@@ -1,0 +1,13 @@
+name: Feature request
+description: A new call the command could offer.
+body:
+  - type: textarea
+    id: job
+    attributes:
+      label: What you want to do on the tablet
+    validations:
+      required: true
+  - type: textarea
+    id: route
+    attributes:
+      label: The direct call that does it, if you know one

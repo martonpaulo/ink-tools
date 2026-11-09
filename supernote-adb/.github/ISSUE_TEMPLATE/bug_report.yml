@@ -1,0 +1,23 @@
+name: Bug report
+description: A command did not do what it says.
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      description: Remove any address, serial number or private file name.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Model and firmware
+      placeholder: Manta, 3.31.45
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What you expected and what happened
+    validations:
+      required: true
