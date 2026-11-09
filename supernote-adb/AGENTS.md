@@ -188,6 +188,7 @@ Lead with the outcome, in the output shape, and include:
 
 - Product definition: `docs/product.md`
 - Decision log: `docs/decisions.md`
+- Routines: `docs/routines.md`
 - Research notes: `docs/research/` (public sources only; a status line opens each note, superseded notes move to `docs/research/archive/`)
 - Handoffs: `.scratch/handoffs/handoff.md`
 - Prototypes: `.scratch/prototypes/`
