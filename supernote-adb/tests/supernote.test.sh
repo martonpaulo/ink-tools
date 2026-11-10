@@ -52,7 +52,8 @@ case "$1" in
     push) : ;;
     logcat)
         cat "$ADB_FILES/log"
-        case " $* " in *" -d "*) ;; *) [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac ;;
+        case " $* " in *" -d "*) ;; *) [ -n "${ADB_FOLLOW_FAILS:-}" ] && exit 1; [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac
+        : ;;
     shell)
         case "$2" in
             "getprop ro.build.display.id") if [ -f "$ADB_FILES/firmware-id" ]; then cat "$ADB_FILES/firmware-id"; else echo Firmware.1; fi ;;
@@ -87,7 +88,9 @@ case "$1" in
             "content insert"*) [ -f "$ADB_FILES/insert-error" ] && cat "$ADB_FILES/insert-error"; : ;;
             "content query --uri content://com.ratta.supernote.task.provider/tasks_table"*)
                 left=$(cat "$ADB_FILES/trigger-reads")
-                if [ "$left" -gt 0 ]; then
+                if [ -f "$ADB_FILES/query-silent" ]; then
+                    :
+                elif [ "$left" -gt 0 ]; then
                     [ "$left" -lt 100 ] && echo $((left - 1)) > "$ADB_FILES/trigger-reads"
                     echo 'Row: 0 id=31'
                 else
@@ -230,6 +233,9 @@ class Answer(io.BytesIO):
         return self.final
 
 def fake_open(url):
+    if os.environ.get("FAIL_NETWORK"):
+        import urllib.error
+        raise urllib.error.URLError("no route")
     if url == supernote.FIRMWARE_PAGE:
         return Answer(open(os.path.join(files, "page.html"), "rb").read(), url)
     final = os.environ.get("FINAL_URL", url)
@@ -270,10 +276,16 @@ echo "Chauvet.3.41.0" > "$files/firmware-id"
 firmware firmware --download >/dev/null 2>&1
 check "firmware refuses a downgrade" "$?$(called ' push ')" "130"
 echo "Chauvet.3.31.45" > "$files/firmware-id"
-firmware firmware --download --url https://example.com/update.zip >/dev/null 2>&1
+cp "$files/page.html" "$work/page.saved"
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("https://download-firmware.supernote.com/1","https://example.com/1"))' "$files/page.html"
+firmware firmware --download >/dev/null 2>&1
 check "firmware refuses another host" "$?$(called ' push ')" "130"
-firmware firmware --download --url http://download-firmware.supernote.com/1/update.zip >/dev/null 2>&1
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("https://example.com/1","http://download-firmware.supernote.com/1"))' "$files/page.html"
+firmware firmware --download >/dev/null 2>&1
 check "firmware refuses plain http" "$?" "13"
+cp "$work/page.saved" "$files/page.html"
+result=$(FAIL_NETWORK=1 firmware firmware --json 2>/dev/null)
+check "firmware reports a network failure in JSON" "$(printf '%s' "$result" | field "['error'],d['next']")" "('network_error', 'supernote firmware')"
 FINAL_URL=https://example.com/x firmware firmware --download >/dev/null 2>&1
 check "firmware refuses a redirect to another host" "$?$(called ' push ')" "130"
 echo "  level: 20" > "$files/battery"
@@ -382,6 +394,11 @@ check "sync tasks reads only its own row" "$(grep 'content query' "$log" | grep 
 echo 0 > "$files/trigger-reads"
 run sync tasks >/dev/null 2>"$work/err"
 check "sync tasks reports an insert that did not hold" "$?" "1"
+echo 2 > "$files/trigger-reads"
+touch "$files/query-silent"
+run sync tasks >/dev/null 2>&1
+check "sync tasks never reads silence as a finished sync" "$?" "1"
+rm "$files/query-silent"
 echo 100 > "$files/trigger-reads"
 run sync tasks --timeout 0 >/dev/null 2>&1
 check "sync tasks gives up with its own code" "$?" "6"
@@ -500,7 +517,16 @@ touch "$files/no-return"
 run snapshot --all --max-steps 1 >/dev/null
 run click @e2 >/dev/null 2>&1
 check "a failed return drops the old references" "$?" "7"
+pages
+touch "$files/no-return"
+run snapshot --find text:Absent >/dev/null 2>&1
+run click @e2 >/dev/null 2>&1
+check "a --find that fails to return drops the old references" "$?" "7"
 rm "$files/no-return"
+pages
+result=$(run snapshot --find text:Absent --max-steps 1 --json 2>/dev/null)
+check "a --find stopped by the limit does not claim the element is absent" "$(printf '%s' "$result" | field "['at_limit']")" "True"
+check "a --find stopped by the limit says so" "$(printf '%s' "$result" | field "['message']" | grep -c 'list continues')" "1"
 stop_pages
 result=$(run snapshot --all --json)
 check "--all without lists is a plain snapshot" "$(printf '%s' "$result" | field "['elements'].__len__(),d['lists']")" "(5, [])"
@@ -521,6 +547,13 @@ check "wait element refuses a bad selector" "$?" "2"
 check "apps separates installed from system" "$(run apps --json | field "['apps'][0]['kind'],d['apps'][1]['kind']")" "('installed', 'system')"
 check "plugin ls keeps a value with commas" "$(run plugin ls --json | field "['plugins'][0]['name']")" '{"en":"Sticker","ja":"x, y"}'
 check "plugin ls splits the fields" "$(run plugin ls --json | field "['plugins'][1]['pluginID']")" "def"
+cp "$files/rows" "$work/rows-copy"
+: > "$files/rows"
+run plugin ls >/dev/null 2>&1
+check "plugin ls reports an answer with no rows and no word from the provider" "$?" "1"
+echo 'No result found.' > "$files/rows"
+check "plugin ls accepts a real empty list" "$(run plugin ls --json | field "['plugins']")" "[]"
+cp "$work/rows-copy" "$files/rows"
 printf 'hello' > "$work/local/my.snplg"
 run plugin push "$work/local/my.snplg" >/dev/null
 check "plugin push goes to MyStyle" "$(called " push $work/local/my.snplg $root/MyStyle/my.snplg")" "1"
@@ -563,6 +596,27 @@ echo 99 > "$files/taps-left"
 run plugin install "$work/local/test.snplg" --step-timeout 0 >/dev/null 2>&1
 check "an unexpected screen stops the install with its own code" "$?" "9"
 check "an unexpected screen presses nothing more" "$(called 'input tap')" "1"
+echo "f $root/MyStyle/test.snplg" >> "$files/paths"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+run plugin install "$work/local/test.snplg" >/dev/null 2>&1
+check "plugin install refuses to replace an earlier copy" "$?$(called ' push ')" "50"
+run plugin push "$work/local/test.snplg" >/dev/null 2>&1
+check "plugin push refuses to replace an earlier copy" "$?$(called ' push ')" "50"
+cp "$work/plugin-screen" "$files/tree.xml"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin\n' > "$files/rows-after"
+echo 5 > "$files/taps-left"
+run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
+check "an update with no version column is not called proven" "$?$(grep -c 'cannot be proved' "$work/err")" "11"
+sed -i.bak 's|<node text="Plugins"|<node text="test.snplg" resource-id="" content-desc="" class="T" bounds="[70,0][80,10]" /><node text="Plugins"|' "$files/tree.xml"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+echo 99 > "$files/taps-left"
+run plugin install "$work/local/test.snplg" --overwrite --step-timeout 0 >/dev/null 2>&1
+check "two files with the same name stop the install" "$?" "9"
+cp "$work/plugin-screen" "$files/tree.xml"
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("test.snplg","other.snplg"))' "$files/tree.xml"
+run plugin install "$work/local/test.snplg" --overwrite --step-timeout 0 >/dev/null 2>&1
+check "a file missing from the picker stops the install" "$?" "9"
 printf 'hello' > "$work/local/bad.snplg"
 run plugin install "$work/local/bad.snplg" >/dev/null 2>&1
 check "a file with no plugin config stops before any copy" "$?$(called ' push ')" "20"
@@ -576,6 +630,12 @@ output=$(run logs --tag Sync --lines 5)
 check "logs read without clearing" "$(last_call)" "-s $serial logcat -d -v time -t 5 -s Sync"
 check "logs mask a credential" "$(printf '%s' "$output" | grep -c 'abcdef')" "0"
 check "logs keep the other fields" "$(printf '%s' "$output" | grep -c 'next=1')" "1"
+cp "$files/log" "$work/log.saved"
+cat > "$files/log" <<'LOG'
+11-10 00:14:27.376 I/A( 1): {"token":"abc1"} access_token='abc2' Authorization: Bearer abc3
+LOG
+check "logs mask quoted values and a bearer token" "$(run logs | grep -c 'abc[123]')" "0"
+cp "$work/log.saved" "$files/log"
 check "logs parse in JSON" "$(run logs --json | field "['lines'][0]['tag'],d['lines'][0]['pid']")" "('Sync', 1218)"
 
 # What the command can reach.
@@ -587,7 +647,7 @@ done
 SUPERNOTE_READ_ONLY=1 run tap 1 2 >/dev/null 2>&1
 check "the environment turns on read-only mode" "$?" "11"
 check "read-only allows what only reads" "$(run --read-only status --json | field "['battery']")" "93"
-for private in Note "Note/A note.note" /sdcard/Note/x "Note/../Note/x" "" /storage/emulated /storage/emulated/0/EXPORT/a.note; do
+for private in Note "Note/A note.note" /sdcard/Note/x "Note/../Note/x" "" /storage/emulated /storage/emulated/0/EXPORT/a.note //storage/emulated/0/Note/a.pdf /storage/emulated/0/NOTE/a.pdf /sdcard/x.NOTE; do
     run files pull "$private" "$work/local/x" >/dev/null 2>&1
     check "files pull protects: [$private]" "$?$(called ' pull ')" "120"
 done
@@ -653,6 +713,8 @@ status=$?
 check "logs --follow ends at its limit without failing" "$status" "0"
 check "logs --follow is bounded" "$((SECONDS - started < 4))" "1"
 check "logs --follow in JSON keeps the lines" "$(printf '%s' "$output" | field "['lines'].__len__()")" "4"
+ADB_FOLLOW_FAILS=1 run logs --follow --timeout 2 >/dev/null 2>&1
+check "logs --follow reports a logcat that failed" "$?" "1"
 check "logs --follow never keeps the log open" "$(last_call)" "-s $serial logcat -v time -t 100"
 run logs --follow --since-last >/dev/null 2>&1
 check "logs refuses --follow with --since-last" "$?" "2"
@@ -693,6 +755,9 @@ HOME="$work/home" PATH="$work/empty" "$(command -v python3)" -B "$script" histor
 status=$?
 check "history needs no device" "$status" "0"
 check "history adds no line" "$(grep -c '"command": "history"' "$history_file")" "0"
+printf '\377\376 not text\n' >> "$history_file"
+run history --json 2>/dev/null | field "['unreadable']" > "$work/out"
+check "history counts a line that is not text" "$(cat "$work/out")" "2"
 python3 -c 'import sys; open(sys.argv[1], "w").write("{\"time\": \"x\"}\n" * 80000)' "$history_file"
 run status >/dev/null
 check "the log stays within its limit" "$(($(wc -c < "$history_file") < 1000000))" "1"

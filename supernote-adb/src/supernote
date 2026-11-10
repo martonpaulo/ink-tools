@@ -49,6 +49,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html.parser
+import http.client
 import json
 import os
 import posixpath
@@ -60,6 +61,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
@@ -200,6 +202,7 @@ VERSION_NUMBER = re.compile(r"\d+\.\d+\.\d+")
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 NOT_FOUND_ERRORS = ("No such file", "does not exist")
+NO_ROWS = "No result found"
 HIERARCHY_OPEN = "<hierarchy"
 HIERARCHY_CLOSE = "</hierarchy>"
 BOUNDS = re.compile(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]")
@@ -219,7 +222,7 @@ SIMPLE_WORD = re.compile(r"[a-z][\w-]*")
 ROW = re.compile(r"Row: \d+ (.*)")
 ROW_FIELD = re.compile(r"(?:^|, )(\w+)=")
 CREDENTIAL = re.compile(
-    r"(?i)([\w-]*(?:token|authorization|password|secret)[\w-]*[\"']?\s*[=:]\s*)[^\s,;&\"']+"
+    r"(?i)([\w-]*(?:token|authorization|password|secret)[\w-]*[\"']?\s*[=:]\s*[\"']?)(?:(?:bearer|basic)\s+)?[^\s,;&\"'}]+"
 )
 CREDENTIAL_MASK = r"\1[masked]"
 
@@ -236,10 +239,11 @@ FAILURE_ADVICE = {
     "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
     "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
     "busy": ("the screen did not settle", "supernote snapshot"),
+    "network_error": ("Ratta's site could not be reached", "supernote firmware"),
     "firmware_refused": ("the update is not safe to copy", "supernote firmware"),
     "read_only": ("read-only mode forbids a command that changes the device", "supernote status"),
-    "protected": ("the notes folder or a note on the screen is protected", "repeat with --allow-notes"),
-    "missing_call": ("a firmware update may have changed this call", "supernote routes"),
+    "protected": ("the notes folder or a note on the screen is protected", "supernote files ls"),
+    "missing_call": ("a firmware update may have changed this call", "supernote doctor"),
     "unexpected_screen": ("the screen is not the one this step expects", "supernote snapshot"),
     "log_error": ("the command's own log could not be read", "supernote status"),
 }
@@ -355,7 +359,7 @@ class RunLog:
             print(f"trace: {line}", file=sys.stderr, flush=True)
         try:
             append_history(line)
-        except OSError as error:
+        except (OSError, ValueError) as error:
             print(f"supernote: the run log was not written: {error}", file=sys.stderr)
 
 
@@ -365,7 +369,7 @@ def append_history(line: str) -> None:
     with HISTORY_FILE.open("a", encoding="utf-8") as stream:
         stream.write(f"{line}\n")
     if HISTORY_FILE.stat().st_size > HISTORY_MAX_BYTES:
-        lines = HISTORY_FILE.read_text(encoding="utf-8").splitlines(keepends=True)
+        lines = HISTORY_FILE.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
         handle, partial = tempfile.mkstemp(dir=HISTORY_FILE.parent, suffix=".partial")
         with os.fdopen(handle, "w", encoding="utf-8") as stream:
             stream.writelines(lines[len(lines) // 2 :])
@@ -403,6 +407,8 @@ class Device:
                 while (left := seconds - (time.monotonic() - started)) > 0 and selector.select(left):
                     chunk = os.read(process.stdout.fileno(), FOLLOW_CHUNK)
                     if not chunk:
+                        if process.wait():
+                            raise Failure(EXIT_FAILED, "device_error", f"{args[0]} ended with an error")
                         break
                     *complete, pending = (pending + chunk).split(b"\n")
                     yield from (line.decode(errors="replace").rstrip("\r") for line in complete)
@@ -539,11 +545,16 @@ def take_snapshot(device: Device) -> dict:
     what the screen says stays out of the file."""
     activity = device.activity()
     elements = device.elements()
+    snapshot = {"activity": activity, "elements": elements}
+    save_snapshot(snapshot)
+    return snapshot
+
+
+def save_snapshot(snapshot: dict) -> None:
     SNAPSHOT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    kept = [{key: element[key] for key in ("ref", "id", "x", "y")} for element in elements]
+    kept = [{key: element[key] for key in ("ref", "id", "x", "y")} for element in snapshot["elements"]]
     SNAPSHOT_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
-    SNAPSHOT_FILE.write_text(json.dumps({"activity": activity, "elements": kept}))
-    return {"activity": activity, "elements": elements}
+    SNAPSHOT_FILE.write_text(json.dumps({"activity": snapshot["activity"], "elements": kept}))
 
 
 def snapshot_lines(snapshot: dict) -> list[str]:
@@ -598,12 +609,13 @@ def resolve_target(device: Device, target: str) -> dict:
 
 def touches_notes(path: str) -> bool:
     """Whether a path is the notes folder, holds it, lies inside it, or is a note."""
-    path = posixpath.normpath(path)
+    path = "/" + posixpath.normpath(path).lstrip("/").casefold()  # shared storage ignores case
     for alias in SHARED_ALIASES:
         if path == alias or path.startswith(f"{alias}/"):
-            path = SHARED_ROOT + path[len(alias):]
-    inside = path == NOTES_FOLDER or path.startswith(f"{NOTES_FOLDER}/")
-    return inside or NOTES_FOLDER.startswith(f"{path.rstrip('/')}/") or path.endswith(NOTE_SUFFIX)
+            path = SHARED_ROOT.casefold() + path[len(alias):]
+    notes = NOTES_FOLDER.casefold()
+    inside = path == notes or path.startswith(f"{notes}/")
+    return inside or notes.startswith(f"{path.rstrip('/')}/") or path.endswith(NOTE_SUFFIX)
 
 
 def protected(what: str) -> Failure:
@@ -735,6 +747,10 @@ def version_tuple(text: str) -> tuple:
     return tuple(int(part) for part in match[0].split("."))
 
 
+def network_failure(error: Exception) -> Failure:
+    return Failure(EXIT_FAILED, "network_error", f"Ratta's site did not answer: {error}")
+
+
 def refuse_firmware(message: str) -> Failure:
     return Failure(EXIT_FIRMWARE_REFUSED, "firmware_refused", message)
 
@@ -766,7 +782,10 @@ def command_firmware(device: Device, args: argparse.Namespace):
     column = FIRMWARE_MODELS.get(model)
     if not column:
         raise Failure(EXIT_FAILED, "device_error", f"no known firmware file for this model: {model}", next_step=FIRMWARE_PAGE)
-    newest = newest_firmware(column)
+    try:
+        newest = newest_firmware(column)
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError) as error:
+        raise network_failure(error) from error
     newer = version_tuple(newest["version"]) > version_tuple(installed)
     data = {"model": model, "installed": installed, "newest": newest["version"], "url": newest["url"], "newer": newer}
     text = f"installed: {installed}\nnewest: {newest['version']}\nnewer: {'yes' if newer else 'no'}"
@@ -774,14 +793,17 @@ def command_firmware(device: Device, args: argparse.Namespace):
         return data, text
     if not newer:
         raise refuse_firmware(f"{newest['version']} is not newer than {installed}; a downgrade can cause a boot loop")
-    url = args.url or newest["url"]
+    url = newest["url"]
     need_official_source(url)
     level = re.search(r"level: (\d+)", device.shell("dumpsys battery | grep level"))
     if not level or int(level[1]) < FIRMWARE_MIN_BATTERY:
         raise refuse_firmware(f"the battery must be at {FIRMWARE_MIN_BATTERY}% or more")
     with tempfile.TemporaryDirectory() as folder:
         local = os.path.join(folder, os.path.basename(FIRMWARE_TARGET))
-        digest = download_firmware(url, local)
+        try:
+            digest = download_firmware(url, local)
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError) as error:
+            raise network_failure(error) from error
         if not zipfile.is_zipfile(local):
             raise refuse_firmware("the download is not a whole zip file")
         pushed = push_file(device, local, remote_path(FIRMWARE_TARGET), args.overwrite, FIRMWARE_TRANSFER_TIMEOUT)
@@ -914,7 +936,7 @@ def command_sync_file(device: Device, args: argparse.Namespace):
 def trigger_row_exists(device: Device, task_id: str) -> bool:
     """Read only the trigger row, never another task."""
     where = shlex.quote(f"taskId='{task_id}'")
-    return bool(parse_rows(device.shell(f"content query --uri {TASKS_URI} --projection id --where {where}")))
+    return bool(query_rows(device, f"content query --uri {TASKS_URI} --projection id --where {where}"))
 
 
 def command_sync_tasks(device: Device, args: argparse.Namespace):
@@ -1000,8 +1022,9 @@ def refuse_note_editor(device: Device) -> None:
 
 def read_every_list(device: Device, snapshot: dict, limit: int) -> tuple[dict, list[str]]:
     """Read each list to its end and come back. Elements found off screen have no reference, because they cannot be pressed from here."""
-    first, seen, merged, lists = snapshot["elements"], None, list(snapshot["elements"]), []
+    first, merged, lists = snapshot["elements"], list(snapshot["elements"]), []
     seen = {element_key(item) for item in first}
+    SNAPSHOT_FILE.unlink(missing_ok=True)  # until the screen is proven back, the old references may point at the wrong place
     for element in [item for item in first if item["scrollable"]]:
         scan = scroll_to_end(device, element, seen, limit)
         merged += [{**item, "ref": "", "offscreen": True} for item in scan["found"]]
@@ -1013,8 +1036,8 @@ def read_every_list(device: Device, snapshot: dict, limit: int) -> tuple[dict, l
             "at_limit": scan["at_limit"],
             "returned": returned,
         })
-    if not all(item["returned"] for item in lists):
-        SNAPSHOT_FILE.unlink(missing_ok=True)  # the old references no longer point at the right places
+    if all(item["returned"] for item in lists):
+        save_snapshot(snapshot)
     data = {**snapshot, "elements": merged, "lists": lists, "at_limit": any(item["at_limit"] for item in lists)}
     lines = [
         f"list {item['ref']}: {item['found']} more in {item['steps']} steps"
@@ -1034,16 +1057,24 @@ def scroll_until_found(device: Device, selector: str, limit: int):
     if matches:
         return {**snapshot, "found": matches[0], "steps": 0}
     seen = {element_key(item) for item in first}
+    SNAPSHOT_FILE.unlink(missing_ok=True)  # until the screen is proven back, the old references may point at the wrong place
+    returned, at_limit = True, False
     for element in [item for item in first if item["scrollable"]]:
         scan = scroll_to_end(device, element, seen, limit, lambda fresh: bool(find_selector(fresh, selector)))
         if scan["stopped"]:
-            snapshot = take_snapshot(device)
-            matches = find_selector(snapshot["elements"], selector)
+            found = take_snapshot(device)
+            matches = find_selector(found["elements"], selector)
             if matches:
-                return {**snapshot, "found": matches[0], "steps": scan["steps"]}
-        if scan["steps"]:
-            scroll_back(device, element, first, scan["steps"])
-    raise not_found(selector, "supernote snapshot --all")
+                return {**found, "found": matches[0], "steps": scan["steps"]}
+        at_limit = at_limit or scan["at_limit"]
+        returned = returned and (not scan["steps"] or scroll_back(device, element, first, scan["steps"]))
+    if returned:
+        save_snapshot(snapshot)
+    failure = not_found(selector, "supernote snapshot --all")
+    failure.extra = {"at_limit": at_limit}
+    if at_limit:
+        failure.message = f"{selector} not found before the limit of {limit} swipes; the list continues"
+    raise failure
 
 
 def command_snapshot(device: Device, args: argparse.Namespace):
@@ -1131,13 +1162,22 @@ def command_plugin_ls(device: Device, args: argparse.Namespace):
 def command_plugin_push(device: Device, args: argparse.Namespace):
     if not args.file.endswith(PLUGIN_SUFFIX):
         raise bad_usage(f"a plugin file ends in {PLUGIN_SUFFIX}: {args.file}")
-    data = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), True)
+    data = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
     data["next"] = PLUGIN_NEXT_STEP
     return data, f"pushed: {data['path']}\n{PLUGIN_NEXT_STEP}"
 
 
+def query_rows(device: Device, call: str) -> list[dict]:
+    """`content query` rows. No rows counts as empty only when the provider says so."""
+    output = device.shell(call)
+    rows = parse_rows(output)
+    if not rows and NO_ROWS not in output:
+        raise Failure(EXIT_FAILED, "device_error", output.strip() or f"no answer to: {call}")
+    return rows
+
+
 def plugin_rows(device: Device) -> list[dict]:
-    return parse_rows(device.shell(f"content query --uri {PLUGIN_URI}"))
+    return query_rows(device, f"content query --uri {PLUGIN_URI}")
 
 
 def read_plugin_config(path: str) -> dict:
@@ -1184,11 +1224,16 @@ def read_enabled_limit(device: Device) -> dict:
     return {"enabled": None, "limit": None}
 
 
-def wait_for_plugin(device: Device, config: dict, limit: float) -> dict:
+def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) -> dict:
+    """Prove the install from the list. An update needs the version column, or nothing proves it changed."""
     started = time.monotonic()
     while True:
         for row in plugin_rows(device):
-            if row.get("pluginID") == config["id"] and row.get("versionName", config["version"]) == config["version"]:
+            if row.get("pluginID") != config["id"]:
+                continue
+            if updating and "versionName" not in row:
+                raise Failure(EXIT_FAILED, "device_error", "the plugin list has no version column, so this update cannot be proved")
+            if row.get("versionName", config["version"]) == config["version"]:
                 return row
         if time.monotonic() - started >= limit:
             raise Failure(EXIT_TIMEOUT, "timeout", f"{config['id']} {config['version']} is not in the plugin list after {limit:g} s")
@@ -1201,7 +1246,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
     if installed and installed[0].get("versionName") == config["version"]:
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "supernote plugin ls")
-    pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), True)
+    pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")
     for step in PLUGIN_PATH_STEPS:
         press_element(device, expect_element(device, step, args.step_timeout))
@@ -1209,9 +1254,16 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     limit = read_enabled_limit(device)
     print(f"plugins enabled: {limit['enabled']} of {limit['limit']}", file=sys.stderr, flush=True)
     press_element(device, pick)
-    press_element(device, scroll_until_found(device, f"text:{name}", SCROLL_STEPS)["found"])
+    expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout)  # the picker's own button: this is the picker
+    try:
+        scroll_until_found(device, f"text:{name}", SCROLL_STEPS)
+    except Failure as failure:
+        if failure.code != EXIT_NOT_FOUND:
+            raise
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{name} is not in the picker; nothing more was pressed") from failure
+    press_element(device, expect_element(device, f"text:{name}", args.step_timeout))
     press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
-    row = wait_for_plugin(device, config, args.timeout)
+    row = wait_for_plugin(device, config, args.timeout, bool(installed))
     data = {
         "plugin": config["id"],
         "version": config["version"],
@@ -1351,7 +1403,7 @@ def command_history(device, args: argparse.Namespace):
     """Read the command's own log, which needs no device."""
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=period_seconds(args.since)) if args.since else None
     try:
-        lines = HISTORY_FILE.read_text(encoding="utf-8").splitlines() if HISTORY_FILE.is_file() else []
+        lines = HISTORY_FILE.read_text(encoding="utf-8", errors="replace").splitlines() if HISTORY_FILE.is_file() else []
     except OSError as error:
         raise Failure(EXIT_FAILED, "log_error", f"cannot read {HISTORY_FILE}: {error}") from error
     runs, unreadable = [], 0
@@ -1428,7 +1480,6 @@ def build_parser() -> argparse.ArgumentParser:
     add(commands, "doctor", command_doctor)
     firmware = add(commands, "firmware", command_firmware)
     firmware.add_argument("--download", action="store_true", help="download the newest firmware and copy it to EXPORT")
-    firmware.add_argument("--url", help=f"a link on {FIRMWARE_HOST}, instead of the newest one")
     firmware.add_argument("--overwrite", action="store_true", help="replace an earlier copy on the device")
 
     notes = noun("note")
@@ -1473,9 +1524,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     plugins = noun("plugin")
     add(plugins, "ls", command_plugin_ls)
-    add(plugins, "push", command_plugin_push, changes=True).add_argument("file")
+    pushing = add(plugins, "push", command_plugin_push, changes=True)
+    pushing.add_argument("file")
+    pushing.add_argument("--overwrite", action="store_true", help="replace an earlier copy in MyStyle")
     installing = add(plugins, "install", command_plugin_install, changes=True)
     installing.add_argument("file")
+    installing.add_argument("--overwrite", action="store_true", help="replace an earlier copy in MyStyle")
     installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
     installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
 
