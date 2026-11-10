@@ -19,12 +19,17 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   apps                           installed packages
   plugin ls                      installed plugins
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
-  logs [--tag T] [--lines N]     recent device log, with credentials masked
+  logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
+                                 --level, --package, --pid, --grep, --since, --since-last,
+                                 --follow and --plugin
+  history                        what this command did: --failures, --command NAME, --since 2h
   tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
   shell COMMAND...               run a command on the device
 
 click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result) and --screen FILE
 (save a fresh capture), so one call shows its effect.
+
+--trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
 ~/.config/supernote-adb/address. PATH is relative to the shared storage, or absolute.
@@ -37,12 +42,14 @@ import argparse
 import json
 import os
 import re
+import selectors
 import shlex
 import subprocess
 import sys
 import tempfile
 import time
 import xml.etree.ElementTree as ElementTree
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 EXIT_OK = 0
@@ -65,6 +72,21 @@ EXIT_CODES = """exit codes:
   7  the reference is stale: take a new snapshot
   8  the screen never settled, so no snapshot came back: try again
 
+a failure in --json has the fields: error, message, cause, next
+
+each run adds one JSON line to ~/.cache/supernote-adb/history.jsonl, with the fields:
+  time       when the run started, UTC
+  command    the command's name, never its arguments
+  seconds    how long the run took
+  exit       its exit code
+  error      the failure's name, or null
+  app_before the app in front before the run
+  app_after  the app in front after the run
+  calls      each ADB call: call, seconds, exit (null when it timed out)
+These fields are a public contract, like the exit codes.
+The log never holds note content, screen text, file content or credentials.
+The address is masked. A call keeps only its verb, unless --log-paths is passed.
+
 https://github.com/martonpaulo/supernote-adb
 """
 
@@ -72,7 +94,11 @@ ADB_PORT = 5555  # the port `adb tcpip` opens
 SHARED_ROOT = "/storage/emulated/0"
 ADDRESS_FILE = Path.home() / ".config/supernote-adb/address"
 SNAPSHOT_FILE = Path.home() / ".cache/supernote-adb/snapshot.json"
-SNAPSHOT_FILE_MODE = 0o600
+HISTORY_FILE = Path.home() / ".cache/supernote-adb/history.jsonl"
+LOG_MARK_FILE = Path.home() / ".cache/supernote-adb/logcat-mark"
+PRIVATE_FILE_MODE = 0o600
+HISTORY_MAX_BYTES = 1_000_000  # past this the file keeps its newest half
+ADDRESS_MASK = "[device]"
 
 CONNECT_TIMEOUT = 10
 CALL_TIMEOUT = 30
@@ -80,6 +106,11 @@ TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 WAIT_INTERVAL = 0.5
 DEFAULT_LOG_LINES = 100
+DEFAULT_HISTORY_RUNS = 50
+PLUGIN_LOG_WINDOW = 5000  # a plugin's lines are picked out of this many recent ones
+FOLLOW_CHUNK = 65536
+TIMING_DIGITS = 3
+PERIOD_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
 DUMP_ATTEMPTS = 3  # the device often answers "could not get idle state" after about 11 s
 IDLE_ERROR = "could not get idle state"
 ERROR_EXCERPT = 200
@@ -113,6 +144,11 @@ LS_LINE = re.compile(
     r"(?P<mode>\S+)\s+\d+\s+\S+\s+\S+\s+(?P<size>\d+)\s+"
     r"(?P<date>\d{4}-\d\d-\d\d) (?P<time>\d\d:\d\d:\d\d)\.\d+ (?P<hours>[+-]\d\d)(?P<minutes>\d\d)\s(?P<name>.*)"
 )
+PERIOD = re.compile(r"(\d+)([smhd])")
+LOG_TIME = re.compile(r"\d\d-\d\d \d\d:\d\d:\d\d\.\d+")
+LOG_LEVELS = "VDIWEF"
+PLUGIN_DENIED = re.compile(r"PluginSec.*DENY")
+SIMPLE_WORD = re.compile(r"[a-z][\w-]*")
 ROW = re.compile(r"Row: \d+ (.*)")
 ROW_FIELD = re.compile(r"(?:^|, )(\w+)=")
 CREDENTIAL = re.compile(
@@ -121,14 +157,32 @@ CREDENTIAL = re.compile(
 CREDENTIAL_MASK = r"\1[masked]"
 
 
-class Failure(Exception):
-    """A failed call, carrying the stable exit code and the name a JSON reader sees."""
+# Why each failure happens and the command to try next: the fixed fields of a failure in --json.
+FAILURE_ADVICE = {
+    "usage": ("the call's arguments are wrong, or no address is recorded", "supernote --help"),
+    "no_adb": ("adb is not on this computer's PATH", "adb version"),
+    "unreachable": ("the device did not answer over Wi-Fi ADB", "supernote status"),
+    "device_error": ("the device refused the call, or the call failed", "supernote logs --level E --lines 50"),
+    "not_found": ("the file or element does not exist", "supernote files ls"),
+    "ambiguous": ("more than one element matches the target", "supernote snapshot"),
+    "exists": ("the destination already exists", "supernote files ls"),
+    "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
+    "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
+    "busy": ("the screen did not settle", "supernote snapshot"),
+    "log_error": ("the command's own log could not be read", "supernote status"),
+}
 
-    def __init__(self, code: int, kind: str, message: str):
+
+class Failure(Exception):
+    """A failed call, carrying the stable exit code and the fields a JSON reader sees."""
+
+    def __init__(self, code: int, kind: str, message: str, next_step: str = ""):
         super().__init__(message)
         self.code = code
         self.kind = kind
         self.message = message
+        self.cause, advised = FAILURE_ADVICE[kind]
+        self.next_step = next_step or advised
 
 
 def unreachable(serial: str) -> Failure:
@@ -140,8 +194,8 @@ def unreachable(serial: str) -> Failure:
     )
 
 
-def not_found(what: str) -> Failure:
-    return Failure(EXIT_NOT_FOUND, "not_found", f"not found: {what}")
+def not_found(what: str, next_step: str = "") -> Failure:
+    return Failure(EXIT_NOT_FOUND, "not_found", f"not found: {what}", next_step)
 
 
 def bad_usage(message: str) -> Failure:
@@ -166,20 +220,110 @@ def read_address() -> str:
     return address
 
 
+def call_verb(args: tuple[str, ...]) -> str:
+    """The name of an ADB call without its arguments, which may name a private note."""
+    words = args[1].split() if args[0] in ("shell", "exec-out") and len(args) > 1 else []
+    if words and SIMPLE_WORD.fullmatch(words[0]):
+        return f"{args[0]} {words[0]}"
+    return args[0]
+
+
+class RunLog:
+    """What one run did. It keeps verbs and timings, and only the masked result reaches a file or a terminal."""
+
+    def __init__(self):
+        self.trace = False
+        self.paths = False
+        self.secrets: list[str] = []
+        self.calls: list[dict] = []
+        self.started = time.monotonic()
+        self.started_at = datetime.now(timezone.utc)
+
+    def clean(self, text: str) -> str:
+        for secret in self.secrets:
+            text = text.replace(secret, ADDRESS_MASK)
+        return CREDENTIAL.sub(CREDENTIAL_MASK, text)
+
+    def call(self, args: tuple[str, ...], started: float, code) -> None:
+        name = self.clean(" ".join(args) if self.paths else call_verb(args))
+        entry = {"call": name, "seconds": round(time.monotonic() - started, TIMING_DIGITS), "exit": code}
+        self.calls.append(entry)
+        if self.trace:
+            print(f"trace: {name} {entry['seconds']} s exit {code}", file=sys.stderr, flush=True)
+
+    def finish(self, command: str, code: int, kind, before: str = "", after: str = "") -> None:
+        """Add this run's line. A log that cannot be written never changes the command's result."""
+        line = self.clean(json.dumps({
+            "time": self.started_at.isoformat(timespec="seconds"),
+            "command": command,
+            "seconds": round(time.monotonic() - self.started, TIMING_DIGITS),
+            "exit": code,
+            "error": kind,
+            "app_before": before,
+            "app_after": after,
+            "calls": self.calls,
+        }, ensure_ascii=False))
+        if self.trace:
+            print(f"trace: {line}", file=sys.stderr, flush=True)
+        try:
+            append_history(line)
+        except OSError as error:
+            print(f"supernote: the run log was not written: {error}", file=sys.stderr)
+
+
+def append_history(line: str) -> None:
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    HISTORY_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
+    with HISTORY_FILE.open("a", encoding="utf-8") as stream:
+        stream.write(f"{line}\n")
+    if HISTORY_FILE.stat().st_size > HISTORY_MAX_BYTES:
+        lines = HISTORY_FILE.read_text(encoding="utf-8").splitlines(keepends=True)
+        handle, partial = tempfile.mkstemp(dir=HISTORY_FILE.parent, suffix=".partial")
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.writelines(lines[len(lines) // 2 :])
+        os.replace(partial, HISTORY_FILE)
+
+
 class Device:
     """One ADB connection. Every call has a time limit, so a silent device cannot hang an agent."""
 
-    def __init__(self, serial: str):
+    def __init__(self, serial: str, log: RunLog):
         self.serial = serial
+        self.log = log
 
     def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True):
         prefix = ["adb", "-s", self.serial] if serial else ["adb"]
+        started = time.monotonic()
         try:
-            return subprocess.run([*prefix, *args], capture_output=True, timeout=timeout, check=False)
+            done = subprocess.run([*prefix, *args], capture_output=True, timeout=timeout, check=False)
         except subprocess.TimeoutExpired as error:
+            self.log.call(args, started, None)
             raise unreachable(self.serial) from error
         except FileNotFoundError as error:
             raise Failure(EXIT_FAILED, "no_adb", "adb is not installed") from error
+        self.log.call(args, started, done.returncode)
+        return done
+
+    def stream(self, args: list[str], seconds: float):
+        """Yield the lines a call prints, until it ends or the time limit passes."""
+        started = time.monotonic()
+        process = subprocess.Popen(["adb", "-s", self.serial, *args], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        pending = b""
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(process.stdout, selectors.EVENT_READ)
+                while (left := seconds - (time.monotonic() - started)) > 0 and selector.select(left):
+                    chunk = os.read(process.stdout.fileno(), FOLLOW_CHUNK)
+                    if not chunk:
+                        break
+                    *complete, pending = (pending + chunk).split(b"\n")
+                    yield from (line.decode(errors="replace").rstrip("\r") for line in complete)
+            if pending:
+                yield pending.decode(errors="replace")
+        finally:
+            process.kill()
+            process.wait()
+            self.log.call(tuple(args), started, process.returncode)
 
     def is_ready(self) -> bool:
         return self.adb("get-state").stdout.strip() == b"device"
@@ -266,7 +410,7 @@ def take_snapshot(device: Device) -> dict:
     elements = device.elements()
     SNAPSHOT_FILE.parent.mkdir(parents=True, exist_ok=True)
     kept = [{key: element[key] for key in ("ref", "id", "x", "y")} for element in elements]
-    SNAPSHOT_FILE.touch(mode=SNAPSHOT_FILE_MODE, exist_ok=True)
+    SNAPSHOT_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
     SNAPSHOT_FILE.write_text(json.dumps({"activity": activity, "elements": kept}))
     return {"activity": activity, "elements": elements}
 
@@ -289,7 +433,7 @@ def resolve_ref(device: Device, reference: str) -> dict:
     for element in saved["elements"]:
         if element["ref"] == reference:
             return element
-    raise not_found(f"{reference} in the last snapshot")
+    raise not_found(f"{reference} in the last snapshot", "supernote snapshot")
 
 
 def find_selector(elements: list[dict], selector: str) -> list[dict]:
@@ -304,7 +448,7 @@ def resolve_target(device: Device, target: str) -> dict:
         return resolve_ref(device, target)
     matches = find_selector(device.elements(), target)
     if not matches:
-        raise not_found(target)
+        raise not_found(target, "supernote snapshot")
     if len(matches) > 1:
         raise Failure(EXIT_NOT_FOUND, "ambiguous", f"{len(matches)} elements match {target}; use a snapshot reference")
     return matches[0]
@@ -572,15 +716,143 @@ def parse_log(line: str) -> dict:
     return {**match.groupdict(), "tag": match["tag"].strip(), "pid": int(match["pid"])}
 
 
-def command_logs(device: Device, args: argparse.Namespace):
-    # Never `logcat -c`: it fails on the Manta.
-    call = ["logcat", "-d", "-v", "time", "-t", str(args.lines)]
+def period_seconds(text: str) -> int:
+    match = PERIOD.fullmatch(text)
+    if not match:
+        raise bad_usage(f"a period is a number and s, m, h or d, such as 30m: {text}")
+    return int(match[1]) * PERIOD_SECONDS[match[2]]
+
+
+def log_start(device: Device, since: str) -> str:
+    """A value for `logcat -T`: an exact device time as it is, or a period counted on the device's clock."""
+    if LOG_TIME.fullmatch(since):
+        return since
+    seconds = period_seconds(since)
+    return f"{int(device.shell('date +%s').strip()) - seconds}.000"
+
+
+def logcat_call(device: Device, args: argparse.Namespace, mark: str) -> list[str]:
+    """The `logcat` arguments for these filters. Never `logcat -c`: it fails on the Manta."""
+    call = ["logcat", *([] if args.follow else ["-d"]), "-v", "time"]
+    start = mark or (log_start(device, args.since) if args.since else "")
+    if start:
+        call += ["-T", start]
+    else:
+        call += ["-t", str(PLUGIN_LOG_WINDOW if args.plugin else args.lines)]
+    if args.package:
+        pids = device.shell(f"pidof {shlex.quote(args.package)} || true").split()
+        if not pids:
+            raise not_found(f"a running process of {args.package}", "supernote apps")
+        call.append(f"--pid={pids[0]}")  # shortcut: only the first process; widen when a package runs several
+    elif args.pid:
+        call.append(f"--pid={args.pid}")
     if args.tag:
-        call += ["-s", args.tag]
+        call += ["-s", f"{args.tag}:{args.level}" if args.level else args.tag]
+    elif args.level:
+        call.append(f"*:{args.level}")
+    return call
+
+
+def log_keeps(args: argparse.Namespace, mark: str):
+    """The test a device log line must pass, for what `logcat` cannot filter by itself."""
+    text = (args.grep or "").lower()
+    plugin = (args.plugin or "").lower()
+
+    def keeps(line: str) -> bool:
+        lowered = line.lower()
+        if line.startswith("---------") or text not in lowered:
+            return False
+        if plugin and plugin not in lowered and not PLUGIN_DENIED.search(line):
+            return False
+        return not mark or parse_log(line).get("time", mark + "~") > mark  # logcat -T repeats the marked line
+
+    return keeps
+
+
+def log_entry(args: argparse.Namespace, line: str) -> dict:
+    entry = parse_log(line)
+    if args.plugin:
+        entry["denied"] = bool(PLUGIN_DENIED.search(line))
+    return entry
+
+
+def read_log_mark() -> str:
+    return LOG_MARK_FILE.read_text().strip() if LOG_MARK_FILE.is_file() else ""
+
+
+def save_log_mark(lines: list[str]) -> None:
+    """Remember the newest line read. Failing here only means the next read repeats some lines."""
+    times = [parse_log(line).get("time", "") for line in lines]
+    if not any(times):
+        return
+    try:
+        LOG_MARK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        LOG_MARK_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
+        LOG_MARK_FILE.write_text(max(times))
+    except OSError as error:
+        print(f"supernote: the log mark was not saved: {error}", file=sys.stderr)
+
+
+def follow_log(device: Device, args: argparse.Namespace, call: list[str], keeps):
+    """Print new lines until the time limit; a quiet device is a normal end, not a failure."""
+    entries = []
+    for raw in device.stream(call, args.timeout):
+        line = CREDENTIAL.sub(CREDENTIAL_MASK, raw)
+        if keeps(line):
+            entries.append(log_entry(args, line))
+            if not args.json:
+                print(line, flush=True)
+    return {"lines": entries}, None
+
+
+def command_logs(device: Device, args: argparse.Namespace):
+    if args.follow and args.since_last:
+        raise bad_usage("--follow already shows only new lines; drop --since-last")
+    mark = read_log_mark() if args.since_last else ""
+    keeps = log_keeps(args, mark)
+    call = logcat_call(device, args, mark)
+    if args.follow:
+        return follow_log(device, args, call, keeps)
     done = device.adb(*call)
-    text = CREDENTIAL.sub(CREDENTIAL_MASK, done.stdout.decode(errors="replace"))
-    lines = [line for line in text.splitlines() if not line.startswith("---------")]
-    return {"lines": [parse_log(line) for line in lines]}, "\n".join(lines)
+    if done.returncode != 0:
+        raise Failure(EXIT_FAILED, "device_error", done.stderr.decode(errors="replace").strip() or "logcat failed")
+    every = CREDENTIAL.sub(CREDENTIAL_MASK, done.stdout.decode(errors="replace")).splitlines()
+    lines = [line for line in every if keeps(line)]
+    if args.plugin:
+        lines = lines[-args.lines:]
+    if args.since_last:
+        save_log_mark(every)
+    return {"lines": [log_entry(args, line) for line in lines]}, "\n".join(lines)
+
+
+def history_matches(run: dict, args: argparse.Namespace, cutoff) -> bool:
+    if args.failures and run["exit"] == EXIT_OK:
+        return False
+    if args.name and run["command"] != args.name and not run["command"].startswith(f"{args.name} "):
+        return False
+    return cutoff is None or datetime.fromisoformat(run["time"]) >= cutoff
+
+
+def command_history(device, args: argparse.Namespace):
+    """Read the command's own log, which needs no device."""
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=period_seconds(args.since)) if args.since else None
+    try:
+        lines = HISTORY_FILE.read_text(encoding="utf-8").splitlines() if HISTORY_FILE.is_file() else []
+    except OSError as error:
+        raise Failure(EXIT_FAILED, "log_error", f"cannot read {HISTORY_FILE}: {error}") from error
+    runs, unreadable = [], 0
+    for line in lines:
+        try:
+            run = json.loads(line)
+            if history_matches(run, args, cutoff):
+                runs.append(run)
+        except (ValueError, KeyError, TypeError):
+            unreadable += 1
+    runs = runs[-args.limit:]
+    text = "\n".join(f"{run['time']} {run['command']} exit={run['exit']} error={run['error']} {run['seconds']} s" for run in runs)
+    if unreadable:
+        print(f"supernote: {unreadable} log lines could not be read", file=sys.stderr)
+    return {"runs": runs, "unreadable": unreadable}, text
 
 
 def command_shell(device: Device, args: argparse.Namespace):
@@ -590,9 +862,14 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
+NOUNS = ("note", "files", "sync", "plugin")
+
+
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="answer in JSON")
+    common.add_argument("--trace", action="store_true", default=argparse.SUPPRESS, help="print each ADB call to stderr")
+    common.add_argument("--log-paths", action="store_true", default=argparse.SUPPRESS, help="keep full call arguments in the log")
     action = argparse.ArgumentParser(add_help=False)
     action.add_argument("--snapshot", action="store_true", help="add a fresh snapshot to the result")
     action.add_argument("--screen", metavar="FILE", help="save a fresh capture")
@@ -604,11 +881,13 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--json", action="store_true", default=False, help="answer in JSON")
+    parser.add_argument("--trace", action="store_true", default=False, help="print each ADB call to stderr")
+    parser.add_argument("--log-paths", action="store_true", default=False, help="keep full call arguments in the log")
     commands = parser.add_subparsers(dest="command", required=True)
 
     def add(group, name: str, handler, *parents) -> argparse.ArgumentParser:
         sub = group.add_parser(name, parents=[common, *parents])
-        sub.set_defaults(handler=handler)
+        sub.set_defaults(handler=handler, needs_device=True)
         return sub
 
     def noun(name: str):
@@ -655,6 +934,23 @@ def build_parser() -> argparse.ArgumentParser:
     logs = add(commands, "logs", command_logs)
     logs.add_argument("--tag")
     logs.add_argument("--lines", type=int, default=DEFAULT_LOG_LINES)
+    logs.add_argument("--level", choices=list(LOG_LEVELS), help="this level and above")
+    process = logs.add_mutually_exclusive_group()
+    process.add_argument("--package", help="only this package's process")
+    process.add_argument("--pid", type=int, help="only this process")
+    logs.add_argument("--grep", help="only lines holding this text, ignoring case")
+    logs.add_argument("--since", help="a period such as 30m, or a device time: MM-DD hh:mm:ss.mmm")
+    logs.add_argument("--since-last", action="store_true", help="only what is new since the previous --since-last")
+    logs.add_argument("--follow", action="store_true", help="keep printing new lines until --timeout")
+    logs.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds of --follow")
+    logs.add_argument("--plugin", metavar="NAME", help="one plugin's lines, and every denied permission")
+
+    history = add(commands, "history", command_history)
+    history.set_defaults(needs_device=False)
+    history.add_argument("--failures", action="store_true", help="only runs that failed")
+    history.add_argument("--command", dest="name", metavar="NAME", help="only this command, such as sync or files ls")
+    history.add_argument("--since", help="only this recent period, such as 2h")
+    history.add_argument("--limit", type=int, default=DEFAULT_HISTORY_RUNS, help="newest runs to show")
 
     tapped = add(commands, "tap", command_tap, action)
     tapped.add_argument("x", type=int)
@@ -667,19 +963,60 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
+def command_name(args: argparse.Namespace) -> str:
+    nested = getattr(args, args.command, None) if args.command in NOUNS else None
+    return f"{args.command} {nested}" if nested else args.command
+
+
+def front_app(device: Device) -> str:
+    """The app in front, for the log. A device that stopped answering just leaves it empty."""
     try:
-        device = Device(f"{read_address()}:{ADB_PORT}")
-        device.connect()
+        return device.activity()
+    except Failure:
+        return ""
+
+
+def main() -> int:
+    log = RunLog()
+    try:
+        args = build_parser().parse_args()
+    except SystemExit as leaving:
+        if leaving.code:
+            log.finish("(usage)", leaving.code, "usage")
+        raise
+    log.trace, log.paths = args.trace, args.log_paths
+    code, kind, device, before, after = EXIT_OK, None, None, "", ""
+    try:
+        if args.needs_device:
+            address = read_address()
+            log.secrets = [f"{address}:{ADB_PORT}", address]
+            device = Device(f"{address}:{ADB_PORT}", log)
+            device.connect()
+            before = front_app(device)
         data, text = args.handler(device, args)
     except Failure as failure:
-        print(f"supernote: {failure.message}", file=sys.stderr)
+        code, kind = failure.code, failure.kind
+        message = log.clean(failure.message)
+        print(f"supernote: {message}", file=sys.stderr)
         if args.json:
-            print(json.dumps({"error": failure.kind, "message": failure.message}, ensure_ascii=False))
-        return failure.code
-    print(json.dumps(data, ensure_ascii=False) if args.json else text)
-    return EXIT_OK
+            print(json.dumps({
+                "error": failure.kind,
+                "message": message,
+                "cause": failure.cause,
+                "next": failure.next_step,
+            }, ensure_ascii=False))
+    except SystemExit as leaving:  # `shell` ends with the device's own exit code
+        code = leaving.code
+    else:
+        if args.json:
+            print(json.dumps(data, ensure_ascii=False))
+        elif text is not None:
+            print(text)
+    if args.needs_device:
+        if device and kind != "unreachable":
+            after = front_app(device)
+        log.finish(command_name(args), code, kind, before, after)
+    return code
 
 
 if __name__ == "__main__":

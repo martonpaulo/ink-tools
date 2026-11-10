@@ -50,11 +50,12 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote wait activity\|file\|element X` | Waits for a condition, with a time limit. |
 | `supernote apps` | Lists installed packages. |
 | `supernote plugin ls\|push` | Lists plugins, or copies one to `MyStyle`. The install is then done on the tablet. |
-| `supernote logs` | Shows the recent device log with credentials masked. |
+| `supernote logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission. |
+| `supernote history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `supernote tap\|swipe` | Presses by coordinates, the last resort. |
 | `supernote shell COMMAND...` | Runs a command on the tablet. |
 
-Every command takes `--json`.
+Every command takes `--json`. A failure in JSON has `cause` and `next`, the next command to try. `--trace` prints each ADB call to stderr as it runs.
 
 <br />
 

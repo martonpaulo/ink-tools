@@ -12,4 +12,5 @@ Report a vulnerability through a [private security advisory](https://github.com/
 
 - The tablet's address, in a file you create.
 - The last snapshot, with only positions and element ids, readable only by you, in `~/.cache/supernote-adb/`.
+- A record of each run, readable only by you and limited to about 1 MB, in `~/.cache/supernote-adb/history.jsonl`. It holds the command's name, timings, exit codes and the app in front. It holds no note content, screen text, file content or credentials, and the address is masked. File paths are kept only with `--log-paths`.
 - `supernote logs` masks values that look like credentials. The mask is a best effort, so read a log before you share it.
