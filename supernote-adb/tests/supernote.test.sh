@@ -55,7 +55,10 @@ case "$1" in
         case " $* " in *" -d "*) ;; *) [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac ;;
     shell)
         case "$2" in
-            "getprop ro.build.display.id") echo Firmware.1 ;;
+            "getprop ro.build.display.id") if [ -f "$ADB_FILES/firmware-id" ]; then cat "$ADB_FILES/firmware-id"; else echo Firmware.1; fi ;;
+            "getprop ro.product.model") cat "$ADB_FILES/model" ;;
+            "dumpsys battery"*) cat "$ADB_FILES/battery" ;;
+            "sha256sum "*) cat "$ADB_FILES/checksum" ;;
             "dumpsys package providers")
                 for authority in com.ratta.supernote.task.provider com.ratta.supernote.pluginhost; do
                     grep -qF "$authority" "$ADB_FILES/gone" || printf '  [%s]:\n' "$authority"
@@ -208,6 +211,93 @@ reset_device
 check "status reads firmware, battery and foreground" "$(run status --json | field "['firmware'],d['battery'],d['activity'],d['screen']")" "('Firmware.1', 93, '$calendar_activity', '1920x2560')"
 check "--json also works before the command" "$(run --json status | field "['battery']")" "93"
 check "an error in JSON keeps a name for the reader" "$(run files ls Absent --json 2>/dev/null | field "['error']")" "not_found"
+
+# Firmware. The network is replaced inside the command, so nothing leaves this computer.
+cat > "$work/firmware_run.py" <<'PY'
+import importlib.machinery, importlib.util, io, os, sys
+
+script, files, *arguments = sys.argv[1:]
+loader = importlib.machinery.SourceFileLoader("supernote_under_test", script)
+spec = importlib.util.spec_from_loader(loader.name, loader)
+supernote = importlib.util.module_from_spec(spec)
+loader.exec_module(supernote)
+
+class Answer(io.BytesIO):
+    def __init__(self, data, final):
+        super().__init__(data)
+        self.final = final
+    def geturl(self):
+        return self.final
+
+def fake_open(url):
+    if url == supernote.FIRMWARE_PAGE:
+        return Answer(open(os.path.join(files, "page.html"), "rb").read(), url)
+    final = os.environ.get("FINAL_URL", url)
+    return Answer(open(os.path.join(files, "firmware.bin"), "rb").read(), final)
+
+supernote.open_url = fake_open
+sys.argv = ["supernote", *arguments]
+sys.exit(supernote.main())
+PY
+firmware() {
+    : > "$log"
+    HOME="$work/home" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$work/firmware_run.py" "$script" "$files" "$@"
+}
+cat > "$files/page.html" <<'HTML'
+<table><tr><th>Manta &amp; Nomad</th><th>A5</th></tr><tr><th><a href="https://download-firmware.supernote.com/1/update.zip"><strong>Chauvet 3.40.1</strong></a></th><th><a href="https://download-firmware.supernote.com/2/update.zip">SN100.B000.445</a></th></tr></table>
+HTML
+python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1],"w"); z.writestr("a.txt","x"); z.close()' "$files/firmware.bin"
+wc -c < "$files/firmware.bin" | tr -d ' ' > "$files/size"
+python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest(), "x")' "$files/firmware.bin" > "$files/checksum"
+echo "Supernote Nomad" > "$files/model"
+echo "Chauvet.3.31.45" > "$files/firmware-id"
+echo "  level: 93" > "$files/battery"
+result=$(firmware firmware --json)
+check "firmware shows both versions" "$(printf '%s' "$result" | field "['installed'],d['newest'],d['newer']")" "('Chauvet.3.31.45', 'Chauvet 3.40.1', True)"
+check "firmware reads the model's own column" "$(printf '%s' "$result" | field "['url']")" "https://download-firmware.supernote.com/1/update.zip"
+check "firmware alone copies nothing" "$(called ' push ')" "0"
+result=$(firmware firmware --download --json)
+check "firmware --download copies to EXPORT" "$(called " push ")" "1"
+check "firmware --download proves the copy" "$(printf '%s' "$result" | expression "len(d['sha256']), d['path'], 'OK' in d['next']")" "(64, '/storage/emulated/0/EXPORT/update.zip', True)"
+echo "other  x" > "$files/checksum"
+firmware firmware --download >/dev/null 2>&1
+check "a copy that differs is reported" "$?" "1"
+python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest(), "x")' "$files/firmware.bin" > "$files/checksum"
+echo "Chauvet.3.40.1" > "$files/firmware-id"
+firmware firmware --download >/dev/null 2>&1
+check "firmware refuses the same version" "$?$(called ' push ')" "130"
+echo "Chauvet.3.41.0" > "$files/firmware-id"
+firmware firmware --download >/dev/null 2>&1
+check "firmware refuses a downgrade" "$?$(called ' push ')" "130"
+echo "Chauvet.3.31.45" > "$files/firmware-id"
+firmware firmware --download --url https://example.com/update.zip >/dev/null 2>&1
+check "firmware refuses another host" "$?$(called ' push ')" "130"
+firmware firmware --download --url http://download-firmware.supernote.com/1/update.zip >/dev/null 2>&1
+check "firmware refuses plain http" "$?" "13"
+FINAL_URL=https://example.com/x firmware firmware --download >/dev/null 2>&1
+check "firmware refuses a redirect to another host" "$?$(called ' push ')" "130"
+echo "  level: 20" > "$files/battery"
+firmware firmware --download >/dev/null 2>&1
+check "firmware refuses a low battery" "$?$(called ' push ')" "130"
+echo "  level: 93" > "$files/battery"
+printf 'not a zip' > "$files/firmware.bin.keep"
+cp "$files/firmware.bin" "$work/firmware.bin.saved"
+printf 'not a zip' > "$files/firmware.bin"
+firmware firmware --download >/dev/null 2>&1
+check "firmware refuses a broken download" "$?$(called ' push ')" "130"
+cp "$work/firmware.bin.saved" "$files/firmware.bin"
+rm "$files/firmware.bin.keep"
+echo "Supernote A9" > "$files/model"
+firmware firmware >/dev/null 2>&1
+check "firmware stops on a model it does not know" "$?" "1"
+echo "Supernote Nomad" > "$files/model"
+echo "<p>nothing</p>" > "$files/page.html"
+firmware firmware >/dev/null 2>&1
+check "firmware stops when the page has changed" "$?" "1"
+echo 'Firmware' > "$files/firmware-id"
+firmware firmware --read-only --download >/dev/null 2>&1
+check "read-only refuses a firmware copy" "$?" "11"
+rm "$files/firmware-id"
 
 # Doctor.
 : > "$files/gone"
@@ -489,7 +579,7 @@ check "logs keep the other fields" "$(printf '%s' "$output" | grep -c 'next=1')"
 check "logs parse in JSON" "$(run logs --json | field "['lines'][0]['tag'],d['lines'][0]['pid']")" "('Sync', 1218)"
 
 # What the command can reach.
-for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync file Note/a.note" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi off" "snapshot --all" "snapshot --find text:One"; do
+for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync file Note/a.note" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
     # shellcheck disable=SC2086 # each entry is a command with its arguments
     run --read-only $changing >/dev/null 2>&1
     check "read-only refuses: $changing" "$?$(wc -l < "$log" | tr -d ' ')" "110"

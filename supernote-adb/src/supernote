@@ -5,6 +5,7 @@ Direct calls come first (intents, content providers, files), then element refere
 snapshot, and coordinates only as the last resort. Every command takes --json.
 
   status                         connection, firmware, screen size, battery, foreground activity
+  firmware [--download]          show the installed and newest official firmware; --download copies it to EXPORT
   doctor                         check, read-only, that each call this command makes still exists
   note open PATH [--page N]      open a note; N counts from 1, as the device shows it
   note new PATH                  create a blank portrait note at PATH and open it; never replaces
@@ -46,6 +47,8 @@ ADB over Wi-Fi is enabled once over USB with `adb tcpip 5555`; a restart of the 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import html.parser
 import json
 import os
 import posixpath
@@ -57,6 +60,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.parse
+import urllib.request
 import uuid
 import xml.etree.ElementTree as ElementTree
 import zipfile
@@ -76,6 +81,7 @@ EXIT_UNEXPECTED_SCREEN = 9
 EXIT_CALL_MISSING = 10
 EXIT_READ_ONLY = 11
 EXIT_PROTECTED = 12
+EXIT_FIRMWARE_REFUSED = 13
 EXIT_CODES = """exit codes:
   0  done
   1  the device refused or the call failed
@@ -90,6 +96,7 @@ EXIT_CODES = """exit codes:
   10 doctor found a call this command relies on missing from the device
   11 read-only mode refused a command that changes the device
   12 the notes folder or a note on the screen is protected: pass --allow-notes
+  13 the firmware was refused: not newer, not from Ratta, or the battery is too low
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -128,6 +135,9 @@ TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 SYNC_TIMEOUT = 60.0
 WIFI_OFF_TIMEOUT = 15.0
+DOWNLOAD_READ_TIMEOUT = 60
+DOWNLOAD_TIMEOUT = 3600.0
+FIRMWARE_TRANSFER_TIMEOUT = 3600
 STEP_TIMEOUT = 20.0
 INSTALL_TIMEOUT = 60.0
 WAIT_INTERVAL = 0.5
@@ -179,6 +189,15 @@ DIRECT_CALLS = (
     {"kind": "provider", "name": PLUGIN_URI},
 )
 
+FIRMWARE_PAGE = "https://support.supernote.com/en_US/change-log/how-to-update-your-supernote"
+FIRMWARE_HOST = "download-firmware.supernote.com"
+FIRMWARE_TARGET = "EXPORT/update.zip"
+FIRMWARE_MIN_BATTERY = 50
+FIRMWARE_NEXT_STEP = "On the tablet: tap OK when it asks. If no prompt appears, restart the tablet to start the update."
+# ro.product.model to the column of Ratta's table. A Manta and a Nomad share one file. shortcut: only the models checked so far.
+FIRMWARE_MODELS = {"Supernote Manta": "Manta & Nomad", "Supernote Nomad": "Manta & Nomad"}
+VERSION_NUMBER = re.compile(r"\d+\.\d+\.\d+")
+
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 NOT_FOUND_ERRORS = ("No such file", "does not exist")
 HIERARCHY_OPEN = "<hierarchy"
@@ -217,6 +236,7 @@ FAILURE_ADVICE = {
     "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
     "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
     "busy": ("the screen did not settle", "supernote snapshot"),
+    "firmware_refused": ("the update is not safe to copy", "supernote firmware"),
     "read_only": ("read-only mode forbids a command that changes the device", "supernote status"),
     "protected": ("the notes folder or a note on the screen is protected", "repeat with --allow-notes"),
     "missing_call": ("a firmware update may have changed this call", "supernote routes"),
@@ -665,6 +685,113 @@ def command_note_new(device: Device, args: argparse.Namespace):
     return start_note(device, args, path, extras)
 
 
+class TableParser(html.parser.HTMLParser):
+    """Every table cell's text and first link, row by row."""
+
+    def __init__(self):
+        super().__init__()
+        self.rows: list[list[dict]] = []
+        self.cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self.rows.append([])
+        elif tag in ("td", "th") and self.rows:
+            self.cell = {"text": "", "link": ""}
+            self.rows[-1].append(self.cell)
+        elif tag == "a" and self.cell is not None and not self.cell["link"]:
+            self.cell["link"] = dict(attrs).get("href") or ""
+
+    def handle_endtag(self, tag):
+        if tag in ("td", "th"):
+            self.cell = None
+
+    def handle_data(self, data):
+        if self.cell is not None:
+            self.cell["text"] = " ".join(f"{self.cell['text']} {data}".split())
+
+
+def open_url(url: str):
+    return urllib.request.urlopen(url, timeout=DOWNLOAD_READ_TIMEOUT)
+
+
+def newest_firmware(column: str) -> dict:
+    """The version and link in this model's column. A page that has changed stops the command."""
+    with open_url(FIRMWARE_PAGE) as answer:
+        table = TableParser()
+        table.feed(answer.read().decode(errors="replace"))
+    for header, row in zip(table.rows, table.rows[1:]):
+        names = [cell["text"] for cell in header]
+        if column in names and len(row) == len(names) and row[names.index(column)]["link"]:
+            cell = row[names.index(column)]
+            return {"version": cell["text"], "url": cell["link"]}
+    raise Failure(EXIT_FAILED, "device_error", f"Ratta's page has no firmware for {column}; it may have changed", next_step=FIRMWARE_PAGE)
+
+
+def version_tuple(text: str) -> tuple:
+    match = VERSION_NUMBER.search(text)
+    if not match:
+        raise Failure(EXIT_FAILED, "device_error", f"no version number in: {text}")
+    return tuple(int(part) for part in match[0].split("."))
+
+
+def refuse_firmware(message: str) -> Failure:
+    return Failure(EXIT_FIRMWARE_REFUSED, "firmware_refused", message)
+
+
+def need_official_source(url: str) -> None:
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https" or parts.hostname != FIRMWARE_HOST:
+        raise refuse_firmware(f"only https://{FIRMWARE_HOST} is accepted, not: {url}")
+
+
+def download_firmware(url: str, destination: str) -> str:
+    """Save the file and return its SHA-256. A redirect to another host stops before a byte is written."""
+    need_official_source(url)
+    digest = hashlib.sha256()
+    started = time.monotonic()
+    with open_url(url) as answer, open(destination, "wb") as stream:
+        need_official_source(answer.geturl())
+        while chunk := answer.read(FOLLOW_CHUNK):
+            if time.monotonic() - started >= DOWNLOAD_TIMEOUT:
+                raise Failure(EXIT_TIMEOUT, "timeout", f"the download took more than {DOWNLOAD_TIMEOUT:g} s")
+            digest.update(chunk)
+            stream.write(chunk)
+    return digest.hexdigest()
+
+
+def command_firmware(device: Device, args: argparse.Namespace):
+    installed = device.shell("getprop ro.build.display.id").strip()
+    model = device.shell("getprop ro.product.model").strip()
+    column = FIRMWARE_MODELS.get(model)
+    if not column:
+        raise Failure(EXIT_FAILED, "device_error", f"no known firmware file for this model: {model}", next_step=FIRMWARE_PAGE)
+    newest = newest_firmware(column)
+    newer = version_tuple(newest["version"]) > version_tuple(installed)
+    data = {"model": model, "installed": installed, "newest": newest["version"], "url": newest["url"], "newer": newer}
+    text = f"installed: {installed}\nnewest: {newest['version']}\nnewer: {'yes' if newer else 'no'}"
+    if not args.download:
+        return data, text
+    if not newer:
+        raise refuse_firmware(f"{newest['version']} is not newer than {installed}; a downgrade can cause a boot loop")
+    url = args.url or newest["url"]
+    need_official_source(url)
+    level = re.search(r"level: (\d+)", device.shell("dumpsys battery | grep level"))
+    if not level or int(level[1]) < FIRMWARE_MIN_BATTERY:
+        raise refuse_firmware(f"the battery must be at {FIRMWARE_MIN_BATTERY}% or more")
+    with tempfile.TemporaryDirectory() as folder:
+        local = os.path.join(folder, os.path.basename(FIRMWARE_TARGET))
+        digest = download_firmware(url, local)
+        if not zipfile.is_zipfile(local):
+            raise refuse_firmware("the download is not a whole zip file")
+        pushed = push_file(device, local, remote_path(FIRMWARE_TARGET), args.overwrite, FIRMWARE_TRANSFER_TIMEOUT)
+    copied = device.shell(f"sha256sum {shlex.quote(pushed['path'])}", timeout=FIRMWARE_TRANSFER_TIMEOUT).split()
+    if not copied or copied[0] != digest:
+        raise Failure(EXIT_FAILED, "device_error", f"{pushed['path']} differs from the download; remove it before updating")
+    data.update({"path": pushed["path"], "bytes": pushed["bytes"], "sha256": digest, "next": FIRMWARE_NEXT_STEP})
+    return data, f"{text}\ncopied: {pushed['path']} ({pushed['bytes']} bytes)\n{FIRMWARE_NEXT_STEP}"
+
+
 def call_exists(device: Device, call: dict, providers: str) -> bool:
     """Read-only: ask the package manager, and start or send nothing."""
     if call["kind"] == "provider":
@@ -728,8 +855,8 @@ def command_files_ls(device: Device, args: argparse.Namespace):
     return {"path": path, "entries": entries}, text
 
 
-def transfer(device: Device, *args: str, missing: str) -> None:
-    done = device.adb(*args, timeout=TRANSFER_TIMEOUT)
+def transfer(device: Device, *args: str, missing: str, timeout: float = TRANSFER_TIMEOUT) -> None:
+    done = device.adb(*args, timeout=timeout)
     if done.returncode == 0:
         return
     problem = (done.stderr.decode(errors="replace") + done.stdout.decode(errors="replace")).strip()
@@ -746,7 +873,7 @@ def command_files_pull(device: Device, args: argparse.Namespace):
     return {"path": path, "local": args.local_path}, f"pulled: {path} -> {args.local_path}"
 
 
-def push_file(device: Device, local: str, path: str, overwrite: bool) -> dict:
+def push_file(device: Device, local: str, path: str, overwrite: bool, timeout: float = TRANSFER_TIMEOUT) -> dict:
     """Copy one file and prove it arrived whole. A folder as destination keeps the file's name."""
     if not os.path.isfile(local):
         raise not_found(local)
@@ -755,7 +882,7 @@ def push_file(device: Device, local: str, path: str, overwrite: bool) -> dict:
     replaced = device.test(f"-e {shlex.quote(path)}")
     if replaced and not overwrite:
         raise Failure(EXIT_EXISTS, "exists", f"{path} exists; pass --overwrite to replace it")
-    transfer(device, "push", local, path, missing=local)
+    transfer(device, "push", local, path, missing=local, timeout=timeout)
     size = int(device.shell(f"stat -c %s {shlex.quote(path)}").strip())
     if size != os.path.getsize(local):
         raise Failure(EXIT_FAILED, "device_error", f"{path} has {size} bytes after the copy, not {os.path.getsize(local)}")
@@ -1299,6 +1426,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     add(commands, "status", command_status)
     add(commands, "doctor", command_doctor)
+    firmware = add(commands, "firmware", command_firmware)
+    firmware.add_argument("--download", action="store_true", help="download the newest firmware and copy it to EXPORT")
+    firmware.add_argument("--url", help=f"a link on {FIRMWARE_HOST}, instead of the newest one")
+    firmware.add_argument("--overwrite", action="store_true", help="replace an earlier copy on the device")
 
     notes = noun("note")
     opened = add(notes, "open", command_note_open, action, changes=True)
@@ -1390,10 +1521,10 @@ def command_name(args: argparse.Namespace) -> str:
 
 
 def refuses_read_only(args: argparse.Namespace) -> bool:
-    """`snapshot --all` and `--find` scroll, so read-only mode counts them as changes."""
+    """`snapshot --all` and `--find` scroll, and `firmware --download` copies, so read-only mode counts them as changes."""
     if not (args.read_only or os.environ.get("SUPERNOTE_READ_ONLY")):
         return False
-    return args.changes or bool(getattr(args, "all", False) or getattr(args, "find", None))
+    return args.changes or any(getattr(args, option, None) for option in ("all", "find", "download"))
 
 
 def front_app(device: Device) -> str:
