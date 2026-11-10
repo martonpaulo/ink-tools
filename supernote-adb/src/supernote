@@ -6,6 +6,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
 
   status                         connection, firmware, screen size, battery, foreground activity
   firmware [--download]          show the installed and newest official firmware; --download copies it to EXPORT
+  routes [PACKAGE]               list, read-only, the device's entry points and which job each one does
   doctor                         check, read-only, that each call this command makes still exists
   note open PATH [--page N]      open a note; N counts from 1, as the device shows it
   note new PATH                  create a blank portrait note at PATH and open it; never replaces
@@ -136,6 +137,7 @@ CALL_TIMEOUT = 30
 TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 SYNC_TIMEOUT = 60.0
+ROUTES_TIMEOUT = 120
 WIFI_OFF_TIMEOUT = 15.0
 DOWNLOAD_READ_TIMEOUT = 60
 DOWNLOAD_TIMEOUT = 3600.0
@@ -181,15 +183,40 @@ CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
 TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
 SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
 
-# The one list of the device's entry points this command calls: `doctor` reads the same names the commands use.
-DIRECT_CALLS = (
-    {"kind": "activity", "name": NOTE_ACTIVITY},
-    {"kind": "activity", "name": SETTINGS_ACTIVITY},
-    {"kind": "receiver", "name": FILE_SYNC_ACTION},
-    {"kind": "receiver", "name": CALENDAR_SYNC_ACTION},
-    {"kind": "provider", "name": TASKS_URI},
-    {"kind": "provider", "name": PLUGIN_URI},
+# Which route does each job. `doctor` and `routes` read these same names, so each has one owner.
+# A receiver marked dynamic exists only while its app runs, so its absence proves nothing.
+JOB_ROUTES = (
+    {"job": "open a note", "command": "note open", "kind": "activity", "name": NOTE_ACTIVITY},
+    {"job": "create a note", "command": "note new", "kind": "activity", "name": NOTE_ACTIVITY},
+    {"job": "open Settings for a plugin install", "command": "plugin install", "kind": "activity", "name": SETTINGS_ACTIVITY},
+    {"job": "sync one file", "command": "sync file", "kind": "receiver", "name": FILE_SYNC_ACTION, "dynamic": True},
+    {"job": "sync the Calendar", "command": "sync calendar", "kind": "receiver", "name": CALENDAR_SYNC_ACTION, "dynamic": True},
+    {"job": "sync the To-do", "command": "sync tasks", "kind": "provider", "name": TASKS_URI},
+    {"job": "list plugins", "command": "plugin ls", "kind": "provider", "name": PLUGIN_URI},
 )
+JOBS_WITHOUT_ROUTE = (
+    {"job": "install or update a plugin", "needs": "the screen", "command": "plugin install"},
+    {"job": "search the InkHub store", "needs": "Ratta's servers, which wait for the owner's yes", "command": ""},
+)
+DIRECT_CALLS = tuple({(route["kind"], route["name"]): route for route in JOB_ROUTES}.values())
+# Operations a read-back proved on a device. Accepting a call proves nothing: a provider can do nothing with it.
+PROVIDER_OPERATIONS = {
+    "com.ratta.supernote.task.provider": {
+        "query": "works",
+        "insert": "works, and starts a sync",
+        "update": "works, and starts no sync",
+        "delete": "works, and a synced row comes back from the cloud",
+    },
+    "com.ratta.supernote.pluginhost": {"query": "works"},
+}
+ROUTE_KINDS = {
+    "Activity Resolver Table:": ("activity", "query-activities"),
+    "Receiver Resolver Table:": ("receiver", "query-receivers"),
+    "Service Resolver Table:": ("service", "query-services"),
+}
+PROVIDER_SECTION = "ContentProvider Authorities:"
+ROUTE_MARK = "::route::"
+RATTA_PACKAGE_PREFIX = "com.ratta."
 
 FIRMWARE_PAGE = "https://support.supernote.com/en_US/change-log/how-to-update-your-supernote"
 FIRMWARE_HOST = "download-firmware.supernote.com"
@@ -198,7 +225,7 @@ FIRMWARE_MIN_BATTERY = 50
 FIRMWARE_NEXT_STEP = "On the tablet: tap OK when it asks. If no prompt appears, restart the tablet to start the update."
 # ro.product.model to the column of Ratta's table. A Manta and a Nomad share one file. shortcut: only the models checked so far.
 FIRMWARE_MODELS = {"Supernote Manta": "Manta & Nomad", "Supernote Nomad": "Manta & Nomad"}
-VERSION_NUMBER = re.compile(r"\d+\.\d+\.\d+")
+VERSION_NUMBER = re.compile(r"(?:^|\s)(\d+\.\d+\.\d+)(?:$|\s)")
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 NOT_FOUND_ERRORS = ("No such file", "does not exist")
@@ -219,6 +246,12 @@ LOG_TIME = re.compile(r"\d\d-\d\d \d\d:\d\d:\d\d\.\d+")
 LOG_LEVELS = "VDIWEF"
 PLUGIN_DENIED = re.compile(r"PluginSec.*DENY")
 SIMPLE_WORD = re.compile(r"[a-z][\w-]*")
+ROUTE_COMPONENT = re.compile(r"\s+[0-9a-f]+ (\S+/\S+) filter [0-9a-f]+")
+ROUTE_ACTION = re.compile(r'\s+Action: "([^"]+)"')
+ROUTE_AUTHORITY = re.compile(r"\s+\[([^\]]+)\]:")
+ROUTE_PROVIDER = re.compile(r"\s+Provider\{[0-9a-f]+ (\S+/\S+)\}")
+ROUTE_EXPORTED = re.compile(r"\bexported=(true|false)")
+ROUTE_PERMISSION = re.compile(r"\bpermission=(\S+)")
 ROW = re.compile(r"Row: \d+ (.*)")
 ROW_FIELD = re.compile(r"(?:^|, )(\w+)=")
 CREDENTIAL = re.compile(
@@ -266,9 +299,10 @@ class Failure(Exception):
 
 USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
 # What a failed connection says about the tablet, measured on a Manta: the first match decides.
+# A refused port comes first: a stale `adb` server can repeat `No route to host` after the tablet woke with ADB off.
 UNREACHABLE_STATES = (
-    (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "supernote status"),
     (("Connection refused",), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
+    (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "supernote status"),
     (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "supernote status"),
 )
 
@@ -447,7 +481,7 @@ class Device:
             reply = self.request_connection()
             if self.is_ready():
                 return
-        raise unreachable(self.serial, f"{reply} {port_problem}")
+        raise unreachable(self.serial, f"{port_problem} {reply}")
 
     def shell(self, command: str, timeout: float = CALL_TIMEOUT, missing: str = "") -> str:
         """Run a device shell command and return its output; `missing` names what a not-found is."""
@@ -740,11 +774,10 @@ def newest_firmware(column: str) -> dict:
     raise Failure(EXIT_FAILED, "device_error", f"Ratta's page has no firmware for {column}; it may have changed", next_step=FIRMWARE_PAGE)
 
 
-def version_tuple(text: str) -> tuple:
+def version_tuple(text: str):
+    """The three numbers of a public version. The tablet's build id holds none: it reads like E103.2610191001.2559."""
     match = VERSION_NUMBER.search(text)
-    if not match:
-        raise Failure(EXIT_FAILED, "device_error", f"no version number in: {text}")
-    return tuple(int(part) for part in match[0].split("."))
+    return tuple(int(part) for part in match[1].split(".")) if match else None
 
 
 def network_failure(error: Exception) -> Failure:
@@ -777,7 +810,7 @@ def download_firmware(url: str, destination: str) -> str:
 
 
 def command_firmware(device: Device, args: argparse.Namespace):
-    installed = device.shell("getprop ro.build.display.id").strip()
+    installed = args.installed or device.shell("getprop ro.build.display.id").strip()
     model = device.shell("getprop ro.product.model").strip()
     column = FIRMWARE_MODELS.get(model)
     if not column:
@@ -786,11 +819,17 @@ def command_firmware(device: Device, args: argparse.Namespace):
         newest = newest_firmware(column)
     except (urllib.error.URLError, http.client.HTTPException, TimeoutError) as error:
         raise network_failure(error) from error
-    newer = version_tuple(newest["version"]) > version_tuple(installed)
+    published, current = version_tuple(newest["version"]), version_tuple(installed)
+    if not published:
+        raise Failure(EXIT_FAILED, "device_error", f"no version number in Ratta's page: {newest['version']}", next_step=FIRMWARE_PAGE)
+    newer = published > current if current else None
     data = {"model": model, "installed": installed, "newest": newest["version"], "url": newest["url"], "newer": newer}
-    text = f"installed: {installed}\nnewest: {newest['version']}\nnewer: {'yes' if newer else 'no'}"
+    answer = {True: "yes", False: "no", None: "unknown: pass --installed X.Y.Z, as Settings > About shows"}[newer]
+    text = f"installed: {installed}\nnewest: {newest['version']}\nnewer: {answer}"
     if not args.download:
         return data, text
+    if newer is None:
+        raise refuse_firmware(f"this tablet's build id holds no public version; pass --installed X.Y.Z, as Settings > About shows: {installed}")
     if not newer:
         raise refuse_firmware(f"{newest['version']} is not newer than {installed}; a downgrade can cause a boot loop")
     url = newest["url"]
@@ -814,22 +853,110 @@ def command_firmware(device: Device, args: argparse.Namespace):
     return data, f"{text}\ncopied: {pushed['path']} ({pushed['bytes']} bytes)\n{FIRMWARE_NEXT_STEP}"
 
 
-def call_exists(device: Device, call: dict, providers: str) -> bool:
-    """Read-only: ask the package manager, and start or send nothing."""
+def call_exists(device: Device, call: dict, providers: str, broadcasts: str):
+    """Read-only: ask the package manager, and start or send nothing. None means it cannot be known now."""
     if call["kind"] == "provider":
         return f"[{call['name'].removeprefix('content://').partition('/')[0]}]" in providers
     if call["kind"] == "activity":
         return "No activity found" not in device.shell(f"cmd package resolve-activity --brief -n {call['name']}")
-    return "No receivers found" not in device.shell(f"cmd package query-receivers --brief -a {call['name']}")
+    if "No receivers found" not in device.shell(f"cmd package query-receivers --brief -a {call['name']}"):
+        return True
+    if call["name"] in broadcasts:
+        return True
+    return None if call.get("dynamic") else False
+
+
+def parse_package_routes(output: str) -> tuple[list[dict], list[dict]]:
+    """The components with an intent filter, and the provider authorities, of one `dumpsys package`."""
+    found: dict[tuple, dict] = {}
+    providers, section, current, authority = [], "", None, ""
+    for line in output.splitlines():
+        if line.strip() and not line.startswith(" "):
+            section, current = line.strip(), None
+        elif section in ROUTE_KINDS:
+            component, action = ROUTE_COMPONENT.fullmatch(line), ROUTE_ACTION.fullmatch(line)
+            if component:
+                kind = ROUTE_KINDS[section][0]
+                current = found.setdefault((kind, component[1]), {"kind": kind, "name": component[1], "filters": [], "query": ROUTE_KINDS[section][1]})
+            elif action and current and action[1] not in current["filters"]:
+                current["filters"].append(action[1])
+        elif section == PROVIDER_SECTION:
+            named, provider = ROUTE_AUTHORITY.fullmatch(line), ROUTE_PROVIDER.fullmatch(line)
+            if named:
+                authority = named[1]
+            elif provider:
+                providers.append({
+                    "authority": authority,
+                    "component": provider[1],
+                    "exported": None,
+                    "operations": PROVIDER_OPERATIONS.get(authority),
+                })
+    return list(found.values()), providers
+
+
+def add_component_details(device: Device, components: list[dict]) -> list[dict]:
+    """Keep the exported components, with their permission, asked in one shell call."""
+    if not components:
+        return []
+    script = "; ".join(
+        f"echo {ROUTE_MARK}{index}; cmd package {component['query']} -n {shlex.quote(component['name'])}"
+        for index, component in enumerate(components)
+    )
+    parts = device.shell(script, timeout=ROUTES_TIMEOUT).split(ROUTE_MARK)[1:]
+    exported = []
+    for part in parts:
+        number, _, details = part.partition("\n")
+        component = dict(components[int(number)])
+        component.pop("query")
+        state, permission = ROUTE_EXPORTED.search(details), ROUTE_PERMISSION.search(details)
+        if state and state[1] == "true":
+            exported.append({**component, "permission": permission[1] if permission and permission[1] != "null" else None})
+    return exported
+
+
+def package_routes(device: Device, package: str) -> dict:
+    output = device.shell(f"dumpsys package {shlex.quote(package)}")
+    if f"Package [{package}]" not in output:
+        raise not_found(f"package {package}", "supernote apps")
+    components, providers = parse_package_routes(output)
+    return {"package": package, "components": add_component_details(device, components), "providers": providers}
+
+
+def route_lines(entry: dict) -> list[str]:
+    lines = [f"package: {entry['package']}"]
+    for item in entry["components"]:
+        lines.append(f"{item['kind']}\t{item['name']}\tpermission={item['permission'] or '-'}\tfilters={','.join(item['filters']) or '-'}")
+    for item in entry["providers"]:
+        operations = "; ".join(f"{name}: {result}" for name, result in (item["operations"] or {}).items()) or "operations not proven"
+        lines.append(f"provider\t{item['authority']}\t{item['component']}\t{operations}")
+    return lines
+
+
+def command_routes(device: Device, args: argparse.Namespace):
+    if args.package:
+        packages = [args.package]
+    else:
+        listed = device.shell("pm list packages").split()
+        packages = sorted(line.removeprefix("package:") for line in listed if line.removeprefix("package:").startswith(RATTA_PACKAGE_PREFIX))
+    entries = [package_routes(device, package) for package in packages]
+    jobs = [{key: route[key] for key in ("job", "command", "kind", "name")} for route in JOB_ROUTES]
+    lines = [line for entry in entries for line in route_lines(entry)]
+    lines += [f"job\t{item['job']}\t{item['command']}\t{item['kind']} {item['name']}" for item in jobs]
+    lines += [f"job\t{item['job']}\tneeds {item['needs']}" for item in JOBS_WITHOUT_ROUTE]
+    return {"packages": entries, "jobs": jobs, "jobs_without_route": list(JOBS_WITHOUT_ROUTE)}, "\n".join(lines)
 
 
 def command_doctor(device: Device, args: argparse.Namespace):
     firmware = device.shell("getprop ro.build.display.id").strip()
     providers = device.shell("dumpsys package providers")
-    calls = [{**call, "exists": call_exists(device, call, providers)} for call in DIRECT_CALLS]
-    data = {"firmware": firmware, "calls": calls, "missing": sum(not call["exists"] for call in calls)}
-    lines = [f"firmware: {firmware}"]
-    lines += [f"{'ok' if call['exists'] else 'MISSING'}\t{call['kind']}\t{call['name']}" for call in calls]
+    broadcasts = device.shell("dumpsys activity broadcasts")
+    calls = [
+        {"kind": call["kind"], "name": call["name"], "exists": call_exists(device, call, providers, broadcasts)}
+        for call in DIRECT_CALLS
+    ]
+    data = {"firmware": firmware, "calls": calls, "missing": sum(call["exists"] is False for call in calls)}
+    words = {True: "ok", False: "MISSING", None: "unknown"}
+    lines = [f"firmware: {firmware}", *(f"{words[call['exists']]}\t{call['kind']}\t{call['name']}" for call in calls)]
     text = "\n".join(lines)
     if data["missing"]:
         raise Failure(EXIT_CALL_MISSING, "missing_call", f"{data['missing']} calls are gone from this firmware", extra=data, text=text)
@@ -1268,6 +1395,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
         "plugin": config["id"],
         "version": config["version"],
         "action": "updated" if installed else "installed",
+        "route": "screen",
         "path": pushed["path"],
         **limit,
         "row": row,
@@ -1478,9 +1606,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     add(commands, "status", command_status)
     add(commands, "doctor", command_doctor)
+    add(commands, "routes", command_routes).add_argument("package", nargs="?", help="one package; default: every Ratta package")
     firmware = add(commands, "firmware", command_firmware)
     firmware.add_argument("--download", action="store_true", help="download the newest firmware and copy it to EXPORT")
     firmware.add_argument("--overwrite", action="store_true", help="replace an earlier copy on the device")
+    firmware.add_argument("--installed", metavar="X.Y.Z", help="the version Settings > About shows, because the device's build id holds none")
 
     notes = noun("note")
     opened = add(notes, "open", command_note_open, action, changes=True)

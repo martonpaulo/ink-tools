@@ -39,7 +39,8 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `make validate` | Runs the full gate: text, duplication and the command's contract tests. |
 | `supernote --help` | Lists every command and exit code. |
 | `supernote status` | Shows connection, firmware, screen size, battery and the app in front. |
-| `supernote firmware` | Shows the installed and the newest official firmware. `--download` copies the newest one to `EXPORT`, after the checks it names. |
+| `supernote firmware` | Shows the installed and the newest official firmware. `--download` copies the newest one to `EXPORT`, after the checks it names. The tablet's build id holds no public version, so pass `--installed X.Y.Z` from Settings > About. |
+| `supernote routes [PACKAGE]` | Lists, read-only, each exported entry point with its filters and permission, and which job each route does. |
 | `supernote doctor` | Checks, read-only, that each call this command makes still exists. Run it after a firmware update. |
 | `supernote note open PATH --page N` | Opens a note at a page, counted from 1. |
 | `supernote note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |

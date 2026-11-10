@@ -60,6 +60,22 @@ case "$1" in
             "getprop ro.product.model") cat "$ADB_FILES/model" ;;
             "dumpsys battery"*) cat "$ADB_FILES/battery" ;;
             "sha256sum "*) cat "$ADB_FILES/checksum" ;;
+            "dumpsys activity broadcasts") cat "$ADB_FILES/broadcasts" ;;
+            "dumpsys package com.ratta.absent") echo 'Unable to find package' ;;
+            "dumpsys package com.ratta"*) cat "$ADB_FILES/package-dump" ;;
+            "echo ::route::"*)
+                remaining=$2
+                while [ -n "$remaining" ]; do
+                    piece=${remaining%%; *}
+                    if [ "$piece" = "$remaining" ]; then remaining=; else remaining=${remaining#*; }; fi
+                    case "$piece" in
+                        echo*) printf '%s\n' "${piece#echo }" ;;
+                        *)
+                            component=${piece##* }; component=${component//\'/}
+                            if grep -qF "$component" "$ADB_FILES/hidden"; then echo '  enabled=true exported=false directBootAware=false'; else printf '  enabled=true exported=true directBootAware=false\n  permission=sample.PERMISSION\n'; fi ;;
+                    esac
+                done ;;
+            "pm list packages") printf 'package:com.ratta.one\npackage:com.example.two\n' ;;
             "dumpsys package providers")
                 for authority in com.ratta.supernote.task.provider com.ratta.supernote.pluginhost; do
                     grep -qF "$authority" "$ADB_FILES/gone" || printf '  [%s]:\n' "$authority"
@@ -192,6 +208,11 @@ check "a restarted tablet gets the route that restores it" "$(printf '%s' "$resu
 echo offline > "$files/state"
 result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Operation timed out' run status --json 2>/dev/null)
 check "a tablet off the network is named" "$(printf '%s' "$result" | field "['state']")" "off_network"
+closed_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')
+echo offline > "$files/state"
+result=$(SUPERNOTE_ADDRESS="127.0.0.1:$closed_port" ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: No route to host' run status --json 2>/dev/null)
+check "a closed port beats an old reply from the adb server" "$(printf '%s' "$result" | field "['state']")" "restarted"
+echo offline > "$files/state"
 listener=$(mktemp "$work/port.XXXXXX")
 python3 -c 'import socket,sys,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind(("127.0.0.1",0)); s.listen(5); open(sys.argv[1],"w").write(str(s.getsockname()[1])); time.sleep(30)' "$listener" &
 listener_pid=$!
@@ -256,10 +277,18 @@ python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1],"w"); z.writestr("
 wc -c < "$files/firmware.bin" | tr -d ' ' > "$files/size"
 python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest(), "x")' "$files/firmware.bin" > "$files/checksum"
 echo "Supernote Nomad" > "$files/model"
-echo "Chauvet.3.31.45" > "$files/firmware-id"
+echo "Chauvet.E103.2610191001.2559_release" > "$files/firmware-id"
 echo "  level: 93" > "$files/battery"
 result=$(firmware firmware --json)
-check "firmware shows both versions" "$(printf '%s' "$result" | field "['installed'],d['newest'],d['newer']")" "('Chauvet.3.31.45', 'Chauvet 3.40.1', True)"
+check "firmware says when the build id holds no public version" "$(printf '%s' "$result" | field "['newer']")" "None"
+firmware firmware --download >/dev/null 2>&1
+check "firmware refuses to copy what it cannot compare" "$?$(called ' push ')" "130"
+echo "Chauvet 3.31.45" > "$files/firmware-id"
+result=$(firmware firmware --json)
+check "firmware shows both versions" "$(printf '%s' "$result" | field "['installed'],d['newest'],d['newer']")" "('Chauvet 3.31.45', 'Chauvet 3.40.1', True)"
+echo "Chauvet.E103.2610191001.2559_release" > "$files/firmware-id"
+check "firmware takes the version the tablet shows" "$(firmware firmware --installed 3.31.45 --json | field "['newer']")" "True"
+echo "Chauvet 3.31.45" > "$files/firmware-id"
 check "firmware reads the model's own column" "$(printf '%s' "$result" | field "['url']")" "https://download-firmware.supernote.com/1/update.zip"
 check "firmware alone copies nothing" "$(called ' push ')" "0"
 result=$(firmware firmware --download --json)
@@ -269,13 +298,13 @@ echo "other  x" > "$files/checksum"
 firmware firmware --download >/dev/null 2>&1
 check "a copy that differs is reported" "$?" "1"
 python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest(), "x")' "$files/firmware.bin" > "$files/checksum"
-echo "Chauvet.3.40.1" > "$files/firmware-id"
+echo "Chauvet 3.40.1" > "$files/firmware-id"
 firmware firmware --download >/dev/null 2>&1
 check "firmware refuses the same version" "$?$(called ' push ')" "130"
-echo "Chauvet.3.41.0" > "$files/firmware-id"
+echo "Chauvet 3.41.0" > "$files/firmware-id"
 firmware firmware --download >/dev/null 2>&1
 check "firmware refuses a downgrade" "$?$(called ' push ')" "130"
-echo "Chauvet.3.31.45" > "$files/firmware-id"
+echo "Chauvet 3.31.45" > "$files/firmware-id"
 cp "$files/page.html" "$work/page.saved"
 python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("https://download-firmware.supernote.com/1","https://example.com/1"))' "$files/page.html"
 firmware firmware --download >/dev/null 2>&1
@@ -311,8 +340,65 @@ firmware firmware --read-only --download >/dev/null 2>&1
 check "read-only refuses a firmware copy" "$?" "11"
 rm "$files/firmware-id"
 
+# Routes.
+cat > "$files/package-dump" <<'DUMP'
+Activity Resolver Table:
+  Non-Data Actions:
+      android.intent.action.MAIN:
+        7ecff80 com.ratta.one/.MainActivity filter 2c1f9b9
+          Action: "android.intent.action.MAIN"
+          Category: "android.intent.category.LAUNCHER"
+
+Receiver Resolver Table:
+  Non-Data Actions:
+      one.action.GO:
+        ce293ac com.ratta.one/.GoReceiver filter 87f7875
+          Action: "one.action.GO"
+      one.action.AGAIN:
+        ce293ac com.ratta.one/.GoReceiver filter 87f7876
+          Action: "one.action.AGAIN"
+
+Service Resolver Table:
+  Non-Data Actions:
+      one.messenger:
+        b970957 com.ratta.one/a.Outer$Inner filter 471ac44
+          Action: "one.messenger"
+
+Registered ContentProviders:
+  com.ratta.one/.P:
+    Provider{f8bc805 com.ratta.one/.P}
+
+ContentProvider Authorities:
+  [com.ratta.supernote.task.provider]:
+    Provider{f8bc805 com.ratta.one/.P}
+      applicationInfo=ApplicationInfo{e53e05a com.ratta.one}
+  [unknown.authority]:
+    Provider{3350e6f com.ratta.one/.Q}
+
+Key Set Manager:
+
+Packages:
+  Package [com.ratta.one] (657049):
+DUMP
+echo 'com.ratta.one/a.Outer$Inner' > "$files/hidden"
+result=$(run routes com.ratta.one --json)
+check "routes joins the filters of one component" "$(printf '%s' "$result" | expression "[c for c in d['packages'][0]['components'] if c['kind']=='receiver'][0]['filters']")" "['one.action.GO', 'one.action.AGAIN']"
+check "routes gives the required permission" "$(printf '%s' "$result" | expression "d['packages'][0]['components'][0]['permission']")" "sample.PERMISSION"
+check "routes leaves out what is not exported" "$(printf '%s' "$result" | expression "[c['kind'] for c in d['packages'][0]['components']]")" "['activity', 'receiver']"
+check "routes reports what a read-back proved of a provider" "$(printf '%s' "$result" | expression "d['packages'][0]['providers'][0]['operations']['update']")" "works, and starts no sync"
+check "routes does not claim an operation it never proved" "$(printf '%s' "$result" | expression "d['packages'][0]['providers'][1]['operations']")" "None"
+check "routes quotes a component name" "$(grep -cF "'com.ratta.one/a.Outer\$Inner'" "$log")" "1"
+check "routes is read-only" "$(called 'am start')$(called 'content ')$(called 'input ')" "000"
+check "routes names which job each route does" "$(printf '%s' "$result" | expression "[j['command'] for j in d['jobs'] if j['job']=='sync the To-do']")" "['sync tasks']"
+check "routes says which jobs have no route" "$(printf '%s' "$result" | expression "[j['needs'] for j in d['jobs_without_route']][0]")" "the screen"
+check "routes covers every Ratta package by default" "$(run routes --json | expression "[p['package'] for p in d['packages']]")" "['com.ratta.one']"
+check "routes prints one line per route" "$(run routes com.ratta.one | grep -c '^receiver')" "1"
+run routes com.ratta.absent >/dev/null 2>&1
+check "routes on an unknown package stops with its own code" "$?" "4"
+
 # Doctor.
 : > "$files/gone"
+printf 'com.ratta.supernote.filesync.action.START_FILE_SYNC:\ncom.ratta.supernote.calendar.notify.sync:\n' > "$files/broadcasts"
 result=$(run doctor --json)
 check "doctor reports every call" "$(printf '%s' "$result" | field "['calls'].__len__(),d['missing']")" "(6, 0)"
 check "doctor names the firmware" "$(printf '%s' "$result" | field "['firmware']")" "Firmware.1"
@@ -325,9 +411,12 @@ check "doctor stops with its own code when a call is missing" "$?" "10"
 check "doctor names the missing call" "$(grep -c '^MISSING.provider.content://com.ratta.supernote.task.provider' "$work/out")" "1"
 result=$(run doctor --json 2>/dev/null)
 check "doctor keeps its data in JSON on a failure" "$(printf '%s' "$result" | field "['error'],d['missing']")" "('missing_call', 1)"
-echo 'com.ratta.supernote.filesync.action.START_FILE_SYNC' > "$files/gone"
-run doctor >/dev/null 2>&1
-check "doctor finds a missing receiver" "$?" "10"
+echo 'com.ratta.supernote.calendar.notify.sync' > "$files/gone"
+check "doctor accepts a receiver registered while its app runs" "$(run doctor --json | field "['calls'][3]['exists']")" "True"
+: > "$files/broadcasts"
+result=$(run doctor --json)
+check "doctor does not call an idle app's receiver missing" "$(printf '%s' "$result" | field "['calls'][3]['exists'],d['missing']")" "(None, 0)"
+check "doctor says unknown for an idle app's receiver" "$(run doctor | grep -c '^unknown')" "1"
 echo "$note_activity" > "$files/gone"
 run doctor >/dev/null 2>&1
 check "doctor finds a missing activity" "$?" "10"
