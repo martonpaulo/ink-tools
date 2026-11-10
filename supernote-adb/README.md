@@ -39,6 +39,7 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `make validate` | Runs the full gate: text, duplication and the command's contract tests. |
 | `supernote --help` | Lists every command and exit code. |
 | `supernote status` | Shows connection, firmware, screen size, battery and the app in front. |
+| `supernote doctor` | Checks, read-only, that each call this command makes still exists. Run it after a firmware update. |
 | `supernote note open PATH --page N` | Opens a note at a page, counted from 1. |
 | `supernote note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `supernote files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
@@ -87,7 +88,7 @@ The command reads no secret.
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **A sleeping tablet does not answer.** The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install presses named elements and stops on a screen it does not expect.
-- **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them.
+- **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `supernote doctor` after one. It proves a call exists, not that it still works.
 - **ADB has wide access.** A computer you authorize can read and delete every note, and Wi-Fi mode opens a port on your network. See [`SECURITY.md`](SECURITY.md).
 
 <br />

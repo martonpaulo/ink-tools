@@ -5,6 +5,7 @@ Direct calls come first (intents, content providers, files), then element refere
 snapshot, and coordinates only as the last resort. Every command takes --json.
 
   status                         connection, firmware, screen size, battery, foreground activity
+  doctor                         check, read-only, that each call this command makes still exists
   note open PATH [--page N]      open a note; N counts from 1, as the device shows it
   note new PATH                  create a blank portrait note at PATH and open it; never replaces
   files ls [PATH]                list a folder of the shared storage
@@ -68,6 +69,7 @@ EXIT_TIMEOUT = 6
 EXIT_STALE = 7
 EXIT_BUSY = 8
 EXIT_UNEXPECTED_SCREEN = 9
+EXIT_CALL_MISSING = 10
 EXIT_CODES = """exit codes:
   0  done
   1  the device refused or the call failed
@@ -79,6 +81,7 @@ EXIT_CODES = """exit codes:
   7  the reference is stale: take a new snapshot
   8  the screen never settled, so no snapshot came back: try again
   9  a step found a screen it did not expect, and pressed nothing more
+  10 doctor found a call this command relies on missing from the device
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -155,6 +158,16 @@ CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
 TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
 SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
 
+# The one list of the device's entry points this command calls: `doctor` reads the same names the commands use.
+DIRECT_CALLS = (
+    {"kind": "activity", "name": NOTE_ACTIVITY},
+    {"kind": "activity", "name": SETTINGS_ACTIVITY},
+    {"kind": "receiver", "name": FILE_SYNC_ACTION},
+    {"kind": "receiver", "name": CALENDAR_SYNC_ACTION},
+    {"kind": "provider", "name": TASKS_URI},
+    {"kind": "provider", "name": PLUGIN_URI},
+)
+
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 NOT_FOUND_ERRORS = ("No such file", "does not exist")
 HIERARCHY_OPEN = "<hierarchy"
@@ -193,6 +206,7 @@ FAILURE_ADVICE = {
     "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
     "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
     "busy": ("the screen did not settle", "supernote snapshot"),
+    "missing_call": ("a firmware update may have changed this call", "supernote routes"),
     "unexpected_screen": ("the screen is not the one this step expects", "supernote snapshot"),
     "log_error": ("the command's own log could not be read", "supernote status"),
 }
@@ -201,7 +215,7 @@ FAILURE_ADVICE = {
 class Failure(Exception):
     """A failed call, carrying the stable exit code and the fields a JSON reader sees."""
 
-    def __init__(self, code: int, kind: str, message: str, next_step: str = "", cause: str = "", extra=None):
+    def __init__(self, code: int, kind: str, message: str, next_step: str = "", cause: str = "", extra=None, text: str = ""):
         super().__init__(message)
         self.code = code
         self.kind = kind
@@ -210,6 +224,7 @@ class Failure(Exception):
         self.cause = cause or advised_cause
         self.next_step = next_step or advised_step
         self.extra = extra or {}
+        self.text = text  # what a plain reader sees on stdout alongside the error
 
 
 USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
@@ -618,6 +633,28 @@ def command_note_new(device: Device, args: argparse.Namespace):
         "--es", "note_style", NOTE_BLANK_STYLE,
     ]
     return start_note(device, args, path, extras)
+
+
+def call_exists(device: Device, call: dict, providers: str) -> bool:
+    """Read-only: ask the package manager, and start or send nothing."""
+    if call["kind"] == "provider":
+        return f"[{call['name'].removeprefix('content://').partition('/')[0]}]" in providers
+    if call["kind"] == "activity":
+        return "No activity found" not in device.shell(f"cmd package resolve-activity --brief -n {call['name']}")
+    return "No receivers found" not in device.shell(f"cmd package query-receivers --brief -a {call['name']}")
+
+
+def command_doctor(device: Device, args: argparse.Namespace):
+    firmware = device.shell("getprop ro.build.display.id").strip()
+    providers = device.shell("dumpsys package providers")
+    calls = [{**call, "exists": call_exists(device, call, providers)} for call in DIRECT_CALLS]
+    data = {"firmware": firmware, "calls": calls, "missing": sum(not call["exists"] for call in calls)}
+    lines = [f"firmware: {firmware}"]
+    lines += [f"{'ok' if call['exists'] else 'MISSING'}\t{call['kind']}\t{call['name']}" for call in calls]
+    text = "\n".join(lines)
+    if data["missing"]:
+        raise Failure(EXIT_CALL_MISSING, "missing_call", f"{data['missing']} calls are gone from this firmware", extra=data, text=text)
+    return data, text
 
 
 def parse_listing(output: str) -> list[dict]:
@@ -1210,6 +1247,7 @@ def build_parser() -> argparse.ArgumentParser:
         return commands.add_parser(name).add_subparsers(dest=name, required=True)
 
     add(commands, "status", command_status)
+    add(commands, "doctor", command_doctor)
 
     notes = noun("note")
     opened = add(notes, "open", command_note_open, action)
@@ -1323,6 +1361,8 @@ def main() -> int:
     except Failure as failure:
         code, kind = failure.code, failure.kind
         message = log.clean(failure.message)
+        if failure.text and not args.json:
+            print(failure.text)
         print(f"supernote: {message}", file=sys.stderr)
         if args.json:
             print(json.dumps({

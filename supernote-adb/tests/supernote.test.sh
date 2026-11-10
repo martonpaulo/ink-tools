@@ -55,6 +55,11 @@ case "$1" in
         case " $* " in *" -d "*) ;; *) [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac ;;
     shell)
         case "$2" in
+            "getprop ro.build.display.id") echo Firmware.1 ;;
+            "dumpsys package providers")
+                for authority in com.ratta.supernote.task.provider com.ratta.supernote.pluginhost; do
+                    grep -qF "$authority" "$ADB_FILES/gone" || printf '  [%s]:\n' "$authority"
+                done ;;
             getprop*) printf 'Firmware.1\nPhysical size: 1920x2560\n  level: 93\n    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/foreground")" ;;
             dumpsys*) printf '    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/foreground")" ;;
             "if [ "*)
@@ -68,6 +73,10 @@ case "$1" in
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
             "am broadcast"*) echo 'Broadcast completed: result=0' ;;
             "date +%s") echo 1800000000 ;;
+            "cmd package resolve-activity"*)
+                if grep -qF "${2##* }" "$ADB_FILES/gone"; then echo 'No activity found'; else echo "priority=0"; echo "${2##* }"; fi ;;
+            "cmd package query-receivers"*)
+                if grep -qF "${2##* }" "$ADB_FILES/gone"; then echo 'No receivers found'; else echo "${2##* }"; fi ;;
             pidof*) cat "$ADB_FILES/pids" ;;
             "stat -c"*) cat "$ADB_FILES/size" ;;
             "pm list packages -3") echo package:com.example.one ;;
@@ -199,6 +208,29 @@ reset_device
 check "status reads firmware, battery and foreground" "$(run status --json | field "['firmware'],d['battery'],d['activity'],d['screen']")" "('Firmware.1', 93, '$calendar_activity', '1920x2560')"
 check "--json also works before the command" "$(run --json status | field "['battery']")" "93"
 check "an error in JSON keeps a name for the reader" "$(run files ls Absent --json 2>/dev/null | field "['error']")" "not_found"
+
+# Doctor.
+: > "$files/gone"
+result=$(run doctor --json)
+check "doctor reports every call" "$(printf '%s' "$result" | field "['calls'].__len__(),d['missing']")" "(6, 0)"
+check "doctor names the firmware" "$(printf '%s' "$result" | field "['firmware']")" "Firmware.1"
+check "doctor starts nothing" "$(called 'am start')$(called 'am broadcast')" "00"
+check "doctor sends nothing to a provider" "$(called 'content ')" "0"
+check "doctor prints one line per call" "$(run doctor | grep -c '^ok')" "6"
+echo 'com.ratta.supernote.task.provider' > "$files/gone"
+run doctor >"$work/out" 2>/dev/null
+check "doctor stops with its own code when a call is missing" "$?" "10"
+check "doctor names the missing call" "$(grep -c '^MISSING.provider.content://com.ratta.supernote.task.provider' "$work/out")" "1"
+result=$(run doctor --json 2>/dev/null)
+check "doctor keeps its data in JSON on a failure" "$(printf '%s' "$result" | field "['error'],d['missing']")" "('missing_call', 1)"
+echo 'com.ratta.supernote.filesync.action.START_FILE_SYNC' > "$files/gone"
+run doctor >/dev/null 2>&1
+check "doctor finds a missing receiver" "$?" "10"
+echo "$note_activity" > "$files/gone"
+run doctor >/dev/null 2>&1
+check "doctor finds a missing activity" "$?" "10"
+: > "$files/gone"
+check "help lists the doctor exit code" "$(python3 -B "$script" --help | grep -c '10 doctor found')" "1"
 
 # Notes.
 run note open "Note/A note.note" --page 3 >/dev/null
