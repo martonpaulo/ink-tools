@@ -61,6 +61,8 @@ An agent completes a task on the tablet by calling only `supernote`, with no raw
 
 The author decided on 2026-11-10 to learn from [`supernote-mcp`](https://github.com/ridget/supernote-mcp) and [`inkbridge`](https://github.com/CRSiegfried/inkbridge), both MIT: their concepts, their code, or a direct integration with this command. Code copied from them is pinned in `upstreams.json` and credited in `NOTICE.md`.
 
+Result ([#2](https://github.com/martonpaulo/supernote-adb/issues/2)): no code or integration is adopted. Two ideas stay: touch the tablet only when called, and leave transcription to the caller.
+
 ## Alternatives considered
 
 Checked on 2026-11-10 with `own_projects.py`, `gh search repos` and web search. The App Store and browser stores were not checked, because the job needs a command-line tool on a computer. Detail is in [the research note](research/2026-11-existing-supernote-tools.md).
