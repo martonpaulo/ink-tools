@@ -181,6 +181,7 @@ Lead with the outcome, in the output shape, and include:
 - Exit codes and JSON keys are a public contract: add to them, and never change what one means.
 - Every ADB call has a time limit, and a wait polls a condition with a time limit.
 - A call that changes the tablet never replaces a file or presses a stale reference without an explicit request.
+- Only one session uses the tablet at a time. A change on the tablet waits for the owner's yes, and a write counts as done only after a read-back.
 - Tests drive `src/supernote` through the `adb` stub in `tests/supernote.test.sh`, with `device-a.test` as the address.
 - Never commit an address, serial number, account or note name, or material from decompiled apps or firmware. `docs/research/` holds public sources only.
 

@@ -24,7 +24,7 @@ Open a note, copy a file, ask for a sync, or install a plugin from a computer, w
 
 | Non-goal | Reason | Reopened when |
 | :--- | :--- | :--- |
-| Root, a firmware change, or an exploit on the tablet. | The tablet holds the owner's notes and the warranty position is unknown. | Never, by the owner's choice. |
+| Root, a modified firmware, or an exploit on the tablet. An official Ratta update is allowed. | The tablet holds the owner's notes and the warranty position is unknown. | Never, by the owner's choice. |
 | Requests to Supernote Cloud. | The cloud has no documented API or scoped token, so a client must hold the account password. | Ratta publishes a documented API with scoped tokens. |
 | Read or interpret note content by itself. | It copies a file only when a caller names it. Parsing belongs to tools built for it. | Never here. A caller may combine this command with a parser. |
 | Write `.note` files on the computer. | The format is private, and the open tool drops recognition data when it rewrites a file ([evidence](research/2026-11-existing-supernote-tools.md#writing-note-files)). | Ratta documents the format. |
@@ -46,7 +46,7 @@ An agent completes a task on the tablet by calling only `supernote`, with no raw
 
 | Limit | Value | Rule or check | Decided | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| Access to the tablet | No root, firmware change or exploit | [non-goals](#what-it-will-never-do) | 2026-11-10 | current |
+| Access to the tablet | No root, modified firmware or exploit | [non-goals](#what-it-will-never-do) | 2026-11-10 | current |
 | Supernote Cloud | No requests | [non-goals](#what-it-will-never-do) | 2026-11-10 | current |
 | Study of third-party apps and firmware | Stays out of this repository | [research index](research/) | 2026-11-10 | current |
 
@@ -54,6 +54,7 @@ An agent completes a task on the tablet by calling only `supernote`, with no raw
 
 - **Skill Deck** is the author's collection of agent workflows. It uses this command, and it keeps no copy. How an agent should use the command for a task belongs there, and what the command does belongs here.
 - **The future plugin** is a separate project. It runs on the tablet and can offer calls ADB cannot reach. This command stops at copying the plugin file and talking to the plugin through ADB.
+- **Calendar and Todoist sync** are a separate deployment of [Task Hub](https://github.com/Sparkinman/task-hub), through Supernote Cloud and with no ADB. Nothing here serves them.
 - **Other Supernote tools** stay separate unless a decision below brings their code in.
 
 ## Reuse

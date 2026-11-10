@@ -10,7 +10,7 @@ Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, 
 
 **One command, `supernote`, reaches the tablet the way a program calls an API.** Direct calls come first: Android intents, broadcasts, content providers and files. Element references from a screen snapshot come next, and coordinates are the last resort.
 
-**This is an unofficial project.** It is not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its owner and is used here only to name the device. The commands that only read were checked on a Manta (A5 X2) with firmware 3.31.45. The commands that change the tablet are covered by contract tests and still wait for a check on a device. Other models and firmware can differ.
+**This is an unofficial project.** It is not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its owner and is used here only to name the device. The commands that only read and `click` were checked on a Manta (A5 X2) with firmware 3.31.45. The other commands that change the tablet are covered by contract tests and still wait for a check on a device. Other models and firmware can differ.
 
 ---
 
@@ -83,6 +83,7 @@ The command reads no secret.
 
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **Installing a plugin needs the tablet's screen.** The platform offers no other route.
+- **`supernote sync tasks` fails.** Android refuses that broadcast from ADB ([details](https://github.com/martonpaulo/supernote-adb/issues/11)).
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them.
 - **ADB has wide access.** A computer you authorize can read and delete every note, and Wi-Fi mode opens a port on your network. See [`SECURITY.md`](SECURITY.md).
 
