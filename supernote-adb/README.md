@@ -92,7 +92,7 @@ The command reads no secret.
 ## Limitations
 
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
-- **A sleeping tablet does not answer.** The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
+- **A sleeping tablet may not answer.** With the global setting `wifi_sleep_policy` at `2`, a Manta on firmware 3.31.45 kept answering while asleep for the 15 minutes measured, and lost 1% of battery with one port check a minute. A longer sleep is not measured. The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install presses named elements and stops on a screen it does not expect.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `supernote doctor` after one. It proves a call exists, not that it still works.
 - **ADB has wide access.** ADB accepts only computers the tablet has authorized. One of those computers can read and delete every note, and Wi-Fi mode opens a port on your network until `supernote wifi off`. See [`SECURITY.md`](SECURITY.md).
