@@ -119,6 +119,11 @@ case "$1" in
                     echo "$left" > "$ADB_FILES/taps-left"
                     [ "$left" -eq 0 ] && cp "$ADB_FILES/rows-after" "$ADB_FILES/rows"
                 fi
+                if [ -f "$ADB_FILES/advance-after" ]; then
+                    left=$(($(cat "$ADB_FILES/advance-after") - 1))
+                    echo "$left" > "$ADB_FILES/advance-after"
+                    [ "$left" -eq 0 ] && echo 2 > "$ADB_FILES/page"
+                fi
                 : ;;
             "input swipe"*)
                 if [ -f "$ADB_FILES/page" ]; then
@@ -706,6 +711,21 @@ cp "$work/plugin-screen" "$files/tree.xml"
 python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("test.snplg","other.snplg"))' "$files/tree.xml"
 run plugin install "$work/local/test.snplg" --overwrite --step-timeout 0 >/dev/null 2>&1
 check "a file missing from the picker stops the install" "$?" "9"
+python3 - "$work/plugin-screen" "$files" <<'PY'
+import sys
+screen = open(sys.argv[1]).read()
+number = '<node text="%s" resource-id="a:id/content_page_number" content-desc="" class="T" bounds="[80,0][90,10]" /><node text="" resource-id="a:id/ll_next_page" content-desc="" class="T" bounds="[90,0][99,10]" /></hierarchy>'
+open(sys.argv[2] + "/page1.xml", "w").write(screen.replace("test.snplg", "other.snplg").replace("</hierarchy>", number % "1 / 2"))
+open(sys.argv[2] + "/page2.xml", "w").write(screen.replace("</hierarchy>", number % "2 / 2"))
+PY
+echo 1 > "$files/page"
+echo 4 > "$files/advance-after"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after"
+echo 6 > "$files/taps-left"
+check "plugin install finds a file on a later page of the picker" "$(run plugin install "$work/local/test.snplg" --overwrite --json 2>/dev/null | field "['action']")" "installed"
+check "plugin install presses next once" "$(called 'input tap 94 5')" "1"
+rm -f "$files/page" "$files/advance-after" "$files"/page?.xml
 printf 'hello' > "$work/local/bad.snplg"
 run plugin install "$work/local/bad.snplg" >/dev/null 2>&1
 check "a file with no plugin config stops before any copy" "$?$(called ' push ')" "20"
@@ -774,6 +794,7 @@ run logs --package com.example.one >/dev/null
 check "logs --package reads that process" "$(last_call)" "-s $serial logcat -d -v time -t 100 --pid=4242"
 run logs --pid 77 >/dev/null
 check "logs --pid reads that process" "$(last_call)" "-s $serial logcat -d -v time -t 100 --pid=77"
+check "logs --lines is a real limit" "$(run logs --lines 1 --json | field "['lines'].__len__()")" "1"
 check "logs --grep ignores case" "$(run logs --grep 'NEXT=1' --json | field "['lines'].__len__()")" "1"
 check "logs --grep drops the rest" "$(run logs --grep absent --json | field "['lines'].__len__()")" "0"
 run logs --since 5m >/dev/null

@@ -176,6 +176,9 @@ SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
 PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
 PLUGIN_PICK_STEP = "text:Select Plugin Package"
 PLUGIN_CONFIRM_STEP = "id:top_save"
+PICKER_NEXT_PAGE = "id:ll_next_page"
+PICKER_PAGE_NUMBER = "id:content_page_number"
+PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
 FILE_SYNC_ACTION = "com.ratta.supernote.filesync.action.START_FILE_SYNC"
 FILE_SYNC_EXTRA = "com.ratta.supernote.filesync.FILE_PATH"
@@ -246,6 +249,7 @@ LOG_TIME = re.compile(r"\d\d-\d\d \d\d:\d\d:\d\d\.\d+")
 LOG_LEVELS = "VDIWEF"
 PLUGIN_DENIED = re.compile(r"PluginSec.*DENY")
 SIMPLE_WORD = re.compile(r"[a-z][\w-]*")
+PICKER_PAGE = re.compile(r"(\d+)\s*/\s*(\d+)")
 ROUTE_COMPONENT = re.compile(r"\s+[0-9a-f]+ (\S+/\S+) filter [0-9a-f]+")
 ROUTE_ACTION = re.compile(r'\s+Action: "([^"]+)"')
 ROUTE_AUTHORITY = re.compile(r"\s+\[([^\]]+)\]:")
@@ -1351,6 +1355,36 @@ def read_enabled_limit(device: Device) -> dict:
     return {"enabled": None, "limit": None}
 
 
+def picker_page(elements: list[dict]) -> tuple[int, int]:
+    """The picker's `current / total` page numbers. A screen that shows none has one page."""
+    labels = find_selector(elements, PICKER_PAGE_NUMBER)
+    match = PICKER_PAGE.fullmatch(labels[0]["text"].strip()) if labels else None
+    return (int(match[1]), int(match[2])) if match else (1, 1)
+
+
+def wait_for_page_change(device: Device, page: int, limit: float) -> None:
+    started = time.monotonic()
+    while picker_page(device.elements())[0] == page:
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the picker stayed on page {page} after {limit:g} s; nothing more was pressed")
+        time.sleep(WAIT_INTERVAL)
+
+
+def turn_to_file(device: Device, name: str, limit: float) -> None:
+    """Page through the file picker, which shows `1 / 2` and has no scrolling list, until the file is on screen."""
+    selector = f"text:{name}"
+    for _ in range(PICKER_MAX_PAGES):
+        elements = device.elements()
+        if find_selector(elements, selector):
+            return
+        page, total = picker_page(elements)
+        if page >= total:
+            break
+        press_element(device, expect_element(device, PICKER_NEXT_PAGE, limit))
+        wait_for_page_change(device, page, limit)
+    raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{name} is not in the picker; nothing more was pressed")
+
+
 def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) -> dict:
     """Prove the install from the list. An update needs the version column, or nothing proves it changed."""
     started = time.monotonic()
@@ -1382,12 +1416,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     print(f"plugins enabled: {limit['enabled']} of {limit['limit']}", file=sys.stderr, flush=True)
     press_element(device, pick)
     expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout)  # the picker's own button: this is the picker
-    try:
-        scroll_until_found(device, f"text:{name}", SCROLL_STEPS)
-    except Failure as failure:
-        if failure.code != EXIT_NOT_FOUND:
-            raise
-        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{name} is not in the picker; nothing more was pressed") from failure
+    turn_to_file(device, name, args.step_timeout)
     press_element(device, expect_element(device, f"text:{name}", args.step_timeout))
     press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
     row = wait_for_plugin(device, config, args.timeout, bool(installed))
@@ -1512,8 +1541,8 @@ def command_logs(device: Device, args: argparse.Namespace):
         raise Failure(EXIT_FAILED, "device_error", done.stderr.decode(errors="replace").strip() or "logcat failed")
     every = CREDENTIAL.sub(CREDENTIAL_MASK, done.stdout.decode(errors="replace")).splitlines()
     lines = [line for line in every if keeps(line)]
-    if args.plugin:
-        lines = lines[-args.lines:]
+    if not (mark or args.since):
+        lines = lines[-args.lines:]  # `logcat -t` counts per buffer, so it can return more than asked
     if args.since_last:
         save_log_mark(every)
     return {"lines": [log_entry(args, line) for line in lines]}, "\n".join(lines)
