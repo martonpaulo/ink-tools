@@ -23,6 +23,16 @@ No tool found opens a note at a page, asks for a sync, or presses a control by n
 | [`supernote-tool`](https://github.com/jya-dev/supernote-tool) | Converts `.note` files to PNG, PDF, SVG or text. |
 | [`allenporter/supernote`](https://github.com/allenporter/supernote) | Parses notebooks and hosts a private cloud replica. |
 
+## Calendars
+
+The tablet's Calendar app shows one calendar account.
+
+| Tool | License or price | What it does |
+| :--- | :--- | :--- |
+| [`task-hub-supernote-plugin`](https://github.com/Sparkinman/task-hub-supernote-plugin) | GPL-3.0 | A plugin with its own calendar views. It subscribes to `.ics` addresses from Google, Outlook and Apple, with no account or server. Subscriptions are read-only. |
+| [`supernote-multiple-google-calendars`](https://github.com/scrobblebox/supernote-multiple-google-calendars) | not checked | A Google Apps Script that copies other calendars into the primary one. |
+| [CalSync](https://supernotetemplates.com/pages/calsync-for-supernote-calendar-sync-unlimited-planners) | paid | A commercial calendar sync. |
+
 ## Writing note files
 
 `supernote-tool` 0.7.3 was tried on a public Manta sample from [`supernote-typescript`](https://github.com/philips/supernote-typescript/tree/main/tests/input):
