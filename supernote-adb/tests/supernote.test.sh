@@ -743,4 +743,15 @@ check "help opens with the sentence of the README" "$(printf '%s\n' "$help" | gr
 check "help documents the log's fields" "$(printf '%s\n' "$help" | grep -c 'app_before the app in front')" "1"
 check "help ends with the repository" "$(printf '%s\n' "$help" | tail -1)" "https://github.com/martonpaulo/supernote-adb"
 
+# The duplication gate reads the extensionless command.
+copy="$work/gate-copy"
+mkdir -p "$copy/src" "$copy/scripts"
+cp "$script" "$copy/src/supernote"
+cp "$repo_root/scripts/dry_check.py" "$copy/scripts/"
+cp "$repo_root/dry-check.json" "$copy/"
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("def remote_path(path: str) -> str:\n", "def remote_path(path: str) -> str:\n    time.sleep(12345)\n", 1))' "$copy/src/supernote"
+python3 -B "$copy/scripts/dry_check.py" --root "$copy" magic >"$work/out" 2>&1
+check "the duplication gate fails on a magic value in the command" "$?" "1"
+check "the duplication gate names the command" "$(grep -m1 -c 'src/supernote' "$work/out")" "1"
+
 [ "$failures" -eq 0 ]
