@@ -41,6 +41,8 @@ case "$1" in
         elif [ -f "$ADB_FILES/busy" ]; then
             [ "$(cat "$ADB_FILES/busy")" = once ] && rm "$ADB_FILES/busy"
             echo 'ERROR: could not get idle state.'
+        elif [ -f "$ADB_FILES/page" ]; then
+            cat "$ADB_FILES/page$(cat "$ADB_FILES/page").xml"
         else
             cat "$ADB_FILES/tree.xml"
         fi ;;
@@ -70,6 +72,13 @@ case "$1" in
             "pm list packages -3") echo package:com.example.one ;;
             "pm list packages -s") echo package:com.ratta.supernote.note ;;
             "content query"*) cat "$ADB_FILES/rows" ;;
+            "input swipe"*)
+                if [ -f "$ADB_FILES/page" ]; then
+                    set -- $2
+                    page=$(cat "$ADB_FILES/page")
+                    if [ "$4" -gt "$6" ]; then page=$((page + 1)); elif [ ! -f "$ADB_FILES/no-return" ]; then page=$((page - 1)); fi
+                    if [ "$page" -ge 1 ] && [ -f "$ADB_FILES/page$page.xml" ]; then echo "$page" > "$ADB_FILES/page"; fi
+                fi ;;
             "input "*) : ;;
             *) echo "remote-out"; exit 9 ;;
         esac ;;
@@ -251,6 +260,70 @@ check "a screen that never settles is tried a bounded number of times" "$(called
 run wait element id:files --timeout 0 >/dev/null 2>&1
 check "a busy screen counts as not seen yet" "$?" "6"
 rm -f "$files/busy"
+
+# Lists that continue off the screen.
+list_page() {
+    printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node resource-id=\"\" text=\"\" content-desc=\"\" class=\"android.widget.ListView\" scrollable=\"true\" bounds=\"[0,100][1000,1100]\"><node resource-id=\"\" text=\"%s\" content-desc=\"\" class=\"android.widget.TextView\" bounds=\"[0,100][1000,600]\" /><node resource-id=\"\" text=\"%s\" content-desc=\"\" class=\"android.widget.TextView\" bounds=\"[0,600][1000,%s]\" /></node></hierarchy>" "$1" "$2" "$3"
+}
+pages() {
+    list_page One Two 1100 > "$files/page1.xml"
+    list_page Three Four 1100 > "$files/page2.xml"
+    list_page Five Six 700 > "$files/page3.xml"
+    echo 1 > "$files/page"
+}
+stop_pages() { rm -f "$files/page" "$files"/page?.xml; }
+pages
+result=$(run snapshot --json)
+check "a list is an element even with no label" "$(printf '%s' "$result" | field "['elements'][0]['scrollable'],d['elements'][0]['class']")" "(True, 'ListView')"
+check "a list that reaches the edge continues" "$(printf '%s' "$result" | field "['elements'][0]['more']")" "True"
+check "other elements are not lists" "$(printf '%s' "$result" | field "['elements'][1]['scrollable'],d['elements'][1]['more']")" "(False, None)"
+check "the text marks a list" "$(run snapshot | sed -n 2p)" "@e1 ListView [0, 100, 1000, 1100] scrollable more=yes"
+echo 3 > "$files/page"
+check "a list with a tall gap has no more" "$(run snapshot --json | field "['elements'][0]['more']")" "False"
+list_page Five Six 900 > "$files/page3.xml"
+check "a small gap is unknown" "$(run snapshot --json | field "['elements'][0]['more']")" "None"
+pages
+result=$(run snapshot --all --json)
+check "--all merges every page" "$(printf '%s' "$result" | expression "[e['text'] for e in d['elements'] if e['text']]")" "['One', 'Two', 'Three', 'Four', 'Five', 'Six']"
+check "--all gives no reference off screen" "$(printf '%s' "$result" | expression "[(e['ref'], e.get('offscreen')) for e in d['elements']][-1]")" "('', True)"
+check "--all stops after two quiet reads" "$(printf '%s' "$result" | field "['lists'][0]['steps']")" "4"
+check "--all returns to the start" "$(printf '%s' "$result" | field "['lists'][0]['returned']")" "True"
+check "--all leaves the first page" "$(cat "$files/page")" "1"
+check "--all is complete when it ended by itself" "$(printf '%s' "$result" | field "['at_limit']")" "False"
+pages
+result=$(run snapshot --all --max-steps 1 --json)
+check "--all says when it stopped at the limit" "$(printf '%s' "$result" | field "['at_limit']")" "True"
+check "--all swipes no more than its limit" "$(called 'input swipe 500 900 500 300')" "1"
+check "the text says when it stopped at the limit" "$(run snapshot --all --max-steps 1 | tail -1)" "list @e1: 2 more in 1 steps; stopped at the limit"
+pages
+check "--find scrolls to an element" "$(run snapshot --find text:Four --json | field "['found']['text'],d['steps']")" "('Four', 1)"
+check "--find leaves it on screen" "$(cat "$files/page")" "2"
+run click text:Four >/dev/null
+check "--find gives a pressable element" "$?" "0"
+pages
+run snapshot --find text:One >/dev/null
+check "--find sends no swipe for what is on screen" "$(called 'input swipe')" "0"
+run snapshot --find text:Absent >/dev/null 2>&1
+check "--find reports an absent element" "$?" "4"
+check "--find returns after an absent element" "$(cat "$files/page")" "1"
+run snapshot --find nonsense >/dev/null 2>&1
+check "--find refuses a bad selector" "$?$(called 'input swipe')" "20"
+printf '%s' "$note_activity" > "$files/foreground"
+run snapshot --all >/dev/null 2>&1
+check "--all refuses the note editor" "$?$(called 'input swipe')" "20"
+run snapshot --find text:One >/dev/null 2>&1
+check "--find refuses the note editor" "$?$(called 'input swipe')" "20"
+reset_device
+pages
+touch "$files/no-return"
+run snapshot --all --max-steps 1 >/dev/null
+run click @e2 >/dev/null 2>&1
+check "a failed return drops the old references" "$?" "7"
+rm "$files/no-return"
+stop_pages
+result=$(run snapshot --all --json)
+check "--all without lists is a plain snapshot" "$(printf '%s' "$result" | field "['elements'].__len__(),d['lists']")" "(5, [])"
+check "--all without lists sends no swipe" "$(called 'input swipe')" "0"
 
 # Wait.
 check "wait activity returns once it holds" "$(run wait activity calendar --json | field "['kind']")" "activity"

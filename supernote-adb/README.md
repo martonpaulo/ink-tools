@@ -45,7 +45,7 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote sync file PATH` | Asks the tablet to sync one file. |
 | `supernote sync tasks\|calendar` | Asks the To-do or the Calendar app to sync. |
 | `supernote screen FILE.png` | Saves what the screen shows. |
-| `supernote snapshot` | Lists the screen's elements with short references. |
+| `supernote snapshot` | Lists the screen's elements with short references, and marks each list that can scroll. `--all` reads each list to its end. `--find X` scrolls until an element appears. |
 | `supernote click TARGET` | Presses `@eN` from the last snapshot, or `id:X`, `desc:X`, `text:X`. |
 | `supernote wait activity\|file\|element X` | Waits for a condition, with a time limit. |
 | `supernote apps` | Lists installed packages. |

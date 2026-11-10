@@ -13,7 +13,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   sync file PATH                 ask the device to sync one file
   sync tasks | sync calendar     ask the To-do (and Knowledge) or the Calendar app to sync
   screen FILE.png                save what the screen shows
-  snapshot                       list the screen's elements with short references
+  snapshot                       list the screen's elements with short references;
+                                 --all reads each list to its end, --find X scrolls to an element
   click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
   wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
   apps                           installed packages
@@ -111,6 +112,12 @@ PLUGIN_LOG_WINDOW = 5000  # a plugin's lines are picked out of this many recent 
 FOLLOW_CHUNK = 65536
 TIMING_DIGITS = 3
 PERIOD_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+SCROLL_STEPS = 20
+SCROLL_START = 0.8  # a swipe runs between these fractions of the list's height
+SCROLL_END = 0.2
+SCROLL_MILLISECONDS = 300
+SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
+LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
 DUMP_ATTEMPTS = 3  # the device often answers "could not get idle state" after about 11 s
 IDLE_ERROR = "could not get idle state"
 ERROR_EXCERPT = 200
@@ -374,9 +381,29 @@ class Device:
         return len(data)
 
 
+def vertical_span(found: re.Match) -> tuple[int, int]:
+    _, top, _, bottom = (int(value) for value in found.groups())
+    return top, bottom
+
+
+def has_more(node, list_bottom: int):
+    """Whether a list continues below the screen, as far as one read can tell: True, False or None.
+
+    shortcut: vertical lists only; add the right edge when a horizontal list matters."""
+    edges = [BOUNDS.fullmatch(child.get("bounds", "")) for child in node]
+    children = [vertical_span(found) for found in edges if found]
+    if not children:
+        return None
+    top, bottom = max(children, key=lambda child: child[1])
+    gap = list_bottom - bottom
+    if gap <= LIST_EDGE:
+        return True
+    return False if gap >= bottom - top else None
+
+
 def parse_elements(dump: str) -> list[dict]:
     """The screen's addressable nodes, numbered. Ratta's custom views rarely set `clickable`, so
-    a node counts when it has a resource id, a description or text."""
+    a node counts when it has a resource id, a description or text, or when it can scroll."""
     start, end = dump.find(HIERARCHY_OPEN), dump.rfind(HIERARCHY_CLOSE)
     if start < 0 or end < 0:
         raise Failure(EXIT_FAILED, "device_error", f"no screen tree came back: {dump.strip()[:ERROR_EXCERPT]}")
@@ -385,7 +412,8 @@ def parse_elements(dump: str) -> list[dict]:
         element_id = node.get("resource-id", "").rpartition("/")[2]
         desc, text = node.get("content-desc", ""), node.get("text", "")
         match = BOUNDS.fullmatch(node.get("bounds", ""))
-        if not match or not (element_id or desc or text):
+        scrollable = node.get("scrollable") == "true"
+        if not match or not (element_id or desc or text or scrollable):
             continue
         left, top, right, bottom = (int(value) for value in match.groups())
         if right <= left or bottom <= top:
@@ -399,6 +427,8 @@ def parse_elements(dump: str) -> list[dict]:
             "bounds": [left, top, right, bottom],
             "x": (left + right) // 2,
             "y": (top + bottom) // 2,
+            "scrollable": scrollable,
+            "more": has_more(node, bottom) if scrollable else None,
         })
     return elements
 
@@ -419,8 +449,19 @@ def snapshot_lines(snapshot: dict) -> list[str]:
     lines = [f"activity: {snapshot['activity']}"]
     for element in snapshot["elements"]:
         labels = [f'{key}="{element[key]}"' for key in ("id", "desc", "text") if element[key]]
-        lines.append(f"{element['ref']} {element['class']} {' '.join(labels)} {element['bounds']}")
+        lines.append(" ".join(part for part in (
+            element["ref"] or "-", element["class"], *labels, str(element["bounds"]), list_mark(element),
+        ) if part))
     return lines
+
+
+def list_mark(element: dict) -> str:
+    if element.get("offscreen"):
+        return "offscreen"
+    if not element["scrollable"]:
+        return ""
+    more = {True: "yes", False: "no", None: "unknown"}[element["more"]]
+    return f"scrollable more={more}"
 
 
 def resolve_ref(device: Device, reference: str) -> dict:
@@ -627,9 +668,109 @@ def command_screen(device: Device, args: argparse.Namespace):
     return {"path": args.file, "bytes": size}, args.file
 
 
-def command_snapshot(device: Device, args: argparse.Namespace):
+def element_key(element: dict) -> tuple:
+    """What makes two reads show the same element. shortcut: identical rows count once; use position when that matters."""
+    return (element["id"], element["desc"], element["text"], element["class"])
+
+
+def swipe_list(device: Device, element: dict, forward: bool) -> None:
+    left, top, right, bottom = element["bounds"]
+    x, height = (left + right) // 2, bottom - top
+    start, end = top + int(height * SCROLL_START), top + int(height * SCROLL_END)
+    if not forward:
+        start, end = end, start
+    device.shell(f"input swipe {x} {start} {x} {end} {SCROLL_MILLISECONDS}")
+
+
+def scroll_to_end(device: Device, element: dict, seen: set, limit: int, stop=None) -> dict:
+    """Swipe one list until two reads bring nothing new or the limit passes, collecting what appears."""
+    found, steps, quiet = [], 0, 0
+    while steps < limit and quiet < SCROLL_QUIET_READS:
+        swipe_list(device, element, True)
+        steps += 1
+        fresh = [item for item in device.elements() if element_key(item) not in seen]
+        seen.update(element_key(item) for item in fresh)
+        found += fresh
+        quiet = 0 if fresh else quiet + 1
+        if stop and stop(fresh):
+            return {"found": found, "steps": steps, "at_limit": False, "stopped": True}
+    return {"found": found, "steps": steps, "at_limit": quiet < SCROLL_QUIET_READS, "stopped": False}
+
+
+def scroll_back(device: Device, element: dict, first: list[dict], steps: int) -> bool:
+    """Swipe back until the screen shows what it showed before the scan."""
+    wanted = [element_key(item) for item in first]
+    for _ in range(steps + SCROLL_QUIET_READS):
+        swipe_list(device, element, False)
+        if [element_key(item) for item in device.elements()] == wanted:
+            return True
+    return False
+
+
+def refuse_note_editor(device: Device) -> None:
+    if device.activity() == NOTE_ACTIVITY:
+        raise bad_usage("scrolling on a note could draw on it; leave the note editor first")
+
+
+def read_every_list(device: Device, snapshot: dict, limit: int) -> tuple[dict, list[str]]:
+    """Read each list to its end and come back. Elements found off screen have no reference, because they cannot be pressed from here."""
+    first, seen, merged, lists = snapshot["elements"], None, list(snapshot["elements"]), []
+    seen = {element_key(item) for item in first}
+    for element in [item for item in first if item["scrollable"]]:
+        scan = scroll_to_end(device, element, seen, limit)
+        merged += [{**item, "ref": "", "offscreen": True} for item in scan["found"]]
+        returned = scan["steps"] == 0 or scroll_back(device, element, first, scan["steps"])
+        lists.append({
+            "ref": element["ref"],
+            "steps": scan["steps"],
+            "found": len(scan["found"]),
+            "at_limit": scan["at_limit"],
+            "returned": returned,
+        })
+    if not all(item["returned"] for item in lists):
+        SNAPSHOT_FILE.unlink(missing_ok=True)  # the old references no longer point at the right places
+    data = {**snapshot, "elements": merged, "lists": lists, "at_limit": any(item["at_limit"] for item in lists)}
+    lines = [
+        f"list {item['ref']}: {item['found']} more in {item['steps']} steps"
+        + ("; stopped at the limit" if item["at_limit"] else "")
+        + ("" if item["returned"] else "; did not return to the start, take a new snapshot")
+        for item in lists
+    ]
+    return data, lines
+
+
+def scroll_until_found(device: Device, selector: str, limit: int):
+    """Scroll until an element appears and leave it on screen, with a fresh snapshot to press it from."""
+    find_selector([], selector)  # a bad selector stops before any swipe
     snapshot = take_snapshot(device)
-    return snapshot, "\n".join(snapshot_lines(snapshot))
+    first = snapshot["elements"]
+    matches = find_selector(first, selector)
+    if matches:
+        return {**snapshot, "found": matches[0], "steps": 0}
+    seen = {element_key(item) for item in first}
+    for element in [item for item in first if item["scrollable"]]:
+        scan = scroll_to_end(device, element, seen, limit, lambda fresh: bool(find_selector(fresh, selector)))
+        if scan["stopped"]:
+            snapshot = take_snapshot(device)
+            matches = find_selector(snapshot["elements"], selector)
+            if matches:
+                return {**snapshot, "found": matches[0], "steps": scan["steps"]}
+        if scan["steps"]:
+            scroll_back(device, element, first, scan["steps"])
+    raise not_found(selector, "supernote snapshot --all")
+
+
+def command_snapshot(device: Device, args: argparse.Namespace):
+    if args.all or args.find:
+        refuse_note_editor(device)
+    if args.find:
+        data = scroll_until_found(device, args.find, args.max_steps)
+        return data, "\n".join(snapshot_lines(data))
+    snapshot = take_snapshot(device)
+    if not args.all:
+        return snapshot, "\n".join(snapshot_lines(snapshot))
+    data, lines = read_every_list(device, snapshot, args.max_steps)
+    return data, "\n".join([*snapshot_lines(data), *lines])
 
 
 def command_click(device: Device, args: argparse.Namespace):
@@ -917,7 +1058,11 @@ def build_parser() -> argparse.ArgumentParser:
         add(syncs, app, command_sync_app)
 
     add(commands, "screen", command_screen).add_argument("file")
-    add(commands, "snapshot", command_snapshot)
+    shot = add(commands, "snapshot", command_snapshot)
+    wanted = shot.add_mutually_exclusive_group()
+    wanted.add_argument("--all", action="store_true", help="read each list to its end and come back")
+    wanted.add_argument("--find", metavar="SELECTOR", help="scroll until id:X, desc:X or text:X appears")
+    shot.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes per list")
     add(commands, "click", command_click, action).add_argument("target")
 
     waited = add(commands, "wait", command_wait)
