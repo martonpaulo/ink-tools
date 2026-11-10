@@ -488,6 +488,40 @@ check "logs mask a credential" "$(printf '%s' "$output" | grep -c 'abcdef')" "0"
 check "logs keep the other fields" "$(printf '%s' "$output" | grep -c 'next=1')" "1"
 check "logs parse in JSON" "$(run logs --json | field "['lines'][0]['tag'],d['lines'][0]['pid']")" "('Sync', 1218)"
 
+# What the command can reach.
+for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync file Note/a.note" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi off" "snapshot --all" "snapshot --find text:One"; do
+    # shellcheck disable=SC2086 # each entry is a command with its arguments
+    run --read-only $changing >/dev/null 2>&1
+    check "read-only refuses: $changing" "$?$(wc -l < "$log" | tr -d ' ')" "110"
+done
+SUPERNOTE_READ_ONLY=1 run tap 1 2 >/dev/null 2>&1
+check "the environment turns on read-only mode" "$?" "11"
+check "read-only allows what only reads" "$(run --read-only status --json | field "['battery']")" "93"
+for private in Note "Note/A note.note" /sdcard/Note/x "Note/../Note/x" "" /storage/emulated /storage/emulated/0/EXPORT/a.note; do
+    run files pull "$private" "$work/local/x" >/dev/null 2>&1
+    check "files pull protects: [$private]" "$?$(called ' pull ')" "120"
+done
+run files pull EXPORT/a.pdf "$work/local/x" >/dev/null 2>&1
+check "files pull allows another folder" "$(called ' pull ')" "1"
+echo "f $root/Note/A note.note" >> "$files/paths"
+run files pull "Note/A note.note" "$work/local/x" --allow-notes >/dev/null
+check "--allow-notes copies a note" "$?$(called ' pull ')" "01"
+printf '%s' "$note_activity" > "$files/foreground"
+run screen "$work/local/note.png" >/dev/null 2>&1
+check "screen protects a note on the screen" "$?$(called screencap)" "120"
+check "screen with --allow-notes captures it" "$(run screen "$work/local/note.png" --allow-notes --json | field "['bytes']")" "12"
+reset_device
+printf '%s' "$note_activity" > "$files/am-goes-to"
+result=$(run note open "Note/A note.note" --screen "$work/local/skip.png" --json)
+check "a capture over a note is skipped and reported" "$(printf '%s' "$result" | expression "'screen_refused' in d, 'screen' in d")" "(True, False)"
+check "a skipped capture does not fail the action" "$(called screencap)" "0"
+reset_device
+result=$(run wifi off --json)
+check "wifi off asks the tablet to close the port" "$(called ' usb')$(called 'disconnect')" "11"
+check "wifi off says how to turn it on" "$(printf '%s' "$result" | field "['restore']" | grep -c 'adb tcpip 5555')" "1"
+check "wifi off is logged as a change" "$(tail -1 "$history_file" | field "['command']")" "wifi off"
+check "help lists the read-only exit code" "$(python3 -B "$script" --help | grep -c '11 read-only')" "1"
+
 # The device log's filters.
 : > "$files/pids"
 run logs --level W >/dev/null

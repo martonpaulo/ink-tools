@@ -56,7 +56,10 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission. |
 | `supernote history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `supernote tap\|swipe` | Presses by coordinates, the last resort. |
+| `supernote wifi off` | Turns Wi-Fi ADB off when the work ends, and says how to turn it on again. |
 | `supernote shell COMMAND...` | Runs a command on the tablet. |
+
+`--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`.
 
 Every command takes `--json`. A failure in JSON has `cause` and `next`, the next command to try. `--trace` prints each ADB call to stderr as it runs.
 
@@ -69,6 +72,7 @@ The command reads no secret.
 | Name | Where | What for |
 | :--- | :--- | :--- |
 | `SUPERNOTE_ADDRESS` | environment | The tablet's address. It wins over the file below. |
+| `SUPERNOTE_READ_ONLY` | environment | When set, refuses every command that changes the tablet. |
 | `~/.config/supernote-adb/address` | your computer | The tablet's address, on its first line. |
 
 ---
@@ -89,7 +93,7 @@ The command reads no secret.
 - **A sleeping tablet does not answer.** The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install presses named elements and stops on a screen it does not expect.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `supernote doctor` after one. It proves a call exists, not that it still works.
-- **ADB has wide access.** A computer you authorize can read and delete every note, and Wi-Fi mode opens a port on your network. See [`SECURITY.md`](SECURITY.md).
+- **ADB has wide access.** ADB accepts only computers the tablet has authorized. One of those computers can read and delete every note, and Wi-Fi mode opens a port on your network until `supernote wifi off`. See [`SECURITY.md`](SECURITY.md).
 
 <br />
 

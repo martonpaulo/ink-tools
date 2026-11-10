@@ -28,11 +28,14 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  --follow and --plugin
   history                        what this command did: --failures, --command NAME, --since 2h
   tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
+  wifi off                       turn Wi-Fi ADB off when the work ends, and say how to turn it on
   shell COMMAND...               run a command on the device
 
 click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result) and --screen FILE
 (save a fresh capture), so one call shows its effect.
 
+--read-only, or $SUPERNOTE_READ_ONLY, refuses every command that changes the device.
+--allow-notes lets files pull and screen read the notes folder or a note on the screen.
 --trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
@@ -45,6 +48,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import posixpath
 import re
 import selectors
 import shlex
@@ -70,6 +74,8 @@ EXIT_STALE = 7
 EXIT_BUSY = 8
 EXIT_UNEXPECTED_SCREEN = 9
 EXIT_CALL_MISSING = 10
+EXIT_READ_ONLY = 11
+EXIT_PROTECTED = 12
 EXIT_CODES = """exit codes:
   0  done
   1  the device refused or the call failed
@@ -82,6 +88,8 @@ EXIT_CODES = """exit codes:
   8  the screen never settled, so no snapshot came back: try again
   9  a step found a screen it did not expect, and pressed nothing more
   10 doctor found a call this command relies on missing from the device
+  11 read-only mode refused a command that changes the device
+  12 the notes folder or a note on the screen is protected: pass --allow-notes
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -103,6 +111,8 @@ https://github.com/martonpaulo/supernote-adb
 
 ADB_PORT = 5555  # the port `adb tcpip` opens
 SHARED_ROOT = "/storage/emulated/0"
+SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
+NOTES_FOLDER = f"{SHARED_ROOT}/Note"
 ADDRESS_FILE = Path.home() / ".config/supernote-adb/address"
 SNAPSHOT_FILE = Path.home() / ".cache/supernote-adb/snapshot.json"
 HISTORY_FILE = Path.home() / ".cache/supernote-adb/history.jsonl"
@@ -117,6 +127,7 @@ CALL_TIMEOUT = 30
 TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 SYNC_TIMEOUT = 60.0
+WIFI_OFF_TIMEOUT = 15.0
 STEP_TIMEOUT = 20.0
 INSTALL_TIMEOUT = 60.0
 WAIT_INTERVAL = 0.5
@@ -206,6 +217,8 @@ FAILURE_ADVICE = {
     "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
     "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
     "busy": ("the screen did not settle", "supernote snapshot"),
+    "read_only": ("read-only mode forbids a command that changes the device", "supernote status"),
+    "protected": ("the notes folder or a note on the screen is protected", "repeat with --allow-notes"),
     "missing_call": ("a firmware update may have changed this call", "supernote routes"),
     "unexpected_screen": ("the screen is not the one this step expects", "supernote snapshot"),
     "log_error": ("the command's own log could not be read", "supernote status"),
@@ -563,12 +576,29 @@ def resolve_target(device: Device, target: str) -> dict:
     return matches[0]
 
 
+def touches_notes(path: str) -> bool:
+    """Whether a path is the notes folder, holds it, lies inside it, or is a note."""
+    path = posixpath.normpath(path)
+    for alias in SHARED_ALIASES:
+        if path == alias or path.startswith(f"{alias}/"):
+            path = SHARED_ROOT + path[len(alias):]
+    inside = path == NOTES_FOLDER or path.startswith(f"{NOTES_FOLDER}/")
+    return inside or NOTES_FOLDER.startswith(f"{path.rstrip('/')}/") or path.endswith(NOTE_SUFFIX)
+
+
+def protected(what: str) -> Failure:
+    return Failure(EXIT_PROTECTED, "protected", f"{what} is protected; pass --allow-notes to read it")
+
+
 def after_action(device: Device, args: argparse.Namespace, before: str, result: dict) -> tuple[dict, list[str]]:
     """Add what the action changed to its result, and the fresh views the caller asked for."""
     now = device.activity()
     result.update({"activity_before": before, "activity": now, "changed": before != now})
     lines = [f"activity: {before} -> {now}" if before != now else f"activity: {now}"]
-    if args.screen:
+    if args.screen and now == NOTE_ACTIVITY and not args.allow_notes:
+        result["screen_refused"] = "a note is on the screen; pass --allow-notes to capture it"
+        lines.append(f"screen: {result['screen_refused']}")
+    elif args.screen:
         result["screen"] = args.screen
         result["screen_bytes"] = device.capture(args.screen)
         lines.append(f"screen: {args.screen}")
@@ -710,6 +740,8 @@ def transfer(device: Device, *args: str, missing: str) -> None:
 
 def command_files_pull(device: Device, args: argparse.Namespace):
     path = remote_path(args.path)
+    if touches_notes(path) and not args.allow_notes:
+        raise protected(path)
     transfer(device, "pull", path, args.local_path, missing=path)
     return {"path": path, "local": args.local_path}, f"pulled: {path} -> {args.local_path}"
 
@@ -789,6 +821,8 @@ def command_sync_calendar(device: Device, args: argparse.Namespace):
 
 
 def command_screen(device: Device, args: argparse.Namespace):
+    if device.activity() == NOTE_ACTIVITY and not args.allow_notes:
+        raise protected("a note on the screen")
     size = device.capture(args.file)
     return {"path": args.file, "bytes": size}, args.file
 
@@ -1208,6 +1242,20 @@ def command_history(device, args: argparse.Namespace):
     return {"runs": runs, "unreadable": unreadable}, text
 
 
+def command_wifi_off(device: Device, args: argparse.Namespace):
+    """`adb usb` closes the network port; the proof is that the port stops answering."""
+    done = device.adb("usb")
+    if done.returncode != 0:
+        raise Failure(EXIT_FAILED, "device_error", (done.stdout + done.stderr).decode(errors="replace").strip())
+    device.adb("disconnect", device.serial, serial=False)
+    started = time.monotonic()
+    while not device.probe():
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"the port still answers after {args.timeout:g} s")
+        time.sleep(WAIT_INTERVAL)
+    return {"wifi_adb": "off", "restore": USB_RESTORE}, f"Wi-Fi ADB is off. To turn it on again, {USB_RESTORE}"
+
+
 def command_shell(device: Device, args: argparse.Namespace):
     done = device.adb("shell", *args.words, timeout=TRANSFER_TIMEOUT)
     sys.stdout.buffer.write(done.stdout)
@@ -1215,17 +1263,19 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin")
+NOUNS = ("note", "files", "sync", "plugin", "wifi")
 
 
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="answer in JSON")
+    common.add_argument("--read-only", action="store_true", default=argparse.SUPPRESS, help="refuse every change on the device")
     common.add_argument("--trace", action="store_true", default=argparse.SUPPRESS, help="print each ADB call to stderr")
     common.add_argument("--log-paths", action="store_true", default=argparse.SUPPRESS, help="keep full call arguments in the log")
     action = argparse.ArgumentParser(add_help=False)
     action.add_argument("--snapshot", action="store_true", help="add a fresh snapshot to the result")
     action.add_argument("--screen", metavar="FILE", help="save a fresh capture")
+    action.add_argument("--allow-notes", action="store_true", help="capture even when a note is on the screen")
 
     parser = argparse.ArgumentParser(
         prog="supernote",
@@ -1234,13 +1284,14 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--json", action="store_true", default=False, help="answer in JSON")
+    parser.add_argument("--read-only", action="store_true", default=False, help="refuse every change on the device")
     parser.add_argument("--trace", action="store_true", default=False, help="print each ADB call to stderr")
     parser.add_argument("--log-paths", action="store_true", default=False, help="keep full call arguments in the log")
     commands = parser.add_subparsers(dest="command", required=True)
 
-    def add(group, name: str, handler, *parents) -> argparse.ArgumentParser:
+    def add(group, name: str, handler, *parents, changes: bool = False) -> argparse.ArgumentParser:
         sub = group.add_parser(name, parents=[common, *parents])
-        sub.set_defaults(handler=handler, needs_device=True)
+        sub.set_defaults(handler=handler, needs_device=True, changes=changes)
         return sub
 
     def noun(name: str):
@@ -1250,34 +1301,37 @@ def build_parser() -> argparse.ArgumentParser:
     add(commands, "doctor", command_doctor)
 
     notes = noun("note")
-    opened = add(notes, "open", command_note_open, action)
+    opened = add(notes, "open", command_note_open, action, changes=True)
     opened.add_argument("path")
     opened.add_argument("--page", type=int, help="page number, from 1")
-    add(notes, "new", command_note_new, action).add_argument("path")
+    add(notes, "new", command_note_new, action, changes=True).add_argument("path")
 
     files = noun("files")
     add(files, "ls", command_files_ls).add_argument("path", nargs="?", default="")
     pulled = add(files, "pull", command_files_pull)
     pulled.add_argument("path")
     pulled.add_argument("local_path")
-    pushed = add(files, "push", command_files_push)
+    pulled.add_argument("--allow-notes", action="store_true", help="copy from the notes folder")
+    pushed = add(files, "push", command_files_push, changes=True)
     pushed.add_argument("local_path")
     pushed.add_argument("path")
     pushed.add_argument("--overwrite", action="store_true", help="replace an existing file")
 
     syncs = noun("sync")
-    add(syncs, "file", command_sync_file).add_argument("path")
-    tasks = add(syncs, "tasks", command_sync_tasks)
+    add(syncs, "file", command_sync_file, changes=True).add_argument("path")
+    tasks = add(syncs, "tasks", command_sync_tasks, changes=True)
     tasks.add_argument("--timeout", type=float, default=SYNC_TIMEOUT, help="seconds to wait for the sync")
-    add(syncs, "calendar", command_sync_calendar)
+    add(syncs, "calendar", command_sync_calendar, changes=True)
 
-    add(commands, "screen", command_screen).add_argument("file")
+    captured = add(commands, "screen", command_screen)
+    captured.add_argument("file")
+    captured.add_argument("--allow-notes", action="store_true", help="capture even when a note is on the screen")
     shot = add(commands, "snapshot", command_snapshot)
     wanted = shot.add_mutually_exclusive_group()
     wanted.add_argument("--all", action="store_true", help="read each list to its end and come back")
     wanted.add_argument("--find", metavar="SELECTOR", help="scroll until id:X, desc:X or text:X appears")
     shot.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes per list")
-    add(commands, "click", command_click, action).add_argument("target")
+    add(commands, "click", command_click, action, changes=True).add_argument("target")
 
     waited = add(commands, "wait", command_wait)
     waited.add_argument("kind", choices=("activity", "file", "element"))
@@ -1288,8 +1342,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     plugins = noun("plugin")
     add(plugins, "ls", command_plugin_ls)
-    add(plugins, "push", command_plugin_push).add_argument("file")
-    installing = add(plugins, "install", command_plugin_install)
+    add(plugins, "push", command_plugin_push, changes=True).add_argument("file")
+    installing = add(plugins, "install", command_plugin_install, changes=True)
     installing.add_argument("file")
     installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
     installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
@@ -1315,20 +1369,31 @@ def build_parser() -> argparse.ArgumentParser:
     history.add_argument("--since", help="only this recent period, such as 2h")
     history.add_argument("--limit", type=int, default=DEFAULT_HISTORY_RUNS, help="newest runs to show")
 
-    tapped = add(commands, "tap", command_tap, action)
+    tapped = add(commands, "tap", command_tap, action, changes=True)
     tapped.add_argument("x", type=int)
     tapped.add_argument("y", type=int)
-    swiped = add(commands, "swipe", command_swipe, action)
+    swiped = add(commands, "swipe", command_swipe, action, changes=True)
     for coordinate in ("x1", "y1", "x2", "y2"):
         swiped.add_argument(coordinate, type=int)
 
-    add(commands, "shell", command_shell).add_argument("words", nargs=argparse.REMAINDER)
+    wifi = noun("wifi")
+    switched_off = add(wifi, "off", command_wifi_off, changes=True)
+    switched_off.add_argument("--timeout", type=float, default=WIFI_OFF_TIMEOUT, help="seconds for the port to close")
+
+    add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
     return parser
 
 
 def command_name(args: argparse.Namespace) -> str:
     nested = getattr(args, args.command, None) if args.command in NOUNS else None
     return f"{args.command} {nested}" if nested else args.command
+
+
+def refuses_read_only(args: argparse.Namespace) -> bool:
+    """`snapshot --all` and `--find` scroll, so read-only mode counts them as changes."""
+    if not (args.read_only or os.environ.get("SUPERNOTE_READ_ONLY")):
+        return False
+    return args.changes or bool(getattr(args, "all", False) or getattr(args, "find", None))
 
 
 def front_app(device: Device) -> str:
@@ -1350,6 +1415,8 @@ def main() -> int:
     log.trace, log.paths = args.trace, args.log_paths
     code, kind, device, before, after = EXIT_OK, None, None, "", ""
     try:
+        if refuses_read_only(args):
+            raise Failure(EXIT_READ_ONLY, "read_only", f"read-only mode refuses: {command_name(args)}")
         if args.needs_device:
             address = read_address()
             serial = address if ":" in address else f"{address}:{ADB_PORT}"

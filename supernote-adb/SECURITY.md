@@ -4,9 +4,14 @@ Report a vulnerability through a [private security advisory](https://github.com/
 
 ## What the command can reach
 
-- ADB gives an authorized computer access to every file in the tablet's shared storage, including notes.
-- Wi-Fi ADB opens port 5555 on the network until the tablet restarts. Use it only on a network you trust.
+- ADB accepts only computers the tablet has authorized. An authorized computer can reach every file in the tablet's shared storage, including notes.
+- Whether the tablet offers a way to revoke an authorized computer is not known yet.
+- Wi-Fi ADB opens port 5555 on the network until the tablet restarts, or until `supernote wifi off`. Use it only on a network you trust.
 - `supernote shell` runs any command the `shell` user may run.
+
+## Limits inside the command
+
+`--read-only` and the notes refusals guard against an agent's mistake. They do not protect against someone who already has the computer's ADB key.
 
 ## What it keeps
 
