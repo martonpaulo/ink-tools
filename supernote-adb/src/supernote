@@ -1098,6 +1098,9 @@ def command_sync_tasks(device: Device, args: argparse.Namespace):
 
 
 def command_sync_calendar(device: Device, args: argparse.Namespace):
+    """The Calendar app registers this receiver only while it runs, and an unheard broadcast still answers 0."""
+    if CALENDAR_SYNC_ACTION not in device.shell("dumpsys activity broadcasts"):
+        raise Failure(EXIT_FAILED, "device_error", "the Calendar app is not running, so nothing would hear this; open it first", next_step="supernote doctor")
     data = {"app": "calendar", **broadcast(device, CALENDAR_SYNC_ACTION)}
     return data, "sync asked: calendar"
 

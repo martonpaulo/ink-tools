@@ -10,7 +10,7 @@ Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, 
 
 **One command, `supernote`, reaches the tablet the way a program calls an API.** Direct calls come first: Android intents, broadcasts, content providers and files. Element references from a screen snapshot come next, and coordinates are the last resort.
 
-**This is an unofficial project.** It is not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its owner and is used here only to name the device. The commands that only read and `click` were checked on a Manta (A5 X2) with firmware 3.31.45. The other commands that change the tablet are covered by contract tests and still wait for a check on a device. Other models and firmware can differ.
+**This is an unofficial project.** It is not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its owner and is used here only to name the device. These were checked on a Manta (A5 X2) with firmware 3.31.45: the commands that only read, `click`, `note open`, `note new`, `files push` and the refusal of a stale reference. The other commands that change the tablet are covered by contract tests and still wait for a check on a device. Other models and firmware can differ.
 
 ---
 
@@ -46,7 +46,7 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `supernote files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
 | `supernote sync tasks` | Starts a To-do sync and waits until it has run. |
-| `supernote sync calendar` | Asks the Calendar app to sync. |
+| `supernote sync calendar` | Asks the Calendar app to sync. The app must be open, and the answer does not prove a sync ran. |
 | `supernote screen FILE.png` | Saves what the screen shows. |
 | `supernote snapshot` | Lists the screen's elements with short references, and marks each list that can scroll. `--all` reads each list to its end. `--find X` scrolls until an element appears. |
 | `supernote click TARGET` | Presses `@eN` from the last snapshot, or `id:X`, `desc:X`, `text:X`. |

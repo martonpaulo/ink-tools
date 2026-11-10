@@ -498,6 +498,9 @@ echo 2 > "$files/trigger-reads"
 run sync tasks >/dev/null 2>&1
 check "sync tasks reports a refused insert" "$?$(called 'content query')" "10"
 rm "$files/insert-error"
+run sync calendar >/dev/null 2>&1
+check "sync calendar stops when nothing would hear it" "$?$(called 'am broadcast')" "10"
+echo 'com.ratta.supernote.calendar.notify.sync:' > "$files/broadcasts"
 run sync calendar >/dev/null
 check "sync calendar asks the Calendar app" "$(last_call)" "-s $serial shell am broadcast -a com.ratta.supernote.calendar.notify.sync"
 
