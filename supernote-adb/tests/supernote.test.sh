@@ -431,6 +431,7 @@ check "help lists the doctor exit code" "$(python3 -B "$script" --help | grep -c
 # Notes.
 run note open "Note/A note.note" --page 3 >/dev/null
 check "note open passes the page from 0 and quotes the path" "$(grep -cF "am start -W -a android.intent.action.VIEW -n $note_activity --es file_path '$root/Note/A note.note' --es from_app launcher --ei page 2" "$log")$(called "am start")" "11"
+check "note open wakes the screen before it starts the app" "$(grep -n -E 'keyevent WAKEUP|am start' "$log" | head -1 | grep -c WAKEUP)" "1"
 run note open Note/Absent.note >/dev/null 2>&1
 check "note open on a missing file stops with its own code" "$?" "4"
 check "note open on a missing file starts nothing" "$(called 'am start')" "0"
@@ -538,6 +539,13 @@ printf '%s' "$note_activity" > "$files/foreground"
 run click @e2 >/dev/null 2>&1
 check "a reference from another screen stops as stale" "$?" "7"
 check "a stale reference presses nothing" "$(called 'input tap')" "0"
+reset_device
+run snapshot >/dev/null
+cp "$files/tree.xml" "$work/tree-before"
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("[100,200][300,400]","[100,900][300,1000]"))' "$files/tree.xml"
+run click @e2 >/dev/null 2>&1
+check "a changed layout in the same app stops as stale" "$?$(called 'input tap')" "70"
+cp "$work/tree-before" "$files/tree.xml"
 reset_device
 run click desc:Save --screen "$work/local/after.png" >/dev/null
 check "click can save what it changed" "$(wc -c < "$work/local/after.png" | tr -d ' ')" "12"
@@ -902,6 +910,7 @@ PY
 
 # Coordinates and the shell.
 run tap 12 34 >/dev/null
+check "tap wakes the screen first" "$(called 'keyevent WAKEUP')" "1"
 check "tap presses coordinates" "$(called 'shell input tap 12 34')" "1"
 run swipe 1 2 3 4 >/dev/null
 check "swipe drags" "$(called 'shell input swipe 1 2 3 4')" "1"

@@ -133,6 +133,7 @@ ADDRESS_MASK = "[device]"
 CONNECT_TIMEOUT = 10
 PROBE_TIMEOUT = 3
 CALL_TIMEOUT = 30
+START_TIMEOUT = 90  # `am start -W` waits for the app, which is slow on an e-ink screen
 TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 SYNC_TIMEOUT = 60.0
@@ -495,6 +496,10 @@ class Device:
             raise not_found(missing)
         raise Failure(EXIT_FAILED, "device_error", problem or f"device call failed: {command}")
 
+    def wake(self) -> None:
+        """Turn the screen on, doing nothing if it is on. `am start -W` hangs on a sleeping screen."""
+        self.shell("input keyevent WAKEUP")
+
     def test(self, condition: str) -> bool:
         return self.shell(f"if [ {condition} ]; then echo yes; else echo no; fi").strip() == "yes"
 
@@ -611,12 +616,19 @@ def list_mark(element: dict) -> str:
     return f"scrollable more={more}"
 
 
+def element_place(element: dict) -> tuple:
+    return (element["id"], element["x"], element["y"])
+
+
 def resolve_ref(device: Device, reference: str) -> dict:
     """A reference holds only for the screen it was read from; pressing an old one could draw on a note."""
     if not SNAPSHOT_FILE.is_file():
         raise stale("no snapshot yet")
     saved = json.loads(SNAPSHOT_FILE.read_text())
     if device.activity() != saved["activity"]:
+        raise stale("the screen changed since the last snapshot")
+    # One activity can show many screens, such as two notes, so the layout must also match.
+    if [element_place(item) for item in device.elements()] != [element_place(item) for item in saved["elements"]]:
         raise stale("the screen changed since the last snapshot")
     for element in saved["elements"]:
         if element["ref"] == reference:
@@ -677,6 +689,7 @@ def after_action(device: Device, args: argparse.Namespace, before: str, result: 
 
 
 def press(device: Device, args: argparse.Namespace, x: int, y: int, result: dict) -> tuple[dict, str]:
+    device.wake()
     before = device.activity()
     device.shell(f"input tap {x} {y}")
     result.update({"x": x, "y": y})
@@ -685,7 +698,8 @@ def press(device: Device, args: argparse.Namespace, x: int, y: int, result: dict
 
 
 def start_activity(device: Device, arguments: str) -> None:
-    output = device.shell(f"am start -W {arguments}".rstrip())
+    device.wake()
+    output = device.shell(f"am start -W {arguments}".rstrip(), timeout=START_TIMEOUT)
     if "Error" in output or "Status: ok" not in output:
         raise Failure(EXIT_FAILED, "device_error", output.strip())
 
@@ -1219,6 +1233,7 @@ def command_tap(device: Device, args: argparse.Namespace):
 
 
 def command_swipe(device: Device, args: argparse.Namespace):
+    device.wake()
     before = device.activity()
     device.shell(f"input swipe {args.x1} {args.y1} {args.x2} {args.y2}")
     done, lines = after_action(device, args, before, {})
