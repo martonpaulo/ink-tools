@@ -51,6 +51,7 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote wait activity\|file\|element X` | Waits for a condition, with a time limit. |
 | `supernote apps` | Lists installed packages. |
 | `supernote plugin ls\|push` | Lists plugins, or copies one to `MyStyle`. The install is then done on the tablet. |
+| `supernote plugin install FILE.snplg` | Copies a plugin, installs or updates it through named elements, and proves it from the plugin list. |
 | `supernote logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission. |
 | `supernote history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `supernote tap\|swipe` | Presses by coordinates, the last resort. |
@@ -85,7 +86,7 @@ The command reads no secret.
 
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **A sleeping tablet does not answer.** The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
-- **Installing a plugin needs the tablet's screen.** The platform offers no other route.
+- **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install presses named elements and stops on a screen it does not expect.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them.
 - **ADB has wide access.** A computer you authorize can read and delete every note, and Wi-Fi mode opens a port on your network. See [`SECURITY.md`](SECURITY.md).
 

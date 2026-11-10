@@ -82,6 +82,13 @@ case "$1" in
                     echo 'No result found.'
                 fi ;;
             "content query"*) cat "$ADB_FILES/rows" ;;
+            "input tap"*)
+                if [ -f "$ADB_FILES/taps-left" ]; then
+                    left=$(($(cat "$ADB_FILES/taps-left") - 1))
+                    echo "$left" > "$ADB_FILES/taps-left"
+                    [ "$left" -eq 0 ] && cp "$ADB_FILES/rows-after" "$ADB_FILES/rows"
+                fi
+                : ;;
             "input swipe"*)
                 if [ -f "$ADB_FILES/page" ]; then
                     set -- $2
@@ -397,6 +404,52 @@ run plugin push "$work/local/my.snplg" >/dev/null
 check "plugin push goes to MyStyle" "$(called " push $work/local/my.snplg $root/MyStyle/my.snplg")" "1"
 run plugin push "$work/local/old.txt" >/dev/null 2>&1
 check "plugin push refuses another kind of file" "$?" "2"
+python3 - "$work/local/test.snplg" <<'PY'
+import json, sys, zipfile
+with zipfile.ZipFile(sys.argv[1], "w") as archive:
+    archive.writestr("plugin/PluginConfig.json", json.dumps({"pluginID": "new.plugin", "versionName": "2.0"}))
+PY
+cat > "$work/plugin-screen" <<'XML'
+<?xml version='1.0' ?><hierarchy rotation="0"><node text="Apps" resource-id="" content-desc="" class="T" bounds="[0,0][10,10]" /><node text="Plugins" resource-id="" content-desc="" class="T" bounds="[10,0][20,10]" /><node text="Select Plugin Package" resource-id="" content-desc="" class="T" bounds="[20,0][30,10]" /><node text="Enabled (9/10)" resource-id="" content-desc="" class="T" bounds="[30,0][40,10]" /><node text="test.snplg" resource-id="" content-desc="" class="T" bounds="[40,0][50,10]" /><node text="" resource-id="a:id/top_save" content-desc="" class="T" bounds="[50,0][60,10]" /></node></hierarchy>
+XML
+sed -i.bak 's|</node></hierarchy>|</hierarchy>|' "$work/plugin-screen"
+cp "$files/tree.xml" "$work/tree-saved"
+cp "$files/rows" "$work/rows-saved"
+cp "$work/plugin-screen" "$files/tree.xml"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after"
+wc -c < "$work/local/test.snplg" | tr -d ' ' > "$files/size"
+echo 5 > "$files/taps-left"
+result=$(run plugin install "$work/local/test.snplg" --json 2>"$work/err")
+check "plugin install proves the new version" "$(printf '%s' "$result" | field "['action'],d['version'],d['row']['versionName']")" "('updated', '2.0', '2.0')"
+check "plugin install opens Settings" "$(called "am start -W -n com.ratta.settings/.SettingsActivity")" "1"
+check "plugin install presses each step" "$(called 'input tap')" "5"
+check "plugin install reports the limit before installing" "$(grep -c 'plugins enabled: 9 of 10' "$work/err")" "1"
+check "plugin install pushes the file" "$(called " push $work/local/test.snplg $root/MyStyle/test.snplg")" "1"
+run plugin install "$work/local/test.snplg" >/dev/null 2>&1
+check "plugin install refuses the same version" "$?$(called ' push ')" "50"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after"
+echo 5 > "$files/taps-left"
+check "plugin install says when the plugin is new" "$(run plugin install "$work/local/test.snplg" --json 2>/dev/null | field "['action']")" "installed"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+echo 99 > "$files/taps-left"
+run plugin install "$work/local/test.snplg" --timeout 0 >/dev/null 2>&1
+check "plugin install gives up when the read-back never shows it" "$?" "6"
+python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace("Plugins\"","Elsewhere\""))' "$work/plugin-screen" "$files/tree.xml"
+echo 99 > "$files/taps-left"
+run plugin install "$work/local/test.snplg" --step-timeout 0 >/dev/null 2>&1
+check "an unexpected screen stops the install with its own code" "$?" "9"
+check "an unexpected screen presses nothing more" "$(called 'input tap')" "1"
+printf 'hello' > "$work/local/bad.snplg"
+run plugin install "$work/local/bad.snplg" >/dev/null 2>&1
+check "a file with no plugin config stops before any copy" "$?$(called ' push ')" "20"
+run plugin install "$work/local/old.txt" >/dev/null 2>&1
+check "plugin install refuses another kind of file" "$?" "2"
+rm -f "$files/taps-left" "$files/rows-after"
+printf '5\n' > "$files/size"
+cp "$work/tree-saved" "$files/tree.xml"
+cp "$work/rows-saved" "$files/rows"
 output=$(run logs --tag Sync --lines 5)
 check "logs read without clearing" "$(last_call)" "-s $serial logcat -d -v time -t 5 -s Sync"
 check "logs mask a credential" "$(printf '%s' "$output" | grep -c 'abcdef')" "0"

@@ -21,6 +21,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   apps                           installed packages
   plugin ls                      installed plugins
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
+  plugin install FILE.snplg      copy, install or update through named elements, and prove it
   logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
                                  --level, --package, --pid, --grep, --since, --since-last,
                                  --follow and --plugin
@@ -53,6 +54,7 @@ import tempfile
 import time
 import uuid
 import xml.etree.ElementTree as ElementTree
+import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -65,6 +67,7 @@ EXIT_EXISTS = 5
 EXIT_TIMEOUT = 6
 EXIT_STALE = 7
 EXIT_BUSY = 8
+EXIT_UNEXPECTED_SCREEN = 9
 EXIT_CODES = """exit codes:
   0  done
   1  the device refused or the call failed
@@ -75,6 +78,7 @@ EXIT_CODES = """exit codes:
   6  the wait timed out
   7  the reference is stale: take a new snapshot
   8  the screen never settled, so no snapshot came back: try again
+  9  a step found a screen it did not expect, and pressed nothing more
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -110,6 +114,8 @@ CALL_TIMEOUT = 30
 TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 SYNC_TIMEOUT = 60.0
+STEP_TIMEOUT = 20.0
+INSTALL_TIMEOUT = 60.0
 WAIT_INTERVAL = 0.5
 DEFAULT_LOG_LINES = 100
 DEFAULT_HISTORY_RUNS = 50
@@ -137,6 +143,12 @@ PLUGIN_SUFFIX = ".snplg"
 PLUGIN_FOLDER = "MyStyle"
 PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
+PLUGIN_CONFIG_FILE = "PluginConfig.json"
+SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
+PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
+PLUGIN_PICK_STEP = "text:Select Plugin Package"
+PLUGIN_CONFIRM_STEP = "id:top_save"
+PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
 FILE_SYNC_ACTION = "com.ratta.supernote.filesync.action.START_FILE_SYNC"
 FILE_SYNC_EXTRA = "com.ratta.supernote.filesync.FILE_PATH"
 CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
@@ -181,6 +193,7 @@ FAILURE_ADVICE = {
     "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
     "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
     "busy": ("the screen did not settle", "supernote snapshot"),
+    "unexpected_screen": ("the screen is not the one this step expects", "supernote snapshot"),
     "log_error": ("the command's own log could not be read", "supernote status"),
 }
 
@@ -559,12 +572,16 @@ def press(device: Device, args: argparse.Namespace, x: int, y: int, result: dict
     return done, "\n".join(lines)
 
 
+def start_activity(device: Device, arguments: str) -> None:
+    output = device.shell(f"am start -W {arguments}".rstrip())
+    if "Error" in output or "Status: ok" not in output:
+        raise Failure(EXIT_FAILED, "device_error", output.strip())
+
+
 def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str]) -> tuple[dict, str]:
     before = device.activity()
     quoted = " ".join(shlex.quote(part) for part in extras)
-    output = device.shell(f"am start -W -a android.intent.action.VIEW -n {NOTE_ACTIVITY} {quoted}")
-    if "Error" in output or "Status: ok" not in output:
-        raise Failure(EXIT_FAILED, "device_error", output.strip())
+    start_activity(device, f"-a android.intent.action.VIEW -n {NOTE_ACTIVITY} {quoted}")
     done, lines = after_action(device, args, before, {"path": path})
     return done, "\n".join([f"opened: {path}", *lines])
 
@@ -909,7 +926,7 @@ def parse_rows(output: str) -> list[dict]:
 
 
 def command_plugin_ls(device: Device, args: argparse.Namespace):
-    rows = parse_rows(device.shell(f"content query --uri {PLUGIN_URI}"))
+    rows = plugin_rows(device)
     return {"plugins": rows}, "\n".join(json.dumps(row, ensure_ascii=False) for row in rows)
 
 
@@ -919,6 +936,93 @@ def command_plugin_push(device: Device, args: argparse.Namespace):
     data = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), True)
     data["next"] = PLUGIN_NEXT_STEP
     return data, f"pushed: {data['path']}\n{PLUGIN_NEXT_STEP}"
+
+
+def plugin_rows(device: Device) -> list[dict]:
+    return parse_rows(device.shell(f"content query --uri {PLUGIN_URI}"))
+
+
+def read_plugin_config(path: str) -> dict:
+    """A plugin's id and version, from the file itself, so the read-back has something to prove."""
+    if not path.endswith(PLUGIN_SUFFIX):
+        raise bad_usage(f"a plugin file ends in {PLUGIN_SUFFIX}: {path}")
+    if not os.path.isfile(path):
+        raise not_found(path)
+    try:
+        with zipfile.ZipFile(path) as archive:
+            member = next(name for name in archive.namelist() if name.rpartition("/")[2] == PLUGIN_CONFIG_FILE)
+            config = json.loads(archive.read(member))
+        return {"id": config["pluginID"], "version": config["versionName"]}
+    except (zipfile.BadZipFile, StopIteration, KeyError, ValueError) as error:
+        raise bad_usage(f"{path} holds no readable {PLUGIN_CONFIG_FILE} with pluginID and versionName") from error
+
+
+def expect_element(device: Device, selector: str, limit: float) -> dict:
+    """The one element this step needs, or a stop before anything else is pressed."""
+    started = time.monotonic()
+    while True:
+        try:
+            matches = find_selector(device.elements(attempts=1), selector)
+        except Failure as failure:
+            if failure.code != EXIT_BUSY:
+                raise
+            matches = []
+        if len(matches) == 1:
+            return matches[0]
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{selector} is not on the screen as one element after {limit:g} s; nothing more was pressed")
+        time.sleep(WAIT_INTERVAL)
+
+
+def press_element(device: Device, element: dict) -> None:
+    device.shell(f"input tap {element['x']} {element['y']}")
+
+
+def read_enabled_limit(device: Device) -> dict:
+    for element in device.elements():
+        found = PLUGIN_ENABLED.fullmatch(element["text"])
+        if found:
+            return {"enabled": int(found[1]), "limit": int(found[2])}
+    return {"enabled": None, "limit": None}
+
+
+def wait_for_plugin(device: Device, config: dict, limit: float) -> dict:
+    started = time.monotonic()
+    while True:
+        for row in plugin_rows(device):
+            if row.get("pluginID") == config["id"] and row.get("versionName", config["version"]) == config["version"]:
+                return row
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{config['id']} {config['version']} is not in the plugin list after {limit:g} s")
+        time.sleep(WAIT_INTERVAL)
+
+
+def command_plugin_install(device: Device, args: argparse.Namespace):
+    config = read_plugin_config(args.file)
+    name = os.path.basename(args.file)
+    installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
+    if installed and installed[0].get("versionName") == config["version"]:
+        raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "supernote plugin ls")
+    pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), True)
+    start_activity(device, f"-n {SETTINGS_ACTIVITY}")
+    for step in PLUGIN_PATH_STEPS:
+        press_element(device, expect_element(device, step, args.step_timeout))
+    pick = expect_element(device, PLUGIN_PICK_STEP, args.step_timeout)
+    limit = read_enabled_limit(device)
+    print(f"plugins enabled: {limit['enabled']} of {limit['limit']}", file=sys.stderr, flush=True)
+    press_element(device, pick)
+    press_element(device, scroll_until_found(device, f"text:{name}", SCROLL_STEPS)["found"])
+    press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
+    row = wait_for_plugin(device, config, args.timeout)
+    data = {
+        "plugin": config["id"],
+        "version": config["version"],
+        "action": "updated" if installed else "installed",
+        "path": pushed["path"],
+        **limit,
+        "row": row,
+    }
+    return data, f"{data['action']}: {config['id']} {config['version']}"
 
 
 def parse_log(line: str) -> dict:
@@ -1147,6 +1251,10 @@ def build_parser() -> argparse.ArgumentParser:
     plugins = noun("plugin")
     add(plugins, "ls", command_plugin_ls)
     add(plugins, "push", command_plugin_push).add_argument("file")
+    installing = add(plugins, "install", command_plugin_install)
+    installing.add_argument("file")
+    installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
+    installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
 
     logs = add(commands, "logs", command_logs)
     logs.add_argument("--tag")
