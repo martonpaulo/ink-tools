@@ -2,7 +2,11 @@ import {readFileSync} from 'fs';
 import {join} from 'path';
 import type {SourceAdapter} from '../src/search-core/adapter';
 import {parseSearchResponse, searchUrl} from '../src/search-core/adapters/commons';
-import {hasAdultWords} from '../src/search-core/filters/adult';
+import {
+  hasAdultCategories,
+  hasAdultWords,
+  isAdult,
+} from '../src/search-core/filters/adult';
 import {searchAll} from '../src/search-core/search';
 import type {SearchResult} from '../src/search-core/types';
 
@@ -64,6 +68,30 @@ describe('the adult filter (#69)', () => {
   ])('keeps «%s»', text => {
     expect(hasAdultWords(text)).toBe(false);
   });
+
+  // Explicit photos for «breast» named only by their categories (live, 2026-11-10).
+  it.each([
+    'Breasts|Self-published work',
+    'GFDL|Human surface anatomy of female breasts',
+    "CC-Zero|Hand on chest|Transgender women's breasts",
+  ])('leaves out the categories «%s»', categories => {
+    expect(hasAdultCategories(categories)).toBe(true);
+    expect(isAdult({title: 'File:Breast.jpg'}, categories)).toBe(true);
+  });
+
+  it.each(['Chicken breasts with rice', 'Baby bottle nipple'])(
+    'keeps the title «%s»',
+    title => {
+      expect(isAdult({title}, 'Food|Self-published work')).toBe(false);
+    },
+  );
+
+  it.each(['Breast cancer|SVG breast cancer', 'Body plan|Featured diagrams'])(
+    'keeps the categories «%s»',
+    categories => {
+      expect(hasAdultCategories(categories)).toBe(false);
+    },
+  );
 
   it('asks Commons for the categories in the same request', () => {
     expect(searchUrl('body', {drawings: true})).toContain(

@@ -373,9 +373,22 @@ Adult and explicit pictures never show, from any source, with no setting to turn
 2. Every result's title is checked in the search pipeline, after the sources answer and before the ranking, so a new source is covered with no change.
 3. Commons also sends each file's categories in the same request (`Categories` in `iiextmetadatafilter`) [CONFIRMED 2026-11-07, live: «nude filetype:drawing» returned categories such as «Nude people in art», «Ecchi», «Fan service»]; a file is left out while its response is read, so it never counts toward the six drawings. The categories add a few hundred bytes per file to the response.
 4. Openclipart's search page carries no adult flag or tag, only the title [INFERENCE from the fixture page]; Openverse's `mature` flag applies if Openverse is ever added.
-5. The search cache version went to 3, so no cached search shows a picture the filter now leaves out.
+5. A few words are adult only in a Commons category name and are never checked in a title: «breasts», «nipple», «areola» and their plurals. «Breasts», «Human surface anatomy of female breasts» and «Transgender women's breasts» hold explicit photos whose titles a title check cannot safely leave out; a title keeps «chicken breasts» and a baby bottle's «nipple».
+6. The search cache version goes up with each change to the rule (3, then 6), so no cached search shows a picture the filter now leaves out.
 
-Measured on 2026-11-07 on two live Commons responses (the session IP was throttled for the rest): «nude filetype:drawing» kept 4 of 18 files, «body filetype:drawing» 17 of 18 (the one left out is a nude couple diagram, an accepted false positive). One kept file is an erotic illustration whose categories name only its book: a picture with no adult word anywhere still shows [TO TEST: the probe words body, woman, breast, man, girl in the search lab and on the device].
+Measured on 2026-11-07 on two live Commons responses (the session IP was throttled for the rest): «nude filetype:drawing» kept 4 of 18 files, «body filetype:drawing» 17 of 18 (the one left out is a nude couple diagram, an accepted false positive). One kept file is an erotic illustration whose categories name only its book: a picture with no adult word anywhere still shows.
+
+Measured on 2026-11-10 on live Commons responses of 18 files for the probe words body, woman, breast, man and girl, each plain and with `filetype:drawing` (10 responses, 180 files), left out before and after rule 5:
+
+| Probe | Plain | Drawing |
+| :--- | :--- | :--- |
+| body | 0, 0 | 1, 1 |
+| woman | 1, 1 | 0, 0 |
+| breast | 12, 15 | 4, 6 |
+| man | 0, 0 | 2, 2 |
+| girl | 0, 0 | 2, 2 |
+
+Before rule 5, plain «breast» kept 3 explicit photos named only by their categories; after it, it keeps none. It still keeps a breast MRI, a bird and «Beauty Revealed» (Sarah Goodridge, 1828, a painting of bare breasts whose categories name only the artwork). Left out as accepted false positives: anatomy diagrams (Tanner scale, breast quadrants), the Pioneer plaque, «Anime Girl» and a Blissymbols sign. A picture with no adult word in its title or categories still shows [TO TEST on the device: the same probe words through the plugin].
 
 ### 5.6 OpenMoji: symbols for abstract words
 

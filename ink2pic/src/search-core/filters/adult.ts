@@ -114,6 +114,22 @@ const ADULT_STEMS = [
   'эрот',
 ];
 
+/**
+ * Words adult only in a Commons category name, never checked in a title: «Breasts», «Human surface
+ * anatomy of female breasts» and «Transgender women's breasts» hold explicit photos whose titles
+ * name nothing a title check can safely leave out (measured 2026-11-10, probe word «breast»,
+ * #69). A title keeps «chicken breasts» and «nipple» (a baby bottle); a category such as «SVG
+ * breasts» left out with them is an accepted false positive.
+ */
+const ADULT_CATEGORY_WORDS = new Set([
+  'breasts',
+  'nipple',
+  'nipples',
+  'areola',
+  'areolas',
+  'areolae',
+]);
+
 /** Phrases, mostly Commons category names, that name adult content without one word above. */
 const ADULT_PHRASES = [
   'human breasts',
@@ -151,12 +167,20 @@ export function hasAdultWords(text: string): boolean {
   return ADULT_PHRASES.some(phrase => joined.includes(` ${phrase} `));
 }
 
+/** True when Commons category names name adult content, with the category-only words too. */
+export function hasAdultCategories(categories: string): boolean {
+  return (
+    hasAdultWords(categories) ||
+    plainWords(categories).some(word => ADULT_CATEGORY_WORDS.has(word))
+  );
+}
+
 /** A result to leave out: its title, or the categories its source sent with it, are adult. */
 export function isAdult(
   result: Pick<SearchResult, 'title'>,
   categories = '',
 ): boolean {
-  return hasAdultWords(result.title) || hasAdultWords(categories);
+  return hasAdultWords(result.title) || hasAdultCategories(categories);
 }
 
 /** The results with every adult one left out, in their order. */
