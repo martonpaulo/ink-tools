@@ -403,13 +403,13 @@ check "routes on an unknown package stops with its own code" "$?" "4"
 
 # Doctor.
 : > "$files/gone"
-printf 'com.ratta.supernote.filesync.action.START_FILE_SYNC:\ncom.ratta.supernote.calendar.notify.sync:\n' > "$files/broadcasts"
+printf 'com.ratta.supernote.calendar.notify.sync:\n' > "$files/broadcasts"
 result=$(run doctor --json)
-check "doctor reports every call" "$(printf '%s' "$result" | field "['calls'].__len__(),d['missing']")" "(6, 0)"
+check "doctor reports every call" "$(printf '%s' "$result" | field "['calls'].__len__(),d['missing']")" "(5, 0)"
 check "doctor names the firmware" "$(printf '%s' "$result" | field "['firmware']")" "Firmware.1"
 check "doctor starts nothing" "$(called 'am start')$(called 'am broadcast')" "00"
 check "doctor sends nothing to a provider" "$(called 'content ')" "0"
-check "doctor prints one line per call" "$(run doctor | grep -c '^ok')" "6"
+check "doctor prints one line per call" "$(run doctor | grep -c '^ok')" "5"
 echo 'com.ratta.supernote.task.provider' > "$files/gone"
 run doctor >"$work/out" 2>/dev/null
 check "doctor stops with its own code when a call is missing" "$?" "10"
@@ -417,10 +417,10 @@ check "doctor names the missing call" "$(grep -c '^MISSING.provider.content://co
 result=$(run doctor --json 2>/dev/null)
 check "doctor keeps its data in JSON on a failure" "$(printf '%s' "$result" | field "['error'],d['missing']")" "('missing_call', 1)"
 echo 'com.ratta.supernote.calendar.notify.sync' > "$files/gone"
-check "doctor accepts a receiver registered while its app runs" "$(run doctor --json | field "['calls'][3]['exists']")" "True"
+check "doctor accepts a receiver registered while its app runs" "$(run doctor --json | field "['calls'][2]['exists']")" "True"
 : > "$files/broadcasts"
 result=$(run doctor --json)
-check "doctor does not call an idle app's receiver missing" "$(printf '%s' "$result" | field "['calls'][3]['exists'],d['missing']")" "(None, 0)"
+check "doctor does not call an idle app's receiver missing" "$(printf '%s' "$result" | field "['calls'][2]['exists'],d['missing']")" "(None, 0)"
 check "doctor says unknown for an idle app's receiver" "$(run doctor | grep -c '^unknown')" "1"
 echo "$note_activity" > "$files/gone"
 run doctor >/dev/null 2>&1
@@ -475,10 +475,6 @@ run files push "$work/local/absent" INBOX >/dev/null 2>&1
 check "files push of a missing local file stops with its own code" "$?" "4"
 
 # Sync.
-run sync file "Note/A note.note" >/dev/null
-check "sync file sends the path" "$(last_call | grep -cF "am broadcast -a com.ratta.supernote.filesync.action.START_FILE_SYNC --es com.ratta.supernote.filesync.FILE_PATH '$root/Note/A note.note'")" "1"
-run sync file Note/Absent.note >/dev/null 2>&1
-check "sync file on a missing file stops with its own code" "$?" "4"
 echo 2 > "$files/trigger-reads"
 result=$(run sync tasks --json)
 check "sync tasks waits until the sync removed its row" "$(printf '%s' "$result" | field "['app']")" "tasks"
@@ -503,6 +499,9 @@ check "sync tasks reports a refused insert" "$?$(called 'content query')" "10"
 rm "$files/insert-error"
 run sync calendar >/dev/null
 check "sync calendar asks the Calendar app" "$(last_call)" "-s $serial shell am broadcast -a com.ratta.supernote.calendar.notify.sync"
+
+run sync file "Note/A note.note" >/dev/null 2>&1
+check "sync file is gone, because Android refuses its broadcast" "$?" "2"
 
 # Screen.
 run screen "$work/local/a.png" >/dev/null
@@ -748,7 +747,7 @@ cp "$work/log.saved" "$files/log"
 check "logs parse in JSON" "$(run logs --json | field "['lines'][0]['tag'],d['lines'][0]['pid']")" "('Sync', 1218)"
 
 # What the command can reach.
-for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync file Note/a.note" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
+for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
     # shellcheck disable=SC2086 # each entry is a command with its arguments
     run --read-only $changing >/dev/null 2>&1
     check "read-only refuses: $changing" "$?$(wc -l < "$log" | tr -d ' ')" "110"

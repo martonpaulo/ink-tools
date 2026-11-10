@@ -45,7 +45,6 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote note open PATH --page N` | Opens a note at a page, counted from 1. |
 | `supernote note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `supernote files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
-| `supernote sync file PATH` | Asks the tablet to sync one file. |
 | `supernote sync tasks` | Starts a To-do sync and waits until it has run. |
 | `supernote sync calendar` | Asks the Calendar app to sync. |
 | `supernote screen FILE.png` | Saves what the screen shows. |
@@ -94,6 +93,7 @@ The command reads no secret.
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **A sleeping tablet may not answer.** With the global setting `wifi_sleep_policy` at `2`, a Manta on firmware 3.31.45 kept answering while asleep for the 15 minutes measured, and lost 1% of battery with one port check a minute. A longer sleep is not measured. The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install presses named elements and stops on a screen it does not expect.
+- **Files sync by themselves.** On firmware 3.31.45 the tablet's own watcher picks up a copied file, and Android refuses the app's sync broadcast from ADB, so there is no `sync file` command.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `supernote doctor` after one. It proves a call exists, not that it still works.
 - **ADB has wide access.** ADB accepts only computers the tablet has authorized. One of those computers can read and delete every note, and Wi-Fi mode opens a port on your network until `supernote wifi off`. See [`SECURITY.md`](SECURITY.md).
 

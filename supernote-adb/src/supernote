@@ -13,7 +13,6 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   files ls [PATH]                list a folder of the shared storage
   files pull PATH LOCAL          copy from the shared storage
   files push LOCAL PATH          copy to the shared storage; refuses to replace without --overwrite
-  sync file PATH                 ask the device to sync one file
   sync tasks                     start a To-do sync and wait until it has run
   sync calendar                  ask the Calendar app to sync
   screen FILE.png                save what the screen shows
@@ -180,8 +179,6 @@ PICKER_NEXT_PAGE = "id:ll_next_page"
 PICKER_PAGE_NUMBER = "id:content_page_number"
 PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
-FILE_SYNC_ACTION = "com.ratta.supernote.filesync.action.START_FILE_SYNC"
-FILE_SYNC_EXTRA = "com.ratta.supernote.filesync.FILE_PATH"
 CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
 TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
 SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
@@ -192,13 +189,13 @@ JOB_ROUTES = (
     {"job": "open a note", "command": "note open", "kind": "activity", "name": NOTE_ACTIVITY},
     {"job": "create a note", "command": "note new", "kind": "activity", "name": NOTE_ACTIVITY},
     {"job": "open Settings for a plugin install", "command": "plugin install", "kind": "activity", "name": SETTINGS_ACTIVITY},
-    {"job": "sync one file", "command": "sync file", "kind": "receiver", "name": FILE_SYNC_ACTION, "dynamic": True},
     {"job": "sync the Calendar", "command": "sync calendar", "kind": "receiver", "name": CALENDAR_SYNC_ACTION, "dynamic": True},
     {"job": "sync the To-do", "command": "sync tasks", "kind": "provider", "name": TASKS_URI},
     {"job": "list plugins", "command": "plugin ls", "kind": "provider", "name": PLUGIN_URI},
 )
 JOBS_WITHOUT_ROUTE = (
     {"job": "install or update a plugin", "needs": "the screen", "command": "plugin install"},
+    {"job": "ask for a sync of one file", "needs": "nothing: the tablet syncs a changed file by itself, and Android refuses its broadcast to the shell user", "command": ""},
     {"job": "search the InkHub store", "needs": "Ratta's servers, which wait for the owner's yes", "command": ""},
 )
 DIRECT_CALLS = tuple({(route["kind"], route["name"]): route for route in JOB_ROUTES}.values())
@@ -1047,21 +1044,12 @@ def command_files_push(device: Device, args: argparse.Namespace):
     return data, f"pushed: {data['path']} ({data['bytes']} bytes)"
 
 
-def broadcast(device: Device, action: str, *extras: str) -> dict:
-    quoted = " ".join(shlex.quote(part) for part in extras)
-    output = device.shell(f"am broadcast -a {action} {quoted}".rstrip()).strip()
+def broadcast(device: Device, action: str) -> dict:
+    output = device.shell(f"am broadcast -a {action}").strip()
     match = re.search(r"Broadcast completed: result=(-?\d+)", output)
     if not match:
         raise Failure(EXIT_FAILED, "device_error", output or f"no answer to {action}")
     return {"action": action, "result": int(match.group(1))}
-
-
-def command_sync_file(device: Device, args: argparse.Namespace):
-    path = remote_path(args.path)
-    if not device.test(f"-e {shlex.quote(path)}"):
-        raise not_found(path)
-    data = {"path": path, **broadcast(device, FILE_SYNC_ACTION, "--es", FILE_SYNC_EXTRA, path)}
-    return data, f"sync asked: {path}"
 
 
 def trigger_row_exists(device: Device, task_id: str) -> bool:
@@ -1659,7 +1647,6 @@ def build_parser() -> argparse.ArgumentParser:
     pushed.add_argument("--overwrite", action="store_true", help="replace an existing file")
 
     syncs = noun("sync")
-    add(syncs, "file", command_sync_file, changes=True).add_argument("path")
     tasks = add(syncs, "tasks", command_sync_tasks, changes=True)
     tasks.add_argument("--timeout", type=float, default=SYNC_TIMEOUT, help="seconds to wait for the sync")
     add(syncs, "calendar", command_sync_calendar, changes=True)
