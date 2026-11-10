@@ -71,6 +71,15 @@ case "$1" in
             "stat -c"*) cat "$ADB_FILES/size" ;;
             "pm list packages -3") echo package:com.example.one ;;
             "pm list packages -s") echo package:com.ratta.supernote.note ;;
+            "content insert"*) [ -f "$ADB_FILES/insert-error" ] && cat "$ADB_FILES/insert-error"; : ;;
+            "content query --uri content://com.ratta.supernote.task.provider/tasks_table"*)
+                left=$(cat "$ADB_FILES/trigger-reads")
+                if [ "$left" -gt 0 ]; then
+                    [ "$left" -lt 100 ] && echo $((left - 1)) > "$ADB_FILES/trigger-reads"
+                    echo 'Row: 0 id=31'
+                else
+                    echo 'No result found.'
+                fi ;;
             "content query"*) cat "$ADB_FILES/rows" ;;
             "input swipe"*)
                 if [ -f "$ADB_FILES/page" ]; then
@@ -207,8 +216,23 @@ run sync file "Note/A note.note" >/dev/null
 check "sync file sends the path" "$(last_call | grep -cF "am broadcast -a com.ratta.supernote.filesync.action.START_FILE_SYNC --es com.ratta.supernote.filesync.FILE_PATH '$root/Note/A note.note'")" "1"
 run sync file Note/Absent.note >/dev/null 2>&1
 check "sync file on a missing file stops with its own code" "$?" "4"
-run sync tasks >/dev/null
-check "sync tasks asks the To-do app" "$(last_call)" "-s $serial shell am broadcast -a com.ratta.supernote.launcher.clicksync"
+echo 2 > "$files/trigger-reads"
+result=$(run sync tasks --json)
+check "sync tasks waits until the sync removed its row" "$(printf '%s' "$result" | field "['app']")" "tasks"
+check "sync tasks sends no broadcast Android refuses" "$(called 'am broadcast')" "0"
+check "sync tasks inserts a row already marked as deleted" "$(grep -c 'content insert --uri content://com.ratta.supernote.task.provider/tasks_table --bind taskId:s:.* --bind title:s:supernote-sync-trigger .*--bind deleted:i:1 --bind hasSync:i:0' "$log")" "1"
+check "sync tasks reads only its own row" "$(grep 'content query' "$log" | grep -vcF "taskId=")" "0"
+echo 0 > "$files/trigger-reads"
+run sync tasks >/dev/null 2>"$work/err"
+check "sync tasks reports an insert that did not hold" "$?" "1"
+echo 100 > "$files/trigger-reads"
+run sync tasks --timeout 0 >/dev/null 2>&1
+check "sync tasks gives up with its own code" "$?" "6"
+echo 'Error: provider refused' > "$files/insert-error"
+echo 2 > "$files/trigger-reads"
+run sync tasks >/dev/null 2>&1
+check "sync tasks reports a refused insert" "$?$(called 'content query')" "10"
+rm "$files/insert-error"
 run sync calendar >/dev/null
 check "sync calendar asks the Calendar app" "$(last_call)" "-s $serial shell am broadcast -a com.ratta.supernote.calendar.notify.sync"
 

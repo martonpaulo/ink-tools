@@ -43,7 +43,8 @@ Keep the address in `~/.config/supernote-adb/address` instead of the variable, i
 | `supernote note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `supernote files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
 | `supernote sync file PATH` | Asks the tablet to sync one file. |
-| `supernote sync tasks\|calendar` | Asks the To-do or the Calendar app to sync. |
+| `supernote sync tasks` | Starts a To-do sync and waits until it has run. |
+| `supernote sync calendar` | Asks the Calendar app to sync. |
 | `supernote screen FILE.png` | Saves what the screen shows. |
 | `supernote snapshot` | Lists the screen's elements with short references, and marks each list that can scroll. `--all` reads each list to its end. `--find X` scrolls until an element appears. |
 | `supernote click TARGET` | Presses `@eN` from the last snapshot, or `id:X`, `desc:X`, `text:X`. |
@@ -84,7 +85,6 @@ The command reads no secret.
 
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **Installing a plugin needs the tablet's screen.** The platform offers no other route.
-- **`supernote sync tasks` fails.** Android refuses that broadcast from ADB ([details](https://github.com/martonpaulo/supernote-adb/issues/11)).
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them.
 - **ADB has wide access.** A computer you authorize can read and delete every note, and Wi-Fi mode opens a port on your network. See [`SECURITY.md`](SECURITY.md).
 

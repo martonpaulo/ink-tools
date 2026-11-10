@@ -11,7 +11,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   files pull PATH LOCAL          copy from the shared storage
   files push LOCAL PATH          copy to the shared storage; refuses to replace without --overwrite
   sync file PATH                 ask the device to sync one file
-  sync tasks | sync calendar     ask the To-do (and Knowledge) or the Calendar app to sync
+  sync tasks                     start a To-do sync and wait until it has run
+  sync calendar                  ask the Calendar app to sync
   screen FILE.png                save what the screen shows
   snapshot                       list the screen's elements with short references;
                                  --all reads each list to its end, --find X scrolls to an element
@@ -49,6 +50,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 import xml.etree.ElementTree as ElementTree
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -105,12 +107,14 @@ CONNECT_TIMEOUT = 10
 CALL_TIMEOUT = 30
 TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
+SYNC_TIMEOUT = 60.0
 WAIT_INTERVAL = 0.5
 DEFAULT_LOG_LINES = 100
 DEFAULT_HISTORY_RUNS = 50
 PLUGIN_LOG_WINDOW = 5000  # a plugin's lines are picked out of this many recent ones
 FOLLOW_CHUNK = 65536
 TIMING_DIGITS = 3
+MILLISECONDS = 1000
 PERIOD_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
 SCROLL_STEPS = 20
 SCROLL_START = 0.8  # a swipe runs between these fractions of the list's height
@@ -133,10 +137,9 @@ PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 FILE_SYNC_ACTION = "com.ratta.supernote.filesync.action.START_FILE_SYNC"
 FILE_SYNC_EXTRA = "com.ratta.supernote.filesync.FILE_PATH"
-APP_SYNC_ACTIONS = {
-    "tasks": "com.ratta.supernote.launcher.clicksync",
-    "calendar": "com.ratta.supernote.calendar.notify.sync",
-}
+CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
+TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
+SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 NOT_FOUND_ERRORS = ("No such file", "does not exist")
@@ -658,9 +661,40 @@ def command_sync_file(device: Device, args: argparse.Namespace):
     return data, f"sync asked: {path}"
 
 
-def command_sync_app(device: Device, args: argparse.Namespace):
-    data = {"app": args.sync, **broadcast(device, APP_SYNC_ACTIONS[args.sync])}
-    return data, f"sync asked: {args.sync}"
+def trigger_row_exists(device: Device, task_id: str) -> bool:
+    """Read only the trigger row, never another task."""
+    where = shlex.quote(f"taskId='{task_id}'")
+    return bool(parse_rows(device.shell(f"content query --uri {TASKS_URI} --projection id --where {where}")))
+
+
+def command_sync_tasks(device: Device, args: argparse.Namespace):
+    """Android refuses the app's own broadcast to the `shell` user. An insert does start a sync, and
+    a row already marked as deleted removes itself in that sync, so nothing stays behind."""
+    task_id = uuid.uuid4().hex
+    now = str(int(time.time() * MILLISECONDS))
+    binds = [
+        f"taskId:s:{task_id}", f"title:s:{SYNC_TRIGGER_TITLE}", "status:s:needsAction", f"lastModified:l:{now}",
+        "dueTime:l:0", "completedTime:l:0", "isReminderOn:i:0", "deleted:i:1", "hasSync:i:0", "sort:i:0",
+        "sortCompleted:i:0", f"sortTime:l:{now}", "plannedSort:i:0", f"plannedSortTime:l:{now}",
+    ]
+    arguments = " ".join(f"--bind {bind}" for bind in binds)
+    output = device.shell(f"content insert --uri {TASKS_URI} {arguments}")
+    if "Exception" in output or "Error" in output:
+        raise Failure(EXIT_FAILED, "device_error", output.strip())
+    if not trigger_row_exists(device, task_id):
+        raise Failure(EXIT_FAILED, "device_error", "the provider accepted the trigger row but does not hold it")
+    started = time.monotonic()
+    while trigger_row_exists(device, task_id):
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"no sync ran in {args.timeout:g} s; the hidden trigger row goes in the next sync")
+        time.sleep(WAIT_INTERVAL)
+    waited = round(time.monotonic() - started, 1)
+    return {"app": "tasks", "route": TASKS_URI, "seconds": waited}, f"synced: tasks, after {waited} s"
+
+
+def command_sync_calendar(device: Device, args: argparse.Namespace):
+    data = {"app": "calendar", **broadcast(device, CALENDAR_SYNC_ACTION)}
+    return data, "sync asked: calendar"
 
 
 def command_screen(device: Device, args: argparse.Namespace):
@@ -1054,8 +1088,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     syncs = noun("sync")
     add(syncs, "file", command_sync_file).add_argument("path")
-    for app in APP_SYNC_ACTIONS:
-        add(syncs, app, command_sync_app)
+    tasks = add(syncs, "tasks", command_sync_tasks)
+    tasks.add_argument("--timeout", type=float, default=SYNC_TIMEOUT, help="seconds to wait for the sync")
+    add(syncs, "calendar", command_sync_calendar)
 
     add(commands, "screen", command_screen).add_argument("file")
     shot = add(commands, "snapshot", command_snapshot)
