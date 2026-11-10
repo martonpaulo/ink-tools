@@ -28,10 +28,11 @@ cat > "$work/bin/adb" <<'STUB'
 #!/bin/bash
 printf '%s\n' "$*" >> "$ADB_LOG"
 if [ "$1" = connect ]; then
-    if [ -z "${ADB_CONNECT_FAILS:-}" ]; then echo device > "$ADB_FILES/state"; fi
-    printf 'connected to %s\n' "$2"
+    if [ -z "${ADB_CONNECT_FAILS:-}" ] && { [ ! -f "$ADB_FILES/stale" ] || [ -f "$ADB_FILES/killed" ]; }; then echo device > "$ADB_FILES/state"; fi
+    printf '%s\n' "${ADB_CONNECT_REPLY:-connected to $2}"
     exit 0
 fi
+if [ "$1" = kill-server ]; then touch "$ADB_FILES/killed"; exit 0; fi
 [ "$1" = -s ] && shift 2
 case "$1" in
     get-state) cat "$ADB_FILES/state" ;;
@@ -158,6 +159,33 @@ ADB_CONNECT_FAILS=1 run tap 1 2 >/dev/null 2>"$work/err"
 check "a silent device stops with its own code" "$?" "3"
 check "a silent device says how to restore it" "$(grep -c 'adb tcpip 5555' "$work/err")" "1"
 check "a silent device gets no input" "$(called 'input')" "0"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: No route to host' run status --json 2>/dev/null)
+check "a sleeping tablet is named" "$(printf '%s' "$result" | field "['state']")" "asleep"
+check "a sleeping tablet leaves the ADB server alone" "$(called 'kill-server')" "0"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status --json 2>/dev/null)
+check "a restarted tablet is named" "$(printf '%s' "$result" | field "['state'],d['next']")" "('restarted', 'adb tcpip 5555')"
+check "a restarted tablet gets the route that restores it" "$(printf '%s' "$result" | grep -c 'connect the USB cable')" "1"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Operation timed out' run status --json 2>/dev/null)
+check "a tablet off the network is named" "$(printf '%s' "$result" | field "['state']")" "off_network"
+listener=$(mktemp "$work/port.XXXXXX")
+python3 -c 'import socket,sys,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind(("127.0.0.1",0)); s.listen(5); open(sys.argv[1],"w").write(str(s.getsockname()[1])); time.sleep(30)' "$listener" &
+listener_pid=$!
+for _ in 1 2 3 4 5 6 7 8 9 10; do [ -s "$listener" ] && break; sleep 0.2; done
+echo offline > "$files/state"
+touch "$files/stale"
+SUPERNOTE_ADDRESS="127.0.0.1:$(cat "$listener")" run status >/dev/null 2>&1
+check "a stale ADB server is restarted when the port answers" "$?$(called 'kill-server')" "01"
+rm -f "$files/killed"
+echo offline > "$files/state"
+SUPERNOTE_ADDRESS="127.0.0.1:$(cat "$listener")" ADB_CONNECT_FAILS=1 run status >/dev/null 2>&1
+check "a restart of the server that does not help is reported" "$?$(called 'kill-server')" "31"
+rm -f "$files/killed" "$files/stale"
+kill "$listener_pid" 2>/dev/null
+wait "$listener_pid" 2>/dev/null
+echo offline > "$files/state"
 reset_device
 
 # Status and JSON.

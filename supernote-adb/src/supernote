@@ -34,7 +34,7 @@ click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result
 --trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
-~/.config/supernote-adb/address. PATH is relative to the shared storage, or absolute.
+~/.config/supernote-adb/address, as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
 ADB over Wi-Fi is enabled once over USB with `adb tcpip 5555`; a restart of the device turns it off.
 """
 
@@ -46,6 +46,7 @@ import os
 import re
 import selectors
 import shlex
+import socket
 import subprocess
 import sys
 import tempfile
@@ -104,6 +105,7 @@ HISTORY_MAX_BYTES = 1_000_000  # past this the file keeps its newest half
 ADDRESS_MASK = "[device]"
 
 CONNECT_TIMEOUT = 10
+PROBE_TIMEOUT = 3
 CALL_TIMEOUT = 30
 TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
@@ -186,21 +188,36 @@ FAILURE_ADVICE = {
 class Failure(Exception):
     """A failed call, carrying the stable exit code and the fields a JSON reader sees."""
 
-    def __init__(self, code: int, kind: str, message: str, next_step: str = ""):
+    def __init__(self, code: int, kind: str, message: str, next_step: str = "", cause: str = "", extra=None):
         super().__init__(message)
         self.code = code
         self.kind = kind
         self.message = message
-        self.cause, advised = FAILURE_ADVICE[kind]
-        self.next_step = next_step or advised
+        advised_cause, advised_step = FAILURE_ADVICE[kind]
+        self.cause = cause or advised_cause
+        self.next_step = next_step or advised_step
+        self.extra = extra or {}
 
 
-def unreachable(serial: str) -> Failure:
+USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
+# What a failed connection says about the tablet, measured on a Manta: the first match decides.
+UNREACHABLE_STATES = (
+    (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "supernote status"),
+    (("Connection refused",), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
+    (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "supernote status"),
+)
+
+
+def unreachable(serial: str, evidence: str = "") -> Failure:
+    """Name why the device does not answer, from what the connection attempt reported."""
+    for needles, state, cause, advice, next_step in UNREACHABLE_STATES:
+        if any(needle in evidence for needle in needles):
+            return Failure(EXIT_UNREACHABLE, "unreachable", f"{serial}: {cause}. {advice}", next_step, cause, {"state": state})
     return Failure(
         EXIT_UNREACHABLE,
         "unreachable",
-        f"{serial} does not answer. Is it on this Wi-Fi? "
-        f"After a restart, connect the USB cable and run: adb tcpip {ADB_PORT}",
+        f"{serial} does not answer. Is it on this Wi-Fi? After a restart, {USB_RESTORE}",
+        extra={"state": "no_answer"},
     )
 
 
@@ -338,12 +355,32 @@ class Device:
     def is_ready(self) -> bool:
         return self.adb("get-state").stdout.strip() == b"device"
 
+    def request_connection(self) -> str:
+        done = self.adb("connect", self.serial, timeout=CONNECT_TIMEOUT, serial=False)
+        return (done.stdout + done.stderr).decode(errors="replace")
+
+    def probe(self) -> str:
+        """Empty when the port answers, otherwise why it does not."""
+        host, _, port = self.serial.rpartition(":")
+        try:
+            with socket.create_connection((host, int(port)), PROBE_TIMEOUT):
+                return ""
+        except OSError as error:
+            return str(error)
+
     def connect(self) -> None:
         if self.is_ready():
             return
-        self.adb("connect", self.serial, timeout=CONNECT_TIMEOUT, serial=False)
-        if not self.is_ready():
-            raise unreachable(self.serial)
+        reply = self.request_connection()
+        if self.is_ready():
+            return
+        port_problem = self.probe()
+        if not port_problem:  # the port answers, so the local ADB server holds a dead connection
+            self.adb("kill-server", serial=False)
+            reply = self.request_connection()
+            if self.is_ready():
+                return
+        raise unreachable(self.serial, f"{reply} {port_problem}")
 
     def shell(self, command: str, timeout: float = CALL_TIMEOUT, missing: str = "") -> str:
         """Run a device shell command and return its output; `missing` names what a not-found is."""
@@ -1169,8 +1206,9 @@ def main() -> int:
     try:
         if args.needs_device:
             address = read_address()
-            log.secrets = [f"{address}:{ADB_PORT}", address]
-            device = Device(f"{address}:{ADB_PORT}", log)
+            serial = address if ":" in address else f"{address}:{ADB_PORT}"
+            log.secrets = [serial, address]
+            device = Device(serial, log)
             device.connect()
             before = front_app(device)
         data, text = args.handler(device, args)
@@ -1184,6 +1222,7 @@ def main() -> int:
                 "message": message,
                 "cause": failure.cause,
                 "next": failure.next_step,
+                **failure.extra,
             }, ensure_ascii=False))
     except SystemExit as leaving:  # `shell` ends with the device's own exit code
         code = leaving.code

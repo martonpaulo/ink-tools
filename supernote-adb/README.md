@@ -84,6 +84,7 @@ The command reads no secret.
 ## Limitations
 
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
+- **A sleeping tablet does not answer.** The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **Installing a plugin needs the tablet's screen.** The platform offers no other route.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them.
 - **ADB has wide access.** A computer you authorize can read and delete every note, and Wi-Fi mode opens a port on your network. See [`SECURITY.md`](SECURITY.md).
