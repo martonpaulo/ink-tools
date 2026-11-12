@@ -18,6 +18,7 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (13), 2026-11-06, firmware 3.31.45](#build-010-13-2026-11-06-firmware-33145)
 - [Build 0.1.0 (14), 2026-11-06, firmware 3.31.45](#build-010-14-2026-11-06-firmware-33145)
 - [Build 0.1.0 (15), 2026-11-07, firmware 3.31.45](#build-010-15-2026-11-07-firmware-33145)
+- [Build 0.1.0 (16), 2026-11-07, firmware 3.31.45](#build-010-16-2026-11-07-firmware-33145)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
 
@@ -155,3 +156,16 @@ Prerelease [`v0.1.0-dev.15`](https://github.com/martonpaulo/ink2pic/releases/tag
 | 7 Lasso last word | Only that word lassoed | Partial | A lone «banana» passes; in phrases only «o» of «frio» and «na» of «China»: the walk stops at an i-dot ([#75](https://github.com/martonpaulo/ink2pic/issues/75)) |
 | 8 Session log | Sent | Pass | Letter gaps 6–20 px, word gaps 48–60 px; pauses inside and between words overlap (130–656 ms against 578–1122 ms); `lassoElements` false on a 53 × 52 rect |
 
+## Build 0.1.0 (16), 2026-11-07, firmware 3.31.45
+
+Prerelease [`v0.1.0-dev.16`](https://github.com/martonpaulo/ink2pic/releases/tag/v0.1.0-dev.16), commit `3427c7d`, check card E16. Owner answer A, «everything worked as expected», 2026-11-10, with no note, no screenshot and no session log on record.
+
+| Step | Expected | Result | Notes |
+| --- | --- | --- | --- |
+| 2 Settings entry, add Português | The «Settings» screen opens | Pass | Plugin Settings entry ([#68](https://github.com/martonpaulo/ink2pic/issues/68), [#70](https://github.com/martonpaulo/ink2pic/issues/70)) |
+| 3 Insert best picture on «apple», then Delete | An apple drawing, not the logo, inserted at once and lassoed; Delete removes it | Pass | [#81](https://github.com/martonpaulo/ink2pic/issues/81), [#74](https://github.com/martonpaulo/ink2pic/issues/74), [#73](https://github.com/martonpaulo/ink2pic/issues/73) |
+| 4 Lasso last word on «Quem foi Miguel de Cervantes», Choose picture | The whole name lassoed; a clean portrait first | Pass | [#75](https://github.com/martonpaulo/ink2pic/issues/75), [#87](https://github.com/martonpaulo/ink2pic/issues/87), [#83](https://github.com/martonpaulo/ink2pic/issues/83) |
+| 5 «apple logo», «Spain», «cold» | The plain logo first; the Spanish flag first, stripes in grey; a snowflake | Pass | [#81](https://github.com/martonpaulo/ink2pic/issues/81), [#89](https://github.com/martonpaulo/ink2pic/issues/89), [#67](https://github.com/martonpaulo/ink2pic/issues/67) |
+| 6 Download symbols, then «happy» offline | Symbols with no internet | Pass | [#91](https://github.com/martonpaulo/ink2pic/issues/91) |
+| 7 «Confucious Institute» | «Showing results for confucius institute» | Pass | [#84](https://github.com/martonpaulo/ink2pic/issues/84) |
+| 8 Session log | Sent | Not on record | The Insert picture timings of [#88](https://github.com/martonpaulo/ink2pic/issues/88) are still unmeasured |
