@@ -1,5 +1,6 @@
 import {readIntent, words} from '../src/search-core/query';
 import {einkScore, rankForEink} from '../src/search-core/rank';
+import {PAGE_SIZE} from '../src/search-core/types';
 import type {SearchResult, SourceName} from '../src/search-core/types';
 
 const r = (
@@ -110,7 +111,10 @@ describe('rankForEink', () => {
       r('commons', 'Flag of Galicia', 'image/svg+xml'),
     ];
     const wikidata = [
-      {...r('commons', 'Flag of Spain', 'image/svg+xml', true), leads: true as const},
+      {
+        ...r('commons', 'Flag of Spain', 'image/svg+xml', true),
+        leads: true as const,
+      },
       r('commons', 'Spain map', 'image/png', true),
     ];
     const titles = rankForEink([commons, wikidata], 'Spain').map(x => x.title);
@@ -345,6 +349,22 @@ describe('logos (#81)', () => {
     expect(
       rankForEink([[arcade, plain]], 'apple logo').map(x => x.title),
     ).toEqual(['Apple logo black', 'Apple Arcade logo']);
+  });
+
+  it('moves the devices icon off page 1 for «apple logo»: the logos asked for fill it', () => {
+    const icon = r('commons', 'Apple mobile icon', 'image/svg+xml');
+    const own = tagged('Apple logo black', ['Apple Inc. logos'], {
+      canonical: true,
+      leads: true,
+    });
+    const logos = ['first', 'rainbow', 'white', 'grey', 'outline'].map(kind =>
+      tagged(`Apple logo ${kind}`, ['Apple Inc. logos']),
+    );
+    const page1 = rankForEink([[icon, ...logos], [own]], 'apple logo')
+      .slice(0, PAGE_SIZE)
+      .map(x => x.title);
+    expect(page1[0]).toBe('Apple logo black');
+    expect(page1).not.toContain('Apple mobile icon');
   });
 
   it("leads with an organisation's own logo and does not bury its other logos", () => {

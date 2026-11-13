@@ -30,6 +30,12 @@ const ok = (text: string) => ({
   text: () => Promise.resolve(text),
 });
 const FILES = fixture('commons-files.json');
+/** A fetch that answers with each text in turn. */
+const answering = (...texts: string[]) =>
+  texts.reduce(
+    (fetch, text) => fetch.mockResolvedValueOnce(ok(text)),
+    jest.fn(),
+  );
 /** The facts an entity response gives, or its failure: what the logo assertions read. */
 const factsOf = (text: string) => {
   const outcome = parseEntityResponse(text);
@@ -414,6 +420,92 @@ describe('logos of organisations and brands (#81)', () => {
       ok: true,
       value: {hit: {title: 'apple', item: 'Q312', disambiguation: false}},
     });
+  });
+
+  it('asks for the brand when the article names the subject but has no logo: «Marketing of Apple Inc.»', async () => {
+    const page = JSON.stringify({
+      batchcomplete: true,
+      query: {
+        pages: [
+          {
+            title: 'Marketing of Example Fruit Inc.',
+            index: 1,
+            pageprops: {wikibase_item: 'Q9001'},
+          },
+        ],
+      },
+    });
+    const empty = JSON.stringify({entities: {Q9001: {claims: {}}}});
+    const candidates = JSON.stringify({search: [{id: 'Q9002'}, {id: 'Q9003'}]});
+    const statement = (value: string) => [
+      {rank: 'normal', mainsnak: {snaktype: 'value', datavalue: {value}}},
+    ];
+    const claims = JSON.stringify({
+      entities: {
+        Q9002: {
+          claims: {
+            P154: statement('Example fruit logo.svg'),
+            P159: statement('Example City'),
+          },
+        },
+        // The fruit has no logo.
+        Q9003: {claims: {P18: statement('Example fruit.jpg')}},
+      },
+    });
+    const files = JSON.stringify({
+      query: {
+        pages: [
+          {
+            title: 'File:Example fruit logo.svg',
+            imageinfo: [
+              {
+                url: 'https://upload.example.test/Example_fruit_logo.svg',
+                thumburl: 'https://upload.example.test/thumb.png',
+                mime: 'image/svg+xml',
+                width: 100,
+                height: 100,
+                extmetadata: {LicenseShortName: {value: 'Public domain'}},
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const fetch = answering(page, empty, candidates, claims, files);
+    const outcome = await searchWikidata('example fruit logo', ctx(fetch));
+    expect(fetch.mock.calls[2][0]).toBe(
+      logoCandidatesUrl('example fruit', 'en'),
+    );
+    expect(fetch.mock.calls[3][0]).toBe(claimsUrl(['Q9002', 'Q9003']));
+    // The candidates' claims give the facts: no request for the brand's entity again.
+    expect(fetch).toHaveBeenCalledTimes(5);
+    expect(outcome.ok && outcome.value.results).toEqual([
+      expect.objectContaining({
+        title: 'Example fruit logo',
+        canonical: true,
+        leads: true,
+      }),
+    ]);
+  });
+
+  it('asks nothing more for a plain word whose item has no logo', async () => {
+    const page = JSON.stringify({
+      batchcomplete: true,
+      query: {
+        pages: [
+          {title: 'Example', index: 1, pageprops: {wikibase_item: 'Q9001'}},
+        ],
+      },
+    });
+    const fetch = answering(
+      page,
+      JSON.stringify({entities: {Q9001: {claims: {}}}}),
+    );
+    expect(await searchWikidata('example', ctx(fetch))).toEqual({
+      ok: true,
+      value: {results: []},
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it('leads an organisation with no logo with its Commons logos category (#92)', async () => {

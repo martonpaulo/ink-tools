@@ -354,7 +354,10 @@ export type EntityOutcome = Outcome<EntityFacts, Failure>;
  * The Commons file names of the item's pictures, whether it is a person, its signature and its
  * own flag.
  */
-export function parseEntityResponse(text: string): EntityOutcome {
+export function parseEntityResponse(
+  text: string,
+  only?: string,
+): EntityOutcome {
   const data = parseJson<EntityResponse>(text);
   if (isFailure(data)) {
     return data;
@@ -365,6 +368,11 @@ export function parseEntityResponse(text: string): EntityOutcome {
   if (!data.entities) {
     return sourceFailure('parse', 'no entities in the response');
   }
+  // One item of a response that holds several: the logo candidates' claims (#81).
+  const entities =
+    only === undefined
+      ? Object.values(data.entities)
+      : [data.entities[only] ?? {missing: ''}];
   const files: string[] = [];
   let human = false;
   let name = false;
@@ -372,7 +380,7 @@ export function parseEntityResponse(text: string): EntityOutcome {
   let flag: string | undefined;
   let leadingLogo: string | undefined;
   let logoCategory: string | undefined;
-  for (const entity of Object.values(data.entities)) {
+  for (const entity of entities) {
     if (entity.missing !== undefined) {
       continue;
     }
@@ -428,18 +436,21 @@ export function isQueryArticle(query: string, title: string): boolean {
     .some(q => have.some(word => sameWord(word, q) || sameWord(q, word)));
 }
 
+/** The organisation or brand a logo query names, with the claims response that holds it. */
+type LogoFind = Outcome<{hit: WikiHit; claims: string} | null, Failure>;
+
 /**
  * For a logo query, the organisation or brand its subject names, with its logo; for any other,
- * none (#81). Two requests, only when the Wikipedia article did not name the subject.
+ * none (#81). Two requests: Wikidata's label search, then its candidates' claims.
  */
-async function logoItem(
+async function findLogoItem(
   query: string,
   language: string,
   ctx: SourceContext,
-): Promise<WikiOutcome> {
+): Promise<LogoFind> {
   const {subject, styles} = readIntent(query);
   if (!styles.has('logo') || subject.length === 0) {
-    return {ok: true, value: {hit: null}};
+    return {ok: true, value: null};
   }
   const named = subject.join(' ');
   const headers = {'Api-User-Agent': ctx.userAgent};
@@ -449,20 +460,46 @@ async function logoItem(
   }
   const order = parseLogoCandidates(found.value);
   if (isFailure(order) || order.length === 0) {
-    return isFailure(order) ? order : {ok: true, value: {hit: null}};
+    return isFailure(order) ? order : {ok: true, value: null};
   }
   const claims = await ctx.fetch(claimsUrl(order), headers);
-  return claims.ok ? parseLogoItem(claims.value, order, named) : claims;
+  if (!claims.ok) {
+    return claims;
+  }
+  const item = parseLogoItem(claims.value, order, named);
+  if (!item.ok) {
+    return item;
+  }
+  const {hit} = item.value;
+  return {ok: true, value: hit ? {hit, claims: claims.value} : null};
 }
 
+/** The logo query's item when the Wikipedia article did not name the subject (#81). */
+async function logoItem(
+  query: string,
+  language: string,
+  ctx: SourceContext,
+): Promise<LookupOutcome> {
+  const found = await findLogoItem(query, language, ctx);
+  return found.ok
+    ? {ok: true, value: {hit: found.value?.hit ?? null, language}}
+    : found;
+}
+
+/** The article found and the language of the Wikipedia that found it. */
+type LookupOutcome = Outcome<WikiAnswer & {language?: string}, Failure>;
+
 /** The first language whose Wikipedia has an article for the query; a failure stops the walk. */
-async function lookup(query: string, ctx: SourceContext): Promise<WikiOutcome> {
+async function lookup(
+  query: string,
+  ctx: SourceContext,
+): Promise<LookupOutcome> {
   let suggestion: string | undefined;
   for (const language of lookupLanguages(query, ctx.languages)) {
     // A written line's check already found this article (#87): no request again.
     const known = knownHit(query, language);
     if (known) {
-      return {ok: true, value: {hit: known}};
+      return {ok: true, value: {hit: known, language}};
     }
     const response = await ctx.fetch(wikipediaUrl(query, language), {
       'Api-User-Agent': ctx.userAgent,
@@ -478,8 +515,11 @@ async function lookup(query: string, ctx: SourceContext): Promise<WikiOutcome> {
     ) {
       return logoItem(query, language, ctx);
     }
-    if (!found.ok || found.value.hit) {
+    if (!found.ok) {
       return found;
+    }
+    if (found.value.hit) {
+      return {ok: true, value: {...found.value, language}};
     }
     suggestion ??= found.value.suggestion;
   }
@@ -561,6 +601,25 @@ export async function searchWikidata(
     }
     ({files, human, signature, flag, leadingLogo, logoCategory} = entity.value);
   }
+  if (!leadingLogo && !logoCategory && found.value.language) {
+    // A logo query whose article names the subject but leads with no logo: «apple logo» found
+    // «Marketing of Apple Inc.», an item with no claims, so Wikidata's label search names the
+    // brand (#81). Its facts come from the candidates' claims: no request more.
+    const logo = await findLogoItem(query, found.value.language, ctx);
+    if (!logo.ok) {
+      return logo;
+    }
+    if (logo.value && logo.value.hit.item !== item) {
+      item = logo.value.hit.item;
+      leadImage = undefined;
+      const facts = parseEntityResponse(logo.value.claims, item);
+      if (!facts.ok) {
+        return facts;
+      }
+      ({files, human, signature, flag, leadingLogo, logoCategory} =
+        facts.value);
+    }
+  }
   if (leadImage) {
     // The lead image uses underscores; Commons file names use spaces.
     const lead = leadImage.replace(/_/g, ' ');
@@ -622,7 +681,8 @@ function withoutExtension(file: string): string {
 
 /**
  * The requests after the articles, in a row: the entity, the namesake and its entity, then the
- * Commons files; the logo path's two requests replace the namesake's two (#92, #110).
+ * Commons files; the logo path's two requests replace the namesake's two (#92, #110), and the
+ * entity's own after an article with no logo, whose candidates' claims hold the logo's (#81).
  */
 const CHAIN_REQUESTS = 4;
 
