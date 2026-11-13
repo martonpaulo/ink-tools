@@ -8,7 +8,7 @@
 - Identifier name: `supernotetools`
 - Benefit-first description: Unofficial tools for Supernote e-ink tablets: a calendar-sync plugin, a handwriting-to-picture plugin, and an ADB control CLI.
 - Repository: `martonpaulo/supernote-tools` (public)
-- Public identifiers: GitHub repository and the `supernote` CLI; the Ink2Pic and Calendar Bridge plugins. Not a package or registry product.
+- Public identifiers: GitHub repository and the `supernote` CLI; the Ink2Pic and Bridge plugins. Not a package or registry product.
 - Landing page: None. The repository README is the public surface.
 - License: `MIT`
 - Copyright: 2026 Marton Paulo
@@ -17,15 +17,15 @@
 - Branch policy: Work on `main` only, with no branch protection; create or switch branches only when the owner asks.
 - Commit policy: Commit each coherent task once it is complete and its subproject's validation passes; only the change's files, one concern per commit; issue commits end with `(#<issue number>)`.
 - Push policy: Push each validated commit to `origin/main` automatically; a cloud session pushes `main` for a `runs: cloud` issue whose gates ran there. Cloud setup command: `bash scripts/cloud-setup.sh`.
-- Product versioning: Per subproject: Ink2Pic uses SemVer with device prereleases; Supernote ADB is unversioned; Calendar Bridge is set at its own setup. The monorepo itself is unversioned.
+- Product versioning: Per subproject: Ink2Pic uses SemVer with device prereleases; Supernote ADB is unversioned; Bridge starts at 0.0.1. The monorepo itself is unversioned.
 - Merge policy: merge commits, so every branch commit reaches `main`.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: disabled
-- Release, signing, and secret-storage policy: Per subproject: Ink2Pic and Calendar Bridge each ship a GitHub prerelease carrying their `.snplg`; Supernote ADB is distributed as source. No monorepo-wide release.
+- Release, signing, and secret-storage policy: Per subproject: Ink2Pic and Bridge each ship a GitHub prerelease carrying their `.snplg`; Supernote ADB is distributed as source. No monorepo-wide release.
 - Skills baseline revision: `4a54af70a4f197df7cb610e1aad847fbdb4dc0d3`
 - Skills baseline applied: `2026-11-13`
 - Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; each subproject keeps its own CI under its folder, to be consolidated at the repository root with path filters (tracked as a setup issue). The root carries no workflows yet.
-- Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `calendar-bridge/`, `ink2pic/` and `supernote-adb/`, each with its own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
+- Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `plugins/bridge/`, `plugins/ink2pic/` and `cli/supernote-adb/`, each with its own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
 
 Change an identifier or policy recorded above only through an explicit task describing the migration and its effects.
 

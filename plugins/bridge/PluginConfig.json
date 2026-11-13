@@ -1,0 +1,16 @@
+{
+  "name": "Bridge",
+  "desc": "Brings your to-do list, calendars and saved items onto the tablet. Everything is opt in in the plugin's Settings.",
+  "author": "Marton Paulo",
+  "iconPath": "assets/icon.png",
+  "versionName": "0.0.1",
+  "versionCode": "1",
+  "pluginID": "4d11a9bbc6ad25e2",
+  "pluginKey": "Bridge",
+  "jsMainPath": "index",
+  "uses-permissions": [
+    "plugin.permission.INTERNET",
+    "plugin.permission.FILE:READ",
+    "plugin.permission.FILE:WRITE"
+  ]
+}

@@ -10,7 +10,7 @@ A monorepo of independent subprojects. Each keeps its own `AGENTS.md`, versionin
 
 | Subproject | What it is |
 | :--- | :--- |
-| [`plugins/calendar-bridge/`](plugins/calendar-bridge/) | A plugin that syncs the owner's Google, Apple and ICS calendars with the native Supernote Calendar, two-way where the source allows. **In planning** — see its open issues. |
+| [`plugins/bridge/`](plugins/bridge/) | A settings-only plugin with to-do, calendar and digest modules, each opt in. **Scaffolded** — see its open issues. |
 | [`plugins/ink2pic/`](plugins/ink2pic/) | Write a word by hand, lasso it, and insert a matching picture from Openclipart or Wikimedia Commons. Keyless, no phone needed. |
 | [`cli/supernote-adb/`](cli/supernote-adb/) | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
 

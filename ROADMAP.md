@@ -29,5 +29,5 @@ it starts. Order is not commitment.
 ## Notes
 
 The owner's three original goals were To-Do <-> Todoist, Calendar <-> Apple/Google, and Saved ->
-Digest. Calendar is the active work (`area: calendar-bridge`). To-Do sync is blocked on the provider
+Digest. Calendar is the active work (`area: bridge`). To-Do sync is blocked on the provider
 write investigation (#31). Saved -> Digest (Digest is cloud-only) is not yet scoped.

@@ -1,13 +1,14 @@
-# Calendar Bridge — agent guidance
+# Bridge — agent guidance
 
-Scoped guidance for `plugins/calendar-bridge/`. Inherits the repository root `../../AGENTS.md`; this file holds
+Scoped guidance for `plugins/bridge/`. Inherits the repository root `../../AGENTS.md`; this file holds
 only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status
 
-**Pre-source.** The subproject is in planning; its full identity, Git/release policy and scaffold are
-settled by its first issue (`area: calendar-bridge`, the setup issue), which runs `project-setup` and
-`skd-project-scaffolding` for this folder. Until then, follow the root policy and the issues.
+**Scaffolded** (#27): settings-only plugin shell (Settings entry, no note button), build to
+`Bridge.snplg`, `npm run validate` green. Modules land with their own issues: sn-adapter (#43),
+calendar (#28, #29, #30), to-do (#44), Settings (#40). Layers: `../../docs/architecture.md`; shared
+code in `../../packages/`. Validate with `npm run validate`. CI consolidation: #38.
 
 ## What it is
 
@@ -18,7 +19,7 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
 ## Load-bearing facts (from device investigation, 2026-11-13)
 
 - A plugin runs as the system user but **cannot** read another app's data dir — the framework guard
-  blocks `File`, SQLite and native `Os.open`. So Calendar Bridge uses its **own** Google login, not
+  blocks `File`, SQLite and native `Os.open`. So Bridge uses its **own** Google login, not
   the Supernote Calendar app's stored session.
 - The calendar content provider is reachable with no plugin permission; events live in `data_info`
   with columns `id, calendarId, eventId, tag, state, readOnly, isAllDay, isSelf, title, content,
