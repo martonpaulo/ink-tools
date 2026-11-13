@@ -67,9 +67,9 @@ Long-running work follows the `skd-project-standards` skill's `references/long-r
 ## Scope, reuse, and implementation
 
 - **Research before building.** Before creating anything new here, search for tools and projects
-  that already do it — device plugins, GitHub code, CLIs, services. Prefer reusing or basing on an
-  existing one; we build new only because nothing existing satisfies what we want, and we say which
-  gap forces it. Study the device and third-party software with `rea`/Ghidra and the decompiled apps
+  that already do it — device plugins, sideloaded Android apps (especially ones built for the
+  Supernote), GitHub code, CLIs, services. Prefer reusing or basing on an existing one; we build new
+  only because nothing existing satisfies what we want, and we say which gap forces it. Study the device and third-party software with `rea`/Ghidra and the decompiled apps
   before designing against them. (`skd-build-or-reuse` and `skd-software-analysis` own the method.)
 - Preserve behavior outside the task and unrelated or uncommitted user changes.
 - Follow the patterns this project already repeats. When a change would break a recorded pattern or establish a new one, stop and ask first, naming the existing pattern, the proposed one, and why the existing one does not fit.
