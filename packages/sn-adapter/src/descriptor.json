@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "descriptorVersion": "2026.11.13",
+  "device": {"model": "Supernote Nomad", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466"},
+  "calendar": {
+    "authority": "com.ratta.supernote.calendar.provider",
+    "tables": {
+      "events": {
+        "path": "data_info",
+        "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"]
+      },
+      "config": {"path": "config_info", "columns": []}
+    },
+    "rules": {"writeTag": "task"}
+  },
+  "todo": {
+    "authority": "com.ratta.supernote.task.provider",
+    "tables": {
+      "tasks": {
+        "path": "tasks_table",
+        "columns": ["id", "taskListId", "taskId", "title", "detail", "lastModified", "recurrence", "isReminderOn", "status", "importance", "dueTime", "completedTime", "links", "deleted", "hasSync", "sort", "sortCompleted", "sortTime", "plannedSort", "plannedSortTime"]
+      },
+      "groups": {
+        "path": "task_group_table",
+        "columns": ["id", "taskListId", "userId", "title", "lastModified", "deleted", "hasSync", "createTime"]
+      }
+    },
+    "rules": {"requiredOnInsert": ["title"], "needsExistingList": true, "writeHasSync": 0}
+  },
+  "digest": {
+    "authority": "com.ratta.supernote.knowledge.provider",
+    "permissions": {"read": "READ_KNOWLEDGE", "write": "WRITE_KNOWLEDGE"},
+    "tables": {
+      "digest": {
+        "path": "digest",
+        "columns": ["id", "digest_id", "digest_content", "digest_time", "digest_related_page", "digest_type", "digest_related_file_name", "digest_text_location_data", "digest_related_file_full_path", "digest_related_file_relative_path", "digest_related_file_size", "digest_related_file_cache_full_folder", "digest_mark_file_name", "digest_mark_relative_path", "digest_mark_md5", "digest_last_modified_time", "digest_status"]
+      }
+    },
+    "rules": {}
+  }
+}

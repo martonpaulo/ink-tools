@@ -1,0 +1,37 @@
+import {Descriptor} from './descriptor';
+
+export type Row = Record<string, string | number | boolean | null>;
+
+/** Keep only columns the descriptor knows for a table; the provider rejects unknown ones with id -1. */
+function pickColumns(columns: string[], row: Row): Row {
+  const out: Row = {};
+  for (const [k, v] of Object.entries(row)) if (columns.includes(k)) out[k] = v;
+  return out;
+}
+
+/** A calendar event the plugin writes carries the descriptor's tag (`tag=task`), so the app shows it. */
+export function toCalendarInsert(d: Descriptor, event: Row): Row {
+  const row = pickColumns(d.calendar.tables.events.columns, event);
+  row.tag = d.calendar.rules.writeTag as string;
+  return row;
+}
+
+export interface TodoInsertContext {
+  /** taskListId values of the non-deleted rows in task_group_table. */
+  existingListIds: string[];
+}
+
+/** Build a To-Do row, enforcing the provider's insert rules. Throws instead of letting the insert fail with -1. */
+export function toTodoInsert(d: Descriptor, task: Row, ctx: TodoInsertContext): Row {
+  const t = d.todo;
+  const row = pickColumns(t.tables.tasks.columns, task);
+  for (const col of t.rules.requiredOnInsert as string[]) {
+    if (row[col] === undefined || row[col] === null || row[col] === '') throw new Error(`To-Do insert needs ${col}`);
+  }
+  const list = row.taskListId;
+  if (t.rules.needsExistingList && list !== undefined && list !== '' && !ctx.existingListIds.includes(String(list))) {
+    throw new Error(`taskListId ${String(list)} does not match an existing list`);
+  }
+  row.hasSync = t.rules.writeHasSync as number; // 0 = the app uploads it to Supernote Cloud
+  return row;
+}

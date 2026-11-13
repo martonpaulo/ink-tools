@@ -1,2 +1,3 @@
-/** Scaffold only: the contents land with their own issues (see docs/architecture.md). */
-export const PACKAGE_NAME = 'sn-adapter';
+export * from './descriptor';
+export * from './probe';
+export * from './rules';
