@@ -35,9 +35,9 @@ Before editing under a path, read the file its row names. A module with rules of
 
 | Path | Read first |
 | :--- | :--- |
-| `calendar-bridge/` | `calendar-bridge/AGENTS.md` |
-| `ink2pic/` | `ink2pic/AGENTS.md` |
-| `supernote-adb/` | `supernote-adb/AGENTS.md` |
+| `plugins/<name>/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) |
+| `cli/<name>/` | that tool's own `AGENTS.md` (host-side tools) |
+| `templates/` | `docs/product.md` (note templates; created when the first one lands) |
 | `docs/` | `docs/product.md` |
 
 ## Instruction hierarchy and sources of truth

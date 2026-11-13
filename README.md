@@ -10,9 +10,9 @@ A monorepo of independent subprojects. Each keeps its own `AGENTS.md`, versionin
 
 | Subproject | What it is |
 | :--- | :--- |
-| [`calendar-bridge/`](calendar-bridge/) | A plugin that syncs the owner's Google, Apple and ICS calendars with the native Supernote Calendar, two-way where the source allows. **In planning** — see its open issues. |
-| [`ink2pic/`](ink2pic/) | Write a word by hand, lasso it, and insert a matching picture from Openclipart or Wikimedia Commons. Keyless, no phone needed. |
-| [`supernote-adb/`](supernote-adb/) | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
+| [`plugins/calendar-bridge/`](plugins/calendar-bridge/) | A plugin that syncs the owner's Google, Apple and ICS calendars with the native Supernote Calendar, two-way where the source allows. **In planning** — see its open issues. |
+| [`plugins/ink2pic/`](plugins/ink2pic/) | Write a word by hand, lasso it, and insert a matching picture from Openclipart or Wikimedia Commons. Keyless, no phone needed. |
+| [`cli/supernote-adb/`](cli/supernote-adb/) | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
 
 **This is unofficial.** Not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its
 owner, used here only to name the device. No root, no modified firmware, no exploits.
