@@ -1,0 +1,1806 @@
+#!/usr/bin/env python3
+"""supernote: let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
+
+Direct calls come first (intents, content providers, files), then element references from a
+snapshot, and coordinates only as the last resort. Every command takes --json.
+
+  status                         connection, firmware, screen size, battery, foreground activity
+  firmware [--download]          show the installed and newest official firmware; --download copies it to EXPORT
+  routes [PACKAGE]               list, read-only, the device's entry points and which job each one does
+  doctor                         check, read-only, that each call this command makes still exists
+  note open PATH [--page N]      open a note; N counts from 1, as the device shows it
+  note new PATH                  create a blank portrait note at PATH and open it; never replaces
+  files ls [PATH]                list a folder of the shared storage
+  files pull PATH LOCAL          copy from the shared storage
+  files push LOCAL PATH          copy to the shared storage; refuses to replace without --overwrite
+  sync tasks                     start a To-do sync and wait until it has run
+  sync calendar                  ask the Calendar app to sync
+  screen FILE.png                save what the screen shows
+  snapshot                       list the screen's elements with short references;
+                                 --all reads each list to its end, --find X scrolls to an element
+  click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
+  wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
+  apps                           installed packages
+  plugin ls                      installed plugins
+  plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
+  plugin install FILE.snplg      copy, install or update through named elements, and prove it
+  logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
+                                 --level, --package, --pid, --grep, --since, --since-last,
+                                 --follow and --plugin
+  history                        what this command did: --failures, --command NAME, --since 2h
+  tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
+  wifi off                       turn Wi-Fi ADB off when the work ends, and say how to turn it on
+  shell COMMAND...               run a command on the device
+
+click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result) and --screen FILE
+(save a fresh capture), so one call shows its effect.
+
+--read-only, or $SUPERNOTE_READ_ONLY, refuses every command that changes the device.
+--allow-notes lets files pull and screen read the notes folder or a note on the screen.
+--trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
+
+The device's address is $SUPERNOTE_ADDRESS, else the first line of
+~/.config/supernote-adb/address, as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
+ADB over Wi-Fi is enabled once over USB with `adb tcpip 5555`; a restart of the device turns it off.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import html.parser
+import http.client
+import json
+import os
+import posixpath
+import re
+import selectors
+import shlex
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import uuid
+import xml.etree.ElementTree as ElementTree
+import zipfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+EXIT_OK = 0
+EXIT_FAILED = 1
+EXIT_USAGE = 2
+EXIT_UNREACHABLE = 3
+EXIT_NOT_FOUND = 4
+EXIT_EXISTS = 5
+EXIT_TIMEOUT = 6
+EXIT_STALE = 7
+EXIT_BUSY = 8
+EXIT_UNEXPECTED_SCREEN = 9
+EXIT_CALL_MISSING = 10
+EXIT_READ_ONLY = 11
+EXIT_PROTECTED = 12
+EXIT_FIRMWARE_REFUSED = 13
+EXIT_CODES = """exit codes:
+  0  done
+  1  the device refused or the call failed
+  2  bad usage, or no address recorded
+  3  the device does not answer
+  4  no such file or element
+  5  the destination exists (pass --overwrite)
+  6  the wait timed out
+  7  the reference is stale: take a new snapshot
+  8  the screen never settled, so no snapshot came back: try again
+  9  a step found a screen it did not expect, and pressed nothing more
+  10 doctor found a call this command relies on missing from the device
+  11 read-only mode refused a command that changes the device
+  12 the notes folder or a note on the screen is protected: pass --allow-notes
+  13 the firmware was refused: not newer, not from Ratta, or the battery is too low
+
+a failure in --json has the fields: error, message, cause, next
+
+each run adds one JSON line to ~/.cache/supernote-adb/history.jsonl, with the fields:
+  time       when the run started, UTC
+  command    the command's name, never its arguments
+  seconds    how long the run took
+  exit       its exit code
+  error      the failure's name, or null
+  app_before the app in front before the run
+  app_after  the app in front after the run
+  calls      each ADB call: call, seconds, exit (null when it timed out)
+These fields are a public contract, like the exit codes.
+The log never holds note content, screen text, file content or credentials.
+The address is masked. A call keeps only its verb, unless --log-paths is passed.
+
+https://github.com/martonpaulo/supernote-adb
+"""
+
+ADB_PORT = 5555  # the port `adb tcpip` opens
+SHARED_ROOT = "/storage/emulated/0"
+SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
+NOTES_FOLDER = f"{SHARED_ROOT}/Note"
+ADDRESS_FILE = Path.home() / ".config/supernote-adb/address"
+SNAPSHOT_FILE = Path.home() / ".cache/supernote-adb/snapshot.json"
+HISTORY_FILE = Path.home() / ".cache/supernote-adb/history.jsonl"
+LOG_MARK_FILE = Path.home() / ".cache/supernote-adb/logcat-mark"
+PRIVATE_FILE_MODE = 0o600
+HISTORY_MAX_BYTES = 1_000_000  # past this the file keeps its newest half
+ADDRESS_MASK = "[device]"
+
+CONNECT_TIMEOUT = 10
+PROBE_TIMEOUT = 3
+CALL_TIMEOUT = 30
+START_TIMEOUT = 90  # `am start -W` waits for the app, which is slow on an e-ink screen
+TRANSFER_TIMEOUT = 600
+WAIT_TIMEOUT = 30.0
+SYNC_TIMEOUT = 60.0
+ROUTES_TIMEOUT = 120
+WIFI_OFF_TIMEOUT = 15.0
+DOWNLOAD_READ_TIMEOUT = 60
+DOWNLOAD_TIMEOUT = 3600.0
+FIRMWARE_TRANSFER_TIMEOUT = 3600
+STEP_TIMEOUT = 20.0
+INSTALL_TIMEOUT = 60.0
+WAIT_INTERVAL = 0.5
+DEFAULT_LOG_LINES = 100
+DEFAULT_HISTORY_RUNS = 50
+PLUGIN_LOG_WINDOW = 5000  # a plugin's lines are picked out of this many recent ones
+FOLLOW_CHUNK = 65536
+TIMING_DIGITS = 3
+MILLISECONDS = 1000
+PERIOD_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+SCROLL_STEPS = 20
+SCROLL_START = 0.8  # a swipe runs between these fractions of the list's height
+SCROLL_END = 0.2
+SCROLL_MILLISECONDS = 300
+SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
+LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
+DUMP_ATTEMPTS = 3  # the device often answers "could not get idle state" after about 11 s
+IDLE_ERROR = "could not get idle state"
+ERROR_EXCERPT = 200
+
+NOTE_PACKAGE = "com.ratta.supernote.note"
+NOTE_ACTIVITY = f"{NOTE_PACKAGE}/.view.NoteInsidePagesActivity"
+NOTE_SUFFIX = ".note"
+NOTE_BLANK_STYLE = "style_white"
+NOTE_MODE_NORMAL = "0"
+PLUGIN_SUFFIX = ".snplg"
+PLUGIN_FOLDER = "MyStyle"
+PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
+PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
+PLUGIN_CONFIG_FILE = "PluginConfig.json"
+SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
+PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
+PLUGIN_PICK_STEP = "text:Select Plugin Package"
+PLUGIN_CONFIRM_STEP = "id:top_save"
+PICKER_NEXT_PAGE = "id:ll_next_page"
+PICKER_PAGE_NUMBER = "id:content_page_number"
+PICKER_MAX_PAGES = 50
+PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
+CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
+TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
+SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
+
+# Which route does each job. `doctor` and `routes` read these same names, so each has one owner.
+# A receiver marked dynamic exists only while its app runs, so its absence proves nothing.
+JOB_ROUTES = (
+    {"job": "open a note", "command": "note open", "kind": "activity", "name": NOTE_ACTIVITY},
+    {"job": "create a note", "command": "note new", "kind": "activity", "name": NOTE_ACTIVITY},
+    {"job": "open Settings for a plugin install", "command": "plugin install", "kind": "activity", "name": SETTINGS_ACTIVITY},
+    {"job": "sync the Calendar", "command": "sync calendar", "kind": "receiver", "name": CALENDAR_SYNC_ACTION, "dynamic": True},
+    {"job": "sync the To-do", "command": "sync tasks", "kind": "provider", "name": TASKS_URI},
+    {"job": "list plugins", "command": "plugin ls", "kind": "provider", "name": PLUGIN_URI},
+)
+JOBS_WITHOUT_ROUTE = (
+    {"job": "install or update a plugin", "needs": "the screen", "command": "plugin install"},
+    {"job": "ask for a sync of one file", "needs": "nothing: the tablet syncs a changed file by itself, and Android refuses its broadcast to the shell user", "command": ""},
+    {"job": "search the InkHub store", "needs": "Ratta's servers, which wait for the owner's yes", "command": ""},
+)
+DIRECT_CALLS = tuple({(route["kind"], route["name"]): route for route in JOB_ROUTES}.values())
+# Operations a read-back proved on a device. Accepting a call proves nothing: a provider can do nothing with it.
+PROVIDER_OPERATIONS = {
+    "com.ratta.supernote.task.provider": {
+        "query": "works",
+        "insert": "works, and starts a sync",
+        "update": "works, and starts no sync",
+        "delete": "works, and a synced row comes back from the cloud",
+    },
+    "com.ratta.supernote.pluginhost": {"query": "works"},
+}
+ROUTE_KINDS = {
+    "Activity Resolver Table:": ("activity", "query-activities"),
+    "Receiver Resolver Table:": ("receiver", "query-receivers"),
+    "Service Resolver Table:": ("service", "query-services"),
+}
+PROVIDER_SECTION = "ContentProvider Authorities:"
+ROUTE_MARK = "::route::"
+RATTA_PACKAGE_PREFIX = "com.ratta."
+
+FIRMWARE_PAGE = "https://support.supernote.com/en_US/change-log/how-to-update-your-supernote"
+FIRMWARE_HOST = "download-firmware.supernote.com"
+FIRMWARE_TARGET = "EXPORT/update.zip"
+FIRMWARE_MIN_BATTERY = 50
+FIRMWARE_NEXT_STEP = "On the tablet: tap OK when it asks. If no prompt appears, restart the tablet to start the update."
+# ro.product.model to the column of Ratta's table. A Manta and a Nomad share one file. shortcut: only the models checked so far.
+FIRMWARE_MODELS = {"Supernote Manta": "Manta & Nomad", "Supernote Nomad": "Manta & Nomad"}
+VERSION_NUMBER = re.compile(r"(?:^|\s)(\d+\.\d+\.\d+)(?:$|\s)")
+
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+NOT_FOUND_ERRORS = ("No such file", "does not exist")
+NO_ROWS = "No result found"
+HIERARCHY_OPEN = "<hierarchy"
+HIERARCHY_CLOSE = "</hierarchy>"
+BOUNDS = re.compile(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]")
+RESUMED = re.compile(r"mResumedActivity: ActivityRecord\{\S+ \S+ (\S+?/\S+)")
+LOG_LINE = re.compile(
+    r"(?P<time>\d\d-\d\d \d\d:\d\d:\d\d\.\d+) (?P<level>[VDIWEF])/(?P<tag>.*?)\(\s*(?P<pid>\d+)\): (?P<message>.*)"
+)
+LS_LINE = re.compile(
+    r"(?P<mode>\S+)\s+\d+\s+\S+\s+\S+\s+(?P<size>\d+)\s+"
+    r"(?P<date>\d{4}-\d\d-\d\d) (?P<time>\d\d:\d\d:\d\d)\.\d+ (?P<hours>[+-]\d\d)(?P<minutes>\d\d)\s(?P<name>.*)"
+)
+PERIOD = re.compile(r"(\d+)([smhd])")
+LOG_TIME = re.compile(r"\d\d-\d\d \d\d:\d\d:\d\d\.\d+")
+LOG_LEVELS = "VDIWEF"
+PLUGIN_DENIED = re.compile(r"PluginSec.*DENY")
+SIMPLE_WORD = re.compile(r"[a-z][\w-]*")
+PICKER_PAGE = re.compile(r"(\d+)\s*/\s*(\d+)")
+ROUTE_COMPONENT = re.compile(r"\s+[0-9a-f]+ (\S+/\S+) filter [0-9a-f]+")
+ROUTE_ACTION = re.compile(r'\s+Action: "([^"]+)"')
+ROUTE_AUTHORITY = re.compile(r"\s+\[([^\]]+)\]:")
+ROUTE_PROVIDER = re.compile(r"\s+Provider\{[0-9a-f]+ (\S+/\S+)\}")
+ROUTE_EXPORTED = re.compile(r"\bexported=(true|false)")
+ROUTE_PERMISSION = re.compile(r"\bpermission=(\S+)")
+ROW = re.compile(r"Row: \d+ (.*)")
+ROW_FIELD = re.compile(r"(?:^|, )(\w+)=")
+CREDENTIAL = re.compile(
+    r"(?i)([\w-]*(?:token|authorization|password|secret)[\w-]*[\"']?\s*[=:]\s*[\"']?)(?:(?:bearer|basic)\s+)?[^\s,;&\"'}]+"
+)
+CREDENTIAL_MASK = r"\1[masked]"
+
+
+# Why each failure happens and the command to try next: the fixed fields of a failure in --json.
+FAILURE_ADVICE = {
+    "usage": ("the call's arguments are wrong, or no address is recorded", "supernote --help"),
+    "no_adb": ("adb is not on this computer's PATH", "adb version"),
+    "unreachable": ("the device did not answer over Wi-Fi ADB", "supernote status"),
+    "device_error": ("the device refused the call, or the call failed", "supernote logs --level E --lines 50"),
+    "not_found": ("the file or element does not exist", "supernote files ls"),
+    "ambiguous": ("more than one element matches the target", "supernote snapshot"),
+    "exists": ("the destination already exists", "supernote files ls"),
+    "timeout": ("the condition did not happen within the time limit", "supernote history --failures"),
+    "stale": ("the screen changed since the last snapshot", "supernote snapshot"),
+    "busy": ("the screen did not settle", "supernote snapshot"),
+    "network_error": ("Ratta's site could not be reached", "supernote firmware"),
+    "firmware_refused": ("the update is not safe to copy", "supernote firmware"),
+    "read_only": ("read-only mode forbids a command that changes the device", "supernote status"),
+    "protected": ("the notes folder or a note on the screen is protected", "supernote files ls"),
+    "missing_call": ("a firmware update may have changed this call", "supernote doctor"),
+    "unexpected_screen": ("the screen is not the one this step expects", "supernote snapshot"),
+    "log_error": ("the command's own log could not be read", "supernote status"),
+}
+
+
+class Failure(Exception):
+    """A failed call, carrying the stable exit code and the fields a JSON reader sees."""
+
+    def __init__(self, code: int, kind: str, message: str, next_step: str = "", cause: str = "", extra=None, text: str = ""):
+        super().__init__(message)
+        self.code = code
+        self.kind = kind
+        self.message = message
+        advised_cause, advised_step = FAILURE_ADVICE[kind]
+        self.cause = cause or advised_cause
+        self.next_step = next_step or advised_step
+        self.extra = extra or {}
+        self.text = text  # what a plain reader sees on stdout alongside the error
+
+
+USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
+# What a failed connection says about the tablet, measured on a Manta: the first match decides.
+# A refused port comes first: a stale `adb` server can repeat `No route to host` after the tablet woke with ADB off.
+UNREACHABLE_STATES = (
+    (("Connection refused",), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
+    (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "supernote status"),
+    (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "supernote status"),
+)
+
+
+def unreachable(serial: str, evidence: str = "") -> Failure:
+    """Name why the device does not answer, from what the connection attempt reported."""
+    for needles, state, cause, advice, next_step in UNREACHABLE_STATES:
+        if any(needle in evidence for needle in needles):
+            return Failure(EXIT_UNREACHABLE, "unreachable", f"{serial}: {cause}. {advice}", next_step, cause, {"state": state})
+    return Failure(
+        EXIT_UNREACHABLE,
+        "unreachable",
+        f"{serial} does not answer. Is it on this Wi-Fi? After a restart, {USB_RESTORE}",
+        extra={"state": "no_answer"},
+    )
+
+
+def not_found(what: str, next_step: str = "") -> Failure:
+    return Failure(EXIT_NOT_FOUND, "not_found", f"not found: {what}", next_step)
+
+
+def bad_usage(message: str) -> Failure:
+    return Failure(EXIT_USAGE, "usage", message)
+
+
+def stale(message: str) -> Failure:
+    return Failure(EXIT_STALE, "stale", f"{message}; take a new snapshot")
+
+
+def remote_path(path: str) -> str:
+    return path if path.startswith("/") else f"{SHARED_ROOT}/{path}".rstrip("/")
+
+
+def read_address() -> str:
+    address = os.environ.get("SUPERNOTE_ADDRESS", "")
+    if not address and ADDRESS_FILE.is_file():
+        lines = ADDRESS_FILE.read_text().splitlines()
+        address = lines[0].strip() if lines else ""
+    if not address:
+        raise bad_usage(f"no address; write the device's IP in {ADDRESS_FILE}")
+    return address
+
+
+def call_verb(args: tuple[str, ...]) -> str:
+    """The name of an ADB call without its arguments, which may name a private note."""
+    words = args[1].split() if args[0] in ("shell", "exec-out") and len(args) > 1 else []
+    if words and SIMPLE_WORD.fullmatch(words[0]):
+        return f"{args[0]} {words[0]}"
+    return args[0]
+
+
+class RunLog:
+    """What one run did. It keeps verbs and timings, and only the masked result reaches a file or a terminal."""
+
+    def __init__(self):
+        self.trace = False
+        self.paths = False
+        self.secrets: list[str] = []
+        self.calls: list[dict] = []
+        self.started = time.monotonic()
+        self.started_at = datetime.now(timezone.utc)
+
+    def clean(self, text: str) -> str:
+        for secret in self.secrets:
+            text = text.replace(secret, ADDRESS_MASK)
+        return CREDENTIAL.sub(CREDENTIAL_MASK, text)
+
+    def call(self, args: tuple[str, ...], started: float, code) -> None:
+        name = self.clean(" ".join(args) if self.paths else call_verb(args))
+        entry = {"call": name, "seconds": round(time.monotonic() - started, TIMING_DIGITS), "exit": code}
+        self.calls.append(entry)
+        if self.trace:
+            print(f"trace: {name} {entry['seconds']} s exit {code}", file=sys.stderr, flush=True)
+
+    def finish(self, command: str, code: int, kind, before: str = "", after: str = "") -> None:
+        """Add this run's line. A log that cannot be written never changes the command's result."""
+        line = self.clean(json.dumps({
+            "time": self.started_at.isoformat(timespec="seconds"),
+            "command": command,
+            "seconds": round(time.monotonic() - self.started, TIMING_DIGITS),
+            "exit": code,
+            "error": kind,
+            "app_before": before,
+            "app_after": after,
+            "calls": self.calls,
+        }, ensure_ascii=False))
+        if self.trace:
+            print(f"trace: {line}", file=sys.stderr, flush=True)
+        try:
+            append_history(line)
+        except (OSError, ValueError) as error:
+            print(f"supernote: the run log was not written: {error}", file=sys.stderr)
+
+
+def append_history(line: str) -> None:
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    HISTORY_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
+    with HISTORY_FILE.open("a", encoding="utf-8") as stream:
+        stream.write(f"{line}\n")
+    if HISTORY_FILE.stat().st_size > HISTORY_MAX_BYTES:
+        lines = HISTORY_FILE.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+        handle, partial = tempfile.mkstemp(dir=HISTORY_FILE.parent, suffix=".partial")
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.writelines(lines[len(lines) // 2 :])
+        os.replace(partial, HISTORY_FILE)
+
+
+class Device:
+    """One ADB connection. Every call has a time limit, so a silent device cannot hang an agent."""
+
+    def __init__(self, serial: str, log: RunLog):
+        self.serial = serial
+        self.log = log
+
+    def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True):
+        prefix = ["adb", "-s", self.serial] if serial else ["adb"]
+        started = time.monotonic()
+        try:
+            done = subprocess.run([*prefix, *args], capture_output=True, timeout=timeout, check=False)
+        except subprocess.TimeoutExpired as error:
+            self.log.call(args, started, None)
+            raise unreachable(self.serial) from error
+        except FileNotFoundError as error:
+            raise Failure(EXIT_FAILED, "no_adb", "adb is not installed") from error
+        self.log.call(args, started, done.returncode)
+        return done
+
+    def stream(self, args: list[str], seconds: float):
+        """Yield the lines a call prints, until it ends or the time limit passes."""
+        started = time.monotonic()
+        process = subprocess.Popen(["adb", "-s", self.serial, *args], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        pending = b""
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(process.stdout, selectors.EVENT_READ)
+                while (left := seconds - (time.monotonic() - started)) > 0 and selector.select(left):
+                    chunk = os.read(process.stdout.fileno(), FOLLOW_CHUNK)
+                    if not chunk:
+                        if process.wait():
+                            raise Failure(EXIT_FAILED, "device_error", f"{args[0]} ended with an error")
+                        break
+                    *complete, pending = (pending + chunk).split(b"\n")
+                    yield from (line.decode(errors="replace").rstrip("\r") for line in complete)
+            if pending:
+                yield pending.decode(errors="replace")
+        finally:
+            process.kill()
+            process.wait()
+            self.log.call(tuple(args), started, process.returncode)
+
+    def is_ready(self) -> bool:
+        return self.adb("get-state").stdout.strip() == b"device"
+
+    def request_connection(self) -> str:
+        done = self.adb("connect", self.serial, timeout=CONNECT_TIMEOUT, serial=False)
+        return (done.stdout + done.stderr).decode(errors="replace")
+
+    def probe(self) -> str:
+        """Empty when the port answers, otherwise why it does not."""
+        host, _, port = self.serial.rpartition(":")
+        try:
+            with socket.create_connection((host, int(port)), PROBE_TIMEOUT):
+                return ""
+        except OSError as error:
+            return str(error)
+
+    def connect(self) -> None:
+        if self.is_ready():
+            return
+        reply = self.request_connection()
+        if self.is_ready():
+            return
+        port_problem = self.probe()
+        if not port_problem:  # the port answers, so the local ADB server holds a dead connection
+            self.adb("kill-server", serial=False)
+            reply = self.request_connection()
+            if self.is_ready():
+                return
+        raise unreachable(self.serial, f"{port_problem} {reply}")
+
+    def shell(self, command: str, timeout: float = CALL_TIMEOUT, missing: str = "") -> str:
+        """Run a device shell command and return its output; `missing` names what a not-found is."""
+        done = self.adb("shell", command, timeout=timeout)
+        output = done.stdout.decode(errors="replace")
+        if done.returncode == 0:
+            return output
+        problem = (done.stderr.decode(errors="replace") + output).strip()
+        if missing and any(error in problem for error in NOT_FOUND_ERRORS):
+            raise not_found(missing)
+        raise Failure(EXIT_FAILED, "device_error", problem or f"device call failed: {command}")
+
+    def wake(self) -> None:
+        """Turn the screen on, doing nothing if it is on. `am start -W` hangs on a sleeping screen."""
+        self.shell("input keyevent WAKEUP")
+
+    def test(self, condition: str) -> bool:
+        return self.shell(f"if [ {condition} ]; then echo yes; else echo no; fi").strip() == "yes"
+
+    def activity(self) -> str:
+        output = self.shell("dumpsys activity activities | grep -m1 mResumedActivity || true")
+        match = RESUMED.search(output)
+        return match.group(1) if match else ""
+
+    def elements(self, attempts: int = DUMP_ATTEMPTS) -> list[dict]:
+        for _ in range(attempts):
+            dump = self.adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
+            if IDLE_ERROR not in dump:
+                return parse_elements(dump)
+        raise Failure(EXIT_BUSY, "busy", f"the screen did not settle after {attempts} tries; try again")
+
+    def capture(self, destination: str) -> int:
+        """Save a screen capture whole or not at all, and return its size."""
+        data = self.adb("exec-out", "screencap", "-p").stdout
+        if not data.startswith(PNG_SIGNATURE):
+            raise Failure(EXIT_FAILED, "device_error", "the device did not return a PNG")
+        folder = os.path.dirname(os.path.abspath(destination))
+        handle, partial = tempfile.mkstemp(dir=folder, suffix=".partial")
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+        os.replace(partial, destination)
+        return len(data)
+
+
+def vertical_span(found: re.Match) -> tuple[int, int]:
+    _, top, _, bottom = (int(value) for value in found.groups())
+    return top, bottom
+
+
+def has_more(node, list_bottom: int):
+    """Whether a list continues below the screen, as far as one read can tell: True, False or None.
+
+    shortcut: vertical lists only; add the right edge when a horizontal list matters."""
+    edges = [BOUNDS.fullmatch(child.get("bounds", "")) for child in node]
+    children = [vertical_span(found) for found in edges if found]
+    if not children:
+        return None
+    top, bottom = max(children, key=lambda child: child[1])
+    gap = list_bottom - bottom
+    if gap <= LIST_EDGE:
+        return True
+    return False if gap >= bottom - top else None
+
+
+def parse_elements(dump: str) -> list[dict]:
+    """The screen's addressable nodes, numbered. Ratta's custom views rarely set `clickable`, so
+    a node counts when it has a resource id, a description or text, or when it can scroll."""
+    start, end = dump.find(HIERARCHY_OPEN), dump.rfind(HIERARCHY_CLOSE)
+    if start < 0 or end < 0:
+        raise Failure(EXIT_FAILED, "device_error", f"no screen tree came back: {dump.strip()[:ERROR_EXCERPT]}")
+    elements: list[dict] = []
+    for node in ElementTree.fromstring(dump[start : end + len(HIERARCHY_CLOSE)]).iter("node"):
+        element_id = node.get("resource-id", "").rpartition("/")[2]
+        desc, text = node.get("content-desc", ""), node.get("text", "")
+        match = BOUNDS.fullmatch(node.get("bounds", ""))
+        scrollable = node.get("scrollable") == "true"
+        if not match or not (element_id or desc or text or scrollable):
+            continue
+        left, top, right, bottom = (int(value) for value in match.groups())
+        if right <= left or bottom <= top:
+            continue
+        elements.append({
+            "ref": f"@e{len(elements) + 1}",
+            "id": element_id,
+            "desc": desc,
+            "text": text,
+            "class": node.get("class", "").rpartition(".")[2],
+            "bounds": [left, top, right, bottom],
+            "x": (left + right) // 2,
+            "y": (top + bottom) // 2,
+            "scrollable": scrollable,
+            "more": has_more(node, bottom) if scrollable else None,
+        })
+    return elements
+
+
+def take_snapshot(device: Device) -> dict:
+    """Read the screen and remember where each reference points. Only positions and ids are kept:
+    what the screen says stays out of the file."""
+    activity = device.activity()
+    elements = device.elements()
+    snapshot = {"activity": activity, "elements": elements}
+    save_snapshot(snapshot)
+    return snapshot
+
+
+def save_snapshot(snapshot: dict) -> None:
+    SNAPSHOT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    kept = [{key: element[key] for key in ("ref", "id", "x", "y")} for element in snapshot["elements"]]
+    SNAPSHOT_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
+    SNAPSHOT_FILE.write_text(json.dumps({"activity": snapshot["activity"], "elements": kept}))
+
+
+def snapshot_lines(snapshot: dict) -> list[str]:
+    lines = [f"activity: {snapshot['activity']}"]
+    for element in snapshot["elements"]:
+        labels = [f'{key}="{element[key]}"' for key in ("id", "desc", "text") if element[key]]
+        lines.append(" ".join(part for part in (
+            element["ref"] or "-", element["class"], *labels, str(element["bounds"]), list_mark(element),
+        ) if part))
+    return lines
+
+
+def list_mark(element: dict) -> str:
+    if element.get("offscreen"):
+        return "offscreen"
+    if not element["scrollable"]:
+        return ""
+    more = {True: "yes", False: "no", None: "unknown"}[element["more"]]
+    return f"scrollable more={more}"
+
+
+def element_place(element: dict) -> tuple:
+    return (element["id"], element["x"], element["y"])
+
+
+def resolve_ref(device: Device, reference: str) -> dict:
+    """A reference holds only for the screen it was read from; pressing an old one could draw on a note."""
+    if not SNAPSHOT_FILE.is_file():
+        raise stale("no snapshot yet")
+    saved = json.loads(SNAPSHOT_FILE.read_text())
+    if device.activity() != saved["activity"]:
+        raise stale("the screen changed since the last snapshot")
+    # One activity can show many screens, such as two notes, so the layout must also match.
+    if [element_place(item) for item in device.elements()] != [element_place(item) for item in saved["elements"]]:
+        raise stale("the screen changed since the last snapshot")
+    for element in saved["elements"]:
+        if element["ref"] == reference:
+            return element
+    raise not_found(f"{reference} in the last snapshot", "supernote snapshot")
+
+
+def find_selector(elements: list[dict], selector: str) -> list[dict]:
+    key, separator, value = selector.partition(":")
+    if not separator or key not in ("id", "desc", "text"):
+        raise bad_usage(f"target must be @eN, id:X, desc:X or text:X, not: {selector}")
+    return [element for element in elements if element[key] == value]
+
+
+def resolve_target(device: Device, target: str) -> dict:
+    if target.startswith("@"):
+        return resolve_ref(device, target)
+    matches = find_selector(device.elements(), target)
+    if not matches:
+        raise not_found(target, "supernote snapshot")
+    if len(matches) > 1:
+        raise Failure(EXIT_NOT_FOUND, "ambiguous", f"{len(matches)} elements match {target}; use a snapshot reference")
+    return matches[0]
+
+
+def touches_notes(path: str) -> bool:
+    """Whether a path is the notes folder, holds it, lies inside it, or is a note."""
+    path = "/" + posixpath.normpath(path).lstrip("/").casefold()  # shared storage ignores case
+    for alias in SHARED_ALIASES:
+        if path == alias or path.startswith(f"{alias}/"):
+            path = SHARED_ROOT.casefold() + path[len(alias):]
+    notes = NOTES_FOLDER.casefold()
+    inside = path == notes or path.startswith(f"{notes}/")
+    return inside or notes.startswith(f"{path.rstrip('/')}/") or path.endswith(NOTE_SUFFIX)
+
+
+def protected(what: str) -> Failure:
+    return Failure(EXIT_PROTECTED, "protected", f"{what} is protected; pass --allow-notes to read it")
+
+
+def after_action(device: Device, args: argparse.Namespace, before: str, result: dict) -> tuple[dict, list[str]]:
+    """Add what the action changed to its result, and the fresh views the caller asked for."""
+    now = device.activity()
+    result.update({"activity_before": before, "activity": now, "changed": before != now})
+    lines = [f"activity: {before} -> {now}" if before != now else f"activity: {now}"]
+    if args.screen and now == NOTE_ACTIVITY and not args.allow_notes:
+        result["screen_refused"] = "a note is on the screen; pass --allow-notes to capture it"
+        lines.append(f"screen: {result['screen_refused']}")
+    elif args.screen:
+        result["screen"] = args.screen
+        result["screen_bytes"] = device.capture(args.screen)
+        lines.append(f"screen: {args.screen}")
+    if args.snapshot:
+        snapshot = take_snapshot(device)
+        result["elements"] = snapshot["elements"]
+        lines.extend(snapshot_lines(snapshot)[1:])
+    return result, lines
+
+
+def press(device: Device, args: argparse.Namespace, x: int, y: int, result: dict) -> tuple[dict, str]:
+    device.wake()
+    before = device.activity()
+    device.shell(f"input tap {x} {y}")
+    result.update({"x": x, "y": y})
+    done, lines = after_action(device, args, before, result)
+    return done, "\n".join(lines)
+
+
+def start_activity(device: Device, arguments: str) -> None:
+    device.wake()
+    output = device.shell(f"am start -W {arguments}".rstrip(), timeout=START_TIMEOUT)
+    if "Error" in output or "Status: ok" not in output:
+        raise Failure(EXIT_FAILED, "device_error", output.strip())
+
+
+def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str]) -> tuple[dict, str]:
+    before = device.activity()
+    quoted = " ".join(shlex.quote(part) for part in extras)
+    start_activity(device, f"-a android.intent.action.VIEW -n {NOTE_ACTIVITY} {quoted}")
+    done, lines = after_action(device, args, before, {"path": path})
+    return done, "\n".join([f"opened: {path}", *lines])
+
+
+def need_note_suffix(path: str) -> None:
+    if not path.endswith(NOTE_SUFFIX):
+        raise bad_usage(f"a note path ends in {NOTE_SUFFIX}: {path}")
+
+
+def command_note_open(device: Device, args: argparse.Namespace):
+    need_note_suffix(args.path)
+    path = remote_path(args.path)
+    if not device.test(f"-f {shlex.quote(path)}"):
+        raise not_found(path)
+    extras = ["--es", "file_path", path, "--es", "from_app", "launcher"]
+    if args.page is not None:
+        extras += ["--ei", "page", str(args.page - 1)]
+    return start_note(device, args, path, extras)
+
+
+def command_note_new(device: Device, args: argparse.Namespace):
+    """The Launcher's own call: the extras name the folder and the bare name, not the file."""
+    need_note_suffix(args.path)
+    path = remote_path(args.path)
+    if device.test(f"-e {shlex.quote(path)}"):
+        raise Failure(EXIT_EXISTS, "exists", f"{path} exists; a new note never replaces one")
+    folder, _, name = path.rpartition("/")
+    extras = [
+        "--es", "file_path", folder,
+        "--es", "currentPath", folder,
+        "--ei", "note_mode", NOTE_MODE_NORMAL,
+        "--es", "note_name", name.removesuffix(NOTE_SUFFIX),
+        "--ez", "note_direction", "false",
+        "--es", "note_style", NOTE_BLANK_STYLE,
+    ]
+    return start_note(device, args, path, extras)
+
+
+class TableParser(html.parser.HTMLParser):
+    """Every table cell's text and first link, row by row."""
+
+    def __init__(self):
+        super().__init__()
+        self.rows: list[list[dict]] = []
+        self.cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self.rows.append([])
+        elif tag in ("td", "th") and self.rows:
+            self.cell = {"text": "", "link": ""}
+            self.rows[-1].append(self.cell)
+        elif tag == "a" and self.cell is not None and not self.cell["link"]:
+            self.cell["link"] = dict(attrs).get("href") or ""
+
+    def handle_endtag(self, tag):
+        if tag in ("td", "th"):
+            self.cell = None
+
+    def handle_data(self, data):
+        if self.cell is not None:
+            self.cell["text"] = " ".join(f"{self.cell['text']} {data}".split())
+
+
+def open_url(url: str):
+    return urllib.request.urlopen(url, timeout=DOWNLOAD_READ_TIMEOUT)
+
+
+def newest_firmware(column: str) -> dict:
+    """The version and link in this model's column. A page that has changed stops the command."""
+    with open_url(FIRMWARE_PAGE) as answer:
+        table = TableParser()
+        table.feed(answer.read().decode(errors="replace"))
+    for header, row in zip(table.rows, table.rows[1:]):
+        names = [cell["text"] for cell in header]
+        if column in names and len(row) == len(names) and row[names.index(column)]["link"]:
+            cell = row[names.index(column)]
+            return {"version": cell["text"], "url": cell["link"]}
+    raise Failure(EXIT_FAILED, "device_error", f"Ratta's page has no firmware for {column}; it may have changed", next_step=FIRMWARE_PAGE)
+
+
+def version_tuple(text: str):
+    """The three numbers of a public version. The tablet's build id holds none: it reads like E103.2610191001.2559."""
+    match = VERSION_NUMBER.search(text)
+    return tuple(int(part) for part in match[1].split(".")) if match else None
+
+
+def network_failure(error: Exception) -> Failure:
+    return Failure(EXIT_FAILED, "network_error", f"Ratta's site did not answer: {error}")
+
+
+def refuse_firmware(message: str) -> Failure:
+    return Failure(EXIT_FIRMWARE_REFUSED, "firmware_refused", message)
+
+
+def need_official_source(url: str) -> None:
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https" or parts.hostname != FIRMWARE_HOST:
+        raise refuse_firmware(f"only https://{FIRMWARE_HOST} is accepted, not: {url}")
+
+
+def download_firmware(url: str, destination: str) -> str:
+    """Save the file and return its SHA-256. A redirect to another host stops before a byte is written."""
+    need_official_source(url)
+    digest = hashlib.sha256()
+    started = time.monotonic()
+    with open_url(url) as answer, open(destination, "wb") as stream:
+        need_official_source(answer.geturl())
+        while chunk := answer.read(FOLLOW_CHUNK):
+            if time.monotonic() - started >= DOWNLOAD_TIMEOUT:
+                raise Failure(EXIT_TIMEOUT, "timeout", f"the download took more than {DOWNLOAD_TIMEOUT:g} s")
+            digest.update(chunk)
+            stream.write(chunk)
+    return digest.hexdigest()
+
+
+def command_firmware(device: Device, args: argparse.Namespace):
+    installed = args.installed or device.shell("getprop ro.build.display.id").strip()
+    model = device.shell("getprop ro.product.model").strip()
+    column = FIRMWARE_MODELS.get(model)
+    if not column:
+        raise Failure(EXIT_FAILED, "device_error", f"no known firmware file for this model: {model}", next_step=FIRMWARE_PAGE)
+    try:
+        newest = newest_firmware(column)
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError) as error:
+        raise network_failure(error) from error
+    published, current = version_tuple(newest["version"]), version_tuple(installed)
+    if not published:
+        raise Failure(EXIT_FAILED, "device_error", f"no version number in Ratta's page: {newest['version']}", next_step=FIRMWARE_PAGE)
+    newer = published > current if current else None
+    data = {"model": model, "installed": installed, "newest": newest["version"], "url": newest["url"], "newer": newer}
+    answer = {True: "yes", False: "no", None: "unknown: pass --installed X.Y.Z, as Settings > About shows"}[newer]
+    text = f"installed: {installed}\nnewest: {newest['version']}\nnewer: {answer}"
+    if not args.download:
+        return data, text
+    if newer is None:
+        raise refuse_firmware(f"this tablet's build id holds no public version; pass --installed X.Y.Z, as Settings > About shows: {installed}")
+    if not newer:
+        raise refuse_firmware(f"{newest['version']} is not newer than {installed}; a downgrade can cause a boot loop")
+    url = newest["url"]
+    need_official_source(url)
+    level = re.search(r"level: (\d+)", device.shell("dumpsys battery | grep level"))
+    if not level or int(level[1]) < FIRMWARE_MIN_BATTERY:
+        raise refuse_firmware(f"the battery must be at {FIRMWARE_MIN_BATTERY}% or more")
+    with tempfile.TemporaryDirectory() as folder:
+        local = os.path.join(folder, os.path.basename(FIRMWARE_TARGET))
+        try:
+            digest = download_firmware(url, local)
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError) as error:
+            raise network_failure(error) from error
+        if not zipfile.is_zipfile(local):
+            raise refuse_firmware("the download is not a whole zip file")
+        pushed = push_file(device, local, remote_path(FIRMWARE_TARGET), args.overwrite, FIRMWARE_TRANSFER_TIMEOUT)
+    copied = device.shell(f"sha256sum {shlex.quote(pushed['path'])}", timeout=FIRMWARE_TRANSFER_TIMEOUT).split()
+    if not copied or copied[0] != digest:
+        raise Failure(EXIT_FAILED, "device_error", f"{pushed['path']} differs from the download; remove it before updating")
+    data.update({"path": pushed["path"], "bytes": pushed["bytes"], "sha256": digest, "next": FIRMWARE_NEXT_STEP})
+    return data, f"{text}\ncopied: {pushed['path']} ({pushed['bytes']} bytes)\n{FIRMWARE_NEXT_STEP}"
+
+
+def call_exists(device: Device, call: dict, providers: str, broadcasts: str):
+    """Read-only: ask the package manager, and start or send nothing. None means it cannot be known now."""
+    if call["kind"] == "provider":
+        return f"[{call['name'].removeprefix('content://').partition('/')[0]}]" in providers
+    if call["kind"] == "activity":
+        return "No activity found" not in device.shell(f"cmd package resolve-activity --brief -n {call['name']}")
+    if "No receivers found" not in device.shell(f"cmd package query-receivers --brief -a {call['name']}"):
+        return True
+    if call["name"] in broadcasts:
+        return True
+    return None if call.get("dynamic") else False
+
+
+def parse_package_routes(output: str) -> tuple[list[dict], list[dict]]:
+    """The components with an intent filter, and the provider authorities, of one `dumpsys package`."""
+    found: dict[tuple, dict] = {}
+    providers, section, current, authority = [], "", None, ""
+    for line in output.splitlines():
+        if line.strip() and not line.startswith(" "):
+            section, current = line.strip(), None
+        elif section in ROUTE_KINDS:
+            component, action = ROUTE_COMPONENT.fullmatch(line), ROUTE_ACTION.fullmatch(line)
+            if component:
+                kind = ROUTE_KINDS[section][0]
+                current = found.setdefault((kind, component[1]), {"kind": kind, "name": component[1], "filters": [], "query": ROUTE_KINDS[section][1]})
+            elif action and current and action[1] not in current["filters"]:
+                current["filters"].append(action[1])
+        elif section == PROVIDER_SECTION:
+            named, provider = ROUTE_AUTHORITY.fullmatch(line), ROUTE_PROVIDER.fullmatch(line)
+            if named:
+                authority = named[1]
+            elif provider:
+                providers.append({
+                    "authority": authority,
+                    "component": provider[1],
+                    "exported": None,
+                    "operations": PROVIDER_OPERATIONS.get(authority),
+                })
+    return list(found.values()), providers
+
+
+def add_component_details(device: Device, components: list[dict]) -> list[dict]:
+    """Keep the exported components, with their permission, asked in one shell call."""
+    if not components:
+        return []
+    script = "; ".join(
+        f"echo {ROUTE_MARK}{index}; cmd package {component['query']} -n {shlex.quote(component['name'])}"
+        for index, component in enumerate(components)
+    )
+    parts = device.shell(script, timeout=ROUTES_TIMEOUT).split(ROUTE_MARK)[1:]
+    exported = []
+    for part in parts:
+        number, _, details = part.partition("\n")
+        component = dict(components[int(number)])
+        component.pop("query")
+        state, permission = ROUTE_EXPORTED.search(details), ROUTE_PERMISSION.search(details)
+        if state and state[1] == "true":
+            exported.append({**component, "permission": permission[1] if permission and permission[1] != "null" else None})
+    return exported
+
+
+def package_routes(device: Device, package: str) -> dict:
+    output = device.shell(f"dumpsys package {shlex.quote(package)}")
+    if f"Package [{package}]" not in output:
+        raise not_found(f"package {package}", "supernote apps")
+    components, providers = parse_package_routes(output)
+    return {"package": package, "components": add_component_details(device, components), "providers": providers}
+
+
+def route_lines(entry: dict) -> list[str]:
+    lines = [f"package: {entry['package']}"]
+    for item in entry["components"]:
+        lines.append(f"{item['kind']}\t{item['name']}\tpermission={item['permission'] or '-'}\tfilters={','.join(item['filters']) or '-'}")
+    for item in entry["providers"]:
+        operations = "; ".join(f"{name}: {result}" for name, result in (item["operations"] or {}).items()) or "operations not proven"
+        lines.append(f"provider\t{item['authority']}\t{item['component']}\t{operations}")
+    return lines
+
+
+def command_routes(device: Device, args: argparse.Namespace):
+    if args.package:
+        packages = [args.package]
+    else:
+        listed = device.shell("pm list packages").split()
+        packages = sorted(line.removeprefix("package:") for line in listed if line.removeprefix("package:").startswith(RATTA_PACKAGE_PREFIX))
+    entries = [package_routes(device, package) for package in packages]
+    jobs = [{key: route[key] for key in ("job", "command", "kind", "name")} for route in JOB_ROUTES]
+    lines = [line for entry in entries for line in route_lines(entry)]
+    lines += [f"job\t{item['job']}\t{item['command']}\t{item['kind']} {item['name']}" for item in jobs]
+    lines += [f"job\t{item['job']}\tneeds {item['needs']}" for item in JOBS_WITHOUT_ROUTE]
+    return {"packages": entries, "jobs": jobs, "jobs_without_route": list(JOBS_WITHOUT_ROUTE)}, "\n".join(lines)
+
+
+def command_doctor(device: Device, args: argparse.Namespace):
+    firmware = device.shell("getprop ro.build.display.id").strip()
+    providers = device.shell("dumpsys package providers")
+    broadcasts = device.shell("dumpsys activity broadcasts")
+    calls = [
+        {"kind": call["kind"], "name": call["name"], "exists": call_exists(device, call, providers, broadcasts)}
+        for call in DIRECT_CALLS
+    ]
+    data = {"firmware": firmware, "calls": calls, "missing": sum(call["exists"] is False for call in calls)}
+    words = {True: "ok", False: "MISSING", None: "unknown"}
+    lines = [f"firmware: {firmware}", *(f"{words[call['exists']]}\t{call['kind']}\t{call['name']}" for call in calls)]
+    text = "\n".join(lines)
+    if data["missing"]:
+        raise Failure(EXIT_CALL_MISSING, "missing_call", f"{data['missing']} calls are gone from this firmware", extra=data, text=text)
+    return data, text
+
+
+def parse_listing(output: str) -> list[dict]:
+    entries = []
+    for match in map(LS_LINE.fullmatch, output.splitlines()):
+        if match:
+            entries.append({
+                "name": match["name"].split(" -> ")[0].rpartition("/")[2],
+                "type": "dir" if match["mode"].startswith("d") else "file",
+                "bytes": int(match["size"]),
+                "modified": f"{match['date']}T{match['time']}{match['hours']}:{match['minutes']}",
+            })
+    return entries
+
+
+def command_status(device: Device, args: argparse.Namespace):
+    output = device.shell(
+        "getprop ro.build.display.id; wm size; dumpsys battery | grep level; "
+        "dumpsys activity activities | grep -m1 mResumedActivity || true"
+    )
+    first = output.splitlines()[0].strip() if output.strip() else ""
+    size = re.search(r"Physical size: (\S+)", output)
+    level = re.search(r"level: (\d+)", output)
+    resumed = RESUMED.search(output)
+    data = {
+        "serial": device.serial,
+        "firmware": first,
+        "screen": size.group(1) if size else "",
+        "battery": int(level.group(1)) if level else None,
+        "activity": resumed.group(1) if resumed else "",
+    }
+    return data, "\n".join(f"{key}: {value}" for key, value in data.items())
+
+
+def command_files_ls(device: Device, args: argparse.Namespace):
+    path = remote_path(args.path)
+    entries = parse_listing(device.shell(f"ls -lA --full-time {shlex.quote(path)}", missing=path))
+    text = "\n".join(
+        f"{entry['type']}\t{entry['bytes']}\t{entry['modified']}\t{entry['name']}" for entry in entries
+    )
+    return {"path": path, "entries": entries}, text
+
+
+def transfer(device: Device, *args: str, missing: str, timeout: float = TRANSFER_TIMEOUT) -> None:
+    done = device.adb(*args, timeout=timeout)
+    if done.returncode == 0:
+        return
+    problem = (done.stderr.decode(errors="replace") + done.stdout.decode(errors="replace")).strip()
+    if any(error in problem for error in NOT_FOUND_ERRORS):
+        raise not_found(missing)
+    raise Failure(EXIT_FAILED, "device_error", problem)
+
+
+def command_files_pull(device: Device, args: argparse.Namespace):
+    path = remote_path(args.path)
+    if touches_notes(path) and not args.allow_notes:
+        raise protected(path)
+    transfer(device, "pull", path, args.local_path, missing=path)
+    return {"path": path, "local": args.local_path}, f"pulled: {path} -> {args.local_path}"
+
+
+def push_file(device: Device, local: str, path: str, overwrite: bool, timeout: float = TRANSFER_TIMEOUT) -> dict:
+    """Copy one file and prove it arrived whole. A folder as destination keeps the file's name."""
+    if not os.path.isfile(local):
+        raise not_found(local)
+    if device.test(f"-d {shlex.quote(path)}"):
+        path = f"{path.rstrip('/')}/{os.path.basename(local)}"
+    replaced = device.test(f"-e {shlex.quote(path)}")
+    if replaced and not overwrite:
+        raise Failure(EXIT_EXISTS, "exists", f"{path} exists; pass --overwrite to replace it")
+    transfer(device, "push", local, path, missing=local, timeout=timeout)
+    size = int(device.shell(f"stat -c %s {shlex.quote(path)}").strip())
+    if size != os.path.getsize(local):
+        raise Failure(EXIT_FAILED, "device_error", f"{path} has {size} bytes after the copy, not {os.path.getsize(local)}")
+    return {"path": path, "bytes": size, "replaced": replaced}
+
+
+def command_files_push(device: Device, args: argparse.Namespace):
+    data = push_file(device, args.local_path, remote_path(args.path), args.overwrite)
+    return data, f"pushed: {data['path']} ({data['bytes']} bytes)"
+
+
+def broadcast(device: Device, action: str) -> dict:
+    output = device.shell(f"am broadcast -a {action}").strip()
+    match = re.search(r"Broadcast completed: result=(-?\d+)", output)
+    if not match:
+        raise Failure(EXIT_FAILED, "device_error", output or f"no answer to {action}")
+    return {"action": action, "result": int(match.group(1))}
+
+
+def trigger_row_exists(device: Device, task_id: str) -> bool:
+    """Read only the trigger row, never another task."""
+    where = shlex.quote(f"taskId='{task_id}'")
+    return bool(query_rows(device, f"content query --uri {TASKS_URI} --projection id --where {where}"))
+
+
+def command_sync_tasks(device: Device, args: argparse.Namespace):
+    """Android refuses the app's own broadcast to the `shell` user. An insert does start a sync, and
+    a row already marked as deleted removes itself in that sync, so nothing stays behind."""
+    task_id = uuid.uuid4().hex
+    now = str(int(time.time() * MILLISECONDS))
+    binds = [
+        f"taskId:s:{task_id}", f"title:s:{SYNC_TRIGGER_TITLE}", "status:s:needsAction", f"lastModified:l:{now}",
+        "dueTime:l:0", "completedTime:l:0", "isReminderOn:i:0", "deleted:i:1", "hasSync:i:0", "sort:i:0",
+        "sortCompleted:i:0", f"sortTime:l:{now}", "plannedSort:i:0", f"plannedSortTime:l:{now}",
+    ]
+    arguments = " ".join(f"--bind {bind}" for bind in binds)
+    output = device.shell(f"content insert --uri {TASKS_URI} {arguments}")
+    if "Exception" in output or "Error" in output:
+        raise Failure(EXIT_FAILED, "device_error", output.strip())
+    if not trigger_row_exists(device, task_id):
+        raise Failure(EXIT_FAILED, "device_error", "the provider accepted the trigger row but does not hold it")
+    started = time.monotonic()
+    while trigger_row_exists(device, task_id):
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"no sync ran in {args.timeout:g} s; the hidden trigger row goes in the next sync")
+        time.sleep(WAIT_INTERVAL)
+    waited = round(time.monotonic() - started, 1)
+    return {"app": "tasks", "route": TASKS_URI, "seconds": waited}, f"synced: tasks, after {waited} s"
+
+
+def command_sync_calendar(device: Device, args: argparse.Namespace):
+    """The Calendar app registers this receiver only while it runs, and an unheard broadcast still answers 0."""
+    if CALENDAR_SYNC_ACTION not in device.shell("dumpsys activity broadcasts"):
+        raise Failure(EXIT_FAILED, "device_error", "the Calendar app is not running, so nothing would hear this; open it first", next_step="supernote doctor")
+    data = {"app": "calendar", **broadcast(device, CALENDAR_SYNC_ACTION)}
+    return data, "sync asked: calendar"
+
+
+def command_screen(device: Device, args: argparse.Namespace):
+    if device.activity() == NOTE_ACTIVITY and not args.allow_notes:
+        raise protected("a note on the screen")
+    size = device.capture(args.file)
+    return {"path": args.file, "bytes": size}, args.file
+
+
+def element_key(element: dict) -> tuple:
+    """What makes two reads show the same element. shortcut: identical rows count once; use position when that matters."""
+    return (element["id"], element["desc"], element["text"], element["class"])
+
+
+def swipe_list(device: Device, element: dict, forward: bool) -> None:
+    left, top, right, bottom = element["bounds"]
+    x, height = (left + right) // 2, bottom - top
+    start, end = top + int(height * SCROLL_START), top + int(height * SCROLL_END)
+    if not forward:
+        start, end = end, start
+    device.shell(f"input swipe {x} {start} {x} {end} {SCROLL_MILLISECONDS}")
+
+
+def scroll_to_end(device: Device, element: dict, seen: set, limit: int, stop=None) -> dict:
+    """Swipe one list until two reads bring nothing new or the limit passes, collecting what appears."""
+    found, steps, quiet = [], 0, 0
+    while steps < limit and quiet < SCROLL_QUIET_READS:
+        swipe_list(device, element, True)
+        steps += 1
+        fresh = [item for item in device.elements() if element_key(item) not in seen]
+        seen.update(element_key(item) for item in fresh)
+        found += fresh
+        quiet = 0 if fresh else quiet + 1
+        if stop and stop(fresh):
+            return {"found": found, "steps": steps, "at_limit": False, "stopped": True}
+    return {"found": found, "steps": steps, "at_limit": quiet < SCROLL_QUIET_READS, "stopped": False}
+
+
+def scroll_back(device: Device, element: dict, first: list[dict], steps: int) -> bool:
+    """Swipe back until the screen shows what it showed before the scan."""
+    wanted = [element_key(item) for item in first]
+    for _ in range(steps + SCROLL_QUIET_READS):
+        swipe_list(device, element, False)
+        if [element_key(item) for item in device.elements()] == wanted:
+            return True
+    return False
+
+
+def refuse_note_editor(device: Device) -> None:
+    if device.activity() == NOTE_ACTIVITY:
+        raise bad_usage("scrolling on a note could draw on it; leave the note editor first")
+
+
+def read_every_list(device: Device, snapshot: dict, limit: int) -> tuple[dict, list[str]]:
+    """Read each list to its end and come back. Elements found off screen have no reference, because they cannot be pressed from here."""
+    first, merged, lists = snapshot["elements"], list(snapshot["elements"]), []
+    seen = {element_key(item) for item in first}
+    SNAPSHOT_FILE.unlink(missing_ok=True)  # until the screen is proven back, the old references may point at the wrong place
+    for element in [item for item in first if item["scrollable"]]:
+        scan = scroll_to_end(device, element, seen, limit)
+        merged += [{**item, "ref": "", "offscreen": True} for item in scan["found"]]
+        returned = scan["steps"] == 0 or scroll_back(device, element, first, scan["steps"])
+        lists.append({
+            "ref": element["ref"],
+            "steps": scan["steps"],
+            "found": len(scan["found"]),
+            "at_limit": scan["at_limit"],
+            "returned": returned,
+        })
+    if all(item["returned"] for item in lists):
+        save_snapshot(snapshot)
+    data = {**snapshot, "elements": merged, "lists": lists, "at_limit": any(item["at_limit"] for item in lists)}
+    lines = [
+        f"list {item['ref']}: {item['found']} more in {item['steps']} steps"
+        + ("; stopped at the limit" if item["at_limit"] else "")
+        + ("" if item["returned"] else "; did not return to the start, take a new snapshot")
+        for item in lists
+    ]
+    return data, lines
+
+
+def scroll_until_found(device: Device, selector: str, limit: int):
+    """Scroll until an element appears and leave it on screen, with a fresh snapshot to press it from."""
+    find_selector([], selector)  # a bad selector stops before any swipe
+    snapshot = take_snapshot(device)
+    first = snapshot["elements"]
+    matches = find_selector(first, selector)
+    if matches:
+        return {**snapshot, "found": matches[0], "steps": 0}
+    seen = {element_key(item) for item in first}
+    SNAPSHOT_FILE.unlink(missing_ok=True)  # until the screen is proven back, the old references may point at the wrong place
+    returned, at_limit = True, False
+    for element in [item for item in first if item["scrollable"]]:
+        scan = scroll_to_end(device, element, seen, limit, lambda fresh: bool(find_selector(fresh, selector)))
+        if scan["stopped"]:
+            found = take_snapshot(device)
+            matches = find_selector(found["elements"], selector)
+            if matches:
+                return {**found, "found": matches[0], "steps": scan["steps"]}
+        at_limit = at_limit or scan["at_limit"]
+        returned = returned and (not scan["steps"] or scroll_back(device, element, first, scan["steps"]))
+    if returned:
+        save_snapshot(snapshot)
+    failure = not_found(selector, "supernote snapshot --all")
+    failure.extra = {"at_limit": at_limit}
+    if at_limit:
+        failure.message = f"{selector} not found before the limit of {limit} swipes; the list continues"
+    raise failure
+
+
+def command_snapshot(device: Device, args: argparse.Namespace):
+    if args.all or args.find:
+        refuse_note_editor(device)
+    if args.find:
+        data = scroll_until_found(device, args.find, args.max_steps)
+        return data, "\n".join(snapshot_lines(data))
+    snapshot = take_snapshot(device)
+    if not args.all:
+        return snapshot, "\n".join(snapshot_lines(snapshot))
+    data, lines = read_every_list(device, snapshot, args.max_steps)
+    return data, "\n".join([*snapshot_lines(data), *lines])
+
+
+def command_click(device: Device, args: argparse.Namespace):
+    element = resolve_target(device, args.target)
+    return press(device, args, element["x"], element["y"], {"target": args.target})
+
+
+def command_tap(device: Device, args: argparse.Namespace):
+    return press(device, args, args.x, args.y, {})
+
+
+def command_swipe(device: Device, args: argparse.Namespace):
+    device.wake()
+    before = device.activity()
+    device.shell(f"input swipe {args.x1} {args.y1} {args.x2} {args.y2}")
+    done, lines = after_action(device, args, before, {})
+    return done, "\n".join(lines)
+
+
+def element_matches(device: Device, selector: str) -> bool:
+    try:
+        return bool(find_selector(device.elements(attempts=1), selector))
+    except Failure as failure:
+        if failure.code == EXIT_BUSY:
+            return False  # a screen that has not settled is one more turn of the wait
+        raise
+
+
+def command_wait(device: Device, args: argparse.Namespace):
+    """Poll one condition until it holds, always trying at least once."""
+    conditions = {
+        "activity": lambda: args.value in device.activity(),
+        "file": lambda: device.test(f"-e {shlex.quote(remote_path(args.value))}"),
+        "element": lambda: element_matches(device, args.value),
+    }
+    if args.kind == "element":
+        find_selector([], args.value)  # a bad selector stops now, not at the timeout
+    condition = conditions[args.kind]
+    started = time.monotonic()
+    while not condition():
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{args.kind} {args.value} not seen in {args.timeout:g} s")
+        time.sleep(WAIT_INTERVAL)
+    waited = round(time.monotonic() - started, 1)
+    return {"kind": args.kind, "value": args.value, "seconds": waited}, f"seen after {waited} s"
+
+
+def command_apps(device: Device, args: argparse.Namespace):
+    third_party = device.shell("pm list packages -3").split()
+    system = device.shell("pm list packages -s").split()
+    apps = [{"package": line.removeprefix("package:"), "kind": "installed"} for line in third_party]
+    apps += [{"package": line.removeprefix("package:"), "kind": "system"} for line in system]
+    return {"apps": apps}, "\n".join(f"{app['kind']}\t{app['package']}" for app in apps)
+
+
+def parse_rows(output: str) -> list[dict]:
+    """`content query` rows. A value may hold commas, so a field starts only at `, name=`."""
+    rows = []
+    for line in output.splitlines():
+        match = ROW.match(line)
+        if not match:
+            continue
+        pieces = ROW_FIELD.split(match.group(1))[1:]
+        rows.append(dict(zip(pieces[0::2], pieces[1::2])))
+    return rows
+
+
+def command_plugin_ls(device: Device, args: argparse.Namespace):
+    rows = plugin_rows(device)
+    return {"plugins": rows}, "\n".join(json.dumps(row, ensure_ascii=False) for row in rows)
+
+
+def command_plugin_push(device: Device, args: argparse.Namespace):
+    if not args.file.endswith(PLUGIN_SUFFIX):
+        raise bad_usage(f"a plugin file ends in {PLUGIN_SUFFIX}: {args.file}")
+    data = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
+    data["next"] = PLUGIN_NEXT_STEP
+    return data, f"pushed: {data['path']}\n{PLUGIN_NEXT_STEP}"
+
+
+def query_rows(device: Device, call: str) -> list[dict]:
+    """`content query` rows. No rows counts as empty only when the provider says so."""
+    output = device.shell(call)
+    rows = parse_rows(output)
+    if not rows and NO_ROWS not in output:
+        raise Failure(EXIT_FAILED, "device_error", output.strip() or f"no answer to: {call}")
+    return rows
+
+
+def plugin_rows(device: Device) -> list[dict]:
+    return query_rows(device, f"content query --uri {PLUGIN_URI}")
+
+
+def read_plugin_config(path: str) -> dict:
+    """A plugin's id and version, from the file itself, so the read-back has something to prove."""
+    if not path.endswith(PLUGIN_SUFFIX):
+        raise bad_usage(f"a plugin file ends in {PLUGIN_SUFFIX}: {path}")
+    if not os.path.isfile(path):
+        raise not_found(path)
+    try:
+        with zipfile.ZipFile(path) as archive:
+            member = next(name for name in archive.namelist() if name.rpartition("/")[2] == PLUGIN_CONFIG_FILE)
+            config = json.loads(archive.read(member))
+        return {"id": config["pluginID"], "version": config["versionName"]}
+    except (zipfile.BadZipFile, StopIteration, KeyError, ValueError) as error:
+        raise bad_usage(f"{path} holds no readable {PLUGIN_CONFIG_FILE} with pluginID and versionName") from error
+
+
+def expect_element(device: Device, selector: str, limit: float) -> dict:
+    """The one element this step needs, or a stop before anything else is pressed."""
+    started = time.monotonic()
+    while True:
+        try:
+            matches = find_selector(device.elements(attempts=1), selector)
+        except Failure as failure:
+            if failure.code != EXIT_BUSY:
+                raise
+            matches = []
+        if len(matches) == 1:
+            return matches[0]
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{selector} is not on the screen as one element after {limit:g} s; nothing more was pressed")
+        time.sleep(WAIT_INTERVAL)
+
+
+def press_element(device: Device, element: dict) -> None:
+    device.shell(f"input tap {element['x']} {element['y']}")
+
+
+def read_enabled_limit(device: Device) -> dict:
+    for element in device.elements():
+        found = PLUGIN_ENABLED.fullmatch(element["text"])
+        if found:
+            return {"enabled": int(found[1]), "limit": int(found[2])}
+    return {"enabled": None, "limit": None}
+
+
+def picker_page(elements: list[dict]) -> tuple[int, int]:
+    """The picker's `current / total` page numbers. A screen that shows none has one page."""
+    labels = find_selector(elements, PICKER_PAGE_NUMBER)
+    match = PICKER_PAGE.fullmatch(labels[0]["text"].strip()) if labels else None
+    return (int(match[1]), int(match[2])) if match else (1, 1)
+
+
+def wait_for_page_change(device: Device, page: int, limit: float) -> None:
+    started = time.monotonic()
+    while picker_page(device.elements())[0] == page:
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the picker stayed on page {page} after {limit:g} s; nothing more was pressed")
+        time.sleep(WAIT_INTERVAL)
+
+
+def turn_to_file(device: Device, name: str, limit: float) -> None:
+    """Page through the file picker, which shows `1 / 2` and has no scrolling list, until the file is on screen."""
+    selector = f"text:{name}"
+    for _ in range(PICKER_MAX_PAGES):
+        elements = device.elements()
+        if find_selector(elements, selector):
+            return
+        page, total = picker_page(elements)
+        if page >= total:
+            break
+        press_element(device, expect_element(device, PICKER_NEXT_PAGE, limit))
+        wait_for_page_change(device, page, limit)
+    raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{name} is not in the picker; nothing more was pressed")
+
+
+def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) -> dict:
+    """Prove the install from the list. An update needs the version column, or nothing proves it changed."""
+    started = time.monotonic()
+    while True:
+        for row in plugin_rows(device):
+            if row.get("pluginID") != config["id"]:
+                continue
+            if updating and "versionName" not in row:
+                raise Failure(EXIT_FAILED, "device_error", "the plugin list has no version column, so this update cannot be proved")
+            if row.get("versionName", config["version"]) == config["version"]:
+                return row
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{config['id']} {config['version']} is not in the plugin list after {limit:g} s")
+        time.sleep(WAIT_INTERVAL)
+
+
+def command_plugin_install(device: Device, args: argparse.Namespace):
+    config = read_plugin_config(args.file)
+    name = os.path.basename(args.file)
+    installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
+    if installed and installed[0].get("versionName") == config["version"]:
+        raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "supernote plugin ls")
+    pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
+    start_activity(device, f"-n {SETTINGS_ACTIVITY}")
+    for step in PLUGIN_PATH_STEPS:
+        press_element(device, expect_element(device, step, args.step_timeout))
+    pick = expect_element(device, PLUGIN_PICK_STEP, args.step_timeout)
+    limit = read_enabled_limit(device)
+    print(f"plugins enabled: {limit['enabled']} of {limit['limit']}", file=sys.stderr, flush=True)
+    press_element(device, pick)
+    expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout)  # the picker's own button: this is the picker
+    turn_to_file(device, name, args.step_timeout)
+    press_element(device, expect_element(device, f"text:{name}", args.step_timeout))
+    press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
+    row = wait_for_plugin(device, config, args.timeout, bool(installed))
+    data = {
+        "plugin": config["id"],
+        "version": config["version"],
+        "action": "updated" if installed else "installed",
+        "route": "screen",
+        "path": pushed["path"],
+        **limit,
+        "row": row,
+    }
+    return data, f"{data['action']}: {config['id']} {config['version']}"
+
+
+def parse_log(line: str) -> dict:
+    match = LOG_LINE.fullmatch(line)
+    if not match:
+        return {"message": line}
+    return {**match.groupdict(), "tag": match["tag"].strip(), "pid": int(match["pid"])}
+
+
+def period_seconds(text: str) -> int:
+    match = PERIOD.fullmatch(text)
+    if not match:
+        raise bad_usage(f"a period is a number and s, m, h or d, such as 30m: {text}")
+    return int(match[1]) * PERIOD_SECONDS[match[2]]
+
+
+def log_start(device: Device, since: str) -> str:
+    """A value for `logcat -T`: an exact device time as it is, or a period counted on the device's clock."""
+    if LOG_TIME.fullmatch(since):
+        return since
+    seconds = period_seconds(since)
+    return f"{int(device.shell('date +%s').strip()) - seconds}.000"
+
+
+def logcat_call(device: Device, args: argparse.Namespace, mark: str) -> list[str]:
+    """The `logcat` arguments for these filters. Never `logcat -c`: it fails on the Manta."""
+    call = ["logcat", *([] if args.follow else ["-d"]), "-v", "time"]
+    start = mark or (log_start(device, args.since) if args.since else "")
+    if start:
+        call += ["-T", start]
+    else:
+        call += ["-t", str(PLUGIN_LOG_WINDOW if args.plugin else args.lines)]
+    if args.package:
+        pids = device.shell(f"pidof {shlex.quote(args.package)} || true").split()
+        if not pids:
+            raise not_found(f"a running process of {args.package}", "supernote apps")
+        call.append(f"--pid={pids[0]}")  # shortcut: only the first process; widen when a package runs several
+    elif args.pid:
+        call.append(f"--pid={args.pid}")
+    if args.tag:
+        call += ["-s", f"{args.tag}:{args.level}" if args.level else args.tag]
+    elif args.level:
+        call.append(f"*:{args.level}")
+    return call
+
+
+def log_keeps(args: argparse.Namespace, mark: str):
+    """The test a device log line must pass, for what `logcat` cannot filter by itself."""
+    text = (args.grep or "").lower()
+    plugin = (args.plugin or "").lower()
+
+    def keeps(line: str) -> bool:
+        lowered = line.lower()
+        if line.startswith("---------") or text not in lowered:
+            return False
+        if plugin and plugin not in lowered and not PLUGIN_DENIED.search(line):
+            return False
+        return not mark or parse_log(line).get("time", mark + "~") > mark  # logcat -T repeats the marked line
+
+    return keeps
+
+
+def log_entry(args: argparse.Namespace, line: str) -> dict:
+    entry = parse_log(line)
+    if args.plugin:
+        entry["denied"] = bool(PLUGIN_DENIED.search(line))
+    return entry
+
+
+def read_log_mark() -> str:
+    return LOG_MARK_FILE.read_text().strip() if LOG_MARK_FILE.is_file() else ""
+
+
+def save_log_mark(lines: list[str]) -> None:
+    """Remember the newest line read. Failing here only means the next read repeats some lines."""
+    times = [parse_log(line).get("time", "") for line in lines]
+    if not any(times):
+        return
+    try:
+        LOG_MARK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        LOG_MARK_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
+        LOG_MARK_FILE.write_text(max(times))
+    except OSError as error:
+        print(f"supernote: the log mark was not saved: {error}", file=sys.stderr)
+
+
+def follow_log(device: Device, args: argparse.Namespace, call: list[str], keeps):
+    """Print new lines until the time limit; a quiet device is a normal end, not a failure."""
+    entries = []
+    for raw in device.stream(call, args.timeout):
+        line = CREDENTIAL.sub(CREDENTIAL_MASK, raw)
+        if keeps(line):
+            entries.append(log_entry(args, line))
+            if not args.json:
+                print(line, flush=True)
+    return {"lines": entries}, None
+
+
+def command_logs(device: Device, args: argparse.Namespace):
+    if args.follow and args.since_last:
+        raise bad_usage("--follow already shows only new lines; drop --since-last")
+    mark = read_log_mark() if args.since_last else ""
+    keeps = log_keeps(args, mark)
+    call = logcat_call(device, args, mark)
+    if args.follow:
+        return follow_log(device, args, call, keeps)
+    done = device.adb(*call)
+    if done.returncode != 0:
+        raise Failure(EXIT_FAILED, "device_error", done.stderr.decode(errors="replace").strip() or "logcat failed")
+    every = CREDENTIAL.sub(CREDENTIAL_MASK, done.stdout.decode(errors="replace")).splitlines()
+    lines = [line for line in every if keeps(line)]
+    if not (mark or args.since):
+        lines = lines[-args.lines:]  # `logcat -t` counts per buffer, so it can return more than asked
+    if args.since_last:
+        save_log_mark(every)
+    return {"lines": [log_entry(args, line) for line in lines]}, "\n".join(lines)
+
+
+def history_matches(run: dict, args: argparse.Namespace, cutoff) -> bool:
+    if args.failures and run["exit"] == EXIT_OK:
+        return False
+    if args.name and run["command"] != args.name and not run["command"].startswith(f"{args.name} "):
+        return False
+    return cutoff is None or datetime.fromisoformat(run["time"]) >= cutoff
+
+
+def command_history(device, args: argparse.Namespace):
+    """Read the command's own log, which needs no device."""
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=period_seconds(args.since)) if args.since else None
+    try:
+        lines = HISTORY_FILE.read_text(encoding="utf-8", errors="replace").splitlines() if HISTORY_FILE.is_file() else []
+    except OSError as error:
+        raise Failure(EXIT_FAILED, "log_error", f"cannot read {HISTORY_FILE}: {error}") from error
+    runs, unreadable = [], 0
+    for line in lines:
+        try:
+            run = json.loads(line)
+            if history_matches(run, args, cutoff):
+                runs.append(run)
+        except (ValueError, KeyError, TypeError):
+            unreadable += 1
+    runs = runs[-args.limit:]
+    text = "\n".join(f"{run['time']} {run['command']} exit={run['exit']} error={run['error']} {run['seconds']} s" for run in runs)
+    if unreadable:
+        print(f"supernote: {unreadable} log lines could not be read", file=sys.stderr)
+    return {"runs": runs, "unreadable": unreadable}, text
+
+
+def command_wifi_off(device: Device, args: argparse.Namespace):
+    """`adb usb` closes the network port; the proof is that the port stops answering."""
+    done = device.adb("usb")
+    if done.returncode != 0:
+        raise Failure(EXIT_FAILED, "device_error", (done.stdout + done.stderr).decode(errors="replace").strip())
+    device.adb("disconnect", device.serial, serial=False)
+    started = time.monotonic()
+    while not device.probe():
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"the port still answers after {args.timeout:g} s")
+        time.sleep(WAIT_INTERVAL)
+    return {"wifi_adb": "off", "restore": USB_RESTORE}, f"Wi-Fi ADB is off. To turn it on again, {USB_RESTORE}"
+
+
+def command_shell(device: Device, args: argparse.Namespace):
+    done = device.adb("shell", *args.words, timeout=TRANSFER_TIMEOUT)
+    sys.stdout.buffer.write(done.stdout)
+    sys.stderr.buffer.write(done.stderr)
+    raise SystemExit(done.returncode)
+
+
+NOUNS = ("note", "files", "sync", "plugin", "wifi")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="answer in JSON")
+    common.add_argument("--read-only", action="store_true", default=argparse.SUPPRESS, help="refuse every change on the device")
+    common.add_argument("--trace", action="store_true", default=argparse.SUPPRESS, help="print each ADB call to stderr")
+    common.add_argument("--log-paths", action="store_true", default=argparse.SUPPRESS, help="keep full call arguments in the log")
+    action = argparse.ArgumentParser(add_help=False)
+    action.add_argument("--snapshot", action="store_true", help="add a fresh snapshot to the result")
+    action.add_argument("--screen", metavar="FILE", help="save a fresh capture")
+    action.add_argument("--allow-notes", action="store_true", help="capture even when a note is on the screen")
+
+    parser = argparse.ArgumentParser(
+        prog="supernote",
+        description=__doc__,
+        epilog=EXIT_CODES,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--json", action="store_true", default=False, help="answer in JSON")
+    parser.add_argument("--read-only", action="store_true", default=False, help="refuse every change on the device")
+    parser.add_argument("--trace", action="store_true", default=False, help="print each ADB call to stderr")
+    parser.add_argument("--log-paths", action="store_true", default=False, help="keep full call arguments in the log")
+    commands = parser.add_subparsers(dest="command", required=True)
+
+    def add(group, name: str, handler, *parents, changes: bool = False) -> argparse.ArgumentParser:
+        sub = group.add_parser(name, parents=[common, *parents])
+        sub.set_defaults(handler=handler, needs_device=True, changes=changes)
+        return sub
+
+    def noun(name: str):
+        return commands.add_parser(name).add_subparsers(dest=name, required=True)
+
+    add(commands, "status", command_status)
+    add(commands, "doctor", command_doctor)
+    add(commands, "routes", command_routes).add_argument("package", nargs="?", help="one package; default: every Ratta package")
+    firmware = add(commands, "firmware", command_firmware)
+    firmware.add_argument("--download", action="store_true", help="download the newest firmware and copy it to EXPORT")
+    firmware.add_argument("--overwrite", action="store_true", help="replace an earlier copy on the device")
+    firmware.add_argument("--installed", metavar="X.Y.Z", help="the version Settings > About shows, because the device's build id holds none")
+
+    notes = noun("note")
+    opened = add(notes, "open", command_note_open, action, changes=True)
+    opened.add_argument("path")
+    opened.add_argument("--page", type=int, help="page number, from 1")
+    add(notes, "new", command_note_new, action, changes=True).add_argument("path")
+
+    files = noun("files")
+    add(files, "ls", command_files_ls).add_argument("path", nargs="?", default="")
+    pulled = add(files, "pull", command_files_pull)
+    pulled.add_argument("path")
+    pulled.add_argument("local_path")
+    pulled.add_argument("--allow-notes", action="store_true", help="copy from the notes folder")
+    pushed = add(files, "push", command_files_push, changes=True)
+    pushed.add_argument("local_path")
+    pushed.add_argument("path")
+    pushed.add_argument("--overwrite", action="store_true", help="replace an existing file")
+
+    syncs = noun("sync")
+    tasks = add(syncs, "tasks", command_sync_tasks, changes=True)
+    tasks.add_argument("--timeout", type=float, default=SYNC_TIMEOUT, help="seconds to wait for the sync")
+    add(syncs, "calendar", command_sync_calendar, changes=True)
+
+    captured = add(commands, "screen", command_screen)
+    captured.add_argument("file")
+    captured.add_argument("--allow-notes", action="store_true", help="capture even when a note is on the screen")
+    shot = add(commands, "snapshot", command_snapshot)
+    wanted = shot.add_mutually_exclusive_group()
+    wanted.add_argument("--all", action="store_true", help="read each list to its end and come back")
+    wanted.add_argument("--find", metavar="SELECTOR", help="scroll until id:X, desc:X or text:X appears")
+    shot.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes per list")
+    add(commands, "click", command_click, action, changes=True).add_argument("target")
+
+    waited = add(commands, "wait", command_wait)
+    waited.add_argument("kind", choices=("activity", "file", "element"))
+    waited.add_argument("value")
+    waited.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds")
+
+    add(commands, "apps", command_apps)
+
+    plugins = noun("plugin")
+    add(plugins, "ls", command_plugin_ls)
+    pushing = add(plugins, "push", command_plugin_push, changes=True)
+    pushing.add_argument("file")
+    pushing.add_argument("--overwrite", action="store_true", help="replace an earlier copy in MyStyle")
+    installing = add(plugins, "install", command_plugin_install, changes=True)
+    installing.add_argument("file")
+    installing.add_argument("--overwrite", action="store_true", help="replace an earlier copy in MyStyle")
+    installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
+    installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
+
+    logs = add(commands, "logs", command_logs)
+    logs.add_argument("--tag")
+    logs.add_argument("--lines", type=int, default=DEFAULT_LOG_LINES)
+    logs.add_argument("--level", choices=list(LOG_LEVELS), help="this level and above")
+    process = logs.add_mutually_exclusive_group()
+    process.add_argument("--package", help="only this package's process")
+    process.add_argument("--pid", type=int, help="only this process")
+    logs.add_argument("--grep", help="only lines holding this text, ignoring case")
+    logs.add_argument("--since", help="a period such as 30m, or a device time: MM-DD hh:mm:ss.mmm")
+    logs.add_argument("--since-last", action="store_true", help="only what is new since the previous --since-last")
+    logs.add_argument("--follow", action="store_true", help="keep printing new lines until --timeout")
+    logs.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds of --follow")
+    logs.add_argument("--plugin", metavar="NAME", help="one plugin's lines, and every denied permission")
+
+    history = add(commands, "history", command_history)
+    history.set_defaults(needs_device=False)
+    history.add_argument("--failures", action="store_true", help="only runs that failed")
+    history.add_argument("--command", dest="name", metavar="NAME", help="only this command, such as sync or files ls")
+    history.add_argument("--since", help="only this recent period, such as 2h")
+    history.add_argument("--limit", type=int, default=DEFAULT_HISTORY_RUNS, help="newest runs to show")
+
+    tapped = add(commands, "tap", command_tap, action, changes=True)
+    tapped.add_argument("x", type=int)
+    tapped.add_argument("y", type=int)
+    swiped = add(commands, "swipe", command_swipe, action, changes=True)
+    for coordinate in ("x1", "y1", "x2", "y2"):
+        swiped.add_argument(coordinate, type=int)
+
+    wifi = noun("wifi")
+    switched_off = add(wifi, "off", command_wifi_off, changes=True)
+    switched_off.add_argument("--timeout", type=float, default=WIFI_OFF_TIMEOUT, help="seconds for the port to close")
+
+    add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
+    return parser
+
+
+def command_name(args: argparse.Namespace) -> str:
+    nested = getattr(args, args.command, None) if args.command in NOUNS else None
+    return f"{args.command} {nested}" if nested else args.command
+
+
+def refuses_read_only(args: argparse.Namespace) -> bool:
+    """`snapshot --all` and `--find` scroll, and `firmware --download` copies, so read-only mode counts them as changes."""
+    if not (args.read_only or os.environ.get("SUPERNOTE_READ_ONLY")):
+        return False
+    return args.changes or any(getattr(args, option, None) for option in ("all", "find", "download"))
+
+
+def front_app(device: Device) -> str:
+    """The app in front, for the log. A device that stopped answering just leaves it empty."""
+    try:
+        return device.activity()
+    except Failure:
+        return ""
+
+
+def main() -> int:
+    log = RunLog()
+    try:
+        args = build_parser().parse_args()
+    except SystemExit as leaving:
+        if leaving.code:
+            log.finish("(usage)", leaving.code, "usage")
+        raise
+    log.trace, log.paths = args.trace, args.log_paths
+    code, kind, device, before, after = EXIT_OK, None, None, "", ""
+    try:
+        if refuses_read_only(args):
+            raise Failure(EXIT_READ_ONLY, "read_only", f"read-only mode refuses: {command_name(args)}")
+        if args.needs_device:
+            address = read_address()
+            serial = address if ":" in address else f"{address}:{ADB_PORT}"
+            log.secrets = [serial, address]
+            device = Device(serial, log)
+            device.connect()
+            before = front_app(device)
+        data, text = args.handler(device, args)
+    except Failure as failure:
+        code, kind = failure.code, failure.kind
+        message = log.clean(failure.message)
+        if failure.text and not args.json:
+            print(failure.text)
+        print(f"supernote: {message}", file=sys.stderr)
+        if args.json:
+            print(json.dumps({
+                "error": failure.kind,
+                "message": message,
+                "cause": failure.cause,
+                "next": failure.next_step,
+                **failure.extra,
+            }, ensure_ascii=False))
+    except SystemExit as leaving:  # `shell` ends with the device's own exit code
+        code = leaving.code
+    else:
+        if args.json:
+            print(json.dumps(data, ensure_ascii=False))
+        elif text is not None:
+            print(text)
+    if args.needs_device:
+        if device and kind != "unreachable":
+            after = front_app(device)
+        log.finish(command_name(args), code, kind, before, after)
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

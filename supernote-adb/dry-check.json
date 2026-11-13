@@ -1,0 +1,25 @@
+{
+ "magicValues": {
+  "folders": [
+   "src",
+   "tests"
+  ],
+  "exclude": [],
+  "counts": {}
+ },
+ "duplicates": {
+  "depth": 1,
+  "exclude": [],
+  "counts": {}
+ },
+ "documents": {
+  "files": [
+   "*.md",
+   "docs/*.md"
+  ],
+  "exclude": [
+   "docs/research/**"
+  ],
+  "repeated": {}
+ }
+}
