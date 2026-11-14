@@ -68,6 +68,9 @@ A macOS app for the owner's `.note` files. It is **read and write**, not a viewe
 
 Sharing/export to other people is **not** a priority here.
 
+**Ship order:** editing (add writing, insert images, rearrange pages) is the must-have first;
+handwriting-to-text and the open backup follow.
+
 ## bridge
 
 Settled: to-do + calendar + digest, each opt in/out, settings-only (no note surface). Input scope
@@ -85,7 +88,7 @@ Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
 - **Placement:** the content arrives floating/selected and the owner positions it himself, the way
   `lookup` places an inserted picture.
 - **Scan-to-template is probably its own capability**, beyond "drop into the open note": a scanned
-  PDF becomes a page template to write on. Split it out when picked up.
+  PDF becomes the **background of new blank pages** the owner writes on. Split it out when picked up.
 
 ## Design direction
 
