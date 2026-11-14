@@ -1,0 +1,34 @@
+{
+ "napoleao": {
+  "ok": true,
+  "reason": "David's portrait of Napoleon, his Wikidata image, is now first as a contour drawing; before, the namesake «Napoleão Bernardes» led. Namesakes' photos and candidate headshots still fill the rest of page 1"
+ },
+ "federico-garcia-lorca": {
+  "ok": true,
+  "reason": "Lorca's Wikidata portrait is now first as a clean contour drawing; the 1989 Albanian stamp moved from 0 to 1"
+ },
+ "frederico-garcia-lorca": {
+  "ok": true,
+  "reason": "the misspelled name now opens on Lorca's Wikidata portrait; before, a photo of Lorca with a friend led"
+ },
+ "garcia-lorca": {
+  "ok": true,
+  "reason": "Lorca's Wikidata portrait first; the photo of Lorca with his sister moved from 0 to 1"
+ },
+ "machado-de-assis": {
+  "ok": true,
+  "reason": "better: Machado de Assis's portrait first; before, a word-frequency chart led"
+ },
+ "santos-dumont": {
+  "ok": true,
+  "reason": "better: Santos-Dumont's portrait first; before, a photo of the town of Santos Dumont led"
+ },
+ "clarice-lispector": {
+  "ok": true,
+  "reason": "Clarice Lispector's Wikidata portrait, a clear head and shoulders, now first; the 1968 photo at the typewriter follows"
+ },
+ "leonardo-da-vinci": {
+  "ok": true,
+  "reason": "Francesco Melzi's red-chalk portrait of Leonardo, his Wikidata image, is now first, unconverted; the knot pattern «Leonardo da Vinci 1519 2019» moved from 0 to 1"
+ }
+}
