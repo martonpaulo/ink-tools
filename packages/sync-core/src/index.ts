@@ -7,3 +7,4 @@ export * from './google';
 export * from './ics';
 export * from './settings';
 export * from './push';
+export * from './status';

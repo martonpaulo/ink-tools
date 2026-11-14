@@ -1,19 +1,21 @@
 /**
  * Bridge's Settings view: the title and the module list, with every size and colour from the
  * shared ui-kit (#93). The modules and their switches land with #40; this shell owns the states a
- * Settings screen needs: loading, an error with a retry, no module yet, and a module that is
- * unavailable with its reason in words, never by colour alone.
+ * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
+ * words, never by colour alone: why it does not run, or its last sync (#88).
  */
 import React from 'react';
 import {Text, View} from 'react-native';
 import {Button, shared} from '@supernote-tools/ui-kit';
+import type {ModuleStatus} from '@supernote-tools/sync-core';
 import {copy, format} from './copy';
+import {statusLines} from './statusText';
 
 export type ModuleRow = {
   id: string;
   name: string;
-  /** Why the module cannot run, such as the device probe turning it off (#67). */
-  unavailable?: string;
+  /** Off, blocked by the device probe with its reasons (#67), waiting, or its last run (#88). */
+  status: ModuleStatus;
 };
 
 export type ShellState =
@@ -54,11 +56,11 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
           {state.modules.map(module => (
             <View key={module.id} style={shared.listRow}>
               <Text style={shared.text}>{module.name}</Text>
-              {module.unavailable !== undefined && (
-                <Text style={shared.text}>
-                  {format('module.unavailable', {reason: module.unavailable})}
+              {statusLines(module.status).map((line, index) => (
+                <Text key={index} style={shared.text}>
+                  {line}
                 </Text>
-              )}
+              ))}
             </View>
           ))}
         </View>
