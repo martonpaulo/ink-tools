@@ -3,7 +3,9 @@
  * as buttons, the current one marked with the selected bar, as the system marks the open
  * Settings section (brief 8.4). Every tap is saved at once and used by the next search or insert.
  * Clear and Reset ask first, in the fixed status line at the bottom, so nothing above moves.
- * «Download symbols» (#91) states the size there first, then its progress.
+ * «Download symbols» (#91) states the size there first, then its progress; a note names the
+ * hidden folder the symbols go to and why, and the old synced folder while files are left in it
+ * (#23).
  */
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
@@ -300,6 +302,13 @@ export function SettingsScreen({
               onPress={askSymbols}
             />
           </View>
+          {/* Where the symbols are kept and why, as the owner asked (#23). */}
+          <Text style={shared.text}>{copy['settings.symbolsWhere']}</Text>
+          {symbolsNow?.oldFiles ? (
+            <Text style={shared.text}>
+              {fill('settings.symbolsOld', {count: symbolsNow.oldFiles})}
+            </Text>
+          ) : null}
           {/* The line beside the actions, at the bottom: a question or a result never moves the
               options above, and the screen keeps its padding free (#97). */}
           <View style={[shared.actions, styles.bottom]}>

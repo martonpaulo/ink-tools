@@ -1,7 +1,9 @@
 /**
  * OpenMoji pictures kept for offline use (#91), through the PluginHost simulator (#78): a symbol
- * shown once is saved in MyStyle/Ink2Pic/symbols and shows and inserts with no network; with
- * none saved, no symbol shows offline; «Download symbols» resumes after it was cut off.
+ * shown once is saved in the hidden .ink2pic-symbols folder, outside Supernote file sync (#23),
+ * and shows and inserts with no network; with none saved, no symbol shows offline; «Download
+ * symbols» resumes after it was cut off; symbols left in MyStyle/Ink2Pic/symbols are read, never
+ * written or deleted.
  */
 import React from 'react';
 import {Image, NativeModules} from 'react-native';
@@ -35,7 +37,7 @@ import {
   flushLogFile,
   openLogFile,
 } from '../src/storage/logFile';
-import {logsDir} from '../src/storage/paths';
+import {logsDir, oldSymbolsDir, symbolsDir} from '../src/storage/paths';
 import {createHost, PluginHost} from './host/pluginHost';
 
 const {PluginManager} = sdk as unknown as Record<
@@ -82,6 +84,37 @@ function fewSymbols(count: number, keep: string[] = []): string[] {
   return few;
 }
 
+/** Files written under MyStyle/, which Supernote file sync reads, except the plugin's own. */
+const inSyncedFolder = (host: PluginHost) =>
+  [...host.files.keys()].filter(file => file.startsWith(`${oldSymbolsDir()}/`));
+
+/** A whole symbol PNG placed by hand, as the owner moved them with ADB (#23). */
+function placed(host: PluginHost, dir: string, hex: string): string {
+  const path = `${dir}/${hex}.png`;
+  host.files.set(path, {
+    image: {width: 618, height: 618},
+    bytes: 10400,
+    order: 0,
+  });
+  for (let at = dir; at.length > 1; at = at.slice(0, at.lastIndexOf('/'))) {
+    host.folders.add(at);
+  }
+  return path;
+}
+
+/** Removes the symbols earlier tests saved, as a tablet that never saved one. */
+function forgetSymbols(host: PluginHost): void {
+  for (const file of [...host.files.keys()]) {
+    if (file.startsWith(`${symbolsDir()}/`)) {
+      host.files.delete(file);
+    }
+  }
+}
+
+/** Whether any call asked the module to delete a file (#23: the owner's files stay). */
+const deletes = (host: PluginHost) =>
+  host.calls.filter(c => c.name === 'deleteFile');
+
 beforeEach(() => resetSymbolsForTests());
 afterEach(() => jest.restoreAllMocks());
 
@@ -94,7 +127,11 @@ describe('offline symbols (#91)', () => {
     const uri = await thumbUri(first, '/unused');
     const path = symbolPath(first.id.slice('openmoji:'.length));
     expect(uri).toBe(`file://${path}`);
-    expect(path).toMatch(/\/MyStyle\/Ink2Pic\/symbols\/[0-9A-F-]+\.png$/);
+    expect(path).toBe(
+      `/storage/emulated/0/.ink2pic-symbols/${path.split('/').pop()}`,
+    );
+    expect(path).toMatch(/\/\.ink2pic-symbols\/[0-9A-F-]+\.png$/);
+    expect(inSyncedFolder(host)).toEqual([]);
     expect(host.files.has(path)).toBe(true);
 
     resetSymbolsForTests(); // a new session lists the folder again
@@ -336,6 +373,77 @@ describe('offline symbols (#91)', () => {
     expect(pictureRequests(host).length).toBe(before);
     expect(await symbolsStatus()).toEqual({total, saved: 1});
     expect(savedSymbolPath(first)).not.toBeNull();
+  });
+
+  it('writes «Download symbols» only to the hidden folder, none under MyStyle (#23)', async () => {
+    const host = started();
+    const few = fewSymbols(5);
+    const end = await downloadAllSymbols(() => {});
+    expect(end.complete).toBe(true);
+    for (const hex of few) {
+      expect(host.files.has(`${symbolsDir()}/${hex}.png`)).toBe(true);
+    }
+    expect(inSyncedFolder(host)).toEqual([]);
+    expect(deletes(host)).toEqual([]);
+  });
+
+  it('uses the hand-moved hidden copy offline, as it is (#23)', async () => {
+    const host = started();
+    const [first] = await symbolResults();
+    const hex = first.id.slice('openmoji:'.length);
+    resetSymbolsForTests();
+    forgetSymbols(host);
+    const path = placed(host, '/storage/emulated/0/.ink2pic-symbols', hex);
+    host.online = false;
+    const offline = await symbolResults();
+    expect(offline.map(r => r.id)).toEqual([first.id]);
+    expect(await thumbUri(offline[0], '/unused')).toBe(`file://${path}`);
+    expect(await symbolFile(offline[0])).toBe(path);
+  });
+
+  it('reads a symbol left in the old synced folder, never writes or deletes there (#23)', async () => {
+    const host = started();
+    // The last symbol: the module's library still holds the first from an earlier test.
+    const first = (await symbolResults()).slice(-1)[0];
+    const hex = first.id.slice('openmoji:'.length);
+    resetSymbolsForTests();
+    forgetSymbols(host);
+    const old = placed(host, oldSymbolsDir(), hex);
+    const total = fewSymbols(3, [hex]).length;
+
+    // Offline, it still shows and inserts from the old folder.
+    host.online = false;
+    const offline = await symbolResults();
+    expect(offline.map(r => r.id)).toEqual([first.id]);
+    expect(await thumbUri(offline[0], '/unused')).toBe(`file://${old}`);
+    const inserted = await insertPicture(
+      offline[0],
+      WORD,
+      null,
+      false,
+      OPTIONS,
+    );
+    expect(inserted.ok).toBe(true);
+
+    // Settings counts it, and names the files left in the old folder.
+    expect(await symbolsStatus()).toEqual({total, saved: 1, oldFiles: 1});
+
+    // «Download symbols» fetches only the others, into the hidden folder.
+    host.online = true;
+    const before = pictureRequests(host).length;
+    const end = await downloadAllSymbols(() => {});
+    expect(end).toEqual({
+      total,
+      saved: total,
+      oldFiles: 1,
+      complete: true,
+      failed: 0,
+      stopped: false,
+    });
+    expect(pictureRequests(host).length - before).toBe(total - 1);
+    expect(inSyncedFolder(host)).toEqual([old]);
+    expect(host.files.get(old)?.order).toBe(0);
+    expect(deletes(host)).toEqual([]);
   });
 
   // Last: its failed searches open the sources' breaker for the rest of the file.

@@ -143,8 +143,12 @@ export const copy = {
   'settings.symbolsUnreadable':
     'Saved symbols cannot be read now. Open Settings again to retry.',
   'settings.symbolsDownload': 'Download symbols for offline use',
+  'settings.symbolsWhere':
+    'Symbols are kept in .ink2pic-symbols, a hidden folder at the top of the tablet storage. Supernote file sync does not read it: each file in a synced folder adds about 0.14 s to every sync, so 1,447 symbols would add about 4 minutes.',
+  'settings.symbolsOld':
+    '{count} symbol files are still in MyStyle/Ink2Pic/symbols, which Supernote syncs on every file sync. Delete that folder with the File Manager, then download symbols again to keep them in the hidden folder.',
   'settings.symbolsQuestion':
-    'Download the other {count} symbols, about {size} MB, so they work without Wi-Fi? They go to MyStyle/Ink2Pic/symbols/.',
+    'Download the other {count} symbols, about {size} MB, so they work without Wi-Fi? They go to the hidden folder .ink2pic-symbols, which Supernote file sync does not read.',
   'settings.symbolsConfirm': 'Download',
   'settings.symbolsProgress': 'Downloading symbols: {saved} of {total}…',
   'settings.symbolsDone': 'Every symbol is saved for offline use.',

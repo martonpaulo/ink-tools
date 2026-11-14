@@ -94,7 +94,9 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 ## Files and sync
 
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
-  small files cost minutes; a hidden folder outside the synced folders is skipped [measured, [#2](https://github.com/martonpaulo/supernote-tools/issues/2)3].
+  small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
+  [#23](https://github.com/martonpaulo/supernote-tools/issues/23)]. Ink2Pic keeps its offline symbols in `/storage/emulated/0/.ink2pic-symbols` for
+  that reason.
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#2](https://github.com/martonpaulo/supernote-tools/issues/2)2].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/snadb/README.md`].

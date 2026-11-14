@@ -85,10 +85,28 @@ export function picksPath(externalRoot = SHARED_ROOT): string {
   return sharedDir(externalRoot, 'picks.json');
 }
 
+/** The hidden folder of the offline symbols, as the person sees it on the tablet (#23). */
+export const SYMBOLS_FOLDER = '.ink2pic-symbols';
+
 /**
- * `<root>/MyStyle/Ink2Pic/symbols`, the OpenMoji pictures kept for offline use (#91), one
- * `<hex>.png` each, written in place (#62).
+ * `<root>/.ink2pic-symbols`, the OpenMoji pictures kept for offline use (#91), one `<hex>.png`
+ * each, written in place (#62). A hidden folder outside `MyStyle/`, which Supernote file sync does
+ * not read: each file in a synced folder costs about 0.14 s on every sync, so 1,447 symbols cost
+ * about 4 minutes; the owner's hand-moved copy is at this exact path (#23). Paths stay here until
+ * Ink2Pic uses `sn-adapter`, which has no file-path module yet (#101).
  */
 export function symbolsDir(externalRoot = SHARED_ROOT): string {
+  return `${externalRoot.replace(/\/+$/, '')}/${SYMBOLS_FOLDER}`;
+}
+
+/** `MyStyle/Ink2Pic/symbols`, as Settings names the old folder to the person (#23). */
+export const OLD_SYMBOLS_FOLDER = `${SHARED_FOLDER}/symbols`;
+
+/**
+ * `<root>/MyStyle/Ink2Pic/symbols`, where symbols were kept before #23: Supernote syncs it. Read
+ * only, never written or deleted: a symbol left there is still used, and the person deletes the
+ * folder with the file manager.
+ */
+export function oldSymbolsDir(externalRoot = SHARED_ROOT): string {
   return sharedDir(externalRoot, 'symbols');
 }
