@@ -1,0 +1,16 @@
+{
+  "name": "Lookup",
+  "tagline": "Lasso a word, get a picture or text",
+  "icon": "art/lookup-icon.svg",
+  "panels": [
+    { "caption": "Write a word,\nthen lasso it", "art": "art/lookup-1.svg" },
+    { "caption": "Tap Sticker,\nImage or Text", "art": "art/lookup-2.svg" }
+  ],
+  "features": [
+    { "icon": "sticker", "label": "Line-art stickers\nand OpenMoji" },
+    { "icon": "photo", "label": "Real photos of\npeople and places" },
+    { "icon": "text", "label": "Short definitions\nand bios" },
+    { "icon": "open", "label": "Open sources,\nno account" }
+  ],
+  "source": "docs/plugin-scope.md#lookup"
+}

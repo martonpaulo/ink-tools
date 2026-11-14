@@ -5,6 +5,7 @@
     {"name": "bridge", "command": "cd plugins/bridge && npm run validate", "covers": "the Bridge plugin"},
     {"name": "probe", "command": "cd plugins/probe && npm run validate", "covers": "the probe plugin and its JVM tests"},
     {"name": "snadb", "command": "cd cli/snadb && make validate", "covers": "the snadb CLI and its contract tests"},
+    {"name": "design", "command": "node --test design/covers/", "covers": "the InkHub cover template filler"},
     {"name": "ink2pic", "command": "cd plugins/ink2pic && npm run validate", "covers": "the Ink2Pic plugin and its JVM tests"}
   ],
   "rules": [
@@ -22,6 +23,7 @@
     {"path": "cli/snadb/", "gates": ["snadb"]},
     {"path": ".github/workflows/validate-snadb.yml", "gates": ["snadb"]},
     {"path": "plugins/ink2pic/", "gates": ["ink2pic"]},
-    {"path": ".github/workflows/validate-ink2pic.yml", "gates": ["ink2pic"]}
+    {"path": ".github/workflows/validate-ink2pic.yml", "gates": ["ink2pic"]},
+    {"path": "design/", "gates": ["design"]}
   ]
 }

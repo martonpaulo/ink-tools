@@ -1,0 +1,4 @@
+<!-- feature icon (64x64): a smiling face. -->
+<circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="6"/>
+<circle cx="24" cy="27" r="4" fill="currentColor"/><circle cx="40" cy="27" r="4" fill="currentColor"/>
+<path d="M21 38 C26 46 38 46 43 38" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
