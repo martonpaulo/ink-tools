@@ -26,7 +26,8 @@ module.exports = {
   rootDir: '../..',
   testMatch: ['<rootDir>/scripts/renders/*.render.tsx'],
   setupFiles: ['<rootDir>/scripts/renders/manta.ts'],
-  modulePaths: [globalRoot],
+  // The plugin's own node_modules first, for the shared ui-kit package (#93).
+  modulePaths: [...base.modulePaths, globalRoot],
   /** One test renders every screen: about 4 s idle, so 5 s timed out under load (#90). */
   testTimeout: 120000,
 };

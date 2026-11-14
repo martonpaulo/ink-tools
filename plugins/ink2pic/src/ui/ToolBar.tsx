@@ -4,9 +4,8 @@
  */
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import {Button} from './Button';
+import {Button, shared} from '@supernote-tools/ui-kit';
 import {copy} from './copy';
-import {shared} from './styles';
 
 export type ToolBarProps = {
   /** The log is shown: Log carries its selected bar. */

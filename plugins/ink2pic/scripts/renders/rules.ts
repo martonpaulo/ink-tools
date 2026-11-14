@@ -30,7 +30,7 @@ export type Measured = {
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
 const TOLERANCE = 0.5;
 
-/** The sizes, in layout units, a screen must keep (metrics.ts). */
+/** The sizes, in layout units, a screen must keep (the tokens of packages/ui-kit). */
 export type Limits = {touchTarget: number; minFont: number; screenPadding: number};
 
 /** True when `inner` reaches past `outer` by more than the tolerance. */

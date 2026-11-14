@@ -4,7 +4,7 @@ import {StyleSheet, Text, View} from 'react-native';
 import {logLines, onLog} from '../log/memory';
 import {copy} from './copy';
 import {ProbeBar} from './ProbeBar';
-import {shared} from './styles';
+import {shared} from '@supernote-tools/ui-kit';
 
 /**
  * Lines shown: the newest, at the bottom (#45). The view has no scroll on e-ink, so older lines

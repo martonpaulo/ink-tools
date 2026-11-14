@@ -1,12 +1,12 @@
 name: Validate Lingo
 
-# Runs only when plugins/lingo/ (or this file) changes; the gate is the subproject's own `npm run validate`.
+# Runs only when plugins/lingo/, the shared packages/ui-kit/ it imports (#93), or this file changes; the gate is the subproject's own `npm run validate`.
 on:
   push:
     branches: [main]
-    paths: ['plugins/lingo/**', '.github/workflows/validate-lingo.yml']
+    paths: ['plugins/lingo/**', 'packages/ui-kit/**', '.github/workflows/validate-lingo.yml']
   pull_request:
-    paths: ['plugins/lingo/**', '.github/workflows/validate-lingo.yml']
+    paths: ['plugins/lingo/**', 'packages/ui-kit/**', '.github/workflows/validate-lingo.yml']
   workflow_dispatch:
 
 permissions:

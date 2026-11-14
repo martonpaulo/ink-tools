@@ -6,7 +6,7 @@ import React from 'react';
 import {Text} from 'react-native';
 import {Screen} from './Screen';
 import {ScreenTools} from './ScreenTools';
-import {shared} from './styles';
+import {shared} from '@supernote-tools/ui-kit';
 
 export type StatusScreenProps = {text: string; onClose: () => void};
 

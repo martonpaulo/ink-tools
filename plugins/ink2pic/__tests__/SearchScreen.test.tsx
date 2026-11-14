@@ -4,7 +4,7 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import type {SourceAdapter} from '../src/search-core';
 import type {SearchResult} from '../src/search-core/types';
 import {copy} from '../src/ui/copy';
-import {metrics} from '../src/ui/metrics';
+import {metrics} from '@supernote-tools/ui-kit';
 import {SearchScreen, statusLine} from '../src/ui/SearchScreen';
 
 const result: SearchResult = {

@@ -91,6 +91,7 @@ supernote-tools/
     sn-adapter/     # Supernote-internals adapter + updatable descriptor + adapt-on/off probe
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
     ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by lookup/lingo/retouch)
+    ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     bridge/         # to-do + calendar + digest, each module and provider opt in/out
     lookup/         # write a word -> insert a picture or a definition (each mode opt in/out)
@@ -147,9 +148,10 @@ supernote-tools/
 
 `lookup`, `lingo` and `retouch` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
-any Supernote-internal access. Today no plugin imports a package yet: `ink2pic` calls `sn-plugin-lib`
-through its own `src/sdk/`, and `bridge` calls `PluginManager` directly
-([#76](https://github.com/martonpaulo/supernote-tools/issues/76)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
+any Supernote-internal access. Every plugin's Settings look comes from `ui-kit`, the first package the plugins import
+([#93](https://github.com/martonpaulo/supernote-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`. No plugin imports the other
+packages yet: `ink2pic` calls `sn-plugin-lib` through its own `src/sdk/`, and `bridge` calls
+`PluginManager` directly ([#76](https://github.com/martonpaulo/supernote-tools/issues/76)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
 of `lookup`, and keeps shipping until the merge lands.
 
 ## The host tools

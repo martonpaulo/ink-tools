@@ -4,7 +4,8 @@
   "description": "Settings-only Supernote plugin: to-do, calendar and digest sync modules, each opt in.",
   "private": true,
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && npm run lint:ui-kit",
+    "lint:ui-kit": "eslint --max-warnings 0 -c .eslintrc.js --resolve-plugins-relative-to . ../../packages/ui-kit",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "validate": "npm run lint && npm run typecheck && npm test",

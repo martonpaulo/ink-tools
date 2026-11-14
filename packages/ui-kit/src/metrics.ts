@@ -1,5 +1,5 @@
 /**
- * The visual tokens for the Manta (brief section 8.4), the one place they are set. Each token
+ * The visual tokens for the Manta (Ink2Pic brief section 8.4), the one place they are set. Each token
  * names a role, so calibrating one role on the device moves only that role (#53).
  * Layout units are density-independent: on the Manta PixelRatio is 1.875 and the window is
  * 1024 x 1365 units for 1920 x 2560 pixels (build 0.1.0 (1), #3), so millimetres are converted

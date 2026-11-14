@@ -1,12 +1,12 @@
 name: Validate Bridge
 
-# Runs only when plugins/bridge/ (or this file) changes; the gate is the subproject's own `npm run validate`.
+# Runs only when plugins/bridge/, the shared packages/ui-kit/ it imports (#93), or this file changes; the gate is the subproject's own `npm run validate`.
 on:
   push:
     branches: [main]
-    paths: ['plugins/bridge/**', '.github/workflows/validate-bridge.yml']
+    paths: ['plugins/bridge/**', 'packages/ui-kit/**', '.github/workflows/validate-bridge.yml']
   pull_request:
-    paths: ['plugins/bridge/**', '.github/workflows/validate-bridge.yml']
+    paths: ['plugins/bridge/**', 'packages/ui-kit/**', '.github/workflows/validate-bridge.yml']
   workflow_dispatch:
 
 permissions:

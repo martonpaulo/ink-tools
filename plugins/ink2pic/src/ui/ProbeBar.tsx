@@ -16,9 +16,8 @@ import {
   runProbe,
   stopPenProbe,
 } from '../flow/penProbe';
-import {Button} from './Button';
+import {Button, shared} from '@supernote-tools/ui-kit';
 import {copy} from './copy';
-import {shared} from './styles';
 
 const PROBLEM_TEXT: Record<LastWordProblem, string> = {
   noStrokes: copy['probe.noStrokes'],

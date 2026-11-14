@@ -23,13 +23,11 @@ import {
   symbolsStatus,
   SymbolsStatus,
 } from '../symbols/store';
-import {Button} from './Button';
+import {Button, metrics, shared} from '@supernote-tools/ui-kit';
 import {copy, CopyKey} from './copy';
 import {languageName} from './LanguagesScreen';
 import {LogView} from './LogView';
-import {metrics} from './metrics';
 import {Screen} from './Screen';
-import {shared} from './styles';
 import {ToolBar} from './ToolBar';
 
 export type SettingsScreenProps = {

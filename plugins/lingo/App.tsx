@@ -1,16 +1,17 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Text, View} from 'react-native';
+import {shared} from '@supernote-tools/ui-kit';
 
-/** Empty settings view. The language-pair switches and the lasso flow land with their own issues. */
+/**
+ * Empty settings view, with every size and colour from the shared ui-kit (#93). The language-pair
+ * switches and the lasso flow land with their own issues.
+ */
 export default function App() {
   return (
-    <View style={styles.root}>
-      <Text style={styles.title}>Lingo</Text>
+    <View style={shared.screen}>
+      <Text accessibilityRole="header" style={shared.textLarge}>
+        Lingo
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {flex: 1, padding: 24, backgroundColor: '#fff'},
-  title: {fontSize: 28, color: '#000'},
-});

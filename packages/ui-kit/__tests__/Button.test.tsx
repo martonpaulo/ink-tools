@@ -2,8 +2,8 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {Button, ButtonProps} from '../src/ui/Button';
-import {metrics} from '../src/ui/metrics';
+import {Button, ButtonProps} from '../src/Button';
+import {metrics} from '../src/metrics';
 
 function render(props: Partial<ButtonProps> = {}) {
   let tree!: ReactTestRenderer;

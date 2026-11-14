@@ -545,7 +545,7 @@ Recognition language: `recognizeElements` has no language parameter. The device 
 
 Layout metrics [DEFAULT, calibrate on device]:
 
-The Manta screen is 1920 x 2560 px on a 10.7 inch diagonal, which is about 299 ppi, so 1 mm is about 11.8 px [CONFIRMED arithmetic from official specs]. React Native layout units in PluginHost are density-independent: `PixelRatio.get()` is 1.875 and `Dimensions.get('window')` is 1024 x 1365.33 [CONFIRMED on the owner's Manta, build 0.1.0 (1)]. So 1 mm is about 6.3 layout units; `src/ui/metrics.ts` converts with the runtime `PixelRatio`. The pixel column below stays in physical pixels.
+The Manta screen is 1920 x 2560 px on a 10.7 inch diagonal, which is about 299 ppi, so 1 mm is about 11.8 px [CONFIRMED arithmetic from official specs]. React Native layout units in PluginHost are density-independent: `PixelRatio.get()` is 1.875 and `Dimensions.get('window')` is 1024 x 1365.33 [CONFIRMED on the owner's Manta, build 0.1.0 (1)]. So 1 mm is about 6.3 layout units; the shared tokens in `packages/ui-kit/src/metrics.ts` convert with the runtime `PixelRatio` ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)). The pixel column below stays in physical pixels.
 
 | Element | Physical target | Pixels at 1:1 |
 | --- | --- | --- |

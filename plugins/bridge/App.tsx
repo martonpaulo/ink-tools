@@ -1,16 +1,7 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {SettingsShell} from './src/SettingsShell';
 
-/** Empty settings view. Modules (to-do, calendar, digest) land with their own issues. */
+/** Bridge's Settings view. No module has landed yet, so it shows the empty state (#40, #93). */
 export default function App() {
-  return (
-    <View style={styles.root}>
-      <Text style={styles.title}>Bridge</Text>
-    </View>
-  );
+  return <SettingsShell state={{kind: 'ready', modules: []}} />;
 }
-
-const styles = StyleSheet.create({
-  root: {flex: 1, padding: 24, backgroundColor: '#fff'},
-  title: {fontSize: 28, color: '#000'},
-});

@@ -5,7 +5,7 @@
  */
 import React, {useRef, useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button} from './Button';
+import {Button, shared} from '@supernote-tools/ui-kit';
 import {ScreenTools} from './ScreenTools';
 import {
   Denied,
@@ -15,7 +15,6 @@ import {
 } from '../onboarding/permissions';
 import {copy} from './copy';
 import {Screen} from './Screen';
-import {shared} from './styles';
 
 const STEPS = [
   copy['onboarding.1'],

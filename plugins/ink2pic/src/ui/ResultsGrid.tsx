@@ -23,10 +23,8 @@ import {
 import {MEASURED_RESULTS, PAGE_SIZE} from '../search-core';
 import type {SearchResult} from '../search-core';
 import {savedSymbolUri} from '../symbols/store';
-import {Button} from './Button';
+import {Button, metrics, shared} from '@supernote-tools/ui-kit';
 import {copy} from './copy';
-import {metrics} from './metrics';
-import {shared} from './styles';
 import {
   keptTile,
   type KeptTile,

@@ -26,13 +26,11 @@ import {
   searchState,
   SourceAdapter,
 } from '../search-core';
-import {Button} from './Button';
+import {Button, metrics, shared} from '@supernote-tools/ui-kit';
 import {copy} from './copy';
 import {LogView} from './LogView';
-import {metrics} from './metrics';
 import {GridNote, ResultsGrid} from './ResultsGrid';
 import {Screen} from './Screen';
-import {shared} from './styles';
 import {ToolBar} from './ToolBar';
 
 type View_ = 'results' | 'library' | 'log';

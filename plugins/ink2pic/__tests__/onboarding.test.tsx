@@ -8,7 +8,7 @@ import {
   requestMissing,
 } from '../src/onboarding/permissions';
 import {copy} from '../src/ui/copy';
-import {metrics} from '../src/ui/metrics';
+import {metrics} from '@supernote-tools/ui-kit';
 import {Onboarding} from '../src/ui/Onboarding';
 
 const has = PluginManager.hasPermission as jest.Mock;

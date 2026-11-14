@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import {act} from 'react-test-renderer';
-import {metrics} from '../../src/ui/metrics';
+import {metrics} from '@supernote-tools/ui-kit';
 import {animationBreaks, toHtml, WINDOW} from './html';
 import {breaksOf, Measured} from './rules';
 import {fixtureLog, SCREENS, settle} from './screens';

@@ -1,8 +1,8 @@
 {
   "gates": [
     {"name": "docs", "command": "python3 plugins/ink2pic/scripts/text_check.py . && python3 plugins/ink2pic/scripts/issue_links.py .", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file"},
-    {"name": "packages", "command": "cd packages && npm run validate", "covers": "sn-adapter, sync-core and ink-core"},
-    {"name": "bridge", "command": "cd plugins/bridge && npm run validate", "covers": "the Bridge plugin"},
+    {"name": "packages", "command": "cd packages && npm run validate", "covers": "sn-adapter, sync-core and ink-core (ui-kit runs in the bridge and ink2pic gates, #93)"},
+    {"name": "bridge", "command": "cd plugins/bridge && npm run validate", "covers": "the Bridge plugin and the ui-kit package's lint and tests"},
     {"name": "lingo", "command": "cd plugins/lingo && npm run validate", "covers": "the Lingo plugin"},
     {"name": "probe", "command": "cd plugins/probe && npm run validate", "covers": "the probe plugin and its JVM tests"},
     {"name": "snadb", "command": "cd cli/snadb && make validate", "covers": "the snadb CLI and its contract tests"},
@@ -16,6 +16,7 @@
     {"path": "scripts/gates.py", "gates": ["docs"]},
     {"path": ".github/workflows/scan.yml", "gates": ["docs"]},
     {"path": "packages/", "gates": ["packages"]},
+    {"path": "packages/ui-kit/", "gates": ["bridge", "ink2pic", "lingo"]},
     {"path": ".github/workflows/validate-packages.yml", "gates": ["packages"]},
     {"path": "plugins/bridge/", "gates": ["bridge"]},
     {"path": ".github/workflows/validate-bridge.yml", "gates": ["bridge"]},
