@@ -6,7 +6,7 @@ it starts. Order is not commitment.
 ## Plugins
 
 - **image-edit** — a plugin to clean and edit a picture on the device (remove parts, tidy). Pairs
-  with Ink2Pic's "insert raw" mode (#35): Ink2Pic inserts the picture as-is, image-edit cleans it.
+  with Ink2Pic's "insert raw" mode ([#35](https://github.com/martonpaulo/supernote-tools/issues/35)): Ink2Pic inserts the picture as-is, image-edit cleans it.
 - **ink2def** — like Ink2Pic but for **definitions and explanations**, not pictures. Lasso a word,
   get its meaning. Inspired by the "Web Lookup" plugin. Could share Ink2Pic's lasso entry point.
 - **lasso dictionary** — a lasso translator/dictionary: Spain-Spanish to Brazil-Portuguese, and
@@ -30,4 +30,4 @@ it starts. Order is not commitment.
 
 The owner's three original goals were To-Do <-> Todoist, Calendar <-> Apple/Google, and Saved ->
 Digest. Calendar is the active work (`area: bridge`). To-Do sync is blocked on the provider
-write investigation (#31). Saved -> Digest (Digest is cloud-only) is not yet scoped.
+write investigation ([#31](https://github.com/martonpaulo/supernote-tools/issues/31)). Saved -> Digest (Digest is cloud-only) is not yet scoped.

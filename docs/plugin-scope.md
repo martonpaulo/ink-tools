@@ -33,14 +33,14 @@ and scope:
 
 - **Relevance is broken on real cases.** "café"/"coffee" returns a heart as the "best" picture;
   "Pedro Sánchez" returns awful results. Ranking and the portrait path must fix these (issues
-  #13, #15, #20, #24). Keep these as named regression cases.
+  [#13](https://github.com/martonpaulo/supernote-tools/issues/13), [#15](https://github.com/martonpaulo/supernote-tools/issues/15), [#20](https://github.com/martonpaulo/supernote-tools/issues/20), [#24](https://github.com/martonpaulo/supernote-tools/issues/24)). Keep these as named regression cases.
 - **Two modes.** An **illustration / vector / sticker** mode (line art, drawings, engravings,
   "Bababum-app" style, OpenMoji) and a **real-photo** mode (people, places). The owner chose a real
-  split, not one blended list (relates to #35).
+  split, not one blended list (relates to [#35](https://github.com/martonpaulo/supernote-tools/issues/35)).
 - **Emoji / known labels.** Map common keywords to emoji via OpenMoji's own keywords: "happy" and
   "smile" insert a smiling face with no search. (new)
 - **Remember my pick.** When the owner rejects the first suggestion for a word (e.g. "maçã") and
-  picks another, that choice leads next time for the same word (#34).
+  picks another, that choice leads next time for the same word ([#34](https://github.com/martonpaulo/supernote-tools/issues/34)).
 - **Temporary result cache.** Keep a search's results for a few seconds so going back to pick a
   different one is instant (the owner often dislikes the first choice and looks for another). (new)
 - **Text / knowledge insert (third mode).** Beyond pictures: search a term and insert a short

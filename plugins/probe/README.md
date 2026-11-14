@@ -19,7 +19,7 @@ Same runtime and pinned versions as [`../ink2pic`](../ink2pic): React Native 0.7
 
 Check before you trust a result: run `npm run validate` (lint, typecheck, tests).
 
-## The Digest-provider probe (#59)
+## The Digest-provider probe ([#59](https://github.com/martonpaulo/supernote-tools/issues/59))
 
 The default probe asks one question for [#42](https://github.com/martonpaulo/supernote-tools/issues/42):
 can a plugin reach the Digest (Knowledge) provider that `adb` is denied? The native module
