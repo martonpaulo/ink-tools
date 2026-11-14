@@ -1,0 +1,80 @@
+name: Prerelease Probe
+
+# Each Probe test build becomes a GitHub prerelease carrying Probe.snplg (#59), so the owner can
+# download it for the tablet. A cloud session cannot push a tag, so a push to main that changes
+# PluginConfig.json publishes when its probe-v<versionName>-dev.<versionCode> tag does not exist yet.
+# A developer-only build: never a user release.
+
+on:
+  push:
+    branches: [main]
+    paths: [plugins/probe/PluginConfig.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prerelease:
+    name: prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: plugins/probe
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Resolve the tag from PluginConfig.json
+        id: tag
+        run: |
+          tag="$(node -p "const c = require('./PluginConfig.json'); 'probe-v' + c.versionName + '-dev.' + c.versionCode")"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$tag is already published; nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: plugins/probe/package-lock.json
+
+      - name: Install dependencies
+        if: steps.tag.outputs.publish == 'true'
+        run: npm ci
+
+      - name: Run the gate
+        if: steps.tag.outputs.publish == 'true'
+        run: npm run validate
+
+      - name: Build the native-capable package
+        if: steps.tag.outputs.publish == 'true'
+        run: npm run build
+
+      - name: Create the prerelease
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          gh release create "$TAG" build/outputs/Probe.snplg \
+            --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+            --notes "Developer-only Probe build with the native Digest-provider probe (#59). Install on the tablet, open Probe, read: adb logcat -s SNPROBE"
+
+      - name: Read the asset back
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          echo "$names"
+          case "$names" in
+            *Probe.snplg*) ;;
+            *) echo "::error::Probe.snplg is missing from $TAG."; exit 1 ;;
+          esac

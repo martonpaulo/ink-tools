@@ -1,7 +1,7 @@
 # Probe
 
 A permanent, developer-only Supernote plugin for quick on-device experiments. It is not shipped to
-users and has no release; its `.snplg` is a build output only.
+users and has no release; its `.snplg` is a developer prerelease (`probe-v0.0.1-dev.<versionCode>`, workflow `prerelease-probe.yml`, published when `PluginConfig.json` changes on `main`; raise `versionCode` for a new build), never a user release.
 
 Same runtime and pinned versions as [`../ink2pic`](../ink2pic): React Native 0.79.2 and `sn-plugin-lib`
 0.2.3. It registers only the plugin Settings entry (like [`../bridge`](../bridge)), so it never shows inside a note.
