@@ -1,0 +1,3 @@
+<!-- feature icon (64x64): an open padlock, for open sources with no account. -->
+<rect x="12" y="28" width="40" height="28" rx="5" fill="currentColor"/>
+<path d="M22 28 V18 C22 6 42 6 42 18" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>

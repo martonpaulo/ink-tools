@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600">
+  <!-- Cover template, pilot A «Side by side». Black, white and greys only. render.mjs fills the double-brace fields. -->
+  <defs>
+    <pattern id="hatch" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="#FFFFFF"/>
+      <rect width="20" height="40" fill="#000000"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1600" fill="#FFFFFF"/>
+
+  <!-- Title band -->
+  <rect width="1200" height="340" fill="#000000"/>
+  <rect x="64" y="70" width="200" height="200" rx="44" fill="#FFFFFF"/>
+  <g transform="translate(84 90) scale(0.3125)">{{icon}}</g>
+  <text x="304" y="196" font-family="Gabarito" font-weight="900" font-size="150" letter-spacing="4" fill="#FFFFFF">{{NAME}}</text>
+  <text x="308" y="268" font-family="Figtree" font-weight="700" font-size="46" fill="#E6E6E6">{{tagline}}</text>
+
+  <!-- How it works -->
+  <text x="64" y="428" font-family="Gabarito" font-weight="800" font-size="44" letter-spacing="6" fill="#000000">HOW IT WORKS</text>
+  <g transform="translate(64 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">1</text>
+    <g transform="translate(20 120)">{{panels.0.art}}</g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000">{{lines:panels.0.caption:260:486:50}}</text>
+  </g>
+  <g transform="translate(616 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">2</text>
+    <g transform="translate(20 120)">{{panels.1.art}}</g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000">{{lines:panels.1.caption:260:486:50}}</text>
+  </g>
+
+  <!-- Features: up to four, two columns -->
+  <rect x="64" y="1088" width="1072" height="6" fill="#000000"/>
+  <!--slot:features.0--><g transform="translate(64 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000">{{icon:features.0.icon}}</g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000">{{lines:features.0.label:128:42:48}}</text>
+  </g><!--/slot-->
+  <!--slot:features.1--><g transform="translate(616 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000">{{icon:features.1.icon}}</g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000">{{lines:features.1.label:128:42:48}}</text>
+  </g><!--/slot-->
+  <!--slot:features.2--><g transform="translate(64 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000">{{icon:features.2.icon}}</g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000">{{lines:features.2.label:128:42:48}}</text>
+  </g><!--/slot-->
+  <!--slot:features.3--><g transform="translate(616 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000">{{icon:features.3.icon}}</g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000">{{lines:features.3.label:128:42:48}}</text>
+  </g><!--/slot-->
+
+  <!-- Hatched footer stripe -->
+  <rect y="1480" width="1200" height="120" fill="url(#hatch)"/>
+  <rect y="1474" width="1200" height="8" fill="#000000"/>
+</svg>

@@ -1,0 +1,4 @@
+<!-- lookup, placeholder icon (512x512, drawn in black): a magnifier over a word line. Replaced by the plugin's own icon when it lands. -->
+<circle cx="220" cy="220" r="128" fill="none" stroke="#000000" stroke-width="52"/>
+<path d="M314 314 L430 430" stroke="#000000" stroke-width="64" stroke-linecap="round"/>
+<path d="M160 228 C178 196 196 196 210 226 C224 254 244 254 270 214" fill="none" stroke="#000000" stroke-width="28" stroke-linecap="round"/>
