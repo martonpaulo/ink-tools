@@ -13,6 +13,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const {execFileSync} = require('node:child_process');
+const {jdkTool, JDK_MISSING} = require('./host-tools.cjs');
 
 const root = path.resolve(__dirname, '..');
 const build = path.join(root, 'build');
@@ -92,16 +93,16 @@ function buildNative() {
   const stage = path.join(out, 'npk');
   fs.mkdirSync(classes, {recursive: true});
   fs.mkdirSync(stage, {recursive: true});
-  run('javac', [
+  run(jdkTool('javac'), [
     // -Werror: a new javac warning fails the build (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
     '-cp', [t.androidJar, t.reactJar, t.kotlinJar].join(path.delimiter),
     '-d', classes, ...javaSources(path.join(root, 'native/src')),
   ]);
   const jar = path.join(out, 'files.jar');
-  run('jar', ['cf', jar, '-C', classes, '.']);
+  run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);
   const dex = path.join(out, 'dex.zip');
-  run('java', [
+  run(jdkTool('java'), [
     '-cp', t.d8, 'com.android.tools.r8.D8', '--release', '--min-api', MIN_API,
     '--lib', t.androidJar, '--classpath', t.reactJar, '--output', dex, jar,
   ]);
@@ -157,12 +158,12 @@ function testNative() {
   );
   // Compile inside the try, so a compile error also removes the folder.
   try {
-    run('javac', [
+    run(jdkTool('javac'), [
       '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-d', classes,
       ...pure, ...javaSources(path.join(root, 'native/tests')),
     ]);
     for (const test of ['ProbeTargetsTest', 'ProbeFormatTest']) {
-      run('java', ['-cp', classes, `com.probe.providers.${test}`]);
+      run(jdkTool('java'), ['-cp', classes, `com.probe.providers.${test}`]);
     }
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
@@ -170,12 +171,21 @@ function testNative() {
 }
 
 if (require.main === module) {
-  if (process.argv.includes('--test')) {
-    testNative();
-  } else if (process.argv.includes('--package')) {
-    packagePlugin();
-  } else {
-    buildNative();
+  try {
+    if (process.argv.includes('--test')) {
+      testNative();
+    } else if (process.argv.includes('--package')) {
+      packagePlugin();
+    } else {
+      buildNative();
+    }
+  } catch (error) {
+    // A missing JDK is one line saying what to install, not a stack trace (#78).
+    if (error.message !== JDK_MISSING) {
+      throw error;
+    }
+    console.error(`native: ${error.message}`);
+    process.exit(1);
   }
 }
 
