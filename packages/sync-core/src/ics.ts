@@ -141,7 +141,8 @@ export function expandEvents(calendarId: string, events: IcsEvent[], w: TimeWind
       const o = overrides.get(`${e.uid}|${s}`) ?? e;
       const start = o === e ? s : o.start;
       const end = o === e ? s + len : o.end;
-      if (end < w.from || start > w.to) continue;
+      // An end equal to the window start is outside it, except for a zero-length event (#62).
+      if (end < w.from || (end === w.from && end > start) || start > w.to) continue;
       out.push({eventId: e.rrule ? `${e.uid}@${s}` : e.uid, calendarId, title: o.title, content: o.content, start, end, allDay: o.allDay ?? e.allDay});
     }
   }

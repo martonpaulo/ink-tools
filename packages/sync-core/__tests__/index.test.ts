@@ -292,6 +292,15 @@ describe('ics', () => {
     expect(one('RRULE:FREQ=YEARLY', '20250310T100000Z').map(e => new Date(e.start).getUTCFullYear())).toEqual([2025, 2026]);
   });
 
+  test('an all-day event ending at the window start is outside it, a zero-length one at the start is inside (#62)', () => {
+    const day3 = Date.UTC(2026, 10, 3);
+    const allDay = parseIcs(ics(vevent(['UID:d', 'DTSTART;VALUE=DATE:20261102']))).events;
+    expect(expandEvents('c', allDay, {from: day3, to: day3 + 86400000})).toHaveLength(0);
+    expect(expandEvents('c', allDay, {from: day3 - 1, to: day3 + 86400000})).toHaveLength(1);
+    const instant = parseIcs(ics(vevent(['UID:i', 'DTSTART:20261103T000000Z']))).events;
+    expect(expandEvents('c', instant, {from: day3, to: day3 + 86400000})).toHaveLength(1);
+  });
+
   test('an unsupported rule keeps the first occurrence and warns', () => {
     const warnings: string[] = [];
     const {events} = parseIcs(ics(vevent(['UID:x', 'DTSTART:20260105T070000Z', 'RRULE:FREQ=MONTHLY;BYDAY=2TU'])));
