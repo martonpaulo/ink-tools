@@ -18,7 +18,9 @@ export default function App() {
       <Pressable
         accessibilityRole="button"
         onPress={() => {
-          void PluginManager.closePluginView();
+          PluginManager.closePluginView().catch(error => {
+            console.error(`Probe: ${error.message}`);
+          });
         }}
         style={styles.back}>
         <Text style={styles.backText}>← Back</Text>
