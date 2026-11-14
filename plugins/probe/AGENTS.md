@@ -7,12 +7,16 @@ symlink points at this file.
 
 A permanent developer-only Supernote plugin (#39) for one-off on-device experiments: read content
 providers, test writes, check framework guards, log to logcat. Same runtime and pinned versions as
-`../ink2pic`. Never shipped to users; its `.snplg` is a CI artifact, not a release.
+`../ink2pic`. Never shipped to users; its `.snplg` is a build output, not a release.
 
 ## Rules
 
 - A probe goes only in `probeBody` (`src/probe.ts`). Reset it to the default body before landing, so
-  `main` always holds the harmless default.
+  `main` always holds the default: the runtime keys and the native Digest-provider probe (#59).
 - Lines are logged with the tag `SNPROBE`. Never log a secret or a person's data.
 - Validate with `npm run validate`. A result found on the device goes to the issue or a research
   note, never kept as a claim without the device run.
+- The native module is `native/src/com/probe/providers/`; its targets (URIs, marker columns) mirror
+  `packages/sn-adapter/src/descriptor.json`. It only reads, and inserts one row marked
+  `SNPROBE dry insert` that it reverts at once; it never logs a row's value. `npm run build` must give
+  a `Probe.snplg` that holds `app.npk` (native step), never a JS-only package.

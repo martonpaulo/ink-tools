@@ -40,3 +40,10 @@ jobs:
 
       - name: Run the gate
         run: npm run validate
+
+      - name: Build the native-capable plugin package
+        # The JS package, then the Java module (#59); native-toolchain.sh reuses the runner's SDK.
+        run: npm run build
+
+      - name: Check the package holds the native module
+        run: unzip -l build/outputs/Probe.snplg | grep -q app.npk
