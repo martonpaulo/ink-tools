@@ -1,0 +1,54 @@
+{
+ "rio-de-janeiro": {
+  "ok": true,
+  "reason": "the panorama «Cidade Maravilhosa» at 2 is now its grey photo, with Christ the Redeemer and Sugarloaf clear; before it was a contour of dots. A seed, a folklore figure and an unrelated portrait from Openclipart still fill the rest of page 1"
+ },
+ "brazil": {
+  "ok": true,
+  "reason": "the flag of Brazil first, unchanged; the Rio panorama at 2 is its grey photo instead of a contour of dots"
+ },
+ "paris": {
+  "ok": true,
+  "reason": "the Eiffel Tower view at 3 is its grey photo instead of a contour of dots; the order is unchanged"
+ },
+ "bread": {
+  "ok": true,
+  "reason": "a bread drawing first, unchanged; the basket of rolls at 2 is its grey photo instead of a contour of dots"
+ },
+ "tree": {
+  "ok": false,
+  "reason": "not met before or after: a search-tree diagram is still first; the alder tree at 1 is its grey photo instead of a contour of dots"
+ },
+ "leaves": {
+  "ok": true,
+  "reason": "a herb drawing first, unchanged; the leaf varieties plate at 1 is its grey photo instead of a contour of dots"
+ },
+ "a-dog-playing-with-a-ball": {
+  "ok": true,
+  "reason": "better: a grey photo of a dog with a tennis ball is now first; before, a girl with a dog led and the same photo was a contour of dots at 3"
+ },
+ "apple-logo": {
+  "ok": true,
+  "reason": "the Apple logo first, unchanged; «Apple logo (3655726351)» replaces a colour palette at 5; Apple Park at 2 is its grey photo"
+ },
+ "elephent": {
+  "ok": true,
+  "reason": "elephant pictures on page 1 as before; «Elephent comparison» moves up to 2 as its grey photo"
+ },
+ "xyzzy": {
+  "ok": true,
+  "reason": "no real answer as before: the cave photo moves to 1 as its grey photo; the rest are the same cave and game pictures"
+ },
+ "confucius-institute": {
+  "ok": false,
+  "reason": "not met before or after: no logo leads; a university photo moves from 5 to 3, shown grey"
+ },
+ "confucious-institute": {
+  "ok": false,
+  "reason": "not met before or after: no logo leads; the same institute pictures, one moved up as its grey photo"
+ },
+ "line-china": {
+  "ok": false,
+  "reason": "not met before or after: no flag or map of China leads; the Great Wall photo at 2 is its grey photo and a Great Wall picture joins at 3"
+ }
+}
