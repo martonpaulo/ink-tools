@@ -1,5 +1,5 @@
-import {CalendarEvent} from '../src/calendar';
-import {CalendarWriter, createGoogleCalendarWriter, pushCalendarEdits, toGoogleBody} from '../src/push';
+import {CalendarEvent, DeviceCalendarStore, syncCalendar} from '../src/calendar';
+import {CalendarWriter, DeviceRelinker, applyCreated, createGoogleCalendarWriter, pushCalendarEdits, toGoogleBody} from '../src/push';
 
 const ev = (o: Partial<CalendarEvent> = {}): CalendarEvent => ({
   eventId: 'e1', calendarId: 'c1', title: 'Talk', content: '', start: Date.UTC(2026, 10, 14, 9), end: Date.UTC(2026, 10, 14, 10), allDay: false, ...o,
@@ -67,4 +67,35 @@ test('Google writer sends POST, PATCH and DELETE; a delete of a gone event succe
   expect(seen).toEqual(['POST /calendars/a%40b/events', 'PATCH /calendars/c1/events/e_20261114', 'DELETE /calendars/c1/events/e1']);
   status.n = 403;
   await expect(w.deleteEvent('c1', 'e1')).rejects.toThrow(/HTTP 403/);
+});
+
+test('a tablet-created event is relinked after the push, so the next pull leaves one row (#65)', async () => {
+  const fresh = ev({eventId: '', calendarId: ''});
+  const rows: CalendarEvent[] = [fresh];
+  const store: DeviceCalendarStore & DeviceRelinker = {
+    listOurs: async () => rows,
+    create: async e => void rows.push(e),
+    update: async () => undefined,
+    remove: async () => undefined,
+    relink: async (from, to) => void Object.assign(rows[rows.indexOf(from)], to),
+  };
+  const {w} = fakeWriter();
+  const pushed = await pushCalendarEdits([{event: fresh, cancelled: false}], [], w, 'work');
+  const remote = ev({calendarId: 'work', eventId: 'new1'});
+  const provider = {listCalendars: async () => [{calendarId: 'work', name: 'work'}], listEvents: async () => [remote]};
+  const window = {from: 0, to: Date.UTC(2027, 0, 1)};
+
+  // Without the relink the pull writes a second row; with it the pull finds nothing to do.
+  expect(await applyCreated(pushed, store)).toEqual([]);
+  const pulled = await syncCalendar(provider, store, window);
+  expect(pulled).toMatchObject({created: 0, updated: 0, removed: 0, errors: []});
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({calendarId: 'work', eventId: 'new1'});
+});
+
+test('a relink that fails is reported', async () => {
+  const {w} = fakeWriter();
+  const pushed = await pushCalendarEdits([{event: ev({eventId: ''}), cancelled: false}], [], w, 'work');
+  const errors = await applyCreated(pushed, {relink: async () => { throw new Error('row locked'); }});
+  expect(errors).toEqual(['relink "Talk" to work/new1: row locked']);
 });

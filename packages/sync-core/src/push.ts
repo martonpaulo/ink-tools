@@ -23,7 +23,8 @@ export interface DeviceEdit {
 }
 
 export interface PushResult {
-  created: Array<{from: CalendarEvent; eventId: string}>;
+  /** `calendarId` is the calendar that received the event; apply the pairs with `applyCreated`. */
+  created: Array<{from: CalendarEvent; calendarId: string; eventId: string}>;
   updated: number;
   deleted: number;
   skipped: number;
@@ -54,7 +55,7 @@ export async function pushCalendarEdits(
         } else if (!defaultCalendarId) {
           result.errors.push(`"${event.title}": no default calendar chosen, event not created`);
         } else {
-          result.created.push({from: event, eventId: await writer.createEvent(defaultCalendarId, event)});
+          result.created.push({from: event, calendarId: defaultCalendarId, eventId: await writer.createEvent(defaultCalendarId, event)});
         }
       } else if (cancelled) {
         await writer.deleteEvent(event.calendarId, event.eventId);
@@ -70,6 +71,28 @@ export async function pushCalendarEdits(
     }
   }
   return result;
+}
+
+/** The tablet side of giving a tablet-created row its identity on the service. */
+export interface DeviceRelinker {
+  relink(from: CalendarEvent, to: {calendarId: string; eventId: string}): Promise<void>;
+}
+
+/**
+ * Give each tablet-created row the id the service assigned. Run it after the push and before the
+ * next pull, or the pull sees the new remote event as missing and writes it a second time (#65).
+ * A row that fails to relink is reported and stays unlinked; it is retried never silently dropped.
+ */
+export async function applyCreated(result: PushResult, store: DeviceRelinker): Promise<string[]> {
+  const errors: string[] = [];
+  for (const {from, calendarId, eventId} of result.created) {
+    try {
+      await store.relink(from, {calendarId, eventId});
+    } catch (e) {
+      errors.push(`relink "${from.title}" to ${calendarId}/${eventId}: ${(e as Error).message}`);
+    }
+  }
+  return errors;
 }
 
 export const GOOGLE_CALENDAR_WRITE_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
