@@ -146,6 +146,13 @@ describe('rankForEink', () => {
         .map(x => x.title)
         .slice(0, 2),
     ).toEqual(['Napoleão lithography', 'The Emperor in His Study']);
+    // A vector file titled only with the name and years is no portrait: it follows the portrait.
+    const knot = r('commons', 'Napoleão 1769 2019', 'image/svg+xml');
+    expect(
+      rankForEink([[knot, ...commons], [portrait]], 'Napoleão')
+        .map(x => x.title)
+        .slice(0, 2),
+    ).toEqual(['The Emperor in His Study', 'Napoleão 1769 2019']);
   });
 
   it("leads with the query's own flag, before regional flags (#89)", () => {

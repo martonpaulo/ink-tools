@@ -145,6 +145,9 @@ const lineWorkScorer: Scorer = result =>
 const photoScorer: Scorer = (result, {styles}) =>
   !styles.has('photo') && hasStyle(result.title, 'photo') ? PHOTO_SCORE : 0;
 
+/** A year in a title: «1519», «2019». */
+const YEAR = /(?<!\d)(1\d|20)\d\d(?!\d)/;
+
 /** A drawing: clip art, a vector file, or a title that names line work. */
 function isDrawing(result: SearchResult): boolean {
   return (
@@ -296,7 +299,7 @@ function wanted(result: SearchResult, {styles}: QueryIntent): boolean {
  * the simple drawing and, for a person, the real portrait (#43); a canonical result that leads,
  * the query's own flag (#89) or the logo of the organisation or brand it names (#81), comes
  * before that result, and so does a person's portrait unless that result is a drawing naming the
- * person plainly (#15). A picture two sources return is shown once.
+ * person plainly, with no year in its title (#15). A picture two sources return is shown once.
  */
 export function rankForEink(
   lists: readonly SearchResult[][],
@@ -327,13 +330,16 @@ export function rankForEink(
     .map(entry => entry.result);
   // The query's own flag (#89) or its organisation's logo (#81) leads, before the best other result.
   // A person's portrait leads too, unless the best other result is a drawing that names them
-  // plainly: a namesake's photo or a stamp never comes before it (#15).
+  // plainly: a namesake's photo or a stamp never comes before it. A drawing titled with a year
+  // beside the name is a commemoration, not a picture of the person: the knot pattern «Leonardo
+  // da Vinci 1519 2019» follows the portrait (#15).
   const portrait = canonical.find(result => result.portrait);
   const portraitLeads =
     portrait !== undefined &&
     !(
       best &&
       isDrawing(best) &&
+      !YEAR.test(best.title) &&
       subjectScorer(best, intent) === PLAIN_SUBJECT_SCORE
     );
   const ordered = [
