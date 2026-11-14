@@ -188,8 +188,18 @@ describe('cachedSearch', () => {
       canonical: true,
       portrait: true,
     };
+    // A picture of the person's depicts gallery keeps its mark too.
+    const depicted: SearchResult = {
+      id: 'commons:Example_painting.jpg',
+      source: 'commons',
+      title: 'Example painting',
+      thumbUrl: THUMB,
+      license: 'Public domain',
+      attribution: 'Wikidata',
+      depicts: true,
+    };
     const {storage, files} = memoryStorage();
-    const run = runner(outcome([portrait, openclipart]));
+    const run = runner(outcome([portrait, depicted, openclipart]));
     await (
       await cachedSearch('person', run, {storage, path: PATH, clock: at(NOW)})
     ).saved;
@@ -199,7 +209,7 @@ describe('cachedSearch', () => {
       path: PATH,
       clock: at(NOW),
     });
-    expect(cached.results).toEqual([portrait, openclipart]);
+    expect(cached.results).toEqual([portrait, depicted, openclipart]);
     expect(run).toHaveBeenCalledTimes(1);
   });
 

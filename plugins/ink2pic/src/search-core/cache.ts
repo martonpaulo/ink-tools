@@ -38,9 +38,10 @@ export type CacheOptions = {
  * the adult filter, so no cached search shows a picture it now leaves out (#69); 4 since entries
  * keep `canonical`, which the measured order and the logo lead read (#99); 5 since each status
  * says whether its source is local, which offline detection reads (#99); 6 since the adult filter
- * reads category-only words, so no cached search shows a picture it now leaves out (#69).
+ * reads category-only words, so no cached search shows a picture it now leaves out (#69); 7 since
+ * entries keep `depicts`, which ranks a person's pictures before a namesake's (#15).
  */
-export const CACHE_VERSION = 6;
+export const CACHE_VERSION = 7;
 /** Newest entries kept; the oldest is evicted first. DEFAULT, no device measurement yet. */
 export const CACHE_LIMIT = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -98,6 +99,7 @@ function store(result: SearchResult): StoredResult {
     canonical,
     leads,
     portrait,
+    depicts,
     tags,
   } = result;
   const original = storedOriginal(result);
@@ -116,6 +118,8 @@ function store(result: SearchResult): StoredResult {
     ...(leads && {leads}),
     // A person's portrait keeps its lead (#15).
     ...(portrait && {portrait}),
+    // So does a picture that depicts the person (#15).
+    ...(depicts && {depicts}),
     // The style rules read them on the way out too (#81).
     ...(tags && {tags}),
   };
@@ -151,6 +155,7 @@ function isStoredResult(value: unknown): value is StoredResult {
     (value.canonical === undefined || value.canonical === true) &&
     (value.leads === undefined || value.leads === true) &&
     (value.portrait === undefined || value.portrait === true) &&
+    (value.depicts === undefined || value.depicts === true) &&
     (value.tags === undefined ||
       (Array.isArray(value.tags) &&
         value.tags.every(tag => typeof tag === 'string'))) &&

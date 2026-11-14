@@ -595,6 +595,8 @@ export async function searchWikidata(
   // A person found by the article's text only is not the one asked for: «cadeira» found the
   // article of a senator, whose portrait must not lead a chair (#15).
   let named = namesSubject(query, hit.title);
+  // The query is a name many people bear, resolved to its most notable bearer (#92).
+  let byName = false;
   if (item) {
     let entity = await entityOf(item, ctx);
     if (entity.ok && entity.value.name) {
@@ -605,6 +607,7 @@ export async function searchWikidata(
       }
       if (person.value) {
         named = true;
+        byName = true;
         item = person.value;
         leadImage = undefined;
         entity = await entityOf(item, ctx);
@@ -685,9 +688,11 @@ export async function searchWikidata(
               portrait: true as const,
             }),
         })),
-        ...(gallery.ok ? gallery.value.results : []).filter(
-          r => !signed(r.title),
-        ),
+        ...(gallery.ok ? gallery.value.results : [])
+          .filter(r => !signed(r.title))
+          // Only for a name: its gallery's titles use other forms of it («Napoleon I» for
+          // «Napoleão») and Commons' own search finds its other bearers (#15).
+          .map(r => (byName ? {...r, depicts: true as const} : r)),
       ],
       ...suggestion,
     },

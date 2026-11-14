@@ -73,6 +73,11 @@ const ASKED_STYLE_SCORE = 2;
 /** Below a photo that names the word: these are about it, not a picture of it. */
 const STYLISED_SCORE = -5;
 const MENTION_SCORE = 1;
+/**
+ * Below a picture that depicts the person: for a name many people bear, a photo that only names
+ * it is most often another bearer's («Napoleão Bernardes» for «Napoleão», #15).
+ */
+const UNDEPICTED_PHOTO_SCORE = -1;
 const PLAIN_SUBJECT_SCORE = 3;
 /**
  * A symbol (#67) leads only when its source says so: above any drawing, measures included. Else it
@@ -125,6 +130,10 @@ function stylisedOther(result: SearchResult): boolean {
  * plain title may add: «Owl Clock» is an owl and a clock, «Blank Clock» only a clock (#24).
  */
 const subjectScorer: Scorer = (result, {subject, styles}) => {
+  if (result.depicts) {
+    // Commons says it shows the person the name resolved to, under any title (#15).
+    return PLAIN_SUBJECT_SCORE;
+  }
   // A title's numbers count only for a subject made of numbers (#96).
   const have = words(result.title, subject.some(isNumber));
   if (
@@ -167,6 +176,16 @@ function isDrawing(result: SearchResult): boolean {
 }
 
 /**
+ * For a name many people bear, a photo outside its notable bearer's depicts gallery falls below
+ * the gallery's pictures: the other bearers' headshots («Napoleão Tavares») no longer fill page 1
+ * (#15). A drawing and a canonical picture keep their place.
+ */
+const undepictedScorer: Scorer = (result, {byName}) =>
+  byName && !result.depicts && !result.canonical && !isDrawing(result)
+    ? UNDEPICTED_PHOTO_SCORE
+    : 0;
+
+/**
  * A query that asks for a photo («photo of a cat») is not asking for a drawing: a drawing falls
  * with the stylised graphics, below the photos (#110).
  */
@@ -183,8 +202,17 @@ const stylisedScorer: Scorer = (result, {styles}) =>
     ? STYLISED_SCORE
     : 0;
 
+/**
+ * A page Commons cut out of a scanned book or PDF ends its title with «(page N)»: «Life of
+ * Napoleon Bonaparte … - DPLA - … (page 49)» is a page of text (#15).
+ */
+const SCANNED_PAGE = /\(page \d+\)$/i;
+
 const textScorer: Scorer = (result, {styles}) =>
-  !styles.has('text') && styled(result, 'text') ? TEXT_SCORE : 0;
+  !styles.has('text') &&
+  (styled(result, 'text') || SCANNED_PAGE.test(result.title))
+    ? TEXT_SCORE
+    : 0;
 
 /** The styles the query asks for, each one the title or the categories carry. */
 const askedStyleScorer: Scorer = (result, {styles}) =>
@@ -233,6 +261,7 @@ export const DEFAULT_SCORERS: readonly Scorer[] = [
   formatScorer,
   symbolScorer,
   unnamedTagScorer,
+  undepictedScorer,
 ];
 
 /** «Photos too» (#70): every scorer but the one that ranks a photo below a drawing. */
@@ -265,13 +294,17 @@ function leadingLogo(result: SearchResult): boolean {
 
 /**
  * What the ranker reads of a query among its results: when Wikidata says the query names an
- * organisation or a brand, its logos are what was asked, as if the query said «logo» (#81).
+ * organisation or a brand, its logos are what was asked, as if the query said «logo» (#81); when
+ * they hold the depicts gallery of a name's notable bearer, the query is that name (#15).
  */
 export function intentFor(
   query: string,
   results: readonly SearchResult[],
 ): QueryIntent {
-  const intent = readIntent(query);
+  const read = readIntent(query);
+  const intent: QueryIntent = results.some(result => result.depicts)
+    ? {...read, byName: true}
+    : read;
   if (intent.styles.has('logo') || !results.some(leadingLogo)) {
     return intent;
   }

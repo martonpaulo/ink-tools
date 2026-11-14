@@ -115,6 +115,11 @@ export type QueryIntent = {
   subject: string[];
   /** The style groups the query names. */
   styles: ReadonlySet<StyleGroup>;
+  /**
+   * The query is a name many people bear, and the results hold the depicts gallery of its most
+   * notable bearer (#15). Read from the results, never from the query.
+   */
+  byName?: true;
 };
 
 /** The query without its style words, and the style groups they named. */

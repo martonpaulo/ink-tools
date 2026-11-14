@@ -155,6 +155,64 @@ describe('rankForEink', () => {
     ).toEqual(['The Emperor in His Study', 'Napoleão 1769 2019']);
   });
 
+  it("puts the pictures that depict the person before a namesake's photo (#15)", () => {
+    const portrait = {
+      ...r('commons', 'The Emperor in His Study', 'image/jpeg', true),
+      portrait: true as const,
+    };
+    // The depicts gallery titles him in another language: «Napoleon», not «Napoleão».
+    const depicted = {
+      ...r('commons', 'Napoleon I by Example Painter', 'image/jpeg'),
+      depicts: true as const,
+    };
+    const namesakes = [
+      r('commons', 'Napoleão Exemplo 02', 'image/jpeg'),
+      r('commons', 'Napoleão Teste', 'image/jpeg'),
+    ];
+    const drawing = r('openclipart', 'Napoleão', 'image/png');
+    expect(
+      rankForEink([namesakes, [portrait, depicted]], 'Napoleão').map(
+        x => x.title,
+      ),
+    ).toEqual([
+      'The Emperor in His Study',
+      'Napoleon I by Example Painter',
+      'Napoleão Exemplo 02',
+      'Napoleão Teste',
+    ]);
+    // A drawing that names the person still comes before the photos that depict them.
+    expect(
+      rankForEink([[drawing], namesakes, [portrait, depicted]], 'Napoleão')
+        .map(x => x.title)
+        .slice(0, 3),
+    ).toEqual([
+      'Napoleão',
+      'The Emperor in His Study',
+      'Napoleon I by Example Painter',
+    ]);
+    // A page cut out of a scanned book is text, even in the gallery.
+    const page = {
+      ...r('commons', 'Life of Napoleon - DPLA - 0a1b (page 49)', 'image/jpeg'),
+      depicts: true as const,
+    };
+    expect(
+      rankForEink([namesakes, [portrait, page, depicted]], 'Napoleão')
+        .map(x => x.title)
+        .slice(0, 2),
+    ).toEqual(['The Emperor in His Study', 'Napoleon I by Example Painter']);
+    // With no gallery marked, as for a full name, a photo that names the word keeps its place.
+    const unmarked = r(
+      'commons',
+      'Napoleon I by Example Painter',
+      'image/jpeg',
+    );
+    expect(
+      rankForEink([namesakes, [portrait, unmarked]], 'Napoleão').map(
+        x => x.title,
+      )[1],
+    ).toBe('Napoleão Exemplo 02');
+  });
+
   it('puts an Openclipart picture whose title names no word of a name below Commons (#73)', () => {
     const openclipart = [
       r('openclipart', 'Terminalia catappa seed', 'image/png'),

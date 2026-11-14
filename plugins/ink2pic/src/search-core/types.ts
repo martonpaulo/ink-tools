@@ -30,6 +30,12 @@ export type SearchResult = {
    */
   portrait?: true;
   /**
+   * A picture of the Commons depicts gallery (P180) of the person a name resolved to, «Napoleão»
+   * to Napoleon (#92): it shows the person, whatever its title says, «Napoleon I of France»
+   * (#15). Set only on that path, where Commons' own search also finds the name's other bearers.
+   */
+  depicts?: true;
+  /**
    * An OpenMoji symbol whose picture is saved on the device (#91): it shows and inserts with no
    * network. Set by the app after each search, never by a source.
    */

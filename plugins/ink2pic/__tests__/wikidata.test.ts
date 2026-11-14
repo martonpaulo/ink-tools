@@ -198,6 +198,8 @@ describe('searchWikidata', () => {
     // The person's own image (P18) is their portrait (#15).
     expect(canonical.map(r => r.portrait === true)).toEqual([false, true]);
     expect(outcome.value.results.length).toBeGreaterThan(canonical.length);
+    // A full name is no name many people bear: its gallery is not marked (#15).
+    expect(outcome.value.results.some(r => r.depicts)).toBe(false);
   });
 
   it('marks no portrait when the article only mentions the query: «cadeira» found a senator (#15)', async () => {
@@ -618,6 +620,19 @@ describe('the notable namesake (#92)', () => {
     expect(
       parseNotablePerson(JSON.stringify({query: {search: []}})),
     ).toBeNull();
+  });
+
+  it("marks the notable bearer's depicts gallery, whatever its titles say (#15)", async () => {
+    const fetch = napoleonFetch().mockImplementation(async (url: string) =>
+      ok(url.includes('haswbstatement') ? fixture('commons-soup.json') : NONE),
+    );
+    const outcome = await searchWikidata('Napoleão', ctx(fetch));
+    if (!outcome.ok) {
+      throw new Error(outcome.message);
+    }
+    const gallery = outcome.value.results.filter(r => !r.canonical);
+    expect(gallery.length).toBeGreaterThan(0);
+    expect(gallery.every(r => r.depicts === true)).toBe(true);
   });
 
   it('budgets for every request of the name path (#110)', async () => {
