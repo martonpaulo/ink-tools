@@ -3,5 +3,5 @@
 
 validate:
 	python3 scripts/text_check.py
-	python3 scripts/dry_check.py
+	python3 scripts/dry_check.py --root .
 	bash scripts/run_suites.sh
