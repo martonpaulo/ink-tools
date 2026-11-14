@@ -91,6 +91,24 @@ supernote-tools/
     Settings. Periodic sync with the view closed needs a background trigger or a kept-alive plugin;
     whether PluginHost allows that is unconfirmed and is the first thing `probe` must answer before
     the `bridge` design commits to it.
+  - **Google sign-in cannot use the device-code flow.** Google's OAuth flow for limited-input
+    devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
+    Calendar scope (read 2026-11-14,
+    [#64](https://github.com/martonpaulo/supernote-tools/issues/64)). `startDeviceCode` in
+    `packages/sync-core` would get `invalid_scope`. The replacement waits on the owner's choice in
+    [#64](https://github.com/martonpaulo/supernote-tools/issues/64):
+    - **Sign in on the Mac, hand the token to the tablet** (recommended): the installed-app flow
+      with a loopback redirect, which allows the Calendar scopes, runs on the Mac (a `snadb`
+      command); the refresh token goes to the plugin's private storage over ADB.
+    - **Sign in in a browser on the tablet**, with a loopback redirect to the plugin: needs a
+      browser on the device and a local listener, both unconfirmed.
+    - **Read only, no sign-in:** Google Calendar's secret iCal address through the ICS provider
+      ([#30](https://github.com/martonpaulo/supernote-tools/issues/30)); writing back
+      ([#29](https://github.com/martonpaulo/supernote-tools/issues/29)) is then impossible.
+
+    Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh
+    tokens expire after 7 days; «In production» without verification keeps them, behind an
+    «unverified app» warning.
 - **`lookup`** — write a word, lasso it, insert a **picture** or a **definition**. Merges today's
   `ink2pic` with the planned `ink2def`; each mode opt in/out.
 - **`lingo`** — write a word, lasso it, insert its **translation**. One plugin; each **language pair**
