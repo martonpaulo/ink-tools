@@ -1,0 +1,12 @@
+{
+  "name": "Lingo",
+  "desc": "Lasso a handwritten word and insert its translation. Each language pair is opt in in the plugin's Settings.",
+  "author": "Marton Paulo",
+  "iconPath": "",
+  "versionName": "0.0.1",
+  "versionCode": "1",
+  "pluginID": "2rwzp7s8b0ul4ijw",
+  "pluginKey": "Lingo",
+  "jsMainPath": "index",
+  "uses-permissions": []
+}
