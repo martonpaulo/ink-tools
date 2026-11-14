@@ -62,3 +62,14 @@ test('to-do insert enforces title, existing list and hasSync=0', () => {
   expect(() => toTodoInsert(D, {taskListId: 'L1'}, ctx)).toThrow(/title/);
   expect(() => toTodoInsert(D, {title: 'x', taskListId: 'nope'}, ctx)).toThrow(/existing list/);
 });
+
+import {rowToTodoTask, todoTaskToRow} from '../src';
+
+test('a To-Do row round-trips through the task shape and keeps the insert rules', () => {
+  const row = todoTaskToRow(D, {title: 'Pay rent', detail: 'by card', due: 1700000000000, completed: false}, 5);
+  const task = rowToTodoTask(D, {...row, taskId: 'abc', deleted: 0});
+  expect(task).toMatchObject({localId: 'abc', title: 'Pay rent', detail: 'by card', due: 1700000000000, completed: false, modified: 5, deleted: false});
+  const done = rowToTodoTask(D, {...todoTaskToRow(D, {...task, completed: true}, 9), taskId: 'abc', deleted: '1'});
+  expect(done).toMatchObject({completed: true, deleted: true});
+  expect(toTodoInsert(D, {...row, taskListId: 'L'}, {existingListIds: ['L']}).hasSync).toBe(0);
+});

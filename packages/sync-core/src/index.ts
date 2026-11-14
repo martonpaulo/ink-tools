@@ -1,2 +1,3 @@
-/** Scaffold only: the contents land with their own issues (see docs/architecture.md). */
 export const PACKAGE_NAME = 'sync-core';
+export * from './tasks';
+export * from './todoist';

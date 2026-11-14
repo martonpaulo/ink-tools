@@ -25,7 +25,10 @@
         "columns": ["id", "taskListId", "userId", "title", "lastModified", "deleted", "hasSync", "createTime"]
       }
     },
-    "rules": {"requiredOnInsert": ["title"], "needsExistingList": true, "writeHasSync": 0}
+    "rules": {"requiredOnInsert": ["title"], "needsExistingList": true, "writeHasSync": 0,
+      "statusOpen": "needsAction",
+      "statusCompleted": "completed",
+      "timeUnit": "ms"}
   },
   "digest": {
     "authority": "com.ratta.supernote.knowledge.provider",
