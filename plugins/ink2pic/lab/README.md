@@ -15,8 +15,8 @@ ignores `lab/`. Nothing here runs in `npm run validate`.
   with this message when it is missing.
 - The project's `node_modules` (`npm ci`): the scripts transpile the TypeScript with the
   `typescript` devDependency, through `ts-hook.cjs`.
-- Python 3 with Pillow, for the pixel measures of `metrics.mjs`.
-- A JDK (`javac` and `java`), for the device's pixel step (below).
+- Python 3 with Pillow, for the pixel measures of `metrics.mjs`: the first of `python3` and Homebrew's `python3.14`, `3.13` and `3.12` that imports it ([#74](https://github.com/martonpaulo/supernote-tools/issues/74)).
+- A JDK (`javac` and `java`), for the device's pixel step (below): `JAVA_HOME`, else the PATH's when it runs (macOS has a stub), else Homebrew's `openjdk` ([#74](https://github.com/martonpaulo/supernote-tools/issues/74)). A missing tool stops the lab with one line naming what to install.
 - Playwright with Chromium, installed outside the project and found through `NODE_PATH`, for the
   sheets.
 

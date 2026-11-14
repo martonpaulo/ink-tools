@@ -84,6 +84,19 @@ const key = url => createHash('sha1').update(url).digest('hex');
  * Node's fetch ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 (Node 22.21 and later): behind a
  * proxy, a host the machine cannot resolve would fail as «network» and falsify the run.
  */
+/**
+ * A host tool from `scripts/host-tools.cjs` (#74): `jdkTool` with its name, or
+ * `pythonWithPillow`. A missing tool stops the lab with one line naming what to install.
+ */
+export function hostTool(kind, ...args) {
+  try {
+    return require('../scripts/host-tools.cjs')[kind](...args);
+  } catch (error) {
+    console.error(`lab: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 export function checkProxy() {
   if (process.env.HTTPS_PROXY && process.env.NODE_USE_ENV_PROXY !== '1') {
     throw new Error('HTTPS_PROXY is set: run with NODE_USE_ENV_PROXY=1');

@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   checkProxy,
+  hostTool,
   LAB_DIR,
   pageOneThumbs,
   readJson,
@@ -40,7 +41,7 @@ const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
 
 function pixels(files) {
   const list = [...new Set([...files.values()].filter(Boolean))];
-  const out = execFileSync('python3', [path.join(LAB_DIR, 'pixels.py')], {
+  const out = execFileSync(hostTool('pythonWithPillow'), [path.join(LAB_DIR, 'pixels.py')], {
     input: JSON.stringify(list),
     encoding: 'utf8',
     maxBuffer: MAX_OUTPUT_BYTES,

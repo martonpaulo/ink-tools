@@ -12,9 +12,10 @@ in a public issue.
 
 ## Local setup
 
-Node.js 18 or newer, npm, Python 3 for the repository checks, and a JDK 21 whose `javac` is on
-`PATH` for the native tests (on macOS with Homebrew: `export PATH="$(brew --prefix openjdk@21)/bin:$PATH"`,
-because the keg is not linked and the system `java` stub fails with «Unable to locate a Java Runtime»):
+Node.js 18 or newer, npm, Python 3 for the repository checks, and a JDK 21 for the native tests.
+The tests take `JAVA_HOME`, else the `PATH`'s JDK when it runs, else Homebrew's `openjdk` or
+`openjdk@21` keg, so the macOS `java` stub («Unable to locate a Java Runtime») is passed over; with
+none, they stop with a line naming what to install ([#74](https://github.com/martonpaulo/supernote-tools/issues/74)):
 
 ```bash
 git clone https://github.com/martonpaulo/ink2pic.git

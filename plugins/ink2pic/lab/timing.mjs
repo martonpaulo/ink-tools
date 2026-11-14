@@ -14,7 +14,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import {CACHE_DIR, LAB_DIR, OUT_DIR, ROOT_DIR, readJson} from './lib.mjs';
+import {CACHE_DIR, hostTool, LAB_DIR, OUT_DIR, ROOT_DIR, readJson} from './lib.mjs';
 
 const MAX_OUTPUT_BYTES = 16 * 1024 * 1024;
 const VERSION_DIGITS = 12;
@@ -60,7 +60,7 @@ function compile(nativeDir) {
   const classes = path.join(CACHE_DIR, 'timing', version);
   if (!fs.existsSync(path.join(classes, 'LabTiming.class'))) {
     fs.mkdirSync(classes, {recursive: true});
-    execFileSync('javac', ['-d', classes, ...sources], {stdio: 'pipe'});
+    execFileSync(hostTool('jdkTool', 'javac'), ['-d', classes, ...sources], {stdio: 'pipe'});
   }
   return classes;
 }
@@ -77,7 +77,7 @@ if (!run || !['before', 'after'].includes(mode)) {
 }
 const nativeDir = path.resolve(option('--native', path.join(ROOT_DIR, 'native/src')));
 const rounds = option('--rounds', String(DEFAULT_ROUNDS));
-const out = execFileSync('java', ['-Djava.awt.headless=true', '-cp', compile(nativeDir), 'LabTiming', mode, rounds], {
+const out = execFileSync(hostTool('jdkTool', 'java'), ['-Djava.awt.headless=true', '-cp', compile(nativeDir), 'LabTiming', mode, rounds], {
   input: input(run),
   encoding: 'utf8',
   maxBuffer: MAX_OUTPUT_BYTES,

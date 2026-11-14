@@ -10,7 +10,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import {CACHE_DIR, LAB_DIR, ROOT_DIR, thumbFile} from './lib.mjs';
+import {CACHE_DIR, hostTool, LAB_DIR, ROOT_DIR, thumbFile} from './lib.mjs';
 
 const NATIVE = path.join(ROOT_DIR, 'native/src/com/ink2pic/files');
 const SOURCES = [
@@ -39,7 +39,7 @@ const CLASSES = path.join(CACHE_DIR, 'java', version);
 function compile() {
   if (!fs.existsSync(path.join(CLASSES, 'LabPixels.class'))) {
     fs.mkdirSync(CLASSES, {recursive: true});
-    execFileSync('javac', ['-d', CLASSES, ...SOURCES], {stdio: 'pipe'});
+    execFileSync(hostTool('jdkTool', 'javac'), ['-d', CLASSES, ...SOURCES], {stdio: 'pipe'});
   }
 }
 
@@ -47,7 +47,7 @@ function compile() {
 function measureFiles(files) {
   compile();
   const out = execFileSync(
-    'java',
+    hostTool('jdkTool', 'java'),
     [
       // Headless: ImageIO would otherwise show a Java app in the macOS Dock on every run.
       '-Djava.awt.headless=true',
