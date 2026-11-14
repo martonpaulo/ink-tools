@@ -115,7 +115,7 @@ const SUPPORTED_PARTS: Record<string, string[]> = {
 };
 
 /** Start times of every occurrence of `e` that begins before `to`. */
-export function occurrenceStarts(e: IcsEvent, to: number, warnings: string[] = []): number[] {
+export function occurrenceStarts(e: IcsEvent, to: number, warnings: string[] = [], notBefore = -Infinity): number[] {
   const r = e.rrule;
   if (!r) return [e.start];
   const freq = r.FREQ;
@@ -141,13 +141,16 @@ export function occurrenceStarts(e: IcsEvent, to: number, warnings: string[] = [
   const push = (t: number) => {
     if (t >= e.start && t <= limit && out.length < count) out.push(t);
   };
+  // Without COUNT, occurrences before `notBefore` need not be walked (#82); with COUNT the walk is bounded by it.
+  const skipTo = (first: number, step: number) =>
+    count === Infinity && notBefore > first ? first + Math.floor((notBefore - first) / step) * step : first;
   if (freq === 'DAILY') {
-    for (let t = e.start; t <= limit && out.length < count; t += interval * DAY) push(t);
+    for (let t = skipTo(e.start, interval * DAY); t <= limit && out.length < count; t += interval * DAY) push(t);
   } else if (freq === 'WEEKLY') {
     const days = r.BYDAY ? r.BYDAY.split(',').map(d => WEEKDAYS.indexOf(d.slice(-2))) : [new Date(e.start).getUTCDay()];
     if (days.includes(-1)) { warnings.push(`${e.uid}: unsupported BYDAY ${r.BYDAY}`); return [e.start]; }
     const weekStart = e.start - new Date(e.start).getUTCDay() * DAY;
-    for (let w = weekStart; w <= limit && out.length < count; w += interval * 7 * DAY) {
+    for (let w = skipTo(weekStart, interval * 7 * DAY); w <= limit && out.length < count; w += interval * 7 * DAY) {
       for (const d of [...days].sort((a, b) => a - b)) {
         const t = w + d * DAY;
         if (t >= e.start && out.length < count) push(t);
@@ -174,7 +177,7 @@ export function expandEvents(calendarId: string, events: IcsEvent[], w: TimeWind
   for (const e of events) {
     if (e.recurrenceId !== undefined) continue;
     const len = e.end - e.start;
-    for (const s of occurrenceStarts(e, w.to, warnings)) {
+    for (const s of occurrenceStarts(e, w.to, warnings, w.from - len)) {
       if (e.exdates.includes(s)) continue;
       const o = overrides.get(`${e.uid}|${s}`) ?? e;
       if (o.cancelled) continue;
@@ -249,6 +252,29 @@ export interface CalDavOptions {
   onWarnings?: WarningSink;
 }
 
+const CALENDAR_DATA_OPEN = /<(?:\w+:)?calendar-data[^>]{0,200}>/g;
+const CALENDAR_DATA_CLOSE = /<\/(?:\w+:)?calendar-data>/g;
+
+/** The text of each `calendar-data` element, in one pass; an unclosed one is a warning, never a rescan (#82). */
+export function calendarData(xml: string, warnings: string[] = []): string[] {
+  const out: string[] = [];
+  let at = 0;
+  for (;;) {
+    CALENDAR_DATA_OPEN.lastIndex = at;
+    const open = CALENDAR_DATA_OPEN.exec(xml);
+    if (!open) return out;
+    const from = open.index + open[0].length;
+    CALENDAR_DATA_CLOSE.lastIndex = from;
+    const close = CALENDAR_DATA_CLOSE.exec(xml);
+    if (!close) {
+      warnings.push('CalDAV answer: a calendar-data element is not closed; the rest is skipped');
+      return out;
+    }
+    out.push(xml.slice(from, close.index));
+    at = close.index + close[0].length;
+  }
+}
+
 const rfc5545 = (ms: number) => new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g, '');
 
 /** iCloud over CalDAV, read side: REPORT calendar-query, each `calendar-data` parsed as ICS. */
@@ -268,8 +294,8 @@ export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
       const xml = await res.text();
       const events: IcsEvent[] = [];
       const warnings: string[] = [];
-      for (const m of xml.matchAll(/<(?:\w+:)?calendar-data[^>]*>([\s\S]*?)<\/(?:\w+:)?calendar-data>/g)) {
-        const data = m[1].replace(/<!\[CDATA\[|\]\]>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      for (const body of calendarData(xml, warnings)) {
+        const data = body.replace(/<!\[CDATA\[|\]\]>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
         const parsed = parseIcs(data);
         events.push(...parsed.events);
         warnings.push(...parsed.warnings);

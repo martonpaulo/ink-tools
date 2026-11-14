@@ -280,7 +280,7 @@ describe('google', () => {
   });
 });
 
-import {createCalDavProvider, createIcsProvider, expandEvents, httpsUrl, parseIcs} from '../src';
+import {calendarData, createCalDavProvider, createIcsProvider, expandEvents, httpsUrl, occurrenceStarts, parseIcs} from '../src';
 
 const ics = (body: string | string[]) => `BEGIN:VCALENDAR\r\n${([] as string[]).concat(body).join('\r\n')}\r\nEND:VCALENDAR`;
 const vevent = (lines: string[]) => `BEGIN:VEVENT\r\n${lines.join('\r\n')}\r\nEND:VEVENT`;
@@ -420,6 +420,30 @@ describe('ics', () => {
     const feed = createIcsProvider(async u => (fetched.push(u), ''), [{id: 'f', name: 'F', url: 'http://example.com/f.ics?key=abc'}]);
     await expect(feed.listEvents('f', WIDE)).rejects.toThrow(/https/);
     expect(fetched).toEqual([]);
+  });
+
+  test('calendar-data is read in one pass, and an unclosed element is a warning (#82)', () => {
+    const warnings: string[] = [];
+    expect(calendarData('<c:calendar-data x="1">A</c:calendar-data><calendar-data>B</calendar-data>', warnings)).toEqual(['A', 'B']);
+    expect(warnings).toEqual([]);
+    expect(calendarData('<calendar-data>A</calendar-data>' + '<calendar-data>'.repeat(5000), warnings)).toEqual(['A']);
+    expect(warnings).toHaveLength(1);
+    const started = Date.now();
+    calendarData('<calendar-data'.repeat(50000), []);
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
+  test('a daily rule from far in the past jumps to the window and returns the same occurrences (#82)', () => {
+    const {events} = parseIcs(ics(vevent(['UID:old', 'DTSTART:00010101T100000Z', 'DTEND:00010101T110000Z', 'RRULE:FREQ=DAILY;INTERVAL=3'])));
+    const from = Date.UTC(2026, 0, 1);
+    const to = Date.UTC(2026, 0, 31);
+    const all = occurrenceStarts(events[0], to).filter(t => t >= from);
+    expect(all.length).toBeGreaterThan(5);
+    expect(occurrenceStarts(events[0], to, [], from)).toEqual(expect.arrayContaining(all));
+    expect(occurrenceStarts(events[0], to, [], from).length).toBeLessThanOrEqual(all.length + 1);
+    const weekly = parseIcs(ics(vevent(['UID:w', 'DTSTART:00010102T100000Z', 'DTEND:00010102T110000Z', 'RRULE:FREQ=WEEKLY;BYDAY=MO,WE'])));
+    const wAll = occurrenceStarts(weekly.events[0], to).filter(t => t >= from);
+    expect(occurrenceStarts(weekly.events[0], to, [], from).filter(t => t >= from)).toEqual(wAll);
   });
 
   test('the ICS provider upgrades webcal:// and reads each feed as its own calendar', async () => {
