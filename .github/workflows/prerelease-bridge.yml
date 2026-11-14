@@ -64,7 +64,10 @@ jobs:
       - name: Create the prerelease
         if: steps.tag.outputs.publish == 'true'
         run: |
-          gh release create "$TAG" build/outputs/Bridge.snplg \
+          # The asset name carries the version so the owner can tell builds apart on the tablet.
+          asset="build/outputs/Bridge-${TAG#bridge-v}.snplg"
+          cp build/outputs/Bridge.snplg "$asset"
+          gh release create "$TAG" "$asset" \
             --prerelease --target "$GITHUB_SHA" --title "$TAG" \
             --notes "Bridge prerelease build. Install on the tablet; Bridge appears only in plugin Settings, never in a note."
 
@@ -74,6 +77,6 @@ jobs:
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
           echo "$names"
           case "$names" in
-            *Bridge.snplg*) ;;
-            *) echo "::error::Bridge.snplg is missing from $TAG."; exit 1 ;;
+            *"Bridge-${TAG#bridge-v}.snplg"*) ;;
+            *) echo "::error::Bridge-${TAG#bridge-v}.snplg is missing from $TAG."; exit 1 ;;
           esac

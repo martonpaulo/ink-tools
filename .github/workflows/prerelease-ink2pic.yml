@@ -77,7 +77,10 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: |
           # On a branch push, --target creates the tag on the pushed commit.
-          gh release create "$TAG" build/outputs/Ink2Pic.snplg \
+          # The asset name carries the version so the owner can tell builds apart on the tablet.
+          asset="build/outputs/Ink2Pic-${TAG#v}.snplg"
+          cp build/outputs/Ink2Pic.snplg "$asset"
+          gh release create "$TAG" "$asset" \
             --prerelease --target "$GITHUB_SHA" --title "$TAG" \
             --notes-file "docs/releases/$TAG.md"
 
@@ -87,6 +90,6 @@ jobs:
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
           echo "$names"
           case "$names" in
-            *Ink2Pic.snplg*) ;;
-            *) echo "::error::Ink2Pic.snplg is missing from $TAG."; exit 1 ;;
+            *"Ink2Pic-${TAG#v}.snplg"*) ;;
+            *) echo "::error::Ink2Pic-${TAG#v}.snplg is missing from $TAG."; exit 1 ;;
           esac
