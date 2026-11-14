@@ -159,3 +159,97 @@ describe('todoist', () => {
     await expect(respond(500).get('1')).rejects.toThrow(/HTTP 500/);
   });
 });
+
+import {
+  CalendarEvent,
+  CalendarProvider,
+  DeviceCalendarStore,
+  createGoogleCalendarProvider,
+  fromGoogleEvent,
+  pollDeviceCode,
+  startDeviceCode,
+  syncCalendar,
+} from '../src';
+
+const ev = (id: string, title = id, cal = 'c1', extra: Partial<CalendarEvent> = {}): CalendarEvent => ({
+  eventId: id, calendarId: cal, title, content: '', start: 10, end: 20, allDay: false, ...extra,
+});
+const W = {from: 0, to: 100};
+
+function calFakes(remote: Record<string, CalendarEvent[] | Error>, device: CalendarEvent[]) {
+  const log: string[] = [];
+  const provider: CalendarProvider = {
+    listCalendars: async () => Object.keys(remote).map(id => ({calendarId: id, name: id})),
+    listEvents: async id => {
+      const r = remote[id];
+      if (r instanceof Error) throw r;
+      return r;
+    },
+  };
+  const store: DeviceCalendarStore = {
+    listOurs: async () => device,
+    create: async e => void log.push(`create ${e.eventId}`),
+    update: async e => void log.push(`update ${e.eventId}`),
+    remove: async (c, id) => void log.push(`remove ${c}/${id}`),
+  };
+  return {provider, store, log};
+}
+
+describe('calendar sync', () => {
+  test('adds, updates and removes to match the provider', async () => {
+    const f = calFakes({c1: [ev('new'), ev('same'), ev('changed', 'renamed')]}, [ev('same'), ev('changed'), ev('gone')]);
+    const out = await syncCalendar(f.provider, f.store, W);
+    expect(f.log.sort()).toEqual(['create new', 'remove c1/gone', 'update changed']);
+    expect(out).toMatchObject({created: 1, updated: 1, removed: 1, errors: []});
+  });
+
+  test('a calendar that fails to read keeps its rows; the others still sync', async () => {
+    const f = calFakes({c1: new Error('HTTP 500'), c2: [ev('x', 'x', 'c2')]}, [ev('keep', 'keep', 'c1')]);
+    const out = await syncCalendar(f.provider, f.store, W);
+    expect(f.log).toEqual(['create x']);
+    expect(out.errors[0]).toMatch(/c1: HTTP 500/);
+  });
+
+  test('a calendar that is switched off is not read and its rows are left alone', async () => {
+    const f = calFakes({c1: [ev('a')], c2: [ev('b', 'b', 'c2')]}, [ev('old', 'old', 'c2')]);
+    await syncCalendar(f.provider, f.store, W, ['c1']);
+    expect(f.log).toEqual(['create a']);
+  });
+});
+
+describe('google', () => {
+  test('maps timed, all-day and cancelled events', () => {
+    expect(fromGoogleEvent('c', {id: 'a', summary: 'Hi', start: {dateTime: '2026-11-20T10:00:00Z'}, end: {dateTime: '2026-11-20T11:00:00Z'}})).toMatchObject({title: 'Hi', allDay: false, end: Date.parse('2026-11-20T11:00:00Z')});
+    expect(fromGoogleEvent('c', {id: 'b', start: {date: '2026-11-20'}, end: {date: '2026-11-21'}})).toMatchObject({allDay: true, title: '(no title)'});
+    expect(fromGoogleEvent('c', {id: 'c', status: 'cancelled', start: {date: '2026-11-20'}, end: {date: '2026-11-21'}})).toBeNull();
+  });
+
+  test('lists every calendar and expanded events across pages with the token', async () => {
+    const urls: string[] = [];
+    const fetch = async (url: string, init: {headers: Record<string, string>}) => {
+      urls.push(url);
+      expect(init.headers.Authorization).toBe('Bearer tok');
+      const body = url.includes('calendarList')
+        ? {items: [{id: 'c1', summary: 'Work'}, {id: 'c2', summaryOverride: 'Home'}]}
+        : url.includes('pageToken')
+          ? {items: [{id: 'e2', start: {date: '2026-11-20'}, end: {date: '2026-11-21'}}]}
+          : {items: [{id: 'e1', start: {date: '2026-11-20'}, end: {date: '2026-11-21'}}], nextPageToken: 'p2'};
+      return {ok: true, status: 200, json: async () => body};
+    };
+    const p = createGoogleCalendarProvider(fetch as never, async () => 'tok');
+    expect((await p.listCalendars()).map(c => c.name)).toEqual(['Work', 'Home']);
+    expect((await p.listEvents('c1', W)).map(e => e.eventId)).toEqual(['e1', 'e2']);
+    expect(urls[1]).toContain('singleEvents=true');
+  });
+
+  test('device-code sign-in: prompt, pending, granted, and a hard error throws', async () => {
+    const client = {clientId: 'id', clientSecret: 's'};
+    const reply = (status: number, body: unknown) => (async () => ({ok: status < 400, status, json: async () => body})) as never;
+    const prompt = await startDeviceCode(reply(200, {device_code: 'dc', user_code: 'AB-12', verification_url: 'https://google.com/device', expires_in: 1800}), client);
+    expect(prompt).toMatchObject({userCode: 'AB-12', intervalSeconds: 5});
+    expect(await pollDeviceCode(reply(428, {error: 'authorization_pending'}), client, 'dc')).toEqual({status: 'pending'});
+    expect(await pollDeviceCode(reply(403, {error: 'access_denied'}), client, 'dc')).toEqual({status: 'denied'});
+    expect(await pollDeviceCode(reply(200, {access_token: 'a', refresh_token: 'r'}), client, 'dc')).toMatchObject({status: 'granted', refreshToken: 'r'});
+    await expect(pollDeviceCode(reply(400, {error: 'invalid_client'}), client, 'dc')).rejects.toThrow(/invalid_client/);
+  });
+});

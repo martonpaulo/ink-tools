@@ -73,3 +73,12 @@ test('a To-Do row round-trips through the task shape and keeps the insert rules'
   expect(done).toMatchObject({completed: true, deleted: true});
   expect(toTodoInsert(D, {...row, taskListId: 'L'}, {existingListIds: ['L']}).hasSync).toBe(0);
 });
+
+import {eventToRow, rowToEvent} from '../src';
+
+test('an event row carries the tag and round-trips', () => {
+  const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
+  const row = eventToRow(D, e, 5);
+  expect(row.tag).toBe('task');
+  expect(rowToEvent(row)).toEqual(e);
+});
