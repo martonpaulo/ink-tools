@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Pilot B, «Lasso spark»: a dashed lasso loop closing around a four-point spark. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9A86E6"/>
+      <stop offset="1" stop-color="#5A70CF"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M256 104 C366 104 420 168 412 240 C404 316 330 360 246 356 C160 352 100 304 104 236 C108 168 170 116 238 106" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" stroke-dasharray="58 34"/>
+  <path d="M246 356 C230 384 236 410 262 424" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round"/>
+  <path d="M256 160 L278 214 L332 236 L278 258 L256 312 L234 258 L180 236 L234 214 Z" fill="#FFFFFF"/>
+</svg>

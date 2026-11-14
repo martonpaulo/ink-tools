@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Pilot C, «Tablet and tool mark»: a generic e-ink tablet with an ink wave and a wrench badge. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F2B463"/>
+      <stop offset="1" stop-color="#DE7C66"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="120" y="76" width="236" height="320" rx="30" fill="#FFFFFF"/>
+  <rect x="146" y="104" width="184" height="264" rx="10" fill="#FBEBDD"/>
+  <path d="M170 236 C196 196 220 196 238 236 C256 276 280 276 306 236" fill="none" stroke="#5A2E24" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="356" cy="376" r="84" fill="#5A2E24"/>
+  <g transform="translate(356 376) rotate(45)">
+    <rect x="-13" y="-8" width="26" height="70" rx="13" fill="#FFFFFF"/>
+    <circle cx="0" cy="-26" r="36" fill="#FFFFFF"/>
+    <rect x="-12" y="-66" width="24" height="36" rx="4" fill="#5A2E24"/>
+  </g>
+</svg>
