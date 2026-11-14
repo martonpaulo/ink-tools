@@ -291,7 +291,9 @@ export async function cachedSearch(
     savedAt: now,
     outcome: {...outcome, results: outcome.results.map(store)},
   };
-  const kept = [entry, ...entries.filter(e => e.query !== key)].slice(
+  // The entries now, not those read before `run`: a search that ended meanwhile keeps its entry.
+  const current = byPath.get(path) ?? entries;
+  const kept = [entry, ...current.filter(e => e.query !== key)].slice(
     0,
     CACHE_LIMIT,
   );

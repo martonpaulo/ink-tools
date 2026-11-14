@@ -64,6 +64,31 @@ function runner(result: SearchOutcome = outcome()) {
 }
 
 describe('cachedSearch', () => {
+  it('keeps both entries when two searches overlap', async () => {
+    const {storage} = memoryStorage();
+    const options = {storage, path: PATH, clock: at(NOW)};
+    let release: () => void = () => undefined;
+    const slow = jest.fn(
+      () =>
+        new Promise<SearchOutcome>(resolve => {
+          release = () => resolve(outcome());
+        }),
+    );
+    const first = cachedSearch('soup', slow, options);
+    // The second search starts and ends while the first still waits for its sources.
+    await cachedSearch('bread', runner(), options);
+    release();
+    await first;
+    const again = runner();
+    expect((await cachedSearch('bread', again, options)).freshness).toBe(
+      'fresh',
+    );
+    expect((await cachedSearch('soup', again, options)).freshness).toBe(
+      'fresh',
+    );
+    expect(again).not.toHaveBeenCalled();
+  });
+
   it('runs on a miss and serves a repeat from the cache', async () => {
     const {storage} = memoryStorage();
     const run = runner();
