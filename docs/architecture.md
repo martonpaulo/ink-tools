@@ -55,6 +55,34 @@ its own Settings** — a user turns on only the modules, sources and language pa
   pure, testable, unaware of both the device internals and the concrete service. This is what the
   cloud agent can build and unit-test without a device or a live account.
 
+### Layer rules
+
+The owner's rules for keeping each part replaceable (2026-11-14, as Panoram's
+[ADR 0001](https://github.com/martonpaulo/panoram/blob/main/docs/adr/0001-source-neutral-kit.md)
+does for its sources):
+
+- **Our own model, in our words.** Feature logic reads and writes only this repository's types (a
+  task, an event, a picture result), never a service's or the device's shapes. Each adapter
+  translates at its edge.
+- **Every outside service is an adapter.** Todoist is one `TaskProvider`; moving to Google Tasks is
+  a new implementation, and a field one service lacks is decided then, not built in advance.
+- **The device side has two tiers, by how often they break:**
+
+  | Tier | What | Changes when |
+  | :--- | :--- | :--- |
+  | Official plugin API | `sn-plugin-lib`: lasso, insert, page and file calls | rarely, with Ratta's notice |
+  | Internals | content providers and their tables (calendar, To-Do, Digest), found by reverse engineering | any firmware update, without notice |
+
+  Each tier sits in its own module of `sn-adapter`, so a firmware update points at one place and
+  the adapt-on/off probe turns off only the module whose tier changed.
+- **No hand-written queries or column names.** Code asks for an operation (`completedTasks()`,
+  `writeEvent(event)`); only `sn-adapter` knows the authority, the table and the column names, and
+  those come from `descriptor.json`, not from strings in the code.
+- **Imports go one way.** Feature logic never imports `sn-plugin-lib` internals or a service client;
+  a check enforces it once every plugin uses the packages
+  ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `plugins/probe` is exempt: it
+  exists to call internals directly.
+
 ## Shared packages
 
 ```
