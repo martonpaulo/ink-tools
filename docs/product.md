@@ -10,7 +10,7 @@ alone, with its own `AGENTS.md`, versioning and releases:
 - **bridge** — a device plugin that syncs the owner's Google, Apple and ICS calendars with
   the native Supernote Calendar.
 - **ink2pic** — a device plugin that turns a handwritten word into an inserted picture.
-- **supernote-adb** — a command-line tool that drives the tablet over Wi-Fi ADB.
+- **snadb** — a command-line tool that drives the tablet over Wi-Fi ADB.
 
 ## Who it is for
 
@@ -27,7 +27,7 @@ only sanctioned, documented channels (Android content providers, the plugin SDK,
 - bridge: aggregates every calendar into the native Calendar and carries edits back, within
   the limits the native app and the plugin sandbox impose.
 - ink2pic: recognises a lassoed word and inserts a matching Openclipart or Wikimedia Commons picture.
-- supernote-adb: exposes the tablet's intents, providers and files as direct calls with JSON output.
+- snadb: exposes the tablet's intents, providers and files as direct calls with JSON output.
 
 ## What it will never do
 

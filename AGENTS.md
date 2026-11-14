@@ -8,7 +8,7 @@
 - Identifier name: `supernotetools`
 - Benefit-first description: Unofficial tools for Supernote e-ink tablets: a calendar-sync plugin, a handwriting-to-picture plugin, and an ADB control CLI.
 - Repository: `martonpaulo/supernote-tools` (public)
-- Public identifiers: GitHub repository and the `supernote` CLI; the Ink2Pic and Bridge plugins. Not a package or registry product.
+- Public identifiers: GitHub repository and the `snadb` CLI; the Ink2Pic and Bridge plugins. Not a package or registry product.
 - Landing page: None. The repository README is the public surface.
 - License: `MIT`
 - Copyright: 2026 Marton Paulo
@@ -25,7 +25,7 @@
 - Skills baseline revision: `4a54af70a4f197df7cb610e1aad847fbdb4dc0d3`
 - Skills baseline applied: `2026-11-13`
 - Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; CI lives at the repository root, one `validate-<subproject>.yml` per subproject with a `paths:` filter and its subproject as the working directory, plus `prerelease-ink2pic.yml`, `scan.yml` and one `dependabot.yml` ([#38](https://github.com/martonpaulo/supernote-tools/issues/38)).
-- Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `plugins/bridge/`, `plugins/ink2pic/` and `cli/supernote-adb/`, each with its own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
+- Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `plugins/bridge/`, `plugins/ink2pic/` and `cli/snadb/`, each with its own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
 
 Change an identifier or policy recorded above only through an explicit task describing the migration and its effects.
 

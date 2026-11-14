@@ -70,7 +70,7 @@ supernote-tools/
     retouch/        # edit an image on the page
     probe/          # permanent on-device investigation plugin
   cli/
-    snadb/          # Supernote ADB control CLI (today's supernote-adb)
+    snadb/          # Supernote ADB control CLI (formerly supernote-adb)
   apps/
     <macOS note editor, name TBD>   # edit Supernote .note files on the Mac
 ```
@@ -107,7 +107,7 @@ of `lookup`, and keeps shipping until the merge lands.
 ## The host tools
 
 - **`snadb`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
-  codes, no root (today's `supernote-adb`).
+  codes, no root (formerly `supernote-adb`).
 - **macOS note editor** (name to be decided) — edit Supernote `.note` files on the Mac. Planned; not
   yet a subproject.
 

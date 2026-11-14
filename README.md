@@ -14,7 +14,7 @@ A monorepo of independent subprojects. Each keeps its own `AGENTS.md`, versionin
 | [`plugins/ink2pic/`](plugins/ink2pic/) | Write a word by hand, lasso it, and insert a matching picture from Openclipart or Wikimedia Commons. Keyless, no phone needed. |
 | [`plugins/probe/`](plugins/probe/) | A developer-only plugin for quick on-device experiments. Never shipped to users. |
 | [`packages/`](packages/) | Shared, provider-agnostic building blocks the plugins use: `sn-adapter`, `sync-core` and `ink-core`. |
-| [`cli/supernote-adb/`](cli/supernote-adb/) | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
+| [`cli/snadb/`](cli/snadb/) | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
 
 **This is unofficial.** Not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its
 owner, used here only to name the device. No root, no modified firmware, no exploits.

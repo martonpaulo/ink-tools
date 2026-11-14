@@ -3,12 +3,12 @@
 ## Project identity and policy
 
 - Display name: `Supernote ADB`
-- Code name: `SupernoteADB`
-- Slug: `supernote-adb`
-- Identifier name: `supernoteadb`
+- Code name: `Snadb`
+- Slug: `snadb`
+- Identifier name: `snadb`
 - Benefit-first description: Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
-- Repository: `martonpaulo/supernote-adb` (public)
-- Public identifiers: GitHub repository and the `supernote` command; this project is not a package or registry product.
+- Repository: `martonpaulo/supernote-tools` (public), subproject `cli/snadb/`; `martonpaulo/supernote-adb` is archived
+- Public identifiers: GitHub repository and the `snadb` command; this project is not a package or registry product.
 - Landing page: None. The repository README is the canonical project surface.
 - License: `MIT`
 - Copyright: 2026 Marton Paulo
@@ -24,8 +24,8 @@
 - Release, signing, and secret-storage policy: Distributed as source through a GitHub clone and one symbolic link; no release artifacts, tags, signing, or release secrets.
 - Skills baseline revision: `cbcec4900930f50f4efb35c839866c96a1ede724`
 - Skills baseline applied: `2026-11-10`
-- Skills baseline divergence `command-name` at `cbcec4900930f50f4efb35c839866c96a1ede724`: the owner kept the command name `supernote`, shorter than the slug, because agents and the installed link already use it.
-- Skills baseline divergence `single-file-source` at `cbcec4900930f50f4efb35c839866c96a1ede724`: the source is one executable, `src/supernote`, because a clone and one link are the whole install and no package is published.
+- Skills baseline divergence `command-name` at `cbcec4900930f50f4efb35c839866c96a1ede724`: replaced on 2026-11-14 ([#72](https://github.com/martonpaulo/supernote-tools/issues/72)); the command now equals the slug, `snadb`.
+- Skills baseline divergence `single-file-source` at `cbcec4900930f50f4efb35c839866c96a1ede724`: the source is one executable, `src/snadb`, because a clone and one link are the whole install and no package is published.
 
 Change an identifier or policy recorded above only through an explicit task describing the migration and its effects.
 
@@ -182,7 +182,7 @@ Lead with the outcome, in the output shape, and include:
 - Every ADB call has a time limit, and a wait polls a condition with a time limit.
 - A call that changes the tablet never replaces a file or presses a stale reference without an explicit request.
 - Only one session uses the tablet at a time. A change on the tablet waits for the owner's yes, and a write counts as done only after a read-back.
-- Tests drive `src/supernote` through the `adb` stub in `tests/supernote.test.sh`, with `device-a.test` as the address.
+- Tests drive `src/snadb` through the `adb` stub in `tests/snadb.test.sh`, with `device-a.test` as the address.
 - Never commit an address, serial number, account or note name, or material from decompiled apps or firmware. `docs/research/` holds public sources only.
 
 ## Agent skill paths

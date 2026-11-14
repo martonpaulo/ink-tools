@@ -8,6 +8,7 @@ page is the only home of decision history.
 | Date | Decision | What it replaced | Where the rule lives |
 | :--- | :--- | :--- | :--- |
 | 2026-11-13 | Build `supernote-tools` as a monorepo; move `ink2pic` and `supernote-adb` in with full Git history; archive the original repositories and make them private, each with a move notice | three separate repositories | [`README.md`](../README.md#history), [`AGENTS.md`](../AGENTS.md#project-identity-and-policy) |
+| 2026-11-14 | Rename the ADB CLI from `supernote-adb` (command `supernote`) to `snadb` (folder `cli/snadb/`, command `snadb`, state in `~/.config/snadb` and `~/.cache/snadb`); the display name stays `Supernote ADB` ([#72](https://github.com/martonpaulo/supernote-tools/issues/72)) | the name `supernote-adb` and the command `supernote` | [`cli/snadb/AGENTS.md`](../cli/snadb/AGENTS.md) |
 | 2026-11-13 | Closed issues stay in the archived repositories so commit `(#N)` references keep resolving; only open issues were migrated | transferring every issue | this index |
 | 2026-11-13 | CI, versioning and releases are per subproject; the root carries shared policy and a route map | a single-project layout | [`AGENTS.md`](../AGENTS.md#project-identity-and-policy) |
 | 2026-11-13 | Research tools and projects that already exist — plugins, sideloaded Supernote apps, GitHub code, CLIs, services — before building anything new | nothing | [`AGENTS.md`](../AGENTS.md#scope-reuse-and-implementation) |

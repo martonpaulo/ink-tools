@@ -12,8 +12,8 @@ One row per item of the Skill Deck application-security standard. This project i
 | 6 | No open policy in a multi-tenant project | No database and no tenants | Not applicable | one user on one computer | None |
 | 7 | Least privilege for every role and service | Yes: the ADB session | Met | runs as the `shell` user, with no root (`docs/product.md`) | None |
 | 8 | No mass assignment | No stored objects from outside | Not applicable | no data layer | None |
-| 9 | Parameterized queries | Yes: device shell commands | Met | paths and extras go through `shlex.quote` in `src/supernote` | None |
-| 10 | Validate every input from outside | Yes: arguments and device output | Met | suffix, selector and PNG checks, tested in `tests/supernote.test.sh` | None |
+| 9 | Parameterized queries | Yes: device shell commands | Met | paths and extras go through `shlex.quote` in `src/snadb` | None |
+| 10 | Validate every input from outside | Yes: arguments and device output | Met | suffix, selector and PNG checks, tested in `tests/snadb.test.sh` | None |
 | 11 | No sensitive screen without authentication | No screens | Not applicable | command line only; ADB authorizes the computer | None |
 | 12 | Validate the session on the server | No server | Not applicable | local command only | None |
 | 13 | `HttpOnly`, `Secure` and `SameSite` cookies | No cookies | Not applicable | local command only | None |
@@ -26,5 +26,5 @@ One row per item of the Skill Deck application-security standard. This project i
 | 20 | Trimmed API responses | No API | Not applicable | local command only | None |
 | 21 | No leak in errors or logs | Yes: `logs` | Partial | a pattern masks values that look like credentials; a best effort stated in `SECURITY.md` | Extend the pattern when a new form appears |
 | 22 | Check a package before installing it | No dependencies | Not applicable | Python standard library and `adb` only | None |
-| 23 | Sensitive data encrypted at rest | Yes: the snapshot | Met | holds only positions and ids, mode 600, tested in `tests/supernote.test.sh` | None |
+| 23 | Sensitive data encrypted at rest | Yes: the snapshot | Met | holds only positions and ids, mode 600, tested in `tests/snadb.test.sh` | None |
 | 24 | Audit row-level security before delivery | No database | Not applicable | the snapshot file has mode 600 instead | None |

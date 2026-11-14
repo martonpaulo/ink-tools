@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Contract tests for src/supernote: what each command asks of adb, what it answers, and its stable
+# Contract tests for src/snadb: what each command asks of adb, what it answers, and its stable
 # exit codes. `adb` is a stub that records its calls and answers from files in $work.
 
 set -u
@@ -23,7 +23,7 @@ check() {
     fi
 }
 
-mkdir -p "$work/bin" "$work/home/.config/supernote-adb" "$work/local"
+mkdir -p "$work/bin" "$work/home/.config/snadb" "$work/local"
 cat > "$work/bin/adb" <<'STUB'
 #!/bin/bash
 printf '%s\n' "$*" >> "$ADB_LOG"
@@ -141,9 +141,9 @@ chmod +x "$work/bin/adb"
 log="$work/calls"
 files="$work/files"
 mkdir -p "$files"
-script="$repo_root/src/supernote"
-snapshot_file="$work/home/.cache/supernote-adb/snapshot.json"
-history_file="$work/home/.cache/supernote-adb/history.jsonl"
+script="$repo_root/src/snadb"
+snapshot_file="$work/home/.cache/snadb/snapshot.json"
+history_file="$work/home/.cache/snadb/history.jsonl"
 
 cat > "$files/tree.xml" <<'XML'
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation="0"><node resource-id="" text="" content-desc="" class="android.widget.FrameLayout" bounds="[0,0][1920,2560]"><node resource-id="com.ratta.supernote.note:id/files" text="" content-desc="" class="android.widget.ImageView" bounds="[0,0][100,200]" /><node resource-id="" text="Private words" content-desc="" class="android.widget.TextView" bounds="[100,200][300,400]" /><node resource-id="" text="" content-desc="Save" class="android.view.View" bounds="[10,10][20,20]" /><node resource-id="com.ratta.supernote.note:id/twin" text="" content-desc="" class="android.view.View" bounds="[0,0][10,10]" /><node resource-id="com.ratta.supernote.note:id/twin" text="" content-desc="" class="android.view.View" bounds="[10,0][20,10]" /><node resource-id="com.ratta.supernote.note:id/empty" text="" content-desc="" class="android.view.View" bounds="[5,5][5,5]" /></node></hierarchy>UI hierchary dumped to: /dev/tty
@@ -162,7 +162,7 @@ cat > "$files/log" <<'LOG'
 11-10 00:14:27.376 I/Sync( 1218): access_token=abcdef next=1
 LOG
 printf '\211PNG\r\n\032\nDATA' > "$files/screen"
-printf 'device-a.test\n' > "$work/home/.config/supernote-adb/address"
+printf 'device-a.test\n' > "$work/home/.config/snadb/address"
 
 reset_device() {
     echo device > "$files/state"
@@ -189,7 +189,7 @@ reset_device
 # Address and connection.
 HOME="$work/empty" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$script" status >/dev/null 2>"$work/err"
 check "no address stops with its own code" "$?" "2"
-check "no address names the file" "$(grep -c 'supernote-adb/address' "$work/err")" "1"
+check "no address names the file" "$(grep -c 'snadb/address' "$work/err")" "1"
 SUPERNOTE_ADDRESS=device-b.test run status >/dev/null
 check "the environment wins over the file" "$(head -1 "$log")" "-s device-b.test:5555 get-state"
 run status >/dev/null
@@ -248,8 +248,8 @@ import importlib.machinery, importlib.util, io, os, sys
 script, files, *arguments = sys.argv[1:]
 loader = importlib.machinery.SourceFileLoader("supernote_under_test", script)
 spec = importlib.util.spec_from_loader(loader.name, loader)
-supernote = importlib.util.module_from_spec(spec)
-loader.exec_module(supernote)
+snadb = importlib.util.module_from_spec(spec)
+loader.exec_module(snadb)
 
 class Answer(io.BytesIO):
     def __init__(self, data, final):
@@ -262,14 +262,14 @@ def fake_open(url):
     if os.environ.get("FAIL_NETWORK"):
         import urllib.error
         raise urllib.error.URLError("no route")
-    if url == supernote.FIRMWARE_PAGE:
+    if url == snadb.FIRMWARE_PAGE:
         return Answer(open(os.path.join(files, "page.html"), "rb").read(), url)
     final = os.environ.get("FINAL_URL", url)
     return Answer(open(os.path.join(files, "firmware.bin"), "rb").read(), final)
 
-supernote.open_url = fake_open
-sys.argv = ["supernote", *arguments]
-sys.exit(supernote.main())
+snadb.open_url = fake_open
+sys.argv = ["snadb", *arguments]
+sys.exit(snadb.main())
 PY
 firmware() {
     : > "$log"
@@ -319,7 +319,7 @@ firmware firmware --download >/dev/null 2>&1
 check "firmware refuses plain http" "$?" "13"
 cp "$work/page.saved" "$files/page.html"
 result=$(FAIL_NETWORK=1 firmware firmware --json 2>/dev/null)
-check "firmware reports a network failure in JSON" "$(printf '%s' "$result" | field "['error'],d['next']")" "('network_error', 'supernote firmware')"
+check "firmware reports a network failure in JSON" "$(printf '%s' "$result" | field "['error'],d['next']")" "('network_error', 'snadb firmware')"
 FINAL_URL=https://example.com/x firmware firmware --download >/dev/null 2>&1
 check "firmware refuses a redirect to another host" "$?$(called ' push ')" "130"
 echo "  level: 20" > "$files/battery"
@@ -899,9 +899,9 @@ check "--trace leaves the answer alone" "$(printf '%s\n' "$output" | grep -c tra
 
 # Failures carry their cause and next command.
 result=$(run files ls Absent --json 2>/dev/null)
-check "a failure names its cause and next command" "$(printf '%s' "$result" | expression "sorted(d),d['next']")" "(['cause', 'error', 'message', 'next'], 'supernote files ls')"
+check "a failure names its cause and next command" "$(printf '%s' "$result" | expression "sorted(d),d['next']")" "(['cause', 'error', 'message', 'next'], 'snadb files ls')"
 run click id:absent --json 2>/dev/null > "$work/out"
-check "a missing element points to a snapshot" "$(field "['next']" < "$work/out")" "supernote snapshot"
+check "a missing element points to a snapshot" "$(field "['next']" < "$work/out")" "snadb snapshot"
 check "every failure kind has its advice" "$(python3 - "$script" <<'PY'
 import re, sys
 source = open(sys.argv[1]).read()
@@ -925,19 +925,19 @@ check "shell passes the output through" "$output" "remote-out"
 # What the command says about itself.
 help=$(python3 -B "$script" --help)
 sentence=$(sed -n 's/^Let an agent/let an agent/p' "$repo_root/README.md" | head -1)
-check "help opens with the sentence of the README" "$(printf '%s\n' "$help" | grep -cF "supernote: $sentence")" "1"
+check "help opens with the sentence of the README" "$(printf '%s\n' "$help" | grep -cF "snadb: $sentence")" "1"
 check "help documents the log's fields" "$(printf '%s\n' "$help" | grep -c 'app_before the app in front')" "1"
-check "help ends with the repository" "$(printf '%s\n' "$help" | tail -1)" "https://github.com/martonpaulo/supernote-adb"
+check "help ends with the repository" "$(printf '%s\n' "$help" | tail -1)" "https://github.com/martonpaulo/supernote-tools"
 
 # The duplication gate reads the extensionless command.
 copy="$work/gate-copy"
 mkdir -p "$copy/src" "$copy/scripts"
-cp "$script" "$copy/src/supernote"
+cp "$script" "$copy/src/snadb"
 cp "$repo_root/scripts/dry_check.py" "$copy/scripts/"
 cp "$repo_root/dry-check.json" "$copy/"
-python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("def remote_path(path: str) -> str:\n", "def remote_path(path: str) -> str:\n    time.sleep(12345)\n", 1))' "$copy/src/supernote"
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("def remote_path(path: str) -> str:\n", "def remote_path(path: str) -> str:\n    time.sleep(12345)\n", 1))' "$copy/src/snadb"
 python3 -B "$copy/scripts/dry_check.py" --root "$copy" magic >"$work/out" 2>&1
 check "the duplication gate fails on a magic value in the command" "$?" "1"
-check "the duplication gate names the command" "$(grep -m1 -c 'src/supernote' "$work/out")" "1"
+check "the duplication gate names the command" "$(grep -m1 -c 'src/snadb' "$work/out")" "1"
 
 [ "$failures" -eq 0 ]
