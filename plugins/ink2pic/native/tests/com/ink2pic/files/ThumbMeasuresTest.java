@@ -131,6 +131,36 @@ public final class ThumbMeasuresTest {
     check(ThumbMeasures.light(outline(gray(180)), SIZE, SIZE).faintLines,
         "the light measure finds faint light-grey lines");
 
+    // #21: the measures of the pixels a conversion wrote equal the measures of the PNG read back,
+    // so `convertThumb` returning them leaves the order `orderMeasured` makes unchanged.
+    for (int k = 0; k < samples.length; k++) {
+      int[] written = samples[k].clone();
+      EinkPixels.toEink(written, true);
+      try {
+        java.awt.image.BufferedImage image =
+            new java.awt.image.BufferedImage(SIZE, SIZE, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(0, 0, SIZE, SIZE, written, 0, SIZE);
+        java.io.ByteArrayOutputStream png = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image, "png", png);
+        java.awt.image.BufferedImage back =
+            javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(png.toByteArray()));
+        int[] reread = back.getRGB(0, 0, SIZE, SIZE, null, 0, SIZE);
+        ThumbMeasures first = measure(written);
+        ThumbMeasures second = measure(reread);
+        boolean same = true;
+        for (java.lang.reflect.Field field : ThumbMeasures.class.getFields()) {
+          if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())
+              && !field.get(first).equals(field.get(second))) {
+            same = false;
+            System.err.println("differs: " + field.getName() + " on sample " + k);
+          }
+        }
+        check(same, "the measures of the written pixels equal those of the file read back: sample " + k);
+      } catch (Exception failure) {
+        check(false, "PNG round trip failed on sample " + k + ": " + failure);
+      }
+    }
+
     if (failures > 0) {
       System.err.println(failures + " failed");
       System.exit(1);
