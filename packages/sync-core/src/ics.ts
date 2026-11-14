@@ -205,6 +205,17 @@ export interface IcsFeed {
 /** Where a provider reports what it could not read exactly: unsupported rules and time zones (#61). */
 export type WarningSink = (warnings: string[]) => void;
 
+/**
+ * Largest feed or CalDAV answer parsed, in characters (#82).
+ * shortcut: a generous guess; lower it to the measured size of a real iCloud REPORT answer once the owner's live check (#30) records it.
+ */
+export const MAX_ANSWER_CHARS = 8 * 1024 * 1024;
+
+function withinLimit(text: string, what: string): string {
+  if (text.length > MAX_ANSWER_CHARS) throw new Error(`${what} is larger than ${MAX_ANSWER_CHARS} characters and was refused`);
+  return text;
+}
+
 /** Read-only ICS subscriptions, one calendar per feed. */
 export function createIcsProvider(
   fetchText: (url: string) => Promise<string>,
@@ -216,7 +227,7 @@ export function createIcsProvider(
     async listEvents(calendarId, w) {
       const feed = feeds.find(f => f.id === calendarId);
       if (!feed) throw new Error(`unknown ICS feed ${calendarId}`);
-      const {events, warnings} = parseIcs(await fetchText(requireHttps(httpsUrl(feed.url), 'ICS feed')));
+      const {events, warnings} = parseIcs(withinLimit(await fetchText(requireHttps(httpsUrl(feed.url), 'ICS feed')), 'ICS feed'));
       const found = [...warnings];
       const out = expandEvents(calendarId, events, w, found);
       if (found.length) onWarnings(found);
@@ -277,7 +288,7 @@ export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
         body,
       });
       if (!res.ok) throw new Error(`CalDAV REPORT failed with HTTP ${res.status}`);
-      const xml = await res.text();
+      const xml = withinLimit(await res.text(), 'CalDAV answer');
       const events: IcsEvent[] = [];
       const warnings: string[] = [];
       for (const body of calendarData(xml, warnings)) {

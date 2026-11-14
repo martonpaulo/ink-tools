@@ -297,7 +297,7 @@ describe('google', () => {
   });
 });
 
-import {calendarData, createCalDavProvider, createIcsProvider, expandEvents, httpsUrl, occurrenceStarts, parseIcs} from '../src';
+import {MAX_ANSWER_CHARS, calendarData, createCalDavProvider, createIcsProvider, expandEvents, httpsUrl, occurrenceStarts, parseIcs} from '../src';
 
 const ics = (body: string | string[]) => `BEGIN:VCALENDAR\r\n${([] as string[]).concat(body).join('\r\n')}\r\nEND:VCALENDAR`;
 const vevent = (lines: string[]) => `BEGIN:VEVENT\r\n${lines.join('\r\n')}\r\nEND:VEVENT`;
@@ -437,6 +437,20 @@ describe('ics', () => {
     const feed = createIcsProvider(async u => (fetched.push(u), ''), [{id: 'f', name: 'F', url: 'http://example.com/f.ics?key=abc'}]);
     await expect(feed.listEvents('f', WIDE)).rejects.toThrow(/https/);
     expect(fetched).toEqual([]);
+  });
+
+  test('an ICS feed or CalDAV answer larger than the limit is refused (#82)', async () => {
+    const big = 'x'.repeat(MAX_ANSWER_CHARS + 1);
+    const feed = createIcsProvider(async () => big, [{id: 'f', name: 'F', url: 'https://example.com/f.ics'}]);
+    await expect(feed.listEvents('f', WIDE)).rejects.toThrow(/larger than/);
+    const dav = createCalDavProvider({
+      fetch: (async () => ({ok: true, status: 207, text: async () => big})) as never,
+      calendars: [{id: 'h', name: 'H', url: 'https://caldav.example.com/c/'}],
+      username: 'u',
+      getPassword: async () => 'fixture-pw',
+      basicAuth: (u, pw) => `${u}:${pw}`,
+    });
+    await expect(dav.listEvents('h', WIDE)).rejects.toThrow(/larger than/);
   });
 
   test('calendar-data is read in one pass, and an unclosed element is a warning (#82)', () => {
