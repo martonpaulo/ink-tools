@@ -18,6 +18,8 @@ export interface IcsEvent {
   rrule?: Record<string, string>;
   exdates: number[];
   recurrenceId?: number;
+  /** Only set on a RECURRENCE-ID override: that one occurrence is cancelled. */
+  cancelled?: boolean;
 }
 
 const DAY = 86400000;
@@ -45,9 +47,10 @@ export function parseIcs(text: string): {events: IcsEvent[]; warnings: string[]}
       cancelled = false;
     }
     else if (line === 'END:VEVENT' && cur) {
-      if (!cancelled && cur.uid && cur.start !== undefined) {
+      if (cur.uid && cur.start !== undefined && (!cancelled || cur.recurrenceId !== undefined)) {
         const end = cur.dtend ?? cur.start + (cur.duration ?? (cur.allDay ? DAY : 0));
-        events.push({...(cur as IcsEvent), end});
+        // A cancelled master is dropped; a cancelled override is kept so its occurrence is skipped (#60).
+        events.push({...(cur as IcsEvent), end, ...(cancelled ? {cancelled: true} : {})});
       }
       cur = null;
     } else if (cur) {
@@ -139,6 +142,7 @@ export function expandEvents(calendarId: string, events: IcsEvent[], w: TimeWind
     for (const s of occurrenceStarts(e, w.to, warnings)) {
       if (e.exdates.includes(s)) continue;
       const o = overrides.get(`${e.uid}|${s}`) ?? e;
+      if (o.cancelled) continue;
       const start = o === e ? s : o.start;
       const end = o === e ? s + len : o.end;
       // An end equal to the window start is outside it, except for a zero-length event (#62).

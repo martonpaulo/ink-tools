@@ -292,6 +292,14 @@ describe('ics', () => {
     expect(one('RRULE:FREQ=YEARLY', '20250310T100000Z').map(e => new Date(e.start).getUTCFullYear())).toEqual([2025, 2026]);
   });
 
+  test('a cancelled single occurrence of a series does not reappear (#60)', () => {
+    const {events} = parseIcs(ics([
+      vevent(['UID:s', 'DTSTART:20261102T100000Z', 'DTEND:20261102T110000Z', 'RRULE:FREQ=DAILY;COUNT=3']),
+      vevent(['UID:s', 'RECURRENCE-ID:20261103T100000Z', 'DTSTART:20261103T100000Z', 'DTEND:20261103T110000Z', 'STATUS:CANCELLED']),
+    ]));
+    expect(expandEvents('c', events, WIDE).map(e => new Date(e.start).getUTCDate())).toEqual([2, 4]);
+  });
+
   test('an all-day event ending at the window start is outside it, a zero-length one at the start is inside (#62)', () => {
     const day3 = Date.UTC(2026, 10, 3);
     const allDay = parseIcs(ics(vevent(['UID:d', 'DTSTART;VALUE=DATE:20261102']))).events;
