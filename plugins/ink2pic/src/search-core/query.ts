@@ -36,12 +36,17 @@ export function lookupLanguages(
  * The query's words, lowercased, without numbers or punctuation. NFC first: a decomposed accent
  * is a mark, not a letter, and would split «Napoleão» in two (#110).
  */
-export function words(text: string): string[] {
+export function words(text: string, keepNumbers = false): string[] {
   return text
     .normalize('NFC')
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
-    .filter(word => word !== '' && !/^\d+$/.test(word));
+    .filter(word => word !== '' && (keepNumbers || !isNumber(word)));
+}
+
+/** Whether the word is made of digits only: «1984». */
+export function isNumber(word: string): boolean {
+  return /^\d+$/.test(word);
 }
 
 /** The text without its accents: «Limão» reads as «Limao». */
@@ -60,7 +65,12 @@ export function sameWord(word: string, queryWord: string): boolean {
  * Words that join a subject but never name it: «photo of a cat» is about «cat» (#110). Only the
  * English ones the ranker already reads as filler.
  */
-export const FILLER_WORDS: ReadonlySet<string> = new Set(['of', 'the', 'a', 'an']);
+export const FILLER_WORDS: ReadonlySet<string> = new Set([
+  'of',
+  'the',
+  'a',
+  'an',
+]);
 
 /** Whole words or phrases of any script, case-insensitive: «logo» in «Apple_logo.svg». */
 function wordPattern(alternatives: string): RegExp {
@@ -136,7 +146,12 @@ export function readIntent(query: string): QueryIntent {
   const {rest, styles} = splitStyles(query);
   const left = words(rest);
   const named = left.filter(word => !FILLER_WORDS.has(word));
-  const subject = [named, left, words(query)].find(list => list.length > 0);
+  // A number names the subject only when no other word does («1984», «911 logo», #96); the
+  // number-dropping rule of #110 («a photo of 2 cats») stays for every other query.
+  const numbers = words(rest, true).filter(isNumber);
+  const subject = [named, left, numbers, words(query)].find(
+    list => list.length > 0,
+  );
   return {subject: subject ?? [], styles};
 }
 
@@ -174,19 +189,56 @@ export function fallbackQueries(query: string): string[] {
  */
 export const QUESTION_WORDS: Readonly<Record<string, readonly string[]>> = {
   en: [
-    'who was', 'who is', 'who were', 'who are', "who's",
-    'what was', 'what is', 'what are', 'what were', "what's",
-    'where is', 'where was', 'where are', 'tell me about', 'show me',
+    'who was',
+    'who is',
+    'who were',
+    'who are',
+    "who's",
+    'what was',
+    'what is',
+    'what are',
+    'what were',
+    "what's",
+    'where is',
+    'where was',
+    'where are',
+    'tell me about',
+    'show me',
   ],
   pt: [
-    'quem foi', 'quem é', 'quem era', 'quem são', 'quem foram',
-    'o que é', 'o que são', 'o que era', 'que é', 'qual é',
-    'onde fica', 'onde é', 'onde está', 'me mostre',
+    'quem foi',
+    'quem é',
+    'quem era',
+    'quem são',
+    'quem foram',
+    'o que é',
+    'o que são',
+    'o que era',
+    'que é',
+    'qual é',
+    'onde fica',
+    'onde é',
+    'onde está',
+    'me mostre',
   ],
   es: [
-    'quién fue', 'quien fue', 'quién es', 'quien es', 'quién era', 'quien era',
-    'qué es', 'que es', 'qué son', 'que son', 'cuál es', 'cual es',
-    'dónde está', 'donde esta', 'dónde queda', 'donde queda', 'muéstrame',
+    'quién fue',
+    'quien fue',
+    'quién es',
+    'quien es',
+    'quién era',
+    'quien era',
+    'qué es',
+    'que es',
+    'qué son',
+    'que son',
+    'cuál es',
+    'cual es',
+    'dónde está',
+    'donde esta',
+    'dónde queda',
+    'donde queda',
+    'muéstrame',
   ],
   zh: ['谁是', '什么是', '哪里是', '介绍一下'],
 };
@@ -204,7 +256,8 @@ export function stripQuestion(
       .filter(
         phrase =>
           lower.startsWith(phrase) &&
-          (HAN.test(phrase) || !/[\p{L}\p{N}]/u.test(lower[phrase.length] ?? '')),
+          (HAN.test(phrase) ||
+            !/[\p{L}\p{N}]/u.test(lower[phrase.length] ?? '')),
       )
       .reduce((longest, phrase) => Math.max(longest, phrase.length), 0);
     if (cut === 0) {

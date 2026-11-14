@@ -493,3 +493,24 @@ describe('decomposed accents (#110)', () => {
     expect(words('Napoleão'.normalize('NFD'))).toEqual(['napoleão']);
   });
 });
+
+describe('a query made of numbers (#96)', () => {
+  it('keeps the numbers as the subject when no other word names it', () => {
+    expect(readIntent('1984').subject).toEqual(['1984']);
+    const intent = readIntent('911 logo');
+    expect(intent.subject).toEqual(['911']);
+    expect(intent.styles.has('logo')).toBe(true);
+  });
+
+  it('keeps dropping a number next to a word that names the subject (#110)', () => {
+    expect(readIntent('a photo of 2 cats').subject).toEqual(['cats']);
+  });
+
+  it('scores a title holding the same number above one that does not', () => {
+    expect(
+      einkScore(r('commons', '1984 novel cover', 'image/png'), '1984'),
+    ).toBeGreaterThan(
+      einkScore(r('commons', 'Soup bowl', 'image/png'), '1984'),
+    );
+  });
+});

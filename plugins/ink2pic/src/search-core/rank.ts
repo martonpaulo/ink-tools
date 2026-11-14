@@ -8,6 +8,7 @@ import {namesThing} from './adapters/openmoji';
 import {
   FILLER_WORDS,
   hasStyle,
+  isNumber,
   QueryIntent,
   readIntent,
   sameWord,
@@ -124,7 +125,8 @@ function stylisedOther(result: SearchResult): boolean {
  * plain title may add: «Owl Clock» is an owl and a clock, «Blank Clock» only a clock (#24).
  */
 const subjectScorer: Scorer = (result, {subject, styles}) => {
-  const have = words(result.title);
+  // A title's numbers count only for a subject made of numbers (#96).
+  const have = words(result.title, subject.some(isNumber));
   if (
     subject.length === 0 ||
     !subject.every(q => have.some(word => sameWord(word, q)))
