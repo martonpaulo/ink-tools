@@ -1,3 +1,4 @@
+import {requireHttps} from './ics';
 import {RemoteTask, TaskContent, TaskProvider} from './tasks';
 
 /**
@@ -53,7 +54,8 @@ export function toTodoistBody(c: TaskContent): Record<string, unknown> {
 }
 
 export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
-  const base = opts.baseUrl ?? 'https://api.todoist.com/api/v1';
+  const base = requireHttps(opts.baseUrl ?? 'https://api.todoist.com/api/v1', 'Todoist base URL');
+  const enc = encodeURIComponent; // an id is one path segment, never a path (#81)
   const call = async (method: string, path: string, body?: unknown, allow404 = false) => {
     const res = await opts.fetch(`${base}${path}`, {
       method,
@@ -65,7 +67,7 @@ export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
     return res.status === 204 ? null : ((await res.json()) as unknown);
   };
   const setChecked = async (id: string, completed: boolean, wasCompleted: boolean) => {
-    if (completed !== wasCompleted) await call('POST', `/tasks/${id}/${completed ? 'close' : 'reopen'}`);
+    if (completed !== wasCompleted) await call('POST', `/tasks/${enc(id)}/${completed ? 'close' : 'reopen'}`);
   };
 
   return {
@@ -83,7 +85,7 @@ export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
       return out;
     },
     async get(remoteId) {
-      const t = (await call('GET', `/tasks/${remoteId}`, undefined, true)) as TodoistTask | null;
+      const t = (await call('GET', `/tasks/${enc(remoteId)}`, undefined, true)) as TodoistTask | null;
       return t ? fromTodoist(t) : null;
     },
     async create(c) {
@@ -94,12 +96,12 @@ export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
     async update(remoteId, c) {
       const before = await this.get(remoteId);
       if (!before) throw new Error(`Todoist task ${remoteId} no longer exists`);
-      const t = (await call('POST', `/tasks/${remoteId}`, toTodoistBody(c))) as TodoistTask;
+      const t = (await call('POST', `/tasks/${enc(remoteId)}`, toTodoistBody(c))) as TodoistTask;
       await setChecked(remoteId, c.completed, before.completed);
       return {...fromTodoist(t), completed: c.completed};
     },
     async remove(remoteId) {
-      await call('DELETE', `/tasks/${remoteId}`, undefined, true);
+      await call('DELETE', `/tasks/${enc(remoteId)}`, undefined, true);
     },
   };
 }

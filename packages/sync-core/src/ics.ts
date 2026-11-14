@@ -126,7 +126,16 @@ export function occurrenceStarts(e: IcsEvent, to: number, warnings: string[] = [
   }
   const interval = Math.max(1, Number(r.INTERVAL ?? 1));
   const count = r.COUNT ? Number(r.COUNT) : Infinity;
-  const until = r.UNTIL ? parseTime('', r.UNTIL).ms + (r.UNTIL.length === 8 ? DAY - 1 : 0) : Infinity;
+  let until = Infinity;
+  if (r.UNTIL) {
+    try {
+      until = parseTime('', r.UNTIL).ms + (r.UNTIL.length === 8 ? DAY - 1 : 0);
+    } catch {
+      // A bad UNTIL must not abort the whole calendar (#79): keep the first occurrence and warn.
+      warnings.push(`${e.uid}: bad RRULE UNTIL ${r.UNTIL}`);
+      return [e.start];
+    }
+  }
   const limit = Math.min(to, until);
   const out: number[] = [];
   const push = (t: number) => {
@@ -182,6 +191,21 @@ export function expandEvents(calendarId: string, events: IcsEvent[], w: TimeWind
 /** `webcal://` is the same address over HTTPS. */
 export const httpsUrl = (u: string) => u.replace(/^webcal:\/\//i, 'https://');
 
+/**
+ * The URL when it is `https:`, else a refusal naming only the scheme and host: a feed address can
+ * hold a secret path or query, and a CalDAV request carries the app password (#80).
+ */
+export function requireHttps(url: string, what: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`${what} needs an https: URL`);
+  }
+  if (parsed.protocol !== 'https:') throw new Error(`${what} needs an https: URL, got ${parsed.protocol}//${parsed.host}`);
+  return url;
+}
+
 export interface IcsFeed {
   /** Becomes the calendarId. */
   id: string;
@@ -203,7 +227,7 @@ export function createIcsProvider(
     async listEvents(calendarId, w) {
       const feed = feeds.find(f => f.id === calendarId);
       if (!feed) throw new Error(`unknown ICS feed ${calendarId}`);
-      const {events, warnings} = parseIcs(await fetchText(httpsUrl(feed.url)));
+      const {events, warnings} = parseIcs(await fetchText(requireHttps(httpsUrl(feed.url), 'ICS feed')));
       const found = [...warnings];
       const out = expandEvents(calendarId, events, w, found);
       if (found.length) onWarnings(found);
@@ -235,7 +259,7 @@ export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
       const cal = o.calendars.find(c => c.id === calendarId);
       if (!cal) throw new Error(`unknown CalDAV calendar ${calendarId}`);
       const body = `<?xml version="1.0" encoding="utf-8"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"><c:time-range start="${rfc5545(w.from)}" end="${rfc5545(w.to)}"/></c:comp-filter></c:comp-filter></c:filter></c:calendar-query>`;
-      const res = await o.fetch(cal.url, {
+      const res = await o.fetch(requireHttps(cal.url, 'CalDAV calendar'), {
         method: 'REPORT',
         headers: {Authorization: `Basic ${o.basicAuth(o.username, await o.getPassword())}`, Depth: '1', 'Content-Type': 'application/xml; charset=utf-8'},
         body,

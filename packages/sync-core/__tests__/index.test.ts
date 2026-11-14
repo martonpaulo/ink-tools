@@ -167,6 +167,17 @@ describe('todoist', () => {
     expect(calls).toContain('POST https://api.todoist.com/api/v1/tasks/7/close');
   });
 
+  test('an id stays one path segment and a non-https base URL is refused (#81)', async () => {
+    const calls: string[] = [];
+    const provider = createTodoistProvider({
+      token: 't',
+      fetch: async (url, init) => (calls.push(`${init.method} ${url}`), {ok: true, status: 200, json: async () => task, text: async () => ''}),
+    });
+    await provider.remove('1/../projects/9');
+    expect(calls).toEqual(['DELETE https://api.todoist.com/api/v1/tasks/1%2F..%2Fprojects%2F9']);
+    expect(() => createTodoistProvider({token: 't', baseUrl: 'http://example.com', fetch: async () => ({ok: true, status: 200, json: async () => ({}), text: async () => ''})})).toThrow(/https/);
+  });
+
   test('a 404 means the task is gone and any other failure throws', async () => {
     const respond = (status: number) =>
       createTodoistProvider({fetch: async () => ({ok: status < 400, status, json: async () => ({}), text: async () => ''}), token: 't'});
@@ -383,6 +394,32 @@ describe('ics', () => {
     await dav.listEvents('h', WIDE);
     expect(seen).toHaveLength(2);
     for (const w of seen) expect(w.join('\n')).toMatch(/TZID Europe\/Paris[\s\S]*unsupported DAILY/);
+  });
+
+  test('a bad UNTIL warns for that event and every other event still expands (#79)', () => {
+    const warnings: string[] = [];
+    const {events} = parseIcs(ics([
+      vevent(['UID:bad', 'DTSTART:20260101T100000Z', 'DTEND:20260101T110000Z', 'RRULE:FREQ=DAILY;UNTIL=garbage']),
+      vevent(['UID:good', 'DTSTART:20260102T100000Z', 'DTEND:20260102T110000Z']),
+    ].join('\r\n')));
+    const out = expandEvents('c', events, WIDE, warnings);
+    expect(out.map(e => e.eventId)).toEqual(['bad@1767261600000', 'good']);
+    expect(warnings).toEqual(['bad: bad RRULE UNTIL garbage']);
+  });
+
+  test('CalDAV and ICS refuse a URL that is not https and never name its path (#80)', async () => {
+    const fetched: string[] = [];
+    const dav = createCalDavProvider({
+      fetch: (async (u: string) => (fetched.push(u), {ok: true, status: 207, text: async () => ''})) as never,
+      calendars: [{id: 'h', name: 'H', url: 'http://caldav.example.com/secret-path/'}],
+      username: 'u',
+      getPassword: async () => 'fixture-pw',
+      basicAuth: (u, pw) => `${u}:${pw}`,
+    });
+    await expect(dav.listEvents('h', WIDE)).rejects.toThrow('CalDAV calendar needs an https: URL, got http://caldav.example.com');
+    const feed = createIcsProvider(async u => (fetched.push(u), ''), [{id: 'f', name: 'F', url: 'http://example.com/f.ics?key=abc'}]);
+    await expect(feed.listEvents('f', WIDE)).rejects.toThrow(/https/);
+    expect(fetched).toEqual([]);
   });
 
   test('the ICS provider upgrades webcal:// and reads each feed as its own calendar', async () => {
