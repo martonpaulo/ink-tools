@@ -7,7 +7,8 @@ shape follows Skill Deck's `skd-project-standards` `references/cloud-rules.md`.
 
 Measured in the first Ink2Pic cloud backlog run, on 2026-11-06:
 
-- Ubuntu 24.04, 4 vCPUs, 15 GB of memory.
+- Ubuntu 24.04. Its cores and memory are in Workbench's machine record, `martonpaulo/workbench` ›
+  `.github/machines.json` › `cloud`, the one place they are written ([martonpaulo/workbench#1438](https://github.com/martonpaulo/workbench/issues/1438)).
 - Node `v22.23.4`, npm `10.9.9`; `npm ci` installs the lockfile.
 - Java: OpenJDK `21.0.12.1` (`java` and `javac`). `zip` and `unzip` are installed. Gradle 8.14.3
   and Maven 3.9.11 are in `/opt`; there is no Android SDK (`ANDROID_HOME` is unset).
