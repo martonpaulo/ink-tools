@@ -121,6 +121,33 @@ describe('rankForEink', () => {
     ]);
   });
 
+  it("leads with a person's portrait, before a namesake's photo or a stamp (#15)", () => {
+    const portrait = {
+      ...r('commons', 'The Emperor in His Study', 'image/jpeg', true),
+      portrait: true as const,
+    };
+    const other = r('commons', 'Lorenzo Example', 'image/jpeg', true);
+    const commons = [
+      r('commons', 'Napoleão Bernardes', 'image/jpeg'),
+      r('commons', 'Napoleão 1989 stamp', 'image/jpeg'),
+    ];
+    expect(
+      rankForEink([commons, [portrait, other]], 'Napoleão').map(x => x.title),
+    ).toEqual([
+      'The Emperor in His Study',
+      'Napoleão Bernardes',
+      'Lorenzo Example',
+      'Napoleão 1989 stamp',
+    ]);
+    // A drawing that names the person plainly stays first: the Cervantes lithograph.
+    const lithograph = r('commons', 'Napoleão lithography', 'image/jpeg');
+    expect(
+      rankForEink([[lithograph, ...commons], [portrait]], 'Napoleão')
+        .map(x => x.title)
+        .slice(0, 2),
+    ).toEqual(['Napoleão lithography', 'The Emperor in His Study']);
+  });
+
   it("leads with the query's own flag, before regional flags (#89)", () => {
     const commons = [
       r('commons', 'Flag of the Canary Islands', 'image/svg+xml'),

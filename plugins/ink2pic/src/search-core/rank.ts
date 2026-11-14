@@ -295,7 +295,8 @@ function wanted(result: SearchResult, {styles}: QueryIntent): boolean {
  * results keep their own order and follow the best-ranked other result, so page 1 holds both
  * the simple drawing and, for a person, the real portrait (#43); a canonical result that leads,
  * the query's own flag (#89) or the logo of the organisation or brand it names (#81), comes
- * before that result. A picture two sources return is shown once.
+ * before that result, and so does a person's portrait unless that result is a drawing naming the
+ * person plainly (#15). A picture two sources return is shown once.
  */
 export function rankForEink(
   lists: readonly SearchResult[][],
@@ -325,7 +326,23 @@ export function rankForEink(
     .sort((a, b) => b.score - a.score || a.order - b.order)
     .map(entry => entry.result);
   // The query's own flag (#89) or its organisation's logo (#81) leads, before the best other result.
-  const ordered = [...leading, ...(best ? [best] : []), ...canonical, ...rest];
+  // A person's portrait leads too, unless the best other result is a drawing that names them
+  // plainly: a namesake's photo or a stamp never comes before it (#15).
+  const portrait = canonical.find(result => result.portrait);
+  const portraitLeads =
+    portrait !== undefined &&
+    !(
+      best &&
+      isDrawing(best) &&
+      subjectScorer(best, intent) === PLAIN_SUBJECT_SCORE
+    );
+  const ordered = [
+    ...leading,
+    ...(portraitLeads ? [portrait] : []),
+    ...(best ? [best] : []),
+    ...canonical,
+    ...rest,
+  ];
   const seen = new Set<string>();
   return ordered.filter(result => !seen.has(result.id) && seen.add(result.id));
 }

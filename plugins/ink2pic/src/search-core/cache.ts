@@ -97,6 +97,7 @@ function store(result: SearchResult): StoredResult {
     mime,
     canonical,
     leads,
+    portrait,
     tags,
   } = result;
   const original = storedOriginal(result);
@@ -113,6 +114,8 @@ function store(result: SearchResult): StoredResult {
     ...(canonical && {canonical}),
     // A cached symbol keeps its lead: the measures re-rank it on the way out (#67).
     ...(leads && {leads}),
+    // A person's portrait keeps its lead (#15).
+    ...(portrait && {portrait}),
     // The style rules read them on the way out too (#81).
     ...(tags && {tags}),
   };
@@ -147,6 +150,7 @@ function isStoredResult(value: unknown): value is StoredResult {
     (value.mime === undefined || typeof value.mime === 'string') &&
     (value.canonical === undefined || value.canonical === true) &&
     (value.leads === undefined || value.leads === true) &&
+    (value.portrait === undefined || value.portrait === true) &&
     (value.tags === undefined ||
       (Array.isArray(value.tags) &&
         value.tags.every(tag => typeof tag === 'string'))) &&

@@ -30,6 +30,7 @@ const WIKIPEDIA_API = 'https://{language}.wikipedia.org/w/api.php';
 export const PICTURE_PROPERTIES = ['P41', 'P154', 'P18'] as const;
 const INSTANCE_OF = 'P31';
 const FLAG = PICTURE_PROPERTIES[0];
+const IMAGE = PICTURE_PROPERTIES[2];
 const HUMAN = 'Q5';
 const LOGO = 'P154';
 /**
@@ -342,6 +343,8 @@ export type EntityFacts = {
   signature?: string;
   /** The item's own flag (P41): it leads the page (#89). */
   flag?: string;
+  /** A person's own image (P18): it leads the page unless a drawing names them plainly (#15). */
+  portrait?: string;
   /** The logo file, when the item is an organisation or a brand: it leads the page (#81). */
   leadingLogo?: string;
   /** An organisation with no logo: the Commons category whose «logos» child holds it (#92). */
@@ -378,6 +381,7 @@ export function parseEntityResponse(
   let name = false;
   let signature: string | undefined;
   let flag: string | undefined;
+  let portrait: string | undefined;
   let leadingLogo: string | undefined;
   let logoCategory: string | undefined;
   for (const entity of entities) {
@@ -391,7 +395,10 @@ export function parseEntityResponse(
         files.push(file);
       }
     }
-    human ||= isInstance(entity.claims?.[INSTANCE_OF], HUMANS);
+    if (isInstance(entity.claims?.[INSTANCE_OF], HUMANS)) {
+      human = true;
+      portrait ??= fileOf(entity.claims?.[IMAGE]);
+    }
     name ||= isInstance(entity.claims?.[INSTANCE_OF], NAMES);
     signature ??= fileOf(entity.claims?.[SIGNATURE]);
     leadingLogo ??= leadingLogoOf(entity.claims);
@@ -407,6 +414,7 @@ export function parseEntityResponse(
       ...(name && {name: true as const}),
       ...(signature && {signature}),
       ...(flag && flag !== signature && {flag}),
+      ...(portrait && portrait !== signature && {portrait}),
       ...(leadingLogo && {leadingLogo}),
       ...(!leadingLogo && logoCategory && {logoCategory}),
     },
@@ -425,14 +433,15 @@ export function logoCategorySearch(category: string): string {
  * decides («elephent»).
  */
 export function isQueryArticle(query: string, title: string): boolean {
-  const {subject, styles} = readIntent(query);
-  if (styles.size === 0) {
-    return true;
-  }
-  // Plural and accents aside: «cats drawing» is the article «Cat» (#110).
+  return readIntent(query).styles.size === 0 || namesSubject(query, title);
+}
+
+/** Whether the title names a word of the query's subject, plural and accents aside (#110). */
+function namesSubject(query: string, title: string): boolean {
+  // «cats drawing» is the article «Cat».
   const have = words(withoutAccents(title));
-  return subject
-    .map(withoutAccents)
+  return readIntent(query)
+    .subject.map(withoutAccents)
     .some(q => have.some(word => sameWord(word, q) || sameWord(q, word)));
 }
 
@@ -578,10 +587,14 @@ export async function searchWikidata(
   let human = false;
   let signature: string | undefined;
   let flag: string | undefined;
+  let portrait: string | undefined;
   let leadingLogo: string | undefined;
   let logoCategory: string | undefined;
   let item = hit.item;
   let leadImage = hit.leadImage;
+  // A person found by the article's text only is not the one asked for: «cadeira» found the
+  // article of a senator, whose portrait must not lead a chair (#15).
+  let named = namesSubject(query, hit.title);
   if (item) {
     let entity = await entityOf(item, ctx);
     if (entity.ok && entity.value.name) {
@@ -591,6 +604,7 @@ export async function searchWikidata(
         return person;
       }
       if (person.value) {
+        named = true;
         item = person.value;
         leadImage = undefined;
         entity = await entityOf(item, ctx);
@@ -599,7 +613,8 @@ export async function searchWikidata(
     if (!entity.ok) {
       return entity;
     }
-    ({files, human, signature, flag, leadingLogo, logoCategory} = entity.value);
+    ({files, human, signature, flag, portrait, leadingLogo, logoCategory} =
+      entity.value);
   }
   if (!leadingLogo && !logoCategory && found.value.language) {
     // A logo query whose article names the subject but leads with no logo: «apple logo» found
@@ -616,7 +631,7 @@ export async function searchWikidata(
       if (!facts.ok) {
         return facts;
       }
-      ({files, human, signature, flag, leadingLogo, logoCategory} =
+      ({files, human, signature, flag, portrait, leadingLogo, logoCategory} =
         facts.value);
     }
   }
@@ -664,6 +679,11 @@ export async function searchWikidata(
           ...result,
           canonical: true,
           ...(leads(result.title) && {leads: true as const}),
+          ...(named &&
+            portrait !== undefined &&
+            result.title === withoutExtension(portrait) && {
+              portrait: true as const,
+            }),
         })),
         ...(gallery.ok ? gallery.value.results : []).filter(
           r => !signed(r.title),

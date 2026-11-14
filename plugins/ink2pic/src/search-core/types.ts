@@ -25,6 +25,11 @@ export type SearchResult = {
    */
   leads?: true;
   /**
+   * The person's own portrait, their Wikidata image (P18): it leads the page unless a drawing
+   * names the person plainly, such as the Cervantes lithograph (#15).
+   */
+  portrait?: true;
+  /**
    * An OpenMoji symbol whose picture is saved on the device (#91): it shows and inserts with no
    * network. Set by the app after each search, never by a source.
    */

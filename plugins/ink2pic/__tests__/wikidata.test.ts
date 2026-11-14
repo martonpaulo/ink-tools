@@ -136,6 +136,7 @@ describe('parseEntityResponse', () => {
         human: true,
         signature: 'Example signature.svg',
         flag: 'Example flag.svg',
+        portrait: 'Example portrait.jpg',
       },
     });
   });
@@ -194,7 +195,29 @@ describe('searchWikidata', () => {
     ]);
     // The item's own flag (P41) leads the page (#89); its other pictures do not.
     expect(canonical.map(r => r.leads === true)).toEqual([true, false]);
+    // The person's own image (P18) is their portrait (#15).
+    expect(canonical.map(r => r.portrait === true)).toEqual([false, true]);
     expect(outcome.value.results.length).toBeGreaterThan(canonical.length);
+  });
+
+  it('marks no portrait when the article only mentions the query: «cadeira» found a senator (#15)', async () => {
+    const hit = JSON.parse(fixture('wikipedia-hit.json'));
+    hit.query.search[0].title = 'Example Senator';
+    hit.query.pages[0].title = 'Example Senator';
+    const fetch = jest
+      .fn()
+      .mockResolvedValueOnce(ok(JSON.stringify(hit)))
+      .mockResolvedValueOnce(ok(fixture('wikidata-entity.json')))
+      .mockImplementation(async (url: string) =>
+        ok(url.includes('haswbstatement') ? NONE : FILES),
+      );
+    const outcome = await searchWikidata('cadeira', ctx(fetch));
+    if (!outcome.ok) {
+      throw new Error(outcome.message);
+    }
+    const canonical = outcome.value.results.filter(r => r.canonical);
+    expect(canonical.map(r => r.title)).toContain('Example portrait');
+    expect(canonical.some(r => r.portrait)).toBe(false);
   });
 
   it('makes one request for a word with no article, and passes the suggestion on', async () => {

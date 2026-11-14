@@ -152,6 +152,32 @@ describe('cachedSearch', () => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a person's portrait marked across a write and a new read (#15)", async () => {
+    const portrait: SearchResult = {
+      id: 'commons:Example_portrait.jpg',
+      source: 'commons',
+      title: 'Example portrait',
+      thumbUrl: THUMB,
+      license: 'Public domain',
+      attribution: 'Wikidata',
+      canonical: true,
+      portrait: true,
+    };
+    const {storage, files} = memoryStorage();
+    const run = runner(outcome([portrait, openclipart]));
+    await (
+      await cachedSearch('person', run, {storage, path: PATH, clock: at(NOW)})
+    ).saved;
+    const {storage: reread} = memoryStorage(files);
+    const {outcome: cached} = await cachedSearch('person', run, {
+      storage: reread,
+      path: PATH,
+      clock: at(NOW),
+    });
+    expect(cached.results).toEqual([portrait, openclipart]);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
   it('rebuilds a cache of version 3, whose entries lost canonical (#99)', async () => {
     const {storage, files} = memoryStorage({
       [PATH]: JSON.stringify({version: 3, entries: []}),
