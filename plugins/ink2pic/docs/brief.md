@@ -757,7 +757,8 @@ A written line searches the whole name at its end, else the last word
 Miguel de Cervantes» searches «Miguel de Cervantes», «Eu comi uma banana» searches «banana».
 
 1. The same grouping gives the line's words up to the last word. With two or more, that whole
-   span is lassoed and recognised with `recognizeElements` at the page size [TO TEST, section 10.5].
+   span is lassoed and recognised with `recognizeElements` at the page size [CONFIRMED on the
+   owner's Manta, build 0.1.0 (16) step 4, section 10.5].
    A recognition whose word count differs from the grouping's keeps the last word alone.
 2. The question words it opens with are cut, from one small list per query language in
    `src/search-core/query.ts` (en, pt, es, zh): «quem foi», «who was», «qué es», «谁是».
@@ -1005,7 +1006,10 @@ Open on the device, each logged so the session log answers it:
   missing permission opens the view's onboarding. Whether `showPluginView()` opens the view from
   a button listener is TO TEST too. If the press never arrives, build 17 goes back to
   `showType: 1`. «Choose picture» keeps its view.
-- `recognizeElements` over a whole written line [TO TEST]
+- `recognizeElements` over a whole written line [CONFIRMED on the owner's Manta, build 0.1.0
+  (16) step 4: «Quem foi Miguel de Cervantes» was lassoed whole and searched «Miguel de
+  Cervantes»; no session log is on record, so the recognised text itself was not read,
+  [#18](https://github.com/martonpaulo/supernote-tools/issues/18)]
   ([#87](https://github.com/martonpaulo/ink2pic/issues/87)): S3 recognised single words only. Lasso last word lassoes the line up to its last word
   and recognises it with the page size (117 with any other size, S3), logged as `probe phrase:
   recognised "…"`; the device shows whether the words come back in writing order, one space
