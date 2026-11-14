@@ -90,6 +90,11 @@ const SYMBOL_SCORE = -2;
  * words: «Terminalia catappa seed» for «Rio de Janeiro» (#73). Below a Commons photo that names it.
  */
 const UNNAMED_TAG_SCORE = -3;
+/**
+ * A Commons picture for a person's name of two or more words whose title names none of them: with
+ * the stylised graphics, as it is not about the person (#15).
+ */
+const UNNAMED_PERSON_SCORE = STYLISED_SCORE;
 /** A name of at least this many words: a one-word query's tags are often its translation. */
 const NAME_WORDS = 2;
 
@@ -232,14 +237,25 @@ const formatScorer: Scorer = result => {
  * word in another language («cachorro» finds «Dog»), so only a name of two or more words is read:
  * a title that names none of its words came through an unrelated tag (#73).
  */
-const unnamedTagScorer: Scorer = (result, {subject}) => {
-  if (result.source !== 'openclipart' || subject.length < NAME_WORDS) {
+const unnamedTagScorer: Scorer = (result, {subject, person}) => {
+  if (subject.length < NAME_WORDS) {
+    return 0;
+  }
+  // A person's name: Commons' full-text search finds files whose description names a word of it,
+  // «Potencia de un punto» for «Pedro Sánchez»; a picture of the depicts gallery keeps its place.
+  const unnamedPerson =
+    person === true &&
+    result.source === 'commons' &&
+    !result.depicts &&
+    !result.canonical;
+  if (result.source !== 'openclipart' && !unnamedPerson) {
     return 0;
   }
   const have = words(result.title);
-  return subject.some(q => have.some(word => sameWord(word, q)))
-    ? 0
-    : UNNAMED_TAG_SCORE;
+  if (subject.some(q => have.some(word => sameWord(word, q)))) {
+    return 0;
+  }
+  return unnamedPerson ? UNNAMED_PERSON_SCORE : UNNAMED_TAG_SCORE;
 };
 
 const symbolScorer: Scorer = result => {
@@ -302,9 +318,11 @@ export function intentFor(
   results: readonly SearchResult[],
 ): QueryIntent {
   const read = readIntent(query);
-  const intent: QueryIntent = results.some(result => result.depicts)
-    ? {...read, byName: true}
-    : read;
+  const intent: QueryIntent = {
+    ...read,
+    ...(results.some(result => result.depicts) && {byName: true as const}),
+    ...(results.some(result => result.portrait) && {person: true as const}),
+  };
   if (intent.styles.has('logo') || !results.some(leadingLogo)) {
     return intent;
   }

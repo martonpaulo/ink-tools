@@ -122,6 +122,8 @@ export type QueryIntent = {
    * notable bearer (#15). Read from the results, never from the query.
    */
   byName?: true;
+  /** The results hold the person's own portrait (Wikidata P18): the query names a person (#15). */
+  person?: true;
 };
 
 /** The query without its style words, and the style groups they named. */

@@ -230,6 +230,29 @@ describe('rankForEink', () => {
     expect(einkScore(r('openclipart', 'Dog', 'image/png'), 'cachorro')).toBe(1);
   });
 
+  it("puts a Commons picture that names no word of a person's name below the photos of the person (#15)", () => {
+    const portrait = {
+      ...r('commons', 'Example 2026 Portrait', 'image/jpeg', true),
+      portrait: true as const,
+    };
+    // Commons' full-text search found the diagram through its description.
+    const commons = [
+      r('commons', 'Potencia de un punto', 'image/svg+xml'),
+      r('commons', 'Pedro Sánchez interviene ante el Pleno', 'image/jpeg'),
+    ];
+    expect(
+      rankForEink([commons, [portrait]], 'Pedro Sánchez').map(x => x.title),
+    ).toEqual([
+      'Example 2026 Portrait',
+      'Pedro Sánchez interviene ante el Pleno',
+      'Potencia de un punto',
+    ]);
+    // Without the person's portrait, as for a place, a Commons title keeps its place.
+    expect(
+      rankForEink([commons], 'Pedro Sánchez').map(x => x.title)[0],
+    ).toBe('Potencia de un punto');
+  });
+
   it("leads with the query's own flag, before regional flags (#89)", () => {
     const commons = [
       r('commons', 'Flag of the Canary Islands', 'image/svg+xml'),
