@@ -61,6 +61,9 @@ test('to-do insert enforces title, existing list and hasSync=0', () => {
   });
   expect(() => toTodoInsert(D, {taskListId: 'L1'}, ctx)).toThrow(/title/);
   expect(() => toTodoInsert(D, {title: 'x', taskListId: 'nope'}, ctx)).toThrow(/existing list/);
+  // A missing list fails like an unknown one (#63).
+  expect(() => toTodoInsert(D, {title: 'x'}, ctx)).toThrow(/taskListId/);
+  expect(() => toTodoInsert(D, {title: 'x', taskListId: ''}, ctx)).toThrow(/taskListId/);
 });
 
 import {rowToTodoTask, todoTaskToRow} from '../src';

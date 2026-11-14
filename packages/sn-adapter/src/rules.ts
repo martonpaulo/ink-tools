@@ -29,8 +29,10 @@ export function toTodoInsert(d: Descriptor, task: Row, ctx: TodoInsertContext): 
     if (row[col] === undefined || row[col] === null || row[col] === '') throw new Error(`To-Do insert needs ${col}`);
   }
   const list = row.taskListId;
-  if (t.rules.needsExistingList && list !== undefined && list !== '' && !ctx.existingListIds.includes(String(list))) {
-    throw new Error(`taskListId ${String(list)} does not match an existing list`);
+  if (t.rules.needsExistingList) {
+    // A missing list fails like an unknown one: the provider would answer id -1 (#63).
+    if (list === undefined || list === null || list === '') throw new Error('To-Do insert needs taskListId of an existing list');
+    if (!ctx.existingListIds.includes(String(list))) throw new Error(`taskListId ${String(list)} does not match an existing list`);
   }
   row.hasSync = t.rules.writeHasSync as number; // 0 = the app uploads it to Supernote Cloud
   return row;
