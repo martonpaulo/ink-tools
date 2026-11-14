@@ -33,8 +33,10 @@ if [ "$1" = connect ]; then
     exit 0
 fi
 if [ "$1" = kill-server ]; then touch "$ADB_FILES/killed"; exit 0; fi
+if [ "$1" = devices ]; then echo 'List of devices attached'; cat "$ADB_FILES/usb"; exit 0; fi
 [ "$1" = -s ] && shift 2
 case "$1" in
+    tcpip) echo "restarting in TCP mode port: $2" ;;
     get-state) cat "$ADB_FILES/state" ;;
     exec-out)
         if [ "$2" = screencap ]; then
@@ -172,6 +174,7 @@ reset_device() {
     rm -f "$files/am-goes-to"
     printf 'Status: ok\nActivity: x\n' > "$files/am"
     printf '5\n' > "$files/size"
+    : > "$files/usb"
 }
 
 run() {
@@ -795,7 +798,7 @@ cp "$work/log.saved" "$files/log"
 check "logs parse in JSON" "$(run logs --json | field "['lines'][0]['tag'],d['lines'][0]['pid']")" "('Sync', 1218)"
 
 # What the command can reach.
-for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
+for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi on" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
     # shellcheck disable=SC2086 # each entry is a command with its arguments
     run --read-only $changing >/dev/null 2>&1
     check "read-only refuses: $changing" "$?$(wc -l < "$log" | tr -d ' ')" "110"
@@ -826,6 +829,19 @@ result=$(run wifi off --json)
 check "wifi off asks the tablet to close the port" "$(called ' usb')$(called 'disconnect')" "11"
 check "wifi off says how to turn it on" "$(printf '%s' "$result" | field "['restore']" | grep -c 'adb tcpip 5555')" "1"
 check "wifi off is logged as a change" "$(tail -1 "$history_file" | field "['command']")" "wifi off"
+reset_device
+echo absent > "$files/state"
+printf 'USB0001\tdevice\n' > "$files/usb"
+result=$(run wifi on --json)
+check "wifi on opens the port over the cable" "$(called '-s USB0001 tcpip 5555')" "1"
+check "wifi on connects over Wi-Fi after it" "$(called "connect $serial")$(printf '%s' "$result" | field "['wifi_adb']")" "1on"
+check "wifi on is logged as a change" "$(tail -1 "$history_file" | field "['command']")" "wifi on"
+reset_device
+printf '%s\tdevice\nUSB0002\tunauthorized\n' "$serial" > "$files/usb"
+result=$(run wifi on --json 2>/dev/null)
+check "wifi on with no authorized cable says so" "$?$(printf '%s' "$result" | field "['error']")$(called tcpip)" "1no_usb0"
+reset_device
+check "status says Wi-Fi ADB is on" "$(run status --json | field "['wifi_adb']")" "on"
 check "help lists the read-only exit code" "$(python3 -B "$script" --help | grep -c '11 read-only')" "1"
 
 # The device log's filters.

@@ -30,6 +30,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  --follow and --plugin
   history                        what this command did: --failures, --command NAME, --since 2h
   tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
+  wifi on                        over the USB cable, turn Wi-Fi ADB on and connect to it
   wifi off                       turn Wi-Fi ADB off when the work ends, and say how to turn it on
   shell COMMAND...               run a command on the device
 
@@ -42,7 +43,8 @@ click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
 ~/.config/snadb/address, as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
-ADB over Wi-Fi is enabled once over USB with `adb tcpip 5555`; a restart of the device turns it off.
+ADB over Wi-Fi is enabled over USB with `snadb wifi on` (`adb tcpip 5555`); a restart of the device turns
+it off.
 """
 
 from __future__ import annotations
@@ -139,7 +141,7 @@ TRANSFER_TIMEOUT = 600
 WAIT_TIMEOUT = 30.0
 SYNC_TIMEOUT = 60.0
 ROUTES_TIMEOUT = 120
-WIFI_OFF_TIMEOUT = 15.0
+WIFI_TIMEOUT = 15.0
 DOWNLOAD_READ_TIMEOUT = 60
 DOWNLOAD_TIMEOUT = 3600.0
 FIRMWARE_TRANSFER_TIMEOUT = 3600
@@ -268,6 +270,7 @@ FAILURE_ADVICE = {
     "usage": ("the call's arguments are wrong, or no address is recorded", "snadb --help"),
     "no_adb": ("adb is not on this computer's PATH", "adb version"),
     "unreachable": ("the device did not answer over Wi-Fi ADB", "snadb status"),
+    "no_usb": ("one tablet must be attached by USB, with USB debugging allowed", "adb devices"),
     "device_error": ("the device refused the call, or the call failed", "snadb logs --level E --lines 50"),
     "not_found": ("the file or element does not exist", "snadb files ls"),
     "ambiguous": ("more than one element matches the target", "snadb snapshot"),
@@ -1014,6 +1017,8 @@ def command_status(device: Device, args: argparse.Namespace):
         "screen": size.group(1) if size else "",
         "battery": int(level.group(1)) if level else None,
         "activity": resumed.group(1) if resumed else "",
+        # status reaches the tablet only over Wi-Fi ADB, so an answer proves it is on (#37).
+        "wifi_adb": "on",
     }
     return data, "\n".join(f"{key}: {value}" for key, value in data.items())
 
@@ -1648,6 +1653,34 @@ def command_history(device, args: argparse.Namespace):
     return {"runs": runs, "unreadable": unreadable}, text
 
 
+def usb_serials(device: Device) -> list[str]:
+    """The tablets attached by USB and authorized: `adb devices` rows whose serial is no network address."""
+    listing = device.adb("devices", serial=False).stdout.decode(errors="replace")
+    rows = (line.split() for line in listing.splitlines()[1:])
+    return [row[0] for row in rows if len(row) == 2 and row[1] == "device" and ":" not in row[0]]
+
+
+def command_wifi_on(device: Device, args: argparse.Namespace):
+    """`adb tcpip` over the cable opens the network port; the proof is a Wi-Fi connection that answers."""
+    attached = usb_serials(device)
+    if len(attached) != 1:
+        found = "no tablet" if not attached else f"{len(attached)} devices"
+        raise Failure(EXIT_FAILED, "no_usb", f"{found} on USB; connect one tablet with the cable and allow USB debugging")
+    done = device.adb("-s", attached[0], "tcpip", str(ADB_PORT), serial=False)
+    if done.returncode != 0:
+        raise Failure(EXIT_FAILED, "device_error", (done.stdout + done.stderr).decode(errors="replace").strip())
+    started = time.monotonic()
+    while True:  # the tablet restarts its ADB daemon before the port answers
+        try:
+            device.connect()
+            break
+        except Failure:
+            if time.monotonic() - started >= args.timeout:
+                raise Failure(EXIT_TIMEOUT, "timeout", f"the port did not answer after {args.timeout:g} s") from None
+            time.sleep(WAIT_INTERVAL)
+    return {"wifi_adb": "on", "off": "snadb wifi off"}, "Wi-Fi ADB is on. Turn it off when the work ends: snadb wifi off"
+
+
 def command_wifi_off(device: Device, args: argparse.Namespace):
     """`adb usb` closes the network port; the proof is that the port stops answering."""
     done = device.adb("usb")
@@ -1697,7 +1730,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     def add(group, name: str, handler, *parents, changes: bool = False) -> argparse.ArgumentParser:
         sub = group.add_parser(name, parents=[common, *parents])
-        sub.set_defaults(handler=handler, needs_device=True, changes=changes)
+        sub.set_defaults(handler=handler, needs_device=True, changes=changes, connects=True)
         return sub
 
     def noun(name: str):
@@ -1790,8 +1823,12 @@ def build_parser() -> argparse.ArgumentParser:
         swiped.add_argument(coordinate, type=int)
 
     wifi = noun("wifi")
+    switched_on = add(wifi, "on", command_wifi_on, changes=True)
+    # It reaches the tablet over USB first, so main does not connect over Wi-Fi before it (#37).
+    switched_on.set_defaults(connects=False)
+    switched_on.add_argument("--timeout", type=float, default=WIFI_TIMEOUT, help="seconds for the port to answer")
     switched_off = add(wifi, "off", command_wifi_off, changes=True)
-    switched_off.add_argument("--timeout", type=float, default=WIFI_OFF_TIMEOUT, help="seconds for the port to close")
+    switched_off.add_argument("--timeout", type=float, default=WIFI_TIMEOUT, help="seconds for the port to close")
 
     add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
     return parser
@@ -1835,8 +1872,9 @@ def main() -> int:
             serial = address if ":" in address else f"{address}:{ADB_PORT}"
             log.secrets = [serial, address]
             device = Device(serial, log)
-            device.connect()
-            before = front_app(device)
+            if args.connects:
+                device.connect()
+                before = front_app(device)
         data, text = args.handler(device, args)
     except Failure as failure:
         code, kind = failure.code, failure.kind

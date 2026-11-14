@@ -23,9 +23,10 @@ Needs Python 3.9 or later, `adb` on your `PATH`, and Sideloading turned on in th
 ```bash
 git clone https://github.com/martonpaulo/supernote-tools
 ln -s "$PWD/supernote-tools/cli/snadb/src/snadb" ~/.local/bin/snadb
-adb tcpip 5555    # once, over USB; a restart of the tablet turns it off
 export SUPERNOTE_ADDRESS=192.0.2.10
+snadb wifi on     # over USB; a restart of the tablet turns it off
 snadb status
+snadb wifi off    # when the work ends
 ```
 
 Keep the address in `~/.config/snadb/address` instead of the variable, if you prefer.
@@ -38,7 +39,7 @@ Keep the address in `~/.config/snadb/address` instead of the variable, if you pr
 | :--- | :--- |
 | `make validate` | Runs the full gate: text, duplication and the command's contract tests. |
 | `snadb --help` | Lists every command and exit code. |
-| `snadb status` | Shows connection, firmware, screen size, battery and the app in front. |
+| `snadb status` | Shows connection, firmware, screen size, battery, the app in front and that Wi-Fi ADB is on. |
 | `snadb firmware` | Shows the installed and the newest official firmware. `--download` copies the newest one to `EXPORT`, after the checks it names. The tablet's build id holds no public version, so pass `--installed X.Y.Z` from Settings > About. |
 | `snadb routes [PACKAGE]` | Lists, read-only, each exported entry point with its filters and permission, and which job each route does. |
 | `snadb doctor` | Checks, read-only, that each call this command makes still exists. Run it after a firmware update. |
@@ -57,7 +58,8 @@ Keep the address in `~/.config/snadb/address` instead of the variable, if you pr
 | `snadb logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission. |
 | `snadb history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `snadb tap\|swipe` | Presses by coordinates, the last resort. |
-| `snadb wifi off` | Turns Wi-Fi ADB off when the work ends, and says how to turn it on again. |
+| `snadb wifi on` | Over the USB cable, turns Wi-Fi ADB on (`adb tcpip 5555`) and connects to it. |
+| `snadb wifi off` | Turns Wi-Fi ADB off when the work ends, and says how to turn it on again. Off is the safe state: leave Wi-Fi ADB off when no work runs. |
 | `snadb shell COMMAND...` | Runs a command on the tablet. |
 
 `--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`.
