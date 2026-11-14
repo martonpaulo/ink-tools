@@ -126,14 +126,19 @@ function hasAllWords(words: Words, query: string): boolean {
   );
 }
 
-type Match = {symbol: Emoji; score: number; named: number};
+/**
+ * `whole`: the symbol names or tags the whole word, not only each word of a phrase apart: the
+ * «Tokyo tower» is tagged «eiffel» and named «tower», never «eiffel tower» (#24).
+ */
+type Match = {symbol: Emoji; score: number; named: number; whole: boolean};
 
-function matchIn(words: Words, query: string): {score: number; named: number} {
+function matchIn(words: Words, query: string): Omit<Match, 'symbol'> {
   const named = nameScore(words, query);
   const score = named + keywordScore(words, query);
   return {
     score: score || (hasAllWords(words, query) ? ALL_WORDS : 0),
     named,
+    whole: score > 0,
   };
 }
 
@@ -151,16 +156,18 @@ export function matchSymbols(
   for (const symbol of symbols()) {
     let score = 0;
     let named = 0;
+    let whole = false;
     for (const lang of langs) {
       const words = symbol.byLanguage.get(lang);
       if (words) {
         const found = matchIn(words, word);
         score += found.score;
         named = Math.max(named, found.named);
+        whole ||= found.whole;
       }
     }
     if (score > 0) {
-      matches.push({symbol, score, named});
+      matches.push({symbol, score, named, whole});
     }
   }
   return matches.sort((a, b) => b.score - a.score);
@@ -169,7 +176,9 @@ export function matchSymbols(
 /**
  * Which matches lead the page (#67): those the word names exactly; else, for an abstract word,
  * the best few. A word is abstract when no thing among the matches carries it in its name:
- * «apple» names the red apple, so the drawings lead; «cold» names only the cold face.
+ * «apple» names the red apple, so the drawings lead; «cold» names only the cold face. A symbol
+ * that matches only each word of a phrase apart never leads: the Tokyo tower, tagged «eiffel» and
+ * named «tower», does not lead «Eiffel Tower» (#24).
  */
 function leaders(matches: readonly Match[]): Set<Match> {
   const exact = matches.filter(match => match.named === EXACT_NAME);
@@ -179,7 +188,30 @@ function leaders(matches: readonly Match[]): Set<Match> {
   const concrete = matches.some(
     match => !match.symbol.abstract && match.named > 0,
   );
-  return new Set(concrete ? [] : matches.slice(0, LEADS_ABSTRACT));
+  return new Set(
+    concrete
+      ? []
+      : matches.filter(match => match.whole).slice(0, LEADS_ABSTRACT),
+  );
+}
+
+let things: Set<string> | undefined;
+
+/**
+ * Whether the English word, or its singular, is the one-word name of a thing OpenMoji draws
+ * («owl», «house»): a word the ranker reads as another thing in the picture, not a style or a
+ * kind of the subject («vintage», «blank») (#24). Read from the shipped index: no request.
+ */
+export function namesThing(word: string): boolean {
+  things ??= new Set(
+    symbols()
+      .filter(symbol => !symbol.abstract)
+      .map(symbol => symbol.byLanguage.get('en')?.name ?? '')
+      .filter(name => name !== '' && !name.includes(' ')),
+  );
+  return (
+    things.has(word) || (word.endsWith('s') && things.has(word.slice(0, -1)))
+  );
 }
 
 /** Every symbol's code, in OpenMoji's order: what «Download symbols» fetches (#91). */

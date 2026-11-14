@@ -1,0 +1,102 @@
+{
+ "clock": {
+  "ok": true,
+  "reason": "a plain clock face first; the owl clock left page 1"
+ },
+ "eiffel-tower": {
+  "ok": true,
+  "reason": "an Eiffel Tower outline drawing first; the Tokyo tower symbol left page 1"
+ },
+ "rio-de-janeiro": {
+  "ok": false,
+  "reason": "the city flag first, a seed and a folklore figure after; the panorama with Sugarloaf is a speckled contour; the map left page 1"
+ },
+ "bicycle": {
+  "ok": true,
+  "reason": "the bicycle symbol first; side-view drawings follow, no diagram"
+ },
+ "umbrella": {
+  "ok": true,
+  "reason": "the umbrella symbol first; the closed umbrella left page 1"
+ },
+ "key": {
+  "ok": false,
+  "reason": "a key symbol first, but the keyboard Enter key is still at 1; the Linux key left page 1"
+ },
+ "soup": {
+  "ok": true,
+  "reason": "a bowl of soup first; a soup bowl replaces the soup spoon"
+ },
+ "soup-caps": {
+  "ok": true,
+  "reason": "the same page as soup"
+ },
+ "elephant": {
+  "ok": true,
+  "reason": "the elephant symbol first, elephant drawings after"
+ },
+ "rose": {
+  "ok": true,
+  "reason": "the rose symbol first; the compass rose left page 1"
+ },
+ "maca": {
+  "ok": true,
+  "reason": "apple drawings on page 1; the maca plant photo is first, the «Bandera Macas» flag left"
+ },
+ "silla": {
+  "ok": true,
+  "reason": "the chair symbol first"
+ },
+ "mariposa": {
+  "ok": true,
+  "reason": "a butterfly at 4; the mariposa lilies come first"
+ },
+ "zh-dog": {
+  "ok": true,
+  "reason": "Chinese dog characters and a dog shadow figure on page 1"
+ },
+ "napoleon-caps": {
+  "ok": true,
+  "reason": "portraits of Napoleon on page 1"
+ },
+ "flag-of-brazil": {
+  "ok": true,
+  "reason": "the flag of Brazil first"
+ },
+ "map-of-spain": {
+  "ok": true,
+  "reason": "a map of Spain first"
+ },
+ "love": {
+  "ok": true,
+  "reason": "a heart («Love Me Heart») now on page 1"
+ },
+ "cold": {
+  "ok": true,
+  "reason": "the cold face first, a thermometer and snow on page 1"
+ },
+ "hot": {
+  "ok": true,
+  "reason": "the hot face now on page 1"
+ },
+ "happy": {
+  "ok": true,
+  "reason": "a grinning face first; the happy cat left page 1"
+ },
+ "sad": {
+  "ok": true,
+  "reason": "a sad face first; the sad cat left page 1"
+ },
+ "angry": {
+  "ok": true,
+  "reason": "the angry face first"
+ },
+ "bat": {
+  "ok": true,
+  "reason": "the bat symbol first"
+ },
+ "crane": {
+  "ok": true,
+  "reason": "a crane icon and the crane symbol on page 1"
+ }
+}

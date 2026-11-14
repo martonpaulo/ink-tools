@@ -4,6 +4,7 @@
  * rest; logos, maps, diagrams and other stylised graphics last (brief sections 5.4, 7 and 8.4).
  * Every signal is one the sources already return: no request per result.
  */
+import {namesThing} from './adapters/openmoji';
 import {
   FILLER_WORDS,
   hasStyle,
@@ -99,7 +100,8 @@ function stylisedOther(result: SearchResult): boolean {
 /**
  * How directly the title names the subject: 0 not at all, else the mention or plain-subject score.
  * For a logo query any other word names something else: «Apple Arcade logo» is a sub-brand's
- * mark, not the plain Apple logo (#81).
+ * mark, not the plain Apple logo (#81). A word that names another thing is never the one word a
+ * plain title may add: «Owl Clock» is an owl and a clock, «Blank Clock» only a clock (#24).
  */
 const subjectScorer: Scorer = (result, {subject, styles}) => {
   const have = words(result.title);
@@ -119,7 +121,9 @@ const subjectScorer: Scorer = (result, {subject, styles}) => {
     ),
   );
   const plain = styles.has('logo') ? 0 : PLAIN_SUBJECT_WORDS;
-  return others.size <= plain ? PLAIN_SUBJECT_SCORE : MENTION_SCORE;
+  return others.size <= plain && ![...others].some(namesThing)
+    ? PLAIN_SUBJECT_SCORE
+    : MENTION_SCORE;
 };
 
 const lineWorkScorer: Scorer = result =>

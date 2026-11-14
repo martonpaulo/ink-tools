@@ -72,6 +72,12 @@ describe('the OpenMoji symbols (#67)', () => {
     expect(results.some(result => result.leads)).toBe(false);
   });
 
+  it('never lets a symbol that matches each word apart lead a phrase (#24)', async () => {
+    const results = await symbols('Eiffel Tower');
+    expect(results.map(result => result.title)).toContain('Tokyo tower');
+    expect(results.some(result => result.leads)).toBe(false);
+  });
+
   it('understands Portuguese, Spanish and Chinese, accents folded', async () => {
     expect(hexes(await symbols('frio', ['pt']))).toContain(COLD_FACE);
     expect(hexes(await symbols('frio', ['es']))).toContain(COLD_FACE);

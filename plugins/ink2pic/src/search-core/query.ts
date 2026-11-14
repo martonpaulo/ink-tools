@@ -76,8 +76,9 @@ function wordPattern(alternatives: string): RegExp {
  */
 export const STYLE_GROUPS = {
   logo: wordPattern('logos?|wordmarks?'),
-  flag: wordPattern('flags?'),
-  map: wordPattern('maps?'),
+  // Commons titles are often Portuguese or Spanish: «Mapa do Rio de Janeiro» (#24, in en, pt, es).
+  flag: wordPattern('flags?|bandeiras?|banderas?'),
+  map: wordPattern('maps?|mapas?'),
   diagram: wordPattern('diagrams?|charts?|graphs?'),
   photo: wordPattern('photos?|photographs?|picture of'),
   painting: wordPattern('paintings?|portraits?'),

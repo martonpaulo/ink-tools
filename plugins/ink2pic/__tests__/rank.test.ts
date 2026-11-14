@@ -60,6 +60,22 @@ describe('einkScore', () => {
   });
 });
 
+describe('a title that names another thing (#24)', () => {
+  it('«clock» puts a plain clock face before the owl clock', () => {
+    const owl = einkScore(r('openclipart', 'Owl Clock'), 'clock');
+    for (const title of ["12 o'clock", 'Blank Clock', 'Vintage clock']) {
+      expect(einkScore(r('openclipart', title), 'clock')).toBeGreaterThan(owl);
+    }
+  });
+
+  it('reads a Portuguese or Spanish map or flag as one (#24)', () => {
+    const beach = einkScore(r('openclipart', 'Praia do Rio'), 'rio');
+    for (const title of ['Mapa do Rio', 'Bandeira do Rio', 'Bandera del Rio']) {
+      expect(einkScore(r('openclipart', title), 'rio')).toBeLessThan(beach);
+    }
+  });
+});
+
 describe('rankForEink', () => {
   it('ranks deterministically and mixes sources on ties', () => {
     const clipart = [
