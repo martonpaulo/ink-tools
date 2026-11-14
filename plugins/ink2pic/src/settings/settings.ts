@@ -46,7 +46,7 @@ export type Settings = {
 
 /** The inserted picture's width in page pixels for each size; medium is today's 640 (#70). */
 export const SIZE_WIDTHS: Record<Choice<'size'>, number> = {
-  small: 400,
+  small: 200, // half of the first 400, the owner's request (#33)
   medium: 640,
   large: 960,
 };

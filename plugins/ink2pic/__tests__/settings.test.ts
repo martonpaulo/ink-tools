@@ -3,6 +3,7 @@ import {logLines} from '../src/log/memory';
 import {
   defaultSettings,
   parseSettings,
+  SIZE_WIDTHS,
   serializeSettings,
   styleFlags,
 } from '../src/settings/settings';
@@ -71,6 +72,12 @@ describe('parseSettings (#68)', () => {
   });
 });
 
+describe('picture sizes (#33)', () => {
+  it('Small is half of the first 400 page pixels; the others are unchanged', () => {
+    expect(SIZE_WIDTHS).toEqual({small: 200, medium: 640, large: 960});
+  });
+});
+
 describe('the settings file (#68)', () => {
   it('logs each problem of a hand-edited file', async () => {
     const path = '/s/settings.json';
@@ -88,11 +95,18 @@ describe('the settings file (#68)', () => {
     const broken = '{"languages": ["en",}';
     const files: Record<string, string> = {[path]: broken};
     const loaded = await loadSettings(memory(files), path, null);
-    expect(loaded).toEqual({settings: defaultSettings(null), readFailure: null});
-    const copies = Object.keys(files).filter(name => name.startsWith('/s/settings.unreadable-'));
+    expect(loaded).toEqual({
+      settings: defaultSettings(null),
+      readFailure: null,
+    });
+    const copies = Object.keys(files).filter(name =>
+      name.startsWith('/s/settings.unreadable-'),
+    );
     expect(copies).toHaveLength(1);
     expect(files[copies[0]]).toBe(broken);
-    expect(logLines().join('\n')).toContain('is kept as /s/settings.unreadable-');
+    expect(logLines().join('\n')).toContain(
+      'is kept as /s/settings.unreadable-',
+    );
   });
 
   it('refuses every write when the copy of a broken file cannot be kept (#94)', async () => {
