@@ -1,4 +1,4 @@
-import {requireHttps} from './ics';
+import {HttpFetch, requireHttps} from './http';
 import {RemoteTask, TaskContent, TaskProvider} from './tasks';
 
 /**
@@ -9,12 +9,7 @@ import {RemoteTask, TaskContent, TaskProvider} from './tasks';
  */
 export interface TodoistOptions {
   token: string;
-  fetch: (url: string, init: {method: string; headers: Record<string, string>; body?: string}) => Promise<{
-    ok: boolean;
-    status: number;
-    json(): Promise<unknown>;
-    text(): Promise<string>;
-  }>;
+  fetch: HttpFetch<{json(): Promise<unknown>; text(): Promise<string>}>;
   baseUrl?: string;
 }
 

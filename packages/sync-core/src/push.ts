@@ -1,5 +1,5 @@
 import {CalendarEvent} from './calendar';
-import {HttpFetch} from './google';
+import {HttpFetch} from './http';
 
 /**
  * Two-way half of the calendar module (#29): carry edits made on the tablet back to the source.

@@ -1,16 +1,11 @@
 import {CalendarEvent, CalendarInfo, CalendarProvider, TimeWindow} from './calendar';
+import {HttpFetch} from './http';
 
 /**
  * Google Calendar as a CalendarProvider (Calendar API v3) and the OAuth device-code sign-in.
  * `fetch` is injected, so tests need no network. Tokens live only in the owner's secure store.
  * Not yet run against a live account: the owner verifies it on the Mac (issue #28).
  */
-export type HttpFetch = (url: string, init: {method: string; headers: Record<string, string>; body?: string}) => Promise<{
-  ok: boolean;
-  status: number;
-  json(): Promise<unknown>;
-}>;
-
 const DEVICE_CODE_URL = 'https://oauth2.googleapis.com/device/code';
 const OAUTH_ENDPOINT = 'https://oauth2.googleapis.com/token';
 export const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
