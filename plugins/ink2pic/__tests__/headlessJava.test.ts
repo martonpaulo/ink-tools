@@ -17,7 +17,11 @@ const EXEMPT = 'com.android.tools.r8.D8';
 describe('the JVMs the scripts start', () => {
   it.each(FILES)('%s starts each one headless', file => {
     const text = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
-    const calls = text.split(/(?:execFileSync|run)\(\s*'java',/).slice(1);
+    // The command is found by scripts/host-tools.cjs (#74): `jdkTool('java')` or
+    // `hostTool('jdkTool', 'java')`.
+    const calls = text
+      .split(/(?:execFileSync|run)\(\s*(?:jdkTool\('java'\)|hostTool\('jdkTool', 'java'\)),/)
+      .slice(1);
     expect(calls.length).toBeGreaterThan(0);
     for (const call of calls) {
       const args = call.slice(0, call.indexOf(']'));
