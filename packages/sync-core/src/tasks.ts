@@ -129,9 +129,15 @@ async function syncLinked(
   devices: Map<string, DeviceTask>,
   result: SyncResult,
 ): Promise<TaskLink | null> {
+  const device = devices.get(link.localId);
+  // A finished task, unchanged on the tablet since the last pass, needs no request: the link is
+  // dropped, so history never costs one `get` per pass (#92). A task reopened on the service
+  // later is listed as an open task and imported as a new one.
+  if (device && !device.deleted && device.completed && fingerprint(device) === link.fingerprint && !remotes.has(link.remoteId)) {
+    return null;
+  }
   // An open task absent from the list is either completed or deleted; `get` tells which.
   const remote = remotes.get(link.remoteId) ?? (await provider.get(link.remoteId));
-  const device = devices.get(link.localId);
 
   // A row missing from the list is not a delete: only the soft-delete flag is. An empty or failed
   // read must never remove real service tasks, so fail closed and keep the link (#69).

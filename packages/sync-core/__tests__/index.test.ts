@@ -114,6 +114,23 @@ test('a deletion on either side propagates, and a completed remote task is not a
   expect(done.log).toEqual(['update local a']);
 });
 
+test('a finished, unchanged task costs no request and its link is dropped; a reopened one is imported (#92)', async () => {
+  const done = c('a', {completed: true});
+  const f = fakes([R('r1', done)], [D('l1', done)]);
+  let gets = 0;
+  const get = f.provider.get;
+  f.provider.get = async id => (gets++, get(id));
+  const out = await syncTasks(f.provider, f.store, [link('r1', 'l1', done)]);
+  expect(gets).toBe(0);
+  expect(out.links).toEqual([]);
+  expect(f.log).toEqual([]);
+  // reopened on the service: listed as open, so it comes in as a new task
+  f.provider.list = async () => [R('r1', c('a'))];
+  const again = await syncTasks(f.provider, f.store, out.links);
+  expect(f.log).toEqual(['create local a']);
+  expect(again.links).toHaveLength(1);
+});
+
 test('an empty device list removes nothing from the service and reports an error (#69)', async () => {
   const base = c('a');
   const f = fakes([R('r1', base), R('r2', c('b'))], []);
