@@ -10,6 +10,8 @@
  * loads, before the page shows; their order stays as it is (#72).
  */
 import {log} from '../log/memory';
+import {pickedFor} from '../picks/device';
+import {picksFirst} from '../picks/picks';
 import {
   chooseLook,
   ImageAnalyzer,
@@ -88,6 +90,8 @@ export type MeasureDeps = {
   allContour?: () => Promise<boolean>;
   /** The person's «Photos too» style (#70): the measured order ranks photos as drawings (#92). */
   photos?: () => Promise<boolean>;
+  /** The result ids the person picked for the query, newest first (#34): they lead the order. */
+  picked?: (query: string) => Promise<readonly string[]>;
 };
 
 const DEVICE: MeasureDeps = {
@@ -96,6 +100,7 @@ const DEVICE: MeasureDeps = {
   limitMs: MEASURE_LIMIT_MS,
   allContour: async () => styleFlags(await getSettings()).contour,
   photos: async () => styleFlags(await getSettings()).photos,
+  picked: pickedFor,
 };
 
 const LATER: MeasureDeps = {...DEVICE, limitMs: LATER_MEASURE_LIMIT_MS};
@@ -292,7 +297,11 @@ export async function measureFirstPages(
       limitReached ? ', limit reached' : ''
     }`,
   );
-  const distinct = orderMeasured(results, prepared, query, photos);
+  // The pixels never push a picture the person picked for the word down (#34).
+  const distinct = picksFirst(
+    orderMeasured(results, prepared, query, photos),
+    (await deps.picked?.(query)) ?? [],
+  );
   if (distinct.length < results.length) {
     log(`pixels: ${results.length - distinct.length} near-duplicates left out`);
   }

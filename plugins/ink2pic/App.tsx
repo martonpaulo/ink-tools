@@ -11,6 +11,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {atStep, failureText, StepFailure} from './src/flow/failure';
 import {insertPicture} from './src/flow/insertPicture';
+import {recordPick} from './src/picks/device';
 import {readLassoQuery} from './src/flow/lassoQuery';
 import {
   initialOpening,
@@ -392,6 +393,10 @@ function App(): React.JSX.Element {
       null,
       stopFor(flow),
     );
+    if (inserted.ok) {
+      // A grid pick leads the next search for the word (#34); «Insert best picture» chose nothing.
+      await recordPick(query, result.id);
+    }
     if (inserted.ok && isCurrent(opening.current, flow)) {
       await logged('closePluginView', closePluginView);
     }

@@ -26,6 +26,7 @@ background that cannot move ([brief section 13](brief.md#13-history-of-options-c
   typical picture of the word first, six per page.
 - Inserts the chosen picture with one tap, already sized and converted for the 16-gray screen.
 - Keeps every inserted picture, with its license and attribution, in a library that works offline.
+- Shows first the picture chosen in the grid for a word, the next time ([#34](https://github.com/martonpaulo/supernote-tools/issues/34)).
 - Lets the person set, from the plugin's own Settings entry, the query languages and their order
   (default: the system language, then English; [#68](https://github.com/martonpaulo/ink2pic/issues/68)), the picture size, where it goes (below, beside, or in place
   of the word, deleted only on their tap), style, sources, data saver, and empty the Library tab;

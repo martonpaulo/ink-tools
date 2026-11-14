@@ -6,6 +6,8 @@
 import {getLibrary, recordSearch} from '../library/device';
 import type {Library} from '../library/types';
 import {log} from '../log/memory';
+import {pickedFor} from '../picks/device';
+import {picksFirst} from '../picks/picks';
 import {
   DEFAULT_ADAPTERS,
   SearchOutcome,
@@ -50,7 +52,12 @@ export async function runSearch(
     prepareThumbs(),
   ]);
   // Saved OpenMoji pictures are marked; with no network, only those show (#91).
-  const outcome = await markSavedSymbols(found);
+  const marked = await markSavedSymbols(found);
+  // The person's earlier picks for the word lead (#34), so the early download starts on one.
+  const outcome = {
+    ...marked,
+    results: picksFirst(marked.results, await pickedFor(word)),
+  };
   if (!isNewest()) {
     log(`search "${word}" ended after a newer one: ignored`);
     return {outcome: null, thumbDir};

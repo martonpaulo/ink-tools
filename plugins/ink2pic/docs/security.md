@@ -16,7 +16,7 @@ project audit of 2026-11-06 ([#51](https://github.com/martonpaulo/ink2pic/issues
 | 7 | Least privilege | Yes | Met | `uses-permissions`: INTERNET, FILE:READ, FILE:WRITE, no delete; CI `contents: read`, write only in the prerelease job | None |
 | 8 | No mass assignment | No API | Not applicable | No API surface | None |
 | 9 | Parameterized queries | No SQL | Not applicable | No SQL | None |
-| 10 | Validate external input | Yes: native app | Met | Source parsers, `parseLibrary` and `parseCache` validators, `SafePaths`, a 20 MB download limit | None |
+| 10 | Validate external input | Yes: native app | Met | Source parsers, `parseLibrary`, `parsePicks` and `parseCache` validators, `SafePaths`, a 20 MB download limit | None |
 | 11 | No sensitive screen without auth | Native app | Not applicable | The device holder is the user; no private remote data | None |
 | 12 | Server-side session | No server | Not applicable | No server | None |
 | 13 | Cookie flags | No cookies | Not applicable | No cookies | None |

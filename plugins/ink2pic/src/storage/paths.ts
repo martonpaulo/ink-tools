@@ -77,6 +77,15 @@ export function settingsPath(externalRoot = SHARED_ROOT): string {
 }
 
 /**
+ * `<root>/MyStyle/Ink2Pic/picks.json`, the pictures the person chose per word (#34): in shared
+ * storage, so a plugin update keeps them; one file, so a Supernote file sync checks one entry
+ * (#23); written in place (#62).
+ */
+export function picksPath(externalRoot = SHARED_ROOT): string {
+  return sharedDir(externalRoot, 'picks.json');
+}
+
+/**
  * `<root>/MyStyle/Ink2Pic/symbols`, the OpenMoji pictures kept for offline use (#91), one
  * `<hex>.png` each, written in place (#62).
  */
