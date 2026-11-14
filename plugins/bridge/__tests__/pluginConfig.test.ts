@@ -5,6 +5,5 @@ test('plugin config declares a generated id and no extra permission', () => {
   expect(config['uses-permissions']).toEqual([
     'plugin.permission.INTERNET',
     'plugin.permission.FILE:READ',
-    'plugin.permission.FILE:WRITE',
   ]);
 });

@@ -29,6 +29,8 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   rows are shown but never re-synced or duplicated). Expand recurrences into per-day rows.
 - The four plugin permissions are `FILE:READ`, `FILE:WRITE`, `FILE:DELETE`, `INTERNET`. Network is
   gated but grantable.
+- Bridge declares only `INTERNET` and `FILE:READ` until a module writes a file (#83); add `FILE:WRITE`
+  with the first writer, such as the Settings storage of #40.
 - The private design and reverse-engineering notes live in the workbench research folder.
 
 ## Reuse
