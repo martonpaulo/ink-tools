@@ -719,7 +719,9 @@ download failure shows `error.download`; `error.unexpected` is the failed start
 
 ### 8.11 The last word
 
-«Lasso last word» chooses the word the person wrote last from the page's strokes, by position
+**Removed** ([#32](https://github.com/martonpaulo/supernote-tools/issues/32)): the Lasso last word button, its phrase lasso and the remembered pick no longer exist; the entry point is the lasso toolbar only. This section records what the spike measured. `src/flow/selectWord.ts` and the Word spacing setting stay until the [#75](https://github.com/martonpaulo/ink2pic/issues/75) spike code goes.
+
+«Lasso last word» chose the word the person wrote last from the page's strokes, by position
 only ([#75](https://github.com/martonpaulo/ink2pic/issues/75), `src/flow/selectWord.ts`). Page
 elements carry no time, and on the owner's device the pauses inside a word (130–656 ms) and
 between words (578–1122 ms) overlap, so no time threshold is used [CONFIRMED in the build 15
@@ -775,8 +777,8 @@ Miguel de Cervantes» searches «Miguel de Cervantes», «Eu comi uma banana» s
    instead of asking again. A line costs the same Wikipedia requests as a one-word search; one
    more only when it has a group that may be a name and none of its groups is an article.
 
-Probe pen and page and Lasso last word are spike controls in the Log view, shown while
-`PROBE_CONTROLS` in `src/config.ts` is true: true for build 16, where the owner tests them, and
+Probe pen and page is a spike control in the Log view (Lasso last word was removed, [#32](https://github.com/martonpaulo/supernote-tools/issues/32)), shown while
+`PROBE_CONTROLS` in `src/config.ts` is true: true for build 16, where the owner tests it, and
 false once the [#75](https://github.com/martonpaulo/ink2pic/issues/75) spike ends. While the probe
 listens, the view shows «Probe on» and a Stop probe button. The probe reads the page again at each
 pen-up and removes its pen-up and motion listeners when the view closes (lifecycle 3), so a closed

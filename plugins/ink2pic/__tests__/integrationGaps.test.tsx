@@ -9,7 +9,6 @@ import {NativeModules} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import * as sdk from 'sn-plugin-lib';
 import {insertPicture, startEarlyDownload} from '../src/flow/insertPicture';
-import {rememberPick, readLassoQuery} from '../src/flow/lassoQuery';
 import {probeIdle, runProbe, stopPenProbe} from '../src/flow/penProbe';
 import {runSearch} from '../src/flow/search';
 import {resetLibraryForTests} from '../src/library/device';
@@ -20,7 +19,6 @@ import {copy} from '../src/ui/copy';
 import type {SearchResult} from '../src/search-core/types';
 import {
   createHost,
-  NOTE_PATH,
   PLUGIN_DIR,
   PluginHost,
   STROKE_TYPE,
@@ -70,7 +68,6 @@ beforeEach(() => {
   resetLibraryForTests();
   resetSymbolsForTests();
   stopPenProbe();
-  rememberPick(null);
 });
 afterEach(() => {
   stopPenProbe();
@@ -149,14 +146,6 @@ describe('a double tap on the probe buttons (#111, item 3)', () => {
     expect(penUpListeners(host)).toHaveLength(1);
     act(() => tree.unmount());
   });
-
-  it('a double tap on Lasso last word reads the page once', async () => {
-    const host = started();
-    const tree = await bar();
-    await doubleTap(tree, copy['probe.lastWord']);
-    expect(host.called('getElements')).toHaveLength(1);
-    act(() => tree.unmount());
-  });
 });
 
 type Point = {x: number; y: number};
@@ -216,39 +205,5 @@ describe('a pen-up being handled when Stop probe is tapped (#111, item 4)', () =
     const before = host.called('lassoElements').length;
     await circleAround(host, stopPenProbe);
     expect(host.called('lassoElements').length).toBe(before);
-  });
-});
-
-describe('the word Lasso last word remembered (#111, item 5)', () => {
-  const rect = {left: 100, top: 200, right: 300, bottom: 260};
-  /** What Lasso last word leaves after lassoing «tomato soup» on `page` of the note. */
-  const pickOn = (page: number) => ({
-    query: 'tomato soup',
-    rect,
-    strokes: 1,
-    path: NOTE_PATH,
-    page,
-  });
-
-  it('is not taken by the same lasso on another page', async () => {
-    const host = started();
-    rememberPick(pickOn(host.page));
-    host.turnPage(host.page + 1);
-    host.write('ladle', rect);
-    host.lassoAround(rect);
-    const read = await readLassoQuery();
-    expect(read).toEqual(expect.objectContaining({ok: true}));
-    expect(read.ok && read.value.query).toBe('ladle');
-    expect(host.called('recognizeElements')).toHaveLength(1);
-  });
-
-  it('is taken by that lasso on its own page', async () => {
-    const host = started();
-    host.write('tomato', rect);
-    host.lassoAround(rect);
-    rememberPick(pickOn(host.page));
-    const read = await readLassoQuery();
-    expect(read.ok && read.value.query).toBe('tomato soup');
-    expect(host.called('recognizeElements')).toHaveLength(0);
   });
 });

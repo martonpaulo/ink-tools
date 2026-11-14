@@ -1,12 +1,10 @@
 import {NativeModules} from 'react-native';
 import {PluginCommAPI, PluginFileAPI, PluginManager} from 'sn-plugin-lib';
 import {
-  lassoLastWord,
   probeArmed,
   probeIdle,
   runProbe,
   stopPenProbe,
-  STROKE_READS_PARALLEL,
 } from '../src/flow/penProbe';
 import {logLines, startLog} from '../src/log/memory';
 import {getPenInfo, strokePoints} from '../src/sdk/pen';
@@ -122,87 +120,6 @@ it('lassoes the strokes inside a circle the person draws, with the view closed',
   expect(logLines().join('\n')).toMatch(/getPenInfo \(after the lasso\) -> ok/);
 });
 
-/** «de Cervantes» on a new page, one stroke per letter, as the page lists them (#75). */
-function cervantes() {
-  const box = (left: number, top: number, right: number, bottom: number) =>
-    Array.from({length: 11}, (_, i) => ({
-      x: left + ((right - left) * i) / 10,
-      y: i % 2 === 0 ? top : bottom,
-    }));
-  const rects: [number, number, number, number][] = [
-    [100, 160, 134, 236], // d
-    [146, 200, 180, 236], // e
-    [240, 160, 295, 236], // C
-    [303, 200, 337, 236], // e
-    [349, 200, 383, 236], // r
-    [393, 200, 427, 236], // v
-    [445, 200, 479, 236], // a
-    [485, 200, 519, 236], // n
-    [531, 175, 565, 236], // t
-    [519, 202, 577, 207], // t-bar
-    [583, 200, 617, 236], // e
-    [626, 200, 660, 236], // s
-  ];
-  return rects.map((rect, i) => strokeElement(box(...rect), 40 + i));
-}
-
-it('lassoes the last word from the page’s strokes with no Probe armed, and recycles them', async () => {
-  const elements = cervantes();
-  mocked(PluginFileAPI.getElements).mockResolvedValue(success(elements));
-  expect(await lassoLastWord()).toBeNull();
-  expect(PluginFileAPI.getElements).toHaveBeenCalledWith(0, '/Note/a.note');
-  expect(PluginCommAPI.lassoElements).toHaveBeenCalledWith({
-    left: 231,
-    top: 151,
-    right: 669,
-    bottom: 245,
-  });
-  for (const element of elements) {
-    expect(element.recycle).toHaveBeenCalled();
-  }
-  const text = logLines().join('\n');
-  expect(text).toMatch(/probe word: rule last word, 10 stroke\(s\).*spacing normal/);
-  expect(text).toMatch(/probe line stroke #40 rect .* letter, left out/);
-  expect(text).toMatch(/probe line stroke #49 rect .* letter, kept/);
-  expect(PluginManager.closePluginView).toHaveBeenCalled();
-});
-
-it('reads strokes 4 at a time, keeps the others when one fails, and never waits for the recycle (#102)', async () => {
-  const elements = cervantes();
-  let running = 0;
-  let most = 0;
-  for (const element of elements) {
-    const {size} = element.stroke.points;
-    element.stroke.points.size = async () => {
-      running += 1;
-      most = Math.max(most, running);
-      await new Promise(resolve => setTimeout(resolve, 1));
-      running -= 1;
-      return size();
-    };
-    // A recycle that never answers holds nothing up.
-    element.recycle.mockImplementation(() => new Promise(() => {}));
-  }
-  elements[0].stroke.points.size = async () => {
-    throw new Error('element gone');
-  };
-  mocked(PluginFileAPI.getElements).mockResolvedValue(success(elements));
-  expect(await lassoLastWord()).toBeNull();
-  expect(most).toBe(STROKE_READS_PARALLEL);
-  expect(logLines().join('\n')).toMatch(/12 element\(s\), 11 stroke\(s\) read/);
-  expect(PluginCommAPI.lassoElements).toHaveBeenCalled();
-  expect(elements[0].recycle).toHaveBeenCalled();
-});
-
-it('says so and keeps the view when lassoElements does not take the rect', async () => {
-  mocked(PluginFileAPI.getElements).mockResolvedValue(success(cervantes()));
-  mocked(PluginCommAPI.lassoElements).mockResolvedValue(success(false));
-  expect(await lassoLastWord()).toBe('lassoFailed');
-  expect(PluginCommAPI.getLassoRect).not.toHaveBeenCalled();
-  expect(PluginManager.closePluginView).not.toHaveBeenCalled();
-  expect(logLines().join('\n')).toMatch(/lassoElements did not take the rect/);
-});
-
 it('logs a lassoed picture’s fields and closes the view after the lasso', async () => {
   const picture = {
     uuid: 'p',
@@ -227,13 +144,6 @@ it('logs a lassoed picture’s fields and closes the view after the lasso', asyn
   expect(
     mocked(PluginManager.closePluginView).mock.invocationCallOrder[0],
   ).toBeGreaterThan(order);
-});
-
-it('lassoes nothing and keeps the view when no stroke was written', async () => {
-  mocked(PluginFileAPI.getElements).mockResolvedValue(success([]));
-  expect(await lassoLastWord()).toBe('noStrokes');
-  expect(PluginCommAPI.lassoElements).not.toHaveBeenCalled();
-  expect(PluginManager.closePluginView).not.toHaveBeenCalled();
 });
 
 it('reads a bare PenInfo as well as an APIResponse', async () => {

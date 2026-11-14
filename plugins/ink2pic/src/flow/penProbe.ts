@@ -7,9 +7,8 @@
  * drawn around earlier strokes is lassoed natively. The page is read again at each pen-up, so a
  * page or note change is followed. The listeners stop with Stop probe or when the view closes
  * (lifecycle 3), so the probe never costs SDK calls or lassoes a closed «o» once the view is gone. Probe also lassoes the
- * page's last picture and reads the lasso back. Lasso last word reads the page's strokes, with no
- * Probe first, and lassoes the last word by position. Both close the view after a lasso that took,
- * so the person sees whether the native lasso stays; a lasso that did not take is said on screen.
+ * page's last picture and reads the lasso back, then closes the view, so the person sees whether
+ * the native lasso stays.
  *
  * The calls made: getCurrentFilePath, getCurrentPageNum, getPageSize, getElements,
  * getLastElement, the stroke points' size and getRange, recycle, getPenInfo, lassoElements,
@@ -22,7 +21,6 @@ import {
   getLassoRect,
   lassoElements,
   Rect,
-  recognizeElements,
 } from '../sdk/lasso';
 import {getCurrentFilePath, getCurrentPageNum, getPageSize} from '../sdk/page';
 import {
@@ -38,20 +36,11 @@ import {
 } from '../sdk/pen';
 import {LifeState, onLifecycle} from '../sdk/buttons';
 import {closePluginView} from '../sdk/plugin';
-import {getSettings} from '../storage/settings';
-import {Settings, SPACING_SCALES} from '../settings/settings';
-import {resolvePhrase} from '../search-core';
-import {deviceContext} from '../search/device';
-import {rememberPick} from './lassoQuery';
 import {
   boundsOf,
   isClosedLoop,
-  LineWords,
-  lineWords,
   PageSize,
   PageStroke,
-  selectLastWords,
-  selectWord,
   WordChoice,
   wordInCircle,
 } from './selectWord';
@@ -474,122 +463,4 @@ export async function runProbe(): Promise<void> {
     }
   }
   await logged('closePluginView', closePluginView);
-}
-
-/** What Lasso last word ended with, for the screen: null when the lasso took. */
-export type LastWordProblem = 'noStrokes' | 'lassoFailed';
-
-type Phrase = {word: WordChoice; query: string};
-
-/**
- * The line's words that name the thing (#87): the line up to the last word is lassoed and
- * recognised by the host, with the page size (117 otherwise, brief section 10.5); the phrase
- * check picks the trailing words. Null keeps the last word alone: a line of one word, a failed
- * lasso or recognition, or a recognition whose word count differs from the position grouping's.
- */
-async function choosePhrase(
-  page: PageContext,
-  strokes: PageStroke[],
-  line: LineWords,
-  settings: Settings,
-): Promise<Phrase | null> {
-  if (line.words.length < 2) {
-    return null;
-  }
-  const whole = selectLastWords(strokes, line, line.words.length, page.size);
-  if (whole === null) {
-    return null;
-  }
-  log(`probe phrase: lasso ${line.words.length} words, rect ${brief(whole.rect)}`);
-  const lassoed = await logged('lassoElements (line)', () =>
-    lassoElements(whole.rect),
-  );
-  const elements = lassoed.ok && lassoed.value
-    ? await logged('getLassoElements (line)', getLassoElements)
-    : null;
-  if (!elements?.ok || elements.value.length === 0) {
-    return null;
-  }
-  const text = await logged('recognizeElements (line)', () =>
-    recognizeElements(elements.value, page.size),
-  );
-  if (!text.ok) {
-    return null;
-  }
-  const tokens = text.value.trim().split(/\s+/u).filter(Boolean);
-  log(`probe phrase: recognised "${text.value.trim()}"`);
-  if (tokens.length !== line.words.length) {
-    log(
-      `probe phrase: ${tokens.length} recognised words, ${line.words.length} by position; the last word alone`,
-    );
-    return null;
-  }
-  const {written, words} = withoutPunctuation(tokens, line);
-  const chosen = await resolvePhrase(written.join(' '), deviceContext(settings));
-  if (chosen === null) {
-    return null;
-  }
-  const word = selectLastWords(strokes, words, chosen.words, page.size);
-  return word && {word, query: chosen.query};
-}
-
-const WORDLIKE = /[\p{L}\p{N}]/u;
-
-/**
- * The recognised tokens and the position words, both without the tokens that hold no letter or
- * digit (#109): a separate «?» is a word by position, but the phrase check drops it, so its count
- * of trailing words would start one word late. `tokens` has one token per position word.
- */
-export function withoutPunctuation(
-  tokens: string[],
-  line: LineWords,
-): {written: string[]; words: LineWords} {
-  const keep = tokens.map(token => WORDLIKE.test(token));
-  return {
-    written: tokens.filter((_, i) => keep[i]),
-    words: {...line, words: line.words.filter((_, i) => keep[i])},
-  };
-}
-
-/**
- * Lasso last word: reads the page's strokes, cold, and lassoes the trailing words of the last
- * line that name the thing, else the last word by position (#87), then closes the view; the view
- * stays open with the problem when nothing was lassoed. Insert best picture on that lasso searches
- * the chosen words.
- */
-export async function lassoLastWord(): Promise<LastWordProblem | null> {
-  await queue;
-  rememberPick(null);
-  const page = await readContext();
-  const strokes = page ? await readPageStrokes(page) : [];
-  const settings = await getSettings();
-  const scale = SPACING_SCALES[settings.spacing];
-  const line = page ? lineWords(strokes, scale) : null;
-  const phrase =
-    page && line ? await choosePhrase(page, strokes, line, settings) : null;
-  const word = phrase?.word ?? (page ? selectWord(strokes, page.size, scale) : null);
-  logWord(word, `, spacing ${settings.spacing}`);
-  if (word === null) {
-    log('probe: no strokes on this page yet');
-    return 'noStrokes';
-  }
-  const took = await lassoAndRead(
-    word.rect,
-    `${word.strokes} stroke(s) by the ${word.rule} rule`,
-  );
-  if (!took) {
-    return 'lassoFailed';
-  }
-  if (phrase && page) {
-    log(`probe phrase: searches "${phrase.query}"`);
-    rememberPick({
-      query: phrase.query,
-      rect: word.rect,
-      strokes: word.strokes,
-      path: page.path,
-      page: page.page,
-    });
-  }
-  await logged('closePluginView', closePluginView);
-  return null;
 }
