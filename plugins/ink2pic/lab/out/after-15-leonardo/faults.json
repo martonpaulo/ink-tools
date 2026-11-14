@@ -1,0 +1,270 @@
+{
+ "run": "after-15-leonardo",
+ "commit": "c14082aff04d829ff0eb55c03ef2eff6c3431ff7",
+ "queries": 102,
+ "pageSize": 6,
+ "faults": [
+  {
+   "fault": "none",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "No pictures found. Check the spelling or try one word.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openclipart=down",
+   "fullPageOne": 100,
+   "partialPageOne": 0,
+   "emptyPageOne": 2,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 99,
+    "A picture source did not answer. Try again later for more pictures.": 2,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openclipart=slow",
+   "fullPageOne": 100,
+   "partialPageOne": 0,
+   "emptyPageOne": 2,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 99,
+    "A picture source did not answer. Try again later for more pictures.": 2,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openclipart=throttled",
+   "fullPageOne": 100,
+   "partialPageOne": 0,
+   "emptyPageOne": 2,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 99,
+    "A picture source did not answer. Try again later for more pictures.": 2,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openclipart=broken",
+   "fullPageOne": 100,
+   "partialPageOne": 0,
+   "emptyPageOne": 2,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 99,
+    "A picture source did not answer. Try again later for more pictures.": 2,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openclipart=malformed",
+   "fullPageOne": 100,
+   "partialPageOne": 0,
+   "emptyPageOne": 2,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 99,
+    "A picture source did not answer. Try again later for more pictures.": 2,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "commons=down",
+   "fullPageOne": 93,
+   "partialPageOne": 4,
+   "emptyPageOne": 5,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 90,
+    "Showing results for mamã.": 1,
+    "A picture source did not answer. Try again later for more pictures.": 9,
+    "Showing results for Dog (zodiac).": 1,
+    "Showing results for elephant.": 1
+   }
+  },
+  {
+   "fault": "commons=slow",
+   "fullPageOne": 93,
+   "partialPageOne": 4,
+   "emptyPageOne": 5,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 90,
+    "Showing results for mamã.": 1,
+    "A picture source did not answer. Try again later for more pictures.": 9,
+    "Showing results for Dog (zodiac).": 1,
+    "Showing results for elephant.": 1
+   }
+  },
+  {
+   "fault": "commons=throttled",
+   "fullPageOne": 93,
+   "partialPageOne": 4,
+   "emptyPageOne": 5,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 90,
+    "Showing results for mamã.": 1,
+    "A picture source did not answer. Try again later for more pictures.": 9,
+    "Showing results for Dog (zodiac).": 1,
+    "Showing results for elephant.": 1
+   }
+  },
+  {
+   "fault": "commons=broken",
+   "fullPageOne": 93,
+   "partialPageOne": 4,
+   "emptyPageOne": 5,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 90,
+    "Showing results for mamã.": 1,
+    "A picture source did not answer. Try again later for more pictures.": 9,
+    "Showing results for Dog (zodiac).": 1,
+    "Showing results for elephant.": 1
+   }
+  },
+  {
+   "fault": "commons=malformed",
+   "fullPageOne": 93,
+   "partialPageOne": 4,
+   "emptyPageOne": 5,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 90,
+    "Showing results for mamã.": 1,
+    "A picture source did not answer. Try again later for more pictures.": 9,
+    "Showing results for Dog (zodiac).": 1,
+    "Showing results for elephant.": 1
+   }
+  },
+  {
+   "fault": "wikidata=down",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "A picture source did not answer. Try again later for more pictures.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "wikidata=slow",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "A picture source did not answer. Try again later for more pictures.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "wikidata=throttled",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "A picture source did not answer. Try again later for more pictures.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "wikidata=broken",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "A picture source did not answer. Try again later for more pictures.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "wikidata=malformed",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "A picture source did not answer. Try again later for more pictures.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openmoji=down",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "No pictures found. Check the spelling or try one word.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openmoji=slow",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "No pictures found. Check the spelling or try one word.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openmoji=throttled",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "No pictures found. Check the spelling or try one word.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openmoji=broken",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "No pictures found. Check the spelling or try one word.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  },
+  {
+   "fault": "openmoji=malformed",
+   "fullPageOne": 101,
+   "partialPageOne": 0,
+   "emptyPageOne": 1,
+   "sourceDownOnFullPage": 0,
+   "notices": {
+    "(none)": 100,
+    "No pictures found. Check the spelling or try one word.": 1,
+    "Showing results for confucius institute.": 1
+   }
+  }
+ ]
+}
