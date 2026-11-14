@@ -91,6 +91,24 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#5](https://github.com/martonpaulo/supernote-tools/issues/5)9].
 
+### What a plugin can show while a no-view action runs
+
+A lasso or toolbar button with `showType: 0` runs with no plugin view
+([PluginButton](https://docs.supernote.com/en/api-reference/supernote-plugin/types/plugin-button)).
+Read on 2026-11-14 for [#103](https://github.com/martonpaulo/supernote-tools/issues/103): every page
+`docs.supernote.com/llms.txt` lists, and the `sn-plugin-lib` 0.2.3 source in a plugin's
+`node_modules`. No surface is both on the note and under the plugin's control:
+
+| Surface | Show and clear | Where it is known from |
+| :--- | :--- | :--- |
+| Toast | `sn-plugin-lib` has none. React Native's own `ToastAndroid` (not the plugin API) shows a text toast with the app context, so it needs no activity; it has no cancel call and disappears after about 2 s or 3.5 s by itself | [official] docs index; React Native 0.79.2 `ToastModule.kt`. Whether the host loads the module and the screen shows the toast: [inference], to test |
+| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, `plugins/ink2pic/docs/device-tests.md`]. Both pass `getCurrentActivity()`, which the host leaves null, and a native exception destroys the plugin (`plugins/ink2pic/docs/brief.md` section 10.5) |
+| Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; whether the view can be small or see-through over the note: to test |
+| Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
+| Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
+
+The choice between them is on [#103](https://github.com/martonpaulo/supernote-tools/issues/103).
+
 ## Files and sync
 
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
