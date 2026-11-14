@@ -4,4 +4,5 @@ export const PluginManager = {
   registerConfigButtonListener: jest.fn(),
   registerButton: jest.fn(),
   showPluginView: jest.fn(),
+  closePluginView: jest.fn(),
 };
