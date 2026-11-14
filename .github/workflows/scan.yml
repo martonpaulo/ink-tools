@@ -1,16 +1,37 @@
 name: Scan
 
+# The weekly dependency audit, plus the Markdown check of the root documents on every change to them
+# (#77): no subproject workflow starts for README.md, ROADMAP.md, AGENTS.md or docs/.
 on:
   schedule:
     - cron: "0 6 * * 1"
+  push:
+    branches: [main]
+    paths: ['*.md', 'docs/**', '.github/workflows/scan.yml']
+  pull_request:
+    paths: ['*.md', 'docs/**', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  docs:
+    name: root documents
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the Markdown (text check and issue links)
+        run: |
+          python3 plugins/ink2pic/scripts/text_check.py .
+          python3 plugins/ink2pic/scripts/issue_links.py . --repo "$GITHUB_REPOSITORY"
+
   npm-audit:
     name: npm audit ${{ matrix.dir }}
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
