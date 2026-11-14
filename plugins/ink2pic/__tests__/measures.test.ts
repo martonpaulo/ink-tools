@@ -244,6 +244,21 @@ describe('needsContour (#66, owner decision D5 A)', () => {
     expect(chooseLook(spain, 'spain', false, undefined, signal)).toBe('found');
   });
 
+  it('shows a busy photo as found, as its contour is speckle the measures miss (#24)', () => {
+    // «Cidade Maravilhosa», Rio de Janeiro from the air (lab, after-20): 46 % edges; its
+    // drawing has 0.18 fragments and 0.35 ink, under both speckle limits, yet reads as dots.
+    const aerial = {...photo, edge: 0.46};
+    const drawing = {...outline, fragments: 0.18, ink: 0.35};
+    expect(needsContour(aerial, 'rio de janeiro')).toBe(true);
+    expect(chooseLook(aerial, 'rio de janeiro')).toBe('found');
+    expect(chooseLook(aerial, 'rio de janeiro', false, drawing)).toBe('found');
+    expect(chooseLook(aerial, 'rio de janeiro', true)).toBe('found');
+    // A Napoleon engraving at 38 % edges still makes a clean drawing.
+    const engraving = {...photo, edge: 0.38};
+    expect(chooseLook(engraving, 'napoleon')).toBe('contour');
+    expect(chooseLook(engraving, 'napoleon', false, drawing)).toBe('contour');
+  });
+
   it('converts dark clip art too: «apple» shows no black silhouette (#81)', () => {
     expect(needsContour(glossy, 'apple')).toBe(true);
     expect(needsContour(glossy, 'apple photo')).toBe(false);

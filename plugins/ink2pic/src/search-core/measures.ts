@@ -231,6 +231,20 @@ export function isSpeckled(contour: Measures): boolean {
 }
 
 /**
+ * A photo so busy that its contour drawing is speckle whatever its measures say: a city seen from
+ * the air, a crowd of leaves, a wall of stones. Its many short strokes join into parts too long
+ * for `fragments`, so `isSpeckled` misses them (#24: «Cidade Maravilhosa» at 0.18). In the search
+ * lab's 411 converted thumbnails of pages 1 and 2 (run after-20), each of the 19 photos with 40 %
+ * edge pixels or more became a drawing of dots and dashes; the clean ones were under it, the
+ * nearest a Napoleon engraving at 38 %. It is shown as found, and no drawing is made.
+ */
+const BUSY_EDGE = 0.4;
+
+export function isBusy(found: Measures): boolean {
+  return found.edge >= BUSY_EDGE;
+}
+
+/**
  * Whether the picture is faint line work on paper, which the insert darkens (#81). The rule is the
  * native one, `EinkPixels.isFaintLines`, which darkens it: one owner.
  */
@@ -436,8 +450,8 @@ export type Prepared = {measures: Measures; look: Look};
 
 /**
  * The look of a thumbnail measured as `found` (#66, #81, #83): its contour drawing when
- * `needsContour` names it or the person chose «All contour» (#70), unless that drawing is mostly
- * speckle; else darkened when it is faint line work; else as found. Without `contour`, the
+ * `needsContour` names it or the person chose «All contour» (#70), unless the photo is too busy
+ * for one (#24) or that drawing is mostly speckle; else darkened when it is faint line work; else as found. Without `contour`, the
  * drawing is not made yet, and 'contour' says to make it; call again with its measures. A flag
  * (`result`) keeps its grey unless the person chose «All contour» (#20).
  */
@@ -450,7 +464,9 @@ export function chooseLook(
 ): Look {
   const flag = result !== undefined && showsFlag(result);
   if (allContour || (needsContour(found, query) && !flag)) {
-    return contour && isSpeckled(contour) ? 'found' : 'contour';
+    return isBusy(found) || (contour && isSpeckled(contour))
+      ? 'found'
+      : 'contour';
   }
   return isFaintLines(found) ? 'darkened' : 'found';
 }
