@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Pilot F, «Folio and pen greys»: a device in the Dark Blue folio, with its pen loop, showing three strokes in the device's pen colours.
+       Palette: #EFEFEF supernote.com background, #4F4C5D Dark Blue folio, #FEFEFE pen white, #000000 pen black, #9D9D9D pen dark gray, #C9C9C9 pen light gray. -->
+  <rect width="512" height="512" rx="112" fill="#EFEFEF"/>
+  <rect x="368" y="138" width="50" height="86" rx="14" fill="#4F4C5D"/>
+  <rect x="104" y="80" width="280" height="352" rx="28" fill="#4F4C5D"/>
+  <rect x="140" y="116" width="208" height="280" rx="8" fill="#FEFEFE"/>
+  <path d="M174 184 H314" stroke="#000000" stroke-width="28" stroke-linecap="round"/>
+  <path d="M174 256 H290" stroke="#9D9D9D" stroke-width="28" stroke-linecap="round"/>
+  <path d="M174 328 H260" stroke="#C9C9C9" stroke-width="28" stroke-linecap="round"/>
+</svg>

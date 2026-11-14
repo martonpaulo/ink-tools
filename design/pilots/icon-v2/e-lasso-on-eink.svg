@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Pilot E, «Lasso on e-ink»: a dashed lasso closes around one ink stroke on the e-ink screen grey.
+       Palette: #C9C9C9 pen light gray (close to the Manta screen, #CCCDCC), #FEFEFE pen white, #000000 pen black, #383838 Partner app ink. -->
+  <rect width="512" height="512" rx="112" fill="#C9C9C9"/>
+  <path d="M256 92 C362 88 432 160 420 252 C410 344 334 414 246 414 C150 414 86 344 92 250 C98 158 166 96 256 92 Z" fill="#FEFEFE"/>
+  <path d="M256 92 C362 88 432 160 420 252 C410 344 334 414 246 414 C150 414 86 344 92 250 C98 158 166 96 256 92 Z" fill="none" stroke="#000000" stroke-width="26" stroke-linecap="round" stroke-dasharray="58 40"/>
+  <path d="M168 300 C200 232 230 222 252 266 C272 306 302 304 340 220" fill="none" stroke="#383838" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
