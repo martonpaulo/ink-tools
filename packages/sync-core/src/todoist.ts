@@ -45,6 +45,9 @@ export function fromTodoist(t: TodoistTask): RemoteTask {
 export function toTodoistBody(c: TaskContent): Record<string, unknown> {
   const body: Record<string, unknown> = {content: c.title, description: c.detail};
   if (c.due === null) body.due_string = 'no date';
+  // shortcut: a due at exactly UTC midnight is how a date-only due reads back (#66), so it is
+  // written as `due_date`; a task genuinely timed at 00:00 UTC turns date-only. Upgrade with an all-day flag.
+  else if (c.due % 86400000 === 0) body.due_date = new Date(c.due).toISOString().slice(0, 10);
   else body.due_datetime = new Date(c.due).toISOString().replace(/\.\d{3}Z$/, 'Z');
   return body;
 }

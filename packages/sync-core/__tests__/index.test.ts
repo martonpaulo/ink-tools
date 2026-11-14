@@ -145,6 +145,10 @@ describe('todoist', () => {
     expect(fromTodoist({id: '8', content: 'x', due: {date: '2026-11-20'}}).due).toBe(Date.parse('2026-11-20T00:00:00Z'));
     expect(toTodoistBody(c('x', {due: Date.parse('2026-11-20T10:00:00Z')}))).toMatchObject({due_datetime: '2026-11-20T10:00:00Z'});
     expect(toTodoistBody(c('x'))).toMatchObject({due_string: 'no date'});
+    // a date-only task read from Todoist stays date-only when written back (#66)
+    const back = toTodoistBody(c('x', {due: fromTodoist({id: '8', content: 'x', due: {date: '2026-11-20'}}).due}));
+    expect(back).toMatchObject({due_date: '2026-11-20'});
+    expect(back).not.toHaveProperty('due_datetime');
   });
 
   test('pages through the list, sends the token and closes a completed task', async () => {
