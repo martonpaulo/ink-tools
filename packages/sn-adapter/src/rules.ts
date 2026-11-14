@@ -12,7 +12,7 @@ function pickColumns(columns: string[], row: Row): Row {
 /** A calendar event the plugin writes carries the descriptor's tag (`tag=task`), so the app shows it. */
 export function toCalendarInsert(d: Descriptor, event: Row): Row {
   const row = pickColumns(d.calendar.tables.events.columns, event);
-  row.tag = d.calendar.rules.writeTag as string;
+  row.tag = d.calendar.rules.writeTag;
   return row;
 }
 
@@ -25,7 +25,7 @@ export interface TodoInsertContext {
 export function toTodoInsert(d: Descriptor, task: Row, ctx: TodoInsertContext): Row {
   const t = d.todo;
   const row = pickColumns(t.tables.tasks.columns, task);
-  for (const col of t.rules.requiredOnInsert as string[]) {
+  for (const col of t.rules.requiredOnInsert) {
     if (row[col] === undefined || row[col] === null || row[col] === '') throw new Error(`To-Do insert needs ${col}`);
   }
   const list = row.taskListId;
@@ -34,6 +34,6 @@ export function toTodoInsert(d: Descriptor, task: Row, ctx: TodoInsertContext): 
     if (list === undefined || list === null || list === '') throw new Error('To-Do insert needs taskListId of an existing list');
     if (!ctx.existingListIds.includes(String(list))) throw new Error(`taskListId ${String(list)} does not match an existing list`);
   }
-  row.hasSync = t.rules.writeHasSync as number; // 0 = the app uploads it to Supernote Cloud
+  row.hasSync = t.rules.writeHasSync; // 0 = the app uploads it to Supernote Cloud
   return row;
 }

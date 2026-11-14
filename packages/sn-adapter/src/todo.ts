@@ -49,7 +49,7 @@ export function todoTaskToRow(
     title: task.title,
     detail: task.detail,
     dueTime: task.due,
-    status: (task.completed ? r.statusCompleted : r.statusOpen) as string,
+    status: task.completed ? r.statusCompleted : r.statusOpen,
     completedTime: task.completed ? now : null,
     lastModified: now,
   };

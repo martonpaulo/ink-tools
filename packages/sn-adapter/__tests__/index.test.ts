@@ -30,6 +30,19 @@ test('parseDescriptor rejects a wrong schema and a missing authority', () => {
   expect(() => parseDescriptor({...D, todo: {...D.todo, authority: ''}})).toThrow(/authority/);
 });
 
+test('parseDescriptor refuses an update that lacks a rule the adapter reads (#84)', () => {
+  const copy = () => JSON.parse(JSON.stringify(D));
+  const noTag = copy();
+  delete noTag.calendar.rules.writeTag;
+  expect(() => parseDescriptor(noTag)).toThrow(/calendar: rule writeTag must be a string/);
+  const noStatus = copy();
+  delete noStatus.todo.rules.statusCompleted;
+  expect(() => parseDescriptor(noStatus)).toThrow(/todo: rule statusCompleted/);
+  const badList = copy();
+  badList.todo.rules.requiredOnInsert = 'title';
+  expect(() => parseDescriptor(badList)).toThrow(/requiredOnInsert must be a string\[\]/);
+});
+
 test('probe: matching device is available', async () => {
   const all = await probeAll(D, reader(full));
   expect(all.every(s => s.available)).toBe(true);
