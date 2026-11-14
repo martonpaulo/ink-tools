@@ -47,3 +47,11 @@ jobs:
 
       - name: Check the package holds the native module
         run: unzip -l build/outputs/Probe.snplg | grep -q app.npk
+
+      - name: Upload the plugin package for the owner to install on the device
+        # Probe has no release (dev-only); its .snplg is fetched from this run's artifact (#59).
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Probe-snplg
+          path: plugins/probe/build/outputs/Probe.snplg
+          if-no-files-found: error
