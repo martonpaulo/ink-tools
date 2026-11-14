@@ -39,7 +39,7 @@ explained.
 
 - The screen shows **16 grey levels**; PDFs are shown in 16 greys since firmware 3.31.45
   [official changelog].
-- **Pen colours** (handwriting only): `[#000000](https://github.com/martonpaulo/supernote-tools/issues/000000)`, `[#9](https://github.com/martonpaulo/supernote-tools/issues/9)D9D9D`, `#C9C9C9`, `#FEFEFE` [official,
+- **Pen colours** (handwriting only): `#000000`, `#9D9D9D`, `#C9C9C9`, `#FEFEFE` [official,
   plugin API types
   [Stroke](https://docs.supernote.com/en/api-reference/supernote-plugin/types/stroke) and
   [PenInfo](https://docs.supernote.com/en/api-reference/supernote-plugin/types/pen-info)].
@@ -48,11 +48,11 @@ explained.
   | Hex | Where | How known |
   | :--- | :--- | :--- |
   | `#EFEFEF`, `#E5E5E5` | supernote.com background, secondary background | [official] site theme |
-  | `[#050504](https://github.com/martonpaulo/supernote-tools/issues/050504)`, `[#000000](https://github.com/martonpaulo/supernote-tools/issues/000000)`, `[#4](https://github.com/martonpaulo/supernote-tools/issues/4)A4A4A` | site accent, text, headings | [official] site theme |
-  | `[#919](https://github.com/martonpaulo/supernote-tools/issues/919)DA9` | site grey-blue button | [official] site theme |
-  | `[#383838](https://github.com/martonpaulo/supernote-tools/issues/383838)` | ink in the Supernote Partner app icon | [measured] App Store image |
-  | `[#4](https://github.com/martonpaulo/supernote-tools/issues/4)F4C5D` | Vegan Leather Folio, Dark Blue | [measured] product photo |
-  | `[#484848](https://github.com/martonpaulo/supernote-tools/issues/484848)`, `#BBBDBC`, `#D4D4D4` | Canvas Folio grey, Half Folio light grey, Vegan Leather White | [measured] product photos |
+  | `#050504`, `#000000`, `#4A4A4A` | site accent, text, headings | [official] site theme |
+  | `#919DA9` | site grey-blue button | [official] site theme |
+  | `#383838` | ink in the Supernote Partner app icon | [measured] App Store image |
+  | `#4F4C5D` | Vegan Leather Folio, Dark Blue | [measured] product photo |
+  | `#484848`, `#BBBDBC`, `#D4D4D4` | Canvas Folio grey, Half Folio light grey, Vegan Leather White | [measured] product photos |
   | `#CCCDCC` | the Manta's e-ink screen in product photos | [measured] product photo |
 
   Photo-measured values are a median of a flat area and can shift with the photo's light. Sources
@@ -62,7 +62,7 @@ explained.
 
 Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 
-- Use only a few greys, far apart: text, rules and borders black; context text `[#444](https://github.com/martonpaulo/supernote-tools/issues/444)`; strong
+- Use only a few greys, far apart: text, rules and borders black; context text `#444`; strong
   fill `#aaa`; highlight `#ccc`; soft panels `#eee`; background white. Never a tint as the only
   cue.
 - Pastel and yellow fills turn white on the screen; a colour must also differ in lightness.
@@ -82,14 +82,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Limits: 30 installed, 10 enabled [official, 3.29.44 announcement].
 - A plugin's view runs its start code once per plugin-host process: going back and opening the
   view again does not re-run it; `am force-stop com.ratta.supernote.pluginhost` starts a fresh
-  process [measured, 2026-11-14, [#9](https://github.com/martonpaulo/supernote-tools/issues/9)1].
+  process [measured, 2026-11-14, [#91](https://github.com/martonpaulo/supernote-tools/issues/91)].
 - A plugin can open a TCP listener and accept a connection over Wi-Fi, with the screen on and off
-  [measured, 2026-11-14, [#9](https://github.com/martonpaulo/supernote-tools/issues/9)1].
+  [measured, 2026-11-14, [#91](https://github.com/martonpaulo/supernote-tools/issues/91)].
 - HTTPS `fetch` works; cleartext `http://` fails at once [measured, `brief.md`].
 - `recognizeElements` has no language parameter; it uses the device's handwriting language
   [official signature].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
-  Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#5](https://github.com/martonpaulo/supernote-tools/issues/5)9].
+  Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#59](https://github.com/martonpaulo/supernote-tools/issues/59)].
 
 ### What a plugin can show while a no-view action runs
 
@@ -115,7 +115,7 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
   [#23](https://github.com/martonpaulo/supernote-tools/issues/23)]. Ink2Pic keeps its offline symbols in `/storage/emulated/0/.ink2pic-symbols` for
   that reason.
-- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#2](https://github.com/martonpaulo/supernote-tools/issues/2)2].
+- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/supernote-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/snadb/README.md`].
 
