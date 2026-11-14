@@ -38,5 +38,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check the subproject's Markdown (text check and issue links, #77)
+        working-directory: .
+        run: |
+          python3 plugins/ink2pic/scripts/text_check.py packages
+          python3 plugins/ink2pic/scripts/issue_links.py packages --repo "$GITHUB_REPOSITORY"
+
       - name: Run the gate
         run: npm run validate
