@@ -6,5 +6,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
     "test": "jest --passWithNoTests"
+  },
+  "devDependencies": {
+    "@supernote-tools/sn-adapter": "*"
   }
 }
