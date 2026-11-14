@@ -23,8 +23,28 @@ const STATES: Record<string, ShellState> = {
   modules: {
     kind: 'ready',
     modules: [
-      {id: 'calendar', name: 'Calendar'},
-      {id: 'todo', name: 'To-do', unavailable: 'the To-Do provider did not answer'},
+      {
+        id: 'calendar',
+        name: 'Calendar',
+        status: {
+          state: 'ran',
+          run: {
+            module: 'calendar',
+            at: new Date(2026, 10, 14, 14, 5).getTime(),
+            counts: {added: 3, changed: 1, removed: 0},
+            errors: ['Work: HTTP 500'],
+            warnings: [],
+          },
+        },
+      },
+      {
+        id: 'todo',
+        name: 'To-do',
+        status: {
+          state: 'blocked',
+          reasons: ['the To-Do provider did not answer'],
+        },
+      },
     ],
   },
 };
@@ -35,7 +55,9 @@ describe('SettingsShell (#93)', () => {
   });
 
   it('marks the title as a header', () => {
-    const title = render(STATES.empty).root.findByProps({accessibilityRole: 'header'});
+    const title = render(STATES.empty).root.findByProps({
+      accessibilityRole: 'header',
+    });
     expect(title.props.children).toBe(copy.title);
   });
 
@@ -50,16 +72,22 @@ describe('SettingsShell (#93)', () => {
   it('retries from the error state', () => {
     const onRetry = jest.fn();
     const tree = render({kind: 'error', reason: 'x', onRetry});
-    act(() => tree.root.findByProps({accessibilityRole: 'button'}).props.onPress());
+    act(() =>
+      tree.root.findByProps({accessibilityRole: 'button'}).props.onPress(),
+    );
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('says in words why a module is unavailable', () => {
+  it('shows the last sync of each module and why a module that is on does not run (#88)', () => {
     expect(texts(render(STATES.modules))).toEqual([
       copy.title,
       'Calendar',
+      'Last synced 2026-11-14 14:05.',
+      '3 added, 1 changed, 0 removed',
+      'Not synced (1):',
+      'Work: HTTP 500',
       'To-do',
-      'Not available: the To-Do provider did not answer',
+      'On, but not running: the To-Do provider did not answer',
     ]);
   });
 });

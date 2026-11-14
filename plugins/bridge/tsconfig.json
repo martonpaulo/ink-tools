@@ -6,6 +6,8 @@
     "paths": {
       "@supernote-tools/ui-kit": ["../../packages/ui-kit/src"],
       "@supernote-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
+      // Types only for now (#88): no Metro or Jest mapping until Bridge runs sync-core code.
+      "@supernote-tools/sync-core": ["../../packages/sync-core/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },
