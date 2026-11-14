@@ -70,7 +70,8 @@ export interface SyncResult {
  * - a task on one side only is created on the other;
  * - a linked task changed on one side is copied to the other;
  * - changed on both sides, the later `modified` wins, a tie goes to the service;
- * - deleted (or, for the service, gone) on one side removes it from the other.
+ * - deleted (soft-delete flag on the tablet, gone on the service) removes it from the other; a tablet
+ *   row that is merely absent from the list is an error and removes nothing.
  */
 export async function syncTasks(
   provider: TaskProvider,
@@ -132,7 +133,10 @@ async function syncLinked(
   const remote = remotes.get(link.remoteId) ?? (await provider.get(link.remoteId));
   const device = devices.get(link.localId);
 
-  if (!device || device.deleted) {
+  // A row missing from the list is not a delete: only the soft-delete flag is. An empty or failed
+  // read must never remove real service tasks, so fail closed and keep the link (#69).
+  if (!device) throw new Error('device row missing from the list; nothing removed, link kept');
+  if (device.deleted) {
     if (remote) {
       await provider.remove(link.remoteId);
       result.counts.removedRemote++;

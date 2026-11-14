@@ -114,6 +114,17 @@ test('a deletion on either side propagates, and a completed remote task is not a
   expect(done.log).toEqual(['update local a']);
 });
 
+test('an empty device list removes nothing from the service and reports an error (#69)', async () => {
+  const base = c('a');
+  const f = fakes([R('r1', base), R('r2', c('b'))], []);
+  const links = [link('r1', 'l1', base), link('r2', 'l2', c('b'))];
+  const out = await syncTasks(f.provider, f.store, links);
+  expect(f.log).toEqual([]);
+  expect(out.counts.removedRemote).toBe(0);
+  expect(out.links).toEqual(links);
+  expect(out.errors).toHaveLength(2);
+});
+
 test('one failing task is reported and kept for the next pass, the others still sync', async () => {
   const base = c('a');
   const f = fakes([R('r1', c('a2')), R('r2', c('b'))], [D('l1', base)]);
