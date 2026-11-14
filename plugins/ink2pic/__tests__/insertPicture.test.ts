@@ -537,13 +537,12 @@ describe('the insert options from Settings (#70)', () => {
     expect(image.prepareForEink.mock.calls[0][2]).toBe(960);
   });
 
-  it('inserts every picture as a contour drawing under All contour', async () => {
-    await insertPicture(result, 'soup', place, false, {
-      width: 640,
-      placement: 'below',
-      contour: true,
-    });
-    expect(image.prepareForEink.mock.calls[0][4]).toBe(true);
+  it('inserts the picture as its tile shows it under All contour: a photo shown as found stays a photo (#104)', async () => {
+    const allContour = {width: 640, placement: 'below' as const, contour: true};
+    await insertPicture(result, 'soup', place, false, allContour);
+    expect(image.prepareForEink.mock.calls[0][4]).toBe(false);
+    await insertPicture(result, 'soup', place, true, allContour);
+    expect(image.prepareForEink.mock.calls[1][4]).toBe(true);
   });
 
   it('shrinks a larger library picture to the chosen width', async () => {

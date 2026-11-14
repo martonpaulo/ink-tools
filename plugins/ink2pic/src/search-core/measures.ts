@@ -174,24 +174,45 @@ export function pixelKind(m: Measures): PixelKind {
   return clean ? 'clean' : 'plain';
 }
 
-const CONVERTED: ReadonlySet<PixelKind> = new Set(['dark', 'photo', 'solid']);
+const CONVERTED: ReadonlySet<PixelKind> = new Set(['solid']);
 const ALREADY_LINES: ReadonlySet<PixelKind> = new Set([
   'outline',
   'text',
   'faint',
   'blank',
 ]);
+/** A photo or a dark painting: never a contour drawing (owner, #104, D34 B). */
+const PHOTO_LIKE: ReadonlySet<PixelKind> = new Set(['dark', 'photo']);
 
 /**
- * Whether the picture is shown and inserted as a contour drawing (owner decision D5 A): a dark
- * picture, a photo or dark clip art on paper (#81), or any picture not already line work when
- * the query asks for an outline; never when the query asks for a photo or a painting, and never
- * for a few flat areas.
+ * Whether the thumbnail reads as a photo or a dark painting. It is shown and inserted as found,
+ * in grey with the e-ink curve, never as a contour drawing, whatever the query or the style
+ * (owner, 2026-11-14, #104, replacing D5 A for photos and paintings).
+ */
+export function isPhotoLike(m: Measures): boolean {
+  return isPhotoKind(pixelKind(m));
+}
+
+/** Whether a pixel kind is a photo's or a dark painting's (#104). */
+export function isPhotoKind(kind: PixelKind): boolean {
+  return PHOTO_LIKE.has(kind);
+}
+
+/**
+ * Whether the picture is shown and inserted as a contour drawing: dark clip art on paper (#81),
+ * or any picture not already line work when the query asks for an outline; never a photo or a
+ * dark painting (#104), never when the query asks for a photo or a painting, and never for a few
+ * flat areas.
  */
 export function needsContour(m: Measures, query: string): boolean {
   // The query's style words are read once, by the query pipeline (#65).
   const {styles} = readIntent(query);
-  if (styles.has('photo') || styles.has('painting') || isFlat(m)) {
+  if (
+    styles.has('photo') ||
+    styles.has('painting') ||
+    isFlat(m) ||
+    isPhotoLike(m)
+  ) {
     return false;
   }
   const kind = pixelKind(m);
@@ -440,7 +461,7 @@ export function reorderByMeasures(
 }
 
 /**
- * How a measured thumbnail is shown, and so inserted (owner decision D5 A): as its contour drawing,
+ * How a measured thumbnail is shown, and so inserted (#66, #104): as its contour drawing,
  * darkened (#81), or as found.
  */
 export type Look = 'contour' | 'darkened' | 'found';
@@ -453,7 +474,8 @@ export type Prepared = {measures: Measures; look: Look};
  * `needsContour` names it or the person chose «All contour» (#70), unless the photo is too busy
  * for one (#24) or that drawing is mostly speckle; else darkened when it is faint line work; else as found. Without `contour`, the
  * drawing is not made yet, and 'contour' says to make it; call again with its measures. A flag
- * (`result`) keeps its grey unless the person chose «All contour» (#20).
+ * (`result`) keeps its grey unless the person chose «All contour» (#20). A photo or a dark
+ * painting is never a contour, «All contour» included (#104).
  */
 export function chooseLook(
   found: Measures,
@@ -463,7 +485,10 @@ export function chooseLook(
   result?: SearchResult,
 ): Look {
   const flag = result !== undefined && showsFlag(result);
-  if (allContour || (needsContour(found, query) && !flag)) {
+  const converts = allContour
+    ? !isPhotoLike(found)
+    : needsContour(found, query) && !flag;
+  if (converts) {
     return isBusy(found) || (contour && isSpeckled(contour))
       ? 'found'
       : 'contour';

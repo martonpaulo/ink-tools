@@ -45,7 +45,10 @@ export type InsertOptions = {
   /** The prepared picture's width in page pixels. */
   width: number;
   placement: Placement;
-  /** «All contour»: every picture is inserted as a contour drawing. */
+  /**
+   * «All contour»: the style the early download guesses a library file in (#103). The insert
+   * itself follows the tile, which `chooseLook` drew (#104).
+   */
   contour: boolean;
 };
 
@@ -458,12 +461,9 @@ export async function insertPicture(
   stop: Stop = () => null,
 ): Promise<Done<string>> {
   const chosen = options ?? (await savedOptions());
-  const saved = await picture(
-    result,
-    contour || chosen.contour,
-    chosen.width,
-    early,
-  );
+  // As its tile shows it, «All contour» included: a photo shown as found never goes in as a
+  // contour drawing (#104).
+  const saved = await picture(result, contour, chosen.width, early);
   if (!saved.ok) {
     return atStep('download', saved);
   }

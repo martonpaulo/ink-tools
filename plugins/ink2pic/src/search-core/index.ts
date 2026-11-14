@@ -22,6 +22,8 @@ export type {Fetcher, FetchLike} from './fetcher';
 export {
   chooseLook,
   isFaintLines,
+  isPhotoKind,
+  isPhotoLike,
   isSpeckled,
   lineArt,
   MEASURED_RESULTS,

@@ -1,8 +1,9 @@
 package com.ink2pic.files;
 
 /**
- * Turns a photo or a dark painting into a contour drawing for e-ink (#66, owner decision D5 A;
- * research note 2026-11-search-ranking section 5): a 1 %/99 % contrast stretch, two 3 x 3 median
+ * Turns dark clip art, or a picture asked for as an outline, into a contour drawing for e-ink
+ * (#66, #81); a photo or a dark painting never reaches it (#104, `chooseLook` decides; research
+ * note 2026-11-search-ranking section 5): a 1 %/99 % contrast stretch, two 3 x 3 median
  * passes, then XDoG in its tau form (Winnemöller, Kyprianidis and Olsen 2012) with the sharp
  * parameters, then removal of ink specks and short fragments, then lines one pixel wider on each
  * side (#83), then a soft 3 x 3 blur so edges keep gray ramps, never stair steps (#89). Plain

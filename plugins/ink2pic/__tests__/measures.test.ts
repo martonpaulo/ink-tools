@@ -9,6 +9,7 @@ import {ok, fail, MODULE_CODE} from '../src/sdk/result';
 import {
   chooseLook,
   isFaintLines,
+  isPhotoLike,
   lineArt,
   Measures,
   needsContour,
@@ -182,10 +183,22 @@ describe('faint line work (#81)', () => {
   });
 });
 
-describe('needsContour (#66, owner decision D5 A)', () => {
-  it('converts dark pictures and photos only', () => {
-    expect(needsContour(darkPainting, 'cervantes')).toBe(true);
-    expect(needsContour(photo, 'jesse jackson')).toBe(true);
+describe('needsContour (#66, #104)', () => {
+  it('never converts a photo or a dark painting (#104)', () => {
+    expect(isPhotoLike(darkPainting)).toBe(true);
+    expect(isPhotoLike(photo)).toBe(true);
+    expect(isPhotoLike(glossy)).toBe(false);
+    for (const query of ['cervantes', 'cervantes outline', 'cat coloring page']) {
+      expect(needsContour(darkPainting, query)).toBe(false);
+      expect(needsContour(photo, query)).toBe(false);
+      for (const all of [false, true]) {
+        expect(chooseLook(darkPainting, query, all)).toBe('found');
+        expect(chooseLook(photo, query, all)).toBe('found');
+      }
+    }
+  });
+
+  it('converts dark clip art and keeps line work as it is', () => {
     expect(needsContour(outline, 'cat')).toBe(false);
     expect(needsContour({...glossy, dark: 0.2, ink: 0.2}, 'apple')).toBe(false);
   });
@@ -218,7 +231,8 @@ describe('needsContour (#66, owner decision D5 A)', () => {
       border: 0,
       dark: 0.5,
     };
-    expect(needsContour(spain, 'spain')).toBe(true);
+    // Photo-like at thumbnail size: never a contour, «All contour» included (#104).
+    expect(needsContour(spain, 'spain')).toBe(false);
     const flag = {
       id: 'commons:Flag of Spain.svg',
       source: 'commons' as const,
@@ -228,9 +242,12 @@ describe('needsContour (#66, owner decision D5 A)', () => {
       attribution: 'x',
     };
     expect(chooseLook(spain, 'spain', false, undefined, flag)).toBe('found');
-    expect(chooseLook(spain, 'spain', true, undefined, flag)).toBe('contour');
+    expect(chooseLook(spain, 'spain', true, undefined, flag)).toBe('found');
+    // A flag drawn as dark clip art keeps its grey too, unless the person chose «All contour».
+    expect(chooseLook(glossy, 'spain', false, undefined, flag)).toBe('found');
+    expect(chooseLook(glossy, 'spain', true, undefined, flag)).toBe('contour');
     expect(
-      chooseLook(spain, 'spain', false, undefined, {...flag, title: 'Madrid'}),
+      chooseLook(glossy, 'spain', false, undefined, {...flag, title: 'Madrid'}),
     ).toBe('contour');
     // A photo filed under a flag's category is a photo of the place.
     const place = {
@@ -239,22 +256,23 @@ describe('needsContour (#66, owner decision D5 A)', () => {
       mime: 'image/jpeg',
       tags: ['Flag of a region'],
     };
-    expect(chooseLook(spain, 'spain', false, undefined, place)).toBe('contour');
+    expect(chooseLook(glossy, 'spain', false, undefined, place)).toBe('contour');
     const signal = {...place, title: 'Signal A', mime: 'image/svg+xml'};
-    expect(chooseLook(spain, 'spain', false, undefined, signal)).toBe('found');
+    expect(chooseLook(glossy, 'spain', false, undefined, signal)).toBe('found');
   });
 
   it('shows a busy photo as found, as its contour is speckle the measures miss (#24)', () => {
     // «Cidade Maravilhosa», Rio de Janeiro from the air (lab, after-20): 46 % edges; its
     // drawing has 0.18 fragments and 0.35 ink, under both speckle limits, yet reads as dots.
-    const aerial = {...photo, edge: 0.46};
+    // Busy dark clip art: a photo is never converted anyway (#104).
+    const aerial = {...glossy, edge: 0.46};
     const drawing = {...outline, fragments: 0.18, ink: 0.35};
     expect(needsContour(aerial, 'rio de janeiro')).toBe(true);
     expect(chooseLook(aerial, 'rio de janeiro')).toBe('found');
     expect(chooseLook(aerial, 'rio de janeiro', false, drawing)).toBe('found');
     expect(chooseLook(aerial, 'rio de janeiro', true)).toBe('found');
-    // A Napoleon engraving at 38 % edges still makes a clean drawing.
-    const engraving = {...photo, edge: 0.38};
+    // At 38 % edges it still makes a clean drawing.
+    const engraving = {...glossy, edge: 0.38};
     expect(chooseLook(engraving, 'napoleon')).toBe('contour');
     expect(chooseLook(engraving, 'napoleon', false, drawing)).toBe('contour');
   });
@@ -493,12 +511,13 @@ describe('measureFirstPages (#66)', () => {
     result('line'),
     result('bad'),
   ];
+  // Dark clip art on paper (#81): the one kind still converted by default (#104).
   const byPath: Record<string, Measures> = {
-    '/p/thumbs/dark': darkPainting,
+    '/p/thumbs/dark': glossy,
     '/p/thumbs/line': outline,
     // Light enough to stay as it is (#81).
     '/p/thumbs/gloss': {...glossy, dark: 0.2, ink: 0.2},
-    // The dark painting's contour: thin lines on white.
+    // The clip art's contour: thin lines on white.
     '/p/thumbs/dark.contour.png': {...outline, colours: 16},
   };
   const converted: string[] = [];
@@ -527,7 +546,7 @@ describe('measureFirstPages (#66)', () => {
 
   it('re-sorts by the measured files and logs each kind', async () => {
     const measured = await measureFirstPages(list, '/p', 'x', deps());
-    // The dark painting shows as its contour drawing: after the pictures shown as found (#83).
+    // The dark clip art shows as its contour drawing: after the pictures shown as found (#83).
     expect(measured.results.map(item => item.id)).toEqual([
       'line',
       'web',
@@ -542,14 +561,14 @@ describe('measureFirstPages (#66)', () => {
     ]);
     const text = logLines().join('\n');
     expect(text).toMatch(/pixels line: outline lineArt \d\.\d\d in 2 ms/);
-    expect(text).toContain('pixels dark: dark');
+    expect(text).toContain('pixels dark: solid');
     expect(text).toContain('pixels web: not on the device, not measured');
     expect(text).toContain('pixels bad: NOT_IMAGE: cannot decode');
     expect(text).toContain('pixels: 3 of 5 measured');
     expect(text).toContain('contour dark: 7 ms, now outline');
   });
 
-  it('shows and inserts a dark picture as its contour drawing', async () => {
+  it('shows and inserts dark clip art as its contour drawing', async () => {
     const measured = await measureFirstPages(list, '/p', 'x', deps());
     expect(converted).toEqual([
       '/p/thumbs/dark -> /p/thumbs/dark.contour.png at 400',
@@ -636,6 +655,42 @@ describe('measureFirstPages (#66)', () => {
     expect(measured.contourThumbs.has('line')).toBe(true);
   });
 
+  it('never sends a photo or a dark painting to Contour, whatever the query or style (#104)', async () => {
+    const base = deps();
+    const shots = [result('photo'), result('painting'), result('line')];
+    const real = {
+      ...base,
+      analyzer: {
+        ...base.analyzer,
+        measure: async (path: string) =>
+          path === '/p/thumbs/photo'
+            ? ok(photo)
+            : path === '/p/thumbs/painting'
+            ? ok(darkPainting)
+            : base.analyzer.measure(path),
+      },
+    };
+    for (const query of ['jesse jackson', 'cervantes outline']) {
+      for (const all of [false, true]) {
+        const measured = await measureFirstPages(shots, '/p', query, {
+          ...real,
+          allContour: async () => all,
+        });
+        expect(measured.contourThumbs.has('photo')).toBe(false);
+        expect(measured.contourThumbs.has('painting')).toBe(false);
+        expect(
+          await measureThumb(shots[0], '/p', query, {
+            ...real,
+            allContour: async () => all,
+          }),
+        ).toBe('file:///p/thumbs/photo');
+      }
+    }
+    expect(converted.filter(line => !line.startsWith('/p/thumbs/line'))).toEqual(
+      [],
+    );
+  });
+
   it('writes derived thumbnails to the private thumbs folder, never beside a shared symbol (#103)', async () => {
     const symbol = '/storage/emulated/0/.ink2pic-symbols/1F600.png';
     const greyLines = {...outline, darkest: 190, faintLines: true};
@@ -684,7 +739,7 @@ describe('measureFirstPages (#66)', () => {
     };
     const measured = await measureFirstPages(list, '/p', 'x', failing);
     expect(measured.contourThumbs.has('dark')).toBe(false);
-    expect(measured.measures.get('dark')).toBe(darkPainting);
+    expect(measured.measures.get('dark')).toBe(glossy);
     expect(logLines().join('\n')).toContain('contour dark: IO: disk full');
   });
 
@@ -733,7 +788,7 @@ describe('measureFirstPages (#66)', () => {
       measure: path =>
         path === '/p/thumbs/dark'
           ? new Promise(resolve => {
-              finish = () => resolve(ok(darkPainting));
+              finish = () => resolve(ok(glossy));
             })
           : deps().analyzer.measure(path),
     };
