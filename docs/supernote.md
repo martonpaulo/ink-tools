@@ -1,0 +1,107 @@
+# What we know about the Supernote
+
+The one place for facts about the device that every plugin, tool and design uses. Each fact says
+how it is known: **[measured]** on the owner's tablet, **[official]** from Ratta's docs or
+changelog, **[reported]** by other developers, **[inference]**. Add a fact here when a session
+learns one; a plugin's own brief keeps only what is specific to it.
+
+## Contents
+
+- [The owner's tablet](#the-owners-tablet)
+- [Screen and units](#screen-and-units)
+- [Greys and colours](#greys-and-colours)
+- [Designing for the screen](#designing-for-the-screen)
+- [Plugins](#plugins)
+- [Files and sync](#files-and-sync)
+- [Network and ADB](#network-and-adb)
+
+## The owner's tablet
+
+| Fact | Value | How known |
+| :--- | :--- | :--- |
+| Screen | 1920 x 2560 px, density 300 | [measured] `adb shell wm size`, `wm density`, 2026-11-14 |
+| Model string | `ro.product.model` reads `Supernote Nomad`, though the screen is the Manta's (A5 X2, `getDeviceType()` = `5`) | [measured] 2026-11-14; [official] SDK source for the type |
+| Android | 11 | [measured] `ro.build.version.release` |
+| Firmware | Chauvet 3.31.45, build `Chauvet.E103.2610191001.2559_release` | [measured] `ro.build.display.id`, 2026-11-14 |
+
+Write «the owner's tablet» in issues and docs, not a model name, until the model string is
+explained.
+
+## Screen and units
+
+- Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
+  arithmetic in `plugins/ink2pic/docs/brief.md`].
+- A page has the same 1920 x 2560 size; `getPageSize` answers it [measured, build 0.1.0 (3)].
+- A design board for this screen is 3:4; the study sheets use 794 x 1059 CSS px boards and export
+  to the Manta page.
+
+## Greys and colours
+
+- The screen shows **16 grey levels**; PDFs are shown in 16 greys since firmware 3.31.45
+  [official changelog].
+- **Pen colours** (handwriting only): `[#000000](https://github.com/martonpaulo/supernote-tools/issues/000000)`, `[#9](https://github.com/martonpaulo/supernote-tools/issues/9)D9D9D`, `#C9C9C9`, `#FEFEFE` [official,
+  plugin API types
+  [Stroke](https://docs.supernote.com/en/api-reference/supernote-plugin/types/stroke) and
+  [PenInfo](https://docs.supernote.com/en/api-reference/supernote-plugin/types/pen-info)].
+- **Ratta's own tones** (no brand colour; greys and one dark blue):
+
+  | Hex | Where | How known |
+  | :--- | :--- | :--- |
+  | `#EFEFEF`, `#E5E5E5` | supernote.com background, secondary background | [official] site theme |
+  | `[#050504](https://github.com/martonpaulo/supernote-tools/issues/050504)`, `[#000000](https://github.com/martonpaulo/supernote-tools/issues/000000)`, `[#4](https://github.com/martonpaulo/supernote-tools/issues/4)A4A4A` | site accent, text, headings | [official] site theme |
+  | `[#919](https://github.com/martonpaulo/supernote-tools/issues/919)DA9` | site grey-blue button | [official] site theme |
+  | `[#383838](https://github.com/martonpaulo/supernote-tools/issues/383838)` | ink in the Supernote Partner app icon | [measured] App Store image |
+  | `[#4](https://github.com/martonpaulo/supernote-tools/issues/4)F4C5D` | Vegan Leather Folio, Dark Blue | [measured] product photo |
+  | `[#484848](https://github.com/martonpaulo/supernote-tools/issues/484848)`, `#BBBDBC`, `#D4D4D4` | Canvas Folio grey, Half Folio light grey, Vegan Leather White | [measured] product photos |
+  | `#CCCDCC` | the Manta's e-ink screen in product photos | [measured] product photo |
+
+  Photo-measured values are a median of a flat area and can shift with the photo's light. Sources
+  and links: [#97](https://github.com/martonpaulo/supernote-tools/issues/97).
+
+## Designing for the screen
+
+Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
+
+- Use only a few greys, far apart: text, rules and borders black; context text `[#444](https://github.com/martonpaulo/supernote-tools/issues/444)`; strong
+  fill `#aaa`; highlight `#ccc`; soft panels `#eee`; background white. Never a tint as the only
+  cue.
+- Pastel and yellow fills turn white on the screen; a colour must also differ in lightness.
+- Lines never thinner than 1 px (1.5 px for borders); body text about 14 px on a 794 px board
+  (about 8 pt on the Manta), 12 px the floor; photos in grey with a little more contrast.
+- No handwritten font, never italic; Atkinson Hyperlegible reads well.
+- One item per line; frames only where they carry meaning.
+- Study sheets: content only in the top half; the bottom half is for handwriting.
+- Plugin screens: touch target at least 10 mm, text at least 3 mm; the tokens live in
+  `packages/ui-kit` and a test refuses smaller sizes ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
+
+## Plugins
+
+- Install: copy the `.snplg` to `MyStyle/`, then Settings > Apps > Plugins > Add Plugin [official].
+  Reinstalling from the existing entry reinstalls the host's managed copy, not the new file
+  [reported]; a versioned file name avoids picking the wrong one.
+- Limits: 30 installed, 10 enabled [official, 3.29.44 announcement].
+- A plugin's view runs its start code once per plugin-host process: going back and opening the
+  view again does not re-run it; `am force-stop com.ratta.supernote.pluginhost` starts a fresh
+  process [measured, 2026-11-14, [#9](https://github.com/martonpaulo/supernote-tools/issues/9)1].
+- A plugin can open a TCP listener and accept a connection over Wi-Fi, with the screen on and off
+  [measured, 2026-11-14, [#9](https://github.com/martonpaulo/supernote-tools/issues/9)1].
+- HTTPS `fetch` works; cleartext `http://` fails at once [measured, `brief.md`].
+- `recognizeElements` has no language parameter; it uses the device's handwriting language
+  [official signature].
+- Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
+  Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#5](https://github.com/martonpaulo/supernote-tools/issues/5)9].
+
+## Files and sync
+
+- `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
+  small files cost minutes; a hidden folder outside the synced folders is skipped [measured, [#2](https://github.com/martonpaulo/supernote-tools/issues/2)3].
+- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#2](https://github.com/martonpaulo/supernote-tools/issues/2)2].
+- The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
+  [measured, `cli/snadb/README.md`].
+
+## Network and ADB
+
+- USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`snadb wifi on`) and off
+  with `snadb wifi off` [measured].
+- With `wifi_sleep_policy` at `2`, the tablet kept answering while asleep for 15 minutes and lost
+  1% battery [measured, `cli/snadb/README.md`].

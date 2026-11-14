@@ -35,7 +35,7 @@ Before editing under a path, read the file its row names. A module with rules of
 
 | Path | Read first |
 | :--- | :--- |
-| `plugins/<name>/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) |
+| `plugins/<name>/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) and `docs/supernote.md` (device facts; add each new one there) |
 | `cli/<name>/` | that tool's own `AGENTS.md` (host-side tools) |
 | `packages/` | `packages/README.md` and `docs/architecture.md` (shared packages) |
 | `templates/` | `docs/product.md` (note templates; created when the first one lands) |
