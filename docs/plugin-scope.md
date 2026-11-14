@@ -46,6 +46,19 @@ without reaching for the phone. The owner lives between PT and ES, maybe ZH. Sha
 dictionary/translation engine with `lookup`'s definition mode (one provider interface). Pairs are
 opt in/out.
 
+## Dictionary and translation engine (shared)
+
+Used by `lingo` and `lookup`'s definition mode, behind a `DictionaryProvider` interface. Decisions
+(interview 2026-11-14):
+
+- **Hybrid:** offline for common words, online fallback when a word is missing — the same shape as
+  `lookup`'s image path.
+- **Keyless, open sources:** Wiktionary / Wikidata and the like, no paid API key (the `ink2pic`
+  philosophy). A paid provider (DeepL, Google) can be an opt-in later behind the same interface.
+- **Priority pairs:** PT↔ES and PT↔ZH. Not EN, for now.
+- **Monolingual definition is not a priority**, so `lookup`'s definition mode ranks below
+  translation; `lingo` (translation) is the stronger need.
+
 ## retouch
 
 Edit an image already on the page. Full edit set the owner chose:
