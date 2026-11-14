@@ -162,7 +162,8 @@ function testNative() {
       ...pure, ...javaSources(path.join(root, 'native/tests')),
     ]);
     for (const test of ['SafePathsTest', 'EinkPixelsTest', 'ThumbGateTest', 'ThumbMeasuresTest', 'ContourTest', 'DecolorTest', 'PerceptualHashTest', 'PngTailTest', 'WorkersTest', 'TwinsTest', 'FileWritesTest']) {
-      run('java', ['-cp', classes, `com.ink2pic.files.${test}`]);
+      // Headless: a test that touches AWT would otherwise show a Java app in the macOS Dock.
+      run('java', ['-Djava.awt.headless=true', '-cp', classes, `com.ink2pic.files.${test}`]);
     }
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});

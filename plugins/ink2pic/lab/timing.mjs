@@ -77,7 +77,7 @@ if (!run || !['before', 'after'].includes(mode)) {
 }
 const nativeDir = path.resolve(option('--native', path.join(ROOT_DIR, 'native/src')));
 const rounds = option('--rounds', String(DEFAULT_ROUNDS));
-const out = execFileSync('java', ['-cp', compile(nativeDir), 'LabTiming', mode, rounds], {
+const out = execFileSync('java', ['-Djava.awt.headless=true', '-cp', compile(nativeDir), 'LabTiming', mode, rounds], {
   input: input(run),
   encoding: 'utf8',
   maxBuffer: MAX_OUTPUT_BYTES,

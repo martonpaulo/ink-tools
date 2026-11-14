@@ -46,12 +46,23 @@ function compile() {
 /** Each file's measures, contour measures and contour file, by file. */
 function measureFiles(files) {
   compile();
-  const out = execFileSync('java', ['-cp', CLASSES, 'LabPixels', version], {
-    input: files.join('\n'),
-    encoding: 'utf8',
-    maxBuffer: MAX_OUTPUT_BYTES,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  const out = execFileSync(
+    'java',
+    [
+      // Headless: ImageIO would otherwise show a Java app in the macOS Dock on every run.
+      '-Djava.awt.headless=true',
+      '-cp',
+      CLASSES,
+      'LabPixels',
+      version,
+    ],
+    {
+      input: files.join('\n'),
+      encoding: 'utf8',
+      maxBuffer: MAX_OUTPUT_BYTES,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  );
   return new Map(
     out
       .split('\n')
