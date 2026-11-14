@@ -130,7 +130,17 @@ function hasAllWords(words: Words, query: string): boolean {
  * `whole`: the symbol names or tags the whole word, not only each word of a phrase apart: the
  * «Tokyo tower» is tagged «eiffel» and named «tower», never «eiffel tower» (#24).
  */
-type Match = {symbol: Emoji; score: number; named: number; whole: boolean};
+type Match = {
+  symbol: Emoji;
+  score: number;
+  named: number;
+  whole: boolean;
+  /**
+   * Its name or a CLDR keyword holds the word: a lesser list alone ties «coffee» to the brown
+   * heart (#13).
+   */
+  strong: boolean;
+};
 
 function matchIn(words: Words, query: string): Omit<Match, 'symbol'> {
   const named = nameScore(words, query);
@@ -139,6 +149,7 @@ function matchIn(words: Words, query: string): Omit<Match, 'symbol'> {
     score: score || (hasAllWords(words, query) ? ALL_WORDS : 0),
     named,
     whole: score > 0,
+    strong: named > 0 || words.strong.has(query),
   };
 }
 
@@ -157,6 +168,7 @@ export function matchSymbols(
     let score = 0;
     let named = 0;
     let whole = false;
+    let strong = false;
     for (const lang of langs) {
       const words = symbol.byLanguage.get(lang);
       if (words) {
@@ -164,10 +176,11 @@ export function matchSymbols(
         score += found.score;
         named = Math.max(named, found.named);
         whole ||= found.whole;
+        strong ||= found.strong;
       }
     }
     if (score > 0) {
-      matches.push({symbol, score, named, whole});
+      matches.push({symbol, score, named, whole, strong});
     }
   }
   return matches.sort((a, b) => b.score - a.score);
@@ -178,7 +191,9 @@ export function matchSymbols(
  * the best few. A word is abstract when no thing among the matches carries it in its name:
  * «apple» names the red apple, so the drawings lead; «cold» names only the cold face. A symbol
  * that matches only each word of a phrase apart never leads: the Tokyo tower, tagged «eiffel» and
- * named «tower», does not lead «Eiffel Tower» (#24).
+ * named «tower», does not lead «Eiffel Tower» (#24). Nor does a symbol that only a lesser keyword
+ * list ties to the word when a thing's CLDR keywords hold it: the brown heart, tagged «coffee» by
+ * emojilib, does not lead «coffee», the hot beverage does (#13).
  */
 function leaders(matches: readonly Match[]): Set<Match> {
   const exact = matches.filter(match => match.named === EXACT_NAME);
@@ -188,10 +203,15 @@ function leaders(matches: readonly Match[]): Set<Match> {
   const concrete = matches.some(
     match => !match.symbol.abstract && match.named > 0,
   );
+  // A thing whose CLDR keywords hold the word («hot beverage» for «coffee») makes it concrete
+  // enough that a symbol only a lesser list ties to it no longer leads (#13).
+  const thing = matches.some(match => !match.symbol.abstract && match.strong);
   return new Set(
     concrete
       ? []
-      : matches.filter(match => match.whole).slice(0, LEADS_ABSTRACT),
+      : matches
+          .filter(match => match.whole && (match.strong || !thing))
+          .slice(0, LEADS_ABSTRACT),
   );
 }
 

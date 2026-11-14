@@ -1,4 +1,4 @@
-import {readIntent, words} from '../src/search-core/query';
+import {hasStyle, readIntent, words} from '../src/search-core/query';
 import {einkScore, rankForEink} from '../src/search-core/rank';
 import {PAGE_SIZE} from '../src/search-core/types';
 import type {SearchResult, SourceName} from '../src/search-core/types';
@@ -452,6 +452,18 @@ describe('logos (#81)', () => {
     expect(einkScore(logo, 'apple logo')).toBeGreaterThan(
       einkScore(fruit, 'apple logo'),
     );
+  });
+
+  it('knows a German compound logo by its title: «café» shows the cup first (#13)', () => {
+    const logo = tagged('Firmenlogo Café Andersen', ['Café Andersen']);
+    const cup = tagged('Cup-o-coffee-simple café', ['Coffee icons']);
+    expect(rankForEink([[logo, cup]], 'café').map(x => x.title)).toEqual([
+      'Cup-o-coffee-simple café',
+      'Firmenlogo Café Andersen',
+    ]);
+    // A vowel before «logo» is another word: a biologist is no logo.
+    expect(hasStyle('Biólogo trabajando', 'logo')).toBe(false);
+    expect(hasStyle('Diálogo', 'logo')).toBe(false);
   });
 
   it("puts a namesake institution's logo below the person (#83)", () => {

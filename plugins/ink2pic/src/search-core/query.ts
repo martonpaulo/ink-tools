@@ -85,7 +85,9 @@ function wordPattern(alternatives: string): RegExp {
  * query names is wanted; any other is judged by the ranker as usual.
  */
 export const STYLE_GROUPS = {
-  logo: wordPattern('logos?|wordmarks?'),
+  // A German compound names a logo too: «Firmenlogo Café Andersen», filed only under «Café
+  // Andersen» (#13). A vowel before «logo» is another word: «biólogo», «diálogo», «catálogo».
+  logo: wordPattern('logos?|wordmarks?|\\p{L}*[bcdfghjklmnpqrstvwxz]logos?'),
   // Commons titles are often Portuguese or Spanish: «Mapa do Rio de Janeiro» (#24, in en, pt, es).
   flag: wordPattern('flags?|bandeiras?|banderas?'),
   map: wordPattern('maps?|mapas?'),

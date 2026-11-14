@@ -72,6 +72,14 @@ describe('the OpenMoji symbols (#67)', () => {
     expect(results.some(result => result.leads)).toBe(false);
   });
 
+  it('never lets a symbol that only a lesser keyword list ties to the word lead (#13)', async () => {
+    // emojilib tags the brown heart «coffee»; CLDR names «coffee» for the hot beverage.
+    const results = await symbols('coffee');
+    const lead = results.filter(result => result.leads);
+    expect(lead.map(result => result.title)).toEqual(['hot beverage']);
+    expect(results.map(result => result.title)).toContain('brown heart');
+  });
+
   it('never lets a symbol that matches each word apart lead a phrase (#24)', async () => {
     const results = await symbols('Eiffel Tower');
     expect(results.map(result => result.title)).toContain('Tokyo tower');
