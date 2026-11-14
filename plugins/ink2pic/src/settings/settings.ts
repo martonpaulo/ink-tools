@@ -241,6 +241,16 @@ function readField<T>(
   return fallback;
 }
 
+/** True when the text is a JSON object, which is the only shape `parseSettings` can read (#94). */
+export function isSettingsObject(text: string): boolean {
+  try {
+    const raw: unknown = JSON.parse(text);
+    return raw !== null && typeof raw === 'object' && !Array.isArray(raw);
+  } catch {
+    return false;
+  }
+}
+
 /** Every key of the file, so an unknown one is reported. */
 const KEYS = new Set(['version', ...Object.keys(RESET_GROUPS)]);
 

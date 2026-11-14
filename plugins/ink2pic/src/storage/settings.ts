@@ -8,7 +8,12 @@
 import {log, logged} from '../log/memory';
 import {systemLanguage} from '../sdk/buttons';
 import {ok} from '../sdk/result';
-import {parseSettings, serializeSettings, Settings} from '../settings/settings';
+import {
+  isSettingsObject,
+  parseSettings,
+  serializeSettings,
+  Settings,
+} from '../settings/settings';
 import {settingsPath} from './paths';
 import type {TextStore} from '../search-core';
 import {deviceStorage, storageFailure} from './text';
@@ -33,7 +38,32 @@ export async function loadSettings(
   }
   const parsed = parseSettings(text, system);
   parsed.problems.forEach(problem => log(problem));
+  if (text !== null && !isSettingsObject(text)) {
+    return {settings: parsed.settings, readFailure: await keepAside(storage, path, text)};
+  }
   return {settings: parsed.settings, readFailure: null};
+}
+
+/**
+ * A file that is not a JSON object is kept beside itself before the defaults can replace it
+ * (#94), as the library does (#104). Null once the copy is written; else why it could not be,
+ * which also refuses every write over the file.
+ */
+async function keepAside(
+  storage: TextStore,
+  path: string,
+  text: string,
+): Promise<string | null> {
+  const aside = `${path.replace(/\.json$/, '')}.unreadable-${Date.now()}.json`;
+  try {
+    await storage.writeText(aside, text);
+    log(`settings: ${path} is not a JSON object; it is kept as ${aside}`);
+    return null;
+  } catch (error) {
+    const failure = `the file is not a JSON object and its copy could not be kept (${storageFailure(error).message})`;
+    log(`settings: ${failure}`);
+    return failure;
+  }
 }
 
 let current: Settings | null = null;

@@ -83,6 +83,29 @@ describe('the settings file (#68)', () => {
     );
   });
 
+  it('keeps a file that is not JSON beside itself before any write (#94)', async () => {
+    const path = '/s/settings.json';
+    const broken = '{"languages": ["en",}';
+    const files: Record<string, string> = {[path]: broken};
+    const loaded = await loadSettings(memory(files), path, null);
+    expect(loaded).toEqual({settings: defaultSettings(null), readFailure: null});
+    const copies = Object.keys(files).filter(name => name.startsWith('/s/settings.unreadable-'));
+    expect(copies).toHaveLength(1);
+    expect(files[copies[0]]).toBe(broken);
+    expect(logLines().join('\n')).toContain('is kept as /s/settings.unreadable-');
+  });
+
+  it('refuses every write when the copy of a broken file cannot be kept (#94)', async () => {
+    const storage: TextStore = {
+      readText: async () => '[1, 2]',
+      writeText: async () => {
+        throw new Error('full');
+      },
+    };
+    const loaded = await loadSettings(storage, '/s/settings.json', null);
+    expect(loaded.readFailure).toContain('its copy could not be kept');
+  });
+
   it('logs a failed read and uses the default', async () => {
     const storage: TextStore = {
       readText: async () => {
