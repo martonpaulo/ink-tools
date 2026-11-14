@@ -37,6 +37,11 @@ Evolution of `ink2pic`: write a word, lasso it, insert something. Pains and scop
   picks another, that choice leads next time for the same word (#34).
 - **Temporary result cache.** Keep a search's results for a few seconds so going back to pick a
   different one is instant (the owner often dislikes the first choice and looks for another). (new)
+- **Text / knowledge insert (third mode).** Beyond pictures: search a term and insert a short
+  **definition** ("inteligência artificial"), a **3-line bio** ("Lula da Silva"), or a brief
+  **topic summary**. Source: open/keyless encyclopedic extracts (Wikipedia/Wikidata summaries);
+  current-events topics are harder and best-effort. This is distinct from — and wanted more than —
+  a single-word dictionary definition, which stays low priority.
 
 ## lingo
 
@@ -61,7 +66,8 @@ Used by `lingo` and `lookup`'s definition mode, behind a `DictionaryProvider` in
 
 ## retouch
 
-Edit an image already on the page. Full edit set the owner chose:
+Edit an image already on the page, **invoked by lassoing the image**. Edit set so far (more tools
+under review):
 
 - Rotate 90°, mirror horizontal/vertical, invert (negative).
 - Crop and resize.
@@ -70,19 +76,15 @@ Edit an image already on the page. Full edit set the owner chose:
 
 ## desk
 
-A macOS app for the owner's `.note` files. It is **read and write**, not a viewer. Pains:
+A macOS app that **reads and edits** the owner's `.note` files **without breaking the format** —
+like editing a PDF. Scope (interview 2026-11-14, revised):
 
-- **Edit on the Mac:** add more writing, insert images, rearrange pages with a big screen and a
-  keyboard — not only read.
-- **Handwriting to text:** convert what was written by hand into editable, searchable text to reuse
-  elsewhere.
-- **Faithful, open backup:** keep the `.note` files on the Mac in an open, durable form, not locked
-  to Ratta's cloud or closed format.
+- Open a `.note` on the Mac and see it faithfully.
+- Edit it non-destructively: insert images, add text blocks, reorder pages.
+- Write the file back so the Supernote still opens it correctly.
 
-Sharing/export to other people is **not** a priority here.
-
-**Ship order:** editing (add writing, insert images, rearrange pages) is the must-have first;
-handwriting-to-text and the open backup follow.
+**Out of scope:** no OCR / handwriting-to-text, and no handwriting *input* on the Mac. Sharing or
+export to other people is not a priority either. The value is a safe `.note` editor on a big screen.
 
 ## bridge
 
