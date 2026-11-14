@@ -79,6 +79,13 @@ const PLAIN_SUBJECT_SCORE = 3;
  */
 const SYMBOL_LEAD_SCORE = 10;
 const SYMBOL_SCORE = -2;
+/**
+ * An Openclipart picture found through a tag, whose title names no word of a name of two or more
+ * words: «Terminalia catappa seed» for «Rio de Janeiro» (#73). Below a Commons photo that names it.
+ */
+const UNNAMED_TAG_SCORE = -3;
+/** A name of at least this many words: a one-word query's tags are often its translation. */
+const NAME_WORDS = 2;
 
 /**
  * Whether the picture carries a style group's word in its title or in what its source files it
@@ -190,6 +197,21 @@ const formatScorer: Scorer = result => {
   return result.mime && LINE_FORMATS.has(result.mime) ? FORMAT_SCORE : 0;
 };
 
+/**
+ * Openclipart searches its tags and returns only a title. For a one-word query a tag is often the
+ * word in another language («cachorro» finds «Dog»), so only a name of two or more words is read:
+ * a title that names none of its words came through an unrelated tag (#73).
+ */
+const unnamedTagScorer: Scorer = (result, {subject}) => {
+  if (result.source !== 'openclipart' || subject.length < NAME_WORDS) {
+    return 0;
+  }
+  const have = words(result.title);
+  return subject.some(q => have.some(word => sameWord(word, q)))
+    ? 0
+    : UNNAMED_TAG_SCORE;
+};
+
 const symbolScorer: Scorer = result => {
   if (result.source !== 'openmoji') {
     return 0;
@@ -208,6 +230,7 @@ export const DEFAULT_SCORERS: readonly Scorer[] = [
   askedStyleScorer,
   formatScorer,
   symbolScorer,
+  unnamedTagScorer,
 ];
 
 /** «Photos too» (#70): every scorer but the one that ranks a photo below a drawing. */

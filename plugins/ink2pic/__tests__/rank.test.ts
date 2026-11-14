@@ -155,6 +155,23 @@ describe('rankForEink', () => {
     ).toEqual(['The Emperor in His Study', 'Napoleão 1769 2019']);
   });
 
+  it('puts an Openclipart picture whose title names no word of a name below Commons (#73)', () => {
+    const openclipart = [
+      r('openclipart', 'Terminalia catappa seed', 'image/png'),
+      r('openclipart', 'Cristo Redentor - Rio', 'image/png'),
+    ];
+    const commons = [r('commons', 'Rio de Janeiro skyline', 'image/jpeg')];
+    expect(
+      rankForEink([openclipart, commons], 'Rio de Janeiro').map(x => x.title),
+    ).toEqual([
+      'Rio de Janeiro skyline',
+      'Cristo Redentor - Rio',
+      'Terminalia catappa seed',
+    ]);
+    // A one-word query keeps its tag matches: the tag is often the word's translation.
+    expect(einkScore(r('openclipart', 'Dog', 'image/png'), 'cachorro')).toBe(1);
+  });
+
   it("leads with the query's own flag, before regional flags (#89)", () => {
     const commons = [
       r('commons', 'Flag of the Canary Islands', 'image/svg+xml'),
