@@ -1,0 +1,6 @@
+before: 102 queries, 1140 tiles
+  thumbnails ready: median 313 ms, p90 524 ms, total 32999 ms
+  insert prepared:  median 93 ms, p90 122 ms, total 9593 ms
+after: 102 queries, 1140 tiles
+  thumbnails ready: median 178 ms, p90 293 ms, total 19199 ms
+  insert prepared:  median 52 ms, p90 65 ms, total 4767 ms

@@ -104,6 +104,7 @@ to 8 times slower than a desktop; the device's own `time` lines are the proof th
 | `out/<run>/judgment.json` | A person's verdict per query, written by hand (below). |
 | `out/<run>/metrics.json` | The numbers `metrics.mjs` writes. |
 | `out/<run>/faults.json` | The numbers `faults.mjs` writes. |
+| `out/<run>/timing.txt` | The summaries `timing.mjs` prints for the run, `before` then `after`. |
 | `out/<run>/sheets/sheet-NN.png` | Page 1 of eight queries per image, in the app's 2 x 3 grid, in grayscale; not committed, about 8 MB a run. |
 | `pixelorder.mjs`, `LabPixels.java` | The device's pixel step: measures, contour drawing and order. |
 | `timing.mjs`, `LabTiming.java` | The device's pixel schedule, timed before and after a change. |
