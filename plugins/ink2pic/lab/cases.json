@@ -616,6 +616,24 @@
    "line": "Quién fue Simón Bolívar",
    "query": "Simón Bolívar",
    "expect": "the line chooses «Simón Bolívar»; a portrait of Bolívar first"
+  },
+  {
+   "id": "cafe",
+   "category": "phrase",
+   "query": "café",
+   "expect": "a café or coffee-house drawing first; not a brand logo"
+  },
+  {
+   "id": "coffee",
+   "category": "object",
+   "query": "coffee",
+   "expect": "a cup of coffee or coffee beans first; not a brand logo"
+  },
+  {
+   "id": "pedro-sanchez",
+   "category": "person",
+   "query": "Pedro Sánchez",
+   "expect": "a portrait of the person on page 1; no logo, poster or unrelated namesake"
   }
  ]
 }
