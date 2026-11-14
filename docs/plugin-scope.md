@@ -76,10 +76,16 @@ by `bridge`. See [`architecture.md`](architecture.md).
 
 ## New: phone to open note
 
-Not previously planned. The owner wants to **send text or an image from his phone straight into the
-note currently open** on the tablet, quickly. Chosen mechanism: **iOS Shortcuts + LocalSend** — a
-Shortcut sends the text/image over LocalSend to the tablet, and a plugin drops it into the open
-note. Needs its own definition and issue.
+Not previously planned. The owner wants to **send content from his phone straight into the note
+currently open** on the tablet, quickly. Chosen mechanism: **iOS Shortcuts + LocalSend** — a
+Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
+
+- **What he sends:** a text snippet, a photo/image, and — a distinct, larger need — **a scanned PDF
+  (e.g. study flashcards / "fichas de estudo") to use as a note template**.
+- **Placement:** the content arrives floating/selected and the owner positions it himself, the way
+  `lookup` places an inserted picture.
+- **Scan-to-template is probably its own capability**, beyond "drop into the open note": a scanned
+  PDF becomes a page template to write on. Split it out when picked up.
 
 ## Design direction
 
