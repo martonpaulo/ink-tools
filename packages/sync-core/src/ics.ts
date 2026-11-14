@@ -3,8 +3,9 @@ import {CalendarEvent, CalendarInfo, CalendarProvider, TimeWindow} from './calen
 /**
  * ICS (RFC 5545) parsing with recurrence expansion, and the ICS-feed and CalDAV (iCloud) providers.
  * Supported RRULE: FREQ DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, COUNT, UNTIL, BYDAY (weekly only),
- * plus EXDATE and RECURRENCE-ID overrides. Anything else is reported by `parseIcs` as a warning
- * and the event is kept as its first occurrence only.
+ * plus EXDATE and RECURRENCE-ID overrides. Any other RRULE part is reported by `occurrenceStarts`
+ * as a warning and the event is kept as its first occurrence only; a TZID other than UTC is reported
+ * by `parseIcs`. The providers hand every warning to their `onWarnings` option (#61).
  * shortcut: floating and TZID times read as UTC, no VTIMEZONE database; revisit with time zones.
  * Not yet run against a live feed or iCloud: the owner verifies it on the Mac (issue #30).
  */
@@ -70,7 +71,14 @@ export function parseIcs(text: string): {events: IcsEvent[]; warnings: string[]}
           case 'SUMMARY': cur.title = unescapeText(value); break;
           case 'DESCRIPTION': cur.content = unescapeText(value); break;
           case 'STATUS': cancelled = value.toUpperCase() === 'CANCELLED'; break;
-          case 'DTSTART': { const t = parseTime(params, value); cur.start = t.ms; cur.allDay = t.allDay; break; }
+          case 'DTSTART': {
+            const t = parseTime(params, value);
+            cur.start = t.ms;
+            cur.allDay = t.allDay;
+            const tz = /(?:^|;)TZID=([^;]+)/i.exec(params)?.[1];
+            if (tz && !/^utc$/i.test(tz)) warnings.push(`${cur.uid ?? 'event'}: TZID ${tz} is read as UTC`);
+            break;
+          }
           case 'DTEND': cur.dtend = parseTime(params, value).ms; break;
           case 'DURATION': {
             const d = /^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(value);
@@ -97,11 +105,25 @@ function addMonths(ms: number, n: number): number | null {
   return r.getUTCDate() === d.getUTCDate() ? r.getTime() : null; // a 31st skips short months, as RFC 5545 does
 }
 
+/** The RRULE parts each frequency expands; any other part is reported, never ignored (#61). */
+const BASE_PARTS = ['FREQ', 'INTERVAL', 'COUNT', 'UNTIL', 'WKST'];
+const SUPPORTED_PARTS: Record<string, string[]> = {
+  DAILY: BASE_PARTS,
+  WEEKLY: [...BASE_PARTS, 'BYDAY'],
+  MONTHLY: BASE_PARTS,
+  YEARLY: BASE_PARTS,
+};
+
 /** Start times of every occurrence of `e` that begins before `to`. */
 export function occurrenceStarts(e: IcsEvent, to: number, warnings: string[] = []): number[] {
   const r = e.rrule;
   if (!r) return [e.start];
   const freq = r.FREQ;
+  const unsupported = Object.keys(r).filter(k => !(SUPPORTED_PARTS[freq] ?? BASE_PARTS).includes(k));
+  if (SUPPORTED_PARTS[freq] && unsupported.length) {
+    warnings.push(`${e.uid}: unsupported ${freq} RRULE part ${unsupported.join(',')}`);
+    return [e.start];
+  }
   const interval = Math.max(1, Number(r.INTERVAL ?? 1));
   const count = r.COUNT ? Number(r.COUNT) : Infinity;
   const until = r.UNTIL ? parseTime('', r.UNTIL).ms + (r.UNTIL.length === 8 ? DAY - 1 : 0) : Infinity;
@@ -123,7 +145,6 @@ export function occurrenceStarts(e: IcsEvent, to: number, warnings: string[] = [
       }
     }
   } else if (freq === 'MONTHLY' || freq === 'YEARLY') {
-    if (r.BYDAY || r.BYMONTHDAY || r.BYSETPOS) { warnings.push(`${e.uid}: unsupported ${freq} rule`); return [e.start]; }
     const step = freq === 'YEARLY' ? 12 * interval : interval;
     for (let n = 0; ; n += step) {
       const t = addMonths(e.start, n);
@@ -168,15 +189,25 @@ export interface IcsFeed {
   url: string;
 }
 
+/** Where a provider reports what it could not read exactly: unsupported rules and time zones (#61). */
+export type WarningSink = (warnings: string[]) => void;
+
 /** Read-only ICS subscriptions, one calendar per feed. */
-export function createIcsProvider(fetchText: (url: string) => Promise<string>, feeds: IcsFeed[]): CalendarProvider {
+export function createIcsProvider(
+  fetchText: (url: string) => Promise<string>,
+  feeds: IcsFeed[],
+  onWarnings: WarningSink = () => {},
+): CalendarProvider {
   return {
     listCalendars: async (): Promise<CalendarInfo[]> => feeds.map(f => ({calendarId: f.id, name: f.name})),
     async listEvents(calendarId, w) {
       const feed = feeds.find(f => f.id === calendarId);
       if (!feed) throw new Error(`unknown ICS feed ${calendarId}`);
       const {events, warnings} = parseIcs(await fetchText(httpsUrl(feed.url)));
-      return expandEvents(calendarId, events, w, warnings);
+      const found = [...warnings];
+      const out = expandEvents(calendarId, events, w, found);
+      if (found.length) onWarnings(found);
+      return out;
     },
   };
 }
@@ -190,6 +221,8 @@ export interface CalDavOptions {
   getPassword: () => Promise<string>;
   /** Base64 of `username:password`; injected so the module stays free of platform globals. */
   basicAuth: (username: string, password: string) => string;
+  /** Receives the warnings of each read, when there are any (#61). */
+  onWarnings?: WarningSink;
 }
 
 const rfc5545 = (ms: number) => new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g, '');
@@ -217,7 +250,9 @@ export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
         events.push(...parsed.events);
         warnings.push(...parsed.warnings);
       }
-      return expandEvents(calendarId, events, w, warnings);
+      const out = expandEvents(calendarId, events, w, warnings);
+      if (warnings.length) o.onWarnings?.(warnings);
+      return out;
     },
   };
 }

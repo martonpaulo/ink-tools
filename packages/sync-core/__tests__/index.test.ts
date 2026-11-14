@@ -341,6 +341,50 @@ describe('ics', () => {
     expect(warnings[0]).toMatch(/unsupported/);
   });
 
+  test('a BYDAY on a daily rule is reported, not ignored (#61)', () => {
+    const warnings: string[] = [];
+    const {events} = parseIcs(ics(vevent(['UID:dd', 'DTSTART:20261102T100000Z', 'RRULE:FREQ=DAILY;BYDAY=MO,TU;COUNT=4'])));
+    expect(expandEvents('c', events, WIDE, warnings)).toHaveLength(1);
+    expect(warnings[0]).toMatch(/unsupported DAILY RRULE part BYDAY/);
+  });
+
+  test('a weekly BYMONTH and a supported weekly BYDAY are told apart (#61)', () => {
+    const warnings: string[] = [];
+    const bad = parseIcs(ics(vevent(['UID:wm', 'DTSTART:20261102T100000Z', 'RRULE:FREQ=WEEKLY;BYMONTH=11;COUNT=3']))).events;
+    expect(expandEvents('c', bad, WIDE, warnings)).toHaveLength(1);
+    expect(warnings[0]).toMatch(/BYMONTH/);
+    const ok: string[] = [];
+    const good = parseIcs(ics(vevent(['UID:wd', 'DTSTART:20261102T100000Z', 'RRULE:FREQ=WEEKLY;BYDAY=MO,TU;COUNT=4']))).events;
+    expect(expandEvents('c', good, WIDE, ok)).toHaveLength(4);
+    expect(ok).toEqual([]);
+  });
+
+  test('a TZID other than UTC warns that the time is read as UTC (#61)', () => {
+    const {events, warnings} = parseIcs(ics(vevent(['UID:tz', 'DTSTART;TZID=America/Sao_Paulo:20261102T100000'])));
+    expect(events[0].start).toBe(Date.UTC(2026, 10, 2, 10));
+    expect(warnings[0]).toMatch(/TZID America\/Sao_Paulo is read as UTC/);
+    expect(parseIcs(ics(vevent(['UID:u', 'DTSTART;TZID=UTC:20261102T100000']))).warnings).toEqual([]);
+  });
+
+  test('both providers hand their warnings to onWarnings (#61)', async () => {
+    const body = ics(vevent(['UID:p', 'DTSTART;TZID=Europe/Paris:20260301T180000', 'RRULE:FREQ=DAILY;BYDAY=MO']));
+    const seen: string[][] = [];
+    const feed = createIcsProvider(async () => body, [{id: 'f', name: 'F', url: 'https://x/f.ics'}], w => seen.push(w));
+    await feed.listEvents('f', WIDE);
+    const xml = `<d:multistatus xmlns:d="DAV:"><c:calendar-data xmlns:c="urn:ietf:params:xml:ns:caldav">${body}</c:calendar-data></d:multistatus>`;
+    const dav = createCalDavProvider({
+      fetch: (async () => ({ok: true, status: 207, text: async () => xml})) as never,
+      calendars: [{id: 'h', name: 'H', url: 'https://x/h/'}],
+      username: 'u',
+      getPassword: async () => 'fixture-pw',
+      basicAuth: (u, pw) => `${u}:${pw}`,
+      onWarnings: w => seen.push(w),
+    });
+    await dav.listEvents('h', WIDE);
+    expect(seen).toHaveLength(2);
+    for (const w of seen) expect(w.join('\n')).toMatch(/TZID Europe\/Paris[\s\S]*unsupported DAILY/);
+  });
+
   test('the ICS provider upgrades webcal:// and reads each feed as its own calendar', async () => {
     const urls: string[] = [];
     const p = createIcsProvider(async u => (urls.push(u), ics(vevent(['UID:f', 'SUMMARY:Match', 'DTSTART:20260301T180000Z', 'DTEND:20260301T200000Z']))), [{id: 'f1', name: 'Team', url: 'webcal://example.com/team.ics'}]);
