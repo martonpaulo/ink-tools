@@ -21,6 +21,7 @@ import {
   hostTool,
   LAB_DIR,
   pageOneThumbs,
+  product,
   readJson,
   readJudgment,
   readResults,
@@ -34,6 +35,7 @@ const SIGNATURE =
   /\b(signature|signatures|autograph|firma|assinatura|unterschrift)\b/i;
 const LOGO = /\b(logo|logos|logotype|wordmark)\b/i;
 const FLAGS = ['text', 'signature', 'dark', 'logo'];
+const {core} = product();
 const PERCENT = 100;
 const HALF = 0.5;
 /** The pixel measures of every tile of a run fit well inside. */
@@ -68,7 +70,14 @@ function caseMetrics(entry, judged, measures) {
     if (pixel && pixel.meanOnWhite < NEAR_BLACK_MEAN) {
       flags.dark.add(index);
     }
-    return {id: tile.id, title: tile.title, pixels: pixel};
+    // The device's pixel step (#104): the thumbnail's kind and whether it shows as a contour.
+    return {
+      id: tile.id,
+      title: tile.title,
+      kind: tile.kind ?? null,
+      converted: tile.converted ?? false,
+      pixels: pixel,
+    };
   });
   if (logoWanted(entry)) {
     flags.logo.clear();
@@ -115,6 +124,10 @@ function summary(cases, pageSize) {
     byCategory,
     tiles: {
       ...totals,
+      // Photos and dark paintings shown on page 1 as a contour drawing: none since #104.
+      convertedPhotos: cases
+        .flatMap(c => c.tiles)
+        .filter(t => t.converted && t.kind && core.isPhotoKind(t.kind)).length,
       emptyPages: cases.filter(c => c.empty).length,
       fullPages: cases.filter(c => c.page1.length === pageSize).length,
     },
@@ -149,6 +162,8 @@ async function metrics(name) {
           ...tile,
           // What the tile shows: its contour drawing when the device converts it (#81).
           file: tile.pixels?.file ?? files.get(tile.thumb),
+          kind: tile.pixels?.kind,
+          converted: tile.pixels?.converted,
         })),
       },
       judgment[entry.id],
