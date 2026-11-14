@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableArray;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -93,6 +94,49 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
         5,
         5,
         TimeUnit.SECONDS);
+  }
+
+  /**
+   * Issue #91: opens a TCP listener on a free port and resolves with its port and the device's
+   * addresses at once, then waits two minutes for one connection and logs the outcome to logcat tag
+   * SNPROBE. Never rejects: a refusal is a result line.
+   */
+  @ReactMethod
+  public void startListener(final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            List<String> lines = new ArrayList<>();
+            final ServerSocket server;
+            try {
+              server = ProbeListener.open();
+              emit(lines, ProbeFormat.ok("listen", "open", "port " + server.getLocalPort()));
+              for (String address : ProbeListener.addresses()) {
+                emit(lines, ProbeFormat.ok("listen", "address", address));
+              }
+            } catch (Throwable error) {
+              emit(lines, ProbeFormat.failed("listen", "open", error));
+              resolveLines(promise, lines);
+              return;
+            }
+            resolveLines(promise, lines);
+            Log.i(TAG, ProbeListener.awaitOne(server, 120000));
+            try {
+              server.close();
+            } catch (Throwable ignored) {
+              // Nothing to do: the probe is over.
+            }
+          }
+        });
+  }
+
+  private static void resolveLines(Promise promise, List<String> lines) {
+    WritableArray out = Arguments.createArray();
+    for (String line : lines) {
+      out.pushString(line);
+    }
+    promise.resolve(out);
   }
 
   private synchronized void stopHeartbeat() {
