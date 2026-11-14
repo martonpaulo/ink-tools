@@ -313,6 +313,24 @@
    "expect": "a picture of Spain whose lines show clearly on e-ink first; no faint light-grey map (owner, build 15)"
   },
   {
+   "id": "brazil",
+   "category": "place",
+   "query": "Brazil",
+   "expect": "the flag of Brazil before any state or regional flag; its colours as distinct greys (#20)"
+  },
+  {
+   "id": "japan",
+   "category": "place",
+   "query": "Japan",
+   "expect": "the flag of Japan before any regional flag; the red disc as a clear grey on white (#20)"
+  },
+  {
+   "id": "esperanto",
+   "category": "place",
+   "query": "esperanto",
+   "expect": "the Esperanto flag, the green star, on page 1, its green as a clear grey (#20)"
+  },
+  {
    "id": "photo-of-a-cat",
    "category": "style",
    "query": "photo of a cat",
