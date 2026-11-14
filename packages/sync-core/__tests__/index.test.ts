@@ -281,6 +281,16 @@ describe('ics', () => {
     expect(events[1]).toMatchObject({allDay: true, end: Date.UTC(2026, 10, 26)});
   });
 
+  test('the lines of a VALARM never overwrite the event (#68)', () => {
+    const {events} = parseIcs(ics(vevent([
+      'UID:al', 'SUMMARY:Review', 'DESCRIPTION:Bring the report', 'DTSTART:20261120T120000Z', 'DTEND:20261120T130000Z',
+      'BEGIN:VALARM', 'ACTION:DISPLAY', 'SUMMARY:Alarm', 'DESCRIPTION:Reminder', 'DTSTART:20250101T000000Z', 'END:VALARM',
+      'LOCATION:Room 1',
+    ])));
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({title: 'Review', content: 'Bring the report', start: Date.UTC(2026, 10, 20, 12)});
+  });
+
   test('a cancelled event is dropped', () => {
     expect(parseIcs(ics(vevent(['UID:c', 'STATUS:CANCELLED', 'DTSTART:20261120T120000Z']))).events).toEqual([]);
   });

@@ -25,8 +25,10 @@ const asNumber = (v: Row[string]): number | null => {
  */
 export function rowToTodoTask(d: Descriptor, row: Row): TodoTask {
   const done = d.todo.rules.statusCompleted;
+  const id = row.taskId ?? row.id;
+  if (id === null || id === undefined || id === '') throw new Error('to-do row has no taskId'); // not the id "undefined" (#70)
   return {
-    localId: String(row.taskId ?? row.id),
+    localId: String(id),
     title: String(row.title ?? ''),
     detail: String(row.detail ?? ''),
     due: asNumber(row.dueTime ?? null),

@@ -32,14 +32,28 @@ export function eventToRow(d: Descriptor, e: DeviceEvent, now: number): Row {
   });
 }
 
+const requireId = (row: Row, key: string): string => {
+  const v = row[key];
+  if (v === null || v === undefined || v === '') throw new Error(`calendar row has no ${key}`);
+  return String(v);
+};
+
+const requireTime = (row: Row, key: string): number => {
+  const v = row[key];
+  const n = v === null || v === undefined || v === '' ? NaN : Number(v);
+  if (!Number.isFinite(n)) throw new Error(`calendar row has no usable ${key}`);
+  return n;
+};
+
+/** Read a data_info row. A missing id or time throws: a made-up id would become a sync key (#70). */
 export function rowToEvent(row: Row): DeviceEvent {
   return {
-    eventId: String(row.eventId),
-    calendarId: String(row.calendarId),
+    eventId: requireId(row, 'eventId'),
+    calendarId: requireId(row, 'calendarId'),
     title: String(row.title ?? ''),
     content: String(row.content ?? ''),
-    start: Number(row.startTime),
-    end: Number(row.endTime),
+    start: requireTime(row, 'startTime'),
+    end: requireTime(row, 'endTime'),
     allDay: row.isAllDay === 1 || row.isAllDay === '1' || row.isAllDay === true,
   };
 }

@@ -41,11 +41,16 @@ export function parseIcs(text: string): {events: IcsEvent[]; warnings: string[]}
   const warnings: string[] = [];
   let cur: (Partial<IcsEvent> & {dtend?: number; duration?: number}) | null = null;
   let cancelled = false;
+  let inAlarm = false; // lines of a nested VALARM are the alarm's, never the event's (#68)
   for (const line of unfold(text)) {
     if (line === 'BEGIN:VEVENT') {
       cur = {exdates: [], title: '', content: ''};
       cancelled = false;
+      inAlarm = false;
     }
+    else if (line === 'BEGIN:VALARM' && cur) inAlarm = true;
+    else if (line === 'END:VALARM') inAlarm = false;
+    else if (inAlarm) continue;
     else if (line === 'END:VEVENT' && cur) {
       if (cur.uid && cur.start !== undefined && (!cancelled || cur.recurrenceId !== undefined)) {
         const end = cur.dtend ?? cur.start + (cur.duration ?? (cur.allDay ? DAY : 0));

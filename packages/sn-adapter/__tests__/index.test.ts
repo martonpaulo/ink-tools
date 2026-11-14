@@ -85,3 +85,15 @@ test('an event row carries the tag and round-trips', () => {
   expect(row.tag).toBe('task');
   expect(rowToEvent(row)).toEqual(e);
 });
+
+test('a row with a missing or unusable id or time throws instead of becoming "undefined" or NaN (#70)', () => {
+  const row = eventToRow(D, {eventId: 'e1', calendarId: 'c1', title: 't', content: '', start: 1000, end: 2000, allDay: false}, 5);
+  for (const key of ['eventId', 'calendarId', 'startTime', 'endTime']) {
+    const missing = {...row};
+    delete missing[key];
+    expect(() => rowToEvent(missing)).toThrow(key);
+    expect(() => rowToEvent({...row, [key]: null})).toThrow(key);
+  }
+  expect(() => rowToEvent({...row, startTime: 'soon'})).toThrow('startTime');
+  expect(() => rowToTodoTask(D, {title: 'x'})).toThrow('taskId');
+});
