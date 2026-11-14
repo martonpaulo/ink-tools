@@ -23,7 +23,12 @@ device into an editable, durable form on the Mac, **not** sharing it with other 
 
 ## lookup
 
-Evolution of `ink2pic`: write a word, lasso it, insert something. Pains and scope:
+Evolution of `ink2pic`: write a word, lasso it, insert something. **It is the first plugin to ship
+after `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each
+mode is its own **lasso button**, chosen before the search — not a post-hoc toggle: "insert
+illustration" (vector/sticker/OpenMoji), "insert photo" (real photo), "insert text" (definition /
+3-line bio / summary). Translation is the separate `lingo` plugin with its own lasso button. Pains
+and scope:
 
 - **Relevance is broken on real cases.** "café"/"coffee" returns a heart as the "best" picture;
   "Pedro Sánchez" returns awful results. Ranking and the portrait path must fix these (issues
@@ -97,6 +102,9 @@ export to other people is not a priority either. The value is a safe `.note` edi
 Settled: to-do + calendar + digest, each opt in/out, settings-only (no note surface). Input scope
 is **only** those three — the owner does not want PDFs, read-later or other-app references pulled in
 by `bridge`. See [`architecture.md`](architecture.md).
+
+**Settings layout (interview 2026-11-14):** one section per module (To-Do / Calendar / Digest);
+inside each, a toggle for the module and a toggle per provider (Todoist; Google / iCloud / ICS).
 
 ## New: phone to open note
 
