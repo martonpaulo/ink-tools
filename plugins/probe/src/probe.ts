@@ -1,4 +1,4 @@
-import {runNativeProviderProbe} from './native';
+import {runNativeListenProbe} from './native';
 
 /** Every line the probe logs starts with this tag: `adb logcat -s SNPROBE`. */
 export const TAG = 'SNPROBE';
@@ -13,7 +13,7 @@ export type Log = (line: string) => void;
  */
 export async function probeBody(log: Log, runtime: Record<string, unknown>): Promise<void> {
   log(`runtime keys: ${Object.keys(runtime).sort().join(',')}`);
-  await runNativeProviderProbe(log);
+  await runNativeListenProbe(log);
 }
 
 /** Run the probe and log its outcome. Never throws: a failed probe is a result, not a crash. */
