@@ -94,6 +94,7 @@ export function orderEntries(
   const {chooseLook, orderMeasured, pixelKind, lineArt} = core;
   const prepared = new Map();
   const shown = new Map();
+  const byId = new Map(results.map(result => [result.id, result]));
   for (const [id, {entry, file}] of entries) {
     // A speckled contour is shown as found, faint lines darkened, as the device does (#81, #83).
     const look = chooseLook(
@@ -101,6 +102,7 @@ export function orderEntries(
       query,
       style.allContour,
       entry.contour,
+      byId.get(id),
     );
     const m =
       look === 'contour'

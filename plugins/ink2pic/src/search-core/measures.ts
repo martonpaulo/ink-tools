@@ -6,7 +6,14 @@
  */
 import {dropNearDuplicates} from './duplicates';
 import {readIntent} from './query';
-import {DEFAULT_SCORERS, intentFor, PHOTO_SCORERS, Scorer, total} from './rank';
+import {
+  DEFAULT_SCORERS,
+  intentFor,
+  PHOTO_SCORERS,
+  Scorer,
+  showsFlag,
+  total,
+} from './rank';
 import {Outcome, PAGE_SIZE, SearchResult} from './types';
 
 /** What an analyzer call gives: the value, or why there is none, for the log. */
@@ -431,15 +438,18 @@ export type Prepared = {measures: Measures; look: Look};
  * The look of a thumbnail measured as `found` (#66, #81, #83): its contour drawing when
  * `needsContour` names it or the person chose «All contour» (#70), unless that drawing is mostly
  * speckle; else darkened when it is faint line work; else as found. Without `contour`, the
- * drawing is not made yet, and 'contour' says to make it; call again with its measures.
+ * drawing is not made yet, and 'contour' says to make it; call again with its measures. A flag
+ * (`result`) keeps its grey unless the person chose «All contour» (#20).
  */
 export function chooseLook(
   found: Measures,
   query: string,
   allContour = false,
   contour?: Measures,
+  result?: SearchResult,
 ): Look {
-  if (allContour || needsContour(found, query)) {
+  const flag = result !== undefined && showsFlag(result);
+  if (allContour || (needsContour(found, query) && !flag)) {
     return contour && isSpeckled(contour) ? 'found' : 'contour';
   }
   return isFaintLines(found) ? 'darkened' : 'found';

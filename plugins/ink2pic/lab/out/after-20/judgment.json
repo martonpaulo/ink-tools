@@ -1,0 +1,30 @@
+{
+ "spain": {
+  "ok": true,
+  "reason": "the flag of Spain first, in its greys: dark bands, a light middle band, the emblem not cut to black and white; the twin «Flag of the Kingdom of Spain» left as a near-duplicate"
+ },
+ "brazil": {
+  "ok": true,
+  "reason": "the flag of Brazil first, in its greys, not a contour; no state flag on page 1"
+ },
+ "japan": {
+  "ok": true,
+  "reason": "the flag of Japan first, the disc a clear grey on white"
+ },
+ "esperanto": {
+  "ok": true,
+  "reason": "the Esperanto flag first, in its greys; the green star symbol and «Esperanto-flago» on page 1"
+ },
+ "flag-of-brazil": {
+  "ok": true,
+  "reason": "the current flag of Brazil first, in its greys"
+ },
+ "paris": {
+  "ok": true,
+  "reason": "the Paris flag left page 1; the Eiffel Tower view at 3; a logo at 2"
+ },
+ "a": {
+  "ok": true,
+  "reason": "unchanged order; the signal flag «ICS Alfa» now in its greys"
+ }
+}

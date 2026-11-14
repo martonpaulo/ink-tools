@@ -7,6 +7,7 @@ import {
 import {logLines, startLog} from '../src/log/memory';
 import {ok, fail, MODULE_CODE} from '../src/sdk/result';
 import {
+  chooseLook,
   isFaintLines,
   lineArt,
   Measures,
@@ -205,6 +206,42 @@ describe('needsContour (#66, owner decision D5 A)', () => {
     expect(
       needsContour({...glossy, colours: 16, edge: 0.05, mid: 0.02}, 'apple'),
     ).toBe(true);
+  });
+
+  it('keeps a flag in grey even when its emblem has many colours (#20)', () => {
+    // The Spanish flag at thumbnail size: the emblem's anti-aliasing gives 336 colours (lab).
+    const spain = {
+      ...photo,
+      colours: 336,
+      edge: 0.06,
+      mid: 1,
+      border: 0,
+      dark: 0.5,
+    };
+    expect(needsContour(spain, 'spain')).toBe(true);
+    const flag = {
+      id: 'commons:Flag of Spain.svg',
+      source: 'commons' as const,
+      title: 'Flag of Spain',
+      thumbUrl: 'https://example.test/t',
+      license: 'PD',
+      attribution: 'x',
+    };
+    expect(chooseLook(spain, 'spain', false, undefined, flag)).toBe('found');
+    expect(chooseLook(spain, 'spain', true, undefined, flag)).toBe('contour');
+    expect(
+      chooseLook(spain, 'spain', false, undefined, {...flag, title: 'Madrid'}),
+    ).toBe('contour');
+    // A photo filed under a flag's category is a photo of the place.
+    const place = {
+      ...flag,
+      title: 'Town',
+      mime: 'image/jpeg',
+      tags: ['Flag of a region'],
+    };
+    expect(chooseLook(spain, 'spain', false, undefined, place)).toBe('contour');
+    const signal = {...place, title: 'Signal A', mime: 'image/svg+xml'};
+    expect(chooseLook(spain, 'spain', false, undefined, signal)).toBe('found');
   });
 
   it('converts dark clip art too: «apple» shows no black silhouette (#81)', () => {

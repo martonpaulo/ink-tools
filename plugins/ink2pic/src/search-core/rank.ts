@@ -91,6 +91,19 @@ function styled(result: SearchResult, group: StyleGroup): boolean {
   );
 }
 
+/**
+ * A flag, by its title, or a vector file its categories call a flag: it keeps its grey and is
+ * never made a contour drawing, which turns its colour bands white and leaves only their borders
+ * and a cut-out emblem (#20). A photo filed under a flag («Pornic», «Flag of Pays de Retz») is a
+ * photo of a place, not a flag.
+ */
+export function showsFlag(result: SearchResult): boolean {
+  return (
+    hasStyle(result.title, 'flag') ||
+    (result.mime === 'image/svg+xml' && styled(result, 'flag'))
+  );
+}
+
 function stylisedOther(result: SearchResult): boolean {
   return [result.title, ...(result.tags ?? [])].some(text =>
     STYLISED_OTHER.test(text),

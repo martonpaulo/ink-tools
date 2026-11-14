@@ -133,7 +133,7 @@ async function measureFile(
   if (late()) {
     return asFound(m);
   }
-  const look = chooseLook(m, query, allContour);
+  const look = chooseLook(m, query, allContour, undefined, result);
   if (look === 'darkened') {
     return darkenFile(result, uri, pluginDir, deps, m);
   }
@@ -155,7 +155,7 @@ async function measureFile(
       converted.value.ms,
     )} ms, now ${pixelKind(drawn)}`,
   );
-  if (chooseLook(m, query, allContour, drawn) === 'found') {
+  if (chooseLook(m, query, allContour, drawn, result) === 'found') {
     // Mostly speckle: the picture is shown and inserted as it is (#83).
     log(`contour ${result.id}: speckled, shown as found`);
     return asFound(m);
