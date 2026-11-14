@@ -253,3 +253,78 @@ describe('google', () => {
     await expect(pollDeviceCode(reply(400, {error: 'invalid_client'}), client, 'dc')).rejects.toThrow(/invalid_client/);
   });
 });
+
+import {createCalDavProvider, createIcsProvider, expandEvents, httpsUrl, parseIcs} from '../src';
+
+const ics = (body: string | string[]) => `BEGIN:VCALENDAR\r\n${([] as string[]).concat(body).join('\r\n')}\r\nEND:VCALENDAR`;
+const vevent = (lines: string[]) => `BEGIN:VEVENT\r\n${lines.join('\r\n')}\r\nEND:VEVENT`;
+const WIDE = {from: Date.UTC(2026, 0, 1), to: Date.UTC(2026, 11, 31)};
+
+describe('ics', () => {
+  test('parses a timed event with folded and escaped text, and an all-day event', () => {
+    const {events} = parseIcs(ics([
+      vevent(['UID:a', 'SUMMARY:Lunch\\, with a very long', ' name', 'DTSTART:20261120T120000Z', 'DTEND:20261120T130000Z']),
+      vevent(['UID:b', 'SUMMARY:Holiday', 'DTSTART;VALUE=DATE:20261125']),
+    ]));
+    expect(events[0]).toMatchObject({title: 'Lunch, with a very longname', start: Date.UTC(2026, 10, 20, 12), end: Date.UTC(2026, 10, 20, 13)});
+    expect(events[1]).toMatchObject({allDay: true, end: Date.UTC(2026, 10, 26)});
+  });
+
+  test('a cancelled event is dropped', () => {
+    expect(parseIcs(ics(vevent(['UID:c', 'STATUS:CANCELLED', 'DTSTART:20261120T120000Z']))).events).toEqual([]);
+  });
+
+  test('expands weekly COUNT with BYDAY, INTERVAL, EXDATE and one overridden occurrence', () => {
+    const {events} = parseIcs(ics([
+      vevent(['UID:w', 'SUMMARY:Gym', 'DTSTART:20260105T070000Z', 'DTEND:20260105T080000Z', 'RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=6', 'EXDATE:20260107T070000Z']),
+      vevent(['UID:w', 'SUMMARY:Gym (moved)', 'RECURRENCE-ID:20260112T070000Z', 'DTSTART:20260112T090000Z', 'DTEND:20260112T100000Z']),
+    ]));
+    const out = expandEvents('c', events, WIDE);
+    expect(out.map(e => new Date(e.start).toISOString().slice(5, 16))).toEqual(['01-05T07:00', '01-12T09:00', '01-14T07:00', '01-19T07:00', '01-21T07:00']);
+    expect(out[1].title).toBe('Gym (moved)');
+    expect(new Set(out.map(e => e.eventId)).size).toBe(5);
+  });
+
+  test('expands daily, monthly (skipping short months) and yearly until UNTIL or the window end', () => {
+    const one = (rule: string, start = '20260131T100000Z') => expandEvents('c', parseIcs(ics(vevent(['UID:r', `DTSTART:${start}`, 'DTEND:' + start, rule]))).events, {from: 0, to: Date.UTC(2026, 5, 1)});
+    expect(one('RRULE:FREQ=DAILY;INTERVAL=2;UNTIL=20260106T000000Z', '20260101T100000Z')).toHaveLength(3);
+    expect(one('RRULE:FREQ=MONTHLY').map(e => new Date(e.start).getUTCMonth() + 1)).toEqual([1, 3, 5]);
+    expect(one('RRULE:FREQ=YEARLY', '20250310T100000Z').map(e => new Date(e.start).getUTCFullYear())).toEqual([2025, 2026]);
+  });
+
+  test('an unsupported rule keeps the first occurrence and warns', () => {
+    const warnings: string[] = [];
+    const {events} = parseIcs(ics(vevent(['UID:x', 'DTSTART:20260105T070000Z', 'RRULE:FREQ=MONTHLY;BYDAY=2TU'])));
+    expect(expandEvents('c', events, WIDE, warnings)).toHaveLength(1);
+    expect(warnings[0]).toMatch(/unsupported/);
+  });
+
+  test('the ICS provider upgrades webcal:// and reads each feed as its own calendar', async () => {
+    const urls: string[] = [];
+    const p = createIcsProvider(async u => (urls.push(u), ics(vevent(['UID:f', 'SUMMARY:Match', 'DTSTART:20260301T180000Z', 'DTEND:20260301T200000Z']))), [{id: 'f1', name: 'Team', url: 'webcal://example.com/team.ics'}]);
+    expect((await p.listCalendars())[0].name).toBe('Team');
+    expect((await p.listEvents('f1', WIDE))[0].title).toBe('Match');
+    expect(urls).toEqual(['https://example.com/team.ics']);
+    expect(httpsUrl('WEBCAL://x')).toBe('https://x');
+    await expect(p.listEvents('nope', WIDE)).rejects.toThrow(/unknown/);
+  });
+
+  test('CalDAV sends a basic-auth REPORT and parses the calendar-data of a multistatus reply', async () => {
+    const seen: {method: string; auth: string; body?: string}[] = [];
+    const xml = `<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:response><d:propstat><d:prop><c:calendar-data>${vevent(['UID:k', 'SUMMARY:Tom &amp; Jerry', 'DTSTART:20260401T100000Z', 'DTEND:20260401T110000Z']).replace(/^/, 'BEGIN:VCALENDAR\r\n').concat('\r\nEND:VCALENDAR')}</c:calendar-data></d:prop></d:propstat></d:response></d:multistatus>`;
+    const p = createCalDavProvider({
+      fetch: (async (_u: string, init: {method: string; headers: Record<string, string>; body?: string}) => {
+        seen.push({method: init.method, auth: init.headers.Authorization, body: init.body});
+        return {ok: true, status: 207, json: async () => ({}), text: async () => xml};
+      }) as never,
+      calendars: [{id: 'home', name: 'Home', url: 'https://caldav.example.com/home/'}],
+      username: 'u',
+      getPassword: async () => 'fixture-pw',
+      basicAuth: (u, pw) => `${u}:${pw}`,
+    });
+    const out = await p.listEvents('home', WIDE);
+    expect(out[0]).toMatchObject({title: 'Tom & Jerry', eventId: 'k'});
+    expect(seen[0]).toMatchObject({method: 'REPORT', auth: 'Basic u:fixture-pw'});
+    expect(seen[0].body).toContain('time-range start="20260101T000000Z"');
+  });
+});
