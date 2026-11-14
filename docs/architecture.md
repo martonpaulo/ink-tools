@@ -118,8 +118,10 @@ supernote-tools/
   checks), reused whenever a device question comes up.
 
 `lookup`, `lingo` and `retouch` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
-gesture). `bridge`'s three modules share `sync-core`. All of them go through `sn-adapter` for any
-Supernote-internal access. `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
+gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
+any Supernote-internal access. Today no plugin imports a package yet: `ink2pic` calls `sn-plugin-lib`
+through its own `src/sdk/`, and `bridge` calls `PluginManager` directly
+([#76](https://github.com/martonpaulo/supernote-tools/issues/76)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
 of `lookup`, and keeps shipping until the merge lands.
 
 ## The host tools
