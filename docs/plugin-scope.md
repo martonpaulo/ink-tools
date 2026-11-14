@@ -73,6 +73,12 @@ under review):
 - Crop and resize.
 - E-ink greyscale: grey levels, brightness/contrast, threshold/dither for the 16 greys.
 - Magic-wand object cutout, background removal, eraser.
+- Photo → line art (edge detection), for a drawing look that reads well on e-ink and matches
+  `lookup`'s illustration mode.
+- Deskew / perspective correction, for photographed or scanned images (helps the phone-scan flow).
+- Dither / halftone styles (Floyd–Steinberg, ordered, halftone) beyond the simple threshold.
+- Make sticker (cutout + transparent/white background) for reuse; sharpen / auto-enhance for
+  legibility.
 
 ## desk
 
