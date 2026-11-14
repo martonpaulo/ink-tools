@@ -24,6 +24,10 @@ function summary(cases, pageSize) {
       c => c.page1.length > 0 && c.page1.length < pageSize,
     ).length,
     emptyPageOne: cases.filter(c => c.page1.length === 0).length,
+    // The source-down line belongs only on a thin or empty page 1 (#14): this stays 0.
+    sourceDownOnFullPage: cases.filter(
+      c => c.notice?.state === 'partial' && c.page1.length === pageSize,
+    ).length,
     notices,
   };
 }
