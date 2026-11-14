@@ -1,0 +1,31 @@
+{
+ "pedro-sanchez": {
+  "ok": true,
+  "reason": "his Wikidata portrait (a cropped official photo) first and the 2026 portrait third; the geometry diagrams «Potencia de un punto» and «Triángulo pedal», found through their descriptions, left page 1 (were at 1 and 3)"
+ },
+ "cafe": {
+  "ok": false,
+  "reason": "the company logo «Firmenlogo Café Andersen» left page 1 (was at 2); a hot beverage cup is first, not a coffee-house drawing, as before",
+  "flags": {}
+ },
+ "coffee": {
+  "ok": true,
+  "reason": "an Openclipart coffee cup is first; the brown heart, tied to «coffee» only by emojilib, no longer leads (was at 0) and left page 1"
+ },
+ "machado-de-assis": {
+  "ok": true,
+  "reason": "portrait still first; the Zipf chart «Don Quixote and Dom Casmurro» left page 1 (was at 1), and «Machado de assis 1874» joined it"
+ },
+ "line-bolivar": {
+  "ok": true,
+  "reason": "portrait drawing still first; the scanned page «Detrás del Espejo internal page» left page 1 (was at 5), the «Monumento Simón Bolívar» took its place"
+ },
+ "santos-dumont": {
+  "ok": true,
+  "reason": "portrait still first; «N.1 (My Airships p76)» fell from page 2, so a photo of him with his Demoiselle monoplane moved onto page 1 and the «Santos-Dumont-6» portrait to page 2; not worse"
+ },
+ "frederico-garcia-lorca": {
+  "ok": true,
+  "reason": "Lorca's Wikidata portrait still first; the 1989 Albanian stamp is at 1 (a photo of Lorca with a friend before), as for «Federico García Lorca»; not worse"
+ }
+}
