@@ -16,8 +16,9 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   sync tasks                     start a To-do sync and wait until it has run
   sync calendar                  ask the Calendar app to sync
   screen FILE.png                save what the screen shows
-  snapshot                       list the screen's elements with short references;
-                                 --all reads each list to its end, --find X scrolls to an element
+  snapshot                       list the screen's elements with short references, and its pages;
+                                 --all reads each list and page to its end, --find X scrolls or
+                                 turns pages to an element
   click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
   wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
   apps                           installed packages
@@ -586,6 +587,10 @@ def take_snapshot(device: Device) -> dict:
     activity = device.activity()
     elements = device.elements()
     snapshot = {"activity": activity, "elements": elements}
+    pages = shown_pages(elements)
+    if pages:
+        # A paged screen says when more follows, as a scrolling list does (#5).
+        snapshot["pages"] = {"page": pages[0], "total": pages[1], "more": pages[0] < pages[1]}
     save_snapshot(snapshot)
     return snapshot
 
@@ -604,6 +609,9 @@ def snapshot_lines(snapshot: dict) -> list[str]:
         lines.append(" ".join(part for part in (
             element["ref"] or "-", element["class"], *labels, str(element["bounds"]), list_mark(element),
         ) if part))
+    if "pages" in snapshot:
+        pages = snapshot["pages"]
+        lines.append(f"pages {pages['page']} / {pages['total']} more={'yes' if pages['more'] else 'no'}")
     return lines
 
 
@@ -1172,16 +1180,51 @@ def read_every_list(device: Device, snapshot: dict, limit: int) -> tuple[dict, l
             "at_limit": scan["at_limit"],
             "returned": returned,
         })
-    if all(item["returned"] for item in lists):
+    paging = turn_every_page(device, snapshot, seen)
+    merged += [{**item, "ref": "", "offscreen": True} for item in paging.pop("elements", [])]
+    if all(item["returned"] for item in lists) and paging.get("returned", True):
         save_snapshot(snapshot)
-    data = {**snapshot, "elements": merged, "lists": lists, "at_limit": any(item["at_limit"] for item in lists)}
+    at_limit = any(item["at_limit"] for item in lists) or paging.get("at_limit", False)
+    data = {**snapshot, "elements": merged, "lists": lists, "at_limit": at_limit}
     lines = [
         f"list {item['ref']}: {item['found']} more in {item['steps']} steps"
         + ("; stopped at the limit" if item["at_limit"] else "")
         + ("" if item["returned"] else "; did not return to the start, take a new snapshot")
         for item in lists
     ]
+    if paging:
+        data["paging"] = paging
+        lines.append(
+            f"pages: {paging['found']} more in {paging['turned']} turns"
+            + ("; stopped at the limit" if paging["at_limit"] else "")
+            + ("" if paging["returned"] else f"; did not return to page {paging['from']}, take a new snapshot")
+        )
     return data, lines
+
+
+def turn_every_page(device: Device, snapshot: dict, seen: set, stop=None) -> dict:
+    """Press next to the last page, collecting what each page adds (#5); {} on a screen with no pages.
+
+    shortcut: the previous-page control is not measured yet, so it never returns to the first
+    page and says so; press it here once a device shows its id."""
+    if "pages" not in snapshot:
+        return {}
+    elements, found, turned, at_limit = snapshot["elements"], [], 0, False
+    while True:
+        if turned >= PICKER_MAX_PAGES:
+            at_limit = True
+            break
+        if not next_page(device, elements, STEP_TIMEOUT):
+            break
+        turned += 1
+        elements = device.elements()
+        fresh = [item for item in elements if element_key(item) not in seen]
+        seen.update(element_key(item) for item in fresh)
+        found += fresh
+        if stop and stop(fresh):
+            break
+    return {"from": snapshot["pages"]["page"], "turned": turned, "found": len(found),
+            "at_limit": at_limit, "returned": turned == 0, "elements": found}
 
 
 def scroll_until_found(device: Device, selector: str, limit: int):
@@ -1204,6 +1247,14 @@ def scroll_until_found(device: Device, selector: str, limit: int):
                 return {**found, "found": matches[0], "steps": scan["steps"]}
         at_limit = at_limit or scan["at_limit"]
         returned = returned and (not scan["steps"] or scroll_back(device, element, first, scan["steps"]))
+    # A paged screen: turn pages until it shows the element, and stay on that page (#5).
+    paging = turn_every_page(device, snapshot, seen, lambda fresh: bool(find_selector(fresh, selector)))
+    if paging.get("turned"):
+        found = take_snapshot(device)
+        matches = find_selector(found["elements"], selector)
+        if matches:
+            return {**found, "found": matches[0], "steps": paging["turned"]}
+        returned, at_limit = False, at_limit or paging["at_limit"]
     if returned:
         save_snapshot(snapshot)
     failure = not_found(selector, "snadb snapshot --all")
@@ -1361,11 +1412,27 @@ def read_enabled_limit(device: Device) -> dict:
     return {"enabled": None, "limit": None}
 
 
-def picker_page(elements: list[dict]) -> tuple[int, int]:
-    """The picker's `current / total` page numbers. A screen that shows none has one page."""
+def shown_pages(elements: list[dict]):
+    """A paged screen's `current / total` page numbers, as Ratta's pickers show them (`1 / 2`), or
+    None when the screen shows no page number."""
     labels = find_selector(elements, PICKER_PAGE_NUMBER)
     match = PICKER_PAGE.fullmatch(labels[0]["text"].strip()) if labels else None
-    return (int(match[1]), int(match[2])) if match else (1, 1)
+    return (int(match[1]), int(match[2])) if match else None
+
+
+def picker_page(elements: list[dict]) -> tuple[int, int]:
+    """The picker's `current / total` page numbers. A screen that shows none has one page."""
+    return shown_pages(elements) or (1, 1)
+
+
+def next_page(device: Device, elements: list[dict], limit: float) -> bool:
+    """Press next and wait for the page number to change; False on the last page or a screen with no pages."""
+    page, total = picker_page(elements)
+    if page >= total:
+        return False
+    press_element(device, expect_element(device, PICKER_NEXT_PAGE, limit))
+    wait_for_page_change(device, page, limit)
+    return True
 
 
 def wait_for_page_change(device: Device, page: int, limit: float) -> None:
@@ -1383,11 +1450,8 @@ def turn_to_file(device: Device, name: str, limit: float) -> None:
         elements = device.elements()
         if find_selector(elements, selector):
             return
-        page, total = picker_page(elements)
-        if page >= total:
+        if not next_page(device, elements, limit):
             break
-        press_element(device, expect_element(device, PICKER_NEXT_PAGE, limit))
-        wait_for_page_change(device, page, limit)
     raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{name} is not in the picker; nothing more was pressed")
 
 
@@ -1674,8 +1738,8 @@ def build_parser() -> argparse.ArgumentParser:
     captured.add_argument("--allow-notes", action="store_true", help="capture even when a note is on the screen")
     shot = add(commands, "snapshot", command_snapshot)
     wanted = shot.add_mutually_exclusive_group()
-    wanted.add_argument("--all", action="store_true", help="read each list to its end and come back")
-    wanted.add_argument("--find", metavar="SELECTOR", help="scroll until id:X, desc:X or text:X appears")
+    wanted.add_argument("--all", action="store_true", help="read each list and page to its end and come back")
+    wanted.add_argument("--find", metavar="SELECTOR", help="scroll or turn pages until id:X, desc:X or text:X appears")
     shot.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes per list")
     add(commands, "click", command_click, action, changes=True).add_argument("target")
 

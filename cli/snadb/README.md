@@ -48,7 +48,7 @@ Keep the address in `~/.config/snadb/address` instead of the variable, if you pr
 | `snadb sync tasks` | Starts a To-do sync and waits until it has run. |
 | `snadb sync calendar` | Asks the Calendar app to sync. The app must be open, and the answer does not prove a sync ran. |
 | `snadb screen FILE.png` | Saves what the screen shows. |
-| `snadb snapshot` | Lists the screen's elements with short references, and marks each list that can scroll. `--all` reads each list to its end. `--find X` scrolls until an element appears. |
+| `snadb snapshot` | Lists the screen's elements with short references, marks each list that can scroll, and gives a paged screen's page and page count. `--all` reads each list and page to its end. `--find X` scrolls or turns pages until an element appears. After turning pages it does not return to the first page yet: take a new snapshot. |
 | `snadb click TARGET` | Presses `@eN` from the last snapshot, or `id:X`, `desc:X`, `text:X`. |
 | `snadb wait activity\|file\|element X` | Waits for a condition, with a time limit. |
 | `snadb apps` | Lists installed packages. |

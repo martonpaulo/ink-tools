@@ -636,6 +636,43 @@ result=$(run snapshot --all --json)
 check "--all without lists is a plain snapshot" "$(printf '%s' "$result" | field "['elements'].__len__(),d['lists']")" "(5, [])"
 check "--all without lists sends no swipe" "$(called 'input swipe')" "0"
 
+# Screens that split a list into pages (#5).
+paged_page() {
+    printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node text=\"%s\" resource-id=\"\" content-desc=\"\" class=\"T\" bounds=\"[0,0][50,10]\" /><node text=\"%s\" resource-id=\"a:id/content_page_number\" content-desc=\"\" class=\"T\" bounds=\"[80,0][90,10]\" /><node text=\"\" resource-id=\"a:id/ll_next_page\" content-desc=\"\" class=\"T\" bounds=\"[90,0][99,10]\" /></hierarchy>" "$1" "$2"
+}
+paged() {
+    paged_page Apple "1 / 2" > "$files/page1.xml"
+    paged_page Zebra "2 / 2" > "$files/page2.xml"
+    echo 1 > "$files/page"
+    echo 1 > "$files/advance-after"
+}
+paged
+result=$(run snapshot --json)
+check "a paged screen says more pages follow" "$(printf '%s' "$result" | field "['pages']")" "{'page': 1, 'total': 2, 'more': True}"
+check "the text gives the pages" "$(run snapshot | tail -1)" "pages 1 / 2 more=yes"
+check "a paged snapshot turns no page" "$(called 'input tap')" "0"
+stop_pages
+check "a screen with no page number has no pages" "$(run snapshot --json | expression "'pages' in d")" "False"
+paged
+result=$(run snapshot --all --json)
+check "--all reads the next pages" "$(printf '%s' "$result" | expression "[(e['text'], e['ref'], e.get('offscreen')) for e in d['elements'] if e['text'] == 'Zebra']")" "[('Zebra', '', True)]"
+check "--all says it did not return to the first page" "$(printf '%s' "$result" | field "['paging']['turned'],d['paging']['returned']")" "(1, False)"
+check "--all presses next once" "$(called 'input tap 94 5')" "1"
+run click @e1 >/dev/null 2>&1
+check "a page turn drops the old references" "$?" "7"
+paged
+check "the text says it did not return" "$(run snapshot --all | tail -1)" "pages: 2 more in 1 turns; did not return to page 1, take a new snapshot"
+paged
+check "--find turns pages to an element" "$(run snapshot --find text:Zebra --json | field "['found']['text'],d['steps']")" "('Zebra', 1)"
+check "--find stays on its page" "$(cat "$files/page")" "2"
+run click text:Zebra >/dev/null
+check "--find gives a pressable element on a later page" "$?" "0"
+paged
+run snapshot --find text:Absent >/dev/null 2>&1
+check "--find reports an element on no page" "$?" "4"
+rm -f "$files/advance-after"
+stop_pages
+
 # Wait.
 check "wait activity returns once it holds" "$(run wait activity calendar --json | field "['kind']")" "activity"
 run wait activity NoteInside --timeout 0 >/dev/null 2>&1
