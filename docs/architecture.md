@@ -3,6 +3,15 @@
 How the tools in this monorepo are named and layered, and why. Current rules live here; the decision
 history is in [`decisions.md`](decisions.md).
 
+## Contents
+
+- [Why layers](#why-layers)
+- [The layers](#the-layers)
+- [Shared packages](#shared-packages)
+- [The plugins (on device)](#the-plugins-on-device)
+- [The host tools](#the-host-tools)
+- [What this means for the cloud agent](#what-this-means-for-the-cloud-agent)
+
 ## Why layers
 
 Two things under the plugins change outside our control, so neither may be hardcoded in feature code:

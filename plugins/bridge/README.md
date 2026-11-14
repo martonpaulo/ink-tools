@@ -1,10 +1,10 @@
 # Bridge
 
-A Supernote plugin that syncs the owner's calendars with the **native** Supernote Calendar — not a
-separate calendar inside a plugin, the real one the device already shows.
+A settings-only Supernote plugin with to-do, calendar and digest modules, each opt in. The calendar
+module syncs your calendars with the **native** Supernote Calendar, the real one the device already
+shows, not a separate calendar inside a plugin.
 
-**Status: scaffolded.** Settings-only shell; modules (calendar, to-do, digest) are tracked in this
-repository's issues (label `area: bridge`).
+**Status: scaffolded.** Settings-only shell; the modules are tracked in this repository's issues.
 
 ## What it will do
 

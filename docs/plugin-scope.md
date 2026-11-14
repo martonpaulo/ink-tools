@@ -9,6 +9,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [The two pains driving everything](#the-two-pains-driving-everything)
 - [lookup](#lookup)
 - [lingo](#lingo)
+- [Dictionary and translation engine (shared)](#dictionary-and-translation-engine-shared)
 - [retouch](#retouch)
 - [desk](#desk)
 - [bridge](#bridge)
