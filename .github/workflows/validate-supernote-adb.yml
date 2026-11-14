@@ -1,0 +1,32 @@
+name: Validate Supernote ADB
+
+# Runs only when cli/supernote-adb/ (or this file) changes; the gate is its own `make validate`.
+on:
+  push:
+    branches: [main]
+    paths: ['cli/supernote-adb/**', '.github/workflows/validate-supernote-adb.yml']
+  pull_request:
+    paths: ['cli/supernote-adb/**', '.github/workflows/validate-supernote-adb.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate supernote-adb
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: cli/supernote-adb
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate
+        run: make validate

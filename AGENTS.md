@@ -24,7 +24,7 @@
 - Release, signing, and secret-storage policy: Per subproject: Ink2Pic and Bridge each ship a GitHub prerelease carrying their `.snplg`; Supernote ADB is distributed as source. No monorepo-wide release.
 - Skills baseline revision: `4a54af70a4f197df7cb610e1aad847fbdb4dc0d3`
 - Skills baseline applied: `2026-11-13`
-- Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; each subproject keeps its own CI under its folder, to be consolidated at the repository root with path filters (tracked as a setup issue). The root carries no workflows yet.
+- Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; CI lives at the repository root, one `validate-<subproject>.yml` per subproject with a `paths:` filter and its subproject as the working directory, plus `prerelease-ink2pic.yml`, `scan.yml` and one `dependabot.yml` ([#38](https://github.com/martonpaulo/supernote-tools/issues/38)).
 - Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `plugins/bridge/`, `plugins/ink2pic/` and `cli/supernote-adb/`, each with its own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
 
 Change an identifier or policy recorded above only through an explicit task describing the migration and its effects.
@@ -134,7 +134,7 @@ Shape every message and ask the owner as Skill Deck's global rules define (`glob
 - Ignore secrets, local environments, logs, caches, and build output. Keep `.env.example` with every variable and a safe placeholder, and secrets only in the platform's secure store. Nothing new in `~` (`project-layout.md`).
 - Add CI, dependency updates, release workflows, and signing only when distribution or risk requires them.
 - The Validate workflow has no `pull_request_target` trigger and reads no stored secret, so it runs on a fork; the `validate-trust` check of `check_repository_conventions.py` fails either ([martonpaulo/skill-deck#801](https://github.com/martonpaulo/skill-deck/issues/801)).
-- Workflows: none; the divergence `ci-pipelines` records why. A workflow added outside the `project-setup` skill's `references/ci-pipelines.md` is a recorded exception. A Node repository's `validate` script runs exactly what CI runs. Do not add an image-optimisation bot.
+- Workflows: one per subproject at the root, path-filtered; the divergence `ci-pipelines` records why. A workflow added outside the `project-setup` skill's `references/ci-pipelines.md` is a recorded exception. A Node repository's `validate` script runs exactly what CI runs. Do not add an image-optimisation bot.
 - The agent rules live in `AGENTS.md`, the one real file; `CLAUDE.md` is a symlink to it. Do not create `GEMINI.md`, `.gemini/rules/agents.md`, or any other alias, and never commit `.claude/settings.local.json`.
 - Change the repository `homepage` only as the `project-setup` skill's `references/github-settings.md` describes.
 
