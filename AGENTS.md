@@ -24,8 +24,8 @@
 - Release, signing, and secret-storage policy: Per subproject: Ink2Pic and Bridge each ship a GitHub prerelease carrying their `.snplg`; Supernote ADB is distributed as source. No monorepo-wide release.
 - Skills baseline revision: `4a54af70a4f197df7cb610e1aad847fbdb4dc0d3`
 - Skills baseline applied: `2026-11-13`
-- Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; CI lives at the repository root, one `validate-<subproject>.yml` per subproject with a `paths:` filter and its subproject as the working directory, plus `prerelease-ink2pic.yml`, `scan.yml` and one `dependabot.yml` ([#38](https://github.com/martonpaulo/supernote-tools/issues/38)).
-- Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `plugins/bridge/`, `plugins/ink2pic/` and `cli/snadb/`, each with its own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
+- Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; CI lives at the repository root, one `validate-<subproject>.yml` per subproject with a `paths:` filter and its subproject as the working directory, plus one `prerelease-<plugin>.yml` per plugin (`bridge`, `ink2pic`, `probe`), `scan.yml` and one `dependabot.yml` ([#38](https://github.com/martonpaulo/supernote-tools/issues/38)). The root `gates.json`, read by `scripts/gates.py`, maps each subproject's paths to its gate, so `land.py finish` picks them ([#75](https://github.com/martonpaulo/supernote-tools/issues/75)).
+- Skills baseline divergence `single-project-layout` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: the repository holds several independent subprojects under `plugins/bridge/`, `plugins/ink2pic/`, `plugins/probe/`, `packages/` and `cli/snadb/`, each with its own gate, and the plugins and the CLI each with their own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
 
 Change an identifier or policy recorded above only through an explicit task describing the migration and its effects.
 
@@ -37,6 +37,7 @@ Before editing under a path, read the file its row names. A module with rules of
 | :--- | :--- |
 | `plugins/<name>/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) |
 | `cli/<name>/` | that tool's own `AGENTS.md` (host-side tools) |
+| `packages/` | `packages/README.md` and `docs/architecture.md` (shared packages) |
 | `templates/` | `docs/product.md` (note templates; created when the first one lands) |
 | `docs/` | `docs/product.md` |
 
