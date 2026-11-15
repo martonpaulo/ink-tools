@@ -125,3 +125,5 @@ Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
 The owner wants prettier Settings interfaces. `ink2pic`'s UI was good — simple, direct, minimal —
 but could use some colour. Reference to study: `Laumss/sn-plugins` configuration UI. This is a
 design direction for every plugin's Settings, within the e-ink constraints (16 greys).
+The conventions, and what was borrowed from that reference (now Notipal), are in
+[`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)).
