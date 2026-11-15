@@ -4,12 +4,23 @@ import {Capability, Descriptor, contentUri} from './descriptor';
 export interface DeviceReader {
   /** Resolve with the column names the provider returns, or reject when the provider does not answer. */
   columnsOf(uri: string): Promise<string[]>;
+  /**
+   * Insert one marked test row and delete it again, as `plugins/probe` does (#67). Resolve when both
+   * passed; reject when the provider refuses the write.
+   */
+  dryInsert(uri: string): Promise<void>;
 }
+
+/** The table each capability writes; reads passing says nothing about writes (#67). */
+const WRITE_TABLE: Record<Capability, string> = {calendar: 'events', todo: 'tasks', digest: 'digest'};
 
 export interface CapabilityStatus {
   capability: Capability;
+  /** Every table answered with the columns the descriptor lists. */
   available: boolean;
-  /** Human-readable reasons when unavailable: provider silent, or columns missing. */
+  /** A marked, reverted dry insert into the write table passed; false when reads failed first. */
+  canWrite: boolean;
+  /** Human-readable reasons: provider silent, columns missing, or the write refused. */
   problems: string[];
 }
 
@@ -36,7 +47,19 @@ export async function probeCapability(
     const missing = table.columns.filter(c => !actual.includes(c));
     if (missing.length) problems.push(`${uri} lacks columns: ${missing.join(', ')}`);
   }
-  return {capability, available: problems.length === 0, problems};
+  const available = problems.length === 0;
+  // No write is tried against a schema that already failed to match.
+  let canWrite = false;
+  if (available) {
+    const uri = contentUri(module, WRITE_TABLE[capability]);
+    try {
+      await reader.dryInsert(uri);
+      canWrite = true;
+    } catch (e) {
+      problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  return {capability, available, canWrite, problems};
 }
 
 export async function probeAll(descriptor: Descriptor, reader: DeviceReader): Promise<CapabilityStatus[]> {

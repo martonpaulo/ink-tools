@@ -14,10 +14,13 @@ const full: Record<string, string[]> = {};
 for (const m of [D.calendar, D.todo, D.digest]) {
   for (const name of Object.keys(m.tables)) full[contentUri(m, name)] = m.tables[name].columns;
 }
-const reader = (cols: Record<string, string[]>): DeviceReader => ({
+const reader = (cols: Record<string, string[]>, refuseWrites: string[] = []): DeviceReader => ({
   columnsOf: async uri => {
     if (!(uri in cols)) throw new Error('no provider');
     return cols[uri];
+  },
+  dryInsert: async uri => {
+    if (refuseWrites.includes(uri)) throw new Error('Permission Denial');
   },
 });
 
@@ -46,14 +49,21 @@ test('parseDescriptor refuses an update that lacks a rule the adapter reads (#84
 
 test('probe: matching device is available', async () => {
   const all = await probeAll(D, reader(full));
-  expect(all.every(s => s.available)).toBe(true);
+  expect(all.every(s => s.available && s.canWrite)).toBe(true);
+});
+
+test('probe: a provider that reads but refuses writes cannot write (#67)', async () => {
+  const digestUri = contentUri(D.digest, 'digest');
+  const digest = await probeCapability(D, 'digest', reader(full, [digestUri]));
+  expect(digest).toMatchObject({available: true, canWrite: false});
+  expect(digest.problems[0]).toMatch(/refused a test write: Permission Denial/);
 });
 
 test('probe: missing column or silent provider turns the capability off', async () => {
   const todoUri = contentUri(D.todo, 'tasks');
   const cols = {...full, [todoUri]: full[todoUri].filter(c => c !== 'hasSync')};
   const todo = await probeCapability(D, 'todo', reader(cols));
-  expect(todo.available).toBe(false);
+  expect(todo).toMatchObject({available: false, canWrite: false});
   expect(todo.problems[0]).toMatch(/hasSync/);
   const {[contentUri(D.digest, 'digest')]: _gone, ...noDigest} = full;
   const digest = await probeCapability(D, 'digest', reader(noDigest));

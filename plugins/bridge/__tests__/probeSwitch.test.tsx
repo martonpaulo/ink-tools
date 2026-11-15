@@ -21,9 +21,20 @@ import {ModuleRow, SettingsShell} from '../src/SettingsShell';
 
 const D = BUNDLED_DESCRIPTOR;
 
-/** Every table answers with its descriptor's columns, except the ones `change` rewrites. */
-function device(change: Record<string, string[] | Error> = {}): DeviceReader {
+/**
+ * Every table answers with its descriptor's columns, except the ones `change` rewrites, and takes a
+ * test write, except the ones in `refuse` (#67).
+ */
+function device(
+  change: Record<string, string[] | Error> = {},
+  refuse: string[] = [],
+): DeviceReader {
   return {
+    dryInsert: async uri => {
+      if (refuse.includes(uri)) {
+        throw new Error('Permission Denial');
+      }
+    },
     columnsOf: async uri => {
       const changed = change[uri];
       if (changed instanceof Error) {
@@ -79,6 +90,15 @@ test('a provider that does not answer turns its module off, never throws past th
   expect(modules[0].status).toEqual({
     state: 'blocked',
     reasons: [`${tasksUri} did not answer: no provider`],
+  });
+  expect(modules[1].status.state).toBe('waiting');
+});
+
+test('a To-Do table that reads but refuses writes turns To-Do off (#67)', async () => {
+  const modules = await rows(device({}, [tasksUri]));
+  expect(modules[0].status).toEqual({
+    state: 'blocked',
+    reasons: [`${tasksUri} refused a test write: Permission Denial`],
   });
   expect(modules[1].status.state).toBe('waiting');
 });

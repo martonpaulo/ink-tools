@@ -13,12 +13,13 @@ const MODULE_OF: Record<CapabilityStatus['capability'], ModuleId> = {
   digest: 'digest',
 };
 
-/** The probe's problems per module; an available capability has none. */
+/** The probe's problems per module; one that reads and writes has none (#67). */
 export function probeProblems(statuses: CapabilityStatus[]): ProbeProblems {
   const problems: ProbeProblems = {};
   for (const status of statuses) {
-    problems[MODULE_OF[status.capability]] = status.available
-      ? []
+    problems[MODULE_OF[status.capability]] =
+      status.available && status.canWrite
+        ? []
       : [...status.problems];
   }
   return problems;

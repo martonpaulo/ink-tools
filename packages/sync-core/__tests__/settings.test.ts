@@ -35,11 +35,21 @@ test('serialize then parse round-trips; unknown keys drop; bad input throws', ()
 test('the plan runs only opted-in modules the probe proved, and reports the blocked ones', () => {
   let s = setProvider(setModule(defaultSettings(), 'calendar', true), 'google', true);
   s = setProvider(setModule(s, 'todo', true), 'todoist', true);
-  expect(activePlan(s, {calendar: true, todo: false})).toEqual({
+  const proved = {available: true, canWrite: true};
+  expect(activePlan(s, {calendar: proved, todo: {available: false, canWrite: false}})).toEqual({
     modules: ['calendar'],
     providers: ['google'],
     blocked: ['todo'],
   });
   // no probe answer at all: nothing runs
   expect(activePlan(s, {})).toEqual({modules: [], providers: [], blocked: ['todo', 'calendar']});
+});
+
+test('the plan blocks a module whose reads pass but whose writes are refused (#67)', () => {
+  const s = setModule(setModule(defaultSettings(), 'calendar', true), 'todo', true);
+  expect(activePlan(s, {calendar: {available: true, canWrite: false}, todo: {available: true, canWrite: true}})).toEqual({
+    modules: ['todo'],
+    providers: [],
+    blocked: ['calendar'],
+  });
 });

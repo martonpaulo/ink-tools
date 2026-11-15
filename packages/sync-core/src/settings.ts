@@ -67,8 +67,11 @@ export function setProvider(s: BridgeSettings, id: ProviderId, on: boolean): Bri
   return {...s, providers: {...s.providers, [id]: on}};
 }
 
-/** What the device adapter's probe says per module: `available` false disables the module. */
-export type ModuleAvailability = Partial<Record<ModuleId, boolean>>;
+/**
+ * What the device adapter's probe says per module: its reads matched (`available`) and a test write
+ * passed (`canWrite`). Every module writes, so either false disables it (#67).
+ */
+export type ModuleAvailability = Partial<Record<ModuleId, {available: boolean; canWrite: boolean}>>;
 
 export interface ActivePlan {
   modules: ModuleId[];
@@ -84,7 +87,8 @@ export function activePlan(s: BridgeSettings, available: ModuleAvailability): Ac
   for (const m of MODULES) {
     if (!s.modules[m]) continue;
     // A missing probe answer counts as unavailable: never write without proof.
-    (available[m] === true ? modules : blocked).push(m);
+    const proof = available[m];
+    (proof?.available === true && proof.canWrite === true ? modules : blocked).push(m);
   }
   const providers = modules.flatMap(m => MODULE_PROVIDERS[m].filter(p => s.providers[p]));
   return {modules, providers, blocked};
