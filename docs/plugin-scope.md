@@ -24,7 +24,9 @@ device into an editable, durable form on the Mac, **not** sharing it with other 
 
 ## lookup
 
-Evolution of `ink2pic`: write a word, lasso it, insert something. **It is the first plugin to ship
+Evolution of `ink2pic`: write a word, lasso it, insert something. `lookup` is a new plugin with its
+own `pluginID`, installed beside Ink2Pic until Ink2Pic is retired; it does not carry Ink2Pic's
+settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)). **It is the first plugin to ship
 after `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each
 mode is its own **lasso button**, chosen before the search — not a post-hoc toggle: "insert
 illustration" (vector/sticker/OpenMoji), "insert photo" (real photo), "insert text" (definition /
