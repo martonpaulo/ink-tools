@@ -94,7 +94,8 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `/storage/emulated/0/.ink2pic-symbols` failed with `SecurityException: Plugin [...] is not allowed
   to access sdcard path outside whitelist` [measured, 2026-11-15, [#23](https://github.com/martonpaulo/supernote-tools/issues/23)].
 - Lasso buttons of all plugins share one «⋯» list under the lasso toolbar; each row's icon shows
-  at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/supernote-tools/issues/107)].
+  at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/supernote-tools/issues/107)]. A button takes one icon, so each plugin
+  ships one 96 x 96 PNG per button, which the tablet scales down to that size (owner D43 A).
 - A lasso button registered while the plugin already runs shows in that list at once, and
   `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/supernote-tools/issues/115)].
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
