@@ -90,6 +90,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   0.1.0-dev.17 [measured, 2026-11-14, [#19](https://github.com/martonpaulo/supernote-tools/issues/19)]: `recognizeElements` 0.9 to 1.7 s,
   `insertPageElements` 0.1 to 0.3 s, re-lasso 0.4 to 0.6 s, writing the PNG under 20 ms, a 200 px
   contour conversion 0.16 to 0.25 s, measuring 12 page-1 thumbnails 5.7 s.
+- A plugin's file calls reach only a whitelist of shared paths: Ink2Pic 0.1.0-dev.18 listing
+  `/storage/emulated/0/.ink2pic-symbols` failed with `SecurityException: Plugin [...] is not allowed
+  to access sdcard path outside whitelist` [measured, 2026-11-15, [#23](https://github.com/martonpaulo/supernote-tools/issues/23)].
+- Lasso buttons of all plugins share one «⋯» list under the lasso toolbar; each row's icon shows
+  at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/supernote-tools/issues/107)].
+- A lasso button registered while the plugin already runs shows in that list at once, and
+  `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/supernote-tools/issues/115)].
+- My Hub in InkHub on the tablet lists published items only; it shows no upload form and no
+  cover rules [measured, 2026-11-15, [#100](https://github.com/martonpaulo/supernote-tools/issues/100)].
 - `recognizeElements` has no language parameter; it uses the device's handwriting language
   [official signature].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
@@ -117,8 +126,8 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
 
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
-  [#23](https://github.com/martonpaulo/supernote-tools/issues/23)]. Ink2Pic keeps its offline symbols in `/storage/emulated/0/.ink2pic-symbols` for
-  that reason.
+  [#23](https://github.com/martonpaulo/supernote-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
+  plugin files.
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/supernote-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/snadb/README.md`].

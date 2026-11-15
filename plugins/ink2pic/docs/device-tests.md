@@ -169,3 +169,18 @@ Prerelease [`v0.1.0-dev.16`](https://github.com/martonpaulo/ink2pic/releases/tag
 | 6 Download symbols, then «happy» offline | Symbols with no internet | Pass | [#91](https://github.com/martonpaulo/ink2pic/issues/91) |
 | 7 «Confucious Institute» | «Showing results for confucius institute» | Pass | [#84](https://github.com/martonpaulo/ink2pic/issues/84) |
 | 8 Session log | Sent | Not on record | The Insert picture timings of [#88](https://github.com/martonpaulo/ink2pic/issues/88) are still unmeasured |
+
+## Build 0.1.0 (18), 2026-11-15, firmware 3.31.45
+
+Prerelease [`v0.1.0-dev.18`](https://github.com/martonpaulo/supernote-tools/releases/tag/v0.1.0-dev.18), commit `f9a37ca`, installed with `snadb plugin install`. Run live with the owner; the agent read the screen and the log over ADB.
+
+| Step | Expected | Result | Notes |
+| --- | --- | --- | --- |
+| Lasso menu | Insert best picture and Choose picture, each with its own icon; no Lasso last word | Pass | The buttons sit in the shared «⋯» list; icons about 60 px ([#107](https://github.com/martonpaulo/supernote-tools/issues/107), [#32](https://github.com/martonpaulo/supernote-tools/issues/32)) |
+| Insert best picture, «apple» | An apple drawing, inserted and lassoed | Pass | `time total` 9734 ms: search 3307, thumbnails 4977, download 714, conversion 117, insert 143, lasso 418; the source search ran twice ([#109](https://github.com/martonpaulo/supernote-tools/issues/109), [#21](https://github.com/martonpaulo/supernote-tools/issues/21), [#19](https://github.com/martonpaulo/supernote-tools/issues/19)) |
+| Choose picture, «Leonardo da Vinci» | The red-chalk portrait as found, inserted in grey and lassoed | Pass | No `photo` or `dark` tile became a contour ([#104](https://github.com/martonpaulo/supernote-tools/issues/104), [#109](https://github.com/martonpaulo/supernote-tools/issues/109)) |
+| Settings, symbols | The symbols kept in `.ink2pic-symbols` | Fail | «Saved symbols cannot be read now»: the host refuses the path outside its whitelist ([#23](https://github.com/martonpaulo/supernote-tools/issues/23)) |
+| Insert definition, «maçã», English only | A clear refusal | Pass | «Add Portuguese or Spanish to the search languages» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
+| Insert definition, «maçã», with Portuguese | A definition below the word | Partial | Inserted in 3.1 s; the box is 200 px wide, the second sense «cama» is wrong, and a picture search ran too ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
+| InkHub upload rules | The cover size and format | Not found | My Hub shows no upload form ([#100](https://github.com/martonpaulo/supernote-tools/issues/100)) |
+
