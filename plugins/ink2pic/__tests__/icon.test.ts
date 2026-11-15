@@ -18,6 +18,25 @@ describe('plugin icon', () => {
     expect(pngSize('insert.png')).toEqual({width: 96, height: 96});
   });
 
+  it.each(['choose.png', 'definition.png'])(
+    'renders the %s lasso icon at the toolbar size (#107)',
+    file => {
+      expect(pngSize(file)).toEqual({width: 96, height: 96});
+    },
+  );
+
+  it('gives every lasso button its own icon file (#107)', () => {
+    const index = readFileSync(join(__dirname, '..', 'index.js'), 'utf8');
+    const lassoIcons = ['insert.png', 'choose.png', 'definition.png'];
+    for (const file of lassoIcons) {
+      expect(index).toContain(`require('./assets/${file}')`);
+    }
+    const bytes = lassoIcons.map(file =>
+      readFileSync(join(__dirname, '..', 'assets', file)).toString('base64'),
+    );
+    expect(new Set(bytes).size).toBe(lassoIcons.length);
+  });
+
   it('renders the README icon at 512 x 512', () => {
     expect(pngSize('icon-512.png')).toEqual({width: 512, height: 512});
   });

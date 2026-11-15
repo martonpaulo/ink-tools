@@ -1,5 +1,6 @@
 // Renders assets/icon.svg to the PNGs the plugin and the README use (#31), and assets/insert.svg
-// to the Insert best picture button's icon (#74).
+// to the Insert best picture button's icon (#74); choose.svg and definition.svg give Choose picture
+// and Insert definition their own icons (#107).
 // Chromium draws the SVG on a transparent page, so the PNGs never drift from the master.
 const fs = require('fs');
 const path = require('path');
@@ -11,6 +12,8 @@ const outputs = [
   {svg: 'icon.svg', file: 'icon.png', size: 96},
   {svg: 'icon.svg', file: 'icon-512.png', size: 512},
   {svg: 'insert.svg', file: 'insert.png', size: 96},
+  {svg: 'choose.svg', file: 'choose.png', size: 96},
+  {svg: 'definition.svg', file: 'definition.png', size: 96},
 ];
 
 async function main() {

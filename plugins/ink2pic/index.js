@@ -83,14 +83,17 @@ registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
 registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
   id: LASSO_BUTTON_ID,
   name: copy['button.lasso'],
-  icon,
+  // Its own grid icon, so it is not read as Insert best picture's framed picture (#107).
+  icon: Image.resolveAssetSource(require('./assets/choose.png')).uri,
   editDataTypes: [EDIT_DATA_STROKES],
   showType: SHOW_FULL_VIEW,
 }).then(result => report('lasso button', result));
 
 // «Insert definition» only while its Settings switch is on (#115): the settings file is read first,
 // so this button registers after the others; whether the host shows a late one is TO TEST.
-setDefinitionIcon(icon);
+setDefinitionIcon(
+  Image.resolveAssetSource(require('./assets/definition.png')).uri,
+);
 getSettings().then(definitionSwitched);
 
 // After registerButton, as the official docs order it; before the view exists (gotcha 11).
