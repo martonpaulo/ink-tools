@@ -116,6 +116,13 @@ supernote-tools/
     (`registerConfigButton()` + `startConfigQueue()`) **independently**. `bridge` registers only the
     config button and no NOTE buttons, so it appears only in the plugin settings, never in notes.
     (API-confirmed from ink2pic; to confirm on device via `probe`.)
+  - **A change made on both sides between two syncs** ([#87](https://github.com/martonpaulo/supernote-tools/issues/87), owner D14 A): on both
+    modules the later change wins, and a tie goes to the service. To-Do compares the two
+    `modified` times (`packages/sync-core/src/tasks.ts`). Calendar compares the tablet row's
+    `lastModifiedTime` with the source's change time (Google's `updated`); a source that has none,
+    such as ICS, wins (`pushCalendarEdits` in `packages/sync-core/src/push.ts`). The losing
+    version goes into the module run's warnings, which Settings and the log show: a task's title, an
+    event's title, start and notes (`conflictWarnings`).
   - **Open question — background lifecycle.** The config listener only fires when the owner opens
     Settings. Periodic sync with the view closed needs a background trigger or a kept-alive plugin;
     whether PluginHost allows that is unconfirmed and is the first thing `probe` must answer before

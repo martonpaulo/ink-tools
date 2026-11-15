@@ -16,6 +16,11 @@ export interface CalendarEvent {
   start: number;
   end: number;
   allDay: boolean;
+  /**
+   * Epoch ms of the last change, when the side knows it: Google's `updated`, the tablet's
+   * `lastModifiedTime`. ICS has none. It decides a change made on both sides (#87).
+   */
+  modified?: number;
 }
 
 export interface TimeWindow {

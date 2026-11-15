@@ -99,6 +99,8 @@ interface GoogleEvent {
   description?: string;
   start?: {date?: string; dateTime?: string};
   end?: {date?: string; dateTime?: string};
+  /** RFC 3339 time of the last change to the event. */
+  updated?: string;
 }
 
 /** shortcut: an all-day date reads as UTC midnight, not the tablet's zone; revisit with time zones. */
@@ -108,7 +110,11 @@ export function fromGoogleEvent(calendarId: string, e: GoogleEvent): CalendarEve
   const start = Date.parse(e.start.dateTime ?? `${e.start.date}T00:00:00Z`);
   const end = Date.parse(e.end.dateTime ?? `${e.end.date}T00:00:00Z`);
   if (Number.isNaN(start) || Number.isNaN(end)) return null;
-  return {eventId: e.id, calendarId, title: e.summary ?? '(no title)', content: e.description ?? '', start, end, allDay};
+  const modified = e.updated ? Date.parse(e.updated) : NaN;
+  return {
+    eventId: e.id, calendarId, title: e.summary ?? '(no title)', content: e.description ?? '', start, end, allDay,
+    ...(Number.isNaN(modified) ? {} : {modified}),
+  };
 }
 
 /** `getAccessToken` is called per request so a refreshed token is always used. */

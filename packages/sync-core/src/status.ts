@@ -50,7 +50,7 @@ export function tasksRun(at: number, result: SyncResult): ModuleRun {
       removed: c.removedLocal + c.removedRemote,
     },
     errors: [...result.errors],
-    warnings: [],
+    warnings: [...result.warnings],
   };
 }
 

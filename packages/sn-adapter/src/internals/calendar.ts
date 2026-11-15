@@ -10,6 +10,8 @@ export interface DeviceEvent {
   start: number;
   end: number;
   allDay: boolean;
+  /** Epoch ms of the row's last change (`lastModifiedTime`), when the row has one (#87). */
+  modified?: number;
 }
 
 /**
@@ -50,6 +52,7 @@ const requireTime = (row: Row, key: string): number => {
 export function rowToEvent(d: Descriptor, row: Row): DeviceEvent {
   const col = (field: string) => column(d.calendar, 'events', field);
   const allDay = row[col('allDay')];
+  const changed = Number(row[col('modified')] ?? NaN);
   return {
     eventId: requireId(row, col('eventId')),
     calendarId: requireId(row, col('calendarId')),
@@ -58,5 +61,6 @@ export function rowToEvent(d: Descriptor, row: Row): DeviceEvent {
     start: requireTime(row, col('start')),
     end: requireTime(row, col('end')),
     allDay: allDay === 1 || allDay === '1' || allDay === true,
+    ...(Number.isFinite(changed) && changed > 0 ? {modified: changed} : {}),
   };
 }

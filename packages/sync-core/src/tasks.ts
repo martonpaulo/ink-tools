@@ -63,6 +63,8 @@ export interface SyncResult {
   counts: {createdLocal: number; createdRemote: number; updatedLocal: number; updatedRemote: number; removedLocal: number; removedRemote: number};
   /** Per-task failures; one bad task never stops the others. */
   errors: string[];
+  /** A task changed on both sides: which version was kept and the losing one's title (#87). */
+  warnings: string[];
 }
 
 /**
@@ -82,6 +84,7 @@ export async function syncTasks(
     links: [],
     counts: {createdLocal: 0, createdRemote: 0, updatedLocal: 0, updatedRemote: 0, removedLocal: 0, removedRemote: 0},
     errors: [],
+    warnings: [],
   };
   const remotes = new Map((await provider.list()).map(t => [t.remoteId, t]));
   const devices = new Map((await store.list()).map(t => [t.localId, t]));
@@ -163,6 +166,11 @@ async function syncLinked(
       ? (device.modified > remote.modified ? 'toRemote' : 'toLocal')
       : remoteChanged ? 'toLocal' : 'toRemote';
 
+  if (remoteChanged && deviceChanged) {
+    const [kept, lost] = direction === 'toRemote' ? ["the tablet's", remote] : ["the service's", device];
+    const other = direction === 'toRemote' ? "the service's" : "the tablet's";
+    result.warnings.push(`Changed on both sides: kept ${kept} version; ${other} was "${lost.title}"`);
+  }
   if (direction === 'toLocal') {
     await store.update(link.localId, content(remote));
     result.counts.updatedLocal++;

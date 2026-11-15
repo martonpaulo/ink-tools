@@ -5,6 +5,10 @@ import {HttpFetch} from './http';
  * Two-way half of the calendar module (#29): carry edits made on the tablet back to the source.
  * Run the push BEFORE the one-way pull, or the pull overwrites the edit. Writes only to sources
  * that accept them (Google, iCloud); ICS has no writer and is never pushed to.
+ *
+ * Changed on both sides since the last pull (#87, owner D14 A): the later `modified` wins, as for
+ * To-Do; a tie, or a side that does not know its time, goes to the source. The losing version is
+ * kept in `conflicts`, which the sync status shows and the log records.
  */
 
 /** A source that accepts writes. `createEvent` returns the new event's id. */
@@ -22,12 +26,20 @@ export interface DeviceEdit {
   cancelled: boolean;
 }
 
+/** An event changed on the tablet and at the source between two syncs; `lost` is the version dropped. */
+export interface Conflict {
+  kept: 'tablet' | 'source';
+  lost: CalendarEvent;
+}
+
 export interface PushResult {
   /** `calendarId` is the calendar that received the event; apply the pairs with `applyCreated`. */
   created: Array<{from: CalendarEvent; calendarId: string; eventId: string}>;
   updated: number;
   deleted: number;
   skipped: number;
+  /** Edits made on both sides, and which version was kept (#87). */
+  conflicts: Conflict[];
   errors: string[];
 }
 
@@ -38,17 +50,31 @@ const same = (a: CalendarEvent, b: CalendarEvent) =>
 /**
  * `baseline` is what the last pull wrote, so an edit identical to it is not pushed again.
  * `defaultCalendarId` receives tablet-created events; without it they are reported, not dropped.
+ * `remote` is the source's events as read now; without it no change on the source side is seen.
  */
 export async function pushCalendarEdits(
   edits: DeviceEdit[],
   baseline: CalendarEvent[],
   writer: CalendarWriter,
   defaultCalendarId?: string,
+  remote: CalendarEvent[] = [],
 ): Promise<PushResult> {
-  const result: PushResult = {created: [], updated: 0, deleted: 0, skipped: 0, errors: []};
+  const result: PushResult = {created: [], updated: 0, deleted: 0, skipped: 0, conflicts: [], errors: []};
   const known = new Map(baseline.map(e => [key(e), e]));
+  const now = new Map(remote.map(e => [key(e), e]));
   for (const {event, cancelled} of edits) {
     try {
+      const base = event.eventId ? known.get(key(event)) : undefined;
+      const source = event.eventId ? now.get(key(event)) : undefined;
+      const tabletChanged = cancelled || !base || !same(base, event);
+      if (base && source && tabletChanged && !same(base, source)) {
+        const tabletWins = (event.modified ?? 0) > (source.modified ?? Infinity);
+        result.conflicts.push(tabletWins ? {kept: 'tablet', lost: source} : {kept: 'source', lost: event});
+        if (!tabletWins) {
+          result.skipped++; // the pull then writes the source's version over the tablet's
+          continue;
+        }
+      }
       if (!event.eventId) {
         if (cancelled) {
           result.skipped++;
@@ -71,6 +97,20 @@ export async function pushCalendarEdits(
     }
   }
   return result;
+}
+
+const SIDE = {tablet: "the tablet's", source: "the source's"} as const;
+
+/**
+ * One line per conflict for the module's run record (`calendarRun`'s warnings, #88), so Settings and
+ * the log keep the losing version's text: its title, start and notes (#87).
+ */
+export function conflictWarnings(conflicts: Conflict[]): string[] {
+  return conflicts.map(({kept, lost}) => {
+    const other = kept === 'tablet' ? 'source' : 'tablet';
+    const notes = lost.content ? `, notes "${lost.content}"` : '';
+    return `Changed on both sides: kept ${SIDE[kept]} version; ${SIDE[other]} was "${lost.title}" at ${new Date(lost.start).toISOString()}${notes}`;
+  });
 }
 
 /** The tablet side of giving a tablet-created row its identity on the service. */

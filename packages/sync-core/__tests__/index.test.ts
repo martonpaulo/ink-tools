@@ -89,11 +89,14 @@ test('a change on one side is copied to the other', async () => {
 test('both sides changed: the later change wins and a tie goes to the service', async () => {
   const base = c('a');
   const tablet = fakes([R('r1', c('remote'), 5)], [D('l1', c('device'), 9)]);
-  await syncTasks(tablet.provider, tablet.store, [link('r1', 'l1', base)]);
+  const won = await syncTasks(tablet.provider, tablet.store, [link('r1', 'l1', base)]);
   expect(tablet.log).toEqual(['update remote device']);
+  // The losing version's title reaches the run's warnings (#87).
+  expect(won.warnings).toEqual([`Changed on both sides: kept the tablet's version; the service's was "remote"`]);
   const tie = fakes([R('r1', c('remote'), 5)], [D('l1', c('device'), 5)]);
-  await syncTasks(tie.provider, tie.store, [link('r1', 'l1', base)]);
+  const lost = await syncTasks(tie.provider, tie.store, [link('r1', 'l1', base)]);
   expect(tie.log).toEqual(['update local remote']);
+  expect(lost.warnings).toEqual([`Changed on both sides: kept the service's version; the tablet's was "device"`]);
 });
 
 test('a deletion on either side propagates, and a completed remote task is not a deletion', async () => {

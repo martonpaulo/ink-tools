@@ -97,7 +97,10 @@ test('an event row carries the tag and round-trips', () => {
   const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
   const row = eventToRow(D, e, 5);
   expect(row.tag).toBe('task');
-  expect(rowToEvent(D, row)).toEqual(e);
+  // The row's lastModifiedTime is its change time, which decides an edit on both sides (#87).
+  expect(rowToEvent(D, row)).toEqual({...e, modified: 5});
+  const {lastModifiedTime: _unused, ...noTime} = row;
+  expect(rowToEvent(D, noTime)).toEqual(e);
 });
 
 test('a row with a missing or unusable id or time throws instead of becoming "undefined" or NaN (#70)', () => {

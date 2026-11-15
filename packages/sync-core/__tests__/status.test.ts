@@ -16,7 +16,7 @@ describe('module status (#88)', () => {
 
   test('a to-do run adds up both directions', () => {
     const counts = {createdLocal: 1, createdRemote: 2, updatedLocal: 0, updatedRemote: 3, removedLocal: 1, removedRemote: 0};
-    expect(tasksRun(AT, {links: [], counts, errors: []}).counts).toEqual({added: 3, changed: 3, removed: 1});
+    expect(tasksRun(AT, {links: [], counts, errors: [], warnings: []}).counts).toEqual({added: 3, changed: 3, removed: 1});
   });
 
   test('off, blocked with the probe reasons, waiting, and ran', () => {
