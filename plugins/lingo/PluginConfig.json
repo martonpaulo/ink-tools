@@ -8,5 +8,5 @@
   "pluginID": "2rwzp7s8b0ul4ijw",
   "pluginKey": "Lingo",
   "jsMainPath": "index",
-  "uses-permissions": []
+  "uses-permissions": ["plugin.permission.INTERNET"]
 }

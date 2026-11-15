@@ -10,6 +10,8 @@ module.exports = {
     ...uiKit.jest.moduleNameMapper,
     // ink-core's pairs model (#126); its own tests run in the packages gate (#109).
     ...inkCore.jestModuleNameMapper,
+    // The CC-CEDICT pinyin index, the ZH buttons' input (#129, #128).
+    ...inkCore.jestPinyinDataMapper,
     ...snAdapter.jestModuleNameMapper,
   },
   // The shared package's own tests run in Bridge's suite (#93).

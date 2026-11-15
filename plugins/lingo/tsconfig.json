@@ -9,6 +9,7 @@
       // sn-adapter's official tier (#101); ink-core for the page types it names.
       "@supernote-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
       "@supernote-tools/ink-core": ["../../packages/ink-core/src"],
+      "@supernote-tools/ink-core/pinyin-data": ["../../packages/ink-core/pinyin-data"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },
