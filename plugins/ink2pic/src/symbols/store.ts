@@ -1,7 +1,7 @@
 /**
  * OpenMoji pictures kept on the device for offline use (#91): each symbol shown or inserted is
- * saved once as `.ink2pic-symbols/<hex>.png`, a hidden folder Supernote file sync does not read
- * (#23), and Settings can download every one. Symbols left in the old synced folder,
+ * saved once as `symbols/<hex>.png` in the plugin's private folder, which Supernote file sync
+ * does not read (#23), and Settings can download every one. Symbols left in the old synced folder,
  * `MyStyle/Ink2Pic/symbols`, are still read, never written. Shared storage is written in place by
  * the plugin's own module (#62). Nothing here deletes a file: PluginHost counts a delete in shared
  * storage as FILE:DELETE, which Ink2Pic does not declare.
@@ -15,6 +15,7 @@ import {
   listCompletePngs,
   listSizes,
   oldSymbolsDir,
+  pluginFolder,
   symbolsDir,
 } from '../profile';
 import {
@@ -34,6 +35,8 @@ export const DOWNLOAD_PARALLEL = 3;
 export const SYMBOL_BYTES = 10400;
 const BYTES_PER_MB = 1000 * 1000;
 
+/** The private symbols folder, known once a listing found the plugin folder (#23). */
+let folder: string | null = null;
 /** The saved symbols' codes, in either folder; null until the folders are listed. */
 let saved: Set<string> | null = null;
 /** Saved symbols found only in the old synced folder, read from there (#23). */
@@ -50,16 +53,18 @@ let unlisted: string | null = null;
 /** One download per symbol: a second request for the same one joins the first. */
 const pending = new Map<string, Promise<boolean>>();
 
-/** Where a symbol is written: always the hidden folder (#23). */
-export function symbolPath(hex: string): string {
-  return `${symbolsDir()}/${hex}${EXTENSION}`;
+/**
+ * Where a symbol is written: always the private folder (#23); null before a listing found it.
+ */
+function symbolPath(hex: string): string | null {
+  return folder ? `${folder}/${hex}${EXTENSION}` : null;
 }
 
-/** Where a saved symbol is read: the hidden folder, else the old one it was found in (#23). */
+/** Where a saved symbol is read: the private folder, else the old one it was found in (#23). */
 function foundPath(hex: string): string {
   return oldOnly.has(hex)
     ? `${oldSymbolsDir()}/${hex}${EXTENSION}`
-    : symbolPath(hex);
+    : `${folder}/${hex}${EXTENSION}`;
 }
 
 /** The non-empty PNGs of a listing, by code. */
@@ -75,7 +80,7 @@ function isSymbol(result: SearchResult): boolean {
 
 /**
  * The saved symbols, listed once per session by name and size, with no file opened (#102): every
- * non-empty PNG of the hidden folder, then of the old synced one (#23). A file a cut-off download
+ * non-empty PNG of the private folder, then of the old synced one (#23). A file a cut-off download
  * left is listed too; `isWhole` checks the one about to be used (#91), and Settings checks the
  * whole folders with `completeSymbols`.
  * A folder that cannot be listed is not cached as empty (#99): this call gets no symbol, its
@@ -86,8 +91,16 @@ export function savedSymbols(): Promise<Set<string>> {
     return Promise.resolve(saved);
   }
   listing ??= (async () => {
+    const plugin = await pluginFolder();
+    if (!plugin.ok) {
+      log(`symbols: no plugin folder: ${plugin.message}`);
+      unlisted = plugin.message;
+      listing = null;
+      return new Set<string>();
+    }
+    folder = symbolsDir(plugin.value);
     const files: FileSize[][] = [];
-    for (const dir of [symbolsDir(), oldSymbolsDir()]) {
+    for (const dir of [folder, oldSymbolsDir()]) {
       const listed = await logged(`listSizes ${dir}`, () => listSizes(dir));
       if (!listed.ok) {
         log(`symbols: cannot list ${dir}: ${listed.message}`);
@@ -166,13 +179,13 @@ function completeSymbols(): Promise<Set<string>> {
           .map(name => name.slice(0, -EXTENSION.length)),
       );
     };
-    const hidden = await wholeIn(symbolsDir());
+    const own = folder ? await wholeIn(folder) : null;
     const old = oldOnly.size > 0 ? await wholeIn(oldSymbolsDir()) : new Set();
-    if (!hidden || !old) {
+    if (!own || !old) {
       return known;
     }
     for (const hex of [...known]) {
-      if ((oldOnly.has(hex) ? old : hidden).has(hex)) {
+      if ((oldOnly.has(hex) ? old : own).has(hex)) {
         whole.add(hex);
       } else if (!whole.has(hex)) {
         known.delete(hex);
@@ -213,7 +226,7 @@ export async function symbolFile(result: SearchResult): Promise<string | null> {
 }
 
 /**
- * Downloads one symbol into the hidden folder unless either folder holds it whole; true when it
+ * Downloads one symbol into the private folder unless either folder holds it whole; true when it
  * is saved afterwards (#23). In
  * the background lane, so an insert never waits behind it (#46). A download cut off midway leaves
  * a partial file in place, which is never counted: the file must end with the PNG's IEND chunk,
@@ -230,6 +243,9 @@ function save(hex: string): Promise<boolean> {
       return true;
     }
     const path = symbolPath(hex);
+    if (!path) {
+      return false;
+    }
     const bytes = await logged(`symbol ${hex}`, () =>
       downloadThumbToFile(openmojiPictureUrl(hex), path),
     );
@@ -420,6 +436,7 @@ export async function downloadAllSymbols(
 }
 
 export function resetSymbolsForTests(): void {
+  folder = null;
   saved = null;
   listing = null;
   oldOnly.clear();

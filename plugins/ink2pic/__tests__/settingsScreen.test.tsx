@@ -196,7 +196,7 @@ it('states the size of the symbols before downloading them (#91)', async () => {
   expect(texts(tree)).toContain('Offline symbols: 47 of 1,447');
   await press(copy['settings.symbolsDownload']);
   expect(texts(tree)).toContain(
-    'Download the other 1,400 symbols, about 15 MB, so they work without Wi-Fi? They go to the hidden folder .ink2pic-symbols, which Supernote file sync does not read.',
+    "Download the other 1,400 symbols, about 15 MB, so they work without Wi-Fi? They go to Ink2Pic's private folder, which Supernote file sync does not read.",
   );
   await press(copy['action.cancel']);
   expect(download).not.toHaveBeenCalled();
@@ -212,7 +212,7 @@ it('says where the symbols are kept and why, outside the synced folders (#23)', 
   await settled();
   const shown = texts(tree).join('\n');
   expect(shown).toContain(copy['settings.symbolsWhere']);
-  expect(shown).toMatch(/\.ink2pic-symbols/);
+  expect(shown).toMatch(/Ink2Pic's own private folder/);
   expect(shown).toMatch(/0\.14 s to every sync/);
   expect(shown).toMatch(/1,447 symbols would add about 4 minutes/);
   // No old folder note while nothing is left there.
@@ -227,7 +227,7 @@ it('names the old synced folder while symbol files are left in it (#23)', async 
   const {tree} = await screen(defaultSettings(null), true, symbols);
   await settled();
   expect(texts(tree)).toContain(
-    '1,447 symbol files are still in MyStyle/Ink2Pic/symbols, which Supernote syncs on every file sync. Delete that folder with the File Manager, then download symbols again to keep them in the hidden folder.',
+    "1,447 symbol files are still in MyStyle/Ink2Pic/symbols, which Supernote syncs on every file sync. Delete that folder with the File Manager, then download symbols again to keep them in Ink2Pic's private folder.",
   );
 });
 

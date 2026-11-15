@@ -157,7 +157,8 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
   [#23](https://github.com/martonpaulo/supernote-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
-  plugin files.
+  plugin files; its private folder (`getPluginDirPath`) is the one place outside sync it reaches.
+  Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/supernote-tools/issues/23)].
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/supernote-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/snadb/README.md`].

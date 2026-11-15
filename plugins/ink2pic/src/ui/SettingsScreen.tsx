@@ -4,7 +4,7 @@
  * Settings section (brief 8.4). Every tap is saved at once and used by the next search or insert.
  * Clear and Reset ask first, in the fixed status line at the bottom, so nothing above moves.
  * «Download symbols» (#91) states the size there first, then its progress; a note names the
- * hidden folder the symbols go to and why, and the old synced folder while files are left in it
+ * private folder the symbols go to and why, and the old synced folder while files are left in it
  * (#23).
  */
 import React, {useEffect, useState} from 'react';

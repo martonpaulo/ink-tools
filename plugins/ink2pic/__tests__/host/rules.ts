@@ -138,6 +138,12 @@ export const RULES = {
       'docs/brief.md section 3.6 (official docs); the refusal text is a guess',
     tag: 'INFERENCE',
   },
+  sharedWhitelist: {
+    rule: 'Shared storage is reachable only under Document, EXPORT, INBOX, MyStyle, Note and SCREENSHOT; any other path fails «SecurityException: Plugin [id] is not allowed to access sdcard path outside whitelist», whatever the permissions; the private folder needs none',
+    source:
+      'docs.supernote.com Plugin Permissions › Default Accessible Scope; docs/device-tests.md build 0.1.0-dev.18 (#23)',
+    tag: 'CONFIRMED',
+  },
   activityNull: {
     rule: 'A FileUtils call that needs the activity throws in the host and destroys the plugin: lifecycle 4 then 5, never 3, and the call never answers',
     source: 'docs/brief.md section 10.5 (host code, build 0.1.0 (9))',
@@ -151,7 +157,8 @@ export const RULES = {
   },
   apiResponse: {
     rule: 'Every PluginCommAPI, PluginNoteAPI and PluginFileAPI call answers {success, result, error}; error is {code, message}',
-    source: 'sn-plugin-lib 0.2.3 src/response/APIResponse.ts; docs.supernote.com APIResponse',
+    source:
+      'sn-plugin-lib 0.2.3 src/response/APIResponse.ts; docs.supernote.com APIResponse',
     tag: 'CONFIRMED',
   },
 } as const satisfies Record<string, HostRule>;

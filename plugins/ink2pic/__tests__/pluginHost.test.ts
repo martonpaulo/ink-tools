@@ -16,6 +16,7 @@ import {
   NOTE_PATH,
   PERMISSION,
   PICTURE_TYPE,
+  PLUGIN_DIR,
   PluginHost,
   REPLAY_MS,
   SHARED_ROOT,
@@ -46,7 +47,7 @@ async function withPicture(): Promise<PluginHost> {
   const host = started();
   host.grantDeclared();
   host.press(1);
-  await files().downloadToFile('https://example.org/a.png', `${SHARED_ROOT}/a.png`, {});
+  await files().downloadToFile('https://example.org/a.png', `${SHARED_ROOT}/MyStyle/a.png`, {});
   return host;
 }
 
@@ -170,7 +171,7 @@ const checks: Record<RuleId, () => Promise<void>> = {
     const host = await withPicture();
     host.write('soup', word);
     host.lassoAround();
-    expect(await PluginNoteAPI.insertImage(`${SHARED_ROOT}/a.png`)).toEqual({
+    expect(await PluginNoteAPI.insertImage(`${SHARED_ROOT}/MyStyle/a.png`)).toEqual({
       success: true,
       result: true,
       error: null,
@@ -181,18 +182,18 @@ const checks: Record<RuleId, () => Promise<void>> = {
     expect((top + bottom) / 2).toBe(MANTA_PAGE.height / 2);
     expect(host.lassoed()).toEqual([picture]);
     // Sides kept between 100 and 2560 px.
-    host.files.set(`${SHARED_ROOT}/tiny.png`, {image: {width: 20, height: 40}, bytes: 1, order: 0});
-    host.files.set(`${SHARED_ROOT}/huge.png`, {image: {width: 6000, height: 3000}, bytes: 1, order: 0});
-    await PluginNoteAPI.insertImage(`${SHARED_ROOT}/tiny.png`);
-    await PluginNoteAPI.insertImage(`${SHARED_ROOT}/huge.png`);
+    host.files.set(`${SHARED_ROOT}/MyStyle/tiny.png`, {image: {width: 20, height: 40}, bytes: 1, order: 0});
+    host.files.set(`${SHARED_ROOT}/MyStyle/huge.png`, {image: {width: 6000, height: 3000}, bytes: 1, order: 0});
+    await PluginNoteAPI.insertImage(`${SHARED_ROOT}/MyStyle/tiny.png`);
+    await PluginNoteAPI.insertImage(`${SHARED_ROOT}/MyStyle/huge.png`);
     const [, tiny, huge] = host.pictures().map(p => p.rect);
     expect(tiny.right - tiny.left).toBe(MIN_SIDE);
     expect(huge.right - huge.left).toBe(MAX_SIDE);
   },
   insertImageFile: async () => {
     const host = await withPicture();
-    host.files.set(`${SHARED_ROOT}/a.gif`, {image: {width: 9, height: 9}, bytes: 1, order: 0});
-    for (const path of [`${SHARED_ROOT}/missing.png`, `${SHARED_ROOT}/a.gif`]) {
+    host.files.set(`${SHARED_ROOT}/MyStyle/a.gif`, {image: {width: 9, height: 9}, bytes: 1, order: 0});
+    for (const path of [`${SHARED_ROOT}/MyStyle/missing.png`, `${SHARED_ROOT}/MyStyle/a.gif`]) {
       expect(await PluginNoteAPI.insertImage(path)).toEqual({
         success: true,
         result: false,
@@ -208,7 +209,7 @@ const checks: Record<RuleId, () => Promise<void>> = {
     const element = {
       ...created.result,
       type: PICTURE_TYPE,
-      picture: {picturePath: `${SHARED_ROOT}/a.png`, rect: past},
+      picture: {picturePath: `${SHARED_ROOT}/MyStyle/a.png`, rect: past},
     };
     expect(await PluginCommAPI.insertPageElements([element], 0, 0)).toEqual({
       success: true,
@@ -337,8 +338,25 @@ const checks: Record<RuleId, () => Promise<void>> = {
     await files().writeText(shared, '{}');
     await expect(files().readText(shared)).resolves.toBe('{}');
     await expect(
-      image().prepareForEink(`${SHARED_ROOT}/none.png`, shared, 640, 'png', false),
+      image().prepareForEink(`${SHARED_ROOT}/Note/none.png`, shared, 640, 'png', false),
     ).rejects.toMatchObject({code: 'NOT_FOUND'});
+  },
+  sharedWhitelist: async () => {
+    const host = started();
+    host.grantDeclared();
+    for (const path of [
+      `${SHARED_ROOT}/.ink2pic-symbols/1F600.png`,
+      `${SHARED_ROOT}/Download/a.png`,
+      `${SHARED_ROOT}/root.png`,
+    ]) {
+      await expect(files().isCompletePng(path)).rejects.toThrow('outside whitelist');
+    }
+    await expect(files().listSizes(`${SHARED_ROOT}/.ink2pic-symbols`)).rejects.toThrow(
+      'outside whitelist',
+    );
+    await files().writeText(shared, '{}');
+    await files().writeText(`${PLUGIN_DIR}/symbols/a.txt`, '{}');
+    expect(host.readFile(`${PLUGIN_DIR}/symbols/a.txt`)).toBe('{}');
   },
   activityNull: async () => {
     const host = started();
@@ -366,7 +384,7 @@ const checks: Record<RuleId, () => Promise<void>> = {
       'Network request failed',
     );
     await expect(
-      files().downloadToFile('https://openclipart.org/a.png', `${SHARED_ROOT}/a.png`, {}),
+      files().downloadToFile('https://openclipart.org/a.png', `${SHARED_ROOT}/MyStyle/a.png`, {}),
     ).rejects.toMatchObject({code: 'IO'});
   },
   apiResponse: async () => {

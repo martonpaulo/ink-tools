@@ -56,17 +56,15 @@ export function picksPath(externalRoot = SHARED_ROOT): string {
   return pluginPath('picks.json', externalRoot);
 }
 
-/** The hidden folder of the offline symbols, as the person sees it on the tablet (#23). */
-export const SYMBOLS_FOLDER = '.ink2pic-symbols';
-
 /**
- * `<root>/.ink2pic-symbols`, the OpenMoji pictures kept for offline use (#91), one `<hex>.png`
- * each, written in place (#62). A hidden folder outside `MyStyle/`, which Supernote file sync does
- * not read: each file in a synced folder costs about 0.14 s on every sync, so 1,447 symbols cost
- * about 4 minutes; the owner's hand-moved copy is at this exact path (#23).
+ * `<plugin folder>/symbols`, the OpenMoji pictures kept for offline use (#91), one `<hex>.png`
+ * each. The private folder is the only place outside Supernote file sync a plugin can reach: each
+ * file in a synced folder costs about 0.14 s on every sync, so 1,447 symbols cost about 4 minutes,
+ * and PluginHost refuses any shared path outside Document, EXPORT, INBOX, MyStyle, Note and
+ * SCREENSHOT, so the hidden `.ink2pic-symbols` folder of 0.1.0-dev.18 cannot be read (#23).
  */
-export function symbolsDir(externalRoot = SHARED_ROOT): string {
-  return `${externalRoot.replace(/\/+$/, '')}/${SYMBOLS_FOLDER}`;
+export function symbolsDir(pluginDir: string): string {
+  return `${pluginDir}/symbols`;
 }
 
 /** `MyStyle/Ink2Pic/symbols`, as Settings names the old folder to the person (#23). */

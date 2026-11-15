@@ -1,6 +1,6 @@
 /**
  * OpenMoji pictures kept for offline use (#91), through the PluginHost simulator (#78): a symbol
- * shown once is saved in the hidden .ink2pic-symbols folder, outside Supernote file sync (#23),
+ * shown once is saved in the plugin's private symbols folder, outside Supernote file sync (#23),
  * and shows and inserts with no network; with none saved, no symbol shows offline; «Download
  * symbols» resumes after it was cut off; symbols left in MyStyle/Ink2Pic/symbols are read, never
  * written or deleted.
@@ -25,7 +25,6 @@ import {
   resetSymbolsForTests,
   savedSymbolPath,
   symbolFile,
-  symbolPath,
   STOP_AFTER_FAILURES,
   symbolsStatus,
 } from '../src/symbols/store';
@@ -40,7 +39,7 @@ import {
   oldSymbolsDir,
   symbolsDir,
 } from '../src/profile';
-import {createHost, PluginHost} from './host/pluginHost';
+import {createHost, PLUGIN_DIR, PluginHost} from './host/pluginHost';
 
 const {PluginManager} = sdk as unknown as Record<
   string,
@@ -104,10 +103,13 @@ function placed(host: PluginHost, dir: string, hex: string): string {
   return path;
 }
 
+/** A symbol's file in the private symbols folder (#23). */
+const ownPath = (hex: string) => `${symbolsDir(PLUGIN_DIR)}/${hex}.png`;
+
 /** Removes the symbols earlier tests saved, as a tablet that never saved one. */
 function forgetSymbols(host: PluginHost): void {
   for (const file of [...host.files.keys()]) {
-    if (file.startsWith(`${symbolsDir()}/`)) {
+    if (file.startsWith(`${symbolsDir(PLUGIN_DIR)}/`)) {
       host.files.delete(file);
     }
   }
@@ -127,12 +129,9 @@ describe('offline symbols (#91)', () => {
     expect(first).toBeDefined();
     expect(first.offlinePicture).toBeUndefined();
     const uri = await thumbUri(first, '/unused');
-    const path = symbolPath(first.id.slice('openmoji:'.length));
+    const path = ownPath(first.id.slice('openmoji:'.length));
     expect(uri).toBe(`file://${path}`);
-    expect(path).toBe(
-      `/storage/emulated/0/.ink2pic-symbols/${path.split('/').pop()}`,
-    );
-    expect(path).toMatch(/\/\.ink2pic-symbols\/[0-9A-F-]+\.png$/);
+    expect(path).toMatch(/^\/data\/user\/0\/.+\/symbols\/[0-9A-F-]+\.png$/);
     expect(inSyncedFolder(host)).toEqual([]);
     expect(host.files.has(path)).toBe(true);
 
@@ -158,7 +157,7 @@ describe('offline symbols (#91)', () => {
   it('shows a saved symbol offline in a grid with no thumbnail store (#99)', async () => {
     const host = started();
     const [first] = await symbolResults();
-    const file = `file://${symbolPath(first.id.slice('openmoji:'.length))}`;
+    const file = `file://${ownPath(first.id.slice('openmoji:'.length))}`;
     expect(await thumbUri(first, '/unused')).toBe(file);
 
     resetSymbolsForTests(); // a new session lists the folder again
@@ -199,7 +198,7 @@ describe('offline symbols (#91)', () => {
     };
     const inserted = await insertPicture(symbol, WORD, null, false, OPTIONS);
     expect(inserted.ok).toBe(true);
-    expect(host.files.has(symbolPath(hex))).toBe(true);
+    expect(host.files.has(ownPath(hex))).toBe(true);
   });
 
   it('never counts a symbol whose download was cut off without an error', async () => {
@@ -217,14 +216,14 @@ describe('offline symbols (#91)', () => {
     host.cutOff.set(PICTURES, 'silent');
     // The grid falls back to the web picture, and the half file is not saved.
     expect(await thumbUri(symbol, '/unused')).toBe(symbol.thumbUrl);
-    expect(host.files.get(symbolPath(hex))?.truncated).toBe(true);
+    expect(host.files.get(ownPath(hex))?.truncated).toBe(true);
     expect(savedSymbolPath(symbol)).toBeNull();
     resetSymbolsForTests(); // a new session lists the folder again
     expect(await symbolFile(symbol)).toBeNull();
     // The next save writes over it in place, with no delete.
     host.cutOff.delete(PICTURES);
-    expect(await thumbUri(symbol, '/unused')).toBe(`file://${symbolPath(hex)}`);
-    expect(host.files.get(symbolPath(hex))?.truncated).toBeUndefined();
+    expect(await thumbUri(symbol, '/unused')).toBe(`file://${ownPath(hex)}`);
+    expect(host.files.get(ownPath(hex))?.truncated).toBeUndefined();
   });
 
   it('states the size, downloads politely, stops when cut off and resumes', async () => {
@@ -299,7 +298,7 @@ describe('offline symbols (#91)', () => {
     fewSymbols(5, [hex]);
     await downloadAllSymbols(() => {});
     // A file cut off midway, the way a grid download can leave one.
-    host.files.set(symbolPath(hex), {bytes: 100, order: 0, truncated: true});
+    host.files.set(ownPath(hex), {bytes: 100, order: 0, truncated: true});
     resetSymbolsForTests();
     const checks = () =>
       host.calls.filter(c => c.name === 'isCompletePng').length;
@@ -314,8 +313,8 @@ describe('offline symbols (#91)', () => {
     expect(checks()).toBe(before + 1);
     expect(savedSymbolPath(symbol)).toBeNull();
     // The grid saves it again, whole.
-    expect(await thumbUri(symbol, '/unused')).toBe(`file://${symbolPath(hex)}`);
-    expect(host.files.get(symbolPath(hex))?.truncated).toBeUndefined();
+    expect(await thumbUri(symbol, '/unused')).toBe(`file://${ownPath(hex)}`);
+    expect(host.files.get(ownPath(hex))?.truncated).toBeUndefined();
   });
 
   it('appends the session log during «Download symbols» (#102)', async () => {
@@ -377,30 +376,31 @@ describe('offline symbols (#91)', () => {
     expect(savedSymbolPath(first)).not.toBeNull();
   });
 
-  it('writes «Download symbols» only to the hidden folder, none under MyStyle (#23)', async () => {
+  it('writes «Download symbols» only to the private folder, none in shared storage (#23)', async () => {
     const host = started();
     const few = fewSymbols(5);
     const end = await downloadAllSymbols(() => {});
     expect(end.complete).toBe(true);
     for (const hex of few) {
-      expect(host.files.has(`${symbolsDir()}/${hex}.png`)).toBe(true);
+      expect(host.files.has(`${symbolsDir(PLUGIN_DIR)}/${hex}.png`)).toBe(true);
     }
     expect(inSyncedFolder(host)).toEqual([]);
+    expect(
+      [...host.files.keys()].filter(
+        file => file.startsWith('/storage/') && file.endsWith('.png'),
+      ),
+    ).toEqual([]);
     expect(deletes(host)).toEqual([]);
   });
 
-  it('uses the hand-moved hidden copy offline, as it is (#23)', async () => {
+  it('never reads the hidden .ink2pic-symbols folder, which PluginHost refuses (#23)', async () => {
     const host = started();
-    const [first] = await symbolResults();
-    const hex = first.id.slice('openmoji:'.length);
+    fewSymbols(3);
     resetSymbolsForTests();
     forgetSymbols(host);
-    const path = placed(host, '/storage/emulated/0/.ink2pic-symbols', hex);
-    host.online = false;
-    const offline = await symbolResults();
-    expect(offline.map(r => r.id)).toEqual([first.id]);
-    expect(await thumbUri(offline[0], '/unused')).toBe(`file://${path}`);
-    expect(await symbolFile(offline[0])).toBe(path);
+    placed(host, '/storage/emulated/0/.ink2pic-symbols', symbolHexes()[0]);
+    // dev.18 listed it and showed «Saved symbols cannot be read now».
+    expect(await symbolsStatus()).toEqual({total: 3, saved: 0});
   });
 
   it('reads a symbol left in the old synced folder, never writes or deletes there (#23)', async () => {
@@ -430,7 +430,7 @@ describe('offline symbols (#91)', () => {
     // Settings counts it, and names the files left in the old folder.
     expect(await symbolsStatus()).toEqual({total, saved: 1, oldFiles: 1});
 
-    // «Download symbols» fetches only the others, into the hidden folder.
+    // «Download symbols» fetches only the others, into the private folder.
     host.online = true;
     const before = pictureRequests(host).length;
     const end = await downloadAllSymbols(() => {});

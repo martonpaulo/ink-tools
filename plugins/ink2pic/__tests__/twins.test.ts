@@ -80,7 +80,7 @@ describe('the rules the Java and the TypeScript share (#100)', () => {
     );
     host.grantDeclared();
     const files = NativeModules.Ink2PicFiles;
-    const file = `${SHARED_ROOT}/a.png`;
+    const file = `${SHARED_ROOT}/MyStyle/a.png`;
     await files.downloadToFile('https://example.org/a.png', file, {});
     const fake = await NativeModules.Ink2PicImage.measureThumb(file);
     expect(sorted(Object.keys(fake))).toEqual(

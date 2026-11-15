@@ -94,7 +94,8 @@ describe('the plugin profile (#142)', () => {
     expect(logsDir(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/logs`);
     expect(picksPath(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/picks.json`);
     expect(oldSymbolsDir(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/symbols`);
-    expect(symbolsDir(ROOT)).toBe(`${ROOT}/.ink2pic-symbols`);
+    // The private folder: PluginHost refuses a hidden shared folder (#23).
+    expect(symbolsDir('/data/plugin')).toBe('/data/plugin/symbols');
   });
 
   it("calls a second plugin's folder, modules and User-Agent", async () => {

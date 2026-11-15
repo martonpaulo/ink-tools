@@ -730,8 +730,8 @@ describe('measureFirstPages (#66)', () => {
     ).toEqual([]);
   });
 
-  it('writes derived thumbnails to the private thumbs folder, never beside a shared symbol (#103)', async () => {
-    const symbol = '/storage/emulated/0/.ink2pic-symbols/1F600.png';
+  it('writes derived thumbnails to the private thumbs folder, never beside a saved symbol (#103)', async () => {
+    const symbol = '/p/symbols/1F600.png';
     const greyLines = {...outline, darkest: 190, faintLines: true};
     const darkened: string[] = [];
     const base = deps();

@@ -200,6 +200,25 @@ export function isShared(path: string): boolean {
   return path.startsWith('/storage/') || path.startsWith('/sdcard/');
 }
 
+/** The shared-storage folders a plugin may reach (rule sharedWhitelist). */
+const SHARED_WHITELIST = [
+  'Document',
+  'EXPORT',
+  'INBOX',
+  'MyStyle',
+  'Note',
+  'SCREENSHOT',
+];
+
+/** The first folder under the shared root, '' for the root itself; null outside shared storage. */
+function sharedTop(path: string): string | null {
+  const root = [`${SHARED_ROOT}/`, '/sdcard/'].find(r => path.startsWith(r));
+  if (!root) {
+    return isShared(path) ? '' : null;
+  }
+  return path.slice(root.length).split('/')[0];
+}
+
 /** The search sources' answers, from the fixtures the adapter tests use. */
 function fixtureFor(url: string): string | null {
   const host = hostOf(url);
@@ -596,6 +615,14 @@ export class PluginHost {
       throw moduleError(
         'BAD_PATH',
         `an absolute file path is required: ${path}`,
+      );
+    }
+    const top = sharedTop(path);
+    if (top !== null && !SHARED_WHITELIST.includes(top)) {
+      // Rule sharedWhitelist: worded as the dev.18 device log (#23).
+      throw moduleError(
+        'IO',
+        'java.lang.SecurityException: Plugin [simulated] is not allowed to access sdcard path outside whitelist',
       );
     }
   }
