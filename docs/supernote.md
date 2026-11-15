@@ -97,8 +97,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/supernote-tools/issues/107)].
 - A lasso button registered while the plugin already runs shows in that list at once, and
   `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/supernote-tools/issues/115)].
-- My Hub in InkHub on the tablet lists published items only; it shows no upload form and no
-  cover rules [measured, 2026-11-15, [#100](https://github.com/martonpaulo/supernote-tools/issues/100)].
+- InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
+  Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
+  from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no
+  pixel size or file type [measured, 2026-11-15, [#100](https://github.com/martonpaulo/supernote-tools/issues/100)].
+- The Upload Item form does not scroll from `adb shell input swipe` or `input motionevent`; taps
+  work [measured, 2026-11-15].
 - `recognizeElements` has no language parameter; it uses the device's handwriting language
   [official signature].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the

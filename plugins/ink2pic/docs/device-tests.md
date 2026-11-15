@@ -182,5 +182,5 @@ Prerelease [`v0.1.0-dev.18`](https://github.com/martonpaulo/supernote-tools/rele
 | Settings, symbols | The symbols kept in `.ink2pic-symbols` | Fail | «Saved symbols cannot be read now»: the host refuses the path outside its whitelist ([#23](https://github.com/martonpaulo/supernote-tools/issues/23)) |
 | Insert definition, «maçã», English only | A clear refusal | Pass | «Add Portuguese or Spanish to the search languages» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
 | Insert definition, «maçã», with Portuguese | A definition below the word | Partial | Inserted in 3.1 s; the box is 200 px wide, the second sense «cama» is wrong, and a picture search ran too ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
-| InkHub upload rules | The cover size and format | Not found | My Hub shows no upload form ([#100](https://github.com/martonpaulo/supernote-tools/issues/100)) |
+| InkHub upload rules | The cover size and format | Pass | Upload Item takes up to 6 thumbnails in a 3:4 slot from the tablet's folders; no pixel size or file type stated ([#100](https://github.com/martonpaulo/supernote-tools/issues/100)) |
 
