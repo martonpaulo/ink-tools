@@ -21,6 +21,9 @@ import {
   safeFileName,
   pluginFolder,
   getSettings,
+  placeAtLasso,
+  type LassoPlace,
+  type Placement,
 } from '../profile';
 import {
   deleteLassoElements,
@@ -43,7 +46,6 @@ import {
 import {atStep, Done} from './failure';
 import {saveSymbol, symbolFile} from '../symbols/store';
 import {SIZE_WIDTHS, styleFlags} from '../settings/settings';
-import {LassoPlace, placeAtLasso, Placement} from './place';
 
 /** About one third of the 1920 px page (brief section 7): the default prepared width. */
 export const INSERT_WIDTH = SIZE_WIDTHS.medium;

@@ -1,7 +1,7 @@
 /**
  * Ink2Pic's PluginProfile and its entry into picture-search's device tier (#142): every Ink2Pic
- * file imports the file store, the settings, the session log and the run log from here, so the
- * profile is set before any call. Ink2Pic's own folders (the library, the picks, the symbols) are
+ * file imports the file store, the settings, the session log, the run log and the lasso read and
+ * placement from here, so the profile is set before any call. Ink2Pic's own folders (the library, the picks, the symbols) are
  * here too; the tier knows only the folder.
  */
 import {
@@ -30,6 +30,7 @@ export const INK2PIC_PROFILE: PluginProfile = {
 setPluginProfile(INK2PIC_PROFILE);
 
 export * from '@supernote-tools/picture-search/storage';
+export * from '@supernote-tools/picture-search/insert';
 
 /** How `settings.json` is read and written (#68). */
 export const INK2PIC_SETTINGS: SettingsCodec<Settings> = {

@@ -24,7 +24,7 @@ import {
   wordKeptOptions,
 } from './insertPicture';
 import {isContourUri, measureFirstPages} from './measure';
-import type {LassoPlace} from './place';
+import type {LassoPlace} from '../profile';
 import {afterSearch, runSearch, stateText} from './search';
 import {copy} from '../ui/copy';
 

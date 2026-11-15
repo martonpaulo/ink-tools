@@ -12,7 +12,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import {atStep, failureText, StepFailure} from './src/flow/failure';
 import {insertPicture} from './src/flow/insertPicture';
 import {recordPick} from './src/picks/device';
-import {readLassoQuery} from './src/flow/lassoQuery';
 import {
   initialOpening,
   isCurrent,
@@ -21,7 +20,6 @@ import {
   OpeningState,
   step,
 } from './src/flow/opening';
-import type {LassoPlace} from './src/flow/place';
 import {insertBest} from './src/flow/quickInsert';
 import {
   HeadlessNote,
@@ -35,6 +33,8 @@ import {
   logged,
   getSettings,
   saveSettings,
+  readLassoQuery,
+  type LassoPlace,
 } from './src/profile';
 import {
   CONFIG_BUTTON_ID,

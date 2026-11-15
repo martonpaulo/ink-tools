@@ -29,4 +29,9 @@ describe('the native file module (#142)', () => {
     expect(fs.existsSync(path.join(ROOT, 'src/storage'))).toBe(false);
     expect(fs.existsSync(path.join(ROOT, 'src/log'))).toBe(false);
   });
+
+  it('keeps no copy of the lasso read or the placement in the plugin (#142)', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/flow/lassoQuery.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(ROOT, 'src/flow/place.ts'))).toBe(false);
+  });
 });

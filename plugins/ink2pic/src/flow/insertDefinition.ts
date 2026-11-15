@@ -29,7 +29,7 @@ import {createFetcher} from '@supernote-tools/picture-search';
 import {Settings, SIZE_WIDTHS} from '../settings/settings';
 import {copy} from '../ui/copy';
 import {offlineText} from './failure';
-import type {LassoPlace} from './place';
+import type {LassoPlace} from '../profile';
 import type {InsertLimit, QuickInsert} from './quickInsert';
 import {
   insertText,

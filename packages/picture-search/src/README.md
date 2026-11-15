@@ -11,7 +11,10 @@ modules, its settings file, its session log and the run log. It imports only `re
 `@supernote-tools/picture-search/storage` from its own profile module, which calls
 `setPluginProfile({name, folder, filesModule, imageModule, userAgent})` first
 (`plugins/ink2pic/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
-over its own settings model.
+over its own settings model. The insert tier, `insert/`, holds what a lasso button runs on the
+page: `readLassoQuery` and `placeAtLasso`, ink-core's lasso read and placement over the official
+SDK wrappers and the device tier's log, reached through `@supernote-tools/picture-search/insert`
+and re-exported by the plugin's profile module.
 
 ## Contents
 

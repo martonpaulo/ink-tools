@@ -1,5 +1,5 @@
 import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
-import {readLassoQuery} from '../src/flow/lassoQuery';
+import {readLassoQuery} from '../src/profile';
 
 const comm = PluginCommAPI as unknown as Record<string, jest.Mock>;
 const file = PluginFileAPI as unknown as Record<string, jest.Mock>;

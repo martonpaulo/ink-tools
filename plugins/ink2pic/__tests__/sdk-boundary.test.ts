@@ -25,8 +25,11 @@ const OFFICIAL = join(
   'official',
 );
 const ALLOWED = [/^__tests__\//];
-/** picture-search's device tier (#142): the file store, the settings, the logs. */
-const DEVICE_FOLDERS = ['storage', 'log'];
+/**
+ * picture-search's device tier (#142): the file store, the settings, the logs, and the insert
+ * tier, the lasso read and the placement over ink-core.
+ */
+const DEVICE_FOLDERS = ['storage', 'log', 'insert'];
 const DEVICE_TIER = join(
   ROOT,
   '..',
@@ -85,6 +88,7 @@ it('has no SDK wrapper that nothing calls (#54)', () => {
   const callers = [
     ...sources(join(ROOT, 'src')),
     ...sources(DEVICE_TIER),
+    ...sources(join(DEVICE_TIER, '..', 'insert')),
     'App.tsx',
     'index.js',
   ]
@@ -137,6 +141,28 @@ it('keeps the search core portable: it imports nothing outside packages/picture-
       )
       .map(target => `${path} imports ${target}`);
   });
+  expect(offenders).toEqual([]);
+});
+
+it("keeps picture-search's insert tier on ink-core, the official tier and the device tier's log (#142)", () => {
+  const insert = join(DEVICE_TIER, '..', 'insert');
+  const files = sources(insert);
+  expect(files.length).toBeGreaterThan(0);
+  const offenders = files.flatMap(path =>
+    [
+      ...readFileSync(join(ROOT, path), 'utf8').matchAll(
+        /(?:from|import|require\()\s*['"]([^'"]+)['"]/g,
+      ),
+    ]
+      .map(match => match[1])
+      .filter(target =>
+        target.startsWith('.')
+          ? !/^\.\/|^\.\.\/log\//.test(target)
+          : target !== '@supernote-tools/ink-core' &&
+            target !== '@supernote-tools/sn-adapter/official',
+      )
+      .map(target => `${path} imports ${target}`),
+  );
   expect(offenders).toEqual([]);
 });
 

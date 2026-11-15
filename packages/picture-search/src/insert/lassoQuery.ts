@@ -1,13 +1,14 @@
 /**
  * The lassoed handwriting as a search query (brief section 8.2, #20, #44): ink-core's
- * readLassoQuery (#109) over this plugin's SDK wrappers and log.
+ * readLassoQuery (#109) over the official SDK wrappers and the plugin's log, for every
+ * plugin that reads a lasso (#142).
  */
 import {
   readLassoQuery as readWith,
   type LassoHost,
   type LassoQuery,
 } from '@supernote-tools/ink-core';
-import {logged} from '../profile';
+import {logged} from '../log/memory';
 import {
   getLassoElements,
   getLassoRect,
