@@ -1,5 +1,5 @@
 import {emptyLibrary, ParsedLibrary, parseLibrary, serialize} from './library';
-import type {TextStore} from '../search-core';
+import type {TextStore} from '@supernote-tools/picture-search';
 import type {Library} from './types';
 
 /** A missing file is an empty library; a corrupt one is a failure the caller shows. */

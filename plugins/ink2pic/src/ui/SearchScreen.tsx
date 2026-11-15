@@ -25,7 +25,7 @@ import {
   SearchState,
   searchState,
   SourceAdapter,
-} from '../search-core';
+} from '@supernote-tools/picture-search';
 import {Button, metrics, shared} from '@supernote-tools/ui-kit';
 import {copy} from './copy';
 import {LogView} from './LogView';

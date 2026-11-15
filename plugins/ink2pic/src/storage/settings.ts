@@ -14,7 +14,7 @@ import {
   Settings,
 } from '../settings/settings';
 import {settingsPath} from './paths';
-import type {TextStore} from '../search-core';
+import type {TextStore} from '@supernote-tools/picture-search';
 import {deviceStorage, storageFailure} from './text';
 
 /** The settings read, and why the file could not be read, or null. */

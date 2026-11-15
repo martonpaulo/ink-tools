@@ -13,7 +13,7 @@ import {
   thumbPath,
   thumbUri,
 } from '../src/search/thumbs';
-import type {SearchResult} from '../src/search-core/types';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
 import {ResultsGrid} from '../src/ui/ResultsGrid';
 
 const DIR = '/data/plugin';

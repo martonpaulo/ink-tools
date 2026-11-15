@@ -9,6 +9,8 @@
       // sn-adapter's official tier (#101); ink-core for the page types it names.
       "@supernote-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
       "@supernote-tools/ink-core": ["../../packages/ink-core/src"],
+      // Ink2Pic's picture search, shared for the picture buttons (#125).
+      "@supernote-tools/picture-search": ["../../packages/picture-search/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

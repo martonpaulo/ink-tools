@@ -14,7 +14,7 @@ import {
   resetSettingsForTests,
   saveSettings,
 } from '../src/storage/settings';
-import type {TextStore} from '../src/search-core';
+import type {TextStore} from '@supernote-tools/picture-search';
 
 function memory(files: Record<string, string> = {}): TextStore {
   return {

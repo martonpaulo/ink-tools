@@ -1,5 +1,5 @@
 /**
- * The TypeScript side of the rules both languages hold (#100), against native/tests/twins.json,
+ * The TypeScript side of the rules both languages hold (#100), against packages/picture-search/native/twins.json (#125),
  * which native/tests/com/ink2pic/files/TwinsTest.java reads too; dry-check.json's `twins` names
  * each rule's owner. The Measures contract is written four times (the Java module's map, the
  * `ThumbMeasures` fields, the `Measures` type, the simulator's fake): every copy is checked here
@@ -10,12 +10,12 @@ import path from 'node:path';
 import {NativeModules} from 'react-native';
 import * as sdk from 'sn-plugin-lib';
 import {MEASURE_WIDTH} from '../src/flow/measure';
-import {CLEAN_BORDER, Measures} from '../src/search-core/measures';
+import {CLEAN_BORDER, Measures} from '@supernote-tools/picture-search/measures';
 import {createHost, SHARED_ROOT} from './host/pluginHost';
 
 const ROOT = path.join(__dirname, '..');
 const golden = JSON.parse(
-  fs.readFileSync(path.join(ROOT, 'native/tests/twins.json'), 'utf8'),
+  fs.readFileSync(path.join(ROOT, '../../packages/picture-search/native/twins.json'), 'utf8'),
 ) as {cleanBorder: number; measureWidth: number; measures: string[]};
 
 /** Every key of `Measures`: the type check fails when the type gains or loses one. */

@@ -4,9 +4,9 @@ name: Validate Lookup
 on:
   push:
     branches: [main]
-    paths: ['plugins/lookup/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-lookup.yml']
+    paths: ['plugins/lookup/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', '.github/workflows/validate-lookup.yml']
   pull_request:
-    paths: ['plugins/lookup/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-lookup.yml']
+    paths: ['plugins/lookup/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', '.github/workflows/validate-lookup.yml']
   workflow_dispatch:
 
 permissions:

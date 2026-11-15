@@ -38,7 +38,7 @@ require('./ts-hook.cjs');
  */
 export function product() {
   return {
-    core: require('../src/search-core/index.ts'),
+    core: require('../../../packages/picture-search/src/index.ts'),
     config: require('../src/config.ts'),
     copy: require('../src/ui/copy.ts'),
   };

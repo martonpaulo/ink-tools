@@ -7,7 +7,7 @@
  *
  * `before` is one worker for everything with a second measure of each converted file; `after` is
  * the thumbnail pool and the insert's own thread. `--native` names the folder holding the
- * `com/ink2pic/files` sources, `native/src` by default, so the code of another commit can be
+ * `com/ink2pic/files` pixel sources, `packages/picture-search/native` by default (#125), so the code of another commit can be
  * timed. The first rounds warm the JVM up; the last is printed, and its summary.
  */
 import {execFileSync} from 'node:child_process';
@@ -75,7 +75,7 @@ if (!run || !['before', 'after'].includes(mode)) {
   console.error('usage: node lab/timing.mjs <run> before|after [--native <dir>] [--rounds <n>]');
   process.exit(2);
 }
-const nativeDir = path.resolve(option('--native', path.join(ROOT_DIR, 'native/src')));
+const nativeDir = path.resolve(option('--native', path.join(ROOT_DIR, '../../packages/picture-search/native')));
 const rounds = option('--rounds', String(DEFAULT_ROUNDS));
 const out = execFileSync(hostTool('jdkTool', 'java'), ['-Djava.awt.headless=true', '-cp', compile(nativeDir), 'LabTiming', mode, rounds], {
   input: input(run),

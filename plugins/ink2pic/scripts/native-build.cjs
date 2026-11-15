@@ -16,6 +16,8 @@ const {execFileSync} = require('node:child_process');
 const {jdkTool, JDK_MISSING} = require('./host-tools.cjs');
 
 const root = path.resolve(__dirname, '..');
+// The pure-Java pixel measures live in the shared picture-search package (#125).
+const {nativeSources: pixels} = require('../../../packages/picture-search/plugin-config');
 const build = path.join(root, 'build');
 const out = path.join(build, 'native');
 const PACKAGE_CLASS = 'com.ink2pic.files.Ink2PicFilesPackage';
@@ -97,7 +99,7 @@ function buildNative() {
     // -Werror: a new javac warning fails the build (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
     '-cp', [t.androidJar, t.reactJar, t.kotlinJar].join(path.delimiter),
-    '-d', classes, ...javaSources(path.join(root, 'native/src')),
+    '-d', classes, ...javaSources(path.join(root, 'native/src')), ...javaSources(pixels),
   ]);
   const jar = path.join(out, 'files.jar');
   run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);
@@ -154,7 +156,9 @@ function testNative() {
   // A temporary folder: the gate may run as another user than the one that owns build/.
   const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'ink2pic-native-tests-'));
   const pure = ['SafePaths', 'EinkPixels', 'ThumbGate', 'ThumbMeasures', 'Contour', 'Decolor', 'PerceptualHash', 'PngTail', 'Workers', 'FileWrites'].map(name =>
-    path.join(root, `native/src/com/ink2pic/files/${name}.java`),
+    [path.join(root, 'native/src'), pixels]
+      .map(folder => path.join(folder, `com/ink2pic/files/${name}.java`))
+      .find(file => fs.existsSync(file)),
   );
   // Compile inside the try, so a compile error also removes the folder.
   try {

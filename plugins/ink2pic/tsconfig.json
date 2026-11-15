@@ -7,6 +7,8 @@
       "@supernote-tools/ui-kit": ["../../packages/ui-kit/src"],
       "@supernote-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
       "@supernote-tools/ink-core": ["../../packages/ink-core/src"],
+      "@supernote-tools/picture-search": ["../../packages/picture-search/src"],
+      "@supernote-tools/picture-search/*": ["../../packages/picture-search/src/*"],
       "@supernote-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }

@@ -8,7 +8,7 @@ import {log, logged} from '../log/memory';
 import {deleteFile, downloadThumbToFile, listDir} from '../storage/files';
 import {safeFileName} from '../storage/paths';
 import {pluginFolder} from '../storage/session';
-import type {SearchResult} from '../search-core';
+import type {SearchResult} from '@supernote-tools/picture-search';
 import {savedSymbolUri, symbolUri} from '../symbols/store';
 
 /** Most thumbnail files kept; the oldest is removed first. DEFAULT: about 100 KB each, 30 MB. */

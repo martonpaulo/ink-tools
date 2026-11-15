@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Builds the OpenMoji keyword index the plugin ships, src/search-core/data/openmoji-index.json
+ * Builds the OpenMoji keyword index the plugin ships, packages/picture-search/src/data/openmoji-index.json
  * (#67), from pinned data files: OpenMoji's openmoji.json, emojilib's English keywords and the
  * CLDR annotations for Portuguese, Spanish and Chinese. Each file is pinned to a commit and its
  * SHA-256, so a run reproduces the committed index byte for byte.
@@ -24,8 +24,11 @@ const zlib = require('node:zlib');
 const OUT = path.join(
   __dirname,
   '..',
+  '..',
+  '..',
+  'packages',
+  'picture-search',
   'src',
-  'search-core',
   'data',
   'openmoji-index.json',
 );

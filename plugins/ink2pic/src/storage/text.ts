@@ -1,5 +1,5 @@
 /** Text files on the device, for every store that keeps one (library.json, the search cache). */
-import type {TextStore} from '../search-core';
+import type {TextStore} from '@supernote-tools/picture-search';
 import {CallFailure, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import {readText, writeText} from './files';
 

@@ -1,6 +1,7 @@
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const uiKit = require('../../packages/ui-kit/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
+const pictureSearch = require('../../packages/picture-search/plugin-config');
 
 /**
  * Metro configuration
@@ -16,6 +17,6 @@ const config = {
 
 module.exports = mergeConfig(
   getDefaultConfig(__dirname),
-  snAdapter.metro(uiKit.metro(__dirname)),
+  pictureSearch.metro(snAdapter.metro(uiKit.metro(__dirname))),
   config,
 );

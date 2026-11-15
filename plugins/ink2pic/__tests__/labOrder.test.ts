@@ -8,8 +8,8 @@ import path from 'node:path';
 import {measureFirstPages, MeasureDeps} from '../src/flow/measure';
 import {startLog} from '../src/log/memory';
 import {ok} from '@supernote-tools/sn-adapter/official';
-import type {Measures} from '../src/search-core/measures';
-import type {SearchResult} from '../src/search-core/types';
+import type {Measures} from '@supernote-tools/picture-search/measures';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
 
 const ROOT = path.join(__dirname, '..');
 /** The lab's start-up transpiles the search core; a loaded runner needs more than Jest's 5 s. */

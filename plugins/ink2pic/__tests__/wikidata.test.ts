@@ -15,9 +15,9 @@ import {
   searchWikidata,
   wikidataAdapter,
   wikipediaUrl,
-} from '../src/search-core/adapters/wikidata';
-import {createContext, FetchLike} from '../src/search-core/fetcher';
-import {lookupLanguages, normalise} from '../src/search-core/query';
+} from '@supernote-tools/picture-search/adapters/wikidata';
+import {createContext, FetchLike} from '@supernote-tools/picture-search/fetcher';
+import {lookupLanguages, normalise} from '@supernote-tools/picture-search/query';
 
 const ctx = (fetch: FetchLike, languages: readonly string[] = ['en']) =>
   createContext({fetch, userAgent: USER_AGENT, languages});

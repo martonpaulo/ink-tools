@@ -5,10 +5,10 @@ import {
   parseSearchPage,
   searchOpenclipart,
   searchUrl,
-} from '../src/search-core/adapters/openclipart';
-import {fullUrl} from '../src/search-core/registry';
+} from '@supernote-tools/picture-search/adapters/openclipart';
+import {fullUrl} from '@supernote-tools/picture-search/registry';
 import {USER_AGENT} from '../src/config';
-import {createContext, FetchLike} from '../src/search-core/fetcher';
+import {createContext, FetchLike} from '@supernote-tools/picture-search/fetcher';
 
 const ctx = (fetch: FetchLike) =>
   createContext({fetch, userAgent: USER_AGENT, languages: ['en']});

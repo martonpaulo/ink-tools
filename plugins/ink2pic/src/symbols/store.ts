@@ -14,7 +14,7 @@ import {
   SearchResult,
   sourceId,
   symbolHexes,
-} from '../search-core';
+} from '@supernote-tools/picture-search';
 import {
   downloadThumbToFile,
   FileSize,

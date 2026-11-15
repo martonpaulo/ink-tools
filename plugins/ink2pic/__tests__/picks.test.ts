@@ -13,8 +13,8 @@ import {
   serializePicks,
 } from '../src/picks/picks';
 import {fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
-import type {TextStore} from '../src/search-core';
-import type {SearchResult} from '../src/search-core/types';
+import type {TextStore} from '@supernote-tools/picture-search';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
 import {picksPath} from '../src/storage/paths';
 
 const result = (id: string): SearchResult => ({

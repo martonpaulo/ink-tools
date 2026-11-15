@@ -1,6 +1,7 @@
 const uiKit = require('../../packages/ui-kit/plugin-config');
 const inkCore = require('../../packages/ink-core/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
+const pictureSearch = require('../../packages/picture-search/plugin-config');
 
 module.exports = {
   preset: 'react-native',
@@ -13,6 +14,8 @@ module.exports = {
     ...uiKit.jest.moduleNameMapper,
     ...inkCore.jestModuleNameMapper,
     ...snAdapter.jestModuleNameMapper,
+    // picture-search's tests run here, beside the mocks they share (#125).
+    ...pictureSearch.jestModuleNameMapper,
   },
   // A test fails on a console.error it did not expect (#112).
   setupFilesAfterEnv: ['<rootDir>/__tests__/host/consoleSetup.ts'],

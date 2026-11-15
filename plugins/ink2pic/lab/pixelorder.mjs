@@ -2,7 +2,7 @@
  * The device's pixel step in the lab (#81): before page 1 shows, the device measures the
  * thumbnails of pages 1 and 2, turns the ones `chooseLook` names into contour drawings or darkens
  * them, and re-sorts them with `orderMeasured` (src/flow/measure.ts, #66). The measures and the drawing
- * are the plugin's own Java (`LabPixels.java` over `native/src`); the decisions are the search
+ * are the plugin's own Java (`LabPixels.java` over `packages/picture-search/native`, #125); the decisions are the search
  * core's own functions. Without a JDK the lab stops: a text-only order is not what the device
  * shows.
  */
@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {CACHE_DIR, hostTool, LAB_DIR, ROOT_DIR, thumbFile} from './lib.mjs';
 
-const NATIVE = path.join(ROOT_DIR, 'native/src/com/ink2pic/files');
+const NATIVE = path.join(ROOT_DIR, '../../packages/picture-search/native/com/ink2pic/files');
 const SOURCES = [
   path.join(NATIVE, 'ThumbMeasures.java'),
   path.join(NATIVE, 'EinkPixels.java'),
@@ -27,7 +27,7 @@ const VERSION_DIGITS = 12;
 
 /**
  * The Java's version: classes and contour drawings are kept per version, so a change to
- * `native/src` never meets a drawing an older `Contour.java` made.
+ * the package's `native/` never meets a drawing an older `Contour.java` made.
  */
 const version = createHash('sha1')
   .update(SOURCES.map(file => fs.readFileSync(file)).join('\n'))

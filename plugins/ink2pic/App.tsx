@@ -49,7 +49,7 @@ import {
   takePendingConfig,
   closePluginView,
 } from '@supernote-tools/sn-adapter/official';
-import type {SearchResult} from './src/search-core';
+import type {SearchResult} from '@supernote-tools/picture-search';
 import {clearLibrary} from './src/library/device';
 import {Settings, SettingsAction, settingsStep} from './src/settings/settings';
 import {getSettings, saveSettings} from './src/storage/settings';

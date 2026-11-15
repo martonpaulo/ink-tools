@@ -7,14 +7,14 @@ import {NativeModules, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {PluginManager} from 'sn-plugin-lib';
 import {failureText, Step} from '../src/flow/failure';
-import {searchState} from '../src/search-core/state';
+import {searchState} from '@supernote-tools/picture-search/state';
 import {
   EMPTY_LASSO_CODE,
   MODULE_CODE,
   TIMEOUT_CODE,
 } from '@supernote-tools/sn-adapter/official';
-import type {SourceAdapter} from '../src/search-core';
-import type {SourceOutcome} from '../src/search-core/types';
+import type {SourceAdapter} from '@supernote-tools/picture-search';
+import type {SourceOutcome} from '@supernote-tools/picture-search/types';
 import {copy} from '../src/ui/copy';
 import {SearchScreen} from '../src/ui/SearchScreen';
 

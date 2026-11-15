@@ -4,7 +4,7 @@
  * the one cheap feature is the word's key, so «Maçã», «maçã» and «maca» share their picks. Pure;
  * the device store is `src/picks/device.ts`.
  */
-import type {SearchResult} from '../search-core';
+import type {SearchResult} from '@supernote-tools/picture-search';
 
 export const PICKS_VERSION = 1;
 /** The picks kept per word, newest first. DEFAULT. */

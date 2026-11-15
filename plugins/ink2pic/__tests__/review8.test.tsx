@@ -22,8 +22,8 @@ import {
   startSession,
 } from '../src/storage/logFile';
 import type {Done} from '../src/flow/failure';
-import type {SourceAdapter} from '../src/search-core';
-import type {SearchResult} from '../src/search-core/types';
+import type {SourceAdapter} from '@supernote-tools/picture-search';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
 import {SearchScreen} from '../src/ui/SearchScreen';
 
 const files: Record<string, string> = {};

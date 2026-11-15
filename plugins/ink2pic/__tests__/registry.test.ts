@@ -1,5 +1,5 @@
-import {fullUrl, insertUrl, isSourceName} from '../src/search-core/registry';
-import type {SearchResult} from '../src/search-core/types';
+import {fullUrl, insertUrl, isSourceName} from '@supernote-tools/picture-search/registry';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
 
 const THUMB =
   'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Soup.png/330px-Soup.png';

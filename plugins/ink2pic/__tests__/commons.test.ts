@@ -11,11 +11,11 @@ import {
   resizeThumb,
   searchCommons,
   searchUrl,
-} from '../src/search-core/adapters/commons';
-import {PAGE_SIZE} from '../src/search-core/pages';
-import {fullUrl} from '../src/search-core/registry';
+} from '@supernote-tools/picture-search/adapters/commons';
+import {PAGE_SIZE} from '@supernote-tools/picture-search/pages';
+import {fullUrl} from '@supernote-tools/picture-search/registry';
 import {USER_AGENT} from '../src/config';
-import {createContext, FetchLike} from '../src/search-core/fetcher';
+import {createContext, FetchLike} from '@supernote-tools/picture-search/fetcher';
 
 const ctx = (fetch: FetchLike) =>
   createContext({fetch, userAgent: USER_AGENT, languages: ['en']});

@@ -16,7 +16,8 @@ import javax.imageio.ImageIO;
 
 /**
  * The device's pixel measures and contour drawing for the search lab (#81): the plugin's own
- * {@code ThumbMeasures}, {@code Contour} and {@code EinkPixels}, compiled from {@code native/src},
+ * {@code ThumbMeasures}, {@code Contour} and {@code EinkPixels}, compiled from
+ * {@code packages/picture-search/native},
  * with the picture decoded by ImageIO in place of Android's BitmapFactory.
  *
  * <p>Reads one thumbnail file per line on stdin and prints one JSON line per file: the measures of

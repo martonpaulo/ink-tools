@@ -3,7 +3,7 @@
  * Prints, as one comma list, the ids of the cases a change can move (#108), from the base run's
  * `results.json` and the paths the change touches (relative to the repository root):
  *
- * - a source adapter, `src/search-core/adapters/<source>.ts`: the cases whose base pages 1 and 2
+ * - a source adapter, `packages/picture-search/src/adapters/<source>.ts`: the cases whose base pages 1 and 2
  *   show that source; Wikidata's results are Commons files, so its cases are the canonical tiles;
  * - `lab/cases.json`: the cases that are new or changed against `--base-cases <file>`;
  * - any other path under the plugin's `src/` or `native/`, or under `packages/`: every case;
@@ -14,7 +14,7 @@
 import {readCases, readJson, readResults} from './lib.mjs';
 
 const PLUGIN = 'plugins/ink2pic/';
-const ADAPTER = /^src\/search-core\/adapters\/(\w+)\.ts$/;
+const ADAPTER = /^packages\/picture-search\/src\/adapters\/(\w+)\.ts$/;
 
 function showsSource(item, source) {
   return [...item.page1, ...item.page2].some(tile =>
@@ -25,14 +25,14 @@ function showsSource(item, source) {
 function affected(cases, baseCases, base, paths) {
   const ids = new Set();
   for (const full of paths) {
-    if (full.startsWith('packages/')) {
+    const adapter = ADAPTER.exec(full);
+    if (full.startsWith('packages/') && !adapter) {
       return cases.map(c => c.id);
     }
-    if (!full.startsWith(PLUGIN)) {
+    if (!adapter && !full.startsWith(PLUGIN)) {
       continue;
     }
     const file = full.slice(PLUGIN.length);
-    const adapter = ADAPTER.exec(file);
     if (adapter) {
       base
         .filter(item => showsSource(item, adapter[1]))

@@ -15,8 +15,8 @@ import {
   openmojiPictureUrl,
   SearchResult,
   symbolHexes,
-} from '../src/search-core';
-import * as openmoji from '../src/search-core/adapters/openmoji';
+} from '@supernote-tools/picture-search';
+import * as openmoji from '@supernote-tools/picture-search/adapters/openmoji';
 import {resetThumbsForTests, thumbUri} from '../src/search/thumbs';
 import {
   DOWNLOAD_PARALLEL,

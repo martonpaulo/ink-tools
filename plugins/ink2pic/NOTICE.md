@@ -15,7 +15,7 @@ Ink2Pic is MIT-licensed ([LICENSE](LICENSE)). It adapts third-party work:
 
 ## OpenMoji and keyword data
 
-`src/search-core/data/openmoji-index.json` is built by `scripts/build-openmoji-index.cjs` from
+`packages/picture-search/src/data/openmoji-index.json` is built by `scripts/build-openmoji-index.cjs` from
 these files, each pinned to a commit and a SHA-256 in the script ([#67](https://github.com/martonpaulo/ink2pic/issues/67)):
 
 - `https://raw.githubusercontent.com/hfg-gmuend/openmoji/f9fc506a3f913be9897ab0181d611d4c910a4104/data/openmoji.json`:

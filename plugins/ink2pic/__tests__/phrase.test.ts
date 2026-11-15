@@ -2,16 +2,16 @@
 import {readFileSync} from 'fs';
 import {join} from 'path';
 import {USER_AGENT} from '../src/config';
-import {searchWikidata} from '../src/search-core/adapters/wikidata';
-import {createContext, FetchLike} from '../src/search-core/fetcher';
+import {searchWikidata} from '@supernote-tools/picture-search/adapters/wikidata';
+import {createContext, FetchLike} from '@supernote-tools/picture-search/fetcher';
 import {
   forgetKnownHit,
   knownHit,
   parseTitles,
   resolvePhrase,
   titlesUrl,
-} from '../src/search-core/phrase';
-import {stripQuestion, trailingGroups} from '../src/search-core/query';
+} from '@supernote-tools/picture-search/phrase';
+import {stripQuestion, trailingGroups} from '@supernote-tools/picture-search/query';
 
 const fixture = (name: string) =>
   readFileSync(join(__dirname, 'fixtures', name), 'utf8');

@@ -29,7 +29,7 @@ import javax.imageio.ImageIO;
  * <p>{@code before}: one worker runs everything, and a converted thumbnail is decoded and measured
  * again from its file. {@code after}: the thumbnails run on {@link #THUMB_THREADS} threads, the
  * insert on its own, and a conversion measures the pixels it wrote. The pixel code is whatever
- * {@code native/src} is compiled with, so the darkening's own measure is the one of that version.
+ * {@code --native} folder is compiled with, so the darkening's own measure is the one of that version.
  *
  * <p>Input on stdin: one {@code <file>\t<contour|darken|none>} line per tile, a blank line after
  * each query. Output: one JSON line per query of the last round.

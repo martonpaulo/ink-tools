@@ -25,7 +25,7 @@ import {
 } from '../buttons';
 import {USER_AGENT} from '../config';
 import {log, logged, timed} from '../log/memory';
-import {createFetcher} from '../search-core';
+import {createFetcher} from '@supernote-tools/picture-search';
 import {Settings, SIZE_WIDTHS} from '../settings/settings';
 import {getSettings} from '../storage/settings';
 import {copy} from '../ui/copy';

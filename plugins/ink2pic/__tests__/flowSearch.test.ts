@@ -3,7 +3,7 @@ import {getLibrary, recordSearch} from '../src/library/device';
 import {emptyLibrary} from '../src/library/library';
 import {logLines, startLog} from '../src/log/memory';
 import {searchCached} from '../src/search/device';
-import type {SearchOutcome} from '../src/search-core/search';
+import type {SearchOutcome} from '@supernote-tools/picture-search/search';
 import {prepareThumbs} from '../src/search/thumbs';
 import {hasPermission} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../src/ui/copy';

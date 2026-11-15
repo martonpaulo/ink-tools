@@ -1,4 +1,4 @@
-import {createFetcher, FetchLike} from '../src/search-core/fetcher';
+import {createFetcher, FetchLike} from '@supernote-tools/picture-search/fetcher';
 
 const reply = (status: number, body = '') =>
   jest.fn().mockResolvedValue({

@@ -11,7 +11,7 @@ import {
   EMPTY_LASSO_CODE,
   TIMEOUT_CODE,
 } from '@supernote-tools/sn-adapter/official';
-import type {Outcome} from '../search-core';
+import type {Outcome} from '@supernote-tools/picture-search';
 import type {FilesErrorCode} from '../storage/files';
 import {copy, CopyKey} from '../ui/copy';
 

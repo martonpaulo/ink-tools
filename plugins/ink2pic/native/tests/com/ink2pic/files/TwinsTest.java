@@ -12,12 +12,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The Java side of the rules both languages hold (#100), against `native/tests/twins.json`, which
+ * The Java side of the rules both languages hold (#100), against `packages/picture-search/native/twins.json` (#125), which
  * `__tests__/twins.test.ts` reads too. Run by `node scripts/native-build.cjs --test` from the
  * repository root.
  */
 public final class TwinsTest {
-  private static final String GOLDEN = "native/tests/twins.json";
+  private static final String GOLDEN = "../../packages/picture-search/native/twins.json";
   private static int failures = 0;
 
   private static void check(boolean condition, String name) {

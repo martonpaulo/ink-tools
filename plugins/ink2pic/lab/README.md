@@ -53,7 +53,7 @@ with the context the device builds, without the device's search cache, breaker a
 store, so each query is judged on its own. Then it takes the device's pixel step
 ([#66](https://github.com/martonpaulo/ink2pic/issues/66), [#81](https://github.com/martonpaulo/ink2pic/issues/81)), in `pixelorder.mjs`: the
 thumbnails of pages 1 and 2 are measured by the plugin's own `ThumbMeasures.java`, compiled from
-`native/src` with `LabPixels.java`, which decodes with ImageIO in place of Android; then the search core's
+`packages/picture-search/native` ([#125](https://github.com/martonpaulo/supernote-tools/issues/125)) with `LabPixels.java`, which decodes with ImageIO in place of Android; then the search core's
 `chooseLook` and `orderMeasured`, the two functions the device calls
 ([#100](https://github.com/martonpaulo/ink2pic/issues/100)), decide: a picture that needs it is
 replaced by its contour drawing from the plugin's `Decolor.java` and `Contour.java`, unless the
@@ -105,13 +105,14 @@ converted, and the first tile is prepared for the insert at the same moment. It 
 until every thumbnail is ready and the time the insert took from its request.
 
 ```bash
-node lab/timing.mjs <run> before --native <old native/src>   # one worker, measured twice
+node lab/timing.mjs <run> before --native <old pixel folder> # one worker, measured twice
 node lab/timing.mjs <run> after                              # the pool and the insert lane
 ```
 
 `before` runs everything on one worker and measures each converted file again; `after` runs the
 thumbnails on a pool of three and the insert on its own thread. `--native` times the pixel code
-of another commit, such as `git show <commit>:native/src/...` written to a folder. The device is 3
+of another commit, such as `git show <commit>:packages/picture-search/native/...` written to a folder
+(`plugins/ink2pic/native/src/...` before [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). The device is 3
 to 8 times slower than a desktop; the device's own `time` lines are the proof there.
 
 ## Files

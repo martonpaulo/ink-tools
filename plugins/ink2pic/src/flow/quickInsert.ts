@@ -13,7 +13,7 @@
  * before each step. The log shows the time around each wait.
  */
 import {log, logTime, timed} from '../log/memory';
-import {MEASURED_RESULTS, searchState} from '../search-core';
+import {MEASURED_RESULTS, searchState} from '@supernote-tools/picture-search';
 import {failureText, offlineText} from './failure';
 import {
   dropEarly,

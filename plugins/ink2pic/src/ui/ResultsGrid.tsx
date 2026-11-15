@@ -20,8 +20,8 @@ import {
   THUMB_TIMEOUT_MS,
   thumbUri,
 } from '../search/thumbs';
-import {MEASURED_RESULTS, PAGE_SIZE} from '../search-core';
-import type {SearchResult} from '../search-core';
+import {MEASURED_RESULTS, PAGE_SIZE} from '@supernote-tools/picture-search';
+import type {SearchResult} from '@supernote-tools/picture-search';
 import {savedSymbolUri} from '../symbols/store';
 import {Button, metrics, shared} from '@supernote-tools/ui-kit';
 import {copy} from './copy';

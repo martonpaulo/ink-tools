@@ -58,7 +58,7 @@ it("defines no negative failure code: sn-adapter's official/result.ts owns them 
 });
 
 it('keeps the storage, search and library layers below the flow and the view (#54)', () => {
-  const lower = /^src\/(log|storage|sources|search|search-core|library)\//;
+  const lower = /^src\/(log|storage|sources|search|library)\//;
   const offenders = sources(join(ROOT, 'src')).filter(
     path =>
       lower.test(path) &&
@@ -96,8 +96,8 @@ it('has no SDK wrapper that nothing calls (#54)', () => {
   ).toEqual([]);
 });
 
-it('keeps the search core portable: it imports nothing outside src/search-core/ (#65)', () => {
-  const core = join(ROOT, 'src', 'search-core');
+it('keeps the search core portable: it imports nothing outside packages/picture-search/src/ (#65, #125)', () => {
+  const core = join(ROOT, '..', '..', 'packages', 'picture-search', 'src');
   const files = sources(core);
   expect(files.length).toBeGreaterThan(0);
   const offenders = files.flatMap(path => {

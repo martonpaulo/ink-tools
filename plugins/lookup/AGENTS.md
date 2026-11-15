@@ -7,8 +7,10 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 **Scaffolded** ([#110](https://github.com/martonpaulo/supernote-tools/issues/110)): plugin shell with a Settings entry and no note button, build to
 `Lookup.snplg`, `npm run validate` green. Still to come, each with its own issue: the three lasso
-buttons (insert illustration, insert photo, insert text) over `../../packages/ink-core`, and the
-move of Ink2Pic's picture search into shared code this plugin reuses.
+buttons (insert illustration, insert photo, insert text) over `../../packages/ink-core`. Ink2Pic's
+picture search and pixel measures are `../../packages/picture-search`, mapped here
+([#125](https://github.com/martonpaulo/supernote-tools/issues/125)); its insert flow, stored measures and library move in with the first
+button that needs them, and Ink2Pic is then retired (owner D45).
 
 ## What it is
 

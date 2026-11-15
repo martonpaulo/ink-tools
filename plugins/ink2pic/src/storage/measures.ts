@@ -4,7 +4,7 @@
  * Java, off the React Native thread, on a small pool of its own: the insert's preparation has
  * its own thread and never waits behind thumbnails (#101).
  */
-import type {ConvertedImage, ImageAnalyzer, Measures} from '../search-core';
+import type {ConvertedImage, ImageAnalyzer, Measures} from '@supernote-tools/picture-search';
 import {callModule} from './files';
 
 type NativeMeasures = {

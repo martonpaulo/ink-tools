@@ -1,15 +1,15 @@
 import {readFileSync} from 'fs';
 import {join} from 'path';
-import {BREAKER_OPEN_MS, createBreaker} from '../src/search-core/breaker';
-import {cachedSearch} from '../src/search-core/cache';
-import {systemClock} from '../src/search-core/clock';
-import type {SourceAdapter} from '../src/search-core/adapter';
-import {PAGE_SIZE, isThin} from '../src/search-core/pages';
-import {searchAll} from '../src/search-core/search';
-import {searchState} from '../src/search-core/state';
-import {createContext, FetchLike} from '../src/search-core/fetcher';
-import {DEFAULT_ADAPTERS} from '../src/search-core/registry';
-import type {SearchResult, SourceOutcome} from '../src/search-core/types';
+import {BREAKER_OPEN_MS, createBreaker} from '@supernote-tools/picture-search/breaker';
+import {cachedSearch} from '@supernote-tools/picture-search/cache';
+import {systemClock} from '@supernote-tools/picture-search/clock';
+import type {SourceAdapter} from '@supernote-tools/picture-search/adapter';
+import {PAGE_SIZE, isThin} from '@supernote-tools/picture-search/pages';
+import {searchAll} from '@supernote-tools/picture-search/search';
+import {searchState} from '@supernote-tools/picture-search/state';
+import {createContext, FetchLike} from '@supernote-tools/picture-search/fetcher';
+import {DEFAULT_ADAPTERS} from '@supernote-tools/picture-search/registry';
+import type {SearchResult, SourceOutcome} from '@supernote-tools/picture-search/types';
 
 const result = (id: string): SearchResult => ({
   id,

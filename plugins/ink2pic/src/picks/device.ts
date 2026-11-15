@@ -6,7 +6,7 @@
  */
 import {log, logged} from '../log/memory';
 import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
-import type {TextStore} from '../search-core';
+import type {TextStore} from '@supernote-tools/picture-search';
 import {picksPath} from '../storage/paths';
 import {deviceStorage} from '../storage/text';
 import {

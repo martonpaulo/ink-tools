@@ -16,7 +16,7 @@ import {libraryDir} from '../storage/paths';
 import {deviceStorage} from '../storage/text';
 import {addItem, addRecentSearch, emptyLibrary, serialize} from './library';
 import {loadLibrary, saveLibrary} from './store';
-import type {SourceName} from '../search-core';
+import type {SourceName} from '@supernote-tools/picture-search';
 import type {Library, LibraryItem} from './types';
 
 let current: Library | null = null;

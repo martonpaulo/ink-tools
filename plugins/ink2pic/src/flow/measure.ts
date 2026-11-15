@@ -22,7 +22,7 @@ import {
   pixelKind,
   Prepared,
   withinLimit,
-} from '../search-core';
+} from '@supernote-tools/picture-search';
 import {
   CONTOUR_SUFFIX,
   DARKENED_SUFFIX,
@@ -33,7 +33,7 @@ import {
 } from '../search/thumbs';
 import {styleFlags} from '../settings/settings';
 import {getSettings} from '../storage/settings';
-import type {SearchResult} from '../search-core';
+import type {SearchResult} from '@supernote-tools/picture-search';
 import {deviceAnalyzer} from '../storage/measures';
 
 /**

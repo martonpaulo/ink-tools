@@ -4,13 +4,13 @@ import {
   CACHE_VERSION,
   cachedSearch,
   cacheKey,
-} from '../src/search-core/cache';
-import type {SearchOutcome} from '../src/search-core/search';
-import type {SearchResult} from '../src/search-core/types';
-import {systemClock} from '../src/search-core/clock';
-import {fullUrl} from '../src/search-core/registry';
-import {searchState} from '../src/search-core/state';
-import type {TextStore} from '../src/search-core';
+} from '@supernote-tools/picture-search/cache';
+import type {SearchOutcome} from '@supernote-tools/picture-search/search';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
+import {systemClock} from '@supernote-tools/picture-search/clock';
+import {fullUrl} from '@supernote-tools/picture-search/registry';
+import {searchState} from '@supernote-tools/picture-search/state';
+import type {TextStore} from '@supernote-tools/picture-search';
 
 const PATH = '/plugin/search-cache.json';
 const NOW = Date.UTC(2026, 10, 6, 12);

@@ -15,7 +15,7 @@ import {
   SearchStateKind,
   searchState,
   SourceAdapter,
-} from '../search-core';
+} from '@supernote-tools/picture-search';
 import {searchCached} from '../search/device';
 import {prepareThumbs} from '../search/thumbs';
 import {markSavedSymbols} from '../symbols/store';

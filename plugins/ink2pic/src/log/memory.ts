@@ -4,7 +4,7 @@
  * log reader. The session log file is #21.
  */
 import {fail, Result, TIMEOUT_CODE} from '@supernote-tools/sn-adapter/official';
-import {withinLimit} from '../search-core';
+import {withinLimit} from '@supernote-tools/picture-search';
 
 /** Lines kept in memory and in the file: enough for a whole opening, small enough to rewrite (#45). */
 export const LOG_MAX_LINES = 2000;

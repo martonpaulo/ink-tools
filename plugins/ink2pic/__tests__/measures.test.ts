@@ -16,10 +16,10 @@ import {
   pixelKind,
   pixelScorer,
   reorderByMeasures,
-} from '../src/search-core/measures';
-import {cachedSearch} from '../src/search-core/cache';
-import {readIntent} from '../src/search-core/query';
-import type {SearchResult} from '../src/search-core/types';
+} from '@supernote-tools/picture-search/measures';
+import {cachedSearch} from '@supernote-tools/picture-search/cache';
+import {readIntent} from '@supernote-tools/picture-search/query';
+import type {SearchResult} from '@supernote-tools/picture-search/types';
 
 /** A white page; each picture below changes what it needs. */
 const paper: Measures = {

@@ -11,6 +11,7 @@ const ROOT = path.join(__dirname, '..');
 const RUN = `test-affected-${process.pid}`;
 const RUN_DIR = path.join(ROOT, 'lab', 'out', RUN);
 const PLUGIN = 'plugins/ink2pic/';
+const CORE = 'packages/picture-search/src/';
 
 const tile = (source: string, canonical = false) => ({source, canonical});
 
@@ -35,16 +36,17 @@ const affected = (...paths: string[]) =>
     .trim();
 
 test('a source adapter picks only the cases that show the source', () => {
-  expect(affected(`${PLUGIN}src/search-core/adapters/openmoji.ts`)).toBe(
+  expect(affected(`${CORE}adapters/openmoji.ts`)).toBe(
     'chair',
   );
-  expect(affected(`${PLUGIN}src/search-core/adapters/wikidata.ts`)).toBe(
+  expect(affected(`${CORE}adapters/wikidata.ts`)).toBe(
     'house',
   );
 });
 
 test('shared code picks every case, documents none', () => {
-  const all = affected(`${PLUGIN}src/search-core/rank.ts`).split(',');
+  const all = affected(`${CORE}rank.ts`).split(',');
+  expect(affected(`${PLUGIN}src/flow/search.ts`).split(',')).toEqual(all);
   expect(all.length).toBeGreaterThan(2);
   expect(all).toEqual(expect.arrayContaining(['chair', 'house']));
   expect(affected('packages/ink-core/x.ts').split(',')).toEqual(all);

@@ -16,7 +16,7 @@ import {
   searchAll,
   SourceAdapter,
   SourceContext,
-} from '../search-core';
+} from '@supernote-tools/picture-search';
 import {pluginFolder} from '../storage/session';
 import {getSettings} from '../storage/settings';
 import {Settings, sourceOn, styleFlags} from '../settings/settings';

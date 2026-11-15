@@ -1,4 +1,4 @@
-import type {SourceName} from '../search-core';
+import type {SourceName} from '@supernote-tools/picture-search';
 
 /** One inserted picture with what is needed to reuse and credit it (brief section 8.6). */
 export type LibraryItem = {

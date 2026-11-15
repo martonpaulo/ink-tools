@@ -4,7 +4,7 @@
  * (#36). The previous handler still runs afterwards.
  */
 import {log, logLines} from '../log/memory';
-import {withinLimit} from '../search-core';
+import {withinLimit} from '@supernote-tools/picture-search';
 import {writeText} from '../storage/files';
 import {logsDir} from '../storage/paths';
 

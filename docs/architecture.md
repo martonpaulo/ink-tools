@@ -91,6 +91,7 @@ supernote-tools/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
     ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by lookup/lingo/retouch)
+    picture-search/ # the picture search core and its pure-Java pixel measures (from ink2pic, for lookup)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     bridge/         # to-do + calendar + digest, each module and provider opt in/out
@@ -165,9 +166,11 @@ supernote-tools/
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
-`sn-adapter` and `ink-core` the same way. `ink2pic`, `bridge`, `lingo` and `lookup` call `sn-plugin-lib` only
+`sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lingo` and `lookup` call `sn-plugin-lib` only
 through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
-of `lookup`, and keeps shipping until the merge lands.
+of `lookup`, and keeps shipping until the merge lands; then it is retired, and `lookup` finds
+stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). The first step of that move is done: the
+picture search core and its pixel measures are `packages/picture-search`.
 
 ## The host tools
 
