@@ -1,7 +1,10 @@
 import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
 import {attempt, Result} from './result';
 
-export type Size = {width: number; height: number};
+/** The page size, owned by ink-core (#109). */
+import type {Size} from '@supernote-tools/ink-core';
+
+export type {Size};
 
 export function getCurrentFilePath(): Promise<Result<string>> {
   return attempt(() => PluginCommAPI.getCurrentFilePath());

@@ -1,4 +1,7 @@
-/** The lasso gesture lands with its own issues (see docs/architecture.md). */
+/** Handwrite, recognise, lasso and insert on the page, shared by the plugins (#109). */
 export const PACKAGE_NAME = 'ink-core';
 export * from './dictionary';
+export * from './lasso';
+export * from './outcome';
 export * from './pairs';
+export * from './place';

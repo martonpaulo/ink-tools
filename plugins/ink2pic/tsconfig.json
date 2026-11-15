@@ -6,6 +6,7 @@
     "paths": {
       "@supernote-tools/ui-kit": ["../../packages/ui-kit/src"],
       "@supernote-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
+      "@supernote-tools/ink-core": ["../../packages/ink-core/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

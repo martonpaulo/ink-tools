@@ -17,6 +17,7 @@
     {"path": ".github/workflows/scan.yml", "gates": ["docs"]},
     {"path": "packages/", "gates": ["packages"]},
     {"path": "packages/ui-kit/", "gates": ["bridge", "ink2pic", "lingo"]},
+    {"path": "packages/ink-core/", "gates": ["packages", "ink2pic"]},
     {"path": ".github/workflows/validate-packages.yml", "gates": ["packages"]},
     {"path": "plugins/bridge/", "gates": ["bridge"]},
     {"path": ".github/workflows/validate-bridge.yml", "gates": ["bridge"]},

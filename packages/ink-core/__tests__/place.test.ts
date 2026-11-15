@@ -1,5 +1,11 @@
-import type {Rect} from '../src/sdk/lasso';
-import {MIN_PLACE_BAND, PLACE_GAP, placeRect} from '../src/flow/place';
+import {
+  MIN_PLACE_BAND,
+  PLACE_GAP,
+  placeAtLasso,
+  placeRect,
+  type PlaceHost,
+  type Rect,
+} from '../src';
 
 const page = {width: 1920, height: 2560};
 const picture = {width: 640, height: 593};
@@ -112,5 +118,56 @@ describe('the placement setting (#70)', () => {
       bottom: 2559,
     };
     expect(placeRect(low, picture, page, 'replace')).toBeNull();
+  });
+});
+
+type Failure = {ok: false; code: number; message: string};
+
+function placeHost(inserted: boolean): PlaceHost<Failure> & {
+  insertPageElements: jest.Mock;
+} {
+  return {
+    pictureType: 200,
+    createElement: jest.fn(async () => ({ok: true, value: {uuid: 'u1'}}) as const),
+    insertPageElements: jest.fn(async () => ({ok: true, value: inserted}) as const),
+    failure: message => ({ok: false, code: -1, message}),
+  };
+}
+
+describe('placeAtLasso (#109)', () => {
+  const place = {
+    rect: {left: 100, top: 200, right: 300, bottom: 260},
+    page: 3,
+    pageSize: page,
+  };
+
+  it('inserts a picture element at the placed rect on the lassoed page', async () => {
+    const host = placeHost(true);
+    const placed = await placeAtLasso(host, '/p.png', picture, place);
+    const rect = placeRect(place.rect, picture, page);
+    expect(placed).toEqual({ok: true, value: rect});
+    expect(host.insertPageElements).toHaveBeenCalledWith(
+      [
+        {
+          uuid: 'u1',
+          type: 200,
+          pageNum: 3,
+          layerNum: 0,
+          picture: {picturePath: '/p.png', rect},
+        },
+      ],
+      3,
+      0,
+    );
+  });
+
+  it('fails when the host answers false or no band fits', async () => {
+    expect((await placeAtLasso(placeHost(false), '/p.png', picture, place)).ok).toBe(
+      false,
+    );
+    const host = placeHost(true);
+    const full = {...place, rect: {left: 100, top: 40, right: 300, bottom: 2500}};
+    expect((await placeAtLasso(host, '/p.png', picture, full)).ok).toBe(false);
+    expect(host.insertPageElements).not.toHaveBeenCalled();
   });
 });

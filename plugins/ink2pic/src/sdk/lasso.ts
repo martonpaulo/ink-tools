@@ -1,7 +1,10 @@
 import {PluginCommAPI} from 'sn-plugin-lib';
 import {attempt, Result} from './result';
 
-export type Rect = {left: number; top: number; right: number; bottom: number};
+/** The page rect, owned by ink-core (#109). */
+import type {Rect} from '@supernote-tools/ink-core';
+
+export type {Rect};
 
 /** Read before anything else: lasso context is ephemeral (brief section 4.8). */
 export function getLassoElements(): Promise<Result<object[]>> {

@@ -6,10 +6,14 @@ Provider-agnostic building blocks the plugins share (layers in [docs/architectur
 | :--- | :--- |
 | `sn-adapter` | Supernote internals as an updatable descriptor, plus the adapt-on/off probe |
 | `sync-core` | Diff, recurrence expansion, mapping and module orchestration |
-| `ink-core` | Handwrite, recognise, lasso, insert on the page; the shared `DictionaryProvider` interface and Lingo's language-pair Settings model |
+| `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface and Lingo's language-pair Settings model |
 | `ui-kit` | The Settings look every plugin shares: tokens, shared styles, the `Button`, and the size rule for tests ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)) |
 
 Run `npm install && npm run validate` here for `sn-adapter`, `sync-core` and `ink-core`.
+
+A plugin imports `ink-core` as `@supernote-tools/ink-core`, mapped by `ink-core/plugin-config.js` in
+its Metro and Jest configs and by `paths` in its `tsconfig.json`; the package holds no React Native
+code and never imports `sn-plugin-lib`: the plugin passes its SDK calls in as a host port ([#109](https://github.com/martonpaulo/supernote-tools/issues/109)).
 
 `ui-kit` is React Native code, so it is not a workspace here. A plugin imports it as
 `@supernote-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by
