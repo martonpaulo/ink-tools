@@ -1383,7 +1383,8 @@ def read_plugin_config(path: str) -> dict:
         with zipfile.ZipFile(path) as archive:
             member = next(name for name in archive.namelist() if name.rpartition("/")[2] == PLUGIN_CONFIG_FILE)
             config = json.loads(archive.read(member))
-        return {"id": config["pluginID"], "version": config["versionName"]}
+        code = config.get("versionCode")
+        return {"id": config["pluginID"], "version": config["versionName"], "code": None if code is None else str(code)}
     except (zipfile.BadZipFile, StopIteration, KeyError, ValueError) as error:
         raise bad_usage(f"{path} holds no readable {PLUGIN_CONFIG_FILE} with pluginID and versionName") from error
 
@@ -1460,6 +1461,13 @@ def turn_to_file(device: Device, name: str, limit: float) -> None:
     raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{name} is not in the picker; nothing more was pressed")
 
 
+def same_build(row: dict, config: dict, version) -> bool:
+    """The same versionName and, when both sides carry one, the same versionCode: a device build keeps its versionName and raises only the code."""
+    if version != config["version"]:
+        return False
+    return config["code"] is None or "versionCode" not in row or row["versionCode"] == config["code"]
+
+
 def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) -> dict:
     """Prove the install from the list. An update needs the version column, or nothing proves it changed."""
     started = time.monotonic()
@@ -1469,7 +1477,7 @@ def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) 
                 continue
             if updating and "versionName" not in row:
                 raise Failure(EXIT_FAILED, "device_error", "the plugin list has no version column, so this update cannot be proved")
-            if row.get("versionName", config["version"]) == config["version"]:
+            if same_build(row, config, row.get("versionName", config["version"])):
                 return row
         if time.monotonic() - started >= limit:
             raise Failure(EXIT_TIMEOUT, "timeout", f"{config['id']} {config['version']} is not in the plugin list after {limit:g} s")
@@ -1480,7 +1488,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
-    if installed and installed[0].get("versionName") == config["version"]:
+    if installed and same_build(installed[0], config, installed[0].get("versionName")):
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "snadb plugin ls")
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")

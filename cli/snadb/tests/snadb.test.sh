@@ -727,6 +727,21 @@ check "plugin install reports the limit before installing" "$(grep -c 'plugins e
 check "plugin install pushes the file" "$(called " push $work/local/test.snplg $root/MyStyle/test.snplg")" "1"
 run plugin install "$work/local/test.snplg" >/dev/null 2>&1
 check "plugin install refuses the same version" "$?$(called ' push ')" "50"
+python3 - "$work/local/test.snplg" <<'PY'
+import json, sys, zipfile
+with zipfile.ZipFile(sys.argv[1], "w") as archive:
+    archive.writestr("plugin/PluginConfig.json", json.dumps({"pluginID": "new.plugin", "versionName": "2.0", "versionCode": "18"}))
+PY
+wc -c < "$work/local/test.snplg" | tr -d ' ' > "$files/size"
+sed -i.bak '\|MyStyle/test.snplg|d' "$files/paths"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0, versionCode=17\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0, versionCode=18\n' > "$files/rows-after"
+echo 5 > "$files/taps-left"
+result=$(run plugin install "$work/local/test.snplg" --json 2>/dev/null)
+check "plugin install updates a build that only raised versionCode" "$(printf '%s' "$result" | field "['action'],d['row']['versionCode']")" "('updated', '18')"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0, versionCode=18\n' > "$files/rows"
+run plugin install "$work/local/test.snplg" >/dev/null 2>&1
+check "plugin install refuses the same versionCode" "$?" "5"
 printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after"
 echo 5 > "$files/taps-left"
