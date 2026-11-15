@@ -16,8 +16,15 @@ export const copy = {
   'remove.button': 'Remove what Bridge wrote',
   'remove.confirm':
     'Remove what Bridge wrote for {module}? Your own events and tasks stay.',
-  'remove.cancel': 'Cancel',
   'remove.yes': 'Remove',
+  cancel: 'Cancel',
+  'signIn.in': '{provider}: signed in ({tail}).',
+  'signIn.out': '{provider}: not signed in. On the Mac, run snadb secret set {id}.',
+  'signIn.unreadable': '{provider}: the sign-in did not read: {reason}',
+  'signOut.button': 'Sign out',
+  'signOut.label': 'Sign out of {provider}',
+  'signOut.confirm': 'Sign out of {provider}? Bridge deletes its sign-in from the tablet.',
+  'signOut.yes': 'Sign out',
 } as const;
 
 export type CopyKey = keyof typeof copy;

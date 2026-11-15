@@ -9,7 +9,7 @@
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';
 import {Button, shared} from '@supernote-tools/ui-kit';
-import type {ModuleStatus} from '@supernote-tools/sync-core';
+import type {ModuleStatus, SignIn} from '@supernote-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
 
@@ -20,6 +20,16 @@ export type ModuleRow = {
   status: ModuleStatus;
   /** Removes the rows Bridge wrote for this module; offered only while the module is off (#89). */
   onRemoveWritten?: () => void;
+  /** The sign-in of each provider of the module that needs a secret (#90). */
+  signIns?: ProviderSignIn[];
+};
+
+export type ProviderSignIn = {
+  /** The provider's id, as `snadb secret set <id>` takes it. */
+  id: string;
+  name: string;
+  signIn: SignIn;
+  onSignOut: () => void;
 };
 
 export type ShellState =
@@ -65,8 +75,16 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
                   {line}
                 </Text>
               ))}
+              {module.signIns?.map(provider => (
+                <SignInLine key={provider.id} provider={provider} />
+              ))}
               {module.status.state === 'off' && module.onRemoveWritten && (
-                <RemoveWritten name={module.name} onRemove={module.onRemoveWritten} />
+                <Confirmed
+                  label={copy['remove.button']}
+                  question={format('remove.confirm', {module: module.name})}
+                  yes={copy['remove.yes']}
+                  onConfirm={module.onRemoveWritten}
+                />
               )}
             </View>
           ))}
@@ -75,24 +93,76 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
   }
 }
 
-/** The destructive action of a module that is off: one press asks, the second removes (#89). */
-function RemoveWritten({name, onRemove}: {name: string; onRemove: () => void}): React.JSX.Element {
+/** A provider's sign-in in words: the masked tail and a sign-out, or how to sign in (#90). */
+function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
+  const {signIn} = provider;
+  switch (signIn.state) {
+    case 'signedOut':
+      return (
+        <Text style={shared.text}>
+          {format('signIn.out', {provider: provider.name, id: provider.id})}
+        </Text>
+      );
+    case 'unreadable':
+      return (
+        <Text accessibilityRole="alert" style={shared.text}>
+          {format('signIn.unreadable', {provider: provider.name, reason: signIn.reason})}
+        </Text>
+      );
+    case 'signedIn':
+      return (
+        <View>
+          <Text style={shared.text}>
+            {format('signIn.in', {provider: provider.name, tail: signIn.tail})}
+          </Text>
+          <Confirmed
+            label={copy['signOut.button']}
+            accessibilityLabel={format('signOut.label', {provider: provider.name})}
+            question={format('signOut.confirm', {provider: provider.name})}
+            yes={copy['signOut.yes']}
+            onConfirm={provider.onSignOut}
+          />
+        </View>
+      );
+  }
+}
+
+/** A destructive action: one press asks, the second does it, Cancel does nothing (#89, #90). */
+function Confirmed({
+  label,
+  accessibilityLabel,
+  question,
+  yes,
+  onConfirm,
+}: {
+  label: string;
+  accessibilityLabel?: string;
+  question: string;
+  yes: string;
+  onConfirm: () => void;
+}): React.JSX.Element {
   const [asking, setAsking] = useState(false);
   if (!asking) {
-    return <Button label={copy['remove.button']} onPress={() => setAsking(true)} />;
+    return (
+      <Button
+        label={label}
+        accessibilityLabel={accessibilityLabel}
+        onPress={() => setAsking(true)}
+      />
+    );
   }
   return (
     <View>
       <Text accessibilityRole="alert" style={shared.text}>
-        {format('remove.confirm', {module: name})}
+        {question}
       </Text>
       <View style={shared.row}>
-        <Button label={copy['remove.cancel']} onPress={() => setAsking(false)} />
+        <Button label={copy.cancel} onPress={() => setAsking(false)} />
         <Button
-          label={copy['remove.yes']}
+          label={yes}
           onPress={() => {
             setAsking(false);
-            onRemove();
+            onConfirm();
           }}
         />
       </View>

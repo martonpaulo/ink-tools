@@ -122,7 +122,7 @@ describe('SettingsShell (#93)', () => {
       const onRemove = jest.fn();
       const tree = render(offModule(onRemove));
       press(tree, copy['remove.button']);
-      press(tree, copy['remove.cancel']);
+      press(tree, copy.cancel);
       expect(onRemove).not.toHaveBeenCalled();
       expect(tree.root.findAllByProps({accessibilityLabel: copy['remove.button']})).not.toHaveLength(0);
     });
@@ -130,6 +130,55 @@ describe('SettingsShell (#93)', () => {
     it('is not offered while the module is on', () => {
       const tree = render(offModule(() => {}, 'waiting'));
       expect(tree.root.findAllByProps({accessibilityLabel: copy['remove.button']})).toHaveLength(0);
+    });
+  });
+
+  describe('Sign-in per provider (#90)', () => {
+    const withSignIns = (onSignOut: () => void): ShellState => ({
+      kind: 'ready',
+      modules: [
+        {
+          id: 'todo',
+          name: 'To-do',
+          status: {state: 'waiting'},
+          signIns: [
+            {id: 'todoist', name: 'Todoist', signIn: {state: 'signedIn', tail: '…wxyz'}, onSignOut},
+            {id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: () => {}},
+            {id: 'google', name: 'Google', signIn: {state: 'unreadable', reason: 'read failed'}, onSignOut: () => {}},
+          ],
+        },
+      ],
+    });
+    const press = (tree: ReactTestRenderer, label: string) =>
+      act(() =>
+        tree.root
+          .findAll(n => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]
+          .props.onPress(),
+      );
+
+    it('shows only the masked tail, how to sign in, and an unreadable sign-in apart', () => {
+      const tree = render(withSignIns(() => {}));
+      expect(texts(tree)).toEqual(
+        expect.arrayContaining([
+          'Todoist: signed in (…wxyz).',
+          'iCloud: not signed in. On the Mac, run snadb secret set icloud.',
+          'Google: the sign-in did not read: read failed',
+        ]),
+      );
+      expect(screenBreaks(tree.root)).toEqual([]);
+      expect(tree.root.findAllByProps({accessibilityLabel: 'Sign out of iCloud'})).toHaveLength(0);
+    });
+
+    it('signs out only after the confirmation, and Cancel keeps the sign-in', () => {
+      const onSignOut = jest.fn();
+      const tree = render(withSignIns(onSignOut));
+      press(tree, 'Sign out of Todoist');
+      press(tree, copy.cancel);
+      expect(onSignOut).not.toHaveBeenCalled();
+      press(tree, 'Sign out of Todoist');
+      expect(texts(tree)).toContain('Sign out of Todoist? Bridge deletes its sign-in from the tablet.');
+      press(tree, copy['signOut.yes']);
+      expect(onSignOut).toHaveBeenCalledTimes(1);
     });
   });
 });
