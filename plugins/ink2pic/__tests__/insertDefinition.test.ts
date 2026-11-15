@@ -10,6 +10,7 @@ import {
   DefinitionDeps,
   definitionLanguages,
   definitionRect,
+  DEFINITION_WIDTH,
   definitionText,
   insertDefinition,
   resetDefinitionButtonForTests,
@@ -63,13 +64,22 @@ test('only the languages the dictionary knows, in the person’s order', () => {
   expect(definitionLanguages({...settings, languages: ['en']})).toEqual([]);
 });
 
-test('the box sits below the word, as wide as the picture size, taller for longer text', () => {
-  const short = definitionRect('a\nb', place, settings);
-  const long = definitionRect(`a\n${'x'.repeat(200)}`, place, settings);
+test('the box sits below the word, 640 px wide, taller for longer text', () => {
+  const short = definitionRect('a\nb', place);
+  const long = definitionRect(`a\n${'x'.repeat(200)}`, place);
   expect(short).not.toBeNull();
   expect(short!.top).toBeGreaterThan(place.rect.bottom);
   expect(short!.right - short!.left).toBe(640);
   expect(long!.bottom - long!.top).toBeGreaterThan(short!.bottom - short!.top);
+});
+
+test('the box keeps its width at the Small picture size, so words do not wrap one per line (#115)', async () => {
+  const d = deps({
+    settings: jest.fn().mockResolvedValue({...settings, size: 'small'}),
+  });
+  await insertDefinition('maçã', place, d);
+  const box = (d.insert as jest.Mock).mock.calls[0][0];
+  expect(box.rect.right - box.rect.left).toBe(DEFINITION_WIDTH);
 });
 
 test('a hit is inserted as one text box below the word', async () => {

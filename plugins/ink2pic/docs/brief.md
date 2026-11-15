@@ -1012,7 +1012,8 @@ Open on the device, each logged so the session log answers it:
   `showType: 1`. «Choose picture» keeps its view.
 - «Insert definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) [TO TEST]: `insertText` has never run on the device. The text box
   sets every `TextBox` field of sn-plugin-lib 0.2.3's model (`src/model/Element.ts`): font size 32
-  page pixels [INFERENCE], fixed width, left-aligned, no frame, editable; whether the host wraps the
+  page pixels [INFERENCE], a fixed 640 px width whatever the picture size (at Small, 200 px, the text
+  wrapped after every word on the tablet), left-aligned, no frame, editable; whether the host wraps the
   text inside `textRect` or grows the box, and whether it lands on the lassoed page, are what the
   device shows. The button is registered after the settings file is read, so later than the other
   buttons, and removed with `unregisterButton` when its switch goes off: whether the «•••» menu

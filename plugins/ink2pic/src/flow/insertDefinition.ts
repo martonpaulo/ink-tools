@@ -46,6 +46,11 @@ export const DEFINITION_FONT_SIZE = 32;
 const LINE_HEIGHT = Math.round(DEFINITION_FONT_SIZE * 1.5);
 /** About how wide one character is, as a share of the font size [INFERENCE]. */
 const CHAR_WIDTH = 0.55;
+/**
+ * The text box's width in page pixels, whatever the picture size: at Small (200 px) the text
+ * wrapped after every word on the tablet (#115, device round 0.1.0-dev.18).
+ */
+export const DEFINITION_WIDTH = SIZE_WIDTHS.medium;
 /** The source line the text box ends with: Wiktionary's text is CC BY-SA. */
 export const SOURCE_LINE = '(Wiktionary)';
 
@@ -85,13 +90,12 @@ export function definitionText(word: string, result: DefinitionResult): string {
   return [head, ...senses, SOURCE_LINE].join('\n');
 }
 
-/** The box below the lassoed word, as wide as the picture size, as tall as its wrapped lines. */
+/** The box below the lassoed word, DEFINITION_WIDTH wide, as tall as its wrapped lines. */
 export function definitionRect(
   text: string,
   place: LassoPlace,
-  settings: Settings,
 ): Rect | null {
-  const width = SIZE_WIDTHS[settings.size];
+  const width = DEFINITION_WIDTH;
   const perLine = Math.max(
     1,
     Math.floor(width / (DEFINITION_FONT_SIZE * CHAR_WIDTH)),
@@ -163,7 +167,7 @@ export async function insertDefinition(
     return {ok: false, text: copy['error.sourcesDown']};
   }
   const text = definitionText(word, result);
-  const rect = definitionRect(text, place, settings);
+  const rect = definitionRect(text, place);
   if (!rect) {
     return {ok: false, text: copy['error.place']};
   }
