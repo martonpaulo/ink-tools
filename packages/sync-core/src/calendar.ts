@@ -94,7 +94,7 @@ export async function syncCalendar(
     else if (!same(old, e)) await run(`update ${e.title}`, () => store.update(e), 'updated');
   }
   for (const [k, e] of have) {
-    // A row of a disabled or unreadable calendar is left alone; a disabled one is the module's cleanup, not sync's.
+    // A row of a disabled or unreadable calendar is left alone; removing it is the owner's button (cleanup.ts, #89).
     if (!wanted.has(k) && calendars.some(c => c.calendarId === e.calendarId) && !failed.has(e.calendarId)) {
       await run(`remove ${e.title}`, () => store.remove(e.calendarId, e.eventId), 'removed');
     }

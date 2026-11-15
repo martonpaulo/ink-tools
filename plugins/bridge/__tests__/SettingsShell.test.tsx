@@ -47,6 +47,12 @@ const STATES: Record<string, ShellState> = {
       },
     ],
   },
+  offWithRows: {
+    kind: 'ready',
+    modules: [
+      {id: 'calendar', name: 'Calendar', status: {state: 'off'}, onRemoveWritten: () => {}},
+    ],
+  },
 };
 
 describe('SettingsShell (#93)', () => {
@@ -89,5 +95,41 @@ describe('SettingsShell (#93)', () => {
       'To-do',
       'On, but not running: the To-Do provider did not answer',
     ]);
+  });
+
+  describe('Remove what Bridge wrote (#89)', () => {
+    const offModule = (onRemoveWritten: () => void, state: 'off' | 'waiting' = 'off'): ShellState => ({
+      kind: 'ready',
+      modules: [{id: 'calendar', name: 'Calendar', status: {state}, onRemoveWritten}],
+    });
+    const press = (tree: ReactTestRenderer, label: string) =>
+      act(() => tree.root.findByProps({accessibilityLabel: label}).props.onPress());
+
+    it('asks before removing, and removes only on the second press', () => {
+      const onRemove = jest.fn();
+      const tree = render(offModule(onRemove));
+      press(tree, copy['remove.button']);
+      expect(onRemove).not.toHaveBeenCalled();
+      expect(texts(tree)).toContain(
+        'Remove what Bridge wrote for Calendar? Your own events and tasks stay.',
+      );
+      expect(screenBreaks(tree.root)).toEqual([]);
+      press(tree, copy['remove.yes']);
+      expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    it('cancels without removing anything', () => {
+      const onRemove = jest.fn();
+      const tree = render(offModule(onRemove));
+      press(tree, copy['remove.button']);
+      press(tree, copy['remove.cancel']);
+      expect(onRemove).not.toHaveBeenCalled();
+      expect(tree.root.findAllByProps({accessibilityLabel: copy['remove.button']})).not.toHaveLength(0);
+    });
+
+    it('is not offered while the module is on', () => {
+      const tree = render(offModule(() => {}, 'waiting'));
+      expect(tree.root.findAllByProps({accessibilityLabel: copy['remove.button']})).toHaveLength(0);
+    });
   });
 });

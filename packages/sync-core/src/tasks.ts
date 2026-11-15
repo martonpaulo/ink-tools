@@ -48,6 +48,8 @@ export interface TaskLink {
   remoteId: string;
   localId: string;
   fingerprint: string;
+  /** `service` when Bridge created the tablet task from the service; only those are removed at cleanup (#89). */
+  origin?: 'service';
 }
 
 export function content(t: TaskContent): TaskContent {
@@ -106,7 +108,7 @@ export async function syncTasks(
     try {
       const d = await store.create(content(r));
       result.counts.createdLocal++;
-      result.links.push({remoteId: r.remoteId, localId: d.localId, fingerprint: fingerprint(r)});
+      result.links.push({remoteId: r.remoteId, localId: d.localId, fingerprint: fingerprint(r), origin: 'service'});
     } catch (e) {
       result.errors.push(`create on device ${r.remoteId}: ${(e as Error).message}`);
     }

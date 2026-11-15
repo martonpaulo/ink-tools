@@ -13,6 +13,11 @@ export const copy = {
   'status.errors': 'Not synced ({count}):',
   'status.warnings': 'Synced, but read with care ({count}):',
   'status.more': 'and {count} more in the log',
+  'remove.button': 'Remove what Bridge wrote',
+  'remove.confirm':
+    'Remove what Bridge wrote for {module}? Your own events and tasks stay.',
+  'remove.cancel': 'Cancel',
+  'remove.yes': 'Remove',
 } as const;
 
 export type CopyKey = keyof typeof copy;

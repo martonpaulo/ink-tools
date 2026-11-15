@@ -2,9 +2,11 @@
  * Bridge's Settings view: the title and the module list, with every size and colour from the
  * shared ui-kit (#93). The modules and their switches land with #40; this shell owns the states a
  * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
- * words, never by colour alone: why it does not run, or its last sync (#88).
+ * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
+ * keeps what Bridge wrote; its «Remove what Bridge wrote» button asks once more before anything
+ * is deleted (#89).
  */
-import React from 'react';
+import React, {useState} from 'react';
 import {Text, View} from 'react-native';
 import {Button, shared} from '@supernote-tools/ui-kit';
 import type {ModuleStatus} from '@supernote-tools/sync-core';
@@ -16,6 +18,8 @@ export type ModuleRow = {
   name: string;
   /** Off, blocked by the device probe with its reasons (#67), waiting, or its last run (#88). */
   status: ModuleStatus;
+  /** Removes the rows Bridge wrote for this module; offered only while the module is off (#89). */
+  onRemoveWritten?: () => void;
 };
 
 export type ShellState =
@@ -61,9 +65,37 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
                   {line}
                 </Text>
               ))}
+              {module.status.state === 'off' && module.onRemoveWritten && (
+                <RemoveWritten name={module.name} onRemove={module.onRemoveWritten} />
+              )}
             </View>
           ))}
         </View>
       );
   }
+}
+
+/** The destructive action of a module that is off: one press asks, the second removes (#89). */
+function RemoveWritten({name, onRemove}: {name: string; onRemove: () => void}): React.JSX.Element {
+  const [asking, setAsking] = useState(false);
+  if (!asking) {
+    return <Button label={copy['remove.button']} onPress={() => setAsking(true)} />;
+  }
+  return (
+    <View>
+      <Text accessibilityRole="alert" style={shared.text}>
+        {format('remove.confirm', {module: name})}
+      </Text>
+      <View style={shared.row}>
+        <Button label={copy['remove.cancel']} onPress={() => setAsking(false)} />
+        <Button
+          label={copy['remove.yes']}
+          onPress={() => {
+            setAsking(false);
+            onRemove();
+          }}
+        />
+      </View>
+    </View>
+  );
 }

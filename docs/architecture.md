@@ -123,6 +123,14 @@ supernote-tools/
     such as ICS, wins (`pushCalendarEdits` in `packages/sync-core/src/push.ts`). The losing
     version goes into the module run's warnings, which Settings and the log show: a task's title, an
     event's title, start and notes (`conflictWarnings`).
+  - **Turning a module or a provider off** ([#89](https://github.com/martonpaulo/supernote-tools/issues/89), owner D15 A): every row Bridge wrote
+    stays on the tablet, and sync stops updating it. A module that is off offers one
+    «Remove what Bridge wrote» button in Settings, which asks once more before it deletes. It
+    removes only what Bridge wrote (`packages/sync-core/src/cleanup.ts`): on **calendar**, every
+    `tag=task` row; on **to-do**, the tasks Bridge imported from the service (a link with
+    `origin: 'service'`), soft-deleted, never a task the owner wrote on the tablet and never the
+    service's copy; **digest** writes nothing yet. A provider has no button of its own: its rows go
+    with the module's.
   - **Open question — background lifecycle.** The config listener only fires when the owner opens
     Settings. Periodic sync with the view closed needs a background trigger or a kept-alive plugin;
     whether PluginHost allows that is unconfirmed and is the first thing `probe` must answer before
