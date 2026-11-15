@@ -396,31 +396,22 @@ export function pixelScorer(
 }
 
 /**
- * Whether the picture leaves pages 1 and 2: a blank thumbnail, or one shown near-black, such as
- * a dark poster or a dark canonical photo whose contour was mostly speckle (#83), unless the
- * query asks for a photo or a painting. A blank canonical picture stays.
+ * Whether the picture leaves pages 1 and 2: a blank thumbnail that is not canonical. A near-black
+ * photo or painting stays, shown as found in dark grey (owner D38 B, #104): since #104 it is never
+ * a speckled contour, which is why #83 sent it away.
  */
 function isLeft(
   result: SearchResult,
   measures: ReadonlyMap<string, Measures>,
-  query: string,
 ): boolean {
   const m = measures.get(result.id);
-  if (m === undefined) {
-    return false;
-  }
-  const kind = pixelKind(m);
-  const {styles} = readIntent(query);
-  return (
-    (kind === 'blank' && !result.canonical) ||
-    (kind === 'dark' && !styles.has('photo') && !styles.has('painting'))
-  );
+  return m !== undefined && pixelKind(m) === 'blank' && !result.canonical;
 }
 
 /**
  * Re-sorts the first MEASURED_RESULTS results by `einkScore + pixelScorer`; ties keep their
- * order. A canonical Wikidata picture keeps its index (brief section 5.5, rule 4), unless it is
- * shown near-black. A blank or near-black thumbnail goes to the end of the list; the next result fills its place. Later
+ * order. A canonical Wikidata picture keeps its index (brief section 5.5, rule 4). A blank
+ * thumbnail goes to the end of the list; the next result fills its place. Later
  * results keep their order. `converted` names the pictures shown as their contour drawing.
  * `photos` is the person's «Photos too» style (#70): the same scorers as the search then (#92).
  */
@@ -437,9 +428,9 @@ export function reorderByMeasures(
   const head = results.slice(0, MEASURED_RESULTS);
   const pixels = pixelScorer(measures, converted);
   const intent = intentFor(query, results);
-  const blank = head.filter(result => isLeft(result, measures, query));
+  const blank = head.filter(result => isLeft(result, measures));
   const sorted = head
-    .filter(result => !result.canonical && !isLeft(result, measures, query))
+    .filter(result => !result.canonical && !isLeft(result, measures))
     .map((result, order) => ({
       result,
       order,
@@ -454,7 +445,7 @@ export function reorderByMeasures(
   const ordered: SearchResult[] = [];
   for (const result of head) {
     // Each other slot takes the next sorted result, or a later one when blanks left.
-    const keeps = result.canonical && !isLeft(result, measures, query);
+    const keeps = result.canonical && !isLeft(result, measures);
     const next = keeps ? result : queue.shift();
     if (next) {
       ordered.push(next);

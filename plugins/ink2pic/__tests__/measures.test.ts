@@ -417,23 +417,26 @@ describe('reorderByMeasures (#66)', () => {
     ]);
   });
 
-  it('sends a picture shown near-black past page 2 unless a photo is asked (#83)', () => {
-    const list = [result('poster', 'Cat'), result('line', 'Roof')];
+  it('keeps a near-black photo or painting on pages 1 and 2, shown as found (D38 B, #104)', () => {
+    const list = [
+      result('line', 'Roof'),
+      result('poster', 'Cat'),
+      ...Array.from({length: 12}, (_, i) => result(`r${i}`)),
+    ];
     const measures = new Map([
       ['poster', darkPainting],
       ['line', outline],
     ]);
-    expect(ids(reorderByMeasures(list, measures, 'cat'))).toEqual([
-      'line',
-      'poster',
-    ]);
-    expect(ids(reorderByMeasures(list, measures, 'cat photo'))).toEqual([
-      'poster',
-      'line',
-    ]);
+    expect(pixelKind(darkPainting)).toBe('dark');
+    for (const query of ['cat', 'cat photo', 'cat painting', '']) {
+      const ordered = ids(reorderByMeasures(list, measures, query));
+      expect(ordered[0]).toBe('line');
+      // Pages 1 and 2 hold 12 results.
+      expect(ordered.slice(0, 12)).toContain('poster');
+    }
   });
 
-  it('keeps a canonical picture at its index, also when it is a dark painting shown as its contour', () => {
+  it('keeps a canonical picture at its index, dark paintings around it on page 1 (D38 B)', () => {
     const list = [
       result('best'),
       result('wikidata', 'wikidata', true),
@@ -446,9 +449,12 @@ describe('reorderByMeasures (#66)', () => {
       ['dark', darkPainting],
       ['line', outline],
     ]);
-    expect(
-      ids(reorderByMeasures(list, measures, '', new Set(['wikidata']))),
-    ).toEqual(['line', 'wikidata', 'best', 'dark']);
+    const ordered = ids(
+      reorderByMeasures(list, measures, '', new Set(['wikidata'])),
+    );
+    expect(ordered[0]).toBe('line');
+    expect(ordered[1]).toBe('wikidata');
+    expect(new Set(ordered.slice(2))).toEqual(new Set(['best', 'dark']));
   });
 
   it('gives a cached search the measured order of the live one (#99)', async () => {
@@ -491,7 +497,7 @@ describe('reorderByMeasures (#66)', () => {
     expect(order(live)).toEqual(['line', 'wikidata', 'best']);
   });
 
-  it('sends a canonical picture shown near-black past page 2 too (#83)', () => {
+  it('keeps a near-black canonical picture at its index (D38 B)', () => {
     const list = [
       result('wikidata', 'wikidata', true),
       result('line'),
@@ -502,9 +508,9 @@ describe('reorderByMeasures (#66)', () => {
       ['line', outline],
     ]);
     expect(ids(reorderByMeasures(list, measures))).toEqual([
+      'wikidata',
       'line',
       'other',
-      'wikidata',
     ]);
   });
 
@@ -517,9 +523,10 @@ describe('reorderByMeasures (#66)', () => {
     ]);
     const ordered = ids(reorderByMeasures(list, measures));
     expect(ordered[0]).toBe('r11');
-    // r12 and r13 are on page 3: not re-sorted, they move up to fill the slots of the blank and
-    // the near-black one (#83), which go to the end.
-    expect(ordered.slice(10)).toEqual(['r12', 'r13', 'r14', 'r0', 'r1']);
+    // r12 is on page 3: not re-sorted, it moves up to fill the slot of the blank, which goes to
+    // the end; the near-black one stays on pages 1 and 2 (D38 B).
+    expect(ordered.slice(0, 11)).toContain('r1');
+    expect(ordered.slice(11)).toEqual(['r12', 'r13', 'r14', 'r0']);
     expect(new Set(ordered).size).toBe(15);
   });
 
