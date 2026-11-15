@@ -5,11 +5,13 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status
 
-**Scaffolded** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)): plugin shell with a Settings entry and no note button, build to
-`Relay.snplg`, `npm run validate` green. `src/localsend/protocol.ts` owns the LocalSend v2 announce,
-prepare-upload and answer parsing; the sn-adapter official tier gives `pageImage` and `lassoImage`.
-Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the native discovery and pinned HTTPS client, the device choice,
-the «Send page» and «Send selection» buttons, the icons and the prerelease. The receive half is
+**Built, not yet on the device** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)): «Send page» (sidebar) and «Send selection» (lasso
+toolbar) send a PNG to the LocalSend device chosen in Settings, with a toast for the result.
+`src/localsend/protocol.ts` owns the LocalSend v2 bodies and answers; `src/send/sendPng.ts` the
+flow; `src/settings/device.ts` the chosen device; `native/` the Java module `RelayLocalSend`
+(discovery, the pinned POST, the settings file); the sn-adapter official tier gives `pageImage` and
+`lassoImage`. Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the device round (multicast from a plugin, the toast)
+and an address field for a device discovery cannot see. The receive half is
 [#49](https://github.com/martonpaulo/supernote-tools/issues/49).
 
 ## What it is
@@ -34,4 +36,5 @@ the same network. Layers: `../../docs/architecture.md`.
 ## Reuse
 
 Scaffold copied from `../lookup`, which took it from `../lingo` (same runtime, build and release
-shape).
+shape); `scripts/native-build.cjs` and its toolchain from `../probe`. No Notipal code is reused:
+the client follows the LocalSend v2 protocol text.

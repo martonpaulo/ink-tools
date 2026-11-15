@@ -14,6 +14,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [desk](#desk)
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
+- [relay](#relay)
 - [Design direction](#design-direction)
 
 ## The two pains driving everything
@@ -175,6 +176,21 @@ Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
   `lookup` places an inserted picture.
 - **Scan-to-template is probably its own capability**, beyond "drop into the open note": a scanned
   PDF becomes the **background of new blank pages** the owner writes on. Split it out when picked up.
+
+## relay
+
+The plugin that moves pictures and text between the tablet and the owner's iPhone and Mac over
+LocalSend; one plugin for both directions (owner D25 A). Its receive half is the phone-to-note need
+above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
+
+**Send half** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)):
+
+- «Send page» in the note's sidebar sends the current page as a PNG; «Send selection» in the lasso
+  toolbar sends only the selection. One tap, no view: the result is a short toast.
+- The person picks the receiving device once in Relay's Settings; later sends go to it, pinned to
+  the fingerprint it announced. A changed certificate is a failed send, never a silent re-pin.
+- Not in scope: the whole note as a PDF; a device without LocalSend; anything over the internet.
+  A lasso selection as typed text is [#99](https://github.com/martonpaulo/supernote-tools/issues/99).
 
 ## Design direction
 
