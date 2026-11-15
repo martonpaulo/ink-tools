@@ -6,7 +6,7 @@ Provider-agnostic building blocks the plugins share (layers in [docs/architectur
 | :--- | :--- |
 | `sn-adapter` | Every Supernote call, in two tiers: the official `sn-plugin-lib` wrappers, and the internals as an updatable descriptor with the adapt-on/off probe ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)) |
 | `sync-core` | Diff, recurrence expansion, mapping and module orchestration |
-| `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface with its first source, Wiktionary definitions ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), and Lingo's language-pair Settings model |
+| `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface with its first source, Wiktionary definitions ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), Lingo's language-pair Settings model, and the ZH input reader with its offline CC-CEDICT pinyin index ([#129](https://github.com/martonpaulo/supernote-tools/issues/129), [notice](ink-core/NOTICE.md)) |
 | `picture-search` | Ink2Pic's picture search core (the sources, the ranking, the measured order, `chooseLook`) its pure-Java pixel measures and the native file module in `native/`, with their JVM tests in `native-tests/`, for Lookup ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)) |
 | `ui-kit` | The Settings look every plugin shares: tokens, shared styles, the `Button`, and the size rule for tests ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)) |
 
@@ -38,3 +38,7 @@ needs one moves it here with it.
 `@supernote-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by
 `paths` in its `tsconfig.json`; Metro bundles it into the plugin's `.snplg` with the plugin's own
 React. Its tests and lint run in the Bridge gate, and the Ink2Pic and Lingo gates type-check it ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
+
+`ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
+when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
+`--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).

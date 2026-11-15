@@ -5,5 +5,6 @@ export * from './dictionary';
 export * from './lasso';
 export * from './outcome';
 export * from './pairs';
+export * from './pinyin';
 export * from './place';
 export * from './wiktionary';
