@@ -21,10 +21,12 @@ export {createContext, createFetcher} from './fetcher';
 export type {Fetcher, FetchLike} from './fetcher';
 export {
   chooseLook,
+  fitsMode,
   isFaintLines,
   isPhotoKind,
   isPhotoLike,
   isSpeckled,
+  keepMode,
   lineArt,
   MEASURED_RESULTS,
   needsContour,
@@ -39,6 +41,7 @@ export type {
   Look,
   Measured,
   Measures,
+  PictureMode,
   PixelKind,
   Prepared,
 } from './measures';

@@ -512,3 +512,36 @@ export function orderMeasured(
   const ordered = reorderByMeasures(results, measures, query, converted, photos);
   return dropNearDuplicates(ordered, measures);
 }
+
+/** A lasso button's kind of picture (#111): «Insert illustration» or «Insert photo». */
+export type PictureMode = 'illustration' | 'photo';
+
+/**
+ * Whether a measured tile belongs to a mode's list (#111): a photo or a dark painting for
+ * `photo`, any other shown tile for `illustration`. A blank tile belongs to neither.
+ */
+export function fitsMode(kind: PixelKind, mode: PictureMode): boolean {
+  if (kind === 'blank') {
+    return false;
+  }
+  return isPhotoKind(kind) === (mode === 'photo');
+}
+
+/**
+ * A mode's pages 1 and 2 (#111): the measured order with only the measured tiles that fit the
+ * mode, in that order, so the illustration and photo lists are a real split, never one blended
+ * list. A tile of the other kind, a blank one and an unmeasured one are left out, even when fewer
+ * than MEASURED_RESULTS fit: a photo list with no photo is empty, never drawings.
+ * shortcut: only the measured tiles (pages 1 and 2); measure further pages once Lookup's Choose
+ * button shows more than two pages (D19 A).
+ */
+export function keepMode(
+  ordered: readonly SearchResult[],
+  measures: ReadonlyMap<string, Measures>,
+  mode: PictureMode,
+): SearchResult[] {
+  return ordered.filter(result => {
+    const m = measures.get(result.id);
+    return m !== undefined && fitsMode(pixelKind(m), mode);
+  });
+}

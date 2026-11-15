@@ -11,6 +11,9 @@ buttons (insert illustration, insert photo, insert text) over `../../packages/in
 picture search and pixel measures are `../../packages/picture-search`, mapped here
 ([#125](https://github.com/martonpaulo/supernote-tools/issues/125)); its insert flow, stored measures and library move in with the first
 button that needs them, and Ink2Pic is then retired (owner D45).
+`src/modes.ts` owns the two picture modes, «Insert illustration» and «Insert photo»: button ids from
+1000, Settings keys and search style, with the measured split `keepMode` in the shared package
+([#111](https://github.com/martonpaulo/supernote-tools/issues/111)); their buttons and switches wait for the file store and insert flow.
 
 ## What it is
 

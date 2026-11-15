@@ -26,6 +26,7 @@ Import from `@supernote-tools/picture-search` (its `index.ts`) only ([#125](http
 | `rankForEink(lists, query, scorers?)`, `DEFAULT_SCORERS`, `Scorer` | The ranking as an ordered list of signals |
 | `fullUrl(result, width)`, `insertUrl(result)` | The image of a result at a width, or for an insert |
 | `pageOf`, `pageCount`, `PAGE_SIZE` | Six results per page |
+| `keepMode(ordered, measures, mode)`, `fitsMode`, `PictureMode` | A lasso mode's measured tiles only: photos and dark paintings for `photo`, the rest for `illustration` ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)) |
 
 Every failure is a `Failure` with a typed `kind` (`network`, `timeout`, `http`, `throttled`,
 `parse`); its `message` is for the log only.
