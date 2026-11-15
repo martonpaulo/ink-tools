@@ -1,6 +1,7 @@
 import {
   BUNDLED_DESCRIPTOR as D,
   DeviceReader,
+  chooseDescriptor,
   contentUri,
   parseDescriptor,
   probeAll,
@@ -109,4 +110,28 @@ test('a row with a missing or unusable id or time throws instead of becoming "un
   }
   expect(() => rowToEvent({...row, startTime: 'soon'})).toThrow('startTime');
   expect(() => rowToTodoTask(D, {title: 'x'})).toThrow('taskId');
+});
+
+describe('chooseDescriptor (#43)', () => {
+  const withVersion = (descriptorVersion: unknown) => JSON.stringify({...D, descriptorVersion});
+
+  it('keeps the bundled descriptor when there is no update', () => {
+    expect(chooseDescriptor(undefined)).toEqual({descriptor: D, source: 'bundled', reason: 'no update'});
+    expect(chooseDescriptor('  ').source).toBe('bundled');
+  });
+
+  it('takes a valid, newer update', () => {
+    const choice = chooseDescriptor(withVersion('2099.01.01'));
+    expect(choice.source).toBe('update');
+    expect(choice.descriptor.descriptorVersion).toBe('2099.01.01');
+    expect(choice.reason).toBeUndefined();
+  });
+
+  it('keeps the bundled one, with the reason, for a bad or older update', () => {
+    expect(chooseDescriptor('{not json').reason).toBe('the update is not JSON');
+    expect(chooseDescriptor(JSON.stringify({...D, schema: 2})).reason).toMatch(/^the update was rejected: descriptor schema 2/);
+    expect(chooseDescriptor(withVersion('v2')).reason).toMatch(/is not YYYY.MM.DD/);
+    expect(chooseDescriptor(withVersion(D.descriptorVersion)).reason).toMatch(/is not newer than/);
+    expect(chooseDescriptor(withVersion('2000.01.01')).descriptor).toBe(D);
+  });
 });

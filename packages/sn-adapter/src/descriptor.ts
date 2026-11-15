@@ -81,3 +81,46 @@ export function contentUri(m: ModuleDescriptor<unknown>, table: string): string 
   if (!t) throw new Error(`unknown table ${table}`);
   return `content://${m.authority}/${t.path}`;
 }
+
+/** Which descriptor a plugin runs with, and why, so a refused update is reported, never silent. */
+export interface DescriptorChoice {
+  descriptor: Descriptor;
+  source: 'bundled' | 'update';
+  /** Why the bundled descriptor was kept; absent when the update was taken. */
+  reason?: string;
+}
+
+/** `descriptorVersion` is a date, `YYYY.MM.DD`; anything else is not comparable. */
+const VERSION = /^(\d{4})\.(\d{2})\.(\d{2})$/;
+
+/**
+ * Take an updated descriptor (its raw JSON text) only when it is valid and newer than the bundled
+ * one; otherwise keep the bundled one and say why (#43).
+ */
+export function chooseDescriptor(
+  update: string | undefined,
+  bundled: Descriptor = BUNDLED_DESCRIPTOR,
+): DescriptorChoice {
+  const keep = (reason: string): DescriptorChoice => ({descriptor: bundled, source: 'bundled', reason});
+  if (update === undefined || update.trim() === '') return keep('no update');
+  let value: unknown;
+  try {
+    value = JSON.parse(update);
+  } catch {
+    return keep('the update is not JSON');
+  }
+  let candidate: Descriptor;
+  try {
+    candidate = parseDescriptor(value);
+  } catch (error) {
+    return keep(`the update was rejected: ${(error as Error).message}`);
+  }
+  if (!VERSION.test(String(candidate.descriptorVersion))) {
+    return keep(`the update's version ${String(candidate.descriptorVersion)} is not YYYY.MM.DD`);
+  }
+  // Same-width dates compare as text.
+  if (candidate.descriptorVersion <= bundled.descriptorVersion) {
+    return keep(`the update ${candidate.descriptorVersion} is not newer than ${bundled.descriptorVersion}`);
+  }
+  return {descriptor: candidate, source: 'update'};
+}
