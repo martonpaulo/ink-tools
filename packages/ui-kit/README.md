@@ -29,8 +29,8 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 
 - Two sizes only: the title (`fontLarge`) and the body (`fontBody`) for names, values and
   buttons; nothing under `minFont`.
-- A section heading is body size, bold, in the context grey; a hint or a current value is body
-  size in the context grey. No italic, no handwritten font.
+- A section heading is body size, bold, in the context grey (`shared.heading`); a hint or a
+  current value is body size in the context grey (`shared.hint`). No italic, no handwritten font.
 
 ## Grey as colour
 
@@ -40,7 +40,7 @@ accents, each with a fixed role, never as the only cue:
 | Grey | Role |
 | :--- | :--- |
 | `#000000` | text, borders, the primary button's fill |
-| `#444444` | section headings, hints and values: 9.7:1 on paper |
+| `#444444` | section headings, hints and values: 9.7:1 on paper (`metrics.context`) |
 | `#aaaaaa` | a strong fill: the band behind a screen title, a count badge |
 | `#cccccc` | a highlight: the row being changed |
 | `#eeeeee` | a soft panel: a block of help text, an empty state |

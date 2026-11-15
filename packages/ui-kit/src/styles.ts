@@ -38,5 +38,9 @@ export const shared = StyleSheet.create({
     minHeight: metrics.statusLineHeight * STATUS_LINES,
   },
   text: {fontSize: metrics.fontBody, color: metrics.ink},
+  /** A section heading: body size, bold, in the context grey (README › Type, #50). */
+  heading: {fontSize: metrics.fontBody, fontWeight: 'bold', color: metrics.context},
+  /** A hint or a current value under a row's name: body size in the context grey (#50). */
+  hint: {fontSize: metrics.fontBody, color: metrics.context},
   textLarge: {fontSize: metrics.fontLarge, color: metrics.ink},
 });

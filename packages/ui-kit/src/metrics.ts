@@ -69,6 +69,8 @@ export const metrics = {
 
   ink: '#000000',
   paper: '#ffffff',
+  /** Section headings, hints and values: the context grey, 9.7:1 on paper (README › Grey as colour, #50). */
+  context: '#444444',
   /** The field's placeholder: a grey that keeps 7:1 contrast on paper (interface rule 3). */
   placeholder: '#595959',
   /** Selected text in the field: a light grey, so the ink text stays readable over it. */

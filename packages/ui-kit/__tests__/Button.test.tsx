@@ -50,3 +50,21 @@ describe('Button (#50)', () => {
     expect(bar.position).toBe('absolute');
   });
 });
+
+/** WCAG relative luminance of a #rrggbb grey. */
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map(i => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+describe('Grey as colour (#50)', () => {
+  it('keeps every grey that carries text at 7:1 or more on paper', () => {
+    const paper = luminance(metrics.paper);
+    for (const grey of [metrics.ink, metrics.context, metrics.placeholder]) {
+      expect((paper + 0.05) / (luminance(grey) + 0.05)).toBeGreaterThanOrEqual(7);
+    }
+  });
+});

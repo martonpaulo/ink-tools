@@ -32,7 +32,7 @@ export function SettingsForm({
         const name = copy[`module.${module}`];
         return (
           <View key={module} style={shared.listRow}>
-            <Text accessibilityRole="header" style={shared.text}>
+            <Text accessibilityRole="header" style={shared.heading}>
               {name}
             </Text>
             <View style={shared.row}>

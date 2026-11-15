@@ -1,6 +1,8 @@
 /** Bridge's opt-in switches over the sync-core Settings rules (#40). */
 import React from 'react';
+import {StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import {metrics} from '@supernote-tools/ui-kit';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
 import {
   BridgeSettings,
@@ -79,6 +81,23 @@ describe('SettingsForm (#40)', () => {
     expect(state(tree, 'Todoist').selected).toBe(true);
     act(() => toggle(tree, 'To-Do').props.onPress());
     expect(onChange.mock.calls[0][0].providers.todoist).toBe(false);
+  });
+
+  it('draws each module name as a section heading in the context grey (#50)', () => {
+    const {tree} = render(defaultSettings());
+    const headings = tree.root.findAll(
+      n => n.type === Text && n.props.accessibilityRole === 'header',
+    );
+    expect(headings.map(h => h.props.children)).toEqual([
+      'To-Do',
+      'Calendar',
+      'Digest',
+    ]);
+    for (const heading of headings) {
+      expect(StyleSheet.flatten(heading.props.style)).toEqual(
+        expect.objectContaining({color: metrics.context, fontWeight: 'bold'}),
+      );
+    }
   });
 
   it('keeps the size rules', () => {

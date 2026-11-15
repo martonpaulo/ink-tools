@@ -79,7 +79,7 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
             <View key={module.id} style={shared.listRow}>
               <Text style={shared.text}>{module.name}</Text>
               {statusLines(module.status).map((line, index) => (
-                <Text key={index} style={shared.text}>
+                <Text key={index} style={shared.hint}>
                   {line}
                 </Text>
               ))}
