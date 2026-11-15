@@ -19,6 +19,7 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (14), 2026-11-06, firmware 3.31.45](#build-010-14-2026-11-06-firmware-33145)
 - [Build 0.1.0 (15), 2026-11-07, firmware 3.31.45](#build-010-15-2026-11-07-firmware-33145)
 - [Build 0.1.0 (16), 2026-11-07, firmware 3.31.45](#build-010-16-2026-11-07-firmware-33145)
+- [Build 0.1.0 (18), 2026-11-15, firmware 3.31.45](#build-010-18-2026-11-15-firmware-33145)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
 
