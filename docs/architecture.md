@@ -139,16 +139,15 @@ supernote-tools/
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,
     [#64](https://github.com/martonpaulo/supernote-tools/issues/64)). `startDeviceCode` in
-    `packages/sync-core` would get `invalid_scope`. The replacement waits on the owner's choice in
-    [#64](https://github.com/martonpaulo/supernote-tools/issues/64):
-    - **Sign in on the Mac, hand the token to the tablet** (recommended): the installed-app flow
-      with a loopback redirect, which allows the Calendar scopes, runs on the Mac (a `snadb`
-      command); the refresh token goes to the plugin's private storage over ADB.
-    - **Sign in in a browser on the tablet**, with a loopback redirect to the plugin: needs a
-      browser on the device and a local listener, both unconfirmed.
-    - **Read only, no sign-in:** Google Calendar's secret iCal address through the ICS provider
-      ([#30](https://github.com/martonpaulo/supernote-tools/issues/30)); writing back
-      ([#29](https://github.com/martonpaulo/supernote-tools/issues/29)) is then impossible.
+    `packages/sync-core` would get `invalid_scope`. **Bridge signs in on the Mac and gets the token
+    over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/supernote-tools/issues/64)): a `snadb` command runs Google's
+    installed-app flow with a loopback redirect, which allows the Calendar scopes, in the Mac's
+    browser; the refresh token then goes to Bridge's private plugin folder the way every sign-in
+    secret does, `snadb secret set google` ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)). The plugin only refreshes
+    access tokens. Not chosen: a browser on the tablet with a loopback redirect to the plugin (the
+    browser and the local listener are unconfirmed), and read-only Google through its secret iCal
+    address and the ICS provider ([#30](https://github.com/martonpaulo/supernote-tools/issues/30)), which makes writing back
+    ([#29](https://github.com/martonpaulo/supernote-tools/issues/29)) impossible.
 
     Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh
     tokens expire after 7 days; «In production» without verification keeps them, behind an
