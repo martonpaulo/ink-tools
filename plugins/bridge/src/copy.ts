@@ -25,6 +25,13 @@ export const copy = {
   'signOut.label': 'Sign out of {provider}',
   'signOut.confirm': 'Sign out of {provider}? Bridge deletes its sign-in from the tablet.',
   'signOut.yes': 'Sign out',
+  'module.todo': 'To-Do',
+  'module.calendar': 'Calendar',
+  'module.digest': 'Digest',
+  'provider.todoist': 'Todoist',
+  'provider.google': 'Google',
+  'provider.icloud': 'iCloud',
+  'provider.ics': 'ICS',
 } as const;
 
 export type CopyKey = keyof typeof copy;

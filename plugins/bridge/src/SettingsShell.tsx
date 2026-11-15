@@ -1,6 +1,6 @@
 /**
  * Bridge's Settings view: the title and the module list, with every size and colour from the
- * shared ui-kit (#93). The modules and their switches land with #40; this shell owns the states a
+ * shared ui-kit (#93). The opt-in switches come in as `form` (#40); this shell owns the states a
  * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
  * keeps what Bridge wrote; its «Remove what Bridge wrote» button asks once more before anything
@@ -37,13 +37,21 @@ export type ShellState =
   | {kind: 'error'; reason: string; onRetry: () => void}
   | {kind: 'ready'; modules: ModuleRow[]};
 
-export function SettingsShell({state}: {state: ShellState}): React.JSX.Element {
+export function SettingsShell({
+  state,
+  form,
+}: {
+  state: ShellState;
+  /** The opt-in switches (#40), drawn under the module list once the settings are ready. */
+  form?: React.ReactNode;
+}): React.JSX.Element {
   return (
     <View style={shared.screen}>
       <Text accessibilityRole="header" style={shared.textLarge}>
         {copy.title}
       </Text>
       <Body state={state} />
+      {state.kind === 'ready' && form}
     </View>
   );
 }
