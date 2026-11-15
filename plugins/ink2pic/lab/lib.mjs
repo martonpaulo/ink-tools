@@ -68,6 +68,24 @@ export function readCases() {
   return readJson(path.join(LAB_DIR, 'cases.json')).cases;
 }
 
+/**
+ * The cases whose id or category is in `list`, a comma list; every case without one (#108). A
+ * name no case has stops the lab, so a typo never runs an empty set.
+ */
+export function selectCases(cases, list) {
+  if (list === undefined) {
+    return cases;
+  }
+  const names = list.split(',').filter(Boolean);
+  const unknown = names.filter(
+    n => !cases.some(c => c.id === n || c.category === n),
+  );
+  if (unknown.length) {
+    throw new Error(`no case has the id or category ${unknown.join(', ')}`);
+  }
+  return cases.filter(c => names.includes(c.id) || names.includes(c.category));
+}
+
 export function readResults(name) {
   return readJson(path.join(runDir(name), 'results.json'));
 }

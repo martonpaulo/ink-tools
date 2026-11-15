@@ -4,7 +4,9 @@
  * `out/<run>/results.json` with pages 1 and 2 of each. `--fault` replaces a source's fetch with a
  * fault (`down`, `slow`, `throttled` or 429, `broken` or 500, `malformed`); see `runner.mjs`.
  *
- *   node lab/run.mjs <run> [--fault <source>=<kind>[,<source>=<kind>]]
+ * `--cases` keeps only the cases whose id or category is in its comma list (#108).
+ *
+ *   node lab/run.mjs <run> [--fault <source>=<kind>[,...]] [--cases <id or category>[,...]]
  */
 import path from 'node:path';
 import {
@@ -13,18 +15,27 @@ import {
   readCases,
   ROOT_DIR,
   runDir,
+  selectCases,
   writeJson,
 } from './lib.mjs';
 import {commit, parseFaults, runCases} from './runner.mjs';
 
-const [name, flag, spec] = process.argv.slice(2);
+const [name, ...rest] = process.argv.slice(2);
 const dir = runDir(name);
-if (flag !== undefined && flag !== '--fault') {
-  throw new Error(
-    `unknown option ${flag}; usage: run.mjs <run> [--fault <spec>]`,
-  );
+const options = {};
+for (let at = 0; at < rest.length; at += 2) {
+  if (
+    !['--fault', '--cases'].includes(rest[at]) ||
+    rest[at + 1] === undefined
+  ) {
+    throw new Error(
+      `unknown option ${rest[at]}; usage: run.mjs <run> [--fault <spec>] [--cases <list>]`,
+    );
+  }
+  options[rest[at]] = rest[at + 1];
 }
-const faults = parseFaults(spec);
+const faults = parseFaults(options['--fault']);
+const chosen = selectCases(readCases(), options['--cases']);
 checkProxy();
 const {config, core} = product();
 const measured = commit();
@@ -38,7 +49,7 @@ const save = cases =>
     cases,
   });
 // Saved after each query, so the sheets and the numbers can start before the run ends.
-const cases = await runCases(readCases(), faults, console.log, save);
+const cases = await runCases(chosen, faults, console.log, save);
 const failed = cases.filter(c =>
   Object.entries(c.statuses).some(
     ([source, s]) => s.state === 'failed' && !faults[source],

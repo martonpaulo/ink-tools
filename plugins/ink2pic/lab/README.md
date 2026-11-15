@@ -20,10 +20,30 @@ ignores `lab/`. Nothing here runs in `npm run validate`.
 - Playwright with Chromium, installed outside the project and found through `NODE_PATH`, for the
   sheets.
 
+## Where it runs
+
+On GitHub's runner, through the `Ink2Pic search lab` workflow (`.github/workflows/lab.yml`,
+[#108](https://github.com/martonpaulo/supernote-tools/issues/108)), never on the owner's Mac. Start it from the Actions tab or with:
+
+```bash
+gh workflow run lab.yml --ref <branch> -f run=<name> -f base=<ref> -f cases=affected
+```
+
+It runs the base (`base`, empty for the head's parent) over every case, then the head over the
+chosen `cases`: `affected`, `all`, or a comma list of case ids and categories. `affected` asks
+`affected.mjs`, which picks the cases the changed paths can move: a source adapter, only the
+cases whose base pages show that source; a changed case in `cases.json`, that case; any other
+path under `src/`, `native/` or `packages/`, every case; anything else, none. Each run is asked
+twice, so a throttled answer is asked again; a still-failed source stays recorded in
+`results.json`. The step summary holds the `metrics.mjs` comparison, and the `lab-<name>`
+artifact both runs' `results.json` and `metrics.json`. `out/.cache` goes from run to run as
+the `lab-cache` artifact, so a first run is slow and the next ones answer from the cache.
+
 ## Run it
 
 ```bash
 node lab/run.mjs baseline       # every case, into lab/out/baseline/results.json
+node lab/run.mjs some --cases chair,place   # only these case ids and categories
 node lab/sheet.mjs baseline     # contact sheets, into lab/out/baseline/sheets/*.png
 node lab/metrics.mjs baseline   # numbers, into lab/out/baseline/metrics.json
 ```
@@ -106,6 +126,7 @@ to 8 times slower than a desktop; the device's own `time` lines are the proof th
 | `out/<run>/faults.json` | The numbers `faults.mjs` writes. |
 | `out/<run>/timing.txt` | The summaries `timing.mjs` prints for the run, `before` then `after`. |
 | `out/<run>/sheets/sheet-NN.png` | Page 1 of eight queries per image, in the app's 2 x 3 grid, in grayscale; not committed, about 8 MB a run. |
+| `affected.mjs` | The cases a change can move, for the workflow's `affected` mode. |
 | `pixelorder.mjs`, `LabPixels.java` | The device's pixel step: measures, contour drawing and order. |
 | `timing.mjs`, `LabTiming.java` | The device's pixel schedule, timed before and after a change. |
 | `out/.cache/` | Raw source responses, thumbnails with their contour drawings, the compiled Java and sheet pages; not committed. |

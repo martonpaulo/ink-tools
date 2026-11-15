@@ -1,0 +1,154 @@
+name: Ink2Pic search lab
+
+# The search lab (plugins/ink2pic/lab, #63) on GitHub's runner, never on the owner's Mac (#108,
+# owner D44 A): started by hand or by an agent, never on push. It runs the base over every case
+# and the head over the chosen ones, and uploads both runs' results.json and metrics.json; the
+# step summary lists the page 1s that changed.
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'Run name: letters, digits, dot, dash or underscore'
+        default: ci
+      base:
+        description: 'Base ref to compare with; empty is the head commit''s parent'
+        default: ''
+      cases:
+        description: 'affected, all, or a comma list of case ids and categories'
+        default: affected
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lab:
+    name: search lab
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: plugins/ink2pic
+    env:
+      RUN: ${{ inputs.run }}
+      BASE: ${{ inputs.base }}
+      CASES: ${{ inputs.cases }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: plugins/ink2pic/package-lock.json
+
+      - name: Check the lab's tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet pillow
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+          PATH="$RUNNER_TEMP/venv/bin:$PATH"
+          missing=0
+          command -v node >/dev/null || { echo 'missing: node'; missing=1; }
+          python3 -c 'import PIL' 2>/dev/null || { echo 'missing: python3 with Pillow'; missing=1; }
+          command -v javac >/dev/null || { echo 'missing: javac (a JDK)'; missing=1; }
+          command -v java >/dev/null || { echo 'missing: java (a JDK)'; missing=1; }
+          exit "$missing"
+
+      - name: Restore the answer cache
+        run: |
+          mkdir -p lab/out/.cache
+          last=$(gh run list --workflow lab.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$last" ] && gh run download "$last" -n lab-cache -D lab/out/.cache; then
+            echo "cache from run $last"
+          else
+            echo 'cold cache: every answer comes from the network'
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the base over every case
+        run: |
+          base_sha=$(git rev-parse "${BASE:-HEAD~1}")
+          echo "BASE_SHA=$base_sha" >> "$GITHUB_ENV"
+          git worktree add "$RUNNER_TEMP/base" "$base_sha"
+          cd "$RUNNER_TEMP/base/plugins/ink2pic"
+          npm ci
+          mkdir -p lab/out
+          ln -s "$GITHUB_WORKSPACE/plugins/ink2pic/lab/out/.cache" lab/out/.cache
+          # A second pass asks again only what was throttled; a still-failed source stays recorded.
+          node lab/run.mjs "$RUN-base"
+          node lab/run.mjs "$RUN-base"
+          mkdir -p "$GITHUB_WORKSPACE/plugins/ink2pic/lab/out/$RUN-base"
+          cp "lab/out/$RUN-base/results.json" "$GITHUB_WORKSPACE/plugins/ink2pic/lab/out/$RUN-base/"
+          git show "$base_sha:plugins/ink2pic/lab/cases.json" > "$RUNNER_TEMP/base-cases.json"
+
+      - name: Choose the cases
+        run: |
+          case "$CASES" in
+            affected)
+              git diff --name-only "$BASE_SHA" HEAD > "$RUNNER_TEMP/changed.txt"
+              chosen=$(xargs node lab/affected.mjs "$RUN-base" --base-cases "$RUNNER_TEMP/base-cases.json" < "$RUNNER_TEMP/changed.txt")
+              ;;
+            all) chosen=$(node -e 'console.log(require("./lab/cases.json").cases.map(c => c.id).join(","))') ;;
+            *) chosen="$CASES" ;;
+          esac
+          echo "CHOSEN=$chosen" >> "$GITHUB_ENV"
+          echo "cases: ${chosen:-none}"
+
+      - name: Run the head over the chosen cases
+        if: env.CHOSEN != ''
+        run: |
+          node lab/run.mjs "$RUN-head" --cases "$CHOSEN"
+          node lab/run.mjs "$RUN-head" --cases "$CHOSEN"
+          # The base keeps only the head's cases, so the two sets of numbers compare.
+          node -e '
+            const fs = require("fs");
+            const file = `lab/out/${process.env.RUN}-base/results.json`;
+            const head = require(`./lab/out/${process.env.RUN}-head/results.json`);
+            const ids = new Set(head.cases.map(c => c.id));
+            const base = JSON.parse(fs.readFileSync(file, "utf8"));
+            base.cases = base.cases.filter(c => ids.has(c.id));
+            fs.writeFileSync(file, JSON.stringify(base, null, 1) + "\n");'
+
+      - name: Measure and compare
+        if: env.CHOSEN != ''
+        run: |
+          {
+            echo "## Search lab: $RUN, base $BASE_SHA, head $GITHUB_SHA"
+            echo '```text'
+            node lab/metrics.mjs "$RUN-base" "$RUN-head"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Say that no case can move
+        if: env.CHOSEN == ''
+        run: echo "## Search lab, $RUN, no case can move with this change" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the runs
+        if: env.CHOSEN != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lab-${{ inputs.run }}
+          path: |
+            plugins/ink2pic/lab/out/${{ inputs.run }}-base/
+            plugins/ink2pic/lab/out/${{ inputs.run }}-head/
+
+      - name: Keep the answer cache for the next run
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lab-cache
+          path: plugins/ink2pic/lab/out/.cache/
+          include-hidden-files: true
+          if-no-files-found: ignore
