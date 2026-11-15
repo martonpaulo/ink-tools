@@ -1,7 +1,19 @@
 import {NativeModules} from 'react-native';
 import {MODULE_CODE} from '@supernote-tools/sn-adapter/official';
-import {downloadToFile, readText, writeText} from '../src/storage/files';
-import {libraryDir, safeFileName} from '../src/storage/paths';
+import {
+  downloadToFile,
+  readText,
+  writeText,
+  libraryDir,
+  safeFileName,
+  INK2PIC_PROFILE,
+  logsDir,
+  oldSymbolsDir,
+  picksPath,
+  setPluginProfile,
+  settingsPath,
+  symbolsDir,
+} from '../src/profile';
 
 const native = {
   downloadToFile: jest.fn(),
@@ -69,5 +81,36 @@ describe('paths (#11)', () => {
       'openclipart-340609-soup-.png',
     );
     expect(safeFileName('///')).toBe('file');
+  });
+});
+
+describe('the plugin profile (#142)', () => {
+  const ROOT = '/storage/emulated/0';
+
+  afterEach(() => setPluginProfile(INK2PIC_PROFILE));
+
+  it("keeps Ink2Pic's files where they were before the move", () => {
+    expect(settingsPath(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/settings.json`);
+    expect(logsDir(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/logs`);
+    expect(picksPath(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/picks.json`);
+    expect(oldSymbolsDir(ROOT)).toBe(`${ROOT}/MyStyle/Ink2Pic/symbols`);
+    expect(symbolsDir(ROOT)).toBe(`${ROOT}/.ink2pic-symbols`);
+  });
+
+  it("calls a second plugin's folder, modules and User-Agent", async () => {
+    const lookupFiles = {readText: jest.fn().mockResolvedValue('{}')};
+    NativeModules.LookupFiles = lookupFiles;
+    setPluginProfile({
+      name: 'Lookup',
+      folder: 'MyStyle/Lookup',
+      filesModule: 'LookupFiles',
+      imageModule: 'LookupImage',
+      userAgent: 'Lookup/0',
+    });
+    expect(settingsPath(ROOT)).toBe(`${ROOT}/MyStyle/Lookup/settings.json`);
+    expect(await readText('/x')).toEqual({ok: true, value: '{}'});
+    expect(lookupFiles.readText).toHaveBeenCalledWith('/x');
+    expect(native.readText).not.toHaveBeenCalled();
+    delete NativeModules.LookupFiles;
   });
 });

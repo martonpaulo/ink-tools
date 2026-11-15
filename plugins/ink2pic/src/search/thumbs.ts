@@ -4,10 +4,15 @@
  * the grid renders the file (#46): before, the grid loaded the web URL and the file was
  * downloaded again afterwards, two requests per thumbnail.
  */
-import {log, logged} from '../log/memory';
-import {deleteFile, downloadThumbToFile, listDir} from '../storage/files';
-import {safeFileName} from '../storage/paths';
-import {pluginFolder} from '../storage/session';
+import {
+  log,
+  logged,
+  deleteFile,
+  downloadThumbToFile,
+  listDir,
+  safeFileName,
+  pluginFolder,
+} from '../profile';
 import type {SearchResult} from '@supernote-tools/picture-search';
 import {savedSymbolUri, symbolUri} from '../symbols/store';
 

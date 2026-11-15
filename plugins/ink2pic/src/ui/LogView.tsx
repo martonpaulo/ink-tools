@@ -1,7 +1,7 @@
 /** The call log, updated line by line (owner's logging rule, AGENTS.md). */
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import {logLines, onLog} from '../log/memory';
+import {logLines, onLog} from '../profile';
 import {copy} from './copy';
 import {ProbeBar} from './ProbeBar';
 import {shared} from '@supernote-tools/ui-kit';

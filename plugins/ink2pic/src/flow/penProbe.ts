@@ -15,7 +15,7 @@
  * getLassoRect, getLassoElements, closePluginView and the two listeners. None deletes, inserts or
  * changes an element.
  */
-import {brief, log, logged} from '../log/memory';
+import {brief, log, logged} from '../profile';
 import {
   getLassoElements,
   getLassoRect,

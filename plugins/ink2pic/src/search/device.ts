@@ -5,7 +5,7 @@
  * on, without waiting for the cache write.
  */
 import {USER_AGENT} from '../config';
-import {log} from '../log/memory';
+import {log, pluginFolder, getSettings, deviceStorage} from '../profile';
 import {
   cachedSearch,
   createBreaker,
@@ -17,10 +17,7 @@ import {
   SourceAdapter,
   SourceContext,
 } from '@supernote-tools/picture-search';
-import {pluginFolder} from '../storage/session';
-import {getSettings} from '../storage/settings';
 import {Settings, sourceOn, styleFlags} from '../settings/settings';
-import {deviceStorage} from '../storage/text';
 
 /** In memory for the plugin's run: a source that keeps failing is skipped for a while (#65). */
 const breaker = createBreaker();
@@ -70,7 +67,10 @@ export async function searchCached(
   query: string,
   sources: readonly SourceAdapter[] = DEFAULT_ADAPTERS,
   context?: SourceContext,
-  {exact = false, noTimerWait = false}: {exact?: boolean; noTimerWait?: boolean} = {},
+  {
+    exact = false,
+    noTimerWait = false,
+  }: {exact?: boolean; noTimerWait?: boolean} = {},
 ): Promise<SearchOutcome> {
   const settings = await getSettings();
   const ctx = context ?? deviceContext(settings, undefined, noTimerWait);

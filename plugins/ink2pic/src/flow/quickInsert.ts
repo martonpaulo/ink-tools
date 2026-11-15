@@ -12,7 +12,7 @@
  * to end (#93): the search retries with no pause, and a limit measured with Date.now() is checked
  * before each step. The log shows the time around each wait.
  */
-import {log, logTime, timed} from '../log/memory';
+import {log, logTime, timed} from '../profile';
 import {MEASURED_RESULTS, searchState} from '@supernote-tools/picture-search';
 import {failureText, offlineText} from './failure';
 import {

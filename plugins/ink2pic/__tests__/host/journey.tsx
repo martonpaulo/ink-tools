@@ -11,7 +11,7 @@ type Modules = {
   React: typeof import('react');
   renderer: typeof import('react-test-renderer');
   App: React.ComponentType;
-  memory: typeof import('../../src/log/memory');
+  memory: typeof import('../../src/profile');
 };
 
 /** A real-time limit for a journey step: the search core retries after 400 ms (fetcher.ts). */
@@ -63,7 +63,9 @@ export class Journey {
         return;
       }
       if (realNow() > end) {
-        throw new Error(`journey step did not end: ${this.log().slice(-5).join(' | ')}`);
+        throw new Error(
+          `journey step did not end: ${this.log().slice(-5).join(' | ')}`,
+        );
       }
     }
   }
@@ -78,7 +80,11 @@ export class Journey {
 
   /** The result tiles on screen, by testID. */
   tiles(): string[] {
-    return (this.tree?.root.findAll(node => /^tile-/.test(String(node.props.testID ?? ''))) ?? [])
+    return (
+      this.tree?.root.findAll(node =>
+        /^tile-/.test(String(node.props.testID ?? '')),
+      ) ?? []
+    )
       .filter(node => typeof node.props.onPress === 'function')
       .map(node => String(node.props.testID));
   }
@@ -90,7 +96,8 @@ export class Journey {
       throw new Error('no result tile to pick');
     }
     const tile = this.tree!.root.find(
-      node => node.props.testID === id && typeof node.props.onPress === 'function',
+      node =>
+        node.props.testID === id && typeof node.props.onPress === 'function',
     );
     await this.modules.renderer.act(async () => {
       tile.props.onPress();
@@ -100,7 +107,8 @@ export class Journey {
   /** The person taps the button that reads `label`. */
   async tap(label: string): Promise<void> {
     const button = this.tree!.root.find(
-      node => node.props.label === label && typeof node.props.onPress === 'function',
+      node =>
+        node.props.label === label && typeof node.props.onPress === 'function',
     );
     await this.modules.renderer.act(async () => {
       button.props.onPress();
@@ -109,7 +117,10 @@ export class Journey {
 
   /** Whether the search screen, with its query field, shows. */
   searching(): boolean {
-    return (this.tree?.root.findAll(node => node.props.testID === 'query').length ?? 0) > 0;
+    return (
+      (this.tree?.root.findAll(node => node.props.testID === 'query').length ??
+        0) > 0
+    );
   }
 
   /** The run log, as the session log file holds it. */
@@ -146,7 +157,10 @@ export function compilePlugin(): void {
   jest.isolateModules(() => {
     const host = createHost();
     host.grantDeclared();
-    host.install(require('sn-plugin-lib'), require('react-native').NativeModules);
+    host.install(
+      require('sn-plugin-lib'),
+      require('react-native').NativeModules,
+    );
     require('../../index');
     require('../../App');
     require('react-test-renderer');
@@ -175,7 +189,7 @@ export function startJourney(
     React: require('react'),
     renderer: require('react-test-renderer'),
     App: require('../../App').default,
-    memory: require('../../src/log/memory'),
+    memory: require('../../src/profile'),
   };
   clock.mockRestore();
   return new Journey(host, modules);

@@ -28,8 +28,14 @@ import {
   onHeadlessNote,
   takeHeadlessNote,
 } from './src/flow/headlessInsert';
-import {startSession} from './src/storage/logFile';
-import {pluginFolder} from './src/storage/session';
+import {
+  startSession,
+  pluginFolder,
+  log,
+  logged,
+  getSettings,
+  saveSettings,
+} from './src/profile';
 import {
   CONFIG_BUTTON_ID,
   INSERT_BUTTON_ID,
@@ -37,7 +43,6 @@ import {
   LASSO_BUTTON_ID,
   SIDEBAR_BUTTON_ID,
 } from './src/buttons';
-import {log, logged} from './src/log/memory';
 import {missingPermissions, PermissionNeed} from './src/onboarding/permissions';
 import {
   getLassoElements,
@@ -52,7 +57,6 @@ import {
 import type {SearchResult} from '@supernote-tools/picture-search';
 import {clearLibrary} from './src/library/device';
 import {Settings, SettingsAction, settingsStep} from './src/settings/settings';
-import {getSettings, saveSettings} from './src/storage/settings';
 import {definitionSwitched} from './src/flow/insertDefinition';
 import {LanguagesScreen} from './src/ui/LanguagesScreen';
 import {SettingsScreen} from './src/ui/SettingsScreen';

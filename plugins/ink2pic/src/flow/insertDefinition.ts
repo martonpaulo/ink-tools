@@ -24,10 +24,9 @@ import {
   SHOW_NO_VIEW,
 } from '../buttons';
 import {USER_AGENT} from '../config';
-import {log, logged, timed} from '../log/memory';
+import {log, logged, timed, getSettings} from '../profile';
 import {createFetcher} from '@supernote-tools/picture-search';
 import {Settings, SIZE_WIDTHS} from '../settings/settings';
-import {getSettings} from '../storage/settings';
 import {copy} from '../ui/copy';
 import {offlineText} from './failure';
 import type {LassoPlace} from './place';
@@ -91,10 +90,7 @@ export function definitionText(word: string, result: DefinitionResult): string {
 }
 
 /** The box below the lassoed word, DEFINITION_WIDTH wide, as tall as its wrapped lines. */
-export function definitionRect(
-  text: string,
-  place: LassoPlace,
-): Rect | null {
+export function definitionRect(text: string, place: LassoPlace): Rect | null {
   const width = DEFINITION_WIDTH;
   const perLine = Math.max(
     1,

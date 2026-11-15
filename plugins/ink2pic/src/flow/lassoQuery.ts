@@ -7,7 +7,7 @@ import {
   type LassoHost,
   type LassoQuery,
 } from '@supernote-tools/ink-core';
-import {logged} from '../log/memory';
+import {logged} from '../profile';
 import {
   getLassoElements,
   getLassoRect,

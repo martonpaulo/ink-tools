@@ -3,8 +3,8 @@
  * Each flush appends the lines logged since the last one (#102), never on a timer (JS timers stop
  * while the view is closed, brief section 3.3); the previous session is kept as session.prev.log.
  */
-import {LOG_MAX_LINES, logCount, logLines, startLog} from '../log/memory';
-import {appendText, readText, writeText} from './files';
+import { LOG_MAX_LINES, logCount, logLines, startLog } from "../log/memory";
+import { appendText, readText, writeText } from "./files";
 
 /** Lines a rewrite keeps: the in-memory cap, so a new file holds what the screen log holds. */
 export const LOG_FILE_MAX_LINES = LOG_MAX_LINES;
@@ -21,7 +21,7 @@ let opened = false;
  * The file's state: `upTo` is the logCount() its last line has, `lines` how many it holds; null
  * until this opening's first write, and after a failed one: the next flush rewrites the file.
  */
-let file: {upTo: number; lines: number} | null = null;
+let file: { upTo: number; lines: number } | null = null;
 
 /** `<shared root>/MyStyle/Ink2Pic/logs`: where flushes write from now on. */
 export function openLogFile(logsDir: string): void {
@@ -29,7 +29,7 @@ export function openLogFile(logsDir: string): void {
 }
 
 function joined(lines: string[]): string {
-  return lines.length > 0 ? lines.join('\n') + '\n' : '';
+  return lines.length > 0 ? lines.join("\n") + "\n" : "";
 }
 
 /**
@@ -55,7 +55,7 @@ async function write(path: string): Promise<unknown> {
     ? await appendText(path, joined(kept))
     : await writeText(path, joined(kept));
   file = written.ok
-    ? {upTo, lines: (append && file ? file.lines : 0) + kept.length}
+    ? { upTo, lines: (append && file ? file.lines : 0) + kept.length }
     : null;
   return written;
 }
@@ -79,7 +79,7 @@ export async function startSession(): Promise<void> {
   let previous: string | null = null;
   if (!first) {
     const all = logLines();
-    previous = all.length > 0 ? all.join('\n') + '\n' : '';
+    previous = all.length > 0 ? all.join("\n") + "\n" : "";
     startLog([]);
     file = null;
   }
@@ -87,10 +87,10 @@ export async function startSession(): Promise<void> {
     return;
   }
   const path = target;
-  const prevPath = path.replace(/session\.log$/, 'session.prev.log');
+  const prevPath = path.replace(/session\.log$/, "session.prev.log");
   await enqueue(async () => {
     const text = previous ?? (await readText(path));
-    const value = typeof text === 'string' ? text : text.ok ? text.value : '';
+    const value = typeof text === "string" ? text : text.ok ? text.value : "";
     if (value) {
       await writeText(prevPath, value);
     }

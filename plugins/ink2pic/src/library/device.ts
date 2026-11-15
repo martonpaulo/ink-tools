@@ -4,16 +4,21 @@
  * Read once per session and saved after each change; a search that changes nothing writes nothing
  * (#46).
  */
-import {log, logged} from '../log/memory';
+import {
+  log,
+  logged,
+  listDir,
+  readText,
+  writeText,
+  libraryDir,
+  deviceStorage,
+} from '../profile';
 import {
   fail,
   ok,
   Result,
   THROWN_CODE,
 } from '@supernote-tools/sn-adapter/official';
-import {listDir, readText, writeText} from '../storage/files';
-import {libraryDir} from '../storage/paths';
-import {deviceStorage} from '../storage/text';
 import {addItem, addRecentSearch, emptyLibrary, serialize} from './library';
 import {loadLibrary, saveLibrary} from './store';
 import type {SourceName} from '@supernote-tools/picture-search';

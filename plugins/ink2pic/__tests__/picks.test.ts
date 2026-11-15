@@ -1,5 +1,5 @@
 import {measureFirstPages, MeasureDeps} from '../src/flow/measure';
-import {startLog} from '../src/log/memory';
+import {startLog, picksPath} from '../src/profile';
 import {pickedFor, recordPick, resetPicksForTests} from '../src/picks/device';
 import {
   addPick,
@@ -15,7 +15,6 @@ import {
 import {fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import type {TextStore} from '@supernote-tools/picture-search';
 import type {SearchResult} from '@supernote-tools/picture-search/types';
-import {picksPath} from '../src/storage/paths';
 
 const result = (id: string): SearchResult => ({
   id,

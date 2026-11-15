@@ -1,5 +1,13 @@
 import {NativeModules} from 'react-native';
-import {logLines} from '../src/log/memory';
+import {
+  logLines,
+  settingsPath,
+  getSettings,
+  INK2PIC_SETTINGS,
+  loadSettings,
+  resetSettingsForTests,
+  saveSettings,
+} from '../src/profile';
 import {
   defaultSettings,
   parseSettings,
@@ -7,13 +15,6 @@ import {
   serializeSettings,
   styleFlags,
 } from '../src/settings/settings';
-import {settingsPath} from '../src/storage/paths';
-import {
-  getSettings,
-  loadSettings,
-  resetSettingsForTests,
-  saveSettings,
-} from '../src/storage/settings';
 import type {TextStore} from '@supernote-tools/picture-search';
 
 function memory(files: Record<string, string> = {}): TextStore {
@@ -84,7 +85,8 @@ describe('the settings file (#68)', () => {
     const path = '/s/settings.json';
     const storage = memory({[path]: '{"languages": ["en", "klingon"]}'});
     expect(
-      (await loadSettings(storage, path, null)).settings.languages,
+      (await loadSettings(INK2PIC_SETTINGS, storage, path, null)).settings
+        .languages,
     ).toEqual(['en']);
     expect(logLines().join('\n')).toContain(
       'settings: language "klingon" is ignored',
@@ -95,7 +97,12 @@ describe('the settings file (#68)', () => {
     const path = '/s/settings.json';
     const broken = '{"languages": ["en",}';
     const files: Record<string, string> = {[path]: broken};
-    const loaded = await loadSettings(memory(files), path, null);
+    const loaded = await loadSettings(
+      INK2PIC_SETTINGS,
+      memory(files),
+      path,
+      null,
+    );
     expect(loaded).toEqual({
       settings: defaultSettings(null),
       readFailure: null,
@@ -117,7 +124,12 @@ describe('the settings file (#68)', () => {
         throw new Error('full');
       },
     };
-    const loaded = await loadSettings(storage, '/s/settings.json', null);
+    const loaded = await loadSettings(
+      INK2PIC_SETTINGS,
+      storage,
+      '/s/settings.json',
+      null,
+    );
     expect(loaded.readFailure).toContain('its copy could not be kept');
   });
 
@@ -128,7 +140,7 @@ describe('the settings file (#68)', () => {
       },
       writeText: async () => {},
     };
-    expect(await loadSettings(storage, '/x', null)).toEqual({
+    expect(await loadSettings(INK2PIC_SETTINGS, storage, '/x', null)).toEqual({
       settings: defaultSettings(null),
       readFailure: 'Error: EACCES',
     });

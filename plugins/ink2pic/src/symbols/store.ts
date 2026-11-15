@@ -6,7 +6,17 @@
  * the plugin's own module (#62). Nothing here deletes a file: PluginHost counts a delete in shared
  * storage as FILE:DELETE, which Ink2Pic does not declare.
  */
-import {log, logged} from '../log/memory';
+import {
+  log,
+  logged,
+  downloadThumbToFile,
+  FileSize,
+  isCompletePng,
+  listCompletePngs,
+  listSizes,
+  oldSymbolsDir,
+  symbolsDir,
+} from '../profile';
 import {
   networkDown,
   openmojiPictureUrl,
@@ -15,14 +25,6 @@ import {
   sourceId,
   symbolHexes,
 } from '@supernote-tools/picture-search';
-import {
-  downloadThumbToFile,
-  FileSize,
-  isCompletePng,
-  listCompletePngs,
-  listSizes,
-} from '../storage/files';
-import {oldSymbolsDir, symbolsDir} from '../storage/paths';
 
 const EXTENSION = '.png';
 const FILE_PREFIX = 'file://';
@@ -55,7 +57,9 @@ export function symbolPath(hex: string): string {
 
 /** Where a saved symbol is read: the hidden folder, else the old one it was found in (#23). */
 function foundPath(hex: string): string {
-  return oldOnly.has(hex) ? `${oldSymbolsDir()}/${hex}${EXTENSION}` : symbolPath(hex);
+  return oldOnly.has(hex)
+    ? `${oldSymbolsDir()}/${hex}${EXTENSION}`
+    : symbolPath(hex);
 }
 
 /** The non-empty PNGs of a listing, by code. */

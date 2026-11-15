@@ -10,13 +10,14 @@ import {
 } from 'sn-plugin-lib';
 import App from '../App';
 import {insertPicture} from '../src/flow/insertPicture';
-import {resetSessionForTests} from '../src/storage/session';
-import {logLines, setAfterCall} from '../src/log/memory';
 import {
+  resetSessionForTests,
+  logLines,
+  setAfterCall,
   closeLogFileForTests,
   flushLogFile,
   openLogFile,
-} from '../src/storage/logFile';
+} from '../src/profile';
 import {startButtonQueue} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../src/ui/copy';
 import {SearchScreen} from '../src/ui/SearchScreen';

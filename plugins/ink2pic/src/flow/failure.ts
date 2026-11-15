@@ -3,7 +3,7 @@
  * the next step, never a code. The technical detail stays in the log (`logged` writes it).
  * It reads typed codes; only the text of an Android OS error is matched (#49).
  */
-import {logged} from '../log/memory';
+import {logged} from '../profile';
 import {
   hasPermission,
   PERMISSION_INTERNET,
@@ -12,7 +12,7 @@ import {
   TIMEOUT_CODE,
 } from '@supernote-tools/sn-adapter/official';
 import type {Outcome} from '@supernote-tools/picture-search';
-import type {FilesErrorCode} from '../storage/files';
+import type {FilesErrorCode} from '../profile';
 import {copy, CopyKey} from '../ui/copy';
 
 /** Where a failure happened: reading the lasso, getting the picture, or putting it in the note. */

@@ -1233,7 +1233,7 @@ The `init` command was run successfully during research with the name `ImageSpik
 
 - TypeScript `strict` mode. `tsc --noEmit` passes.
 - ESLint from the template passes.
-- Jest unit tests for every module in `src/sources`, `src/search`, `src/library` and `src/storage`. Network is mocked. Fixtures are real captured responses.
+- Jest unit tests for every module in `src/sources`, `src/search`, `src/library` and picture-search's device tier `src/storage` ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)). Network is mocked. Fixtures are real captured responses.
 - Capture fixtures before writing parsers: save at least two real Openclipart search pages (one with many results, one with none) and two Commons API responses.
 - JVM tests for the native image pipeline if it exists.
 - A build that produces an installable `.snplg` is the final gate. Unit tests cannot prove device behavior.

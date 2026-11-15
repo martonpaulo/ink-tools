@@ -9,8 +9,6 @@ import {
   LOG_FILE_REWRITE_LINES,
   openLogFile,
   startSession,
-} from '../src/storage/logFile';
-import {
   canClosePlugin,
   log,
   logged,
@@ -18,7 +16,7 @@ import {
   LOG_MAX_LINES,
   setAfterCall,
   startLog,
-} from '../src/log/memory';
+} from '../src/profile';
 import {copy} from '../src/ui/copy';
 import {LOG_VIEW_LINES, LogView} from '../src/ui/LogView';
 

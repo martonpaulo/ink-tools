@@ -18,7 +18,7 @@ import {
   unmeasured,
 } from '../flow/measure';
 import {afterSearch, insteadLabel, runSearch, stateText} from '../flow/search';
-import {log} from '../log/memory';
+import {log} from '../profile';
 import {
   SearchOutcome,
   SearchResult,
@@ -68,7 +68,11 @@ export function statusLine({
   state,
   unreadable = null,
 }: StatusLineInput): string {
-  if (view === 'library' && note === 'empty' && status === copy['error.offline']) {
+  if (
+    view === 'library' &&
+    note === 'empty' &&
+    status === copy['error.offline']
+  ) {
     // Offline, an empty library has nothing to insert: say how to get pictures (#98).
     return copy['library.emptyOffline'];
   }

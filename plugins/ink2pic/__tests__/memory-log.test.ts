@@ -6,7 +6,7 @@ import {
   onLog,
   startLog,
   PERSON_TIMEOUT_MS,
-} from '../src/log/memory';
+} from '../src/profile';
 import {TIMEOUT_CODE} from '@supernote-tools/sn-adapter/official';
 
 beforeEach(() => {

@@ -1,38 +1,39 @@
 /**
- * Downloads and small text files through the plugin's own Java module, Ink2PicFiles (#11):
+ * Downloads and small text files through the plugin's own Java module, the profile's
+ * `filesModule` (Ink2PicFiles for Ink2Pic, #11, #142):
  * sn-plugin-lib 0.2.3 and PluginHost have no file writer (brief sections 4.2 and 6).
  */
-import {NativeModules} from 'react-native';
-import {USER_AGENT} from '../config';
+import { NativeModules } from "react-native";
 import {
   fail,
   MODULE_CODE,
   ok,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from "@supernote-tools/sn-adapter/official";
+import { pluginProfile } from "./profile";
 
 /**
  * The module's rejection codes, plus MISSING when PluginHost did not load it. IO carries an error
  * Android raised; `HTTP_<status>` a download that was not HTTP 200.
  */
 export type FilesErrorCode =
-  | 'HTTPS_ONLY'
-  | 'BAD_PATH'
-  | 'TOO_LARGE'
-  | 'IO'
-  | 'MISSING'
+  | "HTTPS_ONLY"
+  | "BAD_PATH"
+  | "TOO_LARGE"
+  | "IO"
+  | "MISSING"
   | `HTTP_${number}`;
 
 type NativeFiles = {
   downloadToFile: (
     url: string,
     destPath: string,
-    headers: Record<string, string>,
+    headers: Record<string, string>
   ) => Promise<number>;
   downloadThumbToFile: (
     url: string,
     destPath: string,
-    headers: Record<string, string>,
+    headers: Record<string, string>
   ) => Promise<number>;
   deleteFile: (path: string) => Promise<boolean>;
   writeText: (path: string, text: string) => Promise<null>;
@@ -51,36 +52,38 @@ type NativeFiles = {
  */
 export async function callModule<M, T>(
   name: string,
-  run: (native: M) => Promise<T>,
+  run: (native: M) => Promise<T>
 ): Promise<Result<T>> {
   const native = (NativeModules[name] as M | undefined) ?? null;
   if (!native) {
     return fail(
       MODULE_CODE,
       `MISSING: ${name} is not loaded; check reactPackages in PluginConfig.json`,
-      'MISSING',
+      "MISSING"
     );
   }
   try {
     return ok(await run(native));
   } catch (error) {
-    const code = (error as {code?: string}).code ?? 'IO';
+    const code = (error as { code?: string }).code ?? "IO";
     const message = error instanceof Error ? error.message : String(error);
     return fail(MODULE_CODE, `${code}: ${message}`, code);
   }
 }
 
 function call<T>(run: (files: NativeFiles) => Promise<T>): Promise<Result<T>> {
-  return callModule('Ink2PicFiles', run);
+  return callModule(pluginProfile().filesModule, run);
 }
 
 /** Downloads `url` to `destPath` with the plugin's User-Agent; resolves the byte count. */
 export function downloadToFile(
   url: string,
-  destPath: string,
+  destPath: string
 ): Promise<Result<number>> {
-  return call(files =>
-    files.downloadToFile(url, destPath, {'User-Agent': USER_AGENT}),
+  return call((files) =>
+    files.downloadToFile(url, destPath, {
+      "User-Agent": pluginProfile().userAgent,
+    })
   );
 }
 
@@ -90,20 +93,22 @@ export function downloadToFile(
  */
 export function downloadThumbToFile(
   url: string,
-  destPath: string,
+  destPath: string
 ): Promise<Result<number>> {
-  return call(files =>
-    files.downloadThumbToFile(url, destPath, {'User-Agent': USER_AGENT}),
+  return call((files) =>
+    files.downloadThumbToFile(url, destPath, {
+      "User-Agent": pluginProfile().userAgent,
+    })
   );
 }
 
 /** True when the file is gone afterwards, also when it never existed. */
 export function deleteFile(path: string): Promise<Result<boolean>> {
-  return call(files => files.deleteFile(path));
+  return call((files) => files.deleteFile(path));
 }
 
 export function writeText(path: string, text: string): Promise<Result<null>> {
-  return call(files => files.writeText(path, text));
+  return call((files) => files.writeText(path, text));
 }
 
 /**
@@ -111,12 +116,12 @@ export function writeText(path: string, text: string): Promise<Result<null>> {
  * FILE:WRITE only (#62, #102).
  */
 export function appendText(path: string, text: string): Promise<Result<null>> {
-  return call(files => files.appendText(path, text));
+  return call((files) => files.appendText(path, text));
 }
 
 /** `null` when the file does not exist. */
 export function readText(path: string): Promise<Result<string | null>> {
-  return call(files => files.readText(path));
+  return call((files) => files.readText(path));
 }
 
 /**
@@ -124,18 +129,18 @@ export function readText(path: string): Promise<Result<string | null>> {
  * plugin's own module (#13).
  */
 export function listDir(path: string): Promise<Result<string[] | null>> {
-  return call(files => files.listDir(path));
+  return call((files) => files.listDir(path));
 }
 
 /** A file's name in its folder and its size in bytes. */
-export type FileSize = {name: string; bytes: number};
+export type FileSize = { name: string; bytes: number };
 
 /**
  * The files of a folder with their sizes, or null when it does not exist; no file is opened, so
  * a large folder lists fast (#102).
  */
 export function listSizes(path: string): Promise<Result<FileSize[] | null>> {
-  return call(files => files.listSizes(path));
+  return call((files) => files.listSizes(path));
 }
 
 /**
@@ -143,12 +148,12 @@ export function listSizes(path: string): Promise<Result<FileSize[] | null>> {
  * exist: a download cut off midway is left out (#91). It opens every file: Settings only (#102).
  */
 export function listCompletePngs(
-  path: string,
+  path: string
 ): Promise<Result<string[] | null>> {
-  return call(files => files.listCompletePngs(path));
+  return call((files) => files.listCompletePngs(path));
 }
 
 /** True when the file is a whole PNG (#91). */
 export function isCompletePng(path: string): Promise<Result<boolean>> {
-  return call(files => files.isCompletePng(path));
+  return call((files) => files.isCompletePng(path));
 }

@@ -12,12 +12,16 @@
  * marked to be read again before the word is deleted or the picture lassoed: the person stays on
  * the note meanwhile.
  */
-import {log, logged, timed} from '../log/memory';
+import {
+  log,
+  logged,
+  timed,
+  startSession,
+  getSettings,
+  pluginFolder,
+} from '../profile';
 import {missingPermissions} from '../onboarding/permissions';
 import {queuePress, showPluginView} from '@supernote-tools/sn-adapter/official';
-import {startSession} from '../storage/logFile';
-import {getSettings} from '../storage/settings';
-import {pluginFolder} from '../storage/session';
 import {DEFINE_BUTTON_ID, INSERT_BUTTON_ID} from '../buttons';
 import {atStep, failureText, StepFailure} from './failure';
 import type {LassoPlace} from './place';

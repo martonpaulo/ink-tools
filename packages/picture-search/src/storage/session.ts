@@ -3,12 +3,12 @@
  * round trips). The shared-storage folders are fixed and come from `./paths`; index.js opens the
  * log file before any view exists (#21, #45).
  */
-import {logged} from '../log/memory';
+import { logged } from "../log/memory";
 import {
   getPluginDirPath,
   ok,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from "@supernote-tools/sn-adapter/official";
 
 let cached: string | null = null;
 
@@ -16,7 +16,7 @@ export async function pluginFolder(): Promise<Result<string>> {
   if (cached) {
     return ok(cached);
   }
-  const dir = await logged('getPluginDirPath', getPluginDirPath);
+  const dir = await logged("getPluginDirPath", getPluginDirPath);
   if (dir.ok) {
     cached = dir.value;
   }

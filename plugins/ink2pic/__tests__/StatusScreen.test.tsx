@@ -1,7 +1,7 @@
 import React from 'react';
 import {Pressable, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {log, startLog} from '../src/log/memory';
+import {log, startLog} from '../src/profile';
 import {copy} from '../src/ui/copy';
 import {StatusScreen} from '../src/ui/StatusScreen';
 

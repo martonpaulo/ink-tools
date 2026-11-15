@@ -1,13 +1,13 @@
 /** Text files on the device, for every store that keeps one (library.json, the search cache). */
-import type {TextStore} from '@supernote-tools/picture-search';
-import {CallFailure, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
-import {readText, writeText} from './files';
+import type { TextStore } from "../cache";
+import { CallFailure, THROWN_CODE } from "@supernote-tools/sn-adapter/official";
+import { readText, writeText } from "./files";
 
 /** A failed module call thrown as an Error that keeps its `code` and `moduleCode` (#99). */
 export class StorageError extends Error {
   constructor(readonly failure: CallFailure) {
     super(failure.message);
-    this.name = 'StorageError';
+    this.name = "StorageError";
   }
 }
 
@@ -15,12 +15,12 @@ export class StorageError extends Error {
 export function storageFailure(error: unknown): CallFailure {
   return error instanceof StorageError
     ? error.failure
-    : {ok: false, code: THROWN_CODE, message: String(error)};
+    : { ok: false, code: THROWN_CODE, message: String(error) };
 }
 
 /** Text files through the Ink2PicFiles module; a failed call throws a StorageError. */
 export const deviceStorage: TextStore = {
-  readText: async path => {
+  readText: async (path) => {
     const text = await readText(path);
     if (!text.ok) {
       throw new StorageError(text);

@@ -7,14 +7,9 @@ import {INSERT_BUTTON_ID} from '../src/buttons';
 import {copy} from '../src/ui/copy';
 import {NO_VIEW_LIMIT_MS} from '../src/flow/headlessInsert';
 import {defaultSettings, serializeSettings} from '../src/settings/settings';
-import {safeFileName, settingsPath} from '../src/storage/paths';
+import {safeFileName, settingsPath} from '../src/profile';
 import {compilePlugin, Journey, startJourney} from './host/journey';
-import {
-  PICTURE_TYPE,
-  PLUGIN_DIR,
-  PluginHost,
-  success,
-} from './host/pluginHost';
+import {PICTURE_TYPE, PLUGIN_DIR, PluginHost, success} from './host/pluginHost';
 
 const word = {left: 100, top: 200, right: 300, bottom: 260};
 const other = {left: 100, top: 1200, right: 300, bottom: 1260};
@@ -170,7 +165,9 @@ describe('Insert best picture with no view (#93)', () => {
     expect(await drain(ended(j))).toBe(true);
     expect(j.host.pictures()[0].pageNum).toBe(0);
     expect(j.host.called('lassoElements')).toEqual([]);
-    expect(logText(j)).toMatch(/lassoElements: skipped, the (lasso|page) changed/);
+    expect(logText(j)).toMatch(
+      /lassoElements: skipped, the (lasso|page) changed/,
+    );
   });
 
   it('downloads to a file named for the result and leaves no temporary file behind', async () => {

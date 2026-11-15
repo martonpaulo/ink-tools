@@ -5,7 +5,7 @@
  */
 import {getLibrary, recordSearch} from '../library/device';
 import type {Library} from '../library/types';
-import {log} from '../log/memory';
+import {log} from '../profile';
 import {pickedFor} from '../picks/device';
 import {picksFirst} from '../picks/picks';
 import {

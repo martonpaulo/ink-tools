@@ -21,7 +21,15 @@ import {
   definitionSwitched,
   setDefinitionIcon,
 } from './src/flow/insertDefinition';
-import {getSettings} from './src/storage/settings';
+import {
+  getSettings,
+  log,
+  logged,
+  setAfterCall,
+  flushLogFile,
+  openLogFile,
+  logsDir,
+} from './src/profile';
 import {
   initPlugin,
   registerButton,
@@ -32,9 +40,6 @@ import {
   showPluginView,
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './src/ui/copy';
-import {log, logged, setAfterCall} from './src/log/memory';
-import {flushLogFile, openLogFile} from './src/storage/logFile';
-import {logsDir} from './src/storage/paths';
 import {catchCrashes} from './src/flow/crash';
 
 // First: any later error leaves a trace on the page and in crash.log, and the log reaches its

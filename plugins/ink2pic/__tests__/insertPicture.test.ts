@@ -9,11 +9,16 @@ import {
 import {insertBest} from '../src/flow/quickInsert';
 import {unmeasured} from '../src/flow/measure';
 import {parseSettings} from '../src/settings/settings';
-import {resetSettingsForTests, saveSettings} from '../src/storage/settings';
-import {CALL_TIMEOUT_MS, logLines, startLog} from '../src/log/memory';
-import {resetSessionForTests} from '../src/storage/session';
+import {
+  resetSettingsForTests,
+  saveSettings,
+  CALL_TIMEOUT_MS,
+  logLines,
+  startLog,
+  resetSessionForTests,
+  closeLogFileForTests,
+} from '../src/profile';
 import {resetLibraryForTests} from '../src/library/device';
-import {closeLogFileForTests} from '../src/storage/logFile';
 import {PluginManager} from 'sn-plugin-lib';
 import type {SearchResult} from '@supernote-tools/picture-search/types';
 
@@ -324,7 +329,10 @@ describe('insertPicture (#12)', () => {
         '/storage/emulated/0/MyStyle/Ink2Pic/library/openclipart-340609.original.png';
       expect(await done).toEqual({ok: true, value: kept});
       const written = native.downloadToFile.mock.calls.map(call => call[1]);
-      expect(written).toEqual(['/data/plugin/insert-openclipart-340609.png', kept]);
+      expect(written).toEqual([
+        '/data/plugin/insert-openclipart-340609.png',
+        kept,
+      ]);
       expect(written).not.toContain(prepared);
       expect(logLines().join('\n')).toMatch(/TIMEOUT/);
       // Recorded unprepared: a later contour insert prepares it again.

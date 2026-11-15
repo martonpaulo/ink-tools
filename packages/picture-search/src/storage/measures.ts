@@ -4,8 +4,9 @@
  * Java, off the React Native thread, on a small pool of its own: the insert's preparation has
  * its own thread and never waits behind thumbnails (#101).
  */
-import type {ConvertedImage, ImageAnalyzer, Measures} from '@supernote-tools/picture-search';
-import {callModule} from './files';
+import type { ConvertedImage, ImageAnalyzer, Measures } from "../measures";
+import { callModule } from "./files";
+import { pluginProfile } from "./profile";
 
 type NativeMeasures = {
   measureThumb: (path: string) => Promise<Measures>;
@@ -17,19 +18,20 @@ type NativeMeasures = {
     src: string,
     dest: string,
     width: number,
-    contour: boolean,
+    contour: boolean
   ) => Promise<ConvertedImage>;
 };
 
 const convert = (src: string, dest: string, width: number, contour: boolean) =>
-  callModule<NativeMeasures, ConvertedImage>('Ink2PicImage', image =>
-    image.convertThumb(src, dest, width, contour),
+  callModule<NativeMeasures, ConvertedImage>(
+    pluginProfile().imageModule,
+    (image) => image.convertThumb(src, dest, width, contour)
   );
 
 export const deviceAnalyzer: ImageAnalyzer = {
-  measure: path =>
-    callModule<NativeMeasures, Measures>('Ink2PicImage', image =>
-      image.measureThumb(path),
+  measure: (path) =>
+    callModule<NativeMeasures, Measures>(pluginProfile().imageModule, (image) =>
+      image.measureThumb(path)
     ),
   // The insert's own preparation, so the grid shows what goes in.
   toContour: (src, dest, width) => convert(src, dest, width, true),

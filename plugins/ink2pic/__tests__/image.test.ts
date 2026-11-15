@@ -1,6 +1,6 @@
 import {NativeModules} from 'react-native';
 import {MODULE_CODE} from '@supernote-tools/sn-adapter/official';
-import {prepareForEink} from '../src/storage/image';
+import {prepareForEink} from '../src/profile';
 
 const native = {prepareForEink: jest.fn()};
 

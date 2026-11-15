@@ -2,11 +2,12 @@
  * Prepares a saved picture for the 16-gray e-ink screen through the plugin's own Java module,
  * Ink2PicImage (brief sections 7 and 9.4, #17).
  */
-import {Result} from '@supernote-tools/sn-adapter/official';
-import {callModule} from './files';
+import { Result } from "@supernote-tools/sn-adapter/official";
+import { callModule } from "./files";
+import { pluginProfile } from "./profile";
 
 /** PNG for line art; JPG may be smaller for engravings and photos (brief section 7, TO TEST). */
-export type EinkFormat = 'png' | 'jpg';
+export type EinkFormat = "png" | "jpg";
 
 /** The written file: its size in pixels and in bytes, and the preparation time. */
 export type PreparedImage = {
@@ -18,11 +19,11 @@ export type PreparedImage = {
 
 /** The module's own rejection codes, besides BAD_PATH, TOO_LARGE, IO and MISSING. */
 export type ImageErrorCode =
-  | 'BAD_WIDTH'
-  | 'BAD_FORMAT'
-  | 'NOT_FOUND'
-  | 'NOT_IMAGE'
-  | 'ENCODE'
+  | "BAD_WIDTH"
+  | "BAD_FORMAT"
+  | "NOT_FOUND"
+  | "NOT_IMAGE"
+  | "ENCODE"
   | string;
 
 type NativeImage = {
@@ -31,7 +32,7 @@ type NativeImage = {
     destPath: string,
     targetWidth: number,
     format: EinkFormat,
-    contour: boolean,
+    contour: boolean
   ) => Promise<PreparedImage>;
 };
 
@@ -44,10 +45,11 @@ export function prepareForEink(
   src: string,
   dest: string,
   width: number,
-  format: EinkFormat = 'png',
-  contour = false,
+  format: EinkFormat = "png",
+  contour = false
 ): Promise<Result<PreparedImage>> {
-  return callModule<NativeImage, PreparedImage>('Ink2PicImage', image =>
-    image.prepareForEink(src, dest, width, format, contour),
+  return callModule<NativeImage, PreparedImage>(
+    pluginProfile().imageModule,
+    (image) => image.prepareForEink(src, dest, width, format, contour)
   );
 }

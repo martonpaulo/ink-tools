@@ -6,7 +6,7 @@ import {
   runProbe,
   stopPenProbe,
 } from '../src/flow/penProbe';
-import {logLines, startLog} from '../src/log/memory';
+import {logLines, startLog} from '../src/profile';
 import {getPenInfo, strokePoints} from '@supernote-tools/sn-adapter/official';
 
 const mocked = (fn: unknown) => fn as jest.Mock;

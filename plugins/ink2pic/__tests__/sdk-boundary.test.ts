@@ -25,6 +25,17 @@ const OFFICIAL = join(
   'official',
 );
 const ALLOWED = [/^__tests__\//];
+/** picture-search's device tier (#142): the file store, the settings, the logs. */
+const DEVICE_FOLDERS = ['storage', 'log'];
+const DEVICE_TIER = join(
+  ROOT,
+  '..',
+  '..',
+  'packages',
+  'picture-search',
+  'src',
+  'storage',
+);
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap(name => {
@@ -70,7 +81,13 @@ it('keeps the storage, search and library layers below the flow and the view (#5
 });
 
 it('has no SDK wrapper that nothing calls (#54)', () => {
-  const callers = [...sources(join(ROOT, 'src')), 'App.tsx', 'index.js']
+  // The device tier of picture-search calls the SDK for every plugin that imports it (#142).
+  const callers = [
+    ...sources(join(ROOT, 'src')),
+    ...sources(DEVICE_TIER),
+    'App.tsx',
+    'index.js',
+  ]
     .map(path => readFileSync(join(ROOT, path), 'utf8'))
     .join('\n');
   // result.ts is the Result type every wrapper returns; register.ts and storage.ts serve Bridge
@@ -98,7 +115,11 @@ it('has no SDK wrapper that nothing calls (#54)', () => {
 
 it('keeps the search core portable: it imports nothing outside packages/picture-search/src/ (#65, #125)', () => {
   const core = join(ROOT, '..', '..', 'packages', 'picture-search', 'src');
-  const files = sources(core);
+  // The device tier (#142) is not the core: the core never imports it.
+  const device = DEVICE_FOLDERS.map(name => join(core, name));
+  const files = sources(core).filter(
+    path => !device.some(folder => join(ROOT, path).startsWith(folder + '/')),
+  );
   expect(files.length).toBeGreaterThan(0);
   const offenders = files.flatMap(path => {
     const text = readFileSync(join(ROOT, path), 'utf8');
@@ -109,9 +130,35 @@ it('keeps the search core portable: it imports nothing outside packages/picture-
           !target.startsWith('.') ||
           relative(core, resolve(dirname(join(ROOT, path)), target)).startsWith(
             '..',
+          ) ||
+          device.some(folder =>
+            resolve(dirname(join(ROOT, path)), target).startsWith(folder),
           ),
       )
       .map(target => `${path} imports ${target}`);
   });
+  expect(offenders).toEqual([]);
+});
+
+it("keeps picture-search's device tier on the platform's official tier: react-native and sn-adapter only (#142)", () => {
+  const files = sources(DEVICE_TIER).concat(
+    sources(join(DEVICE_TIER, '..', 'log')),
+  );
+  expect(files.length).toBeGreaterThan(0);
+  const offenders = files.flatMap(path =>
+    [
+      ...readFileSync(join(ROOT, path), 'utf8').matchAll(
+        /(?:from|import|require\()\s*['"]([^'"]+)['"]/g,
+      ),
+    ]
+      .map(match => match[1])
+      .filter(
+        target =>
+          !target.startsWith('.') &&
+          target !== 'react-native' &&
+          target !== '@supernote-tools/sn-adapter/official',
+      )
+      .map(target => `${path} imports ${target}`),
+  );
   expect(offenders).toEqual([]);
 });

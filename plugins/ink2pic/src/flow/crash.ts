@@ -3,10 +3,8 @@
  * closing (build 0.1.0 (9) closed with no trace, #13). It is never written into the user's note
  * (#36). The previous handler still runs afterwards.
  */
-import {log, logLines} from '../log/memory';
+import {log, logLines, writeText, logsDir} from '../profile';
 import {withinLimit} from '@supernote-tools/picture-search';
-import {writeText} from '../storage/files';
-import {logsDir} from '../storage/paths';
 
 /** The last log lines carried in the report. */
 const CRASH_LOG_LINES = 30;

@@ -9,18 +9,18 @@ import {
   PluginNoteAPI,
 } from 'sn-plugin-lib';
 import {insertPicture} from '../src/flow/insertPicture';
-import {resetSessionForTests} from '../src/storage/session';
+import {
+  resetSessionForTests,
+  closeLogFileForTests,
+  openLogFile,
+  startSession,
+} from '../src/profile';
 import {
   getLibrary,
   libraryUnreadable,
   recordSearch,
   resetLibraryForTests,
 } from '../src/library/device';
-import {
-  closeLogFileForTests,
-  openLogFile,
-  startSession,
-} from '../src/storage/logFile';
 import type {Done} from '../src/flow/failure';
 import type {SourceAdapter} from '@supernote-tools/picture-search';
 import type {SearchResult} from '@supernote-tools/picture-search/types';

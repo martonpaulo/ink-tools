@@ -8,7 +8,7 @@ import {
   requestPermission,
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from '../ui/copy';
-import {logged, PERSON_TIMEOUT_MS} from '../log/memory';
+import {logged, PERSON_TIMEOUT_MS} from '../profile';
 
 export type PermissionNeed = {permission: string; reason: string};
 

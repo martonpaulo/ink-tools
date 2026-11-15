@@ -1,7 +1,7 @@
 import {afterSearch, runSearch} from '../src/flow/search';
 import {getLibrary, recordSearch} from '../src/library/device';
 import {emptyLibrary} from '../src/library/library';
-import {logLines, startLog} from '../src/log/memory';
+import {logLines, startLog} from '../src/profile';
 import {searchCached} from '../src/search/device';
 import type {SearchOutcome} from '@supernote-tools/picture-search/search';
 import {prepareThumbs} from '../src/search/thumbs';

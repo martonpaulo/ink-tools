@@ -3,7 +3,7 @@ import {join, relative} from 'path';
 import {NativeModules} from 'react-native';
 import {PluginNoteAPI} from 'sn-plugin-lib';
 import {catchCrashes, crashReport} from '../src/flow/crash';
-import {listDir} from '../src/storage/files';
+import {listDir} from '../src/profile';
 
 describe('crash report (#13)', () => {
   it('carries the message, the stack start and the last log lines', () => {

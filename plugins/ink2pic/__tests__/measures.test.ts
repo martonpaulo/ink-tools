@@ -4,7 +4,7 @@ import {
   MeasureDeps,
   measureThumb,
 } from '../src/flow/measure';
-import {logLines, startLog} from '../src/log/memory';
+import {logLines, startLog} from '../src/profile';
 import {ok, fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import {
   chooseLook,

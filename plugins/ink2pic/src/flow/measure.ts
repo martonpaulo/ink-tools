@@ -9,7 +9,7 @@
  * Page 3 and later: each thumbnail is measured, and converted when it needs it, as its page
  * loads, before the page shows; their order stays as it is (#72).
  */
-import {log} from '../log/memory';
+import {log, getSettings, deviceAnalyzer} from '../profile';
 import {pickedFor} from '../picks/device';
 import {picksFirst} from '../picks/picks';
 import {
@@ -32,9 +32,7 @@ import {
   thumbUri,
 } from '../search/thumbs';
 import {styleFlags} from '../settings/settings';
-import {getSettings} from '../storage/settings';
 import type {SearchResult} from '@supernote-tools/picture-search';
-import {deviceAnalyzer} from '../storage/measures';
 
 /**
  * At most this long for the downloads and measures, the grid's own limit for a page: page 1

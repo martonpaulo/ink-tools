@@ -1,7 +1,8 @@
 /**
  * The person's settings, as `MyStyle/Ink2Pic/settings.json` keeps them (#68, #70): their shape,
  * their defaults, the one step of each Settings tap, and the reading of a file that may be
- * hand-edited. Pure; the device store is `src/storage/settings.ts`. A key or a value it does not
+ * hand-edited. Pure; the device store is picture-search's `createSettingsStore`, through
+ * `src/profile.ts` (#142). A key or a value it does not
  * know is ignored with a problem line, and a missing or malformed file gives the defaults, never
  * an empty language list. Every default is today's behaviour, so nobody needs to open Settings.
  */
@@ -247,16 +248,6 @@ function readField<T>(
     )} is ignored; the default is used`,
   );
   return fallback;
-}
-
-/** True when the text is a JSON object, which is the only shape `parseSettings` can read (#94). */
-export function isSettingsObject(text: string): boolean {
-  try {
-    const raw: unknown = JSON.parse(text);
-    return raw !== null && typeof raw === 'object' && !Array.isArray(raw);
-  } catch {
-    return false;
-  }
 }
 
 /** Every key of the file, so an unknown one is reported. */

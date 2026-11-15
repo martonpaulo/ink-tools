@@ -42,6 +42,10 @@ public final class SafePathsTest {
     check(codeOfUrl("file:///etc/passwd").equals("HTTPS_ONLY"), "file refused");
     check(codeOfUrl(null).equals("HTTPS_ONLY"), "null url refused");
     check(codeOfPath("/storage/emulated/0/MyStyle/Ink2Pic/library/a.png").equals("ok"), "absolute path");
+    // A second plugin's folder (#142): shared, accepted, and no way out of it.
+    check(SafePaths.isShared(new java.io.File("/storage/emulated/0/MyStyle/Lookup/settings.json")), "Lookup's folder is shared");
+    check(codeOfPath("/storage/emulated/0/MyStyle/Lookup/settings.json").equals("ok"), "Lookup's path accepted");
+    check(codeOfPath("/storage/emulated/0/MyStyle/Lookup/../Ink2Pic/settings.json").equals("BAD_PATH"), "an escape from Lookup's folder refused");
     check(codeOfPath("MyStyle/a.png").equals("BAD_PATH"), "relative refused");
     check(codeOfPath("/storage/../etc/a").equals("BAD_PATH"), "dot-dot refused");
     check(codeOfPath("/storage/./a").equals("BAD_PATH"), "dot refused");

@@ -2,8 +2,7 @@ import React from 'react';
 import {Image, NativeModules} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {PluginManager} from 'sn-plugin-lib';
-import {resetSessionForTests} from '../src/storage/session';
-import {closeLogFileForTests} from '../src/storage/logFile';
+import {resetSessionForTests, closeLogFileForTests} from '../src/profile';
 import {
   cachedThumbUri,
   prepareThumbs,

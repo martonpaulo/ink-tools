@@ -1,10 +1,11 @@
 /**
  * The native file module lives in packages/picture-search (#142): Ink2Pic keeps no second copy,
  * and the package's no-argument constructor, the one PluginHost calls, registers the two module
- * names this plugin's storage calls.
+ * names Ink2Pic's profile names (src/profile.ts).
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import {INK2PIC_PROFILE} from '../src/profile';
 
 const ROOT = path.join(__dirname, '..');
 const PACKAGE = path.join(
@@ -17,13 +18,15 @@ describe('the native file module (#142)', () => {
     expect(fs.existsSync(path.join(ROOT, 'native'))).toBe(false);
   });
 
-  it('registers the module names the storage calls by default', () => {
+  it('registers the module names the profile calls by default', () => {
     const java = fs.readFileSync(PACKAGE, 'utf8');
     expect(java).toContain('this("Ink2PicFiles", "Ink2PicImage");');
-    const storage = ['files.ts', 'measures.ts'].map(file =>
-      fs.readFileSync(path.join(ROOT, 'src/storage', file), 'utf8'),
-    );
-    expect(storage[0]).toContain("callModule('Ink2PicFiles'");
-    expect(storage[1]).toContain("'Ink2PicImage'");
+    expect(INK2PIC_PROFILE.filesModule).toBe('Ink2PicFiles');
+    expect(INK2PIC_PROFILE.imageModule).toBe('Ink2PicImage');
+  });
+
+  it('keeps no copy of the file store or the run log in the plugin (#142)', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/storage'))).toBe(false);
+    expect(fs.existsSync(path.join(ROOT, 'src/log'))).toBe(false);
   });
 });

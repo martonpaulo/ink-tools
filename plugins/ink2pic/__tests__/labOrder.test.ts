@@ -6,7 +6,7 @@
 import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import {measureFirstPages, MeasureDeps} from '../src/flow/measure';
-import {startLog} from '../src/log/memory';
+import {startLog} from '../src/profile';
 import {ok} from '@supernote-tools/sn-adapter/official';
 import type {Measures} from '@supernote-tools/picture-search/measures';
 import type {SearchResult} from '@supernote-tools/picture-search/types';

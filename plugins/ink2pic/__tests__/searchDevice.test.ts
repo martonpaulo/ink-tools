@@ -1,12 +1,15 @@
 import {NativeModules} from 'react-native';
 import {FileUtils, PluginManager} from 'sn-plugin-lib';
-import {resetSessionForTests} from '../src/storage/session';
-import {closeLogFileForTests} from '../src/storage/logFile';
+import {
+  resetSessionForTests,
+  closeLogFileForTests,
+  settingsPath,
+  resetSettingsForTests,
+  saveSettings,
+} from '../src/profile';
 import {deviceContext, searchCached, searchVariant} from '../src/search/device';
 import type {SourceAdapter} from '@supernote-tools/picture-search';
 import {fullUrl} from '@supernote-tools/picture-search/registry';
-import {settingsPath} from '../src/storage/paths';
-import {resetSettingsForTests, saveSettings} from '../src/storage/settings';
 import {defaultSettings} from '../src/settings/settings';
 
 const files: Record<string, string> = {};

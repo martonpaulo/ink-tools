@@ -5,6 +5,14 @@ network API of its own. Everything it needs comes in through its options, so the
 the Supernote, in Node (the search lab, [#63](https://github.com/martonpaulo/ink2pic/issues/63)) and in another project. A test in
 `plugins/ink2pic/__tests__/sdk-boundary.test.ts` fails when a file here imports anything outside this folder.
 
+The device tier is the exception, kept apart in `storage/` and `log/` ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): the plugin's native file and image
+modules, its settings file, its session log and the run log. It imports only `react-native` and
+`@supernote-tools/sn-adapter/official`, the core never imports it, and a plugin reaches it through
+`@supernote-tools/picture-search/storage` from its own profile module, which calls
+`setPluginProfile({name, folder, filesModule, imageModule, userAgent})` first
+(`plugins/ink2pic/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
+over its own settings model.
+
 ## Contents
 
 - [Public API](#public-api)

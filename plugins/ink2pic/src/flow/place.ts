@@ -10,7 +10,7 @@ import {
   type Placement,
   type Rect,
 } from '@supernote-tools/ink-core';
-import {logged} from '../log/memory';
+import {logged} from '../profile';
 import {
   createElement,
   insertPageElements,

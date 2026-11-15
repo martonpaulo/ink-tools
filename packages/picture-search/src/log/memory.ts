@@ -3,8 +3,13 @@
  * owner in the plugin (owner rule, 2026-11-06, AGENTS.md). Also sent to console.log for a device
  * log reader. The session log file is #21.
  */
-import {fail, Result, TIMEOUT_CODE} from '@supernote-tools/sn-adapter/official';
-import {withinLimit} from '@supernote-tools/picture-search';
+import {
+  fail,
+  Result,
+  TIMEOUT_CODE,
+} from "@supernote-tools/sn-adapter/official";
+import { withinLimit } from "../clock";
+import { profileName } from "../storage/profile";
 
 /** Lines kept in memory and in the file: enough for a whole opening, small enough to rewrite (#45). */
 export const LOG_MAX_LINES = 2000;
@@ -31,14 +36,14 @@ export function setAfterCall(hook: () => unknown): void {
  * section 10.5). Every other call flushes once, after its answer.
  */
 const CLOSING_CALLS = [
-  'closePluginView',
-  'insertImage',
-  'insertPageElements',
-  'requestPermission',
+  "closePluginView",
+  "insertImage",
+  "insertPageElements",
+  "requestPermission",
 ];
 
 export function canClosePlugin(label: string): boolean {
-  return CLOSING_CALLS.some(name => label.startsWith(name));
+  return CLOSING_CALLS.some((name) => label.startsWith(name));
 }
 
 /** A call that never answers ends here, so the screen never stays stuck (build 0.1.0 (4), #11). */
@@ -62,7 +67,7 @@ export function startLog(keep: string[] = []): void {
   if (keep.length === 0) {
     started = Date.now();
   }
-  listeners.forEach(listener => listener(logLines()));
+  listeners.forEach((listener) => listener(logLines()));
 }
 
 export function log(line: string): void {
@@ -72,8 +77,8 @@ export function log(line: string): void {
   if (lines.length > LOG_MAX_LINES) {
     lines.splice(0, lines.length - LOG_MAX_LINES);
   }
-  console.log(`[Ink2Pic] ${entry}`);
-  listeners.forEach(listener => listener(logLines()));
+  console.log(`[${profileName() ?? "plugin"}] ${entry}`);
+  listeners.forEach((listener) => listener(logLines()));
 }
 
 export function logLines(): string[] {
@@ -89,8 +94,8 @@ export function logCount(): number {
  * One step of «Insert best picture» with its duration since `since` (#88): `time <step>: <ms> ms`,
  * so the session log shows where an insert spends its time.
  */
-export function logTime(step: string, since: number, detail = ''): void {
-  log(`time ${step}: ${Date.now() - since} ms${detail ? `, ${detail}` : ''}`);
+export function logTime(step: string, since: number, detail = ""): void {
+  log(`time ${step}: ${Date.now() - since} ms${detail ? `, ${detail}` : ""}`);
 }
 
 /**
@@ -99,7 +104,7 @@ export function logTime(step: string, since: number, detail = ''): void {
  */
 export async function timed<T>(
   step: string,
-  work: () => Promise<T>,
+  work: () => Promise<T>
 ): Promise<T> {
   const at = Date.now();
   log(`wait ${step}: start at ${at}`);
@@ -132,7 +137,7 @@ export function brief(value: unknown, max = BRIEF_MAX): string {
 export async function logged<T>(
   label: string,
   call: () => Promise<Result<T>>,
-  timeoutMs = CALL_TIMEOUT_MS,
+  timeoutMs = CALL_TIMEOUT_MS
 ): Promise<Result<T>> {
   const at = Date.now();
   log(`${label} …`);
@@ -147,7 +152,7 @@ export async function logged<T>(
   log(
     result.ok
       ? `${label} -> ok ${brief(result.value)} (${took} ms)`
-      : `${label} -> error ${result.code}: ${result.message} (${took} ms)`,
+      : `${label} -> error ${result.code}: ${result.message} (${took} ms)`
   );
   afterCall();
   return result;

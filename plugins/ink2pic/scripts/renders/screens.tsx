@@ -8,10 +8,13 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import * as asResults from '../../src/library/asResults';
 import * as libraryDevice from '../../src/library/device';
 import type {LibraryItem} from '../../src/library/types';
-import {log} from '../../src/log/memory';
+import {log} from '../../src/profile';
 import * as deviceSearch from '../../src/search/device';
 import type {SourceAdapter} from '@supernote-tools/picture-search';
-import type {SearchResult, SourceOutcome} from '@supernote-tools/picture-search/types';
+import type {
+  SearchResult,
+  SourceOutcome,
+} from '@supernote-tools/picture-search/types';
 import {copy} from '../../src/ui/copy';
 import {Onboarding} from '../../src/ui/Onboarding';
 import {SearchScreen} from '../../src/ui/SearchScreen';
@@ -22,7 +25,10 @@ import {defaultSettings, Settings} from '../../src/settings/settings';
 import type {LanguageCode} from '../../src/settings/languages';
 import {PERMISSIONS} from '../../src/onboarding/permissions';
 
-export type ScreenRender = {name: string; render: () => Promise<ReactTestRenderer>};
+export type ScreenRender = {
+  name: string;
+  render: () => Promise<ReactTestRenderer>;
+};
 
 /** Synthetic line drawings and one grey photo-like picture, as inline SVG thumbnails. */
 const DRAWINGS = [
@@ -54,19 +60,29 @@ const source = (
 const answers = (results: SearchResult[]) =>
   source('fixture', async () => ({ok: true, value: {results}}));
 const fails = (kind: 'network' | 'http') =>
-  source(`fixture-${kind}`, async () => ({ok: false, kind, message: 'fixture'}));
+  source(`fixture-${kind}`, async () => ({
+    ok: false,
+    kind,
+    message: 'fixture',
+  }));
 /** Answers only when `settle` runs, after the screen was rendered while it searched. */
 const waiting: (() => void)[] = [];
 const slow = source(
   'fixture-slow',
-  () => new Promise(resolve => waiting.push(() => resolve({ok: true, value: {results: []}}))),
+  () =>
+    new Promise(resolve =>
+      waiting.push(() => resolve({ok: true, value: {results: []}})),
+    ),
 );
 /** Finds a few pictures for a misspelled word and suggests the spelling that finds more (#65). */
 const suggests = (typo: string, word: string): SourceAdapter => ({
   name: 'fixture-suggests',
   search: async (query: string): Promise<SourceOutcome> =>
     query === typo
-      ? {ok: true, value: {results: FIXTURE_RESULTS.slice(0, 2), suggestion: word}}
+      ? {
+          ok: true,
+          value: {results: FIXTURE_RESULTS.slice(0, 2), suggestion: word},
+        }
       : {ok: true, value: {results: FIXTURE_RESULTS}},
 });
 /** Stand-ins one screen sets on a module, undone after that screen. */
@@ -108,16 +124,28 @@ const SAVED: LibraryItem[] = FIXTURE_RESULTS.slice(0, 4).map((result, i) => ({
 }));
 function libraryTab(items: LibraryItem[], recentSearches: string[]) {
   stubs.push(
-    jest.spyOn(libraryDevice, 'getLibrary').mockResolvedValue({items, recentSearches}),
+    jest
+      .spyOn(libraryDevice, 'getLibrary')
+      .mockResolvedValue({items, recentSearches}),
     jest.spyOn(libraryDevice, 'libraryUnreadable').mockReturnValue(null),
     // The saved files are not on the render machine: the same drawings, inline.
     jest
       .spyOn(asResults, 'libraryResults')
       .mockImplementation(shown =>
-        shown.map((item, i) => ({...FIXTURE_RESULTS[i], id: `library:${item.id}`})),
+        shown.map((item, i) => ({
+          ...FIXTURE_RESULTS[i],
+          id: `library:${item.id}`,
+        })),
       ),
   );
-  return mount(<SearchScreen initialQuery="" lassoFailure={null} onPick={async () => ({ok: true, value: null})} onClose={() => {}} />);
+  return mount(
+    <SearchScreen
+      initialQuery=""
+      lassoFailure={null}
+      onPick={async () => ({ok: true, value: null})}
+      onClose={() => {}}
+    />,
+  );
 }
 
 async function mount(element: React.ReactElement): Promise<ReactTestRenderer> {
@@ -160,13 +188,48 @@ const search = (word: string, sources: SourceAdapter[]) =>
   );
 
 /** 47 of the 1,447 symbols saved; a download stops at 300 (#91). */
-const SYMBOLS: SymbolsControl = {status: async () => ({total: 1447, saved: 47}), download: async () => ({total: 1447, saved: 300, complete: false, failed: 3, stopped: true})};
+const SYMBOLS: SymbolsControl = {
+  status: async () => ({total: 1447, saved: 47}),
+  download: async () => ({
+    total: 1447,
+    saved: 300,
+    complete: false,
+    failed: 3,
+    stopped: true,
+  }),
+};
 const settingsScreen = (settings: Settings = defaultSettings(null)) =>
-  mount(<SettingsScreen settings={settings} onChange={() => {}} onLanguages={() => {}} onClear={async () => true} onClose={() => {}} symbols={SYMBOLS} />);
+  mount(
+    <SettingsScreen
+      settings={settings}
+      onChange={() => {}}
+      onLanguages={() => {}}
+      onClear={async () => true}
+      onClose={() => {}}
+      symbols={SYMBOLS}
+    />,
+  );
 const languagesScreen = (languages: LanguageCode[]) =>
-  mount(<LanguagesScreen languages={languages} onChange={() => {}} onReset={() => {}} onBack={() => {}} onClose={() => {}} />);
+  mount(
+    <LanguagesScreen
+      languages={languages}
+      onChange={() => {}}
+      onReset={() => {}}
+      onBack={() => {}}
+      onClose={() => {}}
+    />,
+  );
 /** Every option away from its default, so each row shows another selected value. */
-const CHANGED: Settings = {languages: ['zh', 'es', 'en', 'pt'], size: 'large', placement: 'replace', style: 'contour', spacing: 'wide', sourcesOff: ['commons'], dataSaver: true, definition: true};
+const CHANGED: Settings = {
+  languages: ['zh', 'es', 'en', 'pt'],
+  size: 'large',
+  placement: 'replace',
+  style: 'contour',
+  spacing: 'wide',
+  sourcesOff: ['commons'],
+  dataSaver: true,
+  definition: true,
+};
 
 // One line per screen, so adding one is one line.
 // prettier-ignore

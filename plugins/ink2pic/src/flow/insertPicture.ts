@@ -7,7 +7,21 @@
  */
 import {getLibrary, recordInsert} from '../library/device';
 import {findItem} from '../library/library';
-import {logged, log, logTime} from '../log/memory';
+import {
+  logged,
+  log,
+  logTime,
+  deleteFile,
+  downloadToFile,
+  prepareForEink,
+  earlyDownloadPath,
+  insertDownloadPath,
+  isTemporaryDownload,
+  libraryDir,
+  safeFileName,
+  pluginFolder,
+  getSettings,
+} from '../profile';
 import {
   deleteLassoElements,
   getLassoRect,
@@ -21,21 +35,14 @@ import {
   THROWN_CODE,
   TIMEOUT_CODE,
 } from '@supernote-tools/sn-adapter/official';
-import {insertUrl, SearchResult, sourceId} from '@supernote-tools/picture-search';
-import {deleteFile, downloadToFile} from '../storage/files';
-import {prepareForEink} from '../storage/image';
 import {
-  earlyDownloadPath,
-  insertDownloadPath,
-  isTemporaryDownload,
-  libraryDir,
-  safeFileName,
-} from '../storage/paths';
-import {pluginFolder} from '../storage/session';
+  insertUrl,
+  SearchResult,
+  sourceId,
+} from '@supernote-tools/picture-search';
 import {atStep, Done} from './failure';
 import {saveSymbol, symbolFile} from '../symbols/store';
 import {SIZE_WIDTHS, styleFlags} from '../settings/settings';
-import {getSettings} from '../storage/settings';
 import {LassoPlace, placeAtLasso, Placement} from './place';
 
 /** About one third of the 1920 px page (brief section 7): the default prepared width. */

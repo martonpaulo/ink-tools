@@ -4,11 +4,9 @@
  * that session, so a hand-edited or damaged file is kept. No call here rejects: a failed read
  * or write only loses the re-ranking, never a search or an insert.
  */
-import {log, logged} from '../log/memory';
+import {log, logged, picksPath, deviceStorage} from '../profile';
 import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import type {TextStore} from '@supernote-tools/picture-search';
-import {picksPath} from '../storage/paths';
-import {deviceStorage} from '../storage/text';
 import {
   addPick,
   emptyPicks,

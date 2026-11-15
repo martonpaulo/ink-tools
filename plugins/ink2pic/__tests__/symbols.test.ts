@@ -31,13 +31,15 @@ import {
 } from '../src/symbols/store';
 import {ResultsGrid} from '../src/ui/ResultsGrid';
 import {USER_AGENT} from '../src/config';
-import {setAfterCall} from '../src/log/memory';
 import {
+  setAfterCall,
   closeLogFileForTests,
   flushLogFile,
   openLogFile,
-} from '../src/storage/logFile';
-import {logsDir, oldSymbolsDir, symbolsDir} from '../src/storage/paths';
+  logsDir,
+  oldSymbolsDir,
+  symbolsDir,
+} from '../src/profile';
 import {createHost, PluginHost} from './host/pluginHost';
 
 const {PluginManager} = sdk as unknown as Record<

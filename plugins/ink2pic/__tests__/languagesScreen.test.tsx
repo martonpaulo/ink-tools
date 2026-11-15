@@ -5,13 +5,15 @@ import renderer, {act} from 'react-test-renderer';
 import {PluginCommAPI, PluginManager} from 'sn-plugin-lib';
 import App from '../App';
 import {CONFIG_BUTTON_ID} from '../src/buttons';
-import {logLines} from '../src/log/memory';
+import {
+  logLines,
+  settingsPath,
+  resetSessionForTests,
+  resetSettingsForTests,
+} from '../src/profile';
 import {startConfigQueue} from '@supernote-tools/sn-adapter/official';
 import {metrics} from '@supernote-tools/ui-kit';
 import type {LanguageCode} from '../src/settings/languages';
-import {settingsPath} from '../src/storage/paths';
-import {resetSessionForTests} from '../src/storage/session';
-import {resetSettingsForTests} from '../src/storage/settings';
 import {copy} from '../src/ui/copy';
 import {LanguagesScreen} from '../src/ui/LanguagesScreen';
 import {compilePlugin} from './host/journey';
@@ -109,8 +111,7 @@ describe('LanguagesScreen (#68)', () => {
   it('draws its section labels as bold headings in the context grey (#50)', () => {
     const {tree} = screen(['en', 'pt']);
     const headings = tree.root.findAll(
-      node =>
-        node.type === Text && node.props.accessibilityRole === 'header',
+      node => node.type === Text && node.props.accessibilityRole === 'header',
     );
     expect(headings.map(node => node.props.children)).toContain(
       copy['languages.inUse'],
