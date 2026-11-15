@@ -86,9 +86,12 @@ Essential:
 - **Lighter** and **Darker** in fixed gamma steps
   ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
 - **Undo** and **Restore original** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
-- **Style grid**: Photo (16 greys), Line art (contour, matching `lookup`'s illustration mode), Black
-  and white (threshold), Dither (Floyd–Steinberg and Atkinson)
-  ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)).
+- **Style grid**: Photo (16 greys), Line art (contour, matching `lookup`'s illustration mode, with
+  thicker lines as an option), Black and white (threshold), Dither (Floyd–Steinberg and Atkinson);
+  every style can turn white transparent so the page template shows through; the last style shown
+  first ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)).
+- Enhance scales a large picture down to the page width, never up, so the page stays fast
+  ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
 - **Crop with the pen** (draw the rectangle) and **trim white margins** automatically
   ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
 
@@ -100,6 +103,15 @@ Very useful:
   photographed page from the phone ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)).
 - Erase with the pen, background removal, make a sticker
   ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
+- Open retouch on the picture Ink2Pic or Lookup just inserted
+  ([#139](https://github.com/martonpaulo/supernote-tools/issues/139)).
+- Later: apply one edit to every image on the page
+  ([#140](https://github.com/martonpaulo/supernote-tools/issues/140)).
+
+Limit: each edit finishes within 2 s on the Manta; a longer one shows the plugin's «Working…»
+panel ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)). Before building, existing
+plugins, apps and libraries are checked for reuse
+([#138](https://github.com/martonpaulo/supernote-tools/issues/138)).
 
 Not planned: magic wand (imprecise with a pen; background removal covers it), brightness, contrast
 and levels sliders, ordered and halftone dither and other error-diffusion styles, spread splitting,
