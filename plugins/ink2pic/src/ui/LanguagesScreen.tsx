@@ -117,8 +117,8 @@ export function LanguagesScreen({
         <LogView />
       ) : (
         <>
-          <Text style={shared.text}>{copy['languages.hint']}</Text>
-          <Text accessibilityRole="header" style={shared.text}>
+          <Text style={shared.hint}>{copy['languages.hint']}</Text>
+          <Text accessibilityRole="header" style={shared.heading}>
             {copy['languages.inUse']}
           </Text>
           {languages.map((code, index) => (
@@ -148,10 +148,10 @@ export function LanguagesScreen({
           ))}
           {/* Remove is off for the last language: say why (#98). */}
           {languages.length === 1 && (
-            <Text style={shared.text}>{copy['languages.oneStays']}</Text>
+            <Text style={shared.hint}>{copy['languages.oneStays']}</Text>
           )}
           {addableLanguages(languages).length > 0 && (
-            <Text accessibilityRole="header" style={shared.text}>
+            <Text accessibilityRole="header" style={shared.heading}>
               {copy['languages.addSection']}
             </Text>
           )}

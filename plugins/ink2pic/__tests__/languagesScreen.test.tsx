@@ -1,12 +1,13 @@
 /** The Languages screen (#68) and its route from the plugin's Settings entry. */
 import React from 'react';
-import {NativeModules, Text} from 'react-native';
+import {NativeModules, StyleSheet, Text} from 'react-native';
 import renderer, {act} from 'react-test-renderer';
 import {PluginCommAPI, PluginManager} from 'sn-plugin-lib';
 import App from '../App';
 import {CONFIG_BUTTON_ID} from '../src/buttons';
 import {logLines} from '../src/log/memory';
 import {startConfigQueue} from '@supernote-tools/sn-adapter/official';
+import {metrics} from '@supernote-tools/ui-kit';
 import type {LanguageCode} from '../src/settings/languages';
 import {settingsPath} from '../src/storage/paths';
 import {resetSessionForTests} from '../src/storage/session';
@@ -102,6 +103,24 @@ describe('LanguagesScreen (#68)', () => {
   it('writes its section labels in sentence case, as every other label (#98)', () => {
     for (const key of ['languages.inUse', 'languages.addSection'] as const) {
       expect(copy[key]).not.toBe(copy[key].toUpperCase());
+    }
+  });
+
+  it('draws its section labels as bold headings in the context grey (#50)', () => {
+    const {tree} = screen(['en', 'pt']);
+    const headings = tree.root.findAll(
+      node =>
+        node.type === Text && node.props.accessibilityRole === 'header',
+    );
+    expect(headings.map(node => node.props.children)).toContain(
+      copy['languages.inUse'],
+    );
+    for (const heading of headings.filter(
+      node => node.props.children !== copy['languages.title'],
+    )) {
+      expect(StyleSheet.flatten(heading.props.style)).toEqual(
+        expect.objectContaining({color: metrics.context, fontWeight: 'bold'}),
+      );
     }
   });
 
