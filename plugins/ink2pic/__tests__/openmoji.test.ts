@@ -60,11 +60,14 @@ describe('the OpenMoji symbols (#67)', () => {
     expect(results[0].leads).toBe(true);
   });
 
-  it('leads «happy» with a smiling face', async () => {
-    const results = await symbols('happy');
-    expect(results[0].leads).toBe(true);
-    expect(results[0].title).toMatch(/face/);
-  });
+  it.each(['happy', 'smile', 'sad', 'angry', 'laugh', 'cry'])(
+    'leads the feeling word «%s» with a face from the shipped index (#112)',
+    async word => {
+      const results = await symbols(word);
+      expect(results[0].leads).toBe(true);
+      expect(results[0].title).toMatch(/face/);
+    },
+  );
 
   it('offers the apple but never lets it lead «apple»', async () => {
     const results = await symbols('apple');

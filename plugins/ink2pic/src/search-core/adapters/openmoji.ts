@@ -26,6 +26,11 @@ const LEADS_ABSTRACT = 2;
  */
 const EXACT_NAME = 6;
 const NAME_WORD = 3;
+/**
+ * A word of the name after « with »: it describes the thing the name is about, so «cat with wry
+ * smile» never outranks «grinning face» for «smile» (#112).
+ */
+const MODIFIER_WORD = 1;
 const KEYWORD = 2;
 const WEAK_KEYWORD = 1;
 const ALL_WORDS = 1;
@@ -33,6 +38,11 @@ const ALL_WORDS = 1;
 type Words = {
   name: string;
   nameWords: string[];
+  /**
+   * The words before « with », the thing the name is about. shortcut: English only; the pt, es and
+   * zh names keep every word as a head word, until a non-English feeling word shows the gap.
+   */
+  headWords: string[];
   /** CLDR's keywords. */
   strong: Set<string>;
   /** Each English list of a lesser source: openmoji_tags, emojilib. */
@@ -66,6 +76,7 @@ function parseField(text: string): Words | undefined {
   return {
     name: folded,
     nameWords: folded.split(' '),
+    headWords: folded.split(' with ')[0].split(' '),
     strong: new Set(strong),
     weak: weak.map(list => new Set(list.split(';'))),
   };
@@ -99,10 +110,13 @@ function nameScore(words: Words, query: string): number {
   if (words.name === query) {
     return EXACT_NAME;
   }
-  const inName = HAN.test(query)
-    ? words.name.includes(query)
-    : words.nameWords.includes(query);
-  return inName ? NAME_WORD : 0;
+  if (HAN.test(query)) {
+    return words.name.includes(query) ? NAME_WORD : 0;
+  }
+  if (words.headWords.includes(query)) {
+    return NAME_WORD;
+  }
+  return words.nameWords.includes(query) ? MODIFIER_WORD : 0;
 }
 
 function keywordScore(words: Words, query: string): number {
