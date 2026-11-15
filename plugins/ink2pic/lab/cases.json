@@ -621,7 +621,7 @@
    "id": "cafe",
    "category": "phrase",
    "query": "café",
-   "expect": "a café or coffee-house drawing first; not a brand logo"
+   "expect": "a cup of coffee or a café drawing first; not a brand logo (café is the drink too, owner D36 A, #106)"
   },
   {
    "id": "coffee",

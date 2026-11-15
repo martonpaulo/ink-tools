@@ -22,4 +22,8 @@ describe('the search lab catalogue', () => {
     const incomplete = cases.filter(c => !c.id || !c.category || !c.query || !c.expect);
     expect(incomplete).toEqual([]);
   });
+
+  it('lets a cup of coffee lead «café», as the owner chose (D36 A, #106)', () => {
+    expect(cases.find(c => c.id === 'cafe')?.expect).toMatch(/^a cup of coffee/);
+  });
 });
