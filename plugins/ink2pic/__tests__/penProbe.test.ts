@@ -7,7 +7,7 @@ import {
   stopPenProbe,
 } from '../src/flow/penProbe';
 import {logLines, startLog} from '../src/log/memory';
-import {getPenInfo, strokePoints} from '../src/sdk/pen';
+import {getPenInfo, strokePoints} from '@supernote-tools/sn-adapter/official';
 
 const mocked = (fn: unknown) => fn as jest.Mock;
 
@@ -103,7 +103,10 @@ it('lassoes the strokes inside a circle the person draws, with the view closed',
   mocked(PluginFileAPI.getElements).mockResolvedValue(success([]));
   await runProbe();
   mocked(PluginCommAPI.lassoElements).mockClear();
-  const letters = [strokeElement(zigzag(100), 1), strokeElement(zigzag(150), 2)];
+  const letters = [
+    strokeElement(zigzag(100), 1),
+    strokeElement(zigzag(150), 2),
+  ];
   mocked(PluginFileAPI.getElements).mockResolvedValue(success(letters));
   await write(zigzag(100), 1);
   await write(zigzag(150), 2);

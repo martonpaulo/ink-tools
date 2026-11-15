@@ -1,5 +1,5 @@
 import {NativeModules} from 'react-native';
-import {MODULE_CODE} from '../src/sdk/result';
+import {MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import {downloadToFile, readText, writeText} from '../src/storage/files';
 import {libraryDir, safeFileName} from '../src/storage/paths';
 

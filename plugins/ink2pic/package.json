@@ -4,7 +4,8 @@
   "description": "Write a word, get a picture.",
   "private": true,
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && npm run lint:sn-adapter",
+    "lint:sn-adapter": "eslint --max-warnings 0 -c .eslintrc.js --resolve-plugins-relative-to . ../../packages/sn-adapter/src/official ../../packages/sn-adapter/official.ts",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/test.cjs --passWithNoTests",
     "validate": "npm run lint && npm run typecheck && npm test && npm run test:native && python3 scripts/text_check.py && python3 scripts/issue_links.py && python3 scripts/dry_check.py --root .",

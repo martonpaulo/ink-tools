@@ -14,8 +14,7 @@
  */
 import {log, logged, timed} from '../log/memory';
 import {missingPermissions} from '../onboarding/permissions';
-import {queuePress} from '../sdk/buttons';
-import {showPluginView} from '../sdk/plugin';
+import {queuePress, showPluginView} from '@supernote-tools/sn-adapter/official';
 import {startSession} from '../storage/logFile';
 import {pluginFolder} from '../storage/session';
 import {INSERT_BUTTON_ID} from '../buttons';

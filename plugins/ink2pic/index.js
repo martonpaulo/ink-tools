@@ -23,8 +23,8 @@ import {
   startButtonQueue,
   startConfigQueue,
   startLangListener,
-} from './src/sdk/buttons';
-import {showPluginView} from './src/sdk/plugin';
+  showPluginView,
+} from '@supernote-tools/sn-adapter/official';
 import {copy} from './src/ui/copy';
 import {log, logged, setAfterCall} from './src/log/memory';
 import {flushLogFile, openLogFile} from './src/storage/logFile';

@@ -21,9 +21,9 @@ import {
   getLassoRect,
   lassoElements,
   Rect,
-} from '../sdk/lasso';
-import {getCurrentFilePath, getCurrentPageNum, getPageSize} from '../sdk/page';
-import {
+  getCurrentFilePath,
+  getCurrentPageNum,
+  getPageSize,
   getElements,
   getLastElement,
   getPenInfo,
@@ -33,9 +33,10 @@ import {
   PenPoint,
   recycleElement,
   strokePoints,
-} from '../sdk/pen';
-import {LifeState, onLifecycle} from '../sdk/buttons';
-import {closePluginView} from '../sdk/plugin';
+  LifeState,
+  onLifecycle,
+  closePluginView,
+} from '@supernote-tools/sn-adapter/official';
 import {
   boundsOf,
   isClosedLoop,
@@ -170,7 +171,9 @@ async function lassoAndRead(rect: Rect, expected: string): Promise<boolean> {
   log(`probe lasso: rect ${brief(rect)}, expected ${expected}`);
   const lassoed = await logged('lassoElements', () => lassoElements(rect));
   if (!lassoed.ok || !lassoed.value) {
-    log('probe lasso: lassoElements did not take the rect; nothing more is read');
+    log(
+      'probe lasso: lassoElements did not take the rect; nothing more is read',
+    );
     return false;
   }
   await logged('getLassoRect', getLassoRect);

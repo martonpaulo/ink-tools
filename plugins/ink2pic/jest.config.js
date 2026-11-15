@@ -1,5 +1,6 @@
 const uiKit = require('../../packages/ui-kit/plugin-config');
 const inkCore = require('../../packages/ink-core/plugin-config');
+const snAdapter = require('../../packages/sn-adapter/plugin-config');
 
 module.exports = {
   preset: 'react-native',
@@ -7,7 +8,12 @@ module.exports = {
   // The shared package's own tests run in Bridge's suite (#93).
   roots: ['<rootDir>'],
   // ink-core's own tests run in the packages gate (#109).
-  moduleNameMapper: {...uiKit.jest.moduleNameMapper, ...inkCore.jestModuleNameMapper},
+  // sn-adapter's official tier is tested here, where sn-plugin-lib and its mock live (#101).
+  moduleNameMapper: {
+    ...uiKit.jest.moduleNameMapper,
+    ...inkCore.jestModuleNameMapper,
+    ...snAdapter.jestModuleNameMapper,
+  },
   // A test fails on a console.error it did not expect (#112).
   setupFilesAfterEnv: ['<rootDir>/__tests__/host/consoleSetup.ts'],
   // Lane worktrees live under .claude/worktrees; their tests run in their own checkout. The search

@@ -4,9 +4,9 @@ name: Validate Ink2Pic
 on:
   push:
     branches: [main]
-    paths: ['plugins/ink2pic/**', 'packages/ui-kit/**', 'packages/ink-core/**', '.github/workflows/validate-ink2pic.yml']
+    paths: ['plugins/ink2pic/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-ink2pic.yml']
   pull_request:
-    paths: ['plugins/ink2pic/**', 'packages/ui-kit/**', 'packages/ink-core/**', '.github/workflows/validate-ink2pic.yml']
+    paths: ['plugins/ink2pic/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-ink2pic.yml']
   workflow_dispatch:
 
 permissions:

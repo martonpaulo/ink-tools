@@ -11,8 +11,15 @@ import {
   type Rect,
 } from '@supernote-tools/ink-core';
 import {logged} from '../log/memory';
-import {createElement, insertPageElements, PICTURE_TYPE} from '../sdk/page';
-import {CallFailure, fail, Result, THROWN_CODE} from '../sdk/result';
+import {
+  createElement,
+  insertPageElements,
+  PICTURE_TYPE,
+  CallFailure,
+  fail,
+  Result,
+  THROWN_CODE,
+} from '@supernote-tools/sn-adapter/official';
 
 export type {LassoPlace, Placement};
 

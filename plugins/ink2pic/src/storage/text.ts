@@ -1,6 +1,6 @@
 /** Text files on the device, for every store that keeps one (library.json, the search cache). */
 import type {TextStore} from '../search-core';
-import {CallFailure, THROWN_CODE} from '../sdk/result';
+import {CallFailure, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import {readText, writeText} from './files';
 
 /** A failed module call thrown as an Error that keeps its `code` and `moduleCode` (#99). */

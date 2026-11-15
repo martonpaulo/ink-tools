@@ -1,4 +1,4 @@
-import type {Outcome} from '../search-core';
+import type {Outcome} from '@supernote-tools/ink-core';
 
 /**
  * One result type for every SDK call, so no failure is swallowed and none throws past a wrapper.

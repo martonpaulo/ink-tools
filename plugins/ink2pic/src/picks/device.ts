@@ -5,7 +5,7 @@
  * or write only loses the re-ranking, never a search or an insert.
  */
 import {log, logged} from '../log/memory';
-import {fail, ok, THROWN_CODE} from '../sdk/result';
+import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import type {TextStore} from '../search-core';
 import {picksPath} from '../storage/paths';
 import {deviceStorage} from '../storage/text';

@@ -21,9 +21,11 @@ import {
   insertWithoutView,
   takeHeadlessNote,
 } from '../src/flow/headlessInsert';
-import {takePendingButton} from '../src/sdk/buttons';
+import {
+  takePendingButton,
+  startButtonQueue,
+} from '@supernote-tools/sn-adapter/official';
 import {insertBest} from '../src/flow/quickInsert';
-import {startButtonQueue} from '../src/sdk/buttons';
 import {copy} from '../src/ui/copy';
 import {SearchScreen} from '../src/ui/SearchScreen';
 import {compilePlugin} from './host/journey';
@@ -117,7 +119,12 @@ describe('Insert best picture (#74)', () => {
   it('a Close while the insert runs stops it before the note is written (#96)', async () => {
     let stop: (() => string | null) | undefined;
     (insertBest as jest.Mock).mockImplementation(
-      async (_w: string, _p: unknown, _d: unknown, limit: {stop: () => string | null}) => {
+      async (
+        _w: string,
+        _p: unknown,
+        _d: unknown,
+        limit: {stop: () => string | null},
+      ) => {
         stop = limit.stop;
         return new Promise(() => {});
       },
@@ -216,11 +223,13 @@ describe('Insert best picture with no view (#74)', () => {
       const calls = sdk.PluginManager.registerButtonListener.mock.calls;
       listener = calls[calls.length - 1][0].onButtonPress;
       listener({id: INSERT_BUTTON_ID});
-      expect(require('../src/sdk/buttons').takePendingButton()).toBeNull();
+      expect(
+        require('@supernote-tools/sn-adapter/official').takePendingButton(),
+      ).toBeNull();
       listener({id: LASSO_BUTTON_ID});
-      expect(require('../src/sdk/buttons').takePendingButton()).toBe(
-        LASSO_BUTTON_ID,
-      );
+      expect(
+        require('@supernote-tools/sn-adapter/official').takePendingButton(),
+      ).toBe(LASSO_BUTTON_ID);
     });
     expect(run).toHaveBeenCalledTimes(1);
   });

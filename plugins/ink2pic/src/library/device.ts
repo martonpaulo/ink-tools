@@ -5,7 +5,12 @@
  * (#46).
  */
 import {log, logged} from '../log/memory';
-import {fail, ok, Result, THROWN_CODE} from '../sdk/result';
+import {
+  fail,
+  ok,
+  Result,
+  THROWN_CODE,
+} from '@supernote-tools/sn-adapter/official';
 import {listDir, readText, writeText} from '../storage/files';
 import {libraryDir} from '../storage/paths';
 import {deviceStorage} from '../storage/text';
@@ -29,7 +34,8 @@ const UNREADABLE_PREFIX = 'library.unreadable-';
 /** The rebuild from the folder is checked once per session. */
 let rebuildChecked = false;
 /** A prepared picture: `<source>-<source id>.png`, as insertPicture names it. */
-const PICTURE_FILE = /^(openclipart|commons|openmoji)-([^.]+)(\.contour)?\.png$/;
+const PICTURE_FILE =
+  /^(openclipart|commons|openmoji)-([^.]+)(\.contour)?\.png$/;
 /** What the file name cannot tell about a picture from an older build. */
 const UNKNOWN = 'unknown';
 /** One second apart: rebuilt items keep the folder's order, which stands in for their dates. */

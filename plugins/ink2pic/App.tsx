@@ -39,16 +39,16 @@ import {
 } from './src/buttons';
 import {log, logged} from './src/log/memory';
 import {missingPermissions, PermissionNeed} from './src/onboarding/permissions';
-import {getLassoElements} from './src/sdk/lasso';
 import {
+  getLassoElements,
   onButtonEvent,
   onConfigClick,
   onLifecycle,
   systemLanguage,
   takePendingButton,
   takePendingConfig,
-} from './src/sdk/buttons';
-import {closePluginView} from './src/sdk/plugin';
+  closePluginView,
+} from '@supernote-tools/sn-adapter/official';
 import type {SearchResult} from './src/search-core';
 import {clearLibrary} from './src/library/device';
 import {Settings, SettingsAction, settingsStep} from './src/settings/settings';

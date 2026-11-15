@@ -11,8 +11,20 @@ const SKIP = new Set([
   '.claude',
   '__mocks__',
 ]);
-/** The only files allowed to import the SDK: the wrappers and tests, which drive its mock. */
-const ALLOWED = [/^src\/sdk\//, /^__tests__\//];
+/**
+ * The wrappers live in sn-adapter's official tier (#101); only tests, which drive the SDK's mock,
+ * import the SDK here. scripts/boundaries.py checks the same rule across the repository.
+ */
+const OFFICIAL = join(
+  ROOT,
+  '..',
+  '..',
+  'packages',
+  'sn-adapter',
+  'src',
+  'official',
+);
+const ALLOWED = [/^__tests__\//];
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap(name => {
@@ -27,7 +39,7 @@ function sources(dir: string): string[] {
   });
 }
 
-it('imports sn-plugin-lib only from src/sdk/', () => {
+it("imports sn-plugin-lib only in tests: the wrappers are sn-adapter's (#101)", () => {
   const offenders = sources(ROOT).filter(
     path =>
       !ALLOWED.some(rule => rule.test(path)) &&
@@ -38,19 +50,15 @@ it('imports sn-plugin-lib only from src/sdk/', () => {
   expect(offenders).toEqual([]);
 });
 
-it('defines every negative failure code in src/sdk/result.ts only (#49, #54)', () => {
-  const offenders = sources(join(ROOT, 'src')).filter(
-    path =>
-      path !== 'src/sdk/result.ts' &&
-      /fail\(\s*-\d|_CODE\s*=\s*-\d/.test(
-        readFileSync(join(ROOT, path), 'utf8'),
-      ),
+it("defines no negative failure code: sn-adapter's official/result.ts owns them (#49, #54, #101)", () => {
+  const offenders = sources(join(ROOT, 'src')).filter(path =>
+    /fail\(\s*-\d|_CODE\s*=\s*-\d/.test(readFileSync(join(ROOT, path), 'utf8')),
   );
   expect(offenders).toEqual([]);
 });
 
 it('keeps the storage, search and library layers below the flow and the view (#54)', () => {
-  const lower = /^src\/(log|sdk|storage|sources|search|search-core|library)\//;
+  const lower = /^src\/(log|storage|sources|search|search-core|library)\//;
   const offenders = sources(join(ROOT, 'src')).filter(
     path =>
       lower.test(path) &&
@@ -63,14 +71,21 @@ it('keeps the storage, search and library layers below the flow and the view (#5
 
 it('has no SDK wrapper that nothing calls (#54)', () => {
   const callers = [...sources(join(ROOT, 'src')), 'App.tsx', 'index.js']
-    .filter(path => !/^src\/sdk\//.test(path))
     .map(path => readFileSync(join(ROOT, path), 'utf8'))
     .join('\n');
-  const wrappers = sources(join(ROOT, 'src', 'sdk'))
-    .filter(path => path !== 'src/sdk/result.ts')
-    .flatMap(path =>
+  // result.ts is the Result type every wrapper returns; register.ts and storage.ts serve Bridge
+  // and Lingo too, whose own tests call them.
+  const shared = new Set([
+    'result.ts',
+    'register.ts',
+    'storage.ts',
+    'index.ts',
+  ]);
+  const wrappers = readdirSync(OFFICIAL)
+    .filter(name => !shared.has(name))
+    .flatMap(name =>
       [
-        ...readFileSync(join(ROOT, path), 'utf8').matchAll(
+        ...readFileSync(join(OFFICIAL, name), 'utf8').matchAll(
           /export (?:async )?function (\w+)/g,
         ),
       ].map(match => match[1]),

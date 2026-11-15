@@ -1,5 +1,5 @@
 import {PluginManager} from 'sn-plugin-lib';
-import {initPlugin, registerButton} from '../src/sdk/buttons';
+import {initPlugin, registerButton} from '@supernote-tools/sn-adapter/official';
 
 const register = PluginManager.registerButton as jest.Mock;
 const init = PluginManager.init as jest.Mock;
@@ -51,8 +51,8 @@ describe('button queue (#13, gotcha 11)', () => {
   it('keeps a press that came before the view listened, once', () => {
     const {startButtonQueue, takePendingButton, onButtonEvent} =
       jest.requireActual(
-        '../src/sdk/buttons',
-      ) as typeof import('../src/sdk/buttons');
+        '@supernote-tools/sn-adapter/official',
+      ) as typeof import('@supernote-tools/sn-adapter/official');
     let press: ((event: {id: number}) => void) | undefined;
     register.mockReset();
     (PluginManager.registerButtonListener as jest.Mock).mockImplementation(
@@ -75,8 +75,8 @@ describe('button queue (#13, gotcha 11)', () => {
 
   it('reports lifecycle states', () => {
     const {onLifecycle} = jest.requireActual(
-      '../src/sdk/buttons',
-    ) as typeof import('../src/sdk/buttons');
+      '@supernote-tools/sn-adapter/official',
+    ) as typeof import('@supernote-tools/sn-adapter/official');
     let msg: ((m: {state: number}) => void) | undefined;
     (PluginManager.registerPluginLifeListener as jest.Mock).mockImplementation(
       listener => {
@@ -95,8 +95,8 @@ describe('button queue (#13, gotcha 11)', () => {
 describe('config button (#68)', () => {
   const actual = () =>
     jest.requireActual(
-      '../src/sdk/buttons',
-    ) as typeof import('../src/sdk/buttons');
+      '@supernote-tools/sn-adapter/official',
+    ) as typeof import('@supernote-tools/sn-adapter/official');
 
   it('registers, and fails on a false answer', async () => {
     const config = PluginManager.registerConfigButton as jest.Mock;

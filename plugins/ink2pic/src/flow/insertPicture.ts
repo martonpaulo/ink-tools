@@ -13,10 +13,14 @@ import {
   getLassoRect,
   lassoElements,
   Rect,
-} from '../sdk/lasso';
-import {getCurrentPageNum} from '../sdk/page';
-import {insertImage} from '../sdk/note';
-import {fail, ok, Result, THROWN_CODE, TIMEOUT_CODE} from '../sdk/result';
+  getCurrentPageNum,
+  insertImage,
+  fail,
+  ok,
+  Result,
+  THROWN_CODE,
+  TIMEOUT_CODE,
+} from '@supernote-tools/sn-adapter/official';
 import {insertUrl, SearchResult, sourceId} from '../search-core';
 import {deleteFile, downloadToFile} from '../storage/files';
 import {prepareForEink} from '../storage/image';

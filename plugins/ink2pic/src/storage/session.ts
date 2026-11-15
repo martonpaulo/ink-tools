@@ -4,8 +4,11 @@
  * log file before any view exists (#21, #45).
  */
 import {logged} from '../log/memory';
-import {getPluginDirPath} from '../sdk/plugin';
-import {ok, Result} from '../sdk/result';
+import {
+  getPluginDirPath,
+  ok,
+  Result,
+} from '@supernote-tools/sn-adapter/official';
 
 let cached: string | null = null;
 

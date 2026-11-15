@@ -1,12 +1,10 @@
+/** The device's shared storage root, owned by sn-adapter (#101). */
+import {SHARED_ROOT} from '@supernote-tools/sn-adapter/official';
+
+export {SHARED_ROOT};
+
 /** Where Ink2Pic keeps its files (brief section 6.6). */
 export const SHARED_FOLDER = 'MyStyle/Ink2Pic';
-
-/**
- * The shared storage root, as the host's own paths show it (`getCurrentFilePath` answered
- * `/storage/emulated/0/Note/...` on the Manta, builds 0.1.0 (3) to (8)). Not read through
- * FileUtils.getExternalDirPath: its module can close the plugin on an error (#13).
- */
-export const SHARED_ROOT = '/storage/emulated/0';
 
 /** `<root>/MyStyle/Ink2Pic/<name>`, a folder or a file. */
 function sharedDir(externalRoot: string, folder: string): string {
@@ -45,7 +43,9 @@ export function earlyDownloadPath(
   id: string,
   extension: string,
 ): string {
-  return `${pluginDir}/${TEMPORARY_PREFIX}early-${safeFileName(id)}.${extension}`;
+  return `${pluginDir}/${TEMPORARY_PREFIX}early-${safeFileName(
+    id,
+  )}.${extension}`;
 }
 
 /** True for a temporary download of `insertDownloadPath` or `earlyDownloadPath` in `pluginDir`. */
@@ -92,8 +92,7 @@ export const SYMBOLS_FOLDER = '.ink2pic-symbols';
  * `<root>/.ink2pic-symbols`, the OpenMoji pictures kept for offline use (#91), one `<hex>.png`
  * each, written in place (#62). A hidden folder outside `MyStyle/`, which Supernote file sync does
  * not read: each file in a synced folder costs about 0.14 s on every sync, so 1,447 symbols cost
- * about 4 minutes; the owner's hand-moved copy is at this exact path (#23). Paths stay here until
- * Ink2Pic uses `sn-adapter`, which has no file-path module yet (#101).
+ * about 4 minutes; the owner's hand-moved copy is at this exact path (#23).
  */
 export function symbolsDir(externalRoot = SHARED_ROOT): string {
   return `${externalRoot.replace(/\/+$/, '')}/${SYMBOLS_FOLDER}`;

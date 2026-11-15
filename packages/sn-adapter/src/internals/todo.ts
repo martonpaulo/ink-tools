@@ -1,4 +1,4 @@
-import {Descriptor} from './descriptor';
+import {Descriptor, column} from './descriptor';
 import {Row} from './rules';
 
 /** Structurally the same shape as sync-core's DeviceTask, so the two packages stay independent. */
@@ -25,16 +25,18 @@ const asNumber = (v: Row[string]): number | null => {
  */
 export function rowToTodoTask(d: Descriptor, row: Row): TodoTask {
   const done = d.todo.rules.statusCompleted;
-  const id = row.taskId ?? row.id;
+  const get = (field: string) => row[column(d.todo, 'tasks', field)];
+  const id = get('taskId') ?? get('rowId');
   if (id === null || id === undefined || id === '') throw new Error('to-do row has no taskId'); // not the id "undefined" (#70)
+  const deleted = get('deleted');
   return {
     localId: String(id),
-    title: String(row.title ?? ''),
-    detail: String(row.detail ?? ''),
-    due: asNumber(row.dueTime ?? null),
-    completed: row.status === done || asNumber(row.completedTime ?? null) !== null,
-    modified: asNumber(row.lastModified ?? null) ?? 0,
-    deleted: row.deleted === 1 || row.deleted === '1' || row.deleted === true,
+    title: String(get('title') ?? ''),
+    detail: String(get('detail') ?? ''),
+    due: asNumber(get('due') ?? null),
+    completed: get('status') === done || asNumber(get('completedAt') ?? null) !== null,
+    modified: asNumber(get('modified') ?? null) ?? 0,
+    deleted: deleted === 1 || deleted === '1' || deleted === true,
   };
 }
 
@@ -45,12 +47,13 @@ export function todoTaskToRow(
   now: number,
 ): Row {
   const r = d.todo.rules;
+  const col = (field: string) => column(d.todo, 'tasks', field);
   return {
-    title: task.title,
-    detail: task.detail,
-    dueTime: task.due,
-    status: task.completed ? r.statusCompleted : r.statusOpen,
-    completedTime: task.completed ? now : null,
-    lastModified: now,
+    [col('title')]: task.title,
+    [col('detail')]: task.detail,
+    [col('due')]: task.due,
+    [col('status')]: task.completed ? r.statusCompleted : r.statusOpen,
+    [col('completedAt')]: task.completed ? now : null,
+    [col('modified')]: now,
   };
 }

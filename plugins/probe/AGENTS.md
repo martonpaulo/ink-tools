@@ -17,6 +17,6 @@ providers, test writes, check framework guards, log to logcat. Same runtime and 
 - Validate with `npm run validate`. A result found on the device goes to the issue or a research
   note, never kept as a claim without the device run.
 - The native module is `native/src/com/probe/providers/`; its targets (URIs, marker columns) mirror
-  `packages/sn-adapter/src/descriptor.json`. It only reads, and inserts one row marked
+  `packages/sn-adapter/src/internals/descriptor.json`. It only reads, and inserts one row marked
   `SNPROBE dry insert` that it reverts at once; it never logs a row's value. `npm run build` must give
   a `Probe.snplg` that holds `app.npk` (native step), never a JS-only package.

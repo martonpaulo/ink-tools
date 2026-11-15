@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * The providers the probe tries (#59): the Digest (Knowledge) provider under test and two
  * known-open providers as controls. The URIs and marker columns come from the sn-adapter
- * descriptor (packages/sn-adapter/src/descriptor.json); keep the two in step.
+ * descriptor (packages/sn-adapter/src/internals/descriptor.json); keep the two in step.
  */
 public final class ProbeTargets {
   /** Written into a dry insert and the only row the revert may delete. */

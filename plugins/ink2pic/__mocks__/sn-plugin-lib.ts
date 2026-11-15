@@ -1,4 +1,4 @@
-/** Jest mock of the SDK surface Ink2Pic wraps in src/sdk/; every call is a jest.fn(). */
+/** Jest mock of the SDK surface sn-adapter wraps in src/official/; every call is a jest.fn(). */
 const mocks = (...names: string[]): Record<string, jest.Mock> =>
   Object.fromEntries(names.map(name => [name, jest.fn()]));
 

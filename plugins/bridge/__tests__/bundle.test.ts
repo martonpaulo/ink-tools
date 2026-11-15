@@ -43,7 +43,7 @@ function bundle(): string {
 const BUNDLE_TIMEOUT_MS = 180000;
 
 test(
-  'the bundle holds the ui-kit package and one React',
+  "the bundle holds ui-kit, sn-adapter's official tier, one React and one sn-plugin-lib",
   () => {
     const text = bundle();
     for (const file of ['index.ts', 'metrics.ts', 'styles.ts', 'Button.tsx']) {
@@ -51,6 +51,14 @@ test(
     }
     expect(text).not.toContain('packages/ui-kit/src/screenBreaks');
     expect(text.match(/node_modules\/react\/index\.js/g)).toHaveLength(1);
+    // The registration goes through sn-adapter (#101), whose SDK import resolves from this plugin.
+    expect(text).toContain('packages/sn-adapter/src/official/register.ts');
+    expect(text).not.toContain('packages/sn-adapter/src/internals/');
+    const sdk =
+      text.match(/"[^"]*sn-plugin-lib\/lib\/module\/index\.js"/g) ?? [];
+    expect(new Set(sdk)).toEqual(
+      new Set(['"node_modules/sn-plugin-lib/lib/module/index.js"']),
+    );
   },
   BUNDLE_TIMEOUT_MS,
 );

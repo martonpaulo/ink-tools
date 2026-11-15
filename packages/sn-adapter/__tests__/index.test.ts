@@ -97,7 +97,7 @@ test('an event row carries the tag and round-trips', () => {
   const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
   const row = eventToRow(D, e, 5);
   expect(row.tag).toBe('task');
-  expect(rowToEvent(row)).toEqual(e);
+  expect(rowToEvent(D, row)).toEqual(e);
 });
 
 test('a row with a missing or unusable id or time throws instead of becoming "undefined" or NaN (#70)', () => {
@@ -105,10 +105,10 @@ test('a row with a missing or unusable id or time throws instead of becoming "un
   for (const key of ['eventId', 'calendarId', 'startTime', 'endTime']) {
     const missing = {...row};
     delete missing[key];
-    expect(() => rowToEvent(missing)).toThrow(key);
-    expect(() => rowToEvent({...row, [key]: null})).toThrow(key);
+    expect(() => rowToEvent(D, missing)).toThrow(key);
+    expect(() => rowToEvent(D, {...row, [key]: null})).toThrow(key);
   }
-  expect(() => rowToEvent({...row, startTime: 'soon'})).toThrow('startTime');
+  expect(() => rowToEvent(D, {...row, startTime: 'soon'})).toThrow('startTime');
   expect(() => rowToTodoTask(D, {title: 'x'})).toThrow('taskId');
 });
 
@@ -133,5 +133,42 @@ describe('chooseDescriptor (#43)', () => {
     expect(chooseDescriptor(withVersion('v2')).reason).toMatch(/is not YYYY.MM.DD/);
     expect(chooseDescriptor(withVersion(D.descriptorVersion)).reason).toMatch(/is not newer than/);
     expect(chooseDescriptor(withVersion('2000.01.01')).descriptor).toBe(D);
+  });
+});
+
+describe('column map (#101)', () => {
+  /** The bundled descriptor with the To-Do `dueTime` column renamed, as a firmware update could do. */
+  const renamed = (): typeof D => {
+    const d = JSON.parse(JSON.stringify(D));
+    const tasks = d.todo.tables.tasks;
+    tasks.columns = tasks.columns.map((c: string) => (c === 'dueTime' ? 'due_time' : c));
+    tasks.fields.due = 'due_time';
+    return parseDescriptor(d);
+  };
+
+  test('a renamed column is a descriptor change: the same task reads and writes', () => {
+    const d = renamed();
+    const row = todoTaskToRow(d, {title: 'Pay rent', detail: '', due: 1700000000000, completed: false}, 5);
+    expect(row.due_time).toBe(1700000000000);
+    expect(row).not.toHaveProperty('dueTime');
+    expect(rowToTodoTask(d, {...row, taskId: 'abc'}).due).toBe(1700000000000);
+  });
+
+  test('a field that names a column the table does not list refuses the descriptor', () => {
+    const d = JSON.parse(JSON.stringify(D));
+    d.todo.tables.tasks.fields.due = 'due_time';
+    expect(() => parseDescriptor(d)).toThrow('todo.tasks: field due names due_time, not a listed column');
+  });
+
+  test('a descriptor without a field the adapter reads is refused', () => {
+    const d = JSON.parse(JSON.stringify(D));
+    delete d.calendar.tables.events.fields.start;
+    expect(() => parseDescriptor(d)).toThrow('calendar.events: missing field start');
+    delete d.calendar.tables.events;
+    expect(() => parseDescriptor(d)).toThrow('calendar: missing table events');
+  });
+
+  test('the bundled descriptor passes its own parser', () => {
+    expect(parseDescriptor(JSON.parse(JSON.stringify(D)))).toEqual(D);
   });
 });

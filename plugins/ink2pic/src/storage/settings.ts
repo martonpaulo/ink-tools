@@ -6,8 +6,7 @@
  * over the person's file, which the next runtime reads again.
  */
 import {log, logged} from '../log/memory';
-import {systemLanguage} from '../sdk/buttons';
-import {ok} from '../sdk/result';
+import {systemLanguage, ok} from '@supernote-tools/sn-adapter/official';
 import {
   isSettingsObject,
   parseSettings,
@@ -39,7 +38,10 @@ export async function loadSettings(
   const parsed = parseSettings(text, system);
   parsed.problems.forEach(problem => log(problem));
   if (text !== null && !isSettingsObject(text)) {
-    return {settings: parsed.settings, readFailure: await keepAside(storage, path, text)};
+    return {
+      settings: parsed.settings,
+      readFailure: await keepAside(storage, path, text),
+    };
   }
   return {settings: parsed.settings, readFailure: null};
 }
@@ -60,7 +62,9 @@ async function keepAside(
     log(`settings: ${path} is not a JSON object; it is kept as ${aside}`);
     return null;
   } catch (error) {
-    const failure = `the file is not a JSON object and its copy could not be kept (${storageFailure(error).message})`;
+    const failure = `the file is not a JSON object and its copy could not be kept (${
+      storageFailure(error).message
+    })`;
     log(`settings: ${failure}`);
     return failure;
   }

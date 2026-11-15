@@ -4,7 +4,12 @@
  */
 import {NativeModules} from 'react-native';
 import {USER_AGENT} from '../config';
-import {fail, MODULE_CODE, ok, Result} from '../sdk/result';
+import {
+  fail,
+  MODULE_CODE,
+  ok,
+  Result,
+} from '@supernote-tools/sn-adapter/official';
 
 /**
  * The module's rejection codes, plus MISSING when PluginHost did not load it. IO carries an error

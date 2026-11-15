@@ -6,7 +6,7 @@ import {PluginCommAPI, PluginManager} from 'sn-plugin-lib';
 import App from '../App';
 import {CONFIG_BUTTON_ID} from '../src/buttons';
 import {logLines} from '../src/log/memory';
-import {startConfigQueue} from '../src/sdk/buttons';
+import {startConfigQueue} from '@supernote-tools/sn-adapter/official';
 import type {LanguageCode} from '../src/settings/languages';
 import {settingsPath} from '../src/storage/paths';
 import {resetSessionForTests} from '../src/storage/session';

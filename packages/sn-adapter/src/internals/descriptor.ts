@@ -6,6 +6,11 @@ export interface TableDescriptor {
   path: string;
   /** Columns the table must expose. Empty means "the table only has to answer". */
   columns: string[];
+  /**
+   * Our name for each column the adapter reads or writes, mapped to the device's column (#101), so a
+   * renamed column is a descriptor update, never a code change.
+   */
+  fields?: Record<string, string>;
 }
 
 export interface ModuleDescriptor<Rules = Record<string, unknown>> {
@@ -43,6 +48,12 @@ const RULE_TYPES: Record<'calendar' | 'todo', Record<string, RuleType>> = {
   todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', writeHasSync: 'number', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
 };
 
+/** The fields the adapter reads and writes in each table; an update that lacks one is refused (#101). */
+const REQUIRED_FIELDS: Partial<Record<Capability, Record<string, string[]>>> = {
+  calendar: {events: ['eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified']},
+  todo: {tasks: ['rowId', 'listId', 'taskId', 'title', 'detail', 'modified', 'status', 'due', 'completedAt', 'deleted', 'hasSync']},
+};
+
 function hasType(value: unknown, type: RuleType): boolean {
   return type === 'string[]' ? Array.isArray(value) && value.every(v => typeof v === 'string') : typeof value === type;
 }
@@ -65,6 +76,16 @@ export function parseDescriptor(value: unknown): Descriptor {
     if (!m.tables || !Object.keys(m.tables).length) throw new Error(`${cap}: no tables`);
     for (const [name, t] of Object.entries(m.tables)) {
       if (typeof t.path !== 'string' || !Array.isArray(t.columns)) throw new Error(`${cap}.${name}: bad table`);
+      for (const [field, mapped] of Object.entries(t.fields ?? {})) {
+        if (!t.columns.includes(mapped)) throw new Error(`${cap}.${name}: field ${field} names ${String(mapped)}, not a listed column`);
+      }
+    }
+    for (const [name, fields] of Object.entries(REQUIRED_FIELDS[cap] ?? {})) {
+      const t = m.tables[name];
+      if (!t) throw new Error(`${cap}: missing table ${name}`);
+      for (const field of fields) {
+        if (!t.fields || typeof t.fields[field] !== 'string') throw new Error(`${cap}.${name}: missing field ${field}`);
+      }
     }
     if (cap !== 'digest') {
       const rules = (m.rules ?? {}) as Record<string, unknown>;
@@ -74,6 +95,13 @@ export function parseDescriptor(value: unknown): Descriptor {
     }
   }
   return d;
+}
+
+/** The device column for one of our field names (#101); a field the table does not map throws. */
+export function column(m: ModuleDescriptor<unknown>, table: string, field: string): string {
+  const name = m.tables[table]?.fields?.[field];
+  if (!name) throw new Error(`no column for ${table}.${field}`);
+  return name;
 }
 
 export function contentUri(m: ModuleDescriptor<unknown>, table: string): string {

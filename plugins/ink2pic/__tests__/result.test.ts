@@ -1,4 +1,8 @@
-import {attempt, fromResponse, THROWN_CODE} from '../src/sdk/result';
+import {
+  attempt,
+  fromResponse,
+  THROWN_CODE,
+} from '@supernote-tools/sn-adapter/official';
 
 describe('fromResponse', () => {
   it('maps success to its result', () => {

@@ -2,7 +2,7 @@
  * Prepares a saved picture for the 16-gray e-ink screen through the plugin's own Java module,
  * Ink2PicImage (brief sections 7 and 9.4, #17).
  */
-import {Result} from '../sdk/result';
+import {Result} from '@supernote-tools/sn-adapter/official';
 import {callModule} from './files';
 
 /** PNG for line art; JPG may be smaller for engravings and photos (brief section 7, TO TEST). */

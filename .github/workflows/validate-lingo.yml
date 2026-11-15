@@ -4,9 +4,9 @@ name: Validate Lingo
 on:
   push:
     branches: [main]
-    paths: ['plugins/lingo/**', 'packages/ui-kit/**', '.github/workflows/validate-lingo.yml']
+    paths: ['plugins/lingo/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-lingo.yml']
   pull_request:
-    paths: ['plugins/lingo/**', 'packages/ui-kit/**', '.github/workflows/validate-lingo.yml']
+    paths: ['plugins/lingo/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-lingo.yml']
   workflow_dispatch:
 
 permissions:

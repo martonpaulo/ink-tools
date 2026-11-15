@@ -4,8 +4,13 @@
  * It reads typed codes; only the text of an Android OS error is matched (#49).
  */
 import {logged} from '../log/memory';
-import {hasPermission, PERMISSION_INTERNET} from '../sdk/plugin';
-import {CallFailure, EMPTY_LASSO_CODE, TIMEOUT_CODE} from '../sdk/result';
+import {
+  hasPermission,
+  PERMISSION_INTERNET,
+  CallFailure,
+  EMPTY_LASSO_CODE,
+  TIMEOUT_CODE,
+} from '@supernote-tools/sn-adapter/official';
 import type {Outcome} from '../search-core';
 import type {FilesErrorCode} from '../storage/files';
 import {copy, CopyKey} from '../ui/copy';

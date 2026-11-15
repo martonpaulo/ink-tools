@@ -1,10 +1,10 @@
 import {PluginManager} from 'sn-plugin-lib';
 
 /**
- * Lingo registers its Settings entry and listener only, for now. The lasso button comes with the
- * translate flow (#46), so the device never shows a button that does nothing.
+ * Registers the plugin's Settings entry and its listener only, and no note button, for a plugin
+ * that never shows inside a note (Bridge) or has no note action yet (Lingo).
  */
-export async function registerSettingsEntry(onSettingsClick: () => void) {
+export async function registerSettingsEntry(onSettingsClick: () => void): Promise<void> {
   await PluginManager.init();
   const registered = await PluginManager.registerConfigButton();
   if (registered !== true) {

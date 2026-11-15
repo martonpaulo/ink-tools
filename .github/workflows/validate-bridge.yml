@@ -4,9 +4,9 @@ name: Validate Bridge
 on:
   push:
     branches: [main]
-    paths: ['plugins/bridge/**', 'packages/ui-kit/**', '.github/workflows/validate-bridge.yml']
+    paths: ['plugins/bridge/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-bridge.yml']
   pull_request:
-    paths: ['plugins/bridge/**', 'packages/ui-kit/**', '.github/workflows/validate-bridge.yml']
+    paths: ['plugins/bridge/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-bridge.yml']
   workflow_dispatch:
 
 permissions:

@@ -12,15 +12,15 @@ import {
   getLassoElements,
   getLassoRect,
   recognizeElements,
-} from '../sdk/lasso';
-import {getCurrentFilePath, getCurrentPageNum, getPageSize} from '../sdk/page';
-import {
+  getCurrentFilePath,
+  getCurrentPageNum,
+  getPageSize,
   CallFailure,
   EMPTY_LASSO_CODE,
   fail,
   Result,
   THROWN_CODE,
-} from '../sdk/result';
+} from '@supernote-tools/sn-adapter/official';
 
 export type {LassoQuery};
 

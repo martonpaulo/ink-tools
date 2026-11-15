@@ -6,7 +6,7 @@ import {
   PERMISSION_FILE_WRITE,
   PERMISSION_INTERNET,
   requestPermission,
-} from '../sdk/plugin';
+} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../ui/copy';
 import {logged, PERSON_TIMEOUT_MS} from '../log/memory';
 
@@ -70,10 +70,7 @@ export async function requestMissing(): Promise<{
       () => requestPermission(need.permission, need.reason),
       PERSON_TIMEOUT_MS,
     );
-    if (
-      (answer.ok && isGranted(answer.value)) ||
-      (await grantedNow(need))
-    ) {
+    if ((answer.ok && isGranted(answer.value)) || (await grantedNow(need))) {
       granted.push(need);
     } else {
       denied.push({

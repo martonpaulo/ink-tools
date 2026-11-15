@@ -1,4 +1,4 @@
-import {Descriptor} from './descriptor';
+import {Descriptor, column} from './descriptor';
 import {Row, toCalendarInsert} from './rules';
 
 /** Structurally the same shape as sync-core's CalendarEvent, so the two packages stay independent. */
@@ -19,16 +19,17 @@ export interface DeviceEvent {
  * descriptor rule if the device differs.
  */
 export function eventToRow(d: Descriptor, e: DeviceEvent, now: number): Row {
+  const col = (field: string) => column(d.calendar, 'events', field);
   return toCalendarInsert(d, {
-    calendarId: e.calendarId,
-    eventId: e.eventId,
-    title: e.title,
-    content: e.content,
-    startTime: e.start,
-    endTime: e.end,
-    isAllDay: e.allDay ? 1 : 0,
-    readOnly: 1,
-    lastModifiedTime: now,
+    [col('calendarId')]: e.calendarId,
+    [col('eventId')]: e.eventId,
+    [col('title')]: e.title,
+    [col('content')]: e.content,
+    [col('start')]: e.start,
+    [col('end')]: e.end,
+    [col('allDay')]: e.allDay ? 1 : 0,
+    [col('readOnly')]: 1,
+    [col('modified')]: now,
   });
 }
 
@@ -46,14 +47,16 @@ const requireTime = (row: Row, key: string): number => {
 };
 
 /** Read a data_info row. A missing id or time throws: a made-up id would become a sync key (#70). */
-export function rowToEvent(row: Row): DeviceEvent {
+export function rowToEvent(d: Descriptor, row: Row): DeviceEvent {
+  const col = (field: string) => column(d.calendar, 'events', field);
+  const allDay = row[col('allDay')];
   return {
-    eventId: requireId(row, 'eventId'),
-    calendarId: requireId(row, 'calendarId'),
-    title: String(row.title ?? ''),
-    content: String(row.content ?? ''),
-    start: requireTime(row, 'startTime'),
-    end: requireTime(row, 'endTime'),
-    allDay: row.isAllDay === 1 || row.isAllDay === '1' || row.isAllDay === true,
+    eventId: requireId(row, col('eventId')),
+    calendarId: requireId(row, col('calendarId')),
+    title: String(row[col('title')] ?? ''),
+    content: String(row[col('content')] ?? ''),
+    start: requireTime(row, col('start')),
+    end: requireTime(row, col('end')),
+    allDay: allDay === 1 || allDay === '1' || allDay === true,
   };
 }

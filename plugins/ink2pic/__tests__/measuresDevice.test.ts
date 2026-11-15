@@ -1,5 +1,5 @@
 import {NativeModules} from 'react-native';
-import {MODULE_CODE} from '../src/sdk/result';
+import {MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import {deviceAnalyzer} from '../src/storage/measures';
 
 const native = {measureThumb: jest.fn(), convertThumb: jest.fn()};
@@ -20,7 +20,12 @@ describe('deviceAnalyzer (#66)', () => {
   });
 
   it('writes a contour drawing on the thumbnail lane, with the measures of its pixels (#101)', async () => {
-    const converted = {width: 330, height: 400, ms: 9, measures: {mean: 250, ms: 2}};
+    const converted = {
+      width: 330,
+      height: 400,
+      ms: 9,
+      measures: {mean: 250, ms: 2},
+    };
     native.convertThumb.mockResolvedValue(converted);
     expect(
       await deviceAnalyzer.toContour('/p/a', '/p/a.contour.png', 400),
@@ -34,7 +39,12 @@ describe('deviceAnalyzer (#66)', () => {
   });
 
   it('darkens faint lines on the thumbnail lane, without a contour (#81, #101)', async () => {
-    native.convertThumb.mockResolvedValue({width: 330, height: 400, ms: 4, measures: {}});
+    native.convertThumb.mockResolvedValue({
+      width: 330,
+      height: 400,
+      ms: 4,
+      measures: {},
+    });
     await deviceAnalyzer.darken?.('/p/a', '/p/a.dark.png', 400);
     expect(native.convertThumb).toHaveBeenCalledWith(
       '/p/a',

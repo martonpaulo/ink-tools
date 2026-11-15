@@ -715,7 +715,7 @@ shows its `error.permission.*` text, named as the Settings screen names it, foll
 `error.permission.settings` ([#37](https://github.com/martonpaulo/ink2pic/issues/37)). Any other
 download failure shows `error.download`; `error.unexpected` is the failed start
 ([#49](https://github.com/martonpaulo/ink2pic/issues/49)). Every negative code lives in
-`src/sdk/result.ts`.
+`packages/sn-adapter/src/official/result.ts`.
 
 ### 8.11 The last word
 
@@ -1229,7 +1229,7 @@ The `init` command was run successfully during research with the name `ImageSpik
 - JVM tests for the native image pipeline if it exists.
 - A build that produces an installable `.snplg` is the final gate. Unit tests cannot prove device behavior.
 - `npm run renders` renders every screen state as the Manta shows it, 1920 x 2560 px in 16 grey levels, to `.scratch/renders/<screen>.png`, from the real components with synthetic fixture data, and fails on an e-ink rule break of section 8.4: text contrast under 4.5:1 (3:1 for large text, interface standard rule 3) after the 16-level quantization, a target under the 10 mm touch target, text under the 3 mm minimum font size ([#85](https://github.com/martonpaulo/ink2pic/issues/85)), text outside its box or the screen, a spinner or a fading picture ([#80](https://github.com/martonpaulo/ink2pic/issues/80)). It runs the components under `react-test-renderer` and lays them out in the Chromium installed with Playwright, so it adds no dependency; Chromium's flexbox and a stand-in font replace Yoga and the device font, so a render is a preview, never proof. It takes about 5 s, but CI has no Chromium, so it stays out of `npm run validate`: the agent runs it before each device build. A new screen is one line in `scripts/renders/screens.tsx`. ESLint refuses `Animated`, `LayoutAnimation` and `ActivityIndicator` from `react-native` in `npm run validate`.
-- Keep SDK calls behind the wrappers in `src/sdk` so tests can mock them and undocumented behavior stays in one place.
+- Keep SDK calls behind the wrappers in `packages/sn-adapter/src/official/` so tests can mock them and undocumented behavior stays in one place.
 
 ---
 

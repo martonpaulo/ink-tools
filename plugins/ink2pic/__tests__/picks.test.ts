@@ -12,7 +12,7 @@ import {
   picksFirst,
   serializePicks,
 } from '../src/picks/picks';
-import {fail, MODULE_CODE} from '../src/sdk/result';
+import {fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import type {TextStore} from '../src/search-core';
 import type {SearchResult} from '../src/search-core/types';
 import {picksPath} from '../src/storage/paths';
@@ -83,7 +83,13 @@ describe('the picks rule (#34)', () => {
 
   it('puts the picked results first, newest pick first, the rest in order', () => {
     const list = ['a', 'b', 'c', 'd', 'e'].map(result);
-    expect(ids(picksFirst(list, ['d', 'b']))).toEqual(['d', 'b', 'a', 'c', 'e']);
+    expect(ids(picksFirst(list, ['d', 'b']))).toEqual([
+      'd',
+      'b',
+      'a',
+      'c',
+      'e',
+    ]);
     expect(picksFirst(list, ['x'])).toBe(list);
     expect(picksFirst(list, ['a'])).toBe(list);
     expect(ids(picksFirst([result('library:d'), result('a')], ['d']))).toEqual([
@@ -97,9 +103,9 @@ describe('the picks rule (#34)', () => {
     expect(parsePicks(serializePicks(picks))).toEqual({ok: true, picks});
     expect(parsePicks('{').ok).toBe(false);
     expect(parsePicks('{"version":2,"words":[]}').ok).toBe(false);
-    expect(parsePicks('{"version":1,"words":[{"key":"cat","ids":[1]}]}').ok).toBe(
-      false,
-    );
+    expect(
+      parsePicks('{"version":1,"words":[{"key":"cat","ids":[1]}]}').ok,
+    ).toBe(false);
   });
 });
 
@@ -156,11 +162,11 @@ describe('the measured order keeps a pick first (#34)', () => {
       limitMs: 1000,
       picked: async query => (query === 'cat' ? ['c'] : []),
     };
-    expect(ids((await measureFirstPages(list, '/p', 'cat', deps)).results)).toEqual(
-      ['c', 'a', 'b', 'd'],
-    );
-    expect(ids((await measureFirstPages(list, '/p', 'dog', deps)).results)).toEqual(
-      ['a', 'b', 'c', 'd'],
-    );
+    expect(
+      ids((await measureFirstPages(list, '/p', 'cat', deps)).results),
+    ).toEqual(['c', 'a', 'b', 'd']);
+    expect(
+      ids((await measureFirstPages(list, '/p', 'dog', deps)).results),
+    ).toEqual(['a', 'b', 'c', 'd']);
   });
 });

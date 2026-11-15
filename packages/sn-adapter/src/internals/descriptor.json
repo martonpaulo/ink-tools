@@ -1,13 +1,14 @@
 {
   "schema": 1,
-  "descriptorVersion": "2026.11.13",
+  "descriptorVersion": "2026.11.15",
   "device": {"model": "Supernote Nomad", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466"},
   "calendar": {
     "authority": "com.ratta.supernote.calendar.provider",
     "tables": {
       "events": {
         "path": "data_info",
-        "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"]
+        "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"],
+        "fields": {"eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "modified": "lastModifiedTime"}
       },
       "config": {"path": "config_info", "columns": []}
     },
@@ -18,7 +19,8 @@
     "tables": {
       "tasks": {
         "path": "tasks_table",
-        "columns": ["id", "taskListId", "taskId", "title", "detail", "lastModified", "recurrence", "isReminderOn", "status", "importance", "dueTime", "completedTime", "links", "deleted", "hasSync", "sort", "sortCompleted", "sortTime", "plannedSort", "plannedSortTime"]
+        "columns": ["id", "taskListId", "taskId", "title", "detail", "lastModified", "recurrence", "isReminderOn", "status", "importance", "dueTime", "completedTime", "links", "deleted", "hasSync", "sort", "sortCompleted", "sortTime", "plannedSort", "plannedSortTime"],
+        "fields": {"rowId": "id", "listId": "taskListId", "taskId": "taskId", "title": "title", "detail": "detail", "modified": "lastModified", "status": "status", "due": "dueTime", "completedAt": "completedTime", "deleted": "deleted", "hasSync": "hasSync"}
       },
       "groups": {
         "path": "task_group_table",

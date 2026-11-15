@@ -8,7 +8,11 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {PluginManager} from 'sn-plugin-lib';
 import {failureText, Step} from '../src/flow/failure';
 import {searchState} from '../src/search-core/state';
-import {EMPTY_LASSO_CODE, MODULE_CODE, TIMEOUT_CODE} from '../src/sdk/result';
+import {
+  EMPTY_LASSO_CODE,
+  MODULE_CODE,
+  TIMEOUT_CODE,
+} from '@supernote-tools/sn-adapter/official';
 import type {SourceAdapter} from '../src/search-core';
 import type {SourceOutcome} from '../src/search-core/types';
 import {copy} from '../src/ui/copy';

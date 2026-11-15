@@ -5,7 +5,7 @@ import {
   measureThumb,
 } from '../src/flow/measure';
 import {logLines, startLog} from '../src/log/memory';
-import {ok, fail, MODULE_CODE} from '../src/sdk/result';
+import {ok, fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import {
   chooseLook,
   isFaintLines,
@@ -188,7 +188,11 @@ describe('needsContour (#66, #104)', () => {
     expect(isPhotoLike(darkPainting)).toBe(true);
     expect(isPhotoLike(photo)).toBe(true);
     expect(isPhotoLike(glossy)).toBe(false);
-    for (const query of ['cervantes', 'cervantes outline', 'cat coloring page']) {
+    for (const query of [
+      'cervantes',
+      'cervantes outline',
+      'cat coloring page',
+    ]) {
       expect(needsContour(darkPainting, query)).toBe(false);
       expect(needsContour(photo, query)).toBe(false);
       for (const all of [false, true]) {
@@ -256,7 +260,9 @@ describe('needsContour (#66, #104)', () => {
       mime: 'image/jpeg',
       tags: ['Flag of a region'],
     };
-    expect(chooseLook(glossy, 'spain', false, undefined, place)).toBe('contour');
+    expect(chooseLook(glossy, 'spain', false, undefined, place)).toBe(
+      'contour',
+    );
     const signal = {...place, title: 'Signal A', mime: 'image/svg+xml'};
     expect(chooseLook(glossy, 'spain', false, undefined, signal)).toBe('found');
   });
@@ -686,9 +692,9 @@ describe('measureFirstPages (#66)', () => {
         ).toBe('file:///p/thumbs/photo');
       }
     }
-    expect(converted.filter(line => !line.startsWith('/p/thumbs/line'))).toEqual(
-      [],
-    );
+    expect(
+      converted.filter(line => !line.startsWith('/p/thumbs/line')),
+    ).toEqual([]);
   });
 
   it('writes derived thumbnails to the private thumbs folder, never beside a shared symbol (#103)', async () => {
@@ -699,7 +705,9 @@ describe('measureFirstPages (#66)', () => {
     const shared = {
       ...base,
       thumb: async (item: SearchResult) =>
-        `file://${item.id === 'openmoji:1F600' ? symbol : `/p/thumbs/${item.id}`}`,
+        `file://${
+          item.id === 'openmoji:1F600' ? symbol : `/p/thumbs/${item.id}`
+        }`,
       analyzer: {
         ...base.analyzer,
         measure: async (path: string) =>

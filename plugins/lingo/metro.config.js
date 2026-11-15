@@ -1,5 +1,6 @@
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const uiKit = require('../../packages/ui-kit/plugin-config');
+const snAdapter = require('../../packages/sn-adapter/plugin-config');
 
 /**
  * Metro configuration
@@ -8,9 +9,13 @@ const uiKit = require('../../packages/ui-kit/plugin-config');
  * @type {import('@react-native/metro-config').MetroConfig}
  */
 const config = {
-    resolver: {
-        useWatchman: !process.env.CI,
-    },
+  resolver: {
+    useWatchman: !process.env.CI,
+  },
 };
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), uiKit.metro(__dirname), config);
+module.exports = mergeConfig(
+  getDefaultConfig(__dirname),
+  snAdapter.metro(uiKit.metro(__dirname)),
+  config,
+);
