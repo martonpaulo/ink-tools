@@ -1,22 +1,32 @@
 /**
- * Wiktionary as a `DictionaryProvider` that defines (#115): the word's page on its own language's
+ * Wiktionary as a `DictionaryProvider` that defines (#115) and translates (#127): the word's page on its own language's
  * Wiktionary, read through the MediaWiki Action API (`action=parse&prop=wikitext`, keyless), and
- * only the definition lines of that language's section kept. The source the owner chose for the
+ * only the definition or translation-table lines of that language's section kept. The source the owner chose for the
  * shared engine (D29 B on #46).
  *
  * The page layout is a community convention, not an API, so the parse fails closed: a page with no
  * definition line for the language is an empty list, never a guess. The layouts follow each
  * Wiktionary's style guide (pt «Wikcionário:Livro de estilo», es «Wikcionario:Estructura");
  * shortcut: the fixtures are cut from those guides, because the cloud proxy refuses
- * `*.wiktionary.org`; replace them with recorded pages on the Mac (#115 Tasks).
+ * `*.wiktionary.org`; replace them with recorded pages on the Mac (#115 and #127 Tasks).
  */
-import type {Definition, DefinitionQuery, DictionaryProvider, LanguageCode} from './dictionary';
+import type {
+  Definition,
+  DefinitionQuery,
+  DictionaryProvider,
+  LanguageCode,
+  Translation,
+  TranslationQuery,
+} from './dictionary';
 
 /** GETs a text body, or throws with a sentence; the plugin passes its own fetcher here. */
 export type FetchText = (url: string) => Promise<string>;
 
 /** The most senses one definition gives: a text box under a word, not a dictionary page. */
 export const MAX_SENSES = 3;
+
+/** The most translations one answer gives, for the same reason. */
+export const MAX_TRANSLATIONS = 3;
 
 /** The languages whose Wiktionary layout this parse reads. */
 export const DEFINED_LANGUAGES: readonly LanguageCode[] = ['pt', 'es'];
@@ -86,8 +96,8 @@ function partOfSpeech(line: string): string | null {
 }
 
 /** One sense line's text: pt `# text`, es `;1 {{csem|…}}: text`; null for any other line. */
-function senseText(line: string, language: LanguageCode): string | null {
-  if (language === 'es') {
+function senseText(line: string, layout: LanguageCode): string | null {
+  if (layout === 'es') {
     const es = /^;\s*\d+[^:]*:(.*)$/.exec(line);
     return es ? es[1] : null;
   }
@@ -95,8 +105,15 @@ function senseText(line: string, language: LanguageCode): string | null {
   return pt ? pt[1] : null;
 }
 
-/** The definitions of one page's section for `language`, at most `MAX_SENSES`, in page order. */
-export function parseDefinitions(wikitext: string, language: LanguageCode): Definition[] {
+/**
+ * The definitions of one page's section for `language`, at most `MAX_SENSES`, in page order.
+ * `layout` is the Wiktionary the page comes from, when it is not `language`'s own.
+ */
+export function parseDefinitions(
+  wikitext: string,
+  language: LanguageCode,
+  layout: LanguageCode = language,
+): Definition[] {
   const section = languageSection(wikitext, language);
   if (section === null) return [];
   const definitions: Definition[] = [];
@@ -108,7 +125,7 @@ export function parseDefinitions(wikitext: string, language: LanguageCode): Defi
       speech = heading;
       continue;
     }
-    const sense = senseText(line, language);
+    const sense = senseText(line, layout);
     const text = sense === null ? '' : plainText(sense);
     if (text === '') continue;
     definitions.push(speech ? {text, partOfSpeech: speech} : {text});
@@ -139,26 +156,99 @@ export function readParseAnswer(body: string): string | null {
   return fields.parse.wikitext;
 }
 
+/** One translation's text: `[[maçã]]` or `苹果 (píngguǒ)`, its reading split out. */
+function translationOf(raw: string, sense: string | null): Translation | null {
+  const text = plainText(raw);
+  if (text === '') return null;
+  // A reading in brackets after the word, such as pinyin: Latin letters with their tone marks.
+  const reading = /^(.*?)\s*[(（]\s*([\p{Script=Latin}\s'’]+)\s*[)）]$/u.exec(text);
+  const translation: Translation = reading
+    ? {text: reading[1].trim(), reading: reading[2].trim()}
+    : {text};
+  if (translation.text === '') return null;
+  return sense ? {...translation, sense} : translation;
+}
+
 /**
- * The provider. It defines `pt` and `es`; translation is #46's and throws until then. A
- * handwritten capital («Maçã») is tried again in lower case when the page is missing.
+ * The `to` translations of one template line: pt `{{trad|es|[[manzana]], [[poma]]}}`, es
+ * `{{t|pt|a1=1|t1=maçã}}` or `{{t+|pt|1|maçã}}`. A template for another language is null.
+ */
+function templateTranslations(name: string, args: string[], to: LanguageCode): string[] | null {
+  if (args[0] !== to) return null;
+  const rest = args.slice(1);
+  if (name === 'trad') return rest.join('|').split(/[,;]/);
+  const numbered = rest.filter(arg => /^t\d+\s*=/.test(arg)).map(arg => arg.replace(/^t\d+\s*=/, ''));
+  if (numbered.length > 0) return numbered;
+  // `t+`: a sense number, then the words; a named argument is not a word.
+  return rest.filter(arg => !arg.includes('=') && !/^[\d,\s]+$/.test(arg));
+}
+
+/** A table's opening template, whose first argument names the sense: pt `tradini`, es `trad-arriba`. */
+const TABLE_START = /^\{\{\s*(?:tradini|trad-arriba)\s*(?:\|([^{}]*))?\}\}/;
+
+/** The translations into `to` in the translation tables of the page's section for `from`. */
+export function parseTranslations(
+  wikitext: string,
+  from: LanguageCode,
+  to: LanguageCode,
+): Translation[] {
+  const section = languageSection(wikitext, from);
+  if (section === null) return [];
+  const translations: Translation[] = [];
+  let sense: string | null = null;
+  for (const raw of section.split('\n')) {
+    const line = raw.trim();
+    const table = TABLE_START.exec(line);
+    if (table) {
+      sense = table[1] ? plainText(table[1]) || null : null;
+      continue;
+    }
+    // Translation templates: pt `trad`, es `t` and `t+`; a link inside keeps its brackets.
+    for (const match of line.matchAll(/\{\{\s*(trad|t\+?)\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g)) {
+      const name = match[1];
+      const args = match[2].split(/\|(?![^[]*\]\])/).map(arg => arg.trim());
+      for (const word of templateTranslations(name, args, to) ?? []) {
+        const translation = translationOf(word, sense);
+        if (translation === null) continue;
+        if (translations.some(known => known.text === translation.text)) continue;
+        translations.push(translation);
+        if (translations.length === MAX_TRANSLATIONS) return translations;
+      }
+    }
+  }
+  return translations;
+}
+
+/**
+ * The provider. It defines `pt` and `es`, and translates a `pt` or `es` word from its page's
+ * translation tables. A Chinese word has no table this parse reads: it is translated from its
+ * section on the target language's page, whose senses are written in that language. A handwritten
+ * capital («Maçã») is tried again in lower case when the page is missing.
  */
 export function wiktionaryDefiner(fetchText: FetchText): DictionaryProvider {
-  const page = async (word: string, language: LanguageCode): Promise<string | null> =>
-    readParseAnswer(await fetchText(parseUrl(word, language)));
+  const page = async (word: string, language: LanguageCode): Promise<string | null> => {
+    const wikitext = readParseAnswer(await fetchText(parseUrl(word, language)));
+    const lower = word.toLocaleLowerCase(language);
+    if (wikitext !== null || lower === word) return wikitext;
+    return readParseAnswer(await fetchText(parseUrl(lower, language)));
+  };
   return {
     id: 'wiktionary',
-    // Not an empty list: that would say every word is unknown (#46 builds translation).
-    async translate() {
-      throw new Error('wiktionary: translation is not built yet');
+    async translate({word, from, to}: TranslationQuery): Promise<Translation[]> {
+      if (DEFINED_LANGUAGES.includes(from)) {
+        const wikitext = await page(word, from);
+        return wikitext === null ? [] : parseTranslations(wikitext, from, to);
+      }
+      if (!DEFINED_LANGUAGES.includes(to)) return [];
+      const wikitext = await page(word, to);
+      if (wikitext === null) return [];
+      return parseDefinitions(wikitext, from, to)
+        .slice(0, MAX_TRANSLATIONS)
+        .map(({text}) => ({text}));
     },
     async define({word, language}: DefinitionQuery): Promise<Definition[]> {
       if (!DEFINED_LANGUAGES.includes(language)) return [];
-      let wikitext = await page(word, language);
-      const lower = word.toLocaleLowerCase(language);
-      if (wikitext === null && lower !== word) {
-        wikitext = await page(lower, language);
-      }
+      const wikitext = await page(word, language);
       return wikitext === null ? [] : parseDefinitions(wikitext, language);
     },
   };

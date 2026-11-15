@@ -1,24 +1,29 @@
 /**
  * The fixtures are cut from each Wiktionary's style guide, not recorded (the cloud proxy refuses
- * `*.wiktionary.org`); #115's Mac task replaces them with recorded pages.
+ * `*.wiktionary.org`); the Mac tasks of #115 and #127 replace them with recorded pages.
  */
 import ptPage from './fixtures/wiktionary-pt.json';
 import esPage from './fixtures/wiktionary-es.json';
 import missingPage from './fixtures/wiktionary-missing.json';
+import zhPage from './fixtures/wiktionary-zh.json';
 import {
   MAX_SENSES,
+  MAX_TRANSLATIONS,
   parseDefinitions,
+  parseTranslations,
   parseUrl,
   plainText,
   readParseAnswer,
   wiktionaryDefiner,
 } from '../src/wiktionary';
-import {defineFirst} from '../src/dictionary';
+import {apertiumTranslator} from '../src/apertium';
+import {defineFirst, translateFirst} from '../src/dictionary';
 
 const FIXTURES: Record<string, unknown> = {
   'wiktionary-pt.json': ptPage,
   'wiktionary-es.json': esPage,
   'wiktionary-missing.json': missingPage,
+  'wiktionary-zh.json': zhPage,
 };
 /** The answer body as the API sends it. */
 const fixture = (name: string) => JSON.stringify(FIXTURES[name]);
@@ -75,11 +80,67 @@ test('the provider asks the word, then its lower case when the page is missing',
   expect(asked[0]).toMatch(/^https:\/\/pt\.wiktionary\.org\/w\/api\.php\?action=parse&page=/);
 });
 
-test('a failed read throws into the errors; zh is not defined; translation is not claimed', async () => {
+test('a failed read throws into the errors; zh is not defined', async () => {
   const definer = wiktionaryDefiner(async () => {
     throw new Error('HTTP 503');
   });
   const result = await defineFirst([definer], 'manzana', ['es', 'zh']);
   expect(result).toEqual({definitions: [], providerId: null, language: null, errors: ['wiktionary es: HTTP 503']});
-  await expect(definer.translate({word: 'maçã', from: 'pt', to: 'es'})).rejects.toThrow(/not built/);
+  await expect(definer.translate({word: 'maçã', from: 'pt', to: 'es'})).rejects.toThrow(/HTTP 503/);
+});
+
+test('pt: the target language\'s table lines only, split, with the sense and the pinyin', () => {
+  const text = wikitext('wiktionary-pt.json');
+  expect(parseTranslations(text, 'pt', 'es')).toEqual([
+    {text: 'manzana', sense: 'fruto'},
+    {text: 'poma', sense: 'fruto'},
+  ]);
+  expect(parseTranslations(text, 'pt', 'zh')).toEqual([
+    {text: '苹果', reading: 'píngguǒ', sense: 'fruto'},
+  ]);
+});
+
+test('es: numbered `t` arguments are the words; another language\'s line is not', () => {
+  expect(parseTranslations(wikitext('wiktionary-es.json'), 'es', 'pt')).toEqual([
+    {text: 'maçã'},
+    {text: 'quarteirão'},
+  ]);
+  expect(parseTranslations(wikitext('wiktionary-es.json'), 'es', 'zh')).toEqual([]);
+});
+
+test('no table, no section, or too many lines: empty or capped, never a guess', () => {
+  expect(parseTranslations('={{-pt-}}=\n# sem tabela', 'pt', 'es')).toEqual([]);
+  expect(parseTranslations(wikitext('wiktionary-pt.json'), 'es', 'pt')).toEqual([]);
+  const many = '={{-pt-}}=\n{{tradini}}\n* {{trad|es|a, b, c, d, e}}\n{{tradfim}}';
+  expect(parseTranslations(many, 'pt', 'es')).toHaveLength(MAX_TRANSLATIONS);
+});
+
+test('zh to pt: the Chinese section of the pt page, its senses as translations', async () => {
+  const asked: string[] = [];
+  const wiktionary = wiktionaryDefiner(async url => {
+    asked.push(url);
+    return fixture('wiktionary-zh.json');
+  });
+  const result = await translateFirst([wiktionary], {word: '苹果', from: 'zh', to: 'pt'});
+  expect(result.translations).toEqual([{text: 'maçã'}, {text: 'macieira'}]);
+  expect(asked).toEqual([parseUrl('苹果', 'pt')]);
+});
+
+test('Wiktionary first, Apertium only when it has no line; zh never asks Apertium', async () => {
+  const asked: string[] = [];
+  const fetchText = async (url: string) => {
+    asked.push(url);
+    if (url.includes('apertium')) {
+      return '{"responseData":{"translatedText":"aproveitar"},"responseStatus":200}';
+    }
+    return fixture('wiktionary-missing.json');
+  };
+  const providers = [wiktionaryDefiner(fetchText), apertiumTranslator(fetchText)];
+  const es = await translateFirst(providers, {word: 'aprovechar', from: 'es', to: 'pt'});
+  expect(es).toMatchObject({providerId: 'apertium', errors: []});
+  expect(es.translations[0].text).toBe('aproveitar');
+  asked.length = 0;
+  const zh = await translateFirst(providers, {word: '苹果', from: 'zh', to: 'pt'});
+  expect(zh).toEqual({translations: [], providerId: null, errors: []});
+  expect(asked.some(url => url.includes('apertium'))).toBe(false);
 });
