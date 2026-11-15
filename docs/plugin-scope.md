@@ -74,19 +74,37 @@ Used by `lingo` and `lookup`'s definition mode, behind a `DictionaryProvider` in
 
 ## retouch
 
-Edit an image already on the page, **invoked by lassoing the image**. Edit set so far (more tools
-under review):
+Edit an image already on the page, **invoked by lassoing the image**. Every choice costs one e-ink
+refresh, so retouch shows finished options at once and the user taps one, like Ink2Pic's results
+grid; it has no sliders and no live preview
+([#47](https://github.com/martonpaulo/supernote-tools/issues/47)).
 
-- Rotate 90°, mirror horizontal/vertical, invert (negative).
-- Crop and resize.
-- E-ink greyscale: grey levels, brightness/contrast, threshold/dither for the 16 greys.
-- Magic-wand object cutout, background removal, eraser.
-- Photo → line art (edge detection), for a drawing look that reads well on e-ink and matches
-  `lookup`'s illustration mode.
-- Deskew / perspective correction, for photographed or scanned images (helps the phone-scan flow).
-- Dither / halftone styles (Floyd–Steinberg, ordered, halftone) beyond the simple threshold.
-- Make sticker (cutout + transparent/white background) for reuse; sharpen / auto-enhance for
-  legibility.
+Essential:
+
+- **Enhance for e-ink**, one tap: grey that keeps colour contrast, a gamma step, sharpen, the 16
+  greys ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+- **Lighter** and **Darker** in fixed gamma steps
+  ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+- **Undo** and **Restore original** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+- **Style grid**: Photo (16 greys), Line art (contour, matching `lookup`'s illustration mode), Black
+  and white (threshold), Dither (Floyd–Steinberg and Atkinson)
+  ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)).
+- **Crop with the pen** (draw the rectangle) and **trim white margins** automatically
+  ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
+
+Very useful:
+
+- Rotate 90°, mirror horizontal or vertical, invert (a dark-mode screenshot becomes paper)
+  ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
+- **Document** mode: deskew, perspective correction, white background, black and white, for a
+  photographed page from the phone ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)).
+- Erase with the pen, background removal, make a sticker
+  ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
+
+Not planned: magic wand (imprecise with a pen; background removal covers it), brightness, contrast
+and levels sliders, ordered and halftone dither and other error-diffusion styles, spread splitting,
+forced white borders, OCR of the image. Resize stays only if the native lasso cannot already resize
+an image ([#130](https://github.com/martonpaulo/supernote-tools/issues/130)).
 
 ## desk
 
