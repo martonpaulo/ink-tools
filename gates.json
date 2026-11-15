@@ -34,6 +34,7 @@
     {"path": ".github/workflows/validate-snadb.yml", "gates": ["snadb"]},
     {"path": "plugins/ink2pic/", "gates": ["ink2pic"]},
     {"path": ".github/workflows/validate-ink2pic.yml", "gates": ["ink2pic"]},
-    {"path": "design/", "gates": ["design"]}
+    {"path": "design/", "gates": ["design"]},
+    {"path": ".github/workflows/validate-design.yml", "gates": ["design"]}
   ]
 }
