@@ -35,13 +35,17 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
   /** The insert's preparation, on its own thread: it never waits behind thumbnails (#101). */
   private final ExecutorService insert = workers.single();
 
-  public Ink2PicImageModule(ReactApplicationContext context) {
+  /** The React module name, which the plugin's package gives: two plugins never share one (#142). */
+  private final String name;
+
+  public Ink2PicImageModule(ReactApplicationContext context, String name) {
     super(context);
+    this.name = name;
   }
 
   @Override
   public String getName() {
-    return "Ink2PicImage";
+    return name;
   }
 
   /** A new React instance makes a new module: this one's threads stop with it (#95, #101). */

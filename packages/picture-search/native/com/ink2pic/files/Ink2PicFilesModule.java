@@ -37,13 +37,17 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   /** The person's downloads, holding the gate from submit to end, also when refused (#46). */
   private final java.util.concurrent.Executor heldDownloads = gate.holding(downloads);
 
-  public Ink2PicFilesModule(ReactApplicationContext context) {
+  /** The React module name, which the plugin's package gives: two plugins never share one (#142). */
+  private final String name;
+
+  public Ink2PicFilesModule(ReactApplicationContext context, String name) {
     super(context);
+    this.name = name;
   }
 
   @Override
   public String getName() {
-    return "Ink2PicFiles";
+    return name;
   }
 
   /** A new React instance makes a new module: this one's threads stop with it (#95). */

@@ -49,7 +49,7 @@ export const LATER_MEASURE_LIMIT_MS = 2000;
 const FILE_PREFIX = 'file://';
 /**
  * Thumbnails come at 330 and 400 px; never scaled up. `EinkPixels.MEASURE_WIDTH` holds it too;
- * dry-check.json's twins name this one the owner, native/tests/twins.json the value.
+ * dry-check.json's twins name this one the owner, packages/picture-search/native/twins.json the value.
  */
 export const MEASURE_WIDTH = 400;
 const DIGITS = 2;

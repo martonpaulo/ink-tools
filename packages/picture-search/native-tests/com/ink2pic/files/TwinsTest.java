@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 /**
  * The Java side of the rules both languages hold (#100), against `packages/picture-search/native/twins.json` (#125), which
- * `__tests__/twins.test.ts` reads too. Run by `node scripts/native-build.cjs --test` from the
- * repository root.
+ * Ink2Pic's `__tests__/twins.test.ts` reads too. Run by Ink2Pic's `node scripts/native-build.cjs --test`
+ * from the plugin's folder, which the path below is relative to.
  */
 public final class TwinsTest {
   private static final String GOLDEN = "../../packages/picture-search/native/twins.json";

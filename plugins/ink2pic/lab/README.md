@@ -112,7 +112,7 @@ node lab/timing.mjs <run> after                              # the pool and the 
 `before` runs everything on one worker and measures each converted file again; `after` runs the
 thumbnails on a pool of three and the insert on its own thread. `--native` times the pixel code
 of another commit, such as `git show <commit>:packages/picture-search/native/...` written to a folder
-(`plugins/ink2pic/native/src/...` before [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). The device is 3
+(`plugins/ink2pic/native/src/...` before [#125](https://github.com/martonpaulo/supernote-tools/issues/125), and for the file module before [#142](https://github.com/martonpaulo/supernote-tools/issues/142)). The device is 3
 to 8 times slower than a desktop; the device's own `time` lines are the proof there.
 
 ## Files

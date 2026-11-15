@@ -119,7 +119,7 @@ const FILLED_BORDER = 0.3;
 const PHOTO_MID = 0.4;
 /**
  * From this border white share the subject stands on clean paper. `EinkPixels.CLEAN_BORDER` holds
- * it too; dry-check.json's twins name this one the owner, native/tests/twins.json the value.
+ * it too; dry-check.json's twins name this one the owner, native/twins.json the value.
  */
 export const CLEAN_BORDER = 0.85;
 const TEXT_INK = 0.25;
