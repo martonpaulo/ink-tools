@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="design/icon.svg" width="96" height="96" alt="">
+
 # Supernote Tools
 
 Unofficial tools for Supernote e-ink tablets: a calendar-sync plugin, a handwriting-to-picture plugin, and an ADB control CLI.
