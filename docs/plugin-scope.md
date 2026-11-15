@@ -217,9 +217,17 @@ above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
   audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)); a device without LocalSend; anything over the internet.
   A lasso selection as typed text is [#99](https://github.com/martonpaulo/supernote-tools/issues/99).
 
-**Receive half** ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)): receiving takes one tap on «Receive». Whether a listener can stay
-open in the background is measured in the tablet round and decided after it (product audit, owner,
-[#141](https://github.com/martonpaulo/supernote-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/supernote-tools/issues/143).
+**Receive half** ([#49](https://github.com/martonpaulo/supernote-tools/issues/49), owner D42 B: our own, not Notipal):
+
+- «Receive» in the note's sidebar makes the tablet a LocalSend device named «Supernote» for two
+  minutes, one tap. The first text lands as a selected text box, the first PNG or JPEG as the
+  host's floating picture; the person moves it. A HEIC photo is refused: the Shortcut converts it
+  first.
+- The receiver serves HTTPS with Relay's own X.509 v3 certificate, since iOS LocalSend refuses a
+  v1 one (`UnsupportedCertVersion`, what the owner met with Notipal). The same certificate's
+  fingerprint is the tablet's identity when it sends.
+- Whether a listener can stay open in the background is measured in the tablet round and decided
+  after it (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/supernote-tools/issues/143).
 
 ## Note templates
 

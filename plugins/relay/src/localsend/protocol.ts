@@ -54,8 +54,8 @@ function info(sender: Sender) {
     alias: sender.alias,
     version: PROTOCOL_VERSION,
     deviceModel: 'Supernote',
-    // We run no server and download nothing: a receiver answers our announce by multicast.
-    deviceType: 'headless',
+    // A tablet; while it receives (#49) it serves HTTPS on LOCALSEND_PORT. It offers no download.
+    deviceType: 'mobile',
     fingerprint: sender.fingerprint,
     port: LOCALSEND_PORT,
     protocol: 'https',
@@ -226,4 +226,106 @@ export function parsePrepareUpload(
 /** The upload answer: only 200 is «sent». */
 export function parseUpload(status: number): SendResult {
   return status === 200 ? {kind: 'sent'} : {kind: 'failed', status};
+}
+
+/**
+ * The receive half (#49). Our info as a receiver, for `/info`, `/register` and the multicast
+ * answer; `fingerprint` is the SHA-256 of our v3 certificate.
+ */
+export function receiverInfo(self: Sender): string {
+  return JSON.stringify(info(self));
+}
+
+/** The multicast answer to another device's announce. */
+export function announceAnswer(self: Sender): string {
+  return JSON.stringify({...info(self), announce: false});
+}
+
+/** The largest image we take; Java's `Receiver.MAX_FILE_BYTES` is the same number. */
+export const MAX_FILE_BYTES = 30 * 1024 * 1024;
+
+/** The image types `insertImage` takes, with the extension the file is saved under. */
+const IMAGE_TYPES: Record<string, 'png' | 'jpg'> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+};
+
+/** What an offer brings, or why it is refused. */
+export type Taken =
+  | {kind: 'text'; text: string}
+  | {kind: 'image'; fileId: string; extension: 'png' | 'jpg'}
+  | {kind: 'refuse'; reason: 'type' | 'size' | 'shape'};
+
+/** The answer to one prepare-upload, as `RelayLocalSend.answer` takes it. */
+export type Decision = {
+  status: number;
+  body: string;
+  fileId: string | null;
+  extension: 'png' | 'jpg' | null;
+  taken: Taken;
+};
+
+/**
+ * Reads one prepare-upload body: one text message (`text/plain` with its `preview`) or one image
+ * `insertImage` takes. Anything else, two files included, is refused (Plan › Review focus).
+ */
+export function readOffer(text: string): Taken {
+  const body = parseJson(text);
+  if (!isRecord(body) || !isRecord(body.files)) {
+    return {kind: 'refuse', reason: 'shape'};
+  }
+  const files = Object.entries(body.files);
+  if (files.length !== 1) {
+    return {kind: 'refuse', reason: 'shape'};
+  }
+  const [fileId, file] = files[0];
+  if (!shortText(fileId, 256) || !isRecord(file) || typeof file.fileType !== 'string') {
+    return {kind: 'refuse', reason: 'shape'};
+  }
+  const fileType = file.fileType.toLowerCase();
+  if (fileType.startsWith('text/')) {
+    return typeof file.preview === 'string' && file.preview.trim().length > 0
+      ? {kind: 'text', text: file.preview}
+      : {kind: 'refuse', reason: 'shape'};
+  }
+  const extension = IMAGE_TYPES[fileType];
+  if (extension === undefined) {
+    return {kind: 'refuse', reason: 'type'};
+  }
+  if (
+    typeof file.size !== 'number' ||
+    !Number.isInteger(file.size) ||
+    file.size < 1 ||
+    file.size > MAX_FILE_BYTES
+  ) {
+    return {kind: 'refuse', reason: 'size'};
+  }
+  return {kind: 'image', fileId, extension};
+}
+
+/**
+ * The answer to an offer: 204 for a text, whose preview is all we need; 200 with the session and
+ * the one token for an image; 403 otherwise.
+ */
+export function decideOffer(
+  text: string,
+  sessionId: string,
+  token: string,
+): Decision {
+  const taken = readOffer(text);
+  switch (taken.kind) {
+    case 'text':
+      return {status: 204, body: '', fileId: null, extension: null, taken};
+    case 'image':
+      return {
+        status: 200,
+        body: JSON.stringify({sessionId, files: {[taken.fileId]: token}}),
+        fileId: taken.fileId,
+        extension: taken.extension,
+        taken,
+      };
+    case 'refuse':
+      return {status: 403, body: '', fileId: null, extension: null, taken};
+  }
 }

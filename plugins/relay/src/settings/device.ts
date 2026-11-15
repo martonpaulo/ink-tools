@@ -3,7 +3,11 @@
  * fingerprint for the announce. One small JSON file under the shared root; an unreadable file is
  * a fresh start, never a crash.
  */
-import {SHARED_ROOT} from '@supernote-tools/sn-adapter/official';
+import {
+  getPluginDirPath,
+  Result,
+  SHARED_ROOT,
+} from '@supernote-tools/sn-adapter/official';
 import {Device, isPrivateAddress} from '../localsend/protocol';
 import {Relay} from '../native';
 
@@ -81,4 +85,23 @@ export async function saveSettings(
     JSON.stringify(settings, null, 2),
   );
   return written.ok;
+}
+
+/**
+ * Our fingerprint to a receiver: the receive half's certificate (#49), so the tablet is one
+ * LocalSend device both ways; the saved one only while the identity cannot be read.
+ */
+export async function ownFingerprint(
+  native: Relay,
+  settings: Settings,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
+): Promise<string> {
+  const dir = await pluginDir();
+  if (dir.ok) {
+    const identity = await native.identity(dir.value);
+    if (identity.ok) {
+      return identity.value;
+    }
+  }
+  return settings.fingerprint;
 }

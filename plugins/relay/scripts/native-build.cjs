@@ -153,7 +153,7 @@ function packagePlugin() {
 function testNative() {
   // A temporary folder: the gate may run as another user than the one that owns build/.
   const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'relay-native-tests-'));
-  const pure = ['Discovery', 'PinnedClient', 'TextFiles'].map(name =>
+  const pure = ['Discovery', 'Identity', 'PinnedClient', 'Receiver', 'TextFiles'].map(name =>
     path.join(root, `native/src/com/relay/localsend/${name}.java`),
   );
   // Compile inside the try, so a compile error also removes the folder.
@@ -162,7 +162,7 @@ function testNative() {
       '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-d', classes,
       ...pure, ...javaSources(path.join(root, 'native/tests')),
     ]);
-    for (const test of ['DiscoveryTest', 'PinnedClientTest', 'TextFilesTest']) {
+    for (const test of ['DiscoveryTest', 'IdentityTest', 'PinnedClientTest', 'ReceiverTest', 'TextFilesTest']) {
       run(jdkTool('java'), ['-cp', classes, `com.relay.localsend.${test}`]);
     }
   } finally {

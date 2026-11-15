@@ -6,7 +6,17 @@ import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';
 import {ALIAS} from './src/run';
 import {discoverDevices} from './src/send/sendPng';
-import {loadSettings, saveSettings, Settings} from './src/settings/device';
+import {
+  ownFingerprint,
+  loadSettings,
+  saveSettings,
+  Settings,
+} from './src/settings/device';
+import {
+  onReceiveState,
+  receiveState,
+  ReceiveState,
+} from './src/receive/session';
 
 type Props = {native?: Relay};
 
@@ -19,11 +29,44 @@ export function deviceLabel(device: Device, all: Device[]): string {
   return twins > 1 ? `${device.alias} · ${device.ip}` : device.alias;
 }
 
+/** While a receive runs (#49): who the tablet is to the sender, and a way to stop. */
+export function ReceiveView({
+  state,
+  onStop,
+}: {
+  state: ReceiveState;
+  onStop: () => void;
+}) {
+  return (
+    <View style={shared.screen}>
+      <Text accessibilityRole="header" style={shared.textLarge}>
+        {copy.title}
+      </Text>
+      <Text accessibilityLiveRegion="polite" style={shared.text}>
+        {state === 'ready' ? copy.ready(ALIAS) : copy.starting}
+      </Text>
+      <Text style={shared.hint}>{copy.readyHint}</Text>
+      <Button label={copy.stop} onPress={onStop} />
+    </View>
+  );
+}
+
 /**
  * Relay's Settings view (#98): the LocalSend devices one search finds, and the one every send goes
  * to. Picking one saves it, pinned to its fingerprint; sizes and colours from the shared ui-kit.
  */
 export default function App({native = defaultRelay}: Props) {
+  const [receiving, setReceiving] = useState<ReceiveState>(receiveState());
+  useEffect(() => onReceiveState(setReceiving), []);
+  if (receiving !== 'idle') {
+    return (
+      <ReceiveView state={receiving} onStop={() => native.stopReceive()} />
+    );
+  }
+  return <SettingsView native={native} />;
+}
+
+function SettingsView({native}: {native: Relay}) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [devices, setDevices] = useState<Device[] | null>(null);
 
@@ -32,7 +75,7 @@ export default function App({native = defaultRelay}: Props) {
       setDevices(null);
       const found = await discoverDevices(native, {
         alias: ALIAS,
-        fingerprint: current.fingerprint,
+        fingerprint: await ownFingerprint(native, current),
       });
       setDevices(found.ok ? found.value : []);
     },

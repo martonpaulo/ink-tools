@@ -52,6 +52,13 @@ public final class DiscoveryTest {
     } finally {
       socket.close();
     }
+    // While receiving, only another device's announce is answered (#49).
+    check(Discovery.asksForAnswer("{\"fingerprint\":\"b\", \"announce\" : true}", "aa"),
+        "another device's announce is answered");
+    check(!Discovery.asksForAnswer("{\"fingerprint\":\"aa\",\"announce\":true}", "aa"),
+        "our own announce is not");
+    check(!Discovery.asksForAnswer("{\"fingerprint\":\"b\",\"announce\":false}", "aa"),
+        "an answer is not answered, so two receivers never loop");
     System.out.println("DiscoveryTest ok");
   }
 

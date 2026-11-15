@@ -1,7 +1,12 @@
 /** LocalSend v2 at the edge (#98): the request bodies and every answer we read. */
 import {
   announce,
+  announceAnswer,
+  decideOffer,
   Device,
+  MAX_FILE_BYTES,
+  readOffer,
+  receiverInfo,
   isPrivateAddress,
   MAX_ANSWER_BYTES,
   parseAnnounce,
@@ -29,7 +34,7 @@ test('the announce asks receivers to answer and offers no download', () => {
     alias: 'Supernote',
     version: '2.1',
     deviceModel: 'Supernote',
-    deviceType: 'headless',
+    deviceType: 'mobile',
     fingerprint: 'self-fp',
     port: 53317,
     protocol: 'https',
@@ -191,4 +196,72 @@ describe('parsePrepareUpload', () => {
 test('only an upload answered 200 is sent', () => {
   expect(parseUpload(200)).toEqual({kind: 'sent'});
   expect(parseUpload(400)).toEqual({kind: 'failed', status: 400});
+});
+
+describe('receiving an offer (#49)', () => {
+  const offer = (files: Record<string, unknown>) =>
+    JSON.stringify({info: {alias: 'iPhone'}, files});
+
+  test('a text message is taken from its preview and answered 204', () => {
+    const decision = decideOffer(
+      offer({t: {id: 't', fileName: 'a.txt', size: 5, fileType: 'text/plain', preview: 'hello'}}),
+      's',
+      'k',
+    );
+    expect(decision).toEqual({
+      status: 204,
+      body: '',
+      fileId: null,
+      extension: null,
+      taken: {kind: 'text', text: 'hello'},
+    });
+  });
+
+  test('an image opens a session with one token, under our extension', () => {
+    const decision = decideOffer(
+      offer({f: {id: 'f', fileName: '../x.JPG', size: 10, fileType: 'image/jpeg'}}),
+      'sess',
+      'tok',
+    );
+    expect(decision.status).toBe(200);
+    expect(JSON.parse(decision.body)).toEqual({sessionId: 'sess', files: {f: 'tok'}});
+    expect(decision.fileId).toBe('f');
+    expect(decision.extension).toBe('jpg');
+  });
+
+  test.each([
+    ['a text with no preview', {t: {fileType: 'text/plain', size: 1}}, 'shape'],
+    ['an empty preview', {t: {fileType: 'text/plain', preview: '  '}}, 'shape'],
+    [
+      'two files',
+      {a: {fileType: 'image/png', size: 1}, b: {fileType: 'image/png', size: 1}},
+      'shape',
+    ],
+    ['an iPhone HEIC photo', {f: {fileType: 'image/heic', size: 10}}, 'type'],
+    ['a PDF', {f: {fileType: 'application/pdf', size: 10}}, 'type'],
+    ['an image over the limit', {f: {fileType: 'image/png', size: MAX_FILE_BYTES + 1}}, 'size'],
+    ['an image with no size', {f: {fileType: 'image/png'}}, 'size'],
+  ])('%s is refused with 403', (_what, files, reason) => {
+    const decision = decideOffer(offer(files), 's', 'k');
+    expect(decision.status).toBe(403);
+    expect(decision.fileId).toBeNull();
+    expect(decision.taken).toEqual({kind: 'refuse', reason});
+  });
+
+  test.each(['', 'not json', '[]', '{"files":[]}', 'x'.repeat(MAX_ANSWER_BYTES + 1)])(
+    'an unknown body %# is refused',
+    text => {
+      expect(readOffer(text)).toEqual({kind: 'refuse', reason: 'shape'});
+    },
+  );
+
+  test('our info as a receiver serves HTTPS and is not an announce', () => {
+    expect(JSON.parse(receiverInfo(sender))).toMatchObject({
+      fingerprint: 'self-fp',
+      protocol: 'https',
+      port: 53317,
+    });
+    expect(JSON.parse(receiverInfo(sender)).announce).toBeUndefined();
+    expect(JSON.parse(announceAnswer(sender)).announce).toBe(false);
+  });
 });

@@ -1,9 +1,16 @@
 /**
- * One tap of «Send page» or «Send selection» (#98), from the settings to the toast line.
+ * One tap of «Send page» or «Send selection» (#98), from the settings to the toast line, and the
+ * note side of «Receive» (#49).
  */
 import {
+  closePluginView,
   getCurrentFilePath,
   getCurrentPageNum,
+  getPageSize,
+  getPluginDirPath,
+  insertImage,
+  insertText,
+  lassoElements,
   lassoImage,
   pageImage,
   Result,
@@ -11,7 +18,8 @@ import {
 import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
 import {Outcome, sendCapture} from './send/sendPng';
-import {loadSettings} from './settings/device';
+import {NoteHost, Size} from './receive/receive';
+import {loadSettings, ownFingerprint} from './settings/device';
 
 /** How the tablet names itself to a receiver. */
 export const ALIAS = 'Supernote';
@@ -19,6 +27,7 @@ export const ALIAS = 'Supernote';
 /** Button ids, each its own (#98). */
 export const SEND_PAGE_ID = 100;
 export const SEND_SELECTION_ID = 101;
+export const RECEIVE_ID = 102;
 
 export type Capture = 'page' | 'selection';
 
@@ -39,7 +48,10 @@ export async function runSend(
   native: Relay = relay(),
 ): Promise<Outcome> {
   const settings = await loadSettings(native);
-  const sender: Sender = {alias: ALIAS, fingerprint: settings.fingerprint};
+  const sender: Sender = {
+    alias: ALIAS,
+    fingerprint: await ownFingerprint(native, settings),
+  };
   return sendCapture(
     native,
     sender,
@@ -48,3 +60,25 @@ export async function runSend(
     capture === 'page' ? currentPage : lassoImage,
   );
 }
+
+async function currentPageSize(): Promise<Result<Size>> {
+  const note = await getCurrentFilePath();
+  if (!note.ok) {
+    return note;
+  }
+  const page = await getCurrentPageNum();
+  if (!page.ok) {
+    return page;
+  }
+  return getPageSize(note.value, page.value);
+}
+
+/** The open note, as a receive places into it. */
+export const noteHost: NoteHost = {
+  pluginDir: getPluginDirPath,
+  pageSize: currentPageSize,
+  closeView: closePluginView,
+  insertText,
+  lasso: lassoElements,
+  insertImage,
+};

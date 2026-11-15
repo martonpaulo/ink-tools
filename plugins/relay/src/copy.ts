@@ -1,4 +1,4 @@
-/** Every line Relay shows (#98), in one place. */
+/** Every line Relay shows (#98, #49), in one place. */
 import {SendResult} from './localsend/protocol';
 
 export const copy = {
@@ -16,6 +16,20 @@ export const copy = {
   identityChanged: (alias: string) =>
     `${alias} identity changed, choose it again`,
   notLocal: (alias: string) => `${alias} is not on this network`,
+  receive: 'Receive',
+  ready: (alias: string) => `Ready to receive as ${alias}`,
+  readyHint: 'Send a text or a picture from LocalSend on the iPhone or the Mac.',
+  starting: 'Starting…',
+  stop: 'Stop',
+  receivedText: 'Text added to the note',
+  receivedImage: 'Picture added to the note',
+  nothingArrived: 'Nothing arrived',
+  receiveStopped: 'Receiving stopped',
+  receiveFailed: 'Could not start receiving',
+  notAnImage: 'Send the photo as JPEG or PNG',
+  refusedOffer: 'Relay takes one text or one picture',
+  noNote: 'Open a note first',
+  insertFailed: 'Could not add it to the note',
   result(result: SendResult, alias: string): string {
     switch (result.kind) {
       case 'sent':

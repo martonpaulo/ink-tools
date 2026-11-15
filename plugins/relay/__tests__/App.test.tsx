@@ -2,7 +2,9 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
-import App, {deviceLabel} from '../App';
+import App, {deviceLabel, ReceiveView} from '../App';
+import {ownFingerprint} from '../src/settings/device';
+import {fail, ok} from '@supernote-tools/sn-adapter/official';
 import {fakeRelay} from '../test-support/fakeRelay';
 
 const lan = (...parts: number[]) => parts.join('.');
@@ -56,4 +58,29 @@ test('two receivers with one alias are told apart', () => {
   const two = {...one, ip: lan(10, 0, 0, 3), fingerprint: 'b'};
   expect(deviceLabel(one, [one, two])).toBe(`Mac · ${one.ip}`);
   expect(deviceLabel(one, [one])).toBe('Mac');
+});
+
+test('the receive view keeps the size rules, names the tablet and stops (#49)', async () => {
+  const onStop = jest.fn();
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<ReceiveView state="ready" onStop={onStop} />);
+  });
+  expect(screenBreaks(tree.root)).toEqual([]);
+  expect(
+    tree.root.findAllByProps({children: 'Ready to receive as Supernote'}).length,
+  ).toBeGreaterThan(0);
+  await act(async () => {
+    tree.root.findByProps({label: 'Stop'}).props.onPress();
+  });
+  expect(onStop).toHaveBeenCalledTimes(1);
+});
+
+test('the send half announces the certificate fingerprint, the saved one only without it', async () => {
+  const settings = {fingerprint: 'saved', device: null};
+  const {api} = fakeRelay();
+  await expect(ownFingerprint(api, settings, async () => ok('/p'))).resolves.toBe('cert-fp');
+  await expect(
+    ownFingerprint(api, settings, async () => fail(-1, 'no dir')),
+  ).resolves.toBe('saved');
 });

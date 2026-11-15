@@ -1,10 +1,28 @@
-/** A scripted RelayLocalSend for the send and Settings tests (#98). */
-import {relay, RelayNative} from '../src/native';
+/** A scripted RelayLocalSend for the send, receive and Settings tests (#98, #49). */
+import {Arrival, relay, RelayNative} from '../src/native';
 
-export type Calls = {post: unknown[][]; removed: string[]; written: string[]};
+export type Calls = {
+  post: unknown[][];
+  removed: string[];
+  written: string[];
+  answers: unknown[][];
+  started: unknown[][];
+  stopped: number;
+};
 
-export function fakeRelay(overrides: Partial<RelayNative> = {}) {
-  const calls: Calls = {post: [], removed: [], written: []};
+/** `arrivals` are what `nextReceived` answers in turn; null once they run out. */
+export function fakeRelay(
+  overrides: Partial<RelayNative> = {},
+  arrivals: (Arrival | null)[] = [],
+) {
+  const calls: Calls = {
+    post: [],
+    removed: [],
+    written: [],
+    answers: [],
+    started: [],
+    stopped: 0,
+  };
   const native: RelayNative = {
     discover: jest.fn(async () => []),
     post: jest.fn(async (...args: unknown[]) => {
@@ -20,6 +38,20 @@ export function fakeRelay(overrides: Partial<RelayNative> = {}) {
     writeText: jest.fn(async (_path: string, text: string) => {
       calls.written.push(text);
       return null;
+    }),
+    identity: jest.fn(async () => 'cert-fp'),
+    startReceive: jest.fn(async (...args: unknown[]) => {
+      calls.started.push(args);
+      return 'cert-fp';
+    }),
+    nextReceived: jest.fn(async () => arrivals.shift() ?? null),
+    answer: jest.fn(async (...args: unknown[]) => {
+      calls.answers.push(args);
+      return true;
+    }),
+    stopReceive: jest.fn(async () => {
+      calls.stopped += 1;
+      return true;
     }),
     ...overrides,
   };

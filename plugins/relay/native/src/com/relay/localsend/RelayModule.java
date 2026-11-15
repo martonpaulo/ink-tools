@@ -12,6 +12,8 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -19,17 +21,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The network half of Relay (#98), as `NativeModules.RelayLocalSend`: discovery, one POST, a
  * file's size and hash, the removal of a temporary PNG, and the small settings file, since
- * sn-plugin-lib 0.2.3 has no file writer. Every call runs off the JS thread and
+ * sn-plugin-lib 0.2.3 has no file writer. The receive half (#49): our v3 identity, the receiver,
+ * and a queue of what arrives, which JS reads one item at a time and answers each offer of. Every call runs off the JS thread and
  * rejects with a text code (`IDENTITY`, `TIMEOUT`, `IO`) that sn-adapter keeps as `moduleCode`.
  * Never logs a body, a token or a session id.
  */
 public final class RelayModule extends ReactContextBaseJavaModule {
   private static final Charset UTF_8 = Charset.forName("UTF-8");
+  /** How long the receiver waits for JS to decide an offer before it answers 500. */
+  private static final long DECIDE_MS = 10000;
+
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
+  private final LinkedBlockingQueue<WritableMap> arrivals = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<Receiver.Decision> decisions = new LinkedBlockingQueue<>();
+  private Receiver receiver;
+  private MulticastSocket multicast;
+  private WifiManager.MulticastLock multicastLock;
 
   public RelayModule(ReactApplicationContext context) {
     super(context);
@@ -42,6 +55,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
 
   @Override
   public void invalidate() {
+    closeReceiver();
     worker.shutdownNow();
     super.invalidate();
   }
@@ -194,6 +208,186 @@ public final class RelayModule extends ReactContextBaseJavaModule {
             }
           }
         });
+  }
+
+  /** Resolves with our fingerprint, making the identity in `folder` when needed. */
+  @ReactMethod
+  public void identity(final String folder, final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              promise.resolve(Identity.load(new File(folder)).fingerprint);
+            } catch (Throwable error) {
+              reject(promise, error);
+            }
+          }
+        });
+  }
+
+  /**
+   * Starts the receiver on `port` and the multicast answer; resolves with our fingerprint.
+   * `info` answers `/info` and `/register`; `announce` and `answer` are the multicast texts.
+   */
+  @ReactMethod
+  public void startReceive(
+      final String identityFolder,
+      final String fileFolder,
+      final double port,
+      final String group,
+      final String info,
+      final String announce,
+      final String answer,
+      final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              closeReceiver();
+              arrivals.clear();
+              decisions.clear();
+              Identity identity = Identity.load(new File(identityFolder));
+              receiver =
+                  new Receiver(
+                      Receiver.tlsSocket(identity, null, (int) port),
+                      info,
+                      new File(fileFolder),
+                      new Receiver.Decider() {
+                        @Override
+                        public Receiver.Decision decide(String body, String sessionId, String token)
+                            throws Exception {
+                          WritableMap offer = Arguments.createMap();
+                          offer.putString("kind", "offer");
+                          offer.putString("body", body);
+                          offer.putString("sessionId", sessionId);
+                          offer.putString("token", token);
+                          arrivals.add(offer);
+                          Receiver.Decision decision =
+                              decisions.poll(DECIDE_MS, TimeUnit.MILLISECONDS);
+                          if (decision == null) {
+                            throw new SocketTimeoutException("no decision");
+                          }
+                          return decision;
+                        }
+                      },
+                      new Receiver.Sink() {
+                        @Override
+                        public void received(String path) {
+                          WritableMap file = Arguments.createMap();
+                          file.putString("kind", "file");
+                          file.putString("path", path);
+                          arrivals.add(file);
+                        }
+
+                        @Override
+                        public void cancelled() {
+                          WritableMap cancel = Arguments.createMap();
+                          cancel.putString("kind", "cancel");
+                          arrivals.add(cancel);
+                        }
+                      });
+              startMulticast(group, (int) port, announce, answer, identity.fingerprint);
+              promise.resolve(identity.fingerprint);
+            } catch (Throwable error) {
+              closeReceiver();
+              reject(promise, error);
+            }
+          }
+        });
+  }
+
+  /** Resolves with the next arrival (`offer`, `file`, `cancel`, `stopped`), or null at the timeout. */
+  @ReactMethod
+  public void nextReceived(final double timeoutMs, final Promise promise) {
+    // Its own thread: the worker must stay free for `answer`.
+    new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  promise.resolve(arrivals.poll((long) timeoutMs, TimeUnit.MILLISECONDS));
+                } catch (Throwable error) {
+                  reject(promise, error);
+                }
+              }
+            },
+            "relay-next")
+        .start();
+  }
+
+  /** The decision on the last offer; `fileId` null when no upload follows. */
+  @ReactMethod
+  public void answer(
+      final double status,
+      final String body,
+      final String fileId,
+      final String extension,
+      final Promise promise) {
+    decisions.add(new Receiver.Decision((int) status, body, fileId, extension));
+    promise.resolve(true);
+  }
+
+  /** Stops receiving; a waiting `nextReceived` resolves with `stopped`. */
+  @ReactMethod
+  public void stopReceive(final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            closeReceiver();
+            WritableMap stopped = Arguments.createMap();
+            stopped.putString("kind", "stopped");
+            arrivals.add(stopped);
+            promise.resolve(true);
+          }
+        });
+  }
+
+  private void startMulticast(
+      String group, final int port, final String announce, final String answer,
+      final String fingerprint) throws java.io.IOException {
+    WifiManager wifi =
+        (WifiManager)
+            getReactApplicationContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    if (wifi != null) {
+      multicastLock = wifi.createMulticastLock("relay-receive");
+      multicastLock.setReferenceCounted(false);
+      multicastLock.acquire();
+    }
+    final InetAddress address = InetAddress.getByName(group);
+    final MulticastSocket socket = new MulticastSocket(port);
+    socket.joinGroup(address);
+    multicast = socket;
+    new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  Discovery.answer(socket, address, port, announce, answer, fingerprint);
+                } catch (Throwable ignored) {
+                  // Without multicast a sender still reaches us by `/register` or by address.
+                }
+              }
+            },
+            "relay-multicast")
+        .start();
+  }
+
+  private void closeReceiver() {
+    if (receiver != null) {
+      receiver.close();
+      receiver = null;
+    }
+    if (multicast != null) {
+      multicast.close();
+      multicast = null;
+    }
+    if (multicastLock != null && multicastLock.isHeld()) {
+      multicastLock.release();
+    }
+    multicastLock = null;
   }
 
   private static void reject(Promise promise, Throwable error) {

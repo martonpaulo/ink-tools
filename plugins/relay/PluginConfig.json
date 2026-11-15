@@ -1,6 +1,6 @@
 {
   "name": "Relay",
-  "desc": "Send the current page or a lasso selection to an iPhone or a Mac over LocalSend.",
+  "desc": "Send the current page or a lasso selection to an iPhone or a Mac over LocalSend, and receive text or a picture into the open note.",
   "author": "Marton Paulo",
   "iconPath": "",
   "versionName": "0.0.1",

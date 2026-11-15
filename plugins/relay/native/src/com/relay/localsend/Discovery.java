@@ -9,14 +9,14 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * LocalSend discovery (#98): one multicast announce, then every answer for a fixed time. Pure
  * java.net, so the JVM test runs the same code PluginHost does. It only moves bytes: each answer is
- * parsed and checked in TypeScript (`src/localsend/protocol.ts`).
- *
- * shortcut: send-only discovery sees a receiver only through its multicast answer, since we run no
- * server for its `/register`; when #49 adds the HTTPS server, accept `/register` too.
+ * parsed and checked in TypeScript (`src/localsend/protocol.ts`). While Relay receives (#49),
+ * {@link #answer} makes the tablet visible: it announces once and answers each announce it hears
+ * by multicast, the protocol's fallback to `/register`, which Relay's receiver also serves.
  */
 public final class Discovery {
   /** The largest datagram we keep; a longer one is dropped, as the protocol parser does. */
@@ -24,7 +24,43 @@ public final class Discovery {
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
 
+  private static final Pattern ANNOUNCE = Pattern.compile("\"announce\"\\s*:\\s*true");
+
   private Discovery() {}
+
+  /** True when a datagram asks to be answered; the TypeScript parser still owns its meaning. */
+  static boolean asksForAnswer(String text, String ownFingerprint) {
+    return ANNOUNCE.matcher(text).find() && !text.contains(ownFingerprint);
+  }
+
+  /**
+   * Announces `announce` once on `socket`, then sends `answer` to the group for every other
+   * device's announce, until the socket closes. `socket` has joined `group`.
+   */
+  public static void answer(
+      MulticastSocket socket, InetAddress group, int port, String announce, String answer,
+      String ownFingerprint) throws IOException {
+    byte[] hello = announce.getBytes(UTF_8);
+    socket.send(new DatagramPacket(hello, hello.length, group, port));
+    byte[] reply = answer.getBytes(UTF_8);
+    byte[] buffer = new byte[MAX_BYTES + 1];
+    socket.setSoTimeout(0);
+    while (!socket.isClosed()) {
+      DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+      try {
+        socket.receive(packet);
+      } catch (IOException closed) {
+        return;
+      }
+      if (packet.getLength() > MAX_BYTES) {
+        continue;
+      }
+      String text = new String(packet.getData(), packet.getOffset(), packet.getLength(), UTF_8);
+      if (asksForAnswer(text, ownFingerprint)) {
+        socket.send(new DatagramPacket(reply, reply.length, group, port));
+      }
+    }
+  }
 
   /** One datagram: who sent it and its text, unparsed. */
   public static final class Answer {
