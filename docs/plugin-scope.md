@@ -113,6 +113,30 @@ panel ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)). Befor
 plugins, apps and libraries are checked for reuse
 ([#138](https://github.com/martonpaulo/supernote-tools/issues/138)).
 
+**Reuse check (2026-11-15, [#138](https://github.com/martonpaulo/supernote-tools/issues/138)).** No Supernote plugin or app edits
+a picture already on the page. What exists:
+
+| Name | What it does | License | On the Manta |
+| :--- | :--- | :--- | :--- |
+| [supernote-image-insert-plugin](https://github.com/wolfsolver/supernote-image-insert-plugin) | Picks a file under `/sdcard`, crops it with arrows and width and height controls, inserts it; A5 and A6 layouts | not stated in its README | yes, a plugin [inference from its README] |
+| [embedimage](https://github.com/jpmoo/embedimage) | Picks a PNG from `Document/Images` and inserts it; no editing | not stated in its README | yes, a plugin [inference from its README] |
+| [einktools screensaver maker](https://einktools.com/supernote-screensaver) | Web page: crops a photo to the screen, previews e-ink greys, exports a PNG | closed web service | no, a browser on another device |
+| [Jimp](https://github.com/jimp-dev/jimp) | Pure JavaScript image library: crop, rotate, mirror, grey, invert, threshold, a dither plugin | MIT | untested in PluginHost's React Native; whole-image work in JS is slow [inference] |
+| [OpenCV for Android](https://opencv.org/android/) and [jscanify](https://github.com/ColonelParrot/jscanify) | Deskew and perspective correction of a photographed page | Apache 2.0 (OpenCV 4.5 and later); jscanify MIT | Android 11 runs OpenCV's Java build [inference]; adds tens of MB to the `.snplg` [inference] |
+| [MediaPipe Image Segmenter](https://developers.google.com/edge/mediapipe/solutions/vision/image_segmenter/android) | On-device subject or person mask, for background removal | code Apache 2.0; each model has its own terms | to test: needs its native libraries in the plugin and fits the 2 s limit only on a small image [inference] |
+| Ink2Pic's own pixel code (`packages/picture-search/native`: `Contour.java`, `Decolor.java`, `EinkPixels.java`) | Contour drawing, decolouring, e-ink measures in plain Java on `Bitmap` | MIT, this repository | yes, measured in Ink2Pic's device rounds |
+
+Per delivery issue:
+
+- [#130](https://github.com/martonpaulo/supernote-tools/issues/130) native resize: reuse the host's lasso; a device check, no code.
+- [#136](https://github.com/martonpaulo/supernote-tools/issues/136) scaffold and Enhance: base on Ink2Pic's insert flow and `Decolor.java`/`EinkPixels.java`; build the gamma and sharpen steps, a few lines of Java each, since no plugin does them.
+- [#133](https://github.com/martonpaulo/supernote-tools/issues/133) styles: reuse `Contour.java` for Line art; build threshold and the two dithers in Java (each about 40 lines); Jimp's dither is an ordered dither for 16-bit colour [inference from its README], a style `retouch` does not plan.
+- [#132](https://github.com/martonpaulo/supernote-tools/issues/132) crop and trim: build; image-insert-plugin crops with arrows, not with the pen, and has no trim.
+- [#131](https://github.com/martonpaulo/supernote-tools/issues/131) rotate, mirror, invert: build on Android's `Matrix` and `Bitmap`, a platform feature; a library adds nothing.
+- [#134](https://github.com/martonpaulo/supernote-tools/issues/134) eraser and cutout: build the eraser; for background removal try MediaPipe's segmenter first, and keep a white-flood cutout as the fallback when it does not load or is too slow.
+- [#137](https://github.com/martonpaulo/supernote-tools/issues/137) Document mode: base on OpenCV's perspective transform only if its size is acceptable; otherwise build deskew alone on the plain-Java measures.
+- [#139](https://github.com/martonpaulo/supernote-tools/issues/139) and [#140](https://github.com/martonpaulo/supernote-tools/issues/140): build; they depend on this plugin's own flows.
+
 Not planned: magic wand (imprecise with a pen; background removal covers it), brightness, contrast
 and levels sliders, ordered and halftone dither and other error-diffusion styles, spread splitting,
 forced white borders, OCR of the image. Resize stays only if the native lasso cannot already resize
