@@ -351,7 +351,8 @@ const LAST_SCALE = -2;
 
 /**
  * The pixel signal over one set of measures: `3 x lineArt`, min-max scaled within the set, so it
- * moves pictures only relative to each other. A canonical picture scores 0: it keeps its place.
+ * moves pictures only relative to each other. A canonical picture, or a symbol that leads, scores
+ * 0: it keeps its place.
  * `converted` names the pictures shown as their contour drawing.
  */
 export function pixelScorer(
@@ -374,7 +375,9 @@ export function pixelScorer(
   const low = Math.min(...values);
   const range = Math.max(...values) - low;
   return result => {
-    if (result.canonical) {
+    // A symbol its source leads with stays above every drawing, measures included (rank.ts,
+    // SYMBOL_LEAD_SCORE): the «hot beverage» cup's steam lines measure as text (#106).
+    if (result.canonical || result.leads) {
       return 0;
     }
     const set = fixed.get(result.id);

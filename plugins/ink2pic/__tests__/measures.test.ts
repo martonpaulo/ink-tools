@@ -397,6 +397,26 @@ describe('reorderByMeasures (#66)', () => {
     ).toEqual(['drawing', 'photo', 'poster']);
   });
 
+  it('keeps a symbol its source leads with first, even measured as text (#106)', () => {
+    // OpenMoji's «hot beverage» for «coffee»: its steam lines measure as text.
+    const cup: SearchResult = {
+      ...result('openmoji:2615', 'hot beverage'),
+      source: 'openmoji',
+      mime: 'image/png',
+      leads: true,
+    };
+    const list = [result('drawing', 'Coffee'), cup];
+    const measures = new Map([
+      ['openmoji:2615', signature],
+      ['drawing', outline],
+    ]);
+    expect(pixelKind(signature)).toBe('text');
+    expect(ids(reorderByMeasures(list, measures, 'coffee'))).toEqual([
+      'openmoji:2615',
+      'drawing',
+    ]);
+  });
+
   it('sends a picture shown near-black past page 2 unless a photo is asked (#83)', () => {
     const list = [result('poster', 'Cat'), result('line', 'Roof')];
     const measures = new Map([
