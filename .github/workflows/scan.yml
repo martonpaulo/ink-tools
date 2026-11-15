@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [plugins/ink2pic, plugins/bridge, plugins/lingo, plugins/lookup, plugins/probe, packages]
+        dir: [plugins/ink2pic, plugins/bridge, plugins/lingo, plugins/lookup, plugins/relay, plugins/probe, packages]
     defaults:
       run:
         working-directory: ${{ matrix.dir }}

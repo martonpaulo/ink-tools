@@ -1,0 +1,16 @@
+{
+  "name": "Relay",
+  "desc": "Send the current page or a lasso selection to an iPhone or a Mac over LocalSend.",
+  "author": "Marton Paulo",
+  "iconPath": "",
+  "versionName": "0.0.1",
+  "versionCode": "1",
+  "pluginID": "g3nlwrvsvh61tqxz",
+  "pluginKey": "Relay",
+  "jsMainPath": "index",
+  "uses-permissions": [
+    "plugin.permission.INTERNET",
+    "plugin.permission.FILE:READ",
+    "plugin.permission.FILE:WRITE"
+  ]
+}

@@ -97,6 +97,7 @@ supernote-tools/
     bridge/         # to-do + calendar + digest, each module and provider opt in/out
     lookup/         # write a word -> insert a picture or a definition (each mode opt in/out)
     lingo/          # write a word -> insert its translation; language pairs opt in/out
+    relay/          # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     retouch/        # edit an image on the page
     probe/          # permanent on-device investigation plugin
   cli/
@@ -158,6 +159,9 @@ supernote-tools/
   installed beside `ink2pic` until it is retired (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)).
 - **`lingo`** — write a word, lasso it, insert its **translation**. One plugin; each **language pair**
   (e.g. `zh-pt`, `es-pt`) is opt in/out, and more pairs can be added over time.
+- **`relay`** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
+  LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/supernote-tools/issues/98), [#49](https://github.com/martonpaulo/supernote-tools/issues/49)). Its network half is a native
+  Java module, as `probe`'s listener is.
 - **`retouch`** — edit an image already on the page (the old "image-edit plugin is future work" note).
 - **`probe`** — a minimal plugin for on-device investigation (provider reachability, permission
   checks), reused whenever a device question comes up.
@@ -166,7 +170,7 @@ supernote-tools/
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
-`sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lingo` and `lookup` call `sn-plugin-lib` only
+`sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lingo`, `lookup` and `relay` call `sn-plugin-lib` only
 through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
 of `lookup`, and keeps shipping until the merge lands; then it is retired, and `lookup` finds
 stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). The first step of that move is done: the
