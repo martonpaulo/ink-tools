@@ -7,7 +7,7 @@
     {"name": "lingo", "command": "cd plugins/lingo && npm run validate", "covers": "the Lingo plugin"},
     {"name": "probe", "command": "cd plugins/probe && npm run validate", "covers": "the probe plugin and its JVM tests"},
     {"name": "snadb", "command": "cd cli/snadb && make validate", "covers": "the snadb CLI and its contract tests"},
-    {"name": "design", "command": "node --test design/covers/", "covers": "the InkHub cover template filler"},
+    {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"},
     {"name": "ink2pic", "command": "cd plugins/ink2pic && npm run validate", "covers": "the Ink2Pic plugin and its JVM tests"}
   ],
   "rules": [
