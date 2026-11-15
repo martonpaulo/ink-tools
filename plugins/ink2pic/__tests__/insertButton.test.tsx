@@ -198,6 +198,7 @@ describe('Insert best picture with no view (#74)', () => {
       .fn()
       .mockResolvedValue({ok: true, value: {query: 'soup', place}}),
     insert: jest.fn().mockResolvedValue({ok: true, value: '/s/a.png'}),
+    define: jest.fn().mockResolvedValue({ok: true, value: 'soup'}),
     show: jest.fn().mockResolvedValue({ok: true, value: true}),
     press: jest.fn(),
     ...more,

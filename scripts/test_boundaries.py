@@ -55,6 +55,15 @@ class Boundaries(unittest.TestCase):
             "plugins/a/src/call.ts": "fetch('https://www.googleapis.com/calendar/v3');\n",
         }), [("plugins/a/src/call.ts", "service"), ("plugins/a/src/run.ts", "service")])
 
+    def test_dictionary_hosts_stay_in_ink_core(self):
+        self.assertEqual(self.tree({
+            "packages/ink-core/src/wiktionary.ts": "const url = `https://${language}.wiktionary.org/w/api.php`;\n",
+            "packages/ink-core/__tests__/w.test.ts": "expect(url).toMatch(/pt.wiktionary.org/);\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "plugins/a/src/define.ts": "fetch('https://pt.wiktionary.org/w/api.php');\n",
+        }), [("plugins/a/src/define.ts", "dictionary")])
+
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({
             "plugins/a/node_modules/x/index.js": "require('sn-plugin-lib');\n",

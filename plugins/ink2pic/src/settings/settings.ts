@@ -42,7 +42,12 @@ export type Settings = {
   sourcesOff: readonly string[];
   /** Fewer results per search and smaller thumbnails. */
   dataSaver: boolean;
+  /** The «Insert definition» lasso button (#115); off, so the mode is opt in. */
+  definition: boolean;
 };
+
+/** The on/off settings, each one Settings row and one step of the same shape. */
+export type SwitchKey = 'dataSaver' | 'definition';
 
 /** The inserted picture's width in page pixels for each size; medium is today's 640 (#70). */
 export const SIZE_WIDTHS: Record<Choice<'size'>, number> = {
@@ -78,6 +83,7 @@ export const RESET_GROUPS: Record<keyof Settings, string> = {
   spacing: 'handwriting',
   sourcesOff: 'search',
   dataSaver: 'search',
+  definition: 'insert',
 };
 
 export type ParsedSettings = {
@@ -95,6 +101,7 @@ export function defaultSettings(system: string | null): Settings {
     spacing: 'normal',
     sourcesOff: [],
     dataSaver: false,
+    definition: false,
   };
 }
 
@@ -106,7 +113,7 @@ export type SettingsAction =
   | {type: 'languages'; action: LanguagesAction}
   | {type: 'choose'; key: ChoiceKey; value: string}
   | {type: 'source'; name: string; on: boolean}
-  | {type: 'dataSaver'; on: boolean}
+  | {type: SwitchKey; on: boolean}
   | {type: 'reset'; system: string | null};
 
 /** Whether a source is on. */
@@ -163,9 +170,10 @@ export function settingsStep(
         ? {...settings, sourcesOff: [...settings.sourcesOff, action.name]}
         : settings;
     case 'dataSaver':
-      return settings.dataSaver === action.on
+    case 'definition':
+      return settings[action.type] === action.on
         ? settings
-        : {...settings, dataSaver: action.on};
+        : {...settings, [action.type]: action.on};
     case 'reset':
       return defaultSettings(action.system);
   }
@@ -298,13 +306,16 @@ export function parseSettings(
   const spacing = choice('spacing');
   const sourcesOff =
     'sourcesOff' in fields ? readSourcesOff(fields.sourcesOff, problems) : null;
-  const dataSaver = readField(
-    fields,
-    'dataSaver',
-    defaults.dataSaver,
-    (value): value is boolean => typeof value === 'boolean',
-    problems,
-  );
+  const onOff = (key: SwitchKey): boolean =>
+    readField(
+      fields,
+      key,
+      defaults[key],
+      (value): value is boolean => typeof value === 'boolean',
+      problems,
+    );
+  const dataSaver = onOff('dataSaver');
+  const definition = onOff('definition');
   return {
     settings: {
       languages: languages ?? defaults.languages,
@@ -314,6 +325,7 @@ export function parseSettings(
       spacing,
       sourcesOff: sourcesOff ?? defaults.sourcesOff,
       dataSaver,
+      definition,
     },
     problems,
   };

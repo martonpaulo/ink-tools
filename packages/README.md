@@ -6,7 +6,7 @@ Provider-agnostic building blocks the plugins share (layers in [docs/architectur
 | :--- | :--- |
 | `sn-adapter` | Every Supernote call, in two tiers: the official `sn-plugin-lib` wrappers, and the internals as an updatable descriptor with the adapt-on/off probe ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)) |
 | `sync-core` | Diff, recurrence expansion, mapping and module orchestration |
-| `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface and Lingo's language-pair Settings model |
+| `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface with its first source, Wiktionary definitions ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), and Lingo's language-pair Settings model |
 | `ui-kit` | The Settings look every plugin shares: tokens, shared styles, the `Button`, and the size rule for tests ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)) |
 
 Run `npm install && npm run validate` here for `sn-adapter`'s internals tier, `sync-core` and `ink-core`.

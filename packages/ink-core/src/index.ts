@@ -5,3 +5,4 @@ export * from './lasso';
 export * from './outcome';
 export * from './pairs';
 export * from './place';
+export * from './wiktionary';

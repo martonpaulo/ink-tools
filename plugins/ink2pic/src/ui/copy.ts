@@ -5,6 +5,7 @@
 export const copy = {
   'button.lasso': 'Choose picture',
   'button.insert': 'Insert best picture',
+  'button.define': 'Insert definition',
   'button.sidebar': 'Ink2Pic',
   'tab.search': 'Search',
   'tab.library': 'Library',
@@ -60,6 +61,11 @@ export const copy = {
     'Could not put the picture in the note. Open a note page and try again.',
   'error.placeSlow':
     'The picture may still appear. Check the page before you try again.',
+  'definition.none': 'No definition found for this word. Check the spelling, or try another word.',
+  'definition.noLanguage':
+    'Definitions are in Portuguese and Spanish. Add one of them to the search languages in Settings.',
+  'definition.insertFailed':
+    'Could not add the definition to the page. Try again.',
   'error.unexpected': 'Something went wrong. Close Ink2Pic and open it again.',
   // Outside the brief's table: the starting screen (#12, build 0.1.0 (7)).
   'app.starting': 'Starting…',
@@ -134,6 +140,10 @@ export const copy = {
   'settings.dataSaver': 'Data saver: fewer and smaller pictures',
   'settings.dataSaver.off': 'Off',
   'settings.dataSaver.on': 'On',
+  'settings.definition':
+    'Insert definition in the lasso menu: a short Portuguese or Spanish definition of the word',
+  'settings.definition.off': 'Hidden',
+  'settings.definition.on': 'Shown',
   'settings.symbols': 'Offline symbols: {saved} of {total}',
   'settings.symbolsUnreadable':
     'Saved symbols cannot be read now. Open Settings again to retry.',

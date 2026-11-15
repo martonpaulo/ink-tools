@@ -15,6 +15,7 @@ import {
   CHOICES,
   Settings,
   SettingsAction,
+  SwitchKey,
   SOURCE_NAMES,
   sourceOn,
 } from '../settings/settings';
@@ -88,6 +89,30 @@ function Option({
       <Text style={shared.text}>{label}</Text>
       <View style={shared.row}>{children}</View>
     </View>
+  );
+}
+
+/** One on/off setting: its label and two buttons, Off first (#70, #115). */
+function SwitchRow({
+  name,
+  settings,
+  onChange,
+}: {
+  name: SwitchKey;
+  settings: Settings;
+  onChange: (action: SettingsAction) => void;
+}): React.JSX.Element {
+  return (
+    <Option label={copy[`settings.${name}`]}>
+      {[false, true].map(on => (
+        <Button
+          key={String(on)}
+          label={copy[`settings.${name}.${on ? 'on' : 'off'}`]}
+          selected={settings[name] === on}
+          onPress={() => onChange({type: name, on})}
+        />
+      ))}
+    </Option>
   );
 }
 
@@ -270,18 +295,8 @@ export function SettingsScreen({
               );
             })}
           </Option>
-          <Option label={copy['settings.dataSaver']}>
-            {[false, true].map(on => (
-              <Button
-                key={String(on)}
-                label={
-                  copy[on ? 'settings.dataSaver.on' : 'settings.dataSaver.off']
-                }
-                selected={settings.dataSaver === on}
-                onPress={() => onChange({type: 'dataSaver', on})}
-              />
-            ))}
-          </Option>
+          <SwitchRow name="dataSaver" settings={settings} onChange={onChange} />
+          <SwitchRow name="definition" settings={settings} onChange={onChange} />
           {/* One row, label and action side by side: a second line would push the actions off. */}
           <View style={[shared.row, shared.listRow]}>
             <Text style={[shared.text, styles.grow]}>

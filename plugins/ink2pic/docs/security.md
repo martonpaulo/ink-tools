@@ -9,7 +9,7 @@ project audit of 2026-11-06 ([#51](https://github.com/martonpaulo/ink2pic/issues
 | --- | --- | --- | --- | --- | --- |
 | 1 | No hard-coded key | Yes: native app | Met | Item 1 scan over the tree: 0 token or private-key findings; `android/app/debug.keystore` is the unshipped template's debug keystore | None |
 | 2 | No secret in Git history | Yes | Met | `git log -p --all` scan over 84 commits: 0 token or private-key findings | None |
-| 3 | No privileged key in a client | Yes: native app | Met | No key at all: both picture sources are keyless | None |
+| 3 | No privileged key in a client | Yes: native app | Met | No key at all: the picture sources and the Wiktionary definitions ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) are keyless | None |
 | 4 | Public DB key versus RLS | No database | Not applicable | Local JSON files only | None |
 | 5 | RLS on personal-data tables | No database | Not applicable | Same | None |
 | 6 | No open policy | No database | Not applicable | Same | None |
@@ -21,7 +21,7 @@ project audit of 2026-11-06 ([#51](https://github.com/martonpaulo/ink2pic/issues
 | 12 | Server-side session | No server | Not applicable | No server | None |
 | 13 | Cookie flags | No cookies | Not applicable | No cookies | None |
 | 14 | Hashed passwords | No passwords | Not applicable | No accounts | None |
-| 15 | HTTPS everywhere | Yes: native app | Met | Fixed https origins; `SafePaths.checkHttps` refuses others; no `http://` in product code | None |
+| 15 | HTTPS everywhere | Yes: native app | Met | Fixed https origins, `pt.wiktionary.org` and `es.wiktionary.org` included: a definition sends only the lassoed word, as a picture search already does ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)); `SafePaths.checkHttps` refuses others; no `http://` in product code | None |
 | 16 | Security headers | No served HTML | Not applicable | No web surface | None |
 | 17 | Rate limits on AI and sensitive routes | No API | Not applicable | Client side: a search cache and small page sizes keep requests low | None |
 | 18 | Bot protection | No public forms | Not applicable | No forms | None |

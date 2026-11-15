@@ -24,6 +24,17 @@ export function registerButton(
   );
 }
 
+/** Removes one plugin button, as a Settings switch that turns its mode off does (#115). */
+export function unregisterButton(id: number): Promise<Result<true>> {
+  return attempt(
+    () => PluginManager.unregisterButton(id),
+    raw =>
+      raw === true
+        ? ok(true)
+        : fail(THROWN_CODE, `unregisterButton answered ${String(raw)}`),
+  );
+}
+
 export type ButtonPress = {id: number};
 
 /**

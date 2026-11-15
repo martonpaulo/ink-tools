@@ -8,6 +8,7 @@ import {name as appName} from './app.json';
 import {
   BUTTON_TYPE_LASSO,
   BUTTON_TYPE_SIDEBAR,
+  DEFINE_BUTTON_ID,
   EDIT_DATA_STROKES,
   INSERT_BUTTON_ID,
   LASSO_BUTTON_ID,
@@ -15,7 +16,12 @@ import {
   SHOW_NO_VIEW,
   SIDEBAR_BUTTON_ID,
 } from './src/buttons';
-import {insertWithoutView} from './src/flow/headlessInsert';
+import {defineWithoutView, insertWithoutView} from './src/flow/headlessInsert';
+import {
+  definitionSwitched,
+  setDefinitionIcon,
+} from './src/flow/insertDefinition';
+import {getSettings} from './src/storage/settings';
 import {
   initPlugin,
   registerButton,
@@ -82,17 +88,27 @@ registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
   showType: SHOW_FULL_VIEW,
 }).then(result => report('lasso button', result));
 
+// «Insert definition» only while its Settings switch is on (#115): the settings file is read first,
+// so this button registers after the others; whether the host shows a late one is TO TEST.
+setDefinitionIcon(icon);
+getSettings().then(definitionSwitched);
+
 // After registerButton, as the official docs order it; before the view exists (gotcha 11).
 // «Insert best picture» runs here, with no view (#74); every other press goes to the view.
 report(
   'button listener',
   startButtonQueue(id => {
-    if (id !== INSERT_BUTTON_ID) {
-      return false;
+    if (id === INSERT_BUTTON_ID) {
+      log('insert button pressed: no view');
+      insertWithoutView();
+      return true;
     }
-    log('insert button pressed: no view');
-    insertWithoutView();
-    return true;
+    if (id === DEFINE_BUTTON_ID) {
+      log('definition button pressed: no view');
+      defineWithoutView();
+      return true;
+    }
+    return false;
   }),
 );
 

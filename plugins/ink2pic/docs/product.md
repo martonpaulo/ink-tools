@@ -2,6 +2,20 @@
 
 Status: current, 2026-11-06. The research and plan behind it are in [`brief.md`](brief.md).
 
+## Contents
+
+- [What it is](#what-it-is)
+- [Who it is for](#who-it-is-for)
+- [The job](#the-job)
+- [What it does](#what-it-does)
+- [What it will never do](#what-it-will-never-do)
+- [How you know it worked](#how-you-know-it-worked)
+- [Constraints](#constraints)
+- [Limits the owner set](#limits-the-owner-set)
+- [Alternatives considered](#alternatives-considered)
+- [Evidence on hand](#evidence-on-hand)
+- [Accepted evidence gaps](#accepted-evidence-gaps)
+
 ## What it is
 
 Ink2Pic is a Supernote plugin: you write a word by hand, lasso it, and choose a picture of that
@@ -26,6 +40,9 @@ background that cannot move ([brief section 13](brief.md#13-history-of-options-c
   typical picture of the word first, six per page.
 - Inserts the chosen picture with one tap, already sized and converted for the 16-gray screen.
 - Keeps every inserted picture, with its license and attribution, in a library that works offline.
+- Inserts a short Portuguese or Spanish definition of the lassoed word as a text box below it,
+  from Wiktionary, with its own lasso button «Insert definition», shown only once the person turns
+  it on in Settings ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)).
 - Shows first the picture chosen in the grid for a word, the next time ([#34](https://github.com/martonpaulo/supernote-tools/issues/34)).
 - Lets the person set, from the plugin's own Settings entry, the query languages and their order
   (default: the system language, then English; [#68](https://github.com/martonpaulo/ink2pic/issues/68)), the picture size, where it goes (below, beside, or in place

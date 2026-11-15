@@ -48,6 +48,7 @@ describe('parseSettings (#68)', () => {
       placement: 'beside' as const,
       sourcesOff: ['commons'],
       dataSaver: true,
+      definition: true,
     };
     expect(parseSettings(serializeSettings(saved), null)).toEqual({
       settings: saved,
@@ -227,6 +228,7 @@ describe('settingsStep (#70)', () => {
       spacing: 'normal',
       sourcesOff: [],
       dataSaver: false,
+      definition: false,
     });
   });
 
@@ -263,6 +265,7 @@ describe('settingsStep (#70)', () => {
       {type: 'choose', key: 'spacing', value: 'tight'},
       {type: 'source', name: SOURCE_NAMES[0], on: false},
       {type: 'dataSaver', on: true},
+      {type: 'definition', on: true},
     ];
     for (const action of actions) {
       changed = settingsStep(changed, action);
@@ -282,6 +285,7 @@ describe('settingsStep (#70)', () => {
       JSON.stringify({
         size: 'huge',
         dataSaver: 'yes',
+        definition: 1,
         sourcesOff: ['nowhere', SOURCE_NAMES[0]],
       }),
       null,
@@ -294,6 +298,7 @@ describe('settingsStep (#70)', () => {
       'settings: size "huge" is ignored; the default is used',
       'settings: source "nowhere" is ignored',
       'settings: dataSaver "yes" is ignored; the default is used',
+      'settings: definition 1 is ignored; the default is used',
     ]);
   });
 

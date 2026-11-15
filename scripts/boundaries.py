@@ -13,6 +13,8 @@ The rules are `docs/architecture.md` › Layer rules:
   `www.googleapis.com`, `oauth2.googleapis.com`), and no code outside `packages/sync-core/` imports a
   service client module (`todoist`, `google`, `ics`, `http`) by its path: a plugin takes the
   provider-neutral `@supernote-tools/sync-core`.
+- `dictionary`: no code outside `packages/ink-core/src/` names a dictionary host (`wiktionary.org`):
+  a plugin takes the provider-neutral `DictionaryProvider` of `@supernote-tools/ink-core` (#115).
 
 `plugins/probe/` is exempt from every rule: it exists to call the internals directly. Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
@@ -34,6 +36,7 @@ TEST_PARTS = {"__tests__", "__mocks__", "tests"}
 IMPORT = re.compile(r"""(?:\bfrom\s+|\bimport\s+|\brequire\(\s*|\bimport\(\s*|\bjest\.mock\(\s*)['"]([^'"]+)['"]""")
 AUTHORITY = re.compile(r"com\.ratta\.supernote\.\w+\.provider")
 HOST = re.compile(r"\b(?:api\.todoist\.com|www\.googleapis\.com|oauth2\.googleapis\.com)\b")
+DICTIONARY_HOST = re.compile(r"\bwiktionary\.org\b")
 CLIENT = re.compile(r"(?:^|/)sync-core/(?:src/)?(?:todoist|google|ics|http)(?:\.ts)?$")
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 
@@ -74,6 +77,8 @@ def findings(root):
                         found.append((rel, number, "service", "imports the service client %s; take @supernote-tools/sync-core" % target))
                 if HOST.search(line) and not test and not rel.startswith("packages/sync-core/src/"):
                     found.append((rel, number, "service", "names the service host %s outside sync-core" % HOST.search(line).group(0)))
+                if DICTIONARY_HOST.search(line) and not test and not rel.startswith("packages/ink-core/src/"):
+                    found.append((rel, number, "dictionary", "names the dictionary host wiktionary.org outside ink-core"))
             if AUTHORITY.search(line) and not test and not rel.startswith("packages/sn-adapter/"):
                 found.append((rel, number, "authority", "names the provider %s outside sn-adapter" % AUTHORITY.search(line).group(0)))
     return sorted(found)

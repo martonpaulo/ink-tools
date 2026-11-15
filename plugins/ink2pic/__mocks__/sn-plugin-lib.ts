@@ -6,6 +6,7 @@ export const PluginManager = {
   ...mocks(
     'init',
     'registerButton',
+    'unregisterButton',
     'getDeviceType',
     'requestPermission',
     'hasPermission',

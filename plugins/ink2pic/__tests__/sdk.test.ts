@@ -43,6 +43,17 @@ const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [
     true,
   ],
   [
+    'insertText',
+    mocked(PluginNoteAPI.insertText),
+    () =>
+      note.insertText({
+        text: 'fruto',
+        rect: {left: 1, top: 2, right: 3, bottom: 4},
+        fontSize: 32,
+      }),
+    true,
+  ],
+  [
     'getCurrentFilePath',
     mocked(PluginCommAPI.getCurrentFilePath),
     () => page.getCurrentFilePath(),
@@ -88,6 +99,15 @@ describe.each(responseCalls)('%s', (_name, sdkCall, wrapper, value) => {
 });
 
 describe('plain-value calls', () => {
+  it('unregisters a button, and fails on a false answer or a throw (#115)', async () => {
+    mocked(PluginManager.unregisterButton).mockResolvedValue(true);
+    expect(await plugin.unregisterButton(400)).toEqual({ok: true, value: true});
+    mocked(PluginManager.unregisterButton).mockResolvedValue(false);
+    expect((await plugin.unregisterButton(400)).ok).toBe(false);
+    mocked(PluginManager.unregisterButton).mockRejectedValue(new Error('gone'));
+    expect((await plugin.unregisterButton(400)).ok).toBe(false);
+  });
+
   it('reads permissions as granted or not', async () => {
     mocked(PluginManager.hasPermission).mockResolvedValue(1);
     expect(await plugin.hasPermission(plugin.PERMISSION_INTERNET)).toEqual({

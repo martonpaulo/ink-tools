@@ -1010,6 +1010,14 @@ Open on the device, each logged so the session log answers it:
   missing permission opens the view's onboarding. Whether `showPluginView()` opens the view from
   a button listener is TO TEST too. If the press never arrives, build 17 goes back to
   `showType: 1`. «Choose picture» keeps its view.
+- «Insert definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) [TO TEST]: `insertText` has never run on the device. The text box
+  sets every `TextBox` field of sn-plugin-lib 0.2.3's model (`src/model/Element.ts`): font size 32
+  page pixels [INFERENCE], fixed width, left-aligned, no frame, editable; whether the host wraps the
+  text inside `textRect` or grows the box, and whether it lands on the lassoed page, are what the
+  device shows. The button is registered after the settings file is read, so later than the other
+  buttons, and removed with `unregisterButton` when its switch goes off: whether the «•••» menu
+  shows a late or removed button at once is TO TEST too. The official docs at `docs.supernote.com`
+  were not read for this call: the cloud proxy refused the host on 2026-11-15.
 - `recognizeElements` over a whole written line [CONFIRMED on the owner's Manta, build 0.1.0
   (16) step 4: «Quem foi Miguel de Cervantes» was lassoed whole and searched «Miguel de
   Cervantes»; no session log is on record, so the recognised text itself was not read,

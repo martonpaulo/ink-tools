@@ -3,6 +3,8 @@ export const SIDEBAR_BUTTON_ID = 100;
 export const LASSO_BUTTON_ID = 200;
 /** «Insert best picture»: the best result at once, no grid (#74). */
 export const INSERT_BUTTON_ID = 300;
+/** «Insert definition»: the word's definition as a text box, no view; only while its switch is on (#115). */
+export const DEFINE_BUTTON_ID = 400;
 
 /** `registerButton` types (brief section 4.1). */
 export const BUTTON_TYPE_SIDEBAR = 1;

@@ -53,6 +53,7 @@ import type {SearchResult} from './src/search-core';
 import {clearLibrary} from './src/library/device';
 import {Settings, SettingsAction, settingsStep} from './src/settings/settings';
 import {getSettings, saveSettings} from './src/storage/settings';
+import {definitionSwitched} from './src/flow/insertDefinition';
 import {LanguagesScreen} from './src/ui/LanguagesScreen';
 import {SettingsScreen} from './src/ui/SettingsScreen';
 import {Onboarding} from './src/ui/Onboarding';
@@ -424,6 +425,8 @@ function App(): React.JSX.Element {
     setScreen({name, settings: next});
     saving.current = saving.current.then(() => saveSettings(next));
     await saving.current;
+    // The lasso menu follows the definition switch (#115).
+    await definitionSwitched(next);
   };
 
   switch (screen.name) {

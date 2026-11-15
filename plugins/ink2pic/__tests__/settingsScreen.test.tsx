@@ -80,6 +80,7 @@ it('shows each option with its current value selected', async () => {
     copy['settings.spacing.normal'],
     ...SOURCE_NAMES.map(name => copy[`source.${name}` as CopyKey]),
     copy['settings.dataSaver.off'],
+    copy['settings.definition.off'],
   ]);
   expect(texts(tree)).toContain('English');
 });
@@ -95,11 +96,13 @@ it('sends a tap as one step', async () => {
   await press(copy['settings.size.large']);
   await press(copy['settings.spacing.wide']);
   await press(copy['settings.dataSaver.on']);
+  await press(copy['settings.definition.on']);
   await press(copy['source.commons']);
   expect(onChange.mock.calls).toEqual([
     [{type: 'choose', key: 'size', value: 'large'}],
     [{type: 'choose', key: 'spacing', value: 'wide'}],
     [{type: 'dataSaver', on: true}],
+    [{type: 'definition', on: true}],
     [{type: 'source', name: 'commons', on: false}],
   ]);
 });

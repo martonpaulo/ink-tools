@@ -16,12 +16,14 @@ import {log, logged, timed} from '../log/memory';
 import {missingPermissions} from '../onboarding/permissions';
 import {queuePress, showPluginView} from '@supernote-tools/sn-adapter/official';
 import {startSession} from '../storage/logFile';
+import {getSettings} from '../storage/settings';
 import {pluginFolder} from '../storage/session';
-import {INSERT_BUTTON_ID} from '../buttons';
+import {DEFINE_BUTTON_ID, INSERT_BUTTON_ID} from '../buttons';
 import {atStep, failureText, StepFailure} from './failure';
 import type {LassoPlace} from './place';
 import {readLassoQuery} from './lassoQuery';
-import {insertBest} from './quickInsert';
+import {insertBest, InsertLimit, QuickInsert} from './quickInsert';
+import {insertDefinition} from './insertDefinition';
 import {copy} from '../ui/copy';
 
 export type HeadlessDeps = {
@@ -30,6 +32,7 @@ export type HeadlessDeps = {
   missing: typeof missingPermissions;
   read: typeof readLassoQuery;
   insert: typeof insertBest;
+  define: typeof insertDefinition;
   show: typeof showPluginView;
   /** Hands a press to the view, as if the host had opened it for that button. */
   press: typeof queuePress;
@@ -41,6 +44,7 @@ const DEVICE: HeadlessDeps = {
   missing: missingPermissions,
   read: readLassoQuery,
   insert: insertBest,
+  define: insertDefinition,
   show: showPluginView,
   press: queuePress,
 };
@@ -83,24 +87,70 @@ export function onHeadlessNote(listener: () => void): () => void {
   return () => noteListeners.delete(listener);
 }
 
+/** What a no-view button does: its log name, its id for the view, and its insert (#74, #115). */
+type NoViewMode = {
+  name: string;
+  buttonId: number;
+  run: (
+    deps: HeadlessDeps,
+    word: string,
+    at: LassoPlace | null,
+    limit: InsertLimit,
+  ) => Promise<QuickInsert>;
+};
+
+const PICTURE: NoViewMode = {
+  name: 'insert picture (no view)',
+  buttonId: INSERT_BUTTON_ID,
+  run: (deps, word, at, limit) => deps.insert(word, at, undefined, limit),
+};
+
+const DEFINITION: NoViewMode = {
+  name: 'insert definition (no view)',
+  buttonId: DEFINE_BUTTON_ID,
+  run: (deps, word, at, limit) => deps.define(word, at, undefined, limit),
+};
+
 async function showFailure(
+  mode: NoViewMode,
   failed: HeadlessNote,
   deps: HeadlessDeps,
 ): Promise<void> {
-  log(`insert picture (no view) failed: ${failed.text}`);
+  log(`${mode.name} failed: ${failed.text}`);
   note = failed;
   noteListeners.forEach(listener => listener());
   await logged('showPluginView', deps.show);
 }
 
 /** Runs one «Insert best picture» press with no view. Never rejects; a second press waits its turn. */
-export async function insertWithoutView(
+export function insertWithoutView(deps: HeadlessDeps = DEVICE): Promise<void> {
+  return runWithoutView(PICTURE, deps);
+}
+
+/**
+ * Runs one «Insert definition» press with no view, under the same guard (#115). A press that
+ * reaches here after the switch was turned off, such as a queued one, is ignored.
+ */
+export async function defineWithoutView(
   deps: HeadlessDeps = DEVICE,
+  settings: typeof getSettings = getSettings,
+): Promise<void> {
+  if (!(await settings()).definition) {
+    log(`${DEFINITION.name}: the switch is off, press ignored`);
+    return;
+  }
+  return runWithoutView(DEFINITION, deps);
+}
+
+/** One press of either no-view button: one run at a time, across both buttons. */
+async function runWithoutView(
+  mode: NoViewMode,
+  deps: HeadlessDeps,
 ): Promise<void> {
   const started = Date.now();
   const age = runningSince === null ? null : started - runningSince;
   if (age !== null && age <= NO_VIEW_LIMIT_MS) {
-    log('insert picture (no view): already running, press ignored');
+    log(`${mode.name}: already running, press ignored`);
     return;
   }
   runningSince = started;
@@ -111,47 +161,48 @@ export async function insertWithoutView(
   let at: LassoPlace | null = null;
   try {
     await deps.session();
-    log('insert picture (no view): start');
+    log(`${mode.name}: start`);
     if (age !== null) {
       log(
-        `insert picture (no view): the last press is still running after ${age} ms; starting again`,
+        `${mode.name}: the last press is still running after ${age} ms; starting again`,
       );
     }
     await deps.folder();
     if ((await deps.missing()).length > 0) {
-      log(
-        'insert picture (no view): a permission is missing, opening the view',
-      );
-      deps.press(INSERT_BUTTON_ID);
+      log(`${mode.name}: a permission is missing, opening the view`);
+      deps.press(mode.buttonId);
       await logged('showPluginView', deps.show);
       return;
     }
     const query = await timed('lasso', () => deps.read());
     if (!query.ok) {
-      log(`insert picture (no view): no word, ${query.code} ${query.message}`);
+      log(`${mode.name}: no word, ${query.code} ${query.message}`);
       const lassoFailure = atStep('lasso', query);
       await showFailure(
+        mode,
         {query: '', place: null, lassoFailure, text: failureText(lassoFailure)},
         deps,
       );
       return;
     }
     word = query.value.query;
-    log(`insert picture (no view): "${word}"`);
+    log(`${mode.name}: "${word}"`);
     const {place} = query.value;
     at = place ? {...place, recheck: true} : null;
-    const inserted = await deps.insert(word, at, undefined, {deadline});
+    const inserted = await mode.run(deps, word, at, {deadline});
     if (!inserted.ok) {
       await showFailure(
+        mode,
         {query: word, place: at, lassoFailure: null, text: inserted.text},
         deps,
       );
       return;
     }
-    log(`insert picture (no view): done, ${inserted.value}`);
+    log(`${mode.name}: done, ${inserted.value}`);
   } catch (error) {
-    log(`insert picture (no view) failed: ${String(error)}`);
+    log(`${mode.name} failed: ${String(error)}`);
     await showFailure(
+      mode,
       {
         query: word,
         place: at,

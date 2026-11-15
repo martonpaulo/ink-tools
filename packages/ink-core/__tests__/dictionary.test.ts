@@ -1,4 +1,4 @@
-import {checkQuery, DictionaryProvider, Translation, translateFirst} from '../src/dictionary';
+import {checkQuery, Definition, defineFirst, DictionaryProvider, Translation, translateFirst} from '../src/dictionary';
 
 const provider = (id: string, answer: Translation[] | Error): DictionaryProvider & {calls: number} => {
   const p = {
@@ -48,4 +48,56 @@ test('no provider has the word: an empty answer, with every failure kept', async
   });
   const failed = await translateFirst([provider('online', new Error('HTTP 503'))], query);
   expect(failed).toEqual({translations: [], providerId: null, errors: ['online: HTTP 503']});
+});
+
+const definer = (
+  id: string,
+  answers: Partial<Record<'pt' | 'es' | 'zh', Definition[] | Error>>,
+): DictionaryProvider & {asked: string[]} => {
+  const p = {
+    id,
+    asked: [] as string[],
+    async translate() {
+      return [];
+    },
+    async define({word, language}: {word: string; language: 'pt' | 'es' | 'zh'}) {
+      p.asked.push(`${language}:${word}`);
+      const answer = answers[language] ?? [];
+      if (answer instanceof Error) throw answer;
+      return answer;
+    },
+  };
+  return p;
+};
+
+test('a definition: the first language with a hit answers, and later ones are not asked', async () => {
+  const wiktionary = definer('wiktionary', {pt: [], es: [{text: 'Fruto del manzano.'}]});
+  const result = await defineFirst([wiktionary], ' manzana ', ['pt', 'es', 'zh']);
+  expect(result).toEqual({
+    definitions: [{text: 'Fruto del manzano.'}],
+    providerId: 'wiktionary',
+    language: 'es',
+    errors: [],
+  });
+  expect(wiktionary.asked).toEqual(['pt:manzana', 'es:manzana']);
+});
+
+test('a provider without define is skipped, and a failure is kept while the next language answers', async () => {
+  const translatorOnly = provider('apertium', [{text: 'x'}]);
+  const wiktionary = definer('wiktionary', {pt: new Error('HTTP 503'), es: [{text: 'Fruto.'}]});
+  const result = await defineFirst([translatorOnly, wiktionary], 'manzana', ['pt', 'es']);
+  expect(result.language).toBe('es');
+  expect(result.errors).toEqual(['wiktionary pt: HTTP 503']);
+  expect(translatorOnly.calls).toBe(0);
+});
+
+test('no definition anywhere is an empty answer; an empty word or unknown language is refused', async () => {
+  expect(await defineFirst([definer('wiktionary', {})], 'zzz', ['pt'])).toEqual({
+    definitions: [],
+    providerId: null,
+    language: null,
+    errors: [],
+  });
+  await expect(defineFirst([], ' ', ['pt'])).rejects.toThrow(/empty/);
+  await expect(defineFirst([], 'maçã', ['en' as never])).rejects.toThrow(/unknown language/);
 });
