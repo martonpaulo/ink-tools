@@ -3,7 +3,8 @@
 A Supernote plugin: write a word by hand, lasso it, and insert its translation. Each language
 pair is opt in; Portuguese with Spanish and Portuguese with Chinese come first.
 
-**Status: scaffolded.** A plugin shell with a Settings entry only; the work is tracked in
+**Status: scaffolded.** A plugin shell whose Settings turn each language pair on or off
+([#126](https://github.com/martonpaulo/supernote-tools/issues/126)); the rest is tracked in
 [#46](https://github.com/martonpaulo/supernote-tools/issues/46).
 
 ## What it will do

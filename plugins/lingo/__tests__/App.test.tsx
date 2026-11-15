@@ -10,5 +10,6 @@ test('the Settings view keeps the size rules and has a header', () => {
     tree = renderer.create(<App />);
   });
   expect(screenBreaks(tree.root)).toEqual([]);
-  expect(tree.root.findByProps({accessibilityRole: 'header'}).props.children).toBe('Lingo');
+  const headers = tree.root.findAllByProps({accessibilityRole: 'header'});
+  expect(headers[0].props.children).toBe('Lingo');
 });

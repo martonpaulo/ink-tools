@@ -1,5 +1,6 @@
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const uiKit = require('../../packages/ui-kit/plugin-config');
+const inkCore = require('../../packages/ink-core/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
 
 /**
@@ -16,6 +17,6 @@ const config = {
 
 module.exports = mergeConfig(
   getDefaultConfig(__dirname),
-  snAdapter.metro(uiKit.metro(__dirname)),
+  snAdapter.metro(inkCore.metro(uiKit.metro(__dirname))),
   config,
 );

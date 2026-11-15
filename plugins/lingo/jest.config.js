@@ -1,4 +1,5 @@
 const uiKit = require('../../packages/ui-kit/plugin-config');
+const inkCore = require('../../packages/ink-core/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
 
 module.exports = {
@@ -7,6 +8,8 @@ module.exports = {
   // sn-adapter's official tier resolves sn-plugin-lib, and its mock, from this plugin (#101).
   moduleNameMapper: {
     ...uiKit.jest.moduleNameMapper,
+    // ink-core's pairs model (#126); its own tests run in the packages gate (#109).
+    ...inkCore.jestModuleNameMapper,
     ...snAdapter.jestModuleNameMapper,
   },
   // The shared package's own tests run in Bridge's suite (#93).
