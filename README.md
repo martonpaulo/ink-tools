@@ -15,6 +15,7 @@ A monorepo of independent subprojects. Each keeps its own `AGENTS.md`, versionin
 | [`plugins/bridge/`](plugins/bridge/) | A settings-only plugin with to-do, calendar and digest modules, each opt in. **Scaffolded** — see its open issues. |
 | [`plugins/ink2pic/`](plugins/ink2pic/) | Write a word by hand, lasso it, and insert a matching picture from Openclipart or Wikimedia Commons. Keyless, no phone needed. |
 | [`plugins/lingo/`](plugins/lingo/) | Write a word by hand, lasso it, and insert its translation; each language pair opt in. **Scaffolded** — see [#46](https://github.com/martonpaulo/supernote-tools/issues/46). |
+| [`plugins/lookup/`](plugins/lookup/) | Write a word by hand, lasso it, and insert a picture, a photo or a short definition; the next step of Ink2Pic, installed beside it. **Scaffolded** — see [#110](https://github.com/martonpaulo/supernote-tools/issues/110). |
 | [`plugins/probe/`](plugins/probe/) | A developer-only plugin for quick on-device experiments. Never shipped to users. |
 | [`packages/`](packages/) | Shared, provider-agnostic building blocks for the plugins: `sn-adapter`, `sync-core` and `ink-core`. Built and tested; no plugin uses them yet. |
 | [`cli/snadb/`](cli/snadb/) | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |

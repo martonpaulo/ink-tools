@@ -1,0 +1,12 @@
+{
+  "name": "Lookup",
+  "desc": "Lasso a handwritten word and insert a picture, a photo or a short definition for it.",
+  "author": "Marton Paulo",
+  "iconPath": "",
+  "versionName": "0.0.1",
+  "versionCode": "1",
+  "pluginID": "t2obvupqt3edmnrr",
+  "pluginKey": "Lookup",
+  "jsMainPath": "index",
+  "uses-permissions": []
+}

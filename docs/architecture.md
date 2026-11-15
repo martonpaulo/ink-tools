@@ -154,7 +154,8 @@ supernote-tools/
     tokens expire after 7 days; «In production» without verification keeps them, behind an
     «unverified app» warning.
 - **`lookup`** — write a word, lasso it, insert a **picture** or a **definition**. Merges today's
-  `ink2pic` with the planned `ink2def`; each mode opt in/out.
+  `ink2pic` with the planned `ink2def`; each mode opt in/out. A new plugin with its own `pluginID`,
+  installed beside `ink2pic` until it is retired (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)).
 - **`lingo`** — write a word, lasso it, insert its **translation**. One plugin; each **language pair**
   (e.g. `zh-pt`, `es-pt`) is opt in/out, and more pairs can be added over time.
 - **`retouch`** — edit an image already on the page (the old "image-edit plugin is future work" note).
@@ -165,7 +166,7 @@ supernote-tools/
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
-`sn-adapter` and `ink-core` the same way. `ink2pic`, `bridge` and `lingo` call `sn-plugin-lib` only
+`sn-adapter` and `ink-core` the same way. `ink2pic`, `bridge`, `lingo` and `lookup` call `sn-plugin-lib` only
 through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
 of `lookup`, and keeps shipping until the merge lands.
 
