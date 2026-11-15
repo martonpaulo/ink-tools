@@ -1,0 +1,16 @@
+{
+  "name": "Lingo",
+  "tagline": "Lasso a word, get its translation",
+  "icon": "art/lingo-icon.svg",
+  "panels": [
+    { "caption": "Write a word,\nthen lasso it", "art": "art/lookup-1.svg" },
+    { "caption": "Its translation\nlands on the page", "art": "art/lingo-2.svg" }
+  ],
+  "features": [
+    { "icon": "translate", "label": "Portuguese and\nSpanish, both ways" },
+    { "icon": "translate", "label": "Portuguese and\nChinese, both ways" },
+    { "icon": "offline", "label": "Offline for\ncommon words" },
+    { "icon": "open", "label": "Open sources,\nno account" }
+  ],
+  "source": "docs/plugin-scope.md#lingo"
+}

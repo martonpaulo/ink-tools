@@ -1,0 +1,6 @@
+<!-- retouch, placeholder icon (512x512, drawn in black): a magic wand over a framed picture. Replaced by the plugin's own icon when it lands. -->
+<rect x="48" y="112" width="320" height="320" rx="36" fill="none" stroke="#000000" stroke-width="40"/>
+<path d="M80 400 L176 280 L240 352 L280 312 L336 400 Z" fill="#000000"/>
+<path d="M232 280 L448 64" stroke="#FFFFFF" stroke-width="80" stroke-linecap="round"/>
+<path d="M232 280 L448 64" stroke="#000000" stroke-width="40" stroke-linecap="round"/>
+<path d="M420 160 V216 M392 188 H448 M320 40 V88 M296 64 H344" stroke="#000000" stroke-width="20" stroke-linecap="round"/>

@@ -1,0 +1,5 @@
+<!-- bridge, placeholder icon (512x512, drawn in black): an arched bridge between two banks. Replaced by the plugin's own icon when it lands. -->
+<path d="M40 300 H472" stroke="#000000" stroke-width="44" stroke-linecap="round"/>
+<path d="M76 300 C150 140 362 140 436 300" fill="none" stroke="#000000" stroke-width="40" stroke-linecap="round"/>
+<path d="M176 300 V222 M256 300 V196 M336 300 V222" stroke="#000000" stroke-width="28" stroke-linecap="round"/>
+<path d="M40 400 C110 370 170 430 256 400 C342 370 402 430 472 400" fill="none" stroke="#000000" stroke-width="28" stroke-linecap="round"/>

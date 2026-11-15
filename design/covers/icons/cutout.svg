@@ -1,0 +1,4 @@
+<!-- feature icon (64x64): scissors, for a cutout. -->
+<circle cx="16" cy="48" r="9" fill="none" stroke="currentColor" stroke-width="6"/>
+<circle cx="48" cy="48" r="9" fill="none" stroke="currentColor" stroke-width="6"/>
+<path d="M22 41 L46 6 M42 41 L18 6" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>

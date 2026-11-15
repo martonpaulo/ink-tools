@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600">
+  <!-- Cover template, pilot A «Side by side». Black, white and greys only. render.mjs fills the double-brace fields. -->
+  <defs>
+    <pattern id="hatch" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="#FFFFFF"/>
+      <rect width="20" height="40" fill="#000000"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1600" fill="#FFFFFF"/>
+
+  <!-- Title band -->
+  <rect width="1200" height="340" fill="#000000"/>
+  <rect x="64" y="70" width="200" height="200" rx="44" fill="#FFFFFF"/>
+  <g transform="translate(84 90) scale(0.3125)"><!-- lingo, placeholder icon (512x512, drawn in black): two speech bubbles, one answering the other. Replaced by the plugin's own icon when it lands. -->
+<path d="M48 64 H288 V256 H160 L88 320 V256 H48 Z" fill="#000000" stroke="#000000" stroke-width="24" stroke-linejoin="round"/>
+<path d="M232 208 H464 V400 H424 V464 L352 400 H232 Z" fill="#FFFFFF" stroke="#000000" stroke-width="36" stroke-linejoin="round"/></g>
+  <text x="304" y="196" font-family="Gabarito" font-weight="900" font-size="150" letter-spacing="4" fill="#FFFFFF">LINGO</text>
+  <text x="308" y="268" font-family="Figtree" font-weight="700" font-size="46" fill="#E6E6E6">Lasso a word, get its translation</text>
+
+  <!-- How it works -->
+  <text x="64" y="428" font-family="Gabarito" font-weight="800" font-size="44" letter-spacing="6" fill="#000000">HOW IT WORKS</text>
+  <g transform="translate(64 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">1</text>
+    <g transform="translate(20 120)"><!-- lookup and lingo, panel 1 (480x320): a handwritten word on a ruled page, closed in a lasso. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
+<path d="M96 196 C104 150 134 146 132 176 C130 204 112 214 118 188 C126 160 156 158 158 184 C160 206 182 206 186 180 C190 154 214 152 214 180 C214 206 238 204 242 172 C246 132 262 116 270 136 C278 156 254 214 262 200 C272 176 292 168 300 186 C308 204 326 202 334 180 C342 160 364 164 360 188 C356 210 384 206 396 186" fill="none" stroke="#000000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="246" cy="178" rx="196" ry="86" fill="none" stroke="#000000" stroke-width="6" stroke-dasharray="20 14"/></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">Write a word,</tspan><tspan x="260" dy="50">then lasso it</tspan></text>
+  </g>
+  <g transform="translate(616 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">2</text>
+    <g transform="translate(20 120)"><!-- lingo, panel 2 (480x320): the lassoed word with its translation inserted under it as text. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
+<path d="M120 138 C128 100 150 96 150 122 C150 146 136 150 140 128 C146 104 168 104 170 126 C172 146 190 146 194 124 C198 102 218 102 218 126 C218 146 240 144 246 120 C252 96 276 104 270 128 C266 146 292 144 304 126" fill="none" stroke="#000000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="104" y="180" width="272" height="84" rx="10" fill="#E6E6E6" stroke="#000000" stroke-width="5"/>
+<text x="240" y="236" text-anchor="middle" font-family="Figtree" font-weight="800" font-size="40" fill="#000000">manzana</text>
+<path d="M240 150 V174" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+<path d="M228 164 L240 178 L252 164" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">Its translation</tspan><tspan x="260" dy="50">lands on the page</tspan></text>
+  </g>
+
+  <!-- Features: up to four, two columns -->
+  <rect x="64" y="1088" width="1072" height="6" fill="#000000"/>
+  <g transform="translate(64 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): two speech bubbles, one answering the other, for a language pair. -->
+<path d="M6 8 H34 V30 H18 L10 38 V30 H6 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+<path d="M30 26 H58 V48 H54 V56 L46 48 H30 Z" fill="#FFFFFF" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Portuguese and</tspan><tspan x="128" dy="48">Spanish, both ways</tspan></text>
+  </g>
+  <g transform="translate(616 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): two speech bubbles, one answering the other, for a language pair. -->
+<path d="M6 8 H34 V30 H18 L10 38 V30 H6 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+<path d="M30 26 H58 V48 H54 V56 L46 48 H30 Z" fill="#FFFFFF" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Portuguese and</tspan><tspan x="128" dy="48">Chinese, both ways</tspan></text>
+  </g>
+  <g transform="translate(64 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a closed book, for the words kept on the tablet. -->
+<path d="M12 10 C12 6 14 4 18 4 H52 V52 H18 C14 52 12 54 12 58 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+<path d="M12 58 C12 54 14 52 18 52 H52 V60 H18" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+<path d="M24 16 H42 M24 26 H42" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Offline for</tspan><tspan x="128" dy="48">common words</tspan></text>
+  </g>
+  <g transform="translate(616 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): an open padlock, for open sources with no account. -->
+<rect x="12" y="28" width="40" height="28" rx="5" fill="currentColor"/>
+<path d="M22 28 V18 C22 6 42 6 42 18" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Open sources,</tspan><tspan x="128" dy="48">no account</tspan></text>
+  </g>
+
+  <!-- Hatched footer stripe -->
+  <rect y="1480" width="1200" height="120" fill="url(#hatch)"/>
+  <rect y="1474" width="1200" height="8" fill="#000000"/>
+</svg>

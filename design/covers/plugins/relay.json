@@ -1,0 +1,16 @@
+{
+  "name": "Relay",
+  "tagline": "From your phone into the note",
+  "icon": "art/relay-icon.svg",
+  "panels": [
+    { "caption": "Share from the\nphone, by LocalSend", "art": "art/relay-1.svg" },
+    { "caption": "It lands in the\nopen note", "art": "art/relay-2.svg" }
+  ],
+  "features": [
+    { "icon": "text", "label": "Text snippets" },
+    { "icon": "photo", "label": "Photos and\nimages" },
+    { "icon": "move", "label": "You place it\non the page" },
+    { "icon": "wifi", "label": "Over Wi-Fi, by\nLocalSend" }
+  ],
+  "source": "docs/plugin-scope.md#new-phone-to-open-note"
+}

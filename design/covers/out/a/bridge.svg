@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600">
+  <!-- Cover template, pilot A «Side by side». Black, white and greys only. render.mjs fills the double-brace fields. -->
+  <defs>
+    <pattern id="hatch" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="#FFFFFF"/>
+      <rect width="20" height="40" fill="#000000"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1600" fill="#FFFFFF"/>
+
+  <!-- Title band -->
+  <rect width="1200" height="340" fill="#000000"/>
+  <rect x="64" y="70" width="200" height="200" rx="44" fill="#FFFFFF"/>
+  <g transform="translate(84 90) scale(0.3125)"><!-- bridge, placeholder icon (512x512, drawn in black): an arched bridge between two banks. Replaced by the plugin's own icon when it lands. -->
+<path d="M40 300 H472" stroke="#000000" stroke-width="44" stroke-linecap="round"/>
+<path d="M76 300 C150 140 362 140 436 300" fill="none" stroke="#000000" stroke-width="40" stroke-linecap="round"/>
+<path d="M176 300 V222 M256 300 V196 M336 300 V222" stroke="#000000" stroke-width="28" stroke-linecap="round"/>
+<path d="M40 400 C110 370 170 430 256 400 C342 370 402 430 472 400" fill="none" stroke="#000000" stroke-width="28" stroke-linecap="round"/></g>
+  <text x="304" y="196" font-family="Gabarito" font-weight="900" font-size="150" letter-spacing="4" fill="#FFFFFF">BRIDGE</text>
+  <text x="308" y="268" font-family="Figtree" font-weight="700" font-size="46" fill="#E6E6E6">Your to-dos and calendars, synced</text>
+
+  <!-- How it works -->
+  <text x="64" y="428" font-family="Gabarito" font-weight="800" font-size="44" letter-spacing="6" fill="#000000">HOW IT WORKS</text>
+  <g transform="translate(64 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">1</text>
+    <g transform="translate(20 120)"><!-- bridge, panel 1 (480x320): the Settings section with a module switch on and one off. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<text x="52" y="76" font-family="Figtree" font-weight="800" font-size="32" fill="#000000">To-Do</text>
+<rect x="336" y="44" width="92" height="46" rx="23" fill="#000000"/><circle cx="405" cy="67" r="15" fill="#FFFFFF"/>
+<path d="M44 114 H436" stroke="#CCCCCC" stroke-width="4"/>
+<text x="52" y="170" font-family="Figtree" font-weight="800" font-size="32" fill="#000000">Calendar</text>
+<rect x="336" y="138" width="92" height="46" rx="23" fill="#000000"/><circle cx="405" cy="161" r="15" fill="#FFFFFF"/>
+<path d="M44 208 H436" stroke="#CCCCCC" stroke-width="4"/>
+<text x="52" y="264" font-family="Figtree" font-weight="800" font-size="32" fill="#444444">Digest</text>
+<rect x="336" y="232" width="92" height="46" rx="23" fill="#FFFFFF" stroke="#444444" stroke-width="5"/><circle cx="359" cy="255" r="13" fill="#444444"/></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">Turn on To-Do</tspan><tspan x="260" dy="50">or Calendar</tspan></text>
+  </g>
+  <g transform="translate(616 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">2</text>
+    <g transform="translate(20 120)"><!-- bridge, panel 2 (480x320): a native calendar day with synced events beside a to-do list. -->
+<rect x="20" y="16" width="250" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<rect x="20" y="16" width="250" height="52" rx="16" fill="#000000"/>
+<path d="M36 104 H254 M36 160 H254 M36 216 H254 M36 272 H254" stroke="#CCCCCC" stroke-width="4"/>
+<rect x="44" y="112" width="200" height="40" rx="8" fill="#000000"/>
+<rect x="44" y="224" width="200" height="40" rx="8" fill="#E6E6E6" stroke="#000000" stroke-width="5"/>
+<rect x="290" y="16" width="170" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<g fill="none" stroke="#000000" stroke-width="6" stroke-linejoin="round">
+<rect x="308" y="58" width="34" height="34" rx="6"/><rect x="308" y="140" width="34" height="34" rx="6"/><rect x="308" y="222" width="34" height="34" rx="6"/>
+</g>
+<path d="M314 75 L323 84 L338 64" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M356 75 H442 M356 157 H442 M356 239 H426" stroke="#444444" stroke-width="8" stroke-linecap="round"/></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">They show in the</tspan><tspan x="260" dy="50">native apps</tspan></text>
+  </g>
+
+  <!-- Features: up to four, two columns -->
+  <rect x="64" y="1088" width="1072" height="6" fill="#000000"/>
+  <g transform="translate(64 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a ticked box, for to-dos. -->
+<rect x="8" y="8" width="48" height="48" rx="8" fill="none" stroke="currentColor" stroke-width="6"/>
+<path d="M18 33 L28 43 L47 22" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Todoist and the</tspan><tspan x="128" dy="48">native To-Do</tspan></text>
+  </g>
+  <g transform="translate(616 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a calendar page. -->
+<rect x="8" y="12" width="48" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="6"/>
+<rect x="8" y="12" width="48" height="14" rx="6" fill="currentColor"/>
+<path d="M20 6 V18 M44 6 V18" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+<g fill="currentColor"><rect x="16" y="32" width="8" height="8"/><rect x="28" y="32" width="8" height="8"/><rect x="40" y="32" width="8" height="8"/><rect x="16" y="44" width="8" height="6"/><rect x="28" y="44" width="8" height="6"/></g></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Google, iCloud</tspan><tspan x="128" dy="48">and ICS calendars</tspan></text>
+  </g>
+  <g transform="translate(64 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a switch turned on, for a module or a provider that opts in. -->
+<rect x="4" y="18" width="56" height="28" rx="14" fill="currentColor"/>
+<circle cx="45" cy="32" r="9" fill="#FFFFFF"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Turn each module</tspan><tspan x="128" dy="48">and provider on</tspan></text>
+  </g>
+  <g transform="translate(616 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a gear, for Settings. -->
+<path d="M32 4 V14 M32 50 V60 M4 32 H14 M50 32 H60 M12 12 L19 19 M45 45 L52 52 M12 52 L19 45 M45 19 L52 12" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+<circle cx="32" cy="32" r="16" fill="none" stroke="currentColor" stroke-width="8"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Settings only,</tspan><tspan x="128" dy="48">no note buttons</tspan></text>
+  </g>
+
+  <!-- Hatched footer stripe -->
+  <rect y="1480" width="1200" height="120" fill="url(#hatch)"/>
+  <rect y="1474" width="1200" height="8" fill="#000000"/>
+</svg>

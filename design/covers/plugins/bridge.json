@@ -1,0 +1,16 @@
+{
+  "name": "Bridge",
+  "tagline": "Your to-dos and calendars, synced",
+  "icon": "art/bridge-icon.svg",
+  "panels": [
+    { "caption": "Turn on To-Do\nor Calendar", "art": "art/bridge-1.svg" },
+    { "caption": "They show in the\nnative apps", "art": "art/bridge-2.svg" }
+  ],
+  "features": [
+    { "icon": "check", "label": "Todoist and the\nnative To-Do" },
+    { "icon": "calendar", "label": "Google, iCloud\nand ICS calendars" },
+    { "icon": "sync", "label": "Turn each module\nand provider on" },
+    { "icon": "gear", "label": "Settings only,\nno note buttons" }
+  ],
+  "source": "docs/plugin-scope.md#bridge"
+}

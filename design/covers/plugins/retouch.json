@@ -1,0 +1,16 @@
+{
+  "name": "Retouch",
+  "tagline": "Lasso a picture, then edit it",
+  "icon": "art/retouch-icon.svg",
+  "panels": [
+    { "caption": "Lasso a picture\non the page", "art": "art/retouch-1.svg" },
+    { "caption": "Rotate, crop,\ninvert and more", "art": "art/retouch-2.svg" }
+  ],
+  "features": [
+    { "icon": "rotate", "label": "Rotate, mirror,\ncrop and resize" },
+    { "icon": "dither", "label": "Greys, dither\nand halftone" },
+    { "icon": "cutout", "label": "Cut out an object\nor the background" },
+    { "icon": "photo", "label": "Photo to\nline art" }
+  ],
+  "source": "docs/plugin-scope.md#retouch"
+}

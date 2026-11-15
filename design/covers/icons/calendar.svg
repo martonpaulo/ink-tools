@@ -1,0 +1,5 @@
+<!-- feature icon (64x64): a calendar page. -->
+<rect x="8" y="12" width="48" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="6"/>
+<rect x="8" y="12" width="48" height="14" rx="6" fill="currentColor"/>
+<path d="M20 6 V18 M44 6 V18" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+<g fill="currentColor"><rect x="16" y="32" width="8" height="8"/><rect x="28" y="32" width="8" height="8"/><rect x="40" y="32" width="8" height="8"/><rect x="16" y="44" width="8" height="6"/><rect x="28" y="44" width="8" height="6"/></g>

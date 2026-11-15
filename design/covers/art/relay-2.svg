@@ -1,0 +1,9 @@
+<!-- relay, panel 2 (480x320): the photo arrived in the open note, selected, for the owner to place. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
+<path d="M64 76 C76 56 92 56 100 76 C108 92 126 92 136 70 M156 76 H212" fill="none" stroke="#000000" stroke-width="8" stroke-linecap="round"/>
+<rect x="196" y="124" width="200" height="148" fill="none" stroke="#888888" stroke-width="4" stroke-dasharray="12 10"/>
+<rect x="216" y="140" width="160" height="116" rx="6" fill="#E6E6E6" stroke="#000000" stroke-width="6"/>
+<path d="M222 250 L266 196 L298 230 L318 212 L370 250 Z" fill="#444444"/>
+<circle cx="344" cy="170" r="12" fill="#000000"/>
+<g fill="#000000"><rect x="186" y="114" width="20" height="20"/><rect x="386" y="114" width="20" height="20"/><rect x="186" y="262" width="20" height="20"/><rect x="386" y="262" width="20" height="20"/></g>

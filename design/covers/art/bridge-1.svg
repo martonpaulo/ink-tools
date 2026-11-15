@@ -1,0 +1,10 @@
+<!-- bridge, panel 1 (480x320): the Settings section with a module switch on and one off. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<text x="52" y="76" font-family="Figtree" font-weight="800" font-size="32" fill="#000000">To-Do</text>
+<rect x="336" y="44" width="92" height="46" rx="23" fill="#000000"/><circle cx="405" cy="67" r="15" fill="#FFFFFF"/>
+<path d="M44 114 H436" stroke="#CCCCCC" stroke-width="4"/>
+<text x="52" y="170" font-family="Figtree" font-weight="800" font-size="32" fill="#000000">Calendar</text>
+<rect x="336" y="138" width="92" height="46" rx="23" fill="#000000"/><circle cx="405" cy="161" r="15" fill="#FFFFFF"/>
+<path d="M44 208 H436" stroke="#CCCCCC" stroke-width="4"/>
+<text x="52" y="264" font-family="Figtree" font-weight="800" font-size="32" fill="#444444">Digest</text>
+<rect x="336" y="232" width="92" height="46" rx="23" fill="#FFFFFF" stroke="#444444" stroke-width="5"/><circle cx="359" cy="255" r="13" fill="#444444"/>

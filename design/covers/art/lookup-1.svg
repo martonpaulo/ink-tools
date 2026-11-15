@@ -1,4 +1,4 @@
-<!-- lookup, panel 1 (480x320): a handwritten word on a ruled page, closed in a lasso. -->
+<!-- lookup and lingo, panel 1 (480x320): a handwritten word on a ruled page, closed in a lasso. -->
 <rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
 <path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
 <path d="M96 196 C104 150 134 146 132 176 C130 204 112 214 118 188 C126 160 156 158 158 184 C160 206 182 206 186 180 C190 154 214 152 214 180 C214 206 238 204 242 172 C246 132 262 116 270 136 C278 156 254 214 262 200 C272 176 292 168 300 186 C308 204 326 202 334 180 C342 160 364 164 360 188 C356 210 384 206 396 186" fill="none" stroke="#000000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>

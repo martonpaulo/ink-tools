@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600">
+  <!-- Cover template, pilot A «Side by side». Black, white and greys only. render.mjs fills the double-brace fields. -->
+  <defs>
+    <pattern id="hatch" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="#FFFFFF"/>
+      <rect width="20" height="40" fill="#000000"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1600" fill="#FFFFFF"/>
+
+  <!-- Title band -->
+  <rect width="1200" height="340" fill="#000000"/>
+  <rect x="64" y="70" width="200" height="200" rx="44" fill="#FFFFFF"/>
+  <g transform="translate(84 90) scale(0.3125)"><!-- retouch, placeholder icon (512x512, drawn in black): a magic wand over a framed picture. Replaced by the plugin's own icon when it lands. -->
+<rect x="48" y="112" width="320" height="320" rx="36" fill="none" stroke="#000000" stroke-width="40"/>
+<path d="M80 400 L176 280 L240 352 L280 312 L336 400 Z" fill="#000000"/>
+<path d="M232 280 L448 64" stroke="#FFFFFF" stroke-width="80" stroke-linecap="round"/>
+<path d="M232 280 L448 64" stroke="#000000" stroke-width="40" stroke-linecap="round"/>
+<path d="M420 160 V216 M392 188 H448 M320 40 V88 M296 64 H344" stroke="#000000" stroke-width="20" stroke-linecap="round"/></g>
+  <text x="304" y="196" font-family="Gabarito" font-weight="900" font-size="150" letter-spacing="4" fill="#FFFFFF">RETOUCH</text>
+  <text x="308" y="268" font-family="Figtree" font-weight="700" font-size="46" fill="#E6E6E6">Lasso a picture, then edit it</text>
+
+  <!-- How it works -->
+  <text x="64" y="428" font-family="Gabarito" font-weight="800" font-size="44" letter-spacing="6" fill="#000000">HOW IT WORKS</text>
+  <g transform="translate(64 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">1</text>
+    <g transform="translate(20 120)"><!-- retouch, panel 1 (480x320): a picture on a ruled page, closed in a lasso. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
+<rect x="152" y="92" width="176" height="140" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+<path d="M164 222 L210 162 L246 202 L268 180 L316 222 Z" fill="#444444"/>
+<circle cx="284" cy="130" r="16" fill="#000000"/>
+<ellipse cx="240" cy="162" rx="150" ry="112" fill="none" stroke="#000000" stroke-width="6" stroke-dasharray="20 14"/></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">Lasso a picture</tspan><tspan x="260" dy="50">on the page</tspan></text>
+  </g>
+  <g transform="translate(616 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">2</text>
+    <g transform="translate(20 120)"><!-- retouch, panel 2 (480x320): an edit bar with rotate, crop and invert, and the picture turned and inverted. -->
+<rect x="8" y="8" width="464" height="84" rx="20" fill="#000000"/>
+<rect x="22" y="20" width="132" height="60" rx="12" fill="#FFFFFF"/>
+<path d="M104 52 A18 18 0 1 1 94 36" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+<path d="M88 26 L102 34 L90 46 Z" fill="#000000"/>
+<rect x="174" y="20" width="132" height="60" rx="12" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+<path d="M226 28 V64 H262 M216 38 H252 V74" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="326" y="20" width="132" height="60" rx="12" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+<circle cx="392" cy="50" r="20" fill="none" stroke="#FFFFFF" stroke-width="5"/>
+<path d="M392 30 A20 20 0 0 1 392 70 Z" fill="#FFFFFF"/>
+<g transform="rotate(90 240 216)">
+<rect x="166" y="160" width="148" height="112" rx="8" fill="#000000" stroke="#000000" stroke-width="7"/>
+<path d="M176 262 L214 214 L244 246 L262 228 L304 262 Z" fill="#CCCCCC"/>
+<circle cx="276" cy="190" r="13" fill="#FFFFFF"/>
+</g>
+<g fill="#000000"><rect x="174" y="132" width="20" height="20"/><rect x="286" y="132" width="20" height="20"/><rect x="174" y="280" width="20" height="20"/><rect x="286" y="280" width="20" height="20"/></g></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">Rotate, crop,</tspan><tspan x="260" dy="50">invert and more</tspan></text>
+  </g>
+
+  <!-- Features: up to four, two columns -->
+  <rect x="64" y="1088" width="1072" height="6" fill="#000000"/>
+  <g transform="translate(64 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a turning arrow, for rotate. -->
+<path d="M50 34 A18 18 0 1 1 40 16" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+<path d="M34 6 L48 14 L36 26 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Rotate, mirror,</tspan><tspan x="128" dy="48">crop and resize</tspan></text>
+  </g>
+  <g transform="translate(616 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): dots that grow from light to dark, for dither and halftone. -->
+<g fill="currentColor">
+<circle cx="12" cy="12" r="3"/><circle cx="12" cy="32" r="3"/><circle cx="12" cy="52" r="3"/>
+<circle cx="32" cy="12" r="6"/><circle cx="32" cy="32" r="6"/><circle cx="32" cy="52" r="6"/>
+<circle cx="52" cy="12" r="9"/><circle cx="52" cy="32" r="9"/><circle cx="52" cy="52" r="9"/>
+</g></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Greys, dither</tspan><tspan x="128" dy="48">and halftone</tspan></text>
+  </g>
+  <g transform="translate(64 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): scissors, for a cutout. -->
+<circle cx="16" cy="48" r="9" fill="none" stroke="currentColor" stroke-width="6"/>
+<circle cx="48" cy="48" r="9" fill="none" stroke="currentColor" stroke-width="6"/>
+<path d="M22 41 L46 6 M42 41 L18 6" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Cut out an object</tspan><tspan x="128" dy="48">or the background</tspan></text>
+  </g>
+  <g transform="translate(616 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a photo with a mountain and the sun. -->
+<rect x="8" y="12" width="48" height="40" rx="6" fill="none" stroke="currentColor" stroke-width="6"/>
+<path d="M12 48 L28 30 L38 40 L44 34 L54 46" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+<circle cx="43" cy="23" r="5" fill="currentColor"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Photo to</tspan><tspan x="128" dy="48">line art</tspan></text>
+  </g>
+
+  <!-- Hatched footer stripe -->
+  <rect y="1480" width="1200" height="120" fill="url(#hatch)"/>
+  <rect y="1474" width="1200" height="8" fill="#000000"/>
+</svg>

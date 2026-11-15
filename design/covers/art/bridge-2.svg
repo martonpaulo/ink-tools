@@ -1,0 +1,12 @@
+<!-- bridge, panel 2 (480x320): a native calendar day with synced events beside a to-do list. -->
+<rect x="20" y="16" width="250" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<rect x="20" y="16" width="250" height="52" rx="16" fill="#000000"/>
+<path d="M36 104 H254 M36 160 H254 M36 216 H254 M36 272 H254" stroke="#CCCCCC" stroke-width="4"/>
+<rect x="44" y="112" width="200" height="40" rx="8" fill="#000000"/>
+<rect x="44" y="224" width="200" height="40" rx="8" fill="#E6E6E6" stroke="#000000" stroke-width="5"/>
+<rect x="290" y="16" width="170" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<g fill="none" stroke="#000000" stroke-width="6" stroke-linejoin="round">
+<rect x="308" y="58" width="34" height="34" rx="6"/><rect x="308" y="140" width="34" height="34" rx="6"/><rect x="308" y="222" width="34" height="34" rx="6"/>
+</g>
+<path d="M314 75 L323 84 L338 64" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M356 75 H442 M356 157 H442 M356 239 H426" stroke="#444444" stroke-width="8" stroke-linecap="round"/>

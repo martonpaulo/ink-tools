@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600">
+  <!-- Cover template, pilot A «Side by side». Black, white and greys only. render.mjs fills the double-brace fields. -->
+  <defs>
+    <pattern id="hatch" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="#FFFFFF"/>
+      <rect width="20" height="40" fill="#000000"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1600" fill="#FFFFFF"/>
+
+  <!-- Title band -->
+  <rect width="1200" height="340" fill="#000000"/>
+  <rect x="64" y="70" width="200" height="200" rx="44" fill="#FFFFFF"/>
+  <g transform="translate(84 90) scale(0.3125)"><!-- relay, placeholder icon (512x512, drawn in black): a phone sending to a page. Replaced by the plugin's own icon when it lands. -->
+<rect x="40" y="96" width="160" height="300" rx="28" fill="none" stroke="#000000" stroke-width="36"/>
+<path d="M100 340 H140" stroke="#000000" stroke-width="24" stroke-linecap="round"/>
+<rect x="304" y="64" width="176" height="384" rx="20" fill="#000000"/>
+<path d="M336 136 H448 M336 200 H448 M336 264 H420" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+<path d="M220 246 H284" stroke="#000000" stroke-width="32" stroke-linecap="round"/>
+<path d="M256 206 L296 246 L256 286" fill="none" stroke="#000000" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="304" y="196" font-family="Gabarito" font-weight="900" font-size="150" letter-spacing="4" fill="#FFFFFF">RELAY</text>
+  <text x="308" y="268" font-family="Figtree" font-weight="700" font-size="46" fill="#E6E6E6">From your phone into the note</text>
+
+  <!-- How it works -->
+  <text x="64" y="428" font-family="Gabarito" font-weight="800" font-size="44" letter-spacing="6" fill="#000000">HOW IT WORKS</text>
+  <g transform="translate(64 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">1</text>
+    <g transform="translate(20 120)"><!-- relay, panel 1 (480x320): a phone sharing a photo, which goes out as Wi-Fi waves. -->
+<rect x="56" y="12" width="150" height="296" rx="24" fill="#FFFFFF" stroke="#000000" stroke-width="8"/>
+<rect x="74" y="44" width="114" height="180" rx="8" fill="#E6E6E6" stroke="#000000" stroke-width="5"/>
+<path d="M80 216 L114 168 L140 196 L156 182 L184 216 Z" fill="#444444"/>
+<circle cx="160" cy="80" r="12" fill="#000000"/>
+<rect x="92" y="246" width="78" height="40" rx="20" fill="#000000"/>
+<path d="M118 256 L131 268 L144 256 M131 268 V250" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M262 104 C300 132 300 188 262 216 M300 76 C358 120 358 200 300 244 M338 48 C416 108 416 212 338 272" fill="none" stroke="#000000" stroke-width="9" stroke-linecap="round"/></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">Share from the</tspan><tspan x="260" dy="50">phone, by LocalSend</tspan></text>
+  </g>
+  <g transform="translate(616 464)">
+    <rect width="520" height="580" rx="28" fill="#FFFFFF" stroke="#000000" stroke-width="7"/>
+    <circle cx="64" cy="64" r="42" fill="#000000"/>
+    <text x="64" y="83" text-anchor="middle" font-family="Gabarito" font-weight="900" font-size="56" fill="#FFFFFF">2</text>
+    <g transform="translate(20 120)"><!-- relay, panel 2 (480x320): the photo arrived in the open note, selected, for the owner to place. -->
+<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
+<path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
+<path d="M64 76 C76 56 92 56 100 76 C108 92 126 92 136 70 M156 76 H212" fill="none" stroke="#000000" stroke-width="8" stroke-linecap="round"/>
+<rect x="196" y="124" width="200" height="148" fill="none" stroke="#888888" stroke-width="4" stroke-dasharray="12 10"/>
+<rect x="216" y="140" width="160" height="116" rx="6" fill="#E6E6E6" stroke="#000000" stroke-width="6"/>
+<path d="M222 250 L266 196 L298 230 L318 212 L370 250 Z" fill="#444444"/>
+<circle cx="344" cy="170" r="12" fill="#000000"/>
+<g fill="#000000"><rect x="186" y="114" width="20" height="20"/><rect x="386" y="114" width="20" height="20"/><rect x="186" y="262" width="20" height="20"/><rect x="386" y="262" width="20" height="20"/></g></g>
+    <text font-family="Figtree" font-weight="800" font-size="42" text-anchor="middle" fill="#000000"><tspan x="260" y="486">It lands in the</tspan><tspan x="260" dy="50">open note</tspan></text>
+  </g>
+
+  <!-- Features: up to four, two columns -->
+  <rect x="64" y="1088" width="1072" height="6" fill="#000000"/>
+  <g transform="translate(64 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): lines of text. -->
+<path d="M10 16 H54 M10 28 H54 M10 40 H54 M10 52 H38" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Text snippets</tspan></text>
+  </g>
+  <g transform="translate(616 1130)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): a photo with a mountain and the sun. -->
+<rect x="8" y="12" width="48" height="40" rx="6" fill="none" stroke="currentColor" stroke-width="6"/>
+<path d="M12 48 L28 30 L38 40 L44 34 L54 46" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+<circle cx="43" cy="23" r="5" fill="currentColor"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Photos and</tspan><tspan x="128" dy="48">images</tspan></text>
+  </g>
+  <g transform="translate(64 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): four arrows out of one point, for placing an item by hand. -->
+<path d="M32 8 V56 M8 32 H56" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+<g fill="currentColor"><path d="M32 2 L42 14 H22 Z"/><path d="M32 62 L42 50 H22 Z"/><path d="M2 32 L14 22 V42 Z"/><path d="M62 32 L50 22 V42 Z"/></g></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">You place it</tspan><tspan x="128" dy="48">on the page</tspan></text>
+  </g>
+  <g transform="translate(616 1290)">
+    <circle cx="52" cy="52" r="52" fill="#E6E6E6"/>
+    <g transform="translate(20 20)" color="#000000"><!-- feature icon (64x64): Wi-Fi waves. -->
+<path d="M6 24 C20 10 44 10 58 24 M15 34 C25 24 39 24 49 34 M24 44 C28 40 36 40 40 44" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+<circle cx="32" cy="54" r="5" fill="currentColor"/></g>
+    <text font-family="Figtree" font-weight="700" font-size="40" fill="#000000"><tspan x="128" y="42">Over Wi-Fi, by</tspan><tspan x="128" dy="48">LocalSend</tspan></text>
+  </g>
+
+  <!-- Hatched footer stripe -->
+  <rect y="1480" width="1200" height="120" fill="url(#hatch)"/>
+  <rect y="1474" width="1200" height="8" fill="#000000"/>
+</svg>

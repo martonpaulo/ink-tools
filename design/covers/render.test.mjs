@@ -28,3 +28,17 @@ test('drops the slot of a missing feature and keeps a present one', () => {
 test('fails on a missing value instead of leaving it blank', () => {
   assert.throws(() => fill('{{panels.0.caption}}', data), /missing value «panels.0.caption»/);
 });
+
+test('every plugin fills every template with no missing value or file', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const here = new URL('.', import.meta.url).pathname;
+  const templates = readdirSync(here).filter((f) => /^template-\w+\.svg$/.test(f));
+  const plugins = readdirSync(`${here}plugins`).filter((f) => f.endsWith('.json'));
+  assert.ok(templates.length > 0 && plugins.length > 1);
+  for (const t of templates) {
+    for (const p of plugins) {
+      const svg = fill(readFileSync(`${here}${t}`, 'utf8'), JSON.parse(readFileSync(`${here}plugins/${p}`, 'utf8')));
+      assert.doesNotMatch(svg, /\{\{/, `${p} in ${t}`);
+    }
+  }
+});
