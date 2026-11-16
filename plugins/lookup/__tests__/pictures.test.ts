@@ -12,6 +12,7 @@ import {
   LOOKUP_PICTURES,
   modeDeps,
   modeSearchSettings,
+  PICTURE_WIDTH,
   PictureDeps,
   pictureLasso,
 } from '../src/pictures';
@@ -161,19 +162,38 @@ describe('the measured split decides what a mode inserts (#111)', () => {
 });
 
 test('each mode searches with its own style; Lookup keeps its pictures in MyStyle/Lookup', async () => {
-  expect(modeSearchSettings(illustration).photos).toBe(false);
-  expect(modeSearchSettings(photoMode).photos).toBe(true);
+  expect(modeSearchSettings(illustration, defaultSettings).photos).toBe(false);
+  expect(modeSearchSettings(photoMode, defaultSettings).photos).toBe(true);
   // English too, after the definition's languages: «apple» is the fruit there, not the brand (#13).
-  expect(modeSearchSettings(illustration).languages).toEqual(['pt', 'es', 'en']);
+  expect(modeSearchSettings(illustration, defaultSettings).languages).toEqual([
+    'pt',
+    'es',
+    'en',
+  ]);
   expect(LOOKUP_PICTURES.dir()).toBe(picturesDir());
   expect(picturesDir('/storage/emulated/0')).toBe(
     '/storage/emulated/0/MyStyle/Lookup/pictures',
   );
   expect(await LOOKUP_PICTURES.options()).toEqual({
-    width: 640,
+    width: PICTURE_WIDTH,
     placement: 'below',
     contour: false,
   });
+});
+
+test("the owner's presets (#105): one small size, and the search reads Picture sources and Data saver", () => {
+  expect(PICTURE_WIDTH).toBe(200);
+  const saver = modeSearchSettings(illustration, {
+    ...defaultSettings,
+    sourcesOff: ['openmoji'],
+    dataSaver: true,
+  });
+  expect(saver.dataSaver).toBe(true);
+  expect(saver.sourceOn('openmoji')).toBe(false);
+  expect(saver.sourceOn('commons')).toBe(true);
+  const plain = modeSearchSettings(illustration, defaultSettings);
+  expect(plain.dataSaver).toBe(false);
+  expect(plain.sourceOn('openmoji')).toBe(true);
 });
 
 describe('a press (#111)', () => {
@@ -271,7 +291,8 @@ describe('a press (#111)', () => {
 });
 
 test('a picture left unselected over the ink says so in a short toast (#168)', () => {
-  const {ToastAndroid} = jest.requireActual<typeof import('react-native')>('react-native');
+  const {ToastAndroid} =
+    jest.requireActual<typeof import('react-native')>('react-native');
   const show = jest.spyOn(ToastAndroid, 'show').mockImplementation(() => {});
   LOOKUP_PICTURES.lassoSkipped?.();
   expect(show).toHaveBeenCalledWith(

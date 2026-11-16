@@ -19,6 +19,14 @@ export const copy = {
   'button.translate': (direction: Direction) =>
     `Translate ${directionName(direction)}`,
   'settings.translate': 'Translation buttons',
+  /** The picture options left in Settings (owner's presets, #105). */
+  'settings.sources': 'Picture sources',
+  'settings.dataSaver': 'Data saver',
+  'settings.dataSaverHint': 'Fewer and smaller pictures per search.',
+  'source.openclipart': 'Openclipart',
+  'source.commons': 'Wikimedia Commons',
+  'source.wikidata': 'Wikidata',
+  'source.openmoji': 'OpenMoji',
   'permission.internet':
     'Word Lookup looks words up in an online dictionary, Wiktionary.',
   'permission.translate':

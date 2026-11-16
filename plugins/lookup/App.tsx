@@ -13,7 +13,18 @@ import {
 import {Choice, currentChoice, onChoice} from './src/choose';
 import {ChooseScreen} from './src/ui/ChooseScreen';
 import {getSettings, saveSettings} from './src/profile';
-import {defaultSettings, LookupSettings} from './src/settings';
+import {
+  defaultSettings,
+  LookupSettings,
+  SOURCE_NAMES,
+  sourceOn,
+  withSource,
+} from './src/settings';
+
+/** A source's name as Settings shows it; an unknown adapter shows its own name. */
+const sourceLabel = (name: string): string =>
+  ((copy as Record<string, unknown>)[`source.${name}`] as string | undefined) ??
+  name;
 
 /**
  * Lookup's Settings view: one switch per lasso button, every size and colour from the shared ui-kit
@@ -83,6 +94,39 @@ function SettingsScreen() {
         copy['settings.translate'],
         BUTTONS.filter(button => 'direction' in button.switch),
       )}
+      <View style={shared.listRow}>
+        <Text accessibilityRole="header" style={shared.heading}>
+          {copy['settings.sources']}
+        </Text>
+        <View style={shared.row}>
+          {SOURCE_NAMES.map(name => {
+            const on = sourceOn(shown, name);
+            return (
+              <Button
+                key={name}
+                label={sourceLabel(name)}
+                selected={on}
+                disabled={settings === null}
+                onPress={() => change(withSource(shown, name, !on))}
+              />
+            );
+          })}
+        </View>
+      </View>
+      <View style={shared.listRow}>
+        <Text accessibilityRole="header" style={shared.heading}>
+          {copy['settings.dataSaver']}
+        </Text>
+        <Text style={shared.hint}>{copy['settings.dataSaverHint']}</Text>
+        <View style={shared.row}>
+          <Button
+            label={copy['settings.dataSaver']}
+            selected={shown.dataSaver}
+            disabled={settings === null}
+            onPress={() => change({...shown, dataSaver: !shown.dataSaver})}
+          />
+        </View>
+      </View>
     </View>
   );
 }

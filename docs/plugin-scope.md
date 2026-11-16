@@ -51,6 +51,11 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
   Commons for drawings first, Openclipart and OpenMoji, and keeps only line art; «Insert Image»
   searches Commons with no drawings filter and keeps only photos and dark paintings, so a word with
   only clip art inserts no picture and says so.
+- **Fixed presets** (owner, [#105](https://github.com/martonpaulo/ink-tools/issues/105)). Each picture button inserts at one small size, 200 px
+  wide, and its style is the button's mode (drawings for «Insert Sticker», photos for «Insert
+  Image», D33 A). Settings keeps only two picture options: each picture source on or off (the
+  last one on stays on) and Data saver. The picture still goes below the word; the owner's «in place
+  of the word» is the one preset not built yet.
 - **Emoji / known labels.** Map common keywords to emoji via OpenMoji's own keywords: "happy" and
   "smile" insert a smiling face with no search. (new)
 - **Remember my pick.** When the owner rejects the first suggestion for a word (e.g. "maçã") and
