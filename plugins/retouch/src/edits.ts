@@ -19,7 +19,9 @@ export type EditId =
   | 'background'
   | 'sticker'
   | 'document'
-  | 'styles';
+  | 'styles'
+  | 'enhance_all'
+  | 'undo_all';
 
 /** `showType` 1, a full view, for an edit that shows a screen first (#133); 0 runs with no view. */
 export type EditDefinition = {
@@ -52,6 +54,9 @@ const ORDER: readonly EditId[] = [
   'document',
   // #133: the grid of styles, a view.
   'styles',
+  // #140: every picture on the page, from the lasso of one of them.
+  'enhance_all',
+  'undo_all',
 ];
 
 /** The edits that open a view (#133). */

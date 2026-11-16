@@ -13,7 +13,8 @@ lasso button for pictures, run with no view, and a switch in Settings, all on by
 **Styles** ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)) is the one lasso button with a view: `src/styles.ts` renders the
 picture in every style switched on into `MyStyle/Retouch/style-*.png`, `src/StylesGrid.tsx` shows
 them, a tap runs that style through `runEdit`, and `styles.json` keeps the last style and the two
-options. Settings
+options. **Enhance All Images** and **Undo All Images** ([#140](https://github.com/martonpaulo/ink-tools/issues/140)) lasso each picture of the
+page in turn by its rect and run Enhance or Undo on it through `runEdit` (`src/page.ts`). Settings
 live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. An edit past 2 s shows the shared «Loading…» strip at the top of the note
 ([#103](https://github.com/martonpaulo/ink-tools/issues/103)); a press that changes nothing shows a toast with the reason, and a
 missing file permission opens Settings, which asks for it (`src/press.ts`, [#170](https://github.com/martonpaulo/ink-tools/issues/170)). The time of

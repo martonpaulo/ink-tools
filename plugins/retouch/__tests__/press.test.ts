@@ -12,6 +12,7 @@ function deps(missing: string[], done: Done) {
     missing: async () => missing,
     ask: jest.fn(async () => undefined),
     edit: jest.fn(async () => done),
+    page: jest.fn(),
     toast: text => toasts.push(text),
     log: () => undefined,
   };

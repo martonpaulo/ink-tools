@@ -15,6 +15,7 @@ import {
 import {copy} from './copy';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
 import {EditDefinition, EditId} from './edits';
+import {PAGE_EDITS, PageDone, runPageEdit} from './page';
 import {askFilePermissions} from './permissions';
 import {showToast, STRIP_AFTER_MS, working} from './working';
 
@@ -34,6 +35,8 @@ export type PressDeps = {
   ask: () => Promise<void>;
   /** The edit under the strip. */
   edit: (edit: EditId) => Promise<Done>;
+  /** A page-wide edit under the strip, shown at once: it runs one edit per picture (#140). */
+  page: (edit: EditId) => Promise<PageDone>;
   toast: (text: string) => void;
   log: (line: string) => void;
 };
@@ -59,6 +62,7 @@ const DEVICE: PressDeps = {
   },
   edit: edit =>
     working.run(() => runEdit(edit), {showAfterMs: STRIP_AFTER_MS}),
+  page: edit => working.run(() => runPageEdit(edit)),
   toast: showToast,
   log: line => console.log(`Retouch: ${line}`),
 };
@@ -82,17 +86,30 @@ export function reasonOf(name: string, done: Done): string | null {
     : copy['press.failed'](name, done.why);
 }
 
+/** The toast of a page-wide press. */
+export function pageToast(done: PageDone): string {
+  return done.kind === 'failed'
+    ? copy['page.failed'](done.why)
+    : copy['page.done'](done.edited, done.pictures);
+}
+
 /** Runs `edit`'s press; the value is the edit's outcome, or null when a permission was missing. */
 export async function pressEdit(
   edit: EditDefinition,
   deps: PressDeps = DEVICE,
-): Promise<Done | null> {
+): Promise<Done | PageDone | null> {
   const missing = await deps.missing();
   if (missing.length > 0) {
     deps.log(`${edit.id}: missing ${missing.join(', ')}; opening Settings`);
     deps.toast(copy['press.permission']);
     await deps.ask();
     return null;
+  }
+  const each = PAGE_EDITS[edit.id];
+  if (each) {
+    const page = await deps.page(each);
+    deps.toast(pageToast(page));
+    return page;
   }
   const done = await deps.edit(edit.id);
   const reason = reasonOf(edit.name, done);

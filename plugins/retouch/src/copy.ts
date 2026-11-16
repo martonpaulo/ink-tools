@@ -16,6 +16,8 @@ export const copy = {
   'edit.sticker': 'Make sticker',
   'edit.document': 'Document',
   'edit.styles': 'Styles',
+  'edit.enhance_all': 'Enhance All Images',
+  'edit.undo_all': 'Undo All Images',
   'settings.styles': 'Styles',
   'style.photo': 'Photo',
   'style.line_art': 'Line art',
@@ -35,6 +37,12 @@ export const copy = {
   'press.notPicture': 'Lasso one picture only, then press again.',
   'press.notEdited': 'Image Editing has not changed this picture yet.',
   'press.failed': (edit: string, why: string) => `${edit} did not work: ${why}`,
+  /** The toast of a page-wide press (#140). */
+  'page.done': (edited: number, pictures: number) =>
+    pictures === 0
+      ? 'There is no picture on this page.'
+      : `${edited} of ${pictures} pictures changed.`,
+  'page.failed': (why: string) => `The page could not be read: ${why}`,
   /** Toasts that replace the «Loading…» strip (#103). */
   'working.failed': 'Image Editing stopped with an error.',
   'working.timeout': 'Image Editing is still working.',

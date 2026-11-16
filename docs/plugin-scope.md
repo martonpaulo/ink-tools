@@ -164,8 +164,9 @@ Very useful:
 - The picture Word Lookup just inserted stays lassoed, so Image Editing's buttons are one tap
   away; Lookup never opens Image Editing by itself (owner, replacing
   [#139](https://github.com/martonpaulo/ink-tools/issues/139); [#168](https://github.com/martonpaulo/ink-tools/issues/168)).
-- Later: apply one edit to every image on the page
-  ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
+- «Enhance All Images» and «Undo All Images», in the lasso menu of any one picture, run Enhance or
+  Undo on every picture of the page; a picture with ink across it is skipped, as the rect lasso
+  would take the ink too ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
 
 Limit: each edit finishes within 2 s on the Manta; a longer one shows the «Loading…» strip of
 [Design direction](#design-direction) ([#103](https://github.com/martonpaulo/ink-tools/issues/103)). Before building, existing
