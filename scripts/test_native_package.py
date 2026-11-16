@@ -50,11 +50,15 @@ class NativePackageTest(unittest.TestCase):
                     shutil.copy(plugin / "scripts" / name, root / "scripts" / name)
                 # A toolchain that fails, as the Linux archive's checksum did on the Mac.
                 (root / "scripts/native-toolchain.sh").write_text("echo toolchain failed >&2; exit 1\n")
-                name = json.loads((plugin / "PluginConfig.json").read_text())["name"]
-                (root / "PluginConfig.json").write_text(json.dumps({"name": name}))
+                # buildPlugin.sh names the package after package.json; the display name in
+                # PluginConfig.json may differ, as «Word Lookup» does for lookup (#176).
+                name = json.loads((plugin / "package.json").read_text())["name"]
+                (root / "package.json").write_text(json.dumps({"name": name}))
+                shown = {"name": f"{name} display name"}
+                (root / "PluginConfig.json").write_text(json.dumps(shown))
                 generated = root / "build/generated"
                 generated.mkdir(parents=True)
-                (generated / "PluginConfig.json").write_text(json.dumps({"name": name}))
+                (generated / "PluginConfig.json").write_text(json.dumps(shown))
                 outputs = root / "build/outputs"
                 outputs.mkdir()
                 package = outputs / f"{name}.snplg"

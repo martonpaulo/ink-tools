@@ -7,8 +7,9 @@ symlink points at this file.
 
 A small sideloaded Android app, not a plugin ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), the owner's choice in
 [#151](https://github.com/martonpaulo/supernote-tools/issues/151)), that switches the tablet's
-handwriting recognition language for every app. Its name is «Lingo» (owner,
-[#160](https://github.com/martonpaulo/supernote-tools/issues/160)); it was «Dialect» until `0.1.0-beta.1`. The folder, gate, workflow
+handwriting recognition language for every app. Its internal name is «Lingo» (owner,
+[#160](https://github.com/martonpaulo/supernote-tools/issues/160)); it was «Dialect» until `0.1.0-beta.1`. The tablet shows the feature name «Handwriting
+Language» and «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)). The folder, gate, workflow
 and tag say `lingo-app`, because `lingo` is the retiring Lingo plugin's in each of them.
 Two surfaces ship in one build so one tablet round compares them:
 
@@ -18,7 +19,7 @@ Two surfaces ship in one build so one tablet round compares them:
 - **B, the launcher entry** (`SwitchActivity`, label «Lingo»): the sidebar lists it by itself; one
   tap moves to the next language with nothing on screen.
 
-The settings screen (`SettingsActivity`, a second launcher entry «Lingo settings») shows the
+The settings screen (`SettingsActivity`, a second launcher entry «Handwriting Language Settings») shows the
 active language, the floating button switch, the installed languages in the cycle and each missing
 permission with the command that grants it.
 

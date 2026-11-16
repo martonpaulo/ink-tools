@@ -93,8 +93,8 @@ function manifest(file, {versionCode, versionName: name}) {
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <application android:label="Lingo" android:allowBackup="false" android:hasCode="true">
-    <activity android:name=".SwitchActivity" android:label="Lingo" android:exported="true"
+  <application android:label="Handwriting Language" android:allowBackup="false" android:hasCode="true">
+    <activity android:name=".SwitchActivity" android:label="Handwriting Language" android:exported="true"
         android:theme="@android:style/Theme.NoDisplay" android:excludeFromRecents="true"
         android:noHistory="true" android:taskAffinity="${PACKAGE}.switch">
       <intent-filter>
@@ -102,7 +102,7 @@ function manifest(file, {versionCode, versionName: name}) {
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
-    <activity android:name=".SettingsActivity" android:label="Lingo settings" android:exported="true"
+    <activity android:name=".SettingsActivity" android:label="Handwriting Language Settings" android:exported="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar" android:launchMode="singleTask">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />

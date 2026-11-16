@@ -46,7 +46,7 @@ test('the Settings view keeps the size rules and has a header', async () => {
   expect(screenBreaks(tree.root)).toEqual([]);
   expect(
     tree.root.findAllByProps({accessibilityRole: 'header'})[0].props.children,
-  ).toBe('Lookup');
+  ).toBe('Word Lookup');
 });
 
 test('one switch per lasso button: both picture modes on, the definition off, by default', async () => {

@@ -27,6 +27,8 @@ device into an editable, durable form on the Mac, **not** sharing it with other 
 
 ## lookup
 
+Shown on the tablet as **Word Lookup** ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+
 Evolution of `ink2pic`: write a word, lasso it, insert something. `lookup` is a new plugin with its
 own `pluginID` and everything Ink2Pic did moved into it (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)); it does not carry
 Ink2Pic's settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)). Ink2Pic is retired and uninstalled
@@ -79,6 +81,8 @@ paragraph or a whole page.
 
 ## Lingo app
 
+Shown on the tablet as **Handwriting Language**, with «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+
 A sideloaded Android app, not a plugin, under `apps/lingo-app/`: it switches the handwriting
 recognition language of the whole tablet with one tap, so lasso convert, plugin recognition and the
 handwriting keyboard read the next word in that language ([#157](https://github.com/martonpaulo/supernote-tools/issues/157)). A plugin cannot do it: the
@@ -112,6 +116,8 @@ Used by `lookup`'s definition and translation buttons (and the retiring Lingo pl
   ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).
 
 ## retouch
+
+Shown on the tablet as **Image Editing**; its buttons keep their names ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
 
 Edit an image already on the page, **invoked by lassoing the image**. Every choice costs one e-ink
 refresh, so retouch shows finished options at once and the user taps one, like Ink2Pic's results
@@ -204,6 +210,8 @@ The full editor is the goal from the start, not a viewer and exporter first on `
 
 ## bridge
 
+Shown on the tablet as **Account Sync**; a sync button, where one exists, says «Sync Accounts» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+
 Settled: to-do + calendar + digest, each opt in/out, settings-only (no note surface). Input scope
 is **only** those three — the owner does not want PDFs, read-later or other-app references pulled in
 by `bridge`. See [`architecture.md`](architecture.md).
@@ -230,6 +238,8 @@ Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
   ([#143](https://github.com/martonpaulo/supernote-tools/issues/143), owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)).
 
 ## relay
+
+Shown on the tablet as **Device Transfer**, with the buttons «Send Page», «Send Selection» and «Receive» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176), [#172](https://github.com/martonpaulo/supernote-tools/issues/172)).
 
 The plugin that moves pictures and text between the tablet and the owner's iPhone and Mac over
 LocalSend; one plugin for both directions (owner D25 A). Its receive half is the phone-to-note need
@@ -258,6 +268,8 @@ above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
   after it (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/supernote-tools/issues/143).
 
 ## typeset (proposed)
+
+To be shown as **Real-Time Conversion**, with the sidebar button «Real-Time Text» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
 
 A plugin that turns each handwritten word into typed text in a font the owner chose, soon after he
 writes it, with no lasso, turned on and off from one sidebar button. The research proposes it and

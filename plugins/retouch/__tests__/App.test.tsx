@@ -12,7 +12,7 @@ test('the Settings view keeps the size rules and lists every edit', async () => 
   });
   expect(screenBreaks(tree.root)).toEqual([]);
   const headers = tree.root.findAllByProps({accessibilityRole: 'header'});
-  expect(headers[0].props.children).toBe('Retouch');
+  expect(headers[0].props.children).toBe('Image Editing');
   for (const edit of EDITS) {
     expect(tree.root.findAllByProps({label: edit.name}).length).toBeGreaterThan(0);
   }

@@ -111,7 +111,7 @@ describe('SettingsShell (#93)', () => {
       press(tree, copy['remove.button']);
       expect(onRemove).not.toHaveBeenCalled();
       expect(texts(tree)).toContain(
-        'Remove what Bridge wrote for Calendar? Your own events and tasks stay.',
+        'Remove what Account Sync wrote for Calendar? Your own events and tasks stay.',
       );
       expect(screenBreaks(tree.root)).toEqual([]);
       press(tree, copy['remove.yes']);
@@ -176,7 +176,7 @@ describe('SettingsShell (#93)', () => {
       press(tree, copy.cancel);
       expect(onSignOut).not.toHaveBeenCalled();
       press(tree, 'Sign out of Todoist');
-      expect(texts(tree)).toContain('Sign out of Todoist? Bridge deletes its sign-in from the tablet.');
+      expect(texts(tree)).toContain('Sign out of Todoist? Account Sync deletes its sign-in from the tablet.');
       press(tree, copy['signOut.yes']);
       expect(onSignOut).toHaveBeenCalledTimes(1);
     });

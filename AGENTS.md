@@ -9,6 +9,7 @@
 - Benefit-first description: Unofficial tools for Supernote e-ink tablets: a calendar-sync plugin, a handwriting-to-picture plugin, and an ADB control CLI.
 - Repository: `martonpaulo/supernote-tools` (public)
 - Public identifiers: GitHub repository and the `snadb` CLI; the Ink2Pic and Bridge plugins. Not a package or registry product.
+- Display names ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `lookup` is Word Lookup, `retouch` Image Editing, `relay` Device Transfer, `bridge` Account Sync, the planned `typeset` Real-Time Conversion, the Lingo app (`apps/lingo-app`) Handwriting Language, the planned Mac app Ink Notebook Editor. A name carries no brand. Display names live only in `PluginConfig.json` `name`, the visible copy and the docs; folders, npm packages, gates, workflows, tag prefixes, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names.
 - Landing page: None. The repository README is the public surface.
 - License: `MIT`
 - Copyright: 2026 Marton Paulo

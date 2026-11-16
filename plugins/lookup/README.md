@@ -1,5 +1,7 @@
 # Lookup
 
+On the tablet this plugin is called **Word Lookup**; `lookup` stays its folder and internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+
 A Supernote plugin: write a word by hand, lasso it, and insert a picture, a photo, a short
 definition or a translation for it. It replaces Ink2Pic, which is retired and uninstalled from the
 tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)), and it takes over translation from the retiring Lingo plugin ([#159](https://github.com/martonpaulo/supernote-tools/issues/159)).

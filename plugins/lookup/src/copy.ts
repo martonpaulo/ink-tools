@@ -2,7 +2,7 @@ import {Direction, directionName} from '@supernote-tools/ink-core';
 
 /** Every user-facing string of Lookup. English only; never inline in components (#93). */
 export const copy = {
-  title: 'Lookup',
+  title: 'Word Lookup',
   'settings.modes': 'Lasso buttons',
   'button.define': 'Insert Definition',
   /** One button per direction (#174): «Translate ES→PT». */
@@ -10,14 +10,14 @@ export const copy = {
     `Translate ${directionName(direction)}`,
   'settings.translate': 'Translation buttons',
   'permission.internet':
-    'Lookup looks words up in an online dictionary, Wiktionary.',
+    'Word Lookup looks words up in an online dictionary, Wiktionary.',
   'permission.translate':
-    'Lookup translates words with online dictionaries, Wiktionary and Apertium.',
-  'permission.files': 'Lookup reads the word you lasso on the page.',
+    'Word Lookup translates words with online dictionaries, Wiktionary and Apertium.',
+  'permission.files': 'Word Lookup reads the word you lasso on the page.',
   'permission.write':
-    'Lookup saves each picture to MyStyle/Lookup before it puts it in your note.',
+    'Word Lookup saves each picture to MyStyle/Lookup before it puts it in your note.',
   'permission.pictures':
-    'Lookup searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
+    'Word Lookup searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
   /** Written on the note below the word: a word with no definition is never guessed (#115). */
   'definition.none': (word: string) => `${word}: no definition found`,
   'definition.failed': (word: string) =>
@@ -55,11 +55,11 @@ const pictureFailures = {
   'error.sourcesDown':
     'the picture sources did not answer. Try again in a minute.',
   'error.permission.internet':
-    'Lookup needs Network Access to search pictures.',
+    'Word Lookup needs Network Access to search pictures.',
   'error.permission.files':
-    'Lookup needs Read Files and Modify Files to save pictures.',
+    'Word Lookup needs Read Files and Modify Files to save pictures.',
   'error.permission.settings':
-    'To allow it, open Settings > Apps > Plugins > Lookup > Permissions.',
+    'To allow it, open Settings > Apps > Plugins > Word Lookup > Permissions.',
   'error.save':
     'the picture could not be saved. Free some space and try again.',
   'error.downloadOffline':

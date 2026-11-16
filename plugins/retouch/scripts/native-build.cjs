@@ -73,6 +73,14 @@ function config() {
   return JSON.parse(fs.readFileSync(path.join(root, 'PluginConfig.json'), 'utf8'));
 }
 
+/**
+ * The package's file name: buildPlugin.sh names its JS-only `.snplg` after package.json's `name`,
+ * never after the display name in PluginConfig.json, which may differ (#176).
+ */
+function packageName() {
+  return JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).name;
+}
+
 /** Written from PluginConfig.json, so the native versions can never drift from the plugin's. */
 function manifest(file) {
   const {versionCode, versionName} = config();
@@ -141,8 +149,8 @@ function packagePlugin() {
   // Remove the JS-only package buildPlugin.sh wrote before the native step, so a failed step
   // leaves no .snplg without its app.npk, which would fail on the tablet (#153).
   const outputs = path.join(build, 'outputs');
-  const name = `${config().name}.snplg`;
-  for (const stale of [name, `${config().name}.zip`]) {
+  const name = `${packageName()}.snplg`;
+  for (const stale of [name, `${packageName()}.zip`]) {
     fs.rmSync(path.join(outputs, stale), {force: true});
   }
   const npk = buildNative();

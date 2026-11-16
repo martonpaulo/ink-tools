@@ -23,7 +23,7 @@ describe('statusLines (#88)', () => {
       'On, but not running: a; b',
     ]);
     expect(statusLines({state: 'waiting'})).toEqual([
-      'On. Not synced since Bridge started.',
+      'On. Not synced since Account Sync started.',
     ]);
   });
 

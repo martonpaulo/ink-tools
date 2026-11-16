@@ -1,5 +1,7 @@
 # Bridge
 
+On the tablet this plugin is called **Account Sync**; `bridge` stays its folder and internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+
 A settings-only Supernote plugin with to-do, calendar and digest modules, each opt in. The calendar
 module syncs your calendars with the **native** Supernote Calendar, the real one the device already
 shows, not a separate calendar inside a plugin.

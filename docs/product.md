@@ -8,18 +8,18 @@ A monorepo of independent, unofficial tools for Supernote e-ink tablets. Each su
 alone, with its own `AGENTS.md`, versioning and releases. They come in four kinds:
 
 - **Plugins**, which run inside the tablet's plugin host on `sn-plugin-lib`:
-  - **lookup** turns a lassoed handwritten word into an inserted illustration, photo, short
+  - **Word Lookup** (`lookup`) turns a lassoed handwritten word into an inserted illustration, photo, short
     definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
     tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)), and the **lingo** plugin, which is retiring now that translation is Lookup's
     «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/supernote-tools/issues/174), [#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)).
-  - **bridge** syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
+  - **Account Sync** (`bridge`) syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
     Supernote apps.
-  - **retouch** makes a picture on the page readable on e-ink.
-  - **relay** moves pictures and text between the tablet and the owner's iPhone and Mac over
+  - **Image Editing** (`retouch`) makes a picture on the page readable on e-ink.
+  - **Device Transfer** (`relay`) moves pictures and text between the tablet and the owner's iPhone and Mac over
     LocalSend.
   - **probe** is a developer-only plugin for device experiments.
-- **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Lingo**
-  switches the handwriting recognition language of the whole tablet with one tap
+- **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
+  `apps/lingo-app`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
 - **A Mac CLI**: **snadb** drives the tablet over Wi-Fi ADB.
 - **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
@@ -27,8 +27,12 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   «for Supernote notebooks» may appear in a description only
   ([#175](https://github.com/martonpaulo/supernote-tools/issues/175)).
 
-Proposed, not decided: **typeset**, a plugin that turns each handwritten word into typed text with
-no lasso ([#144](https://github.com/martonpaulo/supernote-tools/issues/144)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
+Proposed, not decided: **Real-Time Conversion** (`typeset`), a plugin that turns each handwritten word into typed text with
+no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/supernote-tools/issues/144)).
+
+Each tool shows a feature name in Supernote's own wording, and its buttons read like the tablet's
+(«New Sticker»): a verb and a noun in title case. Folders, packages, gates, tags and `pluginID`s
+keep the short internal names above ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
 
 ## Who it is for
 
