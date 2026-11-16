@@ -501,11 +501,14 @@ class Device:
         self.log = log
 
     def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True, stdin: bytes | None = None):
-        """`stdin` carries a value that must never reach argv, such as a secret."""
+        """`stdin` carries a value that must never reach argv, such as a secret. Without one, the call
+        reads nothing: `adb shell` forwards inherited input, so an earlier call would swallow a piped
+        secret before `secret set` reads it."""
         prefix = ["adb", "-s", self.serial] if serial else ["adb"]
         started = time.monotonic()
+        feed = {"input": stdin} if stdin is not None else {"stdin": subprocess.DEVNULL}
         try:
-            done = subprocess.run([*prefix, *args], input=stdin, capture_output=True, timeout=timeout, check=False)
+            done = subprocess.run([*prefix, *args], **feed, capture_output=True, timeout=timeout, check=False)
         except subprocess.TimeoutExpired as error:
             self.log.call(args, started, None)
             raise unreachable(self.serial) from error
@@ -517,7 +520,9 @@ class Device:
     def stream(self, args: list[str], seconds: float):
         """Yield the lines a call prints, until it ends or the time limit passes."""
         started = time.monotonic()
-        process = subprocess.Popen(["adb", "-s", self.serial, *args], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(
+            ["adb", "-s", self.serial, *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+        )
         pending = b""
         try:
             with selectors.DefaultSelector() as selector:
@@ -2431,7 +2436,7 @@ def keychain_read(account: str) -> str | None:
     try:
         done = subprocess.run(
             ["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-a", account, "-w"],
-            capture_output=True, text=True, timeout=KEYCHAIN_TIMEOUT, check=False,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=KEYCHAIN_TIMEOUT, check=False,
         )
     except FileNotFoundError:
         raise keychain_failure("`security` is missing: the Google sign-in runs on a Mac") from None
