@@ -112,10 +112,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   pixel size or file type [measured, 2026-11-15, [#100](https://github.com/martonpaulo/supernote-tools/issues/100)].
 - The Upload Item form does not scroll from `adb shell input swipe` or `input motionevent`; taps
   work [measured, 2026-11-15].
-- `recognizeElements` has no language parameter [official signature]; that it uses the
-  handwriting language of Settings › Display & Input › Keyboard is [inference]. The SDK has no
-  call that reads or writes that language; `registerLangListener` reports the system UI language
-  only [official, [#146](https://github.com/martonpaulo/supernote-tools/issues/146)].
+- `recognizeElements` has no language parameter [official signature]; it uses the device
+  handwriting language, which the Note app reads freshly on each recognition call, so a change
+  applies on the next call with no note reopen [source, firmware `Chauvet.E103.2610191001.2559`,
+  [#151](https://github.com/martonpaulo/supernote-tools/issues/151)]. The SDK has no call that
+  reads or writes that language; `registerLangListener` reports the system UI language only
+  [official, [#146](https://github.com/martonpaulo/supernote-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#59](https://github.com/martonpaulo/supernote-tools/issues/59)].
 - A lassoed picture can be read and replaced in place [measured, 2026-11-16, Probe 0.0.1 code 5,
@@ -133,6 +135,35 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     [new picture element])`, which deletes and inserts in one call.
   - The host copies each inserted PNG into `.data/plugin/` under a new name, so the plugin's own file
     can be removed after the write. `pageNum` read 0 before the write and 1 after, on page 1 of 1.
+
+### Handwriting recognition language
+
+Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
+[`research/2026-11-handwriting-language.md`](research/2026-11-handwriting-language.md)
+([#151](https://github.com/martonpaulo/supernote-tools/issues/151)).
+
+- The engine is **MyScript iink** (`libiink.so`, `libMyScript*.so` in the keyboard app) [measured,
+  source].
+- The active recognition language is stored as **one empty file** whose name is the language code,
+  in `/sdcard/.data/dictionary/default/`; the tablet holds `pt_BR` [measured]. There is no
+  `Settings.System`/`Global`/`Secure` key, system property or "set active language" provider
+  [measured, source]. The Settings app switches it by replacing that file, then broadcasting
+  `hw_type_change` [source].
+- A **plugin cannot read or write** the language: `/sdcard/.data/dictionary/` is outside the plugin
+  file whitelist (`Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `InkHub/temp` and
+  `.data/plugin`), so the host's `PluginSecurityManager` denies it, the same denial as
+  [#23](https://github.com/martonpaulo/supernote-tools/issues/23). No broadcast, intent or provider
+  sets the language instead [source]. The plugin host runs as `android.uid.system`, so a plugin can
+  still `startActivity` the Settings screen and query providers; only file access is sandboxed
+  [measured uid, inference].
+- **Shell ADB can write** `/sdcard/.data/dictionary/` [measured], so a host-side `snadb` command
+  could switch the global language among the installed packs without a plugin.
+- Installed language packs: `en_US`, `es_ES`, `pt_BR`, `zh_CN`, `zh_TW`, `ja_JP` (147 MB total);
+  the other 60 of the 66 need a Settings download [measured].
+- A `.note` header carries `<FILE_RECOGN_LANGUAGE:...>` (a plain note reads `none`); a Real-Time
+  Recognition note gets the language at creation via `setFileRecognLanguage`, and the field is a
+  writable file-format field even though the UI forbids changing it after creation [measured,
+  source].
 
 ### What a plugin can show while a no-view action runs
 
