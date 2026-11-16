@@ -98,6 +98,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   ships one 96 x 96 PNG per button, which the tablet scales down to that size (owner D43 A).
 - A lasso button registered while the plugin already runs shows in that list at once, and
   `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/supernote-tools/issues/115)].
+- The lasso calls (`getLassoElements`, `getLassoRect`) need `plugin.permission.FILE:READ` declared
+  and granted: without it they fail with code 1503, «File read permission has not been requested»,
+  and the log shows `PluginSec DENY reason=sdcard_no_read` for the note's path [measured, 2026-11-16,
+  Lingo 0.0.1 code 1, [#128](https://github.com/martonpaulo/supernote-tools/issues/128)].
+- A plugin that registers four lasso buttons gets four rows in the «⋯» list, each with its text
+  name and no icon; the list ends after the last plugin row [measured, 2026-11-16, Lingo,
+  [#128](https://github.com/martonpaulo/supernote-tools/issues/128)].
+- After a no-view lasso button inserts its text, the lasso is gone [measured, 2026-11-16, Lingo].
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no
@@ -154,6 +162,10 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
 
 ## Network and ADB
 
+- The lasso tool takes the pen only: a loop drawn with `input motionevent` (touch) or
+  `input stylus motionevent` selects nothing, and `sendevent` to the `Wacom-pen` node
+  (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Nomad,
+  [#148](https://github.com/martonpaulo/supernote-tools/issues/148)]. Once a lasso exists, `snadb click` presses its toolbar and every «⋯» row.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`snadb wifi on`) and off
   with `snadb wifi off` [measured].
 - With `wifi_sleep_policy` at `2`, the tablet kept answering while asleep for 15 minutes and lost
