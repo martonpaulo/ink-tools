@@ -6,6 +6,7 @@
  * from it (`0.2.0 beta 3`, `0.2.0`), and `versionCode` is a hidden integer that rises on every build.
  *
  *   node scripts/plugin-version.cjs plugins/<name>   prints the tag version, or fails on a mismatch
+ *   node scripts/plugin-version.cjs --workflows .      fails when a prerelease tag lacks its plugin name
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -45,6 +46,53 @@ function problems(folder) {
   return found;
 }
 
+/**
+ * The problems with one prerelease workflow's tags (#155): every tag and release carries the
+ * plugin's name, so each `tags:` pattern and the line that computes the tag start with
+ * `<plugin>-v`. `plugin` comes from the file name, `prerelease-<plugin>.yml`.
+ */
+function workflowProblems(plugin, text) {
+  const prefix = `${plugin}-v`;
+  const found = [];
+  for (const [, list] of text.matchAll(/^\s*tags:\s*\[([^\]]*)\]/gm)) {
+    for (const pattern of list.split(',').map(item => item.trim().replace(/^['"]|['"]$/g, ''))) {
+      if (pattern && !pattern.startsWith(prefix)) {
+        found.push(`tag trigger "${pattern}" does not start with ${prefix}`);
+      }
+    }
+  }
+  const computed = [...text.matchAll(/^\s*(?:tag|expected)="(.*)"\s*$/gm)].map(match => match[1]);
+  if (computed.length === 0) {
+    found.push('no tag="…" or expected="…" line computes the tag');
+  }
+  for (const value of computed) {
+    if (!value.startsWith(prefix) && !value.includes(`'${prefix}'`)) {
+      found.push(`computed tag ${value} does not start with ${prefix}`);
+    }
+  }
+  return found;
+}
+
+/** The problems with every prerelease workflow under `root`, each line naming its file. */
+function allWorkflowProblems(root) {
+  const folder = path.join(root, '.github', 'workflows');
+  return fs
+    .readdirSync(folder)
+    .map(name => [name, /^prerelease-([a-z0-9]+)\.yml$/.exec(name)])
+    .filter(([, match]) => match)
+    .flatMap(([name, match]) =>
+      workflowProblems(match[1], fs.readFileSync(path.join(folder, name), 'utf8')).map(
+        line => `${name}: ${line}`,
+      ),
+    );
+}
+
+if (require.main === module && process.argv[2] === '--workflows') {
+  const found = allWorkflowProblems(process.argv[3] || '.');
+  found.forEach(line => console.error(`plugin-version: ${line}`));
+  process.exit(found.length > 0 ? 1 : 0);
+}
+
 if (require.main === module) {
   const folder = process.argv[2];
   const found = problems(folder);
@@ -55,4 +103,4 @@ if (require.main === module) {
   console.log(JSON.parse(fs.readFileSync(path.join(folder, 'package.json'), 'utf8')).version);
 }
 
-module.exports = {versionName, problems};
+module.exports = {versionName, problems, workflowProblems, allWorkflowProblems};

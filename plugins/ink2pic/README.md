@@ -47,7 +47,7 @@ Ink2Pic is tested on the Manta only. The Supernote Nomad is not tested.
 
 ## Install
 
-Each test build is a GitHub prerelease named `v0.1.0-dev.<number>`, with the file `Ink2Pic.snplg`
+Each test build is a GitHub prerelease named `ink2pic-v0.1.0-dev.<number>`, with the file `Ink2Pic.snplg`
 attached.
 
 1. Open the [releases page](https://github.com/martonpaulo/ink2pic/releases) and download
@@ -147,7 +147,7 @@ Ink2Pic never fails silently: it shows one sentence that says what to do.
    `session.log` is the latest use, `session.prev.log` the one before, and `crash.log` exists only
    after a crash.
 2. Open an [issue](https://github.com/martonpaulo/ink2pic/issues) with your device, the firmware,
-   the Ink2Pic build (for example `v0.1.0-dev.12`), what you did, and the log files.
+   the Ink2Pic build (for example `ink2pic-v0.1.0-dev.19`), what you did, and the log files.
 
 ## Privacy
 

@@ -11,9 +11,9 @@ on:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -54,6 +54,9 @@ jobs:
 
       - name: Check the npm audit filter (#154)
         run: python3 -B -m unittest scripts/test_npm_audit.py
+
+      - name: Check that every prerelease tag carries its plugin name (#155)
+        run: node scripts/plugin-version.cjs --workflows .
 
   npm-audit:
     name: npm audit ${{ matrix.dir }}

@@ -4,7 +4,12 @@
  */
 import {join} from 'path';
 
-const {versionName, problems} = require('../../../scripts/plugin-version.cjs');
+const {
+  versionName,
+  problems,
+  workflowProblems,
+  allWorkflowProblems,
+} = require('../../../scripts/plugin-version.cjs');
 
 test('a numbered beta reads «0.2.0 beta 3» on the tablet, a release «0.2.0»', () => {
   expect(versionName('0.2.0-beta.3')).toBe('0.2.0 beta 3');
@@ -20,4 +25,20 @@ test('any other form is refused: no -dev.N, no unnumbered beta', () => {
 
 test("Lookup's PluginConfig.json matches its package.json", () => {
   expect(problems(join(__dirname, '..'))).toEqual([]);
+});
+
+test('a prerelease tag carries its plugin name (#155)', () => {
+  const good =
+    'on:\n  push:\n    tags: [\'ink2pic-v*-dev.*\']\n          tag="lookup-v$version"\n';
+  expect(
+    workflowProblems('lookup', good.replace('ink2pic-v*-dev.*', 'lookup-v*')),
+  ).toEqual([]);
+  expect(workflowProblems('lookup', good)).toEqual([
+    'tag trigger "ink2pic-v*-dev.*" does not start with lookup-v',
+  ]);
+  expect(workflowProblems('relay', '          tag="v$version"\n')).toEqual([
+    'computed tag v$version does not start with relay-v',
+  ]);
+  expect(workflowProblems('relay', 'on: push\n')).toHaveLength(1);
+  expect(allWorkflowProblems(join(__dirname, '..', '..', '..'))).toEqual([]);
 });

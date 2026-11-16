@@ -2,12 +2,13 @@ name: Prerelease Ink2Pic
 
 # Each device test build becomes a GitHub prerelease with Ink2Pic.snplg (#22).
 # A cloud session can neither create a release nor push a tag (HTTP 403), so a push to main
-# that changes plugins/ink2pic/PluginConfig.json publishes too, when its v<versionName>-dev.<versionCode> tag
-# does not exist yet (owner decision D2 A, 2026-11-06). A tag pushed from a Mac still works.
+# that changes plugins/ink2pic/PluginConfig.json publishes too, when its ink2pic-v<versionName>-dev.<versionCode>
+# tag does not exist yet (owner decision D2 A, 2026-11-06). A tag pushed from a Mac still works. Every
+# tag and release carries the plugin's name (#155), checked by scripts/plugin-version.cjs.
 
 on:
   push:
-    tags: ['v*-dev.*']
+    tags: ['ink2pic-v*-dev.*']
     branches: [main]
     # A notes fix retries a release whose run failed; an existing tag is skipped.
     paths: [plugins/ink2pic/PluginConfig.json, 'plugins/ink2pic/docs/releases/**']
@@ -34,7 +35,7 @@ jobs:
       - name: Resolve the tag from PluginConfig.json
         id: tag
         run: |
-          expected="$(node -p "const c = require('./PluginConfig.json'); 'v' + c.versionName + '-dev.' + c.versionCode")"
+          expected="$(node -p "const c = require('./PluginConfig.json'); 'ink2pic-v' + c.versionName + '-dev.' + c.versionCode")"
           if [ "$GITHUB_REF_TYPE" = tag ]; then
             if [ "$GITHUB_REF_NAME" != "$expected" ]; then
               echo "::error::Tag $GITHUB_REF_NAME does not match PluginConfig.json ($expected)."
@@ -78,7 +79,7 @@ jobs:
         run: |
           # On a branch push, --target creates the tag on the pushed commit.
           # The asset name carries the version so the owner can tell builds apart on the tablet.
-          asset="build/outputs/Ink2Pic-${TAG#v}.snplg"
+          asset="build/outputs/Ink2Pic-${TAG#ink2pic-v}.snplg"
           cp build/outputs/Ink2Pic.snplg "$asset"
           gh release create "$TAG" "$asset" \
             --prerelease --target "$GITHUB_SHA" --title "$TAG" \
@@ -90,6 +91,6 @@ jobs:
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
           echo "$names"
           case "$names" in
-            *"Ink2Pic-${TAG#v}.snplg"*) ;;
-            *) echo "::error::Ink2Pic-${TAG#v}.snplg is missing from $TAG."; exit 1 ;;
+            *"Ink2Pic-${TAG#ink2pic-v}.snplg"*) ;;
+            *) echo "::error::Ink2Pic-${TAG#ink2pic-v}.snplg is missing from $TAG."; exit 1 ;;
           esac

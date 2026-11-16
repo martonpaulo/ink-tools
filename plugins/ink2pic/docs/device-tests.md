@@ -173,7 +173,7 @@ Prerelease [`v0.1.0-dev.16`](https://github.com/martonpaulo/ink2pic/releases/tag
 
 ## Build 0.1.0 (18), 2026-11-15, firmware 3.31.45
 
-Prerelease [`v0.1.0-dev.18`](https://github.com/martonpaulo/supernote-tools/releases/tag/v0.1.0-dev.18), commit `f9a37ca`, installed with `snadb plugin install`. Run live with the owner; the agent read the screen and the log over ADB.
+Prerelease [`ink2pic-v0.1.0-dev.18`](https://github.com/martonpaulo/supernote-tools/releases/tag/ink2pic-v0.1.0-dev.18), commit `f9a37ca`, installed with `snadb plugin install`. Run live with the owner; the agent read the screen and the log over ADB.
 
 | Step | Expected | Result | Notes |
 | --- | --- | --- | --- |
