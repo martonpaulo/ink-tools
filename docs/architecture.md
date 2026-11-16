@@ -11,6 +11,7 @@ history is in [`decisions.md`](decisions.md).
 - [The plugins (on device)](#the-plugins-on-device)
 - [The tablet apps](#the-tablet-apps)
 - [The host tools](#the-host-tools)
+- [Device builds](#device-builds)
 - [What this means for the cloud agent](#what-this-means-for-the-cloud-agent)
 
 ## Why layers
@@ -200,6 +201,17 @@ measures are `packages/picture-search`.
   `AGENTS.md` and no code yet ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
+
+## Device builds
+
+A device build is the `.snplg` asset of a plugin's CI prerelease, never a local build on the Mac
+([#203](https://github.com/martonpaulo/ink-tools/issues/203)). Each `prerelease-<plugin>.yml` runs the plugin's gate, builds the package (with its
+native `app.npk` where the plugin has one) and publishes `<Plugin>-<version>.snplg` under the tag
+`<plugin>-v<version>`. A Mac downloads it with:
+
+```bash
+gh release download <tag> --repo martonpaulo/ink-tools --pattern '*.snplg'
+```
 
 ## What this means for the cloud agent
 
