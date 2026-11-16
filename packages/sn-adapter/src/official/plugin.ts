@@ -46,6 +46,11 @@ export function hasPermission(permission: string): Promise<Result<boolean>> {
 }
 
 /** The private plugin directory, which needs no permission (brief section 3.6). */
+/** The device's type: 0 A5, 1 A6, 2 A6X, 3 A5X, 4 A6X2 (Nomad), 5 A5X2 (Manta) (#35). */
+export function getDeviceType(): Promise<Result<number>> {
+  return attempt(() => PluginManager.getDeviceType(), toNumber);
+}
+
 export function getPluginDirPath(): Promise<Result<string>> {
   return attempt(
     () => PluginManager.getPluginDirPath(),

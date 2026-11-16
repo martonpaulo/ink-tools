@@ -15,3 +15,4 @@ export * from './quickInsert';
 export * from './runSearch';
 export * from './searchDevice';
 export * from './thumbs';
+export * from './sticker';

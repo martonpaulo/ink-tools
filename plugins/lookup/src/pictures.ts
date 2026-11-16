@@ -114,6 +114,11 @@ export function modeDeps(
   measureFirst: typeof measureFirstPages = measureFirstPages,
 ): QuickInsertDeps {
   const sources = modeAdapters(mode, DEFAULT_ADAPTERS);
+  // «Insert Sticker» pastes a sticker, «Insert Image» a picture (#35).
+  const modeOptions = async () => ({
+    ...(await wordKeptOptions(LOOKUP_PICTURES)),
+    sticker: mode.sticker,
+  });
   const search = async () => modeSearchSettings(mode, await getSettings());
   return {
     search: (word, _sources, _isNewest, options) =>
@@ -144,19 +149,19 @@ export function modeDeps(
       );
       return {...pages, results: kept};
     },
-    insert: (result, query, place, contour, options, early, stop) =>
+    insert: async (result, query, place, contour, options, early, stop) =>
       insertPicture(
         LOOKUP_PICTURES,
         result,
         query,
         place,
         contour,
-        options,
+        {...(options ?? (await modeOptions())), sticker: mode.sticker},
         early,
         stop,
       ),
     early: result => startEarlyDownload(result, LOOKUP_PICTURES),
-    options: () => wordKeptOptions(LOOKUP_PICTURES),
+    options: modeOptions,
   };
 }
 

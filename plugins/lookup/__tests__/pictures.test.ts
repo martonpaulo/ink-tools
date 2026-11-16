@@ -24,6 +24,13 @@ import {
   QuickInsertDeps,
 } from '../src/profile';
 import {defaultSettings} from '../src/settings';
+import * as insertTier from '@supernote-tools/picture-search/insert';
+
+// The shared insert, watched for the options each button passes (#35); it runs as it is.
+jest.mock('@supernote-tools/picture-search/insert', () => {
+  const actual = jest.requireActual('@supernote-tools/picture-search/insert');
+  return {...actual, insertPicture: jest.fn(actual.insertPicture)};
+});
 
 const [illustration, photoMode] = MODES;
 
@@ -327,4 +334,19 @@ test('a picture left unselected over the ink says so in a short toast (#168)', (
     ToastAndroid.SHORT,
   );
   show.mockRestore();
+});
+
+test('«Insert Sticker» asks for a sticker, «Insert Image» for a picture (#35)', async () => {
+  expect(illustration.sticker).toBe(true);
+  expect(photoMode.sticker).toBe(false);
+  expect(await modeDeps(illustration).options()).toMatchObject({sticker: true});
+  expect(await modeDeps(photoMode).options()).toMatchObject({sticker: false});
+  const shared = insertTier.insertPicture as jest.Mock;
+  shared.mockResolvedValueOnce({ok: true, value: '/p/x.png'});
+  shared.mockResolvedValueOnce({ok: true, value: '/p/x.png'});
+  const picked = {id: 'openmoji:1F34E', source: 'openmoji', title: 'apple'} as SearchResult;
+  const plain = {width: 200, placement: 'below' as const, contour: false};
+  await modeDeps(illustration).insert(picked, 'apple', place, false, plain, null, () => null);
+  await modeDeps(photoMode).insert(picked, 'apple', place, false, plain, null, () => null);
+  expect(shared.mock.calls.map(call => call[5]?.sticker)).toEqual([true, false]);
 });

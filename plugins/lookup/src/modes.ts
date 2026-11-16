@@ -33,6 +33,11 @@ export type Mode = {
   photos: boolean;
   /** The sources this mode leaves out, by adapter name. */
   skipSources: readonly string[];
+  /**
+   * The picture goes in as a Supernote sticker, through the SDK's `insertSticker`, so it can be
+   * used again; else as a picture (#35, owner D32 A).
+   */
+  sticker: boolean;
 };
 
 export const MODES: readonly Mode[] = [
@@ -44,6 +49,7 @@ export const MODES: readonly Mode[] = [
     settingKey: 'illustration',
     photos: false,
     skipSources: [],
+    sticker: true,
   },
   {
     // Real photos: Commons with no drawings filter; clip art and symbols are no photos.
@@ -53,6 +59,7 @@ export const MODES: readonly Mode[] = [
     settingKey: 'photo',
     photos: true,
     skipSources: ['openclipart', 'openmoji'],
+    sticker: false,
   },
 ];
 

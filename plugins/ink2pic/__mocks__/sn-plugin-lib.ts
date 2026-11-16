@@ -35,6 +35,8 @@ export const PluginCommAPI = mocks(
   'createElement',
   'insertPageElements',
   'getPenInfo',
+  'convertElement2Sticker',
+  'insertSticker',
 );
 
 export const PluginNoteAPI = mocks(

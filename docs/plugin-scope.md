@@ -50,7 +50,10 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
   Built as two lasso buttons, each with its Settings switch ([#111](https://github.com/martonpaulo/ink-tools/issues/111)): «Insert Sticker» searches
   Commons for drawings first, Openclipart and OpenMoji, and keeps only line art; «Insert Image»
   searches Commons with no drawings filter and keeps only photos and dark paintings, so a word with
-  only clip art inserts no picture and says so.
+  only clip art inserts no picture and says so. «Insert Sticker» pastes its drawing as a Supernote
+  sticker, written by the SDK's `convertElement2Sticker` and pasted by `insertSticker`, so it can be
+  used again; «Insert Image» inserts a picture (owner D32 A, [#35](https://github.com/martonpaulo/ink-tools/issues/35)). A failed sticker inserts the picture
+  instead, and the log says why.
 - **Fixed presets** (owner, [#105](https://github.com/martonpaulo/ink-tools/issues/105)). Each picture button inserts at one small size, 200 px
   wide, and its style is the button's mode (drawings for «Insert Sticker», photos for «Insert
   Image», D33 A). Settings keeps only two picture options: each picture source on or off (the

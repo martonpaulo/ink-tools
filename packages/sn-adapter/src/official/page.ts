@@ -41,3 +41,22 @@ export function insertPageElements(
   return attempt(() => PluginCommAPI.insertPageElements(elements, page, layer));
 }
 
+
+/**
+ * Writes the elements as a `.sticker` file at `stickerPath` (#35). `machineType` is the device's
+ * type from `getDeviceType` (5 is the Manta).
+ */
+export function convertElement2Sticker(
+  machineType: number,
+  elements: object[],
+  stickerPath: string,
+): Promise<Result<boolean>> {
+  return attempt(() =>
+    PluginCommAPI.convertElement2Sticker({machineType, elements, stickerPath}),
+  );
+}
+
+/** Pastes a `.sticker` file on the current page, where the host puts it (#35). */
+export function insertSticker(path: string): Promise<Result<boolean>> {
+  return attempt(() => PluginCommAPI.insertSticker(path));
+}

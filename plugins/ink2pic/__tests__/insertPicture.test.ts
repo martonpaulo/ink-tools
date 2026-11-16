@@ -685,3 +685,44 @@ describe('the insert options from Settings (#70)', () => {
     expect(remove).not.toHaveBeenCalled();
   });
 });
+
+describe('«Insert Sticker» pastes a Supernote sticker (#35)', () => {
+  const sticker = {width: 640, placement: 'below' as const, contour: false, sticker: true};
+  const convert = PluginCommAPI.convertElement2Sticker as jest.Mock;
+  const paste = PluginCommAPI.insertSticker as jest.Mock;
+
+  beforeEach(() => {
+    (PluginManager.getDeviceType as jest.Mock).mockResolvedValue(5);
+    (PluginCommAPI.createElement as jest.Mock).mockResolvedValue({
+      success: true,
+      result: {uuid: 'u'},
+    });
+    convert.mockResolvedValue({success: true, result: true});
+    paste.mockResolvedValue({success: true, result: true});
+  });
+
+  it('writes the picture as a .sticker file and pastes it, never as an image', async () => {
+    const done = await insertPicture(result, 'ladle', null, false, sticker);
+    expect(done.ok).toBe(true);
+    const [params] = convert.mock.calls[0];
+    expect(params.machineType).toBe(5);
+    expect(params.stickerPath).toMatch(/openclipart-340609\.sticker$/);
+    expect(params.elements[0].type).toBe(200);
+    expect(params.elements[0].picture.picturePath).toMatch(/openclipart-340609\.png$/);
+    expect(params.elements[0].picture.rect).toEqual({left: 0, top: 0, right: 640, bottom: 593});
+    expect(paste).toHaveBeenCalledWith(params.stickerPath);
+    expect(PluginNoteAPI.insertImage).not.toHaveBeenCalled();
+  });
+
+  it('inserts a picture when the sticker fails, and the picture insert never asks for a sticker', async () => {
+    convert.mockResolvedValue({success: true, result: false});
+    await insertPicture(result, 'ladle', null, false, sticker);
+    expect(paste).not.toHaveBeenCalled();
+    expect(PluginNoteAPI.insertImage).toHaveBeenCalledTimes(1);
+    expect(logLines().join('\n')).toMatch(/convertElement2Sticker answered false; inserted as a picture/);
+    convert.mockClear();
+    await insertPicture(result, 'ladle', null, false, {...sticker, sticker: false});
+    expect(convert).not.toHaveBeenCalled();
+    expect(PluginNoteAPI.insertImage).toHaveBeenCalledTimes(2);
+  });
+});

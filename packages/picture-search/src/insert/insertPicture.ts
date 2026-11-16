@@ -17,6 +17,7 @@ import {
 } from '../storage/paths';
 import {pluginFolder} from '../storage/session';
 import {placeAtLasso} from './place';
+import {insertAsSticker} from './sticker';
 import {isFree, type LassoPlace, type Placement} from '@supernote-tools/ink-core';
 import {
   deleteLassoElements,
@@ -93,6 +94,11 @@ export type InsertOptions = {
    * itself follows the tile, which `chooseLook` drew (#104).
    */
   contour: boolean;
+  /**
+   * Insert the picture as a Supernote sticker, through `insertSticker` (#35, owner D32 A): Lookup's
+   * «Insert Sticker». When the sticker fails, the picture insert follows, and the log says why.
+   */
+  sticker?: boolean;
 };
 
 /**
@@ -361,6 +367,16 @@ async function insertInNote(
   place: LassoPlace | null,
   options: InsertOptions,
 ): Promise<Result<Rect | null>> {
+  if (options.sticker) {
+    const pasted = await insertAsSticker(
+      saved.path,
+      saved.size ?? {width: options.width, height: options.width},
+    );
+    if (pasted.ok) {
+      return pasted;
+    }
+    log(`sticker: ${pasted.message}; inserted as a picture instead`);
+  }
   if (place && saved.size) {
     const placed = await placeAtLasso(
       saved.path,
