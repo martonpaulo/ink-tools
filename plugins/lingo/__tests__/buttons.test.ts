@@ -72,7 +72,7 @@ test('a failed registration is tried again on the next change', async () => {
   expect(d.register).toHaveBeenCalledTimes(3);
 });
 
-test('the first pair on asks for Internet only when it is not granted', async () => {
+test('the first pair on asks for Internet and file read only when not granted', async () => {
   const on = setPair(defaultSettings(), 'zh-pt', true);
   const granted = deps(true);
   await settingsChanged(on, granted.d);
@@ -82,6 +82,10 @@ test('the first pair on asks for Internet only when it is not granted', async ()
   await settingsChanged(on, missing.d);
   expect(missing.d.requestPermission).toHaveBeenCalledWith(
     'plugin.permission.INTERNET',
+    expect.any(String),
+  );
+  expect(missing.d.requestPermission).toHaveBeenCalledWith(
+    'plugin.permission.FILE:READ',
     expect.any(String),
   );
   resetButtonsForTests();

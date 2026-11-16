@@ -7,6 +7,7 @@ export const copy = {
   'language.zh': 'Chinese',
   'permission.internet':
     'Lingo looks words up in online dictionaries, Wiktionary and Apertium.',
+  'permission.files': 'Lingo reads the word you lasso on the page.',
   /** Written on the note beside the word: a word with no translation is never guessed (#128). */
   'translate.none': (direction: string, word: string) =>
     `${word}: no ${direction} translation found`,

@@ -12,6 +12,7 @@ import {
 } from '@supernote-tools/ink-core';
 import {
   hasPermission,
+  PERMISSION_FILE_READ,
   PERMISSION_INTERNET,
   registerButton,
   requestPermission,
@@ -116,8 +117,17 @@ export async function syncButtons(
 }
 
 /**
+ * What a direction button needs: Internet for the online dictionaries, and file read, without
+ * which the host refuses the lasso calls with error 1503 (device round, 2026-11-16, #128).
+ */
+const NEEDS = [
+  {permission: PERMISSION_INTERNET, reason: copy['permission.internet']},
+  {permission: PERMISSION_FILE_READ, reason: copy['permission.files']},
+] as const;
+
+/**
  * The Settings path: the buttons follow the switches, and the first pair switched on asks for
- * Internet, which the online dictionaries need, while the view is open to show the question.
+ * each permission in NEEDS not granted yet, while the view is open to show the question.
  */
 export async function settingsChanged(
   settings: LingoSettings,
@@ -127,15 +137,14 @@ export async function settingsChanged(
   if (enabledDirections(settings).length === 0) {
     return;
   }
-  const granted = await deps.hasPermission(PERMISSION_INTERNET);
-  if (granted.ok && granted.value) {
-    return;
+  for (const need of NEEDS) {
+    const granted = await deps.hasPermission(need.permission);
+    if (granted.ok && granted.value) {
+      continue;
+    }
+    const asked = await deps.requestPermission(need.permission, need.reason);
+    deps.log(describe(`request ${need.permission}`, asked));
   }
-  const asked = await deps.requestPermission(
-    PERMISSION_INTERNET,
-    copy['permission.internet'],
-  );
-  deps.log(describe('request INTERNET', asked));
 }
 
 export function resetButtonsForTests(): void {
