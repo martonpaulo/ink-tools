@@ -2,7 +2,8 @@ name: Prerelease Bridge
 
 # Each Bridge build becomes a GitHub prerelease carrying Bridge.snplg (#27), so the owner can
 # download it for the tablet. A cloud session cannot push a tag, so a push to main that changes
-# PluginConfig.json publishes when its bridge-v<versionName>-dev.<versionCode> tag does not exist yet.
+# PluginConfig.json publishes when its bridge-v<package.json version> tag does not exist yet; the
+# version follows root AGENTS.md › Product versioning (#155), checked by scripts/plugin-version.cjs.
 
 on:
   push:
@@ -32,7 +33,8 @@ jobs:
       - name: Resolve the tag from PluginConfig.json
         id: tag
         run: |
-          tag="$(node -p "const c = require('./PluginConfig.json'); 'bridge-v' + c.versionName + '-dev.' + c.versionCode")"
+          version="$(node ../../scripts/plugin-version.cjs .)"
+          tag="bridge-v$version"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::$tag is already published; nothing to do."
             echo "publish=false" >> "$GITHUB_OUTPUT"

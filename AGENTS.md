@@ -17,7 +17,7 @@
 - Branch policy: Work on `main` only, with no branch protection; create or switch branches only when the owner asks.
 - Commit policy: Commit each coherent task once it is complete and its subproject's validation passes; only the change's files, one concern per commit; issue commits end with `(#<issue number>)`.
 - Push policy: Push each validated commit to `origin/main` automatically; a cloud session pushes `main` for a `runs: cloud` issue whose gates ran there. Cloud setup command: `bash scripts/cloud-setup.sh`.
-- Product versioning: Per subproject: Ink2Pic uses SemVer with device prereleases; Supernote ADB is unversioned; Bridge starts at 0.0.1. The monorepo itself is unversioned.
+- Product versioning: Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` is derived from it (`0.2.0 beta 3`, `0.2.0`), which `scripts/plugin-version.cjs` checks; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. Ink2Pic, being retired, keeps its last scheme (`0.1.0-dev.19`); Supernote ADB is unversioned; the monorepo itself is unversioned.
 - Merge policy: merge commits, so every branch commit reaches `main`.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: disabled

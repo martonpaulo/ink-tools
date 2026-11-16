@@ -2,7 +2,8 @@ name: Prerelease Relay
 
 # Each Relay test build becomes a GitHub prerelease carrying Relay.snplg (#98), so the owner can
 # download it for the tablet. A cloud session cannot push a tag, so a push to main that changes
-# PluginConfig.json publishes when its relay-v<versionName>-dev.<versionCode> tag does not exist yet.
+# PluginConfig.json publishes when its relay-v<package.json version> tag does not exist yet; the
+# version follows root AGENTS.md › Product versioning (#155), checked by scripts/plugin-version.cjs.
 # A device-round build: a prerelease until the device round passes.
 
 on:
@@ -33,7 +34,8 @@ jobs:
       - name: Resolve the tag from PluginConfig.json
         id: tag
         run: |
-          tag="$(node -p "const c = require('./PluginConfig.json'); 'relay-v' + c.versionName + '-dev.' + c.versionCode")"
+          version="$(node ../../scripts/plugin-version.cjs .)"
+          tag="relay-v$version"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::$tag is already published; nothing to do."
             echo "publish=false" >> "$GITHUB_OUTPUT"
