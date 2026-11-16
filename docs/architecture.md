@@ -92,13 +92,12 @@ ink-tools/
   packages/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
-    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by lookup/lingo/retouch)
+    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by lookup/relay/retouch)
     picture-search/ # the picture search core and its pure-Java pixel measures (from ink2pic, for lookup)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     bridge/         # to-do + calendar + digest, each module and provider opt in/out
     lookup/         # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
-    lingo/          # retiring: translation moved to lookup
     ink2pic/        # retired: lookup replaced it
     relay/          # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     retouch/        # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
@@ -164,9 +163,6 @@ ink-tools/
   or a **translation**; each mode opt in/out, and each language pair opt in/out under the
   translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced `ink2pic`,
   which is retired and uninstalled from the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)).
-- **`lingo`** (retiring) — the translation plugin Lookup's «Translate ES→PT» buttons replace
-  ([#158](https://github.com/martonpaulo/ink-tools/issues/158), [#159](https://github.com/martonpaulo/ink-tools/issues/159)); its folder is removed once that button passes on the tablet ([#161](https://github.com/martonpaulo/ink-tools/issues/161)).
-  The shared translation flow it used is `ink-core`'s.
 - **`relay`** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
   LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/ink-tools/issues/98), [#49](https://github.com/martonpaulo/ink-tools/issues/49)). Its network half is a native
   Java module, as `probe`'s listener is.
@@ -176,11 +172,11 @@ ink-tools/
 - **`probe`** — a minimal plugin for on-device investigation (provider reachability, permission
   checks), reused whenever a device question comes up.
 
-`lookup`, `retouch` and the retiring `lingo` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
+`lookup`, `relay` and `retouch` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/ink-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
-`sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lingo`, `lookup`, `relay` and `retouch` call `sn-plugin-lib` only
+`sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lookup`, `relay` and `retouch` call `sn-plugin-lib` only
 through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `ink2pic` was the seed of `ink-core` and of `lookup`'s picture modes; it is retired, and `lookup`
 finds stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/ink-tools/issues/125)). Its picture search core and pixel
 measures are `packages/picture-search`.

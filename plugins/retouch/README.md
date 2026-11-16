@@ -24,7 +24,7 @@ A Supernote plugin: lasso a picture on the page and make it readable on e-ink wi
 
 ## Built on
 
-React Native + `sn-plugin-lib`, like `../lingo`, with a native Java module built by
+React Native + `sn-plugin-lib`, like `../lookup`, with a native Java module built by
 `scripts/native-build.cjs`. The grey and e-ink steps come from `../../packages/picture-search`.
 
 ```bash

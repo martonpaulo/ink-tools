@@ -1,5 +1,5 @@
 /**
- * The dictionary and translation engine's seam, shared by `lingo` and `lookup`'s definition mode
+ * The dictionary and translation engine's seam, used by `lookup`'s definition and translation buttons
  * (docs/plugin-scope.md, "Dictionary and translation engine (shared)"). Concrete sources (an offline
  * word list, an online keyless API, later a paid opt-in one) are implementations; feature code
  * never names one. A definition is the same seam's second, optional call (#115): a source that

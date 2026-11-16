@@ -4,9 +4,9 @@ name: Validate Retouch
 on:
   push:
     branches: [main]
-    paths: ['plugins/retouch/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', '.github/workflows/validate-retouch.yml']
+    paths: ['plugins/retouch/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-retouch.yml']
   pull_request:
-    paths: ['plugins/retouch/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', '.github/workflows/validate-retouch.yml']
+    paths: ['plugins/retouch/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-retouch.yml']
   workflow_dispatch:
 
 permissions:

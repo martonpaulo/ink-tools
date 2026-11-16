@@ -1,8 +1,0 @@
-<!-- lingo, panel 2 (480x320): the lassoed word with its translation inserted under it as text. -->
-<rect x="20" y="16" width="440" height="288" rx="16" fill="#FFFFFF" stroke="#888888" stroke-width="5"/>
-<path d="M56 96 H424 M56 160 H424 M56 224 H424 M56 288 H424" stroke="#CCCCCC" stroke-width="4"/>
-<path d="M120 138 C128 100 150 96 150 122 C150 146 136 150 140 128 C146 104 168 104 170 126 C172 146 190 146 194 124 C198 102 218 102 218 126 C218 146 240 144 246 120 C252 96 276 104 270 128 C266 146 292 144 304 126" fill="none" stroke="#000000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="104" y="180" width="272" height="84" rx="10" fill="#E6E6E6" stroke="#000000" stroke-width="5"/>
-<text x="240" y="236" text-anchor="middle" font-family="Figtree" font-weight="800" font-size="40" fill="#000000">manzana</text>
-<path d="M240 150 V174" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
-<path d="M228 164 L240 178 L252 164" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>

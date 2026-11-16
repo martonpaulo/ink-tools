@@ -10,7 +10,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {EDITS, enabledEdits, RetouchSettings} from './edits';
 
-/** sn-plugin-lib's lasso toolbar button (as Lingo's src/buttons.ts). */
+/** sn-plugin-lib's lasso toolbar button (as Lookup's src/buttons.ts). */
 export const BUTTON_TYPE_LASSO = 2;
 /** `editDataTypes` 2: the lasso holds a picture (sn-plugin-lib 0.2.3, NativePluginManager). */
 export const EDIT_DATA_PICTURE = 2;

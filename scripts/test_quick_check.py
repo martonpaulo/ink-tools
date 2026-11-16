@@ -15,7 +15,9 @@ class QuickCheckSelection(unittest.TestCase):
         folders = quick_check.typecheck_dirs(ROOT, ["packages/ink-core/src/a.ts"])
         self.assertIn("packages", folders)
         self.assertIn("plugins/ink2pic", folders)
-        self.assertNotIn("plugins/lookup", folders)
+        # Lookup imports ink-core, so it is checked (#161); Bridge does not.
+        self.assertIn("plugins/lookup", folders)
+        self.assertNotIn("plugins/bridge", folders)
 
     def test_docs_only_change_checks_nothing(self):
         self.assertEqual(quick_check.typecheck_dirs(ROOT, ["docs/product.md"]), [])

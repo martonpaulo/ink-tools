@@ -2,7 +2,7 @@ import {PluginManager} from 'sn-plugin-lib';
 
 /**
  * Registers the plugin's Settings entry and its listener only, and no note button, for a plugin
- * that never shows inside a note (Bridge) or has no note action yet (Lingo).
+ * that never shows inside a note (Bridge).
  */
 export async function registerSettingsEntry(onSettingsClick: () => void): Promise<void> {
   await PluginManager.init();

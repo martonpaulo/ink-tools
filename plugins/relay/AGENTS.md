@@ -75,6 +75,6 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
 
 ## Reuse
 
-Scaffold copied from `../lookup`, which took it from `../lingo` (same runtime, build and release
+Scaffold copied from `../lookup`, which took it from the removed Lingo plugin (same runtime, build and release
 shape); `scripts/native-build.cjs` and its toolchain from `../probe`. No Notipal code is reused:
 the client and the receiver follow the LocalSend v2 protocol text.

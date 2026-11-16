@@ -1,6 +1,6 @@
 /**
- * The translation flow of a lasso press, shared by Lingo's direction buttons (#128) and Lookup's
- * «Insert translation» (#158): which words a query stands for (a ZH input is read through the
+ * The translation flow of a lasso press, used by Lookup's
+ * «Translate ES→PT» buttons (#158, #174): which words a query stands for (a ZH input is read through the
  * pinyin index, #129), the first of them the engine translates, and the line written on the note.
  * Pure: the plugin passes the engine, the index and the fetcher.
  */

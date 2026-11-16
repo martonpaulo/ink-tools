@@ -4,9 +4,9 @@ name: Validate Relay
 on:
   push:
     branches: [main]
-    paths: ['plugins/relay/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-relay.yml']
+    paths: ['plugins/relay/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-relay.yml']
   pull_request:
-    paths: ['plugins/relay/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-relay.yml']
+    paths: ['plugins/relay/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-relay.yml']
   workflow_dispatch:
 
 permissions:

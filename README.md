@@ -27,8 +27,8 @@ numbered beta: a test build reads `0.2.0-beta.3` on GitHub and `0.2.0 beta 3` on
 | Plugin Diagnostics<br><sub>[`plugins/probe/`](plugins/probe/)</sub> | plugin | Quick on-device experiments for developers. Never shipped. | Internal |
 | Shared code<br><sub>[`packages/`](packages/)</sub> | packages | `sn-adapter`, `sync-core`, `ink-core`, `picture-search` and `ui-kit`, bundled by the plugins. | Internal |
 
-Retired: [`plugins/ink2pic/`](plugins/ink2pic/) (Word Lookup replaces it) and
-[`plugins/lingo/`](plugins/lingo/) (translation is now in Word Lookup, [#161](https://github.com/martonpaulo/ink-tools/issues/161)).
+Retired: [`plugins/ink2pic/`](plugins/ink2pic/) (Word Lookup replaces it). The Lingo translation
+plugin was removed; translation is now in Word Lookup ([#161](https://github.com/martonpaulo/ink-tools/issues/161)).
 
 **This is unofficial.** Not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its
 owner, used here only to name the device. No root, no modified firmware, no exploits.

@@ -1,5 +1,5 @@
 import {PluginManager} from 'sn-plugin-lib';
-// sn-adapter's registerSettingsEntry, shared with Lingo, is tested here (#101).
+// sn-adapter's registerSettingsEntry, Bridge's, is tested here (#101).
 import {registerSettingsEntry} from '@supernote-tools/sn-adapter/official';
 
 const lib = PluginManager as unknown as Record<string, jest.Mock>;

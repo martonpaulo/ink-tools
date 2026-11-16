@@ -27,7 +27,7 @@ exports.jestModuleNameMapper = {[`^${NAME}$`]: SOURCE};
 
 /**
  * The Jest part for `@supernote-tools/ink-core/pinyin-data` (#129), the entry only a plugin with a
- * ZH button maps, as Lingo does: Metro finds `pinyin-data.ts` at the package root by itself.
+ * ZH button maps, as Lookup does: Metro finds `pinyin-data.ts` at the package root by itself.
  */
 exports.jestPinyinDataMapper = {
   [`^${NAME}/pinyin-data$`]: path.join(__dirname, 'pinyin-data'),

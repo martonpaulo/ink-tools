@@ -1,11 +1,10 @@
 import config from '../PluginConfig.json';
 import bridge from '../../bridge/PluginConfig.json';
 import ink2pic from '../../ink2pic/PluginConfig.json';
-import lingo from '../../lingo/PluginConfig.json';
 import lookup from '../../lookup/PluginConfig.json';
 import probe from '../../probe/PluginConfig.json';
 
-const others = [bridge, ink2pic, lingo, lookup, probe].map(c => c.pluginID);
+const others = [bridge, ink2pic, lookup, probe].map(c => c.pluginID);
 
 test('plugin config declares its own generated id', () => {
   expect(config.pluginID).toMatch(/^[0-9a-z]{16}$/);

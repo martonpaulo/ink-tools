@@ -53,4 +53,4 @@ does a rebuilt stroke look like the original; the idle, grace and ratio defaults
 
 ## Reuse
 
-Scaffold copied from `../lingo` (no native module), which took it from `../bridge` and `../ink2pic`.
+Scaffold copied from the removed Lingo plugin (no native module, [#161](https://github.com/martonpaulo/ink-tools/issues/161)), which took it from `../bridge` and `../ink2pic`.

@@ -76,8 +76,8 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
   button per direction switched on in Lookup's Settings, with no automatic direction. Any direction
   of the pairs can be chosen; ES→PT, ZH→PT and PT→ZH start on (owner, [#174](https://github.com/martonpaulo/ink-tools/issues/174), which replaced
   [#158](https://github.com/martonpaulo/ink-tools/issues/158)'s one button over every pair). It took over the Lingo plugin's job,
-  and that plugin is retiring: it is uninstalled from the tablet and its folder removed once this
-  button passes on the device ([#159](https://github.com/martonpaulo/ink-tools/issues/159), [#161](https://github.com/martonpaulo/ink-tools/issues/161)). Real uses: **learning a language**, **reading
+  and that plugin is removed: uninstalled from the tablet and its folder deleted from the
+  repository ([#159](https://github.com/martonpaulo/ink-tools/issues/159), [#161](https://github.com/martonpaulo/ink-tools/issues/161)). Real uses: **learning a language**, **reading
   foreign text** (ES/ZH) and annotating meaning, and **finding the right term** while writing in PT
   without reaching for the phone. The owner lives between PT and ES, maybe ZH. Shares the
   dictionary/translation engine with the definition mode (one provider interface). Translation
@@ -97,7 +97,7 @@ recognition language of the whole tablet with one tap, so lasso convert, plugin 
 handwriting keyboard read the next word in that language ([#157](https://github.com/martonpaulo/ink-tools/issues/157)). A plugin cannot do it: the
 folder that names the active language is outside the plugin sandbox ([#151](https://github.com/martonpaulo/ink-tools/issues/151),
 [the study](research/2026-11-handwriting-language.md)). The name Lingo moved here from the
-translation plugin, which is retiring; the app was called Dialect before ([#160](https://github.com/martonpaulo/ink-tools/issues/160)).
+translation plugin, which is removed ([#161](https://github.com/martonpaulo/ink-tools/issues/161)); the app was called Dialect before ([#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 
 - **The floating button, shown only where you write** (owner, [#151](https://github.com/martonpaulo/ink-tools/issues/151), after trying both
   surfaces on the tablet): a small button that shows the active language (`PT`, `EN`, `ES`) and
@@ -113,7 +113,7 @@ translation plugin, which is retiring; the app was called Dialect before ([#160]
 
 ## Dictionary and translation engine (shared)
 
-Used by `lookup`'s definition and translation buttons (and the retiring Lingo plugin until it is removed), behind a `DictionaryProvider` interface. Decisions
+Used by `lookup`'s definition and translation buttons, behind a `DictionaryProvider` interface. Decisions
 (interview 2026-11-14):
 
 - **Hybrid:** offline for common words, online fallback when a word is missing — the same shape as

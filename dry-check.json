@@ -70,12 +70,6 @@
     "repeated": 3,
     "url": 4
    },
-   "plugins/lingo/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/lingo/src/buttons.ts": {
-    "repeated": 1
-   },
    "plugins/lookup/.eslintrc.js": {
     "repeated": 1
    },
@@ -185,9 +179,9 @@
    "cli/inkctl": 1,
    "packages/ink-core": 1,
    "plugins/bridge": 10,
-   "plugins/lingo": 11,
+   "plugins/lookup": 5,
    "plugins/probe": 3,
-   "plugins/real-time-conversion": 1,
+   "plugins/real-time-conversion": 2,
    "plugins/retouch": 1
   },
   "identical": {
@@ -211,9 +205,7 @@
    "cli/inkctl/docs/research/**"
   ],
   "repeated": {
-   "plugins/lingo/AGENTS.md": 1,
-   "plugins/lookup/AGENTS.md": 3,
-   "plugins/lookup/NOTICE.md": 2,
+   "plugins/lookup/AGENTS.md": 1,
    "plugins/real-time-conversion/AGENTS.md": 2,
    "plugins/relay/AGENTS.md": 3,
    "plugins/retouch/AGENTS.md": 3

@@ -40,7 +40,7 @@ stores, and Ink2Pic hands in its library, picks and OpenMoji symbols, which stay
 `ui-kit` is React Native code, so it is not a workspace here. A plugin imports it as
 `@supernote-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by
 `paths` in its `tsconfig.json`; Metro bundles it into the plugin's `.snplg` with the plugin's own
-React. Its tests and lint run in the Bridge gate, and the Ink2Pic and Lingo gates type-check it ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
+React. Its tests and lint run in the Bridge gate, and the other plugin gates type-check it ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
 
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;

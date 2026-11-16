@@ -10,8 +10,8 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
 - **Plugins**, which run inside the tablet's plugin host on `sn-plugin-lib`:
   - **Word Lookup** (`lookup`) turns a lassoed handwritten word into an inserted illustration, photo, short
     definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
-    tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)), and the **lingo** plugin, which is retiring now that translation is Lookup's
-    «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/ink-tools/issues/174), [#158](https://github.com/martonpaulo/ink-tools/issues/158), [#159](https://github.com/martonpaulo/ink-tools/issues/159)).
+    tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)), and the **lingo** plugin, removed now that translation is Lookup's
+    «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/ink-tools/issues/174), [#158](https://github.com/martonpaulo/ink-tools/issues/158), [#161](https://github.com/martonpaulo/ink-tools/issues/161)).
   - **Account Sync** (`bridge`) syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
     Supernote apps.
   - **Image Editing** (`retouch`) makes a picture on the page readable on e-ink.
