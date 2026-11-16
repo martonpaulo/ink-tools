@@ -36,6 +36,8 @@ export type NoteHost = NoteFiles & {
   /** Asks for each declared permission; the first refused one, or null (#163). */
   permissions(): Promise<string | null>;
   pluginDir(): Promise<Result<string>>;
+  /** Which page is open (note path and page), so a second text goes below the first (#49). */
+  pageKey(): Promise<Result<string>>;
   closeView(): Promise<unknown>;
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
   lasso(rect: Rect): Promise<Result<boolean>>;
@@ -44,18 +46,28 @@ export type NoteHost = NoteFiles & {
 
 /**
  * The text box: half the page wide, centred, from 15% of the page down, as tall as its wrapped
- * lines and never past the page's bottom.
+ * lines and never past the page's bottom. With `after`, the bottom of the text received before
+ * on this page, it starts one line below it, or at the top again when it would not fit (#49).
  */
-export function textBox(page: Size, text: string): Rect {
+export function textBox(page: Size, text: string, after: number | null = null): Rect {
   const width = Math.round(page.width / 2);
   const left = Math.round((page.width - width) / 2);
-  const top = Math.round(page.height * 0.15);
+  const first = Math.round(page.height * 0.15);
   const perLine = Math.max(1, Math.floor(width / (TEXT_FONT_SIZE * CHAR_WIDTH)));
   const lines = text
     .split('\n')
     .reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
+  const below = after === null ? first : after + LINE_HEIGHT;
+  const top = below + lines * LINE_HEIGHT <= page.height - LINE_HEIGHT ? below : first;
   const bottom = Math.min(page.height - LINE_HEIGHT, top + lines * LINE_HEIGHT);
   return {left, top, right: left + width, bottom: Math.max(bottom, top + LINE_HEIGHT)};
+}
+
+/** The last text this run placed: its page and its box's bottom. */
+let lastText: {page: string; bottom: number} | null = null;
+
+export function resetPlacedForTests(): void {
+  lastText = null;
 }
 
 async function placeText(host: NoteHost, text: string): Promise<string> {
@@ -63,12 +75,16 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
   if (!size.ok) {
     return copy.noNote;
   }
-  const rect = textBox(size.value, text);
+  const key = await host.pageKey();
+  const page = key.ok ? key.value : null;
+  const after = page !== null && lastText?.page === page ? lastText.bottom : null;
+  const rect = textBox(size.value, text, after);
   await host.closeView();
   const inserted = await host.insertText({text, rect, fontSize: TEXT_FONT_SIZE});
   if (!inserted.ok || inserted.value !== true) {
     return copy.insertFailed;
   }
+  lastText = page === null ? null : {page, bottom: rect.bottom};
   // Selected, so the person moves it at once; a failed lasso still leaves the text in place.
   await host.lasso(rect);
   return copy.receivedText;

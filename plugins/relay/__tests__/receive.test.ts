@@ -1,16 +1,24 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
 import {fail, ok} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../src/copy';
-import {NoteHost, receiveOne, textBox} from '../src/receive/receive';
+import {
+  NoteHost,
+  receiveOne,
+  resetPlacedForTests,
+  textBox,
+} from '../src/receive/receive';
 import {receiveState, runReceive} from '../src/receive/session';
 import {fakeRelay} from '../test-support/fakeRelay';
 
 const PAGE = {width: 1404, height: 1872};
 
+beforeEach(resetPlacedForTests);
+
 function note(overrides: Partial<NoteHost> = {}) {
   const host: NoteHost = {
     permissions: jest.fn(async () => null),
     pluginDir: jest.fn(async () => ok('/plugin')),
+    pageKey: jest.fn(async () => ok('/note.note#0')),
     pageSize: jest.fn(async () => ok(PAGE)),
     closeView: jest.fn(async () => ok(true)),
     insertText: jest.fn(async () => ok(true)),
@@ -148,6 +156,23 @@ test('a refused permission names it and starts nothing (#163)', async () => {
   );
   expect(native.startReceive).not.toHaveBeenCalled();
   expect(host.pageSize).not.toHaveBeenCalled();
+});
+
+test('a second text on the same page goes below the first (#49)', async () => {
+  const text = offer({t: {fileType: 'text/plain', preview: 'one'}});
+  const host = note();
+  await receiveOne(fakeRelay({}, [text]).api, host, 'Supernote');
+  await receiveOne(fakeRelay({}, [text]).api, host, 'Supernote');
+  const [first, second] = (host.insertText as jest.Mock).mock.calls.map(c => c[0].rect);
+  expect(second.top).toBeGreaterThan(first.bottom);
+  const other = note({pageKey: jest.fn(async () => ok('/note.note#1'))});
+  await receiveOne(fakeRelay({}, [text]).api, other, 'Supernote');
+  expect((other.insertText as jest.Mock).mock.calls[0][0].rect.top).toBe(first.top);
+});
+
+test('a text that would not fit below the last one starts at the top again', () => {
+  const first = textBox(PAGE, 'short');
+  expect(textBox(PAGE, 'short', PAGE.height - 10).top).toBe(first.top);
 });
 
 test('a second tap while receiving starts nothing', async () => {
