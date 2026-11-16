@@ -1,22 +1,24 @@
-# Dialect — agent guidance
+# Lingo app — agent guidance
 
-Scoped guidance for `apps/dialect/`. Inherits the repository root `../../AGENTS.md`. A `CLAUDE.md`
+Scoped guidance for `apps/lingo-app/`. Inherits the repository root `../../AGENTS.md`. A `CLAUDE.md`
 symlink points at this file.
 
 ## What it is
 
 A small sideloaded Android app, not a plugin ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), the owner's choice in
 [#151](https://github.com/martonpaulo/supernote-tools/issues/151)), that switches the tablet's
-handwriting recognition language for every app. `dialect` is a working name; the owner may rename it.
+handwriting recognition language for every app. Its name is «Lingo» (owner,
+[#160](https://github.com/martonpaulo/supernote-tools/issues/160)); it was «Dialect» until `0.1.0-beta.1`. The folder, gate, workflow
+and tag say `lingo-app`, because `lingo` is the retiring Lingo plugin's in each of them.
 Two surfaces ship in one build so one tablet round compares them:
 
 - **A, the floating button** (`OverlayService`): a box at the right screen edge over every app that
   shows the active language (`PT`, `EN`, `ES`); one tap moves to the next. On or off in the settings
   screen, and back after a restart when on.
-- **B, the launcher entry** (`SwitchActivity`, label «Dialect»): the sidebar lists it by itself; one
+- **B, the launcher entry** (`SwitchActivity`, label «Lingo»): the sidebar lists it by itself; one
   tap moves to the next language with nothing on screen.
 
-The settings screen (`SettingsActivity`, a second launcher entry «Dialect settings») shows the
+The settings screen (`SettingsActivity`, a second launcher entry «Lingo settings») shows the
 active language, the floating button switch, the installed languages in the cycle and each missing
 permission with the command that grants it.
 
@@ -33,7 +35,7 @@ In short: the active language is one empty file named with its code in
 - After the write, `Switcher` broadcasts `hw_type_change`, as the Settings app does.
 - The cycle order is fixed (`LanguageCycle.DEFAULT`: `pt_BR`, `en_US`, `es_ES`, then the other
   installed codes alphabetically); the settings screen chooses which codes are in it.
-- Each tap logs one line with the tag `Dialect`:
+- Each tap logs one line with the tag `LingoApp`:
   `surface=overlay from=pt_BR to=en_US ms=6`, or `surface=launcher error=…`.
 
 ## Permissions
@@ -41,8 +43,8 @@ In short: the active language is one empty file named with its code in
 Two special permissions, granted once over ADB (no network permission, no other app's data):
 
 ```sh
-adb shell appops set com.supernotetools.dialect MANAGE_EXTERNAL_STORAGE allow
-adb shell appops set com.supernotetools.dialect SYSTEM_ALERT_WINDOW allow
+adb shell appops set com.supernotetools.lingo MANAGE_EXTERNAL_STORAGE allow
+adb shell appops set com.supernotetools.lingo SYSTEM_ALERT_WINDOW allow
 ```
 
 The app writes only inside `/sdcard/.data/dictionary/default/`, and only a name that matches
@@ -56,10 +58,10 @@ SHA-1 checks, or taken from `ANDROID_HOME` on a CI runner. A JDK is found by `sc
 
 ```sh
 node scripts/build.cjs --test   # JVM tests of the cycle and the file switch, over a fake disk
-node scripts/build.cjs          # build/outputs/dialect-<version>.apk, signed and verified
+node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed and verified
 ```
 
-- The gate (`gates.json` › `dialect`, CI `validate-dialect.yml`) runs both.
+- The gate (`gates.json` › `lingo-app`, CI `validate-lingo-app.yml`) runs both.
 - `javac -Werror`: a new warning fails the build.
 - Logic with no Android import goes in `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
@@ -72,10 +74,14 @@ node scripts/build.cjs          # build/outputs/dialect-<version>.apk, signed an
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.1` gives the `versionName` `0.1.0 beta 1` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.2` gives the `versionName` `0.1.0 beta 2` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
-  is `dialect-v<version>`.
+  is `lingo-app-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.
-- The APK is signed with a debug key created in `.toolchain/debug.keystore`, outside Git and unique
+- The APK is signed with a debug key created in `.toolchain/lingo-app-debug.keystore`, outside Git and unique
   to each checkout. An APK from another checkout or from CI has another key, so the tablet needs
-  `adb uninstall com.supernotetools.dialect` before it (which drops the app's settings and grants).
+  `adb uninstall com.supernotetools.lingo` before it (which drops the app's settings and grants).
+- The applicationId changed with the name (`com.supernotetools.dialect` to
+  `com.supernotetools.lingo`, [#160](https://github.com/martonpaulo/supernote-tools/issues/160)): Android installs the new id beside the old app, so
+  uninstall Dialect first (`adb uninstall com.supernotetools.dialect`), or both write the language
+  file. The settings and the two `appops` grants do not carry over; grant them again.

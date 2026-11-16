@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Light build of the Dialect app without Gradle (#157), the same pipeline as the plugins'
+ * Light build of the Lingo app without Gradle (#157), the same pipeline as the plugins'
  * scripts/native-build.cjs (#59, #98): javac, D8 and aapt2 make the APK; zipalign and apksigner
  * finish it.
  *
- *   node scripts/build.cjs           build build/outputs/dialect-<version>.apk, signed and verified
+ *   node scripts/build.cjs           build build/outputs/lingo-app-<version>.apk, signed and verified
  *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK)
  */
 const fs = require('node:fs');
@@ -16,7 +16,7 @@ const {versionName} = require('../../../scripts/plugin-version.cjs');
 
 const root = path.resolve(__dirname, '..');
 const build = path.join(root, 'build');
-const PACKAGE = 'com.supernotetools.dialect';
+const PACKAGE = 'com.supernotetools.lingo';
 /** Android 11, the tablet's release; MANAGE_EXTERNAL_STORAGE starts here. */
 const MIN_API = '30';
 const TARGET_API = '30';
@@ -26,9 +26,9 @@ const TESTS = ['LanguageCycleTest', 'LanguageFilesTest'];
 /**
  * shortcut: a local debug key in .toolchain/, outside Git and unique to each checkout; an APK
  * from another checkout or CI has another key, so the tablet needs an uninstall before it.
- * Upgrade to one stored release key when Dialect gets a published release.
+ * Upgrade to one stored release key when Lingo gets a published release.
  */
-const KEY_ALIAS = 'dialect-debug';
+const KEY_ALIAS = 'lingo-app-debug';
 const KEY_PASS = 'android';
 /** apksigner's Conscrypt loads a native library; this flag keeps JDK 24 and later quiet about it. */
 const NATIVE_ACCESS = '--enable-native-access=ALL-UNNAMED';
@@ -49,11 +49,11 @@ function app() {
 function tools() {
   const text = execFileSync('bash', [path.join(root, 'scripts/toolchain.sh')], {cwd: root, encoding: 'utf8'});
   const values = Object.fromEntries(
-    text.split('\n').filter(line => line.startsWith('DIALECT_')).map(line => line.split('=')),
+    text.split('\n').filter(line => line.startsWith('LINGO_APP_')).map(line => line.split('=')),
   );
-  const bt = values.DIALECT_BUILD_TOOLS || '';
+  const bt = values.LINGO_APP_BUILD_TOOLS || '';
   const result = {
-    androidJar: values.DIALECT_ANDROID_JAR,
+    androidJar: values.LINGO_APP_ANDROID_JAR,
     d8: path.join(bt, 'lib/d8.jar'),
     apksigner: path.join(bt, 'lib/apksigner.jar'),
     aapt2: path.join(bt, 'aapt2'),
@@ -93,8 +93,8 @@ function manifest(file, {versionCode, versionName: name}) {
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <application android:label="Dialect" android:allowBackup="false" android:hasCode="true">
-    <activity android:name=".SwitchActivity" android:label="Dialect" android:exported="true"
+  <application android:label="Lingo" android:allowBackup="false" android:hasCode="true">
+    <activity android:name=".SwitchActivity" android:label="Lingo" android:exported="true"
         android:theme="@android:style/Theme.NoDisplay" android:excludeFromRecents="true"
         android:noHistory="true" android:taskAffinity="${PACKAGE}.switch">
       <intent-filter>
@@ -102,7 +102,7 @@ function manifest(file, {versionCode, versionName: name}) {
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
-    <activity android:name=".SettingsActivity" android:label="Dialect settings" android:exported="true"
+    <activity android:name=".SettingsActivity" android:label="Lingo settings" android:exported="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar" android:launchMode="singleTask">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -126,12 +126,12 @@ function manifest(file, {versionCode, versionName: name}) {
 }
 
 function signingKey() {
-  const store = path.join(root, '.toolchain', 'debug.keystore');
+  const store = path.join(root, '.toolchain', 'lingo-app-debug.keystore');
   if (!fs.existsSync(store)) {
     fs.mkdirSync(path.dirname(store), {recursive: true});
     run(jdkTool('keytool'), [
       '-genkeypair', '-noprompt', '-keystore', store, '-storetype', 'PKCS12', '-alias', KEY_ALIAS,
-      '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000', '-dname', 'CN=Dialect debug',
+      '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000', '-dname', 'CN=Lingo debug',
       '-storepass', KEY_PASS, '-keypass', KEY_PASS,
     ]);
   }
@@ -170,7 +170,7 @@ function buildApk() {
   run(t.zipalign, ['-f', '-p', '4', unsigned, aligned]);
   const outputs = path.join(build, 'outputs');
   fs.mkdirSync(outputs, {recursive: true});
-  const apk = path.join(outputs, `dialect-${info.version}.apk`);
+  const apk = path.join(outputs, `lingo-app-${info.version}.apk`);
   fs.rmSync(apk, {force: true});
   run(jdkTool('java'), [
     NATIVE_ACCESS, '-jar', t.apksigner, 'sign', '--ks', signingKey(), '--ks-key-alias', KEY_ALIAS,
@@ -179,21 +179,21 @@ function buildApk() {
   run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'verify', apk]);
   run(t.aapt2, ['dump', 'badging', apk]);
   fs.rmSync(work, {recursive: true, force: true});
-  console.log(`dialect: ${path.relative(root, apk)} ${fs.statSync(apk).size} bytes, ${info.versionName} (${info.versionCode})`);
+  console.log(`lingo-app: ${path.relative(root, apk)} ${fs.statSync(apk).size} bytes, ${info.versionName} (${info.versionCode})`);
   return apk;
 }
 
 function test() {
   // A temporary folder: the gate may run as another user than the one that owns build/.
-  const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'dialect-tests-'));
+  const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-app-tests-'));
   try {
     run(jdkTool('javac'), [
       '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror', '-d', classes,
-      ...PURE.map(name => path.join(root, `src/com/supernotetools/dialect/${name}.java`)),
+      ...PURE.map(name => path.join(root, `src/com/supernotetools/lingo/${name}.java`)),
       ...javaSources(path.join(root, 'tests')),
     ]);
     for (const name of TESTS) {
-      run(jdkTool('java'), ['-cp', classes, `com.supernotetools.dialect.${name}`]);
+      run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${name}`]);
     }
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
@@ -212,7 +212,7 @@ if (require.main === module) {
     if (error.message !== JDK_MISSING) {
       throw error;
     }
-    console.error(`dialect: ${error.message}`);
+    console.error(`lingo-app: ${error.message}`);
     process.exit(1);
   }
 }

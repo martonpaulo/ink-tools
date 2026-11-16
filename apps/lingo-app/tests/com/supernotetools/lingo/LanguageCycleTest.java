@@ -1,4 +1,4 @@
-package com.supernotetools.dialect;
+package com.supernotetools.lingo;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -40,5 +40,5 @@ else
   platform="$dir/platform"
 fi
 
-echo "DIALECT_BUILD_TOOLS=$build_tools"
-echo "DIALECT_ANDROID_JAR=$platform/android.jar"
+echo "LINGO_APP_BUILD_TOOLS=$build_tools"
+echo "LINGO_APP_ANDROID_JAR=$platform/android.jar"

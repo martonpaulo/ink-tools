@@ -1,4 +1,4 @@
-package com.supernotetools.dialect;
+package com.supernotetools.lingo;
 
 import android.app.Activity;
 import android.content.Intent;

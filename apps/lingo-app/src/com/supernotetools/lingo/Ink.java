@@ -1,4 +1,4 @@
-package com.supernotetools.dialect;
+package com.supernotetools.lingo;
 
 import android.content.Context;
 import android.graphics.Color;

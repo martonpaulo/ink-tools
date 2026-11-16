@@ -1,13 +1,13 @@
-name: Validate Dialect
+name: Validate Lingo app
 
-# Runs only when apps/dialect/ (or this file, or the shared version rule) changes; the gate is the
-# subproject's own JVM tests and APK build (#157).
+# Runs only when apps/lingo-app/ (or this file, or the shared version rule) changes; the gate is the
+# subproject's own JVM tests and APK build (#157, #160).
 on:
   push:
     branches: [main]
-    paths: ['apps/dialect/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-dialect.yml']
+    paths: ['apps/lingo-app/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-lingo-app.yml']
   pull_request:
-    paths: ['apps/dialect/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-dialect.yml']
+    paths: ['apps/lingo-app/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-lingo-app.yml']
   workflow_dispatch:
 
 permissions:
@@ -19,12 +19,12 @@ concurrency:
 
 jobs:
   validate:
-    name: validate dialect
+    name: validate lingo-app
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: apps/dialect
+        working-directory: apps/lingo-app
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -37,8 +37,8 @@ jobs:
       - name: Check the subproject's Markdown (text check and issue links, #77)
         working-directory: .
         run: |
-          python3 plugins/ink2pic/scripts/text_check.py apps/dialect
-          python3 plugins/ink2pic/scripts/issue_links.py apps/dialect --repo "$GITHUB_REPOSITORY"
+          python3 plugins/ink2pic/scripts/text_check.py apps/lingo-app
+          python3 plugins/ink2pic/scripts/issue_links.py apps/lingo-app --repo "$GITHUB_REPOSITORY"
 
       - name: Run the JVM tests
         run: node scripts/build.cjs --test

@@ -1,4 +1,4 @@
-package com.supernotetools.dialect;
+package com.supernotetools.lingo;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -7,7 +7,7 @@ import java.util.Set;
 
 /** The app's two preferences: the floating button on or off, and the codes in the cycle. */
 final class Prefs {
-  private static final String FILE = "dialect";
+  private static final String FILE = "lingo";
   private static final String OVERLAY = "overlay";
   private static final String CYCLE = "cycle";
 

@@ -1,4 +1,4 @@
-package com.supernotetools.dialect;
+package com.supernotetools.lingo;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +10,7 @@ import java.util.List;
 
 /** One tap from either surface: switch the file, tell the system, log one line. */
 final class Switcher {
-  static final String TAG = "Dialect";
+  static final String TAG = "LingoApp";
 
   /**
    * What the Settings app broadcasts after a change (`HWLanguageSetting.changeDefault`); the
