@@ -12,6 +12,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {clearChoice, openChoose} from './src/choose';
 import {DEFINE_BUTTON_ID, defineLasso} from './src/definition';
+import {SUMMARY_BUTTON_ID, summaryLasso} from './src/summary';
 import {syncButtons} from './src/buttons';
 import {CHOOSE_BUTTON_ID, MODES, TRANSLATIONS} from './src/modes';
 import {pictureLasso} from './src/pictures';
@@ -46,6 +47,12 @@ const listening = startButtonQueue(id => {
   if (id === DEFINE_BUTTON_ID) {
     defineLasso().catch(error => {
       console.error(`Lookup: define: ${error.message}`);
+    });
+    return true;
+  }
+  if (id === SUMMARY_BUTTON_ID) {
+    summaryLasso().catch(error => {
+      console.error(`Lookup: summary: ${error.message}`);
     });
     return true;
   }

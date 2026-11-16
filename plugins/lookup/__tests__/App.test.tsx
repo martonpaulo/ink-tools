@@ -87,6 +87,7 @@ test('both picture switches off: no picture button, and Settings still opens (#1
       illustration: false,
       photo: false,
       choose: false,
+      summary: false,
       directions: {'es-pt': false, 'zh-pt': false, 'pt-zh': false},
     }),
   );

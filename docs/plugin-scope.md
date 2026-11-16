@@ -35,8 +35,7 @@ Ink2Pic's settings or picture library (owner D40 B, [#110](https://github.com/ma
 from the tablet; its folder gets no new work ([#45](https://github.com/martonpaulo/ink-tools/issues/45)). **It is the first plugin to ship after
 `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each mode
 that inserts at once is its own **lasso button**, chosen before the search — not a post-hoc toggle:
-«Insert Sticker» (vector/sticker/OpenMoji), «Insert Image» (real photo), «Insert Definition» and the
-planned text insert (3-line bio / summary), and one «Translate ES→PT» button per direction (below).
+«Insert Sticker» (vector/sticker/OpenMoji), «Insert Image» (real photo), «Insert Definition», «Insert Summary» (3-line bio / summary), and one «Translate ES→PT» button per direction (below).
 The names follow the wording of Supernote's own lasso menu, a verb and a noun in title case (owner,
 [#167](https://github.com/martonpaulo/ink-tools/issues/167)). «Choose Image» is the one
 button that opens the results: its Illustrations and Photos tabs stay behind that one button, and
@@ -62,7 +61,9 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
   **definition** ("inteligência artificial"), a **3-line bio** ("Lula da Silva"), or a brief
   **topic summary**. Source: open/keyless encyclopedic extracts (Wikipedia/Wikidata summaries);
   current-events topics are harder and best-effort. This is distinct from — and wanted more than —
-  a single-word dictionary definition, which stays low priority.
+  a single-word dictionary definition, which stays low priority. Built as «Insert Summary»
+  ([#114](https://github.com/martonpaulo/ink-tools/issues/114)): the first 3 sentences of the best Wikipedia article's introduction, Portuguese
+  first, then Spanish, below the word with its title and «(Wikipedia)»; on by default.
 - **Translation («Translate ES→PT»).** Write a word, lasso it, insert its translation: one lasso
   button per direction switched on in Lookup's Settings, with no automatic direction. Any direction
   of the pairs can be chosen; ES→PT, ZH→PT and PT→ZH start on (owner, [#174](https://github.com/martonpaulo/ink-tools/issues/174), which replaced

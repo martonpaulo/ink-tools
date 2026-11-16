@@ -2,6 +2,7 @@
 export const PACKAGE_NAME = 'ink-core';
 export * from './apertium';
 export * from './dictionary';
+export * from './encyclopedia';
 export * from './lasso';
 export * from './outcome';
 export * from './pairs';

@@ -8,6 +8,9 @@ import {
   apertiumTranslator,
   DictionaryProvider,
   fetchTextWith,
+  LanguageCode,
+  summarizeFirst,
+  SummaryResult,
   wiktionaryDefiner,
 } from '@supernote-tools/ink-core';
 import {version} from '../package.json';
@@ -25,6 +28,15 @@ export function definers(
   fetcher: typeof fetch = globalThis.fetch,
 ): DictionaryProvider[] {
   return [wiktionaryDefiner(fetchTextWith(fetcher, USER_AGENT))];
+}
+
+/** The term's Wikipedia summary (#114): its text is CC BY-SA, credited in the box. */
+export function summarize(
+  term: string,
+  languages: readonly LanguageCode[],
+  fetcher: typeof fetch = globalThis.fetch,
+): Promise<SummaryResult> {
+  return summarizeFirst(fetchTextWith(fetcher, USER_AGENT), term, languages);
 }
 
 export function translators(

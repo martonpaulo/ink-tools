@@ -9,7 +9,7 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 with its native `app.npk`; the device round of the picture buttons is still open. Ink2Pic's picture
 search, pixel measures, file store, settings store and «Insert best picture» flow are
 `../../packages/picture-search`, shared with Ink2Pic ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)); Ink2Pic's library and picks
-stay in Ink2Pic (D40 B), which is retired later (owner D45). Still to come: insert text ([#114](https://github.com/martonpaulo/supernote-tools/issues/114)).
+stay in Ink2Pic (D40 B), which is retired later (owner D45).
 Button names follow the wording of Supernote's own lasso menu, a verb and a noun in title case
 (owner, [#167](https://github.com/martonpaulo/supernote-tools/issues/167)). `src/modes.ts` owns the two picture modes, «Insert Sticker» (illustration) and «Insert Image» (photo): button ids from
 1000, Settings keys and search style, with the measured split `keepMode` in the shared package
@@ -19,7 +19,10 @@ and a press that inserts nothing writes its sentence below the word. Pictures go
 `MyStyle/Lookup/pictures`, at 640 px below the word, until [#105](https://github.com/martonpaulo/supernote-tools/issues/105) sets size and place per button.
 «Insert Definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from Ink2Pic: `src/definition.ts` reads the lasso,
 defines it in pt then es through `src/dictionaries.ts` and inserts a 640 px text box below the word,
-with no view. «Choose Image» ([#156](https://github.com/martonpaulo/supernote-tools/issues/156), owner D19 A): `src/choose.ts` reads the lasso, keeps the
+with no view. «Insert Summary» ([#114](https://github.com/martonpaulo/ink-tools/issues/114)): `src/summary.ts` reads the lasso, asks ink-core's
+Wikipedia extract (`summarizeFirst`, pt then es, 3 sentences) through `src/dictionaries.ts` and
+inserts the article title, the summary and «(Wikipedia)» in the same box; on by default, its id
+`FIRST_BUTTON_ID + 100`, clear of the translation ids; its device round is open. «Choose Image» ([#156](https://github.com/martonpaulo/supernote-tools/issues/156), owner D19 A): `src/choose.ts` reads the lasso, keeps the
 word and its place, and opens the view on `src/ui/ChooseScreen.tsx`, which lists one mode at a
 time («Illustrations», «Photos») through the same `modeDeps` flow and inserts the tapped tile at
 the kept place; its device round is open. One «Translate ES→PT» button per direction
@@ -30,7 +33,7 @@ Wiktionary, then Apertium for PT-ES; a ZH input through the pinyin index) and in
 the same 640 px box below the word as the definition (`src/textBox.ts`); its device round is open.
 Each button follows its Settings switch (`src/buttons.ts`); the switches live in
 `MyStyle/Lookup/settings.json` (`src/settings.ts`) with the `directions` map, the picture modes on
-by default, the definition off, ES→PT, ZH→PT and PT→ZH on, PT→ES off. `src/profile.ts`
+by default, the definition off, the summary on, ES→PT, ZH→PT and PT→ZH on, PT→ES off. `src/profile.ts`
 is Lookup's entry into picture-search's file store and insert tier ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): folder
 `MyStyle/Lookup`, native modules `LookupFiles` and `LookupImage`, registered by
 `native/com/lookup/files/LookupFilesPackage.java`, which `scripts/native-build.cjs` compiles with the
