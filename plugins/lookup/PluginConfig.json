@@ -8,5 +8,5 @@
   "pluginID": "t2obvupqt3edmnrr",
   "pluginKey": "Lookup",
   "jsMainPath": "index",
-  "uses-permissions": []
+  "uses-permissions": ["plugin.permission.INTERNET", "plugin.permission.FILE:READ"]
 }

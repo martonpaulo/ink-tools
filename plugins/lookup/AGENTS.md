@@ -14,6 +14,11 @@ button that needs them, and Ink2Pic is then retired (owner D45).
 `src/modes.ts` owns the two picture modes, «Insert illustration» and «Insert photo»: button ids from
 1000, Settings keys and search style, with the measured split `keepMode` in the shared package
 ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)); their buttons and switches wait for the file store and insert flow.
+«Insert definition» is the first working mode ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from Ink2Pic: `src/definition.ts`
+reads the lasso, defines it in pt then es through `src/dictionaries.ts` and inserts a 640 px text
+box below the word, with no view; its switch in Settings registers the button and asks for the
+permissions (`src/buttons.ts`). The switch lives in memory, as Lingo's does, until the settings
+store moves in ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)).
 
 ## What it is
 
@@ -29,8 +34,9 @@ Write a word, lasso it, insert a picture, a photo or a short definition. It is t
 - Each mode is its own lasso button, chosen before the search, never a toggle after it.
 - The definition back-end is the shared `DictionaryProvider` in `ink-core`. Feature code never
   names a concrete source.
-- Permissions: none yet. Add `plugin.permission.INTERNET` with the first online search, and a file
-  permission only with the first file call ([#83](https://github.com/martonpaulo/supernote-tools/issues/83) is the same rule for Bridge).
+- Permissions: `plugin.permission.INTERNET` for the dictionary and `plugin.permission.FILE:READ`
+  for the lasso calls ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)); add another only with its first call ([#83](https://github.com/martonpaulo/supernote-tools/issues/83) is the same rule
+  for Bridge).
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
 - Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.
