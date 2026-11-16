@@ -1,10 +1,10 @@
 {
   "name": "Lookup",
-  "desc": "Lasso a handwritten word and insert a picture, a photo or a short definition for it.",
+  "desc": "Lasso a handwritten word and insert a picture, a photo, a short definition or a translation for it.",
   "author": "Marton Paulo",
   "iconPath": "",
-  "versionName": "0.2.0 beta 3",
-  "versionCode": "4",
+  "versionName": "0.2.0 beta 4",
+  "versionCode": "5",
   "pluginID": "t2obvupqt3edmnrr",
   "pluginKey": "Lookup",
   "jsMainPath": "index",

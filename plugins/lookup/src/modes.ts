@@ -57,6 +57,9 @@ export const MODES: readonly Mode[] = [
 export const CHOOSE_BUTTON_ID = FIRST_BUTTON_ID + MODES.length + 1;
 export const CHOOSE_BUTTON_NAME = 'Choose picture';
 
+/** «Insert translation» (#158): after «Choose picture». */
+export const TRANSLATE_BUTTON_ID = CHOOSE_BUTTON_ID + 1;
+
 /** The sources a mode searches, in the registry's order. */
 export function modeAdapters(
   mode: Mode,

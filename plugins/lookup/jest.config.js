@@ -11,6 +11,8 @@ module.exports = {
     ...uiKit.jest.moduleNameMapper,
     // ink-core's dictionary, lasso and placement (#115).
     ...inkCore.jestModuleNameMapper,
+    // The CC-CEDICT pinyin index, «Insert translation»'s ZH input (#129, #158).
+    ...inkCore.jestPinyinDataMapper,
     ...snAdapter.jestModuleNameMapper,
     // Ink2Pic's picture search, shared for Lookup's picture buttons (#125).
     ...pictureSearch.jestModuleNameMapper,

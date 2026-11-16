@@ -50,8 +50,36 @@ describe('the settings file', () => {
       illustration: false,
       photo: true,
       choose: false,
+      translation: true,
+      pairs: {'es-pt': true, 'zh-pt': false},
     };
     expect(parseSettings(serializeSettings(saved)).settings).toEqual(saved);
+  });
+
+  test('a file from before the translation button: translation and every pair off (#158)', () => {
+    const parsed = parseSettings('{"version": 1, "definition": true}');
+    expect(parsed.settings.translation).toBe(false);
+    expect(parsed.settings.pairs).toEqual({'es-pt': false, 'zh-pt': false});
+    expect(parsed.problems).toEqual([]);
+  });
+
+  test('a pair that is not true or false takes its default and is named; an unknown pair is dropped', () => {
+    const parsed = parseSettings(
+      '{"pairs": {"es-pt": "yes", "zh-pt": true, "en-pt": true}}',
+    );
+    expect(parsed.settings.pairs).toEqual({'es-pt': false, 'zh-pt': true});
+    expect(parsed.problems).toEqual([
+      'settings: pairs.es-pt is not true or false; the default is used',
+    ]);
+    expect(parseSettings('{"pairs": [true]}').problems).toEqual([
+      'settings: pairs is not an object; the defaults are used',
+    ]);
+  });
+
+  test('a parsed file never shares its pair map with the defaults', () => {
+    const parsed = parseSettings(null).settings;
+    parsed.pairs['es-pt'] = true;
+    expect(defaultSettings.pairs['es-pt']).toBe(false);
   });
 
   test('a switch that is not true or false takes its default and is named', () => {

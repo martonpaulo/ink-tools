@@ -98,3 +98,16 @@ test('both picture switches off: no picture button, and Settings still opens (#1
     .mock.calls.map(call => (call[2] as {id: number}).id);
   expect(ids).toEqual([DEFINE_BUTTON_ID]);
 });
+
+test('the language-pair switches start off and a tap saves the pair (#158)', async () => {
+  const tree = await open();
+  expect(toggle(tree, 'Insert translation').props.selected).toBe(false);
+  expect(toggle(tree, 'Spanish – Portuguese').props.selected).toBe(false);
+  expect(toggle(tree, 'Chinese – Portuguese').props.selected).toBe(false);
+  await act(async () => {
+    toggle(tree, 'Spanish – Portuguese').props.onPress();
+  });
+  expect(toggle(tree, 'Spanish – Portuguese').props.selected).toBe(true);
+  const [, text] = files.writeText.mock.calls[0] as unknown as [string, string];
+  expect(JSON.parse(text).pairs).toEqual({'es-pt': true, 'zh-pt': false});
+});

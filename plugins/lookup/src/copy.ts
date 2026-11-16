@@ -3,8 +3,15 @@ export const copy = {
   title: 'Lookup',
   'settings.modes': 'Lasso buttons',
   'button.define': 'Insert definition',
+  'button.translate': 'Insert translation',
+  'settings.pairs': 'Language pairs',
+  'language.pt': 'Portuguese',
+  'language.es': 'Spanish',
+  'language.zh': 'Chinese',
   'permission.internet':
     'Lookup looks words up in an online dictionary, Wiktionary.',
+  'permission.translate':
+    'Lookup translates words with online dictionaries, Wiktionary and Apertium.',
   'permission.files': 'Lookup reads the word you lasso on the page.',
   'permission.write':
     'Lookup saves each picture to MyStyle/Lookup before it puts it in your note.',
@@ -18,6 +25,13 @@ export const copy = {
   'picture.failed': (word: string, why: string) => `${word}: ${why}`,
   'error.place': 'There is no room below the lassoed word.',
   'error.insert': 'The definition could not be inserted on the page.',
+  /** Written on the note below the word: a word with no translation is never guessed (#158). */
+  'translation.none': (word: string) => `${word}: no translation found`,
+  'translation.failed': (word: string) =>
+    `${word}: the dictionaries could not be reached`,
+  'translation.noPair': (word: string) =>
+    `${word}: turn on a language pair in Lookup's Settings to translate`,
+  'translation.insert': 'The translation could not be inserted on the page.',
   /** «Choose picture»'s screen (#156). */
   'choose.title': (word: string) => `Pictures for «${word}»`,
   'choose.illustration': 'Illustrations',

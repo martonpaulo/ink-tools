@@ -5,7 +5,7 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status
 
-**Four lasso buttons** over a Settings view ([#110](https://github.com/martonpaulo/supernote-tools/issues/110), [#111](https://github.com/martonpaulo/supernote-tools/issues/111), [#115](https://github.com/martonpaulo/supernote-tools/issues/115)), built to `Lookup.snplg`
+**Five lasso buttons** over a Settings view ([#110](https://github.com/martonpaulo/supernote-tools/issues/110), [#111](https://github.com/martonpaulo/supernote-tools/issues/111), [#115](https://github.com/martonpaulo/supernote-tools/issues/115)), built to `Lookup.snplg`
 with its native `app.npk`; the device round of the picture buttons is still open. Ink2Pic's picture
 search, pixel measures, file store, settings store and «Insert best picture» flow are
 `../../packages/picture-search`, shared with Ink2Pic ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)); Ink2Pic's library and picks
@@ -21,8 +21,14 @@ defines it in pt then es through `src/dictionaries.ts` and inserts a 640 px text
 with no view. «Choose picture» ([#156](https://github.com/martonpaulo/supernote-tools/issues/156), owner D19 A): `src/choose.ts` reads the lasso, keeps the
 word and its place, and opens the view on `src/ui/ChooseScreen.tsx`, which lists one mode at a
 time («Illustrations», «Photos») through the same `modeDeps` flow and inserts the tapped tile at
-the kept place; its device round is open. Each button follows its Settings switch (`src/buttons.ts`); the switches live in
-`MyStyle/Lookup/settings.json` (`src/settings.ts`), the picture modes on by default. `src/profile.ts`
+the kept place; its device round is open. «Insert translation» ([#158](https://github.com/martonpaulo/supernote-tools/issues/158)), moved here from the
+retiring Lingo plugin: `src/translation.ts` reads the lasso, asks every direction of the language
+pairs switched on in Settings through ink-core's shared flow (`translateAll`: Wiktionary, then
+Apertium for PT-ES; a ZH input through the pinyin index) and inserts one line per direction that
+found a translation, in the same 640 px box below the word as the definition (`src/textBox.ts`);
+its device round is open. The pair switches are `src/ui/PairsForm.tsx`. Each button follows its Settings switch (`src/buttons.ts`); the switches live in
+`MyStyle/Lookup/settings.json` (`src/settings.ts`) with the `pairs` map, the picture modes on by
+default, translation and every pair off. `src/profile.ts`
 is Lookup's entry into picture-search's file store and insert tier ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): folder
 `MyStyle/Lookup`, native modules `LookupFiles` and `LookupImage`, registered by
 `native/com/lookup/files/LookupFilesPackage.java`, which `scripts/native-build.cjs` compiles with the
@@ -30,7 +36,7 @@ package's Java into `app.npk`.
 
 ## What it is
 
-Write a word, lasso it, insert a picture, a photo or a short definition. It is the evolution of
+Write a word, lasso it, insert a picture, a photo, a short definition or a translation. It is the evolution of
 `../ink2pic` and the planned definition mode. Scope and pains: `../../docs/plugin-scope.md`
 (section `lookup`). Layers: `../../docs/architecture.md`.
 
@@ -42,8 +48,10 @@ Write a word, lasso it, insert a picture, a photo or a short definition. It is t
 - Each direct insert mode (illustration, photo, text) is its own lasso button, chosen before the
   search, never a toggle after it. The «Choose picture» screen is the one exception: behind its one
   button it may switch between its Illustrations and Photos tabs (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)).
-- The definition back-end is the shared `DictionaryProvider` in `ink-core`. Feature code never
-  names a concrete source.
+- The definition and translation back-end is the shared `DictionaryProvider` in `ink-core`, built
+  only in `src/dictionaries.ts`. Feature code never names a concrete source.
+- «Insert translation» is one button for every pair (owner, [#158](https://github.com/martonpaulo/supernote-tools/issues/158)); a new pair is one row of
+  ink-core's `PAIRS`, with no change here.
 - Permissions: `plugin.permission.INTERNET` for the dictionary and the picture sources,
   `plugin.permission.FILE:READ` for the lasso calls ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) and `plugin.permission.FILE:WRITE`
   for the settings file and the prepared pictures ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)); add another only with its first call

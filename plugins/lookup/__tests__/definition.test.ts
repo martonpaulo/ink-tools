@@ -20,6 +20,7 @@ import {
 } from '../src/buttons';
 import {FIRST_BUTTON_ID, MODES} from '../src/modes';
 import {copy} from '../src/copy';
+import {defaultSettings} from '../src/settings';
 
 const place: LassoPlace = {
   rect: {left: 372, top: 300, right: 572, bottom: 380},
@@ -28,7 +29,9 @@ const place: LassoPlace = {
 };
 
 const found: DefinitionResult = {
-  definitions: [{text: 'o fruto comestível da macieira', partOfSpeech: 'Substantivo'}],
+  definitions: [
+    {text: 'o fruto comestível da macieira', partOfSpeech: 'Substantivo'},
+  ],
   providerId: 'wiktionary',
   language: 'pt',
   errors: [],
@@ -65,7 +68,10 @@ test('the box is 640 px wide, below the word, never over it (#115)', () => {
 test('the box goes past a written line under the word, into free space (#152)', () => {
   const below = place.rect.bottom + 24;
   const line = {left: 0, top: below + 5, right: 1900, bottom: below + 80};
-  const rect = boxRect(definitionText('maçã', found), {...place, occupied: [line]});
+  const rect = boxRect(definitionText('maçã', found), {
+    ...place,
+    occupied: [line],
+  });
   expect(rect!.top).toBe(line.bottom + 24);
 });
 
@@ -82,7 +88,10 @@ test('a press inserts the definition below the lasso and logs each step', async 
   });
   expect(asked).toEqual([['maçã', ...LANGUAGES]]);
   expect(d.insert).toHaveBeenCalledWith(
-    expect.objectContaining({text: definitionText('maçã', found), fontSize: FONT_SIZE}),
+    expect.objectContaining({
+      text: definitionText('maçã', found),
+      fontSize: FONT_SIZE,
+    }),
   );
   expect(d.lines.join('\n')).toMatch(/define: 1 from wiktionary pt/);
   expect(d.lines.join('\n')).toMatch(/total \d+ ms/);
@@ -90,9 +99,17 @@ test('a press inserts the definition below the lasso and logs each step', async 
 
 test('no definition: a sentence says so on the note, never a guess', async () => {
   const d = deps({
-    define: async () => ({definitions: [], providerId: null, language: null, errors: []}),
+    define: async () => ({
+      definitions: [],
+      providerId: null,
+      language: null,
+      errors: [],
+    }),
   });
-  expect(await defineLasso(d)).toEqual({ok: false, text: copy['definition.none']('maçã')});
+  expect(await defineLasso(d)).toEqual({
+    ok: false,
+    text: copy['definition.none']('maçã'),
+  });
   expect(d.insert).toHaveBeenCalledWith(
     expect.objectContaining({text: 'maçã: no definition found'}),
   );
@@ -112,7 +129,11 @@ test('a dictionary that cannot be reached says so, not «no definition»', async
 
 test('a failed lasso read inserts nothing', async () => {
   const d = deps({
-    read: async () => ({ok: false, code: 1503, message: 'File read permission has not been requested'}),
+    read: async () => ({
+      ok: false,
+      code: 1503,
+      message: 'File read permission has not been requested',
+    }),
   });
   expect((await defineLasso(d)).ok).toBe(false);
   expect(d.insert).not.toHaveBeenCalled();
@@ -141,7 +162,16 @@ describe('the opt-in button', () => {
 
   test('on registers a no-view lasso button and asks for each missing permission', async () => {
     const d = buttonDeps(false);
-    await settingsChanged({definition: true, illustration: false, photo: false, choose: false}, d);
+    await settingsChanged(
+      {
+        ...defaultSettings,
+        definition: true,
+        illustration: false,
+        photo: false,
+        choose: false,
+      },
+      d,
+    );
     expect(d.register).toHaveBeenCalledWith(BUTTON_TYPE_LASSO, ['NOTE'], {
       id: DEFINE_BUTTON_ID,
       name: 'Insert definition',
@@ -153,9 +183,36 @@ describe('the opt-in button', () => {
 
   test('off removes it once, and asks nothing', async () => {
     const d = buttonDeps(true);
-    await settingsChanged({definition: true, illustration: false, photo: false, choose: false}, d);
-    await settingsChanged({definition: false, illustration: false, photo: false, choose: false}, d);
-    await settingsChanged({definition: false, illustration: false, photo: false, choose: false}, d);
+    await settingsChanged(
+      {
+        ...defaultSettings,
+        definition: true,
+        illustration: false,
+        photo: false,
+        choose: false,
+      },
+      d,
+    );
+    await settingsChanged(
+      {
+        ...defaultSettings,
+        definition: false,
+        illustration: false,
+        photo: false,
+        choose: false,
+      },
+      d,
+    );
+    await settingsChanged(
+      {
+        ...defaultSettings,
+        definition: false,
+        illustration: false,
+        photo: false,
+        choose: false,
+      },
+      d,
+    );
     expect(d.unregister).toHaveBeenCalledTimes(1);
     expect(d.requestPermission).not.toHaveBeenCalled();
   });

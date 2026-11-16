@@ -6,7 +6,7 @@
 import {
   apertiumTranslator,
   DictionaryProvider,
-  FetchText,
+  fetchTextWith,
   wiktionaryDefiner,
 } from '@supernote-tools/ink-core';
 import {version} from '../package.json';
@@ -20,20 +20,9 @@ export const SOURCE_NAMES: Record<string, string> = {
   apertium: 'Apertium',
 };
 
-/** GETs a body; a failed request or a status other than 2xx throws, never an empty body. */
-export function fetchTextWith(fetcher: typeof fetch): FetchText {
-  return async url => {
-    const response = await fetcher(url, {headers: {'User-Agent': USER_AGENT}});
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return response.text();
-  };
-}
-
 export function translators(
   fetcher: typeof fetch = globalThis.fetch,
 ): DictionaryProvider[] {
-  const fetchText = fetchTextWith(fetcher);
+  const fetchText = fetchTextWith(fetcher, USER_AGENT);
   return [wiktionaryDefiner(fetchText), apertiumTranslator(fetchText)];
 }

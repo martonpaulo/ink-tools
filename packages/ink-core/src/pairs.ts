@@ -63,8 +63,11 @@ export function setPair(s: LingoSettings, id: string, on: boolean): LingoSetting
   return {...s, pairs: {...s.pairs, [id]: on}};
 }
 
-/** Every direction the opted-in pairs allow, both ways each, in PAIRS order. */
-export function enabledDirections(s: LingoSettings): Direction[] {
+/**
+ * Every direction the opted-in pairs allow, both ways each, in PAIRS order. Any settings with a
+ * `pairs` map: Lingo's and Lookup's (#158).
+ */
+export function enabledDirections(s: Pick<LingoSettings, 'pairs'>): Direction[] {
   return PAIRS.filter(p => s.pairs[p.id] === true).flatMap(({languages: [a, b]}) => [
     {from: a, to: b},
     {from: b, to: a},

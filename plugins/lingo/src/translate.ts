@@ -10,6 +10,8 @@
 import {
   ChineseCandidate,
   Direction,
+  directionName,
+  firstTranslated,
   isFree,
   LassoPlace,
   LassoQuery,
@@ -18,11 +20,12 @@ import {
   Outcome,
   PinyinIndex,
   placeRect,
-  readChineseInput,
   readLassoQuery,
   Rect,
   translateFirst,
+  translationText as sharedText,
   TranslationQuery,
+  wordsOf,
 } from '@supernote-tools/ink-core';
 import {cedictPinyinIndex} from '@supernote-tools/ink-core/pinyin-data';
 import {
@@ -51,8 +54,6 @@ const LINE_HEIGHT = Math.round(FONT_SIZE * 1.5);
 const CHAR_WIDTH = 0.55;
 /** The box's width in page pixels; narrower wrapped after every word in Ink2Pic (#115). */
 export const BOX_WIDTH = 480;
-/** The pinyin candidates asked, best first: a box under a word, not a dictionary page. */
-export const MAX_CANDIDATES = 3;
 
 export type TranslateDeps = {
   read: () => Promise<Outcome<LassoQuery, CallFailure>>;
@@ -82,51 +83,12 @@ const DEVICE: TranslateDeps = {
   log: line => console.log(`Lingo: ${line}`),
 };
 
-const directionName = ({from, to}: Direction): string =>
-  `${from.toUpperCase()}→${to.toUpperCase()}`;
-
-/** The words to translate: the recognized text, or a ZH input's candidates; empty when unreadable. */
-function wordsOf(
-  query: string,
-  {from}: Direction,
-  pinyin: () => PinyinIndex,
-): ChineseCandidate[] {
-  if (from !== 'zh') {
-    return [{word: query}];
-  }
-  return readChineseInput(query, pinyin()).candidates.slice(0, MAX_CANDIDATES);
-}
-
-/** The first candidate the engine translates, with every lookup's failures kept. */
-async function firstTranslated(
-  words: ChineseCandidate[],
-  direction: Direction,
-  translate: TranslateDeps['translate'],
-): Promise<
-  {word: ChineseCandidate; result: LookupResult} | {errors: string[]}
-> {
-  const errors: string[] = [];
-  for (const word of words) {
-    const result = await translate({...direction, word: word.word});
-    if (result.translations.length > 0) {
-      return {word, result};
-    }
-    errors.push(...result.errors);
-  }
-  return {errors};
-}
-
 /** `palavra → word; other (Wiktionary)`, with a reading after the word or a translation. */
 export function translationText(
   word: ChineseCandidate,
   result: LookupResult,
 ): string {
-  const head = word.reading ? `${word.word} (${word.reading})` : word.word;
-  const texts = result.translations.map(t =>
-    t.reading ? `${t.text} (${t.reading})` : t.text,
-  );
-  const source = result.providerId ? SOURCE_NAMES[result.providerId] : null;
-  return `${head} → ${texts.join('; ')}${source ? ` (${source})` : ''}`;
+  return sharedText(word, result, SOURCE_NAMES);
 }
 
 /**

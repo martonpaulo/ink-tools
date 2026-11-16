@@ -1,5 +1,5 @@
 /**
- * Lookup's lasso buttons follow their Settings switches (#115, #111): each button exists only while
+ * Lookup's lasso buttons follow their Settings switches (#115, #111, #158): each button exists only while
  * its switch is on, as Lingo's direction buttons do (#128). At start-up the saved switches register
  * their buttons; turning one on in Settings also asks for each permission its press needs, while
  * the view is open to show the question.
@@ -16,7 +16,12 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
-import {CHOOSE_BUTTON_ID, CHOOSE_BUTTON_NAME, MODES} from './modes';
+import {
+  CHOOSE_BUTTON_ID,
+  CHOOSE_BUTTON_NAME,
+  MODES,
+  TRANSLATE_BUTTON_ID,
+} from './modes';
 import type {LookupSettings, SwitchKey} from './settings';
 
 /** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
@@ -75,6 +80,12 @@ export const BUTTONS: readonly LassoButton[] = [
     id: DEFINE_BUTTON_ID,
     name: copy['button.define'],
     needs: [INTERNET, FILE_READ],
+  },
+  {
+    key: 'translation',
+    id: TRANSLATE_BUTTON_ID,
+    name: copy['button.translate'],
+    needs: [{...INTERNET, reason: copy['permission.translate']}, FILE_READ],
   },
 ];
 

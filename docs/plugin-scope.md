@@ -32,8 +32,9 @@ settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/
 after `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each
 mode is its own **lasso button**, chosen before the search — not a post-hoc toggle: "insert
 illustration" (vector/sticker/OpenMoji), "insert photo" (real photo), "insert text" (definition /
-3-line bio / summary). Translation is the separate `lingo` plugin with its own lasso button. Pains
-and scope:
+3-line bio / summary) and «Insert translation», one button over every language pair switched on in
+Lookup's Settings (owner, [#158](https://github.com/martonpaulo/supernote-tools/issues/158)): the translation needs of the `lingo` section below
+are met here. Pains and scope:
 
 - **Relevance is broken on real cases.** "café"/"coffee" returns a heart as the "best" picture;
   "Pedro Sánchez" returns awful results. Ranking and the portrait path must fix these (issues
@@ -63,7 +64,10 @@ paid provider key.
 
 ## lingo
 
-Write a word, lasso it, insert its **translation**. Real uses: **learning a language**, **reading
+Write a word, lasso it, insert its **translation**. Since 2026-11-16 this is Lookup's «Insert
+translation» button, with the language-pair opt-ins in Lookup's Settings; the `lingo` plugin is
+retiring ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)) and the name Lingo now belongs to the sideloaded app that
+switches the handwriting language ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)). Real uses: **learning a language**, **reading
 foreign text** (ES/ZH) and annotating meaning, and **finding the right term** while writing in PT
 without reaching for the phone. The owner lives between PT and ES, maybe ZH. Shares the
 dictionary/translation engine with `lookup`'s definition mode (one provider interface). Pairs are
@@ -75,7 +79,7 @@ whole page.
 
 ## Dictionary and translation engine (shared)
 
-Used by `lingo` and `lookup`'s definition mode, behind a `DictionaryProvider` interface. Decisions
+Used by `lookup`'s definition and translation buttons (and the retiring `lingo` plugin), behind a `DictionaryProvider` interface. Decisions
 (interview 2026-11-14):
 
 - **Hybrid:** offline for common words, online fallback when a word is missing — the same shape as

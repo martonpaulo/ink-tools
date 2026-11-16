@@ -13,9 +13,10 @@ import {
 import {clearChoice, openChoose} from './src/choose';
 import {DEFINE_BUTTON_ID, defineLasso} from './src/definition';
 import {syncButtons} from './src/buttons';
-import {CHOOSE_BUTTON_ID, MODES} from './src/modes';
+import {CHOOSE_BUTTON_ID, MODES, TRANSLATE_BUTTON_ID} from './src/modes';
 import {pictureLasso} from './src/pictures';
 import {getSettings} from './src/profile';
+import {translateLasso} from './src/translation';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -35,7 +36,7 @@ getSettings()
   });
 
 // At start-up, before the view exists (Ink2Pic gotcha 11). Every lasso button runs here, with no
-// view (#111, #115); each button itself follows its Settings switch (src/buttons.ts).
+// view (#111, #115, #158); each button itself follows its Settings switch (src/buttons.ts).
 const listening = startButtonQueue(id => {
   if (id === CHOOSE_BUTTON_ID) {
     // Reads the lasso, then opens the view on the Choose screen (#156).
@@ -45,6 +46,12 @@ const listening = startButtonQueue(id => {
   if (id === DEFINE_BUTTON_ID) {
     defineLasso().catch(error => {
       console.error(`Lookup: define: ${error.message}`);
+    });
+    return true;
+  }
+  if (id === TRANSLATE_BUTTON_ID) {
+    translateLasso().catch(error => {
+      console.error(`Lookup: translate: ${error.message}`);
     });
     return true;
   }

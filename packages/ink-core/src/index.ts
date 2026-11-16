@@ -7,4 +7,5 @@ export * from './outcome';
 export * from './pairs';
 export * from './pinyin';
 export * from './place';
+export * from './translation';
 export * from './wiktionary';

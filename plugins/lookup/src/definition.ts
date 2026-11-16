@@ -11,48 +11,25 @@ import {
   defineFirst,
   DefinitionResult,
   DEFINED_LANGUAGES,
-  isFree,
   LanguageCode,
-  LassoPlace,
   LassoQuery,
   Outcome,
-  placeRect,
-  readLassoQuery,
-  Rect,
 } from '@supernote-tools/ink-core';
 import {
   CallFailure,
-  EMPTY_LASSO_CODE,
-  fail,
-  getCurrentFilePath,
-  getCurrentPageNum,
-  getLassoElements,
-  getLassoRect,
-  getPageSize,
-  occupiedRects,
   insertText,
-  recognizeElements,
   Result,
   TextBoxInput,
-  THROWN_CODE,
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {definers, SOURCE_NAMES} from './dictionaries';
 import {FIRST_BUTTON_ID, MODES} from './modes';
+import {insertBox, readLasso} from './textBox';
+
+export {BOX_WIDTH, boxRect, FONT_SIZE} from './textBox';
 
 /** After the picture modes' ids, so every Lookup button keeps its own (src/modes.ts). */
 export const DEFINE_BUTTON_ID = FIRST_BUTTON_ID + MODES.length;
-
-/** The text size in page pixels, as Ink2Pic's definition box [INFERENCE]. */
-export const FONT_SIZE = 32;
-const LINE_HEIGHT = Math.round(FONT_SIZE * 1.5);
-/** About how wide one character is, as a share of the font size [INFERENCE]. */
-const CHAR_WIDTH = 0.55;
-/**
- * The box's width in page pixels: at 200 px «Substantivo» broke inside the word on the tablet
- * (#115, device round 2026-11-16); 640 px is Ink2Pic's fixed width since d537180.
- */
-export const BOX_WIDTH = 640;
 
 /**
  * The languages a word is defined in, and the picture modes search in, in this order. shortcut:
@@ -73,19 +50,7 @@ export type DefineDeps = {
 };
 
 const DEVICE: DefineDeps = {
-  read: () =>
-    readLassoQuery<CallFailure>({
-      getLassoElements,
-      getLassoRect,
-      getCurrentFilePath,
-      getCurrentPageNum,
-      getPageSize,
-      recognizeElements,
-      getOccupied: (path, page) =>
-        occupiedRects(path, page, line => console.log(`Lookup: ${line}`)),
-      emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
-      failure: message => fail(THROWN_CODE, message),
-    }),
+  read: readLasso,
   define: (word, languages) => defineFirst(definers(), word, languages),
   insert: insertText,
   log: line => console.log(`Lookup: ${line}`),
@@ -103,24 +68,6 @@ export function definitionText(word: string, result: DefinitionResult): string {
   return [head, ...senses, ...(source ? [`(${source})`] : [])].join('\n');
 }
 
-/** The box below the lassoed word, BOX_WIDTH wide, as tall as its wrapped lines. */
-export function boxRect(text: string, place: LassoPlace): Rect | null {
-  const perLine = Math.max(1, Math.floor(BOX_WIDTH / (FONT_SIZE * CHAR_WIDTH)));
-  const lines = text
-    .split('\n')
-    .reduce(
-      (sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)),
-      0,
-    );
-  return placeRect(
-    place.rect,
-    {width: BOX_WIDTH, height: lines * LINE_HEIGHT},
-    place.pageSize,
-    'below',
-    place.occupied,
-  );
-}
-
 export type Defined = {ok: boolean; text: string};
 
 /** One press of «Insert definition»; the value says what was inserted, or why nothing was. */
@@ -133,7 +80,9 @@ export async function defineLasso(deps: DefineDeps = DEVICE): Promise<Defined> {
   }
   const {query, place} = read.value;
   const recognized = deps.now();
-  deps.log(`define: "${query}", lasso and recognition ${recognized - started} ms`);
+  deps.log(
+    `define: "${query}", lasso and recognition ${recognized - started} ms`,
+  );
   if (!place) {
     deps.log(`define: no lasso rect for "${query}"`);
     return {ok: false, text: copy['error.place']};
@@ -144,32 +93,29 @@ export async function defineLasso(deps: DefineDeps = DEVICE): Promise<Defined> {
   const found = result.definitions.length > 0;
   deps.log(
     found
-      ? `define: ${result.definitions.length} from ${result.providerId} ${result.language} in ${answered - recognized} ms`
-      : `define: none for "${query}" in ${LANGUAGES.join(', ')}, ${answered - recognized} ms`,
+      ? `define: ${result.definitions.length} from ${result.providerId} ${
+          result.language
+        } in ${answered - recognized} ms`
+      : `define: none for "${query}" in ${LANGUAGES.join(', ')}, ${
+          answered - recognized
+        } ms`,
   );
   const text = found
     ? definitionText(query, result)
     : result.errors.length > 0
     ? copy['definition.failed'](query)
     : copy['definition.none'](query);
-  const rect = boxRect(text, place);
-  if (!rect) {
-    deps.log('define: no room below the lasso');
-    return {ok: false, text: copy['error.place']};
-  }
-  if (place.occupied && !isFree(rect, place.occupied)) {
-    deps.log('define: no free place below or above the word: over the ink');
-  }
-  const inserted = await deps.insert({text, rect, fontSize: FONT_SIZE});
-  if (!inserted.ok || !inserted.value) {
-    const why = inserted.ok
-      ? 'answered false'
-      : `${inserted.code} ${inserted.message}`;
-    deps.log(`define: insertText ${why}`);
-    return {ok: false, text: copy['error.insert']};
+  const placed = await insertBox(text, place, deps.insert, deps.log, 'define');
+  if (!placed.ok) {
+    return {
+      ok: false,
+      text: placed.why === 'place' ? copy['error.place'] : copy['error.insert'],
+    };
   }
   deps.log(
-    `define: inserted at ${JSON.stringify(rect)}, insert ${deps.now() - answered} ms, total ${deps.now() - started} ms`,
+    `define: inserted at ${JSON.stringify(placed.rect)}, insert ${
+      deps.now() - answered
+    } ms, total ${deps.now() - started} ms`,
   );
   return {ok: found, text};
 }
