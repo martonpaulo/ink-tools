@@ -1,0 +1,80 @@
+{
+ "apple": {
+  "ok": false,
+  "reason": "the Apple logo, then Apple Inc. pictures; the first fruit at 6 (judged from the titles, no sheets)",
+  "flags": {
+   "logo": [
+    0
+   ]
+  }
+ },
+ "apple-logo": {
+  "ok": true,
+  "reason": "the same page 1 as in English (judged from the titles, no sheets)"
+ },
+ "red-apple": {
+  "ok": true,
+  "reason": "the same page 1 as in English (judged from the titles, no sheets)"
+ },
+ "apples": {
+  "ok": false,
+  "reason": "the Apple logo and Apple Inc. pictures before the first apples at 4 (judged from the titles, no sheets)",
+  "flags": {
+   "logo": [
+    0
+   ]
+  }
+ },
+ "maca": {
+  "ok": true,
+  "reason": "apple icons and photos; the maca root is gone (judged from the titles, no sheets)"
+ },
+ "manzana": {
+  "ok": true,
+  "reason": "apple drawings and photos on page 1 (judged from the titles, no sheets)"
+ },
+ "bread": {
+  "ok": true,
+  "reason": "a bread drawing first (judged from the titles, no sheets)"
+ },
+ "soup": {
+  "ok": true,
+  "reason": "a pot and soup bowls; no photo on page 1 (judged from the titles, no sheets)"
+ },
+ "banana": {
+  "ok": true,
+  "reason": "a banana drawing first (judged from the titles, no sheets)"
+ },
+ "pizza": {
+  "ok": true,
+  "reason": "the same page 1 as in English (judged from the titles, no sheets)"
+ },
+ "key": {
+  "ok": false,
+  "reason": "a company logo first, the key drawing at 2 (judged from the titles, no sheets)",
+  "flags": {
+   "logo": [
+    0,
+    4
+   ]
+  }
+ },
+ "brazil": {
+  "ok": false,
+  "reason": "a medal and a film logo; the flag is gone from page 1 (judged from the titles, no sheets)",
+  "flags": {
+   "logo": [
+    1
+   ]
+  }
+ },
+ "angry": {
+  "ok": true,
+  "reason": "angry faces at 1 and 3, after the Angry Birds logo first (judged from the titles, no sheets)",
+  "flags": {
+   "logo": [
+    0
+   ]
+  }
+ }
+}

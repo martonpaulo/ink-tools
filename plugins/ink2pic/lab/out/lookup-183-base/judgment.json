@@ -1,0 +1,54 @@
+{
+ "apple": {
+  "ok": true,
+  "reason": "fruit icons and drawings; no logo (judged from the titles, no sheets)"
+ },
+ "apple-logo": {
+  "ok": true,
+  "reason": "the Apple logo first (judged from the titles, no sheets)"
+ },
+ "red-apple": {
+  "ok": true,
+  "reason": "a red apple drawing first (judged from the titles, no sheets)"
+ },
+ "apples": {
+  "ok": true,
+  "reason": "apple photos and drawings; no logo (judged from the titles, no sheets)"
+ },
+ "maca": {
+  "ok": true,
+  "reason": "apple icons and drawings on page 1 (judged from the titles, no sheets)"
+ },
+ "manzana": {
+  "ok": true,
+  "reason": "apple drawings on page 1 (judged from the titles, no sheets)"
+ },
+ "bread": {
+  "ok": true,
+  "reason": "a bread drawing first (judged from the titles, no sheets)"
+ },
+ "soup": {
+  "ok": true,
+  "reason": "a pot and a soup bowl on page 1 (judged from the titles, no sheets)"
+ },
+ "banana": {
+  "ok": true,
+  "reason": "a banana drawing first (judged from the titles, no sheets)"
+ },
+ "pizza": {
+  "ok": true,
+  "reason": "a pizza drawing first (judged from the titles, no sheets)"
+ },
+ "key": {
+  "ok": true,
+  "reason": "a key drawing first (judged from the titles, no sheets)"
+ },
+ "brazil": {
+  "ok": true,
+  "reason": "the flag of Brazil first (judged from the titles, no sheets)"
+ },
+ "angry": {
+  "ok": true,
+  "reason": "an angry face first (judged from the titles, no sheets)"
+ }
+}
