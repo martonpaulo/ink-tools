@@ -17,6 +17,11 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   sync calendar                  ask the Calendar app to sync
   lasso rows                     open the lasso «⋯» list and read every row, scrolling only inside it
   lasso press ROW                open the list, scroll inside it to the named row and press it
+  lasso rect X Y W H             lasso that page rectangle, through Probe's «Run Command» button
+  lasso last-insert              lasso the page's last element, such as the last ink write
+  ink write TEXT --at X Y        write the text as synthetic strokes on a note under Note/Tests/
+  ink strokes FILE --at X Y      insert a saved stroke sample there
+  ink save FILE                  save the lassoed strokes as a sample
   lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
                                  cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
@@ -72,7 +77,9 @@ import socket
 import subprocess
 import sys
 import tempfile
+import math
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -186,6 +193,24 @@ SCROLL_END = 0.2
 SCROLL_MILLISECONDS = 300
 SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
+# Ink through Probe's «Run Command» button (#148): plugins/probe/src/helper.ts owns the other side.
+HELPER_COMMAND_PATH = f"{SHARED_ROOT}/MyStyle/Probe/command.json"
+HELPER_BUTTON = "text:Run Command"
+NOTE_PLUGINS_BUTTON = "desc:plugins"  # the note toolbar's plugin panel, where sidebar buttons show
+HELPER_ANSWER = re.compile(r"SNPROBE answer (?P<id>\S+) (?P<index>\d+)/(?P<count>\d+) (?P<chunk>.*)")
+HELPER_UNKNOWN_ID = "unknown"
+HELPER_DATE_FORMAT = "+%m-%d %H:%M:%S.000"  # a device time `logcat -T` takes
+HELPER_TIMEOUT = 20.0
+PAGE_WIDTH = 1920  # the owner's tablet (docs/supernote.md › Screen and units)
+PAGE_HEIGHT = 2560
+INK_SIZE = 60  # px of x-height: about 5 mm, a written word's size
+INK_X_HEIGHT = 5  # the font's grid units
+INK_ASCENDER = 9
+INK_SPACE = 3
+INK_GAP = 1.5
+INK_STEP = 4  # px between points, about what the pen samples
+INK_ARC_DEGREES = 15
+INK_DOTTED = "ij"
 # The lasso «⋯» list (#189): a RecyclerView of `tv_button` rows under the lasso toolbar, measured 2026-11-16.
 LASSO_MORE = "desc:lassoMore"
 LASSO_ROW_ID = "tv_button"
@@ -1504,6 +1529,278 @@ def command_lasso_press(device: Device, args: argparse.Namespace):
     return press(device, args, match["x"], match["y"], {"row": args.row})
 
 
+# Ink and lasso through Probe's «Run Command» button (#148). inkctl pushes one command file, presses
+# the button in the open note, and reads the answer Probe logs; `plugins/probe/src/helper.ts` owns
+# the other side of this contract.
+def arc(cx: float, cy: float, rx: float, ry: float, start: float, end: float) -> list[tuple[float, float]]:
+    """Points along an ellipse from one angle to another, in degrees, counterclockwise when end > start."""
+    steps = max(2, int(abs(end - start) / INK_ARC_DEGREES))
+    return [
+        (cx + rx * math.cos(math.radians(start + (end - start) * step / steps)),
+         cy + ry * math.sin(math.radians(start + (end - start) * step / steps)))
+        for step in range(steps + 1)
+    ]
+
+
+# A single-stroke lowercase hand on a grid: baseline at 0, x-height 5, ascender 9, descender -4.
+# Each glyph is "width|stroke;stroke", a stroke is points "x,y" and arcs "a:cx,cy,rx,ry,from,to"
+# (degrees, counterclockwise when to > from). A mark is drawn around the centre of the letter before it.
+# shortcut: lowercase, digits and the Portuguese and Spanish accents only; add capitals when a round needs them.
+INK_LETTERS = {
+    "a": "5|a:2.5,2.5,2.5,2.5,30,360 5,5 5,0",
+    "b": "5|0,9 0,0;a:2.5,2.5,2.5,2.5,180,540",
+    "c": "5|a:2.5,2.5,2.5,2.5,45,315",
+    "d": "5|a:2.5,2.5,2.5,2.5,0,360;5,9 5,0",
+    "e": "5|0.2,2.5 5,2.5 a:2.5,2.5,2.5,2.5,0,315",
+    "f": "3.5|a:2.7,7.8,1.2,1.2,30,180 1.5,0;0,5 3.5,5",
+    "g": "5|a:2.5,2.5,2.5,2.5,90,450;5,5 a:2.6,-1.6,2.4,2.4,0,-150",
+    "h": "4.5|0,9 0,0;a:2.25,3,2.25,2,180,0 4.5,0",
+    "i": "1|0.5,5 0.5,0;0.5,7 0.5,7.4",
+    "j": "2.5|2,5 a:0.8,-2.6,1.2,1.4,0,-160;2,7 2,7.4",
+    "k": "4.5|0,9 0,0;4,5 0,2 4.5,0",
+    "l": "1|0.5,9 0.5,0",
+    "m": "7|0,5 0,0;a:1.75,3.2,1.75,1.8,180,0 3.5,0;a:5.25,3.2,1.75,1.8,180,0 7,0",
+    "n": "4.5|0,5 0,0;a:2.25,3,2.25,2,180,0 4.5,0",
+    "o": "5|a:2.5,2.5,2.5,2.5,90,450",
+    "p": "5|0,5 0,-4;a:2.5,2.5,2.5,2.5,180,540",
+    "q": "5|a:2.5,2.5,2.5,2.5,0,360;5,5 5,-4",
+    "r": "3.5|0,5 0,0;a:2,3,2,2,180,60",
+    "s": "4.5|4.5,4.5 3.5,5 1.5,5 0.5,4.2 0.7,3.2 2,2.6 3.5,2.2 4.5,1.3 4.2,0.4 3,0 1.2,0 0.2,0.6",
+    "t": "3.5|1.5,8 a:2.7,1.2,1.2,1.2,180,300;0,5 3.5,5",
+    "u": "4.5|0,5 a:2.25,2.25,2.25,2.25,180,360 4.5,5;4.5,5 4.5,0",
+    "v": "4.5|0,5 2.25,0 4.5,5",
+    "w": "6|0,5 1.5,0 3,4 4.5,0 6,5",
+    "x": "4.5|0,5 4.5,0;4.5,5 0,0",
+    "y": "4.5|0,5 2.25,0;4.5,5 1,-4",
+    "z": "4.5|0,5 4.5,5 0,0 4.5,0",
+    "0": "5|a:2.5,4.5,2.5,4.5,90,450",
+    "1": "2.5|0.6,7.5 2.2,9 2.2,0",
+    "2": "5|a:2.5,6.5,2.5,2.5,160,-30 0,0 5,0",
+    "3": "5|a:2.5,6.8,2.2,2.2,150,-90 a:2.5,2.3,2.3,2.3,90,-150",
+    "4": "5|3.5,0 3.5,9 0,2.5 5,2.5",
+    "5": "5|4.5,9 0.8,9 0.5,5 a:2.5,3,2.5,3,130,-140",
+    "6": "5|4,8.8 1.2,5.5 a:2.5,2.5,2.5,2.5,150,510",
+    "7": "5|0,9 5,9 1.5,0",
+    "8": "5|a:2.5,6.8,2.2,2.2,270,630;a:2.5,2.3,2.3,2.3,90,450",
+    "9": "5|a:2.5,6.5,2.5,2.5,0,360 4,0",
+    "-": "3|0,2.5 3,2.5",
+    "'": "1|0.5,9 0.5,7",
+}
+INK_MARKS = {
+    "\u0301": "-0.7,6 0.8,7.5",  # acute
+    "\u0300": "-0.8,7.5 0.7,6",  # grave
+    "\u0302": "-1.5,6 0,7.5 1.5,6",  # circumflex
+    "\u0303": "-1.8,6.2 -1,7 0,6.4 1,6 1.8,6.8",  # tilde
+    "\u0308": "-1,6.6 -1,7;1,6.6 1,7",  # diaeresis
+    "\u0327": "0,0 0.1,-1 0.9,-1.5 -0.1,-2.4",  # cedilla
+}
+
+
+def glyph_strokes(spec: str) -> list[list[tuple[float, float]]]:
+    """The strokes of one glyph or mark spec, in grid units."""
+    strokes = []
+    for stroke in spec.split(";"):
+        points = []
+        for token in stroke.split():
+            if token.startswith("a:"):
+                points += arc(*(float(value) for value in token[2:].split(",")))
+            else:
+                x, y = token.split(",")
+                points.append((float(x), float(y)))
+        strokes.append(points)
+    return strokes
+
+
+def glyphs() -> dict:
+    """The font, parsed: each letter's (width, strokes) and each mark's strokes."""
+    letters = {}
+    for character, spec in INK_LETTERS.items():
+        width, _, strokes = spec.partition("|")
+        letters[character] = (float(width), glyph_strokes(strokes))
+    return {"letters": letters, "marks": {mark: glyph_strokes(spec) for mark, spec in INK_MARKS.items()}}
+
+
+def text_strokes(text: str, left: float, top: float, size: float) -> list[list[list[int]]]:
+    """The text as page-pixel strokes, its top-left corner at (left, top) and its x-height `size` px."""
+    font = glyphs()
+    unit = size / INK_X_HEIGHT
+    baseline = top + INK_ASCENDER * unit
+    strokes, cursor, dot, previous_centre = [], left, None, 0.0
+    for character in unicodedata.normalize("NFD", text.lower()):
+        if character == " ":
+            cursor, dot = cursor + INK_SPACE * unit, None
+            continue
+        if character in font["marks"]:
+            if not strokes:
+                raise bad_usage(f"an accent needs a letter before it: {text}")
+            if dot is not None:  # an accent on i or j takes the dot's place
+                del strokes[dot]
+                dot = None
+            centre = previous_centre
+            for mark in font["marks"][character]:
+                strokes.append([(centre + x * unit, baseline - y * unit) for x, y in mark])
+            continue
+        if character not in font["letters"]:
+            known = "".join(sorted(font["letters"]))
+            raise bad_usage(f"no stroke for {character!r}; ink write knows {known}, space and the accents of á à â ã ç é ê í ó ô õ ú ü ñ")
+        width, glyph = font["letters"][character]
+        dot = len(strokes) + len(glyph) - 1 if character in INK_DOTTED else None
+        for points in glyph:
+            strokes.append([(cursor + x * unit, baseline - y * unit) for x, y in points])
+        previous_centre = cursor + width / 2 * unit
+        cursor += (width + INK_GAP) * unit
+    return [densify(stroke) for stroke in strokes]
+
+
+def densify(points: list[tuple[float, float]]) -> list[list[int]]:
+    """One point at least every INK_STEP px, as a pen samples, rounded to page pixels."""
+    dense = [points[0]]
+    for (x1, y1), (x2, y2) in zip(points, points[1:]):
+        parts = max(1, math.ceil(math.hypot(x2 - x1, y2 - y1) / INK_STEP))
+        dense += [(x1 + (x2 - x1) * part / parts, y1 + (y2 - y1) * part / parts) for part in range(1, parts + 1)]
+    rounded = [[round(x), round(y)] for x, y in dense]
+    return rounded if len(rounded) > 1 else rounded * 2
+
+
+def check_on_page(strokes: list) -> None:
+    for stroke in strokes:
+        for x, y in stroke:
+            if not (0 <= x <= PAGE_WIDTH and 0 <= y <= PAGE_HEIGHT):
+                raise bad_usage(f"the ink leaves the {PAGE_WIDTH} x {PAGE_HEIGHT} page at ({x}, {y}); move --at or lower --size")
+
+
+def moved(strokes: list, left: int, top: int) -> list:
+    """A saved sample moved so its top-left corner is at (left, top)."""
+    xs = [x for stroke in strokes for x, _ in stroke]
+    ys = [y for stroke in strokes for _, y in stroke]
+    return [[[x - min(xs) + left, y - min(ys) + top] for x, y in stroke] for stroke in strokes]
+
+
+def read_sample(path: str) -> list:
+    """A stroke sample: {"strokes": [[[x, y], ...], ...]}, as `ink save` writes it."""
+    if not os.path.isfile(path):
+        raise not_found(path)
+    try:
+        strokes = json.loads(Path(path).read_text(encoding="utf-8"))["strokes"]
+        if not strokes or not all(len(stroke) >= 2 and all(len(point) == 2 for point in stroke) for stroke in strokes):
+            raise ValueError("a stroke needs two points or more")
+        return [[[round(float(x)), round(float(y))] for x, y in stroke] for stroke in strokes]
+    except (ValueError, KeyError, TypeError) as error:
+        raise bad_usage(f"{path} holds no strokes as [[[x, y], ...], ...]: {error}") from error
+
+
+def answer_parts(lines: list[str], command_id: str, since: str) -> dict:
+    """The answer's chunks by number, from Probe's log lines: this command's, or an `unknown` one
+    logged after the push, which means the plugin could not read the file."""
+    parts = {}
+    for line in lines:
+        entry = parse_log(line)
+        found = HELPER_ANSWER.fullmatch(entry.get("message", ""))
+        if not found or found["id"] not in (command_id, HELPER_UNKNOWN_ID):
+            continue
+        if found["id"] == HELPER_UNKNOWN_ID and entry.get("time", "") < since:
+            continue
+        parts.setdefault(found["id"], {})[int(found["index"])] = (int(found["count"]), found["chunk"])
+    return parts
+
+
+def whole_answer(parts: dict):
+    """The joined JSON when every chunk is there, else None."""
+    if not parts:
+        return None
+    count = next(iter(parts.values()))[0]
+    if sorted(parts) != list(range(1, count + 1)):
+        return None
+    return json.loads("".join(parts[index][1] for index in range(1, count + 1)))
+
+
+def press_helper(device: Device, limit: float) -> None:
+    """Press «Run Command»: open the note's plugin panel first when the button is not on screen."""
+    if not find_selector(device.elements(), HELPER_BUTTON):
+        press_element(device, expect_element(device, NOTE_PLUGINS_BUTTON, limit))
+    press_element(device, expect_element(device, HELPER_BUTTON, limit))
+
+
+def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict:
+    """Run one command in Probe and return its answer; a refusal or no answer is a Failure."""
+    if device.activity() != NOTE_ACTIVITY:
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", "no note is open; open a test note first (inkctl note open)", "inkctl note open Note/Tests/X.note")
+    command_id = uuid.uuid4().hex
+    with tempfile.TemporaryDirectory() as folder:
+        local = os.path.join(folder, os.path.basename(HELPER_COMMAND_PATH))
+        Path(local).write_text(json.dumps({"id": command_id, **command}), encoding="utf-8")
+        device.shell(f"mkdir -p {shlex.quote(posixpath.dirname(HELPER_COMMAND_PATH))}")
+        push_file(device, local, HELPER_COMMAND_PATH, overwrite=True)
+    since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
+    device.wake()
+    press_helper(device, args.step_timeout)
+    started = time.monotonic()
+    while True:
+        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", "ReactNativeJS")
+        parts = answer_parts(done.stdout.decode(errors="replace").splitlines(), command_id, since)
+        answer = whole_answer(parts.get(command_id, {})) or whole_answer(parts.get(HELPER_UNKNOWN_ID, {}))
+        if answer is not None:
+            break
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", "inkctl logs --plugin Probe")
+        time.sleep(WAIT_INTERVAL)
+    if not answer.get("ok"):
+        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", "inkctl logs --plugin Probe")
+    return answer
+
+
+def need_test_note(device: Device, allow_notes: bool) -> None:
+    """Ink goes only on a test note, unless the caller allows the owner's notes too."""
+    if not allow_notes and not test_note_on_screen(device):
+        raise protected("writing on a note outside Note/Tests/")
+
+
+def insert_ink(device: Device, args: argparse.Namespace, strokes: list) -> tuple[dict, str]:
+    check_on_page(strokes)
+    need_test_note(device, args.allow_notes)
+    answer = helper_call(device, args, {"op": "insertStrokes", "strokes": strokes})
+    points = sum(len(stroke) for stroke in strokes)
+    data = {**answer, "points": points}
+    return data, f"inserted: {len(strokes)} strokes, {points} points, rect {answer.get('rect')}, in {answer.get('ms')} ms"
+
+
+def command_ink_write(device: Device, args: argparse.Namespace):
+    return insert_ink(device, args, text_strokes(args.text, args.at[0], args.at[1], args.size))
+
+
+def command_ink_strokes(device: Device, args: argparse.Namespace):
+    return insert_ink(device, args, moved(read_sample(args.file), args.at[0], args.at[1]))
+
+
+def command_ink_save(device: Device, args: argparse.Namespace):
+    answer = helper_call(device, args, {"op": "readLasso"})
+    strokes = answer.get("strokes") or []
+    if not strokes:
+        raise not_found("a lassoed stroke", "inkctl lasso rect X Y W H")
+    sample = {"strokes": moved(strokes, 0, 0)}
+    handle, partial = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(args.file)), suffix=".partial")
+    with os.fdopen(handle, "w", encoding="utf-8") as stream:
+        json.dump(sample, stream)
+    os.replace(partial, args.file)
+    return {"path": args.file, "strokes": len(strokes)}, f"saved: {len(strokes)} strokes to {args.file}"
+
+
+def lasso_answer(answer: dict) -> tuple[dict, str]:
+    return answer, f"lassoed: {answer.get('rect')} {answer.get('counts')} in {answer.get('ms')} ms"
+
+
+def command_lasso_rect(device: Device, args: argparse.Namespace):
+    if args.width <= 0 or args.height <= 0:
+        raise bad_usage("a lasso needs a width and a height")
+    rect = {"left": args.x, "top": args.y, "right": args.x + args.width, "bottom": args.y + args.height}
+    check_on_page([[[rect["left"], rect["top"]], [rect["right"], rect["bottom"]]]])
+    return lasso_answer(helper_call(device, args, {"op": "lassoRect", "rect": rect}))
+
+
+def command_lasso_last_insert(device: Device, args: argparse.Namespace):
+    return lasso_answer(helper_call(device, args, {"op": "lassoLast"}))
+
+
 def command_snapshot(device: Device, args: argparse.Namespace):
     if args.all or args.find:
         refuse_note_editor(device)
@@ -2059,7 +2356,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "lang", "lasso")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "lang", "lasso", "ink")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -2130,6 +2427,25 @@ def build_parser() -> argparse.ArgumentParser:
     for lasso_command in (listed, pressed):
         lasso_command.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes through the list")
         lasso_command.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds for the list to open")
+    boxed = add(lassos, "rect", command_lasso_rect, changes=True)
+    for edge in ("x", "y", "width", "height"):
+        boxed.add_argument(edge, type=int, help="page pixels")
+    last = add(lassos, "last-insert", command_lasso_last_insert, changes=True)
+
+    inks = noun("ink")
+    written = add(inks, "write", command_ink_write, changes=True)
+    written.add_argument("text")
+    written.add_argument("--size", type=float, default=INK_SIZE, help="x-height in page pixels")
+    sampled = add(inks, "strokes", command_ink_strokes, changes=True)
+    sampled.add_argument("file", help="a JSON sample, as ink save writes it")
+    saved = add(inks, "save", command_ink_save)
+    saved.add_argument("file", help="where the lassoed strokes go, as JSON")
+    for placed in (written, sampled):
+        placed.add_argument("--at", nargs=2, type=int, metavar=("X", "Y"), required=True, help="the ink's top-left corner, in page pixels")
+        placed.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
+    for helped in (boxed, last, written, sampled, saved):
+        helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
+        helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
 
     languages = noun("lang")
     add(languages, "get", command_lang_get)

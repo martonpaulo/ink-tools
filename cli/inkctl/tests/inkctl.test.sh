@@ -51,8 +51,14 @@ case "$1" in
         fi ;;
     pull)
         if ! grep -qF "$2" "$ADB_FILES/paths"; then echo "adb: error: remote object '$2' does not exist" >&2; exit 1; fi ;;
-    push) : ;;
+    push)
+        case "$3" in *MyStyle/Probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;; esac ;;
     logcat)
+        if [ -f "$ADB_FILES/helper-answer" ]; then
+            id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$ADB_FILES/command.json")
+            sed "s/COMMAND_ID/$id/" "$ADB_FILES/helper-answer"
+            exit 0
+        fi
         cat "$ADB_FILES/log"
         case " $* " in *" -d "*) ;; *) [ -n "${ADB_FOLLOW_FAILS:-}" ] && exit 1; [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac
         : ;;
@@ -102,6 +108,8 @@ case "$1" in
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
             "am broadcast"*) echo 'Broadcast completed: result=0' ;;
             "date +%s") echo 1800000000 ;;
+            "date '+%m-%d %H:%M:%S.000'") echo '11-16 23:00:00.000' ;;
+            "mkdir -p "*) : ;;
             "cmd package resolve-activity"*)
                 if grep -qF "${2##* }" "$ADB_FILES/gone"; then echo 'No activity found'; else echo "priority=0"; echo "${2##* }"; fi ;;
             "cmd package query-receivers"*)
@@ -982,6 +990,69 @@ touch "$files/no-return"
 check "lasso rows opens a closed list first" "$(run lasso rows --json | field "['rows']")$(called 'input tap 1428 207')" "['Flip Horizontal', 'Flip Vertical']1"
 rm -f "$files/no-return" "$files/advance-after"
 stop_pages
+reset_device
+
+# Ink and lasso through Probe's «Run Command» button (#148).
+helper_screen() {
+    printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node resource-id=\"\" text=\"\" content-desc=\"plugins\" class=\"L\" bounds=\"[0,1400][116,1540]\" /><node resource-id=\"\" text=\"Run Command\" content-desc=\"\" class=\"T\" bounds=\"[200,1400][500,1500]\" /><node resource-id=\"a:id/tv_button\" text=\"Round one\" content-desc=\"\" class=\"T\" bounds=\"[1401,2444][1769,2560]\" /></hierarchy>"
+}
+answer_line() {  # the time, then the answer's tail after the id
+    printf '%s I/ReactNativeJS(  900): SNPROBE answer %s\n' "$1" "$2"
+}
+helper_ready() {
+    reset_device
+    printf '%s' "$note_activity" > "$files/foreground"
+    helper_screen > "$files/tree.xml"
+    printf '%s\n' "$root/Note/Tests/Round one.note" > "$files/notes-found"
+    answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertStrokes","ms":80,"page":0,"strokes":7,"rect":{"left":100,"top":248,"right":400,"bottom":335}}' > "$files/helper-answer"
+}
+command_field() { python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(eval(sys.argv[2], {'d': d}))" "$files/command.json" "$1"; }
+cp "$files/tree.xml" "$work/tree-before-helper"
+helper_ready
+result=$(run ink write "maçã" --at 100 200 --json)
+check "ink write pushes the strokes of each letter and accent" "$?$(command_field "d['op'], len(d['strokes'])")" "0('insertStrokes', 8)"
+check "ink write places the text's top-left corner at --at" "$(command_field "min(p[0] for s in d['strokes'] for p in s), min(p[1] for s in d['strokes'] for p in s) >= 200")" "(100, True)"
+check "ink write presses Run Command and reads Probe's answer" "$(called 'input tap 350 1450')$(printf '%s' "$result" | field "['ok'],d['rect']['left']")" "1(True, 100)"
+check "ink write reads only the log after its push" "$(called 'logcat -d -v time -T 11-16 23:00:00.000 -s ReactNativeJS')" "1"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/2 {"ok":true,"op":"lassoLast","rect":{"left":92,' > "$files/helper-answer"
+answer_line '11-16 23:00:01.001' 'COMMAND_ID 2/2 "top":240,"right":408,"bottom":343},"counts":{"trailNum":7},"ms":200}' >> "$files/helper-answer"
+check "lasso last-insert joins an answer in two chunks" "$(run lasso last-insert --json | field "['counts']")$(command_field "d['op']")" "{'trailNum': 7}lassoLast"
+run lasso rect 10 20 300 40 >/dev/null
+check "lasso rect sends the page rectangle" "$(command_field "d['rect']")" "{'left': 10, 'top': 20, 'right': 310, 'bottom': 60}"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":false,"code":1501,"message":"insertPageElements: no permission"}' > "$files/helper-answer"
+run ink write "a" --at 100 200 >/dev/null 2>"$work/err"
+check "a refusal by Probe fails with its code" "$?$(grep -c '1501 insertPageElements: no permission' "$work/err")" "11"
+answer_line '11-16 23:00:01.000' 'unknown 1/1 {"ok":false,"code":1,"message":"command file: not in MyStyle/Probe"}' > "$files/helper-answer"
+run lasso last-insert >/dev/null 2>"$work/err"
+check "an unreadable command file is reported, not waited on" "$?$(grep -c 'command file' "$work/err")" "11"
+answer_line '11-16 22:59:59.000' 'unknown 1/1 {"ok":false,"code":1,"message":"an older press"}' > "$files/helper-answer"
+run lasso last-insert --timeout 0 >/dev/null 2>&1
+check "an unknown answer from before the push is ignored, and no answer times out" "$?" "6"
+helper_ready
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"readLasso","ms":30,"strokes":[[[110,220],[130,260]],[[150,230],[160,240]]]}' > "$files/helper-answer"
+run ink save "$work/local/sample.json" >/dev/null
+check "ink save writes the lassoed strokes from the top-left corner" "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["strokes"][0])' "$work/local/sample.json")" "[[0, 0], [20, 40]]"
+helper_ready
+run ink strokes "$work/local/sample.json" --at 500 600 >/dev/null
+check "ink strokes moves a saved sample to --at" "$(command_field "d['strokes'][1][0]")" "[540, 610]"
+run ink write "í" --at 100 200 >/dev/null
+check "an accent on i takes the dot's place" "$(command_field "len(d['strokes'])")" "2"
+run ink write "Wq!" --at 100 200 >/dev/null 2>&1
+check "a character the font lacks is a usage error before any push" "$?$(called ' push ')" "20"
+run ink write "abc" --at 1900 200 >/dev/null 2>&1
+check "ink that leaves the page is a usage error before any push" "$?$(called ' push ')" "20"
+printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
+run ink write "a" --at 100 200 >/dev/null 2>&1
+check "ink write on a note outside Note/Tests/ is refused" "$?$(called ' push ')" "120"
+run ink write "a" --at 100 200 --allow-notes >/dev/null 2>&1
+check "--allow-notes lets ink write on another note" "$?" "0"
+printf '%s' "$calendar_activity" > "$files/foreground"
+run lasso last-insert >/dev/null 2>&1
+check "with no note open the helper stops before any push or press" "$?$(called ' push ')$(called 'input tap')" "900"
+run --read-only ink write "a" --at 100 200 >/dev/null 2>&1
+check "read-only refuses ink write" "$?" "11"
+rm -f "$files/helper-answer" "$files/command.json" "$files/notes-found"
+cp "$work/tree-before-helper" "$files/tree.xml"
 reset_device
 
 # The handwriting language (#190): one code file in default/, packs as folders in resources/.
