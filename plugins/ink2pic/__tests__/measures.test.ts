@@ -8,9 +8,9 @@ import {logLines, startLog} from '../src/profile';
 import {ok, fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import {
   chooseLook,
-  fitsMode,
   isFaintLines,
   keepMode,
+  keptInMode,
   isPhotoLike,
   leaderDecided,
   lineArt,
@@ -1048,7 +1048,8 @@ describe('leaderDecided (#19)', () => {
     });
     for (const mode of ['illustration', 'photo'] as const) {
       const photos = mode === 'photo';
-      const fits = (m: Measures) => fitsMode(pixelKind(m), mode);
+      // The rule `keepMode` applies, cut-out photos included (#169).
+      const fits = (r: SearchResult, m: Measures) => keptInMode(r, m, mode);
       const kept = (
         results: SearchResult[],
         prepared: ReadonlyMap<string, Prepared>,

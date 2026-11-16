@@ -27,6 +27,7 @@ export {
   isPhotoLike,
   isSpeckled,
   keepMode,
+  keptInMode,
   leaderDecided,
   lineArt,
   MEASURED_RESULTS,

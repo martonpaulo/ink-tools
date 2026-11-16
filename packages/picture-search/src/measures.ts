@@ -562,9 +562,9 @@ export function leaderDecided(
   /**
    * A mode's split (#111, #19): only a measured tile that fits is kept (`keepMode`), so the leader
    * is the first that fits, and a measured tile that does not fit, or an unmeasured one, competes
-   * with nobody.
+   * with nobody. Pass `keptInMode`'s rule, which reads the result too (#169).
    */
-  fits?: (measures: Measures) => boolean,
+  fits?: (result: SearchResult, measures: Measures) => boolean,
 ): boolean {
   const head = results.slice(0, MEASURED_RESULTS);
   if (head.length === 0) {
@@ -595,7 +595,11 @@ export function leaderDecided(
         pending: false,
       });
       const found = prepared.get(result.id);
-      if (fits && !pending.has(result.id) && !(found && fits(found.measures))) {
+      if (
+        fits &&
+        !pending.has(result.id) &&
+        !(found && fits(result, found.measures))
+      ) {
         // Left out of the mode's list: it can lead nothing.
         return;
       }
@@ -663,7 +667,7 @@ function canonicalLeader(
   head: readonly SearchResult[],
   prepared: ReadonlyMap<string, Prepared>,
   pending: ReadonlySet<string>,
-  fits: (measures: Measures) => boolean,
+  fits: (result: SearchResult, measures: Measures) => boolean,
 ): boolean | undefined {
   const canonical = head.filter(result => result.canonical);
   if (canonical.length === 0) {
@@ -674,7 +678,7 @@ function canonicalLeader(
   }
   const kept = (result: SearchResult) => {
     const found = prepared.get(result.id);
-    return found !== undefined && fits(found.measures);
+    return found !== undefined && fits(result, found.measures);
   };
   const first = head.findIndex(result => result.canonical && kept(result));
   if (first === -1) {
@@ -712,14 +716,24 @@ export function keepMode(
 ): SearchResult[] {
   return ordered.filter(result => {
     const m = measures.get(result.id);
-    if (m === undefined) {
-      return false;
-    }
-    const kind = pixelKind(m);
-    return isCutOutPhoto(result, kind)
-      ? mode === 'photo'
-      : fitsMode(kind, mode);
+    return m !== undefined && keptInMode(result, m, mode);
   });
+}
+
+/**
+ * Whether one measured tile stays in a mode's list (`keepMode`): its pixel kind fits the mode,
+ * and a canonical cut-out photo counts as a photo (#169). `leaderDecided`'s `fits` takes this
+ * rule, so the early stop waits for the tile `keepMode` keeps first.
+ */
+export function keptInMode(
+  result: SearchResult,
+  measures: Measures,
+  mode: PictureMode,
+): boolean {
+  const kind = pixelKind(measures);
+  return isCutOutPhoto(result, kind)
+    ? mode === 'photo'
+    : fitsMode(kind, mode);
 }
 
 /** The kinds a scan of line work measures as: never a photo. */

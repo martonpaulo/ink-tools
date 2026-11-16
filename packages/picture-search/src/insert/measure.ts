@@ -236,7 +236,7 @@ export async function measureFirstPages(
   deps: MeasureDeps,
   onThumbs?: () => void,
   untilLeader = false,
-  fits?: (measures: Measures) => boolean,
+  fits?: (result: SearchResult, measures: Measures) => boolean,
 ): Promise<MeasuredPages> {
   if (!thumbDir || results.length === 0) {
     return unmeasured(results);
