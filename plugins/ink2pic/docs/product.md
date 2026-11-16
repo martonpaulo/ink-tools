@@ -15,6 +15,7 @@ Status: current, 2026-11-06. The research and plan behind it are in [`brief.md`]
 - [Alternatives considered](#alternatives-considered)
 - [Evidence on hand](#evidence-on-hand)
 - [Accepted evidence gaps](#accepted-evidence-gaps)
+- [Agent process rules](#agent-process-rules)
 
 ## What it is
 
@@ -115,3 +116,59 @@ device test records it in `docs/device-tests.md`.
 - Accessibility: no accessibility test runs inside PluginHost, and the Supernote has no screen
   reader to test with. The view code is the evidence: labels, touch targets of at least 10 mm,
   and contrast, as [brief section 8.4](brief.md#84-results-screen-e-ink-rules) sets them.
+
+## Agent process rules
+
+Moved from `AGENTS.md`, which links here and gives them the same force ([#150](https://github.com/martonpaulo/supernote-tools/issues/150)).
+
+### Long-running operations
+
+Long-running work follows the `skd-project-standards` skill's `references/long-running-operations.md`. A delegation brief states its concurrency budget; without one, the delegated agent spawns no sub-agents. Delegate only bounded, independent work that cannot race on shared writes; the parent keeps scope, verification and every mutation.
+
+### Before editing
+
+1. Check Git status and the current branch.
+2. Search for the behavior, callers, tests, contracts, and nearby patterns; read only the chunks the change needs.
+3. Distinguish verified facts, reasonable inferences, and unknowns, and define the source of truth before changing data or state.
+4. When the project records an upstream or reference project, consult it before planning. When
+   this project solves the problem differently, document the divergence and its reason.
+5. Make a short plan only for complex, risky, ambiguous, or multi-file work.
+
+### Durable project learning
+
+At wrap-up, propose recording a learning only when it is verified, specific to this project, likely
+to recur, and not already recorded, as the `skd-project-standards` skill's `references/durable-learning.md`
+defines. A command that failed twice for the same cause qualifies: record the cause and working form.
+End each finding, here or in `martonpaulo/skill-deck` for one about Skill Deck itself, as
+`skd-github-publishing-conventions` section 15 defines.
+
+### Output shape and asking the owner
+
+Shape every message and ask the owner as Skill Deck's global rules define (`global/AGENTS.md`, which `skd sync` links into every agent); the four kinds of request are in the `skd-grilling` skill's `references/attention-cards.md`. Do every action your tools allow instead of handing it to the owner; hand over only what the owner alone can do, as those rules list.
+
+### Artifacts and processes
+
+- Temporary is the default; retention is an explicit exception. Remove only temporary files the current task created, keeping deliverables and failure evidence, never pre-existing artifacts, fixtures, baselines, or logs, and never version caches, logs, coverage, or build output.
+- Stop only processes the session started, never the user's pre-existing ones.
+
+### Git and releases
+
+- Follow the recorded branch, commit, push, and version policies; leave unrelated changes untouched.
+- Use English Conventional Commits, one per concern: `feat: add the export button (#54)`.
+- Before a commit, push, published text or release upload, apply `skd-github-publishing-conventions` section 2.
+- If commit or push fails, report the exact failure.
+- Under direct push to the default branch, a red default branch is fixed at once by a new commit, never left for later.
+- Close a `completed` issue with the closing comment `skd-github-publishing-conventions` defines.
+- Release or change a version only when the task and recorded policy authorize it, through `project-release`.
+
+### Completion report
+
+Lead with the outcome, in the output shape, and include:
+
+- what changed and why, and the files touched;
+- validation commands and results, with warnings, skips, and remaining risks;
+- what running the application verified, and what remains unverified;
+- each change to the owner's real state, and its restore with the diff result;
+- each issue closed, with the resolving commit its closing comment names;
+- each issue opened in the run;
+- temporary artifacts kept or removed, commit, branch, push, and worktree status.

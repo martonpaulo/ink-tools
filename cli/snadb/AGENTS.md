@@ -50,19 +50,6 @@ Before editing under a path, read the file its row names. A module with rules of
 - Be direct and evidence-based: state assumptions, risks, tradeoffs, blockers. Ask only about a material decision you cannot discover safely; otherwise make explicit, reversible assumptions.
 - Give concise progress updates during long-running work.
 
-## Long-running operations
-
-Long-running work follows the `skd-project-standards` skill's `references/long-running-operations.md`. A delegation brief states its concurrency budget; without one, the delegated agent spawns no sub-agents. Delegate only bounded, independent work that cannot race on shared writes; the parent keeps scope, verification and every mutation.
-
-## Before editing
-
-1. Check Git status and the current branch.
-2. Search for the behavior, callers, tests, contracts, and nearby patterns; read only the chunks the change needs.
-3. Distinguish verified facts, reasonable inferences, and unknowns, and define the source of truth before changing data or state.
-4. When the project records an upstream or reference project, consult it before planning. When
-   this project solves the problem differently, document the divergence and its reason.
-5. Make a short plan only for complex, risky, ambiguous, or multi-file work.
-
 ## Scope, reuse, and implementation
 
 - Preserve behavior outside the task and unrelated or uncommitted user changes.
@@ -111,24 +98,12 @@ Long-running work follows the `skd-project-standards` skill's `references/long-r
   `assets/issue_links.py` checks it in the gate.
 - Preserve third-party licenses and notices in `NOTICE.md`. Maintain `CHANGELOG.md` when the project has public releases.
 
-## Durable project learning
-
-At wrap-up, propose recording a learning only when it is verified, specific to this project, likely
-to recur, and not already recorded, as the `skd-project-standards` skill's `references/durable-learning.md`
-defines. A command that failed twice for the same cause qualifies: record the cause and working form.
-End each finding, here or in `martonpaulo/skill-deck` for one about Skill Deck itself, as
-`skd-github-publishing-conventions` section 15 defines.
-
-## Output shape and asking the owner
-
-Shape every message and ask the owner as Skill Deck's global rules define (`global/AGENTS.md`, which `skd sync` links into every agent); the four kinds of request are in the `skd-grilling` skill's `references/attention-cards.md`. Do every action your tools allow instead of handing it to the owner; hand over only what the owner alone can do, as those rules list.
-
 ## Configuration and repository hygiene
 
 - Ignore secrets, local environments, logs, caches, and build output. Keep `.env.example` with every variable and a safe placeholder, and secrets only in the platform's secure store. Nothing new in `~` (`project-layout.md`).
 - Add CI, dependency updates, release workflows, and signing only when distribution or risk requires them.
 - The Validate workflow has no `pull_request_target` trigger and reads no stored secret, so it runs on a fork; the `validate-trust` check of `check_repository_conventions.py` fails either ([martonpaulo/skill-deck#801](https://github.com/martonpaulo/skill-deck/issues/801)).
-- Workflows: `validate.yml`. A workflow added outside the `project-setup` skill's `references/ci-pipelines.md` is a recorded exception. A Node repository's `validate` script runs exactly what CI runs. Do not add an image-optimisation bot.
+- Workflows: `Validate Supernote ADB`, in `.github/workflows/validate-snadb.yml` at the repository root, as the root `AGENTS.md` divergence `ci-pipelines` records. A workflow added outside the `project-setup` skill's `references/ci-pipelines.md` is a recorded exception. A Node repository's `validate` script runs exactly what CI runs. Do not add an image-optimisation bot.
 - The agent rules live in `AGENTS.md`, the one real file; `CLAUDE.md` is a symlink to it. Do not create `GEMINI.md`, `.gemini/rules/agents.md`, or any other alias, and never commit `.claude/settings.local.json`.
 - Change the repository `homepage` only as the `project-setup` skill's `references/github-settings.md` describes.
 
@@ -146,33 +121,6 @@ Shape every message and ask the owner as Skill Deck's global rules define (`glob
 - Repository-wide rules live in one discovery-based checker that accepts `--root` and is tested over fixtures, never in scattered one-off scripts.
 - The gate runs unchanged copies of the `project-setup` skill's `assets/text_check.py` (no invisible character, every relative link and anchor resolves, a long `docs/` file opens with a Contents list) and, with shell suites, `assets/run_suites.sh` (an unknown command fails, GNU grep first, `VERBOSE=0|1` the one output switch); the `text-check` and `suite-runner` rules of `check_repository_conventions.py` check both ([martonpaulo/skill-deck#797](https://github.com/martonpaulo/skill-deck/issues/797)). In shell, no backslash escape in a `grep` pattern, no `$?` read after a pipeline, and no numeric compare of captured output before checking it is a number.
 - With code, the gate runs an unchanged copy of the `project-setup` skill's `assets/dry_check.py` over a root `dry-check.json`: no new magic value, repeated block, twin rule without an owner, or rule written in a second document; its counts only go down (`references/dry-checks.md`, the `dry-gate` rule, [martonpaulo/skill-deck#722](https://github.com/martonpaulo/skill-deck/issues/722)).
-
-## Artifacts and processes
-
-- Temporary is the default; retention is an explicit exception. Remove only temporary files the current task created, keeping deliverables and failure evidence, never pre-existing artifacts, fixtures, baselines, or logs, and never version caches, logs, coverage, or build output.
-- Stop only processes the session started, never the user's pre-existing ones.
-
-## Git and releases
-
-- Follow the recorded branch, commit, push, and version policies; leave unrelated changes untouched.
-- Use English Conventional Commits, one per concern: `feat: add the export button (#54)`.
-- Before a commit, push, published text or release upload, apply `skd-github-publishing-conventions` section 2.
-- If commit or push fails, report the exact failure.
-- Under direct push to the default branch, a red default branch is fixed at once by a new commit, never left for later.
-- Close a `completed` issue with the closing comment `skd-github-publishing-conventions` defines.
-- Release or change a version only when the task and recorded policy authorize it, through `project-release`.
-
-## Completion report
-
-Lead with the outcome, in the output shape, and include:
-
-- what changed and why, and the files touched;
-- validation commands and results, with warnings, skips, and remaining risks;
-- what running the application verified, and what remains unverified;
-- each change to the owner's real state, and its restore with the diff result;
-- each issue closed, with the resolving commit its closing comment names;
-- each issue opened in the run;
-- temporary artifacts kept or removed, commit, branch, push, and worktree status.
 
 ## Project patterns
 
@@ -193,3 +141,7 @@ Lead with the outcome, in the output shape, and include:
 - Research notes: `docs/research/` (public sources only; a status line opens each note, superseded notes move to `docs/research/archive/`)
 - Handoffs: `.scratch/handoffs/handoff.md`
 - Prototypes: `.scratch/prototypes/`
+
+## Process rules
+
+Long-running work, before editing, durable learning, asking the owner, artifacts, Git and the completion report follow [product › Agent process rules](docs/product.md#agent-process-rules); they bind as if written here ([#150](https://github.com/martonpaulo/supernote-tools/issues/150)).
