@@ -2,6 +2,8 @@
 import {fail, ok} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {
+  freeTextBox,
+  inkUnderBox,
   NoteHost,
   receiveOne,
   resetPlacedForTests,
@@ -20,6 +22,8 @@ function note(overrides: Partial<NoteHost> = {}) {
     pluginDir: jest.fn(async () => ok('/plugin')),
     pageKey: jest.fn(async () => ok('/note.note#0')),
     pageSize: jest.fn(async () => ok(PAGE)),
+    occupied: jest.fn(async () => ok({rects: [], complete: true})),
+    log: jest.fn(),
     closeView: jest.fn(async () => ok(true)),
     insertText: jest.fn(async () => ok(true)),
     lasso: jest.fn(async () => ok(true)),
@@ -184,4 +188,78 @@ test('a second tap while receiving starts nothing', async () => {
   await expect(first).resolves.toBe(copy.receiveStopped);
   expect(show).toHaveBeenCalledTimes(1);
   expect(receiveState()).toBe('idle');
+});
+
+describe('a received text avoids the ink on the page (#199)', () => {
+  // The device round of 2026-11-16: a 1920 x 2560 page, the word «apple» at y 277 to 457 and a
+  // written line at y 483 to 585, where the first text box landed at y 384 to 427.
+  const MANTA = {width: 1920, height: 2560};
+  const apple = {left: 500, top: 277, right: 900, bottom: 457};
+  const line = {left: 300, top: 483, right: 1500, bottom: 585};
+  const ink = [apple, line];
+
+  test('today\'s place crosses the ink, so the box goes into the free band below it', () => {
+    expect(inkUnderBox(textBox(MANTA, 'one'), {rects: ink, complete: true})).not.toBeNull();
+    const {rect, free} = freeTextBox(MANTA, 'one', null, ink);
+    expect(free).toBe(true);
+    expect(rect.top).toBeGreaterThanOrEqual(line.bottom);
+    expect(inkUnderBox(rect, {rects: ink, complete: true})).toBeNull();
+  });
+
+  test('a free place stays where it is, and an unknown page keeps today\'s place', () => {
+    const today = textBox(MANTA, 'one');
+    expect(freeTextBox(MANTA, 'one', null, [])).toEqual({rect: today, free: true});
+    expect(freeTextBox(MANTA, 'one', null, null)).toEqual({rect: today, free: false});
+  });
+
+  test('a page full of ink keeps today\'s place, marked not free', () => {
+    const all = [{left: 0, top: 0, right: MANTA.width, bottom: MANTA.height}];
+    expect(freeTextBox(MANTA, 'one', null, all)).toEqual({rect: textBox(MANTA, 'one'), free: false});
+  });
+
+  test('the box is inserted below the ink and lassoed alone', async () => {
+    const host = note({
+      pageSize: jest.fn(async () => ok(MANTA)),
+      occupied: jest.fn(async () => ok({rects: ink, complete: true})),
+    });
+    const text = offer({t: {fileType: 'text/plain', preview: 'one'}});
+    await expect(receiveOne(fakeRelay({}, [text]).api, host, 'Supernote')).resolves.toBe(
+      copy.receivedText,
+    );
+    const rect = (host.insertText as jest.Mock).mock.calls[0][0].rect;
+    expect(rect.top).toBeGreaterThanOrEqual(line.bottom);
+    expect(host.lasso).toHaveBeenCalledWith(rect);
+  });
+
+  test('a second text still goes below the first', async () => {
+    const first = freeTextBox(MANTA, 'one', null, ink).rect;
+    const second = freeTextBox(MANTA, 'two', first.bottom, [...ink, first]).rect;
+    expect(second.top).toBeGreaterThan(first.bottom);
+  });
+
+  test('no lasso when the page read is partial or failed, or ink is under the box; the log says why', async () => {
+    const text = offer({t: {fileType: 'text/plain', preview: 'one'}});
+    const partial = note({occupied: jest.fn(async () => ok({rects: [], complete: false}))});
+    await receiveOne(fakeRelay({}, [text]).api, partial, 'Supernote');
+    expect(partial.lasso).not.toHaveBeenCalled();
+    expect(partial.log).toHaveBeenCalledWith(
+      "receive: lassoElements skipped, only part of the page's ink is known",
+    );
+    resetPlacedForTests();
+    const failed = note({occupied: jest.fn(async () => fail(1, 'no page'))});
+    await receiveOne(fakeRelay({}, [text]).api, failed, 'Supernote');
+    expect(failed.lasso).not.toHaveBeenCalled();
+    expect(failed.insertText).toHaveBeenCalledWith(
+      expect.objectContaining({rect: textBox(PAGE, 'one')}),
+    );
+    resetPlacedForTests();
+    const full = note({
+      occupied: jest.fn(async () =>
+        ok({rects: [{left: 0, top: 0, right: PAGE.width, bottom: PAGE.height}], complete: true}),
+      ),
+    });
+    await receiveOne(fakeRelay({}, [text]).api, full, 'Supernote');
+    expect(full.lasso).not.toHaveBeenCalled();
+    expect(full.log).toHaveBeenCalledWith('receive: lassoElements skipped, 1 other elements in the box');
+  });
 });

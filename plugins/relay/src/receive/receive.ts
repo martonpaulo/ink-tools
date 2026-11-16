@@ -4,6 +4,7 @@
  * through `insertImage`, which the host shows as its own floating selection; a PDF becomes a new
  * note (#143, `pdfNote.ts`).
  */
+import {freeRect, isFree, OccupiedRead, PLACE_GAP} from '@supernote-tools/ink-core';
 import {Result, TextBoxInput} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../copy';
 import {
@@ -38,6 +39,10 @@ export type NoteHost = NoteFiles & {
   pluginDir(): Promise<Result<string>>;
   /** Which page is open (note path and page), so a second text goes below the first (#49). */
   pageKey(): Promise<Result<string>>;
+  /** The open page's strokes, text boxes and pictures, so a text avoids them (#199, #152). */
+  occupied(): Promise<Result<OccupiedRead>>;
+  /** One line for the plugin's log. */
+  log(line: string): void;
   closeView(): Promise<unknown>;
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
   lasso(rect: Rect): Promise<Result<boolean>>;
@@ -70,6 +75,47 @@ export function resetPlacedForTests(): void {
   lastText = null;
 }
 
+/**
+ * The text box moved into the first free band that is tall enough (#199), through ink-core's
+ * free placement that Word Lookup uses (#152): down the page from where `textBox` put it, past
+ * each stroke, text box or picture it crosses, else upwards. `free` is false when the page has no
+ * such band, or its ink is unknown, and the box stays where `textBox` put it.
+ */
+export function freeTextBox(
+  page: Size,
+  text: string,
+  after: number | null,
+  occupied: readonly Rect[] | null,
+): {rect: Rect; free: boolean} {
+  const rect = textBox(page, text, after);
+  if (occupied === null) {
+    return {rect, free: false};
+  }
+  if (isFree(rect, occupied)) {
+    return {rect, free: true};
+  }
+  // An empty mark just above the box, so freeRect's first try is the box's own place.
+  const mark = {...rect, top: rect.top - PLACE_GAP, bottom: rect.top - PLACE_GAP};
+  const moved = freeRect(mark, rect, page, occupied);
+  return moved ? {rect: moved, free: true} : {rect, free: false};
+}
+
+/**
+ * Why a lasso of the box could take the person's ink, or null when it cannot (#168's rule): the
+ * rect lasso selects every element inside it, so the box is lassoed only when the whole page was
+ * read and nothing else crosses it.
+ */
+export function inkUnderBox(rect: Rect, read: OccupiedRead | null): string | null {
+  if (read === null) {
+    return "the page's ink is not known";
+  }
+  if (!read.complete) {
+    return "only part of the page's ink is known";
+  }
+  const others = read.rects.filter(other => !isFree(rect, [other])).length;
+  return others > 0 ? `${others} other elements in the box` : null;
+}
+
 async function placeText(host: NoteHost, text: string): Promise<string> {
   const size = await host.pageSize();
   if (!size.ok) {
@@ -78,15 +124,30 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
   const key = await host.pageKey();
   const page = key.ok ? key.value : null;
   const after = page !== null && lastText?.page === page ? lastText.bottom : null;
-  const rect = textBox(size.value, text, after);
+  const occupied = await host.occupied();
+  const read = occupied.ok ? occupied.value : null;
+  const {rect, free} = freeTextBox(size.value, text, after, read?.rects ?? null);
+  if (!free) {
+    host.log(
+      read === null
+        ? "receive: the page's ink is not known: the text goes at its usual place"
+        : `receive: no free band of ${rect.bottom - rect.top} px: the text goes over the ink`,
+    );
+  }
   await host.closeView();
   const inserted = await host.insertText({text, rect, fontSize: TEXT_FONT_SIZE});
   if (!inserted.ok || inserted.value !== true) {
     return copy.insertFailed;
   }
   lastText = page === null ? null : {page, bottom: rect.bottom};
-  // Selected, so the person moves it at once; a failed lasso still leaves the text in place.
-  await host.lasso(rect);
+  // Selected, so the person moves it at once, but never with the person's ink in it (#168).
+  const ink = inkUnderBox(rect, read);
+  if (ink) {
+    host.log(`receive: lassoElements skipped, ${ink}`);
+  } else {
+    // A failed lasso still leaves the text in place.
+    await host.lasso(rect);
+  }
   return copy.receivedText;
 }
 
