@@ -1,0 +1,1565 @@
+{
+ "run": "d106-head",
+ "commit": "9eeaa52aa115a7521398f0ab38f5d57fc02597cc",
+ "summary": {
+  "queries": 16,
+  "expectedOnPageOne": "94% (15/16)",
+  "byCategory": {
+   "abstract": "92% (12/13)",
+   "phrase": "100% (2/2)",
+   "object": "100% (1/1)"
+  },
+  "tiles": {
+   "text": 0,
+   "signature": 0,
+   "dark": 3,
+   "logo": 0,
+   "convertedPhotos": 0,
+   "emptyPages": 0,
+   "fullPages": 16
+  },
+  "pixels": {
+   "measured": 96,
+   "halfTransparent": 59,
+   "nearBlackOnBlack": 59
+  }
+ },
+ "cases": [
+  {
+   "id": "love",
+   "category": "abstract",
+   "query": "love",
+   "ok": true,
+   "reason": "hearts and love drawings; one painting joins at 2 (D38 B) (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:257308",
+    "commons:896519",
+    "openclipart:254839",
+    "openmoji:1F48C",
+    "openclipart:188752",
+    "commons:26927340"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:257308",
+     "title": "Love & Let Love",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 214.9,
+      "meanOnBlack": 28.6,
+      "darkOnWhite": 0.109,
+      "transparent": 0.731
+     }
+    },
+    {
+     "id": "commons:896519",
+     "title": "Frank Bernard Dicksee - Romeo and Juliet, 1884",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 62.3,
+      "meanOnBlack": 62.3,
+      "darkOnWhite": 0.658,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:254839",
+     "title": "Tanabata Love",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 221.7,
+      "meanOnBlack": 53,
+      "darkOnWhite": 0.049,
+      "transparent": 0.66
+     }
+    },
+    {
+     "id": "openmoji:1F48C",
+     "title": "love letter",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 223.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.121,
+      "transparent": 0.878
+     }
+    },
+    {
+     "id": "openclipart:188752",
+     "title": "Love Me Heart",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 202.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.151,
+      "transparent": 0.794
+     }
+    },
+    {
+     "id": "commons:26927340",
+     "title": "Love (1966)",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 133.9,
+      "meanOnBlack": 133.9,
+      "darkOnWhite": 0.449,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "freedom",
+   "category": "abstract",
+   "query": "freedom",
+   "ok": true,
+   "reason": "the same page 1: a broken chain first (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:26D3-FE0F-200D-1F4A5",
+    "commons:110150551",
+    "openclipart:336289",
+    "openclipart:271118",
+    "openclipart:170633",
+    "openclipart:189983"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:26D3-FE0F-200D-1F4A5",
+     "title": "broken chain",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 232.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.085,
+      "transparent": 0.913
+     }
+    },
+    {
+     "id": "commons:110150551",
+     "title": "Four-Freedoms-OWI-composite-poster-1943",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 184.4,
+      "meanOnBlack": 184.4,
+      "darkOnWhite": 0.13,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:336289",
+     "title": "Software Freedom",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 186.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.258,
+      "transparent": 0.733
+     }
+    },
+    {
+     "id": "openclipart:271118",
+     "title": "Freedom",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 209.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.176,
+      "transparent": 0.821
+     }
+    },
+    {
+     "id": "openclipart:170633",
+     "title": "[software freedom]",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 210.4,
+      "meanOnBlack": 4.4,
+      "darkOnWhite": 0.146,
+      "transparent": 0.803
+     }
+    },
+    {
+     "id": "openclipart:189983",
+     "title": "Freedom alarm",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 115.3,
+      "meanOnBlack": 112.2,
+      "darkOnWhite": 0.077,
+      "transparent": 0.01
+     }
+    }
+   ]
+  },
+  {
+   "id": "time",
+   "category": "abstract",
+   "query": "time",
+   "ok": true,
+   "reason": "the same page 1: a watch and an alarm clock (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:231A",
+    "commons:144336",
+    "openmoji:23F0",
+    "openclipart:24868",
+    "openclipart:125725",
+    "openclipart:289929"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:231A",
+     "title": "watch",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.088,
+      "transparent": 0.911
+     }
+    },
+    {
+     "id": "commons:144336",
+     "title": "MontreGousset001",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 115.6,
+      "meanOnBlack": 115.6,
+      "darkOnWhite": 0.151,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:23F0",
+     "title": "alarm clock",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.084,
+      "transparent": 0.914
+     }
+    },
+    {
+     "id": "openclipart:24868",
+     "title": "Time icon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.7,
+      "meanOnBlack": 28.7,
+      "darkOnWhite": 0.072,
+      "transparent": 0.812
+     }
+    },
+    {
+     "id": "openclipart:125725",
+     "title": "Time / temps",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 218,
+      "meanOnBlack": 59.9,
+      "darkOnWhite": 0.082,
+      "transparent": 0.62
+     }
+    },
+    {
+     "id": "openclipart:289929",
+     "title": "Time Capsule",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 121.4,
+      "meanOnBlack": 121.1,
+      "darkOnWhite": 0.077,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "happiness",
+   "category": "abstract",
+   "query": "happiness",
+   "ok": true,
+   "reason": "a smiling face first, as before (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:263A",
+    "commons:72212973",
+    "commons:10381847",
+    "openmoji:1F60C",
+    "openclipart:344566",
+    "openclipart:352692"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:263A",
+     "title": "smiling face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.075,
+      "transparent": 0.923
+     }
+    },
+    {
+     "id": "commons:72212973",
+     "title": "Happiness ",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.8,
+      "meanOnBlack": 98.8,
+      "darkOnWhite": 0.406,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:10381847",
+     "title": "Girl of Vietnam",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 124.1,
+      "meanOnBlack": 124.1,
+      "darkOnWhite": 0.267,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F60C",
+     "title": "relieved face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.081,
+      "transparent": 0.916
+     }
+    },
+    {
+     "id": "openclipart:344566",
+     "title": "Happiness",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 166.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.28,
+      "transparent": 0.657
+     }
+    },
+    {
+     "id": "openclipart:352692",
+     "title": "Double Happiness",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 185.4,
+      "meanOnBlack": 20.5,
+      "darkOnWhite": 0.34,
+      "transparent": 0.646
+     }
+    }
+   ]
+  },
+  {
+   "id": "cold",
+   "category": "abstract",
+   "query": "cold",
+   "ok": true,
+   "reason": "the same page 1: a cold face and thermometers (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F976",
+    "commons:38832386",
+    "commons:4696580",
+    "openmoji:1F328",
+    "openclipart:170665",
+    "openclipart:69487"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F976",
+     "title": "cold face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 215.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.149,
+      "transparent": 0.847
+     }
+    },
+    {
+     "id": "commons:38832386",
+     "title": "Thermometer winterliche Temperaturen",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 126.2,
+      "meanOnBlack": 126.2,
+      "darkOnWhite": 0.106,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:4696580",
+     "title": "Antarctic iceberg, 2001 -2",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 131.9,
+      "meanOnBlack": 131.9,
+      "darkOnWhite": 0.148,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F328",
+     "title": "cloud with snow",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 232.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.084,
+      "transparent": 0.913
+     }
+    },
+    {
+     "id": "openclipart:170665",
+     "title": "weather icon - cold",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 242.6,
+      "meanOnBlack": 18.8,
+      "darkOnWhite": 0.007,
+      "transparent": 0.879
+     }
+    },
+    {
+     "id": "openclipart:69487",
+     "title": "Thermometer Cold - Outline",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 243.4,
+      "meanOnBlack": 54.1,
+      "darkOnWhite": 0.032,
+      "transparent": 0.742
+     }
+    }
+   ]
+  },
+  {
+   "id": "hot",
+   "category": "abstract",
+   "query": "hot",
+   "ok": true,
+   "reason": "the same page 1: hot face, pepper and water (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:354411",
+    "openclipart:305100",
+    "openclipart:345540",
+    "openclipart:311046",
+    "openmoji:1F975",
+    "openclipart:281268"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:354411",
+     "title": "Hot Springs Sketch",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 181.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.137,
+      "transparent": 0.719
+     }
+    },
+    {
+     "id": "openclipart:305100",
+     "title": "Hot Water",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 130.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.441,
+      "transparent": 0.5
+     }
+    },
+    {
+     "id": "openclipart:345540",
+     "title": "Hot Pepper",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 212.7,
+      "meanOnBlack": 18.6,
+      "darkOnWhite": 0.07,
+      "transparent": 0.761
+     }
+    },
+    {
+     "id": "openclipart:311046",
+     "title": "Hot Wine",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 218.6,
+      "meanOnBlack": 67,
+      "darkOnWhite": 0.004,
+      "transparent": 0.586
+     }
+    },
+    {
+     "id": "openmoji:1F975",
+     "title": "hot face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 226.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.108,
+      "transparent": 0.889
+     }
+    },
+    {
+     "id": "openclipart:281268",
+     "title": "Hot Sauce",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 136.3,
+      "meanOnBlack": 21.5,
+      "darkOnWhite": 0.391,
+      "transparent": 0.45
+     }
+    }
+   ]
+  },
+  {
+   "id": "happy",
+   "category": "abstract",
+   "query": "happy",
+   "ok": true,
+   "reason": "a grinning face first, as before (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F600",
+    "commons:72212973",
+    "commons:10381847",
+    "openclipart:242499",
+    "openclipart:334568",
+    "openclipart:287767"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F600",
+     "title": "grinning face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 228.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.101,
+      "transparent": 0.896
+     }
+    },
+    {
+     "id": "commons:72212973",
+     "title": "Happiness ",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.8,
+      "meanOnBlack": 98.8,
+      "darkOnWhite": 0.406,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:10381847",
+     "title": "Girl of Vietnam",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 124.1,
+      "meanOnBlack": 124.1,
+      "darkOnWhite": 0.267,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:242499",
+     "title": "Happy Face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 228,
+      "meanOnBlack": 228,
+      "darkOnWhite": 0.101,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:334568",
+     "title": "Happy Threesome",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 194.7,
+      "meanOnBlack": 23.3,
+      "darkOnWhite": 0.151,
+      "transparent": 0.672
+     }
+    },
+    {
+     "id": "openclipart:287767",
+     "title": "Happy Birthday!",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 197,
+      "meanOnBlack": 49.8,
+      "darkOnWhite": 0.115,
+      "transparent": 0.59
+     }
+    }
+   ]
+  },
+  {
+   "id": "sad",
+   "category": "abstract",
+   "query": "sad",
+   "ok": true,
+   "reason": "the same page 1: sad faces (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F625",
+    "openmoji:1F61F",
+    "commons:1028472",
+    "commons:52241434",
+    "openclipart:25265",
+    "commons:78965327"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F625",
+     "title": "sad but relieved face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 232.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.088,
+      "transparent": 0.91
+     }
+    },
+    {
+     "id": "openmoji:1F61F",
+     "title": "worried face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.082,
+      "transparent": 0.915
+     }
+    },
+    {
+     "id": "commons:1028472",
+     "title": "Sad face",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 191.7,
+      "meanOnBlack": 136.9,
+      "darkOnWhite": 0.179,
+      "transparent": 0.215
+     }
+    },
+    {
+     "id": "commons:52241434",
+     "title": "Sad-Smiley",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 226.3,
+      "meanOnBlack": 225.9,
+      "darkOnWhite": 0,
+      "transparent": 0.003
+     }
+    },
+    {
+     "id": "openclipart:25265",
+     "title": "Sad Piggy",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 216,
+      "meanOnBlack": 177.8,
+      "darkOnWhite": 0.017,
+      "transparent": 0.149
+     }
+    },
+    {
+     "id": "commons:78965327",
+     "title": "Sad (surah)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 203,
+      "meanOnBlack": 108.5,
+      "darkOnWhite": 0,
+      "transparent": 0.371
+     }
+    }
+   ]
+  },
+  {
+   "id": "angry",
+   "category": "abstract",
+   "query": "angry",
+   "ok": true,
+   "reason": "an angry face first, as before (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F620",
+    "commons:36445916",
+    "commons:63519842",
+    "openmoji:1F47F",
+    "commons:3389692",
+    "openclipart:205654"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F620",
+     "title": "angry face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.078,
+      "transparent": 0.92
+     }
+    },
+    {
+     "id": "commons:36445916",
+     "title": "A frontal outline and a profile of faces expressing anger. E Wellcome V0009398",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 192.8,
+      "meanOnBlack": 192.8,
+      "darkOnWhite": 0.024,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:63519842",
+     "title": "Angry-2766265 960 720",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 26.8,
+      "meanOnBlack": 26.8,
+      "darkOnWhite": 0.949,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F47F",
+     "title": "angry face with horns",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 229.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.098,
+      "transparent": 0.899
+     }
+    },
+    {
+     "id": "commons:3389692",
+     "title": "Angry man",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.7,
+      "meanOnBlack": 113.3,
+      "darkOnWhite": 0.056,
+      "transparent": 0.48
+     }
+    },
+    {
+     "id": "openclipart:205654",
+     "title": "Angry Smiley",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 177.9,
+      "meanOnBlack": 107.8,
+      "darkOnWhite": 0.23,
+      "transparent": 0.275
+     }
+    }
+   ]
+  },
+  {
+   "id": "fear",
+   "category": "abstract",
+   "query": "fear",
+   "ok": true,
+   "reason": "a face screaming in fear first; the fearful face moves to 4 (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F631",
+    "commons:7263645",
+    "commons:35951192",
+    "openmoji:1F628",
+    "openclipart:263869",
+    "openclipart:295132"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F631",
+     "title": "face screaming in fear",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.137,
+      "transparent": 0.859
+     }
+    },
+    {
+     "id": "commons:7263645",
+     "title": "Scared Child at Nighttime",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 64.5,
+      "meanOnBlack": 64.5,
+      "darkOnWhite": 0.567,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:35951192",
+     "title": "\"Fear\" from Le Brun, Characters des passions, circa 1720. Wellcome L0010224",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.1,
+      "meanOnBlack": 231.1,
+      "darkOnWhite": 0.033,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F628",
+     "title": "fearful face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.094,
+      "transparent": 0.904
+     }
+    },
+    {
+     "id": "openclipart:263869",
+     "title": "Rune of Fear",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 212.1,
+      "meanOnBlack": 73.9,
+      "darkOnWhite": 0.138,
+      "transparent": 0.558
+     }
+    },
+    {
+     "id": "openclipart:295132",
+     "title": "fear",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 140.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.406,
+      "transparent": 0.553
+     }
+    }
+   ]
+  },
+  {
+   "id": "idea",
+   "category": "abstract",
+   "query": "idea",
+   "ok": true,
+   "reason": "the same page 1: a light bulb first (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F4A1",
+    "commons:17918560",
+    "commons:14318",
+    "openmoji:1F4AD",
+    "openclipart:188607",
+    "openclipart:322250"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F4A1",
+     "title": "light bulb",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.078,
+      "transparent": 0.919
+     }
+    },
+    {
+     "id": "commons:17918560",
+     "title": "Pictofigo - Idea",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 213,
+      "meanOnBlack": 45.3,
+      "darkOnWhite": 0.107,
+      "transparent": 0.659
+     }
+    },
+    {
+     "id": "commons:14318",
+     "title": "Plato-raphael",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 145.6,
+      "meanOnBlack": 145.6,
+      "darkOnWhite": 0.066,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F4AD",
+     "title": "thought balloon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.073,
+      "transparent": 0.925
+     }
+    },
+    {
+     "id": "openclipart:188607",
+     "title": "Idea icon",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 206.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.183,
+      "transparent": 0.811
+     }
+    },
+    {
+     "id": "openclipart:322250",
+     "title": "Idea lightbulb",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 216.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.117,
+      "transparent": 0.849
+     }
+    }
+   ]
+  },
+  {
+   "id": "music",
+   "category": "abstract",
+   "query": "music",
+   "ok": false,
+   "reason": "music icons and a trumpet, but no musical note on page 1; the base had none either, so not worse (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F39B",
+    "commons:2300378",
+    "commons:6455682",
+    "openmoji:1F3BA",
+    "commons:180332666",
+    "openclipart:27648"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F39B",
+     "title": "control knobs",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 223.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.12,
+      "transparent": 0.876
+     }
+    },
+    {
+     "id": "commons:2300378",
+     "title": "Op27 1 seg mov",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 211.4,
+      "meanOnBlack": 211.4,
+      "darkOnWhite": 0.092,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:6455682",
+     "title": "The Sounds of Earth - GPN-2000-001976",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 57.7,
+      "meanOnBlack": 57.7,
+      "darkOnWhite": 0.572,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F3BA",
+     "title": "trumpet",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 225,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.114,
+      "transparent": 0.882
+     }
+    },
+    {
+     "id": "commons:180332666",
+     "title": "Music A172",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 188.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.233,
+      "transparent": 0.74
+     }
+    },
+    {
+     "id": "openclipart:27648",
+     "title": "Music icon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.1,
+      "meanOnBlack": 177.7,
+      "darkOnWhite": 0,
+      "transparent": 0.209
+     }
+    }
+   ]
+  },
+  {
+   "id": "sleep",
+   "category": "abstract",
+   "query": "sleep",
+   "ok": true,
+   "reason": "a sleepy face first, as before (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F62A",
+    "commons:2858290",
+    "commons:15416603",
+    "openmoji:1F634",
+    "commons:1708491",
+    "openclipart:325237"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F62A",
+     "title": "sleepy face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.076,
+      "transparent": 0.922
+     }
+    },
+    {
+     "id": "commons:2858290",
+     "title": "Lion and lioness sleeping",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 144.2,
+      "meanOnBlack": 144.2,
+      "darkOnWhite": 0.074,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:15416603",
+     "title": "Domenico Fetti - Sleeping Girl - WGA7863",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 87.1,
+      "meanOnBlack": 87.1,
+      "darkOnWhite": 0.429,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F634",
+     "title": "sleeping face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.083,
+      "transparent": 0.915
+     }
+    },
+    {
+     "id": "commons:1708491",
+     "title": "Sleep Cycle",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.058,
+      "transparent": 0.931
+     }
+    },
+    {
+     "id": "openclipart:325237",
+     "title": "No Sleep Icon",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 170.9,
+      "meanOnBlack": 27.3,
+      "darkOnWhite": 0.075,
+      "transparent": 0.562
+     }
+    }
+   ]
+  },
+  {
+   "id": "cup-of-coffee",
+   "category": "phrase",
+   "query": "cup of coffee",
+   "ok": true,
+   "reason": "the same page 1: coffee cup drawings (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:330066",
+    "commons:64708072",
+    "commons:16729023",
+    "openclipart:218813",
+    "openclipart:226161",
+    "commons:101369136"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:330066",
+     "title": "Cup of Coffee",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 241.3,
+      "meanOnBlack": 7.3,
+      "darkOnWhite": 0.023,
+      "transparent": 0.912
+     }
+    },
+    {
+     "id": "commons:64708072",
+     "title": "Coffee cup flat",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 212.3,
+      "meanOnBlack": 6.6,
+      "darkOnWhite": 0.188,
+      "transparent": 0.807
+     }
+    },
+    {
+     "id": "commons:16729023",
+     "title": "Coffee cup icon",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 217.2,
+      "meanOnBlack": 92.7,
+      "darkOnWhite": 0.026,
+      "transparent": 0.501
+     }
+    },
+    {
+     "id": "openclipart:218813",
+     "title": "Coffee cup",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.7,
+      "meanOnBlack": 54.6,
+      "darkOnWhite": 0,
+      "transparent": 0.723
+     }
+    },
+    {
+     "id": "openclipart:226161",
+     "title": "Cup Of Coffee",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 188.5,
+      "meanOnBlack": 89.8,
+      "darkOnWhite": 0,
+      "transparent": 0.387
+     }
+    },
+    {
+     "id": "commons:101369136",
+     "title": "Vector Cartoon Coffee Cup",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 159.4,
+      "meanOnBlack": 114.9,
+      "darkOnWhite": 0.077,
+      "transparent": 0.174
+     }
+    }
+   ]
+  },
+  {
+   "id": "cafe",
+   "category": "phrase",
+   "query": "café",
+   "ok": true,
+   "reason": "OpenMoji's hot beverage cup first, then the Café de Flore and café drawings; a cup is a fit first picture, owner D36 A (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:2615",
+    "commons:3730145",
+    "openclipart:322620",
+    "commons:47316411",
+    "openclipart:276613",
+    "openclipart:259490"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:2615",
+     "title": "hot beverage",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.068,
+      "transparent": 0.931
+     }
+    },
+    {
+     "id": "commons:3730145",
+     "title": "Café de Flore",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 110.8,
+      "meanOnBlack": 110.8,
+      "darkOnWhite": 0.318,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:322620",
+     "title": "A Turkish Cafe owner in London",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.3,
+      "meanOnBlack": 226.4,
+      "darkOnWhite": 0.081,
+      "transparent": 0.001
+     }
+    },
+    {
+     "id": "commons:47316411",
+     "title": "Coffee-shop-circular-button",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 216,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.146,
+      "transparent": 0.847
+     }
+    },
+    {
+     "id": "openclipart:276613",
+     "title": "café-en-france",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.9,
+      "meanOnBlack": 86.2,
+      "darkOnWhite": 0.142,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:259490",
+     "title": "cafe brasileiro",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 222.4,
+      "meanOnBlack": 76,
+      "darkOnWhite": 0.033,
+      "transparent": 0.576
+     }
+    }
+   ]
+  },
+  {
+   "id": "coffee",
+   "category": "object",
+   "query": "coffee",
+   "ok": true,
+   "reason": "OpenMoji's hot beverage cup first, its source's lead, then coffee cups; it was sixth in the base (judged from the titles, no sheets)",
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:2615",
+    "commons:107645",
+    "commons:122469412",
+    "openclipart:276267",
+    "openclipart:22305",
+    "openclipart:251492"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:2615",
+     "title": "hot beverage",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.068,
+      "transparent": 0.931
+     }
+    },
+    {
+     "id": "commons:107645",
+     "title": "A small cup of coffee",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.5,
+      "meanOnBlack": 98.5,
+      "darkOnWhite": 0.358,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:122469412",
+     "title": "Latte and dark coffee",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 117.7,
+      "meanOnBlack": 117.7,
+      "darkOnWhite": 0.161,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:276267",
+     "title": "a coffee cup",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 245.5,
+      "meanOnBlack": 1.8,
+      "darkOnWhite": 0.038,
+      "transparent": 0.956
+     }
+    },
+    {
+     "id": "openclipart:22305",
+     "title": "Coffee cup icon",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 178.7,
+      "meanOnBlack": 27.9,
+      "darkOnWhite": 0.192,
+      "transparent": 0.593
+     }
+    },
+    {
+     "id": "openclipart:251492",
+     "title": "coffee design",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 192.4,
+      "meanOnBlack": 57.5,
+      "darkOnWhite": 0.031,
+      "transparent": 0.63
+     }
+    }
+   ]
+  }
+ ]
+}

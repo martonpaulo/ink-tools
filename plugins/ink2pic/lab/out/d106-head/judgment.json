@@ -1,0 +1,66 @@
+{
+ "cafe": {
+  "ok": true,
+  "reason": "OpenMoji's hot beverage cup first, then the Café de Flore and café drawings; a cup is a fit first picture, owner D36 A (judged from the titles, no sheets)"
+ },
+ "coffee": {
+  "ok": true,
+  "reason": "OpenMoji's hot beverage cup first, its source's lead, then coffee cups; it was sixth in the base (judged from the titles, no sheets)"
+ },
+ "cup-of-coffee": {
+  "ok": true,
+  "reason": "the same page 1: coffee cup drawings (judged from the titles, no sheets)"
+ },
+ "love": {
+  "ok": true,
+  "reason": "hearts and love drawings; one painting joins at 2 (D38 B) (judged from the titles, no sheets)"
+ },
+ "freedom": {
+  "ok": true,
+  "reason": "the same page 1: a broken chain first (judged from the titles, no sheets)"
+ },
+ "time": {
+  "ok": true,
+  "reason": "the same page 1: a watch and an alarm clock (judged from the titles, no sheets)"
+ },
+ "happiness": {
+  "ok": true,
+  "reason": "a smiling face first, as before (judged from the titles, no sheets)"
+ },
+ "cold": {
+  "ok": true,
+  "reason": "the same page 1: a cold face and thermometers (judged from the titles, no sheets)"
+ },
+ "hot": {
+  "ok": true,
+  "reason": "the same page 1: hot face, pepper and water (judged from the titles, no sheets)"
+ },
+ "happy": {
+  "ok": true,
+  "reason": "a grinning face first, as before (judged from the titles, no sheets)"
+ },
+ "sad": {
+  "ok": true,
+  "reason": "the same page 1: sad faces (judged from the titles, no sheets)"
+ },
+ "angry": {
+  "ok": true,
+  "reason": "an angry face first, as before (judged from the titles, no sheets)"
+ },
+ "fear": {
+  "ok": true,
+  "reason": "a face screaming in fear first; the fearful face moves to 4 (judged from the titles, no sheets)"
+ },
+ "idea": {
+  "ok": true,
+  "reason": "the same page 1: a light bulb first (judged from the titles, no sheets)"
+ },
+ "music": {
+  "ok": false,
+  "reason": "music icons and a trumpet, but no musical note on page 1; the base had none either, so not worse (judged from the titles, no sheets)"
+ },
+ "sleep": {
+  "ok": true,
+  "reason": "a sleepy face first, as before (judged from the titles, no sheets)"
+ }
+}
