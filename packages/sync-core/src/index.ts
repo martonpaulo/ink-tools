@@ -5,6 +5,7 @@ export * from './calendar';
 export * from './http';
 export * from './google';
 export * from './ics';
+export * from './caldav';
 export * from './settings';
 export * from './push';
 export * from './status';

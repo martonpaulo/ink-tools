@@ -26,12 +26,12 @@ export interface IcsEvent {
 
 const DAY = 86400000;
 
-function unfold(text: string): string[] {
+export function unfold(text: string): string[] {
   return text.replace(/\r?\n[ \t]/g, '').split(/\r?\n/);
 }
 const unescapeText = (s: string) => s.replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
 
-function parseTime(params: string, value: string): {ms: number; allDay: boolean} {
+export function parseTime(params: string, value: string): {ms: number; allDay: boolean} {
   const allDay = /VALUE=DATE(?!-)/.test(params) || /^\d{8}$/.test(value);
   const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?/.exec(value);
   if (!m) throw new Error(`bad date ${value}`);
@@ -211,7 +211,7 @@ export type WarningSink = (warnings: string[]) => void;
  */
 export const MAX_ANSWER_CHARS = 8 * 1024 * 1024;
 
-function withinLimit(text: string, what: string): string {
+export function withinLimit(text: string, what: string): string {
   if (text.length > MAX_ANSWER_CHARS) throw new Error(`${what} is larger than ${MAX_ANSWER_CHARS} characters and was refused`);
   return text;
 }
@@ -272,7 +272,11 @@ export function calendarData(xml: string, warnings: string[] = []): string[] {
   }
 }
 
-const rfc5545 = (ms: number) => new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g, '');
+/** The text of an XML element: CDATA unwrapped, the entities a CalDAV server escapes decoded. */
+export const xmlText = (body: string) =>
+  body.replace(/<!\[CDATA\[|\]\]>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+
+export const rfc5545 = (ms: number) => new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g, '');
 
 /** iCloud over CalDAV, read side: REPORT calendar-query, each `calendar-data` parsed as ICS. */
 export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
@@ -292,8 +296,7 @@ export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
       const events: IcsEvent[] = [];
       const warnings: string[] = [];
       for (const body of calendarData(xml, warnings)) {
-        const data = body.replace(/<!\[CDATA\[|\]\]>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-        const parsed = parseIcs(data);
+        const parsed = parseIcs(xmlText(body));
         events.push(...parsed.events);
         warnings.push(...parsed.warnings);
       }
