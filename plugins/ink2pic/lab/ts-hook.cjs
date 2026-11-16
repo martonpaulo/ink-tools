@@ -22,3 +22,22 @@ for (const extension of ['.ts', '.tsx']) {
     module._compile(outputText, filename);
   };
 }
+
+/**
+ * A shared package by its name, as the plugins' tsconfig `paths` map it: `@supernote-tools/<name>`
+ * is `packages/<name>/src`, so a plugin constant that imports one loads here too (#183).
+ */
+const Module = require('node:module');
+const path = require('node:path');
+
+const PACKAGES = path.resolve(__dirname, '../../../packages');
+const SCOPE = '@supernote-tools/';
+const resolve = Module._resolveFilename;
+Module._resolveFilename = function (request, ...rest) {
+  if (request.startsWith(SCOPE)) {
+    const [name, ...sub] = request.slice(SCOPE.length).split('/');
+    const target = path.join(PACKAGES, name, 'src', ...sub);
+    return resolve.call(this, path.join(target, sub.length ? '' : 'index.ts'), ...rest);
+  }
+  return resolve.call(this, request, ...rest);
+};

@@ -5,6 +5,7 @@
  * fetch, never product code.
  */
 import {execFileSync} from 'node:child_process';
+import {createRequire} from 'node:module';
 import {
   cachedFetch,
   HTTP_OK,
@@ -33,10 +34,24 @@ const MALFORMED_BODY = '<html><body>Service unavailable</body></html>';
 const {core, config, copy} = product();
 export const SOURCE_NAMES = core.DEFAULT_ADAPTERS.map(adapter => adapter.name);
 /**
- * shortcut: the device's query languages, copied from src/search/device.ts, which imports the
- * device storage; import them once they live in a pure module (#68).
+ * The query languages of each plugin that searches (#183): Word Lookup's are its own constant.
+ * shortcut: Ink2Pic's, copied from src/search/device.ts, which imports the device storage; import
+ * them once they live in a pure module (#68).
  */
-const LANGUAGES = ['en'];
+export const QUERY_LANGUAGES = {
+  ink2pic: ['en'],
+  lookup: [
+    ...createRequire(import.meta.url)('../../lookup/src/pictureLanguages.ts')
+      .PICTURE_LANGUAGES,
+  ],
+};
+
+/** A run named `lookup` or `lookup-…` searches with Word Lookup's languages, any other with Ink2Pic's. */
+export function languagesFor(run) {
+  return /^lookup(-|$)/.test(run)
+    ? QUERY_LANGUAGES.lookup
+    : QUERY_LANGUAGES.ink2pic;
+}
 /**
  * shortcut: the sentence of each search state, copied from STATE_COPY in src/flow/search.ts,
  * which imports the device library; import it once it lives in a pure module.
@@ -113,32 +128,32 @@ function tile(result, query, shown) {
   };
 }
 
-const context = fetch =>
+const context = (fetch, languages) =>
   core.createContext({
     fetch,
     userAgent: config.USER_AGENT,
-    languages: LANGUAGES,
+    languages,
   });
 
 /** The default adapters; a faulty one searches with its fault's fetch in place of the network. */
-function adaptersWith(faults) {
+function adaptersWith(faults, languages) {
   return core.DEFAULT_ADAPTERS.map(adapter => {
     const fault = faults[adapter.name];
     if (!fault) {
       return adapter;
     }
-    const ctx = context(FAULTS[fault]());
+    const ctx = context(FAULTS[fault](), languages);
     return {...adapter, search: query => adapter.search(query, ctx)};
   });
 }
 
 /** The search, again after a wait while a source with no injected fault failed to answer. */
-async function searchCase(query, faults, log) {
+async function searchCase(query, faults, log, languages) {
   const stats = {requests: 0, retryAfter: 0, waited: 0};
   for (let attempt = 1; ; attempt++) {
     stats.retryAfter = 0;
-    const outcome = await core.searchAll(query, adaptersWith(faults), {
-      ctx: context(cachedFetch(stats)),
+    const outcome = await core.searchAll(query, adaptersWith(faults, languages), {
+      ctx: context(cachedFetch(stats), languages),
     });
     const failed = Object.entries(outcome.statuses).filter(
       ([, status]) => status.state === 'failed',
@@ -159,13 +174,14 @@ async function searchCase(query, faults, log) {
 /**
  * Every case through the search with `faults`, one at a time; each case's pages 1 and 2, with the
  * seconds it took and the seconds of that spent waiting after a failure. `onCase` gets the cases
- * done so far after each one.
+ * done so far after each one. `languages` are the query languages, Ink2Pic's by default.
  */
 export async function runCases(
   cases,
   faults = {},
   log = console.log,
   onCase = () => {},
+  languages = QUERY_LANGUAGES.ink2pic,
 ) {
   const out = [];
   for (const [index, item] of cases.entries()) {
@@ -173,12 +189,20 @@ export async function runCases(
     // A written line (#87): its words are chosen as Lasso last word chooses them, then searched.
     const lineStats = {requests: 0, retryAfter: 0};
     const chosen = item.line
-      ? await core.resolvePhrase(item.line, context(cachedFetch(lineStats)))
+      ? await core.resolvePhrase(
+          item.line,
+          context(cachedFetch(lineStats), languages),
+        )
       : null;
     if (chosen && chosen.query !== item.query) {
       log(`  line "${item.line}" chose "${chosen.query}", not "${item.query}"`);
     }
-    const searched = await searchCase(chosen?.query ?? item.query, faults, log);
+    const searched = await searchCase(
+      chosen?.query ?? item.query,
+      faults,
+      log,
+      languages,
+    );
     const {outcome, named, attempt, retryAfter, waited} = searched;
     const requests = searched.requests + lineStats.requests;
     // The device's order: pages 1 and 2 re-sorted by their pixels before page 1 shows (#81).

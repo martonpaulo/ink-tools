@@ -39,6 +39,15 @@ twice, so a throttled answer is asked again; a still-failed source stays recorde
 artifact both runs' `results.json` and `metrics.json`. `out/.cache` goes from run to run as
 the `lab-cache` artifact, so a first run is slow and the next ones answer from the cache.
 
+A run named `lookup` or `lookup-…` searches with Word Lookup's query languages,
+`PICTURE_LANGUAGES` of `plugins/lookup/src/pictureLanguages.ts` (Portuguese, Spanish, then
+English); any other run searches with Ink2Pic's, English only
+([#183](https://github.com/martonpaulo/ink-tools/issues/183)). `results.json` records them as
+`languages`. Name the run `lookup-<issue>` for a change to Word Lookup's picture search. To compare
+the two lists on the same code, start a `lookup-…` run whose `base` is the commit before
+[#183](https://github.com/martonpaulo/ink-tools/issues/183): the base searches in English, the
+head in Lookup's languages.
+
 ## Run it
 
 ```bash
