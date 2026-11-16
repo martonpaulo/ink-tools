@@ -1,8 +1,12 @@
 /**
- * The fixtures are cut from each Wiktionary's style guide, not recorded (the cloud proxy refuses
- * `*.wiktionary.org`); the Mac tasks of #115 and #127 replace them with recorded pages.
+ * Most fixtures are cut from each Wiktionary's style guide (the cloud proxy refuses
+ * `*.wiktionary.org`). The `-recorded` ones are real `action=parse` answers recorded on the Mac on
+ * 2026-11-16: pt «maçã» revision 3188657 and es «manzana» revision 6383798 (CC BY-SA 4.0, see
+ * packages/ink-core/NOTICE.md).
  */
 import ptPage from './fixtures/wiktionary-pt.json';
+import ptRecorded from './fixtures/wiktionary-pt-recorded.json';
+import esRecorded from './fixtures/wiktionary-es-recorded.json';
 import esPage from './fixtures/wiktionary-es.json';
 import missingPage from './fixtures/wiktionary-missing.json';
 import zhPage from './fixtures/wiktionary-zh.json';
@@ -24,6 +28,8 @@ const FIXTURES: Record<string, unknown> = {
   'wiktionary-es.json': esPage,
   'wiktionary-missing.json': missingPage,
   'wiktionary-zh.json': zhPage,
+  'wiktionary-pt-recorded.json': ptRecorded,
+  'wiktionary-es-recorded.json': esRecorded,
 };
 /** The answer body as the API sends it. */
 const fixture = (name: string) => JSON.stringify(FIXTURES[name]);
@@ -45,6 +51,27 @@ test('es: numbered senses with their field label dropped and link templates kept
     {text: 'fruto del manzano, de forma redondeada.', partOfSpeech: 'sustantivo femenino'},
     {text: 'Espacio urbano limitado por calles.', partOfSpeech: 'sustantivo femenino'},
   ]);
+});
+
+test('pt recorded: only part-of-speech senses, never the anagram list (#115)', () => {
+  // The live page ends with `==Anagrama==` and `# [[cama]]`; dev.18 showed «2. cama».
+  expect(parseDefinitions(wikitext('wiktionary-pt-recorded.json'), 'pt')).toEqual([
+    {text: 'o fruto comestível da macieira', partOfSpeech: 'Substantivo'},
+  ]);
+});
+
+test('es recorded: the three senses of the sustantivo femenino section', () => {
+  const senses = parseDefinitions(wikitext('wiktionary-es-recorded.json'), 'es');
+  expect(senses).toHaveLength(MAX_SENSES);
+  expect(senses.every(sense => sense.partOfSpeech === 'sustantivo femenino')).toBe(true);
+  expect(senses[0].text).toMatch(/^fruta comestible del manzano/);
+  expect(senses[1].text).toMatch(/^Conjunto de construcciones/);
+});
+
+test('a sense line under a heading that is not a part of speech is left out', () => {
+  const page = ['={{-pt-}}=', '==Substantivo==', '# fruto', '==Anagrama==', '# [[cama]]'].join('\n');
+  expect(parseDefinitions(page, 'pt').map(sense => sense.text)).toEqual(['fruto']);
+  expect(parseDefinitions(['={{-pt-}}=', '# sem título'].join('\n'), 'pt')).toEqual([]);
 });
 
 test('a page with no section for the language is empty, never another language', () => {

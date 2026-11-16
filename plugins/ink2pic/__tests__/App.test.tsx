@@ -21,6 +21,10 @@ import {
 import {startButtonQueue} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../src/ui/copy';
 import {SearchScreen} from '../src/ui/SearchScreen';
+import {
+  insertWithoutView,
+  resetNoViewPressForTests,
+} from '../src/flow/headlessInsert';
 
 jest.mock('../src/flow/insertPicture', () => ({
   ...jest.requireActual('../src/flow/insertPicture'),
@@ -75,6 +79,32 @@ it('opens the lasso flow when a lasso is active, with no button event', async ()
   expect(logLines().join('\n')).toContain('button 200 (decided on open)');
   expect(tree.root.findByProps({testID: 'query'}).props.value).toBe('soup');
   act(() => tree.unmount());
+});
+
+it('opens no search when the view mounts for a no-view press (#115)', async () => {
+  // Device round 2026-11-16: the host mounted the view for «Insert definition» (showType 0) and
+  // the decision on open took the lasso for Choose picture, so a picture search ran too.
+  (PluginCommAPI.getLassoElements as jest.Mock).mockReturnValue(
+    ok([{type: 700}]),
+  );
+  const run = jest.fn().mockResolvedValue(undefined);
+  insertWithoutView({
+    session: run,
+    folder: run,
+    missing: jest.fn().mockResolvedValue(['x']),
+    read: run,
+    insert: run,
+    define: run,
+    show: run,
+    press: jest.fn(),
+  } as never);
+  const tree = await mount();
+  const lines = logLines().join('\n');
+  expect(lines).toContain('decide skipped: a no-view press owns the lasso');
+  expect(lines).not.toContain('decided on open');
+  expect(tree.root.findAllByProps({testID: 'query'})).toHaveLength(0);
+  act(() => tree.unmount());
+  resetNoViewPressForTests();
 });
 
 it('opens an empty search when no lasso is active', async () => {

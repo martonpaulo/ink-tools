@@ -78,6 +78,23 @@ const noteListeners = new Set<() => void>();
 let runningSince: number | null = null;
 let run = 0;
 
+/**
+ * When the last no-view press came, set at once, before any await: the host may mount the view or
+ * send lifecycle 2 for a showType 0 press, and the view's decision on open must not take the same
+ * lasso for «Choose picture» and run a picture search beside the press (#115, device round
+ * 2026-11-16: a definition press logged `search "maçã"` first).
+ */
+let lastPressAt: number | null = null;
+
+/** When the last no-view press came, or null when none came in this runtime. */
+export function lastNoViewPressAt(): number | null {
+  return lastPressAt;
+}
+
+export function resetNoViewPressForTests(): void {
+  lastPressAt = null;
+}
+
 /** The last failed headless insert, once; null when there is none. */
 export function takeHeadlessNote(): HeadlessNote | null {
   const taken = note;
@@ -128,6 +145,7 @@ async function showFailure(
 
 /** Runs one «Insert best picture» press with no view. Never rejects; a second press waits its turn. */
 export function insertWithoutView(deps: HeadlessDeps = DEVICE): Promise<void> {
+  lastPressAt = Date.now();
   return runWithoutView(PICTURE, deps);
 }
 
@@ -139,6 +157,7 @@ export async function defineWithoutView(
   deps: HeadlessDeps = DEVICE,
   settings: typeof getSettings = getSettings,
 ): Promise<void> {
+  lastPressAt = Date.now();
   if (!(await settings()).definition) {
     log(`${DEFINITION.name}: the switch is off, press ignored`);
     return;

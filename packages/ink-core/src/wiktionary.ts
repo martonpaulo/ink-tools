@@ -95,6 +95,16 @@ function partOfSpeech(line: string): string | null {
   return (template ? template[1] : plainText(match[2])).trim() || null;
 }
 
+/**
+ * Part-of-speech headings, by the start of their name: a sense line counts only under one of
+ * these. Every other heading (pt `Anagrama`, `Tradução`, `Etimologia`; es `Etimología`,
+ * `Traducciones`) holds `#` or `;1` lines that are not senses: the recorded pt.wiktionary page of
+ * «maçã» lists the anagram «cama» as `# [[cama]]` (#115, device round 2026-11-16). Unknown
+ * headings are left out, so the parse fails closed.
+ */
+const SPEECH_HEADINGS =
+  /^(substantivo|adjetivo|verbo|adv[ée]rbio|pronome|artigo|numeral|preposição|conjunção|interjeição|locução|forma(?= |$)|contração|sigla|abreviatura|prefixo|sufixo|sustantivo|pronombre|artículo|preposición|conjunción|interjección|locución|contracción|prefijo|sufijo|onomatopeya)/i;
+
 /** One sense line's text: pt `# text`, es `;1 {{csem|…}}: text`; null for any other line. */
 function senseText(line: string, layout: LanguageCode): string | null {
   if (layout === 'es') {
@@ -122,9 +132,10 @@ export function parseDefinitions(
     const line = raw.trim();
     const heading = partOfSpeech(line);
     if (heading !== null) {
-      speech = heading;
+      speech = SPEECH_HEADINGS.test(heading) ? heading : null;
       continue;
     }
+    if (speech === null) continue;
     const sense = senseText(line, layout);
     const text = sense === null ? '' : plainText(sense);
     if (text === '') continue;

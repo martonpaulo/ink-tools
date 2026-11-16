@@ -18,11 +18,13 @@ import {
   OpenedLasso,
   OpeningEvent,
   OpeningState,
+  REPLAY_WINDOW_MS,
   step,
 } from './src/flow/opening';
 import {insertBest} from './src/flow/quickInsert';
 import {
   HeadlessNote,
+  lastNoViewPressAt,
   onHeadlessNote,
   takeHeadlessNote,
 } from './src/flow/headlessInsert';
@@ -285,9 +287,19 @@ function App(): React.JSX.Element {
    * unasked (#74).
    */
   const decide = async () => {
+    const asked = Date.now();
     const lasso = await logged('getLassoElements', getLassoElements);
     const elements =
       lasso.ok && lasso.value.length > 0 ? lasso.value : undefined;
+    // A no-view press just before or during this decision is not an opening: its lasso belongs to
+    // that press, so no search starts beside it (#115).
+    const pressed = lastNoViewPressAt();
+    if (pressed !== null && pressed >= asked - REPLAY_WINDOW_MS) {
+      log(
+        `decide skipped: a no-view press owns the lasso (${pressed - asked} ms from the decision)`,
+      );
+      return;
+    }
     dispatch({
       type: 'decided',
       id: elements ? LASSO_BUTTON_ID : SIDEBAR_BUTTON_ID,
