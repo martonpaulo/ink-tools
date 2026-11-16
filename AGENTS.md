@@ -14,11 +14,12 @@
 - License: `MIT`
 - Copyright: 2026 Marton Paulo
 - Development language: English.
-- Product copy: English only; developer-facing. Each subproject's product copy follows its own policy.
-- Branch policy: Work on `main` only, with no branch protection; create or switch branches only when the owner asks.
+- Product copy: English only; developer-facing; each subproject follows its own policy.
+- Branch policy: Work on `main` only, no branch protection; branch only when the owner asks.
 - Commit policy: Commit each coherent task once it is complete and its subproject's validation passes; only the change's files, one concern per commit; issue commits end with `(#<issue number>)`.
 - Push policy: Push each validated commit to `origin/main` automatically; a cloud session pushes `main` for a `runs: cloud` issue whose gates ran there. Cloud setup command: `bash scripts/cloud-setup.sh`.
-- Product versioning: Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` is derived from it (`0.2.0 beta 3`, `0.2.0`), which `scripts/plugin-version.cjs` checks; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/lingo-app/app.json` and its tag `lingo-app-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). Ink2Pic, being retired, keeps its last scheme (`0.1.0-dev.19`); inkctl is unversioned; the monorepo itself is unversioned.
+- Quick check: `python3 scripts/quick_check.py` (`tsc --noEmit` in the subprojects `gates.json` maps the changed paths to, [#180](https://github.com/martonpaulo/ink-tools/issues/180)).
+- Product versioning: Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/lingo-app/app.json` and its tag `lingo-app-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). Ink2Pic, retiring, keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.
 - Merge policy: merge commits, so every branch commit reaches `main`.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: disabled
@@ -76,7 +77,7 @@ Long-running work follows the `skd-project-standards` skill's `references/long-r
   before designing against them. (`skd-build-or-reuse` and `skd-software-analysis` own the method.)
 - Preserve behavior outside the task and unrelated or uncommitted user changes.
 - Follow the patterns this project already repeats. When a change would break a recorded pattern or establish a new one, stop and ask first, naming the existing pattern, the proposed one, and why the existing one does not fit.
-- When a change sets or fixes a pattern, the same delivery adds the cheapest automatic check that guards it: a lint or type rule, a test over the repository, a gate script. A check larger than the fix becomes its own issue, linked from the change ([martonpaulo/skill-deck#732](https://github.com/martonpaulo/skill-deck/issues/732)).
+- When a change sets or fixes a pattern, the same delivery adds the cheapest automatic check that guards it: a lint or type rule, a test over the repository, a gate script. A larger check becomes its own issue ([martonpaulo/skill-deck#732](https://github.com/martonpaulo/skill-deck/issues/732)).
 - Prefer the smallest correct, readable, reversible solution that is cheap to operate.
 - Keep one owner and one source of truth for each business rule, state, default, and copy value, outside presentation and adapter layers. Derive values instead of storing synchronized copies; model invalid states explicitly.
 - Deliver large changes in reviewable, executable increments. Implement errors, states, accessibility, and tests with the behavior.
