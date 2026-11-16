@@ -17,7 +17,7 @@ import {
   editOfButton,
   enabledStyles,
 } from './src/edits';
-import {runEdit} from './src/edit';
+import {pressEdit} from './src/press';
 import {openStyles} from './src/styles';
 
 AppRegistry.registerComponent(appName, () => App);
@@ -32,7 +32,7 @@ syncButtons(defaultSettings).catch(error => {
 });
 
 // At start-up, before the view exists (Ink2Pic gotcha 11). An edit button's press runs here, with
-// no view (src/edit.ts).
+// no view; it changes the picture or shows a toast with the reason (src/press.ts, #170).
 const listening = startButtonQueue(id => {
   const edit = editOfButton(id);
   if (!edit) {
@@ -46,7 +46,7 @@ const listening = startButtonQueue(id => {
     });
     return true;
   }
-  runEdit(edit.id).catch(error => {
+  pressEdit(edit).catch(error => {
     console.error(`Retouch: ${edit.name}: ${error.message}`);
   });
   return true;

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Text, View} from 'react-native';
-import {shared} from '@supernote-tools/ui-kit';
+import {shared, useWorking, WorkingStrip} from '@supernote-tools/ui-kit';
 import {closePluginView} from '@supernote-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {EditsForm} from './src/EditsForm';
@@ -16,10 +16,12 @@ import {
 import {StylesGrid} from './src/StylesGrid';
 import {syncButtons} from './src/buttons';
 import {askFilePermissions} from './src/permissions';
+import {working} from './src/working';
 
 /**
  * Retouch's Settings view: one switch per edit (#136), every size and colour from the shared
- * ui-kit (#93). Each switch also registers or removes its lasso button.
+ * ui-kit (#93). Each switch also registers or removes its lasso button. While an edit runs past
+ * 2 s, the view is the «Loading…» strip (#103).
  */
 export default function App() {
   const [settings, setSettings] = useState(currentSettings());
@@ -28,6 +30,9 @@ export default function App() {
   useEffect(() => {
     askFilePermissions();
   }, []);
+  if (useWorking(working)) {
+    return <WorkingStrip />;
+  }
   if (grid.phase !== 'idle') {
     const close = () => closePluginView();
     return (

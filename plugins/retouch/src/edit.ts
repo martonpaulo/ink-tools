@@ -111,6 +111,10 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   atkinson: 'atkinson',
 };
 
+/** Why a press changed nothing; src/press.ts turns each into its toast (#170). */
+export const NOT_ONE_PICTURE = 'the lasso is not one picture';
+export const NOT_EDITED = 'Retouch has not edited this picture';
+
 /** The lassoed elements when they are exactly one picture, else null. */
 export function onePicture(elements: object[]): PictureElement | null {
   if (elements.length !== 1) {
@@ -167,7 +171,7 @@ async function editOnce(
   }
   const element = onePicture(lassoed.value);
   if (!element) {
-    return {kind: 'nothing', why: 'the lasso is not one picture'};
+    return {kind: 'nothing', why: NOT_ONE_PICTURE};
   }
   const note = await deps.notePath();
   if (!note.ok) {
@@ -197,7 +201,7 @@ async function editOnce(
   const step =
     edit === 'undo' ? undoStep(history, place) : restoreStep(history, place);
   if (!step) {
-    return {kind: 'nothing', why: 'Retouch has not edited this picture'};
+    return {kind: 'nothing', why: NOT_EDITED};
   }
   return putBack(edit, step, element, place, deps);
 }

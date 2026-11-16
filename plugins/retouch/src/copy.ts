@@ -29,4 +29,13 @@ export const copy = {
   'styles.close': 'Close',
   'permission.files':
     'Image Editing keeps each picture as it was, for Undo and Restore original, in MyStyle/Retouch.',
+  /** Toasts of a press that changed nothing (#170). */
+  'press.permission':
+    'Image Editing needs file access. Choose Always Allow for both questions, then press again.',
+  'press.notPicture': 'Lasso one picture only, then press again.',
+  'press.notEdited': 'Image Editing has not changed this picture yet.',
+  'press.failed': (edit: string, why: string) => `${edit} did not work: ${why}`,
+  /** Toasts that replace the «Loading…» strip (#103). */
+  'working.failed': 'Image Editing stopped with an error.',
+  'working.timeout': 'Image Editing is still working.',
 } as const;

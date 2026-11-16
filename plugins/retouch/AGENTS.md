@@ -14,8 +14,10 @@ lasso button for pictures, run with no view, and a switch in Settings, all on by
 picture in every style switched on into `MyStyle/Retouch/style-*.png`, `src/StylesGrid.tsx` shows
 them, a tap runs that style through `runEdit`, and `styles.json` keeps the last style and the two
 options. Settings
-live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. The time of each edit on the
-Manta and the «Loading…» strip at the top of the note past 2 s ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) are still to come.
+live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. An edit past 2 s shows the shared «Loading…» strip at the top of the note
+([#103](https://github.com/martonpaulo/ink-tools/issues/103)); a press that changes nothing shows a toast with the reason, and a
+missing file permission opens Settings, which asks for it (`src/press.ts`, [#170](https://github.com/martonpaulo/ink-tools/issues/170)). The time of
+each edit on the Manta is still to come ([#145](https://github.com/martonpaulo/ink-tools/issues/145)).
 
 ## What it is
 
@@ -41,7 +43,8 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
 - Every button runs with no view, so it works only once `FILE:READ` and `FILE:WRITE` are «Always
   Allow»: the host shows a no-view request at the next press and revokes «Allow This Time Only» at
   the press after, and a missing grant fails each press at `getPageSize` with 1503 and nothing on
-  the page ([#170](https://github.com/martonpaulo/supernote-tools/issues/170), `../../docs/supernote.md` › Plugins). Removing its preview and state PNGs needs
+  the page ([#170](https://github.com/martonpaulo/supernote-tools/issues/170), `../../docs/supernote.md` › Plugins). So each press checks both
+  first: one missing gives the toast and opens Settings, which asks while its view shows. Removing its preview and state PNGs needs
   `FILE:DELETE` too ([#182](https://github.com/martonpaulo/supernote-tools/issues/182)).
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
