@@ -59,7 +59,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl apps` | Lists installed packages. |
 | `inkctl plugin ls\|push` | Lists plugins, or copies one to `MyStyle`. The install is then done on the tablet. |
 | `inkctl plugin install FILE.snplg` | Copies a plugin, installs or updates it through named elements, and proves it from the plugin list. |
-| `inkctl logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission. |
+| `inkctl logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission: `NAME` is the name the plugin list shows, its `pluginKey` or its `pluginID`. A plugin logs under the tag `ReactNativeJS`, not its own name, so `--tag` with a plugin's name finds nothing and says to use `--plugin`. |
 | `inkctl history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `inkctl tap\|swipe` | Presses by coordinates, the last resort. |
 | `inkctl wifi on` | Over the USB cable, turns Wi-Fi ADB on (`adb tcpip 5555`) and connects to it. |

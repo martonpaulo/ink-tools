@@ -941,6 +941,21 @@ result=$(run logs --plugin someplugin --json)
 check "logs --plugin keeps that plugin's lines and denied permissions" "$(printf '%s' "$result" | expression "[l['tag'] for l in d['lines']]")" "['PluginSec', 'ReactNativeJS']"
 check "logs --plugin marks a denied permission" "$(printf '%s' "$result" | field "['lines'][0]['denied'],d['lines'][1]['denied']")" "(True, False)"
 check "logs --plugin reads a wide window" "$(called 'logcat -d -v time -t 5000')" "1"
+# A plugin logs under ReactNativeJS with its pluginKey as prefix, whatever name the reader gives (#192).
+cp "$files/rows" "$work/rows-saved"
+cp "$files/log" "$work/log-saved"
+printf 'Row: 0 name={"en":"Image Editing"}, pluginID=retouchid1, pluginKey=Retouch, num=1\n' > "$files/rows"
+printf '11-10 00:15:00.000 E/ReactNativeJS( 901): Retouch: Enhance: failed: getPageSize: 1503\n11-10 00:15:01.000 I/ReactNativeJS( 901): Lookup: ready\n' >> "$files/log"
+for name in "Image Editing" retouch retouchid1; do
+    check "logs --plugin finds the ReactNativeJS line by $name" "$(run logs --plugin "$name" --json | expression "[l['message'] for l in d['lines'] if l.get('tag') == 'ReactNativeJS']")" "['Retouch: Enhance: failed: getPageSize: 1503']"
+done
+echo '--------- beginning of main' > "$files/log"  # logcat -s Retouch finds nothing: the stub does not filter tags
+run logs --tag Retouch >/dev/null 2>"$work/err"
+check "logs --tag with a plugin's name points to --plugin" "$(grep -c 'use --plugin Retouch' "$work/err")" "1"
+run logs --tag Other >/dev/null 2>"$work/err"
+check "logs --tag with another tag gives no hint" "$(grep -c 'use --plugin' "$work/err")" "0"
+cp "$work/rows-saved" "$files/rows"
+cp "$work/log-saved" "$files/log"
 check "logs --follow prints and ends with the device" "$(run logs --follow --timeout 2 --grep unrelated)" "11-10 00:14:30.000 I/Other( 902): unrelated"
 started=$SECONDS
 output=$(ADB_HANG=1 run logs --follow --timeout 1 --json)

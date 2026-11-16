@@ -1400,6 +1400,27 @@ def plugin_rows(device: Device) -> list[dict]:
     return query_rows(device, f"content query --uri {PLUGIN_URI}")
 
 
+def plugin_names(row: dict) -> list[str]:
+    """Every name a plugin answers to: its shown name in each language, its pluginKey and its pluginID."""
+    shown = row.get("name", "")
+    try:
+        names = list(json.loads(shown).values()) if shown.startswith("{") else [shown]
+    except ValueError:
+        names = [shown]
+    return [name for name in (*names, row.get("pluginKey", ""), row.get("pluginID", "")) if name]
+
+
+def find_plugins(rows: list[dict], name: str) -> list[dict]:
+    wanted = name.casefold()
+    return [row for row in rows if wanted in (known.casefold() for known in plugin_names(row))]
+
+
+def plugin_log_names(device: Device, name: str) -> list[str]:
+    """The names a plugin's lines may carry. An uninstalled plugin still left lines, so its given name always counts."""
+    found = find_plugins(plugin_rows(device), name)
+    return list(dict.fromkeys([name, *(known for row in found for known in plugin_names(row))]))
+
+
 def read_plugin_config(path: str) -> dict:
     """A plugin's id and version, from the file itself, so the read-back has something to prove."""
     if not path.endswith(PLUGIN_SUFFIX):
@@ -1586,16 +1607,18 @@ def logcat_call(device: Device, args: argparse.Namespace, mark: str) -> list[str
     return call
 
 
-def log_keeps(args: argparse.Namespace, mark: str):
-    """The test a device log line must pass, for what `logcat` cannot filter by itself."""
+def log_keeps(args: argparse.Namespace, mark: str, names: list[str]):
+    """The test a device log line must pass, for what `logcat` cannot filter by itself. A plugin's
+    lines carry no tag of their own (they log under ReactNativeJS in the shared host process), so a
+    line counts as the plugin's when it holds one of the plugin's names (#192)."""
     text = (args.grep or "").lower()
-    plugin = (args.plugin or "").lower()
+    plugin = [name.lower() for name in names]
 
     def keeps(line: str) -> bool:
         lowered = line.lower()
         if line.startswith("---------") or text not in lowered:
             return False
-        if plugin and plugin not in lowered and not PLUGIN_DENIED.search(line):
+        if plugin and not any(name in lowered for name in plugin) and not PLUGIN_DENIED.search(line):
             return False
         return not mark or parse_log(line).get("time", mark + "~") > mark  # logcat -T repeats the marked line
 
@@ -1642,7 +1665,8 @@ def command_logs(device: Device, args: argparse.Namespace):
     if args.follow and args.since_last:
         raise bad_usage("--follow already shows only new lines; drop --since-last")
     mark = read_log_mark() if args.since_last else ""
-    keeps = log_keeps(args, mark)
+    names = plugin_log_names(device, args.plugin) if args.plugin else []
+    keeps = log_keeps(args, mark, names)
     call = logcat_call(device, args, mark)
     if args.follow:
         return follow_log(device, args, call, keeps)
@@ -1655,6 +1679,8 @@ def command_logs(device: Device, args: argparse.Namespace):
         lines = lines[-args.lines:]  # `logcat -t` counts per buffer, so it can return more than asked
     if args.since_last:
         save_log_mark(every)
+    if args.tag and not lines and find_plugins(plugin_rows(device), args.tag):
+        print(f"inkctl: a plugin logs under the tag ReactNativeJS, not {args.tag}; use --plugin {args.tag}", file=sys.stderr)
     return {"lines": [log_entry(args, line) for line in lines]}, "\n".join(lines)
 
 
@@ -1929,7 +1955,7 @@ def build_parser() -> argparse.ArgumentParser:
     logs.add_argument("--since-last", action="store_true", help="only what is new since the previous --since-last")
     logs.add_argument("--follow", action="store_true", help="keep printing new lines until --timeout")
     logs.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds of --follow")
-    logs.add_argument("--plugin", metavar="NAME", help="one plugin's lines, and every denied permission")
+    logs.add_argument("--plugin", metavar="NAME", help="one plugin's lines, by its shown name, pluginKey or pluginID, and every denied permission")
 
     history = add(commands, "history", command_history)
     history.set_defaults(needs_device=False)
