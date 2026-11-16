@@ -1,0 +1,22 @@
+{
+ "brazil": {
+  "ok": true,
+  "reason": "the flag of Brazil first; the film logo is gone (judged from the titles, no sheets)"
+ },
+ "apple-logo": {
+  "ok": true,
+  "reason": "the Apple logo first, as the query asks (judged from the titles, no sheets)"
+ },
+ "apple": {
+  "ok": true,
+  "reason": "the same page 1 as in lookup-13-head: apple icons, photos and drawings (judged from the titles, no sheets)"
+ },
+ "angry": {
+  "ok": true,
+  "reason": "the same page 1 as in lookup-13-head: angry faces first (judged from the titles, no sheets)"
+ },
+ "paris": {
+  "ok": true,
+  "reason": "the city's arms and the Eiffel Tower; the city's own logo at 3, as in English (judged from the titles, no sheets)"
+ }
+}

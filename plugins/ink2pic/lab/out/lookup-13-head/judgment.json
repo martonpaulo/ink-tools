@@ -1,0 +1,27 @@
+{
+ "apple": {
+  "ok": true,
+  "reason": "a green apple icon, apple photos and apple drawings; no Apple logo (judged from the titles, no sheets)"
+ },
+ "apples": {
+  "ok": true,
+  "reason": "harvested and isolated apples, with two tiles of the Swiss village Apples; no Apple logo (judged from the titles, no sheets)"
+ },
+ "key": {
+  "ok": true,
+  "reason": "key drawings and an old key engraving; no company logo (judged from the titles, no sheets)"
+ },
+ "angry": {
+  "ok": true,
+  "reason": "angry faces first; the Angry Birds logo is gone (judged from the titles, no sheets)"
+ },
+ "brazil": {
+  "ok": false,
+  "reason": "a medal and the Brazil film logo; the flag is not on page 1 (fixed in lookup-13b) (judged from the titles, no sheets)",
+  "flags": {
+   "logo": [
+    1
+   ]
+  }
+ }
+}

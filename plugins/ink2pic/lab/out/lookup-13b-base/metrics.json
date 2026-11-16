@@ -1,0 +1,5705 @@
+{
+ "run": "lookup-13b-base",
+ "commit": "8e501de056bdb7b16fcb5826788f2741c36a2d25",
+ "summary": {
+  "queries": 59,
+  "expectedOnPageOne": "not judged",
+  "byCategory": {
+   "object": "not judged",
+   "food": "not judged",
+   "plant": "not judged",
+   "place": "not judged",
+   "person": "not judged",
+   "brazilian": "not judged",
+   "portuguese": "not judged",
+   "spanish": "not judged",
+   "chinese": "not judged",
+   "recognition": "not judged",
+   "style": "not judged",
+   "abstract": "not judged",
+   "ambiguous": "not judged",
+   "short": "not judged",
+   "brand": "not judged",
+   "plural": "not judged",
+   "line": "not judged",
+   "phrase": "not judged"
+  },
+  "tiles": {
+   "text": 0,
+   "signature": 0,
+   "dark": 14,
+   "logo": 2,
+   "convertedPhotos": 0,
+   "emptyPages": 0,
+   "fullPages": 59
+  },
+  "pixels": {
+   "measured": 353,
+   "halfTransparent": 125,
+   "nearBlackOnBlack": 132
+  }
+ },
+ "cases": [
+  {
+   "id": "chair",
+   "category": "object",
+   "query": "chair",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1FA91",
+    "commons:9629174",
+    "commons:60192739",
+    "openclipart:219215",
+    "commons:164417725",
+    "openclipart:291433"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1FA91",
+     "title": "chair",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.082,
+      "transparent": 0.915
+     }
+    },
+    {
+     "id": "commons:9629174",
+     "title": "Silla-Abuelo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 114.5,
+      "meanOnBlack": 114.5,
+      "darkOnWhite": 0.244,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:60192739",
+     "title": "Set of fourteen side chairs MET DP110780",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 181,
+      "meanOnBlack": 181,
+      "darkOnWhite": 0.074,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:219215",
+     "title": "Rocking Chair",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 213.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.147,
+      "transparent": 0.837
+     }
+    },
+    {
+     "id": "commons:164417725",
+     "title": "Chair-Icon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237.2,
+      "meanOnBlack": 25.3,
+      "darkOnWhite": 0,
+      "transparent": 0.835
+     }
+    },
+    {
+     "id": "openclipart:291433",
+     "title": "Rocking Chair",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 190.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.233,
+      "transparent": 0.746
+     }
+    }
+   ]
+  },
+  {
+   "id": "bicycle",
+   "category": "object",
+   "query": "bicycle",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F6B2",
+    "commons:63964332",
+    "commons:18200257",
+    "commons:151877736",
+    "commons:108264567",
+    "commons:73934504"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F6B2",
+     "title": "bicycle",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.088,
+      "transparent": 0.91
+     }
+    },
+    {
+     "id": "commons:63964332",
+     "title": "00 8327 Historisches Fahrrad",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 131.5,
+      "meanOnBlack": 131.5,
+      "darkOnWhite": 0.163,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:18200257",
+     "title": "Left side of Flying Pigeon",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 121.3,
+      "meanOnBlack": 121.3,
+      "darkOnWhite": 0.256,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:151877736",
+     "title": "Bicycle counter icon",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 199.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.211,
+      "transparent": 0.78
+     }
+    },
+    {
+     "id": "commons:108264567",
+     "title": "The Roadster Bicycle of 1886",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 213.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.115,
+      "transparent": 0.834
+     }
+    },
+    {
+     "id": "commons:73934504",
+     "title": "Electric bicycle silhouette",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 180.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.281,
+      "transparent": 0.71
+     }
+    }
+   ]
+  },
+  {
+   "id": "clock",
+   "category": "object",
+   "query": "clock",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:217074",
+    "commons:86250100",
+    "openclipart:217071",
+    "openclipart:217064",
+    "openclipart:213112",
+    "openclipart:194574"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:217074",
+     "title": "12 o'clock",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 188.9,
+      "meanOnBlack": 122,
+      "darkOnWhite": 0.18,
+      "transparent": 0.265
+     }
+    },
+    {
+     "id": "commons:86250100",
+     "title": "Circadian CLOCK protein",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 57,
+      "meanOnBlack": 57,
+      "darkOnWhite": 0.677,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:217071",
+     "title": "9 o'clock",
+     "kind": null,
+     "converted": false,
+     "pixels": {
+      "error": "UnidentifiedImageError"
+     }
+    },
+    {
+     "id": "openclipart:217064",
+     "title": "2 o'clock",
+     "kind": null,
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 188.1,
+      "meanOnBlack": 121.2,
+      "darkOnWhite": 0.183,
+      "transparent": 0.265
+     }
+    },
+    {
+     "id": "openclipart:213112",
+     "title": "Grandfather Clock",
+     "kind": null,
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 116.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.485,
+      "transparent": 0.448
+     }
+    },
+    {
+     "id": "openclipart:194574",
+     "title": "Vintage clock",
+     "kind": null,
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 168.8,
+      "meanOnBlack": 167.8,
+      "darkOnWhite": 0.046,
+      "transparent": 0.006
+     }
+    }
+   ]
+  },
+  {
+   "id": "bread",
+   "category": "food",
+   "query": "bread",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F35E",
+    "commons:19435415",
+    "openclipart:213637",
+    "openclipart:208584",
+    "openclipart:240738",
+    "openclipart:316197"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F35E",
+     "title": "bread",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 232.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.084,
+      "transparent": 0.912
+     }
+    },
+    {
+     "id": "commons:19435415",
+     "title": "Bread 1971",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 157.4,
+      "meanOnBlack": 157.4,
+      "darkOnWhite": 0.142,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:213637",
+     "title": "bread - lineart",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 217.3,
+      "meanOnBlack": 135.7,
+      "darkOnWhite": 0.112,
+      "transparent": 0.32
+     }
+    },
+    {
+     "id": "openclipart:208584",
+     "title": "Loaf of Bread",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 196,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.187,
+      "transparent": 0.767
+     }
+    },
+    {
+     "id": "openclipart:240738",
+     "title": "Bread",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 241.7,
+      "meanOnBlack": 241.7,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:316197",
+     "title": "Simple Bread",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 199.5,
+      "meanOnBlack": 95.6,
+      "darkOnWhite": 0.122,
+      "transparent": 0.408
+     }
+    }
+   ]
+  },
+  {
+   "id": "banana",
+   "category": "food",
+   "query": "banana",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F34C",
+    "commons:68253748",
+    "commons:102658250",
+    "openclipart:177814",
+    "openclipart:177813",
+    "commons:4546291"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F34C",
+     "title": "banana",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.069,
+      "transparent": 0.929
+     }
+    },
+    {
+     "id": "commons:68253748",
+     "title": "Banana on whitebackground",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.1,
+      "meanOnBlack": 233.1,
+      "darkOnWhite": 0.002,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:102658250",
+     "title": "Bananas (Alabama Extension)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 141.1,
+      "meanOnBlack": 141.1,
+      "darkOnWhite": 0.086,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:177814",
+     "title": "Single line art Banana",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 246.3,
+      "meanOnBlack": 4.6,
+      "darkOnWhite": 0.025,
+      "transparent": 0.948
+     }
+    },
+    {
+     "id": "openclipart:177813",
+     "title": "Banana Bunch Line Art",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 240.6,
+      "meanOnBlack": 7.5,
+      "darkOnWhite": 0.04,
+      "transparent": 0.914
+     }
+    },
+    {
+     "id": "commons:4546291",
+     "title": "VU-Banana",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 208.6,
+      "meanOnBlack": 52.6,
+      "darkOnWhite": 0.139,
+      "transparent": 0.612
+     }
+    }
+   ]
+  },
+  {
+   "id": "pizza",
+   "category": "food",
+   "query": "pizza",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F355",
+    "commons:372337",
+    "commons:69850719",
+    "openclipart:142735",
+    "openclipart:202744",
+    "openclipart:337387"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F355",
+     "title": "pizza",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.092,
+      "transparent": 0.906
+     }
+    },
+    {
+     "id": "commons:372337",
+     "title": "Eq it-na pizza-margherita sep2005 sml",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 140.6,
+      "meanOnBlack": 140.6,
+      "darkOnWhite": 0.084,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:69850719",
+     "title": "Pizza-3007395",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 68.3,
+      "meanOnBlack": 68.3,
+      "darkOnWhite": 0.645,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:142735",
+     "title": "pizza cutter icon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 240.3,
+      "meanOnBlack": 51.1,
+      "darkOnWhite": 0.001,
+      "transparent": 0.743
+     }
+    },
+    {
+     "id": "openclipart:202744",
+     "title": "Pizza",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.6,
+      "meanOnBlack": 74.7,
+      "darkOnWhite": 0,
+      "transparent": 0.611
+     }
+    },
+    {
+     "id": "openclipart:337387",
+     "title": "Melty Pizza",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230,
+      "meanOnBlack": 90,
+      "darkOnWhite": 0,
+      "transparent": 0.549
+     }
+    }
+   ]
+  },
+  {
+   "id": "tree",
+   "category": "plant",
+   "query": "tree",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:324463",
+    "commons:2294072",
+    "commons:182066993",
+    "commons:155941239",
+    "commons:155941594",
+    "commons:180332680"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:324463",
+     "title": "Search tree",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 243.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.038,
+      "transparent": 0.955
+     }
+    },
+    {
+     "id": "commons:2294072",
+     "title": "Alnus glutinosa 011",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 120.5,
+      "meanOnBlack": 120.5,
+      "darkOnWhite": 0.2,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:182066993",
+     "title": "Usamljeni jasen - panoramio (cropped)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 129.5,
+      "meanOnBlack": 129.5,
+      "darkOnWhite": 0.229,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:155941239",
+     "title": "Deus tree icon",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 205.5,
+      "meanOnBlack": 17.9,
+      "darkOnWhite": 0.099,
+      "transparent": 0.735
+     }
+    },
+    {
+     "id": "commons:155941594",
+     "title": "Green tree icon",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 176,
+      "meanOnBlack": 38,
+      "darkOnWhite": 0,
+      "transparent": 0.541
+     }
+    },
+    {
+     "id": "commons:180332680",
+     "title": "Tree A159",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 164,
+      "meanOnBlack": 163.6,
+      "darkOnWhite": 0.222,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "eiffel-tower",
+   "category": "place",
+   "query": "Eiffel Tower",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:303858",
+    "commons:6926930",
+    "commons:48220385",
+    "openclipart:247017",
+    "openclipart:337555",
+    "commons:37519033"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:303858",
+     "title": "Eiffel tower outline icon monument",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 243.5,
+      "meanOnBlack": 6.7,
+      "darkOnWhite": 0,
+      "transparent": 0.927
+     }
+    },
+    {
+     "id": "commons:6926930",
+     "title": "Tour Eiffel Wikimedia Commons",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 91.8,
+      "meanOnBlack": 91.8,
+      "darkOnWhite": 0.333,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:48220385",
+     "title": "Tour Eiffel Wikimedia Commons (cropped)",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 89.6,
+      "meanOnBlack": 89.6,
+      "darkOnWhite": 0.354,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:247017",
+     "title": "Eiffel Tower Charcoal Sketch",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 214.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.137,
+      "transparent": 0.842
+     }
+    },
+    {
+     "id": "openclipart:337555",
+     "title": "Vintage Eiffel Tower Line Art",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 228,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.051,
+      "transparent": 0.888
+     }
+    },
+    {
+     "id": "commons:37519033",
+     "title": "Eiffel Tower icon - OpenClipart",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 236.8,
+      "meanOnBlack": 5.4,
+      "darkOnWhite": 0.077,
+      "transparent": 0.908
+     }
+    }
+   ]
+  },
+  {
+   "id": "paris",
+   "category": "place",
+   "query": "Paris",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 1
+   },
+   "page1": [
+    "commons:165648590",
+    "openclipart:169505",
+    "commons:124307592",
+    "commons:34933538",
+    "commons:134899640",
+    "openclipart:343388"
+   ],
+   "tiles": [
+    {
+     "id": "commons:165648590",
+     "title": "Drapeau des armes de la ville de Paris",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 52.8,
+      "meanOnBlack": 52.8,
+      "darkOnWhite": 0.86,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:169505",
+     "title": "Paris",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 221.2,
+      "meanOnBlack": 30.8,
+      "darkOnWhite": 0.054,
+      "transparent": 0.795
+     }
+    },
+    {
+     "id": "commons:124307592",
+     "title": "Ville de Paris logo",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 206.1,
+      "meanOnBlack": 5.8,
+      "darkOnWhite": 0.204,
+      "transparent": 0.786
+     }
+    },
+    {
+     "id": "commons:34933538",
+     "title": "La Tour Eiffel vue de la Tour Saint-Jacques, Paris août 2014 (2)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 145.1,
+      "meanOnBlack": 145.1,
+      "darkOnWhite": 0.144,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:134899640",
+     "title": "The Eiffel Tower, viewed from Tour Montparnasse, 25 July 2022 (cropped)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 138,
+      "meanOnBlack": 138,
+      "darkOnWhite": 0.102,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:343388",
+     "title": "The Judgment of Paris",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 174.3,
+      "meanOnBlack": 161.7,
+      "darkOnWhite": 0.251,
+      "transparent": 0.011
+     }
+    }
+   ]
+  },
+  {
+   "id": "mount-everest",
+   "category": "place",
+   "query": "Mount Everest",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:349479",
+    "commons:18262217",
+    "commons:23263964",
+    "openclipart:215778",
+    "commons:125747467",
+    "commons:125747468"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:349479",
+     "title": "Mount Everest",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 184.8,
+      "meanOnBlack": 183.1,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:18262217",
+     "title": "Mount Everest as seen from Drukair2 PLW edit",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 107,
+      "meanOnBlack": 107,
+      "darkOnWhite": 0.189,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:23263964",
+     "title": "Mt. Everest from Gokyo Ri November 5, 2012",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 120.7,
+      "meanOnBlack": 120.7,
+      "darkOnWhite": 0.131,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:215778",
+     "title": "Mount Everest",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 137.4,
+      "meanOnBlack": 137.4,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:125747467",
+     "title": "Mount Everest, Himalayas",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 119.4,
+      "meanOnBlack": 119.4,
+      "darkOnWhite": 0.384,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:125747468",
+     "title": "Mount Everest, Nepal, Himalayas",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 126.7,
+      "meanOnBlack": 126.7,
+      "darkOnWhite": 0.313,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "rio-de-janeiro",
+   "category": "place",
+   "query": "Rio de Janeiro",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:12436261",
+    "commons:130372972",
+    "commons:40647065",
+    "openclipart:226125",
+    "commons:179872859",
+    "openclipart:217157"
+   ],
+   "tiles": [
+    {
+     "id": "commons:12436261",
+     "title": "Bandeira da cidade do Rio de Janeiro",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 197.6,
+      "meanOnBlack": 197.6,
+      "darkOnWhite": 0.06,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:130372972",
+     "title": "Rio de Janeiro population pyramid",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 190.5,
+      "meanOnBlack": 189.4,
+      "darkOnWhite": 0.022,
+      "transparent": 0.004
+     }
+    },
+    {
+     "id": "commons:40647065",
+     "title": "Cidade Maravilhosa",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 123.6,
+      "meanOnBlack": 123.6,
+      "darkOnWhite": 0.158,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:226125",
+     "title": "Ipanema Beach Rio De Janeiro",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 126.9,
+      "meanOnBlack": 115.6,
+      "darkOnWhite": 0.121,
+      "transparent": 0.004
+     }
+    },
+    {
+     "id": "commons:179872859",
+     "title": "Brasão da Cidade do Rio de Janeiro - SVG",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 181.4,
+      "meanOnBlack": 88.3,
+      "darkOnWhite": 0.023,
+      "transparent": 0.365
+     }
+    },
+    {
+     "id": "openclipart:217157",
+     "title": "CRISTO REDENTOR - RIO",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 212.3,
+      "meanOnBlack": 150.6,
+      "darkOnWhite": 0.018,
+      "transparent": 0.24
+     }
+    }
+   ]
+  },
+  {
+   "id": "napoleon",
+   "category": "person",
+   "query": "Napoleon",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:280517",
+    "commons:22174172",
+    "openclipart:334438",
+    "openclipart:281540",
+    "openclipart:291788",
+    "commons:126657164"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:280517",
+     "title": "Napoleon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 209.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.135,
+      "transparent": 0.82
+     }
+    },
+    {
+     "id": "commons:22174172",
+     "title": "Jacques-Louis David - The Emperor Napoleon in His Study at the Tuileries - Google Art Project",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 56.6,
+      "meanOnBlack": 56.6,
+      "darkOnWhite": 0.757,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:334438",
+     "title": "Napoleon",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 169.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.271,
+      "transparent": 0.661
+     }
+    },
+    {
+     "id": "openclipart:281540",
+     "title": "Napoleon Standing",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 155.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.303,
+      "transparent": 0.63
+     }
+    },
+    {
+     "id": "openclipart:291788",
+     "title": "napoleon bonaparte",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 195.7,
+      "meanOnBlack": 64.9,
+      "darkOnWhite": 0.128,
+      "transparent": 0.512
+     }
+    },
+    {
+     "id": "commons:126657164",
+     "title": "Napoleon bonaparte 1796 1505181",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 118.9,
+      "meanOnBlack": 118.9,
+      "darkOnWhite": 0.038,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "napoleao",
+   "category": "person",
+   "query": "Napoleão",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "commons:22174172",
+    "commons:146854481",
+    "commons:92707254",
+    "commons:27958120",
+    "commons:283006",
+    "commons:182124042"
+   ],
+   "tiles": [
+    {
+     "id": "commons:22174172",
+     "title": "Jacques-Louis David - The Emperor Napoleon in His Study at the Tuileries - Google Art Project",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 56.6,
+      "meanOnBlack": 56.6,
+      "darkOnWhite": 0.757,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:146854481",
+     "title": "Bonaparte à Lyon",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 125.3,
+      "meanOnBlack": 125.3,
+      "darkOnWhite": 0.309,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:92707254",
+     "title": "Napleon Le Grande MET DP883933",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 185.7,
+      "meanOnBlack": 185.7,
+      "darkOnWhite": 0.004,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:27958120",
+     "title": "Le triomphe de 1810, Jean-Pierre Cortot, Arc triomphe Paris",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 164.9,
+      "meanOnBlack": 164.9,
+      "darkOnWhite": 0.055,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:283006",
+     "title": "David - Napoleon crossing the Alps - Malmaison1",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 106.4,
+      "meanOnBlack": 106.4,
+      "darkOnWhite": 0.269,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:182124042",
+     "title": "Bonaparte Premier Consul de la République Française 1802",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 167.3,
+      "meanOnBlack": 167.3,
+      "darkOnWhite": 0.044,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "miguel-de-cervantes",
+   "category": "person",
+   "query": "Miguel de Cervantes",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "commons:794211",
+    "commons:676819",
+    "commons:14862492",
+    "commons:6157061",
+    "commons:4989919",
+    "commons:14862922"
+   ],
+   "tiles": [
+    {
+     "id": "commons:794211",
+     "title": "Miguel de Cervantes lithography",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 191.2,
+      "meanOnBlack": 191.2,
+      "darkOnWhite": 0.047,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:676819",
+     "title": "Cervantes Jáuregui",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 34.9,
+      "meanOnBlack": 34.9,
+      "darkOnWhite": 0.779,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:14862492",
+     "title": "Monumento a Miguel de Cervantes - 01",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 124.7,
+      "meanOnBlack": 124.7,
+      "darkOnWhite": 0.1,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:6157061",
+     "title": "Miguel de Cervantes Saavedra 01",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 175.1,
+      "meanOnBlack": 175.1,
+      "darkOnWhite": 0.029,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:4989919",
+     "title": "Miguel de Cervantes lithography-cropped",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 170.8,
+      "meanOnBlack": 170.8,
+      "darkOnWhite": 0.086,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:14862922",
+     "title": "Miguel de Cervantes - Monumento a Miguel de Cervantes",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 168.8,
+      "meanOnBlack": 168.8,
+      "darkOnWhite": 0.069,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "federico-garcia-lorca",
+   "category": "person",
+   "query": "Federico García Lorca",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "commons:76327202",
+    "commons:132672949",
+    "commons:34457702",
+    "commons:112423698",
+    "commons:76326365",
+    "commons:76457851"
+   ],
+   "tiles": [
+    {
+     "id": "commons:76327202",
+     "title": "Federico García Lorca. Huerta de San Vicente, Granada",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 203.9,
+      "meanOnBlack": 203.9,
+      "darkOnWhite": 0.149,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:132672949",
+     "title": "Federico García Lorca",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 28,
+      "meanOnBlack": 28,
+      "darkOnWhite": 0.885,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:34457702",
+     "title": "Federico García Lorca 1989 Albania stamp",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219.8,
+      "meanOnBlack": 219.8,
+      "darkOnWhite": 0.034,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:112423698",
+     "title": "Federico García Lorca y María Muñoz de Quevedo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 150.3,
+      "meanOnBlack": 150.3,
+      "darkOnWhite": 0.222,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76326365",
+     "title": "Federico García Lorca y Ernesto Pérez Güerra, Madrid, 1934",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 128.4,
+      "meanOnBlack": 128.4,
+      "darkOnWhite": 0.146,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76457851",
+     "title": "Los hermanos Federico García Lorca y Francisco García Lorca",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 133.6,
+      "meanOnBlack": 133.6,
+      "darkOnWhite": 0.114,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "frida-kahlo",
+   "category": "person",
+   "query": "Frida Kahlo",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:296913",
+    "commons:75199760",
+    "commons:32639240",
+    "commons:80071791",
+    "openclipart:296914",
+    "commons:102454673"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:296913",
+     "title": "Frida Kahlo 2",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 193.1,
+      "meanOnBlack": 193,
+      "darkOnWhite": 0.091,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:75199760",
+     "title": "Frida Kahlo, by Guillermo Kahlo (cropped)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 127.9,
+      "meanOnBlack": 127.9,
+      "darkOnWhite": 0.14,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:32639240",
+     "title": "Frida Kahlo, by Guillermo Kahlo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 121.3,
+      "meanOnBlack": 121.3,
+      "darkOnWhite": 0.182,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:80071791",
+     "title": "Frida Kahlo, by Guillermo Kahlo (cropped)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219.5,
+      "meanOnBlack": 178.1,
+      "darkOnWhite": 0,
+      "transparent": 0.003
+     }
+    },
+    {
+     "id": "openclipart:296914",
+     "title": "Frida Kahlo 3",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 106.8,
+      "meanOnBlack": 103,
+      "darkOnWhite": 0.167,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:102454673",
+     "title": "Frida Kahlo (1) (9187650702)",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 55.1,
+      "meanOnBlack": 55.1,
+      "darkOnWhite": 0.58,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "leonardo-da-vinci",
+   "category": "person",
+   "query": "Leonardo da Vinci",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:78645105",
+    "commons:65006649",
+    "openclipart:125137",
+    "openclipart:328442",
+    "openclipart:125119",
+    "openclipart:340583"
+   ],
+   "tiles": [
+    {
+     "id": "commons:78645105",
+     "title": "Francesco Melzi - Portrait of Leonardo",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 175.5,
+      "meanOnBlack": 158.2,
+      "darkOnWhite": 0,
+      "transparent": 0.068
+     }
+    },
+    {
+     "id": "commons:65006649",
+     "title": "Leonardo da Vinci 1519 2019",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 206.1,
+      "meanOnBlack": 9.4,
+      "darkOnWhite": 0.139,
+      "transparent": 0.77
+     }
+    },
+    {
+     "id": "openclipart:125137",
+     "title": "Leonardo Da Vinci Self-portrait Outline 2",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 214.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.116,
+      "transparent": 0.844
+     }
+    },
+    {
+     "id": "openclipart:328442",
+     "title": "Leonardo da Vinci Portrait",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 179.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.137,
+      "transparent": 0.694
+     }
+    },
+    {
+     "id": "openclipart:125119",
+     "title": "Leonardo Da Vinci Self-portrait Outline",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 194.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.174,
+      "transparent": 0.767
+     }
+    },
+    {
+     "id": "openclipart:340583",
+     "title": "Leonardo Da Vinci's Skull Sketch",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 174.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.174,
+      "transparent": 0.683
+     }
+    }
+   ]
+  },
+  {
+   "id": "cleopatra",
+   "category": "person",
+   "query": "Cleopatra",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:348091",
+    "commons:2597825",
+    "openclipart:277658",
+    "openclipart:305924",
+    "openclipart:305923",
+    "openclipart:242466"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:348091",
+     "title": "Cleopatra",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 190.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.23,
+      "transparent": 0.746
+     }
+    },
+    {
+     "id": "commons:2597825",
+     "title": "Kleopatra-VII.-Altes-Museum-Berlin1",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 157.2,
+      "meanOnBlack": 157.2,
+      "darkOnWhite": 0.03,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:277658",
+     "title": "Cleopatra",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 213.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.074,
+      "transparent": 0.858
+     }
+    },
+    {
+     "id": "openclipart:305924",
+     "title": "Head of cleopatra (2)",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 178,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.277,
+      "transparent": 0.699
+     }
+    },
+    {
+     "id": "openclipart:305923",
+     "title": "Head of cleopatra (1)",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 167.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.304,
+      "transparent": 0.656
+     }
+    },
+    {
+     "id": "openclipart:242466",
+     "title": "Cleopatra",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 155.3,
+      "meanOnBlack": 155.3,
+      "darkOnWhite": 0.221,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "machado-de-assis",
+   "category": "brazilian",
+   "query": "Machado de Assis",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:11839475",
+    "openclipart:203276",
+    "commons:150630212",
+    "commons:11219801",
+    "commons:70409605",
+    "commons:8629260"
+   ],
+   "tiles": [
+    {
+     "id": "commons:11839475",
+     "title": "Machado de Assis aos 57 anos",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 87.9,
+      "meanOnBlack": 87.9,
+      "darkOnWhite": 0.472,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:203276",
+     "title": "Machado de Assis-Brazilian Poet",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219.5,
+      "meanOnBlack": 39.2,
+      "darkOnWhite": 0.063,
+      "transparent": 0.705
+     }
+    },
+    {
+     "id": "commons:150630212",
+     "title": "Machado de Assis by Marc Ferrez",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 141.5,
+      "meanOnBlack": 141.5,
+      "darkOnWhite": 0.274,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:11219801",
+     "title": "Machado de assis 1874",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 190.9,
+      "meanOnBlack": 190.9,
+      "darkOnWhite": 0.019,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:70409605",
+     "title": "Machado de Assis 1904",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 112.1,
+      "meanOnBlack": 112.1,
+      "darkOnWhite": 0.405,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:8629260",
+     "title": "Machado de Assis Epilepsia",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 80.7,
+      "meanOnBlack": 80.7,
+      "darkOnWhite": 0.625,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "santos-dumont",
+   "category": "brazilian",
+   "query": "Santos Dumont",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "commons:92836303",
+    "commons:83196329",
+    "commons:69544",
+    "commons:6860116",
+    "commons:31097377",
+    "commons:144351526"
+   ],
+   "tiles": [
+    {
+     "id": "commons:92836303",
+     "title": "Alberto Santos Dumont - 1-13675-0000-0000, Acervo do Museu Paulista da USP",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 116.8,
+      "meanOnBlack": 116.8,
+      "darkOnWhite": 0.001,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:83196329",
+     "title": "Santos-Dumont-6",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 183.6,
+      "meanOnBlack": 183.6,
+      "darkOnWhite": 0.046,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:69544",
+     "title": "Alberto Santos-Dumont portrait",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 49.5,
+      "meanOnBlack": 49.5,
+      "darkOnWhite": 0.89,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:6860116",
+     "title": "Santos dumont mg",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 107,
+      "meanOnBlack": 107,
+      "darkOnWhite": 0.181,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:31097377",
+     "title": "Alberto Santos-Dumont b Meurisse 1922",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 97.2,
+      "meanOnBlack": 97.2,
+      "darkOnWhite": 0.472,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:144351526",
+     "title": "(Barcelona) Portrait of the Brazilian Aviator Alberto Santos-Dumont by François Flameng - Museu Nacional d'Art de Catalunya",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 101.4,
+      "meanOnBlack": 101.4,
+      "darkOnWhite": 0.381,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "clarice-lispector",
+   "category": "brazilian",
+   "query": "Clarice Lispector",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:158175275",
+    "commons:122217175",
+    "commons:121089184",
+    "commons:121088882",
+    "commons:120983111",
+    "commons:122217091"
+   ],
+   "tiles": [
+    {
+     "id": "commons:158175275",
+     "title": "(1920-1977) Clarice Lispector 6zxkp please credit(palette.fm) (cropped)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 108.1,
+      "meanOnBlack": 108.1,
+      "darkOnWhite": 0.295,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:122217175",
+     "title": "Clarice Lispector, 1968",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 100.8,
+      "meanOnBlack": 100.8,
+      "darkOnWhite": 0.518,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:121089184",
+     "title": "\"(1920-1977)\" - \"Clarice Lispector\" Brazil",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 111.9,
+      "meanOnBlack": 111.9,
+      "darkOnWhite": 0.34,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:121088882",
+     "title": "(1920-1977) \"Clarice Lispector\"",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 111.7,
+      "meanOnBlack": 111.7,
+      "darkOnWhite": 0.313,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:120983111",
+     "title": "\"1972\" Clarice Lispector",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 125.4,
+      "meanOnBlack": 124.6,
+      "darkOnWhite": 0.219,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:122217091",
+     "title": "(1968) - Clarice Lispector",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 115.2,
+      "meanOnBlack": 115.2,
+      "darkOnWhite": 0.424,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "maca",
+   "category": "portuguese",
+   "query": "maçã",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:73766367",
+    "commons:11808709",
+    "commons:7823406",
+    "commons:129600349",
+    "commons:121496118",
+    "openclipart:142363"
+   ],
+   "tiles": [
+    {
+     "id": "commons:73766367",
+     "title": "Green Apple Icon -336015",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.2,
+      "meanOnBlack": 97.2,
+      "darkOnWhite": 0.018,
+      "transparent": 0.51
+     }
+    },
+    {
+     "id": "commons:11808709",
+     "title": "Honeycrisp",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 132,
+      "meanOnBlack": 132,
+      "darkOnWhite": 0.065,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:7823406",
+     "title": "Red Apple",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 214.8,
+      "meanOnBlack": 214.8,
+      "darkOnWhite": 0.101,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:129600349",
+     "title": "Apple video game",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 161.6,
+      "meanOnBlack": 84.1,
+      "darkOnWhite": 0.135,
+      "transparent": 0.304
+     }
+    },
+    {
+     "id": "commons:121496118",
+     "title": "Apple fruit icon",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 241.7,
+      "meanOnBlack": 241.7,
+      "darkOnWhite": 0.046,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:142363",
+     "title": "Apple Red with a Green Leaf with funny Worm",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 235.8,
+      "meanOnBlack": 235.8,
+      "darkOnWhite": 0.066,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "cadeira",
+   "category": "portuguese",
+   "query": "cadeira",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1FA91",
+    "commons:9629174",
+    "commons:101270176",
+    "commons:93348824",
+    "commons:185624043",
+    "commons:74906584"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1FA91",
+     "title": "chair",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.082,
+      "transparent": 0.915
+     }
+    },
+    {
+     "id": "commons:9629174",
+     "title": "Silla-Abuelo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 114.5,
+      "meanOnBlack": 114.5,
+      "darkOnWhite": 0.244,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:101270176",
+     "title": "Cadeira (1-05-02-000-00056-00-00-13), Acervo do Museu Paulista da USP",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 190.8,
+      "meanOnBlack": 190.8,
+      "darkOnWhite": 0.132,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:93348824",
+     "title": "Wheelchair accessible icon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 220.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.133,
+      "transparent": 0.864
+     }
+    },
+    {
+     "id": "commons:185624043",
+     "title": "International wheelchair symbol Pinhead icon",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 199.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.213,
+      "transparent": 0.782
+     }
+    },
+    {
+     "id": "commons:74906584",
+     "title": "Badminton pictogram (Paralympics)",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 224.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.115,
+      "transparent": 0.881
+     }
+    }
+   ]
+  },
+  {
+   "id": "sopa",
+   "category": "portuguese",
+   "query": "sopa",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F35C",
+    "commons:667898",
+    "commons:319120",
+    "commons:18098083",
+    "commons:18129666",
+    "commons:18129665"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F35C",
+     "title": "steaming bowl",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 226.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.109,
+      "transparent": 0.889
+     }
+    },
+    {
+     "id": "commons:667898",
+     "title": "Vegetable beef barley soup",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 120.8,
+      "meanOnBlack": 120.8,
+      "darkOnWhite": 0.083,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:319120",
+     "title": "Salmorejo 4",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 100.4,
+      "meanOnBlack": 100.4,
+      "darkOnWhite": 0.357,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:18098083",
+     "title": "Sopa google",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 193.2,
+      "meanOnBlack": 193.2,
+      "darkOnWhite": 0.246,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:18129666",
+     "title": "Sopa-c",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 153.3,
+      "meanOnBlack": 98.5,
+      "darkOnWhite": 0.371,
+      "transparent": 0.22
+     }
+    },
+    {
+     "id": "commons:18129665",
+     "title": "Sopa-b",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 122.5,
+      "meanOnBlack": 67.6,
+      "darkOnWhite": 0.39,
+      "transparent": 0.22
+     }
+    }
+   ]
+  },
+  {
+   "id": "manzana",
+   "category": "spanish",
+   "query": "manzana",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:86533",
+    "commons:11808709",
+    "commons:6006209",
+    "commons:73766367",
+    "commons:15954712",
+    "openclipart:252738"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:86533",
+     "title": "Manzana",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 238.7,
+      "meanOnBlack": 3.9,
+      "darkOnWhite": 0.058,
+      "transparent": 0.921
+     }
+    },
+    {
+     "id": "commons:11808709",
+     "title": "Honeycrisp",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 132,
+      "meanOnBlack": 132,
+      "darkOnWhite": 0.065,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:6006209",
+     "title": "Owoce Jabłko",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 141.7,
+      "meanOnBlack": 141.7,
+      "darkOnWhite": 0.182,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:73766367",
+     "title": "Green Apple Icon -336015",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.2,
+      "meanOnBlack": 97.2,
+      "darkOnWhite": 0.018,
+      "transparent": 0.51
+     }
+    },
+    {
+     "id": "commons:15954712",
+     "title": "Manzana",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 234.9,
+      "meanOnBlack": 234.9,
+      "darkOnWhite": 0.066,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:252738",
+     "title": "Manzana",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 235.7,
+      "meanOnBlack": 235.7,
+      "darkOnWhite": 0.063,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "silla",
+   "category": "spanish",
+   "query": "silla",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:44747574",
+    "openmoji:1FA91",
+    "commons:3634625",
+    "commons:23160796",
+    "openclipart:167451",
+    "commons:54564376"
+   ],
+   "tiles": [
+    {
+     "id": "commons:44747574",
+     "title": "Bandera de Silla",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 78.9,
+      "meanOnBlack": 78.9,
+      "darkOnWhite": 0.025,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1FA91",
+     "title": "chair",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.082,
+      "transparent": 0.915
+     }
+    },
+    {
+     "id": "commons:3634625",
+     "title": "Vista de Silla, Valencia",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 148.5,
+      "meanOnBlack": 148.5,
+      "darkOnWhite": 0.126,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:23160796",
+     "title": "Silla Valencia 01",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 106.5,
+      "meanOnBlack": 106.5,
+      "darkOnWhite": 0.189,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:167451",
+     "title": "silla",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 213.1,
+      "meanOnBlack": 21.3,
+      "darkOnWhite": 0,
+      "transparent": 0.752
+     }
+    },
+    {
+     "id": "commons:54564376",
+     "title": "Seal of Silla",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 209.4,
+      "meanOnBlack": 19.4,
+      "darkOnWhite": 0,
+      "transparent": 0.745
+     }
+    }
+   ]
+  },
+  {
+   "id": "mariposa",
+   "category": "spanish",
+   "query": "mariposa",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F98B",
+    "commons:61289852",
+    "commons:63533022",
+    "openclipart:229128",
+    "openclipart:142069",
+    "commons:114504496"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F98B",
+     "title": "butterfly",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 226.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.109,
+      "transparent": 0.888
+     }
+    },
+    {
+     "id": "commons:61289852",
+     "title": "Opodiphthera eucalypti male",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 213.9,
+      "meanOnBlack": 213.9,
+      "darkOnWhite": 0.132,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:63533022",
+     "title": "Attacus atlas (15050883139)",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 75.9,
+      "meanOnBlack": 75.9,
+      "darkOnWhite": 0.508,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:229128",
+     "title": "Mariposa lily",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.059,
+      "transparent": 0.916
+     }
+    },
+    {
+     "id": "openclipart:142069",
+     "title": "mariposa",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 161.2,
+      "meanOnBlack": 36.8,
+      "darkOnWhite": 0.191,
+      "transparent": 0.454
+     }
+    },
+    {
+     "id": "commons:114504496",
+     "title": "Mariposa (IMO 9425540)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 166.1,
+      "meanOnBlack": 166.1,
+      "darkOnWhite": 0.057,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "zh-dog",
+   "category": "chinese",
+   "query": "狗",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:102943472",
+    "commons:36912299",
+    "commons:45580977",
+    "commons:184460008",
+    "commons:45580997",
+    "commons:7370099"
+   ],
+   "tiles": [
+    {
+     "id": "commons:102943472",
+     "title": "狗 - U+072D7 - KanjiVG stroke order",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.2,
+      "meanOnBlack": 0.5,
+      "darkOnWhite": 0.091,
+      "transparent": 0.901
+     }
+    },
+    {
+     "id": "commons:36912299",
+     "title": "Chinese rocket",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 211.8,
+      "meanOnBlack": 211.8,
+      "darkOnWhite": 0.093,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:45580977",
+     "title": "狗-seal",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 210.6,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.168,
+      "transparent": 0.826
+     }
+    },
+    {
+     "id": "commons:184460008",
+     "title": "狗-bronze",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 222.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.122,
+      "transparent": 0.874
+     }
+    },
+    {
+     "id": "commons:45580997",
+     "title": "狗-silk",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 186.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.263,
+      "transparent": 0.733
+     }
+    },
+    {
+     "id": "commons:7370099",
+     "title": "狗-order",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 211.2,
+      "meanOnBlack": 211.2,
+      "darkOnWhite": 0.164,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "napoleon-caps",
+   "category": "recognition",
+   "query": "NAPOLEON",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:280517",
+    "commons:22174172",
+    "openclipart:334438",
+    "openclipart:281540",
+    "openclipart:291788",
+    "commons:115144006"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:280517",
+     "title": "Napoleon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 209.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.135,
+      "transparent": 0.82
+     }
+    },
+    {
+     "id": "commons:22174172",
+     "title": "Jacques-Louis David - The Emperor Napoleon in His Study at the Tuileries - Google Art Project",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 56.6,
+      "meanOnBlack": 56.6,
+      "darkOnWhite": 0.757,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:334438",
+     "title": "Napoleon",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 169.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.271,
+      "transparent": 0.661
+     }
+    },
+    {
+     "id": "openclipart:281540",
+     "title": "Napoleon Standing",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 155.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.303,
+      "transparent": 0.63
+     }
+    },
+    {
+     "id": "openclipart:291788",
+     "title": "napoleon bonaparte",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 195.7,
+      "meanOnBlack": 64.9,
+      "darkOnWhite": 0.128,
+      "transparent": 0.512
+     }
+    },
+    {
+     "id": "commons:115144006",
+     "title": "Napoleon-Studying",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 126.3,
+      "meanOnBlack": 126.3,
+      "darkOnWhite": 0.065,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "frederico-garcia-lorca",
+   "category": "recognition",
+   "query": "Frederico García Lorca",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:76327202",
+    "commons:34457702",
+    "commons:112423698",
+    "commons:76326365",
+    "commons:76823516",
+    "commons:76457851"
+   ],
+   "tiles": [
+    {
+     "id": "commons:76327202",
+     "title": "Federico García Lorca. Huerta de San Vicente, Granada",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 203.9,
+      "meanOnBlack": 203.9,
+      "darkOnWhite": 0.149,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:34457702",
+     "title": "Federico García Lorca 1989 Albania stamp",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219.8,
+      "meanOnBlack": 219.8,
+      "darkOnWhite": 0.034,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:112423698",
+     "title": "Federico García Lorca y María Muñoz de Quevedo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 150.3,
+      "meanOnBlack": 150.3,
+      "darkOnWhite": 0.222,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76326365",
+     "title": "Federico García Lorca y Ernesto Pérez Güerra, Madrid, 1934",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 128.4,
+      "meanOnBlack": 128.4,
+      "darkOnWhite": 0.146,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76823516",
+     "title": "Gonzalo Menéndez Pidal graba a Lorca y otros miembros de La Barraca en la Calle Capitán Galán (Calle Príncipe) de Vigo en agosto de 1932",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 127.4,
+      "meanOnBlack": 127.4,
+      "darkOnWhite": 0.394,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76457851",
+     "title": "Los hermanos Federico García Lorca y Francisco García Lorca",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 133.6,
+      "meanOnBlack": 133.6,
+      "darkOnWhite": 0.114,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "garcia-lorca",
+   "category": "recognition",
+   "query": "Garcia Lorca",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:76327202",
+    "commons:41545248",
+    "commons:76471686",
+    "commons:76326365",
+    "commons:112423698",
+    "commons:76823516"
+   ],
+   "tiles": [
+    {
+     "id": "commons:76327202",
+     "title": "Federico García Lorca. Huerta de San Vicente, Granada",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 203.9,
+      "meanOnBlack": 203.9,
+      "darkOnWhite": 0.149,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:41545248",
+     "title": "FEDERICO GARCIA LORCA (13451705834)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 191.1,
+      "meanOnBlack": 191.1,
+      "darkOnWhite": 0.001,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76471686",
+     "title": "Federico garcia lorca con su hermana isabel en granada en 1914",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 146.8,
+      "meanOnBlack": 146.8,
+      "darkOnWhite": 0.198,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76326365",
+     "title": "Federico García Lorca y Ernesto Pérez Güerra, Madrid, 1934",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 128.4,
+      "meanOnBlack": 128.4,
+      "darkOnWhite": 0.146,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:112423698",
+     "title": "Federico García Lorca y María Muñoz de Quevedo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 150.3,
+      "meanOnBlack": 150.3,
+      "darkOnWhite": 0.222,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:76823516",
+     "title": "Gonzalo Menéndez Pidal graba a Lorca y otros miembros de La Barraca en la Calle Capitán Galán (Calle Príncipe) de Vigo en agosto de 1932",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 127.4,
+      "meanOnBlack": 127.4,
+      "darkOnWhite": 0.394,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "elephent",
+   "category": "recognition",
+   "query": "elephent",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:72360104",
+    "commons:22923391",
+    "commons:2349769",
+    "commons:21724184",
+    "commons:30468324",
+    "commons:134688706"
+   ],
+   "tiles": [
+    {
+     "id": "commons:72360104",
+     "title": "Elephent falls",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 85.2,
+      "meanOnBlack": 85.2,
+      "darkOnWhite": 0.451,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:22923391",
+     "title": "Radhanagar LateAfternoon",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 134.9,
+      "meanOnBlack": 134.9,
+      "darkOnWhite": 0.188,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:2349769",
+     "title": "Havelockradhanagar1",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 142.4,
+      "meanOnBlack": 142.4,
+      "darkOnWhite": 0.141,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:21724184",
+     "title": "Elephent carving",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 144.6,
+      "meanOnBlack": 144.6,
+      "darkOnWhite": 0.073,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:30468324",
+     "title": "Elephent comparison",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 107.6,
+      "meanOnBlack": 107.6,
+      "darkOnWhite": 0.355,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:134688706",
+     "title": "Elephent elelph",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 163.4,
+      "meanOnBlack": 163.1,
+      "darkOnWhite": 0.002,
+      "transparent": 0.001
+     }
+    }
+   ]
+  },
+  {
+   "id": "apple-logo",
+   "category": "style",
+   "query": "apple logo",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:10472152",
+    "commons:141909395",
+    "commons:78985341",
+    "openclipart:299756",
+    "commons:10503104",
+    "openclipart:181940"
+   ],
+   "tiles": [
+    {
+     "id": "commons:10472152",
+     "title": "Apple logo black",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 237,
+      "meanOnBlack": 237,
+      "darkOnWhite": 0.062,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:141909395",
+     "title": "Apple logo (53053893)",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.5,
+      "meanOnBlack": 231.5,
+      "darkOnWhite": 0.004,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:78985341",
+     "title": "Apple park cupertino 2019",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 128.6,
+      "meanOnBlack": 128.6,
+      "darkOnWhite": 0.052,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:299756",
+     "title": "koconmus logo",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.087,
+      "transparent": 0.907
+     }
+    },
+    {
+     "id": "commons:10503104",
+     "title": "Apple first logo",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 186.7,
+      "meanOnBlack": 102.4,
+      "darkOnWhite": 0.116,
+      "transparent": 0.331
+     }
+    },
+    {
+     "id": "openclipart:181940",
+     "title": "Clipart App Logo",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 154.6,
+      "meanOnBlack": 149.4,
+      "darkOnWhite": 0.123,
+      "transparent": 0.021
+     }
+    }
+   ]
+  },
+  {
+   "id": "brazil",
+   "category": "place",
+   "query": "Brazil",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 1
+   },
+   "page1": [
+    "openclipart:132373",
+    "commons:68518507",
+    "openclipart:65413",
+    "openclipart:251852",
+    "openclipart:181093",
+    "openclipart:209002"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:132373",
+     "title": "Brazil 2014-2016 Medal",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 220.7,
+      "meanOnBlack": 72,
+      "darkOnWhite": 0,
+      "transparent": 0.583
+     }
+    },
+    {
+     "id": "commons:68518507",
+     "title": "Brazil movie logo",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 207.8,
+      "meanOnBlack": 207.8,
+      "darkOnWhite": 0.119,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:65413",
+     "title": "brazil gold",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 211.7,
+      "meanOnBlack": 49.2,
+      "darkOnWhite": 0,
+      "transparent": 0.625
+     }
+    },
+    {
+     "id": "openclipart:251852",
+     "title": "Ideal Justice (For Communist in Brazil)",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 221.1,
+      "meanOnBlack": 217.2,
+      "darkOnWhite": 0.1,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:181093",
+     "title": "Brazil location",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 215.8,
+      "meanOnBlack": 215.8,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:209002",
+     "title": "Avatar Wardrobe Pants Brazil Carnival Tail",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219.8,
+      "meanOnBlack": 219.8,
+      "darkOnWhite": 0.052,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "esperanto",
+   "category": "place",
+   "query": "esperanto",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:447664",
+    "openclipart:92695",
+    "commons:42255700",
+    "commons:81868926",
+    "commons:183947593",
+    "openclipart:188807"
+   ],
+   "tiles": [
+    {
+     "id": "commons:447664",
+     "title": "Flag of Esperanto",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 113.7,
+      "meanOnBlack": 113.7,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:92695",
+     "title": "Esperanto USA",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 199.9,
+      "meanOnBlack": 19.7,
+      "darkOnWhite": 0.125,
+      "transparent": 0.707
+     }
+    },
+    {
+     "id": "commons:42255700",
+     "title": "Number of Esperanto association members by country (2015)",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 223.4,
+      "meanOnBlack": 182.7,
+      "darkOnWhite": 0,
+      "transparent": 0.159
+     }
+    },
+    {
+     "id": "commons:81868926",
+     "title": "Esperanto nun",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 196.7,
+      "meanOnBlack": 195.9,
+      "darkOnWhite": 0.064,
+      "transparent": 0.004
+     }
+    },
+    {
+     "id": "commons:183947593",
+     "title": "Esperanto blanka stelo",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 196.4,
+      "meanOnBlack": 33.8,
+      "darkOnWhite": 0.274,
+      "transparent": 0.637
+     }
+    },
+    {
+     "id": "openclipart:188807",
+     "title": "Esperanto Badge",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 113.2,
+      "meanOnBlack": 58.4,
+      "darkOnWhite": 0.571,
+      "transparent": 0.215
+     }
+    }
+   ]
+  },
+  {
+   "id": "pornic",
+   "category": "place",
+   "query": "Pornic",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:133254163",
+    "commons:1086432",
+    "commons:152736475",
+    "commons:147557432",
+    "commons:64267526",
+    "commons:133254162"
+   ],
+   "tiles": [
+    {
+     "id": "commons:133254163",
+     "title": "Vue Pornic",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 129.4,
+      "meanOnBlack": 129.4,
+      "darkOnWhite": 0.137,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:1086432",
+     "title": "Pornic (1)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 134.4,
+      "meanOnBlack": 134.4,
+      "darkOnWhite": 0.185,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:152736475",
+     "title": "Pornic Harbour",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 140.7,
+      "meanOnBlack": 140.7,
+      "darkOnWhite": 0.104,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:147557432",
+     "title": "Bogolyubov Pornic",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 116.2,
+      "meanOnBlack": 116.2,
+      "darkOnWhite": 0.112,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:64267526",
+     "title": "Pornic 9-8-08 186mod",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 118.3,
+      "meanOnBlack": 118.3,
+      "darkOnWhite": 0.434,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:133254162",
+     "title": "Château Pornic",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 109.6,
+      "meanOnBlack": 109.6,
+      "darkOnWhite": 0.468,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "tree-silhouette",
+   "category": "style",
+   "query": "tree silhouette",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:246953",
+    "commons:62427316",
+    "openclipart:246952",
+    "openclipart:259605",
+    "openclipart:255370",
+    "openclipart:261022"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:246953",
+     "title": "Abstract Tree Silhouette",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 199.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.201,
+      "transparent": 0.78
+     }
+    },
+    {
+     "id": "commons:62427316",
+     "title": "Sechellophryne gardineri",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 75.5,
+      "meanOnBlack": 75.5,
+      "darkOnWhite": 0.482,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:246952",
+     "title": "Barren Tree Silhouette 2",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 201,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.176,
+      "transparent": 0.786
+     }
+    },
+    {
+     "id": "openclipart:259605",
+     "title": "Tree Silhouette 2",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 201.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.194,
+      "transparent": 0.789
+     }
+    },
+    {
+     "id": "openclipart:255370",
+     "title": "Leafless Tree Silhouette",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 205.9,
+      "meanOnBlack": 6.5,
+      "darkOnWhite": 0.174,
+      "transparent": 0.783
+     }
+    },
+    {
+     "id": "openclipart:261022",
+     "title": "Hands Tree Silhouette",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 184.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.262,
+      "transparent": 0.721
+     }
+    }
+   ]
+  },
+  {
+   "id": "angry",
+   "category": "abstract",
+   "query": "angry",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F620",
+    "commons:36445916",
+    "commons:63519842",
+    "openmoji:1F47F",
+    "commons:3389692",
+    "openclipart:205654"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F620",
+     "title": "angry face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.078,
+      "transparent": 0.92
+     }
+    },
+    {
+     "id": "commons:36445916",
+     "title": "A frontal outline and a profile of faces expressing anger. E Wellcome V0009398",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 192.8,
+      "meanOnBlack": 192.8,
+      "darkOnWhite": 0.024,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:63519842",
+     "title": "Angry-2766265 960 720",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 26.8,
+      "meanOnBlack": 26.8,
+      "darkOnWhite": 0.949,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F47F",
+     "title": "angry face with horns",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 229.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.098,
+      "transparent": 0.899
+     }
+    },
+    {
+     "id": "commons:3389692",
+     "title": "Angry man",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.7,
+      "meanOnBlack": 113.3,
+      "darkOnWhite": 0.056,
+      "transparent": 0.48
+     }
+    },
+    {
+     "id": "openclipart:205654",
+     "title": "Angry Smiley",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 177.9,
+      "meanOnBlack": 107.8,
+      "darkOnWhite": 0.23,
+      "transparent": 0.275
+     }
+    }
+   ]
+  },
+  {
+   "id": "fear",
+   "category": "abstract",
+   "query": "fear",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F631",
+    "commons:11155489",
+    "openmoji:1F628",
+    "openclipart:263869",
+    "openclipart:295132",
+    "openclipart:206044"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F631",
+     "title": "face screaming in fear",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.137,
+      "transparent": 0.859
+     }
+    },
+    {
+     "id": "commons:11155489",
+     "title": "Fear at Warped Tour 2010-08-10 07",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 74.1,
+      "meanOnBlack": 74.1,
+      "darkOnWhite": 0.655,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F628",
+     "title": "fearful face",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.094,
+      "transparent": 0.904
+     }
+    },
+    {
+     "id": "openclipart:263869",
+     "title": "Rune of Fear",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 212.1,
+      "meanOnBlack": 73.9,
+      "darkOnWhite": 0.138,
+      "transparent": 0.558
+     }
+    },
+    {
+     "id": "openclipart:295132",
+     "title": "fear",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 140.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.406,
+      "transparent": 0.553
+     }
+    },
+    {
+     "id": "openclipart:206044",
+     "title": "Fear Valley",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 92,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.615,
+      "transparent": 0.36
+     }
+    }
+   ]
+  },
+  {
+   "id": "idea",
+   "category": "abstract",
+   "query": "idea",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F4A1",
+    "commons:17918560",
+    "commons:22857511",
+    "openmoji:1F4AD",
+    "openclipart:188607",
+    "openclipart:322250"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F4A1",
+     "title": "light bulb",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.078,
+      "transparent": 0.919
+     }
+    },
+    {
+     "id": "commons:17918560",
+     "title": "Pictofigo - Idea",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 213,
+      "meanOnBlack": 45.3,
+      "darkOnWhite": 0.107,
+      "transparent": 0.659
+     }
+    },
+    {
+     "id": "commons:22857511",
+     "title": "Glühwendel brennt durch",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 48.2,
+      "meanOnBlack": 48.2,
+      "darkOnWhite": 0.853,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F4AD",
+     "title": "thought balloon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.073,
+      "transparent": 0.925
+     }
+    },
+    {
+     "id": "openclipart:188607",
+     "title": "Idea icon",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 206.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.183,
+      "transparent": 0.811
+     }
+    },
+    {
+     "id": "openclipart:322250",
+     "title": "Idea lightbulb",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 216.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.117,
+      "transparent": 0.849
+     }
+    }
+   ]
+  },
+  {
+   "id": "mouse",
+   "category": "ambiguous",
+   "query": "mouse",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F5B1",
+    "commons:5521043",
+    "openmoji:1F401",
+    "openclipart:347685",
+    "commons:184801924",
+    "openclipart:346287"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F5B1",
+     "title": "computer mouse",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 238.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.063,
+      "transparent": 0.933
+     }
+    },
+    {
+     "id": "commons:5521043",
+     "title": "Мышь 2",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 232.8,
+      "meanOnBlack": 232.8,
+      "darkOnWhite": 0.019,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F401",
+     "title": "mouse",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.091,
+      "transparent": 0.906
+     }
+    },
+    {
+     "id": "openclipart:347685",
+     "title": "Computer mouse Icon",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 246.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.029,
+      "transparent": 0.968
+     }
+    },
+    {
+     "id": "commons:184801924",
+     "title": "PC Mouse",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 249.8,
+      "meanOnBlack": 0.7,
+      "darkOnWhite": 0.018,
+      "transparent": 0.976
+     }
+    },
+    {
+     "id": "openclipart:346287",
+     "title": "1928 Mickey Mouse",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 214.2,
+      "meanOnBlack": 67.8,
+      "darkOnWhite": 0.146,
+      "transparent": 0.571
+     }
+    }
+   ]
+  },
+  {
+   "id": "apple",
+   "category": "ambiguous",
+   "query": "apple",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:73766367",
+    "commons:11808709",
+    "commons:5765394",
+    "openclipart:215910",
+    "commons:121496118",
+    "openclipart:293547"
+   ],
+   "tiles": [
+    {
+     "id": "commons:73766367",
+     "title": "Green Apple Icon -336015",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.2,
+      "meanOnBlack": 97.2,
+      "darkOnWhite": 0.018,
+      "transparent": 0.51
+     }
+    },
+    {
+     "id": "commons:11808709",
+     "title": "Honeycrisp",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 132,
+      "meanOnBlack": 132,
+      "darkOnWhite": 0.065,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:5765394",
+     "title": "Pink lady and cross section",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 216.4,
+      "meanOnBlack": 216.4,
+      "darkOnWhite": 0.003,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:215910",
+     "title": "apple 02",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 150.3,
+      "meanOnBlack": 150.3,
+      "darkOnWhite": 0.024,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:121496118",
+     "title": "Apple fruit icon",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 241.7,
+      "meanOnBlack": 241.7,
+      "darkOnWhite": 0.046,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:293547",
+     "title": "Apple svg, Apple clipart",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 217.7,
+      "meanOnBlack": 217.7,
+      "darkOnWhite": 0.126,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "a",
+   "category": "short",
+   "query": "a",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:498578",
+    "openclipart:352450",
+    "commons:749639",
+    "openclipart:190535",
+    "openclipart:340823",
+    "openclipart:191321"
+   ],
+   "tiles": [
+    {
+     "id": "commons:498578",
+     "title": "ICS Alfa",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 167.5,
+      "meanOnBlack": 136.1,
+      "darkOnWhite": 0.382,
+      "transparent": 0.123
+     }
+    },
+    {
+     "id": "openclipart:352450",
+     "title": "Stranded on Tiny Island Cartoon with Message in a Bottle",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 242.4,
+      "meanOnBlack": 242.4,
+      "darkOnWhite": 0.035,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:749639",
+     "title": "Latin alphabet Aa",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 192.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.234,
+      "transparent": 0.754
+     }
+    },
+    {
+     "id": "openclipart:190535",
+     "title": "Letra A de Ã¡rbol",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.064,
+      "transparent": 0.921
+     }
+    },
+    {
+     "id": "openclipart:340823",
+     "title": "Prometheus Carries a Blazing Torch",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 204.4,
+      "meanOnBlack": 201.8,
+      "darkOnWhite": 0.174,
+      "transparent": 0.005
+     }
+    },
+    {
+     "id": "openclipart:191321",
+     "title": "lady smells a bunch of flowers",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 229.8,
+      "meanOnBlack": 29.4,
+      "darkOnWhite": 0.039,
+      "transparent": 0.778
+     }
+    }
+   ]
+  },
+  {
+   "id": "x",
+   "category": "short",
+   "query": "x",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:498607",
+    "openclipart:99997",
+    "commons:749819",
+    "openclipart:221417",
+    "openclipart:193328",
+    "openclipart:184014"
+   ],
+   "tiles": [
+    {
+     "id": "commons:498607",
+     "title": "ICS X-ray",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 234.3,
+      "meanOnBlack": 234.3,
+      "darkOnWhite": 0.078,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:99997",
+     "title": "letter x",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 235.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.078,
+      "transparent": 0.922
+     }
+    },
+    {
+     "id": "commons:749819",
+     "title": "Latin alphabet Xx",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 195.9,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.22,
+      "transparent": 0.769
+     }
+    },
+    {
+     "id": "openclipart:221417",
+     "title": "4 x 4 Coaster",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.7,
+      "meanOnBlack": 213.9,
+      "darkOnWhite": 0.077,
+      "transparent": 0.077
+     }
+    },
+    {
+     "id": "openclipart:193328",
+     "title": "X",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 222.7,
+      "meanOnBlack": 214.1,
+      "darkOnWhite": 0,
+      "transparent": 0.033
+     }
+    },
+    {
+     "id": "openclipart:184014",
+     "title": "MALCOLM X",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 67.2,
+      "meanOnBlack": 67.2,
+      "darkOnWhite": 0.716,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "coca-cola",
+   "category": "brand",
+   "query": "Coca-Cola",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:2270970",
+    "commons:168724858",
+    "commons:43692381",
+    "commons:151877411",
+    "commons:168722917",
+    "commons:168724019"
+   ],
+   "tiles": [
+    {
+     "id": "commons:2270970",
+     "title": "Coca-Cola logo",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 198.8,
+      "meanOnBlack": 31.2,
+      "darkOnWhite": 0,
+      "transparent": 0.657
+     }
+    },
+    {
+     "id": "commons:168724858",
+     "title": "Coca-Cola Korea 2005",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 202.2,
+      "meanOnBlack": 21.6,
+      "darkOnWhite": 0,
+      "transparent": 0.706
+     }
+    },
+    {
+     "id": "commons:43692381",
+     "title": "15-09-26-RalfR-WLC-0098 - Coca-Cola glass bottle (Germany)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 145,
+      "meanOnBlack": 145,
+      "darkOnWhite": 0.169,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:151877411",
+     "title": "Coca Cola Flasche - Original Taste",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 186,
+      "meanOnBlack": 186,
+      "darkOnWhite": 0.12,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:168722917",
+     "title": "Coca-Cola Thailand 1948 (Script)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 205.3,
+      "meanOnBlack": 27.1,
+      "darkOnWhite": 0,
+      "transparent": 0.698
+     }
+    },
+    {
+     "id": "commons:168724019",
+     "title": "Coca-Cola Thailand",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 197.5,
+      "meanOnBlack": 31.9,
+      "darkOnWhite": 0,
+      "transparent": 0.65
+     }
+    }
+   ]
+  },
+  {
+   "id": "nike",
+   "category": "brand",
+   "query": "Nike",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:10696486",
+    "openmoji:2714",
+    "commons:136017277",
+    "commons:63236944",
+    "commons:50021730",
+    "commons:68758150"
+   ],
+   "tiles": [
+    {
+     "id": "commons:10696486",
+     "title": "Logo NIKE",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 190,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.25,
+      "transparent": 0.745
+     }
+    },
+    {
+     "id": "openmoji:2714",
+     "title": "check mark",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 240.8,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.055,
+      "transparent": 0.945
+     }
+    },
+    {
+     "id": "commons:136017277",
+     "title": "Nike Campus, Beaverton - DPLA - ffa63f1bbaf5cd21aeada3d3978db2b0",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 93.9,
+      "meanOnBlack": 93.9,
+      "darkOnWhite": 0.348,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:63236944",
+     "title": "Nikeworldheadquarters",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 174.8,
+      "meanOnBlack": 174.8,
+      "darkOnWhite": 0.075,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:50021730",
+     "title": "Biketown logo",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 168.3,
+      "meanOnBlack": 70.1,
+      "darkOnWhite": 0,
+      "transparent": 0.378
+     }
+    },
+    {
+     "id": "commons:68758150",
+     "title": "70480-Nike Zoom Vaporfly Elite oinetakoa",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 218.6,
+      "meanOnBlack": 212.5,
+      "darkOnWhite": 0.033,
+      "transparent": 0.024
+     }
+    }
+   ]
+  },
+  {
+   "id": "google",
+   "category": "brand",
+   "query": "Google",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "commons:192567021",
+    "openclipart:227731",
+    "commons:77221979",
+    "commons:93559853",
+    "commons:128690127",
+    "commons:27241672"
+   ],
+   "tiles": [
+    {
+     "id": "commons:192567021",
+     "title": "Google 2026 logo",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 217.2,
+      "meanOnBlack": 39.7,
+      "darkOnWhite": 0,
+      "transparent": 0.698
+     }
+    },
+    {
+     "id": "openclipart:227731",
+     "title": "Google",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 200.7,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.206,
+      "transparent": 0.787
+     }
+    },
+    {
+     "id": "commons:77221979",
+     "title": "Googleplex HQ (cropped)",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 94.9,
+      "meanOnBlack": 94.9,
+      "darkOnWhite": 0.454,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:93559853",
+     "title": "Google Play Badge TR",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 53.1,
+      "meanOnBlack": 52.1,
+      "darkOnWhite": 0.772,
+      "transparent": 0.004
+     }
+    },
+    {
+     "id": "commons:128690127",
+     "title": "Google Play Games logo (2023)",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 179.7,
+      "meanOnBlack": 83.8,
+      "darkOnWhite": 0,
+      "transparent": 0.376
+     }
+    },
+    {
+     "id": "commons:27241672",
+     "title": "Google (5879010443)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 123.8,
+      "meanOnBlack": 123.8,
+      "darkOnWhite": 0.233,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "confucius-institute",
+   "category": "brand",
+   "query": "Confucius Institute",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:144466055",
+    "commons:48307737",
+    "commons:178292375",
+    "commons:155840164",
+    "commons:77172588",
+    "commons:67512059"
+   ],
+   "tiles": [
+    {
+     "id": "commons:144466055",
+     "title": "Confucius Institute, College Street, Lampeter - geograph.org.uk - 6180079",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 137.4,
+      "meanOnBlack": 137.4,
+      "darkOnWhite": 0.098,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:48307737",
+     "title": "ICB-facade",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 148.6,
+      "meanOnBlack": 148.6,
+      "darkOnWhite": 0.059,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:178292375",
+     "title": "Confucius Institute - Carthage University 02",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 138.2,
+      "meanOnBlack": 138.2,
+      "darkOnWhite": 0.236,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:155840164",
+     "title": "Confucius Institute, University of Lagos",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 105.4,
+      "meanOnBlack": 105.4,
+      "darkOnWhite": 0.316,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:77172588",
+     "title": "Bust of Confucius, Confucius Institute building on the Troy University campus, Troy, Alabama on 16 March 2018 (cropped)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 163.8,
+      "meanOnBlack": 163.8,
+      "darkOnWhite": 0.087,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:67512059",
+     "title": "Confucius Institute Troy University",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 126.2,
+      "meanOnBlack": 126.2,
+      "darkOnWhite": 0.168,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "apples",
+   "category": "plural",
+   "query": "apples",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:185860",
+    "commons:163360428",
+    "commons:10276210",
+    "openclipart:228126",
+    "openclipart:352631",
+    "openclipart:236904"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:185860",
+     "title": "harvesting apples",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 224.5,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.066,
+      "transparent": 0.883
+     }
+    },
+    {
+     "id": "commons:163360428",
+     "title": "Church of Apples, Switzerland",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 114.9,
+      "meanOnBlack": 114.9,
+      "darkOnWhite": 0.131,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:10276210",
+     "title": "Apples Temple canton de Vaud Suisse",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 138,
+      "meanOnBlack": 138,
+      "darkOnWhite": 0.092,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:228126",
+     "title": "two apples",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 223.5,
+      "meanOnBlack": 7,
+      "darkOnWhite": 0.083,
+      "transparent": 0.849
+     }
+    },
+    {
+     "id": "openclipart:352631",
+     "title": "Apples Isolated",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 228.2,
+      "meanOnBlack": 61.6,
+      "darkOnWhite": 0,
+      "transparent": 0.653
+     }
+    },
+    {
+     "id": "openclipart:236904",
+     "title": "Apples",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 204.6,
+      "meanOnBlack": 28,
+      "darkOnWhite": 0.057,
+      "transparent": 0.683
+     }
+    }
+   ]
+  },
+  {
+   "id": "mice",
+   "category": "plural",
+   "query": "mice",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F401",
+    "commons:91868578",
+    "openclipart:245002",
+    "openclipart:192804",
+    "openclipart:192803",
+    "openclipart:267963"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F401",
+     "title": "mouse",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.091,
+      "transparent": 0.906
+     }
+    },
+    {
+     "id": "commons:91868578",
+     "title": "Of Mice and Men (1937 1st ed dust jacket)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 180.7,
+      "meanOnBlack": 180.7,
+      "darkOnWhite": 0.103,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:245002",
+     "title": "mice - lineart",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 205,
+      "meanOnBlack": 76.8,
+      "darkOnWhite": 0.167,
+      "transparent": 0.503
+     }
+    },
+    {
+     "id": "openclipart:192804",
+     "title": "Mice 1",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 234.6,
+      "meanOnBlack": 234.6,
+      "darkOnWhite": 0.006,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:192803",
+     "title": "Mice",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 219.4,
+      "meanOnBlack": 219.4,
+      "darkOnWhite": 0.009,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:267963",
+     "title": "Creepy Moon Mice",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 229.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.063,
+      "transparent": 0.899
+     }
+    }
+   ]
+  },
+  {
+   "id": "leaves",
+   "category": "plural",
+   "query": "leaves",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F331",
+    "commons:116280692",
+    "openmoji:1F33F",
+    "openclipart:185286",
+    "openclipart:185288",
+    "openclipart:185285"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F331",
+     "title": "seedling",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 243.4,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.044,
+      "transparent": 0.954
+     }
+    },
+    {
+     "id": "commons:116280692",
+     "title": "Fig Leaves ad in Motion Picture News (weekly, July 3, 1926 to August 28, 1926) (page 557 crop)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 202.7,
+      "meanOnBlack": 202.7,
+      "darkOnWhite": 0.029,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openmoji:1F33F",
+     "title": "herb",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 239.2,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.06,
+      "transparent": 0.938
+     }
+    },
+    {
+     "id": "openclipart:185286",
+     "title": "Fall Leaves 1",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 210.9,
+      "meanOnBlack": 210.7,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:185288",
+     "title": "Fall Leaves 3",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 207.1,
+      "meanOnBlack": 206.7,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:185285",
+     "title": "Fall Leaves",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 204.4,
+      "meanOnBlack": 203,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "line-cervantes",
+   "category": "line",
+   "query": "Miguel de Cervantes",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "commons:794211",
+    "commons:676819",
+    "commons:14862492",
+    "commons:6157061",
+    "commons:4989919",
+    "commons:14862922"
+   ],
+   "tiles": [
+    {
+     "id": "commons:794211",
+     "title": "Miguel de Cervantes lithography",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 191.2,
+      "meanOnBlack": 191.2,
+      "darkOnWhite": 0.047,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:676819",
+     "title": "Cervantes Jáuregui",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 34.9,
+      "meanOnBlack": 34.9,
+      "darkOnWhite": 0.779,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:14862492",
+     "title": "Monumento a Miguel de Cervantes - 01",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 124.7,
+      "meanOnBlack": 124.7,
+      "darkOnWhite": 0.1,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:6157061",
+     "title": "Miguel de Cervantes Saavedra 01",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 175.1,
+      "meanOnBlack": 175.1,
+      "darkOnWhite": 0.029,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:4989919",
+     "title": "Miguel de Cervantes lithography-cropped",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 170.8,
+      "meanOnBlack": 170.8,
+      "darkOnWhite": 0.086,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:14862922",
+     "title": "Miguel de Cervantes - Monumento a Miguel de Cervantes",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 168.8,
+      "meanOnBlack": 168.8,
+      "darkOnWhite": 0.069,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "line-banana",
+   "category": "line",
+   "query": "banana",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:1F34C",
+    "commons:68253748",
+    "commons:102658250",
+    "openclipart:177814",
+    "openclipart:177813",
+    "commons:4546291"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:1F34C",
+     "title": "banana",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.069,
+      "transparent": 0.929
+     }
+    },
+    {
+     "id": "commons:68253748",
+     "title": "Banana on whitebackground",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 233.1,
+      "meanOnBlack": 233.1,
+      "darkOnWhite": 0.002,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:102658250",
+     "title": "Bananas (Alabama Extension)",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 141.1,
+      "meanOnBlack": 141.1,
+      "darkOnWhite": 0.086,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:177814",
+     "title": "Single line art Banana",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 246.3,
+      "meanOnBlack": 4.6,
+      "darkOnWhite": 0.025,
+      "transparent": 0.948
+     }
+    },
+    {
+     "id": "openclipart:177813",
+     "title": "Banana Bunch Line Art",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 240.6,
+      "meanOnBlack": 7.5,
+      "darkOnWhite": 0.04,
+      "transparent": 0.914
+     }
+    },
+    {
+     "id": "commons:4546291",
+     "title": "VU-Banana",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 208.6,
+      "meanOnBlack": 52.6,
+      "darkOnWhite": 0.139,
+      "transparent": 0.612
+     }
+    }
+   ]
+  },
+  {
+   "id": "line-china",
+   "category": "line",
+   "query": "China",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:436175",
+    "openclipart:253163",
+    "commons:32396893",
+    "openclipart:303360",
+    "openclipart:275440",
+    "openclipart:332036"
+   ],
+   "tiles": [
+    {
+     "id": "commons:436175",
+     "title": "Flag of the People's Republic of China",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 95.3,
+      "meanOnBlack": 95.3,
+      "darkOnWhite": 0,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:253163",
+     "title": "Smilax china",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 231.6,
+      "meanOnBlack": 12.4,
+      "darkOnWhite": 0.016,
+      "transparent": 0.86
+     }
+    },
+    {
+     "id": "commons:32396893",
+     "title": "Badaling China Great-Wall-of-China-01",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 119.1,
+      "meanOnBlack": 119.1,
+      "darkOnWhite": 0.165,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:303360",
+     "title": "Symbolic China",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 93.8,
+      "meanOnBlack": 93.8,
+      "darkOnWhite": 0.038,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:275440",
+     "title": "China separatism",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 171.4,
+      "meanOnBlack": 170.8,
+      "darkOnWhite": 0.076,
+      "transparent": 0.003
+     }
+    },
+    {
+     "id": "openclipart:332036",
+     "title": "China Lock",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 166.1,
+      "meanOnBlack": 39.6,
+      "darkOnWhite": 0.015,
+      "transparent": 0.497
+     }
+    }
+   ]
+  },
+  {
+   "id": "line-lovelace",
+   "category": "line",
+   "query": "Ada Lovelace",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:16980076",
+    "commons:82757509",
+    "commons:166285599",
+    "openclipart:309233",
+    "commons:127774209",
+    "openclipart:325365"
+   ],
+   "tiles": [
+    {
+     "id": "commons:16980076",
+     "title": "Ada Lovelace",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 187.1,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.223,
+      "transparent": 0.732
+     }
+    },
+    {
+     "id": "commons:82757509",
+     "title": "Ada Byron daguerreotype by Antoine Claudet 1843 or 1850 - cropped",
+     "kind": "solid",
+     "converted": true,
+     "pixels": {
+      "meanOnWhite": 203.1,
+      "meanOnBlack": 203.1,
+      "darkOnWhite": 0.154,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:166285599",
+     "title": "Ada Lovelace daguerreotype by Antoine Claudet 1843 - cropped",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 116.1,
+      "meanOnBlack": 116.1,
+      "darkOnWhite": 0.289,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:309233",
+     "title": "Ada Lovelace",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 183.5,
+      "meanOnBlack": 78.1,
+      "darkOnWhite": 0.161,
+      "transparent": 0.409
+     }
+    },
+    {
+     "id": "commons:127774209",
+     "title": "Ada lovelace 10k 31i",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 103.3,
+      "meanOnBlack": 103.3,
+      "darkOnWhite": 0.213,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:325365",
+     "title": "Portrait of Ada Lovelace by British painter Margaret Sarah Carpenter (1836)",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 203.1,
+      "meanOnBlack": 202.7,
+      "darkOnWhite": 0.055,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "line-bolivar",
+   "category": "line",
+   "query": "Simón Bolívar",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 1,
+    "logo": 0
+   },
+   "page1": [
+    "openclipart:204153",
+    "commons:151316194",
+    "commons:7758618",
+    "commons:84784507",
+    "commons:22911827",
+    "commons:32203667"
+   ],
+   "tiles": [
+    {
+     "id": "openclipart:204153",
+     "title": "Simón Bolívar",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 181.6,
+      "meanOnBlack": 57.7,
+      "darkOnWhite": 0.101,
+      "transparent": 0.62
+     }
+    },
+    {
+     "id": "commons:151316194",
+     "title": "Simón Bolívar by Acevedo Bernal, 1922",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 73.8,
+      "meanOnBlack": 73.8,
+      "darkOnWhite": 0.48,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:7758618",
+     "title": "Simón Bolívar by Ricardo Acevedo Bernal",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 56.9,
+      "meanOnBlack": 56.9,
+      "darkOnWhite": 0.63,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:84784507",
+     "title": "Simón Bolívar, el Libertador",
+     "kind": "clean",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 200.1,
+      "meanOnBlack": 200.1,
+      "darkOnWhite": 0.198,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:22911827",
+     "title": "Monumento Simón Bolívar",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 145.4,
+      "meanOnBlack": 145.4,
+      "darkOnWhite": 0.241,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:32203667",
+     "title": "Portrait of Simón Bolívar by Arturo Michelena",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 71.6,
+      "meanOnBlack": 71.6,
+      "darkOnWhite": 0.62,
+      "transparent": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "cafe",
+   "category": "phrase",
+   "query": "café",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:2615",
+    "commons:107645",
+    "openclipart:322620",
+    "commons:47316411",
+    "openclipart:276613",
+    "openclipart:259490"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:2615",
+     "title": "hot beverage",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.068,
+      "transparent": 0.931
+     }
+    },
+    {
+     "id": "commons:107645",
+     "title": "A small cup of coffee",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.5,
+      "meanOnBlack": 98.5,
+      "darkOnWhite": 0.358,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:322620",
+     "title": "A Turkish Cafe owner in London",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 230.3,
+      "meanOnBlack": 226.4,
+      "darkOnWhite": 0.081,
+      "transparent": 0.001
+     }
+    },
+    {
+     "id": "commons:47316411",
+     "title": "Coffee-shop-circular-button",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 216,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.146,
+      "transparent": 0.847
+     }
+    },
+    {
+     "id": "openclipart:276613",
+     "title": "café-en-france",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.9,
+      "meanOnBlack": 86.2,
+      "darkOnWhite": 0.142,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:259490",
+     "title": "cafe brasileiro",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 222.4,
+      "meanOnBlack": 76,
+      "darkOnWhite": 0.033,
+      "transparent": 0.576
+     }
+    }
+   ]
+  },
+  {
+   "id": "coffee",
+   "category": "object",
+   "query": "coffee",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "openmoji:2615",
+    "commons:107645",
+    "commons:122469412",
+    "openclipart:276267",
+    "openclipart:22305",
+    "openclipart:251492"
+   ],
+   "tiles": [
+    {
+     "id": "openmoji:2615",
+     "title": "hot beverage",
+     "kind": "text",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 237.3,
+      "meanOnBlack": 0,
+      "darkOnWhite": 0.068,
+      "transparent": 0.931
+     }
+    },
+    {
+     "id": "commons:107645",
+     "title": "A small cup of coffee",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 98.5,
+      "meanOnBlack": 98.5,
+      "darkOnWhite": 0.358,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:122469412",
+     "title": "Latte and dark coffee",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 117.7,
+      "meanOnBlack": 117.7,
+      "darkOnWhite": 0.161,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "openclipart:276267",
+     "title": "a coffee cup",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 245.5,
+      "meanOnBlack": 1.8,
+      "darkOnWhite": 0.038,
+      "transparent": 0.956
+     }
+    },
+    {
+     "id": "openclipart:22305",
+     "title": "Coffee cup icon",
+     "kind": "solid",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 178.7,
+      "meanOnBlack": 27.9,
+      "darkOnWhite": 0.192,
+      "transparent": 0.593
+     }
+    },
+    {
+     "id": "openclipart:251492",
+     "title": "coffee design",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 192.4,
+      "meanOnBlack": 57.5,
+      "darkOnWhite": 0.031,
+      "transparent": 0.63
+     }
+    }
+   ]
+  },
+  {
+   "id": "pedro-sanchez",
+   "category": "person",
+   "query": "Pedro Sánchez",
+   "ok": null,
+   "reason": null,
+   "empty": false,
+   "counts": {
+    "text": 0,
+    "signature": 0,
+    "dark": 0,
+    "logo": 0
+   },
+   "page1": [
+    "commons:156500788",
+    "commons:192133729",
+    "commons:183776935",
+    "commons:86228768",
+    "commons:103389101",
+    "commons:70111528"
+   ],
+   "tiles": [
+    {
+     "id": "commons:156500788",
+     "title": "Obisk španskega predsednika vlade v Sloveniji (53658605930) (cropped)",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 70.1,
+      "meanOnBlack": 70.1,
+      "darkOnWhite": 0.692,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:192133729",
+     "title": "Pedro Sánchez tenure graphic",
+     "kind": "outline",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 212.7,
+      "meanOnBlack": 212.7,
+      "darkOnWhite": 0.019,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:183776935",
+     "title": "Pedro Sánchez in 2026",
+     "kind": "photo",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 145.2,
+      "meanOnBlack": 145.2,
+      "darkOnWhite": 0.309,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:86228768",
+     "title": "Pedro Sánchez OTAN 2019",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 79,
+      "meanOnBlack": 79,
+      "darkOnWhite": 0.451,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:103389101",
+     "title": "Pedro Sánchez Pérez-Castejón 2021",
+     "kind": "plain",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 184.9,
+      "meanOnBlack": 184.9,
+      "darkOnWhite": 0.199,
+      "transparent": 0
+     }
+    },
+    {
+     "id": "commons:70111528",
+     "title": "Pedro Sánchez interviniendo en su primera sesión de control",
+     "kind": "dark",
+     "converted": false,
+     "pixels": {
+      "meanOnWhite": 97.9,
+      "meanOnBlack": 97.9,
+      "darkOnWhite": 0.381,
+      "transparent": 0
+     }
+    }
+   ]
+  }
+ ]
+}
