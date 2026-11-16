@@ -1,4 +1,4 @@
-# Supernote Tools — product definition
+# Ink Tools — product definition
 
 Type: product definition. Current rules only; decision history lives in `docs/decisions.md`.
 

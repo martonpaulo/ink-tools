@@ -1,4 +1,4 @@
-# Supernote Tools decisions
+# Ink Tools decisions
 
 The history of consequential decisions. Each current rule lives where the last column says; this
 page is the only home of decision history.
@@ -7,6 +7,7 @@ page is the only home of decision history.
 
 | Date | Decision | What it replaced | Where the rule lives |
 | :--- | :--- | :--- | :--- |
+| 2026-11-16 | Rename the project from Supernote Tools to Ink Tools: repository `martonpaulo/ink-tools`, slug `ink-tools`, code name `InkTools`, identifier name `inktools`, local folder `~/proj/ink-tools`; «Supernote» stays only as compatibility in descriptions («Unofficial tools for Supernote e-ink tablets»); GitHub redirects the old repository's web, API and Git addresses (owner, [#177](https://github.com/martonpaulo/ink-tools/issues/177)) | the name Supernote Tools and the repository `martonpaulo/supernote-tools` | [`AGENTS.md`](../AGENTS.md#project-identity-and-policy), [`README.md`](../README.md) |
 | 2026-11-13 | Build `supernote-tools` as a monorepo; move `ink2pic` and `supernote-adb` in with full Git history; archive the original repositories and make them private, each with a move notice | three separate repositories | [`README.md`](../README.md#history), [`AGENTS.md`](../AGENTS.md#project-identity-and-policy) |
 | 2026-11-14 | Rename the ADB CLI from `supernote-adb` (command `supernote`) to `snadb` (folder `cli/snadb/`, command `snadb`, state in `~/.config/snadb` and `~/.cache/snadb`); the display name stays `Supernote ADB` ([#72](https://github.com/martonpaulo/supernote-tools/issues/72)) | the name `supernote-adb` and the command `supernote` | [`cli/snadb/AGENTS.md`](../cli/inkctl/AGENTS.md) |
 | 2026-11-13 | Closed issues stay in the archived repositories so commit `(#N)` references keep resolving; only open issues were migrated | transferring every issue | this index |

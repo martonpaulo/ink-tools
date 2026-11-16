@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Supernote Tools project icon (#97, owner D26 D, from pilot D «Ink nib on page»): a pen nib writes one stroke on a light page, on the Partner app's ink grey.
+  <!-- Ink Tools project icon (#97, owner D26 D, from pilot D «Ink nib on page»): a pen nib writes one stroke on a light page, on the Partner app's ink grey.
        Palette: #383838 Partner app ink, #EFEFEF supernote.com background, #C9C9C9 pen light gray, #000000 pen black. -->
   <rect width="512" height="512" rx="112" fill="#383838"/>
   <path d="M120 88 H316 L392 164 V424 H120 Z" fill="#EFEFEF"/>
