@@ -132,6 +132,12 @@ End each finding, here or in `martonpaulo/skill-deck` for one about Skill Deck i
 
 Shape every message and ask the owner as Skill Deck's global rules define (`global/AGENTS.md`, which `skd sync` links into every agent); the four kinds of request are in the `skd-grilling` skill's `references/attention-cards.md`. Do every action your tools allow instead of handing it to the owner; hand over only what the owner alone can do, as those rules list.
 
+Project process rules (owner, 2026-11-16, [`docs/decisions.md`](docs/decisions.md#decision-index)):
+
+- Every Ink Tools decision is asked and answered on the vision artifact (<https://claude.ai/artifact/KtFTFK5Wu46RZ2K7y8rDty>, store `choices`); the Inbox carries only actions.
+- Tablet test rounds are batched: the agent drives every step over `inkctl`, and the owner does only the pen steps.
+- An issue whose code landed and whose only open lines need the tablet stays open with `status: needs-device-check`, and its agent-driven checks join the next batched round.
+
 ## Configuration and repository hygiene
 
 - Ignore secrets, local environments, logs, caches, and build output. Keep `.env.example` with every variable and a safe placeholder, and secrets only in the platform's secure store. Nothing new in `~` (`project-layout.md`).
