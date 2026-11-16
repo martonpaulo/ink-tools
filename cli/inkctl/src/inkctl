@@ -32,6 +32,9 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
   wifi on                        over the USB cable, turn Wi-Fi ADB on and connect to it
   wifi off                       turn Wi-Fi ADB off when the work ends, and say how to turn it on
+  secret set PROVIDER            write a sign-in secret for Bridge from standard input, never argv
+  secret remove PROVIDER         sign Bridge out of PROVIDER by deleting its secret
+  secret status                  which providers have a secret, with only its last 4 characters
   shell COMMAND...               run a command on the device
 
 click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result) and --screen FILE
@@ -122,6 +125,15 @@ https://github.com/martonpaulo/supernote-tools
 """
 
 ADB_PORT = 5555  # the port `adb tcpip` opens
+# Bridge's sign-in secrets (#116, owner D16 A): one file per provider in its private plugin folder.
+# The file names are sync-core's `secretFileName` (packages/sync-core/src/secrets.ts); a test reads both.
+# shortcut: the folder is the official Plugin Permissions page's path for a plugin's own files, not yet
+# measured on the tablet; the #116 probe round confirms it and that `adb shell` may write there.
+SECRET_PROVIDERS = ("todoist", "icloud", "google")
+BRIDGE_PLUGIN_ID = "4d11a9bbc6ad25e2"  # plugins/bridge/PluginConfig.json pluginID
+BRIDGE_PRIVATE_FOLDER = f"/data/data/com.ratta.supernote.pluginhost/files/plugins/{BRIDGE_PLUGIN_ID}"
+SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
+CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 SHARED_ROOT = "/storage/emulated/0"
 SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
 NOTES_FOLDER = f"{SHARED_ROOT}/Note"
@@ -427,11 +439,12 @@ class Device:
         self.serial = serial
         self.log = log
 
-    def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True):
+    def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True, stdin: bytes | None = None):
+        """`stdin` carries a value that must never reach argv, such as a secret."""
         prefix = ["adb", "-s", self.serial] if serial else ["adb"]
         started = time.monotonic()
         try:
-            done = subprocess.run([*prefix, *args], capture_output=True, timeout=timeout, check=False)
+            done = subprocess.run([*prefix, *args], input=stdin, capture_output=True, timeout=timeout, check=False)
         except subprocess.TimeoutExpired as error:
             self.log.call(args, started, None)
             raise unreachable(self.serial) from error
@@ -1707,6 +1720,69 @@ def command_wifi_off(device: Device, args: argparse.Namespace):
     return {"wifi_adb": "off", "restore": USB_RESTORE}, f"Wi-Fi ADB is off. To turn it on again, {USB_RESTORE}"
 
 
+def secret_path(provider: str) -> str:
+    return f"{BRIDGE_PRIVATE_FOLDER}/{provider}.secret"
+
+
+def parse_secret(raw: str) -> str:
+    """sync-core's `parseSecret`: one trailing newline is dropped; empty or a control character is refused."""
+    value = raw[:-2] if raw.endswith("\r\n") else raw[:-1] if raw.endswith("\n") else raw
+    if value == "":
+        raise bad_usage("the secret is empty; pipe it on standard input")
+    if CONTROL_CHARACTER.search(value):
+        raise bad_usage("the secret holds a control character")
+    return value
+
+
+def masked(value: str) -> str:
+    return f"…{value[-SECRET_TAIL:]}"
+
+
+def command_secret_set(device: Device, args: argparse.Namespace):
+    if sys.stdin.isatty():
+        import getpass  # only when typed by hand, so nothing is echoed
+
+        raw = getpass.getpass(f"{args.provider} secret: ")
+    else:
+        raw = sys.stdin.read()
+    value = parse_secret(raw)
+    device.log.secrets.append(value)
+    path = shlex.quote(secret_path(args.provider))
+    partial = shlex.quote(f"{secret_path(args.provider)}.partial")
+    # The value goes on stdin: argv reaches `ps` and the history file. A temp name, then a rename, so a
+    # lost connection never leaves half a secret.
+    done = device.adb("shell", f"umask 077; cat > {partial} && mv {partial} {path}", stdin=value.encode())
+    if done.returncode != 0:
+        device.shell(f"rm -f {partial}")
+        problem = device.log.clean(done.stderr.decode(errors="replace").strip())
+        raise Failure(EXIT_FAILED, "device_error", problem or f"the {args.provider} secret was not written")
+    data = {"provider": args.provider, "stored": True, "tail": masked(value)}
+    return data, f"{args.provider}: signed in ({data['tail']})"
+
+
+def command_secret_remove(device: Device, args: argparse.Namespace):
+    path = secret_path(args.provider)
+    existed = device.test(f"-f {shlex.quote(path)}")
+    device.shell(f"rm -f {shlex.quote(path)}")
+    if device.test(f"-e {shlex.quote(path)}"):
+        raise Failure(EXIT_FAILED, "device_error", f"the {args.provider} secret is still there after rm")
+    return {"provider": args.provider, "removed": existed}, f"{args.provider}: signed out" if existed else f"{args.provider}: was not signed in"
+
+
+def command_secret_status(device: Device, args: argparse.Namespace):
+    rows = []
+    for provider in SECRET_PROVIDERS:
+        path = shlex.quote(secret_path(provider))
+        if not device.test(f"-f {path}"):
+            rows.append({"provider": provider, "stored": False})
+            continue
+        # Only the last characters cross the connection, never the whole value.
+        tail = device.shell(f"tail -c {SECRET_TAIL} {path}")
+        rows.append({"provider": provider, "stored": True, "tail": f"…{tail}"})
+    lines = [f"{row['provider']}: signed in ({row['tail']})" if row["stored"] else f"{row['provider']}: not signed in" for row in rows]
+    return {"providers": rows}, "\n".join(lines)
+
+
 def command_shell(device: Device, args: argparse.Namespace):
     done = device.adb("shell", *args.words, timeout=TRANSFER_TIMEOUT)
     sys.stdout.buffer.write(done.stdout)
@@ -1714,7 +1790,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1841,6 +1917,11 @@ def build_parser() -> argparse.ArgumentParser:
     switched_on.add_argument("--timeout", type=float, default=WIFI_TIMEOUT, help="seconds for the port to answer")
     switched_off = add(wifi, "off", command_wifi_off, changes=True)
     switched_off.add_argument("--timeout", type=float, default=WIFI_TIMEOUT, help="seconds for the port to close")
+
+    secrets = noun("secret")
+    add(secrets, "set", command_secret_set, changes=True).add_argument("provider", choices=SECRET_PROVIDERS)
+    add(secrets, "remove", command_secret_remove, changes=True).add_argument("provider", choices=SECRET_PROVIDERS)
+    add(secrets, "status", command_secret_status)
 
     add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
     return parser

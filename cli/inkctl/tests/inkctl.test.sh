@@ -135,6 +135,11 @@ case "$1" in
                     if [ "$page" -ge 1 ] && [ -f "$ADB_FILES/page$page.xml" ]; then echo "$page" > "$ADB_FILES/page"; fi
                 fi ;;
             "input "*) : ;;
+            "umask 077; cat > "*)
+                [ -f "$ADB_FILES/write-fails" ] && { echo 'Permission denied' >&2; exit 1; }
+                cat > "$ADB_FILES/secret-written" ;;
+            "rm -f "*) printf '%s\n' "$2" >> "$ADB_FILES/removed"; target=${2#rm -f }; target=${target//\'/}; grep -vxF "f $target" "$ADB_FILES/paths" > "$ADB_FILES/paths.next"; mv "$ADB_FILES/paths.next" "$ADB_FILES/paths" ;;
+            "tail -c 4 "*) printf 'wxyz' ;;
             *) echo "remote-out"; exit 9 ;;
         esac ;;
 esac
@@ -994,6 +999,39 @@ kinds = set(re.findall(r'Failure\(\s*EXIT_\w+,\s*"(\w+)"', source))
 print(sorted(kind for kind in kinds if f'"{kind}"' not in advice))
 PY
 )" "[]"
+
+# Bridge's sign-in secrets (#116): the value travels on stdin, never in argv or the history.
+private=/data/data/com.ratta.supernote.pluginhost/files/plugins/4d11a9bbc6ad25e2
+synthetic=tok-SYNTHETIC-0000-wxyz
+output=$(printf '%s\r\n' "$synthetic" | run secret set todoist --json)
+check "secret set writes the value from stdin without its line end" "$(cat "$files/secret-written")" "$synthetic"
+check "secret set writes a temp name, then renames it" "$(called "cat > $private/todoist.secret.partial && mv $private/todoist.secret.partial $private/todoist.secret")" "1"
+check "secret set shows only the last four characters" "$(printf '%s' "$output" | field "['tail']")" "…wxyz"
+check "the secret never reaches an adb argument" "$(grep -cF "$synthetic" "$log")" "0"
+check "the secret never reaches the history" "$(grep -cF "$synthetic" "$history_file")" "0"
+rm -f "$files/secret-written"
+printf '\n' | run secret set todoist >/dev/null 2>&1
+check "an empty secret is refused as usage" "$?" "2"
+printf 'a\tb' | run secret set todoist >/dev/null 2>&1
+check "a control character is refused" "$?" "2"
+check "a refused secret writes nothing" "$([ -f "$files/secret-written" ] && echo written || echo none)" "none"
+printf 'x' | run secret set dropbox >/dev/null 2>&1
+check "an unknown provider is refused" "$?" "2"
+touch "$files/write-fails"
+printf 'x' | run secret set icloud >/dev/null 2>&1
+check "a refused write fails" "$?" "1"
+check "a refused write removes its temp file" "$(grep -cF "rm -f $private/icloud.secret.partial" "$files/removed")" "1"
+rm -f "$files/write-fails"
+printf 'x' | SUPERNOTE_READ_ONLY=1 run secret set todoist >/dev/null 2>&1
+check "read-only mode refuses secret set" "$?" "11"
+printf 'f %s\n' "$private/todoist.secret" >> "$files/paths"
+check "secret status shows the tail of a stored secret" "$(run secret status | head -1)" "todoist: signed in (…wxyz)"
+check "secret status names a provider with none" "$(run secret status | tail -1)" "google: not signed in"
+check "secret remove signs out" "$(run secret remove todoist)" "todoist: signed out"
+check "secret status reads back signed out" "$(run secret status | head -1)" "todoist: not signed in"
+providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/sync-core/src/secrets.ts" | grep -o "'[a-z]*'" | tr -d "'" | paste -sd, -)
+check "the providers are sync-core's" "$providers" "todoist,icloud,google"
+check "the file name is sync-core's" "$(grep -c '`${provider}.secret`' "$repo_root/../../packages/sync-core/src/secrets.ts")" "1"
 
 # Coordinates and the shell.
 run tap 12 34 >/dev/null

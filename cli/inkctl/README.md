@@ -62,6 +62,9 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl tap\|swipe` | Presses by coordinates, the last resort. |
 | `inkctl wifi on` | Over the USB cable, turns Wi-Fi ADB on (`adb tcpip 5555`) and connects to it. |
 | `inkctl wifi off` | Turns Wi-Fi ADB off when the work ends, and says how to turn it on again. Off is the safe state: leave Wi-Fi ADB off when no work runs. |
+| `inkctl secret set PROVIDER` | Writes a sign-in secret for the Bridge plugin (`todoist`, `icloud` or `google`) from standard input, into Bridge's private plugin folder. The value never goes into an argument, the log or the history; only its last 4 characters are shown. Not yet run on the tablet ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). |
+| `inkctl secret remove PROVIDER` | Signs Bridge out of a provider by deleting its secret. |
+| `inkctl secret status` | Says which providers have a secret, with only its last 4 characters. |
 | `inkctl shell COMMAND...` | Runs a command on the tablet. |
 
 `--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`.
@@ -72,7 +75,8 @@ Every command takes `--json`. A failure in JSON has `cause` and `next`, the next
 
 ## 🔐 Secrets and variables
 
-The command reads no secret.
+The command stores no secret of its own. `inkctl secret set` passes a Bridge sign-in secret from
+standard input to the tablet and keeps no copy.
 
 | Name | Where | What for |
 | :--- | :--- | :--- |
