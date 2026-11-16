@@ -6,6 +6,7 @@
  * no automatic direction); the owner's three directions start on, every other one off.
  */
 import {ALL_DIRECTIONS, directionId} from '@supernote-tools/ink-core';
+import {DEFAULT_ADAPTERS} from '@supernote-tools/picture-search';
 import type {SettingsCodec} from './profile';
 
 export const SETTINGS_VERSION = 1;
@@ -25,10 +26,51 @@ export type LookupSettings = {
    * map, which are no longer read.
    */
   directions: Record<string, boolean>;
+  /**
+   * The picture sources turned off, by adapter name; a source not listed is on, so a new one is
+   * on (#105, as Ink2Pic's `sourcesOff`). The last source on cannot be turned off.
+   */
+  sourcesOff: string[];
+  /** Fewer and smaller pictures per search (#105, as Ink2Pic's data saver). */
+  dataSaver: boolean;
 };
 
-/** The lasso buttons' switches: every key but the translation directions. */
-export type SwitchKey = Exclude<keyof LookupSettings, 'directions'>;
+/** The lasso buttons' switches: every key but the translation directions and the picture options. */
+export type SwitchKey = Exclude<
+  keyof LookupSettings,
+  'directions' | 'sourcesOff' | 'dataSaver'
+>;
+
+/** Every picture source a Lookup search can ask, in the registry's order. */
+export const SOURCE_NAMES: readonly string[] = DEFAULT_ADAPTERS.map(
+  adapter => adapter.name,
+);
+
+export const sourceOn = (settings: LookupSettings, name: string): boolean =>
+  !settings.sourcesOff.includes(name);
+
+/**
+ * The settings with `name` on or off. Turning off the last source on changes nothing: a search
+ * with no source would only ever say «no picture found».
+ */
+export function withSource(
+  settings: LookupSettings,
+  name: string,
+  on: boolean,
+): LookupSettings {
+  if (on) {
+    return {
+      ...settings,
+      sourcesOff: settings.sourcesOff.filter(each => each !== name),
+    };
+  }
+  const left = SOURCE_NAMES.filter(
+    each => each !== name && sourceOn(settings, each),
+  );
+  return left.length === 0 || !sourceOn(settings, name)
+    ? settings
+    : {...settings, sourcesOff: [...settings.sourcesOff, name]};
+}
 
 export const SWITCH_KEYS: readonly SwitchKey[] = [
   'illustration',
@@ -54,12 +96,15 @@ export const defaultSettings: LookupSettings = {
       return [id, DIRECTIONS_ON.includes(id)];
     }),
   ),
+  sourcesOff: [],
+  dataSaver: false,
 };
 
 /** A copy with its own direction map, so a change never reaches the defaults. */
 const fresh = (): LookupSettings => ({
   ...defaultSettings,
   directions: {...defaultSettings.directions},
+  sourcesOff: [],
 });
 
 export function serializeSettings(settings: LookupSettings): string {
@@ -132,7 +177,45 @@ export function parseSettings(text: string | null): {
       'settings: directions is not an object; the defaults are used',
     );
   }
+  readPictureOptions(values, settings, problems);
   return {settings, problems};
+}
+
+/** `sourcesOff` and `dataSaver`, each wrong value named and replaced by its default (#105). */
+function readPictureOptions(
+  values: Record<string, unknown>,
+  settings: LookupSettings,
+  problems: string[],
+): void {
+  const off = values.sourcesOff;
+  if (Array.isArray(off)) {
+    const known = off.filter(
+      (name): name is string =>
+        typeof name === 'string' && SOURCE_NAMES.includes(name),
+    );
+    if (known.length !== off.length) {
+      problems.push(
+        'settings: sourcesOff names an unknown source; it is left out',
+      );
+    }
+    const unique = [...new Set(known)];
+    if (unique.length >= SOURCE_NAMES.length) {
+      problems.push(
+        'settings: sourcesOff turns every source off; every source is on',
+      );
+    } else {
+      settings.sourcesOff = unique;
+    }
+  } else if (off !== undefined) {
+    problems.push('settings: sourcesOff is not a list; every source is on');
+  }
+  if (typeof values.dataSaver === 'boolean') {
+    settings.dataSaver = values.dataSaver;
+  } else if (values.dataSaver !== undefined) {
+    problems.push(
+      'settings: dataSaver is not true or false; the default is used',
+    );
+  }
 }
 
 export const LOOKUP_SETTINGS: SettingsCodec<LookupSettings> = {
@@ -144,5 +227,7 @@ export const LOOKUP_SETTINGS: SettingsCodec<LookupSettings> = {
       ...Object.entries(settings.directions).map(
         ([id, on]) => `${id} ${on ? 'on' : 'off'}`,
       ),
+      `sources off [${settings.sourcesOff.join(' ')}]`,
+      `data saver ${settings.dataSaver ? 'on' : 'off'}`,
     ].join(', '),
 };

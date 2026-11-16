@@ -10,6 +10,9 @@ import {
   defaultSettings,
   parseSettings,
   serializeSettings,
+  SOURCE_NAMES,
+  sourceOn,
+  withSource,
 } from '../src/settings';
 
 test('Lookup keeps its own folder and module names, never Ink2Pic’s', () => {
@@ -51,9 +54,50 @@ describe('the settings file', () => {
       illustration: false,
       photo: true,
       choose: false,
-      directions: {'es-pt': true, 'pt-es': true, 'zh-pt': false, 'pt-zh': false},
+      directions: {
+        'es-pt': true,
+        'pt-es': true,
+        'zh-pt': false,
+        'pt-zh': false,
+      },
+      sourcesOff: ['openmoji'],
+      dataSaver: true,
     };
     expect(parseSettings(serializeSettings(saved)).settings).toEqual(saved);
+  });
+
+  test('picture options: unknown sources are left out, all off means all on, and each problem is named (#105)', () => {
+    const odd = parseSettings(
+      '{"sourcesOff": ["openmoji", "example-source", "openmoji"], "dataSaver": "yes"}',
+    );
+    expect(odd.settings.sourcesOff).toEqual(['openmoji']);
+    expect(odd.settings.dataSaver).toBe(false);
+    expect(odd.problems).toEqual([
+      'settings: sourcesOff names an unknown source; it is left out',
+      'settings: dataSaver is not true or false; the default is used',
+    ]);
+    const none = parseSettings(JSON.stringify({sourcesOff: [...SOURCE_NAMES]}));
+    expect(none.settings.sourcesOff).toEqual([]);
+    expect(none.problems).toEqual([
+      'settings: sourcesOff turns every source off; every source is on',
+    ]);
+    expect(parseSettings(null).settings).toMatchObject({
+      sourcesOff: [],
+      dataSaver: false,
+    });
+  });
+
+  test('the last source on cannot be turned off (#105)', () => {
+    let settings = defaultSettings;
+    for (const name of SOURCE_NAMES) {
+      settings = withSource(settings, name, false);
+    }
+    expect(SOURCE_NAMES.filter(name => sourceOn(settings, name))).toHaveLength(
+      1,
+    );
+    expect(
+      withSource(settings, SOURCE_NAMES[0], true).sourcesOff,
+    ).not.toContain(SOURCE_NAMES[0]);
   });
 
   test("a file of #158's single translation button: the owner's three directions on, the old keys not read (#174)", () => {

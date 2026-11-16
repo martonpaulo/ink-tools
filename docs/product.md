@@ -48,7 +48,9 @@ app installed the way Android allows).
 ## What it does
 
 - lookup: recognises a lassoed word and inserts a picture from Openclipart, Wikimedia Commons or
-  OpenMoji, a definition, or a translation for each language pair switched on.
+  OpenMoji, a definition, or a translation for each language pair switched on. Pictures come set
+  up as the owner uses them ([#105](https://github.com/martonpaulo/ink-tools/issues/105)): one small size, a style fixed by the button, and only Picture
+  sources and Data saver to choose in Settings.
 - bridge: aggregates every calendar into the native Calendar and carries edits back, within
   the limits the native app and the plugin sandbox impose.
 - Lingo: replaces the one file that names the active recognition language and tells the tablet,

@@ -49,6 +49,37 @@ test('the Settings view keeps the size rules and has a header', async () => {
   ).toBe('Word Lookup');
 });
 
+test('Settings keeps only Picture sources and Data saver for pictures, and saves each tap (#105)', async () => {
+  const tree = await open();
+  const labels = ['Openclipart', 'Wikimedia Commons', 'Wikidata', 'OpenMoji'];
+  expect(labels.map(label => toggle(tree, label).props.selected)).toEqual([
+    true,
+    true,
+    true,
+    true,
+  ]);
+  expect(toggle(tree, 'Data saver').props.selected).toBe(false);
+  for (const gone of ['Size', 'Placement', 'Style', 'Lasso', 'Small']) {
+    expect(
+      tree.root.findAll(
+        node => node.props.label === gone && node.props.onPress,
+      ),
+    ).toEqual([]);
+  }
+  await act(async () => {
+    toggle(tree, 'OpenMoji').props.onPress();
+  });
+  await act(async () => {
+    toggle(tree, 'Data saver').props.onPress();
+  });
+  const writes = files.writeText.mock.calls as unknown as [string, string][];
+  expect(JSON.parse(writes[writes.length - 1][1])).toMatchObject({
+    sourcesOff: ['openmoji'],
+    dataSaver: true,
+  });
+  expect(screenBreaks(tree.root)).toEqual([]);
+});
+
 test('one switch per lasso button: both picture modes on, the definition off, by default', async () => {
   const tree = await open();
   expect(MODES.map(mode => toggle(tree, mode.name).props.selected)).toEqual([
@@ -105,7 +136,7 @@ test('both picture switches off: no picture button, and Settings still opens (#1
   expect(ids).toEqual([DEFINE_BUTTON_ID]);
 });
 
-test('one switch per translation direction, the owner\'s three on, and a tap saves the direction (#174)', async () => {
+test("one switch per translation direction, the owner's three on, and a tap saves the direction (#174)", async () => {
   const tree = await open();
   const shown = (name: string) => toggle(tree, name).props.selected;
   expect(

@@ -54,13 +54,13 @@ import {
   thumbUri,
   wordKeptOptions,
 } from './profile';
-import type {LookupSettings} from './settings';
+import {LookupSettings, sourceOn} from './settings';
 
 /**
- * Ink2Pic's default insert until fixed size, place and style per button land (#105): medium width
- * (640 px, a third of the page), below the word, as found.
+ * The one picture size, fixed with no choice (owner's preset, #105): Ink2Pic's «small», 200 px
+ * (#33). The place stays below the word; the style is the button's mode (#111).
  */
-export const PICTURE_WIDTH = 640;
+export const PICTURE_WIDTH = 200;
 
 /** Where Lookup writes each prepared picture; no library, no symbols (D40 B, #142). */
 export const LOOKUP_PICTURES: PictureStore = {
@@ -83,15 +83,18 @@ export const LOOKUP_PICTURES: PictureStore = {
 export const PICTURE_LANGUAGES: readonly string[] = [...LANGUAGES, 'en'];
 
 /**
- * What the mode's search reads: Lookup has no search settings yet, so PICTURE_LANGUAGES, the
- * mode's style, and the mode's sources, already filtered by `modeAdapters`.
+ * What the mode's search reads: PICTURE_LANGUAGES, the mode's style, the person's data saver and
+ * the sources left on in Settings (#105), among the mode's own (`modeAdapters`).
  */
-export function modeSearchSettings(mode: Mode): SearchSettings {
+export function modeSearchSettings(
+  mode: Mode,
+  settings: LookupSettings,
+): SearchSettings {
   return {
     languages: PICTURE_LANGUAGES,
     photos: mode.photos,
-    dataSaver: false,
-    sourceOn: () => true,
+    dataSaver: settings.dataSaver,
+    sourceOn: name => sourceOn(settings, name),
   };
 }
 
@@ -116,7 +119,7 @@ export function modeDeps(
   measureFirst: typeof measureFirstPages = measureFirstPages,
 ): QuickInsertDeps {
   const sources = modeAdapters(mode, DEFAULT_ADAPTERS);
-  const search = async () => modeSearchSettings(mode);
+  const search = async () => modeSearchSettings(mode, await getSettings());
   return {
     search: (word, _sources, _isNewest, options) =>
       runSearch(
