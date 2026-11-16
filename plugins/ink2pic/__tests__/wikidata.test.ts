@@ -235,6 +235,33 @@ describe('the query languages (#71, owner D7)', () => {
     },
   );
 
+  it('takes the item most Wikipedias found among the titled articles: «Brazil» is the country (#13)', async () => {
+    const article = (title: string, item: string) =>
+      JSON.stringify({
+        batchcomplete: true,
+        query: {pages: [{title, index: 1, pageprops: {wikibase_item: item}}]},
+      });
+    // Lab run lookup-13: pt «Brasil» and en «Brazil» are Q155, es «Brazil» the film.
+    const fetch = jest.fn(async (url: string) => {
+      if (/^https:\/\/pt\.wikipedia/.test(url)) {
+        return ok(article('Brasil', 'Q155'));
+      }
+      if (/^https:\/\/es\.wikipedia/.test(url)) {
+        return ok(article('Brazil', 'Q25057'));
+      }
+      if (/^https:\/\/en\.wikipedia/.test(url)) {
+        return ok(article('Brazil', 'Q155'));
+      }
+      if (/query\.wikidata/.test(url)) {
+        return ok(sparql(['Q155', 'P41', 'File:Flag of Brazil.svg'], ['Q155', 'P625', 'Point(1 2)']));
+      }
+      return ok(FILES);
+    });
+    await searchWikidata('brazil', ctx(fetch, ['pt', 'es', 'en']));
+    const commons = fetch.mock.calls.map(([url]) => url).find(url => /commons/.test(url));
+    expect(decodeURIComponent(commons ?? '')).toContain('Flag of Brazil');
+  });
+
   it('keeps the brand when every Wikipedia names one, or when the claims fail (#13)', async () => {
     const article = (title: string, item: string) =>
       JSON.stringify({

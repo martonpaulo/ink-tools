@@ -692,13 +692,26 @@ async function lookup(
 /** An article one language's Wikipedia found. */
 type Candidate = {language: string; answer: WikiAnswer & {hit: WikiHit}};
 
-/** In the languages' order, the first article titled as the query, else the first. */
+/**
+ * The article titled as the query whose item the most Wikipedias found, in the languages' order
+ * on a tie; else the first article. «Brazil» is a film in the Spanish Wikipedia and the country
+ * in the Portuguese («Brasil») and English ones: the country wins two to one (#13, lab run
+ * `lookup-13`).
+ */
 function choose(query: string, found: readonly Candidate[]): Candidate {
+  const votes = (c: Candidate) =>
+    c.answer.hit.item === undefined
+      ? 1
+      : found.filter(other => other.answer.hit.item === c.answer.hit.item).length;
+  const titled = found.filter(
+    c =>
+      isQueryArticle(query, c.answer.hit.title) &&
+      isTitleOfQuery(query, c.answer.hit.title),
+  );
   return (
-    found.find(
-      c =>
-        isQueryArticle(query, c.answer.hit.title) &&
-        isTitleOfQuery(query, c.answer.hit.title),
+    titled.reduce<Candidate | undefined>(
+      (best, c) => (best === undefined || votes(c) > votes(best) ? c : best),
+      undefined,
     ) ?? found[0]
   );
 }
