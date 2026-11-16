@@ -1,6 +1,6 @@
 /**
  * The sign-in secrets Bridge's providers need (#90, owner decision D16 A). The first route is the
- * Mac command `snadb secret set <provider>`, which writes one file per provider into Bridge's
+ * Mac command `inkctl secret set <provider>`, which writes one file per provider into Bridge's
  * private plugin folder; Bridge only reads that file and deletes it to sign out. Another route
  * (an on-tablet field, a file edited on a computer) is one more writer of the same file.
  */
@@ -18,7 +18,7 @@ export interface SecretStore {
   remove(provider: SecretProvider): Promise<void>;
 }
 
-/** The one owner of the file names; `snadb` writes the same ones. */
+/** The one owner of the file names; `inkctl` writes the same ones. */
 export function secretFileName(provider: SecretProvider): string {
   if (!SECRET_PROVIDERS.includes(provider)) throw new Error(`secrets: unknown provider ${String(provider)}`);
   return `${provider}.secret`;

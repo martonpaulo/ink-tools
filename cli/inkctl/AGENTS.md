@@ -2,13 +2,13 @@
 
 ## Project identity and policy
 
-- Display name: `Supernote ADB`
-- Code name: `Snadb`
-- Slug: `snadb`
-- Identifier name: `snadb`
+- Display name: `inkctl`
+- Code name: `Inkctl`
+- Slug: `inkctl`
+- Identifier name: `inkctl`
 - Benefit-first description: Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
-- Repository: `martonpaulo/supernote-tools` (public), subproject `cli/snadb/`; `martonpaulo/supernote-adb` is archived
-- Public identifiers: GitHub repository and the `snadb` command; this project is not a package or registry product.
+- Repository: `martonpaulo/supernote-tools` (public), subproject `cli/inkctl/`; `martonpaulo/supernote-adb` is archived
+- Public identifiers: GitHub repository and the `inkctl` command; this project is not a package or registry product.
 - Landing page: None. The repository README is the canonical project surface.
 - License: `MIT`
 - Copyright: 2026 Marton Paulo
@@ -24,8 +24,8 @@
 - Release, signing, and secret-storage policy: Distributed as source through a GitHub clone and one symbolic link; no release artifacts, tags, signing, or release secrets.
 - Skills baseline revision: `cbcec4900930f50f4efb35c839866c96a1ede724`
 - Skills baseline applied: `2026-11-10`
-- Skills baseline divergence `command-name` at `cbcec4900930f50f4efb35c839866c96a1ede724`: replaced on 2026-11-14 ([#72](https://github.com/martonpaulo/supernote-tools/issues/72)); the command now equals the slug, `snadb`.
-- Skills baseline divergence `single-file-source` at `cbcec4900930f50f4efb35c839866c96a1ede724`: the source is one executable, `src/snadb`, because a clone and one link are the whole install and no package is published.
+- Skills baseline divergence `command-name` at `cbcec4900930f50f4efb35c839866c96a1ede724`: replaced on 2026-11-14 ([#72](https://github.com/martonpaulo/supernote-tools/issues/72)); the command now equals the slug, `inkctl`.
+- Skills baseline divergence `single-file-source` at `cbcec4900930f50f4efb35c839866c96a1ede724`: the source is one executable, `src/inkctl`, because a clone and one link are the whole install and no package is published; `src/snadb` is only a shim for the old name, which prints one deprecation line and runs `src/inkctl` ([#173](https://github.com/martonpaulo/supernote-tools/issues/173)).
 
 Change an identifier or policy recorded above only through an explicit task describing the migration and its effects.
 
@@ -103,7 +103,7 @@ Before editing under a path, read the file its row names. A module with rules of
 - Ignore secrets, local environments, logs, caches, and build output. Keep `.env.example` with every variable and a safe placeholder, and secrets only in the platform's secure store. Nothing new in `~` (`project-layout.md`).
 - Add CI, dependency updates, release workflows, and signing only when distribution or risk requires them.
 - The Validate workflow has no `pull_request_target` trigger and reads no stored secret, so it runs on a fork; the `validate-trust` check of `check_repository_conventions.py` fails either ([martonpaulo/skill-deck#801](https://github.com/martonpaulo/skill-deck/issues/801)).
-- Workflows: `Validate Supernote ADB`, in `.github/workflows/validate-snadb.yml` at the repository root, as the root `AGENTS.md` divergence `ci-pipelines` records. A workflow added outside the `project-setup` skill's `references/ci-pipelines.md` is a recorded exception. A Node repository's `validate` script runs exactly what CI runs. Do not add an image-optimisation bot.
+- Workflows: `Validate inkctl`, in `.github/workflows/validate-inkctl.yml` at the repository root, as the root `AGENTS.md` divergence `ci-pipelines` records. A workflow added outside the `project-setup` skill's `references/ci-pipelines.md` is a recorded exception. A Node repository's `validate` script runs exactly what CI runs. Do not add an image-optimisation bot.
 - The agent rules live in `AGENTS.md`, the one real file; `CLAUDE.md` is a symlink to it. Do not create `GEMINI.md`, `.gemini/rules/agents.md`, or any other alias, and never commit `.claude/settings.local.json`.
 - Change the repository `homepage` only as the `project-setup` skill's `references/github-settings.md` describes.
 
@@ -130,7 +130,7 @@ Before editing under a path, read the file its row names. A module with rules of
 - Every ADB call has a time limit, and a wait polls a condition with a time limit.
 - A call that changes the tablet never replaces a file or presses a stale reference without an explicit request.
 - Only one session uses the tablet at a time. A change on the tablet waits for the owner's yes, and a write counts as done only after a read-back.
-- Tests drive `src/snadb` through the `adb` stub in `tests/snadb.test.sh`, with `device-a.test` as the address.
+- Tests drive `src/inkctl` through the `adb` stub in `tests/inkctl.test.sh`, with `device-a.test` as the address.
 - Never commit an address, serial number, account or note name, or material from decompiled apps or firmware. `docs/research/` holds public sources only.
 
 ## Agent skill paths

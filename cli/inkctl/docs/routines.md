@@ -8,7 +8,7 @@ The routines this project keeps. The owner decides when a run on request happens
 
 | Routine | Where |
 | :--- | :--- |
-| `make validate` on each push and pull request | `.github/workflows/validate-snadb.yml` (repository root) |
+| `make validate` on each push and pull request | `.github/workflows/validate-inkctl.yml` (repository root) |
 | Updates for the GitHub Actions in use | `.github/dependabot.yml` (repository root) |
 | Secret scanning and push protection | repository settings |
 | Commit checks for private data and message form | the Skill Deck `pre-commit` and `commit-msg` hooks |
@@ -17,7 +17,7 @@ The routines this project keeps. The owner decides when a run on request happens
 
 | Event | Routine |
 | :--- | :--- |
-| The tablet's firmware changes | Check the commands on the device, and update the firmware the README names. Start with `snadb doctor`. |
+| The tablet's firmware changes | Check the commands on the device, and update the firmware the README names. Start with `inkctl doctor`. |
 | Code is copied from another project | Pin it in `upstreams.json`, credit it in `NOTICE.md`, and add the weekly upstream check. |
 | A large change is planned | Run `project-audit` first. |
 

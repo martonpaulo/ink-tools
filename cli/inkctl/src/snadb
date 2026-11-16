@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+"""snadb: the old name of inkctl (#173). Prints one deprecation line, then runs inkctl with the same
+arguments, input and exit code, so a script that calls snadb keeps working. Remove it once nothing
+calls snadb."""
+
+import os
+import sys
+from pathlib import Path
+
+target = Path(__file__).resolve().with_name("inkctl")
+print("snadb: renamed to inkctl; this name still works for now, run inkctl instead", file=sys.stderr)
+os.execv(sys.executable, [sys.executable, str(target), *sys.argv[1:]])

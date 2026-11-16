@@ -5,7 +5,7 @@
  * definition, or a dictionary that cannot be reached, inserts a sentence that says so; never a guess.
  *
  * Each step is logged with its time as `Lookup: …`, so a device round reads the recognition, the
- * dictionary wait and the insert from `snadb logs --plugin Lookup`.
+ * dictionary wait and the insert from `inkctl logs --plugin Lookup`.
  */
 import {
   defineFirst,

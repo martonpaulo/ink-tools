@@ -161,7 +161,7 @@ describe('SettingsShell (#93)', () => {
       expect(texts(tree)).toEqual(
         expect.arrayContaining([
           'Todoist: signed in (…wxyz).',
-          'iCloud: not signed in. On the Mac, run snadb secret set icloud.',
+          'iCloud: not signed in. On the Mac, run inkctl secret set icloud.',
           'Google: the sign-in did not read: read failed',
         ]),
       );

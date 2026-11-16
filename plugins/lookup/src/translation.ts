@@ -6,7 +6,7 @@
  * A word with no translation, or dictionaries that cannot be reached, inserts a sentence that says
  * so; never a guess.
  *
- * Each step is logged as `Lookup: translate: …`, read with `snadb logs --plugin Lookup`.
+ * Each step is logged as `Lookup: translate: …`, read with `inkctl logs --plugin Lookup`.
  */
 import {
   Direction,

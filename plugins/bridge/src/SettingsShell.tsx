@@ -25,7 +25,7 @@ export type ModuleRow = {
 };
 
 export type ProviderSignIn = {
-  /** The provider's id, as `snadb secret set <id>` takes it. */
+  /** The provider's id, as `inkctl secret set <id>` takes it. */
   id: string;
   name: string;
   signIn: SignIn;

@@ -1,6 +1,6 @@
 /**
  * A module's sync status in plain words for Settings, and the same record as log lines for
- * `snadb logs --plugin Bridge` (#88). The status says «last synced», never a schedule: the sync
+ * `inkctl logs --plugin Bridge` (#88). The status says «last synced», never a schedule: the sync
  * runs only while the plugin is alive (#39).
  */
 import type {ModuleRun, ModuleStatus} from '@supernote-tools/sync-core';
@@ -78,7 +78,7 @@ export function runLogLines(run: ModuleRun): string[] {
   ];
 }
 
-/** Writes a run to the device log, where `snadb logs --plugin Bridge` reads it. */
+/** Writes a run to the device log, where `inkctl logs --plugin Bridge` reads it. */
 export function logRun(
   run: ModuleRun,
   write: (line: string) => void = console.log,

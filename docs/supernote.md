@@ -122,7 +122,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `requestPermission`: no dialog shows without that call, and every file call fails. Settings ›
   Apps › Plugins › the plugin › Permissions sets each one to Allow, Ask Every Time or Don't Allow
   [measured, Relay, [#163](https://github.com/martonpaulo/supernote-tools/issues/163)]. An update
-  by `snadb plugin install` keeps the granted permissions [measured, Lookup beta 1 to beta 4].
+  by `inkctl plugin install` keeps the granted permissions [measured, Lookup beta 1 to beta 4].
 - A plugin's native server socket accepted LocalSend connections while `INTERNET` was still «Ask
   Every Time» [measured, Relay «Receive», 2026-11-16]: the `INTERNET` gate may cover only
   outgoing sockets.
@@ -261,7 +261,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
 - Uninstalling a plugin from Settings («Its data will also be deleted») left its
   `MyStyle/<name>` folder untouched; a `plugin ls` right after the uninstall got no answer from
   the plugin provider once, then answered [measured, Ink2Pic, 2026-11-16].
-- **Shell ADB can write** `/sdcard/.data/dictionary/` [measured], so a host-side `snadb` command
+- **Shell ADB can write** `/sdcard/.data/dictionary/` [measured], so a host-side `inkctl` command
   could switch the global language among the installed packs without a plugin.
 - Installed language packs: `en_US`, `es_ES`, `pt_BR`, `zh_CN`, `zh_TW`, `ja_JP` (147 MB total);
   the other 60 of the 66 need a Settings download [measured].
@@ -297,26 +297,26 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
   Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/supernote-tools/issues/23)].
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/supernote-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
-  [measured, `cli/snadb/README.md`].
+  [measured, `cli/inkctl/README.md`].
 
 ## Network and ADB
 
 - The lasso tool takes the pen only: a loop drawn with `input motionevent` (touch) or
   `input stylus motionevent` selects nothing, and `sendevent` to the `Wacom-pen` node
   (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Nomad,
-  [#148](https://github.com/martonpaulo/supernote-tools/issues/148)]. Once a lasso exists, `snadb click` presses its toolbar and every «⋯» row.
-- USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`snadb wifi on`) and off
-  with `snadb wifi off` [measured]. snadb reaches the tablet over Wi-Fi only, even with the cable
+  [#148](https://github.com/martonpaulo/supernote-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
+- USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off
+  with `inkctl wifi off` [measured]. inkctl reaches the tablet over Wi-Fi only, even with the cable
   in, so a round turns Wi-Fi ADB on first. With the tablet's Wi-Fi off (`adb -d shell svc wifi
-  disable`), snadb loses it although `adb -d` still answers over the cable, so a round cannot run
-  offline checks through snadb [measured, 2026-11-16,
+  disable`), inkctl loses it although `adb -d` still answers over the cable, so a round cannot run
+  offline checks through inkctl [measured, 2026-11-16,
   [#171](https://github.com/martonpaulo/supernote-tools/issues/171)].
-- After a tablet restart, `snadb status` fails with exit 3 and names the USB route
-  (`adb tcpip 5555`); `snadb wifi on` over the cable restores it [measured, 2026-11-16,
+- After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
+  (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/supernote-tools/issues/1)].
 - Two ways to put a selection on the page without the pen, for a round: a text received by Relay
   lands as a lassoed text box, and a sticker from the built-in Sticker plugin lands as lassoed
   strokes in the «pasted» state. Neither is a lassoed handwritten word or picture [measured,
   2026-11-16].
 - With `wifi_sleep_policy` at `2`, the tablet kept answering while asleep for 15 minutes and lost
-  1% battery [measured, `cli/snadb/README.md`].
+  1% battery [measured, `cli/inkctl/README.md`].

@@ -19,7 +19,7 @@ export const copy = {
   'remove.yes': 'Remove',
   cancel: 'Cancel',
   'signIn.in': '{provider}: signed in ({tail}).',
-  'signIn.out': '{provider}: not signed in. On the Mac, run snadb secret set {id}.',
+  'signIn.out': '{provider}: not signed in. On the Mac, run inkctl secret set {id}.',
   'signIn.unreadable': '{provider}: the sign-in did not read: {reason}',
   'signOut.button': 'Sign out',
   'signOut.label': 'Sign out of {provider}',

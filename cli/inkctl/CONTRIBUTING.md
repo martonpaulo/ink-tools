@@ -7,4 +7,4 @@ Read [`docs/product.md`](docs/product.md) first. It says what belongs in this pr
 3. Use only synthetic data in tests. Never add a real address, serial number or note name.
 4. Write a commit in the [Conventional Commits](https://www.conventionalcommits.org/) form.
 
-A change to how the command talks to the tablet needs a test with the `adb` stub in `tests/snadb.test.sh`. Say in the pull request which firmware you ran it on, if any.
+A change to how the command talks to the tablet needs a test with the `adb` stub in `tests/inkctl.test.sh`. Say in the pull request which firmware you ran it on, if any.

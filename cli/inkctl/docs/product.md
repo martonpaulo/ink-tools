@@ -1,4 +1,4 @@
-# Supernote ADB
+# inkctl
 
 ## Contents
 
@@ -19,7 +19,7 @@
 
 ## What it is
 
-A command, `snadb`, that lets a program or an AI agent control a Supernote e-ink tablet over Wi-Fi ADB.
+A command, `inkctl`, that lets a program or an AI agent control a Supernote e-ink tablet over Wi-Fi ADB.
 
 ## Who it is for
 
@@ -50,7 +50,7 @@ Open a note, copy a file, ask for a sync, or install a plugin from a computer, w
 
 ## How you know it worked
 
-An agent completes a task on the tablet by calling only `snadb`, with no raw `adb` and no coordinates. The first measure is the set of commands checked on a real device, recorded in the issue tracker.
+An agent completes a task on the tablet by calling only `inkctl`, with no raw `adb` and no coordinates. The first measure is the set of commands checked on a real device, recorded in the issue tracker.
 
 ## Constraints
 

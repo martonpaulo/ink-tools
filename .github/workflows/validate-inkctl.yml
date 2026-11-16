@@ -1,12 +1,12 @@
-name: Validate Supernote ADB
+name: Validate inkctl
 
-# Runs only when cli/snadb/ (or this file) changes; the gate is its own `make validate`.
+# Runs only when cli/inkctl/ (or this file) changes; the gate is its own `make validate`.
 on:
   push:
     branches: [main]
-    paths: ['cli/snadb/**', '.github/workflows/validate-snadb.yml']
+    paths: ['cli/inkctl/**', '.github/workflows/validate-inkctl.yml']
   pull_request:
-    paths: ['cli/snadb/**', '.github/workflows/validate-snadb.yml']
+    paths: ['cli/inkctl/**', '.github/workflows/validate-inkctl.yml']
   workflow_dispatch:
 
 permissions:
@@ -18,12 +18,12 @@ concurrency:
 
 jobs:
   validate:
-    name: validate snadb
+    name: validate inkctl
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: cli/snadb
+        working-directory: cli/inkctl
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

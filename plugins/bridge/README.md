@@ -11,7 +11,7 @@ shows, not a separate calendar inside a plugin.
 ## What it will do
 
 - Sign in with its **own** Google account and read every Google calendar. You sign in once on
-  the Mac with a `snadb` command, which hands the token to the tablet; Google's device-code flow
+  the Mac with a `inkctl` command, which hands the token to the tablet; Google's device-code flow
   does not allow the Calendar scopes ([#64](https://github.com/martonpaulo/supernote-tools/issues/64)).
 - Connect iCloud (CalDAV) and subscribe to ICS feeds.
 - Write all of them into the native Calendar through the `com.ratta.supernote.calendar.provider`

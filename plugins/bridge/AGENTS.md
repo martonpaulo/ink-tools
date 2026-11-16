@@ -36,7 +36,7 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   last four characters and a «Sign out» per provider, confirmed once more, that deletes the file.
   Entry route per provider, the same for each: **Todoist** API token, **iCloud** app-specific
   password and **Google** refresh token (its sign-in is [#64](https://github.com/martonpaulo/supernote-tools/issues/64)) all come from the Mac with
-  `snadb secret set <provider>`. Target, not built: the command waits on the probe round that
+  `inkctl secret set <provider>`. Target, not built: the command waits on the probe round that
   measures the folder's path and whether ADB can write it. An on-tablet field and a file edited on
   a computer are later routes, writers of the same file; a file in `MyStyle/` is never one, as it
   syncs to Supernote Cloud ([#23](https://github.com/martonpaulo/supernote-tools/issues/23)).

@@ -24,7 +24,7 @@ numbered beta: a test build reads `0.2.0-beta.3` on GitHub and `0.2.0 beta 3` on
 | [`plugins/ink2pic/`](plugins/ink2pic/) | plugin | Insert a matching picture for a lassoed word. **Retired** and uninstalled from the tablet: Lookup replaces it ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)). It gets no new work. |
 | [`plugins/lingo/`](plugins/lingo/) | plugin | Insert the translation of a lassoed word. **Retiring**: translation is now Lookup's «Translate ES→PT» buttons ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#174](https://github.com/martonpaulo/supernote-tools/issues/174)); the folder goes once they pass on the tablet ([#161](https://github.com/martonpaulo/supernote-tools/issues/161)). |
 | [`apps/lingo-app/`](apps/lingo-app/) | tablet app | Handwriting Language (the Lingo app): switch the handwriting recognition language of the whole tablet with one tap, from a floating button or its sidebar entry. **Test build, device round pending** — see [#157](https://github.com/martonpaulo/supernote-tools/issues/157). |
-| [`cli/snadb/`](cli/snadb/) | Mac CLI | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
+| [`cli/inkctl/`](cli/inkctl/) | Mac CLI | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
 | Ink Notebook Editor | Mac app | Read and edit Supernote `.note` files on the Mac without breaking the format. **Planned**, not yet a folder — see [#48](https://github.com/martonpaulo/supernote-tools/issues/48). |
 | [`packages/`](packages/) | shared code | Shared, provider-agnostic building blocks the plugins bundle: `sn-adapter`, `sync-core`, `ink-core`, `picture-search` and `ui-kit`. |
 

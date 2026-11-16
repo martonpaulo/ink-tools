@@ -54,7 +54,7 @@ describe('statusLines (#88)', () => {
 });
 
 describe('the log record (#88)', () => {
-  it('writes every message with the plugin tag snadb filters on', () => {
+  it('writes every message with the plugin tag inkctl filters on', () => {
     const lines: string[] = [];
     logRun(
       run({errors: ['x: HTTP 500'], warnings: ['y: unsupported FREQ HOURLY']}),

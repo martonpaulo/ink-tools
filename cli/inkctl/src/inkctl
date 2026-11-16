@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""snadb: let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
+"""inkctl: let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
 
 Direct calls come first (intents, content providers, files), then element references from a
 snapshot, and coordinates only as the last resort. Every command takes --json.
@@ -42,8 +42,8 @@ click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result
 --trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
-~/.config/snadb/address, as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
-ADB over Wi-Fi is enabled over USB with `snadb wifi on` (`adb tcpip 5555`); a restart of the device turns
+~/.config/inkctl/address (or, from before the rename, ~/.config/snadb/address), as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
+ADB over Wi-Fi is enabled over USB with `inkctl wifi on` (`adb tcpip 5555`); a restart of the device turns
 it off.
 """
 
@@ -105,7 +105,7 @@ EXIT_CODES = """exit codes:
 
 a failure in --json has the fields: error, message, cause, next
 
-each run adds one JSON line to ~/.cache/snadb/history.jsonl, with the fields:
+each run adds one JSON line to ~/.cache/inkctl/history.jsonl, with the fields:
   time       when the run started, UTC
   command    the command's name, never its arguments
   seconds    how long the run took
@@ -125,10 +125,13 @@ ADB_PORT = 5555  # the port `adb tcpip` opens
 SHARED_ROOT = "/storage/emulated/0"
 SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
 NOTES_FOLDER = f"{SHARED_ROOT}/Note"
-ADDRESS_FILE = Path.home() / ".config/snadb/address"
-SNAPSHOT_FILE = Path.home() / ".cache/snadb/snapshot.json"
-HISTORY_FILE = Path.home() / ".cache/snadb/history.jsonl"
-LOG_MARK_FILE = Path.home() / ".cache/snadb/logcat-mark"
+ADDRESS_FILE = Path.home() / ".config/inkctl/address"
+# The address file of the command's old name, snadb (#173): still read when the new one is missing,
+# so a tablet set up before the rename stays reachable. Remove with the src/snadb shim.
+LEGACY_ADDRESS_FILE = Path.home() / ".config/snadb/address"
+SNAPSHOT_FILE = Path.home() / ".cache/inkctl/snapshot.json"
+HISTORY_FILE = Path.home() / ".cache/inkctl/history.jsonl"
+LOG_MARK_FILE = Path.home() / ".cache/inkctl/logcat-mark"
 PRIVATE_FILE_MODE = 0o600
 HISTORY_MAX_BYTES = 1_000_000  # past this the file keeps its newest half
 ADDRESS_MASK = "[device]"
@@ -267,24 +270,24 @@ CREDENTIAL_MASK = r"\1[masked]"
 
 # Why each failure happens and the command to try next: the fixed fields of a failure in --json.
 FAILURE_ADVICE = {
-    "usage": ("the call's arguments are wrong, or no address is recorded", "snadb --help"),
+    "usage": ("the call's arguments are wrong, or no address is recorded", "inkctl --help"),
     "no_adb": ("adb is not on this computer's PATH", "adb version"),
-    "unreachable": ("the device did not answer over Wi-Fi ADB", "snadb status"),
+    "unreachable": ("the device did not answer over Wi-Fi ADB", "inkctl status"),
     "no_usb": ("one tablet must be attached by USB, with USB debugging allowed", "adb devices"),
-    "device_error": ("the device refused the call, or the call failed", "snadb logs --level E --lines 50"),
-    "not_found": ("the file or element does not exist", "snadb files ls"),
-    "ambiguous": ("more than one element matches the target", "snadb snapshot"),
-    "exists": ("the destination already exists", "snadb files ls"),
-    "timeout": ("the condition did not happen within the time limit", "snadb history --failures"),
-    "stale": ("the screen changed since the last snapshot", "snadb snapshot"),
-    "busy": ("the screen did not settle", "snadb snapshot"),
-    "network_error": ("Ratta's site could not be reached", "snadb firmware"),
-    "firmware_refused": ("the update is not safe to copy", "snadb firmware"),
-    "read_only": ("read-only mode forbids a command that changes the device", "snadb status"),
-    "protected": ("the notes folder or a note on the screen is protected", "snadb files ls"),
-    "missing_call": ("a firmware update may have changed this call", "snadb doctor"),
-    "unexpected_screen": ("the screen is not the one this step expects", "snadb snapshot"),
-    "log_error": ("the command's own log could not be read", "snadb status"),
+    "device_error": ("the device refused the call, or the call failed", "inkctl logs --level E --lines 50"),
+    "not_found": ("the file or element does not exist", "inkctl files ls"),
+    "ambiguous": ("more than one element matches the target", "inkctl snapshot"),
+    "exists": ("the destination already exists", "inkctl files ls"),
+    "timeout": ("the condition did not happen within the time limit", "inkctl history --failures"),
+    "stale": ("the screen changed since the last snapshot", "inkctl snapshot"),
+    "busy": ("the screen did not settle", "inkctl snapshot"),
+    "network_error": ("Ratta's site could not be reached", "inkctl firmware"),
+    "firmware_refused": ("the update is not safe to copy", "inkctl firmware"),
+    "read_only": ("read-only mode forbids a command that changes the device", "inkctl status"),
+    "protected": ("the notes folder or a note on the screen is protected", "inkctl files ls"),
+    "missing_call": ("a firmware update may have changed this call", "inkctl doctor"),
+    "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
+    "log_error": ("the command's own log could not be read", "inkctl status"),
 }
 
 
@@ -308,8 +311,8 @@ USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
 # A refused port comes first: a stale `adb` server can repeat `No route to host` after the tablet woke with ADB off.
 UNREACHABLE_STATES = (
     (("Connection refused",), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
-    (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "snadb status"),
-    (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "snadb status"),
+    (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "inkctl status"),
+    (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "inkctl status"),
 )
 
 
@@ -344,8 +347,9 @@ def remote_path(path: str) -> str:
 
 def read_address() -> str:
     address = os.environ.get("SUPERNOTE_ADDRESS", "")
-    if not address and ADDRESS_FILE.is_file():
-        lines = ADDRESS_FILE.read_text().splitlines()
+    found = next((file for file in (ADDRESS_FILE, LEGACY_ADDRESS_FILE) if file.is_file()), None)
+    if not address and found:
+        lines = found.read_text().splitlines()
         address = lines[0].strip() if lines else ""
     if not address:
         raise bad_usage(f"no address; write the device's IP in {ADDRESS_FILE}")
@@ -400,7 +404,7 @@ class RunLog:
         try:
             append_history(line)
         except (OSError, ValueError) as error:
-            print(f"snadb: the run log was not written: {error}", file=sys.stderr)
+            print(f"inkctl: the run log was not written: {error}", file=sys.stderr)
 
 
 def append_history(line: str) -> None:
@@ -644,7 +648,7 @@ def resolve_ref(device: Device, reference: str) -> dict:
     for element in saved["elements"]:
         if element["ref"] == reference:
             return element
-    raise not_found(f"{reference} in the last snapshot", "snadb snapshot")
+    raise not_found(f"{reference} in the last snapshot", "inkctl snapshot")
 
 
 def find_selector(elements: list[dict], selector: str) -> list[dict]:
@@ -659,7 +663,7 @@ def resolve_target(device: Device, target: str) -> dict:
         return resolve_ref(device, target)
     matches = find_selector(device.elements(), target)
     if not matches:
-        raise not_found(target, "snadb snapshot")
+        raise not_found(target, "inkctl snapshot")
     if len(matches) > 1:
         raise Failure(EXIT_NOT_FOUND, "ambiguous", f"{len(matches)} elements match {target}; use a snapshot reference")
     return matches[0]
@@ -943,7 +947,7 @@ def add_component_details(device: Device, components: list[dict]) -> list[dict]:
 def package_routes(device: Device, package: str) -> dict:
     output = device.shell(f"dumpsys package {shlex.quote(package)}")
     if f"Package [{package}]" not in output:
-        raise not_found(f"package {package}", "snadb apps")
+        raise not_found(f"package {package}", "inkctl apps")
     components, providers = parse_package_routes(output)
     return {"package": package, "components": add_component_details(device, components), "providers": providers}
 
@@ -1113,7 +1117,7 @@ def command_sync_tasks(device: Device, args: argparse.Namespace):
 def command_sync_calendar(device: Device, args: argparse.Namespace):
     """The Calendar app registers this receiver only while it runs, and an unheard broadcast still answers 0."""
     if CALENDAR_SYNC_ACTION not in device.shell("dumpsys activity broadcasts"):
-        raise Failure(EXIT_FAILED, "device_error", "the Calendar app is not running, so nothing would hear this; open it first", next_step="snadb doctor")
+        raise Failure(EXIT_FAILED, "device_error", "the Calendar app is not running, so nothing would hear this; open it first", next_step="inkctl doctor")
     data = {"app": "calendar", **broadcast(device, CALENDAR_SYNC_ACTION)}
     return data, "sync asked: calendar"
 
@@ -1262,7 +1266,7 @@ def scroll_until_found(device: Device, selector: str, limit: int):
         returned, at_limit = False, at_limit or paging["at_limit"]
     if returned:
         save_snapshot(snapshot)
-    failure = not_found(selector, "snadb snapshot --all")
+    failure = not_found(selector, "inkctl snapshot --all")
     failure.extra = {"at_limit": at_limit}
     if at_limit:
         failure.message = f"{selector} not found before the limit of {limit} swipes; the list continues"
@@ -1489,7 +1493,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     name = os.path.basename(args.file)
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
     if installed and same_build(installed[0], config, installed[0].get("versionName")):
-        raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "snadb plugin ls")
+        raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "inkctl plugin ls")
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")
     for step in PLUGIN_PATH_STEPS:
@@ -1548,7 +1552,7 @@ def logcat_call(device: Device, args: argparse.Namespace, mark: str) -> list[str
     if args.package:
         pids = device.shell(f"pidof {shlex.quote(args.package)} || true").split()
         if not pids:
-            raise not_found(f"a running process of {args.package}", "snadb apps")
+            raise not_found(f"a running process of {args.package}", "inkctl apps")
         call.append(f"--pid={pids[0]}")  # shortcut: only the first process; widen when a package runs several
     elif args.pid:
         call.append(f"--pid={args.pid}")
@@ -1596,7 +1600,7 @@ def save_log_mark(lines: list[str]) -> None:
         LOG_MARK_FILE.touch(mode=PRIVATE_FILE_MODE, exist_ok=True)
         LOG_MARK_FILE.write_text(max(times))
     except OSError as error:
-        print(f"snadb: the log mark was not saved: {error}", file=sys.stderr)
+        print(f"inkctl: the log mark was not saved: {error}", file=sys.stderr)
 
 
 def follow_log(device: Device, args: argparse.Namespace, call: list[str], keeps):
@@ -1657,7 +1661,7 @@ def command_history(device, args: argparse.Namespace):
     runs = runs[-args.limit:]
     text = "\n".join(f"{run['time']} {run['command']} exit={run['exit']} error={run['error']} {run['seconds']} s" for run in runs)
     if unreadable:
-        print(f"snadb: {unreadable} log lines could not be read", file=sys.stderr)
+        print(f"inkctl: {unreadable} log lines could not be read", file=sys.stderr)
     return {"runs": runs, "unreadable": unreadable}, text
 
 
@@ -1686,7 +1690,7 @@ def command_wifi_on(device: Device, args: argparse.Namespace):
             if time.monotonic() - started >= args.timeout:
                 raise Failure(EXIT_TIMEOUT, "timeout", f"the port did not answer after {args.timeout:g} s") from None
             time.sleep(WAIT_INTERVAL)
-    return {"wifi_adb": "on", "off": "snadb wifi off"}, "Wi-Fi ADB is on. Turn it off when the work ends: snadb wifi off"
+    return {"wifi_adb": "on", "off": "inkctl wifi off"}, "Wi-Fi ADB is on. Turn it off when the work ends: inkctl wifi off"
 
 
 def command_wifi_off(device: Device, args: argparse.Namespace):
@@ -1725,7 +1729,7 @@ def build_parser() -> argparse.ArgumentParser:
     action.add_argument("--allow-notes", action="store_true", help="capture even when a note is on the screen")
 
     parser = argparse.ArgumentParser(
-        prog="snadb",
+        prog="inkctl",
         description=__doc__,
         epilog=EXIT_CODES,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1889,7 +1893,7 @@ def main() -> int:
         message = log.clean(failure.message)
         if failure.text and not args.json:
             print(failure.text)
-        print(f"snadb: {message}", file=sys.stderr)
+        print(f"inkctl: {message}", file=sys.stderr)
         if args.json:
             print(json.dumps({
                 "error": failure.kind,

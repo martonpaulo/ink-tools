@@ -21,7 +21,7 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
   `apps/lingo-app`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
-- **A Mac CLI**: **snadb** drives the tablet over Wi-Fi ADB.
+- **A Mac CLI**: **inkctl** drives the tablet over Wi-Fi ADB.
 - **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
   ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)). «Supernote» is Ratta's trademark, so a tool's name carries no brand;
   «for Supernote notebooks» may appear in a description only
@@ -53,7 +53,7 @@ app installed the way Android allows).
   the limits the native app and the plugin sandbox impose.
 - Lingo: replaces the one file that names the active recognition language and tells the tablet,
   as the Settings app does; lasso convert and plugin recognition read the new language.
-- snadb: exposes the tablet's intents, providers and files as direct calls with JSON output.
+- inkctl: exposes the tablet's intents, providers and files as direct calls with JSON output.
 
 ## What it will never do
 

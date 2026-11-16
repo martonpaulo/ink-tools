@@ -103,7 +103,7 @@ supernote-tools/
     retouch/        # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
     probe/          # permanent on-device investigation plugin
   cli/
-    snadb/          # Supernote ADB control CLI (formerly supernote-adb)
+    inkctl/          # the ADB control CLI (formerly supernote-adb, then inkctl)
   apps/
     lingo-app/      # sideloaded tablet app: switch the handwriting language tablet-wide
     <ink-notebook-editor> # planned macOS app, Ink Notebook Editor: edit .note files on the Mac
@@ -145,10 +145,10 @@ supernote-tools/
     Calendar scope (read 2026-11-14,
     [#64](https://github.com/martonpaulo/supernote-tools/issues/64)). `startDeviceCode` in
     `packages/sync-core` would get `invalid_scope`. **Bridge signs in on the Mac and gets the token
-    over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/supernote-tools/issues/64)): a `snadb` command runs Google's
+    over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/supernote-tools/issues/64)): a `inkctl` command runs Google's
     installed-app flow with a loopback redirect, which allows the Calendar scopes, in the Mac's
     browser; the refresh token then goes to Bridge's private plugin folder the way every sign-in
-    secret does, `snadb secret set google` ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)). The plugin only refreshes
+    secret does, `inkctl secret set google` ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)). The plugin only refreshes
     access tokens. Not chosen: a browser on the tablet with a loopback redirect to the plugin (the
     browser and the local listener are unconfirmed), and read-only Google through its secret iCal
     address and the ICS provider ([#30](https://github.com/martonpaulo/supernote-tools/issues/30)), which makes writing back
@@ -191,8 +191,9 @@ measures are `packages/picture-search`.
 
 ## The host tools
 
-- **`snadb`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
-  codes, no root (formerly `supernote-adb`).
+- **`inkctl`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
+  codes, no root (formerly `supernote-adb`, then `snadb`, which still runs as a shim,
+  [#173](https://github.com/martonpaulo/supernote-tools/issues/173)).
 - **Ink Notebook Editor** (planned folder `apps/ink-notebook-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; not
   yet a subproject ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)).
 
