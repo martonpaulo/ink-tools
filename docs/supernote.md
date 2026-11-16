@@ -126,6 +126,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A plugin's native server socket accepted LocalSend connections while `INTERNET` was still «Ask
   Every Time» [measured, Relay «Receive», 2026-11-16]: the `INTERNET` gate may cover only
   outgoing sockets.
+- The Mac's LocalSend answers a tablet's multicast announce by `POST /api/localsend/v2/register`
+  to the announcer on 53317, and sent no multicast answer while nothing served that port [measured,
+  Relay 0.1.0 beta 3 «Send Page», 2026-11-16, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. Relay's send discovery now serves `/register`
+  for its window.
 - The first write of a file that does not exist yet in shared storage left it empty while the call
   reported success; the next write over that file worked [measured, Lookup settings,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)]. Creating the file empty, closing

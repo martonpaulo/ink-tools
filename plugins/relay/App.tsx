@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Text, ToastAndroid, View} from 'react-native';
+import {BackHandler, Text, ToastAndroid, View} from 'react-native';
 import {closePluginView} from '@supernote-tools/sn-adapter/official';
 import {
   Button,
@@ -32,7 +32,7 @@ import {
   ReceiveState,
 } from './src/receive/session';
 
-type Props = {native?: Relay};
+type Props = {native?: Relay; close?: () => void};
 
 /** One instance, so the view's effects do not run again on every render. */
 const defaultRelay = relay();
@@ -117,17 +117,48 @@ export function TextView({
  * Relay's Settings view (#98): the LocalSend devices one search finds, and the one every send goes
  * to. Picking one saves it, pinned to its fingerprint; sizes and colours from the shared ui-kit.
  */
-export default function App({native = defaultRelay}: Props) {
+export default function App({
+  native = defaultRelay,
+  close = () => closePluginView(),
+}: Props) {
   const [receiving, setReceiving] = useState<ReceiveState>(receiveState());
   const [texting, setTexting] = useState<TextState>(textState());
   useEffect(() => onReceiveState(setReceiving), []);
   useEffect(() => onTextState(setTexting), []);
+  // The Back key does what each screen's own exit button does (#98): PluginHost leaves a
+  // plugin's view open on Back otherwise (`docs/supernote.md` › Plugins).
+  useEffect(() => {
+    const onBack = () => {
+      const text = textState().phase;
+      if (working.isWorking() || text === 'reading' || text === 'sending') {
+        // A send or a read in flight ends by itself, with its toast.
+      } else if (text !== 'idle') {
+        cancelTextSend(
+          textDeps(
+            close,
+            line => ToastAndroid.show(line, ToastAndroid.SHORT),
+            native,
+          ),
+        );
+      } else if (receiveState() !== 'idle') {
+        native.stopReceive();
+      } else {
+        close();
+      }
+      return true;
+    };
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBack,
+    );
+    return () => subscription.remove();
+  }, [native, close]);
   if (useWorking(working)) {
     return <WorkingStrip />;
   }
   if (texting.phase !== 'idle') {
     const deps = textDeps(
-      () => closePluginView(),
+      close,
       line => ToastAndroid.show(line, ToastAndroid.SHORT),
       native,
     );
@@ -144,10 +175,10 @@ export default function App({native = defaultRelay}: Props) {
       <ReceiveView state={receiving} onStop={() => native.stopReceive()} />
     );
   }
-  return <SettingsView native={native} />;
+  return <SettingsView native={native} close={close} />;
 }
 
-function SettingsView({native}: {native: Relay}) {
+function SettingsView({native, close}: {native: Relay; close: () => void}) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [devices, setDevices] = useState<Device[] | null>(null);
 
@@ -208,6 +239,7 @@ function SettingsView({native}: {native: Relay}) {
         disabled={devices === null || settings === null}
         onPress={() => settings !== null && search(settings)}
       />
+      <Button label={copy.close} onPress={close} />
     </View>
   );
 }

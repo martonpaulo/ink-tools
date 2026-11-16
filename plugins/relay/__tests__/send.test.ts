@@ -167,6 +167,45 @@ test('discovery keeps one device per fingerprint and drops bad answers', async (
   ]);
 });
 
+test('discovery serves /register with our identity, where LocalSend answers first (#98)', async () => {
+  // A LocalSend register body: its info, with no `announce` field.
+  const register = JSON.stringify({
+    alias: 'Mac',
+    version: '2.1',
+    deviceModel: 'MacBook',
+    deviceType: 'desktop',
+    fingerprint: 'mac-fp',
+    port: 53317,
+    protocol: 'https',
+    download: false,
+  });
+  const discover = jest.fn(async () => [{ip: lan(10, 0, 0, 2), text: register}]);
+  const {api} = fakeRelay({discover});
+  const found = await discoverDevices(api, sender, async () => ok('/plugin'));
+  expect(found.ok && found.value).toEqual([
+    {
+      alias: 'Mac',
+      ip: lan(10, 0, 0, 2),
+      port: 53317,
+      protocol: 'https',
+      fingerprint: 'mac-fp',
+      deviceModel: 'MacBook',
+    },
+  ]);
+  const args = discover.mock.calls[0] as unknown[];
+  expect(args[4]).toBe('/plugin');
+  expect(JSON.parse(args[5] as string)).toMatchObject({
+    alias: sender.alias,
+    fingerprint: sender.fingerprint,
+    protocol: 'https',
+    port: 53317,
+  });
+
+  // Without the private folder there is no identity to serve: multicast answers only.
+  await discoverDevices(api, sender, async () => fail(-1, 'no dir'));
+  expect((discover.mock.calls[1] as unknown[])[4]).toBeNull();
+});
+
 test('without the native module every call fails as MISSING', async () => {
   const api = relay({});
   const answer = await api.readText('/x');

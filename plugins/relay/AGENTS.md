@@ -10,8 +10,12 @@ toolbar) send a PNG to the LocalSend device chosen in Settings, with a toast for
 `src/localsend/protocol.ts` owns the LocalSend v2 bodies and answers; `src/send/sendPng.ts` the
 flow; `src/settings/device.ts` the chosen device; `native/` the Java module `RelayLocalSend`
 (discovery, the pinned POST, the settings file); the sn-adapter official tier gives `pageImage` and
-`lassoImage`. Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the device round (multicast from a plugin, the toast)
-and an address field for a device discovery cannot see.
+`lassoImage`. Discovery announces by multicast and, for its window, serves `/register` with our
+identity (`Discovery.listen`, refusing every offer), since LocalSend answers an announce there
+first; each register body is one more answer for `parseAnnounce`. The Settings view has «Close»,
+and Back does each view's exit (close, stop, cancel). Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the device round
+(the found Mac and iPhone, the sends, Back reaching the view) and an address field for a device
+discovery cannot see.
 
 **Receive half built, not yet on the device** ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)): «Receive» (sidebar, a view) runs
 `native/.../Receiver.java`, an HTTPS LocalSend v2 receiver with the v3 certificate of

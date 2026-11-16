@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -17,6 +18,11 @@ import java.util.regex.Pattern;
  * parsed and checked in TypeScript (`src/localsend/protocol.ts`). While Relay receives (#49),
  * {@link #answer} makes the tablet visible: it announces once and answers each announce it hears
  * by multicast, the protocol's fallback to `/register`, which Relay's receiver also serves.
+ *
+ * <p>LocalSend answers an announce by `POST /register` to the announcer first, and by multicast
+ * only when that fails, so a send's discovery also serves `/register` for its window
+ * ({@link #run(String, int, String, int, ServerSocket, String)}): each register body is an answer,
+ * as a multicast one is [measured on the tablet, #98].
  */
 public final class Discovery {
   /** The largest datagram we keep; a longer one is dropped, as the protocol parser does. */
@@ -70,6 +76,68 @@ public final class Discovery {
     Answer(String ip, String text) {
       this.ip = ip;
       this.text = text;
+    }
+  }
+
+  /** Keeps each `/register` body as an {@link Answer}, for one discovery window (#98). */
+  public static final class Registrations implements Receiver.Registry {
+    private final List<Answer> answers = new ArrayList<>();
+
+    @Override
+    public synchronized void registered(String ip, String body) {
+      if (body.length() <= MAX_BYTES) {
+        answers.add(new Answer(ip, body));
+      }
+    }
+
+    public synchronized List<Answer> answers() {
+      return new ArrayList<>(answers);
+    }
+  }
+
+  /** A discovery is not a receive: every offer that reaches the window's server is refused. */
+  private static final Receiver.Decider REFUSE =
+      new Receiver.Decider() {
+        @Override
+        public Receiver.Decision decide(String body, String sessionId, String token) {
+          return new Receiver.Decision(403, "", null, null);
+        }
+      };
+
+  private static final Receiver.Sink NOTHING =
+      new Receiver.Sink() {
+        @Override
+        public void received(String path) {}
+
+        @Override
+        public void cancelled() {}
+      };
+
+  /**
+   * Serves `/info` and `/register` with `info` on `server` for one discovery, refusing every offer;
+   * each register body goes to `registrations`. The caller closes the receiver.
+   */
+  public static Receiver listen(ServerSocket server, String info, Registrations registrations) {
+    return new Receiver(server, info, null, REFUSE, NOTHING, registrations);
+  }
+
+  /**
+   * {@link #run(String, int, String, int)} while `server`, when not null, serves `/register`:
+   * the multicast answers, then the register bodies. `server` is closed at the end.
+   */
+  public static List<Answer> run(
+      String group, int port, String announce, int timeoutMs, ServerSocket server, String info)
+      throws IOException {
+    Registrations registrations = new Registrations();
+    Receiver receiver = server == null ? null : listen(server, info, registrations);
+    try {
+      List<Answer> answers = run(group, port, announce, timeoutMs);
+      answers.addAll(registrations.answers());
+      return answers;
+    } finally {
+      if (receiver != null) {
+        receiver.close();
+      }
     }
   }
 

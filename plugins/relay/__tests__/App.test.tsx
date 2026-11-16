@@ -1,5 +1,6 @@
 /** Relay's Settings view (#98): the shared size rules, the device list and the saved choice. */
 import React from 'react';
+import {BackHandler} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
 import App, {deviceLabel, ReceiveView, TextView} from '../App';
@@ -12,10 +13,13 @@ const lan = (...parts: number[]) => parts.join('.');
 const answer = (alias: string, fingerprint: string) =>
   JSON.stringify({alias, fingerprint, port: 53317, protocol: 'https'});
 
-async function render(api: ReturnType<typeof fakeRelay>['api']) {
+async function render(
+  api: ReturnType<typeof fakeRelay>['api'],
+  close: () => void = () => {},
+) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<App native={api} />);
+    tree = renderer.create(<App native={api} close={close} />);
   });
   return tree;
 }
@@ -29,6 +33,31 @@ test('the Settings view keeps the size rules and has a header', async () => {
   expect(
     tree.root.findAllByProps({children: 'No LocalSend device found'}).length,
   ).toBeGreaterThan(0);
+});
+
+test('«No LocalSend device found» closes by its Close button and by Back (#98)', async () => {
+  const handlers: (() => boolean | null | undefined)[] = [];
+  const listen = jest
+    .spyOn(BackHandler, 'addEventListener')
+    .mockImplementation((_event, handler) => {
+      handlers.push(handler);
+      return {remove: () => {}};
+    });
+  const close = jest.fn();
+  const tree = await render(fakeRelay().api, close);
+  expect(
+    tree.root.findAllByProps({children: 'No LocalSend device found'}).length,
+  ).toBeGreaterThan(0);
+  await act(async () => {
+    tree.root.findByProps({label: 'Close'}).props.onPress();
+  });
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(handlers.length).toBeGreaterThan(0);
+  await act(async () => {
+    expect(handlers[handlers.length - 1]()).toBe(true);
+  });
+  expect(close).toHaveBeenCalledTimes(2);
+  listen.mockRestore();
 });
 
 test('picking a found device saves it with its fingerprint', async () => {

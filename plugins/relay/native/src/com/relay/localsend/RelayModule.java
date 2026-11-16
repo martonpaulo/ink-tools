@@ -14,6 +14,7 @@ import com.facebook.react.bridge.WritableMap;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -60,13 +61,20 @@ public final class RelayModule extends ReactContextBaseJavaModule {
     super.invalidate();
   }
 
-  /** Resolves with `[{ip, text}]`, every answer to one announce within `timeoutMs`. */
+  /**
+   * Resolves with `[{ip, text}]`, every answer to one announce within `timeoutMs`. With an
+   * `identityFolder`, our HTTPS server serves `/register` with `info` on `port` for that window,
+   * since LocalSend answers there first (#98); without it, or when the port is taken (a receive
+   * runs), only multicast answers count.
+   */
   @ReactMethod
   public void discover(
       final String group,
       final double port,
       final String announce,
       final double timeoutMs,
+      final String identityFolder,
+      final String info,
       final Promise promise) {
     worker.execute(
         new Runnable() {
@@ -85,7 +93,13 @@ public final class RelayModule extends ReactContextBaseJavaModule {
                 lock.acquire();
               }
               List<Discovery.Answer> answers =
-                  Discovery.run(group, (int) port, announce, (int) timeoutMs);
+                  Discovery.run(
+                      group,
+                      (int) port,
+                      announce,
+                      (int) timeoutMs,
+                      registerSocket(identityFolder, (int) port),
+                      info);
               WritableArray out = Arguments.createArray();
               for (Discovery.Answer answer : answers) {
                 WritableMap item = Arguments.createMap();
@@ -397,6 +411,19 @@ public final class RelayModule extends ReactContextBaseJavaModule {
             promise.resolve(true);
           }
         });
+  }
+
+  /** Our TLS server for a discovery's `/register`, or null when it cannot start. */
+  private static ServerSocket registerSocket(String identityFolder, int port) {
+    if (identityFolder == null) {
+      return null;
+    }
+    try {
+      return Receiver.tlsSocket(Identity.load(new File(identityFolder)), null, port);
+    } catch (Throwable unavailable) {
+      // Discovery still hears multicast answers.
+      return null;
+    }
   }
 
   private void startMulticast(

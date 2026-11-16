@@ -64,6 +64,14 @@ public final class Receiver {
     void cancelled();
   }
 
+  /**
+   * Told of each `/register` body and the peer that sent it (#98): while the send half discovers,
+   * LocalSend answers our announce by registering with us first, so that body is the answer.
+   */
+  public interface Registry {
+    void registered(String ip, String body);
+  }
+
   private static final class Session {
     final String id;
     final String fileId;
@@ -91,12 +99,21 @@ public final class Receiver {
   private final File folder;
   private final Decider decider;
   private final Sink sink;
+  private final Registry registry;
   private final Thread thread;
   private Session session;
 
   /** Starts serving on `server`; `info` is our JSON for `/info` and `/register`. */
   public Receiver(ServerSocket server, String info, File folder, Decider decider, Sink sink) {
+    this(server, info, folder, decider, sink, null);
+  }
+
+  /** As above; `registry`, when not null, hears every `/register` body (#98). */
+  public Receiver(
+      ServerSocket server, String info, File folder, Decider decider, Sink sink,
+      Registry registry) {
     this.server = server;
+    this.registry = registry;
     this.info = info;
     this.folder = folder;
     this.decider = decider;
@@ -193,11 +210,15 @@ public final class Receiver {
     if (route.equals("info") && request.method.equals("GET")) {
       respond(out, 200, info);
     } else if (route.equals("register") && request.method.equals("POST")) {
-      if (readJson(in, request) == null) {
+      String body = readJson(in, request);
+      if (body == null) {
         respond(out, 413, "");
         return;
       }
       respond(out, 200, info);
+      if (registry != null) {
+        registry.registered(socket.getInetAddress().getHostAddress(), body);
+      }
     } else if (route.equals("prepare-upload") && request.method.equals("POST")) {
       prepareUpload(in, out, request);
     } else if (route.equals("upload") && request.method.equals("POST")) {

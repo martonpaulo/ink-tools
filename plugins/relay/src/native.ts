@@ -25,11 +25,17 @@ export type Arrival =
   | {kind: 'stopped'};
 
 export type RelayNative = {
+  /**
+   * With `identityFolder`, our HTTPS server also serves `/register` with `info` for the window,
+   * where LocalSend answers an announce first (#98); each register body is one more datagram.
+   */
   discover(
     group: string,
     port: number,
     announce: string,
     timeoutMs: number,
+    identityFolder: string | null,
+    info: string,
   ): Promise<Datagram[]>;
   post(
     url: string,

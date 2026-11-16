@@ -2,7 +2,11 @@
  * The send flow (#98): make the PNG, offer it to the chosen receiver, upload it, say how it went,
  * and remove the PNG on every path.
  */
-import {EMPTY_LASSO_CODE, Result} from '@supernote-tools/sn-adapter/official';
+import {
+  EMPTY_LASSO_CODE,
+  getPluginDirPath,
+  Result,
+} from '@supernote-tools/sn-adapter/official';
 import {
   announce,
   Device,
@@ -14,6 +18,7 @@ import {
   parseUpload,
   prepareUploadBody,
   prepareUploadUrl,
+  receiverInfo,
   Sender,
   uploadUrl,
 } from '../localsend/protocol';
@@ -42,16 +47,25 @@ export function tempDir(pluginDir: string): string {
 /** What one tap ends in: a line for the toast, or the Settings view to pick a device. */
 export type Outcome = {kind: 'toast'; text: string} | {kind: 'choose'};
 
-/** Every receiver that answers one announce, one per fingerprint, in answer order. */
+/**
+ * Every receiver that answers one announce, by multicast or by `/register`, one per fingerprint,
+ * in answer order. LocalSend registers with the announcer first and answers by multicast only when
+ * that fails, so the window serves `/register` with our identity (#98); without the private folder
+ * only multicast answers count.
+ */
 export async function discoverDevices(
   native: Relay,
   sender: Sender,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
 ): Promise<Result<Device[]>> {
+  const dir = await pluginDir();
   const answers = await native.discover(
     MULTICAST_GROUP,
     LOCALSEND_PORT,
     announce(sender),
     TIMEOUTS.discoverMs,
+    dir.ok ? dir.value : null,
+    receiverInfo(sender),
   );
   if (!answers.ok) {
     return answers;
