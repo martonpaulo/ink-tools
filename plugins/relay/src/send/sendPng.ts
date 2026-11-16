@@ -66,7 +66,8 @@ export async function discoverDevices(
   return {ok: true, value: [...seen.values()]};
 }
 
-function failureText(device: Device, moduleCode: string | undefined): string {
+/** The toast for a failed POST: a changed identity, else not reachable. */
+export function failureText(device: Device, moduleCode: string | undefined): string {
   return moduleCode === 'IDENTITY'
     ? copy.identityChanged(device.alias)
     : copy.unreachable(device.alias);

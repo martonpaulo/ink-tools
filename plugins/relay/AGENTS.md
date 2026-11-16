@@ -20,6 +20,12 @@ and an address field for a device discovery cannot see.
 page goes one line below the first. Still to come: the device round, and whether the receiver can
 stay on with the view closed.
 
+**Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
+lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with «Send to <device>» and
+«Cancel» (`src/send/textSession.ts`, `TextView`), and offers it as one `text/plain` file whose
+`preview` is the text (`textOffer`); a 204 is «sent», a 200 uploads the bytes
+(`src/send/sendText.ts`). To test on the device: how the iOS and macOS LocalSend apps show it.
+
 **PDF to note built, not yet on the device** ([#143](https://github.com/martonpaulo/supernote-tools/issues/143)): one `application/pdf` offer is
 saved as `received-<session>.pdf`; `native/.../PdfPages.java` renders it with Android's
 `PdfRenderer` to page-sized PNGs, and `src/receive/pdfNote.ts` creates the note in `Note/` with

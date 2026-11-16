@@ -21,7 +21,10 @@ import {
   runSend,
   SEND_PAGE_ID,
   SEND_SELECTION_ID,
+  SEND_TEXT_ID,
+  textDeps,
 } from './src/run';
+import {startTextSend} from './src/send/textSession';
 import {relay} from './src/native';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
@@ -62,6 +65,14 @@ registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
   editDataTypes: [EDIT_DATA_STROKES],
   showType: SHOW_NO_VIEW,
 }).then(result => report('send selection button', result));
+
+registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
+  id: SEND_TEXT_ID,
+  name: copy.sendText,
+  icon: Image.resolveAssetSource(require('./assets/send-text.png')).uri,
+  editDataTypes: [EDIT_DATA_STROKES],
+  showType: SHOW_FULL_VIEW,
+}).then(result => report('send text button', result));
 
 registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
   id: RECEIVE_ID,
@@ -105,6 +116,16 @@ report(
     }
     if (id === SEND_SELECTION_ID) {
       send('selection');
+      return true;
+    }
+    if (id === SEND_TEXT_ID) {
+      // The view shows the recognised text before anything is sent (#99).
+      startTextSend(
+        textDeps(
+          () => closePluginView(),
+          line => ToastAndroid.show(line, ToastAndroid.SHORT),
+        ),
+      ).catch(error => console.error(`Relay: send text failed: ${error.message}`));
       return true;
     }
     if (id === RECEIVE_ID) {

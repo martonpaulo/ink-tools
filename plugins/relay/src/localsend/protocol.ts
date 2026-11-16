@@ -36,6 +36,8 @@ export type Offer = {
   size: number;
   fileType: string;
   sha256?: string;
+  /** A text's whole content (#99): a receiver shows it as a message. */
+  preview?: string;
 };
 
 /** The outcome of one send, each with one message on the tablet (Plan › Failure behaviour). */
@@ -78,6 +80,9 @@ export function prepareUploadBody(sender: Sender, offer: Offer): string {
   };
   if (offer.sha256 !== undefined) {
     file.sha256 = offer.sha256;
+  }
+  if (offer.preview !== undefined) {
+    file.preview = offer.preview;
   }
   return JSON.stringify({info: info(sender), files: {[offer.id]: file}});
 }
@@ -221,6 +226,49 @@ export function parsePrepareUpload(
     return {kind: 'failed', status};
   }
   return {kind: 'session', sessionId, fileToken: token};
+}
+
+/** A text file name stays short: LocalSend shows it, and a page of text is no name. */
+export const MAX_TEXT_NAME = 64;
+
+/** The size LocalSend reads: UTF-8 bytes, never UTF-16 code units. */
+export function utf8Bytes(text: string): number {
+  let bytes = 0;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    bytes += code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+  }
+  return bytes;
+}
+
+/** `<first words>.txt`, letters and digits only, within MAX_TEXT_NAME; `text.txt` with none. */
+export function textFileName(text: string): string {
+  const words = text.replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const stem = [...words].slice(0, MAX_TEXT_NAME - '.txt'.length).join('').trim();
+  return `${stem || 'text'}.txt`;
+}
+
+/** One text as LocalSend's own client offers it (#99): `text/plain` with the text as `preview`. */
+export function textOffer(text: string): Offer {
+  return {
+    id: 'text',
+    fileName: textFileName(text),
+    size: utf8Bytes(text),
+    fileType: 'text/plain',
+    preview: text,
+  };
+}
+
+/**
+ * A text's prepare-upload answer: 204 is «sent», since a receiver that shows the `preview` as a
+ * message needs no upload; a 200 asks for the bytes, as for a picture.
+ */
+export function parseTextPrepare(
+  status: number,
+  text: string,
+  fileId: string,
+): Session | SendResult {
+  return status === 204 ? {kind: 'sent'} : parsePrepareUpload(status, text, fileId);
 }
 
 /** The upload answer: only 200 is «sent». */

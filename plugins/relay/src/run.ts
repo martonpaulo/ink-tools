@@ -5,8 +5,12 @@
 import {
   closePluginView,
   createNote,
+  EMPTY_LASSO_CODE,
+  fail,
   getCurrentFilePath,
   getCurrentPageNum,
+  getLassoElements,
+  getLassoRect,
   getPageSize,
   getPluginDirPath,
   insertImage,
@@ -16,12 +20,18 @@ import {
   lassoImage,
   ok,
   pageImage,
+  recognizeElements,
   Result,
+  THROWN_CODE,
 } from '@supernote-tools/sn-adapter/official';
+import {readLassoQuery} from '@supernote-tools/ink-core';
 import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
 import {Outcome, sendCapture, tempDir} from './send/sendPng';
+import {sendText} from './send/sendText';
+import {TextDeps} from './send/textSession';
+import {Device} from './localsend/protocol';
 import {copy} from './copy';
 import {NoteHost, Size} from './receive/receive';
 import {loadSettings, ownFingerprint} from './settings/device';
@@ -33,6 +43,7 @@ export const ALIAS = 'Supernote';
 export const SEND_PAGE_ID = 100;
 export const SEND_SELECTION_ID = 101;
 export const RECEIVE_ID = 102;
+export const SEND_TEXT_ID = 103;
 
 export type Capture = 'page' | 'selection';
 
@@ -112,3 +123,48 @@ export const noteHost: NoteHost = {
   createNote,
   insertNotePage,
 };
+
+/** The lassoed handwriting as text, as Lookup reads it (`ink-core`); null when there is none. */
+async function readLassoText(): Promise<string | null> {
+  const read = await readLassoQuery({
+    getLassoElements,
+    getLassoRect,
+    getCurrentFilePath,
+    getCurrentPageNum,
+    getPageSize,
+    recognizeElements,
+    emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
+    failure: message => fail(THROWN_CODE, message),
+  });
+  if (!read.ok) {
+    console.log(`Relay: read the lasso failed: ${read.code}`);
+    return null;
+  }
+  return read.value.query;
+}
+
+async function sendTo(device: Device, text: string, native: Relay): Promise<string> {
+  const settings = await loadSettings(native);
+  const sender: Sender = {
+    alias: ALIAS,
+    fingerprint: await ownFingerprint(native, settings),
+  };
+  return sendText(native, sender, device, text);
+}
+
+/** «Send Text» on the tablet (#99); the view and its toast are the caller's. */
+export function textDeps(
+  closeView: () => void,
+  toast: (line: string) => void,
+  native: Relay = relay(),
+): TextDeps {
+  return {
+    permissions: ensurePermissions,
+    refused: refusedLine,
+    read: readLassoText,
+    device: async () => (await loadSettings(native)).device,
+    send: (device, text) => sendTo(device, text, native),
+    closeView,
+    toast,
+  };
+}
