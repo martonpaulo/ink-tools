@@ -4,6 +4,7 @@ export const copy = {
   'settings.loading': 'Loading the settings…',
   'settings.error': 'The settings did not load: {reason}',
   'settings.retry': 'Try again',
+  'settings.saveError': 'The change was not saved, so it is lost when Account Sync restarts: {reason}',
   'settings.empty': 'No module is ready yet.',
   'status.off': 'Off.',
   'status.blocked': 'On, but not running: {reasons}',

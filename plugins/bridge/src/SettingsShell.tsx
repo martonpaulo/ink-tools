@@ -35,7 +35,8 @@ export type ProviderSignIn = {
 export type ShellState =
   | {kind: 'loading'}
   | {kind: 'error'; reason: string; onRetry: () => void}
-  | {kind: 'ready'; modules: ModuleRow[]};
+  /** `notice`: a problem that leaves the screen usable, such as a save that failed (#40). */
+  | {kind: 'ready'; modules: ModuleRow[]; notice?: string};
 
 export function SettingsShell({
   state,
@@ -51,6 +52,11 @@ export function SettingsShell({
         {copy.title}
       </Text>
       <Body state={state} />
+      {state.kind === 'ready' && state.notice && (
+        <Text accessibilityRole="alert" style={shared.text}>
+          {state.notice}
+        </Text>
+      )}
       {state.kind === 'ready' && form}
     </View>
   );

@@ -20,6 +20,7 @@ const STATES: Record<string, ShellState> = {
   loading: {kind: 'loading'},
   error: {kind: 'error', reason: 'storage did not answer', onRetry: () => {}},
   empty: {kind: 'ready', modules: []},
+  notice: {kind: 'ready', modules: [], notice: 'The change was not saved: disk full'},
   modules: {
     kind: 'ready',
     modules: [
@@ -70,6 +71,9 @@ describe('SettingsShell (#93)', () => {
   it('shows loading, the empty state and the error with its reason', () => {
     expect(texts(render(STATES.loading))).toContain(copy['settings.loading']);
     expect(texts(render(STATES.empty))).toContain(copy['settings.empty']);
+    // A save that failed is said in words, as an alert, and the screen stays usable (#40).
+    const notice = render(STATES.notice).root.findByProps({accessibilityRole: 'alert'});
+    expect(notice.props.children).toBe('The change was not saved: disk full');
     expect(texts(render(STATES.error))).toContain(
       'The settings did not load: storage did not answer',
     );
