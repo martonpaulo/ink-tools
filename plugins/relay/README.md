@@ -13,6 +13,8 @@ from them straight into the open note.
 
 - «Send Page» in the note's sidebar: the current page as a PNG.
 - «Send Selection» in the lasso toolbar: only the selection as a PNG.
+- «Send Text» in the lasso toolbar: the lassoed handwriting, recognised as text, which you read
+  before «Send to <device>» or «Cancel»; LocalSend shows it on the iPhone or the Mac as a message.
 - Pick the receiving device once in Settings; later sends go to it with no question.
 - «Receive» in the note's sidebar: for two minutes the tablet shows up in LocalSend as
   «Supernote». The first text arrives as a selected text box, the first PNG or JPEG as a floating

@@ -2,10 +2,11 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
-import App, {deviceLabel, ReceiveView} from '../App';
+import App, {deviceLabel, ReceiveView, TextView} from '../App';
 import {ownFingerprint} from '../src/settings/device';
 import {fail, ok} from '@supernote-tools/sn-adapter/official';
 import {fakeRelay} from '../test-support/fakeRelay';
+import {Device} from '../src/localsend/protocol';
 
 const lan = (...parts: number[]) => parts.join('.');
 const answer = (alias: string, fingerprint: string) =>
@@ -68,7 +69,8 @@ test('the receive view keeps the size rules, names the tablet and stops (#49)', 
   });
   expect(screenBreaks(tree.root)).toEqual([]);
   expect(
-    tree.root.findAllByProps({children: 'Ready to receive as Supernote'}).length,
+    tree.root.findAllByProps({children: 'Ready to receive as Supernote'})
+      .length,
   ).toBeGreaterThan(0);
   await act(async () => {
     tree.root.findByProps({label: 'Stop'}).props.onPress();
@@ -79,8 +81,47 @@ test('the receive view keeps the size rules, names the tablet and stops (#49)', 
 test('the send half announces the certificate fingerprint, the saved one only without it', async () => {
   const settings = {fingerprint: 'saved', device: null};
   const {api} = fakeRelay();
-  await expect(ownFingerprint(api, settings, async () => ok('/p'))).resolves.toBe('cert-fp');
+  await expect(
+    ownFingerprint(api, settings, async () => ok('/p')),
+  ).resolves.toBe('cert-fp');
   await expect(
     ownFingerprint(api, settings, async () => fail(-1, 'no dir')),
   ).resolves.toBe('saved');
+});
+
+test('«Send Text» shows the text with Send and Cancel, or only Close when empty (#99)', async () => {
+  const device: Device = {
+    alias: 'Mac',
+    ip: lan(10, 0, 0, 2),
+    port: 53317,
+    protocol: 'https',
+    fingerprint: 'fp',
+  };
+  const onSend = jest.fn();
+  let ready!: ReactTestRenderer;
+  await act(async () => {
+    ready = renderer.create(
+      <TextView
+        state={{phase: 'ready', text: 'Buy milk', device}}
+        onSend={onSend}
+        onCancel={() => {}}
+      />,
+    );
+  });
+  expect(screenBreaks(ready.root)).toEqual([]);
+  await act(async () => {
+    ready.root.findByProps({label: 'Send to Mac'}).props.onPress();
+  });
+  expect(onSend).toHaveBeenCalledTimes(1);
+  expect(ready.root.findAllByProps({label: 'Cancel'}).length).toBeGreaterThan(
+    0,
+  );
+  let empty!: ReactTestRenderer;
+  await act(async () => {
+    empty = renderer.create(
+      <TextView state={{phase: 'empty'}} onSend={onSend} onCancel={() => {}} />,
+    );
+  });
+  expect(empty.root.findAllByProps({label: 'Close'}).length).toBeGreaterThan(0);
+  expect(empty.root.findAllByProps({label: 'Send to Mac'})).toEqual([]);
 });

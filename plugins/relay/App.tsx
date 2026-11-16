@@ -1,10 +1,18 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Text, View} from 'react-native';
+import {Text, ToastAndroid, View} from 'react-native';
+import {closePluginView} from '@supernote-tools/sn-adapter/official';
 import {Button, shared} from '@supernote-tools/ui-kit';
 import {copy} from './src/copy';
 import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';
-import {ALIAS} from './src/run';
+import {ALIAS, textDeps} from './src/run';
+import {
+  cancelTextSend,
+  confirmTextSend,
+  onTextState,
+  TextState,
+  textState,
+} from './src/send/textSession';
 import {discoverDevices} from './src/send/sendPng';
 import {
   ownFingerprint,
@@ -52,12 +60,76 @@ export function ReceiveView({
 }
 
 /**
+ * «Send Text» (#99): the recognised text, read before it is sent, with «Send to <device>» and
+ * «Cancel»; an empty recognition shows only «Close».
+ */
+export function TextView({
+  state,
+  onSend,
+  onCancel,
+}: {
+  state: TextState;
+  onSend: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <View style={shared.screen}>
+      <Text accessibilityRole="header" style={shared.textLarge}>
+        {copy.sendText}
+      </Text>
+      {state.phase === 'ready' || state.phase === 'sending' ? (
+        <>
+          <Text style={shared.text}>{state.text}</Text>
+          <Button
+            label={copy.sendTo(state.device.alias)}
+            disabled={state.phase === 'sending'}
+            onPress={onSend}
+          />
+          <Button
+            label={copy.cancel}
+            disabled={state.phase === 'sending'}
+            onPress={onCancel}
+          />
+        </>
+      ) : state.phase === 'empty' ? (
+        <>
+          <Text accessibilityLiveRegion="polite" style={shared.text}>
+            {copy.noText}
+          </Text>
+          <Button label={copy.close} onPress={onCancel} />
+        </>
+      ) : (
+        <Text accessibilityLiveRegion="polite" style={shared.text}>
+          {copy.readingText}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+/**
  * Relay's Settings view (#98): the LocalSend devices one search finds, and the one every send goes
  * to. Picking one saves it, pinned to its fingerprint; sizes and colours from the shared ui-kit.
  */
 export default function App({native = defaultRelay}: Props) {
   const [receiving, setReceiving] = useState<ReceiveState>(receiveState());
+  const [texting, setTexting] = useState<TextState>(textState());
   useEffect(() => onReceiveState(setReceiving), []);
+  useEffect(() => onTextState(setTexting), []);
+  if (texting.phase !== 'idle') {
+    const deps = textDeps(
+      () => closePluginView(),
+      line => ToastAndroid.show(line, ToastAndroid.SHORT),
+      native,
+    );
+    return (
+      <TextView
+        state={texting}
+        onSend={() => confirmTextSend(deps)}
+        onCancel={() => cancelTextSend(deps)}
+      />
+    );
+  }
   if (receiving !== 'idle') {
     return (
       <ReceiveView state={receiving} onStop={() => native.stopReceive()} />
