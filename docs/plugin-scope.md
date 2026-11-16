@@ -194,7 +194,7 @@ currently open** on the tablet, quickly. Chosen mechanism: **iOS Shortcuts + Loc
 Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
 
 - **What he sends:** a text snippet, a photo/image, and — a distinct, larger need — **a scanned PDF
-  (e.g. study flashcards / "fichas de estudo") to use as a note template**.
+  (e.g. study flashcards) to use as a note template**.
 - **Placement:** the content arrives floating/selected and the owner positions it himself, the way
   `lookup` places an inserted picture.
 - **Scan-to-template is its own capability**, beyond "drop into the open note": a scanned
