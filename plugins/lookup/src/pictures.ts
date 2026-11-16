@@ -8,6 +8,7 @@
  * One press runs at a time across both buttons (the shared press guard, #93). A missing permission
  * opens Lookup's view, which asks for it (App.tsx).
  */
+import {ToastAndroid} from 'react-native';
 import {LassoPlace} from '@supernote-tools/ink-core';
 import {DEFAULT_ADAPTERS, keepMode} from '@supernote-tools/picture-search';
 import {
@@ -64,6 +65,8 @@ export const LOOKUP_PICTURES: PictureStore = {
     placement: 'below',
     contour: false,
   }),
+  lassoSkipped: () =>
+    ToastAndroid.show(copy['picture.unselected'], ToastAndroid.SHORT),
 };
 
 /**

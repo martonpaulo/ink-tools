@@ -26,6 +26,9 @@ export const copy = {
   'picture.failed': (word: string, why: string) => `${word}: ${why}`,
   'error.place': 'There is no room below the lassoed word.',
   'error.insert': 'The definition could not be inserted on the page.',
+  /** A toast after an insert that touches other ink, which a lasso would take with it (#168). */
+  'picture.unselected':
+    'The picture touches your writing, so it is not selected.',
   /** Written on the note below the word: a word with no translation is never guessed (#158). */
   'translation.none': (word: string) => `${word}: no translation found`,
   'translation.failed': (word: string) =>

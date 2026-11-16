@@ -261,3 +261,14 @@ describe('a press (#111)', () => {
     expect((await pictureLasso(photoMode, press()))?.ok).toBe(true);
   });
 });
+
+test('a picture left unselected over the ink says so in a short toast (#168)', () => {
+  const {ToastAndroid} = jest.requireActual<typeof import('react-native')>('react-native');
+  const show = jest.spyOn(ToastAndroid, 'show').mockImplementation(() => {});
+  LOOKUP_PICTURES.lassoSkipped?.();
+  expect(show).toHaveBeenCalledWith(
+    'The picture touches your writing, so it is not selected.',
+    ToastAndroid.SHORT,
+  );
+  show.mockRestore();
+});
