@@ -5,6 +5,16 @@ export const copy = {
   title: 'Word Lookup',
   'settings.modes': 'Lasso buttons',
   'button.define': 'Insert Definition',
+  /** A 3-sentence bio or topic summary from Wikipedia (#114). */
+  'button.summary': 'Insert Summary',
+  'permission.summary':
+    'Word Lookup reads a short summary of the word from Wikipedia.',
+  /** Written on the note below the word: a term with no article is never guessed (#114). */
+  'summary.none': (word: string) => `${word}: no summary found`,
+  'summary.failed': (word: string) => `${word}: Wikipedia could not be reached`,
+  'summary.insert': 'The summary could not be inserted on the page.',
+  /** The box's last line: Wikipedia's text is CC BY-SA, so it names its source. */
+  'summary.source': '(Wikipedia)',
   /** One button per direction (#174): «Translate ES→PT». */
   'button.translate': (direction: Direction) =>
     `Translate ${directionName(direction)}`,

@@ -13,6 +13,8 @@ export const SETTINGS_VERSION = 1;
 /** One switch per lasso button: the definition's, each picture mode's `settingKey`, and Choose's. */
 export type LookupSettings = {
   definition: boolean;
+  /** «Insert Summary», a 3-sentence bio or topic summary (#114). */
+  summary: boolean;
   illustration: boolean;
   photo: boolean;
   /** «Choose Image», the button that opens the result list (#156, owner D19 A). */
@@ -33,6 +35,7 @@ export const SWITCH_KEYS: readonly SwitchKey[] = [
   'photo',
   'choose',
   'definition',
+  'summary',
 ];
 
 /** The owner's directions, on in a new install (owner, 2026-11-16, #174). */
@@ -40,6 +43,8 @@ const DIRECTIONS_ON: readonly string[] = ['es-pt', 'zh-pt', 'pt-zh'];
 
 export const defaultSettings: LookupSettings = {
   definition: false,
+  // On: the owner wants the text insert more than a one-word definition (docs/plugin-scope.md).
+  summary: true,
   illustration: true,
   photo: true,
   choose: true,

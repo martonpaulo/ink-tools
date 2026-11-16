@@ -131,7 +131,13 @@ test('the default directions register their buttons, PT→ES stays off, and Inte
     log: () => {},
   } satisfies ButtonDeps;
   await settingsChanged(
-    {...defaultSettings, illustration: false, photo: false, choose: false},
+    {
+      ...defaultSettings,
+      illustration: false,
+      photo: false,
+      choose: false,
+      summary: false,
+    },
     deps,
   );
   const names = deps.register.mock.calls.map(

@@ -47,6 +47,7 @@ describe('the settings file', () => {
   test('a saved file reads back as it was written', () => {
     const saved = {
       definition: true,
+      summary: false,
       illustration: false,
       photo: true,
       choose: false,

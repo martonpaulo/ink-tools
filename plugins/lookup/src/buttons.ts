@@ -16,7 +16,13 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
-import {CHOOSE_BUTTON_ID, CHOOSE_BUTTON_NAME, MODES, TRANSLATIONS} from './modes';
+import {SUMMARY_BUTTON_ID} from './summary';
+import {
+  CHOOSE_BUTTON_ID,
+  CHOOSE_BUTTON_NAME,
+  MODES,
+  TRANSLATIONS,
+} from './modes';
 import type {LookupSettings, SwitchKey} from './settings';
 
 /** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
@@ -57,7 +63,9 @@ export type LassoButton = {
 
 /** Whether `button`'s switch is on in `settings`. */
 export const isOn = (settings: LookupSettings, {switch: ref}: LassoButton) =>
-  'key' in ref ? settings[ref.key] : settings.directions[ref.direction] === true;
+  'key' in ref
+    ? settings[ref.key]
+    : settings.directions[ref.direction] === true;
 
 /** `settings` with `button`'s switch set to `on`; the input is never changed. */
 export const withSwitch = (
@@ -100,6 +108,12 @@ export const BUTTONS: readonly LassoButton[] = [
     id: DEFINE_BUTTON_ID,
     name: copy['button.define'],
     needs: [INTERNET, FILE_READ],
+  },
+  {
+    switch: {key: 'summary'},
+    id: SUMMARY_BUTTON_ID,
+    name: copy['button.summary'],
+    needs: [{...INTERNET, reason: copy['permission.summary']}, FILE_READ],
   },
   ...TRANSLATIONS.map(translation => ({
     switch: {direction: translation.key},
