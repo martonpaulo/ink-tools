@@ -48,6 +48,9 @@ export const copy = {
   /** A toast: a pasted selection has no place on the page yet (#165). */
   'error.unplaced': 'Put the selection down on the page first, then press again.',
   'error.insert': 'The definition could not be inserted on the page.',
+  /** Toasts that replace the «Loading…» strip (#103). */
+  'working.failed': 'Word Lookup stopped with an error.',
+  'working.timeout': 'Word Lookup is still working.',
   /** A toast after an insert that touches other ink, which a lasso would take with it (#168). */
   'picture.unselected':
     'The picture touches your writing, so it is not selected.',

@@ -12,6 +12,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [Type](#type)
 - [Grey as colour](#grey-as-colour)
 - [Controls](#controls)
+- [The «Loading…» strip](#the-loading-strip)
 - [Reference study: Notipal](#reference-study-notipal)
 - [The owner's picks: SnapMark, PC Clipboard, DocuCraft](#the-owners-picks-snapmark-pc-clipboard-docucraft)
 
@@ -58,6 +59,24 @@ token when the first screen uses it, named by its role.
 - Black fill marks the one primary action of a screen, such as Save or Start.
 - A switch is a `Button` with `selected`: the bar under its label, the box unchanged.
 - A button in a list row takes `rowButtonWidth`, so the buttons of every row share a column.
+
+## The «Loading…» strip
+
+While a no-view button works, the plugin shows one dark strip across the top of the note that
+reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/issues/103)).
+
+- `createWorking` in `src/working.ts` owns it. A plugin makes one with its ports (`showPluginView`,
+  `closePluginView`, a toast, its log and two toast lines), and runs each no-view action through
+  `working.run`. The strip opens the plugin view at the press, with no timer, since a JS timer may
+  not fire while no view is open.
+- The run closes the view on success. A failure closes it, then shows the failure toast. A run
+  past `WORKING_TIMEOUT_MS` clears the strip with the timeout toast.
+- `showAfterMs` delays the strip for a fast action, such as an Image Editing edit (2 s).
+- `handOver` keeps the view open when the action opens the plugin's own screen, such as Settings
+  for a missing permission.
+- The root component renders `WorkingStrip` while `useWorking` is true. The strip is static text
+  with no spinner, because each frame costs an e-ink refresh. The rest of the view is transparent.
+  Whether the host shows the note through it is open: the next device round checks it.
 
 ## Reference study: Notipal
 

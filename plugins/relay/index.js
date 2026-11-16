@@ -28,6 +28,7 @@ import {startTextSend} from './src/send/textSession';
 import {relay} from './src/native';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
+import {working} from './src/working';
 
 /** sn-plugin-lib 0.2.3 button types and show types, as Ink2Pic names them. */
 const BUTTON_TYPE_SIDEBAR = 1;
@@ -93,11 +94,16 @@ function receive() {
     .catch(error => console.error(`Relay: receive failed: ${error.message}`));
 }
 
-/** No view: the person stays on the note and reads a toast; with no device, Settings opens. */
+/**
+ * No view: the person stays on the note under the «Loading…» strip (#103) and reads a toast; with
+ * no device, Settings opens.
+ */
 function send(capture) {
-  runSend(capture)
+  working
+    .run(() => runSend(capture))
     .then(outcome => {
       if (outcome.kind === 'choose') {
+        // The strip has closed the view; Settings opens on its own.
         showPluginView();
       } else {
         // Whether the host shows the toast is measured in the device round (#98 Task 8).

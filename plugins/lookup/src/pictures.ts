@@ -18,7 +18,6 @@ import {
 import {
   insertText,
   Result,
-  showPluginView,
   TextBoxInput,
 } from '@supernote-tools/sn-adapter/official';
 import {missingFor, BUTTONS} from './buttons';
@@ -26,6 +25,7 @@ import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';
 import {PICTURE_LANGUAGES} from './pictureLanguages';
 import {showToast} from './textBox';
+import {showOwnView} from './working';
 import {Mode, modeAdapters} from './modes';
 import {
   createPressGuard,
@@ -188,7 +188,8 @@ const DEVICE: PictureDeps = {
   insert: (mode, word, place, limit) =>
     insertBest(word, place, modeDeps(mode), pictureCopy[mode.kind], limit),
   write: insertText,
-  show: showPluginView,
+  // The view stays open for Settings, which asks for the permission, so the strip hands it over.
+  show: showOwnView,
 };
 
 /** One press at a time across both picture buttons (#93). */

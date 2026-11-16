@@ -336,7 +336,9 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/10
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
 | Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
 
-The choice between them is on [#103](https://github.com/martonpaulo/ink-tools/issues/103).
+The plugin view was chosen: a dark «Loading…» strip at the top of an otherwise transparent view
+([#103](https://github.com/martonpaulo/ink-tools/issues/103), `packages/ui-kit/README.md`). Whether the host draws the view over the note, so
+the note shows through, is still to test.
 
 ## Files and sync
 

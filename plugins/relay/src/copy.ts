@@ -6,6 +6,9 @@ export const copy = {
   sendPage: 'Send Page',
   sendSelection: 'Send Selection',
   sendText: 'Send Text',
+  /** Toasts that replace the «Loading…» strip (#103). */
+  workingFailed: 'Device Transfer stopped with an error.',
+  workingTimeout: 'Device Transfer is still working.',
   readingText: 'Reading the handwriting…',
   noText: 'No text recognized',
   sendTo: (alias: string) => `Send to ${alias}`,

@@ -1,7 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Text, ToastAndroid, View} from 'react-native';
 import {closePluginView} from '@supernote-tools/sn-adapter/official';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {
+  Button,
+  shared,
+  useWorking,
+  WorkingStrip,
+} from '@supernote-tools/ui-kit';
 import {copy} from './src/copy';
 import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';
@@ -14,6 +19,7 @@ import {
   textState,
 } from './src/send/textSession';
 import {discoverDevices} from './src/send/sendPng';
+import {working} from './src/working';
 import {
   ownFingerprint,
   loadSettings,
@@ -116,6 +122,9 @@ export default function App({native = defaultRelay}: Props) {
   const [texting, setTexting] = useState<TextState>(textState());
   useEffect(() => onReceiveState(setReceiving), []);
   useEffect(() => onTextState(setTexting), []);
+  if (useWorking(working)) {
+    return <WorkingStrip />;
+  }
   if (texting.phase !== 'idle') {
     const deps = textDeps(
       () => closePluginView(),
