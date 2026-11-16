@@ -45,8 +45,12 @@ type SdkElement = {
   recycle?: () => Promise<void>;
 };
 
-/** The time pageOccupied may take before it gives up (#152): the press must stay quick. */
-export const OCCUPIED_BUDGET_MS = 300;
+/**
+ * The time pageOccupied may take before it answers with what it has (#152). The read runs while
+ * the handwriting is recognized (0.9 to 2.6 s on the tablet, docs/supernote.md), so only the part
+ * past the recognition adds to the press.
+ */
+export const OCCUPIED_BUDGET_MS = 1500;
 
 function thrown(error: unknown): Result<never> {
   return fail(
@@ -176,12 +180,34 @@ async function elementRect(element: SdkElement): Promise<Result<SdkRect | null>>
   return points.ok ? ok(pointsRect(points.value)) : points;
 }
 
-type Occupied = {rects: SdkRect[]; elements: number; ms: number};
+/**
+ * What a page read found: the rects, how many of the page's elements they come from, and whether
+ * every element was read. A partial read still helps the placement, but no lasso may trust it.
+ */
+export type OccupiedRead = {rects: SdkRect[]; complete: boolean};
+
+type Occupied = OccupiedRead & {elements: number; read: number; ms: number};
+
+/** True when `work` ends within `ms`, false once `ms` has passed first; the timer never lingers. */
+async function within(work: Promise<unknown>, ms: number): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<false>(resolve => {
+    timer = setTimeout(() => resolve(false), Math.max(0, ms));
+  });
+  try {
+    return await Promise.race([work.then(() => true as const), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * The rects of every stroke, picture, text box and shape on a page (#152), for a placement that
- * avoids the person's ink. It fails once `budgetMs` has passed, so a full page keeps today's
- * placement; every element read is recycled.
+ * avoids the person's ink. The elements are read all at once, not one after the other: each
+ * stroke costs two bridge calls, and one by one a page of 70 to 90 elements took past 700 ms
+ * (8 to 11 ms each, docs/supernote.md). Once `budgetMs` has passed it answers with the rects read
+ * so far, marked incomplete. An element whose read fails makes the read incomplete. Every element
+ * is recycled once its read ends.
  */
 async function pageOccupied(
   page: number,
@@ -196,31 +222,36 @@ async function pageOccupied(
   }
   const all = elements.value as SdkElement[];
   const rects: SdkRect[] = [];
-  try {
-    for (const element of all) {
-      if (now() - started > budgetMs) {
-        return fail(
-          THROWN_CODE,
-          `page read over ${budgetMs} ms after ${rects.length} of ${all.length} elements`,
-        );
+  let read = 0;
+  let failed = 0;
+  const reads = Promise.all(
+    all.map(async element => {
+      const rect = await elementRect(element).catch(thrown);
+      if (rect.ok) {
+        read += 1;
+        if (rect.value) {
+          rects.push(rect.value);
+        }
+      } else {
+        failed += 1;
       }
-      const rect = await elementRect(element);
-      if (!rect.ok) {
-        return rect;
-      }
-      if (rect.value) {
-        rects.push(rect.value);
-      }
-    }
-    return ok({rects, elements: all.length, ms: now() - started});
-  } finally {
-    await Promise.all(all.map(element => recycleElement(element)));
-  }
+    }),
+  );
+  // Recycled once every read ends, also after the budget answered.
+  reads.then(() => Promise.all(all.map(element => recycleElement(element)))).catch(() => {});
+  const finished = await within(reads, budgetMs - (now() - started));
+  return ok({
+    rects: [...rects],
+    complete: finished && failed === 0,
+    elements: all.length,
+    read,
+    ms: now() - started,
+  });
 }
 
 /**
  * pageOccupied as a lasso host's `getOccupied` (#152): the rects, with one line for the log that
- * says how many elements took how long, or why the placement stays today's.
+ * says how many elements took how long, and whether the read was cut by its budget.
  */
 export async function occupiedRects(
   notePath: string,
@@ -228,12 +259,17 @@ export async function occupiedRects(
   log: (line: string) => void = () => {},
   budgetMs: number = OCCUPIED_BUDGET_MS,
   now: () => number = Date.now,
-): Promise<Result<SdkRect[]>> {
+): Promise<Result<OccupiedRead>> {
   const read = await pageOccupied(page, notePath, budgetMs, now);
   if (!read.ok) {
     log(`place: ${read.message}: today's placement`);
     return read;
   }
-  log(`place: page read ${read.value.elements} elements in ${read.value.ms} ms`);
-  return ok(read.value.rects);
+  const {rects, complete, elements, ms} = read.value;
+  log(
+    complete
+      ? `place: page read ${elements} elements in ${ms} ms`
+      : `place: page read ${read.value.read} of ${elements} elements in ${ms} ms: partial, placed by what was read`,
+  );
+  return ok({rects, complete});
 }
