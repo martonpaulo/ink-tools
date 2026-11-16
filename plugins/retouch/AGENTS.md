@@ -15,7 +15,7 @@ picture in every style switched on into `MyStyle/Retouch/style-*.png`, `src/Styl
 them, a tap runs that style through `runEdit`, and `styles.json` keeps the last style and the two
 options. Settings
 live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. The time of each edit on the
-Manta and the «Working…» panel past 2 s ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) are still to come.
+Manta and the «Loading…» strip at the top of the note past 2 s ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) are still to come.
 
 ## What it is
 

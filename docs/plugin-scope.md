@@ -166,8 +166,8 @@ Very useful:
 - Later: apply one edit to every image on the page
   ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
 
-Limit: each edit finishes within 2 s on the Manta; a longer one shows the plugin's «Working…»
-panel ([#103](https://github.com/martonpaulo/ink-tools/issues/103)). Before building, existing
+Limit: each edit finishes within 2 s on the Manta; a longer one shows the «Loading…» strip of
+[Design direction](#design-direction) ([#103](https://github.com/martonpaulo/ink-tools/issues/103)). Before building, existing
 plugins, apps and libraries are checked for reuse
 ([#138](https://github.com/martonpaulo/ink-tools/issues/138)).
 
@@ -297,5 +297,8 @@ but could use some colour. Reference to study: `Laumss/sn-plugins` configuration
 design direction for every plugin's Settings, within the e-ink constraints (16 greys).
 The conventions, and what was borrowed from that reference (now Notipal), are in
 [`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/ink-tools/issues/50)).
+While a no-view action works, every plugin shows the same sign: one dark strip across the top of
+the note that reads «Loading…», removed when the action ends (owner,
+[#103](https://github.com/martonpaulo/ink-tools/issues/103)).
 On 2026-11-16 the owner named three more plugins whose Settings look he likes: SnapMark, PC Clipboard
 and DocuCraft ([their traits](../packages/ui-kit/README.md#the-owners-picks-snapmark-pc-clipboard-docucraft)).
