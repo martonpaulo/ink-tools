@@ -11,6 +11,7 @@
     {"name": "probe", "command": "cd plugins/probe && { test -d node_modules || npm ci; } && npm run validate", "covers": "the probe plugin and its JVM tests"},
     {"name": "snadb", "command": "cd cli/snadb && make validate", "covers": "the snadb CLI and its contract tests"},
     {"name": "native", "command": "python3 -B -m unittest scripts/test_native_package.py", "covers": "each plugin's light native build: one toolchain script for macOS and Linux, no .snplg left without its app.npk (#153)"},
+    {"name": "audit", "command": "python3 -B -m unittest scripts/test_npm_audit.py", "covers": "the weekly npm audit's filter and audit-exceptions.json (#154)"},
     {"name": "setup", "command": "python3 -B -m unittest scripts/test_gate_install.py", "covers": "each npm gate installs its subproject from its lockfile when node_modules is missing (#135)"},
     {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"},
     {"name": "ink2pic", "command": "cd plugins/ink2pic && { test -d node_modules || npm ci; } && npm run validate", "covers": "the Ink2Pic plugin and its JVM tests"}
@@ -21,6 +22,9 @@
     {"path": "gates.json", "gates": ["docs", "setup"]},
     {"path": "scripts/test_gate_install.py", "gates": ["setup"]},
     {"path": "scripts/test_native_package.py", "gates": ["native"]},
+    {"path": "scripts/npm_audit.py", "gates": ["audit"]},
+    {"path": "scripts/test_npm_audit.py", "gates": ["audit"]},
+    {"path": "audit-exceptions.json", "gates": ["audit"]},
     {"path": "plugins/*/scripts/native-*", "gates": ["native"]},
     {"path": "scripts/gates.py", "gates": ["docs"]},
     {"path": ".github/workflows/scan.yml", "gates": ["docs"]},

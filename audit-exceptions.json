@@ -1,0 +1,30 @@
+{
+  "_comment": "Advisories scripts/npm_audit.py lets pass; docs/security.md > Dependency audit holds the rule (#154). Each runs only in the React Native build tooling on the developer's machine and in CI, never on the tablet. Remove an entry as soon as a fix fits React Native 0.79.2.",
+  "exceptions": [
+    {
+      "advisory": "GHSA-gcqx-w48m-w2h4",
+      "package": "deepmerge",
+      "reason": "No patched deepmerge exists (all of 4.2.0 to 4.3.1, the last release). The React Native CLI 18 merges only its own configuration with it."
+    },
+    {
+      "advisory": "GHSA-gh4j-gqv2-49f6",
+      "package": "fast-xml-parser",
+      "reason": "Fixed only in fast-xml-parser 5; the React Native CLI 18 platform packages require ^4. It reads only the project's own Android and iOS files."
+    },
+    {
+      "advisory": "GHSA-474x-hrwr-fgx4",
+      "package": "fast-xml-parser",
+      "reason": "Fixed only in fast-xml-parser 5.12; the React Native CLI 18 platform packages require ^4. It reads only the project's own Android and iOS files."
+    },
+    {
+      "advisory": "GHSA-5p2g-fcmc-qvqq",
+      "package": "image-size",
+      "reason": "Fixed only in image-size 2.0.3; Metro 0.82, which React Native 0.79.2 needs, requires ^1. Metro measures only the plugin's own bundled pictures."
+    },
+    {
+      "advisory": "GHSA-w3rx-r6r6-pgpr",
+      "package": "image-size",
+      "reason": "Fixed only in image-size 2.0.3; Metro 0.82, which React Native 0.79.2 needs, requires ^1. Metro measures only the plugin's own bundled pictures."
+    }
+  ]
+}
