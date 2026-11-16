@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a new capability or a change to an Ink Tools tool.
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: What do you want to do?
+      description: Describe the task you cannot do now, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: How could it work? Name the tool it belongs to.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Existing tools or workarounds you tried.
