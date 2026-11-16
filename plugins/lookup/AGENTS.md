@@ -39,7 +39,9 @@ Write a word, lasso it, insert a picture, a photo or a short definition. It is t
 - `lookup` is a new plugin beside Ink2Pic, with its own `pluginID`, never Ink2Pic renamed: both stay
   installed until Ink2Pic is retired (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110), `../../docs/decisions.md`).
   `__tests__/pluginConfig.test.ts` fails if the two ids are the same.
-- Each mode is its own lasso button, chosen before the search, never a toggle after it.
+- Each direct insert mode (illustration, photo, text) is its own lasso button, chosen before the
+  search, never a toggle after it. The «Choose picture» screen is the one exception: behind its one
+  button it may switch between its Illustrations and Photos tabs (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)).
 - The definition back-end is the shared `DictionaryProvider` in `ink-core`. Feature code never
   names a concrete source.
 - Permissions: `plugin.permission.INTERNET` for the dictionary and the picture sources,
