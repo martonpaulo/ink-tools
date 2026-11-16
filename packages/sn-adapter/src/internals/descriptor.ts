@@ -23,6 +23,8 @@ export interface ModuleDescriptor<Rules = Record<string, unknown>> {
 /** The rule keys the adapter reads; `parseDescriptor` refuses an update that lacks one (#84). */
 export interface CalendarRules {
   writeTag: string;
+  /** The `status` value the native app writes when it hides an event: the delete signal (#29). */
+  cancelledStatus: string;
 }
 
 export interface TodoRules {
@@ -44,13 +46,13 @@ export interface Descriptor {
 
 type RuleType = 'string' | 'boolean' | 'number' | 'string[]';
 const RULE_TYPES: Record<'calendar' | 'todo', Record<string, RuleType>> = {
-  calendar: {writeTag: 'string'},
+  calendar: {writeTag: 'string', cancelledStatus: 'string'},
   todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', writeHasSync: 'number', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
 };
 
 /** The fields the adapter reads and writes in each table; an update that lacks one is refused (#101). */
 const REQUIRED_FIELDS: Partial<Record<Capability, Record<string, string[]>>> = {
-  calendar: {events: ['eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified']},
+  calendar: {events: ['eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified', 'status']},
   todo: {tasks: ['rowId', 'listId', 'taskId', 'title', 'detail', 'modified', 'status', 'due', 'completedAt', 'deleted', 'hasSync']},
 };
 

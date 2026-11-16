@@ -101,7 +101,7 @@ test('a To-Do row round-trips through the task shape and keeps the insert rules'
   expect(toTodoInsert(D, {...row, taskListId: 'L'}, {existingListIds: ['L']}).hasSync).toBe(0);
 });
 
-import {eventToRow, rowToEvent} from '../src';
+import {eventToRow, rowToDeviceEdit, rowToEvent} from '../src';
 
 test('an event row carries the tag and round-trips', () => {
   const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
@@ -123,6 +123,18 @@ test('a row with a missing or unusable id or time throws instead of becoming "un
   }
   expect(() => rowToEvent(D, {...row, startTime: 'soon'})).toThrow('startTime');
   expect(() => rowToTodoTask(D, {title: 'x'})).toThrow('taskId');
+});
+
+test('a row reads as an edit: hidden is the delete signal, no eventId is a tablet-made event (#29)', () => {
+  const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
+  const row = eventToRow(D, e, 5);
+  expect(rowToDeviceEdit(D, row)).toEqual({event: {...e, modified: 5}, cancelled: false});
+  expect(rowToDeviceEdit(D, {...row, status: 'cancelled'}).cancelled).toBe(true);
+  expect(rowToDeviceEdit(D, {...row, eventId: null}).event.eventId).toBe('');
+  expect(() => rowToDeviceEdit(D, {...row, eventId: null, startTime: null})).toThrow('startTime');
+  const noRule = JSON.parse(JSON.stringify(D));
+  delete noRule.calendar.rules.cancelledStatus;
+  expect(() => parseDescriptor(noRule)).toThrow(/cancelledStatus/);
 });
 
 describe('chooseDescriptor (#43)', () => {

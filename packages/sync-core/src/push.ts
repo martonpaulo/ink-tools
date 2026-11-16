@@ -26,6 +26,14 @@ export interface DeviceEdit {
   cancelled: boolean;
 }
 
+/**
+ * The rows the tablet changed after the last sync, by their `lastModifiedTime` (#29). A row that
+ * does not know its time is kept: the push then skips it when it still equals the baseline.
+ */
+export function changedSince(edits: DeviceEdit[], since: number): DeviceEdit[] {
+  return edits.filter(({event}) => event.modified === undefined || event.modified > since);
+}
+
 /** An event changed on the tablet and at the source between two syncs; `lost` is the version dropped. */
 export interface Conflict {
   kept: 'tablet' | 'source';

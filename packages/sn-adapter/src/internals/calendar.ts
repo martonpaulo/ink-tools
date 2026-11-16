@@ -50,11 +50,15 @@ const requireTime = (row: Row, key: string): number => {
 
 /** Read a data_info row. A missing id or time throws: a made-up id would become a sync key (#70). */
 export function rowToEvent(d: Descriptor, row: Row): DeviceEvent {
+  return readEvent(d, row, requireId(row, column(d.calendar, 'events', 'eventId')));
+}
+
+function readEvent(d: Descriptor, row: Row, eventId: string): DeviceEvent {
   const col = (field: string) => column(d.calendar, 'events', field);
   const allDay = row[col('allDay')];
   const changed = Number(row[col('modified')] ?? NaN);
   return {
-    eventId: requireId(row, col('eventId')),
+    eventId,
     calendarId: requireId(row, col('calendarId')),
     title: String(row[col('title')] ?? ''),
     content: String(row[col('content')] ?? ''),
@@ -63,4 +67,23 @@ export function rowToEvent(d: Descriptor, row: Row): DeviceEvent {
     allDay: allDay === 1 || allDay === '1' || allDay === true,
     ...(Number.isFinite(changed) && changed > 0 ? {modified: changed} : {}),
   };
+}
+
+/** Structurally the same shape as sync-core's DeviceEdit (#29). */
+export interface DeviceEventEdit {
+  event: DeviceEvent;
+  /** The native app hides an event (`status` = the descriptor's `cancelledStatus`) instead of deleting it. */
+  cancelled: boolean;
+}
+
+/**
+ * Read one of our rows as an edit for the push (#29). A row with no `eventId` is an event made on the
+ * tablet, so it reads as an empty id, which the push creates in the default calendar; a missing time
+ * still throws, as in `rowToEvent`.
+ */
+export function rowToDeviceEdit(d: Descriptor, row: Row): DeviceEventEdit {
+  const col = (field: string) => column(d.calendar, 'events', field);
+  const id = row[col('eventId')];
+  const event = id === null || id === undefined || id === '' ? readEvent(d, row, '') : rowToEvent(d, row);
+  return {event, cancelled: row[col('status')] === d.calendar.rules.cancelledStatus};
 }
