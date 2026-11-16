@@ -52,6 +52,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
 | `inkctl sync tasks` | Starts a To-do sync and waits until it has run. |
 | `inkctl sync calendar` | Asks the Calendar app to sync. The app must be open, and the answer does not prove a sync ran. |
+| `inkctl lang get\|set CODE\|cycle` | Reads or switches the handwriting recognition language of the whole tablet. `set` refuses a pack that is not installed, writes the new code file before it deletes the old one, tells the system with `hw_type_change` and reads the folder back. `cycle` goes `pt_BR`, `en_US`, `es_ES` among the installed packs. |
 | `inkctl screen FILE.png` | Saves what the screen shows. |
 | `inkctl snapshot` | Lists the screen's elements with short references, marks each list that can scroll, and gives a paged screen's page and page count. `--all` reads each list and page to its end. `--find X` scrolls or turns pages until an element appears. After turning pages it does not return to the first page yet: take a new snapshot. |
 | `inkctl click TARGET` | Presses `@eN` from the last snapshot, or `id:X`, `desc:X`, `text:X`. |

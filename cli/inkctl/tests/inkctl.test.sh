@@ -92,6 +92,12 @@ case "$1" in
             "ls -lA"*)
                 if ! grep -qF "${2##*/}" "$ADB_FILES/paths"; then echo "ls: x: No such file or directory" >&2; exit 1; fi
                 cat "$ADB_FILES/listing" ;;
+            "ls -1 /storage/emulated/0/.data/dictionary"*)
+                if [ -f "$ADB_FILES/lang-missing" ]; then echo "ls: x: No such file or directory" >&2; exit 1; fi
+                cat "$ADB_FILES/lang-default"; echo ::packs::; cat "$ADB_FILES/lang-packs" ;;
+            "touch /storage/emulated/0/.data/dictionary"*)
+                set -- $2
+                printf '%s\n' "${2##*/}" > "$ADB_FILES/lang-default" ;;  # the rm after && leaves only this file
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
             "am broadcast"*) echo 'Broadcast completed: result=0' ;;
             "date +%s") echo 1800000000 ;;
@@ -905,6 +911,29 @@ run status >/dev/null
 check "an unauthorized cable leaves Wi-Fi in use" "$(called "-s $serial shell")" "3"
 reset_device
 check "help lists the read-only exit code" "$(python3 -B "$script" --help | grep -c '11 read-only')" "1"
+
+# The handwriting language (#190): one code file in default/, packs as folders in resources/.
+printf 'pt_BR\n' > "$files/lang-default"
+printf 'en_US\nes_ES\npt_BR\nzh_CN\n' > "$files/lang-packs"
+check "lang get reads the code and the packs" "$(run lang get --json | field "['language'],d['installed']")" "('pt_BR', ['en_US', 'es_ES', 'pt_BR', 'zh_CN'])"
+result=$(run lang set en_US --json)
+check "lang set writes the new file before it deletes the old one" "$(called 'touch /storage/emulated/0/.data/dictionary/default/en_US && rm -f /storage/emulated/0/.data/dictionary/default/pt_BR')" "1"
+check "lang set tells the system and reads it back" "$(called 'am broadcast -a hw_type_change')$(printf '%s' "$result" | field "['before'],d['language']")" "1('pt_BR', 'en_US')"
+check "lang cycle goes to the next of the cycle" "$(run lang cycle --json | field "['language']")" "es_ES"
+check "lang cycle comes back to the first" "$(run lang cycle --json | field "['language']")" "pt_BR"
+run lang set ja_JP >/dev/null 2>&1
+check "lang set of a pack that is not installed stops with not found" "$?$(called touch)" "40"
+run lang set english >/dev/null 2>&1
+check "lang set of a bad code is a usage error" "$?" "2"
+: > "$files/lang-default"
+check "an empty default folder reads as English" "$(run lang get --json | field "['language']")" "en_US"
+printf 'pt_BR\n' > "$files/lang-default"
+run lang set en_US --read-only >/dev/null 2>&1
+check "lang set is a change, refused in read-only mode" "$?$(called touch)" "110"
+touch "$files/lang-missing"
+run lang get >/dev/null 2>&1
+check "a missing language folder stops with not found" "$?" "4"
+rm -f "$files/lang-missing"
 
 # The device log's filters.
 : > "$files/pids"

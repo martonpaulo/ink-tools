@@ -15,6 +15,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   files push LOCAL PATH          copy to the shared storage; refuses to replace without --overwrite
   sync tasks                     start a To-do sync and wait until it has run
   sync calendar                  ask the Calendar app to sync
+  lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
+                                 cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
   snapshot                       list the screen's elements with short references, and its pages;
                                  --all reads each list and page to its end, --find X scrolls or
@@ -204,6 +206,14 @@ PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
 CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
 TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
 SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
+# The handwriting recognition language: one empty file named with the code in default/, the
+# installed packs as folders in resources/ (docs/supernote.md › Handwriting recognition language, #190).
+DICTIONARY_FOLDER = f"{SHARED_ROOT}/.data/dictionary"
+LANGUAGE_CHANGED = "hw_type_change"  # what the Settings app broadcasts after a switch
+LANGUAGE_CODE = re.compile(r"[a-z]{2}_[A-Z]{2}")
+LANGUAGE_CYCLE = ("pt_BR", "en_US", "es_ES")  # the Lingo app's LanguageCycle.DEFAULT, so both surfaces agree
+EMPTY_FOLDER_LANGUAGE = "en_US"  # the device reads an empty default/ folder as English
+LANGUAGE_MARK = "::packs::"
 
 # Which route does each job. `doctor` and `routes` read these same names, so each has one owner.
 # A receiver marked dynamic exists only while its app runs, so its absence proves nothing.
@@ -1145,6 +1155,60 @@ def command_sync_calendar(device: Device, args: argparse.Namespace):
     return data, "sync asked: calendar"
 
 
+def read_languages(device: Device) -> dict:
+    """The active code and the installed packs, in one shell call."""
+    output = device.shell(
+        f"ls -1 {DICTIONARY_FOLDER}/default && echo {LANGUAGE_MARK} && "
+        f"for pack in {DICTIONARY_FOLDER}/resources/*; do if [ -d \"$pack\" ]; then echo \"${{pack##*/}}\"; fi; done",
+        missing=DICTIONARY_FOLDER,
+    )
+    active, _, packs = output.partition(LANGUAGE_MARK)
+    codes = [name for name in active.split() if LANGUAGE_CODE.fullmatch(name)]
+    installed = [name for name in packs.split() if LANGUAGE_CODE.fullmatch(name)]
+    current = codes[0] if len(codes) == 1 else (EMPTY_FOLDER_LANGUAGE if not codes else None)
+    return {"language": current, "files": codes, "installed": installed}
+
+
+def language_text(state: dict) -> str:
+    current = state["language"] or f"unknown: several files, {', '.join(state['files'])}"
+    return f"language: {current}\ninstalled: {' '.join(state['installed'])}"
+
+
+def command_lang_get(device: Device, args: argparse.Namespace):
+    state = read_languages(device)
+    return state, language_text(state)
+
+
+def set_language(device: Device, state: dict, code: str) -> tuple[dict, str]:
+    """Create the new file before deleting the others, so the folder is never empty, then read it back."""
+    if not LANGUAGE_CODE.fullmatch(code):
+        raise bad_usage(f"a language code reads like pt_BR, not: {code}")
+    if code not in state["installed"]:
+        raise not_found(f"language pack {code}; installed: {' '.join(state['installed'])}", "inkctl lang get")
+    folder = f"{DICTIONARY_FOLDER}/default"
+    others = " ".join(shlex.quote(f"{folder}/{other}") for other in state["files"] if other != code)
+    device.shell(f"touch {shlex.quote(f'{folder}/{code}')}" + (f" && rm -f {others}" if others else ""))
+    broadcast(device, LANGUAGE_CHANGED)
+    after = read_languages(device)
+    if after["files"] != [code]:
+        raise Failure(EXIT_FAILED, "device_error", f"the language folder holds {after['files']} after the switch, not [{code}]")
+    data = {**after, "before": state["language"]}
+    return data, f"language: {state['language']} -> {code}"
+
+
+def command_lang_set(device: Device, args: argparse.Namespace):
+    return set_language(device, read_languages(device), args.code)
+
+
+def command_lang_cycle(device: Device, args: argparse.Namespace):
+    state = read_languages(device)
+    cycle = [code for code in LANGUAGE_CYCLE if code in state["installed"]]
+    if not cycle:
+        raise not_found(f"a pack of the cycle {' '.join(LANGUAGE_CYCLE)}", "inkctl lang get")
+    index = cycle.index(state["language"]) if state["language"] in cycle else -1
+    return set_language(device, state, cycle[(index + 1) % len(cycle)])
+
+
 def command_screen(device: Device, args: argparse.Namespace):
     if device.activity() == NOTE_ACTIVITY and not args.allow_notes:
         raise protected("a note on the screen")
@@ -1851,7 +1915,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "lang")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1914,6 +1978,11 @@ def build_parser() -> argparse.ArgumentParser:
     tasks = add(syncs, "tasks", command_sync_tasks, changes=True)
     tasks.add_argument("--timeout", type=float, default=SYNC_TIMEOUT, help="seconds to wait for the sync")
     add(syncs, "calendar", command_sync_calendar, changes=True)
+
+    languages = noun("lang")
+    add(languages, "get", command_lang_get)
+    add(languages, "set", command_lang_set, changes=True).add_argument("code", help="an installed pack, such as en_US")
+    add(languages, "cycle", command_lang_cycle, changes=True)
 
     captured = add(commands, "screen", command_screen)
     captured.add_argument("file")
