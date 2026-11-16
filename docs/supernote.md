@@ -111,6 +111,41 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   ship the Java of `com.ink2pic.files` and register their modules under their own names
   (`Ink2PicFiles` and `Ink2PicImage`, `LookupFiles` and `LookupImage`), so neither name is
   registered twice in one host either way.
+- Every enabled plugin loads into one PluginHost process: after a host restart the log shows
+  `getPackages packageName:<ReactPackage>` then `load pluginKey:<key>` for each plugin in turn
+  (Lookup's `LookupFilesPackage`, Relay's `RelayPackage`, Retouch's `RetouchPackage`), with no
+  `ClassNotFound`, `NoSuchMethod`, duplicate-class or `already registered` line [measured,
+  2026-11-16, [#142](https://github.com/martonpaulo/supernote-tools/issues/142)].
+- A lasso button whose `editDataTypes` do not match the lasso stays in the «⋯» list, in grey, and
+  does nothing; it is not hidden [measured, 2026-11-16, a lassoed text box].
+- A plugin's declared permissions stay «Ask Every Time» until the plugin calls
+  `requestPermission`: no dialog shows without that call, and every file call fails. Settings ›
+  Apps › Plugins › the plugin › Permissions sets each one to Allow, Ask Every Time or Don't Allow
+  [measured, Relay, [#163](https://github.com/martonpaulo/supernote-tools/issues/163)]. An update
+  by `snadb plugin install` keeps the granted permissions [measured, Lookup beta 1 to beta 4].
+- A plugin's native server socket accepted LocalSend connections while `INTERNET` was still «Ask
+  Every Time» [measured, Relay «Receive», 2026-11-16]: the `INTERNET` gate may cover only
+  outgoing sockets.
+- The first write of a file that does not exist yet in shared storage left it empty while the call
+  reported success; the next write over that file worked [measured, Lookup settings,
+  [#162](https://github.com/martonpaulo/supernote-tools/issues/162)].
+- `/storage/emulated/0/<Plugin>/` is outside the whitelist: `mkdirs` is denied
+  (`sdcard_not_in_whitelist`), and `File.delete` throws a `SecurityException` that the host
+  suppresses in a native thread, so the JS call never settles [measured, Relay,
+  [#164](https://github.com/martonpaulo/supernote-tools/issues/164)].
+- `lassoElements(rect)` selected the text boxes inside the rect but not a picture that crossed its
+  bottom edge [measured]; that an element must lie wholly inside is [inference].
+- The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
+  state. `getLassoRect` then answers the selection's local rect (`{-40, 0, 140, 181}` for a sticker
+  shown near (870, 1190)), and Back leaves the note and drops the pasted sticker [measured,
+  [#165](https://github.com/martonpaulo/supernote-tools/issues/165)].
+- A finger drag (`adb shell input swipe`) on a lassoed selection does not move it [measured].
+- The Back key does not close a plugin's full view (Lookup and Relay Settings, Relay «Receive»):
+  the view stays until the plugin calls `closePluginView` or the host restarts [measured,
+  2026-11-16].
+- PluginHost exports only its launcher `StubActivity`, a `com.ratta.supernote.plugin.action.DEBUG`
+  receiver and a messenger service; no intent opens one plugin's view [measured, `dumpsys
+  package`, [#139](https://github.com/martonpaulo/supernote-tools/issues/139)].
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no
@@ -189,6 +224,10 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
     The sidebar opens from the side touch strip (`fts_slide_ts`), which ADB cannot drive, so the
     tap from the sidebar itself is a pen-round step.
   - The Lingo app ([`apps/lingo-app/`](../apps/lingo-app/AGENTS.md), [#157](https://github.com/martonpaulo/supernote-tools/issues/157), named Dialect until [#160](https://github.com/martonpaulo/supernote-tools/issues/160)) ships both surfaces.
+    Its floating button came back by itself after a tablet restart [measured, 2026-11-16]. Setting
+    `MANAGE_EXTERNAL_STORAGE` to deny restarts the app's process, and the button shows again.
+    Customize Sidebar lists a newly installed app only when that screen is opened again; it showed
+    one entry, «Lingo» [measured].
 - **A plugin can float a button over every app too.** SnapMark's optional «Floating capture
   button» is a `TYPE_APPLICATION_OVERLAY` window owned by `com.ratta.supernote.pluginhost`
   (uid 1000, appop `SYSTEM_ALERT_WINDOW`) that stays over Email with no plugin view open
@@ -226,7 +265,7 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/supernote-tools/iss
 
 | Surface | Show and clear | Where it is known from |
 | :--- | :--- | :--- |
-| Toast | `sn-plugin-lib` has none. React Native's own `ToastAndroid` (not the plugin API) shows a text toast with the app context, so it needs no activity; it has no cancel call and disappears after about 2 s or 3.5 s by itself | [official] docs index; React Native 0.79.2 `ToastModule.kt`. Whether the host loads the module and the screen shows the toast: [inference], to test |
+| Toast | `sn-plugin-lib` has none. React Native's own `ToastAndroid` (not the plugin API) shows a text toast with the app context, so it needs no activity; it has no cancel call and disappears after about 2 s or 3.5 s by itself | [official] docs index; React Native 0.79.2 `ToastModule.kt`. A plugin's toast shows at the bottom centre of the note for about 2 s [measured, Relay, 2026-11-16] |
 | Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, `plugins/ink2pic/docs/device-tests.md`]. Both pass `getCurrentActivity()`, which the host leaves null, and a native exception destroys the plugin (`plugins/ink2pic/docs/brief.md` section 10.5) |
 | Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; whether the view can be small or see-through over the note: to test |
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
@@ -252,6 +291,14 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
   (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Nomad,
   [#148](https://github.com/martonpaulo/supernote-tools/issues/148)]. Once a lasso exists, `snadb click` presses its toolbar and every «⋯» row.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`snadb wifi on`) and off
-  with `snadb wifi off` [measured].
+  with `snadb wifi off` [measured]. snadb reaches the tablet over Wi-Fi only, even with the cable
+  in, so a round turns Wi-Fi ADB on first.
+- After a tablet restart, `snadb status` fails with exit 3 and names the USB route
+  (`adb tcpip 5555`); `snadb wifi on` over the cable restores it [measured, 2026-11-16,
+  [#1](https://github.com/martonpaulo/supernote-tools/issues/1)].
+- Two ways to put a selection on the page without the pen, for a round: a text received by Relay
+  lands as a lassoed text box, and a sticker from the built-in Sticker plugin lands as lassoed
+  strokes in the «pasted» state. Neither is a lassoed handwritten word or picture [measured,
+  2026-11-16].
 - With `wifi_sleep_policy` at `2`, the tablet kept answering while asleep for 15 minutes and lost
   1% battery [measured, `cli/snadb/README.md`].
