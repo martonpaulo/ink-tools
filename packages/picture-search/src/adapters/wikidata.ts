@@ -129,9 +129,103 @@ export function logoCandidatesUrl(subject: string, language: string): string {
   return `${WIKIDATA_API}?${params.join('&')}`;
 }
 
-/** The candidates' claims, in one request. */
+/**
+ * Wikidata's SPARQL endpoint: the one form that returns only some properties of several items
+ * in one request (#25, owner D11 A). `wbgetentities` has no property filter, and `props=claims`
+ * for «apple»'s 5 candidates was 826 KB, Apple Inc. alone 673 KB (measured 2026-11-14).
+ */
+const WIKIDATA_SPARQL = 'https://query.wikidata.org/sparql';
+
+/** Every property the facts and the logo choice read, and nothing else. */
+export const READ_PROPERTIES: readonly string[] = [
+  ...PICTURE_PROPERTIES,
+  INSTANCE_OF,
+  SIGNATURE,
+  HEADQUARTERS,
+  COORDINATES,
+  COMMONS_CATEGORY,
+];
+
+/**
+ * The candidates' statements of the read properties only, in one request: each with its value
+ * and rank, so the same rules as for a full entity apply. The ids come from
+ * `parseLogoCandidates`, which keeps only `Q<digits>`.
+ */
 export function claimsUrl(items: readonly string[]): string {
-  return entityUrl(items.join('|'));
+  const values = items.map(id => `wd:${id}`).join(' ');
+  const properties = READ_PROPERTIES.map(p => `(p:${p} ps:${p} "${p}")`).join(
+    ' ',
+  );
+  const query =
+    'SELECT ?item ?property ?value ?rank WHERE { ' +
+    `VALUES ?item { ${values} } ` +
+    `VALUES (?p ?ps ?property) { ${properties} } ` +
+    '?item ?p ?statement . ?statement ?ps ?value ; wikibase:rank ?rank . }';
+  return `${WIKIDATA_SPARQL}?format=json&query=${encodeURIComponent(query)}`;
+}
+
+type SparqlTerm = {type?: string; value?: string};
+type SparqlResponse = {
+  results?: {bindings?: Record<string, SparqlTerm | undefined>[]};
+};
+
+const ENTITY_IRI = 'http://www.wikidata.org/entity/';
+const FILE_IRI = 'http://commons.wikimedia.org/wiki/Special:FilePath/';
+/** An unknown value («somevalue») is a generated IRI, or a blank node on older servers. */
+const UNKNOWN_IRI = 'http://www.wikidata.org/.well-known/genid/';
+const RANKS: Record<string, string> = {
+  'http://wikiba.se/ontology#PreferredRank': 'preferred',
+  'http://wikiba.se/ontology#NormalRank': 'normal',
+  'http://wikiba.se/ontology#DeprecatedRank': 'deprecated',
+};
+
+/** A SPARQL value in the shape `wbgetentities` gives it: an item id, a file name or the text. */
+function statementOf(value: SparqlTerm, rank?: string): Statement {
+  const text = value.value ?? '';
+  const unknown = value.type === 'bnode' || text.startsWith(UNKNOWN_IRI);
+  if (unknown) {
+    return {rank, mainsnak: {snaktype: 'somevalue'}};
+  }
+  let datavalue: unknown = text;
+  if (value.type === 'uri' && text.startsWith(ENTITY_IRI)) {
+    datavalue = {id: text.slice(ENTITY_IRI.length)};
+  } else if (value.type === 'uri' && text.startsWith(FILE_IRI)) {
+    // Commons file names use spaces; the path encodes them.
+    datavalue = decodeURIComponent(text.slice(FILE_IRI.length)).replace(
+      /_/g,
+      ' ',
+    );
+  }
+  return {rank, mainsnak: {snaktype: 'value', datavalue: {value: datavalue}}};
+}
+
+/**
+ * The candidates' entities from the SPARQL answer, each as `wbgetentities` would give its read
+ * properties. shortcut: SPARQL keeps no statement order, so of two statements of the same rank
+ * the first is the query's, not the item's; upgrade if a candidate with two normal logos leads
+ * with the wrong one.
+ */
+function parseClaims(text: string): Record<string, Entity> | Failure {
+  const data = parseJson<SparqlResponse>(text);
+  if (isFailure(data)) {
+    return data;
+  }
+  const bindings = data.results?.bindings;
+  if (!Array.isArray(bindings)) {
+    return sourceFailure('parse', 'no results in the SPARQL response');
+  }
+  const entities: Record<string, Entity> = {};
+  for (const row of bindings) {
+    const item = row.item?.value?.slice(ENTITY_IRI.length);
+    const property = row.property?.value;
+    if (!item || !property || !row.value) {
+      continue;
+    }
+    const claims = (entities[item] ??= {claims: {}}).claims!;
+    const rank = RANKS[row.rank?.value ?? ''];
+    (claims[property] ??= []).push(statementOf(row.value, rank));
+  }
+  return entities;
 }
 
 type CandidatesResponse = {
@@ -161,21 +255,23 @@ export function parseLogoItem(
   text: string,
   order: readonly string[],
   subject: string,
-): WikiOutcome {
-  const data = parseJson<EntityResponse>(text);
-  if (isFailure(data)) {
-    return data;
-  }
-  if (data.error) {
-    return apiFailure(data.error);
+): Outcome<{hit: WikiHit; facts: EntityFacts} | null, Failure> {
+  const entities = parseClaims(text);
+  if (isFailure(entities)) {
+    return entities;
   }
   const item = order.find(id => {
-    const claims = data.entities?.[id]?.claims;
+    const claims = entities[id]?.claims;
     return leadingLogoOf(claims) !== undefined;
   });
   return {
     ok: true,
-    value: {hit: item ? {title: subject, item, disambiguation: false} : null},
+    value: item
+      ? {
+          hit: {title: subject, item, disambiguation: false},
+          facts: factsOf([entities[item]]),
+        }
+      : null,
   };
 }
 
@@ -371,11 +467,16 @@ export function parseEntityResponse(
   if (!data.entities) {
     return sourceFailure('parse', 'no entities in the response');
   }
-  // One item of a response that holds several: the logo candidates' claims (#81).
+  // One item of a response that holds several.
   const entities =
     only === undefined
       ? Object.values(data.entities)
       : [data.entities[only] ?? {missing: ''}];
+  return {ok: true, value: factsOf(entities)};
+}
+
+/** What the entities' claims say, read together: an article's item, or one logo candidate. */
+function factsOf(entities: readonly Entity[]): EntityFacts {
   const files: string[] = [];
   let human = false;
   let name = false;
@@ -407,8 +508,6 @@ export function parseEntityResponse(
     }
   }
   return {
-    ok: true,
-    value: {
       files: files.filter(file => file !== signature),
       human,
       ...(name && {name: true as const}),
@@ -417,7 +516,6 @@ export function parseEntityResponse(
       ...(portrait && portrait !== signature && {portrait}),
       ...(leadingLogo && {leadingLogo}),
       ...(!leadingLogo && logoCategory && {logoCategory}),
-    },
   };
 }
 
@@ -445,8 +543,8 @@ function namesSubject(query: string, title: string): boolean {
     .some(q => have.some(word => sameWord(word, q) || sameWord(q, word)));
 }
 
-/** The organisation or brand a logo query names, with the claims response that holds it. */
-type LogoFind = Outcome<{hit: WikiHit; claims: string} | null, Failure>;
+/** The organisation or brand a logo query names, with what its read properties say. */
+type LogoFind = Outcome<{hit: WikiHit; facts: EntityFacts} | null, Failure>;
 
 /**
  * For a logo query, the organisation or brand its subject names, with its logo; for any other,
@@ -475,12 +573,7 @@ async function findLogoItem(
   if (!claims.ok) {
     return claims;
   }
-  const item = parseLogoItem(claims.value, order, named);
-  if (!item.ok) {
-    return item;
-  }
-  const {hit} = item.value;
-  return {ok: true, value: hit ? {hit, claims: claims.value} : null};
+  return parseLogoItem(claims.value, order, named);
 }
 
 /** The logo query's item when the Wikipedia article did not name the subject (#81). */
@@ -491,12 +584,25 @@ async function logoItem(
 ): Promise<LookupOutcome> {
   const found = await findLogoItem(query, language, ctx);
   return found.ok
-    ? {ok: true, value: {hit: found.value?.hit ?? null, language}}
+    ? {
+        ok: true,
+        value: {
+          hit: found.value?.hit ?? null,
+          language,
+          ...(found.value && {facts: found.value.facts}),
+        },
+      }
     : found;
 }
 
-/** The article found and the language of the Wikipedia that found it. */
-type LookupOutcome = Outcome<WikiAnswer & {language?: string}, Failure>;
+/**
+ * The article found and the language of the Wikipedia that found it; for the logo path, the
+ * item's facts already read, so its full entity is never fetched (#25).
+ */
+type LookupOutcome = Outcome<
+  WikiAnswer & {language?: string; facts?: EntityFacts},
+  Failure
+>;
 
 /** The first language whose Wikipedia has an article for the query; a failure stops the walk. */
 async function lookup(
@@ -597,7 +703,11 @@ export async function searchWikidata(
   let named = namesSubject(query, hit.title);
   // The query is a name many people bear, resolved to its most notable bearer (#92).
   let byName = false;
-  if (item) {
+  if (found.value.facts) {
+    // The logo path read the item's facts with the candidates: no request for its entity.
+    ({files, human, signature, flag, portrait, leadingLogo, logoCategory} =
+      found.value.facts);
+  } else if (item) {
     let entity = await entityOf(item, ctx);
     if (entity.ok && entity.value.name) {
       // The article is the name's: the most notable person it names is the subject (#92).
@@ -630,12 +740,8 @@ export async function searchWikidata(
     if (logo.value && logo.value.hit.item !== item) {
       item = logo.value.hit.item;
       leadImage = undefined;
-      const facts = parseEntityResponse(logo.value.claims, item);
-      if (!facts.ok) {
-        return facts;
-      }
       ({files, human, signature, flag, portrait, leadingLogo, logoCategory} =
-        facts.value);
+        logo.value.facts);
     }
   }
   if (leadImage) {
@@ -706,8 +812,9 @@ function withoutExtension(file: string): string {
 
 /**
  * The requests after the articles, in a row: the entity, the namesake and its entity, then the
- * Commons files; the logo path's two requests replace the namesake's two (#92, #110), and the
- * entity's own after an article with no logo, whose candidates' claims hold the logo's (#81).
+ * Commons files; the logo path's two requests, the label search and the candidates' read
+ * properties, replace the namesake's two (#92, #110), and the entity's own, since the
+ * candidates' answer holds the chosen item's facts (#25, #81).
  */
 const CHAIN_REQUESTS = 4;
 

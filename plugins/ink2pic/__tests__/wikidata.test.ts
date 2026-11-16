@@ -12,6 +12,7 @@ import {
   parseEntityResponse,
   parseLogoItem,
   parseWikipediaResponse,
+  READ_PROPERTIES,
   searchWikidata,
   wikidataAdapter,
   wikipediaUrl,
@@ -42,6 +43,31 @@ const factsOf = (text: string) => {
   return outcome.ok ? outcome.value : outcome;
 };
 const NONE = fixture('commons-none.json');
+
+/** One row of the SPARQL answer of `claimsUrl`: item, property, value and rank (#25). */
+type Row = [item: string, property: string, value: string, rank?: string];
+const ITEM_IRI = 'http://www.wikidata.org/entity/';
+const FILE_IRI = 'http://commons.wikimedia.org/wiki/Special:FilePath/';
+/** A SPARQL answer; a value `Q…` is an item, `File:…` a Commons file, else text. */
+const sparql = (...rows: Row[]) =>
+  JSON.stringify({
+    head: {vars: ['item', 'property', 'value', 'rank']},
+    results: {
+      bindings: rows.map(([item, property, value, rank = 'Normal']) => ({
+        item: {type: 'uri', value: ITEM_IRI + item},
+        property: {type: 'literal', value: property},
+        value: /^Q\d+$/.test(value)
+          ? {type: 'uri', value: ITEM_IRI + value}
+          : value.startsWith('File:')
+            ? {
+                type: 'uri',
+                value: FILE_IRI + encodeURIComponent(value.slice(5)),
+              }
+            : {type: 'literal', value},
+        rank: {type: 'uri', value: `http://wikiba.se/ontology#${rank}Rank`},
+      })),
+    },
+  });
 
 describe('the Wikipedia lookup (#71)', () => {
   it('asks one Wikipedia for the article, its item, its lead image and a suggestion', () => {
@@ -310,6 +336,66 @@ describe('searchWikidata', () => {
   });
 });
 
+describe('the logo candidates\' read properties only (#25)', () => {
+  it('asks Wikidata\'s SPARQL endpoint for exactly the properties the facts read', () => {
+    const url = claimsUrl(['Q89', 'Q312']);
+    expect(url).toMatch(/^https:\/\/query\.wikidata\.org\/sparql\?format=json&query=/);
+    const query = decodeURIComponent(url.split('query=')[1]);
+    expect(query).toContain('VALUES ?item { wd:Q89 wd:Q312 }');
+    const asked = [...query.matchAll(/\bp:(P\d+)/g)].map(m => m[1]);
+    expect(asked).toEqual([...READ_PROPERTIES]);
+    expect([...READ_PROPERTIES].sort()).toEqual(
+      ['P109', 'P154', 'P159', 'P18', 'P31', 'P373', 'P41', 'P625'].sort(),
+    );
+  });
+
+  it('reads ranks, files and unknown values as a full entity would', () => {
+    const text = JSON.stringify({
+      results: {
+        bindings: [
+          ...JSON.parse(
+            sparql(
+              ['Q9002', 'P154', 'File:Old logo.svg', 'Deprecated'],
+              ['Q9002', 'P154', 'File:Example_logo 2.svg'],
+              ['Q9002', 'P154', 'File:Example new logo.svg', 'Preferred'],
+              ['Q9002', 'P373', 'Example company'],
+            ),
+          ).results.bindings,
+          {
+            item: {type: 'uri', value: 'http://www.wikidata.org/entity/Q9002'},
+            property: {type: 'literal', value: 'P159'},
+            value: {
+              type: 'uri',
+              value: 'http://www.wikidata.org/.well-known/genid/abc',
+            },
+            rank: {type: 'uri', value: 'http://wikiba.se/ontology#NormalRank'},
+          },
+        ],
+      },
+    });
+    expect(parseLogoItem(text, ['Q9002'], 'example')).toEqual({
+      ok: true,
+      value: {
+        hit: {title: 'example', item: 'Q9002', disambiguation: false},
+        facts: {
+          files: ['Example new logo.svg'],
+          human: false,
+          leadingLogo: 'Example new logo.svg',
+        },
+      },
+    });
+  });
+
+  it('fails on an answer with no results, never as «no logo»', () => {
+    expect(parseLogoItem('{}', ['Q1'], 'x').ok).toBe(false);
+    expect(parseLogoItem('<html>', ['Q1'], 'x').ok).toBe(false);
+    expect(parseLogoItem(sparql(), ['Q1'], 'x')).toEqual({
+      ok: true,
+      value: null,
+    });
+  });
+});
+
 describe('logos of organisations and brands (#81)', () => {
   const claim = (property: string, value: unknown) => ({
     mainsnak: {snaktype: 'value', property, datavalue: {value}},
@@ -407,43 +493,38 @@ describe('logos of organisations and brands (#81)', () => {
     const candidates = JSON.stringify({
       search: [{id: 'Q89'}, {id: 'Q312'}, {id: 'Q213710'}],
     });
-    const statement = (value: string) => [
-      {rank: 'normal', mainsnak: {snaktype: 'value', datavalue: {value}}},
-    ];
-    const instance = (id: string) => [
-      {rank: 'normal', mainsnak: {snaktype: 'value', datavalue: {value: {id}}}},
-    ];
-    const claims = JSON.stringify({
-      entities: {
-        // The fruit has no logo; Apple Corps is later in Wikidata's order.
-        Q89: {claims: {P18: statement('Red Apple.jpg')}},
-        Q312: {
-          claims: {
-            P31: instance('Q891723'),
-            P154: statement('Apple logo black.svg'),
-          },
-        },
-        Q213710: {
-          claims: {
-            P31: instance('Q783794'),
-            P154: statement('Apple Corps.svg'),
-          },
-        },
-      },
-    });
+    // The fruit has no logo; Apple Corps is later in Wikidata's order.
+    const claims = sparql(
+      ['Q89', 'P18', 'File:Red Apple.jpg'],
+      ['Q312', 'P31', 'Q891723'],
+      ['Q312', 'P154', 'File:Apple logo black.svg'],
+      ['Q213710', 'P31', 'Q783794'],
+      ['Q213710', 'P154', 'File:Apple Corps.svg'],
+    );
     const fetch = jest
       .fn()
       .mockResolvedValueOnce(ok(page))
       .mockResolvedValueOnce(ok(candidates))
       .mockResolvedValueOnce(ok(claims))
-      .mockResolvedValue(ok(JSON.stringify({entities: {}})));
+      .mockResolvedValue(ok(NONE));
     await searchWikidata('apple logo', ctx(fetch));
     expect(fetch.mock.calls[1][0]).toBe(logoCandidatesUrl('apple', 'en'));
     expect(fetch.mock.calls[2][0]).toBe(claimsUrl(['Q89', 'Q312', 'Q213710']));
-    expect(fetch.mock.calls[3][0]).toBe(entityUrl('Q312'));
+    // The candidates' answer holds Apple Inc.'s facts: its full entity, 673 KB, is never asked.
+    expect(fetch.mock.calls.map(call => call[0])).not.toContain(
+      entityUrl('Q312'),
+    );
+    expect(fetch.mock.calls[3][0]).toMatch(/^https:\/\/commons\.wikimedia\.org\//);
     expect(parseLogoItem(claims, ['Q89', 'Q312', 'Q213710'], 'apple')).toEqual({
       ok: true,
-      value: {hit: {title: 'apple', item: 'Q312', disambiguation: false}},
+      value: {
+        hit: {title: 'apple', item: 'Q312', disambiguation: false},
+        facts: {
+          files: ['Apple logo black.svg'],
+          human: false,
+          leadingLogo: 'Apple logo black.svg',
+        },
+      },
     });
   });
 
@@ -462,21 +543,12 @@ describe('logos of organisations and brands (#81)', () => {
     });
     const empty = JSON.stringify({entities: {Q9001: {claims: {}}}});
     const candidates = JSON.stringify({search: [{id: 'Q9002'}, {id: 'Q9003'}]});
-    const statement = (value: string) => [
-      {rank: 'normal', mainsnak: {snaktype: 'value', datavalue: {value}}},
-    ];
-    const claims = JSON.stringify({
-      entities: {
-        Q9002: {
-          claims: {
-            P154: statement('Example fruit logo.svg'),
-            P159: statement('Example City'),
-          },
-        },
-        // The fruit has no logo.
-        Q9003: {claims: {P18: statement('Example fruit.jpg')}},
-      },
-    });
+    // The fruit has no logo.
+    const claims = sparql(
+      ['Q9002', 'P154', 'File:Example fruit logo.svg'],
+      ['Q9002', 'P159', 'Q9004'],
+      ['Q9003', 'P18', 'File:Example fruit.jpg'],
+    );
     const files = JSON.stringify({
       query: {
         pages: [
