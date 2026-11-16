@@ -1385,7 +1385,9 @@ check "a missing client exits 4" "$?" "4"
 kill "$token_pid"
 wait "$token_pid" 2>/dev/null
 printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "https://oauth.example.test/token"}}' > "$client"
-check "the guard stops the real browser opener" "$(INKCTL_BROWSER= PYTHONPATH="$work/guard" HOME="$work/home" PATH="$work/bin:$PATH" python3 -B "$script" google login --timeout 1 >/dev/null 2>&1; echo "$? $(cat "$work/real-browser-reached")")" "1 webbrowser.open"
+# $BROWSER names a program that does not exist, so Python has an opener to try on Linux CI too,
+# where it registers none; the guard must stop it before it starts.
+check "the guard stops the real browser opener" "$(INKCTL_BROWSER= BROWSER="$work/bin/no-such-browser" PYTHONPATH="$work/guard" HOME="$work/home" PATH="$work/bin:$PATH" python3 -B "$script" google login --timeout 1 >/dev/null 2>&1; echo "$? $(cat "$work/real-browser-reached")")" "1 webbrowser.open"
 rm -f "$work/real-browser-reached" "$client"
 
 # Coordinates and the shell.
