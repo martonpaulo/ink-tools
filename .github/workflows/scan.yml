@@ -30,8 +30,11 @@ jobs:
 
       - name: Check the Markdown (text check and issue links)
         run: |
-          python3 plugins/ink2pic/scripts/text_check.py .
+          python3 scripts/text_check.py .
           python3 plugins/ink2pic/scripts/issue_links.py . --repo "$GITHUB_REPOSITORY"
+
+      - name: Check the DRY ratchet
+        run: python3 scripts/dry_check.py --root .
 
   boundaries:
     name: adapter boundaries

@@ -1,0 +1,222 @@
+{
+ "magicValues": {
+  "folders": [],
+  "exclude": [
+   "plugins/ink2pic/**",
+   "**/android/**",
+   "**/buildPlugin.sh",
+   "**/buildPlugin.ps1"
+  ],
+  "counts": {
+   "apps/lingo-app/scripts/build.cjs": {
+    "url": 1
+   },
+   "apps/lingo-app/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "apps/lingo-app/scripts/toolchain.sh": {
+    "repeated": 1,
+    "url": 2
+   },
+   "cli/inkctl/scripts/dry_check.py": {
+    "number": 5
+   },
+   "packages/ink-core/scripts/build-pinyin-index.cjs": {
+    "number": 4
+   },
+   "packages/ink-core/src/apertium.ts": {
+    "number": 1
+   },
+   "packages/ink-core/src/encyclopedia.ts": {
+    "url": 1
+   },
+   "packages/ink-core/src/pinyin.ts": {
+    "number": 1
+   },
+   "packages/ink-core/src/wiktionary.ts": {
+    "url": 1
+   },
+   "packages/sync-core/src/caldav.ts": {
+    "number": 6
+   },
+   "packages/sync-core/src/google.ts": {
+    "url": 1
+   },
+   "packages/sync-core/src/ics.ts": {
+    "number": 9
+   },
+   "packages/sync-core/src/push.ts": {
+    "number": 2,
+    "url": 1
+   },
+   "packages/sync-core/src/todoist.ts": {
+    "number": 3,
+    "url": 1
+   },
+   "packages/ui-kit/src/metrics.ts": {
+    "colour": 2
+   },
+   "plugins/bridge/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/bridge/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/bridge/scripts/native-build.cjs": {
+    "repeated": 6,
+    "url": 1
+   },
+   "plugins/bridge/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/lingo/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/lingo/src/buttons.ts": {
+    "repeated": 1
+   },
+   "plugins/lookup/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/lookup/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/lookup/scripts/native-build.cjs": {
+    "repeated": 6,
+    "url": 1
+   },
+   "plugins/lookup/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/lookup/src/buttons.ts": {
+    "repeated": 1
+   },
+   "plugins/probe/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/probe/App.tsx": {
+    "colour": 1,
+    "number": 4
+   },
+   "plugins/probe/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/probe/scripts/native-build.cjs": {
+    "repeated": 6,
+    "url": 1
+   },
+   "plugins/probe/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/real-time-conversion/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/real-time-conversion/src/buttons.ts": {
+    "repeated": 1
+   },
+   "plugins/real-time-conversion/test-support/host.ts": {
+    "number": 4
+   },
+   "plugins/real-time-conversion/test-support/ink.ts": {
+    "number": 13
+   },
+   "plugins/relay/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/relay/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/relay/scripts/native-build.cjs": {
+    "repeated": 6,
+    "url": 1
+   },
+   "plugins/relay/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/relay/src/localsend/protocol.ts": {
+    "number": 23
+   },
+   "plugins/relay/src/receive/receive.ts": {
+    "number": 1
+   },
+   "plugins/relay/test-support/fakeRelay.ts": {
+    "number": 2
+   },
+   "plugins/retouch/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/retouch/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/retouch/scripts/native-build.cjs": {
+    "repeated": 6,
+    "url": 1
+   },
+   "plugins/retouch/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/retouch/src/buttons.ts": {
+    "repeated": 1
+   },
+   "scripts/dry_check.py": {
+    "number": 5
+   },
+   "scripts/npm_audit.py": {
+    "number": 2,
+    "url": 1
+   }
+  }
+ },
+ "duplicates": {
+  "depth": 2,
+  "exclude": [
+   "plugins/ink2pic/**",
+   "**/android/**",
+   "**/buildPlugin.sh",
+   "**/buildPlugin.ps1"
+  ],
+  "counts": {
+   "apps/lingo-app": 5,
+   "cli/inkctl": 1,
+   "packages/ink-core": 1,
+   "plugins/bridge": 10,
+   "plugins/lingo": 11,
+   "plugins/probe": 3,
+   "plugins/real-time-conversion": 1,
+   "plugins/retouch": 1
+  },
+  "identical": {
+   "plugins/probe/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
+   "plugins/relay/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
+   "plugins/retouch/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
+   "plugins/relay/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
+   "plugins/retouch/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)"
+  }
+ },
+ "twins": {
+  "rules": []
+ },
+ "documents": {
+  "files": [
+   "**/*.md"
+  ],
+  "exclude": [
+   "plugins/ink2pic/**",
+   "docs/research/**",
+   "cli/inkctl/docs/research/**"
+  ],
+  "repeated": {
+   "plugins/lingo/AGENTS.md": 1,
+   "plugins/lookup/AGENTS.md": 3,
+   "plugins/lookup/NOTICE.md": 2,
+   "plugins/real-time-conversion/AGENTS.md": 2,
+   "plugins/relay/AGENTS.md": 3,
+   "plugins/retouch/AGENTS.md": 3
+  }
+ }
+}

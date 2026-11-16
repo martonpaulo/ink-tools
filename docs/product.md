@@ -90,3 +90,11 @@ plugin appears in the native Calendar, and an edit on the tablet reaches the sou
 
 - Manual screen-reader passes are not run on the device plugins; the view code is the accessibility
   evidence, per the fleet rule.
+
+## Display names
+
+Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `lookup` is Word Lookup, `retouch` Image Editing, `relay` Device Transfer, `bridge` Account Sync, `real-time-conversion` Real-Time Conversion, the Lingo app (`apps/lingo-app`) Handwriting Language, the planned Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). A name carries no brand. Display names live only in `PluginConfig.json` `name`, the visible copy and the docs; folders, npm packages, gates, workflows, tag prefixes, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names.
+
+## Product versioning
+
+Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/lingo-app/app.json` and its tag `lingo-app-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). Ink2Pic, retiring, keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.
