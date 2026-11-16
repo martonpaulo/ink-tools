@@ -1,4 +1,4 @@
-export * from './descriptor';
+export * from './descriptorModel';
 export * from './probe';
 export * from './rules';
 export * from './todo';
