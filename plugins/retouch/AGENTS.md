@@ -9,7 +9,11 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 **Enhance**, **Lighter**, **Darker**, **Undo**, **Restore original**, **Rotate 90°**, **Mirror**,
 **Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)) or **Document** ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)) in
 the lasso menu. Each is a
-lasso button for pictures, run with no view, and a switch in Settings, all on by default. Settings
+lasso button for pictures, run with no view, and a switch in Settings, all on by default.
+**Styles** ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)) is the one lasso button with a view: `src/styles.ts` renders the
+picture in every style switched on into `MyStyle/Retouch/style-*.png`, `src/StylesGrid.tsx` shows
+them, a tap runs that style through `runEdit`, and `styles.json` keeps the last style and the two
+options. Settings
 live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. The time of each edit on the
 Manta and the «Working…» panel past 2 s ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) are still to come.
 

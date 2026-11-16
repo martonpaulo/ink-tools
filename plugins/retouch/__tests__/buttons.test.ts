@@ -5,7 +5,15 @@ import {
   resetButtonsForTests,
   syncButtons,
 } from '../src/buttons';
-import {defaultSettings, EDITS, editOfButton, setEdit} from '../src/edits';
+import {
+  defaultSettings,
+  EDITS,
+  editOfButton,
+  enabledStyles,
+  setEdit,
+  setStyle,
+  STYLE_ORDER,
+} from '../src/edits';
 
 function fakeDeps() {
   const calls: string[] = [];
@@ -48,4 +56,28 @@ test('a switch turned off removes only its button, and nothing changes twice', a
 test('a pressed id maps back to its edit, and a foreign id to none', () => {
   expect(editOfButton(EDITS[0].buttonId)?.id).toBe('enhance');
   expect(editOfButton(1)).toBeNull();
+});
+
+test('Styles opens a view; every other edit runs with no view (#133)', async () => {
+  const {deps} = fakeDeps();
+  await syncButtons(defaultSettings, deps);
+  const shows = (deps.register as jest.Mock).mock.calls.map(
+    call => [call[2].name, call[2].showType] as const,
+  );
+  expect(shows.filter(([, show]) => show === 1)).toEqual([['Styles', 1]]);
+  expect(shows.filter(([, show]) => show === 0)).toHaveLength(EDITS.length - 1);
+});
+
+test('with every style switched off, the Styles button goes and the grid never opens empty', async () => {
+  const {calls, deps} = fakeDeps();
+  await syncButtons(defaultSettings, deps);
+  calls.length = 0;
+  const none = STYLE_ORDER.reduce(
+    (s, id) => setStyle(s, id, false),
+    defaultSettings,
+  );
+  await syncButtons(none, deps);
+  const styles = EDITS.find(e => e.id === 'styles')!;
+  expect(calls).toEqual([`-${styles.buttonId}`]);
+  expect(enabledStyles(none)).toEqual([]);
 });

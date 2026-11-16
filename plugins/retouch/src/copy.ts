@@ -15,6 +15,18 @@ export const copy = {
   'edit.background': 'Remove background',
   'edit.sticker': 'Make sticker',
   'edit.document': 'Document',
+  'edit.styles': 'Styles',
+  'settings.styles': 'Styles',
+  'style.photo': 'Photo',
+  'style.line_art': 'Line art',
+  'style.black_white': 'Black and white',
+  'style.dither': 'Dither',
+  'style.atkinson': 'Clean dither',
+  'styles.transparent': 'White to transparent',
+  'styles.thick': 'Thicker lines',
+  'styles.making': 'Making the styles…',
+  'styles.failed': 'Could not make the styles',
+  'styles.close': 'Close',
   'permission.files':
     'Image Editing keeps each picture as it was, for Undo and Restore original, in MyStyle/Retouch.',
 } as const;
