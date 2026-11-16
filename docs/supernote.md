@@ -184,6 +184,37 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     [new picture element])`, which deletes and inserts in one call.
   - The host copies each inserted PNG into `.data/plugin/` under a new name, so the plugin's own file
     can be removed after the write. `pageNum` read 0 before the write and 1 after, on page 1 of 1.
+- A plugin can put ink and pictures on the open page and lasso them with no pen [measured,
+  2026-11-16, a throwaway probe on sn-plugin-lib 0.2.3, [#148](https://github.com/martonpaulo/ink-tools/issues/148)]:
+  - A stroke: `createElement(0)`, then for each point `stroke.points.add(i, {x, y})`,
+    `stroke.pressures.add(i, 2000)` and `stroke.flagDraw.add(i, true)` in page pixels, then
+    `insertPageElements([stroke], page, null)`. 151 points took 718 ms to add and 80 ms to insert;
+    the zigzag showed as ink with `penType` 10 and `thickness` 400.
+  - A picture: `createElement(200)` with `picture.picturePath` a PNG under `MyStyle/` and
+    `picture.rect`, then `insertPageElements`: 245 ms.
+  - `lassoElements(rect)` around either one selects it in 184 to 299 ms: `getLassoElementTypeCounts`
+    gives `{bitmapNum: 1}` or `{trailNum: 1}`, the lasso toolbar shows, and every «⋯» row,
+    other plugins' rows included, can then be pressed with `inkctl click`.
+  - `insertPageElements` on the open note needs `FILE:WRITE` granted: without it, code 1501.
+- Permissions of a no-view button [measured, 2026-11-16, Retouch and a probe,
+  [#170](https://github.com/martonpaulo/ink-tools/issues/170)]:
+  - After a PluginHost start, the first press of a plugin's button mounts the plugin's root
+    component (`Running "<pluginKey>"` in the log) even with `showType: 0`, so its effects run then.
+  - A `requestPermission` made while no view shows does not show its dialog
+    (`requestPermission isHaveButton:true`); the dialog shows over the note at that plugin's next
+    button press, while that press's own calls fail.
+  - «Allow This Time Only» is revoked when the next press starts (`revokePermission` in the log),
+    so a no-view button works only once both file permissions are «Always Allow».
+  - With `FILE:READ` declared but not granted, `getLassoElements`, `getCurrentFilePath` and
+    `getCurrentPageNum` answered, and `getPageSize` failed with 1503 and `PluginSec DENY
+    reason=sdcard_no_read` for the note's path.
+  - With `FILE:READ` and `FILE:WRITE` granted, deleting a file the plugin wrote in `MyStyle/`
+    fails: `SecurityException: Plugin [...] has no DELETE permission`. Deletes need
+    `plugin.permission.FILE:DELETE`, which the SDK lists beside the other three.
+- A plugin's `console.log` lines reach logcat under the tag `ReactNativeJS`, not under the plugin's
+  name: a log read filtered by the plugin's name as a tag shows nothing [measured].
+- A pressed plugin row moves to the top of the plugin rows in the lasso «⋯» list, which the host
+  sorts by last use [measured, 2026-11-16].
 
 ### Handwriting recognition language
 
@@ -269,6 +300,25 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   Recognition note gets the language at creation via `setFileRecognLanguage`, and the field is a
   writable file-format field even though the UI forbids changing it after creation [measured,
   source].
+- Where the owner writes can be told by a sideloaded app's accessibility service, enabled over
+  ADB with `settings put secure enabled_accessibility_services <package>/<service>` and
+  `accessibility_enabled 1` [measured, 2026-11-16, a throwaway service,
+  [#157](https://github.com/martonpaulo/ink-tools/issues/157)]:
+  - The handwriting keyboard (`com.android.inputmethod.keyboard/.PinyinIME`) shows as a window of
+    type `TYPE_INPUT_METHOD` in `getWindows()` about 140 ms after its `TYPE_WINDOW_STATE_CHANGED`
+    event, and leaves the list when it closes; one `getWindows()` read took 4 to 125 ms.
+  - `TYPE_WINDOW_STATE_CHANGED` names the foreground app and activity: Note
+    `NoteInsidePagesActivity`, Digest `KnowledgeActivity`, To-Do `TaskActivity`, Email
+    `HomeActivity`.
+  - A window of type `TYPE_ACCESSIBILITY_OVERLAY` never received the keyboard in its insets, so an
+    overlay alone cannot see the keyboard.
+  - `UsageStatsManager.queryEvents` with the `GET_USAGE_STATS` app-op granted by `appops` lists
+    each resumed activity (6 ms), but only when asked, so it needs a timer.
+  - A `uiautomator` dump (`inkctl snapshot`) restarts the service (`onServiceConnected` again).
+- Settings › Apps › Customize Sidebar lists one item per app package, by its label: the Lingo app
+  shows once, «Lingo», although it has two launcher activities, and a sidebar tap opens the first
+  one [measured, 2026-11-16, Lingo app 0.1.0 beta 2,
+  [#160](https://github.com/martonpaulo/ink-tools/issues/160)].
 
 ### What a plugin can show while a no-view action runs
 
@@ -295,6 +345,8 @@ The choice between them is on [#103](https://github.com/martonpaulo/ink-tools/is
   [#23](https://github.com/martonpaulo/ink-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
   plugin files; its private folder (`getPluginDirPath`) is the one place outside sync it reaches.
   Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)].
+- A file a plugin writes in `MyStyle/` is uploaded to Supernote Cloud within seconds (Retouch's
+  `MyStyle/Retouch/history.json`, 5 s after the write) [measured, 2026-11-16].
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/inkctl/README.md`].
@@ -305,12 +357,17 @@ The choice between them is on [#103](https://github.com/martonpaulo/ink-tools/is
   `input stylus motionevent` selects nothing, and `sendevent` to the `Wacom-pen` node
   (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Nomad,
   [#148](https://github.com/martonpaulo/ink-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
+  A plugin's `lassoElements(rect)` does lasso with no pen (see Plugins), so a helper plugin button
+  is the route an agent has.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off
   with `inkctl wifi off` [measured]. inkctl reaches the tablet over Wi-Fi only, even with the cable
   in, so a round turns Wi-Fi ADB on first. With the tablet's Wi-Fi off (`adb -d shell svc wifi
   disable`), inkctl loses it although `adb -d` still answers over the cable, so a round cannot run
   offline checks through inkctl [measured, 2026-11-16,
-  [#171](https://github.com/martonpaulo/ink-tools/issues/171)].
+  [#171](https://github.com/martonpaulo/ink-tools/issues/171)]. The cause is in the code: the
+  device serial is always the address read from `SUPERNOTE_ADDRESS` or the address file, with
+  `:5555` added when it has no port, and every call runs `adb -s <serial>`; only `wifi on` looks up
+  a USB serial [source, 2026-11-16].
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/ink-tools/issues/1)].
