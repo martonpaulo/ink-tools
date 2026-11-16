@@ -38,6 +38,9 @@ PY
 cat > "$work/bin/adb" <<'STUB'
 #!/bin/bash
 printf '%s\n' "$*" >> "$ADB_LOG"
+# A real `adb shell` forwards the input it inherits: with $ADB_READS_STDIN, every call but the
+# secret write drains it, so a call that inherits a piped secret swallows it.
+if [ -n "${ADB_READS_STDIN:-}" ]; then case "$*" in *"umask 077; cat > "*) ;; *) cat >> "$ADB_FILES/swallowed" ;; esac; fi
 if [ "$1" = connect ]; then
     if [ -z "${ADB_CONNECT_FAILS:-}" ] && { [ ! -f "$ADB_FILES/stale" ] || [ -f "$ADB_FILES/killed" ]; }; then echo device > "$ADB_FILES/state"; fi
     printf '%s\n' "${ADB_CONNECT_REPLY:-connected to $2}"
@@ -1234,6 +1237,10 @@ check "secret set shows only the last four characters" "$(printf '%s' "$output" 
 check "the secret never reaches an adb argument" "$(grep -cF "$synthetic" "$log")" "0"
 check "the secret never reaches the history" "$(grep -cF "$synthetic" "$history_file")" "0"
 rm -f "$files/secret-written"
+printf '%s\n' "$synthetic" | ADB_READS_STDIN=1 run secret set todoist >/dev/null
+check "no earlier adb call swallows the piped secret" "$(cat "$files/secret-written")" "$synthetic"
+check "no adb call but the write reads standard input" "$(cat "$files/swallowed" 2>/dev/null)" ""
+rm -f "$files/secret-written" "$files/swallowed"
 printf '\n' | run secret set todoist >/dev/null 2>&1
 check "an empty secret is refused as usage" "$?" "2"
 printf 'a\tb' | run secret set todoist >/dev/null 2>&1
