@@ -1,5 +1,5 @@
 import {CalendarEvent, DeviceCalendarStore, syncCalendar} from '../src/calendar';
-import {CalendarWriter, DeviceRelinker, applyCreated, createGoogleCalendarWriter, pushCalendarEdits, toGoogleBody} from '../src/push';
+import {CalendarWriter, DeviceRelinker, applyCreated, changedSince, createGoogleCalendarWriter, pushCalendarEdits, toGoogleBody} from '../src/push';
 
 const ev = (o: Partial<CalendarEvent> = {}): CalendarEvent => ({
   eventId: 'e1', calendarId: 'c1', title: 'Talk', content: '', start: Date.UTC(2026, 10, 14, 9), end: Date.UTC(2026, 10, 14, 10), allDay: false, ...o,
@@ -98,4 +98,13 @@ test('a relink that fails is reported', async () => {
   const pushed = await pushCalendarEdits([{event: ev({eventId: ''}), cancelled: false}], [], w, 'work');
   const errors = await applyCreated(pushed, {relink: async () => { throw new Error('row locked'); }});
   expect(errors).toEqual(['relink "Talk" to work/new1: row locked']);
+});
+
+test('only rows changed after the last sync are pushed; a row with no time is kept (#29)', () => {
+  const edits = [
+    {event: ev({eventId: 'old', modified: 100}), cancelled: false},
+    {event: ev({eventId: 'new', modified: 300}), cancelled: true},
+    {event: ev({eventId: 'unknown'}), cancelled: false},
+  ];
+  expect(changedSince(edits, 200).map(e => e.event.eventId)).toEqual(['new', 'unknown']);
 });

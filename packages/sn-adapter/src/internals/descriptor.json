@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "descriptorVersion": "2026.11.15",
+  "descriptorVersion": "2026.11.16",
   "device": {"model": "Supernote Nomad", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466"},
   "calendar": {
     "authority": "com.ratta.supernote.calendar.provider",
@@ -8,11 +8,11 @@
       "events": {
         "path": "data_info",
         "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"],
-        "fields": {"eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "modified": "lastModifiedTime"}
+        "fields": {"eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "modified": "lastModifiedTime", "status": "status"}
       },
       "config": {"path": "config_info", "columns": []}
     },
-    "rules": {"writeTag": "task"}
+    "rules": {"writeTag": "task", "cancelledStatus": "cancelled"}
   },
   "todo": {
     "authority": "com.ratta.supernote.task.provider",
