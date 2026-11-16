@@ -13,7 +13,8 @@ export type EditId =
   | 'rotate'
   | 'mirror'
   | 'flip'
-  | 'invert';
+  | 'invert'
+  | 'trim';
 
 export type EditDefinition = {id: EditId; buttonId: number; name: string};
 
@@ -31,6 +32,8 @@ const ORDER: readonly EditId[] = [
   'mirror',
   'flip',
   'invert',
+  // #132
+  'trim',
 ];
 
 export const EDITS: readonly EditDefinition[] = ORDER.map((id, index) => ({

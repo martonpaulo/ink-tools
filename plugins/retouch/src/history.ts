@@ -15,7 +15,25 @@ export const MAX_PICTURES = 30;
 /** Page pixels a rect may move and still be the same picture: the host may round [inference]. */
 export const RECT_TOLERANCE = 2;
 
-export type State = {path: string; width: number; height: number};
+/**
+ * One picture as it was: its file, its size, and, since Trim moves the top left (#132), the page
+ * point of its top left. A history written before #132 has no `left` and `top`; such a state goes
+ * back at the picture's current top left.
+ */
+export type State = {
+  path: string;
+  width: number;
+  height: number;
+  left?: number;
+  top?: number;
+};
+
+/** Where `state` goes back on the page in place of the picture at `rect`. */
+export function stateRect(rect: Rect, state: State): Rect {
+  return state.left === undefined || state.top === undefined
+    ? rect
+    : {...rect, left: state.left, top: state.top};
+}
 
 export type Entry = {
   note: string;

@@ -94,7 +94,7 @@ grid; it has no sliders and no live preview
 
 Status: `plugins/retouch/` holds Enhance, Lighter, Darker, Undo and Restore original
 ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)), and Rotate 90°, Mirror, Flip and Invert
-([#131](https://github.com/martonpaulo/supernote-tools/issues/131)); their device round is still to come.
+([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), and Trim ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)); their device round is still to come.
 
 Essential:
 

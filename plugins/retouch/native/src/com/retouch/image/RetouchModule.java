@@ -49,8 +49,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
   /**
    * Crops `srcPath` to its centre `width` x `height` (the picture inside the lasso margin), writes
    * that to `beforePath` when it is not empty, runs `edit` (`enhance`, `lighter`, `darker`,
-   * `rotate`, `mirror`, `flip` or `invert`) and writes the result to `destPath`. Resolves
-   * {width, height, ms} of the result.
+   * `rotate`, `mirror`, `flip`, `invert` or `trim`) and writes the result to `destPath`. Resolves
+   * {width, height, left, top, ms}: the result's size and where its top left sits in the picture.
    */
   @ReactMethod
   public void edit(
@@ -98,11 +98,15 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     }
     int[] size = Retouch.outputSize(edit, picture.width, picture.height, whole(pageWidth));
     picture = scale(picture, size[0], size[1]);
-    picture = Retouch.apply(edit, picture);
+    // Trim moves the picture's top left by the margin it removes, so the page keeps it in place.
+    int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : null;
+    picture = box != null ? Retouch.crop(picture, box) : Retouch.apply(edit, picture);
     write(picture, target);
     WritableMap result = Arguments.createMap();
     result.putInt("width", picture.width);
     result.putInt("height", picture.height);
+    result.putInt("left", box != null ? box[0] : 0);
+    result.putInt("top", box != null ? box[1] : 0);
     result.putDouble("ms", (System.nanoTime() - start) / NANOS_PER_MS);
     return result;
   }

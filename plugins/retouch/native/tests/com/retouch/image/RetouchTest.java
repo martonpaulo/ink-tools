@@ -15,6 +15,7 @@ public final class RetouchTest {
     rotateTurnsClockwiseAndSwapsTheSize();
     mirrorAndFlipReverseTheirAxis();
     invertMakesDarkModePaper();
+    trimCutsWhiteAndClearMargins();
     System.out.println("RetouchTest ok");
   }
 
@@ -154,6 +155,31 @@ public final class RetouchTest {
     check((picture.argb[1] & 0xFF) == 25, "the light text becomes ink");
     check(picture.argb[2] == 0x8000FFFF, "a colour inverts and keeps its alpha");
     check((picture.argb[0] >>> 24) == 0xFF, "an opaque pixel stays opaque");
+  }
+
+  private static void trimCutsWhiteAndClearMargins() {
+    // A 5 x 4 picture: near-white paper, one clear pixel, and ink at (1, 1) and (3, 2).
+    int[] argb = new int[20];
+    java.util.Arrays.fill(argb, gray(Retouch.TRIM_WHITE));
+    argb[0] = 0x00000000;
+    argb[1 * 5 + 1] = gray(0);
+    argb[2 * 5 + 3] = gray(Retouch.TRIM_WHITE - 1);
+    Retouch.Picture picture = new Retouch.Picture(argb, 5, 4);
+    int[] box = Retouch.trimBox(picture);
+    check(java.util.Arrays.equals(box, new int[] {1, 1, 3, 2}), "the box holds only the ink");
+    Retouch.Picture trimmed = Retouch.apply(Retouch.Edit.TRIM, picture);
+    check(trimmed.width == 3 && trimmed.height == 2, "Trim keeps the box's size");
+    check(trimmed.argb[0] == gray(0), "Trim starts at the box's top left");
+    Retouch.Picture blank = new Retouch.Picture(new int[] {WHITE, WHITE}, 2, 1);
+    check(Retouch.apply(Retouch.Edit.TRIM, blank) == blank, "an all-white picture is kept");
+    Retouch.Picture full = new Retouch.Picture(new int[] {gray(0), gray(0)}, 2, 1);
+    check(Retouch.apply(Retouch.Edit.TRIM, full) == full, "a picture with no margin is kept");
+    try {
+      Retouch.crop(full, new int[] {1, 0, 2, 1});
+      throw new AssertionError("a box past the edge must be refused");
+    } catch (IllegalArgumentException expected) {
+      // refused
+    }
   }
 
   private static int gray(int g) {

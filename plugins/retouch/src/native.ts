@@ -22,9 +22,20 @@ export type PixelEdit =
   | 'rotate'
   | 'mirror'
   | 'flip'
-  | 'invert';
+  | 'invert'
+  | 'trim';
 
-export type Edited = {width: number; height: number; ms: number};
+/**
+ * The result's size, and where its top left sits in the picture it came from: 0, 0 for every edit
+ * but Trim, which cuts the margin off (#132).
+ */
+export type Edited = {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  ms: number;
+};
 
 type Native = {
   edit(

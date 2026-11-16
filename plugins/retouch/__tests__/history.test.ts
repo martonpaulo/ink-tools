@@ -8,6 +8,7 @@ import {
   placeAt,
   recordEdit,
   restoreStep,
+  stateRect,
   undoStep,
 } from '../src/history';
 
@@ -101,4 +102,10 @@ test('a picture keeps its corner and stays inside the page', () => {
     right: 1920,
     bottom: 250,
   });
+});
+
+test('a state goes back at its own top left, or at the current one when it has none (#132)', () => {
+  const saved = {path: 'o', width: 400, height: 300};
+  expect(stateRect(RECT, saved)).toBe(RECT);
+  expect(stateRect(RECT, {...saved, left: 60, top: 70})).toEqual({...RECT, left: 60, top: 70});
 });

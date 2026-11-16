@@ -28,6 +28,8 @@ or too dark on the 16-grey screen.
 - Rotate 90° clockwise, Mirror (left to right), Flip (top to bottom) and Invert, which turns a
   dark-mode screenshot into paper, each one tap
   ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
+- Trim the white margins, one tap; crop with the pen is still to come
+  ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
 - Each edit is a switch in Settings.
 
 ## What it will never do

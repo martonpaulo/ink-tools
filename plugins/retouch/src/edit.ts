@@ -28,6 +28,7 @@ import {
   recordEdit,
   restoreStep,
   State,
+  stateRect,
   Step,
   undoStep,
 } from './history';
@@ -92,6 +93,7 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   mirror: 'mirror',
   flip: 'flip',
   invert: 'invert',
+  trim: 'trim',
 };
 
 /** The lassoed elements when they are exactly one picture, else null. */
@@ -206,15 +208,32 @@ async function pixelEdit(
     if (!edited.ok) {
       return {kind: 'failed', why: why(`edit ${pixel}`, edited)};
     }
-    const rect = placeAt(place.rect, edited.value, width.value);
+    const {left, top} = edited.value;
+    const at = {
+      ...place.rect,
+      left: place.rect.left + left,
+      top: place.rect.top + top,
+    };
+    const rect = placeAt(at, edited.value, width.value);
     const replaced = await replace(element, resultPath, rect, place, deps);
     if (!replaced.ok) {
       return {kind: 'failed', why: why('modifyPageElements', replaced)};
     }
-    const result: State = {path: resultPath, ...edited.value};
+    const result: State = {
+      path: resultPath,
+      width: edited.value.width,
+      height: edited.value.height,
+      left: rect.left,
+      top: rect.top,
+    };
     const original: State | null = known
       ? null
-      : {path: originalPath, ...size};
+      : {
+          path: originalPath,
+          ...size,
+          left: place.rect.left,
+          top: place.rect.top,
+        };
     const change = recordEdit(history, place, rect, result, original, stamp);
     keep.add(resultPath).add(originalPath);
     await save(change, deps);
@@ -239,7 +258,11 @@ async function putBack(
   if (!width.ok) {
     return {kind: 'failed', why: why('getPageSize', width)};
   }
-  const rect = placeAt(place.rect, step.show, width.value);
+  const rect = placeAt(
+    stateRect(place.rect, step.show),
+    step.show,
+    width.value,
+  );
   const replaced = await replace(element, step.show.path, rect, place, deps);
   if (!replaced.ok) {
     return {kind: 'failed', why: why('modifyPageElements', replaced)};

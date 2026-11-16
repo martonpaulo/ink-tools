@@ -30,7 +30,8 @@ function world() {
       }
       files.set(dest, 'png');
       const w = Math.min(width, pageWidth);
-      return ok({width: w, height: Math.round((height * w) / width), ms: 5});
+      const h = Math.round((height * w) / width);
+      return ok({width: w, height: h, left: 0, top: 0, ms: 5});
     }),
     readText: jest.fn(async path => ok(files.get(path) ?? null)),
     writeText: jest.fn(async (path, text) => {
@@ -147,13 +148,48 @@ test('Rotate puts the turned picture at the same top left, and Undo turns it bac
     async (_edit, _src, before, dest, width, height) => {
       w.files.set(before, 'png');
       w.files.set(dest, 'png');
-      return ok({width: height, height: width, ms: 5});
+      return ok({width: height, height: width, left: 0, top: 0, ms: 5});
     },
   );
   expect(await runEdit('rotate', w.deps)).toMatchObject({kind: 'edited'});
   expect((w.native.edit as jest.Mock).mock.calls[0][0]).toBe('rotate');
   expect(w.modified[0].path).toMatch(/-rotate\.png$/);
   expect(w.modified[0].rect).toEqual({left: 100, top: 200, right: 400, bottom: 600});
+  expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
+  expect(w.modified[1].rect).toEqual(RECT);
+});
+
+test('Trim keeps the picture where it was on the page, less its margin (#132)', async () => {
+  const w = world();
+  (w.native.edit as jest.Mock).mockImplementationOnce(
+    async (_edit, _src, before, dest) => {
+      w.files.set(before, 'png');
+      w.files.set(dest, 'png');
+      return ok({width: 300, height: 200, left: 40, top: 30, ms: 5});
+    },
+  );
+  expect(await runEdit('trim', w.deps)).toMatchObject({kind: 'edited'});
+  expect(w.modified[0].rect).toEqual({
+    left: 140,
+    top: 230,
+    right: 440,
+    bottom: 430,
+  });
+  const [original, trimmed] = w.history().entries[0].states;
+  expect(trimmed).toEqual({
+    path: w.modified[0].path,
+    width: 300,
+    height: 200,
+    left: 140,
+    top: 230,
+  });
+  expect(original).toMatchObject({
+    left: 100,
+    top: 200,
+    width: 400,
+    height: 300,
+  });
+  // Undo puts the untrimmed picture back where it was, not at the trimmed top left.
   expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
   expect(w.modified[1].rect).toEqual(RECT);
 });

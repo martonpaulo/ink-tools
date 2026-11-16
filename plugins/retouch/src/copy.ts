@@ -11,6 +11,7 @@ export const copy = {
   'edit.mirror': 'Mirror',
   'edit.flip': 'Flip',
   'edit.invert': 'Invert',
+  'edit.trim': 'Trim',
   'permission.files':
     'Retouch keeps each picture as it was, for Undo and Restore original, in MyStyle/Retouch.',
 } as const;

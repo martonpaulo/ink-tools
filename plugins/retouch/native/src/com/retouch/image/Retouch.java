@@ -18,6 +18,11 @@ public final class Retouch {
   /** Enhance's sharpen: the share of the difference from the 3 x 3 mean added back. */
   public static final double SHARPEN_AMOUNT = 0.6;
 
+  /** Trim's white: a pixel whose red, green and blue are all at least this is margin. */
+  public static final int TRIM_WHITE = 240;
+  /** Trim's clear: a pixel whose alpha is at most this is margin too. */
+  public static final int TRIM_CLEAR = 15;
+
   private static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
 
@@ -31,7 +36,8 @@ public final class Retouch {
     ROTATE,
     MIRROR,
     FLIP,
-    INVERT;
+    INVERT,
+    TRIM;
 
     /** The edit for its JavaScript name, such as `enhance`. */
     public static Edit of(String name) {
@@ -70,13 +76,58 @@ public final class Retouch {
     if (w == picture.width && h == picture.height) {
       return picture;
     }
-    int left = (picture.width - w) / 2;
-    int top = (picture.height - h) / 2;
+    return crop(picture, new int[] {(picture.width - w) / 2, (picture.height - h) / 2, w, h});
+  }
+
+  /** The area `box` ({left, top, width, height}, inside the picture) of `picture`, as a new one. */
+  public static Picture crop(Picture picture, int[] box) {
+    int left = box[0];
+    int top = box[1];
+    int w = box[2];
+    int h = box[3];
+    if (left < 0 || top < 0 || w < 1 || h < 1
+        || left + w > picture.width || top + h > picture.height) {
+      throw new IllegalArgumentException("the box is outside the picture");
+    }
+    if (w == picture.width && h == picture.height) {
+      return picture;
+    }
     int[] out = new int[w * h];
     for (int y = 0; y < h; y++) {
       System.arraycopy(picture.argb, (top + y) * picture.width + left, out, y * w, w);
     }
     return new Picture(out, w, h);
+  }
+
+  /**
+   * Trim's box (#132), {left, top, width, height}: the smallest area that holds every pixel that is
+   * neither near white nor near clear. A picture that is all margin keeps its whole box.
+   */
+  public static int[] trimBox(Picture picture) {
+    int left = picture.width;
+    int top = picture.height;
+    int right = -1;
+    int bottom = -1;
+    for (int y = 0; y < picture.height; y++) {
+      for (int x = 0; x < picture.width; x++) {
+        if (!isMargin(picture.argb[y * picture.width + x])) {
+          left = Math.min(left, x);
+          right = Math.max(right, x);
+          top = Math.min(top, y);
+          bottom = Math.max(bottom, y);
+        }
+      }
+    }
+    return right < 0
+        ? new int[] {0, 0, picture.width, picture.height}
+        : new int[] {left, top, right - left + 1, bottom - top + 1};
+  }
+
+  private static boolean isMargin(int argb) {
+    return (argb >>> 24) <= TRIM_CLEAR
+        || (((argb >> 16) & MAX) >= TRIM_WHITE
+            && ((argb >> 8) & MAX) >= TRIM_WHITE
+            && (argb & MAX) >= TRIM_WHITE);
   }
 
   /** The 256 greys after gamma `gamma`: above 1 lighter, below 1 darker; 0 and 255 stay. */
@@ -212,7 +263,7 @@ public final class Retouch {
 
   /**
    * Runs `edit` on `picture`, already at {@link #outputSize}, and returns the result: `picture`
-   * itself, edited in place, or a new picture for Rotate.
+   * itself, edited in place, or a new picture for Rotate and Trim.
    */
   public static Picture apply(Edit edit, Picture picture) {
     switch (edit) {
@@ -234,6 +285,8 @@ public final class Retouch {
       case INVERT:
         invert(picture);
         return picture;
+      case TRIM:
+        return crop(picture, trimBox(picture));
       default:
         throw new IllegalArgumentException("unknown edit: " + edit);
     }
