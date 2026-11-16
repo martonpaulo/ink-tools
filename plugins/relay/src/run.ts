@@ -18,13 +18,14 @@ import {
   insertText,
   lassoElements,
   lassoImage,
+  occupiedRects,
   ok,
   pageImage,
   recognizeElements,
   Result,
   THROWN_CODE,
 } from '@supernote-tools/sn-adapter/official';
-import {readLassoQuery} from '@supernote-tools/ink-core';
+import {OccupiedRead, readLassoQuery} from '@supernote-tools/ink-core';
 import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
@@ -110,12 +111,28 @@ async function currentPageKey(): Promise<Result<string>> {
   return page.ok ? ok(`${note.value}#${page.value}`) : page;
 }
 
+function log(line: string): void {
+  console.log(`Relay: ${line}`);
+}
+
+/** The open page's occupied rects, as Word Lookup reads them (#199, #152). */
+async function currentOccupied(): Promise<Result<OccupiedRead>> {
+  const note = await getCurrentFilePath();
+  if (!note.ok) {
+    return note;
+  }
+  const page = await getCurrentPageNum();
+  return page.ok ? occupiedRects(note.value, page.value, log) : page;
+}
+
 /** The open note, as a receive places into it. */
 export const noteHost: NoteHost = {
   permissions: ensurePermissions,
   pluginDir: getPluginDirPath,
   pageKey: currentPageKey,
   pageSize: currentPageSize,
+  occupied: currentOccupied,
+  log,
   closeView: closePluginView,
   insertText,
   lasso: lassoElements,

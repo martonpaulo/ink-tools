@@ -17,7 +17,10 @@ and an address field for a device discovery cannot see.
 `native/.../Receiver.java`, an HTTPS LocalSend v2 receiver with the v3 certificate of
 `Identity.java`, for `RECEIVE_WINDOW_MS`; `src/localsend/protocol.ts` decides each offer
 (`decideOffer`), `src/receive/receive.ts` places the item in the note; a second text on the same
-page goes one line below the first. Still to come: the device round, and whether the receiver can
+page goes one line below the first. A text goes into the first free band of the page, past its
+strokes, text boxes and pictures (`freeTextBox`, `ink-core`'s `freeRect` that Word Lookup uses,
+[#199](https://github.com/martonpaulo/ink-tools/issues/199)), and is lassoed only when the whole page was read and nothing else is under it
+([#168](https://github.com/martonpaulo/ink-tools/issues/168)'s rule, `inkUnderBox`). Still to come: the device round, and whether the receiver can
 stay on with the view closed.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
