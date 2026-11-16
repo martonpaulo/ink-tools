@@ -40,3 +40,4 @@ export function insertPageElements(
 ): Promise<Result<boolean>> {
   return attempt(() => PluginCommAPI.insertPageElements(elements, page, layer));
 }
+

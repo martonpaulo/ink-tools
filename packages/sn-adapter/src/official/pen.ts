@@ -5,16 +5,14 @@
  * PluginFileAPI.getLastElement and getElements, PluginCommAPI.getPenInfo).
  */
 import {PluginCommAPI, PluginFileAPI, PluginManager} from 'sn-plugin-lib';
+import {readAll} from './elements';
 import {attempt, fail, fromResponse, ok, Result, THROWN_CODE} from './result';
 
 /** The only plugin event the docs list: its message is the Element[] just written. */
 const PEN_UP_EVENT = 'event_pen_up';
 /** registerType 1: normal order among the plugins that listen (0 first, 2 last). */
 const NORMAL_ORDER = 1;
-/** Sample points read per bridge call: a word's stroke has a few hundred. */
-const POINTS_PER_READ = 500;
-/** More points than this are cut, so one long scribble cannot hold the bridge. */
-export const MAX_STROKE_POINTS = 4000;
+export {MAX_STROKE_POINTS} from './elements';
 
 export type PenPoint = {x: number; y: number};
 /** The fields of a MotionEvent the spike reads; x and y are screen pixels (docs, MotionEvent). */
@@ -118,24 +116,8 @@ export function getPenInfo(): Promise<Result<PenInfo>> {
 }
 
 /** A stroke's sample points in page pixels, at most MAX_STROKE_POINTS; empty for other types. */
-export async function strokePoints(
-  element: object,
-): Promise<Result<PenPoint[]>> {
-  const accessor = (element as SdkElement).stroke?.points;
-  if (!accessor) {
-    return ok([]);
-  }
-  try {
-    const size = Math.min(await accessor.size(), MAX_STROKE_POINTS);
-    const points: PenPoint[] = [];
-    for (let start = 0; start < size; start += POINTS_PER_READ) {
-      const count = Math.min(POINTS_PER_READ, size - start);
-      points.push(...(await accessor.getRange(start, count)));
-    }
-    return ok(points);
-  } catch (error) {
-    return thrown(error);
-  }
+export function strokePoints(element: object): Promise<Result<PenPoint[]>> {
+  return readAll((element as SdkElement).stroke?.points);
 }
 
 /** Frees the element's native point cache (docs, Element Caching and Release). */
