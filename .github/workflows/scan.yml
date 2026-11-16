@@ -3,15 +3,16 @@ name: Scan
 # The weekly dependency audit, plus the Markdown check of the root documents on every change to them
 # (#77): no subproject workflow starts for README.md, ROADMAP.md, AGENTS.md or docs/. The adapter
 # boundaries are checked on every change to a package, a plugin or the checker (#101), and gates.json's
-# npm gates install from each lockfile when node_modules is missing (#135).
+# npm gates install from each lockfile when node_modules is missing (#135), and each plugin's native
+# build leaves no .snplg without its app.npk (#153).
 on:
   schedule:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -46,6 +47,9 @@ jobs:
 
       - name: Check that each npm gate installs its subproject (#135)
         run: python3 -B -m unittest scripts/test_gate_install.py
+
+      - name: Check each plugin's light native build (#153)
+        run: python3 -B -m unittest scripts/test_native_package.py
 
   npm-audit:
     name: npm audit ${{ matrix.dir }}

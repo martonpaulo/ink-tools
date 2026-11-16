@@ -138,18 +138,20 @@ function packagePlugin() {
   if (!fs.existsSync(generatedConfig)) {
     throw Error('Run `bash buildPlugin.sh` first: build/generated/PluginConfig.json is missing.');
   }
+  // Remove the JS-only package buildPlugin.sh wrote before the native step, so a failed step
+  // leaves no .snplg without its app.npk, which would fail on the tablet (#153).
+  const outputs = path.join(build, 'outputs');
+  const name = `${config().name}.snplg`;
+  for (const stale of [name, `${config().name}.zip`]) {
+    fs.rmSync(path.join(outputs, stale), {force: true});
+  }
   const npk = buildNative();
   fs.copyFileSync(npk, path.join(generated, 'app.npk'));
   const cfg = JSON.parse(fs.readFileSync(generatedConfig, 'utf8'));
   cfg.nativeCodePackage = '/app.npk';
   cfg.reactPackages = [PACKAGE_CLASS];
   fs.writeFileSync(generatedConfig, JSON.stringify(cfg, null, 2) + '\n');
-  const outputs = path.join(build, 'outputs');
-  const name = `${config().name}.snplg`;
   fs.mkdirSync(outputs, {recursive: true});
-  for (const stale of [name, `${config().name}.zip`]) {
-    fs.rmSync(path.join(outputs, stale), {force: true});
-  }
   run('zip', ['-q', '-r', '-9', path.join(outputs, name), '.'], {cwd: generated});
   console.log(`native: ${name} ${fs.statSync(path.join(outputs, name)).size} bytes with app.npk`);
 }
