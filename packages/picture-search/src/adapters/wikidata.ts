@@ -624,7 +624,11 @@ export function isTitleOfQuery(query: string, title: string): boolean {
  * article whose title is the query itself wins; else the first article, as before (#13): a plain
  * English word searched in another Wikipedia finds a brand first («apple» in Portuguese is
  * «Apple Inc.», whose logo then led Lookup's page 1), while its own Wikipedia names the thing.
- * A failure before any article stops the walk.
+ * When the Wikipedias found different items and the query asks for no logo, a brand or an
+ * organisation is chosen only when every article found is one: the Portuguese article titled
+ * «Apple» is the company and «Brazil (filme)» a film with a logo, so a title match alone kept
+ * the brand first (#13, lab run `lookup-183`). Their read properties come in one request, and
+ * stand in for the chosen item's entity request. A failure before any article stops the walk.
  */
 async function lookup(
   query: string,
@@ -649,30 +653,91 @@ async function lookup(
       };
     }),
   );
-  let first: (() => Promise<LookupOutcome>) | undefined;
+  const found: Candidate[] = [];
   let suggestion: string | undefined;
-  for (const {language, found} of answers) {
-    if (!found.ok) {
-      return first ? first() : found;
+  for (const {language, found: answer} of answers) {
+    if (!answer.ok) {
+      if (found.length === 0) {
+        return answer;
+      }
+      break;
     }
-    const {hit} = found.value;
+    const {hit} = answer.value;
     if (!hit) {
-      suggestion ??= found.value.suggestion;
+      suggestion ??= answer.value.suggestion;
       continue;
     }
-    const isQuery = isQueryArticle(query, hit.title);
-    const answer = (): Promise<LookupOutcome> =>
-      isQuery
-        ? Promise.resolve({ok: true, value: {...found.value, language}})
-        : logoItem(query, language, ctx);
-    if (isQuery && isTitleOfQuery(query, hit.title)) {
-      return answer();
-    }
-    first ??= answer;
+    found.push({language, answer: {...answer.value, hit}});
   }
-  return first
-    ? first()
-    : {ok: true, value: {hit: null, ...(suggestion && {suggestion})}};
+  if (found.length === 0) {
+    return {ok: true, value: {hit: null, ...(suggestion && {suggestion})}};
+  }
+  const facts = await itemFacts(query, found, ctx);
+  const plain = facts && found.filter(c => !isBrand(facts, c.answer.hit.item));
+  const chosen = choose(query, plain && plain.length > 0 ? plain : found);
+  const item = chosen.answer.hit.item;
+  if (!isQueryArticle(query, chosen.answer.hit.title)) {
+    return logoItem(query, chosen.language, ctx);
+  }
+  return {
+    ok: true,
+    value: {
+      ...chosen.answer,
+      language: chosen.language,
+      ...(facts && item && {facts: factsOf([facts[item] ?? {claims: {}}])}),
+    },
+  };
+}
+
+/** An article one language's Wikipedia found. */
+type Candidate = {language: string; answer: WikiAnswer & {hit: WikiHit}};
+
+/** In the languages' order, the first article titled as the query, else the first. */
+function choose(query: string, found: readonly Candidate[]): Candidate {
+  return (
+    found.find(
+      c =>
+        isQueryArticle(query, c.answer.hit.title) &&
+        isTitleOfQuery(query, c.answer.hit.title),
+    ) ?? found[0]
+  );
+}
+
+/**
+ * The read properties of the items the Wikipedias found, when they found more than one and the
+ * query asks for no logo; else, or when the request fails, none, and the first rule decides.
+ */
+async function itemFacts(
+  query: string,
+  found: readonly Candidate[],
+  ctx: SourceContext,
+): Promise<Record<string, Entity> | undefined> {
+  const items = [
+    ...new Set(
+      found
+        .filter(c => !c.answer.hit.disambiguation)
+        .map(c => c.answer.hit.item)
+        .filter((id): id is string => id !== undefined && /^Q\d+$/.test(id)),
+    ),
+  ];
+  if (items.length < 2 || readIntent(query).styles.has('logo')) {
+    return undefined;
+  }
+  const response = await ctx.fetch(claimsUrl(items), {
+    'Api-User-Agent': ctx.userAgent,
+  });
+  const entities = response.ok ? parseClaims(response.value) : response;
+  if (isFailure(entities)) {
+    ctx.log(`wikidata: the claims of ${items.join(', ')}: ${entities.message}`);
+    return undefined;
+  }
+  return entities;
+}
+
+/** Whether the item is an organisation, or a brand whose logo would lead the page. */
+function isBrand(entities: Record<string, Entity>, item?: string): boolean {
+  const claims = item === undefined ? undefined : entities[item]?.claims;
+  return isOrganisation(claims) || leadingLogoOf(claims) !== undefined;
 }
 
 /** A spelling to try when nothing was found: Wikipedia's «did you mean», else its article title. */
@@ -737,8 +802,9 @@ export async function searchWikidata(
   let named = namesSubject(query, hit.title);
   // The query is a name many people bear, resolved to its most notable bearer (#92).
   let byName = false;
-  if (found.value.facts) {
-    // The logo path read the item's facts with the candidates: no request for its entity.
+  if (found.value.facts && !found.value.facts.name) {
+    // The logo path, or the choice among the Wikipedias' items, read the item's facts: no
+    // request for its entity. A name still takes the namesake path below.
     ({files, human, signature, flag, portrait, leadingLogo, logoCategory} =
       found.value.facts);
   } else if (item) {

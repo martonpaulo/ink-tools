@@ -181,7 +181,6 @@ describe('the query languages (#71, owner D7)', () => {
     });
     const found = await searchWikidata('apple', ctx(fetch, ['pt', 'es', 'en']));
     const urls = fetch.mock.calls.map(([url]) => url);
-    expect(urls).toContain(entityUrl('Q89'));
     expect(urls).not.toContain(entityUrl('Q312'));
     expect(found.ok && found.value.results.some(r => r.leads)).toBe(false);
     // A word with no exact article anywhere keeps the first language's, as before.
@@ -190,6 +189,95 @@ describe('the query languages (#71, owner D7)', () => {
     );
     await searchWikidata('apple', ctx(first, ['pt', 'es']));
     expect(first.mock.calls.map(([url]) => url)).toContain(entityUrl('Q312'));
+  });
+
+  // Lab run lookup-183: the Portuguese article titled «Apple» is the company, and «Brazil
+  // (filme)» a film with a logo, so a title match alone kept the brand first (#13).
+  it.each([
+    ['apple', 'Apple', 'Apple', 'Q89', 'File:Red Apple.jpg'],
+    ['brazil', 'Brazil (filme)', 'Brazil', 'Q155', 'File:Flag of Brazil.svg'],
+    ['angry', 'Angry Birds', 'Anger', 'Q79871', 'File:Angry face.svg'],
+  ])(
+    'never takes a brand for a plain word another Wikipedia names: %s (#13)',
+    async (query, ptTitle, enTitle, thing, picture) => {
+      const article = (title: string, item: string) =>
+        JSON.stringify({
+          batchcomplete: true,
+          query: {pages: [{title, index: 1, pageprops: {wikibase_item: item}}]},
+        });
+      const claims = sparql(
+        ['Q312', 'P31', 'Q891723'],
+        ['Q312', 'P154', 'File:Brand logo.svg'],
+        [thing, 'P18', picture],
+      );
+      const fetch = jest.fn(async (url: string) => {
+        if (/^https:\/\/(pt|es)\.wikipedia/.test(url)) {
+          return ok(article(ptTitle, 'Q312'));
+        }
+        if (/^https:\/\/en\.wikipedia/.test(url)) {
+          return ok(article(enTitle, thing));
+        }
+        if (url === claimsUrl(['Q312', thing])) {
+          return ok(claims);
+        }
+        return ok(FILES);
+      });
+      const found = await searchWikidata(query, ctx(fetch, ['pt', 'es', 'en']));
+      const urls = fetch.mock.calls.map(([url]) => url);
+      expect(urls).toContain(claimsUrl(['Q312', thing]));
+      // The claims answer stands in for the chosen item's entity: no request more.
+      expect(urls).not.toContain(entityUrl(thing));
+      expect(urls).not.toContain(entityUrl('Q312'));
+      const commons = urls.find(url => /commons\.wikimedia/.test(url)) ?? '';
+      expect(decodeURIComponent(commons)).toContain(picture.slice(5));
+      expect(decodeURIComponent(commons)).not.toContain('Brand logo');
+      expect(found.ok && found.value.results.some(r => r.leads)).toBe(false);
+    },
+  );
+
+  it('keeps the brand when every Wikipedia names one, or when the claims fail (#13)', async () => {
+    const article = (title: string, item: string) =>
+      JSON.stringify({
+        batchcomplete: true,
+        query: {pages: [{title, index: 1, pageprops: {wikibase_item: item}}]},
+      });
+    const brands = sparql(
+      ['Q2283', 'P159', 'Q62'],
+      ['Q2283', 'P154', 'File:Microsoft logo.svg'],
+      ['Q9366', 'P159', 'Q62'],
+      ['Q9366', 'P154', 'File:Windows logo.svg'],
+    );
+    const fetch = jest.fn(async (url: string) => {
+      if (/^https:\/\/pt\.wikipedia/.test(url)) {
+        return ok(article('Microsoft', 'Q2283'));
+      }
+      if (/wikipedia/.test(url)) {
+        return ok(article('Microsoft Windows', 'Q9366'));
+      }
+      if (/query\.wikidata/.test(url)) {
+        return ok(brands);
+      }
+      return ok(FILES);
+    });
+    await searchWikidata('microsoft', ctx(fetch, ['pt', 'en']));
+    const commons = fetch.mock.calls.map(([url]) => url).find(url => /commons/.test(url));
+    expect(decodeURIComponent(commons ?? '')).toContain('Microsoft logo');
+    // A failed claims request leaves the first rule to decide: the title match.
+    const failing = jest.fn(async (url: string) => {
+      if (/query\.wikidata/.test(url)) {
+        return {ok: false, status: 503, text: () => Promise.resolve('')};
+      }
+      if (/^https:\/\/pt\.wikipedia/.test(url)) {
+        return ok(article('Microsoft', 'Q2283'));
+      }
+      if (/wikipedia/.test(url)) {
+        return ok(article('Microsoft Windows', 'Q9366'));
+      }
+      return ok(url === entityUrl('Q2283') ? JSON.stringify({entities: {Q2283: {claims: {}}}}) : NONE);
+    });
+    const found = await searchWikidata('microsoft', ctx(failing, ['pt', 'en']));
+    expect(found.ok).toBe(true);
+    expect(failing.mock.calls.map(([url]) => url)).toContain(entityUrl('Q2283'));
   });
 
   it('knows a title that is the word itself, plural, accents and a qualifier aside (#13)', () => {
