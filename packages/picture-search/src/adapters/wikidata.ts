@@ -525,13 +525,15 @@ async function lookup(
   ctx: SourceContext,
 ): Promise<LookupOutcome> {
   const languages = lookupLanguages(query, ctx.languages);
+  // A written line's check already found this article (#87): it wins, and no Wikipedia is asked.
+  for (const language of languages) {
+    const known = knownHit(query, language);
+    if (known) {
+      return {ok: true, value: {hit: known, language}};
+    }
+  }
   const answers = await Promise.all(
     languages.map(async language => {
-      // A written line's check already found this article (#87): no request again.
-      const known = knownHit(query, language);
-      if (known) {
-        return {language, found: {ok: true as const, value: {hit: known}}};
-      }
       const response = await ctx.fetch(wikipediaUrl(query, language), {
         'Api-User-Agent': ctx.userAgent,
       });
