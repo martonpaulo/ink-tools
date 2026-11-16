@@ -199,14 +199,14 @@ HOME="$work/empty" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" pyth
 check "no address stops with its own code" "$?" "2"
 check "no address names the file" "$(grep -c 'inkctl/address' "$work/err")" "1"
 SUPERNOTE_ADDRESS=device-b.test run status >/dev/null
-check "the environment wins over the file" "$(head -1 "$log")" "-s device-b.test:5555 get-state"
+check "the environment wins over the file" "$(grep -m1 -- "^-s" "$log")" "-s device-b.test:5555 get-state"
 
 # The old name, snadb (#173): its address file is still read, and its shim forwards to inkctl.
 mkdir -p "$work/legacy/.config/snadb"
 printf 'device-c.test\n' > "$work/legacy/.config/snadb/address"
 : > "$log"
 HOME="$work/legacy" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$script" status >/dev/null 2>&1
-check "the address file of the old name is still read" "$(head -1 "$log")" "-s device-c.test:5555 get-state"
+check "the address file of the old name is still read" "$(grep -m1 -- "^-s" "$log")" "-s device-c.test:5555 get-state"
 run no-such-command >/dev/null 2>&1
 direct=$?
 : > "$log"
@@ -215,7 +215,7 @@ check "the snadb shim keeps the exit code" "$?" "$direct"
 check "the snadb shim prints one deprecation line" "$(grep -c 'renamed to inkctl' "$work/err")" "1"
 : > "$log"
 HOME="$work/home" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$repo_root/src/snadb" status >/dev/null 2>&1
-check "the snadb shim forwards the arguments" "$(head -1 "$log")" "-s device-a.test:5555 get-state"
+check "the snadb shim forwards the arguments" "$(grep -m1 -- "^-s" "$log")" "-s device-a.test:5555 get-state"
 run status >/dev/null
 check "a connected device skips adb connect" "$(called ' connect')$(called 'connect ')" "00"
 echo offline > "$files/state"
@@ -861,7 +861,9 @@ result=$(run note open "Note/A note.note" --screen "$work/local/skip.png" --json
 check "a capture over a note is skipped and reported" "$(printf '%s' "$result" | expression "'screen_refused' in d, 'screen' in d")" "(True, False)"
 check "a skipped capture does not fail the action" "$(called screencap)" "0"
 reset_device
-result=$(run wifi off --json)
+result=$(run wifi off --json 2>/dev/null)
+check "wifi off with no cable refuses, so the session is not stranded" "$?$(printf '%s' "$result" | field "['error']")$(called ' usb')" "1no_usb0"
+result=$(run wifi off --leave-unreachable --json)
 check "wifi off asks the tablet to close the port" "$(called ' usb')$(called 'disconnect')" "11"
 check "wifi off says how to turn it on" "$(printf '%s' "$result" | field "['restore']" | grep -c 'adb tcpip 5555')" "1"
 check "wifi off is logged as a change" "$(tail -1 "$history_file" | field "['command']")" "wifi off"
@@ -878,6 +880,30 @@ result=$(run wifi on --json 2>/dev/null)
 check "wifi on with no authorized cable says so" "$?$(printf '%s' "$result" | field "['error']")$(called tcpip)" "1no_usb0"
 reset_device
 check "status says Wi-Fi ADB is on" "$(run status --json | field "['wifi_adb']")" "on"
+check "status names the Wi-Fi link" "$(run status --json | field "['link']")" "wifi"
+
+# The USB cable (#171): one authorized tablet on USB carries every call, with or without Wi-Fi.
+reset_device
+printf 'USB0001\tdevice\n' > "$files/usb"
+result=$(run status --json)
+check "one tablet on USB carries the calls" "$(printf '%s' "$result" | field "['link']")$(called '-s USB0001 shell')$(called "-s $serial")" "usb30"
+check "the cable needs no adb connect" "$(called 'connect ')" "0"
+check "status over the cable asks whether Wi-Fi ADB is on" "$(printf '%s' "$result" | field "['wifi_adb']")" "off"
+check "the USB serial is masked in the log" "$(tail -1 "$history_file" | grep -c USB0001)" "0"
+HOME="$work/empty" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$script" status >/dev/null 2>&1
+check "the cable works with no address recorded" "$?" "0"
+printf 'USB0001\tdevice\n%s\toffline\n' "$serial" > "$files/usb"
+run status >/dev/null
+check "an offline Wi-Fi device leaves the cable in use" "$?$(called '-s USB0001 shell')" "03"
+result=$(run wifi off --json)
+check "wifi off over the cable closes the port and keeps the cable" "$(called '-s USB0001 usb')$(called "disconnect $serial")$(printf '%s' "$result" | field "['wifi_adb']")" "11off"
+printf 'USB0001\tdevice\nUSB0002\tdevice\n' > "$files/usb"
+run status >/dev/null
+check "two tablets on USB leave Wi-Fi in use" "$(called "-s $serial shell")$(called '-s USB0001 shell')" "30"
+printf 'USB0001\tunauthorized\n' > "$files/usb"
+run status >/dev/null
+check "an unauthorized cable leaves Wi-Fi in use" "$(called "-s $serial shell")" "3"
+reset_device
 check "help lists the read-only exit code" "$(python3 -B "$script" --help | grep -c '11 read-only')" "1"
 
 # The device log's filters.
@@ -937,7 +963,7 @@ check "a run names the app in front" "$(run history --json --limit 1 | field "['
 check "the log file is private" "$(python3 -c 'import os,sys; print(format(os.stat(sys.argv[1]).st_mode & 0o777, "o"))' "$history_file")" "600"
 run files ls "Note" >/dev/null
 check "a run names its command" "$(run history --json --limit 1 | field "['runs'][0]['command']")" "files ls"
-check "a call keeps its verb and timing" "$(run history --json --limit 1 | expression "[c['call'] for c in d['runs'][0]['calls']]")" "['get-state', 'shell dumpsys', 'shell ls', 'shell dumpsys']"
+check "a call keeps its verb and timing" "$(run history --json --limit 1 | expression "[c['call'] for c in d['runs'][0]['calls']]")" "['devices', 'get-state', 'shell dumpsys', 'shell ls', 'shell dumpsys']"
 run note open "Note/A note.note" >/dev/null
 check "the log keeps no path" "$(grep -c 'A note' "$history_file")" "0"
 check "the log masks the address" "$(grep -c 'device-a' "$history_file")" "0"

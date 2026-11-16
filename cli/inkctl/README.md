@@ -31,6 +31,8 @@ inkctl wifi off    # when the work ends
 
 Keep the address in `~/.config/inkctl/address` instead of the variable, if you prefer.
 
+When one authorized tablet is attached by USB, every command goes over the cable, even with an address recorded and with the tablet's Wi-Fi off; no address is needed then. Without a cable, or with two USB devices, commands go over Wi-Fi ADB. `inkctl status` names the link.
+
 The command was called `snadb` until 2026-11-16 ([#173](https://github.com/martonpaulo/supernote-tools/issues/173)). `src/snadb` still runs `inkctl`, after one line that asks for the new name, and an address in `~/.config/snadb/address` is still read.
 
 <br />
@@ -41,7 +43,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | :--- | :--- |
 | `make validate` | Runs the full gate: text, duplication and the command's contract tests. |
 | `inkctl --help` | Lists every command and exit code. |
-| `inkctl status` | Shows connection, firmware, screen size, battery, the app in front and that Wi-Fi ADB is on. |
+| `inkctl status` | Shows connection, firmware, screen size, battery, the app in front, the link in use (`usb` or `wifi`) and whether Wi-Fi ADB is on. |
 | `inkctl firmware` | Shows the installed and the newest official firmware. `--download` copies the newest one to `EXPORT`, after the checks it names. The tablet's build id holds no public version, so pass `--installed X.Y.Z` from Settings > About. |
 | `inkctl routes [PACKAGE]` | Lists, read-only, each exported entry point with its filters and permission, and which job each route does. |
 | `inkctl doctor` | Checks, read-only, that each call this command makes still exists. Run it after a firmware update. |
@@ -61,7 +63,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `inkctl tap\|swipe` | Presses by coordinates, the last resort. |
 | `inkctl wifi on` | Over the USB cable, turns Wi-Fi ADB on (`adb tcpip 5555`) and connects to it. |
-| `inkctl wifi off` | Turns Wi-Fi ADB off when the work ends, and says how to turn it on again. Off is the safe state: leave Wi-Fi ADB off when no work runs. |
+| `inkctl wifi off` | Turns Wi-Fi ADB off over the cable, which keeps working after it, and says how to turn it on again. With no cable it refuses, unless `--leave-unreachable` says the work has ended. Off is the safe state: leave Wi-Fi ADB off when no work runs. |
 | `inkctl secret set PROVIDER` | Writes a sign-in secret for the Bridge plugin (`todoist`, `icloud` or `google`) from standard input, into Bridge's private plugin folder. The value never goes into an argument, the log or the history; only its last 4 characters are shown. Not yet run on the tablet ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). |
 | `inkctl secret remove PROVIDER` | Signs Bridge out of a provider by deleting its secret. |
 | `inkctl secret status` | Says which providers have a secret, with only its last 4 characters. |

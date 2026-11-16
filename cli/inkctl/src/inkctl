@@ -31,7 +31,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   history                        what this command did: --failures, --command NAME, --since 2h
   tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
   wifi on                        over the USB cable, turn Wi-Fi ADB on and connect to it
-  wifi off                       turn Wi-Fi ADB off when the work ends, and say how to turn it on
+  wifi off                       turn Wi-Fi ADB off, over the cable; --leave-unreachable with none
   secret set PROVIDER            write a sign-in secret for Bridge from standard input, never argv
   secret remove PROVIDER         sign Bridge out of PROVIDER by deleting its secret
   secret status                  which providers have a secret, with only its last 4 characters
@@ -47,7 +47,8 @@ click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
 ~/.config/inkctl/address (or, from before the rename, ~/.config/snadb/address), as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
 ADB over Wi-Fi is enabled over USB with `inkctl wifi on` (`adb tcpip 5555`); a restart of the device turns
-it off.
+it off. When one authorized tablet is attached by USB, every command goes over the cable instead, so
+the work goes on with the tablet's Wi-Fi off; `status` names the link.
 """
 
 from __future__ import annotations
@@ -125,6 +126,8 @@ https://github.com/martonpaulo/supernote-tools
 """
 
 ADB_PORT = 5555  # the port `adb tcpip` opens
+LINK_USB = "usb"
+LINK_WIFI = "wifi"
 # Bridge's sign-in secrets (#116, owner D16 A): one file per provider in its private plugin folder.
 # The file names are sync-core's `secretFileName` (packages/sync-core/src/secrets.ts); a test reads both.
 # shortcut: the folder is the official Plugin Permissions page's path for a plugin's own files, not yet
@@ -435,8 +438,10 @@ def append_history(line: str) -> None:
 class Device:
     """One ADB connection. Every call has a time limit, so a silent device cannot hang an agent."""
 
-    def __init__(self, serial: str, log: RunLog):
-        self.serial = serial
+    def __init__(self, serial: str, log: RunLog, wifi: str | None = None, link: str = LINK_WIFI):
+        self.serial = serial  # the serial every call goes to: the USB one or the Wi-Fi address
+        self.wifi = serial if wifi is None else wifi  # HOST:PORT of Wi-Fi ADB, or "" when none is recorded
+        self.link = link
         self.log = log
 
     def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True, stdin: bytes | None = None):
@@ -484,8 +489,10 @@ class Device:
         return (done.stdout + done.stderr).decode(errors="replace")
 
     def probe(self) -> str:
-        """Empty when the port answers, otherwise why it does not."""
-        host, _, port = self.serial.rpartition(":")
+        """Empty when the Wi-Fi ADB port answers, otherwise why it does not."""
+        if not self.wifi:
+            return "no Wi-Fi address is recorded"
+        host, _, port = self.wifi.rpartition(":")
         try:
             with socket.create_connection((host, int(port)), PROBE_TIMEOUT):
                 return ""
@@ -495,6 +502,8 @@ class Device:
     def connect(self) -> None:
         if self.is_ready():
             return
+        if self.link == LINK_USB:  # `adb devices` listed it a moment ago; a cable has no connect step
+            raise Failure(EXIT_UNREACHABLE, "unreachable", f"{self.serial} on USB is not ready; check the cable", "adb devices", extra={"state": "usb_not_ready"})
         reply = self.request_connection()
         if self.is_ready():
             return
@@ -1034,8 +1043,9 @@ def command_status(device: Device, args: argparse.Namespace):
         "screen": size.group(1) if size else "",
         "battery": int(level.group(1)) if level else None,
         "activity": resumed.group(1) if resumed else "",
-        # status reaches the tablet only over Wi-Fi ADB, so an answer proves it is on (#37).
-        "wifi_adb": "on",
+        "link": device.link,
+        # An answer over Wi-Fi proves Wi-Fi ADB is on (#37); over the cable the port is asked (#171).
+        "wifi_adb": "on" if device.link == LINK_WIFI or not device.probe() else "off",
     }
     return data, "\n".join(f"{key}: {value}" for key, value in data.items())
 
@@ -1678,6 +1688,28 @@ def command_history(device, args: argparse.Namespace):
     return {"runs": runs, "unreadable": unreadable}, text
 
 
+def wifi_serial(address: str) -> str:
+    return address if ":" in address else f"{address}:{ADB_PORT}"
+
+
+def open_device(args: argparse.Namespace, log: RunLog) -> Device:
+    """The cable when one authorized tablet is attached, else Wi-Fi ADB (#171): the cable keeps
+    working with the tablet's Wi-Fi off and after `wifi off`, and the result says which link it took."""
+    try:
+        address = read_address()
+    except Failure:
+        address = ""
+    wifi = wifi_serial(address) if address else ""
+    log.secrets = [secret for secret in (wifi, address) if secret]
+    attached = usb_serials(Device("", log)) if args.connects else []
+    if len(attached) == 1:
+        log.secrets.append(attached[0])  # a serial number names the tablet, so the log masks it too
+        return Device(attached[0], log, wifi, LINK_USB)
+    if not wifi:
+        read_address()  # raises the usage failure that names the address file
+    return Device(wifi, log)
+
+
 def usb_serials(device: Device) -> list[str]:
     """The tablets attached by USB and authorized: `adb devices` rows whose serial is no network address."""
     listing = device.adb("devices", serial=False).stdout.decode(errors="replace")
@@ -1707,11 +1739,14 @@ def command_wifi_on(device: Device, args: argparse.Namespace):
 
 
 def command_wifi_off(device: Device, args: argparse.Namespace):
-    """`adb usb` closes the network port; the proof is that the port stops answering."""
+    """`adb usb` closes the network port; the proof is that the port stops answering. Without a
+    cable that would leave nothing to reach the tablet with, so it needs --leave-unreachable (#171)."""
+    if device.link != LINK_USB and not args.leave_unreachable:
+        raise Failure(EXIT_FAILED, "no_usb", "no tablet on USB: after wifi off nothing could reach it; attach the cable, or pass --leave-unreachable when the work ends")
     done = device.adb("usb")
     if done.returncode != 0:
         raise Failure(EXIT_FAILED, "device_error", (done.stdout + done.stderr).decode(errors="replace").strip())
-    device.adb("disconnect", device.serial, serial=False)
+    device.adb("disconnect", device.wifi, serial=False)
     started = time.monotonic()
     while not device.probe():
         if time.monotonic() - started >= args.timeout:
@@ -1917,6 +1952,7 @@ def build_parser() -> argparse.ArgumentParser:
     switched_on.add_argument("--timeout", type=float, default=WIFI_TIMEOUT, help="seconds for the port to answer")
     switched_off = add(wifi, "off", command_wifi_off, changes=True)
     switched_off.add_argument("--timeout", type=float, default=WIFI_TIMEOUT, help="seconds for the port to close")
+    switched_off.add_argument("--leave-unreachable", action="store_true", help="turn it off with no cable attached, so nothing reaches the tablet after")
 
     secrets = noun("secret")
     add(secrets, "set", command_secret_set, changes=True).add_argument("provider", choices=SECRET_PROVIDERS)
@@ -1961,10 +1997,7 @@ def main() -> int:
         if refuses_read_only(args):
             raise Failure(EXIT_READ_ONLY, "read_only", f"read-only mode refuses: {command_name(args)}")
         if args.needs_device:
-            address = read_address()
-            serial = address if ":" in address else f"{address}:{ADB_PORT}"
-            log.secrets = [serial, address]
-            device = Device(serial, log)
+            device = open_device(args, log)
             if args.connects:
                 device.connect()
                 before = front_app(device)
