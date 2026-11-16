@@ -231,6 +231,11 @@ by `bridge`. See [`architecture.md`](architecture.md).
 **Settings layout (interview 2026-11-14):** one section per module (To-Do / Calendar / Digest);
 inside each, a toggle for the module and a toggle per provider (Todoist; Google / iCloud / ICS).
 
+**To-Do sources** ([#44](https://github.com/martonpaulo/ink-tools/issues/44), owner, 2026-11-16): four Todoist sources reach the tablet's To-Do:
+Inbox, Upcoming, Habits and the project Mirror. Upcoming is Todoist's view of dated tasks, not a
+project: the dated tasks of the other projects, never a second copy of one already shown under
+Inbox, Habits or Mirror.
+
 **To-Do runs on the tablet alone** ([#44](https://github.com/martonpaulo/ink-tools/issues/44)): Bridge never depends on the Mac being on. The
 community script that syncs Todoist through the Partner app on the Mac is not used (product audit,
 owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
