@@ -106,7 +106,7 @@ supernote-tools/
     snadb/          # Supernote ADB control CLI (formerly supernote-adb)
   apps/
     lingo-app/      # sideloaded tablet app: switch the handwriting language tablet-wide
-    <desk>          # planned macOS app: edit Supernote .note files on the Mac
+    <supernote-editor> # planned macOS app, Supernote Editor: edit .note files on the Mac
 ```
 
 ## The plugins (on device)
@@ -193,7 +193,7 @@ measures are `packages/picture-search`.
 
 - **`snadb`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
   codes, no root (formerly `supernote-adb`).
-- **`desk`** — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; not
+- **Supernote Editor** (planned folder `apps/supernote-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; not
   yet a subproject ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)).
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
