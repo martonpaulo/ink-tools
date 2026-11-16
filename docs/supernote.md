@@ -169,10 +169,43 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   `android.uid.system`. A bypassing plugin suits the owner's device only and would likely fail store
   review ([#6](https://github.com/martonpaulo/supernote-tools/issues/6)).
 - The Settings handwriting-language screen opens via `com.ratta.settings/.SettingsActivity` with
-  `com.ratta.settings.input.HWLanguageSetting` [source]. The device has Quick Settings
-  infrastructure (`sysui_qs_tiles` populated), so a sideloaded app with all-files access plus a
-  Quick Settings tile is a no-bypass "anywhere, one tap" switch — whether the e-ink pull-down
-  surfaces a custom tile is an on-screen question, not yet confirmed.
+  `com.ratta.settings.input.HWLanguageSetting` [source]. From any text field the owner reaches it in
+  five taps: long-press the keyboard's globe key, «Keyboard Settings», «Handwriting», «Language»,
+  the language [measured, 2026-11-16]. A plain tap on the globe only toggles handwriting and typed
+  keys, and the long-press list's other rows are typed layouts.
+- **There is no Android pull-down.** The `StatusBar` window is `GONE` and `NotificationShade`
+  stays `INVISIBLE` even after `cmd statusbar expand-settings`; a top swipe does nothing. A Quick
+  Settings tile added with `cmd statusbar add-tile` lands in `sysui_qs_tiles` but its
+  `TileService` is never bound, and `cmd statusbar click-tile` does nothing [measured, test app,
+  2026-11-16]. A Quick Settings tile is no surface on this device.
+- **A sideloaded app switches the language with no bypass.** With `MANAGE_EXTERNAL_STORAGE`
+  (`appops set … allow`), a test app created the new code file, deleted the old one and broadcast
+  `hw_type_change` in 6 to 10 ms [measured, 2026-11-16]. Two surfaces work:
+  - A **floating button** (`TYPE_APPLICATION_OVERLAY`, `SYSTEM_ALERT_WINDOW` by `appops`) stays
+    visible and tappable over Note, Digest, To-Do, Email, Settings, a plugin view and the
+    keyboard; each tap cycled the file [measured].
+  - The app's **launcher icon** is added to the Supernote sidebar by itself (Settings › Apps ›
+    Customize Sidebar listed it, and removed it on uninstall) [measured]; a tap runs the switch.
+    The sidebar opens from the side touch strip (`fts_slide_ts`), which ADB cannot drive, so the
+    tap from the sidebar itself is a pen-round step.
+- **A plugin can float a button over every app too.** SnapMark's optional «Floating capture
+  button» is a `TYPE_APPLICATION_OVERLAY` window owned by `com.ratta.supernote.pluginhost`
+  (uid 1000, appop `SYSTEM_ALERT_WINDOW`) that stays over Email with no plugin view open
+  [measured, 2026-11-16]. `sn-plugin-lib` has no such call (button types are only 1 sidebar,
+  2 lasso, 3 document selection), so it is the plugin's own native code adding a window in the
+  host process; the host's own plugin view is one full-screen `TYPE_PHONE` window
+  (`PluginHostService.initWindowManager`) [source].
+- **The next recognition follows a switch, with no restart.** The Note app's TXT export
+  recognised the same page as «Maa» in `en_US`, «magá» in `es_ES` and «maçã» in `pt_BR`, one
+  export right after each floating-button tap, in 2.7 to 2.8 s each, the first no slower
+  [measured, 2026-11-16]. The keyboard re-reads the file each time it opens
+  (`onStartInputView` → `SkbContainer` → `Recognition.binderEvent` sets `recognizer.lang`; same
+  process, no restart), and its label then shows the new language; while it stays open it keeps
+  the old one [measured, log and label]. TXT export lands in `EXPORT/`, which Supernote Cloud
+  uploads at once [measured].
+- Uninstalling a plugin from Settings («Its data will also be deleted») left its
+  `MyStyle/<name>` folder untouched; a `plugin ls` right after the uninstall got no answer from
+  the plugin provider once, then answered [measured, Ink2Pic, 2026-11-16].
 - **Shell ADB can write** `/sdcard/.data/dictionary/` [measured], so a host-side `snadb` command
   could switch the global language among the installed packs without a plugin.
 - Installed language packs: `en_US`, `es_ES`, `pt_BR`, `zh_CN`, `zh_TW`, `ja_JP` (147 MB total);
