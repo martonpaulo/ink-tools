@@ -56,6 +56,7 @@ test('one switch per lasso button: both picture modes on, the definition off, by
     true,
   ]);
   expect(toggle(tree, 'Insert definition').props.selected).toBe(false);
+  expect(toggle(tree, 'Choose picture').props.selected).toBe(true);
 });
 
 test('the «Insert definition» switch registers its lasso button and saves the switch', async () => {
@@ -82,7 +83,7 @@ test('the «Insert definition» switch registers its lasso button and saves the 
 
 test('both picture switches off: no picture button, and Settings still opens (#111)', async () => {
   files.readText.mockResolvedValue(
-    JSON.stringify({illustration: false, photo: false}),
+    JSON.stringify({illustration: false, photo: false, choose: false}),
   );
   const tree = await open();
   expect(MODES.map(mode => toggle(tree, mode.name).props.selected)).toEqual([

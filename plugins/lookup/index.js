@@ -10,15 +10,20 @@ import {
   showPluginView,
   startButtonQueue,
 } from '@supernote-tools/sn-adapter/official';
+import {clearChoice, openChoose} from './src/choose';
 import {DEFINE_BUTTON_ID, defineLasso} from './src/definition';
 import {syncButtons} from './src/buttons';
-import {MODES} from './src/modes';
+import {CHOOSE_BUTTON_ID, MODES} from './src/modes';
 import {pictureLasso} from './src/pictures';
 import {getSettings} from './src/profile';
 
 AppRegistry.registerComponent(appName, () => App);
 
-registerSettingsEntry(() => showPluginView()).catch(error => {
+// The Settings entry always opens Settings, never a Choose screen left from an earlier press.
+registerSettingsEntry(() => {
+  clearChoice();
+  showPluginView();
+}).catch(error => {
   console.error(`Lookup: ${error.message}`);
 });
 
@@ -32,6 +37,11 @@ getSettings()
 // At start-up, before the view exists (Ink2Pic gotcha 11). Every lasso button runs here, with no
 // view (#111, #115); each button itself follows its Settings switch (src/buttons.ts).
 const listening = startButtonQueue(id => {
+  if (id === CHOOSE_BUTTON_ID) {
+    // Reads the lasso, then opens the view on the Choose screen (#156).
+    openChoose();
+    return true;
+  }
   if (id === DEFINE_BUTTON_ID) {
     defineLasso().catch(error => {
       console.error(`Lookup: define: ${error.message}`);

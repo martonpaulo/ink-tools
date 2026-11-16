@@ -5,7 +5,7 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status
 
-**Three lasso buttons** over a Settings view ([#110](https://github.com/martonpaulo/supernote-tools/issues/110), [#111](https://github.com/martonpaulo/supernote-tools/issues/111), [#115](https://github.com/martonpaulo/supernote-tools/issues/115)), built to `Lookup.snplg`
+**Four lasso buttons** over a Settings view ([#110](https://github.com/martonpaulo/supernote-tools/issues/110), [#111](https://github.com/martonpaulo/supernote-tools/issues/111), [#115](https://github.com/martonpaulo/supernote-tools/issues/115)), built to `Lookup.snplg`
 with its native `app.npk`; the device round of the picture buttons is still open. Ink2Pic's picture
 search, pixel measures, file store, settings store and «Insert best picture» flow are
 `../../packages/picture-search`, shared with Ink2Pic ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)); Ink2Pic's library and picks
@@ -18,7 +18,10 @@ and a press that inserts nothing writes its sentence below the word. Pictures go
 `MyStyle/Lookup/pictures`, at 640 px below the word, until [#105](https://github.com/martonpaulo/supernote-tools/issues/105) sets size and place per button.
 «Insert definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from Ink2Pic: `src/definition.ts` reads the lasso,
 defines it in pt then es through `src/dictionaries.ts` and inserts a 640 px text box below the word,
-with no view. Each button follows its Settings switch (`src/buttons.ts`); the switches live in
+with no view. «Choose picture» ([#156](https://github.com/martonpaulo/supernote-tools/issues/156), owner D19 A): `src/choose.ts` reads the lasso, keeps the
+word and its place, and opens the view on `src/ui/ChooseScreen.tsx`, which lists one mode at a
+time («Illustrations», «Photos») through the same `modeDeps` flow and inserts the tapped tile at
+the kept place; its device round is open. Each button follows its Settings switch (`src/buttons.ts`); the switches live in
 `MyStyle/Lookup/settings.json` (`src/settings.ts`), the picture modes on by default. `src/profile.ts`
 is Lookup's entry into picture-search's file store and insert tier ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): folder
 `MyStyle/Lookup`, native modules `LookupFiles` and `LookupImage`, registered by

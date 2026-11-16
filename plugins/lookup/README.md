@@ -8,7 +8,8 @@ definition for it. It is the next step of Ink2Pic, installed beside it.
 
 ## What it will do
 
-- Give each mode its own lasso button: insert illustration, insert photo, insert text.
+- Give each mode its own lasso button: insert illustration, insert photo, insert text, and «Choose
+  picture», which opens the illustration and photo results to pick one.
 - Rank pictures so real cases work, and remember the picture you chose for a word.
 - Insert a short definition, a three-line bio or a topic summary from keyless, open sources.
 

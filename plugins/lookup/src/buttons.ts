@@ -16,7 +16,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
-import {MODES} from './modes';
+import {CHOOSE_BUTTON_ID, CHOOSE_BUTTON_NAME, MODES} from './modes';
 import type {LookupSettings, SwitchKey} from './settings';
 
 /** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
@@ -60,6 +60,16 @@ export const BUTTONS: readonly LassoButton[] = [
       FILE_WRITE,
     ],
   })),
+  {
+    key: 'choose',
+    id: CHOOSE_BUTTON_ID,
+    name: CHOOSE_BUTTON_NAME,
+    needs: [
+      {...INTERNET, reason: copy['permission.pictures']},
+      FILE_READ,
+      FILE_WRITE,
+    ],
+  },
   {
     key: 'definition',
     id: DEFINE_BUTTON_ID,

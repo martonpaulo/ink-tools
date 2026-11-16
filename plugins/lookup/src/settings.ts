@@ -1,17 +1,20 @@
 /**
  * Lookup's Settings (#111, #142): one switch per lasso button, kept in `MyStyle/Lookup/settings.json`
  * by picture-search's settings store, so a switch survives a restart. The picture modes start on,
- * as the #111 Plan says; «Insert definition» starts off, as before (#115).
+ * as the #111 Plan says, and «Choose picture» with them (#156); «Insert definition» starts off, as
+ * before (#115).
  */
 import type {SettingsCodec} from './profile';
 
 export const SETTINGS_VERSION = 1;
 
-/** One switch per lasso button: the definition's and each picture mode's `settingKey`. */
+/** One switch per lasso button: the definition's, each picture mode's `settingKey`, and Choose's. */
 export type LookupSettings = {
   definition: boolean;
   illustration: boolean;
   photo: boolean;
+  /** «Choose picture», the button that opens the result list (#156, owner D19 A). */
+  choose: boolean;
 };
 
 export type SwitchKey = keyof LookupSettings;
@@ -19,6 +22,7 @@ export type SwitchKey = keyof LookupSettings;
 export const SWITCH_KEYS: readonly SwitchKey[] = [
   'illustration',
   'photo',
+  'choose',
   'definition',
 ];
 
@@ -26,6 +30,7 @@ export const defaultSettings: LookupSettings = {
   definition: false,
   illustration: true,
   photo: true,
+  choose: true,
 };
 
 export function serializeSettings(settings: LookupSettings): string {

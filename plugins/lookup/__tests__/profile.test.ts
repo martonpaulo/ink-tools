@@ -45,7 +45,12 @@ describe('the settings file', () => {
   });
 
   test('a saved file reads back as it was written', () => {
-    const saved = {definition: true, illustration: false, photo: true};
+    const saved = {
+      definition: true,
+      illustration: false,
+      photo: true,
+      choose: false,
+    };
     expect(parseSettings(serializeSettings(saved)).settings).toEqual(saved);
   });
 

@@ -3,6 +3,8 @@ import {Text, View} from 'react-native';
 import {Button, shared} from '@supernote-tools/ui-kit';
 import {copy} from './src/copy';
 import {askMissing, BUTTONS, settingsChanged} from './src/buttons';
+import {Choice, currentChoice, onChoice} from './src/choose';
+import {ChooseScreen} from './src/ui/ChooseScreen';
 import {getSettings, saveSettings} from './src/profile';
 import {defaultSettings, LookupSettings} from './src/settings';
 
@@ -11,8 +13,15 @@ import {defaultSettings, LookupSettings} from './src/settings';
  * (#93): «Insert illustration», «Insert photo» (#111) and «Insert definition» (#115). Each switch
  * registers or removes its button and is saved to MyStyle/Lookup/settings.json (#142). On open, the
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
+ * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156).
  */
 export default function App() {
+  const [choice, setChoice] = useState<Choice | null>(currentChoice());
+  useEffect(() => onChoice(setChoice), []);
+  return choice ? <ChooseScreen choice={choice} /> : <SettingsScreen />;
+}
+
+function SettingsScreen() {
   const [settings, setSettings] = useState<LookupSettings | null>(null);
   useEffect(() => {
     let open = true;

@@ -18,6 +18,15 @@ export const copy = {
   'picture.failed': (word: string, why: string) => `${word}: ${why}`,
   'error.place': 'There is no room below the lassoed word.',
   'error.insert': 'The definition could not be inserted on the page.',
+  /** «Choose picture»'s screen (#156). */
+  'choose.title': (word: string) => `Pictures for «${word}»`,
+  'choose.illustration': 'Illustrations',
+  'choose.photo': 'Photos',
+  'choose.close': 'Close',
+  'choose.more': 'More',
+  'choose.inserting': 'Putting the picture in your note.',
+  'choose.tile': (title: string, source: string) => `${title}, from ${source}`,
+  'choose.noWord': 'Lasso a handwritten word first, then press Choose picture.',
 } as const;
 
 /**

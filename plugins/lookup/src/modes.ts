@@ -50,6 +50,13 @@ export const MODES: readonly Mode[] = [
   },
 ];
 
+/**
+ * «Choose picture» (#156): after the picture modes and «Insert definition», whose id is
+ * FIRST_BUTTON_ID + MODES.length (src/definition.ts).
+ */
+export const CHOOSE_BUTTON_ID = FIRST_BUTTON_ID + MODES.length + 1;
+export const CHOOSE_BUTTON_NAME = 'Choose picture';
+
 /** The sources a mode searches, in the registry's order. */
 export function modeAdapters(
   mode: Mode,
