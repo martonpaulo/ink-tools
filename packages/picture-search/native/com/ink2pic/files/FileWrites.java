@@ -71,15 +71,41 @@ final class FileWrites {
     }
   }
 
+  /** Opens a file for writing; the JVM tests give one that acts like the tablet (#162). */
+  interface Opener {
+    OutputStream open(File target) throws IOException;
+  }
+
+  private static final Opener TRUNCATE = target -> new FileOutputStream(target, false);
+
+  private static long writeInPlace(File target, InputStream input) throws Exception {
+    return writeInPlace(target, input, TRUNCATE);
+  }
+
   /**
    * Writes straight into a file in shared storage: no temporary file, no rename, no delete, which
    * PluginHost refuses without FILE:DELETE (#62). shortcut: a write cut off midway leaves a partial
    * file, which the next write replaces; upgrade if a device shows such a file.
+   *
+   * A file that does not exist yet is first created empty and closed: on the tablet the first
+   * open of a new file kept it at 0 bytes while the write reported success, and the next write
+   * over it worked (#162). Then the size on disk is read back, so a dropped write fails with
+   * SHORT_WRITE instead of reporting success.
    */
-  private static long writeInPlace(File target, InputStream input) throws Exception {
-    try (OutputStream output = new FileOutputStream(target, false)) {
-      return copy(input, output);
+  static long writeInPlace(File target, InputStream input, Opener opener) throws Exception {
+    if (!target.exists()) {
+      opener.open(target).close();
     }
+    long total;
+    try (OutputStream output = opener.open(target)) {
+      total = copy(input, output);
+    }
+    long onDisk = target.length();
+    if (onDisk != total) {
+      throw new SafePaths.Refused(
+          "SHORT_WRITE", "wrote " + total + " bytes to " + target + " but " + onDisk + " are on disk");
+    }
+    return total;
   }
 
   private static long copy(InputStream input, OutputStream output) throws Exception {

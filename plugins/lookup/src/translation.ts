@@ -30,7 +30,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {SOURCE_NAMES, translators} from './dictionaries';
-import {insertBox, readLasso} from './textBox';
+import {checkedRead, insertBox, readLasso} from './textBox';
 
 export type TranslateDeps = {
   read: () => Promise<Outcome<LassoQuery, CallFailure>>;
@@ -38,6 +38,8 @@ export type TranslateDeps = {
   pinyin: () => PinyinIndex;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
+  /** The device toast when absent. */
+  toast?: (text: string) => void;
 };
 
 const DEVICE: TranslateDeps = {
@@ -105,10 +107,9 @@ export async function translateLasso(
   direction: Direction,
   deps: TranslateDeps = DEVICE,
 ): Promise<Translated> {
-  const read = await deps.read();
+  const read = await checkedRead(await deps.read(), deps, 'translate');
   if (!read.ok) {
-    deps.log(`translate: lasso failed: ${read.code} ${read.message}`);
-    return {ok: false, text: read.message};
+    return read;
   }
   const {query, place} = read.value;
   if (!place) {

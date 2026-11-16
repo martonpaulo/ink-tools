@@ -2,7 +2,11 @@ package com.ink2pic.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -104,8 +108,65 @@ public final class FileWritesTest {
     folder.delete();
   }
 
+  /** A stream that opens `target` but drops every byte, as the tablet did (#162). */
+  private static OutputStream dropping(File target) throws IOException {
+    OutputStream real = new FileOutputStream(target, false);
+    return new OutputStream() {
+      @Override
+      public void write(int value) {}
+
+      @Override
+      public void write(byte[] buffer, int offset, int length) {}
+
+      @Override
+      public void close() throws IOException {
+        real.close();
+      }
+    };
+  }
+
+  /**
+   * The tablet's first open of a new shared file kept it at 0 bytes, and the next open worked
+   * (#162): the first save of a new settings file holds the whole text.
+   */
+  private static void firstWriteOfNewFile() throws Exception {
+    File folder = Files.createTempDirectory("ink2pic-first-write-").toFile();
+    File target = new File(folder, "settings.json");
+    byte[] text = "{\"insertDefinition\":true}".getBytes(StandardCharsets.UTF_8);
+    FileWrites.Opener tablet = file -> file.exists() ? new FileOutputStream(file, false) : dropping(file);
+    Throwable error = null;
+    try {
+      FileWrites.writeInPlace(target, new ByteArrayInputStream(text), tablet);
+    } catch (Throwable thrown) {
+      error = thrown;
+    }
+    check(error == null, "the first write of a new file succeeds: " + error);
+    check(Arrays.equals(Files.readAllBytes(target.toPath()), text),
+        "the first write of a new file holds the whole text: " + target.length() + " bytes");
+    target.delete();
+    folder.delete();
+  }
+
+  /** A write that leaves fewer bytes on disk than it was given fails, never reports success (#162). */
+  private static void droppedWriteFails() throws Exception {
+    File folder = Files.createTempDirectory("ink2pic-short-write-").toFile();
+    File target = new File(folder, "settings.json");
+    byte[] text = "{}".getBytes(StandardCharsets.UTF_8);
+    String code = null;
+    try {
+      FileWrites.writeInPlace(target, new ByteArrayInputStream(text), FileWritesTest::dropping);
+    } catch (SafePaths.Refused refused) {
+      code = refused.code;
+    }
+    check("SHORT_WRITE".equals(code), "a dropped write fails with SHORT_WRITE: " + code);
+    target.delete();
+    folder.delete();
+  }
+
   public static void main(String[] args) throws Exception {
     twoWritersOnePath();
+    firstWriteOfNewFile();
+    droppedWriteFails();
     if (failures > 0) {
       System.err.println(failures + " failed");
       System.exit(1);

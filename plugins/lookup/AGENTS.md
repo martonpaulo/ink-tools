@@ -60,6 +60,10 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
   menu: «Choose Image» to change it, or Image Editing to edit it; Lookup never opens Image Editing
   by itself. It lassoes only when no other element crosses the picture's rect, since the rect
   lasso also takes the ink under it ([#168](https://github.com/martonpaulo/supernote-tools/issues/168), owner, `../../docs/decisions.md`).
+- Every button uses a lasso read only through ink-core's `checkLookup`: the recognized words, and
+  a rect on the page. A pasted selection's local rect places nothing and shows a toast ([#165](https://github.com/martonpaulo/ink-tools/issues/165));
+  a recognition with no letter searches nothing and writes that the handwriting could not be read
+  ([#166](https://github.com/martonpaulo/ink-tools/issues/166)).
 - The definition and translation back-end is the shared `DictionaryProvider` in `ink-core`, built
   only in `src/dictionaries.ts`. Feature code never names a concrete source.
 - Translation has no automatic direction: one button per direction, each with its own switch

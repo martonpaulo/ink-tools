@@ -217,3 +217,25 @@ describe('the opt-in button', () => {
     expect(d.requestPermission).not.toHaveBeenCalled();
   });
 });
+
+describe('a read it may not use stops before the dictionary (#165, #166)', () => {
+  test('a recognition with no letter writes that the handwriting could not be read', async () => {
+    const define = jest.fn(async () => found);
+    const d = deps({
+      read: async () => ({ok: true, value: {query: '• :.\n÷\n÷:.\n.\n.', place}}),
+      define,
+    });
+    expect(await defineLasso(d)).toEqual({ok: false, text: copy['error.unreadable']});
+    expect(define).not.toHaveBeenCalled();
+    expect((d.insert as jest.Mock).mock.calls[0][0].text).toBe(copy['error.unreadable']);
+  });
+
+  test("a pasted selection's local rect writes nothing and shows a toast", async () => {
+    const toast = jest.fn();
+    const pasted = {...place, rect: {left: -40, top: 0, right: 140, bottom: 181}};
+    const d = deps({read: async () => ({ok: true, value: {query: 'maçã', place: pasted}}), toast});
+    expect(await defineLasso(d)).toEqual({ok: false, text: copy['error.unplaced']});
+    expect(d.insert).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(copy['error.unplaced']);
+  });
+});

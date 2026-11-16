@@ -25,7 +25,7 @@ import {copy} from './copy';
 import {LANGUAGES} from './definition';
 import {summarize} from './dictionaries';
 import {FIRST_BUTTON_ID} from './modes';
-import {insertBox, readLasso} from './textBox';
+import {checkedRead, insertBox, readLasso} from './textBox';
 
 /**
  * A block of its own, far after the translation buttons, whose ids grow with each new pair of
@@ -41,6 +41,8 @@ export type SummaryDeps = {
   ) => Promise<SummaryResult>;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
+  /** The device toast when absent. */
+  toast?: (text: string) => void;
   now: () => number;
 };
 
@@ -64,10 +66,9 @@ export async function summaryLasso(
   deps: SummaryDeps = DEVICE,
 ): Promise<Summarized> {
   const started = deps.now();
-  const read = await deps.read();
+  const read = await checkedRead(await deps.read(), deps, 'summary');
   if (!read.ok) {
-    deps.log(`summary: lasso failed: ${read.code} ${read.message}`);
-    return {ok: false, text: read.message};
+    return read;
   }
   const {query, place} = read.value;
   const recognized = deps.now();

@@ -136,6 +136,19 @@ test('a failed edit or replace leaves the page and the history as they were', as
   expect(w.pngs()).toEqual([]);
 });
 
+test('a delete the host refuses is logged and the edit still lands (#182)', async () => {
+  const w = world();
+  const lines: string[] = [];
+  w.deps.log = line => lines.push(line);
+  (w.native.deleteFile as jest.Mock).mockResolvedValue(
+    fail(MODULE_CODE, 'IO: java.lang.SecurityException: has no DELETE permission', 'IO'),
+  );
+  expect(await runEdit('enhance', w.deps)).toMatchObject({kind: 'edited'});
+  expect(lines).toContainEqual(
+    expect.stringMatching(/^delete .*\/preview-\d+\.png: .*no DELETE permission$/),
+  );
+});
+
 test('a history file that is not Retouch\'s is never written over', async () => {
   const w = world();
   w.files.set(HISTORY_PATH, 'not json');

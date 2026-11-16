@@ -1,17 +1,23 @@
 /**
  * Retouch keeps each picture's states in shared storage (src/edit.ts), so it needs FILE:READ and
- * FILE:WRITE. They are asked when Settings opens, as a no-view button cannot show the question;
- * a press without them fails at the first file call and is logged (#136).
+ * FILE:WRITE, and FILE:DELETE to remove the preview and every state its history drops (#182).
+ * They are asked when Settings opens, as a no-view button cannot show the question; a press
+ * without them fails at the first file call and is logged (#136).
  */
 import {
   hasPermission,
+  PERMISSION_FILE_DELETE,
   PERMISSION_FILE_READ,
   PERMISSION_FILE_WRITE,
   requestPermission,
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 
-export const NEEDED = [PERMISSION_FILE_READ, PERMISSION_FILE_WRITE] as const;
+export const NEEDED = [
+  PERMISSION_FILE_READ,
+  PERMISSION_FILE_WRITE,
+  PERMISSION_FILE_DELETE,
+] as const;
 
 export type PermissionDeps = {
   has: typeof hasPermission;

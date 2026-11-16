@@ -43,6 +43,10 @@ export const copy = {
   /** Written on the note below the word when a picture press inserts nothing (#111). */
   'picture.failed': (word: string, why: string) => `${word}: ${why}`,
   'error.place': 'There is no room below the lassoed word.',
+  /** Written on the note below the selection: no word was recognized in it (#166). */
+  'error.unreadable': 'The handwriting could not be read.',
+  /** A toast: a pasted selection has no place on the page yet (#165). */
+  'error.unplaced': 'Put the selection down on the page first, then press again.',
   'error.insert': 'The definition could not be inserted on the page.',
   /** A toast after an insert that touches other ink, which a lasso would take with it (#168). */
   'picture.unselected':

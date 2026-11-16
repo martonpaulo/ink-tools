@@ -9,7 +9,7 @@
  * opens Lookup's view, which asks for it (App.tsx).
  */
 import {ToastAndroid} from 'react-native';
-import {LassoPlace} from '@supernote-tools/ink-core';
+import {checkLookup, LassoPlace} from '@supernote-tools/ink-core';
 import {
   DEFAULT_ADAPTERS,
   keepMode,
@@ -25,6 +25,7 @@ import {missingFor, BUTTONS} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';
 import {PICTURE_LANGUAGES} from './pictureLanguages';
+import {showToast} from './textBox';
 import {Mode, modeAdapters} from './modes';
 import {
   createPressGuard,
@@ -174,6 +175,8 @@ export type PictureDeps = {
   /** Writes a text box on the current page. */
   write: (box: TextBoxInput) => Promise<Result<boolean>>;
   show: () => Promise<Result<boolean>>;
+  /** The device toast when absent. */
+  toast?: (text: string) => void;
 };
 
 const DEVICE: PictureDeps = {
@@ -194,11 +197,9 @@ const guard = createPressGuard(NO_VIEW_LIMIT_MS);
 /** Why a press inserted nothing, written below the word; logged when there is no room. */
 async function writeNote(
   deps: PictureDeps,
-  word: string,
   place: LassoPlace,
-  why: string,
+  text: string,
 ): Promise<void> {
-  const text = copy['picture.failed'](word, why);
   const rect = boxRect(text, place);
   if (!rect) {
     log('picture: no room below the lasso for the sentence');
@@ -250,8 +251,19 @@ export async function pictureLasso(
       log(`${name}: no word, ${query.code} ${query.message}`);
       return null;
     }
-    const word = query.value.query;
-    const place = query.value.place;
+    // A pasted selection's rect or a recognition with no word stops before the search (#165, #166).
+    const checked = checkLookup(query.value);
+    if (!checked.ok) {
+      log(`${name}: ${checked.why}, ${checked.message}`);
+      if (checked.why === 'unplaced') {
+        (deps.toast ?? showToast)(copy['error.unplaced']);
+      } else if (checked.place) {
+        await writeNote(deps, checked.place, copy['error.unreadable']);
+      }
+      return null;
+    }
+    const word = checked.value.query;
+    const place = checked.value.place;
     log(`${name}: "${word}"`);
     // The person stays on the note: the place is read again before the picture is lassoed (#93).
     const at: LassoPlace | null = place
@@ -265,7 +277,7 @@ export async function pictureLasso(
     } else {
       log(`${name}: nothing inserted: ${inserted.text}`);
       if (place) {
-        await writeNote(deps, word, place, inserted.text);
+        await writeNote(deps, place, copy['picture.failed'](word, inserted.text));
       }
     }
     return inserted;

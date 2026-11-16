@@ -4,6 +4,7 @@ export * from './apertium';
 export * from './dictionary';
 export * from './encyclopedia';
 export * from './lasso';
+export * from './lookupCheck';
 export * from './outcome';
 export * from './pairs';
 export * from './pinyin';
