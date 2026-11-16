@@ -19,10 +19,19 @@ and an address field for a device discovery cannot see.
 (`decideOffer`), `src/receive/receive.ts` places the item in the note. Still to come: the device
 round, and whether the receiver can stay on with the view closed.
 
+**PDF to note built, not yet on the device** ([#143](https://github.com/martonpaulo/supernote-tools/issues/143)): one `application/pdf` offer is
+saved as `received-<session>.pdf`; `native/.../PdfPages.java` renders it with Android's
+`PdfRenderer` to page-sized PNGs, and `src/receive/pdfNote.ts` creates the note in `Note/` with
+`createNote` (page 1) and `insertNotePage` (each further page), then removes the PDF and the PNGs;
+a failure also removes the note. To test on the device: whether `insertNotePage` takes a PNG path
+as its template, its page index base, and whether the note keeps its backgrounds once the PNGs
+are gone.
+
 ## What it is
 
 Send the current page, or a lasso selection, as a PNG to an iPhone or a Mac running LocalSend on
-the same network, and receive a text or a picture from them into the open note. Layers: `../../docs/architecture.md`.
+the same network, receive a text or a picture from them into the open note, and turn a received
+PDF into a new note with its pages as backgrounds. Layers: `../../docs/architecture.md`.
 
 ## Rules
 

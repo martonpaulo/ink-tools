@@ -241,7 +241,7 @@ export function announceAnswer(self: Sender): string {
   return JSON.stringify({...info(self), announce: false});
 }
 
-/** The largest image we take; Java's `Receiver.MAX_FILE_BYTES` is the same number. */
+/** The largest image or PDF we take; Java's `Receiver.MAX_FILE_BYTES` is the same number. */
 export const MAX_FILE_BYTES = 30 * 1024 * 1024;
 
 /** The image types `insertImage` takes, with the extension the file is saved under. */
@@ -251,10 +251,14 @@ const IMAGE_TYPES: Record<string, 'png' | 'jpg'> = {
   'image/jpg': 'jpg',
 };
 
+/** A scanned PDF, which becomes a note with its pages as backgrounds (#143). */
+export const PDF_TYPE = 'application/pdf';
+
 /** What an offer brings, or why it is refused. */
 export type Taken =
   | {kind: 'text'; text: string}
   | {kind: 'image'; fileId: string; extension: 'png' | 'jpg'}
+  | {kind: 'pdf'; fileId: string}
   | {kind: 'refuse'; reason: 'type' | 'size' | 'shape'};
 
 /** The answer to one prepare-upload, as `RelayLocalSend.answer` takes it. */
@@ -262,13 +266,13 @@ export type Decision = {
   status: number;
   body: string;
   fileId: string | null;
-  extension: 'png' | 'jpg' | null;
+  extension: 'png' | 'jpg' | 'pdf' | null;
   taken: Taken;
 };
 
 /**
- * Reads one prepare-upload body: one text message (`text/plain` with its `preview`) or one image
- * `insertImage` takes. Anything else, two files included, is refused (Plan › Review focus).
+ * Reads one prepare-upload body: one text message (`text/plain` with its `preview`), one image
+ * `insertImage` takes, or one PDF that becomes a note (#143). Anything else, two files included, is refused (Plan › Review focus).
  */
 export function readOffer(text: string): Taken {
   const body = parseJson(text);
@@ -289,7 +293,7 @@ export function readOffer(text: string): Taken {
       ? {kind: 'text', text: file.preview}
       : {kind: 'refuse', reason: 'shape'};
   }
-  const extension = IMAGE_TYPES[fileType];
+  const extension = fileType === PDF_TYPE ? 'pdf' : IMAGE_TYPES[fileType];
   if (extension === undefined) {
     return {kind: 'refuse', reason: 'type'};
   }
@@ -301,12 +305,14 @@ export function readOffer(text: string): Taken {
   ) {
     return {kind: 'refuse', reason: 'size'};
   }
-  return {kind: 'image', fileId, extension};
+  return extension === 'pdf'
+    ? {kind: 'pdf', fileId}
+    : {kind: 'image', fileId, extension};
 }
 
 /**
  * The answer to an offer: 204 for a text, whose preview is all we need; 200 with the session and
- * the one token for an image; 403 otherwise.
+ * the one token for an image or a PDF; 403 otherwise.
  */
 export function decideOffer(
   text: string,
@@ -318,11 +324,12 @@ export function decideOffer(
     case 'text':
       return {status: 204, body: '', fileId: null, extension: null, taken};
     case 'image':
+    case 'pdf':
       return {
         status: 200,
         body: JSON.stringify({sessionId, files: {[taken.fileId]: token}}),
         fileId: taken.fileId,
-        extension: taken.extension,
+        extension: taken.kind === 'pdf' ? 'pdf' : taken.extension,
         taken,
       };
     case 'refuse':

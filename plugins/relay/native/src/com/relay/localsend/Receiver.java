@@ -231,7 +231,7 @@ public final class Receiver {
       return;
     }
     if (decision.status == 200 && decision.fileId != null) {
-      String extension = "png".equals(decision.extension) ? "png" : "jpg";
+      String extension = extensionOf(decision.extension);
       synchronized (this) {
         session =
             new Session(
@@ -470,6 +470,14 @@ public final class Receiver {
       default:
         return "Error";
     }
+  }
+
+  /** The saved file's extension, from the decision alone, never the sender's name (#143). */
+  static String extensionOf(String decided) {
+    if ("png".equals(decided) || "pdf".equals(decided)) {
+      return decided;
+    }
+    return "jpg";
   }
 
   private static String randomHex() {

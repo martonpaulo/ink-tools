@@ -1,7 +1,8 @@
 /**
  * One receive (#49): the tablet is a LocalSend receiver for one item, then it lands in the open
  * note, floating and selected, for the person to move. Text becomes a text box; a PNG or JPEG goes
- * through `insertImage`, which the host shows as its own floating selection.
+ * through `insertImage`, which the host shows as its own floating selection; a PDF becomes a new
+ * note (#143, `pdfNote.ts`).
  */
 import {Result, TextBoxInput} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../copy';
@@ -16,6 +17,7 @@ import {
 } from '../localsend/protocol';
 import {Relay} from '../native';
 import {TEMP_DIR} from '../send/sendPng';
+import {NoteFiles, pdfToNote} from './pdfNote';
 
 /** How long one tap on «Receive» keeps the tablet visible. */
 export const RECEIVE_WINDOW_MS = 2 * 60 * 1000;
@@ -29,9 +31,8 @@ type Rect = TextBoxInput['rect'];
 export type Size = {width: number; height: number};
 
 /** The note side of a receive, so the test runs it without a device. */
-export type NoteHost = {
+export type NoteHost = NoteFiles & {
   pluginDir(): Promise<Result<string>>;
-  pageSize(): Promise<Result<Size>>;
   closeView(): Promise<unknown>;
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
   lasso(rect: Rect): Promise<Result<boolean>>;
@@ -81,7 +82,14 @@ function refusedLine(taken: Taken | null): string {
   if (taken === null || taken.kind !== 'refuse') {
     return copy.nothingArrived;
   }
-  return taken.reason === 'type' ? copy.notAnImage : copy.refusedOffer;
+  switch (taken.reason) {
+    case 'type':
+      return copy.notAnImage;
+    case 'size':
+      return copy.tooLarge;
+    case 'shape':
+      return copy.refusedOffer;
+  }
 }
 
 /**
@@ -134,7 +142,9 @@ export async function receiveOne(
         return copy.receiveStopped;
       }
       if (arrival.kind === 'file') {
-        return await placeImage(native, host, arrival.path);
+        return arrival.path.endsWith('.pdf')
+          ? await pdfToNote(native, host, arrival.path)
+          : await placeImage(native, host, arrival.path);
       }
       if (arrival.kind === 'offer') {
         const decision = decideOffer(arrival.body, arrival.sessionId, arrival.token);

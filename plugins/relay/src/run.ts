@@ -4,11 +4,13 @@
  */
 import {
   closePluginView,
+  createNote,
   getCurrentFilePath,
   getCurrentPageNum,
   getPageSize,
   getPluginDirPath,
   insertImage,
+  insertNotePage,
   insertText,
   lassoElements,
   lassoImage,
@@ -81,4 +83,6 @@ export const noteHost: NoteHost = {
   insertText,
   lasso: lassoElements,
   insertImage,
+  createNote,
+  insertNotePage,
 };

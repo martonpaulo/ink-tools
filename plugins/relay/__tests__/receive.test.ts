@@ -15,6 +15,8 @@ function note(overrides: Partial<NoteHost> = {}) {
     insertText: jest.fn(async () => ok(true)),
     lasso: jest.fn(async () => ok(true)),
     insertImage: jest.fn(async () => ok(true)),
+    createNote: jest.fn(async () => ok(true)),
+    insertNotePage: jest.fn(async () => ok(true)),
     ...overrides,
   };
   return host;
@@ -64,6 +66,13 @@ test('a HEIC photo is refused, the window stays open, and its toast says why', a
   await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.notAnImage);
   expect(calls.answers[0][0]).toBe(403);
   expect(host.insertImage).not.toHaveBeenCalled();
+});
+
+test('a file over the limit is refused with a toast that names the size (#143)', async () => {
+  const {api} = fakeRelay({}, [
+    offer({p: {fileType: 'application/pdf', size: 31 * 1024 * 1024}}),
+  ]);
+  await expect(receiveOne(api, note(), 'Supernote')).resolves.toBe(copy.tooLarge);
 });
 
 test('a refused offer is followed by a good one in the same window', async () => {

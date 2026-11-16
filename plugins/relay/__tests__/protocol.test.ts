@@ -229,6 +229,18 @@ describe('receiving an offer (#49)', () => {
     expect(decision.extension).toBe('jpg');
   });
 
+  test('a PDF opens a session and is saved as .pdf (#143)', () => {
+    const decision = decideOffer(
+      offer({p: {id: 'p', fileName: 'Scan.PDF', size: 10, fileType: 'application/pdf'}}),
+      'sess',
+      'tok',
+    );
+    expect(decision.status).toBe(200);
+    expect(JSON.parse(decision.body)).toEqual({sessionId: 'sess', files: {p: 'tok'}});
+    expect(decision.extension).toBe('pdf');
+    expect(decision.taken).toEqual({kind: 'pdf', fileId: 'p'});
+  });
+
   test.each([
     ['a text with no preview', {t: {fileType: 'text/plain', size: 1}}, 'shape'],
     ['an empty preview', {t: {fileType: 'text/plain', preview: '  '}}, 'shape'],
@@ -238,7 +250,13 @@ describe('receiving an offer (#49)', () => {
       'shape',
     ],
     ['an iPhone HEIC photo', {f: {fileType: 'image/heic', size: 10}}, 'type'],
-    ['a PDF', {f: {fileType: 'application/pdf', size: 10}}, 'type'],
+    ['a Word file', {f: {fileType: 'application/msword', size: 10}}, 'type'],
+    ['a PDF over the limit', {f: {fileType: 'application/pdf', size: MAX_FILE_BYTES + 1}}, 'size'],
+    [
+      'two PDFs',
+      {a: {fileType: 'application/pdf', size: 1}, b: {fileType: 'application/pdf', size: 1}},
+      'shape',
+    ],
     ['an image over the limit', {f: {fileType: 'image/png', size: MAX_FILE_BYTES + 1}}, 'size'],
     ['an image with no size', {f: {fileType: 'image/png'}}, 'size'],
   ])('%s is refused with 403', (_what, files, reason) => {

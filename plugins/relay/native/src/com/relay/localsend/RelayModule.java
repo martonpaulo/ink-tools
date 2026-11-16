@@ -170,11 +170,59 @@ public final class RelayModule extends ReactContextBaseJavaModule {
         });
   }
 
-  /** Removes a temporary PNG; resolves `true` when it is gone, also when it never existed. */
+  /**
+   * Removes a temporary file, or an empty folder; resolves `true` when it is gone, also when it
+   * never existed.
+   */
   @ReactMethod
   public void remove(final String path, final Promise promise) {
     File file = new File(path);
     promise.resolve(!file.exists() || file.delete());
+  }
+
+  /** Resolves `true` when a file or folder is at `path`; a note's free name is chosen with it. */
+  @ReactMethod
+  public void exists(final String path, final Promise promise) {
+    promise.resolve(new File(path).exists());
+  }
+
+  /**
+   * Renders the PDF to one PNG per page in `outDir`, each `width` x `height` (#143); resolves
+   * with their paths in page order. Rejects with `BROKEN` (unreadable, no page, a password) or
+   * `PAGES` (over `maxPages`), leaving no PNG behind.
+   */
+  @ReactMethod
+  public void renderPdf(
+      final String pdfPath,
+      final String outDir,
+      final double width,
+      final double height,
+      final double maxPages,
+      final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              List<String> pages =
+                  PdfPages.render(
+                      new File(pdfPath),
+                      new File(outDir),
+                      (int) width,
+                      (int) height,
+                      (int) maxPages);
+              WritableArray out = Arguments.createArray();
+              for (String page : pages) {
+                out.pushString(page);
+              }
+              promise.resolve(out);
+            } catch (PdfPages.Refused refused) {
+              promise.reject(refused.code, refused.code);
+            } catch (Throwable error) {
+              reject(promise, error);
+            }
+          }
+        });
   }
 
   /** Resolves with the file's UTF-8 text, or null when it does not exist. */

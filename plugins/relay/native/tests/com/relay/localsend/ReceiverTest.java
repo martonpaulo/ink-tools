@@ -25,6 +25,7 @@ public final class ReceiverTest {
     try {
       run(folder);
       chunked();
+      extensions();
     } finally {
       for (File file : folder.listFiles()) {
         file.delete();
@@ -134,6 +135,13 @@ public final class ReceiverTest {
   }
 
   /** A chunked body arrives whole; a cut one and one over the limit do not. */
+  private static void extensions() {
+    check("pdf".equals(Receiver.extensionOf("pdf")), "a PDF is saved as .pdf");
+    check("png".equals(Receiver.extensionOf("png")), "a PNG is saved as .png");
+    check("jpg".equals(Receiver.extensionOf("jpg")), "a JPEG is saved as .jpg");
+    check("jpg".equals(Receiver.extensionOf("../x")), "any other answer is never a path part");
+  }
+
   private static void chunked() throws Exception {
     Receiver.Request request =
         Receiver.readHead(

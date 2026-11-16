@@ -62,6 +62,15 @@ export type RelayNative = {
     extension: string | null,
   ): Promise<boolean>;
   stopReceive(): Promise<boolean>;
+  exists(path: string): Promise<boolean>;
+  /** One PNG path per page; rejects `BROKEN` or `PAGES` (#143). */
+  renderPdf(
+    pdfPath: string,
+    outDir: string,
+    width: number,
+    height: number,
+    maxPages: number,
+  ): Promise<string[]>;
 };
 
 /** Every call as a Result; MISSING when PluginHost did not load the module. */
@@ -103,5 +112,7 @@ export function relay(modules: Record<string, unknown> = NativeModules): Relay {
     nextReceived: call('nextReceived'),
     answer: call('answer'),
     stopReceive: call('stopReceive'),
+    exists: call('exists'),
+    renderPdf: call('renderPdf'),
   } as Relay;
 }

@@ -15,6 +15,9 @@ from them straight into the open note.
 - «Receive» in the note's sidebar: for two minutes the tablet shows up in LocalSend as
   «Supernote». The first text arrives as a selected text box, the first PNG or JPEG as a floating
   picture; move it where you want it.
+- Send a scanned PDF the same way: a new note appears in the Note folder, named after the time
+  (`Scan 2026-11-16 0905`), with one page per PDF page as the page's background, so you write on
+  it. Up to 50 pages and 30 MB ([#143](https://github.com/martonpaulo/supernote-tools/issues/143)).
 
 ## Send from the iPhone with one Shortcut
 

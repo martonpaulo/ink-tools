@@ -53,6 +53,11 @@ export function fakeRelay(
       calls.stopped += 1;
       return true;
     }),
+    exists: jest.fn(async () => false),
+    renderPdf: jest.fn(async (_pdf: string, outDir: string) => [
+      `${outDir}/page-1.png`,
+      `${outDir}/page-2.png`,
+    ]),
     ...overrides,
   };
   return {native, calls, api: relay({RelayLocalSend: native})};
