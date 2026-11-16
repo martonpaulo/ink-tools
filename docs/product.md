@@ -27,8 +27,8 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   «for Supernote notebooks» may appear in a description only
   ([#175](https://github.com/martonpaulo/ink-tools/issues/175)).
 
-Proposed, not decided: **Real-Time Conversion** (`typeset`), a plugin that turns each handwritten word into typed text with
-no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144)).
+In beta, not yet on the tablet: **Real-Time Conversion** (`plugins/real-time-conversion/`), a plugin that turns each handwritten
+word into typed text with no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144)).
 
 Each tool shows a feature name in Supernote's own wording, and its buttons read like the tablet's
 («New Sticker»): a verb and a noun in title case. Folders, packages, gates, tags and `pluginID`s

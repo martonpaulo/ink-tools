@@ -4,7 +4,7 @@ Future subprojects and larger ideas, not yet issues. Each becomes its own folder
 it starts. Order is not commitment.
 
 Plugins, apps and tools that already have a folder or an issue (`lookup`, the Lingo app,
-`retouch`, `relay`, `bridge`, Ink Notebook Editor, and the proposed `typeset`) are described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
+`retouch`, `relay`, `bridge`, Ink Notebook Editor, and `real-time-conversion`) are described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
 ([#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 ## Content
