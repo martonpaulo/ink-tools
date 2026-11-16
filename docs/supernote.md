@@ -188,6 +188,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
     Customize Sidebar listed it, and removed it on uninstall) [measured]; a tap runs the switch.
     The sidebar opens from the side touch strip (`fts_slide_ts`), which ADB cannot drive, so the
     tap from the sidebar itself is a pen-round step.
+  - The Dialect app ([`apps/dialect/`](../apps/dialect/AGENTS.md), [#157](https://github.com/martonpaulo/supernote-tools/issues/157)) ships both surfaces.
 - **A plugin can float a button over every app too.** SnapMark's optional «Floating capture
   button» is a `TYPE_APPLICATION_OVERLAY` window owned by `com.ratta.supernote.pluginhost`
   (uid 1000, appop `SYSTEM_ALERT_WINDOW`) that stays over Email with no plugin view open

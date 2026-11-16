@@ -1,0 +1,48 @@
+name: Validate Dialect
+
+# Runs only when apps/dialect/ (or this file, or the shared version rule) changes; the gate is the
+# subproject's own JVM tests and APK build (#157).
+on:
+  push:
+    branches: [main]
+    paths: ['apps/dialect/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-dialect.yml']
+  pull_request:
+    paths: ['apps/dialect/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-dialect.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate dialect
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/dialect
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Check the subproject's Markdown (text check and issue links, #77)
+        working-directory: .
+        run: |
+          python3 plugins/ink2pic/scripts/text_check.py apps/dialect
+          python3 plugins/ink2pic/scripts/issue_links.py apps/dialect --repo "$GITHUB_REPOSITORY"
+
+      - name: Run the JVM tests
+        run: node scripts/build.cjs --test
+
+      - name: Build the signed APK
+        # toolchain.sh reuses the runner's SDK; the debug key is made fresh for this run.
+        run: node scripts/build.cjs
