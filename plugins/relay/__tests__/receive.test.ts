@@ -9,6 +9,7 @@ const PAGE = {width: 1404, height: 1872};
 
 function note(overrides: Partial<NoteHost> = {}) {
   const host: NoteHost = {
+    permissions: jest.fn(async () => null),
     pluginDir: jest.fn(async () => ok('/plugin')),
     pageSize: jest.fn(async () => ok(PAGE)),
     closeView: jest.fn(async () => ok(true)),
@@ -135,6 +136,18 @@ test('received files go to the private folder, never to shared storage (#164)', 
   await receiveOne(api, note(), 'Supernote');
   const fileFolder = (native.startReceive as jest.Mock).mock.calls[0][1];
   expect(fileFolder).toBe('/plugin/tmp');
+});
+
+test('a refused permission names it and starts nothing (#163)', async () => {
+  const {api, native} = fakeRelay();
+  const host = note({
+    permissions: jest.fn(async () => 'plugin.permission.FILE:WRITE'),
+  });
+  await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(
+    copy.permissionRefused('File write'),
+  );
+  expect(native.startReceive).not.toHaveBeenCalled();
+  expect(host.pageSize).not.toHaveBeenCalled();
 });
 
 test('a second tap while receiving starts nothing', async () => {

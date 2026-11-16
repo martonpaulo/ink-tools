@@ -19,6 +19,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
+import {ensurePermissions, refusedLine} from './permissions';
 import {Outcome, sendCapture, tempDir} from './send/sendPng';
 import {copy} from './copy';
 import {NoteHost, Size} from './receive/receive';
@@ -49,8 +50,14 @@ async function currentPage(pngPath: string): Promise<Result<string>> {
 export async function runSend(
   capture: Capture,
   native: Relay = relay(),
+  ensure: () => Promise<string | null> = ensurePermissions,
   pluginDir: () => Promise<Result<string>> = getPluginDirPath,
 ): Promise<Outcome> {
+  // Before the first file or network call (#163): without it every file call fails.
+  const refused = await ensure();
+  if (refused !== null) {
+    return {kind: 'toast', text: refusedLine(refused)};
+  }
   const dir = await pluginDir();
   if (!dir.ok) {
     return {kind: 'toast', text: copy.noImage};
@@ -84,6 +91,7 @@ async function currentPageSize(): Promise<Result<Size>> {
 
 /** The open note, as a receive places into it. */
 export const noteHost: NoteHost = {
+  permissions: ensurePermissions,
   pluginDir: getPluginDirPath,
   pageSize: currentPageSize,
   closeView: closePluginView,

@@ -23,6 +23,7 @@ import {
   SEND_SELECTION_ID,
 } from './src/run';
 import {relay} from './src/native';
+import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
 
 /** sn-plugin-lib 0.2.3 button types and show types, as Ink2Pic names them. */
@@ -41,6 +42,11 @@ function report(what, result) {
 }
 
 initPlugin().then(result => report('init', result));
+
+// Each launch logs what the host holds; each tap asks for what is missing (#163).
+logPermissions().catch(error =>
+  console.error(`Relay: permissions failed: ${error.message}`),
+);
 
 registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
   id: SEND_PAGE_ID,
@@ -109,6 +115,10 @@ report(
   }),
 );
 
-registerSettingsEntry(() => showPluginView()).catch(error => {
+// Settings is a view, so the host's dialog has a place to show; a no-view tap asks too (#163).
+registerSettingsEntry(() => {
+  showPluginView();
+  ensurePermissions();
+}).catch(error => {
   console.error(`Relay: ${error.message}`);
 });

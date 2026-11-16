@@ -114,6 +114,7 @@ test('a PDF that arrives over LocalSend goes to a note, not into the open one', 
   ]);
   const host: NoteHost = {
     ...files(),
+    permissions: async () => null,
     pluginDir: async () => ok('/plugin'),
     closeView: async () => ok(true),
     insertText: jest.fn(async () => ok(true)),
