@@ -233,3 +233,5 @@ but could use some colour. Reference to study: `Laumss/sn-plugins` configuration
 design direction for every plugin's Settings, within the e-ink constraints (16 greys).
 The conventions, and what was borrowed from that reference (now Notipal), are in
 [`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)).
+On 2026-11-16 the owner named three more plugins whose Settings look he likes: SnapMark, PC Clipboard
+and DocuCraft ([their traits](../packages/ui-kit/README.md#the-owners-picks-snapmark-pc-clipboard-docucraft)).

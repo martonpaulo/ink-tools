@@ -13,6 +13,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [Grey as colour](#grey-as-colour)
 - [Controls](#controls)
 - [Reference study: Notipal](#reference-study-notipal)
+- [The owner's picks: SnapMark, PC Clipboard, DocuCraft](#the-owners-picks-snapmark-pc-clipboard-docucraft)
 
 ## Layout
 
@@ -78,3 +79,25 @@ Avoided:
 - Hint and value text in `#666666` and `#777777`: 5.7:1 and 4.5:1 on white, under the 7:1 these
   conventions keep for text; `#444444` replaces both.
 - Font sizes chosen per view (14, 15, 16.15, 17, 21.11, 22 sp): here the ramp has two.
+
+## The owner's picks: SnapMark, PC Clipboard, DocuCraft
+
+The owner finds the Settings pages of three third-party plugins pretty (Inbox general comment,
+2026-11-16, with four photos of the tablet). What they share, read from the photos:
+
+- The whole page sits on a light grey panel, not white paper, with the title bold at the leading
+  edge and «Close» as an outlined button at the trailing edge of the same line (SnapMark, PC Clipboard).
+- Each setting is a bold heading, one line of grey hint under it, then its choices as a row of
+  outlined buttons; the chosen one is filled black with white text (SnapMark: «A new note each»,
+  «Off», «Open the snap», «Keep», «Copy»).
+- Pages are tabs as outlined buttons beside «Close», the open one filled black (PC Clipboard:
+  Clipboard, Phone, Settings), or text tabs across the top with a bar under the open one (DocuCraft).
+- One filled black primary button per section («Find my computer»); a text field with its action
+  button inline on the same row («Connect»).
+- The About page groups each link as a bordered card: a QR code at the leading edge, a bold title,
+  a grey hint and the address (DocuCraft 0.2.16).
+
+Open against these conventions: here a selected switch shows a bar under its label and keeps the
+box unchanged ([Controls](#controls)), and the page is white paper ([Layout](#layout)); the picks
+fill the chosen option black and use a grey page. Nothing changes until the owner chooses.
+
