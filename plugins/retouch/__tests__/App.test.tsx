@@ -45,7 +45,7 @@ test('the Styles grid keeps the size rules, labels each tile and says when it fa
       {style: 'line_art', path: '/s/line.png'},
     ],
     options: {transparent: true, thick: false},
-    source: {path: '/s/source.png', width: 10, height: 10, pageWidth: 100},
+    source: {path: '/s/source.png', work: '/s', width: 10, height: 10, pageWidth: 100},
   };
   let tree!: ReactTestRenderer;
   await act(async () => {
