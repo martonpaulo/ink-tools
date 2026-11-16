@@ -16,6 +16,7 @@ import {
   Taken,
 } from '../localsend/protocol';
 import {Relay} from '../native';
+import {refusedLine as permissionLine} from '../permissions';
 import {tempDir} from '../send/sendPng';
 import {NoteFiles, pdfToNote} from './pdfNote';
 
@@ -32,6 +33,8 @@ export type Size = {width: number; height: number};
 
 /** The note side of a receive, so the test runs it without a device. */
 export type NoteHost = NoteFiles & {
+  /** Asks for each declared permission; the first refused one, or null (#163). */
+  permissions(): Promise<string | null>;
   pluginDir(): Promise<Result<string>>;
   closeView(): Promise<unknown>;
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
@@ -104,6 +107,11 @@ export async function receiveOne(
   now: () => number = Date.now,
   windowMs: number = RECEIVE_WINDOW_MS,
 ): Promise<string> {
+  // Before the first file, note or network call (#163): without it every file call fails.
+  const missing = await host.permissions();
+  if (missing !== null) {
+    return permissionLine(missing);
+  }
   const dir = await host.pluginDir();
   if (!dir.ok) {
     return copy.receiveFailed;

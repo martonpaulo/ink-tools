@@ -36,6 +36,15 @@ export const copy = {
   pdfNoNote: 'Could not make the note',
   noNote: 'Open a note first',
   insertFailed: 'Could not add it to the note',
+  permissionReason:
+    'Device Transfer sends and receives pages, pictures and texts over LocalSend',
+  permissionNames: {
+    'plugin.permission.INTERNET': 'Network',
+    'plugin.permission.FILE:READ': 'File read',
+    'plugin.permission.FILE:WRITE': 'File write',
+  } as Record<string, string>,
+  permissionRefused: (name: string) =>
+    `${name} permission not allowed: allow it in Settings > Apps > Plugins > Device Transfer`,
   result(result: SendResult, alias: string): string {
     switch (result.kind) {
       case 'sent':
