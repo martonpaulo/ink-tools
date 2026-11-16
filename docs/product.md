@@ -29,6 +29,9 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
 - **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
   ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
+In beta, not yet on the tablet: **Real-Time Conversion** (`plugins/real-time-conversion/`), a plugin that turns each handwritten
+word into typed text with no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144)).
+
 «Supernote» is Ratta's trademark, so a tool's name, icon and look carry no brand. The brand appears
 only as a referential use, to say what the tools work with: «Unofficial tools for Supernote e-ink
 tablets», «for Supernote notebooks» in a description

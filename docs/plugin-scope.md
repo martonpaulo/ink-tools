@@ -15,7 +15,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
-- [typeset (planned)](#typeset-planned)
+- [real-time-conversion](#real-time-conversion)
 - [Note templates](#note-templates)
 - [Design direction](#design-direction)
 
@@ -290,9 +290,9 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
 Device Transfer and Account Sync stay two plugins, each with a clear name; they share no flow
 (owner, 2026-11-16).
 
-## typeset (planned)
+## real-time-conversion
 
-To be shown as **Real-Time Conversion**, with the sidebar button «Real-Time Text» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
+Shown as **Real-Time Conversion**, with the sidebar buttons «Real-Time Text» and «Undo Conversion» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)); built in [`plugins/real-time-conversion/`](../plugins/real-time-conversion/), formerly the planned `typeset` (owner, 2026-11-16, [#184](https://github.com/martonpaulo/ink-tools/issues/184)).
 
 A plugin that turns each handwritten word into typed text in a font the owner chose, soon after he
 writes it, with no lasso, turned on and off from one sidebar button. The research proposes it and
