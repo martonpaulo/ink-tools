@@ -1,4 +1,5 @@
 import {PluginNoteAPI} from 'sn-plugin-lib';
+import {textBoxFields} from './elements';
 import {attempt, Result} from './result';
 
 /** png, jpg or jpeg only; the host chooses placement and size (brief section 4.4). */
@@ -19,19 +20,6 @@ export type TextBoxInput = {
  * font. The fields follow sn-plugin-lib 0.2.3's `TextBox` model; on the device it is TO TEST.
  */
 export function insertText(box: TextBoxInput): Promise<Result<boolean>> {
-  return attempt(() =>
-    PluginNoteAPI.insertText({
-      fontSize: box.fontSize,
-      fontPath: null,
-      textContentFull: box.text,
-      textRect: box.rect,
-      textDigestData: null,
-      textAlign: 0,
-      textBold: 0,
-      textItalics: 0,
-      textFrameWidthType: 0,
-      textFrameStyle: 0,
-      textEditable: 0,
-    }),
-  );
+  return attempt(() => PluginNoteAPI.insertText(textBoxFields(box)));
 }
+

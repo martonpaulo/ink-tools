@@ -5,6 +5,7 @@
  */
 export * from './result';
 export * from './buttons';
+export * from './elements';
 export * from './file';
 export * from './image';
 export * from './lasso';
