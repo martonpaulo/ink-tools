@@ -24,6 +24,21 @@ public final class Retouch {
   /** Trim's clear: a pixel whose alpha is at most this is margin too. */
   public static final int TRIM_CLEAR = 15;
 
+  /**
+   * Document mode's quad finder (#137): the page is confident only when the surface around it is at
+   * least this share of the pixels, so a photo whose page fills the frame cleans without a warp.
+   */
+  public static final double DOCUMENT_MIN_SURFACE = 0.06;
+  /** The page region must be at least this share of the pixels, so a speck is never warped. */
+  public static final double DOCUMENT_MIN_PAGE = 0.15;
+  /**
+   * The page must not fill the frame: when more than this share of the border ring is the page
+   * class, there is no surrounding surface to straighten against, so the photo is cleaned in place.
+   */
+  public static final double DOCUMENT_MAX_BORDER_PAGE = 0.65;
+  /** The found quad must cover at least this share of the frame, so a thin sliver is not a page. */
+  public static final double DOCUMENT_MIN_QUAD = 0.20;
+
   private static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
   /** Make sticker's opaque white card (#134). */
@@ -44,6 +59,8 @@ public final class Retouch {
     // #134: the cutout edits, which keep the object and clear or fill the border background.
     BACKGROUND,
     STICKER,
+    // #137: a photographed page straightened and cleaned to black and white on white.
+    DOCUMENT,
     // #133: the styles of the grid, each ending on the screen's greys.
     PHOTO,
     LINE_ART,
@@ -273,7 +290,7 @@ public final class Retouch {
    * the page stays fast; the others keep the size, which Rotate then swaps itself.
    */
   public static int[] outputSize(Edit edit, int width, int height, int pageWidth) {
-    return edit == Edit.ENHANCE || edit.isStyle()
+    return edit == Edit.ENHANCE || edit == Edit.DOCUMENT || edit.isStyle()
         ? EinkPixels.targetSize(width, height, pageWidth)
         : new int[] {width, height};
   }
@@ -310,6 +327,8 @@ public final class Retouch {
       case STICKER:
         sticker(picture, false);
         return picture;
+      case DOCUMENT:
+        return document(picture);
       case PHOTO:
       case LINE_ART:
       case BLACK_WHITE:
@@ -346,10 +365,7 @@ public final class Retouch {
         break;
       case BLACK_WHITE:
         Decolor.apply(argb, w, h);
-        int threshold = otsu(argb);
-        for (int i = 0; i < argb.length; i++) {
-          argb[i] = grayPixel((argb[i] & MAX) > threshold ? MAX : 0);
-        }
+        threshold(argb);
         break;
       case DITHER:
         Decolor.apply(argb, w, h);
@@ -402,6 +418,256 @@ public final class Retouch {
       }
     }
     return threshold;
+  }
+
+  /** Rewrites gray pixels in place to pure black or white at {@link #otsu}'s split. */
+  public static void threshold(int[] gray) {
+    int split = otsu(gray);
+    for (int i = 0; i < gray.length; i++) {
+      gray[i] = grayPixel((gray[i] & MAX) > split ? MAX : 0);
+    }
+  }
+
+  /**
+   * Document mode (#137): straighten a photographed page and clean it to black and white on white.
+   * The picture is made gray, the page quad is found, warped to an upright rectangle and
+   * thresholded. When no confident quad is found (a photo with no clear page, or a page that fills
+   * the frame), it is cleaned in place without a warp, so a mis-detected page is never distorted
+   * (Undo and Restore original cover a wrong result). The input is already at {@link #outputSize},
+   * capped at the page width, so the warp output never exceeds it.
+   *
+   * <p>shortcut: the no-quad fallback cleans without deskewing a rotated page; add a
+   * projection-profile deskew if the device round (#137 [device]) finds skewed no-quad photos
+   * common.
+   */
+  public static Picture document(Picture picture) {
+    Decolor.apply(picture.argb, picture.width, picture.height);
+    int[][] quad = findPageQuad(picture);
+    Picture out = quad == null ? picture : warpToQuad(picture, quad);
+    threshold(out.argb);
+    return out;
+  }
+
+  /**
+   * The four page corners {top-left, top-right, bottom-right, bottom-left} of the gray `picture`,
+   * each {x, y}, or null when no confident page is found. The page is the Otsu class that fills the
+   * centre; its corners are the pixels farthest along the two diagonals, so a rotated page is
+   * found whichever side is brighter. Null when the surrounding surface, the page region or the
+   * quad is too small to trust.
+   */
+  public static int[][] findPageQuad(Picture picture) {
+    int w = picture.width;
+    int h = picture.height;
+    int total = w * h;
+    if (w < 4 || h < 4) {
+      return null;
+    }
+    int split = otsu(picture.argb);
+    // Which class is the page: the one that fills the central half of the frame.
+    int x0 = w / 4;
+    int x1 = w - w / 4;
+    int y0 = h / 4;
+    int y1 = h - h / 4;
+    long brightCentre = 0;
+    long centre = 0;
+    for (int y = y0; y < y1; y++) {
+      for (int x = x0; x < x1; x++) {
+        centre++;
+        if ((picture.argb[y * w + x] & MAX) > split) {
+          brightCentre++;
+        }
+      }
+    }
+    boolean pageIsBright = centre == 0 || brightCentre * 2 >= centre;
+    long pageCount = 0;
+    int tl = -1;
+    int tr = -1;
+    int br = -1;
+    int bl = -1;
+    long minSum = Long.MAX_VALUE;
+    long maxSum = Long.MIN_VALUE;
+    long minDiff = Long.MAX_VALUE;
+    long maxDiff = Long.MIN_VALUE;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        boolean bright = (picture.argb[y * w + x] & MAX) > split;
+        if (bright != pageIsBright) {
+          continue;
+        }
+        pageCount++;
+        long sum = x + y;
+        long diff = x - y;
+        int i = y * w + x;
+        if (sum < minSum) {
+          minSum = sum;
+          tl = i;
+        }
+        if (sum > maxSum) {
+          maxSum = sum;
+          br = i;
+        }
+        if (diff > maxDiff) {
+          maxDiff = diff;
+          tr = i;
+        }
+        if (diff < minDiff) {
+          minDiff = diff;
+          bl = i;
+        }
+      }
+    }
+    long surface = total - pageCount;
+    if (surface < DOCUMENT_MIN_SURFACE * total || pageCount < DOCUMENT_MIN_PAGE * total) {
+      return null;
+    }
+    // The surface must ring the page: a page that reaches the border fills the frame.
+    long ring = 0;
+    long ringPage = 0;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        if (x >= 2 && x < w - 2 && y >= 2 && y < h - 2) {
+          continue;
+        }
+        ring++;
+        if (((picture.argb[y * w + x] & MAX) > split) == pageIsBright) {
+          ringPage++;
+        }
+      }
+    }
+    if (ring > 0 && ringPage > DOCUMENT_MAX_BORDER_PAGE * ring) {
+      return null;
+    }
+    int[][] quad = {point(tl, w), point(tr, w), point(br, w), point(bl, w)};
+    if (quadArea(quad) < DOCUMENT_MIN_QUAD * total) {
+      return null;
+    }
+    return quad;
+  }
+
+  private static int[] point(int index, int width) {
+    return new int[] {index % width, index / width};
+  }
+
+  /** The quad's area by the shoelace formula, its corners in order. */
+  private static double quadArea(int[][] q) {
+    double area = 0;
+    for (int i = 0; i < 4; i++) {
+      int[] a = q[i];
+      int[] b = q[(i + 1) % 4];
+      area += (double) a[0] * b[1] - (double) b[0] * a[1];
+    }
+    return Math.abs(area) / 2;
+  }
+
+  /**
+   * The gray `picture` warped so its `quad` {top-left, top-right, bottom-right, bottom-left}
+   * becomes an upright rectangle, by bilinear sampling of the source for each output pixel. The
+   * output keeps the page's aspect from the longer of each pair of opposite quad edges; a pixel
+   * whose source falls outside the picture is white, so the background is clean.
+   */
+  public static Picture warpToQuad(Picture picture, int[][] quad) {
+    int[] tl = quad[0];
+    int[] tr = quad[1];
+    int[] br = quad[2];
+    int[] bl = quad[3];
+    int outW = Math.max(1, (int) Math.round(Math.max(dist(tl, tr), dist(bl, br))));
+    int outH = Math.max(1, (int) Math.round(Math.max(dist(tl, bl), dist(tr, br))));
+    // The homography mapping output (u, v) back to the source, so each output pixel samples once.
+    double[] hgy =
+        homography(outW - 1, outH - 1, tl, tr, br, bl);
+    int[] out = new int[outW * outH];
+    for (int v = 0; v < outH; v++) {
+      for (int u = 0; u < outW; u++) {
+        double denom = hgy[6] * u + hgy[7] * v + 1;
+        double sx = (hgy[0] * u + hgy[1] * v + hgy[2]) / denom;
+        double sy = (hgy[3] * u + hgy[4] * v + hgy[5]) / denom;
+        out[v * outW + u] = sample(picture, sx, sy);
+      }
+    }
+    return new Picture(out, outW, outH);
+  }
+
+  private static double dist(int[] a, int[] b) {
+    double dx = a[0] - b[0];
+    double dy = a[1] - b[1];
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /**
+   * The 8 coefficients {a..h} of the homography that maps output (u, v) in the (maxU x maxV)
+   * rectangle to the source quad corners, so x = (au + bv + c) / (gu + hv + 1) and likewise for y.
+   * Solved from the four corner pairs by Gaussian elimination.
+   */
+  private static double[] homography(int maxU, int maxV, int[] tl, int[] tr, int[] br, int[] bl) {
+    int[][] dst = {{0, 0}, {maxU, 0}, {maxU, maxV}, {0, maxV}};
+    int[][] src = {tl, tr, br, bl};
+    double[][] a = new double[8][9];
+    for (int i = 0; i < 4; i++) {
+      double u = dst[i][0];
+      double v = dst[i][1];
+      double x = src[i][0];
+      double y = src[i][1];
+      a[i * 2] = new double[] {u, v, 1, 0, 0, 0, -u * x, -v * x, x};
+      a[i * 2 + 1] = new double[] {0, 0, 0, u, v, 1, -u * y, -v * y, y};
+    }
+    return solve(a);
+  }
+
+  /** Solves the 8 x 9 augmented system by Gaussian elimination with partial pivoting. */
+  private static double[] solve(double[][] a) {
+    int n = 8;
+    for (int col = 0; col < n; col++) {
+      int pivot = col;
+      for (int row = col + 1; row < n; row++) {
+        if (Math.abs(a[row][col]) > Math.abs(a[pivot][col])) {
+          pivot = row;
+        }
+      }
+      double[] swap = a[col];
+      a[col] = a[pivot];
+      a[pivot] = swap;
+      double head = a[col][col];
+      if (Math.abs(head) < 1e-9) {
+        continue;
+      }
+      for (int row = 0; row < n; row++) {
+        if (row == col) {
+          continue;
+        }
+        double factor = a[row][col] / head;
+        for (int k = col; k <= n; k++) {
+          a[row][k] -= factor * a[col][k];
+        }
+      }
+    }
+    double[] result = new double[n];
+    for (int i = 0; i < n; i++) {
+      result[i] = Math.abs(a[i][i]) < 1e-9 ? 0 : a[i][n] / a[i][i];
+    }
+    return result;
+  }
+
+  /** The gray value at source (sx, sy) by bilinear sampling, or white outside the picture. */
+  private static int sample(Picture picture, double sx, double sy) {
+    int w = picture.width;
+    int h = picture.height;
+    if (sx < 0 || sy < 0 || sx > w - 1 || sy > h - 1) {
+      return WHITE;
+    }
+    int x0 = (int) Math.floor(sx);
+    int y0 = (int) Math.floor(sy);
+    int x1 = Math.min(x0 + 1, w - 1);
+    int y1 = Math.min(y0 + 1, h - 1);
+    double fx = sx - x0;
+    double fy = sy - y0;
+    int g00 = picture.argb[y0 * w + x0] & MAX;
+    int g10 = picture.argb[y0 * w + x1] & MAX;
+    int g01 = picture.argb[y1 * w + x0] & MAX;
+    int g11 = picture.argb[y1 * w + x1] & MAX;
+    double top = g00 + (g10 - g00) * fx;
+    double bottom = g01 + (g11 - g01) * fx;
+    int gray = (int) Math.round(top + (bottom - top) * fy);
+    return grayPixel(Math.max(0, Math.min(MAX, gray)));
   }
 
   /**

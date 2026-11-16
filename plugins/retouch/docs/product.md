@@ -33,6 +33,10 @@ or too dark on the 16-grey screen.
 - Remove background, which clears the border around the main object to transparent, and Make
   sticker, which puts the object on a white card, each one tap; erase with the pen is still to come
   ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
+- Document, one tap: straighten a photographed page or whiteboard to an upright rectangle on a
+  white background, cleaned to black and white. The page corners are found automatically; a photo
+  with no clear page is cleaned without a warp, never distorted
+  ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)).
 - Each edit is a switch in Settings.
 
 ## What it will never do

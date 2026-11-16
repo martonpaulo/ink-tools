@@ -26,6 +26,11 @@ public final class RetouchTest {
     cutoutKeepsAnObjectOnTheBorderAndAnInteriorHole();
     cutoutKeepsAnAllBackgroundPictureAndTinySizes();
     stickerFillsWhiteOrClearsWithTheOption();
+    thresholdGivesBlackAndWhite();
+    documentFindsThePageQuadEitherContrast();
+    documentWarpsAQuadToAnUprightRectangle();
+    documentCleansWithoutAQuadWhenThePageFillsTheFrame();
+    documentScalesDownAndSurvivesTinyPictures();
     System.out.println("RetouchTest ok");
   }
 
@@ -354,6 +359,114 @@ public final class RetouchTest {
         picture.argb[y * 5 + x] = gray(0);
       }
     }
+  }
+
+  private static void thresholdGivesBlackAndWhite() {
+    int[] gray = {gray(40), gray(40), gray(200), gray(210)};
+    Retouch.threshold(gray);
+    for (int pixel : gray) {
+      int g = pixel & 0xFF;
+      check(g == 0 || g == 255, "threshold gives only black and white: " + g);
+      check((pixel >>> 24) == 0xFF, "threshold is opaque");
+    }
+    check((gray[0] & 0xFF) == 0 && (gray[2] & 0xFF) == 255, "the split keeps the two sides apart");
+    check(Retouch.Edit.of("document") == Retouch.Edit.DOCUMENT, "document is known");
+    check(!Retouch.Edit.DOCUMENT.isStyle(), "Document is no style");
+    int[] down = Retouch.outputSize(Retouch.Edit.DOCUMENT, 3000, 1500, 1920);
+    check(down[0] == 1920 && down[1] == 960, "Document fits a wide photo to the page width");
+  }
+
+  /** A `size` gray fixture: a `page` rectangle with `margin` of `surface` around it. */
+  private static Retouch.Picture pageFixture(int size, int page, int surface, int margin) {
+    int[] argb = new int[size * size];
+    for (int y = 0; y < size; y++) {
+      for (int x = 0; x < size; x++) {
+        boolean onPage = x >= margin && x < size - margin && y >= margin && y < size - margin;
+        argb[y * size + x] = gray(onPage ? page : surface);
+      }
+    }
+    return new Retouch.Picture(argb, size, size);
+  }
+
+  private static void documentFindsThePageQuadEitherContrast() {
+    // A bright page on a dark surface, and the inverted case: the finder keys on the edge.
+    int[][] bright = Retouch.findPageQuad(pageFixture(40, 220, 40, 8));
+    int[][] dark = Retouch.findPageQuad(pageFixture(40, 40, 220, 8));
+    for (int[][] quad : new int[][][] {bright, dark}) {
+      check(quad != null, "a centred page has a quad whichever side is brighter");
+      check(quad[0][0] == 8 && quad[0][1] == 8, "the top-left corner is the page corner");
+      check(quad[1][0] == 31 && quad[1][1] == 8, "the top-right corner is the page corner");
+      check(quad[2][0] == 31 && quad[2][1] == 31, "the bottom-right corner is the page corner");
+      check(quad[3][0] == 8 && quad[3][1] == 31, "the bottom-left corner is the page corner");
+    }
+  }
+
+  private static void documentWarpsAQuadToAnUprightRectangle() {
+    // A rotated quad with a distinct 3 x 3 patch at each corner, on a flat gray field.
+    int[] argb = new int[24 * 24];
+    java.util.Arrays.fill(argb, gray(128));
+    int[][] quad = {{5, 3}, {20, 6}, {18, 20}, {3, 17}};
+    int[] mark = {20, 70, 170, 230};
+    for (int c = 0; c < 4; c++) {
+      patch(argb, 24, quad[c][0], quad[c][1], mark[c]);
+    }
+    Retouch.Picture warped = Retouch.warpToQuad(new Retouch.Picture(argb, 24, 24), quad);
+    check(warped.width == 15 && warped.height == 14, "the output keeps the quad's edge lengths");
+    int w = warped.width;
+    int h = warped.height;
+    check(near(warped.argb[0], mark[0]), "the top-left corner maps to the rectangle");
+    check(near(warped.argb[w - 1], mark[1]), "the top-right corner maps to the rectangle");
+    check(near(warped.argb[(h - 1) * w + w - 1], mark[2]), "the bottom-right corner maps");
+    check(near(warped.argb[(h - 1) * w], mark[3]), "the bottom-left corner maps");
+    // A full-frame quad is near the identity: each corner is an edge length (23) apart.
+    int[][] whole = {{0, 0}, {23, 0}, {23, 23}, {0, 23}};
+    Retouch.Picture same = Retouch.warpToQuad(new Retouch.Picture(argb.clone(), 24, 24), whole);
+    check(same.width == 23 && same.height == 23, "a full-frame quad keeps the edge-length size");
+    check(near(same.argb[3 * 23 + 5], mark[0]), "a full-frame quad samples near the same place");
+  }
+
+  private static void documentCleansWithoutAQuadWhenThePageFillsTheFrame() {
+    // The page fills the frame: paper to every edge, a few lines of text, no surrounding surface.
+    int[] argb = new int[30 * 30];
+    java.util.Arrays.fill(argb, gray(215));
+    for (int row : new int[] {12, 15, 18, 21}) {
+      for (int x = 8; x < 22; x++) {
+        argb[row * 30 + x] = gray(60);
+      }
+    }
+    Retouch.Picture picture = new Retouch.Picture(argb, 30, 30);
+    check(Retouch.findPageQuad(picture) == null, "a page that fills the frame has no quad");
+    Retouch.Picture cleaned = Retouch.document(picture);
+    check(cleaned.width == 30 && cleaned.height == 30, "the clean-only result is not moved");
+    for (int pixel : cleaned.argb) {
+      int g = pixel & 0xFF;
+      check(g == 0 || g == 255, "the clean-only result is black and white: " + g);
+    }
+  }
+
+  private static void documentScalesDownAndSurvivesTinyPictures() {
+    check(Retouch.findPageQuad(new Retouch.Picture(new int[] {gray(90)}, 1, 1)) == null,
+        "a 1 x 1 picture has no quad");
+    Retouch.apply(Retouch.Edit.DOCUMENT, new Retouch.Picture(new int[] {gray(90)}, 1, 1));
+    Retouch.apply(Retouch.Edit.DOCUMENT, new Retouch.Picture(new int[40], 40, 1));
+    Retouch.apply(Retouch.Edit.DOCUMENT, new Retouch.Picture(new int[] {gray(10), gray(240),
+        gray(10), gray(240)}, 2, 2));
+  }
+
+  private static void patch(int[] argb, int size, int cx, int cy, int value) {
+    for (int dy = -1; dy <= 1; dy++) {
+      for (int dx = -1; dx <= 1; dx++) {
+        int x = cx + dx;
+        int y = cy + dy;
+        if (x >= 0 && x < size && y >= 0 && y < size) {
+          argb[y * size + x] = gray(value);
+        }
+      }
+    }
+  }
+
+  private static boolean near(int pixel, int value) {
+    return Math.abs((pixel & 0xFF) - value) <= 2;
   }
 
   private static long ink(Retouch.Picture picture) {

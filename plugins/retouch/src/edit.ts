@@ -103,6 +103,7 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   trim: 'trim',
   background: 'background',
   sticker: 'sticker',
+  document: 'document',
   photo: 'photo',
   line_art: 'line_art',
   black_white: 'black_white',

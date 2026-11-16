@@ -26,6 +26,7 @@ export type PixelEdit =
   | 'trim'
   | 'background'
   | 'sticker'
+  | 'document'
   | StyleId;
 
 /** The grid's styles (#133), each ending on the screen's greys. */

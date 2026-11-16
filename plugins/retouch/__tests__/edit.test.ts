@@ -196,6 +196,33 @@ test('Trim keeps the picture where it was on the page, less its margin (#132)', 
   expect(w.modified[1].rect).toEqual(RECT);
 });
 
+test('Document runs as a pixel edit and is recorded in the history (#137)', async () => {
+  const w = world();
+  (w.native.edit as jest.Mock).mockImplementationOnce(
+    async (_edit, _src, before, dest) => {
+      w.files.set(before, 'png');
+      w.files.set(dest, 'png');
+      // The warp straightens the page to a smaller upright rectangle.
+      return ok({width: 320, height: 240, left: 0, top: 0, ms: 5});
+    },
+  );
+  const done = await runEdit('document', w.deps);
+  expect(done).toMatchObject({kind: 'edited', edit: 'document'});
+  expect(w.native.edit).toHaveBeenCalledWith(
+    'document',
+    expect.stringContaining('/preview-'),
+    expect.stringMatching(/-original\.png$/),
+    expect.stringMatching(/-document\.png$/),
+    400,
+    300,
+    1920,
+    false,
+    false,
+  );
+  const [, straightened] = w.history().entries[0].states;
+  expect(straightened).toMatchObject({width: 320, height: 240});
+});
+
 test('A style passes its options to the Java side and is recorded as an edit (#133)', async () => {
   const w = world();
   const done = await runEdit('line_art', w.deps, {transparent: true, thick: true});

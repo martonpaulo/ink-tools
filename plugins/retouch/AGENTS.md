@@ -7,7 +7,8 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 **Built, device round pending** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)): lasso one picture on the page and tap
 **Enhance**, **Lighter**, **Darker**, **Undo**, **Restore original**, **Rotate 90°**, **Mirror**,
-**Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)) or **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)) in the lasso menu. Each is a
+**Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)) or **Document** ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)) in
+the lasso menu. Each is a
 lasso button for pictures, run with no view, and a switch in Settings, all on by default. Settings
 live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. The time of each edit on the
 Manta and the «Working…» panel past 2 s ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) are still to come.

@@ -16,7 +16,8 @@ export type EditId =
   | 'invert'
   | 'trim'
   | 'background'
-  | 'sticker';
+  | 'sticker'
+  | 'document';
 
 export type EditDefinition = {id: EditId; buttonId: number; name: string};
 
@@ -39,6 +40,8 @@ const ORDER: readonly EditId[] = [
   // #134: appended, so the ids above keep theirs.
   'background',
   'sticker',
+  // #137
+  'document',
 ];
 
 export const EDITS: readonly EditDefinition[] = ORDER.map((id, index) => ({
