@@ -108,6 +108,21 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [official signature].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#59](https://github.com/martonpaulo/supernote-tools/issues/59)].
+- A lassoed picture can be read and replaced in place [measured, 2026-11-16, Probe 0.0.1 code 5,
+  firmware `Chauvet.E103.2610191001.2559`, [#130](https://github.com/martonpaulo/supernote-tools/issues/130)]:
+  - `getLassoElements` gives the picture element (type 200) with its `numInPage`, `layerNum` and
+    `picture.rect` in page pixels. Its `picture.picturePath` names a file under
+    `/storage/emulated/0/.data/plugin/` that the plugin cannot open (`exists` false, `copyFile`
+    ENOENT), so the element gives no pixels.
+  - `generateLassoPreview(path)` writes the lassoed area as an RGBA PNG to a whitelisted path, at
+    page-pixel size with about 6 px of margin per side (a 400 x 300 picture gave 412 x 311). That is
+    the pixel read: it shows everything inside the lasso, and the size is the picture's size on the
+    page, not the source file's size.
+  - Both writes put a new PNG at the same rect, on the screen at once: `modifyPageElements` with the
+    lassoed element and a new `picture.picturePath`, and `batchUpdatePageElements([numInPage],
+    [new picture element])`, which deletes and inserts in one call.
+  - The host copies each inserted PNG into `.data/plugin/` under a new name, so the plugin's own file
+    can be removed after the write. `pageNum` read 0 before the write and 1 after, on page 1 of 1.
 
 ### What a plugin can show while a no-view action runs
 
