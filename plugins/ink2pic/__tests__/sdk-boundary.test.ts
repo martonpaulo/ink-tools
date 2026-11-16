@@ -145,8 +145,9 @@ it('keeps the search core portable: it imports nothing outside packages/picture-
   expect(offenders).toEqual([]);
 });
 
-it("keeps picture-search's insert tier on ink-core, the official tier and the device tier's log (#142)", () => {
-  const insert = join(DEVICE_TIER, '..', 'insert');
+it("keeps picture-search's insert tier on its package, ink-core and the official tier (#142)", () => {
+  const core = join(DEVICE_TIER, '..');
+  const insert = join(core, 'insert');
   const files = sources(insert);
   expect(files.length).toBeGreaterThan(0);
   const offenders = files.flatMap(path =>
@@ -158,7 +159,9 @@ it("keeps picture-search's insert tier on ink-core, the official tier and the de
       .map(match => match[1])
       .filter(target =>
         target.startsWith('.')
-          ? !/^\.\/|^\.\.\/log\//.test(target)
+          ? relative(core, resolve(dirname(join(ROOT, path)), target)).startsWith(
+              '..',
+            )
           : target !== '@supernote-tools/ink-core' &&
             target !== '@supernote-tools/sn-adapter/official',
       )

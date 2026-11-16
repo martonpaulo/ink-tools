@@ -1,71 +1,55 @@
 /**
- * One search as the screen runs it: the cached search (#16) and the stored thumbnails (#46) at
- * the same time; only the newest search is shown (#33); after its results show, an offline search
- * opens the Library with its sentence, and any other answer is recorded as a recent search.
+ * One search as the screen runs it: the shared run of picture-search's insert tier (#142) over
+ * Ink2Pic's cached search, stored thumbnails, saved symbols (#91) and picks (#34); after its
+ * results show, an offline search opens the Library with its sentence, and any other answer is
+ * recorded as a recent search.
  */
 import {getLibrary, recordSearch} from '../library/device';
 import type {Library} from '../library/types';
-import {log} from '../profile';
+import {
+  runSearch as sharedRun,
+  stateText as sharedStateText,
+  type SearchRun,
+  type SearchRunOptions,
+} from '../profile';
 import {pickedFor} from '../picks/device';
-import {picksFirst} from '../picks/picks';
 import {
   DEFAULT_ADAPTERS,
   SearchOutcome,
   SearchState,
-  SearchStateKind,
   searchState,
   SourceAdapter,
 } from '@supernote-tools/picture-search';
 import {searchCached} from '../search/device';
 import {prepareThumbs} from '../search/thumbs';
 import {markSavedSymbols} from '../symbols/store';
-import {copy, CopyKey} from '../ui/copy';
+import {copy} from '../ui/copy';
 import {offlineText} from './failure';
 
-export type SearchRun = {
-  /** Null when a newer search started meanwhile: this answer is ignored. */
-  outcome: SearchOutcome | null;
-  /** The plugin folder with its thumbnails listed, or null (see `prepareThumbs`). */
-  thumbDir: string | null;
-};
+export type {SearchRun, SearchRunOptions} from '../profile';
 
 /** What follows the shown results: the offline sentence, the updated library, or nothing. */
 export type AfterSearch = {offline: string} | {library: Library} | null;
 
-export type SearchRunOptions = {
-  /** Search the word as typed: no corrected spelling, no cached answer (#65). */
-  exact?: boolean;
-  /** No wait on a JS timer, for the no-view insert: timers may stop with no view (#93). */
-  noTimerWait?: boolean;
-};
-
-export async function runSearch(
+export function runSearch(
   word: string,
   sources: readonly SourceAdapter[] = DEFAULT_ADAPTERS,
   isNewest: () => boolean = () => true,
-  {exact = false, noTimerWait = false}: SearchRunOptions = {},
+  options: SearchRunOptions = {},
 ): Promise<SearchRun> {
-  log(`search "${word}"${exact ? ' exactly' : ''}`);
-  // The stored thumbnails are listed while the search runs, so the grid knows them at once.
-  const [found, thumbDir] = await Promise.all([
-    searchCached(word, sources, undefined, {exact, noTimerWait}),
-    prepareThumbs(),
-  ]);
-  // Saved OpenMoji pictures are marked; with no network, only those show (#91).
-  const marked = await markSavedSymbols(found);
-  // The person's earlier picks for the word lead (#34), so the early download starts on one.
-  const outcome = {
-    ...marked,
-    results: picksFirst(marked.results, await pickedFor(word)),
-  };
-  if (!isNewest()) {
-    log(`search "${word}" ended after a newer one: ignored`);
-    return {outcome: null, thumbDir};
-  }
-  for (const [name, status] of Object.entries(outcome.statuses)) {
-    log(`source ${name}: ${JSON.stringify(status)}`);
-  }
-  return {outcome, thumbDir};
+  return sharedRun(
+    word,
+    sources,
+    {
+      search: (query, from, {exact, noTimerWait}) =>
+        searchCached(query, from, undefined, {exact, noTimerWait}),
+      thumbs: () => prepareThumbs(),
+      markSaved: outcome => markSavedSymbols(outcome),
+      picked: query => pickedFor(query),
+    },
+    isNewest,
+    options,
+  );
 }
 
 /** Runs once the results show, so neither the permission check nor the library write delays them. */
@@ -84,27 +68,9 @@ export async function afterSearch(
   return {library: await getLibrary()};
 }
 
-/** The one sentence of each search state; null when the results speak for themselves. */
-const STATE_COPY: Record<SearchStateKind, CopyKey | null> = {
-  searching: 'search.running',
-  ready: null,
-  corrected: 'search.corrected',
-  stale: 'search.stale',
-  partial: 'error.sourceDown',
-  empty: 'search.empty',
-  offline: 'error.offline',
-  failed: 'error.sourcesDown',
-};
-
 /** The state's sentence, with the corrected spelling in it; null when there is none. */
 export function stateText(state: SearchState): string | null {
-  const key = STATE_COPY[state.kind];
-  if (!key) {
-    return null;
-  }
-  return state.kind === 'corrected'
-    ? copy[key].replace('{query}', state.query)
-    : copy[key];
+  return sharedStateText(state, copy);
 }
 
 /** The action that searches the typed word as it is, after a corrected search. */

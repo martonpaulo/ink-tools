@@ -22,15 +22,7 @@
   }
  },
  "twins": {
-  "rules": [
-   {
-    "rule": "measure width: the thumbnail width the measures and the drawings are taken at",
-    "owner": "src/flow/measure.ts",
-    "other": "../../packages/picture-search/native/com/ink2pic/files/EinkPixels.java",
-    "pattern": "MEASURE_WIDTH = 400",
-    "golden": "../../packages/picture-search/native/twins.json"
-   }
-  ]
+  "rules": []
  },
  "documents": {
   "files": [

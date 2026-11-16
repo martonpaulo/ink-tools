@@ -13,8 +13,10 @@
  * the note meanwhile.
  */
 import {
+  createPressGuard,
   log,
   logged,
+  NO_VIEW_LIMIT_MS,
   timed,
   startSession,
   getSettings,
@@ -55,9 +57,10 @@ const DEVICE: HeadlessDeps = {
 
 /**
  * The longest one press may take, measured with Date.now(): about four source budgets (brief
- * section 8.5) for the search, the thumbnails, the download and the insert.
+ * section 8.5) for the search, the thumbnails, the download and the insert. The guard is shared
+ * with Lookup's buttons (#142).
  */
-export const NO_VIEW_LIMIT_MS = 60000;
+export {NO_VIEW_LIMIT_MS};
 
 /**
  * What the view opens on after a failure (#96): the search screen, as Choose picture opens it, with
@@ -74,9 +77,8 @@ export type HeadlessNote = {
 /** The failure the view shows once it opens; taken once. */
 let note: HeadlessNote | null = null;
 const noteListeners = new Set<() => void>();
-/** When the running press started, or null; a newer press holds `run` (#93). */
-let runningSince: number | null = null;
-let run = 0;
+/** One press at a time across both buttons (#93). */
+const guard = createPressGuard(NO_VIEW_LIMIT_MS);
 
 /**
  * When the last no-view press came, set at once, before any await: the host may mount the view or
@@ -171,13 +173,12 @@ async function runWithoutView(
   deps: HeadlessDeps,
 ): Promise<void> {
   const started = Date.now();
-  const age = runningSince === null ? null : started - runningSince;
-  if (age !== null && age <= NO_VIEW_LIMIT_MS) {
+  const turn = guard.take(started);
+  if (!turn) {
     log(`${mode.name}: already running, press ignored`);
     return;
   }
-  runningSince = started;
-  const own = ++run;
+  const age = turn.replacedAfter;
   const deadline = started + NO_VIEW_LIMIT_MS;
   // The word and its place once read, for the search screen a failure opens (#96).
   let word = '';
@@ -235,8 +236,6 @@ async function runWithoutView(
       deps,
     );
   } finally {
-    if (run === own) {
-      runningSince = null;
-    }
+    turn.end();
   }
 }

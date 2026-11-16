@@ -7,7 +7,7 @@ Provider-agnostic building blocks the plugins share (layers in [docs/architectur
 | `sn-adapter` | Every Supernote call, in two tiers: the official `sn-plugin-lib` wrappers, and the internals as an updatable descriptor with the adapt-on/off probe ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)) |
 | `sync-core` | Diff, recurrence expansion, mapping and module orchestration |
 | `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface with its first source, Wiktionary definitions ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), Lingo's language-pair Settings model, and the ZH input reader with its offline CC-CEDICT pinyin index ([#129](https://github.com/martonpaulo/supernote-tools/issues/129), [notice](ink-core/NOTICE.md)) |
-| `picture-search` | Ink2Pic's picture search core (the sources, the ranking, the measured order, `chooseLook`) its pure-Java pixel measures and the native file module in `native/`, with their JVM tests in `native-tests/`, for Lookup ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)) |
+| `picture-search` | Ink2Pic's picture search core (the sources, the ranking, the measured order, `chooseLook`) its pure-Java pixel measures and the native file module in `native/`, with their JVM tests in `native-tests/`, the file store, the settings store and the «Insert best picture» flow, shared by Ink2Pic and Lookup ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)) |
 | `ui-kit` | The Settings look every plugin shares: tokens, shared styles, the `Button`, and the size rule for tests ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)) |
 
 Run `npm install && npm run validate` here for `sn-adapter`'s internals tier, `sync-core` and `ink-core`.
@@ -27,12 +27,14 @@ tests it. `scripts/boundaries.py` keeps every other folder off the SDK and the p
 
 `picture-search` is wired the same way by `picture-search/plugin-config.js`, which also maps a deep
 path (`@supernote-tools/picture-search/rank`) for tests. Its Java keeps the package name
-`com.ink2pic.files` and is compiled by Ink2Pic's `scripts/native-build.cjs`; it holds the React
-Native file module too, whose `Ink2PicFilesPackage` registers Ink2Pic's module names and takes
-another plugin's two names in a subclass ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)). Its TypeScript and JVM tests run in the Ink2Pic gate, beside the mocks they
-share, and Lookup's gate type-checks it. Ink2Pic's insert flow, its stored measures and its library
-stay in the plugin: they call the SDK and Ink2Pic's native modules, and each Lookup button that
-needs one moves it here with it.
+`com.ink2pic.files` and is compiled by each plugin's `scripts/native-build.cjs` (Ink2Pic's and
+Lookup's); it holds the React Native file module too, whose `Ink2PicFilesPackage` registers
+Ink2Pic's module names and takes another plugin's two names in a subclass, as Lookup's
+`LookupFilesPackage` does ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)). Its TypeScript and JVM tests run in the Ink2Pic gate, beside the
+mocks they share, and Lookup's gate type-checks it and tests its own bindings. Its insert tier
+(`/insert`) holds «Insert best picture»: the cached search, the stored thumbnails, the measured
+order, the insert and the no-view press guard; each plugin binds it to its own settings, copy and
+stores, and Ink2Pic hands in its library, picks and OpenMoji symbols, which stay in Ink2Pic.
 
 `ui-kit` is React Native code, so it is not a workspace here. A plugin imports it as
 `@supernote-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by

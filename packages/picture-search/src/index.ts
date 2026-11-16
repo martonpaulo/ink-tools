@@ -62,3 +62,17 @@ export type {
   SearchResult,
   SourceName,
 } from './types';
+export {
+  addPick,
+  emptyPicks,
+  parsePicks,
+  pickedIds,
+  pickId,
+  pickKey,
+  PICKS_PER_WORD,
+  PICKS_VERSION,
+  PICK_WORD_LIMIT,
+  picksFirst,
+  serializePicks,
+} from './picks';
+export type {ParsedPicks, Picks, WordPicks} from './picks';

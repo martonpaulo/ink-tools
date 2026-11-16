@@ -106,6 +106,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   name and no icon; the list ends after the last plugin row [measured, 2026-11-16, Lingo,
   [#128](https://github.com/martonpaulo/supernote-tools/issues/128)].
 - After a no-view lasso button inserts its text, the lasso is gone [measured, 2026-11-16, Lingo].
+- Two plugins with native modules installed side by side: whether PluginHost gives each its own
+  React host and class loader is not known [to test, [#142](https://github.com/martonpaulo/supernote-tools/issues/142)]. Ink2Pic and Lookup both
+  ship the Java of `com.ink2pic.files` and register their modules under their own names
+  (`Ink2PicFiles` and `Ink2PicImage`, `LookupFiles` and `LookupImage`), so neither name is
+  registered twice in one host either way.
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no

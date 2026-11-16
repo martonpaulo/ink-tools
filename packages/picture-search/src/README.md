@@ -13,8 +13,11 @@ modules, its settings file, its session log and the run log. It imports only `re
 (`plugins/ink2pic/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
 over its own settings model. The insert tier, `insert/`, holds what a lasso button runs on the
 page: `readLassoQuery` and `placeAtLasso`, ink-core's lasso read and placement over the official
-SDK wrappers and the device tier's log, reached through `@supernote-tools/picture-search/insert`
-and re-exported by the plugin's profile module.
+SDK wrappers, and «Insert best picture» ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): `searchCached` over a plugin's `SearchSettings`,
+the stored thumbnails, `measureFirstPages`, `insertPicture` over a plugin's `PictureStore`,
+`insertBest`, the failure sentences from a plugin's copy, and `createPressGuard`, one no-view press
+at a time. It imports the core, the device tier, ink-core and the official tier; it is reached
+through `@supernote-tools/picture-search/insert` and re-exported by the plugin's profile module.
 
 ## Contents
 
@@ -38,6 +41,7 @@ Import from `@supernote-tools/picture-search` (its `index.ts`) only ([#125](http
 | `fullUrl(result, width)`, `insertUrl(result)` | The image of a result at a width, or for an insert |
 | `pageOf`, `pageCount`, `PAGE_SIZE` | Six results per page |
 | `keepMode(ordered, measures, mode)`, `fitsMode`, `PictureMode` | A lasso mode's measured tiles only: photos and dark paintings for `photo`, the rest for `illustration` ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)) |
+| `picksFirst(results, ids)`, `addPick`, `parsePicks`, `serializePicks` | «Remember my pick»: the person's picks for a word lead its results ([#34](https://github.com/martonpaulo/ink2pic/issues/34)); moved from Ink2Pic for the measured order ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)) |
 
 Every failure is a `Failure` with a typed `kind` (`network`, `timeout`, `http`, `throttled`,
 `parse`); its `message` is for the log only.

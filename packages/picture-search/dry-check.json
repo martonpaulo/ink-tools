@@ -24,6 +24,13 @@
     "other": "native/com/ink2pic/files/ThumbMeasures.java",
     "pattern": "\\bobjectShare\\b",
     "golden": "native/twins.json"
+   },
+   {
+    "rule": "measure width: the thumbnail width the measures and the drawings are taken at",
+    "owner": "src/insert/measure.ts",
+    "other": "native/com/ink2pic/files/EinkPixels.java",
+    "pattern": "MEASURE_WIDTH = 400",
+    "golden": "native/twins.json"
    }
   ]
  }
