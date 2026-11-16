@@ -112,8 +112,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   pixel size or file type [measured, 2026-11-15, [#100](https://github.com/martonpaulo/supernote-tools/issues/100)].
 - The Upload Item form does not scroll from `adb shell input swipe` or `input motionevent`; taps
   work [measured, 2026-11-15].
-- `recognizeElements` has no language parameter; it uses the device's handwriting language
-  [official signature].
+- `recognizeElements` has no language parameter [official signature]; that it uses the
+  handwriting language of Settings › Display & Input › Keyboard is [inference]. The SDK has no
+  call that reads or writes that language; `registerLangListener` reports the system UI language
+  only [official, [#146](https://github.com/martonpaulo/supernote-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#59](https://github.com/martonpaulo/supernote-tools/issues/59)].
 - A lassoed picture can be read and replaced in place [measured, 2026-11-16, Probe 0.0.1 code 5,
