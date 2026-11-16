@@ -1,6 +1,6 @@
-# Relay
+# Device Transfer
 
-On the tablet this plugin is called **Device Transfer**; `relay` stays its folder and internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+`relay` is this plugin's folder and internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
 
 A Supernote plugin: send the current page, or a lasso selection, as a picture to your iPhone or
 your Mac over [LocalSend](https://localsend.org), with one tap; and receive a text or a picture

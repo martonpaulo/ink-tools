@@ -21,11 +21,10 @@ numbered beta: a test build reads `0.2.0-beta.3` on GitHub and `0.2.0 beta 3` on
 | **Account Sync**<br><sub>[`plugins/bridge/`](plugins/bridge/)</sub> | plugin | Sync to-dos, calendars and a digest with your accounts, each module opt in. | Being built |
 | **Image Editing**<br><sub>[`plugins/retouch/`](plugins/retouch/)</sub> | plugin | Lasso a picture on the page and make it readable on e-ink with one tap. | 13 edits; style grid, crop and erase in progress ([#136](https://github.com/martonpaulo/ink-tools/issues/136)) |
 | **Device Transfer**<br><sub>[`plugins/relay/`](plugins/relay/)</sub> | plugin | Send the page or a lasso selection to an iPhone or a Mac over LocalSend, and receive text or a picture into the open note. | Sends and receives; PDF receive fix in progress ([#98](https://github.com/martonpaulo/ink-tools/issues/98)) |
-| **Real-Time Conversion**<br><sub>`typeset`, no folder yet</sub> | plugin | Turn each handwritten word into typed text in a chosen font, with no lasso, and undo the last conversion. | Planned, build next ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [the research](docs/research/2026-11-live-handwriting-to-text.md)) |
 | **Handwriting Language**<br><sub>[`apps/lingo-app/`](apps/lingo-app/)</sub> | tablet app | Switch the handwriting recognition language of the whole tablet with one tap. | Test build, device round pending ([#157](https://github.com/martonpaulo/ink-tools/issues/157)) |
 | **inkctl**<br><sub>[`cli/inkctl/`](cli/inkctl/)</sub> | Mac CLI | Control the tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. | In use |
 | **Ink Notebook Editor**<br><sub>[`apps/ink-notebook-editor/`](apps/ink-notebook-editor/)</sub> | Mac app | Read and edit `.note` notebooks on the Mac without breaking the format. | Planned; a faithful reader first ([#48](https://github.com/martonpaulo/ink-tools/issues/48)) |
-| Probe<br><sub>[`plugins/probe/`](plugins/probe/)</sub> | plugin | Quick on-device experiments for developers. Never shipped. | Internal |
+| Plugin Diagnostics<br><sub>[`plugins/probe/`](plugins/probe/)</sub> | plugin | Quick on-device experiments for developers. Never shipped. | Internal |
 | Shared code<br><sub>[`packages/`](packages/)</sub> | packages | `sn-adapter`, `sync-core`, `ink-core`, `picture-search` and `ui-kit`, bundled by the plugins. | Internal |
 
 Retired: [`plugins/ink2pic/`](plugins/ink2pic/) (Word Lookup replaces it) and

@@ -1,4 +1,6 @@
-# Probe
+# Plugin Diagnostics
+
+`probe` is this plugin's folder and internal name; the tablet shows it as «Probe» until the rename of [#194](https://github.com/martonpaulo/ink-tools/issues/194) ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 A permanent, developer-only Supernote plugin for quick on-device experiments. It is not shipped to
 users and has no release; its `.snplg` is a developer prerelease (`probe-v0.0.1-dev.<versionCode>`, workflow `prerelease-probe.yml`, published when `PluginConfig.json` changes on `main`; raise `versionCode` for a new build), never a user release.

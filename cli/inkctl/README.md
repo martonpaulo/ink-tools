@@ -109,6 +109,7 @@ standard input to the tablet and keeps no copy.
 
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **A sleeping tablet may not answer.** With the global setting `wifi_sleep_policy` at `2`, a Manta on firmware 3.31.45 kept answering while asleep for the 15 minutes measured, and lost 1% of battery with one port check a minute. A longer sleep is not measured. The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
+- **A locked tablet is not tested.** The owner runs the tablet with no lock code, so what `input keyevent WAKEUP` and `screencap` do behind a lock screen is not known. The command never bypasses a lock code or PIN.
 - **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install presses named elements and stops on a screen it does not expect.
 - **Files sync by themselves.** On firmware 3.31.45 the tablet's own watcher picks up a copied file, and Android refuses the app's sync broadcast from ADB, so there is no `sync file` command.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `inkctl doctor` after one. It proves a call exists, not that it still works.
