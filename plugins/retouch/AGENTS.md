@@ -38,6 +38,11 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
 - No slider and no live preview: every step on e-ink costs a refresh. An edit is one tap.
 - A new edit is one row of `EDITS` in `src/edits.ts` and, for pixel work, one `Retouch.Edit`.
 - A failure never writes on the page: it is logged, and the picture stays as it was.
+- Every button runs with no view, so it works only once `FILE:READ` and `FILE:WRITE` are «Always
+  Allow»: the host shows a no-view request at the next press and revokes «Allow This Time Only» at
+  the press after, and a missing grant fails each press at `getPageSize` with 1503 and nothing on
+  the page ([#170](https://github.com/martonpaulo/supernote-tools/issues/170), `../../docs/supernote.md` › Plugins). Removing its preview and state PNGs needs
+  `FILE:DELETE` too ([#182](https://github.com/martonpaulo/supernote-tools/issues/182)).
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
 - Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.

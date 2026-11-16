@@ -55,6 +55,11 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
 - Each direct insert mode (illustration, photo, text) is its own lasso button, chosen before the
   search, never a toggle after it. The «Choose Image» screen is the one exception: behind its one
   button it may switch between its Illustrations and Photos tabs (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)).
+- An insert goes into free space, never over the writing below the word ([#152](https://github.com/martonpaulo/supernote-tools/issues/152)). After a
+  picture insert, the picture stays lassoed so the person picks the next step from the lasso
+  menu: «Choose Image» to change it, or Image Editing to edit it; Lookup never opens Image Editing
+  by itself. It lassoes only when no other element crosses the picture's rect, since the rect
+  lasso also takes the ink under it ([#168](https://github.com/martonpaulo/supernote-tools/issues/168), owner, `../../docs/decisions.md`).
 - The definition and translation back-end is the shared `DictionaryProvider` in `ink-core`, built
   only in `src/dictionaries.ts`. Feature code never names a concrete source.
 - Translation has no automatic direction: one button per direction, each with its own switch

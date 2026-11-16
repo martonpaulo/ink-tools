@@ -161,8 +161,9 @@ Very useful:
   photographed page from the phone ([#137](https://github.com/martonpaulo/ink-tools/issues/137)).
 - Erase with the pen, background removal, make a sticker
   ([#134](https://github.com/martonpaulo/ink-tools/issues/134)).
-- Open retouch on the picture Ink2Pic or Lookup just inserted
-  ([#139](https://github.com/martonpaulo/ink-tools/issues/139)).
+- The picture Word Lookup just inserted stays lassoed, so Image Editing's buttons are one tap
+  away; Lookup never opens Image Editing by itself (owner, replacing
+  [#139](https://github.com/martonpaulo/ink-tools/issues/139); [#168](https://github.com/martonpaulo/ink-tools/issues/168)).
 - Later: apply one edit to every image on the page
   ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
 
