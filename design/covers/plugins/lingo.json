@@ -12,5 +12,5 @@
     { "icon": "offline", "label": "Offline for\ncommon words" },
     { "icon": "open", "label": "Open sources,\nno account" }
   ],
-  "source": "docs/plugin-scope.md#lingo"
+  "source": "docs/plugin-scope.md#lookup"
 }

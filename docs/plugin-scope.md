@@ -8,13 +8,14 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 
 - [The two pains driving everything](#the-two-pains-driving-everything)
 - [lookup](#lookup)
-- [lingo](#lingo)
+- [Lingo app](#lingo-app)
 - [Dictionary and translation engine (shared)](#dictionary-and-translation-engine-shared)
 - [retouch](#retouch)
 - [desk](#desk)
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
+- [typeset (proposed)](#typeset-proposed)
 - [Note templates](#note-templates)
 - [Design direction](#design-direction)
 
@@ -27,14 +28,15 @@ device into an editable, durable form on the Mac, **not** sharing it with other 
 ## lookup
 
 Evolution of `ink2pic`: write a word, lasso it, insert something. `lookup` is a new plugin with its
-own `pluginID`, installed beside Ink2Pic until Ink2Pic is retired, and everything Ink2Pic does moves into it (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)); it does not carry Ink2Pic's
-settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)). **It is the first plugin to ship
-after `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each
-mode is its own **lasso button**, chosen before the search — not a post-hoc toggle: "insert
-illustration" (vector/sticker/OpenMoji), "insert photo" (real photo), "insert text" (definition /
-3-line bio / summary) and «Insert translation», one button over every language pair switched on in
-Lookup's Settings (owner, [#158](https://github.com/martonpaulo/supernote-tools/issues/158)): the translation needs of the `lingo` section below
-are met here. Pains and scope:
+own `pluginID` and everything Ink2Pic did moved into it (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)); it does not carry
+Ink2Pic's settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)). Ink2Pic is retired and uninstalled
+from the tablet; its folder gets no new work ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)). **It is the first plugin to ship after
+`bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each mode
+that inserts at once is its own **lasso button**, chosen before the search — not a post-hoc toggle:
+"insert illustration" (vector/sticker/OpenMoji), "insert photo" (real photo), "insert text"
+(definition / 3-line bio / summary) and «Insert translation» (below). «Choose picture» is the one
+button that opens the results: its Illustrations and Photos tabs stay behind that one button, and
+the one-button-per-mode rule covers the direct insert buttons only (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)). Pains and scope:
 
 - **Relevance is broken on real cases.** "café"/"coffee" returns a heart as the "best" picture;
   "Pedro Sánchez" returns awful results. Ranking and the portrait path must fix these (issues
@@ -57,29 +59,42 @@ are met here. Pains and scope:
   **topic summary**. Source: open/keyless encyclopedic extracts (Wikipedia/Wikidata summaries);
   current-events topics are harder and best-effort. This is distinct from — and wanted more than —
   a single-word dictionary definition, which stays low priority.
+- **Translation («Insert translation»).** Write a word, lasso it, insert its translation: one lasso
+  button over every language pair switched on in Lookup's Settings, each pair opt in/out, one line
+  per direction that found a translation (owner, [#158](https://github.com/martonpaulo/supernote-tools/issues/158)). It took over the Lingo plugin's job,
+  and that plugin is retiring: it is uninstalled from the tablet and its folder removed once this
+  button passes on the device ([#159](https://github.com/martonpaulo/supernote-tools/issues/159), [#161](https://github.com/martonpaulo/supernote-tools/issues/161)). Real uses: **learning a language**, **reading
+  foreign text** (ES/ZH) and annotating meaning, and **finding the right term** while writing in PT
+  without reaching for the phone. The owner lives between PT and ES, maybe ZH. Shares the
+  dictionary/translation engine with the definition mode (one provider interface). Translation
+  stays on the word.
 
 Not planned (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)): a button in the PDF and book selection toolbar
-(lookup and lingo stay on the lasso in a note), and an AI summary of the written page, which needs a
-paid provider key.
+(lookup stays on the lasso in a note), an AI summary of the written page, which needs a paid
+provider key, and, for translation, a vocabulary list of the words it translated and translating a
+paragraph or a whole page.
 
-## lingo
+## Lingo app
 
-Write a word, lasso it, insert its **translation**. Since 2026-11-16 this is Lookup's «Insert
-translation» button, with the language-pair opt-ins in Lookup's Settings; the `lingo` plugin is
-retiring ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)) and the name Lingo now belongs to the sideloaded app that
-switches the handwriting language ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)). Real uses: **learning a language**, **reading
-foreign text** (ES/ZH) and annotating meaning, and **finding the right term** while writing in PT
-without reaching for the phone. The owner lives between PT and ES, maybe ZH. Shares the
-dictionary/translation engine with `lookup`'s definition mode (one provider interface). Pairs are
-opt in/out.
+A sideloaded Android app, not a plugin, under `apps/lingo-app/`: it switches the handwriting
+recognition language of the whole tablet with one tap, so lasso convert, plugin recognition and the
+handwriting keyboard read the next word in that language ([#157](https://github.com/martonpaulo/supernote-tools/issues/157)). A plugin cannot do it: the
+folder that names the active language is outside the plugin sandbox ([#151](https://github.com/martonpaulo/supernote-tools/issues/151),
+[the study](research/2026-11-handwriting-language.md)). The name Lingo moved here from the
+translation plugin, which is retiring; the app was called Dialect before ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
 
-Lingo stays on the word. Not planned (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)): the PDF and book
-selection toolbar, a vocabulary list of the words it translated, and translating a paragraph or a
-whole page.
+- **Two surfaces in one test build**, so one device round compares them: a small floating button
+  over every app that shows the active language (`PT`, `EN`, `ES`) and moves to the next one, on
+  or off in «Lingo settings»; and the app's launcher entry, which the sidebar lists, that switches
+  with nothing on screen (owner, [#151](https://github.com/martonpaulo/supernote-tools/issues/151)).
+- **Installed languages only**: the cycle holds the tablet's installed language packs, by default
+  `pt_BR`, `en_US`, `es_ES`; «Lingo settings» chooses which are in it.
+- **Esperanto is out of scope**: it is not among the tablet's languages, and reaching it would need
+  a second recognition engine (owner, [#151](https://github.com/martonpaulo/supernote-tools/issues/151)).
 
 ## Dictionary and translation engine (shared)
 
-Used by `lookup`'s definition and translation buttons (and the retiring `lingo` plugin), behind a `DictionaryProvider` interface. Decisions
+Used by `lookup`'s definition and translation buttons (and the retiring Lingo plugin until it is removed), behind a `DictionaryProvider` interface. Decisions
 (interview 2026-11-14):
 
 - **Hybrid:** offline for common words, online fallback when a word is missing — the same shape as
@@ -88,9 +103,9 @@ Used by `lookup`'s definition and translation buttons (and the retiring `lingo` 
   philosophy). A paid provider (DeepL, Google) can be an opt-in later behind the same interface.
 - **Priority pairs:** PT↔ES and PT↔ZH. Not EN, for now.
 - **Monolingual definition is not a priority**, so `lookup`'s definition mode ranks below
-  translation; `lingo` (translation) is the stronger need.
+  translation, the stronger need.
 - **Not planned** (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)): pinyin and example sentences in the
-  translation shown. Pinyin stays an input of the ZH button only
+  translation shown. Pinyin stays an input of a ZH translation only
   ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).
 
 ## retouch
@@ -236,6 +251,13 @@ above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
   fingerprint is the tablet's identity when it sends.
 - Whether a listener can stay open in the background is measured in the tablet round and decided
   after it (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/supernote-tools/issues/143).
+
+## typeset (proposed)
+
+A plugin that turns each handwritten word into typed text in a font the owner chose, soon after he
+writes it, with no lasso, turned on and off from one sidebar button. The research proposes it and
+the name ([`research/2026-11-live-handwriting-to-text.md`](research/2026-11-live-handwriting-to-text.md), [#144](https://github.com/martonpaulo/supernote-tools/issues/144)); the owner has not
+yet chosen whether to build it, so nothing here is decided.
 
 ## Note templates
 
