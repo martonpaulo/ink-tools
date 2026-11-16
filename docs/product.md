@@ -5,12 +5,28 @@ Type: product definition. Current rules only; decision history lives in `docs/de
 ## What it is
 
 A monorepo of independent, unofficial tools for Supernote e-ink tablets. Each subproject stands
-alone, with its own `AGENTS.md`, versioning and releases:
+alone, with its own `AGENTS.md`, versioning and releases. They come in four kinds:
 
-- **bridge** — a device plugin that syncs the owner's Google, Apple and ICS calendars with
-  the native Supernote Calendar.
-- **ink2pic** — a device plugin that turns a handwritten word into an inserted picture.
-- **snadb** — a command-line tool that drives the tablet over Wi-Fi ADB.
+- **Plugins**, which run inside the tablet's plugin host on `sn-plugin-lib`:
+  - **lookup** turns a lassoed handwritten word into an inserted illustration, photo, short
+    definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
+    tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)), and the **lingo** plugin, which is retiring now that translation is Lookup's
+    «Insert translation» ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)).
+  - **bridge** syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
+    Supernote apps.
+  - **retouch** makes a picture on the page readable on e-ink.
+  - **relay** moves pictures and text between the tablet and the owner's iPhone and Mac over
+    LocalSend.
+  - **probe** is a developer-only plugin for device experiments.
+- **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Lingo**
+  switches the handwriting recognition language of the whole tablet with one tap
+  ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
+- **A Mac CLI**: **snadb** drives the tablet over Wi-Fi ADB.
+- **A Mac app**, planned: **desk** reads and edits `.note` files on the Mac
+  ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)).
+
+Proposed, not decided: **typeset**, a plugin that turns each handwritten word into typed text with
+no lasso ([#144](https://github.com/martonpaulo/supernote-tools/issues/144)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
 
 ## Who it is for
 
@@ -19,14 +35,18 @@ rooting or modifying the device.
 
 ## The job
 
-Give a Supernote owner reliable, scriptable control over calendars, pictures and the device, using
-only sanctioned, documented channels (Android content providers, the plugin SDK, ADB).
+Give a Supernote owner reliable, scriptable control over calendars, pictures, words and the device,
+using only sanctioned, documented channels (Android content providers, the plugin SDK, ADB, and an
+app installed the way Android allows).
 
 ## What it does
 
+- lookup: recognises a lassoed word and inserts a picture from Openclipart, Wikimedia Commons or
+  OpenMoji, a definition, or a translation for each language pair switched on.
 - bridge: aggregates every calendar into the native Calendar and carries edits back, within
   the limits the native app and the plugin sandbox impose.
-- ink2pic: recognises a lassoed word and inserts a matching Openclipart or Wikimedia Commons picture.
+- Lingo: replaces the one file that names the active recognition language and tells the tablet,
+  as the Settings app does; lasso convert and plugin recognition read the new language.
 - snadb: exposes the tablet's intents, providers and files as direct calls with JSON output.
 
 ## What it will never do

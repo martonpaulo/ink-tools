@@ -3,8 +3,8 @@
 Future subprojects and larger ideas, not yet issues. Each becomes its own folder and backlog when
 it starts. Order is not commitment.
 
-Plugins and tools that already have a folder or an issue (`lookup`, `lingo`, `retouch`, `relay`,
-`bridge`, `desk`) are described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
+Plugins, apps and tools that already have a folder or an issue (`lookup`, the Lingo app,
+`retouch`, `relay`, `bridge`, `desk`, and the proposed `typeset`) are described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
 ([#141](https://github.com/martonpaulo/supernote-tools/issues/141)).
 
 ## Content
