@@ -33,7 +33,10 @@ It runs the base (`base`, empty for the head's parent) over every case, then the
 chosen `cases`: `affected`, `all`, or a comma list of case ids and categories. `affected` asks
 `affected.mjs`, which picks the cases the changed paths can move: a source adapter, only the
 cases whose base pages show that source; a changed case in `cases.json`, that case; any other
-path under `src/`, `native/` or `packages/`, every case; anything else, none. Each run is asked
+file the lab loads (read from Node's module cache after loading the product's modules) or the
+pixel step's Java in `packages/picture-search/native/`, every case; anything else, such as a
+test, a document or plugin code the lab never loads, none
+([#108](https://github.com/martonpaulo/ink-tools/issues/108)). Each run is asked
 twice, so a throttled answer is asked again; a still-failed source stays recorded in
 `results.json`. The step summary holds the `metrics.mjs` comparison, and the `lab-<name>`
 artifact both runs' `results.json` and `metrics.json`. `out/.cache` goes from run to run as

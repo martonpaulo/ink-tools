@@ -44,11 +44,24 @@ test('a source adapter picks only the cases that show the source', () => {
   );
 });
 
-test('shared code picks every case, documents none', () => {
+test('a file the lab loads picks every case', () => {
   const all = affected(`${CORE}rank.ts`).split(',');
-  expect(affected(`${PLUGIN}src/flow/search.ts`).split(',')).toEqual(all);
   expect(all.length).toBeGreaterThan(2);
   expect(all).toEqual(expect.arrayContaining(['chair', 'house']));
-  expect(affected('packages/ink-core/x.ts').split(',')).toEqual(all);
+  expect(affected(`${PLUGIN}src/config.ts`).split(',')).toEqual(all);
+  expect(affected('plugins/lookup/src/pictureLanguages.ts').split(',')).toEqual(all);
+  expect(
+    affected('packages/picture-search/native/com/ink2pic/files/Contour.java').split(','),
+  ).toEqual(all);
+});
+
+// Run settle-warm-108 picked all 105 cases: any path under packages/ or the plugin's src/ did.
+test('a file the lab never loads picks none (#108)', () => {
   expect(affected(`${PLUGIN}docs/brief.md`, 'README.md')).toBe('');
+  expect(affected(`${PLUGIN}src/flow/search.ts`)).toBe('');
+  expect(affected(`${CORE}storage/settings.ts`, `${CORE}insert/place.ts`)).toBe('');
+  expect(affected('packages/sync-core/src/index.ts', 'packages/ink-core/x.ts')).toBe('');
+  expect(affected(`${PLUGIN}__tests__/wikidata.test.ts`)).toBe('');
+  // With a loaded file among them, every case again.
+  expect(affected(`${PLUGIN}src/flow/search.ts`, `${CORE}rank.ts`)).not.toBe('');
 });
