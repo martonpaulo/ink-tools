@@ -128,6 +128,8 @@ Before editing under a path, read the file its row names. A module with rules of
 - A command returns `(data, text)` for `--json` and plain output. A failure raises `Failure` with a stable exit code, and `--help` lists every code.
 - Exit codes and JSON keys are a public contract: add to them, and never change what one means.
 - Every ADB call has a time limit, and a wait polls a condition with a time limit.
+- A command goes over the USB cable when one authorized tablet is attached, else over Wi-Fi ADB; `status` names the link ([#171](https://github.com/martonpaulo/ink-tools/issues/171)). A command that would leave no link to the tablet refuses without an explicit flag.
+- A swipe on a note screen stays inside a list's own bounds, read in the same step: a swipe elsewhere on a note could draw ([#189](https://github.com/martonpaulo/ink-tools/issues/189)).
 - A call that changes the tablet never replaces a file or presses a stale reference without an explicit request.
 - Only one session uses the tablet at a time. A change on the tablet waits for the owner's yes, and a write counts as done only after a read-back.
 - Tests drive `src/inkctl` through the `adb` stub in `tests/inkctl.test.sh`, with `device-a.test` as the address.

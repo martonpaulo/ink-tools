@@ -360,14 +360,12 @@ The choice between them is on [#103](https://github.com/martonpaulo/ink-tools/is
   A plugin's `lassoElements(rect)` does lasso with no pen (see Plugins), so a helper plugin button
   is the route an agent has.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off
-  with `inkctl wifi off` [measured]. inkctl reaches the tablet over Wi-Fi only, even with the cable
-  in, so a round turns Wi-Fi ADB on first. With the tablet's Wi-Fi off (`adb -d shell svc wifi
-  disable`), inkctl loses it although `adb -d` still answers over the cable, so a round cannot run
-  offline checks through inkctl [measured, 2026-11-16,
-  [#171](https://github.com/martonpaulo/ink-tools/issues/171)]. The cause is in the code: the
-  device serial is always the address read from `SUPERNOTE_ADDRESS` or the address file, with
-  `:5555` added when it has no port, and every call runs `adb -s <serial>`; only `wifi on` looks up
-  a USB serial [source, 2026-11-16].
+  with `inkctl wifi off` [measured]. With the tablet's Wi-Fi off (`adb -d shell svc wifi disable`),
+  `adb -d` still answers over the cable [measured, 2026-11-16,
+  [#171](https://github.com/martonpaulo/ink-tools/issues/171)]. Since that change inkctl sends every
+  call over the cable when `adb devices` lists one authorized USB tablet, and over Wi-Fi ADB
+  otherwise; `inkctl status` names the link [source]. Before it, inkctl reached the tablet over
+  Wi-Fi only and lost it with the tablet's Wi-Fi off [measured, 2026-11-16].
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/ink-tools/issues/1)].
