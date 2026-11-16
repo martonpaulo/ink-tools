@@ -157,6 +157,8 @@ describe('the measured split decides what a mode inserts (#111)', () => {
 test('each mode searches with its own style; Lookup keeps its pictures in MyStyle/Lookup', async () => {
   expect(modeSearchSettings(illustration).photos).toBe(false);
   expect(modeSearchSettings(photoMode).photos).toBe(true);
+  // English too, after the definition's languages: «apple» is the fruit there, not the brand (#13).
+  expect(modeSearchSettings(illustration).languages).toEqual(['pt', 'es', 'en']);
   expect(LOOKUP_PICTURES.dir()).toBe(picturesDir());
   expect(picturesDir('/storage/emulated/0')).toBe(
     '/storage/emulated/0/MyStyle/Lookup/pictures',
