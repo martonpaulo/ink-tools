@@ -96,10 +96,13 @@ folder that names the active language is outside the plugin sandbox ([#151](http
 [the study](research/2026-11-handwriting-language.md)). The name Lingo moved here from the
 translation plugin, which is retiring; the app was called Dialect before ([#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 
-- **Two surfaces in one test build**, so one device round compares them: a small floating button
-  over every app that shows the active language (`PT`, `EN`, `ES`) and moves to the next one, on
-  or off in «Lingo settings»; and the app's launcher entry, which the sidebar lists, that switches
-  with nothing on screen (owner, [#151](https://github.com/martonpaulo/ink-tools/issues/151)).
+- **The floating button, shown only where you write** (owner, [#151](https://github.com/martonpaulo/ink-tools/issues/151), after trying both
+  surfaces on the tablet): a small button that shows the active language (`PT`, `EN`, `ES`) and
+  moves to the next one, visible while the handwriting keyboard is open or a handwriting screen
+  (Note, Digest, To-Do, Email) is in front; one setting keeps it always visible or always hidden.
+  The app's sidebar entry also switches, with nothing on screen.
+- **No language line in the other tools**: the plugins that recognise ink do not show the active
+  language, since the floating button already does.
 - **Installed languages only**: the cycle holds the tablet's installed language packs, by default
   `pt_BR`, `en_US`, `es_ES`; «Lingo settings» chooses which are in it.
 - **Esperanto is out of scope**: it is not among the tablet's languages, and reaching it would need
@@ -158,13 +161,14 @@ Very useful:
   photographed page from the phone ([#137](https://github.com/martonpaulo/ink-tools/issues/137)).
 - Erase with the pen, background removal, make a sticker
   ([#134](https://github.com/martonpaulo/ink-tools/issues/134)).
-- Open retouch on the picture Ink2Pic or Lookup just inserted
-  ([#139](https://github.com/martonpaulo/ink-tools/issues/139)).
+- The picture Word Lookup just inserted stays lassoed, so Image Editing's buttons are one tap
+  away; Lookup never opens Image Editing by itself (owner, replacing
+  [#139](https://github.com/martonpaulo/ink-tools/issues/139); [#168](https://github.com/martonpaulo/ink-tools/issues/168)).
 - Later: apply one edit to every image on the page
   ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
 
-Limit: each edit finishes within 2 s on the Manta; a longer one shows the plugin's «Working…»
-panel ([#103](https://github.com/martonpaulo/ink-tools/issues/103)). Before building, existing
+Limit: each edit finishes within 2 s on the Manta; a longer one shows the «Loading…» strip of
+[Design direction](#design-direction) ([#103](https://github.com/martonpaulo/ink-tools/issues/103)). Before building, existing
 plugins, apps and libraries are checked for reuse
 ([#138](https://github.com/martonpaulo/ink-tools/issues/138)).
 
@@ -212,7 +216,9 @@ like editing a PDF. Scope (interview 2026-11-14, revised):
 export to other people is not a priority either. The value is a safe `.note` editor on a big screen.
 
 The full editor is the goal from the start, not a viewer and exporter first on `supernotelib`
-(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
+(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). It fetches and writes back the tablet's notes over the
+cable through `inkctl`, with no ADB code of its own (owner, 2026-11-16,
+[#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
 ## bridge
 
@@ -224,6 +230,11 @@ by `bridge`. See [`architecture.md`](architecture.md).
 
 **Settings layout (interview 2026-11-14):** one section per module (To-Do / Calendar / Digest);
 inside each, a toggle for the module and a toggle per provider (Todoist; Google / iCloud / ICS).
+
+**To-Do sources** ([#44](https://github.com/martonpaulo/ink-tools/issues/44), owner, 2026-11-16): four Todoist sources reach the tablet's To-Do:
+Inbox, Upcoming, Habits and the project Mirror. Upcoming is Todoist's view of dated tasks, not a
+project: the dated tasks of the other projects, never a second copy of one already shown under
+Inbox, Habits or Mirror.
 
 **To-Do runs on the tablet alone** ([#44](https://github.com/martonpaulo/ink-tools/issues/44)): Bridge never depends on the Mac being on. The
 community script that syncs Todoist through the Partner app on the Mac is not used (product audit,
@@ -259,7 +270,8 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
   the fingerprint it announced. A changed certificate is a failed send, never a silent re-pin.
 - Not in scope: the whole note as a PDF, which the Supernote Partner app already exports (product
   audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)); a device without LocalSend; anything over the internet.
-  A lasso selection as typed text is [#99](https://github.com/martonpaulo/ink-tools/issues/99).
+  Sending lassoed handwriting as typed text lives here, beside «Send Page»
+  ([#99](https://github.com/martonpaulo/ink-tools/issues/99), owner, 2026-11-16).
 
 **Receive half** ([#49](https://github.com/martonpaulo/ink-tools/issues/49), owner D42 B: our own, not Notipal):
 
@@ -272,6 +284,11 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
   fingerprint is the tablet's identity when it sends.
 - Whether a listener can stay open in the background is measured in the tablet round and decided
   after it (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/ink-tools/issues/143).
+- A received photo of a paper page is offered «Straighten as document», Image Editing's Document
+  mode ([#137](https://github.com/martonpaulo/ink-tools/issues/137)), so it lands as a straight, white page (owner, 2026-11-16).
+
+Device Transfer and Account Sync stay two plugins, each with a clear name; they share no flow
+(owner, 2026-11-16).
 
 ## real-time-conversion
 
@@ -294,5 +311,8 @@ but could use some colour. Reference to study: `Laumss/sn-plugins` configuration
 design direction for every plugin's Settings, within the e-ink constraints (16 greys).
 The conventions, and what was borrowed from that reference (now Notipal), are in
 [`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/ink-tools/issues/50)).
+While a no-view action works, every plugin shows the same sign: one dark strip across the top of
+the note that reads «Loading…», removed when the action ends (owner,
+[#103](https://github.com/martonpaulo/ink-tools/issues/103)).
 On 2026-11-16 the owner named three more plugins whose Settings look he likes: SnapMark, PC Clipboard
 and DocuCraft ([their traits](../packages/ui-kit/README.md#the-owners-picks-snapmark-pc-clipboard-docucraft)).

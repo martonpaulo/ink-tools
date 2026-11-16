@@ -156,7 +156,9 @@ ink-tools/
 
     Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh
     tokens expire after 7 days; «In production» without verification keeps them, behind an
-    «unverified app» warning.
+    «unverified app» warning. The app stays in «Testing» for now (owner, 2026-11-16,
+    [#124](https://github.com/martonpaulo/ink-tools/issues/124)). The loopback flow needs an OAuth client of the «Desktop app» type:
+    the existing client is a «TVs and Limited Input devices» one, with no redirect URIs.
 - **`lookup`** — write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
   or a **translation**; each mode opt in/out, and each language pair opt in/out under the
   translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced `ink2pic`,

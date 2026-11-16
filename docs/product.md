@@ -17,22 +17,29 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   - **Image Editing** (`retouch`) makes a picture on the page readable on e-ink.
   - **Device Transfer** (`relay`) moves pictures and text between the tablet and the owner's iPhone and Mac over
     LocalSend.
-  - **probe** is a developer-only plugin for device experiments.
+  - **Plugin Diagnostics** (`probe`) is a developer-only plugin for device experiments; it still
+    shows as «Probe» until [#194](https://github.com/martonpaulo/ink-tools/issues/194).
+  - **Real-Time Conversion** (`typeset`, being built) turns each handwritten word into typed text
+    with no lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion
+    ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184)).
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
   `apps/lingo-app`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 - **A Mac CLI**: **inkctl** drives the tablet over Wi-Fi ADB.
 - **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
-  ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). «Supernote» is Ratta's trademark, so a tool's name carries no brand;
-  «for Supernote notebooks» may appear in a description only
-  ([#175](https://github.com/martonpaulo/ink-tools/issues/175)).
+  ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
-In beta, not yet on the tablet: **Real-Time Conversion** (`plugins/real-time-conversion/`), a plugin that turns each handwritten
-word into typed text with no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144)).
+«Supernote» is Ratta's trademark, so a tool's name, icon and look carry no brand. The brand appears
+only as a referential use, to say what the tools work with: «Unofficial tools for Supernote e-ink
+tablets», «for Supernote notebooks» in a description
+([#175](https://github.com/martonpaulo/ink-tools/issues/175), [#177](https://github.com/martonpaulo/ink-tools/issues/177)).
 
 Each tool shows a feature name in Supernote's own wording, and its buttons read like the tablet's
-(«New Sticker»): a verb and a noun in title case. Folders, packages, gates, tags and `pluginID`s
-keep the short internal names above ([#176](https://github.com/martonpaulo/ink-tools/issues/176)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
+(«New Sticker»): a verb and a noun in title case. A name says what the tool can do, not which
+window it opens: «Image Editing», not «Image Editor». Packages and `pluginID`s keep the short
+internal names above; a `pluginID` is random, never shown and never changes, so the tablet keeps
+a plugin's settings and grants across a rename ([#176](https://github.com/martonpaulo/ink-tools/issues/176)). Folders, gates and new tags take
+the feature names with [#194](https://github.com/martonpaulo/ink-tools/issues/194); until it lands they keep the short names. What each one is for is in [`plugin-scope.md`](plugin-scope.md).
 
 ## Who it is for
 

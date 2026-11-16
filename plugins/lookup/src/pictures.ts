@@ -12,9 +12,8 @@ import {ToastAndroid} from 'react-native';
 import {LassoPlace} from '@supernote-tools/ink-core';
 import {
   DEFAULT_ADAPTERS,
-  fitsMode,
   keepMode,
-  pixelKind,
+  keptInMode,
 } from '@supernote-tools/picture-search';
 import {
   insertText,
@@ -141,7 +140,7 @@ export function modeDeps(
         modeMeasure(mode),
         onThumbs,
         true,
-        measures => fitsMode(pixelKind(measures), mode.kind),
+        (result, measures) => keptInMode(result, measures, mode.kind),
       );
       const kept = keepMode(pages.results, pages.measures, mode.kind);
       log(

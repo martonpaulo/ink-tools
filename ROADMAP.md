@@ -1,16 +1,33 @@
 # Roadmap
 
-Future subprojects and larger ideas, not yet issues. Each becomes its own folder and backlog when
-it starts. Order is not commitment.
+Ideas still being considered: no commitment, no priority, no date. An issue is work we will do; a
+roadmap item is not one, and the two never hold the same item. An item leaves this page and
+becomes an issue only when the owner decides to do it.
 
-Plugins, apps and tools that already have a folder or an issue (`lookup`, the Lingo app,
-`retouch`, `relay`, `bridge`, Ink Notebook Editor, and `real-time-conversion`) are described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
+Tools that already have a folder or an issue (Word Lookup, the Handwriting Language app, Image
+Editing, Device Transfer, Account Sync, Real-Time Conversion and Ink Notebook Editor) are
+described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
 ([#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 ## Content
 
 - **note templates** — simple generated pages, such as one sudoku page. Parked by the owner until
   he asks ([`plugin-scope.md` › Note templates](docs/plugin-scope.md#note-templates)).
+
+## Google sign-in without expiry
+
+Deferred by the owner on 2026-11-16. Account Sync's Google app (the Google Auth Platform app of
+the Google Cloud project `supernote-tools`) stays in «Testing» for now, so its refresh token
+expires every 7 days and the owner signs in again (the current one lasts until 2026-11-23). A
+token that does not expire needs the app published:
+
+1. A home page and a privacy policy on martonpaulo.com, such as `/ink-tools` and
+   `/ink-tools/privacy`.
+2. The domain verified in Google Search Console.
+3. The domain added under Authorised domains.
+4. «Publish app».
+
+Context: [#124](https://github.com/martonpaulo/ink-tools/issues/124), the sign-in on the Mac.
 
 ## Publish and announce
 
@@ -23,9 +40,3 @@ Deferred by the owner on 2026-11-16, until the tools are ready to share; it repl
 - **InkHub** — list the reviewed plugins there.
 - **Announce** — post the tools, the `inkctl` CLI and the Handwriting Language app on
   r/Supernote_dev and r/Supernote.
-
-## Notes
-
-The owner's three original goals were To-Do <-> Todoist, Calendar <-> Apple/Google, and Saved ->
-Digest. Calendar is the active work (`area: bridge`). To-Do sync is the Bridge module of
-[#44](https://github.com/martonpaulo/ink-tools/issues/44), on the tablet alone; the provider write investigation ([#31](https://github.com/martonpaulo/ink-tools/issues/31)) is done. Saved -> Digest (Digest is cloud-only) is not yet scoped.
