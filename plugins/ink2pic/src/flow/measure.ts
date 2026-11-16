@@ -11,10 +11,11 @@
  */
 import {log, getSettings, deviceAnalyzer} from '../profile';
 import {pickedFor} from '../picks/device';
-import {picksFirst} from '../picks/picks';
+import {pickId, picksFirst} from '../picks/picks';
 import {
   chooseLook,
   ImageAnalyzer,
+  leaderDecided,
   lineArt,
   MEASURED_RESULTS,
   Measures,
@@ -234,7 +235,9 @@ export async function measureThumb(
  * folder. Never rejects: a failed download or measure leaves its result unmeasured.
  * `onThumbs` runs once every measured thumbnail is on the device (or failed), before the
  * limit: from then on a full download no longer holds a thumbnail back (#46, #88). It never
- * runs once the result is returned.
+ * runs once the result is returned. With `untilLeader`, for «Insert best picture», the order
+ * returns as soon as its first result is fixed whatever the others measure (#19): the rest of
+ * the order is then that of the measures taken so far.
  */
 export async function measureFirstPages(
   results: SearchResult[],
@@ -242,6 +245,7 @@ export async function measureFirstPages(
   query: string,
   deps: MeasureDeps = DEVICE,
   onThumbs?: () => void,
+  untilLeader = false,
 ): Promise<MeasuredPages> {
   if (!thumbDir || results.length === 0) {
     return unmeasured(results);
@@ -251,6 +255,16 @@ export async function measureFirstPages(
   const contourAll = (await deps.allContour?.()) ?? false;
   const photos = (await deps.photos?.()) ?? false;
   const firstPages = results.slice(0, MEASURED_RESULTS);
+  const picked = (await deps.picked?.(query)) ?? [];
+  // shortcut: a pick among the results leads anyway, so it waits for every thumbnail; decide on
+  // the pick once its own thumbnail is measured if the log shows that wait (#19).
+  const early =
+    untilLeader && !results.some(result => picked.includes(pickId(result.id)));
+  const pending = new Set(firstPages.map(result => result.id));
+  let decide: () => void = () => {};
+  const decided = new Promise<void>(resolve => {
+    decide = resolve;
+  });
   const uris = firstPages.map(result => deps.thumb(result, thumbDir));
   let returned = false;
   // No conversion starts once the order is returned: it would only delay the insert (#101).
@@ -260,6 +274,8 @@ export async function measureFirstPages(
       onThumbs?.();
     }
   });
+  const leads = () =>
+    leaderDecided(results, new Map(found), pending, query, photos);
   const all = Promise.all(
     firstPages.map((result, index) =>
       uris[index]
@@ -271,10 +287,27 @@ export async function measureFirstPages(
             found.set(result.id, measured);
           }
         })
-        .catch(error => log(`pixels ${result.id}: ${String(error)}`)),
+        .catch(error => log(`pixels ${result.id}: ${String(error)}`))
+        .then(() => {
+          pending.delete(result.id);
+          if (early && !returned && leads()) {
+            decide();
+          }
+        }),
     ),
   );
-  const limitReached = (await withinLimit(all, deps.limitMs)) === undefined;
+  if (early && leads()) {
+    decide();
+  }
+  const ended = await withinLimit(
+    Promise.race([
+      all.then(() => 'all' as const),
+      decided.then(() => 'leader' as const),
+    ]),
+    deps.limitMs,
+  );
+  const limitReached = ended === undefined;
+  const leaderFirst = ended === 'leader' && pending.size > 0;
   returned = true;
   // Copies: a measure that ends after the limit changes nothing already shown.
   const prepared = new Map<string, Prepared>();
@@ -292,13 +325,13 @@ export async function measureFirstPages(
       results.length,
       MEASURED_RESULTS,
     )} measured in ${Date.now() - started} ms${
-      limitReached ? ', limit reached' : ''
+      limitReached ? ', limit reached' : leaderFirst ? ', leader decided' : ''
     }`,
   );
   // The pixels never push a picture the person picked for the word down (#34).
   const distinct = picksFirst(
     orderMeasured(results, prepared, query, photos),
-    (await deps.picked?.(query)) ?? [],
+    picked,
   );
   if (distinct.length < results.length) {
     log(`pixels: ${results.length - distinct.length} near-duplicates left out`);

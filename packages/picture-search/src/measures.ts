@@ -350,6 +350,18 @@ const CONVERTED_SCALE = -1;
 const LAST_SCALE = -2;
 
 /**
+ * The scale a measured picture takes whatever the others measure: last for faint line work, text
+ * and faint pictures, then a contour drawing; undefined for one scored by its line art.
+ */
+function fixedScale(m: Measures, converted: boolean): number | undefined {
+  const kind = pixelKind(m);
+  if (isFaintLines(m) || kind === 'faint' || kind === 'text') {
+    return LAST_SCALE;
+  }
+  return converted ? CONVERTED_SCALE : undefined;
+}
+
+/**
  * The pixel signal over one set of measures: `3 x lineArt`, min-max scaled within the set, so it
  * moves pictures only relative to each other. A canonical picture, or a symbol that leads, scores
  * 0: it keeps its place.
@@ -362,12 +374,10 @@ export function pixelScorer(
   const scores = new Map<string, number>();
   const fixed = new Map<string, number>();
   for (const [id, m] of measures) {
-    const kind = pixelKind(m);
-    if (isFaintLines(m) || kind === 'faint' || kind === 'text') {
-      fixed.set(id, LAST_SCALE);
-    } else if (converted.has(id)) {
-      fixed.set(id, CONVERTED_SCALE);
-    } else if (kind !== 'blank') {
+    const set = fixedScale(m, converted.has(id));
+    if (set !== undefined) {
+      fixed.set(id, set);
+    } else if (pixelKind(m) !== 'blank') {
       scores.set(id, lineArt(m));
     }
   }
@@ -509,8 +519,121 @@ export function orderMeasured(
       converted.add(id);
     }
   }
-  const ordered = reorderByMeasures(results, measures, query, converted, photos);
+  const ordered = reorderByMeasures(
+    results,
+    measures,
+    query,
+    converted,
+    photos,
+  );
   return dropNearDuplicates(ordered, measures);
+}
+
+/**
+ * What one result can still score while thumbnails are measured: its bounds, and its line art
+ * when that is the one pixel term left open, a measured line drawing (#19).
+ */
+type Candidate = {
+  result: SearchResult;
+  order: number;
+  base: number;
+  low: number;
+  high: number;
+  pending: boolean;
+  lineArt?: number;
+};
+
+/**
+ * Whether the first result of `orderMeasured` is already fixed while the thumbnails of `pending`
+ * are still measured (#19): true when it is the same whatever they measure, or when they fail or
+ * time out, and its own thumbnail is measured. A canonical first result keeps its place.
+ * Otherwise the pixel term lies between `LINE_ART_WEIGHT x LAST_SCALE` and `LINE_ART_WEIGHT`, and
+ * a line drawing's between 0 and `LINE_ART_WEIGHT`, min-max scaled within the set; between two
+ * measured line drawings, the scale keeps their order and its range only grows. One difference
+ * is left: a pending near-duplicate of the winner with a cleaner edge would take its place in
+ * `dropNearDuplicates`, the same picture.
+ */
+export function leaderDecided(
+  results: readonly SearchResult[],
+  prepared: ReadonlyMap<string, Prepared>,
+  pending: ReadonlySet<string>,
+  query: string,
+  photos = false,
+): boolean {
+  const head = results.slice(0, MEASURED_RESULTS);
+  if (head.length === 0) {
+    return true;
+  }
+  if (head[0].canonical) {
+    // Its own measure still sets its look, and so what is inserted.
+    return !pending.has(head[0].id);
+  }
+  const intent = intentFor(query, results);
+  const scorers = photos ? PHOTO_SCORERS : DEFAULT_SCORERS;
+  const candidates: Candidate[] = [];
+  head
+    .filter(result => !result.canonical)
+    .forEach((result, order) => {
+      const base = total(result, intent, scorers);
+      const at = (scale: number) => ({
+        result,
+        order,
+        base,
+        low: base + LINE_ART_WEIGHT * scale,
+        high: base + LINE_ART_WEIGHT * scale,
+        pending: false,
+      });
+      const found = prepared.get(result.id);
+      if (pending.has(result.id)) {
+        candidates.push({
+          ...at(LAST_SCALE),
+          high: base + LINE_ART_WEIGHT,
+          pending: true,
+        });
+      } else if (!found) {
+        candidates.push(at(UNMEASURED));
+      } else if (pixelKind(found.measures) !== 'blank') {
+        // A blank one leaves pages 1 and 2 (`isLeft`).
+        const set = result.leads
+          ? 0
+          : fixedScale(found.measures, found.look === 'contour');
+        candidates.push(
+          set !== undefined
+            ? at(set)
+            : {
+                ...at(0),
+                high: base + LINE_ART_WEIGHT,
+                lineArt: lineArt(found.measures),
+              },
+        );
+      }
+    });
+  const arts = candidates.flatMap(c =>
+    c.lineArt === undefined ? [] : [c.lineArt],
+  );
+  const range = Math.max(...arts) - Math.min(...arts);
+  /** Whether `a` ranks before `b` whatever the pending thumbnails measure. */
+  const before = (a: Candidate, b: Candidate): boolean => {
+    if (a.lineArt !== undefined && b.lineArt !== undefined) {
+      const gap = a.lineArt - b.lineArt;
+      // Scaled by a range at least `range`: the gap's share is at most gap / range.
+      const least =
+        a.base -
+        b.base +
+        (gap >= 0
+          ? 0
+          : range > 0
+          ? (LINE_ART_WEIGHT * gap) / range
+          : -LINE_ART_WEIGHT);
+      return least > 0 || (least === 0 && gap >= 0 && a.order < b.order);
+    }
+    return a.low > b.high || (a.low === b.high && a.order < b.order);
+  };
+  return candidates.some(
+    leader =>
+      !leader.pending &&
+      candidates.every(other => other === leader || before(leader, other)),
+  );
 }
 
 /** A lasso button's kind of picture (#111): «Insert illustration» or «Insert photo». */

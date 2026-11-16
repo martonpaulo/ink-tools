@@ -10,16 +10,22 @@ import {
   chooseLook,
   isFaintLines,
   isPhotoLike,
+  leaderDecided,
   lineArt,
   Measures,
   needsContour,
   pixelKind,
   pixelScorer,
+  Prepared,
   reorderByMeasures,
 } from '@supernote-tools/picture-search/measures';
+import {einkScore} from '@supernote-tools/picture-search/rank';
 import {cachedSearch} from '@supernote-tools/picture-search/cache';
 import {readIntent} from '@supernote-tools/picture-search/query';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import type {
+  SearchResult,
+  SourceName,
+} from '@supernote-tools/picture-search/types';
 
 /** A white page; each picture below changes what it needs. */
 const paper: Measures = {
@@ -942,6 +948,170 @@ describe('measureFirstPages (#66)', () => {
       expect(await measureThumb(result('dark'), '/p', 'x', broken)).toBe(
         result('dark').thumbUrl,
       );
+    });
+  });
+});
+
+describe('leaderDecided (#19)', () => {
+  /** A small seeded generator, so a failure is the same on every run. */
+  const random = (seed: number) => () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+  const kinds: Measures[] = [
+    outline,
+    glossy,
+    faint,
+    blank,
+    signature,
+    photo,
+    {...outline, white: 0.6, mid: 0.2},
+    {...outline, colours: 300, edgeBox: 0.9},
+  ];
+  const titles: [SourceName, string, string][] = [
+    ['openclipart', 'Soup bowl', 'image/png'],
+    ['commons', 'Photo of soup', 'image/jpeg'],
+    ['commons', 'Soup engraving', 'image/jpeg'],
+    ['openclipart', 'Soup cartoon character', 'image/png'],
+    ['commons', 'Soup poster with text', 'image/jpeg'],
+  ];
+  const first = (
+    results: SearchResult[],
+    prepared: ReadonlyMap<string, Prepared>,
+  ) => {
+    const measures = new Map<string, Measures>();
+    const converted = new Set<string>();
+    for (const [id, {measures: m, look}] of prepared) {
+      measures.set(id, m);
+      if (look === 'contour') {
+        converted.add(id);
+      }
+    }
+    return reorderByMeasures(results, measures, 'soup', converted)[0]?.id;
+  };
+
+  it('fixes a winner only when every outcome of the pending thumbnails keeps it', () => {
+    const next = random(19);
+    const pick = <T>(items: readonly T[]): T =>
+      items[Math.floor(next() * items.length)];
+    let decided = 0;
+    for (let round = 0; round < 300; round++) {
+      const results = Array.from({length: 12}, (_, i) => {
+        const [source, title, mime] = pick(titles);
+        return {...result(`${source}:${i}`, title), source, mime};
+      });
+      const prepared = new Map<string, Prepared>();
+      const pending = new Set<string>();
+      // The slow tail: one to three thumbnails still pending, as on the device logs.
+      const tail = 1 + Math.floor(next() * 3);
+      for (const item of results) {
+        const roll = next();
+        if (pending.size < tail && roll < 0.25) {
+          pending.add(item.id);
+        } else if (roll < 0.9) {
+          prepared.set(item.id, {
+            measures: pick(kinds),
+            look: next() < 0.2 ? 'contour' : 'found',
+          });
+        }
+      }
+      if (!leaderDecided(results, prepared, pending, 'soup')) {
+        continue;
+      }
+      decided++;
+      const winner = first(results, prepared);
+      for (let outcome = 0; outcome < 20; outcome++) {
+        const completed = new Map(prepared);
+        for (const id of pending) {
+          if (next() < 0.8) {
+            completed.set(id, {
+              measures: pick(kinds),
+              look: next() < 0.2 ? 'contour' : 'found',
+            });
+          }
+        }
+        expect(first(results, completed)).toBe(winner);
+      }
+    }
+    expect(decided).toBeGreaterThan(20);
+  });
+
+  it('waits for the leading canonical result and for a pending one that could pass', () => {
+    const lead = result('lead', 'Soup', true);
+    const rest = [result('a', 'Soup bowl'), result('b', 'Soup bowl')];
+    expect(
+      leaderDecided([lead, ...rest], new Map(), new Set(['lead']), 'soup'),
+    ).toBe(false);
+    expect(
+      leaderDecided([lead, ...rest], new Map(), new Set(['a', 'b']), 'soup'),
+    ).toBe(true);
+    // Two equal pictures: the pending one may still measure better.
+    expect(
+      leaderDecided(
+        rest,
+        new Map([['a', {measures: outline, look: 'found' as const}]]),
+        new Set(['b']),
+        'soup',
+      ),
+    ).toBe(false);
+  });
+
+  describe('measureFirstPages with untilLeader', () => {
+    const clean = {...result('clean', 'Soup bowl'), mime: 'image/png'};
+    const poster: SearchResult = {
+      ...result('poster', 'Soup poster with text'),
+      source: 'commons',
+      mime: 'image/jpeg',
+    };
+    const never = new Promise<string>(() => {});
+    const deps = (picked: string[] = []): MeasureDeps => ({
+      analyzer: {
+        measure: async () => ok(outline),
+        toContour: async () => fail(MODULE_CODE, 'unused', 'unused'),
+      },
+      // The poster's thumbnail never arrives, as a slow source's.
+      thumb: async item =>
+        item.id === 'poster' ? never : `file:///p/thumbs/${item.id}`,
+      limitMs: 60000,
+      picked: async () => picked,
+    });
+
+    beforeEach(() => startLog());
+
+    it('returns once the winner is fixed, with the full wait winner', async () => {
+      expect(
+        einkScore(clean, 'soup') - einkScore(poster, 'soup'),
+      ).toBeGreaterThan(3);
+      const measured = await measureFirstPages(
+        [poster, clean],
+        '/p',
+        'soup',
+        deps(),
+        undefined,
+        true,
+      );
+      expect(measured.results[0].id).toBe('clean');
+      expect(logLines().join('\n')).toContain('pixels: 1 of 2 measured in');
+      expect(logLines().join('\n')).toContain('leader decided');
+    });
+
+    it('waits for every thumbnail without untilLeader or with a pick', async () => {
+      for (const [untilLeader, picked] of [
+        [false, []],
+        [true, ['poster']],
+      ] as const) {
+        const measured = measureFirstPages(
+          [poster, clean],
+          '/p',
+          'soup',
+          {...deps([...picked]), limitMs: 50},
+          undefined,
+          untilLeader,
+        );
+        await measured;
+        expect(logLines().join('\n')).toContain('limit reached');
+        startLog();
+      }
     });
   });
 });

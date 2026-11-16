@@ -94,7 +94,8 @@ export async function insertBest(
   if (!outcome) {
     return {ok: false, text: copy['error.unexpected']};
   }
-  // Page 1 in the grid's order: re-sorted by its pixels, as Choose picture shows it (#66).
+  // Page 1 in the grid's order: re-sorted by its pixels, as Choose picture shows it (#66), up to
+  // the moment its first picture is fixed (#19).
   const measuring = Date.now();
   const early: {value: EarlyDownload | null} = {value: null};
   const leading = outcome.results[0];
@@ -102,9 +103,16 @@ export async function insertBest(
     return LATE;
   }
   const pages = await timed('thumbnails', () =>
-    deps.measure(outcome.results, run.thumbDir, word, undefined, () => {
-      early.value = leading ? deps.early(leading) : null;
-    }),
+    deps.measure(
+      outcome.results,
+      run.thumbDir,
+      word,
+      undefined,
+      () => {
+        early.value = leading ? deps.early(leading) : null;
+      },
+      true,
+    ),
   );
   logTime(
     'thumbnails',

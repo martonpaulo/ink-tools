@@ -91,6 +91,8 @@ describe('Insert best picture inserts the best result at once (#74)', () => {
       '/p',
       'soup',
     ]);
+    // Only the first picture is inserted: the measures stop once it is fixed (#19).
+    expect(d.measure.mock.calls[0][5]).toBe(true);
     // As a contour drawing when its tile shows one, the same as a tap on it (#66). The early
     // download of the search's first picture is dropped: the measured order chose another (#88).
     expect(d.early).toHaveBeenCalledWith(first);
