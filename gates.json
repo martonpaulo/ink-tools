@@ -54,6 +54,7 @@
     {"path": "plugins/probe/", "gates": ["probe"]},
     {"path": ".github/workflows/validate-probe.yml", "gates": ["probe"]},
     {"path": "apps/lingo-app/", "gates": ["lingo-app"]},
+    {"path": "apps/ink-notebook-editor/", "gates": ["docs"]},
     {"path": ".github/workflows/validate-lingo-app.yml", "gates": ["lingo-app"]},
     {"path": "cli/inkctl/", "gates": ["inkctl"]},
     {"path": ".github/workflows/validate-inkctl.yml", "gates": ["inkctl"]},
