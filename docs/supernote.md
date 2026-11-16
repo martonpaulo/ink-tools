@@ -135,6 +135,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#164](https://github.com/martonpaulo/supernote-tools/issues/164)].
 - `lassoElements(rect)` selected the text boxes inside the rect but not a picture that crossed its
   bottom edge [measured]; that an element must lie wholly inside is [inference].
+- `lassoElements(rect)` with an inserted picture's rect also selects the handwriting strokes under
+  the picture, and a delete of that selection removes them [measured, pen round, 2026-11-16,
+  Lookup 0.2.0 beta 4, [#168](https://github.com/martonpaulo/supernote-tools/issues/168)].
+- Reading a page's elements one by one for their rects costs about 8 to 11 ms per element (3
+  elements in 24 ms, 5 in 54 ms); a test page of 69 to 90 elements ran past a 300 ms budget every
+  time [measured, 2026-11-16, Lookup 0.2.0 beta 4,
+  [#152](https://github.com/martonpaulo/supernote-tools/issues/152)].
+- `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
+  pen round, 2026-11-16, [#19](https://github.com/martonpaulo/supernote-tools/issues/19)].
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
   state. `getLassoRect` then answers the selection's local rect (`{-40, 0, 140, 181}` for a sticker
   shown near (870, 1190)), and Back leaves the note and drops the pasted sticker [measured,
@@ -243,6 +252,12 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   process, no restart), and its label then shows the new language; while it stays open it keeps
   the old one [measured, log and label]. TXT export lands in `EXPORT/`, which Supernote Cloud
   uploads at once [measured].
+- **The pen confirms it** [measured, pen round, 2026-11-16, Lingo app 0.1.0 beta 2,
+  [#157](https://github.com/martonpaulo/supernote-tools/issues/157)]: lasso «Recognize as Text» on
+  a handwritten «maçã» gave «mass» in `en_US` and «maçã» in `pt_BR`, right after each
+  floating-button tap. The handwriting keyboard in To-Do gave «~ Maga» in `en_US` and «maçã» in
+  `pt_BR`; its bar showed the new language only after the keyboard was opened again. A tap on the
+  app's entry in the Supernote sidebar switched the language with nothing on screen.
 - Uninstalling a plugin from Settings («Its data will also be deleted») left its
   `MyStyle/<name>` folder untouched; a `plugin ls` right after the uninstall got no answer from
   the plugin provider once, then answered [measured, Ink2Pic, 2026-11-16].
@@ -292,7 +307,10 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
   [#148](https://github.com/martonpaulo/supernote-tools/issues/148)]. Once a lasso exists, `snadb click` presses its toolbar and every «⋯» row.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`snadb wifi on`) and off
   with `snadb wifi off` [measured]. snadb reaches the tablet over Wi-Fi only, even with the cable
-  in, so a round turns Wi-Fi ADB on first.
+  in, so a round turns Wi-Fi ADB on first. With the tablet's Wi-Fi off (`adb -d shell svc wifi
+  disable`), snadb loses it although `adb -d` still answers over the cable, so a round cannot run
+  offline checks through snadb [measured, 2026-11-16,
+  [#171](https://github.com/martonpaulo/supernote-tools/issues/171)].
 - After a tablet restart, `snadb status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `snadb wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/supernote-tools/issues/1)].
