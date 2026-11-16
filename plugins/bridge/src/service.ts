@@ -15,13 +15,14 @@ import {getPluginDirPath} from '@supernote-tools/sn-adapter/official';
 import {deviceReader} from './deviceReader';
 import {deviceRows} from './deviceRows';
 import {createDeviceStores} from './deviceStores';
-import {createSecretStore} from './secretStore';
+import {createSecretStore, importSecretDrops} from './secretStore';
 import {loadSettings} from './settingsStore';
 import {createSyncRunner, SyncDevice, SyncRunner, SyncSnapshot} from './sync';
 
 export const device: SyncDevice = {
   loadSettings: () => loadSettings(getPluginDirPath),
   secrets: createSecretStore(getPluginDirPath),
+  importSecrets: () => importSecretDrops(getPluginDirPath),
   stores: createDeviceStores(deviceRows(), () => Date.now()),
   probe: () => probeAll(BUNDLED_DESCRIPTOR, deviceReader()),
   fetch: (url, init) => fetch(url, init),

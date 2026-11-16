@@ -41,9 +41,9 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   tap X Y | swipe X1 Y1 X2 Y2    press by coordinates, the last resort
   wifi on                        over the USB cable, turn Wi-Fi ADB on and connect to it
   wifi off                       turn Wi-Fi ADB off, over the cable; --leave-unreachable with none
-  secret set PROVIDER            write a sign-in secret for Bridge from standard input, never argv
-  secret remove PROVIDER         sign Bridge out of PROVIDER by deleting its secret
-  secret status                  which providers have a secret, with only its last 4 characters
+  secret set PROVIDER            leave a sign-in secret for Account Sync to take, from standard input, never argv
+  secret remove PROVIDER         take back a secret Account Sync has not taken yet
+  secret status                  which providers have a secret waiting, with only its last 4 characters
   google login                   sign Account Sync in to Google Calendar in this Mac's browser and
                                  keep the refresh token in the login Keychain; prints only its length
   shell COMMAND...               run a command on the device
@@ -142,13 +142,14 @@ https://github.com/martonpaulo/supernote-tools
 ADB_PORT = 5555  # the port `adb tcpip` opens
 LINK_USB = "usb"
 LINK_WIFI = "wifi"
-# Bridge's sign-in secrets (#116, owner D16 A): one file per provider in its private plugin folder.
+# Bridge's sign-in secrets (#116, owner D16 A): `adb shell` cannot write Bridge's private plugin folder
+# (measured 2026-11-17: Permission denied), so `secret set` leaves a one-shot drop file in a folder the
+# shell user writes and the plugin file guard allows, and Account Sync moves it into its private folder
+# and deletes it on its next start or «Sync now» (plugins/bridge/src/secretStore.ts, SECRET_DROP_FOLDER).
 # The file names are sync-core's `secretFileName` (packages/sync-core/src/secrets.ts); a test reads both.
-# shortcut: the folder is the official Plugin Permissions page's path for a plugin's own files, not yet
-# measured on the tablet; the #116 probe round confirms it and that `adb shell` may write there.
+# shortcut: the drop folder is not yet measured on the tablet; the #116 device round checks it.
 SECRET_PROVIDERS = ("todoist", "icloud", "google")
-BRIDGE_PLUGIN_ID = "4d11a9bbc6ad25e2"  # plugins/bridge/PluginConfig.json pluginID
-BRIDGE_PRIVATE_FOLDER = f"/data/data/com.ratta.supernote.pluginhost/files/plugins/{BRIDGE_PLUGIN_ID}"
+SIGN_IN_DROP_FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync"
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
 # The login Keychain items of the Google sign-in on the Mac (#124, plugins/bridge/AGENTS.md).
 KEYCHAIN_SERVICE = "ink-tools"
@@ -2302,7 +2303,7 @@ def command_wifi_off(device: Device, args: argparse.Namespace):
 
 
 def secret_path(provider: str) -> str:
-    return f"{BRIDGE_PRIVATE_FOLDER}/{provider}.secret"
+    return f"{SIGN_IN_DROP_FOLDER}/{provider}.secret"
 
 
 def parse_secret(raw: str) -> str:
@@ -2332,13 +2333,14 @@ def command_secret_set(device: Device, args: argparse.Namespace):
     partial = shlex.quote(f"{secret_path(args.provider)}.partial")
     # The value goes on stdin: argv reaches `ps` and the history file. A temp name, then a rename, so a
     # lost connection never leaves half a secret.
-    done = device.adb("shell", f"umask 077; cat > {partial} && mv {partial} {path}", stdin=value.encode())
+    folder = shlex.quote(SIGN_IN_DROP_FOLDER)
+    done = device.adb("shell", f"umask 077; mkdir -p {folder} && cat > {partial} && mv {partial} {path}", stdin=value.encode())
     if done.returncode != 0:
         device.shell(f"rm -f {partial}")
         problem = device.log.clean(done.stderr.decode(errors="replace").strip())
         raise Failure(EXIT_FAILED, "device_error", problem or f"the {args.provider} secret was not written")
     data = {"provider": args.provider, "stored": True, "tail": masked(value)}
-    return data, f"{args.provider}: signed in ({data['tail']})"
+    return data, f"{args.provider}: waiting for Account Sync ({data['tail']}); it moves in on its next start or Sync now"
 
 
 def command_secret_remove(device: Device, args: argparse.Namespace):
@@ -2347,7 +2349,10 @@ def command_secret_remove(device: Device, args: argparse.Namespace):
     device.shell(f"rm -f {shlex.quote(path)}")
     if device.test(f"-e {shlex.quote(path)}"):
         raise Failure(EXIT_FAILED, "device_error", f"the {args.provider} secret is still there after rm")
-    return {"provider": args.provider, "removed": existed}, f"{args.provider}: signed out" if existed else f"{args.provider}: was not signed in"
+    # Only a drop file Account Sync has not taken yet; a moved-in secret is signed out in its Settings.
+    removed = f"{args.provider}: the waiting secret was removed"
+    none = f"{args.provider}: nothing waiting; sign out in Account Sync Settings"
+    return {"provider": args.provider, "removed": existed}, removed if existed else none
 
 
 def command_secret_status(device: Device, args: argparse.Namespace):
@@ -2360,7 +2365,7 @@ def command_secret_status(device: Device, args: argparse.Namespace):
         # Only the last characters cross the connection, never the whole value.
         tail = device.shell(f"tail -c {SECRET_TAIL} {path}")
         rows.append({"provider": provider, "stored": True, "tail": f"…{tail}"})
-    lines = [f"{row['provider']}: signed in ({row['tail']})" if row["stored"] else f"{row['provider']}: not signed in" for row in rows]
+    lines = [f"{row['provider']}: waiting for Account Sync ({row['tail']})" if row["stored"] else f"{row['provider']}: nothing waiting" for row in rows]
     return {"providers": rows}, "\n".join(lines)
 
 

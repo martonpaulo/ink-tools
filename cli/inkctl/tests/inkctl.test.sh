@@ -40,7 +40,7 @@ cat > "$work/bin/adb" <<'STUB'
 printf '%s\n' "$*" >> "$ADB_LOG"
 # A real `adb shell` forwards the input it inherits: with $ADB_READS_STDIN, every call but the
 # secret write drains it, so a call that inherits a piped secret swallows it.
-if [ -n "${ADB_READS_STDIN:-}" ]; then case "$*" in *"umask 077; cat > "*) ;; *) cat >> "$ADB_FILES/swallowed" ;; esac; fi
+if [ -n "${ADB_READS_STDIN:-}" ]; then case "$*" in *"umask 077; mkdir -p "*) ;; *) cat >> "$ADB_FILES/swallowed" ;; esac; fi
 if [ "$1" = connect ]; then
     if [ -z "${ADB_CONNECT_FAILS:-}" ] && { [ ! -f "$ADB_FILES/stale" ] || [ -f "$ADB_FILES/killed" ]; }; then echo device > "$ADB_FILES/state"; fi
     printf '%s\n' "${ADB_CONNECT_REPLY:-connected to $2}"
@@ -164,7 +164,7 @@ case "$1" in
                     if [ "$page" -ge 1 ] && [ -f "$ADB_FILES/page$page.xml" ]; then echo "$page" > "$ADB_FILES/page"; fi
                 fi ;;
             "input "*) : ;;
-            "umask 077; cat > "*)
+            "umask 077; mkdir -p "*)
                 [ -f "$ADB_FILES/write-fails" ] && { echo 'Permission denied' >&2; exit 1; }
                 cat > "$ADB_FILES/secret-written" ;;
             "rm -f "*) printf '%s\n' "$2" >> "$ADB_FILES/removed"; target=${2#rm -f }; target=${target//\'/}; grep -vxF "f $target" "$ADB_FILES/paths" > "$ADB_FILES/paths.next"; mv "$ADB_FILES/paths.next" "$ADB_FILES/paths" ;;
@@ -1228,11 +1228,12 @@ PY
 )" "[]"
 
 # Bridge's sign-in secrets (#116): the value travels on stdin, never in argv or the history.
-private=/data/data/com.ratta.supernote.pluginhost/files/plugins/4d11a9bbc6ad25e2
+# The private folder refuses adb (#116), so the value waits in a one-shot drop file Account Sync takes.
+private=/storage/emulated/0/.data/plugin/inktools-account-sync
 synthetic=tok-SYNTHETIC-0000-wxyz
 output=$(printf '%s\r\n' "$synthetic" | run secret set todoist --json)
 check "secret set writes the value from stdin without its line end" "$(cat "$files/secret-written")" "$synthetic"
-check "secret set writes a temp name, then renames it" "$(called "cat > $private/todoist.secret.partial && mv $private/todoist.secret.partial $private/todoist.secret")" "1"
+check "secret set writes a temp name, then renames it" "$(called "mkdir -p $private && cat > $private/todoist.secret.partial && mv $private/todoist.secret.partial $private/todoist.secret")" "1"
 check "secret set shows only the last four characters" "$(printf '%s' "$output" | field "['tail']")" "…wxyz"
 check "the secret never reaches an adb argument" "$(grep -cF "$synthetic" "$log")" "0"
 check "the secret never reaches the history" "$(grep -cF "$synthetic" "$history_file")" "0"
@@ -1256,10 +1257,10 @@ rm -f "$files/write-fails"
 printf 'x' | SUPERNOTE_READ_ONLY=1 run secret set todoist >/dev/null 2>&1
 check "read-only mode refuses secret set" "$?" "11"
 printf 'f %s\n' "$private/todoist.secret" >> "$files/paths"
-check "secret status shows the tail of a stored secret" "$(run secret status | head -1)" "todoist: signed in (…wxyz)"
-check "secret status names a provider with none" "$(run secret status | tail -1)" "google: not signed in"
-check "secret remove signs out" "$(run secret remove todoist)" "todoist: signed out"
-check "secret status reads back signed out" "$(run secret status | head -1)" "todoist: not signed in"
+check "secret status shows the tail of a stored secret" "$(run secret status | head -1)" "todoist: waiting for Account Sync (…wxyz)"
+check "secret status names a provider with none" "$(run secret status | tail -1)" "google: nothing waiting"
+check "secret remove takes back a waiting secret" "$(run secret remove todoist)" "todoist: the waiting secret was removed"
+check "secret status reads back nothing waiting" "$(run secret status | head -1)" "todoist: nothing waiting"
 providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/sync-core/src/secrets.ts" | grep -o "'[a-z]*'" | tr -d "'" | paste -sd, -)
 check "the providers are sync-core's" "$providers" "todoist,icloud,google"
 check "the file name is sync-core's" "$(grep -c '`${provider}.secret`' "$repo_root/../../packages/sync-core/src/secrets.ts")" "1"

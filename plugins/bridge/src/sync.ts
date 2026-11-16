@@ -30,6 +30,7 @@ import {
 } from '@supernote-tools/sync-core';
 import type {CapabilityStatus} from '@supernote-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
+import type {SecretDrop} from './secretStore';
 import {probeProblems} from './probe';
 import {logBlocked, logRun} from './statusText';
 
@@ -66,6 +67,11 @@ export interface SyncDevice {
   stores?: DeviceStores;
   /** The adapt-on/off probe (#43); absent until its device reader is in the build. */
   probe?: () => Promise<CapabilityStatus[]>;
+  /**
+   * Moves the sign-in drop files `inkctl secret set` left into the private folder (#116,
+   * `importSecretDrops`); each pass runs it first, so a start and «Sync now» both take them.
+   */
+  importSecrets?: () => Promise<SecretDrop[]>;
   /** The Google OAuth client the refresh needs; absent while nothing puts it on the tablet. */
   googleClient?: () => Promise<OAuthClient | null>;
   fetch: Fetch;
@@ -203,6 +209,23 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
 
   const run = async (): Promise<SyncSnapshot> => {
     publish({...current, running: true});
+    if (device.importSecrets) {
+      try {
+        for (const drop of await device.importSecrets()) {
+          log(
+            drop.moved
+              ? `[Bridge] secrets: ${drop.provider} moved in from the drop folder`
+              : `[Bridge] secrets: ${drop.provider} not moved in: ${drop.problem}`,
+          );
+        }
+      } catch (e) {
+        log(
+          `[Bridge] secrets: the drop folder check failed: ${
+            (e as Error).message
+          }`,
+        );
+      }
+    }
     const settings = await device.loadSettings();
     if (!settings.ok) {
       log(

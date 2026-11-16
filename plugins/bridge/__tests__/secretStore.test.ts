@@ -2,7 +2,11 @@
 import {ok, fail, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import {signInState} from '@supernote-tools/sync-core/secrets';
 import {TextFiles} from '../src/files';
-import {createSecretStore} from '../src/secretStore';
+import {
+  createSecretStore,
+  importSecretDrops,
+  SECRET_DROP_FOLDER,
+} from '../src/secretStore';
 
 const DIR = '/data/data/com.ratta.supernote.pluginhost/files/plugins/bridge/';
 const folder = async () => ok(DIR);
@@ -11,7 +15,10 @@ function disk(start: Record<string, string> = {}) {
   const files = {...start};
   const native: TextFiles = {
     readText: async p => files[p] ?? null,
-    writeText: async () => null,
+    writeText: async (p, text) => {
+      files[p] = text;
+      return null;
+    },
     deleteFile: async p => {
       delete files[p];
       return true;
@@ -62,4 +69,46 @@ test('sign out deletes the file; a delete that did not happen throws', async () 
   await expect(
     createSecretStore(folder, stuck).remove('todoist'),
   ).rejects.toThrow('the todoist sign-in was not deleted');
+});
+
+const DROP = `${SECRET_DROP_FOLDER}/todoist.secret`;
+
+test('a drop file inkctl left moves into the private folder and is deleted at once (#116)', async () => {
+  const {files, native} = disk({[DROP]: 'tok-SYNTHETIC-1234\n'});
+  expect(await importSecretDrops(folder, native)).toEqual([
+    {provider: 'todoist', moved: true},
+  ]);
+  expect(files[DROP]).toBeUndefined();
+  expect(files[`${DIR}todoist.secret`]).toBe('tok-SYNTHETIC-1234');
+  expect(await importSecretDrops(folder, native)).toEqual([]);
+});
+
+test('a broken drop file is deleted too, and its problem never holds the value', async () => {
+  const {files, native} = disk({[DROP]: 'tok\tSYNTHETIC'});
+  const [drop] = await importSecretDrops(folder, native);
+  expect(drop).toMatchObject({provider: 'todoist', moved: false});
+  expect(JSON.stringify(drop)).not.toContain('SYNTHETIC');
+  expect(files[DROP]).toBeUndefined();
+  expect(files[`${DIR}todoist.secret`]).toBeUndefined();
+});
+
+test('a drop file that cannot be deleted is a problem, not a move', async () => {
+  const {native} = disk({[DROP]: 'tok-SYNTHETIC-1234'});
+  native.deleteFile = async () => false;
+  const [drop] = await importSecretDrops(folder, native);
+  expect(drop).toEqual({
+    provider: 'todoist',
+    moved: false,
+    problem: 'the drop file was not deleted: it is still there',
+  });
+});
+
+test('inkctl writes the drop files where Bridge reads them', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const cli = fs.readFileSync(
+    path.join(__dirname, '../../../cli/inkctl/src/inkctl'),
+    'utf8',
+  );
+  expect(cli).toContain(`SIGN_IN_DROP_FOLDER = "${SECRET_DROP_FOLDER}"`);
 });

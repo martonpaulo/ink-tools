@@ -71,9 +71,9 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl tap\|swipe` | Presses by coordinates, the last resort. |
 | `inkctl wifi on` | Over the USB cable, turns Wi-Fi ADB on (`adb tcpip 5555`) and connects to it. |
 | `inkctl wifi off` | Turns Wi-Fi ADB off over the cable, which keeps working after it, and says how to turn it on again. With no cable it refuses, unless `--leave-unreachable` says the work has ended. Off is the safe state: leave Wi-Fi ADB off when no work runs. |
-| `inkctl secret set PROVIDER` | Writes a sign-in secret for the Bridge plugin (`todoist`, `icloud` or `google`) from standard input, into Bridge's private plugin folder. The value never goes into an argument, the log or the history; only its last 4 characters are shown. Not yet run on the tablet ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). |
-| `inkctl secret remove PROVIDER` | Signs Bridge out of a provider by deleting its secret. |
-| `inkctl secret status` | Says which providers have a secret, with only its last 4 characters. |
+| `inkctl secret set PROVIDER` | Writes a sign-in secret for the Bridge plugin (`todoist`, `icloud` or `google`) from standard input, as a one-shot drop file in `/storage/emulated/0/.data/plugin/inktools-account-sync/`: `adb` cannot write Bridge's private plugin folder, so Account Sync moves the value there and deletes the drop file on its next start or «Sync now». The value never goes into an argument, the log or the history; only its last 4 characters are shown. Not yet run on the tablet ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). |
+| `inkctl secret remove PROVIDER` | Takes back a drop file Account Sync has not taken yet. A secret already moved in is signed out in Account Sync Settings. |
+| `inkctl secret status` | Says which providers have a drop file waiting, with only its last 4 characters. |
 | `inkctl google login` | Signs Account Sync in to Google Calendar in this Mac's browser, with Google's installed-app flow: a redirect to `127.0.0.1`, `state` and PKCE, scopes `calendar.readonly` and `calendar.events`. It reads the «Desktop app» client from the login Keychain and stores the refresh token there, and prints only the token's length and the command that sends it to the tablet through `inkctl secret set google`. The browser then shows a success or failure page ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). |
 | `inkctl shell COMMAND...` | Runs a command on the tablet. |
 

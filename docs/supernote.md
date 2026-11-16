@@ -354,6 +354,10 @@ the note shows through, is still to test.
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
   [#23](https://github.com/martonpaulo/ink-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
   plugin files; its private folder (`getPluginDirPath`) is the one place outside sync it reaches.
+- `adb shell` (`uid=2000(shell)`, groups `sdcard_rw`, `ext_data_rw`) cannot list or write a plugin's
+  private folder under `/data/data/com.ratta.supernote.pluginhost/files/plugins/<pluginID>`
+  («Permission denied»), and `run-as com.ratta.supernote.pluginhost` answers «package not an
+  application» [measured, 2026-11-17, [#116](https://github.com/martonpaulo/ink-tools/issues/116)].
   Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)].
 - A file a plugin writes in `MyStyle/` is uploaded to Supernote Cloud within seconds (Retouch's
   `MyStyle/Retouch/history.json`, 5 s after the write) [measured, 2026-11-16].

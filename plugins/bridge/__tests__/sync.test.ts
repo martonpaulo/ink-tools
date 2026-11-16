@@ -248,3 +248,32 @@ test('the calendar window starts days before today at midnight', () => {
   expect(new Date(w.from).getHours()).toBe(0);
   expect(w.to - w.from).toBe(67 * 24 * 3_600_000);
 });
+
+test('each pass first moves in the sign-in drop files, before it reads a secret (#116)', async () => {
+  const order: string[] = [];
+  const d = device({
+    importSecrets: async () => {
+      order.push('import');
+      return [
+        {provider: 'todoist', moved: true},
+        {
+          provider: 'icloud',
+          moved: false,
+          problem: 'the drop file did not read: refused',
+        },
+      ];
+    },
+    loadSettings: async () => {
+      order.push('settings');
+      return {ok: true, value: settings('google', 'todoist')};
+    },
+  });
+  await createSyncRunner(d).syncNow();
+  expect(order.slice(0, 2)).toEqual(['import', 'settings']);
+  expect(d.lines).toContain(
+    '[Bridge] secrets: todoist moved in from the drop folder',
+  );
+  expect(d.lines).toContain(
+    '[Bridge] secrets: icloud not moved in: the drop file did not read: refused',
+  );
+});

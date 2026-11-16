@@ -8,6 +8,7 @@
 import {
   parseSecret,
   secretFileName,
+  SECRET_PROVIDERS,
   SecretProvider,
   SecretStore,
 } from '@supernote-tools/sync-core/secrets';
@@ -54,4 +55,82 @@ export function createSecretStore(
       }
     },
   };
+}
+
+/**
+ * Where `inkctl secret set` leaves a sign-in secret (#116): `adb shell` cannot write the private
+ * folder (Permission denied on the tablet, 2026-11-17), so the Mac writes a one-shot drop file in a
+ * folder the plugin file guard allows and Supernote Cloud does not sync (hidden), and Bridge moves
+ * it in. `cli/inkctl/src/inkctl` has the same path as `SIGN_IN_DROP_FOLDER`.
+ * shortcut: the folder is not yet measured on the tablet; the #116 device round checks it.
+ */
+export const SECRET_DROP_FOLDER =
+  '/storage/emulated/0/.data/plugin/inktools-account-sync';
+
+/** What happened to one provider's drop file; the value is never in it. */
+export type SecretDrop =
+  | {provider: SecretProvider; moved: true}
+  | {provider: SecretProvider; moved: false; problem: string};
+
+/**
+ * Moves each waiting drop file into the private folder and deletes the drop file at once, even a
+ * broken one, so no secret stays in shared storage. Only providers with a drop file are listed.
+ */
+export async function importSecretDrops(
+  folder: Folder,
+  files?: TextFiles,
+  dropFolder: string = SECRET_DROP_FOLDER,
+): Promise<SecretDrop[]> {
+  const done: SecretDrop[] = [];
+  for (const provider of SECRET_PROVIDERS) {
+    const drop = inFolder(dropFolder, provider);
+    const read = await callFiles(f => f.readText(drop), files);
+    if (read.ok && read.value === null) {
+      continue;
+    }
+    let problem: string | undefined;
+    if (!read.ok) {
+      problem = `the drop file did not read: ${read.message}`;
+    } else {
+      let value: string | undefined;
+      try {
+        value = parseSecret(read.value!);
+      } catch (e) {
+        problem = (e as Error).message;
+      }
+      if (value !== undefined) {
+        const dir = await folder();
+        if (!dir.ok) {
+          problem = dir.message;
+        } else {
+          const target = inFolder(dir.value, provider);
+          const written = await callFiles(
+            f => f.writeText(target, value!),
+            files,
+          );
+          if (!written.ok) {
+            problem = `the secret was not saved: ${written.message}`;
+          }
+        }
+      }
+    }
+    if (read.ok) {
+      const removed = await callFiles(f => {
+        if (!f.deleteFile) {
+          throw new Error('the file module cannot delete a file');
+        }
+        return f.deleteFile(drop);
+      }, files);
+      if (!removed.ok || removed.value === false) {
+        const why = removed.ok ? 'it is still there' : removed.message;
+        problem = `${
+          problem ? `${problem}; ` : ''
+        }the drop file was not deleted: ${why}`;
+      }
+    }
+    done.push(
+      problem ? {provider, moved: false, problem} : {provider, moved: true},
+    );
+  }
+  return done;
 }
