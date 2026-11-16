@@ -32,11 +32,18 @@ export type ProviderSignIn = {
   onSignOut: () => void;
 };
 
+/** The «Sync now» button (#40): disabled while a pass runs, with why the last pass did not start. */
+export type SyncControl = {
+  running: boolean;
+  onSyncNow: () => void;
+  problem?: string;
+};
+
 export type ShellState =
   | {kind: 'loading'}
   | {kind: 'error'; reason: string; onRetry: () => void}
   /** `notice`: a problem that leaves the screen usable, such as a save that failed (#40). */
-  | {kind: 'ready'; modules: ModuleRow[]; notice?: string};
+  | {kind: 'ready'; modules: ModuleRow[]; notice?: string; sync?: SyncControl};
 
 export function SettingsShell({
   state,
@@ -57,6 +64,7 @@ export function SettingsShell({
           {state.notice}
         </Text>
       )}
+      {state.kind === 'ready' && state.sync && <SyncLine sync={state.sync} />}
       {state.kind === 'ready' && form}
     </View>
   );
@@ -105,6 +113,25 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
         </View>
       );
   }
+}
+
+/** «Sync now», and in words that a pass runs or why the last one did not start. */
+function SyncLine({sync}: {sync: SyncControl}): React.JSX.Element {
+  return (
+    <View style={shared.row}>
+      <Button
+        label={copy['sync.button']}
+        disabled={sync.running}
+        onPress={sync.onSyncNow}
+      />
+      {sync.running && <Text style={shared.hint}>{copy['sync.running']}</Text>}
+      {!sync.running && sync.problem && (
+        <Text accessibilityRole="alert" style={shared.text}>
+          {format('sync.problem', {reason: sync.problem})}
+        </Text>
+      )}
+    </View>
+  );
 }
 
 /** A provider's sign-in in words: the masked tail and a sign-out, or how to sign in (#90). */

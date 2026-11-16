@@ -11,10 +11,15 @@ import {
   Result,
 } from '@supernote-tools/sn-adapter/official';
 
-/** The calls Bridge uses of the module; `readText` answers null for a file that is not there. */
+/**
+ * The calls Bridge uses of the module; `readText` answers null for a file that is not there.
+ * `deleteFile` signs a provider out (#90); it is optional so a store that only reads and writes
+ * Settings needs none.
+ */
 export type TextFiles = {
   readText: (path: string) => Promise<string | null>;
   writeText: (path: string, text: string) => Promise<null>;
+  deleteFile?: (path: string) => Promise<unknown>;
 };
 
 export const FILES_MODULE = 'BridgeFiles';

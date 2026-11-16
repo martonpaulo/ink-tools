@@ -14,6 +14,9 @@ export const copy = {
   'status.errors': 'Not synced ({count}):',
   'status.warnings': 'Synced, but read with care ({count}):',
   'status.more': 'and {count} more in the log',
+  'sync.button': 'Sync now',
+  'sync.running': 'Syncing…',
+  'sync.problem': 'The sync did not start: {reason}',
   'remove.button': 'Remove what Account Sync wrote',
   'remove.confirm':
     'Remove what Account Sync wrote for {module}? Your own events and tasks stay.',

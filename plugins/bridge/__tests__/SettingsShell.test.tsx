@@ -21,6 +21,12 @@ const STATES: Record<string, ShellState> = {
   error: {kind: 'error', reason: 'storage did not answer', onRetry: () => {}},
   empty: {kind: 'ready', modules: []},
   notice: {kind: 'ready', modules: [], notice: 'The change was not saved: disk full'},
+  syncing: {kind: 'ready', modules: [], sync: {running: true, onSyncNow: () => {}}},
+  syncProblem: {
+    kind: 'ready',
+    modules: [],
+    sync: {running: false, onSyncNow: () => {}, problem: 'storage did not answer'},
+  },
   modules: {
     kind: 'ready',
     modules: [
@@ -184,5 +190,29 @@ describe('SettingsShell (#93)', () => {
       press(tree, copy['signOut.yes']);
       expect(onSignOut).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('the Sync now button (#40)', () => {
+  const button = (tree: ReactTestRenderer) =>
+    tree.root.findByProps({accessibilityLabel: copy['sync.button']});
+
+  test('a press starts a pass', () => {
+    const onSyncNow = jest.fn();
+    const tree = render({kind: 'ready', modules: [], sync: {running: false, onSyncNow}});
+    act(() => button(tree).props.onPress());
+    expect(onSyncNow).toHaveBeenCalledTimes(1);
+  });
+
+  test('it is disabled, in words, while a pass runs', () => {
+    const tree = render(STATES.syncing);
+    expect(button(tree).props.accessibilityState).toMatchObject({disabled: true});
+    expect(texts(tree)).toContain(copy['sync.running']);
+  });
+
+  test('a pass that did not start says why', () => {
+    expect(texts(render(STATES.syncProblem))).toContain(
+      'The sync did not start: storage did not answer',
+    );
   });
 });
