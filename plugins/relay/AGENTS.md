@@ -16,8 +16,9 @@ and an address field for a device discovery cannot see.
 **Receive half built, not yet on the device** ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)): «Receive» (sidebar, a view) runs
 `native/.../Receiver.java`, an HTTPS LocalSend v2 receiver with the v3 certificate of
 `Identity.java`, for `RECEIVE_WINDOW_MS`; `src/localsend/protocol.ts` decides each offer
-(`decideOffer`), `src/receive/receive.ts` places the item in the note. Still to come: the device
-round, and whether the receiver can stay on with the view closed.
+(`decideOffer`), `src/receive/receive.ts` places the item in the note; a second text on the same
+page goes one line below the first. Still to come: the device round, and whether the receiver can
+stay on with the view closed.
 
 **PDF to note built, not yet on the device** ([#143](https://github.com/martonpaulo/supernote-tools/issues/143)): one `application/pdf` offer is
 saved as `received-<session>.pdf`; `native/.../PdfPages.java` renders it with Android's

@@ -14,6 +14,7 @@ import {
   insertText,
   lassoElements,
   lassoImage,
+  ok,
   pageImage,
   Result,
 } from '@supernote-tools/sn-adapter/official';
@@ -89,10 +90,20 @@ async function currentPageSize(): Promise<Result<Size>> {
   return getPageSize(note.value, page.value);
 }
 
+async function currentPageKey(): Promise<Result<string>> {
+  const note = await getCurrentFilePath();
+  if (!note.ok) {
+    return note;
+  }
+  const page = await getCurrentPageNum();
+  return page.ok ? ok(`${note.value}#${page.value}`) : page;
+}
+
 /** The open note, as a receive places into it. */
 export const noteHost: NoteHost = {
   permissions: ensurePermissions,
   pluginDir: getPluginDirPath,
+  pageKey: currentPageKey,
   pageSize: currentPageSize,
   closeView: closePluginView,
   insertText,
