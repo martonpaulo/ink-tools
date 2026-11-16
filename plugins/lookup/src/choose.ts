@@ -9,7 +9,7 @@
  * Search, measured order, thumbnails and insert are picture-search's, bound to the mode by
  * `modeDeps` (src/pictures.ts), the same flow the insert buttons run; only the list is Lookup's.
  */
-import type {LassoPlace} from '@supernote-tools/ink-core';
+import {checkLookup, type LassoPlace} from '@supernote-tools/ink-core';
 import {searchState, type SearchResult} from '@supernote-tools/picture-search';
 import {
   closePluginView,
@@ -17,7 +17,7 @@ import {
   showPluginView,
 } from '@supernote-tools/sn-adapter/official';
 import {BUTTONS, missingFor} from './buttons';
-import {pictureCopy} from './copy';
+import {copy, pictureCopy} from './copy';
 import {CHOOSE_BUTTON_ID, type Mode} from './modes';
 import {modeDeps} from './pictures';
 import {
@@ -33,6 +33,7 @@ import {
   stateText,
   thumbUri,
 } from './profile';
+import {showToast} from './textBox';
 
 /** The lassoed word the Choose screen is for, and where its picture goes. */
 export type Choice = {word: string; place: LassoPlace | null};
@@ -53,6 +54,8 @@ export type ChooseDeps = {
   /** The mode's search, measure and insert. */
   flow: (mode: Mode) => QuickInsertDeps;
   thumb: (result: SearchResult, dir: string) => Promise<string>;
+  /** The device toast when absent. */
+  toast?: (text: string) => void;
 };
 
 const DEVICE: ChooseDeps = {
@@ -111,8 +114,17 @@ export async function openChoose(deps: ChooseDeps = DEVICE): Promise<boolean> {
       log(`choose: no word, ${query.code} ${query.message}`);
       return false;
     }
-    log(`choose: "${query.value.query}"`);
-    setChoice({word: query.value.query, place: query.value.place});
+    // As the picture buttons: no word or no place on the page opens no view (#165, #166).
+    const checked = checkLookup(query.value);
+    if (!checked.ok) {
+      log(`choose: ${checked.why}, ${checked.message}`);
+      (deps.toast ?? showToast)(
+        copy[checked.why === 'unplaced' ? 'error.unplaced' : 'error.unreadable'],
+      );
+      return false;
+    }
+    log(`choose: "${checked.value.query}"`);
+    setChoice({word: checked.value.query, place: checked.value.place});
     await logged('showPluginView', deps.show);
     return true;
   } catch (error) {
@@ -160,11 +172,11 @@ export async function chooseResults(
   if (run !== latest) {
     return null;
   }
-  const copy = pictureCopy[mode.kind];
+  const modeCopy = pictureCopy[mode.kind];
   const text =
     tiles.length > 0
       ? null
-      : stateText(searchState(outcome), copy) ?? copy['search.empty'];
+      : stateText(searchState(outcome), modeCopy) ?? modeCopy['search.empty'];
   return {tiles, text};
 }
 

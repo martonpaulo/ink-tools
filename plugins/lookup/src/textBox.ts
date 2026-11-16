@@ -2,7 +2,9 @@
  * The text box a text button writes below the lassoed word, and the device lasso read it starts
  * from, shared by «Insert definition» (#115) and «Insert translation» (#158).
  */
+import {ToastAndroid} from 'react-native';
 import {
+  checkLookup,
   isFree,
   LassoPlace,
   LassoQuery,
@@ -26,6 +28,7 @@ import {
   TextBoxInput,
   THROWN_CODE,
 } from '@supernote-tools/sn-adapter/official';
+import {copy} from './copy';
 
 /** The text size in page pixels, as Ink2Pic's definition box [INFERENCE]. */
 export const FONT_SIZE = 32;
@@ -104,4 +107,46 @@ export async function insertBox(
     return {ok: false, why: 'insert'};
   }
   return {ok: true, rect};
+}
+
+/** A short toast at the bottom of the note (docs/supernote.md, «What a plugin can show»). */
+export function showToast(text: string): void {
+  ToastAndroid.show(text, ToastAndroid.SHORT);
+}
+
+/** What a text button's press needs to stop on a read it may not use (#165, #166). */
+export type CheckDeps = {
+  insert: (box: TextBoxInput) => Promise<Result<boolean>>;
+  log: (line: string) => void;
+  /** The device toast when absent. */
+  toast?: (text: string) => void;
+};
+
+/**
+ * The read as a text button uses it, through ink-core's `checkLookup`: its words and a place on
+ * the page; else why the press stops. A rect that is not on the page places nothing and shows a
+ * toast (#165); a recognition with no word writes so below the selection, before any lookup (#166).
+ */
+export async function checkedRead(
+  read: Outcome<LassoQuery, CallFailure>,
+  deps: CheckDeps,
+  tag: string,
+): Promise<{ok: true; value: LassoQuery} | {ok: false; text: string}> {
+  if (!read.ok) {
+    deps.log(`${tag}: lasso failed: ${read.code} ${read.message}`);
+    return {ok: false, text: read.message};
+  }
+  const checked = checkLookup(read.value);
+  if (checked.ok) {
+    return checked;
+  }
+  deps.log(`${tag}: ${checked.why}, ${checked.message}`);
+  if (checked.why === 'unplaced') {
+    (deps.toast ?? showToast)(copy['error.unplaced']);
+    return {ok: false, text: copy['error.unplaced']};
+  }
+  if (checked.place) {
+    await insertBox(copy['error.unreadable'], checked.place, deps.insert, deps.log, tag);
+  }
+  return {ok: false, text: copy['error.unreadable']};
 }

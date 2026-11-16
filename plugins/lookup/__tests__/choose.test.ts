@@ -14,7 +14,7 @@ import {
   openChoose,
   resetChooseForTests,
 } from '../src/choose';
-import {pictureCopy} from '../src/copy';
+import {copy, pictureCopy} from '../src/copy';
 import {MODES} from '../src/modes';
 import type {QuickInsertDeps} from '../src/profile';
 
@@ -211,4 +211,17 @@ test('Close drops the word and inserts nothing', async () => {
       d,
     ),
   ).toBeNull();
+});
+
+test('a pasted rect or a text with no letter opens no view (#165, #166)', async () => {
+  const toast = jest.fn();
+  const pasted = {...place, rect: {left: -40, top: 0, right: 140, bottom: 181}};
+  const unplaced = deps({read: async () => ok({query: 'apple', place: pasted}), toast});
+  expect(await openChoose(unplaced)).toBe(false);
+  const unreadable = deps({read: async () => ok({query: '÷:.', place}), toast});
+  expect(await openChoose(unreadable)).toBe(false);
+  expect(unplaced.show).not.toHaveBeenCalled();
+  expect(unreadable.show).not.toHaveBeenCalled();
+  expect(toast.mock.calls).toEqual([[copy['error.unplaced']], [copy['error.unreadable']]]);
+  expect(currentChoice()).toBeNull();
 });

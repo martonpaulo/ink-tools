@@ -6,7 +6,7 @@
 import {LassoPlace} from '@supernote-tools/ink-core';
 import {Measures, SearchResult} from '@supernote-tools/picture-search';
 import {fail, ok} from '@supernote-tools/sn-adapter/official';
-import {pictureCopy} from '../src/copy';
+import {copy, pictureCopy} from '../src/copy';
 import {MODES} from '../src/modes';
 import {
   LOOKUP_PICTURES,
@@ -266,6 +266,33 @@ describe('a press (#111)', () => {
     expect(await pictureLasso(illustration, d)).toBeNull();
     expect(d.insert).not.toHaveBeenCalled();
     expect(d.write).not.toHaveBeenCalled();
+  });
+
+  test("a pasted selection's local rect places nothing and shows a toast (#165)", async () => {
+    const toast = jest.fn();
+    const pasted = {...place, rect: {left: -40, top: 0, right: 140, bottom: 181}};
+    const d = press({read: jest.fn(async () => ok({query: 'apple', place: pasted})), toast});
+    expect(await pictureLasso(illustration, d)).toBeNull();
+    expect(d.insert).not.toHaveBeenCalled();
+    expect(d.write).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(copy['error.unplaced']);
+  });
+
+  test('a recognition with no letter searches nothing and says so below it (#166)', async () => {
+    const d = press({
+      read: jest.fn(async () => ok({query: '• :.\n÷\n÷:.\n.\n.', place})),
+    });
+    expect(await pictureLasso(illustration, d)).toBeNull();
+    expect(d.insert).not.toHaveBeenCalled();
+    const box = d.write.mock.calls[0][0];
+    expect(box.text).toBe(copy['error.unreadable']);
+    expect(box.rect.top).toBeGreaterThanOrEqual(place.rect.bottom);
+  });
+
+  test('a multi-line recognition searches its words (#166)', async () => {
+    const d = press({read: jest.fn(async () => ok({query: 'apple\npie\n.', place}))});
+    await pictureLasso(photoMode, d);
+    expect(d.insert.mock.calls[0][1]).toBe('apple pie');
   });
 
   test('one press at a time across both buttons', async () => {

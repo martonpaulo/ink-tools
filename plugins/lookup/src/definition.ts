@@ -24,7 +24,7 @@ import {
 import {copy} from './copy';
 import {definers, SOURCE_NAMES} from './dictionaries';
 import {FIRST_BUTTON_ID, MODES} from './modes';
-import {insertBox, readLasso} from './textBox';
+import {checkedRead, insertBox, readLasso} from './textBox';
 
 export {BOX_WIDTH, boxRect, FONT_SIZE} from './textBox';
 
@@ -46,6 +46,8 @@ export type DefineDeps = {
   ) => Promise<DefinitionResult>;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
+  /** The device toast when absent. */
+  toast?: (text: string) => void;
   now: () => number;
 };
 
@@ -73,10 +75,9 @@ export type Defined = {ok: boolean; text: string};
 /** One press of «Insert definition»; the value says what was inserted, or why nothing was. */
 export async function defineLasso(deps: DefineDeps = DEVICE): Promise<Defined> {
   const started = deps.now();
-  const read = await deps.read();
+  const read = await checkedRead(await deps.read(), deps, 'define');
   if (!read.ok) {
-    deps.log(`define: lasso failed: ${read.code} ${read.message}`);
-    return {ok: false, text: read.message};
+    return read;
   }
   const {query, place} = read.value;
   const recognized = deps.now();
