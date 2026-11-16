@@ -50,36 +50,47 @@ describe('the settings file', () => {
       illustration: false,
       photo: true,
       choose: false,
-      translation: true,
-      pairs: {'es-pt': true, 'zh-pt': false},
+      directions: {'es-pt': true, 'pt-es': true, 'zh-pt': false, 'pt-zh': false},
     };
     expect(parseSettings(serializeSettings(saved)).settings).toEqual(saved);
   });
 
-  test('a file from before the translation button: translation and every pair off (#158)', () => {
-    const parsed = parseSettings('{"version": 1, "definition": true}');
-    expect(parsed.settings.translation).toBe(false);
-    expect(parsed.settings.pairs).toEqual({'es-pt': false, 'zh-pt': false});
+  test("a file of #158's single translation button: the owner's three directions on, the old keys not read (#174)", () => {
+    const parsed = parseSettings(
+      '{"version": 1, "definition": true, "translation": true, "pairs": {"es-pt": true, "zh-pt": false}}',
+    );
+    expect(parsed.settings.directions).toEqual({
+      'es-pt': true,
+      'pt-es': false,
+      'zh-pt': true,
+      'pt-zh': true,
+    });
+    expect(parsed.settings).not.toHaveProperty('pairs');
     expect(parsed.problems).toEqual([]);
   });
 
-  test('a pair that is not true or false takes its default and is named; an unknown pair is dropped', () => {
+  test('a direction that is not true or false takes its default and is named; an unknown one is dropped', () => {
     const parsed = parseSettings(
-      '{"pairs": {"es-pt": "yes", "zh-pt": true, "en-pt": true}}',
+      '{"directions": {"es-pt": "yes", "pt-es": true, "en-pt": true}}',
     );
-    expect(parsed.settings.pairs).toEqual({'es-pt': false, 'zh-pt': true});
+    expect(parsed.settings.directions).toEqual({
+      'es-pt': true,
+      'pt-es': true,
+      'zh-pt': true,
+      'pt-zh': true,
+    });
     expect(parsed.problems).toEqual([
-      'settings: pairs.es-pt is not true or false; the default is used',
+      'settings: directions.es-pt is not true or false; the default is used',
     ]);
-    expect(parseSettings('{"pairs": [true]}').problems).toEqual([
-      'settings: pairs is not an object; the defaults are used',
+    expect(parseSettings('{"directions": [true]}').problems).toEqual([
+      'settings: directions is not an object; the defaults are used',
     ]);
   });
 
-  test('a parsed file never shares its pair map with the defaults', () => {
+  test('a parsed file never shares its direction map with the defaults', () => {
     const parsed = parseSettings(null).settings;
-    parsed.pairs['es-pt'] = true;
-    expect(defaultSettings.pairs['es-pt']).toBe(false);
+    parsed.directions['pt-es'] = true;
+    expect(defaultSettings.directions['pt-es']).toBe(false);
   });
 
   test('a switch that is not true or false takes its default and is named', () => {

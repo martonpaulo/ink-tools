@@ -1,10 +1,11 @@
 /**
  * Lookup's Settings (#111, #142): one switch per lasso button, kept in `MyStyle/Lookup/settings.json`
  * by picture-search's settings store, so a switch survives a restart. The picture modes start on,
- * as the #111 Plan says, and «Choose picture» with them (#156); «Insert definition» starts off, as
- * before (#115), and «Insert translation» with every language pair (#158).
+ * as the #111 Plan says, and «Choose Image» with them (#156); «Insert Definition» starts off, as
+ * before (#115). Each translation direction has its own switch and button (#174, owner 2026-11-16:
+ * no automatic direction); the owner's three directions start on, every other one off.
  */
-import {PAIRS} from '@supernote-tools/ink-core';
+import {ALL_DIRECTIONS, directionId} from '@supernote-tools/ink-core';
 import type {SettingsCodec} from './profile';
 
 export const SETTINGS_VERSION = 1;
@@ -14,38 +15,46 @@ export type LookupSettings = {
   definition: boolean;
   illustration: boolean;
   photo: boolean;
-  /** «Choose picture», the button that opens the result list (#156, owner D19 A). */
+  /** «Choose Image», the button that opens the result list (#156, owner D19 A). */
   choose: boolean;
-  /** «Insert translation» (#158), moved here from the Lingo plugin. */
-  translation: boolean;
-  /** One opt-in per language pair of ink-core's `PAIRS`, by its id; every id has a key. */
-  pairs: Record<string, boolean>;
+  /**
+   * One «Translate ES→PT» button per direction of ink-core's `ALL_DIRECTIONS`, by its
+   * `directionId`; every id has a key (#174). It replaces #158's `translation` switch and `pairs`
+   * map, which are no longer read.
+   */
+  directions: Record<string, boolean>;
 };
 
-/** The lasso buttons' switches: every key but the language pairs. */
-export type SwitchKey = Exclude<keyof LookupSettings, 'pairs'>;
+/** The lasso buttons' switches: every key but the translation directions. */
+export type SwitchKey = Exclude<keyof LookupSettings, 'directions'>;
 
 export const SWITCH_KEYS: readonly SwitchKey[] = [
   'illustration',
   'photo',
   'choose',
   'definition',
-  'translation',
 ];
+
+/** The owner's directions, on in a new install (owner, 2026-11-16, #174). */
+const DIRECTIONS_ON: readonly string[] = ['es-pt', 'zh-pt', 'pt-zh'];
 
 export const defaultSettings: LookupSettings = {
   definition: false,
   illustration: true,
   photo: true,
   choose: true,
-  translation: false,
-  pairs: Object.fromEntries(PAIRS.map(pair => [pair.id, false])),
+  directions: Object.fromEntries(
+    ALL_DIRECTIONS.map(direction => {
+      const id = directionId(direction);
+      return [id, DIRECTIONS_ON.includes(id)];
+    }),
+  ),
 };
 
-/** A copy with its own pair map, so a change never reaches the defaults. */
+/** A copy with its own direction map, so a change never reaches the defaults. */
 const fresh = (): LookupSettings => ({
   ...defaultSettings,
-  pairs: {...defaultSettings.pairs},
+  directions: {...defaultSettings.directions},
 });
 
 export function serializeSettings(settings: LookupSettings): string {
@@ -97,20 +106,26 @@ export function parseSettings(text: string | null): {
       );
     }
   }
-  const pairs = values.pairs;
-  if (pairs !== null && typeof pairs === 'object' && !Array.isArray(pairs)) {
-    for (const {id} of PAIRS) {
-      const value = (pairs as Record<string, unknown>)[id];
+  const directions = values.directions;
+  if (
+    directions !== null &&
+    typeof directions === 'object' &&
+    !Array.isArray(directions)
+  ) {
+    for (const id of Object.keys(settings.directions)) {
+      const value = (directions as Record<string, unknown>)[id];
       if (typeof value === 'boolean') {
-        settings.pairs[id] = value;
+        settings.directions[id] = value;
       } else if (value !== undefined) {
         problems.push(
-          `settings: pairs.${id} is not true or false; the default is used`,
+          `settings: directions.${id} is not true or false; the default is used`,
         );
       }
     }
-  } else if (pairs !== undefined) {
-    problems.push('settings: pairs is not an object; the defaults are used');
+  } else if (directions !== undefined) {
+    problems.push(
+      'settings: directions is not an object; the defaults are used',
+    );
   }
   return {settings, problems};
 }
@@ -121,6 +136,8 @@ export const LOOKUP_SETTINGS: SettingsCodec<LookupSettings> = {
   describe: settings =>
     [
       ...SWITCH_KEYS.map(key => `${key} ${settings[key] ? 'on' : 'off'}`),
-      ...PAIRS.map(({id}) => `${id} ${settings.pairs[id] ? 'on' : 'off'}`),
+      ...Object.entries(settings.directions).map(
+        ([id, on]) => `${id} ${on ? 'on' : 'off'}`,
+      ),
     ].join(', '),
 };

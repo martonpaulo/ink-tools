@@ -161,7 +161,7 @@ supernote-tools/
   or a **translation**; each mode opt in/out, and each language pair opt in/out under the
   translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)); it replaced `ink2pic`,
   which is retired and uninstalled from the tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)).
-- **`lingo`** (retiring) — the translation plugin Lookup's «Insert translation» replaces
+- **`lingo`** (retiring) — the translation plugin Lookup's «Translate ES→PT» buttons replace
   ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)); its folder is removed once that button passes on the tablet ([#161](https://github.com/martonpaulo/supernote-tools/issues/161)).
   The shared translation flow it used is `ink-core`'s.
 - **`relay`** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over

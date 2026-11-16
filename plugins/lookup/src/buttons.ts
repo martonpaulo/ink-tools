@@ -1,5 +1,5 @@
 /**
- * Lookup's lasso buttons follow their Settings switches (#115, #111, #158): each button exists only while
+ * Lookup's lasso buttons follow their Settings switches (#115, #111, #174): each button exists only while
  * its switch is on, as Lingo's direction buttons do (#128). At start-up the saved switches register
  * their buttons; turning one on in Settings also asks for each permission its press needs, while
  * the view is open to show the question.
@@ -16,12 +16,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
-import {
-  CHOOSE_BUTTON_ID,
-  CHOOSE_BUTTON_NAME,
-  MODES,
-  TRANSLATE_BUTTON_ID,
-} from './modes';
+import {CHOOSE_BUTTON_ID, CHOOSE_BUTTON_NAME, MODES, TRANSLATIONS} from './modes';
 import type {LookupSettings, SwitchKey} from './settings';
 
 /** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
@@ -46,17 +41,42 @@ const FILE_WRITE: Need = {
   reason: copy['permission.write'],
 };
 
+/**
+ * Where a button's switch lives in the settings: a named switch, or one key of the `directions`
+ * map (#174).
+ */
+export type SwitchRef = {key: SwitchKey} | {direction: string};
+
 /** One lasso button: its switch, its id and name, and what its press needs. */
 export type LassoButton = {
-  key: SwitchKey;
+  switch: SwitchRef;
   id: number;
   name: string;
   needs: readonly Need[];
 };
 
+/** Whether `button`'s switch is on in `settings`. */
+export const isOn = (settings: LookupSettings, {switch: ref}: LassoButton) =>
+  'key' in ref ? settings[ref.key] : settings.directions[ref.direction] === true;
+
+/** `settings` with `button`'s switch set to `on`; the input is never changed. */
+export const withSwitch = (
+  settings: LookupSettings,
+  {switch: ref}: LassoButton,
+  on: boolean,
+): LookupSettings =>
+  'key' in ref
+    ? {...settings, [ref.key]: on}
+    : {...settings, directions: {...settings.directions, [ref.direction]: on}};
+
+const TRANSLATE_NEEDS: readonly Need[] = [
+  {...INTERNET, reason: copy['permission.translate']},
+  FILE_READ,
+];
+
 export const BUTTONS: readonly LassoButton[] = [
   ...MODES.map(mode => ({
-    key: mode.settingKey,
+    switch: {key: mode.settingKey},
     id: mode.buttonId,
     name: mode.name,
     needs: [
@@ -66,7 +86,7 @@ export const BUTTONS: readonly LassoButton[] = [
     ],
   })),
   {
-    key: 'choose',
+    switch: {key: 'choose'},
     id: CHOOSE_BUTTON_ID,
     name: CHOOSE_BUTTON_NAME,
     needs: [
@@ -76,17 +96,17 @@ export const BUTTONS: readonly LassoButton[] = [
     ],
   },
   {
-    key: 'definition',
+    switch: {key: 'definition'},
     id: DEFINE_BUTTON_ID,
     name: copy['button.define'],
     needs: [INTERNET, FILE_READ],
   },
-  {
-    key: 'translation',
-    id: TRANSLATE_BUTTON_ID,
-    name: copy['button.translate'],
-    needs: [{...INTERNET, reason: copy['permission.translate']}, FILE_READ],
-  },
+  ...TRANSLATIONS.map(translation => ({
+    switch: {direction: translation.key},
+    id: translation.buttonId,
+    name: translation.name,
+    needs: TRANSLATE_NEEDS,
+  })),
 ];
 
 export type ButtonDeps = {
@@ -122,7 +142,7 @@ export async function syncButtons(
   deps: ButtonDeps = DEVICE,
 ): Promise<void> {
   for (const button of BUTTONS) {
-    const on = settings[button.key];
+    const on = isOn(settings, button);
     if (on === registered.has(button.id)) {
       continue;
     }
@@ -170,7 +190,7 @@ export async function askMissing(
   settings: LookupSettings,
   deps: ButtonDeps = DEVICE,
 ): Promise<void> {
-  const on = BUTTONS.filter(button => settings[button.key]);
+  const on = BUTTONS.filter(button => isOn(settings, button));
   for (const need of await missingFor(on, deps)) {
     const asked = await deps.requestPermission(need.permission, need.reason);
     deps.log(describe(`request ${need.permission}`, asked));

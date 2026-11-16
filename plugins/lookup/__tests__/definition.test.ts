@@ -174,7 +174,7 @@ describe('the opt-in button', () => {
     );
     expect(d.register).toHaveBeenCalledWith(BUTTON_TYPE_LASSO, ['NOTE'], {
       id: DEFINE_BUTTON_ID,
-      name: 'Insert definition',
+      name: 'Insert Definition',
       editDataTypes: [0],
       showType: SHOW_NO_VIEW,
     });

@@ -1,11 +1,10 @@
 /**
- * «Insert translation» (#158), moved here from the Lingo plugin's direction buttons (#128): one
- * lasso button for every language pair switched on in Settings. A plugin cannot tell which
- * language the word was written in, so a press asks every direction the pairs allow, in `PAIRS`
- * order, through ink-core's shared flow (a ZH input read through the pinyin index, #129), and the
- * text box below the word has one line per direction that found a translation. A word with no
- * translation, or dictionaries that cannot be reached, inserts a sentence that says so; never a
- * guess. No pair on: the box says to turn one on, and nothing is looked up.
+ * «Translate ES→PT» and its siblings (#174, moved here from the Lingo plugin by #158): one lasso
+ * button per direction switched on in Settings, with no automatic direction (owner, 2026-11-16). A
+ * press translates the lassoed word in its own direction only, through ink-core's shared flow (a
+ * ZH input read through the pinyin index, #129), and the text box below the word has the one line.
+ * A word with no translation, or dictionaries that cannot be reached, inserts a sentence that says
+ * so; never a guess.
  *
  * Each step is logged as `Lookup: translate: …`, read with `snadb logs --plugin Lookup`.
  */
@@ -13,7 +12,6 @@ import {
   Direction,
   directionName,
   DirectionOutcome,
-  enabledDirections,
   LassoQuery,
   LookupResult,
   Outcome,
@@ -32,13 +30,10 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {SOURCE_NAMES, translators} from './dictionaries';
-import {getSettings} from './profile';
-import type {LookupSettings} from './settings';
 import {insertBox, readLasso} from './textBox';
 
 export type TranslateDeps = {
   read: () => Promise<Outcome<LassoQuery, CallFailure>>;
-  settings: () => Promise<LookupSettings>;
   translate: (query: TranslationQuery) => Promise<LookupResult>;
   pinyin: () => PinyinIndex;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
@@ -47,7 +42,6 @@ export type TranslateDeps = {
 
 const DEVICE: TranslateDeps = {
   read: readLasso,
-  settings: getSettings,
   translate: query => translateFirst(translators(), query),
   pinyin: cedictPinyinIndex,
   insert: insertText,
@@ -71,19 +65,15 @@ export function translationLines(
   );
 }
 
-/** The box's text for `query` over `directions`, and whether a translation was found. */
+/** The box's text for `query` in `direction`, and whether a translation was found. */
 async function textFor(
   query: string,
-  directions: readonly Direction[],
+  direction: Direction,
   deps: TranslateDeps,
 ): Promise<{found: boolean; text: string}> {
-  if (directions.length === 0) {
-    deps.log(`translate: no language pair on for "${query}"`);
-    return {found: false, text: copy['translation.noPair'](query)};
-  }
   const outcomes = await translateAll(
     query,
-    directions,
+    [direction],
     deps.translate,
     deps.pinyin,
   );
@@ -110,8 +100,9 @@ async function textFor(
 
 export type Translated = {ok: boolean; text: string};
 
-/** One press of «Insert translation»; the value says what was inserted, or why nothing was. */
+/** One press of a «Translate ES→PT» button; the value says what was inserted, or why nothing was. */
 export async function translateLasso(
+  direction: Direction,
   deps: TranslateDeps = DEVICE,
 ): Promise<Translated> {
   const read = await deps.read();
@@ -124,8 +115,7 @@ export async function translateLasso(
     deps.log(`translate: no lasso rect for "${query}"`);
     return {ok: false, text: copy['error.place']};
   }
-  const directions = enabledDirections(await deps.settings());
-  const {found, text} = await textFor(query, directions, deps);
+  const {found, text} = await textFor(query, direction, deps);
   const placed = await insertBox(
     text,
     place,

@@ -1,6 +1,6 @@
 /**
  * Lookup's Settings view keeps the shared size rules, shows one switch per lasso button, and each
- * switch registers or removes its button and is saved (#93, #111, #115, #142).
+ * switch registers or removes its button and is saved (#93, #111, #115, #142, #167, #174).
  */
 import React from 'react';
 import {NativeModules} from 'react-native';
@@ -55,14 +55,14 @@ test('one switch per lasso button: both picture modes on, the definition off, by
     true,
     true,
   ]);
-  expect(toggle(tree, 'Insert definition').props.selected).toBe(false);
-  expect(toggle(tree, 'Choose picture').props.selected).toBe(true);
+  expect(toggle(tree, 'Insert Definition').props.selected).toBe(false);
+  expect(toggle(tree, 'Choose Image').props.selected).toBe(true);
 });
 
-test('the «Insert definition» switch registers its lasso button and saves the switch', async () => {
+test('the «Insert Definition» switch registers its lasso button and saves the switch', async () => {
   const tree = await open();
   await act(async () => {
-    toggle(tree, 'Insert definition').props.onPress();
+    toggle(tree, 'Insert Definition').props.onPress();
   });
   expect(PluginManager.registerButton).toHaveBeenCalledWith(
     2,
@@ -83,7 +83,12 @@ test('the «Insert definition» switch registers its lasso button and saves the 
 
 test('both picture switches off: no picture button, and Settings still opens (#111)', async () => {
   files.readText.mockResolvedValue(
-    JSON.stringify({illustration: false, photo: false, choose: false}),
+    JSON.stringify({
+      illustration: false,
+      photo: false,
+      choose: false,
+      directions: {'es-pt': false, 'zh-pt': false, 'pt-zh': false},
+    }),
   );
   const tree = await open();
   expect(MODES.map(mode => toggle(tree, mode.name).props.selected)).toEqual([
@@ -91,7 +96,7 @@ test('both picture switches off: no picture button, and Settings still opens (#1
     false,
   ]);
   await act(async () => {
-    toggle(tree, 'Insert definition').props.onPress();
+    toggle(tree, 'Insert Definition').props.onPress();
   });
   const ids = jest
     .mocked(PluginManager.registerButton)
@@ -99,15 +104,26 @@ test('both picture switches off: no picture button, and Settings still opens (#1
   expect(ids).toEqual([DEFINE_BUTTON_ID]);
 });
 
-test('the language-pair switches start off and a tap saves the pair (#158)', async () => {
+test('one switch per translation direction, the owner\'s three on, and a tap saves the direction (#174)', async () => {
   const tree = await open();
-  expect(toggle(tree, 'Insert translation').props.selected).toBe(false);
-  expect(toggle(tree, 'Spanish – Portuguese').props.selected).toBe(false);
-  expect(toggle(tree, 'Chinese – Portuguese').props.selected).toBe(false);
+  const shown = (name: string) => toggle(tree, name).props.selected;
+  expect(
+    ['ES→PT', 'PT→ES', 'ZH→PT', 'PT→ZH'].map(d => shown(`Translate ${d}`)),
+  ).toEqual([true, false, true, true]);
   await act(async () => {
-    toggle(tree, 'Spanish – Portuguese').props.onPress();
+    toggle(tree, 'Translate PT→ES').props.onPress();
   });
-  expect(toggle(tree, 'Spanish – Portuguese').props.selected).toBe(true);
+  expect(shown('Translate PT→ES')).toBe(true);
   const [, text] = files.writeText.mock.calls[0] as unknown as [string, string];
-  expect(JSON.parse(text).pairs).toEqual({'es-pt': true, 'zh-pt': false});
+  expect(JSON.parse(text).directions).toEqual({
+    'es-pt': true,
+    'pt-es': true,
+    'zh-pt': true,
+    'pt-zh': true,
+  });
+  expect(PluginManager.registerButton).toHaveBeenCalledWith(
+    2,
+    ['NOTE'],
+    expect.objectContaining({name: 'Translate PT→ES'}),
+  );
 });

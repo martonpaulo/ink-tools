@@ -1,13 +1,14 @@
+import {Direction, directionName} from '@supernote-tools/ink-core';
+
 /** Every user-facing string of Lookup. English only; never inline in components (#93). */
 export const copy = {
   title: 'Lookup',
   'settings.modes': 'Lasso buttons',
-  'button.define': 'Insert definition',
-  'button.translate': 'Insert translation',
-  'settings.pairs': 'Language pairs',
-  'language.pt': 'Portuguese',
-  'language.es': 'Spanish',
-  'language.zh': 'Chinese',
+  'button.define': 'Insert Definition',
+  /** One button per direction (#174): «Translate ES→PT». */
+  'button.translate': (direction: Direction) =>
+    `Translate ${directionName(direction)}`,
+  'settings.translate': 'Translation buttons',
   'permission.internet':
     'Lookup looks words up in an online dictionary, Wiktionary.',
   'permission.translate':
@@ -29,10 +30,8 @@ export const copy = {
   'translation.none': (word: string) => `${word}: no translation found`,
   'translation.failed': (word: string) =>
     `${word}: the dictionaries could not be reached`,
-  'translation.noPair': (word: string) =>
-    `${word}: turn on a language pair in Lookup's Settings to translate`,
   'translation.insert': 'The translation could not be inserted on the page.',
-  /** «Choose picture»'s screen (#156). */
+  /** «Choose Image»'s screen (#156). */
   'choose.title': (word: string) => `Pictures for «${word}»`,
   'choose.illustration': 'Illustrations',
   'choose.photo': 'Photos',
@@ -40,7 +39,7 @@ export const copy = {
   'choose.more': 'More',
   'choose.inserting': 'Putting the picture in your note.',
   'choose.tile': (title: string, source: string) => `${title}, from ${source}`,
-  'choose.noWord': 'Lasso a handwritten word first, then press Choose picture.',
+  'choose.noWord': 'Lasso a handwritten word first, then press Choose Image.',
 } as const;
 
 /**

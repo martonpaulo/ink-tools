@@ -63,13 +63,23 @@ export function setPair(s: LingoSettings, id: string, on: boolean): LingoSetting
   return {...s, pairs: {...s.pairs, [id]: on}};
 }
 
-/**
- * Every direction the opted-in pairs allow, both ways each, in PAIRS order. Any settings with a
- * `pairs` map: Lingo's and Lookup's (#158).
- */
-export function enabledDirections(s: Pick<LingoSettings, 'pairs'>): Direction[] {
-  return PAIRS.filter(p => s.pairs[p.id] === true).flatMap(({languages: [a, b]}) => [
+/** Both directions of each pair, in PAIRS order. */
+const bothWays = (pairs: readonly LanguagePair[]): Direction[] =>
+  pairs.flatMap(({languages: [a, b]}) => [
     {from: a, to: b},
     {from: b, to: a},
   ]);
+
+/** Every direction the opted-in pairs allow, both ways each, in PAIRS order (Lingo's switches). */
+export function enabledDirections(s: Pick<LingoSettings, 'pairs'>): Direction[] {
+  return bothWays(PAIRS.filter(p => s.pairs[p.id] === true));
 }
+
+/**
+ * Every direction of every pair, in PAIRS order: Lookup's one Translate button per direction
+ * (#174). Adding a pair to PAIRS adds its two directions here, after the others.
+ */
+export const ALL_DIRECTIONS: readonly Direction[] = bothWays(PAIRS);
+
+/** A direction's stable Settings key: `es-pt` for Spanish to Portuguese. */
+export const directionId = ({from, to}: Direction): string => `${from}-${to}`;

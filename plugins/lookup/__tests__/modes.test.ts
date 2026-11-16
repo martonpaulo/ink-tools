@@ -90,8 +90,8 @@ test('each mode has its own button id, never one of Ink2Pic', () => {
     expect(ink2picIds).not.toContain(id);
   });
   expect(MODES.map(mode => mode.name)).toEqual([
-    'Insert illustration',
-    'Insert photo',
+    'Insert Sticker',
+    'Insert Image',
   ]);
 });
 

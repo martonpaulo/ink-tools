@@ -1,7 +1,7 @@
 {
   "name": "Lookup",
-  "version": "0.2.0-beta.4",
-  "description": "Supernote plugin: lasso a handwritten word and insert a picture, a photo or a short definition for it.",
+  "version": "0.2.0-beta.5",
+  "description": "Supernote plugin: lasso a handwritten word and insert a picture, a photo, a short definition or a translation for it.",
   "private": true,
   "scripts": {
     "lint": "eslint . --max-warnings 0",

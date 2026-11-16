@@ -16,7 +16,7 @@ numbered beta: a test build reads `0.2.0-beta.3` on GitHub and `0.2.0 beta 3` on
 
 | Subproject | Kind | What it is |
 | :--- | :--- | :--- |
-| [`plugins/lookup/`](plugins/lookup/) | plugin | Write a word by hand, lasso it, and insert an illustration, a photo, a short definition or a translation; «Choose picture» opens the results to pick one. It replaces Ink2Pic. **Beta, device round pending** — see [#45](https://github.com/martonpaulo/supernote-tools/issues/45). |
+| [`plugins/lookup/`](plugins/lookup/) | plugin | Write a word by hand, lasso it, and insert an illustration, a photo, a short definition or a translation; «Choose Image» opens the results to pick one. It replaces Ink2Pic. **Beta, device round pending** — see [#45](https://github.com/martonpaulo/supernote-tools/issues/45). |
 | [`plugins/bridge/`](plugins/bridge/) | plugin | A settings-only plugin with to-do, calendar and digest modules, each opt in. **Scaffolded** — see its open issues. |
 | [`plugins/retouch/`](plugins/retouch/) | plugin | Lasso a picture on the page and make it readable on e-ink with one tap: Enhance, Lighter, Darker, Undo and Restore original. **Built, device round pending** — see [#136](https://github.com/martonpaulo/supernote-tools/issues/136). |
 | [`plugins/relay/`](plugins/relay/) | plugin | Send the current page or a lasso selection as a picture to an iPhone or a Mac over LocalSend, with one tap, and receive text or a picture into the open note. **Built, device round pending** — see [#98](https://github.com/martonpaulo/supernote-tools/issues/98), [#49](https://github.com/martonpaulo/supernote-tools/issues/49). |

@@ -1,5 +1,6 @@
-/** «Insert translation» in Lookup (#158): one button over every switched-on pair. */
+/** «Translate ES→PT» and its siblings in Lookup (#174): one button and one direction per press. */
 import {
+  Direction,
   LassoPlace,
   LookupResult,
   PinyinIndex,
@@ -12,8 +13,8 @@ import {
   settingsChanged,
 } from '../src/buttons';
 import {copy} from '../src/copy';
-import {TRANSLATE_BUTTON_ID} from '../src/modes';
-import {defaultSettings, LookupSettings} from '../src/settings';
+import {CHOOSE_BUTTON_ID, TRANSLATIONS} from '../src/modes';
+import {defaultSettings} from '../src/settings';
 import {TranslateDeps, translateLasso} from '../src/translation';
 
 const place: LassoPlace = {
@@ -33,22 +34,15 @@ const answer = (texts: string[], errors: string[] = []): LookupResult => ({
   errors,
 });
 
-const withPairs = (pairs: Record<string, boolean>): LookupSettings => ({
-  ...defaultSettings,
-  translation: true,
-  pairs: {...defaultSettings.pairs, ...pairs},
-});
+const ES_PT: Direction = {from: 'es', to: 'pt'};
+const PT_ES: Direction = {from: 'pt', to: 'es'};
+const ZH_PT: Direction = {from: 'zh', to: 'pt'};
 
-function run(
-  query: string,
-  settings: LookupSettings,
-  lookup: (q: TranslationQuery) => LookupResult,
-) {
+function run(query: string, lookup: (q: TranslationQuery) => LookupResult) {
   const asked: TranslationQuery[] = [];
   const insert = jest.fn(async () => ok(true));
   const deps: TranslateDeps = {
     read: async () => ok({query, place}),
-    settings: async () => settings,
     translate: async q => {
       asked.push(q);
       return lookup(q);
@@ -60,77 +54,47 @@ function run(
   return {deps, asked, insert};
 }
 
-test('no pair on: the box asks for one and nothing is looked up', async () => {
-  const {deps, asked, insert} = run('casa', withPairs({}), () => answer([]));
-  const result = await translateLasso(deps);
-  expect(result).toEqual({ok: false, text: copy['translation.noPair']('casa')});
-  expect(asked).toEqual([]);
-  expect(insert).toHaveBeenCalledTimes(1);
-});
-
-test('both directions of a pair are asked; each that finds one is a line, in PAIRS order', async () => {
-  const {deps, asked, insert} = run('casa', withPairs({'es-pt': true}), q =>
+test('a press asks only its own direction and inserts its one line below the word', async () => {
+  const {deps, asked, insert} = run('casa', q =>
     answer([q.to === 'pt' ? 'casa' : 'hogar']),
   );
-  const result = await translateLasso(deps);
-  expect(asked.map(q => `${q.from}-${q.to}`).sort()).toEqual([
-    'es-pt',
-    'pt-es',
-  ]);
-  expect(result).toEqual({
-    ok: true,
-    text: 'ES→PT casa → casa (Wiktionary)\nPT→ES casa → hogar (Wiktionary)',
-  });
+  const result = await translateLasso(PT_ES, deps);
+  expect(asked.map(q => `${q.from}-${q.to}`)).toEqual(['pt-es']);
+  expect(result).toEqual({ok: true, text: 'PT→ES casa → hogar (Wiktionary)'});
   const box = (insert.mock.calls[0] as unknown[])[0] as {
     rect: {top: number};
   };
   expect(box.rect.top).toBeGreaterThanOrEqual(place.rect.bottom);
 });
 
-test('one direction fails, another finds: the found line is inserted', async () => {
-  const {deps} = run('aprovechar', withPairs({'es-pt': true}), q =>
-    q.from === 'es'
-      ? answer(['aproveitar'])
-      : answer([], ['wiktionary: HTTP 503']),
-  );
-  expect(await translateLasso(deps)).toEqual({
-    ok: true,
-    text: 'ES→PT aprovechar → aproveitar (Wiktionary)',
-  });
-});
-
-test('every lookup fails: «could not be reached», never «no translation»', async () => {
-  const {deps} = run('casa', withPairs({'es-pt': true}), () =>
-    answer([], ['wiktionary: HTTP 503']),
-  );
-  expect(await translateLasso(deps)).toEqual({
+test('the lookup fails: «could not be reached», never «no translation»', async () => {
+  const {deps} = run('casa', () => answer([], ['wiktionary: HTTP 503']));
+  expect(await translateLasso(ES_PT, deps)).toEqual({
     ok: false,
     text: copy['translation.failed']('casa'),
   });
 });
 
 test('no lookup knows the word and none failed: «no translation found»', async () => {
-  const {deps} = run('xyzzy', withPairs({'es-pt': true}), () => answer([]));
-  expect((await translateLasso(deps)).text).toBe(
+  const {deps} = run('xyzzy', () => answer([]));
+  expect((await translateLasso(ES_PT, deps)).text).toBe(
     copy['translation.none']('xyzzy'),
   );
 });
 
 test('ZH pinyin is read to characters on the ZH→PT direction', async () => {
-  const {deps} = run('pingguo', withPairs({'zh-pt': true}), q =>
+  const {deps} = run('pingguo', q =>
     q.word === '苹果' && q.from === 'zh' ? answer(['maçã']) : answer([]),
   );
-  expect((await translateLasso(deps)).text).toBe(
+  expect((await translateLasso(ZH_PT, deps)).text).toBe(
     'ZH→PT 苹果 (ping2guo3) → maçã (Wiktionary)',
   );
 });
 
 test('a failed lasso read inserts nothing', async () => {
-  const {deps, insert} = run('casa', withPairs({'es-pt': true}), () =>
-    answer([]),
-  );
+  const {deps, insert} = run('casa', () => answer([]));
   deps.read = async () => fail(1503, 'no permission');
-  expect(await translateLasso(deps)).toEqual({
+  expect(await translateLasso(ES_PT, deps)).toEqual({
     ok: false,
     text: 'no permission',
   });
@@ -138,17 +102,24 @@ test('a failed lasso read inserts nothing', async () => {
 });
 
 test('a refused insert says the translation could not be inserted', async () => {
-  const {deps} = run('casa', withPairs({'es-pt': true}), () =>
-    answer(['hogar']),
-  );
+  const {deps} = run('casa', () => answer(['hogar']));
   deps.insert = async () => ok(false);
-  expect(await translateLasso(deps)).toEqual({
+  expect(await translateLasso(ES_PT, deps)).toEqual({
     ok: false,
     text: copy['translation.insert'],
   });
 });
 
-test('the «Insert translation» switch registers its button and asks for Internet and file read', async () => {
+test('one button per direction, named after it, with fixed ids after Choose Image', () => {
+  expect(TRANSLATIONS.map(t => [t.key, t.buttonId, t.name])).toEqual([
+    ['es-pt', CHOOSE_BUTTON_ID + 1, 'Translate ES→PT'],
+    ['pt-es', CHOOSE_BUTTON_ID + 2, 'Translate PT→ES'],
+    ['zh-pt', CHOOSE_BUTTON_ID + 3, 'Translate ZH→PT'],
+    ['pt-zh', CHOOSE_BUTTON_ID + 4, 'Translate PT→ZH'],
+  ]);
+});
+
+test('the default directions register their buttons, PT→ES stays off, and Internet and file read are asked', async () => {
   resetButtonsForTests();
   const deps = {
     register: jest.fn(async () => ok(true as const)),
@@ -160,23 +131,17 @@ test('the «Insert translation» switch registers its button and asks for Intern
     log: () => {},
   } satisfies ButtonDeps;
   await settingsChanged(
-    {
-      ...defaultSettings,
-      illustration: false,
-      photo: false,
-      choose: false,
-      translation: true,
-    },
+    {...defaultSettings, illustration: false, photo: false, choose: false},
     deps,
   );
-  expect(deps.register).toHaveBeenCalledWith(
-    2,
-    ['NOTE'],
-    expect.objectContaining({
-      id: TRANSLATE_BUTTON_ID,
-      name: 'Insert translation',
-    }),
+  const names = deps.register.mock.calls.map(
+    call => (call as unknown as [number, string[], {name: string}])[2].name,
   );
+  expect(names).toEqual([
+    'Translate ES→PT',
+    'Translate ZH→PT',
+    'Translate PT→ZH',
+  ]);
   expect(deps.requestPermission.mock.calls.map(call => call[1])).toEqual([
     copy['permission.translate'],
     copy['permission.files'],

@@ -1,6 +1,8 @@
 import {LANGUAGES} from '../src/dictionary';
 import {
+  ALL_DIRECTIONS,
   defaultSettings,
+  directionId,
   enabledDirections,
   PAIRS,
   parseSettings,
@@ -46,4 +48,8 @@ test('a wrong schema or shape throws instead of silently resetting', () => {
   expect(() => parseSettings('{"schema":2,"pairs":{}}')).toThrow(/schema/);
   expect(() => parseSettings('{"schema":1}')).toThrow(/pairs missing/);
   expect(() => parseSettings('{"schema":1,"pairs":{"es-pt":"yes"}}')).toThrow(/boolean/);
+});
+
+test('every direction of every pair, both ways, in PAIRS order, each with its own id (#174)', () => {
+  expect(ALL_DIRECTIONS.map(directionId)).toEqual(['es-pt', 'pt-es', 'zh-pt', 'pt-zh']);
 });

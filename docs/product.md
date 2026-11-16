@@ -11,7 +11,7 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   - **lookup** turns a lassoed handwritten word into an inserted illustration, photo, short
     definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
     tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)), and the **lingo** plugin, which is retiring now that translation is Lookup's
-    «Insert translation» ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)).
+    «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/supernote-tools/issues/174), [#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)).
   - **bridge** syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
     Supernote apps.
   - **retouch** makes a picture on the page readable on e-ink.

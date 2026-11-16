@@ -33,8 +33,10 @@ Ink2Pic's settings or picture library (owner D40 B, [#110](https://github.com/ma
 from the tablet; its folder gets no new work ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)). **It is the first plugin to ship after
 `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each mode
 that inserts at once is its own **lasso button**, chosen before the search — not a post-hoc toggle:
-"insert illustration" (vector/sticker/OpenMoji), "insert photo" (real photo), "insert text"
-(definition / 3-line bio / summary) and «Insert translation» (below). «Choose picture» is the one
+«Insert Sticker» (vector/sticker/OpenMoji), «Insert Image» (real photo), «Insert Definition» and the
+planned text insert (3-line bio / summary), and one «Translate ES→PT» button per direction (below).
+The names follow the wording of Supernote's own lasso menu, a verb and a noun in title case (owner,
+[#167](https://github.com/martonpaulo/supernote-tools/issues/167)). «Choose Image» is the one
 button that opens the results: its Illustrations and Photos tabs stay behind that one button, and
 the one-button-per-mode rule covers the direct insert buttons only (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)). Pains and scope:
 
@@ -44,8 +46,8 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
 - **Two modes.** An **illustration / vector / sticker** mode (line art, drawings, engravings,
   "Bababum-app" style, OpenMoji) and a **real-photo** mode (people, places). The owner chose a real
   split, not one blended list (relates to [#35](https://github.com/martonpaulo/supernote-tools/issues/35)).
-  Built as two lasso buttons, each with its Settings switch ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)): «Insert illustration» searches
-  Commons for drawings first, Openclipart and OpenMoji, and keeps only line art; «Insert photo»
+  Built as two lasso buttons, each with its Settings switch ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)): «Insert Sticker» searches
+  Commons for drawings first, Openclipart and OpenMoji, and keeps only line art; «Insert Image»
   searches Commons with no drawings filter and keeps only photos and dark paintings, so a word with
   only clip art inserts no picture and says so.
 - **Emoji / known labels.** Map common keywords to emoji via OpenMoji's own keywords: "happy" and
@@ -59,9 +61,10 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
   **topic summary**. Source: open/keyless encyclopedic extracts (Wikipedia/Wikidata summaries);
   current-events topics are harder and best-effort. This is distinct from — and wanted more than —
   a single-word dictionary definition, which stays low priority.
-- **Translation («Insert translation»).** Write a word, lasso it, insert its translation: one lasso
-  button over every language pair switched on in Lookup's Settings, each pair opt in/out, one line
-  per direction that found a translation (owner, [#158](https://github.com/martonpaulo/supernote-tools/issues/158)). It took over the Lingo plugin's job,
+- **Translation («Translate ES→PT»).** Write a word, lasso it, insert its translation: one lasso
+  button per direction switched on in Lookup's Settings, with no automatic direction. Any direction
+  of the pairs can be chosen; ES→PT, ZH→PT and PT→ZH start on (owner, [#174](https://github.com/martonpaulo/supernote-tools/issues/174), which replaced
+  [#158](https://github.com/martonpaulo/supernote-tools/issues/158)'s one button over every pair). It took over the Lingo plugin's job,
   and that plugin is retiring: it is uninstalled from the tablet and its folder removed once this
   button passes on the device ([#159](https://github.com/martonpaulo/supernote-tools/issues/159), [#161](https://github.com/martonpaulo/supernote-tools/issues/161)). Real uses: **learning a language**, **reading
   foreign text** (ES/ZH) and annotating meaning, and **finding the right term** while writing in PT
