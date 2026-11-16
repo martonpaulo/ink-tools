@@ -604,41 +604,75 @@ type LookupOutcome = Outcome<
   Failure
 >;
 
-/** The first language whose Wikipedia has an article for the query; a failure stops the walk. */
+/**
+ * Whether the article's title is the query's subject itself, plural and accents aside, with any
+ * «(fruit)» qualifier left out: «Apple» for «apple», not «Apple Inc.» (#13).
+ */
+export function isTitleOfQuery(query: string, title: string): boolean {
+  const subject = readIntent(query).subject.map(withoutAccents);
+  const have = words(withoutAccents(title.replace(/\s*\([^)]*\)\s*$/, '')));
+  return (
+    have.length > 0 &&
+    have.length === subject.length &&
+    have.every((word, i) => sameWord(word, subject[i]) || sameWord(subject[i], word))
+  );
+}
+
+/**
+ * The article for the query, and the language of the Wikipedia that found it. Every language is
+ * asked at once (the budget already counts one request each). In the languages' order, the first
+ * article whose title is the query itself wins; else the first article, as before (#13): a plain
+ * English word searched in another Wikipedia finds a brand first («apple» in Portuguese is
+ * «Apple Inc.», whose logo then led Lookup's page 1), while its own Wikipedia names the thing.
+ * A failure before any article stops the walk.
+ */
 async function lookup(
   query: string,
   ctx: SourceContext,
 ): Promise<LookupOutcome> {
-  let suggestion: string | undefined;
-  for (const language of lookupLanguages(query, ctx.languages)) {
-    // A written line's check already found this article (#87): no request again.
+  const languages = lookupLanguages(query, ctx.languages);
+  // A written line's check already found this article (#87): it wins, and no Wikipedia is asked.
+  for (const language of languages) {
     const known = knownHit(query, language);
     if (known) {
       return {ok: true, value: {hit: known, language}};
     }
-    const response = await ctx.fetch(wikipediaUrl(query, language), {
-      'Api-User-Agent': ctx.userAgent,
-    });
-    if (!response.ok) {
-      return response;
-    }
-    const found = parseWikipediaResponse(response.value);
-    if (
-      found.ok &&
-      found.value.hit &&
-      !isQueryArticle(query, found.value.hit.title)
-    ) {
-      return logoItem(query, language, ctx);
-    }
-    if (!found.ok) {
-      return found;
-    }
-    if (found.value.hit) {
-      return {ok: true, value: {...found.value, language}};
-    }
-    suggestion ??= found.value.suggestion;
   }
-  return {ok: true, value: {hit: null, ...(suggestion && {suggestion})}};
+  const answers = await Promise.all(
+    languages.map(async language => {
+      const response = await ctx.fetch(wikipediaUrl(query, language), {
+        'Api-User-Agent': ctx.userAgent,
+      });
+      return {
+        language,
+        found: response.ok ? parseWikipediaResponse(response.value) : response,
+      };
+    }),
+  );
+  let first: (() => Promise<LookupOutcome>) | undefined;
+  let suggestion: string | undefined;
+  for (const {language, found} of answers) {
+    if (!found.ok) {
+      return first ? first() : found;
+    }
+    const {hit} = found.value;
+    if (!hit) {
+      suggestion ??= found.value.suggestion;
+      continue;
+    }
+    const isQuery = isQueryArticle(query, hit.title);
+    const answer = (): Promise<LookupOutcome> =>
+      isQuery
+        ? Promise.resolve({ok: true, value: {...found.value, language}})
+        : logoItem(query, language, ctx);
+    if (isQuery && isTitleOfQuery(query, hit.title)) {
+      return answer();
+    }
+    first ??= answer;
+  }
+  return first
+    ? first()
+    : {ok: true, value: {hit: null, ...(suggestion && {suggestion})}};
 }
 
 /** A spelling to try when nothing was found: Wikipedia's «did you mean», else its article title. */

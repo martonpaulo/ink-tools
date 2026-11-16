@@ -81,13 +81,13 @@ does for its sources):
   those come from `descriptor.json`, not from strings in the code.
 - **Imports go one way.** Feature logic never imports `sn-plugin-lib`, names a content provider or
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
-  ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `plugins/probe` is exempt: it
+  ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/probe` is exempt: it
   exists to call internals directly.
 
 ## Shared packages
 
 ```
-supernote-tools/
+ink-tools/
   packages/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
@@ -106,7 +106,7 @@ supernote-tools/
     inkctl/          # the ADB control CLI (formerly supernote-adb, then inkctl)
   apps/
     lingo-app/      # sideloaded tablet app: switch the handwriting language tablet-wide
-    <ink-notebook-editor> # planned macOS app, Ink Notebook Editor: edit .note files on the Mac
+    ink-notebook-editor/ # planned macOS app, Ink Notebook Editor: docs only, no code yet
 ```
 
 ## The plugins (on device)
@@ -121,14 +121,14 @@ supernote-tools/
     (`registerConfigButton()` + `startConfigQueue()`) **independently**. `bridge` registers only the
     config button and no NOTE buttons, so it appears only in the plugin settings, never in notes.
     (API-confirmed from ink2pic; to confirm on device via `probe`.)
-  - **A change made on both sides between two syncs** ([#87](https://github.com/martonpaulo/supernote-tools/issues/87), owner D14 A): on both
+  - **A change made on both sides between two syncs** ([#87](https://github.com/martonpaulo/ink-tools/issues/87), owner D14 A): on both
     modules the later change wins, and a tie goes to the service. To-Do compares the two
     `modified` times (`packages/sync-core/src/tasks.ts`). Calendar compares the tablet row's
     `lastModifiedTime` with the source's change time (Google's `updated`); a source that has none,
     such as ICS, wins (`pushCalendarEdits` in `packages/sync-core/src/push.ts`). The losing
     version goes into the module run's warnings, which Settings and the log show: a task's title, an
     event's title, start and notes (`conflictWarnings`).
-  - **Turning a module or a provider off** ([#89](https://github.com/martonpaulo/supernote-tools/issues/89), owner D15 A): every row Bridge wrote
+  - **Turning a module or a provider off** ([#89](https://github.com/martonpaulo/ink-tools/issues/89), owner D15 A): every row Bridge wrote
     stays on the tablet, and sync stops updating it. A module that is off offers one
     «Remove what Bridge wrote» button in Settings, which asks once more before it deletes. It
     removes only what Bridge wrote (`packages/sync-core/src/cleanup.ts`): on **calendar**, every
@@ -143,32 +143,32 @@ supernote-tools/
   - **Google sign-in cannot use the device-code flow.** Google's OAuth flow for limited-input
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,
-    [#64](https://github.com/martonpaulo/supernote-tools/issues/64)). `startDeviceCode` in
-    `packages/sync-core` would get `invalid_scope`. **Bridge signs in on the Mac and gets the token
-    over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/supernote-tools/issues/64)): a `inkctl` command runs Google's
+    [#64](https://github.com/martonpaulo/ink-tools/issues/64)). `packages/sync-core`
+    therefore has no device-code sign-in ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). **Bridge signs in on the Mac and gets the token
+    over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/ink-tools/issues/64)): a `inkctl` command runs Google's
     installed-app flow with a loopback redirect, which allows the Calendar scopes, in the Mac's
     browser; the refresh token then goes to Bridge's private plugin folder the way every sign-in
-    secret does, `inkctl secret set google` ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)). The plugin only refreshes
+    secret does, `inkctl secret set google` ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). The plugin only refreshes
     access tokens. Not chosen: a browser on the tablet with a loopback redirect to the plugin (the
     browser and the local listener are unconfirmed), and read-only Google through its secret iCal
-    address and the ICS provider ([#30](https://github.com/martonpaulo/supernote-tools/issues/30)), which makes writing back
-    ([#29](https://github.com/martonpaulo/supernote-tools/issues/29)) impossible.
+    address and the ICS provider ([#30](https://github.com/martonpaulo/ink-tools/issues/30)), which makes writing back
+    ([#29](https://github.com/martonpaulo/ink-tools/issues/29)) impossible.
 
     Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh
     tokens expire after 7 days; «In production» without verification keeps them, behind an
     «unverified app» warning.
 - **`lookup`** — write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
   or a **translation**; each mode opt in/out, and each language pair opt in/out under the
-  translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)); it replaced `ink2pic`,
-  which is retired and uninstalled from the tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)).
+  translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced `ink2pic`,
+  which is retired and uninstalled from the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)).
 - **`lingo`** (retiring) — the translation plugin Lookup's «Translate ES→PT» buttons replace
-  ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)); its folder is removed once that button passes on the tablet ([#161](https://github.com/martonpaulo/supernote-tools/issues/161)).
+  ([#158](https://github.com/martonpaulo/ink-tools/issues/158), [#159](https://github.com/martonpaulo/ink-tools/issues/159)); its folder is removed once that button passes on the tablet ([#161](https://github.com/martonpaulo/ink-tools/issues/161)).
   The shared translation flow it used is `ink-core`'s.
 - **`relay`** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
-  LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/supernote-tools/issues/98), [#49](https://github.com/martonpaulo/supernote-tools/issues/49)). Its network half is a native
+  LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/ink-tools/issues/98), [#49](https://github.com/martonpaulo/ink-tools/issues/49)). Its network half is a native
   Java module, as `probe`'s listener is.
 - **`retouch`** — edit an image already on the page: lasso it and tap Enhance, Lighter, Darker, Undo or
-  Restore original ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)). Its pixel work is a native Java module that reuses
+  Restore original ([#136](https://github.com/martonpaulo/ink-tools/issues/136)). Its pixel work is a native Java module that reuses
   `picture-search`'s `Decolor` and `EinkPixels`.
 - **`probe`** — a minimal plugin for on-device investigation (provider reachability, permission
   checks), reused whenever a device question comes up.
@@ -176,26 +176,26 @@ supernote-tools/
 `lookup`, `retouch` and the retiring `lingo` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
-([#93](https://github.com/martonpaulo/supernote-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
+([#93](https://github.com/martonpaulo/ink-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
 `sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lingo`, `lookup`, `relay` and `retouch` call `sn-plugin-lib` only
-through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `ink2pic` was the seed of `ink-core` and of `lookup`'s picture modes; it is retired, and `lookup`
-finds stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). Its picture search core and pixel
+through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `ink2pic` was the seed of `ink-core` and of `lookup`'s picture modes; it is retired, and `lookup`
+finds stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/ink-tools/issues/125)). Its picture search core and pixel
 measures are `packages/picture-search`.
 
 ## The tablet apps
 
 - **Lingo** (`apps/lingo-app/`) — a sideloaded Android app, not a plugin, that switches the
   handwriting recognition language of the whole tablet from a floating button or its sidebar entry
-  ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
+  ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
   `ink-core`; its pure cycle and file switch are unit-tested on the JVM.
 
 ## The host tools
 
 - **`inkctl`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
   codes, no root (formerly `supernote-adb`, then `snadb`, which still runs as a shim,
-  [#173](https://github.com/martonpaulo/supernote-tools/issues/173)).
-- **Ink Notebook Editor** (planned folder `apps/ink-notebook-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; not
-  yet a subproject ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)).
+  [#173](https://github.com/martonpaulo/ink-tools/issues/173)).
+- **Ink Notebook Editor** (`apps/ink-notebook-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; the folder holds its
+  `AGENTS.md` and no code yet ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
 

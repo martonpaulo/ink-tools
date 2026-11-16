@@ -8,8 +8,14 @@
  * One press runs at a time across both buttons (the shared press guard, #93). A missing permission
  * opens Lookup's view, which asks for it (App.tsx).
  */
+import {ToastAndroid} from 'react-native';
 import {LassoPlace} from '@supernote-tools/ink-core';
-import {DEFAULT_ADAPTERS, keepMode} from '@supernote-tools/picture-search';
+import {
+  DEFAULT_ADAPTERS,
+  fitsMode,
+  keepMode,
+  pixelKind,
+} from '@supernote-tools/picture-search';
 import {
   insertText,
   Result,
@@ -64,16 +70,25 @@ export const LOOKUP_PICTURES: PictureStore = {
     placement: 'below',
     contour: false,
   }),
+  lassoSkipped: () =>
+    ToastAndroid.show(copy['picture.unselected'], ToastAndroid.SHORT),
 };
 
 /**
- * What the mode's search reads: Lookup has no search settings yet, so the definition's languages
- * (shortcut: fixed, as `LANGUAGES` says; read the person's languages once Lookup has them), the
+ * The languages a picture search asks, in order: the definition's, then English, the language of
+ * Ink2Pic's search and its lab. Without English, «apple» was only looked up in the Portuguese
+ * and Spanish Wikipedias, which find the brand, and its logo led (#13).
+ * shortcut: fixed, as `LANGUAGES` says; read the person's languages once Lookup has them.
+ */
+export const PICTURE_LANGUAGES: readonly string[] = [...LANGUAGES, 'en'];
+
+/**
+ * What the mode's search reads: Lookup has no search settings yet, so PICTURE_LANGUAGES, the
  * mode's style, and the mode's sources, already filtered by `modeAdapters`.
  */
 export function modeSearchSettings(mode: Mode): SearchSettings {
   return {
-    languages: LANGUAGES,
+    languages: PICTURE_LANGUAGES,
     photos: mode.photos,
     dataSaver: false,
     sourceOn: () => true,
@@ -91,9 +106,10 @@ function modeMeasure(mode: Mode): MeasureDeps {
 }
 
 /**
- * The shared flow bound to one mode. The measured order waits for every tile of pages 1 and 2
- * (no early leader): `keepMode` then keeps only the mode's tiles, so the first one left is the
- * mode's best, and a photo list with no photo is empty, never a drawing.
+ * The shared flow bound to one mode. `keepMode` keeps only the mode's measured tiles, so the
+ * first one left is the mode's best, and a photo list with no photo is empty, never a drawing.
+ * The measure stops once that first tile is fixed whatever the pending tiles measure (#19, owner
+ * D48 A): «Insert Sticker» waited 2.4 s for every tile of pages 1 and 2 on the tablet.
  */
 export function modeDeps(
   mode: Mode,
@@ -121,7 +137,8 @@ export function modeDeps(
         query,
         modeMeasure(mode),
         onThumbs,
-        false,
+        true,
+        measures => fitsMode(pixelKind(measures), mode.kind),
       );
       const kept = keepMode(pages.results, pages.measures, mode.kind);
       log(

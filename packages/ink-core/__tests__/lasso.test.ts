@@ -36,10 +36,11 @@ describe('readLassoQuery (#109)', () => {
 
   it('keeps the page\'s occupied rects with the place, and only the place when the read fails (#152)', async () => {
     const ink = [{left: 100, top: 300, right: 900, bottom: 360}];
-    const read = jest.fn(() => ok(ink));
+    const read = jest.fn(() => ok({rects: ink, complete: true}));
     const answer = await readLassoQuery(host({getOccupied: read}));
     expect(read).toHaveBeenCalledWith('/Note/a.note', 3);
     expect(answer.ok && answer.value.place?.occupied).toEqual(ink);
+    expect(answer.ok && answer.value.place?.occupiedPartial).toBeUndefined();
     const failed = await readLassoQuery(
       host({getOccupied: async () => ({ok: false, code: -1, message: 'over budget'})}),
     );
@@ -48,6 +49,48 @@ describe('readLassoQuery (#109)', () => {
       page: 3,
       pageSize: {width: 1920, height: 2560},
     });
+  });
+
+  it('marks a partial page read, so no lasso trusts it (#168)', async () => {
+    const ink = [{left: 0, top: 300, right: 400, bottom: 340}];
+    const answer = await readLassoQuery(
+      host({getOccupied: () => ok({rects: ink, complete: false})}),
+    );
+    expect(answer.ok && answer.value.place).toMatchObject({
+      occupied: ink,
+      occupiedPartial: true,
+    });
+  });
+
+  it('reads the page while the word is recognized, not before it (#152)', async () => {
+    const events: string[] = [];
+    let endRead: () => void = () => {};
+    const answer = readLassoQuery(
+      host({
+        getOccupied: () =>
+          new Promise(resolve => {
+            events.push('read starts');
+            endRead = () => {
+              events.push('read ends');
+              resolve({ok: true, value: {rects: [], complete: true}});
+            };
+          }),
+        recognizeElements: async () => {
+          events.push('recognition ends');
+          endRead();
+          return {ok: true, value: 'soup'};
+        },
+      }),
+    );
+    expect((await answer).ok).toBe(true);
+    expect(events).toEqual(['read starts', 'recognition ends', 'read ends']);
+  });
+
+  it('keeps the place without the rects when the page read throws', async () => {
+    const answer = await readLassoQuery(
+      host({getOccupied: () => Promise.reject(new Error('bridge gone'))}),
+    );
+    expect(answer.ok && answer.value.place?.occupied).toBeUndefined();
   });
 
   it('uses the known elements and loses only the place without a rect', async () => {
@@ -96,5 +139,16 @@ describe('readLassoQuery (#109)', () => {
       'getPageSize',
       'recognizeElements',
     ]);
+    labels.length = 0;
+    await readLassoQuery(
+      host({
+        getOccupied: () => ok({rects: [], complete: true}),
+        logged: (label, call) => {
+          labels.push(label);
+          return call();
+        },
+      }),
+    );
+    expect(labels.slice(-2)).toEqual(['getOccupied', 'recognizeElements']);
   });
 });

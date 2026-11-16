@@ -4,6 +4,7 @@ import {USER_AGENT} from '../src/config';
 import {
   entityUrl,
   isQueryArticle,
+  isTitleOfQuery,
   claimsUrl,
   logoCandidatesUrl,
   logoCategorySearch,
@@ -145,6 +146,58 @@ describe('the query languages (#71, owner D7)', () => {
     await searchWikidata('sopa', ctx(fetch, ['es', 'pt']));
     expect(fetch.mock.calls[0][0]).toMatch(/^https:\/\/es\.wikipedia\.org/);
     expect(fetch.mock.calls[1][0]).toMatch(/^https:\/\/pt\.wikipedia\.org/);
+  });
+
+  it('takes the Wikipedia whose article is the word itself: «apple» is the fruit, not Apple Inc. (#13)', async () => {
+    const article = (title: string, item: string) =>
+      JSON.stringify({
+        batchcomplete: true,
+        query: {pages: [{title, index: 1, pageprops: {wikibase_item: item}}]},
+      });
+    const brand = JSON.stringify({
+      entities: {
+        Q312: {
+          claims: {
+            P159: [{rank: 'normal', mainsnak: {snaktype: 'value', datavalue: {value: {id: 'Q1'}}}}],
+            P154: [{rank: 'normal', mainsnak: {snaktype: 'value', datavalue: {value: 'Apple logo black.svg'}}}],
+          },
+        },
+      },
+    });
+    const fetch = jest.fn(async (url: string) => {
+      if (/^https:\/\/(pt|es)\.wikipedia/.test(url)) {
+        return ok(article('Apple Inc.', 'Q312'));
+      }
+      if (/^https:\/\/en\.wikipedia/.test(url)) {
+        return ok(article('Apple', 'Q89'));
+      }
+      if (url === entityUrl('Q312')) {
+        return ok(brand);
+      }
+      if (url === entityUrl('Q89')) {
+        return ok(JSON.stringify({entities: {Q89: {claims: {}}}}));
+      }
+      return ok(NONE);
+    });
+    const found = await searchWikidata('apple', ctx(fetch, ['pt', 'es', 'en']));
+    const urls = fetch.mock.calls.map(([url]) => url);
+    expect(urls).toContain(entityUrl('Q89'));
+    expect(urls).not.toContain(entityUrl('Q312'));
+    expect(found.ok && found.value.results.some(r => r.leads)).toBe(false);
+    // A word with no exact article anywhere keeps the first language's, as before.
+    const first = jest.fn(async (url: string) =>
+      ok(/wikipedia/.test(url) ? article('Apple Inc.', 'Q312') : brand),
+    );
+    await searchWikidata('apple', ctx(first, ['pt', 'es']));
+    expect(first.mock.calls.map(([url]) => url)).toContain(entityUrl('Q312'));
+  });
+
+  it('knows a title that is the word itself, plural, accents and a qualifier aside (#13)', () => {
+    expect(isTitleOfQuery('apple', 'Apple')).toBe(true);
+    expect(isTitleOfQuery('apples', 'Apple')).toBe(true);
+    expect(isTitleOfQuery('maçã', 'Maçã (fruta)')).toBe(true);
+    expect(isTitleOfQuery('apple', 'Apple Inc.')).toBe(false);
+    expect(isTitleOfQuery('apple logo', 'Apple')).toBe(true);
   });
 
   it('gives every language its own request budget', () => {

@@ -1,7 +1,7 @@
 /**
  * One lasso button per edit switched on in Settings (#136), shown when the lasso holds a picture,
- * run with no view, as Lingo's direction buttons (#128). A button exists only while its switch is
- * on.
+ * run with no view, as Lingo's direction buttons (#128), or opening a view when its row says so
+ * (Styles, #133). A button exists only while its switch is on.
  */
 import {
   registerButton,
@@ -14,7 +14,6 @@ import {EDITS, enabledEdits, RetouchSettings} from './edits';
 export const BUTTON_TYPE_LASSO = 2;
 /** `editDataTypes` 2: the lasso holds a picture (sn-plugin-lib 0.2.3, NativePluginManager). */
 export const EDIT_DATA_PICTURE = 2;
-export const SHOW_NO_VIEW = 0;
 
 export type ButtonDeps = {
   register: typeof registerButton;
@@ -55,10 +54,12 @@ export async function syncButtons(
           id: edit.buttonId,
           name: edit.name,
           editDataTypes: [EDIT_DATA_PICTURE],
-          showType: SHOW_NO_VIEW,
+          showType: edit.showType,
         })
       : await deps.unregister(edit.buttonId);
-    deps.log(describe(`${on ? 'register' : 'unregister'} ${edit.name}`, result));
+    deps.log(
+      describe(`${on ? 'register' : 'unregister'} ${edit.name}`, result),
+    );
     if (result.ok) {
       on ? registered.add(edit.buttonId) : registered.delete(edit.buttonId);
     }

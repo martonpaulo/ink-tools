@@ -2,11 +2,11 @@ import {CalendarEvent, CalendarInfo, CalendarProvider, TimeWindow} from './calen
 import {HttpFetch} from './http';
 
 /**
- * Google Calendar as a CalendarProvider (Calendar API v3) and the OAuth device-code sign-in.
+ * Google Calendar as a CalendarProvider (Calendar API v3) and the access-token refresh. The sign-in
+ * runs on the Mac, not here: Google's device-code flow allows no Calendar scope (#64, #124).
  * `fetch` is injected, so tests need no network. Tokens live only in the owner's secure store.
  * Not yet run against a live account: the owner verifies it on the Mac (issue #28).
  */
-const DEVICE_CODE_URL = 'https://oauth2.googleapis.com/device/code';
 const OAUTH_ENDPOINT = 'https://oauth2.googleapis.com/token';
 export const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 
@@ -15,79 +15,30 @@ export interface OAuthClient {
   clientSecret: string;
 }
 
-export interface DeviceCodePrompt {
-  deviceCode: string;
-  /** The short code the owner types on a phone. */
-  userCode: string;
-  verificationUrl: string;
-  intervalSeconds: number;
-  expiresInSeconds: number;
-}
-
 const form = (o: Record<string, string>) => new URLSearchParams(o).toString();
 const FORM = {'Content-Type': 'application/x-www-form-urlencoded'};
 
-export async function startDeviceCode(fetch: HttpFetch, client: OAuthClient): Promise<DeviceCodePrompt> {
-  const res = await fetch(DEVICE_CODE_URL, {
-    method: 'POST',
-    headers: FORM,
-    body: form({client_id: client.clientId, scope: GOOGLE_CALENDAR_SCOPE}),
-  });
-  if (!res.ok) throw new Error(`Google device code request failed with HTTP ${res.status}`);
-  const j = (await res.json()) as {device_code: string; user_code: string; verification_url: string; interval?: number; expires_in: number};
-  return {
-    deviceCode: j.device_code,
-    userCode: j.user_code,
-    verificationUrl: j.verification_url,
-    intervalSeconds: j.interval ?? 5,
-    expiresInSeconds: j.expires_in,
-  };
-}
-
-export type PollResult =
-  | {status: 'pending'}
-  | {status: 'slow_down'}
-  | {status: 'denied'}
-  | {status: 'expired'}
-  | {status: 'granted'; refreshToken: string; accessToken: string; expiresInSeconds: number};
-
-/** One poll of the token endpoint; the caller waits `intervalSeconds` between calls. */
-export async function pollDeviceCode(fetch: HttpFetch, client: OAuthClient, deviceCode: string): Promise<PollResult> {
-  const res = await fetch(OAUTH_ENDPOINT, {
-    method: 'POST',
-    headers: FORM,
-    body: form({
-      client_id: client.clientId,
-      client_secret: client.clientSecret,
-      device_code: deviceCode,
-      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    }),
-  });
-  const j = (await res.json()) as {error?: string; access_token?: string; refresh_token?: string; expires_in?: number};
-  if (res.ok && j.access_token && j.refresh_token) {
-    return {status: 'granted', accessToken: j.access_token, refreshToken: j.refresh_token, expiresInSeconds: j.expires_in ?? 3600};
-  }
-  switch (j.error) {
-    case 'authorization_pending':
-      return {status: 'pending'};
-    case 'slow_down':
-      return {status: 'slow_down'};
-    case 'access_denied':
-      return {status: 'denied'};
-    case 'expired_token':
-      return {status: 'expired'};
-    default:
-      throw new Error(`Google token request failed: ${j.error ?? `HTTP ${res.status}`}`);
+/**
+ * Google refused the stored refresh token: it was revoked, or it expired (seven days while the
+ * consent screen is in Testing, #64). Settings shows Google as signed out, never an empty calendar.
+ */
+export class GoogleSignedOutError extends Error {
+  constructor() {
+    super('Google sign-in was revoked or has expired: sign in again on the Mac with inkctl google login');
+    this.name = 'GoogleSignedOutError';
   }
 }
 
+/** The only Google token call the plugin makes; the sign-in itself runs on the Mac (owner D39 A, #124). */
 export async function refreshAccessToken(fetch: HttpFetch, client: OAuthClient, refreshToken: string): Promise<string> {
   const res = await fetch(OAUTH_ENDPOINT, {
     method: 'POST',
     headers: FORM,
     body: form({client_id: client.clientId, client_secret: client.clientSecret, refresh_token: refreshToken, grant_type: 'refresh_token'}),
   });
-  const j = (await res.json()) as {access_token?: string};
+  const j = (await res.json()) as {access_token?: string; error?: string};
+  // RFC 6749 §5.2: a revoked or expired refresh token answers invalid_grant.
+  if (j.error === 'invalid_grant') throw new GoogleSignedOutError();
   if (!res.ok || !j.access_token) throw new Error(`Google token refresh failed with HTTP ${res.status}`);
   return j.access_token;
 }

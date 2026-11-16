@@ -149,14 +149,19 @@ describe('the measured split decides what a mode inserts (#111)', () => {
       true,
     );
     expect(insert.mock.calls[0][0].title).toBe('b');
-    // Every tile of pages 1 and 2 is measured before the split: no early leader.
-    expect(measure.mock.calls[0][5]).toBe(false);
+    // The measure stops once the first photo is fixed, judged by the mode's own split (#19).
+    expect(measure.mock.calls[0][5]).toBe(true);
+    const fits = measure.mock.calls[0][6] as (m: Measures) => boolean;
+    expect(fits(photo)).toBe(true);
+    expect(fits(outline)).toBe(false);
   });
 });
 
 test('each mode searches with its own style; Lookup keeps its pictures in MyStyle/Lookup', async () => {
   expect(modeSearchSettings(illustration).photos).toBe(false);
   expect(modeSearchSettings(photoMode).photos).toBe(true);
+  // English too, after the definition's languages: «apple» is the fruit there, not the brand (#13).
+  expect(modeSearchSettings(illustration).languages).toEqual(['pt', 'es', 'en']);
   expect(LOOKUP_PICTURES.dir()).toBe(picturesDir());
   expect(picturesDir('/storage/emulated/0')).toBe(
     '/storage/emulated/0/MyStyle/Lookup/pictures',
@@ -260,4 +265,15 @@ describe('a press (#111)', () => {
     // Once it ends, the next press runs.
     expect((await pictureLasso(photoMode, press()))?.ok).toBe(true);
   });
+});
+
+test('a picture left unselected over the ink says so in a short toast (#168)', () => {
+  const {ToastAndroid} = jest.requireActual<typeof import('react-native')>('react-native');
+  const show = jest.spyOn(ToastAndroid, 'show').mockImplementation(() => {});
+  LOOKUP_PICTURES.lassoSkipped?.();
+  expect(show).toHaveBeenCalledWith(
+    'The picture touches your writing, so it is not selected.',
+    ToastAndroid.SHORT,
+  );
+  show.mockRestore();
 });

@@ -20,10 +20,18 @@ export type LassoPlace = {
   recheck?: true;
   /**
    * The page's strokes, pictures and text boxes, in page pixels, read with the lasso (#152); absent
-   * when the read failed or ran over its budget, so the placement is today's.
+   * when the read failed, so the placement is today's.
    */
   occupied?: Rect[];
+  /**
+   * Set when `occupied` holds only part of the page: the read ran past its budget or an element
+   * failed. The placement still avoids what was read; a lasso of the insert never trusts it (#168).
+   */
+  occupiedPartial?: true;
 };
+
+/** What a page read found (#152): the rects, and whether every element of the page was read. */
+export type OccupiedRead = {rects: Rect[]; complete: boolean};
 
 export type LassoQuery = {query: string; place: LassoPlace | null};
 
@@ -49,7 +57,7 @@ export type LassoHost<F extends {ok: false; message: string}> = {
   getPageSize(path: string, page: number): Promise<Outcome<Size, F>>;
   recognizeElements(elements: object[], size: Size): Promise<Outcome<string, F>>;
   /** The page's occupied rects (#152); without it, or when it fails, the placement is today's. */
-  getOccupied?(path: string, page: number): Promise<Outcome<Rect[], F>>;
+  getOccupied?(path: string, page: number): Promise<Outcome<OccupiedRead, F>>;
   /** The lasso holds no handwriting. */
   emptyLasso(message: string): F;
   /** Any other failure. */
@@ -96,25 +104,32 @@ export async function readLassoQuery<F extends {ok: false; message: string}>(
   if (!size.ok) {
     return size;
   }
+  // The page read runs while the word is recognized (#152): only the part past it adds to the press.
   const getOccupied = host.getOccupied;
-  const occupied =
+  const reading =
     rect.ok && getOccupied
-      ? await logged('getOccupied', () => getOccupied(path.value, page.value))
+      ? logged('getOccupied', () => getOccupied(path.value, page.value)).catch(
+          (error: unknown) => host.failure(`getOccupied threw: ${String(error)}`),
+        )
       : null;
-  const place = rect.ok
+  const text = await logged('recognizeElements', () =>
+    host.recognizeElements(elements.value, size.value),
+  );
+  const occupied = reading ? await reading : null;
+  if (!text.ok) {
+    return text;
+  }
+  const place: LassoPlace | null = rect.ok
     ? {
         rect: rect.value,
         page: page.value,
         pageSize: size.value,
-        ...(occupied?.ok ? {occupied: occupied.value} : {}),
+        ...(occupied?.ok ? {occupied: occupied.value.rects} : {}),
+        ...(occupied?.ok && !occupied.value.complete
+          ? {occupiedPartial: true as const}
+          : {}),
       }
     : null;
-  const text = await logged('recognizeElements', () =>
-    host.recognizeElements(elements.value, size.value),
-  );
-  if (!text.ok) {
-    return text;
-  }
   const query = text.value.trim();
   if (!query) {
     return host.failure('the handwriting was recognized as empty text');

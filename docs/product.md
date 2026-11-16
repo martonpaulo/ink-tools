@@ -1,4 +1,4 @@
-# Supernote Tools — product definition
+# Ink Tools — product definition
 
 Type: product definition. Current rules only; decision history lives in `docs/decisions.md`.
 
@@ -10,8 +10,8 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
 - **Plugins**, which run inside the tablet's plugin host on `sn-plugin-lib`:
   - **Word Lookup** (`lookup`) turns a lassoed handwritten word into an inserted illustration, photo, short
     definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
-    tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)), and the **lingo** plugin, which is retiring now that translation is Lookup's
-    «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/supernote-tools/issues/174), [#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)).
+    tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)), and the **lingo** plugin, which is retiring now that translation is Lookup's
+    «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/ink-tools/issues/174), [#158](https://github.com/martonpaulo/ink-tools/issues/158), [#159](https://github.com/martonpaulo/ink-tools/issues/159)).
   - **Account Sync** (`bridge`) syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
     Supernote apps.
   - **Image Editing** (`retouch`) makes a picture on the page readable on e-ink.
@@ -20,19 +20,19 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   - **probe** is a developer-only plugin for device experiments.
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
   `apps/lingo-app`) switches the handwriting recognition language of the whole tablet with one tap
-  ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
+  ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 - **A Mac CLI**: **inkctl** drives the tablet over Wi-Fi ADB.
 - **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
-  ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)). «Supernote» is Ratta's trademark, so a tool's name carries no brand;
+  ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). «Supernote» is Ratta's trademark, so a tool's name carries no brand;
   «for Supernote notebooks» may appear in a description only
-  ([#175](https://github.com/martonpaulo/supernote-tools/issues/175)).
+  ([#175](https://github.com/martonpaulo/ink-tools/issues/175)).
 
 Proposed, not decided: **Real-Time Conversion** (`typeset`), a plugin that turns each handwritten word into typed text with
-no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/supernote-tools/issues/144)).
+no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144)).
 
 Each tool shows a feature name in Supernote's own wording, and its buttons read like the tablet's
 («New Sticker»): a verb and a noun in title case. Folders, packages, gates, tags and `pluginID`s
-keep the short internal names above ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
+keep the short internal names above ([#176](https://github.com/martonpaulo/ink-tools/issues/176)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
 
 ## Who it is for
 

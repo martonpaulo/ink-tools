@@ -11,8 +11,14 @@ import {
   startButtonQueue,
 } from '@supernote-tools/sn-adapter/official';
 import {syncButtons} from './src/buttons';
-import {defaultSettings, editOfButton} from './src/edits';
+import {
+  currentSettings,
+  defaultSettings,
+  editOfButton,
+  enabledStyles,
+} from './src/edits';
 import {runEdit} from './src/edit';
+import {openStyles} from './src/styles';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -31,6 +37,14 @@ const listening = startButtonQueue(id => {
   const edit = editOfButton(id);
   if (!edit) {
     return false;
+  }
+  if (edit.id === 'styles') {
+    // A full-view button (#133): the host shows the view, which shows the grid once it is made.
+    showPluginView();
+    openStyles(enabledStyles(currentSettings())).catch(error => {
+      console.error(`Retouch: ${edit.name}: ${error.message}`);
+    });
+    return true;
   }
   runEdit(edit.id).catch(error => {
     console.error(`Retouch: ${edit.name}: ${error.message}`);

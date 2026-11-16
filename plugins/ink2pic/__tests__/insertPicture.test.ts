@@ -452,10 +452,12 @@ describe('insertPicture (#12)', () => {
 });
 
 describe('the inserted picture is left lassoed (#73)', () => {
+  // The whole page was read and holds only the word: nothing else is under the picture (#168).
   const place = {
     rect: {left: 100, top: 200, right: 300, bottom: 260},
     page: 3,
     pageSize: {width: 1920, height: 2560},
+    occupied: [{left: 110, top: 210, right: 290, bottom: 250}],
   };
   const placedRect = {left: 100, top: 284, right: 740, bottom: 877};
   const lasso = PluginCommAPI.lassoElements as jest.Mock;
@@ -492,6 +494,26 @@ describe('the inserted picture is left lassoed (#73)', () => {
     expect((await insertPicture(result, 'soup', place)).ok).toBe(true);
     lasso.mockResolvedValueOnce({success: true, result: false});
     expect((await insertPicture(result, 'soup', place)).ok).toBe(true);
+  });
+
+  it('never lassoes ink: strokes under the picture, or a page not wholly read, skip it (#168)', async () => {
+    // A line of handwriting fills the page below the word, so the picture lands over it.
+    const full = {
+      ...place,
+      occupied: [{left: 0, top: 262, right: 1920, bottom: 2560}],
+    };
+    expect((await insertPicture(result, 'soup', full)).ok).toBe(true);
+    expect(lasso).not.toHaveBeenCalled();
+    expect(logLines().join('\n')).toMatch(
+      /lassoElements: skipped, 1 other elements in the rect/,
+    );
+    const unread = {rect: place.rect, page: place.page, pageSize: place.pageSize};
+    expect((await insertPicture(result, 'soup', unread)).ok).toBe(true);
+    const partial = {...place, occupiedPartial: true as const};
+    expect((await insertPicture(result, 'soup', partial)).ok).toBe(true);
+    expect(lasso).not.toHaveBeenCalled();
+    expect(logLines().join('\n')).toMatch(/the page's ink is not known/);
+    expect(logLines().join('\n')).toMatch(/only part of the page's ink is known/);
   });
 
   it('skips the lasso when the host placed the picture with insertImage', async () => {
@@ -584,6 +606,17 @@ describe('the insert options from Settings (#70)', () => {
     expect(remove.mock.invocationCallOrder[0]).toBeGreaterThan(
       insertElements.mock.invocationCallOrder[0],
     );
+  });
+
+  it('lassoes the picture in place of the word once the word is deleted (#168)', async () => {
+    remove.mockResolvedValue({success: true, result: true});
+    const word = {...place, occupied: [{left: 110, top: 210, right: 290, bottom: 250}]};
+    await insertPicture(result, 'soup', word, false, {
+      width: 640,
+      placement: 'replace',
+      contour: false,
+    });
+    expect(PluginCommAPI.lassoElements).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the word when the insert fails or the picture is not at it', async () => {
