@@ -14,12 +14,14 @@ import { pluginProfile } from "./profile";
 
 /**
  * The module's rejection codes, plus MISSING when PluginHost did not load it. IO carries an error
- * Android raised; `HTTP_<status>` a download that was not HTTP 200.
+ * Android raised; `HTTP_<status>` a download that was not HTTP 200; SHORT_WRITE a write in shared
+ * storage whose file holds fewer bytes than it was given (#162).
  */
 export type FilesErrorCode =
   | "HTTPS_ONLY"
   | "BAD_PATH"
   | "TOO_LARGE"
+  | "SHORT_WRITE"
   | "IO"
   | "MISSING"
   | `HTTP_${number}`;
