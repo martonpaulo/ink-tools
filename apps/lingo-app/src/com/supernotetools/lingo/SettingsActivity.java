@@ -2,6 +2,7 @@ package com.supernotetools.lingo;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
@@ -22,15 +23,17 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The one settings screen: the active language, the floating button on or off, the languages in
- * the cycle, and any missing permission with the command that grants it. Built in code (no XML
+ * The one settings screen: the active language, where the floating button shows, the languages
+ * in the cycle, and any missing permission or service with the command that turns it on.
+ * A long press on the floating button opens it, since the sidebar lists only the first entry. Built in code (no XML
  * resources, so the light build needs no resource step); black on white, no animation.
  *
- * Extras, for a device round over ADB: `--ez overlay true|false` sets the floating button.
+ * Extras, for a device round over ADB: `--es button writing|always|hidden` sets the floating
+ * button (ButtonRule.Mode keys).
  */
 public final class SettingsActivity extends Activity {
   static final String EXTRA_ERROR = "error";
-  static final String EXTRA_OVERLAY = "overlay";
+  static final String EXTRA_BUTTON = "button";
   private static final String FILES_OP = "MANAGE_EXTERNAL_STORAGE";
   private static final String OVERLAY_OP = "SYSTEM_ALERT_WINDOW";
 
@@ -69,8 +72,8 @@ public final class SettingsActivity extends Activity {
     if (intent.hasExtra(EXTRA_ERROR)) {
       error = intent.getStringExtra(EXTRA_ERROR);
     }
-    if (intent.hasExtra(EXTRA_OVERLAY)) {
-      setOverlay(intent.getBooleanExtra(EXTRA_OVERLAY, false));
+    if (intent.hasExtra(EXTRA_BUTTON)) {
+      setButton(ButtonRule.mode(intent.getStringExtra(EXTRA_BUTTON)));
     }
   }
 
@@ -104,11 +107,21 @@ public final class SettingsActivity extends Activity {
     if (!overlay) {
       missing(Copy.OVERLAY_OFF, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
     }
-    CheckedTextView show = check(Copy.BUTTON_SHOW, prefs.overlay());
-    show.setOnClickListener(view -> {
-      setOverlay(!new Prefs(this).overlay());
-      render();
-    });
+    ButtonRule.Mode chosenMode = prefs.button();
+    for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
+      CheckedTextView row = check(Copy.buttonMode(mode), mode == chosenMode);
+      row.setOnClickListener(view -> {
+        setButton(mode);
+        render();
+      });
+    }
+    if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
+      text(Copy.WATCHER_OFF, Ink.TEXT_SP, true);
+      text(Copy.GRANT_FROM_COMPUTER, Ink.TEXT_SP, false);
+      TextView command = text(Copy.WATCHER_COMMANDS, Ink.TEXT_SP, false);
+      command.setTypeface(Typeface.MONOSPACE);
+      command.setTextIsSelectable(true);
+    }
     text(Copy.BUTTON_HELP, Ink.TEXT_SP, false);
 
     section(Copy.CYCLE_SECTION);
@@ -128,13 +141,29 @@ public final class SettingsActivity extends Activity {
     }
   }
 
-  private void setOverlay(boolean on) {
-    new Prefs(this).setOverlay(on);
-    if (on) {
-      OverlayService.start(this);
-    } else {
+  private void setButton(ButtonRule.Mode mode) {
+    new Prefs(this).setButton(mode);
+    if (mode == ButtonRule.Mode.HIDDEN) {
       OverlayService.stop(this);
+    } else {
+      OverlayService.start(this);
+      OverlayService.refresh();
     }
+  }
+
+  /** Whether the system lists WritingWatcher as enabled, which the ADB command sets. */
+  private boolean watcherOn() {
+    String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+    if (enabled == null) {
+      return false;
+    }
+    ComponentName watcher = new ComponentName(this, WritingWatcher.class);
+    for (String entry : enabled.split(":")) {
+      if (watcher.equals(ComponentName.unflattenFromString(entry))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void toggle(String code) {
@@ -162,7 +191,7 @@ public final class SettingsActivity extends Activity {
     prefs.setCycle(chosen);
     render();
     // The button's label depends on the cycle (CN and TW when both Chinese codes are in it).
-    if (prefs.overlay()) {
+    if (prefs.button() != ButtonRule.Mode.HIDDEN) {
       sendBroadcast(new Intent(Switcher.CHANGED).setPackage(getPackageName()));
     }
   }

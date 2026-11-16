@@ -5,10 +5,10 @@ import android.content.SharedPreferences;
 import java.util.HashSet;
 import java.util.Set;
 
-/** The app's two preferences: the floating button on or off, and the codes in the cycle. */
+/** The app's two preferences: where the floating button shows, and the codes in the cycle. */
 final class Prefs {
   private static final String FILE = "lingo";
-  private static final String OVERLAY = "overlay";
+  private static final String BUTTON = "button";
   private static final String CYCLE = "cycle";
 
   private final SharedPreferences store;
@@ -17,12 +17,13 @@ final class Prefs {
     store = context.getSharedPreferences(FILE, Context.MODE_PRIVATE);
   }
 
-  boolean overlay() {
-    return store.getBoolean(OVERLAY, false);
+  /** Where the floating button shows; ButtonRule.DEFAULT until the owner changes it (#195). */
+  ButtonRule.Mode button() {
+    return ButtonRule.mode(store.getString(BUTTON, null));
   }
 
-  void setOverlay(boolean on) {
-    store.edit().putBoolean(OVERLAY, on).apply();
+  void setButton(ButtonRule.Mode mode) {
+    store.edit().putString(BUTTON, mode.key).apply();
   }
 
   /** The chosen codes; LanguageCycle.DEFAULT until the owner changes them. */

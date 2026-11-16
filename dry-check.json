@@ -8,9 +8,6 @@
    "**/buildPlugin.ps1"
   ],
   "counts": {
-   "apps/lingo-app/scripts/build.cjs": {
-    "url": 1
-   },
    "apps/lingo-app/scripts/host-tools.cjs": {
     "repeated": 1
    },

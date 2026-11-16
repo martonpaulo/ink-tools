@@ -17,12 +17,14 @@ const {versionName} = require('../../../scripts/plugin-version.cjs');
 const root = path.resolve(__dirname, '..');
 const build = path.join(root, 'build');
 const PACKAGE = 'com.supernotetools.lingo';
+/** The XML namespace of the manifest and the watcher's configuration. */
+const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 /** Android 11, the tablet's release; MANAGE_EXTERNAL_STORAGE starts here. */
 const MIN_API = '30';
 const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
-const PURE = ['LanguageCycle', 'LanguageFiles'];
-const TESTS = ['LanguageCycleTest', 'LanguageFilesTest'];
+const PURE = ['ButtonRule', 'LanguageCycle', 'LanguageFiles'];
+const TESTS = ['ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest'];
 /**
  * shortcut: a local debug key in .toolchain/, outside Git and unique to each checkout; an APK
  * from another checkout or CI has another key, so the tablet needs an uninstall before it.
@@ -84,7 +86,7 @@ function manifest(file, {versionCode, versionName: name}) {
   fs.writeFileSync(
     file,
     `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="${ANDROID_NS}"
     package="${PACKAGE}"
     android:versionCode="${versionCode}"
     android:versionName="${name}">
@@ -114,6 +116,13 @@ function manifest(file, {versionCode, versionName: name}) {
       </intent-filter>
     </activity>
     <service android:name=".OverlayService" android:exported="false" />
+    <service android:name=".WritingWatcher" android:label="Handwriting Language" android:exported="true"
+        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+      <meta-data android:name="android.accessibilityservice" android:resource="@xml/writing_watcher" />
+    </service>
     <receiver android:name=".BootReceiver" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -123,6 +132,32 @@ function manifest(file, {versionCode, versionName: name}) {
 </manifest>
 `,
   );
+}
+
+/**
+ * The one resource: WritingWatcher's configuration (#195). Window reading
+ * (canRetrieveWindowContent, flagRetrieveInteractiveWindows) can be declared only in this XML,
+ * never from code, so the build compiles this single file; the views stay in code.
+ */
+function watcherConfig(work, aapt2) {
+  const folder = path.join(work, 'res', 'xml');
+  fs.mkdirSync(folder, {recursive: true});
+  const file = path.join(folder, 'writing_watcher.xml');
+  fs.writeFileSync(
+    file,
+    `<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="${ANDROID_NS}"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="0" />
+`,
+  );
+  const compiled = path.join(work, 'compiled');
+  fs.mkdirSync(compiled);
+  run(aapt2, ['compile', '-o', compiled, file]);
+  return fs.readdirSync(compiled).map(name => path.join(compiled, name));
 }
 
 function signingKey() {
@@ -164,6 +199,7 @@ function buildApk() {
   run(t.aapt2, [
     'link', '--manifest', manifestFile, '-I', t.androidJar,
     '--min-sdk-version', MIN_API, '--target-sdk-version', TARGET_API, '-o', unsigned,
+    ...watcherConfig(work, t.aapt2),
   ]);
   run('zip', ['-q', '-j', unsigned, path.join(dex, 'classes.dex')]);
   const aligned = path.join(work, 'aligned.apk');

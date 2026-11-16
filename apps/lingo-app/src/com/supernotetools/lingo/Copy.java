@@ -14,8 +14,14 @@ final class Copy {
   static final String ACTIVE = "Active language";
   static final String UNKNOWN = "Unknown: the language folder holds more than one language.";
   static final String BUTTON_SECTION = "Floating button";
-  static final String BUTTON_SHOW = "Show the floating button over every app";
-  static final String BUTTON_HELP = "One tap moves to the next language. The Handwriting Language entry in the sidebar does the same with nothing on screen.";
+  static final String BUTTON_WRITING = "Only where you write: the handwriting keyboard, a note, Digest, To-Do, Email";
+  static final String BUTTON_ALWAYS = "Always visible, over every app";
+  static final String BUTTON_HIDDEN = "Hidden";
+  static final String BUTTON_HELP = "One tap moves to the next language. A long press opens these settings. The Handwriting Language entry in the sidebar switches with nothing on screen.";
+  static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
+  static final String WATCHER_COMMANDS =
+      "adb shell settings put secure enabled_accessibility_services " + PACKAGE + "/.WritingWatcher\n"
+          + "adb shell settings put secure accessibility_enabled 1";
   static final String CYCLE_SECTION = "Languages in the cycle";
   static final String CYCLE_HELP = "Only installed languages are listed. Install more in Settings, Handwriting language.";
   static final String CYCLE_LAST = "Keep at least one language in the cycle.";
@@ -30,6 +36,17 @@ final class Copy {
   static final String BUTTON_FAILED = "!";
   static final String BUTTON_DESCRIPTION = "Handwriting language %s. Tap to switch to the next language.";
   static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language Settings.";
+
+  static String buttonMode(ButtonRule.Mode mode) {
+    switch (mode) {
+      case ALWAYS:
+        return BUTTON_ALWAYS;
+      case HIDDEN:
+        return BUTTON_HIDDEN;
+      default:
+        return BUTTON_WRITING;
+    }
+  }
 
   static String grantCommand(String op) {
     return "adb shell appops set " + PACKAGE + " " + op + " allow";
