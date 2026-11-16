@@ -11,7 +11,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [Lingo app](#lingo-app)
 - [Dictionary and translation engine (shared)](#dictionary-and-translation-engine-shared)
 - [retouch](#retouch)
-- [Supernote Editor](#supernote-editor)
+- [Ink Notebook Editor](#ink-notebook-editor)
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
@@ -185,9 +185,9 @@ and levels sliders, ordered and halftone dither and other error-diffusion styles
 forced white borders, OCR of the image. Resize stays only if the native lasso cannot already resize
 an image ([#130](https://github.com/martonpaulo/supernote-tools/issues/130)).
 
-## Supernote Editor
+## Ink Notebook Editor
 
-Named by the owner on 2026-11-16; the working name was `desk` ([#175](https://github.com/martonpaulo/supernote-tools/issues/175)).
+Named by the owner on 2026-11-16, a brand-free name; the working name was `desk` ([#175](https://github.com/martonpaulo/supernote-tools/issues/175)).
 
 A macOS app that **reads and edits** the owner's `.note` files **without breaking the format** —
 like editing a PDF. Scope (interview 2026-11-14, revised):

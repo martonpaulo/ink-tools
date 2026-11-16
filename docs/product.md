@@ -22,9 +22,9 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
 - **A Mac CLI**: **snadb** drives the tablet over Wi-Fi ADB.
-- **A Mac app**, planned: **Supernote Editor** reads and edits `.note` files on the Mac
-  ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)). «Supernote» is Ratta's trademark:
-  check the name with Ratta's brand rules before any public release or store listing
+- **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
+  ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)). «Supernote» is Ratta's trademark, so a tool's name carries no brand;
+  «for Supernote notebooks» may appear in a description only
   ([#175](https://github.com/martonpaulo/supernote-tools/issues/175)).
 
 Proposed, not decided: **typeset**, a plugin that turns each handwritten word into typed text with
