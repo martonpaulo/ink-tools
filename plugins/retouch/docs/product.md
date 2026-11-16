@@ -30,6 +30,9 @@ or too dark on the 16-grey screen.
   ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
 - Trim the white margins, one tap; crop with the pen is still to come
   ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
+- Remove background, which clears the border around the main object to transparent, and Make
+  sticker, which puts the object on a white card, each one tap; erase with the pen is still to come
+  ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
 - Each edit is a switch in Settings.
 
 ## What it will never do

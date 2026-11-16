@@ -22,6 +22,10 @@ public final class RetouchTest {
     thickerLinesInkMore();
     whiteToTransparentClearsOnlyWhite();
     stylesScaleDownAndSurviveTinyPictures();
+    cutoutClearsTheBorderAndKeepsTheObject();
+    cutoutKeepsAnObjectOnTheBorderAndAnInteriorHole();
+    cutoutKeepsAnAllBackgroundPictureAndTinySizes();
+    stickerFillsWhiteOrClearsWithTheOption();
     System.out.println("RetouchTest ok");
   }
 
@@ -277,6 +281,78 @@ public final class RetouchTest {
     for (Retouch.Edit style : styles) {
       Retouch.apply(style, new Retouch.Picture(new int[] {gray(90)}, 1, 1));
       Retouch.apply(style, new Retouch.Picture(new int[40], 40, 1));
+    }
+  }
+
+  private static void cutoutClearsTheBorderAndKeepsTheObject() {
+    // A 5 x 5 white picture with a 3 x 3 black object in the centre.
+    Retouch.Picture picture = filled(5, 5, gray(255));
+    blackSquare(picture);
+    Retouch.removeBackground(picture);
+    check((picture.argb[0] >>> 24) == 0, "a border corner becomes clear");
+    check((picture.argb[2 * 5 + 2] & 0xFF) == 0, "the object's centre stays black");
+    check((picture.argb[2 * 5 + 2] >>> 24) == 0xFF, "the object stays opaque");
+  }
+
+  private static void cutoutKeepsAnObjectOnTheBorderAndAnInteriorHole() {
+    // A black bar flush to the left edge: it blocks the flood, so it is kept.
+    Retouch.Picture bar = filled(5, 5, gray(255));
+    for (int y = 0; y < 5; y++) {
+      bar.argb[y * 5] = gray(0);
+    }
+    Retouch.removeBackground(bar);
+    check(bar.argb[2 * 5] == gray(0), "an object flush to the border is kept");
+    check((bar.argb[2 * 5 + 4] >>> 24) == 0, "the far-side background is cleared");
+    // A white hole inside the object is never reached from the border, so it stays.
+    Retouch.Picture hole = filled(5, 5, gray(255));
+    blackSquare(hole);
+    hole.argb[2 * 5 + 2] = gray(255);
+    Retouch.removeBackground(hole);
+    check(hole.argb[2 * 5 + 2] == gray(255), "a hole inside the object is kept, not cleared");
+    check((hole.argb[0] >>> 24) == 0, "the outer background is still cleared");
+  }
+
+  private static void cutoutKeepsAnAllBackgroundPictureAndTinySizes() {
+    Retouch.Picture allWhite = filled(2, 2, gray(255));
+    Retouch.removeBackground(allWhite);
+    for (int pixel : allWhite.argb) {
+      check(pixel == gray(255), "an all-background picture is kept unchanged");
+    }
+    Retouch.Picture dot = new Retouch.Picture(new int[] {gray(0)}, 1, 1);
+    Retouch.removeBackground(dot);
+    check(dot.argb[0] == gray(0), "a 1 x 1 object is kept");
+    Retouch.Picture column =
+        new Retouch.Picture(new int[] {gray(255), gray(0), gray(255)}, 1, 3);
+    Retouch.removeBackground(column);
+    check((column.argb[0] >>> 24) == 0 && column.argb[1] == gray(0),
+        "a 1-wide cutout clears white and keeps the object");
+  }
+
+  private static void stickerFillsWhiteOrClearsWithTheOption() {
+    // A near-white (not pure white) background, so the white fill is visible.
+    Retouch.Picture white = filled(5, 5, gray(248));
+    blackSquare(white);
+    Retouch.sticker(white, false);
+    check(white.argb[0] == WHITE, "a sticker fills the background opaque white");
+    check(white.argb[2 * 5 + 2] == gray(0), "the sticker keeps the object");
+    Retouch.Picture clear = filled(5, 5, gray(248));
+    blackSquare(clear);
+    Retouch.sticker(clear, true);
+    check((clear.argb[0] >>> 24) == 0, "the transparent option clears the background");
+  }
+
+  private static Retouch.Picture filled(int width, int height, int argb) {
+    int[] pixels = new int[width * height];
+    java.util.Arrays.fill(pixels, argb);
+    return new Retouch.Picture(pixels, width, height);
+  }
+
+  /** Paints the centre 3 x 3 of a 5 x 5 picture black, the object a cutout keeps. */
+  private static void blackSquare(Retouch.Picture picture) {
+    for (int y = 1; y <= 3; y++) {
+      for (int x = 1; x <= 3; x++) {
+        picture.argb[y * 5 + x] = gray(0);
+      }
     }
   }
 

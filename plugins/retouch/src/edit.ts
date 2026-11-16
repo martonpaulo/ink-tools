@@ -101,6 +101,8 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   flip: 'flip',
   invert: 'invert',
   trim: 'trim',
+  background: 'background',
+  sticker: 'sticker',
   photo: 'photo',
   line_art: 'line_art',
   black_white: 'black_white',

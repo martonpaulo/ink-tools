@@ -12,6 +12,8 @@ export const copy = {
   'edit.flip': 'Flip',
   'edit.invert': 'Invert',
   'edit.trim': 'Trim',
+  'edit.background': 'Remove background',
+  'edit.sticker': 'Make sticker',
   'permission.files':
     'Retouch keeps each picture as it was, for Undo and Restore original, in MyStyle/Retouch.',
 } as const;

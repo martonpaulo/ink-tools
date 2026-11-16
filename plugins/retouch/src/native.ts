@@ -24,6 +24,8 @@ export type PixelEdit =
   | 'flip'
   | 'invert'
   | 'trim'
+  | 'background'
+  | 'sticker'
   | StyleId;
 
 /** The grid's styles (#133), each ending on the screen's greys. */

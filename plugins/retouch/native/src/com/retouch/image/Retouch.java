@@ -26,6 +26,8 @@ public final class Retouch {
 
   private static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
+  /** Make sticker's opaque white card (#134). */
+  private static final int WHITE = 0xFFFFFFFF;
 
   private Retouch() {}
 
@@ -39,6 +41,9 @@ public final class Retouch {
     FLIP,
     INVERT,
     TRIM,
+    // #134: the cutout edits, which keep the object and clear or fill the border background.
+    BACKGROUND,
+    STICKER,
     // #133: the styles of the grid, each ending on the screen's greys.
     PHOTO,
     LINE_ART,
@@ -299,6 +304,12 @@ public final class Retouch {
         return picture;
       case TRIM:
         return crop(picture, trimBox(picture));
+      case BACKGROUND:
+        removeBackground(picture);
+        return picture;
+      case STICKER:
+        sticker(picture, false);
+        return picture;
       case PHOTO:
       case LINE_ART:
       case BLACK_WHITE:
@@ -431,6 +442,101 @@ public final class Retouch {
   private static void spread(int[] value, int w, int h, int x, int y, int error) {
     if (x >= 0 && x < w && y < h) {
       value[y * w + x] += error;
+    }
+  }
+
+  /**
+   * The border-connected background (#134): every pixel reachable from the four borders, 4-connected,
+   * through pixels {@link #isMargin} judges near white or near clear. An object that reaches a border
+   * blocks the flood, so it is kept; a near-white hole inside the object is never reached, so it is
+   * kept too. Each pixel is pushed at most once, so the stack never outgrows the picture.
+   */
+  public static boolean[] backgroundMask(Picture picture) {
+    int w = picture.width;
+    int h = picture.height;
+    int[] argb = picture.argb;
+    boolean[] bg = new boolean[argb.length];
+    int[] stack = new int[argb.length];
+    int top = 0;
+    for (int x = 0; x < w; x++) {
+      top = reach(bg, stack, top, x, argb);
+      top = reach(bg, stack, top, (h - 1) * w + x, argb);
+    }
+    for (int y = 0; y < h; y++) {
+      top = reach(bg, stack, top, y * w, argb);
+      top = reach(bg, stack, top, y * w + (w - 1), argb);
+    }
+    while (top > 0) {
+      int i = stack[--top];
+      int x = i % w;
+      int y = i / w;
+      if (x > 0) {
+        top = reach(bg, stack, top, i - 1, argb);
+      }
+      if (x < w - 1) {
+        top = reach(bg, stack, top, i + 1, argb);
+      }
+      if (y > 0) {
+        top = reach(bg, stack, top, i - w, argb);
+      }
+      if (y < h - 1) {
+        top = reach(bg, stack, top, i + w, argb);
+      }
+    }
+    return bg;
+  }
+
+  /** Marks pixel `i` background and stacks it when it is not marked yet and is margin-coloured. */
+  private static int reach(boolean[] bg, int[] stack, int top, int i, int[] argb) {
+    if (!bg[i] && isMargin(argb[i])) {
+      bg[i] = true;
+      stack[top++] = i;
+    }
+    return top;
+  }
+
+  /**
+   * Whether `bg` leaves any pixel for the object: a picture that is all background (a mis-lassoed
+   * near-white area) has none, and the cutout edits then keep it rather than blank it.
+   */
+  private static boolean hasObject(boolean[] bg) {
+    for (boolean background : bg) {
+      if (!background) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Background removal (#134): clears the border-connected background to transparent, in place, so
+   * the page shows through. A picture with no object is kept unchanged.
+   */
+  public static void removeBackground(Picture picture) {
+    boolean[] bg = backgroundMask(picture);
+    if (!hasObject(bg)) {
+      return;
+    }
+    for (int i = 0; i < bg.length; i++) {
+      if (bg[i]) {
+        picture.argb[i] &= 0x00FFFFFF;
+      }
+    }
+  }
+
+  /**
+   * Make sticker (#134): the cutout on an opaque white card, or on a transparent background with
+   * `transparent`, in place. A picture with no object is kept unchanged.
+   */
+  public static void sticker(Picture picture, boolean transparent) {
+    boolean[] bg = backgroundMask(picture);
+    if (!hasObject(bg)) {
+      return;
+    }
+    for (int i = 0; i < bg.length; i++) {
+      if (bg[i]) {
+        picture.argb[i] = transparent ? (picture.argb[i] & 0x00FFFFFF) : WHITE;
+      }
     }
   }
 

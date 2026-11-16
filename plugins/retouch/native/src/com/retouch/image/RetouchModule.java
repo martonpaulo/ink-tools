@@ -49,9 +49,10 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
   /**
    * Crops `srcPath` to its centre `width` x `height` (the picture inside the lasso margin), writes
    * that to `beforePath` when it is not empty, runs `edit` (`enhance`, `lighter`, `darker`,
-   * `rotate`, `mirror`, `flip`, `invert`, `trim`, or a style of #133: `photo`, `line_art`,
-   * `black_white`, `dither`, `atkinson`) and writes the result to `destPath`. `transparent` and
-   * `thick` are the styles' two options; the other edits ignore them. Resolves
+   * `rotate`, `mirror`, `flip`, `invert`, `trim`, `background` or `sticker` of #134, or a style of
+   * #133: `photo`, `line_art`, `black_white`, `dither`, `atkinson`) and writes the result to
+   * `destPath`. `transparent` also fills `sticker`'s card, clear with it and white without it; with
+   * `thick` they are the styles' two options; the other edits ignore them. Resolves
    * {width, height, left, top, ms}: the result's size and where its top left sits in the picture.
    */
   @ReactMethod
@@ -109,6 +110,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : null;
     if (box != null) {
       picture = Retouch.crop(picture, box);
+    } else if (edit == Retouch.Edit.STICKER) {
+      Retouch.sticker(picture, transparent);
     } else if (edit.isStyle()) {
       Retouch.style(edit, picture, transparent, thick);
     } else {
