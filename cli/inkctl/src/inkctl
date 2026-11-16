@@ -15,6 +15,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   files push LOCAL PATH          copy to the shared storage; refuses to replace without --overwrite
   sync tasks                     start a To-do sync and wait until it has run
   sync calendar                  ask the Calendar app to sync
+  lasso rows                     open the lasso «⋯» list and read every row, scrolling only inside it
+  lasso press ROW                open the list, scroll inside it to the named row and press it
   lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
                                  cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
@@ -184,6 +186,12 @@ SCROLL_END = 0.2
 SCROLL_MILLISECONDS = 300
 SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
+# The lasso «⋯» list (#189): a RecyclerView of `tv_button` rows under the lasso toolbar, measured 2026-11-16.
+LASSO_MORE = "desc:lassoMore"
+LASSO_ROW_ID = "tv_button"
+LASSO_SWIPE_FROM = 0.75  # a swipe runs over half the list, slowly, so it does not fling past rows
+LASSO_SWIPE_TO = 0.25
+LASSO_SWIPE_MILLISECONDS = 800
 DUMP_ATTEMPTS = 3  # the device often answers "could not get idle state" after about 11 s
 IDLE_ERROR = "could not get idle state"
 ERROR_EXCERPT = 200
@@ -1252,13 +1260,14 @@ def element_key(element: dict) -> tuple:
     return (element["id"], element["desc"], element["text"], element["class"])
 
 
-def swipe_list(device: Device, element: dict, forward: bool) -> None:
+def swipe_list(device: Device, element: dict, forward: bool, span=(SCROLL_START, SCROLL_END), milliseconds: int = SCROLL_MILLISECONDS) -> None:
+    """Swipe inside a list's own bounds, between two fractions of its height."""
     left, top, right, bottom = element["bounds"]
     x, height = (left + right) // 2, bottom - top
-    start, end = top + int(height * SCROLL_START), top + int(height * SCROLL_END)
+    start, end = top + int(height * span[0]), top + int(height * span[1])
     if not forward:
         start, end = end, start
-    device.shell(f"input swipe {x} {start} {x} {end} {SCROLL_MILLISECONDS}")
+    device.shell(f"input swipe {x} {start} {x} {end} {milliseconds}")
 
 
 def scroll_to_end(device: Device, element: dict, seen: set, limit: int, stop=None) -> dict:
@@ -1389,6 +1398,110 @@ def scroll_until_found(device: Device, selector: str, limit: int):
     if at_limit:
         failure.message = f"{selector} not found before the limit of {limit} swipes; the list continues"
     raise failure
+
+
+def inside(element: dict, box: dict) -> bool:
+    """Whether an element's centre lies within another element's bounds."""
+    left, top, right, bottom = box["bounds"]
+    return left <= element["x"] <= right and top <= element["y"] <= bottom
+
+
+def lasso_list(elements: list[dict]):
+    """The lasso «⋯» list: a scrolling list holding `tv_button` rows. It moves with the lasso, so it is found each read."""
+    rows = [element for element in elements if element["id"] == LASSO_ROW_ID and element["text"]]
+    return next((element for element in elements if element["scrollable"] and any(inside(row, element) for row in rows)), None)
+
+
+def read_lasso_list(device: Device) -> tuple[dict, list[dict]]:
+    """The list and its rows on screen, top first, or a stop when the list is gone."""
+    elements = device.elements()
+    found = lasso_list(elements)
+    if not found:
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", "the lasso «⋯» list is not on the screen; nothing more was pressed")
+    rows = [element for element in elements if element["id"] == LASSO_ROW_ID and element["text"] and inside(element, found)]
+    return found, sorted(rows, key=lambda row: row["y"])
+
+
+def open_lasso_list(device: Device, limit: float) -> None:
+    """Open the «⋯» list unless it shows. Without a lasso toolbar it stops before any press."""
+    elements = device.elements()
+    if lasso_list(elements):
+        return
+    if len(find_selector(elements, LASSO_MORE)) != 1:
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", "no lasso toolbar on the screen: lasso something first; nothing was pressed")
+    press_element(device, find_selector(elements, LASSO_MORE)[0])
+    started = time.monotonic()
+    while not lasso_list(device.elements()):
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the lasso «⋯» list stayed closed for {limit:g} seconds; the press opened nothing")
+        time.sleep(WAIT_INTERVAL)
+
+
+def swipe_lasso_list(device: Device, found: dict, forward: bool) -> None:
+    """Half the list's height, slowly, so the list does not fling past rows."""
+    swipe_list(device, found, forward, (LASSO_SWIPE_FROM, LASSO_SWIPE_TO), LASSO_SWIPE_MILLISECONDS)
+
+
+def lasso_list_to_top(device: Device, limit: int) -> None:
+    previous = None
+    for _ in range(limit):
+        found, rows = read_lasso_list(device)
+        names = [row["text"] for row in rows]
+        if names == previous:
+            return
+        previous = names
+        swipe_lasso_list(device, found, False)
+
+
+def wholly_shown(row: dict, rows: list[dict]) -> bool:
+    """A row cut by the list's edge is shorter than the others; press it only once most of it shows."""
+    def height(item: dict) -> int:
+        _, top, _, bottom = item["bounds"]
+        return bottom - top
+
+    return height(row) * 2 >= max(height(item) for item in rows)
+
+
+def shown_row(rows: list[dict], wanted: str):
+    return next((row for row in rows if row["text"] == wanted and wholly_shown(row, rows)), None)
+
+
+def walk_lasso_list(device: Device, limit: int, wanted: str = ""):
+    """Read the list from its top to its end, collecting each row once in order; stop at `wanted` when it shows whole."""
+    if wanted:  # a row already on the screen needs no swipe
+        _, rows = read_lasso_list(device)
+        match = shown_row(rows, wanted)
+        if match:
+            return [row["text"] for row in rows], match
+    lasso_list_to_top(device, limit)
+    names, quiet = [], 0
+    for _ in range(limit):
+        found, rows = read_lasso_list(device)
+        match = shown_row(rows, wanted)
+        if match:
+            return names, match
+        fresh = [row["text"] for row in rows if row["text"] not in names]
+        names += fresh
+        quiet = 0 if fresh else quiet + 1
+        if quiet >= SCROLL_QUIET_READS:
+            return names, None
+        swipe_lasso_list(device, found, True)
+    return names, None
+
+
+def command_lasso_rows(device: Device, args: argparse.Namespace):
+    open_lasso_list(device, args.step_timeout)
+    names, _ = walk_lasso_list(device, args.max_steps)
+    return {"rows": names}, "\n".join(names)
+
+
+def command_lasso_press(device: Device, args: argparse.Namespace):
+    """shortcut: the first row of that name wins; check for twins when two plugins share a button name."""
+    open_lasso_list(device, args.step_timeout)
+    names, match = walk_lasso_list(device, args.max_steps, args.row)
+    if not match:
+        raise not_found(f"row {args.row} in the lasso «⋯» list", "inkctl lasso rows")
+    return press(device, args, match["x"], match["y"], {"row": args.row})
 
 
 def command_snapshot(device: Device, args: argparse.Namespace):
@@ -1946,7 +2059,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "lang")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "lang", "lasso")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -2009,6 +2122,14 @@ def build_parser() -> argparse.ArgumentParser:
     tasks = add(syncs, "tasks", command_sync_tasks, changes=True)
     tasks.add_argument("--timeout", type=float, default=SYNC_TIMEOUT, help="seconds to wait for the sync")
     add(syncs, "calendar", command_sync_calendar, changes=True)
+
+    lassos = noun("lasso")
+    listed = add(lassos, "rows", command_lasso_rows, changes=True)
+    pressed = add(lassos, "press", command_lasso_press, action, changes=True)
+    pressed.add_argument("row", help="the row's name, as the list shows it")
+    for lasso_command in (listed, pressed):
+        lasso_command.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes through the list")
+        lasso_command.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds for the list to open")
 
     languages = noun("lang")
     add(languages, "get", command_lang_get)

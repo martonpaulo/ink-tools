@@ -932,6 +932,58 @@ check "an unauthorized cable leaves Wi-Fi in use" "$(called "-s $serial shell")"
 reset_device
 check "help lists the read-only exit code" "$(python3 -B "$script" --help | grep -c '11 read-only')" "1"
 
+# The lasso «⋯» list (#189): tv_button rows in a scrolling list that moves with the lasso.
+lasso_screen() {  # the rows' names; a row named "-" is cut by the list's lower edge
+    printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node resource-id=\"a:id/lassoMore\" text=\"\" content-desc=\"lassoMore\" class=\"L\" bounds=\"[1370,150][1486,264]\" /><node resource-id=\"\" text=\"\" content-desc=\"\" class=\"androidx.recyclerview.widget.RecyclerView\" scrollable=\"true\" bounds=\"[906,326][1484,1006]\">"
+    top=326
+    for name in "$@"; do
+        bottom=$((top + 140)); [ "$bottom" -gt 1006 ] && bottom=1006
+        printf "<node resource-id=\"a:id/tv_button\" text=\"%s\" content-desc=\"\" class=\"T\" bounds=\"[1059,%s][1419,%s]\" />" "$name" "$top" "$bottom"
+        top=$((top + 142))
+    done
+    printf "</node><node resource-id=\"a:id/tv_button\" text=\"Round one\" content-desc=\"\" class=\"T\" bounds=\"[1401,2444][1769,2560]\" /></hierarchy>"
+}
+closed_lasso() {
+    printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node resource-id=\"\" text=\"\" content-desc=\"lassoMore\" class=\"L\" bounds=\"[1370,150][1486,264]\" /></hierarchy>"
+}
+lasso_pages() {
+    lasso_screen "Flip Horizontal" "Flip Vertical" "Recognize as Text" "New Event" "New Task" > "$files/page1.xml"
+    lasso_screen "New Task" "Enhance" "Lighter" "Darker" "Restore original" > "$files/page2.xml"
+    echo 1 > "$files/page"
+}
+swipes_inside() {  # every swipe of the last run starts and ends inside the list's bounds
+    grep 'input swipe' "$log" | awk '{ if ($6 < 906 || $6 > 1484 || $8 < 906 || $8 > 1484 || $7 < 326 || $7 > 1006 || $9 < 326 || $9 > 1006) bad++ } END { print bad + 0 }'
+}
+printf '%s' "$note_activity" > "$files/foreground"
+lasso_pages
+result=$(run lasso rows --json)
+check "lasso rows lists every row once, in order" "$(printf '%s' "$result" | field "['rows']")" "['Flip Horizontal', 'Flip Vertical', 'Recognize as Text', 'New Event', 'New Task', 'Enhance', 'Lighter', 'Darker', 'Restore original']"
+check "lasso rows swipes only inside the list" "$(called 'input swipe')$(swipes_inside)" "40"
+lasso_pages
+result=$(run lasso press Lighter --json)
+check "lasso press scrolls to a row below the first screen and presses its centre" "$(called 'input tap 1239 680')$(printf '%s' "$result" | field "['row']")" "1Lighter"
+check "lasso press swipes only inside the list" "$(swipes_inside)" "0"
+lasso_pages
+lasso_screen "Flip Horizontal" "Flip Vertical" "Recognize as Text" "New Event" "-" > "$files/page1.xml"
+lasso_screen "New Event" "Enhance" "Lighter" "Darker" "Restore original" > "$files/page2.xml"
+run lasso press "Flip Vertical" >/dev/null
+check "lasso press on the first screen sends no swipe" "$(called 'input swipe')$(called 'input tap 1239 538')" "01"
+lasso_pages
+run lasso press Absent >/dev/null 2>&1
+check "lasso press of a missing row stops with not found" "$?$(called 'input tap')" "40"
+stop_pages
+run lasso rows >/dev/null 2>&1
+check "lasso rows with no lasso toolbar stops before any press" "$?$(called 'input')" "90"
+closed_lasso > "$files/page1.xml"
+lasso_screen "Flip Horizontal" "Flip Vertical" > "$files/page2.xml"
+echo 1 > "$files/page"
+echo 1 > "$files/advance-after"
+touch "$files/no-return"
+check "lasso rows opens a closed list first" "$(run lasso rows --json | field "['rows']")$(called 'input tap 1428 207')" "['Flip Horizontal', 'Flip Vertical']1"
+rm -f "$files/no-return" "$files/advance-after"
+stop_pages
+reset_device
+
 # The handwriting language (#190): one code file in default/, packs as folders in resources/.
 printf 'pt_BR\n' > "$files/lang-default"
 printf 'en_US\nes_ES\npt_BR\nzh_CN\n' > "$files/lang-packs"
