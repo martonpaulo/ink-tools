@@ -3,9 +3,11 @@
 A Supernote plugin: write a word by hand, lasso it, and insert its translation. Each language
 pair is opt in; Portuguese with Spanish and Portuguese with Chinese come first.
 
-**Status: scaffolded.** A plugin shell whose Settings turn each language pair on or off
-([#126](https://github.com/martonpaulo/supernote-tools/issues/126)); the rest is tracked in
-[#46](https://github.com/martonpaulo/supernote-tools/issues/46).
+**Status: retiring.** Translation is now Lookup's «Insert translation» lasso button, with the
+language pairs in Lookup's Settings ([#158](https://github.com/martonpaulo/supernote-tools/issues/158)). This plugin gets no new work. It is
+uninstalled from the tablet, and this folder removed, once Lookup's translation passes on the
+device ([#159](https://github.com/martonpaulo/supernote-tools/issues/159)). The name Lingo now belongs to the sideloaded app that switches the
+handwriting language ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
 
 ## What it will do
 

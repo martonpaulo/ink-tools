@@ -5,6 +5,14 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status
 
+**Retiring** ([#159](https://github.com/martonpaulo/supernote-tools/issues/159), owner decision of 2026-11-16 in `../../docs/decisions.md`): translation
+moved to Lookup's «Insert translation» ([#158](https://github.com/martonpaulo/supernote-tools/issues/158)). Do no new work here; a fix only to keep the gate
+green. The flow it shares with Lookup lives in `../../packages/ink-core/src/translation.ts`. The
+folder, its gate, workflow and route-map row stay until the plugin is uninstalled from the tablet
+after Lookup's translation passes there; then they are removed together.
+
+Before retiring:
+
 **Translates on the note** ([#128](https://github.com/martonpaulo/supernote-tools/issues/128)): each direction of a pair switched on in Settings
 has its own lasso button (`ES→PT`, `PT→ES`, …, `src/buttons.ts`), run with no view: the lassoed word
 is recognized, a ZH input read through the CC-CEDICT pinyin index ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)), translated through
