@@ -23,6 +23,24 @@ The settings screen (`SettingsActivity`, a second launcher entry «Handwriting L
 active language, the floating button switch, the installed languages in the cycle and each missing
 permission with the command that grants it.
 
+## Target surface
+
+The owner's choice after trying both on the tablet ([#151](https://github.com/martonpaulo/supernote-tools/issues/151), [#157](https://github.com/martonpaulo/supernote-tools/issues/157)), not built yet:
+
+- The floating button shows only where the owner writes: while the handwriting keyboard is open,
+  or while a handwriting screen is in front (Note pages `NoteInsidePagesActivity`, Digest
+  `KnowledgeActivity`, To-Do `TaskActivity`, Email `HomeActivity`); hidden elsewhere. One setting
+  keeps it always visible or always hidden instead.
+- Detection is an `AccessibilityService` in this app, enabled once over ADB, that reacts to window
+  events only, with no timer: a `TYPE_INPUT_METHOD` window in `getWindows()` (about 140 ms after
+  the keyboard opens) or a listed foreground activity. An `inkctl snapshot` restarts the service,
+  which then reads the windows again. Measured facts: `../../docs/supernote.md` › Handwriting
+  recognition language.
+- The sidebar entry stays: the tablet lists one entry per app by itself. The settings screen needs
+  an entry the tablet shows, such as a long press on the floating button, since the second
+  launcher entry never appears in the sidebar ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
+- No other tool shows the active language: the button already does.
+
 ## How the switch works
 
 The device facts live in [`../../docs/supernote.md`](../../docs/supernote.md#handwriting-recognition-language)
