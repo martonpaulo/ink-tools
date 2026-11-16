@@ -8,7 +8,9 @@ import {logLines, startLog} from '../src/profile';
 import {ok, fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
 import {
   chooseLook,
+  fitsMode,
   isFaintLines,
+  keepMode,
   isPhotoLike,
   leaderDecided,
   lineArt,
@@ -1034,6 +1036,70 @@ describe('leaderDecided (#19)', () => {
       }
     }
     expect(decided).toBeGreaterThan(20);
+  });
+
+  it("fixes a mode's winner only when every outcome keeps the first tile that fits (#111, #19)", () => {
+    const next = random(111);
+    const pick = <T>(items: readonly T[]): T =>
+      items[Math.floor(next() * items.length)];
+    const look = (): Prepared => ({
+      measures: pick(kinds),
+      look: next() < 0.2 ? 'contour' : 'found',
+    });
+    for (const mode of ['illustration', 'photo'] as const) {
+      const photos = mode === 'photo';
+      const fits = (m: Measures) => fitsMode(pixelKind(m), mode);
+      const kept = (
+        results: SearchResult[],
+        prepared: ReadonlyMap<string, Prepared>,
+      ) => {
+        const measures = new Map<string, Measures>();
+        const converted = new Set<string>();
+        for (const [id, {measures: m, look: shown}] of prepared) {
+          measures.set(id, m);
+          if (shown === 'contour') {
+            converted.add(id);
+          }
+        }
+        const ordered = reorderByMeasures(results, measures, 'soup', converted, photos);
+        return keepMode(ordered, measures, mode)[0]?.id;
+      };
+      let decided = 0;
+      for (let round = 0; round < 1000; round++) {
+        const results = Array.from({length: 12}, (_, i) => {
+          const [source, title, mime] = pick(titles);
+          // Now and then a canonical tile, as Wikidata's pictures are.
+          const canonical = next() < 0.1;
+          return {...result(`${source}:${i}`, title, canonical), source, mime};
+        });
+        const prepared = new Map<string, Prepared>();
+        const pending = new Set<string>();
+        const tail = 1 + Math.floor(next() * 3);
+        for (const item of results) {
+          const roll = next();
+          if (pending.size < tail && roll < 0.25) {
+            pending.add(item.id);
+          } else if (roll < 0.9) {
+            prepared.set(item.id, look());
+          }
+        }
+        if (!leaderDecided(results, prepared, pending, 'soup', photos, fits)) {
+          continue;
+        }
+        decided++;
+        const winner = kept(results, prepared);
+        for (let outcome = 0; outcome < 20; outcome++) {
+          const completed = new Map(prepared);
+          for (const id of pending) {
+            if (next() < 0.8) {
+              completed.set(id, look());
+            }
+          }
+          expect(kept(results, completed)).toBe(winner);
+        }
+      }
+      expect(decided).toBeGreaterThan(20);
+    }
   });
 
   it('waits for the leading canonical result and for a pending one that could pass', () => {

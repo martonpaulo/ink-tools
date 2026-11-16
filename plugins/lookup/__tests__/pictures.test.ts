@@ -149,8 +149,11 @@ describe('the measured split decides what a mode inserts (#111)', () => {
       true,
     );
     expect(insert.mock.calls[0][0].title).toBe('b');
-    // Every tile of pages 1 and 2 is measured before the split: no early leader.
-    expect(measure.mock.calls[0][5]).toBe(false);
+    // The measure stops once the first photo is fixed, judged by the mode's own split (#19).
+    expect(measure.mock.calls[0][5]).toBe(true);
+    const fits = measure.mock.calls[0][6] as (m: Measures) => boolean;
+    expect(fits(photo)).toBe(true);
+    expect(fits(outline)).toBe(false);
   });
 });
 

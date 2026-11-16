@@ -559,12 +559,23 @@ export function leaderDecided(
   pending: ReadonlySet<string>,
   query: string,
   photos = false,
+  /**
+   * A mode's split (#111, #19): only a measured tile that fits is kept (`keepMode`), so the leader
+   * is the first that fits, and a measured tile that does not fit, or an unmeasured one, competes
+   * with nobody.
+   */
+  fits?: (measures: Measures) => boolean,
 ): boolean {
   const head = results.slice(0, MEASURED_RESULTS);
   if (head.length === 0) {
     return true;
   }
-  if (head[0].canonical) {
+  if (fits) {
+    const decided = canonicalLeader(head, prepared, pending, fits);
+    if (decided !== undefined) {
+      return decided;
+    }
+  } else if (head[0].canonical) {
     // Its own measure still sets its look, and so what is inserted.
     return !pending.has(head[0].id);
   }
@@ -584,6 +595,10 @@ export function leaderDecided(
         pending: false,
       });
       const found = prepared.get(result.id);
+      if (fits && !pending.has(result.id) && !(found && fits(found.measures))) {
+        // Left out of the mode's list: it can lead nothing.
+        return;
+      }
       if (pending.has(result.id)) {
         candidates.push({
           ...at(LAST_SCALE),
@@ -634,6 +649,38 @@ export function leaderDecided(
       !leader.pending &&
       candidates.every(other => other === leader || before(leader, other)),
   );
+}
+
+/**
+ * With a mode's split, whether the canonical tiles already decide the leader: undefined when no
+ * canonical tile can be kept, so the measured order of the others decides. A canonical tile keeps
+ * its slot, so one that fits is kept first only when every slot before it is a canonical tile
+ * that is left out; a pending canonical tile, or one that fits behind other slots, waits for the
+ * full measure (shortcut: exact only for leading canonical tiles; decide the mixed case once the
+ * log shows that wait).
+ */
+function canonicalLeader(
+  head: readonly SearchResult[],
+  prepared: ReadonlyMap<string, Prepared>,
+  pending: ReadonlySet<string>,
+  fits: (measures: Measures) => boolean,
+): boolean | undefined {
+  const canonical = head.filter(result => result.canonical);
+  if (canonical.length === 0) {
+    return undefined;
+  }
+  if (canonical.some(result => pending.has(result.id))) {
+    return false;
+  }
+  const kept = (result: SearchResult) => {
+    const found = prepared.get(result.id);
+    return found !== undefined && fits(found.measures);
+  };
+  const first = head.findIndex(result => result.canonical && kept(result));
+  if (first === -1) {
+    return undefined;
+  }
+  return head.slice(0, first).every(result => result.canonical);
 }
 
 /** A lasso button's kind of picture (#111): «Insert illustration» or «Insert photo». */

@@ -10,7 +10,12 @@
  */
 import {ToastAndroid} from 'react-native';
 import {LassoPlace} from '@supernote-tools/ink-core';
-import {DEFAULT_ADAPTERS, keepMode} from '@supernote-tools/picture-search';
+import {
+  DEFAULT_ADAPTERS,
+  fitsMode,
+  keepMode,
+  pixelKind,
+} from '@supernote-tools/picture-search';
 import {
   insertText,
   Result,
@@ -101,9 +106,10 @@ function modeMeasure(mode: Mode): MeasureDeps {
 }
 
 /**
- * The shared flow bound to one mode. The measured order waits for every tile of pages 1 and 2
- * (no early leader): `keepMode` then keeps only the mode's tiles, so the first one left is the
- * mode's best, and a photo list with no photo is empty, never a drawing.
+ * The shared flow bound to one mode. `keepMode` keeps only the mode's measured tiles, so the
+ * first one left is the mode's best, and a photo list with no photo is empty, never a drawing.
+ * The measure stops once that first tile is fixed whatever the pending tiles measure (#19, owner
+ * D48 A): «Insert Sticker» waited 2.4 s for every tile of pages 1 and 2 on the tablet.
  */
 export function modeDeps(
   mode: Mode,
@@ -131,7 +137,8 @@ export function modeDeps(
         query,
         modeMeasure(mode),
         onThumbs,
-        false,
+        true,
+        measures => fitsMode(pixelKind(measures), mode.kind),
       );
       const kept = keepMode(pages.results, pages.measures, mode.kind);
       log(

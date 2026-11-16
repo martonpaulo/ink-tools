@@ -226,7 +226,8 @@ export async function measureThumb(
  * limit: from then on a full download no longer holds a thumbnail back (#46, #88). It never
  * runs once the result is returned. With `untilLeader`, for «Insert best picture», the order
  * returns as soon as its first result is fixed whatever the others measure (#19): the rest of
- * the order is then that of the measures taken so far.
+ * the order is then that of the measures taken so far. With `fits` too, a mode's split (#111),
+ * the first result that fits is the one waited for (`leaderDecided`).
  */
 export async function measureFirstPages(
   results: SearchResult[],
@@ -235,6 +236,7 @@ export async function measureFirstPages(
   deps: MeasureDeps,
   onThumbs?: () => void,
   untilLeader = false,
+  fits?: (measures: Measures) => boolean,
 ): Promise<MeasuredPages> {
   if (!thumbDir || results.length === 0) {
     return unmeasured(results);
@@ -264,7 +266,7 @@ export async function measureFirstPages(
     }
   });
   const leads = () =>
-    leaderDecided(results, new Map(found), pending, query, photos);
+    leaderDecided(results, new Map(found), pending, query, photos, fits);
   const all = Promise.all(
     firstPages.map((result, index) =>
       uris[index]
