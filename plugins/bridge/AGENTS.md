@@ -53,7 +53,8 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
 - **On the Mac, the secrets wait in the login Keychain** (owner, 2026-11-16, [#30](https://github.com/martonpaulo/supernote-tools/issues/30), [#44](https://github.com/martonpaulo/supernote-tools/issues/44)): service
   `ink-tools`, accounts `account-sync-todoist-token`, `account-sync-icloud-apple-id`,
   `account-sync-icloud-password` and, once the Google sign-in runs, the Google refresh token.
-  `inkctl secret set` reads from there ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)); no secret is typed into a command line or a file.
+  An agent pipes each one from there into `inkctl secret set <provider>`, which reads standard
+  input ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)); no secret goes into an argument or a file.
 - **Google sign-in client** ([#124](https://github.com/martonpaulo/supernote-tools/issues/124)): the OAuth client created for the device-code flow is of the «TVs and
   Limited Input devices» type, which has no redirect URIs, so the loopback sign-in of
   `inkctl google login` needs a new client of the «Desktop app» type in the same Google Cloud
