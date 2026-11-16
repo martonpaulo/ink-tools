@@ -50,6 +50,15 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   write it. An on-tablet field and a file edited on
   a computer are later routes, writers of the same file; a file in `MyStyle/` is never one, as it
   syncs to Supernote Cloud ([#23](https://github.com/martonpaulo/supernote-tools/issues/23)).
+- **On the Mac, the secrets wait in the login Keychain** (owner, 2026-11-16, [#30](https://github.com/martonpaulo/supernote-tools/issues/30), [#44](https://github.com/martonpaulo/supernote-tools/issues/44)): service
+  `ink-tools`, accounts `account-sync-todoist-token`, `account-sync-icloud-apple-id`,
+  `account-sync-icloud-password` and, once the Google sign-in runs, the Google refresh token.
+  `inkctl secret set` reads from there ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)); no secret is typed into a command line or a file.
+- **Google sign-in client** ([#124](https://github.com/martonpaulo/supernote-tools/issues/124)): the OAuth client created for the device-code flow is of the «TVs and
+  Limited Input devices» type, which has no redirect URIs, so the loopback sign-in of
+  `inkctl google login` needs a new client of the «Desktop app» type in the same Google Cloud
+  project; the owner creates it. While the consent screen stays in «Testing», each refresh
+  token lasts 7 days and the owner signs in again; publishing the app is a ROADMAP item.
 - The private design and reverse-engineering notes live in the workbench research folder.
 
 ## Reuse
