@@ -149,16 +149,25 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   `Settings.System`/`Global`/`Secure` key, system property or "set active language" provider
   [measured, source]. The Settings app switches it by replacing that file, then broadcasting
   `hw_type_change` [source].
-- A **plugin cannot read or write** the language: `/sdcard/.data/dictionary/` is outside the plugin
-  file whitelist (`Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `InkHub/temp` and
-  `.data/plugin`). A probe's own native `listFiles`, `createNewFile` and `FileOutputStream` were all
-  denied on the tablet (`SecurityException ... outside whitelist`, `Permission denied`), so the
-  sandbox blocks native file I/O, not just the JS API [measured, Probe `voc4oo2ysd7cdnkc`,
-  2026-11-16]. The guard sits in `libcore.io.BlockGuardOs` at the posix layer, gated by the thread's
-  plugin id [source]. No broadcast, intent or provider sets the language instead; a plugin can send
-  `hw_type_change` but it changes nothing [measured]. The plugin host runs as `android.uid.system`,
-  so a plugin can still `startActivity` and query providers; only file access is sandboxed [measured
-  uid].
+- The language is **one global file** read by every recognition app: Note, Digest (Document),
+  Task, Email, Search and the keyboard IME all reference `/sdcard/.data/dictionary/default` and
+  `getDefaultLang` [measured, static dex scan of each APK, 2026-11-16]. Switching it changes
+  handwriting recognition everywhere.
+- A plugin's **ordinary in-process file I/O cannot** touch it: `/sdcard/.data/dictionary/` is
+  outside the whitelist (`Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `InkHub/temp`
+  and `.data/plugin`), so the guard in `libcore.io.BlockGuardOs` (posix layer, gated by the thread's
+  plugin id) denies `listFiles`, `createNewFile` and `FileOutputStream` [measured, Probe
+  `voc4oo2ysd7cdnkc`, 2026-11-16; source]. But a plugin **can switch it by a sandbox bypass**: a
+  child process (`ProcessBuilder("sh","-c", …)`) and the system Documents provider
+  (`DocumentsContract.createDocument`) both wrote the folder on the tablet; reflection to the raw
+  Os, the host main-looper thread and a plain new thread were denied [measured]. The host runs as
+  `android.uid.system`. A bypassing plugin suits the owner's device only and would likely fail store
+  review ([#6](https://github.com/martonpaulo/supernote-tools/issues/6)).
+- The Settings handwriting-language screen opens via `com.ratta.settings/.SettingsActivity` with
+  `com.ratta.settings.input.HWLanguageSetting` [source]. The device has Quick Settings
+  infrastructure (`sysui_qs_tiles` populated), so a sideloaded app with all-files access plus a
+  Quick Settings tile is a no-bypass "anywhere, one tap" switch — whether the e-ink pull-down
+  surfaces a custom tile is an on-screen question, not yet confirmed.
 - **Shell ADB can write** `/sdcard/.data/dictionary/` [measured], so a host-side `snadb` command
   could switch the global language among the installed packs without a plugin.
 - Installed language packs: `en_US`, `es_ES`, `pt_BR`, `zh_CN`, `zh_TW`, `ja_JP` (147 MB total);
