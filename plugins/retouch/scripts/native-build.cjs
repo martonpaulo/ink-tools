@@ -22,7 +22,7 @@ const PACKAGE_CLASS = 'com.retouch.image.RetouchPackage';
 // Ink2Pic's pixel code and file module, reused unchanged (#136, #142).
 const {nativeSources} = require('../../../packages/picture-search/plugin-config');
 /** The picture-search classes the pure JVM tests need: no Android or React type. */
-const PURE_SHARED = ['SafePaths', 'EinkPixels', 'ThumbMeasures', 'Decolor'];
+const PURE_SHARED = ['SafePaths', 'EinkPixels', 'ThumbMeasures', 'Decolor', 'Contour'];
 const MIN_API = '27';
 const TARGET_API = '35';
 

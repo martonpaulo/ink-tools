@@ -23,7 +23,24 @@ export type PixelEdit =
   | 'mirror'
   | 'flip'
   | 'invert'
-  | 'trim';
+  | 'trim'
+  | StyleId;
+
+/** The grid's styles (#133), each ending on the screen's greys. */
+export type StyleId =
+  | 'photo'
+  | 'line_art'
+  | 'black_white'
+  | 'dither'
+  | 'atkinson';
+
+/**
+ * A style's two options (#133): `transparent` clears near-white pixels so the page template shows
+ * through; `thick` widens Line art's lines. The other edits ignore them.
+ */
+export type StyleOptions = {transparent: boolean; thick: boolean};
+
+export const NO_OPTIONS: StyleOptions = {transparent: false, thick: false};
 
 /**
  * The result's size, and where its top left sits in the picture it came from: 0, 0 for every edit
@@ -46,6 +63,8 @@ type Native = {
     width: number,
     height: number,
     pageWidth: number,
+    transparent: boolean,
+    thick: boolean,
   ): Promise<Edited>;
   readText(path: string): Promise<string | null>;
   writeText(path: string, text: string): Promise<null>;

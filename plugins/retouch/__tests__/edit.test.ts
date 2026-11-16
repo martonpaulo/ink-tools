@@ -81,6 +81,8 @@ test('Enhance keeps the original, replaces the picture in place and removes the 
     400,
     300,
     1920,
+    false,
+    false,
   );
   const states = w.history().entries[0].states;
   expect(states.map(s => s.path)).toEqual([
@@ -192,4 +194,22 @@ test('Trim keeps the picture where it was on the page, less its margin (#132)', 
   // Undo puts the untrimmed picture back where it was, not at the trimmed top left.
   expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
   expect(w.modified[1].rect).toEqual(RECT);
+});
+
+test('A style passes its options to the Java side and is recorded as an edit (#133)', async () => {
+  const w = world();
+  const done = await runEdit('line_art', w.deps, {transparent: true, thick: true});
+  expect(done).toMatchObject({kind: 'edited', edit: 'line_art'});
+  expect(w.native.edit).toHaveBeenCalledWith(
+    'line_art',
+    expect.stringContaining('/preview-'),
+    expect.stringMatching(/-original\.png$/),
+    expect.stringMatching(/-line_art\.png$/),
+    400,
+    300,
+    1920,
+    true,
+    true,
+  );
+  expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
 });

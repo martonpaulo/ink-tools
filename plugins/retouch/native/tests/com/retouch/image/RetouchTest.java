@@ -16,6 +16,12 @@ public final class RetouchTest {
     mirrorAndFlipReverseTheirAxis();
     invertMakesDarkModePaper();
     trimCutsWhiteAndClearMargins();
+    everyStyleEndsOnTheScreensGreys();
+    otsuSplitsTwoTonesAndKeepsOneGray();
+    floydSteinbergKeepsAFlatGraysMean();
+    thickerLinesInkMore();
+    whiteToTransparentClearsOnlyWhite();
+    stylesScaleDownAndSurviveTinyPictures();
     System.out.println("RetouchTest ok");
   }
 
@@ -180,6 +186,102 @@ public final class RetouchTest {
     } catch (IllegalArgumentException expected) {
       // refused
     }
+  }
+
+  /** A 24 x 24 colour fixture with a dark square, alpha at the corner: input for every style. */
+  private static Retouch.Picture fixture(int size) {
+    int[] argb = new int[size * size];
+    for (int y = 0; y < size; y++) {
+      for (int x = 0; x < size; x++) {
+        boolean square = x > size / 4 && x < 3 * size / 4 && y > size / 4 && y < 3 * size / 4;
+        int alpha = x == 0 && y == 0 ? 0 : 0xFF;
+        argb[y * size + x] = square
+            ? (alpha << 24) | 0x203040
+            : (alpha << 24) | ((x * 9 % 256) << 16) | ((y * 7 % 256) << 8) | 200;
+      }
+    }
+    return new Retouch.Picture(argb, size, size);
+  }
+
+  private static void everyStyleEndsOnTheScreensGreys() {
+    Retouch.Edit[] styles = {
+      Retouch.Edit.PHOTO, Retouch.Edit.LINE_ART, Retouch.Edit.BLACK_WHITE,
+      Retouch.Edit.DITHER, Retouch.Edit.ATKINSON
+    };
+    for (Retouch.Edit style : styles) {
+      check(style.isStyle(), style + " is a style");
+      Retouch.Picture picture = Retouch.apply(style, fixture(24));
+      boolean twoTone = style == Retouch.Edit.BLACK_WHITE || style == Retouch.Edit.ATKINSON;
+      for (int pixel : picture.argb) {
+        int r = (pixel >> 16) & 0xFF;
+        check(r == (pixel & 0xFF) && r == ((pixel >> 8) & 0xFF), style + " gives grey");
+        check(r % 17 == 0, style + " uses only the 16 greys: " + r);
+        check(!twoTone || r == 0 || r == 255, style + " gives only black and white: " + r);
+        check((pixel >>> 24) == 0xFF, style + " is opaque without the option");
+      }
+    }
+    check(!Retouch.Edit.TRIM.isStyle() && !Retouch.Edit.ENHANCE.isStyle(), "edits are no styles");
+    check(Retouch.Edit.of("line_art") == Retouch.Edit.LINE_ART, "line_art is known");
+    check(Retouch.Edit.of("black_white") == Retouch.Edit.BLACK_WHITE, "black_white is known");
+  }
+
+  private static void otsuSplitsTwoTonesAndKeepsOneGray() {
+    int[] two = {gray(40), gray(40), gray(200), gray(200), gray(210)};
+    int t = Retouch.otsu(two);
+    check(t >= 40 && t < 200, "the split falls between the two tones: " + t);
+    Retouch.Picture light = new Retouch.Picture(new int[] {gray(200), gray(200)}, 2, 1);
+    Retouch.style(Retouch.Edit.BLACK_WHITE, light, false, false);
+    check((light.argb[0] & 0xFF) == 255, "a light picture of one grey stays white");
+    Retouch.Picture dark = new Retouch.Picture(new int[] {gray(60), gray(60)}, 2, 1);
+    Retouch.style(Retouch.Edit.BLACK_WHITE, dark, false, false);
+    check((dark.argb[0] & 0xFF) == 0, "a dark picture of one grey turns black");
+  }
+
+  private static void floydSteinbergKeepsAFlatGraysMean() {
+    int[] flat = new int[32 * 32];
+    java.util.Arrays.fill(flat, gray(128));
+    Retouch.diffuse(flat, 32, 32, false);
+    double sum = 0;
+    for (int pixel : flat) {
+      sum += pixel & 0xFF;
+    }
+    check(Math.abs(sum / flat.length - 128) < 3, "the mean stays near 128: " + sum / flat.length);
+    int[] mid = new int[32 * 32];
+    java.util.Arrays.fill(mid, gray(128));
+    Retouch.diffuse(mid, 32, 32, true);
+    long black = java.util.Arrays.stream(mid).filter(p -> (p & 0xFF) == 0).count();
+    check(black > 300 && black < 724, "Atkinson mixes black and white for a mid grey: " + black);
+  }
+
+  private static void thickerLinesInkMore() {
+    Retouch.Picture thin = fixture(24);
+    Retouch.Picture thick = fixture(24);
+    Retouch.style(Retouch.Edit.LINE_ART, thin, false, false);
+    Retouch.style(Retouch.Edit.LINE_ART, thick, false, true);
+    check(ink(thick) > ink(thin) && ink(thin) > 0, "thicker lines ink more pixels");
+  }
+
+  private static void whiteToTransparentClearsOnlyWhite() {
+    Retouch.Picture picture =
+        new Retouch.Picture(new int[] {gray(255), gray(0), 0x00FFFFFF, gray(250)}, 2, 2);
+    Retouch.style(Retouch.Edit.BLACK_WHITE, picture, true, false);
+    check((picture.argb[0] >>> 24) == 0, "white becomes clear");
+    check(picture.argb[1] == gray(0), "black stays opaque");
+    check((picture.argb[2] >>> 24) == 0, "a clear pixel stays clear");
+  }
+
+  private static void stylesScaleDownAndSurviveTinyPictures() {
+    int[] down = Retouch.outputSize(Retouch.Edit.DITHER, 3000, 1500, 1920);
+    check(down[0] == 1920 && down[1] == 960, "a style fits the page width");
+    Retouch.Edit[] styles = {Retouch.Edit.DITHER, Retouch.Edit.ATKINSON, Retouch.Edit.LINE_ART};
+    for (Retouch.Edit style : styles) {
+      Retouch.apply(style, new Retouch.Picture(new int[] {gray(90)}, 1, 1));
+      Retouch.apply(style, new Retouch.Picture(new int[40], 40, 1));
+    }
+  }
+
+  private static long ink(Retouch.Picture picture) {
+    return java.util.Arrays.stream(picture.argb).filter(p -> (p & 0xFF) < 128).count();
   }
 
   private static int gray(int g) {

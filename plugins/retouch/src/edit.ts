@@ -32,7 +32,14 @@ import {
   Step,
   undoStep,
 } from './history';
-import {PixelEdit, retouchNative, RetouchNative} from './native';
+import {
+  NO_OPTIONS,
+  PixelEdit,
+  retouchNative,
+  RetouchNative,
+  StyleId,
+  StyleOptions,
+} from './native';
 
 /**
  * Retouch's folder in shared storage: the note app reads an inserted PNG only there, not in the
@@ -81,7 +88,7 @@ export const DEVICE: EditDeps = {
 
 /** What a press did, for the log and the tests. */
 export type Done =
-  | {kind: 'edited'; edit: EditId; ms: number}
+  | {kind: 'edited'; edit: EditId | StyleId; ms: number}
   | {kind: 'nothing'; why: string}
   | {kind: 'failed'; why: string};
 
@@ -94,6 +101,11 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   flip: 'flip',
   invert: 'invert',
   trim: 'trim',
+  photo: 'photo',
+  line_art: 'line_art',
+  black_white: 'black_white',
+  dither: 'dither',
+  atkinson: 'atkinson',
 };
 
 /** The lassoed elements when they are exactly one picture, else null. */
@@ -114,13 +126,16 @@ const sizeOf = (rect: Rect) => ({
   height: Math.round(rect.bottom - rect.top),
 });
 
-/** Runs `edit` on the lassoed picture and logs the outcome. */
+/**
+ * Runs `edit`, or a style with its `options` (#133), on the lassoed picture and logs the outcome.
+ */
 export async function runEdit(
-  edit: EditId,
+  edit: EditId | StyleId,
   deps: EditDeps = DEVICE,
+  options: StyleOptions = NO_OPTIONS,
 ): Promise<Done> {
   const started = deps.now();
-  const done = await editOnce(edit, deps);
+  const done = await editOnce(edit, deps, options);
   const ms = deps.now() - started;
   deps.log(
     done.kind === 'edited'
@@ -130,7 +145,11 @@ export async function runEdit(
   return done.kind === 'edited' ? {...done, ms} : done;
 }
 
-async function editOnce(edit: EditId, deps: EditDeps): Promise<Done> {
+async function editOnce(
+  edit: EditId | StyleId,
+  deps: EditDeps,
+  options: StyleOptions,
+): Promise<Done> {
   const lassoed = await deps.lassoElements();
   if (!lassoed.ok) {
     return {kind: 'failed', why: why('getLassoElements', lassoed)};
@@ -162,7 +181,7 @@ async function editOnce(edit: EditId, deps: EditDeps): Promise<Done> {
   };
   const pixel = PIXEL_EDITS[edit];
   if (pixel) {
-    return pixelEdit(pixel, edit, element, place, history, deps);
+    return pixelEdit(pixel, edit, element, place, history, deps, options);
   }
   const step =
     edit === 'undo' ? undoStep(history, place) : restoreStep(history, place);
@@ -174,11 +193,12 @@ async function editOnce(edit: EditId, deps: EditDeps): Promise<Done> {
 
 async function pixelEdit(
   pixel: PixelEdit,
-  edit: EditId,
+  edit: EditId | StyleId,
   element: PictureElement,
   place: Place,
   history: History,
   deps: EditDeps,
+  options: StyleOptions,
 ): Promise<Done> {
   const width = await deps.pageWidth(place.note, place.page);
   if (!width.ok) {
@@ -204,6 +224,8 @@ async function pixelEdit(
       size.width,
       size.height,
       width.value,
+      options.transparent,
+      options.thick,
     );
     if (!edited.ok) {
       return {kind: 'failed', why: why(`edit ${pixel}`, edited)};
@@ -248,7 +270,7 @@ async function pixelEdit(
 }
 
 async function putBack(
-  edit: EditId,
+  edit: EditId | StyleId,
   step: Step,
   element: PictureElement,
   place: Place,

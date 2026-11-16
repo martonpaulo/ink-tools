@@ -1,5 +1,6 @@
 package com.retouch.image;
 
+import com.ink2pic.files.Contour;
 import com.ink2pic.files.Decolor;
 import com.ink2pic.files.EinkPixels;
 
@@ -37,7 +38,18 @@ public final class Retouch {
     MIRROR,
     FLIP,
     INVERT,
-    TRIM;
+    TRIM,
+    // #133: the styles of the grid, each ending on the screen's greys.
+    PHOTO,
+    LINE_ART,
+    BLACK_WHITE,
+    DITHER,
+    ATKINSON;
+
+    /** Whether this edit is one of the grid's styles (#133). */
+    public boolean isStyle() {
+      return ordinal() >= PHOTO.ordinal();
+    }
 
     /** The edit for its JavaScript name, such as `enhance`. */
     public static Edit of(String name) {
@@ -252,11 +264,11 @@ public final class Retouch {
   }
 
   /**
-   * The output size of an edit: Enhance scales a large picture down to `pageWidth`, never up, so
+   * The output size of an edit: Enhance and the styles scale a large picture down to `pageWidth`, never up, so
    * the page stays fast; the others keep the size, which Rotate then swaps itself.
    */
   public static int[] outputSize(Edit edit, int width, int height, int pageWidth) {
-    return edit == Edit.ENHANCE
+    return edit == Edit.ENHANCE || edit.isStyle()
         ? EinkPixels.targetSize(width, height, pageWidth)
         : new int[] {width, height};
   }
@@ -287,8 +299,147 @@ public final class Retouch {
         return picture;
       case TRIM:
         return crop(picture, trimBox(picture));
+      case PHOTO:
+      case LINE_ART:
+      case BLACK_WHITE:
+      case DITHER:
+      case ATKINSON:
+        style(edit, picture, false, false);
+        return picture;
       default:
         throw new IllegalArgumentException("unknown edit: " + edit);
+    }
+  }
+
+  /**
+   * Runs the style `edit` in place on `picture` (#133): Photo, Line art, Black and white, Dither or
+   * Atkinson, each on the screen's greys. `thick` widens Line art's lines by one more pixel on each
+   * side, so thin strokes stay on e-ink; `transparent` then clears near-white pixels, so the page
+   * template shows through.
+   */
+  public static void style(Edit edit, Picture picture, boolean transparent, boolean thick) {
+    int[] argb = picture.argb;
+    int w = picture.width;
+    int h = picture.height;
+    switch (edit) {
+      case PHOTO:
+        Decolor.apply(argb, w, h);
+        EinkPixels.toEink(argb, true);
+        break;
+      case LINE_ART:
+        Contour.apply(argb, w, h);
+        if (thick) {
+          Contour.thicken(argb, w, h);
+        }
+        toGreys(argb);
+        break;
+      case BLACK_WHITE:
+        Decolor.apply(argb, w, h);
+        int threshold = otsu(argb);
+        for (int i = 0; i < argb.length; i++) {
+          argb[i] = grayPixel((argb[i] & MAX) > threshold ? MAX : 0);
+        }
+        break;
+      case DITHER:
+        Decolor.apply(argb, w, h);
+        diffuse(argb, w, h, false);
+        break;
+      case ATKINSON:
+        Decolor.apply(argb, w, h);
+        diffuse(argb, w, h, true);
+        break;
+      default:
+        throw new IllegalArgumentException("not a style: " + edit);
+    }
+    if (transparent) {
+      whiteToClear(argb);
+    }
+  }
+
+  /**
+   * Otsu's threshold over gray pixels: the gray at or below which a pixel is black, the split
+   * with the largest variance between the two sides. A picture of one gray has no split: the
+   * middle gray decides, so a light one stays white and a dark one black.
+   */
+  public static int otsu(int[] gray) {
+    long[] count = new long[MAX + 1];
+    for (int pixel : gray) {
+      count[pixel & MAX]++;
+    }
+    long total = gray.length;
+    double sumAll = 0;
+    for (int g = 0; g <= MAX; g++) {
+      sumAll += g * (double) count[g];
+    }
+    double best = 0;
+    int threshold = EinkPixels.MID_GRAY - 1;
+    long below = 0;
+    double sumBelow = 0;
+    for (int t = 0; t < MAX; t++) {
+      below += count[t];
+      sumBelow += t * (double) count[t];
+      long above = total - below;
+      if (below == 0 || above == 0) {
+        continue;
+      }
+      double meanBelow = sumBelow / below;
+      double meanAbove = (sumAll - sumBelow) / above;
+      double between = (double) below * above * (meanBelow - meanAbove) * (meanBelow - meanAbove);
+      if (between > best) {
+        best = between;
+        threshold = t;
+      }
+    }
+    return threshold;
+  }
+
+  /**
+   * Error diffusion in place over gray pixels: Floyd-Steinberg to the 16 greys, or, with
+   * `atkinson`, Atkinson to black and white, which spreads only 6/8 of the error and so keeps
+   * light areas clean.
+   */
+  public static void diffuse(int[] gray, int w, int h, boolean atkinson) {
+    int[] value = new int[gray.length];
+    for (int i = 0; i < gray.length; i++) {
+      value[i] = gray[i] & MAX;
+    }
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        int i = y * w + x;
+        int old = Math.max(0, Math.min(MAX, value[i]));
+        int level = atkinson ? (old < EinkPixels.MID_GRAY ? 0 : MAX) : EinkPixels.quantize(old);
+        gray[i] = grayPixel(level);
+        int error = old - level;
+        if (atkinson) {
+          int share = error / 8;
+          spread(value, w, h, x + 1, y, share);
+          spread(value, w, h, x + 2, y, share);
+          spread(value, w, h, x - 1, y + 1, share);
+          spread(value, w, h, x, y + 1, share);
+          spread(value, w, h, x + 1, y + 1, share);
+          spread(value, w, h, x, y + 2, share);
+        } else {
+          spread(value, w, h, x + 1, y, error * 7 / 16);
+          spread(value, w, h, x - 1, y + 1, error * 3 / 16);
+          spread(value, w, h, x, y + 1, error * 5 / 16);
+          spread(value, w, h, x + 1, y + 1, error / 16);
+        }
+      }
+    }
+  }
+
+  private static void spread(int[] value, int w, int h, int x, int y, int error) {
+    if (x >= 0 && x < w && y < h) {
+      value[y * w + x] += error;
+    }
+  }
+
+  /** White to transparent (#133): a pixel at or above {@link #TRIM_WHITE} becomes clear. */
+  public static void whiteToClear(int[] argb) {
+    for (int i = 0; i < argb.length; i++) {
+      if ((argb[i] & MAX) >= TRIM_WHITE) {
+        argb[i] &= 0x00FFFFFF;
+      }
     }
   }
 

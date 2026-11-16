@@ -49,7 +49,9 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
   /**
    * Crops `srcPath` to its centre `width` x `height` (the picture inside the lasso margin), writes
    * that to `beforePath` when it is not empty, runs `edit` (`enhance`, `lighter`, `darker`,
-   * `rotate`, `mirror`, `flip`, `invert` or `trim`) and writes the result to `destPath`. Resolves
+   * `rotate`, `mirror`, `flip`, `invert`, `trim`, or a style of #133: `photo`, `line_art`,
+   * `black_white`, `dither`, `atkinson`) and writes the result to `destPath`. `transparent` and
+   * `thick` are the styles' two options; the other edits ignore them. Resolves
    * {width, height, left, top, ms}: the result's size and where its top left sits in the picture.
    */
   @ReactMethod
@@ -61,11 +63,14 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       double width,
       double height,
       double pageWidth,
+      boolean transparent,
+      boolean thick,
       Promise promise) {
     try {
       worker.execute(() -> {
         try {
-          promise.resolve(run(edit, srcPath, beforePath, destPath, width, height, pageWidth));
+          promise.resolve(run(
+              edit, srcPath, beforePath, destPath, width, height, pageWidth, transparent, thick));
         } catch (SafePaths.Refused refused) {
           promise.reject(refused.code, refused.getMessage());
         } catch (Throwable error) {
@@ -85,7 +90,9 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       String destPath,
       double width,
       double height,
-      double pageWidth)
+      double pageWidth,
+      boolean transparent,
+      boolean thick)
       throws Exception {
     long start = System.nanoTime();
     Retouch.Edit edit = Retouch.Edit.of(editName);
@@ -100,7 +107,13 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     picture = scale(picture, size[0], size[1]);
     // Trim moves the picture's top left by the margin it removes, so the page keeps it in place.
     int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : null;
-    picture = box != null ? Retouch.crop(picture, box) : Retouch.apply(edit, picture);
+    if (box != null) {
+      picture = Retouch.crop(picture, box);
+    } else if (edit.isStyle()) {
+      Retouch.style(edit, picture, transparent, thick);
+    } else {
+      picture = Retouch.apply(edit, picture);
+    }
     write(picture, target);
     WritableMap result = Arguments.createMap();
     result.putInt("width", picture.width);

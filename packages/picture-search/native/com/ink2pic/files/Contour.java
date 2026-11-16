@@ -125,7 +125,7 @@ public final class Contour {
   }
 
   /** Each ink pixel inks its 8 neighbours too: lines two pixels wider, legible on e-ink. */
-  static void thicken(int[] argb, int w, int h) {
+  public static void thicken(int[] argb, int w, int h) {
     int[] copy = argb.clone();
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
