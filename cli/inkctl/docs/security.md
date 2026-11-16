@@ -10,7 +10,7 @@ One row per item of the Skill Deck application-security standard. This project i
 | 4 | A public database key reaches only what row-level security allows | No database | Not applicable | the snapshot file has mode 600 instead | None |
 | 5 | Row-level security on every table with personal data | No database | Not applicable | the snapshot file has mode 600 instead | None |
 | 6 | No open policy in a multi-tenant project | No database and no tenants | Not applicable | one user on one computer | None |
-| 7 | Least privilege for every role and service | Yes: the ADB session | Met | runs as the `shell` user, with no root (`docs/product.md`) | None |
+| 7 | Least privilege for every role and service | Yes: the ADB session | Met | runs as the `shell` user, with no root (`docs/product.md`); `files pull` and `screen` refuse notes without `--allow-notes`, except test notes under `Note/Tests/`, proved by the path or by the title the note shows ([#193](https://github.com/martonpaulo/ink-tools/issues/193)) | None |
 | 8 | No mass assignment | No stored objects from outside | Not applicable | no data layer | None |
 | 9 | Parameterized queries | Yes: device shell commands | Met | paths and extras go through `shlex.quote` in `src/inkctl` | None |
 | 10 | Validate every input from outside | Yes: arguments and device output | Met | suffix, selector and PNG checks, tested in `tests/inkctl.test.sh` | None |

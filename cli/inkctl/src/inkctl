@@ -43,7 +43,8 @@ click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result
 (save a fresh capture), so one call shows its effect.
 
 --read-only, or $SUPERNOTE_READ_ONLY, refuses every command that changes the device.
---allow-notes lets files pull and screen read the notes folder or a note on the screen.
+--allow-notes lets files pull and screen read the notes folder or a note on the screen; notes under
+Note/Tests/ need no flag.
 --trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
@@ -142,6 +143,8 @@ CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 SHARED_ROOT = "/storage/emulated/0"
 SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
 NOTES_FOLDER = f"{SHARED_ROOT}/Note"
+TEST_NOTES_FOLDER = f"{NOTES_FOLDER}/Tests"  # test notes a round may read without --allow-notes (#193)
+NOTE_TITLE_ID = "tv_button"  # the note editor's bottom bar shows the note's name, and its page, in this id
 ADDRESS_FILE = Path.home() / ".config/inkctl/address"
 # The address file of the command's old name, snadb (#173): still read when the new one is missing,
 # so a tablet set up before the rename stays reachable. Remove with the src/snadb shim.
@@ -701,15 +704,43 @@ def resolve_target(device: Device, target: str) -> dict:
     return matches[0]
 
 
-def touches_notes(path: str) -> bool:
-    """Whether a path is the notes folder, holds it, lies inside it, or is a note."""
-    path = "/" + posixpath.normpath(path).lstrip("/").casefold()  # shared storage ignores case
+def shared_path(path: str) -> str:
+    """One spelling of a shared-storage path: absolute, case-folded (shared storage ignores case), aliases resolved."""
+    path = "/" + posixpath.normpath(path).lstrip("/").casefold()
     for alias in SHARED_ALIASES:
         if path == alias or path.startswith(f"{alias}/"):
             path = SHARED_ROOT.casefold() + path[len(alias):]
+    return path
+
+
+def in_test_notes(path: str) -> bool:
+    """Whether a path is the test notes folder or lies inside it (#193): those notes need no --allow-notes."""
+    path, tests = shared_path(path), TEST_NOTES_FOLDER.casefold()
+    return path == tests or path.startswith(f"{tests}/")
+
+
+def touches_notes(path: str) -> bool:
+    """Whether a path is the notes folder, holds it, lies inside it, or is a note."""
+    path = shared_path(path)
     notes = NOTES_FOLDER.casefold()
     inside = path == notes or path.startswith(f"{notes}/")
     return inside or notes.startswith(f"{path.rstrip('/')}/") or path.endswith(NOTE_SUFFIX)
+
+
+def test_note_on_screen(device: Device) -> bool:
+    """Whether the open note is a test note: a title the note shows names a note under Note/Tests/
+    and no note outside it. The shell cannot read the open note's path, so the title is the
+    evidence; anything unproven counts as the owner's note (#193)."""
+    titles = {element["text"] for element in device.elements() if element["id"] == NOTE_TITLE_ID and element["text"]}
+    if not titles:
+        return False
+    found = device.shell(f"find {shlex.quote(NOTES_FOLDER)} -name '*{NOTE_SUFFIX}' 2>/dev/null; true").splitlines()
+    named = [path for path in found if path.rpartition("/")[2].removesuffix(NOTE_SUFFIX) in titles]
+    return bool(named) and all(in_test_notes(path) for path in named)
+
+
+def note_screen_allowed(device: Device, allow_notes: bool) -> bool:
+    return allow_notes or device.activity() != NOTE_ACTIVITY or test_note_on_screen(device)
 
 
 def protected(what: str) -> Failure:
@@ -721,7 +752,7 @@ def after_action(device: Device, args: argparse.Namespace, before: str, result: 
     now = device.activity()
     result.update({"activity_before": before, "activity": now, "changed": before != now})
     lines = [f"activity: {before} -> {now}" if before != now else f"activity: {now}"]
-    if args.screen and now == NOTE_ACTIVITY and not args.allow_notes:
+    if args.screen and now == NOTE_ACTIVITY and not args.allow_notes and not test_note_on_screen(device):
         result["screen_refused"] = "a note is on the screen; pass --allow-notes to capture it"
         lines.append(f"screen: {result['screen_refused']}")
     elif args.screen:
@@ -1081,7 +1112,7 @@ def transfer(device: Device, *args: str, missing: str, timeout: float = TRANSFER
 
 def command_files_pull(device: Device, args: argparse.Namespace):
     path = remote_path(args.path)
-    if touches_notes(path) and not args.allow_notes:
+    if touches_notes(path) and not args.allow_notes and not in_test_notes(path):
         raise protected(path)
     transfer(device, "pull", path, args.local_path, missing=path)
     return {"path": path, "local": args.local_path}, f"pulled: {path} -> {args.local_path}"
@@ -1210,7 +1241,7 @@ def command_lang_cycle(device: Device, args: argparse.Namespace):
 
 
 def command_screen(device: Device, args: argparse.Namespace):
-    if device.activity() == NOTE_ACTIVITY and not args.allow_notes:
+    if not note_screen_allowed(device, args.allow_notes):
         raise protected("a note on the screen")
     size = device.capture(args.file)
     return {"path": args.file, "bytes": size}, args.file

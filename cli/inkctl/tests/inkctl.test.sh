@@ -98,6 +98,7 @@ case "$1" in
             "touch /storage/emulated/0/.data/dictionary"*)
                 set -- $2
                 printf '%s\n' "${2##*/}" > "$ADB_FILES/lang-default" ;;  # the rm after && leaves only this file
+            "find /storage/emulated/0/Note -name"*) cat "$ADB_FILES/notes-found" ;;
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
             "am broadcast"*) echo 'Broadcast completed: result=0' ;;
             "date +%s") echo 1800000000 ;;
@@ -854,6 +855,13 @@ for private in Note "Note/A note.note" /sdcard/Note/x "Note/../Note/x" "" /stora
 done
 run files pull EXPORT/a.pdf "$work/local/x" >/dev/null 2>&1
 check "files pull allows another folder" "$(called ' pull ')" "1"
+echo "f $root/Note/Tests/Round one.note" >> "$files/paths"
+run files pull "Note/Tests/Round one.note" "$work/local/x" >/dev/null 2>&1
+check "files pull allows a test note without the flag" "$?$(called ' pull ')" "01"
+run files pull "Note/Tests/../A note.note" "$work/local/x" >/dev/null 2>&1
+check "files pull keeps a path that leaves Note/Tests/ protected" "$?$(called ' pull ')" "120"
+run files pull EXPORT/a.pdf "$work/local/x" >/dev/null 2>&1
+check "files pull allows another folder" "$(called ' pull ')" "1"
 echo "f $root/Note/A note.note" >> "$files/paths"
 run files pull "Note/A note.note" "$work/local/x" --allow-notes >/dev/null
 check "--allow-notes copies a note" "$?$(called ' pull ')" "01"
@@ -861,6 +869,18 @@ printf '%s' "$note_activity" > "$files/foreground"
 run screen "$work/local/note.png" >/dev/null 2>&1
 check "screen protects a note on the screen" "$?$(called screencap)" "120"
 check "screen with --allow-notes captures it" "$(run screen "$work/local/note.png" --allow-notes --json | field "['bytes']")" "12"
+# A test note under Note/Tests/ needs no flag; the title its bottom bar shows is the evidence (#193).
+cp "$files/tree.xml" "$work/tree-saved"
+sed 's|</node></hierarchy>|<node resource-id="com.ratta.supernote.note:id/tv_button" text="Round one" content-desc="" class="android.widget.TextView" bounds="[1400,2444][1770,2560]" /></node></hierarchy>|' "$work/tree-saved" > "$files/tree.xml"
+printf '%s\n' "$root/Note/Tests/Round one.note" "$root/Note/Diary.note" > "$files/notes-found"
+check "screen captures a test note without the flag" "$(run screen "$work/local/note.png" --json | field "['bytes']")" "12"
+printf '%s\n' "$root/Note/Tests/Round one.note" "$root/Note/Round one.note" > "$files/notes-found"
+run screen "$work/local/note.png" >/dev/null 2>&1
+check "a note of the same name outside Note/Tests/ stays protected" "$?" "12"
+printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
+run screen "$work/local/note.png" >/dev/null 2>&1
+check "a title that names no test note stays protected" "$?" "12"
+cp "$work/tree-saved" "$files/tree.xml"
 reset_device
 printf '%s' "$note_activity" > "$files/am-goes-to"
 result=$(run note open "Note/A note.note" --screen "$work/local/skip.png" --json)

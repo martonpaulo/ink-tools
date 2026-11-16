@@ -70,7 +70,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl secret status` | Says which providers have a secret, with only its last 4 characters. |
 | `inkctl shell COMMAND...` | Runs a command on the tablet. |
 
-`--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`.
+`--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`. Test notes under `Note/Tests/` need no flag: a pull of a path inside that folder, and a capture when the title the note shows names a note there and no note outside it.
 
 Every command takes `--json`. A failure in JSON has `cause` and `next`, the next command to try. `--trace` prints each ADB call to stderr as it runs.
 
