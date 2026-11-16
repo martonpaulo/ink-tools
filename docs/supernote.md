@@ -128,6 +128,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   outgoing sockets.
 - The first write of a file that does not exist yet in shared storage left it empty while the call
   reported success; the next write over that file worked [measured, Lookup settings,
+  [#162](https://github.com/martonpaulo/ink-tools/issues/162)]. Creating the file empty, closing
+  it, then opening it again to write gives the full content on the first save: Word Lookup 0.2.0
+  beta 10 wrote all 259 bytes of a new `MyStyle/Lookup/settings.json`, and the switch set before
+  a PluginHost restart was the one read after it [measured, Nomad, 2026-11-16,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)].
 - `/storage/emulated/0/<Plugin>/` is outside the whitelist: `mkdirs` is denied
   (`sdcard_not_in_whitelist`), and `File.delete` throws a `SecurityException` that the host
