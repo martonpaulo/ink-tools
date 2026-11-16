@@ -41,6 +41,10 @@ and scope:
 - **Two modes.** An **illustration / vector / sticker** mode (line art, drawings, engravings,
   "Bababum-app" style, OpenMoji) and a **real-photo** mode (people, places). The owner chose a real
   split, not one blended list (relates to [#35](https://github.com/martonpaulo/supernote-tools/issues/35)).
+  Built as two lasso buttons, each with its Settings switch ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)): «Insert illustration» searches
+  Commons for drawings first, Openclipart and OpenMoji, and keeps only line art; «Insert photo»
+  searches Commons with no drawings filter and keeps only photos and dark paintings, so a word with
+  only clip art inserts no picture and says so.
 - **Emoji / known labels.** Map common keywords to emoji via OpenMoji's own keywords: "happy" and
   "smile" insert a smiling face with no search. (new)
 - **Remember my pick.** When the owner rejects the first suggestion for a word (e.g. "maçã") and

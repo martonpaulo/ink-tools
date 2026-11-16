@@ -134,7 +134,7 @@ describe('the opt-in button', () => {
 
   test('on registers a no-view lasso button and asks for each missing permission', async () => {
     const d = buttonDeps(false);
-    await settingsChanged({definition: true}, d);
+    await settingsChanged({definition: true, illustration: false, photo: false}, d);
     expect(d.register).toHaveBeenCalledWith(BUTTON_TYPE_LASSO, ['NOTE'], {
       id: DEFINE_BUTTON_ID,
       name: 'Insert definition',
@@ -146,9 +146,9 @@ describe('the opt-in button', () => {
 
   test('off removes it once, and asks nothing', async () => {
     const d = buttonDeps(true);
-    await settingsChanged({definition: true}, d);
-    await settingsChanged({definition: false}, d);
-    await settingsChanged({definition: false}, d);
+    await settingsChanged({definition: true, illustration: false, photo: false}, d);
+    await settingsChanged({definition: false, illustration: false, photo: false}, d);
+    await settingsChanged({definition: false, illustration: false, photo: false}, d);
     expect(d.unregister).toHaveBeenCalledTimes(1);
     expect(d.requestPermission).not.toHaveBeenCalled();
   });

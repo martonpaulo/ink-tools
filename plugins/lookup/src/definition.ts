@@ -53,8 +53,9 @@ const CHAR_WIDTH = 0.55;
 export const BOX_WIDTH = 640;
 
 /**
- * The languages a word is defined in, in this order. shortcut: fixed, as Lookup keeps no settings
- * file yet; read the person's search languages once the settings store moves in (#142).
+ * The languages a word is defined in, and the picture modes search in, in this order. shortcut:
+ * fixed, as Lookup's settings file (#142) holds only its switches; read the person's languages once
+ * Lookup's Settings has a languages choice.
  */
 export const LANGUAGES: readonly LanguageCode[] = DEFINED_LANGUAGES;
 
