@@ -109,10 +109,13 @@ public final class PinnedClientTest {
               .equals("74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0"),
           "the file hash is SHA-256 in lower-case hex");
 
-      // Another fingerprint is a changed identity, never a silent accept.
+      // Another fingerprint is a changed identity, never a silent accept. Its first digit always
+      // differs: "00" + the rest was the real pin for one certificate in 256, a flaky failure.
+      String wrong = (fingerprint.charAt(0) == '0' ? "1" : "0") + fingerprint.substring(1);
+      check(!wrong.equalsIgnoreCase(fingerprint), "the wrong pin differs from the real one");
       try {
         PinnedClient.post(url, Collections.<String, String>emptyMap(), body, null,
-            "00" + fingerprint.substring(2), 3000, 3000);
+            wrong, 3000, 3000);
         throw new AssertionError("a wrong fingerprint must fail");
       } catch (Exception error) {
         check(PinnedClient.identityChanged(error), "a wrong pin is IdentityChanged: " + error);
