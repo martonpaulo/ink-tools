@@ -24,6 +24,17 @@ check() {
 }
 
 mkdir -p "$work/bin" "$work/home/.config/inkctl" "$work/local"
+# No test may reach the person's real browser (#124): every run gets $INKCTL_BROWSER, a stub, and
+# this audit hook stops Python's own opener before it starts, leaving a mark the suite checks.
+mkdir -p "$work/guard"
+cat > "$work/guard/sitecustomize.py" <<PY
+import sys
+def refuse_real_browser(event, arguments):
+    if event == "webbrowser.open":
+        open("$work/real-browser-reached", "a").write("webbrowser.open\\n")
+        raise RuntimeError("a test reached the real browser opener")
+sys.addaudithook(refuse_real_browser)
+PY
 cat > "$work/bin/adb" <<'STUB'
 #!/bin/bash
 printf '%s\n' "$*" >> "$ADB_LOG"
@@ -199,7 +210,7 @@ reset_device() {
 
 run() {
     : > "$log"
-    HOME="$work/home" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$script" "$@"
+    INKCTL_BROWSER="$work/bin/browser" PYTHONPATH="$work/guard" HOME="$work/home" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" python3 -B "$script" "$@"
 }
 
 last_call() { grep -v 'dumpsys activity' "$log" | tail -1; }
@@ -1246,6 +1257,137 @@ providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/syn
 check "the providers are sync-core's" "$providers" "todoist,icloud,google"
 check "the file name is sync-core's" "$(grep -c '`${provider}.secret`' "$repo_root/../../packages/sync-core/src/secrets.ts")" "1"
 
+# The Google sign-in on the Mac (#124): `security`, the browser and Google's token endpoint are stubs.
+# The real Keychain, browser and network are never reached: PATH puts the `security` stub first,
+# $BROWSER is the browser stub, and the client's token_uri is a local fake.
+export KEYCHAIN="$work/keychain" SECURITY_LOG="$work/security.log"
+mkdir -p "$KEYCHAIN"
+cat > "$work/bin/security" <<'STUB'
+#!/bin/bash
+printf '%s\n' "$*" >> "$SECURITY_LOG"
+if [ "$1" = -i ]; then
+    cat > "$KEYCHAIN/stdin"
+    line=$(cat "$KEYCHAIN/stdin")
+    [ -f "$KEYCHAIN/write-fails" ] || printf '%s' "${line##*-w }" > "$KEYCHAIN/account-sync-google-refresh-token"
+    exit 0
+fi
+[ -f "$KEYCHAIN/$5" ] || { echo 'security: The specified item could not be found in the keychain.' >&2; exit 44; }
+cat "$KEYCHAIN/$5"
+echo
+STUB
+cat > "$work/browser.py" <<'PY'
+import os, sys, urllib.error, urllib.parse, urllib.request
+keychain, mode = os.environ["KEYCHAIN"], os.environ["BROWSER_MODE"]
+open(f"{keychain}/auth-url", "w").write(sys.argv[1])
+query = urllib.parse.parse_qs(urllib.parse.urlsplit(sys.argv[1]).query)
+redirect = query["redirect_uri"][0]
+try:
+    urllib.request.urlopen(f"{redirect}/favicon.ico", timeout=10)
+except urllib.error.HTTPError:
+    pass
+answer = {"ok": {"state": query["state"][0], "code": "code-SYNTHETIC"},
+          "badstate": {"state": "not-this-sign-in", "code": "code-SYNTHETIC"},
+          "denied": {"state": query["state"][0], "error": "access_denied"}}[mode]
+try:
+    page = urllib.request.urlopen(f"{redirect}/?{urllib.parse.urlencode(answer)}", timeout=20).read()
+except urllib.error.HTTPError as failed:
+    page = failed.read()
+open(f"{keychain}/page.html", "wb").write(page)
+PY
+cat > "$work/bin/browser" <<STUB
+#!/bin/bash
+[ "\$BROWSER_MODE" = none ] && exit 0
+python3 "$work/browser.py" "\$1" >/dev/null 2>&1 &
+exit 0
+STUB
+cat > "$work/token.py" <<'PY'
+import http.server, json, os
+keychain = os.environ["KEYCHAIN"]
+both = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly"
+class Token(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        open(f"{keychain}/token-body", "wb").write(self.rfile.read(int(self.headers["Content-Length"])))
+        mode = open(f"{keychain}/token-mode").read().strip()
+        status, answer = {
+            "ok": (200, {"access_token": "access-SYNTHETIC", "refresh_token": os.environ["SYNTHETIC_REFRESH"], "scope": both}),
+            "narrow": (200, {"access_token": "access-SYNTHETIC", "refresh_token": os.environ["SYNTHETIC_REFRESH"], "scope": both.split()[1]}),
+            "refuse": (400, {"error": "invalid_grant"}),
+        }[mode]
+        body = json.dumps(answer).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+    def log_message(self, *ignored):
+        pass
+server = http.server.HTTPServer(("127.0.0.1", 0), Token)
+open(f"{keychain}/token-port.partial", "w").write(str(server.server_port))
+os.rename(f"{keychain}/token-port.partial", f"{keychain}/token-port")
+server.serve_forever()
+PY
+chmod +x "$work/bin/security" "$work/bin/browser"
+export SYNTHETIC_REFRESH='1//SYNTHETIC-refresh-0000_wxyz'
+python3 -B "$work/token.py" &
+token_pid=$!
+trap 'kill "$token_pid" 2>/dev/null; rm -rf "$work"' EXIT
+for _ in $(seq 50); do [ -f "$KEYCHAIN/token-port" ] && break; sleep 0.1; done
+client="$KEYCHAIN/account-sync-google-oauth-client"
+printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "http://127.0.0.1:%s/token"}}' "$(cat "$KEYCHAIN/token-port")" > "$client"
+google() { run google login --timeout 20 "$@"; }
+
+echo ok > "$KEYCHAIN/token-mode"
+output=$(BROWSER_MODE=ok google --json 2>"$work/err")
+check "google login signs in" "$?" "0"
+check "google login stores the refresh token" "$(cat "$KEYCHAIN/account-sync-google-refresh-token")" "$SYNTHETIC_REFRESH"
+check "google login shows only the token's length" "$(printf '%s' "$output" | field "['length'],d['keychain']['account']")" "(${#SYNTHETIC_REFRESH}, 'account-sync-google-refresh-token')"
+check "the token goes to security on stdin" "$(grep -c "^add-generic-password -U -s ink-tools -a account-sync-google-refresh-token .* -w $SYNTHETIC_REFRESH$" "$KEYCHAIN/stdin")" "1"
+check "the token never reaches an argument" "$(grep -cF "$SYNTHETIC_REFRESH" "$SECURITY_LOG")" "0"
+check "no secret reaches the output" "$(printf '%s\n' "$output" "$(cat "$work/err")" | grep -cF -e "$SYNTHETIC_REFRESH" -e client-secret-SYNTHETIC)" "0"
+check "google login never writes the history" "$(cat "$history_file" 2>/dev/null | grep -c '"command": "google')" "0"
+check "google login names the push to the tablet" "$(printf '%s' "$output" | field "['next']")" "security find-generic-password -s ink-tools -a account-sync-google-refresh-token -w | inkctl secret set google"
+auth=$(cat "$KEYCHAIN/auth-url")
+check "the consent asks both Calendar scopes, offline" "$(python3 -c 'import sys,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); print(q["scope"], q["access_type"], q["code_challenge_method"], q["redirect_uri"].startswith("http://127.0.0.1:"))' "$auth")" "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events offline S256 True"
+check "the exchange proves the PKCE verifier" "$(python3 -c 'import sys,hashlib,base64,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); b=dict(u.parse_qsl(open(sys.argv[2]).read())); print(base64.urlsafe_b64encode(hashlib.sha256(b["code_verifier"].encode()).digest()).rstrip(b"=").decode()==q["code_challenge"], b["code"], b["grant_type"], b["redirect_uri"]==q["redirect_uri"])' "$auth" "$KEYCHAIN/token-body")" "True code-SYNTHETIC authorization_code True"
+check "the success page names the product and the state" "$(grep -c -e 'Ink Tools</span>' -e '<span>Signed in to Google</span>' "$KEYCHAIN/page.html")" "2"
+check "the page has a dark look" "$(grep -c 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "1"
+
+rm -f "$KEYCHAIN/account-sync-google-refresh-token" "$KEYCHAIN/token-body"
+BROWSER_MODE=badstate google --json >"$work/out" 2>/dev/null
+check "a wrong state is refused" "$?" "1"
+check "a wrong state names its error" "$(field "['error']" < "$work/out")" "google_denied"
+check "a wrong state exchanges no code" "$([ -f "$KEYCHAIN/token-body" ] && echo exchanged || echo none)" "none"
+check "a wrong state shows the failure page" "$(grep -c '<span>Sign-in failed</span>' "$KEYCHAIN/page.html")" "1"
+BROWSER_MODE=denied google >/dev/null 2>"$work/err"
+check "a refused consent fails" "$?" "1"
+check "a refused consent names Google's answer" "$(grep -c 'access_denied' "$work/err")" "1"
+echo narrow > "$KEYCHAIN/token-mode"
+BROWSER_MODE=ok google >/dev/null 2>"$work/err"
+check "a consent without calendar.events fails" "$?" "1"
+check "a narrow consent names the missing scope" "$(grep -c 'left out calendar.events;' "$work/err")" "1"
+check "a narrow consent stores nothing" "$([ -f "$KEYCHAIN/account-sync-google-refresh-token" ] && echo stored || echo none)" "none"
+echo refuse > "$KEYCHAIN/token-mode"
+BROWSER_MODE=ok google --json >"$work/out" 2>/dev/null
+check "a refused code fails with Google's reason" "$(field "['error'],d['message']" < "$work/out")" "('google_refused', 'Google refused the code (HTTP 400 invalid_grant)')"
+echo ok > "$KEYCHAIN/token-mode"
+touch "$KEYCHAIN/write-fails"
+BROWSER_MODE=ok google --json >"$work/out" 2>/dev/null
+check "a Keychain write that does not read back fails" "$(field "['error']" < "$work/out")" "keychain_error"
+rm -f "$KEYCHAIN/write-fails"
+BROWSER_MODE=none run google login --timeout 1 >/dev/null 2>&1
+check "no answer from the browser times out" "$?" "6"
+printf '{"web": {}}' > "$client"
+BROWSER_MODE=none google --json >"$work/out" 2>/dev/null
+check "a client of another type is refused" "$(field "['error']" < "$work/out")" "google_client"
+rm "$client"
+BROWSER_MODE=none google >/dev/null 2>&1
+check "a missing client exits 4" "$?" "4"
+kill "$token_pid"
+wait "$token_pid" 2>/dev/null
+printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "https://oauth.example.test/token"}}' > "$client"
+check "the guard stops the real browser opener" "$(INKCTL_BROWSER= PYTHONPATH="$work/guard" HOME="$work/home" PATH="$work/bin:$PATH" python3 -B "$script" google login --timeout 1 >/dev/null 2>&1; echo "$? $(cat "$work/real-browser-reached")")" "1 webbrowser.open"
+rm -f "$work/real-browser-reached" "$client"
+
 # Coordinates and the shell.
 run tap 12 34 >/dev/null
 check "tap wakes the screen first" "$(called 'keyevent WAKEUP')" "1"
@@ -1274,5 +1416,7 @@ python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.rep
 python3 -B "$copy/scripts/dry_check.py" --root "$copy" magic >"$work/out" 2>&1
 check "the duplication gate fails on a magic value in the command" "$?" "1"
 check "the duplication gate names the command" "$(grep -m1 -c 'src/inkctl' "$work/out")" "1"
+
+check "no test reached the real browser opener" "$([ -f "$work/real-browser-reached" ] && echo reached || echo never)" "never"
 
 [ "$failures" -eq 0 ]

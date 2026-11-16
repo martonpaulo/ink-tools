@@ -44,6 +44,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   secret set PROVIDER            write a sign-in secret for Bridge from standard input, never argv
   secret remove PROVIDER         sign Bridge out of PROVIDER by deleting its secret
   secret status                  which providers have a secret, with only its last 4 characters
+  google login                   sign Account Sync in to Google Calendar in this Mac's browser and
+                                 keep the refresh token in the login Keychain; prints only its length
   shell COMMAND...               run a command on the device
 
 click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result) and --screen FILE
@@ -148,6 +150,10 @@ SECRET_PROVIDERS = ("todoist", "icloud", "google")
 BRIDGE_PLUGIN_ID = "4d11a9bbc6ad25e2"  # plugins/bridge/PluginConfig.json pluginID
 BRIDGE_PRIVATE_FOLDER = f"/data/data/com.ratta.supernote.pluginhost/files/plugins/{BRIDGE_PLUGIN_ID}"
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
+# The login Keychain items of the Google sign-in on the Mac (#124, plugins/bridge/AGENTS.md).
+KEYCHAIN_SERVICE = "ink-tools"
+GOOGLE_CLIENT_ACCOUNT = "account-sync-google-oauth-client"
+GOOGLE_TOKEN_ACCOUNT = "account-sync-google-refresh-token"
 CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 SHARED_ROOT = "/storage/emulated/0"
 SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
@@ -349,6 +355,10 @@ FAILURE_ADVICE = {
     "missing_call": ("a firmware update may have changed this call", "inkctl doctor"),
     "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
     "log_error": ("the command's own log could not be read", "inkctl status"),
+    "google_client": ("the login Keychain holds no «Desktop app» Google client for Account Sync", f"security add-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_CLIENT_ACCOUNT} -w"),
+    "google_denied": ("the browser's answer did not sign in: consent refused, or not this sign-in's answer", "inkctl google login"),
+    "google_refused": ("Google's answer cannot sign Account Sync in", "inkctl google login"),
+    "keychain_error": ("the login Keychain could not be read or written", "inkctl google login"),
 }
 
 
@@ -2349,6 +2359,264 @@ def command_secret_status(device: Device, args: argparse.Namespace):
     return {"providers": rows}, "\n".join(lines)
 
 
+# Google sign-in on the Mac (#124, owner D39 A): Google's installed-app flow with a loopback
+# redirect, because its device-code flow allows no Calendar scope. The Desktop client and the refresh
+# token wait in the login Keychain (plugins/bridge/AGENTS.md); `inkctl secret set google` is the one
+# writer to the tablet. https://developers.google.com/identity/protocols/oauth2/native-app
+GOOGLE_TOKEN_LABEL = "Ink Tools Account Sync: Google Calendar"
+GOOGLE_TOKEN_COMMENT = (
+    "Google refresh token for Ink Tools Account Sync (calendar.readonly, calendar.events). Stored in the login Keychain."
+    " Rotate: revoke at myaccount.google.com/permissions and run inkctl google login."
+)
+GOOGLE_SCOPES = (
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar.events",
+)
+GOOGLE_LOGIN_TIMEOUT = 300.0  # seconds for the person to finish the consent page
+KEYCHAIN_TIMEOUT = 10.0
+TOKEN_EXCHANGE_TIMEOUT = 30.0
+LOOPBACK_HOST = "127.0.0.1"
+STATE_BYTES = 24
+VERIFIER_BYTES = 64  # 86 characters, inside PKCE's 43 to 128
+# Google's refresh tokens are URL-safe text, such as `1//0g…`; anything else is refused before it
+# reaches the Keychain line, so that line needs no quoting.
+REFRESH_TOKEN_SHAPE = re.compile(r"[A-Za-z0-9._/~+-]+")
+PROJECT_ICON = Path(__file__).resolve().parents[3] / "design/icon.svg"  # the one copy of the icon (#97)
+GOOGLE_PUSH_STEP = f"security find-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_TOKEN_ACCOUNT} -w | inkctl secret set google"
+# The page the browser shows after the consent, in the Settings look of packages/ui-kit/README.md:
+# one column on paper, two type sizes, the ui-kit greys, a state word and a shape, light and dark.
+LOGIN_PAGE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>{title} - Ink Tools</title>
+<style>
+:root {{ --paper: #ffffff; --ink: #000000; --context: #444444; --panel: #eeeeee; }}
+@media (prefers-color-scheme: dark) {{
+  :root {{ --paper: #000000; --ink: #ffffff; --context: #bbbbbb; --panel: #222222; }}
+}}
+body {{ margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.5 -apple-system, system-ui, sans-serif; }}
+main {{ max-width: 34rem; margin: 0 auto; padding: 48px 16px; }}
+.product {{ display: flex; align-items: center; gap: 12px; font-weight: 700; }}
+.product svg {{ width: 40px; height: 40px; }}
+h1 {{ display: flex; align-items: center; gap: 12px; font-size: 28px; line-height: 1.25; margin: 32px 0 16px; }}
+.mark {{ flex: none; width: 40px; height: 40px; border: 3px solid var(--ink); border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }}
+.failed .mark {{ border-radius: 4px; }}
+p {{ margin: 0 0 16px; }}
+.detail {{ color: var(--context); }}
+.next {{ background: var(--panel); padding: 16px; border-left: 4px solid var(--ink); }}
+</style>
+</head>
+<body class="{state}">
+<main>
+<div class="product"><span aria-hidden="true">{icon}</span><span>Ink Tools</span></div>
+<h1><span class="mark" aria-hidden="true">{mark}</span><span>{title}</span></h1>
+<p class="detail">{detail}</p>
+<p class="next"><strong>Next:</strong> {next}</p>
+</main>
+</body>
+</html>
+"""
+
+
+def keychain_failure(message: str) -> Failure:
+    return Failure(EXIT_FAILED, "keychain_error", message)
+
+
+def keychain_read(account: str) -> str | None:
+    """The item's secret, or None when there is none. The value never reaches argv or the output."""
+    try:
+        done = subprocess.run(
+            ["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-a", account, "-w"],
+            capture_output=True, text=True, timeout=KEYCHAIN_TIMEOUT, check=False,
+        )
+    except FileNotFoundError:
+        raise keychain_failure("`security` is missing: the Google sign-in runs on a Mac") from None
+    except subprocess.TimeoutExpired:
+        raise keychain_failure("the login Keychain did not answer; unlock it and try again") from None
+    return done.stdout.rstrip("\n") if done.returncode == 0 else None
+
+
+def keychain_store_token(token: str) -> None:
+    """Store the refresh token through `security -i`: the command line goes on stdin, so the token is in no argv."""
+    if not REFRESH_TOKEN_SHAPE.fullmatch(token):
+        raise Failure(EXIT_FAILED, "google_refused", "Google answered a refresh token of an unexpected shape; nothing was stored")
+    line = (
+        f'add-generic-password -U -s {KEYCHAIN_SERVICE} -a {GOOGLE_TOKEN_ACCOUNT} '
+        f'-l "{GOOGLE_TOKEN_LABEL}" -j "{GOOGLE_TOKEN_COMMENT}" -w {token}\n'
+    )
+    try:
+        subprocess.run(["security", "-i"], input=line, capture_output=True, text=True, timeout=KEYCHAIN_TIMEOUT, check=False)
+    except subprocess.TimeoutExpired:
+        raise keychain_failure("the login Keychain did not answer; unlock it and try again") from None
+    # `security -i` exits 0 even when a command inside it failed, so only the read-back proves the write.
+    if keychain_read(GOOGLE_TOKEN_ACCOUNT) != token:
+        raise keychain_failure(f"the refresh token was not stored in the Keychain item {KEYCHAIN_SERVICE} / {GOOGLE_TOKEN_ACCOUNT}")
+
+
+def google_client() -> dict:
+    raw = keychain_read(GOOGLE_CLIENT_ACCOUNT)
+    if raw is None:
+        raise Failure(
+            EXIT_NOT_FOUND, "google_client",
+            f"no Keychain item {KEYCHAIN_SERVICE} / {GOOGLE_CLIENT_ACCOUNT}: store the «Desktop app» client's JSON there",
+        )
+    try:
+        client = json.loads(raw).get("installed")
+    except (json.JSONDecodeError, AttributeError):
+        client = None
+    if not isinstance(client, dict) or not all(isinstance(client.get(key), str) for key in ("client_id", "client_secret", "auth_uri", "token_uri")):
+        raise Failure(EXIT_FAILED, "google_client", "the Keychain client is not a «Desktop app» client's JSON (no `installed` block)")
+    for key in ("auth_uri", "token_uri"):
+        address = urllib.parse.urlsplit(client[key])
+        # https only; plain http only to this computer, which the tests' fake endpoint uses.
+        if not (address.scheme == "https" or (address.scheme == "http" and address.hostname == LOOPBACK_HOST)):
+            raise Failure(EXIT_FAILED, "google_client", f"the client's {key} is not an https address")
+    return client
+
+
+def pkce_pair() -> tuple[str, str]:
+    import base64
+    import secrets
+
+    verifier = secrets.token_urlsafe(VERIFIER_BYTES)
+    challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
+    return verifier, challenge
+
+
+def google_exchange(client: dict, code: str, redirect: str, verifier: str) -> dict:
+    body = urllib.parse.urlencode({
+        "code": code, "client_id": client["client_id"], "client_secret": client["client_secret"],
+        "redirect_uri": redirect, "grant_type": "authorization_code", "code_verifier": verifier,
+    }).encode()
+    request = urllib.request.Request(client["token_uri"], data=body, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=TOKEN_EXCHANGE_TIMEOUT) as answer:
+            return json.load(answer)
+    except urllib.error.HTTPError as refused:
+        try:
+            reason = json.load(refused).get("error", "")
+        except (ValueError, AttributeError):
+            reason = ""
+        raise Failure(EXIT_FAILED, "google_refused", f"Google refused the code (HTTP {refused.code} {reason})".replace(" )", ")")) from None
+    except (urllib.error.URLError, OSError, ValueError) as lost:
+        raise Failure(EXIT_FAILED, "network_error", f"Google's token endpoint did not answer: {lost}", cause="Google's sign-in server could not be reached", next_step="inkctl google login") from None
+
+
+def login_page(failure: Failure | None) -> bytes:
+    try:
+        icon = PROJECT_ICON.read_text()
+    except OSError:
+        icon = ""  # a copy of the command without the repository still shows the name
+    if failure is None:
+        fields = {
+            "state": "signed-in", "mark": "&#10003;", "title": "Signed in to Google",
+            "detail": "Account Sync may now read your calendars and add events. The sign-in is kept in this Mac's login Keychain.",
+            "next": "Close this tab and go back to the terminal.",
+        }
+    else:
+        fields = {
+            "state": "failed", "mark": "&#10005;", "title": "Sign-in failed",
+            "detail": html.escape(failure.message),
+            "next": "Close this tab and run <code>inkctl google login</code> again in the terminal.",
+        }
+    return LOGIN_PAGE.format(icon=icon, **fields).encode()
+
+
+def open_consent(address: str) -> None:
+    """Open the consent page. $INKCTL_BROWSER, when set, is the only opener: the tests set it to a stub,
+    so a test never reaches the person's real browser (#124)."""
+    opener = os.environ.get("INKCTL_BROWSER")
+    if opener:
+        subprocess.Popen([opener, address], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return
+    import webbrowser
+
+    webbrowser.open(address)
+
+
+def command_google_login(device, args: argparse.Namespace):
+    import hmac
+    import http.server
+    import secrets
+
+    client = google_client()
+    state = secrets.token_urlsafe(STATE_BYTES)
+    verifier, challenge = pkce_pair()
+    outcome: dict = {}
+
+    class Redirect(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            if not any(key in query for key in ("state", "code", "error")):
+                self.send_error(http.HTTPStatus.NOT_FOUND)  # such as the browser's favicon request: keep waiting
+                return
+            failure = None
+            try:
+                outcome["result"] = finish(query)
+            except Failure as refused:
+                failure = outcome["failure"] = refused
+            page = login_page(failure)
+            self.send_response(http.HTTPStatus.OK if failure is None else http.HTTPStatus.BAD_REQUEST)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(page)
+
+        def log_message(self, *ignored):
+            pass  # the request line holds the code
+
+    def finish(query: dict) -> dict:
+        if not hmac.compare_digest(query.get("state", [""])[0], state):
+            raise Failure(EXIT_FAILED, "google_denied", "the answer's state does not match this sign-in; nothing was stored")
+        if "error" in query:
+            raise Failure(EXIT_FAILED, "google_denied", f"Google did not sign in: {query['error'][0]}")
+        tokens = google_exchange(client, query.get("code", [""])[0], redirect, verifier)
+        granted = str(tokens.get("scope", "")).split()
+        missing = [scope.rsplit("/", 1)[-1] for scope in GOOGLE_SCOPES if scope not in granted]
+        if missing:
+            raise Failure(EXIT_FAILED, "google_refused", f"the consent left out {', '.join(missing)}; tick every box and sign in again. Nothing was stored")
+        token = tokens.get("refresh_token")
+        if not isinstance(token, str) or not token:
+            raise Failure(EXIT_FAILED, "google_refused", "Google answered no refresh token; nothing was stored")
+        keychain_store_token(token)
+        return {"length": len(token), "scopes": granted}
+
+    with http.server.HTTPServer((LOOPBACK_HOST, 0), Redirect) as server:
+        redirect = f"http://{LOOPBACK_HOST}:{server.server_port}"
+        address = client["auth_uri"] + "?" + urllib.parse.urlencode({
+            "client_id": client["client_id"], "redirect_uri": redirect, "response_type": "code",
+            "scope": " ".join(GOOGLE_SCOPES), "state": state, "code_challenge": challenge,
+            "code_challenge_method": "S256", "access_type": "offline", "prompt": "consent",
+        })
+        # The address holds no secret: the client id is public and the state works once.
+        print(f"inkctl: finish the sign-in in the browser; if none opened, open:\n{address}", file=sys.stderr, flush=True)
+        open_consent(address)
+        deadline = time.monotonic() + args.timeout
+        while not outcome:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise Failure(EXIT_TIMEOUT, "timeout", f"no answer from the browser within {args.timeout:g} seconds", next_step="inkctl google login")
+            server.timeout = left
+            server.handle_request()
+    if "failure" in outcome:
+        raise outcome["failure"]
+    result = outcome["result"]
+    data = {
+        "signed_in": True, "length": result["length"], "scopes": result["scopes"],
+        "keychain": {"service": KEYCHAIN_SERVICE, "account": GOOGLE_TOKEN_ACCOUNT}, "next": GOOGLE_PUSH_STEP,
+    }
+    text = (
+        f"google: signed in; refresh token (length {result['length']}) stored in the login Keychain "
+        f"({KEYCHAIN_SERVICE} / {GOOGLE_TOKEN_ACCOUNT})\nnext, to send it to Account Sync: {GOOGLE_PUSH_STEP}"
+    )
+    return data, text
+
+
 def command_shell(device: Device, args: argparse.Namespace):
     done = device.adb("shell", *args.words, timeout=TRANSFER_TIMEOUT)
     sys.stdout.buffer.write(done.stdout)
@@ -2356,7 +2624,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "lang", "lasso", "ink")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "google", "lang", "lasso", "ink")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -2521,6 +2789,11 @@ def build_parser() -> argparse.ArgumentParser:
     add(secrets, "set", command_secret_set, changes=True).add_argument("provider", choices=SECRET_PROVIDERS)
     add(secrets, "remove", command_secret_remove, changes=True).add_argument("provider", choices=SECRET_PROVIDERS)
     add(secrets, "status", command_secret_status)
+
+    googles = noun("google")
+    login = add(googles, "login", command_google_login)
+    login.set_defaults(needs_device=False)  # a Mac sign-in: the tablet is not reached
+    login.add_argument("--timeout", type=float, default=GOOGLE_LOGIN_TIMEOUT, help="seconds to finish the consent page")
 
     add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
     return parser

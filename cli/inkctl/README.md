@@ -74,6 +74,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl secret set PROVIDER` | Writes a sign-in secret for the Bridge plugin (`todoist`, `icloud` or `google`) from standard input, into Bridge's private plugin folder. The value never goes into an argument, the log or the history; only its last 4 characters are shown. Not yet run on the tablet ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). |
 | `inkctl secret remove PROVIDER` | Signs Bridge out of a provider by deleting its secret. |
 | `inkctl secret status` | Says which providers have a secret, with only its last 4 characters. |
+| `inkctl google login` | Signs Account Sync in to Google Calendar in this Mac's browser, with Google's installed-app flow: a redirect to `127.0.0.1`, `state` and PKCE, scopes `calendar.readonly` and `calendar.events`. It reads the «Desktop app» client from the login Keychain and stores the refresh token there, and prints only the token's length and the command that sends it to the tablet through `inkctl secret set google`. The browser then shows a success or failure page ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). |
 | `inkctl shell COMMAND...` | Runs a command on the tablet. |
 
 `--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`. Test notes under `Note/Tests/` need no flag: a pull of a path inside that folder, and a capture when the title the note shows names a note there and no note outside it.
@@ -84,14 +85,17 @@ Every command takes `--json`. A failure in JSON has `cause` and `next`, the next
 
 ## 🔐 Secrets and variables
 
-The command stores no secret of its own. `inkctl secret set` passes a Bridge sign-in secret from
-standard input to the tablet and keeps no copy.
+`inkctl secret set` passes a Bridge sign-in secret from standard input to the tablet and keeps no
+copy. `inkctl google login` keeps the Google sign-in in the login Keychain, service `ink-tools`.
 
 | Name | Where | What for |
 | :--- | :--- | :--- |
 | `SUPERNOTE_ADDRESS` | environment | The tablet's address. It wins over the file below. |
 | `SUPERNOTE_READ_ONLY` | environment | When set, refuses every command that changes the tablet. |
+| `INKCTL_BROWSER` | environment | A program that `google login` runs with the consent address, instead of the system browser. The tests set it to a stub. |
 | `~/.config/inkctl/address` | your computer | The tablet's address, on its first line. |
+| `account-sync-google-oauth-client` | login Keychain, service `ink-tools` | The JSON of the Google OAuth client of type «Desktop app», which `google login` reads. |
+| `account-sync-google-refresh-token` | login Keychain, service `ink-tools` | The Google refresh token `google login` writes. While the consent screen is in «Testing», it lasts 7 days. |
 
 ---
 
