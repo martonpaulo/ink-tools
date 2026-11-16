@@ -143,8 +143,8 @@ ink-tools/
   - **Google sign-in cannot use the device-code flow.** Google's OAuth flow for limited-input
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,
-    [#64](https://github.com/martonpaulo/ink-tools/issues/64)). `startDeviceCode` in
-    `packages/sync-core` would get `invalid_scope`. **Bridge signs in on the Mac and gets the token
+    [#64](https://github.com/martonpaulo/ink-tools/issues/64)). `packages/sync-core`
+    therefore has no device-code sign-in ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). **Bridge signs in on the Mac and gets the token
     over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/ink-tools/issues/64)): a `inkctl` command runs Google's
     installed-app flow with a loopback redirect, which allows the Calendar scopes, in the Mac's
     browser; the refresh token then goes to Bridge's private plugin folder the way every sign-in

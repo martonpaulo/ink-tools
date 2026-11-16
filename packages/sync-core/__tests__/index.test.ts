@@ -212,8 +212,8 @@ import {
   DeviceCalendarStore,
   createGoogleCalendarProvider,
   fromGoogleEvent,
-  pollDeviceCode,
-  startDeviceCode,
+  GoogleSignedOutError,
+  refreshAccessToken,
   syncCalendar,
 } from '../src';
 
@@ -288,15 +288,12 @@ describe('google', () => {
     expect(urls[1]).toContain('singleEvents=true');
   });
 
-  test('device-code sign-in: prompt, pending, granted, and a hard error throws', async () => {
+  test('the token refresh returns an access token; a revoked refresh token reads as signed out (#124)', async () => {
     const client = {clientId: 'id', clientSecret: 's'};
     const reply = (status: number, body: unknown) => (async () => ({ok: status < 400, status, json: async () => body})) as never;
-    const prompt = await startDeviceCode(reply(200, {device_code: 'dc', user_code: 'AB-12', verification_url: 'https://google.com/device', expires_in: 1800}), client);
-    expect(prompt).toMatchObject({userCode: 'AB-12', intervalSeconds: 5});
-    expect(await pollDeviceCode(reply(428, {error: 'authorization_pending'}), client, 'dc')).toEqual({status: 'pending'});
-    expect(await pollDeviceCode(reply(403, {error: 'access_denied'}), client, 'dc')).toEqual({status: 'denied'});
-    expect(await pollDeviceCode(reply(200, {access_token: 'a', refresh_token: 'r'}), client, 'dc')).toMatchObject({status: 'granted', refreshToken: 'r'});
-    await expect(pollDeviceCode(reply(400, {error: 'invalid_client'}), client, 'dc')).rejects.toThrow(/invalid_client/);
+    expect(await refreshAccessToken(reply(200, {access_token: 'a'}), client, 'r')).toBe('a');
+    await expect(refreshAccessToken(reply(400, {error: 'invalid_grant'}), client, 'r')).rejects.toBeInstanceOf(GoogleSignedOutError);
+    await expect(refreshAccessToken(reply(401, {error: 'invalid_client'}), client, 'r')).rejects.toThrow(/HTTP 401/);
   });
 });
 
