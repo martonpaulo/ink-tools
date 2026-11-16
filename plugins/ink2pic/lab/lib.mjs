@@ -182,6 +182,23 @@ export async function thumbFile(url, userAgent) {
 }
 
 /** Every page-1 thumbnail of a run as a local file, keyed by thumbnail URL. */
+const CACHE_PART = '/out/.cache/';
+
+/**
+ * The tile's file on this machine. A run made in another folder, as the lab workflow's base
+ * worktree, recorded its own path into the shared cache; its files are in this cache under the
+ * same name, so the base's pixels are measured too (#104: run d38 measured 5 base tiles of 630).
+ */
+export function localFile(file) {
+  if (!file || fs.existsSync(file)) {
+    return file;
+  }
+  const at = file.lastIndexOf(CACHE_PART);
+  return at === -1
+    ? file
+    : path.join(CACHE_DIR, file.slice(at + CACHE_PART.length));
+}
+
 export async function pageOneThumbs(results) {
   const files = new Map();
   for (const entry of results.cases) {

@@ -20,6 +20,7 @@ import {
   checkProxy,
   hostTool,
   LAB_DIR,
+  localFile,
   pageOneThumbs,
   product,
   readJson,
@@ -153,15 +154,22 @@ async function metrics(name) {
   const results = readResults(name);
   const judgment = readJudgment(name);
   const files = await pageOneThumbs(results);
-  const measures = pixels(files);
+  // What the tile shows: its contour drawing when the device converts it (#81).
+  const shown = tile => localFile(tile.pixels?.file) ?? files.get(tile.thumb);
+  const measures = pixels(
+    new Map(
+      results.cases.flatMap(entry =>
+        entry.page1.map(tile => [tile.thumb + tile.id, shown(tile)]),
+      ),
+    ),
+  );
   const cases = results.cases.map(entry =>
     caseMetrics(
       {
         ...entry,
         page1: entry.page1.map(tile => ({
           ...tile,
-          // What the tile shows: its contour drawing when the device converts it (#81).
-          file: tile.pixels?.file ?? files.get(tile.thumb),
+          file: shown(tile),
           kind: tile.pixels?.kind,
           converted: tile.pixels?.converted,
         })),
