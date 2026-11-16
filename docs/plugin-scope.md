@@ -15,7 +15,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
-- [typeset (proposed)](#typeset-proposed)
+- [typeset (planned)](#typeset-planned)
 - [Note templates](#note-templates)
 - [Design direction](#design-direction)
 
@@ -27,35 +27,35 @@ device into an editable, durable form on the Mac, **not** sharing it with other 
 
 ## lookup
 
-Shown on the tablet as **Word Lookup** ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+Shown on the tablet as **Word Lookup** ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 Evolution of `ink2pic`: write a word, lasso it, insert something. `lookup` is a new plugin with its
-own `pluginID` and everything Ink2Pic did moved into it (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)); it does not carry
-Ink2Pic's settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)). Ink2Pic is retired and uninstalled
-from the tablet; its folder gets no new work ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)). **It is the first plugin to ship after
+own `pluginID` and everything Ink2Pic did moved into it (owner D45, [#125](https://github.com/martonpaulo/ink-tools/issues/125)); it does not carry
+Ink2Pic's settings or picture library (owner D40 B, [#110](https://github.com/martonpaulo/ink-tools/issues/110)). Ink2Pic is retired and uninstalled
+from the tablet; its folder gets no new work ([#45](https://github.com/martonpaulo/ink-tools/issues/45)). **It is the first plugin to ship after
 `bridge`** (the owner's biggest daily pain). **Mode selection (interview 2026-11-14):** each mode
 that inserts at once is its own **lasso button**, chosen before the search — not a post-hoc toggle:
 «Insert Sticker» (vector/sticker/OpenMoji), «Insert Image» (real photo), «Insert Definition» and the
 planned text insert (3-line bio / summary), and one «Translate ES→PT» button per direction (below).
 The names follow the wording of Supernote's own lasso menu, a verb and a noun in title case (owner,
-[#167](https://github.com/martonpaulo/supernote-tools/issues/167)). «Choose Image» is the one
+[#167](https://github.com/martonpaulo/ink-tools/issues/167)). «Choose Image» is the one
 button that opens the results: its Illustrations and Photos tabs stay behind that one button, and
-the one-button-per-mode rule covers the direct insert buttons only (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)). Pains and scope:
+the one-button-per-mode rule covers the direct insert buttons only (owner, [#156](https://github.com/martonpaulo/ink-tools/issues/156)). Pains and scope:
 
 - **Relevance is broken on real cases.** "café"/"coffee" returns a heart as the "best" picture;
   "Pedro Sánchez" returns awful results. Ranking and the portrait path must fix these (issues
-  [#13](https://github.com/martonpaulo/supernote-tools/issues/13), [#15](https://github.com/martonpaulo/supernote-tools/issues/15), [#20](https://github.com/martonpaulo/supernote-tools/issues/20), [#24](https://github.com/martonpaulo/supernote-tools/issues/24)). Keep these as named regression cases.
+  [#13](https://github.com/martonpaulo/ink-tools/issues/13), [#15](https://github.com/martonpaulo/ink-tools/issues/15), [#20](https://github.com/martonpaulo/ink-tools/issues/20), [#24](https://github.com/martonpaulo/ink-tools/issues/24)). Keep these as named regression cases.
 - **Two modes.** An **illustration / vector / sticker** mode (line art, drawings, engravings,
   "Bababum-app" style, OpenMoji) and a **real-photo** mode (people, places). The owner chose a real
-  split, not one blended list (relates to [#35](https://github.com/martonpaulo/supernote-tools/issues/35)).
-  Built as two lasso buttons, each with its Settings switch ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)): «Insert Sticker» searches
+  split, not one blended list (relates to [#35](https://github.com/martonpaulo/ink-tools/issues/35)).
+  Built as two lasso buttons, each with its Settings switch ([#111](https://github.com/martonpaulo/ink-tools/issues/111)): «Insert Sticker» searches
   Commons for drawings first, Openclipart and OpenMoji, and keeps only line art; «Insert Image»
   searches Commons with no drawings filter and keeps only photos and dark paintings, so a word with
   only clip art inserts no picture and says so.
 - **Emoji / known labels.** Map common keywords to emoji via OpenMoji's own keywords: "happy" and
   "smile" insert a smiling face with no search. (new)
 - **Remember my pick.** When the owner rejects the first suggestion for a word (e.g. "maçã") and
-  picks another, that choice leads next time for the same word ([#34](https://github.com/martonpaulo/supernote-tools/issues/34)).
+  picks another, that choice leads next time for the same word ([#34](https://github.com/martonpaulo/ink-tools/issues/34)).
 - **Temporary result cache.** Keep a search's results for a few seconds so going back to pick a
   different one is instant (the owner often dislikes the first choice and looks for another). (new)
 - **Text / knowledge insert (third mode).** Beyond pictures: search a term and insert a short
@@ -65,39 +65,39 @@ the one-button-per-mode rule covers the direct insert buttons only (owner, [#156
   a single-word dictionary definition, which stays low priority.
 - **Translation («Translate ES→PT»).** Write a word, lasso it, insert its translation: one lasso
   button per direction switched on in Lookup's Settings, with no automatic direction. Any direction
-  of the pairs can be chosen; ES→PT, ZH→PT and PT→ZH start on (owner, [#174](https://github.com/martonpaulo/supernote-tools/issues/174), which replaced
-  [#158](https://github.com/martonpaulo/supernote-tools/issues/158)'s one button over every pair). It took over the Lingo plugin's job,
+  of the pairs can be chosen; ES→PT, ZH→PT and PT→ZH start on (owner, [#174](https://github.com/martonpaulo/ink-tools/issues/174), which replaced
+  [#158](https://github.com/martonpaulo/ink-tools/issues/158)'s one button over every pair). It took over the Lingo plugin's job,
   and that plugin is retiring: it is uninstalled from the tablet and its folder removed once this
-  button passes on the device ([#159](https://github.com/martonpaulo/supernote-tools/issues/159), [#161](https://github.com/martonpaulo/supernote-tools/issues/161)). Real uses: **learning a language**, **reading
+  button passes on the device ([#159](https://github.com/martonpaulo/ink-tools/issues/159), [#161](https://github.com/martonpaulo/ink-tools/issues/161)). Real uses: **learning a language**, **reading
   foreign text** (ES/ZH) and annotating meaning, and **finding the right term** while writing in PT
   without reaching for the phone. The owner lives between PT and ES, maybe ZH. Shares the
   dictionary/translation engine with the definition mode (one provider interface). Translation
   stays on the word.
 
-Not planned (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)): a button in the PDF and book selection toolbar
+Not planned (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)): a button in the PDF and book selection toolbar
 (lookup stays on the lasso in a note), an AI summary of the written page, which needs a paid
 provider key, and, for translation, a vocabulary list of the words it translated and translating a
 paragraph or a whole page.
 
 ## Lingo app
 
-Shown on the tablet as **Handwriting Language**, with «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+Shown on the tablet as **Handwriting Language**, with «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 A sideloaded Android app, not a plugin, under `apps/lingo-app/`: it switches the handwriting
 recognition language of the whole tablet with one tap, so lasso convert, plugin recognition and the
-handwriting keyboard read the next word in that language ([#157](https://github.com/martonpaulo/supernote-tools/issues/157)). A plugin cannot do it: the
-folder that names the active language is outside the plugin sandbox ([#151](https://github.com/martonpaulo/supernote-tools/issues/151),
+handwriting keyboard read the next word in that language ([#157](https://github.com/martonpaulo/ink-tools/issues/157)). A plugin cannot do it: the
+folder that names the active language is outside the plugin sandbox ([#151](https://github.com/martonpaulo/ink-tools/issues/151),
 [the study](research/2026-11-handwriting-language.md)). The name Lingo moved here from the
-translation plugin, which is retiring; the app was called Dialect before ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
+translation plugin, which is retiring; the app was called Dialect before ([#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 
 - **Two surfaces in one test build**, so one device round compares them: a small floating button
   over every app that shows the active language (`PT`, `EN`, `ES`) and moves to the next one, on
   or off in «Lingo settings»; and the app's launcher entry, which the sidebar lists, that switches
-  with nothing on screen (owner, [#151](https://github.com/martonpaulo/supernote-tools/issues/151)).
+  with nothing on screen (owner, [#151](https://github.com/martonpaulo/ink-tools/issues/151)).
 - **Installed languages only**: the cycle holds the tablet's installed language packs, by default
   `pt_BR`, `en_US`, `es_ES`; «Lingo settings» chooses which are in it.
 - **Esperanto is out of scope**: it is not among the tablet's languages, and reaching it would need
-  a second recognition engine (owner, [#151](https://github.com/martonpaulo/supernote-tools/issues/151)).
+  a second recognition engine (owner, [#151](https://github.com/martonpaulo/ink-tools/issues/151)).
 
 ## Dictionary and translation engine (shared)
 
@@ -111,58 +111,58 @@ Used by `lookup`'s definition and translation buttons (and the retiring Lingo pl
 - **Priority pairs:** PT↔ES and PT↔ZH. Not EN, for now.
 - **Monolingual definition is not a priority**, so `lookup`'s definition mode ranks below
   translation, the stronger need.
-- **Not planned** (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)): pinyin and example sentences in the
+- **Not planned** (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)): pinyin and example sentences in the
   translation shown. Pinyin stays an input of a ZH translation only
-  ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).
+  ([#129](https://github.com/martonpaulo/ink-tools/issues/129)).
 
 ## retouch
 
-Shown on the tablet as **Image Editing**; its buttons keep their names ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+Shown on the tablet as **Image Editing**; its buttons keep their names ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 Edit an image already on the page, **invoked by lassoing the image**. Every choice costs one e-ink
 refresh, so retouch shows finished options at once and the user taps one, like Ink2Pic's results
 grid; it has no sliders and no live preview
-([#47](https://github.com/martonpaulo/supernote-tools/issues/47)).
+([#47](https://github.com/martonpaulo/ink-tools/issues/47)).
 
 Status: `plugins/retouch/` holds Enhance, Lighter, Darker, Undo and Restore original
-([#136](https://github.com/martonpaulo/supernote-tools/issues/136)), and Rotate 90°, Mirror, Flip and Invert
-([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), and Trim ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)); their device round is still to come.
+([#136](https://github.com/martonpaulo/ink-tools/issues/136)), and Rotate 90°, Mirror, Flip and Invert
+([#131](https://github.com/martonpaulo/ink-tools/issues/131)), and Trim ([#132](https://github.com/martonpaulo/ink-tools/issues/132)); their device round is still to come.
 
 Essential:
 
 - **Enhance for e-ink**, one tap: grey that keeps colour contrast, a gamma step, sharpen, the 16
-  greys ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+  greys ([#136](https://github.com/martonpaulo/ink-tools/issues/136)).
 - **Lighter** and **Darker** in fixed gamma steps
-  ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
-- **Undo** and **Restore original** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+  ([#136](https://github.com/martonpaulo/ink-tools/issues/136)).
+- **Undo** and **Restore original** ([#136](https://github.com/martonpaulo/ink-tools/issues/136)).
 - **Style grid**: Photo (16 greys), Line art (contour, matching `lookup`'s illustration mode, with
   thicker lines as an option), Black and white (threshold), Dither (Floyd–Steinberg and Atkinson);
   every style can turn white transparent so the page template shows through; the last style shown
-  first ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)).
+  first ([#133](https://github.com/martonpaulo/ink-tools/issues/133)).
 - Enhance scales a large picture down to the page width, never up, so the page stays fast
-  ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+  ([#136](https://github.com/martonpaulo/ink-tools/issues/136)).
 - **Crop with the pen** (draw the rectangle) and **trim white margins** automatically
-  ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
+  ([#132](https://github.com/martonpaulo/ink-tools/issues/132)).
 
 Very useful:
 
 - Rotate 90°, mirror horizontal or vertical, invert (a dark-mode screenshot becomes paper)
-  ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
+  ([#131](https://github.com/martonpaulo/ink-tools/issues/131)).
 - **Document** mode: deskew, perspective correction, white background, black and white, for a
-  photographed page from the phone ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)).
+  photographed page from the phone ([#137](https://github.com/martonpaulo/ink-tools/issues/137)).
 - Erase with the pen, background removal, make a sticker
-  ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
+  ([#134](https://github.com/martonpaulo/ink-tools/issues/134)).
 - Open retouch on the picture Ink2Pic or Lookup just inserted
-  ([#139](https://github.com/martonpaulo/supernote-tools/issues/139)).
+  ([#139](https://github.com/martonpaulo/ink-tools/issues/139)).
 - Later: apply one edit to every image on the page
-  ([#140](https://github.com/martonpaulo/supernote-tools/issues/140)).
+  ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
 
 Limit: each edit finishes within 2 s on the Manta; a longer one shows the plugin's «Working…»
-panel ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)). Before building, existing
+panel ([#103](https://github.com/martonpaulo/ink-tools/issues/103)). Before building, existing
 plugins, apps and libraries are checked for reuse
-([#138](https://github.com/martonpaulo/supernote-tools/issues/138)).
+([#138](https://github.com/martonpaulo/ink-tools/issues/138)).
 
-**Reuse check (2026-11-15, [#138](https://github.com/martonpaulo/supernote-tools/issues/138)).** No Supernote plugin or app edits
+**Reuse check (2026-11-15, [#138](https://github.com/martonpaulo/ink-tools/issues/138)).** No Supernote plugin or app edits
 a picture already on the page. What exists:
 
 | Name | What it does | License | On the Manta |
@@ -177,23 +177,23 @@ a picture already on the page. What exists:
 
 Per delivery issue:
 
-- [#130](https://github.com/martonpaulo/supernote-tools/issues/130) native resize: reuse the host's lasso; a device check, no code.
-- [#136](https://github.com/martonpaulo/supernote-tools/issues/136) scaffold and Enhance: base on Ink2Pic's insert flow and `Decolor.java`/`EinkPixels.java`; build the gamma and sharpen steps, a few lines of Java each, since no plugin does them.
-- [#133](https://github.com/martonpaulo/supernote-tools/issues/133) styles: reuse `Contour.java` for Line art; build threshold and the two dithers in Java (each about 40 lines); Jimp's dither is an ordered dither for 16-bit colour [inference from its README], a style `retouch` does not plan.
-- [#132](https://github.com/martonpaulo/supernote-tools/issues/132) crop and trim: build; image-insert-plugin crops with arrows, not with the pen, and has no trim.
-- [#131](https://github.com/martonpaulo/supernote-tools/issues/131) rotate, mirror, invert: built as plain Java loops over the pixels in `Retouch.java`, a few lines each, so the JVM tests run them; Android's `Matrix` would do the same but only on the device, and a library adds nothing.
-- [#134](https://github.com/martonpaulo/supernote-tools/issues/134) eraser and cutout: build the eraser; for background removal try MediaPipe's segmenter first, and keep a white-flood cutout as the fallback when it does not load or is too slow.
-- [#137](https://github.com/martonpaulo/supernote-tools/issues/137) Document mode: base on OpenCV's perspective transform only if its size is acceptable; otherwise build deskew alone on the plain-Java measures.
-- [#139](https://github.com/martonpaulo/supernote-tools/issues/139) and [#140](https://github.com/martonpaulo/supernote-tools/issues/140): build; they depend on this plugin's own flows.
+- [#130](https://github.com/martonpaulo/ink-tools/issues/130) native resize: reuse the host's lasso; a device check, no code.
+- [#136](https://github.com/martonpaulo/ink-tools/issues/136) scaffold and Enhance: base on Ink2Pic's insert flow and `Decolor.java`/`EinkPixels.java`; build the gamma and sharpen steps, a few lines of Java each, since no plugin does them.
+- [#133](https://github.com/martonpaulo/ink-tools/issues/133) styles: reuse `Contour.java` for Line art; build threshold and the two dithers in Java (each about 40 lines); Jimp's dither is an ordered dither for 16-bit colour [inference from its README], a style `retouch` does not plan.
+- [#132](https://github.com/martonpaulo/ink-tools/issues/132) crop and trim: build; image-insert-plugin crops with arrows, not with the pen, and has no trim.
+- [#131](https://github.com/martonpaulo/ink-tools/issues/131) rotate, mirror, invert: built as plain Java loops over the pixels in `Retouch.java`, a few lines each, so the JVM tests run them; Android's `Matrix` would do the same but only on the device, and a library adds nothing.
+- [#134](https://github.com/martonpaulo/ink-tools/issues/134) eraser and cutout: build the eraser; for background removal try MediaPipe's segmenter first, and keep a white-flood cutout as the fallback when it does not load or is too slow.
+- [#137](https://github.com/martonpaulo/ink-tools/issues/137) Document mode: base on OpenCV's perspective transform only if its size is acceptable; otherwise build deskew alone on the plain-Java measures.
+- [#139](https://github.com/martonpaulo/ink-tools/issues/139) and [#140](https://github.com/martonpaulo/ink-tools/issues/140): build; they depend on this plugin's own flows.
 
 Not planned: magic wand (imprecise with a pen; background removal covers it), brightness, contrast
 and levels sliders, ordered and halftone dither and other error-diffusion styles, spread splitting,
 forced white borders, OCR of the image. Resize stays only if the native lasso cannot already resize
-an image ([#130](https://github.com/martonpaulo/supernote-tools/issues/130)).
+an image ([#130](https://github.com/martonpaulo/ink-tools/issues/130)).
 
 ## Ink Notebook Editor
 
-Named by the owner on 2026-11-16, a brand-free name; the working name was `desk` ([#175](https://github.com/martonpaulo/supernote-tools/issues/175)).
+Named by the owner on 2026-11-16, a brand-free name; the working name was `desk` ([#175](https://github.com/martonpaulo/ink-tools/issues/175)).
 
 A macOS app that **reads and edits** the owner's `.note` files **without breaking the format** —
 like editing a PDF. Scope (interview 2026-11-14, revised):
@@ -206,11 +206,11 @@ like editing a PDF. Scope (interview 2026-11-14, revised):
 export to other people is not a priority either. The value is a safe `.note` editor on a big screen.
 
 The full editor is the goal from the start, not a viewer and exporter first on `supernotelib`
-(product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)).
+(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 ## bridge
 
-Shown on the tablet as **Account Sync**; a sync button, where one exists, says «Sync Accounts» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+Shown on the tablet as **Account Sync**; a sync button, where one exists, says «Sync Accounts» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 Settled: to-do + calendar + digest, each opt in/out, settings-only (no note surface). Input scope
 is **only** those three — the owner does not want PDFs, read-later or other-app references pulled in
@@ -219,9 +219,9 @@ by `bridge`. See [`architecture.md`](architecture.md).
 **Settings layout (interview 2026-11-14):** one section per module (To-Do / Calendar / Digest);
 inside each, a toggle for the module and a toggle per provider (Todoist; Google / iCloud / ICS).
 
-**To-Do runs on the tablet alone** ([#44](https://github.com/martonpaulo/supernote-tools/issues/44)): Bridge never depends on the Mac being on. The
+**To-Do runs on the tablet alone** ([#44](https://github.com/martonpaulo/ink-tools/issues/44)): Bridge never depends on the Mac being on. The
 community script that syncs Todoist through the Partner app on the Mac is not used (product audit,
-owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)).
+owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 ## New: phone to open note
 
@@ -235,27 +235,27 @@ Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
   `lookup` places an inserted picture.
 - **Scan-to-template is its own capability**, beyond "drop into the open note": a scanned
   PDF becomes the **background of new blank pages** the owner writes on
-  ([#143](https://github.com/martonpaulo/supernote-tools/issues/143), owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)).
+  ([#143](https://github.com/martonpaulo/ink-tools/issues/143), owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 ## relay
 
-Shown on the tablet as **Device Transfer**, with the buttons «Send Page», «Send Selection» and «Receive» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176), [#172](https://github.com/martonpaulo/supernote-tools/issues/172)).
+Shown on the tablet as **Device Transfer**, with the buttons «Send Page», «Send Selection» and «Receive» ([#176](https://github.com/martonpaulo/ink-tools/issues/176), [#172](https://github.com/martonpaulo/ink-tools/issues/172)).
 
 The plugin that moves pictures and text between the tablet and the owner's iPhone and Mac over
 LocalSend; one plugin for both directions (owner D25 A). Its receive half is the phone-to-note need
-above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
+above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
 
-**Send half** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)):
+**Send half** ([#98](https://github.com/martonpaulo/ink-tools/issues/98)):
 
 - «Send Page» in the note's sidebar sends the current page as a PNG; «Send Selection» in the lasso
   toolbar sends only the selection. One tap, no view: the result is a short toast.
 - The person picks the receiving device once in Relay's Settings; later sends go to it, pinned to
   the fingerprint it announced. A changed certificate is a failed send, never a silent re-pin.
 - Not in scope: the whole note as a PDF, which the Supernote Partner app already exports (product
-  audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)); a device without LocalSend; anything over the internet.
-  A lasso selection as typed text is [#99](https://github.com/martonpaulo/supernote-tools/issues/99).
+  audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)); a device without LocalSend; anything over the internet.
+  A lasso selection as typed text is [#99](https://github.com/martonpaulo/ink-tools/issues/99).
 
-**Receive half** ([#49](https://github.com/martonpaulo/supernote-tools/issues/49), owner D42 B: our own, not Notipal):
+**Receive half** ([#49](https://github.com/martonpaulo/ink-tools/issues/49), owner D42 B: our own, not Notipal):
 
 - «Receive» in the note's sidebar makes the tablet a LocalSend device named «Supernote» for two
   minutes, one tap. The first text lands as a selected text box, the first PNG or JPEG as the
@@ -265,20 +265,20 @@ above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
   v1 one (`UnsupportedCertVersion`, what the owner met with Notipal). The same certificate's
   fingerprint is the tablet's identity when it sends.
 - Whether a listener can stay open in the background is measured in the tablet round and decided
-  after it (product audit, owner, [#141](https://github.com/martonpaulo/supernote-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/supernote-tools/issues/143).
+  after it (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/ink-tools/issues/143).
 
-## typeset (proposed)
+## typeset (planned)
 
-To be shown as **Real-Time Conversion**, with the sidebar button «Real-Time Text» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+To be shown as **Real-Time Conversion**, with the sidebar button «Real-Time Text» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 A plugin that turns each handwritten word into typed text in a font the owner chose, soon after he
 writes it, with no lasso, turned on and off from one sidebar button. The research proposes it and
-the name ([`research/2026-11-live-handwriting-to-text.md`](research/2026-11-live-handwriting-to-text.md), [#144](https://github.com/martonpaulo/supernote-tools/issues/144)); the owner has not
-yet chosen whether to build it, so nothing here is decided.
+the name ([`research/2026-11-live-handwriting-to-text.md`](research/2026-11-live-handwriting-to-text.md), [#144](https://github.com/martonpaulo/ink-tools/issues/144)). The owner chose to
+build it as proposed, with an «Undo the last conversion» action; it is the next plugin to build (2026-11-16).
 
 ## Note templates
 
-Parked by the owner ([#141](https://github.com/martonpaulo/supernote-tools/issues/141)): nothing is built until he asks. A template here means
+Parked by the owner ([#141](https://github.com/martonpaulo/ink-tools/issues/141)): nothing is built until he asks. A template here means
 something simple, such as one generated sudoku page, not a large set.
 
 ## Design direction
@@ -287,6 +287,6 @@ The owner wants prettier Settings interfaces. `ink2pic`'s UI was good — simple
 but could use some colour. Reference to study: `Laumss/sn-plugins` configuration UI. This is a
 design direction for every plugin's Settings, within the e-ink constraints (16 greys).
 The conventions, and what was borrowed from that reference (now Notipal), are in
-[`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)).
+[`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/ink-tools/issues/50)).
 On 2026-11-16 the owner named three more plugins whose Settings look he likes: SnapMark, PC Clipboard
 and DocuCraft ([their traits](../packages/ui-kit/README.md#the-owners-picks-snapmark-pc-clipboard-docucraft)).

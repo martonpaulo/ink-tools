@@ -1,6 +1,6 @@
 # Live handwriting to text: research and proposal
 
-Status: research, 2026-11-16, for [#144](https://github.com/martonpaulo/supernote-tools/issues/144). No code; the build follows in sub-issues once the owner picks the proposal.
+Status: research, 2026-11-16, for [#144](https://github.com/martonpaulo/ink-tools/issues/144). No code; the build follows in sub-issues once the owner picks the proposal.
 
 Marks, as in [`../supernote.md`](../supernote.md): [official] the vendor's documents or the `sn-plugin-lib` 0.2.3 type definitions; [measured] seen on the owner's Manta; [reported] a user's or a reviewer's account; [inference] reasoned, not seen.
 
@@ -35,7 +35,7 @@ No Supernote feature replaces handwriting with typed text on the page as you wri
 
 ### Other plugins
 
-The reuse check of [#138](https://github.com/martonpaulo/supernote-tools/issues/138) and a web search on 2026-11-16 found no Supernote plugin that converts handwriting on pen-up. The plugins known to this project insert pictures (`supernote-image-insert-plugin`, `embedimage`, [`plugin-scope.md`](../plugin-scope.md#retouch)). The `fharper/awesome-supernote` list holds sync tools for Obsidian and Joplin, not on-device plugins [reported, from its index pages; this session could not read the repository].
+The reuse check of [#138](https://github.com/martonpaulo/ink-tools/issues/138) and a web search on 2026-11-16 found no Supernote plugin that converts handwriting on pen-up. The plugins known to this project insert pictures (`supernote-image-insert-plugin`, `embedimage`, [`plugin-scope.md`](../plugin-scope.md#retouch)). The `fharper/awesome-supernote` list holds sync tools for Obsidian and Joplin, not on-device plugins [reported, from its index pages; this session could not read the repository].
 
 ### Other tablets
 
@@ -57,9 +57,9 @@ Only Scribble is live, and it works because the target is a text field: the syst
 | Follow the pen between strokes | `registerMotionListener(order, listener)`: `MotionEvent` with `action` 0 down, 1 up, 2 move, `toolType` 2 for the pen | [official]; same open point |
 | A stroke's place and time | Elements carry no time and no rect; the rect comes from `stroke.points`, in page pixels | [official, Ink2Pic's brief] |
 | Word ends | Pauses inside a word (130 to 656 ms) and between words (578 to 1122 ms) overlap on the owner's tablet, so a timer alone cannot find the end of a word; position can (Ink2Pic's «Lasso last word» grouping) | [measured, Ink2Pic build 15, [#75](https://github.com/martonpaulo/ink2pic/issues/75)] |
-| Recognize the word | `recognizeElements(elements, size)`; the device's handwriting language, no language parameter; 0.9 to 1.7 s per call | [official]; time [measured, [#19](https://github.com/martonpaulo/supernote-tools/issues/19)] |
-| Put typed text on the page | `insertText` puts a text box on the page | [measured, [#115](https://github.com/martonpaulo/supernote-tools/issues/115)] |
-| Remove the word's strokes in the same step | `batchUpdatePageElements(deleteNumList, elements, page, layer)`: deletes, then inserts, in one call | [official]; replaces a picture in place [measured, [#130](https://github.com/martonpaulo/supernote-tools/issues/130)]; with strokes and a text box, open |
+| Recognize the word | `recognizeElements(elements, size)`; the device's handwriting language, no language parameter; 0.9 to 1.7 s per call | [official]; time [measured, [#19](https://github.com/martonpaulo/ink-tools/issues/19)] |
+| Put typed text on the page | `insertText` puts a text box on the page | [measured, [#115](https://github.com/martonpaulo/ink-tools/issues/115)] |
+| Remove the word's strokes in the same step | `batchUpdatePageElements(deleteNumList, elements, page, layer)`: deletes, then inserts, in one call | [official]; replaces a picture in place [measured, [#130](https://github.com/martonpaulo/ink-tools/issues/130)]; with strokes and a text box, open |
 | A chosen font | The `TextBox` element has `fontPath`, `fontSize`, `textRect`, `textAlign`, `textBold`, `textItalics`, `textEditable` | [official type]; which `fontPath` values the host accepts, and whether a font from `Document/Fonts` works, is open |
 | Is the page writable now | `PluginCommAPI.canHandwrite()` | [official] |
 | A sidebar on/off button | `registerButton(1, ['NOTE'], …)`: type 1 is the sidebar; `setButtonState` can show on or off | [official] |
@@ -67,7 +67,7 @@ Only Scribble is live, and it works because the target is a text field: the syst
 
 ## 3. How it would work
 
-**Mode.** One sidebar button, «Type as I write», on or off ([#144](https://github.com/martonpaulo/supernote-tools/issues/144) decision). On: the plugin listens for pen-up. Off: it removes its listener at once, so a drawing is never touched. NOTE only.
+**Mode.** One sidebar button, «Type as I write», on or off ([#144](https://github.com/martonpaulo/ink-tools/issues/144) decision). On: the plugin listens for pen-up. Off: it removes its listener at once, so a drawing is never touched. NOTE only.
 
 **The word-end rule.** A word is converted only when it is certainly finished:
 
@@ -114,7 +114,7 @@ The project's plugins are one plain word for what they do: `lookup`, `lingo`, `r
 | **`typeset`** (recommended) | Says what happens to the page: handwriting becomes set type; one word, an English verb like `relay` and `retouch` |
 | `scribe` | The writer who copies; clashes with Kindle Scribe |
 | `clean` | The owner's «clean page»; too generic |
-| `ink2type` | Echoes Ink2Pic; the project moved away from that pattern (Lookup replaces Ink2Pic, [#45](https://github.com/martonpaulo/supernote-tools/issues/45)) |
+| `ink2type` | Echoes Ink2Pic; the project moved away from that pattern (Lookup replaces Ink2Pic, [#45](https://github.com/martonpaulo/ink-tools/issues/45)) |
 
 ## 6. Device questions
 

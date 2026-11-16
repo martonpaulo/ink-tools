@@ -8,7 +8,7 @@ application-security standard is in [`plugins/ink2pic/docs/security.md`](../plug
 The weekly `Scan` workflow runs [`scripts/npm_audit.py`](../scripts/npm_audit.py) in every plugin and
 in `packages/`. It runs `npm audit --omit=dev` and fails on every advisory, whatever its severity,
 except the ones [`audit-exceptions.json`](../audit-exceptions.json) names
-([#154](https://github.com/martonpaulo/supernote-tools/issues/154)).
+([#154](https://github.com/martonpaulo/ink-tools/issues/154)).
 
 - A dependency gets fixed by an upgrade first: a patch release, then an `overrides` entry, only when
   React Native 0.79.2 and the build stay unchanged. PluginHost on the tablet fixes that React Native

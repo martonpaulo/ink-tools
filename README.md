@@ -2,43 +2,36 @@
 
 <img src="design/icon.svg" width="96" height="96" alt="">
 
-# Supernote Tools
+# Ink Tools
 
-Unofficial tools for Supernote e-ink tablets: a calendar-sync plugin, a handwriting-to-picture plugin, and an ADB control CLI.
+Unofficial tools for Supernote e-ink tablets: device plugins, a tablet app, a Mac CLI and a planned Mac notebook editor.
 
 </div>
 
 A monorepo of independent subprojects of four kinds: device **plugins** that run inside the
-Supernote's plugin host, a sideloaded **tablet app**, a **Mac CLI** and a planned **Mac app**. Each
+tablet's plugin host, a sideloaded **tablet app**, a **Mac CLI** and a planned **Mac app**. Each
 keeps its own `AGENTS.md`, versioning and releases. Plugins and the tablet app use SemVer with a
 numbered beta: a test build reads `0.2.0-beta.3` on GitHub and `0.2.0 beta 3` on the tablet
-([#155](https://github.com/martonpaulo/supernote-tools/issues/155)).
+([#155](https://github.com/martonpaulo/ink-tools/issues/155)).
 
-| Subproject | Kind | What it is |
-| :--- | :--- | :--- |
-| [`plugins/lookup/`](plugins/lookup/) | plugin | Word Lookup: write a word by hand, lasso it, and insert an illustration, a photo, a short definition or a translation; «Choose Image» opens the results to pick one. It replaces Ink2Pic. **Beta, device round pending** — see [#45](https://github.com/martonpaulo/supernote-tools/issues/45). |
-| [`plugins/bridge/`](plugins/bridge/) | plugin | Account Sync: a settings-only plugin with to-do, calendar and digest modules, each opt in. **Scaffolded** — see its open issues. |
-| [`plugins/retouch/`](plugins/retouch/) | plugin | Image Editing: lasso a picture on the page and make it readable on e-ink with one tap: Enhance, Lighter, Darker, Undo and Restore original. **Built, device round pending** — see [#136](https://github.com/martonpaulo/supernote-tools/issues/136). |
-| [`plugins/relay/`](plugins/relay/) | plugin | Device Transfer: send the current page or a lasso selection as a picture to an iPhone or a Mac over LocalSend, with one tap, and receive text or a picture into the open note. **Built, device round pending** — see [#98](https://github.com/martonpaulo/supernote-tools/issues/98), [#49](https://github.com/martonpaulo/supernote-tools/issues/49). |
-| [`plugins/probe/`](plugins/probe/) | plugin | A developer-only plugin for quick on-device experiments. Never shipped to users. |
-| [`plugins/ink2pic/`](plugins/ink2pic/) | plugin | Insert a matching picture for a lassoed word. **Retired** and uninstalled from the tablet: Lookup replaces it ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)). It gets no new work. |
-| [`plugins/lingo/`](plugins/lingo/) | plugin | Insert the translation of a lassoed word. **Retiring**: translation is now Lookup's «Translate ES→PT» buttons ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#174](https://github.com/martonpaulo/supernote-tools/issues/174)); the folder goes once they pass on the tablet ([#161](https://github.com/martonpaulo/supernote-tools/issues/161)). |
-| [`apps/lingo-app/`](apps/lingo-app/) | tablet app | Handwriting Language (the Lingo app): switch the handwriting recognition language of the whole tablet with one tap, from a floating button or its sidebar entry. **Test build, device round pending** — see [#157](https://github.com/martonpaulo/supernote-tools/issues/157). |
-| [`cli/inkctl/`](cli/inkctl/) | Mac CLI | Control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. |
-| Ink Notebook Editor | Mac app | Read and edit Supernote `.note` files on the Mac without breaking the format. **Planned**, not yet a folder — see [#48](https://github.com/martonpaulo/supernote-tools/issues/48). |
-| [`packages/`](packages/) | shared code | Shared, provider-agnostic building blocks the plugins bundle: `sn-adapter`, `sync-core`, `ink-core`, `picture-search` and `ui-kit`. |
+| Tool | Kind | What it does | Status |
+| :--- | :--- | :--- | :--- |
+| **Word Lookup**<br><sub>[`plugins/lookup/`](plugins/lookup/)</sub> | plugin | Write a word by hand, lasso it, and insert an illustration, a photo, a short definition or a translation; «Choose Image» opens the results to pick one. | Beta 4, with translation ([#45](https://github.com/martonpaulo/ink-tools/issues/45)) |
+| **Account Sync**<br><sub>[`plugins/bridge/`](plugins/bridge/)</sub> | plugin | Sync to-dos, calendars and a digest with your accounts, each module opt in. | Being built |
+| **Image Editing**<br><sub>[`plugins/retouch/`](plugins/retouch/)</sub> | plugin | Lasso a picture on the page and make it readable on e-ink with one tap. | 13 edits; style grid, crop and erase in progress ([#136](https://github.com/martonpaulo/ink-tools/issues/136)) |
+| **Device Transfer**<br><sub>[`plugins/relay/`](plugins/relay/)</sub> | plugin | Send the page or a lasso selection to an iPhone or a Mac over LocalSend, and receive text or a picture into the open note. | Sends and receives; PDF receive fix in progress ([#98](https://github.com/martonpaulo/ink-tools/issues/98)) |
+| **Real-Time Conversion**<br><sub>`typeset`, no folder yet</sub> | plugin | Turn each handwritten word into typed text in a chosen font, with no lasso, and undo the last conversion. | Planned, build next ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [the research](docs/research/2026-11-live-handwriting-to-text.md)) |
+| **Handwriting Language**<br><sub>[`apps/lingo-app/`](apps/lingo-app/)</sub> | tablet app | Switch the handwriting recognition language of the whole tablet with one tap. | Test build, device round pending ([#157](https://github.com/martonpaulo/ink-tools/issues/157)) |
+| **inkctl**<br><sub>[`cli/inkctl/`](cli/inkctl/)</sub> | Mac CLI | Control the tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root. | In use |
+| **Ink Notebook Editor**<br><sub>[`apps/ink-notebook-editor/`](apps/ink-notebook-editor/)</sub> | Mac app | Read and edit `.note` notebooks on the Mac without breaking the format. | Planned; a faithful reader first ([#48](https://github.com/martonpaulo/ink-tools/issues/48)) |
+| Probe<br><sub>[`plugins/probe/`](plugins/probe/)</sub> | plugin | Quick on-device experiments for developers. Never shipped. | Internal |
+| Shared code<br><sub>[`packages/`](packages/)</sub> | packages | `sn-adapter`, `sync-core`, `ink-core`, `picture-search` and `ui-kit`, bundled by the plugins. | Internal |
 
-Proposed, not built: **Real-Time Conversion** (`typeset`), a plugin that turns each handwritten word into typed text in a
-chosen font, with no lasso; it waits on the owner's choice
-([#144](https://github.com/martonpaulo/supernote-tools/issues/144), [the research](docs/research/2026-11-live-handwriting-to-text.md)).
+Retired: [`plugins/ink2pic/`](plugins/ink2pic/) (Word Lookup replaces it) and
+[`plugins/lingo/`](plugins/lingo/) (translation is now in Word Lookup, [#161](https://github.com/martonpaulo/ink-tools/issues/161)).
 
 **This is unofficial.** Not affiliated with or endorsed by Ratta. "Supernote" is a trademark of its
 owner, used here only to name the device. No root, no modified firmware, no exploits.
-
-## History
-
-`ink2pic` and `supernote-adb` were separate repositories, moved here with their full Git history on
-2026-11-13 (`martonpaulo/ink2pic`, `martonpaulo/supernote-adb`, now archived).
 
 ## License
 

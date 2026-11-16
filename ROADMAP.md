@@ -5,7 +5,7 @@ it starts. Order is not commitment.
 
 Plugins, apps and tools that already have a folder or an issue (`lookup`, the Lingo app,
 `retouch`, `relay`, `bridge`, Ink Notebook Editor, and the proposed `typeset`) are described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
-([#141](https://github.com/martonpaulo/supernote-tools/issues/141)).
+([#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 ## Content
 
@@ -28,4 +28,4 @@ Deferred by the owner on 2026-11-16, until the tools are ready to share; it repl
 
 The owner's three original goals were To-Do <-> Todoist, Calendar <-> Apple/Google, and Saved ->
 Digest. Calendar is the active work (`area: bridge`). To-Do sync is the Bridge module of
-[#44](https://github.com/martonpaulo/supernote-tools/issues/44), on the tablet alone; the provider write investigation ([#31](https://github.com/martonpaulo/supernote-tools/issues/31)) is done. Saved -> Digest (Digest is cloud-only) is not yet scoped.
+[#44](https://github.com/martonpaulo/ink-tools/issues/44), on the tablet alone; the provider write investigation ([#31](https://github.com/martonpaulo/ink-tools/issues/31)) is done. Saved -> Digest (Digest is cloud-only) is not yet scoped.

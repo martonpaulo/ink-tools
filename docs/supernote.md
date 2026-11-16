@@ -56,7 +56,7 @@ explained.
   | `#CCCDCC` | the Manta's e-ink screen in product photos | [measured] product photo |
 
   Photo-measured values are a median of a flat area and can shift with the photo's light. Sources
-  and links: [#97](https://github.com/martonpaulo/supernote-tools/issues/97).
+  and links: [#97](https://github.com/martonpaulo/ink-tools/issues/97).
 
 ## Designing for the screen
 
@@ -72,7 +72,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - One item per line; frames only where they carry meaning.
 - Study sheets: content only in the top half; the bottom half is for handwriting.
 - Plugin screens: touch target at least 10 mm, text at least 3 mm; the tokens live in
-  `packages/ui-kit` and a test refuses smaller sizes ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
+  `packages/ui-kit` and a test refuses smaller sizes ([#93](https://github.com/martonpaulo/ink-tools/issues/93)).
 
 ## Plugins
 
@@ -82,32 +82,32 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Limits: 30 installed, 10 enabled [official, 3.29.44 announcement].
 - A plugin's view runs its start code once per plugin-host process: going back and opening the
   view again does not re-run it; `am force-stop com.ratta.supernote.pluginhost` starts a fresh
-  process [measured, 2026-11-14, [#91](https://github.com/martonpaulo/supernote-tools/issues/91)].
+  process [measured, 2026-11-14, [#91](https://github.com/martonpaulo/ink-tools/issues/91)].
 - A plugin can open a TCP listener and accept a connection over Wi-Fi, with the screen on and off
-  [measured, 2026-11-14, [#91](https://github.com/martonpaulo/supernote-tools/issues/91)].
+  [measured, 2026-11-14, [#91](https://github.com/martonpaulo/ink-tools/issues/91)].
 - HTTPS `fetch` works; cleartext `http://` fails at once [measured, `brief.md`].
 - Plugin call times on the owner's tablet, one «Insert best picture» for «apple», Ink2Pic
-  0.1.0-dev.17 [measured, 2026-11-14, [#19](https://github.com/martonpaulo/supernote-tools/issues/19)]: `recognizeElements` 0.9 to 1.7 s,
+  0.1.0-dev.17 [measured, 2026-11-14, [#19](https://github.com/martonpaulo/ink-tools/issues/19)]: `recognizeElements` 0.9 to 1.7 s,
   `insertPageElements` 0.1 to 0.3 s, re-lasso 0.4 to 0.6 s, writing the PNG under 20 ms, a 200 px
   contour conversion 0.16 to 0.25 s, measuring 12 page-1 thumbnails 5.7 s.
 - A plugin's file calls reach only a whitelist of shared paths: Ink2Pic 0.1.0-dev.18 listing
   `/storage/emulated/0/.ink2pic-symbols` failed with `SecurityException: Plugin [...] is not allowed
-  to access sdcard path outside whitelist` [measured, 2026-11-15, [#23](https://github.com/martonpaulo/supernote-tools/issues/23)].
+  to access sdcard path outside whitelist` [measured, 2026-11-15, [#23](https://github.com/martonpaulo/ink-tools/issues/23)].
 - Lasso buttons of all plugins share one «⋯» list under the lasso toolbar; each row's icon shows
-  at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/supernote-tools/issues/107)]. A button takes one icon, so each plugin
+  at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/ink-tools/issues/107)]. A button takes one icon, so each plugin
   ships one 96 x 96 PNG per button, which the tablet scales down to that size (owner D43 A).
 - A lasso button registered while the plugin already runs shows in that list at once, and
-  `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/supernote-tools/issues/115)].
+  `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/ink-tools/issues/115)].
 - The lasso calls (`getLassoElements`, `getLassoRect`) need `plugin.permission.FILE:READ` declared
   and granted: without it they fail with code 1503, «File read permission has not been requested»,
   and the log shows `PluginSec DENY reason=sdcard_no_read` for the note's path [measured, 2026-11-16,
-  Lingo 0.0.1 code 1, [#128](https://github.com/martonpaulo/supernote-tools/issues/128)].
+  Lingo 0.0.1 code 1, [#128](https://github.com/martonpaulo/ink-tools/issues/128)].
 - A plugin that registers four lasso buttons gets four rows in the «⋯» list, each with its text
   name and no icon; the list ends after the last plugin row [measured, 2026-11-16, Lingo,
-  [#128](https://github.com/martonpaulo/supernote-tools/issues/128)].
+  [#128](https://github.com/martonpaulo/ink-tools/issues/128)].
 - After a no-view lasso button inserts its text, the lasso is gone [measured, 2026-11-16, Lingo].
 - Two plugins with native modules installed side by side: whether PluginHost gives each its own
-  React host and class loader is not known [to test, [#142](https://github.com/martonpaulo/supernote-tools/issues/142)]. Ink2Pic and Lookup both
+  React host and class loader is not known [to test, [#142](https://github.com/martonpaulo/ink-tools/issues/142)]. Ink2Pic and Lookup both
   ship the Java of `com.ink2pic.files` and register their modules under their own names
   (`Ink2PicFiles` and `Ink2PicImage`, `LookupFiles` and `LookupImage`), so neither name is
   registered twice in one host either way.
@@ -115,62 +115,62 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `getPackages packageName:<ReactPackage>` then `load pluginKey:<key>` for each plugin in turn
   (Lookup's `LookupFilesPackage`, Relay's `RelayPackage`, Retouch's `RetouchPackage`), with no
   `ClassNotFound`, `NoSuchMethod`, duplicate-class or `already registered` line [measured,
-  2026-11-16, [#142](https://github.com/martonpaulo/supernote-tools/issues/142)].
+  2026-11-16, [#142](https://github.com/martonpaulo/ink-tools/issues/142)].
 - A lasso button whose `editDataTypes` do not match the lasso stays in the «⋯» list, in grey, and
   does nothing; it is not hidden [measured, 2026-11-16, a lassoed text box].
 - A plugin's declared permissions stay «Ask Every Time» until the plugin calls
   `requestPermission`: no dialog shows without that call, and every file call fails. Settings ›
   Apps › Plugins › the plugin › Permissions sets each one to Allow, Ask Every Time or Don't Allow
-  [measured, Relay, [#163](https://github.com/martonpaulo/supernote-tools/issues/163)]. An update
+  [measured, Relay, [#163](https://github.com/martonpaulo/ink-tools/issues/163)]. An update
   by `inkctl plugin install` keeps the granted permissions [measured, Lookup beta 1 to beta 4].
 - A plugin's native server socket accepted LocalSend connections while `INTERNET` was still «Ask
   Every Time» [measured, Relay «Receive», 2026-11-16]: the `INTERNET` gate may cover only
   outgoing sockets.
 - The first write of a file that does not exist yet in shared storage left it empty while the call
   reported success; the next write over that file worked [measured, Lookup settings,
-  [#162](https://github.com/martonpaulo/supernote-tools/issues/162)].
+  [#162](https://github.com/martonpaulo/ink-tools/issues/162)].
 - `/storage/emulated/0/<Plugin>/` is outside the whitelist: `mkdirs` is denied
   (`sdcard_not_in_whitelist`), and `File.delete` throws a `SecurityException` that the host
   suppresses in a native thread, so the JS call never settles [measured, Relay,
-  [#164](https://github.com/martonpaulo/supernote-tools/issues/164)].
+  [#164](https://github.com/martonpaulo/ink-tools/issues/164)].
 - `lassoElements(rect)` selected the text boxes inside the rect but not a picture that crossed its
   bottom edge [measured]; that an element must lie wholly inside is [inference].
 - `lassoElements(rect)` with an inserted picture's rect also selects the handwriting strokes under
   the picture, and a delete of that selection removes them [measured, pen round, 2026-11-16,
-  Lookup 0.2.0 beta 4, [#168](https://github.com/martonpaulo/supernote-tools/issues/168)].
+  Lookup 0.2.0 beta 4, [#168](https://github.com/martonpaulo/ink-tools/issues/168)].
 - Reading a page's elements one by one for their rects costs about 8 to 11 ms per element (3
   elements in 24 ms, 5 in 54 ms); a test page of 69 to 90 elements ran past a 300 ms budget every
   time [measured, 2026-11-16, Lookup 0.2.0 beta 4,
-  [#152](https://github.com/martonpaulo/supernote-tools/issues/152)].
+  [#152](https://github.com/martonpaulo/ink-tools/issues/152)].
 - `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
-  pen round, 2026-11-16, [#19](https://github.com/martonpaulo/supernote-tools/issues/19)].
+  pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)].
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
   state. `getLassoRect` then answers the selection's local rect (`{-40, 0, 140, 181}` for a sticker
   shown near (870, 1190)), and Back leaves the note and drops the pasted sticker [measured,
-  [#165](https://github.com/martonpaulo/supernote-tools/issues/165)].
+  [#165](https://github.com/martonpaulo/ink-tools/issues/165)].
 - A finger drag (`adb shell input swipe`) on a lassoed selection does not move it [measured].
 - The Back key does not close a plugin's full view (Lookup and Relay Settings, Relay «Receive»):
   the view stays until the plugin calls `closePluginView` or the host restarts [measured,
   2026-11-16].
 - PluginHost exports only its launcher `StubActivity`, a `com.ratta.supernote.plugin.action.DEBUG`
   receiver and a messenger service; no intent opens one plugin's view [measured, `dumpsys
-  package`, [#139](https://github.com/martonpaulo/supernote-tools/issues/139)].
+  package`, [#139](https://github.com/martonpaulo/ink-tools/issues/139)].
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no
-  pixel size or file type [measured, 2026-11-15, [#100](https://github.com/martonpaulo/supernote-tools/issues/100)].
+  pixel size or file type [measured, 2026-11-15, [#100](https://github.com/martonpaulo/ink-tools/issues/100)].
 - The Upload Item form does not scroll from `adb shell input swipe` or `input motionevent`; taps
   work [measured, 2026-11-15].
 - `recognizeElements` has no language parameter [official signature]; it uses the device
   handwriting language, which the Note app reads freshly on each recognition call, so a change
   applies on the next call with no note reopen [source, firmware `Chauvet.E103.2610191001.2559`,
-  [#151](https://github.com/martonpaulo/supernote-tools/issues/151)]. The SDK has no call that
+  [#151](https://github.com/martonpaulo/ink-tools/issues/151)]. The SDK has no call that
   reads or writes that language; `registerLangListener` reports the system UI language only
-  [official, [#146](https://github.com/martonpaulo/supernote-tools/issues/146)].
+  [official, [#146](https://github.com/martonpaulo/ink-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
-  Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/supernote-tools/issues/42), [#59](https://github.com/martonpaulo/supernote-tools/issues/59)].
+  Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#59](https://github.com/martonpaulo/ink-tools/issues/59)].
 - A lassoed picture can be read and replaced in place [measured, 2026-11-16, Probe 0.0.1 code 5,
-  firmware `Chauvet.E103.2610191001.2559`, [#130](https://github.com/martonpaulo/supernote-tools/issues/130)]:
+  firmware `Chauvet.E103.2610191001.2559`, [#130](https://github.com/martonpaulo/ink-tools/issues/130)]:
   - `getLassoElements` gives the picture element (type 200) with its `numInPage`, `layerNum` and
     `picture.rect` in page pixels. Its `picture.picturePath` names a file under
     `/storage/emulated/0/.data/plugin/` that the plugin cannot open (`exists` false, `copyFile`
@@ -189,7 +189,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 
 Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
 [`research/2026-11-handwriting-language.md`](research/2026-11-handwriting-language.md)
-([#151](https://github.com/martonpaulo/supernote-tools/issues/151)).
+([#151](https://github.com/martonpaulo/ink-tools/issues/151)).
 
 - The engine is **MyScript iink** (`libiink.so`, `libMyScript*.so` in the keyboard app) [measured,
   source].
@@ -211,7 +211,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   (`DocumentsContract.createDocument`) both wrote the folder on the tablet; reflection to the raw
   Os, the host main-looper thread and a plain new thread were denied [measured]. The host runs as
   `android.uid.system`. A bypassing plugin suits the owner's device only and would likely fail store
-  review ([#6](https://github.com/martonpaulo/supernote-tools/issues/6)).
+  review ([#6](https://github.com/martonpaulo/ink-tools/issues/6)).
 - The Settings handwriting-language screen opens via `com.ratta.settings/.SettingsActivity` with
   `com.ratta.settings.input.HWLanguageSetting` [source]. From any text field the owner reaches it in
   five taps: long-press the keyboard's globe key, «Keyboard Settings», «Handwriting», «Language»,
@@ -232,7 +232,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
     Customize Sidebar listed it, and removed it on uninstall) [measured]; a tap runs the switch.
     The sidebar opens from the side touch strip (`fts_slide_ts`), which ADB cannot drive, so the
     tap from the sidebar itself is a pen-round step.
-  - The Lingo app ([`apps/lingo-app/`](../apps/lingo-app/AGENTS.md), [#157](https://github.com/martonpaulo/supernote-tools/issues/157), named Dialect until [#160](https://github.com/martonpaulo/supernote-tools/issues/160)) ships both surfaces.
+  - The Lingo app ([`apps/lingo-app/`](../apps/lingo-app/AGENTS.md), [#157](https://github.com/martonpaulo/ink-tools/issues/157), named Dialect until [#160](https://github.com/martonpaulo/ink-tools/issues/160)) ships both surfaces.
     Its floating button came back by itself after a tablet restart [measured, 2026-11-16]. Setting
     `MANAGE_EXTERNAL_STORAGE` to deny restarts the app's process, and the button shows again.
     Customize Sidebar lists a newly installed app only when that screen is opened again; it showed
@@ -253,7 +253,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   the old one [measured, log and label]. TXT export lands in `EXPORT/`, which Supernote Cloud
   uploads at once [measured].
 - **The pen confirms it** [measured, pen round, 2026-11-16, Lingo app 0.1.0 beta 2,
-  [#157](https://github.com/martonpaulo/supernote-tools/issues/157)]: lasso «Recognize as Text» on
+  [#157](https://github.com/martonpaulo/ink-tools/issues/157)]: lasso «Recognize as Text» on
   a handwritten «maçã» gave «mass» in `en_US` and «maçã» in `pt_BR`, right after each
   floating-button tap. The handwriting keyboard in To-Do gave «~ Maga» in `en_US` and «maçã» in
   `pt_BR`; its bar showed the new language only after the keyboard was opened again. A tap on the
@@ -274,7 +274,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
 
 A lasso or toolbar button with `showType: 0` runs with no plugin view
 ([PluginButton](https://docs.supernote.com/en/api-reference/supernote-plugin/types/plugin-button)).
-Read on 2026-11-14 for [#103](https://github.com/martonpaulo/supernote-tools/issues/103): every page
+Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/103): every page
 `docs.supernote.com/llms.txt` lists, and the `sn-plugin-lib` 0.2.3 source in a plugin's
 `node_modules`. No surface is both on the note and under the plugin's control:
 
@@ -286,16 +286,16 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/supernote-tools/iss
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
 | Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
 
-The choice between them is on [#103](https://github.com/martonpaulo/supernote-tools/issues/103).
+The choice between them is on [#103](https://github.com/martonpaulo/ink-tools/issues/103).
 
 ## Files and sync
 
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
-  [#23](https://github.com/martonpaulo/supernote-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
+  [#23](https://github.com/martonpaulo/ink-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
   plugin files; its private folder (`getPluginDirPath`) is the one place outside sync it reaches.
-  Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/supernote-tools/issues/23)].
-- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/supernote-tools/issues/22)].
+  Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)].
+- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/inkctl/README.md`].
 
@@ -304,16 +304,16 @@ The choice between them is on [#103](https://github.com/martonpaulo/supernote-to
 - The lasso tool takes the pen only: a loop drawn with `input motionevent` (touch) or
   `input stylus motionevent` selects nothing, and `sendevent` to the `Wacom-pen` node
   (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Nomad,
-  [#148](https://github.com/martonpaulo/supernote-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
+  [#148](https://github.com/martonpaulo/ink-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off
   with `inkctl wifi off` [measured]. inkctl reaches the tablet over Wi-Fi only, even with the cable
   in, so a round turns Wi-Fi ADB on first. With the tablet's Wi-Fi off (`adb -d shell svc wifi
   disable`), inkctl loses it although `adb -d` still answers over the cable, so a round cannot run
   offline checks through inkctl [measured, 2026-11-16,
-  [#171](https://github.com/martonpaulo/supernote-tools/issues/171)].
+  [#171](https://github.com/martonpaulo/ink-tools/issues/171)].
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
-  [#1](https://github.com/martonpaulo/supernote-tools/issues/1)].
+  [#1](https://github.com/martonpaulo/ink-tools/issues/1)].
 - Two ways to put a selection on the page without the pen, for a round: a text received by Relay
   lands as a lassoed text box, and a sticker from the built-in Sticker plugin lands as lassoed
   strokes in the «pasted» state. Neither is a lassoed handwritten word or picture [measured,
