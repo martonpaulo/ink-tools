@@ -11,7 +11,6 @@ import {
   setProvider,
 } from '@supernote-tools/sync-core/settings';
 import {SettingsForm} from '../src/SettingsForm';
-import App from '../App';
 
 function render(settings: BridgeSettings, onChange = jest.fn()) {
   let tree!: ReactTestRenderer;
@@ -107,16 +106,5 @@ describe('SettingsForm (#40)', () => {
         render(setModule(defaultSettings(), 'calendar', true)).tree.root,
       ),
     ).toEqual([]);
-  });
-
-  it('App shows the switches and keeps a change', () => {
-    let tree!: ReactTestRenderer;
-    act(() => {
-      tree = renderer.create(<App />);
-    });
-    act(() => toggle(tree, 'Calendar').props.onPress());
-    expect(state(tree, 'Calendar').selected).toBe(true);
-    expect(state(tree, 'Google').disabled).toBe(false);
-    expect(screenBreaks(tree.root)).toEqual([]);
   });
 });

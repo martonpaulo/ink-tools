@@ -10,7 +10,7 @@
     "test": "jest --passWithNoTests",
     "validate": "npm run lint && npm run typecheck && npm test",
     "start": "react-native start",
-    "build": "bash buildPlugin.sh"
+    "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package"
   },
   "dependencies": {
     "react": "19.0.0",
