@@ -95,7 +95,7 @@ it('has no SDK wrapper that nothing calls (#54)', () => {
     .map(path => readFileSync(join(ROOT, path), 'utf8'))
     .join('\n');
   // result.ts is the Result type every wrapper returns; register.ts and storage.ts serve Bridge
-  // and Lingo too, and image.ts serves Relay (#98), whose own tests call them.
+  // and Lingo too, and image.ts serves Relay (#98) and Retouch (#136), whose own tests call them.
   const shared = new Set([
     'result.ts',
     'register.ts',

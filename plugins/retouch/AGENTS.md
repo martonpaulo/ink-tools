@@ -1,0 +1,42 @@
+# Retouch — agent guidance
+
+Scoped guidance for `plugins/retouch/`. Inherits the repository root `../../AGENTS.md`; this file
+holds only what is specific here. A `CLAUDE.md` symlink points at this file.
+
+## Status
+
+**Built, device round pending** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)): lasso one picture on the page and tap
+**Enhance**, **Lighter**, **Darker**, **Undo** or **Restore original** in the lasso menu. Each is a
+lasso button for pictures, run with no view, and a switch in Settings, all on by default. Settings
+live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. The time of each edit on the
+Manta and the «Working…» panel past 2 s ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) are still to come.
+
+## What it is
+
+Edit a picture already on the page, readable on the 16-grey screen with one tap. Scope:
+`../../docs/plugin-scope.md` › retouch; product definition and limits: [`docs/product.md`](docs/product.md).
+
+## How it works
+
+- Read: `generateLassoPreview` writes the lassoed area as a PNG, the only pixel read the host gives
+  (`../../docs/supernote.md`, [#130](https://github.com/martonpaulo/supernote-tools/issues/130)). The Java side crops its margin to the picture's rect.
+- Edit: `native/src/com/retouch/image/Retouch.java`, plain Java, tested on the JVM
+  (`npm run test:native`). It reuses `Decolor` and `EinkPixels` from `../../packages/picture-search/native`.
+- Write: `modifyPageElements` with the lassoed element and the new `picture.picturePath`
+  (`src/edit.ts`).
+- Undo and Restore original: `src/history.ts` keeps each picture's states as PNG files in
+  `MyStyle/Retouch/`, listed in `history.json`, found again by note, page and rect.
+
+## Rules
+
+- No slider and no live preview: every step on e-ink costs a refresh. An edit is one tap.
+- A new edit is one row of `EDITS` in `src/edits.ts` and, for pixel work, one `Retouch.Edit`.
+- A failure never writes on the page: it is logged, and the picture stays as it was.
+- Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
+  Never change `pluginID`.
+- Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.
+
+## Reuse
+
+Scaffold from `../lingo`; native build from `../relay/scripts/`; Java module names under Retouch's
+own names through `Ink2PicFilesPackage` ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)).

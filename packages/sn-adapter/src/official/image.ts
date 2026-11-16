@@ -10,7 +10,8 @@ import {
 } from './result';
 
 /**
- * The page and lasso as PNG files, for Relay's sends (#98). Relay's own tests call them.
+ * The page and lasso as PNG files, for Relay's sends (#98), and a lassoed picture replaced in
+ * place, for Retouch (#136). Their own tests call them.
  */
 
 /** `generateNotePng`'s `type` for a white background; 0 is transparent (sn-plugin-lib 0.2.3). */
@@ -63,6 +64,31 @@ export function lassoImage(pngPath: string): Promise<Result<string>> {
       return typeof path === 'string' && path.length > 0
         ? ok(path)
         : fail(EMPTY_LASSO_CODE, 'the lasso gave no preview image');
+    },
+  );
+}
+
+/**
+ * Changes elements already on a page of the current file, in place (official docs,
+ * «modifyPageElements»): a lassoed picture with a new `picture.picturePath` shows the new PNG at
+ * once [measured, #130]. Answers the changed elements' in-page indices; a `false` or missing
+ * answer is a failure, never a success.
+ */
+export function modifyPageElements(
+  elements: object[],
+  page: number,
+  layer: number | null = null,
+): Promise<Result<number[]>> {
+  return attempt(
+    () => PluginCommAPI.modifyPageElements(elements, page, layer),
+    raw => {
+      const answer = fromResponse<unknown>(raw);
+      if (!answer.ok) {
+        return answer;
+      }
+      return Array.isArray(answer.value)
+        ? ok(answer.value as number[])
+        : fail(THROWN_CODE, 'modifyPageElements changed no element');
     },
   );
 }

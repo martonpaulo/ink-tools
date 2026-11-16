@@ -92,6 +92,9 @@ refresh, so retouch shows finished options at once and the user taps one, like I
 grid; it has no sliders and no live preview
 ([#47](https://github.com/martonpaulo/supernote-tools/issues/47)).
 
+Status: `plugins/retouch/` holds Enhance, Lighter, Darker, Undo and Restore original; their device
+round is still to come ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+
 Essential:
 
 - **Enhance for e-ink**, one tap: grey that keeps colour contrast, a gamma step, sharpen, the 16

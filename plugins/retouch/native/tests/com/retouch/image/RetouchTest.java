@@ -1,0 +1,114 @@
+package com.retouch.image;
+
+/** Plain JVM test, no framework: run by `npm run test:native` (#136). */
+public final class RetouchTest {
+  private static final int WHITE = 0xFFFFFFFF;
+
+  public static void main(String[] args) {
+    cropsTheLassoMargin();
+    gammaKeepsBlackAndWhiteAndMovesTheMiddle();
+    sharpenLeavesFlatAreasAndRaisesAnEdge();
+    enhanceGivesOnlyTheSixteenGreys();
+    lighterAndDarkerMoveOppositeWays();
+    enhanceScalesDownNeverUp();
+    namesTheEdits();
+    System.out.println("RetouchTest ok");
+  }
+
+  private static void cropsTheLassoMargin() {
+    // A 6 x 5 preview whose centre 2 x 1 is black, as the lasso's margin around a picture.
+    int[] argb = new int[30];
+    java.util.Arrays.fill(argb, WHITE);
+    argb[2 * 6 + 2] = gray(0);
+    argb[2 * 6 + 3] = gray(0);
+    Retouch.Picture cropped = Retouch.cropCentre(new Retouch.Picture(argb, 6, 5), 2, 1);
+    check(cropped.width == 2 && cropped.height == 1, "the crop has the picture's size");
+    check(cropped.argb[0] == gray(0) && cropped.argb[1] == gray(0), "the crop is the centre");
+    Retouch.Picture same = Retouch.cropCentre(cropped, 10, 10);
+    check(same == cropped, "a size above the picture keeps it");
+  }
+
+  private static void gammaKeepsBlackAndWhiteAndMovesTheMiddle() {
+    int[] lighter = Retouch.gammaTable(Retouch.GAMMA_STEP);
+    int[] darker = Retouch.gammaTable(1 / Retouch.GAMMA_STEP);
+    check(lighter[0] == 0 && lighter[255] == 255, "lighter keeps black and white");
+    check(darker[0] == 0 && darker[255] == 255, "darker keeps black and white");
+    check(lighter[128] > 128 && darker[128] < 128, "the middle grey moves");
+    try {
+      Retouch.gammaTable(0);
+      throw new AssertionError("a gamma of 0 must be refused");
+    } catch (IllegalArgumentException expected) {
+      // refused
+    }
+  }
+
+  private static void sharpenLeavesFlatAreasAndRaisesAnEdge() {
+    int[] flat = {gray(100), gray(100), gray(100), gray(100)};
+    Retouch.sharpen(flat, 2, 2, Retouch.SHARPEN_AMOUNT);
+    for (int pixel : flat) {
+      check((pixel & 0xFF) == 100, "a flat area is unchanged");
+    }
+    // A 3 x 1 step from dark to light: the light side of the edge gets lighter.
+    int[] edge = {gray(50), gray(200), gray(200)};
+    Retouch.sharpen(edge, 3, 1, Retouch.SHARPEN_AMOUNT);
+    check((edge[1] & 0xFF) > 200, "the edge's light side is raised");
+    check((edge[0] & 0xFF) < 50, "the edge's dark side is lowered");
+  }
+
+  private static void enhanceGivesOnlyTheSixteenGreys() {
+    int[] argb = new int[16 * 16];
+    for (int i = 0; i < argb.length; i++) {
+      // A red and green colour field with a gradient: colour in, greys out.
+      argb[i] = 0xFF000000 | ((i % 256) << 16) | (((255 - i) % 256) << 8) | 40;
+    }
+    Retouch.Picture picture = new Retouch.Picture(argb, 16, 16);
+    Retouch.enhance(picture);
+    for (int pixel : picture.argb) {
+      int r = (pixel >> 16) & 0xFF;
+      check(r == (pixel & 0xFF) && r == ((pixel >> 8) & 0xFF), "the result is grey");
+      check(r % 17 == 0, "the result uses only the 16 greys: " + r);
+      check((pixel >>> 24) == 0xFF, "the result is opaque");
+    }
+  }
+
+  private static void lighterAndDarkerMoveOppositeWays() {
+    int[] base = {gray(119), gray(119), gray(119), gray(119)};
+    Retouch.Picture lighter = new Retouch.Picture(base.clone(), 2, 2);
+    Retouch.Picture darker = new Retouch.Picture(base.clone(), 2, 2);
+    Retouch.apply(Retouch.Edit.LIGHTER, lighter);
+    Retouch.apply(Retouch.Edit.DARKER, darker);
+    check((lighter.argb[0] & 0xFF) > 119, "Lighter lightens the middle grey");
+    check((darker.argb[0] & 0xFF) < 119, "Darker darkens the middle grey");
+    check((lighter.argb[0] & 0xFF) % 17 == 0, "Lighter ends on one of the 16 greys");
+  }
+
+  private static void enhanceScalesDownNeverUp() {
+    int[] down = Retouch.outputSize(Retouch.Edit.ENHANCE, 3000, 1500, 1920);
+    check(down[0] == 1920 && down[1] == 960, "a wide picture fits the page width");
+    int[] small = Retouch.outputSize(Retouch.Edit.ENHANCE, 400, 300, 1920);
+    check(small[0] == 400 && small[1] == 300, "a small picture is never scaled up");
+    int[] kept = Retouch.outputSize(Retouch.Edit.LIGHTER, 3000, 1500, 1920);
+    check(kept[0] == 3000 && kept[1] == 1500, "Lighter keeps the size");
+  }
+
+  private static void namesTheEdits() {
+    check(Retouch.Edit.of("enhance") == Retouch.Edit.ENHANCE, "enhance is known");
+    check(Retouch.Edit.of("darker") == Retouch.Edit.DARKER, "darker is known");
+    try {
+      Retouch.Edit.of("blur");
+      throw new AssertionError("an unknown edit must be refused");
+    } catch (IllegalArgumentException expected) {
+      // refused
+    }
+  }
+
+  private static int gray(int g) {
+    return 0xFF000000 | (g << 16) | (g << 8) | g;
+  }
+
+  private static void check(boolean condition, String what) {
+    if (!condition) {
+      throw new AssertionError(what);
+    }
+  }
+}
