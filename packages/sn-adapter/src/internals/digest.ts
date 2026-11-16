@@ -1,4 +1,4 @@
-import {Descriptor, column} from './descriptor';
+import {Descriptor, column} from './descriptorModel';
 import {Row} from './rules';
 
 /**

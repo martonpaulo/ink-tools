@@ -1,4 +1,4 @@
-import {Descriptor, column} from './descriptor';
+import {Descriptor, column} from './descriptorModel';
 
 export type Row = Record<string, string | number | boolean | null>;
 

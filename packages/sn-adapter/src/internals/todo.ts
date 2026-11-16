@@ -1,4 +1,4 @@
-import {Descriptor, column} from './descriptor';
+import {Descriptor, column} from './descriptorModel';
 import {Row} from './rules';
 
 /** Structurally the same shape as sync-core's DeviceTask, so the two packages stay independent. */

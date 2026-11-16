@@ -1,4 +1,4 @@
-import {Capability, Descriptor, column, contentUri} from './descriptor';
+import {Capability, Descriptor, column, contentUri} from './descriptorModel';
 
 /** What the plugin runtime provides: one cheap, unfiltered query per table. No device logic here. */
 export interface DeviceReader {
