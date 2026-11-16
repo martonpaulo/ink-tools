@@ -1,6 +1,6 @@
 /** The Styles grid (#133): order, the remembered style, the toggles and the cleanup. */
 import {ok, PICTURE_TYPE} from '@supernote-tools/sn-adapter/official';
-import {EditDeps, RETOUCH_DIR} from '../src/edit';
+import {EditDeps} from '../src/edit';
 import {
   changedBy,
   closeStyles,
@@ -9,11 +9,14 @@ import {
   orderStyles,
   parseMemory,
   pickStyle,
-  STYLES_PATH,
+  stylesPath,
   toggleOption,
 } from '../src/styles';
 import {STYLE_ORDER} from '../src/edits';
 import {RetouchNative} from '../src/native';
+
+const RETOUCH_DIR = '/data/user/0/com.ratta.supernote.pluginhost/files/plugins/retouch/work';
+const STYLES_PATH = stylesPath(RETOUCH_DIR);
 
 const RECT = {left: 100, top: 200, right: 500, bottom: 500};
 
@@ -38,6 +41,7 @@ function world(stored: Record<string, string> = {}, failing: string[] = []) {
     deleteFile: jest.fn(async path => ok(files.delete(path) || true)),
   };
   const deps: EditDeps = {
+    workDir: async () => ok(RETOUCH_DIR),
     lassoElements: jest.fn(async () => ok([element])),
     notePath: async () => ok('/Note/a.note'),
     pageNum: async () => ok(0),

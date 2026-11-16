@@ -11,7 +11,7 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 the lasso menu. Each is a
 lasso button for pictures, run with no view, and a switch in Settings, all on by default.
 **Styles** ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)) is the one lasso button with a view: `src/styles.ts` renders the
-picture in every style switched on into `MyStyle/Retouch/style-*.png`, `src/StylesGrid.tsx` shows
+picture in every style switched on into `style-*.png` in its working folder, `src/StylesGrid.tsx` shows
 them, a tap runs that style through `runEdit`, and `styles.json` keeps the last style and the two
 options. **Enhance All Images** and **Undo All Images** ([#140](https://github.com/martonpaulo/ink-tools/issues/140)) lasso each picture of the
 page in turn by its rect and run Enhance or Undo on it through `runEdit` (`src/page.ts`). Settings
@@ -33,8 +33,12 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
   (`npm run test:native`). It reuses `Decolor` and `EinkPixels` from `../../packages/picture-search/native`.
 - Write: `modifyPageElements` with the lassoed element and the new `picture.picturePath`
   (`src/edit.ts`).
-- Undo and Restore original: `src/history.ts` keeps each picture's states as PNG files in
-  `MyStyle/Retouch/`, listed in `history.json`, found again by note, page and rect.
+- Undo and Restore original: `src/history.ts` keeps each picture's states as PNG files in the
+  working folder, listed in `history.json`, found again by note, page and rect.
+- Working folder: `work/` in the private plugin folder (`getPluginDirPath`), which Supernote
+  Cloud sync does not upload ([#198](https://github.com/martonpaulo/ink-tools/issues/198)). An install empties it, so Undo forgets
+  the pictures edited before an update. Files earlier builds left in `MyStyle/Retouch/` are not
+  migrated: remove that folder once over ADB.
 
 ## Rules
 

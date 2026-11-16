@@ -5,9 +5,13 @@ import {
   PICTURE_TYPE,
   THROWN_CODE,
 } from '@supernote-tools/sn-adapter/official';
-import {EditDeps, HISTORY_PATH, RETOUCH_DIR, runEdit} from '../src/edit';
+import {EditDeps, historyPath, runEdit} from '../src/edit';
 import {parseHistory} from '../src/history';
 import {RetouchNative} from '../src/native';
+
+/** The private plugin folder's work/ (#198), as getPluginDirPath would give it. */
+const RETOUCH_DIR = '/data/user/0/com.ratta.supernote.pluginhost/files/plugins/retouch/work';
+const HISTORY_PATH = historyPath(RETOUCH_DIR);
 
 const RECT = {left: 100, top: 200, right: 500, bottom: 500};
 
@@ -41,6 +45,7 @@ function world() {
     deleteFile: jest.fn(async path => ok(files.delete(path) || true)),
   };
   const deps: EditDeps = {
+    workDir: async () => ok(RETOUCH_DIR),
     lassoElements: jest.fn(async () => ok([element])),
     notePath: async () => ok('/Note/a.note'),
     pageNum: async () => ok(0),
@@ -90,6 +95,30 @@ test('Enhance keeps the original, replaces the picture in place and removes the 
     w.modified[0].path,
   ]);
   expect(w.pngs()).toEqual(states.map(s => s.path).sort());
+});
+
+test('every working file stays in the private plugin folder, out of Supernote Cloud sync (#198)', async () => {
+  const w = world();
+  await runEdit('enhance', w.deps);
+  await runEdit('undo', w.deps);
+  const written = [
+    ...w.files.keys(),
+    ...(w.deps.preview as jest.Mock).mock.calls.map(call => String(call[0])),
+  ];
+  expect(written.length).toBeGreaterThan(0);
+  expect(written.filter(path => !path.startsWith(`${RETOUCH_DIR}/`))).toEqual([]);
+});
+
+test('no private plugin folder: the press fails and the page is left as it was (#198)', async () => {
+  const w = world();
+  w.deps.workDir = async () => fail(THROWN_CODE, 'getPluginDirPath returned nothing');
+  const done = await runEdit('enhance', w.deps);
+  expect(done).toEqual({
+    kind: 'failed',
+    why: `getPluginDirPath: ${THROWN_CODE} getPluginDirPath returned nothing`,
+  });
+  expect(w.modified).toEqual([]);
+  expect(w.files.size).toBe(0);
 });
 
 test('a second edit saves no new original, and Undo then Restore bring the original back', async () => {

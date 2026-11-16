@@ -11,11 +11,11 @@ import {
   getCurrentPageNum,
   getLassoElements,
   getPageSize,
+  getPluginDirPath,
   lassoImage,
   modifyPageElements,
   PICTURE_TYPE,
   Result,
-  SHARED_ROOT,
 } from '@supernote-tools/sn-adapter/official';
 import {EditId} from './edits';
 import {
@@ -42,11 +42,23 @@ import {
 } from './native';
 
 /**
- * Retouch's folder in shared storage: the note app reads an inserted PNG only there, not in the
- * private plugin folder (Ink2Pic's brief section 6.6), and its states survive a plugin update.
+ * Retouch's working folder, `work/` in the private plugin folder (`getPluginDirPath`): the one
+ * place a plugin reaches that Supernote Cloud sync does not upload (docs/supernote.md › Files and
+ * sync, #198). The note app does not read the inserted PNG there: the host copies it into
+ * `.data/plugin/` at the write (docs/supernote.md › Plugins, #130).
+ * shortcut: an install empties the private folder, so Undo and Restore original forget the
+ * pictures edited before an update; move the states if the owner wants them kept across updates.
  */
-export const RETOUCH_DIR = `${SHARED_ROOT}/MyStyle/Retouch`;
-export const HISTORY_PATH = `${RETOUCH_DIR}/history.json`;
+export const WORK_FOLDER = 'work';
+
+/** The history of every edited picture, in the working folder. */
+export const historyPath = (work: string) => `${work}/history.json`;
+
+/** The private plugin folder's `work/`, or the failure of `getPluginDirPath`. */
+async function deviceWorkDir(): Promise<Result<string>> {
+  const dir = await getPluginDirPath();
+  return dir.ok ? {ok: true, value: `${dir.value}/${WORK_FOLDER}`} : dir;
+}
 
 /** A lassoed picture element, as `getLassoElements` gives it [measured, #130]. */
 export type PictureElement = {
@@ -56,6 +68,7 @@ export type PictureElement = {
 };
 
 export type EditDeps = {
+  workDir: () => Promise<Result<string>>;
   lassoElements: () => Promise<Result<object[]>>;
   notePath: () => Promise<Result<string>>;
   pageNum: () => Promise<Result<number>>;
@@ -72,6 +85,7 @@ export type EditDeps = {
 };
 
 export const DEVICE: EditDeps = {
+  workDir: deviceWorkDir,
   lassoElements: getLassoElements,
   notePath: getCurrentFilePath,
   pageNum: getCurrentPageNum,
@@ -181,13 +195,20 @@ async function editOnce(
   if (!page.ok) {
     return {kind: 'failed', why: why('getCurrentPageNum', page)};
   }
-  const read = await deps.native.readText(HISTORY_PATH);
+  const work = await deps.workDir();
+  if (!work.ok) {
+    return {kind: 'failed', why: why('getPluginDirPath', work)};
+  }
+  const read = await deps.native.readText(historyPath(work.value));
   if (!read.ok) {
     return {kind: 'failed', why: why('read history', read)};
   }
   const history = parseHistory(read.value);
   if (!history) {
-    return {kind: 'failed', why: `${HISTORY_PATH} is not a Retouch history`};
+    return {
+      kind: 'failed',
+      why: `${historyPath(work.value)} is not a Retouch history`,
+    };
   }
   const place: Place = {
     note: note.value,
@@ -196,14 +217,14 @@ async function editOnce(
   };
   const pixel = PIXEL_EDITS[edit];
   if (pixel) {
-    return pixelEdit(pixel, edit, element, place, history, deps, options);
+    return pixelEdit(pixel, edit, element, place, history, work.value, deps, options);
   }
   const step =
     edit === 'undo' ? undoStep(history, place) : restoreStep(history, place);
   if (!step) {
     return {kind: 'nothing', why: NOT_EDITED};
   }
-  return putBack(edit, step, element, place, deps);
+  return putBack(edit, step, element, place, work.value, deps);
 }
 
 async function pixelEdit(
@@ -212,6 +233,7 @@ async function pixelEdit(
   element: PictureElement,
   place: Place,
   history: History,
+  work: string,
   deps: EditDeps,
   options: StyleOptions,
 ): Promise<Done> {
@@ -220,10 +242,10 @@ async function pixelEdit(
     return {kind: 'failed', why: why('getPageSize', width)};
   }
   const stamp = deps.now();
-  const previewPath = `${RETOUCH_DIR}/preview-${stamp}.png`;
+  const previewPath = `${work}/preview-${stamp}.png`;
   const known = findEntry(history, place);
-  const originalPath = known ? '' : `${RETOUCH_DIR}/${stamp}-original.png`;
-  const resultPath = `${RETOUCH_DIR}/${stamp}-${pixel}.png`;
+  const originalPath = known ? '' : `${work}/${stamp}-original.png`;
+  const resultPath = `${work}/${stamp}-${pixel}.png`;
   const preview = await deps.preview(previewPath);
   if (!preview.ok) {
     return {kind: 'failed', why: why('generateLassoPreview', preview)};
@@ -273,7 +295,7 @@ async function pixelEdit(
         };
     const change = recordEdit(history, place, rect, result, original, stamp);
     keep.add(resultPath).add(originalPath);
-    await save(change, deps);
+    await save(change, work, deps);
     return {kind: 'edited', edit, ms: 0};
   } finally {
     for (const path of [preview.value, originalPath, resultPath]) {
@@ -289,6 +311,7 @@ async function putBack(
   step: Step,
   element: PictureElement,
   place: Place,
+  work: string,
   deps: EditDeps,
 ): Promise<Done> {
   const width = await deps.pageWidth(place.note, place.page);
@@ -304,7 +327,7 @@ async function putBack(
   if (!replaced.ok) {
     return {kind: 'failed', why: why('modifyPageElements', replaced)};
   }
-  await save(step.after(rect, deps.now()), deps);
+  await save(step.after(rect, deps.now()), work, deps);
   return {kind: 'edited', edit, ms: 0};
 }
 
@@ -326,9 +349,13 @@ function replace(
  * Writes the history, then removes the files it dropped. A failed write is logged: the page
  * already shows the edit, and the files stay, so nothing is lost but the way back.
  */
-async function save(change: Change, deps: EditDeps): Promise<void> {
+async function save(
+  change: Change,
+  work: string,
+  deps: EditDeps,
+): Promise<void> {
   const written = await deps.native.writeText(
-    HISTORY_PATH,
+    historyPath(work),
     JSON.stringify(change.history),
   );
   if (!written.ok) {

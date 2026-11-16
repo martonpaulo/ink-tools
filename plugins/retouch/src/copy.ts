@@ -30,7 +30,7 @@ export const copy = {
   'styles.failed': 'Could not make the styles',
   'styles.close': 'Close',
   'permission.files':
-    'Image Editing keeps each picture as it was, for Undo and Restore original, in MyStyle/Retouch.',
+    'Image Editing keeps each picture as it was, for Undo and Restore original, in its own folder, which Supernote Cloud does not sync.',
   /** Toasts of a press that changed nothing (#170). */
   'press.permission':
     'Image Editing needs file access. Choose Always Allow for both questions, then press again.',

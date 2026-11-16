@@ -357,6 +357,8 @@ the note shows through, is still to test.
   Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)].
 - A file a plugin writes in `MyStyle/` is uploaded to Supernote Cloud within seconds (Retouch's
   `MyStyle/Retouch/history.json`, 5 s after the write) [measured, 2026-11-16].
+  Retouch keeps its working files in its private folder since [#198](https://github.com/martonpaulo/ink-tools/issues/198); whether
+  the note app takes an inserted PNG from there is [to test, [#198](https://github.com/martonpaulo/ink-tools/issues/198)].
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)].
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/inkctl/README.md`].

@@ -1,6 +1,6 @@
 /**
  * The Styles grid (#133): the lassoed picture in every style switched on, rendered once into
- * `MyStyle/Retouch/` and shown in one refresh. A tap runs that style as an ordinary edit
+ * Retouch's working folder (`workDir`, #198) and shown in one refresh. A tap runs that style as an ordinary edit
  * (`runEdit`), so Undo, Restore original and the history keep working. The previews are deleted
  * when the grid closes. The last style chosen, and the two options, are kept in `styles.json`
  * and lead the next grid.
@@ -11,13 +11,13 @@ import {
   EditDeps,
   onePicture,
   removeFile,
-  RETOUCH_DIR,
   runEdit,
 } from './edit';
 import {STYLE_ORDER} from './edits';
 import {NO_OPTIONS, StyleId, StyleOptions} from './native';
 
-export const STYLES_PATH = `${RETOUCH_DIR}/styles.json`;
+/** The last style and the two options, in the working folder. */
+export const stylesPath = (work: string) => `${work}/styles.json`;
 
 /** What `styles.json` keeps: the last style chosen and the two options. */
 export type StylesMemory = {last: StyleId | null} & StyleOptions;
@@ -72,6 +72,8 @@ export type Tile = {style: StyleId; path: string};
 /** The lassoed picture read once, and what each preview needs. */
 export type Source = {
   path: string;
+  /** The working folder the previews are written to. */
+  work: string;
   width: number;
   height: number;
   pageWidth: number;
@@ -105,8 +107,13 @@ export async function readSource(
     deps.log(describe('styles: getPageSize', pageWidth));
     return null;
   }
+  const work = await deps.workDir();
+  if (!work.ok) {
+    deps.log(describe('styles: getPluginDirPath', work));
+    return null;
+  }
   const preview = await deps.preview(
-    `${RETOUCH_DIR}/style-source-${deps.now()}.png`,
+    `${work.value}/style-source-${deps.now()}.png`,
   );
   if (!preview.ok) {
     deps.log(describe('styles: generateLassoPreview', preview));
@@ -115,6 +122,7 @@ export async function readSource(
   const {rect} = element.picture;
   return {
     path: preview.value,
+    work: work.value,
     width: Math.round(rect.right - rect.left),
     height: Math.round(rect.bottom - rect.top),
     pageWidth: pageWidth.value,
@@ -131,7 +139,7 @@ export async function renderTiles(
   const stamp = deps.now();
   const tiles: Tile[] = [];
   for (const style of styles) {
-    const path = `${RETOUCH_DIR}/style-${stamp}-${style}.png`;
+    const path = `${source.work}/style-${stamp}-${style}.png`;
     const made = await deps.native.edit(
       style,
       source.path,
@@ -165,10 +173,13 @@ export async function removeFiles(
 export async function loadMemory(
   deps: EditDeps = DEVICE,
 ): Promise<StylesMemory> {
-  const read = await deps.native.readText(STYLES_PATH);
+  const work = await deps.workDir();
+  const read = work.ok
+    ? await deps.native.readText(stylesPath(work.value))
+    : work;
   const memory = read.ok ? parseMemory(read.value) : null;
   if (memory === null) {
-    deps.log(`styles: ${STYLES_PATH} unreadable, Photo leads`);
+    deps.log('styles: styles.json unreadable, Photo leads');
     return NO_MEMORY;
   }
   return memory;
@@ -183,10 +194,10 @@ export async function chooseStyle(
   const done = await runEdit(style, deps, options);
   if (done.kind === 'edited') {
     const memory: StylesMemory = {last: style, ...options};
-    const saved = await deps.native.writeText(
-      STYLES_PATH,
-      JSON.stringify(memory),
-    );
+    const work = await deps.workDir();
+    const saved = work.ok
+      ? await deps.native.writeText(stylesPath(work.value), JSON.stringify(memory))
+      : work;
     if (!saved.ok) {
       deps.log(describe('styles: save the last style', saved));
     }
