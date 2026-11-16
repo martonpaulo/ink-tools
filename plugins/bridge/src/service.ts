@@ -4,12 +4,17 @@
  * starts its automatic pass when PluginHost loads Bridge; the Settings view's «Sync now» presses the
  * same runner, so a press during an automatic pass joins it.
  *
- * The content providers and the device probe are not bound yet: they come with the ContentResolver
- * module of #43 and the native writer over it. Until then every module that is on shows «the device
- * check has not answered», and nothing is written.
+ * The Calendar and To-Do are written through `BridgeProviders` (#43, `deviceRows.ts`), and each pass
+ * first runs sn-adapter's probe with the same module, so a module the device does not clear is
+ * blocked and nothing is written for it. The Google OAuth client is not on the tablet yet (#200), so
+ * the Google source fails its run with that reason.
  */
 import {useEffect, useState} from 'react';
+import {BUNDLED_DESCRIPTOR, probeAll} from '@supernote-tools/sn-adapter';
 import {getPluginDirPath} from '@supernote-tools/sn-adapter/official';
+import {deviceReader} from './deviceReader';
+import {deviceRows} from './deviceRows';
+import {createDeviceStores} from './deviceStores';
 import {createSecretStore} from './secretStore';
 import {loadSettings} from './settingsStore';
 import {createSyncRunner, SyncDevice, SyncRunner, SyncSnapshot} from './sync';
@@ -17,6 +22,8 @@ import {createSyncRunner, SyncDevice, SyncRunner, SyncSnapshot} from './sync';
 export const device: SyncDevice = {
   loadSettings: () => loadSettings(getPluginDirPath),
   secrets: createSecretStore(getPluginDirPath),
+  stores: createDeviceStores(deviceRows(), () => Date.now()),
+  probe: () => probeAll(BUNDLED_DESCRIPTOR, deviceReader()),
   fetch: (url, init) => fetch(url, init),
   now: () => Date.now(),
 };

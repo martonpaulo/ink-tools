@@ -4,9 +4,14 @@ import {NativeModules, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
 import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
-import {BUNDLED_DESCRIPTOR as D, contentUri, DeviceReader} from '@supernote-tools/sn-adapter';
+import {
+  BUNDLED_DESCRIPTOR as D,
+  contentUri,
+  DeviceReader,
+} from '@supernote-tools/sn-adapter';
 import App, {startupProbe} from '../App';
 import {copy} from '../src/copy';
+import type {SyncRunner, SyncSnapshot} from '../src/sync';
 
 const DIR = '/data/plugins/bridge';
 const folder = async () => ok(DIR);
@@ -78,19 +83,22 @@ test('each module says whether it is off or why it does not run (#88)', async ()
   ).toBe(true);
 });
 
+/** A device whose every table has the descriptor's columns. */
+async function descriptorColumns(uri: string): Promise<string[]> {
+  for (const module of [D.calendar, D.todo, D.digest]) {
+    for (const [name, table] of Object.entries(module.tables)) {
+      if (contentUri(module, name) === uri) {
+        return table.columns;
+      }
+    }
+  }
+  throw new Error(`unknown ${uri}`);
+}
+
 test('a device that matches the descriptor clears the probe, so Calendar waits for its sync (#43)', async () => {
   const marked: string[] = [];
   const reader: DeviceReader = {
-    columnsOf: async uri => {
-      for (const module of [D.calendar, D.todo, D.digest]) {
-        for (const [name, table] of Object.entries(module.tables)) {
-          if (contentUri(module, name) === uri) {
-            return table.columns;
-          }
-        }
-      }
-      throw new Error(`unknown ${uri}`);
-    },
+    columnsOf: descriptorColumns,
     dryInsert: async (uri, markerColumn) => {
       marked.push(`${uri} ${markerColumn}`);
     },
@@ -128,4 +136,70 @@ test('a failed save is said on the screen; a failed load offers a retry', async 
   expect(texts(broken)).toContain(
     'The settings did not load: getPluginDirPath returned nothing',
   );
+});
+
+/** A runner whose pass the test ends by hand, as `createSyncRunner` publishes it. */
+function fakeRunner() {
+  let snap: SyncSnapshot = {running: false, runs: {}, probe: {}};
+  const listeners = new Set<(s: SyncSnapshot) => void>();
+  const publish = (next: SyncSnapshot) => {
+    snap = next;
+    listeners.forEach(l => l(snap));
+  };
+  const runner: SyncRunner = {
+    syncNow: jest.fn(async () => {
+      publish({...snap, running: true});
+      return snap;
+    }),
+    snapshot: () => snap,
+    subscribe: l => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+  };
+  return {runner, publish};
+}
+
+test('Sync now runs the plugin host runner and its run shows under the module (#28, #40)', async () => {
+  const {runner, publish} = fakeRunner();
+  const reader: DeviceReader = {
+    columnsOf: descriptorColumns,
+    dryInsert: async () => {},
+  };
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(
+      <App folder={folder as never} reader={reader} sync={runner} />,
+    );
+  });
+  await act(async () => toggle(tree, 'Calendar').props.onPress());
+  await act(async () => toggle(tree, copy['sync.button']).props.onPress());
+  expect(runner.syncNow).toHaveBeenCalledTimes(1);
+  expect(texts(tree)).toContain(copy['sync.running']);
+  expect(
+    toggle(tree, copy['sync.button']).props.accessibilityState.disabled,
+  ).toBe(true);
+  const at = new Date(2026, 10, 16, 22, 15).getTime();
+  await act(async () =>
+    publish({
+      running: false,
+      probe: {},
+      runs: {
+        calendar: {
+          module: 'calendar',
+          at,
+          counts: {added: 2, changed: 0, removed: 0},
+          errors: [],
+          warnings: [],
+        },
+      },
+    }),
+  );
+  expect(texts(tree)).toEqual(
+    expect.arrayContaining([
+      'Last synced 2026-11-16 22:15.',
+      '2 added, 0 changed, 0 removed',
+    ]),
+  );
+  expect(screenBreaks(tree.root)).toEqual([]);
 });

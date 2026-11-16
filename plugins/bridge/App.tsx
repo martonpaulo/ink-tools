@@ -1,31 +1,43 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {BUNDLED_DESCRIPTOR, DeviceReader, probeAll} from '@supernote-tools/sn-adapter';
+import {
+  BUNDLED_DESCRIPTOR,
+  DeviceReader,
+  probeAll,
+} from '@supernote-tools/sn-adapter';
 import {getPluginDirPath} from '@supernote-tools/sn-adapter/official';
 import {BridgeSettings, MODULES} from '@supernote-tools/sync-core/settings';
-import {moduleStatus, ProbeProblems} from '@supernote-tools/sync-core/status';
+import {
+  ModuleRun,
+  moduleStatus,
+  ProbeProblems,
+} from '@supernote-tools/sync-core/status';
+import type {ModuleId} from '@supernote-tools/sync-core/settings';
 import {copy, format} from './src/copy';
 import {SettingsForm} from './src/SettingsForm';
 import {ModuleRow, SettingsShell, ShellState} from './src/SettingsShell';
 import {deviceReader} from './src/deviceReader';
 import {probeProblems} from './src/probe';
 import {Folder, loadSettings, saveSettings} from './src/settingsStore';
+import {bridgeSync, useSync} from './src/service';
+import type {SyncRunner} from './src/sync';
 
 /** One reader for the life of the plugin, so the probe effect runs once per open of Settings. */
 const DEVICE_READER = deviceReader();
 
 /**
  * Each module's status from the settings and the device probe (#88, #43): a module the probe has not
- * cleared is blocked with its reasons, one it cleared waits for the sync runner, which is not wired
- * yet, and one that is off says so. Never a schedule (#39).
+ * cleared is blocked with its reasons, one it cleared shows its last run since the plugin host
+ * started, or waits for its first (#28, #44), and one that is off says so. Never a schedule (#39).
  */
 export function moduleRows(
   settings: BridgeSettings,
   probe: ProbeProblems = {},
+  runs: Partial<Record<ModuleId, ModuleRun>> = {},
 ): ModuleRow[] {
   return MODULES.map(id => ({
     id,
     name: copy[`module.${id}`],
-    status: moduleStatus(id, settings, probe, {}),
+    status: moduleStatus(id, settings, probe, runs),
   }));
 }
 
@@ -33,11 +45,15 @@ export function moduleRows(
  * The start-up probe (#43, #67): sn-adapter's adapt-on/off check against the device, once per open
  * of Settings. A probe that throws blocks every module with its reason, never a silent pass.
  */
-export async function startupProbe(reader: DeviceReader): Promise<ProbeProblems> {
+export async function startupProbe(
+  reader: DeviceReader,
+): Promise<ProbeProblems> {
   try {
     return probeProblems(await probeAll(BUNDLED_DESCRIPTOR, reader));
   } catch (error) {
-    const reason = `the device check failed: ${error instanceof Error ? error.message : String(error)}`;
+    const reason = `the device check failed: ${
+      error instanceof Error ? error.message : String(error)
+    }`;
     return Object.fromEntries(MODULES.map(id => [id, [reason]]));
   }
 }
@@ -46,10 +62,14 @@ export async function startupProbe(reader: DeviceReader): Promise<ProbeProblems>
 export default function App({
   folder = getPluginDirPath,
   reader = DEVICE_READER,
+  sync = bridgeSync,
 }: {
   folder?: Folder;
   reader?: DeviceReader;
+  /** The runner behind «Sync now»: the plugin host's one, which also runs the automatic pass. */
+  sync?: SyncRunner;
 }) {
+  const synced = useSync(sync);
   const [probe, setProbe] = useState<ProbeProblems>({});
   const [settings, setSettings] = useState<BridgeSettings | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -94,8 +114,15 @@ export default function App({
     : settings
     ? {
         kind: 'ready',
-        modules: moduleRows(settings, probe),
+        modules: moduleRows(settings, probe, synced.runs),
         notice: saveProblem ?? undefined,
+        sync: {
+          running: synced.running,
+          onSyncNow: () => {
+            sync.syncNow();
+          },
+          problem: synced.problem,
+        },
       }
     : {kind: 'loading'};
   return (

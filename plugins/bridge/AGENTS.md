@@ -44,6 +44,12 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   `DeviceReader` over ContentResolver (`src/deviceReader.ts`); every URI and column comes from the
   descriptor. Settings runs `probeAll` once per open, and a module it does not clear stays blocked
   with the reason. Not yet run on the tablet.
+- **Sync runner** ([#28](https://github.com/martonpaulo/ink-tools/issues/28), [#44](https://github.com/martonpaulo/ink-tools/issues/44)): `src/sync.ts` runs sync-core's `runBridgeSync`, one
+  pass when PluginHost loads Bridge (`index.js`), one every `AUTO_SYNC_MINUTES` while the host
+  lives, and the same runner behind Settings' «Sync now». Each pass probes first. The Calendar and
+  To-Do are written through `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`,
+  `src/deviceStores.ts`). The Google OAuth client is not on the tablet yet
+  ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
 - **Sign-in secrets** ([#90](https://github.com/martonpaulo/supernote-tools/issues/90), owner D16 A): one file per provider (`secretFileName` in
   `packages/sync-core/src/secrets.ts`) in Bridge's private plugin folder. Settings shows only the
   last four characters and a «Sign out» per provider, confirmed once more, that deletes the file.
