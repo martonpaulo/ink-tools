@@ -1,17 +1,16 @@
 /**
  * Relay's settings (#98): the chosen receiver, with the fingerprint it is pinned to, and our own
- * fingerprint for the announce. One small JSON file under the shared root; an unreadable file is
- * a fresh start, never a crash.
+ * fingerprint for the announce. One small JSON file in the private folder, since a shared path
+ * outside PluginHost's whitelist cannot be written (#164); an unreadable file is a fresh start,
+ * never a crash.
  */
-import {
-  getPluginDirPath,
-  Result,
-  SHARED_ROOT,
-} from '@supernote-tools/sn-adapter/official';
+import {getPluginDirPath, Result} from '@supernote-tools/sn-adapter/official';
 import {Device, isPrivateAddress} from '../localsend/protocol';
 import {Relay} from '../native';
 
-export const SETTINGS_PATH = `${SHARED_ROOT}/Relay/settings.json`;
+export function settingsPath(pluginDir: string): string {
+  return `${pluginDir}/settings.json`;
+}
 
 export type Settings = {
   /** Who we are to a receiver; made once, kept. */
@@ -55,9 +54,11 @@ function readDevice(value: unknown): Device | null {
 /** The saved settings; a missing or unreadable file gives a new fingerprint and no device. */
 export async function loadSettings(
   native: Relay,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
   random: () => number = Math.random,
 ): Promise<Settings> {
-  const read = await native.readText(SETTINGS_PATH);
+  const dir = await pluginDir();
+  const read = dir.ok ? await native.readText(settingsPath(dir.value)) : dir;
   let parsed: Record<string, unknown> = {};
   if (read.ok && read.value !== null) {
     try {
@@ -79,9 +80,14 @@ export async function loadSettings(
 export async function saveSettings(
   native: Relay,
   settings: Settings,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
 ): Promise<boolean> {
+  const dir = await pluginDir();
+  if (!dir.ok) {
+    return false;
+  }
   const written = await native.writeText(
-    SETTINGS_PATH,
+    settingsPath(dir.value),
     JSON.stringify(settings, null, 2),
   );
   return written.ok;

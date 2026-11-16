@@ -48,6 +48,10 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
   `MAX_FILE_BYTES`, and names a received file from its type, never the sender's file name.
 - Log no image content, token or session id; only status codes and timings.
 - Permissions: `INTERNET`, `FILE:READ` and `FILE:WRITE`; `__tests__/pluginConfig.test.ts` checks them.
+- Relay writes only in its private folder (`getPluginDirPath`): the settings (`settingsPath`), and
+  the sent PNGs, received files and PDF pages in `tempDir`. A shared path such as
+  `/storage/emulated/0/Relay/` is outside PluginHost's whitelist ([#164](https://github.com/martonpaulo/supernote-tools/issues/164)). A native delete goes
+  through `TextFiles.delete`, which never throws, so every promise settles.
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
 - Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.

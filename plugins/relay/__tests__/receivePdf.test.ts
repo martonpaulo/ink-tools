@@ -5,7 +5,7 @@ import {
   DEFAULT_PAGE,
   MAX_PDF_PAGES,
   NOTE_DIR,
-  PAGES_DIR,
+  pagesDir,
   pdfToNote,
   scanName,
   NoteFiles,
@@ -16,6 +16,7 @@ import {fakeRelay} from '../test-support/fakeRelay';
 const PDF = '/tmp/received-sess.pdf';
 const AT = new Date(2026, 10, 16, 9, 5);
 const NOTE = `${NOTE_DIR}/Scan 2026-11-16 0905.note`;
+const PAGES_DIR = pagesDir(PDF);
 const PNGS = [`${PAGES_DIR}/page-1.png`, `${PAGES_DIR}/page-2.png`];
 
 function files(overrides: Partial<NoteFiles> = {}) {

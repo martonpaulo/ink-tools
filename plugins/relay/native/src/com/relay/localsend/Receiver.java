@@ -142,7 +142,7 @@ public final class Receiver {
     thread.interrupt();
     synchronized (this) {
       if (session != null) {
-        session.file.delete();
+        TextFiles.delete(session.file);
         session = null;
       }
     }
@@ -269,12 +269,12 @@ public final class Receiver {
       file.close();
     }
     if (!whole) {
-      partial.delete();
+      TextFiles.delete(partial);
       respond(out, 413, "");
       return;
     }
     if (!partial.renameTo(current.file)) {
-      partial.delete();
+      TextFiles.delete(partial);
       respond(out, 500, "");
       return;
     }
@@ -290,7 +290,7 @@ public final class Receiver {
     synchronized (this) {
       ours = session != null && session.id.equals(request.query.get("sessionId"));
       if (ours) {
-        session.file.delete();
+        TextFiles.delete(session.file);
         session = null;
       }
     }

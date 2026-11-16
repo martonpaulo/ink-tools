@@ -39,6 +39,19 @@ public final class TextFiles {
     }
   }
 
+  /**
+   * Deletes the file; false when it stays. PluginHost throws a `SecurityException` for a path
+   * outside its whitelist, and a throw in a native thread leaves the JS promise unsettled, so the
+   * view hangs (#164); this never throws.
+   */
+  public static boolean delete(File file) {
+    try {
+      return !file.exists() || file.delete();
+    } catch (SecurityException refused) {
+      return false;
+    }
+  }
+
   /** Writes beside the file, then renames over it, so a crash never leaves half a file. */
   public static void write(File file, String text) throws IOException {
     File folder = file.getAbsoluteFile().getParentFile();
@@ -54,7 +67,7 @@ public final class TextFiles {
       out.close();
     }
     if (!part.renameTo(file)) {
-      part.delete();
+      delete(part);
       throw new IOException("cannot replace the file");
     }
   }

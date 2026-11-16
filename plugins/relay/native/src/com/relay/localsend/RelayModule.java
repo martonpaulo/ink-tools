@@ -176,8 +176,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
    */
   @ReactMethod
   public void remove(final String path, final Promise promise) {
-    File file = new File(path);
-    promise.resolve(!file.exists() || file.delete());
+    promise.resolve(TextFiles.delete(new File(path)));
   }
 
   /** Resolves `true` when a file or folder is at `path`; a note's free name is chosen with it. */
@@ -384,9 +383,16 @@ public final class RelayModule extends ReactContextBaseJavaModule {
         new Runnable() {
           @Override
           public void run() {
-            closeReceiver();
             WritableMap stopped = Arguments.createMap();
             stopped.putString("kind", "stopped");
+            try {
+              closeReceiver();
+            } catch (Throwable error) {
+              // Settle the promise on every path: an unsettled one leaves the view open (#164).
+              arrivals.add(stopped);
+              reject(promise, error);
+              return;
+            }
             arrivals.add(stopped);
             promise.resolve(true);
           }

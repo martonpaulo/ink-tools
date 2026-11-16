@@ -7,7 +7,6 @@
 import {Result, SHARED_ROOT} from '@supernote-tools/sn-adapter/official';
 import {copy} from '../copy';
 import {Relay} from '../native';
-import {TEMP_DIR} from '../send/sendPng';
 import type {Size} from './receive';
 
 /** More pages than a scan of study cards needs, and few enough to render in seconds. */
@@ -15,7 +14,10 @@ export const MAX_PDF_PAGES = 50;
 /** The Manta's page, used when no note is open to measure (`../ink2pic/docs/brief.md`). */
 export const DEFAULT_PAGE: Size = {width: 1920, height: 2560};
 export const NOTE_DIR = `${SHARED_ROOT}/Note`;
-export const PAGES_DIR = `${TEMP_DIR}/pdf-pages`;
+/** The PNGs go beside the received PDF, in Relay's temporary folder (`tempDir`, #164). */
+export function pagesDir(pdfPath: string): string {
+  return `${pdfPath.slice(0, pdfPath.lastIndexOf('/'))}/pdf-pages`;
+}
 /** How many ` 2`, ` 3`… names are tried before giving up on a free one. */
 const MAX_NAME_TRIES = 50;
 
@@ -68,11 +70,12 @@ export async function pdfToNote(
   pdfPath: string,
   now: () => Date = () => new Date(),
 ): Promise<string> {
+  const pages = pagesDir(pdfPath);
   const measured = await host.pageSize();
   const page = measured.ok ? measured.value : DEFAULT_PAGE;
   const rendered = await native.renderPdf(
     pdfPath,
-    PAGES_DIR,
+    pages,
     page.width,
     page.height,
     MAX_PDF_PAGES,
@@ -85,7 +88,7 @@ export async function pdfToNote(
   }
   const pngs = rendered.value;
   // The PNGs first, then their folder, then the PDF: nothing of the receive stays.
-  const temporary = [...pngs, PAGES_DIR, pdfPath];
+  const temporary = [...pngs, pages, pdfPath];
   if (pngs.length === 0) {
     await removeAll(native, temporary);
     return copy.pdfBroken;
