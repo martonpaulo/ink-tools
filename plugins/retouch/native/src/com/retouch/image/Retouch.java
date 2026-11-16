@@ -27,7 +27,11 @@ public final class Retouch {
   public enum Edit {
     ENHANCE,
     LIGHTER,
-    DARKER;
+    DARKER,
+    ROTATE,
+    MIRROR,
+    FLIP,
+    INVERT;
 
     /** The edit for its JavaScript name, such as `enhance`. */
     public static Edit of(String name) {
@@ -149,9 +153,56 @@ public final class Retouch {
     toGreys(picture.argb);
   }
 
+  /** The picture turned 90 degrees clockwise (#131): a new picture, its width and height swapped. */
+  public static Picture rotate(Picture picture) {
+    int w = picture.width;
+    int h = picture.height;
+    int[] out = new int[w * h];
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        // The source pixel (x, y) lands at column h - 1 - y, row x of the h-wide result.
+        out[x * h + (h - 1 - y)] = picture.argb[y * w + x];
+      }
+    }
+    return new Picture(out, h, w);
+  }
+
+  /** Mirrors in place, left to right (#131). */
+  public static void mirror(Picture picture) {
+    int w = picture.width;
+    for (int row = 0; row < picture.argb.length; row += w) {
+      for (int left = row, right = row + w - 1; left < right; left++, right--) {
+        int kept = picture.argb[left];
+        picture.argb[left] = picture.argb[right];
+        picture.argb[right] = kept;
+      }
+    }
+  }
+
+  /** Mirrors in place, top to bottom (#131). */
+  public static void flip(Picture picture) {
+    int w = picture.width;
+    int[] kept = new int[w];
+    for (int top = 0, bottom = picture.height - 1; top < bottom; top++, bottom--) {
+      System.arraycopy(picture.argb, top * w, kept, 0, w);
+      System.arraycopy(picture.argb, bottom * w, picture.argb, top * w, w);
+      System.arraycopy(kept, 0, picture.argb, bottom * w, w);
+    }
+  }
+
+  /**
+   * Inverts each colour in place and keeps its alpha (#131): a dark-mode screenshot becomes dark
+   * text on paper. Colour stays colour, as the other geometric edits keep it.
+   */
+  public static void invert(Picture picture) {
+    for (int i = 0; i < picture.argb.length; i++) {
+      picture.argb[i] ^= 0x00FFFFFF;
+    }
+  }
+
   /**
    * The output size of an edit: Enhance scales a large picture down to `pageWidth`, never up, so
-   * the page stays fast; Lighter and Darker keep the size.
+   * the page stays fast; the others keep the size, which Rotate then swaps itself.
    */
   public static int[] outputSize(Edit edit, int width, int height, int pageWidth) {
     return edit == Edit.ENHANCE
@@ -159,12 +210,32 @@ public final class Retouch {
         : new int[] {width, height};
   }
 
-  /** Runs `edit` on `picture`, already at {@link #outputSize}, in place. */
-  public static void apply(Edit edit, Picture picture) {
-    if (edit == Edit.ENHANCE) {
-      enhance(picture);
-    } else {
-      step(picture, edit == Edit.LIGHTER);
+  /**
+   * Runs `edit` on `picture`, already at {@link #outputSize}, and returns the result: `picture`
+   * itself, edited in place, or a new picture for Rotate.
+   */
+  public static Picture apply(Edit edit, Picture picture) {
+    switch (edit) {
+      case ENHANCE:
+        enhance(picture);
+        return picture;
+      case LIGHTER:
+      case DARKER:
+        step(picture, edit == Edit.LIGHTER);
+        return picture;
+      case ROTATE:
+        return rotate(picture);
+      case MIRROR:
+        mirror(picture);
+        return picture;
+      case FLIP:
+        flip(picture);
+        return picture;
+      case INVERT:
+        invert(picture);
+        return picture;
+      default:
+        throw new IllegalArgumentException("unknown edit: " + edit);
     }
   }
 

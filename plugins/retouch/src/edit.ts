@@ -88,6 +88,10 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   enhance: 'enhance',
   lighter: 'lighter',
   darker: 'darker',
+  rotate: 'rotate',
+  mirror: 'mirror',
+  flip: 'flip',
+  invert: 'invert',
 };
 
 /** The lassoed elements when they are exactly one picture, else null. */

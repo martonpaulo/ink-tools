@@ -12,6 +12,9 @@ public final class RetouchTest {
     lighterAndDarkerMoveOppositeWays();
     enhanceScalesDownNeverUp();
     namesTheEdits();
+    rotateTurnsClockwiseAndSwapsTheSize();
+    mirrorAndFlipReverseTheirAxis();
+    invertMakesDarkModePaper();
     System.out.println("RetouchTest ok");
   }
 
@@ -94,12 +97,63 @@ public final class RetouchTest {
   private static void namesTheEdits() {
     check(Retouch.Edit.of("enhance") == Retouch.Edit.ENHANCE, "enhance is known");
     check(Retouch.Edit.of("darker") == Retouch.Edit.DARKER, "darker is known");
+    check(Retouch.Edit.of("invert") == Retouch.Edit.INVERT, "invert is known");
     try {
       Retouch.Edit.of("blur");
       throw new AssertionError("an unknown edit must be refused");
     } catch (IllegalArgumentException expected) {
       // refused
     }
+  }
+
+  private static void rotateTurnsClockwiseAndSwapsTheSize() {
+    // A 3 x 2 picture with pixels 0..5, row by row: 0 1 2 / 3 4 5.
+    int[] argb = {gray(0), gray(1), gray(2), gray(3), gray(4), gray(5)};
+    Retouch.Picture source = new Retouch.Picture(argb.clone(), 3, 2);
+    Retouch.Picture turned = Retouch.apply(Retouch.Edit.ROTATE, source);
+    check(turned.width == 2 && turned.height == 3, "Rotate swaps width and height");
+    // Clockwise: 3 0 / 4 1 / 5 2.
+    int[] want = {3, 0, 4, 1, 5, 2};
+    for (int i = 0; i < want.length; i++) {
+      check((turned.argb[i] & 0xFF) == want[i], "Rotate turns clockwise at " + i);
+    }
+    check(java.util.Arrays.equals(source.argb, argb), "Rotate leaves the source as it was");
+    Retouch.Picture back = turned;
+    for (int i = 0; i < 3; i++) {
+      back = Retouch.rotate(back);
+    }
+    check(java.util.Arrays.equals(back.argb, argb), "four turns give the picture back");
+    int[] kept = Retouch.outputSize(Retouch.Edit.ROTATE, 3000, 1500, 1920);
+    check(kept[0] == 3000 && kept[1] == 1500, "Rotate is never scaled to the page");
+  }
+
+  private static void mirrorAndFlipReverseTheirAxis() {
+    int[] argb = {gray(0), gray(1), gray(2), gray(3), gray(4), gray(5)};
+    Retouch.Picture mirrored = new Retouch.Picture(argb.clone(), 3, 2);
+    check(Retouch.apply(Retouch.Edit.MIRROR, mirrored) == mirrored, "Mirror works in place");
+    int[] wantMirror = {2, 1, 0, 5, 4, 3};
+    Retouch.Picture flipped = new Retouch.Picture(argb.clone(), 3, 2);
+    Retouch.apply(Retouch.Edit.FLIP, flipped);
+    int[] wantFlip = {3, 4, 5, 0, 1, 2};
+    for (int i = 0; i < argb.length; i++) {
+      check((mirrored.argb[i] & 0xFF) == wantMirror[i], "Mirror reverses each row at " + i);
+      check((flipped.argb[i] & 0xFF) == wantFlip[i], "Flip reverses the rows at " + i);
+    }
+    // An odd height keeps its middle row.
+    Retouch.Picture odd = new Retouch.Picture(new int[] {gray(7), gray(8), gray(9)}, 1, 3);
+    Retouch.flip(odd);
+    check((odd.argb[1] & 0xFF) == 8, "Flip keeps the middle row");
+  }
+
+  private static void invertMakesDarkModePaper() {
+    // Dark mode: near-black background, light text, a half-transparent red mark.
+    int[] argb = {gray(20), gray(230), 0x80FF0000};
+    Retouch.Picture picture = new Retouch.Picture(argb, 3, 1);
+    Retouch.apply(Retouch.Edit.INVERT, picture);
+    check((picture.argb[0] & 0xFF) == 235, "the dark background becomes paper");
+    check((picture.argb[1] & 0xFF) == 25, "the light text becomes ink");
+    check(picture.argb[2] == 0x8000FFFF, "a colour inverts and keeps its alpha");
+    check((picture.argb[0] >>> 24) == 0xFF, "an opaque pixel stays opaque");
   }
 
   private static int gray(int g) {

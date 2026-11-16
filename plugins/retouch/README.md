@@ -10,6 +10,8 @@ A Supernote plugin: lasso a picture on the page and make it readable on e-ink wi
   screen. A picture wider than the page is scaled down to the page width, never up.
 - **Lighter** and **Darker**: one fixed gamma step each tap.
 - **Undo** and **Restore original**: back one edit, or back to the picture as it was before Retouch.
+- **Rotate 90°** clockwise, **Mirror** left to right, **Flip** top to bottom, and **Invert**, which
+  turns a dark-mode screenshot into paper and keeps colour.
 - Each edit is a lasso button and a switch in the plugin's Settings.
 
 ## Built on

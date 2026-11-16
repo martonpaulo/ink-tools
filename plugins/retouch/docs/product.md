@@ -25,6 +25,9 @@ or too dark on the 16-grey screen.
 
 - Enhance for e-ink, Lighter, Darker, Undo and Restore original, each one tap
   ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+- Rotate 90° clockwise, Mirror (left to right), Flip (top to bottom) and Invert, which turns a
+  dark-mode screenshot into paper, each one tap
+  ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
 - Each edit is a switch in Settings.
 
 ## What it will never do

@@ -48,8 +48,9 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
 
   /**
    * Crops `srcPath` to its centre `width` x `height` (the picture inside the lasso margin), writes
-   * that to `beforePath` when it is not empty, runs `edit` (`enhance`, `lighter` or `darker`) and
-   * writes the result to `destPath`. Resolves {width, height, ms} of the result.
+   * that to `beforePath` when it is not empty, runs `edit` (`enhance`, `lighter`, `darker`,
+   * `rotate`, `mirror`, `flip` or `invert`) and writes the result to `destPath`. Resolves
+   * {width, height, ms} of the result.
    */
   @ReactMethod
   public void edit(
@@ -97,7 +98,7 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     }
     int[] size = Retouch.outputSize(edit, picture.width, picture.height, whole(pageWidth));
     picture = scale(picture, size[0], size[1]);
-    Retouch.apply(edit, picture);
+    picture = Retouch.apply(edit, picture);
     write(picture, target);
     WritableMap result = Arguments.createMap();
     result.putInt("width", picture.width);

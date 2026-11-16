@@ -92,8 +92,9 @@ refresh, so retouch shows finished options at once and the user taps one, like I
 grid; it has no sliders and no live preview
 ([#47](https://github.com/martonpaulo/supernote-tools/issues/47)).
 
-Status: `plugins/retouch/` holds Enhance, Lighter, Darker, Undo and Restore original; their device
-round is still to come ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)).
+Status: `plugins/retouch/` holds Enhance, Lighter, Darker, Undo and Restore original
+([#136](https://github.com/martonpaulo/supernote-tools/issues/136)), and Rotate 90°, Mirror, Flip and Invert
+([#131](https://github.com/martonpaulo/supernote-tools/issues/131)); their device round is still to come.
 
 Essential:
 
@@ -148,7 +149,7 @@ Per delivery issue:
 - [#136](https://github.com/martonpaulo/supernote-tools/issues/136) scaffold and Enhance: base on Ink2Pic's insert flow and `Decolor.java`/`EinkPixels.java`; build the gamma and sharpen steps, a few lines of Java each, since no plugin does them.
 - [#133](https://github.com/martonpaulo/supernote-tools/issues/133) styles: reuse `Contour.java` for Line art; build threshold and the two dithers in Java (each about 40 lines); Jimp's dither is an ordered dither for 16-bit colour [inference from its README], a style `retouch` does not plan.
 - [#132](https://github.com/martonpaulo/supernote-tools/issues/132) crop and trim: build; image-insert-plugin crops with arrows, not with the pen, and has no trim.
-- [#131](https://github.com/martonpaulo/supernote-tools/issues/131) rotate, mirror, invert: build on Android's `Matrix` and `Bitmap`, a platform feature; a library adds nothing.
+- [#131](https://github.com/martonpaulo/supernote-tools/issues/131) rotate, mirror, invert: built as plain Java loops over the pixels in `Retouch.java`, a few lines each, so the JVM tests run them; Android's `Matrix` would do the same but only on the device, and a library adds nothing.
 - [#134](https://github.com/martonpaulo/supernote-tools/issues/134) eraser and cutout: build the eraser; for background removal try MediaPipe's segmenter first, and keep a white-flood cutout as the fallback when it does not load or is too slow.
 - [#137](https://github.com/martonpaulo/supernote-tools/issues/137) Document mode: base on OpenCV's perspective transform only if its size is acceptable; otherwise build deskew alone on the plain-Java measures.
 - [#139](https://github.com/martonpaulo/supernote-tools/issues/139) and [#140](https://github.com/martonpaulo/supernote-tools/issues/140): build; they depend on this plugin's own flows.

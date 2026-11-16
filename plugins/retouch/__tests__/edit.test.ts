@@ -140,3 +140,20 @@ test('a history file that is not Retouch\'s is never written over', async () => 
   expect(w.files.get(HISTORY_PATH)).toBe('not json');
   expect(w.modified).toEqual([]);
 });
+
+test('Rotate puts the turned picture at the same top left, and Undo turns it back (#131)', async () => {
+  const w = world();
+  (w.native.edit as jest.Mock).mockImplementationOnce(
+    async (_edit, _src, before, dest, width, height) => {
+      w.files.set(before, 'png');
+      w.files.set(dest, 'png');
+      return ok({width: height, height: width, ms: 5});
+    },
+  );
+  expect(await runEdit('rotate', w.deps)).toMatchObject({kind: 'edited'});
+  expect((w.native.edit as jest.Mock).mock.calls[0][0]).toBe('rotate');
+  expect(w.modified[0].path).toMatch(/-rotate\.png$/);
+  expect(w.modified[0].rect).toEqual({left: 100, top: 200, right: 400, bottom: 600});
+  expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
+  expect(w.modified[1].rect).toEqual(RECT);
+});

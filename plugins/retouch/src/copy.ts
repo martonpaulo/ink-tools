@@ -7,6 +7,10 @@ export const copy = {
   'edit.darker': 'Darker',
   'edit.undo': 'Undo',
   'edit.restore': 'Restore original',
+  'edit.rotate': 'Rotate 90°',
+  'edit.mirror': 'Mirror',
+  'edit.flip': 'Flip',
+  'edit.invert': 'Invert',
   'permission.files':
     'Retouch keeps each picture as it was, for Undo and Restore original, in MyStyle/Retouch.',
 } as const;

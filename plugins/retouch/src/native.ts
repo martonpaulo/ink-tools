@@ -15,7 +15,14 @@ export const IMAGE_MODULE = 'RetouchImage';
 export const FILES_MODULE = 'RetouchFiles';
 
 /** The edits the Java side runs; Undo and Restore original need no pixel work. */
-export type PixelEdit = 'enhance' | 'lighter' | 'darker';
+export type PixelEdit =
+  | 'enhance'
+  | 'lighter'
+  | 'darker'
+  | 'rotate'
+  | 'mirror'
+  | 'flip'
+  | 'invert';
 
 export type Edited = {width: number; height: number; ms: number};
 

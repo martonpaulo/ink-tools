@@ -4,7 +4,16 @@
  */
 import {copy} from './copy';
 
-export type EditId = 'enhance' | 'lighter' | 'darker' | 'undo' | 'restore';
+export type EditId =
+  | 'enhance'
+  | 'lighter'
+  | 'darker'
+  | 'undo'
+  | 'restore'
+  | 'rotate'
+  | 'mirror'
+  | 'flip'
+  | 'invert';
 
 export type EditDefinition = {id: EditId; buttonId: number; name: string};
 
@@ -17,6 +26,11 @@ const ORDER: readonly EditId[] = [
   'darker',
   'undo',
   'restore',
+  // #131: appended, so the ids above keep theirs.
+  'rotate',
+  'mirror',
+  'flip',
+  'invert',
 ];
 
 export const EDITS: readonly EditDefinition[] = ORDER.map((id, index) => ({
