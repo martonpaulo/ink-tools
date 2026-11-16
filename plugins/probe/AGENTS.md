@@ -14,6 +14,13 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
 
 - A probe goes only in `probeBody` (`src/probe.ts`). Reset it to the default body before landing, so
   `main` always holds the default: the runtime keys and the native Digest-provider probe ([#59](https://github.com/martonpaulo/supernote-tools/issues/59)).
+- The command helper is a permanent part, outside `probeBody` ([#148](https://github.com/martonpaulo/ink-tools/issues/148)): the note sidebar button «Run Command»
+  (`src/register.ts`) reads inkctl's command file `MyStyle/Probe/command.json` (`ProbeCommandFile`,
+  only that folder), runs it through `src/helper.ts` (insert strokes, lasso a rect or the last
+  element, read the lassoed strokes) and logs `SNPROBE answer <id> <n>/<count> <json>` under
+  `ReactNativeJS`. `cli/inkctl/src/inkctl` owns the other side; change both together. The helper
+  only executes: text to strokes and every refusal live in the CLI. The probe view runs the probe
+  on «Run Probe», never on mount, because a «Run Command» press mounts the view's component too.
 - Lines are logged with the tag `SNPROBE`. Never log a secret or a person's data.
 - Validate with `npm run validate`. A result found on the device goes to the issue or a research
   note, never kept as a claim without the device run.

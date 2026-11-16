@@ -1,18 +1,21 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text} from 'react-native';
 import {PluginManager} from 'sn-plugin-lib';
 import {runProbe} from './src/probe';
 
 /**
- * Runs the probe once on open and shows its log lines; the same lines go to logcat.
- * A Back button closes the plugin view (`closePluginView`), so reopening Probe remounts this
- * component and re-runs the probe without a reboot — needed to test the background lifecycle (#39).
+ * Runs the probe when «Run Probe» is pressed and shows its log lines; the same lines go to logcat.
+ * Not on mount: the host mounts this component at the first press of «Run Command» too, even with
+ * no view (docs/supernote.md › Plugins), and that press must not run the probe (#148).
+ * A Back button closes the plugin view (`closePluginView`), so the probe can run again in a fresh
+ * view without a reboot — needed to test the background lifecycle (#39).
  */
 export default function App() {
-  const [lines, setLines] = useState<string[]>(['running…']);
-  useEffect(() => {
+  const [lines, setLines] = useState<string[]>([]);
+  const run = () => {
+    setLines(['running…']);
     runProbe(PluginManager as unknown as Record<string, unknown>).then(setLines);
-  }, []);
+  };
   return (
     <ScrollView style={styles.root}>
       <Pressable
@@ -26,6 +29,9 @@ export default function App() {
         <Text style={styles.backText}>← Back</Text>
       </Pressable>
       <Text style={styles.title}>Probe</Text>
+      <Pressable accessibilityRole="button" onPress={run} style={styles.back}>
+        <Text style={styles.backText}>Run Probe</Text>
+      </Pressable>
       {lines.map((l, i) => (
         <Text key={i} style={styles.line}>
           {l}

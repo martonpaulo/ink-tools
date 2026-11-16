@@ -46,6 +46,22 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
     super.invalidate();
   }
 
+  /** Issue #148: the text of inkctl's command file; rejects with a one-line reason (ProbeCommandFile). */
+  @ReactMethod
+  public void readCommand(final String path, final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              promise.resolve(ProbeCommandFile.read(path));
+            } catch (Throwable error) {
+              promise.reject("read_failed", ProbeFormat.oneLine(String.valueOf(error.getMessage())));
+            }
+          }
+        });
+  }
+
   /** Resolves with every line logged, in order. Never rejects: a failure is a result line. */
   @ReactMethod
   public void run(final Promise promise) {
