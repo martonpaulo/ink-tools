@@ -11,10 +11,17 @@ export interface DeviceReader {
   dryInsert(uri: string, markerColumn: string): Promise<void>;
 }
 
-/** The table each capability writes; reads passing says nothing about writes (#67). */
-const WRITE_TABLE: Record<Capability, string> = {calendar: 'events', todo: 'tasks', digest: 'digest'};
+/**
+ * The table each capability test-writes; reads passing says nothing about writes (#67). The Digest
+ * has none: its provider refuses every delete to a plugin, so a test row would stay in the owner's
+ * Digest and reach Supernote Cloud (#42, docs/research/2026-11-digest-provider.md).
+ */
+const WRITE_TABLE: Partial<Record<Capability, string>> = {calendar: 'events', todo: 'tasks'};
 /** The text field of each write table that carries the test row's marker (#43), as `plugins/probe` marks it. */
-const MARKER_FIELD: Record<Capability, string> = {calendar: 'title', todo: 'title', digest: 'content'};
+const MARKER_FIELD: Partial<Record<Capability, string>> = {calendar: 'title', todo: 'title'};
+
+/** Why a capability with no test write stays unable to write. */
+export const NO_TEST_WRITE = 'no test write: the provider refuses deletes, so a test row would stay (#42)';
 
 export interface CapabilityStatus {
   capability: Capability;
@@ -52,11 +59,14 @@ export async function probeCapability(
   const available = problems.length === 0;
   // No write is tried against a schema that already failed to match.
   let canWrite = false;
-  if (available) {
-    const table = WRITE_TABLE[capability];
+  const table = WRITE_TABLE[capability];
+  const marker = MARKER_FIELD[capability];
+  if (available && (!table || !marker)) {
+    problems.push(NO_TEST_WRITE);
+  } else if (available && table && marker) {
     const uri = contentUri(module, table);
     try {
-      await reader.dryInsert(uri, column(module, table, MARKER_FIELD[capability]));
+      await reader.dryInsert(uri, column(module, table, marker));
       canWrite = true;
     } catch (e) {
       problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);

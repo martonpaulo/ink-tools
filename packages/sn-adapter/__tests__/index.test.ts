@@ -6,6 +6,7 @@ import {
   parseDescriptor,
   probeAll,
   probeCapability,
+  NO_TEST_WRITE,
   toCalendarInsert,
   toTodoInsert,
 } from '../src';
@@ -49,7 +50,27 @@ test('parseDescriptor refuses an update that lacks a rule the adapter reads (#84
 
 test('probe: matching device is available', async () => {
   const all = await probeAll(D, reader(full));
-  expect(all.every(s => s.available && s.canWrite)).toBe(true);
+  expect(all.every(s => s.available)).toBe(true);
+  expect(all.filter(s => s.canWrite).map(s => s.capability).sort()).toEqual(['calendar', 'todo']);
+});
+
+test('probe: the Digest is never test-written, as a plugin cannot delete the row again (#42)', async () => {
+  const tried: string[] = [];
+  const digest = await probeCapability(D, 'digest', {
+    columnsOf: async uri => full[uri],
+    dryInsert: async uri => {
+      tried.push(uri);
+    },
+  });
+  expect(tried).toEqual([]);
+  expect(digest).toEqual({capability: 'digest', available: true, canWrite: false, problems: [NO_TEST_WRITE]});
+});
+
+test('the Digest reads the knowledge table, not the old digest path the provider refuses (#42)', () => {
+  expect(contentUri(D.digest, 'knowledge')).toBe('content://com.ratta.supernote.knowledge.provider/knowledge');
+  const noRule = JSON.parse(JSON.stringify(D));
+  delete noRule.digest.rules.insertPath;
+  expect(() => parseDescriptor(noRule)).toThrow(/digest: rule insertPath must be a string/);
 });
 
 test('probe: each test row is marked in its table\'s text column (#43)', async () => {
@@ -64,17 +85,16 @@ test('probe: each test row is marked in its table\'s text column (#43)', async (
   expect(marked.sort()).toEqual(
     [
       `${contentUri(D.calendar, 'events')} title`,
-      `${contentUri(D.digest, 'digest')} digest_content`,
       `${contentUri(D.todo, 'tasks')} title`,
     ].sort(),
   );
 });
 
 test('probe: a provider that reads but refuses writes cannot write (#67)', async () => {
-  const digestUri = contentUri(D.digest, 'digest');
-  const digest = await probeCapability(D, 'digest', reader(full, [digestUri]));
-  expect(digest).toMatchObject({available: true, canWrite: false});
-  expect(digest.problems[0]).toMatch(/refused a test write: Permission Denial/);
+  const todoUri = contentUri(D.todo, 'tasks');
+  const todo = await probeCapability(D, 'todo', reader(full, [todoUri]));
+  expect(todo).toMatchObject({available: true, canWrite: false});
+  expect(todo.problems[0]).toMatch(/refused a test write: Permission Denial/);
 });
 
 test('probe: missing column or silent provider turns the capability off', async () => {
@@ -83,7 +103,7 @@ test('probe: missing column or silent provider turns the capability off', async 
   const todo = await probeCapability(D, 'todo', reader(cols));
   expect(todo).toMatchObject({available: false, canWrite: false});
   expect(todo.problems[0]).toMatch(/hasSync/);
-  const {[contentUri(D.digest, 'digest')]: _gone, ...noDigest} = full;
+  const {[contentUri(D.digest, 'knowledge')]: _gone, ...noDigest} = full;
   const digest = await probeCapability(D, 'digest', reader(noDigest));
   expect(digest.available).toBe(false);
   expect(digest.problems[0]).toMatch(/did not answer/);

@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "descriptorVersion": "2026.11.16",
-  "device": {"model": "Supernote Nomad", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466"},
+  "descriptorVersion": "2026.11.17",
+  "device": {"model": "Supernote Nomad", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466", "knowledgeApp": "1.00.153"},
   "calendar": {
     "authority": "com.ratta.supernote.calendar.provider",
     "tables": {
@@ -36,12 +36,19 @@
     "authority": "com.ratta.supernote.knowledge.provider",
     "permissions": {"read": "READ_KNOWLEDGE", "write": "WRITE_KNOWLEDGE"},
     "tables": {
-      "digest": {
-        "path": "digest",
-        "columns": ["id", "digest_id", "digest_content", "digest_time", "digest_related_page", "digest_type", "digest_related_file_name", "digest_text_location_data", "digest_related_file_full_path", "digest_related_file_relative_path", "digest_related_file_size", "digest_related_file_cache_full_folder", "digest_mark_file_name", "digest_mark_relative_path", "digest_mark_md5", "digest_last_modified_time", "digest_status"],
-        "fields": {"content": "digest_content"}
+      "knowledge": {
+        "path": "knowledge",
+        "columns": ["id", "content", "knowledge_base_unique_attribute", "source_type", "source_path", "source_page", "metadata", "comment_str", "state", "creation_time", "last_modified_time"],
+        "fields": {"content": "content", "collection": "knowledge_base_unique_attribute", "sourceType": "source_type", "metadata": "metadata", "comment": "comment_str", "created": "creation_time"}
       }
     },
-    "rules": {}
+    "rules": {"insertPath": "knowledge/insert",
+      "countByIdentifierPath": "knowledge/count/by_unique_identifier",
+      "updateByIdentifierPath": "knowledge/update/by_unique_identifier",
+      "updateIdentifierKey": "knowledge_unique_identifier",
+      "identifierKey": "unique_identifier",
+      "sourceTypeSelfAdd": 4,
+      "contentMaxLength": 15000,
+      "commentMaxLength": 2000}
   }
 }

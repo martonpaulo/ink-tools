@@ -36,24 +36,43 @@ export interface TodoRules {
   timeUnit: string;
 }
 
+/** The Digest's write rules, read in `KnowledgeContentProvider` (docs/research/2026-11-digest-provider.md, #42). */
+export interface DigestRules {
+  /** Path of the one insert a plugin may call; the `knowledge` read path refuses inserts. */
+  insertPath: string;
+  /** Path that answers one `count` column for the identifier appended to it. */
+  countByIdentifierPath: string;
+  updateByIdentifierPath: string;
+  /** The ContentValues key that names the entry an update by identifier changes. */
+  updateIdentifierKey: string;
+  /** The key inside `metadata` the provider keeps as the entry's identifier. */
+  identifierKey: string;
+  /** `source_type` of an entry with no note or document behind it («custom source» in the list). */
+  sourceTypeSelfAdd: number;
+  contentMaxLength: number;
+  commentMaxLength: number;
+}
+
 export interface Descriptor {
   schema: number;
   descriptorVersion: string;
   calendar: ModuleDescriptor<CalendarRules>;
   todo: ModuleDescriptor<TodoRules>;
-  digest: ModuleDescriptor;
+  digest: ModuleDescriptor<DigestRules>;
 }
 
 type RuleType = 'string' | 'boolean' | 'number' | 'string[]';
-const RULE_TYPES: Record<'calendar' | 'todo', Record<string, RuleType>> = {
+const RULE_TYPES: Record<Capability, Record<string, RuleType>> = {
   calendar: {writeTag: 'string', cancelledStatus: 'string'},
   todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', writeHasSync: 'number', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
+  digest: {insertPath: 'string', countByIdentifierPath: 'string', updateByIdentifierPath: 'string', updateIdentifierKey: 'string', identifierKey: 'string', sourceTypeSelfAdd: 'number', contentMaxLength: 'number', commentMaxLength: 'number'},
 };
 
 /** The fields the adapter reads and writes in each table; an update that lacks one is refused (#101). */
 const REQUIRED_FIELDS: Partial<Record<Capability, Record<string, string[]>>> = {
   calendar: {events: ['eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified', 'status']},
   todo: {tasks: ['rowId', 'listId', 'taskId', 'title', 'detail', 'modified', 'status', 'due', 'completedAt', 'deleted', 'hasSync']},
+  digest: {knowledge: ['content', 'collection', 'sourceType', 'metadata', 'comment', 'created']},
 };
 
 function hasType(value: unknown, type: RuleType): boolean {
@@ -89,11 +108,9 @@ export function parseDescriptor(value: unknown): Descriptor {
         if (!t.fields || typeof t.fields[field] !== 'string') throw new Error(`${cap}.${name}: missing field ${field}`);
       }
     }
-    if (cap !== 'digest') {
-      const rules = (m.rules ?? {}) as Record<string, unknown>;
-      for (const [key, type] of Object.entries(RULE_TYPES[cap])) {
-        if (!hasType(rules[key], type)) throw new Error(`${cap}: rule ${key} must be a ${type}`);
-      }
+    const rules = (m.rules ?? {}) as unknown as Record<string, unknown>;
+    for (const [key, type] of Object.entries(RULE_TYPES[cap])) {
+      if (!hasType(rules[key], type)) throw new Error(`${cap}: rule ${key} must be a ${type}`);
     }
   }
   return d;
