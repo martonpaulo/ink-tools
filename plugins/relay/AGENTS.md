@@ -5,7 +5,7 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status
 
-**Built, not yet on the device** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)): «Send page» (sidebar) and «Send selection» (lasso
+**Built, not yet on the device** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)): «Send Page» (sidebar) and «Send Selection» (lasso
 toolbar) send a PNG to the LocalSend device chosen in Settings, with a toast for the result.
 `src/localsend/protocol.ts` owns the LocalSend v2 bodies and answers; `src/send/sendPng.ts` the
 flow; `src/settings/device.ts` the chosen device; `native/` the Java module `RelayLocalSend`

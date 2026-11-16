@@ -247,7 +247,7 @@ above ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)).
 
 **Send half** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)):
 
-- «Send page» in the note's sidebar sends the current page as a PNG; «Send selection» in the lasso
+- «Send Page» in the note's sidebar sends the current page as a PNG; «Send Selection» in the lasso
   toolbar sends only the selection. One tap, no view: the result is a short toast.
 - The person picks the receiving device once in Relay's Settings; later sends go to it, pinned to
   the fingerprint it announced. A changed certificate is a failed send, never a silent re-pin.

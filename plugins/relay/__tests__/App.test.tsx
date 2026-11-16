@@ -24,7 +24,7 @@ test('the Settings view keeps the size rules and has a header', async () => {
   expect(screenBreaks(tree.root)).toEqual([]);
   expect(
     tree.root.findByProps({accessibilityRole: 'header'}).props.children,
-  ).toBe('Relay');
+  ).toBe('Device Transfer');
   expect(
     tree.root.findAllByProps({children: 'No LocalSend device found'}).length,
   ).toBeGreaterThan(0);

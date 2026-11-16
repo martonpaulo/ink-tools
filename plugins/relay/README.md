@@ -1,5 +1,7 @@
 # Relay
 
+On the tablet this plugin is called **Device Transfer**; `relay` stays its folder and internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+
 A Supernote plugin: send the current page, or a lasso selection, as a picture to your iPhone or
 your Mac over [LocalSend](https://localsend.org), with one tap; and receive a text or a picture
 from them straight into the open note.
@@ -9,8 +11,8 @@ from them straight into the open note.
 
 ## What it does
 
-- «Send page» in the note's sidebar: the current page as a PNG.
-- «Send selection» in the lasso toolbar: only the selection as a PNG.
+- «Send Page» in the note's sidebar: the current page as a PNG.
+- «Send Selection» in the lasso toolbar: only the selection as a PNG.
 - Pick the receiving device once in Settings; later sends go to it with no question.
 - «Receive» in the note's sidebar: for two minutes the tablet shows up in LocalSend as
   «Supernote». The first text arrives as a selected text box, the first PNG or JPEG as a floating

@@ -2,9 +2,9 @@
 import {SendResult} from './localsend/protocol';
 
 export const copy = {
-  title: 'Relay',
-  sendPage: 'Send page',
-  sendSelection: 'Send selection',
+  title: 'Device Transfer',
+  sendPage: 'Send Page',
+  sendSelection: 'Send Selection',
   devices: 'Send to',
   searching: 'Searching for LocalSend devices…',
   searchAgain: 'Search again',
@@ -27,7 +27,7 @@ export const copy = {
   receiveStopped: 'Receiving stopped',
   receiveFailed: 'Could not start receiving',
   notAnImage: 'Send a JPEG, a PNG or a PDF',
-  refusedOffer: 'Relay takes one text, one picture or one PDF',
+  refusedOffer: 'Device Transfer takes one text, one picture or one PDF',
   tooLarge: 'The file is over 30 MB',
   receivedPdf: (name: string, pages: number) =>
     `${name} made with ${pages} ${pages === 1 ? 'page' : 'pages'}`,
