@@ -40,6 +40,10 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   and written through `BridgeFiles`, picture-search's file module under Bridge's name, built by
   `scripts/native-build.cjs` as Lookup's is. No file is the default settings; an unreadable one is
   an error on the screen, never a silent reset.
+- **Device probe** ([#43](https://github.com/martonpaulo/ink-tools/issues/43)): `BridgeProviders`, a Java module beside `BridgeFiles`, is sn-adapter's
+  `DeviceReader` over ContentResolver (`src/deviceReader.ts`); every URI and column comes from the
+  descriptor. Settings runs `probeAll` once per open, and a module it does not clear stays blocked
+  with the reason. Not yet run on the tablet.
 - **Sign-in secrets** ([#90](https://github.com/martonpaulo/supernote-tools/issues/90), owner D16 A): one file per provider (`secretFileName` in
   `packages/sync-core/src/secrets.ts`) in Bridge's private plugin folder. Settings shows only the
   last four characters and a «Sign out» per provider, confirmed once more, that deletes the file.

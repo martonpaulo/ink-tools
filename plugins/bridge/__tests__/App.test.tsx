@@ -4,7 +4,8 @@ import {NativeModules, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
 import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
-import App from '../App';
+import {BUNDLED_DESCRIPTOR as D, contentUri, DeviceReader} from '@supernote-tools/sn-adapter';
+import App, {startupProbe} from '../App';
 import {copy} from '../src/copy';
 
 const DIR = '/data/plugins/bridge';
@@ -66,9 +67,52 @@ test('each module says whether it is off or why it does not run (#88)', async ()
     expect.arrayContaining([copy['module.calendar'], copy['status.off']]),
   );
   await act(async () => toggle(tree, 'Calendar').props.onPress());
-  expect(texts(tree)).toContain(
-    'On, but not running: the device check has not answered',
-  );
+  // No BridgeProviders module in this test, so the start-up probe blocks Calendar with that reason (#43).
+  expect(
+    texts(tree).some(
+      t =>
+        typeof t === 'string' &&
+        t.startsWith('On, but not running: ') &&
+        t.includes('the BridgeProviders module is not loaded'),
+    ),
+  ).toBe(true);
+});
+
+test('a device that matches the descriptor clears the probe, so Calendar waits for its sync (#43)', async () => {
+  const marked: string[] = [];
+  const reader: DeviceReader = {
+    columnsOf: async uri => {
+      for (const module of [D.calendar, D.todo, D.digest]) {
+        for (const [name, table] of Object.entries(module.tables)) {
+          if (contentUri(module, name) === uri) {
+            return table.columns;
+          }
+        }
+      }
+      throw new Error(`unknown ${uri}`);
+    },
+    dryInsert: async (uri, markerColumn) => {
+      marked.push(`${uri} ${markerColumn}`);
+    },
+  };
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App folder={folder as never} reader={reader} />);
+  });
+  await act(async () => toggle(tree, 'Calendar').props.onPress());
+  expect(texts(tree)).toContain(copy['status.waiting']);
+  expect(marked).toContain(`${contentUri(D.calendar, 'events')} title`);
+});
+
+test('a probe that throws blocks every module with its reason, never a silent pass (#43)', async () => {
+  const broken = {
+    columnsOf: () => {
+      throw new Error('host crashed');
+    },
+  } as unknown as DeviceReader;
+  const problems = await startupProbe(broken);
+  expect(Object.keys(problems).sort()).toEqual(['calendar', 'digest', 'todo']);
+  expect(problems.calendar?.[0]).toMatch(/host crashed/);
 });
 
 test('a failed save is said on the screen; a failed load offers a retry', async () => {

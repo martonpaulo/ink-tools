@@ -38,7 +38,8 @@
     "tables": {
       "digest": {
         "path": "digest",
-        "columns": ["id", "digest_id", "digest_content", "digest_time", "digest_related_page", "digest_type", "digest_related_file_name", "digest_text_location_data", "digest_related_file_full_path", "digest_related_file_relative_path", "digest_related_file_size", "digest_related_file_cache_full_folder", "digest_mark_file_name", "digest_mark_relative_path", "digest_mark_md5", "digest_last_modified_time", "digest_status"]
+        "columns": ["id", "digest_id", "digest_content", "digest_time", "digest_related_page", "digest_type", "digest_related_file_name", "digest_text_location_data", "digest_related_file_full_path", "digest_related_file_relative_path", "digest_related_file_size", "digest_related_file_cache_full_folder", "digest_mark_file_name", "digest_mark_relative_path", "digest_mark_md5", "digest_last_modified_time", "digest_status"],
+        "fields": {"content": "digest_content"}
       }
     },
     "rules": {}

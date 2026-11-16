@@ -1,18 +1,20 @@
-import {Capability, Descriptor, contentUri} from './descriptor';
+import {Capability, Descriptor, column, contentUri} from './descriptor';
 
 /** What the plugin runtime provides: one cheap, unfiltered query per table. No device logic here. */
 export interface DeviceReader {
   /** Resolve with the column names the provider returns, or reject when the provider does not answer. */
   columnsOf(uri: string): Promise<string[]>;
   /**
-   * Insert one marked test row and delete it again, as `plugins/probe` does (#67). Resolve when both
-   * passed; reject when the provider refuses the write.
+   * Insert one test row with a marker text in `markerColumn` and delete the rows carrying it again,
+   * as `plugins/probe` does (#67). Resolve when both passed; reject when the provider refuses the write.
    */
-  dryInsert(uri: string): Promise<void>;
+  dryInsert(uri: string, markerColumn: string): Promise<void>;
 }
 
 /** The table each capability writes; reads passing says nothing about writes (#67). */
 const WRITE_TABLE: Record<Capability, string> = {calendar: 'events', todo: 'tasks', digest: 'digest'};
+/** The text field of each write table that carries the test row's marker (#43), as `plugins/probe` marks it. */
+const MARKER_FIELD: Record<Capability, string> = {calendar: 'title', todo: 'title', digest: 'content'};
 
 export interface CapabilityStatus {
   capability: Capability;
@@ -51,9 +53,10 @@ export async function probeCapability(
   // No write is tried against a schema that already failed to match.
   let canWrite = false;
   if (available) {
-    const uri = contentUri(module, WRITE_TABLE[capability]);
+    const table = WRITE_TABLE[capability];
+    const uri = contentUri(module, table);
     try {
-      await reader.dryInsert(uri);
+      await reader.dryInsert(uri, column(module, table, MARKER_FIELD[capability]));
       canWrite = true;
     } catch (e) {
       problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);

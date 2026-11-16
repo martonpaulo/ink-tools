@@ -53,7 +53,8 @@ test(
     expect(text.match(/node_modules\/react\/index\.js/g)).toHaveLength(1);
     // The registration goes through sn-adapter (#101), whose SDK import resolves from this plugin.
     expect(text).toContain('packages/sn-adapter/src/official/register.ts');
-    expect(text).not.toContain('packages/sn-adapter/src/internals/');
+    // The start-up probe runs the internals tier's adapt-on/off check (#43).
+    expect(text).toContain('packages/sn-adapter/src/internals/probe.ts');
     const sdk =
       text.match(/"[^"]*sn-plugin-lib\/lib\/module\/index\.js"/g) ?? [];
     expect(new Set(sdk)).toEqual(

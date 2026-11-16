@@ -52,6 +52,24 @@ test('probe: matching device is available', async () => {
   expect(all.every(s => s.available && s.canWrite)).toBe(true);
 });
 
+test('probe: each test row is marked in its table\'s text column (#43)', async () => {
+  const marked: string[] = [];
+  const marking: DeviceReader = {
+    columnsOf: async uri => full[uri],
+    dryInsert: async (uri, markerColumn) => {
+      marked.push(`${uri} ${markerColumn}`);
+    },
+  };
+  await probeAll(D, marking);
+  expect(marked.sort()).toEqual(
+    [
+      `${contentUri(D.calendar, 'events')} title`,
+      `${contentUri(D.digest, 'digest')} digest_content`,
+      `${contentUri(D.todo, 'tasks')} title`,
+    ].sort(),
+  );
+});
+
 test('probe: a provider that reads but refuses writes cannot write (#67)', async () => {
   const digestUri = contentUri(D.digest, 'digest');
   const digest = await probeCapability(D, 'digest', reader(full, [digestUri]));
