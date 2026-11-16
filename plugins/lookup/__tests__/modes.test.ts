@@ -60,6 +60,16 @@ const photo: Measures = {
 };
 const dark: Measures = {...paper, mean: 60, border: 0.1, objectShare: 0.9};
 const blank: Measures = {...paper, objectShare: 0.001};
+/** A photo cut out on white paper: it measures as clean clip art (#169). */
+const cutOut: Measures = {
+  ...outline,
+  border: 0.95,
+  white: 0.5,
+  mid: 0.3,
+  dark: 0.1,
+  ink: 0.2,
+  objectShare: 0.5,
+};
 
 function result(id: string): SearchResult {
   return {
@@ -141,6 +151,33 @@ describe('keepMode', () => {
       ['e', outline],
     ]);
     expect(keepMode(ordered, drawings, 'photo')).toEqual([]);
+  });
+
+  test('a canonical cut-out photo goes under Photos, never Illustrations: «banana» (#169)', () => {
+    expect(pixelKind(cutOut)).toBe('clean');
+    const wikidata = (id: string, mime: string): SearchResult => ({
+      ...result(id),
+      canonical: true,
+      mime,
+    });
+    const tiles = [
+      wikidata('photo', 'image/jpeg'),
+      wikidata('logo', 'image/svg+xml'),
+      wikidata('engraving', 'image/jpeg'),
+      result('clipart'),
+    ];
+    const kinds = new Map<string, Measures>([
+      ['photo', cutOut],
+      ['logo', cutOut],
+      ['engraving', outline],
+      ['clipart', cutOut],
+    ]);
+    expect(keepMode(tiles, kinds, 'illustration').map(r => r.id)).toEqual([
+      'logo',
+      'engraving',
+      'clipart',
+    ]);
+    expect(keepMode(tiles, kinds, 'photo').map(r => r.id)).toEqual(['photo']);
   });
 
   test('the two lists never share a tile across pages 1 and 2', () => {

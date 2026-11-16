@@ -665,6 +665,29 @@ export function keepMode(
 ): SearchResult[] {
   return ordered.filter(result => {
     const m = measures.get(result.id);
-    return m !== undefined && fitsMode(pixelKind(m), mode);
+    if (m === undefined) {
+      return false;
+    }
+    const kind = pixelKind(m);
+    return isCutOutPhoto(result, kind)
+      ? mode === 'photo'
+      : fitsMode(kind, mode);
   });
+}
+
+/** The kinds a scan of line work measures as: never a photo. */
+const LINE_WORK: ReadonlySet<PixelKind> = new Set(['outline', 'text', 'faint']);
+
+/**
+ * A word's canonical JPEG that is not line work is a photo, even when it stands on white paper
+ * and measures as clip art: Wikidata's image of «banana» is a cut-out photo, and canonical
+ * pictures never pass the Commons drawings filter of the illustration mode (#169).
+ */
+function isCutOutPhoto(result: SearchResult, kind: PixelKind): boolean {
+  return (
+    result.canonical === true &&
+    result.mime === 'image/jpeg' &&
+    kind !== 'blank' &&
+    !LINE_WORK.has(kind)
+  );
 }

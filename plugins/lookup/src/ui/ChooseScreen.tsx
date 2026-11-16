@@ -21,7 +21,13 @@ import {copy, pictureCopy} from '../copy';
 import {MODES} from '../modes';
 import {LOOKUP_PROFILE} from '../profile';
 
+/** Two tiles per row; the rows follow from PAGE_SIZE: three for six. */
 const COLUMNS = 2;
+const ROWS = Array.from(
+  {length: Math.ceil(PAGE_SIZE / COLUMNS)},
+  (_, row) => row,
+);
+const COLUMN_SLOTS = Array.from({length: COLUMNS}, (_, column) => column);
 const WEB_HEADERS = {'User-Agent': LOOKUP_PROFILE.userAgent};
 
 export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
@@ -83,35 +89,52 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
           />
         ))}
       </View>
-      <Text accessibilityLiveRegion="polite" style={[shared.text, shared.statusLine]}>
+      <Text
+        accessibilityLiveRegion="polite"
+        style={[shared.text, shared.statusLine]}>
         {line ?? ''}
       </Text>
-      <View style={styles.grid}>
-        {shown.map(tile => (
-          <Pressable
-            key={tile.result.id}
-            accessibilityRole="button"
-            accessibilityLabel={copy['choose.tile'](
-              tile.result.title,
-              tile.result.source,
-            )}
-            accessibilityState={{disabled: busy}}
-            disabled={busy}
-            onPress={() => pick(tile)}
-            style={[shared.outline, styles.tile]}>
-            <Image
-              source={
-                tile.uri.startsWith('http')
-                  ? {uri: tile.uri, headers: WEB_HEADERS}
-                  : {uri: tile.uri}
-              }
-              resizeMode="contain"
-              style={styles.image}
-            />
-          </Pressable>
+      {/*
+        The grid takes the height the title, tabs and buttons leave, and its rows share it, so
+        «More» and «Close» always sit below the last tile, never over it (#169), as Ink2Pic's grid
+        does since its build 0.1.0 (6). Square tiles at half the width overflowed 1920 x 2560.
+      */}
+      <View testID="grid" style={styles.grid}>
+        {ROWS.map(row => (
+          <View key={row} style={styles.row}>
+            {COLUMN_SLOTS.map(column => {
+              const tile = shown[row * COLUMNS + column];
+              return tile ? (
+                <Pressable
+                  key={tile.result.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={copy['choose.tile'](
+                    tile.result.title,
+                    tile.result.source,
+                  )}
+                  accessibilityState={{disabled: busy}}
+                  disabled={busy}
+                  onPress={() => pick(tile)}
+                  style={[shared.outline, styles.tile]}>
+                  <Image
+                    source={
+                      tile.uri.startsWith('http')
+                        ? {uri: tile.uri, headers: WEB_HEADERS}
+                        : {uri: tile.uri}
+                    }
+                    resizeMode="contain"
+                    style={styles.image}
+                  />
+                </Pressable>
+              ) : (
+                // An empty cell keeps every tile the same size on a short page.
+                <View key={`empty-${column}`} style={styles.empty} />
+              );
+            })}
+          </View>
         ))}
       </View>
-      <View style={shared.row}>
+      <View style={[shared.row, styles.nav]}>
         {pages > 1 ? (
           <Button
             label={copy['choose.more']}
@@ -134,17 +157,14 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
 const styles = StyleSheet.create({
   grid: {
     flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignSelf: 'stretch',
     gap: metrics.tileGap,
-    marginVertical: metrics.sectionGap,
+    marginTop: metrics.sectionGap,
   },
-  tile: {
-    // Two per row, less the one gap between them.
-    width: `${Math.floor(100 / COLUMNS) - 2}%`,
-    aspectRatio: 1,
-    backgroundColor: metrics.paper,
-  },
+  row: {flex: 1, flexDirection: 'row', gap: metrics.tileGap},
+  tile: {flex: 1, backgroundColor: metrics.paper},
+  empty: {flex: 1},
+  nav: {marginTop: metrics.sectionGap},
   image: {
     flex: 1,
     backgroundColor: metrics.paper,
