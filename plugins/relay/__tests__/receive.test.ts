@@ -130,6 +130,13 @@ test('the text box is centred, half the page wide, and stays on the page', () =>
   expect(long.bottom).toBeGreaterThan(long.top);
 });
 
+test('received files go to the private folder, never to shared storage (#164)', async () => {
+  const {api, native} = fakeRelay();
+  await receiveOne(api, note(), 'Supernote');
+  const fileFolder = (native.startReceive as jest.Mock).mock.calls[0][1];
+  expect(fileFolder).toBe('/plugin/tmp');
+});
+
 test('a second tap while receiving starts nothing', async () => {
   const {api} = fakeRelay({}, [{kind: 'stopped'}]);
   const show = jest.fn();

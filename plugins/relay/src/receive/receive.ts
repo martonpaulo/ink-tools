@@ -16,7 +16,7 @@ import {
   Taken,
 } from '../localsend/protocol';
 import {Relay} from '../native';
-import {TEMP_DIR} from '../send/sendPng';
+import {tempDir} from '../send/sendPng';
 import {NoteFiles, pdfToNote} from './pdfNote';
 
 /** How long one tap on «Receive» keeps the tablet visible. */
@@ -115,7 +115,7 @@ export async function receiveOne(
   const self = {alias, fingerprint: fingerprint.value};
   const started = await native.startReceive(
     dir.value,
-    TEMP_DIR,
+    tempDir(dir.value),
     LOCALSEND_PORT,
     MULTICAST_GROUP,
     receiverInfo(self),

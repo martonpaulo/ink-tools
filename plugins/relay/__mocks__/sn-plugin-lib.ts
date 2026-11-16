@@ -4,6 +4,7 @@ export const PluginManager = {
   registerConfigButtonListener: jest.fn(),
   registerButton: jest.fn(),
   showPluginView: jest.fn(),
+  getPluginDirPath: jest.fn(async () => '/plugin'),
 };
 
 export const PluginFileAPI = {

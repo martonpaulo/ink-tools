@@ -22,6 +22,24 @@ public final class TextFilesTest {
       } catch (java.io.IOException expected) {
         // refused
       }
+      check(TextFiles.delete(file) && !file.exists(), "a delete removes the file");
+      check(TextFiles.delete(file), "a missing file counts as deleted");
+      File guarded =
+          new File(folder, "guarded") {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean exists() {
+              return true;
+            }
+
+            @Override
+            public boolean delete() {
+              throw new SecurityException("not allowed to delete sdcard path outside whitelist");
+            }
+          };
+      // PluginHost's refusal must come back as false, never a throw that hangs the view (#164).
+      check(!TextFiles.delete(guarded), "a refused delete answers false");
     } finally {
       file.delete();
       nested.delete();

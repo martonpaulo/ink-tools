@@ -19,7 +19,8 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
-import {Outcome, sendCapture} from './send/sendPng';
+import {Outcome, sendCapture, tempDir} from './send/sendPng';
+import {copy} from './copy';
 import {NoteHost, Size} from './receive/receive';
 import {loadSettings, ownFingerprint} from './settings/device';
 
@@ -48,16 +49,22 @@ async function currentPage(pngPath: string): Promise<Result<string>> {
 export async function runSend(
   capture: Capture,
   native: Relay = relay(),
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
 ): Promise<Outcome> {
-  const settings = await loadSettings(native);
+  const dir = await pluginDir();
+  if (!dir.ok) {
+    return {kind: 'toast', text: copy.noImage};
+  }
+  const settings = await loadSettings(native, pluginDir);
   const sender: Sender = {
     alias: ALIAS,
-    fingerprint: await ownFingerprint(native, settings),
+    fingerprint: await ownFingerprint(native, settings, pluginDir),
   };
   return sendCapture(
     native,
     sender,
     settings.device,
+    tempDir(dir.value),
     capture,
     capture === 'page' ? currentPage : lassoImage,
   );

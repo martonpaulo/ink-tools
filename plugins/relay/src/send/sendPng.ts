@@ -2,11 +2,7 @@
  * The send flow (#98): make the PNG, offer it to the chosen receiver, upload it, say how it went,
  * and remove the PNG on every path.
  */
-import {
-  EMPTY_LASSO_CODE,
-  Result,
-  SHARED_ROOT,
-} from '@supernote-tools/sn-adapter/official';
+import {EMPTY_LASSO_CODE, Result} from '@supernote-tools/sn-adapter/official';
 import {
   announce,
   Device,
@@ -33,7 +29,15 @@ export const TIMEOUTS = {
   uploadMs: 30000,
 } as const;
 
-export const TEMP_DIR = `${SHARED_ROOT}/Relay/tmp`;
+/**
+ * Relay's temporary folder, inside its private folder (`getPluginDirPath`): a shared path such as
+ * `/storage/emulated/0/Relay/tmp` is outside PluginHost's whitelist, so every write and delete
+ * there fails (#164, `docs/supernote.md` › Plugins). It holds the sent PNGs, the received files
+ * and the PDF pages.
+ */
+export function tempDir(pluginDir: string): string {
+  return `${pluginDir}/tmp`;
+}
 
 /** What one tap ends in: a line for the toast, or the Settings view to pick a device. */
 export type Outcome = {kind: 'toast'; text: string} | {kind: 'choose'};
@@ -127,13 +131,14 @@ export async function sendFile(
 }
 
 /**
- * One tap: with no chosen device, the Settings view opens; otherwise `make` writes the PNG, which
- * is sent and then removed, whatever happened.
+ * One tap: with no chosen device, the Settings view opens; otherwise `make` writes the PNG in
+ * `tmp` (`tempDir`), which is sent and then removed, whatever happened.
  */
 export async function sendCapture(
   native: Relay,
   sender: Sender,
   device: Device | null,
+  tmp: string,
   name: string,
   make: (pngPath: string) => Promise<Result<string>>,
   now: () => number = Date.now,
@@ -142,7 +147,7 @@ export async function sendCapture(
     return {kind: 'choose'};
   }
   const fileName = `${name}-${now()}.png`;
-  const pngPath = `${TEMP_DIR}/${fileName}`;
+  const pngPath = `${tmp}/${fileName}`;
   let written: string | null = null;
   try {
     const made = await make(pngPath);
