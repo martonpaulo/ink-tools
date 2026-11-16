@@ -151,11 +151,14 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   `hw_type_change` [source].
 - A **plugin cannot read or write** the language: `/sdcard/.data/dictionary/` is outside the plugin
   file whitelist (`Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `InkHub/temp` and
-  `.data/plugin`), so the host's `PluginSecurityManager` denies it, the same denial as
-  [#23](https://github.com/martonpaulo/supernote-tools/issues/23). No broadcast, intent or provider
-  sets the language instead [source]. The plugin host runs as `android.uid.system`, so a plugin can
-  still `startActivity` the Settings screen and query providers; only file access is sandboxed
-  [measured uid, inference].
+  `.data/plugin`). A probe's own native `listFiles`, `createNewFile` and `FileOutputStream` were all
+  denied on the tablet (`SecurityException ... outside whitelist`, `Permission denied`), so the
+  sandbox blocks native file I/O, not just the JS API [measured, Probe `voc4oo2ysd7cdnkc`,
+  2026-11-16]. The guard sits in `libcore.io.BlockGuardOs` at the posix layer, gated by the thread's
+  plugin id [source]. No broadcast, intent or provider sets the language instead; a plugin can send
+  `hw_type_change` but it changes nothing [measured]. The plugin host runs as `android.uid.system`,
+  so a plugin can still `startActivity` and query providers; only file access is sandboxed [measured
+  uid].
 - **Shell ADB can write** `/sdcard/.data/dictionary/` [measured], so a host-side `snadb` command
   could switch the global language among the installed packs without a plugin.
 - Installed language packs: `en_US`, `es_ES`, `pt_BR`, `zh_CN`, `zh_TW`, `ja_JP` (147 MB total);

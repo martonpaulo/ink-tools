@@ -21,10 +21,10 @@ Marks, as in [`../supernote.md`](../supernote.md): **[measured]** on the owner's
 ## Answer in short
 
 - **Where the language is stored:** a single empty file whose name is the language code, in `/sdcard/.data/dictionary/default/`. The owner's tablet holds one file, `pt_BR` [measured]. The Settings app switches the language by deleting that file and creating a new one, then broadcasting `hw_type_change` [source]. There is no `Settings.System`/`Global`/`Secure` key, no system property and no "set active language" content provider; the file is the whole source of truth [source, measured].
-- **Can a plugin switch it?** No. The value is a file under `/sdcard/.data/dictionary/`, which is outside the plugin file whitelist, so the host's own sandbox denies a plugin reading or writing it — the same denial already measured in [#23](https://github.com/martonpaulo/supernote-tools/issues/23). No broadcast, intent or provider sets the language instead; only the Settings app writes the file [source]. **This closes the question the earlier study left open: a plugin cannot change the device recognition language, and no tablet round can make it possible.**
+- **Can a plugin switch it?** No. The value is a file under `/sdcard/.data/dictionary/`, which is outside the plugin file whitelist, so the host's own sandbox denies a plugin reading or writing it. A probe built for this issue, whose **own native Java** tried it, was denied on the tablet: `java.io.File.listFiles` and `FileOutputStream` both threw `SecurityException ... not allowed to access sdcard path outside whitelist`, and `createNewFile` failed `Permission denied` [measured, Probe `voc4oo2ysd7cdnkc`, 2026-11-16]. So the denial is not only the JavaScript file API ([#23](https://github.com/martonpaulo/supernote-tools/issues/23)); native code is blocked by the same guard. A plugin can send the `hw_type_change` broadcast, but that changes nothing — only the Settings app writes the file [measured broadcast sent, no effect; source]. **This closes the question the earlier study left open: a plugin cannot change the device recognition language, and no tablet round can make it possible.**
 - **What a plugin can do** (the host process runs as `android.uid.system`, so inter-app calls are not blocked, only file access is): open the Settings handwriting-language screen for the owner to tap [source], and recognise with its own bundled engine, independent of the device setting [inference].
 - **Switching from the computer works.** Shell ADB can write that folder [measured], so a `snadb` command could switch the global language without any plugin. Recognition uses the new language on the next call [inference from per-call reads].
-- **Many languages at once:** the device engine (MyScript iink) uses one language per recognition [official, source]. The only way to recognise several languages on the same strokes inside a plugin is the plugin's own engine (Google ML Kit Digital Ink, Esperanto included). Esperanto is not one of the device's 66 languages and is dropped by owner decision.
+- **Many languages at once:** the device engine (MyScript iink) uses one language per recognition [official, source]. The only way to recognise several languages on the same strokes inside a plugin is the plugin's own engine (Google ML Kit Digital Ink).
 
 ## 1. Where the language lives
 
@@ -55,12 +55,12 @@ So a language change applies to Note-app lasso convert and to a plugin's `recogn
 
 The plugin host `com.ratta.supernote.pluginhost` runs as `sharedUser=android.uid.system` (uid 1000) with `WRITE_SETTINGS` granted [measured, `dumpsys package`]. A plugin's own native code is loaded into that process with `DexClassLoader` [official SDK]. Two different limits apply:
 
-- **File access is sandboxed in-process.** The framework class `android.os.PluginSecurityManager` (decompiled from `framework.jar`) checks every file path against a whitelist while a plugin's code runs. `checkFileAccess` throws `SecurityException` for any path under `/storage/emulated/0/` that is not whitelisted. The whitelist is `Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `/storage/emulated/0/InkHub/temp` and `/storage/emulated/0/.data/plugin` added at host start [source `PluginSecurityManager`; `PluginApplication:112`]. `/storage/emulated/0/.data/dictionary` is **not** in it, so a plugin cannot read or write the language file. The same denial is measured in [#23](https://github.com/martonpaulo/supernote-tools/issues/23) for a different `/sdcard` path.
+- **File access is sandboxed in-process, at the syscall layer.** The check lives in `libcore.io.BlockGuardOs` — the posix layer under **all** Java file I/O — which calls the firmware's `PluginSecurityManager` on `open`, `mkdir`, `unlink`, `rename` and on `UnixFileSystem.list`, but only while the current thread carries a plugin id (`getCurrentPluginId() != null`) [source `BlockGuardOs` lines 248/226/342/354, `UnixFileSystem:257`]. So a plugin's **own native `java.io.File` / `FileOutputStream`** is gated exactly like the JavaScript file API, not only the bridge. `checkFileAccess` throws `SecurityException` for any path under `/storage/emulated/0/` that is not whitelisted. The whitelist is `Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `/storage/emulated/0/InkHub/temp` and `/storage/emulated/0/.data/plugin` added at host start [source `PluginSecurityManager`; `PluginApplication:112`]. `/storage/emulated/0/.data/dictionary` is **not** in it, so a plugin cannot read or write the language file. The same denial is measured in [#23](https://github.com/martonpaulo/supernote-tools/issues/23) for a different `/sdcard` path. (The hook is skipped only for a thread with no plugin id, such as a raw native C thread the host never seeded; that is a fragile sandbox-bypass surface, not a path we would build.)
 - **Inter-app calls are not sandboxed**, and the host's system uid bypasses the usual export checks. So a plugin's native code can `startActivity`, `sendBroadcast` and query a provider that its permission allows [inference from the sandbox scope and uid].
 
 | Need | Possible from a plugin? | Mark |
 | :--- | :--- | :--- |
-| Read or write the language file | **No** — outside the file whitelist | [source] whitelist; [measured] the same guard in [#23](https://github.com/martonpaulo/supernote-tools/issues/23) |
+| Read or write the language file | **No** — outside the file whitelist; the probe's own native `listFiles`, `createNewFile` and `FileOutputStream` were all denied on the tablet | [measured] Probe `voc4oo2ysd7cdnkc`, 2026-11-16; [source] whitelist |
 | Set the language by broadcast / intent / provider | **No** — nothing but the Settings app's file write changes it; `hw_type_change` only notifies, and no receiver switches the language on it | [source] no setter exists |
 | Open the Settings handwriting-language screen for the owner to tap | **Yes** (system-uid `startActivity`); this lights up the screen and leaves the note | [inference] from uid; activity confirmation is a device step (§ 9) |
 | Pass a language to `recognizeElements` | **No** — the API has no language parameter, and the host always uses the global file | [official, source] |
@@ -71,7 +71,7 @@ The earlier study guessed that a plugin's native code "might" write the setting 
 
 ## 4. Switching from the computer (snadb)
 
-Shell ADB (uid 2000, groups include `sdcard_rw`) can create and delete files in `/sdcard/.data/dictionary/` [measured: a probe file was written and removed]. So a host-side `snadb` command could switch the global handwriting language with no plugin and no sandbox limit:
+Shell ADB (uid 2000, groups include `sdcard_rw`) can create and delete files in `/sdcard/.data/dictionary/`. The switch was run end to end and reversed: `pt_BR` → replaced with `es_ES` → restored to `pt_BR`, each with `am broadcast -a hw_type_change`, leaving the folder with the single original file [measured, 2026-11-16]. So a host-side `snadb` command could switch the global handwriting language with no plugin and no sandbox limit:
 
 1. Delete the current `/sdcard/.data/dictionary/default/<old>` and create `/sdcard/.data/dictionary/default/<new>` (create first, then delete, to avoid an empty folder that would reset to `en_US`).
 2. Optionally broadcast `hw_type_change` so the Settings/keyboard UI refreshes its label.
@@ -82,11 +82,11 @@ The next Note-app recognition or plugin `recognizeElements` then uses the new la
 
 The device engine loads one language resource per recognition [official, source]. Each installed `conf/<lang>.conf` also adds `mul/mul-lk-english_secondary_1.res` with `EnableAlienCharacters`, which is MyScript's "secondary English" for isolated English words only [measured conf files]. For anything beyond that:
 
-| Method | How | Cost | Esperanto | Mark |
-| :--- | :--- | :--- | :--- | :--- |
-| Device engine, switch and repeat | Switch the language (only from the computer, § 4, or the Settings screen), recognise again | A switch per language; keyboard needs a restart | No (not installed, not among the 66) | [source], [official] |
-| Plugin with its own engine (Google ML Kit Digital Ink) | Native code feeds the strokes to one recognizer per language and picks the best | ~20 MB per language model, downloaded once; API 23+ (the tablet is 11) | **Yes** (`eo`) | [official] ML Kit; model download without Google Play services is a device step (§ 9) |
-| Host tool over snadb | Pull the `.note`, recognise on the Mac with any engine | Not live; needs the Mac | Engine's choice | [inference] |
+| Method | How | Cost | Mark |
+| :--- | :--- | :--- | :--- |
+| Device engine, switch and repeat | Switch the language (only from the computer, § 4, or the Settings screen), recognise again | A switch per language; keyboard needs a restart | [source], [official] |
+| Plugin with its own engine (Google ML Kit Digital Ink) | Native code feeds the strokes to one recognizer per language and picks the best | ~20 MB per language model, downloaded once; API 23+ (the tablet is 11) | [official] ML Kit; model download without Google Play services is a device step (§ 9) |
+| Host tool over snadb | Pull the `.note`, recognise on the Mac with any engine | Not live; needs the Mac | [inference] |
 
 MyScript states its engine "has not been designed for recognizing mixed languages" [official], so a page that mixes languages word by word needs a per-word, per-language pass under any method except a true multilingual resource (which only Ratta can ship in firmware, so it is not a path we can build).
 
@@ -114,9 +114,9 @@ Fast switching **without leaving the note**, using the device engine from a plug
 
 1. **A `snadb lang <code>` command** (host side). Switches the global language instantly from the computer, no plugin, no sandbox limit [mechanism measured, § 4]. For the owner at a desk. What the owner sees: nothing on the tablet until the next recognition, which then comes out in the new language. Proven: the file write and the per-call read. Not proven: the exact first-call timing after a switch (pen step).
 2. **A plugin sidebar button that opens the Settings handwriting-language screen.** On-tablet, official, uses the real setting; the owner taps the language and returns. A few taps, and it leaves the note. What the owner sees: the Settings language list. Proven: the host's system uid can start activities. Not proven: the exact activity name and that it starts from a plugin (device step, § 9).
-3. **A plugin with its own recognizer (Google ML Kit Digital Ink).** The only way to switch language instantly inside a note from the tablet, and the only Esperanto path; but it is a second engine (~20 MB per language, a model download) that ignores the device's own languages. The owner asked to drop ML Kit unless it is needed; it is the only on-tablet instant path, so it is listed for the owner to weigh, not recommended by default. Not proven: model download without Google Play services, and per-call time on the tablet (device step, § 9).
+3. **A plugin with its own recognizer (Google ML Kit Digital Ink).** The only way to switch language instantly inside a note from the tablet; but it is a second engine (~20 MB per language, a model download) that ignores the device's own languages. The owner asked to drop ML Kit unless it is needed; it is the only on-tablet instant path, so it is listed for the owner to weigh, not recommended by default. Not proven: model download without Google Play services, and per-call time on the tablet (device step, § 9).
 
-Esperanto is dropped (not among the device languages; only option 3 would reach it). No option depends on Ratta.
+Esperanto is out of scope (owner decision): it is not among the device's 66 languages, so only option 3 could reach it. No option depends on Ratta.
 
 A shared `packages/` module should own "recognise in language X" if more than one plugin needs it, so Lookup, Lingo and Ink2Pic share one path [inference].
 
@@ -124,9 +124,9 @@ A shared `packages/` module should own "recognise in language X" if more than on
 
 Collected so they run in one round, not one by one:
 
-1. **First-call timing after a switch** (option 1): with the pen, switch the language from the computer, then lasso-convert a word and read how long the first recognition takes versus a warm one (needs a pen lasso).
-2. **Settings-screen button** (option 2): confirm the exact handwriting-language activity name and that a plugin can start it (a small on-device probe; the probe's native step builds only on Linux/CI, see Findings).
-3. **ML Kit on the tablet** (option 3): whether the Esperanto model downloads without Google Play services, its RAM use, and the time for one word (a probe build plus a pen lasso).
+1. **Recognition output and first-call timing after a switch** (options 1-2): with the pen, after a switch, lasso-convert a word and read both that it comes out in the new language and how long the first recognition takes versus a warm one. The plugin recognition path and lasso convert are lasso-driven, so this needs a pen; the switch mechanism itself is already measured, and the readers call `getDefaultLang()` per recognition [source], so the output is expected to change on the next convert.
+2. **Settings-screen button** (option 2): confirm the exact handwriting-language activity name and that a plugin can start it. The probe's `ACTION_MAIN` guess for the IME did not resolve [measured]; the Settings handwriting screen is a `com.ratta.settings` fragment, so the launch needs its activity-and-extra, still to be found.
+3. **ML Kit on the tablet** (option 3): whether a language model downloads without Google Play services, its RAM use, and the time for one word (a probe build plus a pen lasso).
 
 ## Sources
 
