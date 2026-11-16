@@ -4,6 +4,8 @@ import {attempt, fail, ok, Result, THROWN_CODE} from './result';
 export const PERMISSION_INTERNET = 'plugin.permission.INTERNET';
 export const PERMISSION_FILE_READ = 'plugin.permission.FILE:READ';
 export const PERMISSION_FILE_WRITE = 'plugin.permission.FILE:WRITE';
+/** Deleting, replacing or renaming a file in shared storage needs it (docs/supernote.md › Plugins). */
+export const PERMISSION_FILE_DELETE = 'plugin.permission.FILE:DELETE';
 
 /**
  * `hasPermission` and `requestPermission` answers that mean granted: the SDK's Java documents 1

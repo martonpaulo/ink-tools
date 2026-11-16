@@ -5,7 +5,15 @@
  * when the grid closes. The last style chosen, and the two options, are kept in `styles.json`
  * and lead the next grid.
  */
-import {DEVICE, Done, EditDeps, onePicture, RETOUCH_DIR, runEdit} from './edit';
+import {
+  DEVICE,
+  Done,
+  EditDeps,
+  onePicture,
+  removeFile,
+  RETOUCH_DIR,
+  runEdit,
+} from './edit';
 import {STYLE_ORDER} from './edits';
 import {NO_OPTIONS, StyleId, StyleOptions} from './native';
 
@@ -150,7 +158,7 @@ export async function removeFiles(
   deps: EditDeps = DEVICE,
 ): Promise<void> {
   for (const path of paths) {
-    await deps.native.deleteFile(path);
+    await removeFile(path, deps);
   }
 }
 

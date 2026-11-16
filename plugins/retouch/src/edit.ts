@@ -124,6 +124,14 @@ export function onePicture(elements: object[]): PictureElement | null {
 const why = (what: string, result: {code: number; message: string}) =>
   `${what}: ${result.code} ${result.message}`;
 
+/** Deletes `path`; a failure is logged, never thrown, so the press goes on (#182). */
+export async function removeFile(path: string, deps: EditDeps): Promise<void> {
+  const removed = await deps.native.deleteFile(path);
+  if (!removed.ok) {
+    deps.log(why(`delete ${path}`, removed));
+  }
+}
+
 const sizeOf = (rect: Rect) => ({
   width: Math.round(rect.right - rect.left),
   height: Math.round(rect.bottom - rect.top),
@@ -266,7 +274,7 @@ async function pixelEdit(
   } finally {
     for (const path of [preview.value, originalPath, resultPath]) {
       if (path && !keep.has(path)) {
-        await deps.native.deleteFile(path);
+        await removeFile(path, deps);
       }
     }
   }
@@ -324,9 +332,6 @@ async function save(change: Change, deps: EditDeps): Promise<void> {
     return;
   }
   for (const path of change.drop) {
-    const removed = await deps.native.deleteFile(path);
-    if (!removed.ok) {
-      deps.log(why(`delete ${path}`, removed));
-    }
+    await removeFile(path, deps);
   }
 }
