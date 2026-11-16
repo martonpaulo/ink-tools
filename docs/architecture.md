@@ -9,6 +9,7 @@ history is in [`decisions.md`](decisions.md).
 - [The layers](#the-layers)
 - [Shared packages](#shared-packages)
 - [The plugins (on device)](#the-plugins-on-device)
+- [The tablet apps](#the-tablet-apps)
 - [The host tools](#the-host-tools)
 - [What this means for the cloud agent](#what-this-means-for-the-cloud-agent)
 
@@ -95,15 +96,17 @@ supernote-tools/
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     bridge/         # to-do + calendar + digest, each module and provider opt in/out
-    lookup/         # write a word -> insert a picture or a definition (each mode opt in/out)
-    lingo/          # write a word -> insert its translation; language pairs opt in/out
+    lookup/         # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
+    lingo/          # retiring: translation moved to lookup
+    ink2pic/        # retired: lookup replaced it
     relay/          # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     retouch/        # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
     probe/          # permanent on-device investigation plugin
   cli/
     snadb/          # Supernote ADB control CLI (formerly supernote-adb)
   apps/
-    <macOS note editor, name TBD>   # edit Supernote .note files on the Mac
+    lingo-app/      # sideloaded tablet app: switch the handwriting language tablet-wide
+    <desk>          # planned macOS app: edit Supernote .note files on the Mac
 ```
 
 ## The plugins (on device)
@@ -154,11 +157,13 @@ supernote-tools/
     Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh
     tokens expire after 7 days; «In production» without verification keeps them, behind an
     «unverified app» warning.
-- **`lookup`** — write a word, lasso it, insert a **picture** or a **definition**. Merges today's
-  `ink2pic` with the planned `ink2def`; each mode opt in/out. A new plugin with its own `pluginID`,
-  installed beside `ink2pic` until it is retired (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)).
-- **`lingo`** — write a word, lasso it, insert its **translation**. One plugin; each **language pair**
-  (e.g. `zh-pt`, `es-pt`) is opt in/out, and more pairs can be added over time.
+- **`lookup`** — write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
+  or a **translation**; each mode opt in/out, and each language pair opt in/out under the
+  translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110)); it replaced `ink2pic`,
+  which is retired and uninstalled from the tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)).
+- **`lingo`** (retiring) — the translation plugin Lookup's «Insert translation» replaces
+  ([#158](https://github.com/martonpaulo/supernote-tools/issues/158), [#159](https://github.com/martonpaulo/supernote-tools/issues/159)); its folder is removed once that button passes on the tablet ([#161](https://github.com/martonpaulo/supernote-tools/issues/161)).
+  The shared translation flow it used is `ink-core`'s.
 - **`relay`** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
   LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/supernote-tools/issues/98), [#49](https://github.com/martonpaulo/supernote-tools/issues/49)). Its network half is a native
   Java module, as `probe`'s listener is.
@@ -168,22 +173,28 @@ supernote-tools/
 - **`probe`** — a minimal plugin for on-device investigation (provider reachability, permission
   checks), reused whenever a device question comes up.
 
-`lookup`, `lingo` and `retouch` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
+`lookup`, `retouch` and the retiring `lingo` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
 `sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lingo`, `lookup`, `relay` and `retouch` call `sn-plugin-lib` only
-through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `ink2pic` as it stands today is the seed of `ink-core` + the picture mode
-of `lookup`, and keeps shipping until the merge lands; then it is retired, and `lookup` finds
-stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). The first step of that move is done: the
-picture search core and its pixel measures are `packages/picture-search`.
+through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `ink2pic` was the seed of `ink-core` and of `lookup`'s picture modes; it is retired, and `lookup`
+finds stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/supernote-tools/issues/125)). Its picture search core and pixel
+measures are `packages/picture-search`.
+
+## The tablet apps
+
+- **Lingo** (`apps/lingo-app/`) — a sideloaded Android app, not a plugin, that switches the
+  handwriting recognition language of the whole tablet from a floating button or its sidebar entry
+  ([#157](https://github.com/martonpaulo/supernote-tools/issues/157), [#160](https://github.com/martonpaulo/supernote-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
+  `ink-core`; its pure cycle and file switch are unit-tested on the JVM.
 
 ## The host tools
 
 - **`snadb`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
   codes, no root (formerly `supernote-adb`).
-- **macOS note editor** (name to be decided) — edit Supernote `.note` files on the Mac. Planned; not
-  yet a subproject.
+- **`desk`** — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; not
+  yet a subproject ([#48](https://github.com/martonpaulo/supernote-tools/issues/48)).
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
 
