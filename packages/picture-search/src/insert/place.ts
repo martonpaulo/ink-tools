@@ -11,7 +11,7 @@ import {
   type Placement,
   type Rect,
 } from '@supernote-tools/ink-core';
-import {logged} from '../log/memory';
+import {log, logged} from '../log/memory';
 import {
   createElement,
   insertPageElements,
@@ -30,6 +30,7 @@ const host: PlaceHost<CallFailure> = {
   insertPageElements,
   failure: message => fail(THROWN_CODE, message),
   logged: (label, call) => logged(label, call),
+  log,
 };
 
 /** Inserts the picture beside the lasso; its value is the rect the picture was placed at (#73). */

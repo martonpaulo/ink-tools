@@ -95,22 +95,90 @@ function besideRect(lasso: Rect, picture: Picture, page: Size): Rect | null {
   return {left, top, right: left + size.width, bottom: top + size.height};
 }
 
-/** The picture's rect for the person's placement; null when it fits nowhere near the word. */
+/** True when the two rects share area; touching edges do not count. */
+function crosses(a: Rect, b: Rect): boolean {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+/** True when no occupied rect crosses `rect`. */
+export function isFree(rect: Rect, occupied: readonly Rect[]): boolean {
+  return !occupied.some(other => crosses(rect, other));
+}
+
+/**
+ * The first free place for `rect`'s size near the word (#152): moved down past each occupied rect
+ * it crosses, PLACE_GAP below it, until it is free or leaves the page; else the same upwards from
+ * PLACE_GAP above the word. Null when neither direction has a free place of that size; it never
+ * shrinks the rect.
+ */
+export function freeRect(
+  lasso: Rect,
+  rect: Rect,
+  page: Size,
+  occupied: readonly Rect[],
+): Rect | null {
+  const width = rect.right - rect.left;
+  const height = rect.bottom - rect.top;
+  const at = (top: number): Rect => ({
+    left: rect.left,
+    top,
+    right: rect.left + width,
+    bottom: top + height,
+  });
+  for (let top = lasso.bottom + PLACE_GAP; top + height <= page.height; ) {
+    const hits = occupied.filter(other => crosses(at(top), other));
+    if (hits.length === 0) {
+      return at(top);
+    }
+    top = Math.max(...hits.map(hit => hit.bottom)) + PLACE_GAP;
+  }
+  for (let bottom = lasso.top - PLACE_GAP; bottom - height >= 0; ) {
+    const hits = occupied.filter(other => crosses(at(bottom - height), other));
+    if (hits.length === 0) {
+      return at(bottom - height);
+    }
+    bottom = Math.min(...hits.map(hit => hit.top)) - PLACE_GAP;
+  }
+  return null;
+}
+
+/** Today's below rect moved into free space when the page's ink is known; else it as it is. */
+function freeBelowRect(
+  lasso: Rect,
+  picture: Picture,
+  page: Size,
+  occupied: readonly Rect[],
+): Rect | null {
+  const rect = belowRect(lasso, picture, page);
+  if (!rect || isFree(rect, occupied)) {
+    return rect;
+  }
+  return freeRect(lasso, rect, page, occupied) ?? rect;
+}
+
+/**
+ * The picture's rect for the person's placement; null when it fits nowhere near the word.
+ * `occupied` holds the page's other strokes, pictures and text boxes (#152): below and beside
+ * avoid them when a free place exists, else keep today's rect; `replace` covers the word on purpose.
+ */
 export function placeRect(
   lasso: Rect,
   picture: Picture,
   page: Size,
   placement: Placement = 'below',
+  occupied: readonly Rect[] = [],
 ): Rect | null {
   switch (placement) {
     case 'replace':
       return inPlaceRect(lasso, picture, page);
-    case 'beside':
-      return (
-        besideRect(lasso, picture, page) ?? belowRect(lasso, picture, page)
-      );
+    case 'beside': {
+      const beside = besideRect(lasso, picture, page);
+      return beside && isFree(beside, occupied)
+        ? beside
+        : freeBelowRect(lasso, picture, page, occupied);
+    }
     case 'below':
-      return belowRect(lasso, picture, page);
+      return freeBelowRect(lasso, picture, page, occupied);
   }
 }
 
@@ -126,6 +194,8 @@ export type PlaceHost<F extends {ok: false; message: string}> = {
   ): Promise<Outcome<boolean, F>>;
   failure(message: string): F;
   logged?: Logged<F>;
+  /** One line for the plugin's log. */
+  log?: (line: string) => void;
 };
 
 /** Inserts the picture beside the lasso; its value is the rect the picture was placed at. */
@@ -137,9 +207,13 @@ export async function placeAtLasso<F extends {ok: false; message: string}>(
   placement: Placement = 'below',
 ): Promise<Outcome<Rect, F>> {
   const logged = loggerOf(host);
-  const rect = placeRect(place.rect, picture, place.pageSize, placement);
+  const occupied = place.occupied ?? [];
+  const rect = placeRect(place.rect, picture, place.pageSize, placement, occupied);
   if (!rect) {
     return host.failure(`no band of ${MIN_PLACE_BAND} px beside the lasso`);
+  }
+  if (!isFree(rect, occupied)) {
+    host.log?.(`place: no free place of ${rect.right - rect.left} x ${rect.bottom - rect.top} px, today's place over the ink`);
   }
   const created = await logged('createElement(picture)', () =>
     host.createElement(host.pictureType),

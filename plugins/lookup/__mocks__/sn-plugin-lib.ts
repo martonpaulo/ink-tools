@@ -18,6 +18,7 @@ export const PluginCommAPI = {
 
 export const PluginFileAPI = {
   getPageSize: jest.fn(),
+  getElements: jest.fn(),
 };
 
 export const PluginNoteAPI = {

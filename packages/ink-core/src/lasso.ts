@@ -18,6 +18,11 @@ export type LassoPlace = {
    * word is deleted or the picture lassoed, and nothing is done when they changed.
    */
   recheck?: true;
+  /**
+   * The page's strokes, pictures and text boxes, in page pixels, read with the lasso (#152); absent
+   * when the read failed or ran over its budget, so the placement is today's.
+   */
+  occupied?: Rect[];
 };
 
 export type LassoQuery = {query: string; place: LassoPlace | null};
@@ -43,6 +48,8 @@ export type LassoHost<F extends {ok: false; message: string}> = {
   getCurrentPageNum(): Promise<Outcome<number, F>>;
   getPageSize(path: string, page: number): Promise<Outcome<Size, F>>;
   recognizeElements(elements: object[], size: Size): Promise<Outcome<string, F>>;
+  /** The page's occupied rects (#152); without it, or when it fails, the placement is today's. */
+  getOccupied?(path: string, page: number): Promise<Outcome<Rect[], F>>;
   /** The lasso holds no handwriting. */
   emptyLasso(message: string): F;
   /** Any other failure. */
@@ -89,8 +96,18 @@ export async function readLassoQuery<F extends {ok: false; message: string}>(
   if (!size.ok) {
     return size;
   }
+  const getOccupied = host.getOccupied;
+  const occupied =
+    rect.ok && getOccupied
+      ? await logged('getOccupied', () => getOccupied(path.value, page.value))
+      : null;
   const place = rect.ok
-    ? {rect: rect.value, page: page.value, pageSize: size.value}
+    ? {
+        rect: rect.value,
+        page: page.value,
+        pageSize: size.value,
+        ...(occupied?.ok ? {occupied: occupied.value} : {}),
+      }
     : null;
   const text = await logged('recognizeElements', () =>
     host.recognizeElements(elements.value, size.value),

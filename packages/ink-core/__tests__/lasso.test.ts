@@ -34,6 +34,22 @@ describe('readLassoQuery (#109)', () => {
     expect(recognize).toHaveBeenCalledWith([{type: 700}], {width: 1920, height: 2560});
   });
 
+  it('keeps the page\'s occupied rects with the place, and only the place when the read fails (#152)', async () => {
+    const ink = [{left: 100, top: 300, right: 900, bottom: 360}];
+    const read = jest.fn(() => ok(ink));
+    const answer = await readLassoQuery(host({getOccupied: read}));
+    expect(read).toHaveBeenCalledWith('/Note/a.note', 3);
+    expect(answer.ok && answer.value.place?.occupied).toEqual(ink);
+    const failed = await readLassoQuery(
+      host({getOccupied: async () => ({ok: false, code: -1, message: 'over budget'})}),
+    );
+    expect(failed.ok && failed.value.place).toEqual({
+      rect: {left: 100, top: 200, right: 300, bottom: 260},
+      page: 3,
+      pageSize: {width: 1920, height: 2560},
+    });
+  });
+
   it('uses the known elements and loses only the place without a rect', async () => {
     const read = jest.fn(() => ok<object[]>([]));
     const answer = await readLassoQuery(

@@ -11,6 +11,7 @@ import {
   defineFirst,
   DefinitionResult,
   DEFINED_LANGUAGES,
+  isFree,
   LanguageCode,
   LassoPlace,
   LassoQuery,
@@ -28,6 +29,7 @@ import {
   getLassoElements,
   getLassoRect,
   getPageSize,
+  occupiedRects,
   insertText,
   recognizeElements,
   Result,
@@ -79,6 +81,8 @@ const DEVICE: DefineDeps = {
       getCurrentPageNum,
       getPageSize,
       recognizeElements,
+      getOccupied: (path, page) =>
+        occupiedRects(path, page, line => console.log(`Lookup: ${line}`)),
       emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
       failure: message => fail(THROWN_CODE, message),
     }),
@@ -113,6 +117,7 @@ export function boxRect(text: string, place: LassoPlace): Rect | null {
     {width: BOX_WIDTH, height: lines * LINE_HEIGHT},
     place.pageSize,
     'below',
+    place.occupied,
   );
 }
 
@@ -151,6 +156,9 @@ export async function defineLasso(deps: DefineDeps = DEVICE): Promise<Defined> {
   if (!rect) {
     deps.log('define: no room below the lasso');
     return {ok: false, text: copy['error.place']};
+  }
+  if (place.occupied && !isFree(rect, place.occupied)) {
+    deps.log('define: no free place below or above the word: over the ink');
   }
   const inserted = await deps.insert({text, rect, fontSize: FONT_SIZE});
   if (!inserted.ok || !inserted.value) {

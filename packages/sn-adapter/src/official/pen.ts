@@ -34,12 +34,19 @@ type Accessor<T> = {
   size(): Promise<number>;
   getRange(start: number, count: number): Promise<T[]>;
 };
+type SdkRect = {left: number; top: number; right: number; bottom: number};
 type SdkElement = {
   uuid?: string;
   type?: number;
   stroke?: {points?: Accessor<PenPoint>} | null;
+  picture?: {rect?: SdkRect} | null;
+  textBox?: {textRect?: SdkRect} | null;
+  geometry?: {points?: PenPoint[]} | null;
   recycle?: () => Promise<void>;
 };
+
+/** The time pageOccupied may take before it gives up (#152): the press must stay quick. */
+export const OCCUPIED_BUDGET_MS = 300;
 
 function thrown(error: unknown): Result<never> {
   return fail(
@@ -135,4 +142,98 @@ export async function recycleElement(element: object): Promise<Result<true>> {
   } catch (error) {
     return thrown(error);
   }
+}
+
+/** The smallest rect around the points; null for none. */
+function pointsRect(points: readonly PenPoint[]): SdkRect | null {
+  if (points.length === 0) {
+    return null;
+  }
+  const xs = points.map(point => point.x);
+  const ys = points.map(point => point.y);
+  return {
+    left: Math.min(...xs),
+    top: Math.min(...ys),
+    right: Math.max(...xs),
+    bottom: Math.max(...ys),
+  };
+}
+
+/** Where one element is on the page, in page pixels; null for a kind with no known bounds. */
+async function elementRect(element: SdkElement): Promise<Result<SdkRect | null>> {
+  if (element.picture?.rect) {
+    return ok(element.picture.rect);
+  }
+  if (element.textBox?.textRect) {
+    return ok(element.textBox.textRect);
+  }
+  if (element.geometry?.points) {
+    return ok(pointsRect(element.geometry.points));
+  }
+  // Titles and links mark strokes, which are read as strokes; maxX and maxY are deprecated and in
+  // EMR units (sn-plugin-lib 0.2.3, Element.d.ts), so a stroke's bounds come from its points.
+  const points = await strokePoints(element);
+  return points.ok ? ok(pointsRect(points.value)) : points;
+}
+
+type Occupied = {rects: SdkRect[]; elements: number; ms: number};
+
+/**
+ * The rects of every stroke, picture, text box and shape on a page (#152), for a placement that
+ * avoids the person's ink. It fails once `budgetMs` has passed, so a full page keeps today's
+ * placement; every element read is recycled.
+ */
+async function pageOccupied(
+  page: number,
+  notePath: string,
+  budgetMs: number,
+  now: () => number,
+): Promise<Result<Occupied>> {
+  const started = now();
+  const elements = await getElements(page, notePath);
+  if (!elements.ok) {
+    return elements;
+  }
+  const all = elements.value as SdkElement[];
+  const rects: SdkRect[] = [];
+  try {
+    for (const element of all) {
+      if (now() - started > budgetMs) {
+        return fail(
+          THROWN_CODE,
+          `page read over ${budgetMs} ms after ${rects.length} of ${all.length} elements`,
+        );
+      }
+      const rect = await elementRect(element);
+      if (!rect.ok) {
+        return rect;
+      }
+      if (rect.value) {
+        rects.push(rect.value);
+      }
+    }
+    return ok({rects, elements: all.length, ms: now() - started});
+  } finally {
+    await Promise.all(all.map(element => recycleElement(element)));
+  }
+}
+
+/**
+ * pageOccupied as a lasso host's `getOccupied` (#152): the rects, with one line for the log that
+ * says how many elements took how long, or why the placement stays today's.
+ */
+export async function occupiedRects(
+  notePath: string,
+  page: number,
+  log: (line: string) => void = () => {},
+  budgetMs: number = OCCUPIED_BUDGET_MS,
+  now: () => number = Date.now,
+): Promise<Result<SdkRect[]>> {
+  const read = await pageOccupied(page, notePath, budgetMs, now);
+  if (!read.ok) {
+    log(`place: ${read.message}: today's placement`);
+    return read;
+  }
+  log(`place: page read ${read.value.elements} elements in ${read.value.ms} ms`);
+  return ok(read.value.rects);
 }

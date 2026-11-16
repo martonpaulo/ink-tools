@@ -8,7 +8,7 @@ import {
   type LassoHost,
   type LassoQuery,
 } from '@supernote-tools/ink-core';
-import {logged} from '../log/memory';
+import {log, logged} from '../log/memory';
 import {
   getLassoElements,
   getLassoRect,
@@ -16,6 +16,7 @@ import {
   getCurrentFilePath,
   getCurrentPageNum,
   getPageSize,
+  occupiedRects,
   CallFailure,
   EMPTY_LASSO_CODE,
   fail,
@@ -32,6 +33,7 @@ const host: LassoHost<CallFailure> = {
   getCurrentPageNum,
   getPageSize,
   recognizeElements,
+  getOccupied: (path, page) => occupiedRects(path, page, log),
   emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
   failure: message => fail(THROWN_CODE, message),
   logged: (label, call) => logged(label, call),

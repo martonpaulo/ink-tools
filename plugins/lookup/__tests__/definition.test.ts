@@ -62,6 +62,13 @@ test('the box is 640 px wide, below the word, never over it (#115)', () => {
   expect(rect!.left).toBe(place.rect.left);
 });
 
+test('the box goes past a written line under the word, into free space (#152)', () => {
+  const below = place.rect.bottom + 24;
+  const line = {left: 0, top: below + 5, right: 1900, bottom: below + 80};
+  const rect = boxRect(definitionText('maçã', found), {...place, occupied: [line]});
+  expect(rect!.top).toBe(line.bottom + 24);
+});
+
 test('a press inserts the definition below the lasso and logs each step', async () => {
   const d = deps();
   const asked: string[][] = [];

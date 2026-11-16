@@ -10,6 +10,7 @@
 import {
   ChineseCandidate,
   Direction,
+  isFree,
   LassoPlace,
   LassoQuery,
   LookupResult,
@@ -33,6 +34,7 @@ import {
   getLassoElements,
   getLassoRect,
   getPageSize,
+  occupiedRects,
   insertText,
   recognizeElements,
   Result,
@@ -69,6 +71,8 @@ const DEVICE: TranslateDeps = {
       getCurrentPageNum,
       getPageSize,
       recognizeElements,
+      getOccupied: (path, page) =>
+        occupiedRects(path, page, line => console.log(`Lingo: ${line}`)),
       emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
       failure: message => fail(THROWN_CODE, message),
     }),
@@ -142,6 +146,7 @@ export function boxRect(text: string, place: LassoPlace): Rect | null {
     {width: BOX_WIDTH, height: Math.max(MIN_PLACE_BAND, lines * LINE_HEIGHT)},
     place.pageSize,
     'beside',
+    place.occupied,
   );
 }
 
@@ -183,6 +188,9 @@ export async function translateLasso(
   if (!rect) {
     deps.log(`${name}: no room beside the lasso`);
     return {ok: false, text: copy['error.place']};
+  }
+  if (place.occupied && !isFree(rect, place.occupied)) {
+    deps.log(`${name}: no free place near the word: over the ink`);
   }
   const inserted = await deps.insert({text, rect, fontSize: FONT_SIZE});
   if (!inserted.ok || !inserted.value) {
