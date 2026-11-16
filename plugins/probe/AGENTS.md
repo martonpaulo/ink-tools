@@ -7,7 +7,8 @@ symlink points at this file.
 
 A permanent developer-only Supernote plugin ([#39](https://github.com/martonpaulo/supernote-tools/issues/39)) for one-off on-device experiments: read content
 providers, test writes, check framework guards, log to logcat. Same runtime and pinned versions as
-`../ink2pic`. Never shipped to users; its `.snplg` is a build output, not a release.
+`../ink2pic`. Never shipped to users; its `.snplg` is a build output, not a release. Its display
+name is «Plugin Diagnostics», applied with the folder rename of [#194](https://github.com/martonpaulo/ink-tools/issues/194); `pluginID` never changes.
 
 ## Rules
 
