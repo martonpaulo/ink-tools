@@ -21,8 +21,9 @@ index, as an adaptation of this data, is under CC BY-SA 4.0 too. A plugin that i
 
 ## Wiktionary test fixtures
 
-`__tests__/fixtures/wiktionary-pt-recorded.json` and `wiktionary-es-recorded.json` are the MediaWiki
-`action=parse` answers for pt.wiktionary «maçã» (revision 3188657) and es.wiktionary «manzana»
-(revision 6383798), recorded unchanged on 2026-11-16 ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)). The text is by the Wiktionary
+`__tests__/fixtures/wiktionary-pt-recorded.json`, `wiktionary-es-recorded.json` and
+`wiktionary-zh-recorded.json` are the MediaWiki `action=parse` answers for pt.wiktionary «maçã»
+(revision 3188657), es.wiktionary «manzana» (revision 6383798) and pt.wiktionary «苹果» (revision
+3019617), recorded unchanged on 2026-11-16 ([#115](https://github.com/martonpaulo/supernote-tools/issues/115), [#127](https://github.com/martonpaulo/ink-tools/issues/127)). The text is by the Wiktionary
 contributors under CC BY-SA 4.0 (<https://creativecommons.org/licenses/by-sa/4.0/>); the page
 history names them. The fixtures are only read by tests and are not part of any plugin build.

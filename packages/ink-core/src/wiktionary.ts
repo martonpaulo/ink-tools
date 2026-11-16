@@ -7,8 +7,8 @@
  * The page layout is a community convention, not an API, so the parse fails closed: a page with no
  * definition line for the language is an empty list, never a guess. The layouts follow each
  * Wiktionary's style guide (pt «Wikcionário:Livro de estilo», es «Wikcionario:Estructura");
- * shortcut: the fixtures are cut from those guides, because the cloud proxy refuses
- * `*.wiktionary.org`; replace them with recorded pages on the Mac (#115 and #127 Tasks).
+ * Some fixtures are cut from those guides, because the cloud proxy refuses `*.wiktionary.org`;
+ * the `-recorded` ones are real pt, es and zh pages, recorded on the Mac (#115, #127).
  */
 import type {
   Definition,
@@ -167,15 +167,24 @@ export function readParseAnswer(body: string): string | null {
   return fields.parse.wikitext;
 }
 
+/** A reading in brackets, such as pinyin: Latin letters with their tone marks. */
+const READING = /[(（]\s*([\p{Script=Latin}\s'’]+)\s*[)）]/u;
+
 /** One translation's text: `[[maçã]]` or `苹果 (píngguǒ)`, its reading split out. */
-function translationOf(raw: string, sense: string | null): Translation | null {
+function translationOf(
+  raw: string,
+  sense: string | null,
+  after?: string,
+): Translation | null {
   const text = plainText(raw);
   if (text === '') return null;
   // A reading in brackets after the word, such as pinyin: Latin letters with their tone marks.
-  const reading = /^(.*?)\s*[(（]\s*([\p{Script=Latin}\s'’]+)\s*[)）]$/u.exec(text);
+  const reading = new RegExp(`^(.*?)\\s*${READING.source}$`, 'u').exec(text);
   const translation: Translation = reading
     ? {text: reading[1].trim(), reading: reading[2].trim()}
-    : {text};
+    : after
+      ? {text, reading: after}
+      : {text};
   if (translation.text === '') return null;
   return sense ? {...translation, sense} : translation;
 }
@@ -187,7 +196,9 @@ function translationOf(raw: string, sense: string | null): Translation | null {
 function templateTranslations(name: string, args: string[], to: LanguageCode): string[] | null {
   if (args[0] !== to) return null;
   const rest = args.slice(1);
-  if (name === 'trad') return rest.join('|').split(/[,;]/);
+  // Each argument is a word, and one argument may list several: the recorded pt «maçã» has
+  // `{{trad|zh|苹果|林檎}}`, which gave the one word «苹果|林檎» (#127).
+  if (name === 'trad') return rest.join(',').split(/[,;]/);
   const numbered = rest.filter(arg => /^t\d+\s*=/.test(arg)).map(arg => arg.replace(/^t\d+\s*=/, ''));
   if (numbered.length > 0) return numbered;
   // `t+`: a sense number, then the words; a named argument is not a word.
@@ -218,8 +229,14 @@ export function parseTranslations(
     for (const match of line.matchAll(/\{\{\s*(trad|t\+?)\s*\|((?:[^{}]|\{\{[^{}]*\}\})*)\}\}/g)) {
       const name = match[1];
       const args = match[2].split(/\|(?![^[]*\]\])/).map(arg => arg.trim());
-      for (const word of templateTranslations(name, args, to) ?? []) {
-        const translation = translationOf(word, sense);
+      // pt writes the readings after the template, in the words' order: `{{trad|zh|苹果|林檎}}
+      // (píngguǒ), (línqín)` (#127).
+      const end = (match.index ?? 0) + match[0].length;
+      const tail = line.slice(end).split('{{')[0];
+      const readings = [...tail.matchAll(new RegExp(READING.source, 'gu'))].map(r => r[1].trim());
+      const words = templateTranslations(name, args, to) ?? [];
+      for (const [i, word] of words.entries()) {
+        const translation = translationOf(word, sense, readings[i]);
         if (translation === null) continue;
         if (translations.some(known => known.text === translation.text)) continue;
         translations.push(translation);

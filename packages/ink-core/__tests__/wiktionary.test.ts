@@ -1,8 +1,8 @@
 /**
  * Most fixtures are cut from each Wiktionary's style guide (the cloud proxy refuses
  * `*.wiktionary.org`). The `-recorded` ones are real `action=parse` answers recorded on the Mac on
- * 2026-11-16: pt «maçã» revision 3188657 and es «manzana» revision 6383798 (CC BY-SA 4.0, see
- * packages/ink-core/NOTICE.md).
+ * 2026-11-16: pt «maçã» revision 3188657, es «manzana» revision 6383798 and pt «苹果» revision
+ * 3019617, the page a Chinese word is translated from (CC BY-SA 4.0, see packages/ink-core/NOTICE.md).
  */
 import ptPage from './fixtures/wiktionary-pt.json';
 import ptRecorded from './fixtures/wiktionary-pt-recorded.json';
@@ -10,6 +10,7 @@ import esRecorded from './fixtures/wiktionary-es-recorded.json';
 import esPage from './fixtures/wiktionary-es.json';
 import missingPage from './fixtures/wiktionary-missing.json';
 import zhPage from './fixtures/wiktionary-zh.json';
+import zhRecorded from './fixtures/wiktionary-zh-recorded.json';
 import {
   MAX_SENSES,
   MAX_TRANSLATIONS,
@@ -30,6 +31,7 @@ const FIXTURES: Record<string, unknown> = {
   'wiktionary-zh.json': zhPage,
   'wiktionary-pt-recorded.json': ptRecorded,
   'wiktionary-es-recorded.json': esRecorded,
+  'wiktionary-zh-recorded.json': zhRecorded,
 };
 /** The answer body as the API sends it. */
 const fixture = (name: string) => JSON.stringify(FIXTURES[name]);
@@ -170,4 +172,25 @@ test('Wiktionary first, Apertium only when it has no line; zh never asks Apertiu
   const zh = await translateFirst(providers, {word: '苹果', from: 'zh', to: 'pt'});
   expect(zh).toEqual({translations: [], providerId: null, errors: []});
   expect(asked.some(url => url.includes('apertium'))).toBe(false);
+});
+
+test('recorded pages: the pt, es and zh translation lines as the live Wiktionaries write them (#127)', async () => {
+  // pt lists the Chinese words as arguments, with their readings after the template; they were
+  // one word «苹果|林檎» before.
+  expect(parseTranslations(wikitext('wiktionary-pt-recorded.json'), 'pt', 'zh')).toEqual([
+    {text: '苹果', reading: 'píngguǒ'},
+    {text: '林檎', reading: 'línqín'},
+  ]);
+  expect(parseTranslations(wikitext('wiktionary-pt-recorded.json'), 'pt', 'es')).toEqual([
+    {text: 'manzana'},
+  ]);
+  expect(parseTranslations(wikitext('wiktionary-es-recorded.json'), 'es', 'pt')).toEqual([
+    {text: 'maçã'},
+  ]);
+  expect(parseTranslations(wikitext('wiktionary-es-recorded.json'), 'es', 'zh')).toEqual([
+    {text: '苹果'},
+  ]);
+  const wiktionary = wiktionaryDefiner(async () => fixture('wiktionary-zh-recorded.json'));
+  const zh = await translateFirst([wiktionary], {word: '苹果', from: 'zh', to: 'pt'});
+  expect(zh.translations).toEqual([{text: 'maçã'}]);
 });
