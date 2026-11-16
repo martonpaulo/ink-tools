@@ -216,7 +216,9 @@ like editing a PDF. Scope (interview 2026-11-14, revised):
 export to other people is not a priority either. The value is a safe `.note` editor on a big screen.
 
 The full editor is the goal from the start, not a viewer and exporter first on `supernotelib`
-(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
+(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). It fetches and writes back the tablet's notes over the
+cable through `inkctl`, with no ADB code of its own (owner, 2026-11-16,
+[#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
 ## bridge
 
@@ -263,7 +265,8 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
   the fingerprint it announced. A changed certificate is a failed send, never a silent re-pin.
 - Not in scope: the whole note as a PDF, which the Supernote Partner app already exports (product
   audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)); a device without LocalSend; anything over the internet.
-  A lasso selection as typed text is [#99](https://github.com/martonpaulo/ink-tools/issues/99).
+  Sending lassoed handwriting as typed text lives here, beside «Send Page»
+  ([#99](https://github.com/martonpaulo/ink-tools/issues/99), owner, 2026-11-16).
 
 **Receive half** ([#49](https://github.com/martonpaulo/ink-tools/issues/49), owner D42 B: our own, not Notipal):
 
@@ -276,6 +279,11 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
   fingerprint is the tablet's identity when it sends.
 - Whether a listener can stay open in the background is measured in the tablet round and decided
   after it (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/ink-tools/issues/143).
+- A received photo of a paper page is offered «Straighten as document», Image Editing's Document
+  mode ([#137](https://github.com/martonpaulo/ink-tools/issues/137)), so it lands as a straight, white page (owner, 2026-11-16).
+
+Device Transfer and Account Sync stay two plugins, each with a clear name; they share no flow
+(owner, 2026-11-16).
 
 ## typeset (planned)
 
