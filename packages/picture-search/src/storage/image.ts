@@ -34,7 +34,11 @@ type NativeImage = {
     format: EinkFormat,
     contour: boolean
   ) => Promise<PreparedImage>;
+  readInkMask: (path: string, targetWidth: number) => Promise<NativeInkMask>;
 };
+
+/** The ink mask the module resolves: one '1' or '0' per pixel, row after row (#35). */
+export type NativeInkMask = { width: number; height: number; rows: string };
 
 /**
  * Writes `dest` from `src`: flattened on white, scaled down to `width` (never up), with
@@ -51,5 +55,16 @@ export function prepareForEink(
   return callModule<NativeImage, PreparedImage>(
     pluginProfile().imageModule,
     (image) => image.prepareForEink(src, dest, width, format, contour)
+  );
+}
+
+/** The prepared picture's ink at `width` (never up), for «Insert Sticker»'s traced strokes (#35). */
+export function readInkMask(
+  path: string,
+  width: number
+): Promise<Result<NativeInkMask>> {
+  return callModule<NativeImage, NativeInkMask>(
+    pluginProfile().imageModule,
+    (image) => image.readInkMask(path, width)
   );
 }

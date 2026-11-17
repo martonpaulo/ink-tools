@@ -95,8 +95,9 @@ export type InsertOptions = {
    */
   contour: boolean;
   /**
-   * Insert the picture as a Supernote sticker, through `insertSticker` (#35, owner D32 A): Lookup's
-   * «Insert Sticker». When the sticker fails, the picture insert follows, and the log says why.
+   * Insert the drawing as a Supernote sticker made of pen strokes, through `insertSticker` (#35,
+   * owner D32 A, D62 A): Lookup's «Insert Sticker». When the sticker fails, the picture insert
+   * follows, and the log says why.
    */
   sticker?: boolean;
 };
@@ -363,14 +364,16 @@ async function picture(
  * is the placed rect, or null when the host placed it: insertImage gives no rect.
  */
 async function insertInNote(
+  result: SearchResult,
   saved: Saved,
   place: LassoPlace | null,
   options: InsertOptions,
 ): Promise<Result<Rect | null>> {
   if (options.sticker) {
     const pasted = await insertAsSticker(
+      result,
       saved.path,
-      saved.size ?? {width: options.width, height: options.width},
+      saved.size ? placedSize(saved.size, options.width).width : options.width,
     );
     if (pasted.ok) {
       return pasted;
@@ -569,7 +572,7 @@ export async function insertPicture(
     return atStep('download', fail(THROWN_CODE, `stopped: ${reason}`));
   }
   let at = Date.now();
-  const inserted = await insertInNote(saved.value, place, chosen);
+  const inserted = await insertInNote(result, saved.value, place, chosen);
   logTime('insert', at);
   if (!inserted.ok) {
     return atStep('place', inserted);

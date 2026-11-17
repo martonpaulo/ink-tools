@@ -683,32 +683,46 @@ describe('the insert options from Settings (#70)', () => {
   });
 });
 
-describe('«Insert Sticker» pastes a Supernote sticker (#35)', () => {
+describe('«Insert Sticker» pastes a sticker made of pen strokes (#35, D62 A)', () => {
   const sticker = {width: 640, placement: 'below' as const, contour: false, sticker: true};
   const convert = PluginCommAPI.convertElement2Sticker as jest.Mock;
   const paste = PluginCommAPI.insertSticker as jest.Mock;
+  const accessor = () => ({add: jest.fn().mockResolvedValue(true)});
+  /** A 4 x 4 ink square in an 8 x 8 picture, as the image module's mask. */
+  const square = Array.from({length: 8}, (_, y) =>
+    Array.from({length: 8}, (__, x) => (x >= 2 && x < 6 && y >= 2 && y < 6 ? '1' : '0')).join(''),
+  ).join('');
 
   beforeEach(() => {
     (PluginManager.getDeviceType as jest.Mock).mockResolvedValue(5);
-    (PluginCommAPI.createElement as jest.Mock).mockResolvedValue({
+    (PluginCommAPI.createElement as jest.Mock).mockImplementation(async () => ({
       success: true,
-      result: {uuid: 'u'},
-    });
+      result: {
+        uuid: 'u',
+        stroke: {points: accessor(), pressures: accessor(), flagDraw: accessor()},
+      },
+    }));
+    (image as Record<string, jest.Mock>).readInkMask = jest
+      .fn()
+      .mockResolvedValue({width: 8, height: 8, rows: square});
     convert.mockResolvedValue({success: true, result: true});
     paste.mockResolvedValue({success: true, result: true});
   });
 
-  it('writes the picture as a .sticker file and pastes it, never as an image', async () => {
+  it('traces the picture into strokes, writes them as a .sticker file and pastes it, never as an image', async () => {
     const done = await insertPicture(result, 'ladle', null, false, sticker);
     expect(done.ok).toBe(true);
+    expect(PluginCommAPI.createElement).toHaveBeenCalledWith(0);
     const [params] = convert.mock.calls[0];
     expect(params.machineType).toBe(5);
     expect(params.stickerPath).toMatch(/openclipart-340609\.sticker$/);
-    expect(params.elements[0].type).toBe(200);
-    expect(params.elements[0].picture.picturePath).toMatch(/openclipart-340609\.png$/);
-    expect(params.elements[0].picture.rect).toEqual({left: 0, top: 0, right: 640, bottom: 593});
+    expect(params.elements).toHaveLength(1);
+    expect(params.elements[0].stroke.penType).toBe(10);
+    // The square's outline: its 4 corners and the closing point.
+    expect(params.elements[0].stroke.points.add).toHaveBeenCalledTimes(5);
     expect(paste).toHaveBeenCalledWith(params.stickerPath);
     expect(PluginNoteAPI.insertImage).not.toHaveBeenCalled();
+    expect(logLines().join('\n')).toMatch(/sticker: 1 strokes, 5 points, from trace/);
   });
 
   it('inserts a picture when the sticker fails, and the picture insert never asks for a sticker', async () => {
@@ -721,5 +735,38 @@ describe('«Insert Sticker» pastes a Supernote sticker (#35)', () => {
     await insertPicture(result, 'ladle', null, false, {...sticker, sticker: false});
     expect(convert).not.toHaveBeenCalled();
     expect(PluginNoteAPI.insertImage).toHaveBeenCalledTimes(2);
+  });
+
+  it('inserts a picture when the picture has no ink to trace', async () => {
+    (image as Record<string, jest.Mock>).readInkMask.mockResolvedValue({
+      width: 8,
+      height: 8,
+      rows: '0'.repeat(64),
+    });
+    await insertPicture(result, 'ladle', null, false, sticker);
+    expect(convert).not.toHaveBeenCalled();
+    expect(PluginNoteAPI.insertImage).toHaveBeenCalledTimes(1);
+    expect(logLines().join('\n')).toMatch(/no ink to trace; inserted as a picture/);
+  });
+
+  it('takes the strokes from a Commons SVG original when there is one', async () => {
+    const svg: SearchResult = {
+      ...result,
+      id: 'commons:7',
+      source: 'commons',
+      mime: 'image/svg+xml',
+      original: {url: 'https://upload.wikimedia.org/a.svg', width: 512},
+    };
+    native.readText.mockImplementation(async (file: string) =>
+      file.endsWith('.svg') ? '<svg><rect x="0" y="0" width="10" height="5"/></svg>' : null,
+    );
+    const done = await insertPicture(svg, 'box', null, false, sticker);
+    expect(done.ok).toBe(true);
+    expect(native.downloadToFile).toHaveBeenCalledWith(
+      'https://upload.wikimedia.org/a.svg',
+      expect.stringMatching(/commons-7-vector\.svg$/),
+      expect.anything(),
+    );
+    expect(logLines().join('\n')).toMatch(/sticker: 1 strokes, 5 points, from svg/);
   });
 });
