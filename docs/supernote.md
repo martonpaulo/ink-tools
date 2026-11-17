@@ -216,6 +216,9 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [official, [#146](https://github.com/martonpaulo/ink-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#59](https://github.com/martonpaulo/ink-tools/issues/59)].
+- The calendar's `data_info` delete with the selection `title = ?` removed 0 rows of a row just
+  inserted with that title, so each probe left its test row; Account Sync now deletes by the row id
+  the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)].
 - The calendar's `data_info` insert refuses a row without `tag`, then one without
   `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
   refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`

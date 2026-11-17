@@ -108,7 +108,7 @@ function buildNative() {
     // -Werror: a new javac warning fails the build (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
     '-cp', [t.androidJar, t.reactJar, t.kotlinJar].join(path.delimiter),
-    '-d', classes, ...javaSources(nativeSources), ...javaSources(path.join(root, 'native')),
+    '-d', classes, ...javaSources(nativeSources), ...javaSources(path.join(root, 'native/com')),
   ]);
   const jar = path.join(out, 'files.jar');
   run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);
@@ -180,4 +180,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {buildNative, packagePlugin};
+module.exports = {buildNative, packagePlugin, javaSources};
