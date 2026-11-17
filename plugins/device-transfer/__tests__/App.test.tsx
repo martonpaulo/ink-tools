@@ -1,11 +1,11 @@
 /** Relay's Settings view (#98): the shared size rules, the device list and the saved choice. */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
-import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
+import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import App, {deviceLabel, ReceiveView, TextView} from '../App';
 import {ownFingerprint} from '../src/settings/device';
-import {fail, ok} from '@supernote-tools/sn-adapter/official';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {fakeRelay} from '../test-support/fakeRelay';
 import {Device} from '../src/localsend/protocol';
 

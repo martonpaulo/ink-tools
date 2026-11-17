@@ -3,7 +3,7 @@ const path = require('path');
 const uiKit = require('../../packages/ui-kit/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
 
-/** sync-core's source, so `@supernote-tools/sync-core/settings` bundles that one file (#40). */
+/** sync-core's source, so `@ink-tools/sync-core/settings` bundles that one file (#40). */
 const SYNC_CORE = path.join(__dirname, '../../packages/sync-core/src');
 
 /** ui-kit and sn-adapter; mergeConfig replaces watchFolders and extraNodeModules, so join here. */
@@ -21,7 +21,7 @@ const config = {
     useWatchman: !process.env.CI,
     extraNodeModules: {
       ...shared.resolver.extraNodeModules,
-      '@supernote-tools/sync-core': SYNC_CORE,
+      '@ink-tools/sync-core': SYNC_CORE,
     },
   },
 };

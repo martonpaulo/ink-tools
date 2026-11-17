@@ -10,7 +10,7 @@ import {
   PERMISSION_FILE_READ,
   PERMISSION_FILE_WRITE,
   requestPermission,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 
 export const NEEDED = [

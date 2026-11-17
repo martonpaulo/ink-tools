@@ -3,8 +3,8 @@
  * picture and the rectangle together, and presses Crop. src/guide.ts reads the rectangle from the
  * lasso, deletes it and lassoes the picture alone; `runEdit` then cuts the picture to its box.
  */
-import type {Rect} from '@supernote-tools/ink-core';
-import {PenPoint} from '@supernote-tools/sn-adapter/official';
+import type {Rect} from '@ink-tools/ink-core';
+import {PenPoint} from '@ink-tools/sn-adapter/official';
 import {Box, Done, runEdit, sizeOf} from './edit';
 import {GUIDE_DEVICE, GuideDeps, GuideReasons, Guided, runGuided, splitGuides} from './guide';
 import {NO_OPTIONS} from './native';

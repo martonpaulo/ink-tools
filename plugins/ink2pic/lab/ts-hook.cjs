@@ -24,14 +24,14 @@ for (const extension of ['.ts', '.tsx']) {
 }
 
 /**
- * A shared package by its name, as the plugins' tsconfig `paths` map it: `@supernote-tools/<name>`
+ * A shared package by its name, as the plugins' tsconfig `paths` map it: `@ink-tools/<name>`
  * is `packages/<name>/src`, so a plugin constant that imports one loads here too (#183).
  */
 const Module = require('node:module');
 const path = require('node:path');
 
 const PACKAGES = path.resolve(__dirname, '../../../packages');
-const SCOPE = '@supernote-tools/';
+const SCOPE = '@ink-tools/';
 const resolve = Module._resolveFilename;
 Module._resolveFilename = function (request, ...rest) {
   if (request.startsWith(SCOPE)) {

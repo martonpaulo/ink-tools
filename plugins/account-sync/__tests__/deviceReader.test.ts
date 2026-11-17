@@ -73,6 +73,6 @@ test('the Java module writes the marker the probe fills as the test event, so th
     require('path').join(__dirname, '../native/com/bridge/providers/BridgeProvidersModule.java'),
     'utf8',
   );
-  const {DRY_INSERT_MARKER} = require('@supernote-tools/sn-adapter');
+  const {DRY_INSERT_MARKER} = require('@ink-tools/sn-adapter');
   expect(java).toContain(`static final String MARKER = "${DRY_INSERT_MARKER}";`);
 });

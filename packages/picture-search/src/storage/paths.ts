@@ -1,5 +1,5 @@
 /** The device's shared storage root, owned by sn-adapter (#101). */
-import { SHARED_ROOT } from "@supernote-tools/sn-adapter/official";
+import { SHARED_ROOT } from "@ink-tools/sn-adapter/official";
 import { pluginProfile } from "./profile";
 
 export { SHARED_ROOT };

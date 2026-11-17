@@ -5,7 +5,7 @@
  * reason instead of reporting a device it never read.
  */
 import {NativeModules} from 'react-native';
-import type {DeviceReader, Row} from '@supernote-tools/sn-adapter';
+import type {DeviceReader, Row} from '@ink-tools/sn-adapter';
 import {ROW_ID} from './deviceStores';
 
 export const PROVIDERS_MODULE = 'BridgeProviders';

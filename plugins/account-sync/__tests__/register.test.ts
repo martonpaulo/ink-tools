@@ -1,6 +1,6 @@
 import {PluginManager} from 'sn-plugin-lib';
 // sn-adapter's registerSettingsEntry, Bridge's, is tested here (#101).
-import {registerSettingsEntry} from '@supernote-tools/sn-adapter/official';
+import {registerSettingsEntry} from '@ink-tools/sn-adapter/official';
 
 const lib = PluginManager as unknown as Record<string, jest.Mock>;
 

@@ -6,8 +6,8 @@
  */
 import {isContourUri} from '../flow/measure';
 import {webRetryUri} from '../search/thumbs';
-import {pageCount, pageOf} from '@supernote-tools/picture-search';
-import type {SearchResult} from '@supernote-tools/picture-search';
+import {pageCount, pageOf} from '@ink-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search';
 
 export type Tile =
   /** The thumbnail is being downloaded to its file; nothing renders yet. */

@@ -12,7 +12,7 @@ import {
   summarizeFirst,
   SummaryResult,
   wiktionaryDefiner,
-} from '@supernote-tools/ink-core';
+} from '@ink-tools/ink-core';
 import {version} from '../package.json';
 
 /** Wiktionary asks every client to name itself and a contact (its User-Agent policy). */

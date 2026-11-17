@@ -1,5 +1,5 @@
 {
-  "name": "supernote-tools-packages",
+  "name": "ink-tools-packages",
   "private": true,
   "workspaces": ["sn-adapter", "sync-core", "ink-core"],
   "scripts": {

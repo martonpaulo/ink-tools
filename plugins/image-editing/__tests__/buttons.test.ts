@@ -1,4 +1,4 @@
-import {ok} from '@supernote-tools/sn-adapter/official';
+import {ok} from '@ink-tools/sn-adapter/official';
 import {
   ButtonDeps,
   EDIT_DATA_PICTURE,

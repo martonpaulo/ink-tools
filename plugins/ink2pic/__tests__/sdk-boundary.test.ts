@@ -165,8 +165,8 @@ it("keeps picture-search's insert tier on its package, ink-core and the official
           ? relative(core, resolve(dirname(join(ROOT, path)), target)).startsWith(
               '..',
             )
-          : target !== '@supernote-tools/ink-core' &&
-            target !== '@supernote-tools/sn-adapter/official',
+          : target !== '@ink-tools/ink-core' &&
+            target !== '@ink-tools/sn-adapter/official',
       )
       .map(target => `${path} imports ${target}`),
   );
@@ -189,7 +189,7 @@ it("keeps picture-search's device tier on the platform's official tier: react-na
         target =>
           !target.startsWith('.') &&
           target !== 'react-native' &&
-          target !== '@supernote-tools/sn-adapter/official',
+          target !== '@ink-tools/sn-adapter/official',
       )
       .map(target => `${path} imports ${target}`),
   );

@@ -14,5 +14,5 @@ export {
   PICK_WORD_LIMIT,
   picksFirst,
   serializePicks,
-} from '@supernote-tools/picture-search';
-export type {ParsedPicks, Picks, WordPicks} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
+export type {ParsedPicks, Picks, WordPicks} from '@ink-tools/picture-search';

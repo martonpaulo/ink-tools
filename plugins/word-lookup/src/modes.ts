@@ -9,8 +9,8 @@ import {
   ALL_DIRECTIONS,
   Direction,
   directionId,
-} from '@supernote-tools/ink-core';
-import type {PictureMode, SourceAdapter} from '@supernote-tools/picture-search';
+} from '@ink-tools/ink-core';
+import type {PictureMode, SourceAdapter} from '@ink-tools/picture-search';
 import {copy} from './copy';
 
 /**

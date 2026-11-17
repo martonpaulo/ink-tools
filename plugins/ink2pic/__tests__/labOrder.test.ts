@@ -7,9 +7,9 @@ import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import {measureFirstPages, MeasureDeps} from '../src/flow/measure';
 import {startLog} from '../src/profile';
-import {ok} from '@supernote-tools/sn-adapter/official';
-import type {Measures} from '@supernote-tools/picture-search/measures';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import {ok} from '@ink-tools/sn-adapter/official';
+import type {Measures} from '@ink-tools/picture-search/measures';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const ROOT = path.join(__dirname, '..');
 /** The lab's start-up transpiles the search core; a loaded runner needs more than Jest's 5 s. */

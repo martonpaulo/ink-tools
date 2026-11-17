@@ -10,13 +10,13 @@ import {
   defaultSettings,
   parseSettings,
   serializeSettings,
-} from '@supernote-tools/sync-core/settings';
+} from '@ink-tools/sync-core/settings';
 import {
   fail,
   MODULE_CODE,
   ok,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {callFiles, TextFiles} from './files';
 
 export const SETTINGS_FILE = 'settings.json';

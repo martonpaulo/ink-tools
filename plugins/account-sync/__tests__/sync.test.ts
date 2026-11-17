@@ -4,9 +4,9 @@ import {
   defaultSettings,
   setModule,
   setProvider,
-} from '@supernote-tools/sync-core/settings';
-import type {CapabilityStatus} from '@supernote-tools/sn-adapter';
-import type {Row} from '@supernote-tools/sn-adapter';
+} from '@ink-tools/sync-core/settings';
+import type {CapabilityStatus} from '@ink-tools/sn-adapter';
+import type {Row} from '@ink-tools/sn-adapter';
 import {ContentRows, createDeviceStores} from '../src/deviceStores';
 import {
   AUTO_SYNC_MINUTES,

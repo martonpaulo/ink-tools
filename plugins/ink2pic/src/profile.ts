@@ -11,7 +11,7 @@ import {
   setPluginProfile,
   SettingsCodec,
   SHARED_ROOT,
-} from '@supernote-tools/picture-search/storage';
+} from '@ink-tools/picture-search/storage';
 import {versionCode} from '../PluginConfig.json';
 import {USER_AGENT} from './config';
 import {parseSettings, serializeSettings, Settings} from './settings/settings';
@@ -31,8 +31,8 @@ export const INK2PIC_PROFILE: PluginProfile = {
 
 setPluginProfile(INK2PIC_PROFILE);
 
-export * from '@supernote-tools/picture-search/storage';
-export * from '@supernote-tools/picture-search/insert';
+export * from '@ink-tools/picture-search/storage';
+export * from '@ink-tools/picture-search/insert';
 
 /** How `settings.json` is read and written (#68). */
 export const INK2PIC_SETTINGS: SettingsCodec<Settings> = {

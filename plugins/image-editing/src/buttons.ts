@@ -7,7 +7,7 @@ import {
   registerButton,
   Result,
   unregisterButton,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {EDITS, enabledEdits, RetouchSettings} from './edits';
 
 /** sn-plugin-lib's lasso toolbar button (as Lookup's src/buttons.ts). */

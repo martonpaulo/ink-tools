@@ -8,8 +8,8 @@
  */
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared} from '@supernote-tools/ui-kit';
-import type {ModuleStatus, SignIn} from '@supernote-tools/sync-core';
+import {Button, shared} from '@ink-tools/ui-kit';
+import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
 

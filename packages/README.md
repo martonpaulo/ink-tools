@@ -12,21 +12,21 @@ Provider-agnostic building blocks the plugins share (layers in [docs/architectur
 
 Run `npm install && npm run validate` here for `sn-adapter`'s internals tier, `sync-core` and `ink-core`.
 
-A plugin imports `ink-core` as `@supernote-tools/ink-core`, mapped by `ink-core/plugin-config.js` in
+A plugin imports `ink-core` as `@ink-tools/ink-core`, mapped by `ink-core/plugin-config.js` in
 its Metro and Jest configs and by `paths` in its `tsconfig.json`; the package holds no React Native
 code and never imports `sn-plugin-lib`: the plugin passes its SDK calls in as a host port ([#109](https://github.com/martonpaulo/supernote-tools/issues/109)).
 
-`sn-adapter` has two entries ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `@supernote-tools/sn-adapter` is the internals
+`sn-adapter` has two entries ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `@ink-tools/sn-adapter` is the internals
 tier (`src/internals/`): content providers, their tables and columns, all read from
 `descriptor.json`, whose `fields` map our names to the device's columns, so a renamed column is a
-descriptor update. `@supernote-tools/sn-adapter/official` is the official tier (`src/official/`):
+descriptor update. `@ink-tools/sn-adapter/official` is the official tier (`src/official/`):
 the only code that imports `sn-plugin-lib`, each call returning a `Result`. A plugin maps both with
 `sn-adapter/plugin-config.js`; the official tier's `sn-plugin-lib` resolves from the plugin's
 `node_modules`, so this folder leaves it out of its type check, and the Ink2Pic gate lints, types and
 tests it. `scripts/boundaries.py` keeps every other folder off the SDK and the providers.
 
 `picture-search` is wired the same way by `picture-search/plugin-config.js`, which also maps a deep
-path (`@supernote-tools/picture-search/rank`) for tests. Its Java keeps the package name
+path (`@ink-tools/picture-search/rank`) for tests. Its Java keeps the package name
 `com.ink2pic.files` and is compiled by each plugin's `scripts/native-build.cjs` (Ink2Pic's and
 Lookup's); it holds the React Native file module too, whose `Ink2PicFilesPackage` registers
 Ink2Pic's module names and takes another plugin's two names in a subclass, as Lookup's
@@ -38,7 +38,7 @@ order, the insert and the no-view press guard; each plugin binds it to its own s
 stores, and Ink2Pic hands in its library, picks and OpenMoji symbols, which stay in Ink2Pic.
 
 `ui-kit` is React Native code, so it is not a workspace here. A plugin imports it as
-`@supernote-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by
+`@ink-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by
 `paths` in its `tsconfig.json`; Metro bundles it into the plugin's `.snplg` with the plugin's own
 React. Its tests and lint run in the Bridge gate, and the other plugin gates type-check it ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
 

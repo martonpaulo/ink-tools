@@ -118,3 +118,5 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
   `com.supernotetools.lingo`, [#160](https://github.com/martonpaulo/supernote-tools/issues/160)): Android installs the new id beside the old app, so
   uninstall Dialect first (`adb uninstall com.supernotetools.dialect`), or both write the language
   file. The settings and the two `appops` grants do not carry over; grant them again.
+- The applicationId `com.supernotetools.lingo` stays on purpose, so the installed app keeps its settings
+  and grants ([#179](https://github.com/martonpaulo/ink-tools/issues/179)). A new app takes `com.martonpaulo.inktools.<app>`.

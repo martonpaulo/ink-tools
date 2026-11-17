@@ -1,5 +1,5 @@
 /** The Styles grid (#133): order, the remembered style, the toggles and the cleanup. */
-import {ok, PICTURE_TYPE} from '@supernote-tools/sn-adapter/official';
+import {ok, PICTURE_TYPE} from '@ink-tools/sn-adapter/official';
 import {EditDeps} from '../src/edit';
 import {
   changedBy,

@@ -9,7 +9,7 @@ import {
   registerSettingsEntry,
   showPluginView,
   startButtonQueue,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {syncButtons} from './src/buttons';
 import {
   currentSettings,

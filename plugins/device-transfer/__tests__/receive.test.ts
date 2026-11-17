@@ -1,5 +1,5 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
-import {fail, ok} from '@supernote-tools/sn-adapter/official';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {
   freeTextBox,

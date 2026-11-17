@@ -10,7 +10,7 @@ import {
   Measures,
   pixelKind,
   SearchResult,
-} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
 import * as ink2pic from '../../ink2pic/src/buttons';
 import {FIRST_BUTTON_ID, MODES, modeAdapters} from '../src/modes';
 

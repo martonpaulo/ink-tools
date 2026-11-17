@@ -7,7 +7,7 @@ import {
   fail,
   Result,
   TIMEOUT_CODE,
-} from "@supernote-tools/sn-adapter/official";
+} from "@ink-tools/sn-adapter/official";
 import { withinLimit } from "../clock";
 import { profileName } from "../storage/profile";
 

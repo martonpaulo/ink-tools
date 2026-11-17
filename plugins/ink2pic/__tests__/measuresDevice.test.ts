@@ -1,5 +1,5 @@
 import {NativeModules} from 'react-native';
-import {MODULE_CODE} from '@supernote-tools/sn-adapter/official';
+import {MODULE_CODE} from '@ink-tools/sn-adapter/official';
 import {deviceAnalyzer} from '../src/profile';
 
 const native = {measureThumb: jest.fn(), convertThumb: jest.fn()};

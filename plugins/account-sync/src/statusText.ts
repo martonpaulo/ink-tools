@@ -3,7 +3,7 @@
  * `inkctl logs --plugin Bridge` (#88). The status says «last synced», never a schedule: the sync
  * runs only while the plugin is alive (#39).
  */
-import type {ModuleRun, ModuleStatus} from '@supernote-tools/sync-core';
+import type {ModuleRun, ModuleStatus} from '@ink-tools/sync-core';
 import {format} from './copy';
 
 /** The messages shown per kind; the log keeps every one. */

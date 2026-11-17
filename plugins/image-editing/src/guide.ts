@@ -9,7 +9,7 @@
  * it was without its guide. Save and put back the strokes (elements.ts) if the device round shows
  * either case matters.
  */
-import type {Rect} from '@supernote-tools/ink-core';
+import type {Rect} from '@ink-tools/ink-core';
 import {
   batchUpdatePageElements,
   emrRange,
@@ -28,7 +28,7 @@ import {
   Size,
   STROKE_TYPE,
   strokePoints,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import type {Done} from './edit';
 
 type Lassoed = {

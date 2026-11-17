@@ -6,7 +6,7 @@
  * over the person's file, which the next runtime reads again.
  */
 import { log, logged } from "../log/memory";
-import { systemLanguage, ok } from "@supernote-tools/sn-adapter/official";
+import { systemLanguage, ok } from "@ink-tools/sn-adapter/official";
 import { settingsPath } from "./paths";
 import type { TextStore } from "../cache";
 import { deviceStorage, storageFailure } from "./text";

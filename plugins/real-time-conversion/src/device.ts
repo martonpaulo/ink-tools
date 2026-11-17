@@ -14,7 +14,7 @@ import {
   recycleElement,
   saveStroke,
   strokePoints,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import type {ConvertHost} from './convert';
 import type {UndoHost} from './undo';
 

@@ -5,7 +5,7 @@
  * state `history.ts` kept. Any failure stops before the page changes, and is logged: a text box
  * would write on the owner's page.
  */
-import type {Rect} from '@supernote-tools/ink-core';
+import type {Rect} from '@ink-tools/ink-core';
 import {
   getCurrentFilePath,
   getCurrentPageNum,
@@ -16,7 +16,7 @@ import {
   modifyPageElements,
   PICTURE_TYPE,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {EditId} from './edits';
 import {
   Change,

@@ -12,7 +12,7 @@ import {
   SECRET_PROVIDERS,
   SecretProvider,
   SecretStore,
-} from '@supernote-tools/sync-core/secrets';
+} from '@ink-tools/sync-core/secrets';
 import {callFiles, TextFiles} from './files';
 import {Folder} from './settingsStore';
 

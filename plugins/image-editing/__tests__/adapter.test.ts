@@ -1,6 +1,6 @@
 /** sn-adapter's `modifyPageElements`, which Retouch is the first to call (#136). */
 import {PluginCommAPI} from 'sn-plugin-lib';
-import {modifyPageElements} from '@supernote-tools/sn-adapter/official';
+import {modifyPageElements} from '@ink-tools/sn-adapter/official';
 
 const modify = PluginCommAPI.modifyPageElements as jest.Mock;
 

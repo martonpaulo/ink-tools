@@ -9,7 +9,7 @@ import {
   registerSettingsEntry,
   showPluginView,
   startButtonQueue,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {clearChoice, openChoose} from './src/choose';
 import {DEFINE_BUTTON_ID, defineLasso} from './src/definition';
 import {SUMMARY_BUTTON_ID, summaryLasso} from './src/summary';

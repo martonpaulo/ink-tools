@@ -6,7 +6,7 @@
  *
  * Pure: no file or SDK call; `edit.ts` reads and writes the JSON and removes the dropped files.
  */
-import type {Rect} from '@supernote-tools/ink-core';
+import type {Rect} from '@ink-tools/ink-core';
 
 /** States per picture, the original included; the oldest edit after the original goes first. */
 export const MAX_STATES = 10;

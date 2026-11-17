@@ -2,7 +2,7 @@
 import React from 'react';
 import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {SettingsShell, ShellState} from '../src/SettingsShell';
 import {copy} from '../src/copy';
 

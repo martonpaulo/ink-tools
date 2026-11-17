@@ -2,7 +2,7 @@ import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
 import {attempt, Result} from './result';
 
 /** The page size, owned by ink-core (#109). */
-import type {Size} from '@supernote-tools/ink-core';
+import type {Size} from '@ink-tools/ink-core';
 
 export type {Size};
 

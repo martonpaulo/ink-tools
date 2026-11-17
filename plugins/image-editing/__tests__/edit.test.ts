@@ -4,7 +4,7 @@ import {
   ok,
   PICTURE_TYPE,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {EditDeps, historyPath, runEdit} from '../src/edit';
 import {parseHistory} from '../src/history';
 import {NO_OPTIONS, RetouchNative} from '../src/native';

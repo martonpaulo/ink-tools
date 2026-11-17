@@ -12,7 +12,7 @@ import {
   LanguagesAction,
 } from '../settings/languages';
 import {REPEAT_REMOVE_MS} from '../config';
-import {Button, metrics, shared} from '@supernote-tools/ui-kit';
+import {Button, metrics, shared} from '@ink-tools/ui-kit';
 import {copy, CopyKey} from './copy';
 import {LogView} from './LogView';
 import {Screen} from './Screen';

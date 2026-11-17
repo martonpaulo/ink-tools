@@ -2,11 +2,11 @@
  * Lookup's «Loading…» strip (#103): every lasso button that runs with no view shows it from the
  * press to the end of the action (index.js), from the shared ui-kit.
  */
-import {createWorking} from '@supernote-tools/ui-kit';
+import {createWorking} from '@ink-tools/ui-kit';
 import {
   closePluginView,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {showToast} from './textBox';
 

@@ -9,17 +9,17 @@
  * Search, measured order, thumbnails and insert are picture-search's, bound to the mode by
  * `modeDeps` (src/pictures.ts), the same flow the insert buttons run; only the list is Lookup's.
  */
-import {checkLookup, type LassoPlace} from '@supernote-tools/ink-core';
+import {checkLookup, type LassoPlace} from '@ink-tools/ink-core';
 import {
   MEASURED_RESULTS,
   searchState,
   type SearchResult,
-} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
 import {
   closePluginView,
   Result,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {BUTTONS, missingFor} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {CHOOSE_BUTTON_ID, type Mode} from './modes';

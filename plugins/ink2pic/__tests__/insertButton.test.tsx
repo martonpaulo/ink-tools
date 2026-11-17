@@ -24,7 +24,7 @@ import {
 import {
   takePendingButton,
   startButtonQueue,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {insertBest} from '../src/flow/quickInsert';
 import {copy} from '../src/ui/copy';
 import {SearchScreen} from '../src/ui/SearchScreen';
@@ -225,11 +225,11 @@ describe('Insert best picture with no view (#74)', () => {
       listener = calls[calls.length - 1][0].onButtonPress;
       listener({id: INSERT_BUTTON_ID});
       expect(
-        require('@supernote-tools/sn-adapter/official').takePendingButton(),
+        require('@ink-tools/sn-adapter/official').takePendingButton(),
       ).toBeNull();
       listener({id: LASSO_BUTTON_ID});
       expect(
-        require('@supernote-tools/sn-adapter/official').takePendingButton(),
+        require('@ink-tools/sn-adapter/official').takePendingButton(),
       ).toBe(LASSO_BUTTON_ID);
     });
     expect(run).toHaveBeenCalledTimes(1);

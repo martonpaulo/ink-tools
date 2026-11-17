@@ -1,7 +1,7 @@
-import {hasStyle, readIntent, words} from '@supernote-tools/picture-search/query';
-import {einkScore, rankForEink} from '@supernote-tools/picture-search/rank';
-import {PAGE_SIZE} from '@supernote-tools/picture-search/types';
-import type {SearchResult, SourceName} from '@supernote-tools/picture-search/types';
+import {hasStyle, readIntent, words} from '@ink-tools/picture-search/query';
+import {einkScore, rankForEink} from '@ink-tools/picture-search/rank';
+import {PAGE_SIZE} from '@ink-tools/picture-search/types';
+import type {SearchResult, SourceName} from '@ink-tools/picture-search/types';
 
 const r = (
   source: SourceName,
@@ -438,8 +438,8 @@ describe('silhouettes and frames (#65)', () => {
 
 it('does not rank a photo below a drawing under Photos too (#70)', () => {
   const {PHOTO_SCORERS} = jest.requireActual(
-    '@supernote-tools/picture-search/rank',
-  ) as typeof import('@supernote-tools/picture-search/rank');
+    '@ink-tools/picture-search/rank',
+  ) as typeof import('@ink-tools/picture-search/rank');
   const photo: SearchResult = {
     id: 'commons:Apple photo.jpg',
     source: 'commons',

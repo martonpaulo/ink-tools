@@ -4,7 +4,7 @@
  * partial answer, and every element recycled.
  */
 import {PluginFileAPI} from 'sn-plugin-lib';
-import {occupiedRects} from '@supernote-tools/sn-adapter/official';
+import {occupiedRects} from '@ink-tools/sn-adapter/official';
 
 const getElements = PluginFileAPI.getElements as jest.Mock;
 

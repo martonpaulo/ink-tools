@@ -8,7 +8,7 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 **Scaffolded** ([#27](https://github.com/martonpaulo/supernote-tools/issues/27)): settings-only plugin shell (Settings entry, no note button), build to
 `Bridge.snplg`, `npm run validate` green. Modules land with their own issues: sn-adapter ([#43](https://github.com/martonpaulo/supernote-tools/issues/43)),
 calendar ([#28](https://github.com/martonpaulo/supernote-tools/issues/28), [#29](https://github.com/martonpaulo/supernote-tools/issues/29), [#30](https://github.com/martonpaulo/supernote-tools/issues/30)), to-do ([#44](https://github.com/martonpaulo/supernote-tools/issues/44)), Settings ([#40](https://github.com/martonpaulo/supernote-tools/issues/40)). Layers: `../../docs/architecture.md`; shared
-code in `../../packages/`. Every size and colour of a screen comes from `@supernote-tools/ui-kit`, never a literal, and each screen's test runs its `screenBreaks` size rule ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)). Validate with `npm run validate`. CI consolidation: [#38](https://github.com/martonpaulo/supernote-tools/issues/38).
+code in `../../packages/`. Every size and colour of a screen comes from `@ink-tools/ui-kit`, never a literal, and each screen's test runs its `screenBreaks` size rule ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)). Validate with `npm run validate`. CI consolidation: [#38](https://github.com/martonpaulo/supernote-tools/issues/38).
 
 ## What it is
 

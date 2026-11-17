@@ -8,8 +8,8 @@ import {
   saveSettings,
 } from '../src/profile';
 import {deviceContext, searchCached, searchVariant} from '../src/search/device';
-import type {SourceAdapter} from '@supernote-tools/picture-search';
-import {fullUrl} from '@supernote-tools/picture-search/registry';
+import type {SourceAdapter} from '@ink-tools/picture-search';
+import {fullUrl} from '@ink-tools/picture-search/registry';
 import {defaultSettings} from '../src/settings/settings';
 
 const files: Record<string, string> = {};

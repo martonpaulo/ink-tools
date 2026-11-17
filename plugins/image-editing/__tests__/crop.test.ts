@@ -5,7 +5,7 @@ import {
   PICTURE_TYPE,
   STROKE_TYPE,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {
   cropBox,
   CropDeps,

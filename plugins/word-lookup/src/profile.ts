@@ -11,7 +11,7 @@ import {
   PluginProfile,
   setPluginProfile,
   SHARED_ROOT,
-} from '@supernote-tools/picture-search/storage';
+} from '@ink-tools/picture-search/storage';
 import {version} from '../package.json';
 import {versionCode} from '../PluginConfig.json';
 import {LOOKUP_SETTINGS} from './settings';
@@ -30,8 +30,8 @@ export const LOOKUP_PROFILE: PluginProfile = {
 
 setPluginProfile(LOOKUP_PROFILE);
 
-export * from '@supernote-tools/picture-search/storage';
-export * from '@supernote-tools/picture-search/insert';
+export * from '@ink-tools/picture-search/storage';
+export * from '@ink-tools/picture-search/insert';
 
 export const {getSettings, saveSettings, resetSettingsForTests} =
   createSettingsStore(LOOKUP_SETTINGS);

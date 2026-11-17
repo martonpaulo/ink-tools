@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {Button, shared} from '@ink-tools/ui-kit';
 import {EDITS, RetouchSettings, setEdit, setStyle, STYLES} from './edits';
 import {copy} from './copy';
 

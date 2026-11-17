@@ -1,6 +1,6 @@
 /** «Insert Summary» in Lookup (#114): the text, its box, the failures and the button. */
-import {LassoPlace, Summary} from '@supernote-tools/ink-core';
-import {ok} from '@supernote-tools/sn-adapter/official';
+import {LassoPlace, Summary} from '@ink-tools/ink-core';
+import {ok} from '@ink-tools/sn-adapter/official';
 import {BUTTONS} from '../src/buttons';
 import {copy} from '../src/copy';
 import {LANGUAGES} from '../src/definition';

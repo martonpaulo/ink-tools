@@ -2,7 +2,7 @@
  * The languages Word Lookup's picture search asks, in a module with no device import, so the
  * search lab reads this constant, never a copy (#183).
  */
-import {DEFINED_LANGUAGES} from '@supernote-tools/ink-core';
+import {DEFINED_LANGUAGES} from '@ink-tools/ink-core';
 
 /**
  * The languages a picture search asks, in order: the definition's, then English, the language of

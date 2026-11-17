@@ -21,8 +21,8 @@ import {
   todoShapeGaps,
   todoTaskToRow,
   toTodoInsert,
-} from '@supernote-tools/sn-adapter';
-import {content, fingerprint} from '@supernote-tools/sync-core';
+} from '@ink-tools/sn-adapter';
+import {content, fingerprint} from '@ink-tools/sync-core';
 import type {
   CalendarEvent,
   DeviceCalendarEditor,
@@ -33,7 +33,7 @@ import type {
   TaskList,
   TaskRepair,
   TimeWindow,
-} from '@supernote-tools/sync-core';
+} from '@ink-tools/sync-core';
 
 /** One content provider, by its `content://` URI. Every call rejects with the provider's reason. */
 export interface ContentRows {

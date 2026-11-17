@@ -10,12 +10,12 @@ import {
   contentUri,
   DeviceReader,
   probeAll,
-} from '@supernote-tools/sn-adapter';
+} from '@ink-tools/sn-adapter';
 import {
   defaultSettings,
   moduleStatus,
   setModule,
-} from '@supernote-tools/sync-core';
+} from '@ink-tools/sync-core';
 import {probeProblems} from '../src/probe';
 import {ModuleRow, SettingsShell} from '../src/SettingsShell';
 

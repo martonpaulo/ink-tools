@@ -2,9 +2,9 @@ import {
   dropNearDuplicates,
   DUPLICATE_BITS,
   hashDistance,
-} from '@supernote-tools/picture-search/duplicates';
-import type {Measures} from '@supernote-tools/picture-search/measures';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+} from '@ink-tools/picture-search/duplicates';
+import type {Measures} from '@ink-tools/picture-search/measures';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const result = (id: string, canonical = false): SearchResult => ({
   id,

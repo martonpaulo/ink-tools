@@ -4,7 +4,7 @@ import {unmeasured} from '../src/flow/measure';
 import type {
   SearchOutcome,
   SearchResult,
-} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
 import {copy} from '../src/ui/copy';
 import {logLines, startLog} from '../src/profile';
 

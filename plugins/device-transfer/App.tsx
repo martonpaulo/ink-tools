@@ -1,13 +1,13 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Text, ToastAndroid, View} from 'react-native';
-import {closePluginView} from '@supernote-tools/sn-adapter/official';
+import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {
   Button,
   shared,
   useBackKey,
   useWorking,
   WorkingStrip,
-} from '@supernote-tools/ui-kit';
+} from '@ink-tools/ui-kit';
 import {copy} from './src/copy';
 import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';

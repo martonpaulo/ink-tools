@@ -1,6 +1,6 @@
 /** «Insert definition» in Lookup (#115): the text, its box, the failures and the opt-in button. */
-import {DefinitionResult, LassoPlace} from '@supernote-tools/ink-core';
-import {ok} from '@supernote-tools/sn-adapter/official';
+import {DefinitionResult, LassoPlace} from '@ink-tools/ink-core';
+import {ok} from '@ink-tools/sn-adapter/official';
 import {
   BOX_WIDTH,
   boxRect,

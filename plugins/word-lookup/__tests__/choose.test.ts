@@ -2,8 +2,8 @@
  * «Choose picture» (#156): the press keeps the word and opens the view, each mode lists only its
  * own tiles, an old list never shows in the new tab, a tap inserts once and closes the view.
  */
-import type {SearchResult} from '@supernote-tools/picture-search';
-import {fail, ok} from '@supernote-tools/sn-adapter/official';
+import type {SearchResult} from '@ink-tools/picture-search';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {
   ChooseDeps,
   chooseResults,

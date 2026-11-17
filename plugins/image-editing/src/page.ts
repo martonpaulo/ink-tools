@@ -6,7 +6,7 @@
  * take too (#168), so the ink is never baked into the picture. Undo All Images takes back the last
  * step of each picture, so it brings back every picture Enhance All Images changed.
  */
-import type {Rect} from '@supernote-tools/ink-core';
+import type {Rect} from '@ink-tools/ink-core';
 import {
   getCurrentFilePath,
   getCurrentPageNum,
@@ -15,7 +15,7 @@ import {
   PICTURE_TYPE,
   recycleElement,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {Done, runEdit} from './edit';
 import {EditId} from './edits';
 

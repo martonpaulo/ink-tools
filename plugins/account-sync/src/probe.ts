@@ -3,8 +3,8 @@
  * capability, and sync-core's `moduleStatus` blocks a module with problems (#67). The two packages
  * stay independent, so Bridge, the feature edge, translates one into the other.
  */
-import type {CapabilityStatus} from '@supernote-tools/sn-adapter';
-import type {ModuleId, ProbeProblems} from '@supernote-tools/sync-core';
+import type {CapabilityStatus} from '@ink-tools/sn-adapter';
+import type {ModuleId, ProbeProblems} from '@ink-tools/sync-core';
 
 /** Bridge's module for each capability the descriptor names; they share their names today. */
 const MODULE_OF: Record<CapabilityStatus['capability'], ModuleId> = {

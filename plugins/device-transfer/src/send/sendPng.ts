@@ -6,7 +6,7 @@ import {
   EMPTY_LASSO_CODE,
   getPluginDirPath,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {
   announce,
   Device,

@@ -12,7 +12,7 @@ import {
   requestPermission,
   Result,
   unregisterButton,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {Converter} from './convert';
 import {getSettings, wordOptions} from './settings';

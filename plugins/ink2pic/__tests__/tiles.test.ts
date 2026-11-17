@@ -1,5 +1,5 @@
-import {PAGE_SIZE} from '@supernote-tools/picture-search';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import {PAGE_SIZE} from '@ink-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 import {
   initialTile,
   keptTile,

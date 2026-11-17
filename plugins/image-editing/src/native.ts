@@ -9,7 +9,7 @@ import {
   MODULE_CODE,
   ok,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 export const IMAGE_MODULE = 'RetouchImage';
 export const FILES_MODULE = 'RetouchFiles';

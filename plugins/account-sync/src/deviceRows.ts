@@ -5,7 +5,7 @@
  * `deviceStores.ts`, so this file names no provider. A missing module rejects each call.
  */
 import {NativeModules} from 'react-native';
-import type {Row} from '@supernote-tools/sn-adapter';
+import type {Row} from '@ink-tools/sn-adapter';
 import type {ContentRows} from './deviceStores';
 import {PROVIDERS_MODULE} from './deviceReader';
 

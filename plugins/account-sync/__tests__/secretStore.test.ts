@@ -1,6 +1,6 @@
 /** The sign-in files `inkctl secret set` writes, read and deleted in the private folder (#90). */
-import {ok, fail, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
-import {signInState} from '@supernote-tools/sync-core/secrets';
+import {ok, fail, THROWN_CODE} from '@ink-tools/sn-adapter/official';
+import {signInState} from '@ink-tools/sync-core/secrets';
 import {TextFiles} from '../src/files';
 import {
   createSecretStore,

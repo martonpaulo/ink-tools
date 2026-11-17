@@ -8,8 +8,8 @@
  */
 import React, {useEffect, useState} from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {PAGE_SIZE} from '@supernote-tools/picture-search';
-import {Button, metrics, shared, useBackKey} from '@supernote-tools/ui-kit';
+import {PAGE_SIZE} from '@ink-tools/picture-search';
+import {Button, metrics, shared, useBackKey} from '@ink-tools/ui-kit';
 import {
   Choice,
   ChooseList,

@@ -6,7 +6,7 @@
 import {
   recognizeElements,
   textBoxFields,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {PluginCommAPI} from 'sn-plugin-lib';
 import {Converter} from '../src/convert';
 import {lastConversion, setLastConversion, undoLast} from '../src/undo';

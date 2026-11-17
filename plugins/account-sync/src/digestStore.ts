@@ -17,7 +17,7 @@ import {
   digestUpdateUri,
   toDigestInsert,
   toDigestUpdate,
-} from '@supernote-tools/sn-adapter';
+} from '@ink-tools/sn-adapter';
 import type {ContentRows} from './deviceStores';
 
 /**

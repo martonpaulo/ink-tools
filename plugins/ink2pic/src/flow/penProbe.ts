@@ -36,7 +36,7 @@ import {
   LifeState,
   onLifecycle,
   closePluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {
   boundsOf,
   isClosedLoop,

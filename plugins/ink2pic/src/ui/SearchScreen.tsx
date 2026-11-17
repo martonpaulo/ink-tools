@@ -25,8 +25,8 @@ import {
   SearchState,
   searchState,
   SourceAdapter,
-} from '@supernote-tools/picture-search';
-import {Button, metrics, shared} from '@supernote-tools/ui-kit';
+} from '@ink-tools/picture-search';
+import {Button, metrics, shared} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {LogView} from './LogView';
 import {GridNote, ResultsGrid} from './ResultsGrid';

@@ -1,5 +1,5 @@
 {
-  "name": "@supernote-tools/picture-search",
+  "name": "@ink-tools/picture-search",
   "version": "0.0.0",
   "private": true,
   "main": "src/index.ts"

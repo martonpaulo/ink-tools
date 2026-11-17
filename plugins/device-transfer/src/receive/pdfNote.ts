@@ -4,7 +4,7 @@
  * inserted with its PNG. The PDF and the PNGs are removed at the end; a failure also removes the
  * half-made note, and answers one toast line that names the cause.
  */
-import {Result, SHARED_ROOT} from '@supernote-tools/sn-adapter/official';
+import {Result, SHARED_ROOT} from '@ink-tools/sn-adapter/official';
 import {copy} from '../copy';
 import {Relay} from '../native';
 import type {Size} from './receive';

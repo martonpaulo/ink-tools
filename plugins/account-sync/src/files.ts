@@ -9,7 +9,7 @@ import {
   MODULE_CODE,
   ok,
   Result,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 /**
  * The calls Bridge uses of the module; `readText` answers null for a file that is not there.

@@ -20,14 +20,14 @@ import {
   translateFirst,
   translationText,
   TranslationQuery,
-} from '@supernote-tools/ink-core';
-import {cedictPinyinIndex} from '@supernote-tools/ink-core/pinyin-data';
+} from '@ink-tools/ink-core';
+import {cedictPinyinIndex} from '@ink-tools/ink-core/pinyin-data';
 import {
   CallFailure,
   insertText,
   Result,
   TextBoxInput,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {SOURCE_NAMES, translators} from './dictionaries';
 import {checkedRead, insertBox, readLasso} from './textBox';

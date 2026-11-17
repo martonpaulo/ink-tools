@@ -1,5 +1,5 @@
 /** The Calendar and To-Do stores over an in-memory content provider (#28, #29, #44). */
-import type {Row} from '@supernote-tools/sn-adapter';
+import type {Row} from '@ink-tools/sn-adapter';
 import {
   ContentRows,
   createDeviceCalendar,

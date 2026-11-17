@@ -34,7 +34,7 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
 
 ## Rules
 
-- Every SDK call goes through `@supernote-tools/sn-adapter/official`, gathered in `src/device.ts`;
+- Every SDK call goes through `@ink-tools/sn-adapter/official`, gathered in `src/device.ts`;
   `src/convert.ts`, `src/undo.ts` and `src/buttons.ts` take their host as a parameter, so the tests
   drive them with fakes and synthetic strokes.
 - `src/words.ts` and `src/shapes.ts` stay pure: no SDK, no timer; the clock is passed in.

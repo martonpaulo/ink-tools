@@ -47,7 +47,7 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(self.tree({
             "packages/sync-core/src/todoist.ts": "const BASE = 'https://api.todoist.com/rest/v2';\n",
             "packages/sync-core/src/index.ts": "export * from './todoist';\n",
-            "plugins/a/src/run.ts": "import {syncTasks} from '@supernote-tools/sync-core';\n",
+            "plugins/a/src/run.ts": "import {syncTasks} from '@ink-tools/sync-core';\n",
             "plugins/a/scripts/fetch.sh": "curl https://www.googleapis.com/x\n",
         }), [])
         self.assertEqual(self.tree({

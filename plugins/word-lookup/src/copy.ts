@@ -1,4 +1,4 @@
-import {Direction, directionName} from '@supernote-tools/ink-core';
+import {Direction, directionName} from '@ink-tools/ink-core';
 
 /** Every user-facing string of Lookup. English only; never inline in components (#93). */
 export const copy = {

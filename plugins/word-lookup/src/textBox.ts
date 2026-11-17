@@ -12,7 +12,7 @@ import {
   placeRect,
   readLassoQuery,
   Rect,
-} from '@supernote-tools/ink-core';
+} from '@ink-tools/ink-core';
 import {
   CallFailure,
   EMPTY_LASSO_CODE,
@@ -27,7 +27,7 @@ import {
   Result,
   TextBoxInput,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 
 /** The text size in page pixels, as Ink2Pic's definition box [INFERENCE]. */

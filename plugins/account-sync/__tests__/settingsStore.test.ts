@@ -2,8 +2,8 @@ import {
   defaultSettings,
   serializeSettings,
   setModule,
-} from '@supernote-tools/sync-core/settings';
-import {ok, fail, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sync-core/settings';
+import {ok, fail, THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {callFiles, TextFiles} from '../src/files';
 import {loadSettings, saveSettings} from '../src/settingsStore';
 

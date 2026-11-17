@@ -6,7 +6,7 @@ import {
   PERMISSION_FILE_WRITE,
   PERMISSION_INTERNET,
   requestPermission,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from '../ui/copy';
 import {logged, PERSON_TIMEOUT_MS} from '../profile';
 

@@ -4,7 +4,7 @@
  * kept, in memory [inference: a restart loses it, enough for «the last conversion»]; a record from
  * another note or page is never applied.
  */
-import type {Rect} from '@supernote-tools/ink-core';
+import type {Rect} from '@ink-tools/ink-core';
 import {
   fail,
   ok,
@@ -13,7 +13,7 @@ import {
   TEXT_TYPE,
   type TextBoxInput,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 export type Conversion = {path: string; page: number; box: TextBoxInput; strokes: SavedStroke[]};
 

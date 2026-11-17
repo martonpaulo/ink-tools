@@ -10,7 +10,7 @@ Lookup is MIT-licensed ([LICENSE](LICENSE)). It ships third-party data:
 | [CLDR annotations](https://github.com/unicode-org/cldr-json) 49.0.0 | Unicode-3.0 | Portuguese, Spanish and Chinese names and keywords in the OpenMoji index | [Ink2Pic's notice](../ink2pic/NOTICE.md#openmoji-and-keyword-data) |
 
 The pinyin index, `packages/ink-core/src/data/pinyin-index.json`, is bundled into `Lookup.snplg`
-through `@supernote-tools/ink-core/pinyin-data` ([#158](https://github.com/martonpaulo/supernote-tools/issues/158)). As an
+through `@ink-tools/ink-core/pinyin-data` ([#158](https://github.com/martonpaulo/supernote-tools/issues/158)). As an
 adaptation of CC-CEDICT by MDBG and the CC-CEDICT contributors, it is under CC BY-SA 4.0
 (<https://creativecommons.org/licenses/by-sa/4.0/>); ink-core's notice says what was taken and
 changed.

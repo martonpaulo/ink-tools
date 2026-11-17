@@ -11,8 +11,8 @@ import {
   resetSessionForTests,
   resetSettingsForTests,
 } from '../src/profile';
-import {startConfigQueue} from '@supernote-tools/sn-adapter/official';
-import {metrics} from '@supernote-tools/ui-kit';
+import {startConfigQueue} from '@ink-tools/sn-adapter/official';
+import {metrics} from '@ink-tools/ui-kit';
 import type {LanguageCode} from '../src/settings/languages';
 import {copy} from '../src/ui/copy';
 import {LanguagesScreen} from '../src/ui/LanguagesScreen';

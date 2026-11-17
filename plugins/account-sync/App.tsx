@@ -3,19 +3,19 @@ import {
   BUNDLED_DESCRIPTOR,
   DeviceReader,
   probeAll,
-} from '@supernote-tools/sn-adapter';
+} from '@ink-tools/sn-adapter';
 import {
   closePluginView,
   getPluginDirPath,
-} from '@supernote-tools/sn-adapter/official';
-import {useBackKey} from '@supernote-tools/ui-kit';
-import {BridgeSettings, MODULES} from '@supernote-tools/sync-core/settings';
+} from '@ink-tools/sn-adapter/official';
+import {useBackKey} from '@ink-tools/ui-kit';
+import {BridgeSettings, MODULES} from '@ink-tools/sync-core/settings';
 import {
   ModuleRun,
   moduleStatus,
   ProbeProblems,
-} from '@supernote-tools/sync-core/status';
-import type {ModuleId} from '@supernote-tools/sync-core/settings';
+} from '@ink-tools/sync-core/status';
+import type {ModuleId} from '@ink-tools/sync-core/settings';
 import {copy, format} from './src/copy';
 import {SettingsForm} from './src/SettingsForm';
 import {ModuleRow, SettingsShell, ShellState} from './src/SettingsShell';

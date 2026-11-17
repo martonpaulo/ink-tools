@@ -16,7 +16,7 @@ import {log, logTime, timed} from '../log/memory';
 import {MEASURED_RESULTS} from '../measures';
 import {searchState} from '../state';
 import type {SearchResult} from '../types';
-import type {LassoPlace} from '@supernote-tools/ink-core';
+import type {LassoPlace} from '@ink-tools/ink-core';
 import {Done, failureText, FailureCopy, offlineText} from './failure';
 import type {EarlyDownload, InsertOptions, Stop} from './insertPicture';
 import {dropEarly} from './insertPicture';

@@ -5,8 +5,8 @@
  */
 import {NativeModules} from 'react-native';
 import {PluginManager} from 'sn-plugin-lib';
-import {SearchResult} from '@supernote-tools/picture-search';
-import {fail, ok, TIMEOUT_CODE} from '@supernote-tools/sn-adapter/official';
+import {SearchResult} from '@ink-tools/picture-search';
+import {fail, ok, TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 import {
   findKept,
   indexPath,

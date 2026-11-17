@@ -5,8 +5,8 @@
  * a band along each mark, and the inside of a mark that closes on itself, to transparent.
  * No plugin view takes the pen: whether one can is not measured yet (#134).
  */
-import type {Rect} from '@supernote-tools/ink-core';
-import {PenPoint} from '@supernote-tools/sn-adapter/official';
+import type {Rect} from '@ink-tools/ink-core';
+import {PenPoint} from '@ink-tools/sn-adapter/official';
 import {Done, Marks, runEdit} from './edit';
 import {GUIDE_DEVICE, GuideDeps, GuideReasons, runGuided} from './guide';
 import {NO_OPTIONS} from './native';

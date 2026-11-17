@@ -5,8 +5,8 @@ import {
   useBackKey,
   useWorking,
   WorkingStrip,
-} from '@supernote-tools/ui-kit';
-import {closePluginView} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/ui-kit';
+import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {EditsForm} from './src/EditsForm';
 import {currentSettings, rememberSettings} from './src/edits';

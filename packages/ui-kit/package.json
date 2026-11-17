@@ -1,5 +1,5 @@
 {
-  "name": "@supernote-tools/ui-kit",
+  "name": "@ink-tools/ui-kit",
   "version": "0.0.0",
   "private": true,
   "description": "The Settings design tokens, shared styles and Button every plugin uses (#93).",

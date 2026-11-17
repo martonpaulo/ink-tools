@@ -16,7 +16,7 @@ import {resetSymbolsForTests} from '../src/symbols/store';
 import {thumbUri} from '../src/search/thumbs';
 import {ProbeBar} from '../src/ui/ProbeBar';
 import {copy} from '../src/ui/copy';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 import {
   createHost,
   PLUGIN_DIR,

@@ -10,8 +10,8 @@
  * refresh token, which `inkctl secret set google-client` puts there (#200).
  */
 import {useEffect, useState} from 'react';
-import {BUNDLED_DESCRIPTOR, probeAll} from '@supernote-tools/sn-adapter';
-import {getPluginDirPath} from '@supernote-tools/sn-adapter/official';
+import {BUNDLED_DESCRIPTOR, probeAll} from '@ink-tools/sn-adapter';
+import {getPluginDirPath} from '@ink-tools/sn-adapter/official';
 import {deviceReader} from './deviceReader';
 import {deviceRows} from './deviceRows';
 import {createDeviceStores} from './deviceStores';

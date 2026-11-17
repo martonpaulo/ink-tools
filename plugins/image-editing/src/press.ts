@@ -11,7 +11,7 @@ import {
   PERMISSION_FILE_WRITE,
   requestPermission,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from './crop';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';

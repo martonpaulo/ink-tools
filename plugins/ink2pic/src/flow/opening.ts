@@ -16,7 +16,7 @@
  * its lifecycle line, the lasso decision and the press. The decision on mount goes through the
  * controller too, so a fresh runtime keeps the previous runtime's file as session.prev.log.
  */
-import {LifeState} from '@supernote-tools/sn-adapter/official';
+import {LifeState} from '@ink-tools/sn-adapter/official';
 
 /** The host replays the last press within 1 s of a new listener (#34); a margin on top. */
 export const REPLAY_WINDOW_MS = 1500;

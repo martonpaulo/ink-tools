@@ -14,13 +14,13 @@ import {
   Outcome,
   Summary,
   SummaryResult,
-} from '@supernote-tools/ink-core';
+} from '@ink-tools/ink-core';
 import {
   CallFailure,
   insertText,
   Result,
   TextBoxInput,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {LANGUAGES} from './definition';
 import {summarize} from './dictionaries';

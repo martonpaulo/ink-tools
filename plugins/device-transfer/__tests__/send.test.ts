@@ -1,5 +1,5 @@
 /** The send flow (#98): device choice, each answer's line, and no PNG left behind. */
-import {EMPTY_LASSO_CODE, fail, ok} from '@supernote-tools/sn-adapter/official';
+import {EMPTY_LASSO_CODE, fail, ok} from '@ink-tools/sn-adapter/official';
 import {Device} from '../src/localsend/protocol';
 import {relay} from '../src/native';
 import {discoverDevices, sendCapture, tempDir} from '../src/send/sendPng';

@@ -9,8 +9,8 @@ import renderer, {
   ReactTestInstance,
   ReactTestRenderer,
 } from 'react-test-renderer';
-import type {SearchResult} from '@supernote-tools/picture-search';
-import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
+import type {SearchResult} from '@ink-tools/picture-search';
+import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import {ChooseScreen} from '../src/ui/ChooseScreen';
 import * as choose from '../src/choose';
 import {pictureCopy} from '../src/copy';

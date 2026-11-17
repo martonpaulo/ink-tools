@@ -1,5 +1,5 @@
 {
-  "name": "@supernote-tools/sync-core",
+  "name": "@ink-tools/sync-core",
   "version": "0.0.0",
   "private": true,
   "main": "src/index.ts",
@@ -8,6 +8,6 @@
     "test": "jest --passWithNoTests"
   },
   "devDependencies": {
-    "@supernote-tools/sn-adapter": "*"
+    "@ink-tools/sn-adapter": "*"
   }
 }

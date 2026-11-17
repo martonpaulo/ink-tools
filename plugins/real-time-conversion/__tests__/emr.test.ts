@@ -3,7 +3,7 @@
  * read 8 times their page size. The letters here are the bounds Probe read back from the owner's
  * «casa» on a 1920 x 2560 page, turned into EMR with the SDK's inverse formula.
  */
-import {emrToPage, offPage} from '@supernote-tools/sn-adapter/official';
+import {emrToPage, offPage} from '@ink-tools/sn-adapter/official';
 import {Converter} from '../src/convert';
 import {wordKept} from '../src/shapes';
 import {lastConversion, setLastConversion} from '../src/undo';

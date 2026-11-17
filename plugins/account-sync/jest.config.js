@@ -14,8 +14,8 @@ module.exports = {
     ...snAdapter.jestModuleNameMapper,
     // sync-core's status rules, which the probe switch test drives (#101), and its Settings
     // rules by subpath (#40).
-    '^@supernote-tools/sync-core$': SYNC_CORE,
-    '^@supernote-tools/sync-core/(.*)$': path.join(SYNC_CORE, '$1'),
+    '^@ink-tools/sync-core$': SYNC_CORE,
+    '^@ink-tools/sync-core/(.*)$': path.join(SYNC_CORE, '$1'),
   },
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.scratch/'],
 };

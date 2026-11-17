@@ -1,5 +1,5 @@
 /** A received PDF becomes a note with its pages as backgrounds (#143), with a scripted module. */
-import {fail, MODULE_CODE, ok} from '@supernote-tools/sn-adapter/official';
+import {fail, MODULE_CODE, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {
   DEFAULT_PAGE,

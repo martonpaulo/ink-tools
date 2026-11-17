@@ -14,7 +14,7 @@ import {
   runProbe,
   stopPenProbe,
 } from '../flow/penProbe';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {Button, shared} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 
 export function ProbeBar({

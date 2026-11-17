@@ -5,8 +5,8 @@
  * before (#115). Each translation direction has its own switch and button (#174, owner 2026-11-16:
  * no automatic direction); the owner's three directions start on, every other one off.
  */
-import {ALL_DIRECTIONS, directionId} from '@supernote-tools/ink-core';
-import {DEFAULT_ADAPTERS} from '@supernote-tools/picture-search';
+import {ALL_DIRECTIONS, directionId} from '@ink-tools/ink-core';
+import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search';
 import type {SettingsCodec} from './profile';
 
 export const SETTINGS_VERSION = 1;

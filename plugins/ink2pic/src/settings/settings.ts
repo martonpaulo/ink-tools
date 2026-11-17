@@ -6,7 +6,7 @@
  * know is ignored with a problem line, and a missing or malformed file gives the defaults, never
  * an empty language list. Every default is today's behaviour, so nobody needs to open Settings.
  */
-import {DEFAULT_ADAPTERS} from '@supernote-tools/picture-search';
+import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search';
 import {
   defaultLanguages,
   isSupportedLanguage,

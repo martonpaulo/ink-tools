@@ -5,8 +5,8 @@ import {
   LookupResult,
   PinyinIndex,
   TranslationQuery,
-} from '@supernote-tools/ink-core';
-import {fail, ok} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/ink-core';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {
   ButtonDeps,
   resetButtonsForTests,

@@ -2,14 +2,14 @@
 import React from 'react';
 import {StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {metrics} from '@supernote-tools/ui-kit';
-import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {metrics} from '@ink-tools/ui-kit';
+import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {
   BridgeSettings,
   defaultSettings,
   setModule,
   setProvider,
-} from '@supernote-tools/sync-core/settings';
+} from '@ink-tools/sync-core/settings';
 import {SettingsForm} from '../src/SettingsForm';
 
 function render(settings: BridgeSettings, onChange = jest.fn()) {

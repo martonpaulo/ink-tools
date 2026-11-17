@@ -20,7 +20,7 @@ import {
 } from '../src/profile';
 import {resetLibraryForTests} from '../src/library/device';
 import {PluginManager} from 'sn-plugin-lib';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const result: SearchResult = {
   id: 'openclipart:340609',

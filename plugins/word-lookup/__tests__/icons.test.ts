@@ -1,7 +1,7 @@
 import {existsSync, readFileSync} from 'fs';
 import {join} from 'path';
 import {Image} from 'react-native';
-import {ok} from '@supernote-tools/sn-adapter/official';
+import {ok} from '@ink-tools/sn-adapter/official';
 import {
   BUTTONS,
   ButtonDeps,

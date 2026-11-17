@@ -3,11 +3,11 @@
  * the picture is replaced (src/press.ts), from the shared ui-kit.
  */
 import {ToastAndroid} from 'react-native';
-import {createWorking} from '@supernote-tools/ui-kit';
+import {createWorking} from '@ink-tools/ui-kit';
 import {
   closePluginView,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 
 /** The owner's limit: an edit finishes within 2 s; a longer one shows the strip (plugin-scope.md). */

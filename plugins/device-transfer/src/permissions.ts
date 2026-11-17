@@ -11,7 +11,7 @@ import {
   PERMISSION_FILE_WRITE,
   PERMISSION_INTERNET,
   requestPermission,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 
 /** Every permission `PluginConfig.json` declares; `__tests__/permissions.test.ts` checks both match. */

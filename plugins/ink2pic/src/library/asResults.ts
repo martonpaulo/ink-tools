@@ -1,5 +1,5 @@
 /** Library pictures as grid results: local files, inserted without a download (#15). */
-import type {SearchResult} from '@supernote-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search';
 import type {LibraryItem} from './types';
 
 export function libraryResults(items: LibraryItem[]): SearchResult[] {

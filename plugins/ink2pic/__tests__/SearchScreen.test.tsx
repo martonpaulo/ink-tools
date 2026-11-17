@@ -1,10 +1,10 @@
 import React from 'react';
 import {Keyboard, Pressable, StyleSheet, Text, TextInput} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import type {SourceAdapter} from '@supernote-tools/picture-search';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import type {SourceAdapter} from '@ink-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 import {copy} from '../src/ui/copy';
-import {metrics} from '@supernote-tools/ui-kit';
+import {metrics} from '@ink-tools/ui-kit';
 import {SearchScreen, statusLine} from '../src/ui/SearchScreen';
 
 const result: SearchResult = {

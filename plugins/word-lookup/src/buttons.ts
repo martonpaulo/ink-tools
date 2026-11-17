@@ -13,7 +13,7 @@ import {
   requestPermission,
   Result,
   unregisterButton,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
 import {iconUri} from './icons';

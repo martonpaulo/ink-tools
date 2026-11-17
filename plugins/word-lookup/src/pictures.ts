@@ -9,18 +9,18 @@
  * opens Lookup's view, which asks for it (App.tsx).
  */
 import {ToastAndroid} from 'react-native';
-import {checkLookup, LassoPlace} from '@supernote-tools/ink-core';
+import {checkLookup, LassoPlace} from '@ink-tools/ink-core';
 import {
   DEFAULT_ADAPTERS,
   keepMode,
   keptInMode,
-} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
 import {
   insertText,
   Result,
   TextBoxInput,
   TIMEOUT_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {missingFor, BUTTONS} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';

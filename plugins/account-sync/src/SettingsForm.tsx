@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {Button, shared} from '@ink-tools/ui-kit';
 import {
   BridgeSettings,
   MODULE_PROVIDERS,
@@ -16,7 +16,7 @@ import {
   setSendTabletOnly,
   TWO_WAY_MODULES,
   TwoWayModule,
-} from '@supernote-tools/sync-core/settings';
+} from '@ink-tools/sync-core/settings';
 import {copy, format} from './copy';
 
 const twoWay = (m: string): m is TwoWayModule =>

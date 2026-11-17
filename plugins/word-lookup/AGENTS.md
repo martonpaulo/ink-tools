@@ -84,7 +84,7 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
   for the settings file and the prepared pictures ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)); add another only with its first call
   ([#83](https://github.com/martonpaulo/supernote-tools/issues/83) is the same rule for Bridge).
 - Every file, settings and insert call goes through `src/profile.ts`, which sets Lookup's
-  PluginProfile first; never import `@supernote-tools/picture-search/storage` or `/insert` elsewhere.
+  PluginProfile first; never import `@ink-tools/picture-search/storage` or `/insert` elsewhere.
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
 - Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.

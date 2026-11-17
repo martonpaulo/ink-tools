@@ -2,14 +2,14 @@
 import React from 'react';
 import {NativeModules, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
-import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
-import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
+import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {fail, ok, THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {
   BUNDLED_DESCRIPTOR as D,
   contentUri,
   DeviceReader,
-} from '@supernote-tools/sn-adapter';
+} from '@ink-tools/sn-adapter';
 import App, {startupProbe} from '../App';
 import {copy} from '../src/copy';
 import type {SyncRunner, SyncSnapshot} from '../src/sync';

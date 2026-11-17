@@ -4,8 +4,8 @@
  * through `insertImage`, which the host shows as its own floating selection; a PDF becomes a new
  * note (#143, `pdfNote.ts`).
  */
-import {freeRect, isFree, OccupiedRead, PLACE_GAP} from '@supernote-tools/ink-core';
-import {Result, TextBoxInput} from '@supernote-tools/sn-adapter/official';
+import {freeRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
+import {Result, TextBoxInput} from '@ink-tools/sn-adapter/official';
 import {copy} from '../copy';
 import {
   announce,

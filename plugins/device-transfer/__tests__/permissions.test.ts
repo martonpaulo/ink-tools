@@ -1,5 +1,5 @@
 /** Relay asks for every permission it declares before its first call (#163). */
-import {fail, ok} from '@supernote-tools/sn-adapter/official';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import config from '../PluginConfig.json';
 import {copy} from '../src/copy';
 import {

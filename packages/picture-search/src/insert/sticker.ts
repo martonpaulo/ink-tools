@@ -18,7 +18,7 @@ import {
   PICTURE_TYPE,
   Result,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 /** The `.sticker` file beside a prepared picture: `apple.png` gives `apple.sticker`. */
 export function stickerPath(picturePath: string): string {

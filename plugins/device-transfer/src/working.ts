@@ -3,11 +3,11 @@
  * each shows it from the press to the toast (index.js), from the shared ui-kit.
  */
 import {ToastAndroid} from 'react-native';
-import {createWorking} from '@supernote-tools/ui-kit';
+import {createWorking} from '@ink-tools/ui-kit';
 import {
   closePluginView,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 
 export const working = createWorking({

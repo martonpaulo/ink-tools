@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, shared} from '@supernote-tools/ui-kit';
+import {Button, metrics, shared} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GridState} from './styles';
 import {StyleId, StyleOptions} from './native';

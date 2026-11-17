@@ -29,8 +29,8 @@ import {
   tabletOnlyKept,
   TimeWindow,
   TWO_WAY_MODULES,
-} from '@supernote-tools/sync-core';
-import type {CapabilityStatus} from '@supernote-tools/sn-adapter';
+} from '@ink-tools/sync-core';
+import type {CapabilityStatus} from '@ink-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
 import type {SecretDrop} from './secretStore';
 import {probeProblems} from './probe';

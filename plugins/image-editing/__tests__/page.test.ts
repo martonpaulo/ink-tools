@@ -1,5 +1,5 @@
 /** One edit on every picture of the page, and its undo (#140). */
-import {fail, ok, PICTURE_TYPE, STROKE_TYPE} from '@supernote-tools/sn-adapter/official';
+import {fail, ok, PICTURE_TYPE, STROKE_TYPE} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {Done, NOT_ONE_PICTURE} from '../src/edit';
 import {EDITS, EditId} from '../src/edits';

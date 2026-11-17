@@ -3,10 +3,10 @@ import {join} from 'path';
 import React from 'react';
 import {Image, StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {PAGE_SIZE, pageCount, pageOf} from '@supernote-tools/picture-search';
-import type {SearchResult} from '@supernote-tools/picture-search';
+import {PAGE_SIZE, pageCount, pageOf} from '@ink-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search';
 import {copy} from '../src/ui/copy';
-import {metrics} from '@supernote-tools/ui-kit';
+import {metrics} from '@ink-tools/ui-kit';
 import {THUMB_TIMEOUT_MS} from '../src/search/thumbs';
 import {ResultsGrid} from '../src/ui/ResultsGrid';
 

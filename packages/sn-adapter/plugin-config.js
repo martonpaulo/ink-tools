@@ -1,5 +1,5 @@
 /**
- * How a plugin reads `@supernote-tools/sn-adapter` (#101), for its Metro and Jest configs, as
+ * How a plugin reads `@ink-tools/sn-adapter` (#101), for its Metro and Jest configs, as
  * `ink-core/plugin-config.js` does: Metro bundles the package's TypeScript from this folder into the
  * .snplg, and its `sn-plugin-lib` import resolves from the plugin's node_modules (ui-kit's
  * `nodeModulesPaths`), so the plugin keeps one copy. The plugin's tsconfig.json maps the same names
@@ -10,7 +10,7 @@
  */
 const path = require('path');
 
-const NAME = '@supernote-tools/sn-adapter';
+const NAME = '@ink-tools/sn-adapter';
 
 /** The Java a plugin's native build compiles: the dry insert's revert by row id (#213). */
 exports.nativeSources = path.join(__dirname, 'native');

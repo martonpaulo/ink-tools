@@ -1,5 +1,5 @@
 /** The file permissions Retouch asks for when Settings opens (#136, #182). */
-import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
+import {fail, ok, THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {askFilePermissions, PermissionDeps} from '../src/permissions';
 
 function deps(granted: readonly string[]): PermissionDeps & {asked: string[]} {

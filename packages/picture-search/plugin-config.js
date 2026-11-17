@@ -1,5 +1,5 @@
 /**
- * How a plugin reads `@supernote-tools/picture-search` (#125), for its Metro and Jest configs, as
+ * How a plugin reads `@ink-tools/picture-search` (#125), for its Metro and Jest configs, as
  * `ink-core/plugin-config.js` does: Metro bundles the package's TypeScript from this folder into
  * the .snplg, and Jest maps the name, and a deep path such as `/rank`, to its source. The plugin's
  * tsconfig.json maps the same names by `paths`. The Java in `native/` (the pixel measures and the
@@ -9,7 +9,7 @@
  */
 const path = require('path');
 
-const NAME = '@supernote-tools/picture-search';
+const NAME = '@ink-tools/picture-search';
 const SOURCE = path.join(__dirname, 'src');
 
 /** The Java a plugin's native build compiles: the pixel measures and the file module (#142). */

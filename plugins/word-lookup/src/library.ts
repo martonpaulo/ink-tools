@@ -13,7 +13,7 @@ import {
   ok,
   Result,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {
   FileSize,
   InsertRecord,

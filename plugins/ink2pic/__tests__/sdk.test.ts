@@ -4,11 +4,11 @@ import {
   PluginManager,
   PluginNoteAPI,
 } from 'sn-plugin-lib';
-import * as lasso from '@supernote-tools/sn-adapter/official';
-import * as note from '@supernote-tools/sn-adapter/official';
-import * as page from '@supernote-tools/sn-adapter/official';
-import * as plugin from '@supernote-tools/sn-adapter/official';
-import {THROWN_CODE} from '@supernote-tools/sn-adapter/official';
+import * as lasso from '@ink-tools/sn-adapter/official';
+import * as note from '@ink-tools/sn-adapter/official';
+import * as page from '@ink-tools/sn-adapter/official';
+import * as plugin from '@ink-tools/sn-adapter/official';
+import {THROWN_CODE} from '@ink-tools/sn-adapter/official';
 
 const sdkFailure = {success: false, error: {code: 904, message: 'no lasso'}};
 const success = (result: unknown) => ({success: true, result});

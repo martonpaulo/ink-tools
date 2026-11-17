@@ -5,7 +5,7 @@ import {
   lassoImage,
   pageImage,
   WHITE_PNG,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 const generateNotePng = PluginFileAPI.generateNotePng as jest.Mock;
 const generateLassoPreview = PluginCommAPI.generateLassoPreview as jest.Mock;

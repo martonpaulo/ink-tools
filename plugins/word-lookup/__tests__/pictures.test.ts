@@ -3,9 +3,9 @@
  * picture» flow (#142): the mode's measured split decides what goes in, a press that inserts
  * nothing writes its sentence below the word, and one press runs at a time.
  */
-import {LassoPlace} from '@supernote-tools/ink-core';
-import {Measures, pixelKind, SearchResult} from '@supernote-tools/picture-search';
-import {fail, ok} from '@supernote-tools/sn-adapter/official';
+import {LassoPlace} from '@ink-tools/ink-core';
+import {Measures, pixelKind, SearchResult} from '@ink-tools/picture-search';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy, pictureCopy} from '../src/copy';
 import {MODES} from '../src/modes';
 import {
@@ -24,11 +24,11 @@ import {
   QuickInsertDeps,
 } from '../src/profile';
 import {defaultSettings} from '../src/settings';
-import * as insertTier from '@supernote-tools/picture-search/insert';
+import * as insertTier from '@ink-tools/picture-search/insert';
 
 // The shared insert, watched for the options each button passes (#35); it runs as it is.
-jest.mock('@supernote-tools/picture-search/insert', () => {
-  const actual = jest.requireActual('@supernote-tools/picture-search/insert');
+jest.mock('@ink-tools/picture-search/insert', () => {
+  const actual = jest.requireActual('@ink-tools/picture-search/insert');
   return {...actual, insertPicture: jest.fn(actual.insertPicture)};
 });
 

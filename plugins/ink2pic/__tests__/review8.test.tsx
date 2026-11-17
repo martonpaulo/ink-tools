@@ -22,8 +22,8 @@ import {
   resetLibraryForTests,
 } from '../src/library/device';
 import type {Done} from '../src/flow/failure';
-import type {SourceAdapter} from '@supernote-tools/picture-search';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import type {SourceAdapter} from '@ink-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 import {SearchScreen} from '../src/ui/SearchScreen';
 
 const files: Record<string, string> = {};

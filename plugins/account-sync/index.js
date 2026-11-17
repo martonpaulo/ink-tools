@@ -10,7 +10,7 @@ import {startAutoSync} from './src/sync';
 import {
   registerSettingsEntry,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 AppRegistry.registerComponent(appName, () => App);
 

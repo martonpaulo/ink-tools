@@ -4,7 +4,7 @@
  * outside PluginHost's whitelist cannot be written (#164); an unreadable file is a fresh start,
  * never a crash.
  */
-import {getPluginDirPath, Result} from '@supernote-tools/sn-adapter/official';
+import {getPluginDirPath, Result} from '@ink-tools/sn-adapter/official';
 import {Device, isPrivateAddress} from '../localsend/protocol';
 import {Relay} from '../native';
 

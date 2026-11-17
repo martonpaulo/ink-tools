@@ -1,5 +1,5 @@
 /** The Digest store over an in-memory Knowledge provider (#42). */
-import type {DigestEntry, Row} from '@supernote-tools/sn-adapter';
+import type {DigestEntry, Row} from '@ink-tools/sn-adapter';
 import type {ContentRows} from '../src/deviceStores';
 import {createDeviceDigest} from '../src/digestStore';
 

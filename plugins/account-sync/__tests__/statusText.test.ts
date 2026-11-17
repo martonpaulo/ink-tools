@@ -1,5 +1,5 @@
 /** A module's status in plain words, and the same record in the log (#88). */
-import type {ModuleRun} from '@supernote-tools/sync-core';
+import type {ModuleRun} from '@ink-tools/sync-core';
 import {
   logBlocked,
   logRun,

@@ -1,5 +1,5 @@
 {
-  "name": "@supernote-tools/sn-adapter",
+  "name": "@ink-tools/sn-adapter",
   "version": "0.0.0",
   "private": true,
   "main": "src/index.ts",

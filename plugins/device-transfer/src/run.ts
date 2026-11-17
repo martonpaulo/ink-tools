@@ -24,8 +24,8 @@ import {
   recognizeElements,
   Result,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
-import {OccupiedRead, readLassoQuery} from '@supernote-tools/ink-core';
+} from '@ink-tools/sn-adapter/official';
+import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';

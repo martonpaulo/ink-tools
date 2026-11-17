@@ -14,13 +14,13 @@ import {
   LanguageCode,
   LassoQuery,
   Outcome,
-} from '@supernote-tools/ink-core';
+} from '@ink-tools/ink-core';
 import {
   CallFailure,
   insertText,
   Result,
   TextBoxInput,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {definers, SOURCE_NAMES} from './dictionaries';
 import {FIRST_BUTTON_ID, MODES} from './modes';

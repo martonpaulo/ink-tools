@@ -9,7 +9,7 @@ import {
   MODULE_CODE,
   ok,
   Result,
-} from "@supernote-tools/sn-adapter/official";
+} from "@ink-tools/sn-adapter/official";
 import { pluginProfile } from "./profile";
 
 /**
