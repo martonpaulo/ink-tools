@@ -73,7 +73,11 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
   only in `src/dictionaries.ts`. Feature code never names a concrete source.
 - Translation has no automatic direction: one button per direction, each with its own switch
   (owner, [#174](https://github.com/martonpaulo/supernote-tools/issues/174)); a new pair is one row of ink-core's `PAIRS`, which adds its two
-  directions with no change here.
+  directions with no change here except its two icons.
+- Each lasso button registers its own icon, distinct in silhouette ([#107](https://github.com/martonpaulo/ink-tools/issues/107)): `assets/<name>.svg`
+  rendered by `npm run icons` (Playwright on `NODE_PATH`) to a 96 x 96 PNG (owner D43 A), named once
+  in `src/icons.ts`; `__tests__/icons.test.ts` fails for a button with no icon, such as a new direction's.
+  `assets/contact-sheet.png` shows them all beside Device Transfer's.
 - Permissions: `plugin.permission.INTERNET` for the dictionary and the picture sources,
   `plugin.permission.FILE:READ` for the lasso calls ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) and `plugin.permission.FILE:WRITE`
   for the settings file and the prepared pictures ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)); add another only with its first call

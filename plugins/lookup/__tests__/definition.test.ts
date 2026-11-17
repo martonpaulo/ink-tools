@@ -18,6 +18,7 @@ import {
   settingsChanged,
   SHOW_NO_VIEW,
 } from '../src/buttons';
+import {iconUri} from '../src/icons';
 import {FIRST_BUTTON_ID, MODES} from '../src/modes';
 import {copy} from '../src/copy';
 import {defaultSettings} from '../src/settings';
@@ -175,6 +176,7 @@ describe('the opt-in button', () => {
     expect(d.register).toHaveBeenCalledWith(BUTTON_TYPE_LASSO, ['NOTE'], {
       id: DEFINE_BUTTON_ID,
       name: 'Insert Definition',
+      icon: iconUri('definition.png'),
       editDataTypes: [0],
       showType: SHOW_NO_VIEW,
     });

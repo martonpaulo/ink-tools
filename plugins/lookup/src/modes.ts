@@ -38,6 +38,8 @@ export type Mode = {
    * used again; else as a picture (#35, owner D32 A).
    */
   sticker: boolean;
+  /** Its lasso button's icon file in `assets/` (#107, `src/icons.ts`). */
+  icon: string;
 };
 
 export const MODES: readonly Mode[] = [
@@ -50,6 +52,7 @@ export const MODES: readonly Mode[] = [
     photos: false,
     skipSources: [],
     sticker: true,
+    icon: 'sticker.png',
   },
   {
     // Real photos: Commons with no drawings filter; clip art and symbols are no photos.
@@ -60,6 +63,7 @@ export const MODES: readonly Mode[] = [
     photos: true,
     skipSources: ['openclipart', 'openmoji'],
     sticker: false,
+    icon: 'image.png',
   },
 ];
 
@@ -77,6 +81,8 @@ export type Translation = {
   key: string;
   buttonId: number;
   name: string;
+  /** Its lasso button's icon file in `assets/`, one per direction (#107, `src/icons.ts`). */
+  icon: string;
 };
 
 /**
@@ -90,6 +96,7 @@ export const TRANSLATIONS: readonly Translation[] = ALL_DIRECTIONS.map(
     key: directionId(direction),
     buttonId: CHOOSE_BUTTON_ID + 1 + index,
     name: copy['button.translate'](direction),
+    icon: `translate-${directionId(direction)}.png`,
   }),
 );
 

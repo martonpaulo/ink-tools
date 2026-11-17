@@ -16,6 +16,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
+import {iconUri} from './icons';
 import {SUMMARY_BUTTON_ID} from './summary';
 import {
   CHOOSE_BUTTON_ID,
@@ -58,6 +59,8 @@ export type LassoButton = {
   switch: SwitchRef;
   id: number;
   name: string;
+  /** Its icon file in `assets/`, distinct for each button (#107). */
+  icon: string;
   needs: readonly Need[];
 };
 
@@ -87,6 +90,7 @@ export const BUTTONS: readonly LassoButton[] = [
     switch: {key: mode.settingKey},
     id: mode.buttonId,
     name: mode.name,
+    icon: mode.icon,
     needs: [
       {...INTERNET, reason: copy['permission.pictures']},
       FILE_READ,
@@ -97,6 +101,7 @@ export const BUTTONS: readonly LassoButton[] = [
     switch: {key: 'choose'},
     id: CHOOSE_BUTTON_ID,
     name: CHOOSE_BUTTON_NAME,
+    icon: 'choose.png',
     needs: [
       {...INTERNET, reason: copy['permission.pictures']},
       FILE_READ,
@@ -107,18 +112,21 @@ export const BUTTONS: readonly LassoButton[] = [
     switch: {key: 'definition'},
     id: DEFINE_BUTTON_ID,
     name: copy['button.define'],
+    icon: 'definition.png',
     needs: [INTERNET, FILE_READ],
   },
   {
     switch: {key: 'summary'},
     id: SUMMARY_BUTTON_ID,
     name: copy['button.summary'],
+    icon: 'summary.png',
     needs: [{...INTERNET, reason: copy['permission.summary']}, FILE_READ],
   },
   ...TRANSLATIONS.map(translation => ({
     switch: {direction: translation.key},
     id: translation.buttonId,
     name: translation.name,
+    icon: translation.icon,
     needs: TRANSLATE_NEEDS,
   })),
 ];
@@ -164,6 +172,7 @@ export async function syncButtons(
       ? await deps.register(BUTTON_TYPE_LASSO, ['NOTE'], {
           id: button.id,
           name: button.name,
+          icon: iconUri(button.icon),
           editDataTypes: [EDIT_DATA_STROKES],
           showType: SHOW_NO_VIEW,
         })
