@@ -41,7 +41,7 @@ test('the first pass only pulls; the next pushes the tablet edits before it pull
   let clock = 1000;
   const first = await runCalendarModule({sources: [google], store: t.store, window: W}, {baseline: []}, () => clock);
   expect(t.log).toEqual(['create Talk']);
-  expect(first.state).toEqual({lastSync: 1000, baseline: [ev()]});
+  expect(first.state).toEqual({lastSync: 1000, sourceSync: {google: 1000}, baseline: [ev()]});
   expect(first.run.counts).toEqual({added: 1, changed: 0, removed: 0});
 
   clock = 2000;
@@ -69,6 +69,54 @@ test('an edit to a read-only source is reported, and a failing source never stop
   expect(r.run.errors).toEqual(['google: HTTP 401']);
   expect(r.run.warnings).toEqual(['ics is read-only: 1 edit(s) on the tablet were replaced by the source\'s version', 'TZID read as UTC']);
   expect(t.log).toEqual(['create Talk']);
+});
+
+test('a tablet edit to a source that failed one pass while another read is sent on the next pass where it reads (#211)', async () => {
+  const t = tablet();
+  const googleEvents = [ev()];
+  let googleDown = false;
+  const google: CalendarSource = {
+    id: 'google',
+    provider: {
+      listCalendars: async () => { if (googleDown) throw new Error('HTTP 401'); return [{calendarId: 'g1', name: 'g1'}]; },
+      listEvents: async () => [...googleEvents],
+    },
+    writer: {
+      ...writer(t.log),
+      updateEvent: async e => { t.log.push(`push update ${e.eventId} ${e.title}`); googleEvents[0] = e; },
+    },
+  };
+  const ics: CalendarSource = {id: 'ics', provider: provider('feed', [ev({eventId: 'f1', calendarId: 'feed', title: 'Feed'})])};
+  const m = {sources: [google, ics], store: t.store, window: W};
+  let clock = 1000;
+  let state = (await runCalendarModule(m, {baseline: []}, () => clock)).state;
+
+  // The owner moves the Google event on the tablet; then Google fails one pass while ICS reads.
+  const moved = ev({title: 'Talk moved', modified: 1500});
+  t.rows.set(key(moved), moved);
+  const edits: DeviceEdit[] = [{event: moved, cancelled: false}];
+  t.store.listEdits = async () => edits;
+  t.log.length = 0;
+  googleDown = true;
+  clock = 2000;
+  const failedPass = await runCalendarModule(m, state, () => clock);
+  expect(failedPass.run.notRun).toBeUndefined();
+  expect(failedPass.run.errors).toEqual([
+    'google: HTTP 401',
+    '1 tablet edit(s) were not sent: their source did not read or is not on; an edit for a source that did not read is sent on the next pass where it reads',
+  ]);
+  expect(t.log).toEqual([]);
+  state = failedPass.state;
+  expect(state.sourceSync).toEqual({google: 1000, ics: 2000});
+
+  // Google reads again: the edit goes out before the pull, so the pull never writes over it.
+  googleDown = false;
+  clock = 3000;
+  const back = await runCalendarModule(m, state, () => clock);
+  expect(back.run.errors).toEqual([]);
+  expect(t.log).toEqual(['push update e1 Talk moved']);
+  expect(t.rows.get(key(moved))?.title).toBe('Talk moved');
+  expect(back.state.sourceSync).toEqual({google: 3000, ics: 3000});
 });
 
 test('runBridgeSync runs only what the plan allows, and a module with no sign-in says so', async () => {

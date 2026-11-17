@@ -33,7 +33,16 @@ export interface DeviceCalendarEditor extends DeviceCalendarStore, DeviceRelinke
 export interface CalendarState {
   /** Epoch ms when the last pass ended; absent before the first. */
   lastSync?: number;
-  /** Our rows as the last pass left them: the push skips an edit that still equals its row. */
+  /**
+   * Epoch ms when the last pass that read each source ended (#211). A source that failed keeps its
+   * older time, so its tablet edits stay newer than it and go out on the next pass where it reads.
+   * A source with no time here uses `lastSync`.
+   */
+  sourceSync?: Partial<Record<ProviderId, number>>;
+  /**
+   * Our rows as the last pass left them: the push skips an edit that still equals its row. The rows
+   * of a source that did not read keep their older version, so its pending edits still differ (#211).
+   */
   baseline: CalendarEvent[];
 }
 
@@ -80,15 +89,15 @@ export async function runCalendarModule(
   }
 
   if (state.lastSync !== undefined) {
-    let edits: DeviceEdit[] = [];
+    let all: DeviceEdit[] = [];
     try {
-      edits = changedSince(await m.store.listEdits(m.window), state.lastSync);
+      all = await m.store.listEdits(m.window);
     } catch (e) {
       total.errors.push(`reading the tablet's edits: ${message(e)}`);
     }
     const target = (e: DeviceEdit) => owner.get(e.event.eventId ? e.event.calendarId : (m.defaultCalendarId ?? ''));
     for (const source of readable) {
-      const mine = edits.filter(e => target(e) === source);
+      const mine = changedSince(all, state.sourceSync?.[source.id] ?? state.lastSync).filter(e => target(e) === source);
       if (!mine.length) continue;
       if (!source.writer) {
         warnings.push(`${source.id} is read-only: ${mine.length} edit(s) on the tablet were replaced by the source's version`);
@@ -111,8 +120,12 @@ export async function runCalendarModule(
       total.errors.push(...pushed.errors, ...(await applyCreated(pushed, m.store)));
       warnings.push(...conflictWarnings(pushed.conflicts));
     }
-    const lost = edits.filter(e => !target(e));
-    if (lost.length) total.errors.push(`${lost.length} tablet edit(s) belong to no source that is on, so they were not sent`);
+    const lost = changedSince(all, state.lastSync).filter(e => !target(e));
+    if (lost.length) {
+      total.errors.push(readable.length < m.sources.length
+        ? `${lost.length} tablet edit(s) were not sent: their source did not read or is not on; an edit for a source that did not read is sent on the next pass where it reads`
+        : `${lost.length} tablet edit(s) belong to no source that is on, so they were not sent`);
+    }
   }
 
   for (const source of readable) {
@@ -128,14 +141,19 @@ export async function runCalendarModule(
   }
   warnings.push(...(m.takeWarnings?.() ?? []));
 
+  // A row of a calendar no source read this pass keeps its last baseline: on the tablet it may hold
+  // an edit not sent yet, which must not become the version the next push compares with (#211).
   let baseline = state.baseline;
   try {
-    baseline = await m.store.listOurs(m.window);
+    const read = (e: CalendarEvent) => owner.has(e.calendarId);
+    baseline = [...(await m.store.listOurs(m.window)).filter(read), ...state.baseline.filter(e => !read(e))];
   } catch (e) {
     total.errors.push(`reading the tablet's rows after the sync: ${message(e)}`);
   }
   const at = now();
-  return {run: calendarRun(at, total, warnings), state: {lastSync: at, baseline}};
+  const sourceSync = {...state.sourceSync};
+  for (const source of readable) sourceSync[source.id] = at;
+  return {run: calendarRun(at, total, warnings), state: {lastSync: at, sourceSync, baseline}};
 }
 
 const keptWarning = (n: number, kind: string) =>
