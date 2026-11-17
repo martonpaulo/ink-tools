@@ -155,6 +155,11 @@ case "$1" in
                     echo "$left" > "$ADB_FILES/advance-after"
                     [ "$left" -eq 0 ] && echo 2 > "$ADB_FILES/page"
                 fi
+                # With $ADB_FILES/tap-turns, each press shows the next screen, page<N+1>.xml, when it exists.
+                if [ -f "$ADB_FILES/tap-turns" ]; then
+                    next=$(($(cat "$ADB_FILES/page") + 1))
+                    [ -f "$ADB_FILES/page$next.xml" ] && echo "$next" > "$ADB_FILES/page"
+                fi
                 : ;;
             "input swipe"*)
                 if [ -f "$ADB_FILES/page" ]; then
@@ -846,6 +851,78 @@ run plugin install "$work/local/bad.snplg" >/dev/null 2>&1
 check "a file with no plugin config stops before any copy" "$?$(called ' push ')" "20"
 run plugin install "$work/local/old.txt" >/dev/null 2>&1
 check "plugin install refuses another kind of file" "$?" "2"
+# A plugin's page in Settings (#191): each press shows the next screen of a synthetic walk.
+settings_screens() {
+    python3 - "$files" "$@" <<'PY'
+import sys
+folder, screens = sys.argv[1], sys.argv[2:]
+def node(text, top, left=0, right=900):
+    return f'<node text="{text}" resource-id="" content-desc="" class="T" bounds="[{left},{top}][{right},{top + 100}]" />'
+def page(*rows):
+    return "<?xml version='1.0' ?><hierarchy rotation=\"0\">" + "".join(rows) + "</hierarchy>"
+def permissions(*states):
+    labels = ("Network Access", "File Read Access", "File Write Access")
+    return page(node("Permissions", 0, right=1920), *(node(label, 200 + 200 * index) + node(state, 200 + 200 * index, 1200, 1800) for index, (label, state) in enumerate(zip(labels, states))))
+shown = {
+    "list": page(node("Apps", 0), node("Plugins", 100), node("Select Plugin Package", 200), node("Enabled (3/10)", 300), node("Snap", 400)),
+    "plugin": page(node("Snap", 0), node("Permissions", 100), node("Uninstall", 200)),
+    "bare": page(node("Snap", 0)),
+    "start": permissions("Ask Every Time", "Allow", "Don't Allow"),
+    "half": permissions("Allow", "Allow", "Don't Allow"),
+    "done": permissions("Allow", "Allow", "Allow"),
+    "dialog": page(node("Network Access", 1000, right=1920), node("Allow", 1100, right=1920), node("Ask Every Time", 1200, right=1920), node("Don't Allow", 1300, right=1920)),
+    "confirm": page(node("Snap: Its data will also be deleted.", 1000, right=1920), node("Cancel", 1200), node("OK", 1200, 1000, 1900)),
+    "silent": page(node("Remove Snap?", 1000, right=1920), node("OK", 1200, 1000, 1900)),
+}
+for number, name in enumerate(screens, 1):
+    open(f"{folder}/page{number}.xml", "w").write(shown[name])
+PY
+    echo 1 > "$files/page"
+    touch "$files/tap-turns"
+}
+end_settings() { rm -f "$files/page" "$files/tap-turns" "$files"/page?.xml; }
+printf 'Row: 0 name={"en":"Snap"}, pluginID=snap.id, pluginKey=SnapKey\nRow: 1 name=Other, pluginID=other\n' > "$files/rows"
+settings_screens list list list plugin start
+result=$(run plugin permissions SnapKey --json 2>/dev/null)
+check "plugin permissions reads each permission and its state" "$(printf '%s' "$result" | expression "[(p['permission'], p['state']) for p in d['permissions']]")" "[('Network Access', 'Ask Every Time'), ('File Read Access', 'Allow'), ('File Write Access', \"Don't Allow\")]"
+check "plugin permissions finds the plugin by its pluginKey" "$(printf '%s' "$result" | field "['plugin']")" "snap.id"
+check "plugin permissions presses only the way to the page" "$(called 'input tap')" "4"
+settings_screens list list list plugin start dialog half dialog done
+result=$(run plugin permissions snap always --json 2>/dev/null)
+check "plugin permissions always changes only what is not on Allow" "$(printf '%s' "$result" | field "['changed']")" "['Network Access', 'File Write Access']"
+check "plugin permissions always reads every state back" "$(printf '%s' "$result" | expression "{p['state'] for p in d['permissions']}")" "{'Allow'}"
+check "plugin permissions always presses each row and its choice" "$(called 'input tap')" "8"
+check "plugin permissions always presses the choice in the dialog" "$(called 'input tap 960 1150')" "2"
+settings_screens list list list plugin start dialog half dialog half
+run plugin permissions Snap always --step-timeout 0 >/dev/null 2>"$work/err"
+check "a read-back that keeps another state fails" "$?$(grep -c 'File Write Access' "$work/err")" "11"
+settings_screens list list list plugin start half
+run plugin permissions Snap always --step-timeout 0 >/dev/null 2>&1
+check "a row that opens no dialog stops before the choice" "$?$(called 'input tap')" "95"
+settings_screens list list list bare
+run plugin permissions Snap --step-timeout 0 >/dev/null 2>&1
+check "a plugin page with no Permissions stops with its own code" "$?$(called 'input tap')" "93"
+run plugin permissions Missing >/dev/null 2>&1
+check "plugin permissions of an unknown plugin presses nothing" "$?$(called 'input tap')" "40"
+printf 'Row: 0 name=Snap, pluginID=snap.id\nRow: 1 name=Snap, pluginID=snap.two\n' > "$files/rows"
+run plugin uninstall Snap >/dev/null 2>&1
+check "a name two plugins share stops before the uninstall" "$?$(called 'input tap')" "40"
+printf 'Row: 0 name={"en":"Snap"}, pluginID=snap.id\nRow: 1 name=Other, pluginID=other\n' > "$files/rows"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows-after"
+echo 5 > "$files/taps-left"
+settings_screens list list list plugin confirm bare
+result=$(run plugin uninstall snap.id --json 2>/dev/null)
+check "plugin uninstall proves it from the plugin list" "$(printf '%s' "$result" | field "['action'],d['plugin']")" "('uninstalled', 'snap.id')"
+check "plugin uninstall presses the confirmation after reading it" "$(called 'input tap 1450 1250')" "1"
+printf 'Row: 0 name={"en":"Snap"}, pluginID=snap.id\n' > "$files/rows"
+echo 99 > "$files/taps-left"
+settings_screens list list list plugin confirm bare
+run plugin uninstall Snap --timeout 0 >/dev/null 2>&1
+check "plugin uninstall gives up when the plugin stays in the list" "$?" "6"
+settings_screens list list list plugin silent
+run plugin uninstall Snap --step-timeout 0 >/dev/null 2>&1
+check "a confirmation without the data warning is never confirmed" "$?$(called 'input tap')" "94"
+end_settings
 rm -f "$files/taps-left" "$files/rows-after"
 printf '5\n' > "$files/size"
 cp "$work/tree-saved" "$files/tree.xml"
@@ -863,7 +940,7 @@ cp "$work/log.saved" "$files/log"
 check "logs parse in JSON" "$(run logs --json | field "['lines'][0]['tag'],d['lines'][0]['pid']")" "('Sync', 1218)"
 
 # What the command can reach.
-for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "shell ls" "wifi on" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
+for changing in "note open Note/a.note" "note new Note/b.note" "files push $work/local/old.txt INBOX" "sync tasks" "sync calendar" "click id:files" "tap 1 2" "swipe 1 2 3 4" "plugin push $work/local/my.snplg" "plugin install $work/local/test.snplg" "plugin permissions Snap" "plugin uninstall Snap" "shell ls" "wifi on" "wifi off" "snapshot --all" "snapshot --find text:One" "firmware --download"; do
     # shellcheck disable=SC2086 # each entry is a command with its arguments
     run --read-only $changing >/dev/null 2>&1
     check "read-only refuses: $changing" "$?$(wc -l < "$log" | tr -d ' ')" "110"

@@ -34,6 +34,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   plugin ls                      installed plugins
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
   plugin install FILE.snplg      copy, install or update through named elements, and prove it
+  plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
+  plugin uninstall NAME          uninstall through named elements, and prove it from the plugin list
   logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
                                  --level, --package, --pid, --grep, --since, --since-last,
                                  --follow and --plugin
@@ -188,6 +190,7 @@ DOWNLOAD_READ_TIMEOUT = 60
 DOWNLOAD_TIMEOUT = 3600.0
 FIRMWARE_TRANSFER_TIMEOUT = 3600
 STEP_TIMEOUT = 20.0
+STEP_TIMEOUT_HELP = "seconds each screen may take"
 INSTALL_TIMEOUT = 60.0
 WAIT_INTERVAL = 0.5
 DEFAULT_LOG_LINES = 100
@@ -241,6 +244,7 @@ PLUGIN_FOLDER = "MyStyle"
 PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 PLUGIN_CONFIG_FILE = "PluginConfig.json"
+PLUGIN_LIST_STEP = "inkctl plugin ls"  # the next step that shows which plugins are installed
 SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
 PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
 PLUGIN_PICK_STEP = "text:Select Plugin Package"
@@ -249,6 +253,15 @@ PICKER_NEXT_PAGE = "id:ll_next_page"
 PICKER_PAGE_NUMBER = "id:content_page_number"
 PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
+# A plugin's own page in Settings › Apps › Plugins (#191). docs/supernote.md › Plugins records the
+# path to Permissions and its three choices, measured on Relay (#163), and the uninstall warning,
+# measured on Ink2Pic; the other texts and the layout are not measured yet.
+PLUGIN_PERMISSIONS_STEP = "text:Permissions"  # shortcut: the path is recorded, the exact label is not; confirm it with `inkctl snapshot` on the tablet
+PERMISSION_ALWAYS = "Allow"  # Settings' always-allow choice, as recorded; shortcut: confirm on the tablet that a row shows this same text as its state
+PERMISSION_STATES = (PERMISSION_ALWAYS, "Ask Every Time", "Don't Allow")
+PLUGIN_UNINSTALL_STEP = "text:Uninstall"  # shortcut: not measured; confirm it with `inkctl snapshot` of a plugin's page on the tablet
+UNINSTALL_WARNING = "Its data will also be deleted"  # part of the confirmation's text, measured on Ink2Pic, 2026-11-16
+UNINSTALL_CONFIRM_STEP = "text:OK"  # shortcut: not measured; confirm it with `inkctl snapshot` of the confirmation on the tablet
 CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
 TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
 SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
@@ -1924,14 +1937,19 @@ def plugin_rows(device: Device) -> list[dict]:
     return query_rows(device, f"content query --uri {PLUGIN_URI}")
 
 
-def plugin_names(row: dict) -> list[str]:
-    """Every name a plugin answers to: its shown name in each language, its pluginKey and its pluginID."""
+def shown_plugin_names(row: dict) -> list[str]:
+    """The names a plugin shows, one for each language."""
     shown = row.get("name", "")
     try:
         names = list(json.loads(shown).values()) if shown.startswith("{") else [shown]
     except ValueError:
         names = [shown]
-    return [name for name in (*names, row.get("pluginKey", ""), row.get("pluginID", "")) if name]
+    return [name for name in names if name]
+
+
+def plugin_names(row: dict) -> list[str]:
+    """Every name a plugin answers to: its shown name in each language, its pluginKey and its pluginID."""
+    return [name for name in (*shown_plugin_names(row), row.get("pluginKey", ""), row.get("pluginID", "")) if name]
 
 
 def find_plugins(rows: list[dict], name: str) -> list[dict]:
@@ -1961,21 +1979,33 @@ def read_plugin_config(path: str) -> dict:
         raise bad_usage(f"{path} holds no readable {PLUGIN_CONFIG_FILE} with pluginID and versionName") from error
 
 
-def expect_element(device: Device, selector: str, limit: float) -> dict:
-    """The one element this step needs, or a stop before anything else is pressed."""
+def unexpected_screen(message: str) -> Failure:
+    return Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{message}; nothing more was pressed")
+
+
+def expect_screen(device: Device, read, limit: float, missing: str):
+    """Read the screen until `read` finds what this step needs in it (anything but None), or stop before anything else is pressed."""
     started = time.monotonic()
     while True:
         try:
-            matches = find_selector(device.elements(attempts=1), selector)
+            found = read(device.elements(attempts=1))
         except Failure as failure:
             if failure.code != EXIT_BUSY:
                 raise
-            matches = []
-        if len(matches) == 1:
-            return matches[0]
+            found = None
+        if found is not None:
+            return found
         if time.monotonic() - started >= limit:
-            raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{selector} is not on the screen as one element after {limit:g} s; nothing more was pressed")
+            raise unexpected_screen(f"{missing} after {limit:g} s")
         time.sleep(WAIT_INTERVAL)
+
+
+def expect_element(device: Device, selector: str, limit: float) -> dict:
+    """The one element this step needs, or a stop before anything else is pressed."""
+    def only(elements: list[dict]):
+        matches = find_selector(elements, selector)
+        return matches[0] if len(matches) == 1 else None
+    return expect_screen(device, only, limit, f"{selector} is not on the screen as one element")
 
 
 def press_element(device: Device, element: dict) -> None:
@@ -2061,7 +2091,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     name = os.path.basename(args.file)
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
     if installed and same_build(installed[0], config, installed[0].get("versionName")):
-        raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", "inkctl plugin ls")
+        raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", PLUGIN_LIST_STEP)
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")
     for step in PLUGIN_PATH_STEPS:
@@ -2085,6 +2115,156 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
         "row": row,
     }
     return data, f"{data['action']}: {config['id']} {config['version']}"
+
+
+def resolve_plugin(device: Device, name: str) -> dict:
+    """The one installed plugin a name points to, before anything is pressed."""
+    found = find_plugins(plugin_rows(device), name)
+    if not found:
+        raise not_found(f"plugin {name}", PLUGIN_LIST_STEP)
+    if len(found) > 1:
+        raise Failure(EXIT_NOT_FOUND, "ambiguous", f"{len(found)} plugins answer to {name}; use its pluginID", PLUGIN_LIST_STEP, "more than one plugin answers to that name")
+    return found[0]
+
+
+def find_plugin_row(device: Device, row: dict, limit: int) -> dict:
+    """The plugin's row in Settings › Apps › Plugins, by a name it shows, scrolled to on a long list."""
+    for name in shown_plugin_names(row):
+        selector = f"text:{name}"
+        try:
+            found = scroll_until_found(device, selector, limit)
+        except Failure as failure:
+            if failure.code != EXIT_NOT_FOUND:
+                raise
+            continue
+        if len(find_selector(found["elements"], selector)) > 1:
+            raise unexpected_screen(f"{selector} shows more than once on the plugin list")
+        return found["found"]
+    raise unexpected_screen(f"{row.get('pluginID', '')} has no row on the plugin list")
+
+
+def open_plugin_page(device: Device, args: argparse.Namespace, row: dict) -> None:
+    """Settings › Apps › Plugins › the plugin, through the same named steps as `plugin install`."""
+    start_activity(device, f"-n {SETTINGS_ACTIVITY}")
+    for step in PLUGIN_PATH_STEPS:
+        press_element(device, expect_element(device, step, args.step_timeout))
+    expect_element(device, PLUGIN_PICK_STEP, args.step_timeout)  # the list's own button: this is the plugin list
+    press_element(device, find_plugin_row(device, row, args.max_steps))
+
+
+def vertical_edges(element: dict) -> tuple[int, int]:
+    _, top, _, bottom = element["bounds"]
+    return top, bottom
+
+
+def permission_label(state: dict, texts: list[dict]):
+    """A permission row's label: the nearest text left of its state on the same line, else the nearest text above it.
+
+    shortcut: the Permissions page's layout is not measured; confirm it with `inkctl snapshot` on the tablet (#191)."""
+    beside = [text for text in texts if vertical_edges(text)[0] <= state["y"] <= vertical_edges(text)[1] and text["x"] < state["x"]]
+    if beside:
+        return max(beside, key=lambda text: text["x"])
+    above = [text for text in texts if vertical_edges(text)[1] <= vertical_edges(state)[0]]
+    return max(above, key=lambda text: vertical_edges(text)[1]) if above else None
+
+
+def permission_rows(elements: list[dict]):
+    """Each permission on the page with its state, or None when the screen is not a page of permission rows.
+    The choices dialog reads as None too: its three choices share one label."""
+    states = [element for element in elements if element["text"] in PERMISSION_STATES]
+    texts = [element for element in elements if element["text"] and element["text"] not in PERMISSION_STATES]
+    rows = []
+    for state in states:
+        label = permission_label(state, texts)
+        if label is None:
+            return None
+        rows.append({"permission": label["text"], "state": state["text"], "element": state})
+    labels = [row["permission"] for row in rows]
+    return rows if rows and len(set(labels)) == len(labels) else None
+
+
+def expect_permissions(device: Device, limit: float) -> list[dict]:
+    return expect_screen(device, permission_rows, limit, f"no page of permission rows, each with one state of {', '.join(PERMISSION_STATES)}")
+
+
+def permission_choices(elements: list[dict]):
+    """The always-allow choice of the dialog a permission row opens: every choice shows once, and the screen is not the page."""
+    if permission_rows(elements) is not None or any(len(find_selector(elements, f"text:{state}")) != 1 for state in PERMISSION_STATES):
+        return None
+    return find_selector(elements, f"text:{PERMISSION_ALWAYS}")[0]
+
+
+def shown_permissions(rows: list[dict]) -> list[dict]:
+    return [{"permission": row["permission"], "state": row["state"]} for row in rows]
+
+
+def read_back_permissions(device: Device, limit: float) -> list[dict]:
+    """The page once every permission shows the always-allow choice; a page that keeps another one is a failed write."""
+    started = time.monotonic()
+    while True:
+        rows = expect_permissions(device, limit)
+        left = [row["permission"] for row in rows if row["state"] != PERMISSION_ALWAYS]
+        if not left:
+            return rows
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_FAILED, "device_error", f"after the presses, not on «{PERMISSION_ALWAYS}»: {', '.join(left)}", extra={"permissions": shown_permissions(rows)})
+        time.sleep(WAIT_INTERVAL)
+
+
+def command_plugin_permissions(device: Device, args: argparse.Namespace):
+    """Read a plugin's permissions in Settings, or set each one the page lists to the always-allow choice.
+    The page lists only what the plugin declares, so nothing undeclared is granted."""
+    row = resolve_plugin(device, args.plugin)
+    open_plugin_page(device, args, row)
+    press_element(device, expect_element(device, PLUGIN_PERMISSIONS_STEP, args.step_timeout))
+    rows = expect_permissions(device, args.step_timeout)
+    data = {"plugin": row.get("pluginID", "")}
+    if args.choice:
+        changed = []
+        for label in [item["permission"] for item in rows if item["state"] != PERMISSION_ALWAYS]:
+            current = [item for item in expect_permissions(device, args.step_timeout) if item["permission"] == label]
+            if not current:
+                raise unexpected_screen(f"the permission {label} left the page")
+            press_element(device, current[0]["element"])
+            press_element(device, expect_screen(device, permission_choices, args.step_timeout, f"no dialog with the choices {', '.join(PERMISSION_STATES)}"))
+            changed.append(label)
+        rows = read_back_permissions(device, args.step_timeout)
+        data["changed"] = changed
+    data["permissions"] = shown_permissions(rows)
+    return data, "\n".join(f"{item['permission']}\t{item['state']}" for item in data["permissions"])
+
+
+def uninstall_warning(elements: list[dict]):
+    return next((element for element in elements if UNINSTALL_WARNING in element["text"]), None)
+
+
+def wait_for_plugin_gone(device: Device, plugin_id: str, limit: float) -> None:
+    """Prove the uninstall from the list. Right after one, the provider once gave no answer
+    (docs/supernote.md › Plugins), so a read that fails is one more turn of the wait."""
+    started = time.monotonic()
+    while True:
+        try:
+            if not any(row.get("pluginID") == plugin_id for row in plugin_rows(device)):
+                return
+        except Failure as failure:
+            if failure.code != EXIT_FAILED:
+                raise
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{plugin_id} is still in the plugin list after {limit:g} s")
+        time.sleep(WAIT_INTERVAL)
+
+
+def command_plugin_uninstall(device: Device, args: argparse.Namespace):
+    row = resolve_plugin(device, args.plugin)
+    plugin_id = row.get("pluginID", "")
+    if not plugin_id:
+        raise Failure(EXIT_FAILED, "device_error", "the plugin list has no pluginID column, so this uninstall cannot be proved")
+    open_plugin_page(device, args, row)
+    press_element(device, expect_element(device, PLUGIN_UNINSTALL_STEP, args.step_timeout))
+    expect_screen(device, uninstall_warning, args.step_timeout, f"no confirmation saying «{UNINSTALL_WARNING}»")
+    press_element(device, expect_element(device, UNINSTALL_CONFIRM_STEP, args.step_timeout))
+    wait_for_plugin_gone(device, plugin_id, args.timeout)
+    return {"plugin": plugin_id, "action": "uninstalled", "route": "screen"}, f"uninstalled: {plugin_id}"
 
 
 def parse_log(line: str) -> dict:
@@ -2734,7 +2914,7 @@ def build_parser() -> argparse.ArgumentParser:
         placed.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
     for helped in (boxed, last, written, sampled, saved):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
-        helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
+        helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
 
     languages = noun("lang")
     add(languages, "get", command_lang_get)
@@ -2766,8 +2946,18 @@ def build_parser() -> argparse.ArgumentParser:
     installing = add(plugins, "install", command_plugin_install, changes=True)
     installing.add_argument("file")
     installing.add_argument("--overwrite", action="store_true", help="replace an earlier copy in MyStyle")
-    installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds each screen may take")
+    installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
     installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
+    plugin_name_help = "the name the plugin list shows, its pluginKey or its pluginID"
+    permitting = add(plugins, "permissions", command_plugin_permissions, changes=True)
+    permitting.add_argument("plugin", help=plugin_name_help)
+    permitting.add_argument("choice", nargs="?", choices=("always",), help=f"set every permission to «{PERMISSION_ALWAYS}» and read them back")
+    uninstalling = add(plugins, "uninstall", command_plugin_uninstall, changes=True)
+    uninstalling.add_argument("plugin", help=plugin_name_help)
+    uninstalling.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to leave the list")
+    for settings_page in (permitting, uninstalling):
+        settings_page.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
+        settings_page.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes through the plugin list")
 
     logs = add(commands, "logs", command_logs)
     logs.add_argument("--tag")
