@@ -67,3 +67,12 @@ test('a written row the delete missed keeps its «may remain» message', async (
   };
   await expect(deviceReader().dryInsert('content://example.test/rows', 'title', {})).rejects.toThrow(/may remain/);
 });
+
+test('the Java module writes the marker the probe fills as the test event, so the cleanup finds it (#43)', () => {
+  const java = require('fs').readFileSync(
+    require('path').join(__dirname, '../native/com/bridge/providers/BridgeProvidersModule.java'),
+    'utf8',
+  );
+  const {DRY_INSERT_MARKER} = require('@supernote-tools/sn-adapter');
+  expect(java).toContain(`static final String MARKER = "${DRY_INSERT_MARKER}";`);
+});

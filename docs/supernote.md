@@ -195,6 +195,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [official, [#146](https://github.com/martonpaulo/ink-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#59](https://github.com/martonpaulo/ink-tools/issues/59)].
+- The calendar's `data_info` insert refuses a row without `tag`, then one without
+  `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
+  refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`
+  (`task`), `state` (0), `readOnly`, `isAllDay` (0), `title`, `startTime`, `endTime`,
+  `lastModifiedTime` (epoch ms) and `status`, and holds null in every other column [measured, one
+  row, 2026-11-17, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]; the descriptor's `requiredOnInsert` lists the filled ones.
 - A lassoed picture can be read and replaced in place [measured, 2026-11-16, Probe 0.0.1 code 5,
   firmware `Chauvet.E103.2610191001.2559`, [#130](https://github.com/martonpaulo/ink-tools/issues/130)]:
   - `getLassoElements` gives the picture element (type 200) with its `numInPage`, `layerNum` and
