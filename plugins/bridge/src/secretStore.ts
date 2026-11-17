@@ -6,6 +6,7 @@
  * never shown as signed out, and never sent to a service.
  */
 import {
+  parseGoogleClient,
   parseSecret,
   secretFileName,
   SECRET_PROVIDERS,
@@ -55,6 +56,17 @@ export function createSecretStore(
       }
     },
   };
+}
+
+/**
+ * The Google «Desktop app» OAuth client the token refresh needs (#200), from its own file beside
+ * `google.secret`; null when it is not on the tablet. A broken file throws with the reason.
+ */
+export async function readGoogleClient(
+  store: SecretStore,
+): Promise<{clientId: string; clientSecret: string} | null> {
+  const raw = await store.read('google-client');
+  return raw === null ? null : parseGoogleClient(raw);
 }
 
 /**

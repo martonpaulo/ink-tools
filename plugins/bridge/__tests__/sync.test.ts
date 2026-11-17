@@ -193,9 +193,19 @@ test('a missing Google client or sign-in is an error of the run, never an empty 
     device({googleClient: undefined}),
   ).syncNow();
   expect(noClient.runs.calendar?.errors).toEqual([
-    'google: the Google sign-in client is not on the tablet',
+    'google: the Google sign-in client is not on the tablet: on the Mac, run inkctl secret set google-client',
   ]);
   expect(noClient.runs.calendar?.notRun).toBe(true);
+  const broken = await createSyncRunner(
+    device({
+      googleClient: async () => {
+        throw new Error('secrets: the Google client has no client_secret');
+      },
+    }),
+  ).syncNow();
+  expect(broken.runs.calendar?.errors).toEqual([
+    'google: the Google sign-in client did not read: secrets: the Google client has no client_secret',
+  ]);
   const signedOut = await createSyncRunner(
     device({secrets: {read: async () => null, remove: async () => {}}}),
   ).syncNow();
