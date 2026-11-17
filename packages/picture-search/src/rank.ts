@@ -208,6 +208,38 @@ const stylisedScorer: Scorer = (result, {styles}) =>
     : 0;
 
 /**
+ * Whether a category names a proper name that starts with the word: the word capitalised, then a
+ * capitalised word or a number, «Apple II», «Apple Music», «Apples VD». Commons names categories
+ * in sentence case, so the thing itself reads «Apple trees» or «Red apples», never so (#13).
+ */
+function namesNamesake(category: string, word: string): boolean {
+  const tokens = category.normalize('NFC').split(/[\s\-–,]+/u);
+  return tokens.some(
+    (token, i) =>
+      /^\p{Lu}/u.test(token) &&
+      sameWord(token.toLowerCase(), word) &&
+      /^[\p{Lu}\p{N}]/u.test(tokens[i + 1] ?? ''),
+  );
+}
+
+/**
+ * For a plain one-word query, a picture Commons files under a namesake of the word shows that
+ * namesake, not the thing: the Apple II computer and the Apple Music icon for «apple», the
+ * village Apples for «apples» (#13). It falls with the stylised graphics. A query that asks for
+ * a logo, or that Wikidata resolves to a brand (its logo leads) or a person, is the namesake.
+ */
+const namesakeScorer: Scorer = (result, {subject, styles, byName, person}) =>
+  subject.length === 1 &&
+  styles.size === 0 &&
+  !byName &&
+  !person &&
+  !result.canonical &&
+  !result.depicts &&
+  (result.tags ?? []).some(tag => namesNamesake(tag, subject[0]))
+    ? STYLISED_SCORE
+    : 0;
+
+/**
  * A page Commons cut out of a scanned book or PDF ends its title with «(page N)»: «Life of
  * Napoleon Bonaparte … - DPLA - … (page 49)» is a page of text (#15).
  */
@@ -272,6 +304,7 @@ export const DEFAULT_SCORERS: readonly Scorer[] = [
   photoScorer,
   drawingScorer,
   stylisedScorer,
+  namesakeScorer,
   textScorer,
   askedStyleScorer,
   formatScorer,
