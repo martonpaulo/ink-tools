@@ -23,6 +23,23 @@ export const copy = {
   'settings.sources': 'Picture sources',
   'settings.dataSaver': 'Data saver',
   'settings.dataSaverHint': 'Fewer and smaller pictures per search.',
+  /** Where the inserted pictures are kept, and why (#23, owner D13 B). */
+  'settings.pictures': 'Saved pictures',
+  'settings.picturesHint':
+    'Word Lookup keeps each picture it inserted in its own plugin folder, so it can insert it again without a download. Supernote file sync does not read that folder: each file in a synced folder adds about 0.14 s to every file sync.',
+  /** Files earlier versions left in synced folders, with the way out (#23). */
+  'settings.oldFiles': (
+    folders: readonly {folder: string; files: number | null}[],
+  ) =>
+    `Earlier versions left files in synced folders: ${folders
+      .map(({folder, files}) =>
+        files === null
+          ? `${folder} (cannot be read)`
+          : `${folder} (${files} files)`,
+      )
+      .join(
+        ', ',
+      )}. Each file adds about 0.14 s to every Supernote file sync. Delete these folders with the File Manager.`,
   'source.openclipart': 'Openclipart',
   'source.commons': 'Wikimedia Commons',
   'source.wikidata': 'Wikidata',
@@ -33,7 +50,7 @@ export const copy = {
     'Word Lookup translates words with online dictionaries, Wiktionary and Apertium.',
   'permission.files': 'Word Lookup reads the word you lasso on the page.',
   'permission.write':
-    'Word Lookup saves each picture to MyStyle/Lookup before it puts it in your note.',
+    'Word Lookup saves your settings in MyStyle/Lookup and puts each picture in your note.',
   'permission.pictures':
     'Word Lookup searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
   /** Written on the note below the word: a word with no definition is never guessed (#115). */
@@ -46,7 +63,8 @@ export const copy = {
   /** Written on the note below the selection: no word was recognized in it (#166). */
   'error.unreadable': 'The handwriting could not be read.',
   /** A toast: a pasted selection has no place on the page yet (#165). */
-  'error.unplaced': 'Put the selection down on the page first, then press again.',
+  'error.unplaced':
+    'Put the selection down on the page first, then press again.',
   'error.insert': 'The definition could not be inserted on the page.',
   /** Toasts that replace the «Loading…» strip (#103). */
   'working.failed': 'Word Lookup stopped with an error.',

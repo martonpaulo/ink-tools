@@ -16,7 +16,10 @@ Button names follow the wording of Supernote's own lasso menu, a verb and a noun
 ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)). `src/pictures.ts` runs each as a no-view press over picture-search's shared
 «Insert best picture» flow, with the mode's sources and style; only the mode's measured tiles stay,
 and a press that inserts nothing writes its sentence below the word. Pictures go to
-`MyStyle/Lookup/pictures`, at the owner's one small size, 200 px, below the word; Settings
+`pictures/` of the private plugin folder, out of Supernote file sync, and are reused from there
+through `pictures.json` (`src/library.ts`, [#23](https://github.com/martonpaulo/ink-tools/issues/23)); a failed insert from there is tried once from
+`MyStyle/Lookup/pictures`, and Settings names the old synced folders still holding files. They
+go in at the owner's one small size, 200 px, below the word; Settings
 keeps only Picture sources and Data saver for pictures, which `modeSearchSettings` reads
 ([#105](https://github.com/martonpaulo/ink-tools/issues/105)).
 «Insert Definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from Ink2Pic: `src/definition.ts` reads the lasso,

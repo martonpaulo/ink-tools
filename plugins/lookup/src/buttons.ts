@@ -41,7 +41,7 @@ const FILE_READ: Need = {
   permission: PERMISSION_FILE_READ,
   reason: copy['permission.files'],
 };
-/** A picture is written to MyStyle/Lookup before it goes in the note (#142). */
+/** The settings file is written to MyStyle/Lookup, and each picture goes in the note (#142). */
 const FILE_WRITE: Need = {
   permission: PERMISSION_FILE_WRITE,
   reason: copy['permission.write'],

@@ -21,6 +21,7 @@ import {Choice, currentChoice, onChoice} from './src/choose';
 import {ChooseScreen} from './src/ui/ChooseScreen';
 import {working} from './src/working';
 import {getSettings, saveSettings} from './src/profile';
+import {OldFolder, oldFolders} from './src/library';
 import {
   defaultSettings,
   LookupSettings,
@@ -42,7 +43,8 @@ const sourceLabel = (name: string): string =>
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
  * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156); while a
  * no-view button works, it is the «Loading…» strip (#103). Back closes Settings, as it leaves the
- * Choose screen by its «Close» (#204).
+ * Choose screen by its «Close» (#204). «Saved pictures» says where the inserted pictures are kept and why, and names the old
+ * synced folders that still hold files, with the File Manager step (#23).
  */
 export default function App({
   close = () => closePluginView(),
@@ -62,9 +64,28 @@ export default function App({
   );
 }
 
+/** One Settings section: its heading, then its rows. */
+function Section({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={shared.listRow}>
+      <Text accessibilityRole="header" style={shared.heading}>
+        {heading}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
 function SettingsScreen({close}: {close: () => void}) {
   useBackKey(close);
   const [settings, setSettings] = useState<LookupSettings | null>(null);
+  const [old, setOld] = useState<OldFolder[]>([]);
   useEffect(() => {
     let open = true;
     getSettings().then(saved => {
@@ -73,6 +94,7 @@ function SettingsScreen({close}: {close: () => void}) {
         askMissing(saved);
       }
     });
+    oldFolders().then(found => open && setOld(found));
     return () => {
       open = false;
     };
@@ -84,10 +106,7 @@ function SettingsScreen({close}: {close: () => void}) {
     settingsChanged(next);
   };
   const group = (heading: string, buttons: readonly LassoButton[]) => (
-    <View style={shared.listRow}>
-      <Text accessibilityRole="header" style={shared.heading}>
-        {heading}
-      </Text>
+    <Section heading={heading}>
       <View style={shared.row}>
         {buttons.map(button => {
           const on = isOn(shown, button);
@@ -102,7 +121,7 @@ function SettingsScreen({close}: {close: () => void}) {
           );
         })}
       </View>
-    </View>
+    </Section>
   );
   return (
     <View style={shared.screen}>
@@ -117,10 +136,7 @@ function SettingsScreen({close}: {close: () => void}) {
         copy['settings.translate'],
         BUTTONS.filter(button => 'direction' in button.switch),
       )}
-      <View style={shared.listRow}>
-        <Text accessibilityRole="header" style={shared.heading}>
-          {copy['settings.sources']}
-        </Text>
+      <Section heading={copy['settings.sources']}>
         <View style={shared.row}>
           {SOURCE_NAMES.map(name => {
             const on = sourceOn(shown, name);
@@ -135,11 +151,8 @@ function SettingsScreen({close}: {close: () => void}) {
             );
           })}
         </View>
-      </View>
-      <View style={shared.listRow}>
-        <Text accessibilityRole="header" style={shared.heading}>
-          {copy['settings.dataSaver']}
-        </Text>
+      </Section>
+      <Section heading={copy['settings.dataSaver']}>
         <Text style={shared.hint}>{copy['settings.dataSaverHint']}</Text>
         <View style={shared.row}>
           <Button
@@ -149,7 +162,13 @@ function SettingsScreen({close}: {close: () => void}) {
             onPress={() => change({...shown, dataSaver: !shown.dataSaver})}
           />
         </View>
-      </View>
+      </Section>
+      <Section heading={copy['settings.pictures']}>
+        <Text style={shared.hint}>{copy['settings.picturesHint']}</Text>
+        {old.length > 0 && (
+          <Text style={shared.hint}>{copy['settings.oldFiles'](old)}</Text>
+        )}
+      </Section>
     </View>
   );
 }
