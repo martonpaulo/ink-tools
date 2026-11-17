@@ -3,6 +3,8 @@
  * `*.wiktionary.org`). The `-recorded` ones are real `action=parse` answers recorded on the Mac on
  * 2026-11-16: pt «maçã» revision 3188657, es «manzana» revision 6383798 and pt «苹果» revision
  * 3019617, the page a Chinese word is translated from (CC BY-SA 4.0, see packages/ink-core/NOTICE.md).
+ * pt «manga» revision 3238687 and es «aprovechar» revision 6427832 were recorded on 2026-11-17 from
+ * `index.php?action=raw` and wrapped in the `action=parse` shape, as NOTICE.md says (#127).
  */
 import ptPage from './fixtures/wiktionary-pt.json';
 import ptRecorded from './fixtures/wiktionary-pt-recorded.json';
@@ -11,6 +13,8 @@ import esPage from './fixtures/wiktionary-es.json';
 import missingPage from './fixtures/wiktionary-missing.json';
 import zhPage from './fixtures/wiktionary-zh.json';
 import zhRecorded from './fixtures/wiktionary-zh-recorded.json';
+import mangaRecorded from './fixtures/wiktionary-pt-manga-recorded.json';
+import aprovecharRecorded from './fixtures/wiktionary-es-aprovechar-recorded.json';
 import {
   MAX_SENSES,
   MAX_TRANSLATIONS,
@@ -32,6 +36,8 @@ const FIXTURES: Record<string, unknown> = {
   'wiktionary-pt-recorded.json': ptRecorded,
   'wiktionary-es-recorded.json': esRecorded,
   'wiktionary-zh-recorded.json': zhRecorded,
+  'wiktionary-pt-manga-recorded.json': mangaRecorded,
+  'wiktionary-es-aprovechar-recorded.json': aprovecharRecorded,
 };
 /** The answer body as the API sends it. */
 const fixture = (name: string) => JSON.stringify(FIXTURES[name]);
@@ -193,4 +199,35 @@ test('recorded pages: the pt, es and zh translation lines as the live Wiktionari
   const wiktionary = wiktionaryDefiner(async () => fixture('wiktionary-zh-recorded.json'));
   const zh = await translateFirst([wiktionary], {word: '苹果', from: 'zh', to: 'pt'});
   expect(zh.translations).toEqual([{text: 'maçã'}]);
+});
+
+test('pt «manga» recorded: the first three noun senses, never the Galician or verb-form ones (#127)', () => {
+  expect(parseDefinitions(wikitext('wiktionary-pt-manga-recorded.json'), 'pt')).toEqual([
+    {
+      text: 'fruto tropical, doce e comestível da mangueira (Mangifera indica)',
+      partOfSpeech: 'Substantivo',
+    },
+    {text: 'peça de vestuário que cobre o braço', partOfSpeech: 'Substantivo'},
+    {text: 'filtro para líquidos', partOfSpeech: 'Substantivo'},
+  ]);
+});
+
+test('pt «manga» recorded: `{{t}}` keeps only its word, the transliteration as the reading (#127)', () => {
+  const page = wikitext('wiktionary-pt-manga-recorded.json');
+  // `{{t|zh|芒果||mángguǒ}}`: the fourth argument is the reading, never a second word.
+  expect(parseTranslations(page, 'pt', 'zh')).toEqual([
+    {text: '芒果', reading: 'mángguǒ', sense: 'De 1: fruto comestível'},
+  ]);
+  // The page writes `{{t|de|Mango|f}}`: the third argument is the gender, never a word.
+  const gendered = ['={{-pt-}}=', '{{tradini|fruto}}', '* {{t|es|mango|m}}', '{{tradfim}}'].join('\n');
+  expect(parseTranslations(gendered, 'pt', 'es')).toEqual([{text: 'mango', sense: 'fruto'}]);
+  expect(parseTranslations(page, 'pt', 'es').map(t => t.text)).toEqual(['mango', 'manga', 'mangó']);
+});
+
+test('es «aprovechar» recorded: the `;1:` sense of a verb, and no Portuguese row gives no translation (#127)', () => {
+  const page = wikitext('wiktionary-es-aprovechar-recorded.json');
+  expect(parseDefinitions(page, 'es')).toEqual([
+    {text: 'Tomar ventaja. No desperdiciar una oportunidad.', partOfSpeech: 'verbo transitivo'},
+  ]);
+  expect(parseTranslations(page, 'es', 'pt')).toEqual([]);
 });
