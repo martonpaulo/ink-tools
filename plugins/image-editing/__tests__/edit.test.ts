@@ -59,6 +59,7 @@ function world() {
       return ok(null);
     }),
     deleteFile: jest.fn(async path => ok(files.delete(path) || true)),
+    listDir: jest.fn(async () => ok(null)),
   };
   const deps: EditDeps = {
     workDir: async () => ok(RETOUCH_DIR),

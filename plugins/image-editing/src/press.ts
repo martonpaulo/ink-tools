@@ -14,10 +14,11 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from './crop';
-import {Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
+import {DEVICE as EDIT_DEVICE, Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
 import {MARKS_OUTSIDE, NO_MARKS, NOT_PICTURE_AND_MARKS, runErase} from './erase';
 import {EditDefinition, EditId} from './edits';
 import {PAGE_EDITS, PageDone, runPageEdit} from './page';
+import {sweepOrphans} from './orphans';
 import {askFilePermissions} from './permissions';
 import {showToast, STRIP_AFTER_MS, working} from './working';
 
@@ -40,6 +41,8 @@ export type PressDeps = {
   /** A page-wide edit under the strip, shown at once: it runs one edit per picture (#140). */
   page: (edit: EditId) => Promise<PageDone>;
   toast: (text: string) => void;
+  /** Removes the PNGs earlier builds left, once per session, after the press's own work (#182). */
+  sweep: () => Promise<void>;
   log: (line: string) => void;
 };
 
@@ -69,6 +72,7 @@ const DEVICE: PressDeps = {
   edit: edit => working.run(() => runPress(edit), {showAfterMs: STRIP_AFTER_MS}),
   page: edit => working.run(() => runPageEdit(edit)),
   toast: showToast,
+  sweep: () => sweepOrphans(EDIT_DEVICE),
   log: line => console.log(`Retouch: ${line}`),
 };
 
@@ -120,6 +124,7 @@ export async function pressEdit(
   if (each) {
     const page = await deps.page(each);
     deps.toast(pageToast(page));
+    await deps.sweep();
     return page;
   }
   const done = await deps.edit(edit.id);
@@ -127,5 +132,6 @@ export async function pressEdit(
   if (reason) {
     deps.toast(reason);
   }
+  await deps.sweep();
   return done;
 }

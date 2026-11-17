@@ -94,6 +94,8 @@ type Native = {
   readText(path: string): Promise<string | null>;
   writeText(path: string, text: string): Promise<null>;
   deleteFile(path: string): Promise<boolean>;
+  /** The names in a folder, or null when it does not exist (#182). */
+  listDir(path: string): Promise<string[] | null>;
 };
 
 const MODULE_OF: Record<keyof Native, string> = {
@@ -103,6 +105,7 @@ const MODULE_OF: Record<keyof Native, string> = {
   readText: FILES_MODULE,
   writeText: FILES_MODULE,
   deleteFile: FILES_MODULE,
+  listDir: FILES_MODULE,
 };
 
 /** Every call as a Result; MISSING when PluginHost did not load the module. */
@@ -143,5 +146,6 @@ export function retouchNative(
     readText: call('readText'),
     writeText: call('writeText'),
     deleteFile: call('deleteFile'),
+    listDir: call('listDir'),
   } as RetouchNative;
 }

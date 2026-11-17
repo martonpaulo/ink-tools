@@ -84,6 +84,7 @@ test('Enhance All Images and Undo All Images run Enhance and Undo on the page, w
       return {kind: 'done', pictures: 3, edited: 2, skipped: ['x']};
     },
     toast: text => toasts.push(text),
+    sweep: async () => undefined,
     log: () => undefined,
   };
   for (const id of ['enhance_all', 'undo_all']) {
