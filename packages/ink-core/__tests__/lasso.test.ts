@@ -1,4 +1,4 @@
-import {readLassoQuery, type LassoHost} from '../src';
+import {OCCUPIED_AFTER_RECOGNITION_MS, readLassoQuery, type LassoHost} from '../src';
 
 type Failure = {ok: false; code: number; message: string};
 const ok = <T>(value: T) => Promise.resolve({ok: true as const, value});
@@ -40,7 +40,6 @@ describe('readLassoQuery (#109)', () => {
     const answer = await readLassoQuery(host({getOccupied: read}));
     expect(read).toHaveBeenCalledWith('/Note/a.note', 3);
     expect(answer.ok && answer.value.place?.occupied).toEqual(ink);
-    expect(answer.ok && answer.value.place?.occupiedPartial).toBeUndefined();
     const failed = await readLassoQuery(
       host({getOccupied: async () => ({ok: false, code: -1, message: 'over budget'})}),
     );
@@ -51,15 +50,46 @@ describe('readLassoQuery (#109)', () => {
     });
   });
 
-  it('marks a partial page read, so no lasso trusts it (#168)', async () => {
+  it('drops a partial page read, so the placement is today\'s (#152)', async () => {
     const ink = [{left: 0, top: 300, right: 400, bottom: 340}];
     const answer = await readLassoQuery(
       host({getOccupied: () => ok({rects: ink, complete: false})}),
     );
-    expect(answer.ok && answer.value.place).toMatchObject({
-      occupied: ink,
-      occupiedPartial: true,
+    expect(answer.ok && answer.value.place).toEqual({
+      rect: {left: 100, top: 200, right: 300, bottom: 260},
+      page: 3,
+      pageSize: {width: 1920, height: 2560},
     });
+  });
+
+  it('waits at most OCCUPIED_AFTER_RECOGNITION_MS for the page read after recognition, then places as today (#152)', async () => {
+    jest.useFakeTimers();
+    try {
+      const log = jest.fn();
+      let endRead: () => void = () => {};
+      const answer = readLassoQuery(
+        host({
+          log,
+          getOccupied: () =>
+            new Promise(resolve => {
+              endRead = () =>
+                resolve({ok: true, value: {rects: [{left: 0, top: 0, right: 9, bottom: 9}], complete: true}});
+            }),
+        }),
+      );
+      await jest.advanceTimersByTimeAsync(OCCUPIED_AFTER_RECOGNITION_MS - 1);
+      expect(log).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(1);
+      const done = await answer;
+      endRead();
+      expect(done.ok && done.value.place?.occupied).toBeUndefined();
+      expect(log).toHaveBeenCalledWith(
+        `place: page read still running ${OCCUPIED_AFTER_RECOGNITION_MS} ms after recognition: today's placement`,
+      );
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('reads the page while the word is recognized, not before it (#152)', async () => {

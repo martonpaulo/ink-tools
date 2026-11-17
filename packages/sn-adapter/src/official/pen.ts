@@ -175,7 +175,8 @@ async function elementRect(element: SdkElement): Promise<Result<SdkRect | null>>
 
 /**
  * What a page read found: the rects, how many of the page's elements they come from, and whether
- * every element was read. A partial read still helps the placement, but no lasso may trust it.
+ * every element was read. A partial read gives today's placement (#152): placed by what was read,
+ * a box landed over the person's ink on a full page.
  */
 export type OccupiedRead = {rects: SdkRect[]; complete: boolean};
 
@@ -294,7 +295,7 @@ export async function occupiedRects(
   log(
     complete
       ? `place: page read ${elements} elements in ${ms} ms`
-      : `place: page read ${read.value.read} of ${elements} elements in ${ms} ms: partial, placed by what was read`,
+      : `place: page read ${read.value.read} of ${elements} elements in ${ms} ms: partial, today's placement`,
   );
   return ok({rects, complete});
 }

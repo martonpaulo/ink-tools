@@ -34,6 +34,7 @@ const host: LassoHost<CallFailure> = {
   getPageSize,
   recognizeElements,
   getOccupied: (path, page) => occupiedRects(path, page, log),
+  log,
   emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
   failure: message => fail(THROWN_CODE, message),
   logged: (label, call) => logged(label, call),

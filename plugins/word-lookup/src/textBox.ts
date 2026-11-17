@@ -41,6 +41,9 @@ const CHAR_WIDTH = 0.55;
  */
 export const BOX_WIDTH = 640;
 
+/** One line of Lookup's log. */
+export const lookupLog = (line: string) => console.log(`Lookup: ${line}`);
+
 /** The lassoed word and its place, read on the tablet. */
 export function readLasso(): Promise<Outcome<LassoQuery, CallFailure>> {
   return readLassoQuery<CallFailure>({
@@ -51,7 +54,8 @@ export function readLasso(): Promise<Outcome<LassoQuery, CallFailure>> {
     getPageSize,
     recognizeElements,
     getOccupied: (path, page) =>
-      occupiedRects(path, page, line => console.log(`Lookup: ${line}`)),
+      occupiedRects(path, page, lookupLog),
+    log: lookupLog,
     emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
     failure: message => fail(THROWN_CODE, message),
   });
