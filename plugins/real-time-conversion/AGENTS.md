@@ -19,7 +19,9 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   distance is a ratio to the line's letter height, from Ink2Pic's brief › 8.11.
 - What stays handwriting ([#186](https://github.com/martonpaulo/ink-tools/issues/186), `src/shapes.ts`): tall, long or scribbled strokes, very large
   writing, and an answer that is empty, has no letter, or is one character for wide ink.
-- The conversion ([#187](https://github.com/martonpaulo/ink-tools/issues/187), `src/convert.ts`): recognition at the page size, then ONE
+- The conversion ([#187](https://github.com/martonpaulo/ink-tools/issues/187), `src/convert.ts`): recognition at the page size of the
+  page's own elements, found by uuid in a `getElements` read, never the pen-up ones, whose points
+  are EMR units ([#206](https://github.com/martonpaulo/ink-tools/issues/206)); a `recognize:` line logs their shape; then ONE
   `batchUpdatePageElements` call deletes the word's strokes (found again by uuid) and inserts a
   text box at its place, in the tablet's default font. Words convert one at a time.
 - «Undo Conversion» (sidebar, [#188](https://github.com/martonpaulo/ink-tools/issues/188), `src/undo.ts`): the last conversion only, kept in memory;

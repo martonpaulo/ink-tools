@@ -1,5 +1,5 @@
 /** A fake tablet for the conversion and the undo: a page of synthetic elements and a manual clock. */
-import {fail, type SavedStroke, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
+import {fail, offPage, type SavedStroke, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import type {ConvertHost} from '../src/convert';
 import type {UndoHost} from '../src/undo';
 import type {InkStroke} from '../src/words';
@@ -11,6 +11,11 @@ export type FakeElement = {
   points?: {x: number; y: number}[];
   textBox?: {textRect: object; textContentFull: string};
 };
+
+/** The tablet's answer when recognition cannot read the ink (device log, #206). */
+export const RECOGNITION_FAILED = 'Recognition failed. Please try again!';
+/** Its code, as Ink2Pic's lasso-size failure gave it (plugins/ink2pic/docs/brief.md). */
+export const RECOGNITION_FAILED_CODE = 117;
 
 const ok = <T>(value: T) => ({ok: true as const, value});
 
@@ -44,7 +49,13 @@ export function fakeTablet(answer = 'café') {
     getPageSize: jest.fn(async () => ok({width: 1404, height: 1872})),
     // A stroke off the page asks for it; the EMR tests give the SDK's range for their page.
     emrRange: jest.fn(() => fail(THROWN_CODE, 'the fake tablet has no EMR range')),
-    recognizeElements: jest.fn(async () => ok(answer)),
+    // As on the tablet (#206): recognition reads each element's points as page pixels at `size`,
+    // so ink off the page (a pen-up element's EMR units) fails with the device's own message.
+    recognizeElements: jest.fn(async (elements: object[], size: {width: number; height: number}) =>
+      elements.some(element => offPage((element as FakeElement).points ?? [], size))
+        ? fail(RECOGNITION_FAILED_CODE, RECOGNITION_FAILED)
+        : ok(answer),
+    ),
     getElements: jest.fn(async () => ok(page.map(element => ({...element})))),
     createTextBox: jest.fn(async box => ok({type: 500, box})),
     rebuildStroke: jest.fn(async saved => ok({type: 0, saved})),
@@ -84,13 +95,17 @@ export function fakeTablet(answer = 'café') {
     get listening() {
       return listener !== null;
     },
-    /** Writes the synthetic stroke on the page and ends it with a pen-up at `at`. */
-    penUp(stroke: InkStroke, at: number) {
+    /**
+     * Writes the synthetic stroke on the page and ends it with a pen-up at `at`. The pen-up element
+     * carries `stroke.points` in the pen's unit; the page keeps `pagePoints`, its page pixels, as
+     * getElements reads them on the tablet (#206).
+     */
+    penUp(stroke: InkStroke, at: number, pagePoints: {x: number; y: number}[] = stroke.points) {
       time = at;
-      const element: FakeElement = {uuid: stroke.id, type: 0, points: stroke.points};
+      const element: FakeElement = {uuid: stroke.id, type: 0, points: pagePoints};
       page.push(element);
       renumber();
-      listener?.([{...element}]);
+      listener?.([{uuid: stroke.id, type: 0, points: stroke.points}]);
     },
     /** Moves the clock, running each timer that falls due. */
     async advance(to: number) {

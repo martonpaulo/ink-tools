@@ -1,4 +1,4 @@
-import {Converter, numbersOf, textBoxFor} from '../src/convert';
+import {Converter, elementShape, pageStrokesOf, textBoxFor} from '../src/convert';
 import {lastConversion, setLastConversion} from '../src/undo';
 import {DEFAULT_WORD_OPTIONS} from '../src/words';
 import {fakeTablet} from '../test-support/host';
@@ -91,14 +91,52 @@ test('a failed pen-up listener is the answer, never a silent «on»', () => {
   expect(converter.running).toBe(false);
 });
 
-test('stroke numbers are read again by id; a stroke gone keeps the word', () => {
+test('stroke numbers and page elements are read again by id; a stroke gone keeps the word', () => {
   const word = {strokes: [letter(0), letter(30)], rect: {left: 0, top: 0, right: 1, bottom: 1}, letterHeight: 40};
   const page = [
     {uuid: word.strokes[1].id, numInPage: 4},
     {uuid: word.strokes[0].id, numInPage: 2},
   ];
-  expect(numbersOf(word, page)).toEqual({ok: true, value: [2, 4]});
-  expect(numbersOf(word, page.slice(1)).ok).toBe(false);
+  expect(pageStrokesOf(word, page)).toEqual({ok: true, value: {nums: [2, 4], elements: [page[1], page[0]]}});
+  expect(pageStrokesOf(word, page.slice(1))).toMatchObject({
+    ok: false,
+    message: '1 of 2 strokes of the word are not in the page read of 1 elements',
+  });
+});
+
+test('recognition is sent the page read of the word, never the pen-up elements (#206)', async () => {
+  const tablet = fakeTablet('café');
+  const penUps: object[] = [];
+  const listen = tablet.host.onPenUp;
+  tablet.host.onPenUp = jest.fn(next =>
+    listen(elements => {
+      penUps.push(...elements);
+      next(elements);
+    }),
+  );
+  const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+  await writeWord(tablet, converter);
+  const [sent] = (tablet.host.recognizeElements as jest.Mock).mock.calls[0] as [object[]];
+  expect(sent).toHaveLength(3);
+  expect(sent.every(element => !penUps.includes(element))).toBe(true);
+  // A page element: it carries its number in the page, which the pen-up copy lacks.
+  expect(sent.map(element => (element as {numInPage?: number}).numInPage)).toEqual([0, 1, 2]);
+  expect(tablet.logs).toContain(
+    'recognize: 3 page elements of 3 read, types 0:3, fields numInPage,points,type,uuid, stroke fields none',
+  );
+});
+
+test('the shape line names fields and counts, never points or text', () => {
+  const line = elementShape(
+    [
+      {uuid: 'a', type: 0, numInPage: 3, stroke: {points: {}, penType: 10}},
+      {uuid: 'b', type: 0, numInPage: 4, stroke: {points: {}}},
+    ],
+    9,
+  );
+  expect(line).toBe(
+    'recognize: 2 page elements of 9 read, types 0:2, fields numInPage,stroke,type,uuid, stroke fields penType,points',
+  );
 });
 
 test('the text box starts at the word, sized to its letters, inside the page', () => {
