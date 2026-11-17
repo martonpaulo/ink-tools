@@ -96,6 +96,17 @@ export function median(values: readonly number[]): number {
 const heightOf = (rect: Rect) => rect.bottom - rect.top;
 
 /**
+ * A stroke over the letters (#206): shorter than a letter, its foot no lower than a share of the
+ * letter height into the band whose top is `bandTop`. An ascender («f», «l») ends at the baseline,
+ * so it is never one.
+ */
+export function isAccent(rect: Rect, bandTop: number, letterHeight: number): boolean {
+  return (
+    heightOf(rect) < letterHeight && rect.bottom <= bandTop + LINE_OVERLAP_SHARE * letterHeight
+  );
+}
+
+/**
  * Follows one writer's strokes. `add` takes each pen-up, `tick` the clock; both return the words
  * that are finished, in writing order. `nextDeadline` says when `tick` has something to close.
  */
@@ -141,15 +152,16 @@ export class WordTracker<E = unknown> {
     return overlap >= LINE_OVERLAP_SHARE * Math.max(1, lower);
   }
 
-  /** A short stroke above or on the line: an accent, an i-dot, a tilde, a bar. */
+  /**
+   * A short stroke above or on the line: an accent, an i-dot, a tilde, a bar. A stroke sitting on
+   * top of the line's band is a mark up to a full letter height: the owner's accent on «café» is
+   * 27 px over 40 to 44 px letters (#206), more than MARK_SHARE of them.
+   */
   private isMark(rect: Rect, band: Rect): boolean {
     const height = this.letterHeight();
-    return (
-      heightOf(rect) < MARK_SHARE * height &&
-      rect.right - rect.left < 2 * height &&
-      rect.bottom <= band.bottom &&
-      rect.bottom >= band.top - MARK_REACH * height
-    );
+    const reach = rect.bottom <= band.bottom && rect.bottom >= band.top - MARK_REACH * height;
+    const narrow = rect.right - rect.left < 2 * height;
+    return reach && narrow && (heightOf(rect) < MARK_SHARE * height || isAccent(rect, band.top, height));
   }
 
   /** The open or waiting word whose x range holds the mark's centre; the nearest first. */

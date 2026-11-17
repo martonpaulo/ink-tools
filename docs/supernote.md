@@ -45,8 +45,14 @@ explained.
   [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. `recognizeElements` on those pen-up
   elements failed for every word with «Recognition failed. Please try again!», while the same
   handwriting lassoed (page elements) was read [measured]; so recognition is sent the page's own
-  elements from `getElements`, found by uuid [inference: it reads the elements' native points as
+  elements from `getElements` [inference: it reads the elements' native points as
   page pixels, as the 0.2.3 `Stroke.points` doc says; to confirm in the device round].
+- A pen-up element's uuid is not the uuid `getElements` gives the same stroke: none of a word's 4
+  strokes was found by uuid in a page read of 4 elements [measured, Real-Time Conversion 0.1.0
+  beta 3, 2026-11-17, [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. In sn-plugin-lib
+  0.2.3 the uuid is the key of the element's native point cache (`ElementDataAccessor`), made for
+  each event or read [official source]. So a pen-up stroke is found in a page read by its bounds in
+  page pixels; the plugin logs both shapes of one stroke to confirm it.
 - A design board for this screen is 3:4; the study sheets use 794 x 1059 CSS px boards and export
   to the Manta page.
 
