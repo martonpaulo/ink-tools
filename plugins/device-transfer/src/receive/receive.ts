@@ -1,8 +1,8 @@
 /**
  * One receive (#49): the tablet is a LocalSend receiver for one item, then it lands in the open
  * note, floating and selected, for the person to move. Text becomes a text box; a PNG or JPEG goes
- * through `insertImage`, which the host shows as its own floating selection; a PDF becomes a new
- * note (#143, `pdfNote.ts`).
+ * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
+ * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
 import {freeRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
 import {Result, TextBoxInput} from '@ink-tools/sn-adapter/official';
@@ -73,6 +73,7 @@ let lastText: {page: string; bottom: number} | null = null;
 
 export function resetPlacedForTests(): void {
   lastText = null;
+  lastImage = null;
 }
 
 /**
@@ -154,11 +155,68 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
   return copy.receivedText;
 }
 
+/**
+ * The rect of the one picture the insert added: the rect in `after` that `before` lacks, or null
+ * when either read failed or is partial, or when the insert added none or more than one (#196).
+ */
+export function addedRect(before: OccupiedRead | null, after: OccupiedRead | null): Rect | null {
+  if (!before?.complete || !after?.complete) {
+    return null;
+  }
+  const same = (a: Rect, b: Rect) =>
+    a.left === b.left && a.top === b.top && a.right === b.right && a.bottom === b.bottom;
+  const added = after.rects.filter(rect => !before.rects.some(old => same(old, rect)));
+  return added.length === 1 ? added[0] : null;
+}
+
+/**
+ * The received picture this run placed last, kept on disk until the next receive (#196): the host's
+ * floating `insertImage` selection may still read it when the note saves it, and a photo whose file
+ * was removed at once was gone after Back on the beta 7 round.
+ * shortcut: one file stays after the last receive of a run until the next run's first receive.
+ */
+let lastImage: string | null = null;
+
+async function removeLastImage(native: Relay): Promise<void> {
+  if (lastImage !== null) {
+    await native.remove(lastImage);
+    lastImage = null;
+  }
+}
+
+/**
+ * Places a received PNG or JPEG with `insertImage`, then lassoes it by its rect, found as the one
+ * rect the insert added to the page, so another plugin's lasso row (Image Editing's «Document»)
+ * acts on it: the host's floating selection is no lasso for the plugin API (error 904, #196).
+ * Under #168's rule, never when the page's ink is not all known or crosses the picture.
+ */
 async function placeImage(native: Relay, host: NoteHost, path: string): Promise<string> {
+  const before = await host.occupied();
   await host.closeView();
   const inserted = await host.insertImage(path);
-  await native.remove(path);
-  return inserted.ok && inserted.value === true ? copy.receivedImage : copy.insertFailed;
+  if (!inserted.ok || inserted.value !== true) {
+    await native.remove(path);
+    return copy.insertFailed;
+  }
+  lastImage = path;
+  const beforeRead = before.ok ? before.value : null;
+  const after = await host.occupied();
+  const rect = addedRect(beforeRead, after.ok ? after.value : null);
+  if (rect === null) {
+    host.log('receive: lassoElements skipped, the placed picture is not found on the page');
+    return copy.receivedImage;
+  }
+  const ink = inkUnderBox(rect, beforeRead);
+  if (ink) {
+    host.log(`receive: lassoElements skipped, ${ink}`);
+    return copy.receivedImage;
+  }
+  const lassoed = await host.lasso(rect);
+  if (!lassoed.ok || lassoed.value !== true) {
+    // The picture stays placed; only the lasso is missing.
+    host.log('receive: lassoElements did not lasso the placed picture');
+  }
+  return copy.receivedImage;
 }
 
 function refusedLine(taken: Taken | null): string {
@@ -213,6 +271,7 @@ export async function receiveOne(
   if (!started.ok) {
     return copy.receiveFailed;
   }
+  await removeLastImage(native);
   onReady();
   let refused: Taken | null = null;
   try {

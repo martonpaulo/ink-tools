@@ -2,6 +2,7 @@
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {
+  addedRect,
   freeTextBox,
   inkUnderBox,
   NoteHost,
@@ -59,18 +60,79 @@ test('a text lands as a selected text box, and the receiver stops', async () => 
   expect(String(calls.started[0][4])).toContain('cert-fp');
 });
 
-test('an image is answered with a session, inserted when it arrives, then removed', async () => {
-  const {api, calls} = fakeRelay({}, [
-    offer({f: {fileType: 'image/png', size: 100}}),
-    {kind: 'file', path: '/tmp/received-sess.png'},
-  ]);
+const imageArrives = (path: string) => [
+  offer({f: {fileType: 'image/png', size: 100}}),
+  {kind: 'file' as const, path},
+];
+
+/** A page read before the insert and one after it, which holds the placed picture too. */
+function pageReads(before: Rect[], placed: Rect, complete = true) {
+  const reads = [
+    ok({rects: before, complete}),
+    ok({rects: [...before, placed], complete}),
+  ];
+  return jest.fn(async () => reads.shift() ?? ok({rects: [...before, placed], complete}));
+}
+
+type Rect = ReturnType<typeof textBox>;
+const PLACED: Rect = {left: 498, top: 680, right: 1421, bottom: 1880};
+
+test('an image is answered with a session, inserted when it arrives, and kept until the next receive', async () => {
+  const {api, calls} = fakeRelay({}, imageArrives('/tmp/received-sess.png'));
   const host = note();
   await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.receivedImage);
   expect(calls.answers[0][0]).toBe(200);
   expect(calls.answers[0].slice(2)).toEqual(['f', 'png']);
   expect(host.insertImage).toHaveBeenCalledWith('/tmp/received-sess.png');
-  expect(calls.removed).toEqual(['/tmp/received-sess.png']);
   expect(host.insertText).not.toHaveBeenCalled();
+  // #196: the host may still read the file when the note saves the floating picture.
+  expect(calls.removed).toEqual([]);
+  const next = fakeRelay({}, imageArrives('/tmp/received-next.png'));
+  await receiveOne(next.api, note(), 'Supernote');
+  expect(next.calls.removed).toEqual(['/tmp/received-sess.png']);
+});
+
+describe('the received picture is lassoed for another plugin\'s rows (#196)', () => {
+  test('the one rect the insert added is lassoed, so «Document» acts on the picture', async () => {
+    const {api} = fakeRelay({}, imageArrives('/tmp/a.png'));
+    const host = note({occupied: pageReads([], PLACED)});
+    await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.receivedImage);
+    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+  });
+
+  test('ink under the picture, a partial read or no new rect leaves it unlassoed, logged', async () => {
+    const ink = {left: 600, top: 700, right: 700, bottom: 760};
+    const over = note({occupied: pageReads([ink], PLACED)});
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/b.png')).api, over, 'Supernote');
+    expect(over.lasso).not.toHaveBeenCalled();
+    expect(over.log).toHaveBeenCalledWith('receive: lassoElements skipped, 1 other elements in the box');
+
+    const partial = note({occupied: pageReads([], PLACED, false)});
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/c.png')).api, partial, 'Supernote');
+    expect(partial.lasso).not.toHaveBeenCalled();
+
+    const none = note();
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/d.png')).api, none, 'Supernote');
+    expect(none.lasso).not.toHaveBeenCalled();
+    expect(none.log).toHaveBeenCalledWith(
+      'receive: lassoElements skipped, the placed picture is not found on the page',
+    );
+  });
+
+  test('a lasso the host refuses keeps the picture and its received line', async () => {
+    const host = note({occupied: pageReads([], PLACED), lasso: jest.fn(async () => ok(false))});
+    await expect(
+      receiveOne(fakeRelay({}, imageArrives('/tmp/e.png')).api, host, 'Supernote'),
+    ).resolves.toBe(copy.receivedImage);
+    expect(host.log).toHaveBeenCalledWith('receive: lassoElements did not lasso the placed picture');
+  });
+
+  test('addedRect finds only one new rect, on two complete reads', () => {
+    const a = {left: 0, top: 0, right: 10, bottom: 10};
+    expect(addedRect({rects: [a], complete: true}, {rects: [a, PLACED], complete: true})).toEqual(PLACED);
+    expect(addedRect({rects: [], complete: true}, {rects: [a, PLACED], complete: true})).toBeNull();
+    expect(addedRect(null, {rects: [PLACED], complete: true})).toBeNull();
+  });
 });
 
 test('a HEIC photo is refused, the window stays open, and its toast says why', async () => {
@@ -132,6 +194,7 @@ test('a failed insert says so', async () => {
   ]);
   const host = note({insertImage: jest.fn(async () => ok(false))});
   await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.insertFailed);
+  expect(host.lasso).not.toHaveBeenCalled();
 });
 
 test('the text box is centred, half the page wide, and stays on the page', () => {

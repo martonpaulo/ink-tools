@@ -75,6 +75,23 @@ public final class Retouch {
    */
   public static final int BACKGROUND_STEP = 10;
   public static final int BACKGROUND_DRIFT = 72;
+  /**
+   * Background removal's object edge (#134, beta 9): a pixel is on an edge when the blurred
+   * colour changes by at least this much across {@link #BACKGROUND_EDGE_SPAN} pixels each side of
+   * it. A soft outline stays well above it; a soft shadow or a lens's vignetting stays well below.
+   */
+  public static final int BACKGROUND_EDGE = 20;
+  public static final int BACKGROUND_EDGE_SPAN = 2;
+  /**
+   * How far the object's hull is grown each way, in pixels: where the object's dark side meets a
+   * shadow with no edge, the hull's chord cuts a sliver off the object, which this margin keeps.
+   */
+  public static final int BACKGROUND_HULL_MARGIN = 3;
+  /**
+   * Inside the hull, the flood takes only pixels this close to the frame edge's median colour, so
+   * the margin's ring of plain ground goes while the object and its contact shadow stay.
+   */
+  public static final int BACKGROUND_HULL_DRIFT = 24;
 
   private static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
@@ -876,10 +893,128 @@ public final class Retouch {
   /**
    * The border-connected background (#134): {@link #groundMask} with near white always flooded, so
    * a light ground, its gradient and a soft shadow go, while an object that reaches a border blocks
-   * the flood and is kept, and a hole inside the object is never reached, so it is kept too.
+   * the flood and is kept, and a hole inside the object is never reached, so it is kept too. The
+   * object is the convex hull of the picture's edges ({@link #objectMask}): inside it the flood
+   * takes only the ground's own colour ({@link #BACKGROUND_HULL_DRIFT}), so a shadow that fades
+   * into the object's dark side with no edge stops at the hull, not inside the object (beta 9
+   * cleared a whole apple that way). Near white still goes inside it.
+   *
+   * <p>shortcut: one convex object per picture; two objects keep the ground between them unless it
+   * is near white, and a textured ground (wood grain) makes the hull the whole frame, so only near
+   * white goes. Upgrade to a segmenter (the MediaPipe trial of #134) when that shows on the device.
    */
   public static boolean[] backgroundMask(Picture picture) {
-    return groundMask(picture, BACKGROUND_STEP, BACKGROUND_DRIFT, true);
+    return groundMask(picture, BACKGROUND_STEP, BACKGROUND_DRIFT, true, objectMask(picture),
+        BACKGROUND_HULL_DRIFT);
+  }
+
+  /**
+   * The pixels the background flood keeps out of (#134): the convex hull of every edge pixel, a
+   * pixel whose 3 x 3 blurred colour differs by {@link #BACKGROUND_EDGE} or more between
+   * {@link #BACKGROUND_EDGE_SPAN} pixels before and after it, across or down. A picture with no
+   * edge has an empty mask.
+   */
+  static boolean[] objectMask(Picture picture) {
+    int w = picture.width;
+    int h = picture.height;
+    int[] blur = blur3(picture.argb, w, h);
+    int s = BACKGROUND_EDGE_SPAN;
+    // Each row's leftmost and rightmost edge pixel: their hull is the hull of all edge pixels.
+    int[] left = new int[h];
+    int[] right = new int[h];
+    java.util.Arrays.fill(left, -1);
+    for (int y = s; y < h - s; y++) {
+      for (int x = s; x < w - s; x++) {
+        int i = y * w + x;
+        boolean edge = distance(blur[i - s], blur[i + s]) >= BACKGROUND_EDGE
+            || distance(blur[i - s * w], blur[i + s * w]) >= BACKGROUND_EDGE;
+        if (edge) {
+          if (left[y] < 0) {
+            left[y] = x;
+          }
+          right[y] = x;
+        }
+      }
+    }
+    int[][] points = new int[2 * h][];
+    int count = 0;
+    for (int y = 0; y < h; y++) {
+      if (left[y] >= 0) {
+        points[count++] = new int[] {left[y], y};
+        points[count++] = new int[] {right[y], y};
+      }
+    }
+    boolean[] mask = new boolean[w * h];
+    if (count == 0) {
+      return mask;
+    }
+    int[][] hull = convexHull(java.util.Arrays.copyOf(points, count));
+    // Each row's span inside the hull, then grown by the margin across and down.
+    double[] rowLo = new double[h];
+    double[] rowHi = new double[h];
+    for (int y = 0; y < h; y++) {
+      double lo = Double.MAX_VALUE;
+      double hi = -Double.MAX_VALUE;
+      for (int k = 0; k < hull.length; k++) {
+        int[] a = hull[k];
+        int[] b = hull[(k + 1) % hull.length];
+        if (y < Math.min(a[1], b[1]) || y > Math.max(a[1], b[1])) {
+          continue;
+        }
+        if (a[1] == b[1]) {
+          lo = Math.min(lo, Math.min(a[0], b[0]));
+          hi = Math.max(hi, Math.max(a[0], b[0]));
+        } else {
+          double x = a[0] + (double) (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1]);
+          lo = Math.min(lo, x);
+          hi = Math.max(hi, x);
+        }
+      }
+      rowLo[y] = lo;
+      rowHi[y] = hi;
+    }
+    int m = BACKGROUND_HULL_MARGIN;
+    for (int y = 0; y < h; y++) {
+      double lo = Double.MAX_VALUE;
+      double hi = -Double.MAX_VALUE;
+      for (int yy = Math.max(0, y - m); yy <= Math.min(h - 1, y + m); yy++) {
+        lo = Math.min(lo, rowLo[yy] - m);
+        hi = Math.max(hi, rowHi[yy] + m);
+      }
+      for (int x = Math.max(0, (int) Math.ceil(lo)); x <= Math.min(w - 1, hi); x++) {
+        mask[y * w + x] = true;
+      }
+    }
+    return mask;
+  }
+
+  /** The convex hull of `points` ({x, y}), counter-clockwise, by Andrew's monotone chain. */
+  private static int[][] convexHull(int[][] points) {
+    if (points.length < 3) {
+      return points;
+    }
+    int[][] sorted = points.clone();
+    java.util.Arrays.sort(sorted, (p, q) -> p[0] != q[0] ? p[0] - q[0] : p[1] - q[1]);
+    int[][] hull = new int[2 * sorted.length][];
+    int k = 0;
+    for (int[] p : sorted) {
+      while (k >= 2 && cross(hull[k - 2], hull[k - 1], p) <= 0) {
+        k--;
+      }
+      hull[k++] = p;
+    }
+    for (int i = sorted.length - 2, lower = k + 1; i >= 0; i--) {
+      int[] p = sorted[i];
+      while (k >= lower && cross(hull[k - 2], hull[k - 1], p) <= 0) {
+        k--;
+      }
+      hull[k++] = p;
+    }
+    return java.util.Arrays.copyOf(hull, Math.max(1, k - 1));
+  }
+
+  private static long cross(int[] o, int[] a, int[] b) {
+    return (long) (a[0] - o[0]) * (b[1] - o[1]) - (long) (a[1] - o[1]) * (b[0] - o[0]);
   }
 
   /**
@@ -892,6 +1027,16 @@ public final class Retouch {
    * the order of the flood carries it over an edge. Each pixel is pushed at most once.
    */
   public static boolean[] groundMask(Picture picture, int step, int drift, boolean nearWhite) {
+    return groundMask(picture, step, drift, nearWhite, null, drift);
+  }
+
+  /**
+   * {@link #groundMask} whose flood takes a pixel `kept` marks only within `keptDrift` of the
+   * median (#134); clear and, with `nearWhite`, near-white pixels still always belong. A null
+   * `kept` marks nothing.
+   */
+  public static boolean[] groundMask(Picture picture, int step, int drift, boolean nearWhite,
+      boolean[] kept, int keptDrift) {
     int w = picture.width;
     int h = picture.height;
     int[] raw = picture.argb;
@@ -914,7 +1059,8 @@ public final class Retouch {
     for (int k = 0; k < count; k++) {
       int i = edge[k];
       if (!bg[i]
-          && (isClear(raw[i]) || (nearWhite && isMargin(raw[i])) || distance(raw[i], median) <= drift)) {
+          && (isClear(raw[i]) || (nearWhite && isMargin(raw[i]))
+              || distance(raw[i], median) <= (kept != null && kept[i] ? keptDrift : drift))) {
         bg[i] = true;
         stack[top++] = i;
       }
@@ -932,7 +1078,7 @@ public final class Retouch {
         boolean follows = isClear(raw[j])
             || (nearWhite && isMargin(raw[j]))
             || (Math.min(distance(argb[j], argb[i]), distance(raw[j], raw[i])) <= step
-                && distance(raw[j], median) <= drift);
+                && distance(raw[j], median) <= (kept != null && kept[j] ? keptDrift : drift));
         if (follows) {
           bg[j] = true;
           stack[top++] = j;
