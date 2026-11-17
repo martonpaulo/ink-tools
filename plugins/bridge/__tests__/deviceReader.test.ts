@@ -13,15 +13,15 @@ test('the reader passes the URI and the marker column to BridgeProviders', async
       calls.push(`columns ${uri}`);
       return ['id', 'title'];
     },
-    dryInsert: async (uri: string, column: string) => {
-      calls.push(`insert ${uri} ${column}`);
+    dryInsert: async (uri: string, column: string, values: Record<string, unknown>) => {
+      calls.push(`insert ${uri} ${column} ${JSON.stringify(values)}`);
       return null;
     },
   };
   const reader = deviceReader();
   await expect(reader.columnsOf('content://example.test/rows')).resolves.toEqual(['id', 'title']);
-  await expect(reader.dryInsert('content://example.test/rows', 'title')).resolves.toBeUndefined();
-  expect(calls).toEqual(['columns content://example.test/rows', 'insert content://example.test/rows title']);
+  await expect(reader.dryInsert('content://example.test/rows', 'title', {tag: 'task'})).resolves.toBeUndefined();
+  expect(calls).toEqual(['columns content://example.test/rows', 'insert content://example.test/rows title {"tag":"task"}']);
 });
 
 test('a missing module rejects with its name, never an empty column list', async () => {
@@ -29,7 +29,7 @@ test('a missing module rejects with its name, never an empty column list', async
   await expect(reader.columnsOf('content://example.test/rows')).rejects.toThrow(
     'the BridgeProviders module is not loaded',
   );
-  await expect(reader.dryInsert('content://example.test/rows', 'title')).rejects.toThrow(
+  await expect(reader.dryInsert('content://example.test/rows', 'title', {})).rejects.toThrow(
     'the BridgeProviders module is not loaded',
   );
 });
@@ -41,5 +41,29 @@ test('a refused write reaches the probe as a rejection', async () => {
       throw new Error('Permission Denial');
     },
   };
-  await expect(deviceReader().dryInsert('content://example.test/rows', 'title')).rejects.toThrow('Permission Denial');
+  await expect(deviceReader().dryInsert('content://example.test/rows', 'title', {})).rejects.toThrow('Permission Denial');
+});
+
+test('a refused insert says no row was written, never that one may remain (#43)', async () => {
+  NativeModules[PROVIDERS_MODULE] = {
+    columnsOf: async () => [],
+    dryInsert: async () => {
+      throw Object.assign(new Error('NOT NULL constraint failed: data_info.tag'), {code: 'insert_refused'});
+    },
+  };
+  const refused = deviceReader().dryInsert('content://example.test/rows', 'title', {});
+  await expect(refused).rejects.toThrow('no test row was written: NOT NULL constraint failed: data_info.tag');
+  await expect(refused).rejects.not.toThrow(/may remain/);
+});
+
+test('a written row the delete missed keeps its «may remain» message', async () => {
+  NativeModules[PROVIDERS_MODULE] = {
+    columnsOf: async () => [],
+    dryInsert: async () => {
+      throw Object.assign(new Error("a test row may remain where title is 'Account Sync dry insert'"), {
+        code: 'revert_failed',
+      });
+    },
+  };
+  await expect(deviceReader().dryInsert('content://example.test/rows', 'title', {})).rejects.toThrow(/may remain/);
 });

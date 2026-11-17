@@ -5,14 +5,14 @@
  * reason instead of reporting a device it never read.
  */
 import {NativeModules} from 'react-native';
-import type {DeviceReader} from '@supernote-tools/sn-adapter';
+import type {DeviceReader, Row} from '@supernote-tools/sn-adapter';
 
 export const PROVIDERS_MODULE = 'BridgeProviders';
 
 /** The calls of the Java module, as `native/com/bridge/providers/BridgeProvidersModule.java` defines them. */
 export type ProvidersModule = {
   columnsOf: (uri: string) => Promise<string[]>;
-  dryInsert: (uri: string, markerColumn: string) => Promise<null>;
+  dryInsert: (uri: string, markerColumn: string, values: Row) => Promise<null>;
 };
 
 /** `providers` is for tests; without it, each call reads the module PluginHost loaded. */
@@ -28,8 +28,16 @@ export function deviceReader(providers?: ProvidersModule): DeviceReader {
   };
   return {
     columnsOf: async uri => loaded().columnsOf(uri),
-    dryInsert: async (uri, markerColumn) => {
-      await loaded().dryInsert(uri, markerColumn);
+    dryInsert: async (uri, markerColumn, values) => {
+      try {
+        await loaded().dryInsert(uri, markerColumn, values);
+      } catch (e) {
+        // `insert_refused` means the provider wrote no row; only `revert_failed` says one may remain (#43).
+        if ((e as {code?: unknown}).code === 'insert_refused') {
+          throw new Error(`no test row was written: ${e instanceof Error ? e.message : String(e)}`);
+        }
+        throw e;
+      }
     },
   };
 }

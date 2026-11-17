@@ -90,6 +90,19 @@ test('probe: each test row is marked in its table\'s text column (#43)', async (
   );
 });
 
+test('probe: the Calendar test row carries tag=task, which the provider requires (#43)', async () => {
+  const values: Record<string, unknown> = {};
+  const recording: DeviceReader = {
+    columnsOf: async uri => full[uri],
+    dryInsert: async (uri, _markerColumn, row) => {
+      values[uri] = row;
+    },
+  };
+  await probeAll(D, recording);
+  expect(values[contentUri(D.calendar, 'events')]).toEqual({tag: 'task'});
+  expect(values[contentUri(D.todo, 'tasks')]).toEqual({});
+});
+
 test('probe: a provider that reads but refuses writes cannot write (#67)', async () => {
   const todoUri = contentUri(D.todo, 'tasks');
   const todo = await probeCapability(D, 'todo', reader(full, [todoUri]));

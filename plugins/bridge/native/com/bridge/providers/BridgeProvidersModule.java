@@ -1,6 +1,7 @@
 package com.bridge.providers;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
@@ -68,40 +69,62 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
   }
 
   /**
-   * Inserts one row with {@link #MARKER} in {@code markerColumn}, then deletes every row carrying it.
-   * Resolves only when both passed; a row the delete could not remove is named in the rejection.
+   * Inserts one row with {@link #MARKER} in {@code markerColumn} and {@code values} in the other
+   * columns, then deletes every row carrying the marker. Resolves only when both passed. It rejects
+   * with {@code insert_refused} when the provider wrote no row (it threw, returned null or an id
+   * below 0), and with {@code revert_failed}, naming the row, only when a row was written and the
+   * delete did not remove it (#43).
    */
   @ReactMethod
-  public void dryInsert(String uri, String markerColumn, Promise promise) {
+  public void dryInsert(String uri, String markerColumn, ReadableMap values, Promise promise) {
     worker.execute(
         () -> {
           ContentResolver resolver = getReactApplicationContext().getContentResolver();
           Uri base = Uri.parse(uri);
-          Uri created;
+          boolean written;
           try {
-            ContentValues values = new ContentValues();
-            values.put(markerColumn, MARKER);
-            created = resolver.insert(base, values);
+            ContentValues row = values(values);
+            row.put(markerColumn, MARKER);
+            written = wroteRow(resolver.insert(base, row));
           } catch (Throwable error) {
             promise.reject("insert_refused", String.valueOf(error.getMessage()), error);
             return;
           }
+          String remains = "a test row may remain where " + markerColumn + " is '" + MARKER + "'";
           try {
             int removed = resolver.delete(base, markerColumn + " = ?", new String[] {MARKER});
-            if (created == null) {
-              promise.reject("insert_refused", "the provider ignored the test row");
+            if (!written) {
+              promise.reject("insert_refused", "the provider did not write the test row");
             } else if (removed == 0) {
-              promise.reject("revert_failed", "a test row may remain where " + markerColumn + " is '" + MARKER + "'");
+              promise.reject("revert_failed", remains);
             } else {
               promise.resolve(null);
             }
           } catch (Throwable error) {
-            promise.reject(
-                "revert_failed",
-                "a test row may remain where " + markerColumn + " is '" + MARKER + "': " + error.getMessage(),
-                error);
+            if (!written) {
+              promise.reject(
+                  "insert_refused", "the provider did not write the test row; the cleanup delete failed too: " + error.getMessage(), error);
+            } else {
+              promise.reject("revert_failed", remains + ": " + error.getMessage(), error);
+            }
           }
         });
+  }
+
+  /**
+   * Whether an insert's answer names a written row. A provider that refuses a row may answer null or
+   * an id below 0 instead of throwing; an answer without a numeric id counts as written, so a row
+   * that might exist is never reported as absent.
+   */
+  static boolean wroteRow(Uri created) {
+    if (created == null) {
+      return false;
+    }
+    try {
+      return ContentUris.parseId(created) >= 0;
+    } catch (RuntimeException notNumeric) {
+      return true;
+    }
   }
 
   /** The selection of a filter: {@code a = ? AND b IS NULL}; an empty filter selects every row. */
