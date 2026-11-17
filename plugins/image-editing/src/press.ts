@@ -1,6 +1,6 @@
 /**
- * One no-view edit button's press (#170): a press either changes the picture or shows why it did
- * not, never nothing. A file permission the host does not hold now («Ask Every Time», or «Allow
+ * One edit's press (#170), run from a button of the editor view (#226, src/editor.ts): a press
+ * either changes the picture or shows why it did not, never nothing. A file permission the host does not hold now («Ask Every Time», or «Allow
  * This Time Only», which the host revokes when the next press starts: docs/supernote.md ›
  * Plugins) opens Settings, which asks for it while a view shows, and tells the person to choose
  * Always Allow. An edit past the owner's 2 s limit shows the «Loading…» strip (#103, #145).
@@ -47,10 +47,10 @@ export type PressDeps = {
 };
 
 /** The edits whose guide the pen drew over the picture (#132, #134); the others run as they are. */
-const runPress = (edit: EditId): Promise<Done> =>
+export const runPress = (edit: EditId): Promise<Done> =>
   edit === 'crop' ? runCrop() : edit === 'erase' ? runErase() : runEdit(edit);
 
-const DEVICE: PressDeps = {
+export const PRESS_DEVICE: PressDeps = {
   missing: async () => {
     const missing: string[] = [];
     for (const permission of PRESS_NEEDS) {
@@ -111,7 +111,7 @@ export function pageToast(done: PageDone): string {
 /** Runs `edit`'s press; the value is the edit's outcome, or null when a permission was missing. */
 export async function pressEdit(
   edit: EditDefinition,
-  deps: PressDeps = DEVICE,
+  deps: PressDeps = PRESS_DEVICE,
 ): Promise<Done | PageDone | null> {
   const missing = await deps.missing();
   if (missing.length > 0) {

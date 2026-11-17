@@ -151,6 +151,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   (Lookup's `LookupFilesPackage`, Relay's `RelayPackage`, Retouch's `RetouchPackage`), with no
   `ClassNotFound`, `NoSuchMethod`, duplicate-class or `already registered` line [measured,
   2026-11-16, [#142](https://github.com/martonpaulo/ink-tools/issues/142)].
+- Pen input in a plugin view: `sn-plugin-lib` 0.2.3 types every motion with `toolType` 0
+  unknown, 1 finger or 2 EMR pen (`event/PluginEvent.ts`), and a plugin view is an ordinary React
+  Native view, so its touch responder is taken to get the pen as a pointer [inference, to measure,
+  [#226](https://github.com/martonpaulo/ink-tools/issues/226), [#134](https://github.com/martonpaulo/ink-tools/issues/134)]. Image Editing's editor draws Erase and Crop marks that way; the
+  marks drawn on the page and lassoed with the picture stay as the fallback.
 - A lasso button whose `editDataTypes` do not match the lasso stays in the «⋯» list, in grey, and
   does nothing; it is not hidden [measured, 2026-11-16, a lassoed text box].
 - A plugin's declared permissions stay «Ask Every Time» until the plugin calls

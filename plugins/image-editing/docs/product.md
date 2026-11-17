@@ -14,7 +14,8 @@ Status: current, 2026-11-16. Scope and the reuse check behind it are in
 ## What it is
 
 Retouch is a Supernote plugin that edits a picture already on the page. You lasso the picture and
-tap one edit in the lasso menu; the finished picture replaces it in place.
+press its one lasso row, «Image Editing», which opens the editor on the picture with every edit as
+a button; each tap replaces the picture in place ([#226](https://github.com/martonpaulo/ink-tools/issues/226)).
 
 ## Who it is for
 
@@ -28,19 +29,21 @@ or too dark on the 16-grey screen.
 - Rotate 90° clockwise, Mirror (left to right), Flip (top to bottom) and Invert, which turns a
   dark-mode screenshot into paper, each one tap
   ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
-- Trim the white margins, one tap, and Crop with the pen: draw a rectangle on the picture, lasso
-  both, tap Crop; the rectangle is erased
+- Trim the white margins, one tap, and Crop with the pen: tap Crop, draw a rectangle on the
+  picture in the editor, tap Crop again; or draw it on the page and lasso both
   ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
 - Remove background, which clears the border around the main object to transparent, and Make
-  sticker, which puts the object on a white card, each one tap, and Erase with the pen: draw over
-  the part to remove, lasso the picture and the marks, tap Erase; a band along each mark, and the
-  inside of a mark that closes on itself, turns clear, and the marks are erased
+  sticker, which puts the object on a white card, each one tap, and Erase with the pen: tap Erase,
+  draw over the part to remove in the editor, tap Erase again, or draw on the page and lasso the
+  picture and the marks; a band along each mark, and the inside of a mark that closes on itself,
+  turns clear
   ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
 - Document, one tap: straighten a photographed page or whiteboard to an upright rectangle on a
   white background, cleaned to black and white. The page corners are found automatically; a photo
   with no clear page is cleaned without a warp, never distorted
   ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)).
-- Each edit is a switch in Settings.
+- Each edit is a button of the editor and a switch in Settings; the lasso menu holds one row,
+  «Image Editing», never one per edit ([#226](https://github.com/martonpaulo/ink-tools/issues/226)).
 
 ## What it will never do
 

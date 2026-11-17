@@ -1,6 +1,7 @@
 /**
- * Retouch's edits (#136): each one is a lasso button and a switch in Settings. A new edit is one
- * row here; the buttons and the Settings view follow it.
+ * Retouch's edits (#136): each one is a button of the editor view and a switch in Settings. A new
+ * edit is one row here; the editor and the Settings view follow it. The lasso menu holds one
+ * «Image Editing» row, which opens the editor (#226).
  */
 import {copy} from './copy';
 import type {StyleId} from './native';
@@ -25,16 +26,21 @@ export type EditId =
   | 'crop'
   | 'erase';
 
-/** `showType` 1, a full view, for an edit that shows a screen first (#133); 0 runs with no view. */
 export type EditDefinition = {
   id: EditId;
-  buttonId: number;
   name: string;
-  showType: 0 | 1;
 };
 
-/** The first edit button's id; each edit keeps its place, so an id never changes. */
-export const FIRST_BUTTON_ID = 200;
+/** The one lasso button, «Image Editing», which opens the editor view (#226). */
+export const EDITOR_BUTTON_ID = 300;
+
+/**
+ * The lasso button ids of the builds before #226, one per edit from 200 in `ORDER`. The start-up
+ * removes them, so an update never leaves the old rows in the lasso menu.
+ * shortcut: the removal assumes the host may keep a button across a plugin update; drop it once a
+ * device round shows the menu holds one Image Editing row after an update from beta 10.
+ */
+const FIRST_LEGACY_BUTTON_ID = 200;
 
 const ORDER: readonly EditId[] = [
   'enhance',
@@ -65,15 +71,14 @@ const ORDER: readonly EditId[] = [
   'erase',
 ];
 
-/** The edits that open a view (#133). */
-const WITH_VIEW: ReadonlySet<EditId> = new Set(['styles']);
-
-export const EDITS: readonly EditDefinition[] = ORDER.map((id, index) => ({
+export const EDITS: readonly EditDefinition[] = ORDER.map(id => ({
   id,
-  buttonId: FIRST_BUTTON_ID + index,
   name: copy[`edit.${id}`],
-  showType: WITH_VIEW.has(id) ? 1 : 0,
 }));
+
+export const LEGACY_BUTTON_IDS: readonly number[] = ORDER.map(
+  (_, index) => FIRST_LEGACY_BUTTON_ID + index,
+);
 
 /** The grid's styles in their default order (#133); each is a switch in Settings. */
 export const STYLE_ORDER: readonly StyleId[] = [
@@ -134,13 +139,12 @@ export function enabledEdits(settings: RetouchSettings): EditDefinition[] {
   );
 }
 
-/** The edit a pressed button stands for, or null for an id that is not Retouch's. */
-export function editOfButton(id: number): EditDefinition | null {
-  return EDITS.find(edit => edit.buttonId === id) ?? null;
+export function editOf(id: EditId): EditDefinition {
+  return EDITS.find(edit => edit.id === id)!;
 }
 
 // shortcut: the settings live in memory and reset when Retouch restarts, as Lingo's do; upgrade
-// when the plugin storage lands (#40). One copy, so a Styles press reads the switches Settings set.
+// when the plugin storage lands (#40). One copy, so the editor reads the switches Settings set.
 let current: RetouchSettings = defaultSettings;
 
 export function currentSettings(): RetouchSettings {

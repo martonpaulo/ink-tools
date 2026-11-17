@@ -118,9 +118,12 @@ export type Marks = {points: number[]; ends: number[]};
  */
 export type EditOptions = StyleOptions & {box?: Box; marks?: Marks};
 
-/** What a press did, for the log and the tests. */
+/**
+ * What a press did, for the log and the tests. An edit gives the picture's new place on the page,
+ * so the editor view lassoes it again for the next edit (#226).
+ */
 export type Done =
-  | {kind: 'edited'; edit: EditId | StyleId; ms: number; quad?: string}
+  | {kind: 'edited'; edit: EditId | StyleId; ms: number; quad?: string; rect?: Rect}
   | {kind: 'nothing'; why: string}
   | {kind: 'failed'; why: string};
 
@@ -350,7 +353,9 @@ async function pixelEdit(
     keep.add(resultPath).add(originalPath);
     await save(change, work, deps);
     const {quad} = edited.value;
-    return quad === undefined ? {kind: 'edited', edit, ms: 0} : {kind: 'edited', edit, ms: 0, quad};
+    return quad === undefined
+      ? {kind: 'edited', edit, ms: 0, rect}
+      : {kind: 'edited', edit, ms: 0, quad, rect};
   } finally {
     for (const path of [preview.value, originalPath, resultPath]) {
       if (path && !keep.has(path)) {
@@ -382,7 +387,7 @@ async function putBack(
     return {kind: 'failed', why: why('modifyPageElements', replaced)};
   }
   await save(step.after(rect, deps.now()), work, deps);
-  return {kind: 'edited', edit, ms: 0};
+  return {kind: 'edited', edit, ms: 0, rect};
 }
 
 function replace(
