@@ -84,6 +84,10 @@ does for its sources):
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
   ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/probe` is exempt: it
   exists to call internals directly.
+- **No `URL` getter on the tablet.** React Native's `URL` throws on `protocol`, `host` and the
+  rest, so tablet code parses with `parseUrl` of `sync-core`; the `url` rule of
+  `scripts/boundaries.py` covers every plugin, `plugins/probe` included
+  ([#209](https://github.com/martonpaulo/ink-tools/issues/209)).
 
 ## Shared packages
 

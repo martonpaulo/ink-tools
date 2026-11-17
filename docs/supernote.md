@@ -107,6 +107,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A plugin can open a TCP listener and accept a connection over Wi-Fi, with the screen on and off
   [measured, 2026-11-14, [#91](https://github.com/martonpaulo/ink-tools/issues/91)].
 - HTTPS `fetch` works; cleartext `http://` fails at once [measured, `brief.md`].
+- React Native's `URL` parses a string, but its getters throw: Account Sync 0.1.0-beta.10's To-Do
+  pass failed with `URL.protocol is not implemented` [measured, 2026-11-17,
+  [#209](https://github.com/martonpaulo/ink-tools/issues/209)]. React Native 0.79.2's
+  `Libraries/Blob/URL.js` throws on every getter but `href`, and its `URLSearchParams` has only the
+  constructor, `append` and `toString`. Tablet code takes `parseUrl` of `sync-core`; the `url` rule
+  of `scripts/boundaries.py` refuses `new URL(` there.
 - Plugin call times on the owner's tablet, one «Insert best picture» for «apple», Ink2Pic
   0.1.0-dev.17 [measured, 2026-11-14, [#19](https://github.com/martonpaulo/ink-tools/issues/19)]: `recognizeElements` 0.9 to 1.7 s,
   `insertPageElements` 0.1 to 0.3 s, re-lasso 0.4 to 0.6 s, writing the PNG under 20 ms, a 200 px

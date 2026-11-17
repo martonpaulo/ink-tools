@@ -64,6 +64,23 @@ class Boundaries(unittest.TestCase):
             "plugins/a/src/define.ts": "fetch('https://pt.wiktionary.org/w/api.php');\n",
         }), [("plugins/a/src/define.ts", "dictionary")])
 
+    def test_no_url_class_in_tablet_code(self):
+        self.assertEqual(self.tree({
+            "packages/sync-core/src/http.ts": "// never `new URL(url).protocol` (#209)\nconst p = parseUrl(url);\n",
+            "packages/sync-core/src/google.ts": "const form = (o) => new URLSearchParams(o).toString();\n",
+            "plugins/a/__tests__/u.test.ts": "expect(new URL(u).host).toBe('x');\n",
+            "plugins/a/scripts/release.cjs": "const u = new URL(process.argv[2]);\n",
+            "plugins/a/metro.config.js": "const u = new URL('file:///x');\n",
+            "plugins/a/src/relay.ts": "const pinned = device.protocol === 'https';\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "packages/sync-core/src/http.ts": "if (new URL(url).protocol !== 'https:') throw e;\n",
+            "packages/ink-core/src/w.ts": "const q = link.searchParams.get('q');\n",
+            "plugins/a/index.js": "const u = new URL(x);\n",
+            "plugins/probe/src/p.ts": "const host = new URL(x).host;\n",
+        }), [("packages/ink-core/src/w.ts", "url"), ("packages/sync-core/src/http.ts", "url"),
+             ("plugins/a/index.js", "url"), ("plugins/probe/src/p.ts", "url")])
+
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({
             "plugins/a/node_modules/x/index.js": "require('sn-plugin-lib');\n",
