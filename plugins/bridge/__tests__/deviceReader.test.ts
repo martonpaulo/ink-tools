@@ -6,22 +6,22 @@ afterEach(() => {
   delete NativeModules[PROVIDERS_MODULE];
 });
 
-test('the reader passes the URI and the marker column to BridgeProviders', async () => {
+test('the reader passes the URI, the marker column and the row id column to BridgeProviders (#43)', async () => {
   const calls: string[] = [];
   NativeModules[PROVIDERS_MODULE] = {
     columnsOf: async (uri: string) => {
       calls.push(`columns ${uri}`);
       return ['id', 'title'];
     },
-    dryInsert: async (uri: string, column: string, values: Record<string, unknown>) => {
-      calls.push(`insert ${uri} ${column} ${JSON.stringify(values)}`);
+    dryInsert: async (uri: string, column: string, idColumn: string, values: Record<string, unknown>) => {
+      calls.push(`insert ${uri} ${column} ${idColumn} ${JSON.stringify(values)}`);
       return null;
     },
   };
   const reader = deviceReader();
   await expect(reader.columnsOf('content://example.test/rows')).resolves.toEqual(['id', 'title']);
   await expect(reader.dryInsert('content://example.test/rows', 'title', {tag: 'task'})).resolves.toBeUndefined();
-  expect(calls).toEqual(['columns content://example.test/rows', 'insert content://example.test/rows title {"tag":"task"}']);
+  expect(calls).toEqual(['columns content://example.test/rows', 'insert content://example.test/rows title id {"tag":"task"}']);
 });
 
 test('a missing module rejects with its name, never an empty column list', async () => {

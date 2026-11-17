@@ -58,7 +58,7 @@ function one(count: number, what: string): void {
  * `task_group_table` but maps no field to it, so it is named here once; a field mapping for it
  * belongs in descriptor.json with the next descriptor change.
  */
-const ROW_ID = 'id';
+export const ROW_ID = 'id';
 const LIST_ID = 'taskListId';
 const DELETED = 'deleted';
 /** `task_group_table` columns a new list fills; the descriptor maps no field for them yet. */

@@ -70,33 +70,41 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
 
   /**
    * Inserts one row with {@link #MARKER} in {@code markerColumn} and {@code values} in the other
-   * columns, then deletes every row carrying the marker. Resolves only when both passed. It rejects
-   * with {@code insert_refused} when the provider wrote no row (it threw, returned null or an id
-   * below 0), and with {@code revert_failed}, naming the row, only when a row was written and the
-   * delete did not remove it (#43).
+   * columns, then deletes it by its row id ({@code idColumn}), with every older row carrying the
+   * marker ({@link DryInsertRevert}). Resolves only when both passed. It rejects with {@code
+   * insert_refused} when the provider wrote no row (it threw, returned null or an id below 0), and
+   * with {@code revert_failed}, counting the rows, only when a marked row is still listed (#43).
    */
   @ReactMethod
-  public void dryInsert(String uri, String markerColumn, ReadableMap values, Promise promise) {
+  public void dryInsert(
+      String uri, String markerColumn, String idColumn, ReadableMap values, Promise promise) {
     worker.execute(
         () -> {
           ContentResolver resolver = getReactApplicationContext().getContentResolver();
           Uri base = Uri.parse(uri);
           boolean written;
+          String createdId;
           try {
             ContentValues row = values(values);
             row.put(markerColumn, MARKER);
-            written = wroteRow(resolver.insert(base, row));
+            Uri created = resolver.insert(base, row);
+            written = wroteRow(created);
+            createdId = written ? rowId(created) : null;
           } catch (Throwable error) {
             promise.reject("insert_refused", String.valueOf(error.getMessage()), error);
             return;
           }
-          String remains = "a test row may remain where " + markerColumn + " is '" + MARKER + "'";
+          String where = " where " + markerColumn + " is '" + MARKER + "'";
           try {
-            int removed = resolver.delete(base, markerColumn + " = ?", new String[] {MARKER});
+            DryInsertRevert.Result result =
+                DryInsertRevert.revert(
+                    new ProviderTable(resolver, base, idColumn, markerColumn), MARKER, createdId);
             if (!written) {
               promise.reject("insert_refused", "the provider did not write the test row");
-            } else if (removed == 0) {
-              promise.reject("revert_failed", remains);
+            } else if (result.remaining > 0) {
+              promise.reject(
+                  "revert_failed",
+                  result.remaining + " test rows remain" + where + " after deleting them by " + idColumn);
             } else {
               promise.resolve(null);
             }
@@ -105,10 +113,74 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
               promise.reject(
                   "insert_refused", "the provider did not write the test row; the cleanup delete failed too: " + error.getMessage(), error);
             } else {
-              promise.reject("revert_failed", remains + ": " + error.getMessage(), error);
+              promise.reject("revert_failed", "a test row may remain" + where + ": " + error.getMessage(), error);
             }
           }
         });
+  }
+
+  /** The new row's id from the insert's answer, or null when it holds no number. */
+  static String rowId(Uri created) {
+    try {
+      long id = ContentUris.parseId(created);
+      return id >= 0 ? String.valueOf(id) : null;
+    } catch (RuntimeException notNumeric) {
+      return null;
+    }
+  }
+
+  /** The test write's table over ContentResolver: a marker query, and a delete of one row by id. */
+  private static final class ProviderTable implements DryInsertRevert.Table {
+    private final ContentResolver resolver;
+    private final Uri base;
+    private final String idColumn;
+    private final String markerColumn;
+
+    ProviderTable(ContentResolver resolver, Uri base, String idColumn, String markerColumn) {
+      this.resolver = resolver;
+      this.base = base;
+      this.idColumn = idColumn;
+      this.markerColumn = markerColumn;
+    }
+
+    @Override
+    public List<String[]> marked() {
+      List<String[]> out = new ArrayList<>();
+      try (Cursor cursor =
+          resolver.query(
+              base, new String[] {idColumn, markerColumn}, markerColumn + " = ?", new String[] {MARKER}, null)) {
+        if (cursor == null) {
+          return out;
+        }
+        int id = cursor.getColumnIndex(idColumn);
+        int marker = cursor.getColumnIndex(markerColumn);
+        if (id < 0 || marker < 0) {
+          throw new IllegalStateException("the provider listed no " + idColumn + " or " + markerColumn + " column");
+        }
+        while (cursor.moveToNext()) {
+          out.add(new String[] {cursor.getString(id), cursor.getString(marker)});
+        }
+      }
+      return out;
+    }
+
+    /**
+     * Deletes one row: first through the row's own URI ({@code base/<id>}, Android's convention for
+     * one row), with the id in the selection too; when that removes nothing or the provider does not
+     * know the URI, through the table URI with the id selection alone.
+     */
+    @Override
+    public int deleteById(String id) {
+      String selection = idColumn + " = ?";
+      String[] args = {id};
+      int removed = 0;
+      try {
+        removed = resolver.delete(ContentUris.withAppendedId(base, Long.parseLong(id)), selection, args);
+      } catch (RuntimeException unknownUri) {
+        removed = 0;
+      }
+      return removed > 0 ? removed : resolver.delete(base, selection, args);
+    }
   }
 
   /**

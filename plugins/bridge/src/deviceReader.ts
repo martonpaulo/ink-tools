@@ -6,13 +6,20 @@
  */
 import {NativeModules} from 'react-native';
 import type {DeviceReader, Row} from '@supernote-tools/sn-adapter';
+import {ROW_ID} from './deviceStores';
 
 export const PROVIDERS_MODULE = 'BridgeProviders';
 
 /** The calls of the Java module, as `native/com/bridge/providers/BridgeProvidersModule.java` defines them. */
 export type ProvidersModule = {
   columnsOf: (uri: string) => Promise<string[]>;
-  dryInsert: (uri: string, markerColumn: string, values: Row) => Promise<null>;
+  /** The test row is deleted again by its `idColumn`, the provider's row key (#43). */
+  dryInsert: (
+    uri: string,
+    markerColumn: string,
+    idColumn: string,
+    values: Row,
+  ) => Promise<null>;
 };
 
 /** `providers` is for tests; without it, each call reads the module PluginHost loaded. */
@@ -30,7 +37,7 @@ export function deviceReader(providers?: ProvidersModule): DeviceReader {
     columnsOf: async uri => loaded().columnsOf(uri),
     dryInsert: async (uri, markerColumn, values) => {
       try {
-        await loaded().dryInsert(uri, markerColumn, values);
+        await loaded().dryInsert(uri, markerColumn, ROW_ID, values);
       } catch (e) {
         // `insert_refused` means the provider wrote no row; only `revert_failed` says one may remain (#43).
         if ((e as {code?: unknown}).code === 'insert_refused') {
