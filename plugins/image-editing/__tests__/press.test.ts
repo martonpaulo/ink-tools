@@ -16,6 +16,7 @@ function deps(missing: string[], done: Done) {
     edit: jest.fn(async () => done),
     page: jest.fn(),
     toast: text => toasts.push(text),
+    sweep: jest.fn(async () => undefined),
     log: () => undefined,
   };
   return {d, toasts};
@@ -68,4 +69,13 @@ test('an edited picture shows no toast', async () => {
   const {d, toasts} = deps([], {kind: 'edited', edit: 'enhance', ms: 500});
   await pressEdit(ENHANCE, d);
   expect(toasts).toEqual([]);
+});
+
+test('the orphan sweep runs after the edit, and not when a permission is missing (#182)', async () => {
+  const edited = deps([], {kind: 'edited', edit: 'enhance', ms: 500});
+  await pressEdit(ENHANCE, edited.d);
+  expect(edited.d.sweep).toHaveBeenCalledTimes(1);
+  const missing = deps(['plugin.permission.FILE:READ'], {kind: 'edited', edit: 'enhance', ms: 1});
+  await pressEdit(ENHANCE, missing.d);
+  expect(missing.d.sweep).not.toHaveBeenCalled();
 });

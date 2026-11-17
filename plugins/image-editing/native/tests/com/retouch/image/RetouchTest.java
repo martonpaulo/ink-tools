@@ -1,5 +1,7 @@
 package com.retouch.image;
 
+import com.ink2pic.files.Decolor;
+
 /** Plain JVM test, no framework: run by `npm run test:native` (#136). */
 public final class RetouchTest {
   private static final int WHITE = 0xFFFFFFFF;
@@ -32,6 +34,10 @@ public final class RetouchTest {
     documentWarpsAQuadToAnUprightRectangle();
     documentCleansWithoutAQuadWhenThePageFillsTheFrame();
     documentScalesDownAndSurvivesTinyPictures();
+    documentFindsTheCornersOfASkewedPhoto();
+    documentStraightensASkewedPhotoOnWhite();
+    documentCleansALitSurfaceToWhiteWithoutAPage();
+    backgroundClearsAnUnevenGroundAndTheShadow();
     eraseNeedsItsMarksAndKeepsTheSize();
     eraseClearsABandAlongAnOpenMark();
     eraseClearsTheInsideOfAClosedMark();
@@ -570,6 +576,141 @@ public final class RetouchTest {
         }
       }
     }
+  }
+
+  /** The corners #137's beta 8 missed: a white sheet on a gray table lit from one side. */
+  private static void documentFindsTheCornersOfASkewedPhoto() {
+    Retouch.Picture photo = PhotoFixtures.skewedPage();
+    Decolor.apply(photo.argb, photo.width, photo.height);
+    int[][] quad = Retouch.findPageQuad(photo);
+    check(quad != null, "the skewed sheet on a lit table has a quad");
+    String[] names = {"top-left", "top-right", "bottom-right", "bottom-left"};
+    for (int c = 0; c < 4; c++) {
+      double dx = quad[c][0] - PhotoFixtures.PAGE_QUAD[c][0];
+      double dy = quad[c][1] - PhotoFixtures.PAGE_QUAD[c][1];
+      check(Math.sqrt(dx * dx + dy * dy) <= 4,
+          "the " + names[c] + " corner is found within 4 px: " + quad[c][0] + "," + quad[c][1]);
+    }
+  }
+
+  /**
+   * The sheet comes out upright, at its own shape, black on white: its printed border runs level
+   * and plumb, and the table around it is white, never the black wedge of beta 8.
+   */
+  private static void documentStraightensASkewedPhotoOnWhite() {
+    long started = System.nanoTime();
+    Retouch.Picture out = Retouch.document(PhotoFixtures.skewedPage());
+    long ms = (System.nanoTime() - started) / 1_000_000;
+    int w = out.width;
+    int h = out.height;
+    double aspect = (double) w / h;
+    double sheet = (double) PhotoFixtures.PAGE_W / PhotoFixtures.PAGE_H;
+    check(Math.abs(aspect - sheet) / sheet < 0.08, "the result keeps the sheet's shape: " + w + " x " + h);
+    for (int pixel : out.argb) {
+      int g = pixel & 0xFF;
+      check(g == 0 || g == 255, "the result is black and white: " + g);
+    }
+    // The border's top edge is level: the first ink from the top at a quarter and three quarters.
+    int left = firstInkDown(out, w / 4);
+    int right = firstInkDown(out, 3 * w / 4);
+    check(left > 0 && Math.abs(left - right) <= 3, "the top border is level: " + left + " / " + right);
+    int top = firstInkAcross(out, h / 4);
+    int bottom = firstInkAcross(out, 3 * h / 4);
+    check(top > 0 && Math.abs(top - bottom) <= 3, "the left border is plumb: " + top + " / " + bottom);
+    // Outside the printed border is paper or table: it must be white, all round.
+    int margin = Math.min(left, top) - 3;
+    check(margin >= 4, "a margin of paper lies outside the border: " + margin);
+    long black = 0;
+    long seen = 0;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        if (x < margin || y < margin || x >= w - margin || y >= h - margin) {
+          seen++;
+          if ((out.argb[y * w + x] & 0xFF) == 0) {
+            black++;
+          }
+        }
+      }
+    }
+    check(black * 100 < seen, "the ground around the page stays white: " + black + " of " + seen);
+    System.out.println("document on the " + PhotoFixtures.PHOTO_W + " x " + PhotoFixtures.PHOTO_H
+        + " fixture: " + ms + " ms on the JVM");
+  }
+
+  /** No page in the frame, a table lit from one side: the clean-only result is white, not a wedge. */
+  private static void documentCleansALitSurfaceToWhiteWithoutAPage() {
+    int w = 200;
+    int h = 160;
+    int[] argb = new int[w * h];
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        boolean word = y >= 70 && y < 80 && x >= 40 && x < 160 && (x % 30) < 22;
+        argb[y * w + x] = gray(word ? 30 : 90 + 115 * x / w);
+      }
+    }
+    Retouch.Picture out = Retouch.document(new Retouch.Picture(argb, w, h));
+    long black = ink(out);
+    check(black > 0 && black < 0.06 * w * h, "only the words are ink on a lit surface: " + black);
+    check((out.argb[5 * w + 5] & 0xFF) == 255, "the dark side of the surface is white");
+  }
+
+  /**
+   * #134 on the device: the light table's darker top right corner and the apple's soft shadow
+   * were left as gray patches. Both go now, and the apple stays whole.
+   */
+  private static void backgroundClearsAnUnevenGroundAndTheShadow() {
+    Retouch.Picture photo = PhotoFixtures.apple();
+    Retouch.removeBackground(photo);
+    int w = photo.width;
+    long ground = 0;
+    long groundLeft = 0;
+    long shade = 0;
+    long shadeLeft = 0;
+    long apple = 0;
+    long appleCut = 0;
+    for (int y = 0; y < photo.height; y++) {
+      for (int x = 0; x < w; x++) {
+        double cx = x + 0.5;
+        double cy = y + 0.5;
+        boolean opaque = (photo.argb[y * w + x] >>> 24) != 0;
+        double d = Math.hypot(cx - PhotoFixtures.APPLE_X, cy - PhotoFixtures.APPLE_Y);
+        if (PhotoFixtures.onApple(cx, cy) && d < PhotoFixtures.APPLE_R - 3) {
+          apple++;
+          appleCut += opaque ? 0 : 1;
+        } else if (!PhotoFixtures.onApple(cx, cy) && d > PhotoFixtures.APPLE_R + 4
+            && Math.abs(cx - PhotoFixtures.APPLE_X) > 10) {
+          ground++;
+          groundLeft += opaque ? 1 : 0;
+          if (PhotoFixtures.shadow(cx, cy) > 0.3) {
+            shade++;
+            shadeLeft += opaque ? 1 : 0;
+          }
+        }
+      }
+    }
+    check(appleCut == 0, "the apple is kept whole: " + appleCut + " of " + apple + " cleared");
+    check(groundLeft * 100 < ground, "the uneven table is cleared: " + groundLeft + " of " + ground + " left");
+    check(shade > 0 && shadeLeft * 20 < shade, "the shadow is cleared: " + shadeLeft + " of " + shade + " left");
+  }
+
+  /** The first black row from the top in column `x`, or -1. */
+  private static int firstInkDown(Retouch.Picture p, int x) {
+    for (int y = 0; y < p.height; y++) {
+      if ((p.argb[y * p.width + x] & 0xFF) == 0) {
+        return y;
+      }
+    }
+    return -1;
+  }
+
+  /** The first black column from the left in row `y`, or -1. */
+  private static int firstInkAcross(Retouch.Picture p, int y) {
+    for (int x = 0; x < p.width; x++) {
+      if ((p.argb[y * p.width + x] & 0xFF) == 0) {
+        return x;
+      }
+    }
+    return -1;
   }
 
   private static boolean near(int pixel, int value) {

@@ -59,6 +59,7 @@ function world() {
       return ok(null);
     }),
     deleteFile: jest.fn(async path => ok(files.delete(path) || true)),
+    listDir: jest.fn(async () => ok(null)),
   };
   const deps: EditDeps = {
     workDir: async () => ok(RETOUCH_DIR),
@@ -318,11 +319,15 @@ test('Document runs as a pixel edit and is recorded in the history (#137)', asyn
       w.files.set(before, 'png');
       w.files.set(dest, 'png');
       // The warp straightens the page to a smaller upright rectangle.
-      return ok({width: 320, height: 240, left: 0, top: 0, ms: 5});
+      return ok({width: 320, height: 240, left: 0, top: 0, ms: 5, quad: '12,9 380,4 391,290 8,296'});
     },
   );
+  const lines: string[] = [];
+  w.deps.log = line => lines.push(line);
   const done = await runEdit('document', w.deps);
   expect(done).toMatchObject({kind: 'edited', edit: 'document'});
+  // The page quad the Java side found is logged, so a device round can check it (#137).
+  expect(lines).toEqual([expect.stringMatching(/^document: done in \d+ ms; page quad 12,9 380,4 391,290 8,296$/)]);
   expect(w.native.edit).toHaveBeenCalledWith(
     'document',
     expect.stringContaining('/preview-'),

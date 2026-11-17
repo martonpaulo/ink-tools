@@ -41,8 +41,10 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
   working folder, listed in `history.json`, found again by note, page and rect.
 - Working folder: `work/` in the private plugin folder (`getPluginDirPath`), which Supernote
   Cloud sync does not upload ([#198](https://github.com/martonpaulo/ink-tools/issues/198)). An install empties it, so Undo forgets
-  the pictures edited before an update. Files earlier builds left in `MyStyle/Retouch/` are not
-  migrated: remove that folder once over ADB.
+  the pictures edited before an update. Once per session, after the first press, `src/orphans.ts`
+  removes the preview and state PNGs of Retouch's own naming that earlier builds left in
+  `MyStyle/Retouch/`, and those in `work/` older than the session that the history does not name;
+  it logs one `sweep:` line per folder ([#182](https://github.com/martonpaulo/ink-tools/issues/182)).
 
 ## Rules
 

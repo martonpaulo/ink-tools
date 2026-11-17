@@ -52,6 +52,29 @@ public final class Retouch {
   public static final double DOCUMENT_MAX_BORDER_PAGE = 0.65;
   /** The found quad must cover at least this share of the frame, so a thin sliver is not a page. */
   public static final double DOCUMENT_MIN_QUAD = 0.20;
+  /**
+   * Document mode's surface flood ({@link #groundMask}, #137): the most two neighbouring surface
+   * pixels may differ, and the most a surface pixel may differ from the median of the frame's
+   * edge. A page edge is a far larger step, and paper is far from a table's median, so neither is
+   * flooded; a table lit from one side stays within the drift.
+   */
+  public static final int DOCUMENT_STEP = 12;
+  public static final int DOCUMENT_DRIFT = 64;
+  /** Adaptive threshold (#137): the window is a square of this share of the shorter side. */
+  public static final int ADAPTIVE_WINDOW_SHARE = 16;
+  /** The smallest window radius in pixels, so a small picture still sees whole letters. */
+  public static final int ADAPTIVE_MIN_RADIUS = 8;
+  /** A pixel this many percent darker than its window's mean is ink. */
+  public static final int ADAPTIVE_DARKER = 15;
+  /** A gray below this is ink whatever its window, so a large dark area stays dark. */
+  public static final int ADAPTIVE_BLACK = 48;
+  /**
+   * Background removal's surface flood (#134): the flood follows a lit or shadowed ground from the
+   * edge, so the gray patches near the frame and a soft shadow are cleared with it, while the
+   * object's edge, a larger step, stops it.
+   */
+  public static final int BACKGROUND_STEP = 10;
+  public static final int BACKGROUND_DRIFT = 72;
 
   private static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
@@ -452,97 +475,124 @@ public final class Retouch {
 
   /**
    * Document mode (#137): straighten a photographed page and clean it to black and white on white.
-   * The picture is made gray, the page quad is found, warped to an upright rectangle and
-   * thresholded. When no confident quad is found (a photo with no clear page, or a page that fills
-   * the frame), it is cleaned in place without a warp, so a mis-detected page is never distorted
-   * (Undo and Restore original cover a wrong result). The input is already at {@link #outputSize},
-   * capped at the page width, so the warp output never exceeds it.
+   * The picture is made gray and its page quad is found ({@link #findPageQuad}); the surface
+   * around the page is painted the page's paper gray, so it can never turn black, and the quad is
+   * warped to an upright rectangle. The result is cleaned by {@link #adaptiveThreshold}, which
+   * follows uneven light, so a lit gray surface or a shaded corner stays white. When no confident
+   * quad is found (a photo with no clear page, or a page that fills the frame), it is cleaned in
+   * place without a warp, so a mis-detected page is never distorted (Undo and Restore original
+   * cover a wrong result). The input is already at {@link #outputSize}, capped at the page width,
+   * so the warp output never exceeds it.
    *
    * <p>shortcut: the no-quad fallback cleans without deskewing a rotated page; add a
    * projection-profile deskew if the device round (#137 [device]) finds skewed no-quad photos
    * common.
    */
   public static Picture document(Picture picture) {
+    return document(picture, new int[1][][]);
+  }
+
+  /** {@link #document}, which also puts the page quad it used, or null, in `found[0]`. */
+  public static Picture document(Picture picture, int[][][] found) {
     Decolor.apply(picture.argb, picture.width, picture.height);
-    int[][] quad = findPageQuad(picture);
-    Picture out = quad == null ? picture : warpToQuad(picture, quad);
-    threshold(out.argb);
+    Page page = findPage(picture);
+    found[0] = page == null ? null : page.quad;
+    Picture out = picture;
+    if (page != null) {
+      for (int i = 0; i < page.ground.length; i++) {
+        if (page.ground[i]) {
+          picture.argb[i] = grayPixel(page.paper);
+        }
+      }
+      out = warpToQuad(picture, page.quad);
+    }
+    adaptiveThreshold(out.argb, out.width, out.height);
     return out;
+  }
+
+  /** A page found in a gray picture: its corners, the surface around it and its paper gray. */
+  static final class Page {
+    final int[][] quad;
+    final boolean[] ground;
+    final int paper;
+
+    Page(int[][] quad, boolean[] ground, int paper) {
+      this.quad = quad;
+      this.ground = ground;
+      this.paper = paper;
+    }
   }
 
   /**
    * The four page corners {top-left, top-right, bottom-right, bottom-left} of the gray `picture`,
-   * each {x, y}, or null when no confident page is found. The page is the Otsu class that fills the
-   * centre; its corners are the pixels farthest along the two diagonals, so a rotated page is
-   * found whichever side is brighter. Null when the surrounding surface, the page region or the
-   * quad is too small to trust.
+   * each {x, y}, or null when no confident page is found.
    */
   public static int[][] findPageQuad(Picture picture) {
+    Page page = findPage(picture);
+    return page == null ? null : page.quad;
+  }
+
+  /**
+   * The page of the gray `picture`, or null. The surface is what {@link #groundMask} floods from
+   * the frame's edge: it follows a lighting gradient across the surface, which one global split
+   * cannot (#137, beta 8: a white page on a lit gray ground was missed). The page is the largest
+   * region the flood leaves, holes and text included; its corners are its pixels farthest along
+   * the two diagonals, so a turned or perspective page is found whichever side is brighter. Null
+   * when the surface, the page or the quad is too small to trust, or the page reaches most of the
+   * frame's edge.
+   */
+  static Page findPage(Picture picture) {
     int w = picture.width;
     int h = picture.height;
     int total = w * h;
     if (w < 4 || h < 4) {
       return null;
     }
-    int split = otsu(picture.argb);
-    // Which class is the page: the one that fills the central half of the frame.
-    int x0 = w / 4;
-    int x1 = w - w / 4;
-    int y0 = h / 4;
-    int y1 = h - h / 4;
-    long brightCentre = 0;
-    long centre = 0;
-    for (int y = y0; y < y1; y++) {
-      for (int x = x0; x < x1; x++) {
-        centre++;
-        if ((picture.argb[y * w + x] & MAX) > split) {
-          brightCentre++;
+    boolean[] ground =
+        groundMask(picture, DOCUMENT_STEP, DOCUMENT_DRIFT, false);
+    int[] label = new int[total];
+    int[] stack = new int[total];
+    int best = 0;
+    int bestCount = 0;
+    int next = 0;
+    for (int start = 0; start < total; start++) {
+      if (ground[start] || label[start] != 0) {
+        continue;
+      }
+      next++;
+      int count = 0;
+      int top = 0;
+      label[start] = next;
+      stack[top++] = start;
+      while (top > 0) {
+        int i = stack[--top];
+        count++;
+        int x = i % w;
+        int y = i / w;
+        int[] around = {x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1,
+            y < h - 1 ? i + w : -1};
+        for (int j : around) {
+          if (j >= 0 && !ground[j] && label[j] == 0) {
+            label[j] = next;
+            stack[top++] = j;
+          }
         }
       }
-    }
-    boolean pageIsBright = centre == 0 || brightCentre * 2 >= centre;
-    long pageCount = 0;
-    int tl = -1;
-    int tr = -1;
-    int br = -1;
-    int bl = -1;
-    long minSum = Long.MAX_VALUE;
-    long maxSum = Long.MIN_VALUE;
-    long minDiff = Long.MAX_VALUE;
-    long maxDiff = Long.MIN_VALUE;
-    for (int y = 0; y < h; y++) {
-      for (int x = 0; x < w; x++) {
-        boolean bright = (picture.argb[y * w + x] & MAX) > split;
-        if (bright != pageIsBright) {
-          continue;
-        }
-        pageCount++;
-        long sum = x + y;
-        long diff = x - y;
-        int i = y * w + x;
-        if (sum < minSum) {
-          minSum = sum;
-          tl = i;
-        }
-        if (sum > maxSum) {
-          maxSum = sum;
-          br = i;
-        }
-        if (diff > maxDiff) {
-          maxDiff = diff;
-          tr = i;
-        }
-        if (diff < minDiff) {
-          minDiff = diff;
-          bl = i;
-        }
+      if (count > bestCount) {
+        bestCount = count;
+        best = next;
       }
     }
-    long surface = total - pageCount;
-    if (surface < DOCUMENT_MIN_SURFACE * total || pageCount < DOCUMENT_MIN_PAGE * total) {
+    long surface = 0;
+    for (boolean g : ground) {
+      if (g) {
+        surface++;
+      }
+    }
+    if (best == 0 || surface < DOCUMENT_MIN_SURFACE * total || bestCount < DOCUMENT_MIN_PAGE * total) {
       return null;
     }
-    // The surface must ring the page: a page that reaches the border fills the frame.
+    // The surface must ring the page: a page that reaches most of the edge fills the frame.
     long ring = 0;
     long ringPage = 0;
     for (int y = 0; y < h; y++) {
@@ -551,23 +601,113 @@ public final class Retouch {
           continue;
         }
         ring++;
-        if (((picture.argb[y * w + x] & MAX) > split) == pageIsBright) {
+        if (label[y * w + x] == best) {
           ringPage++;
         }
       }
     }
-    if (ring > 0 && ringPage > DOCUMENT_MAX_BORDER_PAGE * ring) {
+    if (ringPage > DOCUMENT_MAX_BORDER_PAGE * ring) {
       return null;
+    }
+    int tl = -1;
+    int tr = -1;
+    int br = -1;
+    int bl = -1;
+    long minSum = Long.MAX_VALUE;
+    long maxSum = Long.MIN_VALUE;
+    long minDiff = Long.MAX_VALUE;
+    long maxDiff = Long.MIN_VALUE;
+    int[] histogram = new int[MAX + 1];
+    for (int i = 0; i < total; i++) {
+      if (label[i] != best) {
+        continue;
+      }
+      histogram[picture.argb[i] & MAX]++;
+      long x = i % w;
+      long y = i / w;
+      if (x + y < minSum) {
+        minSum = x + y;
+        tl = i;
+      }
+      if (x + y > maxSum) {
+        maxSum = x + y;
+        br = i;
+      }
+      if (x - y > maxDiff) {
+        maxDiff = x - y;
+        tr = i;
+      }
+      if (x - y < minDiff) {
+        minDiff = x - y;
+        bl = i;
+      }
     }
     int[][] quad = {point(tl, w), point(tr, w), point(br, w), point(bl, w)};
     if (quadArea(quad) < DOCUMENT_MIN_QUAD * total) {
       return null;
     }
-    return quad;
+    // The paper is the page's median gray: the text is far less than half of a page.
+    int paper = 0;
+    for (int seen = 0; paper < MAX && seen + histogram[paper] <= bestCount / 2; paper++) {
+      seen += histogram[paper];
+    }
+    for (int i = 0; i < total; i++) {
+      ground[i] = label[i] != best;
+    }
+    return new Page(quad, ground, paper);
+  }
+
+  /**
+   * Bradley's adaptive threshold in place over gray pixels: a pixel is black when it is
+   * {@link #ADAPTIVE_DARKER} darker than the mean of the square around it, or darker than
+   * {@link #ADAPTIVE_BLACK} outright, else white. A flat area, lit or shaded, is white whatever its
+   * gray, so uneven light leaves no dark wedge (#137).
+   */
+  public static void adaptiveThreshold(int[] gray, int w, int h) {
+    int radius = Math.max(ADAPTIVE_MIN_RADIUS, Math.min(w, h) / ADAPTIVE_WINDOW_SHARE);
+    long[] sums = new long[(w + 1) * (h + 1)];
+    for (int y = 0; y < h; y++) {
+      long row = 0;
+      for (int x = 0; x < w; x++) {
+        row += gray[y * w + x] & MAX;
+        sums[(y + 1) * (w + 1) + x + 1] = sums[y * (w + 1) + x + 1] + row;
+      }
+    }
+    int[] out = new int[gray.length];
+    for (int y = 0; y < h; y++) {
+      int ya = Math.max(0, y - radius);
+      int yb = Math.min(h, y + radius + 1);
+      for (int x = 0; x < w; x++) {
+        int xa = Math.max(0, x - radius);
+        int xb = Math.min(w, x + radius + 1);
+        long sum = sums[yb * (w + 1) + xb] - sums[ya * (w + 1) + xb] - sums[yb * (w + 1) + xa]
+            + sums[ya * (w + 1) + xa];
+        long area = (long) (xb - xa) * (yb - ya);
+        int g = gray[y * w + x] & MAX;
+        boolean black = g < ADAPTIVE_BLACK || g * area * 100 < sum * (100 - ADAPTIVE_DARKER);
+        out[y * w + x] = grayPixel(black ? 0 : MAX);
+      }
+    }
+    System.arraycopy(out, 0, gray, 0, gray.length);
   }
 
   private static int[] point(int index, int width) {
     return new int[] {index % width, index / width};
+  }
+
+  /**
+   * The quad as the log shows it (#137), `x,y` per corner from the top left clockwise, or `none`:
+   * a device round reads which page Document found.
+   */
+  public static String describeQuad(int[][] quad) {
+    if (quad == null) {
+      return "none";
+    }
+    StringBuilder text = new StringBuilder();
+    for (int[] corner : quad) {
+      text.append(text.length() == 0 ? "" : " ").append(corner[0]).append(',').append(corner[1]);
+    }
+    return text.toString();
   }
 
   /** The quad's area by the shoelace formula, its corners in order. */
@@ -620,7 +760,7 @@ public final class Retouch {
    * rectangle to the source quad corners, so x = (au + bv + c) / (gu + hv + 1) and likewise for y.
    * Solved from the four corner pairs by Gaussian elimination.
    */
-  private static double[] homography(int maxU, int maxV, int[] tl, int[] tr, int[] br, int[] bl) {
+  static double[] homography(int maxU, int maxV, int[] tl, int[] tr, int[] br, int[] bl) {
     int[][] dst = {{0, 0}, {maxU, 0}, {maxU, maxV}, {0, maxV}};
     int[][] src = {tl, tr, br, bl};
     double[][] a = new double[8][9];
@@ -734,53 +874,135 @@ public final class Retouch {
   }
 
   /**
-   * The border-connected background (#134): every pixel reachable from the four borders, 4-connected,
-   * through pixels {@link #isMargin} judges near white or near clear. An object that reaches a border
-   * blocks the flood, so it is kept; a near-white hole inside the object is never reached, so it is
-   * kept too. Each pixel is pushed at most once, so the stack never outgrows the picture.
+   * The border-connected background (#134): {@link #groundMask} with near white always flooded, so
+   * a light ground, its gradient and a soft shadow go, while an object that reaches a border blocks
+   * the flood and is kept, and a hole inside the object is never reached, so it is kept too.
    */
   public static boolean[] backgroundMask(Picture picture) {
+    return groundMask(picture, BACKGROUND_STEP, BACKGROUND_DRIFT, true);
+  }
+
+  /**
+   * The surface around the subject, flooded from the frame's edge (#134, #137). The surface is
+   * every pixel within `drift` of the edge's median colour (in each channel) that the flood
+   * reaches: an edge pixel starts it, and it goes on to a neighbour that differs by at most `step`,
+   * raw or in a 3 x 3 blur that hides photo noise. Clear pixels, and with `nearWhite` near-white
+   * ones, always belong. So the flood follows a gradient of light or a soft shadow and stops at the
+   * subject's sharper edge; the drift is judged raw and against one colour, so neither a blur nor
+   * the order of the flood carries it over an edge. Each pixel is pushed at most once.
+   */
+  public static boolean[] groundMask(Picture picture, int step, int drift, boolean nearWhite) {
     int w = picture.width;
     int h = picture.height;
-    int[] argb = picture.argb;
-    boolean[] bg = new boolean[argb.length];
-    int[] stack = new int[argb.length];
+    int[] raw = picture.argb;
+    int[] argb = blur3(raw, w, h);
+    int n = argb.length;
+    boolean[] bg = new boolean[n];
+    int[] stack = new int[n];
     int top = 0;
+    int median = edgeMedian(raw, w, h);
+    int[] edge = new int[2 * (w + h)];
+    int count = 0;
     for (int x = 0; x < w; x++) {
-      top = reach(bg, stack, top, x, argb);
-      top = reach(bg, stack, top, (h - 1) * w + x, argb);
+      edge[count++] = x;
+      edge[count++] = (h - 1) * w + x;
     }
     for (int y = 0; y < h; y++) {
-      top = reach(bg, stack, top, y * w, argb);
-      top = reach(bg, stack, top, y * w + (w - 1), argb);
+      edge[count++] = y * w;
+      edge[count++] = y * w + (w - 1);
+    }
+    for (int k = 0; k < count; k++) {
+      int i = edge[k];
+      if (!bg[i]
+          && (isClear(raw[i]) || (nearWhite && isMargin(raw[i])) || distance(raw[i], median) <= drift)) {
+        bg[i] = true;
+        stack[top++] = i;
+      }
     }
     while (top > 0) {
       int i = stack[--top];
       int x = i % w;
       int y = i / w;
-      if (x > 0) {
-        top = reach(bg, stack, top, i - 1, argb);
-      }
-      if (x < w - 1) {
-        top = reach(bg, stack, top, i + 1, argb);
-      }
-      if (y > 0) {
-        top = reach(bg, stack, top, i - w, argb);
-      }
-      if (y < h - 1) {
-        top = reach(bg, stack, top, i + w, argb);
+      int[] around = {x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1,
+          y < h - 1 ? i + w : -1};
+      for (int j : around) {
+        if (j < 0 || bg[j]) {
+          continue;
+        }
+        boolean follows = isClear(raw[j])
+            || (nearWhite && isMargin(raw[j]))
+            || (Math.min(distance(argb[j], argb[i]), distance(raw[j], raw[i])) <= step
+                && distance(raw[j], median) <= drift);
+        if (follows) {
+          bg[j] = true;
+          stack[top++] = j;
+        }
       }
     }
     return bg;
   }
 
-  /** Marks pixel `i` background and stacks it when it is not marked yet and is margin-coloured. */
-  private static int reach(boolean[] bg, int[] stack, int top, int i, int[] argb) {
-    if (!bg[i] && isMargin(argb[i])) {
-      bg[i] = true;
-      stack[top++] = i;
+  private static boolean isClear(int argb) {
+    return (argb >>> 24) <= TRIM_CLEAR;
+  }
+
+  /** The largest difference of two colours over their red, green and blue. */
+  private static int distance(int a, int b) {
+    int dr = Math.abs(((a >> 16) & MAX) - ((b >> 16) & MAX));
+    int dg = Math.abs(((a >> 8) & MAX) - ((b >> 8) & MAX));
+    int db = Math.abs((a & MAX) - (b & MAX));
+    return Math.max(dr, Math.max(dg, db));
+  }
+
+  /** Each channel's median over the frame's edge pixels, as one opaque colour. */
+  private static int edgeMedian(int[] argb, int w, int h) {
+    int[][] histogram = new int[3][MAX + 1];
+    int count = 0;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        if (x > 0 && x < w - 1 && y > 0 && y < h - 1) {
+          continue;
+        }
+        int c = argb[y * w + x];
+        histogram[0][(c >> 16) & MAX]++;
+        histogram[1][(c >> 8) & MAX]++;
+        histogram[2][c & MAX]++;
+        count++;
+      }
     }
-    return top;
+    int colour = OPAQUE;
+    for (int channel = 0; channel < 3; channel++) {
+      int value = 0;
+      for (int seen = 0; value < MAX && seen + histogram[channel][value] <= count / 2; value++) {
+        seen += histogram[channel][value];
+      }
+      colour |= value << (16 - 8 * channel);
+    }
+    return colour;
+  }
+
+  /** A 3 x 3 box blur of each colour channel, so photo noise does not break a flood. */
+  private static int[] blur3(int[] argb, int w, int h) {
+    int[] out = new int[argb.length];
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        int k = 0;
+        for (int yy = Math.max(0, y - 1); yy <= Math.min(h - 1, y + 1); yy++) {
+          for (int xx = Math.max(0, x - 1); xx <= Math.min(w - 1, x + 1); xx++) {
+            int c = argb[yy * w + xx];
+            r += (c >> 16) & MAX;
+            g += (c >> 8) & MAX;
+            b += c & MAX;
+            k++;
+          }
+        }
+        out[y * w + x] = (argb[y * w + x] & 0xFF000000) | ((r / k) << 16) | ((g / k) << 8) | (b / k);
+      }
+    }
+    return out;
   }
 
   /**

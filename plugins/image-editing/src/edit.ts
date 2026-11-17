@@ -120,7 +120,7 @@ export type EditOptions = StyleOptions & {box?: Box; marks?: Marks};
 
 /** What a press did, for the log and the tests. */
 export type Done =
-  | {kind: 'edited'; edit: EditId | StyleId; ms: number}
+  | {kind: 'edited'; edit: EditId | StyleId; ms: number; quad?: string}
   | {kind: 'nothing'; why: string}
   | {kind: 'failed'; why: string};
 
@@ -191,7 +191,7 @@ export async function runEdit(
   const ms = deps.now() - started;
   deps.log(
     done.kind === 'edited'
-      ? `${edit}: done in ${ms} ms`
+      ? `${edit}: done in ${ms} ms${done.quad ? `; page quad ${done.quad}` : ''}`
       : `${edit}: ${done.kind}: ${done.why}`,
   );
   return done.kind === 'edited' ? {...done, ms} : done;
@@ -349,7 +349,8 @@ async function pixelEdit(
     const change = recordEdit(history, place, rect, result, original, stamp);
     keep.add(resultPath).add(originalPath);
     await save(change, work, deps);
-    return {kind: 'edited', edit, ms: 0};
+    const {quad} = edited.value;
+    return quad === undefined ? {kind: 'edited', edit, ms: 0} : {kind: 'edited', edit, ms: 0, quad};
   } finally {
     for (const path of [preview.value, originalPath, resultPath]) {
       if (path && !keep.has(path)) {
