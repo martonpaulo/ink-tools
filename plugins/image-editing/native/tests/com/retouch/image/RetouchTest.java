@@ -38,6 +38,7 @@ public final class RetouchTest {
     documentStraightensASkewedPhotoOnWhite();
     documentCleansALitSurfaceToWhiteWithoutAPage();
     backgroundClearsAnUnevenGroundAndTheShadow();
+    backgroundKeepsASoftGrayAppleWhoseShadowFadesIntoIt();
     eraseNeedsItsMarksAndKeepsTheSize();
     eraseClearsABandAlongAnOpenMark();
     eraseClearsTheInsideOfAClosedMark();
@@ -659,7 +660,22 @@ public final class RetouchTest {
    * were left as gray patches. Both go now, and the apple stays whole.
    */
   private static void backgroundClearsAnUnevenGroundAndTheShadow() {
-    Retouch.Picture photo = PhotoFixtures.apple();
+    checkAppleCutout(PhotoFixtures.apple(), 3);
+  }
+
+  /**
+   * #134 on beta 9: the flood of eb0627d ran from the shadow into a gray apple with a soft
+   * outline and cleared it with the ground. The apple stays whole, and the shadow still goes.
+   */
+  private static void backgroundKeepsASoftGrayAppleWhoseShadowFadesIntoIt() {
+    checkAppleCutout(PhotoFixtures.softGrayApple(), (int) PhotoFixtures.SOFT_EDGE);
+  }
+
+  /**
+   * Background removal on an apple fixture: nothing inside the apple, `edge` pixels in from its
+   * outline, is cleared; nearly all the table and the shadow away from the outline are.
+   */
+  private static void checkAppleCutout(Retouch.Picture photo, int edge) {
     Retouch.removeBackground(photo);
     int w = photo.width;
     long ground = 0;
@@ -674,10 +690,10 @@ public final class RetouchTest {
         double cy = y + 0.5;
         boolean opaque = (photo.argb[y * w + x] >>> 24) != 0;
         double d = Math.hypot(cx - PhotoFixtures.APPLE_X, cy - PhotoFixtures.APPLE_Y);
-        if (PhotoFixtures.onApple(cx, cy) && d < PhotoFixtures.APPLE_R - 3) {
+        if (PhotoFixtures.onApple(cx, cy) && d < PhotoFixtures.APPLE_R - edge) {
           apple++;
           appleCut += opaque ? 0 : 1;
-        } else if (!PhotoFixtures.onApple(cx, cy) && d > PhotoFixtures.APPLE_R + 4
+        } else if (!PhotoFixtures.onApple(cx, cy) && d > PhotoFixtures.APPLE_R + edge + 1
             && Math.abs(cx - PhotoFixtures.APPLE_X) > 10) {
           ground++;
           groundLeft += opaque ? 1 : 0;

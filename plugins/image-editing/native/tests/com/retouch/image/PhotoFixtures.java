@@ -159,13 +159,45 @@ final class PhotoFixtures {
       double light = 1 - 0.35 * ((x - APPLE_X) + (y - APPLE_Y)) / (2 * APPLE_R);
       return new int[] {(int) (185 * light), (int) (40 * light), (int) (35 * light)};
     }
-    // The table: light, a little warm, darker towards the top right (vignetting).
+    double v = appleTable(x, y);
+    return new int[] {(int) (v + 4), (int) v, (int) (v - 5)};
+  }
+
+  /** The table's gray under the apple: light, darker towards the top right, and the shadow. */
+  private static double appleTable(double x, double y) {
     double corner = Math.max(0, (x / APPLE_W + (APPLE_H - y) / APPLE_H) - 1.1);
     // Down to about 150 in the very corner, a phone lens's vignetting under room light.
     double base = 228 - 12 * y / APPLE_H - 85 * corner * corner;
-    double shade = 1 - 0.28 * shadow(x, y);
-    double v = base * shade;
-    return new int[] {(int) (v + 4), (int) v, (int) (v - 5)};
+    return base * (1 - 0.28 * shadow(x, y));
+  }
+
+  /** How many pixels the soft apple's outline takes to go from the table to the apple. */
+  static final double SOFT_EDGE = 8;
+
+  /**
+   * The apple of {@link #apple} as the tablet's lasso preview gives it (#134, beta 9 device
+   * round): gray, a light apple (about 145 to 185) whose outline is soft, as a phone's depth of
+   * field leaves it, and whose dark lower side meets the shadow's core (about 158) with almost no
+   * step. Every step of the outline is below the flood's step, so the flood of eb0627d ran from
+   * the shadow into the apple and cleared it.
+   */
+  static Retouch.Picture softGrayApple() {
+    Random noise = new Random(1341);
+    int[] argb = new int[APPLE_W * APPLE_H];
+    for (int y = 0; y < APPLE_H; y++) {
+      for (int x = 0; x < APPLE_W; x++) {
+        double px = x + 0.5;
+        double py = y + 0.5;
+        double d = Math.hypot(px - APPLE_X, py - APPLE_Y);
+        // 0 on the table, 1 inside the apple, a smoothstep across the soft outline.
+        double t = Math.max(0, Math.min(1, (APPLE_R - d) / SOFT_EDGE + 0.5));
+        double inside = t * t * (3 - 2 * t);
+        double appleGray = 165 - 30 * ((px - APPLE_X) + (py - APPLE_Y)) / (2 * APPLE_R);
+        double v = inside * appleGray + (1 - inside) * appleTable(px, py);
+        argb[y * APPLE_W + x] = gray((int) Math.round(v + noise.nextGaussian() * 3));
+      }
+    }
+    return jpeg(new Retouch.Picture(argb, APPLE_W, APPLE_H));
   }
 
   /** The 3 x 3 inverse of a homography's 8 coefficients, scaled so its last term is 1. */
