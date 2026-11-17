@@ -1,4 +1,5 @@
 import {Capability, Descriptor, column, contentUri} from './descriptorModel';
+import {Row, toCalendarInsert} from './rules';
 
 /** What the plugin runtime provides: one cheap, unfiltered query per table. No device logic here. */
 export interface DeviceReader {
@@ -6,9 +7,11 @@ export interface DeviceReader {
   columnsOf(uri: string): Promise<string[]>;
   /**
    * Insert one test row with a marker text in `markerColumn` and delete the rows carrying it again,
-   * as `plugins/probe` does (#67). Resolve when both passed; reject when the provider refuses the write.
+   * as `plugins/probe` does (#67). `values` are the other columns the real writer sets, so a NOT NULL
+   * column (the Calendar's `tag`) is filled as a real row fills it. Resolve when both passed; reject
+   * when the provider refuses the write.
    */
-  dryInsert(uri: string, markerColumn: string): Promise<void>;
+  dryInsert(uri: string, markerColumn: string, values: Row): Promise<void>;
 }
 
 /**
@@ -19,6 +22,14 @@ export interface DeviceReader {
 const WRITE_TABLE: Partial<Record<Capability, string>> = {calendar: 'events', todo: 'tasks'};
 /** The text field of each write table that carries the test row's marker (#43), as `plugins/probe` marks it. */
 const MARKER_FIELD: Partial<Record<Capability, string>> = {calendar: 'title', todo: 'title'};
+
+/**
+ * The columns the real writer sets on each test row besides the marker: the Calendar's `tag=task`,
+ * which the provider requires (`NOT NULL constraint failed: data_info.tag`, #43).
+ */
+const TEST_ROW_VALUES: Partial<Record<Capability, (d: Descriptor) => Row>> = {
+  calendar: d => toCalendarInsert(d, {}),
+};
 
 /** Why a capability with no test write stays unable to write. */
 export const NO_TEST_WRITE = 'no test write: the provider refuses deletes, so a test row would stay (#42)';
@@ -66,7 +77,7 @@ export async function probeCapability(
   } else if (available && table && marker) {
     const uri = contentUri(module, table);
     try {
-      await reader.dryInsert(uri, column(module, table, marker));
+      await reader.dryInsert(uri, column(module, table, marker), TEST_ROW_VALUES[capability]?.(descriptor) ?? {});
       canWrite = true;
     } catch (e) {
       problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);
