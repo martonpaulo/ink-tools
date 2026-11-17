@@ -15,9 +15,15 @@ import java.util.List;
 public final class HostCalls {
   /** The binder descriptor; it must match PluginHost's exactly, or every call is refused. */
   public static final String DESCRIPTOR = "com.ratta.supernote.plugincorelib.IPluginSetting";
-  public static final String INSTALL_CALLBACK = "com.ratta.supernote.plugincorelib.IPluginInstallCallback";
-  public static final String SET_CALLBACK = "com.ratta.supernote.plugincorelib.IPluginSetCallback";
-  public static final String UNINSTALL_CALLBACK = "com.ratta.supernote.plugincorelib.IPluginUninstallCallback";
+  /**
+   * The callbacks live in the {@code .callback} subpackage, unlike {@code IPluginSetting}: a stub
+   * under any other descriptor fails {@code enforceInterface} and PluginHost's answer is lost
+   * (device log, #215).
+   */
+  public static final String CALLBACK_PACKAGE = "com.ratta.supernote.plugincorelib.callback.";
+  public static final String INSTALL_CALLBACK = CALLBACK_PACKAGE + "IPluginInstallCallback";
+  public static final String SET_CALLBACK = CALLBACK_PACKAGE + "IPluginSetCallback";
+  public static final String UNINSTALL_CALLBACK = CALLBACK_PACKAGE + "IPluginUninstallCallback";
   public static final String HOST_PACKAGE = "com.ratta.supernote.pluginhost";
   public static final String SERVICE = HOST_PACKAGE + ".services.PluginSettingService";
 

@@ -41,6 +41,12 @@ public final class HostCallsTest {
     String token = "token com.ratta.supernote.plugincorelib.IPluginSetting";
     check(HostCalls.DESCRIPTOR.equals("com.ratta.supernote.plugincorelib.IPluginSetting"), "the descriptor is PluginHost's");
     check(HostCalls.SERVICE.equals("com.ratta.supernote.pluginhost.services.PluginSettingService"), "the service is PluginHost's");
+    check(HostCalls.INSTALL_CALLBACK.equals("com.ratta.supernote.plugincorelib.callback.IPluginInstallCallback"),
+        "the install callback descriptor is PluginHost's, in the callback package");
+    check(HostCalls.SET_CALLBACK.equals("com.ratta.supernote.plugincorelib.callback.IPluginSetCallback"),
+        "the set callback descriptor is PluginHost's, in the callback package");
+    check(HostCalls.UNINSTALL_CALLBACK.equals("com.ratta.supernote.plugincorelib.callback.IPluginUninstallCallback"),
+        "the uninstall callback descriptor is PluginHost's, in the callback package");
 
     Recorder install = new Recorder();
     check(HostCalls.install(install, "/sdcard/MyStyle/X.snplg", "cb") == 1, "installPlugin is transaction 1");
