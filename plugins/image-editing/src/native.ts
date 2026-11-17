@@ -57,6 +57,8 @@ export type Edited = {
   left: number;
   top: number;
   ms: number;
+  /** Document's page corners from the top left clockwise, or `none` (#137). */
+  quad?: string;
 };
 
 type Native = {

@@ -187,6 +187,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     // Trim moves the picture's top left by the margin it removes, so the page keeps it in place.
     // Crop (#132) does the same with the box drawn with the pen.
     int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : cropBox;
+    // Document's page quad, for the log (#137).
+    int[][][] found = new int[1][][];
     if (box != null) {
       picture = Retouch.crop(picture, box);
     } else if (edit == Retouch.Edit.ERASE && markXy != null) {
@@ -196,6 +198,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       Retouch.sticker(picture, transparent);
     } else if (edit.isStyle()) {
       Retouch.style(edit, picture, transparent, thick);
+    } else if (edit == Retouch.Edit.DOCUMENT) {
+      picture = Retouch.document(picture, found);
     } else {
       picture = Retouch.apply(edit, picture);
     }
@@ -206,6 +210,9 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     result.putInt("left", box != null ? box[0] : 0);
     result.putInt("top", box != null ? box[1] : 0);
     result.putDouble("ms", (System.nanoTime() - start) / NANOS_PER_MS);
+    if (edit == Retouch.Edit.DOCUMENT) {
+      result.putString("quad", Retouch.describeQuad(found[0]));
+    }
     return result;
   }
 
