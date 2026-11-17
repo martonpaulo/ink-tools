@@ -1,8 +1,8 @@
 /** Relay's Settings view (#98): the shared size rules, the device list and the saved choice. */
 import React from 'react';
-import {BackHandler} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
 import App, {deviceLabel, ReceiveView, TextView} from '../App';
 import {ownFingerprint} from '../src/settings/device';
 import {fail, ok} from '@supernote-tools/sn-adapter/official';
@@ -36,13 +36,7 @@ test('the Settings view keeps the size rules and has a header', async () => {
 });
 
 test('«No LocalSend device found» closes by its Close button and by Back (#98)', async () => {
-  const handlers: (() => boolean | null | undefined)[] = [];
-  const listen = jest
-    .spyOn(BackHandler, 'addEventListener')
-    .mockImplementation((_event, handler) => {
-      handlers.push(handler);
-      return {remove: () => {}};
-    });
+  const back = catchBackKey();
   const close = jest.fn();
   const tree = await render(fakeRelay().api, close);
   expect(
@@ -52,12 +46,11 @@ test('«No LocalSend device found» closes by its Close button and by Back (#98)
     tree.root.findByProps({label: 'Close'}).props.onPress();
   });
   expect(close).toHaveBeenCalledTimes(1);
-  expect(handlers.length).toBeGreaterThan(0);
   await act(async () => {
-    expect(handlers[handlers.length - 1]()).toBe(true);
+    expect(back.press()).toBe(true);
   });
   expect(close).toHaveBeenCalledTimes(2);
-  listen.mockRestore();
+  back.restore();
 });
 
 test('picking a found device saves it with its fingerprint', async () => {

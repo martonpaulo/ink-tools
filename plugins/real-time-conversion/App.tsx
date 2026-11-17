@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {Button, shared, useBackKey} from '@supernote-tools/ui-kit';
+import {closePluginView} from '@supernote-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {getSettings, setSettings, Settings, Spacing, Wait} from './src/settings';
 
@@ -56,9 +57,15 @@ function Row<V>({
 /**
  * Real-Time Conversion's Settings view (#184), every size and colour from the shared ui-kit (#93):
  * the switch's start state and the word rule's two measures (#185). The word rule reads them the
- * next time Real-Time Text turns on.
+ * next time Real-Time Text turns on. Back closes the view (#204).
  */
-export default function App() {
+export default function App({
+  close = () => closePluginView(),
+}: {
+  /** Closes the plugin view; tests pass a fake. */
+  close?: () => void;
+}) {
+  useBackKey(close);
   const [settings, setLocal] = useState<Settings>(getSettings);
   const change = (next: Settings) => {
     setSettings(next);

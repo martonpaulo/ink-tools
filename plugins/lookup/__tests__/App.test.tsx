@@ -7,6 +7,7 @@ import {NativeModules} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {PluginManager} from 'sn-plugin-lib';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {resetButtonsForTests} from '../src/buttons';
 import {DEFINE_BUTTON_ID} from '../src/definition';
@@ -27,10 +28,10 @@ beforeEach(() => {
   resetButtonsForTests();
 });
 
-async function open(): Promise<ReactTestRenderer> {
+async function open(close?: () => void): Promise<ReactTestRenderer> {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<App />);
+    tree = renderer.create(<App close={close} />);
   });
   return tree;
 }
@@ -158,4 +159,13 @@ test("one switch per translation direction, the owner's three on, and a tap save
     ['NOTE'],
     expect.objectContaining({name: 'Translate PT→ES'}),
   );
+});
+
+test('Back closes the Settings view (#204)', async () => {
+  const back = catchBackKey();
+  const close = jest.fn();
+  await open(close);
+  expect(back.press()).toBe(true);
+  expect(close).toHaveBeenCalledTimes(1);
+  back.restore();
 });

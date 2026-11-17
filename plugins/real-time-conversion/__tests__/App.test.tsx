@@ -2,6 +2,7 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {DEFAULT_SETTINGS, getSettings, setSettings} from '../src/settings';
 
@@ -27,4 +28,15 @@ test('a tap on a value saves it for the next time the mode turns on', () => {
   );
   act(() => wide.props.onPress());
   expect(getSettings().spacing).toBe('wide');
+});
+
+test('Back closes the Settings view (#204)', () => {
+  const back = catchBackKey();
+  const close = jest.fn();
+  act(() => {
+    renderer.create(<App close={close} />);
+  });
+  expect(back.press()).toBe(true);
+  expect(close).toHaveBeenCalledTimes(1);
+  back.restore();
 });

@@ -5,6 +5,7 @@
  */
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {useBackKey} from './backKey';
 import {metrics} from './metrics';
 import {Working, WORKING_TEXT} from './working';
 
@@ -18,7 +19,11 @@ export function useWorking(working: Working): boolean {
   return on;
 }
 
+/** Back does nothing while the strip shows (#204): the run ends by itself, with its toast. */
+const ignoreBack = () => undefined;
+
 export function WorkingStrip() {
+  useBackKey(ignoreBack);
   return (
     <View style={styles.view} pointerEvents="none">
       <View

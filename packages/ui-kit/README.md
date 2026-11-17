@@ -13,6 +13,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [Grey as colour](#grey-as-colour)
 - [Controls](#controls)
 - [The «Loading…» strip](#the-loading-strip)
+- [The Back key](#the-back-key)
 - [Reference study: Notipal](#reference-study-notipal)
 - [The owner's picks: SnapMark, PC Clipboard, DocuCraft](#the-owners-picks-snapmark-pc-clipboard-docucraft)
 
@@ -77,6 +78,18 @@ reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/iss
 - The root component renders `WorkingStrip` while `useWorking` is true. The strip is static text
   with no spinner, because each frame costs an e-ink refresh. The rest of the view is transparent.
   Whether the host shows the note through it is open: the next device round checks it.
+
+## The Back key
+
+PluginHost leaves a plugin's full view open on Back ([`docs/supernote.md` › Plugins](../../docs/supernote.md#plugins)), so each
+view registers its own exit with `useBackKey` ([#204](https://github.com/martonpaulo/ink-tools/issues/204)).
+
+- `onBack` does what the view's own close or cancel button does: close the view, cancel a
+  dialog, stop a receive.
+- While work runs, `onBack` does nothing; `WorkingStrip` already takes the key and ignores it.
+- The key always ends at the hook, so the host's default never runs on top of it.
+- A test catches the handlers with `catchBackKey` from `@supernote-tools/ui-kit/backKeyTest` and
+  presses the key as React Native does, newest handler first.
 
 ## Reference study: Notipal
 

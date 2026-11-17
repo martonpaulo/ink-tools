@@ -4,7 +4,11 @@ import {
   DeviceReader,
   probeAll,
 } from '@supernote-tools/sn-adapter';
-import {getPluginDirPath} from '@supernote-tools/sn-adapter/official';
+import {
+  closePluginView,
+  getPluginDirPath,
+} from '@supernote-tools/sn-adapter/official';
+import {useBackKey} from '@supernote-tools/ui-kit';
 import {BridgeSettings, MODULES} from '@supernote-tools/sync-core/settings';
 import {
   ModuleRun,
@@ -58,18 +62,29 @@ export async function startupProbe(
   }
 }
 
-/** Bridge's Settings view: the saved switches, loaded from and saved to the private folder (#40). */
+/**
+ * Bridge's Settings view: the saved switches, loaded from and saved to the private folder (#40).
+ * Back closes it, and does nothing while a pass runs (#204).
+ */
 export default function App({
   folder = getPluginDirPath,
   reader = DEVICE_READER,
   sync = bridgeSync,
+  close = () => closePluginView(),
 }: {
   folder?: Folder;
   reader?: DeviceReader;
   /** The runner behind «Sync now»: the plugin host's one, which also runs the automatic pass. */
   sync?: SyncRunner;
+  /** Closes the plugin view; tests pass a fake. */
+  close?: () => void;
 }) {
   const synced = useSync(sync);
+  useBackKey(() => {
+    if (!synced.running) {
+      close();
+    }
+  });
   const [probe, setProbe] = useState<ProbeProblems>({});
   const [settings, setSettings] = useState<BridgeSettings | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
