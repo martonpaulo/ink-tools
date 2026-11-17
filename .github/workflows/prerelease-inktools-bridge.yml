@@ -3,9 +3,13 @@ name: Prerelease Ink Tools bridge
 # Each bridge test build becomes a GitHub prerelease carrying its signed APK (#215), so the Mac can
 # download it for the tablet. A cloud session cannot push a tag, so a push to main that changes
 # app.json publishes when its inktools-bridge-v<version> tag does not exist yet; the version
-# follows root AGENTS.md › Product versioning (#155). The APK carries a debug key made fresh on the
-# runner, so the tablet needs `adb uninstall com.martonpaulo.inktools.bridge` before a build from
-# another key. A developer-only build: never a user release.
+# follows root AGENTS.md › Product versioning (#155). The APK is signed with the stable key from the
+# INKTOOLS_BRIDGE_KEYSTORE_BASE64 and INKTOOLS_BRIDGE_KEYSTORE_PASSWORD repository secrets, so each
+# build updates the last one with `adb install -r` (#223). Without them it falls back to a debug key
+# made fresh on the runner, with a notice, and the tablet needs
+# `adb uninstall com.martonpaulo.inktools.bridge` first. The secrets are read only here, never in a
+# validate workflow, and this workflow never runs on a pull request. A developer-only build: never a
+# user release.
 
 on:
   push:
@@ -57,7 +61,23 @@ jobs:
 
       - name: Build the signed APK
         if: steps.tag.outputs.publish == 'true'
-        run: node scripts/build.cjs
+        # The secrets live only in this step's env and are never echoed; the keystore is decoded
+        # under RUNNER_TEMP, outside the checkout, and removed after the build.
+        env:
+          KEYSTORE_BASE64: ${{ secrets.INKTOOLS_BRIDGE_KEYSTORE_BASE64 }}
+          INKTOOLS_BRIDGE_KEYSTORE_PASSWORD: ${{ secrets.INKTOOLS_BRIDGE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::notice::INKTOOLS_BRIDGE_KEYSTORE_BASE64 is not set: signing with a debug key made on this runner, so the tablet needs adb uninstall com.martonpaulo.inktools.bridge before this build (#223)."
+            unset INKTOOLS_BRIDGE_KEYSTORE_PASSWORD
+            node scripts/build.cjs
+            exit 0
+          fi
+          store="$RUNNER_TEMP/inktools-bridge.keystore"
+          trap 'rm -f "$store"' EXIT
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$store"
+          unset KEYSTORE_BASE64
+          INKTOOLS_BRIDGE_KEYSTORE="$store" node scripts/build.cjs
 
       - name: Create the prerelease
         if: steps.tag.outputs.publish == 'true'

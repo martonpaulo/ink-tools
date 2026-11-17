@@ -26,3 +26,21 @@ To check one subproject on the Mac:
 ```bash
 python3 scripts/npm_audit.py plugins/word-lookup
 ```
+
+## Android signing keys
+
+The Ink Tools bridge prerelease signs its APK with one stable key, so each build updates the last
+one on the tablet ([#223](https://github.com/martonpaulo/ink-tools/issues/223)). The rule and the fallback are in
+[`apps/inktools-bridge/AGENTS.md`](../apps/inktools-bridge/AGENTS.md#versioning-and-signing).
+
+- The keystore and its password are two repository secrets, `INKTOOLS_BRIDGE_KEYSTORE_BASE64` and
+  `INKTOOLS_BRIDGE_KEYSTORE_PASSWORD`. Only `prerelease-inktools-bridge.yml` reads them, in the
+  env of its build step. It runs on a push to `main` or by hand, never on a pull request, so a
+  fork never reaches them. No validate workflow reads a stored secret.
+- The keystore is decoded under `RUNNER_TEMP`, outside the checkout, and removed after the build.
+  The password reaches apksigner by variable name, never on a command line or in the log.
+- It is a test key for a sideloaded developer app, not a release key. A leaked key lets someone
+  sign an APK that updates the bridge, which still needs `adb` on the tablet. To rotate it, make a
+  new keystore, set both secrets again and uninstall the bridge once on the tablet.
+- The Lingo app has no prerelease: its CI build is never installed, so its per-run debug key needs
+  no secret.
