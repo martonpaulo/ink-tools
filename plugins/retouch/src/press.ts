@@ -15,6 +15,7 @@ import {
 import {copy} from './copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from './crop';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
+import {MARKS_OUTSIDE, NO_MARKS, NOT_PICTURE_AND_MARKS, runErase} from './erase';
 import {EditDefinition, EditId} from './edits';
 import {PAGE_EDITS, PageDone, runPageEdit} from './page';
 import {askFilePermissions} from './permissions';
@@ -42,6 +43,10 @@ export type PressDeps = {
   log: (line: string) => void;
 };
 
+/** The edits whose guide the pen drew over the picture (#132, #134); the others run as they are. */
+const runPress = (edit: EditId): Promise<Done> =>
+  edit === 'crop' ? runCrop() : edit === 'erase' ? runErase() : runEdit(edit);
+
 const DEVICE: PressDeps = {
   missing: async () => {
     const missing: string[] = [];
@@ -61,10 +66,7 @@ const DEVICE: PressDeps = {
       log: line => console.log(`Retouch: ${line}`),
     });
   },
-  edit: edit =>
-    working.run(() => (edit === 'crop' ? runCrop() : runEdit(edit)), {
-      showAfterMs: STRIP_AFTER_MS,
-    }),
+  edit: edit => working.run(() => runPress(edit), {showAfterMs: STRIP_AFTER_MS}),
   page: edit => working.run(() => runPageEdit(edit)),
   toast: showToast,
   log: line => console.log(`Retouch: ${line}`),
@@ -77,6 +79,9 @@ const NOTHING_TOAST: Record<string, string> = {
   [NO_GUIDE]: copy['press.cropNoGuide'],
   [NOT_PICTURE_AND_GUIDE]: copy['press.cropNotPicture'],
   [GUIDE_OUTSIDE]: copy['press.cropOutside'],
+  [NO_MARKS]: copy['press.eraseNoMarks'],
+  [NOT_PICTURE_AND_MARKS]: copy['press.eraseNotPicture'],
+  [MARKS_OUTSIDE]: copy['press.eraseOutside'],
 };
 
 /** The toast for a press that changed nothing. */

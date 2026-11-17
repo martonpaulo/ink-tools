@@ -19,6 +19,7 @@ export const copy = {
   'edit.enhance_all': 'Enhance All Images',
   'edit.undo_all': 'Undo All Images',
   'edit.crop': 'Crop',
+  'edit.erase': 'Erase',
   'settings.styles': 'Styles',
   'style.photo': 'Photo',
   'style.line_art': 'Line art',
@@ -44,6 +45,13 @@ export const copy = {
     'Lasso one picture and the rectangle drawn on it, then press Crop.',
   'press.cropOutside':
     'Draw a larger rectangle on the picture itself, then press Crop again.',
+  /** Erase's toasts (#134): what to draw and lasso. */
+  'press.eraseNoMarks':
+    'Draw over the part to erase with the pen, lasso the picture and your marks, then press Erase.',
+  'press.eraseNotPicture':
+    'Lasso one picture and the marks drawn on it, then press Erase.',
+  'press.eraseOutside':
+    'Draw the marks on the picture itself, then press Erase again.',
   'press.failed': (edit: string, why: string) => `${edit} did not work: ${why}`,
   /** The toast of a page-wide press (#140). */
   'page.done': (edited: number, pictures: number) =>

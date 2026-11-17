@@ -22,7 +22,8 @@ export type EditId =
   | 'styles'
   | 'enhance_all'
   | 'undo_all'
-  | 'crop';
+  | 'crop'
+  | 'erase';
 
 /** `showType` 1, a full view, for an edit that shows a screen first (#133); 0 runs with no view. */
 export type EditDefinition = {
@@ -60,6 +61,8 @@ const ORDER: readonly EditId[] = [
   'undo_all',
   // #132: the rectangle drawn with the pen over the picture, lassoed with it.
   'crop',
+  // #134: the marks drawn with the pen over the picture, lassoed with it.
+  'erase',
 ];
 
 /** The edits that open a view (#133). */

@@ -13,10 +13,10 @@ import {
   MIN_CROP_PX,
   NO_GUIDE,
   NOT_PICTURE_AND_GUIDE,
-  pagePoints,
   runCrop,
   splitLasso,
 } from '../src/crop';
+import {pagePoints} from '../src/guide';
 
 const PAGE = {width: 1920, height: 2560};
 /** The picture of the device round (#132): 200 x 200 at 1216, 1152. */
