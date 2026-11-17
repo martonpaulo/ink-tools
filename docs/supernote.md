@@ -351,6 +351,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `usesPermissions`, each `status` 2 for Always Allow; the provider is read-only [measured,
   2026-11-17, [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md),
   [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- An install through the bridge can answer `onFailed` with error 100, «Plugin [<other id>] is not
+  allowed to access other plugin's private dir», naming a background plugin, while the update has
+  landed: PluginHost's log shows it seeds a current plugin per thread, and the binder thread
+  that served the call still carried Account Sync's id. The plugin list showed the new version, and
+  after `am force-stop com.ratta.supernote.pluginhost` the next installs answered `updated:`
+  [measured, Nomad, bridge 0.1.0 beta 2, 2026-11-17,
+  [#225](https://github.com/martonpaulo/ink-tools/issues/225)]. Why the thread keeps the other id
+  is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`.
 - The built-in Sticker plugin has no enable switch; every other plugin is turned on or off in
   Settings › Apps › Plugins [reported by the device round of 2026-11-17, not re-measured, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - A plugin's `console.log` lines reach logcat under the tag `ReactNativeJS`, not under the plugin's

@@ -291,6 +291,7 @@ BRIDGE_INCLUDE_STOPPED = 32  # Intent.FLAG_INCLUDE_STOPPED_PACKAGES: an app neve
 BRIDGE_NOT_RUN = 0
 BRIDGE_RESULTS = {1: "ok", 2: "failed", 3: "usage", 4: "unreachable", 5: "timeout"}
 BRIDGE_OK = 1
+BRIDGE_FAILED = 2
 BRIDGE_USAGE = 3
 BRIDGE_TIMEOUT_RESULT = 5
 BRIDGE_ANSWER = re.compile(r'Broadcast completed: result=(-?\d+)(?:, data="(.*)")?')
@@ -2212,6 +2213,11 @@ def require_bridge(device: Device) -> None:
 
 def bridge_call(device: Device, op: str, **extras) -> str:
     """One ordered broadcast to the bridge app; its answer, or the failure its result code names."""
+    return bridge_answer(*bridge_result(device, op, **extras))
+
+
+def bridge_result(device: Device, op: str, **extras) -> tuple:
+    """One ordered broadcast to the bridge app: its result code and answer text."""
     words = ["am", "broadcast", "-n", BRIDGE_RECEIVER, "-f", str(BRIDGE_INCLUDE_STOPPED), "--es", "op", op]
     for key, value in extras.items():
         words += ["--ei" if isinstance(value, int) else "--es", key, str(value)]
@@ -2219,7 +2225,11 @@ def bridge_call(device: Device, op: str, **extras) -> str:
     match = BRIDGE_ANSWER.search(output)
     if not match:
         raise Failure(EXIT_FAILED, "device_error", output.strip()[:ERROR_EXCERPT] or "am broadcast gave no result")
-    code, answer = int(match[1]), match[2] or ""
+    return int(match[1]), match[2] or ""
+
+
+def bridge_answer(code: int, answer: str) -> str:
+    """The bridge's answer text, or the failure its result code names."""
     if code == BRIDGE_OK:
         return answer
     if code == BRIDGE_NOT_RUN:
@@ -2275,10 +2285,25 @@ def wait_until(limit: float, condition, message: str):
         time.sleep(WAIT_INTERVAL)
 
 
+def landed_despite_failure(device: Device, config: dict):
+    """The plugin's row when PluginHost answered onFailed yet holds the file's build: its binder
+    thread can carry another plugin's id and refuse the callback after the update landed
+    (docs/supernote.md, #225). None when the list does not prove the build."""
+    for row in plugin_rows(device):
+        if row.get("pluginID") == config["id"] and "versionName" in row and same_build(row, config, row["versionName"]):
+            return row
+    return None
+
+
 def install_through_bridge(device: Device, args: argparse.Namespace, config: dict, installed: list) -> tuple:
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
-    answer = bridge_call(device, "install", path=pushed["path"])
-    row = wait_for_plugin(device, config, args.timeout, bool(installed))
+    code, answer = bridge_result(device, "install", path=pushed["path"])
+    row = landed_despite_failure(device, config) if code == BRIDGE_FAILED else None
+    if row is None:
+        bridge_answer(code, answer)
+        row = wait_for_plugin(device, config, args.timeout, bool(installed))
+    else:
+        print(f"the bridge reported a failure, but {config['id']} {config['version']} is in the plugin list: {answer}", file=sys.stderr, flush=True)
     data = {
         "plugin": config["id"],
         "version": config["version"],
