@@ -7,7 +7,7 @@
 - Slug: `inkctl`
 - Identifier name: `inkctl`
 - Benefit-first description: Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
-- Repository: `martonpaulo/supernote-tools` (public), subproject `cli/inkctl/`; `martonpaulo/supernote-adb` is archived
+- Repository: `martonpaulo/ink-tools` (public), subproject `cli/inkctl/`; `martonpaulo/supernote-adb` is archived
 - Public identifiers: GitHub repository and the `inkctl` command; this project is not a package or registry product.
 - Landing page: None. The repository README is the canonical project surface.
 - License: `MIT`

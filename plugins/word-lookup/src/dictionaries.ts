@@ -16,7 +16,7 @@ import {
 import {version} from '../package.json';
 
 /** Wiktionary asks every client to name itself and a contact (its User-Agent policy). */
-export const USER_AGENT = `Lookup/${version} (+https://github.com/martonpaulo/supernote-tools)`;
+export const USER_AGENT = `Lookup/${version} (+https://github.com/martonpaulo/ink-tools)`;
 
 /** The credit a text box ends with, per provider id: Wiktionary's text is CC BY-SA. */
 export const SOURCE_NAMES: Record<string, string> = {

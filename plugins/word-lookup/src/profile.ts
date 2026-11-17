@@ -16,7 +16,7 @@ import {version} from '../package.json';
 import {versionCode} from '../PluginConfig.json';
 import {LOOKUP_SETTINGS} from './settings';
 
-export const REPOSITORY_URL = 'https://github.com/martonpaulo/supernote-tools';
+export const REPOSITORY_URL = 'https://github.com/martonpaulo/ink-tools';
 
 export const LOOKUP_PROFILE: PluginProfile = {
   name: 'Lookup',

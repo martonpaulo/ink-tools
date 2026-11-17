@@ -209,7 +209,7 @@ export function createCalDavWriter(o: CalDavWriterOptions): CalendarWriter {
   return {
     async createEvent(calendarId, event) {
       const uid = o.newUid();
-      const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//supernote-tools//Bridge//EN', 'BEGIN:VEVENT', `UID:${uid}`, stamp(),
+      const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ink-tools//Account Sync//EN', 'BEGIN:VEVENT', `UID:${uid}`, stamp(),
         ...contentLines(event, eventForm(event.allDay, UTC_FORM)), 'END:VEVENT', 'END:VCALENDAR'];
       const url = `${collection(calendarId)}${encodeURIComponent(uid)}.ics`;
       // If-None-Match: never overwrite a resource that already has this name.

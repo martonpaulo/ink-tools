@@ -1,6 +1,6 @@
 # Security
 
-Report a vulnerability through a [private security advisory](https://github.com/martonpaulo/supernote-tools/security/advisories/new). Do not open a public issue for it.
+Report a vulnerability through a [private security advisory](https://github.com/martonpaulo/ink-tools/security/advisories/new). Do not open a public issue for it.
 
 ## What the command can reach
 

@@ -4,7 +4,7 @@
 
 Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
 
-[![Validate](https://img.shields.io/github/actions/workflow/status/martonpaulo/supernote-tools/validate-inkctl.yml?branch=main&style=flat&labelColor=30363d&label=validate)](https://github.com/martonpaulo/supernote-tools/actions/workflows/validate.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/martonpaulo/ink-tools/validate-inkctl.yml?branch=main&style=flat&labelColor=30363d&label=validate)](https://github.com/martonpaulo/ink-tools/actions/workflows/validate-inkctl.yml)
 
 </div>
 
@@ -21,8 +21,8 @@ Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, 
 Needs Python 3.9 or later, `adb` on your `PATH`, and Sideloading turned on in the tablet's settings ([how](docs/research/2026-11-adb-on-supernote.md#steps)).
 
 ```bash
-git clone https://github.com/martonpaulo/supernote-tools
-ln -s "$PWD/supernote-tools/cli/inkctl/src/inkctl" ~/.local/bin/inkctl
+git clone https://github.com/martonpaulo/ink-tools
+ln -s "$PWD/ink-tools/cli/inkctl/src/inkctl" ~/.local/bin/inkctl
 export SUPERNOTE_ADDRESS=192.0.2.10
 inkctl wifi on     # over USB; a restart of the tablet turns it off
 inkctl status

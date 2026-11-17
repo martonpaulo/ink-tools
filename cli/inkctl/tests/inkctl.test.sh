@@ -1503,7 +1503,7 @@ help=$(python3 -B "$script" --help)
 sentence=$(sed -n 's/^Let an agent/let an agent/p' "$repo_root/README.md" | head -1)
 check "help opens with the sentence of the README" "$(printf '%s\n' "$help" | grep -cF "inkctl: $sentence")" "1"
 check "help documents the log's fields" "$(printf '%s\n' "$help" | grep -c 'app_before the app in front')" "1"
-check "help ends with the repository" "$(printf '%s\n' "$help" | tail -1)" "https://github.com/martonpaulo/supernote-tools"
+check "help ends with the repository" "$(printf '%s\n' "$help" | tail -1)" "https://github.com/martonpaulo/ink-tools"
 
 # The duplication gate reads the extensionless command.
 copy="$work/gate-copy"

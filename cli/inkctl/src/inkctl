@@ -138,7 +138,7 @@ These fields are a public contract, like the exit codes.
 The log never holds note content, screen text, file content or credentials.
 The address is masked. A call keeps only its verb, unless --log-paths is passed.
 
-https://github.com/martonpaulo/supernote-tools
+https://github.com/martonpaulo/ink-tools
 """
 
 ADB_PORT = 5555  # the port `adb tcpip` opens
