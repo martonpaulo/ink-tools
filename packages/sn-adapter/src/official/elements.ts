@@ -1,11 +1,12 @@
 /**
- * The page elements Real-Time Conversion writes (#187, #188): a text box element, a stroke saved and
+ * The page elements Real-Time Conversion reads and writes (#187, #188, #206): pen-up points turned
+ * from EMR into page pixels, a text box element, a stroke saved and
  * rebuilt, and the one-call delete-and-insert. Kept apart from page.ts and pen.ts, whose every
  * wrapper Ink2Pic calls (its sdk-boundary test), as image.ts and file.ts are.
  */
-import {PluginCommAPI} from 'sn-plugin-lib';
+import {PluginCommAPI, PointUtils} from 'sn-plugin-lib';
 import type {TextBoxInput} from './note';
-import {createElement} from './page';
+import {createElement, type Size} from './page';
 import type {PenPoint} from './pen';
 import {attempt, fail, ok, Result, THROWN_CODE} from './result';
 
@@ -168,3 +169,47 @@ export async function rebuildStroke(
   }
 }
 
+/** The EMR digitizer's largest x and y for a page size (sn-plugin-lib 0.2.3, PointUtils). */
+export type EmrRange = {maxX: number; maxY: number};
+
+/**
+ * The SDK's own EMR range for a page size (#206): `PointUtils.getRealMaxX` and `getRealMaxY`, which
+ * answer 21632 x 16224 for the Manta's 1920 x 2560 page and throw for a page size they do not know.
+ */
+export function emrRange(size: Size): Result<EmrRange> {
+  try {
+    return ok({maxX: PointUtils.getRealMaxX(size), maxY: PointUtils.getRealMaxY(size)});
+  } catch (error) {
+    return thrown(error);
+  }
+}
+
+/**
+ * True when a point lies off the page: page pixels never do, so the points are in EMR units (#206).
+ * shortcut: a stroke whose EMR points all fall inside the page's pixel box (only near the page's
+ * top-right corner on the Manta) is not caught; the caller remembers a proof for the next strokes.
+ */
+export function offPage(points: readonly PenPoint[], size: Size): boolean {
+  return points.some(
+    ({x, y}) => x < 0 || y < 0 || x > size.width - 1 || y > size.height - 1,
+  );
+}
+
+/**
+ * EMR points as page pixels (#206): the formula of `PointUtils.emrPoint2Android` in sn-plugin-lib
+ * 0.2.3, run here over a whole stroke so its argument check does not run per point. The EMR axes
+ * are turned against the page: EMR x runs down the page and EMR y runs from the right edge to the
+ * left, each scaled by the range over the page side minus one.
+ */
+export function emrToPage(
+  points: readonly PenPoint[],
+  size: Size,
+  range: EmrRange,
+): PenPoint[] {
+  const perPxDown = range.maxX / (size.height - 1);
+  const perPxAcross = range.maxY / (size.width - 1);
+  return points.map(({x, y}) => ({
+    x: size.width - 1 - y / perPxAcross,
+    y: x / perPxDown,
+  }));
+}

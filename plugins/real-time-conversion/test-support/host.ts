@@ -1,5 +1,5 @@
 /** A fake tablet for the conversion and the undo: a page of synthetic elements and a manual clock. */
-import type {SavedStroke} from '@supernote-tools/sn-adapter/official';
+import {fail, type SavedStroke, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import type {ConvertHost} from '../src/convert';
 import type {UndoHost} from '../src/undo';
 import type {InkStroke} from '../src/words';
@@ -42,6 +42,8 @@ export function fakeTablet(answer = 'café') {
     getCurrentFilePath: jest.fn(async () => ok('/Note/test.note')),
     getCurrentPageNum: jest.fn(async () => ok(0)),
     getPageSize: jest.fn(async () => ok({width: 1404, height: 1872})),
+    // A stroke off the page asks for it; the EMR tests give the SDK's range for their page.
+    emrRange: jest.fn(() => fail(THROWN_CODE, 'the fake tablet has no EMR range')),
     recognizeElements: jest.fn(async () => ok(answer)),
     getElements: jest.fn(async () => ok(page.map(element => ({...element})))),
     createTextBox: jest.fn(async box => ok({type: 500, box})),

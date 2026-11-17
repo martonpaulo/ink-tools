@@ -7,7 +7,10 @@
  */
 import type {Rect, Size} from '@supernote-tools/ink-core';
 import {
+  type EmrRange,
+  emrToPage,
   fail,
+  offPage,
   ok,
   type Result,
   type SavedStroke,
@@ -26,6 +29,12 @@ export const LINE_SHARE = 1.5;
 /** About how wide one character is, as a share of the font size (Lookup's box) [inference]. */
 export const CHAR_WIDTH = 0.55;
 
+/**
+ * Logs, once per mode start, the first pen-up stroke's unit, point count, first point, raw and page
+ * bounds and the page size, so the device round proves the unit (#206). On until that round.
+ */
+export const LOG_PEN_UP_UNIT = true;
+
 /** The fields of a host element this module reads. */
 export type HostElement = {uuid?: string; type?: number; numInPage?: number};
 
@@ -38,6 +47,7 @@ export type ConvertHost = {
   getCurrentFilePath(): Promise<Result<string>>;
   getCurrentPageNum(): Promise<Result<number>>;
   getPageSize(path: string, page: number): Promise<Result<Size>>;
+  emrRange(size: Size): Result<EmrRange>;
   recognizeElements(elements: object[], size: Size): Promise<Result<string>>;
   getElements(page: number, path: string): Promise<Result<object[]>>;
   createTextBox(box: TextBoxInput): Promise<Result<object>>;
@@ -76,6 +86,11 @@ export class Converter {
   private queue: Promise<void> = Promise.resolve();
   /** Pen-ups are read in the order they came, each at the time it came. */
   private reading: Promise<void> = Promise.resolve();
+  /** The page size, read at the first pen-up of a mode start. */
+  private size: Promise<Result<Size>> | null = null;
+  /** Set once a pen-up stroke proved its points are EMR units (#206). */
+  private emr: EmrRange | null = null;
+  private unitLogged = false;
 
   constructor(private readonly host: ConvertHost, options: WordOptions) {
     this.tracker = new WordTracker<object>(options);
@@ -95,6 +110,11 @@ export class Converter {
       return listening;
     }
     this.stop = listening.value;
+    // shortcut: the page size and the unit are read once per mode start; a note of another page
+    // size opened while the mode stays on keeps the first one, until turning the mode off and on.
+    this.size = null;
+    this.emr = null;
+    this.unitLogged = false;
     return ok(true);
   }
 
@@ -142,7 +162,8 @@ export class Converter {
         this.free([element]);
         continue;
       }
-      const points = await this.host.strokePoints(element);
+      const raw = await this.host.strokePoints(element);
+      const points = raw.ok ? await this.toPage(raw.value) : raw;
       const rect = points.ok ? rectOf(points.value) : null;
       if (!points.ok || !rect || !this.stop) {
         this.host.log(points.ok ? 'pen-up: a stroke with no points' : `pen-up: ${points.message}`);
@@ -153,6 +174,46 @@ export class Converter {
       this.handOn(this.tracker.add(stroke, at));
     }
     this.schedule();
+  }
+
+  /**
+   * A pen-up stroke's points in page pixels, the unit words.ts and shapes.ts measure in (#206).
+   * The pen-up event may hand over EMR units, while getElements gives page pixels: a point off the
+   * page proves EMR, and from then on every stroke of this mode start is converted with the SDK's
+   * own range for the page size.
+   */
+  private async toPage(raw: Point[]): Promise<Result<Point[]>> {
+    this.size ??= this.readPageSize();
+    const size = await this.size;
+    if (!size.ok) {
+      this.size = null;
+      return fail(size.code, `page size: ${size.message}`);
+    }
+    if (!this.emr && offPage(raw, size.value)) {
+      const range = this.host.emrRange(size.value);
+      if (!range.ok) {
+        return fail(range.code, `EMR range: ${range.message}`);
+      }
+      this.emr = range.value;
+    }
+    const points = this.emr ? emrToPage(raw, size.value, this.emr) : raw;
+    if (LOG_PEN_UP_UNIT && !this.unitLogged && raw.length > 0) {
+      this.unitLogged = true;
+      this.host.log(unitLine(raw, points, size.value, this.emr !== null));
+    }
+    return ok(points);
+  }
+
+  private async readPageSize(): Promise<Result<Size>> {
+    const path = await this.host.getCurrentFilePath();
+    if (!path.ok) {
+      return path;
+    }
+    const page = await this.host.getCurrentPageNum();
+    if (!page.ok) {
+      return page;
+    }
+    return this.host.getPageSize(path.value, page.value);
   }
 
   private schedule(): void {
@@ -221,13 +282,14 @@ export class Converter {
     }
     // Kept for «Undo Conversion» before the strokes leave the page (#188).
     const saved: SavedStroke[] = [];
-    for (const element of elements) {
+    for (const [index, element] of elements.entries()) {
       const one = await this.host.saveStroke(element);
       if (!one.ok) {
         log(`kept: saveStroke ${one.message}`);
         return;
       }
-      saved.push(one.value);
+      // The rebuild writes page pixels (#148), so it keeps the converted points, not the raw ones.
+      saved.push({...one.value, points: word.strokes[index].points});
     }
     const read = await this.host.getElements(page.value, path.value);
     if (!read.ok) {
@@ -258,6 +320,27 @@ export class Converter {
       this.free(read.value);
     }
   }
+}
+
+function bounds(points: readonly Point[]): string {
+  const rect = rectOf(points);
+  return rect
+    ? `${Math.round(rect.left)},${Math.round(rect.top)} to ${Math.round(rect.right)},${Math.round(rect.bottom)}`
+    : 'none';
+}
+
+/** The one unit line LOG_PEN_UP_UNIT asks for. */
+export function unitLine(
+  raw: readonly Point[],
+  points: readonly Point[],
+  size: Size,
+  emr: boolean,
+): string {
+  const [first] = raw;
+  return (
+    `pen-up unit: ${emr ? 'EMR' : 'page px'}, ${raw.length} points, first ${first.x},${first.y}, ` +
+    `raw ${bounds(raw)}, page ${bounds(points)}, page size ${size.width} x ${size.height}`
+  );
 }
 
 /**
