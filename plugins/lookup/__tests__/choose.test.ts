@@ -130,6 +130,30 @@ test('each tile shows its stored thumbnail, or the contour drawing that is inser
   ]);
 });
 
+test('a reopen on the same answer shows the kept tiles with no new measure (#205)', async () => {
+  const banana = flow(['a', 'b']);
+  const d = deps({flow: () => banana});
+  const first = await chooseResults(illustration, 'banana', d);
+  const second = await chooseResults(illustration, 'banana', d);
+  expect(banana.measure).toHaveBeenCalledTimes(1);
+  expect(second).toEqual(first);
+  // Another answer, another word or the other mode is measured again.
+  await chooseResults(photo, 'banana', d);
+  await chooseResults(illustration, 'apple', d);
+  expect(banana.measure).toHaveBeenCalledTimes(3);
+  const updated = flow(['c', 'a']);
+  await chooseResults(illustration, 'apple', deps({flow: () => updated}));
+  expect(updated.measure).toHaveBeenCalledTimes(1);
+});
+
+test('an empty list is searched and said again on the next open (#205)', async () => {
+  const none = flow([]);
+  const d = deps({flow: () => none});
+  await chooseResults(photo, 'banana', d);
+  await chooseResults(photo, 'banana', d);
+  expect(none.measure).toHaveBeenCalledTimes(2);
+});
+
 test('a switch of tab while a search runs drops the old answer', async () => {
   let finish!: () => void;
   const slow = flow(['old'], {
