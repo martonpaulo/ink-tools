@@ -2,6 +2,7 @@
 import {copy} from '../src/copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE} from '../src/crop';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE} from '../src/edit';
+import {MARKS_OUTSIDE, NO_MARKS, NOT_PICTURE_AND_MARKS} from '../src/erase';
 import {EDITS} from '../src/edits';
 import {pressEdit, PressDeps} from '../src/press';
 
@@ -48,6 +49,9 @@ test('every press that changed nothing shows its reason', async () => {
     [{kind: 'nothing', why: NO_GUIDE}, copy['press.cropNoGuide']],
     [{kind: 'nothing', why: NOT_PICTURE_AND_GUIDE}, copy['press.cropNotPicture']],
     [{kind: 'nothing', why: GUIDE_OUTSIDE}, copy['press.cropOutside']],
+    [{kind: 'nothing', why: NO_MARKS}, copy['press.eraseNoMarks']],
+    [{kind: 'nothing', why: NOT_PICTURE_AND_MARKS}, copy['press.eraseNotPicture']],
+    [{kind: 'nothing', why: MARKS_OUTSIDE}, copy['press.eraseOutside']],
     [
       {kind: 'failed', why: 'modifyPageElements: 9 broken'},
       copy['press.failed']('Enhance', 'modifyPageElements: 9 broken'),

@@ -34,6 +34,7 @@ function world(stored: Record<string, string> = {}, failing: string[] = []) {
       return ok({width: 400, height: 300, left: 0, top: 0, ms: 5});
     }),
     crop: jest.fn(),
+    erase: jest.fn(),
     readText: jest.fn(async path => ok(files.get(path) ?? null)),
     writeText: jest.fn(async (path, text) => {
       files.set(path, text);
