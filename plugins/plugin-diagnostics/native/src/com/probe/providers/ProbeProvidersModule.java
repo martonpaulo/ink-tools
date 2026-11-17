@@ -207,7 +207,7 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
         }
       }
       Uri created = resolver.insert(base, values);
-      inserted = ProbeTargets.wroteRow(created != null, created == null ? null : created.getLastPathSegment());
+      inserted = ResolverTable.wroteRow(created);
       createdId = inserted ? ResolverTable.rowId(created) : null;
       emit(lines, ProbeFormat.ok(target.label, "insert", inserted ? "row created" : "no row (refused: " + created + ")"));
     } catch (Throwable error) {

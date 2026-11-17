@@ -57,6 +57,7 @@
     {"path": "packages/picture-search/", "gates": ["ink2pic", "word-lookup", "image-editing"]},
     {"path": "packages/sn-adapter/", "gates": ["packages", "account-sync", "ink2pic", "word-lookup", "device-transfer", "image-editing", "real-time-conversion"]},
     {"path": "packages/sn-adapter/native", "gates": ["plugin-diagnostics"]},
+    {"path": "packages/sn-adapter/src/internals/descriptor.json", "gates": ["plugin-diagnostics"]},
     {"path": ".github/workflows/validate-packages.yml", "gates": ["packages"]},
     {"path": "plugins/account-sync/", "gates": ["account-sync"]},
     {"path": ".github/workflows/validate-account-sync.yml", "gates": ["account-sync"]},

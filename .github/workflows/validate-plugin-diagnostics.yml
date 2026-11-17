@@ -1,12 +1,12 @@
 name: Validate Plugin Diagnostics
 
-# Runs only when plugins/plugin-diagnostics/, the sn-adapter Java it compiles (#213), or this file changes; the gate is the subproject's own `npm run validate`.
+# Runs only when plugins/plugin-diagnostics/, the sn-adapter Java it compiles (#213), the descriptor its targets mirror (#217), or this file changes; the gate is the subproject's own `npm run validate`.
 on:
   push:
     branches: [main]
-    paths: ['plugins/plugin-diagnostics/**', 'packages/sn-adapter/native/**', '.github/workflows/validate-plugin-diagnostics.yml']
+    paths: ['plugins/plugin-diagnostics/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', '.github/workflows/validate-plugin-diagnostics.yml']
   pull_request:
-    paths: ['plugins/plugin-diagnostics/**', 'packages/sn-adapter/native/**', '.github/workflows/validate-plugin-diagnostics.yml']
+    paths: ['plugins/plugin-diagnostics/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', '.github/workflows/validate-plugin-diagnostics.yml']
   workflow_dispatch:
 
 permissions:

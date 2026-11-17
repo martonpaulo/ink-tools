@@ -58,9 +58,9 @@ function one(count: number, what: string): void {
 }
 
 /**
- * The provider's own row key. The descriptor lists it among the columns of `data_info` and
- * `task_group_table` but maps no field to it, so it is named here once; a field mapping for it
- * belongs in descriptor.json with the next descriptor change.
+ * The row key the native dry insert deletes its test row by (#43), which takes no descriptor. Every
+ * store write takes the key from the descriptor's `rowId` field instead; `deviceStores.test.ts`
+ * fails when this copy differs from one of them (#217).
  */
 export const ROW_ID = 'id';
 const LIST_ID = 'taskListId';
@@ -112,6 +112,7 @@ export function createDeviceCalendar(
 ): DeviceCalendarEditor {
   const uri = contentUri(d.calendar, 'events');
   const col = (field: string) => column(d.calendar, 'events', field);
+  const rowId = col('rowId');
   const ours = () => rows.query(uri, {[col('tag')]: d.calendar.rules.writeTag});
   /**
    * The row key of our one row of a pulled event (#213). The rows are matched here, not by the
@@ -130,7 +131,7 @@ export function createDeviceCalendar(
     if (hits.length !== 1) {
       throw new Error(`event ${eventId} has ${hits.length} tablet rows, not 1`);
     }
-    return {[ROW_ID]: hits[0][ROW_ID]};
+    return {[rowId]: hits[0][rowId]};
   };
   return {
     async listOurs(window) {
@@ -190,7 +191,7 @@ export function createDeviceCalendar(
       one(
         await rows.update(
           uri,
-          {[ROW_ID]: row[ROW_ID]},
+          {[rowId]: row[rowId]},
           {
             [col('calendarId')]: to.calendarId,
             [col('eventId')]: to.eventId,
@@ -209,6 +210,7 @@ export function createDeviceTasks(
 ): DeviceTaskStore {
   const tasks = contentUri(d.todo, 'tasks');
   const groups = contentUri(d.todo, 'groups');
+  const groupId = column(d.todo, 'groups', 'rowId');
   const col = (field: string) => column(d.todo, 'tasks', field);
   const rowId = col('rowId');
   /** The row whose task id is `localId`, as `rowToTodoTask` reads it. */
@@ -419,7 +421,7 @@ export function createDeviceTasks(
       one(
         await rows.update(
           groups,
-          {[ROW_ID]: g[ROW_ID]},
+          {[groupId]: g[groupId]},
           {
             [DELETED]: 1,
             [LIST_MODIFIED]: at,

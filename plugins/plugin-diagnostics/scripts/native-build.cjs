@@ -171,7 +171,9 @@ function testNative() {
   const pure = ['ProbeTargets', 'ProbeFormat', 'ProbeListener', 'ProbeCommandFile', 'ProbeRevert'].map(name =>
     path.join(root, `native/src/com/probe/providers/${name}.java`),
   );
-  pure.push(path.join(adapter.nativeSources, 'com/inktools/provider/DryInsertRevert.java'));
+  for (const shared of ['DryInsertRevert', 'InsertAnswer']) {
+    pure.push(path.join(adapter.nativeSources, `com/inktools/provider/${shared}.java`));
+  }
   // Compile inside the try, so a compile error also removes the folder.
   try {
     run(jdkTool('javac'), [
@@ -179,7 +181,7 @@ function testNative() {
       ...pure, ...javaSources(path.join(root, 'native/tests')),
     ]);
     for (const test of ['ProbeTargetsTest', 'ProbeFormatTest', 'ProbeListenerTest', 'ProbeCommandFileTest', 'ProbeRevertTest']) {
-      // ProbeTargetsTest checks the Calendar row against the descriptor's NOT NULL columns (#208).
+      // ProbeTargetsTest checks the test rows and the row key against the descriptor (#208, #217).
       run(jdkTool('java'), [`-Dprobe.descriptor=${DESCRIPTOR}`, '-cp', classes, `com.probe.providers.${test}`]);
     }
   } finally {

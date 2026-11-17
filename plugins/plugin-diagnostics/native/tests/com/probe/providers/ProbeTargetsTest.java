@@ -3,7 +3,6 @@ package com.probe.providers;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,19 +27,15 @@ public final class ProbeTargetsTest {
     check(tasks && calendar, "both control providers are present");
     check(ProbeTargets.all().get(0).uri.equals("content://com.ratta.supernote.knowledge.provider"), "the provider root is queried first");
     calendarRowFillsTheDescriptorColumns();
-    refusedInsertsWriteNoRow();
+    taskRowFillsTheDescriptorColumns();
+    rowKeyIsTheDescriptors();
     System.out.println("ProbeTargetsTest ok");
   }
 
   /** #208: the control-calendar row fills every requiredOnInsert column with Account Sync's values. */
   static void calendarRowFillsTheDescriptorColumns() {
-    String rules = calendarRules(System.getProperty("probe.descriptor"));
-    Matcher required = Pattern.compile("\"requiredOnInsert\"\\s*:\\s*\\[([^\\]]*)\\]").matcher(rules);
-    check(required.find(), "the descriptor lists calendar.rules.requiredOnInsert");
-    Set<String> columns = new LinkedHashSet<>();
-    for (String name : required.group(1).split(",")) {
-      columns.add(name.trim().replace("\"", ""));
-    }
+    String rules = rules("calendar");
+    Set<String> columns = requiredOnInsert(rules, "calendar");
     ProbeTargets.Target calendar = target("control-calendar");
     long now = 1700000000000L;
     Map<String, Object> row = calendar.row(now);
@@ -53,8 +48,44 @@ public final class ProbeTargetsTest {
     check(row.get("title").equals(ProbeTargets.MARKER), "the title carries the marker the revert deletes by");
     check(row.get("startTime").equals(now) && row.get("endTime").equals(now + 3600000L), "the test event lasts one hour, in epoch ms");
     check(row.get("lastModifiedTime").equals(now), "lastModifiedTime is the insert time, in epoch ms");
-    Map<String, Object> task = target("control-task").row(now);
-    check(task.keySet().equals(new LinkedHashSet<>(Arrays.asList("title"))), "the control-task row holds only the marker");
+  }
+
+  /** #217: the control-task row fills every todo.rules.requiredOnInsert column, as the calendar row does. */
+  static void taskRowFillsTheDescriptorColumns() {
+    Set<String> columns = requiredOnInsert(rules("todo"), "todo");
+    check(columns.contains("taskId"), "the descriptor lists taskId among the task's NOT NULL columns");
+    Map<String, Object> task = target("control-task").row(1700000000000L);
+    for (String column : columns) {
+      check(task.get(column) != null, "the control-task row fills " + column);
+    }
+    check(task.get("title").equals(ProbeTargets.MARKER), "the task title carries the marker the revert deletes by");
+  }
+
+  /** #217: every fields.rowId of the descriptor's Calendar and To-Do tables is the key the revert deletes by. */
+  static void rowKeyIsTheDescriptors() {
+    String json = descriptor();
+    for (String[] part : new String[][] {{"\"calendar\"", "\"todo\""}, {"\"todo\"", "\"digest\""}}) {
+      int from = json.indexOf(part[0]);
+      int to = json.indexOf(part[1], from);
+      check(from >= 0 && to > from, "the descriptor has " + part[0]);
+      Matcher rowId = Pattern.compile("\"rowId\"\\s*:\\s*\"([^\"]*)\"").matcher(json.substring(from, to));
+      int found = 0;
+      while (rowId.find()) {
+        found++;
+        check(rowId.group(1).equals(ProbeTargets.ROW_ID), part[0] + " maps rowId to " + ProbeTargets.ROW_ID);
+      }
+      check(found > 0, part[0] + " maps a rowId field");
+    }
+  }
+
+  static Set<String> requiredOnInsert(String rules, String section) {
+    Matcher required = Pattern.compile("\"requiredOnInsert\"\\s*:\\s*\\[([^\\]]*)\\]").matcher(rules);
+    check(required.find(), "the descriptor lists " + section + ".rules.requiredOnInsert");
+    Set<String> columns = new LinkedHashSet<>();
+    for (String name : required.group(1).split(",")) {
+      columns.add(name.trim().replace("\"", ""));
+    }
+    return columns;
   }
 
   static ProbeTargets.Target target(String label) {
@@ -66,27 +97,24 @@ public final class ProbeTargetsTest {
     throw new AssertionError("no target " + label);
   }
 
-  /** The providers answer a refused row with null or the id -1 (#43); the probe says no row was written. */
-  static void refusedInsertsWriteNoRow() {
-    check(!ProbeTargets.wroteRow(false, null), "a null answer wrote no row");
-    check(!ProbeTargets.wroteRow(true, "-1"), "the id -1 wrote no row");
-    check(!ProbeTargets.wroteRow(true, null), "an answer without an id wrote no row");
-    check(ProbeTargets.wroteRow(true, "42"), "a positive id is a written row");
-  }
-
-  /** The descriptor's calendar.rules object, read as text: the JVM test has no JSON library. */
-  static String calendarRules(String path) {
+  /** The descriptor's text: the JVM test has no JSON library. */
+  static String descriptor() {
+    String path = System.getProperty("probe.descriptor");
     check(path != null, "the test runs with -Dprobe.descriptor (npm run test:native)");
-    String json;
     try {
-      json = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+      return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
     } catch (java.io.IOException error) {
       throw new AssertionError("cannot read the descriptor " + path + ": " + error.getMessage());
     }
-    int calendar = json.indexOf("\"calendar\"");
-    int rules = json.indexOf("\"rules\"", calendar);
+  }
+
+  /** The start of one section's rules object, up to its first closing brace, read as text. */
+  static String rules(String section) {
+    String json = descriptor();
+    int at = json.indexOf("\"" + section + "\"");
+    int rules = json.indexOf("\"rules\"", at);
     int end = json.indexOf("}", rules);
-    check(calendar >= 0 && rules > calendar && end > rules, "the descriptor has calendar.rules");
+    check(at >= 0 && rules > at && end > rules, "the descriptor has " + section + ".rules");
     return json.substring(rules, end);
   }
 

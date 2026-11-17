@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * The JVM tests of Bridge's Android-free native classes (#43): sn-adapter's `DryInsertRevert`, shared
- * with the Probe (#213), and its tests in sn-adapter's native-tests, compiled with the JDK alone, no
- * Android SDK. `npm run test:native` runs it in the gate.
+ * The JVM tests of Bridge's Android-free native classes (#43): sn-adapter's `DryInsertRevert` and
+ * `InsertAnswer`, shared with the Probe (#213, #217), and their tests in sn-adapter's native-tests,
+ * compiled with the JDK alone, no Android SDK. `npm run test:native` runs it in the gate.
  */
 const fs = require('node:fs');
 const os = require('node:os');
@@ -13,8 +13,10 @@ const {javaSources} = require('./native-build.cjs');
 
 const adapter = require('../../../packages/sn-adapter/plugin-config');
 
-const PURE = [path.join(adapter.nativeSources, 'com/inktools/provider/DryInsertRevert.java')];
-const TESTS = ['com.inktools.provider.DryInsertRevertTest'];
+const PURE = ['DryInsertRevert', 'InsertAnswer'].map(name =>
+  path.join(adapter.nativeSources, `com/inktools/provider/${name}.java`),
+);
+const TESTS = ['com.inktools.provider.DryInsertRevertTest', 'com.inktools.provider.InsertAnswerTest'];
 
 let classes;
 try {

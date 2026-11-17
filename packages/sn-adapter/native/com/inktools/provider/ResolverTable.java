@@ -29,17 +29,14 @@ public final class ResolverTable implements DryInsertRevert.Table {
     this.marker = marker;
   }
 
-  /** The new row's id from the insert's answer, or null when it holds no number. */
+  /** Whether the insert's answer names a written row ({@link InsertAnswer}, #217). */
+  public static boolean wroteRow(Uri created) {
+    return InsertAnswer.wroteRow(created != null, created == null ? null : created.getLastPathSegment());
+  }
+
+  /** The new row's id from the insert's answer, or null when it holds no number ({@link InsertAnswer}). */
   public static String rowId(Uri created) {
-    if (created == null) {
-      return null;
-    }
-    try {
-      long id = ContentUris.parseId(created);
-      return id >= 0 ? String.valueOf(id) : null;
-    } catch (RuntimeException notNumeric) {
-      return null;
-    }
+    return InsertAnswer.rowId(created != null, created == null ? null : created.getLastPathSegment());
   }
 
   @Override

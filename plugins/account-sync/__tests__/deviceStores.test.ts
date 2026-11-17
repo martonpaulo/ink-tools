@@ -1,9 +1,11 @@
 /** The Calendar and To-Do stores over an in-memory content provider (#28, #29, #44). */
+import {BUNDLED_DESCRIPTOR} from '@ink-tools/sn-adapter';
 import type {Row} from '@ink-tools/sn-adapter';
 import {
   ContentRows,
   createDeviceCalendar,
   createDeviceTasks,
+  ROW_ID,
   serviceTaskId,
 } from '../src/deviceStores';
 
@@ -141,6 +143,15 @@ describe('the Calendar store', () => {
     await cal.create(event);
     await expect(cal.remove('work', 'g1')).rejects.toThrow('event g1 has 2 tablet rows, not 1');
     expect(tables[EVENTS]).toHaveLength(2);
+  });
+
+  test('every rowId field of the descriptor is the dry insert key (#217)', () => {
+    const keys = [
+      BUNDLED_DESCRIPTOR.calendar.tables.events,
+      BUNDLED_DESCRIPTOR.todo.tables.tasks,
+      BUNDLED_DESCRIPTOR.todo.tables.groups,
+    ].map(t => t.fields?.rowId);
+    expect(keys).toEqual([ROW_ID, ROW_ID, ROW_ID]);
   });
 
   test('a tablet-made row is an edit, and a relink gives it the service id', async () => {

@@ -1,7 +1,6 @@
 package com.bridge.providers;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
@@ -74,7 +73,7 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
    * Inserts one row with {@link #MARKER} in {@code markerColumn} and {@code values} in the other
    * columns, then deletes it by its row id ({@code idColumn}), with every older row carrying the
    * marker ({@link DryInsertRevert}). Resolves only when both passed. It rejects with {@code
-   * insert_refused} when the provider wrote no row (it threw, returned null or an id below 0), and
+   * insert_refused} when the provider wrote no row (it threw, or {@link ResolverTable#wroteRow} says so), and
    * with {@code revert_failed}, counting the rows, only when a marked row is still listed (#43).
    */
   @ReactMethod
@@ -90,7 +89,7 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
             ContentValues row = values(values);
             row.put(markerColumn, MARKER);
             Uri created = resolver.insert(base, row);
-            written = wroteRow(created);
+            written = ResolverTable.wroteRow(created);
             createdId = written ? ResolverTable.rowId(created) : null;
           } catch (Throwable error) {
             promise.reject("insert_refused", String.valueOf(error.getMessage()), error);
@@ -119,22 +118,6 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
             }
           }
         });
-  }
-
-  /**
-   * Whether an insert's answer names a written row. A provider that refuses a row may answer null or
-   * an id below 0 instead of throwing; an answer without a numeric id counts as written, so a row
-   * that might exist is never reported as absent.
-   */
-  static boolean wroteRow(Uri created) {
-    if (created == null) {
-      return false;
-    }
-    try {
-      return ContentUris.parseId(created) >= 0;
-    } catch (RuntimeException notNumeric) {
-      return true;
-    }
   }
 
   /** The selection of a filter: {@code a = ? AND b IS NULL}; an empty filter selects every row. */
@@ -253,12 +236,11 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
         () -> {
           try {
             Uri created = getReactApplicationContext().getContentResolver().insert(Uri.parse(uri), values(row));
-            String id = created == null ? null : created.getLastPathSegment();
-            // The Supernote providers answer a refused row with the id -1 (#63).
-            if (id == null || id.equals("-1")) {
+            // A refused row is a null answer or an id below 0 (#63), as InsertAnswer decides (#217).
+            if (!ResolverTable.wroteRow(created)) {
               promise.reject("insert_refused", "the provider refused the row: " + created);
             } else {
-              promise.resolve(id);
+              promise.resolve(created.getLastPathSegment());
             }
           } catch (Throwable error) {
             promise.reject("insert_refused", String.valueOf(error.getMessage()), error);

@@ -24,8 +24,9 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
 - Lines are logged with the tag `SNPROBE`. Never log a secret or a person's data.
 - Validate with `npm run validate`. A result found on the device goes to the issue or a research
   note, never kept as a claim without the device run.
-- The native module is `native/src/com/probe/providers/`; its targets (URIs, marker columns, the Calendar's NOT NULL
-  columns, [#208](https://github.com/martonpaulo/ink-tools/issues/208)) mirror `packages/sn-adapter/src/internals/descriptor.json`, and
-  `ProbeTargetsTest` keeps the Calendar columns equal to it. It only reads, and inserts one row marked
+- The native module is `native/src/com/probe/providers/`; its targets (URIs, marker columns, the Calendar's and
+  To-Do's NOT NULL columns and the row key, [#208](https://github.com/martonpaulo/ink-tools/issues/208), [#217](https://github.com/martonpaulo/ink-tools/issues/217)) mirror
+  `packages/sn-adapter/src/internals/descriptor.json`, and `ProbeTargetsTest` keeps them equal to it; a descriptor
+  change runs this gate. Whether an insert wrote a row is sn-adapter's `InsertAnswer`, shared with Account Sync. It only reads, and inserts one row marked
   `SNPROBE dry insert` that it reverts at once; it never logs a row's value. `npm run build` must give
   a `Probe.snplg` that holds `app.npk` (native step), never a JS-only package.

@@ -16,9 +16,10 @@ public final class ProbeTargets {
   public static final String MARKER = "SNPROBE dry insert";
 
   /**
-   * The row key the revert deletes by (#213): the descriptor lists {@code id} among the columns of
-   * {@code data_info} and {@code tasks_table}. The Digest table's key is not known; a revert there
-   * that finds no {@code id} column fails with a FAILED line, never a silent pass.
+   * The row key the revert deletes by (#213): the descriptor's {@code fields.rowId} of {@code
+   * data_info} and {@code tasks_table}, which ProbeTargetsTest keeps equal to this (#217). The Digest
+   * table's key is not known; a revert there that finds no {@code id} column fails with a FAILED
+   * line, never a silent pass.
    */
   public static final String ROW_ID = "id";
 
@@ -30,27 +31,41 @@ public final class ProbeTargets {
     public final String markerColumn;
     /** Whether a dry insert is tried: false for the provider root, which has no table. */
     public final boolean writable;
-    /** Whether the dry insert fills the Calendar's NOT NULL columns ({@link #calendarRow}). */
-    final boolean calendar;
+    /** The NOT NULL columns the dry insert fills: {@link #calendarRow}, {@link #taskRow} or none. */
+    final Kind kind;
 
     Target(String label, String uri, String markerColumn, boolean writable) {
-      this(label, uri, markerColumn, writable, false);
+      this(label, uri, markerColumn, writable, Kind.PLAIN);
     }
 
-    Target(String label, String uri, String markerColumn, boolean writable, boolean calendar) {
+    Target(String label, String uri, String markerColumn, boolean writable, Kind kind) {
       this.label = label;
       this.uri = uri;
       this.markerColumn = markerColumn;
       this.writable = writable;
-      this.calendar = calendar;
+      this.kind = kind;
     }
 
     /** Every column of the dry insert, the marker included, for an insert at {@code now} (epoch ms). */
     public Map<String, Object> row(long now) {
-      Map<String, Object> row = calendar ? calendarRow(now) : new LinkedHashMap<String, Object>();
+      Map<String, Object> row;
+      if (kind == Kind.CALENDAR) {
+        row = calendarRow(now);
+      } else if (kind == Kind.TASK) {
+        row = taskRow();
+      } else {
+        row = new LinkedHashMap<>();
+      }
       row.put(markerColumn, MARKER);
       return row;
     }
+  }
+
+  /** Which provider's NOT NULL columns a dry insert fills. */
+  enum Kind {
+    PLAIN,
+    CALENDAR,
+    TASK
   }
 
   private static final long HOUR_MS = 60L * 60L * 1000L;
@@ -78,11 +93,15 @@ public final class ProbeTargets {
   }
 
   /**
-   * Whether an insert's answer names a written row: the Supernote providers answer a refused row
-   * with a null URI or the id -1 (#43, #63). {@code lastSegment} is the answer's last path segment.
+   * The control-task test row (#217): every column of the descriptor's {@code
+   * todo.rules.requiredOnInsert}, {@code title} and {@code taskId}, both the marker. ProbeTargetsTest
+   * keeps the names equal to the descriptor.
    */
-  public static boolean wroteRow(boolean answered, String lastSegment) {
-    return answered && lastSegment != null && !lastSegment.equals("-1");
+  static Map<String, Object> taskRow() {
+    Map<String, Object> row = new LinkedHashMap<>();
+    row.put("title", MARKER);
+    row.put("taskId", MARKER);
+    return row;
   }
 
   private static final List<Target> ALL =
@@ -92,13 +111,17 @@ public final class ProbeTargets {
               new Target(
                   "digest", "content://com.ratta.supernote.knowledge.provider/digest", "digest_content", true),
               new Target(
-                  "control-task", "content://com.ratta.supernote.task.provider/tasks_table", "title", true),
+                  "control-task",
+                  "content://com.ratta.supernote.task.provider/tasks_table",
+                  "title",
+                  true,
+                  Kind.TASK),
               new Target(
                   "control-calendar",
                   "content://com.ratta.supernote.calendar.provider/data_info",
                   "title",
                   true,
-                  true)));
+                  Kind.CALENDAR)));
 
   private ProbeTargets() {}
 

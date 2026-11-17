@@ -5,7 +5,7 @@
  * `nodeModulesPaths`), so the plugin keeps one copy. The plugin's tsconfig.json maps the same names
  * by `paths`. The internals tier's tests run in the packages gate; the official tier is tested by
  * the plugins that call it, which have `sn-plugin-lib`. The Java in `native/` (the dry insert's
- * revert by row id, #213) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
+ * revert by row id, #213, and whether an insert wrote a row, #217) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
  * its JVM tests in `native-tests/` run in the Account Sync gate.
  */
 const path = require('path');
