@@ -47,7 +47,8 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl firmware` | Shows the installed and the newest official firmware. `--download` copies the newest one to `EXPORT`, after the checks it names. The tablet's build id holds no public version, so pass `--installed X.Y.Z` from Settings > About. |
 | `inkctl routes [PACKAGE]` | Lists, read-only, each exported entry point with its filters and permission, and which job each route does. |
 | `inkctl doctor` | Checks, read-only, that each call this command makes still exists. Run it after a firmware update. |
-| `inkctl note open PATH --page N` | Opens a note at a page, counted from 1. |
+| `inkctl note open PATH --page N` | Opens a note at a page, counted from 1. The note app ignores the page for a note it opened before, so with `--page` it then presses the Probe's «Run Command» to jump to the page and read it back, and fails with exit 9 and the page the note shows when the two differ ([#220](https://github.com/martonpaulo/ink-tools/issues/220)). |
+| `inkctl fixture NAME` | Opens the test fixtures note, `Note/Tests/Fixtures.note`, at that fixture's page and proves the page the same way. `--lasso ITEM` then lassoes one of the fixture's rects, as `lasso rect` does. `fixture --list` prints each fixture's page, rects and the issues it serves, from the one table in `src/inkctl` (`FIXTURES`), with no tablet. The command never creates the note: when it is missing, it says so and links the [page map](https://github.com/martonpaulo/ink-tools/issues/214#issuecomment-6936338459). |
 | `inkctl note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `inkctl files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
 | `inkctl sync tasks` | Starts a To-do sync and waits until it has run. |
@@ -131,7 +132,7 @@ Notes for an agent that drives the tablet in a test round, learned in the rounds
 
 - **Name the device for raw `adb`.** With the USB cable and Wi-Fi ADB both attached, `adb` refuses a call with more than one device; pass `-s <serial>`. `inkctl` picks the link itself.
 - **Query the Calendar provider with a projection and a filter.** A plain `adb shell content query` of `content://com.ratta.supernote.calendar.provider/data_info` was reported to fail with a `NullPointerException` in `setNotificationUri` (not re-measured); the form with `--projection` and `--where` returned rows ([#43](https://github.com/martonpaulo/ink-tools/issues/43)).
-- **Test with real handwriting and no pen.** Copy a word the owner wrote on a note under `Note/Tests/` to the test page (for example `ink save`, then `ink strokes`), lasso it with `lasso last-insert`, and press rows with `lasso press` ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#189](https://github.com/martonpaulo/ink-tools/issues/189)).
+- **Test with real handwriting and no pen.** Copy a word the owner wrote on a note under `Note/Tests/` to the test page (for example `ink save`, then `ink strokes`), lasso it with `lasso last-insert`, and press rows with `lasso press` ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#189](https://github.com/martonpaulo/ink-tools/issues/189)). A ready word, picture or blank page is one call away: `fixture NAME --lasso ITEM` ([#220](https://github.com/martonpaulo/ink-tools/issues/220)).
 - **Delete the older build.** Each install leaves its `.snplg` in `MyStyle/`; delete the older build after a newer one is installed.
 - **Stop each log capture by its PID.** Capture the PID of every `adb logcat` you start and stop that PID, never a name pattern.
 

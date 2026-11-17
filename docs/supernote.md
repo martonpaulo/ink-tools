@@ -500,6 +500,12 @@ the note shows through, is still to test.
   call over the cable when `adb devices` lists one authorized USB tablet, and over Wi-Fi ADB
   otherwise; `inkctl status` names the link [source]. Before it, inkctl reached the tablet over
   Wi-Fi only and lost it with the tablet's Wi-Fi off [measured, 2026-11-16].
+- The note app takes the `page` extra of `am start` (from 0) only for a note it has not opened
+  before: a note opened before reopens at its last page and the extra is ignored, while a plugin's
+  `PluginCommAPI.jumpToPage(page)` (from 0) moves to the page [measured, 2026-11-17, Nomad,
+  [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. So `inkctl note open --page` and
+  `inkctl fixture` move with the Probe's `jumpToPage` and prove the page with `getCurrentPageNum`
+  read after it; that read-back is [unverified] on the tablet.
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/ink-tools/issues/1)].

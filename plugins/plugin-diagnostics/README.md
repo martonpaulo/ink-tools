@@ -25,10 +25,12 @@ Check before you trust a result: run `npm run validate` (lint, typecheck, tests)
 
 ## The command button for inkctl ([#148](https://github.com/martonpaulo/ink-tools/issues/148))
 
-`inkctl ink write`, `ink strokes`, `ink save`, `lasso rect` and `lasso last-insert` push one JSON
+`inkctl ink write`, `ink strokes`, `ink save`, `lasso rect`, `lasso last-insert`, `note open --page`
+and `fixture` push one JSON
 command to `MyStyle/Probe/command.json`, press «Run Command» in the open note, and read the answer
 Probe logs as `SNPROBE answer <id> <n>/<count> <json>` under `ReactNativeJS`. `src/helper.ts` runs
-the command (`insertPageElements`, `lassoElements`, `getLastElement`, `getLassoElements`); the CLI
+the command (`insertPageElements`, `lassoElements`, `getLastElement`, `getLassoElements`, `jumpToPage`,
+then `getCurrentPageNum` as proof, [#220](https://github.com/martonpaulo/ink-tools/issues/220)); the CLI
 owns every rule. The note calls need `FILE:READ` and `FILE:WRITE` on «Always Allow».
 
 ## The Digest-provider probe ([#59](https://github.com/martonpaulo/supernote-tools/issues/59))

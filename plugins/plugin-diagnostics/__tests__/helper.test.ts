@@ -19,6 +19,7 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     lasso: jest.fn().mockResolvedValue({trailNum: 1}),
     lastElementRect: jest.fn().mockResolvedValue({left: 100, top: 200, right: 300, bottom: 260}),
     lassoStrokes: jest.fn().mockResolvedValue([[{x: 1, y: 2}, {x: 3, y: 4}]]),
+    jumpToPage: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   } as HelperApi & Record<string, jest.Mock>;
 }
@@ -63,6 +64,13 @@ test('readLasso answers each lassoed stroke as [x, y] pairs', async () => {
   expect(answer).toMatchObject({ok: true, strokes: [[[1, 2], [3, 4]]]});
 });
 
+test('jumpToPage jumps, then answers the page the note shows', async () => {
+  const note = api({pageNumber: jest.fn().mockResolvedValue(4)});
+  const {answer} = await runCommand(command({op: 'jumpToPage', page: 5}), note);
+  expect(note.jumpToPage).toHaveBeenCalledWith(5);
+  expect(answer).toMatchObject({ok: true, op: 'jumpToPage', page: 4});
+});
+
 test.each([
   ['a text that is not JSON', 'not json', 'the command is not JSON'],
   ['a command with no id', JSON.stringify({op: 'lassoLast'}), 'no hex id'],
@@ -70,6 +78,7 @@ test.each([
   ['a point off the page', command({op: 'insertStrokes', strokes: [[[0, 0], [1921, 10]]]}), 'not [x, y] on the page'],
   ['a stroke of one point', command({op: 'insertStrokes', strokes: [[[0, 0]]]}), 'two points or more'],
   ['a rect with no width', command({op: 'lassoRect', rect: {left: 10, top: 10, right: 10, bottom: 50}})],
+  ['a page that is not an index from 0', command({op: 'jumpToPage', page: -1}), 'page index from 0'],
 ])('%s is refused before any note call', async (_name, text, message = '') => {
   const note = api();
   const {answer} = await runCommand(text, note);

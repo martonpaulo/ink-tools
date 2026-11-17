@@ -31,6 +31,7 @@ export interface HelperApi {
   lasso(rect: Rect): Promise<Record<string, unknown>>;
   lastElementRect(): Promise<Rect>;
   lassoStrokes(): Promise<Point[][]>;
+  jumpToPage(page: number): Promise<void>;
 }
 
 export class HelperError extends Error {
@@ -48,7 +49,8 @@ type Command =
   | {id: string; op: 'insertStrokes'; strokes: Point[][]}
   | {id: string; op: 'lassoRect'; rect: Rect}
   | {id: string; op: 'lassoLast'}
-  | {id: string; op: 'readLasso'};
+  | {id: string; op: 'readLasso'}
+  | {id: string; op: 'jumpToPage'; page: number};
 
 function onPage(x: unknown, y: unknown): boolean {
   return (
@@ -77,6 +79,14 @@ function parseStrokes(value: unknown): Point[][] {
     throw new HelperError(USAGE, `${count} points is more than ${MAX_POINTS}`);
   }
   return strokes;
+}
+
+/** A page index, from 0, as `PluginCommAPI.jumpToPage` takes it. */
+function parsePage(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    throw new HelperError(USAGE, 'page must be a page index from 0');
+  }
+  return value;
 }
 
 function parseRect(value: unknown): Rect {
@@ -110,6 +120,8 @@ export function parseCommand(text: string): Command {
     case 'lassoLast':
     case 'readLasso':
       return {id, op: raw.op};
+    case 'jumpToPage':
+      return {id, op: 'jumpToPage', page: parsePage(raw.page)};
     default:
       throw new HelperError(USAGE, `unknown op: ${String(raw.op)}`);
   }
@@ -149,6 +161,12 @@ async function execute(command: Command, api: HelperApi): Promise<Record<string,
     case 'readLasso': {
       const strokes = await api.lassoStrokes();
       return {strokes: strokes.map(stroke => stroke.map(point => [point.x, point.y]))};
+    }
+    case 'jumpToPage': {
+      // The note app ignores `note open`'s page extra for a note opened before (#220); the answer's
+      // page is read after the jump, so inkctl proves the page the note shows.
+      await api.jumpToPage(command.page);
+      return {page: await api.pageNumber()};
     }
   }
 }

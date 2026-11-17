@@ -1254,6 +1254,43 @@ run lasso last-insert >/dev/null 2>&1
 check "with no note open the helper stops before any push or press" "$?$(called ' push ')$(called 'input tap')" "900"
 run --read-only ink write "a" --at 100 200 >/dev/null 2>&1
 check "read-only refuses ink write" "$?" "11"
+# Paging through Probe and the test fixtures note (#220): the note app ignores the page extra for a
+# note opened before, so Probe jumps and reads the page back.
+fixtures="$root/Note/Tests/Fixtures.note"
+jump_answer() { answer_line '11-16 23:00:01.000' "COMMAND_ID 1/1 {\"ok\":true,\"op\":\"jumpToPage\",\"ms\":40,\"page\":$1}" > "$files/helper-answer"; }
+helper_ready
+printf 'f %s\n' "$fixtures" >> "$files/paths"
+jump_answer 2
+result=$(run fixture casa --json)
+check "fixture opens the fixtures note at its page" "$?$(grep -cF "am start -W -a android.intent.action.VIEW -n $note_activity --es file_path $fixtures --es from_app launcher --ei page 2" "$log")" "01"
+check "fixture asks Probe to jump to the page, from 0" "$(command_field "d['op'], d['page']")" "('jumpToPage', 2)"
+check "fixture proves the page from Probe's read-back" "$(printf '%s' "$result" | field "['fixture'],d['page'],d['path']")" "('casa', 3, '$fixtures')"
+jump_answer 0
+run fixture casa >/dev/null 2>"$work/err"
+check "fixture on the wrong page after opening fails and names the shown page" "$?$(grep -c 'shows page 1, not page 3' "$work/err")" "91"
+run fixture kitchen >/dev/null 2>"$work/err"
+check "an unknown fixture is a usage error before any call to the note" "$?$(called 'am start')$(grep -c 'below-word' "$work/err")" "201"
+run fixture apple --lasso nothing >/dev/null 2>&1
+check "an unknown rect of a fixture is a usage error before any call to the note" "$?$(called 'am start')" "20"
+jump_answer 5
+run fixture translation --lasso manzana >/dev/null
+check "fixture --lasso lassoes the named rect after the jump" "$?$(command_field "d['op'], d['rect']")" "0('lassoRect', {'left': 300, 'top': 700, 'right': 760, 'bottom': 769})"
+printf 'f %s\n' "$root/Note/A note.note" > "$files/paths"
+run fixture casa >/dev/null 2>"$work/err"
+check "a missing fixtures note stops with not found, names the page map and creates nothing" "$?$(grep -c 'issues/214#issuecomment' "$work/err")$(called 'am start')$(called ' push ')" "4100"
+result=$(run fixture --list --json)
+check "fixture --list reaches no tablet" "$?$(grep -c . "$log")" "00"
+check "fixture --list gives every fixture in page order" "$(printf '%s' "$result" | expression "[f['name'] for f in d['fixtures']], [f['page'] for f in d['fixtures']] == list(range(1, 14))")" "(['apple', 'maca', 'casa', 'cafe', 'coffee', 'translation', 'full-name', 'no-letters', 'marks', 'photo', 'illustration', 'blank', 'below-word'], True)"
+check "fixture --list gives each rect and what the page serves" "$(printf '%s' "$result" | expression "d['fixtures'][12]['rects']['line'], d['fixtures'][0]['rects']['label'], d['fixtures'][5]['serves']")" "([500, 560, 1252, 662], [60, 40, 1860, 110], ['#127'])"
+check "fixture --list runs in read-only mode" "$(run --read-only fixture --list >/dev/null; echo $?)" "0"
+jump_answer 2
+result=$(run note open "Note/A note.note" --page 3 --json)
+check "note open --page proves the page through Probe" "$?$(command_field "d['op'], d['page']")$(printf '%s' "$result" | field "['page']")" "0('jumpToPage', 2)3"
+jump_answer 6
+run note open "Note/A note.note" --page 3 >/dev/null 2>"$work/err"
+check "note open --page on a note that keeps its last page fails and names the shown page" "$?$(grep -c 'shows page 7, not page 3' "$work/err")" "91"
+run note open "Note/A note.note" --page 0 >/dev/null 2>&1
+check "note open --page 0 is a usage error before any start" "$?$(called 'am start')" "20"
 rm -f "$files/helper-answer" "$files/command.json" "$files/notes-found"
 cp "$work/tree-before-helper" "$files/tree.xml"
 reset_device

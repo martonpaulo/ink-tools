@@ -39,6 +39,10 @@ export const noteApi: HelperApi = {
     return unwrap<number>('getCurrentPageNum', await PluginCommAPI.getCurrentPageNum());
   },
 
+  async jumpToPage(page) {
+    unwrap('jumpToPage', await PluginCommAPI.jumpToPage(page));
+  },
+
   async insertStrokes(strokes, page) {
     const elements: Element[] = [];
     for (const points of strokes) {

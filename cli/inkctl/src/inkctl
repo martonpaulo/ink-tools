@@ -220,6 +220,28 @@ HELPER_ANSWER = re.compile(r"SNPROBE answer (?P<id>\S+) (?P<index>\d+)/(?P<count
 HELPER_UNKNOWN_ID = "unknown"
 HELPER_DATE_FORMAT = "+%m-%d %H:%M:%S.000"  # a device time `logcat -T` takes
 HELPER_TIMEOUT = 20.0
+HELPER_LOG_STEP = "inkctl logs --plugin Probe"
+# The test fixtures note (#220): one fixture per page, built by hand on the tablet; this table mirrors
+# its page map and is the one source the docs and `fixture --list` read. Rects are page pixels,
+# [left, top, right, bottom]; "serves" names the issues and checks that use the page.
+FIXTURES_NOTE = f"{TEST_NOTES_FOLDER}/Fixtures.note"
+FIXTURES_MAP = "https://github.com/martonpaulo/ink-tools/issues/214#issuecomment-6936338459"
+FIXTURE_LABEL = [60, 40, 1860, 110]  # every page's typed label, a text box at its top
+FIXTURES = (
+    {"name": "apple", "page": 1, "content": "the word «apple», handwritten", "rects": {"word": [500, 400, 727, 518]}, "serves": ["#13", "#35", "#169", "#19"]},
+    {"name": "maca", "page": 2, "content": "the word «maçã», handwritten", "rects": {"word": [500, 400, 762, 511]}, "serves": ["#114", "Word Lookup definitions"]},
+    {"name": "casa", "page": 3, "content": "the word «casa», handwritten", "rects": {"word": [500, 400, 697, 447]}, "serves": ["Word Lookup translation", "Real-Time Conversion"]},
+    {"name": "cafe", "page": 4, "content": "the word «café» with its accent, handwritten", "rects": {"word": [500, 400, 684, 486]}, "serves": ["Real-Time Conversion accents", "#144"]},
+    {"name": "coffee", "page": 5, "content": "label only: «coffee» is still to be written with the pen", "rects": {}, "serves": ["Word Lookup English cases"]},
+    {"name": "translation", "page": 6, "content": "Spanish and Chinese words, handwritten", "rects": {"aprovechar": [300, 400, 795, 506], "manzana": [300, 700, 760, 769], "pingguo": [300, 1000, 593, 1127]}, "serves": ["#127"]},
+    {"name": "full-name", "page": 7, "content": "a full name at the end of a line, and the name alone", "rects": {"line": [60, 383, 1868, 558], "name": [300, 900, 1316, 1075]}, "serves": ["#18"]},
+    {"name": "no-letters", "page": 8, "content": "a selection with no letters: one synthetic zigzag stroke", "rects": {"zigzag": [400, 500, 1000, 580]}, "serves": ["#165", "#166"]},
+    {"name": "marks", "page": 9, "content": "an arrow and a scribble, handwritten; a drawing is still to be made with the pen", "rects": {"arrow": [300, 500, 542, 534], "scribble": [900, 450, 1349, 621]}, "serves": ["#165", "Real-Time Conversion non-words"]},
+    {"name": "photo", "page": 10, "content": "an inserted apple photo, 960 x 870, placed by the host near the page centre; its rect is not measured", "rects": {}, "serves": ["#170", "#182", "#137", "#196", "#145", "#134"]},
+    {"name": "illustration", "page": 11, "content": "an inserted banana line drawing", "rects": {"drawing": [640, 1053, 1280, 1506]}, "serves": ["Image Editing on clipart", "#134"]},
+    {"name": "blank", "page": 12, "content": "label only", "rects": {}, "serves": ["Real-Time Conversion pen tests"]},
+    {"name": "below-word", "page": 13, "content": "handwriting right below a word", "rects": {"word": [577, 400, 804, 518], "line": [500, 560, 1252, 662]}, "serves": ["#152", "#168"]},
+)
 PAGE_WIDTH = 1920  # the owner's tablet (docs/supernote.md › Screen and units)
 PAGE_HEIGHT = 2560
 INK_SIZE = 60  # px of x-height: about 5 mm, a written word's size
@@ -872,12 +894,30 @@ def start_activity(device: Device, arguments: str) -> None:
         raise Failure(EXIT_FAILED, "device_error", output.strip())
 
 
-def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str]) -> tuple[dict, str]:
+def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str], page: int | None = None) -> tuple[dict, str]:
+    """Open the note; with a page, also prove the page it shows before the screen is read."""
     before = device.activity()
     quoted = " ".join(shlex.quote(part) for part in extras)
     start_activity(device, f"-a android.intent.action.VIEW -n {NOTE_ACTIVITY} {quoted}")
-    done, lines = after_action(device, args, before, {"path": path})
-    return done, "\n".join([f"opened: {path}", *lines])
+    result, opened = {"path": path}, [f"opened: {path}"]
+    if page is not None:
+        result["page"] = show_page(device, args, page)
+        opened.append(f"page: {page}")
+    done, lines = after_action(device, args, before, result)
+    return done, "\n".join([*opened, *lines])
+
+
+def show_page(device: Device, args: argparse.Namespace, page: int) -> int:
+    """Move the open note to a page, counted from 1, and prove it from Probe's read-back. The note app
+    ignores the `page` extra when the note was opened before and shows its last page (#220), so
+    Probe's `jumpToPage` does the move and answers `getCurrentPageNum`, both counted from 0."""
+    answer = helper_call(device, args, {"op": "jumpToPage", "page": page - 1})
+    shown = answer.get("page")
+    if not isinstance(shown, int) or isinstance(shown, bool):
+        raise Failure(EXIT_FAILED, "device_error", f"Probe gave no page number after the jump: {shown!r}", HELPER_LOG_STEP)
+    if shown != page - 1:
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the note shows page {shown + 1}, not page {page}", HELPER_LOG_STEP, extra={"page": shown + 1})
+    return page
 
 
 def need_note_suffix(path: str) -> None:
@@ -888,12 +928,60 @@ def need_note_suffix(path: str) -> None:
 def command_note_open(device: Device, args: argparse.Namespace):
     need_note_suffix(args.path)
     path = remote_path(args.path)
+    extras = note_extras(path, args.page)
     if not device.test(f"-f {shlex.quote(path)}"):
         raise not_found(path)
+    return start_note(device, args, path, extras, args.page)
+
+
+def note_extras(path: str, page: int | None) -> list[str]:
+    """The Launcher's extras; the page extra still serves a note opened for the first time."""
     extras = ["--es", "file_path", path, "--es", "from_app", "launcher"]
-    if args.page is not None:
-        extras += ["--ei", "page", str(args.page - 1)]
-    return start_note(device, args, path, extras)
+    if page is None:
+        return extras
+    if page < 1:
+        raise bad_usage(f"a page is counted from 1: {page}")
+    return extras + ["--ei", "page", str(page - 1)]
+
+
+def fixture_rects(fixture: dict) -> dict:
+    return {"label": FIXTURE_LABEL, **fixture["rects"]}
+
+
+def fixture_line(fixture: dict) -> str:
+    rects = "; ".join(f"{item} {rect}" for item, rect in fixture_rects(fixture).items())
+    return f"{fixture['page']:>2} {fixture['name']}: {fixture['content']}. Rects: {rects}. Serves: {', '.join(fixture['serves'])}"
+
+
+def find_fixture(name: str) -> dict:
+    for fixture in FIXTURES:
+        if fixture["name"] == name:
+            return fixture
+    raise bad_usage(f"no fixture is named {name!r}; the names: {', '.join(item['name'] for item in FIXTURES)}")
+
+
+def command_fixture(device: Device, args: argparse.Namespace):
+    """Open the fixtures note at a fixture's page and prove the page; optionally lasso one rect (#220)."""
+    if args.list_fixtures:
+        listed = [{**fixture, "rects": fixture_rects(fixture)} for fixture in FIXTURES]
+        data = {"note": FIXTURES_NOTE, "map": FIXTURES_MAP, "fixtures": listed}
+        return data, "\n".join([f"{FIXTURES_NOTE} (page map: {FIXTURES_MAP})", *map(fixture_line, FIXTURES)])
+    if not args.name:
+        raise bad_usage("name a fixture, or pass --list")
+    fixture = find_fixture(args.name)
+    rects = fixture_rects(fixture)
+    if args.lasso and args.lasso not in rects:
+        raise bad_usage(f"{fixture['name']} has no rect {args.lasso!r}; its rects: {', '.join(rects)}")
+    if not device.test(f"-f {shlex.quote(FIXTURES_NOTE)}"):
+        raise Failure(EXIT_NOT_FOUND, "not_found", f"{FIXTURES_NOTE} is not on the tablet; this command never creates it: rebuild it by hand as the page map says, {FIXTURES_MAP}", FIXTURES_MAP)
+    data, text = start_note(device, args, FIXTURES_NOTE, note_extras(FIXTURES_NOTE, fixture["page"]), fixture["page"])
+    data["fixture"] = fixture["name"]
+    if args.lasso:
+        left, top, right, bottom = rects[args.lasso]
+        answer = helper_call(device, args, {"op": "lassoRect", "rect": {"left": left, "top": top, "right": right, "bottom": bottom}})
+        data["lasso"], lassoed = lasso_answer(answer)
+        text = f"{text}\n{lassoed}"
+    return data, text
 
 
 def command_note_new(device: Device, args: argparse.Namespace):
@@ -1799,10 +1887,10 @@ def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict
         if answer is not None:
             break
         if time.monotonic() - started >= args.timeout:
-            raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", "inkctl logs --plugin Probe")
+            raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", HELPER_LOG_STEP)
         time.sleep(WAIT_INTERVAL)
     if not answer.get("ok"):
-        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", "inkctl logs --plugin Probe")
+        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", HELPER_LOG_STEP)
     return answer
 
 
@@ -3034,7 +3122,7 @@ def build_parser() -> argparse.ArgumentParser:
     notes = noun("note")
     opened = add(notes, "open", command_note_open, action, changes=True)
     opened.add_argument("path")
-    opened.add_argument("--page", type=int, help="page number, from 1")
+    opened.add_argument("--page", type=int, help="page number, from 1, proved through Probe's «Run Command»")
     add(notes, "new", command_note_new, action, changes=True).add_argument("path")
 
     files = noun("files")
@@ -3076,7 +3164,11 @@ def build_parser() -> argparse.ArgumentParser:
     for placed in (written, sampled):
         placed.add_argument("--at", nargs=2, type=int, metavar=("X", "Y"), required=True, help="the ink's top-left corner, in page pixels")
         placed.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
-    for helped in (boxed, last, written, sampled, saved):
+    fixtures = add(commands, "fixture", command_fixture, action, changes=True)
+    fixtures.add_argument("name", nargs="?", help="a fixture of Note/Tests/Fixtures.note, as --list names it")
+    fixtures.add_argument("--list", dest="list_fixtures", action="store_true", help="print each fixture, its page, its rects and what it serves; no tablet is reached")
+    fixtures.add_argument("--lasso", metavar="ITEM", help="then lasso this rect of the fixture, as --list names it")
+    for helped in (opened, fixtures, boxed, last, written, sampled, saved):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
         helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
 
@@ -3213,6 +3305,8 @@ def main() -> int:
             log.finish("(usage)", leaving.code, "usage")
         raise
     log.trace, log.paths = args.trace, args.log_paths
+    if getattr(args, "list_fixtures", False):  # `fixture --list` only reads the table in this file
+        args.needs_device = args.changes = False
     code, kind, device, before, after = EXIT_OK, None, None, "", ""
     try:
         if refuses_read_only(args):
