@@ -103,8 +103,19 @@ export const DEVICE: EditDeps = {
 /** An area inside the picture, in its pixels from its top left: Crop's box (#132). */
 export type Box = {left: number; top: number; width: number; height: number};
 
-/** A style's two options (#133), and the box Crop cuts to (#132); the other edits ignore both. */
-export type EditOptions = StyleOptions & {box?: Box};
+/**
+ * The pen marks Erase clears (#134), in the picture's pixels from its top left (the lasso preview
+ * is the picture at its page size, #130): `points` holds x, y of every point in turn, and `ends`
+ * the point count after each mark, so mark k is the points from `ends[k - 1]` (0 for the first) to
+ * `ends[k]`.
+ */
+export type Marks = {points: number[]; ends: number[]};
+
+/**
+ * A style's two options (#133), the box Crop cuts to (#132) and the marks Erase clears (#134); the
+ * other edits ignore them.
+ */
+export type EditOptions = StyleOptions & {box?: Box; marks?: Marks};
 
 /** What a press did, for the log and the tests. */
 export type Done =
@@ -125,6 +136,7 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   sticker: 'sticker',
   document: 'document',
   crop: 'crop',
+  erase: 'erase',
   photo: 'photo',
   line_art: 'line_art',
   black_white: 'black_white',
@@ -165,7 +177,8 @@ export const sizeOf = (rect: Rect) => ({
 
 /**
  * Runs `edit`, or a style with its `options` (#133), on the lassoed picture and logs the outcome.
- * Crop runs only with its box (#132), which src/crop.ts takes from the pen's rectangle.
+ * Crop runs only with its box (#132), which src/crop.ts takes from the pen's rectangle, and Erase
+ * only with its marks (#134), which src/erase.ts takes from the pen.
  */
 export async function runEdit(
   edit: EditId | StyleId,
@@ -250,6 +263,10 @@ async function pixelEdit(
   if (pixel === 'crop' && !box) {
     return {kind: 'failed', why: 'Crop has no box'};
   }
+  const marks = pixel === 'erase' ? options.marks : undefined;
+  if (pixel === 'erase' && !marks) {
+    return {kind: 'failed', why: 'Erase has no marks'};
+  }
   const width = await deps.pageWidth(place.note, place.page);
   if (!width.ok) {
     return {kind: 'failed', why: why('getPageSize', width)};
@@ -266,7 +283,17 @@ async function pixelEdit(
   const keep = new Set<string>();
   try {
     const size = sizeOf(place.rect);
-    const edited = box
+    const edited = marks
+      ? await deps.native.erase(
+          preview.value,
+          originalPath,
+          resultPath,
+          size.width,
+          size.height,
+          marks.points,
+          marks.ends,
+        )
+      : box
       ? await deps.native.crop(
           preview.value,
           originalPath,

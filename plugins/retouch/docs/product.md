@@ -32,7 +32,9 @@ or too dark on the 16-grey screen.
   both, tap Crop; the rectangle is erased
   ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
 - Remove background, which clears the border around the main object to transparent, and Make
-  sticker, which puts the object on a white card, each one tap; erase with the pen is still to come
+  sticker, which puts the object on a white card, each one tap, and Erase with the pen: draw over
+  the part to remove, lasso the picture and the marks, tap Erase; a band along each mark, and the
+  inside of a mark that closes on itself, turns clear, and the marks are erased
   ([#134](https://github.com/martonpaulo/supernote-tools/issues/134)).
 - Document, one tap: straighten a photographed page or whiteboard to an upright rectangle on a
   white background, cleaned to black and white. The page corners are found automatically; a photo

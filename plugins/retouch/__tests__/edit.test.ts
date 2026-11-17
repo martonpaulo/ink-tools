@@ -45,6 +45,14 @@ function world() {
       files.set(dest, 'png');
       return ok({width, height, left: _left, top: _top, ms: 5});
     }),
+    erase: jest.fn(async (src, before, dest, width, height) => {
+      expect(files.has(src)).toBe(true);
+      if (before) {
+        files.set(before, 'png');
+      }
+      files.set(dest, 'png');
+      return ok({width, height, left: 0, top: 0, ms: 5});
+    }),
     readText: jest.fn(async path => ok(files.get(path) ?? null)),
     writeText: jest.fn(async (path, text) => {
       files.set(path, text);
@@ -171,6 +179,33 @@ test('Crop cuts to its box and keeps the kept area where it was on the page (#13
 test('Crop without its box fails before anything is read or written (#132)', async () => {
   const w = world();
   expect(await runEdit('crop', w.deps)).toEqual({kind: 'failed', why: 'Crop has no box'});
+  expect(w.deps.preview).not.toHaveBeenCalled();
+  expect(w.modified).toEqual([]);
+});
+
+test('Erase sends its marks and keeps the picture in place, with Undo (#134)', async () => {
+  const w = world();
+  const marks = {points: [10, 20, 30, 40, 50.5, 60], ends: [1, 3]};
+  const done = await runEdit('erase', w.deps, {...NO_OPTIONS, marks});
+  expect(done.kind).toBe('edited');
+  expect(w.native.erase).toHaveBeenCalledWith(
+    expect.stringContaining('/preview-'),
+    expect.stringMatching(/-original\.png$/),
+    w.modified[0].path,
+    400,
+    300,
+    marks.points,
+    marks.ends,
+  );
+  expect(w.native.edit).not.toHaveBeenCalled();
+  expect(w.modified[0].rect).toEqual(RECT);
+  expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
+  expect(w.modified[1].rect).toEqual(RECT);
+});
+
+test('Erase without its marks fails before anything is read or written (#134)', async () => {
+  const w = world();
+  expect(await runEdit('erase', w.deps)).toEqual({kind: 'failed', why: 'Erase has no marks'});
   expect(w.deps.preview).not.toHaveBeenCalled();
   expect(w.modified).toEqual([]);
 });

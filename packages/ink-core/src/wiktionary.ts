@@ -189,20 +189,35 @@ function translationOf(
   return sense ? {...translation, sense} : translation;
 }
 
+/** One word of a translation template, with the reading the template itself gives, if any. */
+interface TemplateWord {
+  word: string;
+  reading?: string;
+}
+
 /**
- * The `to` translations of one template line: pt `{{trad|es|[[manzana]], [[poma]]}}`, es
- * `{{t|pt|a1=1|t1=maçã}}` or `{{t+|pt|1|maçã}}`. A template for another language is null.
+ * The `to` translations of one template line: pt `{{trad|es|[[manzana]], [[poma]]}}` or
+ * `{{t|zh|芒果||mángguǒ}}`, es `{{t|pt|a1=1|t1=maçã}}` or `{{t+|pt|1|maçã}}`. A template for another
+ * language is null.
  */
-function templateTranslations(name: string, args: string[], to: LanguageCode): string[] | null {
+function templateTranslations(name: string, args: string[], to: LanguageCode): TemplateWord[] | null {
   if (args[0] !== to) return null;
   const rest = args.slice(1);
   // Each argument is a word, and one argument may list several: the recorded pt «maçã» has
   // `{{trad|zh|苹果|林檎}}`, which gave the one word «苹果|林檎» (#127).
-  if (name === 'trad') return rest.join(',').split(/[,;]/);
+  if (name === 'trad') return rest.join(',').split(/[,;]/).map(word => ({word}));
   const numbered = rest.filter(arg => /^t\d+\s*=/.test(arg)).map(arg => arg.replace(/^t\d+\s*=/, ''));
-  if (numbered.length > 0) return numbered;
+  if (numbered.length > 0) return numbered.map(word => ({word}));
+  // pt `t`: the word, its gender, then its transliteration; the recorded pt «manga» has
+  // `{{t|zh|芒果||mángguǒ}}` and `{{t|de|Mango|f}}`, which gave «mángguǒ» and «f» as words (#127).
+  if (name === 't') {
+    const positional = rest.filter(arg => !arg.includes('='));
+    if (positional.length === 0) return [];
+    const reading = positional[2]?.trim();
+    return [reading ? {word: positional[0], reading} : {word: positional[0]}];
+  }
   // `t+`: a sense number, then the words; a named argument is not a word.
-  return rest.filter(arg => !arg.includes('=') && !/^[\d,\s]+$/.test(arg));
+  return rest.filter(arg => !arg.includes('=') && !/^[\d,\s]+$/.test(arg)).map(word => ({word}));
 }
 
 /** A table's opening template, whose first argument names the sense: pt `tradini`, es `trad-arriba`. */
@@ -235,8 +250,8 @@ export function parseTranslations(
       const tail = line.slice(end).split('{{')[0];
       const readings = [...tail.matchAll(new RegExp(READING.source, 'gu'))].map(r => r[1].trim());
       const words = templateTranslations(name, args, to) ?? [];
-      for (const [i, word] of words.entries()) {
-        const translation = translationOf(word, sense, readings[i]);
+      for (const [i, {word, reading}] of words.entries()) {
+        const translation = translationOf(word, sense, reading ?? readings[i]);
         if (translation === null) continue;
         if (translations.some(known => known.text === translation.text)) continue;
         translations.push(translation);

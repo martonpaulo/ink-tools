@@ -277,6 +277,10 @@ export function createDeviceTasks(
     );
     const oldInboxIds = new Set(oldInbox.map(g => String(g[LIST_ID])));
     const localOf = (r: Row) => rowToTodoTask(d, r).localId;
+    const twinKey = (r: Row) => {
+      const t = rowToTodoTask(d, r);
+      return JSON.stringify([String(r[col('listId')] ?? ''), t.title, t.due]);
+    };
     const moved: Record<string, string> = {};
     const found: TaskRepair['found'] = [];
     // A link to a row id whose row the native sync has since given a taskId follows the row.
@@ -316,7 +320,13 @@ export function createDeviceTasks(
       );
       return r.remoteId;
     };
-    for (const r of all) {
+    // A row that names its service task goes first, so a twin never takes its service task (#212).
+    const marked = (r: Row) =>
+      String(r[col('taskId')] ?? '').startsWith(SERVICE_TASK_PREFIX);
+    const ordered = [...all.filter(marked), ...all.filter(r => !marked(r))];
+    /** Rows kept as one side of a pair, by `twinKey`: a twin of one is removed below. */
+    const anchors = new Set<string>();
+    for (const r of ordered) {
       const taskId = r[col('taskId')];
       const listId = r[col('listId')];
       const mark =
@@ -369,6 +379,40 @@ export function createDeviceTasks(
       if (remoteId !== null) {
         found.push({remoteId, localId});
       }
+      if (isLinked || remoteId !== null) {
+        anchors.add(twinKey(r));
+      }
+    }
+    // The native cloud sync copied rows of the beta 15 pass into new rows with a taskId of its own
+    // (#212). Such a twin shares its list, title and due time with a row kept as a pair; it would
+    // read as a tablet-only task and be sent to the service again, so it is soft-deleted as the app
+    // does. A row with no such twin, perhaps the owner's own task, is kept. shortcut: a twin's own
+    // edit (a completion) is not copied to its pair; merge it if a device round shows one.
+    const pairs = new Set([...linked, ...found.map(f => f.localId)]);
+    for (const r of all) {
+      const taskId = r[col('taskId')];
+      const task = rowToTodoTask(d, r);
+      if (
+        task.deleted ||
+        empty(taskId) ||
+        String(taskId).startsWith(ID_PREFIX) ||
+        pairs.has(task.localId) ||
+        !anchors.has(twinKey(r))
+      ) {
+        continue;
+      }
+      one(
+        await rows.update(
+          tasks,
+          {[rowId]: r[rowId]},
+          {
+            [col('deleted')]: 1,
+            [col('modified')]: at,
+            [col('hasSync')]: d.todo.rules.writeHasSync,
+          },
+        ),
+        `remove twin task ${task.title}`,
+      );
     }
     // The old «Inbox» list is empty now; a soft delete lets the native sync remove it too.
     for (const g of oldInbox) {

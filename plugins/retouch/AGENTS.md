@@ -10,7 +10,9 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 **Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)) or **Document** ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)) in
 the lasso menu. **Crop** ([#132](https://github.com/martonpaulo/ink-tools/issues/132)) takes the picture lassoed with a rectangle drawn on it
 with the pen: `src/crop.ts` reads the strokes' bounds, deletes them, lassoes the picture alone by
-its rect and runs `runEdit` with that box. Each is a
+its rect and runs `runEdit` with that box. **Erase** ([#134](https://github.com/martonpaulo/ink-tools/issues/134)) takes the pen marks the same
+way, through the shared `src/guide.ts`: `src/erase.ts` passes their points to `Retouch.erase`, which
+clears a band along each mark and the inside of a closed one. Each is a
 lasso button for pictures, run with no view, and a switch in Settings, all on by default.
 **Styles** ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)) is the one lasso button with a view: `src/styles.ts` renders the
 picture in every style switched on into `style-*.png` in its working folder, `src/StylesGrid.tsx` shows

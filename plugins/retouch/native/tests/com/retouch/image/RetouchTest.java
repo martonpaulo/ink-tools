@@ -32,6 +32,12 @@ public final class RetouchTest {
     documentWarpsAQuadToAnUprightRectangle();
     documentCleansWithoutAQuadWhenThePageFillsTheFrame();
     documentScalesDownAndSurvivesTinyPictures();
+    eraseNeedsItsMarksAndKeepsTheSize();
+    eraseClearsABandAlongAnOpenMark();
+    eraseClearsTheInsideOfAClosedMark();
+    eraseFillsALoopDrawnTwiceRound();
+    eraseSurvivesTinyPicturesAndMarksOutside();
+    eraseRefusesBadMarkEnds();
     System.out.println("RetouchTest ok");
   }
 
@@ -465,6 +471,93 @@ public final class RetouchTest {
     Retouch.apply(Retouch.Edit.DOCUMENT, new Retouch.Picture(new int[40], 40, 1));
     Retouch.apply(Retouch.Edit.DOCUMENT, new Retouch.Picture(new int[] {gray(10), gray(240),
         gray(10), gray(240)}, 2, 2));
+  }
+
+  private static void eraseNeedsItsMarksAndKeepsTheSize() {
+    check(Retouch.Edit.of("erase") == Retouch.Edit.ERASE, "erase is known");
+    check(!Retouch.Edit.ERASE.isStyle(), "Erase is no style");
+    check(java.util.Arrays.equals(Retouch.outputSize(Retouch.Edit.ERASE, 3000, 2000, 1920),
+        new int[] {3000, 2000}), "Erase keeps the size, so the marks stay in place");
+    try {
+      Retouch.apply(Retouch.Edit.ERASE, new Retouch.Picture(new int[] {WHITE}, 1, 1));
+      throw new AssertionError("Erase without marks must be refused");
+    } catch (IllegalArgumentException expected) {
+      // refused: the marks come from the pen, through RetouchModule.erase
+    }
+  }
+
+  private static void eraseClearsABandAlongAnOpenMark() {
+    // A black 200 x 100 picture and one straight mark across it at y = 50.
+    Retouch.Picture picture = filled(200, 100, gray(0));
+    Retouch.erase(picture, new double[] {20, 50, 180, 50}, new int[] {2});
+    int r = (int) Retouch.ERASE_RADIUS;
+    check(picture.argb[50 * 200 + 100] == 0x00FFFFFF, "the mark's middle is clear white");
+    check(picture.argb[(50 + r - 1) * 200 + 100] == 0x00FFFFFF, "the band is the radius wide");
+    check(picture.argb[(50 + r + 2) * 200 + 100] == gray(0), "past the band the picture stays");
+    check(picture.argb[50 * 200 + 20 - r + 1] == 0x00FFFFFF, "the band rounds past the first point");
+    check(picture.argb[50 * 200 + 2] == gray(0), "far from the mark the picture stays");
+    check(picture.argb[5 * 200 + 100] == gray(0), "an open mark erases no inside");
+  }
+
+  private static void eraseClearsTheInsideOfAClosedMark() {
+    // A circle of radius 60 round (100, 100), drawn as 36 points; its last point meets its first.
+    Retouch.Picture picture = filled(200, 200, gray(0));
+    double[] xy = circle(100, 100, 60, 36, 1);
+    Retouch.erase(picture, xy, new int[] {xy.length / 2});
+    check(picture.argb[100 * 200 + 100] == 0x00FFFFFF, "the circle's centre is erased");
+    check(picture.argb[100 * 200 + 60] == 0x00FFFFFF, "inside the circle is erased");
+    check(picture.argb[5 * 200 + 5] == gray(0), "outside the circle stays");
+    // The same points with the last ones dropped leave a gap wider than ERASE_CLOSE: no inside.
+    Retouch.Picture open = filled(200, 200, gray(0));
+    double[] arc = java.util.Arrays.copyOf(xy, xy.length - 2 * 12);
+    Retouch.erase(open, arc, new int[] {arc.length / 2});
+    check(open.argb[100 * 200 + 100] == gray(0), "an open arc keeps its centre");
+  }
+
+  private static void eraseFillsALoopDrawnTwiceRound() {
+    // Two turns of the same circle: the non-zero rule keeps the inside, where even-odd would not.
+    Retouch.Picture picture = filled(200, 200, gray(0));
+    double[] xy = circle(100, 100, 60, 36, 2);
+    Retouch.erase(picture, xy, new int[] {xy.length / 2});
+    check(picture.argb[100 * 200 + 100] == 0x00FFFFFF, "a loop drawn twice keeps its inside erased");
+  }
+
+  private static void eraseSurvivesTinyPicturesAndMarksOutside() {
+    Retouch.Picture one = filled(1, 1, gray(0));
+    Retouch.erase(one, new double[] {0.5, 0.5}, new int[] {1});
+    check(one.argb[0] == 0x00FFFFFF, "a dot erases a 1 x 1 picture");
+    Retouch.Picture wide = filled(40, 1, gray(0));
+    Retouch.erase(wide, new double[] {-100, -100, -90, -100}, new int[] {2});
+    check(wide.argb[0] == gray(0), "a mark far outside erases nothing");
+    Retouch.Picture edge = filled(40, 40, gray(0));
+    Retouch.erase(edge, new double[] {-5, 20, -5, 25}, new int[] {2});
+    check(edge.argb[20 * 40] == 0x00FFFFFF, "a mark just outside erases the band it reaches");
+    Retouch.Picture none = filled(4, 4, gray(0));
+    Retouch.erase(none, new double[] {}, new int[] {});
+    check(none.argb[0] == gray(0), "no mark erases nothing");
+  }
+
+  private static void eraseRefusesBadMarkEnds() {
+    int[][] bad = {{3}, {2, 1}, {1}};
+    for (int[] ends : bad) {
+      try {
+        Retouch.eraseMask(10, 10, new double[] {1, 1, 2, 2}, ends, 1);
+        throw new AssertionError("mark ends " + java.util.Arrays.toString(ends) + " must be refused");
+      } catch (IllegalArgumentException expected) {
+        // refused: the ends must be ascending and end at the point count
+      }
+    }
+  }
+
+  /** `turns` turns of a circle as `steps` points each, ending on its first point. */
+  private static double[] circle(double cx, double cy, double radius, int steps, int turns) {
+    double[] xy = new double[2 * (steps * turns + 1)];
+    for (int i = 0; i <= steps * turns; i++) {
+      double angle = 2 * Math.PI * i / steps;
+      xy[2 * i] = cx + radius * Math.cos(angle);
+      xy[2 * i + 1] = cy + radius * Math.sin(angle);
+    }
+    return xy;
   }
 
   private static void patch(int[] argb, int size, int cx, int cy, int value) {

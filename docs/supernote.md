@@ -177,11 +177,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   200 x 200 picture, lassoed by the picture's rect, gave `getLassoElementTypeCounts`
   `{"trailNum":1,"bitmapNum":1}`, and the «⋯» list kept Image Editing's rows next to the stroke
   rows [measured, Nomad, 2026-11-17, [#132](https://github.com/martonpaulo/ink-tools/issues/132)].
-  Image Editing's Crop relies on three facts not yet measured, each logged on its press: a lassoed
+  Image Editing's Crop and Erase rely on three facts not yet measured, each logged on its press: a lassoed
   stroke's points read in page pixels, as a page read's do (points off the page are taken as EMR);
   each lassoed stroke has its `numInPage`; and `batchUpdatePageElements(nums, [], page)` with an
   empty insert list deletes those strokes and leaves the picture's place for a new
-  `lassoElements(rect)` [unverified, [#132](https://github.com/martonpaulo/ink-tools/issues/132)].
+  `lassoElements(rect)` [unverified, [#132](https://github.com/martonpaulo/ink-tools/issues/132), [#134](https://github.com/martonpaulo/ink-tools/issues/134)].
 - `lassoElements(rect)` with an inserted picture's rect also selects the handwriting strokes under
   the picture, and a delete of that selection removes them [measured, pen round, 2026-11-16,
   Lookup 0.2.0 beta 4, [#168](https://github.com/martonpaulo/ink-tools/issues/168)].
@@ -224,6 +224,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   whose `taskListId` Account Sync made (`inktools…`) kept it after the native sync (`hasSync = 1`).
   A task with an empty `taskListId` is an unfiled task, the app's own Inbox [decompiled
   `DataBaseTools.insert`; a pulled unfiled task is not yet seen on the tablet].
+- After a pass of Account Sync 0.1.0 beta 15, the native To-Do cloud sync left 5 extra rows in a
+  list Account Sync made: `hasSync = 1`, a `taskId` of its own, and the list, title and due time of
+  a pulled row that kept its `inktools…` `taskId` [measured rows, Account Sync 0.1.0 beta 18; their
+  origin inferred, [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. The repair soft-deletes such a twin (`deleted = 1`), so
+  it is never read as a tablet-only task.
 - The calendar's `data_info` delete with the selection `title = ?` removed 0 rows of a row just
   inserted with that title, so each probe left its test row; Account Sync now deletes by the row id
   the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The Probe does the same, and Account

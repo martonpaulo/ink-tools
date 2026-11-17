@@ -3,6 +3,7 @@ package com.retouch.image;
 import com.ink2pic.files.Contour;
 import com.ink2pic.files.Decolor;
 import com.ink2pic.files.EinkPixels;
+import java.util.Arrays;
 
 /**
  * Retouch's pixel edits (#136), plain Java on unpremultiplied ARGB pixels with no Android types,
@@ -18,6 +19,19 @@ public final class Retouch {
   public static final double GAMMA_STEP = 1.25;
   /** Enhance's sharpen: the share of the difference from the 3 x 3 mean added back. */
   public static final double SHARPEN_AMOUNT = 0.6;
+
+  /**
+   * Erase's band (#134): a pixel whose centre lies within this many picture pixels of a pen mark is
+   * cleared, so one pass of the pen erases a stripe about 2.7 mm wide on the Manta.
+   * shortcut: a fixed width, since the stroke's `thickness` has no measured unit in pixels; take
+   * the pen's width once the device round measures it.
+   */
+  public static final double ERASE_RADIUS = 16;
+  /**
+   * A mark whose last point lies within this many pixels of its first closes on itself, so its
+   * inside is erased too: circle the part to remove and it goes.
+   */
+  public static final double ERASE_CLOSE = 48;
 
   /** Trim's white: a pixel whose red, green and blue are all at least this is margin. */
   public static final int TRIM_WHITE = 240;
@@ -63,6 +77,8 @@ public final class Retouch {
     DOCUMENT,
     // #132: the box the person drew with the pen; it needs that box, so apply refuses it.
     CROP,
+    // #134: the marks the person drew with the pen; it needs them, so apply refuses it.
+    ERASE,
     // #133: the styles of the grid, each ending on the screen's greys.
     PHOTO,
     LINE_ART,
@@ -333,6 +349,8 @@ public final class Retouch {
         return document(picture);
       case CROP:
         throw new IllegalArgumentException("crop needs its box: call crop(picture, box)");
+      case ERASE:
+        throw new IllegalArgumentException("erase needs its marks: call erase(picture, xy, ends)");
       case PHOTO:
       case LINE_ART:
       case BLACK_WHITE:
@@ -807,6 +825,140 @@ public final class Retouch {
       if (bg[i]) {
         picture.argb[i] = transparent ? (picture.argb[i] & 0x00FFFFFF) : WHITE;
       }
+    }
+  }
+
+  /**
+   * Erase with the pen (#134), in place: every pixel {@link #eraseMask} marks becomes clear white,
+   * so the page shows through and a reader that ignores alpha still sees paper.
+   */
+  public static void erase(Picture picture, double[] xy, int[] ends) {
+    boolean[] mask = eraseMask(picture.width, picture.height, xy, ends, ERASE_RADIUS);
+    for (int i = 0; i < mask.length; i++) {
+      if (mask[i]) {
+        picture.argb[i] = 0x00FFFFFF;
+      }
+    }
+  }
+
+  /**
+   * The pixels the pen marks erase on a `width` x `height` picture (#134). `xy` holds x, y of every
+   * point in turn, in the picture's pixels; `ends` the point count after each mark, ascending, the
+   * last one every point. A pixel is erased when its centre lies within `radius` of a mark, and
+   * inside a mark that closes on itself ({@link #ERASE_CLOSE}), by the non-zero rule, so a loop
+   * drawn twice round stays filled. A point outside the picture still erases the band it reaches.
+   */
+  public static boolean[] eraseMask(int width, int height, double[] xy, int[] ends, double radius) {
+    if (width < 1 || height < 1 || xy.length % 2 != 0 || !(radius >= 0)) {
+      throw new IllegalArgumentException("bad erase input");
+    }
+    boolean[] mask = new boolean[width * height];
+    int start = 0;
+    for (int end : ends) {
+      if (end < start || end > xy.length / 2) {
+        throw new IllegalArgumentException("the mark ends are not ascending inside the points");
+      }
+      if (end > start) {
+        band(mask, width, height, xy, start, end, radius);
+        if (end - start >= 3
+            && Math.hypot(xy[2 * start] - xy[2 * (end - 1)], xy[2 * start + 1] - xy[2 * (end - 1) + 1])
+                <= ERASE_CLOSE) {
+          fillInside(mask, width, height, xy, start, end);
+        }
+      }
+      start = end;
+    }
+    if (start != xy.length / 2) {
+      throw new IllegalArgumentException("the last mark end is not the point count");
+    }
+    return mask;
+  }
+
+  /** Marks every pixel whose centre lies within `radius` of the mark's points `start` to `end`. */
+  private static void band(
+      boolean[] mask, int w, int h, double[] xy, int start, int end, double radius) {
+    for (int k = start; k < end; k++) {
+      int next = Math.min(k + 1, end - 1);
+      double ax = xy[2 * k];
+      double ay = xy[2 * k + 1];
+      double bx = xy[2 * next];
+      double by = xy[2 * next + 1];
+      int x0 = Math.max(0, (int) Math.floor(Math.min(ax, bx) - radius));
+      int x1 = Math.min(w - 1, (int) Math.ceil(Math.max(ax, bx) + radius));
+      int y0 = Math.max(0, (int) Math.floor(Math.min(ay, by) - radius));
+      int y1 = Math.min(h - 1, (int) Math.ceil(Math.max(ay, by) + radius));
+      double dx = bx - ax;
+      double dy = by - ay;
+      double length2 = dx * dx + dy * dy;
+      for (int y = y0; y <= y1; y++) {
+        for (int x = x0; x <= x1; x++) {
+          double px = x + 0.5 - ax;
+          double py = y + 0.5 - ay;
+          double t = length2 == 0 ? 0 : Math.max(0, Math.min(1, (px * dx + py * dy) / length2));
+          double ex = px - t * dx;
+          double ey = py - t * dy;
+          if (ex * ex + ey * ey <= radius * radius) {
+            mask[y * w + x] = true;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Marks every pixel whose centre lies inside the closed mark `start` to `end` (its last point
+   * joined back to its first) by the non-zero winding rule, one scanline per pixel row.
+   */
+  private static void fillInside(boolean[] mask, int w, int h, double[] xy, int start, int end) {
+    int count = end - start;
+    // Crossings of the row by edges going down and going up, each sorted on its own: the walk
+    // merges them, so a scribble with many crossings sorts as fast as a plain loop.
+    double[] downs = new double[count];
+    double[] ups = new double[count];
+    for (int y = 0; y < h; y++) {
+      double cy = y + 0.5;
+      int down = 0;
+      int up = 0;
+      for (int k = 0; k < count; k++) {
+        int a = start + k;
+        int b = start + (k + 1) % count;
+        double ay = xy[2 * a + 1];
+        double by = xy[2 * b + 1];
+        boolean goesDown = ay <= cy && by > cy;
+        if (!goesDown && !(by <= cy && ay > cy)) {
+          continue;
+        }
+        double x = xy[2 * a] + (cy - ay) / (by - ay) * (xy[2 * b] - xy[2 * a]);
+        if (goesDown) {
+          downs[down++] = x;
+        } else {
+          ups[up++] = x;
+        }
+      }
+      Arrays.sort(downs, 0, down);
+      Arrays.sort(ups, 0, up);
+      int winding = 0;
+      double from = 0;
+      for (int i = 0, j = 0; i < down || j < up; ) {
+        boolean takeDown = j >= up || (i < down && downs[i] <= ups[j]);
+        double x = takeDown ? downs[i++] : ups[j++];
+        int before = winding;
+        winding += takeDown ? 1 : -1;
+        if (before == 0) {
+          from = x;
+        } else if (winding == 0) {
+          fillRow(mask, w, y, from, x);
+        }
+      }
+    }
+  }
+
+  /** Marks row `y`'s pixels whose centre x + 0.5 lies in [from, to). */
+  private static void fillRow(boolean[] mask, int w, int y, double from, double to) {
+    int first = Math.max(0, (int) Math.ceil(from - 0.5));
+    int last = Math.min(w, (int) Math.ceil(to - 0.5));
+    for (int x = first; x < last; x++) {
+      mask[y * w + x] = true;
     }
   }
 

@@ -28,6 +28,7 @@ export type PixelEdit =
   | 'sticker'
   | 'document'
   | 'crop'
+  | 'erase'
   | StyleId;
 
 /** The grid's styles (#133), each ending on the screen's greys. */
@@ -81,6 +82,15 @@ type Native = {
     boxWidth: number,
     boxHeight: number,
   ): Promise<Edited>;
+  erase(
+    srcPath: string,
+    beforePath: string,
+    destPath: string,
+    width: number,
+    height: number,
+    points: number[],
+    ends: number[],
+  ): Promise<Edited>;
   readText(path: string): Promise<string | null>;
   writeText(path: string, text: string): Promise<null>;
   deleteFile(path: string): Promise<boolean>;
@@ -89,6 +99,7 @@ type Native = {
 const MODULE_OF: Record<keyof Native, string> = {
   edit: IMAGE_MODULE,
   crop: IMAGE_MODULE,
+  erase: IMAGE_MODULE,
   readText: FILES_MODULE,
   writeText: FILES_MODULE,
   deleteFile: FILES_MODULE,
@@ -128,6 +139,7 @@ export function retouchNative(
   return {
     edit: call('edit'),
     crop: call('crop'),
+    erase: call('erase'),
     readText: call('readText'),
     writeText: call('writeText'),
     deleteFile: call('deleteFile'),

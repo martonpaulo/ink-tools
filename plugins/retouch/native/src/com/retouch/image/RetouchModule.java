@@ -7,6 +7,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.ink2pic.files.EinkPixels;
 import com.ink2pic.files.SafePaths;
@@ -68,7 +69,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       boolean thick,
       Promise promise) {
     settle(promise, () -> run(
-        edit, srcPath, beforePath, destPath, width, height, pageWidth, transparent, thick, null));
+        edit, srcPath, beforePath, destPath, width, height, pageWidth, transparent, thick, null,
+        null, null));
   }
 
   /**
@@ -90,7 +92,49 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       Promise promise) {
     settle(promise, () -> run(
         "crop", srcPath, beforePath, destPath, width, height, width, false, false,
-        new int[] {count(boxLeft), count(boxTop), whole(boxWidth), whole(boxHeight)}));
+        new int[] {count(boxLeft), count(boxTop), whole(boxWidth), whole(boxHeight)}, null, null));
+  }
+
+  /**
+   * Erase with the pen (#134): as {@link #edit} with `erase`, clearing what the marks cover.
+   * `points` holds x, y of every point in turn, in the picture's pixels, and `ends` the point count
+   * after each mark ({@link Retouch#eraseMask}). Resolves the same map, at the picture's size.
+   */
+  @ReactMethod
+  public void erase(
+      String srcPath,
+      String beforePath,
+      String destPath,
+      double width,
+      double height,
+      ReadableArray points,
+      ReadableArray ends,
+      Promise promise) {
+    settle(promise, () -> run(
+        "erase", srcPath, beforePath, destPath, width, height, width, false, false, null,
+        numbers(points), counts(ends)));
+  }
+
+  /** The bridge array as doubles; a value that is not a finite number is refused. */
+  private static double[] numbers(ReadableArray array) throws SafePaths.Refused {
+    double[] values = new double[array.size()];
+    for (int i = 0; i < values.length; i++) {
+      double value = array.getDouble(i);
+      if (Double.isNaN(value) || Double.isInfinite(value)) {
+        throw new SafePaths.Refused("BAD_MARKS", "a mark point is not a number: " + value);
+      }
+      values[i] = value;
+    }
+    return values;
+  }
+
+  /** The bridge array as whole counts at or above 0. */
+  private static int[] counts(ReadableArray array) throws SafePaths.Refused {
+    int[] values = new int[array.size()];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = count(array.getDouble(i));
+    }
+    return values;
   }
 
   private interface Work {
@@ -125,7 +169,9 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       double pageWidth,
       boolean transparent,
       boolean thick,
-      int[] cropBox)
+      int[] cropBox,
+      double[] markXy,
+      int[] markEnds)
       throws Exception {
     long start = System.nanoTime();
     Retouch.Edit edit = Retouch.Edit.of(editName);
@@ -143,6 +189,9 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : cropBox;
     if (box != null) {
       picture = Retouch.crop(picture, box);
+    } else if (edit == Retouch.Edit.ERASE && markXy != null) {
+      // Without its marks (an `edit` call), Erase falls to apply, which refuses it.
+      Retouch.erase(picture, markXy, markEnds);
     } else if (edit == Retouch.Edit.STICKER) {
       Retouch.sticker(picture, transparent);
     } else if (edit.isStyle()) {
