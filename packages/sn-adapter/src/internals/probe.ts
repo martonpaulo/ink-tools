@@ -1,17 +1,16 @@
 import {Capability, Descriptor, column, contentUri} from './descriptorModel';
-import {Row, toCalendarInsert} from './rules';
+import {Row} from './rules';
 
 /** What the plugin runtime provides: one cheap, unfiltered query per table. No device logic here. */
 export interface DeviceReader {
   /** Resolve with the column names the provider returns, or reject when the provider does not answer. */
   columnsOf(uri: string): Promise<string[]>;
   /**
-   * Insert one test row with a marker text in `markerColumn` and delete the rows carrying it again,
-   * as `plugins/probe` does (#67). `values` are the other columns the real writer sets, so a NOT NULL
-   * column (the Calendar's `tag`) is filled as a real row fills it. Resolve when both passed; reject
-   * when the provider refuses the write.
+   * Update the rows whose columns equal `where` with `values`, and resolve with the number changed;
+   * reject when the provider refuses the write. The probe passes a `where` that matches none of the
+   * owner's rows, so the test write inserts nothing and changes nothing of the owner's (#43).
    */
-  dryInsert(uri: string, markerColumn: string, values: Row): Promise<void>;
+  testWrite(uri: string, where: Row, values: Row): Promise<number>;
 }
 
 /**
@@ -20,34 +19,40 @@ export interface DeviceReader {
  * Digest and reach Supernote Cloud (#42, docs/research/2026-11-digest-provider.md).
  */
 const WRITE_TABLE: Partial<Record<Capability, string>> = {calendar: 'events', todo: 'tasks'};
-/** The text field of each write table that carries the test row's marker (#43), as `plugins/probe` marks it. */
-const MARKER_FIELD: Partial<Record<Capability, string>> = {calendar: 'title', todo: 'title'};
 
-/** The text the device module writes in the marker column; also the test event's calendar. */
+/**
+ * The text that Account Sync 0.1.0 beta 11 to beta 16 wrote in the title and the calendar id of each
+ * test row they inserted. The Calendar provider never deletes a row (its delete is `return 0;`), so
+ * those rows stayed (#43).
+ */
 export const DRY_INSERT_MARKER = 'Account Sync dry insert';
 
 /**
- * The other columns of each test row, built by the real writer's rule, so every NOT NULL column is
- * filled as a real row fills it (`NOT NULL constraint failed: data_info.tag`, then
- * `lastModifiedTime`, #43). The test event lasts one hour from `now`.
+ * Each capability's test write: an update, never an insert, since the Calendar provider cannot
+ * delete a test row again (#43). The Calendar's `where` matches only the test rows older builds
+ * left, and marks them `cancelled`, as the native app removes a row; on a clean tablet it matches
+ * nothing. The To-Do's `where` asks for the row id -1, which no row has.
  */
-const TEST_ROW_VALUES: Partial<Record<Capability, (d: Descriptor, now: number) => Row>> = {
-  calendar: (d, now) => {
+const TEST_WRITE: Partial<Record<Capability, (d: Descriptor) => {where: Row; values: Row}>> = {
+  calendar: d => {
     const col = (field: string) => column(d.calendar, 'events', field);
-    return toCalendarInsert(d, {
-      [col('calendarId')]: DRY_INSERT_MARKER,
-      [col('title')]: DRY_INSERT_MARKER,
-      [col('content')]: '',
-      [col('start')]: now,
-      [col('end')]: now + HOUR_MS,
-      [col('allDay')]: 0,
-      [col('readOnly')]: 1,
-      [col('modified')]: now,
-    });
+    return {
+      where: {
+        [col('tag')]: d.calendar.rules.writeTag,
+        [col('calendarId')]: DRY_INSERT_MARKER,
+        [col('title')]: DRY_INSERT_MARKER,
+      },
+      values: {[col('status')]: d.calendar.rules.cancelledStatus},
+    };
+  },
+  todo: d => {
+    const col = (field: string) => column(d.todo, 'tasks', field);
+    return {where: {[col('rowId')]: NO_ROW_ID}, values: {[col('title')]: DRY_INSERT_MARKER}};
   },
 };
 
-const HOUR_MS = 60 * 60 * 1000;
+/** A row id no provider gives: the Supernote providers answer a refused insert with -1 (#63). */
+const NO_ROW_ID = -1;
 
 /** Why a capability with no test write stays unable to write. */
 export const NO_TEST_WRITE = 'no test write: the provider refuses deletes, so a test row would stay (#42)';
@@ -56,7 +61,7 @@ export interface CapabilityStatus {
   capability: Capability;
   /** Every table answered with the columns the descriptor lists. */
   available: boolean;
-  /** A marked, reverted dry insert into the write table passed; false when reads failed first. */
+  /** A test write into the write table passed; false when reads failed first. */
   canWrite: boolean;
   /** Human-readable reasons: provider silent, columns missing, or the write refused. */
   problems: string[];
@@ -70,7 +75,6 @@ export async function probeCapability(
   descriptor: Descriptor,
   capability: Capability,
   reader: DeviceReader,
-  now: number = Date.now(),
 ): Promise<CapabilityStatus> {
   const module = descriptor[capability];
   const problems: string[] = [];
@@ -90,13 +94,14 @@ export async function probeCapability(
   // No write is tried against a schema that already failed to match.
   let canWrite = false;
   const table = WRITE_TABLE[capability];
-  const marker = MARKER_FIELD[capability];
-  if (available && (!table || !marker)) {
+  const write = TEST_WRITE[capability];
+  if (available && (!table || !write)) {
     problems.push(NO_TEST_WRITE);
-  } else if (available && table && marker) {
+  } else if (available && table && write) {
     const uri = contentUri(module, table);
+    const {where, values} = write(descriptor);
     try {
-      await reader.dryInsert(uri, column(module, table, marker), TEST_ROW_VALUES[capability]?.(descriptor, now) ?? {});
+      await reader.testWrite(uri, where, values);
       canWrite = true;
     } catch (e) {
       problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);
@@ -105,6 +110,6 @@ export async function probeCapability(
   return {capability, available, canWrite, problems};
 }
 
-export async function probeAll(descriptor: Descriptor, reader: DeviceReader, now: number = Date.now()): Promise<CapabilityStatus[]> {
-  return Promise.all((['calendar', 'todo', 'digest'] as const).map(c => probeCapability(descriptor, c, reader, now)));
+export async function probeAll(descriptor: Descriptor, reader: DeviceReader): Promise<CapabilityStatus[]> {
+  return Promise.all((['calendar', 'todo', 'digest'] as const).map(c => probeCapability(descriptor, c, reader)));
 }

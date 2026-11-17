@@ -100,8 +100,9 @@ test('a device that matches the descriptor clears the probe, so Calendar waits f
   const marked: string[] = [];
   const reader: DeviceReader = {
     columnsOf: descriptorColumns,
-    dryInsert: async (uri, markerColumn) => {
-      marked.push(`${uri} ${markerColumn}`);
+    testWrite: async uri => {
+      marked.push(uri);
+      return 0;
     },
   };
   let tree!: ReactTestRenderer;
@@ -110,7 +111,7 @@ test('a device that matches the descriptor clears the probe, so Calendar waits f
   });
   await act(async () => toggle(tree, 'Calendar').props.onPress());
   expect(texts(tree)).toContain(copy['status.waiting']);
-  expect(marked).toContain(`${contentUri(D.calendar, 'events')} title`);
+  expect(marked).toContain(contentUri(D.calendar, 'events'));
 });
 
 test('a probe that throws blocks every module with its reason, never a silent pass (#43)', async () => {
@@ -166,7 +167,7 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
   const {runner, publish} = fakeRunner();
   const reader: DeviceReader = {
     columnsOf: descriptorColumns,
-    dryInsert: async () => {},
+    testWrite: async () => 0,
   };
   let tree!: ReactTestRenderer;
   await act(async () => {

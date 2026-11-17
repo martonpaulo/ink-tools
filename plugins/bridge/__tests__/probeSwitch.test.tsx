@@ -30,10 +30,11 @@ function device(
   refuse: string[] = [],
 ): DeviceReader {
   return {
-    dryInsert: async uri => {
+    testWrite: async uri => {
       if (refuse.includes(uri)) {
         throw new Error('Permission Denial');
       }
+      return 0;
     },
     columnsOf: async uri => {
       const changed = change[uri];

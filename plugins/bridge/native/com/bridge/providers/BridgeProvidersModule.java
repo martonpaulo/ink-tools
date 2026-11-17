@@ -1,7 +1,6 @@
 package com.bridge.providers;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
@@ -20,8 +19,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * The device half of sn-adapter's `DeviceReader` (#43): one unfiltered query for a table's columns,
- * and a marked test row inserted and deleted again, as plugins/probe does (#67). It names no
+ * The device half of sn-adapter's `DeviceReader` (#43): one unfiltered query for a table's columns;
+ * the probe's test write is a plain {@link #update} whose filter matches none of the owner's rows,
+ * because the Calendar provider never deletes a row, so an inserted test row would stay. It names no
  * provider: every URI and column comes from sn-adapter's descriptor through the JavaScript caller,
  * so a changed provider is a descriptor update, never a native build.
  *
@@ -31,8 +31,6 @@ import java.util.concurrent.Executors;
  * insert the provider ignored is a rejection, never an id.
  */
 public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
-  /** The text a test row carries; the revert deletes only rows whose marker column equals it. */
-  static final String MARKER = "Account Sync dry insert";
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
 
   public BridgeProvidersModule(ReactApplicationContext context) {
@@ -66,137 +64,6 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
             promise.reject("query_failed", String.valueOf(error.getMessage()), error);
           }
         });
-  }
-
-  /**
-   * Inserts one row with {@link #MARKER} in {@code markerColumn} and {@code values} in the other
-   * columns, then deletes it by its row id ({@code idColumn}), with every older row carrying the
-   * marker ({@link DryInsertRevert}). Resolves only when both passed. It rejects with {@code
-   * insert_refused} when the provider wrote no row (it threw, returned null or an id below 0), and
-   * with {@code revert_failed}, counting the rows, only when a marked row is still listed (#43).
-   */
-  @ReactMethod
-  public void dryInsert(
-      String uri, String markerColumn, String idColumn, ReadableMap values, Promise promise) {
-    worker.execute(
-        () -> {
-          ContentResolver resolver = getReactApplicationContext().getContentResolver();
-          Uri base = Uri.parse(uri);
-          boolean written;
-          String createdId;
-          try {
-            ContentValues row = values(values);
-            row.put(markerColumn, MARKER);
-            Uri created = resolver.insert(base, row);
-            written = wroteRow(created);
-            createdId = written ? rowId(created) : null;
-          } catch (Throwable error) {
-            promise.reject("insert_refused", String.valueOf(error.getMessage()), error);
-            return;
-          }
-          String where = " where " + markerColumn + " is '" + MARKER + "'";
-          try {
-            DryInsertRevert.Result result =
-                DryInsertRevert.revert(
-                    new ProviderTable(resolver, base, idColumn, markerColumn), MARKER, createdId);
-            if (!written) {
-              promise.reject("insert_refused", "the provider did not write the test row");
-            } else if (result.remaining > 0) {
-              promise.reject(
-                  "revert_failed",
-                  result.remaining + " test rows remain" + where + " after deleting them by " + idColumn);
-            } else {
-              promise.resolve(null);
-            }
-          } catch (Throwable error) {
-            if (!written) {
-              promise.reject(
-                  "insert_refused", "the provider did not write the test row; the cleanup delete failed too: " + error.getMessage(), error);
-            } else {
-              promise.reject("revert_failed", "a test row may remain" + where + ": " + error.getMessage(), error);
-            }
-          }
-        });
-  }
-
-  /** The new row's id from the insert's answer, or null when it holds no number. */
-  static String rowId(Uri created) {
-    try {
-      long id = ContentUris.parseId(created);
-      return id >= 0 ? String.valueOf(id) : null;
-    } catch (RuntimeException notNumeric) {
-      return null;
-    }
-  }
-
-  /** The test write's table over ContentResolver: a marker query, and a delete of one row by id. */
-  private static final class ProviderTable implements DryInsertRevert.Table {
-    private final ContentResolver resolver;
-    private final Uri base;
-    private final String idColumn;
-    private final String markerColumn;
-
-    ProviderTable(ContentResolver resolver, Uri base, String idColumn, String markerColumn) {
-      this.resolver = resolver;
-      this.base = base;
-      this.idColumn = idColumn;
-      this.markerColumn = markerColumn;
-    }
-
-    @Override
-    public List<String[]> marked() {
-      List<String[]> out = new ArrayList<>();
-      try (Cursor cursor =
-          resolver.query(
-              base, new String[] {idColumn, markerColumn}, markerColumn + " = ?", new String[] {MARKER}, null)) {
-        if (cursor == null) {
-          return out;
-        }
-        int id = cursor.getColumnIndex(idColumn);
-        int marker = cursor.getColumnIndex(markerColumn);
-        if (id < 0 || marker < 0) {
-          throw new IllegalStateException("the provider listed no " + idColumn + " or " + markerColumn + " column");
-        }
-        while (cursor.moveToNext()) {
-          out.add(new String[] {cursor.getString(id), cursor.getString(marker)});
-        }
-      }
-      return out;
-    }
-
-    /**
-     * Deletes one row: first through the row's own URI ({@code base/<id>}, Android's convention for
-     * one row), with the id in the selection too; when that removes nothing or the provider does not
-     * know the URI, through the table URI with the id selection alone.
-     */
-    @Override
-    public int deleteById(String id) {
-      String selection = idColumn + " = ?";
-      String[] args = {id};
-      int removed = 0;
-      try {
-        removed = resolver.delete(ContentUris.withAppendedId(base, Long.parseLong(id)), selection, args);
-      } catch (RuntimeException unknownUri) {
-        removed = 0;
-      }
-      return removed > 0 ? removed : resolver.delete(base, selection, args);
-    }
-  }
-
-  /**
-   * Whether an insert's answer names a written row. A provider that refuses a row may answer null or
-   * an id below 0 instead of throwing; an answer without a numeric id counts as written, so a row
-   * that might exist is never reported as absent.
-   */
-  static boolean wroteRow(Uri created) {
-    if (created == null) {
-      return false;
-    }
-    try {
-      return ContentUris.parseId(created) >= 0;
-    } catch (RuntimeException notNumeric) {
-      return true;
-    }
   }
 
   /** The selection of a filter: {@code a = ? AND b IS NULL}; an empty filter selects every row. */

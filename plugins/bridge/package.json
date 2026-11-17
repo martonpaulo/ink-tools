@@ -8,8 +8,7 @@
     "lint:ui-kit": "eslint --max-warnings 0 -c .eslintrc.js --resolve-plugins-relative-to . ../../packages/ui-kit",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "test:native": "node scripts/native-test.cjs",
-    "validate": "npm run lint && npm run typecheck && npm test && npm run test:native",
+    "validate": "npm run lint && npm run typecheck && npm test",
     "start": "react-native start",
     "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package"
   },

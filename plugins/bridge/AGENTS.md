@@ -48,11 +48,13 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
 - **Device probe** ([#43](https://github.com/martonpaulo/ink-tools/issues/43)): `BridgeProviders`, a Java module beside `BridgeFiles`, is sn-adapter's
   `DeviceReader` over ContentResolver (`src/deviceReader.ts`); every URI and column comes from the
   descriptor. Settings runs `probeAll` once per open, and a module it does not clear stays blocked
-  with the reason. Not yet run on the tablet.
+  with the reason. Its test write is an `update` that matches none of the owner's rows, never an
+  insert: the Calendar provider cannot delete a row, so a removed Calendar event is a row marked
+  `status = 'cancelled'`, as the native app does (`../../docs/supernote.md`).
 - **Sync runner** ([#28](https://github.com/martonpaulo/ink-tools/issues/28), [#44](https://github.com/martonpaulo/ink-tools/issues/44)): `src/sync.ts` runs sync-core's `runBridgeSync`, one
   pass when PluginHost loads Bridge (`index.js`), one every `AUTO_SYNC_MINUTES` while the host
   lives, and the same runner behind Settings' «Sync now». Each pass probes first. The Calendar and
-  To-Do are written through `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`,
+  To-Do are written through `BridgeProviders`' query, insert, update and, for the To-Do, delete (`src/deviceRows.ts`,
   `src/deviceStores.ts`). The Google OAuth client is not on the tablet yet
   ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
   A module's first pass only pulls: tablet-only items stay local unless its «Send tablet-only items»

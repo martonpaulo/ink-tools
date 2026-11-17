@@ -32,7 +32,6 @@ test('a module without the write calls, or none, rejects with the reason', async
   );
   NativeModules.BridgeProviders = {
     columnsOf: async () => [],
-    dryInsert: async () => null,
   };
   await expect(deviceRows().insert('content://x/t', {})).rejects.toThrow(
     'cannot write yet',

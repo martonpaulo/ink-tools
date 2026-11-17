@@ -39,7 +39,10 @@ export interface ContentRows {
   insert(uri: string, row: Row): Promise<string>;
   /** The number of rows changed. */
   update(uri: string, where: Row, row: Row): Promise<number>;
-  /** The number of rows deleted. */
+  /**
+   * The number of rows deleted. Never used on the Calendar: its provider's delete is `return 0;`,
+   * so a Calendar row is removed by marking it cancelled, as the native app does (#43).
+   */
   remove(uri: string, where: Row): Promise<number>;
 }
 
@@ -95,6 +98,7 @@ export function createDeviceCalendar(
   const uri = contentUri(d.calendar, 'events');
   const col = (field: string) => column(d.calendar, 'events', field);
   const ours = () => rows.query(uri, {[col('tag')]: d.calendar.rules.writeTag});
+  const cancelled = (row: Row) => row[col('status')] === d.calendar.rules.cancelledStatus;
   const keyOf = (calendarId: string, eventId: string): Row => ({
     [col('tag')]: d.calendar.rules.writeTag,
     [col('calendarId')]: calendarId,
@@ -105,8 +109,9 @@ export function createDeviceCalendar(
       const events: CalendarEvent[] = [];
       for (const row of await ours()) {
         const id = row[col('eventId')];
-        // A row made on the tablet has no eventId yet: it is an edit, not a pulled event.
-        if (id === null || id === undefined || id === '') {
+        // A row made on the tablet has no eventId yet: it is an edit, not a pulled event. A cancelled
+        // row is a removed event: the provider cannot delete it, so it stays in the table (#43).
+        if (id === null || id === undefined || id === '' || cancelled(row)) {
           continue;
         }
         const event = rowToEvent(d, row);
@@ -122,7 +127,21 @@ export function createDeviceCalendar(
         .filter(edit => overlaps(edit.event, window));
     },
     async create(event) {
-      await rows.insert(uri, eventToRow(d, event, now()));
+      const row = eventToRow(d, event, now());
+      // An event removed earlier and back at the source takes its cancelled row again, so the table
+      // never holds two rows of one event (#43).
+      const [old] = await rows.query(uri, {
+        ...keyOf(event.calendarId, event.eventId),
+        [col('status')]: d.calendar.rules.cancelledStatus,
+      });
+      if (old) {
+        one(
+          await rows.update(uri, {[ROW_ID]: old[ROW_ID]}, row),
+          `create ${event.eventId}`,
+        );
+      } else {
+        await rows.insert(uri, row);
+      }
     },
     async update(event) {
       one(
@@ -135,8 +154,13 @@ export function createDeviceCalendar(
       );
     },
     async remove(calendarId, eventId) {
+      // The provider never deletes a row (its delete is `return 0;`): the native app removes a synced
+      // event by setting its status to cancelled and its modified time, and so does this (#43).
       one(
-        await rows.remove(uri, keyOf(calendarId, eventId)),
+        await rows.update(uri, keyOf(calendarId, eventId), {
+          [col('status')]: d.calendar.rules.cancelledStatus,
+          [col('modified')]: now(),
+        }),
         `remove ${eventId}`,
       );
     },

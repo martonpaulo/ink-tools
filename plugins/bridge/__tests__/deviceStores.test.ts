@@ -37,6 +37,10 @@ function provider(start: Record<string, Row[]> = {}) {
       return hit.length;
     },
     remove: async (uri, where) => {
+      // The Calendar provider's delete is `return 0;` on the tablet (#43).
+      if (uri === EVENTS) {
+        return 0;
+      }
       const before = tables[uri].length;
       tables[uri] = tables[uri].filter(r => !match(r, where));
       return before - tables[uri].length;
@@ -89,7 +93,7 @@ describe('the Calendar store', () => {
     expect((await cal.listOurs(window)).map(e => e.eventId)).toEqual(['g1']);
   });
 
-  test('updates and removes by its keys; a write that changed no row throws', async () => {
+  test('updates by its keys; a write that changed no row throws', async () => {
     const {tables, rows} = provider();
     const cal = createDeviceCalendar(rows, () => NOW);
     await cal.create(event);
@@ -98,9 +102,48 @@ describe('the Calendar store', () => {
     await expect(cal.update({...event, eventId: 'gone'})).rejects.toThrow(
       'changed 0 rows',
     );
+    await expect(cal.remove('work', 'gone')).rejects.toThrow('changed 0 rows');
+  });
+
+  test('removes an event by marking its row cancelled, never by a delete the provider ignores (#43)', async () => {
+    const {tables, rows} = provider();
+    const deletes: string[] = [];
+    const watched: ContentRows = {
+      ...rows,
+      remove: async (uri, where) => {
+        deletes.push(uri);
+        return rows.remove(uri, where);
+      },
+    };
+    let clock = NOW;
+    const cal = createDeviceCalendar(watched, () => clock);
+    await cal.create(event);
+    clock = NOW + HOUR;
     await cal.remove('work', 'g1');
-    expect(tables[EVENTS]).toEqual([]);
-    await expect(cal.remove('work', 'g1')).rejects.toThrow('changed 0 rows');
+    expect(deletes).toEqual([]);
+    expect(tables[EVENTS]).toHaveLength(1);
+    expect(tables[EVENTS][0]).toMatchObject({
+      eventId: 'g1',
+      status: 'cancelled',
+      lastModifiedTime: NOW + HOUR,
+    });
+    // A cancelled row is not one of the pulled events, so the next pass does not remove it again.
+    expect(await cal.listOurs(window)).toEqual([]);
+  });
+
+  test('an event back at the source takes its cancelled row again, never a second row (#43)', async () => {
+    const {tables, rows} = provider();
+    const cal = createDeviceCalendar(rows, () => NOW);
+    await cal.create(event);
+    await cal.remove('work', 'g1');
+    await cal.create({...event, title: 'Standup again'});
+    expect(tables[EVENTS]).toHaveLength(1);
+    expect(tables[EVENTS][0]).toMatchObject({
+      eventId: 'g1',
+      status: 'confirmed',
+      title: 'Standup again',
+    });
+    expect((await cal.listOurs(window)).map(e => e.title)).toEqual(['Standup again']);
   });
 
   test('a tablet-made row is an edit, and a relink gives it the service id', async () => {
