@@ -36,20 +36,14 @@ const describe = (what: string, result: Result<unknown>): string =>
     : `${what} failed: ${result.code} ${result.message}`;
 
 /**
- * Removes the per-edit rows of earlier builds, then registers the one «Image Editing» button. A
- * failed removal is expected for an id the host does not hold, so only the count is logged.
+ * Registers the one «Image Editing» button first, then asks the host to remove the per-edit rows
+ * of earlier builds without waiting for them. On this firmware an `unregisterButton` of an id the
+ * plugin does not hold never answers (`docs/supernote.md` › Plugins, #226): awaiting it left the
+ * lasso menu with no Image Editing row. Each removal that does answer is logged when it settles.
  */
 export async function registerEditorButton(
   deps: ButtonDeps = DEVICE,
 ): Promise<Result<true>> {
-  let removed = 0;
-  for (const id of LEGACY_BUTTON_IDS) {
-    const result = await deps.unregister(id);
-    removed += result.ok ? 1 : 0;
-  }
-  if (removed > 0) {
-    deps.log(`removed ${removed} lasso rows of an earlier build`);
-  }
   const result = await deps.register(BUTTON_TYPE_LASSO, ['NOTE'], {
     id: EDITOR_BUTTON_ID,
     name: copy.title,
@@ -57,5 +51,15 @@ export async function registerEditorButton(
     showType: SHOW_FULL_VIEW,
   });
   deps.log(describe(`register ${copy.title}`, result));
+  for (const id of LEGACY_BUTTON_IDS) {
+    deps
+      .unregister(id)
+      .then(removed => {
+        if (removed.ok) {
+          deps.log(`removed lasso row ${id} of an earlier build`);
+        }
+      })
+      .catch(() => {});
+  }
   return result;
 }

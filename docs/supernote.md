@@ -131,6 +131,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Lasso buttons of all plugins share one «⋯» list under the lasso toolbar; each row's icon shows
   at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/ink-tools/issues/107)]. A button takes one icon, so each plugin
   ships one 96 x 96 PNG per button, which the tablet scales down to that size (owner D43 A).
+- `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
+  promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
+  [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`
+  throws `Throwable("Plugin button is not exists!")`, and its caller answers
+  `promise.resolve(th)`, a Java `Throwable` the React Native bridge cannot pass. A plugin that
+  awaits such a call before `registerButton` never registers its button, so the lasso menu shows
+  no row for it. Register first, and never await an unregister of an id this runtime did not
+  register itself.
 - A lasso button registered while the plugin already runs shows in that list at once, and
   `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/ink-tools/issues/115)].
 - The lasso calls (`getLassoElements`, `getLassoRect`) need `plugin.permission.FILE:READ` declared
