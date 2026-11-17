@@ -42,3 +42,14 @@ test('a prerelease tag carries its plugin name (#155)', () => {
   expect(workflowProblems('relay', 'on: push\n')).toHaveLength(1);
   expect(allWorkflowProblems(join(__dirname, '..', '..', '..'))).toEqual([]);
 });
+
+test('a hyphenated name is checked too, such as inktools-bridge (#215)', () => {
+  const {mkdtempSync, mkdirSync, writeFileSync} = require('fs');
+  const {tmpdir} = require('os');
+  const root = mkdtempSync(join(tmpdir(), 'versions-'));
+  mkdirSync(join(root, '.github', 'workflows'), {recursive: true});
+  writeFileSync(join(root, '.github', 'workflows', 'prerelease-inktools-bridge.yml'), '          tag="v$version"\n');
+  expect(allWorkflowProblems(root)).toEqual([
+    'prerelease-inktools-bridge.yml: computed tag v$version does not start with inktools-bridge-v',
+  ]);
+});

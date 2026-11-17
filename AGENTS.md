@@ -39,7 +39,7 @@ Before editing under a path, read the file its row names. A module with rules of
 | :--- | :--- |
 | `plugins/<name>/`: `plugins/account-sync/`, `plugins/ink2pic/`, `plugins/word-lookup/`, `plugins/plugin-diagnostics/`, `plugins/real-time-conversion/`, `plugins/device-transfer/`, `plugins/image-editing/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) and `docs/supernote.md` (device facts; add each new one there) |
 | `cli/<name>/`: `cli/inkctl/` | that tool's own `AGENTS.md` (host-side tools) |
-| `apps/<name>/`: `apps/handwriting-language/`, `apps/ink-notebook-editor/` | that app's own `AGENTS.md` (the sideloaded Android app, the planned macOS app) and `docs/supernote.md` (device facts) |
+| `apps/<name>/`: `apps/handwriting-language/`, `apps/inktools-bridge/`, `apps/ink-notebook-editor/` | that app's own `AGENTS.md` (the sideloaded Android app, the planned macOS app) and `docs/supernote.md` (device facts) |
 | `packages/` | `packages/README.md` and `docs/architecture.md` (shared packages) |
 | `templates/` | `docs/product.md` (note templates; created when the first one lands) |
 | `docs/` | `docs/product.md` |

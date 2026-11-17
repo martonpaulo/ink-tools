@@ -110,6 +110,7 @@ ink-tools/
     inkctl/          # the ADB control CLI (formerly supernote-adb, then inkctl)
   apps/
     handwriting-language/ # sideloaded tablet app: switch the handwriting language tablet-wide
+    inktools-bridge/ # sideloaded helper app: lets inkctl install, enable and permit plugins
     ink-notebook-editor/ # planned macOS app, Ink Notebook Editor: docs only, no code yet
 ```
 
@@ -191,6 +192,11 @@ measures are `packages/picture-search`.
   handwriting recognition language of the whole tablet from a floating button or its sidebar entry
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
   `ink-core`; its pure cycle and file switch are unit-tested on the JVM.
+- **Ink Tools Bridge** (`apps/inktools-bridge/`) — a sideloaded helper app with no screen that binds
+  PluginHost's exported `PluginSettingService` and runs one install, enable, disable, uninstall or
+  permission change per `am broadcast` from `inkctl` ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). `adb` cannot hold the callback binder
+  PluginHost answers through, so a live app process must. Plain Java; its call encoding is
+  unit-tested on the JVM.
 
 ## The host tools
 

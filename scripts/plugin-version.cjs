@@ -78,7 +78,7 @@ function allWorkflowProblems(root) {
   const folder = path.join(root, '.github', 'workflows');
   return fs
     .readdirSync(folder)
-    .map(name => [name, /^prerelease-([a-z0-9]+)\.yml$/.exec(name)])
+    .map(name => [name, /^prerelease-([a-z0-9-]+)\.yml$/.exec(name)])
     .filter(([, match]) => match)
     .flatMap(([name, match]) =>
       workflowProblems(match[1], fs.readFileSync(path.join(folder, name), 'utf8')).map(
