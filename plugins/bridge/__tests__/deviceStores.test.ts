@@ -484,6 +484,66 @@ describe('the To-Do store', () => {
       expect(listed).toEqual(expect.arrayContaining(Object.values(fix.moved)));
     });
 
+    test('a twin the native cloud sync made of a pulled row is soft-deleted, never sent (beta 18)', async () => {
+      const shown = (id: string, title: string, taskId: string, due = 0) => ({
+        ...hidden(id, title, 'inktools19a1'),
+        taskId,
+        hasSync: 1,
+        deleted: 0,
+        dueTime: due,
+        completedTime: 0,
+        isReminderOn: 0,
+        ...{sort: 0, sortCompleted: 0, sortTime: NOW},
+        ...{plannedSort: 0, plannedSortTime: NOW},
+      });
+      const titles = ['Stretch', 'Walk', 'Read', 'Water', 'Journal'];
+      const {tables, rows} = provider({
+        [GROUPS]: [
+          {id: '1', taskListId: 'inktools19a1', title: 'Mirror', deleted: 0, hasSync: 1},
+        ],
+        [TASKS]: [
+          // The 5 pulled rows, then their 5 twins with the native sync's own taskId, then the
+          // owner's own task in the same list, with a title no pulled row has.
+          ...titles.map((t, i) => shown(`${20 + i}`, t, serviceTaskId(`r${i + 1}`))),
+          ...titles.map((t, i) => shown(`${30 + i}`, t, `native${i}`)),
+          shown('40', 'Plant seeds', 'native9'),
+          // Same title as a pulled row but another due time: not a twin.
+          shown('41', 'Stretch', 'native8', NOW + 9 * HOUR),
+        ],
+      });
+      const tasks = createDeviceTasks(rows, () => LATER);
+      const services = titles.map((t, i) => ({
+        ...remote(`r${i + 1}`, t),
+        list: {name: 'Mirror', inbox: false},
+      }));
+      const fix = await tasks.repair!(services, []);
+      expect(fix.found).toEqual(
+        titles.map((_, i) => ({
+          remoteId: `r${i + 1}`,
+          localId: serviceTaskId(`r${i + 1}`),
+        })),
+      );
+      const deleted = tables[TASKS].filter(t => t.deleted === 1).map(t => t.id);
+      expect(deleted).toEqual(['30', '31', '32', '33', '34']);
+      expect(tables[TASKS]).toHaveLength(12);
+      expect(tables[TASKS].find(t => t.id === '30')).toMatchObject({
+        lastModified: LATER,
+        hasSync: 0,
+      });
+      const kept = (await tasks.list()).filter(t => !t.deleted);
+      const linked = new Set(fix.found.map(f => f.localId));
+      // Only the owner's two tasks stay tablet-only.
+      expect(kept.filter(t => !linked.has(t.localId)).map(t => t.localId)).toEqual([
+        'native9',
+        'native8',
+      ]);
+      // A second repair finds the same pairs and deletes nothing more.
+      const before = JSON.stringify(tables);
+      const again = await tasks.repair!(services, fix.found.map(f => ({...f, fingerprint: ''})));
+      expect(again).toEqual({moved: {}, found: []});
+      expect(JSON.stringify(tables)).toBe(before);
+    });
+
     test('a row whose taskId names its service task is found after a restart', async () => {
       const {rows} = provider();
       const tasks = createDeviceTasks(rows, () => NOW);
