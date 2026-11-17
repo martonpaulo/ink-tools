@@ -1,0 +1,21 @@
+{
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    // The shared package lives outside this folder (#93); its react and react-native imports
+    // resolve from this plugin's node_modules, as packages/ui-kit/plugin-config.js does for Metro.
+    "paths": {
+      "@ink-tools/ui-kit": ["../../packages/ui-kit/src"],
+      "@ink-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
+      // sn-adapter's official tier (#101); ink-core for the page types it names.
+      "@ink-tools/sn-adapter": ["../../packages/sn-adapter/src"],
+      "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
+      "@ink-tools/ink-core": ["../../packages/ink-core/src"],
+      // Types and Jest for the probe switch test (#101); Bridge bundles only the Settings rules
+      // (#40), and jest.config.js and metro.config.js map the same names.
+      "@ink-tools/sync-core": ["../../packages/sync-core/src"],
+      "@ink-tools/sync-core/*": ["../../packages/sync-core/src/*"],
+      "*": ["./node_modules/@types/*", "./node_modules/*"]
+    }
+  },
+  "include": ["**/*", "../../packages/ui-kit/src", "../../packages/sn-adapter/src/official", "../../packages/ui-kit/__tests__"]
+}

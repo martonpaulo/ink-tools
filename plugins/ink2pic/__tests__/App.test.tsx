@@ -18,7 +18,7 @@ import {
   flushLogFile,
   openLogFile,
 } from '../src/profile';
-import {startButtonQueue} from '@supernote-tools/sn-adapter/official';
+import {startButtonQueue} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/ui/copy';
 import {SearchScreen} from '../src/ui/SearchScreen';
 import {

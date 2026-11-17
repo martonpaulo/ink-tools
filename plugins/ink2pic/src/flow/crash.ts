@@ -4,7 +4,7 @@
  * (#36). The previous handler still runs afterwards.
  */
 import {log, logLines, writeText, logsDir} from '../profile';
-import {withinLimit} from '@supernote-tools/picture-search';
+import {withinLimit} from '@ink-tools/picture-search';
 
 /** The last log lines carried in the report. */
 const CRASH_LOG_LINES = 30;

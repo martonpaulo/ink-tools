@@ -5,7 +5,7 @@
  */
 import React, {useRef, useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {Button, shared} from '@ink-tools/ui-kit';
 import {ScreenTools} from './ScreenTools';
 import {
   Denied,

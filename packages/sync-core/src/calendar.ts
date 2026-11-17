@@ -50,20 +50,23 @@ export interface CalendarSyncResult {
   errors: string[];
 }
 
-const key = (e: Pick<CalendarEvent, 'calendarId' | 'eventId'>) => `${e.calendarId}\u0000${e.eventId}`;
+/** One event's identity on the tablet: its calendar and event ids. */
+export const eventKey = (e: Pick<CalendarEvent, 'calendarId' | 'eventId'>) => `${e.calendarId}\u0000${e.eventId}`;
 const same = (a: CalendarEvent, b: CalendarEvent) =>
   a.title === b.title && a.content === b.content && a.start === b.start && a.end === b.end && a.allDay === b.allDay;
 
 /**
  * Make the device match the provider over `window`: add what is missing, update what differs,
  * remove our rows the provider no longer has. Rows outside the window and rows we did not write
- * are never touched. A calendar that fails to read keeps its rows and is reported.
+ * are never touched. A calendar that fails to read keeps its rows and is reported. A row `keep`
+ * accepts is left as it is: it holds a tablet edit whose push failed, sent on the next pass (#216).
  */
 export async function syncCalendar(
   provider: CalendarProvider,
   store: DeviceCalendarStore,
   window: TimeWindow,
   enabledCalendarIds?: string[],
+  keep: (row: CalendarEvent) => boolean = () => false,
 ): Promise<CalendarSyncResult> {
   const result: CalendarSyncResult = {created: 0, updated: 0, removed: 0, errors: []};
   const calendars = (await provider.listCalendars()).filter(
@@ -73,13 +76,13 @@ export async function syncCalendar(
   const failed = new Set<string>();
   for (const cal of calendars) {
     try {
-      for (const e of await provider.listEvents(cal.calendarId, window)) wanted.set(key(e), e);
+      for (const e of await provider.listEvents(cal.calendarId, window)) wanted.set(eventKey(e), e);
     } catch (e) {
       failed.add(cal.calendarId);
       result.errors.push(`${cal.name}: ${(e as Error).message}`);
     }
   }
-  const have = new Map((await store.listOurs(window)).map(e => [key(e), e]));
+  const have = new Map((await store.listOurs(window)).map(e => [eventKey(e), e]));
   const run = async (what: string, fn: () => Promise<void>, count: 'created' | 'updated' | 'removed') => {
     try {
       await fn();
@@ -91,11 +94,11 @@ export async function syncCalendar(
   for (const [k, e] of wanted) {
     const old = have.get(k);
     if (!old) await run(`create ${e.title}`, () => store.create(e), 'created');
-    else if (!same(old, e)) await run(`update ${e.title}`, () => store.update(e), 'updated');
+    else if (!keep(old) && !same(old, e)) await run(`update ${e.title}`, () => store.update(e), 'updated');
   }
   for (const [k, e] of have) {
     // A row of a disabled or unreadable calendar is left alone; removing it is the owner's button (cleanup.ts, #89).
-    if (!wanted.has(k) && calendars.some(c => c.calendarId === e.calendarId) && !failed.has(e.calendarId)) {
+    if (!wanted.has(k) && calendars.some(c => c.calendarId === e.calendarId) && !failed.has(e.calendarId) && !keep(e)) {
       await run(`remove ${e.title}`, () => store.remove(e.calendarId, e.eventId), 'removed');
     }
   }

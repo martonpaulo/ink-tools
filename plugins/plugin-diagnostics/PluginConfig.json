@@ -1,0 +1,16 @@
+{
+  "name": "Plugin Diagnostics",
+  "desc": "Developer tool: runs a one-off probe and the inkctl command button, and logs the result. Not for users.",
+  "author": "Marton Paulo",
+  "iconPath": "assets/icon.png",
+  "versionName": "0.0.2 beta 4",
+  "versionCode": "8",
+  "pluginID": "voc4oo2ysd7cdnkc",
+  "pluginKey": "Probe",
+  "jsMainPath": "index",
+  "uses-permissions": [
+    "plugin.permission.INTERNET",
+    "plugin.permission.FILE:READ",
+    "plugin.permission.FILE:WRITE"
+  ]
+}

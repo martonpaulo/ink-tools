@@ -1,14 +1,14 @@
 import {readFileSync} from 'fs';
 import {join} from 'path';
-import type {SourceAdapter} from '@supernote-tools/picture-search/adapter';
-import {parseSearchResponse, searchUrl} from '@supernote-tools/picture-search/adapters/commons';
+import type {SourceAdapter} from '@ink-tools/picture-search/adapter';
+import {parseSearchResponse, searchUrl} from '@ink-tools/picture-search/adapters/commons';
 import {
   hasAdultCategories,
   hasAdultWords,
   isAdult,
-} from '@supernote-tools/picture-search/filters/adult';
-import {searchAll} from '@supernote-tools/picture-search/search';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+} from '@ink-tools/picture-search/filters/adult';
+import {searchAll} from '@ink-tools/picture-search/search';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const fixture = (name: string) =>
   readFileSync(join(__dirname, 'fixtures', name), 'utf8');

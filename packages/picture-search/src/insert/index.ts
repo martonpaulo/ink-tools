@@ -3,7 +3,7 @@
  * read and placement, the search core and the device tier: the cached search, the stored
  * thumbnails, the measured order, the insert, «Insert best picture» and the no-view press guard.
  * Like the device tier it calls the platform, so it has its own entry,
- * `@supernote-tools/picture-search/insert`; the search core never imports it.
+ * `@ink-tools/picture-search/insert`; the search core never imports it.
  */
 export * from './failure';
 export * from './guard';

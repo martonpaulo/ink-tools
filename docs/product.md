@@ -8,22 +8,22 @@ A monorepo of independent, unofficial tools for Supernote e-ink tablets. Each su
 alone, with its own `AGENTS.md`, versioning and releases. They come in four kinds:
 
 - **Plugins**, which run inside the tablet's plugin host on `sn-plugin-lib`:
-  - **Word Lookup** (`lookup`) turns a lassoed handwritten word into an inserted illustration, photo, short
+  - **Word Lookup** (`plugins/word-lookup`) turns a lassoed handwritten word into an inserted illustration, photo, short
     definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
     tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)), and the **lingo** plugin, removed now that translation is Lookup's
     «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/ink-tools/issues/174), [#158](https://github.com/martonpaulo/ink-tools/issues/158), [#161](https://github.com/martonpaulo/ink-tools/issues/161)).
-  - **Account Sync** (`bridge`) syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
+  - **Account Sync** (`plugins/account-sync`) syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
     Supernote apps.
-  - **Image Editing** (`retouch`) makes a picture on the page readable on e-ink.
-  - **Device Transfer** (`relay`) moves pictures and text between the tablet and the owner's iPhone and Mac over
+  - **Image Editing** (`plugins/image-editing`) makes a picture on the page readable on e-ink.
+  - **Device Transfer** (`plugins/device-transfer`) moves pictures and text between the tablet and the owner's iPhone and Mac over
     LocalSend.
-  - **Plugin Diagnostics** (`probe`) is a developer-only plugin for device experiments; it still
-    shows as «Probe» until [#194](https://github.com/martonpaulo/ink-tools/issues/194).
-  - **Real-Time Conversion** (`typeset`, being built) turns each handwritten word into typed text
+  - **Plugin Diagnostics** (`plugins/plugin-diagnostics`) is a developer-only plugin for device
+    experiments.
+  - **Real-Time Conversion** (`plugins/real-time-conversion`, being built) turns each handwritten word into typed text
     with no lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion
     ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184)).
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
-  `apps/lingo-app`) switches the handwriting recognition language of the whole tablet with one tap
+  `apps/handwriting-language`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 - **A Mac CLI**: **inkctl** drives the tablet over Wi-Fi ADB.
 - **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
@@ -39,10 +39,9 @@ tablets», «for Supernote notebooks» in a description
 
 Each tool shows a feature name in Supernote's own wording, and its buttons read like the tablet's
 («New Sticker»): a verb and a noun in title case. A name says what the tool can do, not which
-window it opens: «Image Editing», not «Image Editor». Packages and `pluginID`s keep the short
-internal names above; a `pluginID` is random, never shown and never changes, so the tablet keeps
-a plugin's settings and grants across a rename ([#176](https://github.com/martonpaulo/ink-tools/issues/176)). Folders, gates and new tags take
-the feature names with [#194](https://github.com/martonpaulo/ink-tools/issues/194); until it lands they keep the short names. What each one is for is in [`plugin-scope.md`](plugin-scope.md).
+window it opens: «Image Editing», not «Image Editor». Each folder, gate, workflow and new tag prefix takes the feature name
+([#194](https://github.com/martonpaulo/ink-tools/issues/194)); npm packages, `pluginID`s and data folders keep the short internal names. A `pluginID` is random, never shown and never changes, so the tablet keeps
+a plugin's settings and grants across a rename ([#176](https://github.com/martonpaulo/ink-tools/issues/176)). What each one is for is in [`plugin-scope.md`](plugin-scope.md).
 
 ## Who it is for
 
@@ -93,8 +92,8 @@ plugin appears in the native Calendar, and an edit on the tablet reaches the sou
 
 ## Display names
 
-Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `lookup` is Word Lookup, `retouch` Image Editing, `relay` Device Transfer, `bridge` Account Sync, `real-time-conversion` Real-Time Conversion, the Lingo app (`apps/lingo-app`) Handwriting Language, the planned Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). A name carries no brand. Display names live only in `PluginConfig.json` `name`, the visible copy and the docs; folders, npm packages, gates, workflows, tag prefixes, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names.
+Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `plugins/word-lookup` is Word Lookup, `plugins/image-editing` Image Editing, `plugins/device-transfer` Device Transfer, `plugins/account-sync` Account Sync, `plugins/plugin-diagnostics` Plugin Diagnostics, `plugins/real-time-conversion` Real-Time Conversion, the Lingo app (`apps/handwriting-language`) Handwriting Language, the planned Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). A name carries no brand. Display names live in `PluginConfig.json` `name`, the visible copy and the docs, and each subproject's folder, gate, workflow and new tag prefix use the feature name in kebab case ([#194](https://github.com/martonpaulo/ink-tools/issues/194)); npm packages, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names, and tags made before the rename keep theirs.
 
 ## Product versioning
 
-Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/lingo-app/app.json` and its tag `lingo-app-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). Ink2Pic, retiring, keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.
+Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/handwriting-language/app.json` and its tag `handwriting-language-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). Ink2Pic, retiring, keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.

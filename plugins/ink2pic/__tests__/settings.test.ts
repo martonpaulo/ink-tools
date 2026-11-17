@@ -15,7 +15,7 @@ import {
   serializeSettings,
   styleFlags,
 } from '../src/settings/settings';
-import type {TextStore} from '@supernote-tools/picture-search';
+import type {TextStore} from '@ink-tools/picture-search';
 
 function memory(files: Record<string, string> = {}): TextStore {
   return {

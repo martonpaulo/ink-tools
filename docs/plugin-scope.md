@@ -92,7 +92,7 @@ paragraph or a whole page.
 
 Shown on the tablet as **Handwriting Language**, with «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
-A sideloaded Android app, not a plugin, under `apps/lingo-app/`: it switches the handwriting
+A sideloaded Android app, not a plugin, under `apps/handwriting-language/`: it switches the handwriting
 recognition language of the whole tablet with one tap, so lasso convert, plugin recognition and the
 handwriting keyboard read the next word in that language ([#157](https://github.com/martonpaulo/ink-tools/issues/157)). A plugin cannot do it: the
 folder that names the active language is outside the plugin sandbox ([#151](https://github.com/martonpaulo/ink-tools/issues/151),
@@ -136,7 +136,7 @@ refresh, so retouch shows finished options at once and the user taps one, like I
 grid; it has no sliders and no live preview
 ([#47](https://github.com/martonpaulo/ink-tools/issues/47)).
 
-Status: `plugins/retouch/` holds Enhance, Lighter, Darker, Undo and Restore original
+Status: `plugins/image-editing/` holds Enhance, Lighter, Darker, Undo and Restore original
 ([#136](https://github.com/martonpaulo/ink-tools/issues/136)), and Rotate 90°, Mirror, Flip and Invert
 ([#131](https://github.com/martonpaulo/ink-tools/issues/131)), and Trim and Crop with the pen ([#132](https://github.com/martonpaulo/ink-tools/issues/132)), and Remove background, Make sticker and Erase with the pen ([#134](https://github.com/martonpaulo/ink-tools/issues/134)); their device round is still to come.
 

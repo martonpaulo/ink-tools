@@ -1,8 +1,8 @@
 /** The Settings view keeps the shared size rules, and each tap changes the setting (#184). */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
-import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
+import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {DEFAULT_SETTINGS, getSettings, setSettings} from '../src/settings';
 

@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import {Button, shared} from '@supernote-tools/ui-kit';
+import {Button, shared} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 
 export type ToolBarProps = {

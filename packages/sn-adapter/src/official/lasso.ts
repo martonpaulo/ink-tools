@@ -2,7 +2,7 @@ import {PluginCommAPI} from 'sn-plugin-lib';
 import {attempt, fail, fromResponse, Result, THROWN_CODE} from './result';
 
 /** The page rect, owned by ink-core (#109). */
-import type {Rect} from '@supernote-tools/ink-core';
+import type {Rect} from '@ink-tools/ink-core';
 
 export type {Rect};
 

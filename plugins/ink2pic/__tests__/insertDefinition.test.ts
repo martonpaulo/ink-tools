@@ -1,5 +1,5 @@
 /** «Insert definition» (#115): the text, its box, the failures and the opt-in button. */
-import type {DefinitionResult} from '@supernote-tools/ink-core';
+import type {DefinitionResult} from '@ink-tools/ink-core';
 import {
   BUTTON_TYPE_LASSO,
   DEFINE_BUTTON_ID,

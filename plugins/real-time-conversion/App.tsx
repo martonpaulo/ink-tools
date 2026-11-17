@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared, useBackKey} from '@supernote-tools/ui-kit';
-import {closePluginView} from '@supernote-tools/sn-adapter/official';
+import {Button, shared, useBackKey} from '@ink-tools/ui-kit';
+import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {getSettings, setSettings, Settings, Spacing, Wait} from './src/settings';
 

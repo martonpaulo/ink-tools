@@ -7,7 +7,7 @@ import {
   readLassoQuery as readWith,
   type LassoHost,
   type LassoQuery,
-} from '@supernote-tools/ink-core';
+} from '@ink-tools/ink-core';
 import {log, logged} from '../log/memory';
 import {
   getLassoElements,
@@ -22,7 +22,7 @@ import {
   fail,
   Result,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 export type {LassoQuery};
 

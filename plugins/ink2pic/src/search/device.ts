@@ -13,8 +13,8 @@ import type {
   SearchOutcome,
   SourceAdapter,
   SourceContext,
-} from '@supernote-tools/picture-search';
-import {DEFAULT_ADAPTERS} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
+import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search';
 import {Settings, sourceOn, styleFlags} from '../settings/settings';
 
 export {searchVariant} from '../profile';

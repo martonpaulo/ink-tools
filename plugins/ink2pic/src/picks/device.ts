@@ -5,8 +5,8 @@
  * or write only loses the re-ranking, never a search or an insert.
  */
 import {log, logged, picksPath, deviceStorage} from '../profile';
-import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
-import type {TextStore} from '@supernote-tools/picture-search';
+import {fail, ok, THROWN_CODE} from '@ink-tools/sn-adapter/official';
+import type {TextStore} from '@ink-tools/picture-search';
 import {
   addPick,
   emptyPicks,

@@ -1,4 +1,4 @@
-import type {DeviceEvent, TodoTask} from '@supernote-tools/sn-adapter';
+import type {DeviceEvent, TodoTask} from '@ink-tools/sn-adapter';
 import type {CalendarEvent, DeviceTask} from '../src';
 
 /**

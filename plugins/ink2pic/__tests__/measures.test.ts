@@ -5,7 +5,7 @@ import {
   measureThumb,
 } from '../src/flow/measure';
 import {logLines, startLog} from '../src/profile';
-import {ok, fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
+import {ok, fail, MODULE_CODE} from '@ink-tools/sn-adapter/official';
 import {
   chooseLook,
   isFaintLines,
@@ -20,14 +20,14 @@ import {
   pixelScorer,
   Prepared,
   reorderByMeasures,
-} from '@supernote-tools/picture-search/measures';
-import {einkScore} from '@supernote-tools/picture-search/rank';
-import {cachedSearch} from '@supernote-tools/picture-search/cache';
-import {readIntent} from '@supernote-tools/picture-search/query';
+} from '@ink-tools/picture-search/measures';
+import {einkScore} from '@ink-tools/picture-search/rank';
+import {cachedSearch} from '@ink-tools/picture-search/cache';
+import {readIntent} from '@ink-tools/picture-search/query';
 import type {
   SearchResult,
   SourceName,
-} from '@supernote-tools/picture-search/types';
+} from '@ink-tools/picture-search/types';
 
 /** A white page; each picture below changes what it needs. */
 const paper: Measures = {

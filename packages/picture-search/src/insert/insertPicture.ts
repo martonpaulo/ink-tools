@@ -18,7 +18,7 @@ import {
 import {pluginFolder} from '../storage/session';
 import {placeAtLasso} from './place';
 import {insertAsSticker} from './sticker';
-import {isFree, type LassoPlace, type Placement} from '@supernote-tools/ink-core';
+import {isFree, type LassoPlace, type Placement} from '@ink-tools/ink-core';
 import {
   deleteLassoElements,
   getLassoRect,
@@ -31,7 +31,7 @@ import {
   Result,
   THROWN_CODE,
   TIMEOUT_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {insertUrl} from '../registry';
 import {sourceId} from '../types';
 import type {SearchResult, SourceName} from '../types';

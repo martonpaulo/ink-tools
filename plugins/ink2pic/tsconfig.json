@@ -4,12 +4,12 @@
     // The shared package lives outside this folder (#93); its react and react-native imports
     // resolve from this plugin's node_modules, as packages/ui-kit/plugin-config.js does for Metro.
     "paths": {
-      "@supernote-tools/ui-kit": ["../../packages/ui-kit/src"],
-      "@supernote-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
-      "@supernote-tools/ink-core": ["../../packages/ink-core/src"],
-      "@supernote-tools/picture-search": ["../../packages/picture-search/src"],
-      "@supernote-tools/picture-search/*": ["../../packages/picture-search/src/*"],
-      "@supernote-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
+      "@ink-tools/ui-kit": ["../../packages/ui-kit/src"],
+      "@ink-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
+      "@ink-tools/ink-core": ["../../packages/ink-core/src"],
+      "@ink-tools/picture-search": ["../../packages/picture-search/src"],
+      "@ink-tools/picture-search/*": ["../../packages/picture-search/src/*"],
+      "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

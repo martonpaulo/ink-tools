@@ -7,8 +7,8 @@ the Supernote, in Node (the search lab, [#63](https://github.com/martonpaulo/ink
 
 The device tier is the exception, kept apart in `storage/` and `log/` ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): the plugin's native file and image
 modules, its settings file, its session log and the run log. It imports only `react-native` and
-`@supernote-tools/sn-adapter/official`, the core never imports it, and a plugin reaches it through
-`@supernote-tools/picture-search/storage` from its own profile module, which calls
+`@ink-tools/sn-adapter/official`, the core never imports it, and a plugin reaches it through
+`@ink-tools/picture-search/storage` from its own profile module, which calls
 `setPluginProfile({name, folder, filesModule, imageModule, userAgent})` first
 (`plugins/ink2pic/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
 over its own settings model. The insert tier, `insert/`, holds what a lasso button runs on the
@@ -17,7 +17,7 @@ SDK wrappers, and «Insert best picture» ([#142](https://github.com/martonpaulo
 the stored thumbnails, `measureFirstPages`, `insertPicture` over a plugin's `PictureStore`,
 `insertBest`, the failure sentences from a plugin's copy, and `createPressGuard`, one no-view press
 at a time. It imports the core, the device tier, ink-core and the official tier; it is reached
-through `@supernote-tools/picture-search/insert` and re-exported by the plugin's profile module.
+through `@ink-tools/picture-search/insert` and re-exported by the plugin's profile module.
 
 ## Contents
 
@@ -28,7 +28,7 @@ through `@supernote-tools/picture-search/insert` and re-exported by the plugin's
 
 ## Public API
 
-Import from `@supernote-tools/picture-search` (its `index.ts`) only ([#125](https://github.com/martonpaulo/supernote-tools/issues/125)).
+Import from `@ink-tools/picture-search` (its `index.ts`) only ([#125](https://github.com/martonpaulo/supernote-tools/issues/125)).
 
 | Name | What it does |
 | :--- | :--- |

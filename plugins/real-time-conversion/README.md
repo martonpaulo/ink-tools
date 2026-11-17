@@ -1,6 +1,6 @@
 # Real-Time Conversion
 
-On the tablet this plugin is called **Real-Time Conversion**; `real-time-conversion` stays its folder
+On the tablet this plugin is called **Real-Time Conversion**; `real-time-conversion` is its folder
 and internal name.
 
 A Supernote plugin: while **Real-Time Text** is on, each handwritten word becomes typed text at its

@@ -16,7 +16,7 @@ import {
 import {pickedFor} from '../picks/device';
 import {thumbUri} from '../search/thumbs';
 import {styleFlags} from '../settings/settings';
-import type {SearchResult} from '@supernote-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search';
 
 export {
   isContourUri,

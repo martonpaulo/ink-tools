@@ -18,10 +18,10 @@ import {
   ok,
   Result,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {addItem, addRecentSearch, emptyLibrary, serialize} from './library';
 import {loadLibrary, saveLibrary} from './store';
-import type {SourceName} from '@supernote-tools/picture-search';
+import type {SourceName} from '@ink-tools/picture-search';
 import type {Library, LibraryItem} from './types';
 
 let current: Library | null = null;

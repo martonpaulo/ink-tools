@@ -8,7 +8,7 @@ import {
   getPluginDirPath,
   ok,
   Result,
-} from "@supernote-tools/sn-adapter/official";
+} from "@ink-tools/sn-adapter/official";
 
 let cached: string | null = null;
 

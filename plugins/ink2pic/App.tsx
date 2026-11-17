@@ -55,8 +55,8 @@ import {
   takePendingButton,
   takePendingConfig,
   closePluginView,
-} from '@supernote-tools/sn-adapter/official';
-import type {SearchResult} from '@supernote-tools/picture-search';
+} from '@ink-tools/sn-adapter/official';
+import type {SearchResult} from '@ink-tools/picture-search';
 import {clearLibrary} from './src/library/device';
 import {Settings, SettingsAction, settingsStep} from './src/settings/settings';
 import {definitionSwitched} from './src/flow/insertDefinition';

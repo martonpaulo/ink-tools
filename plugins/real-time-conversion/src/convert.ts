@@ -6,7 +6,7 @@
  * page changes once per word. Nothing runs during a stroke: the work starts at pen-up, and words
  * convert one at a time. Any failure keeps the handwriting and is logged.
  */
-import type {Rect, Size} from '@supernote-tools/ink-core';
+import type {Rect, Size} from '@ink-tools/ink-core';
 import {
   type EmrRange,
   emrToPage,
@@ -17,7 +17,7 @@ import {
   type SavedStroke,
   type TextBoxInput,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {answerKept, wordKept} from './shapes';
 import {setLastConversion} from './undo';
 import {InkStroke, Point, rectOf, Word, WordOptions, WordTracker} from './words';

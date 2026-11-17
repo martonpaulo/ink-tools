@@ -7,7 +7,7 @@ export interface DeviceReader {
   columnsOf(uri: string): Promise<string[]>;
   /**
    * Insert one test row with a marker text in `markerColumn` and delete the rows carrying it again,
-   * as `plugins/probe` does (#67). `values` are the other columns the real writer sets, so a NOT NULL
+   * as `plugins/plugin-diagnostics` does (#67). `values` are the other columns the real writer sets, so a NOT NULL
    * column (the Calendar's `tag`) is filled as a real row fills it. Resolve when both passed; reject
    * when the provider refuses the write.
    */
@@ -20,7 +20,7 @@ export interface DeviceReader {
  * Digest and reach Supernote Cloud (#42, docs/research/2026-11-digest-provider.md).
  */
 const WRITE_TABLE: Partial<Record<Capability, string>> = {calendar: 'events', todo: 'tasks'};
-/** The text field of each write table that carries the test row's marker (#43), as `plugins/probe` marks it. */
+/** The text field of each write table that carries the test row's marker (#43), as `plugins/plugin-diagnostics` marks it. */
 const MARKER_FIELD: Partial<Record<Capability, string>> = {calendar: 'title', todo: 'title'};
 
 /** The text the device module writes in the marker column; also the test event's calendar. */

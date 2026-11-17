@@ -12,9 +12,9 @@ import {
   picksFirst,
   serializePicks,
 } from '../src/picks/picks';
-import {fail, MODULE_CODE} from '@supernote-tools/sn-adapter/official';
-import type {TextStore} from '@supernote-tools/picture-search';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+import {fail, MODULE_CODE} from '@ink-tools/sn-adapter/official';
+import type {TextStore} from '@ink-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const result = (id: string): SearchResult => ({
   id,

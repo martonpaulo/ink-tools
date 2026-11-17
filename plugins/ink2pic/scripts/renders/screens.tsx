@@ -10,11 +10,11 @@ import * as libraryDevice from '../../src/library/device';
 import type {LibraryItem} from '../../src/library/types';
 import {log} from '../../src/profile';
 import * as deviceSearch from '../../src/search/device';
-import type {SourceAdapter} from '@supernote-tools/picture-search';
+import type {SourceAdapter} from '@ink-tools/picture-search';
 import type {
   SearchResult,
   SourceOutcome,
-} from '@supernote-tools/picture-search/types';
+} from '@ink-tools/picture-search/types';
 import {copy} from '../../src/ui/copy';
 import {Onboarding} from '../../src/ui/Onboarding';
 import {SearchScreen} from '../../src/ui/SearchScreen';

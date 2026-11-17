@@ -13,7 +13,7 @@ import {
   showPluginView,
   startButtonQueue,
   unregisterButton,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {Buttons, converterFor} from './src/buttons';
 import {DEVICE_CONVERT, DEVICE_UNDO} from './src/device';
 

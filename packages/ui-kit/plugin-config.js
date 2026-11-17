@@ -1,12 +1,12 @@
 /**
- * How a plugin reads `@supernote-tools/ui-kit` (#93), for its Metro and Jest configs. The package
+ * How a plugin reads `@ink-tools/ui-kit` (#93), for its Metro and Jest configs. The package
  * is not installed in the plugin's node_modules: Metro bundles it from this folder into the
  * .snplg, and its own `react` and `react-native` imports resolve from the plugin's node_modules,
  * so the plugin keeps one copy of each. The plugin's tsconfig.json maps the same name by `paths`.
  */
 const path = require('path');
 
-const NAME = '@supernote-tools/ui-kit';
+const NAME = '@ink-tools/ui-kit';
 const UI_KIT = __dirname;
 
 /** The Metro config part, merged into the plugin's own. */

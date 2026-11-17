@@ -5,6 +5,7 @@
  * Bridge wrote: calendar rows tagged `task` (the store's `listOurs`) and To-Do tasks Bridge created
  * from the service. A task the owner wrote on the tablet stays, even when it was synced to the service.
  */
+import {eventKey} from './calendar';
 import type {DeviceCalendarStore, TimeWindow} from './calendar';
 import type {DeviceTaskStore, TaskLink} from './tasks';
 
@@ -17,10 +18,15 @@ export interface CleanupResult {
   errors: string[];
 }
 
-/** Remove every calendar row Bridge wrote. Rows Bridge did not write are never listed, so never touched. */
+/**
+ * Remove every calendar row Bridge wrote. Rows Bridge did not write are never listed, so never touched.
+ * An event listed twice, as duplicated rows are (#218), is removed once: the store's remove takes every
+ * row of the event.
+ */
 export async function removeCalendarRows(store: DeviceCalendarStore): Promise<CleanupResult> {
   const result: CleanupResult = {removed: 0, errors: []};
-  for (const e of await store.listOurs(ALL_TIME)) {
+  const events = new Map((await store.listOurs(ALL_TIME)).map(e => [eventKey(e), e]));
+  for (const e of events.values()) {
     try {
       await store.remove(e.calendarId, e.eventId);
       result.removed++;

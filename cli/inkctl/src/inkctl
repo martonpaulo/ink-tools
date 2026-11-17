@@ -31,11 +31,15 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
   wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
   apps                           installed packages
-  plugin ls                      installed plugins
+  plugin list                    installed plugins, from PluginHost's provider (plugin ls is the same)
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
-  plugin install FILE.snplg      copy, install or update through named elements, and prove it
+  plugin install FILE.snplg      copy, install or update, and prove it: through the Ink Tools bridge
+                                 app when it is installed, else through named elements on the screen
+  plugin enable|disable NAME     turn a plugin on or off through the bridge app, and prove it
+  plugin allow NAME [PERM...]    set permissions (default: every one it uses) to Always Allow
+                                 through the bridge app, and prove it from the plugin's row
   plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
-  plugin uninstall NAME          uninstall through named elements, and prove it from the plugin list
+  plugin uninstall NAME          uninstall through the bridge app, else named elements, and prove it
   logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
                                  --level, --package, --pid, --grep, --since, --since-last,
                                  --follow and --plugin
@@ -107,6 +111,7 @@ EXIT_CALL_MISSING = 10
 EXIT_READ_ONLY = 11
 EXIT_PROTECTED = 12
 EXIT_FIRMWARE_REFUSED = 13
+EXIT_NO_BRIDGE = 14
 EXIT_CODES = """exit codes:
   0  done
   1  the device refused or the call failed
@@ -122,6 +127,7 @@ EXIT_CODES = """exit codes:
   11 read-only mode refused a command that changes the device
   12 the notes folder or a note on the screen is protected: pass --allow-notes
   13 the firmware was refused: not newer, not from Ratta, or the battery is too low
+  14 the Ink Tools bridge app is not on the device: install its APK (apps/inktools-bridge)
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -138,7 +144,7 @@ These fields are a public contract, like the exit codes.
 The log never holds note content, screen text, file content or credentials.
 The address is masked. A call keeps only its verb, unless --log-paths is passed.
 
-https://github.com/martonpaulo/supernote-tools
+https://github.com/martonpaulo/ink-tools
 """
 
 ADB_PORT = 5555  # the port `adb tcpip` opens
@@ -147,7 +153,7 @@ LINK_WIFI = "wifi"
 # Bridge's sign-in secrets (#116, owner D16 A): `adb shell` cannot write Bridge's private plugin folder
 # (measured 2026-11-17: Permission denied), so `secret set` leaves a one-shot drop file in a folder the
 # shell user writes and the plugin file guard allows, and Account Sync moves it into its private folder
-# and deletes it on its next start or «Sync now» (plugins/bridge/src/secretStore.ts, SECRET_DROP_FOLDER).
+# and deletes it on its next start or «Sync now» (plugins/account-sync/src/secretStore.ts, SECRET_DROP_FOLDER).
 # The file names are sync-core's `secretFileName` (packages/sync-core/src/secrets.ts); a test reads both.
 # shortcut: the drop folder is not yet measured on the tablet; the #116 device round checks it.
 SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
@@ -156,7 +162,7 @@ SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
 GOOGLE_CLIENT_PROVIDER = "google-client"
 SIGN_IN_DROP_FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync"
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
-# The login Keychain items of the Google sign-in on the Mac (#124, plugins/bridge/AGENTS.md).
+# The login Keychain items of the Google sign-in on the Mac (#124, plugins/account-sync/AGENTS.md).
 KEYCHAIN_SERVICE = "ink-tools"
 GOOGLE_CLIENT_ACCOUNT = "account-sync-google-oauth-client"
 GOOGLE_TOKEN_ACCOUNT = "account-sync-google-refresh-token"
@@ -206,7 +212,7 @@ SCROLL_END = 0.2
 SCROLL_MILLISECONDS = 300
 SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
-# Ink through Probe's «Run Command» button (#148): plugins/probe/src/helper.ts owns the other side.
+# Ink through Probe's «Run Command» button (#148): plugins/plugin-diagnostics/src/helper.ts owns the other side.
 HELPER_COMMAND_PATH = f"{SHARED_ROOT}/MyStyle/Probe/command.json"
 HELPER_BUTTON = "text:Run Command"
 NOTE_PLUGINS_BUTTON = "desc:plugins"  # the note toolbar's plugin panel, where sidebar buttons show
@@ -214,6 +220,28 @@ HELPER_ANSWER = re.compile(r"SNPROBE answer (?P<id>\S+) (?P<index>\d+)/(?P<count
 HELPER_UNKNOWN_ID = "unknown"
 HELPER_DATE_FORMAT = "+%m-%d %H:%M:%S.000"  # a device time `logcat -T` takes
 HELPER_TIMEOUT = 20.0
+HELPER_LOG_STEP = "inkctl logs --plugin Probe"
+# The test fixtures note (#220): one fixture per page, built by hand on the tablet; this table mirrors
+# its page map and is the one source the docs and `fixture --list` read. Rects are page pixels,
+# [left, top, right, bottom]; "serves" names the issues and checks that use the page.
+FIXTURES_NOTE = f"{TEST_NOTES_FOLDER}/Fixtures.note"
+FIXTURES_MAP = "https://github.com/martonpaulo/ink-tools/issues/214#issuecomment-6936338459"
+FIXTURE_LABEL = [60, 40, 1860, 110]  # every page's typed label, a text box at its top
+FIXTURES = (
+    {"name": "apple", "page": 1, "content": "the word «apple», handwritten", "rects": {"word": [500, 400, 727, 518]}, "serves": ["#13", "#35", "#169", "#19"]},
+    {"name": "maca", "page": 2, "content": "the word «maçã», handwritten", "rects": {"word": [500, 400, 762, 511]}, "serves": ["#114", "Word Lookup definitions"]},
+    {"name": "casa", "page": 3, "content": "the word «casa», handwritten", "rects": {"word": [500, 400, 697, 447]}, "serves": ["Word Lookup translation", "Real-Time Conversion"]},
+    {"name": "cafe", "page": 4, "content": "the word «café» with its accent, handwritten", "rects": {"word": [500, 400, 684, 486]}, "serves": ["Real-Time Conversion accents", "#144"]},
+    {"name": "coffee", "page": 5, "content": "label only: «coffee» is still to be written with the pen", "rects": {}, "serves": ["Word Lookup English cases"]},
+    {"name": "translation", "page": 6, "content": "Spanish and Chinese words, handwritten", "rects": {"aprovechar": [300, 400, 795, 506], "manzana": [300, 700, 760, 769], "pingguo": [300, 1000, 593, 1127]}, "serves": ["#127"]},
+    {"name": "full-name", "page": 7, "content": "a full name at the end of a line, and the name alone", "rects": {"line": [60, 383, 1868, 558], "name": [300, 900, 1316, 1075]}, "serves": ["#18"]},
+    {"name": "no-letters", "page": 8, "content": "a selection with no letters: one synthetic zigzag stroke", "rects": {"zigzag": [400, 500, 1000, 580]}, "serves": ["#165", "#166"]},
+    {"name": "marks", "page": 9, "content": "an arrow and a scribble, handwritten; a drawing is still to be made with the pen", "rects": {"arrow": [300, 500, 542, 534], "scribble": [900, 450, 1349, 621]}, "serves": ["#165", "Real-Time Conversion non-words"]},
+    {"name": "photo", "page": 10, "content": "an inserted apple photo, 960 x 870, placed by the host near the page centre; its rect is not measured", "rects": {}, "serves": ["#170", "#182", "#137", "#196", "#145", "#134"]},
+    {"name": "illustration", "page": 11, "content": "an inserted banana line drawing", "rects": {"drawing": [640, 1053, 1280, 1506]}, "serves": ["Image Editing on clipart", "#134"]},
+    {"name": "blank", "page": 12, "content": "label only", "rects": {}, "serves": ["Real-Time Conversion pen tests"]},
+    {"name": "below-word", "page": 13, "content": "handwriting right below a word", "rects": {"word": [577, 400, 804, 518], "line": [500, 560, 1252, 662]}, "serves": ["#152", "#168"]},
+)
 PAGE_WIDTH = 1920  # the owner's tablet (docs/supernote.md › Screen and units)
 PAGE_HEIGHT = 2560
 INK_SIZE = 60  # px of x-height: about 5 mm, a written word's size
@@ -242,9 +270,10 @@ NOTE_MODE_NORMAL = "0"
 PLUGIN_SUFFIX = ".snplg"
 PLUGIN_FOLDER = "MyStyle"
 PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
+CONTENT_QUERY = "content query --uri"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 PLUGIN_CONFIG_FILE = "PluginConfig.json"
-PLUGIN_LIST_STEP = "inkctl plugin ls"  # the next step that shows which plugins are installed
+PLUGIN_LIST_STEP = "inkctl plugin list"  # the next step that shows which plugins are installed
 SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
 PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
 PLUGIN_PICK_STEP = "text:Select Plugin Package"
@@ -253,6 +282,23 @@ PICKER_NEXT_PAGE = "id:ll_next_page"
 PICKER_PAGE_NUMBER = "id:content_page_number"
 PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
+# The Ink Tools bridge app (#215, apps/inktools-bridge/AGENTS.md): it binds PluginHost's
+# PluginSettingService, which `adb` cannot reach, and answers an ordered broadcast. Its result codes
+# are the app's Outcome class; 0 is what `am` prints when no receiver ran.
+BRIDGE_PACKAGE = "com.martonpaulo.inktools.bridge"
+BRIDGE_RECEIVER = f"{BRIDGE_PACKAGE}/.CommandReceiver"
+BRIDGE_INCLUDE_STOPPED = 32  # Intent.FLAG_INCLUDE_STOPPED_PACKAGES: an app never opened still gets it
+BRIDGE_NOT_RUN = 0
+BRIDGE_RESULTS = {1: "ok", 2: "failed", 3: "usage", 4: "unreachable", 5: "timeout"}
+BRIDGE_OK = 1
+BRIDGE_USAGE = 3
+BRIDGE_TIMEOUT_RESULT = 5
+BRIDGE_ANSWER = re.compile(r'Broadcast completed: result=(-?\d+)(?:, data="(.*)")?')
+BRIDGE_CALL_TIMEOUT = 75  # the app waits up to 50 s for PluginHost's callback, under Android's 60 s
+BRIDGE_NEXT_STEP = "adb install the Ink Tools bridge APK (apps/inktools-bridge), or use the screen route for an install"
+BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
+PERMISSION_STATUS_ALWAYS = 2  # PluginPermissionManager.STATUS_ALWAYS, «Always Allow» (docs/research/2026-11-pluginhost-control.md)
+PLUGIN_ON_VALUES = ("1", "true")
 # A plugin's own page in Settings › Apps › Plugins (#191). docs/supernote.md › Plugins records the
 # path to Permissions and its three choices, measured on Relay (#163), and the uninstall warning,
 # measured on Ink2Pic; the other texts and the layout are not measured yet.
@@ -285,7 +331,7 @@ JOB_ROUTES = (
     {"job": "list plugins", "command": "plugin ls", "kind": "provider", "name": PLUGIN_URI},
 )
 JOBS_WITHOUT_ROUTE = (
-    {"job": "install or update a plugin", "needs": "the screen", "command": "plugin install"},
+    {"job": "install or update a plugin", "needs": "the screen, or the Ink Tools bridge app (#215)", "command": "plugin install"},
     {"job": "ask for a sync of one file", "needs": "nothing: the tablet syncs a changed file by itself, and Android refuses its broadcast to the shell user", "command": ""},
     {"job": "search the InkHub store", "needs": "Ratta's servers, which wait for the owner's yes", "command": ""},
 )
@@ -369,6 +415,7 @@ FAILURE_ADVICE = {
     "firmware_refused": ("the update is not safe to copy", "inkctl firmware"),
     "read_only": ("read-only mode forbids a command that changes the device", "inkctl status"),
     "protected": ("the notes folder or a note on the screen is protected", "inkctl files ls"),
+    "no_bridge": ("the Ink Tools bridge app is not installed or did not answer", "adb install inktools-bridge-<version>.apk"),
     "missing_call": ("a firmware update may have changed this call", "inkctl doctor"),
     "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
     "log_error": ("the command's own log could not be read", "inkctl status"),
@@ -847,12 +894,30 @@ def start_activity(device: Device, arguments: str) -> None:
         raise Failure(EXIT_FAILED, "device_error", output.strip())
 
 
-def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str]) -> tuple[dict, str]:
+def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str], page: int | None = None) -> tuple[dict, str]:
+    """Open the note; with a page, also prove the page it shows before the screen is read."""
     before = device.activity()
     quoted = " ".join(shlex.quote(part) for part in extras)
     start_activity(device, f"-a android.intent.action.VIEW -n {NOTE_ACTIVITY} {quoted}")
-    done, lines = after_action(device, args, before, {"path": path})
-    return done, "\n".join([f"opened: {path}", *lines])
+    result, opened = {"path": path}, [f"opened: {path}"]
+    if page is not None:
+        result["page"] = show_page(device, args, page)
+        opened.append(f"page: {page}")
+    done, lines = after_action(device, args, before, result)
+    return done, "\n".join([*opened, *lines])
+
+
+def show_page(device: Device, args: argparse.Namespace, page: int) -> int:
+    """Move the open note to a page, counted from 1, and prove it from Probe's read-back. The note app
+    ignores the `page` extra when the note was opened before and shows its last page (#220), so
+    Probe's `jumpToPage` does the move and answers `getCurrentPageNum`, both counted from 0."""
+    answer = helper_call(device, args, {"op": "jumpToPage", "page": page - 1})
+    shown = answer.get("page")
+    if not isinstance(shown, int) or isinstance(shown, bool):
+        raise Failure(EXIT_FAILED, "device_error", f"Probe gave no page number after the jump: {shown!r}", HELPER_LOG_STEP)
+    if shown != page - 1:
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the note shows page {shown + 1}, not page {page}", HELPER_LOG_STEP, extra={"page": shown + 1})
+    return page
 
 
 def need_note_suffix(path: str) -> None:
@@ -863,12 +928,60 @@ def need_note_suffix(path: str) -> None:
 def command_note_open(device: Device, args: argparse.Namespace):
     need_note_suffix(args.path)
     path = remote_path(args.path)
+    extras = note_extras(path, args.page)
     if not device.test(f"-f {shlex.quote(path)}"):
         raise not_found(path)
+    return start_note(device, args, path, extras, args.page)
+
+
+def note_extras(path: str, page: int | None) -> list[str]:
+    """The Launcher's extras; the page extra still serves a note opened for the first time."""
     extras = ["--es", "file_path", path, "--es", "from_app", "launcher"]
-    if args.page is not None:
-        extras += ["--ei", "page", str(args.page - 1)]
-    return start_note(device, args, path, extras)
+    if page is None:
+        return extras
+    if page < 1:
+        raise bad_usage(f"a page is counted from 1: {page}")
+    return extras + ["--ei", "page", str(page - 1)]
+
+
+def fixture_rects(fixture: dict) -> dict:
+    return {"label": FIXTURE_LABEL, **fixture["rects"]}
+
+
+def fixture_line(fixture: dict) -> str:
+    rects = "; ".join(f"{item} {rect}" for item, rect in fixture_rects(fixture).items())
+    return f"{fixture['page']:>2} {fixture['name']}: {fixture['content']}. Rects: {rects}. Serves: {', '.join(fixture['serves'])}"
+
+
+def find_fixture(name: str) -> dict:
+    for fixture in FIXTURES:
+        if fixture["name"] == name:
+            return fixture
+    raise bad_usage(f"no fixture is named {name!r}; the names: {', '.join(item['name'] for item in FIXTURES)}")
+
+
+def command_fixture(device: Device, args: argparse.Namespace):
+    """Open the fixtures note at a fixture's page and prove the page; optionally lasso one rect (#220)."""
+    if args.list_fixtures:
+        listed = [{**fixture, "rects": fixture_rects(fixture)} for fixture in FIXTURES]
+        data = {"note": FIXTURES_NOTE, "map": FIXTURES_MAP, "fixtures": listed}
+        return data, "\n".join([f"{FIXTURES_NOTE} (page map: {FIXTURES_MAP})", *map(fixture_line, FIXTURES)])
+    if not args.name:
+        raise bad_usage("name a fixture, or pass --list")
+    fixture = find_fixture(args.name)
+    rects = fixture_rects(fixture)
+    if args.lasso and args.lasso not in rects:
+        raise bad_usage(f"{fixture['name']} has no rect {args.lasso!r}; its rects: {', '.join(rects)}")
+    if not device.test(f"-f {shlex.quote(FIXTURES_NOTE)}"):
+        raise Failure(EXIT_NOT_FOUND, "not_found", f"{FIXTURES_NOTE} is not on the tablet; this command never creates it: rebuild it by hand as the page map says, {FIXTURES_MAP}", FIXTURES_MAP)
+    data, text = start_note(device, args, FIXTURES_NOTE, note_extras(FIXTURES_NOTE, fixture["page"]), fixture["page"])
+    data["fixture"] = fixture["name"]
+    if args.lasso:
+        left, top, right, bottom = rects[args.lasso]
+        answer = helper_call(device, args, {"op": "lassoRect", "rect": {"left": left, "top": top, "right": right, "bottom": bottom}})
+        data["lasso"], lassoed = lasso_answer(answer)
+        text = f"{text}\n{lassoed}"
+    return data, text
 
 
 def command_note_new(device: Device, args: argparse.Namespace):
@@ -1215,7 +1328,7 @@ def broadcast(device: Device, action: str) -> dict:
 def trigger_row_exists(device: Device, task_id: str) -> bool:
     """Read only the trigger row, never another task."""
     where = shlex.quote(f"taskId='{task_id}'")
-    return bool(query_rows(device, f"content query --uri {TASKS_URI} --projection id --where {where}"))
+    return bool(query_rows(device, f"{CONTENT_QUERY} {TASKS_URI} --projection id --where {where}"))
 
 
 def command_sync_tasks(device: Device, args: argparse.Namespace):
@@ -1562,7 +1675,7 @@ def command_lasso_press(device: Device, args: argparse.Namespace):
 
 
 # Ink and lasso through Probe's «Run Command» button (#148). inkctl pushes one command file, presses
-# the button in the open note, and reads the answer Probe logs; `plugins/probe/src/helper.ts` owns
+# the button in the open note, and reads the answer Probe logs; `plugins/plugin-diagnostics/src/helper.ts` owns
 # the other side of this contract.
 def arc(cx: float, cy: float, rx: float, ry: float, start: float, end: float) -> list[tuple[float, float]]:
     """Points along an ellipse from one angle to another, in degrees, counterclockwise when end > start."""
@@ -1774,10 +1887,10 @@ def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict
         if answer is not None:
             break
         if time.monotonic() - started >= args.timeout:
-            raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", "inkctl logs --plugin Probe")
+            raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", HELPER_LOG_STEP)
         time.sleep(WAIT_INTERVAL)
     if not answer.get("ok"):
-        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", "inkctl logs --plugin Probe")
+        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", HELPER_LOG_STEP)
     return answer
 
 
@@ -1934,7 +2047,7 @@ def query_rows(device: Device, call: str) -> list[dict]:
 
 
 def plugin_rows(device: Device) -> list[dict]:
-    return query_rows(device, f"content query --uri {PLUGIN_URI}")
+    return query_rows(device, f"{CONTENT_QUERY} {PLUGIN_URI}")
 
 
 def shown_plugin_names(row: dict) -> list[str]:
@@ -2086,12 +2199,147 @@ def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) 
         time.sleep(WAIT_INTERVAL)
 
 
+def bridge_installed(device: Device) -> bool:
+    """`pm path` prints the APK of an installed package and nothing, with exit 1, for a missing one."""
+    done = device.adb("shell", f"pm path {BRIDGE_PACKAGE}")
+    return done.returncode == 0 and "package:" in done.stdout.decode(errors="replace")
+
+
+def require_bridge(device: Device) -> None:
+    if not bridge_installed(device):
+        raise Failure(EXIT_NO_BRIDGE, "no_bridge", f"{BRIDGE_PACKAGE} is not installed; {BRIDGE_NEXT_STEP}", BRIDGE_NEXT_STEP)
+
+
+def bridge_call(device: Device, op: str, **extras) -> str:
+    """One ordered broadcast to the bridge app; its answer, or the failure its result code names."""
+    words = ["am", "broadcast", "-n", BRIDGE_RECEIVER, "-f", str(BRIDGE_INCLUDE_STOPPED), "--es", "op", op]
+    for key, value in extras.items():
+        words += ["--ei" if isinstance(value, int) else "--es", key, str(value)]
+    output = device.shell(shlex.join(words), timeout=BRIDGE_CALL_TIMEOUT)
+    match = BRIDGE_ANSWER.search(output)
+    if not match:
+        raise Failure(EXIT_FAILED, "device_error", output.strip()[:ERROR_EXCERPT] or "am broadcast gave no result")
+    code, answer = int(match[1]), match[2] or ""
+    if code == BRIDGE_OK:
+        return answer
+    if code == BRIDGE_NOT_RUN:
+        raise Failure(EXIT_NO_BRIDGE, "no_bridge", f"the Ink Tools bridge app did not answer; {BRIDGE_NEXT_STEP}", BRIDGE_NEXT_STEP)
+    if code == BRIDGE_USAGE:
+        raise bad_usage(f"the bridge refused the request: {answer}")
+    if code == BRIDGE_TIMEOUT_RESULT:
+        raise Failure(EXIT_TIMEOUT, "timeout", f"the bridge: {answer}", BRIDGE_LOG_STEP)
+    raise Failure(EXIT_FAILED, "device_error", f"the bridge ({BRIDGE_RESULTS.get(code, code)}): {answer}", BRIDGE_LOG_STEP)
+
+
+def plugin_row(device: Device, plugin_id: str) -> dict:
+    """The single-plugin row, which alone carries usesPermissions."""
+    rows = query_rows(device, f"{CONTENT_QUERY} {PLUGIN_URI}/{shlex.quote(plugin_id)}")
+    if not rows:
+        raise not_found(f"plugin {plugin_id}", PLUGIN_LIST_STEP)
+    return rows[0]
+
+
+def is_enabled(row: dict) -> bool:
+    value = row.get("enable")
+    if value is None:
+        raise Failure(EXIT_FAILED, "device_error", "the plugin list has no enable column, so the change cannot be proved")
+    return value.strip().lower() in PLUGIN_ON_VALUES
+
+
+def permission_states(row: dict) -> dict:
+    """Each permission's status from usesPermissions, a JSON list of {name, status}, as measured in
+    docs/research/2026-11-pluginhost-control.md › 1; any other text stops with that text."""
+    raw = row.get("usesPermissions")
+    if raw is None:
+        raise Failure(EXIT_FAILED, "device_error", "the plugin row has no usesPermissions column, so the permissions cannot be proved")
+    try:
+        items = json.loads(raw)
+        if isinstance(items, list) and all(isinstance(item, dict) and "name" in item for item in items):
+            return {item["name"]: int(item["status"]) if "status" in item else None for item in items}
+    except (ValueError, TypeError):
+        pass
+    if raw.strip() in ("", "null"):
+        return {}
+    raise Failure(EXIT_FAILED, "device_error", f"usesPermissions is in a notation inkctl cannot read: {raw[:ERROR_EXCERPT]}")
+
+
+def wait_until(limit: float, condition, message: str):
+    """Poll `condition` until it gives a value, or time out with `message`."""
+    started = time.monotonic()
+    while True:
+        value = condition()
+        if value:
+            return value
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{message} after {limit:g} s")
+        time.sleep(WAIT_INTERVAL)
+
+
+def install_through_bridge(device: Device, args: argparse.Namespace, config: dict, installed: list) -> tuple:
+    pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
+    answer = bridge_call(device, "install", path=pushed["path"])
+    row = wait_for_plugin(device, config, args.timeout, bool(installed))
+    data = {
+        "plugin": config["id"],
+        "version": config["version"],
+        "action": "updated" if installed else "installed",
+        "route": "bridge",
+        "path": pushed["path"],
+        "enabled": None,
+        "limit": None,
+        "bridge": answer,
+        "row": row,
+    }
+    return data, f"{data['action']}: {config['id']} {config['version']}"
+
+
+def command_plugin_enable(device: Device, args: argparse.Namespace):
+    wanted = args.plugin_state == "enable"
+    row = resolve_plugin(device, args.plugin)
+    plugin_id = row["pluginID"]
+    if is_enabled(row) == wanted:
+        data = {"plugin": plugin_id, "enable": wanted, "action": "unchanged", "row": row}
+        return data, f"unchanged: {plugin_id} is already {'enabled' if wanted else 'disabled'}"
+    require_bridge(device)
+    answer = bridge_call(device, args.plugin_state, pluginID=plugin_id)
+
+    def changed():
+        return next((item for item in plugin_rows(device) if item.get("pluginID") == plugin_id and is_enabled(item) == wanted), None)
+
+    row = wait_until(args.timeout, changed, f"{plugin_id} is not {'enabled' if wanted else 'disabled'} in the plugin list")
+    data = {"plugin": plugin_id, "enable": wanted, "action": "enabled" if wanted else "disabled", "route": "bridge", "bridge": answer, "row": row}
+    return data, f"{data['action']}: {plugin_id}"
+
+
+def command_plugin_allow(device: Device, args: argparse.Namespace):
+    plugin_id = resolve_plugin(device, args.plugin)["pluginID"]
+    states = permission_states(plugin_row(device, plugin_id))
+    names = args.permissions or sorted(states)
+    if not names:
+        raise bad_usage(f"{plugin_id} uses no permission; name one")
+    unknown = [name for name in names if name not in states]
+    if unknown:
+        raise not_found(f"permission {', '.join(unknown)} in {plugin_id}'s usesPermissions", f"inkctl plugin allow {plugin_id}")
+    require_bridge(device)
+    answer = bridge_call(device, "allow", pluginID=plugin_id, perm=",".join(names), status=PERMISSION_STATUS_ALWAYS)
+
+    def allowed():
+        now = permission_states(plugin_row(device, plugin_id))
+        return now if all(now.get(name) == PERMISSION_STATUS_ALWAYS for name in names) else None
+
+    now = wait_until(args.timeout, allowed, f"{plugin_id}'s permissions are not all Always Allow")
+    data = {"plugin": plugin_id, "permissions": {name: now[name] for name in names}, "status": PERMISSION_STATUS_ALWAYS, "route": "bridge", "bridge": answer}
+    return data, f"always allowed: {plugin_id} {' '.join(names)}"
+
+
 def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
     if installed and same_build(installed[0], config, installed[0].get("versionName")):
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", PLUGIN_LIST_STEP)
+    if bridge_installed(device):
+        return install_through_bridge(device, args, config, installed)
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")
     for step in PLUGIN_PATH_STEPS:
@@ -2259,6 +2507,10 @@ def command_plugin_uninstall(device: Device, args: argparse.Namespace):
     plugin_id = row.get("pluginID", "")
     if not plugin_id:
         raise Failure(EXIT_FAILED, "device_error", "the plugin list has no pluginID column, so this uninstall cannot be proved")
+    if bridge_installed(device):
+        answer = bridge_call(device, "uninstall", pluginID=plugin_id)
+        wait_for_plugin_gone(device, plugin_id, args.timeout)
+        return {"plugin": plugin_id, "action": "uninstalled", "route": "bridge", "bridge": answer}, f"uninstalled: {plugin_id}"
     open_plugin_page(device, args, row)
     press_element(device, expect_element(device, PLUGIN_UNINSTALL_STEP, args.step_timeout))
     expect_screen(device, uninstall_warning, args.step_timeout, f"no confirmation saying «{UNINSTALL_WARNING}»")
@@ -2562,7 +2814,7 @@ def command_secret_status(device: Device, args: argparse.Namespace):
 
 # Google sign-in on the Mac (#124, owner D39 A): Google's installed-app flow with a loopback
 # redirect, because its device-code flow allows no Calendar scope. The Desktop client and the refresh
-# token wait in the login Keychain (plugins/bridge/AGENTS.md); `inkctl secret set google` is the one
+# token wait in the login Keychain (plugins/account-sync/AGENTS.md); `inkctl secret set google` is the one
 # writer to the tablet. https://developers.google.com/identity/protocols/oauth2/native-app
 GOOGLE_TOKEN_LABEL = "Ink Tools Account Sync: Google Calendar"
 GOOGLE_TOKEN_COMMENT = (
@@ -2870,7 +3122,7 @@ def build_parser() -> argparse.ArgumentParser:
     notes = noun("note")
     opened = add(notes, "open", command_note_open, action, changes=True)
     opened.add_argument("path")
-    opened.add_argument("--page", type=int, help="page number, from 1")
+    opened.add_argument("--page", type=int, help="page number, from 1, proved through Probe's «Run Command»")
     add(notes, "new", command_note_new, action, changes=True).add_argument("path")
 
     files = noun("files")
@@ -2912,7 +3164,11 @@ def build_parser() -> argparse.ArgumentParser:
     for placed in (written, sampled):
         placed.add_argument("--at", nargs=2, type=int, metavar=("X", "Y"), required=True, help="the ink's top-left corner, in page pixels")
         placed.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
-    for helped in (boxed, last, written, sampled, saved):
+    fixtures = add(commands, "fixture", command_fixture, action, changes=True)
+    fixtures.add_argument("name", nargs="?", help="a fixture of Note/Tests/Fixtures.note, as --list names it")
+    fixtures.add_argument("--list", dest="list_fixtures", action="store_true", help="print each fixture, its page, its rects and what it serves; no tablet is reached")
+    fixtures.add_argument("--lasso", metavar="ITEM", help="then lasso this rect of the fixture, as --list names it")
+    for helped in (opened, fixtures, boxed, last, written, sampled, saved):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
         helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
 
@@ -2939,6 +3195,7 @@ def build_parser() -> argparse.ArgumentParser:
     add(commands, "apps", command_apps)
 
     plugins = noun("plugin")
+    add(plugins, "list", command_plugin_ls)
     add(plugins, "ls", command_plugin_ls)
     pushing = add(plugins, "push", command_plugin_push, changes=True)
     pushing.add_argument("file")
@@ -2955,6 +3212,15 @@ def build_parser() -> argparse.ArgumentParser:
     uninstalling = add(plugins, "uninstall", command_plugin_uninstall, changes=True)
     uninstalling.add_argument("plugin", help=plugin_name_help)
     uninstalling.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to leave the list")
+    for state in ("enable", "disable"):
+        switched = add(plugins, state, command_plugin_enable, changes=True)
+        switched.set_defaults(plugin_state=state)
+        switched.add_argument("plugin", help=plugin_name_help)
+        switched.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds for the list to show the change")
+    allowing = add(plugins, "allow", command_plugin_allow, changes=True)
+    allowing.add_argument("plugin", help=plugin_name_help)
+    allowing.add_argument("permissions", nargs="*", metavar="PERM", help="such as plugin.permission.FILE:READ; default: every one it uses")
+    allowing.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds for the row to show the change")
     for settings_page in (permitting, uninstalling):
         settings_page.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
         settings_page.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes through the plugin list")
@@ -3039,6 +3305,8 @@ def main() -> int:
             log.finish("(usage)", leaving.code, "usage")
         raise
     log.trace, log.paths = args.trace, args.log_paths
+    if getattr(args, "list_fixtures", False):  # `fixture --list` only reads the table in this file
+        args.needs_device = args.changes = False
     code, kind, device, before, after = EXIT_OK, None, None, "", ""
     try:
         if refuses_read_only(args):

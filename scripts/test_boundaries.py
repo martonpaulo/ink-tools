@@ -25,7 +25,7 @@ class Boundaries(unittest.TestCase):
             "packages/sn-adapter/src/official/note.ts": "import {PluginNoteAPI} from 'sn-plugin-lib';\n",
             "plugins/a/__tests__/x.test.ts": "import {PluginManager} from 'sn-plugin-lib';\n",
             "plugins/a/__mocks__/sn-plugin-lib.ts": "jest.mock('sn-plugin-lib');\n",
-            "plugins/probe/index.js": "import {PluginManager} from 'sn-plugin-lib';\n",
+            "plugins/plugin-diagnostics/index.js": "import {PluginManager} from 'sn-plugin-lib';\n",
             "plugins/a/src/flow.ts": "/** sn-plugin-lib's code for a missing permission. */\n",
         }), [])
         self.assertEqual(self.tree({
@@ -36,7 +36,7 @@ class Boundaries(unittest.TestCase):
     def test_authority_only_in_sn_adapter(self):
         self.assertEqual(self.tree({
             "packages/sn-adapter/src/internals/todo.ts": "const a = 'com.ratta.supernote.task.provider';\n",
-            "plugins/probe/native/src/P.java": "String a = \"com.ratta.supernote.task.provider\";\n",
+            "plugins/plugin-diagnostics/native/src/P.java": "String a = \"com.ratta.supernote.task.provider\";\n",
             "plugins/a/__tests__/a.test.ts": "expect(uri).toContain('com.ratta.supernote.task.provider');\n",
         }), [])
         self.assertEqual(self.tree({
@@ -47,7 +47,7 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(self.tree({
             "packages/sync-core/src/todoist.ts": "const BASE = 'https://api.todoist.com/rest/v2';\n",
             "packages/sync-core/src/index.ts": "export * from './todoist';\n",
-            "plugins/a/src/run.ts": "import {syncTasks} from '@supernote-tools/sync-core';\n",
+            "plugins/a/src/run.ts": "import {syncTasks} from '@ink-tools/sync-core';\n",
             "plugins/a/scripts/fetch.sh": "curl https://www.googleapis.com/x\n",
         }), [])
         self.assertEqual(self.tree({
@@ -77,9 +77,9 @@ class Boundaries(unittest.TestCase):
             "packages/sync-core/src/http.ts": "if (new URL(url).protocol !== 'https:') throw e;\n",
             "packages/ink-core/src/w.ts": "const q = link.searchParams.get('q');\n",
             "plugins/a/index.js": "const u = new URL(x);\n",
-            "plugins/probe/src/p.ts": "const host = new URL(x).host;\n",
+            "plugins/plugin-diagnostics/src/p.ts": "const host = new URL(x).host;\n",
         }), [("packages/ink-core/src/w.ts", "url"), ("packages/sync-core/src/http.ts", "url"),
-             ("plugins/a/index.js", "url"), ("plugins/probe/src/p.ts", "url")])
+             ("plugins/a/index.js", "url"), ("plugins/plugin-diagnostics/src/p.ts", "url")])
 
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({

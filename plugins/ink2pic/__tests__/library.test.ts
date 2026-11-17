@@ -9,7 +9,7 @@ import {
 } from '../src/library/library';
 import {loadLibrary, saveLibrary} from '../src/library/store';
 import type {LibraryItem} from '../src/library/types';
-import type {TextStore} from '@supernote-tools/picture-search';
+import type {TextStore} from '@ink-tools/picture-search';
 
 const item = (n: number, query = 'soup'): LibraryItem => ({
   id: `openclipart:${n}`,

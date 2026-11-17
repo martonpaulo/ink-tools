@@ -5,7 +5,7 @@ import {
   type SavedStroke,
   textBoxFields,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import type {ConvertHost} from '../src/convert';
 import type {UndoHost} from '../src/undo';
 import type {InkStroke} from '../src/words';

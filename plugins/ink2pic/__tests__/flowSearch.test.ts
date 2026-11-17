@@ -3,9 +3,9 @@ import {getLibrary, recordSearch} from '../src/library/device';
 import {emptyLibrary} from '../src/library/library';
 import {logLines, startLog} from '../src/profile';
 import {searchCached} from '../src/search/device';
-import type {SearchOutcome} from '@supernote-tools/picture-search/search';
+import type {SearchOutcome} from '@ink-tools/picture-search/search';
 import {prepareThumbs} from '../src/search/thumbs';
-import {hasPermission} from '@supernote-tools/sn-adapter/official';
+import {hasPermission} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/ui/copy';
 
 jest.mock('../src/search/device', () => ({searchCached: jest.fn()}));
@@ -14,8 +14,8 @@ jest.mock('../src/library/device', () => ({
   getLibrary: jest.fn(),
   recordSearch: jest.fn(),
 }));
-jest.mock('@supernote-tools/sn-adapter/official', () => ({
-  ...jest.requireActual('@supernote-tools/sn-adapter/official'),
+jest.mock('@ink-tools/sn-adapter/official', () => ({
+  ...jest.requireActual('@ink-tools/sn-adapter/official'),
   PERMISSION_INTERNET: 'plugin.permission.INTERNET',
   hasPermission: jest.fn(),
 }));

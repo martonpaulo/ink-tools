@@ -25,7 +25,7 @@ import {
   type LassoPlace,
 } from '../profile';
 import {missingPermissions} from '../onboarding/permissions';
-import {queuePress, showPluginView} from '@supernote-tools/sn-adapter/official';
+import {queuePress, showPluginView} from '@ink-tools/sn-adapter/official';
 import {DEFINE_BUTTON_ID, INSERT_BUTTON_ID} from '../buttons';
 import {atStep, failureText, StepFailure} from './failure';
 import {insertBest, InsertLimit, QuickInsert} from './quickInsert';

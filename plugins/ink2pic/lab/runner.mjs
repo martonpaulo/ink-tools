@@ -41,7 +41,7 @@ export const SOURCE_NAMES = core.DEFAULT_ADAPTERS.map(adapter => adapter.name);
 export const QUERY_LANGUAGES = {
   ink2pic: ['en'],
   lookup: [
-    ...createRequire(import.meta.url)('../../lookup/src/pictureLanguages.ts')
+    ...createRequire(import.meta.url)('../../word-lookup/src/pictureLanguages.ts')
       .PICTURE_LANGUAGES,
   ],
 };

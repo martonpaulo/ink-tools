@@ -16,7 +16,7 @@ import {
   type PictureStore,
   type Stop,
 } from '../profile';
-import type {SearchResult} from '@supernote-tools/picture-search';
+import type {SearchResult} from '@ink-tools/picture-search';
 import type {Done} from './failure';
 import {saveSymbol, symbolFile} from '../symbols/store';
 import {SIZE_WIDTHS, styleFlags} from '../settings/settings';

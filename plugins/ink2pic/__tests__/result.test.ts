@@ -2,7 +2,7 @@ import {
   attempt,
   fromResponse,
   THROWN_CODE,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 describe('fromResponse', () => {
   it('maps success to its result', () => {

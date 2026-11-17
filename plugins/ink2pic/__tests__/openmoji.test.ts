@@ -1,16 +1,16 @@
-import INDEX from '@supernote-tools/picture-search/data/openmoji-index.json';
+import INDEX from '@ink-tools/picture-search/data/openmoji-index.json';
 import {
   matchSymbols,
   searchOpenmoji,
-} from '@supernote-tools/picture-search/adapters/openmoji';
-import {createContext} from '@supernote-tools/picture-search/fetcher';
-import {rankForEink} from '@supernote-tools/picture-search/rank';
+} from '@ink-tools/picture-search/adapters/openmoji';
+import {createContext} from '@ink-tools/picture-search/fetcher';
+import {rankForEink} from '@ink-tools/picture-search/rank';
 import {
   DEFAULT_ADAPTERS,
   insertUrl,
   isSourceName,
-} from '@supernote-tools/picture-search/registry';
-import type {SearchResult} from '@supernote-tools/picture-search/types';
+} from '@ink-tools/picture-search/registry';
+import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const fetch = jest.fn(async () => {
   throw new Error('OpenMoji matched a word over the network');

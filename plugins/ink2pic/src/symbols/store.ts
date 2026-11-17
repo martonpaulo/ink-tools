@@ -25,7 +25,7 @@ import {
   SearchResult,
   sourceId,
   symbolHexes,
-} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
 
 const EXTENSION = '.png';
 const FILE_PREFIX = 'file://';

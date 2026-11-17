@@ -26,7 +26,7 @@ import {
   symbolsStatus,
   SymbolsStatus,
 } from '../symbols/store';
-import {Button, metrics, shared} from '@supernote-tools/ui-kit';
+import {Button, metrics, shared} from '@ink-tools/ui-kit';
 import {copy, CopyKey} from './copy';
 import {languageName} from './LanguagesScreen';
 import {LogView} from './LogView';

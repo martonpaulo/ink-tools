@@ -12,14 +12,14 @@ The rules are `docs/architecture.md` › Layer rules:
 - `service`: no code outside `packages/sync-core/src/` names a service host (`api.todoist.com`,
   `www.googleapis.com`, `oauth2.googleapis.com`), and no code outside `packages/sync-core/` imports a
   service client module (`todoist`, `google`, `ics`, `http`) by its path: a plugin takes the
-  provider-neutral `@supernote-tools/sync-core`.
+  provider-neutral `@ink-tools/sync-core`.
 - `dictionary`: no code outside `packages/ink-core/src/` names a dictionary host (`wiktionary.org`):
-  a plugin takes the provider-neutral `DictionaryProvider` of `@supernote-tools/ink-core` (#115).
+  a plugin takes the provider-neutral `DictionaryProvider` of `@ink-tools/ink-core` (#115).
 - `url`: no code that runs on the tablet (a plugin's or package's `src/`, a plugin's `index.js`)
   constructs a `URL` or reads `searchParams`: React Native's `URL` throws on `protocol`, `host` and
-  every other getter but `href`; take `parseUrl` of `@supernote-tools/sync-core` (#209).
+  every other getter but `href`; take `parseUrl` of `@ink-tools/sync-core` (#209).
 
-`plugins/probe/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
+`plugins/plugin-diagnostics/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
@@ -32,7 +32,7 @@ from pathlib import Path
 SKIP = {"node_modules", ".git", ".scratch", ".claude", "build", "android", ".toolchain"}
 SCRIPT = {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"}
 NATIVE = {".java", ".kt"}
-EXEMPT = ("plugins/probe/",)
+EXEMPT = ("plugins/plugin-diagnostics/",)
 TEST_PARTS = {"__tests__", "__mocks__", "tests"}
 
 # An import target: `from 'x'`, `import 'x'`, `require('x')`, `import('x')`, `jest.mock('x'`.
@@ -85,7 +85,7 @@ def findings(root):
                     if target == "sn-plugin-lib" and not test and not rel.startswith("packages/sn-adapter/src/official/"):
                         found.append((rel, number, "sdk", "imports sn-plugin-lib outside sn-adapter's official tier"))
                     if CLIENT.search(target) and not rel.startswith("packages/sync-core/"):
-                        found.append((rel, number, "service", "imports the service client %s; take @supernote-tools/sync-core" % target))
+                        found.append((rel, number, "service", "imports the service client %s; take @ink-tools/sync-core" % target))
                 if HOST.search(line) and not test and not rel.startswith("packages/sync-core/src/"):
                     found.append((rel, number, "service", "names the service host %s outside sync-core" % HOST.search(line).group(0)))
                 if DICTIONARY_HOST.search(line) and not test and not rel.startswith("packages/ink-core/src/"):

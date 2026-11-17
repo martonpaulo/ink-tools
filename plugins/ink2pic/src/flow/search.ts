@@ -19,7 +19,7 @@ import {
   SearchState,
   searchState,
   SourceAdapter,
-} from '@supernote-tools/picture-search';
+} from '@ink-tools/picture-search';
 import {searchCached} from '../search/device';
 import {prepareThumbs} from '../search/thumbs';
 import {markSavedSymbols} from '../symbols/store';

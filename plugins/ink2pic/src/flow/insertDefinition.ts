@@ -16,7 +16,7 @@ import {
   placeRect,
   Rect,
   wiktionaryDefiner,
-} from '@supernote-tools/ink-core';
+} from '@ink-tools/ink-core';
 import {
   BUTTON_TYPE_LASSO,
   DEFINE_BUTTON_ID,
@@ -25,7 +25,7 @@ import {
 } from '../buttons';
 import {USER_AGENT} from '../config';
 import {log, logged, timed, getSettings} from '../profile';
-import {createFetcher} from '@supernote-tools/picture-search';
+import {createFetcher} from '@ink-tools/picture-search';
 import {Settings, SIZE_WIDTHS} from '../settings/settings';
 import {copy} from '../ui/copy';
 import {offlineText} from './failure';
@@ -37,7 +37,7 @@ import {
   Result,
   TextBoxInput,
   unregisterButton,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 
 /** The text size in page pixels [INFERENCE: near the Supernote's own text box default]. */
 export const DEFINITION_FONT_SIZE = 32;

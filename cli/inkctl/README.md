@@ -4,7 +4,7 @@
 
 Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, JSON answers and stable exit codes, without root.
 
-[![Validate](https://img.shields.io/github/actions/workflow/status/martonpaulo/supernote-tools/validate-inkctl.yml?branch=main&style=flat&labelColor=30363d&label=validate)](https://github.com/martonpaulo/supernote-tools/actions/workflows/validate.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/martonpaulo/ink-tools/validate-inkctl.yml?branch=main&style=flat&labelColor=30363d&label=validate)](https://github.com/martonpaulo/ink-tools/actions/workflows/validate-inkctl.yml)
 
 </div>
 
@@ -21,8 +21,8 @@ Let an agent control a Supernote e-ink tablet over Wi-Fi ADB with direct calls, 
 Needs Python 3.9 or later, `adb` on your `PATH`, and Sideloading turned on in the tablet's settings ([how](docs/research/2026-11-adb-on-supernote.md#steps)).
 
 ```bash
-git clone https://github.com/martonpaulo/supernote-tools
-ln -s "$PWD/supernote-tools/cli/inkctl/src/inkctl" ~/.local/bin/inkctl
+git clone https://github.com/martonpaulo/ink-tools
+ln -s "$PWD/ink-tools/cli/inkctl/src/inkctl" ~/.local/bin/inkctl
 export SUPERNOTE_ADDRESS=192.0.2.10
 inkctl wifi on     # over USB; a restart of the tablet turns it off
 inkctl status
@@ -47,7 +47,8 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl firmware` | Shows the installed and the newest official firmware. `--download` copies the newest one to `EXPORT`, after the checks it names. The tablet's build id holds no public version, so pass `--installed X.Y.Z` from Settings > About. |
 | `inkctl routes [PACKAGE]` | Lists, read-only, each exported entry point with its filters and permission, and which job each route does. |
 | `inkctl doctor` | Checks, read-only, that each call this command makes still exists. Run it after a firmware update. |
-| `inkctl note open PATH --page N` | Opens a note at a page, counted from 1. |
+| `inkctl note open PATH --page N` | Opens a note at a page, counted from 1. The note app ignores the page for a note it opened before, so with `--page` it then presses the Probe's «Run Command» to jump to the page and read it back, and fails with exit 9 and the page the note shows when the two differ ([#220](https://github.com/martonpaulo/ink-tools/issues/220)). |
+| `inkctl fixture NAME` | Opens the test fixtures note, `Note/Tests/Fixtures.note`, at that fixture's page and proves the page the same way. `--lasso ITEM` then lassoes one of the fixture's rects, as `lasso rect` does. `fixture --list` prints each fixture's page, rects and the issues it serves, from the one table in `src/inkctl` (`FIXTURES`), with no tablet. The command never creates the note: when it is missing, it says so and links the [page map](https://github.com/martonpaulo/ink-tools/issues/214#issuecomment-6936338459). |
 | `inkctl note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `inkctl files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
 | `inkctl sync tasks` | Starts a To-do sync and waits until it has run. |
@@ -64,10 +65,12 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl click TARGET` | Presses `@eN` from the last snapshot, or `id:X`, `desc:X`, `text:X`. |
 | `inkctl wait activity\|file\|element X` | Waits for a condition, with a time limit. |
 | `inkctl apps` | Lists installed packages. |
-| `inkctl plugin ls\|push` | Lists plugins, or copies one to `MyStyle`. The install is then done on the tablet. |
-| `inkctl plugin install FILE.snplg` | Copies a plugin, installs or updates it through named elements, and proves it from the plugin list. |
+| `inkctl plugin list\|push` | Lists plugins from PluginHost's content provider (`plugin ls` is the same), or copies one to `MyStyle`. |
+| `inkctl plugin install FILE.snplg` | Copies a plugin, installs or updates it, and proves it from the plugin list: through the bridge app when it is installed (`"route": "bridge"`), else through named elements (`"route": "screen"`). |
+| `inkctl plugin enable\|disable NAME` | Turns a plugin on or off through the Ink Tools bridge app ([`apps/inktools-bridge/`](../../apps/inktools-bridge/)), and proves it from the plugin list. Without the bridge app it stops with exit code 14. Not yet run on the tablet ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). |
+| `inkctl plugin allow NAME [PERM...]` | Sets the named permissions, by default every one the plugin uses, to «Always Allow» (status 2) through the bridge app, and proves each from the single-plugin row's `usesPermissions`. Not yet run on the tablet ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). |
 | `inkctl plugin permissions NAME [always]` | Opens Settings › Apps › Plugins › the plugin › Permissions through named elements and lists each permission and its state. With `always`, it sets each permission the page lists to «Allow» and reads the states back. `NAME` is the name the plugin list shows, its `pluginKey` or its `pluginID`. The texts of these screens are not measured on the tablet yet ([#191](https://github.com/martonpaulo/ink-tools/issues/191)). |
-| `inkctl plugin uninstall NAME` | Uninstalls a plugin from its Settings page through named elements, presses the confirmation only after it reads «Its data will also be deleted», and proves the uninstall from the plugin list. The plugin's data on the tablet is deleted. Not yet run on the tablet ([#191](https://github.com/martonpaulo/ink-tools/issues/191)). |
+| `inkctl plugin uninstall NAME` | Uninstalls a plugin through the bridge app when it is installed, else from its Settings page through named elements, presses the confirmation only after it reads «Its data will also be deleted», and proves the uninstall from the plugin list. The plugin's data on the tablet is deleted. Not yet run on the tablet ([#191](https://github.com/martonpaulo/ink-tools/issues/191)). |
 | `inkctl logs` | Shows the recent device log with credentials masked. It filters by time, level, package, process and text, follows new lines with a time limit, and shows only what is new with `--since-last`. `--plugin NAME` keeps one plugin's lines and every denied permission: `NAME` is the name the plugin list shows, its `pluginKey` or its `pluginID`. A plugin logs under the tag `ReactNativeJS`, not its own name, so `--tag` with a plugin's name finds nothing and says to use `--plugin`. |
 | `inkctl history` | Reads what this command did: `--failures`, `--command NAME`, `--since 2h`. |
 | `inkctl tap\|swipe` | Presses by coordinates, the last resort. |
@@ -116,7 +119,7 @@ copy. `inkctl google login` keeps the Google sign-in in the login Keychain, serv
 - **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
 - **A sleeping tablet may not answer.** With the global setting `wifi_sleep_policy` at `2`, a Manta on firmware 3.31.45 kept answering while asleep for the 15 minutes measured, and lost 1% of battery with one port check a minute. A longer sleep is not measured. The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **A locked tablet is not tested.** The owner runs the tablet with no lock code, so what `input keyevent WAKEUP` and `screencap` do behind a lock screen is not known. The command never bypasses a lock code or PIN.
-- **Installing a plugin uses the tablet's screen.** The platform offers no other route, so the install, the permissions and the uninstall press named elements and stop on a screen they do not expect.
+- **Changing a plugin needs the Ink Tools bridge app, or the screen.** `adb` cannot call PluginHost's settings service, so a small sideloaded app does ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). With it, `plugin install` and `plugin uninstall` touch no screen (`"route": "bridge"`), and `enable`, `disable` and `allow` work; without it, the install, the permissions and the uninstall press named elements and stop on a screen they do not expect. The bridge route is not yet run on the tablet.
 - **Files sync by themselves.** On firmware 3.31.45 the tablet's own watcher picks up a copied file, and Android refuses the app's sync broadcast from ADB, so there is no `sync file` command.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `inkctl doctor` after one. It proves a call exists, not that it still works.
 - **ADB has wide access.** ADB accepts only computers the tablet has authorized. One of those computers can read and delete every note, and Wi-Fi mode opens a port on your network until `inkctl wifi off`. See [`SECURITY.md`](SECURITY.md).
@@ -129,7 +132,7 @@ Notes for an agent that drives the tablet in a test round, learned in the rounds
 
 - **Name the device for raw `adb`.** With the USB cable and Wi-Fi ADB both attached, `adb` refuses a call with more than one device; pass `-s <serial>`. `inkctl` picks the link itself.
 - **Query the Calendar provider with a projection and a filter.** A plain `adb shell content query` of `content://com.ratta.supernote.calendar.provider/data_info` was reported to fail with a `NullPointerException` in `setNotificationUri` (not re-measured); the form with `--projection` and `--where` returned rows ([#43](https://github.com/martonpaulo/ink-tools/issues/43)).
-- **Test with real handwriting and no pen.** Copy a word the owner wrote on a note under `Note/Tests/` to the test page (for example `ink save`, then `ink strokes`), lasso it with `lasso last-insert`, and press rows with `lasso press` ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#189](https://github.com/martonpaulo/ink-tools/issues/189)).
+- **Test with real handwriting and no pen.** Copy a word the owner wrote on a note under `Note/Tests/` to the test page (for example `ink save`, then `ink strokes`), lasso it with `lasso last-insert`, and press rows with `lasso press` ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#189](https://github.com/martonpaulo/ink-tools/issues/189)). A ready word, picture or blank page is one call away: `fixture NAME --lasso ITEM` ([#220](https://github.com/martonpaulo/ink-tools/issues/220)).
 - **Delete the older build.** Each install leaves its `.snplg` in `MyStyle/`; delete the older build after a newer one is installed.
 - **Stop each log capture by its PID.** Capture the PID of every `adb logcat` you start and stop that PID, never a name pattern.
 

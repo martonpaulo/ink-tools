@@ -1,0 +1,78 @@
+name: Prerelease Ink Tools bridge
+
+# Each bridge test build becomes a GitHub prerelease carrying its signed APK (#215), so the Mac can
+# download it for the tablet. A cloud session cannot push a tag, so a push to main that changes
+# app.json publishes when its inktools-bridge-v<version> tag does not exist yet; the version
+# follows root AGENTS.md › Product versioning (#155). The APK carries a debug key made fresh on the
+# runner, so the tablet needs `adb uninstall com.martonpaulo.inktools.bridge` before a build from
+# another key. A developer-only build: never a user release.
+
+on:
+  push:
+    branches: [main]
+    paths: [apps/inktools-bridge/app.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prerelease:
+    name: prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: apps/inktools-bridge
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Resolve the tag from app.json
+        id: tag
+        run: |
+          version="$(node -p 'require("./app.json").version')"
+          tag="inktools-bridge-v$version"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$tag is already published; nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Run the JVM tests
+        if: steps.tag.outputs.publish == 'true'
+        run: node scripts/build.cjs --test
+
+      - name: Build the signed APK
+        if: steps.tag.outputs.publish == 'true'
+        run: node scripts/build.cjs
+
+      - name: Create the prerelease
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          asset="build/outputs/inktools-bridge-${TAG#inktools-bridge-v}.apk"
+          gh release create "$TAG" "$asset" \
+            --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+            --notes "Developer-only Ink Tools bridge build (#215). Install: adb install -r $(basename "$asset"). Check: adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op ping"
+
+      - name: Read the asset back
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          echo "$names"
+          case "$names" in
+            *"inktools-bridge-${TAG#inktools-bridge-v}.apk"*) ;;
+            *) echo "::error::inktools-bridge-${TAG#inktools-bridge-v}.apk is missing from $TAG."; exit 1 ;;
+          esac

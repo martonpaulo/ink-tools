@@ -82,11 +82,11 @@ does for its sources):
   those come from `descriptor.json`, not from strings in the code.
 - **Imports go one way.** Feature logic never imports `sn-plugin-lib`, names a content provider or
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
-  ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/probe` is exempt: it
+  ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/plugin-diagnostics` is exempt: it
   exists to call internals directly.
 - **No `URL` getter on the tablet.** React Native's `URL` throws on `protocol`, `host` and the
   rest, so tablet code parses with `parseUrl` of `sync-core`; the `url` rule of
-  `scripts/boundaries.py` covers every plugin, `plugins/probe` included
+  `scripts/boundaries.py` covers every plugin, `plugins/plugin-diagnostics` included
   ([#209](https://github.com/martonpaulo/ink-tools/issues/209)).
 
 ## Shared packages
@@ -100,16 +100,17 @@ ink-tools/
     picture-search/ # the picture search core and its pure-Java pixel measures (from ink2pic, for lookup)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
-    bridge/         # to-do + calendar + digest, each module and provider opt in/out
-    lookup/         # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
+    account-sync/   # to-do + calendar + digest, each module and provider opt in/out
+    word-lookup/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
     ink2pic/        # retired: lookup replaced it
-    relay/          # send a page or a lasso selection to an iPhone or a Mac over LocalSend
-    retouch/        # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
-    probe/          # permanent on-device investigation plugin
+    device-transfer/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
+    image-editing/  # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
+    plugin-diagnostics/ # permanent on-device investigation plugin
   cli/
     inkctl/          # the ADB control CLI (formerly supernote-adb, then inkctl)
   apps/
-    lingo-app/      # sideloaded tablet app: switch the handwriting language tablet-wide
+    handwriting-language/ # sideloaded tablet app: switch the handwriting language tablet-wide
+    inktools-bridge/ # sideloaded helper app: lets inkctl install, enable and permit plugins
     ink-notebook-editor/ # planned macOS app, Ink Notebook Editor: docs only, no code yet
 ```
 
@@ -187,10 +188,15 @@ measures are `packages/picture-search`.
 
 ## The tablet apps
 
-- **Lingo** (`apps/lingo-app/`) — a sideloaded Android app, not a plugin, that switches the
+- **Lingo** (`apps/handwriting-language/`) — a sideloaded Android app, not a plugin, that switches the
   handwriting recognition language of the whole tablet from a floating button or its sidebar entry
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
   `ink-core`; its pure cycle and file switch are unit-tested on the JVM.
+- **Ink Tools Bridge** (`apps/inktools-bridge/`) — a sideloaded helper app with no screen that binds
+  PluginHost's exported `PluginSettingService` and runs one install, enable, disable, uninstall or
+  permission change per `am broadcast` from `inkctl` ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). `adb` cannot hold the callback binder
+  PluginHost answers through, so a live app process must. Plain Java; its call encoding is
+  unit-tested on the JVM.
 
 ## The host tools
 

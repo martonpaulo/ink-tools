@@ -383,7 +383,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
     Customize Sidebar listed it, and removed it on uninstall) [measured]; a tap runs the switch.
     The sidebar opens from the side touch strip (`fts_slide_ts`), which ADB cannot drive, so the
     tap from the sidebar itself is a pen-round step.
-  - The Lingo app ([`apps/lingo-app/`](../apps/lingo-app/AGENTS.md), [#157](https://github.com/martonpaulo/ink-tools/issues/157), named Dialect until [#160](https://github.com/martonpaulo/ink-tools/issues/160)) ships both surfaces.
+  - The Lingo app ([`apps/handwriting-language/`](../apps/handwriting-language/AGENTS.md), [#157](https://github.com/martonpaulo/ink-tools/issues/157), named Dialect until [#160](https://github.com/martonpaulo/ink-tools/issues/160)) ships both surfaces.
     Its floating button came back by itself after a tablet restart [measured, 2026-11-16]. Setting
     `MANAGE_EXTERNAL_STORAGE` to deny restarts the app's process, and the button shows again.
     Customize Sidebar lists a newly installed app only when that screen is opened again; it showed
@@ -500,6 +500,12 @@ the note shows through, is still to test.
   call over the cable when `adb devices` lists one authorized USB tablet, and over Wi-Fi ADB
   otherwise; `inkctl status` names the link [source]. Before it, inkctl reached the tablet over
   Wi-Fi only and lost it with the tablet's Wi-Fi off [measured, 2026-11-16].
+- The note app takes the `page` extra of `am start` (from 0) only for a note it has not opened
+  before: a note opened before reopens at its last page and the extra is ignored, while a plugin's
+  `PluginCommAPI.jumpToPage(page)` (from 0) moves to the page [measured, 2026-11-17, Nomad,
+  [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. So `inkctl note open --page` and
+  `inkctl fixture` move with the Probe's `jumpToPage` and prove the page with `getCurrentPageNum`
+  read after it; that read-back is [unverified] on the tablet.
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/ink-tools/issues/1)].

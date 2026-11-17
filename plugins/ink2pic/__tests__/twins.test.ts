@@ -10,7 +10,7 @@ import path from 'node:path';
 import {NativeModules} from 'react-native';
 import * as sdk from 'sn-plugin-lib';
 import {MEASURE_WIDTH} from '../src/flow/measure';
-import {CLEAN_BORDER, Measures} from '@supernote-tools/picture-search/measures';
+import {CLEAN_BORDER, Measures} from '@ink-tools/picture-search/measures';
 import {createHost, SHARED_ROOT} from './host/pluginHost';
 
 const ROOT = path.join(__dirname, '..');

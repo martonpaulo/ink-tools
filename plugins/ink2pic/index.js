@@ -38,7 +38,7 @@ import {
   startConfigQueue,
   startLangListener,
   showPluginView,
-} from '@supernote-tools/sn-adapter/official';
+} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/ui/copy';
 import {catchCrashes} from './src/flow/crash';
 

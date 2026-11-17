@@ -34,7 +34,7 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
 
 ## Rules
 
-- Every SDK call goes through `@supernote-tools/sn-adapter/official`, gathered in `src/device.ts`;
+- Every SDK call goes through `@ink-tools/sn-adapter/official`, gathered in `src/device.ts`;
   `src/convert.ts`, `src/undo.ts` and `src/buttons.ts` take their host as a parameter, so the tests
   drive them with fakes and synthetic strokes.
 - `src/words.ts` and `src/shapes.ts` stay pure: no SDK, no timer; the clock is passed in.
@@ -57,4 +57,4 @@ does a rebuilt stroke look like the original; the idle, grace and ratio defaults
 
 ## Reuse
 
-Scaffold copied from the removed Lingo plugin (no native module, [#161](https://github.com/martonpaulo/ink-tools/issues/161)), which took it from `../bridge` and `../ink2pic`.
+Scaffold copied from the removed Lingo plugin (no native module, [#161](https://github.com/martonpaulo/ink-tools/issues/161)), which took it from `../account-sync` and `../ink2pic`.

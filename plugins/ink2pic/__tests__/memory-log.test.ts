@@ -7,7 +7,7 @@ import {
   startLog,
   PERSON_TIMEOUT_MS,
 } from '../src/profile';
-import {TIMEOUT_CODE} from '@supernote-tools/sn-adapter/official';
+import {TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 
 beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});

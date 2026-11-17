@@ -88,7 +88,7 @@ view registers its own exit with `useBackKey` ([#204](https://github.com/martonp
   dialog, stop a receive.
 - While work runs, `onBack` does nothing; `WorkingStrip` already takes the key and ignores it.
 - The key always ends at the hook, so the host's default never runs on top of it.
-- A test catches the handlers with `catchBackKey` from `@supernote-tools/ui-kit/backKeyTest` and
+- A test catches the handlers with `catchBackKey` from `@ink-tools/ui-kit/backKeyTest` and
   presses the key as React Native does, newest handler first.
 
 ## Reference study: Notipal
