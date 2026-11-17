@@ -121,3 +121,18 @@ describe('Back does what the open screen\'s «Close» does (#204)', () => {
     expect(close).not.toHaveBeenCalled();
   });
 });
+
+test('Settings wraps its button rows and closes with its own «Close» (#224, #204)', async () => {
+  const close = jest.fn();
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App close={close} />);
+  });
+  // screenBreaks fails a row of more than three buttons that does not wrap (#224).
+  expect(screenBreaks(tree.root)).toEqual([]);
+  const [closeButton] = tree.root.findAllByProps({label: 'Close'});
+  await act(async () => {
+    closeButton.props.onPress();
+  });
+  expect(close).toHaveBeenCalledTimes(1);
+});

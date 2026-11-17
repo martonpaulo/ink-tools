@@ -107,7 +107,7 @@ function SettingsScreen({close}: {close: () => void}) {
   };
   const group = (heading: string, buttons: readonly LassoButton[]) => (
     <Section heading={heading}>
-      <View style={shared.row}>
+      <View style={shared.buttons}>
         {buttons.map(button => {
           const on = isOn(shown, button);
           return (
@@ -137,7 +137,7 @@ function SettingsScreen({close}: {close: () => void}) {
         BUTTONS.filter(button => 'direction' in button.switch),
       )}
       <Section heading={copy['settings.sources']}>
-        <View style={shared.row}>
+        <View style={shared.buttons}>
           {SOURCE_NAMES.map(name => {
             const on = sourceOn(shown, name);
             return (

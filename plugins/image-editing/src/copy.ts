@@ -21,6 +21,7 @@ export const copy = {
   'edit.crop': 'Crop',
   'edit.erase': 'Erase',
   'settings.styles': 'Styles',
+  'settings.close': 'Close',
   'style.photo': 'Photo',
   'style.line_art': 'Line art',
   'style.black_white': 'Black and white',

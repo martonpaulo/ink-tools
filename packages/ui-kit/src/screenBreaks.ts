@@ -1,6 +1,7 @@
 /**
  * The size rules of a rendered screen, checked over a react-test-renderer tree (#93): no text
- * under the minimum font size, no button under the touch target. A plugin's unit test calls it on
+ * under the minimum font size, no button under the touch target, no row of more than
+ * MAX_UNWRAPPED_BUTTONS buttons that does not wrap (#224). A plugin's unit test calls it on
  * each of its screens; Ink2Pic's `npm run renders` measures the same rules in a real layout.
  */
 import {StyleSheet} from 'react-native';
@@ -41,6 +42,25 @@ function fontSizeOf(node: ReactTestInstance): unknown {
   return undefined;
 }
 
+/**
+ * The most buttons a row that does not wrap may hold: more ran past the Nomad's right edge in
+ * Image Editing's Settings (#224), so a longer row uses `shared.buttons`.
+ */
+export const MAX_UNWRAPPED_BUTTONS = 3;
+
+/** The nearest host view above `node` that lays its children in a row, or null. */
+function rowOf(node: ReactTestInstance): ReactTestInstance | null {
+  for (let at = node.parent; at; at = at.parent) {
+    if (hostName(at) === 'View') {
+      const {flexDirection} = StyleSheet.flatten(at.props.style) ?? {};
+      if (flexDirection === 'row') {
+        return at;
+      }
+    }
+  }
+  return null;
+}
+
 /** Every size-rule break under `root`, as one readable line each; none is an empty list. */
 export function screenBreaks(root: ReactTestInstance): string[] {
   const found: string[] = [];
@@ -70,6 +90,20 @@ export function screenBreaks(root: ReactTestInstance): string[] {
       found.push(
         `button «${name}» is ${String(width)} x ${String(height)} units, under ${metrics.touchTarget}`,
       );
+    }
+  }
+  const rows = new Map<ReactTestInstance, string[]>();
+  for (const node of buttons) {
+    const row = rowOf(node);
+    if (row) {
+      const name = node.props.accessibilityLabel ?? textOf(node).slice(0, SNIPPET);
+      rows.set(row, [...(rows.get(row) ?? []), name]);
+    }
+  }
+  for (const [row, names] of rows) {
+    const {flexWrap} = StyleSheet.flatten(row.props.style) ?? {};
+    if (names.length > MAX_UNWRAPPED_BUTTONS && flexWrap !== 'wrap') {
+      found.push(`row of ${names.length} buttons from «${names[0]}» does not wrap`);
     }
   }
   return found;

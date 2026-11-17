@@ -17,6 +17,13 @@ export const shared = StyleSheet.create({
   outline: {borderWidth: metrics.border, borderColor: metrics.ink},
   /** A row of controls. */
   row: {flexDirection: 'row', alignItems: 'center', gap: metrics.controlGap},
+  /** A row of many buttons, which wraps to a new line when full (#224). */
+  buttons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: metrics.controlGap,
+  },
   /** A row of controls at the trailing edge, as OK in the system dialogs. */
   actions: {
     flexDirection: 'row',
