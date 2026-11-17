@@ -61,6 +61,8 @@ public final class Retouch {
     STICKER,
     // #137: a photographed page straightened and cleaned to black and white on white.
     DOCUMENT,
+    // #132: the box the person drew with the pen; it needs that box, so apply refuses it.
+    CROP,
     // #133: the styles of the grid, each ending on the screen's greys.
     PHOTO,
     LINE_ART,
@@ -329,6 +331,8 @@ public final class Retouch {
         return picture;
       case DOCUMENT:
         return document(picture);
+      case CROP:
+        throw new IllegalArgumentException("crop needs its box: call crop(picture, box)");
       case PHOTO:
       case LINE_ART:
       case BLACK_WHITE:

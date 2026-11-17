@@ -18,6 +18,7 @@ export const copy = {
   'edit.styles': 'Styles',
   'edit.enhance_all': 'Enhance All Images',
   'edit.undo_all': 'Undo All Images',
+  'edit.crop': 'Crop',
   'settings.styles': 'Styles',
   'style.photo': 'Photo',
   'style.line_art': 'Line art',
@@ -36,6 +37,13 @@ export const copy = {
     'Image Editing needs file access. Choose Always Allow for both questions, then press again.',
   'press.notPicture': 'Lasso one picture only, then press again.',
   'press.notEdited': 'Image Editing has not changed this picture yet.',
+  /** Crop's toasts (#132): what to draw and lasso. */
+  'press.cropNoGuide':
+    'Draw a rectangle on the picture with the pen, lasso the picture and the rectangle, then press Crop.',
+  'press.cropNotPicture':
+    'Lasso one picture and the rectangle drawn on it, then press Crop.',
+  'press.cropOutside':
+    'Draw a larger rectangle on the picture itself, then press Crop again.',
   'press.failed': (edit: string, why: string) => `${edit} did not work: ${why}`,
   /** The toast of a page-wide press (#140). */
   'page.done': (edited: number, pictures: number) =>

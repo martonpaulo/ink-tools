@@ -8,7 +8,9 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 **Built, device round pending** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)): lasso one picture on the page and tap
 **Enhance**, **Lighter**, **Darker**, **Undo**, **Restore original**, **Rotate 90°**, **Mirror**,
 **Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)) or **Document** ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)) in
-the lasso menu. Each is a
+the lasso menu. **Crop** ([#132](https://github.com/martonpaulo/ink-tools/issues/132)) takes the picture lassoed with a rectangle drawn on it
+with the pen: `src/crop.ts` reads the strokes' bounds, deletes them, lassoes the picture alone by
+its rect and runs `runEdit` with that box. Each is a
 lasso button for pictures, run with no view, and a switch in Settings, all on by default.
 **Styles** ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)) is the one lasso button with a view: `src/styles.ts` renders the
 picture in every style switched on into `style-*.png` in its working folder, `src/StylesGrid.tsx` shows
