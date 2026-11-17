@@ -7,7 +7,7 @@
 
 The paths go through `gates.py`'s rules (`gates.json`), the one map. A selected gate whose command
 starts with `cd DIR &&` names a subproject; when DIR/package.json has a `typecheck` script and
-DIR/node_modules exists, `npm run typecheck` runs there. Subprojects without that script (the JVM
+DIR/node_modules matches its lockfile (`npm_install.py`, #222), `npm run typecheck` runs there. Subprojects without that script (the JVM
 and Python gates) are skipped: the full gate still runs them. ESLint is left to the gate, since it is
 not cheap on the larger plugins. Exit 0 pass, 1 a type error (its lines are printed), 2 a usage error.
 """
@@ -22,6 +22,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import gates  # noqa: E402
+import npm_install  # noqa: E402
 
 CD_PREFIX = re.compile(r"^cd (\S+) &&")
 
@@ -65,8 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     failed = 0
     for folder in folders:
-        if not (root / folder / "node_modules").is_dir():
-            print(f"quick {folder}: skipped, node_modules missing (the gate installs it)")
+        if not npm_install.is_current(root / folder):
+            print(f"quick {folder}: skipped, node_modules missing or older than the lockfile (the gate installs it)")
             continue
         result = subprocess.run(["npm", "run", "typecheck", "--silent"], cwd=root / folder,
                                 capture_output=True, text=True, check=False)
