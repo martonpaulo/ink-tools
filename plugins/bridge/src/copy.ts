@@ -8,6 +8,7 @@ export const copy = {
   'settings.empty': 'No module is ready yet.',
   'status.off': 'Off.',
   'status.blocked': 'On, but not running: {reasons}',
+  'status.tried': 'Last tried {time}.',
   'status.waiting': 'On. Not synced since Account Sync started.',
   'status.lastSync': 'Last synced {time}.',
   'status.counts': '{added} added, {changed} changed, {removed} removed',

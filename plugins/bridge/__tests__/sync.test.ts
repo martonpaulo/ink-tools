@@ -188,6 +188,7 @@ test('a missing Google client or sign-in is an error of the run, never an empty 
   expect(noClient.runs.calendar?.errors).toEqual([
     'google: the Google sign-in client is not on the tablet',
   ]);
+  expect(noClient.runs.calendar?.notRun).toBe(true);
   const signedOut = await createSyncRunner(
     device({secrets: {read: async () => null, remove: async () => {}}}),
   ).syncNow();
@@ -195,8 +196,9 @@ test('a missing Google client or sign-in is an error of the run, never an empty 
     /inkctl secret set google/,
   );
   expect(signedOut.runs.todo?.errors).toEqual([
-    'Todoist is not turned on or not signed in',
+    'Todoist is not signed in: on the Mac, run inkctl secret set todoist',
   ]);
+  expect(signedOut.runs.todo?.notRun).toBe(true);
 });
 
 test('an unreadable Todoist sign-in fails the to-do run with its reason', async () => {

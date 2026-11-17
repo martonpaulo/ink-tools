@@ -50,8 +50,25 @@ export function statusLines(status: ModuleStatus): string[] {
   switch (status.state) {
     case 'off':
       return [format('status.off')];
-    case 'blocked':
-      return [format('status.blocked', {reasons: status.reasons.join('; ')})];
+    case 'blocked': {
+      const {reasons, at} = status;
+      const lines = [
+        format('status.blocked', {
+          reasons: reasons.slice(0, SHOWN_MESSAGES).join('; '),
+        }),
+      ];
+      if (reasons.length > SHOWN_MESSAGES) {
+        lines.push(
+          format('status.more', {
+            count: String(reasons.length - SHOWN_MESSAGES),
+          }),
+        );
+      }
+      if (at !== undefined) {
+        lines.push(format('status.tried', {time: localTime(at)}));
+      }
+      return lines;
+    }
     case 'waiting':
       return [format('status.waiting')];
     case 'ran':
@@ -64,8 +81,17 @@ export function statusLines(status: ModuleStatus): string[] {
   }
 }
 
-/** The log lines of one run, every message included, each starting with the plugin's tag. */
+const notRunLine = (module: ModuleRun['module'], reasons: string[]) =>
+  `[Bridge] sync ${module}: not run: ${reasons.join('; ')}`;
+
+/**
+ * The log lines of one run, every message included, each starting with the plugin's tag. A run
+ * that could not start is one «not run» line, the same as a module the probe blocked.
+ */
 export function runLogLines(run: ModuleRun): string[] {
+  if (run.notRun) {
+    return [notRunLine(run.module, run.errors)];
+  }
   const head = `[Bridge] sync ${run.module}: ${new Date(
     run.at,
   ).toISOString()}, ${countsText(run)}, ${run.errors.length} errors, ${
@@ -92,5 +118,5 @@ export function logBlocked(
   reasons: string[],
   write: (line: string) => void = console.log,
 ): void {
-  write(`[Bridge] sync ${module}: not run: ${reasons.join('; ')}`);
+  write(notRunLine(module, reasons));
 }

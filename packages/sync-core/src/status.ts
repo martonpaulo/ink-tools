@@ -17,12 +17,20 @@ export interface ModuleRun {
   errors: string[];
   /** What was read inexactly, such as an unsupported recurrence part or a time zone read as UTC (#61). */
   warnings: string[];
+  /**
+   * The module is on but could not run at all, such as a missing sign-in or no source that reads:
+   * nothing was read or written, and `errors` says why. Settings says «not running», never «synced».
+   */
+  notRun?: true;
 }
 
 export type ModuleStatus =
   | {state: 'off'}
-  /** On, but the device probe turned it off, or has not answered (#67): nothing was written. */
-  | {state: 'blocked'; reasons: string[]}
+  /**
+   * On, but nothing was written: the device probe turned it off or has not answered (#67), or the
+   * last run could not start (`ModuleRun.notRun`), which gives `at`, the time it tried.
+   */
+  | {state: 'blocked'; reasons: string[]; at?: number}
   /** On and available, with no run since Bridge started. */
   | {state: 'waiting'}
   | {state: 'ran'; run: ModuleRun};
@@ -70,5 +78,6 @@ export function moduleStatus(
   if (problems === undefined) return {state: 'blocked', reasons: ['the device check has not answered']};
   if (problems.length > 0) return {state: 'blocked', reasons: [...problems]};
   const run = runs[id];
+  if (run?.notRun) return {state: 'blocked', reasons: [...run.errors], at: run.at};
   return run ? {state: 'ran', run} : {state: 'waiting'};
 }

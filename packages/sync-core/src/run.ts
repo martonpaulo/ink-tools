@@ -73,6 +73,12 @@ export async function runCalendarModule(
     }
   }
 
+  // No source reads: nothing can be sent or pulled. The state stays, so the tablet's edits are still
+  // newer than the last sync and go out on the next pass that reads (#88).
+  if (!readable.length) {
+    return {run: {...calendarRun(now(), total, m.takeWarnings?.() ?? []), notRun: true}, state};
+  }
+
   if (state.lastSync !== undefined) {
     let edits: DeviceEdit[] = [];
     try {
@@ -175,7 +181,7 @@ export const initialBridgeState = (): BridgeState => ({calendar: {baseline: []},
  * One pass over every module `activePlan` allows, each with only the sources that are on. A module
  * that throws gets a run with its error and keeps its state, so one failure never stops the other
  * module and is never shown as a clean run. A module that is allowed but not bound (no sign-in yet)
- * gets a run that says so.
+ * gets a run marked `notRun` that says why.
  */
 export async function runBridgeSync(
   plan: ActivePlan,
@@ -187,20 +193,22 @@ export async function runBridgeSync(
   const next: BridgeState = {calendar: state.calendar, links: state.links, firstLinked: {...state.firstLinked}};
   const policy = (id: TwoWayModule): TabletOnlyPolicy => ({firstLinked: state.firstLinked[id], sendTabletOnly: plan.sendTabletOnly[id]});
   const failed = (module: ModuleId, error: string): ModuleRun => ({module, at: now(), counts: {added: 0, changed: 0, removed: 0}, errors: [error], warnings: []});
+  const notRun = (module: ModuleId, reason: string): ModuleRun => ({...failed(module, reason), notRun: true});
   for (const id of plan.modules) {
     try {
       if (id === 'calendar') {
         const cal = modules.calendar;
-        if (!cal) { runs.calendar = failed('calendar', 'no calendar source is signed in'); continue; }
+        if (!cal) { runs.calendar = notRun('calendar', 'no calendar source is signed in'); continue; }
         const sources = cal.sources.filter(s => plan.providers.includes(s.id));
-        if (!sources.length) { runs.calendar = failed('calendar', 'no calendar source is turned on'); continue; }
+        if (!sources.length) { runs.calendar = notRun('calendar', 'no calendar source is turned on'); continue; }
         const done = await runCalendarModule({...cal, sources}, state.calendar, now, policy('calendar'));
         runs.calendar = done.run;
         next.calendar = done.state;
-        next.firstLinked.calendar ??= done.run.at;
+        if (!done.run.notRun) next.firstLinked.calendar ??= done.run.at;
       } else if (id === 'todo') {
         const todo = modules.todo;
-        if (!todo || !plan.providers.includes('todoist')) { runs.todo = failed('todo', 'Todoist is not turned on or not signed in'); continue; }
+        if (!plan.providers.includes('todoist')) { runs.todo = notRun('todo', 'Todoist is not turned on'); continue; }
+        if (!todo) { runs.todo = notRun('todo', 'Todoist is not signed in: on the Mac, run inkctl secret set todoist'); continue; }
         const done = await runTodoModule(todo, state.links, now, policy('todo'));
         runs.todo = done.run;
         next.links = done.links;

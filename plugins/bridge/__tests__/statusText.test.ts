@@ -27,6 +27,17 @@ describe('statusLines (#88)', () => {
     ]);
   });
 
+  it('says a module that could not run is not running, why, and when it tried, never «synced»', () => {
+    const reasons = Array.from({length: SHOWN_MESSAGES + 1}, (_, i) => `r${i}`);
+    expect(
+      statusLines({state: 'blocked', reasons, at: run().at}),
+    ).toEqual([
+      `On, but not running: ${reasons.slice(0, SHOWN_MESSAGES).join('; ')}`,
+      'and 1 more in the log',
+      'Last tried 2026-11-14 09:07.',
+    ]);
+  });
+
   it('gives the last sync time and the counts of a clean run', () => {
     expect(statusLines({state: 'ran', run: run()})).toEqual([
       'Last synced 2026-11-14 09:07.',
@@ -66,6 +77,17 @@ describe('the log record (#88)', () => {
       ).toISOString()}, 2 added, 0 changed, 1 removed, 1 errors, 1 warnings`,
       '[Bridge] sync calendar error: x: HTTP 500',
       '[Bridge] sync calendar warning: y: unsupported FREQ HOURLY',
+    ]);
+  });
+
+  it('writes a run that could not start as one «not run» line', () => {
+    const lines: string[] = [];
+    logRun(
+      run({errors: ['google: HTTP 401', 'ics: offline'], notRun: true}),
+      line => lines.push(line),
+    );
+    expect(lines).toEqual([
+      '[Bridge] sync calendar: not run: google: HTTP 401; ics: offline',
     ]);
   });
 

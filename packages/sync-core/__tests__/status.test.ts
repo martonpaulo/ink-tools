@@ -32,6 +32,12 @@ describe('module status (#88)', () => {
     expect(moduleStatus('calendar', on, {calendar: []}, {calendar: run})).toEqual({state: 'ran', run});
   });
 
+  test('a run that could not start blocks the module with its reasons and the time it tried (#88)', () => {
+    const on = setModule(defaultSettings(), 'todo', true);
+    const notRun = {module: 'todo' as const, at: 9, counts: {added: 0, changed: 0, removed: 0}, errors: ['Todoist is not signed in'], warnings: [], notRun: true as const};
+    expect(moduleStatus('todo', on, {todo: []}, {todo: notRun})).toEqual({state: 'blocked', reasons: ['Todoist is not signed in'], at: 9});
+  });
+
   test('a module with no probe answer is blocked, never shown as ready', () => {
     const on = setModule(defaultSettings(), 'todo', true);
     expect(moduleStatus('todo', on, {}, {})).toEqual({state: 'blocked', reasons: ['the device check has not answered']});
