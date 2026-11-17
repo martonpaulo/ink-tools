@@ -152,6 +152,9 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   beta 10 wrote all 259 bytes of a new `MyStyle/Lookup/settings.json`, and the switch set before
   a PluginHost restart was the one read after it [measured, Nomad, 2026-11-16,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)].
+- A plugin that declares only `FILE:READ` reads a file it did not write under
+  `/storage/emulated/0/.data/plugin/`, and its delete throws `SecurityException: Plugin [...] has no
+  DELETE permission` [measured, Account Sync 0.1.0 beta 7, [#116](https://github.com/martonpaulo/ink-tools/issues/116)].
 - `/storage/emulated/0/<Plugin>/` is outside the whitelist: `mkdirs` is denied
   (`sdcard_not_in_whitelist`), and `File.delete` throws a `SecurityException` that the host
   suppresses in a native thread, so the JS call never settles [measured, Relay,

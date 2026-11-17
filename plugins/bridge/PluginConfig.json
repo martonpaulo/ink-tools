@@ -10,6 +10,7 @@
   "jsMainPath": "index",
   "uses-permissions": [
     "plugin.permission.INTERNET",
-    "plugin.permission.FILE:READ"
+    "plugin.permission.FILE:READ",
+    "plugin.permission.FILE:DELETE"
   ]
 }

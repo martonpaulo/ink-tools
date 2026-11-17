@@ -35,7 +35,12 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   - `plugin.permission.FILE:READ`: the Settings file, `settings.json` in the private plugin folder
     ([#40](https://github.com/martonpaulo/ink-tools/issues/40)). Supernote's Plugin Permissions page says that folder needs no permission; it stays
     until a tablet round shows the read works without it.
-  - No `FILE:WRITE`: the private folder needs none, and Bridge writes nothing in shared storage.
+  - `plugin.permission.FILE:DELETE`: the sign-in drop file in `SECRET_DROP_FOLDER`, shared storage,
+    deleted once its secret is moved in ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). Without it the host refused the delete
+    (`has no DELETE permission`, beta 7), so the secret stayed in shared storage.
+  - No `FILE:WRITE`: the private folder needs none (beta 7 saved the moved secret there with only
+    `FILE:READ`), and Bridge writes nothing in shared storage. `__tests__/secretStore.test.ts`
+    checks that the permissions cover every file call the secrets mover makes.
 - **Settings storage** ([#40](https://github.com/martonpaulo/ink-tools/issues/40)): `settings.json` in the folder `getPluginDirPath()` returns, read
   and written through `BridgeFiles`, picture-search's file module under Bridge's name, built by
   `scripts/native-build.cjs` as Lookup's is. No file is the default settings; an unreadable one is

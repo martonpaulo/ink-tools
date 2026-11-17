@@ -112,3 +112,49 @@ test('inkctl writes the drop files where Bridge reads them', () => {
   );
   expect(cli).toContain(`SIGN_IN_DROP_FOLDER = "${SECRET_DROP_FOLDER}"`);
 });
+
+import config from '../PluginConfig.json';
+
+/**
+ * The permission the host asks for each file call outside the private folder, which needs none
+ * (Supernote's Plugin Permissions page): a delete needs `FILE:DELETE` even with `FILE:READ` and
+ * `FILE:WRITE` granted (docs/supernote.md, #116).
+ */
+const NEEDS = {
+  read: 'plugin.permission.FILE:READ',
+  write: 'plugin.permission.FILE:WRITE',
+  delete: 'plugin.permission.FILE:DELETE',
+} as const;
+
+test('the declared permissions cover every file call the secrets mover makes (#116)', async () => {
+  const calls: {op: keyof typeof NEEDS; path: string}[] = [];
+  const {native} = disk({
+    [`${SECRET_DROP_FOLDER}/todoist.secret`]: 'tok-1234\n',
+    [`${SECRET_DROP_FOLDER}/google.secret`]: '\n',
+  });
+  const recording: TextFiles = {
+    readText: p => {
+      calls.push({op: 'read', path: p});
+      return native.readText(p);
+    },
+    writeText: (p, t) => {
+      calls.push({op: 'write', path: p});
+      return native.writeText(p, t);
+    },
+    deleteFile: p => {
+      calls.push({op: 'delete', path: p});
+      return native.deleteFile!(p);
+    },
+  };
+  await importSecretDrops(folder, recording);
+  await createSecretStore(folder, recording).remove('todoist');
+  // Each kind of call happened, so a new one cannot slip past this check unseen.
+  expect(new Set(calls.map(c => c.op))).toEqual(new Set(['read', 'write', 'delete']));
+  const needed = new Set(
+    calls.filter(c => !c.path.startsWith(DIR)).map(c => NEEDS[c.op]),
+  );
+  expect(needed).toEqual(new Set([NEEDS.read, NEEDS.delete]));
+  for (const permission of needed) {
+    expect(config['uses-permissions']).toContain(permission);
+  }
+});
