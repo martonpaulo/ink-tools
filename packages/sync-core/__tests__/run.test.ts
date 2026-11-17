@@ -41,7 +41,7 @@ test('the first pass only pulls; the next pushes the tablet edits before it pull
   let clock = 1000;
   const first = await runCalendarModule({sources: [google], store: t.store, window: W}, {baseline: []}, () => clock);
   expect(t.log).toEqual(['create Talk']);
-  expect(first.state).toEqual({lastSync: 1000, baseline: [ev()]});
+  expect(first.state).toEqual({lastSync: 1000, sourceSync: {google: 1000}, baseline: [ev()]});
   expect(first.run.counts).toEqual({added: 1, changed: 0, removed: 0});
 
   clock = 2000;
@@ -71,6 +71,54 @@ test('an edit to a read-only source is reported, and a failing source never stop
   expect(t.log).toEqual(['create Talk']);
 });
 
+test('a tablet edit to a source that failed one pass while another read is sent on the next pass where it reads (#211)', async () => {
+  const t = tablet();
+  const googleEvents = [ev()];
+  let googleDown = false;
+  const google: CalendarSource = {
+    id: 'google',
+    provider: {
+      listCalendars: async () => { if (googleDown) throw new Error('HTTP 401'); return [{calendarId: 'g1', name: 'g1'}]; },
+      listEvents: async () => [...googleEvents],
+    },
+    writer: {
+      ...writer(t.log),
+      updateEvent: async e => { t.log.push(`push update ${e.eventId} ${e.title}`); googleEvents[0] = e; },
+    },
+  };
+  const ics: CalendarSource = {id: 'ics', provider: provider('feed', [ev({eventId: 'f1', calendarId: 'feed', title: 'Feed'})])};
+  const m = {sources: [google, ics], store: t.store, window: W};
+  let clock = 1000;
+  let state = (await runCalendarModule(m, {baseline: []}, () => clock)).state;
+
+  // The owner moves the Google event on the tablet; then Google fails one pass while ICS reads.
+  const moved = ev({title: 'Talk moved', modified: 1500});
+  t.rows.set(key(moved), moved);
+  const edits: DeviceEdit[] = [{event: moved, cancelled: false}];
+  t.store.listEdits = async () => edits;
+  t.log.length = 0;
+  googleDown = true;
+  clock = 2000;
+  const failedPass = await runCalendarModule(m, state, () => clock);
+  expect(failedPass.run.notRun).toBeUndefined();
+  expect(failedPass.run.errors).toEqual([
+    'google: HTTP 401',
+    '1 tablet edit(s) were not sent: their source did not read or is not on; an edit for a source that did not read is sent on the next pass where it reads',
+  ]);
+  expect(t.log).toEqual([]);
+  state = failedPass.state;
+  expect(state.sourceSync).toEqual({google: 1000, ics: 2000});
+
+  // Google reads again: the edit goes out before the pull, so the pull never writes over it.
+  googleDown = false;
+  clock = 3000;
+  const back = await runCalendarModule(m, state, () => clock);
+  expect(back.run.errors).toEqual([]);
+  expect(t.log).toEqual(['push update e1 Talk moved']);
+  expect(t.rows.get(key(moved))?.title).toBe('Talk moved');
+  expect(back.state.sourceSync).toEqual({google: 3000, ics: 3000});
+});
+
 test('runBridgeSync runs only what the plan allows, and a module with no sign-in says so', async () => {
   let s = setModule(defaultSettings(), 'calendar', true);
   s = setModule(s, 'todo', true);
@@ -84,8 +132,48 @@ test('runBridgeSync runs only what the plan allows, and a module with no sign-in
   const {runs, state} = await runBridgeSync(plan, {calendar: {sources, store: t.store, window: W}}, initialBridgeState(), () => 5);
   expect(t.log).toEqual(['create Talk']);
   expect(runs.calendar?.counts.added).toBe(1);
-  expect(runs.todo?.errors).toEqual(['Todoist is not turned on or not signed in']);
+  expect(runs.todo).toMatchObject({notRun: true, errors: ['Todoist is not turned on']});
   expect(state.calendar.lastSync).toBe(5);
+});
+
+test('a to-do module that is on with no sign-in is not run, and says how to sign in (#88)', async () => {
+  let s = setModule(defaultSettings(), 'todo', true);
+  s = setProvider(s, 'todoist', true);
+  const plan = activePlan(s, {todo: {available: true, canWrite: true}});
+  const {runs, state} = await runBridgeSync(plan, {}, initialBridgeState(), () => 3);
+  expect(runs.todo).toEqual({
+    module: 'todo', at: 3, counts: {added: 0, changed: 0, removed: 0},
+    errors: ['Todoist is not signed in: on the Mac, run inkctl secret set todoist'], warnings: [], notRun: true,
+  });
+  expect(state.firstLinked.todo).toBeUndefined();
+});
+
+test('a calendar pass where no source reads is not run, and keeps the tablet edits for the next pass (#88)', async () => {
+  const edited = ev({title: 'Moved', modified: 50});
+  const t = tablet([{event: edited, cancelled: false}]);
+  const broken: CalendarProvider = {listCalendars: async () => { throw new Error('HTTP 401'); }, listEvents: async () => []};
+  const log: string[] = [];
+  const before = {lastSync: 10, baseline: [ev()]};
+  const r = await runCalendarModule(
+    {sources: [{id: 'google', provider: broken, writer: writer(log)}], store: t.store, window: W, takeWarnings: () => ['TZID read as UTC']},
+    before,
+    () => 99,
+  );
+  expect(r.run).toEqual({
+    module: 'calendar', at: 99, counts: {added: 0, changed: 0, removed: 0},
+    errors: ['google: HTTP 401'], warnings: ['TZID read as UTC'], notRun: true,
+  });
+  // The last sync time stays, so the edit is still newer than it when Google reads again.
+  expect(r.state).toBe(before);
+  expect(t.log).toEqual([]);
+  expect(log).toEqual([]);
+
+  let st = setModule(defaultSettings(), 'calendar', true);
+  st = setProvider(st, 'google', true);
+  const plan = activePlan(st, {calendar: {available: true, canWrite: true}});
+  const pass = await runBridgeSync(plan, {calendar: {sources: [{id: 'google', provider: broken}], store: t.store, window: W}}, initialBridgeState(), () => 4);
+  expect(pass.runs.calendar?.notRun).toBe(true);
+  expect(pass.state.firstLinked.calendar).toBeUndefined();
 });
 
 test('a to-do module that throws gets a failed run and keeps its links (#44)', async () => {

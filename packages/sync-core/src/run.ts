@@ -33,7 +33,16 @@ export interface DeviceCalendarEditor extends DeviceCalendarStore, DeviceRelinke
 export interface CalendarState {
   /** Epoch ms when the last pass ended; absent before the first. */
   lastSync?: number;
-  /** Our rows as the last pass left them: the push skips an edit that still equals its row. */
+  /**
+   * Epoch ms when the last pass that read each source ended (#211). A source that failed keeps its
+   * older time, so its tablet edits stay newer than it and go out on the next pass where it reads.
+   * A source with no time here uses `lastSync`.
+   */
+  sourceSync?: Partial<Record<ProviderId, number>>;
+  /**
+   * Our rows as the last pass left them: the push skips an edit that still equals its row. The rows
+   * of a source that did not read keep their older version, so its pending edits still differ (#211).
+   */
   baseline: CalendarEvent[];
 }
 
@@ -73,16 +82,22 @@ export async function runCalendarModule(
     }
   }
 
+  // No source reads: nothing can be sent or pulled. The state stays, so the tablet's edits are still
+  // newer than the last sync and go out on the next pass that reads (#88).
+  if (!readable.length) {
+    return {run: {...calendarRun(now(), total, m.takeWarnings?.() ?? []), notRun: true}, state};
+  }
+
   if (state.lastSync !== undefined) {
-    let edits: DeviceEdit[] = [];
+    let all: DeviceEdit[] = [];
     try {
-      edits = changedSince(await m.store.listEdits(m.window), state.lastSync);
+      all = await m.store.listEdits(m.window);
     } catch (e) {
       total.errors.push(`reading the tablet's edits: ${message(e)}`);
     }
     const target = (e: DeviceEdit) => owner.get(e.event.eventId ? e.event.calendarId : (m.defaultCalendarId ?? ''));
     for (const source of readable) {
-      const mine = edits.filter(e => target(e) === source);
+      const mine = changedSince(all, state.sourceSync?.[source.id] ?? state.lastSync).filter(e => target(e) === source);
       if (!mine.length) continue;
       if (!source.writer) {
         warnings.push(`${source.id} is read-only: ${mine.length} edit(s) on the tablet were replaced by the source's version`);
@@ -105,8 +120,12 @@ export async function runCalendarModule(
       total.errors.push(...pushed.errors, ...(await applyCreated(pushed, m.store)));
       warnings.push(...conflictWarnings(pushed.conflicts));
     }
-    const lost = edits.filter(e => !target(e));
-    if (lost.length) total.errors.push(`${lost.length} tablet edit(s) belong to no source that is on, so they were not sent`);
+    const lost = changedSince(all, state.lastSync).filter(e => !target(e));
+    if (lost.length) {
+      total.errors.push(readable.length < m.sources.length
+        ? `${lost.length} tablet edit(s) were not sent: their source did not read or is not on; an edit for a source that did not read is sent on the next pass where it reads`
+        : `${lost.length} tablet edit(s) belong to no source that is on, so they were not sent`);
+    }
   }
 
   for (const source of readable) {
@@ -122,14 +141,19 @@ export async function runCalendarModule(
   }
   warnings.push(...(m.takeWarnings?.() ?? []));
 
+  // A row of a calendar no source read this pass keeps its last baseline: on the tablet it may hold
+  // an edit not sent yet, which must not become the version the next push compares with (#211).
   let baseline = state.baseline;
   try {
-    baseline = await m.store.listOurs(m.window);
+    const read = (e: CalendarEvent) => owner.has(e.calendarId);
+    baseline = [...(await m.store.listOurs(m.window)).filter(read), ...state.baseline.filter(e => !read(e))];
   } catch (e) {
     total.errors.push(`reading the tablet's rows after the sync: ${message(e)}`);
   }
   const at = now();
-  return {run: calendarRun(at, total, warnings), state: {lastSync: at, baseline}};
+  const sourceSync = {...state.sourceSync};
+  for (const source of readable) sourceSync[source.id] = at;
+  return {run: calendarRun(at, total, warnings), state: {lastSync: at, sourceSync, baseline}};
 }
 
 const keptWarning = (n: number, kind: string) =>
@@ -175,7 +199,7 @@ export const initialBridgeState = (): BridgeState => ({calendar: {baseline: []},
  * One pass over every module `activePlan` allows, each with only the sources that are on. A module
  * that throws gets a run with its error and keeps its state, so one failure never stops the other
  * module and is never shown as a clean run. A module that is allowed but not bound (no sign-in yet)
- * gets a run that says so.
+ * gets a run marked `notRun` that says why.
  */
 export async function runBridgeSync(
   plan: ActivePlan,
@@ -187,20 +211,22 @@ export async function runBridgeSync(
   const next: BridgeState = {calendar: state.calendar, links: state.links, firstLinked: {...state.firstLinked}};
   const policy = (id: TwoWayModule): TabletOnlyPolicy => ({firstLinked: state.firstLinked[id], sendTabletOnly: plan.sendTabletOnly[id]});
   const failed = (module: ModuleId, error: string): ModuleRun => ({module, at: now(), counts: {added: 0, changed: 0, removed: 0}, errors: [error], warnings: []});
+  const notRun = (module: ModuleId, reason: string): ModuleRun => ({...failed(module, reason), notRun: true});
   for (const id of plan.modules) {
     try {
       if (id === 'calendar') {
         const cal = modules.calendar;
-        if (!cal) { runs.calendar = failed('calendar', 'no calendar source is signed in'); continue; }
+        if (!cal) { runs.calendar = notRun('calendar', 'no calendar source is signed in'); continue; }
         const sources = cal.sources.filter(s => plan.providers.includes(s.id));
-        if (!sources.length) { runs.calendar = failed('calendar', 'no calendar source is turned on'); continue; }
+        if (!sources.length) { runs.calendar = notRun('calendar', 'no calendar source is turned on'); continue; }
         const done = await runCalendarModule({...cal, sources}, state.calendar, now, policy('calendar'));
         runs.calendar = done.run;
         next.calendar = done.state;
-        next.firstLinked.calendar ??= done.run.at;
+        if (!done.run.notRun) next.firstLinked.calendar ??= done.run.at;
       } else if (id === 'todo') {
         const todo = modules.todo;
-        if (!todo || !plan.providers.includes('todoist')) { runs.todo = failed('todo', 'Todoist is not turned on or not signed in'); continue; }
+        if (!plan.providers.includes('todoist')) { runs.todo = notRun('todo', 'Todoist is not turned on'); continue; }
+        if (!todo) { runs.todo = notRun('todo', 'Todoist is not signed in: on the Mac, run inkctl secret set todoist'); continue; }
         const done = await runTodoModule(todo, state.links, now, policy('todo'));
         runs.todo = done.run;
         next.links = done.links;
