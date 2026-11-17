@@ -115,7 +115,11 @@ export function getPenInfo(): Promise<Result<PenInfo>> {
   );
 }
 
-/** A stroke's sample points in page pixels, at most MAX_STROKE_POINTS; empty for other types. */
+/**
+ * A stroke's sample points, at most MAX_STROKE_POINTS; empty for other types. getElements gives page
+ * pixels; a pen-up element may give EMR units (#206), which elements.ts's offPage and emrToPage turn
+ * into pixels.
+ */
 export function strokePoints(element: object): Promise<Result<PenPoint[]>> {
   return readAll((element as SdkElement).stroke?.points);
 }

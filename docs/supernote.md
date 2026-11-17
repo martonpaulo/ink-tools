@@ -32,6 +32,14 @@ explained.
 - Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
   arithmetic in `plugins/ink2pic/docs/brief.md`].
 - A page has the same 1920 x 2560 size; `getPageSize` answers it [measured, build 0.1.0 (3)].
+- Stroke points from `getElements` are page pixels [measured, Probe, 2026-11-17,
+  [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. The pen digitizer (EMR) spans 21632 x
+  16224 on the Manta page, its x running down the page and its y from the right edge to the left
+  (`PointUtils.getRealMaxX`, `getRealMaxY` and `emrPoint2Android` in sn-plugin-lib 0.2.3, which
+  says points are pixels after 0.1.65) [official source]. The points of an `event_pen_up` element
+  read about 8 times the page size on the tablet («kept: large» for every word), so they are taken
+  as EMR when a point falls off the page [inference, to measure in the device round: the plugin
+  logs its first pen-up stroke raw and converted].
 - A design board for this screen is 3:4; the study sheets use 794 x 1059 CSS px boards and export
   to the Manta page.
 
