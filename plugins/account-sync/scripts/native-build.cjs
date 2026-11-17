@@ -19,7 +19,7 @@ const {jdkTool, JDK_MISSING} = require('./host-tools.cjs');
 const root = path.resolve(__dirname, '..');
 // The native code lives in the shared picture-search package (#125, #142).
 const {nativeSources} = require('../../../packages/picture-search/plugin-config');
-// The dry insert's revert by row id lives in sn-adapter, shared with the Probe (#213).
+// The insert answer check (ResolverTable, InsertAnswer) lives in sn-adapter, shared with the Probe (#213, #217).
 const adapter = require('../../../packages/sn-adapter/plugin-config');
 const build = path.join(root, 'build');
 const out = path.join(build, 'native');

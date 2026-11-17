@@ -5,12 +5,8 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import {fail, ok, THROWN_CODE} from '@ink-tools/sn-adapter/official';
-import {
-  BUNDLED_DESCRIPTOR as D,
-  contentUri,
-  DeviceReader,
-} from '@ink-tools/sn-adapter';
-import App, {startupProbe} from '../App';
+import {DEVICE_CHECK_PENDING} from '@ink-tools/sync-core';
+import App from '../App';
 import {copy} from '../src/copy';
 import type {SyncRunner, SyncSnapshot} from '../src/sync';
 
@@ -73,55 +69,15 @@ test('each module says whether it is off or why it does not run (#88)', async ()
     expect.arrayContaining([copy['module.calendar'], copy['status.off']]),
   );
   await act(async () => toggle(tree, 'Calendar').props.onPress());
-  // No BridgeProviders module in this test, so the start-up probe blocks Calendar with that reason (#43).
+  // Settings never probes (#43): Calendar waits for the device check of the next sync.
   expect(
     texts(tree).some(
       t =>
         typeof t === 'string' &&
         t.startsWith('On, but not running: ') &&
-        t.includes('the BridgeProviders module is not loaded'),
+        t.includes(DEVICE_CHECK_PENDING),
     ),
   ).toBe(true);
-});
-
-/** A device whose every table has the descriptor's columns. */
-async function descriptorColumns(uri: string): Promise<string[]> {
-  for (const module of [D.calendar, D.todo, D.digest]) {
-    for (const [name, table] of Object.entries(module.tables)) {
-      if (contentUri(module, name) === uri) {
-        return table.columns;
-      }
-    }
-  }
-  throw new Error(`unknown ${uri}`);
-}
-
-test('a device that matches the descriptor clears the probe, so Calendar waits for its sync (#43)', async () => {
-  const marked: string[] = [];
-  const reader: DeviceReader = {
-    columnsOf: descriptorColumns,
-    dryInsert: async (uri, markerColumn) => {
-      marked.push(`${uri} ${markerColumn}`);
-    },
-  };
-  let tree!: ReactTestRenderer;
-  await act(async () => {
-    tree = renderer.create(<App folder={folder as never} reader={reader} />);
-  });
-  await act(async () => toggle(tree, 'Calendar').props.onPress());
-  expect(texts(tree)).toContain(copy['status.waiting']);
-  expect(marked).toContain(`${contentUri(D.calendar, 'events')} title`);
-});
-
-test('a probe that throws blocks every module with its reason, never a silent pass (#43)', async () => {
-  const broken = {
-    columnsOf: () => {
-      throw new Error('host crashed');
-    },
-  } as unknown as DeviceReader;
-  const problems = await startupProbe(broken);
-  expect(Object.keys(problems).sort()).toEqual(['calendar', 'digest', 'todo']);
-  expect(problems.calendar?.[0]).toMatch(/host crashed/);
 });
 
 test('a failed save is said on the screen; a failed load offers a retry', async () => {
@@ -162,17 +118,37 @@ function fakeRunner() {
   return {runner, publish};
 }
 
-test('Sync now runs the plugin host runner and its run shows under the module (#28, #40)', async () => {
+test('opening Settings and turning a module on never touches a provider; the runner\'s probe answer shows (#43)', async () => {
+  const calls: string[] = [];
+  NativeModules.BridgeProviders = new Proxy(
+    {},
+    {
+      get: (_target, name) => async () => {
+        calls.push(String(name));
+        return [];
+      },
+    },
+  );
   const {runner, publish} = fakeRunner();
-  const reader: DeviceReader = {
-    columnsOf: descriptorColumns,
-    dryInsert: async () => {},
-  };
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(
-      <App folder={folder as never} reader={reader} sync={runner} />,
-    );
+    tree = renderer.create(<App folder={folder as never} sync={runner} />);
+  });
+  await act(async () => toggle(tree, 'Calendar').props.onPress());
+  expect(calls).toEqual([]);
+  expect(runner.syncNow).not.toHaveBeenCalled();
+  await act(async () =>
+    publish({running: false, runs: {}, probe: {calendar: []}}),
+  );
+  expect(texts(tree)).toContain(copy['status.waiting']);
+  delete NativeModules.BridgeProviders;
+});
+
+test('Sync now runs the plugin host runner and its run shows under the module (#28, #40)', async () => {
+  const {runner, publish} = fakeRunner();
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App folder={folder as never} sync={runner} />);
   });
   await act(async () => toggle(tree, 'Calendar').props.onPress());
   await act(async () => toggle(tree, copy['sync.button']).props.onPress());
@@ -185,7 +161,7 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
   await act(async () =>
     publish({
       running: false,
-      probe: {},
+      probe: {calendar: []},
       runs: {
         calendar: {
           module: 'calendar',

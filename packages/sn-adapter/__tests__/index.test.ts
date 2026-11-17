@@ -7,7 +7,7 @@ import {
   probeAll,
   probeCapability,
   NO_TEST_WRITE,
-  DRY_INSERT_MARKER,
+  NO_ROW_ID,
   toCalendarInsert,
   todoShapeGaps,
   toTodoInsert,
@@ -22,8 +22,9 @@ const reader = (cols: Record<string, string[]>, refuseWrites: string[] = []): De
     if (!(uri in cols)) throw new Error('no provider');
     return cols[uri];
   },
-  dryInsert: async uri => {
+  testWrite: async uri => {
     if (refuseWrites.includes(uri)) throw new Error('Permission Denial');
+    return 0;
   },
 });
 
@@ -60,8 +61,9 @@ test('probe: the Digest is never test-written, as a plugin cannot delete the row
   const tried: string[] = [];
   const digest = await probeCapability(D, 'digest', {
     columnsOf: async uri => full[uri],
-    dryInsert: async uri => {
+    testWrite: async uri => {
       tried.push(uri);
+      return 0;
     },
   });
   expect(tried).toEqual([]);
@@ -75,21 +77,48 @@ test('the Digest reads the knowledge table, not the old digest path the provider
   expect(() => parseDescriptor(noRule)).toThrow(/digest: rule insertPath must be a string/);
 });
 
-test('probe: each test row is marked in its table\'s text column (#43)', async () => {
-  const marked: string[] = [];
-  const marking: DeviceReader = {
+test('probe: each test write is a no-op update selected by row id -1, never an insert (#43)', async () => {
+  const writes: unknown[] = [];
+  const recording: DeviceReader = {
     columnsOf: async uri => full[uri],
-    dryInsert: async (uri, markerColumn) => {
-      marked.push(`${uri} ${markerColumn}`);
+    testWrite: async (uri, where, values) => {
+      writes.push({uri, where, values});
+      return 0;
     },
   };
-  await probeAll(D, marking);
-  expect(marked.sort()).toEqual(
-    [
-      `${contentUri(D.calendar, 'events')} title`,
-      `${contentUri(D.todo, 'tasks')} title`,
-    ].sort(),
-  );
+  // The reader has no insert: the probe can only read and update.
+  expect(Object.keys(recording).sort()).toEqual(['columnsOf', 'testWrite']);
+  await probeAll(D, recording);
+  expect(NO_ROW_ID).toBe(-1);
+  expect(writes).toEqual([
+    {uri: contentUri(D.calendar, 'events'), where: {id: -1}, values: {status: 'cancelled'}},
+    {uri: contentUri(D.todo, 'tasks'), where: {id: -1}, values: {hasSync: 0}},
+  ]);
+});
+
+test('probe: a test write that changed a row is not proof of a safe write (#43)', async () => {
+  const calendar = await probeCapability(D, 'calendar', {
+    columnsOf: async uri => full[uri],
+    testWrite: async () => 3,
+  });
+  expect(calendar).toMatchObject({available: true, canWrite: false});
+  expect(calendar.problems[0]).toMatch(/changed 3 rows on a test write that selects none/);
+});
+
+test('probe: only the capabilities asked for are read or written (#43)', async () => {
+  const touched: string[] = [];
+  const all = await probeAll(D, {
+    columnsOf: async uri => {
+      touched.push(uri);
+      return full[uri];
+    },
+    testWrite: async uri => {
+      touched.push(uri);
+      return 0;
+    },
+  }, ['todo']);
+  expect(all.map(s => s.capability)).toEqual(['todo']);
+  expect(touched.every(uri => uri.startsWith(`content://${D.todo.authority}/`))).toBe(true);
 });
 
 /**
@@ -103,32 +132,6 @@ test('the descriptor names every NOT NULL Calendar column, and only columns a re
   expect([...D.calendar.rules.requiredOnInsert].sort()).toEqual([...CALENDAR_NOT_NULL].sort());
   for (const col of CALENDAR_NULLABLE) expect(D.calendar.tables.events.columns).toContain(col);
   expect([...CALENDAR_NOT_NULL, ...CALENDAR_NULLABLE, 'id'].sort()).toEqual([...D.calendar.tables.events.columns].sort());
-});
-
-test('probe: the Calendar test row fills every NOT NULL column (#43)', async () => {
-  const values: Record<string, Record<string, unknown>> = {};
-  const recording: DeviceReader = {
-    columnsOf: async uri => full[uri],
-    dryInsert: async (uri, _markerColumn, row) => {
-      values[uri] = row;
-    },
-  };
-  await probeAll(D, recording, 1_700_000_000_000);
-  expect(values[contentUri(D.calendar, 'events')]).toEqual({
-    calendarId: DRY_INSERT_MARKER,
-    tag: 'task',
-    state: 0,
-    readOnly: 1,
-    isAllDay: 0,
-    title: DRY_INSERT_MARKER,
-    content: '',
-    startTime: 1_700_000_000_000,
-    endTime: 1_700_003_600_000,
-    lastModifiedTime: 1_700_000_000_000,
-    status: 'confirmed',
-  });
-  for (const col of CALENDAR_NOT_NULL) expect(values[contentUri(D.calendar, 'events')][col]).not.toBeNull();
-  expect(values[contentUri(D.todo, 'tasks')]).toEqual({});
 });
 
 test('probe: a provider that reads but refuses writes cannot write (#67)', async () => {

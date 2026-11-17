@@ -258,11 +258,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   its tasks moved to the unfiled Inbox [measured, Account Sync 0.1.0 beta 18, 2026-11-17,
   [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. That the app itself deletes only this way is [inference, from the
   `deleted = 0` filter].
-- The calendar's `data_info` delete with the selection `title = ?` removed 0 rows of a row just
-  inserted with that title, so each probe left its test row; Account Sync now deletes by the row id
-  the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The Probe does the same, and Account
-  Sync's Calendar writer updates and removes a pulled event by its row id; whether an update or
-  delete selected by `eventId` or `id` works is not measured yet [[#213](https://github.com/martonpaulo/ink-tools/issues/213)].
+- The calendar's `data_info` delete removes no row, whether selected by `title = ?` [measured,
+  Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)] or by the row id the insert returned: beta 21 left one active
+  «Account Sync dry insert» row at each plugin host start [measured, 2026-11-17, [#213](https://github.com/martonpaulo/ink-tools/issues/213)]. So
+  Account Sync's probe never inserts: its test write is an update selected by `id = -1`, which
+  matches no row, and it runs only in a sync pass that needs a module that is on, never when the
+  host loads Account Sync [[#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Its Calendar writer updates and cancels a pulled event by its row id.
 - The calendar provider never deletes a row: `CalendarContentProvider.delete` calls
   `DataBaseTools.delete`, whose body is `return 0;` [source, decompiled `SupernoteCalendar.apk`,
   firmware `Chauvet.E103.2610191001.2559`, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The app removes a synced event by

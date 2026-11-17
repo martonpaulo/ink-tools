@@ -4,9 +4,9 @@
  * starts its automatic pass when PluginHost loads Bridge; the Settings view's «Sync now» presses the
  * same runner, so a press during an automatic pass joins it.
  *
- * The Calendar and To-Do are written through `BridgeProviders` (#43, `deviceRows.ts`), and each pass
- * first runs sn-adapter's probe with the same module, so a module the device does not clear is
- * blocked and nothing is written for it. The Google OAuth client comes from its own file beside the
+ * The Calendar and To-Do are written through `BridgeProviders` (#43, `deviceRows.ts`), and a pass
+ * that needs a module first runs sn-adapter's probe of it with the same module, so a module the
+ * device does not clear is blocked and nothing is written for it. The load pass never probes. The Google OAuth client comes from its own file beside the
  * refresh token, which `inkctl secret set google-client` puts there (#200).
  */
 import {useEffect, useState} from 'react';
@@ -28,7 +28,7 @@ export const device: SyncDevice = {
   googleClient: () => readGoogleClient(secrets),
   importSecrets: () => importSecretDrops(getPluginDirPath),
   stores: createDeviceStores(deviceRows(), () => Date.now()),
-  probe: () => probeAll(BUNDLED_DESCRIPTOR, deviceReader()),
+  probe: capabilities => probeAll(BUNDLED_DESCRIPTOR, deviceReader(), capabilities),
   fetch: (url, init) => fetch(url, init),
   now: () => Date.now(),
 };

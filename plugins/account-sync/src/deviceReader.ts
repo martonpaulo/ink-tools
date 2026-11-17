@@ -6,20 +6,18 @@
  */
 import {NativeModules} from 'react-native';
 import type {DeviceReader, Row} from '@ink-tools/sn-adapter';
-import {ROW_ID} from './deviceStores';
 
 export const PROVIDERS_MODULE = 'BridgeProviders';
 
 /** The calls of the Java module, as `native/com/bridge/providers/BridgeProvidersModule.java` defines them. */
 export type ProvidersModule = {
   columnsOf: (uri: string) => Promise<string[]>;
-  /** The test row is deleted again by its `idColumn`, the provider's row key (#43). */
-  dryInsert: (
-    uri: string,
-    markerColumn: string,
-    idColumn: string,
-    values: Row,
-  ) => Promise<null>;
+  /**
+   * The probe's test write is the module's plain `update`, never an insert: the Calendar provider
+   * cannot delete a row again, so a test row would stay in the owner's Calendar (#43). A refused
+   * update (a `SecurityException`) rejects as `update_refused`.
+   */
+  update: (uri: string, where: Row, row: Row) => Promise<number>;
 };
 
 /** `providers` is for tests; without it, each call reads the module PluginHost loaded. */
@@ -35,16 +33,6 @@ export function deviceReader(providers?: ProvidersModule): DeviceReader {
   };
   return {
     columnsOf: async uri => loaded().columnsOf(uri),
-    dryInsert: async (uri, markerColumn, values) => {
-      try {
-        await loaded().dryInsert(uri, markerColumn, ROW_ID, values);
-      } catch (e) {
-        // `insert_refused` means the provider wrote no row; only `revert_failed` says one may remain (#43).
-        if ((e as {code?: unknown}).code === 'insert_refused') {
-          throw new Error(`no test row was written: ${e instanceof Error ? e.message : String(e)}`);
-        }
-        throw e;
-      }
-    },
+    testWrite: async (uri, where, values) => loaded().update(uri, where, values),
   };
 }

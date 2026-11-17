@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * The JVM tests of Bridge's Android-free native classes (#43): sn-adapter's `DryInsertRevert` and
- * `InsertAnswer`, shared with the Probe (#213, #217), and their tests in sn-adapter's native-tests,
+ * The JVM tests of the Android-free native classes Bridge compiles (#43): sn-adapter's `InsertAnswer`
+ * and the Probe's `DryInsertRevert` (Bridge no longer calls it, #43), with their tests in sn-adapter's native-tests,
  * compiled with the JDK alone, no Android SDK. `npm run test:native` runs it in the gate.
  */
 const fs = require('node:fs');
