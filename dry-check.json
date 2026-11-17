@@ -177,7 +177,7 @@
    "packages/ink-core": 1,
    "plugins/bridge": 10,
    "plugins/lookup": 5,
-   "plugins/probe": 3,
+   "plugins/probe": 2,
    "plugins/real-time-conversion": 2,
    "plugins/retouch": 1
   },

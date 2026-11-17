@@ -113,11 +113,25 @@ export function createDeviceCalendar(
   const uri = contentUri(d.calendar, 'events');
   const col = (field: string) => column(d.calendar, 'events', field);
   const ours = () => rows.query(uri, {[col('tag')]: d.calendar.rules.writeTag});
-  const keyOf = (calendarId: string, eventId: string): Row => ({
-    [col('tag')]: d.calendar.rules.writeTag,
-    [col('calendarId')]: calendarId,
-    [col('eventId')]: eventId,
-  });
+  /**
+   * The row key of our one row of a pulled event (#213). The rows are matched here, not by the
+   * provider's selection: on the tablet a Calendar delete selected by `title` removed 0 rows (#43),
+   * so a write selects only the row id, as `relink` and the To-Do store do. Zero or several rows is
+   * an error, never a write.
+   */
+  const keyOf = async (calendarId: string, eventId: string): Promise<Row> => {
+    const text = (value: unknown) => (value === null || value === undefined ? '' : String(value));
+    const hits = (await ours()).filter(
+      r =>
+        text(r[col('tag')]) === d.calendar.rules.writeTag &&
+        text(r[col('calendarId')]) === calendarId &&
+        text(r[col('eventId')]) === eventId,
+    );
+    if (hits.length !== 1) {
+      throw new Error(`event ${eventId} has ${hits.length} tablet rows, not 1`);
+    }
+    return {[ROW_ID]: hits[0][ROW_ID]};
+  };
   return {
     async listOurs(window) {
       const events: CalendarEvent[] = [];
@@ -146,7 +160,7 @@ export function createDeviceCalendar(
       one(
         await rows.update(
           uri,
-          keyOf(event.calendarId, event.eventId),
+          await keyOf(event.calendarId, event.eventId),
           eventToRow(d, event, now()),
         ),
         `update ${event.eventId}`,
@@ -154,7 +168,7 @@ export function createDeviceCalendar(
     },
     async remove(calendarId, eventId) {
       one(
-        await rows.remove(uri, keyOf(calendarId, eventId)),
+        await rows.remove(uri, await keyOf(calendarId, eventId)),
         `remove ${eventId}`,
       );
     },

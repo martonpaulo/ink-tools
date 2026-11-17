@@ -1,4 +1,4 @@
-package com.bridge.providers;
+package com.inktools.provider;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,10 +10,13 @@ import java.util.Set;
  * deletes by row id: the id the insert returned, and the id of every row the provider lists with the
  * marker, which also removes the rows earlier probes left. A row is deleted only when it is the new
  * row or its marker column holds the marker, read back here, never on the provider's filter alone.
+ *
+ * <p>The one owner of that row-id rule for every plugin (#213): Account Sync's and the Probe's
+ * native builds compile this folder, and {@link ResolverTable} is the table over ContentResolver.
  */
-final class DryInsertRevert {
+public final class DryInsertRevert {
   /** The test write's table, reached through the provider. */
-  interface Table {
+  public interface Table {
     /** {id, marker column value} of each row the provider answers to a filter on the marker. */
     List<String[]> marked() throws Exception;
 
@@ -22,9 +25,9 @@ final class DryInsertRevert {
   }
 
   /** What the revert did: rows removed, and marked rows still listed after it. */
-  static final class Result {
-    final int removed;
-    final int remaining;
+  public static final class Result {
+    public final int removed;
+    public final int remaining;
 
     Result(int removed, int remaining) {
       this.removed = removed;
@@ -35,7 +38,7 @@ final class DryInsertRevert {
   private DryInsertRevert() {}
 
   /** Deletes the new row ({@code createdId}, or null) and every marked row, by id, then counts. */
-  static Result revert(Table table, String marker, String createdId) throws Exception {
+  public static Result revert(Table table, String marker, String createdId) throws Exception {
     Set<String> ids = new LinkedHashSet<>();
     if (createdId != null) {
       ids.add(createdId);

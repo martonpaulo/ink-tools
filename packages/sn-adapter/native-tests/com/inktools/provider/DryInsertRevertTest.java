@@ -1,4 +1,4 @@
-package com.bridge.providers;
+package com.inktools.provider;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** JVM checks of the probe's revert (#43); run by `node scripts/native-build.cjs --test`. */
+/** JVM checks of the probe's revert (#43); run by the Account Sync gate, `npm run test:native` in plugins/bridge. */
 public final class DryInsertRevertTest {
   private static final String MARKER = "Account Sync dry insert";
 

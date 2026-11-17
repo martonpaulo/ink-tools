@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableArray;
+import com.inktools.provider.ResolverTable;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
@@ -185,12 +186,14 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
     }
   }
 
-  /** Inserts one row marked {@link ProbeTargets#MARKER}, then deletes only rows carrying it. */
+  /**
+   * Inserts one row marked {@link ProbeTargets#MARKER}, then deletes it, and every older marked row,
+   * by row id ({@link ProbeRevert}, #213): the Calendar provider ignored a delete by the marker.
+   */
   private static void dryInsert(ContentResolver resolver, ProbeTargets.Target target, List<String> lines) {
     Uri base = Uri.parse(target.uri);
-    String where = target.markerColumn + " = ?";
-    String[] args = {ProbeTargets.MARKER};
     boolean inserted = false;
+    String createdId = null;
     try {
       ContentValues values = new ContentValues();
       for (Map.Entry<String, Object> column : target.row(System.currentTimeMillis()).entrySet()) {
@@ -205,21 +208,21 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
       }
       Uri created = resolver.insert(base, values);
       inserted = ProbeTargets.wroteRow(created != null, created == null ? null : created.getLastPathSegment());
+      createdId = inserted ? ResolverTable.rowId(created) : null;
       emit(lines, ProbeFormat.ok(target.label, "insert", inserted ? "row created" : "no row (refused: " + created + ")"));
     } catch (Throwable error) {
       emit(lines, ProbeFormat.failed(target.label, "insert", error));
     }
-    try {
-      int removed = resolver.delete(base, where, args);
-      emit(lines, ProbeFormat.ok(target.label, "delete-marked", removed + " rows removed"));
-      if (inserted && removed == 0) {
-        emit(lines, target.label + " LEFTOVER: a marked row may remain; delete rows where " + where.replace("?", "'" + ProbeTargets.MARKER + "'"));
-      }
-    } catch (Throwable error) {
-      emit(lines, ProbeFormat.failed(target.label, "delete-marked", error));
-      if (inserted) {
-        emit(lines, target.label + " LEFTOVER: a marked row may remain; delete rows where " + where.replace("?", "'" + ProbeTargets.MARKER + "'"));
-      }
+    List<String> revert = new ArrayList<>();
+    ProbeRevert.revert(
+        new ResolverTable(resolver, base, ProbeTargets.ROW_ID, target.markerColumn, ProbeTargets.MARKER),
+        target.label,
+        target.markerColumn,
+        createdId,
+        inserted,
+        revert);
+    for (String line : revert) {
+      emit(lines, line);
     }
   }
 }

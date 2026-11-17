@@ -90,18 +90,57 @@ describe('the Calendar store', () => {
     expect((await cal.listOurs(window)).map(e => e.eventId)).toEqual(['g1']);
   });
 
-  test('updates and removes by its keys; a write that changed no row throws', async () => {
+  test('updates and removes by its keys; an event with no tablet row throws', async () => {
     const {tables, rows} = provider();
     const cal = createDeviceCalendar(rows, () => NOW);
     await cal.create(event);
     await cal.update({...event, title: 'Planning'});
     expect(tables[EVENTS][0].title).toBe('Planning');
     await expect(cal.update({...event, eventId: 'gone'})).rejects.toThrow(
-      'changed 0 rows',
+      'event gone has 0 tablet rows, not 1',
     );
     await cal.remove('work', 'g1');
     expect(tables[EVENTS]).toEqual([]);
-    await expect(cal.remove('work', 'g1')).rejects.toThrow('changed 0 rows');
+    await expect(cal.remove('work', 'g1')).rejects.toThrow('0 tablet rows');
+  });
+
+  test('updates and removes by the row id, as a provider that honours only id needs (#213)', async () => {
+    const {tables, rows} = provider({
+      [EVENTS]: [
+        // A native row that shares the event's ids but not our tag is never written.
+        {id: '1', tag: 'event', calendarId: 'work', eventId: 'g1', title: 'Native'},
+      ],
+    });
+    // The tablet's Calendar provider ignored a delete selected by `title` (#43): this one changes
+    // nothing for a write selected by anything but the row id.
+    const writes: Row[] = [];
+    const byIdOnly: ContentRows = {
+      ...rows,
+      update: async (uri, where, row) => {
+        writes.push(where);
+        return Object.keys(where).join() === 'id' ? rows.update(uri, where, row) : 0;
+      },
+      remove: async (uri, where) => {
+        writes.push(where);
+        return Object.keys(where).join() === 'id' ? rows.remove(uri, where) : 0;
+      },
+    };
+    const cal = createDeviceCalendar(byIdOnly, () => NOW);
+    await cal.create(event);
+    await cal.update({...event, title: 'Planning'});
+    expect(tables[EVENTS].map(r => r.title)).toEqual(['Native', 'Planning']);
+    await cal.remove('work', 'g1');
+    expect(tables[EVENTS].map(r => r.id)).toEqual(['1']);
+    expect(writes).toEqual([{id: '100'}, {id: '100'}]);
+  });
+
+  test('an event held by two tablet rows is an error, never a write', async () => {
+    const {tables, rows} = provider();
+    const cal = createDeviceCalendar(rows, () => NOW);
+    await cal.create(event);
+    await cal.create(event);
+    await expect(cal.remove('work', 'g1')).rejects.toThrow('event g1 has 2 tablet rows, not 1');
+    expect(tables[EVENTS]).toHaveLength(2);
   });
 
   test('a tablet-made row is an edit, and a relink gives it the service id', async () => {
