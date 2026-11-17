@@ -21,8 +21,10 @@ options. **Enhance All Images** and **Undo All Images** ([#140](https://github.c
 page in turn by its rect and run Enhance or Undo on it through `runEdit` (`src/page.ts`). Settings
 live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. An edit past 2 s shows the shared «Loading…» strip at the top of the note
 ([#103](https://github.com/martonpaulo/ink-tools/issues/103)); a press that changes nothing shows a toast with the reason, and a
-missing file permission opens Settings, which asks for it (`src/press.ts`, [#170](https://github.com/martonpaulo/ink-tools/issues/170)). The time of
-each edit on the Manta is still to come ([#145](https://github.com/martonpaulo/ink-tools/issues/145)).
+missing file permission opens Settings, which asks for it (`src/press.ts`, [#170](https://github.com/martonpaulo/ink-tools/issues/170)). On a 960 x 870
+picture on the Manta, Enhance took 3926 ms, Restore original 1274 ms and Document 2028 ms on a
+1200 px photo (measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)); the other edits' times are still to come
+([#145](https://github.com/martonpaulo/ink-tools/issues/145)).
 
 ## What it is
 

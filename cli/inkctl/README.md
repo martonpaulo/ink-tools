@@ -135,6 +135,19 @@ Notes for an agent that drives the tablet in a test round, learned in the rounds
 - **Test with real handwriting and no pen.** Copy a word the owner wrote on a note under `Note/Tests/` to the test page (for example `ink save`, then `ink strokes`), lasso it with `lasso last-insert`, and press rows with `lasso press` ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#189](https://github.com/martonpaulo/ink-tools/issues/189)). A ready word, picture or blank page is one call away: `fixture NAME --lasso ITEM` ([#220](https://github.com/martonpaulo/ink-tools/issues/220)).
 - **Delete the older build.** Each install leaves its `.snplg` in `MyStyle/`; delete the older build after a newer one is installed.
 - **Stop each log capture by its PID.** Capture the PID of every `adb logcat` you start and stop that PID, never a name pattern.
+- **Read a log from your own start line.** `adb shell logcat -c` did not always clear the buffer, and `logcat -d -T` with the device's time printed nothing in a script; read the whole buffer and filter by text, from the line your step logged first.
+- **Wake the tablet before each step.** It sleeps between long steps and a press then does nothing; send `input keyevent 224` first. After `inkctl wifi on`, wait for the device: USB answers «device not found» for a few seconds while adbd restarts.
+- **Parse `content query` rows with free text last.** A column can hold commas, so put the free-text column last in `--projection`.
+- **Keep the fixtures note.** `Note/Tests/Fixtures.note` holds one fixture per page, copied from the owner's real handwriting with no pen; never delete it. Its pen steps left are «coffee» on page 5 and a small drawing on page 9 ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#214](https://github.com/martonpaulo/ink-tools/issues/214)).
+- **Wait about 4 s after a page jump.** The next press of the plugins button after `jumpToPage` is lost; 1.5 s is too short on a page with a picture.
+- **Lasso again before a press.** A Probe command run after a Word Lookup or Device Transfer insert clears the inserted picture's lasso; lasso it by its rect before `lasso press`.
+- **Know which helper holds Plugin Diagnostics' `pluginID`.** `fixture` and `ink write` press Plugin Diagnostics' «Run Command», so they fail with `text:Run Command is not on the screen` while the Probe helper is installed in its place. With Probe, insert synthetic text as a Probe `strokes` command from `text_strokes(text, left, top, size)` in `src/inkctl`, loaded with `importlib`'s `SourceFileLoader`.
+- **Expect a slow `lasso press`.** It scrolls the «⋯» list from the top, so a press takes 30 to 60 s with about 40 rows, every Ink Tools plugin on.
+- **Close a plugin's Settings view first.** It stays over Settings after `am force-stop com.ratta.settings`, and `plugin install`'s screen path then fails with `text:Apps is not on the screen`; Back closes it.
+- **Read the detail page's title before a tap.** A plugin with no config button has «Uninstall» where another plugin has «Settings»; read `plugin_detail_title` first.
+- **Test another permission state through the bridge.** `plugin allow` always writes status 2. Send the bridge `allow` with `--ei status 0` (or 1, -1) for one permission, read it back from `content://com.ratta.supernote.pluginhost/plugins/<id>`, then restore with `inkctl plugin allow <id>`.
+- **Read the plugin list after a bridge `failed`.** An install can land while the callback fails ([#225](https://github.com/martonpaulo/ink-tools/issues/225)); `plugin list` is the proof.
+- **Run one session per tablet.** Two agents on the tablet at once gave phantom page changes and Settings windows over the note (2026-11-17).
 
 <br />
 

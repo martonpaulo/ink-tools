@@ -225,3 +225,8 @@ Build the pure layers (`sync-core`, `ink-core`, provider implementations) and un
 device and no secrets. The `sn-adapter` descriptor is filled from the private reverse-engineering
 notes. Anything that needs the physical tablet or a live account is verified by the owner on the
 Mac, not faked in the cloud.
+
+A cloud session's work reaches `main` by `git merge --no-ff` of its hand-off branch, never by
+cherry-pick: GitHub's compare counts commit IDs, so a cherry-picked commit still shows the branch
+as ahead. Parallel cloud sessions race on a plugin's version: bump it right before landing, never
+at the start of the work (lessons of the 2026-11-16 night rounds, [#214](https://github.com/martonpaulo/ink-tools/issues/214)).

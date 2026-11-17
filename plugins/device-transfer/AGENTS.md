@@ -24,8 +24,10 @@ discovery cannot see.
 page goes one line below the first. A text goes into the first free band of the page, past its
 strokes, text boxes and pictures (`freeTextBox`, `ink-core`'s `freeRect` that Word Lookup uses,
 [#199](https://github.com/martonpaulo/ink-tools/issues/199)), and is lassoed only when the whole page was read and nothing else is under it
-([#168](https://github.com/martonpaulo/ink-tools/issues/168)'s rule, `inkUnderBox`). Still to come: the device round, and whether the receiver can
-stay on with the view closed.
+([#168](https://github.com/martonpaulo/ink-tools/issues/168)'s rule, `inkUnderBox`). On the tablet (2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)), an `application/zip` offer is
+refused at `prepare-upload` with 403, and a received photo is lassoed for a plugin: Image Editing's
+«Document» reached `modifyPageElements` on beta 7, where beta 6 got error 904 from
+`getLassoElementTypeCounts`. Still to come: whether the receiver can stay on with the view closed.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
 lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with «Send to <device>» and
@@ -37,7 +39,8 @@ lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with «Send to 
 saved as `received-<session>.pdf`; `native/.../PdfPages.java` renders it with Android's
 `PdfRenderer` to page-sized PNGs, and `src/receive/pdfNote.ts` creates the note in `Note/` with
 `createNote` (page 1) and `insertNotePage` (each further page), then removes the PDF and the PNGs;
-a failure also removes the note. To test on the device: whether `insertNotePage` takes a PNG path
+a failure also removes the note. A received PDF became `Note/Scan <yyyy-MM-dd> <HHmm>.note` in the
+root `Note/` folder, not the open note's folder (measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)). To test on the device: whether `insertNotePage` takes a PNG path
 as its template, its page index base, and whether the note keeps its backgrounds once the PNGs
 are gone.
 

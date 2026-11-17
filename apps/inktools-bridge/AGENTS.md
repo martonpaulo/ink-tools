@@ -104,6 +104,7 @@ node scripts/build.cjs          # build/outputs/inktools-bridge-<version>.apk, s
 
 ## Device check
 
-Not yet run on the tablet (`status: needs-device-check`, [#215](https://github.com/martonpaulo/ink-tools/issues/215)): install the APK, `ping`, then
-`inkctl plugin install`, `enable`, `disable` and `allow`, each proven by `inkctl plugin list` and
-the single-plugin row, and the log tag `PluginInstallManager`.
+Run on the tablet on 2026-11-17 ([#215](https://github.com/martonpaulo/ink-tools/issues/215), [#214](https://github.com/martonpaulo/ink-tools/issues/214)): `inkctl plugin list`, `install`, `enable`,
+`disable` and `allow` worked through the bridge, each proven by `inkctl plugin list` and the
+single-plugin row. Their times are in `../../docs/supernote.md` › Plugins. An install can answer
+`failed` and still land ([#225](https://github.com/martonpaulo/ink-tools/issues/225)), so the plugin list, not the answer, is the proof.

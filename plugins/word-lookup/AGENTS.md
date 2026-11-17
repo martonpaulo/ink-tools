@@ -44,6 +44,9 @@ is Lookup's entry into picture-search's file store and insert tier ([#142](https
 `MyStyle/Lookup`, native modules `LookupFiles` and `LookupImage`, registered by
 `native/com/lookup/files/LookupFilesPackage.java`, which `scripts/native-build.cjs` compiles with the
 package's Java into `app.npk`.
+The page read for the free band stops at its 1.5 s budget: on a 540-stroke page beta 24 read 68 of
+540 elements and inserted at today's place; on a page of 24 elements the read took 395 ms and the
+insert went in the free band (measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214), [#221](https://github.com/martonpaulo/ink-tools/issues/221)).
 
 ## What it is
 

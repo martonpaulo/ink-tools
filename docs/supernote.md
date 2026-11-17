@@ -219,7 +219,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A finger drag (`adb shell input swipe`) on a lassoed selection does not move it [measured].
 - The Back key does not close a plugin's full view (Lookup and Relay Settings, Relay «Receive»):
   the view stays until the plugin calls `closePluginView` or the host restarts [measured,
-  2026-11-16].
+  2026-11-16]. A plugin's own Settings view, a host window, stays over Settings after
+  `am force-stop com.ratta.settings`; Back closed it there. Image Editing's Settings view opened
+  from its permission path did not close on Back, and Home, then opening a note, left it
+  [measured, 2026-11-17, [#204](https://github.com/martonpaulo/ink-tools/issues/204)]; with its «Close» button (Image Editing beta 8) it
+  closes back to Settings [measured, 2026-11-17, [#224](https://github.com/martonpaulo/ink-tools/issues/224)].
+- A plugin's detail page in Settings › Apps › Plugins has a «Settings» row only when the plugin has
+  a config button: on Probe's page, which has none, «Uninstall» sits where Account Sync's page has
+  «Settings» (y about 920), and a blind tap there opened the uninstall dialog [measured, 2026-11-17,
+  [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Read `plugin_detail_title` before any tap on that page.
 - PluginHost exports only its launcher `StubActivity`, a `com.ratta.supernote.plugin.action.DEBUG`
   receiver and a messenger service; no intent opens one plugin's view [measured, `dumpsys
   package`, [#139](https://github.com/martonpaulo/ink-tools/issues/139)].
@@ -291,6 +299,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - The native Google sync (`GoogleSync.getAllEvents`) reads only `tag = 'event'` rows and uploads one
   with no `eventId` to Google [source, [#28](https://github.com/martonpaulo/ink-tools/issues/28)], so Account Sync's `tag=task` rows never reach
   Google.
+- The Calendar app logs `getDuringEvent list size:N` and `GetTodayData: todayList size:N` each time
+  it opens, which checks what it shows with no screen read; `am force-stop
+  com.ratta.supernote.calendar`, then `am start -n com.ratta.supernote.calendar/.MainActivity`,
+  restarts it [measured, 2026-11-17, [#28](https://github.com/martonpaulo/ink-tools/issues/28), [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - The calendar's `data_info` insert refuses a row without `tag`, then one without
   `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
   refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`
@@ -324,6 +336,21 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     gives `{bitmapNum: 1}` or `{trailNum: 1}`, the lasso toolbar shows, and every «⋯» row,
     other plugins' rows included, can then be pressed with `inkctl click`.
   - `insertPageElements` on the open note needs `FILE:WRITE` granted: without it, code 1501.
+  - `insertPageElements(elements, page, 0)` writes into any page of the open note, not only the
+    shown one [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+  - On 2026-11-17, `createElement(200)` in a plain plugin had no `picture` object (`Cannot set
+    property 'picturePath' of undefined`), and `PluginNoteAPI.insertImage(path)` put the picture
+    on the current page, placed by the host near the page centre [measured, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Why
+    this differs from the probe of 2026-11-16 above is [unverified].
+- `PluginFileAPI.insertNotePage` needs a template name from `PluginCommAPI.getNoteSystemTemplates()`
+  (for example `style_white`): the name `getNotePageTemplate` returns (`style_white_a5x2`) fails with
+  «802 Background template file does not exist!» [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- Right after a plugin's `PluginCommAPI.jumpToPage`, the next press of the plugins button is lost;
+  a wait of about 4 s before it works, and 1.5 s was too short on a page with a picture [measured,
+  Probe, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- A Word Lookup or Device Transfer insert leaves the inserted picture lassoed, but a plugin command
+  run after it clears the lasso: `getLassoElementTypeCounts` then answers 904 [measured, Probe,
+  2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Lasso again by the element's rect before pressing a row.
 - Permissions of a no-view button [measured, 2026-11-16, Retouch and a probe,
   [#170](https://github.com/martonpaulo/ink-tools/issues/170)]:
   - After a PluginHost start, the first press of a plugin's button mounts the plugin's root
@@ -343,7 +370,9 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   only normal strokes and geometries» [measured, Word Lookup, 2026-11-16, [#35](https://github.com/martonpaulo/ink-tools/issues/35)].
 - Each plugin install restarts PluginHost, so every enabled plugin's load pass runs again: one
   Account Sync test row appeared per install, three in 8 minutes [measured, 2026-11-17,
-  [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. PluginHost kills its own process after a native plugin is upgraded or
+  [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Every host start (a tablet restart, a plugin install, a host restart by itself) ran
+  Account Sync's load pass: it ran a To-Do pass with no press, and beta 25's Calendar repair ran
+  before any «Sync now» [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. PluginHost kills its own process after a native plugin is upgraded or
   uninstalled; whether a plugin with no native code restarts it is [unverified]
   ([`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md)).
 - `adb shell content query --uri content://com.ratta.supernote.pluginhost/plugins` lists every
@@ -351,6 +380,25 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `usesPermissions`, each `status` 2 for Always Allow; the provider is read-only [measured,
   2026-11-17, [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md),
   [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- Install, enable, disable and permission changes have no `adb` one-liner: they go through the
+  exported AIDL service `PluginSettingService` (`IPluginSetting`: `installPlugin` 1,
+  `setPluginEnable` 6, `updatePluginPermissions` 9), which `am`, `content` and `service call`
+  cannot drive, since `installPlugin` needs a live callback binder. The service has no permission
+  guard, and `installPlugin(path, cb)` opens any path, so a `.snplg` in `MyStyle/` installs with no
+  copy. The callbacks (`IPluginInstallCallback`, `IPluginSetCallback`, `IPluginUninstallCallback`)
+  are in package `com.ratta.supernote.plugincorelib.callback`. A button press by intent exists only
+  for the built-in Sticker plugin (`a5db6166e8fe8e17`, exported `PluginHostService`, `action=VIEW`
+  with the extra `action=plugin`) [source, decompiled PluginHost `1.00.2610150`,
+  [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md), [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. The Ink Tools
+  bridge app holds that binder ([#215](https://github.com/martonpaulo/ink-tools/issues/215)); through it a plugin list took 1.35 s,
+  «Always Allow» 3.5 s, an install 2.9 s, a disable 2.4 s and an enable 3.1 s, where the screen
+  path took about 40 s, 60 to 240 s and about 25 s each [measured, Nomad, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- PluginHost's log tags for a round: `PluginInstallManager` (install), `PluginContainerService`
+  (the `PluginHostService`), `PluginSettingService`, `PluginsContentProvider`, `PluginManager` and
+  `PluginPermissionManager` [source, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- PluginHost permission `status` values: 2 Always Allow, 1 While Using, 0 Denied, -1 Cancelled
+  [reported by the device round of 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]; the bridge's `allow` takes any of them,
+  and the single-plugin row reads it back.
 - An install through the bridge can answer `onFailed` with error 100, «Plugin [<other id>] is not
   allowed to access other plugin's private dir», naming a background plugin, while the update has
   landed: PluginHost's log shows it seeds a current plugin per thread, and the binder thread
@@ -538,7 +586,19 @@ the note shows through, is still to test.
   read after it; that read-back is [unverified] on the tablet.
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
-  [#1](https://github.com/martonpaulo/ink-tools/issues/1)].
+  [#1](https://github.com/martonpaulo/ink-tools/issues/1)]. USB ADB came back authorized, with no prompt, about 20 s after power-on, and Wi-Fi
+  ADB was off (`service.adb.tcp.port` empty, `settings global adb_wifi_enabled` 0). For a few
+  seconds after `inkctl wifi on`, `adb -s <serial>` over USB answers «device not found» while adbd
+  restarts in TCP mode [measured, 2026-11-17, [#1](https://github.com/martonpaulo/ink-tools/issues/1), [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- The tablet sleeps between long steps (`dumpsys power` shows `mWakefulness=Asleep`), and a press
+  then does nothing; `input keyevent 224` (WAKEUP) before a step wakes it [measured, 2026-11-17,
+  [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- `adb shell logcat -c` did not always clear the buffer before the next read, and `logcat -d -T
+  '<MM-dd HH:mm:ss.000>'` with the device's own time printed no line in a script; reading the whole
+  buffer and filtering by text worked [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- `adb shell content query` columns can hold commas, so a row is parsed safely only with a
+  projection that puts the free-text column last; `content update --bind <column>:n:` writes NULL
+  (the `n` type) [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - Two ways to put a selection on the page without the pen, for a round: a text received by Relay
   lands as a lassoed text box, and a sticker from the built-in Sticker plugin lands as lassoed
   strokes in the «pasted» state. Neither is a lassoed handwritten word or picture [measured,
