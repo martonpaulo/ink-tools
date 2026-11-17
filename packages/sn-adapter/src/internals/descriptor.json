@@ -8,11 +8,12 @@
       "events": {
         "path": "data_info",
         "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"],
-        "fields": {"eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "modified": "lastModifiedTime", "status": "status"}
+        "fields": {"eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "modified": "lastModifiedTime", "status": "status", "state": "state"}
       },
       "config": {"path": "config_info", "columns": []}
     },
-    "rules": {"writeTag": "task", "cancelledStatus": "cancelled"}
+    "rules": {"writeTag": "task", "cancelledStatus": "cancelled", "writeStatus": "confirmed", "writeState": 0,
+      "requiredOnInsert": ["calendarId", "tag", "state", "readOnly", "isAllDay", "title", "startTime", "endTime", "lastModifiedTime", "status"]}
   },
   "todo": {
     "authority": "com.ratta.supernote.task.provider",

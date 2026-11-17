@@ -25,6 +25,20 @@ export interface CalendarRules {
   writeTag: string;
   /** The `status` value the native app writes when it hides an event: the delete signal (#29). */
   cancelledStatus: string;
+  /**
+   * The `status` and `state` a written row carries: a native row holds `state` 0 and a `status` text
+   * (one real `data_info` row, #43).
+   * shortcut: `confirmed` is Google's word for a live event, beside its `cancelled`; the row read on
+   * the tablet did not record its `status` text. Change this rule if a written row shows otherwise.
+   */
+  writeStatus: string;
+  writeState: number;
+  /**
+   * Device columns every inserted row fills: the provider's NOT NULL columns. `tag` and
+   * `lastModifiedTime` are measured refusals; the others are every column a native row fills, as a
+   * null there was never seen (#43).
+   */
+  requiredOnInsert: string[];
 }
 
 export interface TodoRules {
@@ -63,14 +77,14 @@ export interface Descriptor {
 
 type RuleType = 'string' | 'boolean' | 'number' | 'string[]';
 const RULE_TYPES: Record<Capability, Record<string, RuleType>> = {
-  calendar: {writeTag: 'string', cancelledStatus: 'string'},
+  calendar: {writeTag: 'string', cancelledStatus: 'string', writeStatus: 'string', writeState: 'number', requiredOnInsert: 'string[]'},
   todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', writeHasSync: 'number', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
   digest: {insertPath: 'string', countByIdentifierPath: 'string', updateByIdentifierPath: 'string', updateIdentifierKey: 'string', identifierKey: 'string', sourceTypeSelfAdd: 'number', contentMaxLength: 'number', commentMaxLength: 'number'},
 };
 
 /** The fields the adapter reads and writes in each table; an update that lacks one is refused (#101). */
 const REQUIRED_FIELDS: Partial<Record<Capability, Record<string, string[]>>> = {
-  calendar: {events: ['eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified', 'status']},
+  calendar: {events: ['eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified', 'status', 'state']},
   todo: {tasks: ['rowId', 'listId', 'taskId', 'title', 'detail', 'modified', 'status', 'due', 'completedAt', 'deleted', 'hasSync']},
   digest: {knowledge: ['content', 'collection', 'sourceType', 'metadata', 'comment', 'created']},
 };

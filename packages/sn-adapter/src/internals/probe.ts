@@ -23,13 +23,31 @@ const WRITE_TABLE: Partial<Record<Capability, string>> = {calendar: 'events', to
 /** The text field of each write table that carries the test row's marker (#43), as `plugins/probe` marks it. */
 const MARKER_FIELD: Partial<Record<Capability, string>> = {calendar: 'title', todo: 'title'};
 
+/** The text the device module writes in the marker column; also the test event's calendar. */
+export const DRY_INSERT_MARKER = 'Account Sync dry insert';
+
 /**
- * The columns the real writer sets on each test row besides the marker: the Calendar's `tag=task`,
- * which the provider requires (`NOT NULL constraint failed: data_info.tag`, #43).
+ * The other columns of each test row, built by the real writer's rule, so every NOT NULL column is
+ * filled as a real row fills it (`NOT NULL constraint failed: data_info.tag`, then
+ * `lastModifiedTime`, #43). The test event lasts one hour from `now`.
  */
-const TEST_ROW_VALUES: Partial<Record<Capability, (d: Descriptor) => Row>> = {
-  calendar: d => toCalendarInsert(d, {}),
+const TEST_ROW_VALUES: Partial<Record<Capability, (d: Descriptor, now: number) => Row>> = {
+  calendar: (d, now) => {
+    const col = (field: string) => column(d.calendar, 'events', field);
+    return toCalendarInsert(d, {
+      [col('calendarId')]: DRY_INSERT_MARKER,
+      [col('title')]: DRY_INSERT_MARKER,
+      [col('content')]: '',
+      [col('start')]: now,
+      [col('end')]: now + HOUR_MS,
+      [col('allDay')]: 0,
+      [col('readOnly')]: 1,
+      [col('modified')]: now,
+    });
+  },
 };
+
+const HOUR_MS = 60 * 60 * 1000;
 
 /** Why a capability with no test write stays unable to write. */
 export const NO_TEST_WRITE = 'no test write: the provider refuses deletes, so a test row would stay (#42)';
@@ -52,6 +70,7 @@ export async function probeCapability(
   descriptor: Descriptor,
   capability: Capability,
   reader: DeviceReader,
+  now: number = Date.now(),
 ): Promise<CapabilityStatus> {
   const module = descriptor[capability];
   const problems: string[] = [];
@@ -77,7 +96,7 @@ export async function probeCapability(
   } else if (available && table && marker) {
     const uri = contentUri(module, table);
     try {
-      await reader.dryInsert(uri, column(module, table, marker), TEST_ROW_VALUES[capability]?.(descriptor) ?? {});
+      await reader.dryInsert(uri, column(module, table, marker), TEST_ROW_VALUES[capability]?.(descriptor, now) ?? {});
       canWrite = true;
     } catch (e) {
       problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);
@@ -86,6 +105,6 @@ export async function probeCapability(
   return {capability, available, canWrite, problems};
 }
 
-export async function probeAll(descriptor: Descriptor, reader: DeviceReader): Promise<CapabilityStatus[]> {
-  return Promise.all((['calendar', 'todo', 'digest'] as const).map(c => probeCapability(descriptor, c, reader)));
+export async function probeAll(descriptor: Descriptor, reader: DeviceReader, now: number = Date.now()): Promise<CapabilityStatus[]> {
+  return Promise.all((['calendar', 'todo', 'digest'] as const).map(c => probeCapability(descriptor, c, reader, now)));
 }

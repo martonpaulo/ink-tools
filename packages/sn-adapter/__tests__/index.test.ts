@@ -7,6 +7,7 @@ import {
   probeAll,
   probeCapability,
   NO_TEST_WRITE,
+  DRY_INSERT_MARKER,
   toCalendarInsert,
   toTodoInsert,
 } from '../src';
@@ -90,16 +91,42 @@ test('probe: each test row is marked in its table\'s text column (#43)', async (
   );
 });
 
-test('probe: the Calendar test row carries tag=task, which the provider requires (#43)', async () => {
-  const values: Record<string, unknown> = {};
+/**
+ * Every column one real `data_info` row fills on the tablet (#43): the NOT NULL candidates. `tag` and
+ * `lastModifiedTime` are measured refusals; a null was seen in every other column.
+ */
+const CALENDAR_NOT_NULL = ['calendarId', 'tag', 'state', 'readOnly', 'isAllDay', 'title', 'startTime', 'endTime', 'lastModifiedTime', 'status'];
+const CALENDAR_NULLABLE = ['eventId', 'isSelf', 'content', 'startDate', 'endDate', 'recurrence', 'recurringEventId', 'originalStartTime', 'originalStartDate'];
+
+test('the descriptor names every NOT NULL Calendar column, and only columns a real row fills (#43)', () => {
+  expect([...D.calendar.rules.requiredOnInsert].sort()).toEqual([...CALENDAR_NOT_NULL].sort());
+  for (const col of CALENDAR_NULLABLE) expect(D.calendar.tables.events.columns).toContain(col);
+  expect([...CALENDAR_NOT_NULL, ...CALENDAR_NULLABLE, 'id'].sort()).toEqual([...D.calendar.tables.events.columns].sort());
+});
+
+test('probe: the Calendar test row fills every NOT NULL column (#43)', async () => {
+  const values: Record<string, Record<string, unknown>> = {};
   const recording: DeviceReader = {
     columnsOf: async uri => full[uri],
     dryInsert: async (uri, _markerColumn, row) => {
       values[uri] = row;
     },
   };
-  await probeAll(D, recording);
-  expect(values[contentUri(D.calendar, 'events')]).toEqual({tag: 'task'});
+  await probeAll(D, recording, 1_700_000_000_000);
+  expect(values[contentUri(D.calendar, 'events')]).toEqual({
+    calendarId: DRY_INSERT_MARKER,
+    tag: 'task',
+    state: 0,
+    readOnly: 1,
+    isAllDay: 0,
+    title: DRY_INSERT_MARKER,
+    content: '',
+    startTime: 1_700_000_000_000,
+    endTime: 1_700_003_600_000,
+    lastModifiedTime: 1_700_000_000_000,
+    status: 'confirmed',
+  });
+  for (const col of CALENDAR_NOT_NULL) expect(values[contentUri(D.calendar, 'events')][col]).not.toBeNull();
   expect(values[contentUri(D.todo, 'tasks')]).toEqual({});
 });
 
@@ -122,9 +149,22 @@ test('probe: missing column or silent provider turns the capability off', async 
   expect(digest.problems[0]).toMatch(/did not answer/);
 });
 
-test('calendar insert forces tag=task and drops unknown columns', () => {
-  const row = toCalendarInsert(D, {title: 'Dentist', tag: 'x', bogus: 1});
-  expect(row).toEqual({title: 'Dentist', tag: 'task'});
+test('calendar insert forces tag=task and state, keeps a given status, drops unknown columns', () => {
+  const full = {calendarId: 'c1', readOnly: 1, isAllDay: 0, title: 'Dentist', startTime: 1, endTime: 2, lastModifiedTime: 3};
+  expect(toCalendarInsert(D, {...full, tag: 'x', state: 7, bogus: 1})).toEqual({...full, tag: 'task', state: 0, status: 'confirmed'});
+  expect(toCalendarInsert(D, {...full, status: 'cancelled'}).status).toBe('cancelled');
+  // An untitled event still writes: SQLite's NOT NULL accepts an empty text.
+  expect(toCalendarInsert(D, {...full, title: ''}).title).toBe('');
+});
+
+test('calendar insert throws on each NOT NULL column it would leave empty, before the provider refuses it (#43)', () => {
+  const full = {calendarId: 'c1', readOnly: 1, isAllDay: 0, title: 'Dentist', startTime: 1, endTime: 2, lastModifiedTime: 3};
+  for (const col of Object.keys(full)) {
+    const gap = {...full} as Record<string, unknown>;
+    delete gap[col];
+    expect(() => toCalendarInsert(D, gap as never)).toThrow(`calendar insert needs ${col}`);
+    expect(() => toCalendarInsert(D, {...full, [col]: null})).toThrow(col);
+  }
 });
 
 test('to-do insert enforces title, existing list and hasSync=0', () => {
@@ -158,6 +198,8 @@ test('an event row carries the tag and round-trips', () => {
   const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
   const row = eventToRow(D, e, 5);
   expect(row.tag).toBe('task');
+  // The real writer fills every NOT NULL column too (#43).
+  for (const col of CALENDAR_NOT_NULL) expect(row[col] ?? null).not.toBeNull();
   // The row's lastModifiedTime is its change time, which decides an edit on both sides (#87).
   expect(rowToEvent(D, row)).toEqual({...e, modified: 5});
   const {lastModifiedTime: _unused, ...noTime} = row;

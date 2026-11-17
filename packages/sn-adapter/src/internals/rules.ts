@@ -9,10 +9,24 @@ function pickColumns(columns: string[], row: Row): Row {
   return out;
 }
 
-/** A calendar event the plugin writes carries the descriptor's tag (`tag=task`), so the app shows it. */
+/** SQLite's NOT NULL accepts an empty text, so an untitled event still writes. */
+const missing = (v: Row[string] | undefined) => v === undefined || v === null;
+
+/**
+ * A calendar row the plugin writes: the descriptor's tag (`tag=task`), so the app shows it and the
+ * native Google sync leaves it, and its `state` and `status`, unless the row names a status. Every
+ * NOT NULL column of `data_info` (`rules.requiredOnInsert`) must be filled: the provider names one
+ * at a time (`NOT NULL constraint failed`, #43), so a gap throws here instead.
+ */
 export function toCalendarInsert(d: Descriptor, event: Row): Row {
-  const row = pickColumns(d.calendar.tables.events.columns, event);
-  row[column(d.calendar, 'events', 'tag')] = d.calendar.rules.writeTag;
+  const c = d.calendar;
+  const row = pickColumns(c.tables.events.columns, event);
+  row[column(c, 'events', 'tag')] = c.rules.writeTag;
+  row[column(c, 'events', 'state')] = c.rules.writeState;
+  const status = column(c, 'events', 'status');
+  if (missing(row[status])) row[status] = c.rules.writeStatus;
+  const gaps = c.rules.requiredOnInsert.filter(col => missing(row[col]));
+  if (gaps.length) throw new Error(`calendar insert needs ${gaps.join(', ')}`);
   return row;
 }
 
