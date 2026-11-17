@@ -30,6 +30,11 @@ export type CacheOptions = {
    * with another configuration is a different entry.
    */
   variant?: string;
+  /**
+   * The plugin build that searches, its PluginConfig.json versionCode: a file written by another
+   * build is searched again, so a ranking fix reaches a word cached before the update (#210).
+   */
+  build?: string;
 };
 
 /**
@@ -39,7 +44,9 @@ export type CacheOptions = {
  * keep `canonical`, which the measured order and the logo lead read (#99); 5 since each status
  * says whether its source is local, which offline detection reads (#99); 6 since the adult filter
  * reads category-only words, so no cached search shows a picture it now leaves out (#69); 7 since
- * entries keep `depicts`, which ranks a person's pictures before a namesake's (#15).
+ * entries keep `depicts`, which ranks a person's pictures before a namesake's (#15). A plugin
+ * update drops the file by its `build` (#210); raise this for a ranking change in a build that
+ * keeps its versionCode.
  */
 export const CACHE_VERSION = 7;
 /** Newest entries kept; the oldest is evicted first. DEFAULT, no device measurement yet. */
@@ -193,20 +200,30 @@ function isEntry(value: unknown): value is Entry {
 
 type ParsedCache = {ok: true; entries: Entry[]} | {ok: false; message: string};
 
-/** Entries newest first; anything unreadable is a failure, never an empty cache. */
-export function parseCache(text: string): ParsedCache {
+/**
+ * Entries newest first; anything unreadable is a failure, never an empty cache. A file another
+ * build wrote holds no entry for this one: its answers may rank by older rules (#210).
+ */
+export function parseCache(text: string, build?: string): ParsedCache {
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
     return {ok: false, message: 'the search cache file is not JSON'};
   }
-  const root = data as {version?: unknown; entries?: unknown} | null;
+  const root = data as {
+    version?: unknown;
+    build?: unknown;
+    entries?: unknown;
+  } | null;
   if (root?.version !== CACHE_VERSION) {
     return {
       ok: false,
       message: `unknown search cache version ${String(root?.version)}`,
     };
+  }
+  if (root.build !== build) {
+    return {ok: true, entries: []};
   }
   if (!Array.isArray(root.entries) || !root.entries.every(isEntry)) {
     return {ok: false, message: 'a search cache entry is malformed'};
@@ -214,8 +231,8 @@ export function parseCache(text: string): ParsedCache {
   return {ok: true, entries: root.entries};
 }
 
-function serialize(entries: Entry[]): string {
-  return JSON.stringify({version: CACHE_VERSION, entries});
+function serialize(entries: Entry[], build?: string): string {
+  return JSON.stringify({version: CACHE_VERSION, build, entries});
 }
 
 function isFresh(entry: Entry, now: number): boolean {
@@ -237,10 +254,11 @@ function message(error: unknown): string {
 async function readEntries(
   storage: TextStore,
   path: string,
+  build?: string,
 ): Promise<ParsedCache> {
   try {
     const text = await storage.readText(path);
-    return text === null ? {ok: true, entries: []} : parseCache(text);
+    return text === null ? {ok: true, entries: []} : parseCache(text, build);
   } catch (error) {
     return {
       ok: false,
@@ -256,7 +274,7 @@ async function readEntries(
 export async function cachedSearch(
   query: string,
   run: (query: string) => Promise<SearchOutcome>,
-  {storage, path, clock = systemClock, variant}: CacheOptions,
+  {storage, path, clock = systemClock, variant, build}: CacheOptions,
 ): Promise<CachedSearch> {
   const now = clock.now();
   const key = cacheKey(query, variant);
@@ -264,7 +282,7 @@ export async function cachedSearch(
   const inMemory = byPath.get(path);
   const read: ParsedCache = inMemory
     ? {ok: true, entries: inMemory}
-    : await readEntries(storage, path);
+    : await readEntries(storage, path, build);
   const entries = read.ok ? read.entries : [];
   const problem = read.ok ? undefined : read.message;
   if (read.ok) {
@@ -305,7 +323,7 @@ export async function cachedSearch(
   // The memory holds what the file will hold: the next search reads it without the file.
   byPath.set(path, kept);
   const saved = Promise.resolve()
-    .then(() => storage.writeText(path, serialize(kept)))
+    .then(() => storage.writeText(path, serialize(kept, build)))
     .then(
       () => null,
       error => `cannot write the search cache: ${message(error)}`,

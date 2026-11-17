@@ -213,6 +213,30 @@ describe('cachedSearch', () => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 
+  it('searches again after a plugin update, never serving an older build (#210)', async () => {
+    const files: Record<string, string> = {};
+    // Each build starts a new runtime, which reads the file again.
+    const searchAs = (build: string, run = runner()) =>
+      cachedSearch('apple', run, {
+        storage: memoryStorage(files).storage,
+        path: PATH,
+        clock: at(NOW),
+        build,
+      });
+    await (await searchAs('12')).saved;
+    expect(JSON.parse(files[PATH]).build).toBe('12');
+    const run = runner(outcome([commons]));
+    const updated = await searchAs('13', run);
+    expect(run).toHaveBeenCalledTimes(1);
+    expect([updated.freshness, updated.problem]).toEqual(['live', undefined]);
+    await updated.saved;
+    expect(JSON.parse(files[PATH]).build).toBe('13');
+    // The same build reads its own answer back.
+    const hit = await searchAs('13');
+    expect(hit.freshness).toBe('fresh');
+    expect(hit.outcome.results).toEqual([commons]);
+  });
+
   it('rebuilds a cache of version 3, whose entries lost canonical (#99)', async () => {
     const {storage, files} = memoryStorage({
       [PATH]: JSON.stringify({version: 3, entries: []}),

@@ -101,6 +101,8 @@ export async function searchCached(
     path: `${dir.value}/search-cache.json`,
     // Other languages, sources or style find other pictures: a new search, not the cached one.
     variant: searchVariant(ctx, active),
+    // An update may rank otherwise: its first search of a word is a new one (#210).
+    build: pluginProfile().build,
   });
   if (cached.problem) {
     log(`search cache: ${cached.problem}`);

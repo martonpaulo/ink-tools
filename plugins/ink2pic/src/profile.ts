@@ -12,6 +12,7 @@ import {
   SettingsCodec,
   SHARED_ROOT,
 } from '@supernote-tools/picture-search/storage';
+import {versionCode} from '../PluginConfig.json';
 import {USER_AGENT} from './config';
 import {parseSettings, serializeSettings, Settings} from './settings/settings';
 
@@ -25,6 +26,7 @@ export const INK2PIC_PROFILE: PluginProfile = {
   filesModule: 'Ink2PicFiles',
   imageModule: 'Ink2PicImage',
   userAgent: USER_AGENT,
+  build: versionCode,
 };
 
 setPluginProfile(INK2PIC_PROFILE);
