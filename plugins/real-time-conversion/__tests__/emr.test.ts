@@ -69,7 +69,8 @@ test('a word written with EMR pen-up points converts, and undo keeps page pixels
   converter.start();
   CASA.forEach((box, index) => {
     const points = zigzag(box).map(toEmr);
-    tablet.penUp({id: `e${index}`, rect: rectOf(points)!, points}, index * 200);
+    // The page keeps page pixels; only the pen-up element carries EMR units (#206).
+    tablet.penUp({id: `e${index}`, rect: rectOf(points)!, points}, index * 200, zigzag(box));
   });
   await tablet.advance(800 + DEFAULT_WORD_OPTIONS.idleMs);
   await converter.idle();

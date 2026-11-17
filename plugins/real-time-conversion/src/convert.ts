@@ -1,6 +1,7 @@
 /**
  * The conversion (#187): while the mode is on, each pen-up feeds the word rule (src/words.ts); a
- * finished word that src/shapes.ts lets through is recognized at the page size, and ONE
+ * finished word that src/shapes.ts lets through is recognized at the page size, from the page's own
+ * elements (#206), and ONE
  * batchUpdatePageElements call deletes its strokes and inserts a text box at its place, so the
  * page changes once per word. Nothing runs during a stroke: the work starts at pen-up, and words
  * convert one at a time. Any failure keeps the handwriting and is logged.
@@ -270,37 +271,42 @@ export class Converter {
       log(`kept: getPageSize ${size.message}`);
       return;
     }
-    const text = await this.host.recognizeElements(elements, size.value);
-    if (!text.ok) {
-      log(`kept: recognizeElements ${text.message}`);
-      return;
-    }
-    const answer = answerKept(text.value, word);
-    if (answer) {
-      log(`kept: ${answer} answer`);
-      return;
-    }
-    // Kept for «Undo Conversion» before the strokes leave the page (#188).
-    const saved: SavedStroke[] = [];
-    for (const [index, element] of elements.entries()) {
-      const one = await this.host.saveStroke(element);
-      if (!one.ok) {
-        log(`kept: saveStroke ${one.message}`);
-        return;
-      }
-      // The rebuild writes page pixels (#148), so it keeps the converted points, not the raw ones.
-      saved.push({...one.value, points: word.strokes[index].points});
-    }
+    // Recognition reads the page's own elements, never the pen-up ones (#206): a pen-up element's
+    // native points are EMR units, while recognizeElements takes page pixels at the page size, as
+    // Lookup's lassoed elements are. On the tablet every pen-up word failed with «Recognition
+    // failed», while the same handwriting lassoed was read.
     const read = await this.host.getElements(page.value, path.value);
     if (!read.ok) {
       log(`kept: getElements ${read.message}`);
       return;
     }
     try {
-      const nums = numbersOf(word, read.value);
-      if (!nums.ok) {
-        log(`kept: ${nums.message}`);
+      const found = pageStrokesOf(word, read.value);
+      if (!found.ok) {
+        log(`kept: ${found.message}`);
         return;
+      }
+      log(elementShape(found.value.elements, read.value.length));
+      const text = await this.host.recognizeElements(found.value.elements, size.value);
+      if (!text.ok) {
+        log(`kept: recognizeElements ${text.message}`);
+        return;
+      }
+      const answer = answerKept(text.value, word);
+      if (answer) {
+        log(`kept: ${answer} answer`);
+        return;
+      }
+      // Kept for «Undo Conversion» before the strokes leave the page (#188).
+      const saved: SavedStroke[] = [];
+      for (const [index, element] of elements.entries()) {
+        const one = await this.host.saveStroke(element);
+        if (!one.ok) {
+          log(`kept: saveStroke ${one.message}`);
+          return;
+        }
+        // The rebuild writes page pixels (#148), so it keeps the converted points, not the raw ones.
+        saved.push({...one.value, points: word.strokes[index].points});
       }
       const box = textBoxFor(text.value.trim(), word, size.value);
       const made = await this.host.createTextBox(box);
@@ -308,13 +314,14 @@ export class Converter {
         log(`kept: createTextBox ${made.message}`);
         return;
       }
-      const written = await this.host.batchUpdatePageElements(nums.value, [made.value], page.value);
+      const nums = found.value.nums;
+      const written = await this.host.batchUpdatePageElements(nums, [made.value], page.value);
       if (!written.ok || !written.value) {
         log(`kept: batchUpdatePageElements ${written.ok ? 'answered false' : written.message}`);
         return;
       }
       setLastConversion({path: path.value, page: page.value, box, strokes: saved});
-      log(`converted ${[...box.text].length} characters from ${nums.value.length} strokes`);
+      log(`converted ${[...box.text].length} characters from ${nums.length} strokes`);
     } finally {
       // The page read is freed only now: it may share its native cache with the word's strokes.
       this.free(read.value);
@@ -343,20 +350,57 @@ export function unitLine(
   );
 }
 
+/** The word's strokes as the page holds them: their numbers and their page elements. */
+export type PageStrokes = {nums: number[]; elements: object[]};
+
 /**
- * The word's strokes' numbers in a page read, found by their ids: an earlier conversion deleted
- * strokes before them and moved the numbers. A stroke no longer there keeps the word.
+ * The word's strokes in a page read, found by their ids, in the word's order: an earlier conversion
+ * deleted strokes before them and moved the numbers. A stroke no longer there keeps the word.
  */
-export function numbersOf(word: Word, page: readonly object[]): Result<number[]> {
-  const byId = new Map<string, number>();
+export function pageStrokesOf(word: Word, page: readonly object[]): Result<PageStrokes> {
+  const byId = new Map<string, HostElement>();
   for (const element of page as HostElement[]) {
     if (element.uuid !== undefined && element.numInPage !== undefined) {
-      byId.set(element.uuid, element.numInPage);
+      byId.set(element.uuid, element);
     }
   }
-  const nums = word.strokes.map(stroke => byId.get(stroke.id));
-  if (nums.some(num => num === undefined)) {
-    return fail(THROWN_CODE, 'a stroke of the word is no longer on the page');
+  const found = word.strokes.map(stroke => byId.get(stroke.id));
+  const missing = found.filter(element => element === undefined).length;
+  if (missing > 0) {
+    return fail(
+      THROWN_CODE,
+      `${missing} of ${word.strokes.length} strokes of the word are not in the page read of ` +
+        `${page.length} elements`,
+    );
   }
-  return ok(nums as number[]);
+  const elements = found as HostElement[];
+  return ok({nums: elements.map(element => element.numInPage as number), elements});
+}
+
+function fieldNames(objects: readonly unknown[]): string {
+  const names = new Set<string>();
+  for (const each of objects) {
+    if (each !== null && typeof each === 'object') {
+      Object.keys(each).forEach(name => names.add(name));
+    }
+  }
+  return names.size > 0 ? [...names].sort().join(',') : 'none';
+}
+
+/**
+ * The one line saying what recognition is sent (#206): how many elements, their types, and the
+ * names of their fields and stroke fields. Field names and counts only, never points or text.
+ */
+export function elementShape(elements: readonly object[], pageCount: number): string {
+  const types = new Map<string, number>();
+  for (const {type} of elements as HostElement[]) {
+    const key = String(type ?? 'none');
+    types.set(key, (types.get(key) ?? 0) + 1);
+  }
+  const typeList = [...types].map(([type, count]) => `${type}:${count}`).join(' ');
+  const strokes = (elements as {stroke?: unknown}[]).map(element => element.stroke);
+  return (
+    `recognize: ${elements.length} page elements of ${pageCount} read, types ${typeList || 'none'}, ` +
+    `fields ${fieldNames(elements)}, stroke fields ${fieldNames(strokes)}`
+  );
 }

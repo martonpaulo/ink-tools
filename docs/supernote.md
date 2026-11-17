@@ -40,6 +40,13 @@ explained.
   read about 8 times the page size on the tablet («kept: large» for every word), so they are taken
   as EMR when a point falls off the page [inference, to measure in the device round: the plugin
   logs its first pen-up stroke raw and converted].
+- The pen-up unit is EMR: the first stroke read raw 6627..7033 x 11625..12059 and converted to
+  493..544 x 784..832 page px [measured, Real-Time Conversion 0.1.0 beta 2, 2026-11-17,
+  [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. `recognizeElements` on those pen-up
+  elements failed for every word with «Recognition failed. Please try again!», while the same
+  handwriting lassoed (page elements) was read [measured]; so recognition is sent the page's own
+  elements from `getElements`, found by uuid [inference: it reads the elements' native points as
+  page pixels, as the 0.2.3 `Stroke.points` doc says; to confirm in the device round].
 - A design board for this screen is 3:4; the study sheets use 794 x 1059 CSS px boards and export
   to the Manta page.
 
