@@ -27,7 +27,7 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   `batchUpdatePageElements` call deletes the word's strokes (by their `numInPage`) and inserts a
   text box at its place, in the tablet's default font. Words convert one at a time.
 - «Undo Conversion» (sidebar, [#188](https://github.com/martonpaulo/ink-tools/issues/188), `src/undo.ts`): the last conversion only, kept in memory;
-  the box is found by its text and rect, the strokes rebuilt from their saved points.
+  the box is found by its text and top-left corner (the host may size it again, [#206](https://github.com/martonpaulo/ink-tools/issues/206)), the strokes rebuilt from their saved points.
 - Settings (`App.tsx`, `src/settings.ts`): «Start with Real-Time Text on» (off), «Word spacing»,
   «Wait before converting». In memory until [#40](https://github.com/martonpaulo/ink-tools/issues/40)'s storage. A chosen font waits for the
   device round (research note §6, question 4).
