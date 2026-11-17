@@ -351,6 +351,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A Word Lookup or Device Transfer insert leaves the inserted picture lassoed, but a plugin command
   run after it clears the lasso: `getLassoElementTypeCounts` then answers 904 [measured, Probe,
   2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Lasso again by the element's rect before pressing a row.
+- The floating selection `insertImage` leaves shows the lasso «⋯» rows, other plugins' included,
+  but is no lasso for the plugin API: `getLassoRect` answers 904, and Image Editing's «Document»
+  pressed on it logged `done` and left the placed picture unchanged. After one such press, Back
+  and reopening the note, the page held no element: the received photo was gone [measured,
+  Device Transfer 0.1.0 beta 7, 2026-11-17, [#196](https://github.com/martonpaulo/ink-tools/issues/196)]. Whether Back alone drops a floating
+  `insertImage` picture is [unverified].
 - Permissions of a no-view button [measured, 2026-11-16, Retouch and a probe,
   [#170](https://github.com/martonpaulo/ink-tools/issues/170)]:
   - After a PluginHost start, the first press of a plugin's button mounts the plugin's root
