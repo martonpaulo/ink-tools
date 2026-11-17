@@ -167,7 +167,7 @@ Very useful:
 - The picture Word Lookup just inserted stays lassoed, so Image Editing's buttons are one tap
   away; Lookup never opens Image Editing by itself (owner, replacing
   [#139](https://github.com/martonpaulo/ink-tools/issues/139); [#168](https://github.com/martonpaulo/ink-tools/issues/168)).
-- «Enhance All Images» and «Undo All Images», in the lasso menu of any one picture, run Enhance or
+- «Enhance All Images» and «Undo All Images», in the editor of any one picture, run Enhance or
   Undo on every picture of the page; a picture with ink across it is skipped, as the rect lasso
   would take the ink too ([#140](https://github.com/martonpaulo/ink-tools/issues/140)).
 

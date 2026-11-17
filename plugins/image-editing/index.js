@@ -10,15 +10,9 @@ import {
   showPluginView,
   startButtonQueue,
 } from '@ink-tools/sn-adapter/official';
-import {syncButtons} from './src/buttons';
-import {
-  currentSettings,
-  defaultSettings,
-  editOfButton,
-  enabledStyles,
-} from './src/edits';
-import {pressEdit} from './src/press';
-import {openStyles} from './src/styles';
+import {registerEditorButton} from './src/buttons';
+import {openEditor} from './src/editor';
+import {EDITOR_BUTTON_ID} from './src/edits';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -26,28 +20,21 @@ registerSettingsEntry(() => showPluginView()).catch(error => {
   console.error(`Retouch: ${error.message}`);
 });
 
-// Every edit starts on, so its lasso button is registered at start-up (#136).
-syncButtons(defaultSettings).catch(error => {
+// One lasso button, «Image Editing», for a lassoed picture (#226); every edit is in its view.
+registerEditorButton().catch(error => {
   console.error(`Retouch: buttons: ${error.message}`);
 });
 
-// At start-up, before the view exists (Ink2Pic gotcha 11). An edit button's press runs here, with
-// no view; it changes the picture or shows a toast with the reason (src/press.ts, #170).
+// At start-up, before the view exists (Ink2Pic gotcha 11). The press opens the editor view: the
+// host shows it (`showType` 1), and the editor reads the lassoed picture (src/editor.ts).
 const listening = startButtonQueue(id => {
-  const edit = editOfButton(id);
-  if (!edit) {
+  if (id !== EDITOR_BUTTON_ID) {
     return false;
   }
-  if (edit.id === 'styles') {
-    // A full-view button (#133): the host shows the view, which shows the grid once it is made.
-    showPluginView();
-    openStyles(enabledStyles(currentSettings())).catch(error => {
-      console.error(`Retouch: ${edit.name}: ${error.message}`);
-    });
-    return true;
-  }
-  pressEdit(edit).catch(error => {
-    console.error(`Retouch: ${edit.name}: ${error.message}`);
+  console.log('Retouch: Image Editing pressed');
+  showPluginView();
+  openEditor().catch(error => {
+    console.error(`Retouch: editor: ${error.message}`);
   });
   return true;
 });

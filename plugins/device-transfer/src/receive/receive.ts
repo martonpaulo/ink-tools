@@ -47,6 +47,10 @@ export type NoteHost = NoteFiles & {
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
   lasso(rect: Rect): Promise<Result<boolean>>;
   insertImage(path: string): Promise<Result<boolean>>;
+  /** A picture file's own size in pixels, for the rect the host places it at (#196). */
+  imageSize(path: string): Promise<Result<Size>>;
+  /** Waits `ms`, so a page read can retry while the host commits a floating picture (#196). */
+  wait(ms: number): Promise<void>;
 };
 
 /**
@@ -184,10 +188,56 @@ async function removeLastImage(native: Relay): Promise<void> {
   }
 }
 
+/** How often, and how long, the page is read again until the inserted picture is on it (#196). */
+export const PLACED_RETRY_MS = 250;
+export const PLACED_WAIT_MS = 3000;
+
+/**
+ * The rect the host places an inserted picture at: its own size, scaled down to fit the page,
+ * centred, rounded down (measured on the tablet: a 923 x 1200 JPEG on a 1920 x 2560 page landed at
+ * `[498, 680, 1421, 1880]`, #196).
+ * shortcut: the scale-down rounding is not measured; upgrade when a picture larger than the page
+ * lands somewhere else.
+ */
+export function centredRect(page: Size, picture: Size): Rect {
+  const scale = Math.min(1, page.width / picture.width, page.height / picture.height);
+  const width = Math.floor(picture.width * scale);
+  const height = Math.floor(picture.height * scale);
+  const left = Math.floor((page.width - width) / 2);
+  const top = Math.floor((page.height - height) / 2);
+  return {left, top, right: left + width, bottom: top + height};
+}
+
+/**
+ * Reads the page again, every `PLACED_RETRY_MS` up to `PLACED_WAIT_MS`, until it holds the one
+ * rect the insert added: the host commits a floating `insertImage` picture only later, and a read
+ * about 120 ms after the insert still held 0 elements on beta 8 (#196).
+ */
+async function waitForAdded(host: NoteHost, before: OccupiedRead | null): Promise<Rect | null> {
+  if (!before?.complete) {
+    return null;
+  }
+  for (let waited = 0; ; waited += PLACED_RETRY_MS) {
+    const after = await host.occupied();
+    const rect = addedRect(before, after.ok ? after.value : null);
+    if (rect !== null || waited >= PLACED_WAIT_MS) {
+      return rect;
+    }
+    await host.wait(PLACED_RETRY_MS);
+  }
+}
+
+/** The centred rect the host chose for the picture, or null when its size or the page's is unknown. */
+async function expectedRect(host: NoteHost, path: string): Promise<Rect | null> {
+  const [page, picture] = [await host.pageSize(), await host.imageSize(path)];
+  return page.ok && picture.ok ? centredRect(page.value, picture.value) : null;
+}
+
 /**
  * Places a received PNG or JPEG with `insertImage`, then lassoes it by its rect, found as the one
- * rect the insert added to the page, so another plugin's lasso row (Image Editing's «Document»)
- * acts on it: the host's floating selection is no lasso for the plugin API (error 904, #196).
+ * rect the insert added to the page once the host commits it, else the centred rect the host
+ * places it at, so another plugin's lasso row (Image Editing's «Document») acts on it: the host's
+ * floating selection is no lasso for the plugin API (error 904, #196).
  * Under #168's rule, never when the page's ink is not all known or crosses the picture.
  */
 async function placeImage(native: Relay, host: NoteHost, path: string): Promise<string> {
@@ -200,8 +250,13 @@ async function placeImage(native: Relay, host: NoteHost, path: string): Promise<
   }
   lastImage = path;
   const beforeRead = before.ok ? before.value : null;
-  const after = await host.occupied();
-  const rect = addedRect(beforeRead, after.ok ? after.value : null);
+  let rect = await waitForAdded(host, beforeRead);
+  if (rect === null && beforeRead?.complete) {
+    rect = await expectedRect(host, path);
+    if (rect !== null) {
+      host.log(`receive: the placed picture is not on the page after ${PLACED_WAIT_MS} ms: lasso its centred rect`);
+    }
+  }
   if (rect === null) {
     host.log('receive: lassoElements skipped, the placed picture is not found on the page');
     return copy.receivedImage;

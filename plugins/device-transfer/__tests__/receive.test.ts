@@ -3,6 +3,9 @@ import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {
   addedRect,
+  centredRect,
+  PLACED_RETRY_MS,
+  PLACED_WAIT_MS,
   freeTextBox,
   inkUnderBox,
   NoteHost,
@@ -29,6 +32,8 @@ function note(overrides: Partial<NoteHost> = {}) {
     insertText: jest.fn(async () => ok(true)),
     lasso: jest.fn(async () => ok(true)),
     insertImage: jest.fn(async () => ok(true)),
+    imageSize: jest.fn(async () => ok({width: 923, height: 1200})),
+    wait: jest.fn(async () => {}),
     createNote: jest.fn(async () => ok(true)),
     insertNotePage: jest.fn(async () => ok(true)),
     ...overrides,
@@ -111,12 +116,41 @@ describe('the received picture is lassoed for another plugin\'s rows (#196)', ()
     await receiveOne(fakeRelay({}, imageArrives('/tmp/c.png')).api, partial, 'Supernote');
     expect(partial.lasso).not.toHaveBeenCalled();
 
-    const none = note();
+    const none = note({imageSize: jest.fn(async () => fail(1, 'no decoder'))});
     await receiveOne(fakeRelay({}, imageArrives('/tmp/d.png')).api, none, 'Supernote');
     expect(none.lasso).not.toHaveBeenCalled();
     expect(none.log).toHaveBeenCalledWith(
       'receive: lassoElements skipped, the placed picture is not found on the page',
     );
+  });
+
+  test('a picture the host commits late is found by reading the page again, then lassoed', async () => {
+    // Beta 8 on the tablet: the reads right after insertImage held 0 elements.
+    const reads = [ok({rects: [], complete: true}), ok({rects: [], complete: true}), ok({rects: [], complete: true})];
+    const occupied = jest.fn(async () => reads.shift() ?? ok({rects: [PLACED], complete: true}));
+    const host = note({occupied, imageSize: jest.fn(async () => ok({width: 10, height: 10}))});
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/late.png')).api, host, 'Supernote');
+    expect(host.wait).toHaveBeenCalledTimes(2);
+    expect(host.wait).toHaveBeenCalledWith(PLACED_RETRY_MS);
+    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+  });
+
+  test('a picture never seen on the page is lassoed at the centred rect the host places it at', async () => {
+    const page = {width: 1920, height: 2560};
+    const host = note({pageSize: jest.fn(async () => ok(page))});
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/never.png')).api, host, 'Supernote');
+    // Bounded: one read before, then one every PLACED_RETRY_MS up to PLACED_WAIT_MS.
+    expect(host.wait).toHaveBeenCalledTimes(PLACED_WAIT_MS / PLACED_RETRY_MS);
+    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+    expect(host.log).toHaveBeenCalledWith(
+      `receive: the placed picture is not on the page after ${PLACED_WAIT_MS} ms: lasso its centred rect`,
+    );
+  });
+
+  test('centredRect matches the tablet and scales a large picture down to the page', () => {
+    const page = {width: 1920, height: 2560};
+    expect(centredRect(page, {width: 923, height: 1200})).toEqual(PLACED);
+    expect(centredRect(page, {width: 3840, height: 2560})).toEqual({left: 0, top: 640, right: 1920, bottom: 1920});
   });
 
   test('a lasso the host refuses keeps the picture and its received line', async () => {
