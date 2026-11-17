@@ -38,20 +38,36 @@ test('the plugin registers one lasso button, «Image Editing», for pictures, wi
   ]);
 });
 
-test('the rows of earlier builds, one per edit, are removed first', async () => {
+test('the rows of earlier builds, one per edit, are removed after the registration', async () => {
   const {deps, logs} = fakeDeps([LEGACY_BUTTON_IDS[0], LEGACY_BUTTON_IDS[3]]);
   await registerEditorButton(deps);
+  await new Promise(resolve => setImmediate(resolve));
   expect((deps.unregister as jest.Mock).mock.calls.map(call => call[0])).toEqual([
     ...LEGACY_BUTTON_IDS,
   ]);
+  expect((deps.register as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+    (deps.unregister as jest.Mock).mock.invocationCallOrder[0],
+  );
   expect(LEGACY_BUTTON_IDS).toHaveLength(EDITS.length);
   expect(LEGACY_BUTTON_IDS).not.toContain(EDITOR_BUTTON_ID);
-  expect(logs[0]).toBe('removed 2 lasso rows of an earlier build');
+  expect(logs).toEqual([
+    'register Image Editing: ok',
+    `removed lasso row ${LEGACY_BUTTON_IDS[0]} of an earlier build`,
+    `removed lasso row ${LEGACY_BUTTON_IDS[3]} of an earlier build`,
+  ]);
+});
+
+test('an unregister that never settles still leaves the button registered (#226)', async () => {
+  const {deps} = fakeDeps();
+  deps.unregister = jest.fn(() => new Promise<never>(() => {}));
+  expect(await registerEditorButton(deps)).toEqual(ok(true));
+  expect(deps.register).toHaveBeenCalledTimes(1);
+  expect(deps.unregister).toHaveBeenCalledTimes(LEGACY_BUTTON_IDS.length);
 });
 
 test('a refused registration is logged and answered', async () => {
   const {deps, logs} = fakeDeps();
   deps.register = jest.fn(async () => fail(7, 'refused'));
   expect(await registerEditorButton(deps)).toEqual(fail(7, 'refused'));
-  expect(logs).toEqual(['register Image Editing failed: 7 refused']);
+  expect(logs[0]).toBe('register Image Editing failed: 7 refused');
 });
