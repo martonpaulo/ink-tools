@@ -50,6 +50,13 @@ type SdkElement = {
  */
 export const OCCUPIED_BUDGET_MS = 1500;
 
+/**
+ * The most element reads pageOccupied keeps in flight, and the most recycles (#221). Every element
+ * at once (two bridge calls per stroke) crashed the Note app with SIGSEGV on a 540-stroke page,
+ * while the same page read one by one did not; a few in flight keep most of the parallel speed.
+ */
+export const OCCUPIED_READS_IN_FLIGHT = 4;
+
 function thrown(error: unknown): Result<never> {
   return fail(
     THROWN_CODE,
@@ -187,13 +194,32 @@ async function within(work: Promise<unknown>, ms: number): Promise<boolean> {
   }
 }
 
+/** Runs `work` over `items`, at most `bound` at a time, and starts none once `stop()` is true. */
+async function bounded<T>(
+  items: readonly T[],
+  bound: number,
+  stop: () => boolean,
+  work: (item: T) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  const lane = async (): Promise<void> => {
+    while (next < items.length && !stop()) {
+      const item = items[next];
+      next += 1;
+      await work(item);
+    }
+  };
+  await Promise.all(Array.from({length: Math.min(bound, items.length)}, lane));
+}
+
 /**
  * The rects of every stroke, picture, text box and shape on a page (#152), for a placement that
- * avoids the person's ink. The elements are read all at once, not one after the other: each
- * stroke costs two bridge calls, and one by one a page of 70 to 90 elements took past 700 ms
- * (8 to 11 ms each, docs/supernote.md). Once `budgetMs` has passed it answers with the rects read
- * so far, marked incomplete. An element whose read fails makes the read incomplete. Every element
- * is recycled once its read ends.
+ * avoids the person's ink. At most OCCUPIED_READS_IN_FLIGHT elements are read at a time (#221):
+ * one by one a page of 70 to 90 elements took past 700 ms (8 to 11 ms each, docs/supernote.md), and
+ * all at once crashed the Note app on a full page. Once `budgetMs` has passed no new read starts,
+ * and it answers with the rects read so far, marked incomplete, without waiting for the reads in
+ * flight. An element whose read fails makes the read incomplete. Each element whose read ended is
+ * recycled, with the same bound, once the reads in flight end.
  */
 async function pageOccupied(
   page: number,
@@ -208,11 +234,17 @@ async function pageOccupied(
   }
   const all = elements.value as SdkElement[];
   const rects: SdkRect[] = [];
+  const ended: SdkElement[] = [];
   let read = 0;
   let failed = 0;
-  const reads = Promise.all(
-    all.map(async element => {
+  let late = false;
+  const reads = bounded(
+    all,
+    OCCUPIED_READS_IN_FLIGHT,
+    () => late,
+    async element => {
       const rect = await elementRect(element).catch(thrown);
+      ended.push(element);
       if (rect.ok) {
         read += 1;
         if (rect.value) {
@@ -221,11 +253,18 @@ async function pageOccupied(
       } else {
         failed += 1;
       }
-    }),
+    },
   );
-  // Recycled once every read ends, also after the budget answered.
-  reads.then(() => Promise.all(all.map(element => recycleElement(element)))).catch(() => {});
+  // Recycled once the reads in flight end, also after the budget answered.
+  reads
+    .then(() =>
+      bounded(ended, OCCUPIED_READS_IN_FLIGHT, () => false, async element => {
+        await recycleElement(element);
+      }),
+    )
+    .catch(() => {});
   const finished = await within(reads, budgetMs - (now() - started));
+  late = !finished;
   return ok({
     rects: [...rects],
     complete: finished && failed === 0,

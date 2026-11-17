@@ -14,31 +14,106 @@ export interface DeviceEvent {
   modified?: number;
 }
 
+/** A pulled row's source: the calendar and event ids its `calendarId` text carries (#28). */
+export interface CalendarLink {
+  calendarId: string;
+  eventId: string;
+}
+
 /**
- * The data_info row for an event, tagged so the native Google sync leaves it alone.
- * shortcut: startTime/endTime are written as epoch ms and `isAllDay` as 0/1; these values are
- * assumptions until the owner checks a written row on the tablet (issue #28). Replace with a
- * descriptor rule if the device differs.
+ * The `calendarId` text of a pulled row: the descriptor's `linkPrefix`, then both ids, each
+ * URI-encoded so the `:` between them never occurs inside one (Google ids can hold `#` and other signs).
+ */
+export function calendarLink(d: Descriptor, link: CalendarLink): string {
+  return `${d.calendar.rules.linkPrefix}${encodeURIComponent(link.calendarId)}:${encodeURIComponent(link.eventId)}`;
+}
+
+/** The link a `calendarId` text carries, or null for any other text: a row made on the tablet. */
+export function readCalendarLink(d: Descriptor, value: unknown): CalendarLink | null {
+  const prefix = d.calendar.rules.linkPrefix;
+  if (typeof value !== 'string' || !value.startsWith(prefix)) return null;
+  const parts = value.slice(prefix.length).split(':');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
+  try {
+    return {calendarId: decodeURIComponent(parts[0]), eventId: decodeURIComponent(parts[1])};
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The Calendar app's `yyyy-MM-dd` text for an all-day date (#28). An all-day event's `start` and
+ * `end` are UTC midnight of Google's `start.date` and exclusive `end.date` (`fromGoogleEvent`), so
+ * the UTC day gives those dates back.
+ */
+const dayText = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+
+/**
+ * The data_info row for an event (#28): `tag=task`, `state` 0, `status` confirmed, `readOnly` 1,
+ * `isAllDay` 0 or 1, `startTime` and `endTime` in epoch ms, `lastModifiedTime` in epoch ms, and
+ * `eventId` NULL, with the event's link in `calendarId`.
+ * An all-day row also writes `startDate` and `endDate` as `yyyy-MM-dd`, the shape of the native
+ * all-day rows. The Calendar app (`SupernoteCalendar.apk`, `DataBaseTools.getDuringEvent` and
+ * `getTodayEvent`) reads every `status='confirmed' AND recurrence is null` row in one `try`, and for
+ * an all-day row calls `DateUtils.getLongDate(startDate)`, which is `startDate.split("-")`: a NULL
+ * `startDate` throws and drops every later row. A timed row is read from `startTime` and `endTime`
+ * only, so its `startDate` and `endDate` stay NULL, as in the native timed row of #43.
+ * The recurrence columns stay NULL: each occurrence is its own row. `data_info` has no time zone
+ * column: times are absolute epoch ms.
  */
 export function eventToRow(d: Descriptor, e: DeviceEvent, now: number): Row {
   const col = (field: string) => column(d.calendar, 'events', field);
   return toCalendarInsert(d, {
-    [col('calendarId')]: e.calendarId,
-    [col('eventId')]: e.eventId,
+    [col('calendarId')]: calendarLink(d, e),
+    [col('eventId')]: null,
     [col('title')]: e.title,
     [col('content')]: e.content,
     [col('start')]: e.start,
     [col('end')]: e.end,
     [col('allDay')]: e.allDay ? 1 : 0,
+    [col('startDate')]: e.allDay ? dayText(e.start) : null,
+    [col('endDate')]: e.allDay ? dayText(e.end) : null,
     [col('readOnly')]: 1,
     [col('modified')]: now,
   });
 }
 
-const requireId = (row: Row, key: string): string => {
-  const v = row[key];
-  if (v === null || v === undefined || v === '') throw new Error(`calendar row has no ${key}`);
-  return String(v);
+const blank = (v: unknown) => v === null || v === undefined || v === '';
+const isSet = (v: unknown) => v === 1 || v === '1' || v === true;
+
+/**
+ * The update that gives a row an older Account Sync build wrote its visible shape (#28), or null
+ * for any other row. Only `tag=task` rows are ours (the native Google sync writes `tag=event`):
+ * - beta 23 and older kept the Google id in `eventId`; the link moves into `calendarId`;
+ * - beta 24 and older left an all-day row's `startDate` and `endDate` NULL, which makes the Calendar
+ *   app drop the row and every row after it; they are filled from `startTime` and `endTime`.
+ * A row made on the tablet (no link and no `eventId`) is left. The row is updated in place by its
+ * id, never deleted and inserted again, so no event gets a second row.
+ */
+export function legacyRowRepair(d: Descriptor, row: Row): Row | null {
+  const col = (field: string) => column(d.calendar, 'events', field);
+  if (row[col('tag')] !== d.calendar.rules.writeTag) return null;
+  const eventId = row[col('eventId')];
+  const calendarId = row[col('calendarId')];
+  const legacyId = !blank(eventId) && !blank(calendarId);
+  if (!legacyId && !readCalendarLink(d, calendarId)) return null;
+  const fix: Row = {};
+  if (legacyId) {
+    fix[col('calendarId')] = calendarLink(d, {calendarId: String(calendarId), eventId: String(eventId)});
+    fix[col('eventId')] = null;
+  }
+  if (isSet(row[col('allDay')]) && (blank(row[col('startDate')]) || blank(row[col('endDate')]))) {
+    fix[col('startDate')] = dayText(requireTime(row, col('start')));
+    fix[col('endDate')] = dayText(requireTime(row, col('end')));
+  }
+  return Object.keys(fix).length ? fix : null;
+}
+
+const requireLink = (d: Descriptor, row: Row): CalendarLink => {
+  const key = column(d.calendar, 'events', 'calendarId');
+  const link = readCalendarLink(d, row[key]);
+  if (!link) throw new Error(`calendar row has no ${key} link`);
+  return link;
 };
 
 const requireTime = (row: Row, key: string): number => {
@@ -48,23 +123,23 @@ const requireTime = (row: Row, key: string): number => {
   return n;
 };
 
-/** Read a data_info row. A missing id or time throws: a made-up id would become a sync key (#70). */
+/** Read a pulled data_info row. A missing link or time throws: a made-up id would become a sync key (#70). */
 export function rowToEvent(d: Descriptor, row: Row): DeviceEvent {
-  return readEvent(d, row, requireId(row, column(d.calendar, 'events', 'eventId')));
+  return readEvent(d, row, requireLink(d, row));
 }
 
-function readEvent(d: Descriptor, row: Row, eventId: string): DeviceEvent {
+function readEvent(d: Descriptor, row: Row, link: CalendarLink): DeviceEvent {
   const col = (field: string) => column(d.calendar, 'events', field);
   const allDay = row[col('allDay')];
   const changed = Number(row[col('modified')] ?? NaN);
   return {
-    eventId,
-    calendarId: requireId(row, col('calendarId')),
+    eventId: link.eventId,
+    calendarId: link.calendarId,
     title: String(row[col('title')] ?? ''),
     content: String(row[col('content')] ?? ''),
     start: requireTime(row, col('start')),
     end: requireTime(row, col('end')),
-    allDay: allDay === 1 || allDay === '1' || allDay === true,
+    allDay: isSet(allDay),
     ...(Number.isFinite(changed) && changed > 0 ? {modified: changed} : {}),
   };
 }
@@ -77,13 +152,12 @@ export interface DeviceEventEdit {
 }
 
 /**
- * Read one of our rows as an edit for the push (#29). A row with no `eventId` is an event made on the
- * tablet, so it reads as an empty id, which the push creates in the default calendar; a missing time
- * still throws, as in `rowToEvent`.
+ * Read one of our rows as an edit for the push (#29). A row with no link in `calendarId` is an event
+ * made on the tablet, so it reads as an empty id, which the push creates in the default calendar; a
+ * missing time still throws, as in `rowToEvent`.
  */
 export function rowToDeviceEdit(d: Descriptor, row: Row): DeviceEventEdit {
   const col = (field: string) => column(d.calendar, 'events', field);
-  const id = row[col('eventId')];
-  const event = id === null || id === undefined || id === '' ? readEvent(d, row, '') : rowToEvent(d, row);
-  return {event, cancelled: row[col('status')] === d.calendar.rules.cancelledStatus};
+  const link = readCalendarLink(d, row[col('calendarId')]) ?? {calendarId: String(row[col('calendarId')] ?? ''), eventId: ''};
+  return {event: readEvent(d, row, link), cancelled: row[col('status')] === d.calendar.rules.cancelledStatus};
 }

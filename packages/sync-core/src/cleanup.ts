@@ -25,6 +25,8 @@ export interface CleanupResult {
  */
 export async function removeCalendarRows(store: DeviceCalendarStore): Promise<CleanupResult> {
   const result: CleanupResult = {removed: 0, errors: []};
+  // A row an older build wrote is listed only once it has its current shape (#28).
+  if (store.repair) await store.repair();
   const events = new Map((await store.listOurs(ALL_TIME)).map(e => [eventKey(e), e]));
   for (const e of events.values()) {
     try {

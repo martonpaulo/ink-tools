@@ -8,11 +8,11 @@
       "events": {
         "path": "data_info",
         "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"],
-        "fields": {"rowId": "id", "eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "modified": "lastModifiedTime", "status": "status", "state": "state"}
+        "fields": {"rowId": "id", "eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "startDate": "startDate", "endDate": "endDate", "modified": "lastModifiedTime", "status": "status", "state": "state"}
       },
       "config": {"path": "config_info", "columns": []}
     },
-    "rules": {"writeTag": "task", "cancelledStatus": "cancelled", "writeStatus": "confirmed", "writeState": 0,
+    "rules": {"writeTag": "task", "cancelledStatus": "cancelled", "writeStatus": "confirmed", "writeState": 0, "linkPrefix": "inktools:",
       "requiredOnInsert": ["calendarId", "tag", "state", "readOnly", "isAllDay", "title", "startTime", "endTime", "lastModifiedTime", "status"]}
   },
   "todo": {

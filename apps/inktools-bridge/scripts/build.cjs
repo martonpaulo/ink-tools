@@ -5,7 +5,7 @@
  * JDK finder are the Lingo app's own scripts, reused, not copied.
  *
  *   node scripts/build.cjs           build build/outputs/inktools-bridge-<version>.apk, signed and verified
- *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK)
+ *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK) and the signing-key test
  */
 const {jdkTool, JDK_MISSING} = require('../../handwriting-language/scripts/host-tools.cjs');
 const {versionName} = require('../../../scripts/plugin-version.cjs');
@@ -28,12 +28,20 @@ const TARGET_API = '30';
 const PURE = ['HostCalls', 'Command', 'Outcome', 'Fields', 'Callbacks'];
 const TESTS = ['HostCallsTest', 'CommandTest', 'FieldsTest'];
 /**
- * shortcut: a local debug key in .toolchain/, outside Git and unique to each checkout, as the Lingo
- * app does; an APK from another checkout or CI has another key, so the tablet needs an uninstall
- * before it. Upgrade to one stored release key when the bridge gets a published release.
+ * shortcut: without the stable key, a local debug key in .toolchain/, outside Git and unique to each
+ * checkout, as the Lingo app does; an APK from another checkout has another key, so the tablet needs
+ * an uninstall before it. Upgrade to one stored release key when the bridge gets a published release.
  */
 const KEY_ALIAS = 'inktools-bridge-debug';
 const KEY_PASS = 'android';
+/**
+ * The stable key (#223): a PKCS12 keystore path and its password in these variables, which the
+ * prerelease workflow sets from repository secrets, so every CI build updates the last one. The
+ * password reaches apksigner by name (`env:`), never on a command line.
+ */
+const STABLE_KEYSTORE_ENV = 'INKTOOLS_BRIDGE_KEYSTORE';
+const STABLE_PASSWORD_ENV = `${STABLE_KEYSTORE_ENV}_PASSWORD`;
+const STABLE_KEY_ALIAS = 'inktools-bridge';
 const NATIVE_ACCESS = '--enable-native-access=ALL-UNNAMED';
 
 function run(binary, args, options = {}) {
@@ -100,7 +108,7 @@ function manifest(file, {versionCode, versionName: name}) {
   );
 }
 
-function signingKey() {
+function debugKey() {
   const store = path.join(root, '.toolchain', `${KEY_ALIAS}.keystore`);
   if (!fs.existsSync(store)) {
     fs.mkdirSync(path.dirname(store), {recursive: true});
@@ -111,6 +119,27 @@ function signingKey() {
     ]);
   }
   return store;
+}
+
+/**
+ * The apksigner key arguments: the stable key when STABLE_KEYSTORE_ENV is set, else the local debug
+ * key (`makeDebugKey`). A keystore without its password, or a path that does not exist, fails: a
+ * half-set key must never fall back to a key the tablet cannot update from.
+ */
+function signingArgs(env = process.env, makeDebugKey = debugKey) {
+  const store = env[STABLE_KEYSTORE_ENV];
+  if (!store) {
+    const debug = makeDebugKey();
+    return {stable: false, args: ['--ks', debug, '--ks-key-alias', KEY_ALIAS, '--ks-pass', `pass:${KEY_PASS}`, '--key-pass', `pass:${KEY_PASS}`]};
+  }
+  if (!env[STABLE_PASSWORD_ENV]) {
+    throw Error(`${STABLE_KEYSTORE_ENV} is set but ${STABLE_PASSWORD_ENV} is empty`);
+  }
+  if (!fs.existsSync(store)) {
+    throw Error(`${STABLE_KEYSTORE_ENV} names a missing file: ${store}`);
+  }
+  const pass = `env:${STABLE_PASSWORD_ENV}`;
+  return {stable: true, args: ['--ks', store, '--ks-key-alias', STABLE_KEY_ALIAS, '--ks-pass', pass, '--key-pass', pass]};
 }
 
 function buildApk() {
@@ -146,17 +175,16 @@ function buildApk() {
   fs.mkdirSync(outputs, {recursive: true});
   const apk = path.join(outputs, `inktools-bridge-${info.version}.apk`);
   fs.rmSync(apk, {force: true});
-  run(jdkTool('java'), [
-    NATIVE_ACCESS, '-jar', t.apksigner, 'sign', '--ks', signingKey(), '--ks-key-alias', KEY_ALIAS,
-    '--ks-pass', `pass:${KEY_PASS}`, '--key-pass', `pass:${KEY_PASS}`, '--out', apk, aligned,
-  ]);
+  const key = signingArgs();
+  run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'sign', ...key.args, '--out', apk, aligned]);
   run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'verify', apk]);
   const badging = execFileSync(t.aapt2, ['dump', 'badging', apk], {encoding: 'utf8'});
   if (!badging.includes(`package: name='${PACKAGE}'`)) {
     throw Error(`the APK is not ${PACKAGE}:\n${badging}`);
   }
   fs.rmSync(work, {recursive: true, force: true});
-  console.log(`inktools-bridge: ${path.relative(root, apk)} ${fs.statSync(apk).size} bytes, ${info.versionName} (${info.versionCode})`);
+  const keyName = key.stable ? 'the stable key' : 'the local debug key';
+  console.log(`inktools-bridge: ${path.relative(root, apk)} ${fs.statSync(apk).size} bytes, ${info.versionName} (${info.versionCode}), signed with ${keyName}`);
   return apk;
 }
 
@@ -171,6 +199,7 @@ function test() {
     for (const name of TESTS) {
       run(jdkTool('java'), ['-cp', classes, `${PACKAGE}.${name}`]);
     }
+    run(process.execPath, ['--test', path.join(__dirname, 'signing.test.cjs')]);
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
   }
@@ -192,4 +221,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {buildApk, test};
+module.exports = {buildApk, test, signingArgs, STABLE_KEYSTORE_ENV, STABLE_PASSWORD_ENV, STABLE_KEY_ALIAS};

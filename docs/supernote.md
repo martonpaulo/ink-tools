@@ -205,6 +205,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   elements in 24 ms, 5 in 54 ms); a test page of 69 to 90 elements ran past a 300 ms budget every
   time [measured, 2026-11-16, Lookup 0.2.0 beta 4,
   [#152](https://github.com/martonpaulo/ink-tools/issues/152)].
+- Reading every element of a 540-stroke page at once (two bridge calls per stroke, all in flight)
+  crashed the Note app with SIGSEGV in 2 of 2 runs, while the same page read one element after the
+  other took under 3 s and did not crash [measured, 2026-11-17, Lookup 0.2.0 beta 21, firmware
+  `Chauvet.E103.2610191001.2559`, [#221](https://github.com/martonpaulo/ink-tools/issues/221)].
+  sn-adapter keeps at most `OCCUPIED_READS_IN_FLIGHT` (4) reads in flight [unverified on the device].
 - `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
   pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)].
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
@@ -270,6 +275,22 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `status = 'cancelled'` and a new `lastModifiedTime`; `adb shell content update` with that status
   on 7 test rows hid them from the Calendar app, and the rows stay in the table [measured,
   2026-11-17, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Account Sync removes an event the same way.
+- The Calendar app's month dots (`DataBaseTools.getDuringEvent`) and day list (`getTodayEvent`)
+  read every `data_info` row with `status = 'confirmed' AND recurrence is null` in one loop inside
+  one `try`, and for an `isAllDay` 1 row call `DateUtils.getLongDate(startDate)`, which is
+  `startDate.split("-")` on a `yyyy-MM-dd` text [source, decompiled `SupernoteCalendar.apk`,
+  firmware `Chauvet.E103.2610191001.2559`, [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. An all-day row with `startDate` NULL throws
+  `NullPointerException` and the loop drops it and every later row: Account Sync 0.1.0 beta 23 and
+  24 showed one event of 217, and filling `startDate` and `endDate` on the 29 all-day rows showed
+  all of them [measured, 2026-11-17, [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. These queries filter on no calendar and no
+  `eventId` [source]. A native all-day row holds Google's `start.date` and exclusive `end.date` in
+  `startDate` and `endDate` [source]. So an all-day row Account Sync writes carries both dates as
+  `yyyy-MM-dd`, a timed row leaves them NULL, and the repair fills them on older rows by row id.
+  Account Sync keeps `eventId` NULL and the link in `calendarId` (`inktools:` and both ids)
+  [[#28](https://github.com/martonpaulo/ink-tools/issues/28)].
+- The native Google sync (`GoogleSync.getAllEvents`) reads only `tag = 'event'` rows and uploads one
+  with no `eventId` to Google [source, [#28](https://github.com/martonpaulo/ink-tools/issues/28)], so Account Sync's `tag=task` rows never reach
+  Google.
 - The calendar's `data_info` insert refuses a row without `tag`, then one without
   `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
   refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`

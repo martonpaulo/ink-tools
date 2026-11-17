@@ -1,10 +1,10 @@
 /**
  * sn-adapter's occupiedRects (#152), which Lookup's lasso reads use to place a box or a picture in
- * free space: each element's bounds in page pixels, read all at once, the time budget with its
- * partial answer, and every element recycled.
+ * free space: each element's bounds in page pixels, read a few at a time (#221), the time budget
+ * with its partial answer, and every element whose read ended recycled.
  */
 import {PluginFileAPI} from 'sn-plugin-lib';
-import {occupiedRects} from '@ink-tools/sn-adapter/official';
+import {OCCUPIED_READS_IN_FLIGHT, occupiedRects} from '@ink-tools/sn-adapter/official';
 
 const getElements = PluginFileAPI.getElements as jest.Mock;
 
@@ -58,7 +58,7 @@ test('a stroke, a picture and a text box give their rects, and each is recycled'
   expect(picture.recycle).toHaveBeenCalled();
 });
 
-test('a read over its budget answers what it read, marked partial, and still recycles', async () => {
+test('a read over its budget answers what it read, marked partial, and recycles what it read', async () => {
   const quick = stroke([{x: 1, y: 1}]);
   const stuck = {
     type: 0,
@@ -73,9 +73,11 @@ test('a read over its budget answers what it read, marked partial, and still rec
     value: {rects: [{left: 1, top: 1, right: 1, bottom: 1}], complete: false},
   });
   expect(lines[0]).toMatch(/^place: page read 1 of 2 elements in \d+ ms: partial/);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(stuck.recycle).not.toHaveBeenCalled();
 });
 
-test('reads every element at once, not one after the other (#152)', async () => {
+test('reads a few elements at once, not one after the other (#152)', async () => {
   let inFlight = 0;
   let most = 0;
   const slow = () => ({
@@ -121,4 +123,64 @@ test('occupiedRects logs the count and the time, or why the placement is today\'
   const failed = await occupiedRects('/n.note', 1, line => lines.push(line));
   expect(failed.ok).toBe(false);
   expect(lines[1]).toMatch(/today's placement$/);
+});
+
+/** A stroke whose point read takes `ms`, counting the reads in flight and the reads started. */
+function timed(ms: number, count: {inFlight: number; most: number; started: number}) {
+  return {
+    type: 0,
+    stroke: {
+      points: {
+        size: async () => {
+          count.started += 1;
+          count.inFlight += 1;
+          count.most = Math.max(count.most, count.inFlight);
+          await new Promise(resolve => setTimeout(resolve, ms));
+          count.inFlight -= 1;
+          return 1;
+        },
+        getRange: async () => [{x: 0, y: 0}],
+      },
+    },
+    recycle: jest.fn(async () => {
+      count.inFlight += 1;
+      count.most = Math.max(count.most, count.inFlight);
+      await Promise.resolve();
+      count.inFlight -= 1;
+    }),
+  };
+}
+
+test('a full page keeps at most OCCUPIED_READS_IN_FLIGHT reads in flight (#221)', async () => {
+  expect(OCCUPIED_READS_IN_FLIGHT).toBe(4);
+  const count = {inFlight: 0, most: 0, started: 0};
+  const page = Array.from({length: 40}, () => timed(1, count));
+  getElements.mockResolvedValueOnce({success: true, result: page});
+  const read = await occupiedRects('/n.note', 1, () => {}, 5000);
+  expect(read.ok && read.value.complete).toBe(true);
+  expect(count.started).toBe(40);
+  expect(count.most).toBe(OCCUPIED_READS_IN_FLIGHT);
+  await new Promise(resolve => setTimeout(resolve, 10));
+  expect(count.most).toBe(OCCUPIED_READS_IN_FLIGHT);
+  page.forEach(element => expect(element.recycle).toHaveBeenCalledTimes(1));
+});
+
+test('no read starts once the budget passed, and the answer comes within it (#221)', async () => {
+  const count = {inFlight: 0, most: 0, started: 0};
+  const page = Array.from({length: 540}, () => timed(20, count));
+  getElements.mockResolvedValueOnce({success: true, result: page});
+  const lines: string[] = [];
+  const begun = Date.now();
+  const read = await occupiedRects('/n.note', 1, line => lines.push(line), 50);
+  const took = Date.now() - begun;
+  expect(read.ok && read.value.complete).toBe(false);
+  expect(took).toBeLessThan(50 + 20);
+  const startedAtAnswer = count.started;
+  expect(startedAtAnswer).toBeLessThan(540);
+  expect(lines[0]).toMatch(/^place: page read \d+ of 540 elements in \d+ ms: partial/);
+  await new Promise(resolve => setTimeout(resolve, 60));
+  expect(count.started).toBe(startedAtAnswer);
+  expect(count.inFlight).toBe(0);
+  const recycled = page.filter(element => element.recycle.mock.calls.length > 0).length;
+  expect(recycled).toBe(startedAtAnswer);
 });

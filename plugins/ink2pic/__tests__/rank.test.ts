@@ -1,5 +1,9 @@
 import {hasStyle, readIntent, words} from '@ink-tools/picture-search/query';
-import {einkScore, rankForEink} from '@ink-tools/picture-search/rank';
+import {
+  einkScore,
+  PHOTO_SCORERS,
+  rankForEink,
+} from '@ink-tools/picture-search/rank';
 import {PAGE_SIZE} from '@ink-tools/picture-search/types';
 import type {SearchResult, SourceName} from '@ink-tools/picture-search/types';
 
@@ -437,9 +441,6 @@ describe('silhouettes and frames (#65)', () => {
 });
 
 it('does not rank a photo below a drawing under Photos too (#70)', () => {
-  const {PHOTO_SCORERS} = jest.requireActual(
-    '@ink-tools/picture-search/rank',
-  ) as typeof import('@ink-tools/picture-search/rank');
   const photo: SearchResult = {
     id: 'commons:Apple photo.jpg',
     source: 'commons',
@@ -542,6 +543,62 @@ describe('logos (#81)', () => {
       'Example Institute old logo',
       'Example Institute building',
     ]);
+  });
+});
+
+describe('namesakes of a plain word (#13)', () => {
+  // Titles and categories as Commons returned them (lab cache, plain search, 2026-11-17).
+  const photo = (title: string, tags: string[]): SearchResult => ({
+    ...r('commons', title, 'image/jpeg'),
+    tags,
+  });
+  const computer = photo('Apple II at Musée Bolo', [
+    'Featured pictures by Rama',
+    'Apple II with Monitor II and 2 Disk II floppy disk drives',
+    'Computers in museums',
+    'Apple II-Musée Bolo',
+  ]);
+  const fruit = photo('Red Apple', [
+    'Featured pictures of fruit',
+    'Unidentified red apples',
+    'Apples on white background',
+  ]);
+  const tree = photo('Tree with red apples in Barkedal 4', [
+    'Särsö (apple)',
+    'Apple trees in Sweden',
+    'Red apples',
+  ]);
+
+  it("puts the Apple II photo after the fruit photos for «apple», in the photo button's order", () => {
+    const ranked = rankForEink(
+      [[computer, fruit, tree]],
+      'apple',
+      PHOTO_SCORERS,
+    );
+    expect(ranked.map(x => x.title)).toEqual([
+      'Red Apple',
+      'Tree with red apples in Barkedal 4',
+      'Apple II at Musée Bolo',
+    ]);
+    expect(einkScore(computer, 'apple', PHOTO_SCORERS)).toBeLessThan(0);
+  });
+
+  it('puts the village Apples after the fruit for «apples»', () => {
+    const village = photo('Apples Temple canton de Vaud Suisse', [
+      'Apples VD',
+      'Churches in Switzerland built in 1838',
+    ]);
+    expect(
+      rankForEink([[village, fruit]], 'apples', PHOTO_SCORERS).map(
+        x => x.title,
+      ),
+    ).toEqual(['Red Apple', 'Apples Temple canton de Vaud Suisse']);
+  });
+
+  it('keeps the namesake when the query names it or asks for its logo', () => {
+    expect(einkScore(computer, 'apple ii', PHOTO_SCORERS)).toBeGreaterThan(0);
+    const music = photo('Apple Music Logo', ['Apple Music']);
+    expect(einkScore(music, 'apple logo')).toBeGreaterThan(0);
   });
 });
 

@@ -227,7 +227,7 @@ test('a To-Do row round-trips through the task shape and keeps the insert rules'
   expect(toTodoInsert(D, {...row, taskId: 'abc', taskListId: 'L'}, {existingListIds: ['L'], now: 5}).hasSync).toBe(0);
 });
 
-import {eventToRow, rowToDeviceEdit, rowToEvent} from '../src';
+import {calendarLink, eventToRow, legacyRowRepair, readCalendarLink, rowToDeviceEdit, rowToEvent} from '../src';
 
 test('an event row carries the tag and round-trips', () => {
   const e = {eventId: 'e1', calendarId: 'c1', title: 'Dentist', content: '', start: 1000, end: 2000, allDay: false};
@@ -243,7 +243,7 @@ test('an event row carries the tag and round-trips', () => {
 
 test('a row with a missing or unusable id or time throws instead of becoming "undefined" or NaN (#70)', () => {
   const row = eventToRow(D, {eventId: 'e1', calendarId: 'c1', title: 't', content: '', start: 1000, end: 2000, allDay: false}, 5);
-  for (const key of ['eventId', 'calendarId', 'startTime', 'endTime']) {
+  for (const key of ['calendarId', 'startTime', 'endTime']) {
     const missing = {...row};
     delete missing[key];
     expect(() => rowToEvent(D, missing)).toThrow(key);
@@ -258,8 +258,8 @@ test('a row reads as an edit: hidden is the delete signal, no eventId is a table
   const row = eventToRow(D, e, 5);
   expect(rowToDeviceEdit(D, row)).toEqual({event: {...e, modified: 5}, cancelled: false});
   expect(rowToDeviceEdit(D, {...row, status: 'cancelled'}).cancelled).toBe(true);
-  expect(rowToDeviceEdit(D, {...row, eventId: null}).event.eventId).toBe('');
-  expect(() => rowToDeviceEdit(D, {...row, eventId: null, startTime: null})).toThrow('startTime');
+  expect(rowToDeviceEdit(D, {...row, calendarId: 'Home'}).event).toMatchObject({eventId: '', calendarId: 'Home'});
+  expect(() => rowToDeviceEdit(D, {...row, calendarId: 'Home', startTime: null})).toThrow('startTime');
   const noRule = JSON.parse(JSON.stringify(D));
   delete noRule.calendar.rules.cancelledStatus;
   expect(() => parseDescriptor(noRule)).toThrow(/cancelledStatus/);
@@ -323,5 +323,70 @@ describe('column map (#101)', () => {
 
   test('the bundled descriptor passes its own parser', () => {
     expect(parseDescriptor(JSON.parse(JSON.stringify(D)))).toEqual(D);
+  });
+});
+
+describe('the visible Calendar row (#28)', () => {
+  const e = {eventId: 'abc_20261117T090000Z', calendarId: 'team#holiday.calendar', title: 'Standup', content: 'Notes', start: 1_795_000_000_000, end: 1_795_000_900_000, allDay: false};
+
+  test('a pulled event writes every column of the rows the Calendar app showed, with eventId NULL', () => {
+    expect(eventToRow(D, e, 1_795_000_000_123)).toEqual({
+      calendarId: calendarLink(D, e),
+      eventId: null,
+      tag: 'task',
+      state: 0,
+      status: 'confirmed',
+      readOnly: 1,
+      isAllDay: 0,
+      title: 'Standup',
+      content: 'Notes',
+      startTime: 1_795_000_000_000,
+      endTime: 1_795_000_900_000,
+      startDate: null,
+      endDate: null,
+      lastModifiedTime: 1_795_000_000_123,
+    });
+  });
+
+  // Google's all-day event of 17 November 2026: start.date 2026-11-17, exclusive end.date 2026-11-18.
+  const allDay = {...e, allDay: true, start: Date.UTC(2026, 10, 17), end: Date.UTC(2026, 10, 18)};
+
+  test('a pulled all-day event writes startDate and endDate as yyyy-MM-dd, which the Calendar app splits', () => {
+    expect(eventToRow(D, allDay, 5)).toMatchObject({isAllDay: 1, startDate: '2026-11-17', endDate: '2026-11-18'});
+  });
+
+  test('an older all-day row with null dates is repaired with its dates; a dated one is left', () => {
+    const linked = {...eventToRow(D, allDay, 5), id: 9, startDate: null, endDate: null};
+    expect(legacyRowRepair(D, linked)).toEqual({startDate: '2026-11-17', endDate: '2026-11-18'});
+    expect(legacyRowRepair(D, {...linked, isAllDay: '1'})).toEqual({startDate: '2026-11-17', endDate: '2026-11-18'});
+    expect(legacyRowRepair(D, {...linked, startDate: '2026-11-17', endDate: '2026-11-18'})).toBeNull();
+    const beta23 = {...linked, calendarId: e.calendarId, eventId: e.eventId};
+    expect(legacyRowRepair(D, beta23)).toEqual({calendarId: calendarLink(D, e), eventId: null, startDate: '2026-11-17', endDate: '2026-11-18'});
+    // A tablet-made row has no link: it is not ours to repair.
+    expect(legacyRowRepair(D, {...linked, calendarId: 'Home'})).toBeNull();
+  });
+
+  test('the link in calendarId keeps both ids, whatever characters they hold', () => {
+    const link = calendarLink(D, e);
+    expect(link.startsWith('inktools:')).toBe(true);
+    expect(readCalendarLink(D, link)).toEqual({calendarId: e.calendarId, eventId: e.eventId});
+    expect(readCalendarLink(D, calendarLink(D, {calendarId: 'a:b', eventId: 'c:d'}))).toEqual({calendarId: 'a:b', eventId: 'c:d'});
+    for (const other of ['Home', 'inktools:', 'inktools:only', 'inktools:a:b:c', '', null, 7]) expect(readCalendarLink(D, other)).toBeNull();
+  });
+
+  test('an older row with the Google id in eventId is repaired in place; any other row is left', () => {
+    const old = {id: 7, tag: 'task', calendarId: e.calendarId, eventId: e.eventId, status: 'confirmed'};
+    const fix = legacyRowRepair(D, old);
+    expect(fix).toEqual({calendarId: calendarLink(D, e), eventId: null});
+    expect(rowToEvent(D, {...eventToRow(D, e, 5), ...fix})).toMatchObject({calendarId: e.calendarId, eventId: e.eventId});
+    expect(legacyRowRepair(D, {...old, ...fix})).toBeNull();
+    expect(legacyRowRepair(D, {...old, eventId: null})).toBeNull();
+    expect(legacyRowRepair(D, {...old, tag: 'event'})).toBeNull();
+  });
+
+  test('a descriptor without linkPrefix is refused', () => {
+    const noRule = JSON.parse(JSON.stringify(D));
+    delete noRule.calendar.rules.linkPrefix;
+    expect(() => parseDescriptor(noRule)).toThrow(/linkPrefix/);
   });
 });

@@ -70,7 +70,7 @@ The Lingo app's toolchain, reused, not copied: `../handwriting-language/scripts/
 build-tools and platform) and `../handwriting-language/scripts/host-tools.cjs` (the JDK finder).
 
 ```sh
-node scripts/build.cjs --test   # JVM tests: call encoding, command parsing, field access
+node scripts/build.cjs --test   # JVM tests (call encoding, command parsing, field access), signing-key choice
 node scripts/build.cjs          # build/outputs/inktools-bridge-<version>.apk, signed and verified
 ```
 
@@ -87,9 +87,20 @@ node scripts/build.cjs          # build/outputs/inktools-bridge-<version>.apk, s
   gives the `versionName`; `versionCode` rises on every build sent to the tablet.
 - `prerelease-inktools-bridge.yml` publishes `inktools-bridge-v<version>` with the APK when a push
   to `main` changes `app.json` and the tag does not exist yet.
-- The APK is signed with a debug key made in `.toolchain/`, outside Git; a CI build has another
-  key, so the tablet needs `adb uninstall com.martonpaulo.inktools.bridge` before a build from
-  another key.
+- The stable key ([#223](https://github.com/martonpaulo/ink-tools/issues/223)): `build.cjs` signs with the PKCS12 keystore that
+  `INKTOOLS_BRIDGE_KEYSTORE` names, alias `inktools-bridge`, password in
+  `INKTOOLS_BRIDGE_KEYSTORE_PASSWORD`, passed to apksigner by name (`env:`), never as an argument.
+  The prerelease workflow decodes the `INKTOOLS_BRIDGE_KEYSTORE_BASE64` repository secret into
+  `RUNNER_TEMP`, outside the checkout, and removes it after the build. So each prerelease updates
+  the last one with `adb install -r`. A keystore without its password, or a missing file, fails the
+  build.
+- Without the stable key, the APK is signed with a debug key made in `.toolchain/`, outside Git, and
+  the prerelease prints a notice. Each checkout and each CI run then has another key, so the tablet
+  needs `adb uninstall com.martonpaulo.inktools.bridge` before a build from another key, and once
+  when it moves to the stable key. The validate workflow never reads the secrets, so it always uses
+  the debug key.
+- The owner makes the stable key once on the Mac and stores it with `gh secret set`; the keystore
+  itself stays in the encrypted disk image the credential naming rule names, never in Git.
 
 ## Device check
 
