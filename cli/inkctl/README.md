@@ -123,6 +123,18 @@ copy. `inkctl google login` keeps the Google sign-in in the login Keychain, serv
 
 <br />
 
+## Device rounds
+
+Notes for an agent that drives the tablet in a test round, learned in the rounds of 2026-11-16 and 2026-11-17 ([#214](https://github.com/martonpaulo/ink-tools/issues/214)):
+
+- **Name the device for raw `adb`.** With the USB cable and Wi-Fi ADB both attached, `adb` refuses a call with more than one device; pass `-s <serial>`. `inkctl` picks the link itself.
+- **Query the Calendar provider with a projection and a filter.** A plain `adb shell content query` of `content://com.ratta.supernote.calendar.provider/data_info` was reported to fail with a `NullPointerException` in `setNotificationUri` (not re-measured); the form with `--projection` and `--where` returned rows ([#43](https://github.com/martonpaulo/ink-tools/issues/43)).
+- **Test with real handwriting and no pen.** Copy a word the owner wrote on a note under `Note/Tests/` to the test page (for example `ink save`, then `ink strokes`), lasso it with `lasso last-insert`, and press rows with `lasso press` ([#148](https://github.com/martonpaulo/ink-tools/issues/148), [#189](https://github.com/martonpaulo/ink-tools/issues/189)).
+- **Delete the older build.** Each install leaves its `.snplg` in `MyStyle/`; delete the older build after a newer one is installed.
+- **Stop each log capture by its PID.** Capture the PID of every `adb logcat` you start and stop that PID, never a name pattern.
+
+<br />
+
 ## License
 
 [MIT](LICENSE) © 2026 Marton Paulo.

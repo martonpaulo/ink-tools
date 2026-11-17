@@ -36,23 +36,31 @@ explained.
   [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. The pen digitizer (EMR) spans 21632 x
   16224 on the Manta page, its x running down the page and its y from the right edge to the left
   (`PointUtils.getRealMaxX`, `getRealMaxY` and `emrPoint2Android` in sn-plugin-lib 0.2.3, which
-  says points are pixels after 0.1.65) [official source]. The points of an `event_pen_up` element
-  read about 8 times the page size on the tablet («kept: large» for every word), so they are taken
-  as EMR when a point falls off the page [inference, to measure in the device round: the plugin
-  logs its first pen-up stroke raw and converted].
-- The pen-up unit is EMR: the first stroke read raw 6627..7033 x 11625..12059 and converted to
-  493..544 x 784..832 page px [measured, Real-Time Conversion 0.1.0 beta 2, 2026-11-17,
-  [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. `recognizeElements` on those pen-up
-  elements failed for every word with «Recognition failed. Please try again!», while the same
-  handwriting lassoed (page elements) was read [measured]; so recognition is sent the page's own
-  elements from `getElements` [inference: it reads the elements' native points as
-  page pixels, as the 0.2.3 `Stroke.points` doc says; to confirm in the device round].
+  says points are pixels after 0.1.65) [official source].
+- The points of an `event_pen_up` element are in EMR units, not page pixels: the first stroke read
+  raw 6627..7033 x 11625..12059 and converted to 493..544 x 784..832 page px with the formula of
+  `PointUtils.emrPoint2Android` [measured, Real-Time Conversion 0.1.0 beta 2, 2026-11-17, firmware
+  `Chauvet.E103.2610191001.2559`, [#206](https://github.com/martonpaulo/ink-tools/issues/206)].
+  A plugin converts them once, with the page size `getPageSize` gives (1920 x 2560 on the owner's
+  tablet).
+- `recognizeElements` accepts only the page's own elements, from `getElements`: on the pen-up
+  elements it failed for every word with «Recognition failed. Please try again!» [measured, beta
+  2]; on the same strokes read from the page it answered («converted 4 characters from 4 strokes»)
+  [measured, Real-Time Conversion 0.1.0 beta 5, 2026-11-17,
+  [#206](https://github.com/martonpaulo/ink-tools/issues/206)].
 - A pen-up element's uuid is not the uuid `getElements` gives the same stroke: none of a word's 4
   strokes was found by uuid in a page read of 4 elements [measured, Real-Time Conversion 0.1.0
   beta 3, 2026-11-17, [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. In sn-plugin-lib
   0.2.3 the uuid is the key of the element's native point cache (`ElementDataAccessor`), made for
   each event or read [official source]. So a pen-up stroke is found in a page read by its bounds in
-  page pixels; the plugin logs both shapes of one stroke to confirm it.
+  page pixels: beta 5 found 6 of 7 and 1 of 8 page elements that way [measured, 2026-11-17].
+- `batchUpdatePageElements` refuses a text box whose `textRect` holds a non-integer, with
+  «`elements[0].textBox.textRect.right` must be an integer» [measured, Real-Time Conversion 0.1.0
+  beta 5, 2026-11-17, [#206](https://github.com/martonpaulo/ink-tools/issues/206)].
+- The page does not redraw after a plugin's `batchUpdatePageElements`: the converted text box was
+  on the page but showed only at the next page change [measured, owner pen test, beta 5,
+  2026-11-17, [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. PluginHost has no
+  intent that redraws a note ([`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md)).
 - A design board for this screen is 3:4; the study sheets use 794 x 1059 CSS px boards and export
   to the Manta page.
 
@@ -157,6 +165,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   to the announcer on 53317, and sent no multicast answer while nothing served that port [measured,
   Relay 0.1.0 beta 3 «Send Page», 2026-11-16, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. Relay's send discovery now serves `/register`
   for its window.
+- A send from the tablet to the Mac's saved LocalSend target made no offer on the Mac: with
+  LocalSend listening on TCP 53317, the tablet's TCP check of that port answered closed while the
+  macOS firewall was on, and «Send Text» showed «not reachable» [measured, Device Transfer 0.1.0
+  beta 5 and 6, 2026-11-17, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. That the firewall is the only cause is
+  [unverified: the send with LocalSend allowed through it is not yet run].
 - The first write of a file that does not exist yet in shared storage left it empty while the call
   reported success; the next write over that file worked [measured, Lookup settings,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)]. Creating the file empty, closing
@@ -166,7 +179,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)].
 - A plugin that declares only `FILE:READ` reads a file it did not write under
   `/storage/emulated/0/.data/plugin/`, and its delete throws `SecurityException: Plugin [...] has no
-  DELETE permission` [measured, Account Sync 0.1.0 beta 7, [#116](https://github.com/martonpaulo/ink-tools/issues/116)].
+  DELETE permission` [measured, Account Sync 0.1.0 beta 7, [#116](https://github.com/martonpaulo/ink-tools/issues/116)]. So a one-shot drop file there, which `adb shell`
+  writes and the plugin takes and deletes, needs `plugin.permission.FILE:DELETE` granted: with it,
+  Account Sync 0.1.0 beta 10 moved both sign-in secrets in and left the folder empty [measured,
+  2026-11-17, [#116](https://github.com/martonpaulo/ink-tools/issues/116)].
 - `/storage/emulated/0/<Plugin>/` is outside the whitelist: `mkdirs` is denied
   (`sdcard_not_in_whitelist`), and `File.delete` throws a `SecurityException` that the host
   suppresses in a native thread, so the JS call never settles [measured, Relay,
@@ -216,6 +232,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [official, [#146](https://github.com/martonpaulo/ink-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#59](https://github.com/martonpaulo/ink-tools/issues/59)].
+- The Digest is the Room table `knowledge` of `content://com.ratta.supernote.knowledge.provider`:
+  PluginHost may insert (`knowledge/insert`), query and update; `isTrustedCaller` lists five Ratta
+  packages, not PluginHost, and guards every delete, tags, restores and the sync state, so a delete
+  is refused before its URI is read. `source_type` 4 («self add») shows as «custom source», with no
+  note or document. An entry holds text only: `content` of 1 to 15,000 characters, `comment_str`
+  up to 2,000, a collection, `metadata` JSON and an optional `.mark` file; there is no image column
+  [source, decompiled, 2026-11-17, [#42](https://github.com/martonpaulo/ink-tools/issues/42)]. An insert from a plugin is
+  [unverified: not yet run on the tablet].
 - The To-Do app lists only `tasks_table` rows with `deleted = 0`: 278 rows inserted with `deleted`,
   `sort`, `taskId` and their siblings NULL were in its lists' counts as 0, and the one row the native
   sync rewrote (`taskId` set, `deleted = 0`, `sort = 0`, `hasSync = 1`) was the only one shown
@@ -229,11 +253,22 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   a pulled row that kept its `inktools…` `taskId` [measured rows, Account Sync 0.1.0 beta 18; their
   origin inferred, [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. The repair soft-deletes such a twin (`deleted = 1`), so
   it is never read as a tablet-only task.
+- A To-Do row in `tasks_table` or `task_group_table` is removed by `deleted = 1`, which hides it
+  from the app's lists: Account Sync's old «Inbox» list, soft-deleted that way, left the app while
+  its tasks moved to the unfiled Inbox [measured, Account Sync 0.1.0 beta 18, 2026-11-17,
+  [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. That the app itself deletes only this way is [inference, from the
+  `deleted = 0` filter].
 - The calendar's `data_info` delete with the selection `title = ?` removed 0 rows of a row just
   inserted with that title, so each probe left its test row; Account Sync now deletes by the row id
   the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The Probe does the same, and Account
   Sync's Calendar writer updates and removes a pulled event by its row id; whether an update or
   delete selected by `eventId` or `id` works is not measured yet [[#213](https://github.com/martonpaulo/ink-tools/issues/213)].
+- The calendar provider never deletes a row: `CalendarContentProvider.delete` calls
+  `DataBaseTools.delete`, whose body is `return 0;` [source, decompiled `SupernoteCalendar.apk`,
+  firmware `Chauvet.E103.2610191001.2559`, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The app removes a synced event by
+  `status = 'cancelled'` and a new `lastModifiedTime`; `adb shell content update` with that status
+  on 7 test rows hid them from the Calendar app, and the rows stay in the table [measured,
+  2026-11-17, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Account Sync removes an event the same way.
 - The calendar's `data_info` insert refuses a row without `tag`, then one without
   `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
   refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`
@@ -282,6 +317,20 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   - With `FILE:READ` and `FILE:WRITE` granted, deleting a file the plugin wrote in `MyStyle/`
     fails: `SecurityException: Plugin [...] has no DELETE permission`. Deletes need
     `plugin.permission.FILE:DELETE`, which the SDK lists beside the other three.
+- `convertElement2Sticker` refuses a picture element with error 205, «Sticker conversion supports
+  only normal strokes and geometries» [measured, Word Lookup, 2026-11-16, [#35](https://github.com/martonpaulo/ink-tools/issues/35)].
+- Each plugin install restarts PluginHost, so every enabled plugin's load pass runs again: one
+  Account Sync test row appeared per install, three in 8 minutes [measured, 2026-11-17,
+  [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. PluginHost kills its own process after a native plugin is upgraded or
+  uninstalled; whether a plugin with no native code restarts it is [unverified]
+  ([`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md)).
+- `adb shell content query --uri content://com.ratta.supernote.pluginhost/plugins` lists every
+  installed plugin with its version and `enable` state, and `…/plugins/<pluginID>` gives its
+  `usesPermissions`, each `status` 2 for Always Allow; the provider is read-only [measured,
+  2026-11-17, [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md),
+  [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- The built-in Sticker plugin has no enable switch; every other plugin is turned on or off in
+  Settings › Apps › Plugins [reported by the device round of 2026-11-17, not re-measured, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - A plugin's `console.log` lines reach logcat under the tag `ReactNativeJS`, not under the plugin's
   name: a log read filtered by the plugin's name as a tag shows nothing [measured].
 - A pressed plugin row moves to the top of the plugin rows in the lasso «⋯» list, which the host
@@ -421,8 +470,11 @@ the note shows through, is still to test.
   private folder under `/data/data/com.ratta.supernote.pluginhost/files/plugins/<pluginID>`
   («Permission denied»), and `run-as com.ratta.supernote.pluginhost` answers «package not an
   application» [measured, 2026-11-17, [#116](https://github.com/martonpaulo/ink-tools/issues/116)].
-  Whether that folder survives a plugin update is not measured on this firmware [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)];
-  the Ink2Pic brief records that an install emptied it on build 0.1.0 (12) ([ink2pic#41](https://github.com/martonpaulo/ink2pic/issues/41)).
+  That folder survives a plugin update: Word Lookup's `search-cache.json` there, filled by beta 11,
+  answered a search after the update to beta 12 [measured, 2026-11-17,
+  [#13](https://github.com/martonpaulo/ink-tools/issues/13), [#210](https://github.com/martonpaulo/ink-tools/issues/210)]. So a cache there is keyed by the plugin's
+  `versionCode`. The Ink2Pic brief records that an install emptied it on build 0.1.0 (12)
+  ([ink2pic#41](https://github.com/martonpaulo/ink2pic/issues/41)).
   Word Lookup keeps its inserted pictures there since [#23](https://github.com/martonpaulo/ink-tools/issues/23); whether the note app takes a PNG
   inserted from there is [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23), [#198](https://github.com/martonpaulo/ink-tools/issues/198)].
 - A file a plugin writes in `MyStyle/` is uploaded to Supernote Cloud within seconds (Retouch's
