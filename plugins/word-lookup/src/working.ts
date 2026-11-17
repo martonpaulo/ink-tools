@@ -8,13 +8,13 @@ import {
   showPluginView,
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
-import {showToast} from './textBox';
+import {lookupLog, showToast} from './textBox';
 
 export const working = createWorking({
   show: showPluginView,
   close: closePluginView,
   toast: showToast,
-  log: line => console.log(`Lookup: ${line}`),
+  log: lookupLog,
   copy: {failed: copy['working.failed'], timeout: copy['working.timeout']},
 });
 
