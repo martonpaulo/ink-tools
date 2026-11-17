@@ -19,7 +19,7 @@ The rules are `docs/architecture.md` › Layer rules:
   constructs a `URL` or reads `searchParams`: React Native's `URL` throws on `protocol`, `host` and
   every other getter but `href`; take `parseUrl` of `@supernote-tools/sync-core` (#209).
 
-`plugins/probe/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
+`plugins/plugin-diagnostics/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
@@ -32,7 +32,7 @@ from pathlib import Path
 SKIP = {"node_modules", ".git", ".scratch", ".claude", "build", "android", ".toolchain"}
 SCRIPT = {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"}
 NATIVE = {".java", ".kt"}
-EXEMPT = ("plugins/probe/",)
+EXEMPT = ("plugins/plugin-diagnostics/",)
 TEST_PARTS = {"__tests__", "__mocks__", "tests"}
 
 # An import target: `from 'x'`, `import 'x'`, `require('x')`, `import('x')`, `jest.mock('x'`.

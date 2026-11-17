@@ -33,7 +33,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /plugins/bridge
+    directory: /plugins/account-sync
     schedule:
       interval: weekly
       day: monday
@@ -64,7 +64,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /plugins/retouch
+    directory: /plugins/image-editing
     schedule:
       interval: weekly
       day: monday
@@ -95,7 +95,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /plugins/lookup
+    directory: /plugins/word-lookup
     schedule:
       interval: weekly
       day: monday
@@ -126,7 +126,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /plugins/relay
+    directory: /plugins/device-transfer
     schedule:
       interval: weekly
       day: monday
@@ -157,7 +157,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /plugins/probe
+    directory: /plugins/plugin-diagnostics
     schedule:
       interval: weekly
       day: monday

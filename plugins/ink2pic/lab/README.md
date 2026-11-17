@@ -43,7 +43,7 @@ artifact both runs' `results.json` and `metrics.json`. `out/.cache` goes from ru
 the `lab-cache` artifact, so a first run is slow and the next ones answer from the cache.
 
 A run named `lookup` or `lookup-…` searches with Word Lookup's query languages,
-`PICTURE_LANGUAGES` of `plugins/lookup/src/pictureLanguages.ts` (Portuguese, Spanish, then
+`PICTURE_LANGUAGES` of `plugins/word-lookup/src/pictureLanguages.ts` (Portuguese, Spanish, then
 English); any other run searches with Ink2Pic's, English only
 ([#183](https://github.com/martonpaulo/ink-tools/issues/183)). `results.json` records them as
 `languages`. Name the run `lookup-<issue>` for a change to Word Lookup's picture search. To compare

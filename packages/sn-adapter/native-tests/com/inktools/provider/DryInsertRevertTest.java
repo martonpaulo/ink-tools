@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** JVM checks of the probe's revert (#43); run by the Account Sync gate, `npm run test:native` in plugins/bridge. */
+/** JVM checks of the probe's revert (#43); run by the Account Sync gate, `npm run test:native` in plugins/account-sync. */
 public final class DryInsertRevertTest {
   private static final String MARKER = "Account Sync dry insert";
 

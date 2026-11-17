@@ -27,7 +27,7 @@ const REPOSITORY = path.join(ROOT_DIR, '../..');
 function labFiles() {
   const require = createRequire(import.meta.url);
   product();
-  require('../../lookup/src/pictureLanguages.ts');
+  require('../../word-lookup/src/pictureLanguages.ts');
   return new Set(
     Object.keys(require.cache)
       .filter(file => !file.split(path.sep).includes('node_modules'))

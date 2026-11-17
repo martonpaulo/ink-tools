@@ -49,7 +49,7 @@ test('a file the lab loads picks every case', () => {
   expect(all.length).toBeGreaterThan(2);
   expect(all).toEqual(expect.arrayContaining(['chair', 'house']));
   expect(affected(`${PLUGIN}src/config.ts`).split(',')).toEqual(all);
-  expect(affected('plugins/lookup/src/pictureLanguages.ts').split(',')).toEqual(all);
+  expect(affected('plugins/word-lookup/src/pictureLanguages.ts').split(',')).toEqual(all);
   expect(
     affected('packages/picture-search/native/com/ink2pic/files/Contour.java').split(','),
   ).toEqual(all);

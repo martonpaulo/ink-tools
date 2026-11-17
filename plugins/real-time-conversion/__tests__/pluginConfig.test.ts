@@ -1,5 +1,5 @@
 import config from '../PluginConfig.json';
-import lookup from '../../lookup/PluginConfig.json';
+import lookup from '../../word-lookup/PluginConfig.json';
 
 test('plugin config declares its own generated id and both file permissions', () => {
   expect(config.pluginID).toMatch(/^[0-9a-z]{16}$/);

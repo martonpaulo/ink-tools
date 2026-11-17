@@ -147,7 +147,7 @@ LINK_WIFI = "wifi"
 # Bridge's sign-in secrets (#116, owner D16 A): `adb shell` cannot write Bridge's private plugin folder
 # (measured 2026-11-17: Permission denied), so `secret set` leaves a one-shot drop file in a folder the
 # shell user writes and the plugin file guard allows, and Account Sync moves it into its private folder
-# and deletes it on its next start or «Sync now» (plugins/bridge/src/secretStore.ts, SECRET_DROP_FOLDER).
+# and deletes it on its next start or «Sync now» (plugins/account-sync/src/secretStore.ts, SECRET_DROP_FOLDER).
 # The file names are sync-core's `secretFileName` (packages/sync-core/src/secrets.ts); a test reads both.
 # shortcut: the drop folder is not yet measured on the tablet; the #116 device round checks it.
 SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
@@ -156,7 +156,7 @@ SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
 GOOGLE_CLIENT_PROVIDER = "google-client"
 SIGN_IN_DROP_FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync"
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
-# The login Keychain items of the Google sign-in on the Mac (#124, plugins/bridge/AGENTS.md).
+# The login Keychain items of the Google sign-in on the Mac (#124, plugins/account-sync/AGENTS.md).
 KEYCHAIN_SERVICE = "ink-tools"
 GOOGLE_CLIENT_ACCOUNT = "account-sync-google-oauth-client"
 GOOGLE_TOKEN_ACCOUNT = "account-sync-google-refresh-token"
@@ -206,7 +206,7 @@ SCROLL_END = 0.2
 SCROLL_MILLISECONDS = 300
 SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
-# Ink through Probe's «Run Command» button (#148): plugins/probe/src/helper.ts owns the other side.
+# Ink through Probe's «Run Command» button (#148): plugins/plugin-diagnostics/src/helper.ts owns the other side.
 HELPER_COMMAND_PATH = f"{SHARED_ROOT}/MyStyle/Probe/command.json"
 HELPER_BUTTON = "text:Run Command"
 NOTE_PLUGINS_BUTTON = "desc:plugins"  # the note toolbar's plugin panel, where sidebar buttons show
@@ -1562,7 +1562,7 @@ def command_lasso_press(device: Device, args: argparse.Namespace):
 
 
 # Ink and lasso through Probe's «Run Command» button (#148). inkctl pushes one command file, presses
-# the button in the open note, and reads the answer Probe logs; `plugins/probe/src/helper.ts` owns
+# the button in the open note, and reads the answer Probe logs; `plugins/plugin-diagnostics/src/helper.ts` owns
 # the other side of this contract.
 def arc(cx: float, cy: float, rx: float, ry: float, start: float, end: float) -> list[tuple[float, float]]:
     """Points along an ellipse from one angle to another, in degrees, counterclockwise when end > start."""
@@ -2562,7 +2562,7 @@ def command_secret_status(device: Device, args: argparse.Namespace):
 
 # Google sign-in on the Mac (#124, owner D39 A): Google's installed-app flow with a loopback
 # redirect, because its device-code flow allows no Calendar scope. The Desktop client and the refresh
-# token wait in the login Keychain (plugins/bridge/AGENTS.md); `inkctl secret set google` is the one
+# token wait in the login Keychain (plugins/account-sync/AGENTS.md); `inkctl secret set google` is the one
 # writer to the tablet. https://developers.google.com/identity/protocols/oauth2/native-app
 GOOGLE_TOKEN_LABEL = "Ink Tools Account Sync: Google Calendar"
 GOOGLE_TOKEN_COMMENT = (

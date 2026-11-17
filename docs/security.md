@@ -24,5 +24,5 @@ except the ones [`audit-exceptions.json`](../audit-exceptions.json) names
 To check one subproject on the Mac:
 
 ```bash
-python3 scripts/npm_audit.py plugins/lookup
+python3 scripts/npm_audit.py plugins/word-lookup
 ```

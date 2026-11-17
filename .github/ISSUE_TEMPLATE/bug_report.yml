@@ -8,10 +8,10 @@ body:
       label: Tool
       options:
         - inkctl (Mac CLI)
-        - Account Sync (bridge)
-        - Word Lookup (lookup)
-        - Image Editing (retouch)
-        - Device Transfer (relay)
+        - Account Sync (account-sync)
+        - Word Lookup (word-lookup)
+        - Image Editing (image-editing)
+        - Device Transfer (device-transfer)
         - Handwriting Language (app)
         - Other
     validations:
