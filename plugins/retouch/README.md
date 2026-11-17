@@ -1,6 +1,6 @@
-# Retouch
+# Image Editing
 
-On the tablet this plugin is called **Image Editing**; `retouch` stays its folder and internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+On the tablet this plugin is called **Image Editing**; `retouch` stays its folder and internal name ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
 A Supernote plugin: lasso a picture on the page and make it readable on e-ink with one tap.
 
