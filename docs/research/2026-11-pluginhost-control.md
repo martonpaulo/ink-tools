@@ -9,7 +9,7 @@ system and notes from the Mac over `adb` — install or upgrade a `.snplg`, set 
 «Always Allow», enable or disable a plugin, trigger a plugin button, open or redraw a note, and
 read plugin or note state.
 
-Targets, pulled read-only from the owner's Nomad (`SN100D20051174`, build
+Targets, pulled read-only from the owner's Nomad (serial withheld, build
 `Chauvet.E103.2610191001.2559_release`) and decompiled with `jadx`:
 
 - `com.ratta.supernote.pluginhost` (PluginHost), `versionName` 1.00.2610150, `versionCode`
@@ -65,7 +65,7 @@ throw `UnsupportedOperationException` (`provider/PluginsContentProvider.java:70-
 List every plugin with version and enable state: **[measured]**
 
 ```sh
-adb -s SN100D20051174 shell content query \
+adb -s <serial> shell content query \
   --uri content://com.ratta.supernote.pluginhost/plugins \
   --projection pluginID:name:versionName:versionCode:enable
 ```
@@ -73,7 +73,7 @@ adb -s SN100D20051174 shell content query \
 One plugin's full row, including `usesPermissions` with each `status` (2 = Always Allow): **[measured]**
 
 ```sh
-adb -s SN100D20051174 shell content query \
+adb -s <serial> shell content query \
   --uri content://com.ratta.supernote.pluginhost/plugins/<pluginID>
 ```
 
@@ -159,7 +159,7 @@ and then presses the side button of the **hardcoded** handwriting Sticker plugin
 (`pluginID a5db6166e8fe8e17`) only (`services/PluginHostService.java:379-396`). **[source]**
 
 ```sh
-adb -s SN100D20051174 shell am start-foreground-service \
+adb -s <serial> shell am start-foreground-service \
   -n com.ratta.supernote.pluginhost/.services.PluginHostService \
   -a android.intent.action.VIEW --es action plugin
 ```
@@ -198,4 +198,4 @@ a general button trigger would also need the helper app of section 2. This candi
   `manager/PluginManager.java`, `security/PluginPermissionManager.java`,
   `plugincorelib/IPluginSetting.java`, `receiver/PluginReceiver.java`,
   `jadx-ph-res/resources/AndroidManifest.xml`.
-- `content query` output on `SN100D20051174`, 2026-11-17.
+- `content query` output on the owner's Nomad, 2026-11-17.
