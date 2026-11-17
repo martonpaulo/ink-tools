@@ -62,6 +62,9 @@ export function tasksRun(at: number, result: SyncResult): ModuleRun {
   };
 }
 
+/** Why a module that is on waits: no pass has probed it since the plugin host started (#43). */
+export const DEVICE_CHECK_PENDING = 'the device check has not run yet: it runs with the next sync';
+
 /** The probe's problems per module; a module with no entry has no probe answer. */
 export type ProbeProblems = Partial<Record<ModuleId, string[]>>;
 
@@ -75,7 +78,8 @@ export function moduleStatus(
   if (!settings.modules[id]) return {state: 'off'};
   const problems = probe[id];
   // A missing probe answer blocks the module, as `activePlan` does: never write without proof.
-  if (problems === undefined) return {state: 'blocked', reasons: ['the device check has not answered']};
+  // The check runs only in a pass that needs the module, never at host start nor on a Settings open (#43).
+  if (problems === undefined) return {state: 'blocked', reasons: [DEVICE_CHECK_PENDING]};
   if (problems.length > 0) return {state: 'blocked', reasons: [...problems]};
   const run = runs[id];
   if (run?.notRun) return {state: 'blocked', reasons: [...run.errors], at: run.at};

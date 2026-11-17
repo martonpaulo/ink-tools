@@ -30,10 +30,10 @@ import {
   TimeWindow,
   TWO_WAY_MODULES,
 } from '@ink-tools/sync-core';
-import type {CapabilityStatus} from '@ink-tools/sn-adapter';
+import type {Capability, CapabilityStatus} from '@ink-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
 import type {SecretDrop} from './secretStore';
-import {probeProblems} from './probe';
+import {capabilitiesOf, probeProblems} from './probe';
 import {logBlocked, logRun} from './statusText';
 
 /** The automatic pass while the plugin host lives; a guess until a device round measures the cost. */
@@ -69,8 +69,11 @@ export interface SyncDevice {
    * that writer binds them.
    */
   stores?: DeviceStores;
-  /** The adapt-on/off probe (#43); absent until its device reader is in the build. */
-  probe?: () => Promise<CapabilityStatus[]>;
+  /**
+   * The adapt-on/off probe (#43) of the capabilities given, only those of modules that are on;
+   * absent until its device reader is in the build.
+   */
+  probe?: (capabilities: Capability[]) => Promise<CapabilityStatus[]>;
   /**
    * Moves the sign-in drop files `inkctl secret set` left into the private folder (#116,
    * `importSecretDrops`); each pass runs it first, so a start and «Sync now» both take them.
@@ -196,9 +199,19 @@ export interface SyncSnapshot {
   problem?: string;
 }
 
+export interface PassOptions {
+  /**
+   * The pass when PluginHost loads Bridge: it moves the sign-in drops in and runs only modules an
+   * earlier probe of this host cleared, which is none, as the host just started. It never probes:
+   * every plugin install restarts the host, and the old insert probe left a Calendar row on each
+   * start (#43). The probe runs at «Sync now» and at the automatic pass.
+   */
+  load?: boolean;
+}
+
 export interface SyncRunner {
   /** One pass; a press while one runs joins it instead of starting a second. */
-  syncNow(): Promise<SyncSnapshot>;
+  syncNow(options?: PassOptions): Promise<SyncSnapshot>;
   snapshot(): SyncSnapshot;
   /**
    * How many open tablet To-Do tasks with no link would stay on the tablet at the next pass, for
@@ -249,13 +262,18 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
   let state: BridgeState = initialBridgeState();
   let current: SyncSnapshot = {running: false, runs: {}, probe: {}};
   let pass: Promise<SyncSnapshot> | null = null;
+  /**
+   * The capabilities the probe cleared since the host started; each is probed once, and one that
+   * failed is probed again at the next pass that needs it.
+   */
+  const cleared = new Map<Capability, CapabilityStatus>();
   const listeners = new Set<(s: SyncSnapshot) => void>();
   const publish = (next: SyncSnapshot) => {
     current = next;
     listeners.forEach(l => l(current));
   };
 
-  const run = async (): Promise<SyncSnapshot> => {
+  const run = async ({load = false}: PassOptions): Promise<SyncSnapshot> => {
     publish({...current, running: true});
     if (device.importSecrets) {
       try {
@@ -281,18 +299,28 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       );
       return {...current, running: false, problem: settings.message};
     }
-    let statuses: CapabilityStatus[] = [];
-    let probe: ProbeProblems = {};
-    if (device.probe) {
+    // Only the modules that are on are probed, and never in the load pass (#43).
+    const wanted = capabilitiesOf(settings.value);
+    const statuses: CapabilityStatus[] = wanted.flatMap(c => cleared.get(c) ?? []);
+    const unknown = wanted.filter(c => !cleared.has(c));
+    let probe: ProbeProblems = probeProblems(statuses);
+    if (load && unknown.length) {
+      log('[Bridge] sync: the load pass checks no device and writes nothing; the first check runs at «Sync now» or the automatic pass');
+    } else if (device.probe && unknown.length) {
       try {
-        statuses = await device.probe();
+        for (const status of await device.probe(unknown)) {
+          statuses.push(status);
+          if (status.available && status.canWrite) {
+            cleared.set(status.capability, status);
+          }
+        }
         probe = probeProblems(statuses);
       } catch (e) {
         log(`[Bridge] sync: the device check failed: ${(e as Error).message}`);
       }
     }
     const plan = activePlan(settings.value, availability(statuses));
-    for (const id of plan.blocked) {
+    for (const id of load ? [] : plan.blocked) {
       logBlocked(
         id,
         probe[id]?.length ? probe[id]! : ['the device check has not answered'],
@@ -317,8 +345,8 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
   };
 
   return {
-    syncNow() {
-      pass ??= run()
+    syncNow(options = {}) {
+      pass ??= run(options)
         .catch(e => ({
           ...current,
           running: false,
@@ -359,7 +387,10 @@ export interface Timers {
   clearInterval(handle: unknown): void;
 }
 
-/** The automatic sync: one pass now and one every `AUTO_SYNC_MINUTES`; returns the stop. */
+/**
+ * The automatic sync: the load pass now, which never probes (`PassOptions.load`), and one full pass
+ * every `AUTO_SYNC_MINUTES`; returns the stop.
+ */
 export function startAutoSync(
   runner: SyncRunner,
   timers: Timers = {
@@ -367,7 +398,7 @@ export function startAutoSync(
     clearInterval: h => clearInterval(h as ReturnType<typeof setInterval>),
   },
 ): () => void {
-  runner.syncNow();
+  runner.syncNow({load: true});
   const handle = timers.setInterval(() => {
     runner.syncNow();
   }, AUTO_SYNC_MINUTES * MINUTE);

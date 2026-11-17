@@ -13,7 +13,6 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.inktools.provider.DryInsertRevert;
 import com.inktools.provider.ResolverTable;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,8 @@ import java.util.concurrent.Executors;
 
 /**
  * The device half of sn-adapter's `DeviceReader` (#43): one unfiltered query for a table's columns,
- * and a marked test row inserted and deleted again, as plugins/plugin-diagnostics does (#67). It names no
+ * and the probe's test write, which is {@link #update} selected by a row id no row has. There is no
+ * test insert: the Calendar provider never deletes a row, so a test row would stay (#43). It names no
  * provider: every URI and column comes from sn-adapter's descriptor through the JavaScript caller,
  * so a changed provider is a descriptor update, never a native build.
  *
@@ -32,8 +32,6 @@ import java.util.concurrent.Executors;
  * insert the provider ignored is a rejection, never an id.
  */
 public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
-  /** The text a test row carries; the revert deletes only rows whose marker column equals it. */
-  static final String MARKER = "Account Sync dry insert";
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
 
   public BridgeProvidersModule(ReactApplicationContext context) {
@@ -65,57 +63,6 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
             promise.resolve(names);
           } catch (Throwable error) {
             promise.reject("query_failed", String.valueOf(error.getMessage()), error);
-          }
-        });
-  }
-
-  /**
-   * Inserts one row with {@link #MARKER} in {@code markerColumn} and {@code values} in the other
-   * columns, then deletes it by its row id ({@code idColumn}), with every older row carrying the
-   * marker ({@link DryInsertRevert}). Resolves only when both passed. It rejects with {@code
-   * insert_refused} when the provider wrote no row (it threw, or {@link ResolverTable#wroteRow} says so), and
-   * with {@code revert_failed}, counting the rows, only when a marked row is still listed (#43).
-   */
-  @ReactMethod
-  public void dryInsert(
-      String uri, String markerColumn, String idColumn, ReadableMap values, Promise promise) {
-    worker.execute(
-        () -> {
-          ContentResolver resolver = getReactApplicationContext().getContentResolver();
-          Uri base = Uri.parse(uri);
-          boolean written;
-          String createdId;
-          try {
-            ContentValues row = values(values);
-            row.put(markerColumn, MARKER);
-            Uri created = resolver.insert(base, row);
-            written = ResolverTable.wroteRow(created);
-            createdId = written ? ResolverTable.rowId(created) : null;
-          } catch (Throwable error) {
-            promise.reject("insert_refused", String.valueOf(error.getMessage()), error);
-            return;
-          }
-          String where = " where " + markerColumn + " is '" + MARKER + "'";
-          try {
-            DryInsertRevert.Result result =
-                DryInsertRevert.revert(
-                    new ResolverTable(resolver, base, idColumn, markerColumn, MARKER), MARKER, createdId);
-            if (!written) {
-              promise.reject("insert_refused", "the provider did not write the test row");
-            } else if (result.remaining > 0) {
-              promise.reject(
-                  "revert_failed",
-                  result.remaining + " test rows remain" + where + " after deleting them by " + idColumn);
-            } else {
-              promise.resolve(null);
-            }
-          } catch (Throwable error) {
-            if (!written) {
-              promise.reject(
-                  "insert_refused", "the provider did not write the test row; the cleanup delete failed too: " + error.getMessage(), error);
-            } else {
-              promise.reject("revert_failed", "a test row may remain" + where + ": " + error.getMessage(), error);
-            }
           }
         });
   }

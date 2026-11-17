@@ -124,7 +124,8 @@ function device(
       remove: async () => {},
     },
     stores: createDeviceStores(rows(), () => NOW),
-    probe: async () => ON,
+    probe: async capabilities =>
+      ON.filter(status => capabilities.includes(status.capability)),
     googleClient: async () => ({clientId: 'id', clientSecret: 'secret'}),
     fetch: network().fetch,
     now: () => NOW,
@@ -188,6 +189,69 @@ test('without the device probe nothing runs, and the log says why', async () => 
   expect(d.lines).toContain(
     '[Bridge] sync calendar: not run: the device check has not answered',
   );
+});
+
+test('the load pass never probes and writes nothing; the next pass probes (#43)', async () => {
+  const probe = jest.fn(async (capabilities: string[]) =>
+    ON.filter(status => capabilities.includes(status.capability)),
+  );
+  const table = rows();
+  const imported = jest.fn(async () => []);
+  const d = device({
+    probe,
+    importSecrets: imported,
+    stores: createDeviceStores(table, () => NOW),
+  });
+  const runner = createSyncRunner(d);
+  const load = await runner.syncNow({load: true});
+  expect(probe).not.toHaveBeenCalled();
+  expect(imported).toHaveBeenCalledTimes(1);
+  expect(load.runs).toEqual({});
+  expect(table.inserted).toEqual([]);
+  expect(d.lines).toEqual([
+    '[Bridge] sync: the load pass checks no device and writes nothing; the first check runs at «Sync now» or the automatic pass',
+  ]);
+  const next = await runner.syncNow();
+  expect(probe).toHaveBeenCalledTimes(1);
+  expect(Object.keys(next.runs).sort()).toEqual(['calendar', 'todo']);
+});
+
+test('a module that is off is never probed (#43)', async () => {
+  const probe = jest.fn(async (capabilities: string[]) =>
+    ON.filter(status => capabilities.includes(status.capability)),
+  );
+  const todoOnly = setProvider(
+    setModule(defaultSettings(), 'todo', true),
+    'todoist',
+    true,
+  );
+  await createSyncRunner(
+    device({probe, loadSettings: async () => ({ok: true, value: todoOnly})}),
+  ).syncNow();
+  expect(probe.mock.calls).toEqual([[['todo']]]);
+  const allOff = jest.fn(async () => ON);
+  await createSyncRunner(
+    device({
+      probe: allOff,
+      loadSettings: async () => ({ok: true, value: defaultSettings()}),
+    }),
+  ).syncNow();
+  expect(allOff).not.toHaveBeenCalled();
+});
+
+test('a cleared module is probed once per host; a blocked one again at the next pass (#43)', async () => {
+  const probe = jest.fn(async (capabilities: string[]) =>
+    ON.filter(status => capabilities.includes(status.capability)).map(status =>
+      status.capability === 'todo'
+        ? {...status, canWrite: false, problems: ['refused a test write']}
+        : status,
+    ),
+  );
+  const runner = createSyncRunner(device({probe}));
+  await runner.syncNow();
+  const second = await runner.syncNow();
+  expect(probe.mock.calls).toEqual([[['calendar', 'todo']], [['todo']]]);
+  expect(second.probe).toEqual({calendar: [], todo: ['refused a test write']});
 });
 
 test('a missing Google client or sign-in is an error of the run, never an empty calendar', async () => {
@@ -260,12 +324,14 @@ test('the automatic sync runs at start and every AUTO_SYNC_MINUTES until stopped
     timers,
   );
   expect(syncNow).toHaveBeenCalledTimes(1);
+  expect(syncNow).toHaveBeenLastCalledWith({load: true});
   expect(timers.setInterval).toHaveBeenCalledWith(
     expect.any(Function),
     AUTO_SYNC_MINUTES * 60_000,
   );
   tick();
   expect(syncNow).toHaveBeenCalledTimes(2);
+  expect(syncNow).toHaveBeenLastCalledWith();
   stop();
   expect(timers.clearInterval).toHaveBeenCalledWith(7);
 });

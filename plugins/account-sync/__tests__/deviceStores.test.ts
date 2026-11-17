@@ -1,12 +1,10 @@
 /** The Calendar and To-Do stores over an in-memory content provider (#28, #29, #44). */
-import {BUNDLED_DESCRIPTOR} from '@ink-tools/sn-adapter';
 import type {Row} from '@ink-tools/sn-adapter';
 import {removeCalendarRows} from '@ink-tools/sync-core';
 import {
   ContentRows,
   createDeviceCalendar,
   createDeviceTasks,
-  ROW_ID,
   serviceTaskId,
 } from '../src/deviceStores';
 
@@ -25,6 +23,7 @@ function provider(start: Record<string, Row[]> = {}) {
     ...start,
   };
   let next = 100;
+  const calendarDeletes: Row[] = [];
   const match = (row: Row, where: Row) =>
     Object.entries(where).every(([k, v]) => row[k] === v);
   const rows: ContentRows = {
@@ -41,13 +40,21 @@ function provider(start: Record<string, Row[]> = {}) {
       return hit.length;
     },
     remove: async (uri, where) => {
+      // The tablet's Calendar provider never deletes a row: its delete is `return 0;` (#43).
+      if (uri === EVENTS) {
+        calendarDeletes.push(where);
+        return 0;
+      }
       const before = tables[uri].length;
       tables[uri] = tables[uri].filter(r => !match(r, where));
       return before - tables[uri].length;
     },
   };
-  return {tables, rows};
+  return {tables, rows, calendarDeletes};
 }
+
+/** The rows the Calendar app shows: every row that is not cancelled. */
+const live = (table: Row[]) => table.filter(r => r.status !== 'cancelled');
 
 const event = {
   eventId: 'g1',
@@ -103,8 +110,31 @@ describe('the Calendar store', () => {
       'event gone has 0 tablet rows',
     );
     await cal.remove('work', 'g1');
-    expect(tables[EVENTS]).toEqual([]);
+    expect(live(tables[EVENTS])).toEqual([]);
     await expect(cal.remove('work', 'g1')).rejects.toThrow('0 tablet rows');
+  });
+
+  test('a remove cancels the row by its id with a new modified time, never a delete (#43, #213)', async () => {
+    const {tables, rows, calendarDeletes} = provider();
+    let now = NOW;
+    const cal = createDeviceCalendar(rows, () => now);
+    await cal.create(event);
+    now = NOW + HOUR;
+    await cal.remove('work', 'g1');
+    expect(calendarDeletes).toEqual([]);
+    expect(tables[EVENTS]).toHaveLength(1);
+    expect(tables[EVENTS][0]).toMatchObject({id: '100', status: 'cancelled', lastModifiedTime: NOW + HOUR});
+    expect(await cal.listOurs(window)).toEqual([]);
+  });
+
+  test('an event back at its source takes its cancelled row again, never a second row (#43)', async () => {
+    const {tables, rows} = provider();
+    const cal = createDeviceCalendar(rows, () => NOW);
+    await cal.create(event);
+    await cal.remove('work', 'g1');
+    await cal.create({...event, title: 'Back'});
+    expect(tables[EVENTS].map(r => [r.id, r.title, r.status])).toEqual([['100', 'Back', 'confirmed']]);
+    expect((await cal.listOurs(window)).map(e => e.title)).toEqual(['Back']);
   });
 
   test('updates and removes by the row id, as a provider that honours only id needs (#213)', async () => {
@@ -133,7 +163,7 @@ describe('the Calendar store', () => {
     await cal.update({...event, title: 'Planning'});
     expect(tables[EVENTS].map(r => r.title)).toEqual(['Native', 'Planning']);
     await cal.remove('work', 'g1');
-    expect(tables[EVENTS].map(r => r.id)).toEqual(['1']);
+    expect(live(tables[EVENTS]).map(r => r.id)).toEqual(['1']);
     expect(writes).toEqual([{id: '100'}, {id: '100'}]);
   });
 
@@ -143,7 +173,7 @@ describe('the Calendar store', () => {
     await cal.create(event);
     await cal.create(event);
     await cal.update({...event, title: 'Planning'});
-    expect(tables[EVENTS].map(r => [r.id, r.title])).toEqual([['101', 'Planning']]);
+    expect(live(tables[EVENTS]).map(r => [r.id, r.title])).toEqual([['101', 'Planning']]);
     expect(cal.takeWarnings()).toEqual([
       'event g1 had 2 tablet rows: kept the newest, removed 1',
     ]);
@@ -157,7 +187,7 @@ describe('the Calendar store', () => {
     await cal.create(event);
     await cal.create(event);
     await cal.remove('work', 'g1');
-    expect(tables[EVENTS]).toEqual([]);
+    expect(live(tables[EVENTS])).toEqual([]);
     expect(cal.takeWarnings()).toEqual(['event g1 had 3 tablet rows: removed them all']);
   });
 
@@ -170,16 +200,7 @@ describe('the Calendar store', () => {
     await cal.create({...event, eventId: 'g2'});
     const out = await removeCalendarRows(cal);
     expect(out).toEqual({removed: 2, errors: []});
-    expect(tables[EVENTS]).toEqual([native]);
-  });
-
-  test('every rowId field of the descriptor is the dry insert key (#217)', () => {
-    const keys = [
-      BUNDLED_DESCRIPTOR.calendar.tables.events,
-      BUNDLED_DESCRIPTOR.todo.tables.tasks,
-      BUNDLED_DESCRIPTOR.todo.tables.groups,
-    ].map(t => t.fields?.rowId);
-    expect(keys).toEqual([ROW_ID, ROW_ID, ROW_ID]);
+    expect(live(tables[EVENTS])).toEqual([native]);
   });
 
   test('a tablet-made row is an edit, and a relink gives it the service id', async () => {

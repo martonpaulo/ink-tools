@@ -47,13 +47,17 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   an error on the screen, never a silent reset.
 - **Device probe** ([#43](https://github.com/martonpaulo/ink-tools/issues/43)): `BridgeProviders`, a Java module beside `BridgeFiles`, is sn-adapter's
   `DeviceReader` over ContentResolver (`src/deviceReader.ts`); every URI and column comes from the
-  descriptor. Settings runs `probeAll` once per open, and a module it does not clear stays blocked
-  with the reason. Not yet run on the tablet.
+  descriptor. The probe never inserts: its test write is an update selected by `id = -1`, which
+  matches no row; a refused update is «cannot write». Only a sync pass probes, only the modules
+  that are on, and a module it clears is not probed again while the host lives; the load pass and a
+  Settings open never probe, and Settings shows the last pass's answer. A module it does not clear
+  stays blocked with the reason.
 - **Sync runner** ([#28](https://github.com/martonpaulo/ink-tools/issues/28), [#44](https://github.com/martonpaulo/ink-tools/issues/44)): `src/sync.ts` runs sync-core's `runBridgeSync`, one
   pass when PluginHost loads Bridge (`index.js`), one every `AUTO_SYNC_MINUTES` while the host
-  lives, and the same runner behind Settings' «Sync now». Each pass probes first. The Calendar and
-  To-Do are written through `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`,
-  `src/deviceStores.ts`). The Google OAuth client is its own file,
+  lives, and the same runner behind Settings' «Sync now». The load pass moves the sign-in drops in
+  and runs nothing, since it never probes. The Calendar and To-Do are written through
+  `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`, `src/deviceStores.ts`);
+  a Calendar event is removed by `status='cancelled'`, never a delete, which that provider ignores. The Google OAuth client is its own file,
   `google-client.secret`, from `inkctl secret set google-client` ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
   A module's first pass only pulls: tablet-only items stay local unless its «Send tablet-only items»
   switch is on ([#207](https://github.com/martonpaulo/ink-tools/issues/207), an assumption the owner may override).

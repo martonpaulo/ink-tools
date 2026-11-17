@@ -43,7 +43,10 @@ export interface ContentRows {
   insert(uri: string, row: Row): Promise<string>;
   /** The number of rows changed. */
   update(uri: string, where: Row, row: Row): Promise<number>;
-  /** The number of rows deleted. */
+  /**
+   * The number of rows deleted. Never called on the Calendar: its provider's delete is `return 0;`,
+   * so a Calendar row is removed by marking it cancelled, as the native app does (#43, #213).
+   */
   remove(uri: string, where: Row): Promise<number>;
 }
 
@@ -57,12 +60,6 @@ function one(count: number, what: string): void {
   }
 }
 
-/**
- * The row key the native dry insert deletes its test row by (#43), which takes no descriptor. Every
- * store write takes the key from the descriptor's `rowId` field instead; `deviceStores.test.ts`
- * fails when this copy differs from one of them (#217).
- */
-export const ROW_ID = 'id';
 const LIST_ID = 'taskListId';
 const DELETED = 'deleted';
 /** `task_group_table` columns a new list fills; the descriptor maps no field for them yet. */
@@ -128,20 +125,23 @@ export function createDeviceCalendar(
   const col = (field: string) => column(d.calendar, 'events', field);
   const rowId = col('rowId');
   const ours = () => rows.query(uri, {[col('tag')]: d.calendar.rules.writeTag});
+  const text = (value: unknown) => (value === null || value === undefined ? '' : String(value));
+  /** A removed event: the provider cannot delete its row, so it stays in the table, cancelled (#43). */
+  const cancelled = (r: Row) => text(r[col('status')]) === d.calendar.rules.cancelledStatus;
+  const isRowOf = (r: Row, calendarId: string, eventId: string) =>
+    text(r[col('tag')]) === d.calendar.rules.writeTag &&
+    text(r[col('calendarId')]) === calendarId &&
+    text(r[col('eventId')]) === eventId;
   let warnings: string[] = [];
   /**
-   * Our rows of a pulled event, newest first (#213). The rows are matched here, not by the
+   * Our live rows of a pulled event, newest first (#213). The rows are matched here, not by the
    * provider's selection: on the tablet a Calendar delete selected by `title` removed 0 rows (#43),
-   * so a write selects only the row id, as `relink` and the To-Do store do. No row is an error,
-   * never a write.
+   * so a write selects only the row id, as `relink` and the To-Do store do. A cancelled row is a
+   * removed event and is never written again but by `create`. No row is an error, never a write.
    */
   const rowsOf = async (calendarId: string, eventId: string): Promise<Row[]> => {
-    const text = (value: unknown) => (value === null || value === undefined ? '' : String(value));
     const hits = (await ours()).filter(
-      r =>
-        text(r[col('tag')]) === d.calendar.rules.writeTag &&
-        text(r[col('calendarId')]) === calendarId &&
-        text(r[col('eventId')]) === eventId,
+      r => isRowOf(r, calendarId, eventId) && !cancelled(r),
     );
     if (!hits.length) {
       throw new Error(`event ${eventId} has 0 tablet rows`);
@@ -149,12 +149,21 @@ export function createDeviceCalendar(
     return hits.sort(newestFirst(rowId));
   };
   /**
-   * Removes each row by its id. Earlier failures of #43 could leave two rows of one event (#218):
-   * both are Account Sync's copies of one source event, so the extra ones go, with a warning.
+   * Removes each row by its id, as the native app removes an event: `status` set to cancelled and a
+   * new modified time, never a delete, which the provider ignores (`return 0;`, #43, #213). Earlier
+   * failures of #43 could leave two rows of one event (#218): both are Account Sync's copies of one
+   * source event, so the extra ones go, with a warning.
    */
   const removeRows = async (list: Row[], what: string) => {
     for (const r of list) {
-      one(await rows.remove(uri, {[rowId]: r[rowId]}), what);
+      one(
+        await rows.update(
+          uri,
+          {[rowId]: r[rowId]},
+          {[col('status')]: d.calendar.rules.cancelledStatus, [col('modified')]: now()},
+        ),
+        what,
+      );
     }
   };
   return {
@@ -167,8 +176,9 @@ export function createDeviceCalendar(
       const events: CalendarEvent[] = [];
       for (const row of await ours()) {
         const id = row[col('eventId')];
-        // A row made on the tablet has no eventId yet: it is an edit, not a pulled event.
-        if (id === null || id === undefined || id === '') {
+        // A row made on the tablet has no eventId yet: it is an edit, not a pulled event. A cancelled
+        // row is a removed event that stays in the table (#43).
+        if (id === null || id === undefined || id === '' || cancelled(row)) {
           continue;
         }
         const event = rowToEvent(d, row);
@@ -184,7 +194,17 @@ export function createDeviceCalendar(
         .filter(edit => overlaps(edit.event, window));
     },
     async create(event) {
-      await rows.insert(uri, eventToRow(d, event, now()));
+      const row = eventToRow(d, event, now());
+      // An event removed earlier and back at its source takes its cancelled row again, so the table
+      // does not gain a row each time an event comes back (#43).
+      const [old] = (await ours())
+        .filter(r => isRowOf(r, event.calendarId, event.eventId) && cancelled(r))
+        .sort(newestFirst(rowId));
+      if (old) {
+        one(await rows.update(uri, {[rowId]: old[rowId]}, row), `create ${event.eventId}`);
+      } else {
+        await rows.insert(uri, row);
+      }
     },
     async update(event) {
       const [newest, ...older] = await rowsOf(event.calendarId, event.eventId);
