@@ -1,6 +1,6 @@
 {
   "name": "Probe",
-  "version": "0.0.2-beta.2",
+  "version": "0.0.2-beta.3",
   "description": "Developer-only on-device probe: edit src/probe.ts, build, install, read logcat.",
   "private": true,
   "scripts": {
