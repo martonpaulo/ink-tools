@@ -441,9 +441,6 @@ describe('silhouettes and frames (#65)', () => {
 });
 
 it('does not rank a photo below a drawing under Photos too (#70)', () => {
-  const {PHOTO_SCORERS} = jest.requireActual(
-    '@ink-tools/picture-search/rank',
-  ) as typeof import('@ink-tools/picture-search/rank');
   const photo: SearchResult = {
     id: 'commons:Apple photo.jpg',
     source: 'commons',
