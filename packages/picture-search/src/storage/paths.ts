@@ -64,8 +64,8 @@ export function logsDir(externalRoot = SHARED_ROOT): string {
 }
 
 /**
- * `<root>/<folder>/settings.json`, the person's settings (#68): in shared storage, so a
- * plugin update keeps them, written in place (#62).
+ * `<root>/<folder>/settings.json`, where builds before #22 kept the person's settings (#68): read
+ * once to move them into the private folder, and the fallback when there is none (`settingsFile`).
  */
 export function settingsPath(externalRoot = SHARED_ROOT): string {
   return pluginPath("settings.json", externalRoot);

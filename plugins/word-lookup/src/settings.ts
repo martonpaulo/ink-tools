@@ -1,6 +1,6 @@
 /**
- * Lookup's Settings (#111, #142): one switch per lasso button, kept in `MyStyle/Lookup/settings.json`
- * by picture-search's settings store, so a switch survives a restart. The picture modes start on,
+ * Lookup's Settings (#111, #142): one switch per lasso button, kept in the private folder's
+ * `settings.json` by picture-search's settings store (#22), so a switch survives a restart. The picture modes start on,
  * as the #111 Plan says, and «Choose Image» with them (#156); «Insert Definition» starts off, as
  * before (#115). Each translation direction has its own switch and button (#174, owner 2026-11-16:
  * no automatic direction); the owner's three directions start on, every other one off.

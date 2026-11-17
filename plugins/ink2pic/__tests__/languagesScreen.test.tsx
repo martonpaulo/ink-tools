@@ -253,7 +253,8 @@ describe('the Settings entry (#68)', () => {
     );
     await settle();
     expect(texts(tree)).toContain('2. English');
-    expect(JSON.parse(files[settingsPath()]).languages).toEqual([
+    // Moved once into the private folder, and saved there (#22).
+    expect(JSON.parse(files['/p/settings.json']).languages).toEqual([
       'zh',
       'en',
       'es',
@@ -285,7 +286,8 @@ describe('the Settings entry (#68)', () => {
     });
     await settle();
     expect(texts(tree)).toContain('1. English');
-    expect(JSON.parse(files[settingsPath()]).languages).toEqual([
+    // Moved once into the private folder, and saved there (#22).
+    expect(JSON.parse(files['/p/settings.json']).languages).toEqual([
       'en',
       'zh',
       'es',
