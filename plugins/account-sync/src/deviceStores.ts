@@ -10,10 +10,13 @@
  */
 import {
   BUNDLED_DESCRIPTOR,
+  calendarLink,
   column,
   contentUri,
   Descriptor,
   eventToRow,
+  legacyRowRepair,
+  readCalendarLink,
   Row,
   rowToDeviceEdit,
   rowToEvent,
@@ -128,10 +131,10 @@ export function createDeviceCalendar(
   const text = (value: unknown) => (value === null || value === undefined ? '' : String(value));
   /** A removed event: the provider cannot delete its row, so it stays in the table, cancelled (#43). */
   const cancelled = (r: Row) => text(r[col('status')]) === d.calendar.rules.cancelledStatus;
+  /** A pulled event's row: its link sits in `calendarId`, and its `eventId` is NULL (#28). */
   const isRowOf = (r: Row, calendarId: string, eventId: string) =>
     text(r[col('tag')]) === d.calendar.rules.writeTag &&
-    text(r[col('calendarId')]) === calendarId &&
-    text(r[col('eventId')]) === eventId;
+    text(r[col('calendarId')]) === calendarLink(d, {calendarId, eventId});
   let warnings: string[] = [];
   /**
    * Our live rows of a pulled event, newest first (#213). The rows are matched here, not by the
@@ -172,13 +175,27 @@ export function createDeviceCalendar(
       warnings = [];
       return out;
     },
+    async repair() {
+      // Rows of beta 23 and older kept the Google id in `eventId`, which hides them in the Calendar
+      // app (#28): each one is updated in place by its row id, cancelled rows too, so an event that
+      // comes back takes its old row again. No row is inserted or deleted.
+      let repaired = 0;
+      for (const r of await ours()) {
+        const values = legacyRowRepair(d, r);
+        if (!values) {
+          continue;
+        }
+        one(await rows.update(uri, {[rowId]: r[rowId]}, values), `repair row ${text(r[rowId])}`);
+        repaired++;
+      }
+      return repaired;
+    },
     async listOurs(window) {
       const events: CalendarEvent[] = [];
       for (const row of await ours()) {
-        const id = row[col('eventId')];
-        // A row made on the tablet has no eventId yet: it is an edit, not a pulled event. A cancelled
+        // A row made on the tablet has no link yet: it is an edit, not a pulled event. A cancelled
         // row is a removed event that stays in the table (#43).
-        if (id === null || id === undefined || id === '' || cancelled(row)) {
+        if (!readCalendarLink(d, row[col('calendarId')]) || cancelled(row)) {
           continue;
         }
         const event = rowToEvent(d, row);
@@ -233,8 +250,7 @@ export function createDeviceCalendar(
     async relink(from, to) {
       // The tablet-made row is found by its content, as it has no id of ours yet (#65).
       const row = (await ours()).find(r => {
-        const id = r[col('eventId')];
-        if (id !== null && id !== undefined && id !== '') {
+        if (readCalendarLink(d, r[col('calendarId')])) {
           return false;
         }
         const e = rowToDeviceEdit(d, r).event;
@@ -249,9 +265,10 @@ export function createDeviceCalendar(
         await rows.update(
           uri,
           {[rowId]: row[rowId]},
+          // The link goes in `calendarId` and `eventId` stays NULL, as on a pulled row (#28).
           {
-            [col('calendarId')]: to.calendarId,
-            [col('eventId')]: to.eventId,
+            [col('calendarId')]: calendarLink(d, to),
+            [col('eventId')]: null,
           },
         ),
         `relink ${from.title}`,

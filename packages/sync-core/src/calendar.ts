@@ -41,6 +41,11 @@ export interface DeviceCalendarStore {
   create(event: CalendarEvent): Promise<void>;
   update(event: CalendarEvent): Promise<void>;
   remove(calendarId: string, eventId: string): Promise<void>;
+  /**
+   * Give rows an older build wrote the shape the tablet's app shows, in place; answers how many rows
+   * changed (#28). Runs before each pass, so the pass reads every row in its current shape.
+   */
+  repair?(): Promise<number>;
 }
 
 export interface CalendarSyncResult {

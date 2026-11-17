@@ -244,3 +244,21 @@ test('a to-do module that throws gets a failed run and keeps its links (#44)', a
   expect(runs.todo).toEqual({module: 'todo', at: 7, counts: {added: 0, changed: 0, removed: 0}, errors: ['token refused'], warnings: []});
   expect(state.links).toBe(links);
 });
+
+test('a calendar pass repairs the older tablet rows before it reads any row, and a failed repair stops it (#28)', async () => {
+  const t = tablet();
+  const google: CalendarSource = {id: 'google', provider: provider('g1', [ev()]), writer: writer(t.log)};
+  const repaired = {...t.store, repair: async () => { t.log.push('repair'); return 2; }};
+  const done = await runCalendarModule({sources: [google], store: repaired, window: W}, {baseline: []}, () => 1000);
+  expect(t.log).toEqual(['repair', 'create Talk']);
+  expect(done.run.warnings).toEqual(['gave 2 older tablet row(s) the shape the Calendar app shows']);
+
+  const broken = tablet();
+  const failing = {...broken.store, repair: async () => { throw new Error('update refused'); }};
+  const state = {baseline: [ev()], lastSync: 500};
+  const stopped = await runCalendarModule({sources: [google], store: failing, window: W}, state, () => 2000);
+  expect(stopped.run.notRun).toBe(true);
+  expect(stopped.run.errors).toEqual(['repair tablet rows: update refused']);
+  expect(stopped.state).toBe(state);
+  expect(broken.log).toEqual([]);
+});

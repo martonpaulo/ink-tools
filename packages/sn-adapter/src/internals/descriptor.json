@@ -12,7 +12,7 @@
       },
       "config": {"path": "config_info", "columns": []}
     },
-    "rules": {"writeTag": "task", "cancelledStatus": "cancelled", "writeStatus": "confirmed", "writeState": 0,
+    "rules": {"writeTag": "task", "cancelledStatus": "cancelled", "writeStatus": "confirmed", "writeState": 0, "linkPrefix": "inktools:",
       "requiredOnInsert": ["calendarId", "tag", "state", "readOnly", "isAllDay", "title", "startTime", "endTime", "lastModifiedTime", "status"]}
   },
   "todo": {

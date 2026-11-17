@@ -148,8 +148,9 @@ test('Sync now runs Google into the Calendar and Todoist into the To-Do, with on
   const inserted = table.inserted;
   expect(inserted.find(r => r.tag)).toMatchObject({
     tag: 'task',
-    calendarId: 'work',
-    eventId: expect.stringContaining('e1'),
+    // The link sits in calendarId and eventId stays NULL, the shape the Calendar app shows (#28).
+    calendarId: expect.stringMatching(/^inktools:work:.*e1/),
+    eventId: null,
     title: 'Standup',
   });
   expect(inserted.find(r => !r.tag)).toMatchObject({

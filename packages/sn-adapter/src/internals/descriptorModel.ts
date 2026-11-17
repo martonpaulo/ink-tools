@@ -34,6 +34,13 @@ export interface CalendarRules {
   writeStatus: string;
   writeState: number;
   /**
+   * The start of the `calendarId` text that links a pulled row to its source event (#28). The row's
+   * `eventId` stays NULL: the Calendar app showed test rows with no `eventId` and hid the 217 pulled
+   * rows that had one, with every other column of the same shape (an inference from the device
+   * rounds of #43 and #28, not read in the app's code).
+   */
+  linkPrefix: string;
+  /**
    * Device columns every inserted row fills: the provider's NOT NULL columns. `tag` and
    * `lastModifiedTime` are measured refusals; the others are every column a native row fills, as a
    * null there was never seen (#43).
@@ -87,7 +94,7 @@ export interface Descriptor {
 
 type RuleType = 'string' | 'boolean' | 'number' | 'string[]' | 'number-map';
 const RULE_TYPES: Record<Capability, Record<string, RuleType>> = {
-  calendar: {writeTag: 'string', cancelledStatus: 'string', writeStatus: 'string', writeState: 'number', requiredOnInsert: 'string[]'},
+  calendar: {writeTag: 'string', cancelledStatus: 'string', writeStatus: 'string', writeState: 'number', linkPrefix: 'string', requiredOnInsert: 'string[]'},
   todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', allowNoList: 'boolean', writeHasSync: 'number', insertDefaults: 'number-map', insertNow: 'string[]', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
   digest: {insertPath: 'string', countByIdentifierPath: 'string', updateByIdentifierPath: 'string', updateIdentifierKey: 'string', identifierKey: 'string', sourceTypeSelfAdd: 'number', contentMaxLength: 'number', commentMaxLength: 'number'},
 };

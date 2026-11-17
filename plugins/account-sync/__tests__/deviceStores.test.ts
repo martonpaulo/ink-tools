@@ -68,7 +68,7 @@ const event = {
 const window = {from: NOW - 24 * HOUR, to: NOW + 24 * HOUR};
 
 describe('the Calendar store', () => {
-  test('writes tag=task rows with calendarId and eventId, and lists only ours in the window', async () => {
+  test('writes tag=task rows with the link in calendarId and eventId NULL, and lists only ours in the window (#28)', async () => {
     const {tables, rows} = provider({
       [EVENTS]: [
         {
@@ -90,12 +90,20 @@ describe('the Calendar store', () => {
       start: NOW + 72 * HOUR,
       end: NOW + 73 * HOUR,
     });
-    expect(tables[EVENTS][1]).toMatchObject({
+    expect(tables[EVENTS][1]).toEqual({
+      id: '100',
+      calendarId: 'inktools:work:g1',
+      eventId: null,
       tag: 'task',
-      calendarId: 'work',
-      eventId: 'g1',
+      state: 0,
+      status: 'confirmed',
+      readOnly: 1,
+      isAllDay: 0,
       title: 'Standup',
+      content: '',
       startTime: NOW,
+      endTime: NOW + HOUR,
+      lastModifiedTime: NOW,
     });
     expect((await cal.listOurs(window)).map(e => e.eventId)).toEqual(['g1']);
   });
@@ -226,10 +234,75 @@ describe('the Calendar store', () => {
       event: {eventId: '', title: 'Lunch'},
     });
     await cal.relink(edit.event, {calendarId: 'work', eventId: 'g9'});
-    expect(tables[EVENTS][0]).toMatchObject({id: '7', eventId: 'g9'});
+    expect(tables[EVENTS][0]).toMatchObject({id: '7', calendarId: 'inktools:work:g9', eventId: null});
+    expect((await cal.listOurs(window)).map(e => [e.calendarId, e.eventId])).toEqual([['work', 'g9']]);
     await expect(
       cal.relink(edit.event, {calendarId: 'work', eventId: 'g9'}),
     ).rejects.toThrow('waiting for its id');
+  });
+
+  /** A row as Account Sync beta 23 wrote it: the Google ids in calendarId and eventId (#28). */
+  const beta23 = (id: string, eventId: string, o: Row = {}): Row => ({
+    id,
+    calendarId: 'work',
+    eventId,
+    tag: 'task',
+    state: 0,
+    status: 'confirmed',
+    readOnly: 1,
+    isAllDay: 0,
+    title: 'Standup',
+    content: '',
+    startTime: NOW,
+    endTime: NOW + HOUR,
+    lastModifiedTime: NOW - HOUR,
+    ...o,
+  });
+
+  test('the repair gives the rows of beta 23 their visible shape in place, by row id, and the pull then adds none (#28)', async () => {
+    const native = {id: '1', tag: 'event', calendarId: 'work', eventId: 'n1', title: 'Native'};
+    const local = {id: '2', tag: 'task', calendarId: 'Home', eventId: null, title: 'Lunch', startTime: NOW, endTime: NOW + HOUR};
+    const {tables, rows, calendarDeletes} = provider({
+      [EVENTS]: [native, local, beta23('50', 'g1'), beta23('51', 'g2', {status: 'cancelled'})],
+    });
+    const inserts: Row[] = [];
+    const writes: Row[] = [];
+    const watched: ContentRows = {
+      ...rows,
+      insert: async (uri, row) => {
+        inserts.push(row);
+        return rows.insert(uri, row);
+      },
+      update: async (uri, where, row) => {
+        writes.push(where);
+        return rows.update(uri, where, row);
+      },
+    };
+    const cal = createDeviceCalendar(watched, () => NOW);
+    // Before the repair a beta 23 row is not a pulled event, so the pull would add a second row.
+    expect(await cal.listOurs(window)).toEqual([]);
+    expect(await cal.repair!()).toBe(2);
+    expect(writes).toEqual([{id: '50'}, {id: '51'}]);
+    expect(tables[EVENTS].map(r => [r.id, r.calendarId, r.eventId, r.status])).toEqual([
+      ['1', 'work', 'n1', undefined],
+      ['2', 'Home', null, undefined],
+      ['50', 'inktools:work:g1', null, 'confirmed'],
+      ['51', 'inktools:work:g2', null, 'cancelled'],
+    ]);
+    expect((await cal.listOurs(window)).map(e => [e.calendarId, e.eventId])).toEqual([['work', 'g1']]);
+    // A second repair finds nothing; an event back at its source takes its cancelled row again.
+    expect(await cal.repair!()).toBe(0);
+    await cal.create({...event, eventId: 'g2'});
+    expect(inserts).toEqual([]);
+    expect(calendarDeletes).toEqual([]);
+    expect(tables[EVENTS]).toHaveLength(4);
+  });
+
+  test('«Remove what Account Sync wrote» repairs first, so it finds the rows of beta 23 too (#28)', async () => {
+    const {tables, rows} = provider({[EVENTS]: [beta23('50', 'g1')]});
+    const cal = createDeviceCalendar(rows, () => NOW);
+    expect(await removeCalendarRows(cal)).toEqual({removed: 1, errors: []});
+    expect(live(tables[EVENTS])).toEqual([]);
   });
 });
 

@@ -71,6 +71,17 @@ export async function runCalendarModule(
 ): Promise<{run: ModuleRun; state: CalendarState}> {
   const total: CalendarSyncResult = {created: 0, updated: 0, removed: 0, errors: []};
   const warnings: string[] = [];
+  if (m.store.repair) {
+    // A failed repair stops the pass: an old row it could not fix would read as no pulled event, and
+    // the pull would add a second row for it (#28).
+    try {
+      const repaired = await m.store.repair();
+      if (repaired) warnings.push(`gave ${repaired} older tablet row(s) the shape the Calendar app shows`);
+    } catch (e) {
+      total.errors.push(`repair tablet rows: ${message(e)}`);
+      return {run: {...calendarRun(now(), total, [...warnings, ...(m.takeWarnings?.() ?? [])]), notRun: true}, state};
+    }
+  }
   const owner = new Map<string, CalendarSource>();
   const readable: CalendarSource[] = [];
   for (const source of m.sources) {
