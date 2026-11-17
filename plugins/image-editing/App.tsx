@@ -32,7 +32,7 @@ import {
   runEditorEdit,
   stylesDone,
 } from './src/editor';
-import {Editor} from './src/Editor';
+import {Editor} from './src/EditorView';
 import {askFilePermissions} from './src/permissions';
 import {working} from './src/working';
 

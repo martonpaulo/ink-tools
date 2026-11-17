@@ -7,7 +7,7 @@ import App from '../App';
 import {defaultSettings, EDITS, setEdit, STYLES} from '../src/edits';
 import * as editor from '../src/editor';
 import {EditorState} from '../src/editor';
-import {Editor} from '../src/Editor';
+import {Editor} from '../src/EditorView';
 
 const READY: EditorState = {
   phase: 'ready',

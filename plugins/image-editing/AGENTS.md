@@ -7,7 +7,7 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 **Built, device round pending** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)): lasso one picture on the page and press
 **Image Editing**, the plugin's one lasso button ([#226](https://github.com/martonpaulo/ink-tools/issues/226), `src/buttons.ts`); its full view,
-the editor (`src/editor.ts`, `src/Editor.tsx`), shows the picture and every edit switched on in
+the editor (`src/editor.ts`, `src/EditorView.tsx`), shows the picture and every edit switched on in
 Settings as a button: **Enhance**, **Lighter**, **Darker**, **Undo**, **Restore original**,
 **Rotate 90°**, **Mirror**, **Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)),
 **Remove background**, **Make sticker** ([#134](https://github.com/martonpaulo/ink-tools/issues/134)) and **Document** ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)). A tap
