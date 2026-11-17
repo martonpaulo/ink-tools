@@ -1339,6 +1339,75 @@ public final class Retouch {
     }
   }
 
+  /**
+   * One log line about an edit's input picture (#134, the device-only background failure): its
+   * size, how many pixels are clear, partly clear and opaque, the gray (the mean of the three
+   * channels) of the opaque pixels as min, median and max, and the mean colour of the clear ones,
+   * so a transparent ground read as black or white shows. Never a pixel's position or content.
+   */
+  public static String inputStats(Picture picture) {
+    int clear = 0;
+    int partial = 0;
+    long[] clearSum = new long[3];
+    int[] grays = new int[MAX + 1];
+    int opaque = 0;
+    for (int argb : picture.argb) {
+      int alpha = argb >>> 24;
+      int r = (argb >> 16) & MAX;
+      int g = (argb >> 8) & MAX;
+      int b = argb & MAX;
+      if (alpha == 0) {
+        clear++;
+        clearSum[0] += r;
+        clearSum[1] += g;
+        clearSum[2] += b;
+      } else if (alpha < MAX) {
+        partial++;
+      } else {
+        opaque++;
+        grays[(r + g + b) / 3]++;
+      }
+    }
+    StringBuilder line = new StringBuilder()
+        .append(picture.width).append('x').append(picture.height)
+        .append(" alpha clear ").append(clear)
+        .append(" partial ").append(partial)
+        .append(" opaque ").append(opaque);
+    if (opaque > 0) {
+      line.append(" gray ").append(rank(grays, 0)).append('/')
+          .append(rank(grays, (opaque - 1) / 2)).append('/').append(rank(grays, opaque - 1));
+    }
+    if (clear > 0) {
+      line.append(" clear rgb ").append(clearSum[0] / clear).append(',')
+          .append(clearSum[1] / clear).append(',').append(clearSum[2] / clear);
+    }
+    return line.toString();
+  }
+
+  /** The gray at 0-based rank `k` of a histogram. */
+  private static int rank(int[] histogram, int k) {
+    int seen = 0;
+    for (int g = 0; g < histogram.length; g++) {
+      seen += histogram[g];
+      if (seen > k) {
+        return g;
+      }
+    }
+    return MAX;
+  }
+
+  /**
+   * A background mask as a picture to look at (#134 debug): black where the object is kept, white
+   * where the background is cleared.
+   */
+  public static Picture maskPicture(boolean[] background, int width, int height) {
+    int[] out = new int[width * height];
+    for (int i = 0; i < out.length; i++) {
+      out[i] = background[i] ? WHITE : OPAQUE;
+    }
+    return new Picture(out, width, height);
+  }
+
   private static int grayPixel(int gray) {
     return OPAQUE | (gray << 16) | (gray << 8) | gray;
   }

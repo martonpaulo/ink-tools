@@ -2,6 +2,7 @@ package com.retouch.image;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -30,6 +31,13 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
   private static final double NANOS_PER_MS = 1e6;
   /** One edit at a time, off the React Native thread. */
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
+  /** The log tag of the input line (#134); `inkctl logs --tag Retouch` reads it. */
+  private static final String TAG = "Retouch";
+  /**
+   * The folder the debug switch of Settings saves each edit's input and mask to, or null when it
+   * is off (#134). Per module, so it resets with the JavaScript settings when Retouch restarts.
+   */
+  private volatile String debugFolder;
 
   public RetouchModule(ReactApplicationContext context) {
     super(context);
@@ -71,6 +79,21 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     settle(promise, () -> run(
         edit, srcPath, beforePath, destPath, width, height, pageWidth, transparent, thick, null,
         null, null));
+  }
+
+  /**
+   * Turns the debug switch on with the folder to save to, or off with null or an empty path
+   * (#134). Resolves true once set.
+   */
+  @ReactMethod
+  public void setDebugFolder(String folder, Promise promise) {
+    try {
+      debugFolder =
+          folder == null || folder.isEmpty() ? null : SafePaths.checkPath(folder).getPath();
+      promise.resolve(true);
+    } catch (SafePaths.Refused refused) {
+      promise.reject(refused.code, refused.getMessage());
+    }
   }
 
   /**
@@ -159,7 +182,7 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     }
   }
 
-  private static WritableMap run(
+  private WritableMap run(
       String editName,
       String srcPath,
       String beforePath,
@@ -177,13 +200,33 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     Retouch.Edit edit = Retouch.Edit.of(editName);
     File source = SafePaths.checkPath(srcPath);
     File target = SafePaths.checkPath(destPath);
-    Retouch.Picture picture =
-        Retouch.cropCentre(decode(source), whole(width), whole(height));
+    Retouch.Picture preview = decode(source);
+    Retouch.Picture picture = Retouch.cropCentre(preview, whole(width), whole(height));
     if (beforePath != null && !beforePath.isEmpty()) {
       write(picture, SafePaths.checkPath(beforePath));
     }
     int[] size = Retouch.outputSize(edit, picture.width, picture.height, whole(pageWidth));
+    boolean cutout = edit == Retouch.Edit.BACKGROUND || edit == Retouch.Edit.STICKER;
+    if (cutout) {
+      // #134: the tablet clears an object the Mac keeps, so every cutout logs what it was given.
+      Log.i(TAG, "Retouch: " + editName + ": input preview " + preview.width + "x"
+          + preview.height + ", picture " + picture.width + "x" + picture.height + ", scaled to "
+          + size[0] + "x" + size[1] + "; " + Retouch.inputStats(picture));
+    }
     picture = scale(picture, size[0], size[1]);
+    String debug = debugFolder;
+    String stamp = editName + "-" + System.currentTimeMillis();
+    if (debug != null) {
+      // The exact preview the host wrote, and the picture the edit reads (#134 debug).
+      saveDebug(preview, debug, stamp + "-preview.png");
+      saveDebug(picture, debug, stamp + "-input.png");
+      if (cutout) {
+        Retouch.Picture copy =
+            new Retouch.Picture(picture.argb.clone(), picture.width, picture.height);
+        saveDebug(Retouch.maskPicture(Retouch.backgroundMask(copy), copy.width, copy.height),
+            debug, stamp + "-mask.png");
+      }
+    }
     // Trim moves the picture's top left by the margin it removes, so the page keeps it in place.
     // Crop (#132) does the same with the box drawn with the pen.
     int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : cropBox;
@@ -214,6 +257,16 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       result.putString("quad", Retouch.describeQuad(found[0]));
     }
     return result;
+  }
+
+  /** Writes one debug PNG; a failure is logged and never fails the edit (#134). */
+  private static void saveDebug(Retouch.Picture picture, String folder, String name) {
+    try {
+      write(picture, new File(folder, name));
+      Log.i(TAG, "Retouch: debug: saved " + name);
+    } catch (Exception error) {
+      Log.w(TAG, "Retouch: debug: cannot save " + name + ": " + error.getMessage());
+    }
   }
 
   /** A whole number at or above 0, such as a box's left edge. */

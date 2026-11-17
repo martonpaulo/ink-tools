@@ -45,6 +45,8 @@ public final class RetouchTest {
     eraseFillsALoopDrawnTwiceRound();
     eraseSurvivesTinyPicturesAndMarksOutside();
     eraseRefusesBadMarkEnds();
+    inputStatsCountAlphaAndGrays();
+    maskPictureIsBlackWhereKept();
     System.out.println("RetouchTest ok");
   }
 
@@ -739,6 +741,22 @@ public final class RetouchTest {
 
   private static int gray(int g) {
     return 0xFF000000 | (g << 16) | (g << 8) | g;
+  }
+
+  private static void inputStatsCountAlphaAndGrays() {
+    // Two clear black pixels, one half-clear, and opaque grays 10, 100 and 200.
+    int[] argb = {0x00000000, 0x00000000, 0x80FFFFFF, gray(10), gray(100), gray(200)};
+    String line = Retouch.inputStats(new Retouch.Picture(argb, 3, 2));
+    check(line.equals("3x2 alpha clear 2 partial 1 opaque 3 gray 10/100/200 clear rgb 0,0,0"),
+        "the stats name the size, the alpha counts, the grays and the clear colour: " + line);
+    String opaque = Retouch.inputStats(new Retouch.Picture(new int[] {WHITE}, 1, 1));
+    check(opaque.equals("1x1 alpha clear 0 partial 0 opaque 1 gray 255/255/255"),
+        "an opaque picture has no clear colour: " + opaque);
+  }
+
+  private static void maskPictureIsBlackWhereKept() {
+    Retouch.Picture mask = Retouch.maskPicture(new boolean[] {true, false}, 2, 1);
+    check(mask.argb[0] == WHITE && mask.argb[1] == gray(0), "cleared is white, kept is black");
   }
 
   private static void check(boolean condition, String what) {

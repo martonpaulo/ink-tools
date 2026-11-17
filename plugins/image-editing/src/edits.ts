@@ -99,6 +99,8 @@ export const STYLES: readonly StyleDefinition[] = STYLE_ORDER.map(id => ({
 export type RetouchSettings = {
   edits: Record<EditId, boolean>;
   styles: Record<StyleId, boolean>;
+  /** Saves each edit's input and mask as PNGs for the Mac to pull (#134); off by default. */
+  debug: boolean;
 };
 
 const allOn = <K extends string>(ids: readonly K[]) =>
@@ -108,6 +110,7 @@ const allOn = <K extends string>(ids: readonly K[]) =>
 export const defaultSettings: RetouchSettings = {
   edits: allOn(ORDER),
   styles: allOn(STYLE_ORDER),
+  debug: false,
 };
 
 export function setEdit(

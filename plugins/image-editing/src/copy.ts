@@ -79,4 +79,7 @@ export const copy = {
   /** Toasts that replace the «Loading…» strip (#103). */
   'working.failed': 'Image Editing stopped with an error.',
   'working.timeout': 'Image Editing is still working.',
+  /** The debug switch of Settings (#134). */
+  'settings.debug': 'Debug',
+  'settings.debugSave': 'Save edit input',
 } as const;
