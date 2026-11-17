@@ -205,6 +205,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   elements in 24 ms, 5 in 54 ms); a test page of 69 to 90 elements ran past a 300 ms budget every
   time [measured, 2026-11-16, Lookup 0.2.0 beta 4,
   [#152](https://github.com/martonpaulo/ink-tools/issues/152)].
+- Reading every element of a 540-stroke page at once (two bridge calls per stroke, all in flight)
+  crashed the Note app with SIGSEGV in 2 of 2 runs, while the same page read one element after the
+  other took under 3 s and did not crash [measured, 2026-11-17, Lookup 0.2.0 beta 21, firmware
+  `Chauvet.E103.2610191001.2559`, [#221](https://github.com/martonpaulo/ink-tools/issues/221)].
+  sn-adapter keeps at most `OCCUPIED_READS_IN_FLIGHT` (4) reads in flight [unverified on the device].
 - `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
   pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)].
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
