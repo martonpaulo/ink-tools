@@ -32,7 +32,7 @@ function rows(): ContentRows & {inserted: Row[]} {
     inserted,
     query: async uri =>
       uri.endsWith('task_group_table')
-        ? [{taskListId: 'inbox', deleted: 0}]
+        ? [{taskListId: 'inbox', title: 'Inbox', deleted: 0}]
         : [],
     insert: async (_uri, row) => {
       inserted.push(row);
@@ -85,10 +85,17 @@ function network() {
         ],
       });
     }
+    if (url.includes('/projects')) {
+      return answer({
+        results: [{id: 'p1', name: 'Inbox', inbox_project: true}],
+        next_cursor: null,
+      });
+    }
     return answer({
       results: [
         {
           id: 'r1',
+          project_id: 'p1',
           content: 'Buy milk',
           description: '',
           checked: false,

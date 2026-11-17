@@ -70,6 +70,15 @@ test('tasks on one side only are created on the other, and finished ones are not
   expect(out.errors).toEqual([]);
 });
 
+test('a pulled task reaches the tablet store with its service list (#212)', async () => {
+  const f = fakes([{...R('r1', c('stretch')), list: {name: 'Habits', inbox: false}}, R('r2', c('loose'))], []);
+  const lists: unknown[] = [];
+  const create = f.store.create;
+  f.store.create = async (x, list) => (lists.push(list), create(x, list));
+  await syncTasks(f.provider, f.store, []);
+  expect(lists).toEqual([{name: 'Habits', inbox: false}, undefined]);
+});
+
 test('a second pass over a synced pair changes nothing', async () => {
   const f = fakes([R('r1', c('a'))], [D('l1', c('a'))]);
   const out = await syncTasks(f.provider, f.store, [link('r1', 'l1', c('a'))]);
@@ -180,13 +189,34 @@ describe('todoist', () => {
       fetch: async (url, init) => {
         calls.push(`${init.method} ${url}`);
         expect(init.headers.Authorization).toBe('Bearer test-token');
-        const body = url.endsWith('/tasks') && init.method === 'GET' ? {results: [task], next_cursor: 'c2'} : url.includes('cursor=') ? {results: [{...task, id: '9'}]} : task;
+        const body = url.endsWith('/projects') ? {results: []} : url.endsWith('/tasks') && init.method === 'GET' ? {results: [task], next_cursor: 'c2'} : url.includes('cursor=') ? {results: [{...task, id: '9'}]} : task;
         return {ok: true, status: 200, json: async () => body, text: async () => ''};
       },
     });
     expect((await provider.list()).map(t => t.remoteId)).toEqual(['7', '9']);
     await provider.update('7', c('Buy milk', {completed: true}));
     expect(calls).toContain('POST https://api.todoist.com/api/v1/tasks/7/close');
+  });
+
+  test('names each task\'s project and marks the Inbox, so the tablet files it in that list (#212)', async () => {
+    const projects = [
+      {id: 'p1', name: 'Inbox', inbox_project: true},
+      {id: 'p2', name: 'Habits'},
+    ];
+    const tasks = [
+      {...task, id: '1', project_id: 'p1'},
+      {...task, id: '2', project_id: 'p2'},
+      {...task, id: '3', project_id: 'gone'},
+    ];
+    const provider = createTodoistProvider({
+      token: 't',
+      fetch: async url => {
+        const body = url.endsWith('/projects') ? {results: projects} : {results: tasks};
+        return {ok: true, status: 200, json: async () => body, text: async () => ''};
+      },
+    });
+    const listed = await provider.list();
+    expect(listed.map(t => t.list)).toEqual([{name: 'Inbox', inbox: true}, {name: 'Habits', inbox: false}, undefined]);
   });
 
   test('an id stays one path segment and a non-https base URL is refused (#81)', async () => {

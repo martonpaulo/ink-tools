@@ -134,7 +134,7 @@ describe('the Calendar store', () => {
 });
 
 describe('the To-Do store', () => {
-  const list = {id: '1', taskListId: 'inbox', deleted: 0};
+  const list = {id: '1', taskListId: 'inbox', title: 'Inbox', deleted: 0};
 
   test('creates a task in an existing list with hasSync=0, known by its row id', async () => {
     const {tables, rows} = provider({[GROUPS]: [list]});
@@ -158,11 +158,57 @@ describe('the To-Do store', () => {
     expect((await tasks.list()).map(t => t.localId)).toEqual(['100']);
   });
 
-  test('a tablet with no list refuses the create instead of writing a lost row', async () => {
-    const tasks = createDeviceTasks(provider().rows, () => NOW);
-    await expect(
-      tasks.create({title: 'x', detail: '', due: null, completed: false}),
-    ).rejects.toThrow('no To-Do list');
+  const open = (title: string) => ({
+    title,
+    detail: '',
+    due: null,
+    completed: false,
+  });
+
+  test('a tablet with no list gets one list per project and an Inbox list (#212)', async () => {
+    const {tables, rows} = provider();
+    const tasks = createDeviceTasks(rows, () => NOW);
+    await tasks.create(open('a'), {name: 'Inbox', inbox: true});
+    await tasks.create(open('b'));
+    await tasks.create(open('c'), {name: 'Habits', inbox: false});
+    await tasks.create(open('d'), {name: 'Habits', inbox: false});
+    expect(tables[GROUPS].map(g => g.title)).toEqual(['Inbox', 'Habits']);
+    expect(tables[GROUPS][0]).toMatchObject({deleted: 0, hasSync: 0, createTime: NOW});
+    const [inbox, habits] = tables[GROUPS].map(g => g.taskListId);
+    expect(inbox).toEqual(expect.any(String));
+    expect(inbox).not.toEqual(habits);
+    expect(tables[TASKS].map(t => [t.title, t.taskListId])).toEqual([
+      ['a', inbox],
+      ['b', inbox],
+      ['c', habits],
+      ['d', habits],
+    ]);
+  });
+
+  test('a project whose list exists reuses it; a deleted list of that name is not reused (#212)', async () => {
+    const {tables, rows} = provider({
+      [GROUPS]: [
+        {id: '1', taskListId: 'old', title: 'Mirror', deleted: 1, userId: 'u1'},
+        {id: '2', taskListId: 'habits', title: 'Habits', deleted: 0, userId: 'u1'},
+      ],
+    });
+    const tasks = createDeviceTasks(rows, () => NOW);
+    await tasks.create(open('stretch'), {name: 'Habits', inbox: false});
+    await tasks.create(open('look'), {name: 'Mirror', inbox: false});
+    expect(tables[GROUPS]).toHaveLength(3);
+    const mirror = tables[GROUPS][2];
+    expect(mirror).toMatchObject({title: 'Mirror', deleted: 0, userId: 'u1'});
+    expect(mirror.taskListId).not.toBe('old');
+    expect(tables[TASKS].map(t => t.taskListId)).toEqual(['habits', mirror.taskListId]);
+  });
+
+  test('a list the provider refuses fails the task instead of writing a lost row', async () => {
+    const {rows} = provider();
+    rows.insert = async () => {
+      throw new Error('the provider refused the row');
+    };
+    const tasks = createDeviceTasks(rows, () => NOW);
+    await expect(tasks.create(open('x'), {name: 'Habits', inbox: false})).rejects.toThrow('refused');
   });
 
   test('update and soft delete mark the row for the native sync', async () => {

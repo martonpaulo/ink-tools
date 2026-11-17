@@ -27,6 +27,7 @@ import type {
   DeviceTask,
   DeviceTaskStore,
   TaskContent,
+  TaskList,
   TimeWindow,
 } from '@supernote-tools/sync-core';
 
@@ -60,6 +61,31 @@ function one(count: number, what: string): void {
 const ROW_ID = 'id';
 const LIST_ID = 'taskListId';
 const DELETED = 'deleted';
+/** `task_group_table` columns a new list fills; the descriptor maps no field for them yet. */
+const LIST_TITLE = 'title';
+const LIST_USER = 'userId';
+const LIST_MODIFIED = 'lastModified';
+const LIST_CREATED = 'createTime';
+const LIST_HAS_SYNC = 'hasSync';
+/**
+ * The tablet list a service task with no list, or from the service's Inbox, goes into (#212). The
+ * provider refuses a task with no list (#63), so the Inbox is a list of its own.
+ */
+export const INBOX_LIST = 'Inbox';
+
+/** The tablet list name for a service list; the Inbox, or no list, is `INBOX_LIST`. */
+export function tabletListName(list: TaskList | undefined): string {
+  return !list || list.inbox || !list.name.trim() ? INBOX_LIST : list.name.trim();
+}
+
+/**
+ * A new list id. shortcut: the native app's own id format is not known, so this is a unique hex
+ * string of the same kind as a row key; switch to the app's format once a device round reads one.
+ */
+function newListId(now: number): string {
+  const random = Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, '0');
+  return `inktools${now.toString(16)}${random}`;
+}
 
 export function createDeviceCalendar(
   rows: ContentRows,
@@ -163,6 +189,34 @@ export function createDeviceTasks(
     }
     return row;
   };
+  /**
+   * The id of the open tablet list named `name`, created when missing (#212). A list is matched by
+   * its name, so a later pass reuses the one an earlier pass made. shortcut: two service lists with
+   * one name share a tablet list; key lists by the service id if the owner ever has such a pair.
+   */
+  const listFor = async (name: string, at: number): Promise<string> => {
+    const all = await rows.query(groups, {});
+    const open = all.find(
+      g => Number(g[DELETED]) !== 1 && String(g[LIST_TITLE] ?? '').trim() === name,
+    );
+    const known = open?.[LIST_ID];
+    if (known !== null && known !== undefined && known !== '') {
+      return String(known);
+    }
+    const id = newListId(at);
+    // A list keeps the account owner of the tablet's earlier lists, when one is left to read.
+    const user = all.map(g => g[LIST_USER]).find(u => u !== null && u !== undefined && u !== '');
+    await rows.insert(groups, {
+      [LIST_ID]: id,
+      [LIST_TITLE]: name,
+      ...(user === undefined ? {} : {[LIST_USER]: user}),
+      [LIST_MODIFIED]: at,
+      [LIST_CREATED]: at,
+      [DELETED]: 0,
+      [LIST_HAS_SYNC]: d.todo.rules.writeHasSync,
+    });
+    return id;
+  };
   const saved = (localId: string, c: TaskContent, at: number): DeviceTask => ({
     localId,
     title: c.title,
@@ -176,24 +230,13 @@ export function createDeviceTasks(
     async list() {
       return (await rows.query(tasks, {})).map(row => rowToTodoTask(d, row));
     },
-    async create(c) {
-      const lists = (await rows.query(groups, {[DELETED]: 0}))
-        .map(g => g[LIST_ID])
-        .filter(
-          (id): id is string | number =>
-            id !== null && id !== undefined && id !== '',
-        )
-        .map(String);
-      if (!lists.length) {
-        throw new Error('the tablet has no To-Do list to add a task to');
-      }
+    async create(c, list) {
       const at = now();
-      // shortcut: a new task goes into the first list the provider returns; a list setting comes
-      // when the owner asks for one.
+      const listId = await listFor(tabletListName(list), at);
       const row = toTodoInsert(
         d,
-        {...todoTaskToRow(d, c, at), [col('listId')]: lists[0]},
-        {existingListIds: lists},
+        {...todoTaskToRow(d, c, at), [col('listId')]: listId},
+        {existingListIds: [listId]},
       );
       // shortcut: with no taskId written, the task is known by its row id, which `rowToTodoTask`
       // reads when taskId is empty; if the native sync later writes a taskId, the link is lost and
