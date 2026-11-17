@@ -68,6 +68,13 @@ public final class Retouch {
   public static final int ADAPTIVE_DARKER = 15;
   /** A gray below this is ink whatever its window, so a large dark area stays dark. */
   public static final int ADAPTIVE_BLACK = 48;
+  /**
+   * Background removal's surface flood (#134): the flood follows a lit or shadowed ground from the
+   * edge, so the gray patches near the frame and a soft shadow are cleared with it, while the
+   * object's edge, a larger step, stops it.
+   */
+  public static final int BACKGROUND_STEP = 10;
+  public static final int BACKGROUND_DRIFT = 72;
 
   private static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
@@ -867,13 +874,12 @@ public final class Retouch {
   }
 
   /**
-   * The border-connected background (#134): every pixel reachable from the four borders through
-   * pixels {@link #isMargin} judges near white or near clear ({@link #groundMask} with no drift).
-   * An object that reaches a border blocks the flood, so it is kept; a near-white hole inside the
-   * object is never reached, so it is kept too.
+   * The border-connected background (#134): {@link #groundMask} with near white always flooded, so
+   * a light ground, its gradient and a soft shadow go, while an object that reaches a border blocks
+   * the flood and is kept, and a hole inside the object is never reached, so it is kept too.
    */
   public static boolean[] backgroundMask(Picture picture) {
-    return groundMask(picture, 0, -1, true);
+    return groundMask(picture, BACKGROUND_STEP, BACKGROUND_DRIFT, true);
   }
 
   /**

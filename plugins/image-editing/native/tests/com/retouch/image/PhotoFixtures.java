@@ -11,7 +11,7 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 
 /**
- * Synthetic phone photos for the JVM tests (#137): no real photo is committed, so each one
+ * Synthetic phone photos for the JVM tests (#137, #134): no real photo is committed, so each one
  * is drawn here from a fixed seed, with the faults the device round saw, and sent through a JPEG
  * round trip so the edges and the noise are a camera's, not a drawing's.
  */
@@ -93,6 +93,81 @@ final class PhotoFixtures {
     return u >= inset && v >= inset && u < PAGE_W - inset && v < PAGE_H - inset;
   }
 
+  /**
+   * A red apple with a stem on a light, uneven table (#134): the table darkens towards the top
+   * right corner, where beta 8 left gray patches, and the apple casts a soft shadow under it.
+   */
+  static Retouch.Picture apple() {
+    Random noise = new Random(134);
+    int[] argb = new int[APPLE_W * APPLE_H];
+    for (int y = 0; y < APPLE_H; y++) {
+      for (int x = 0; x < APPLE_W; x++) {
+        double r = 0;
+        double g = 0;
+        double b = 0;
+        for (int sy = 0; sy < 3; sy++) {
+          for (int sx = 0; sx < 3; sx++) {
+            double px = x + (sx + 0.5) / 3;
+            double py = y + (sy + 0.5) / 3;
+            int[] c = appleScene(px, py);
+            r += c[0];
+            g += c[1];
+            b += c[2];
+          }
+        }
+        double n = noise.nextGaussian() * 3;
+        argb[y * APPLE_W + x] = rgb((int) Math.round(r / 9 + n), (int) Math.round(g / 9 + n),
+            (int) Math.round(b / 9 + n));
+      }
+    }
+    return jpeg(new Retouch.Picture(argb, APPLE_W, APPLE_H));
+  }
+
+  static final int APPLE_W = 480;
+  static final int APPLE_H = 435;
+  static final double APPLE_X = 240;
+  static final double APPLE_Y = 195;
+  static final double APPLE_R = 120;
+  /** The shadow's centre and radii, under the apple. */
+  static final double SHADOW_X = 255;
+  static final double SHADOW_Y = 325;
+  static final double SHADOW_RX = 170;
+  static final double SHADOW_RY = 45;
+
+  /** Whether a photo point is on the apple or its stem. */
+  static boolean onApple(double x, double y) {
+    double dx = x - APPLE_X;
+    double dy = y - APPLE_Y;
+    boolean stem = Math.abs(x - APPLE_X) < 6 && y > APPLE_Y - APPLE_R - 25 && y < APPLE_Y - APPLE_R + 5;
+    return dx * dx + dy * dy < APPLE_R * APPLE_R || stem;
+  }
+
+  /** How dark the shadow is at a point, 0 (none) to 1 (its core). */
+  static double shadow(double x, double y) {
+    double dx = (x - SHADOW_X) / SHADOW_RX;
+    double dy = (y - SHADOW_Y) / SHADOW_RY;
+    double d = Math.sqrt(dx * dx + dy * dy);
+    return d >= 1 ? 0 : (1 - d) * (1 - d) * (3 - 2 * (1 - d));
+  }
+
+  private static int[] appleScene(double x, double y) {
+    if (onApple(x, y)) {
+      if (y < APPLE_Y - APPLE_R + 5 && Math.abs(x - APPLE_X) < 6) {
+        return new int[] {70, 45, 25};
+      }
+      // A highlight up and to the left, darker red towards the bottom right.
+      double light = 1 - 0.35 * ((x - APPLE_X) + (y - APPLE_Y)) / (2 * APPLE_R);
+      return new int[] {(int) (185 * light), (int) (40 * light), (int) (35 * light)};
+    }
+    // The table: light, a little warm, darker towards the top right (vignetting).
+    double corner = Math.max(0, (x / APPLE_W + (APPLE_H - y) / APPLE_H) - 1.1);
+    // Down to about 150 in the very corner, a phone lens's vignetting under room light.
+    double base = 228 - 12 * y / APPLE_H - 85 * corner * corner;
+    double shade = 1 - 0.28 * shadow(x, y);
+    double v = base * shade;
+    return new int[] {(int) (v + 4), (int) v, (int) (v - 5)};
+  }
+
   /** The 3 x 3 inverse of a homography's 8 coefficients, scaled so its last term is 1. */
   private static double[] invert(double[] m) {
     double a = m[0];
@@ -149,7 +224,7 @@ final class PhotoFixtures {
     return rgb(g, g, g);
   }
 
-  private static int rgb(int r, int g, int b) {
+  static int rgb(int r, int g, int b) {
     return 0xFF000000 | (clamp(r) << 16) | (clamp(g) << 8) | clamp(b);
   }
 }

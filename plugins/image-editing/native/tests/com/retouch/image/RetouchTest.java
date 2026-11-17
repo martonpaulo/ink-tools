@@ -37,6 +37,7 @@ public final class RetouchTest {
     documentFindsTheCornersOfASkewedPhoto();
     documentStraightensASkewedPhotoOnWhite();
     documentCleansALitSurfaceToWhiteWithoutAPage();
+    backgroundClearsAnUnevenGroundAndTheShadow();
     eraseNeedsItsMarksAndKeepsTheSize();
     eraseClearsABandAlongAnOpenMark();
     eraseClearsTheInsideOfAClosedMark();
@@ -651,6 +652,45 @@ public final class RetouchTest {
     long black = ink(out);
     check(black > 0 && black < 0.06 * w * h, "only the words are ink on a lit surface: " + black);
     check((out.argb[5 * w + 5] & 0xFF) == 255, "the dark side of the surface is white");
+  }
+
+  /**
+   * #134 on the device: the light table's darker top right corner and the apple's soft shadow
+   * were left as gray patches. Both go now, and the apple stays whole.
+   */
+  private static void backgroundClearsAnUnevenGroundAndTheShadow() {
+    Retouch.Picture photo = PhotoFixtures.apple();
+    Retouch.removeBackground(photo);
+    int w = photo.width;
+    long ground = 0;
+    long groundLeft = 0;
+    long shade = 0;
+    long shadeLeft = 0;
+    long apple = 0;
+    long appleCut = 0;
+    for (int y = 0; y < photo.height; y++) {
+      for (int x = 0; x < w; x++) {
+        double cx = x + 0.5;
+        double cy = y + 0.5;
+        boolean opaque = (photo.argb[y * w + x] >>> 24) != 0;
+        double d = Math.hypot(cx - PhotoFixtures.APPLE_X, cy - PhotoFixtures.APPLE_Y);
+        if (PhotoFixtures.onApple(cx, cy) && d < PhotoFixtures.APPLE_R - 3) {
+          apple++;
+          appleCut += opaque ? 0 : 1;
+        } else if (!PhotoFixtures.onApple(cx, cy) && d > PhotoFixtures.APPLE_R + 4
+            && Math.abs(cx - PhotoFixtures.APPLE_X) > 10) {
+          ground++;
+          groundLeft += opaque ? 1 : 0;
+          if (PhotoFixtures.shadow(cx, cy) > 0.3) {
+            shade++;
+            shadeLeft += opaque ? 1 : 0;
+          }
+        }
+      }
+    }
+    check(appleCut == 0, "the apple is kept whole: " + appleCut + " of " + apple + " cleared");
+    check(groundLeft * 100 < ground, "the uneven table is cleared: " + groundLeft + " of " + ground + " left");
+    check(shade > 0 && shadeLeft * 20 < shade, "the shadow is cleared: " + shadeLeft + " of " + shade + " left");
   }
 
   /** The first black row from the top in column `x`, or -1. */
