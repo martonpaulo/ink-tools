@@ -13,6 +13,7 @@ import {
   SHARED_ROOT,
 } from '@supernote-tools/picture-search/storage';
 import {version} from '../package.json';
+import {versionCode} from '../PluginConfig.json';
 import {LOOKUP_SETTINGS} from './settings';
 
 export const REPOSITORY_URL = 'https://github.com/martonpaulo/supernote-tools';
@@ -24,6 +25,7 @@ export const LOOKUP_PROFILE: PluginProfile = {
   imageModule: 'LookupImage',
   // The User-Agent Wikimedia's policy asks for: the plugin, its version and a contact page.
   userAgent: `Lookup/${version} (+${REPOSITORY_URL})`,
+  build: versionCode,
 };
 
 setPluginProfile(LOOKUP_PROFILE);

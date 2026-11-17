@@ -15,6 +15,9 @@ A Supernote plugin: lasso a picture on the page and make it readable on e-ink wi
 - **Rotate 90°** clockwise, **Mirror** left to right, **Flip** top to bottom, and **Invert**, which
   turns a dark-mode screenshot into paper and keeps colour.
 - **Trim**: cuts the white or clear margins around the picture, which keeps its place on the page.
+- **Crop**: draw a rectangle on the picture with the pen, lasso the picture and the rectangle
+  together, and press Crop. The picture keeps only the area inside the rectangle, in its place on
+  the page, and the rectangle is erased. Undo brings the whole picture back.
 - **Styles** opens a grid of the picture in every style at once: Photo (16 greys), Line art,
   Black and white, Dither and Clean dither (Atkinson). Tap one to use it. **White to transparent**
   lets the page template show through, and **Thicker lines** widens Line art's strokes. The style

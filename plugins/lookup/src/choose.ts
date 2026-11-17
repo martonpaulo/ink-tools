@@ -136,6 +136,23 @@ export async function openChoose(deps: ChooseDeps = DEVICE): Promise<boolean> {
 /** The number of the latest list asked for: an older one that ends later is dropped. */
 let latest = 0;
 
+/** A mode's last list, kept with the word and the search answer it was measured from. */
+type Kept = {word: string; answer: string; list: ChooseList};
+
+/**
+ * The last list per mode, so a reopen on the same answer shows at once, with no new pixel
+ * measure (#205). It lives as long as the answer: another answer, such as a new search after the
+ * cached one expired or a plugin update (#210), has other ids and is measured again.
+ * shortcut: in memory for the runtime, not in the cache file; persist it beside the search answer
+ * if a reopen after a plugin restart must be instant too.
+ */
+const kept = new Map<Mode['kind'], Kept>();
+
+/** The search answer's pictures, in order: the same answer measures the same. */
+function answerKey(results: readonly SearchResult[]): string {
+  return results.map(result => result.id).join('\n');
+}
+
 /**
  * The mode's tiles for the word; null when a newer list was asked for meanwhile, such as after a
  * switch to the other mode, so an old answer never shows in the new tab.
@@ -151,6 +168,12 @@ export async function chooseResults(
   const outcome = searched.outcome;
   if (run !== latest || !outcome) {
     return null;
+  }
+  const answer = answerKey(outcome.results);
+  const last = kept.get(mode.kind);
+  if (last && last.word === word && last.answer === answer) {
+    log(`choose: ${mode.kind} tiles kept from the last open`);
+    return last.list;
   }
   const pages = await flow.measure(
     outcome.results,
@@ -177,7 +200,12 @@ export async function chooseResults(
     tiles.length > 0
       ? null
       : stateText(searchState(outcome), modeCopy) ?? modeCopy['search.empty'];
-  return {tiles, text};
+  const list = {tiles, text};
+  if (tiles.length > 0) {
+    // An empty list says why, which the next open may say otherwise: it is searched again.
+    kept.set(mode.kind, {word, answer, list});
+  }
+  return list;
 }
 
 let inserting = false;
@@ -235,5 +263,6 @@ export function resetChooseForTests(): void {
   choice = null;
   latest = 0;
   inserting = false;
+  kept.clear();
   listeners.clear();
 }

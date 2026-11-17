@@ -13,6 +13,7 @@ import {
   showPluginView,
 } from '@supernote-tools/sn-adapter/official';
 import {copy} from './copy';
+import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from './crop';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
 import {EditDefinition, EditId} from './edits';
 import {PAGE_EDITS, PageDone, runPageEdit} from './page';
@@ -61,10 +62,21 @@ const DEVICE: PressDeps = {
     });
   },
   edit: edit =>
-    working.run(() => runEdit(edit), {showAfterMs: STRIP_AFTER_MS}),
+    working.run(() => (edit === 'crop' ? runCrop() : runEdit(edit)), {
+      showAfterMs: STRIP_AFTER_MS,
+    }),
   page: edit => working.run(() => runPageEdit(edit)),
   toast: showToast,
   log: line => console.log(`Retouch: ${line}`),
+};
+
+/** The toast of each reason a press changed nothing. */
+const NOTHING_TOAST: Record<string, string> = {
+  [NOT_ONE_PICTURE]: copy['press.notPicture'],
+  [NOT_EDITED]: copy['press.notEdited'],
+  [NO_GUIDE]: copy['press.cropNoGuide'],
+  [NOT_PICTURE_AND_GUIDE]: copy['press.cropNotPicture'],
+  [GUIDE_OUTSIDE]: copy['press.cropOutside'],
 };
 
 /** The toast for a press that changed nothing. */
@@ -73,13 +85,7 @@ export function reasonOf(name: string, done: Done): string | null {
     return null;
   }
   if (done.kind === 'nothing') {
-    if (done.why === NOT_ONE_PICTURE) {
-      return copy['press.notPicture'];
-    }
-    if (done.why === NOT_EDITED) {
-      return copy['press.notEdited'];
-    }
-    return copy['press.failed'](name, done.why);
+    return NOTHING_TOAST[done.why] ?? copy['press.failed'](name, done.why);
   }
   return NO_FILE_PERMISSION.test(done.why)
     ? copy['press.permission']

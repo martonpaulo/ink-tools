@@ -1,5 +1,6 @@
 /** A press changes the picture or shows why it did not, never nothing (#170). */
 import {copy} from '../src/copy';
+import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE} from '../src/crop';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE} from '../src/edit';
 import {EDITS} from '../src/edits';
 import {pressEdit, PressDeps} from '../src/press';
@@ -44,6 +45,9 @@ test('every press that changed nothing shows its reason', async () => {
   const cases: [Done, string][] = [
     [{kind: 'nothing', why: NOT_ONE_PICTURE}, copy['press.notPicture']],
     [{kind: 'nothing', why: NOT_EDITED}, copy['press.notEdited']],
+    [{kind: 'nothing', why: NO_GUIDE}, copy['press.cropNoGuide']],
+    [{kind: 'nothing', why: NOT_PICTURE_AND_GUIDE}, copy['press.cropNotPicture']],
+    [{kind: 'nothing', why: GUIDE_OUTSIDE}, copy['press.cropOutside']],
     [
       {kind: 'failed', why: 'modifyPageElements: 9 broken'},
       copy['press.failed']('Enhance', 'modifyPageElements: 9 broken'),

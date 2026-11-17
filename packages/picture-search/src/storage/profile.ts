@@ -16,6 +16,11 @@ export type PluginProfile = {
   imageModule: string;
   /** The User-Agent of every download. */
   userAgent: string;
+  /**
+   * The build, the plugin's PluginConfig.json versionCode: the search cache keeps only this
+   * build's answers, so an update searches again (#210).
+   */
+  build: string;
 };
 
 let current: PluginProfile | null = null;

@@ -7,7 +7,7 @@ import {
 } from '@supernote-tools/sn-adapter/official';
 import {EditDeps, historyPath, runEdit} from '../src/edit';
 import {parseHistory} from '../src/history';
-import {RetouchNative} from '../src/native';
+import {NO_OPTIONS, RetouchNative} from '../src/native';
 
 /** The private plugin folder's work/ (#198), as getPluginDirPath would give it. */
 const RETOUCH_DIR = '/data/user/0/com.ratta.supernote.pluginhost/files/plugins/retouch/work';
@@ -36,6 +36,14 @@ function world() {
       const w = Math.min(width, pageWidth);
       const h = Math.round((height * w) / width);
       return ok({width: w, height: h, left: 0, top: 0, ms: 5});
+    }),
+    crop: jest.fn(async (src, before, dest, _w, _h, _left, _top, width, height) => {
+      expect(files.has(src)).toBe(true);
+      if (before) {
+        files.set(before, 'png');
+      }
+      files.set(dest, 'png');
+      return ok({width, height, left: _left, top: _top, ms: 5});
     }),
     readText: jest.fn(async path => ok(files.get(path) ?? null)),
     writeText: jest.fn(async (path, text) => {
@@ -135,6 +143,36 @@ test('a second edit saves no new original, and Undo then Restore bring the origi
   // The host copied every PNG it showed, so none is left behind.
   expect(w.pngs()).toEqual([]);
   expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'nothing'});
+});
+
+test('Crop cuts to its box and keeps the kept area where it was on the page (#132)', async () => {
+  const w = world();
+  const box = {left: 40, top: 30, width: 120, height: 100};
+  const done = await runEdit('crop', w.deps, {...NO_OPTIONS, box});
+  expect(done.kind).toBe('edited');
+  expect(w.native.crop).toHaveBeenCalledWith(
+    expect.stringContaining('/preview-'),
+    expect.stringMatching(/-original\.png$/),
+    w.modified[0].path,
+    400,
+    300,
+    40,
+    30,
+    120,
+    100,
+  );
+  expect(w.native.edit).not.toHaveBeenCalled();
+  expect(w.modified[0].rect).toEqual({left: 140, top: 230, right: 260, bottom: 330});
+  // Undo brings the whole picture back at its old place.
+  expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
+  expect(w.modified[1].rect).toEqual(RECT);
+});
+
+test('Crop without its box fails before anything is read or written (#132)', async () => {
+  const w = world();
+  expect(await runEdit('crop', w.deps)).toEqual({kind: 'failed', why: 'Crop has no box'});
+  expect(w.deps.preview).not.toHaveBeenCalled();
+  expect(w.modified).toEqual([]);
 });
 
 test('Enhance scales a picture wider than the page down to its width', async () => {

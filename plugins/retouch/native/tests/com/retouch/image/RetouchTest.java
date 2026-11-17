@@ -16,6 +16,7 @@ public final class RetouchTest {
     mirrorAndFlipReverseTheirAxis();
     invertMakesDarkModePaper();
     trimCutsWhiteAndClearMargins();
+    cropNeedsItsBox();
     everyStyleEndsOnTheScreensGreys();
     otsuSplitsTwoTonesAndKeepsOneGray();
     floydSteinbergKeepsAFlatGraysMean();
@@ -194,6 +195,19 @@ public final class RetouchTest {
       throw new AssertionError("a box past the edge must be refused");
     } catch (IllegalArgumentException expected) {
       // refused
+    }
+  }
+
+  private static void cropNeedsItsBox() {
+    check(Retouch.Edit.of("crop") == Retouch.Edit.CROP, "crop is known");
+    check(!Retouch.Edit.CROP.isStyle(), "Crop is no style");
+    check(java.util.Arrays.equals(Retouch.outputSize(Retouch.Edit.CROP, 3000, 2000, 1920),
+        new int[] {3000, 2000}), "Crop keeps the size before it cuts");
+    try {
+      Retouch.apply(Retouch.Edit.CROP, new Retouch.Picture(new int[] {WHITE}, 1, 1));
+      throw new AssertionError("Crop without a box must be refused");
+    } catch (IllegalArgumentException expected) {
+      // refused: the box comes from the pen, through RetouchModule.crop
     }
   }
 

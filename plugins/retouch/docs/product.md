@@ -28,7 +28,8 @@ or too dark on the 16-grey screen.
 - Rotate 90° clockwise, Mirror (left to right), Flip (top to bottom) and Invert, which turns a
   dark-mode screenshot into paper, each one tap
   ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)).
-- Trim the white margins, one tap; crop with the pen is still to come
+- Trim the white margins, one tap, and Crop with the pen: draw a rectangle on the picture, lasso
+  both, tap Crop; the rectangle is erased
   ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)).
 - Remove background, which clears the border around the main object to transparent, and Make
   sticker, which puts the object on a white card, each one tap; erase with the pen is still to come

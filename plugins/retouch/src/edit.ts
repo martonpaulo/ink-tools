@@ -100,6 +100,12 @@ export const DEVICE: EditDeps = {
   log: line => console.log(`Retouch: ${line}`),
 };
 
+/** An area inside the picture, in its pixels from its top left: Crop's box (#132). */
+export type Box = {left: number; top: number; width: number; height: number};
+
+/** A style's two options (#133), and the box Crop cuts to (#132); the other edits ignore both. */
+export type EditOptions = StyleOptions & {box?: Box};
+
 /** What a press did, for the log and the tests. */
 export type Done =
   | {kind: 'edited'; edit: EditId | StyleId; ms: number}
@@ -118,6 +124,7 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
   background: 'background',
   sticker: 'sticker',
   document: 'document',
+  crop: 'crop',
   photo: 'photo',
   line_art: 'line_art',
   black_white: 'black_white',
@@ -150,18 +157,20 @@ export async function removeFile(path: string, deps: EditDeps): Promise<void> {
   }
 }
 
-const sizeOf = (rect: Rect) => ({
+/** A picture's size on the page in whole pixels, the size of its lasso preview (#130). */
+export const sizeOf = (rect: Rect) => ({
   width: Math.round(rect.right - rect.left),
   height: Math.round(rect.bottom - rect.top),
 });
 
 /**
  * Runs `edit`, or a style with its `options` (#133), on the lassoed picture and logs the outcome.
+ * Crop runs only with its box (#132), which src/crop.ts takes from the pen's rectangle.
  */
 export async function runEdit(
   edit: EditId | StyleId,
   deps: EditDeps = DEVICE,
-  options: StyleOptions = NO_OPTIONS,
+  options: EditOptions = NO_OPTIONS,
 ): Promise<Done> {
   const started = deps.now();
   const done = await editOnce(edit, deps, options);
@@ -177,7 +186,7 @@ export async function runEdit(
 async function editOnce(
   edit: EditId | StyleId,
   deps: EditDeps,
-  options: StyleOptions,
+  options: EditOptions,
 ): Promise<Done> {
   const lassoed = await deps.lassoElements();
   if (!lassoed.ok) {
@@ -235,8 +244,12 @@ async function pixelEdit(
   history: History,
   work: string,
   deps: EditDeps,
-  options: StyleOptions,
+  options: EditOptions,
 ): Promise<Done> {
+  const box = pixel === 'crop' ? options.box : undefined;
+  if (pixel === 'crop' && !box) {
+    return {kind: 'failed', why: 'Crop has no box'};
+  }
   const width = await deps.pageWidth(place.note, place.page);
   if (!width.ok) {
     return {kind: 'failed', why: why('getPageSize', width)};
@@ -253,17 +266,29 @@ async function pixelEdit(
   const keep = new Set<string>();
   try {
     const size = sizeOf(place.rect);
-    const edited = await deps.native.edit(
-      pixel,
-      preview.value,
-      originalPath,
-      resultPath,
-      size.width,
-      size.height,
-      width.value,
-      options.transparent,
-      options.thick,
-    );
+    const edited = box
+      ? await deps.native.crop(
+          preview.value,
+          originalPath,
+          resultPath,
+          size.width,
+          size.height,
+          box.left,
+          box.top,
+          box.width,
+          box.height,
+        )
+      : await deps.native.edit(
+          pixel,
+          preview.value,
+          originalPath,
+          resultPath,
+          size.width,
+          size.height,
+          width.value,
+          options.transparent,
+          options.thick,
+        );
     if (!edited.ok) {
       return {kind: 'failed', why: why(`edit ${pixel}`, edited)};
     }

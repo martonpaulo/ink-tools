@@ -27,6 +27,7 @@ export type PixelEdit =
   | 'background'
   | 'sticker'
   | 'document'
+  | 'crop'
   | StyleId;
 
 /** The grid's styles (#133), each ending on the screen's greys. */
@@ -47,7 +48,7 @@ export const NO_OPTIONS: StyleOptions = {transparent: false, thick: false};
 
 /**
  * The result's size, and where its top left sits in the picture it came from: 0, 0 for every edit
- * but Trim, which cuts the margin off (#132).
+ * but Trim, which cuts the margin off, and Crop, which cuts to the drawn box (#132).
  */
 export type Edited = {
   width: number;
@@ -69,6 +70,17 @@ type Native = {
     transparent: boolean,
     thick: boolean,
   ): Promise<Edited>;
+  crop(
+    srcPath: string,
+    beforePath: string,
+    destPath: string,
+    width: number,
+    height: number,
+    boxLeft: number,
+    boxTop: number,
+    boxWidth: number,
+    boxHeight: number,
+  ): Promise<Edited>;
   readText(path: string): Promise<string | null>;
   writeText(path: string, text: string): Promise<null>;
   deleteFile(path: string): Promise<boolean>;
@@ -76,6 +88,7 @@ type Native = {
 
 const MODULE_OF: Record<keyof Native, string> = {
   edit: IMAGE_MODULE,
+  crop: IMAGE_MODULE,
   readText: FILES_MODULE,
   writeText: FILES_MODULE,
   deleteFile: FILES_MODULE,
@@ -114,6 +127,7 @@ export function retouchNative(
     };
   return {
     edit: call('edit'),
+    crop: call('crop'),
     readText: call('readText'),
     writeText: call('writeText'),
     deleteFile: call('deleteFile'),

@@ -107,6 +107,7 @@ describe('the plugin profile (#142)', () => {
       filesModule: 'LookupFiles',
       imageModule: 'LookupImage',
       userAgent: 'Lookup/0',
+      build: '1',
     });
     expect(settingsPath(ROOT)).toBe(`${ROOT}/MyStyle/Lookup/settings.json`);
     expect(await readText('/x')).toEqual({ok: true, value: '{}'});

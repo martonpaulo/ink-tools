@@ -21,6 +21,8 @@ test('Lookup keeps its own folder and module names, never Ink2Pic’s', () => {
   expect(LOOKUP_PROFILE.filesModule).not.toBe(INK2PIC_PROFILE.filesModule);
   expect(LOOKUP_PROFILE.imageModule).not.toBe(INK2PIC_PROFILE.imageModule);
   expect(LOOKUP_PROFILE.userAgent).toMatch(/^Lookup\/\S+ \(\+https:\/\//);
+  // The search cache keeps only this build's answers (#210).
+  expect(LOOKUP_PROFILE.build).toBe(require('../PluginConfig.json').versionCode);
   expect(settingsPath('/sdcard')).toBe('/sdcard/MyStyle/Lookup/settings.json');
 });
 

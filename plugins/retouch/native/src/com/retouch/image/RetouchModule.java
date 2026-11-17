@@ -67,11 +67,42 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       boolean transparent,
       boolean thick,
       Promise promise) {
+    settle(promise, () -> run(
+        edit, srcPath, beforePath, destPath, width, height, pageWidth, transparent, thick, null));
+  }
+
+  /**
+   * Crop with the pen (#132): as {@link #edit} with `crop`, cut to the box `boxLeft`, `boxTop`,
+   * `boxWidth` x `boxHeight` in the picture's pixels, which the JavaScript side took from the
+   * rectangle the person drew. Resolves the same map; `left` and `top` are the box's.
+   */
+  @ReactMethod
+  public void crop(
+      String srcPath,
+      String beforePath,
+      String destPath,
+      double width,
+      double height,
+      double boxLeft,
+      double boxTop,
+      double boxWidth,
+      double boxHeight,
+      Promise promise) {
+    settle(promise, () -> run(
+        "crop", srcPath, beforePath, destPath, width, height, width, false, false,
+        new int[] {count(boxLeft), count(boxTop), whole(boxWidth), whole(boxHeight)}));
+  }
+
+  private interface Work {
+    WritableMap call() throws Exception;
+  }
+
+  /** Runs `work` on the worker and settles `promise` with its map or its failure. */
+  private void settle(Promise promise, Work work) {
     try {
       worker.execute(() -> {
         try {
-          promise.resolve(run(
-              edit, srcPath, beforePath, destPath, width, height, pageWidth, transparent, thick));
+          promise.resolve(work.call());
         } catch (SafePaths.Refused refused) {
           promise.reject(refused.code, refused.getMessage());
         } catch (Throwable error) {
@@ -93,7 +124,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       double height,
       double pageWidth,
       boolean transparent,
-      boolean thick)
+      boolean thick,
+      int[] cropBox)
       throws Exception {
     long start = System.nanoTime();
     Retouch.Edit edit = Retouch.Edit.of(editName);
@@ -107,7 +139,8 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     int[] size = Retouch.outputSize(edit, picture.width, picture.height, whole(pageWidth));
     picture = scale(picture, size[0], size[1]);
     // Trim moves the picture's top left by the margin it removes, so the page keeps it in place.
-    int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : null;
+    // Crop (#132) does the same with the box drawn with the pen.
+    int[] box = edit == Retouch.Edit.TRIM ? Retouch.trimBox(picture) : cropBox;
     if (box != null) {
       picture = Retouch.crop(picture, box);
     } else if (edit == Retouch.Edit.STICKER) {
@@ -125,6 +158,15 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     result.putInt("top", box != null ? box[1] : 0);
     result.putDouble("ms", (System.nanoTime() - start) / NANOS_PER_MS);
     return result;
+  }
+
+  /** A whole number at or above 0, such as a box's left edge. */
+  private static int count(double value) throws SafePaths.Refused {
+    int whole = (int) value;
+    if (whole < 0 || whole != value) {
+      throw new SafePaths.Refused("BAD_SIZE", "a whole number at or above 0 is required: " + value);
+    }
+    return whole;
   }
 
   private static int whole(double value) throws SafePaths.Refused {
