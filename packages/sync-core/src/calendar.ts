@@ -50,7 +50,8 @@ export interface CalendarSyncResult {
   errors: string[];
 }
 
-const key = (e: Pick<CalendarEvent, 'calendarId' | 'eventId'>) => `${e.calendarId}\u0000${e.eventId}`;
+/** One event's identity on the tablet: its calendar and event ids. */
+export const eventKey = (e: Pick<CalendarEvent, 'calendarId' | 'eventId'>) => `${e.calendarId}\u0000${e.eventId}`;
 const same = (a: CalendarEvent, b: CalendarEvent) =>
   a.title === b.title && a.content === b.content && a.start === b.start && a.end === b.end && a.allDay === b.allDay;
 
@@ -75,13 +76,13 @@ export async function syncCalendar(
   const failed = new Set<string>();
   for (const cal of calendars) {
     try {
-      for (const e of await provider.listEvents(cal.calendarId, window)) wanted.set(key(e), e);
+      for (const e of await provider.listEvents(cal.calendarId, window)) wanted.set(eventKey(e), e);
     } catch (e) {
       failed.add(cal.calendarId);
       result.errors.push(`${cal.name}: ${(e as Error).message}`);
     }
   }
-  const have = new Map((await store.listOurs(window)).map(e => [key(e), e]));
+  const have = new Map((await store.listOurs(window)).map(e => [eventKey(e), e]));
   const run = async (what: string, fn: () => Promise<void>, count: 'created' | 'updated' | 'removed') => {
     try {
       await fn();

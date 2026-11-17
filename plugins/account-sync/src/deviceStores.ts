@@ -105,22 +105,37 @@ function newId(now: number): string {
   return `${ID_PREFIX}${now.toString(16)}${random}`;
 }
 
+/** The Calendar store, with the warnings of its writes since the last call (`CalendarModule.takeWarnings`). */
+export interface DeviceCalendar extends DeviceCalendarEditor {
+  takeWarnings(): string[];
+}
+
+/** Newest first: a higher row id is a later insert. A non-numeric id sorts after every number. */
+const newestFirst = (rowId: string) => (a: Row, b: Row) => {
+  const n = (r: Row) => {
+    const v = Number(r[rowId]);
+    return Number.isFinite(v) ? v : -Infinity;
+  };
+  return n(b) - n(a);
+};
+
 export function createDeviceCalendar(
   rows: ContentRows,
   now: () => number,
   d: Descriptor = BUNDLED_DESCRIPTOR,
-): DeviceCalendarEditor {
+): DeviceCalendar {
   const uri = contentUri(d.calendar, 'events');
   const col = (field: string) => column(d.calendar, 'events', field);
   const rowId = col('rowId');
   const ours = () => rows.query(uri, {[col('tag')]: d.calendar.rules.writeTag});
+  let warnings: string[] = [];
   /**
-   * The row key of our one row of a pulled event (#213). The rows are matched here, not by the
+   * Our rows of a pulled event, newest first (#213). The rows are matched here, not by the
    * provider's selection: on the tablet a Calendar delete selected by `title` removed 0 rows (#43),
-   * so a write selects only the row id, as `relink` and the To-Do store do. Zero or several rows is
-   * an error, never a write.
+   * so a write selects only the row id, as `relink` and the To-Do store do. No row is an error,
+   * never a write.
    */
-  const keyOf = async (calendarId: string, eventId: string): Promise<Row> => {
+  const rowsOf = async (calendarId: string, eventId: string): Promise<Row[]> => {
     const text = (value: unknown) => (value === null || value === undefined ? '' : String(value));
     const hits = (await ours()).filter(
       r =>
@@ -128,12 +143,26 @@ export function createDeviceCalendar(
         text(r[col('calendarId')]) === calendarId &&
         text(r[col('eventId')]) === eventId,
     );
-    if (hits.length !== 1) {
-      throw new Error(`event ${eventId} has ${hits.length} tablet rows, not 1`);
+    if (!hits.length) {
+      throw new Error(`event ${eventId} has 0 tablet rows`);
     }
-    return {[rowId]: hits[0][rowId]};
+    return hits.sort(newestFirst(rowId));
+  };
+  /**
+   * Removes each row by its id. Earlier failures of #43 could leave two rows of one event (#218):
+   * both are Account Sync's copies of one source event, so the extra ones go, with a warning.
+   */
+  const removeRows = async (list: Row[], what: string) => {
+    for (const r of list) {
+      one(await rows.remove(uri, {[rowId]: r[rowId]}), what);
+    }
   };
   return {
+    takeWarnings() {
+      const out = warnings;
+      warnings = [];
+      return out;
+    },
     async listOurs(window) {
       const events: CalendarEvent[] = [];
       for (const row of await ours()) {
@@ -158,20 +187,28 @@ export function createDeviceCalendar(
       await rows.insert(uri, eventToRow(d, event, now()));
     },
     async update(event) {
+      const [newest, ...older] = await rowsOf(event.calendarId, event.eventId);
       one(
         await rows.update(
           uri,
-          await keyOf(event.calendarId, event.eventId),
+          {[rowId]: newest[rowId]},
           eventToRow(d, event, now()),
         ),
         `update ${event.eventId}`,
       );
+      if (older.length) {
+        await removeRows(older, `remove a copy of ${event.eventId}`);
+        warnings.push(
+          `event ${event.eventId} had ${older.length + 1} tablet rows: kept the newest, removed ${older.length}`,
+        );
+      }
     },
     async remove(calendarId, eventId) {
-      one(
-        await rows.remove(uri, await keyOf(calendarId, eventId)),
-        `remove ${eventId}`,
-      );
+      const all = await rowsOf(calendarId, eventId);
+      await removeRows(all, `remove ${eventId}`);
+      if (all.length > 1) {
+        warnings.push(`event ${eventId} had ${all.length} tablet rows: removed them all`);
+      }
     },
     async relink(from, to) {
       // The tablet-made row is found by its content, as it has no id of ours yet (#65).
@@ -504,7 +541,7 @@ export function createDeviceTasks(
 
 /** The two stores the sync runner takes (`SyncDevice.stores`). */
 export interface DeviceStores {
-  calendar: DeviceCalendarEditor;
+  calendar: DeviceCalendar;
   tasks: DeviceTaskStore;
 }
 

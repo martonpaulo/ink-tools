@@ -1,6 +1,7 @@
 /** The Calendar and To-Do stores over an in-memory content provider (#28, #29, #44). */
 import {BUNDLED_DESCRIPTOR} from '@ink-tools/sn-adapter';
 import type {Row} from '@ink-tools/sn-adapter';
+import {removeCalendarRows} from '@ink-tools/sync-core';
 import {
   ContentRows,
   createDeviceCalendar,
@@ -99,7 +100,7 @@ describe('the Calendar store', () => {
     await cal.update({...event, title: 'Planning'});
     expect(tables[EVENTS][0].title).toBe('Planning');
     await expect(cal.update({...event, eventId: 'gone'})).rejects.toThrow(
-      'event gone has 0 tablet rows, not 1',
+      'event gone has 0 tablet rows',
     );
     await cal.remove('work', 'g1');
     expect(tables[EVENTS]).toEqual([]);
@@ -136,13 +137,40 @@ describe('the Calendar store', () => {
     expect(writes).toEqual([{id: '100'}, {id: '100'}]);
   });
 
-  test('an event held by two tablet rows is an error, never a write', async () => {
+  test('an update of an event held by two tablet rows keeps the newest and removes the other (#218)', async () => {
     const {tables, rows} = provider();
     const cal = createDeviceCalendar(rows, () => NOW);
     await cal.create(event);
     await cal.create(event);
-    await expect(cal.remove('work', 'g1')).rejects.toThrow('event g1 has 2 tablet rows, not 1');
-    expect(tables[EVENTS]).toHaveLength(2);
+    await cal.update({...event, title: 'Planning'});
+    expect(tables[EVENTS].map(r => [r.id, r.title])).toEqual([['101', 'Planning']]);
+    expect(cal.takeWarnings()).toEqual([
+      'event g1 had 2 tablet rows: kept the newest, removed 1',
+    ]);
+    expect(cal.takeWarnings()).toEqual([]);
+  });
+
+  test('a remove of an event held by three tablet rows removes them all (#218)', async () => {
+    const {tables, rows} = provider();
+    const cal = createDeviceCalendar(rows, () => NOW);
+    await cal.create(event);
+    await cal.create(event);
+    await cal.create(event);
+    await cal.remove('work', 'g1');
+    expect(tables[EVENTS]).toEqual([]);
+    expect(cal.takeWarnings()).toEqual(['event g1 had 3 tablet rows: removed them all']);
+  });
+
+  test('«Remove what Account Sync wrote» removes duplicated rows too, and no other row (#218)', async () => {
+    const native = {id: '1', tag: 'event', calendarId: 'work', eventId: 'g1', title: 'Native'};
+    const {tables, rows} = provider({[EVENTS]: [native]});
+    const cal = createDeviceCalendar(rows, () => NOW);
+    await cal.create(event);
+    await cal.create(event);
+    await cal.create({...event, eventId: 'g2'});
+    const out = await removeCalendarRows(cal);
+    expect(out).toEqual({removed: 2, errors: []});
+    expect(tables[EVENTS]).toEqual([native]);
   });
 
   test('every rowId field of the descriptor is the dry insert key (#217)', () => {

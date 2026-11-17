@@ -158,6 +158,8 @@ export async function buildModules(
       sources,
       store: stores.calendar,
       window: calendarWindow(device.now()),
+      // The writer's notes, such as the extra copies of an event it removed (#218).
+      takeWarnings: () => stores.calendar.takeWarnings(),
     };
   }
   if (providers.includes('todoist')) {
