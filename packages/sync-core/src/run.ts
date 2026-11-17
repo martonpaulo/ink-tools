@@ -88,12 +88,19 @@ export async function runCalendarModule(
     return {run: {...calendarRun(now(), total, m.takeWarnings?.() ?? []), notRun: true}, state};
   }
 
+  // Tablet edits that were not sent: the pull leaves their rows alone and their source keeps its
+  // mark, so they are still pending on the next pass (#216).
+  const held: CalendarEvent[] = [];
+  const stalled = new Set<ProviderId>();
   if (state.lastSync !== undefined) {
-    let all: DeviceEdit[] = [];
+    let all: DeviceEdit[];
     try {
       all = await m.store.listEdits(m.window);
     } catch (e) {
+      // Unread edits cannot be sent, and a pull would write the source's version over them: the pass
+      // stops and the state stays, as when no source reads (#88, #216).
       total.errors.push(`reading the tablet's edits: ${message(e)}`);
+      return {run: {...calendarRun(now(), total, [...warnings, ...(m.takeWarnings?.() ?? [])]), notRun: true}, state};
     }
     const target = (e: DeviceEdit) => owner.get(e.event.eventId ? e.event.calendarId : (m.defaultCalendarId ?? ''));
     for (const source of readable) {
@@ -118,6 +125,10 @@ export async function runCalendarModule(
       total.updated += pushed.updated;
       total.removed += pushed.deleted;
       total.errors.push(...pushed.errors, ...(await applyCreated(pushed, m.store)));
+      if (pushed.failed.length) {
+        held.push(...pushed.failed);
+        stalled.add(source.id);
+      }
       warnings.push(...conflictWarnings(pushed.conflicts));
     }
     const lost = changedSince(all, state.lastSync).filter(e => !target(e));
@@ -128,9 +139,10 @@ export async function runCalendarModule(
     }
   }
 
+  const isHeld = (e: CalendarEvent) => held.some(h => h.calendarId === e.calendarId && h.eventId === e.eventId);
   for (const source of readable) {
     try {
-      const pulled = await syncCalendar(source.provider, m.store, m.window, source.calendarIds);
+      const pulled = await syncCalendar(source.provider, m.store, m.window, source.calendarIds, isHeld);
       total.created += pulled.created;
       total.updated += pulled.updated;
       total.removed += pulled.removed;
@@ -141,18 +153,19 @@ export async function runCalendarModule(
   }
   warnings.push(...(m.takeWarnings?.() ?? []));
 
-  // A row of a calendar no source read this pass keeps its last baseline: on the tablet it may hold
-  // an edit not sent yet, which must not become the version the next push compares with (#211).
+  // A row of a calendar no source read this pass, or whose push failed, keeps its last baseline: on
+  // the tablet it holds an edit not sent yet, which must not become the version the next push
+  // compares with (#211, #216).
   let baseline = state.baseline;
   try {
-    const read = (e: CalendarEvent) => owner.has(e.calendarId);
+    const read = (e: CalendarEvent) => owner.has(e.calendarId) && !isHeld(e);
     baseline = [...(await m.store.listOurs(m.window)).filter(read), ...state.baseline.filter(e => !read(e))];
   } catch (e) {
     total.errors.push(`reading the tablet's rows after the sync: ${message(e)}`);
   }
   const at = now();
   const sourceSync = {...state.sourceSync};
-  for (const source of readable) sourceSync[source.id] = at;
+  for (const source of readable) sourceSync[source.id] = stalled.has(source.id) ? (state.sourceSync?.[source.id] ?? state.lastSync) : at;
   return {run: calendarRun(at, total, warnings), state: {lastSync: at, sourceSync, baseline}};
 }
 

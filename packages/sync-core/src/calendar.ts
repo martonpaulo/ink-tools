@@ -57,13 +57,15 @@ const same = (a: CalendarEvent, b: CalendarEvent) =>
 /**
  * Make the device match the provider over `window`: add what is missing, update what differs,
  * remove our rows the provider no longer has. Rows outside the window and rows we did not write
- * are never touched. A calendar that fails to read keeps its rows and is reported.
+ * are never touched. A calendar that fails to read keeps its rows and is reported. A row `keep`
+ * accepts is left as it is: it holds a tablet edit whose push failed, sent on the next pass (#216).
  */
 export async function syncCalendar(
   provider: CalendarProvider,
   store: DeviceCalendarStore,
   window: TimeWindow,
   enabledCalendarIds?: string[],
+  keep: (row: CalendarEvent) => boolean = () => false,
 ): Promise<CalendarSyncResult> {
   const result: CalendarSyncResult = {created: 0, updated: 0, removed: 0, errors: []};
   const calendars = (await provider.listCalendars()).filter(
@@ -91,11 +93,11 @@ export async function syncCalendar(
   for (const [k, e] of wanted) {
     const old = have.get(k);
     if (!old) await run(`create ${e.title}`, () => store.create(e), 'created');
-    else if (!same(old, e)) await run(`update ${e.title}`, () => store.update(e), 'updated');
+    else if (!keep(old) && !same(old, e)) await run(`update ${e.title}`, () => store.update(e), 'updated');
   }
   for (const [k, e] of have) {
     // A row of a disabled or unreadable calendar is left alone; removing it is the owner's button (cleanup.ts, #89).
-    if (!wanted.has(k) && calendars.some(c => c.calendarId === e.calendarId) && !failed.has(e.calendarId)) {
+    if (!wanted.has(k) && calendars.some(c => c.calendarId === e.calendarId) && !failed.has(e.calendarId) && !keep(e)) {
       await run(`remove ${e.title}`, () => store.remove(e.calendarId, e.eventId), 'removed');
     }
   }

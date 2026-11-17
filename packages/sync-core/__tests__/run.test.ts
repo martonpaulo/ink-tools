@@ -119,6 +119,63 @@ test('a tablet edit to a source that failed one pass while another read is sent 
   expect(back.state.sourceSync).toEqual({google: 3000, ics: 3000});
 });
 
+/**
+ * A tablet whose edits are its rows, and a Google source that keeps what is pushed to it (#216).
+ * After the first pass the owner moves the event on the tablet.
+ */
+async function editedAfterFirstPass() {
+  const t = tablet();
+  t.store.listEdits = async () => [...t.rows.values()].map(event => ({event, cancelled: false}));
+  const googleEvents = [ev()];
+  const google: CalendarSource = {
+    id: 'google',
+    provider: {listCalendars: async () => [{calendarId: 'g1', name: 'g1'}], listEvents: async () => [...googleEvents]},
+    writer: {...writer(t.log), updateEvent: async e => { t.log.push(`push update ${e.eventId} ${e.title}`); googleEvents[0] = e; }},
+  };
+  const m = {sources: [google], store: t.store, window: W};
+  const first = await runCalendarModule(m, {baseline: []}, () => 1000);
+  const moved = ev({title: 'Talk moved', modified: 1500});
+  t.rows.set(key(moved), moved);
+  t.log.length = 0;
+  return {t, google, m, state: first.state, moved};
+}
+
+test('a pass whose edit read fails moves no mark and pulls nothing, so the next pass sends the edit (#216)', async () => {
+  const {t, m, state, moved} = await editedAfterFirstPass();
+  const listEdits = t.store.listEdits;
+  t.store.listEdits = async () => { throw new Error('content provider busy'); };
+  const failed = await runCalendarModule(m, state, () => 2000);
+  expect(failed.run).toMatchObject({errors: ["reading the tablet's edits: content provider busy"], notRun: true});
+  expect(failed.state).toBe(state);
+  expect(t.log).toEqual([]); // the pull did not write the source's version over the edit
+  expect(t.rows.get(key(moved))?.title).toBe('Talk moved');
+
+  t.store.listEdits = listEdits;
+  const back = await runCalendarModule(m, failed.state, () => 3000);
+  expect(back.run.errors).toEqual([]);
+  expect(t.log).toEqual(['push update e1 Talk moved']);
+  expect(t.rows.get(key(moved))?.title).toBe('Talk moved');
+});
+
+test('an edit whose push failed stays pending: its source keeps its mark and the row its baseline (#216)', async () => {
+  const {t, google, m, state, moved} = await editedAfterFirstPass();
+  const updateEvent = google.writer!.updateEvent;
+  google.writer!.updateEvent = async () => { throw new Error('HTTP 503'); };
+  const failed = await runCalendarModule(m, state, () => 2000);
+  expect(failed.run.errors).toEqual(['g1/e1: HTTP 503']);
+  expect(t.log).toEqual([]);
+  expect(t.rows.get(key(moved))?.title).toBe('Talk moved');
+  expect(failed.state.sourceSync).toEqual({google: 1000});
+  expect(failed.state.baseline).toEqual([ev()]);
+
+  google.writer!.updateEvent = updateEvent;
+  const back = await runCalendarModule(m, failed.state, () => 3000);
+  expect(back.run.errors).toEqual([]);
+  expect(t.log).toEqual(['push update e1 Talk moved']);
+  expect(back.state.sourceSync).toEqual({google: 3000});
+  expect(back.state.baseline).toEqual([moved]);
+});
+
 test('runBridgeSync runs only what the plan allows, and a module with no sign-in says so', async () => {
   let s = setModule(defaultSettings(), 'calendar', true);
   s = setModule(s, 'todo', true);

@@ -52,6 +52,8 @@ export interface PushResult {
   /** Edits made on both sides, and which version was kept (#87). */
   conflicts: Conflict[];
   errors: string[];
+  /** The edits that were not sent, one per error: they stay pending for the next pass (#216). */
+  failed: CalendarEvent[];
 }
 
 const key = (e: Pick<CalendarEvent, 'calendarId' | 'eventId'>) => `${e.calendarId}\u0000${e.eventId}`;
@@ -72,7 +74,7 @@ export async function pushCalendarEdits(
   remote: CalendarEvent[] = [],
   policy: TabletOnlyPolicy = PULL_ONLY,
 ): Promise<PushResult> {
-  const result: PushResult = {created: [], updated: 0, deleted: 0, skipped: 0, keptLocal: 0, conflicts: [], errors: []};
+  const result: PushResult = {created: [], updated: 0, deleted: 0, skipped: 0, keptLocal: 0, conflicts: [], errors: [], failed: []};
   const known = new Map(baseline.map(e => [key(e), e]));
   const now = new Map(remote.map(e => [key(e), e]));
   for (const {event, cancelled} of edits) {
@@ -95,6 +97,7 @@ export async function pushCalendarEdits(
           result.keptLocal++;
         } else if (!defaultCalendarId) {
           result.errors.push(`"${event.title}": no default calendar chosen, event not created`);
+          result.failed.push(event);
         } else {
           result.created.push({from: event, calendarId: defaultCalendarId, eventId: await writer.createEvent(defaultCalendarId, event)});
         }
@@ -109,6 +112,7 @@ export async function pushCalendarEdits(
       }
     } catch (e) {
       result.errors.push(`${event.calendarId}/${event.eventId || event.title}: ${(e as Error).message}`);
+      result.failed.push(event);
     }
   }
   return result;
