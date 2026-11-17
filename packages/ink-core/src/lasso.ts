@@ -19,16 +19,19 @@ export type LassoPlace = {
    */
   recheck?: true;
   /**
-   * The page's strokes, pictures and text boxes, in page pixels, read with the lasso (#152); absent
-   * when the read failed, so the placement is today's.
+   * Every stroke, picture and text box of the page, in page pixels, read with the lasso (#152);
+   * absent when the read failed, read only part of the page or ended late, so the placement is
+   * today's: a partial read placed a box over the person's ink.
    */
   occupied?: Rect[];
-  /**
-   * Set when `occupied` holds only part of the page: the read ran past its budget or an element
-   * failed. The placement still avoids what was read; a lasso of the insert never trusts it (#168).
-   */
-  occupiedPartial?: true;
 };
+
+/**
+ * How long the press waits for the page read once the word is recognized (#152): the read runs
+ * during the recognition, so this is the most it adds to the press. A read still running then
+ * gives today's placement.
+ */
+export const OCCUPIED_AFTER_RECOGNITION_MS = 300;
 
 /** What a page read found (#152): the rects, and whether every element of the page was read. */
 export type OccupiedRead = {rects: Rect[]; complete: boolean};
@@ -58,6 +61,8 @@ export type LassoHost<F extends {ok: false; message: string}> = {
   recognizeElements(elements: object[], size: Size): Promise<Outcome<string, F>>;
   /** The page's occupied rects (#152); without it, or when it fails, the placement is today's. */
   getOccupied?(path: string, page: number): Promise<Outcome<OccupiedRead, F>>;
+  /** One line for the plugin's log. */
+  log?(line: string): void;
   /** The lasso holds no handwriting. */
   emptyLasso(message: string): F;
   /** Any other failure. */
@@ -115,7 +120,7 @@ export async function readLassoQuery<F extends {ok: false; message: string}>(
   const text = await logged('recognizeElements', () =>
     host.recognizeElements(elements.value, size.value),
   );
-  const occupied = reading ? await reading : null;
+  const occupied = reading ? await readInTime(reading, host) : null;
   if (!text.ok) {
     return text;
   }
@@ -124,9 +129,8 @@ export async function readLassoQuery<F extends {ok: false; message: string}>(
         rect: rect.value,
         page: page.value,
         pageSize: size.value,
-        ...(occupied?.ok ? {occupied: occupied.value.rects} : {}),
-        ...(occupied?.ok && !occupied.value.complete
-          ? {occupiedPartial: true as const}
+        ...(occupied?.ok && occupied.value.complete
+          ? {occupied: occupied.value.rects}
           : {}),
       }
     : null;
@@ -135,4 +139,29 @@ export async function readLassoQuery<F extends {ok: false; message: string}>(
     return host.failure('the handwriting was recognized as empty text');
   }
   return {ok: true, value: {query, place}};
+}
+
+/**
+ * The page read, or null when it is still running OCCUPIED_AFTER_RECOGNITION_MS after the
+ * recognition ended (#152); the read is left to end by itself, and the timer never lingers.
+ */
+async function readInTime<T>(
+  reading: Promise<T>,
+  host: {log?(line: string): void},
+): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<null>(resolve => {
+    timer = setTimeout(() => resolve(null), OCCUPIED_AFTER_RECOGNITION_MS);
+  });
+  try {
+    const read = await Promise.race([reading, late]);
+    if (read === null) {
+      host.log?.(
+        `place: page read still running ${OCCUPIED_AFTER_RECOGNITION_MS} ms after recognition: today's placement`,
+      );
+    }
+    return read;
+  } finally {
+    clearTimeout(timer);
+  }
 }

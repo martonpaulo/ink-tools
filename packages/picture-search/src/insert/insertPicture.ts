@@ -466,9 +466,6 @@ export function inkUnderPicture(
   if (!place?.occupied) {
     return "the page's ink is not known";
   }
-  if (place.occupiedPartial) {
-    return "only part of the page's ink is known";
-  }
   const others = place.occupied.filter(
     other => !isFree(rect, [other]) && !(wordDeleted && inside(other, place.rect)),
   );

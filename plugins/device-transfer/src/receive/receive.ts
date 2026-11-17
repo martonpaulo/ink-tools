@@ -126,11 +126,14 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
   const after = page !== null && lastText?.page === page ? lastText.bottom : null;
   const occupied = await host.occupied();
   const read = occupied.ok ? occupied.value : null;
-  const {rect, free} = freeTextBox(size.value, text, after, read?.rects ?? null);
+  // A partial read places at the usual place, never by what was read (#152): placed by part of a
+  // full page, a box landed over the person's ink.
+  const known = read?.complete ? read.rects : null;
+  const {rect, free} = freeTextBox(size.value, text, after, known);
   if (!free) {
     host.log(
-      read === null
-        ? "receive: the page's ink is not known: the text goes at its usual place"
+      known === null
+        ? `receive: ${read === null ? "the page's ink is not known" : "only part of the page's ink is known"}: the text goes at its usual place`
         : `receive: no free band of ${rect.bottom - rect.top} px: the text goes over the ink`,
     );
   }

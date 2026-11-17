@@ -72,7 +72,7 @@ test('a read over its budget answers what it read, marked partial, and recycles 
     ok: true,
     value: {rects: [{left: 1, top: 1, right: 1, bottom: 1}], complete: false},
   });
-  expect(lines[0]).toMatch(/^place: page read 1 of 2 elements in \d+ ms: partial/);
+  expect(lines[0]).toMatch(/^place: page read 1 of 2 elements in \d+ ms: partial, today's placement$/);
   await new Promise(resolve => setTimeout(resolve, 0));
   expect(stuck.recycle).not.toHaveBeenCalled();
 });

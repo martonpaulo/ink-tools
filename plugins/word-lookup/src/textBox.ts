@@ -52,6 +52,7 @@ export function readLasso(): Promise<Outcome<LassoQuery, CallFailure>> {
     recognizeElements,
     getOccupied: (path, page) =>
       occupiedRects(path, page, line => console.log(`Lookup: ${line}`)),
+    log: line => console.log(`Lookup: ${line}`),
     emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
     failure: message => fail(THROWN_CODE, message),
   });

@@ -509,11 +509,8 @@ describe('the inserted picture is left lassoed (#73)', () => {
     );
     const unread = {rect: place.rect, page: place.page, pageSize: place.pageSize};
     expect((await insertPicture(result, 'soup', unread)).ok).toBe(true);
-    const partial = {...place, occupiedPartial: true as const};
-    expect((await insertPicture(result, 'soup', partial)).ok).toBe(true);
     expect(lasso).not.toHaveBeenCalled();
     expect(logLines().join('\n')).toMatch(/the page's ink is not known/);
-    expect(logLines().join('\n')).toMatch(/only part of the page's ink is known/);
   });
 
   it('skips the lasso when the host placed the picture with insertImage', async () => {

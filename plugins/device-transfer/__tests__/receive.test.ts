@@ -231,6 +231,21 @@ describe('a received text avoids the ink on the page (#199)', () => {
     expect(host.lasso).toHaveBeenCalledWith(rect);
   });
 
+  test('a partial page read places the box at its usual place, never by what was read (#152)', async () => {
+    const host = note({
+      pageSize: jest.fn(async () => ok(MANTA)),
+      occupied: jest.fn(async () => ok({rects: ink, complete: false})),
+    });
+    const text = offer({t: {fileType: 'text/plain', preview: 'one'}});
+    await receiveOne(fakeRelay({}, [text]).api, host, 'Supernote');
+    expect(host.insertText).toHaveBeenCalledWith(
+      expect.objectContaining({rect: textBox(MANTA, 'one')}),
+    );
+    expect(host.log).toHaveBeenCalledWith(
+      "receive: only part of the page's ink is known: the text goes at its usual place",
+    );
+  });
+
   test('a second text still goes below the first', async () => {
     const first = freeTextBox(MANTA, 'one', null, ink).rect;
     const second = freeTextBox(MANTA, 'two', first.bottom, [...ink, first]).rect;
