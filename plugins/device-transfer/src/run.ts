@@ -34,6 +34,7 @@ import {sendText} from './send/sendText';
 import {TextDeps} from './send/textSession';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
+import {Image} from 'react-native';
 import {NoteHost, Size} from './receive/receive';
 import {loadSettings, ownFingerprint} from './settings/device';
 
@@ -125,6 +126,17 @@ async function currentOccupied(): Promise<Result<OccupiedRead>> {
   return page.ok ? occupiedRects(note.value, page.value, log) : page;
 }
 
+/** A picture file's size from React Native's own decoder, with no pixels read (#196). */
+function pictureSize(path: string): Promise<Result<Size>> {
+  return new Promise(resolve =>
+    Image.getSize(
+      `file://${path}`,
+      (width, height) => resolve(ok({width, height})),
+      error => resolve(fail(THROWN_CODE, String(error))),
+    ),
+  );
+}
+
 /** The open note, as a receive places into it. */
 export const noteHost: NoteHost = {
   permissions: ensurePermissions,
@@ -137,6 +149,8 @@ export const noteHost: NoteHost = {
   insertText,
   lasso: lassoElements,
   insertImage,
+  imageSize: pictureSize,
+  wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
   createNote,
   insertNotePage,
 };

@@ -30,7 +30,10 @@ refused at `prepare-upload` with 403, and a received photo is lassoed for a plug
 `getLassoElementTypeCounts`. Since 0.1.0 beta 8, a received picture is lassoed by its rect after
 `insertImage`, the one rect the insert added to the page, under the same rule, because the host's
 floating selection is no lasso for the plugin API and «Document» edited nothing on it; its file
-stays until the next receive ([#196](https://github.com/martonpaulo/ink-tools/issues/196)). Still to
+stays until the next receive ([#196](https://github.com/martonpaulo/ink-tools/issues/196)). Since
+beta 9, the page is read again every 250 ms for up to 3 s until the host commits the picture (on
+beta 8 a read 120 ms after the insert held 0 elements), else the centred rect the host places it
+at (`centredRect`, the picture's own size from `Image.getSize`) is lassoed. Still to
 come: whether the receiver can stay on with the view closed.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
