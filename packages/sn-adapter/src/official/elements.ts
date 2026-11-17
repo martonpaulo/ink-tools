@@ -54,13 +54,26 @@ export async function readAll<T>(accessor: Accessor<T> | undefined): Promise<Res
   }
 }
 
+/**
+ * `rect` in whole page pixels: sn-plugin-lib 0.2.3's `RectSchema` takes integers only, and a rect
+ * built from converted EMR points is fractional («textBox.textRect.right must be an integer», #206).
+ */
+export function integerRect(rect: TextBoxInput['rect']): TextBoxInput['rect'] {
+  return {
+    left: Math.round(rect.left),
+    top: Math.round(rect.top),
+    right: Math.round(rect.right),
+    bottom: Math.round(rect.bottom),
+  };
+}
+
 /** The SDK's `TextBox` fields for `box`, shared by insertText and a text box element (#187). */
 export function textBoxFields(box: TextBoxInput): Record<string, unknown> {
   return {
     fontSize: box.fontSize,
     fontPath: null,
     textContentFull: box.text,
-    textRect: box.rect,
+    textRect: integerRect(box.rect),
     textDigestData: null,
     textAlign: 0,
     textBold: 0,

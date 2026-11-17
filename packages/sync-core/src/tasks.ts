@@ -46,10 +46,27 @@ export interface TaskProvider {
 }
 
 /** The seam to the tablet's To-Do (sn-adapter implements it over the content provider). */
+/** What a store's `repair` answers (#212). */
+export interface TaskRepair {
+  /** The new local id of each given link whose tablet row now reads as another id. */
+  moved: Record<string, string>;
+  /** Unlinked service tasks whose tablet row the store found by its own marks on the row. */
+  found: {remoteId: string; localId: string}[];
+}
+
 export interface DeviceTaskStore {
   list(): Promise<DeviceTask[]>;
-  /** `list` is the service list the task comes from; the store files it there (#212). */
-  create(content: TaskContent, list?: TaskList): Promise<DeviceTask>;
+  /**
+   * `list` is the service list the task comes from; the store files it there (#212). `remoteId` is
+   * the service task's id, which the store may mark on the row so `repair` finds it again.
+   */
+  create(content: TaskContent, list?: TaskList, remoteId?: string): Promise<DeviceTask>;
+  /**
+   * Bring the rows this tool wrote to the shape the tablet app shows, and find the service task
+   * behind each of them, before the pass reads the tablet (#212). The links live in memory, so a
+   * pass after a restart starts with none: without this, every pulled task would be pulled again.
+   */
+  repair?(remotes: RemoteTask[], links: TaskLink[]): Promise<TaskRepair>;
   update(localId: string, content: TaskContent): Promise<DeviceTask>;
   /** Soft delete. */
   remove(localId: string): Promise<void>;
@@ -121,9 +138,10 @@ export interface SyncResult {
 export async function syncTasks(
   provider: TaskProvider,
   store: DeviceTaskStore,
-  previous: TaskLink[],
+  given: TaskLink[],
   policy: TabletOnlyPolicy = PULL_ONLY,
 ): Promise<SyncResult> {
+  let previous = given;
   const result: SyncResult = {
     links: [],
     keptLocal: 0,
@@ -131,8 +149,30 @@ export async function syncTasks(
     errors: [],
     warnings: [],
   };
-  const remotes = new Map((await provider.list()).map(t => [t.remoteId, t]));
+  const remoteList = await provider.list();
+  const remotes = new Map(remoteList.map(t => [t.remoteId, t]));
+  let found: TaskRepair['found'] = [];
+  if (store.repair) {
+    // A failed repair stops the pass: going on would pull again every task it had to find (#212).
+    let repaired: TaskRepair;
+    try {
+      repaired = await store.repair(remoteList, previous);
+    } catch (e) {
+      throw new Error(`repair tablet rows: ${(e as Error).message}`);
+    }
+    previous = previous.map(l => (repaired.moved[l.localId] ? {...l, localId: repaired.moved[l.localId]} : l));
+    found = repaired.found;
+  }
   const devices = new Map((await store.list()).map(t => [t.localId, t]));
+  // A found pair starts from the tablet's content: a service change since then is copied to the
+  // tablet, and nothing is sent to the service for a task it already holds.
+  const taken = new Set([...previous.map(l => l.remoteId), ...previous.map(l => l.localId)]);
+  for (const f of found) {
+    const d = devices.get(f.localId);
+    if (!d || taken.has(f.remoteId) || taken.has(f.localId)) continue;
+    taken.add(f.remoteId).add(f.localId);
+    previous = [...previous, {remoteId: f.remoteId, localId: f.localId, fingerprint: fingerprint(d), origin: 'service'}];
+  }
   const linkedRemote = new Set(previous.map(l => l.remoteId));
   const linkedLocal = new Set(previous.map(l => l.localId));
 
@@ -149,7 +189,7 @@ export async function syncTasks(
   for (const r of remotes.values()) {
     if (linkedRemote.has(r.remoteId) || r.completed) continue; // a finished task is not worth importing
     try {
-      const d = await store.create(content(r), r.list);
+      const d = await store.create(content(r), r.list, r.remoteId);
       result.counts.createdLocal++;
       result.links.push({remoteId: r.remoteId, localId: d.localId, fingerprint: fingerprint(r), origin: 'service'});
     } catch (e) {

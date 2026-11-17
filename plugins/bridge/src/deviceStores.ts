@@ -18,16 +18,20 @@ import {
   rowToDeviceEdit,
   rowToEvent,
   rowToTodoTask,
+  todoShapeGaps,
   todoTaskToRow,
   toTodoInsert,
 } from '@supernote-tools/sn-adapter';
+import {content, fingerprint} from '@supernote-tools/sync-core';
 import type {
   CalendarEvent,
   DeviceCalendarEditor,
   DeviceTask,
   DeviceTaskStore,
+  RemoteTask,
   TaskContent,
   TaskList,
+  TaskRepair,
   TimeWindow,
 } from '@supernote-tools/sync-core';
 
@@ -68,23 +72,37 @@ const LIST_MODIFIED = 'lastModified';
 const LIST_CREATED = 'createTime';
 const LIST_HAS_SYNC = 'hasSync';
 /**
- * The tablet list a service task with no list, or from the service's Inbox, goes into (#212). The
- * provider refuses a task with no list (#63), so the Inbox is a list of its own.
+ * The list name Account Sync beta 15 to 17 gave the service's Inbox (#212). The app keeps unfiled
+ * tasks (`taskListId` NULL) as its own Inbox, so `repair` moves those tasks out and removes the list.
  */
 export const INBOX_LIST = 'Inbox';
 
-/** The tablet list name for a service list; the Inbox, or no list, is `INBOX_LIST`. */
-export function tabletListName(list: TaskList | undefined): string {
-  return !list || list.inbox || !list.name.trim() ? INBOX_LIST : list.name.trim();
+/** The tablet list name for a service list; null, an unfiled task, for the Inbox or no list (#212). */
+export function tabletListName(list: TaskList | undefined): string | null {
+  return !list || list.inbox || !list.name.trim() ? null : list.name.trim();
 }
 
+/** Every list and task id Account Sync makes starts with this, so its own rows are known. */
+const ID_PREFIX = 'inktools';
+/** A task id made from a service task's id: the row names its service task after a restart. */
+const SERVICE_TASK_PREFIX = `${ID_PREFIX}rt`;
+
+export const serviceTaskId = (remoteId: string): string =>
+  `${SERVICE_TASK_PREFIX}${remoteId}`;
+
+const empty = (v: Row[string] | undefined): boolean =>
+  v === null || v === undefined || v === '';
+
 /**
- * A new list id. shortcut: the native app's own id format is not known, so this is a unique hex
- * string of the same kind as a row key; switch to the app's format once a device round reads one.
+ * A new list or task id. shortcut: the native app's own id format is not known, so this is a unique
+ * text of the kind the native sync already accepted for lists (device round of #212); switch to the
+ * app's format once a device round reads one.
  */
-function newListId(now: number): string {
-  const random = Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, '0');
-  return `inktools${now.toString(16)}${random}`;
+function newId(now: number): string {
+  const random = Math.floor(Math.random() * 0xffffffff)
+    .toString(16)
+    .padStart(8, '0');
+  return `${ID_PREFIX}${now.toString(16)}${random}`;
 }
 
 export function createDeviceCalendar(
@@ -197,15 +215,18 @@ export function createDeviceTasks(
   const listFor = async (name: string, at: number): Promise<string> => {
     const all = await rows.query(groups, {});
     const open = all.find(
-      g => Number(g[DELETED]) !== 1 && String(g[LIST_TITLE] ?? '').trim() === name,
+      g =>
+        Number(g[DELETED]) !== 1 && String(g[LIST_TITLE] ?? '').trim() === name,
     );
     const known = open?.[LIST_ID];
     if (known !== null && known !== undefined && known !== '') {
       return String(known);
     }
-    const id = newListId(at);
+    const id = newId(at);
     // A list keeps the account owner of the tablet's earlier lists, when one is left to read.
-    const user = all.map(g => g[LIST_USER]).find(u => u !== null && u !== undefined && u !== '');
+    const user = all
+      .map(g => g[LIST_USER])
+      .find(u => u !== null && u !== undefined && u !== '');
     await rows.insert(groups, {
       [LIST_ID]: id,
       [LIST_TITLE]: name,
@@ -216,6 +237,141 @@ export function createDeviceTasks(
       [LIST_HAS_SYNC]: d.todo.rules.writeHasSync,
     });
     return id;
+  };
+  /**
+   * Rows Account Sync wrote are those whose taskId it made, or that sit in a list it made. Each one
+   * gets the columns a native insert fills (beta 15 to 17 left `deleted` and `sort` NULL, which hides
+   * the task), a taskId, and leaves the old «Inbox» list for no list. A row with no stored link is
+   * matched to an open service task by its taskId, or else by its content. A hidden row that matches
+   * none was never shown nor uploaded, so it is deleted and nothing is pulled twice (#212).
+   */
+  const repairTasks = async (
+    remotes: RemoteTask[],
+    links: {remoteId: string; localId: string}[],
+  ): Promise<TaskRepair> => {
+    const at = now();
+    const all = await rows.query(tasks, {});
+    const lists = await rows.query(groups, {});
+    const ownLists = lists.filter(g =>
+      String(g[LIST_ID] ?? '').startsWith(ID_PREFIX),
+    );
+    const ownListIds = new Set(ownLists.map(g => String(g[LIST_ID])));
+    const oldInbox = ownLists.filter(
+      g =>
+        Number(g[DELETED]) !== 1 &&
+        String(g[LIST_TITLE] ?? '').trim() === INBOX_LIST,
+    );
+    const oldInboxIds = new Set(oldInbox.map(g => String(g[LIST_ID])));
+    const localOf = (r: Row) => rowToTodoTask(d, r).localId;
+    const moved: Record<string, string> = {};
+    const found: TaskRepair['found'] = [];
+    // A link to a row id whose row the native sync has since given a taskId follows the row.
+    const readIds = new Set(all.map(localOf));
+    for (const l of links) {
+      const r = readIds.has(l.localId)
+        ? undefined
+        : all.find(x => String(x[rowId]) === l.localId);
+      if (r) {
+        moved[l.localId] = localOf(r);
+      }
+    }
+    const linked = new Set([
+      ...links.map(l => l.localId),
+      ...Object.values(moved),
+    ]);
+    const takenRemote = new Set(links.map(l => l.remoteId));
+    const open = new Map<string, RemoteTask>();
+    const byContent = new Map<string, RemoteTask[]>();
+    for (const r of remotes) {
+      if (takenRemote.has(r.remoteId)) {
+        continue;
+      }
+      open.set(r.remoteId, r);
+      const key = fingerprint(content(r));
+      byContent.set(key, [...(byContent.get(key) ?? []), r]);
+    }
+    const take = (r: RemoteTask | undefined): string | null => {
+      if (!r || !open.has(r.remoteId)) {
+        return null;
+      }
+      open.delete(r.remoteId);
+      const key = fingerprint(content(r));
+      byContent.set(
+        key,
+        (byContent.get(key) ?? []).filter(x => x.remoteId !== r.remoteId),
+      );
+      return r.remoteId;
+    };
+    for (const r of all) {
+      const taskId = r[col('taskId')];
+      const listId = r[col('listId')];
+      const mark =
+        !empty(taskId) && String(taskId).startsWith(SERVICE_TASK_PREFIX)
+          ? String(taskId).slice(SERVICE_TASK_PREFIX.length)
+          : null;
+      const task = rowToTodoTask(d, r);
+      if (
+        task.deleted ||
+        (mark === null && (empty(listId) || !ownListIds.has(String(listId))))
+      ) {
+        continue;
+      }
+      const isLinked = linked.has(task.localId);
+      let remoteId: string | null = null;
+      if (!isLinked) {
+        remoteId =
+          mark !== null
+            ? take(open.get(mark))
+            : take((byContent.get(fingerprint(content(task))) ?? [])[0]);
+      }
+      const fix: Row = todoShapeGaps(d, r, at);
+      if (!empty(listId) && oldInboxIds.has(String(listId))) {
+        fix[col('listId')] = null;
+      }
+      let localId = task.localId;
+      if (empty(taskId)) {
+        if (!isLinked && remoteId === null) {
+          if (Number(r[col('hasSync')]) !== 1) {
+            one(
+              await rows.remove(tasks, {[rowId]: r[rowId]}),
+              `remove hidden task ${task.title}`,
+            );
+          }
+          continue;
+        }
+        localId = remoteId === null ? newId(at) : serviceTaskId(remoteId);
+        fix[col('taskId')] = localId;
+        if (isLinked) {
+          moved[task.localId] = localId;
+        }
+      }
+      if (Object.keys(fix).length) {
+        fix[col('hasSync')] = d.todo.rules.writeHasSync;
+        one(
+          await rows.update(tasks, {[rowId]: r[rowId]}, fix),
+          `repair task ${task.title}`,
+        );
+      }
+      if (remoteId !== null) {
+        found.push({remoteId, localId});
+      }
+    }
+    // The old «Inbox» list is empty now; a soft delete lets the native sync remove it too.
+    for (const g of oldInbox) {
+      one(
+        await rows.update(
+          groups,
+          {[ROW_ID]: g[ROW_ID]},
+          {
+            [DELETED]: 1,
+            [LIST_MODIFIED]: at,
+            [LIST_HAS_SYNC]: d.todo.rules.writeHasSync,
+          },
+        ),
+        `remove list ${INBOX_LIST}`,
+      );
+    }
+    return {moved, found};
   };
   const saved = (localId: string, c: TaskContent, at: number): DeviceTask => ({
     localId,
@@ -230,19 +386,27 @@ export function createDeviceTasks(
     async list() {
       return (await rows.query(tasks, {})).map(row => rowToTodoTask(d, row));
     },
-    async create(c, list) {
+    async create(c, list, remoteId) {
       const at = now();
-      const listId = await listFor(tabletListName(list), at);
+      const name = tabletListName(list);
+      const listId = name === null ? null : await listFor(name, at);
+      const taskId = remoteId ? serviceTaskId(remoteId) : newId(at);
       const row = toTodoInsert(
         d,
-        {...todoTaskToRow(d, c, at), [col('listId')]: listId},
-        {existingListIds: [listId]},
+        {
+          ...todoTaskToRow(d, c, at),
+          [col('listId')]: listId,
+          [col('taskId')]: taskId,
+        },
+        {existingListIds: listId === null ? [] : [listId], now: at},
       );
-      // shortcut: with no taskId written, the task is known by its row id, which `rowToTodoTask`
-      // reads when taskId is empty; if the native sync later writes a taskId, the link is lost and
-      // the next pass sees two tasks. The device round of #44 checks it.
-      return saved(await rows.insert(tasks, row), c, at);
+      // The task is known by the taskId written here. shortcut: that the native sync keeps it is
+      // inferred from the lists, which kept theirs (#212); if it does not, `repair` finds the row by
+      // its content in a list Account Sync made, and a task with no list is pulled again.
+      await rows.insert(tasks, row);
+      return saved(taskId, c, at);
     },
+    repair: (remotes, links) => repairTasks(remotes, links),
     async update(localId, c) {
       const row = await find(localId);
       const at = now();

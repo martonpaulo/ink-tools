@@ -52,23 +52,42 @@ type PageText = {
   textBox?: {textRect?: Rect; textContentFull?: string | null} | null;
 };
 
-const near = (a: Rect, b: Rect) =>
-  (['left', 'top', 'right', 'bottom'] as const).every(
-    side => Math.abs(a[side] - b[side]) <= RECT_SLACK,
-  );
+/** The largest distance between the top-left corners of two rects. */
+const cornerDistance = (a: Rect, b: Rect) =>
+  Math.max(Math.abs(a.left - b.left), Math.abs(a.top - b.top));
 
-/** The number of the conversion's text box in a page read, by its text and rect. */
+const rectText = (rect: Rect | undefined) =>
+  rect ? `${rect.left},${rect.top},${rect.right},${rect.bottom}` : 'none';
+
+/**
+ * The number of the conversion's text box in a page read: a text box with its text whose top-left
+ * corner is within RECT_SLACK of the written one, the nearest first. Only the corner is compared:
+ * the host may size the box again to its text, and on the tablet the exact rect never matched
+ * («the converted text box is no longer on the page» right after a conversion, #206). A miss says
+ * what the page holds, in counts and rects only, never the text.
+ */
 export function boxNumber(conversion: Conversion, page: readonly object[]): Result<number> {
-  const found = (page as PageText[]).find(
-    element =>
-      element.type === TEXT_TYPE &&
-      element.textBox?.textContentFull === conversion.box.text &&
-      element.textBox.textRect !== undefined &&
-      near(element.textBox.textRect, conversion.box.rect),
+  const boxes = (page as PageText[]).filter(element => element.type === TEXT_TYPE);
+  const sameText = boxes.filter(
+    element => element.textBox?.textContentFull?.trim() === conversion.box.text.trim(),
   );
-  return found?.numInPage === undefined
-    ? fail(THROWN_CODE, 'the converted text box is no longer on the page')
-    : ok(found.numInPage);
+  const nearest = sameText
+    .filter(element => element.textBox?.textRect && element.numInPage !== undefined)
+    .sort(
+      (a, b) =>
+        cornerDistance(a.textBox?.textRect as Rect, conversion.box.rect) -
+        cornerDistance(b.textBox?.textRect as Rect, conversion.box.rect),
+    )[0];
+  const rect = nearest?.textBox?.textRect;
+  if (nearest && rect && cornerDistance(rect, conversion.box.rect) <= RECT_SLACK) {
+    return ok(nearest.numInPage as number);
+  }
+  return fail(
+    THROWN_CODE,
+    `the converted text box is no longer on the page: ${boxes.length} text boxes, ` +
+      `${sameText.length} with its text, nearest rect ${rectText(rect)}, ` +
+      `written ${rectText(conversion.box.rect)}`,
+  );
 }
 
 export async function undoLast(host: UndoHost): Promise<UndoOutcome> {

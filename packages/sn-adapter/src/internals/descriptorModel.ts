@@ -43,8 +43,18 @@ export interface CalendarRules {
 
 export interface TodoRules {
   requiredOnInsert: string[];
+  /** A non-empty `taskListId` must name an open `task_group_table` row ("taskList is not Exist"). */
   needsExistingList: boolean;
+  /** An empty `taskListId` is an unfiled task, the app's own Inbox (decompiled `DataBaseTools.insert`, #212). */
+  allowNoList: boolean;
   writeHasSync: number;
+  /**
+   * The value a native insert gives each of these columns when the task has none. The app lists only
+   * `deleted=0` rows, so a NULL there hides the task (device round of #212).
+   */
+  insertDefaults: Record<string, number>;
+  /** Columns a native insert fills with the insert time, in `timeUnit`. */
+  insertNow: string[];
   statusOpen: string;
   statusCompleted: string;
   timeUnit: string;
@@ -75,10 +85,10 @@ export interface Descriptor {
   digest: ModuleDescriptor<DigestRules>;
 }
 
-type RuleType = 'string' | 'boolean' | 'number' | 'string[]';
+type RuleType = 'string' | 'boolean' | 'number' | 'string[]' | 'number-map';
 const RULE_TYPES: Record<Capability, Record<string, RuleType>> = {
   calendar: {writeTag: 'string', cancelledStatus: 'string', writeStatus: 'string', writeState: 'number', requiredOnInsert: 'string[]'},
-  todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', writeHasSync: 'number', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
+  todo: {requiredOnInsert: 'string[]', needsExistingList: 'boolean', allowNoList: 'boolean', writeHasSync: 'number', insertDefaults: 'number-map', insertNow: 'string[]', statusOpen: 'string', statusCompleted: 'string', timeUnit: 'string'},
   digest: {insertPath: 'string', countByIdentifierPath: 'string', updateByIdentifierPath: 'string', updateIdentifierKey: 'string', identifierKey: 'string', sourceTypeSelfAdd: 'number', contentMaxLength: 'number', commentMaxLength: 'number'},
 };
 
@@ -90,7 +100,11 @@ const REQUIRED_FIELDS: Partial<Record<Capability, Record<string, string[]>>> = {
 };
 
 function hasType(value: unknown, type: RuleType): boolean {
-  return type === 'string[]' ? Array.isArray(value) && value.every(v => typeof v === 'string') : typeof value === type;
+  if (type === 'string[]') return Array.isArray(value) && value.every(v => typeof v === 'string');
+  if (type === 'number-map') {
+    return !!value && typeof value === 'object' && !Array.isArray(value) && Object.values(value).every(v => typeof v === 'number');
+  }
+  return typeof value === type;
 }
 
 export const SUPPORTED_SCHEMA = 1;

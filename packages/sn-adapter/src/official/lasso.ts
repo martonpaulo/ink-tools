@@ -1,5 +1,5 @@
 import {PluginCommAPI} from 'sn-plugin-lib';
-import {attempt, Result} from './result';
+import {attempt, fail, fromResponse, Result, THROWN_CODE} from './result';
 
 /** The page rect, owned by ink-core (#109). */
 import type {Rect} from '@supernote-tools/ink-core';
@@ -31,10 +31,26 @@ export function deleteLassoElements(): Promise<Result<boolean>> {
   return attempt(() => PluginCommAPI.deleteLassoElements());
 }
 
-/** Uses the device's recognition language; there is no language parameter (brief section 4.5). */
+/** The failure for a recognition that succeeded with no text: null on the tablet (#206). */
+export const NO_TEXT_MESSAGE = 'recognition gave no text';
+
+/**
+ * Uses the device's recognition language; there is no language parameter (brief section 4.5). A
+ * success whose result is not a string (null on the tablet, #206) is a failure, so no caller trims
+ * a null.
+ */
 export function recognizeElements(
   elements: object[],
   size: {width: number; height: number},
 ): Promise<Result<string>> {
-  return attempt(() => PluginCommAPI.recognizeElements(elements, size));
+  return attempt(
+    () => PluginCommAPI.recognizeElements(elements, size),
+    response => {
+      const text = fromResponse<unknown>(response);
+      if (text.ok && typeof text.value !== 'string') {
+        return fail(THROWN_CODE, `${NO_TEXT_MESSAGE} (${text.value === null ? 'null' : typeof text.value})`);
+      }
+      return text as Result<string>;
+    },
+  );
 }

@@ -1,5 +1,11 @@
 /** A fake tablet for the conversion and the undo: a page of synthetic elements and a manual clock. */
-import {fail, offPage, type SavedStroke, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
+import {
+  fail,
+  offPage,
+  type SavedStroke,
+  textBoxFields,
+  THROWN_CODE,
+} from '@supernote-tools/sn-adapter/official';
 import type {ConvertHost} from '../src/convert';
 import type {UndoHost} from '../src/undo';
 import type {InkStroke} from '../src/words';
@@ -16,8 +22,20 @@ export type FakeElement = {
 export const RECOGNITION_FAILED = 'Recognition failed. Please try again!';
 /** Its code, as Ink2Pic's lasso-size failure gave it (plugins/ink2pic/docs/brief.md). */
 export const RECOGNITION_FAILED_CODE = 117;
+/** The SDK's code for a parameter its schema refuses (sn-plugin-lib 0.2.3 VerifyUtils, APIError 107). */
+export const PARAM_REFUSED_CODE = 107;
 
 const ok = <T>(value: T) => ({ok: true as const, value});
+
+// The SDK's own element rules, as batchUpdatePageElements applies them (sn-plugin-lib 0.2.3, #206).
+// Its element model loads the native module, which only the tablet has. Required, not imported,
+// so tsc never type-checks the SDK's own source.
+jest.mock('../node_modules/sn-plugin-lib/src/module/NativePluginAPI', () => ({}));
+const {ElementSchema, verifyParams} =
+  require('../node_modules/sn-plugin-lib/src/sdk/utils/VerifyUtils') as {
+    ElementSchema: object;
+    verifyParams(schema: object, params: unknown, options: object): void;
+  };
 
 export function fakeTablet(answer = 'café') {
   let time = 0;
@@ -57,21 +75,27 @@ export function fakeTablet(answer = 'café') {
         : ok(answer),
     ),
     getElements: jest.fn(async () => ok(page.map(element => ({...element})))),
-    createTextBox: jest.fn(async box => ok({type: 500, box})),
-    rebuildStroke: jest.fn(async saved => ok({type: 0, saved})),
+    createTextBox: jest.fn(async box => ok({type: 500, textBox: textBoxFields(box)})),
+    rebuildStroke: jest.fn(async saved => ok({type: 0, stroke: {}, saved})),
     batchUpdatePageElements: jest.fn(async (nums: number[], elements: object[]) => {
+      try {
+        verifyParams({elements: {type: 'array', required: true, items: ElementSchema}}, {elements}, {
+          allowUnknown: true,
+          rootName: 'batchUpdatePageElements',
+        });
+      } catch (error) {
+        return fail(PARAM_REFUSED_CODE, (error as Error).message);
+      }
       const gone = new Set(nums);
       const kept = page.filter(element => !gone.has(element.numInPage as number));
       page.length = 0;
       page.push(...kept);
       elements.forEach((element, index) => {
-        const made = element as {type: number; box?: {text: string; rect: object}};
+        const made = element as {type: number; textBox?: FakeElement['textBox']};
         page.push({
           uuid: `new${index}-${time}`,
           type: made.type,
-          ...(made.box
-            ? {textBox: {textRect: made.box.rect, textContentFull: made.box.text}}
-            : {}),
+          ...(made.textBox ? {textBox: {...made.textBox}} : {}),
         });
       });
       renumber();

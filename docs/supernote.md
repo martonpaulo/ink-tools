@@ -216,6 +216,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [official, [#146](https://github.com/martonpaulo/ink-tools/issues/146)].
 - Content providers: calendar and To-Do answer query, insert and delete from a plugin; the
   Knowledge (Digest) provider rejects the guessed URIs and refuses delete [measured, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#59](https://github.com/martonpaulo/ink-tools/issues/59)].
+- The To-Do app lists only `tasks_table` rows with `deleted = 0`: 278 rows inserted with `deleted`,
+  `sort`, `taskId` and their siblings NULL were in its lists' counts as 0, and the one row the native
+  sync rewrote (`taskId` set, `deleted = 0`, `sort = 0`, `hasSync = 1`) was the only one shown
+  [measured, Account Sync 0.1.0 beta 15, [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. Account Sync now writes every column a native
+  insert fills (the descriptor's `insertDefaults` and `insertNow`) and its own `taskId`. A list
+  whose `taskListId` Account Sync made (`inktools…`) kept it after the native sync (`hasSync = 1`).
+  A task with an empty `taskListId` is an unfiled task, the app's own Inbox [decompiled
+  `DataBaseTools.insert`; a pulled unfiled task is not yet seen on the tablet].
 - The calendar's `data_info` delete with the selection `title = ?` removed 0 rows of a row just
   inserted with that title, so each probe left its test row; Account Sync now deletes by the row id
   the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)].

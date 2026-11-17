@@ -68,7 +68,8 @@ export function textBoxFor(text: string, word: Word, page: Size): TextBoxInput {
   const fontSize = Math.max(MIN_FONT_SIZE, Math.round(word.letterHeight * FONT_PER_LETTER));
   const textWidth = Math.ceil([...text].length * fontSize * CHAR_WIDTH);
   // One font size more than the text needs, so the host never wraps the word [inference].
-  const boxWidth = Math.max(word.rect.right - word.rect.left, textWidth) + fontSize;
+  // Whole pixels: the word's rect comes from converted EMR points and is fractional (#206).
+  const boxWidth = Math.ceil(Math.max(word.rect.right - word.rect.left, textWidth)) + fontSize;
   const left = Math.max(0, Math.min(Math.round(word.rect.left), page.width - boxWidth));
   const top = Math.max(0, Math.round(word.rect.top));
   const rect: Rect = {

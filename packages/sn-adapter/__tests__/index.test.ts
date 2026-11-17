@@ -9,6 +9,7 @@ import {
   NO_TEST_WRITE,
   DRY_INSERT_MARKER,
   toCalendarInsert,
+  todoShapeGaps,
   toTodoInsert,
 } from '../src';
 
@@ -167,18 +168,49 @@ test('calendar insert throws on each NOT NULL column it would leave empty, befor
   }
 });
 
-test('to-do insert enforces title, existing list and hasSync=0', () => {
-  const ctx = {existingListIds: ['L1']};
-  expect(toTodoInsert(D, {title: 'Buy milk', taskListId: 'L1', createTime: 5}, ctx)).toEqual({
+test('to-do insert enforces title, taskId, existing list and hasSync=0', () => {
+  const ctx = {existingListIds: ['L1'], now: 7};
+  expect(toTodoInsert(D, {title: 'Buy milk', taskId: 't1', taskListId: 'L1', createTime: 5}, ctx)).toEqual({
     title: 'Buy milk',
+    taskId: 't1',
     taskListId: 'L1',
     hasSync: 0,
+    deleted: 0,
+    isReminderOn: 0,
+    dueTime: 0,
+    completedTime: 0,
+    sort: 0,
+    sortCompleted: 0,
+    plannedSort: 0,
+    lastModified: 7,
+    sortTime: 7,
+    plannedSortTime: 7,
   });
-  expect(() => toTodoInsert(D, {taskListId: 'L1'}, ctx)).toThrow(/title/);
-  expect(() => toTodoInsert(D, {title: 'x', taskListId: 'nope'}, ctx)).toThrow(/existing list/);
-  // A missing list fails like an unknown one (#63).
-  expect(() => toTodoInsert(D, {title: 'x'}, ctx)).toThrow(/taskListId/);
-  expect(() => toTodoInsert(D, {title: 'x', taskListId: ''}, ctx)).toThrow(/taskListId/);
+  expect(() => toTodoInsert(D, {taskId: 't1', taskListId: 'L1'}, ctx)).toThrow(/title/);
+  expect(() => toTodoInsert(D, {title: 'x', taskListId: 'L1'}, ctx)).toThrow(/taskId/);
+  expect(() => toTodoInsert(D, {title: 'x', taskId: 't1', taskListId: 'nope'}, ctx)).toThrow(/existing list/);
+  // No list is an unfiled task, the app's own Inbox (#212); NULL, never an empty text.
+  expect(toTodoInsert(D, {title: 'x', taskId: 't1', taskListId: ''}, ctx).taskListId).toBeNull();
+  expect(toTodoInsert(D, {title: 'x', taskId: 't1'}, ctx).taskListId).toBeNull();
+  // A descriptor that forbids unfiled tasks fails like an unknown list (#63).
+  const strict = {...D, todo: {...D.todo, rules: {...D.todo.rules, allowNoList: false}}};
+  expect(() => toTodoInsert(strict, {title: 'x', taskId: 't1'}, ctx)).toThrow(/taskListId/);
+});
+
+test('every tasks_table column but the row key is written on insert, as a native row has it (#212)', () => {
+  const row = toTodoInsert(D, {...todoTaskToRow(D, {title: 'a', detail: '', due: null, completed: false}, 3), taskId: 't', taskListId: 'L'}, {existingListIds: ['L'], now: 3});
+  const unset = ['id', 'recurrence', 'importance', 'links'];
+  expect(Object.keys(row).sort()).toEqual(D.todo.tables.tasks.columns.filter(c => !unset.includes(c)).sort());
+  expect(Object.values(row)).not.toContain(null);
+});
+
+test('shape gaps fill only the columns a row lacks', () => {
+  expect(todoShapeGaps(D, {deleted: null, sort: 4, sortTime: null}, 9)).toEqual({
+    deleted: 0, isReminderOn: 0, dueTime: 0, completedTime: 0, sortCompleted: 0, plannedSort: 0,
+    lastModified: 9, sortTime: 9, plannedSortTime: 9,
+  });
+  const native = toTodoInsert(D, {title: 'a', taskId: 't'}, {existingListIds: [], now: 1});
+  expect(todoShapeGaps(D, native, 9)).toEqual({});
 });
 
 import {rowToTodoTask, todoTaskToRow} from '../src';
@@ -189,7 +221,7 @@ test('a To-Do row round-trips through the task shape and keeps the insert rules'
   expect(task).toMatchObject({localId: 'abc', title: 'Pay rent', detail: 'by card', due: 1700000000000, completed: false, modified: 5, deleted: false});
   const done = rowToTodoTask(D, {...todoTaskToRow(D, {...task, completed: true}, 9), taskId: 'abc', deleted: '1'});
   expect(done).toMatchObject({completed: true, deleted: true});
-  expect(toTodoInsert(D, {...row, taskListId: 'L'}, {existingListIds: ['L']}).hasSync).toBe(0);
+  expect(toTodoInsert(D, {...row, taskId: 'abc', taskListId: 'L'}, {existingListIds: ['L'], now: 5}).hasSync).toBe(0);
 });
 
 import {eventToRow, rowToDeviceEdit, rowToEvent} from '../src';

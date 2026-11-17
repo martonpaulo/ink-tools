@@ -13,5 +13,9 @@ module.exports = {
     ...snAdapter.jestModuleNameMapper,
   },
   roots: ['<rootDir>'],
+  // The fake tablet checks page writes with sn-plugin-lib's own TypeScript schema (#206).
+  transformIgnorePatterns: [
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|sn-plugin-lib)/)',
+  ],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.scratch/'],
 };
