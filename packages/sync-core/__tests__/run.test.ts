@@ -50,7 +50,8 @@ test('the first pass only pulls; the next pushes the tablet edits before it pull
     {event: ev({eventId: 'old', modified: 900}), cancelled: true}, // before the last sync: not an edit
     {event: ev({eventId: '', title: 'Lunch', modified: 1600}), cancelled: false},
   ]);
-  const second = await runCalendarModule({sources: [{...google, writer: writer(edited.log)}], store: edited.store, window: W, defaultCalendarId: 'g1'}, first.state, () => clock);
+  const second = await runCalendarModule({sources: [{...google, writer: writer(edited.log)}], store: edited.store, window: W, defaultCalendarId: 'g1'}, first.state, () => clock, {firstLinked: 1000, sendTabletOnly: false});
+  // Lunch was made after the first link (1000), so it is sent with the switch off.
   // The pull then writes the source's rows to this fresh fake tablet, which holds none yet.
   expect(edited.log).toEqual(['push update e1', 'push create g1 Lunch', 'relink Lunch g-new', 'create Talk']);
   expect(second.run.errors).toEqual([]);

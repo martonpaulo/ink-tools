@@ -152,6 +152,7 @@ function fakeRunner() {
       return snap;
     }),
     snapshot: () => snap,
+    tabletOnlyTasks: async () => 94,
     subscribe: l => {
       listeners.add(l);
       return () => listeners.delete(l);

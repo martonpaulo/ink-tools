@@ -74,6 +74,7 @@ export default function App({
   const [settings, setSettings] = useState<BridgeSettings | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [saveProblem, setSaveProblem] = useState<string | null>(null);
+  const [tabletOnly, setTabletOnly] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setProblem(null);
@@ -100,6 +101,21 @@ export default function App({
       current = false;
     };
   }, [reader]);
+
+  // Before the first «Sync now», show how many tablet-only tasks would stay on the tablet.
+  useEffect(() => {
+    let current = true;
+    if (settings?.modules.todo) {
+      sync.tabletOnlyTasks(settings).then(n => {
+        if (current) {
+          setTabletOnly(n);
+        }
+      });
+    }
+    return () => {
+      current = false;
+    };
+  }, [settings, sync, synced.runs]);
 
   const change = async (next: BridgeSettings) => {
     setSettings(next);
@@ -128,7 +144,13 @@ export default function App({
   return (
     <SettingsShell
       state={state}
-      form={settings && <SettingsForm settings={settings} onChange={change} />}
+      form={settings && (
+          <SettingsForm
+            settings={settings}
+            onChange={change}
+            tabletOnlyTasks={tabletOnly}
+          />
+        )}
     />
   );
 }

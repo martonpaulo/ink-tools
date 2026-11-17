@@ -1,5 +1,6 @@
 /** The tablet's sync runner: Sync now, the automatic pass and the module wiring (#28, #40, #44). */
 import {
+  BridgeSettings,
   defaultSettings,
   setModule,
   setProvider,
@@ -229,7 +230,12 @@ test('the automatic sync runs at start and every AUTO_SYNC_MINUTES until stopped
     clearInterval: jest.fn(),
   };
   const stop = startAutoSync(
-    {syncNow, snapshot: jest.fn(), subscribe: jest.fn()},
+    {
+      syncNow,
+      snapshot: jest.fn(),
+      tabletOnlyTasks: jest.fn(),
+      subscribe: jest.fn(),
+    },
     timers,
   );
   expect(syncNow).toHaveBeenCalledTimes(1);
@@ -276,4 +282,25 @@ test('each pass first moves in the sign-in drop files, before it reads a secret 
   expect(d.lines).toContain(
     '[Bridge] secrets: icloud not moved in: the drop file did not read: refused',
   );
+});
+
+test('Settings reads the tablet-only tasks before the first pass, and the pass keeps the first-link time', async () => {
+  const tasks = [
+    {localId: 'l1', title: 'a', detail: '', due: null, completed: false, deleted: false, modified: 1},
+    {localId: 'l2', title: 'b', detail: '', due: null, completed: false, deleted: false, modified: 1},
+  ];
+  const real = createDeviceStores(rows(), () => NOW);
+  const saved: BridgeSettings[] = [];
+  const d = device({
+    stores: {...real, tasks: {...real.tasks, list: async () => tasks}},
+    saveSettings: async s => {
+      saved.push(s);
+      return {ok: true};
+    },
+  });
+  const runner = createSyncRunner(d);
+  const before = (await d.loadSettings()) as {ok: true; value: BridgeSettings};
+  expect(await runner.tabletOnlyTasks(before.value)).toBe(2);
+  await runner.syncNow();
+  expect(saved.at(-1)?.firstLinked).toEqual({calendar: NOW, todo: NOW});
 });

@@ -16,11 +16,12 @@ import {deviceReader} from './deviceReader';
 import {deviceRows} from './deviceRows';
 import {createDeviceStores} from './deviceStores';
 import {createSecretStore, importSecretDrops} from './secretStore';
-import {loadSettings} from './settingsStore';
+import {loadSettings, saveSettings} from './settingsStore';
 import {createSyncRunner, SyncDevice, SyncRunner, SyncSnapshot} from './sync';
 
 export const device: SyncDevice = {
   loadSettings: () => loadSettings(getPluginDirPath),
+  saveSettings: s => saveSettings(getPluginDirPath, s),
   secrets: createSecretStore(getPluginDirPath),
   importSecrets: () => importSecretDrops(getPluginDirPath),
   stores: createDeviceStores(deviceRows(), () => Date.now()),

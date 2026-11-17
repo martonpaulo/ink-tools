@@ -60,8 +60,36 @@ export function fingerprint(t: TaskContent): string {
   return JSON.stringify([t.title, t.detail, t.due, t.completed]);
 }
 
+/**
+ * Which tablet-only items a pass may send to the account (owner assumption, see docs/decisions.md):
+ * none on the module's first pass, only those changed after the first link (`firstLinked`), or all
+ * when the module's «Send tablet-only items» switch is on. shortcut: the tablet keeps no creation
+ * time, so «created after the first link» is read as «changed after it»; switch to a creation time
+ * if the provider ever exposes one.
+ */
+export interface TabletOnlyPolicy {
+  /** Epoch ms of the module's first pass; absent before it, so the first pass only pulls. */
+  firstLinked?: number;
+  sendTabletOnly: boolean;
+}
+
+export const PULL_ONLY: TabletOnlyPolicy = {sendTabletOnly: false};
+
+export function maySend(modified: number | undefined, policy: TabletOnlyPolicy): boolean {
+  if (policy.sendTabletOnly) return true;
+  return policy.firstLinked !== undefined && modified !== undefined && modified > policy.firstLinked;
+}
+
+/** Open, unlinked tablet tasks the policy keeps on the tablet: what Settings shows before a sync. */
+export function tabletOnlyKept(devices: DeviceTask[], links: TaskLink[], policy: TabletOnlyPolicy): number {
+  const linked = new Set(links.map(l => l.localId));
+  return devices.filter(d => !linked.has(d.localId) && !d.deleted && !d.completed && !maySend(d.modified, policy)).length;
+}
+
 export interface SyncResult {
   links: TaskLink[];
+  /** Tablet-only tasks the policy kept on the tablet this pass. */
+  keptLocal: number;
   counts: {createdLocal: number; createdRemote: number; updatedLocal: number; updatedRemote: number; removedLocal: number; removedRemote: number};
   /** Per-task failures; one bad task never stops the others. */
   errors: string[];
@@ -71,7 +99,8 @@ export interface SyncResult {
 
 /**
  * Run one sync pass. Rules:
- * - a task on one side only is created on the other;
+ * - a service task missing on the tablet is created there; a tablet task missing on the service is
+ *   created there only when `policy` allows it (`maySend`), so a first pass never floods the account;
  * - a linked task changed on one side is copied to the other;
  * - changed on both sides, the later `modified` wins, a tie goes to the service;
  * - deleted (soft-delete flag on the tablet, gone on the service) removes it from the other; a tablet
@@ -81,9 +110,11 @@ export async function syncTasks(
   provider: TaskProvider,
   store: DeviceTaskStore,
   previous: TaskLink[],
+  policy: TabletOnlyPolicy = PULL_ONLY,
 ): Promise<SyncResult> {
   const result: SyncResult = {
     links: [],
+    keptLocal: 0,
     counts: {createdLocal: 0, createdRemote: 0, updatedLocal: 0, updatedRemote: 0, removedLocal: 0, removedRemote: 0},
     errors: [],
     warnings: [],
@@ -115,6 +146,10 @@ export async function syncTasks(
   }
   for (const d of devices.values()) {
     if (linkedLocal.has(d.localId) || d.deleted || d.completed) continue;
+    if (!maySend(d.modified, policy)) {
+      result.keptLocal++;
+      continue;
+    }
     try {
       const r = await provider.create(content(d));
       result.counts.createdRemote++;

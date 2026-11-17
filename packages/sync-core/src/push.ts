@@ -1,5 +1,6 @@
 import {CalendarEvent} from './calendar';
 import {HttpFetch} from './http';
+import {PULL_ONLY, TabletOnlyPolicy, maySend} from './tasks';
 
 /**
  * Two-way half of the calendar module (#29): carry edits made on the tablet back to the source.
@@ -46,6 +47,8 @@ export interface PushResult {
   updated: number;
   deleted: number;
   skipped: number;
+  /** Tablet-only events the policy kept on the tablet (`maySend`). */
+  keptLocal: number;
   /** Edits made on both sides, and which version was kept (#87). */
   conflicts: Conflict[];
   errors: string[];
@@ -59,6 +62,7 @@ const same = (a: CalendarEvent, b: CalendarEvent) =>
  * `baseline` is what the last pull wrote, so an edit identical to it is not pushed again.
  * `defaultCalendarId` receives tablet-created events; without it they are reported, not dropped.
  * `remote` is the source's events as read now; without it no change on the source side is seen.
+ * `policy` decides which tablet-created events may be created at the source; by default none.
  */
 export async function pushCalendarEdits(
   edits: DeviceEdit[],
@@ -66,8 +70,9 @@ export async function pushCalendarEdits(
   writer: CalendarWriter,
   defaultCalendarId?: string,
   remote: CalendarEvent[] = [],
+  policy: TabletOnlyPolicy = PULL_ONLY,
 ): Promise<PushResult> {
-  const result: PushResult = {created: [], updated: 0, deleted: 0, skipped: 0, conflicts: [], errors: []};
+  const result: PushResult = {created: [], updated: 0, deleted: 0, skipped: 0, keptLocal: 0, conflicts: [], errors: []};
   const known = new Map(baseline.map(e => [key(e), e]));
   const now = new Map(remote.map(e => [key(e), e]));
   for (const {event, cancelled} of edits) {
@@ -86,6 +91,8 @@ export async function pushCalendarEdits(
       if (!event.eventId) {
         if (cancelled) {
           result.skipped++;
+        } else if (!maySend(event.modified, policy)) {
+          result.keptLocal++;
         } else if (!defaultCalendarId) {
           result.errors.push(`"${event.title}": no default calendar chosen, event not created`);
         } else {
