@@ -14,6 +14,7 @@ import com.facebook.react.bridge.WritableArray;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -192,10 +193,19 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
     boolean inserted = false;
     try {
       ContentValues values = new ContentValues();
-      values.put(target.markerColumn, ProbeTargets.MARKER);
+      for (Map.Entry<String, Object> column : target.row(System.currentTimeMillis()).entrySet()) {
+        Object value = column.getValue();
+        if (value instanceof Integer) {
+          values.put(column.getKey(), (Integer) value);
+        } else if (value instanceof Long) {
+          values.put(column.getKey(), (Long) value);
+        } else {
+          values.put(column.getKey(), String.valueOf(value));
+        }
+      }
       Uri created = resolver.insert(base, values);
-      inserted = created != null;
-      emit(lines, ProbeFormat.ok(target.label, "insert", created == null ? "null uri (refused or ignored)" : "row created"));
+      inserted = ProbeTargets.wroteRow(created != null, created == null ? null : created.getLastPathSegment());
+      emit(lines, ProbeFormat.ok(target.label, "insert", inserted ? "row created" : "no row (refused: " + created + ")"));
     } catch (Throwable error) {
       emit(lines, ProbeFormat.failed(target.label, "insert", error));
     }

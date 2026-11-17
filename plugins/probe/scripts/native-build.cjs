@@ -160,6 +160,9 @@ function packagePlugin() {
   console.log(`native: ${name} ${fs.statSync(path.join(outputs, name)).size} bytes with app.npk`);
 }
 
+/** The sn-adapter descriptor the native targets mirror (ProbeTargets.java). */
+const DESCRIPTOR = path.join(root, '../../packages/sn-adapter/src/internals/descriptor.json');
+
 function testNative() {
   // A temporary folder: the gate may run as another user than the one that owns build/.
   const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'probe-native-tests-'));
@@ -173,7 +176,8 @@ function testNative() {
       ...pure, ...javaSources(path.join(root, 'native/tests')),
     ]);
     for (const test of ['ProbeTargetsTest', 'ProbeFormatTest', 'ProbeListenerTest', 'ProbeCommandFileTest']) {
-      run(jdkTool('java'), ['-cp', classes, `com.probe.providers.${test}`]);
+      // ProbeTargetsTest checks the Calendar row against the descriptor's NOT NULL columns (#208).
+      run(jdkTool('java'), [`-Dprobe.descriptor=${DESCRIPTOR}`, '-cp', classes, `com.probe.providers.${test}`]);
     }
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
