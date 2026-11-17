@@ -1,9 +1,10 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {BackHandler, Text, ToastAndroid, View} from 'react-native';
+import {Text, ToastAndroid, View} from 'react-native';
 import {closePluginView} from '@supernote-tools/sn-adapter/official';
 import {
   Button,
   shared,
+  useBackKey,
   useWorking,
   WorkingStrip,
 } from '@supernote-tools/ui-kit';
@@ -125,34 +126,26 @@ export default function App({
   const [texting, setTexting] = useState<TextState>(textState());
   useEffect(() => onReceiveState(setReceiving), []);
   useEffect(() => onTextState(setTexting), []);
-  // The Back key does what each screen's own exit button does (#98): PluginHost leaves a
+  // The Back key does what each screen's own exit button does (#98, #204): PluginHost leaves a
   // plugin's view open on Back otherwise (`docs/supernote.md` › Plugins).
-  useEffect(() => {
-    const onBack = () => {
-      const text = textState().phase;
-      if (working.isWorking() || text === 'reading' || text === 'sending') {
-        // A send or a read in flight ends by itself, with its toast.
-      } else if (text !== 'idle') {
-        cancelTextSend(
-          textDeps(
-            close,
-            line => ToastAndroid.show(line, ToastAndroid.SHORT),
-            native,
-          ),
-        );
-      } else if (receiveState() !== 'idle') {
-        native.stopReceive();
-      } else {
-        close();
-      }
-      return true;
-    };
-    const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
-      onBack,
-    );
-    return () => subscription.remove();
-  }, [native, close]);
+  useBackKey(() => {
+    const text = textState().phase;
+    if (working.isWorking() || text === 'reading' || text === 'sending') {
+      // A send or a read in flight ends by itself, with its toast.
+    } else if (text !== 'idle') {
+      cancelTextSend(
+        textDeps(
+          close,
+          line => ToastAndroid.show(line, ToastAndroid.SHORT),
+          native,
+        ),
+      );
+    } else if (receiveState() !== 'idle') {
+      native.stopReceive();
+    } else {
+      close();
+    }
+  });
   if (useWorking(working)) {
     return <WorkingStrip />;
   }

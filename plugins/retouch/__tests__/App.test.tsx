@@ -2,8 +2,10 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {EDITS, STYLES} from '../src/edits';
+import * as styles from '../src/styles';
 import {GridState} from '../src/styles';
 import {StylesGrid} from '../src/StylesGrid';
 
@@ -82,4 +84,40 @@ test('the Styles grid keeps the size rules, labels each tile and says when it fa
   expect(
     failed.root.findAllByProps({children: 'Could not make the styles'}).length,
   ).toBeGreaterThan(0);
+});
+
+describe('Back does what the open screen\'s «Close» does (#204)', () => {
+  let back: ReturnType<typeof catchBackKey>;
+  beforeEach(() => {
+    back = catchBackKey();
+  });
+  afterEach(() => {
+    back.restore();
+    jest.restoreAllMocks();
+  });
+
+  async function open(close: () => void) {
+    await act(async () => {
+      renderer.create(<App close={close} />);
+    });
+  }
+
+  test('on Settings it closes the view', async () => {
+    const close = jest.fn();
+    await open(close);
+    expect(back.press()).toBe(true);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  test('on the styles grid it closes the grid, never the view alone', async () => {
+    jest.spyOn(styles, 'gridState').mockReturnValue({phase: 'failed'});
+    const closeStyles = jest
+      .spyOn(styles, 'closeStyles')
+      .mockResolvedValue(undefined);
+    const close = jest.fn();
+    await open(close);
+    expect(back.press()).toBe(true);
+    expect(closeStyles).toHaveBeenCalledWith(close);
+    expect(close).not.toHaveBeenCalled();
+  });
 });

@@ -10,6 +10,7 @@ import renderer, {
   ReactTestRenderer,
 } from 'react-test-renderer';
 import type {SearchResult} from '@supernote-tools/picture-search';
+import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
 import {ChooseScreen} from '../src/ui/ChooseScreen';
 import * as choose from '../src/choose';
 import {pictureCopy} from '../src/copy';
@@ -23,6 +24,7 @@ jest.mock('../src/choose', () => ({
 
 const chooseResults = choose.chooseResults as jest.Mock;
 const insertChosen = choose.insertChosen as jest.Mock;
+const closeChoose = choose.closeChoose as jest.Mock;
 const choice = {word: 'apple', place: null};
 
 function tile(id: string) {
@@ -95,6 +97,33 @@ test('a failed insert shows its sentence and keeps the tiles', async () => {
     first.props.onPress();
   });
   expect(texts(tree)).toContain('the picture could not be saved.');
+});
+
+test('Back leaves as «Close» does, and does nothing while an insert runs (#204)', async () => {
+  const back = catchBackKey();
+  chooseResults.mockResolvedValue({tiles: [tile('a')], text: null});
+  let inserted!: (answer: {ok: boolean; text: string}) => void;
+  insertChosen.mockReturnValue(
+    new Promise(resolve => {
+      inserted = resolve;
+    }),
+  );
+  const tree = await open();
+  const [first] = tree.root.findAll(
+    node =>
+      node.props.accessibilityLabel === 'a, from commons' && node.props.onPress,
+  );
+  await act(async () => {
+    first.props.onPress();
+  });
+  expect(back.press()).toBe(true);
+  expect(closeChoose).not.toHaveBeenCalled();
+  await act(async () => {
+    inserted({ok: false, text: 'the picture could not be saved.'});
+  });
+  expect(back.press()).toBe(true);
+  expect(closeChoose).toHaveBeenCalledTimes(1);
+  back.restore();
 });
 
 describe('the grid leaves «More» and «Close» clear of every tile (#169)', () => {

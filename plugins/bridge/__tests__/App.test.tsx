@@ -3,6 +3,7 @@ import React from 'react';
 import {NativeModules, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@supernote-tools/ui-kit/screenBreaks';
+import {catchBackKey} from '@supernote-tools/ui-kit/backKeyTest';
 import {fail, ok, THROWN_CODE} from '@supernote-tools/sn-adapter/official';
 import {
   BUNDLED_DESCRIPTOR as D,
@@ -203,4 +204,22 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
     ]),
   );
   expect(screenBreaks(tree.root)).toEqual([]);
+});
+
+test('Back closes Settings, and does nothing while a pass runs (#204)', async () => {
+  const back = catchBackKey();
+  const {runner, publish} = fakeRunner();
+  const close = jest.fn();
+  await act(async () => {
+    renderer.create(
+      <App folder={folder as never} sync={runner} close={close} />,
+    );
+  });
+  await act(async () => publish({running: true, runs: {}, probe: {}}));
+  expect(back.press()).toBe(true);
+  expect(close).not.toHaveBeenCalled();
+  await act(async () => publish({running: false, runs: {}, probe: {}}));
+  expect(back.press()).toBe(true);
+  expect(close).toHaveBeenCalledTimes(1);
+  back.restore();
 });

@@ -2,13 +2,14 @@
  * «Choose picture»'s screen (#156): the word, a switch between «Illustrations» and «Photos», one
  * status line and a page of large tiles for e-ink, as Ink2Pic's grid shows them: two per row,
  * no scrolling, no animation, a white tile behind a transparent picture. A tap inserts the picture
- * at the lassoed word and closes the view; «More» shows the next page; «Close» inserts nothing.
+ * at the lassoed word and closes the view; «More» shows the next page; «Close» inserts nothing,
+ * and so does Back, except while an insert runs (#204).
  * Sizes and colours come from ui-kit (#93).
  */
 import React, {useEffect, useState} from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {PAGE_SIZE} from '@supernote-tools/picture-search';
-import {Button, metrics, shared} from '@supernote-tools/ui-kit';
+import {Button, metrics, shared, useBackKey} from '@supernote-tools/ui-kit';
 import {
   Choice,
   ChooseList,
@@ -37,6 +38,11 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const mode = MODES[modeIndex];
+  useBackKey(() => {
+    if (!busy) {
+      closeChoose();
+    }
+  });
 
   useEffect(() => {
     let open = true;
