@@ -22,7 +22,7 @@ export function EditsForm({
       <Text accessibilityRole="header" style={shared.heading}>
         {copy['settings.edits']}
       </Text>
-      <View style={shared.row}>
+      <View style={shared.buttons}>
         {EDITS.map(edit => {
           const on = settings.edits[edit.id];
           return (
@@ -38,7 +38,7 @@ export function EditsForm({
       <Text accessibilityRole="header" style={shared.heading}>
         {copy['settings.styles']}
       </Text>
-      <View style={shared.row}>
+      <View style={shared.buttons}>
         {STYLES.map(style => {
           const on = settings.styles[style.id];
           return (

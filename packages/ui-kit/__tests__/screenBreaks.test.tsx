@@ -51,4 +51,15 @@ describe('screenBreaks (#93)', () => {
       ),
     ).toEqual([`button «Tiny» is ${small} x ${small} units, under ${metrics.touchTarget}`]);
   });
+  it('fails a row of more than three buttons that does not wrap, and passes it wrapped (#224)', () => {
+    const four = (style: object) => (
+      <View style={style}>
+        {['A', 'B', 'C', 'D'].map(label => (
+          <Button key={label} label={label} onPress={() => {}} />
+        ))}
+      </View>
+    );
+    expect(breaks(four(shared.row))).toEqual(['row of 4 buttons from «A» does not wrap']);
+    expect(breaks(four(shared.buttons))).toEqual([]);
+  });
 });

@@ -355,3 +355,38 @@ test('A style passes its options to the Java side and is recorded as an edit (#1
   );
   expect(await runEdit('undo', w.deps)).toMatchObject({kind: 'edited'});
 });
+
+// The SDK's own check of modifyPageElements' elements (sn-plugin-lib 0.2.3 VerifyUtils), which
+// refused the lassoed picture's pageNum below 0 with 107 on beta 7 (#170). Required, not imported,
+// so tsc never type-checks the SDK's own source; its element model needs the tablet's module.
+jest.mock('../node_modules/sn-plugin-lib/src/module/NativePluginAPI', () => ({}));
+const {ElementSchema, verifyParams} =
+  require('../node_modules/sn-plugin-lib/src/sdk/utils/VerifyUtils') as {
+    ElementSchema: object;
+    verifyParams(schema: object, params: unknown, options: object): void;
+  };
+
+test.each(['enhance', 'undo'] as const)(
+  '%s writes the page it read into pageNum, so the SDK takes a lassoed pageNum below 0 (#170)',
+  async edit => {
+    const w = world();
+    (w.element as {pageNum?: number}).pageNum = -1;
+    w.deps.pageNum = async () => ok(9);
+    const pages: number[] = [];
+    const modify = w.deps.modify;
+    w.deps.modify = jest.fn(async (elements, page, layer) => {
+      verifyParams({elements: {type: 'array', required: true, items: ElementSchema}}, {elements}, {
+        allowUnknown: true,
+        rootName: 'modifyPageElements',
+      });
+      pages.push((elements[0] as {pageNum: number}).pageNum);
+      return modify(elements, page, layer);
+    });
+    if (edit === 'undo') {
+      expect((await runEdit('enhance', w.deps)).kind).toBe('edited');
+      (w.element as {pageNum?: number}).pageNum = -1;
+    }
+    expect((await runEdit(edit, w.deps)).kind).toBe('edited');
+    expect(pages.every(page => page === 9)).toBe(true);
+  },
+);

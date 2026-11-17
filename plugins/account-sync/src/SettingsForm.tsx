@@ -44,7 +44,7 @@ export function SettingsForm({
             <Text accessibilityRole="header" style={shared.heading}>
               {name}
             </Text>
-            <View style={shared.row}>
+            <View style={shared.buttons}>
               <Button
                 label={name}
                 selected={on}

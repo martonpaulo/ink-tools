@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Text, View} from 'react-native';
 import {
+  Button,
   shared,
   useBackKey,
   useWorking,
@@ -27,7 +28,9 @@ import {working} from './src/working';
  * Retouch's Settings view: one switch per edit (#136), every size and colour from the shared
  * ui-kit (#93). Each switch also registers or removes its lasso button. While an edit runs past
  * 2 s, the view is the «Loading…» strip (#103). Back does what the open screen's «Close» does:
- * it closes the styles grid, or Settings, and does nothing while an edit runs (#204).
+ * it closes the styles grid, or Settings, and does nothing while an edit runs (#204). Settings has
+ * its own «Close» too: opened by the permission path, PluginHost kept the key from the view on
+ * the Nomad, so Back never reached it (#204, measured on beta 7).
  */
 export default function App({
   close = () => closePluginView(),
@@ -77,6 +80,9 @@ export default function App({
           syncButtons(next);
         }}
       />
+      <View style={shared.actions}>
+        <Button label={copy['settings.close']} onPress={close} />
+      </View>
     </View>
   );
 }

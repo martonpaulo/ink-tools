@@ -14,5 +14,9 @@ module.exports = {
   },
   // The shared package's own tests run in Bridge's suite (#93).
   roots: ['<rootDir>'],
+  // The edit tests check page writes with sn-plugin-lib's own TypeScript schema (#170).
+  transformIgnorePatterns: [
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|sn-plugin-lib)/)',
+  ],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.scratch/'],
 };

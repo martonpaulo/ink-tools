@@ -63,6 +63,7 @@ async function deviceWorkDir(): Promise<Result<string>> {
 /** A lassoed picture element, as `getLassoElements` gives it [measured, #130]. */
 export type PictureElement = {
   type: number;
+  pageNum?: number;
   layerNum?: number;
   picture: {rect: Rect; picturePath?: string};
 };
@@ -390,8 +391,11 @@ function replace(
   place: Place,
   deps: EditDeps,
 ): Promise<Result<number[]>> {
+  // The lassoed element can carry a pageNum below 0, which the SDK's ElementSchema refuses with
+  // 107 (#170, measured on beta 7): the page is the one the edit was read on.
   const changed = {
     ...element,
+    pageNum: place.page,
     picture: {...element.picture, picturePath: path, rect},
   };
   return deps.modify([changed], place.page, element.layerNum ?? null);
