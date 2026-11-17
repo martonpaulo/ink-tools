@@ -5,6 +5,7 @@ import {TextFiles} from '../src/files';
 import {
   createSecretStore,
   importSecretDrops,
+  readGoogleClient,
   SECRET_DROP_FOLDER,
 } from '../src/secretStore';
 
@@ -101,6 +102,26 @@ test('a drop file that cannot be deleted is a problem, not a move', async () => 
     moved: false,
     problem: 'the drop file was not deleted: it is still there',
   });
+});
+
+test('the Google client reads from its own file; absent is null, broken throws (#200)', async () => {
+  const client = JSON.stringify({client_id: 'id-fixture', client_secret: 'fixture'});
+  const {native} = disk({[`${DIR}google-client.secret`]: `${client}\n`});
+  expect(await readGoogleClient(createSecretStore(folder, native))).toEqual({
+    clientId: 'id-fixture',
+    clientSecret: 'fixture',
+  });
+  expect(await readGoogleClient(createSecretStore(folder, disk().native))).toBeNull();
+  const broken = disk({[`${DIR}google-client.secret`]: JSON.stringify({client_id: 'x'})});
+  await expect(readGoogleClient(createSecretStore(folder, broken.native))).rejects.toThrow('no client_secret');
+});
+
+test('a Google client drop file moves in like the other secrets (#200)', async () => {
+  const drop = `${SECRET_DROP_FOLDER}/google-client.secret`;
+  const {files, native} = disk({[drop]: '{"client_id":"c","client_secret":"s"}'});
+  expect(await importSecretDrops(folder, native)).toEqual([{provider: 'google-client', moved: true}]);
+  expect(files[drop]).toBeUndefined();
+  expect(files[`${DIR}google-client.secret`]).toBe('{"client_id":"c","client_secret":"s"}');
 });
 
 test('inkctl writes the drop files where Bridge reads them', () => {

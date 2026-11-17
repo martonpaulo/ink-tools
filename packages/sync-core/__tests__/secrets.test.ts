@@ -1,11 +1,12 @@
 /** Sign-in secrets: file names, the masked tail and the parse of a stored value (#90). */
-import {SecretStore, maskSecret, parseSecret, secretFileName, signInState} from '../src';
+import {SecretStore, maskSecret, parseGoogleClient, parseSecret, secretFileName, signInState} from '../src';
 
 const SYNTHETIC = 'synthetic-token-0000-wxyz';
 
 test('each provider has its own file, and an unknown one is refused', () => {
   expect(secretFileName('todoist')).toBe('todoist.secret');
   expect(secretFileName('icloud')).toBe('icloud.secret');
+  expect(secretFileName('google-client')).toBe('google-client.secret');
   expect(() => secretFileName('../x' as never)).toThrow('unknown provider');
 });
 
@@ -33,4 +34,14 @@ test('the sign-in state: signed out, signed in with the tail, and an unreadable 
       throw new Error('read failed');
     }), 'icloud'),
   ).toEqual({state: 'unreadable', reason: 'read failed'});
+});
+
+test('the Google client reads as inkctl writes it; a broken one throws, never a client (#200)', () => {
+  const stored = JSON.stringify({client_id: 'id-fixture', client_secret: 'fixture'});
+  expect(parseGoogleClient(`${stored}\n`)).toEqual({clientId: 'id-fixture', clientSecret: 'fixture'});
+  expect(() => parseGoogleClient('client-SYNTHETIC')).toThrow('not JSON');
+  expect(() => parseGoogleClient(JSON.stringify({client_id: 'id-fixture'}))).toThrow('no client_secret');
+  expect(() => parseGoogleClient('{"client_id":"","client_secret":"s"}')).toThrow('no client_id');
+  expect(() => parseGoogleClient('null')).toThrow('no client_id');
+  expect(() => parseGoogleClient('')).toThrow('not JSON: secrets: the stored secret is empty');
 });

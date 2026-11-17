@@ -76,7 +76,7 @@ export interface SyncDevice {
    * `importSecretDrops`); each pass runs it first, so a start and «Sync now» both take them.
    */
   importSecrets?: () => Promise<SecretDrop[]>;
-  /** The Google OAuth client the refresh needs; absent while nothing puts it on the tablet. */
+  /** The Google OAuth client the refresh needs (#200); null when it is not on the tablet. */
   googleClient?: () => Promise<OAuthClient | null>;
   fetch: Fetch;
   now: () => number;
@@ -100,10 +100,19 @@ async function googleSource(device: SyncDevice): Promise<CalendarSource> {
   if (refresh === null) {
     return failing('google', signedOut('google'));
   }
-  // Nothing puts the OAuth client on the tablet yet (#200): until then this source fails.
-  const client = (await device.googleClient?.()) ?? null;
+  // The OAuth client is its own file, `inkctl secret set google-client` (#200); a missing or
+  // broken one fails this source with the reason, never an empty calendar.
+  let client: OAuthClient | null;
+  try {
+    client = (await device.googleClient?.()) ?? null;
+  } catch (e) {
+    return failing('google', `the Google sign-in client did not read: ${(e as Error).message}`);
+  }
   if (!client) {
-    return failing('google', 'the Google sign-in client is not on the tablet');
+    return failing(
+      'google',
+      'the Google sign-in client is not on the tablet: on the Mac, run inkctl secret set google-client',
+    );
   }
   // One access token per pass: each request asks for it, and it lasts an hour.
   let pending: Promise<string> | undefined;

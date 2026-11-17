@@ -148,7 +148,10 @@ LINK_WIFI = "wifi"
 # and deletes it on its next start or «Sync now» (plugins/bridge/src/secretStore.ts, SECRET_DROP_FOLDER).
 # The file names are sync-core's `secretFileName` (packages/sync-core/src/secrets.ts); a test reads both.
 # shortcut: the drop folder is not yet measured on the tablet; the #116 device round checks it.
-SECRET_PROVIDERS = ("todoist", "icloud", "google")
+SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
+# The Google «Desktop app» OAuth client the tablet's token refresh needs (#200, option A, the Clarify's recommendation while the owner's answer is open): read from
+# the login Keychain item, never from stdin, and written as the two fields the refresh sends.
+GOOGLE_CLIENT_PROVIDER = "google-client"
 SIGN_IN_DROP_FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync"
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
 # The login Keychain items of the Google sign-in on the Mac (#124, plugins/bridge/AGENTS.md).
@@ -2320,8 +2323,16 @@ def masked(value: str) -> str:
     return f"…{value[-SECRET_TAIL:]}"
 
 
+def google_client_secret() -> str:
+    """The Keychain client as the one-line JSON sync-core's `parseGoogleClient` reads; only its two fields."""
+    client = google_client()
+    return json.dumps({"client_id": client["client_id"], "client_secret": client["client_secret"]}, separators=(",", ":"))
+
+
 def command_secret_set(device: Device, args: argparse.Namespace):
-    if sys.stdin.isatty():
+    if args.provider == GOOGLE_CLIENT_PROVIDER:
+        raw = google_client_secret()
+    elif sys.stdin.isatty():
         import getpass  # only when typed by hand, so nothing is echoed
 
         raw = getpass.getpass(f"{args.provider} secret: ")

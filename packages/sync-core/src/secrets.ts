@@ -5,10 +5,13 @@
  * (an on-tablet field, a file edited on a computer) is one more writer of the same file.
  */
 
-/** Providers that need a secret. ICS needs none: its URL is a setting. */
-export type SecretProvider = 'todoist' | 'icloud' | 'google';
+/**
+ * Providers that need a secret. ICS needs none: its URL is a setting. `google-client` is Google's
+ * «Desktop app» OAuth client, which the token refresh sends with the refresh token (#200).
+ */
+export type SecretProvider = 'todoist' | 'icloud' | 'google' | 'google-client';
 
-export const SECRET_PROVIDERS: SecretProvider[] = ['todoist', 'icloud', 'google'];
+export const SECRET_PROVIDERS: SecretProvider[] = ['todoist', 'icloud', 'google', 'google-client'];
 
 /** The seam to the stored secrets; the plugin implements it over its private folder. */
 export interface SecretStore {
@@ -41,6 +44,26 @@ export function parseSecret(raw: string): string {
   if (value === '') throw new Error('secrets: the stored secret is empty');
   if (/[\u0000-\u001f\u007f]/.test(value)) throw new Error('secrets: the stored secret holds a control character');
   return value;
+}
+
+/**
+ * Read the stored Google OAuth client (#200): the one-line JSON `inkctl secret set google-client`
+ * writes, `{"client_id": …, "client_secret": …}`. A broken file throws, so the calendar run fails
+ * with the reason instead of sending a broken client to Google.
+ */
+export function parseGoogleClient(raw: string): {clientId: string; clientSecret: string} {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(parseSecret(raw));
+  } catch (e) {
+    throw new Error(`secrets: the Google client is not JSON${e instanceof SyntaxError ? '' : `: ${(e as Error).message}`}`);
+  }
+  const field = (name: string) => {
+    const value = (parsed as Record<string, unknown> | null)?.[name];
+    if (typeof value !== 'string' || value === '') throw new Error(`secrets: the Google client has no ${name}`);
+    return value;
+  };
+  return {clientId: field('client_id'), clientSecret: field('client_secret')};
 }
 
 /** A provider's sign-in, as Settings words it. */

@@ -53,8 +53,8 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   pass when PluginHost loads Bridge (`index.js`), one every `AUTO_SYNC_MINUTES` while the host
   lives, and the same runner behind Settings' «Sync now». Each pass probes first. The Calendar and
   To-Do are written through `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`,
-  `src/deviceStores.ts`). The Google OAuth client is not on the tablet yet
-  ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
+  `src/deviceStores.ts`). The Google OAuth client is its own file,
+  `google-client.secret`, from `inkctl secret set google-client` ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
   A module's first pass only pulls: tablet-only items stay local unless its «Send tablet-only items»
   switch is on ([#207](https://github.com/martonpaulo/ink-tools/issues/207), an assumption the owner may override).
 - **Digest writer** ([#42](https://github.com/martonpaulo/ink-tools/issues/42)): `src/digestStore.ts` writes `DigestEntry` items into the

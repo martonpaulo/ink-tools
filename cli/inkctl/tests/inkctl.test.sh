@@ -1258,11 +1258,11 @@ printf 'x' | SUPERNOTE_READ_ONLY=1 run secret set todoist >/dev/null 2>&1
 check "read-only mode refuses secret set" "$?" "11"
 printf 'f %s\n' "$private/todoist.secret" >> "$files/paths"
 check "secret status shows the tail of a stored secret" "$(run secret status | head -1)" "todoist: waiting for Account Sync (…wxyz)"
-check "secret status names a provider with none" "$(run secret status | tail -1)" "google: nothing waiting"
+check "secret status names a provider with none" "$(run secret status | tail -1)" "google-client: nothing waiting"
 check "secret remove takes back a waiting secret" "$(run secret remove todoist)" "todoist: the waiting secret was removed"
 check "secret status reads back nothing waiting" "$(run secret status | head -1)" "todoist: nothing waiting"
-providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/sync-core/src/secrets.ts" | grep -o "'[a-z]*'" | tr -d "'" | paste -sd, -)
-check "the providers are sync-core's" "$providers" "todoist,icloud,google"
+providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/sync-core/src/secrets.ts" | grep -o "'[a-z-]*'" | tr -d "'" | paste -sd, -)
+check "the providers are sync-core's" "$providers" "todoist,icloud,google,google-client"
 check "the file name is sync-core's" "$(grep -c '`${provider}.secret`' "$repo_root/../../packages/sync-core/src/secrets.ts")" "1"
 
 # The Google sign-in on the Mac (#124): `security`, the browser and Google's token endpoint are stubs.
@@ -1354,6 +1354,18 @@ check "the token never reaches an argument" "$(grep -cF "$SYNTHETIC_REFRESH" "$S
 check "no secret reaches the output" "$(printf '%s\n' "$output" "$(cat "$work/err")" | grep -cF -e "$SYNTHETIC_REFRESH" -e client-secret-SYNTHETIC)" "0"
 check "google login never writes the history" "$(cat "$history_file" 2>/dev/null | grep -c '"command": "google')" "0"
 check "google login names the push to the tablet" "$(printf '%s' "$output" | field "['next']")" "security find-generic-password -s ink-tools -a account-sync-google-refresh-token -w | inkctl secret set google"
+# The «Desktop app» client reaches the tablet from the Keychain item, never from stdin (#200).
+rm -f "$files/secret-written"
+output=$(printf 'ignored' | run secret set google-client --json 2>"$work/err")
+check "secret set google-client writes the Keychain client's two fields" "$(field "['client_id'],sorted(d)" < "$files/secret-written")" "('client-SYNTHETIC.apps.example.test', ['client_id', 'client_secret'])"
+check "secret set google-client writes the Keychain client's secret" "$(python3 -c 'import json,sys; a=json.load(open(sys.argv[1])); b=json.load(open(sys.argv[2]))["installed"]; print(a["client_secret"] == b["client_secret"])' "$files/secret-written" "$client")" "True"
+check "secret set google-client writes its own drop file" "$(called "cat > $private/google-client.secret.partial && mv $private/google-client.secret.partial $private/google-client.secret")" "1"
+check "the client secret never reaches the output or an argument" "$(printf '%s\n' "$output" "$(cat "$work/err")" "$(cat "$log")" | grep -cF client-secret-SYNTHETIC)" "0"
+mv "$client" "$client.away"
+rm -f "$files/secret-written"
+run secret set google-client >/dev/null 2>&1
+check "no Keychain client is a failure that writes nothing" "$? $([ -f "$files/secret-written" ] && echo written || echo none)" "4 none"
+mv "$client.away" "$client"
 auth=$(cat "$KEYCHAIN/auth-url")
 check "the consent asks both Calendar scopes, offline" "$(python3 -c 'import sys,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); print(q["scope"], q["access_type"], q["code_challenge_method"], q["redirect_uri"].startswith("http://127.0.0.1:"))' "$auth")" "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events offline S256 True"
 check "the exchange proves the PKCE verifier" "$(python3 -c 'import sys,hashlib,base64,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); b=dict(u.parse_qsl(open(sys.argv[2]).read())); print(base64.urlsafe_b64encode(hashlib.sha256(b["code_verifier"].encode()).digest()).rstrip(b"=").decode()==q["code_challenge"], b["code"], b["grant_type"], b["redirect_uri"]==q["redirect_uri"])' "$auth" "$KEYCHAIN/token-body")" "True code-SYNTHETIC authorization_code True"
