@@ -10,6 +10,7 @@ import {fail, ok, TIMEOUT_CODE} from '@supernote-tools/sn-adapter/official';
 import {
   findKept,
   indexPath,
+  keptPaths,
   LibraryDeps,
   oldFolders,
   privatePicturesDir,
@@ -173,12 +174,60 @@ describe('the old synced folders (#23)', () => {
       }
       return ok(null);
     });
-    expect(await oldFolders(list, '/storage/emulated/0/')).toEqual([
+    expect(
+      await oldFolders(list, '/storage/emulated/0/', async () => ok(new Set())),
+    ).toEqual([
       {folder: 'MyStyle/Lookup/pictures', files: 2},
       {folder: 'MyStyle/Ink2Pic/library', files: null},
     ]);
     expect(list.mock.calls[0][0]).toBe(
       '/storage/emulated/0/MyStyle/Lookup/pictures',
     );
+  });
+
+  test('a fallback picture listed in pictures.json is never offered for deletion (#219)', async () => {
+    const root = '/storage/emulated/0';
+    const fallback = `${root}/MyStyle/Lookup/pictures/commons_Apple.png`;
+    const list = jest.fn(async (path: string) =>
+      path.endsWith('Lookup/pictures')
+        ? ok([
+            {name: 'commons_Apple.png', bytes: 10},
+            {name: 'old.png', bytes: 10},
+          ])
+        : path.endsWith('Ink2Pic/symbols')
+          ? ok([{name: '1F34E.png', bytes: 10}])
+          : ok(null),
+    );
+    const symbols = {folder: 'MyStyle/Ink2Pic/symbols', files: 1};
+    expect(await oldFolders(list, root, async () => ok(new Set([fallback])))).toEqual(
+      [symbols],
+    );
+    // An index that cannot be read never lets the folder be offered as old.
+    expect(
+      await oldFolders(list, root, async () => fail(-2, 'IO')),
+    ).toEqual([{folder: 'MyStyle/Lookup/pictures', files: null}, symbols]);
+  });
+
+  test('keptPaths lists every picture in pictures.json, from either folder', async () => {
+    const files = new Map<string, string>([
+      [
+        indexPath(PLUGIN_DIR),
+        JSON.stringify({
+          a: {path: `${PLUGIN_DIR}/pictures/a.png`, width: 1, height: 1},
+          b: {path: '/storage/emulated/0/MyStyle/Lookup/pictures/b.png', width: 1, height: 1},
+        }),
+      ],
+    ]);
+    const deps: LibraryDeps = {
+      folder: async () => ok(PLUGIN_DIR),
+      read: async path => ok(files.get(path) ?? null),
+      write: async () => ok(null),
+      complete: async () => ok(true),
+    };
+    const paths = await keptPaths(deps);
+    expect(paths.ok && [...paths.value]).toEqual([
+      `${PLUGIN_DIR}/pictures/a.png`,
+      '/storage/emulated/0/MyStyle/Lookup/pictures/b.png',
+    ]);
   });
 });

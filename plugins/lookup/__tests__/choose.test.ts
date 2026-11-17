@@ -36,6 +36,11 @@ function result(id: string): SearchResult {
   } as SearchResult;
 }
 
+/** A measure for each result; the values do not matter to Choose, only that one exists. */
+function measuredAll(results: readonly SearchResult[]): Map<string, never> {
+  return new Map(results.map(r => [r.id, {} as never]));
+}
+
 function flow(
   ids: string[],
   over: Partial<QuickInsertDeps> = {},
@@ -49,9 +54,10 @@ function flow(
       } as never,
       thumbDir: '/MyStyle/Lookup',
     })),
-    measure: jest.fn(async results => ({
+    // Every tile measured: the list is whole, so it is kept (#219).
+    measure: jest.fn(async (results: SearchResult[]) => ({
       results,
-      measures: new Map(),
+      measures: measuredAll(results),
       contourThumbs: new Map(),
     })),
     insert: jest.fn(async () => ({ok: true as const, value: '/p.png'})),
@@ -144,6 +150,37 @@ test('a reopen on the same answer shows the kept tiles with no new measure (#205
   const updated = flow(['c', 'a']);
   await chooseResults(illustration, 'apple', deps({flow: () => updated}));
   expect(updated.measure).toHaveBeenCalledTimes(1);
+});
+
+test('a list cut short by a failed thumbnail is measured again on the next open (#219)', async () => {
+  // «b»'s thumbnail did not download or measure: it has no measure and is left out.
+  const short = flow(['a', 'b'], {
+    measure: jest.fn(async (results: SearchResult[]) => ({
+      results: results.slice(0, 1),
+      measures: measuredAll(results.slice(0, 1)),
+      contourThumbs: new Map(),
+    })),
+  });
+  const d = deps({flow: () => short});
+  const first = await chooseResults(illustration, 'banana', d);
+  expect(first?.tiles.map(tile => tile.result.id)).toEqual(['a']);
+  await chooseResults(illustration, 'banana', d);
+  expect(short.measure).toHaveBeenCalledTimes(2);
+});
+
+test('a tile the mode rule rejected still lets the list be kept (#219)', async () => {
+  // «b» is measured, then left out by the mode's split: the list is whole.
+  const split = flow(['a', 'b'], {
+    measure: jest.fn(async (results: SearchResult[]) => ({
+      results: results.slice(0, 1),
+      measures: measuredAll(results),
+      contourThumbs: new Map(),
+    })),
+  });
+  const d = deps({flow: () => split});
+  await chooseResults(illustration, 'banana', d);
+  await chooseResults(illustration, 'banana', d);
+  expect(split.measure).toHaveBeenCalledTimes(1);
 });
 
 test('an empty list is searched and said again on the next open (#205)', async () => {

@@ -18,7 +18,8 @@ Button names follow the wording of Supernote's own lasso menu, a verb and a noun
 and a press that inserts nothing writes its sentence below the word. Pictures go to
 `pictures/` of the private plugin folder, out of Supernote file sync, and are reused from there
 through `pictures.json` (`src/library.ts`, [#23](https://github.com/martonpaulo/ink-tools/issues/23)); a failed insert from there is tried once from
-`MyStyle/Lookup/pictures`, and Settings names the old synced folders still holding files. They
+`MyStyle/Lookup/pictures`, and Settings names the old synced folders still holding files, never one
+that holds a picture `pictures.json` lists ([#219](https://github.com/martonpaulo/ink-tools/issues/219)). They
 go in at the owner's one small size, 200 px, below the word; Settings
 keeps only Picture sources and Data saver for pictures, which `modeSearchSettings` reads
 ([#105](https://github.com/martonpaulo/ink-tools/issues/105)).

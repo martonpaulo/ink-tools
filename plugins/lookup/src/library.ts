@@ -22,6 +22,7 @@ import {
   listSizes,
   log,
   logged,
+  picturesDir,
   pluginFolder,
   readText,
   safeFileName,
@@ -126,9 +127,22 @@ export async function recordKept(
   }
 }
 
+/** The paths of every picture in `pictures.json`, from either folder: the current build's own. */
+export async function keptPaths(
+  deps: LibraryDeps = DEVICE,
+): Promise<Result<ReadonlySet<string>>> {
+  const read = await readIndex(deps);
+  if (!read.ok) {
+    return read;
+  }
+  return ok(new Set(Object.values(read.value.index).map(entry => entry.path)));
+}
+
 /**
  * The synced folders earlier versions filled, one file each per picture or symbol: Lookup's own
  * `pictures` before #23, and Ink2Pic's library and symbols (#91), which Lookup replaces.
+ * `MyStyle/Lookup/pictures` is also the live fallback of `insertKept`, so `oldFolders` leaves out
+ * the pictures `pictures.json` lists (#219).
  */
 export const OLD_FOLDERS = [
   'MyStyle/Lookup/pictures',
@@ -139,21 +153,49 @@ export const OLD_FOLDERS = [
 /** An old folder with files left in it, or one that could not be read (`files` null). */
 export type OldFolder = {folder: string; files: number | null};
 
-/** The old folders that still hold files, or could not be read; a missing folder is left out. */
+/**
+ * The old folders that Settings tells the person to delete: each holds files and none the current
+ * build wrote (#219). Lookup's own folder (`picturesDir`), the fallback of `insertKept`, is left
+ * out while it holds a picture in `pictures.json`, since deleting it would delete that picture
+ * too; a missing folder is left out; a folder, or the index, that could not be read is named with
+ * `files` null.
+ */
 export async function oldFolders(
   list: (path: string) => Promise<Result<FileSize[] | null>> = listSizes,
   root = SHARED_ROOT,
+  kept: () => Promise<Result<ReadonlySet<string>>> = keptPaths,
 ): Promise<OldFolder[]> {
   const found: OldFolder[] = [];
+  // Read once, and only when Lookup's own folder holds files.
+  let inUse: Result<ReadonlySet<string>> | null = null;
   for (const folder of OLD_FOLDERS) {
-    const listed = await logged(`listSizes ${folder}`, () =>
-      list(`${root.replace(/\/+$/, '')}/${folder}`),
-    );
+    const path = `${root.replace(/\/+$/, '')}/${folder}`;
+    const listed = await logged(`listSizes ${folder}`, () => list(path));
     if (!listed.ok) {
       found.push({folder, files: null});
-    } else if (listed.value && listed.value.length > 0) {
-      found.push({folder, files: listed.value.length});
+      continue;
     }
+    if (!listed.value || listed.value.length === 0) {
+      continue;
+    }
+    if (path !== picturesDir(root)) {
+      // Only Lookup's own folder is a live insert target; the Ink2Pic folders are never written.
+      found.push({folder, files: listed.value.length});
+      continue;
+    }
+    inUse = inUse ?? (await kept());
+    if (!inUse.ok) {
+      log(`old folders: pictures.json cannot be read, ${inUse.message}`);
+      found.push({folder, files: null});
+      continue;
+    }
+    const paths = inUse.value;
+    const used = listed.value.filter(file => paths.has(`${path}/${file.name}`));
+    if (used.length > 0) {
+      log(`old folders: ${folder} holds ${used.length} pictures in use, not offered`);
+      continue;
+    }
+    found.push({folder, files: listed.value.length});
   }
   return found;
 }

@@ -190,14 +190,15 @@ export function modeDeps(
         undefined,
         options,
       ),
-    measure: async (results, thumbDir, query, _deps, onThumbs) => {
+    measure: async (results, thumbDir, query, _deps, onThumbs, untilLeader) => {
       const pages = await measureFirst(
         results,
         thumbDir,
         query,
         modeMeasure(mode),
         onThumbs,
-        true,
+        // The insert buttons stop at the leader; the Choose grid waits for every tile (#219).
+        untilLeader,
         (result, measures) => keptInMode(result, measures, mode.kind),
       );
       const kept = keepMode(pages.results, pages.measures, mode.kind);

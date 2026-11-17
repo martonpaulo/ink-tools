@@ -197,6 +197,12 @@ describe('the measured split decides what a mode inserts (#111)', () => {
     expect(fits(result('b'), photo)).toBe(true);
     expect(fits(result('a'), outline)).toBe(false);
   });
+
+  test('the Choose grid waits for every tile: its measure does not stop at the leader (#219)', async () => {
+    const {deps, measure} = flow(illustration, {a: outline, b: outline});
+    await deps.measure([result('a'), result('b')], '/p', 'apple', undefined, () => {}, false);
+    expect(measure.mock.calls[0][5]).toBe(false);
+  });
 });
 
 test('each mode searches with its own style; Lookup keeps its pictures in MyStyle/Lookup', async () => {

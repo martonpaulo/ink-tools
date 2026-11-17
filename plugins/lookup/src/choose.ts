@@ -10,7 +10,11 @@
  * `modeDeps` (src/pictures.ts), the same flow the insert buttons run; only the list is Lookup's.
  */
 import {checkLookup, type LassoPlace} from '@supernote-tools/ink-core';
-import {searchState, type SearchResult} from '@supernote-tools/picture-search';
+import {
+  MEASURED_RESULTS,
+  searchState,
+  type SearchResult,
+} from '@supernote-tools/picture-search';
 import {
   closePluginView,
   Result,
@@ -201,9 +205,16 @@ export async function chooseResults(
       ? null
       : stateText(searchState(outcome), modeCopy) ?? modeCopy['search.empty'];
   const list = {tiles, text};
-  if (tiles.length > 0) {
-    // An empty list says why, which the next open may say otherwise: it is searched again.
+  // Only a whole list is kept: each measured tile of the answer is in it or out by the mode rule.
+  // A tile whose download or measure failed would keep the grid short until a restart (#219),
+  // and an empty list says why, which the next open may say otherwise: both are searched again.
+  const whole = outcome.results
+    .slice(0, MEASURED_RESULTS)
+    .every(result => pages.measures.has(result.id));
+  if (tiles.length > 0 && whole) {
     kept.set(mode.kind, {word, answer, list});
+  } else if (tiles.length > 0) {
+    log(`choose: ${mode.kind} tiles not kept, a thumbnail was not measured`);
   }
   return list;
 }
