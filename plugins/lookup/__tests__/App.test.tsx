@@ -169,3 +169,35 @@ test('Back closes the Settings view (#204)', async () => {
   expect(close).toHaveBeenCalledTimes(1);
   back.restore();
 });
+
+describe('Saved pictures (#23)', () => {
+  const texts = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAll(node => typeof node.props.children === 'string')
+      .map(node => node.props.children as string);
+
+  test('says where the pictures are kept and why, and names the old folders left', async () => {
+    NativeModules.LookupFiles = {
+      ...files,
+      listSizes: jest.fn(async (path: string) =>
+        path.endsWith('MyStyle/Ink2Pic/symbols')
+          ? [
+              {name: '1F34E.png', bytes: 900},
+              {name: '1F34F.png', bytes: 900},
+            ]
+          : null,
+      ),
+    };
+    const shown = texts(await open());
+    expect(shown).toContain('Saved pictures');
+    expect(shown.join('\n')).toMatch(/does not read that folder.*0\.14 s/);
+    expect(shown.join('\n')).toContain(
+      'MyStyle/Ink2Pic/symbols (2 files). Each file adds about 0.14 s to every Supernote file sync. Delete these folders with the File Manager.',
+    );
+  });
+
+  test('shows no old-folder note when no old folder holds a file', async () => {
+    NativeModules.LookupFiles = {...files, listSizes: jest.fn(async () => [])};
+    expect(texts(await open()).join('\n')).not.toContain('Earlier versions');
+  });
+});

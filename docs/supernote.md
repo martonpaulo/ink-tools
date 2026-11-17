@@ -406,7 +406,10 @@ the note shows through, is still to test.
   private folder under `/data/data/com.ratta.supernote.pluginhost/files/plugins/<pluginID>`
   («Permission denied»), and `run-as com.ratta.supernote.pluginhost` answers «package not an
   application» [measured, 2026-11-17, [#116](https://github.com/martonpaulo/ink-tools/issues/116)].
-  Whether that folder survives a plugin update is not measured yet [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)].
+  Whether that folder survives a plugin update is not measured on this firmware [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23)];
+  the Ink2Pic brief records that an install emptied it on build 0.1.0 (12) ([ink2pic#41](https://github.com/martonpaulo/ink2pic/issues/41)).
+  Word Lookup keeps its inserted pictures there since [#23](https://github.com/martonpaulo/ink-tools/issues/23); whether the note app takes a PNG
+  inserted from there is [to test, [#23](https://github.com/martonpaulo/ink-tools/issues/23), [#198](https://github.com/martonpaulo/ink-tools/issues/198)].
 - A file a plugin writes in `MyStyle/` is uploaded to Supernote Cloud within seconds (Retouch's
   `MyStyle/Retouch/history.json`, 5 s after the write) [measured, 2026-11-16].
   Retouch keeps its working files in its private folder since [#198](https://github.com/martonpaulo/ink-tools/issues/198); whether

@@ -19,6 +19,7 @@ import {
   insertText,
   Result,
   TextBoxInput,
+  TIMEOUT_CODE,
 } from '@supernote-tools/sn-adapter/official';
 import {missingFor, BUTTONS} from './buttons';
 import {copy, pictureCopy} from './copy';
@@ -27,9 +28,11 @@ import {PICTURE_LANGUAGES} from './pictureLanguages';
 import {showToast} from './textBox';
 import {showOwnView} from './working';
 import {Mode, modeAdapters} from './modes';
+import {findKept, privatePicturesDir, recordKept} from './library';
 import {
   createPressGuard,
   deviceAnalyzer,
+  Done,
   getSettings,
   insertBest,
   insertPicture,
@@ -63,7 +66,11 @@ import {LookupSettings, sourceOn} from './settings';
  */
 export const PICTURE_WIDTH = 200;
 
-/** Where Lookup writes each prepared picture; no library, no symbols (D40 B, #142). */
+/**
+ * The measured way in: each prepared picture written to `MyStyle/Lookup/pictures`, a synced
+ * folder the note app reads (#142). Used only when an insert from the private folder fails (#23).
+ * Every picture inserted, from either folder, is kept in `pictures.json`, so it is reused.
+ */
 export const LOOKUP_PICTURES: PictureStore = {
   dir: () => picturesDir(),
   options: async () => ({
@@ -71,9 +78,59 @@ export const LOOKUP_PICTURES: PictureStore = {
     placement: 'below',
     contour: false,
   }),
+  find: (result, contour) => findKept(result.id, contour),
+  record: recordKept,
   lassoSkipped: () =>
     ToastAndroid.show(copy['picture.unselected'], ToastAndroid.SHORT),
 };
+
+/** Lookup's pictures in the private folder, which Supernote file sync does not read (#23). */
+export function privateStore(pluginDir: string): PictureStore {
+  return {...LOOKUP_PICTURES, dir: () => privatePicturesDir(pluginDir)};
+}
+
+type InsertArgs = Parameters<typeof insertPicture> extends [
+  PictureStore,
+  ...infer Rest,
+]
+  ? Rest
+  : never;
+
+/**
+ * Inserts from the private folder (#23). Whether the note app takes a PNG from there is not
+ * measured yet (docs/supernote.md › Files and sync, #198), so a failed insert is tried once more
+ * the measured way, from `MyStyle/Lookup/pictures`, and the log says so. A TIMEOUT is not tried
+ * again: the host may still insert it, and a second copy would follow (#33).
+ */
+export async function insertKept(
+  args: InsertArgs,
+  folder: () => Promise<Result<string>> = pluginFolder,
+  insert: typeof insertPicture = insertPicture,
+): Promise<Done<string>> {
+  const dir = await folder();
+  if (!dir.ok) {
+    log(`picture: no private folder (${dir.message}); using MyStyle/Lookup`);
+    return insert(LOOKUP_PICTURES, ...args);
+  }
+  const done = await insert(privateStore(dir.value), ...args);
+  if (done.ok || done.step !== 'place' || done.code === TIMEOUT_CODE) {
+    return done;
+  }
+  log(
+    `picture: the insert from the private folder failed (${done.message}); inserting from MyStyle/Lookup/pictures`,
+  );
+  const [result, query, place, contour, options, , stop] = args;
+  return insert(
+    LOOKUP_PICTURES,
+    result,
+    query,
+    place,
+    contour,
+    options,
+    null,
+    stop,
+  );
+}
 
 export {PICTURE_LANGUAGES};
 
@@ -150,8 +207,7 @@ export function modeDeps(
       return {...pages, results: kept};
     },
     insert: async (result, query, place, contour, options, early, stop) =>
-      insertPicture(
-        LOOKUP_PICTURES,
+      insertKept([
         result,
         query,
         place,
@@ -159,7 +215,7 @@ export function modeDeps(
         {...(options ?? (await modeOptions())), sticker: mode.sticker},
         early,
         stop,
-      ),
+      ]),
     early: result => startEarlyDownload(result, LOOKUP_PICTURES),
     options: modeOptions,
   };
@@ -283,7 +339,11 @@ export async function pictureLasso(
     } else {
       log(`${name}: nothing inserted: ${inserted.text}`);
       if (place) {
-        await writeNote(deps, place, copy['picture.failed'](word, inserted.text));
+        await writeNote(
+          deps,
+          place,
+          copy['picture.failed'](word, inserted.text),
+        );
       }
     }
     return inserted;
