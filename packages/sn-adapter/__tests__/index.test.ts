@@ -342,9 +342,28 @@ describe('the visible Calendar row (#28)', () => {
       content: 'Notes',
       startTime: 1_795_000_000_000,
       endTime: 1_795_000_900_000,
+      startDate: null,
+      endDate: null,
       lastModifiedTime: 1_795_000_000_123,
     });
-    expect(eventToRow(D, {...e, allDay: true}, 5).isAllDay).toBe(1);
+  });
+
+  // Google's all-day event of 17 November 2026: start.date 2026-11-17, exclusive end.date 2026-11-18.
+  const allDay = {...e, allDay: true, start: Date.UTC(2026, 10, 17), end: Date.UTC(2026, 10, 18)};
+
+  test('a pulled all-day event writes startDate and endDate as yyyy-MM-dd, which the Calendar app splits', () => {
+    expect(eventToRow(D, allDay, 5)).toMatchObject({isAllDay: 1, startDate: '2026-11-17', endDate: '2026-11-18'});
+  });
+
+  test('an older all-day row with null dates is repaired with its dates; a dated one is left', () => {
+    const linked = {...eventToRow(D, allDay, 5), id: 9, startDate: null, endDate: null};
+    expect(legacyRowRepair(D, linked)).toEqual({startDate: '2026-11-17', endDate: '2026-11-18'});
+    expect(legacyRowRepair(D, {...linked, isAllDay: '1'})).toEqual({startDate: '2026-11-17', endDate: '2026-11-18'});
+    expect(legacyRowRepair(D, {...linked, startDate: '2026-11-17', endDate: '2026-11-18'})).toBeNull();
+    const beta23 = {...linked, calendarId: e.calendarId, eventId: e.eventId};
+    expect(legacyRowRepair(D, beta23)).toEqual({calendarId: calendarLink(D, e), eventId: null, startDate: '2026-11-17', endDate: '2026-11-18'});
+    // A tablet-made row has no link: it is not ours to repair.
+    expect(legacyRowRepair(D, {...linked, calendarId: 'Home'})).toBeNull();
   });
 
   test('the link in calendarId keeps both ids, whatever characters they hold', () => {

@@ -103,6 +103,8 @@ describe('the Calendar store', () => {
       content: '',
       startTime: NOW,
       endTime: NOW + HOUR,
+      startDate: null,
+      endDate: null,
       lastModifiedTime: NOW,
     });
     expect((await cal.listOurs(window)).map(e => e.eventId)).toEqual(['g1']);
@@ -296,6 +298,21 @@ describe('the Calendar store', () => {
     expect(inserts).toEqual([]);
     expect(calendarDeletes).toEqual([]);
     expect(tables[EVENTS]).toHaveLength(4);
+  });
+
+  test('the repair fills the dates of an all-day row an older build left NULL, by row id, and leaves a tablet-made row (#28)', async () => {
+    const DAY = 24 * HOUR;
+    const start = Date.UTC(2026, 10, 17);
+    const beta24 = {...beta23('60', 'g3', {isAllDay: 1, startTime: start, endTime: start + DAY, startDate: null, endDate: null}), calendarId: 'inktools:work:g3', eventId: null};
+    const local = {id: '61', tag: 'task', calendarId: 'Home', eventId: null, isAllDay: 1, title: 'Holiday', startTime: start, endTime: start + DAY, startDate: null, endDate: null};
+    const {tables, rows} = provider({[EVENTS]: [beta24, local]});
+    const cal = createDeviceCalendar(rows, () => NOW);
+    expect(await cal.repair!()).toBe(1);
+    expect(tables[EVENTS].map(r => [r.id, r.startDate, r.endDate])).toEqual([
+      ['60', '2026-11-17', '2026-11-18'],
+      ['61', null, null],
+    ]);
+    expect(await cal.repair!()).toBe(0);
   });
 
   test('«Remove what Account Sync wrote» repairs first, so it finds the rows of beta 23 too (#28)', async () => {

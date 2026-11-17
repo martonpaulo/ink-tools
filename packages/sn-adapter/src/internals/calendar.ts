@@ -42,17 +42,24 @@ export function readCalendarLink(d: Descriptor, value: unknown): CalendarLink | 
 }
 
 /**
- * The data_info row for an event, in the shape of the rows the Calendar app showed (#28): `tag=task`,
- * `state` 0, `status` confirmed, `readOnly` 1, `isAllDay` 0 or 1, `startTime` and `endTime` in epoch
- * ms, `lastModifiedTime` in epoch ms, and `eventId` NULL, with the event's link in `calendarId`.
- * Account Sync beta 23 wrote the Google id in `eventId`, and the app hid all 217 of those rows while
- * it showed the «Account Sync dry insert» rows, whose `eventId` was NULL and whose other columns had
- * the same shape (#43). shortcut: that `eventId` is the filter is an inference from those rounds,
- * not read in the app's code; decompile `SupernoteCalendar.apk` if a linked row stays hidden.
- * Left NULL, as in the native timed row of #43: `isSelf`, `startDate`, `endDate` and the recurrence
- * columns (each occurrence is its own row). shortcut: an all-day row also leaves `startDate` and
- * `endDate` NULL, since no native all-day row was read; fill them if such a row shows them set.
- * `data_info` has no time zone column: times are absolute epoch ms.
+ * The Calendar app's `yyyy-MM-dd` text for an all-day date (#28). An all-day event's `start` and
+ * `end` are UTC midnight of Google's `start.date` and exclusive `end.date` (`fromGoogleEvent`), so
+ * the UTC day gives those dates back.
+ */
+const dayText = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+
+/**
+ * The data_info row for an event (#28): `tag=task`, `state` 0, `status` confirmed, `readOnly` 1,
+ * `isAllDay` 0 or 1, `startTime` and `endTime` in epoch ms, `lastModifiedTime` in epoch ms, and
+ * `eventId` NULL, with the event's link in `calendarId`.
+ * An all-day row also writes `startDate` and `endDate` as `yyyy-MM-dd`, the shape of the native
+ * all-day rows. The Calendar app (`SupernoteCalendar.apk`, `DataBaseTools.getDuringEvent` and
+ * `getTodayEvent`) reads every `status='confirmed' AND recurrence is null` row in one `try`, and for
+ * an all-day row calls `DateUtils.getLongDate(startDate)`, which is `startDate.split("-")`: a NULL
+ * `startDate` throws and drops every later row. A timed row is read from `startTime` and `endTime`
+ * only, so its `startDate` and `endDate` stay NULL, as in the native timed row of #43.
+ * The recurrence columns stay NULL: each occurrence is its own row. `data_info` has no time zone
+ * column: times are absolute epoch ms.
  */
 export function eventToRow(d: Descriptor, e: DeviceEvent, now: number): Row {
   const col = (field: string) => column(d.calendar, 'events', field);
@@ -64,28 +71,42 @@ export function eventToRow(d: Descriptor, e: DeviceEvent, now: number): Row {
     [col('start')]: e.start,
     [col('end')]: e.end,
     [col('allDay')]: e.allDay ? 1 : 0,
+    [col('startDate')]: e.allDay ? dayText(e.start) : null,
+    [col('endDate')]: e.allDay ? dayText(e.end) : null,
     [col('readOnly')]: 1,
     [col('modified')]: now,
   });
 }
 
+const blank = (v: unknown) => v === null || v === undefined || v === '';
+const isSet = (v: unknown) => v === 1 || v === '1' || v === true;
+
 /**
- * The update that gives a row Account Sync beta 23 or older wrote its visible shape (#28): such a row
- * is `tag=task` with a non-empty `eventId`, which only Account Sync writes (the native Google sync
- * writes `tag=event`, a tablet-made event has no `eventId`). Null for any other row. The row is
- * updated in place by its id, never deleted and inserted again, so no event gets a second row.
+ * The update that gives a row an older Account Sync build wrote its visible shape (#28), or null
+ * for any other row. Only `tag=task` rows are ours (the native Google sync writes `tag=event`):
+ * - beta 23 and older kept the Google id in `eventId`; the link moves into `calendarId`;
+ * - beta 24 and older left an all-day row's `startDate` and `endDate` NULL, which makes the Calendar
+ *   app drop the row and every row after it; they are filled from `startTime` and `endTime`.
+ * A row made on the tablet (no link and no `eventId`) is left. The row is updated in place by its
+ * id, never deleted and inserted again, so no event gets a second row.
  */
 export function legacyRowRepair(d: Descriptor, row: Row): Row | null {
   const col = (field: string) => column(d.calendar, 'events', field);
+  if (row[col('tag')] !== d.calendar.rules.writeTag) return null;
   const eventId = row[col('eventId')];
   const calendarId = row[col('calendarId')];
-  if (row[col('tag')] !== d.calendar.rules.writeTag) return null;
-  if (eventId === null || eventId === undefined || eventId === '') return null;
-  if (calendarId === null || calendarId === undefined || calendarId === '') return null;
-  return {
-    [col('calendarId')]: calendarLink(d, {calendarId: String(calendarId), eventId: String(eventId)}),
-    [col('eventId')]: null,
-  };
+  const legacyId = !blank(eventId) && !blank(calendarId);
+  if (!legacyId && !readCalendarLink(d, calendarId)) return null;
+  const fix: Row = {};
+  if (legacyId) {
+    fix[col('calendarId')] = calendarLink(d, {calendarId: String(calendarId), eventId: String(eventId)});
+    fix[col('eventId')] = null;
+  }
+  if (isSet(row[col('allDay')]) && (blank(row[col('startDate')]) || blank(row[col('endDate')]))) {
+    fix[col('startDate')] = dayText(requireTime(row, col('start')));
+    fix[col('endDate')] = dayText(requireTime(row, col('end')));
+  }
+  return Object.keys(fix).length ? fix : null;
 }
 
 const requireLink = (d: Descriptor, row: Row): CalendarLink => {
@@ -118,7 +139,7 @@ function readEvent(d: Descriptor, row: Row, link: CalendarLink): DeviceEvent {
     content: String(row[col('content')] ?? ''),
     start: requireTime(row, col('start')),
     end: requireTime(row, col('end')),
-    allDay: allDay === 1 || allDay === '1' || allDay === true,
+    allDay: isSet(allDay),
     ...(Number.isFinite(changed) && changed > 0 ? {modified: changed} : {}),
   };
 }

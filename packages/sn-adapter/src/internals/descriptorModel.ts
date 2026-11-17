@@ -101,7 +101,7 @@ const RULE_TYPES: Record<Capability, Record<string, RuleType>> = {
 
 /** The fields the adapter reads and writes in each table; an update that lacks one is refused (#101). */
 const REQUIRED_FIELDS: Partial<Record<Capability, Record<string, string[]>>> = {
-  calendar: {events: ['rowId', 'eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'modified', 'status', 'state']},
+  calendar: {events: ['rowId', 'eventId', 'calendarId', 'tag', 'readOnly', 'allDay', 'title', 'content', 'start', 'end', 'startDate', 'endDate', 'modified', 'status', 'state']},
   todo: {tasks: ['rowId', 'listId', 'taskId', 'title', 'detail', 'modified', 'status', 'due', 'completedAt', 'deleted', 'hasSync'], groups: ['rowId']},
   digest: {knowledge: ['content', 'collection', 'sourceType', 'metadata', 'comment', 'created']},
 };

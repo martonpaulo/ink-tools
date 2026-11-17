@@ -275,13 +275,22 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `status = 'cancelled'` and a new `lastModifiedTime`; `adb shell content update` with that status
   on 7 test rows hid them from the Calendar app, and the rows stay in the table [measured,
   2026-11-17, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Account Sync removes an event the same way.
-- The Calendar app showed the «Account Sync dry insert» rows, whose `eventId` was NULL, and hid the
-  217 events Account Sync 0.1.0 beta 23 pulled, whose `eventId` held the Google id; every other
-  column had the same shape (`tag=task`, `state` 0, `readOnly` 1, `status` `confirmed`, times in
-  epoch ms) [measured, 2026-11-17, [#43](https://github.com/martonpaulo/ink-tools/issues/43), [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. That the app hides a `tag=task` row
-  with an `eventId` is [inference, not read in the app's code]. So Account Sync writes `eventId`
-  NULL and keeps the event's link in `calendarId` (`inktools:` and both ids), and repairs the rows of
-  older builds in place by row id [[#28](https://github.com/martonpaulo/ink-tools/issues/28)].
+- The Calendar app's month dots (`DataBaseTools.getDuringEvent`) and day list (`getTodayEvent`)
+  read every `data_info` row with `status = 'confirmed' AND recurrence is null` in one loop inside
+  one `try`, and for an `isAllDay` 1 row call `DateUtils.getLongDate(startDate)`, which is
+  `startDate.split("-")` on a `yyyy-MM-dd` text [source, decompiled `SupernoteCalendar.apk`,
+  firmware `Chauvet.E103.2610191001.2559`, [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. An all-day row with `startDate` NULL throws
+  `NullPointerException` and the loop drops it and every later row: Account Sync 0.1.0 beta 23 and
+  24 showed one event of 217, and filling `startDate` and `endDate` on the 29 all-day rows showed
+  all of them [measured, 2026-11-17, [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. These queries filter on no calendar and no
+  `eventId` [source]. A native all-day row holds Google's `start.date` and exclusive `end.date` in
+  `startDate` and `endDate` [source]. So an all-day row Account Sync writes carries both dates as
+  `yyyy-MM-dd`, a timed row leaves them NULL, and the repair fills them on older rows by row id.
+  Account Sync keeps `eventId` NULL and the link in `calendarId` (`inktools:` and both ids)
+  [[#28](https://github.com/martonpaulo/ink-tools/issues/28)].
+- The native Google sync (`GoogleSync.getAllEvents`) reads only `tag = 'event'` rows and uploads one
+  with no `eventId` to Google [source, [#28](https://github.com/martonpaulo/ink-tools/issues/28)], so Account Sync's `tag=task` rows never reach
+  Google.
 - The calendar's `data_info` insert refuses a row without `tag`, then one without
   `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
   refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`
