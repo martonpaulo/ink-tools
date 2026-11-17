@@ -1,6 +1,6 @@
 {
   "name": "RealTimeConversion",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "Supernote plugin: while Real-Time Text is on, each finished handwritten word becomes a text box at its place.",
   "private": true,
   "scripts": {
