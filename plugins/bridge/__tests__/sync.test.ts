@@ -154,7 +154,9 @@ test('Sync now runs Google into the Calendar and Todoist into the To-Do, with on
   expect(inserted.find(r => !r.tag)).toMatchObject({
     title: 'Buy milk',
     hasSync: 0,
-    taskListId: 'inbox',
+    // Todoist's Inbox is the tablet's own Inbox: a task with no list (#212).
+    taskListId: null,
+    deleted: 0,
   });
   expect(net.calls.filter(c => c.includes('oauth2'))).toHaveLength(1);
   expect(d.lines.some(l => l.startsWith('[Bridge] sync calendar:'))).toBe(true);
@@ -305,8 +307,24 @@ test('each pass first moves in the sign-in drop files, before it reads a secret 
 
 test('Settings reads the tablet-only tasks before the first pass, and the pass keeps the first-link time', async () => {
   const tasks = [
-    {localId: 'l1', title: 'a', detail: '', due: null, completed: false, deleted: false, modified: 1},
-    {localId: 'l2', title: 'b', detail: '', due: null, completed: false, deleted: false, modified: 1},
+    {
+      localId: 'l1',
+      title: 'a',
+      detail: '',
+      due: null,
+      completed: false,
+      deleted: false,
+      modified: 1,
+    },
+    {
+      localId: 'l2',
+      title: 'b',
+      detail: '',
+      due: null,
+      completed: false,
+      deleted: false,
+      modified: 1,
+    },
   ];
   const real = createDeviceStores(rows(), () => NOW);
   const saved: BridgeSettings[] = [];

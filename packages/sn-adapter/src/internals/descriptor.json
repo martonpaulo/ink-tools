@@ -28,7 +28,9 @@
         "columns": ["id", "taskListId", "userId", "title", "lastModified", "deleted", "hasSync", "createTime"]
       }
     },
-    "rules": {"requiredOnInsert": ["title"], "needsExistingList": true, "writeHasSync": 0,
+    "rules": {"requiredOnInsert": ["title", "taskId"], "needsExistingList": true, "allowNoList": true, "writeHasSync": 0,
+      "insertDefaults": {"deleted": 0, "isReminderOn": 0, "dueTime": 0, "completedTime": 0, "sort": 0, "sortCompleted": 0, "plannedSort": 0},
+      "insertNow": ["lastModified", "sortTime", "plannedSortTime"],
       "statusOpen": "needsAction",
       "statusCompleted": "completed",
       "timeUnit": "ms"}

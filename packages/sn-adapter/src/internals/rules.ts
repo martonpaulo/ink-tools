@@ -33,20 +33,48 @@ export function toCalendarInsert(d: Descriptor, event: Row): Row {
 export interface TodoInsertContext {
   /** taskListId values of the non-deleted rows in task_group_table. */
   existingListIds: string[];
+  /** The insert time, in the descriptor's `timeUnit`, for the `insertNow` columns. */
+  now: number;
 }
 
-/** Build a To-Do row, enforcing the provider's insert rules. Throws instead of letting the insert fail with -1. */
+/**
+ * The columns a native insert fills that `row` lacks, with the native values: `insertDefaults`, and
+ * `insertNow` set to `now` (#212). A row the app wrote is left as it is; a row missing `deleted` or
+ * `sort` is hidden in the To-Do app, so this also repairs rows an earlier build wrote.
+ */
+export function todoShapeGaps(d: Descriptor, row: Row, now: number): Row {
+  const t = d.todo;
+  const known = t.tables.tasks.columns;
+  const gaps: Row = {};
+  for (const [col, value] of Object.entries(t.rules.insertDefaults)) {
+    if (known.includes(col) && missing(row[col])) gaps[col] = value;
+  }
+  for (const col of t.rules.insertNow) {
+    if (known.includes(col) && missing(row[col])) gaps[col] = now;
+  }
+  return gaps;
+}
+
+/**
+ * Build a To-Do row with every column a native insert fills, enforcing the provider's insert rules.
+ * Throws instead of letting the insert fail with -1. An empty `taskListId` is written as NULL, an
+ * unfiled task, when `allowNoList` holds.
+ */
 export function toTodoInsert(d: Descriptor, task: Row, ctx: TodoInsertContext): Row {
   const t = d.todo;
-  const row = pickColumns(t.tables.tasks.columns, task);
+  const picked = pickColumns(t.tables.tasks.columns, task);
+  const row = {...picked, ...todoShapeGaps(d, picked, ctx.now)};
   for (const col of t.rules.requiredOnInsert) {
     if (row[col] === undefined || row[col] === null || row[col] === '') throw new Error(`To-Do insert needs ${col}`);
   }
-  const list = row[column(t, 'tasks', 'listId')];
-  if (t.rules.needsExistingList) {
-    // A missing list fails like an unknown one: the provider would answer id -1 (#63).
-    if (list === undefined || list === null || list === '') throw new Error('To-Do insert needs taskListId of an existing list');
-    if (!ctx.existingListIds.includes(String(list))) throw new Error(`taskListId ${String(list)} does not match an existing list`);
+  const listCol = column(t, 'tasks', 'listId');
+  const list = row[listCol];
+  if (list === undefined || list === null || list === '') {
+    // A missing list fails like an unknown one unless the app keeps unfiled tasks (#63, #212).
+    if (!t.rules.allowNoList) throw new Error('To-Do insert needs taskListId of an existing list');
+    row[listCol] = null;
+  } else if (t.rules.needsExistingList && !ctx.existingListIds.includes(String(list))) {
+    throw new Error(`taskListId ${String(list)} does not match an existing list`);
   }
   row[column(t, 'tasks', 'hasSync')] = t.rules.writeHasSync; // 0 = the app uploads it to Supernote Cloud
   return row;
