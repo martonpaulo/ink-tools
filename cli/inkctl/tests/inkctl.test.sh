@@ -120,7 +120,44 @@ case "$1" in
                 printf '%s\n' "${2##*/}" > "$ADB_FILES/lang-default" ;;  # the rm after && leaves only this file
             "find /storage/emulated/0/Note -name"*) cat "$ADB_FILES/notes-found" ;;
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
+            "am broadcast -n com.martonpaulo.inktools.bridge/"*)
+                printf '%s\n' "$2" >> "$ADB_FILES/bridge-calls"
+                if [ -f "$ADB_FILES/bridge-answer" ]; then
+                    echo 'Broadcasting: Intent { flg=0x20 cmp=com.martonpaulo.inktools.bridge/.CommandReceiver }'
+                    cat "$ADB_FILES/bridge-answer"
+                    [ -f "$ADB_FILES/rows-after-bridge" ] && cp "$ADB_FILES/rows-after-bridge" "$ADB_FILES/rows"
+                    [ -f "$ADB_FILES/plugin-row-after" ] && cp "$ADB_FILES/plugin-row-after" "$ADB_FILES/plugin-row"
+                else
+                    echo 'Broadcast completed: result=0'
+                fi
+                : ;;
             "am broadcast"*) echo 'Broadcast completed: result=0' ;;
+            "pm path com.martonpaulo.inktools.bridge")
+                [ -f "$ADB_FILES/bridge-installed" ] || exit 1
+                echo 'package:/data/app/bridge/base.apk' ;;
+            "content query --uri content://com.ratta.supernote.pluginhost/plugins/"*) cat "$ADB_FILES/plugin-row" ;;
+            "date +%s") echo 1800000000 ;;
+            "date '+%m-%d %H:%M:%S.000'") echo '11-16 23:00:00.000' ;;
+            "mkdir -p "*) : ;;
+            "cmd package resolve-activity"*)
+                if grep -qF "${2##* }" "$ADB_FILES/gone"; then echo 'No activity found'; else echo "priority=0"; echo "${2##* }"; fi ;;
+            "cmd package query-receivers"*)
+                if grep -qF "${2##* }" "$ADB_FILES/gone"; then echo 'No receivers found'; else echo "${2##* }"; fi ;;
+            pidof*) cat "$ADB_FILES/pids" ;;
+            "stat -c"*) cat "$ADB_FILES/size" ;;
+            "pm list packages -3") echo package:com.example.one ;;
+            "pm list packages -s") echo package:com.ratta.supernote.note ;;
+            "content insert"*) [ -f "$ADB_FILES/insert-error" ] && cat "$ADB_FILES/insert-error"; : ;;
+            "content query --uri content://com.ratta.supernote.task.provider/tasks_table"*)
+                left=$(cat "$ADB_FILES/trigger-reads")
+                if [ -f "$ADB_FILES/query-silent" ]; then
+                    :
+                elif [ "$left" -gt 0 ]; then
+                    [ "$left" -lt 100 ] && echo $((left - 1)) > "$ADB_FILES/trigger-reads"
+                    echo 'Row: 0 id=31'
+                else
+                    echo 'No result found.'
+                fi ;;
             "date +%s") echo 1800000000 ;;
             "date '+%m-%d %H:%M:%S.000'") echo '11-16 23:00:00.000' ;;
             "mkdir -p "*) : ;;
@@ -453,7 +490,7 @@ check "routes does not claim an operation it never proved" "$(printf '%s' "$resu
 check "routes quotes a component name" "$(grep -cF "'com.ratta.one/a.Outer\$Inner'" "$log")" "1"
 check "routes is read-only" "$(called 'am start')$(called 'content ')$(called 'input ')" "000"
 check "routes names which job each route does" "$(printf '%s' "$result" | expression "[j['command'] for j in d['jobs'] if j['job']=='sync the To-do']")" "['sync tasks']"
-check "routes says which jobs have no route" "$(printf '%s' "$result" | expression "[j['needs'] for j in d['jobs_without_route']][0]")" "the screen"
+check "routes says which jobs have no route" "$(printf '%s' "$result" | expression "[j['needs'] for j in d['jobs_without_route']][0]")" "the screen, or the Ink Tools bridge app (#215)"
 check "routes covers every Ratta package by default" "$(run routes --json | expression "[p['package'] for p in d['packages']]")" "['com.ratta.one']"
 check "routes prints one line per route" "$(run routes com.ratta.one | grep -c '^receiver')" "1"
 run routes com.ratta.absent >/dev/null 2>&1
@@ -851,6 +888,81 @@ run plugin install "$work/local/bad.snplg" >/dev/null 2>&1
 check "a file with no plugin config stops before any copy" "$?$(called ' push ')" "20"
 run plugin install "$work/local/old.txt" >/dev/null 2>&1
 check "plugin install refuses another kind of file" "$?" "2"
+
+# The Ink Tools bridge app (#215): install, enable, disable and Always Allow through one ordered broadcast.
+bridge_calls() { cat "$files/bridge-calls" 2>/dev/null; }
+exit_of() { run "$@" >/dev/null 2>&1; echo $?; }
+wc -c < "$work/local/test.snplg" | tr -d ' ' > "$files/size"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
+touch "$files/bridge-installed"
+printf 'Broadcast completed: result=1, data="ok onSuccess PluginInfo{pluginID=new.plugin}"\n' > "$files/bridge-answer"
+: > "$files/bridge-calls"
+result=$(run plugin install "$work/local/test.snplg" --overwrite --json 2>/dev/null)
+check "plugin install goes through the bridge when it is installed" "$(printf '%s' "$result" | field "['route'],d['action'],d['row']['versionName']")" "('bridge', 'installed', '2.0')"
+check "the bridge install names the pushed path" "$(bridge_calls)" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op install --es path $root/MyStyle/test.snplg"
+check "the bridge install presses nothing on the screen" "$(called 'input tap')$(called 'SettingsActivity')" "00"
+check "the bridge install keeps PluginHost's answer" "$(printf '%s' "$result" | field "['bridge']")" "ok onSuccess PluginInfo{pluginID=new.plugin}"
+rm -f "$files/rows-after-bridge"
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+printf 'Broadcast completed: result=2, data="failed onFailed PluginError{code=3}"\n' > "$files/bridge-answer"
+run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
+check "a refused bridge install fails with PluginHost's error" "$?$(grep -c 'onFailed PluginError{code=3}' "$work/err")" "11"
+printf 'Broadcast completed: result=5, data="timeout no callback"\n' > "$files/bridge-answer"
+check "a bridge with no callback times out" "$(exit_of plugin install "$work/local/test.snplg" --overwrite)" "6"
+rm -f "$files/rows-after-bridge"
+
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=false\nRow: 1 name=Other, pluginID=other, enable=true\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\nRow: 1 name=Other, pluginID=other, enable=true\n' > "$files/rows-after-bridge"
+printf 'Broadcast completed: result=1, data="ok onSuccess"\n' > "$files/bridge-answer"
+: > "$files/bridge-calls"
+check "plugin enable proves the change in the list" "$(run plugin enable Snap --json | field "['action'],d['row']['enable']")" "('enabled', 'true')"
+check "plugin enable sends the plugin's id" "$(bridge_calls)" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op enable --es pluginID new.plugin"
+: > "$files/bridge-calls"
+check "plugin enable leaves an enabled plugin alone" "$(run plugin enable new.plugin --json | field "['action']")$(bridge_calls)" "unchanged"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=false\nRow: 1 name=Other, pluginID=other, enable=true\n' > "$files/rows-after-bridge"
+check "plugin disable proves the change in the list" "$(run plugin disable Snap --json | field "['action'],d['enable']")" "('disabled', False)"
+check "plugin disable sends op disable" "$(bridge_calls | tail -1)" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op disable --es pluginID new.plugin"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\n' > "$files/rows-after-bridge"
+check "plugin disable times out when the list never changes" "$(exit_of plugin disable Snap --timeout 0)" "6"
+check "plugin enable names a missing plugin" "$(exit_of plugin enable Nothing)" "4"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=false\n' > "$files/rows"
+rm -f "$files/bridge-installed"
+: > "$files/bridge-calls"
+run plugin enable Snap >/dev/null 2>"$work/err"
+check "plugin enable without the bridge app stops with its own code and sends nothing" "$?$(bridge_calls)" "14"
+check "plugin enable without the bridge says how to install it" "$(grep -c 'inktools-bridge' "$work/err")" "1"
+check "read-only mode refuses plugin enable" "$(exit_of --read-only plugin enable Snap)" "11"
+touch "$files/bridge-installed"
+rm -f "$files/bridge-answer"
+check "an installed bridge that never answers stops with code 14" "$(exit_of plugin enable Snap)" "14"
+
+printf 'Broadcast completed: result=1, data="ok allow new.plugin"\n' > "$files/bridge-answer"
+printf 'Row: 0 pluginID=new.plugin, usesPermissions=[{"name":"plugin.permission.FILE:READ","status":0},{"name":"plugin.permission.FILE:WRITE","status":-1}]\n' > "$files/plugin-row"
+printf 'Row: 0 pluginID=new.plugin, usesPermissions=[{"name":"plugin.permission.FILE:READ","status":2},{"name":"plugin.permission.FILE:WRITE","status":2}]\n' > "$files/plugin-row-after"
+: > "$files/bridge-calls"
+result=$(run plugin allow Snap --json)
+check "plugin allow sets every used permission to Always Allow and proves it" "$(printf '%s' "$result" | field "['permissions']")" "{'plugin.permission.FILE:READ': 2, 'plugin.permission.FILE:WRITE': 2}"
+check "plugin allow sends the names and status 2" "$(bridge_calls)" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op allow --es pluginID new.plugin --es perm plugin.permission.FILE:READ,plugin.permission.FILE:WRITE --ei status 2"
+check "plugin allow reads the single-plugin row" "$(called 'content query --uri content://com.ratta.supernote.pluginhost/plugins/new.plugin')" "2"
+printf 'Row: 0 pluginID=new.plugin, usesPermissions=[{"name":"plugin.permission.FILE:READ","status":0},{"name":"plugin.permission.FILE:WRITE","status":0}]\n' > "$files/plugin-row"
+rm -f "$files/plugin-row-after"
+: > "$files/bridge-calls"
+check "plugin allow times out when the row keeps the old status" "$(exit_of plugin allow Snap plugin.permission.FILE:READ --timeout 0)" "6"
+check "plugin allow sends only the named permission" "$(bridge_calls | grep -c 'perm plugin.permission.FILE:READ --ei')" "1"
+check "plugin allow refuses a permission the plugin does not use" "$(exit_of plugin allow Snap plugin.permission.NETWORK)" "4"
+printf 'Row: 0 pluginID=new.plugin, usesPermissions=something else\n' > "$files/plugin-row"
+check "plugin allow stops on a notation it cannot read" "$(exit_of plugin allow Snap)" "1"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\nRow: 1 name=Other, pluginID=other, enable=true\n' > "$files/rows"
+printf 'Row: 0 name=Other, pluginID=other, enable=true\n' > "$files/rows-after-bridge"
+printf 'Broadcast completed: result=1, data="ok onSuccess"\n' > "$files/bridge-answer"
+: > "$files/bridge-calls"
+check "plugin uninstall goes through the bridge and proves it from the list" "$(run plugin uninstall Snap --json | field "['route'],d['action']")" "('bridge', 'uninstalled')"
+check "the bridge uninstall presses nothing on the screen" "$(bridge_calls)$(called 'input tap')" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op uninstall --es pluginID new.plugin0"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\n' > "$files/rows"
+check "plugin list is plugin ls" "$(run plugin list --json | field "['plugins'][0]['pluginID']")" "new.plugin"
+rm -f "$files/bridge-installed" "$files/bridge-answer" "$files/rows-after-bridge" "$files/plugin-row" "$files/plugin-row-after" "$files/bridge-calls"
 # A plugin's page in Settings (#191): each press shows the next screen of a synthetic walk.
 settings_screens() {
     python3 - "$files" "$@" <<'PY'

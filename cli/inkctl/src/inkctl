@@ -31,11 +31,15 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
   wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
   apps                           installed packages
-  plugin ls                      installed plugins
+  plugin list                    installed plugins, from PluginHost's provider (plugin ls is the same)
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
-  plugin install FILE.snplg      copy, install or update through named elements, and prove it
+  plugin install FILE.snplg      copy, install or update, and prove it: through the Ink Tools bridge
+                                 app when it is installed, else through named elements on the screen
+  plugin enable|disable NAME     turn a plugin on or off through the bridge app, and prove it
+  plugin allow NAME [PERM...]    set permissions (default: every one it uses) to Always Allow
+                                 through the bridge app, and prove it from the plugin's row
   plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
-  plugin uninstall NAME          uninstall through named elements, and prove it from the plugin list
+  plugin uninstall NAME          uninstall through the bridge app, else named elements, and prove it
   logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
                                  --level, --package, --pid, --grep, --since, --since-last,
                                  --follow and --plugin
@@ -107,6 +111,7 @@ EXIT_CALL_MISSING = 10
 EXIT_READ_ONLY = 11
 EXIT_PROTECTED = 12
 EXIT_FIRMWARE_REFUSED = 13
+EXIT_NO_BRIDGE = 14
 EXIT_CODES = """exit codes:
   0  done
   1  the device refused or the call failed
@@ -122,6 +127,7 @@ EXIT_CODES = """exit codes:
   11 read-only mode refused a command that changes the device
   12 the notes folder or a note on the screen is protected: pass --allow-notes
   13 the firmware was refused: not newer, not from Ratta, or the battery is too low
+  14 the Ink Tools bridge app is not on the device: install its APK (apps/inktools-bridge)
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -242,9 +248,10 @@ NOTE_MODE_NORMAL = "0"
 PLUGIN_SUFFIX = ".snplg"
 PLUGIN_FOLDER = "MyStyle"
 PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
+CONTENT_QUERY = "content query --uri"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 PLUGIN_CONFIG_FILE = "PluginConfig.json"
-PLUGIN_LIST_STEP = "inkctl plugin ls"  # the next step that shows which plugins are installed
+PLUGIN_LIST_STEP = "inkctl plugin list"  # the next step that shows which plugins are installed
 SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
 PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
 PLUGIN_PICK_STEP = "text:Select Plugin Package"
@@ -253,6 +260,23 @@ PICKER_NEXT_PAGE = "id:ll_next_page"
 PICKER_PAGE_NUMBER = "id:content_page_number"
 PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
+# The Ink Tools bridge app (#215, apps/inktools-bridge/AGENTS.md): it binds PluginHost's
+# PluginSettingService, which `adb` cannot reach, and answers an ordered broadcast. Its result codes
+# are the app's Outcome class; 0 is what `am` prints when no receiver ran.
+BRIDGE_PACKAGE = "com.martonpaulo.inktools.bridge"
+BRIDGE_RECEIVER = f"{BRIDGE_PACKAGE}/.CommandReceiver"
+BRIDGE_INCLUDE_STOPPED = 32  # Intent.FLAG_INCLUDE_STOPPED_PACKAGES: an app never opened still gets it
+BRIDGE_NOT_RUN = 0
+BRIDGE_RESULTS = {1: "ok", 2: "failed", 3: "usage", 4: "unreachable", 5: "timeout"}
+BRIDGE_OK = 1
+BRIDGE_USAGE = 3
+BRIDGE_TIMEOUT_RESULT = 5
+BRIDGE_ANSWER = re.compile(r'Broadcast completed: result=(-?\d+)(?:, data="(.*)")?')
+BRIDGE_CALL_TIMEOUT = 75  # the app waits up to 50 s for PluginHost's callback, under Android's 60 s
+BRIDGE_NEXT_STEP = "adb install the Ink Tools bridge APK (apps/inktools-bridge), or use the screen route for an install"
+BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
+PERMISSION_STATUS_ALWAYS = 2  # PluginPermissionManager.STATUS_ALWAYS, «Always Allow» (docs/research/2026-11-pluginhost-control.md)
+PLUGIN_ON_VALUES = ("1", "true")
 # A plugin's own page in Settings › Apps › Plugins (#191). docs/supernote.md › Plugins records the
 # path to Permissions and its three choices, measured on Relay (#163), and the uninstall warning,
 # measured on Ink2Pic; the other texts and the layout are not measured yet.
@@ -285,7 +309,7 @@ JOB_ROUTES = (
     {"job": "list plugins", "command": "plugin ls", "kind": "provider", "name": PLUGIN_URI},
 )
 JOBS_WITHOUT_ROUTE = (
-    {"job": "install or update a plugin", "needs": "the screen", "command": "plugin install"},
+    {"job": "install or update a plugin", "needs": "the screen, or the Ink Tools bridge app (#215)", "command": "plugin install"},
     {"job": "ask for a sync of one file", "needs": "nothing: the tablet syncs a changed file by itself, and Android refuses its broadcast to the shell user", "command": ""},
     {"job": "search the InkHub store", "needs": "Ratta's servers, which wait for the owner's yes", "command": ""},
 )
@@ -369,6 +393,7 @@ FAILURE_ADVICE = {
     "firmware_refused": ("the update is not safe to copy", "inkctl firmware"),
     "read_only": ("read-only mode forbids a command that changes the device", "inkctl status"),
     "protected": ("the notes folder or a note on the screen is protected", "inkctl files ls"),
+    "no_bridge": ("the Ink Tools bridge app is not installed or did not answer", "adb install inktools-bridge-<version>.apk"),
     "missing_call": ("a firmware update may have changed this call", "inkctl doctor"),
     "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
     "log_error": ("the command's own log could not be read", "inkctl status"),
@@ -1215,7 +1240,7 @@ def broadcast(device: Device, action: str) -> dict:
 def trigger_row_exists(device: Device, task_id: str) -> bool:
     """Read only the trigger row, never another task."""
     where = shlex.quote(f"taskId='{task_id}'")
-    return bool(query_rows(device, f"content query --uri {TASKS_URI} --projection id --where {where}"))
+    return bool(query_rows(device, f"{CONTENT_QUERY} {TASKS_URI} --projection id --where {where}"))
 
 
 def command_sync_tasks(device: Device, args: argparse.Namespace):
@@ -1934,7 +1959,7 @@ def query_rows(device: Device, call: str) -> list[dict]:
 
 
 def plugin_rows(device: Device) -> list[dict]:
-    return query_rows(device, f"content query --uri {PLUGIN_URI}")
+    return query_rows(device, f"{CONTENT_QUERY} {PLUGIN_URI}")
 
 
 def shown_plugin_names(row: dict) -> list[str]:
@@ -2086,12 +2111,147 @@ def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) 
         time.sleep(WAIT_INTERVAL)
 
 
+def bridge_installed(device: Device) -> bool:
+    """`pm path` prints the APK of an installed package and nothing, with exit 1, for a missing one."""
+    done = device.adb("shell", f"pm path {BRIDGE_PACKAGE}")
+    return done.returncode == 0 and "package:" in done.stdout.decode(errors="replace")
+
+
+def require_bridge(device: Device) -> None:
+    if not bridge_installed(device):
+        raise Failure(EXIT_NO_BRIDGE, "no_bridge", f"{BRIDGE_PACKAGE} is not installed; {BRIDGE_NEXT_STEP}", BRIDGE_NEXT_STEP)
+
+
+def bridge_call(device: Device, op: str, **extras) -> str:
+    """One ordered broadcast to the bridge app; its answer, or the failure its result code names."""
+    words = ["am", "broadcast", "-n", BRIDGE_RECEIVER, "-f", str(BRIDGE_INCLUDE_STOPPED), "--es", "op", op]
+    for key, value in extras.items():
+        words += ["--ei" if isinstance(value, int) else "--es", key, str(value)]
+    output = device.shell(shlex.join(words), timeout=BRIDGE_CALL_TIMEOUT)
+    match = BRIDGE_ANSWER.search(output)
+    if not match:
+        raise Failure(EXIT_FAILED, "device_error", output.strip()[:ERROR_EXCERPT] or "am broadcast gave no result")
+    code, answer = int(match[1]), match[2] or ""
+    if code == BRIDGE_OK:
+        return answer
+    if code == BRIDGE_NOT_RUN:
+        raise Failure(EXIT_NO_BRIDGE, "no_bridge", f"the Ink Tools bridge app did not answer; {BRIDGE_NEXT_STEP}", BRIDGE_NEXT_STEP)
+    if code == BRIDGE_USAGE:
+        raise bad_usage(f"the bridge refused the request: {answer}")
+    if code == BRIDGE_TIMEOUT_RESULT:
+        raise Failure(EXIT_TIMEOUT, "timeout", f"the bridge: {answer}", BRIDGE_LOG_STEP)
+    raise Failure(EXIT_FAILED, "device_error", f"the bridge ({BRIDGE_RESULTS.get(code, code)}): {answer}", BRIDGE_LOG_STEP)
+
+
+def plugin_row(device: Device, plugin_id: str) -> dict:
+    """The single-plugin row, which alone carries usesPermissions."""
+    rows = query_rows(device, f"{CONTENT_QUERY} {PLUGIN_URI}/{shlex.quote(plugin_id)}")
+    if not rows:
+        raise not_found(f"plugin {plugin_id}", PLUGIN_LIST_STEP)
+    return rows[0]
+
+
+def is_enabled(row: dict) -> bool:
+    value = row.get("enable")
+    if value is None:
+        raise Failure(EXIT_FAILED, "device_error", "the plugin list has no enable column, so the change cannot be proved")
+    return value.strip().lower() in PLUGIN_ON_VALUES
+
+
+def permission_states(row: dict) -> dict:
+    """Each permission's status from usesPermissions, a JSON list of {name, status}, as measured in
+    docs/research/2026-11-pluginhost-control.md › 1; any other text stops with that text."""
+    raw = row.get("usesPermissions")
+    if raw is None:
+        raise Failure(EXIT_FAILED, "device_error", "the plugin row has no usesPermissions column, so the permissions cannot be proved")
+    try:
+        items = json.loads(raw)
+        if isinstance(items, list) and all(isinstance(item, dict) and "name" in item for item in items):
+            return {item["name"]: int(item["status"]) if "status" in item else None for item in items}
+    except (ValueError, TypeError):
+        pass
+    if raw.strip() in ("", "null"):
+        return {}
+    raise Failure(EXIT_FAILED, "device_error", f"usesPermissions is in a notation inkctl cannot read: {raw[:ERROR_EXCERPT]}")
+
+
+def wait_until(limit: float, condition, message: str):
+    """Poll `condition` until it gives a value, or time out with `message`."""
+    started = time.monotonic()
+    while True:
+        value = condition()
+        if value:
+            return value
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{message} after {limit:g} s")
+        time.sleep(WAIT_INTERVAL)
+
+
+def install_through_bridge(device: Device, args: argparse.Namespace, config: dict, installed: list) -> tuple:
+    pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
+    answer = bridge_call(device, "install", path=pushed["path"])
+    row = wait_for_plugin(device, config, args.timeout, bool(installed))
+    data = {
+        "plugin": config["id"],
+        "version": config["version"],
+        "action": "updated" if installed else "installed",
+        "route": "bridge",
+        "path": pushed["path"],
+        "enabled": None,
+        "limit": None,
+        "bridge": answer,
+        "row": row,
+    }
+    return data, f"{data['action']}: {config['id']} {config['version']}"
+
+
+def command_plugin_enable(device: Device, args: argparse.Namespace):
+    wanted = args.plugin_state == "enable"
+    row = resolve_plugin(device, args.plugin)
+    plugin_id = row["pluginID"]
+    if is_enabled(row) == wanted:
+        data = {"plugin": plugin_id, "enable": wanted, "action": "unchanged", "row": row}
+        return data, f"unchanged: {plugin_id} is already {'enabled' if wanted else 'disabled'}"
+    require_bridge(device)
+    answer = bridge_call(device, args.plugin_state, pluginID=plugin_id)
+
+    def changed():
+        return next((item for item in plugin_rows(device) if item.get("pluginID") == plugin_id and is_enabled(item) == wanted), None)
+
+    row = wait_until(args.timeout, changed, f"{plugin_id} is not {'enabled' if wanted else 'disabled'} in the plugin list")
+    data = {"plugin": plugin_id, "enable": wanted, "action": "enabled" if wanted else "disabled", "route": "bridge", "bridge": answer, "row": row}
+    return data, f"{data['action']}: {plugin_id}"
+
+
+def command_plugin_allow(device: Device, args: argparse.Namespace):
+    plugin_id = resolve_plugin(device, args.plugin)["pluginID"]
+    states = permission_states(plugin_row(device, plugin_id))
+    names = args.permissions or sorted(states)
+    if not names:
+        raise bad_usage(f"{plugin_id} uses no permission; name one")
+    unknown = [name for name in names if name not in states]
+    if unknown:
+        raise not_found(f"permission {', '.join(unknown)} in {plugin_id}'s usesPermissions", f"inkctl plugin allow {plugin_id}")
+    require_bridge(device)
+    answer = bridge_call(device, "allow", pluginID=plugin_id, perm=",".join(names), status=PERMISSION_STATUS_ALWAYS)
+
+    def allowed():
+        now = permission_states(plugin_row(device, plugin_id))
+        return now if all(now.get(name) == PERMISSION_STATUS_ALWAYS for name in names) else None
+
+    now = wait_until(args.timeout, allowed, f"{plugin_id}'s permissions are not all Always Allow")
+    data = {"plugin": plugin_id, "permissions": {name: now[name] for name in names}, "status": PERMISSION_STATUS_ALWAYS, "route": "bridge", "bridge": answer}
+    return data, f"always allowed: {plugin_id} {' '.join(names)}"
+
+
 def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
     if installed and same_build(installed[0], config, installed[0].get("versionName")):
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", PLUGIN_LIST_STEP)
+    if bridge_installed(device):
+        return install_through_bridge(device, args, config, installed)
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")
     for step in PLUGIN_PATH_STEPS:
@@ -2259,6 +2419,10 @@ def command_plugin_uninstall(device: Device, args: argparse.Namespace):
     plugin_id = row.get("pluginID", "")
     if not plugin_id:
         raise Failure(EXIT_FAILED, "device_error", "the plugin list has no pluginID column, so this uninstall cannot be proved")
+    if bridge_installed(device):
+        answer = bridge_call(device, "uninstall", pluginID=plugin_id)
+        wait_for_plugin_gone(device, plugin_id, args.timeout)
+        return {"plugin": plugin_id, "action": "uninstalled", "route": "bridge", "bridge": answer}, f"uninstalled: {plugin_id}"
     open_plugin_page(device, args, row)
     press_element(device, expect_element(device, PLUGIN_UNINSTALL_STEP, args.step_timeout))
     expect_screen(device, uninstall_warning, args.step_timeout, f"no confirmation saying «{UNINSTALL_WARNING}»")
@@ -2939,6 +3103,7 @@ def build_parser() -> argparse.ArgumentParser:
     add(commands, "apps", command_apps)
 
     plugins = noun("plugin")
+    add(plugins, "list", command_plugin_ls)
     add(plugins, "ls", command_plugin_ls)
     pushing = add(plugins, "push", command_plugin_push, changes=True)
     pushing.add_argument("file")
@@ -2955,6 +3120,15 @@ def build_parser() -> argparse.ArgumentParser:
     uninstalling = add(plugins, "uninstall", command_plugin_uninstall, changes=True)
     uninstalling.add_argument("plugin", help=plugin_name_help)
     uninstalling.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to leave the list")
+    for state in ("enable", "disable"):
+        switched = add(plugins, state, command_plugin_enable, changes=True)
+        switched.set_defaults(plugin_state=state)
+        switched.add_argument("plugin", help=plugin_name_help)
+        switched.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds for the list to show the change")
+    allowing = add(plugins, "allow", command_plugin_allow, changes=True)
+    allowing.add_argument("plugin", help=plugin_name_help)
+    allowing.add_argument("permissions", nargs="*", metavar="PERM", help="such as plugin.permission.FILE:READ; default: every one it uses")
+    allowing.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds for the row to show the change")
     for settings_page in (permitting, uninstalling):
         settings_page.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
         settings_page.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes through the plugin list")
