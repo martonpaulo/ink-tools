@@ -4,7 +4,7 @@ Provider-agnostic building blocks the plugins share (layers in [docs/architectur
 
 | Package | Owns |
 | :--- | :--- |
-| `sn-adapter` | Every Supernote call, in two tiers: the official `sn-plugin-lib` wrappers, and the internals as an updatable descriptor with the adapt-on/off probe ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)) |
+| `sn-adapter` | Every Supernote call, in two tiers: the official `sn-plugin-lib` wrappers, and the internals as an updatable descriptor with the adapt-on/off probe ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)), and in `native/` the Java revert of a dry insert by row id that Account Sync and the Probe compile, with its JVM tests in `native-tests/` ([#213](https://github.com/martonpaulo/ink-tools/issues/213)) |
 | `sync-core` | Diff, recurrence expansion, mapping and module orchestration |
 | `ink-core` | Handwrite, recognise, the lasso query and the placement on the page; the shared `DictionaryProvider` interface with its first source, Wiktionary definitions ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), Lingo's language-pair Settings model, and the ZH input reader with its offline CC-CEDICT pinyin index ([#129](https://github.com/martonpaulo/supernote-tools/issues/129), [notice](ink-core/NOTICE.md)) |
 | `picture-search` | Ink2Pic's picture search core (the sources, the ranking, the measured order, `chooseLook`) its pure-Java pixel measures and the native file module in `native/`, with their JVM tests in `native-tests/`, the file store, the settings store and the «Insert best picture» flow, shared by Ink2Pic and Lookup ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)) |

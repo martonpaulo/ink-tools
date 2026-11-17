@@ -19,6 +19,8 @@ const {jdkTool, JDK_MISSING} = require('./host-tools.cjs');
 const root = path.resolve(__dirname, '..');
 // The native code lives in the shared picture-search package (#125, #142).
 const {nativeSources} = require('../../../packages/picture-search/plugin-config');
+// The dry insert's revert by row id lives in sn-adapter, shared with the Probe (#213).
+const adapter = require('../../../packages/sn-adapter/plugin-config');
 const build = path.join(root, 'build');
 const out = path.join(build, 'native');
 const PACKAGE_CLASS = 'com.bridge.files.BridgeFilesPackage';
@@ -108,7 +110,8 @@ function buildNative() {
     // -Werror: a new javac warning fails the build (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
     '-cp', [t.androidJar, t.reactJar, t.kotlinJar].join(path.delimiter),
-    '-d', classes, ...javaSources(nativeSources), ...javaSources(path.join(root, 'native/com')),
+    '-d', classes, ...javaSources(nativeSources), ...javaSources(adapter.nativeSources),
+    ...javaSources(path.join(root, 'native/com')),
   ]);
   const jar = path.join(out, 'files.jar');
   run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);

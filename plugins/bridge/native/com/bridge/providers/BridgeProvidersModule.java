@@ -14,6 +14,8 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.inktools.provider.DryInsertRevert;
+import com.inktools.provider.ResolverTable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -89,7 +91,7 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
             row.put(markerColumn, MARKER);
             Uri created = resolver.insert(base, row);
             written = wroteRow(created);
-            createdId = written ? rowId(created) : null;
+            createdId = written ? ResolverTable.rowId(created) : null;
           } catch (Throwable error) {
             promise.reject("insert_refused", String.valueOf(error.getMessage()), error);
             return;
@@ -98,7 +100,7 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
           try {
             DryInsertRevert.Result result =
                 DryInsertRevert.revert(
-                    new ProviderTable(resolver, base, idColumn, markerColumn), MARKER, createdId);
+                    new ResolverTable(resolver, base, idColumn, markerColumn, MARKER), MARKER, createdId);
             if (!written) {
               promise.reject("insert_refused", "the provider did not write the test row");
             } else if (result.remaining > 0) {
@@ -117,70 +119,6 @@ public final class BridgeProvidersModule extends ReactContextBaseJavaModule {
             }
           }
         });
-  }
-
-  /** The new row's id from the insert's answer, or null when it holds no number. */
-  static String rowId(Uri created) {
-    try {
-      long id = ContentUris.parseId(created);
-      return id >= 0 ? String.valueOf(id) : null;
-    } catch (RuntimeException notNumeric) {
-      return null;
-    }
-  }
-
-  /** The test write's table over ContentResolver: a marker query, and a delete of one row by id. */
-  private static final class ProviderTable implements DryInsertRevert.Table {
-    private final ContentResolver resolver;
-    private final Uri base;
-    private final String idColumn;
-    private final String markerColumn;
-
-    ProviderTable(ContentResolver resolver, Uri base, String idColumn, String markerColumn) {
-      this.resolver = resolver;
-      this.base = base;
-      this.idColumn = idColumn;
-      this.markerColumn = markerColumn;
-    }
-
-    @Override
-    public List<String[]> marked() {
-      List<String[]> out = new ArrayList<>();
-      try (Cursor cursor =
-          resolver.query(
-              base, new String[] {idColumn, markerColumn}, markerColumn + " = ?", new String[] {MARKER}, null)) {
-        if (cursor == null) {
-          return out;
-        }
-        int id = cursor.getColumnIndex(idColumn);
-        int marker = cursor.getColumnIndex(markerColumn);
-        if (id < 0 || marker < 0) {
-          throw new IllegalStateException("the provider listed no " + idColumn + " or " + markerColumn + " column");
-        }
-        while (cursor.moveToNext()) {
-          out.add(new String[] {cursor.getString(id), cursor.getString(marker)});
-        }
-      }
-      return out;
-    }
-
-    /**
-     * Deletes one row: first through the row's own URI ({@code base/<id>}, Android's convention for
-     * one row), with the id in the selection too; when that removes nothing or the provider does not
-     * know the URI, through the table URI with the id selection alone.
-     */
-    @Override
-    public int deleteById(String id) {
-      String selection = idColumn + " = ?";
-      String[] args = {id};
-      int removed = 0;
-      try {
-        removed = resolver.delete(ContentUris.withAppendedId(base, Long.parseLong(id)), selection, args);
-      } catch (RuntimeException unknownUri) {
-        removed = 0;
-      }
-      return removed > 0 ? removed : resolver.delete(base, selection, args);
-    }
   }
 
   /**

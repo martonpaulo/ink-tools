@@ -4,11 +4,19 @@
  * .snplg, and its `sn-plugin-lib` import resolves from the plugin's node_modules (ui-kit's
  * `nodeModulesPaths`), so the plugin keeps one copy. The plugin's tsconfig.json maps the same names
  * by `paths`. The internals tier's tests run in the packages gate; the official tier is tested by
- * the plugins that call it, which have `sn-plugin-lib`.
+ * the plugins that call it, which have `sn-plugin-lib`. The Java in `native/` (the dry insert's
+ * revert by row id, #213) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
+ * its JVM tests in `native-tests/` run in the Account Sync gate.
  */
 const path = require('path');
 
 const NAME = '@supernote-tools/sn-adapter';
+
+/** The Java a plugin's native build compiles: the dry insert's revert by row id (#213). */
+exports.nativeSources = path.join(__dirname, 'native');
+
+/** The JVM tests of that Java, which need only a JDK. */
+exports.nativeTests = path.join(__dirname, 'native-tests');
 
 /**
  * Adds the package to another Metro config part, such as ui-kit's: Metro's mergeConfig replaces

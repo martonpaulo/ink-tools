@@ -1,12 +1,12 @@
 name: Validate Probe
 
-# Runs only when plugins/probe/ (or this file) changes; the gate is the subproject's own `npm run validate`.
+# Runs only when plugins/probe/, the sn-adapter Java it compiles (#213), or this file changes; the gate is the subproject's own `npm run validate`.
 on:
   push:
     branches: [main]
-    paths: ['plugins/probe/**', '.github/workflows/validate-probe.yml']
+    paths: ['plugins/probe/**', 'packages/sn-adapter/native/**', '.github/workflows/validate-probe.yml']
   pull_request:
-    paths: ['plugins/probe/**', '.github/workflows/validate-probe.yml']
+    paths: ['plugins/probe/**', 'packages/sn-adapter/native/**', '.github/workflows/validate-probe.yml']
   workflow_dispatch:
 
 permissions:

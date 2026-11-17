@@ -226,7 +226,9 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `DataBaseTools.insert`; a pulled unfiled task is not yet seen on the tablet].
 - The calendar's `data_info` delete with the selection `title = ?` removed 0 rows of a row just
   inserted with that title, so each probe left its test row; Account Sync now deletes by the row id
-  the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)].
+  the insert returned [measured, Account Sync 0.1.0 beta 11, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The Probe does the same, and Account
+  Sync's Calendar writer updates and removes a pulled event by its row id; whether an update or
+  delete selected by `eventId` or `id` works is not measured yet [[#213](https://github.com/martonpaulo/ink-tools/issues/213)].
 - The calendar's `data_info` insert refuses a row without `tag`, then one without
   `lastModifiedTime` (`SQLiteConstraintException: NOT NULL constraint failed`, one column per
   refusal) [measured, Account Sync 0.1.0 beta 5 and 7, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. A native row fills `calendarId`, `tag`

@@ -15,11 +15,18 @@ public final class ProbeTargets {
   /** Written into a dry insert and the only row the revert may delete. */
   public static final String MARKER = "SNPROBE dry insert";
 
+  /**
+   * The row key the revert deletes by (#213): the descriptor lists {@code id} among the columns of
+   * {@code data_info} and {@code tasks_table}. The Digest table's key is not known; a revert there
+   * that finds no {@code id} column fails with a FAILED line, never a silent pass.
+   */
+  public static final String ROW_ID = "id";
+
   /** One provider URI to query, and how to insert and revert one marked row. */
   public static final class Target {
     public final String label;
     public final String uri;
-    /** Text column that holds {@link #MARKER}; the revert deletes only rows where it equals it. */
+    /** Text column that holds {@link #MARKER}; the revert deletes, by row id, only rows where it equals it. */
     public final String markerColumn;
     /** Whether a dry insert is tried: false for the provider root, which has no table. */
     public final boolean writable;

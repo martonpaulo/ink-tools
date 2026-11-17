@@ -16,6 +16,8 @@ const {execFileSync} = require('node:child_process');
 const {jdkTool, JDK_MISSING} = require('./host-tools.cjs');
 
 const root = path.resolve(__dirname, '..');
+// The dry insert's revert by row id lives in sn-adapter, shared with Account Sync (#213).
+const adapter = require('../../../packages/sn-adapter/plugin-config');
 const build = path.join(root, 'build');
 const out = path.join(build, 'native');
 const PACKAGE_CLASS = 'com.probe.providers.ProbePackage';
@@ -105,7 +107,7 @@ function buildNative() {
     // -Werror: a new javac warning fails the build (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
     '-cp', [t.androidJar, t.reactJar, t.kotlinJar].join(path.delimiter),
-    '-d', classes, ...javaSources(path.join(root, 'native/src')),
+    '-d', classes, ...javaSources(path.join(root, 'native/src')), ...javaSources(adapter.nativeSources),
   ]);
   const jar = path.join(out, 'files.jar');
   run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);
@@ -166,16 +168,17 @@ const DESCRIPTOR = path.join(root, '../../packages/sn-adapter/src/internals/desc
 function testNative() {
   // A temporary folder: the gate may run as another user than the one that owns build/.
   const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'probe-native-tests-'));
-  const pure = ['ProbeTargets', 'ProbeFormat', 'ProbeListener', 'ProbeCommandFile'].map(name =>
+  const pure = ['ProbeTargets', 'ProbeFormat', 'ProbeListener', 'ProbeCommandFile', 'ProbeRevert'].map(name =>
     path.join(root, `native/src/com/probe/providers/${name}.java`),
   );
+  pure.push(path.join(adapter.nativeSources, 'com/inktools/provider/DryInsertRevert.java'));
   // Compile inside the try, so a compile error also removes the folder.
   try {
     run(jdkTool('javac'), [
       '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-d', classes,
       ...pure, ...javaSources(path.join(root, 'native/tests')),
     ]);
-    for (const test of ['ProbeTargetsTest', 'ProbeFormatTest', 'ProbeListenerTest', 'ProbeCommandFileTest']) {
+    for (const test of ['ProbeTargetsTest', 'ProbeFormatTest', 'ProbeListenerTest', 'ProbeCommandFileTest', 'ProbeRevertTest']) {
       // ProbeTargetsTest checks the Calendar row against the descriptor's NOT NULL columns (#208).
       run(jdkTool('java'), [`-Dprobe.descriptor=${DESCRIPTOR}`, '-cp', classes, `com.probe.providers.${test}`]);
     }
