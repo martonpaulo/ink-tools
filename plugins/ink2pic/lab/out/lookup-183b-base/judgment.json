@@ -1,0 +1,54 @@
+{
+ "apple": {
+  "ok": true,
+  "reason": "fruit drawings and photos only; no logo (judged from the titles and the pixel measures, no sheets)"
+ },
+ "apple-logo": {
+  "ok": true,
+  "reason": "the Apple logo first, as asked (judged from the titles and the pixel measures, no sheets)"
+ },
+ "red-apple": {
+  "ok": true,
+  "reason": "red apple drawings only (judged from the titles and the pixel measures, no sheets)"
+ },
+ "apples": {
+  "ok": true,
+  "reason": "apple drawings, a Honeycrisp photo and a cross section (judged from the titles and the pixel measures, no sheets)"
+ },
+ "maca": {
+  "ok": false,
+  "reason": "the maca root first, then apple icons (judged from the titles and the pixel measures, no sheets)"
+ },
+ "manzana": {
+  "ok": false,
+  "reason": "a candelabra at 2 among the apples (judged from the titles and the pixel measures, no sheets)"
+ },
+ "bread": {
+  "ok": true,
+  "reason": "bread drawings and one photo (judged from the titles and the pixel measures, no sheets)"
+ },
+ "soup": {
+  "ok": true,
+  "reason": "soup drawings, two soup photos at 2 and 3 (judged from the titles and the pixel measures, no sheets)"
+ },
+ "banana": {
+  "ok": true,
+  "reason": "banana drawings and one photo (judged from the titles and the pixel measures, no sheets)"
+ },
+ "pizza": {
+  "ok": true,
+  "reason": "pizza drawings, one photo (judged from the titles and the pixel measures, no sheets)"
+ },
+ "coffee": {
+  "ok": true,
+  "reason": "coffee cups (judged from the titles and the pixel measures, no sheets)"
+ },
+ "cup-of-coffee": {
+  "ok": true,
+  "reason": "coffee cup drawings only (judged from the titles and the pixel measures, no sheets)"
+ },
+ "cafe": {
+  "ok": true,
+  "reason": "coffee and cafe pictures, a Paris cafe photo at 2 (judged from the titles and the pixel measures, no sheets)"
+ }
+}
