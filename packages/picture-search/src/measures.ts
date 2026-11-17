@@ -52,6 +52,11 @@ export type Measures = {
   edgeBox: number;
   /** Distinct 12-bit colours. */
   colours: number;
+  /**
+   * Share of the object pixels in soft shading, neither flat fill nor edge: high for a photo or a
+   * shaded render (#169). Absent from an older module.
+   */
+  shading?: number;
   /** Share of pixels that differ from the background. */
   objectShare: number;
   /** Perceptual hash, 48 hex digits (`PerceptualHash.java`, #89); absent from an older module. */
@@ -722,8 +727,8 @@ export function keepMode(
 
 /**
  * Whether one measured tile stays in a mode's list (`keepMode`): its pixel kind fits the mode,
- * and a canonical cut-out photo counts as a photo (#169). `leaderDecided`'s `fits` takes this
- * rule, so the early stop waits for the tile `keepMode` keeps first.
+ * and a shaded picture or a canonical cut-out photo counts as a photo (#169). `leaderDecided`'s
+ * `fits` takes this rule, so the early stop waits for the tile `keepMode` keeps first.
  */
 export function keptInMode(
   result: SearchResult,
@@ -731,9 +736,28 @@ export function keptInMode(
   mode: PictureMode,
 ): boolean {
   const kind = pixelKind(measures);
-  return isCutOutPhoto(result, kind)
+  return kind !== 'blank' &&
+    (isShaded(measures) || isCutOutPhoto(result, kind))
     ? mode === 'photo'
     : fitsMode(kind, mode);
+}
+
+/**
+ * From this shading share a picture is a photo or a shaded render, not a drawing (#169). Measured
+ * by `ThumbMeasures.java` on 110 thumbnails (2026-11-17): every Commons photo cut out on white
+ * scored 0.41 to 0.79, «Banana on whitebackground» 0.77, and the shaded 3D render «Banana icon»
+ * 0.50; the flat and outlined clip art of Openclipart scored 0.36 or less, two Dürer engravings 0.23 and 0.25.
+ * shortcut: fitted on that set; a photo at 0.38 (a pineapple) still passes; refit in the search
+ * lab once its metrics record `shading`.
+ */
+const SHADED_FROM = 0.4;
+
+/**
+ * A photo or a shaded render, even cut out on white paper, where it measures as clip art: its
+ * tone changes softly over much of the object (#169). Unknown, so false, from an older module.
+ */
+function isShaded(m: Measures): boolean {
+  return (m.shading ?? 0) >= SHADED_FROM;
 }
 
 /** The kinds a scan of line work measures as: never a photo. */

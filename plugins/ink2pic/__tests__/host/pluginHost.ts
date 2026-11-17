@@ -155,6 +155,7 @@ const LINE_ART = {
   edge: 0.23,
   edgeBox: 0.6,
   colours: 12,
+  shading: 0.1,
   objectShare: 0.12,
   fragments: 0.05,
   darkest: 0,

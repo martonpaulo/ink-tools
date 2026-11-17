@@ -174,6 +174,7 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
     result.putDouble("edge", m.edge);
     result.putDouble("edgeBox", m.edgeBox);
     result.putInt("colours", m.colours);
+    result.putDouble("shading", m.shading);
     result.putDouble("objectShare", m.objectShare);
     result.putString("hash", PerceptualHash.of(pixels.argb, pixels.width, pixels.height));
     result.putDouble("fragments", m.fragments);

@@ -9,8 +9,19 @@ export interface TaskContent {
   completed: boolean;
 }
 
+/**
+ * The service's list a task belongs to (a Todoist project), so the tablet files it in a To-Do list of
+ * the same name (#212). `inbox` marks the service's own unfiled list.
+ */
+export interface TaskList {
+  name: string;
+  inbox: boolean;
+}
+
 export interface RemoteTask extends TaskContent {
   remoteId: string;
+  /** Absent when the service does not say; the tablet then files it as an Inbox task. */
+  list?: TaskList;
   /** Epoch ms of the last change on the service; 0 when the service does not say. */
   modified: number;
 }
@@ -37,7 +48,8 @@ export interface TaskProvider {
 /** The seam to the tablet's To-Do (sn-adapter implements it over the content provider). */
 export interface DeviceTaskStore {
   list(): Promise<DeviceTask[]>;
-  create(content: TaskContent): Promise<DeviceTask>;
+  /** `list` is the service list the task comes from; the store files it there (#212). */
+  create(content: TaskContent, list?: TaskList): Promise<DeviceTask>;
   update(localId: string, content: TaskContent): Promise<DeviceTask>;
   /** Soft delete. */
   remove(localId: string): Promise<void>;
@@ -137,7 +149,7 @@ export async function syncTasks(
   for (const r of remotes.values()) {
     if (linkedRemote.has(r.remoteId) || r.completed) continue; // a finished task is not worth importing
     try {
-      const d = await store.create(content(r));
+      const d = await store.create(content(r), r.list);
       result.counts.createdLocal++;
       result.links.push({remoteId: r.remoteId, localId: d.localId, fingerprint: fingerprint(r), origin: 'service'});
     } catch (e) {

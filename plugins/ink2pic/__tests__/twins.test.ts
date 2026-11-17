@@ -39,6 +39,7 @@ const TS_FIELDS: Record<keyof Measures, true> = {
   edge: true,
   edgeBox: true,
   colours: true,
+  shading: true,
   objectShare: true,
   hash: true,
   fragments: true,

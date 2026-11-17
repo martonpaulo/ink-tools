@@ -1,5 +1,5 @@
 import {HttpFetch, requireHttps} from './http';
-import {RemoteTask, TaskContent, TaskProvider} from './tasks';
+import {RemoteTask, TaskContent, TaskList, TaskProvider} from './tasks';
 
 /**
  * Todoist as a TaskProvider, over the REST API v1 (https://developer.todoist.com/api/v1/).
@@ -20,6 +20,20 @@ interface TodoistTask {
   checked?: boolean;
   due?: {date?: string; datetime?: string} | null;
   updated_at?: string | null;
+  project_id?: string | null;
+}
+
+interface TodoistProject {
+  id: string;
+  name: string;
+  /** API v1's flag; REST v2 called it `is_inbox_project`. */
+  inbox_project?: boolean;
+  is_inbox_project?: boolean;
+}
+
+/** A project as the tablet files it: by name, the Inbox marked (#212). */
+export function projectList(p: TodoistProject): TaskList {
+  return {name: p.name, inbox: p.inbox_project === true || p.is_inbox_project === true};
 }
 
 /** shortcut: due keeps whole seconds and a date-only due reads as UTC midnight; revisit with time zones. */
@@ -65,19 +79,28 @@ export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
     if (completed !== wasCompleted) await call('POST', `/tasks/${enc(id)}/${completed ? 'close' : 'reopen'}`);
   };
 
+  /** Every item of a paginated list endpoint. */
+  const all = async <T>(path: string): Promise<T[]> => {
+    const out: T[] = [];
+    let cursor: string | null = null;
+    do {
+      const page = (await call('GET', `${path}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)) as {
+        results: T[];
+        next_cursor?: string | null;
+      };
+      out.push(...page.results);
+      cursor = page.next_cursor ?? null;
+    } while (cursor);
+    return out;
+  };
+
   return {
     async list() {
-      const out: RemoteTask[] = [];
-      let cursor: string | null = null;
-      do {
-        const page = (await call('GET', `/tasks${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)) as {
-          results: TodoistTask[];
-          next_cursor?: string | null;
-        };
-        out.push(...page.results.map(fromTodoist));
-        cursor = page.next_cursor ?? null;
-      } while (cursor);
-      return out;
+      const projects = new Map((await all<TodoistProject>('/projects')).map(p => [String(p.id), projectList(p)]));
+      return (await all<TodoistTask>('/tasks')).map(t => {
+        const list = t.project_id ? projects.get(String(t.project_id)) : undefined;
+        return list ? {...fromTodoist(t), list} : fromTodoist(t);
+      });
     },
     async get(remoteId) {
       const t = (await call('GET', `/tasks/${enc(remoteId)}`, undefined, true)) as TodoistTask | null;
