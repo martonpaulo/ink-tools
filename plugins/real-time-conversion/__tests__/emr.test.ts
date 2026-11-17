@@ -74,7 +74,14 @@ test('a word written with EMR pen-up points converts, and undo keeps page pixels
   });
   await tablet.advance(800 + DEFAULT_WORD_OPTIONS.idleMs);
   await converter.idle();
+  // The page read gives the strokes uuids of its own, as the tablet did (#206): they are found by
+  // their bounds; before, this logged «kept: 4 of 4 strokes of the word are not in the page read».
   expect(tablet.logs.filter(line => line.startsWith('kept'))).toEqual([]);
+  expect(tablet.logs.filter(line => line.startsWith('match:'))).toEqual([
+    expect.stringMatching(
+      /^match: pen-up .*, 5 points, first \d+,\d+ EMR; page .*numInPage 0, .*5 points, first 512,1356 page px; same uuid false$/,
+    ),
+  ]);
   expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(1);
   expect(tablet.logs.filter(line => line.startsWith('pen-up unit:'))).toEqual([
     expect.stringMatching(/^pen-up unit: EMR, 5 points, .* page 512,1297 to 559,1356, page size 1920 x 2560$/),

@@ -45,8 +45,14 @@ explained.
   [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. `recognizeElements` on those pen-up
   elements failed for every word with «Recognition failed. Please try again!», while the same
   handwriting lassoed (page elements) was read [measured]; so recognition is sent the page's own
-  elements from `getElements`, found by uuid [inference: it reads the elements' native points as
+  elements from `getElements` [inference: it reads the elements' native points as
   page pixels, as the 0.2.3 `Stroke.points` doc says; to confirm in the device round].
+- A pen-up element's uuid is not the uuid `getElements` gives the same stroke: none of a word's 4
+  strokes was found by uuid in a page read of 4 elements [measured, Real-Time Conversion 0.1.0
+  beta 3, 2026-11-17, [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. In sn-plugin-lib
+  0.2.3 the uuid is the key of the element's native point cache (`ElementDataAccessor`), made for
+  each event or read [official source]. So a pen-up stroke is found in a page read by its bounds in
+  page pixels; the plugin logs both shapes of one stroke to confirm it.
 - A design board for this screen is 3:4; the study sheets use 794 x 1059 CSS px boards and export
   to the Manta page.
 
@@ -101,6 +107,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A plugin can open a TCP listener and accept a connection over Wi-Fi, with the screen on and off
   [measured, 2026-11-14, [#91](https://github.com/martonpaulo/ink-tools/issues/91)].
 - HTTPS `fetch` works; cleartext `http://` fails at once [measured, `brief.md`].
+- React Native's `URL` parses a string, but its getters throw: Account Sync 0.1.0-beta.10's To-Do
+  pass failed with `URL.protocol is not implemented` [measured, 2026-11-17,
+  [#209](https://github.com/martonpaulo/ink-tools/issues/209)]. React Native 0.79.2's
+  `Libraries/Blob/URL.js` throws on every getter but `href`, and its `URLSearchParams` has only the
+  constructor, `append` and `toString`. Tablet code takes `parseUrl` of `sync-core`; the `url` rule
+  of `scripts/boundaries.py` refuses `new URL(` there.
 - Plugin call times on the owner's tablet, one «Insert best picture» for «apple», Ink2Pic
   0.1.0-dev.17 [measured, 2026-11-14, [#19](https://github.com/martonpaulo/ink-tools/issues/19)]: `recognizeElements` 0.9 to 1.7 s,
   `insertPageElements` 0.1 to 0.3 s, re-lasso 0.4 to 0.6 s, writing the PNG under 20 ms, a 200 px

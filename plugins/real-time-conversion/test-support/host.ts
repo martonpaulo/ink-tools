@@ -98,11 +98,12 @@ export function fakeTablet(answer = 'café') {
     /**
      * Writes the synthetic stroke on the page and ends it with a pen-up at `at`. The pen-up element
      * carries `stroke.points` in the pen's unit; the page keeps `pagePoints`, its page pixels, as
-     * getElements reads them on the tablet (#206).
+     * getElements reads them on the tablet (#206), under a uuid of its own.
      */
     penUp(stroke: InkStroke, at: number, pagePoints: {x: number; y: number}[] = stroke.points) {
       time = at;
-      const element: FakeElement = {uuid: stroke.id, type: 0, points: pagePoints};
+      // As on the tablet (#206): the page read hands out its own uuid, never the pen-up one.
+      const element: FakeElement = {uuid: `page-${stroke.id}`, type: 0, points: pagePoints};
       page.push(element);
       renumber();
       listener?.([{uuid: stroke.id, type: 0, points: stroke.points}]);

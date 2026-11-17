@@ -4,7 +4,7 @@
  * letter height and an [inference] default, tuned in the device round.
  */
 import type {Rect} from '@supernote-tools/ink-core';
-import {MARK_SHARE, median, type InkStroke, type Point, type Word} from './words';
+import {isAccent, MARK_SHARE, median, type InkStroke, type Point, type Word} from './words';
 
 /** A stroke taller than this many letter heights is a drawing. */
 export const TALL_SHARE = 2.5;
@@ -76,17 +76,42 @@ export function strokeKept(stroke: InkStroke, letterHeight: number): Kept | null
   return null;
 }
 
+/**
+ * The word's accents (#185, #206): strokes over its letters, measured against the line's letter
+ * height and the median top of the word's strokes that are not small. They never count toward the
+ * letter height, and an accent joins its letter, so it is never judged tall.
+ */
+export function accentsOf(word: Word): Set<InkStroke> {
+  const letter = word.letterHeight;
+  const tops = word.strokes
+    .filter(stroke => height(stroke.rect) >= MARK_SHARE * letter)
+    .map(stroke => stroke.rect.top);
+  if (letter <= 0 || tops.length === 0) {
+    return new Set();
+  }
+  const bandTop = median(tops);
+  return new Set(word.strokes.filter(stroke => isAccent(stroke.rect, bandTop, letter)));
+}
+
 /** Why the word stays handwriting before recognition, or null when it goes on. */
 export function wordKept(word: Word): Kept | null {
   if (word.letterHeight > MAX_LETTER_PX) {
     return 'large';
   }
+  const accents = accentsOf(word);
   for (const stroke of word.strokes) {
     // Weighed against the word's other letters, marks left out: a drawing among few letters pulls
-    // the line's median up.
-    const all = word.strokes.filter(other => other !== stroke).map(other => height(other.rect));
+    // the line's median up, and an accent or a bar pulls it down.
+    const all = word.strokes
+      .filter(other => other !== stroke && !accents.has(other))
+      .map(other => height(other.rect));
     const others = all.filter(each => each >= MARK_SHARE * median(all));
-    const kept = strokeKept(stroke, others.length ? median(others) : word.letterHeight);
+    const letterHeight = accents.has(stroke)
+      ? 0
+      : others.length
+        ? median(others)
+        : word.letterHeight;
+    const kept = strokeKept(stroke, letterHeight);
     if (kept) {
       return kept;
     }

@@ -92,6 +92,7 @@ export class Converter {
   /** Set once a pen-up stroke proved its points are EMR units (#206). */
   private emr: EmrRange | null = null;
   private unitLogged = false;
+  private matchLogged = false;
 
   constructor(private readonly host: ConvertHost, options: WordOptions) {
     this.tracker = new WordTracker<object>(options);
@@ -116,6 +117,7 @@ export class Converter {
     this.size = null;
     this.emr = null;
     this.unitLogged = false;
+    this.matchLogged = false;
     return ok(true);
   }
 
@@ -217,6 +219,50 @@ export class Converter {
     return this.host.getPageSize(path.value, page.value);
   }
 
+  /**
+   * The page bounds of the strokes the word may be, for the strokes no uuid matched (#206): on the
+   * tablet a pen-up uuid is the native cache key of that one event, and a getElements read hands
+   * out new ones. The newest MATCH_WINDOW strokes of the page are read, at once.
+   */
+  private async candidateRects(
+    word: Word,
+    page: readonly object[],
+  ): Promise<Map<object, Rect>> {
+    const rects = new Map<object, Rect>();
+    const ids = new Set(word.strokes.map(stroke => stroke.id));
+    const candidates = (page as HostElement[])
+      .filter(each => each.type === 0 && each.numInPage !== undefined && !ids.has(each.uuid ?? ''))
+      .sort((a, b) => (b.numInPage as number) - (a.numInPage as number))
+      .slice(0, Math.max(MATCH_WINDOW, word.strokes.length));
+    if (candidates.length === 0 || word.strokes.every(stroke => uuidIn(page, stroke.id))) {
+      return rects;
+    }
+    await Promise.all(
+      candidates.map(async element => {
+        const points = await this.host.strokePoints(element);
+        const rect = points.ok ? rectOf(points.value) : null;
+        if (rect) {
+          rects.set(element, rect);
+        }
+      }),
+    );
+    return rects;
+  }
+
+  /** The one line LOG_MATCH_SHAPES asks for: both shapes of the word's first stroke. */
+  private async matchLine(word: Word<object>, matched: object | undefined): Promise<string> {
+    const [first] = word.strokes;
+    const raw = first?.element ? await this.host.strokePoints(first.element) : null;
+    const pagePoints = matched ? await this.host.strokePoints(matched) : null;
+    return matchShapes(
+      first?.element,
+      raw?.ok ? raw.value : [],
+      this.emr !== null,
+      matched,
+      pagePoints?.ok ? pagePoints.value : [],
+    );
+  }
+
   private schedule(): void {
     if (this.timer !== null) {
       this.host.clearTimer(this.timer);
@@ -257,7 +303,9 @@ export class Converter {
     const {log} = this.host;
     const shape = wordKept(word);
     if (shape) {
-      log(`kept: ${shape}, ${word.strokes.length} strokes`);
+      // The heights say which stroke kept it, as numbers only, for the device round (#206).
+      const heights = word.strokes.map(({rect}) => Math.round(rect.bottom - rect.top)).join(',');
+      log(`kept: ${shape}, ${word.strokes.length} strokes, heights ${heights} px`);
       return;
     }
     const path = await this.host.getCurrentFilePath();
@@ -281,7 +329,12 @@ export class Converter {
       return;
     }
     try {
-      const found = pageStrokesOf(word, read.value);
+      const rects = await this.candidateRects(word, read.value);
+      const found = pageStrokesOf(word, read.value, rects);
+      if (LOG_MATCH_SHAPES && !this.matchLogged) {
+        this.matchLogged = true;
+        log(await this.matchLine(word, found.ok ? found.value.elements[0] : undefined));
+      }
       if (!found.ok) {
         log(`kept: ${found.message}`);
         return;
@@ -354,17 +407,77 @@ export function unitLine(
 export type PageStrokes = {nums: number[]; elements: object[]};
 
 /**
- * The word's strokes in a page read, found by their ids, in the word's order: an earlier conversion
- * deleted strokes before them and moved the numbers. A stroke no longer there keeps the word.
+ * The page strokes a word's strokes are looked for in, by bounds, newest first (#206). A word is
+ * matched just after its idle time, so its strokes are among the newest of the page.
+ * shortcut: a word written before more than MATCH_WINDOW newer strokes is kept unmatched; raise it
+ * if the log shows such a word.
  */
-export function pageStrokesOf(word: Word, page: readonly object[]): Result<PageStrokes> {
+export const MATCH_WINDOW = 40;
+/**
+ * The most, in page pixels, one edge of a pen-up stroke's converted bounds may differ from the
+ * page's own bounds of the same stroke [inference: the EMR conversion rounds to below one pixel].
+ */
+export const MATCH_TOLERANCE_PX = 4;
+
+/**
+ * Logs, once per mode start, both shapes of a word's first stroke: the pen-up element and the page
+ * element it matched, their field names, point counts and first points, each in its unit (#206).
+ * On until the device round proves the match.
+ */
+export const LOG_MATCH_SHAPES = true;
+
+function uuidIn(page: readonly object[], uuid: string): boolean {
+  return (page as HostElement[]).some(each => each.uuid === uuid && each.numInPage !== undefined);
+}
+
+/** The largest distance between two rects' matching edges. */
+export function edgeDistance(a: Rect, b: Rect): number {
+  return Math.max(
+    Math.abs(a.left - b.left),
+    Math.abs(a.top - b.top),
+    Math.abs(a.right - b.right),
+    Math.abs(a.bottom - b.bottom),
+  );
+}
+
+/**
+ * The word's strokes in a page read, in the word's order: an earlier conversion deleted strokes
+ * before them and moved the numbers. A stroke is found by its uuid, else by the page stroke whose
+ * bounds (`rects`, page pixels) are nearest its own, within MATCH_TOLERANCE_PX, each page stroke
+ * taken once: on the tablet the pen-up uuid is not the one getElements gives (#206). A stroke found
+ * neither way keeps the word.
+ */
+export function pageStrokesOf(
+  word: Word,
+  page: readonly object[],
+  rects: ReadonlyMap<object, Rect> = new Map(),
+): Result<PageStrokes> {
   const byId = new Map<string, HostElement>();
   for (const element of page as HostElement[]) {
     if (element.uuid !== undefined && element.numInPage !== undefined) {
       byId.set(element.uuid, element);
     }
   }
-  const found = word.strokes.map(stroke => byId.get(stroke.id));
+  const found: (HostElement | undefined)[] = word.strokes.map(stroke => byId.get(stroke.id));
+  const used = new Set<object>(found.filter(each => each !== undefined) as object[]);
+  word.strokes.forEach((stroke, index) => {
+    if (found[index]) {
+      return;
+    }
+    let best: object | undefined;
+    let bestDistance = MATCH_TOLERANCE_PX;
+    for (const [element, rect] of rects) {
+      const distance = edgeDistance(stroke.rect, rect);
+      if (!used.has(element) && distance <= bestDistance) {
+        best = element;
+        bestDistance = distance;
+      }
+    }
+    if (best) {
+      used.add(best);
+      found[index] = best as HostElement;
+    }
+  });
   const missing = found.filter(element => element === undefined).length;
   if (missing > 0) {
     return fail(
@@ -375,6 +488,43 @@ export function pageStrokesOf(word: Word, page: readonly object[]): Result<PageS
   }
   const elements = found as HostElement[];
   return ok({nums: elements.map(element => element.numInPage as number), elements});
+}
+
+function firstPoint(points: readonly Point[]): string {
+  const [first] = points;
+  return first ? `${Math.round(first.x)},${Math.round(first.y)}` : 'none';
+}
+
+/** One side of the match line: field names, numInPage, stroke field names, point count, first point. */
+function sideShape(element: object | undefined, points: readonly Point[], unit: string): string {
+  if (!element) {
+    return 'none';
+  }
+  const {numInPage} = element as HostElement;
+  const stroke = (element as {stroke?: unknown}).stroke;
+  return (
+    `fields ${fieldNames([element])}, numInPage ${numInPage ?? 'none'}, ` +
+    `stroke fields ${fieldNames([stroke])}, ${points.length} points, first ${firstPoint(points)} ${unit}`
+  );
+}
+
+/**
+ * The one line LOG_MATCH_SHAPES asks for (#206): the pen-up element and the page element of the
+ * same stroke, field names, counts and the first point only, never the ink or the text.
+ */
+export function matchShapes(
+  penUp: object | undefined,
+  penUpPoints: readonly Point[],
+  emr: boolean,
+  page: object | undefined,
+  pagePoints: readonly Point[],
+): string {
+  const same =
+    penUp && page ? String((penUp as HostElement).uuid === (page as HostElement).uuid) : 'none';
+  return (
+    `match: pen-up ${sideShape(penUp, penUpPoints, emr ? 'EMR' : 'page px')}; ` +
+    `page ${sideShape(page, pagePoints, 'page px')}; same uuid ${same}`
+  );
 }
 
 function fieldNames(objects: readonly unknown[]): string {

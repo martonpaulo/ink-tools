@@ -15,8 +15,11 @@ The rules are `docs/architecture.md` › Layer rules:
   provider-neutral `@supernote-tools/sync-core`.
 - `dictionary`: no code outside `packages/ink-core/src/` names a dictionary host (`wiktionary.org`):
   a plugin takes the provider-neutral `DictionaryProvider` of `@supernote-tools/ink-core` (#115).
+- `url`: no code that runs on the tablet (a plugin's or package's `src/`, a plugin's `index.js`)
+  constructs a `URL` or reads `searchParams`: React Native's `URL` throws on `protocol`, `host` and
+  every other getter but `href`; take `parseUrl` of `@supernote-tools/sync-core` (#209).
 
-`plugins/probe/` is exempt from every rule: it exists to call the internals directly. Only code is
+`plugins/probe/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
@@ -38,6 +41,8 @@ AUTHORITY = re.compile(r"com\.ratta\.supernote\.\w+\.provider")
 HOST = re.compile(r"\b(?:api\.todoist\.com|www\.googleapis\.com|oauth2\.googleapis\.com)\b")
 DICTIONARY_HOST = re.compile(r"\bwiktionary\.org\b")
 CLIENT = re.compile(r"(?:^|/)sync-core/(?:src/)?(?:todoist|google|ics|http)(?:\.ts)?$")
+URL_USE = re.compile(r"\bnew\s+URL\s*\(|\.searchParams\b")
+TABLET = re.compile(r"^(?:plugins|packages)/[^/]+/(?:src/|index\.(?:js|jsx|ts|tsx)$)")
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 
 
@@ -62,12 +67,18 @@ def findings(root):
     """[(path, line number, rule, text)] for every broken rule under root."""
     found = []
     for rel, suffix in code_files(root):
-        if rel.startswith(EXEMPT):
-            continue
+        exempt = rel.startswith(EXEMPT)
         test = is_test(rel)
+        tablet = suffix in SCRIPT and not test and bool(TABLET.match(rel))
+        if exempt and not tablet:
+            continue
         lines = (root / rel).read_text(encoding="utf-8", errors="replace").splitlines()
         for number, line in enumerate(lines, 1):
             if LINE_COMMENT.match(line):
+                continue
+            if tablet and URL_USE.search(line):
+                found.append((rel, number, "url", "uses React Native's URL, whose getters throw; take parseUrl of sync-core"))
+            if exempt:
                 continue
             if suffix in SCRIPT:
                 for target in IMPORT.findall(line):

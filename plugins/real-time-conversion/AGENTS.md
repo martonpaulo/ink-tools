@@ -15,14 +15,16 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   the button's icon (`assets/mode-on.png`, `assets/mode-off.png`), registered again on each change,
   and a toast says it in words.
 - The word-end rule ([#185](https://github.com/martonpaulo/ink-tools/issues/185), `src/words.ts`): position closes a word, an idle time
-  closes the last one, and a mark (accent, i-dot, tilde) joins its word within a grace time. Every
+  closes the last one, and a mark (accent, i-dot, tilde) joins its word within a grace time; an
+  accent never counts toward the letter height and is never judged tall. Every
   distance is a ratio to the line's letter height, from Ink2Pic's brief › 8.11.
 - What stays handwriting ([#186](https://github.com/martonpaulo/ink-tools/issues/186), `src/shapes.ts`): tall, long or scribbled strokes, very large
   writing, and an answer that is empty, has no letter, or is one character for wide ink.
 - The conversion ([#187](https://github.com/martonpaulo/ink-tools/issues/187), `src/convert.ts`): recognition at the page size of the
-  page's own elements, found by uuid in a `getElements` read, never the pen-up ones, whose points
-  are EMR units ([#206](https://github.com/martonpaulo/ink-tools/issues/206)); a `recognize:` line logs their shape; then ONE
-  `batchUpdatePageElements` call deletes the word's strokes (found again by uuid) and inserts a
+  page's own elements, found in a `getElements` read by uuid, else by bounds in page pixels (the
+  pen-up uuid is not the page read's), never the pen-up ones, whose points are EMR units
+  ([#206](https://github.com/martonpaulo/ink-tools/issues/206)); `match:` and `recognize:` lines log their shapes; then ONE
+  `batchUpdatePageElements` call deletes the word's strokes (by their `numInPage`) and inserts a
   text box at its place, in the tablet's default font. Words convert one at a time.
 - «Undo Conversion» (sidebar, [#188](https://github.com/martonpaulo/ink-tools/issues/188), `src/undo.ts`): the last conversion only, kept in memory;
   the box is found by its text and rect, the strokes rebuilt from their saved points.

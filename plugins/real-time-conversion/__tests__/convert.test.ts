@@ -1,4 +1,11 @@
-import {Converter, elementShape, pageStrokesOf, textBoxFor} from '../src/convert';
+import {
+  Converter,
+  elementShape,
+  MATCH_TOLERANCE_PX,
+  matchShapes,
+  pageStrokesOf,
+  textBoxFor,
+} from '../src/convert';
 import {lastConversion, setLastConversion} from '../src/undo';
 import {DEFAULT_WORD_OPTIONS} from '../src/words';
 import {fakeTablet} from '../test-support/host';
@@ -146,4 +153,57 @@ test('the text box starts at the word, sized to its letters, inside the page', (
   expect(box.rect.right).toBeLessThanOrEqual(1404);
   expect(box.rect.top).toBe(100);
   expect(box.rect.bottom - box.rect.top).toBe(84);
+});
+
+test('a stroke the page read gives another uuid is found by its bounds (#206)', () => {
+  const word = {strokes: [letter(0), letter(30)], rect: {left: 0, top: 0, right: 1, bottom: 1}, letterHeight: 40};
+  const near = {uuid: 'page-b', numInPage: 7};
+  const far = {uuid: 'page-x', numInPage: 8};
+  const first = {uuid: 'page-a', numInPage: 6};
+  const page = [first, near, far];
+  const rects = new Map<object, {left: number; top: number; right: number; bottom: number}>([
+    [first, {left: 0.4, top: 100.3, right: 20.2, bottom: 139.6}],
+    [near, {left: 31, top: 101, right: 50, bottom: 140}],
+    [far, {left: 30 + MATCH_TOLERANCE_PX + 1, top: 100, right: 50, bottom: 140}],
+  ]);
+  expect(pageStrokesOf(word, page, rects)).toEqual({ok: true, value: {nums: [6, 7], elements: [first, near]}});
+  rects.delete(near);
+  expect(pageStrokesOf(word, page, rects)).toMatchObject({
+    ok: false,
+    message: '1 of 2 strokes of the word are not in the page read of 3 elements',
+  });
+});
+
+test('one page stroke is never taken for two strokes of the word', () => {
+  const word = {strokes: [letter(0), letter(0)], rect: {left: 0, top: 0, right: 1, bottom: 1}, letterHeight: 40};
+  const only = {uuid: 'page-a', numInPage: 1};
+  const rects = new Map([[only as object, {left: 0, top: 100, right: 20, bottom: 140}]]);
+  expect(pageStrokesOf(word, [only], rects).ok).toBe(false);
+});
+
+test('the match line gives both shapes of one stroke, field names, counts and first points', () => {
+  expect(
+    matchShapes(
+      {uuid: 'u1', type: 0, stroke: {points: {}}},
+      [{x: 3823, y: 12143}, {x: 3900, y: 12000}],
+      true,
+      {uuid: 'u2', type: 0, numInPage: 3, stroke: {points: {}, penType: 10}},
+      [{x: 458.4, y: 451.6}],
+    ),
+  ).toBe(
+    'match: pen-up fields stroke,type,uuid, numInPage none, stroke fields points, 2 points, first 3823,12143 EMR; ' +
+      'page fields numInPage,stroke,type,uuid, numInPage 3, stroke fields penType,points, 1 points, first 458,452 page px; ' +
+      'same uuid false',
+  );
+});
+
+test('a word kept before recognition logs its stroke heights, numbers only', async () => {
+  const tablet = fakeTablet();
+  const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+  converter.start();
+  tablet.penUp(letter(0), 0);
+  tablet.penUp(stroke(30, 0, 40, 300), 200);
+  await tablet.advance(200 + DEFAULT_WORD_OPTIONS.idleMs);
+  await converter.idle();
+  expect(tablet.logs).toContain('kept: tall, 2 strokes, heights 40,300 px');
 });
