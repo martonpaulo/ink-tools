@@ -5,6 +5,7 @@ import {
   serializeSettings,
   setModule,
   setProvider,
+  setSendTabletOnly,
 } from '../src/settings';
 
 test('everything is off by default', () => {
@@ -40,9 +41,10 @@ test('the plan runs only opted-in modules the probe proved, and reports the bloc
     modules: ['calendar'],
     providers: ['google'],
     blocked: ['todo'],
+    sendTabletOnly: {todo: false, calendar: false},
   });
   // no probe answer at all: nothing runs
-  expect(activePlan(s, {})).toEqual({modules: [], providers: [], blocked: ['todo', 'calendar']});
+  expect(activePlan(s, {})).toEqual({modules: [], providers: [], blocked: ['todo', 'calendar'], sendTabletOnly: {todo: false, calendar: false}});
 });
 
 test('the plan blocks a module whose reads pass but whose writes are refused (#67)', () => {
@@ -51,5 +53,14 @@ test('the plan blocks a module whose reads pass but whose writes are refused (#6
     modules: ['todo'],
     providers: [],
     blocked: ['calendar'],
+    sendTabletOnly: {todo: false, calendar: false},
   });
+});
+
+test('«Send tablet-only items» is off by default, round-trips, and a wrong type throws', () => {
+  expect(defaultSettings().sendTabletOnly).toEqual({todo: false, calendar: false});
+  const on = setSendTabletOnly({...defaultSettings(), firstLinked: {todo: 1000}}, 'todo', true);
+  expect(parseSettings(serializeSettings(on))).toEqual(on);
+  expect(parseSettings(JSON.stringify({schema: 1, modules: {}, providers: {}})).sendTabletOnly).toEqual({todo: false, calendar: false});
+  expect(() => parseSettings(JSON.stringify({schema: 1, modules: {}, providers: {}, sendTabletOnly: {todo: 'yes'}}))).toThrow('settings: sendTabletOnly.todo is not a boolean');
 });

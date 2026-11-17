@@ -100,7 +100,7 @@ test('sync marks the tasks it imports from the service, and only those', async (
     remove: async () => {},
   };
   const t = todo([task('l0', 'from tablet')]);
-  const out = await syncTasks(provider, t.store, []);
+  const out = await syncTasks(provider, t.store, [], {sendTabletOnly: true});
   expect(out.links).toEqual([
     {remoteId: 'r1', localId: 'l2', fingerprint: fingerprint(remote[0]), origin: 'service'},
     {remoteId: 'r2', localId: 'l0', fingerprint: fingerprint(t.tasks[0])},

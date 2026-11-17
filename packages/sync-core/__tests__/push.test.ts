@@ -1,5 +1,8 @@
 import {CalendarEvent, DeviceCalendarStore, syncCalendar} from '../src/calendar';
 import {CalendarWriter, DeviceRelinker, applyCreated, changedSince, createGoogleCalendarWriter, pushCalendarEdits, toGoogleBody} from '../src/push';
+import {TabletOnlyPolicy} from '../src/tasks';
+
+const SEND: TabletOnlyPolicy = {sendTabletOnly: true};
 
 const ev = (o: Partial<CalendarEvent> = {}): CalendarEvent => ({
   eventId: 'e1', calendarId: 'c1', title: 'Talk', content: '', start: Date.UTC(2026, 10, 14, 9), end: Date.UTC(2026, 10, 14, 10), allDay: false, ...o,
@@ -29,10 +32,10 @@ test('changed rows update, hidden rows delete, unchanged rows are skipped', asyn
 test('a tablet-created event goes to the default calendar; without one it is reported, never dropped', async () => {
   const {w, calls} = fakeWriter();
   const fresh = {event: ev({eventId: '', title: 'New'}), cancelled: false};
-  const ok = await pushCalendarEdits([fresh], [], w, 'work');
+  const ok = await pushCalendarEdits([fresh], [], w, 'work', [], SEND);
   expect(calls).toEqual(['create work New']);
   expect(ok.created[0].eventId).toBe('new1');
-  const none = await pushCalendarEdits([fresh], [], w);
+  const none = await pushCalendarEdits([fresh], [], w, undefined, [], SEND);
   expect(none.errors[0]).toMatch(/no default calendar/);
   expect(none.created).toEqual([]);
 });
@@ -80,7 +83,7 @@ test('a tablet-created event is relinked after the push, so the next pull leaves
     relink: async (from, to) => void Object.assign(rows[rows.indexOf(from)], to),
   };
   const {w} = fakeWriter();
-  const pushed = await pushCalendarEdits([{event: fresh, cancelled: false}], [], w, 'work');
+  const pushed = await pushCalendarEdits([{event: fresh, cancelled: false}], [], w, 'work', [], SEND);
   const remote = ev({calendarId: 'work', eventId: 'new1'});
   const provider = {listCalendars: async () => [{calendarId: 'work', name: 'work'}], listEvents: async () => [remote]};
   const window = {from: 0, to: Date.UTC(2027, 0, 1)};
@@ -95,7 +98,7 @@ test('a tablet-created event is relinked after the push, so the next pull leaves
 
 test('a relink that fails is reported', async () => {
   const {w} = fakeWriter();
-  const pushed = await pushCalendarEdits([{event: ev({eventId: ''}), cancelled: false}], [], w, 'work');
+  const pushed = await pushCalendarEdits([{event: ev({eventId: ''}), cancelled: false}], [], w, 'work', [], SEND);
   const errors = await applyCreated(pushed, {relink: async () => { throw new Error('row locked'); }});
   expect(errors).toEqual(['relink "Talk" to work/new1: row locked']);
 });
@@ -107,4 +110,15 @@ test('only rows changed after the last sync are pushed; a row with no time is ke
     {event: ev({eventId: 'unknown'}), cancelled: false},
   ];
   expect(changedSince(edits, 200).map(e => e.event.eventId)).toEqual(['new', 'unknown']);
+});
+
+test('a tablet-only event stays local on the first link and is sent with the switch on', async () => {
+  const {w, calls} = fakeWriter();
+  const old = {event: ev({eventId: '', title: 'Old', modified: 500}), cancelled: false};
+  const kept = await pushCalendarEdits([old], [], w, 'work');
+  expect(calls).toEqual([]);
+  expect(kept.keptLocal).toBe(1);
+  const sent = await pushCalendarEdits([old], [], w, 'work', [], SEND);
+  expect(calls).toEqual(['create work Old']);
+  expect(sent.keptLocal).toBe(0);
 });

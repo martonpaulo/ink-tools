@@ -15,10 +15,18 @@ export const MODULE_PROVIDERS: Record<ModuleId, ProviderId[]> = {
 
 export const MODULES = Object.keys(MODULE_PROVIDERS) as ModuleId[];
 
+/** The modules that sync both ways, so they can hold tablet-only items. */
+export type TwoWayModule = 'todo' | 'calendar';
+export const TWO_WAY_MODULES: TwoWayModule[] = ['todo', 'calendar'];
+
 export interface BridgeSettings {
   schema: 1;
   modules: Record<ModuleId, boolean>;
   providers: Record<ProviderId, boolean>;
+  /** «Send tablet-only items», off by default: off, items the tablet held before the first link stay local. */
+  sendTabletOnly: Record<TwoWayModule, boolean>;
+  /** Epoch ms of each module's first pass, kept as the record of the first link. */
+  firstLinked: Partial<Record<TwoWayModule, number>>;
 }
 
 export function defaultSettings(): BridgeSettings {
@@ -26,6 +34,8 @@ export function defaultSettings(): BridgeSettings {
     schema: 1,
     modules: {todo: false, calendar: false, digest: false},
     providers: {todoist: false, google: false, icloud: false, ics: false},
+    sendTabletOnly: {todo: false, calendar: false},
+    firstLinked: {},
   };
 }
 
@@ -33,7 +43,7 @@ export function defaultSettings(): BridgeSettings {
 export function parseSettings(raw: string): BridgeSettings {
   const value: unknown = JSON.parse(raw);
   if (typeof value !== 'object' || value === null) throw new Error('settings: not an object');
-  const v = value as {schema?: unknown; modules?: unknown; providers?: unknown};
+  const v = value as {schema?: unknown; modules?: unknown; providers?: unknown; sendTabletOnly?: unknown; firstLinked?: unknown};
   if (v.schema !== 1) throw new Error(`settings: unsupported schema ${String(v.schema)}`);
   const out = defaultSettings();
   for (const [key, target] of [['modules', out.modules], ['providers', out.providers]] as const) {
@@ -44,6 +54,18 @@ export function parseSettings(raw: string): BridgeSettings {
       if (flag === undefined) continue;
       if (typeof flag !== 'boolean') throw new Error(`settings: ${key}.${k} is not a boolean`);
       (target as Record<string, boolean>)[k] = flag;
+    }
+  }
+  // Both keys came after schema 1 shipped: absent is the safe default, a wrong type throws.
+  for (const [key, kind] of [['sendTabletOnly', 'boolean'], ['firstLinked', 'number']] as const) {
+    const part = v[key];
+    if (part === undefined) continue;
+    if (typeof part !== 'object' || part === null) throw new Error(`settings: ${key} is not an object`);
+    for (const m of TWO_WAY_MODULES) {
+      const value = (part as Record<string, unknown>)[m];
+      if (value === undefined) continue;
+      if (typeof value !== kind) throw new Error(`settings: ${key}.${m} is not a ${kind}`);
+      (out[key] as Record<string, unknown>)[m] = value;
     }
   }
   return out;
@@ -59,6 +81,10 @@ export function setModule(s: BridgeSettings, id: ModuleId, on: boolean): BridgeS
     for (const p of MODULE_PROVIDERS[id]) next.providers[p] = false;
   }
   return next;
+}
+
+export function setSendTabletOnly(s: BridgeSettings, id: TwoWayModule, on: boolean): BridgeSettings {
+  return {...s, sendTabletOnly: {...s.sendTabletOnly, [id]: on}};
 }
 
 export function setProvider(s: BridgeSettings, id: ProviderId, on: boolean): BridgeSettings {
@@ -78,6 +104,8 @@ export interface ActivePlan {
   providers: ProviderId[];
   /** Modules the user turned on that the probe turned off, with no write attempted. */
   blocked: ModuleId[];
+  /** Each two-way module's «Send tablet-only items» switch. */
+  sendTabletOnly: Record<TwoWayModule, boolean>;
 }
 
 /** The modules and providers that may run: opted in AND the device probe passed. */
@@ -91,5 +119,5 @@ export function activePlan(s: BridgeSettings, available: ModuleAvailability): Ac
     (proof?.available === true && proof.canWrite === true ? modules : blocked).push(m);
   }
   const providers = modules.flatMap(m => MODULE_PROVIDERS[m].filter(p => s.providers[p]));
-  return {modules, providers, blocked};
+  return {modules, providers, blocked, sendTabletOnly: {...s.sendTabletOnly}};
 }

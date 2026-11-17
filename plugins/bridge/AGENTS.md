@@ -50,6 +50,8 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   To-Do are written through `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`,
   `src/deviceStores.ts`). The Google OAuth client is not on the tablet yet
   ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
+  A module's first pass only pulls: tablet-only items stay local unless its «Send tablet-only items»
+  switch is on ([#207](https://github.com/martonpaulo/ink-tools/issues/207), an assumption the owner may override).
 - **Digest writer** ([#42](https://github.com/martonpaulo/ink-tools/issues/42)): `src/digestStore.ts` writes `DigestEntry` items into the
   tablet's Digest over the same `BridgeProviders` calls, counted by identifier, then inserted or
   updated, never deleted (the provider refuses a plugin's delete); paths and rules are in

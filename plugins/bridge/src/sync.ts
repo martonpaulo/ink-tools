@@ -26,7 +26,9 @@ import {
   refreshAccessToken,
   runBridgeSync,
   SecretStore,
+  tabletOnlyKept,
   TimeWindow,
+  TWO_WAY_MODULES,
 } from '@supernote-tools/sync-core';
 import type {CapabilityStatus} from '@supernote-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
@@ -58,6 +60,8 @@ export interface SyncDevice {
   loadSettings(): Promise<
     {ok: true; value: BridgeSettings} | {ok: false; message: string}
   >;
+  /** Keeps each module's first-link time in Settings (`firstLinked`); absent, it is not kept. */
+  saveSettings?(settings: BridgeSettings): Promise<{ok: boolean; message?: string}>;
   secrets: SecretStore;
   /**
    * The Calendar and To-Do over the content providers (`createDeviceStores`); absent until the
@@ -185,6 +189,11 @@ export interface SyncRunner {
   /** One pass; a press while one runs joins it instead of starting a second. */
   syncNow(): Promise<SyncSnapshot>;
   snapshot(): SyncSnapshot;
+  /**
+   * How many open tablet To-Do tasks with no link would stay on the tablet at the next pass, for
+   * Settings to show before the first «Sync now»; null when the tablet cannot be read.
+   */
+  tabletOnlyTasks(settings: BridgeSettings): Promise<number | null>;
   subscribe(listener: (s: SyncSnapshot) => void): () => void;
 }
 
@@ -195,6 +204,34 @@ const availability = (statuses: CapabilityStatus[]): ModuleAvailability =>
       {available: s.available, canWrite: s.canWrite},
     ]),
   );
+
+/** Record each module's first-link time in Settings once, re-read first so no switch is lost. */
+async function keepFirstLinked(
+  device: SyncDevice,
+  state: BridgeState,
+  log: (line: string) => void,
+): Promise<void> {
+  if (!device.saveSettings) {
+    return;
+  }
+  const fresh = await device.loadSettings();
+  if (!fresh.ok) {
+    return;
+  }
+  const missing = TWO_WAY_MODULES.filter(
+    m => state.firstLinked[m] !== undefined && fresh.value.firstLinked[m] === undefined,
+  );
+  if (!missing.length) {
+    return;
+  }
+  const saved = await device.saveSettings({
+    ...fresh.value,
+    firstLinked: {...state.firstLinked, ...fresh.value.firstLinked},
+  });
+  if (!saved.ok) {
+    log(`[Bridge] sync: the first-link time was not saved: ${saved.message}`);
+  }
+}
 
 export function createSyncRunner(device: SyncDevice): SyncRunner {
   const log = device.log ?? console.log;
@@ -256,6 +293,7 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       const modules = await buildModules(device, plan.providers);
       const done = await runBridgeSync(plan, modules, state, device.now);
       state = done.state;
+      await keepFirstLinked(device, state, log);
       for (const [id, r] of Object.entries(done.runs) as [
         ModuleId,
         ModuleRun,
@@ -283,6 +321,21 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       return pass;
     },
     snapshot: () => current,
+    async tabletOnlyTasks(settings) {
+      if (!device.stores) {
+        return null;
+      }
+      try {
+        const tasks = await device.stores.tasks.list();
+        return tabletOnlyKept(tasks, state.links, {
+          firstLinked: state.firstLinked.todo,
+          sendTabletOnly: settings.sendTabletOnly.todo,
+        });
+      } catch (e) {
+        log(`[Bridge] sync: the To-Do did not read: ${(e as Error).message}`);
+        return null;
+      }
+    },
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

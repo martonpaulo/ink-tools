@@ -13,17 +13,26 @@ import {
   MODULES,
   setModule,
   setProvider,
+  setSendTabletOnly,
+  TWO_WAY_MODULES,
+  TwoWayModule,
 } from '@supernote-tools/sync-core/settings';
-import {copy} from './copy';
+import {copy, format} from './copy';
+
+const twoWay = (m: string): m is TwoWayModule =>
+  (TWO_WAY_MODULES as string[]).includes(m);
 
 export type SettingsFormProps = {
   settings: BridgeSettings;
   onChange: (next: BridgeSettings) => void;
+  /** Open, unlinked tablet To-Do tasks, read before the first sync; absent while unknown. */
+  tabletOnlyTasks?: number | null;
 };
 
 export function SettingsForm({
   settings,
   onChange,
+  tabletOnlyTasks,
 }: SettingsFormProps): React.JSX.Element {
   return (
     <View>
@@ -58,7 +67,33 @@ export function SettingsForm({
                   }
                 />
               ))}
+              {twoWay(module) && (
+                <Button
+                  label={copy['sendTabletOnly.button']}
+                  selected={settings.sendTabletOnly[module]}
+                  disabled={!on}
+                  onPress={() =>
+                    onChange(
+                      setSendTabletOnly(
+                        settings,
+                        module,
+                        !settings.sendTabletOnly[module],
+                      ),
+                    )
+                  }
+                />
+              )}
             </View>
+            {module === 'todo' && on && typeof tabletOnlyTasks === 'number' && (
+              <Text style={shared.hint}>
+                {format(
+                  settings.sendTabletOnly.todo
+                    ? 'sendTabletOnly.sent'
+                    : 'sendTabletOnly.kept',
+                  {count: String(tabletOnlyTasks)},
+                )}
+              </Text>
+            )}
           </View>
         );
       })}

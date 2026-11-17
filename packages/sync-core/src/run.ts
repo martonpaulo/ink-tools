@@ -11,9 +11,9 @@
  */
 import {CalendarEvent, CalendarProvider, CalendarSyncResult, DeviceCalendarStore, TimeWindow, syncCalendar} from './calendar';
 import {CalendarWriter, DeviceEdit, DeviceRelinker, applyCreated, changedSince, conflictWarnings, pushCalendarEdits} from './push';
-import {ActivePlan, ModuleId, ProviderId} from './settings';
+import {ActivePlan, ModuleId, ProviderId, TwoWayModule} from './settings';
 import {ModuleRun, calendarRun, tasksRun} from './status';
-import {DeviceTaskStore, TaskLink, TaskProvider, syncTasks} from './tasks';
+import {DeviceTaskStore, PULL_ONLY, TabletOnlyPolicy, TaskLink, TaskProvider, syncTasks} from './tasks';
 
 /** One calendar service: Google, iCloud or the ICS feeds. Without a writer it is read-only. */
 export interface CalendarSource {
@@ -54,7 +54,12 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * the pull never overwrites an edit (#29). The first pass after start only pulls: with no last sync
  * time, Bridge's own writes cannot be told from the owner's edits.
  */
-export async function runCalendarModule(m: CalendarModule, state: CalendarState, now: () => number): Promise<{run: ModuleRun; state: CalendarState}> {
+export async function runCalendarModule(
+  m: CalendarModule,
+  state: CalendarState,
+  now: () => number,
+  policy: TabletOnlyPolicy = PULL_ONLY,
+): Promise<{run: ModuleRun; state: CalendarState}> {
   const total: CalendarSyncResult = {created: 0, updated: 0, removed: 0, errors: []};
   const warnings: string[] = [];
   const owner = new Map<string, CalendarSource>();
@@ -92,7 +97,8 @@ export async function runCalendarModule(m: CalendarModule, state: CalendarState,
         }
       }
       const defaultHere = m.defaultCalendarId && owner.get(m.defaultCalendarId) === source ? m.defaultCalendarId : undefined;
-      const pushed = await pushCalendarEdits(mine, state.baseline, source.writer, defaultHere, remote);
+      const pushed = await pushCalendarEdits(mine, state.baseline, source.writer, defaultHere, remote, policy);
+      if (pushed.keptLocal) warnings.push(keptWarning(pushed.keptLocal, 'event'));
       total.created += pushed.created.length;
       total.updated += pushed.updated;
       total.removed += pushed.deleted;
@@ -126,14 +132,23 @@ export async function runCalendarModule(m: CalendarModule, state: CalendarState,
   return {run: calendarRun(at, total, warnings), state: {lastSync: at, baseline}};
 }
 
+const keptWarning = (n: number, kind: string) =>
+  `${n} tablet-only ${kind}(s) stayed on the tablet; turn on «Send tablet-only items» to send them`;
+
 export interface TodoModule {
   provider: TaskProvider;
   store: DeviceTaskStore;
 }
 
 /** One to-do pass (#44): the two-way sync, its links kept for the next pass. */
-export async function runTodoModule(m: TodoModule, links: TaskLink[], now: () => number): Promise<{run: ModuleRun; links: TaskLink[]}> {
-  const result = await syncTasks(m.provider, m.store, links);
+export async function runTodoModule(
+  m: TodoModule,
+  links: TaskLink[],
+  now: () => number,
+  policy: TabletOnlyPolicy = PULL_ONLY,
+): Promise<{run: ModuleRun; links: TaskLink[]}> {
+  const result = await syncTasks(m.provider, m.store, links, policy);
+  if (result.keptLocal) result.warnings.push(keptWarning(result.keptLocal, 'task'));
   return {run: tasksRun(now(), result), links: result.links};
 }
 
@@ -145,9 +160,16 @@ export interface BridgeModules {
 export interface BridgeState {
   calendar: CalendarState;
   links: TaskLink[];
+  /**
+   * Epoch ms of each module's first pass in this state's life: only tablet items changed after it
+   * are sent. shortcut: the links live in memory (#40), so after a restart this restarts too and the
+   * next first pass is pull-only again, never a resend; restore it from Settings' `firstLinked` once
+   * the links persist.
+   */
+  firstLinked: Partial<Record<TwoWayModule, number>>;
 }
 
-export const initialBridgeState = (): BridgeState => ({calendar: {baseline: []}, links: []});
+export const initialBridgeState = (): BridgeState => ({calendar: {baseline: []}, links: [], firstLinked: {}});
 
 /**
  * One pass over every module `activePlan` allows, each with only the sources that are on. A module
@@ -162,7 +184,8 @@ export async function runBridgeSync(
   now: () => number,
 ): Promise<{runs: Partial<Record<ModuleId, ModuleRun>>; state: BridgeState}> {
   const runs: Partial<Record<ModuleId, ModuleRun>> = {};
-  const next: BridgeState = {calendar: state.calendar, links: state.links};
+  const next: BridgeState = {calendar: state.calendar, links: state.links, firstLinked: {...state.firstLinked}};
+  const policy = (id: TwoWayModule): TabletOnlyPolicy => ({firstLinked: state.firstLinked[id], sendTabletOnly: plan.sendTabletOnly[id]});
   const failed = (module: ModuleId, error: string): ModuleRun => ({module, at: now(), counts: {added: 0, changed: 0, removed: 0}, errors: [error], warnings: []});
   for (const id of plan.modules) {
     try {
@@ -171,15 +194,17 @@ export async function runBridgeSync(
         if (!cal) { runs.calendar = failed('calendar', 'no calendar source is signed in'); continue; }
         const sources = cal.sources.filter(s => plan.providers.includes(s.id));
         if (!sources.length) { runs.calendar = failed('calendar', 'no calendar source is turned on'); continue; }
-        const done = await runCalendarModule({...cal, sources}, state.calendar, now);
+        const done = await runCalendarModule({...cal, sources}, state.calendar, now, policy('calendar'));
         runs.calendar = done.run;
         next.calendar = done.state;
+        next.firstLinked.calendar ??= done.run.at;
       } else if (id === 'todo') {
         const todo = modules.todo;
         if (!todo || !plan.providers.includes('todoist')) { runs.todo = failed('todo', 'Todoist is not turned on or not signed in'); continue; }
-        const done = await runTodoModule(todo, state.links, now);
+        const done = await runTodoModule(todo, state.links, now, policy('todo'));
         runs.todo = done.run;
         next.links = done.links;
+        next.firstLinked.todo ??= done.run.at;
       }
       // digest has no sync yet (#39): it is never in a run.
     } catch (e) {

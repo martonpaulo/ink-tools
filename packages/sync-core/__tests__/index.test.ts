@@ -8,7 +8,9 @@ import {
   createTodoistProvider,
   fingerprint,
   fromTodoist,
+  PULL_ONLY,
   syncTasks,
+  tabletOnlyKept,
   toTodoistBody,
 } from '../src';
 
@@ -62,7 +64,7 @@ const link = (r: string, l: string, x: TaskContent): TaskLink => ({remoteId: r, 
 
 test('tasks on one side only are created on the other, and finished ones are not imported', async () => {
   const f = fakes([R('r1', c('from todoist')), R('r2', c('old', {completed: true}))], [D('l1', c('from tablet'))]);
-  const out = await syncTasks(f.provider, f.store, []);
+  const out = await syncTasks(f.provider, f.store, [], {sendTabletOnly: true});
   expect(f.log).toEqual(['create local from todoist', 'create remote from tablet']);
   expect(out.links).toHaveLength(2);
   expect(out.errors).toEqual([]);
@@ -504,5 +506,33 @@ describe('ics', () => {
     expect(out[0]).toMatchObject({title: 'Tom & Jerry', eventId: 'k'});
     expect(seen[0]).toMatchObject({method: 'REPORT', auth: 'Basic u:fixture-pw'});
     expect(seen[0].body).toContain('time-range start="20260101T000000Z"');
+  });
+});
+
+describe('tablet-only tasks on the first pass (owner assumption, safe first sync)', () => {
+  const many = (n: number) => Array.from({length: n}, (_, i) => D(`l${i}`, c(`tablet ${i}`), 500));
+
+  test('a first pass with N unlinked tablet tasks creates none on the service', async () => {
+    const f = fakes([R('r1', c('from todoist'))], many(94));
+    const out = await syncTasks(f.provider, f.store, []);
+    expect(f.log).toEqual(['create local from todoist']);
+    expect(out.keptLocal).toBe(94);
+    expect(tabletOnlyKept(many(94), [], PULL_ONLY)).toBe(94);
+  });
+
+  test('with «Send tablet-only items» on, the first pass creates all N', async () => {
+    const f = fakes([], many(5));
+    const out = await syncTasks(f.provider, f.store, [], {sendTabletOnly: true});
+    expect(out.counts.createdRemote).toBe(5);
+    expect(out.keptLocal).toBe(0);
+  });
+
+  test('a task made after the first link is sent; an older one stays on the tablet', async () => {
+    const f = fakes([], [D('old', c('old'), 500), D('new', c('new'), 1500)]);
+    const policy = {firstLinked: 1000, sendTabletOnly: false};
+    const out = await syncTasks(f.provider, f.store, [], policy);
+    expect(f.log).toEqual(['create remote new']);
+    expect(out.keptLocal).toBe(1);
+    expect(tabletOnlyKept([D('old', c('old'), 500), D('new', c('new'), 1500)], [], policy)).toBe(1);
   });
 });
