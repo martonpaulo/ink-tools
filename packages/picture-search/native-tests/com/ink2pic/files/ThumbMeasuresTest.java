@@ -81,6 +81,20 @@ public final class ThumbMeasuresTest {
     ThumbMeasures solid = measure(disk);
     check(solid.ink == 0.36 && solid.thickness > 10, "a solid fill is thick: " + solid.thickness);
 
+    // #169: a flat fill and line art change tone only at their edges; a shaded render or a photo
+    // cut out on white changes it softly across the object.
+    check(solid.shading < 0.1, "a flat fill is not shaded: " + solid.shading);
+    check(lines.shading < 0.1, "an outline is not shaded: " + lines.shading);
+    check(white.shading == 0, "a white page has no shading");
+    int[] shadedSquare = filled(WHITE);
+    for (int y = 20; y < 80; y++) {
+      for (int x = 20; x < 80; x++) {
+        shadedSquare[y * SIZE + x] = gray(30 + 2 * (x - 20) + (y - 20));
+      }
+    }
+    ThumbMeasures shaded = measure(shadedSquare);
+    check(shaded.shading > 0.8, "a gradient fill on white is shaded: " + shaded.shading);
+
     int[] text = filled(WHITE);
     for (int line = 0; line < 3; line++) {
       rect(text, 10, 30 + line * 12, 80, 5, BLACK);

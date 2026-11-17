@@ -71,6 +71,98 @@ const cutOut: Measures = {
   objectShare: 0.5,
 };
 
+/**
+ * Two Commons tiles of the beta 11 round's «banana» Illustrations page (#169), as
+ * `ThumbMeasures.java` measures their 330 px thumbnails, and two Openclipart drawings of «banana»
+ * and «pizza»: the photo cut out on white measures as an outline, the 3D render as plain clip art.
+ */
+const recorded: Record<string, Measures> = {
+  'Banana on whitebackground': {
+    ...paper,
+    width: 330,
+    height: 409,
+    mean: 233.1,
+    dark: 0.005,
+    white: 0.724,
+    mid: 0.245,
+    border: 0.992,
+    ink: 0.216,
+    bands: 2,
+    lineAspect: 1.704,
+    thickness: 5.365,
+    edge: 0.063,
+    edgeBox: 0.697,
+    colours: 324,
+    shading: 0.766,
+    objectShare: 0.287,
+    fragments: 0.026,
+    darkest: 105,
+  },
+  'Banana icon': {
+    ...paper,
+    width: 330,
+    height: 191,
+    mean: 226.2,
+    dark: 0.002,
+    white: 0.571,
+    mid: 0.408,
+    border: 0.814,
+    ink: 0.345,
+    bands: 1,
+    lineAspect: 1.759,
+    thickness: 10.991,
+    edge: 0.051,
+    edgeBox: 0.955,
+    colours: 195,
+    shading: 0.495,
+    objectShare: 0.432,
+    fragments: 0,
+    darkest: 126,
+  },
+  'Single line art Banana': {
+    ...paper,
+    width: 355,
+    height: 251,
+    mean: 249.3,
+    dark: 0.008,
+    white: 0.954,
+    mid: 0.042,
+    border: 0.914,
+    ink: 0.04,
+    bands: 1,
+    lineAspect: 1.422,
+    thickness: 1.987,
+    edge: 0.065,
+    edgeBox: 0.958,
+    colours: 12,
+    shading: 0.11,
+    objectShare: 0.048,
+    fragments: 0.003,
+    darkest: 73,
+  },
+  Pizza: {
+    ...paper,
+    width: 400,
+    height: 283,
+    mean: 230.6,
+    dark: 0.021,
+    white: 0.735,
+    mid: 0.249,
+    border: 0.88,
+    ink: 0.23,
+    bands: 1,
+    lineAspect: 1.415,
+    thickness: 2.907,
+    edge: 0.152,
+    edgeBox: 0.725,
+    colours: 345,
+    shading: 0.333,
+    objectShare: 0.385,
+    fragments: 0.126,
+    darkest: 76,
+  },
+};
+
 function result(id: string): SearchResult {
   return {
     id,
@@ -178,6 +270,31 @@ describe('keepMode', () => {
       'clipart',
     ]);
     expect(keepMode(tiles, kinds, 'photo').map(r => r.id)).toEqual(['photo']);
+  });
+
+  test('a photo cut out on white or a shaded render goes under Photos, never Illustrations: «banana» (#169)', () => {
+    const titles = Object.keys(recorded);
+    const tiles = titles.map(result);
+    const measured = new Map(titles.map(title => [title, recorded[title]]));
+    expect(pixelKind(recorded['Banana on whitebackground'])).toBe('outline');
+    expect(pixelKind(recorded['Banana icon'])).toBe('plain');
+    expect(keepMode(tiles, measured, 'illustration').map(r => r.id)).toEqual([
+      'Single line art Banana',
+      'Pizza',
+    ]);
+    expect(keepMode(tiles, measured, 'photo').map(r => r.id)).toEqual([
+      'Banana on whitebackground',
+      'Banana icon',
+    ]);
+  });
+
+  test('a module that does not measure shading keeps the kind split', () => {
+    const older: Measures = {...recorded['Banana icon'], shading: undefined};
+    const tiles = [result('render')];
+    const measured = new Map([['render', older]]);
+    expect(keepMode(tiles, measured, 'illustration').map(r => r.id)).toEqual([
+      'render',
+    ]);
   });
 
   test('the two lists never share a tile across pages 1 and 2', () => {

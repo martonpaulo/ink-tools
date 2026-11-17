@@ -31,6 +31,11 @@ public final class ThumbMeasures {
   public static final int OBJECT_MARGIN = 24;
   /** Sobel L1 magnitude above which a pixel is an edge (research section 3). */
   public static final int EDGE_ABOVE = 128;
+  /**
+   * Sobel L1 magnitude above which an object pixel is shaded, not a flat fill: a soft tone change
+   * up to {@link #EDGE_ABOVE}, as in a photo or a rendered gradient (#169).
+   */
+  public static final int SHADED_ABOVE = 8;
   /** Share of Laplacian edge energy trimmed on each side of each axis: 98 % kept (Ke 2006). */
   public static final double EDGE_TRIM = 0.01;
   /** A row holds ink when at least this share of the ink box's width is ink. */
@@ -75,6 +80,12 @@ public final class ThumbMeasures {
   public double edgeBox;
   /** Distinct 12-bit colours (Athitsos 1997). */
   public int colours;
+  /**
+   * Share of the interior object pixels in soft shading: a Sobel magnitude above
+   * {@link #SHADED_ABOVE} and at most {@link #EDGE_ABOVE}. High for a photo or a shaded render,
+   * even cut out on white; low for flat fills and line art, whose tone changes only at edges (#169).
+   */
+  public double shading;
   /** Share of pixels that differ from the background: near zero for a blank thumbnail. */
   public double objectShare;
   /**
@@ -332,7 +343,10 @@ public final class ThumbMeasures {
     b.lineAspect = b.inkWidth / ((double) b.inkHeight / b.bands);
   }
 
-  /** Pass 3, interior pixels: Sobel edge share and the Laplacian edge-energy box. */
+  /**
+   * Pass 3, interior pixels: Sobel edge share, the Laplacian edge-energy box and the shading share
+   * of the object pixels.
+   */
   private static void edges(int[] gray, ThumbMeasures b) {
     int w = b.width;
     int h = b.height;
@@ -343,6 +357,8 @@ public final class ThumbMeasures {
     long[] rows = new long[h];
     long total = 0;
     int edges = 0;
+    int object = 0;
+    int shaded = 0;
     for (int y = 1; y < h - 1; y++) {
       for (int x = 1; x < w - 1; x++) {
         int i = y * w + x;
@@ -357,8 +373,15 @@ public final class ThumbMeasures {
         int se = gray[i + w + 1];
         int gx = (ne + 2 * east + se) - (nw + 2 * west + sw);
         int gy = (sw + 2 * s + se) - (nw + 2 * n + ne);
-        if (Math.abs(gx) + Math.abs(gy) > EDGE_ABOVE) {
+        int magnitude = Math.abs(gx) + Math.abs(gy);
+        if (magnitude > EDGE_ABOVE) {
           edges++;
+        }
+        if (Math.abs(c - b.borderMedian) > OBJECT_MARGIN) {
+          object++;
+          if (magnitude > SHADED_ABOVE && magnitude <= EDGE_ABOVE) {
+            shaded++;
+          }
         }
         int energy = Math.abs(4 * c - n - s - west - east);
         columns[x] += energy;
@@ -367,6 +390,7 @@ public final class ThumbMeasures {
       }
     }
     b.edge = (double) edges / ((double) w * h);
+    b.shading = object == 0 ? 0 : (double) shaded / object;
     if (total == 0) {
       return;
     }

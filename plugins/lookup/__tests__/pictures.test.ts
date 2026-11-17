@@ -4,7 +4,7 @@
  * nothing writes its sentence below the word, and one press runs at a time.
  */
 import {LassoPlace} from '@supernote-tools/ink-core';
-import {Measures, SearchResult} from '@supernote-tools/picture-search';
+import {Measures, pixelKind, SearchResult} from '@supernote-tools/picture-search';
 import {fail, ok} from '@supernote-tools/sn-adapter/official';
 import {copy, pictureCopy} from '../src/copy';
 import {MODES} from '../src/modes';
@@ -149,6 +149,37 @@ describe('the measured split decides what a mode inserts (#111)', () => {
       await insertBest('apple', place, deps, pictureCopy.illustration),
     ).toEqual(ok('/pictures/b.png'));
     expect(insert.mock.calls[0][0].title).toBe('b');
+  });
+
+  test('an Illustrations page of the Choose screen holds no photo (#169)', async () => {
+    // A photo cut out on white measures as clip art; its soft shading marks it (#169).
+    const cutOut: Measures = {
+      ...outline,
+      border: 0.99,
+      white: 0.72,
+      mid: 0.25,
+      colours: 324,
+      shading: 0.77,
+    };
+    const measured = {a: photo, b: cutOut, c: outline, d: {...outline, shading: 0.1}};
+    const page = async (mode: (typeof MODES)[number]) => {
+      const {deps} = flow(mode, measured);
+      const pages = await deps.measure(
+        Object.keys(measured).map(result),
+        '/p',
+        'banana',
+        undefined,
+        () => {},
+        true,
+      );
+      return pages.results.map(r => r.title);
+    };
+    const drawings = await page(illustration);
+    expect(drawings).toEqual(['c', 'd']);
+    expect(
+      drawings.map(title => pixelKind(measured[title as keyof typeof measured])),
+    ).not.toContain('photo');
+    expect(await page(photoMode)).toEqual(['a', 'b']);
   });
 
   test('«Insert photo» takes the first photo, below the word', async () => {
