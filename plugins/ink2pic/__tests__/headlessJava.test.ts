@@ -8,7 +8,8 @@ import path from 'node:path';
 const FILES = [
   'lab/pixelorder.mjs',
   'lab/timing.mjs',
-  'scripts/native-build.cjs',
+  // Every plugin's native build and JVM tests run here (#231).
+  '../../packages/native-build/native-build.cjs',
 ];
 const HEADLESS = '-Djava.awt.headless=true';
 /** The D8 dexer reads no image: it is the one JVM that may start without the flag. */

@@ -35,6 +35,7 @@
     {"path": ".github/workflows/prerelease-*", "gates": ["versions"]},
     {"path": "scripts/plugin-version.cjs", "gates": ["versions", "handwriting-language", "inktools-bridge", "account-sync", "word-lookup", "plugin-diagnostics", "device-transfer", "image-editing", "real-time-conversion"]},
     {"path": "plugins/*/scripts/native-*", "gates": ["native"]},
+    {"path": "packages/native-build/", "gates": ["native", "account-sync", "word-lookup", "device-transfer", "image-editing", "plugin-diagnostics", "ink2pic"]},
     {"path": "scripts/gates.py", "gates": ["docs", "quick"]},
     {"path": "scripts/quick_check.py", "gates": ["quick", "case"]},
     {"path": "scripts/case_check.py", "gates": ["case", "quick"]},
