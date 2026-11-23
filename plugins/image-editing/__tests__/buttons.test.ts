@@ -17,6 +17,7 @@ function fakeDeps(held: readonly number[] = []) {
       held.includes(id) ? ok(true as const) : fail(1, 'no such button'),
     ),
     log: line => logs.push(line),
+    icon: 'file:///editor.png',
   };
   return {deps, logs};
 }
@@ -34,6 +35,7 @@ test('the plugin registers one lasso button, «Image Editing», for pictures, wi
       name: 'Image Editing',
       editDataTypes: [EDIT_DATA_PICTURE],
       showType: SHOW_FULL_VIEW,
+      icon: 'file:///editor.png',
     },
   ]);
 });
@@ -70,4 +72,14 @@ test('a refused registration is logged and answered', async () => {
   deps.register = jest.fn(async () => fail(7, 'refused'));
   expect(await registerEditorButton(deps)).toEqual(fail(7, 'refused'));
   expect(logs[0]).toBe('register Image Editing failed: 7 refused');
+});
+
+test('the button icon is drawn from its SVG and bundled by name (#107)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const assets = path.join(__dirname, '..', 'assets');
+  expect(fs.existsSync(path.join(assets, 'editor.svg'))).toBe(true);
+  expect(fs.existsSync(path.join(assets, 'editor.png'))).toBe(true);
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'buttons.ts'), 'utf8');
+  expect(source).toContain("require('../assets/editor.png')");
 });
