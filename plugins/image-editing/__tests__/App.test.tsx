@@ -8,6 +8,7 @@ import {defaultSettings, EDITS, setEdit, STYLES} from '../src/edits';
 import * as editor from '../src/editor';
 import {EditorState} from '../src/editor';
 import {Editor} from '../src/EditorView';
+import {copy} from '../src/copy';
 
 const READY: EditorState = {
   phase: 'ready',
@@ -259,6 +260,25 @@ describe('the editor view (#226)', () => {
       );
     });
     expect(tree.root.findAllByProps({label: 'Darker'})).toEqual([]);
+  });
+
+  test('with no mark yet, the edit and Clear marks are disabled and say why (#233)', async () => {
+    const why = copy['editor.noMarks']('Erase');
+    const strings = (tree: ReactTestRenderer) =>
+      tree.root
+        .findAll(node => typeof node.props.children === 'string')
+        .map(node => node.props.children);
+    const empty = await show({...READY, draw: 'erase', marks: []});
+    expect(
+      empty.tree.root.findAllByProps({label: 'Erase'})[0].props.disabled,
+    ).toBe(true);
+    expect(strings(empty.tree)).toContain(why);
+    const marked = await show({
+      ...READY,
+      draw: 'erase',
+      marks: [[{x: 1, y: 1}]],
+    });
+    expect(strings(marked.tree)).not.toContain(why);
   });
 
   test('while drawing, a pen stroke on the picture comes back in page pixels', async () => {

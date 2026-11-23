@@ -166,3 +166,22 @@ describe('the grid leaves «More» and «Close» clear of every tile (#169)', ()
     expect(grid.findAll(node => node.props.label !== undefined)).toEqual([]);
   });
 });
+
+test("the tiles take the Button's disabled look while an insert runs (#233)", async () => {
+  chooseResults.mockResolvedValue({tiles: [tile('a')], text: null});
+  insertChosen.mockReturnValue(new Promise(() => {}));
+  const tree = await open();
+  const theTile = () =>
+    tree.root.find(
+      node =>
+        node.props.accessibilityLabel === 'a, from commons' &&
+        node.props.onPress,
+    );
+  const look = () => StyleSheet.flatten(theTile().props.style) as ViewStyle;
+  expect(look().borderStyle).toBeUndefined();
+  await act(async () => {
+    theTile().props.onPress();
+  });
+  expect(theTile().props.disabled).toBe(true);
+  expect(look().borderStyle).toBe('dashed');
+});

@@ -117,6 +117,27 @@ it('disables the last source that is on', async () => {
     b => b.label === copy[`source.${SOURCE_NAMES[0]}` as CopyKey],
   );
   expect(last?.disabled).toBe(true);
+  // A disabled control says why, next to it (interface rule 16, #233).
+  expect(texts(tree)).toContain(copy['settings.oneSourceStays']);
+  expect(
+    texts(await screen(defaultSettings(null)).then(r => r.tree)),
+  ).not.toContain(copy['settings.oneSourceStays']);
+});
+
+it('says why the symbols download waits while the count is read (#233)', async () => {
+  const symbols: SymbolsControl = {
+    status: () => new Promise(() => {}),
+    download: jest.fn(),
+  };
+  const {tree} = await screen(defaultSettings(null), true, symbols);
+  expect(
+    buttons(tree).find(b => b.label === copy['settings.symbolsDownload'])
+      ?.disabled,
+  ).toBe(true);
+  expect(texts(tree)).toContain(copy['settings.symbolsCounting']);
+  const counted = await screen(defaultSettings(null));
+  await settled();
+  expect(texts(counted.tree)).not.toContain(copy['settings.symbolsCounting']);
 });
 
 it('asks before clearing, and says the files stay', async () => {

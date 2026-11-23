@@ -159,24 +159,32 @@ export function Editor({
         ) : null}
       </View>
       {state.draw !== null ? (
-        <View style={shared.buttons}>
-          <Button
-            label={editOf(state.draw).name}
-            primary
-            disabled={state.busy !== null || state.marks.length === 0}
-            onPress={() => onApply(editOf(state.draw!))}
-          />
-          <Button
-            label={copy['editor.clear']}
-            disabled={state.busy !== null || state.marks.length === 0}
-            onPress={onClear}
-          />
-          <Button
-            label={copy['editor.cancel']}
-            disabled={state.busy !== null}
-            onPress={onCancel}
-          />
-        </View>
+        <>
+          <View style={shared.buttons}>
+            <Button
+              label={editOf(state.draw).name}
+              primary
+              disabled={state.busy !== null || state.marks.length === 0}
+              onPress={() => onApply(editOf(state.draw!))}
+            />
+            <Button
+              label={copy['editor.clear']}
+              disabled={state.busy !== null || state.marks.length === 0}
+              onPress={onClear}
+            />
+            <Button
+              label={copy['editor.cancel']}
+              disabled={state.busy !== null}
+              onPress={onCancel}
+            />
+          </View>
+          {/* The edit and Clear marks wait for a mark: say why (interface rule 16, #233). */}
+          {state.busy === null && state.marks.length === 0 ? (
+            <Text style={shared.hint}>
+              {copy['editor.noMarks'](editOf(state.draw).name)}
+            </Text>
+          ) : null}
+        </>
       ) : (
         <ScrollView style={styles.edits} contentContainerStyle={styles.groups}>
           {EDITOR_GROUPS.map(group => {

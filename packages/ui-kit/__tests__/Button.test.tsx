@@ -24,6 +24,23 @@ const bars = (tree: ReactTestRenderer) =>
   );
 
 describe('Button (#50)', () => {
+  it.each([false, true])(
+    'draws a disabled button, primary %s, as a grey dashed outline on paper (#233)',
+    primary => {
+      const off = render({primary, disabled: true});
+      expect(boxStyle(off)).toMatchObject({
+        borderStyle: 'dashed',
+        borderColor: metrics.context,
+        backgroundColor: metrics.paper,
+      });
+      expect(textStyle(off).color).toBe(metrics.context);
+      const on = render({primary});
+      expect(boxStyle(on).borderColor).toBe(metrics.ink);
+      expect(boxStyle(on).borderStyle).toBeUndefined();
+      expect(textStyle(on).color).toBe(primary ? metrics.paper : metrics.ink);
+    },
+  );
+
   it('fills only the primary action black', () => {
     const primary = render({primary: true});
     expect(boxStyle(primary).backgroundColor).toBe(metrics.ink);

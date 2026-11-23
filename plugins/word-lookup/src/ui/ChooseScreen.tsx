@@ -121,7 +121,12 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
                   accessibilityState={{disabled: busy}}
                   disabled={busy}
                   onPress={() => pick(tile)}
-                  style={[shared.outline, styles.tile]}>
+                  style={[
+                    shared.outline,
+                    styles.tile,
+                    // The Button's disabled look while a pick runs (interface rule 16, #233).
+                    busy && shared.disabledOutline,
+                  ]}>
                   <Image
                     source={
                       tile.uri.startsWith('http')

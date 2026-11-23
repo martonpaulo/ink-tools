@@ -15,6 +15,17 @@ export const shared = StyleSheet.create({
   },
   /** The thick ink border of a button, a tile and the field (brief 8.4). */
   outline: {borderWidth: metrics.border, borderColor: metrics.ink},
+  /**
+   * A control that cannot act: a dashed border in the context grey, never a black fill, so it reads
+   * apart from an enabled one at a glance (interface rule 16, #233). With `disabledText`.
+   */
+  disabledOutline: {
+    borderStyle: 'dashed',
+    borderColor: metrics.context,
+    backgroundColor: metrics.paper,
+  },
+  /** The label of a control that cannot act, in the context grey (#233). */
+  disabledText: {color: metrics.context},
   /** A row of controls. */
   row: {flexDirection: 'row', alignItems: 'center', gap: metrics.controlGap},
   /** A row of many buttons, which wraps to a new line when full (#224). */

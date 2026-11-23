@@ -2,7 +2,9 @@
  * The one bordered button of every screen: black on white, at least a touch target high.
  * As in the Supernote system interface (firmware 3.31.45), black fill marks the one primary
  * action of a screen, such as OK or Start; a selected toggle shows a bar under its label, as the
- * system marks the open page or Settings section (#50).
+ * system marks the open page or Settings section (#50). A disabled button, plain or primary, is a
+ * dashed outline with its label in the context grey on paper, so it reads at a glance in black and
+ * white; the screen says why next to it (interface rule 16, #233).
  */
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -38,11 +40,18 @@ export function Button({
       style={[
         shared.outline,
         styles.button,
-        disabled && styles.disabled,
-        primary && styles.primary,
+        primary && !disabled && styles.primary,
+        disabled && shared.disabledOutline,
       ]}
       onPress={onPress}>
-      <Text style={[shared.text, primary && styles.primaryText]}>{label}</Text>
+      <Text
+        style={[
+          shared.text,
+          primary && !disabled && styles.primaryText,
+          disabled && shared.disabledText,
+        ]}>
+        {label}
+      </Text>
       {/* Drawn over the padding, so turning a toggle on never changes the box (brief 8.4). */}
       {selected && <View testID="selected-bar" style={styles.selectedBar} />}
     </Pressable>
@@ -58,7 +67,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: metrics.paper,
   },
-  disabled: {borderStyle: 'dashed'},
   primary: {backgroundColor: metrics.ink},
   primaryText: {color: metrics.paper},
   selectedBar: {

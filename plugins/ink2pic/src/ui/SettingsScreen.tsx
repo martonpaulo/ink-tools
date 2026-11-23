@@ -295,8 +295,17 @@ export function SettingsScreen({
               );
             })}
           </Option>
+          {/* A source that cannot be turned off: say why (interface rule 16, #233). */}
+          {SOURCE_NAMES.filter(name => sourceOn(settings, name)).length ===
+            1 && (
+            <Text style={shared.hint}>{copy['settings.oneSourceStays']}</Text>
+          )}
           <SwitchRow name="dataSaver" settings={settings} onChange={onChange} />
-          <SwitchRow name="definition" settings={settings} onChange={onChange} />
+          <SwitchRow
+            name="definition"
+            settings={settings}
+            onChange={onChange}
+          />
           {/* One row, label and action side by side: a second line would push the actions off. */}
           <View style={[shared.row, shared.listRow]}>
             <Text style={[shared.text, styles.grow]}>
@@ -317,6 +326,10 @@ export function SettingsScreen({
               onPress={askSymbols}
             />
           </View>
+          {/* The download waits for the count: say why (interface rule 16, #233). */}
+          {!symbolsNow && (
+            <Text style={shared.hint}>{copy['settings.symbolsCounting']}</Text>
+          )}
           {/* Where the symbols are kept and why, as the owner asked (#23). */}
           <Text style={shared.text}>{copy['settings.symbolsWhere']}</Text>
           {symbolsNow?.oldFiles ? (
