@@ -3,8 +3,8 @@
  * shared ui-kit (#93). The opt-in switches come in as `form` (#40); this shell owns the states a
  * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
- * keeps what Bridge wrote; its «Remove what Bridge wrote» button asks once more before anything
- * is deleted (#89).
+ * keeps what Account Sync wrote; its «Remove what Account Sync wrote» button asks once more before
+ * anything is deleted (#89).
  */
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';

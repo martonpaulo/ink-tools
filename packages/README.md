@@ -22,8 +22,8 @@ tier (`src/internals/`): content providers, their tables and columns, all read f
 descriptor update. `@ink-tools/sn-adapter/official` is the official tier (`src/official/`):
 the only code that imports `sn-plugin-lib`, each call returning a `Result`. A plugin maps both with
 `sn-adapter/plugin-config.js`; the official tier's `sn-plugin-lib` resolves from the plugin's
-`node_modules`, so this folder leaves it out of its type check, and the Ink2Pic gate lints, types and
-tests it. `scripts/boundaries.py` keeps every other folder off the SDK and the providers.
+`node_modules`, so this folder leaves it out of its type check, and the plugin gates type-check and
+test it. `scripts/boundaries.py` keeps every other folder off the SDK and the providers.
 
 `picture-search` is wired the same way by `picture-search/plugin-config.js`, which also maps a deep
 path (`@ink-tools/picture-search/rank`) for tests. Its Java keeps the package name
@@ -32,7 +32,7 @@ Lookup's); it holds the React Native file module too, whose `Ink2PicFilesPackage
 Ink2Pic's module names and takes another plugin's two names in a subclass, as Lookup's
 `LookupFilesPackage` does ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)), and Bridge's `BridgeFilesPackage`, which reads and
 writes only its Settings file ([#40](https://github.com/martonpaulo/ink-tools/issues/40)). Its TypeScript and JVM tests run in the Ink2Pic gate, beside the
-mocks they share, and Lookup's gate type-checks it and tests its own bindings. Its insert tier
+mocks they share, and the other plugin gates that use it type-check it and test their own bindings. Its insert tier
 (`/insert`) holds «Insert best picture»: the cached search, the stored thumbnails, the measured
 order, the insert and the no-view press guard; each plugin binds it to its own settings, copy and
 stores, and Ink2Pic hands in its library, picks and OpenMoji symbols, which stay in Ink2Pic.
@@ -40,8 +40,11 @@ stores, and Ink2Pic hands in its library, picks and OpenMoji symbols, which stay
 `ui-kit` is React Native code, so it is not a workspace here. A plugin imports it as
 `@ink-tools/ui-kit`, mapped by `ui-kit/plugin-config.js` in its Metro and Jest configs and by
 `paths` in its `tsconfig.json`; Metro bundles it into the plugin's `.snplg` with the plugin's own
-React. Its tests and lint run in the Bridge gate, and the other plugin gates type-check it ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
+React. Its tests and lint run in the Account Sync gate, and the other plugin gates type-check it ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)).
 
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
 `--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).
+
+Which gates run each package is written once, in the `rules` of [`gates.json`](../gates.json): the
+package's folder maps to its gates there, and this page only says where its tests live.
