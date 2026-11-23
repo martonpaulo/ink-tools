@@ -39,7 +39,9 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   drive them with fakes and synthetic strokes.
 - `src/words.ts` and `src/shapes.ts` stay pure: no SDK, no timer; the clock is passed in.
 - Nothing runs while the pen is down: the work starts at pen-up. A failure keeps the handwriting and
-  is logged; never a success-shaped default.
+  is logged; never a success-shaped default. A stroke whose points cannot be read (over
+  `MAX_STROKE_POINTS`, for one) keeps its word, the words waiting and the strokes of the next idle
+  time on the page ([#229](https://github.com/martonpaulo/ink-tools/issues/229)).
 - Turning the mode off removes the pen-up listener at once and drops the open words untouched.
 - Permissions: `FILE:READ` (page size) and `FILE:WRITE` (the page change, code 1501 without it,
   [#148](https://github.com/martonpaulo/ink-tools/issues/148)); a no-view button needs both «Always Allow» ([#170](https://github.com/martonpaulo/ink-tools/issues/170)).
