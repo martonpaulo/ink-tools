@@ -298,7 +298,7 @@ def mcp_refusal(tool_name: str, row: dict) -> str:
     lines += [
         f"  usage:  {row['usage']}",
         "Run that instead, in the shell; an MCP write has no bypass. If the script cannot do this step,",
-        "ask the owner, and report it in martonpaulo/skill-deck (skd-github-publishing-conventions, section 15).",
+        "ask the owner, and report it in martonpaulo/workbench (skd-github-publishing-conventions, section 15).",
     ]
     return "\n".join(lines) + "\n"
 
@@ -1341,7 +1341,7 @@ def refusal(refused: list[tuple[str, dict]]) -> str:
     lines += [
         "If the script cannot do this step, ask the owner. On a yes, rerun only that command as",
         f'`{BYPASS}="<reason>" <command>`; the bypass is logged for an issue that extends the script.',
-        "If the script itself fails or refuses a legitimate case, report it in martonpaulo/skill-deck and",
+        "If the script itself fails or refuses a legitimate case, report it in martonpaulo/workbench and",
         "ask: fix it there now, work around it, or both (skd-github-publishing-conventions, section 15).",
     ]
     return "\n".join(lines) + "\n"
