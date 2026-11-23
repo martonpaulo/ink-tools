@@ -6,7 +6,10 @@
 # tool<TAB>script<TAB>usage
 #
 # tool    the tool name after `mcp__<server>__`.
-# script  the owning script or rule, relative to the skills folder, or `-` for git.
+# script  the owning script or rule, relative to the skills folder, or `-` for git or no owning script.
+#
+# scripts/skd/surfaces/github-mcp-tools.json pins the server's whole tool list; every write in it is a row
+# here, and validate_repository.py fails on a name neither here nor on its read lists (#1663).
 # usage   the usage line the refusal prints.
 
 issue_write	skd-github-publishing-conventions/scripts/publish.py	publish.py issue --repo OWNER/NAME --title TITLE < body.md, or issue_body.py / issue_ops.py apply for an edit
@@ -27,3 +30,18 @@ add_reply_to_pull_request_comment	skd-github-publishing-conventions/scripts/publ
 create_or_update_file	-	commit with git, which the pre-commit secret scan guards, and push with land.py finish
 push_files	-	commit with git, which the pre-commit secret scan guards, and push with land.py finish
 delete_file	-	commit with git, which the pre-commit secret scan guards, and push with land.py finish
+update_issue_comment	skd-github-publishing-conventions/scripts/publish.py	publish.py comment --repo OWNER/NAME --edit COMMENT_ID --expected-updated-at TS < body.md
+enable_pr_auto_merge	skd-github-publishing-conventions/references/issue-closure.md	merge only as the merge rule allows, with SKD_ALLOW_RAW="<who approved it>" gh pr merge ...
+disable_pr_auto_merge	skd-github-publishing-conventions/references/issue-closure.md	turn auto-merge off only as the merge rule allows, with SKD_ALLOW_RAW="<who approved it>" gh pr merge --disable-auto ...
+create_branch	-	create the branch with git and push it with land.py finish
+update_pull_request_branch	-	merge the base into the branch with git and push it with land.py finish
+resolve_review_thread	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+unresolve_review_thread	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+actions_run_trigger	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+fork_repository	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+create_repository	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+assign_copilot_to_issue	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+create_pull_request_with_copilot	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+request_copilot_review	-	ask the owner: no Workbench script does this, and an MCP write skips the scan
+subscribe_pr_activity	-	the session's own mcp__Claude_Code_Remote__subscribe_pr_activity
+unsubscribe_pr_activity	-	the session's own mcp__Claude_Code_Remote__unsubscribe_pr_activity
