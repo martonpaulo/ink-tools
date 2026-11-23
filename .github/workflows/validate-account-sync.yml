@@ -4,9 +4,9 @@ name: Validate Account Sync
 on:
   push:
     branches: [main]
-    paths: ['plugins/account-sync/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-account-sync.yml']
   pull_request:
-    paths: ['plugins/account-sync/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-account-sync.yml']
   workflow_dispatch:
 
 permissions:

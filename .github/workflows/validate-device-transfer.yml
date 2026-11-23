@@ -4,9 +4,9 @@ name: Validate Device Transfer
 on:
   push:
     branches: [main]
-    paths: ['plugins/device-transfer/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-device-transfer.yml']
+    paths: ['plugins/device-transfer/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-device-transfer.yml']
   pull_request:
-    paths: ['plugins/device-transfer/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-device-transfer.yml']
+    paths: ['plugins/device-transfer/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-device-transfer.yml']
   workflow_dispatch:
 
 permissions:
