@@ -43,6 +43,8 @@
     {"path": "scripts/test_quick_check.py", "gates": ["quick"]},
     {"path": ".github/workflows/scan.yml", "gates": ["docs"]},
     {"path": "dry-check.json", "gates": ["dry"]},
+    {"path": "scripts/skd/", "gates": ["docs"]},
+    {"path": ".claude/", "gates": ["docs"]},
     {"path": "scripts/dry_check.py", "gates": ["dry"]},
     {"path": "scripts/text_check.py", "gates": ["docs"]},
     {"path": "*.md", "gates": ["dry"]},

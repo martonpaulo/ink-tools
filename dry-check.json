@@ -5,7 +5,8 @@
    "plugins/ink2pic/**",
    "**/android/**",
    "**/buildPlugin.sh",
-   "**/buildPlugin.ps1"
+   "**/buildPlugin.ps1",
+   "scripts/skd/**"
   ],
   "counts": {
    "apps/handwriting-language/scripts/host-tools.cjs": {
@@ -149,7 +150,8 @@
    "plugins/ink2pic/**",
    "**/android/**",
    "**/buildPlugin.sh",
-   "**/buildPlugin.ps1"
+   "**/buildPlugin.ps1",
+   "scripts/skd/**"
   ],
   "counts": {
    "apps/handwriting-language": 3,
