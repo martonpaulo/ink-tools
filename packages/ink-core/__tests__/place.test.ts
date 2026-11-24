@@ -1,4 +1,5 @@
 import {
+  inkUnderRect,
   MIN_PLACE_BAND,
   PLACE_GAP,
   placeAtLasso,
@@ -238,5 +239,37 @@ describe('placeAtLasso (#109)', () => {
     const full = {...place, rect: {left: 100, top: 40, right: 300, bottom: 2500}};
     expect((await placeAtLasso(host, '/p.png', picture, full)).ok).toBe(false);
     expect(host.insertPageElements).not.toHaveBeenCalled();
+  });
+});
+
+describe('inkUnderRect, the one ink-under rule (#168, #234)', () => {
+  const placedRect = {left: 100, top: 100, right: 500, bottom: 400};
+  const word = {left: 120, top: 120, right: 300, bottom: 200};
+  const stroke = {left: 150, top: 130, right: 250, bottom: 190};
+  const far = {left: 900, top: 900, right: 1000, bottom: 1000};
+
+  test('an unknown page refuses the lasso', () => {
+    expect(inkUnderRect(placedRect, null)).toBe("the page's ink is not known");
+  });
+
+  test('a partial read refuses the lasso, even with nothing read under the rect', () => {
+    expect(inkUnderRect(placedRect, {rects: [far], complete: false})).toBe(
+      "only part of the page's ink is known",
+    );
+  });
+
+  test('a complete read lassoes only when nothing else crosses the rect', () => {
+    expect(inkUnderRect(placedRect, {rects: [far], complete: true})).toBeNull();
+    expect(inkUnderRect(placedRect, {rects: [stroke, far], complete: true})).toBe(
+      '1 other elements in the rect',
+    );
+  });
+
+  test("the deleted word's own strokes do not count, any other ink does", () => {
+    const outside = {left: 450, top: 350, right: 600, bottom: 450};
+    expect(inkUnderRect(placedRect, {rects: [stroke], complete: true}, word)).toBeNull();
+    expect(inkUnderRect(placedRect, {rects: [stroke, outside], complete: true}, word)).toBe(
+      '1 other elements in the rect',
+    );
   });
 });

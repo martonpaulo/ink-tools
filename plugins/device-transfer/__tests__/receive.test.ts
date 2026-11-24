@@ -1,4 +1,5 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
+import {inkUnderRect} from '@ink-tools/ink-core';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {
@@ -7,7 +8,6 @@ import {
   PLACED_RETRY_MS,
   PLACED_WAIT_MS,
   freeTextBox,
-  inkUnderBox,
   NoteHost,
   receiveOne,
   resetPlacedForTests,
@@ -110,7 +110,7 @@ describe('the received picture is lassoed for another plugin\'s rows (#196)', ()
     const over = note({occupied: pageReads([ink], PLACED)});
     await receiveOne(fakeRelay({}, imageArrives('/tmp/b.png')).api, over, 'Supernote');
     expect(over.lasso).not.toHaveBeenCalled();
-    expect(over.log).toHaveBeenCalledWith('receive: lassoElements skipped, 1 other elements in the box');
+    expect(over.log).toHaveBeenCalledWith('receive: lassoElements skipped, 1 other elements in the rect');
 
     const partial = note({occupied: pageReads([], PLACED, false)});
     await receiveOne(fakeRelay({}, imageArrives('/tmp/c.png')).api, partial, 'Supernote');
@@ -296,11 +296,11 @@ describe('a received text avoids the ink on the page (#199)', () => {
   const ink = [apple, line];
 
   test('today\'s place crosses the ink, so the box goes into the free band below it', () => {
-    expect(inkUnderBox(textBox(MANTA, 'one'), {rects: ink, complete: true})).not.toBeNull();
+    expect(inkUnderRect(textBox(MANTA, 'one'), {rects: ink, complete: true})).not.toBeNull();
     const {rect, free} = freeTextBox(MANTA, 'one', null, ink);
     expect(free).toBe(true);
     expect(rect.top).toBeGreaterThanOrEqual(line.bottom);
-    expect(inkUnderBox(rect, {rects: ink, complete: true})).toBeNull();
+    expect(inkUnderRect(rect, {rects: ink, complete: true})).toBeNull();
   });
 
   test('a free place stays where it is, and an unknown page keeps today\'s place', () => {
@@ -372,6 +372,6 @@ describe('a received text avoids the ink on the page (#199)', () => {
     });
     await receiveOne(fakeRelay({}, [text]).api, full, 'Supernote');
     expect(full.lasso).not.toHaveBeenCalled();
-    expect(full.log).toHaveBeenCalledWith('receive: lassoElements skipped, 1 other elements in the box');
+    expect(full.log).toHaveBeenCalledWith('receive: lassoElements skipped, 1 other elements in the rect');
   });
 });
