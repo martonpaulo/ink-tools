@@ -15,7 +15,7 @@ import {
   ROOT_DIR,
   sleep,
 } from './lib.mjs';
-import {pixelOrder} from './pixelorder.mjs';
+import {DEFAULT_STYLE, pixelOrder} from './pixelorder.mjs';
 
 /** Between two queries that asked the network: one query at a time, as a person searches. */
 const QUERY_DELAY_MS = 2000;
@@ -51,6 +51,28 @@ export function languagesFor(run) {
   return /^lookup(-|$)/.test(run)
     ? QUERY_LANGUAGES.lookup
     : QUERY_LANGUAGES.ink2pic;
+}
+
+/** Word Lookup's picture modes, from their one owner (#111). */
+const LOOKUP_MODES = createRequire(import.meta.url)(
+  '../../word-lookup/src/modes.ts',
+).MODES;
+
+/**
+ * The search style of a run (#13): a run named `lookup-photo` or `lookup-photo-…` searches as
+ * Word Lookup's «Insert Image» does, with its «Photos too», without its skipped sources, and keeps
+ * only its measured photo tiles; any other run searches as «Drawings» with every source.
+ */
+export function styleFor(run) {
+  const photo = LOOKUP_MODES.find(mode => mode.kind === 'photo');
+  return /^lookup-photo(-|$)/.test(run)
+    ? {
+        allContour: false,
+        photos: photo.photos,
+        mode: photo.kind,
+        skipSources: [...photo.skipSources],
+      }
+    : {...DEFAULT_STYLE, skipSources: []};
 }
 /**
  * shortcut: the sentence of each search state, copied from STATE_COPY in src/flow/search.ts,
@@ -128,33 +150,44 @@ function tile(result, query, shown) {
   };
 }
 
-const context = (fetch, languages) =>
-  core.createContext({
+// «Photos too» goes in the context, as `deviceContext` puts it there (#70).
+const context = (fetch, languages, style = DEFAULT_STYLE) => ({
+  ...core.createContext({
     fetch,
     userAgent: config.USER_AGENT,
     languages,
-  });
+  }),
+  photos: style.photos,
+});
 
-/** The default adapters; a faulty one searches with its fault's fetch in place of the network. */
-function adaptersWith(faults, languages) {
-  return core.DEFAULT_ADAPTERS.map(adapter => {
+/**
+ * The default adapters less the style's skipped sources; a faulty one searches with its fault's
+ * fetch in place of the network.
+ */
+function adaptersWith(faults, languages, style) {
+  const skipped = style.skipSources ?? [];
+  return core.DEFAULT_ADAPTERS.filter(
+    adapter => !skipped.includes(adapter.name),
+  ).map(adapter => {
     const fault = faults[adapter.name];
     if (!fault) {
       return adapter;
     }
-    const ctx = context(FAULTS[fault](), languages);
+    const ctx = context(FAULTS[fault](), languages, style);
     return {...adapter, search: query => adapter.search(query, ctx)};
   });
 }
 
 /** The search, again after a wait while a source with no injected fault failed to answer. */
-async function searchCase(query, faults, log, languages) {
+async function searchCase(query, faults, log, languages, style) {
   const stats = {requests: 0, retryAfter: 0, waited: 0};
   for (let attempt = 1; ; attempt++) {
     stats.retryAfter = 0;
-    const outcome = await core.searchAll(query, adaptersWith(faults, languages), {
-      ctx: context(cachedFetch(stats), languages),
-    });
+    const outcome = await core.searchAll(
+      query,
+      adaptersWith(faults, languages, style),
+      {ctx: context(cachedFetch(stats), languages, style)},
+    );
     const failed = Object.entries(outcome.statuses).filter(
       ([, status]) => status.state === 'failed',
     );
@@ -174,7 +207,8 @@ async function searchCase(query, faults, log, languages) {
 /**
  * Every case through the search with `faults`, one at a time; each case's pages 1 and 2, with the
  * seconds it took and the seconds of that spent waiting after a failure. `onCase` gets the cases
- * done so far after each one. `languages` are the query languages, Ink2Pic's by default.
+ * done so far after each one. `languages` are the query languages, Ink2Pic's by default, and
+ * `style` the run's `styleFor`, «Drawings» by default.
  */
 export async function runCases(
   cases,
@@ -182,6 +216,7 @@ export async function runCases(
   log = console.log,
   onCase = () => {},
   languages = QUERY_LANGUAGES.ink2pic,
+  style = styleFor(''),
 ) {
   const out = [];
   for (const [index, item] of cases.entries()) {
@@ -191,7 +226,7 @@ export async function runCases(
     const chosen = item.line
       ? await core.resolvePhrase(
           item.line,
-          context(cachedFetch(lineStats), languages),
+          context(cachedFetch(lineStats), languages, style),
         )
       : null;
     if (chosen && chosen.query !== item.query) {
@@ -202,6 +237,7 @@ export async function runCases(
       faults,
       log,
       languages,
+      style,
     );
     const {outcome, named, attempt, retryAfter, waited} = searched;
     const requests = searched.requests + lineStats.requests;
@@ -211,6 +247,7 @@ export async function runCases(
       item.query,
       core,
       config.USER_AGENT,
+      style,
     );
     out.push({
       ...item,

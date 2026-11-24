@@ -74,9 +74,11 @@ function measureFiles(files) {
 
 /**
  * The device's style (#70): «All contour» and «Photos too», both off as the device's default
- * style, «Drawings», has them.
+ * style, «Drawings», has them. `mode`, a Word Lookup picture mode (`photo` or `illustration`),
+ * keeps only that mode's measured tiles, as `keepMode` does on the device (#111, #13); none keeps
+ * every tile, as Ink2Pic does.
  */
-export const DEFAULT_STYLE = {allContour: false, photos: false};
+export const DEFAULT_STYLE = {allContour: false, photos: false, mode: null};
 
 /**
  * The pure part of the pixel step: `results` in the order the device shows them, from each
@@ -128,8 +130,13 @@ export function orderEntries(
     });
   }
   // Near-duplicates leave the list, as on the device (#89).
+  const ordered = orderMeasured(results, prepared, query, style.photos);
+  // A Word Lookup mode keeps only its measured tiles, by the measures each tile shows (#13).
+  const measures = new Map(
+    [...prepared].map(([id, {measures: m}]) => [id, m]),
+  );
   return {
-    results: orderMeasured(results, prepared, query, style.photos),
+    results: style.mode ? core.keepMode(ordered, measures, style.mode) : ordered,
     shown,
   };
 }
