@@ -1,6 +1,7 @@
 // Renders each lasso button icon, assets/<name>.svg, to the 96 x 96 PNG the button registers
-// (#107; one size per button, owner D43 A), and assets/contact-sheet.png: every icon at 96 px and at
-// the lasso list's 60 px, with Device Transfer's lasso icons beside them for the shared style.
+// (#107; one size per button, owner D43 A), Image Editing's lasso icon the same way, and
+// assets/contact-sheet.png: every icon at 96 px and at the lasso list's 60 px, with Device Transfer's
+// and Image Editing's lasso icons beside them for the shared style.
 // Chromium (Playwright, as Ink2Pic's `npm run icon`) draws each SVG, so a PNG never drifts from it.
 // Run: `npm run icons`, with Playwright on NODE_PATH.
 const fs = require('fs');
@@ -8,13 +9,17 @@ const path = require('path');
 const {chromium} = require('playwright');
 
 const assets = path.join(__dirname, '..', 'assets');
-const relayAssets = path.join(__dirname, '..', '..', 'relay', 'assets');
+const plugins = path.join(__dirname, '..', '..');
+const transferAssets = path.join(plugins, 'device-transfer', 'assets');
+const editingAssets = path.join(plugins, 'image-editing', 'assets');
 const BUTTON_PX = 96;
 const LIST_PX = 60;
 const SHEET_WIDTH = 760;
-const RELAY_LASSO = ['send-selection.svg', 'send-text.svg'];
+const TRANSFER_LASSO = ['send-selection.svg', 'send-text.svg'];
 
-const svgs = fs.readdirSync(assets).filter(file => file.endsWith('.svg')).sort();
+const svgsIn = dir => fs.readdirSync(dir).filter(file => file.endsWith('.svg')).sort();
+const svgs = svgsIn(assets);
+const editingSvgs = svgsIn(editingAssets);
 
 function cell(dir, file, plugin) {
   const svg = fs.readFileSync(path.join(dir, file), 'utf8');
@@ -32,19 +37,24 @@ async function shot(browser, html, {width, height, file, transparent}) {
 async function main() {
   const browser = await chromium.launch();
   try {
-    for (const file of svgs) {
-      const svg = fs.readFileSync(path.join(assets, file), 'utf8');
-      const png = file.replace('.svg', '.png');
+    const buttons = [
+      ...svgs.map(file => [assets, file]),
+      ...editingSvgs.map(file => [editingAssets, file]),
+    ];
+    for (const [dir, file] of buttons) {
+      const svg = fs.readFileSync(path.join(dir, file), 'utf8');
+      const png = path.join(dir, file.replace('.svg', '.png'));
       await shot(
         browser,
         `<style>html,body{margin:0;background:transparent}svg{display:block;width:${BUTTON_PX}px;height:${BUTTON_PX}px}</style>${svg}`,
-        {width: BUTTON_PX, height: BUTTON_PX, file: path.join(assets, png), transparent: true},
+        {width: BUTTON_PX, height: BUTTON_PX, file: png, transparent: true},
       );
-      console.log(`rendered assets/${png} (${BUTTON_PX} x ${BUTTON_PX})`);
+      console.log(`rendered ${path.relative(plugins, png)} (${BUTTON_PX} x ${BUTTON_PX})`);
     }
     const cells = [
       ...svgs.map(file => cell(assets, file, 'Word Lookup')),
-      ...RELAY_LASSO.map(file => cell(relayAssets, file, 'Device Transfer')),
+      ...TRANSFER_LASSO.map(file => cell(transferAssets, file, 'Device Transfer')),
+      ...editingSvgs.map(file => cell(editingAssets, file, 'Image Editing')),
     ].join('');
     await shot(
       browser,

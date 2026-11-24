@@ -96,13 +96,13 @@ ink-tools/
   packages/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
-    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by lookup/relay/retouch)
-    picture-search/ # the picture search core and its pure-Java pixel measures (from ink2pic, for lookup)
+    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Word Lookup, Device Transfer, Image Editing)
+    picture-search/ # the picture search core and its pure-Java pixel measures (from Ink2Pic, for Word Lookup)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     account-sync/   # to-do + calendar + digest, each module and provider opt in/out
     word-lookup/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
-    ink2pic/        # retired: lookup replaced it
+    ink2pic/        # retired: Word Lookup replaced it
     device-transfer/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     image-editing/  # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
     plugin-diagnostics/ # permanent on-device investigation plugin
@@ -116,16 +116,32 @@ ink-tools/
 
 ## The plugins (on device)
 
-- **`bridge`** — brings external services onto the device. Three modules, each opt in/out: **to-do**
+Each plugin is named here by its display name ([product › Display names](product.md#display-names)).
+Older code names stay in npm packages, `pluginKey`, log prefixes, data folders and older issues:
+
+| Display name | Folder | Code name |
+| :--- | :--- | :--- |
+| Account Sync | `plugins/account-sync/` | `bridge` (npm package, `BridgeFilesPackage`) |
+| Word Lookup | `plugins/word-lookup/` | `lookup` |
+| Device Transfer | `plugins/device-transfer/` | `relay` |
+| Image Editing | `plugins/image-editing/` | `retouch` |
+| Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
+| Real-Time Conversion | `plugins/real-time-conversion/` | `RealTimeConversion` (`pluginKey`) |
+| Ink2Pic (retired) | `plugins/ink2pic/` | `ink2pic` |
+
+«Bridge» alone never names the helper app: that is the Ink Tools bridge app,
+[`apps/inktools-bridge/`](#the-tablet-apps).
+
+- **Account Sync** — brings external services onto the device. Three modules, each opt in/out: **to-do**
   (Todoist <-> native To-Do), **calendar** (Google / iCloud / ICS <-> native Calendar), **digest**
   (Panoram Saved -> native Digest, pending feasibility). Each provider is a separate toggle. One
   plugin, not a bundle of separate plugins.
-  - **Settings-only, no note surface.** `bridge` is pure configuration plus background sync; it has
+  - **Settings-only, no note surface.** Account Sync is pure configuration plus background sync; it has
     nothing to do with a note's canvas. The plugin API supports this: `ink2pic/index.js` registers
     the note buttons (`registerButton(..., ['NOTE'], ...)`) and the plugin's Settings entry
-    (`registerConfigButton()` + `startConfigQueue()`) **independently**. `bridge` registers only the
+    (`registerConfigButton()` + `startConfigQueue()`) **independently**. Account Sync registers only the
     config button and no NOTE buttons, so it appears only in the plugin settings, never in notes.
-    (API-confirmed from ink2pic; to confirm on device via `probe`.)
+    (API-confirmed from ink2pic; to confirm on device via Plugin Diagnostics.)
   - **A change made on both sides between two syncs** ([#87](https://github.com/martonpaulo/ink-tools/issues/87), owner D14 A): on both
     modules the later change wins, and a tie goes to the service. To-Do compares the two
     `modified` times (`packages/sync-core/src/tasks.ts`). Calendar compares the tablet row's
@@ -133,26 +149,26 @@ ink-tools/
     such as ICS, wins (`pushCalendarEdits` in `packages/sync-core/src/push.ts`). The losing
     version goes into the module run's warnings, which Settings and the log show: a task's title, an
     event's title, start and notes (`conflictWarnings`).
-  - **Turning a module or a provider off** ([#89](https://github.com/martonpaulo/ink-tools/issues/89), owner D15 A): every row Bridge wrote
+  - **Turning a module or a provider off** ([#89](https://github.com/martonpaulo/ink-tools/issues/89), owner D15 A): every row Account Sync wrote
     stays on the tablet, and sync stops updating it. A module that is off offers one
-    «Remove what Bridge wrote» button in Settings, which asks once more before it deletes. It
-    removes only what Bridge wrote (`packages/sync-core/src/cleanup.ts`): on **calendar**, every
-    `tag=task` row; on **to-do**, the tasks Bridge imported from the service (a link with
+    «Remove what Account Sync wrote» button in Settings, which asks once more before it deletes. It
+    removes only what Account Sync wrote (`packages/sync-core/src/cleanup.ts`): on **calendar**, every
+    `tag=task` row; on **to-do**, the tasks Account Sync imported from the service (a link with
     `origin: 'service'`), soft-deleted, never a task the owner wrote on the tablet and never the
     service's copy; **digest** writes nothing yet. A provider has no button of its own: its rows go
     with the module's.
   - **Open question — background lifecycle.** The config listener only fires when the owner opens
     Settings. Periodic sync with the view closed needs a background trigger or a kept-alive plugin;
-    whether PluginHost allows that is unconfirmed and is the first thing `probe` must answer before
-    the `bridge` design commits to it.
+    whether PluginHost allows that is unconfirmed and is the first thing Plugin Diagnostics must answer before
+    the Account Sync design commits to it.
   - **Google sign-in cannot use the device-code flow.** Google's OAuth flow for limited-input
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,
     [#64](https://github.com/martonpaulo/ink-tools/issues/64)). `packages/sync-core`
-    therefore has no device-code sign-in ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). **Bridge signs in on the Mac and gets the token
+    therefore has no device-code sign-in ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). **Account Sync signs in on the Mac and gets the token
     over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/ink-tools/issues/64)): a `inkctl` command runs Google's
     installed-app flow with a loopback redirect, which allows the Calendar scopes, in the Mac's
-    browser; the refresh token then goes to Bridge's private plugin folder the way every sign-in
+    browser; the refresh token then goes to Account Sync's private plugin folder the way every sign-in
     secret does, `inkctl secret set google` ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). The plugin only refreshes
     access tokens. Not chosen: a browser on the tablet with a loopback redirect to the plugin (the
     browser and the local listener are unconfirmed), and read-only Google through its secret iCal
@@ -164,25 +180,28 @@ ink-tools/
     «unverified app» warning. The app stays in «Testing» for now (owner, 2026-11-16,
     [#124](https://github.com/martonpaulo/ink-tools/issues/124)). The loopback flow needs an OAuth client of the «Desktop app» type:
     the existing client is a «TVs and Limited Input devices» one, with no redirect URIs.
-- **`lookup`** — write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
+- **Word Lookup** — write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
   or a **translation**; each mode opt in/out, and each language pair opt in/out under the
-  translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced `ink2pic`,
+  translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced Ink2Pic,
   which is retired and uninstalled from the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)).
-- **`relay`** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
+- **Device Transfer** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
   LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/ink-tools/issues/98), [#49](https://github.com/martonpaulo/ink-tools/issues/49)). Its network half is a native
-  Java module, as `probe`'s listener is.
-- **`retouch`** — edit an image already on the page: lasso it and tap Enhance, Lighter, Darker, Undo or
+  Java module, as Plugin Diagnostics' listener is.
+- **Image Editing** — edit an image already on the page: lasso it and tap Enhance, Lighter, Darker, Undo or
   Restore original ([#136](https://github.com/martonpaulo/ink-tools/issues/136)). Its pixel work is a native Java module that reuses
   `picture-search`'s `Decolor` and `EinkPixels`.
-- **`probe`** — a minimal plugin for on-device investigation (provider reachability, permission
-  checks), reused whenever a device question comes up.
+- **Plugin Diagnostics** — a minimal plugin for on-device investigation (provider reachability,
+  permission checks), reused whenever a device question comes up.
+- **Real-Time Conversion** — turns handwriting into a text box as each word ends, with an Undo
+  Conversion ([#144](https://github.com/martonpaulo/ink-tools/issues/144)); its guidance is
+  [`plugins/real-time-conversion/AGENTS.md`](../plugins/real-time-conversion/AGENTS.md).
 
-`lookup`, `relay` and `retouch` share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
-gesture). `bridge`'s three modules share `sync-core`. All of them are to go through `sn-adapter` for
+Word Lookup, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
+gesture). Account Sync's three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/ink-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
-`sn-adapter`, `ink-core` and `picture-search` the same way. `ink2pic`, `bridge`, `lookup`, `relay` and `retouch` call `sn-plugin-lib` only
-through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `ink2pic` was the seed of `ink-core` and of `lookup`'s picture modes; it is retired, and `lookup`
+`sn-adapter`, `ink-core` and `picture-search` the same way. Every plugin calls `sn-plugin-lib` only
+through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). Ink2Pic was the seed of `ink-core` and of Word Lookup's picture modes; it is retired, and Word Lookup
 finds stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/ink-tools/issues/125)). Its picture search core and pixel
 measures are `packages/picture-search`.
 

@@ -9,7 +9,8 @@ The paths go through `gates.py`'s rules (`gates.json`), the one map. A selected 
 starts with `cd DIR &&` names a subproject; when DIR/package.json has a `typecheck` script and
 DIR/node_modules matches its lockfile (`npm_install.py`, #222), `npm run typecheck` runs there. Subprojects without that script (the JVM
 and Python gates) are skipped: the full gate still runs them. ESLint is left to the gate, since it is
-not cheap on the larger plugins. Exit 0 pass, 1 a type error (its lines are printed), 2 a usage error.
+not cheap on the larger plugins. Every run first refuses tracked paths that differ only in case
+(`case_check.py`, #227), since a case-insensitive disk would merge them. Exit 0 pass, 1 a type error (its lines are printed), 2 a usage error.
 """
 from __future__ import annotations
 
@@ -21,6 +22,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import case_check  # noqa: E402
 import gates  # noqa: E402
 import npm_install  # noqa: E402
 
@@ -65,6 +67,9 @@ def main(argv: list[str] | None = None) -> int:
         print("\n".join(folders))
         return 0
     failed = 0
+    for kind, first, second in case_check.collisions(case_check.tracked(root)):
+        failed = 1
+        print(f"quick case: {kind}: {first} <-> {second}")
     for folder in folders:
         if not npm_install.is_current(root / folder):
             print(f"quick {folder}: skipped, node_modules missing or older than the lockfile (the gate installs it)")

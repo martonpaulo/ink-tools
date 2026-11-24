@@ -24,7 +24,7 @@ discovery cannot see.
 page goes one line below the first. A text goes into the first free band of the page, past its
 strokes, text boxes and pictures (`freeTextBox`, `ink-core`'s `freeRect` that Word Lookup uses,
 [#199](https://github.com/martonpaulo/ink-tools/issues/199)), and is lassoed only when the whole page was read and nothing else is under it
-([#168](https://github.com/martonpaulo/ink-tools/issues/168)'s rule, `inkUnderBox`). On the tablet (2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)), an `application/zip` offer is
+([#168](https://github.com/martonpaulo/ink-tools/issues/168)'s rule, ink-core's `inkUnderRect`). On the tablet (2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)), an `application/zip` offer is
 refused at `prepare-upload` with 403, and a received photo is lassoed for a plugin: Image Editing's
 «Document» reached `modifyPageElements` on beta 7, where beta 6 got error 904 from
 `getLassoElementTypeCounts`. Since 0.1.0 beta 8, a received picture is lassoed by its rect after

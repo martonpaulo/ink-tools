@@ -4,7 +4,7 @@
  * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
  * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
-import {freeRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
+import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
 import {Result, TextBoxInput} from '@ink-tools/sn-adapter/official';
 import {copy} from '../copy';
 import {
@@ -105,22 +105,6 @@ export function freeTextBox(
   return moved ? {rect: moved, free: true} : {rect, free: false};
 }
 
-/**
- * Why a lasso of the box could take the person's ink, or null when it cannot (#168's rule): the
- * rect lasso selects every element inside it, so the box is lassoed only when the whole page was
- * read and nothing else crosses it.
- */
-export function inkUnderBox(rect: Rect, read: OccupiedRead | null): string | null {
-  if (read === null) {
-    return "the page's ink is not known";
-  }
-  if (!read.complete) {
-    return "only part of the page's ink is known";
-  }
-  const others = read.rects.filter(other => !isFree(rect, [other])).length;
-  return others > 0 ? `${others} other elements in the box` : null;
-}
-
 async function placeText(host: NoteHost, text: string): Promise<string> {
   const size = await host.pageSize();
   if (!size.ok) {
@@ -149,7 +133,7 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
   }
   lastText = page === null ? null : {page, bottom: rect.bottom};
   // Selected, so the person moves it at once, but never with the person's ink in it (#168).
-  const ink = inkUnderBox(rect, read);
+  const ink = inkUnderRect(rect, read);
   if (ink) {
     host.log(`receive: lassoElements skipped, ${ink}`);
   } else {
@@ -261,7 +245,7 @@ async function placeImage(native: Relay, host: NoteHost, path: string): Promise<
     host.log('receive: lassoElements skipped, the placed picture is not found on the page');
     return copy.receivedImage;
   }
-  const ink = inkUnderBox(rect, beforeRead);
+  const ink = inkUnderRect(rect, beforeRead);
   if (ink) {
     host.log(`receive: lassoElements skipped, ${ink}`);
     return copy.receivedImage;

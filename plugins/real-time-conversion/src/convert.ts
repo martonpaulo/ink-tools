@@ -94,8 +94,10 @@ export class Converter {
   private emr: EmrRange | null = null;
   private unitLogged = false;
   private matchLogged = false;
+  /** When the last stroke whose points could not be read came, or a stroke kept after it (#229). */
+  private unreadAt: number | null = null;
 
-  constructor(private readonly host: ConvertHost, options: WordOptions) {
+  constructor(private readonly host: ConvertHost, private readonly options: WordOptions) {
     this.tracker = new WordTracker<object>(options);
   }
 
@@ -117,6 +119,7 @@ export class Converter {
     // size opened while the mode stays on keeps the first one, until turning the mode off and on.
     this.size = null;
     this.emr = null;
+    this.unreadAt = null;
     this.unitLogged = false;
     this.matchLogged = false;
     return ok(true);
@@ -167,7 +170,11 @@ export class Converter {
         continue;
       }
       const raw = await this.host.strokePoints(element);
-      const points = raw.ok ? await this.toPage(raw.value) : raw;
+      if (!raw.ok || this.afterUnread(at)) {
+        this.keepAroundUnread(element, at, raw.ok ? 'a stroke near one not read' : raw.message);
+        continue;
+      }
+      const points = await this.toPage(raw.value);
       const rect = points.ok ? rectOf(points.value) : null;
       if (!points.ok || !rect || !this.stop) {
         this.host.log(points.ok ? 'pen-up: a stroke with no points' : `pen-up: ${points.message}`);
@@ -178,6 +185,24 @@ export class Converter {
       this.handOn(this.tracker.add(stroke, at));
     }
     this.schedule();
+  }
+
+  /** Whether `at` comes within the idle time of a stroke whose points could not be read (#229). */
+  private afterUnread(at: number): boolean {
+    return this.unreadAt !== null && at - this.unreadAt < this.options.idleMs;
+  }
+
+  /**
+   * A stroke whose points could not be read, such as one over MAX_STROKE_POINTS, may belong to the
+   * word being written: converting the rest would leave it beside a text box, and an Undo Conversion
+   * could not give it back. So that word, the words still waiting, and every stroke written within
+   * the idle time after it stay on the page as written (#229).
+   */
+  private keepAroundUnread(element: object, at: number, why: string): void {
+    this.unreadAt = at;
+    const held = this.tracker.reset().map(stroke => stroke.element);
+    this.free([element, ...held]);
+    this.host.log(`kept: ${why}, ${held.length + 1} strokes left as written`);
   }
 
   /**

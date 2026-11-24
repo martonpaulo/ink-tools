@@ -5,7 +5,8 @@
    "plugins/ink2pic/**",
    "**/android/**",
    "**/buildPlugin.sh",
-   "**/buildPlugin.ps1"
+   "**/buildPlugin.ps1",
+   "scripts/skd/**"
   ],
   "counts": {
    "apps/handwriting-language/scripts/host-tools.cjs": {
@@ -59,70 +60,15 @@
    "plugins/account-sync/scripts/host-tools.cjs": {
     "repeated": 1
    },
-   "plugins/account-sync/scripts/native-build.cjs": {
-    "repeated": 6,
-    "url": 1
-   },
    "plugins/account-sync/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
-   },
-   "plugins/word-lookup/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/word-lookup/scripts/host-tools.cjs": {
-    "repeated": 1
-   },
-   "plugins/word-lookup/scripts/native-build.cjs": {
-    "repeated": 6,
-    "url": 1
-   },
-   "plugins/word-lookup/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
-   },
-   "plugins/word-lookup/src/buttons.ts": {
-    "repeated": 1
-   },
-   "plugins/plugin-diagnostics/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/plugin-diagnostics/App.tsx": {
-    "colour": 1,
-    "number": 4
-   },
-   "plugins/plugin-diagnostics/scripts/host-tools.cjs": {
-    "repeated": 1
-   },
-   "plugins/plugin-diagnostics/scripts/native-build.cjs": {
-    "repeated": 6,
-    "url": 1
-   },
-   "plugins/plugin-diagnostics/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
-   },
-   "plugins/real-time-conversion/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/real-time-conversion/src/buttons.ts": {
-    "repeated": 1
-   },
-   "plugins/real-time-conversion/test-support/host.ts": {
-    "number": 4
-   },
-   "plugins/real-time-conversion/test-support/ink.ts": {
-    "number": 13
    },
    "plugins/device-transfer/.eslintrc.js": {
     "repeated": 1
    },
    "plugins/device-transfer/scripts/host-tools.cjs": {
     "repeated": 1
-   },
-   "plugins/device-transfer/scripts/native-build.cjs": {
-    "repeated": 6,
-    "url": 1
    },
    "plugins/device-transfer/scripts/native-toolchain.sh": {
     "repeated": 3,
@@ -143,15 +89,50 @@
    "plugins/image-editing/scripts/host-tools.cjs": {
     "repeated": 1
    },
-   "plugins/image-editing/scripts/native-build.cjs": {
-    "repeated": 6,
-    "url": 1
-   },
    "plugins/image-editing/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
    },
    "plugins/image-editing/src/buttons.ts": {
+    "repeated": 1
+   },
+   "plugins/plugin-diagnostics/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/plugin-diagnostics/App.tsx": {
+    "colour": 1,
+    "number": 4
+   },
+   "plugins/plugin-diagnostics/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/plugin-diagnostics/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/real-time-conversion/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/real-time-conversion/src/buttons.ts": {
+    "repeated": 1
+   },
+   "plugins/real-time-conversion/test-support/host.ts": {
+    "number": 4
+   },
+   "plugins/real-time-conversion/test-support/ink.ts": {
+    "number": 13
+   },
+   "plugins/word-lookup/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/word-lookup/scripts/host-tools.cjs": {
+    "repeated": 1
+   },
+   "plugins/word-lookup/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/word-lookup/src/buttons.ts": {
     "repeated": 1
    },
    "scripts/dry_check.py": {
@@ -169,16 +150,17 @@
    "plugins/ink2pic/**",
    "**/android/**",
    "**/buildPlugin.sh",
-   "**/buildPlugin.ps1"
+   "**/buildPlugin.ps1",
+   "scripts/skd/**"
   ],
   "counts": {
-   "apps/handwriting-language": 5,
+   "apps/handwriting-language": 3,
    "cli/inkctl": 1,
    "packages/ink-core": 1,
-   "plugins/account-sync": 10,
-   "plugins/device-transfer": 4,
-   "plugins/real-time-conversion": 1,
-   "plugins/image-editing": 5
+   "plugins/account-sync": 5,
+   "plugins/device-transfer": 2,
+   "plugins/image-editing": 5,
+   "plugins/real-time-conversion": 1
   },
   "identical": {
    "plugins/plugin-diagnostics/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
@@ -201,10 +183,10 @@
    "cli/inkctl/docs/research/**"
   ],
   "repeated": {
-   "plugins/word-lookup/AGENTS.md": 3,
-   "plugins/real-time-conversion/AGENTS.md": 2,
    "plugins/device-transfer/AGENTS.md": 1,
-   "plugins/image-editing/AGENTS.md": 3
+   "plugins/image-editing/AGENTS.md": 3,
+   "plugins/real-time-conversion/AGENTS.md": 2,
+   "plugins/word-lookup/AGENTS.md": 3
   }
  }
 }

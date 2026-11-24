@@ -3,6 +3,7 @@
  * with `showType` 1, so the host opens the plugin's full view, the editor, where every edit is a
  * button. The builds before it registered one row per edit, which crowded the lasso menu.
  */
+import {Image} from 'react-native';
 import {
   registerButton,
   Result,
@@ -22,12 +23,15 @@ export type ButtonDeps = {
   register: typeof registerButton;
   unregister: typeof unregisterButton;
   log: (line: string) => void;
+  /** The button's icon URI (#107), drawn from `assets/editor.svg` by Word Lookup's `npm run icons`. */
+  icon: string | undefined;
 };
 
 const DEVICE: ButtonDeps = {
   register: registerButton,
   unregister: unregisterButton,
   log: line => console.log(`Retouch: ${line}`),
+  icon: Image.resolveAssetSource(require('../assets/editor.png'))?.uri,
 };
 
 const describe = (what: string, result: Result<unknown>): string =>
@@ -49,6 +53,7 @@ export async function registerEditorButton(
     name: copy.title,
     editDataTypes: [EDIT_DATA_PICTURE],
     showType: SHOW_FULL_VIEW,
+    icon: deps.icon,
   });
   deps.log(describe(`register ${copy.title}`, result));
   for (const id of LEGACY_BUTTON_IDS) {

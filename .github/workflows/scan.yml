@@ -4,16 +4,17 @@ name: Scan
 # (#77): no subproject workflow starts for README.md, ROADMAP.md, AGENTS.md or docs/. The adapter
 # boundaries are checked on every change to a package, a plugin or the checker (#101), and gates.json's
 # npm gates install from each lockfile when node_modules is missing (#135), and each plugin's native
-# build leaves no .snplg without its app.npk (#153). The weekly audit fails on any advisory
+# build leaves no .snplg without its app.npk (#153). No two tracked paths differ only in case, so the
+# owner's Mac, whose disk ignores case, sees every file CI sees (#227). The weekly audit fails on any advisory
 # audit-exceptions.json does not name (#154).
 on:
   schedule:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -35,6 +36,11 @@ jobs:
 
       - name: Check the DRY ratchet
         run: python3 scripts/dry_check.py --root .
+
+      - name: Check that no two tracked paths differ only in case (#227)
+        run: |
+          python3 scripts/case_check.py --root .
+          python3 -B -m unittest scripts/test_case_check.py
 
   boundaries:
     name: adapter boundaries

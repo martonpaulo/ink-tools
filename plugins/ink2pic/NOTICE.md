@@ -48,7 +48,8 @@ pictures under the same CC BY-SA 4.0 licence; Settings names it before the downl
 Adapted: the light native build without Gradle (`native/BUILD.md` and `scripts/native-build.cjs`
 of that repository): `javac` for Java 8, D8 with minimum API 27, `aapt2 link`, and an APK-format
 `app.npk` added with `nativeCodePackage` and `reactPackages` to the plugin package. Ink2Pic's
-`scripts/native-build.cjs` is a new script that follows this pipeline. Changed: it uses the
+`scripts/native-build.cjs` was a new script that follows this pipeline; it is now
+`packages/native-build/native-build.cjs`, which every plugin with native code calls ([#231](https://github.com/martonpaulo/ink-tools/issues/231)). Changed: it uses the
 `zip` and `unzip` commands instead of the `fflate` library, writes the Android manifest from
 `PluginConfig.json`, gets its tools from `scripts/native-toolchain.sh` with pinned SHA-1 checks,
 and runs Ink2Pic's own JVM tests. Not taken: Pic2Note's Java code, image editor and Windows
