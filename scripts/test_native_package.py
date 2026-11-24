@@ -77,6 +77,35 @@ class NativePackageTest(unittest.TestCase):
             with self.subTest(plugin=plugin.name):
                 self.assertEqual(toolchain_code(plugin), first)
 
+    def test_validate_workflow_compiles_the_native_code(self):
+        # Cloud sessions have no Android SDK, so CI is the only place the Android Java compiles
+        # before a hand-off (#235): each native plugin's validate job builds its package.
+        for plugin in native_plugins():
+            with self.subTest(plugin=plugin.name):
+                workflow = ROOT / f".github/workflows/validate-{plugin.name}.yml"
+                text = workflow.read_text()
+                self.assertTrue("run: npm run build\n" in text, f"{workflow.name} never runs npm run build")
+                checked = re.search(r"unzip -l build/outputs/\S+\.snplg \| grep -q app\.npk", text)
+                self.assertTrue(checked, f"{workflow.name} never checks the package for app.npk")
+                # A shared package whose Java the build compiles must trigger the job too.
+                build = (plugin / "scripts/native-build.cjs").read_text()
+                for package in sorted(set(re.findall(r"\.\./\.\./\.\./packages/([\w-]+)", build))):
+                    watched = f"'packages/{package}/" in text
+                    self.assertTrue(watched, f"{workflow.name} paths miss packages/{package}/")
+
+    def test_app_validate_workflow_builds_the_apk(self):
+        apps = [
+            folder
+            for folder in (ROOT / "apps").iterdir()
+            if (folder / "scripts/build.cjs").is_file() and any((folder / "src").rglob("*.java"))
+        ]
+        self.assertGreaterEqual(len(apps), 1)
+        for app in apps:
+            with self.subTest(app=app.name):
+                workflow = ROOT / f".github/workflows/validate-{app.name}.yml"
+                built = "run: node scripts/build.cjs\n" in workflow.read_text()
+                self.assertTrue(built, f"{workflow.name} never builds the APK")
+
     def test_toolchain_uses_a_checksum_tool_macos_and_linux_both_have(self):
         for plugin in native_plugins():
             with self.subTest(plugin=plugin.name):
