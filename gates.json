@@ -43,6 +43,7 @@
     {"path": "scripts/test_case_check.py", "gates": ["case"]},
     {"path": "scripts/test_quick_check.py", "gates": ["quick"]},
     {"path": ".github/workflows/scan.yml", "gates": ["docs"]},
+    {"path": ".github/workflows/lab.yml", "gates": ["ink2pic"]},
     {"path": "dry-check.json", "gates": ["dry"]},
     {"path": "scripts/skd/", "gates": ["docs"]},
     {"path": ".claude/", "gates": ["docs"]},
