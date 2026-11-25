@@ -10,7 +10,7 @@ import boundaries  # noqa: E402
 
 
 class Boundaries(unittest.TestCase):
-    def tree(self, files, pending=frozenset()):
+    def tree(self, files, pending=frozenset(), pending_host=None):
         """A fixture tree of {relative path: text}; returns the findings as (path, rule) pairs."""
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -18,7 +18,7 @@ class Boundaries(unittest.TestCase):
                 path = root / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8")
-            return [(rel, rule) for rel, _number, rule, _text in boundaries.findings(root, pending)]
+            return [(rel, rule) for rel, _number, rule, _text in boundaries.findings(root, pending, pending_host or {})]
 
     def test_sdk_only_in_the_official_tier(self):
         self.assertEqual(self.tree({
@@ -112,6 +112,17 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(self.tree(files, frozenset({"plugins/a/src/A.tsx"})), [])
         self.assertEqual(self.tree(files, frozenset({"plugins/a/src/A.tsx", "plugins/a/src/B.tsx"})),
                          [("plugins/a/src/B.tsx", "controls")])
+
+    def test_a_host_tools_python_is_read_even_without_a_suffix(self):
+        # inkctl is one extensionless file (#295): it was never read before.
+        tool = ("#!/usr/bin/env python3\n# com.ratta.supernote.task.provider in a comment is not a finding\n"
+                "TASKS = \"content://com.ratta.supernote.task.provider/tasks\"\n"
+                "SCOPE = \"https://www.googleapis.com/auth/calendar.events\"\n")
+        files = {"cli/t/src/t": tool, "cli/t/src/notes.txt": tool, "cli/t/README.md": tool}
+        self.assertEqual(self.tree(files), [("cli/t/src/t", "authority"), ("cli/t/src/t", "service")])
+        self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "authority"): 1, ("cli/t/src/t", "service"): 1}), [])
+        self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "authority"): 2, ("cli/t/src/t", "service"): 1}),
+                         [("cli/t/src/t", "authority")])
 
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({

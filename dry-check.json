@@ -161,7 +161,112 @@
   }
  },
  "twins": {
-  "rules": []
+  "rules": [
+   {
+    "rule": "Plugin Diagnostics command folder and file: MyStyle/Probe/command.json",
+    "owner": "plugins/plugin-diagnostics/src",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "MyStyle/Probe/",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Plugin Diagnostics answer line mark: SNPROBE answer",
+    "owner": "plugins/plugin-diagnostics/src",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "SNPROBE answer",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Plugin Diagnostics answer id when the command has none: unknown",
+    "owner": "plugins/plugin-diagnostics/src",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "UNKNOWN_ID = ['\\\"]unknown['\\\"]",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Plugin Diagnostics page render file: page.png in the command folder",
+    "owner": "plugins/plugin-diagnostics/src",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "page\\.png",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Plugin Diagnostics sidebar button inkctl presses: Run Command",
+    "owner": "plugins/plugin-diagnostics/src",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "Run Command['\\\"]",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Plugin Diagnostics page size in page pixels: 1920 x 2560",
+    "owner": "plugins/plugin-diagnostics/src",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "PAGE_(?:WIDTH|HEIGHT) = (?:1920|2560)\\b",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "LocalSend API path: /api/localsend/v2",
+    "owner": "plugins/device-transfer/src/localsend/protocol.ts",
+    "other": "plugins/device-transfer/native/src/com/relay/localsend",
+    "pattern": "/api/localsend/v2",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "LocalSend JSON message limit: 64 KiB",
+    "owner": "plugins/device-transfer/src/localsend/protocol.ts",
+    "other": "plugins/device-transfer/native/src/com/relay/localsend",
+    "pattern": "MAX_\\w*BYTES = 64 \\* 1024",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Account Sync native module name: BridgeFiles",
+    "owner": "plugins/account-sync/native/com/bridge/files/BridgeFilesPackage.java",
+    "other": "plugins/account-sync/src/files.ts",
+    "pattern": "['\\\"]BridgeFiles['\\\"]",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Account Sync native module name: BridgeProviders",
+    "owner": "plugins/account-sync/native/com/bridge/providers/BridgeProvidersModule.java",
+    "other": "plugins/account-sync/src/deviceReader.ts",
+    "pattern": "['\\\"]BridgeProviders['\\\"]",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Device Transfer native module name: RelayLocalSend",
+    "owner": "plugins/device-transfer/native/src/com/relay/localsend/RelayModule.java",
+    "other": "plugins/device-transfer/src/native.ts",
+    "pattern": "['\\\"]RelayLocalSend['\\\"]",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Word Lookup native module name: LookupFiles",
+    "owner": "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java",
+    "other": "plugins/word-lookup/src/profile.ts",
+    "pattern": "['\\\"]LookupFiles['\\\"]",
+    "golden": "",
+    "open": 295
+   },
+   {
+    "rule": "Word Lookup native module name: LookupImage",
+    "owner": "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java",
+    "other": "plugins/word-lookup/src/profile.ts",
+    "pattern": "['\\\"]LookupImage['\\\"]",
+    "golden": "",
+    "open": 295
+   }
+  ]
  },
  "documents": {
   "files": [
@@ -528,6 +633,158 @@
    },
    "plugins/word-lookup/tsconfig.json": {
     "Ink2Pic": 1
+   }
+  }
+ },
+ "crossTool": {
+  "languages": {
+   "counts": {
+    "apps/handwriting-language/src/com/supernotetools/lingo/Ink.java": {
+     "number": 1
+    },
+    "apps/handwriting-language/src/com/supernotetools/lingo/LanguageCycle.java": {
+     "number": 2
+    },
+    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteFile.swift": {
+     "number": 4
+    },
+    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": {
+     "number": 1
+    },
+    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/PageImage.swift": {
+     "number": 1
+    },
+    "apps/ink-notebook-editor/NoteFormat/Sources/note-render/main.swift": {
+     "number": 3
+    },
+    "apps/ink-notebook-editor/NoteFormat/Sources/note-tool/main.swift": {
+     "number": 5
+    },
+    "apps/ink-notebook-editor/Sources/InkNotebookEditor/App.swift": {
+     "number": 2
+    },
+    "apps/ink-notebook-editor/Sources/InkNotebookEditor/NotebookView.swift": {
+     "number": 8
+    },
+    "apps/ink-notebook-editor/Sources/InkNotebookEditor/OpenFromTablet.swift": {
+     "number": 6
+    },
+    "apps/ink-notebook-editor/Sources/InkNotebookEditor/StateViews.swift": {
+     "number": 1
+    },
+    "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Inkctl.swift": {
+     "path": 2
+    },
+    "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/IssueReport.swift": {
+     "url": 1
+    },
+    "packages/picture-search/native/com/ink2pic/files/Decolor.java": {
+     "number": 31
+    },
+    "packages/picture-search/native/com/ink2pic/files/FileWrites.java": {
+     "repeated": 2
+    },
+    "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesModule.java": {
+     "number": 2
+    },
+    "packages/picture-search/native/com/ink2pic/files/ThumbMeasures.java": {
+     "number": 4
+    },
+    "plugins/account-sync/native/com/bridge/providers/BridgeProvidersModule.java": {
+     "number": 2
+    },
+    "plugins/device-transfer/native/src/com/relay/localsend/Discovery.java": {
+     "number": 2
+    },
+    "plugins/device-transfer/native/src/com/relay/localsend/Identity.java": {
+     "number": 4
+    },
+    "plugins/device-transfer/native/src/com/relay/localsend/PinnedClient.java": {
+     "number": 3
+    },
+    "plugins/device-transfer/native/src/com/relay/localsend/Receiver.java": {
+     "number": 28
+    },
+    "plugins/image-editing/native/src/com/retouch/image/Retouch.java": {
+     "number": 23
+    },
+    "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": {
+     "repeated": 1
+    },
+    "plugins/plugin-diagnostics/native/src/com/probe/providers/ProbeFormat.java": {
+     "number": 2
+    },
+    "plugins/plugin-diagnostics/native/src/com/probe/providers/ProbeListener.java": {
+     "number": 3
+    },
+    "plugins/plugin-diagnostics/native/src/com/probe/providers/ProbeProvidersModule.java": {
+     "number": 5
+    }
+   },
+   "duplicates": {
+    "packages/picture-search": 3,
+    "packages/sn-adapter": 1,
+    "plugins/device-transfer": 6
+   }
+  },
+  "constants": {
+   "counts": {
+    "apps/handwriting-language/scripts/build.cjs": 3,
+    "apps/handwriting-language/scripts/host-tools.cjs": 1,
+    "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
+    "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
+    "apps/handwriting-language/src/com/supernotetools/lingo/LanguageCycle.java": 1,
+    "apps/handwriting-language/src/com/supernotetools/lingo/Switcher.java": 1,
+    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
+    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/PageImage.swift": 1,
+    "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Tablet.swift": 1,
+    "apps/inktools-bridge/scripts/build.cjs": 4,
+    "cli/inkctl/src/inkctl": 15,
+    "packages/ink-core/src/lasso.ts": 1,
+    "packages/ink-core/src/place.ts": 1,
+    "packages/native-build/host-tools.cjs": 1,
+    "packages/native-build/native-build.cjs": 1,
+    "packages/picture-search/native/com/ink2pic/files/Contour.java": 3,
+    "packages/picture-search/native/com/ink2pic/files/Decolor.java": 1,
+    "packages/picture-search/native/com/ink2pic/files/EinkPixels.java": 6,
+    "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesModule.java": 2,
+    "packages/picture-search/native/com/ink2pic/files/Ink2PicImageModule.java": 2,
+    "packages/picture-search/native/com/ink2pic/files/ThumbMeasures.java": 2,
+    "packages/picture-search/src/adapters/commons.ts": 1,
+    "packages/picture-search/src/adapters/openclipart.ts": 3,
+    "packages/picture-search/src/fetcher.ts": 3,
+    "packages/picture-search/src/insert/measure.ts": 2,
+    "packages/picture-search/src/insert/strokes.ts": 2,
+    "packages/picture-search/src/insert/thumbs.ts": 1,
+    "packages/picture-search/src/log/memory.ts": 2,
+    "packages/picture-search/src/measures.ts": 3,
+    "packages/picture-search/src/picks.ts": 1,
+    "packages/picture-search/src/search.ts": 1,
+    "packages/picture-search/src/storage/settings.ts": 1,
+    "packages/sn-adapter/src/official/elements.ts": 3,
+    "packages/sn-adapter/src/official/page.ts": 1,
+    "packages/sn-adapter/src/official/pen.ts": 1,
+    "packages/sn-adapter/src/official/storage.ts": 1,
+    "packages/ui-kit/src/problem.ts": 1,
+    "plugins/account-sync/src/settingsStore.ts": 1,
+    "plugins/device-transfer/native/src/com/relay/localsend/Receiver.java": 1,
+    "plugins/device-transfer/src/receive/receive.ts": 3,
+    "plugins/device-transfer/src/run.ts": 3,
+    "plugins/image-editing/native/src/com/retouch/image/Retouch.java": 3,
+    "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": 1,
+    "plugins/image-editing/src/edits.ts": 2,
+    "plugins/image-editing/src/working.ts": 1,
+    "plugins/plugin-diagnostics/src/helper.ts": 4,
+    "plugins/plugin-diagnostics/src/noteApi.ts": 4,
+    "plugins/real-time-conversion/src/buttons.ts": 3,
+    "plugins/real-time-conversion/src/convert.ts": 1,
+    "plugins/real-time-conversion/src/shapes.ts": 2,
+    "plugins/smart-shapes/src/geometry.ts": 1,
+    "plugins/word-lookup/src/pictures.ts": 1,
+    "plugins/word-lookup/src/textBox.ts": 2,
+    "scripts/dry_cross.py": 1,
+    "scripts/icons.py": 1,
+    "scripts/license_check.py": 1
    }
   }
  }

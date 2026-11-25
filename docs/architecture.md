@@ -113,14 +113,20 @@ does for its sources):
 - **One owner per value** ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). Device facts live in the registry, visual values in
   `ui-kit` tokens, copy in each tool's copy module, cross-language contracts in one shared file,
   plugin identity in `PluginConfig.json`; the DRY guard reads TypeScript, Java, Python and Swift,
-  and the same value in two places passes only with a registered owner.
+  and the same value in two places passes only with a registered owner: `scripts/dry_cross.py`
+  reads Java and Swift beside the Skill Deck copy `scripts/dry_check.py`, and fails a constant
+  value two tools name unless a `twins` row of `dry-check.json` names its owner; its counts only go
+  down. `scripts/plugin-version.cjs --identity` checks that each plugin's names agree, that
+  `versionCode` rises, and that the plugins pin one `react`, `react-native` and `sn-plugin-lib`.
 - **No hand-written queries or column names.** Code asks for an operation (`completedTasks()`,
   `writeEvent(event)`); only `sn-adapter` knows the authority, the table and the column names, and
   those come from `descriptor.json`, which `scripts/registry.py` writes from the registry, not
   from strings in the code.
 - **Imports go one way.** Feature logic never imports `sn-plugin-lib`, names a content provider or
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
-  ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/plugin-diagnostics` is exempt: it
+  ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). It reads inkctl too, for the provider and
+  service-host rules; inkctl's existing names are counts that only go down
+  ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). `plugins/plugin-diagnostics` is exempt: it
   exists to call internals directly.
 - **The highest dependency level that serves.** As with high-level and low-level languages,
   level 1 is the highest and level 5 the lowest. Use the highest level that delivers the outcome at

@@ -24,6 +24,11 @@ The rules are `docs/architecture.md` › Layer rules:
   `@ink-tools/ui-kit` (#273). The files that still do are `PENDING_CONTROLS`, which #274 empties: a
   listed file that no longer draws one is a finding too, so the list only shrinks.
 
+The host tools' Python under `cli/<tool>/src/` (inkctl is one extensionless file, read by its `#!`
+line, #295) is read for `authority`, `service` and `dictionary`. The values inkctl still names when
+this landed are `PENDING_HOST` counts, which #295's value moves lower: a count above its row names
+each line, and a count below it is a finding too, so the counts only go down.
+
 `plugins/plugin-diagnostics/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
@@ -62,6 +67,14 @@ PENDING_CONTROLS = frozenset({
     "plugins/word-lookup/src/ui/ChooseScreen.tsx",
 })
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
+PYTHON_COMMENT = re.compile(r"^\s*#")
+HOST_TOOL = re.compile(r"^cli/[^/]+/src/")
+PYTHON = ".py"
+# The (path, rule) counts inkctl held when boundaries.py first read it (#295); they only go down.
+PENDING_HOST = {
+    ("cli/inkctl/src/inkctl", "authority"): 2,
+    ("cli/inkctl/src/inkctl", "service"): 2,
+}
 
 
 def code_files(root):
@@ -75,6 +88,20 @@ def code_files(root):
                     stack.append(entry)
             elif entry.suffix in SCRIPT | NATIVE:
                 yield entry.relative_to(root).as_posix(), entry.suffix
+            elif HOST_TOOL.match(entry.relative_to(root).as_posix()) and is_python(entry):
+                yield entry.relative_to(root).as_posix(), PYTHON
+
+
+def is_python(path):
+    """A `.py` file, or an extensionless one whose `#!` line names Python."""
+    if path.suffix:
+        return path.suffix == PYTHON
+    try:
+        with open(path, "rb") as handle:
+            first = handle.readline().decode("utf-8", "replace")  # a host tool's source: a short first line
+    except OSError:
+        return False
+    return first.startswith("#!") and "python" in first
 
 
 def is_test(rel):
@@ -88,11 +115,48 @@ def own_controls(rel, lines):
             for pattern, text in OWN_CONTROLS if pattern.search(line)]
 
 
-def findings(root, pending=PENDING_CONTROLS):
+def host_findings(rel, lines):
+    """[(path, line number, rule, text)] for each Supernote provider or service host a host tool names."""
+    found = []
+    for number, line in enumerate(lines, 1):
+        if PYTHON_COMMENT.match(line):
+            continue
+        for pattern, rule, text in (
+            (AUTHORITY, "authority", "names the provider %s outside sn-adapter"),
+            (HOST, "service", "names the service host %s outside sync-core"),
+            (DICTIONARY_HOST, "dictionary", "names the dictionary host %s outside ink-core"),
+        ):
+            hit = pattern.search(line)
+            if hit:
+                found.append((rel, number, rule, text % hit.group(0)))
+    return found
+
+
+def host_ratchet(found, pending):
+    """The host tools' findings above their `PENDING_HOST` count, and each count now too high."""
+    have = {}
+    for rel, _number, rule, _text in found:
+        have[(rel, rule)] = have.get((rel, rule), 0) + 1
+    out = []
+    for key in sorted(set(have) | set(pending)):
+        rel, rule = key
+        if have.get(key, 0) > pending.get(key, 0):
+            out += [item for item in found if (item[0], item[2]) == key]
+        elif have.get(key, 0) < pending.get(key, 0):
+            out.append((rel, 0, rule, "holds %d, PENDING_HOST says %d; lower it" % (have.get(key, 0), pending[key])))
+    return out
+
+
+def findings(root, pending=PENDING_CONTROLS, pending_host=None):
     """[(path, line number, rule, text)] for every broken rule under root."""
+    pending_host = PENDING_HOST if pending_host is None else pending_host
     found = []
     drawn = set()
+    host = []
     for rel, suffix in code_files(root):
+        if suffix == PYTHON:
+            host += host_findings(rel, (root / rel).read_text(encoding="utf-8", errors="replace").splitlines())
+            continue
         exempt = rel.startswith(EXEMPT)
         test = is_test(rel)
         tablet = suffix in SCRIPT and not test and bool(TABLET.match(rel))
@@ -124,6 +188,7 @@ def findings(root, pending=PENDING_CONTROLS):
                     found.append((rel, number, "dictionary", "names the dictionary host wiktionary.org outside ink-core"))
             if AUTHORITY.search(line) and not test and not rel.startswith("packages/sn-adapter/"):
                 found.append((rel, number, "authority", "names the provider %s outside sn-adapter" % AUTHORITY.search(line).group(0)))
+    found += host_ratchet(host, pending_host)
     for rel in sorted(pending - drawn):
         found.append((rel, 0, "controls", "draws no control of its own any more; remove it from PENDING_CONTROLS"))
     return sorted(found)
