@@ -5,7 +5,7 @@ import {cachedSearch} from '../src/cache';
 import {systemClock} from '../src/clock';
 import type {SourceAdapter} from '../src/adapter';
 import {PAGE_SIZE, isThin} from '../src/pages';
-import {searchAll} from '../src/search';
+import {SUPPLEMENT_GRACE_MS, searchAll} from '../src/search';
 import {searchState} from '../src/state';
 import {createContext, FetchLike} from '../src/fetcher';
 import {DEFAULT_ADAPTERS} from '../src/registry';
@@ -246,6 +246,76 @@ describe('sources of two requests and the supplement (#43)', () => {
     const pending = searchAll('soup', [twoRequests], {timeoutMs: 5000});
     await jest.advanceTimersByTimeAsync(7000);
     expect((await pending).statuses.b).toEqual({state: 'ok', count: 1});
+  });
+
+  describe('the supplement deadline (#19, D67 C)', () => {
+    /** A source answering `id`1 after `ms`, on the fake timers. */
+    const after = (name: string, ms: number): SourceAdapter => ({
+      name,
+      search: () =>
+        new Promise(resolve =>
+          setTimeout(
+            () => resolve({ok: true, value: {results: [result(`${name}1`)]}}),
+            ms,
+          ),
+        ),
+    });
+    const lines: string[] = [];
+    const options = () => ({
+      ctx: {...withFetch(jest.fn()).ctx, log: (line: string) => lines.push(line)},
+      correct: false,
+    });
+
+    it(`keeps a supplement answering within ${SUPPLEMENT_GRACE_MS} ms of the main sources`, async () => {
+      jest.useFakeTimers();
+      const pending = searchAll(
+        'soup',
+        [after('a', 600), {...after('w', 600 + SUPPLEMENT_GRACE_MS - 100), supplement: true}],
+        options(),
+      );
+      await jest.advanceTimersByTimeAsync(600 + SUPPLEMENT_GRACE_MS);
+      const outcome = await pending;
+      expect(outcome.statuses.w).toEqual({state: 'ok', count: 1});
+      expect(outcome.results.map(x => x.id).sort()).toEqual(['a1', 'w1']);
+    });
+
+    it('ends the search without a supplement still silent after the grace', async () => {
+      jest.useFakeTimers();
+      lines.length = 0;
+      let done = false;
+      const pending = searchAll(
+        'soup',
+        [after('a', 600), {...after('w', 4000), supplement: true}],
+        options(),
+      ).then(outcome => {
+        done = true;
+        return outcome;
+      });
+      await jest.advanceTimersByTimeAsync(600 + SUPPLEMENT_GRACE_MS - 1);
+      expect(done).toBe(false);
+      await jest.advanceTimersByTimeAsync(1);
+      expect(done).toBe(true);
+      const outcome = await pending;
+      expect(outcome.statuses.w).toMatchObject({state: 'failed', kind: 'timeout'});
+      expect(outcome.results.map(x => x.id)).toEqual(['a1']);
+      expect(outcome.sourceDown).toBe(false);
+      expect(lines).toContain(
+        `time source w: ${600 + SUPPLEMENT_GRACE_MS} ms, failed timeout`,
+      );
+    });
+
+    it('never cuts the main sources: the grace counts from their last answer', async () => {
+      jest.useFakeTimers();
+      const pending = searchAll(
+        'soup',
+        [after('a', 600), after('b', 3000), {...after('w', 4000), supplement: true}],
+        options(),
+      );
+      await jest.advanceTimersByTimeAsync(4000);
+      const outcome = await pending;
+      expect(outcome.statuses.b).toEqual({state: 'ok', count: 1});
+      expect(outcome.statuses.w).toEqual({state: 'ok', count: 1});
+    });
   });
 
   it('a supplement failing is no source down, and the search is still cached', async () => {

@@ -111,6 +111,12 @@ function requestCount(source: SourceAdapter, ctx: SourceContext): number {
   return typeof requests === 'function' ? requests(ctx) : requests;
 }
 
+/**
+ * How long a supplement may still answer once every main source has (#19, owner D67 C): long
+ * enough for Wikidata's usual answer, short enough to cap its slow tail of up to 40 s.
+ */
+export const SUPPLEMENT_GRACE_MS = 1500;
+
 type Pass = {outcome: SearchOutcome; suggestion?: string};
 
 type Run = {
@@ -166,21 +172,44 @@ async function searchOnce(
 ): Promise<Pass> {
   const {ctx, clock, timeoutMs} = run;
   const skipped = skippedSources(sources, run);
+  const at = clock.now();
+  const asked = sources.map((source, i) => {
+    const open = skipped[i];
+    if (open) {
+      ctx.log(`breaker: ${source.name} skipped: ${open.failure.message}`);
+      return Promise.resolve(open.failure);
+    }
+    return withTimeout(
+      source,
+      query,
+      ctx,
+      clock,
+      timeoutMs * requestCount(source, ctx),
+    );
+  });
+  // A supplement gets SUPPLEMENT_GRACE_MS more once the main sources answered, never their wait.
+  const mainAnswered = sources.some(source => !source.supplement)
+    ? Promise.all(asked.filter((_, i) => !sources[i].supplement))
+    : null;
   const outcomes = await Promise.all(
-    sources.map((source, i) => {
-      const open = skipped[i];
-      if (open) {
-        ctx.log(`breaker: ${source.name} skipped: ${open.failure.message}`);
-        return Promise.resolve(open.failure);
+    asked.map((answer, i) => {
+      const source = sources[i];
+      if (skipped[i]) {
+        return answer;
       }
-      const at = clock.now();
-      return withTimeout(
-        source,
-        query,
-        ctx,
-        clock,
-        timeoutMs * requestCount(source, ctx),
-      ).then(outcome => {
+      const settled = mainAnswered && source.supplement
+        ? mainAnswered
+            .then(() => withinLimit(answer, SUPPLEMENT_GRACE_MS, clock))
+            .then(
+              (outcome): SourceOutcome =>
+                outcome ?? {
+                  ok: false,
+                  kind: 'timeout',
+                  message: `no answer ${SUPPLEMENT_GRACE_MS} ms after the main sources`,
+                },
+            )
+        : answer;
+      return settled.then(outcome => {
         // One time line per source, as `time <step>` lines read (#88), to tell which one sets
         // the page's wait (#102); the flow logs each source's status after the search.
         ctx.log(
