@@ -84,8 +84,11 @@ reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/iss
 
 ## The Back key
 
-PluginHost leaves a plugin's full view open on Back ([`docs/supernote.md` › Plugins](../../docs/supernote.md#plugins)), so each
-view registers its own exit with `useBackKey` ([#204](https://github.com/martonpaulo/ink-tools/issues/204)).
+PluginHost leaves a plugin's full view open on Back, and on the Nomad's PluginHost the key never
+reaches the view: it hosts plugin views outside an Activity, so React Native never emits
+`hardwareBackPress` ([`docs/supernote.md` › Plugins](../../docs/supernote.md#plugins),
+[#204](https://github.com/martonpaulo/ink-tools/issues/204)). Every full view therefore keeps a visible «Close». Each view still
+registers its exit with `useBackKey`, which costs nothing and works on a host that sends the key.
 
 - `onBack` does what the view's own close or cancel button does: close the view, cancel a
   dialog, stop a receive.

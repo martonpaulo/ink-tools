@@ -243,6 +243,16 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   from its permission path did not close on Back, and Home, then opening a note, left it
   [measured, 2026-11-17, [#204](https://github.com/martonpaulo/ink-tools/issues/204)]; with its «Close» button (Image Editing beta 8) it
   closes back to Settings [measured, 2026-11-17, [#224](https://github.com/martonpaulo/ink-tools/issues/224)].
+- React Native's `hardwareBackPress`, and so `BackHandler`, never reaches a plugin view: PluginHost
+  1.00.2610150 (the Nomad's) shows every plugin's root view in one `PluginContainer`, a
+  `FrameLayout` added with `WindowManager.addView` as a `TYPE_PHONE` overlay (type 2002, flags
+  `0x520`, focusable), never in an Activity. React Native emits the event only from
+  `ReactInstanceManager.onBackPressed` or `ReactHostImpl.onBackPressed`, which only `ReactActivity`
+  and `ReactFragment` call, and no PluginHost class overrides `dispatchKeyEvent`, sets a key
+  listener or calls `onBackPressed` [observed in the decompiled APK, 2026-11-25; measured: no
+  `ReactNativeJS` line on Back, 2026-11-17 and 2026-11-25,
+  [#204](https://github.com/martonpaulo/ink-tools/issues/204)]. A full view's way out is its own
+  visible «Close»; a native key listener on the root view is untested.
 - A plugin's detail page in Settings › Apps › Plugins has a «Settings» row only when the plugin has
   a config button: on Probe's page, which has none, «Uninstall» sits where Account Sync's page has
   «Settings» (y about 920), and a blind tap there opened the uninstall dialog [measured, 2026-11-17,
