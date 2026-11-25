@@ -572,7 +572,12 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
 - Settings › Apps › Customize Sidebar lists one item per app package, by its label: the Lingo app
   shows once, «Lingo», although it has two launcher activities, and a sidebar tap opens the first
   one [measured, 2026-11-16, Lingo app 0.1.0 beta 2,
-  [#160](https://github.com/martonpaulo/ink-tools/issues/160)].
+  [#160](https://github.com/martonpaulo/ink-tools/issues/160)]. It lists an app with no activity
+  too (Ink Tools Bridge). Every install of the app, an update with the same launcher activity
+  included, drops the item until the Supernote launcher (`com.ratta.supernote.launcher`) reads
+  the apps again: `am force-stop com.ratta.supernote.launcher` brought it back each time; a
+  restart of the Settings app alone did not [measured, 2026-11-25, Handwriting Language 0.1.0 beta 5,
+  [#246](https://github.com/martonpaulo/ink-tools/issues/246)].
 
 ### What a plugin can show while a no-view action runs
 

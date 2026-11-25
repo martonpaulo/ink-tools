@@ -1,8 +1,8 @@
 package com.supernotetools.lingo;
 
 /**
- * Every visible text of the app, in English (root AGENTS.md › Product copy). The two launcher
- * labels live in the manifest, which scripts/build.cjs writes, since a manifest cannot read Java.
+ * Every visible text of the app, in English (root AGENTS.md › Product copy). The launcher
+ * label lives in the manifest, which scripts/build.cjs writes, since a manifest cannot read Java.
  * The app shows its feature name, Handwriting Language; Lingo stays its internal name (#176).
  */
 final class Copy {
@@ -12,12 +12,14 @@ final class Copy {
   static final String TITLE = "Handwriting Language";
   static final String INTRO = "Switches the handwriting recognition language of the whole tablet.";
   static final String ACTIVE = "Active language";
+  static final String SWITCH_LANGUAGE = "Switch Language";
+  static final String CLOSE = "Close";
   static final String UNKNOWN = "Unknown: the language folder holds more than one language.";
   static final String BUTTON_SECTION = "Floating button";
   static final String BUTTON_WRITING = "Only where you write: the handwriting keyboard, a note, Digest, To-Do, Email";
   static final String BUTTON_ALWAYS = "Always visible, over every app";
   static final String BUTTON_HIDDEN = "Hidden";
-  static final String BUTTON_HELP = "One tap moves to the next language. A long press opens these settings. Drag the button to move it; it stays where you leave it. The Handwriting Language entry in the sidebar switches with nothing on screen.";
+  static final String BUTTON_HELP = "One tap moves to the next language. A long press opens this screen. Drag the button to move it; it stays where you leave it. The Handwriting Language entry in the sidebar opens this screen.";
   static final String RESET_PLACE = "Reset Button Position";
   static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
   static final String WATCHER_COMMANDS =
@@ -36,7 +38,7 @@ final class Copy {
   static final String NOTIFICATION = "Handwriting Language floating button";
   static final String BUTTON_FAILED = "!";
   static final String BUTTON_DESCRIPTION = "Handwriting language %s. Tap to switch to the next language.";
-  static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language Settings.";
+  static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language from the sidebar.";
 
   static String buttonMode(ButtonRule.Mode mode) {
     switch (mode) {

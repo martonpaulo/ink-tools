@@ -14,19 +14,20 @@ and tag prefix say `handwriting-language` ([#194](https://github.com/martonpaulo
 Two surfaces ship in one build:
 
 - **A, the floating button** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
-  `ES`); one tap moves to the next, a long press opens the settings screen, a drag moves it
+  `ES`); one tap moves to the next, a long press opens the app's screen, a drag moves it
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts at the top trailing
   corner and stays where it is dragged, saved as fractions of the screen so it stays on screen
   when the screen turns (`ButtonGesture`, `ButtonPlace`); Settings' «Reset Button Position» puts it
   back. It shows only where the owner writes, or always, or never (the setting), and comes back
   after a restart of the tablet or an update of the app unless hidden.
-- **B, the launcher entry** (`SwitchActivity`, label «Lingo»): the sidebar lists it by itself; one
-  tap moves to the next language with nothing on screen.
-
-The settings screen (`SettingsActivity`, a second launcher entry «Handwriting Language Settings») shows the
-active language, the floating button's three choices and «Reset Button Position», the installed languages in the cycle and each missing
-permission with the command that grants it, and the command that turns on writing detection when
-it is off.
+- **B, the app's screen** (`SettingsActivity`, the one launcher entry, «Handwriting Language»,
+  with its icon `res/drawable/ic_launcher.xml`): the sidebar lists it by itself and opens it
+  ([#246](https://github.com/martonpaulo/ink-tools/issues/246)). It shows the title with «Close»
+  at the trailing edge (Back closes it too), the active language large with «Switch Language»,
+  the floating button's three choices and «Reset Button Position», the installed languages in the
+  cycle, each missing permission with the command that grants it, and the command that turns on
+  writing detection when it is off. The one-tap switch with nothing on screen is gone (owner,
+  2026-11-25).
 
 ## Target surface
 
@@ -43,9 +44,9 @@ The owner's choice after trying both on the tablet ([#151](https://github.com/ma
   the keyboard opens) or a listed foreground activity. An `inkctl snapshot` restarts the service,
   which then reads the windows again. Measured facts: `../../docs/supernote.md` › Handwriting
   recognition language.
-- The sidebar entry stays: the tablet lists one entry per app by itself. The settings screen opens from
-  a long press on the floating button, an entry the tablet shows, since the second
-  launcher entry never appears in the sidebar ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
+- The sidebar entry stays: the tablet lists one entry per app by itself, and it opens the app's
+  screen ([#246](https://github.com/martonpaulo/ink-tools/issues/246)), as a long press on the
+  floating button does. The build fails unless the APK has its icon and exactly one launcher entry.
 - No other tool shows the active language: the button already does.
 
 ## How the switch works
@@ -100,17 +101,18 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 - Logic with no Android import goes in `ButtonGesture`, `ButtonPlace`, `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
 - All visible copy is in `Copy.java`; the e-ink look (black on white, a black outline, 64 dp
-  targets, no animation) in `Ink.java`. The two launcher labels live in the manifest that
+  targets, no animation) in `Ink.java`. The launcher label lives in the manifest that
   `scripts/build.cjs` writes.
-- No XML layouts: the views are built in code. The one resource is `WritingWatcher`'s
-  configuration, which `scripts/build.cjs` writes and compiles, since window reading can be
-  declared only there ([#195](https://github.com/martonpaulo/ink-tools/issues/195)).
+- No XML layouts: the views are built in code. The two resources are the icon,
+  `res/drawable/ic_launcher.xml` (a vector, [#246](https://github.com/martonpaulo/ink-tools/issues/246)), and `WritingWatcher`'s configuration, which
+  `scripts/build.cjs` writes and compiles, since window reading can be declared only there
+  ([#195](https://github.com/martonpaulo/ink-tools/issues/195)).
 
 ## Versioning and signing
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.3` gives the `versionName` `0.1.0 beta 3` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.5` gives the `versionName` `0.1.0 beta 5` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.

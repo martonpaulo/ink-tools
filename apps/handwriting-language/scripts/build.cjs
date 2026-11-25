@@ -95,16 +95,9 @@ function manifest(file, {versionCode, versionName: name}) {
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <application android:label="Handwriting Language" android:allowBackup="false" android:hasCode="true">
-    <activity android:name=".SwitchActivity" android:label="Handwriting Language" android:exported="true"
-        android:theme="@android:style/Theme.NoDisplay" android:excludeFromRecents="true"
-        android:noHistory="true" android:taskAffinity="${PACKAGE}.switch">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
-    </activity>
-    <activity android:name=".SettingsActivity" android:label="Handwriting Language Settings" android:exported="true"
+  <application android:label="Handwriting Language" android:icon="@drawable/ic_launcher"
+      android:allowBackup="false" android:hasCode="true">
+    <activity android:name=".SettingsActivity" android:label="Handwriting Language" android:exported="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar" android:launchMode="singleTask">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -136,11 +129,12 @@ function manifest(file, {versionCode, versionName: name}) {
 }
 
 /**
- * The one resource: WritingWatcher's configuration (#195). Window reading
- * (canRetrieveWindowContent, flagRetrieveInteractiveWindows) can be declared only in this XML,
- * never from code, so the build compiles this single file; the views stay in code.
+ * The two resources: the icon, res/drawable/ic_launcher.xml (#246), and WritingWatcher's
+ * configuration (#195), written here. Window reading (canRetrieveWindowContent,
+ * flagRetrieveInteractiveWindows) can be declared only in that XML, never from code; the views
+ * stay in code.
  */
-function watcherConfig(work, aapt2) {
+function resources(work, aapt2) {
   const folder = path.join(work, 'res', 'xml');
   fs.mkdirSync(folder, {recursive: true});
   const file = path.join(folder, 'writing_watcher.xml');
@@ -158,7 +152,24 @@ function watcherConfig(work, aapt2) {
   const compiled = path.join(work, 'compiled');
   fs.mkdirSync(compiled);
   run(aapt2, ['compile', '-o', compiled, file]);
+  run(aapt2, ['compile', '-o', compiled, path.join(root, 'res', 'drawable', 'ic_launcher.xml')]);
   return fs.readdirSync(compiled).map(name => path.join(compiled, name));
+}
+
+/**
+ * What is wrong with the APK's `aapt2 dump badging` output (#246): the app needs its icon, and
+ * exactly one launcher entry, since the sidebar lists one entry per app (#160).
+ */
+function badgingProblems(badging) {
+  const problems = [];
+  if (!/^application-icon-\d+:'[^']+'$/m.test(badging) && !/^application: .*icon='[^']+'/m.test(badging)) {
+    problems.push('no application icon');
+  }
+  const launchers = (badging.match(/^launchable-activity:/gm) || []).length;
+  if (launchers !== 1) {
+    problems.push(`${launchers} launcher entries, not 1`);
+  }
+  return problems;
 }
 
 function signingKey() {
@@ -200,7 +211,7 @@ function buildApk() {
   run(t.aapt2, [
     'link', '--manifest', manifestFile, '-I', t.androidJar,
     '--min-sdk-version', MIN_API, '--target-sdk-version', TARGET_API, '-o', unsigned,
-    ...watcherConfig(work, t.aapt2),
+    ...resources(work, t.aapt2),
   ]);
   run('zip', ['-q', '-j', unsigned, path.join(dex, 'classes.dex')]);
   const aligned = path.join(work, 'aligned.apk');
@@ -214,7 +225,12 @@ function buildApk() {
     '--ks-pass', `pass:${KEY_PASS}`, '--key-pass', `pass:${KEY_PASS}`, '--out', apk, aligned,
   ]);
   run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'verify', apk]);
-  run(t.aapt2, ['dump', 'badging', apk]);
+  const badging = execFileSync(t.aapt2, ['dump', 'badging', apk], {cwd: root, encoding: 'utf8'});
+  process.stdout.write(badging);
+  const problems = badgingProblems(badging);
+  if (problems.length > 0) {
+    throw new Error(`lingo-app: ${problems.join('; ')}`);
+  }
   fs.rmSync(work, {recursive: true, force: true});
   console.log(`lingo-app: ${path.relative(root, apk)} ${fs.statSync(apk).size} bytes, ${info.versionName} (${info.versionCode})`);
   return apk;
@@ -232,9 +248,29 @@ function test() {
     for (const name of TESTS) {
       run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${name}`]);
     }
+    testBadging();
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
   }
+}
+
+/** The badging rule over synthetic `aapt2 dump badging` lines (#246). */
+function testBadging() {
+  const app = "application: label='Handwriting Language' icon='res/drawable/ic_launcher.xml'";
+  const launcher = "launchable-activity: name='com.supernotetools.lingo.SettingsActivity'";
+  const cases = [
+    [[app, launcher], []],
+    [["application: label='Handwriting Language'", launcher], ['no application icon']],
+    [[app, launcher, launcher], ['2 launcher entries, not 1']],
+    [[app], ['0 launcher entries, not 1']],
+  ];
+  for (const [lines, expected] of cases) {
+    const found = badgingProblems(lines.join('\n'));
+    if (JSON.stringify(found) !== JSON.stringify(expected)) {
+      throw new Error(`badging rule: ${JSON.stringify(lines)} gave ${JSON.stringify(found)}`);
+    }
+  }
+  console.log('badging rule ok');
 }
 
 if (require.main === module) {
@@ -254,4 +290,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {buildApk, test};
+module.exports = {badgingProblems, buildApk, test};

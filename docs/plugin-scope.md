@@ -90,7 +90,7 @@ paragraph or a whole page.
 
 ## Lingo app
 
-Shown on the tablet as **Handwriting Language**, with «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
+Shown on the tablet as **Handwriting Language** ([#176](https://github.com/martonpaulo/ink-tools/issues/176)), one screen opened from the sidebar ([#246](https://github.com/martonpaulo/ink-tools/issues/246)).
 
 A sideloaded Android app, not a plugin, under `apps/handwriting-language/`: it switches the handwriting
 recognition language of the whole tablet with one tap, so lasso convert, plugin recognition and the

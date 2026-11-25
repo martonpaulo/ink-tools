@@ -23,17 +23,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The one settings screen: the active language, where the floating button shows (and a reset of
- * where it sits, #244), the languages
- * in the cycle, and any missing permission or service with the command that turns it on.
- * A long press on the floating button opens it, since the sidebar lists only the first entry. Built in code (no XML
- * resources, so the light build needs no resource step); black on white, no animation.
+ * The app's one screen (#246), opened from the sidebar, the floating button's long press and the
+ * system's app preferences: the title with «Close», the active language with «Switch Language»,
+ * where the floating button shows (and a reset of where it sits, #244), the languages in the
+ * cycle, and any missing permission or service with the command that turns it on. Built in code;
+ * black on white, no animation.
  *
  * Extras, for a device round over ADB: `--es button writing|always|hidden` sets the floating
  * button (ButtonRule.Mode keys).
  */
 public final class SettingsActivity extends Activity {
-  static final String EXTRA_ERROR = "error";
   static final String EXTRA_BUTTON = "button";
   private static final String FILES_OP = "MANAGE_EXTERNAL_STORAGE";
   private static final String OVERLAY_OP = "SYSTEM_ALERT_WINDOW";
@@ -70,9 +69,6 @@ public final class SettingsActivity extends Activity {
   }
 
   private void readExtras(Intent intent) {
-    if (intent.hasExtra(EXTRA_ERROR)) {
-      error = intent.getStringExtra(EXTRA_ERROR);
-    }
     if (intent.hasExtra(EXTRA_BUTTON)) {
       setButton(ButtonRule.mode(intent.getStringExtra(EXTRA_BUTTON)));
     }
@@ -81,7 +77,7 @@ public final class SettingsActivity extends Activity {
   /** Rebuilt on each resume, since a permission may have changed in between. */
   private void render() {
     page.removeAllViews();
-    text(Copy.TITLE, Ink.TITLE_SP, true);
+    titleRow();
     text(Copy.INTRO, Ink.TEXT_SP, false);
     if (error != null) {
       section(Copy.SWITCH_FAILED);
@@ -97,11 +93,15 @@ public final class SettingsActivity extends Activity {
     List<String> installed = null;
     try {
       String active = Switcher.current();
-      text(active == null ? Copy.UNKNOWN : LanguageCycle.name(active) + "  (" + active + ")", Ink.TEXT_SP, false);
+      text(active == null ? Copy.UNKNOWN : LanguageCycle.name(active) + "  (" + active + ")", Ink.TITLE_SP, true);
       installed = Switcher.installed();
     } catch (IOException readError) {
       text(files ? readError.getMessage() : Copy.FILES_OFF, Ink.TEXT_SP, false);
     }
+
+    Button next = button(Copy.SWITCH_LANGUAGE);
+    next.setEnabled(files);
+    next.setOnClickListener(view -> switchLanguage());
 
     Prefs prefs = new Prefs(this);
     section(Copy.BUTTON_SECTION);
@@ -145,6 +145,38 @@ public final class SettingsActivity extends Activity {
     } catch (PackageManager.NameNotFoundException impossible) {
       throw new IllegalStateException(impossible);
     }
+  }
+
+  /** The title at the leading edge and «Close» at the trailing edge of one line (#246; D69 A). */
+  private void titleRow() {
+    LinearLayout row = new LinearLayout(this);
+    row.setOrientation(LinearLayout.HORIZONTAL);
+    row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+    TextView title = new TextView(this);
+    title.setText(Copy.TITLE);
+    title.setTextColor(Ink.INK);
+    title.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.TITLE_SP);
+    title.setTypeface(Typeface.DEFAULT_BOLD);
+    title.setAccessibilityHeading(true);
+    row.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+    Button close = outlined(Copy.CLOSE);
+    close.setOnClickListener(view -> finish());
+    int pad = Ink.px(this, Ink.GAP_DP);
+    close.setPadding(pad, 0, pad, 0);
+    row.addView(close, new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    add(row);
+  }
+
+  /** «Switch Language»: the next language in the cycle, as a tap on the floating button does. */
+  private void switchLanguage() {
+    try {
+      Switcher.next(this, "screen");
+      error = null;
+    } catch (IOException switchError) {
+      error = switchError.getMessage();
+    }
+    render();
   }
 
   private void setButton(ButtonRule.Mode mode) {
@@ -221,6 +253,13 @@ public final class SettingsActivity extends Activity {
 
   /** A full-width outlined button, the e-ink look. */
   private Button button(String label) {
+    Button view = outlined(label);
+    add(view);
+    return view;
+  }
+
+  /** An outlined button, the e-ink look, not yet placed. */
+  private Button outlined(String label) {
     Button view = new Button(this);
     view.setText(label);
     view.setAllCaps(false);
@@ -229,7 +268,6 @@ public final class SettingsActivity extends Activity {
     view.setBackground(Ink.box(this, false, 0));
     view.setStateListAnimator(null);
     view.setMinHeight(Ink.px(this, Ink.TARGET_DP));
-    add(view);
     return view;
   }
 
