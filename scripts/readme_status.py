@@ -8,9 +8,8 @@ source. Every table in README.md, Markdown or HTML with one row per line, whose 
 them; `&nbsp;` may stand for any space, to keep the status on one line. A cell may wrap the value in one link, to the piece's releases (owner, 2026-11-25), and holds nothing else. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
 cell, 2 when AGENTS.md has no values line or README.md has no Status table.
 
-A table with no Status column may hold each row's status at the end of its Name cell, after a blank
-line (`<br><br>`), below the piece's kind (owner, 2026-11-25); a row whose Name cell shows an icon
-must end that way.
+A table with no Status column holds each row's status as the emoji of one value, before the name in
+the Name cell (owner, 2026-11-25); a row whose Name cell shows an icon must have one.
 """
 import argparse
 import re
@@ -73,9 +72,10 @@ def bad_cells(readme_text, values):
             if "<img" not in row[0]:
                 continue
             found = True
-            cell = row[0].rsplit("<br><br>", 1)[-1] if "<br><br>" in row[0] else row[0]
-            if status_value(cell) not in values:
-                bad.append((number, cell))
+            text = re.sub(r"^.*?</p>", "", row[0])
+            dot = text.replace("&nbsp;", " ").split(" ", 1)[0]
+            if dot not in {value.split(" ", 1)[0] for value in values}:
+                bad.append((number, dot))
             continue
         found = True
         if set(row[-1]) <= set(":- "):

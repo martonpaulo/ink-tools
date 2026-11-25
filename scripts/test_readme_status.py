@@ -66,12 +66,12 @@ class Vocabulary(unittest.TestCase):
         html = '<table>\n  <tr><th>Name</th><th>What it does</th></tr>\n  <tr><td><b>A</b> (app)</td><td>x</td></tr>\n</table>\n'
         self.assertEqual(readme_status.bad_cells(html, ["🟡 Beta"]), (False, []))
 
-    def test_a_status_under_the_name_passes(self):
+    def test_a_status_dot_before_the_name_passes(self):
         # The Tools table holds each status at the end of its Name cell (owner, 2026-11-25).
-        row = '<td align="center"><p align="center"><img src="i.png"></p><b>A</b><br>(plugin)<br><br>{}</td>'
+        row = '<td align="center"><p align="center"><img src="i.png"></p>{}&nbsp;<a href="r"><b>A</b></a><br>(plugin)</td>'
         html = '<table>\n  <tr><th>Name</th><th>What it does</th></tr>\n  <tr>' + row + '<td>x</td></tr>\n</table>\n'
-        self.assertEqual(readme_status.bad_cells(html.format("🟡&nbsp;Beta"), ["🟡 Beta"]), (True, []))
-        self.assertEqual(readme_status.bad_cells(html.format("Beta soon"), ["🟡 Beta"]), (True, [(3, "Beta soon")]))
+        self.assertEqual(readme_status.bad_cells(html.format("🟡"), ["🟡 Beta"]), (True, []))
+        self.assertEqual(readme_status.bad_cells(html.format("🟣"), ["🟡 Beta"]), (True, [(3, "🟣")]))
 
     def test_a_table_without_status_is_ignored(self):
         self.assertEqual(readme_status.bad_cells("| A | B |\n| :--- | :--- |\n| x | y |\n", ["🟡 Beta"]), (False, []))

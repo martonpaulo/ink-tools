@@ -116,8 +116,8 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 - README: the recorded `Display name` is the H1. Links to the live project are allowed. The rest
   follows `bench-project-standards`'s `references/public-surface-style.md`.
 - README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `⚫ Internal`.
-  Each status in the README Tools table, at the end of the Name cell below the kind, is exactly one of them, with no issue link, progress
-  note or device note; its word may link to the piece's own releases, the emoji stays outside the link (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
+  In the README Tools table each status is the emoji of one of them, before the name in the Name cell, with a legend under the table;
+  the name links to the piece's own releases when it has them (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
   `scripts/readme_status.py` checks it in the `docs` gate.
 - Every fenced code block you create or materially edit has an explicit language identifier.
 - Never mark an API, a flag or a behaviour `implemented` without running it. Fix or drop a broken script; never ship it documented as working.
