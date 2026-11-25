@@ -4,7 +4,9 @@
  * Position closes a word, not time alone: on the owner's tablet the pauses inside a word (130 to
  * 656 ms) and between words (578 to 1122 ms) overlap (Ink2Pic brief › 8.11 The last word). Every
  * distance is a ratio of the writer's own letter height and letter gaps, as Ink2Pic's grouping
- * measured; the clock is passed in, so the rule runs with no timer.
+ * measured; the clock is passed in, so the rule runs with no timer. A stroke's own pen times
+ * (`Stroke.recognPoints`, #296) add one signal beside position, never alone: a long pause before a
+ * stroke closes the word only when its gap is already wider than a letter gap.
  */
 import type {Rect} from '@ink-tools/ink-core';
 
@@ -17,6 +19,8 @@ export type InkStroke<E = unknown> = {
   points: Point[];
   /** The host's element, handed on to recognition and freed after. */
   element?: E;
+  /** When the pen drew it, from its recognition points; absent when the host gave none (#296). */
+  times?: {startedAt: number; endedAt: number};
 };
 
 /** A finished word: its strokes in writing order, their bounds and the line's letter height. */
@@ -54,8 +58,14 @@ export const LETTER_GAP_SHARE = 0.8;
 export const MARK_SIDE_SHARE = 0.5;
 /** The letters a line's measures are taken from: the newest ones. */
 export const LINE_MEMORY = 30;
+/**
+ * A pen-up pause at least this long, in the host's stroke time unit, counts toward a word end
+ * (#296): longer than the 656 ms pause measured inside a word (brief › 8.11) [inference: the unit
+ * is ms; the device round reads it].
+ */
+export const WORD_PAUSE_MS = 700;
 
-type Open<E> = {strokes: InkStroke<E>[]; rect: Rect; lastAt: number};
+type Open<E> = {strokes: InkStroke<E>[]; rect: Rect; lastAt: number; endedAt?: number};
 type Pending<E> = {word: Open<E>; closedAt: number; letterHeight: number};
 
 export function rectOf(points: readonly Point[]): Rect | null {
@@ -221,7 +231,7 @@ export class WordTracker<E = unknown> {
       const gap = stroke.rect.left - this.open.rect.right;
       const back = this.open.rect.left - stroke.rect.right;
       const wordGap = this.wordGap();
-      if (gap >= wordGap || back >= wordGap) {
+      if (gap >= wordGap || back >= wordGap || this.pausedApart(stroke, gap)) {
         this.close(now);
       } else if (gap > 0 && gap <= LETTER_GAP_SHARE * this.letterHeight()) {
         this.gaps.push(gap);
@@ -232,10 +242,27 @@ export class WordTracker<E = unknown> {
       this.open.strokes.push(stroke);
       this.open.rect = union(this.open.rect, stroke.rect);
       this.open.lastAt = now;
+      this.open.endedAt = stroke.times?.endedAt;
     } else {
-      this.open = {strokes: [stroke], rect: stroke.rect, lastAt: now};
+      this.open = {strokes: [stroke], rect: stroke.rect, lastAt: now, endedAt: stroke.times?.endedAt};
     }
     return ready;
+  }
+
+  /**
+   * The second signal (#296): a gap wider than a letter gap, though under the word gap, with a pen
+   * pause of at least WORD_PAUSE_MS since the open word's last stroke ended. Without both strokes'
+   * times it is false, so the rule is position alone.
+   */
+  private pausedApart(stroke: InkStroke<E>, gap: number): boolean {
+    const endedAt = this.open?.endedAt;
+    if (endedAt === undefined || stroke.times === undefined) {
+      return false;
+    }
+    return (
+      gap > LETTER_GAP_SHARE * this.letterHeight() &&
+      stroke.times.startedAt - endedAt >= WORD_PAUSE_MS
+    );
   }
 
   /** The words finished by `now`: a waiting word past its grace, an open word past the idle time. */

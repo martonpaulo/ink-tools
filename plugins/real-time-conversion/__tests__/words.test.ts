@@ -101,3 +101,52 @@ test('Wide spacing keeps a gap together that Normal splits', () => {
   expect(normal.tick(700 + graceMs)).toHaveLength(1);
   expect(wide.tick(700 + graceMs)).toHaveLength(0);
 });
+
+describe('the pen pause beside position (#296)', () => {
+  /** A letter with its pen times: drawn in 100 ms, starting `startedAt`. */
+  const timed = (left: number, startedAt: number) => ({
+    ...letter(left),
+    times: {startedAt, endedAt: startedAt + 100},
+  });
+  // Wide spacing: the word gap is 1.4 × 0.8 × 40 = 44.8 px, the letter gap at most 32 px, so a
+  // 40 px gap is neither, and position alone keeps it in the word.
+  const wide = {...DEFAULT_WORD_OPTIONS, spacing: 1.4};
+
+  test('a gap wider than a letter gap with a long pause closes the word', () => {
+    const tracker = new WordTracker(wide);
+    tracker.add(timed(0, 0), 100);
+    tracker.add(timed(30, 200), 300);
+    // 40 px after the second letter (right edge 50), drawn 800 ms after it ended.
+    tracker.add(timed(90, 1100), 1200);
+    const [first] = tracker.tick(1200 + graceMs);
+    expect(first.strokes).toHaveLength(2);
+  });
+
+  test('the same gap with a short pause stays in the word', () => {
+    const tracker = new WordTracker(wide);
+    tracker.add(timed(0, 0), 100);
+    tracker.add(timed(30, 200), 300);
+    tracker.add(timed(90, 500), 600);
+    expect(tracker.tick(600 + graceMs)).toEqual([]);
+    expect(tracker.tick(600 + idleMs)[0].strokes).toHaveLength(3);
+  });
+
+  test('without pen times the rule is position alone', () => {
+    const tracker = new WordTracker(wide);
+    tracker.add(letter(0), 100);
+    tracker.add(letter(30), 300);
+    tracker.add(letter(90), 1200);
+    expect(tracker.tick(1200 + graceMs)).toEqual([]);
+    expect(tracker.tick(1200 + idleMs)[0].strokes).toHaveLength(3);
+  });
+
+  test('a long pause alone never splits letter gaps', () => {
+    const tracker = new WordTracker(wide);
+    tracker.add(timed(0, 0), 100);
+    // 1500 ms pauses, under the idle time, with 10 px letter gaps.
+    tracker.add(timed(30, 1600), 1700);
+    tracker.add(timed(60, 3200), 3300);
+    expect(tracker.tick(3300 + graceMs)).toEqual([]);
+    expect(tracker.tick(3300 + idleMs)[0].strokes).toHaveLength(3);
+  });
+});

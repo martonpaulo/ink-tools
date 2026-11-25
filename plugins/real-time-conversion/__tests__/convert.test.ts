@@ -207,3 +207,39 @@ test('a word kept before recognition logs its stroke heights, numbers only', asy
   await converter.idle();
   expect(tablet.logs).toContain('kept: tall, 2 strokes, heights 40,300 px');
 });
+
+describe('pen times (#296)', () => {
+  const wide = {...DEFAULT_WORD_OPTIONS, spacing: 1.4};
+  const timed = (left: number, startedAt: number) => ({
+    ...letter(left),
+    times: {startedAt, endedAt: startedAt + 100},
+  });
+
+  test('a long pause before a wide gap splits two words, and the first times are logged once', async () => {
+    const tablet = fakeTablet('ab');
+    const converter = new Converter(tablet.host, wide);
+    converter.start();
+    tablet.penUp(timed(0, 0), 100);
+    tablet.penUp(timed(30, 200), 300);
+    tablet.penUp(timed(90, 1100), 1200);
+    await tablet.advance(1200 + wide.idleMs);
+    await converter.idle();
+    expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(2);
+    expect(tablet.logs.filter(line => line.startsWith('times:'))).toEqual([
+      'times: first 0 to 100, read in 0 ms',
+    ]);
+  });
+
+  test('strokes with no times are one word by position alone, and that is logged', async () => {
+    const tablet = fakeTablet('abc');
+    const converter = new Converter(tablet.host, wide);
+    converter.start();
+    tablet.penUp(letter(0), 100);
+    tablet.penUp(letter(30), 300);
+    tablet.penUp(letter(90), 1200);
+    await tablet.advance(1200 + wide.idleMs);
+    await converter.idle();
+    expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(1);
+    expect(tablet.logs).toContain('times: none filled, read in 0 ms: position alone');
+  });
+});

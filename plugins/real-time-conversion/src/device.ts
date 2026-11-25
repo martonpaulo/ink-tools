@@ -16,6 +16,7 @@ import {
   recycleElement,
   saveStroke,
   strokePoints,
+  strokeTimes,
 } from '@ink-tools/sn-adapter/official';
 import type {ConvertHost} from './convert';
 import type {LassoConvertHost} from './lasso';
@@ -26,6 +27,7 @@ const log = (line: string) => console.log(`RealTimeConversion: ${line}`);
 export const DEVICE_CONVERT: ConvertHost = {
   onPenUp,
   strokePoints,
+  strokeTimes,
   saveStroke,
   recycleElement,
   getCurrentFilePath,

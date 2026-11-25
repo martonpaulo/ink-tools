@@ -16,6 +16,8 @@ export type FakeElement = {
   type: number;
   numInPage?: number;
   points?: {x: number; y: number}[];
+  /** The pen times a pen-up element carries (#296); none when absent. */
+  times?: {startedAt: number; endedAt: number};
   textBox?: {textRect: object; textContentFull: string};
 };
 
@@ -65,6 +67,7 @@ export function fakeTablet(answer = 'café') {
       });
     }),
     strokePoints: jest.fn(async element => ok((element as FakeElement).points ?? [])),
+    strokeTimes: jest.fn(async element => ok((element as FakeElement).times ?? null)),
     saveStroke: jest.fn(async element =>
       ok<SavedStroke>({
         points: (element as FakeElement).points ?? [],
@@ -150,7 +153,9 @@ export function fakeTablet(answer = 'café') {
       const element: FakeElement = {uuid: `page-${stroke.id}`, type: 0, points: pagePoints};
       page.push(element);
       renumber();
-      listener?.([{uuid: stroke.id, type: 0, points: stroke.points}]);
+      listener?.([
+        {uuid: stroke.id, type: 0, points: stroke.points, ...(stroke.times ? {times: stroke.times} : {})},
+      ]);
     },
     /** Moves the clock, running each timer that falls due. */
     async advance(to: number) {

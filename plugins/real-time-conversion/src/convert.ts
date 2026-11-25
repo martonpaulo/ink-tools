@@ -15,6 +15,7 @@ import {
   ok,
   type Result,
   type SavedStroke,
+  type StrokeTimes,
   type TextBoxInput,
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
@@ -36,6 +37,12 @@ export const CHAR_WIDTH = 0.55;
  */
 export const LOG_PEN_UP_UNIT = true;
 
+/**
+ * Logs, once per mode start, the first pen-up stroke's pen times and how long their read took, so
+ * the device round names their unit and read cost (#296). On until that round.
+ */
+export const LOG_STROKE_TIMES = true;
+
 /** The fields of a host element this module reads. */
 export type HostElement = {uuid?: string; type?: number; numInPage?: number};
 
@@ -43,6 +50,8 @@ export type HostElement = {uuid?: string; type?: number; numInPage?: number};
 export type ConvertHost = {
   onPenUp(listener: (elements: object[]) => void): Result<() => void>;
   strokePoints(element: object): Promise<Result<Point[]>>;
+  /** The stroke's pen times from its recognition points; null when the host filled none (#296). */
+  strokeTimes(element: object): Promise<Result<StrokeTimes | null>>;
   saveStroke(element: object): Promise<Result<SavedStroke>>;
   recycleElement(element: object): Promise<Result<true>>;
   getCurrentFilePath(): Promise<Result<string>>;
@@ -95,6 +104,7 @@ export class Converter {
   private emr: EmrRange | null = null;
   private unitLogged = false;
   private matchLogged = false;
+  private timesLogged = false;
   /** When the last stroke whose points could not be read came, or a stroke kept after it (#229). */
   private unreadAt: number | null = null;
 
@@ -123,6 +133,7 @@ export class Converter {
     this.unreadAt = null;
     this.unitLogged = false;
     this.matchLogged = false;
+    this.timesLogged = false;
     return ok(true);
   }
 
@@ -182,10 +193,38 @@ export class Converter {
         this.free([element]);
         continue;
       }
-      const stroke: InkStroke<object> = {id: uuid, rect, points: points.value, element};
+      const times = await this.readTimes(element);
+      const stroke: InkStroke<object> = {
+        id: uuid,
+        rect,
+        points: points.value,
+        element,
+        ...(times ? {times} : {}),
+      };
       this.handOn(this.tracker.add(stroke, at));
     }
     this.schedule();
+  }
+
+  /**
+   * The stroke's pen times, a second word-end signal beside position (#296); a failed or empty read
+   * leaves the stroke to position alone, and is logged once per mode start with the first answer.
+   */
+  private async readTimes(element: object): Promise<StrokeTimes | null> {
+    const started = this.host.now();
+    const times = await this.host.strokeTimes(element);
+    if (LOG_STROKE_TIMES && !this.timesLogged) {
+      this.timesLogged = true;
+      const ms = this.host.now() - started;
+      this.host.log(
+        !times.ok
+          ? `times: ${times.message} in ${ms} ms: position alone`
+          : times.value
+          ? `times: first ${times.value.startedAt} to ${times.value.endedAt}, read in ${ms} ms`
+          : `times: none filled, read in ${ms} ms: position alone`,
+      );
+    }
+    return times.ok ? times.value : null;
   }
 
   /** Whether `at` comes within the idle time of a stroke whose points could not be read (#229). */
