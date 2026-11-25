@@ -436,6 +436,7 @@ export function reorderByMeasures(
   query = '',
   converted: ReadonlySet<string> = new Set(),
   photos = false,
+  scores: BaseScores = baseScores(results, query, photos),
 ): SearchResult[] {
   if (measures.size === 0) {
     return [...results];
@@ -449,10 +450,8 @@ export function reorderByMeasures(
     .map((result, order) => ({
       result,
       order,
-      score: total(result, intent, [
-        ...(photos ? PHOTO_SCORERS : DEFAULT_SCORERS),
-        pixels,
-      ]),
+      // The same sum as `total` over the scorers and `pixels`, in the same order.
+      score: scores(result) + pixels(result, intent),
     }))
     .sort((a, b) => b.score - a.score || a.order - b.order)
     .map(entry => entry.result);
@@ -515,6 +514,7 @@ export function orderMeasured(
   prepared: ReadonlyMap<string, Prepared>,
   query: string,
   photos = false,
+  scores?: BaseScores,
 ): SearchResult[] {
   const measures = new Map<string, Measures>();
   const converted = new Set<string>();
@@ -530,8 +530,35 @@ export function orderMeasured(
     query,
     converted,
     photos,
+    scores,
   );
   return dropNearDuplicates(ordered, measures);
+}
+
+/** A result's score from its text and source alone, before any pixel term (`total`). */
+export type BaseScores = (result: SearchResult) => number;
+
+/**
+ * Each result's `total` over the scorers, computed once and kept (#19): the text scorers cost
+ * about 120 ms per pass over page 1 on the tablet, and «Insert best picture» asks for the order
+ * after every thumbnail. Pass the same `results`, `query` and `photos` to every call it serves.
+ */
+export function baseScores(
+  results: readonly SearchResult[],
+  query: string,
+  photos = false,
+): BaseScores {
+  const intent = intentFor(query, results);
+  const scorers = photos ? PHOTO_SCORERS : DEFAULT_SCORERS;
+  const kept = new Map<SearchResult, number>();
+  return result => {
+    let score = kept.get(result);
+    if (score === undefined) {
+      score = total(result, intent, scorers);
+      kept.set(result, score);
+    }
+    return score;
+  };
 }
 
 /**
@@ -570,6 +597,7 @@ export function leaderDecided(
    * with nobody. Pass `keptInMode`'s rule, which reads the result too (#169).
    */
   fits?: (result: SearchResult, measures: Measures) => boolean,
+  scores: BaseScores = baseScores(results, query, photos),
 ): boolean {
   const head = results.slice(0, MEASURED_RESULTS);
   if (head.length === 0) {
@@ -584,13 +612,11 @@ export function leaderDecided(
     // Its own measure still sets its look, and so what is inserted.
     return !pending.has(head[0].id);
   }
-  const intent = intentFor(query, results);
-  const scorers = photos ? PHOTO_SCORERS : DEFAULT_SCORERS;
   const candidates: Candidate[] = [];
   head
     .filter(result => !result.canonical)
     .forEach((result, order) => {
-      const base = total(result, intent, scorers);
+      const base = scores(result);
       const at = (scale: number) => ({
         result,
         order,

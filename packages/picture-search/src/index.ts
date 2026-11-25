@@ -20,6 +20,7 @@ export {dropNearDuplicates} from './duplicates';
 export {createContext, createFetcher} from './fetcher';
 export type {Fetcher, FetchLike} from './fetcher';
 export {
+  baseScores,
   chooseLook,
   fitsMode,
   isFaintLines,
@@ -38,6 +39,7 @@ export {
   reorderByMeasures,
 } from './measures';
 export type {
+  BaseScores,
   ConvertedImage,
   ImageAnalyzer,
   Look,

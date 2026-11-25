@@ -7,6 +7,7 @@ import {
 import {logLines, startLog} from '../src/profile';
 import {ok, fail, MODULE_CODE} from '@ink-tools/sn-adapter/official';
 import {
+  baseScores,
   chooseLook,
   isFaintLines,
   keepMode,
@@ -16,11 +17,13 @@ import {
   lineArt,
   Measures,
   needsContour,
+  orderMeasured,
   pixelKind,
   pixelScorer,
   Prepared,
   reorderByMeasures,
 } from '@ink-tools/picture-search/measures';
+import * as rank from '@ink-tools/picture-search/rank';
 import {einkScore} from '@ink-tools/picture-search/rank';
 import {cachedSearch} from '@ink-tools/picture-search/cache';
 import {readIntent} from '@ink-tools/picture-search/query';
@@ -1180,5 +1183,55 @@ describe('leaderDecided (#19)', () => {
         startLog();
       }
     });
+
+    it("scores each result's text once, however many thumbnails settle (#19)", async () => {
+      // The text scorers took about 120 ms per pass on the tablet, run after every thumbnail.
+      const page = Array.from({length: 12}, (_, i) => ({
+        ...result(`r${i}`, `Soup bowl ${i}`),
+        mime: 'image/png',
+      }));
+      const totals = jest.spyOn(rank, 'total');
+      try {
+        const measured = await measureFirstPages(
+          page,
+          '/p',
+          'soup',
+          {...deps(), thumb: async item => `file:///p/thumbs/${item.id}`},
+          undefined,
+          true,
+        );
+        expect(measured.results).toHaveLength(page.length);
+        expect(totals.mock.calls.length).toBeLessThanOrEqual(page.length);
+      } finally {
+        totals.mockRestore();
+      }
+    });
+  });
+});
+
+describe('baseScores (#19)', () => {
+  it('gives the same order as scoring on every call', () => {
+    const page = [
+      {...result('a', 'Soup poster with text'), source: 'commons' as const},
+      result('b', 'Soup bowl'),
+      result('c', 'Soup cartoon character'),
+      result('d', 'Soup', true),
+    ];
+    const prepared = new Map<string, Prepared>([
+      ['a', {measures: photo, look: 'found'}],
+      ['b', {measures: outline, look: 'found'}],
+      ['c', {measures: glossy, look: 'contour'}],
+    ]);
+    for (const photos of [false, true]) {
+      const scores = baseScores(page, 'soup', photos);
+      expect(orderMeasured(page, prepared, 'soup', photos, scores)).toEqual(
+        orderMeasured(page, prepared, 'soup', photos),
+      );
+      for (const pending of [new Set<string>(), new Set(['c'])]) {
+        expect(
+          leaderDecided(page, prepared, pending, 'soup', photos, undefined, scores),
+        ).toBe(leaderDecided(page, prepared, pending, 'soup', photos));
+      }
+    }
   });
 });

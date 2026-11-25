@@ -15,6 +15,7 @@
 import {log} from '../log/memory';
 import {pickId, picksFirst} from '../picks';
 import {
+  baseScores,
   chooseLook,
   ImageAnalyzer,
   leaderDecided,
@@ -265,8 +266,10 @@ export async function measureFirstPages(
       onThumbs?.();
     }
   });
+  // Scored once: the leader check runs after every thumbnail (#19).
+  const scores = baseScores(results, query, photos);
   const leads = () =>
-    leaderDecided(results, new Map(found), pending, query, photos, fits);
+    leaderDecided(results, new Map(found), pending, query, photos, fits, scores);
   const all = Promise.all(
     firstPages.map((result, index) =>
       uris[index]
@@ -321,7 +324,7 @@ export async function measureFirstPages(
   );
   // The pixels never push a picture the person picked for the word down (#34).
   const distinct = picksFirst(
-    orderMeasured(results, prepared, query, photos),
+    orderMeasured(results, prepared, query, photos, scores),
     picked,
   );
   if (distinct.length < results.length) {

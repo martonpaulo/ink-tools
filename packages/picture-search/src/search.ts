@@ -205,11 +205,14 @@ async function searchOnce(
     };
   });
   // Adult pictures never show, from any source (#69).
+  const ranking = clock.now();
   const results = rankForEink(
     outcomes.map(o => (o.ok ? withoutAdult(o.value.results) : [])),
     query,
     ctx.photos ? PHOTO_SCORERS : DEFAULT_SCORERS,
   );
+  // The text scorers are slow on the tablet (#19): this line shows their share of the search.
+  ctx.log(`time rank: ${clock.now() - ranking} ms, ${results.length} result(s)`);
   const failed = outcomes.filter(o => !o.ok).length;
   const mainFailed = outcomes.some((o, i) => !o.ok && !sources[i].supplement);
   // The first source, in adapter order, that suggests a spelling.
