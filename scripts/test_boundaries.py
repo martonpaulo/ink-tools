@@ -124,6 +124,12 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "authority"): 2, ("cli/t/src/t", "service"): 1}),
                          [("cli/t/src/t", "authority")])
 
+    def test_a_host_tools_registry_block_is_not_a_finding(self):
+        # The block is written from the registry, where an internal may be named (#294).
+        tool = ("#!/usr/bin/env python3\n%s\n    \"tasksUri\": \"content://com.ratta.supernote.task.provider/tasks\",\n%s\n"
+                "TASKS = \"content://com.ratta.supernote.task.provider/tasks\"\n" % (boundaries.registry_readers.BLOCK_START, boundaries.registry_readers.BLOCK_END))
+        self.assertEqual(self.tree({"cli/t/src/t": tool}), [("cli/t/src/t", "authority")])
+
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({
             "plugins/a/node_modules/x/index.js": "require('sn-plugin-lib');\n",

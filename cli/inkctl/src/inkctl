@@ -119,6 +119,122 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+# The Supernote internals inkctl reads, from the registry (docs/architecture.md › Layer rules).
+# BEGIN registry: Written by scripts/registry.py from registry/ (#294); never edit it by hand.
+REGISTRY_VERSION = "2026.11.25"
+# Each item: id, level (docs/architecture.md › Layer rules), impact, owner, probe or None,
+# the reason it is unprobed or None, and the implementation that serves it.
+REGISTRY_ITEMS = (
+    {"id": "calendar.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(calendar)", "unprobed": None, "active": "sn-adapter internals/calendar.ts"},
+    {"id": "calendar.sync-broadcast", "level": 3, "impact": "user", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync calendar"},
+    {"id": "handwriting.language-file", "level": 2, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a read of the folder's one file", "active": "handwriting-language LanguageFiles.java"},
+    {"id": "handwriting.changed-broadcast", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "sending it is the change itself", "active": "handwriting-language Switcher.java"},
+    {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new"},
+    {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl"},
+    {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
+    {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
+    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inkctl plugin allow"},
+    {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
+    {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
+    {"id": "settings.plugin-detail-labels", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin allow and uninstall"},
+    {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "plugin-diagnostics", "probe": "inkctl helper", "unprobed": None, "active": "plugin-diagnostics src/helper.ts"},
+    {"id": "system.device-identity", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl status", "unprobed": None, "active": "inkctl status"},
+    {"id": "system.firmware-page", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl firmware", "unprobed": None, "active": "inkctl firmware"},
+    {"id": "system.plugin-log-tag", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl logs", "unprobed": None, "active": "inkctl logs"},
+    {"id": "todo.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(todo)", "unprobed": None, "active": "sn-adapter internals/todo.ts"},
+    {"id": "todo.sync-trigger", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync tasks"},
+)
+# Each item's values, by its id.
+REGISTRY = {
+    "calendar.provider": {
+        "authority": "com.ratta.supernote.calendar.provider",
+        "eventsUri": "content://com.ratta.supernote.calendar.provider/data_info",
+        "configUri": "content://com.ratta.supernote.calendar.provider/config_info",
+    },
+    "calendar.sync-broadcast": {
+        "action": "com.ratta.supernote.calendar.notify.sync",
+    },
+    "handwriting.language-file": {
+        "folder": ".data/dictionary",
+        "current": "default",
+        "packs": "resources",
+        "emptyFolderLanguage": "en_US",
+    },
+    "handwriting.changed-broadcast": {
+        "action": "hw_type_change",
+    },
+    "note.activity": {
+        "package": "com.ratta.supernote.note",
+        "activity": "com.ratta.supernote.note/.view.NoteInsidePagesActivity",
+        "blankStyle": "style_white",
+        "normalMode": "0",
+    },
+    "note.screen-ids": {
+        "pluginsButton": "desc:plugins",
+        "lassoMore": "desc:lassoMore",
+        "lassoRow": "tv_button",
+    },
+    "note.fonts-folder": {
+        "folder": "MyStyle/fonts",
+        "suffixes": (".ttf", ".otf",),
+    },
+    "pluginhost.plugin-list": {
+        "uri": "content://com.ratta.supernote.pluginhost/plugins",
+    },
+    "pluginhost.permission-status": {
+        "always": 2,
+    },
+    "settings.language-page": {
+        "package": "com.ratta.settings",
+        "activity": "com.ratta.settings.SettingsActivity",
+        "pageExtra": "activity_type",
+        "languagePage": "com.ratta.settings.input.HWLanguageSetting",
+    },
+    "settings.plugin-install-screens": {
+        "path": ("text:Apps", "text:Plugins",),
+        "pick": "text:Select Plugin Package",
+        "confirm": "id:top_save",
+        "nextPage": "id:ll_next_page",
+        "pageNumber": "id:content_page_number",
+    },
+    "settings.plugin-detail-labels": {
+        "permissions": "text:Permissions",
+        "always": "Allow",
+        "states": ("Allow", "Ask Every Time", "Don't Allow",),
+        "uninstall": "text:Uninstall",
+        "uninstallWarning": "Its data will also be deleted",
+        "confirm": "text:OK",
+    },
+    "storage.helper-channel": {
+        "folder": "/storage/emulated/0/MyStyle/Probe",
+        "commandFile": "command.json",
+        "answerMark": "SNPROBE answer",
+    },
+    "system.device-identity": {
+        "boardProperty": "ro.product.board",
+        "boards": ("A5X2", "A6X2",),
+        "models": ("Manta", "Nomad",),
+        "vendorPackagePrefix": "com.ratta.",
+    },
+    "system.firmware-page": {
+        "page": "https://support.supernote.com/en_US/change-log/how-to-update-your-supernote",
+        "host": "download-firmware.supernote.com",
+        "target": "EXPORT/update.zip",
+    },
+    "system.plugin-log-tag": {
+        "tag": "ReactNativeJS",
+    },
+    "todo.provider": {
+        "authority": "com.ratta.supernote.task.provider",
+        "tasksUri": "content://com.ratta.supernote.task.provider/tasks_table",
+        "groupsUri": "content://com.ratta.supernote.task.provider/task_group_table",
+    },
+    "todo.sync-trigger": {
+        "title": "supernote-sync-trigger",
+    },
+}
+# END registry
+
 EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_USAGE = 2

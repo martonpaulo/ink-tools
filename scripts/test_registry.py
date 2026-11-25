@@ -12,6 +12,7 @@ from pathlib import Path
 # The scripts folder first: the root's registry/ folder would otherwise import as a namespace package.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import registry  # noqa: E402
+import registry_readers  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -42,6 +43,9 @@ class RegistryTest(unittest.TestCase):
         self.meta = copy.deepcopy(META)
         self.meta["ceilings"]["2"] = 3
         self.areas = {area: [provider(area)] for area in registry.DESCRIPTOR_AREAS}
+        inkctl = self.root / "cli/inkctl/src/inkctl"
+        inkctl.parent.mkdir(parents=True)
+        inkctl.write_text("before\n%s\nold\n%s\nafter\n" % (registry_readers.BLOCK_START, registry_readers.BLOCK_END))
 
     def save(self):
         (self.root / registry.META).write_text(json.dumps(self.meta))
@@ -124,6 +128,75 @@ class RegistryTest(unittest.TestCase):
     def test_the_ratchet_lowers_a_ceiling_with_room(self):
         self.meta["ceilings"]["2"] = 5
         self.assertIn("lower its ceiling from 5 to 3", self.problems())
+
+    def test_each_reader_holds_the_items_of_its_tools(self):
+        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl", "inktools-bridge", "ink-notebook-editor"]
+        code, out = self.run_main("--write")
+        self.assertEqual(code, 0, out)
+        ts = (self.root / "packages/sn-adapter/src/registry.generated.ts").read_text()
+        self.assertIn("todoProvider: {", ts)
+        self.assertIn("action: 'an.action',", ts)
+        self.assertIn("authority: 'a.provider',", ts)
+        bridge = (self.root / "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java").read_text()
+        self.assertIn("public static final class TodoProvider {", bridge)
+        self.assertIn('public static final String ACTION = "an.action";', bridge)
+        self.assertNotIn("CalendarProvider", bridge)
+        swift = (self.root / "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
+        self.assertIn('public static let action: String = "an.action"', swift)
+        lingo = (self.root / "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java").read_text()
+        self.assertNotIn("TodoProvider", lingo)
+        inkctl = (self.root / "cli/inkctl/src/inkctl").read_text()
+        self.assertTrue(inkctl.startswith("before\n") and inkctl.endswith("after\n"), inkctl)
+        self.assertNotIn("\nold\n", inkctl)
+        self.assertIn('"todo.provider": {', inkctl)
+
+    def test_a_python_block_that_runs_gives_the_values(self):
+        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl"]
+        self.areas["todo"][0]["values"] = {"one": ["a"], "flag": True, "count": 3}
+        self.run_main("--write")
+        namespace = {}
+        exec((self.root / "cli/inkctl/src/inkctl").read_text().replace("before", "").replace("after", ""), namespace)
+        values = namespace["REGISTRY"]["todo.provider"]
+        self.assertEqual(values["one"], ("a",))
+        self.assertIs(values["flag"], True)
+        self.assertEqual(values["count"], 3)
+
+    def test_a_missing_python_block_is_refused(self):
+        (self.root / "cli/inkctl/src/inkctl").write_text("no block\n")
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("has no registry block", out)
+
+    def test_colliding_reader_names_are_refused(self):
+        other = provider("todo")
+        other["id"] = "todo.a-b"
+        del other["descriptor"]
+        twin = copy.deepcopy(other)
+        twin["id"] = "todo.ab"
+        self.areas["todo"] += [other, twin]
+        self.meta["ceilings"]["2"] = 5
+        self.assertNotIn("reader name", self.problems_or_none())
+        twin["id"] = "todo.a-b-"
+        self.assertIn("reader name TodoAB is also todo.a-b's", self.problems())
+
+    def test_a_value_named_like_a_derived_one_is_refused(self):
+        self.areas["todo"][0]["values"] = {"authority": "x"}
+        self.assertIn("derived from its descriptor", self.problems())
+
+    def test_a_reader_tool_with_no_reader_is_refused(self):
+        saved = registry_readers.READERS
+        registry_readers.READERS = tuple(r for r in saved if "inkctl" not in r.tools)
+        self.addCleanup(setattr, registry_readers, "READERS", saved)
+        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl"]
+        self.assertIn("inkctl: no reader serves this tool", self.problems())
+
+    def problems_or_none(self):
+        self.save()
+        try:
+            registry.load(self.root)
+        except registry.Invalid as error:
+            return " | ".join(error.problems)
+        return ""
 
     def test_a_missing_items_folder_is_a_bad_root(self):
         shutil.rmtree(self.root / registry.ITEMS)

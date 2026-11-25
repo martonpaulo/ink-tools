@@ -12,10 +12,12 @@ version, the header of sn-adapter's descriptor and the ratchet's ceiling per lev
 - an item below level 1 has a `reason`; its owner is the first of its `readers`, none twice;
 - only an sn-adapter item of the calendar, todo or digest area carries a `descriptor`;
 - the ratchet: no level holds more items than its ceiling, and a ceiling above its count is
-  lowered to the count, so a ceiling only goes down.
+  lowered to the count, so a ceiling only goes down;
+- no two generated names collide, and every tool an item names has a reader.
 
 Then it writes `packages/sn-adapter/src/internals/descriptor.json`, the shape `chooseDescriptor`
-reads, from the three provider items. Without `--write` it compares each written file with the
+reads, from the three provider items, and one reader per runtime (`registry_readers.py`: TypeScript,
+Java, Python and Swift). Without `--write` it compares each written file with the
 disk and fails on a stale or hand-edited one. Prints one `path: problem` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
 """
@@ -24,6 +26,8 @@ import json
 import re
 import sys
 from pathlib import Path
+
+import registry_readers
 
 SCHEMA = "registry/schema.json"
 META = "registry/registry.json"
@@ -144,6 +148,8 @@ def load(root):
             items.append((rel, area["area"], item))
     problems.extend(rule_errors(items))
     if not problems:
+        problems.extend(registry_readers.name_errors([item for _, _, item in items]))
+    if not problems:
         problems.extend(ratchet_errors(meta["ceilings"], [item for _, _, item in items]))
     if problems:
         raise Invalid(problems)
@@ -206,9 +212,21 @@ def descriptor(meta, items):
     return json.dumps(body, indent=2, ensure_ascii=False) + "\n"
 
 
-def outputs(meta, items):
+def outputs(meta, items, root):
     """{path relative to the root: text} for every file the registry writes."""
-    return {DESCRIPTOR: descriptor(meta, items)}
+    written = {DESCRIPTOR: descriptor(meta, items)}
+    for reader in registry_readers.READERS:
+        current = None
+        if reader.block:
+            path = root / reader.path
+            if not path.exists():
+                raise Invalid(["%s: missing; the registry block lives inside it" % reader.path])
+            current = path.read_text(encoding="utf-8")
+        try:
+            written[reader.path] = registry_readers.text(reader, meta["version"], items, current)
+        except ValueError as error:
+            raise Invalid([str(error)])
+    return written
 
 
 def main(argv=None):
@@ -222,7 +240,7 @@ def main(argv=None):
         return 2
     try:
         meta, items = load(root)
-        written = outputs(meta, items)
+        written = outputs(meta, items, root)
     except Invalid as error:
         for problem in error.problems:
             print(problem)

@@ -24,8 +24,8 @@ const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 const MIN_API = '30';
 const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
-const PURE = ['ButtonGesture', 'ButtonPlace', 'ButtonRule', 'LanguageCycle', 'LanguageFiles', 'FileFailure', 'Copy'];
-const TESTS = ['ButtonGestureTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest', 'FileFailureTest'];
+const PURE = ['ButtonGesture', 'ButtonPlace', 'ButtonRule', 'LanguageCycle', 'LanguageFiles', 'FileFailure', 'Copy', 'Registry'];
+const TESTS = ['ButtonGestureTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest', 'FileFailureTest', 'RegistryTest'];
 /** The native look's tokens, written from ui-kit's tokens.json before javac, never by hand (#275). */
 const TOKENS_CLASS = 'Tokens';
 /**

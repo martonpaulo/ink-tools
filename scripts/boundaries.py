@@ -39,6 +39,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import registry_readers  # noqa: E402  the registry block's markers have one owner
+
 SKIP = {"node_modules", ".git", ".scratch", ".claude", "build", "android", ".toolchain"}
 SCRIPT = {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"}
 NATIVE = {".java", ".kt"}
@@ -115,10 +118,19 @@ def own_controls(rel, lines):
 
 
 def host_findings(rel, lines):
-    """[(path, line number, rule, text)] for each Supernote provider or service host a host tool names."""
+    """[(path, line number, rule, text)] for each Supernote provider or service host a host tool names.
+
+    The registry block (`registry_readers.BLOCK_START` to `BLOCK_END`) is written from the registry,
+    the one place an internal may be named (#294), so its lines are never findings.
+    """
     found = []
+    in_registry = False
     for number, line in enumerate(lines, 1):
-        if PYTHON_COMMENT.match(line):
+        if line.startswith(registry_readers.BLOCK_START):
+            in_registry = True
+        elif line.startswith(registry_readers.BLOCK_END):
+            in_registry = False
+        if in_registry or PYTHON_COMMENT.match(line):
             continue
         for pattern, rule, text in (
             (AUTHORITY, "authority", "names the provider %s outside sn-adapter"),

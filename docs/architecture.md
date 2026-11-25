@@ -87,7 +87,10 @@ does for its sources):
   (a ceiling only goes down), and one file per device area in `registry/items/`;
   `scripts/registry.py` checks it in the `registry` gate and writes `sn-adapter`'s `descriptor.json`
   from its three provider items. Readers for TypeScript, Java, Python
-  and Swift are generated from the schema with a staleness check. There are four Supernote adapters,
+  and Swift are generated from the registry with a staleness check (`scripts/registry_readers.py`):
+  `sn-adapter`'s `src/registry.generated.ts`, a `Registry.java` in each Android app, a block inside
+  `cli/inkctl/src/inkctl` (a single file by design) and NoteFormat's `Registry.swift`; each holds
+  only the items its tools read. There are four Supernote adapters,
   one per runtime, sharing the registry and the common rules, not code: TypeScript (`sn-adapter`,
   the plugins), Java (the apps and the plugins' native code), Python (`inkctl`) and Swift (Ink
   Notebook Editor). Inside each, one module per level the runtime needs; a module exists only when a

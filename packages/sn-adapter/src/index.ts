@@ -4,3 +4,4 @@
  * `@ink-tools/sn-adapter/official`, so code that needs only one tier never loads the other.
  */
 export * from './internals';
+export * from './registry.generated';

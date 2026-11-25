@@ -125,6 +125,7 @@ Before editing under a path, read the file its row names. A module with rules of
 ## Project patterns
 
 - Prefer a direct call (intent, broadcast, content provider, file), then an element reference from a snapshot, then coordinates, in that order.
+- The registry block near the top of `src/inkctl` holds the Supernote internals inkctl reads; `python3 scripts/registry.py --write`, run at the repository root, writes it from `registry/` ([#294](https://github.com/martonpaulo/ink-tools/issues/294)), so never edit the block by hand.
 - A command returns `(data, text)` for `--json` and plain output. A failure raises `Failure` with a stable exit code, and `--help` lists every code.
 - Exit codes and JSON keys are a public contract: add to them, and never change what one means.
 - Every ADB call has a time limit, and a wait polls a condition with a time limit. An ADB call that carries no input gets `/dev/null` as its standard input, or a real `adb shell` reads a secret piped to `inkctl` ([#202](https://github.com/martonpaulo/ink-tools/issues/202)).

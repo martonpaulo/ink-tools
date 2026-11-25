@@ -2008,6 +2008,17 @@ python3 -B "$copy/scripts/dry_check.py" --root "$copy" magic >"$work/out" 2>&1
 check "the duplication gate fails on a magic value in the command" "$?" "1"
 check "the duplication gate names the command" "$(grep -m1 -c 'src/inkctl' "$work/out")" "1"
 
+# The registry block (#294): written from registry/, each item once with a probe or a reason.
+registry_check='
+import runpy, sys
+ns = runpy.run_path(sys.argv[1], run_name="registry_test")
+ids = [item["id"] for item in ns["REGISTRY_ITEMS"]]
+assert len(set(ids)) == len(ids), "an item is listed twice"
+assert all((item["probe"] is None) != (item["unprobed"] is None) for item in ns["REGISTRY_ITEMS"]), "an item lacks a probe or a reason"
+print(ns["REGISTRY"]["todo.provider"]["tasksUri"])
+'
+check "the registry block loads and derives the To-Do URI" "$(python3 -c "$registry_check" "$script" 2>&1)" "content://com.ratta.supernote.task.provider/tasks_table"
+
 check "no test reached the real browser opener" "$([ -f "$work/real-browser-reached" ] && echo reached || echo never)" "never"
 
 [ "$failures" -eq 0 ]
