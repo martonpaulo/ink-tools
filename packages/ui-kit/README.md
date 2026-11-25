@@ -27,12 +27,21 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   name, an optional value or hint under it, and its control at the trailing edge.
 - Where the native screens disagree, Ink Tools draws each kind of setting one way
   ([#274](https://github.com/martonpaulo/ink-tools/issues/274)): an on/off setting is a `SwitchRow`
-  (a `ListRow` with a trailing `Switch`), several independent on/off items are a `SectionCaption`
-  over one `SwitchRow` each, one value out of several is a `ChoiceList` (a `SectionCaption` over
-  one `ListRow` per value with its `Radio`), and a page opened from a row is a `ListRow` with a
-  `Chevron`. Rows that outgrow the screen scroll under the title bar.
-- Every gap is the one spacing step, `SPACE_MM` (screen padding, section gap, control gap, row padding);
-  a screen adds no spacing value of its own.
+  (a `ListRow` with a trailing `Switch`), several independent on/off items are a `RowGroup`
+  with their caption over one `SwitchRow` each, one value out of several is a `ChoiceList` (a
+  `RowGroup` with one `ListRow` per value and its `Radio`), and a page opened from a row is a
+  `ListRow` with a `Chevron`. Rows that outgrow the screen scroll under the title bar.
+- Three levels, as the native Settings group them (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275)): the
+  caption (bold grey, nothing under it), its rows, and a thin line (`separator`, thinner than a
+  control's `border`, in whole device pixels) only between two rows of one group, never under the
+  caption or the last row; the group's `note` follows right under its last row, never between a
+  caption and its rows. `RowGroup` draws all of it and owns `groupGap` above it, so its container
+  adds no gap of its own; a row with no caption is a `RowGroup` too. A `ListRow` draws no line and
+  a screen draws no caption by itself: `SectionCaption` is not exported.
+- A language shows only its name, never its code such as `pt_BR` (owner,
+  [#275](https://github.com/martonpaulo/ink-tools/issues/275)).
+- Every other gap is the one spacing step, `SPACE_MM` (screen padding, section gap, control gap,
+  row padding); a screen adds no spacing value of its own.
 - Several pages of Settings are a `NavList` in a left pane, or a page opened from a row with a
   `Chevron` and left with the title bar's ‹, as the system Settings does.
 
@@ -76,18 +85,18 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 | :--- | :--- |
 | `TitleBar` | the black band: × to close (`onClose`), ‹ to go back (`onBack`), the title centred, and `paneTitle` over a left pane |
 | `NavList` | the left navigation list: an optional icon and a label per item, a dotted separator, the open item marked by an ink bar at its trailing edge |
-| `ListRow` | a title, an optional grey subtitle, a solid separator, a `leading` slot (the ✓) and a `trailing` slot (its control); with `onPress` the whole row is one button |
+| `ListRow` | a title, an optional grey subtitle, a `leading` slot (the ✓) and a `trailing` slot (its control), with no line of its own; with `onPress` the whole row is one button |
+| `RowGroup` | rows that belong together: the group gap, an optional caption, the rows with a thin line only between two of them, an optional grey `note` |
 | `Switch` | a bordered box that reads «ON», filled black, or «OFF», on paper; role `switch` |
 | `Radio` | an ink ring, with a filled dot when `checked`; role `radio` |
 | `CheckMark` | the ✓ on the leading side of a chosen row; unchecked, the same width empty |
 | `Chevron` | the › that says a row opens a page |
-| `SectionCaption` | a grey caption over the rows it names, such as «Installed Languages» |
 | `SearchField` | a bordered field with a drawn magnifier and a grey placeholder, its spoken name |
 | `Pager` | \|‹ ‹ page/total › ›\|, the current page underlined; a button that would leave the range is disabled |
 | `IconButton` | `remove` (⊖), `delete` (a trash) and `download` (an arrow over a tray), each with its spoken name |
 | `Button` with `primary` | the small filled black button, such as «Scan» |
 | `SwitchRow` | an on/off setting: a `ListRow` whose trailing `Switch` speaks the row's title |
-| `ChoiceList` | one value out of several: a caption over one `ListRow` per value, each `Radio` spoken «setting: value» |
+| `ChoiceList` | one value out of several: a `RowGroup` with one `ListRow` per value, each `Radio` spoken «setting: value», and an optional `note` |
 
 - One `Button` for every other action, at least `touchTarget` high: black on white with an ink border.
 - Black fill marks the one primary action of a screen, such as Save or Start.

@@ -1,10 +1,10 @@
 /**
  * Retouch's Settings switches (#136): one toggle per edit in `EDITS` and one per style of the
- * Styles grid (#133), each a ui-kit `SwitchRow` (#274), and the debug switch that saves each edit's input (#134), off by default.
+ * Styles grid (#133), each a ui-kit `SwitchRow` (#274) in its captioned `RowGroup` (#275), and the debug switch that saves each edit's input (#134), off by default.
  */
 import React from 'react';
 import {View} from 'react-native';
-import {SectionCaption, SwitchRow} from '@ink-tools/ui-kit';
+import {RowGroup, SwitchRow} from '@ink-tools/ui-kit';
 import {EDITS, RetouchSettings, setEdit, setStyle, STYLES} from './edits';
 import {copy} from './copy';
 import {setDebug} from './debug';
@@ -23,33 +23,43 @@ export function EditsForm({
   debugDeps = DEVICE,
 }: EditsFormProps): React.JSX.Element {
   const toggleDebug = async () =>
-    onChange(await setDebug(settings, !settings.debug, debugDeps.native, debugDeps.log));
+    onChange(
+      await setDebug(
+        settings,
+        !settings.debug,
+        debugDeps.native,
+        debugDeps.log,
+      ),
+    );
   return (
     <View>
-      <SectionCaption>{copy['settings.edits']}</SectionCaption>
-      {EDITS.map(edit => (
+      <RowGroup caption={copy['settings.edits']}>
+        {EDITS.map(edit => (
+          <SwitchRow
+            key={edit.id}
+            title={edit.name}
+            value={settings.edits[edit.id]}
+            onChange={on => onChange(setEdit(settings, edit.id, on))}
+          />
+        ))}
+      </RowGroup>
+      <RowGroup caption={copy['settings.styles']}>
+        {STYLES.map(style => (
+          <SwitchRow
+            key={style.id}
+            title={style.name}
+            value={settings.styles[style.id]}
+            onChange={on => onChange(setStyle(settings, style.id, on))}
+          />
+        ))}
+      </RowGroup>
+      <RowGroup caption={copy['settings.debug']}>
         <SwitchRow
-          key={edit.id}
-          title={edit.name}
-          value={settings.edits[edit.id]}
-          onChange={on => onChange(setEdit(settings, edit.id, on))}
+          title={copy['settings.debugSave']}
+          value={settings.debug}
+          onChange={toggleDebug}
         />
-      ))}
-      <SectionCaption>{copy['settings.styles']}</SectionCaption>
-      {STYLES.map(style => (
-        <SwitchRow
-          key={style.id}
-          title={style.name}
-          value={settings.styles[style.id]}
-          onChange={on => onChange(setStyle(settings, style.id, on))}
-        />
-      ))}
-      <SectionCaption>{copy['settings.debug']}</SectionCaption>
-      <SwitchRow
-        title={copy['settings.debugSave']}
-        value={settings.debug}
-        onChange={toggleDebug}
-      />
+      </RowGroup>
     </View>
   );
 }

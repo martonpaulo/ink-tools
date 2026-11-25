@@ -24,10 +24,13 @@ export function Chevron(): React.JSX.Element {
   );
 }
 
-/** A caption such as «Installed Languages»: grey, over the rows it names. */
+/**
+ * A caption such as «Installed Languages»: bold grey, with no gap under it, so it reads as the head
+ * of the rows it names and apart from a grey hint; `RowGroup` draws it and the gap above (#275).
+ */
 export function SectionCaption({children}: {children: string}): React.JSX.Element {
   return (
-    <Text accessibilityRole="header" style={[shared.hint, styles.caption]}>
+    <Text accessibilityRole="header" style={shared.heading}>
       {children}
     </Text>
   );
@@ -35,5 +38,4 @@ export function SectionCaption({children}: {children: string}): React.JSX.Elemen
 
 const styles = StyleSheet.create({
   mark: {minWidth: metrics.iconSize, textAlign: 'center'},
-  caption: {paddingTop: metrics.sectionGap},
 });

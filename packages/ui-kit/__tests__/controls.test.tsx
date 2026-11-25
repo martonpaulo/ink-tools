@@ -15,12 +15,13 @@ import {
   NavList,
   Pager,
   Radio,
+  RowGroup,
   SearchField,
-  SectionCaption,
   Switch,
   SwitchRow,
   TitleBar,
 } from '../src';
+import {SectionCaption} from '../src/marks';
 import {screenBreaks} from '../src/screenBreaks';
 
 function render(element: React.JSX.Element) {
@@ -65,6 +66,13 @@ const EVERY_CONTROL: [string, React.JSX.Element][] = [
   ['CheckMark', <CheckMark checked />],
   ['Chevron', <Chevron />],
   ['SectionCaption', <SectionCaption>Installed Languages</SectionCaption>],
+  [
+    'RowGroup',
+    <RowGroup caption="Installed Languages">
+      <ListRow title="English" />
+      <ListRow title="Portuguese" />
+    </RowGroup>,
+  ],
   ['SearchField', <SearchField value="" placeholder="Search" onChangeText={noop} />],
   ['Pager', <Pager page={2} total={3} onPage={noop} />],
   ['IconButton remove', <IconButton kind="remove" onPress={noop} />],
@@ -205,6 +213,49 @@ describe('the native controls (#273)', () => {
     expect(onChange).toHaveBeenCalledWith(true);
     const off = render(<SwitchRow title="Data saver" value={false} disabled onChange={onChange} />);
     expect(hostByLabel(off, 'Data saver').props.accessibilityState).toMatchObject({checked: false, disabled: true});
+  });
+
+  it('draws a line only between two rows of one group: none under the caption, none under the last row (#275)', () => {
+    const separators = (tree: ReactTestRenderer) =>
+      tree.root.findAll(n => n.props.testID === 'row-separator' && typeof n.type === 'string');
+    const three = render(
+      <RowGroup caption="Floating Button">
+        <ListRow title="Always" />
+        {false}
+        <ListRow title="Only where you write" />
+        <ListRow title="Hidden" />
+      </RowGroup>,
+    );
+    expect(texts(three)).toEqual(['Floating Button', 'Always', 'Only where you write', 'Hidden']);
+    expect(separators(three)).toHaveLength(2);
+    expect(StyleSheet.flatten(separators(three)[0].props.style)).toEqual({
+      height: metrics.separator,
+      backgroundColor: metrics.ink,
+    });
+    expect(metrics.separator).toBeLessThan(metrics.border);
+    expect(separators(render(<RowGroup><ListRow title="Alone" /></RowGroup>))).toEqual([]);
+    const rows = three.root.findAll(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.touchTarget);
+    expect(rows).toHaveLength(3);
+    rows.forEach(row => expect(StyleSheet.flatten(row.props.style).borderBottomWidth).toBeUndefined());
+  });
+
+  it('sets a group apart: the group gap above it, a bold caption, its note right under the last row (#275)', () => {
+    const tree = render(
+      <RowGroup caption="Smallest shape" note="A smaller figure stays handwriting.">
+        <ListRow title="8 mm" />
+      </RowGroup>,
+    );
+    expect(texts(tree)).toEqual(['Smallest shape', '8 mm', 'A smaller figure stays handwriting.']);
+    const [caption, , note] = tree.root.findAllByType(Text).map(n => StyleSheet.flatten(n.props.style));
+    expect(caption).toEqual({fontSize: metrics.fontBody, fontWeight: 'bold', color: metrics.context});
+    expect(note).toEqual({fontSize: metrics.fontBody, color: metrics.context});
+    const group = tree.root.findAll(n => typeof n.type === 'string')[0];
+    expect(StyleSheet.flatten(group.props.style)).toEqual({paddingTop: metrics.groupGap});
+    expect(metrics.groupGap).toBeGreaterThan(metrics.sectionGap);
+    const noCaption = render(<RowGroup><ListRow title="Data saver" /></RowGroup>);
+    expect(StyleSheet.flatten(noCaption.root.findAll(n => typeof n.type === 'string')[0].props.style)).toEqual({
+      paddingTop: metrics.groupGap,
+    });
   });
 
   it('draws one value out of several as a caption over one radio row each, the chosen one checked', () => {

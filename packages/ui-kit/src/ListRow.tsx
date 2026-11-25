@@ -1,7 +1,8 @@
 /**
- * The native list row (#273): a title, an optional grey subtitle under it, a solid separator, a
- * leading slot for the ✓ of a chosen item and a trailing slot for its control (Chevron, Switch,
- * Radio, an IconButton). A row with `onPress` is one button; without it, only its control acts.
+ * The native list row (#273): a title, an optional grey subtitle under it, a leading slot for the ✓
+ * of a chosen item and a trailing slot for its control (Chevron, Switch, Radio, an IconButton). A
+ * row with `onPress` is one button; without it, only its control acts. It draws no line: `RowGroup`
+ * draws the separators, only between the rows of one group (#275).
  */
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -48,8 +49,6 @@ const styles = StyleSheet.create({
     gap: metrics.controlGap,
     minHeight: metrics.touchTarget,
     paddingVertical: metrics.rowPadding,
-    borderBottomWidth: metrics.border,
-    borderColor: metrics.ink,
   },
   target: {minWidth: metrics.touchTarget},
   texts: {flex: 1},

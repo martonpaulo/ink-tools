@@ -16,6 +16,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -81,17 +83,17 @@ public final class SettingsActivity extends Activity {
     }
   }
 
-  /** Rebuilt on each resume, since a permission may have changed in between. */
+  /**
+   * Rebuilt on each resume, since a permission may have changed in between. Each section is one
+   * group (`Ink.group`): its caption, its rows, then the note that explains it; a missing
+   * permission or an error follows under it, so no text sits between a caption and its rows (#275).
+   */
   private void render() {
     page.removeAllViews();
     add(Ink.text(this, Copy.INTRO, false));
     boolean files = Environment.isExternalStorageManager();
     boolean overlay = Settings.canDrawOverlays(this);
-    if (!files) {
-      missing(Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-    }
 
-    add(Ink.caption(this, Copy.ACTIVE));
     List<String> installed = null;
     String active = null;
     String readFailure = null;
@@ -105,29 +107,32 @@ public final class SettingsActivity extends Activity {
     next.setOnClickListener(view -> switchLanguage());
     String language = active == null ? Copy.UNKNOWN : LanguageCycle.name(active);
     String title = readFailure == null ? language : files ? readFailure : Copy.NOT_READ;
-    add(Ink.actionRow(this, title, active, next));
+    addGroup(Ink.group(this, Copy.ACTIVE, Collections.singletonList(Ink.actionRow(this, title, next)), null));
+    if (!files) {
+      missing(Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+    }
     errorAt(Place.SWITCH, Copy.SWITCH_FAILED);
 
     Prefs prefs = new Prefs(this);
-    add(Ink.caption(this, Copy.BUTTON_SECTION));
-    if (!overlay) {
-      missing(Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-    }
     ButtonRule.Mode chosenMode = prefs.button();
+    List<View> modes = new ArrayList<>();
     for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
       LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), mode == chosenMode);
       row.setOnClickListener(view -> {
         setButton(mode);
         render();
       });
-      add(row);
+      modes.add(row);
+    }
+    addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
+    if (!overlay) {
+      missing(Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
     }
     if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
       bold(Copy.WATCHER_OFF);
       add(Ink.text(this, Copy.WATCHER_FROM_COMPUTER, false));
       command(Copy.WATCHER_COMMANDS);
     }
-    add(Ink.text(this, Copy.BUTTON_HELP, true));
     boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
     Button reset = Ink.button(this, Copy.RESET_PLACE, false, shown);
     reset.setOnClickListener(view -> {
@@ -139,17 +144,20 @@ public final class SettingsActivity extends Activity {
       add(Ink.text(this, Copy.RESET_OFF, true));
     }
 
-    add(Ink.caption(this, Copy.CYCLE_SECTION));
-    add(Ink.text(this, files ? Copy.CYCLE_HELP : Copy.CYCLE_NO_FILES, true));
-    errorAt(Place.CYCLE, null);
+    List<View> languages = new ArrayList<>();
     if (installed != null) {
       Set<String> chosen = prefs.cycle();
       for (String code : installed) {
-        LinearLayout row = Ink.switchRow(this, LanguageCycle.name(code), code, chosen.contains(code));
+        // The name only: a code such as pt_BR stays in the log and the preferences (owner, #275).
+        LinearLayout row = Ink.switchRow(this, LanguageCycle.name(code), chosen.contains(code));
         row.setOnClickListener(view -> toggle(code));
-        add(row);
+        languages.add(row);
       }
     }
+    // An unread folder lists no language: say so, not that none is installed (#275).
+    String cycleNote = !files ? Copy.CYCLE_NO_FILES : installed == null ? Copy.CYCLE_NOT_READ : Copy.CYCLE_HELP;
+    addGroup(Ink.group(this, Copy.CYCLE_SECTION, languages, cycleNote));
+    errorAt(Place.CYCLE, null);
     try {
       String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
       add(Ink.text(this, Copy.VERSION + " " + version, true));
@@ -277,6 +285,12 @@ public final class SettingsActivity extends Activity {
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     params.topMargin = Ink.space(this);
     page.addView(view, params);
+  }
+
+  /** A group of rows: it carries the gap above it, so the page adds none of its own. */
+  private void addGroup(View group) {
+    page.addView(group, new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
   }
 
   /** A button at its own width at the trailing edge, as OK sits in the system dialogs (ui-kit `shared.actions`). */

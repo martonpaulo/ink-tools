@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, shared, SwitchRow} from '@ink-tools/ui-kit';
+import {Button, metrics, RowGroup, shared, SwitchRow} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GridState} from './styles';
 import {StyleId, StyleOptions} from './native';
@@ -39,16 +39,18 @@ export function StylesGrid({
       </Text>
       {ready ? (
         <>
-          <SwitchRow
-            title={copy['styles.transparent']}
-            value={ready.options.transparent}
-            onChange={() => onToggle('transparent')}
-          />
-          <SwitchRow
-            title={copy['styles.thick']}
-            value={ready.options.thick}
-            onChange={() => onToggle('thick')}
-          />
+          <RowGroup>
+            <SwitchRow
+              title={copy['styles.transparent']}
+              value={ready.options.transparent}
+              onChange={() => onToggle('transparent')}
+            />
+            <SwitchRow
+              title={copy['styles.thick']}
+              value={ready.options.thick}
+              onChange={() => onToggle('thick')}
+            />
+          </RowGroup>
           <View style={styles.grid}>
             {rows.map(row => (
               <View key={row[0].style} style={styles.row}>
