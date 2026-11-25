@@ -27,6 +27,7 @@ public final class ProbeTargetsTest {
     check(tasks && calendar, "both control providers are present");
     check(ProbeTargets.all().get(0).uri.equals("content://com.ratta.supernote.knowledge.provider"), "the provider root is queried first");
     calendarRowFillsTheDescriptorColumns();
+    calendarRevertCancelsLikeAccountSync();
     taskRowFillsTheDescriptorColumns();
     rowKeyIsTheDescriptors();
     System.out.println("ProbeTargetsTest ok");
@@ -95,6 +96,17 @@ public final class ProbeTargetsTest {
       }
     }
     throw new AssertionError("no target " + label);
+  }
+
+  /** #208: the Calendar's delete is a no-op, so only its revert cancels, by the descriptor's status and modified columns. */
+  static void calendarRevertCancelsLikeAccountSync() {
+    String descriptor = descriptor();
+    String rules = rules("calendar");
+    check(target("control-calendar").cancelsOnRevert(), "the control-calendar revert cancels the row");
+    check(!target("control-task").cancelsOnRevert(), "the control-task revert still deletes by id");
+    check(ProbeTargets.CANCELLED_STATUS.equals(text(rules, "cancelledStatus")), "the cancelled status is the descriptor's");
+    check(descriptor.contains("\"status\": \"" + ProbeTargets.STATUS_COLUMN + "\""), "the status column is the descriptor's");
+    check(descriptor.contains("\"modified\": \"" + ProbeTargets.MODIFIED_COLUMN + "\""), "the modified column is the descriptor's");
   }
 
   /** The descriptor's text: the JVM test has no JSON library. */

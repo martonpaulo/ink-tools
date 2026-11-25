@@ -57,7 +57,7 @@ adb logcat -s SNPROBE
 
 Each line reads `<target> <query|insert|delete-marked> OK <detail>`, `DENIED SecurityException: <message>`
 or `FAILED <ExceptionClass>: <message>`. The revert deletes the new row, and every older marked row, by its
-row id ([#213](https://github.com/martonpaulo/ink-tools/issues/213)). A `LEFTOVER` line means a marked row may remain: delete the
+row id ([#213](https://github.com/martonpaulo/ink-tools/issues/213)); the Calendar's delete removes nothing on the tablet, so for `control-calendar` it sets `status` to `cancelled` instead, as Account Sync does ([#208](https://github.com/martonpaulo/ink-tools/issues/208)). A `LEFTOVER` line means a marked row may remain: delete the
 rows whose marker column equals `SNPROBE dry insert`. After the three results the module logs a
 `heartbeat` line every 5 seconds for about 30 seconds: close the plugin view and watch whether the lines
 go on (the bridge background-lifecycle question).
