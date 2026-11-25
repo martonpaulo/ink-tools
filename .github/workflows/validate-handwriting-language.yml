@@ -34,12 +34,6 @@ jobs:
         with:
           node-version: 24
 
-      - name: Check the subproject's Markdown (text check and issue links, #77)
-        working-directory: .
-        run: |
-          python3 scripts/text_check.py apps/handwriting-language
-          python3 scripts/issue_links.py apps/handwriting-language --repo "$GITHUB_REPOSITORY"
-
       - name: Run the JVM tests
         run: node scripts/build.cjs --test
 

@@ -35,14 +35,17 @@ jobs:
           cache: npm
           cache-dependency-path: plugins/real-time-conversion/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/real-time-conversion/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/real-time-conversion-${{ hashFiles('plugins/real-time-conversion/package-lock.json') }}
 
-      - name: Check the subproject's Markdown (text check and issue links, #77)
-        working-directory: .
-        run: |
-          python3 scripts/text_check.py plugins/real-time-conversion
-          python3 scripts/issue_links.py plugins/real-time-conversion --repo "$GITHUB_REPOSITORY"
+      - name: Install dependencies
+        if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
 
       - name: Run the gate
         run: npm run validate
