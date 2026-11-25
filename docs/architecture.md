@@ -68,15 +68,48 @@ does for its sources):
   translates at its edge.
 - **Every outside service is an adapter.** Todoist is one `TaskProvider`; moving to Google Tasks is
   a new implementation, and a field one service lacks is decided then, not built in advance.
-- **The device side has two tiers, by how often they break:**
+- **The device side has five levels, by how fragile they are** (owner, 2026-11-25; the rule for
+  choosing among them is «The highest dependency level that serves» below):
 
-  | Tier | What | Changes when |
-  | :--- | :--- | :--- |
-  | Official plugin API | `sn-plugin-lib`: lasso, insert, page and file calls | rarely, with Ratta's notice |
-  | Internals | content providers and their tables (calendar, To-Do, Digest), found by reverse engineering | any firmware update, without notice |
+  | Level | What | Breaks when | Impact |
+  | :--- | :--- | :--- | :--- |
+  | 1 | `sn-plugin-lib`, public Android API, our own code | rarely, with Ratta's notice | the person |
+  | 2 | Internal data: content providers, private files and folders, the `.note` format | any firmware update; the probe sees it | the person |
+  | 3 | Internal vendor code and screens: classes, activities, deep links, broadcasts, the host binder | any firmware update; a call fails | the person |
+  | 4 | Screen automation: `inkctl` finds controls by text and id | any interface change; a step fails | our tests only |
+  | 5 | Behaviour learned from decompiled code (Back key routing, pen units, the Calendar and To-Do reading rules) | silently | the person |
 
-  Each tier sits in its own module of `sn-adapter`, so a firmware update points at one place and
-  the adapt-on/off probe turns off only the module whose tier changed.
+- **Target: one registry of internals, four adapters** ([#294](https://github.com/martonpaulo/ink-tools/issues/294)). Every internal lives in one
+  registry, data and not code, with one JSON Schema: per item its level, impact, owning tool,
+  reason when below level 1, evidence (decompiled class or method, app versionCode, date), the path
+  to a higher level, when it was last verified, and its probe. Readers for TypeScript, Java, Python
+  and Swift are generated from the schema with a staleness check. There are four Supernote adapters,
+  one per runtime, sharing the registry and the common rules, not code: TypeScript (`sn-adapter`,
+  the plugins), Java (the apps and the plugins' native code), Python (`inkctl`) and Swift (Ink
+  Notebook Editor). Inside each, one module per level the runtime needs; a module exists only when a
+  tool needs it. Each operation is a port named in our words (`writeTask`, `setLanguage`,
+  `readPage`) with one implementation per level, and the registry names the active one: moving a
+  part to a higher level adds the new implementation beside the old one, the port's shared contract
+  tests run on both, and the old one leaves once the new passes; no tool changes. Before acting, a
+  module checks its item's status and kill switch; after acting, it reads back. Plugins reach the
+  internal providers through their native Java. A boundary check fails on a vendor name
+  (`com.ratta.`, a provider URI, a vendor class, a private path) written outside the registry.
+- **Target: the firmware watch** ([#293](https://github.com/martonpaulo/ink-tools/issues/293)). It runs one probe per registry item when the
+  environment fingerprint changes (`Build.FINGERPRINT`, every vendor app's `versionCode`, the
+  registry version; versions are labels, never gates), in the InkTools Bridge app and when `inkctl`
+  connects, since a plugin may never see a first start. Each item reads `ok`, `broken` or
+  `unprobed` (no safe probe, with its reason and accepted risk; probes only read or make a provable
+  no-op). Each module has a kill switch in the registry, with a review date: off stops the module
+  and says so. One card per run lists what broke, updated by a stable id, and each run feeds a
+  compatibility table per fingerprint. Recorded fixtures per fingerprint run in CI against the
+  adapters. Prior art: [`research/2026-11-architecture-prior-art.md`](research/2026-11-architecture-prior-art.md).
+- **No fallback for a Supernote internal.** A broken internal stops its module and says so; it never
+  takes a hidden second path. Outside services may keep a second source, such as the offline then
+  online dictionary or a second translator (owner, 2026-11-25).
+- **One owner per value** ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). Device facts live in the registry, visual values in
+  `ui-kit` tokens, copy in each tool's copy module, cross-language contracts in one shared file,
+  plugin identity in `PluginConfig.json`; the DRY guard reads TypeScript, Java, Python and Swift,
+  and the same value in two places passes only with a registered owner.
 - **No hand-written queries or column names.** Code asks for an operation (`completedTasks()`,
   `writeEvent(event)`); only `sn-adapter` knows the authority, the table and the column names, and
   those come from `descriptor.json`, not from strings in the code.
