@@ -14,6 +14,11 @@ on:
 permissions:
   contents: read
 
+# One publish at a time per plugin, never cancelled half way (#301).
+concurrency:
+  group: prerelease-account-sync
+  cancel-in-progress: false
+
 jobs:
   prerelease:
     name: prerelease

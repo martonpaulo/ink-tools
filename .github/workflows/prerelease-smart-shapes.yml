@@ -1,18 +1,24 @@
 name: Prerelease Smart Shapes
 
-# Each Smart Shapes build becomes a GitHub prerelease carrying SmartShapes-<version>.snplg (#203): a device
-# build comes from CI, never from the owner's Mac. A push to main that changes the plugin or a package
-# it uses publishes when its smart-shapes-v<package.json version> tag does not exist yet, so each version
-# publishes once; the version follows root AGENTS.md › Product versioning (#155).
+# Each Smart Shapes build becomes a GitHub prerelease carrying SmartShapes-<version>.snplg (#203): a
+# device build comes from CI, never from the owner's Mac. A push to main that changes
+# PluginConfig.json, where the version lives, publishes (#301) when its smart-shapes-v<package.json
+# version> tag does not exist yet, so each version publishes once; the version follows root AGENTS.md
+# › Product versioning (#155).
 
 on:
   push:
     branches: [main]
-    paths: ['plugins/smart-shapes/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**']
+    paths: [plugins/smart-shapes/PluginConfig.json]
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# One publish at a time per plugin, never cancelled half way (#301).
+concurrency:
+  group: prerelease-smart-shapes
+  cancel-in-progress: false
 
 jobs:
   prerelease:

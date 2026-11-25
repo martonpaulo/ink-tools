@@ -15,6 +15,11 @@ on:
 permissions:
   contents: read
 
+# One publish at a time per plugin, never cancelled half way (#301).
+concurrency:
+  group: prerelease-plugin-diagnostics
+  cancel-in-progress: false
+
 jobs:
   prerelease:
     name: prerelease
