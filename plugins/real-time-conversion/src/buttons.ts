@@ -1,6 +1,7 @@
 /**
  * The two sidebar buttons (#184, #188), NOTE only, with no view: «Real-Time Text» switches the
- * mode, «Undo Conversion» undoes the last conversion. sn-plugin-lib 0.2.3's `setButtonState` only
+ * mode, «Undo Conversion» undoes the last conversion; and the lasso button «Convert to Text»
+ * (#250), for strokes, with no view, converts the whole lasso. sn-plugin-lib 0.2.3's `setButtonState` only
  * enables or disables a button, so the switch shows on or off by its icon, registered again on
  * each change, and a toast says the new state in words (no colour cue alone).
  */
@@ -15,6 +16,7 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {Converter} from './convert';
+import {convertLasso, LassoConvertHost, LassoOutcome} from './lasso';
 import {getSettings, wordOptions} from './settings';
 import {undoLast, UndoHost, UndoOutcome} from './undo';
 
@@ -22,8 +24,12 @@ export const BUTTON_TYPE_SIDEBAR = 1;
 export const SHOW_NO_VIEW = 0;
 export const MODE_BUTTON_ID = 100;
 export const UNDO_BUTTON_ID = 101;
+/** sn-plugin-lib's lasso toolbar button, for strokes (as Lookup's src/buttons.ts). */
+export const BUTTON_TYPE_LASSO = 2;
+export const EDIT_DATA_STROKES = 0;
+export const LASSO_BUTTON_ID = 102;
 
-export type Icons = {on: string; off: string; undo: string};
+export type Icons = {on: string; off: string; undo: string; lasso: string};
 
 export type ButtonHost = {
   register: typeof registerButton;
@@ -32,6 +38,7 @@ export type ButtonHost = {
   requestPermission: typeof requestPermission;
   makeConverter: () => Converter;
   undo: UndoHost;
+  lasso: LassoConvertHost;
   toast: (text: string) => void;
   log: (line: string) => void;
   icons: Icons;
@@ -64,9 +71,21 @@ export class Buttons {
     };
   }
 
-  /** Registers both buttons at start-up, the switch in the state Settings start it in. */
+  /** Registers every button at start-up, the switch in the state Settings start it in. */
   async registerAll(): Promise<void> {
     const {host} = this;
+    host.log(
+      describe(
+        'register lasso',
+        await host.register(BUTTON_TYPE_LASSO, ['NOTE'], {
+          id: LASSO_BUTTON_ID,
+          name: copy['button.lasso'],
+          icon: host.icons.lasso,
+          editDataTypes: [EDIT_DATA_STROKES],
+          showType: SHOW_NO_VIEW,
+        }),
+      ),
+    );
     host.log(
       describe(
         'register undo',
@@ -139,7 +158,7 @@ export class Buttons {
     return true;
   }
 
-  /** A press of one of the two buttons; false for an id that is not this plugin's. */
+  /** A press of one of the buttons; false for an id that is not this plugin's. */
   press(id: number): boolean {
     if (id === MODE_BUTTON_ID) {
       this.turn(!this.on).catch(error => this.host.log(`mode: ${String(error)}`));
@@ -149,7 +168,30 @@ export class Buttons {
       this.undo().catch(error => this.host.log(`undo: ${String(error)}`));
       return true;
     }
+    if (id === LASSO_BUTTON_ID) {
+      this.convertLasso().catch(error => this.host.log(`lasso: ${String(error)}`));
+      return true;
+    }
     return false;
+  }
+
+  /** «Convert to Text» (#250); null when a file permission is still missing. */
+  async convertLasso(): Promise<LassoOutcome | null> {
+    if (!(await this.permitted())) {
+      this.host.toast(copy['toast.permission']);
+      return null;
+    }
+    // A word still converting finishes first, so «Undo Conversion» keeps the lasso's conversion.
+    await this.converter?.idle();
+    const outcome = await convertLasso(this.host.lasso);
+    this.host.toast(
+      outcome === 'converted'
+        ? copy['toast.converted']
+        : outcome === 'empty'
+        ? copy['toast.empty']
+        : copy['toast.convertFailed'],
+    );
+    return outcome;
   }
 
   async undo(): Promise<UndoOutcome> {

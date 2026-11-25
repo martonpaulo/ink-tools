@@ -20,8 +20,9 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   - **Plugin Diagnostics** (`plugins/plugin-diagnostics`) is a developer-only plugin for device
     experiments.
   - **Real-Time Conversion** (`plugins/real-time-conversion`, being built) turns each handwritten word into typed text
-    with no lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion
-    ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184)).
+    with no lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion,
+    and a whole lasso into one text box with its lasso button «Convert to Text»
+    ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184), [#250](https://github.com/martonpaulo/ink-tools/issues/250)).
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
   `apps/handwriting-language`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).

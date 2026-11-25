@@ -7,6 +7,8 @@ import {
   getCurrentFilePath,
   getCurrentPageNum,
   getElements,
+  getLassoElements,
+  getLassoRect,
   getPageSize,
   onPenUp,
   rebuildStroke,
@@ -16,6 +18,7 @@ import {
   strokePoints,
 } from '@ink-tools/sn-adapter/official';
 import type {ConvertHost} from './convert';
+import type {LassoConvertHost} from './lasso';
 import type {UndoHost} from './undo';
 
 const log = (line: string) => console.log(`RealTimeConversion: ${line}`);
@@ -45,6 +48,21 @@ export const DEVICE_UNDO: UndoHost = {
   getCurrentPageNum,
   getElements,
   rebuildStroke: saved => rebuildStroke(saved, createElement),
+  batchUpdatePageElements: (nums, elements, page) =>
+    batchUpdatePageElements(nums, elements, page),
+  recycleElement,
+  log,
+};
+
+export const DEVICE_LASSO: LassoConvertHost = {
+  getLassoElements,
+  getLassoRect,
+  getCurrentFilePath,
+  getCurrentPageNum,
+  getPageSize,
+  recognizeElements,
+  saveStroke,
+  createTextBox,
   batchUpdatePageElements: (nums, elements, page) =>
     batchUpdatePageElements(nums, elements, page),
   recycleElement,

@@ -28,6 +28,10 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   text box at its place, in the tablet's default font. Words convert one at a time.
 - «Undo Conversion» (sidebar, [#188](https://github.com/martonpaulo/ink-tools/issues/188), `src/undo.ts`): the last conversion only, kept in memory;
   the box is found by its text and top-left corner (the host may size it again, [#206](https://github.com/martonpaulo/ink-tools/issues/206)), the strokes rebuilt from their saved points.
+- «Convert to Text» (lasso, strokes, no view, [#250](https://github.com/martonpaulo/ink-tools/issues/250), `src/lasso.ts`): the lassoed strokes in
+  ONE `recognizeElements` call at the page size, then ONE `batchUpdatePageElements` call deletes
+  them by `numInPage` and inserts one text box over the lasso rect, each recognized line a
+  paragraph, in the default font until [#144](https://github.com/martonpaulo/ink-tools/issues/144)'s font; «Undo Conversion» undoes it.
 - Settings (`App.tsx`, `src/settings.ts`): «Start with Real-Time Text on» (off), «Word spacing»,
   «Wait before converting». In memory until [#40](https://github.com/martonpaulo/ink-tools/issues/40)'s storage. A chosen font waits for the
   device round (research note §6, question 4).
@@ -55,7 +59,9 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
 Open, for the Mac: does `event_pen_up` arrive with no view open after a sidebar press; does a
 re-registered sidebar button show its new icon; does one `batchUpdatePageElements` delete strokes
 and insert a `createElement(500)` text box with one partial refresh; does the pen keep its speed;
-does a rebuilt stroke look like the original; the idle, grace and ratio defaults.
+does a rebuilt stroke look like the original; the idle, grace and ratio defaults; for «Convert to
+Text», what the native «Recognize as Text» makes (box, font, place), whether recognition keeps
+line breaks, and the box's font size against the handwriting.
 
 ## Reuse
 

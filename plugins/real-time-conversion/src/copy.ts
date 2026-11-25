@@ -5,13 +5,18 @@ export const copy = {
   'button.mode': 'Real-Time Text',
   /** The sidebar undo (#188), as the tablet's verb-and-noun buttons read. */
   'button.undo': 'Undo Conversion',
+  /** The lasso button (#250), the tablet's verb-and-noun wording. */
+  'button.lasso': 'Convert to Text',
   'toast.on': 'Real-Time Text on',
   'toast.off': 'Real-Time Text off',
   'toast.undone': 'Conversion undone',
   'toast.nothing': 'Nothing to undo',
   'toast.undoFailed': 'Could not undo the conversion',
+  'toast.converted': 'Converted to text',
+  'toast.empty': 'Lasso some handwriting first',
+  'toast.convertFailed': 'Could not convert the handwriting',
   'toast.permission':
-    'Allow Read Files and Modify Files, then tap Real-Time Text again',
+    'Allow Read Files and Modify Files, then tap the button again',
   'toast.failed': 'Real-Time Text could not start',
   'settings.start': 'Start with Real-Time Text on',
   'settings.spacing': 'Word spacing',

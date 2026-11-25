@@ -13,7 +13,10 @@ place soon after you finish it, with no lasso. Drawings, arrows and scribbles st
 - «Real-Time Text» in the sidebar turns the mode on and off.
 - A word converts only when it is finished: a word gap, a new line or a pause closes it, and an
   accent written just after still joins it.
-- «Undo Conversion» in the sidebar brings back the handwriting of the last conversion.
+- «Convert to Text» in the lasso's «⋯» list turns the whole lassoed handwriting into one text box
+  at its place, each handwritten line a paragraph.
+- «Undo Conversion» in the sidebar brings back the handwriting of the last conversion, a word's or
+  a lasso's.
 - Settings: start with the mode on, word spacing, and how long to wait before converting.
 
 Versions follow SemVer with a numbered beta: `0.1.0-beta.1` reads `0.1.0 beta 1` on the tablet
