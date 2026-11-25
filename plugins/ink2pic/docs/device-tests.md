@@ -21,6 +21,7 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (16), 2026-11-07, firmware 3.31.45](#build-010-16-2026-11-07-firmware-33145)
 - [Build 0.1.0 (18), 2026-11-15, firmware 3.31.45](#build-010-18-2026-11-15-firmware-33145)
 - [Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad](#word-lookup-020-beta-27-28-2026-11-25-nomad)
+- [Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Nomad](#word-lookup-020-beta-28-29-2026-11-25-nomad)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
 
@@ -211,3 +212,27 @@ Plugin Diagnostics and read the log over ADB; the fixture note was restored afte
   87 ms in a later one on the same JS instance; the first scoring of an instance pays the rest.
 - A Commons timeout (5 s) followed by the thin-page retry made the slowest search of the round.
 
+## Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Nomad
+
+The Wikidata supplement now waits at most 1.5 s after the main sources (owner D67 C). Prerelease
+[`word-lookup-v0.2.0-beta.28`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.28),
+commit `b8b5400`, installed with `inkctl plugin install`; beta 27 measured just before as the base.
+«Insert Image» on `Note/Tests/Fixtures.note`, lassoed with `inkctl fixture NAME --lasso word`, log
+read over ADB; the fixture note was restored after, checksum checked
+([#19](https://github.com/martonpaulo/ink-tools/issues/19)). Each run is a cache miss: a new build
+searches each word again.
+
+| Run | Commons | Wikidata | Rank | Search | Thumbnails | `time total` |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| beta 27, «maçã» read as «Maea» | 3693 ms | 6566 ms, no results | 137 ms | 6874 ms | 2635 ms | 11114 ms |
+| beta 28, «maçã» read as «Maea» | 545 ms | 1943 ms, no results | 136 ms | 2178 ms | 1588 ms | 4556 ms |
+| beta 28, «apple» read as «appe» | 1029 ms | 2549 ms, cut (`failed timeout`) | 1077 ms | 3643 ms | 1066 ms | 5375 ms |
+
+- The deadline fired once: Wikidata was cut 1520 ms after Commons answered. On beta 27 the same
+  tail held the «maçã» search 2.9 s after Commons; beta 28 would have ended it 1.5 s after.
+- The second beta 28 run had a fast network: Wikidata answered 1398 ms after Commons, inside the
+  grace, so nothing was cut. Network time varies by about 3 s between runs of the same word.
+- «maçã» inserted the same picture on both builds (`commons:136995162`); Wikidata had no results
+  for either word, so the cut changed no page 1 here.
+- Ranking 18 results for «appe» took 1077 ms in the second search of a fresh JS instance; the first,
+  17 results for «Maea», took 136 ms. The slow rank follows the titles, not only a cold instance.
