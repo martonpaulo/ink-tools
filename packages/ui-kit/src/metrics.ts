@@ -1,69 +1,35 @@
 /**
- * The visual tokens for the Manta (Ink2Pic brief section 8.4), the one place they are set. Each token
- * names a role, so calibrating one role on the device moves only that role (#53).
+ * The visual tokens for the Manta (Ink2Pic brief section 8.4), in pixels for React Native. Their values
+ * are set in tokens.json alone, which the Android apps read too (#275). Each token names a role, so
+ * calibrating one role on the device moves only that role (#53).
  * Layout units are density-independent: on the Manta PixelRatio is 1.875 and the window is
  * 1024 x 1365 units for 1920 x 2560 pixels (build 0.1.0 (1), #3), so millimetres are converted
  * with the runtime PixelRatio.
  */
 import {PixelRatio} from 'react-native';
+import tokens from './tokens.json';
 
 const SCALE = 1 / PixelRatio.get();
 /** Physical pixels per millimetre on the 299 ppi Manta screen. */
-const PX_PER_MM = 11.8;
-
-const TOUCH_TARGET_MM = 10;
-const CONTROL_HEIGHT_MM = 12;
-/** A button in a list row: one width, so the buttons of every row share a column (#68). */
-const ROW_BUTTON_WIDTH_MM = 22;
-/** The one spacing step every spacing role starts from [DEFAULT, calibrate on device]. */
-const SPACE_MM = 3;
-const BORDER_MM = 0.3;
-/** The body font size, near 40 px: about 2.4 mm cap height with Roboto's 0.71 cap height. */
-const BODY_FONT_SIZE_MM = 3.4;
-/**
- * The smallest font size on screen: the Supernote's own system text, the note title in the bottom
- * bar, measured at about 2.2 mm cap height in a device screenshot (brief section 8.4, #85).
- * Text a person must read is never smaller; `npm run renders` fails a screen that is.
- */
-const MIN_FONT_SIZE_MM = 3;
-/** The type ramp, as multiples of the body font size. */
-const LARGE_FONT_RATIO = 2;
-/** The line height of the status line, as a multiple of its font size. */
-const LINE_HEIGHT_RATIO = 1.3;
-/** A selected toggle's bar is this many borders thick. */
-const SELECTED_BAR_BORDERS = 2;
-
-/*
- * The native controls (#273). Each size below is a [DEFAULT, measure in #272]: the catalog of the
- * Supernote's own Settings replaces it with the measured value and its source, here alone.
- */
-/** The black band of the title bar. */
-const TITLE_BAR_HEIGHT_MM = 14;
-/** The bar that marks the open item of the navigation list, at its trailing edge. */
-const NAV_MARK_WIDTH_MM = 1;
-/** The switch's box, wide enough for «OFF». */
-const SWITCH_WIDTH_MM = 16;
-/** The radio button's ring and its filled dot. */
-const RADIO_SIZE_MM = 6;
-const RADIO_DOT_MM = 3;
-/** The drawn icons of the icon buttons: the remove ring, the trash and the download arrow. */
-const ICON_SIZE_MM = 6;
-/** The underline of the pager's current page. */
-const PAGE_MARK_BORDERS = 2;
+const PX_PER_MM = tokens.pxPerMm.value;
+/** Each size in millimetres, each ratio and each colour, with its source, in tokens.json (#275). */
+const MM = tokens.mm;
+const RATIO = tokens.ratio;
+const COLOUR = tokens.colour;
 
 const mm = (millimetres: number) => Math.round(millimetres * PX_PER_MM * SCALE);
 
-const space = mm(SPACE_MM);
-const border = Math.max(1, mm(BORDER_MM));
-const bodyFont = mm(BODY_FONT_SIZE_MM);
+const space = mm(MM.space.value);
+const border = Math.max(1, mm(MM.border.value));
+const bodyFont = mm(MM.bodyFont.value);
 
 export const metrics = {
-  touchTarget: mm(TOUCH_TARGET_MM),
+  touchTarget: mm(MM.touchTarget.value),
   /** A button and the text field: one height, so a field and its button line up. */
-  controlHeight: mm(CONTROL_HEIGHT_MM),
-  rowButtonWidth: mm(ROW_BUTTON_WIDTH_MM),
+  controlHeight: mm(MM.controlHeight.value),
+  rowButtonWidth: mm(MM.rowButtonWidth.value),
   border,
-  selectedBarHeight: border * SELECTED_BAR_BORDERS,
+  selectedBarHeight: border * RATIO.selectedBarBorders.value,
 
   /** Between the screen's edge and its content. */
   screenPadding: space,
@@ -80,25 +46,25 @@ export const metrics = {
   /** Between the tiles of the results grid. */
   tileGap: space,
 
-  minFont: mm(MIN_FONT_SIZE_MM),
+  minFont: mm(MM.minFont.value),
   fontBody: bodyFont,
-  fontLarge: bodyFont * LARGE_FONT_RATIO,
-  statusLineHeight: Math.round(bodyFont * LINE_HEIGHT_RATIO),
+  fontLarge: bodyFont * RATIO.largeFont.value,
+  statusLineHeight: Math.round(bodyFont * RATIO.lineHeight.value),
 
-  titleBarHeight: mm(TITLE_BAR_HEIGHT_MM),
-  navMarkWidth: mm(NAV_MARK_WIDTH_MM),
-  switchWidth: mm(SWITCH_WIDTH_MM),
-  radioSize: mm(RADIO_SIZE_MM),
-  radioDot: mm(RADIO_DOT_MM),
-  iconSize: mm(ICON_SIZE_MM),
-  pageMarkHeight: border * PAGE_MARK_BORDERS,
+  titleBarHeight: mm(MM.titleBarHeight.value),
+  navMarkWidth: mm(MM.navMarkWidth.value),
+  switchWidth: mm(MM.switchWidth.value),
+  radioSize: mm(MM.radioSize.value),
+  radioDot: mm(MM.radioDot.value),
+  iconSize: mm(MM.iconSize.value),
+  pageMarkHeight: border * RATIO.pageMarkBorders.value,
 
-  ink: '#000000',
-  paper: '#ffffff',
+  ink: COLOUR.ink.value,
+  paper: COLOUR.paper.value,
   /** Section headings, hints and values: the context grey, 9.7:1 on paper (README › Grey as colour, #50). */
-  context: '#444444',
+  context: COLOUR.context.value,
   /** The field's placeholder: a grey that keeps 7:1 contrast on paper (interface rule 3). */
-  placeholder: '#595959',
+  placeholder: COLOUR.placeholder.value,
   /** Selected text in the field: a light grey, so the ink text stays readable over it. */
-  selection: '#bfbfbf',
+  selection: COLOUR.selection.value,
 } as const;

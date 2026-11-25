@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
-import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,7 +13,6 @@ import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckedTextView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -24,10 +22,11 @@ import java.util.Set;
 
 /**
  * The app's one screen (#246), opened from the sidebar, the floating button's long press and the
- * system's app preferences: the title with «Close», the active language with «Switch Language»,
- * where the floating button shows (and a reset of where it sits, #244), the languages in the
- * cycle, and any missing permission or service with the command that turns it on. Built in code;
- * black on white, no animation.
+ * system's app preferences, drawn with the Supernote's native controls (`Ink`, #275): the title
+ * bar with × to close, the active language with «Switch Language», where the floating button
+ * shows as radio rows (and a reset of where it sits, #244), a switch row for each installed
+ * language in the cycle, and any missing permission or service with the command that turns it on.
+ * Built in code; black on white, no animation.
  *
  * Extras, for a device round over ADB: `--es button writing|always|hidden` sets the floating
  * button (ButtonRule.Mode keys).
@@ -45,15 +44,20 @@ public final class SettingsActivity extends Activity {
     super.onCreate(state);
     getWindow().setWindowAnimations(0);
     readExtras(getIntent());
+    LinearLayout screen = new LinearLayout(this);
+    screen.setOrientation(LinearLayout.VERTICAL);
+    screen.setBackgroundColor(Ink.PAPER);
+    screen.addView(Ink.titleBar(this, Copy.TITLE, Copy.CLOSE, this::finish), new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
     page = new LinearLayout(this);
     page.setOrientation(LinearLayout.VERTICAL);
-    int gap = Ink.px(this, Ink.GAP_DP);
-    page.setPadding(gap * 2, gap * 2, gap * 2, gap * 2);
+    int space = Ink.space(this);
+    page.setPadding(space, space, space, space);
     ScrollView scroll = new ScrollView(this);
-    scroll.setBackgroundColor(Ink.PAPER);
     scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
     scroll.addView(page);
-    setContentView(scroll);
+    screen.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+    setContentView(screen);
   }
 
   @Override
@@ -77,11 +81,10 @@ public final class SettingsActivity extends Activity {
   /** Rebuilt on each resume, since a permission may have changed in between. */
   private void render() {
     page.removeAllViews();
-    titleRow();
-    text(Copy.INTRO, Ink.TEXT_SP, false);
+    add(Ink.text(this, Copy.INTRO, false));
     if (error != null) {
-      section(Copy.SWITCH_FAILED);
-      text(error, Ink.TEXT_SP, false);
+      add(Ink.caption(this, Copy.SWITCH_FAILED));
+      add(Ink.text(this, error, false));
     }
     boolean files = Environment.isExternalStorageManager();
     boolean overlay = Settings.canDrawOverlays(this);
@@ -89,83 +92,64 @@ public final class SettingsActivity extends Activity {
       missing(Copy.FILES_OFF, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
     }
 
-    section(Copy.ACTIVE);
+    add(Ink.caption(this, Copy.ACTIVE));
     List<String> installed = null;
     try {
       String active = Switcher.current();
-      text(active == null ? Copy.UNKNOWN : LanguageCycle.name(active) + "  (" + active + ")", Ink.TITLE_SP, true);
+      TextView name = Ink.text(this, active == null ? Copy.UNKNOWN : LanguageCycle.name(active) + "  (" + active + ")", false);
+      name.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.largeSp(this));
+      add(name);
       installed = Switcher.installed();
     } catch (IOException readError) {
-      text(files ? readError.getMessage() : Copy.FILES_OFF, Ink.TEXT_SP, false);
+      add(Ink.text(this, files ? readError.getMessage() : Copy.FILES_OFF, false));
     }
-
-    Button next = button(Copy.SWITCH_LANGUAGE);
-    next.setEnabled(files);
+    Button next = Ink.button(this, Copy.SWITCH_LANGUAGE, true, files);
     next.setOnClickListener(view -> switchLanguage());
+    addButton(next);
 
     Prefs prefs = new Prefs(this);
-    section(Copy.BUTTON_SECTION);
+    add(Ink.caption(this, Copy.BUTTON_SECTION));
     if (!overlay) {
       missing(Copy.OVERLAY_OFF, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
     }
     ButtonRule.Mode chosenMode = prefs.button();
     for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
-      CheckedTextView row = check(Copy.buttonMode(mode), mode == chosenMode);
+      LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), mode == chosenMode);
       row.setOnClickListener(view -> {
         setButton(mode);
         render();
       });
+      add(row);
     }
     if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
-      text(Copy.WATCHER_OFF, Ink.TEXT_SP, true);
-      text(Copy.GRANT_FROM_COMPUTER, Ink.TEXT_SP, false);
-      TextView command = text(Copy.WATCHER_COMMANDS, Ink.TEXT_SP, false);
-      command.setTypeface(Typeface.MONOSPACE);
-      command.setTextIsSelectable(true);
+      bold(Copy.WATCHER_OFF);
+      add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, false));
+      command(Copy.WATCHER_COMMANDS);
     }
-    text(Copy.BUTTON_HELP, Ink.TEXT_SP, false);
-    Button reset = button(Copy.RESET_PLACE);
+    add(Ink.text(this, Copy.BUTTON_HELP, true));
+    Button reset = Ink.button(this, Copy.RESET_PLACE, false, true);
     reset.setOnClickListener(view -> {
       new Prefs(this).clearPlace();
       OverlayService.moveHome();
     });
+    addButton(reset);
 
-    section(Copy.CYCLE_SECTION);
-    text(Copy.CYCLE_HELP, Ink.TEXT_SP, false);
+    add(Ink.caption(this, Copy.CYCLE_SECTION));
+    add(Ink.text(this, Copy.CYCLE_HELP, true));
     if (installed != null) {
       Set<String> chosen = prefs.cycle();
       for (String code : installed) {
-        CheckedTextView row = check(LanguageCycle.name(code) + "  (" + code + ")", chosen.contains(code));
+        LinearLayout row = Ink.switchRow(this, LanguageCycle.name(code), code, chosen.contains(code));
         row.setOnClickListener(view -> toggle(code));
+        add(row);
       }
     }
     try {
       String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-      text(Copy.VERSION + " " + version, Ink.TEXT_SP, false);
+      add(Ink.text(this, Copy.VERSION + " " + version, true));
     } catch (PackageManager.NameNotFoundException impossible) {
       throw new IllegalStateException(impossible);
     }
-  }
-
-  /** The title at the leading edge and «Close» at the trailing edge of one line (#246; D69 A). */
-  private void titleRow() {
-    LinearLayout row = new LinearLayout(this);
-    row.setOrientation(LinearLayout.HORIZONTAL);
-    row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-    TextView title = new TextView(this);
-    title.setText(Copy.TITLE);
-    title.setTextColor(Ink.INK);
-    title.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.TITLE_SP);
-    title.setTypeface(Typeface.DEFAULT_BOLD);
-    title.setAccessibilityHeading(true);
-    row.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-    Button close = outlined(Copy.CLOSE);
-    close.setOnClickListener(view -> finish());
-    int pad = Ink.px(this, Ink.GAP_DP);
-    close.setPadding(pad, 0, pad, 0);
-    row.addView(close, new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-    add(row);
   }
 
   /** «Switch Language»: the next language in the cycle, as a tap on the floating button does. */
@@ -235,12 +219,10 @@ public final class SettingsActivity extends Activity {
   }
 
   private void missing(String what, String op, String screen) {
-    text(what, Ink.TEXT_SP, true);
-    text(Copy.GRANT_FROM_COMPUTER, Ink.TEXT_SP, false);
-    TextView command = text(Copy.grantCommand(op), Ink.TEXT_SP, false);
-    command.setTypeface(Typeface.MONOSPACE);
-    command.setTextIsSelectable(true);
-    Button open = button(Copy.OPEN_PERMISSION);
+    bold(what);
+    add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, false));
+    command(Copy.grantCommand(op));
+    Button open = Ink.button(this, Copy.OPEN_PERMISSION, false, true);
     open.setOnClickListener(view -> {
       try {
         startActivity(new Intent(screen, Uri.parse("package:" + getPackageName())));
@@ -249,70 +231,36 @@ public final class SettingsActivity extends Activity {
         render();
       }
     });
+    addButton(open);
   }
 
-  /** A full-width outlined button, the e-ink look. */
-  private Button button(String label) {
-    Button view = outlined(label);
+  private void bold(String value) {
+    TextView view = Ink.text(this, value, false);
+    view.setTypeface(Typeface.DEFAULT_BOLD);
     add(view);
-    return view;
   }
 
-  /** An outlined button, the e-ink look, not yet placed. */
-  private Button outlined(String label) {
-    Button view = new Button(this);
-    view.setText(label);
-    view.setAllCaps(false);
-    view.setTextColor(Ink.INK);
-    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.TEXT_SP);
-    view.setBackground(Ink.box(this, false, 0));
-    view.setStateListAnimator(null);
-    view.setMinHeight(Ink.px(this, Ink.TARGET_DP));
-    return view;
-  }
-
-  private void section(String title) {
-    TextView view = text(title, Ink.TEXT_SP, true);
-    view.setPadding(0, Ink.px(this, Ink.GAP_DP * 2), 0, 0);
-  }
-
-  private TextView text(String value, float sp, boolean bold) {
-    TextView view = new TextView(this);
-    view.setText(value);
-    view.setTextColor(Ink.INK);
-    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
-    if (bold) {
-      view.setTypeface(Typeface.DEFAULT_BOLD);
-    }
+  /** A command to type on the computer: monospace and selectable. */
+  private void command(String value) {
+    TextView view = Ink.text(this, value, false);
+    view.setTypeface(Typeface.MONOSPACE);
+    view.setTextIsSelectable(true);
     add(view);
-    return view;
   }
 
-  /** A row with a square at its start: filled when on, empty when off; no animated check mark. */
-  private CheckedTextView check(String label, boolean on) {
-    CheckedTextView row = new CheckedTextView(this);
-    row.setText(label);
-    row.setTextColor(Ink.INK);
-    row.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.TEXT_SP);
-    row.setMinHeight(Ink.px(this, Ink.TARGET_DP));
-    row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-    StateListDrawable mark = new StateListDrawable();
-    mark.addState(new int[] {android.R.attr.state_checked}, Ink.box(this, true, Ink.GAP_DP * 2));
-    mark.addState(new int[] {}, Ink.box(this, false, Ink.GAP_DP * 2));
-    mark.setExitFadeDuration(0);
-    mark.setEnterFadeDuration(0);
-    row.setCheckMarkDrawable(null);
-    row.setCompoundDrawablesRelativeWithIntrinsicBounds(mark, null, null, null);
-    row.setCompoundDrawablePadding(Ink.px(this, Ink.GAP_DP));
-    row.setChecked(on);
-    add(row);
-    return row;
-  }
-
+  /** A full-width view, one spacing step under the one before. */
   private void add(View view) {
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    params.topMargin = Ink.px(this, Ink.GAP_DP / 2);
+    params.topMargin = Ink.space(this);
     page.addView(view, params);
+  }
+
+  /** A button at its own width, at the leading edge, one spacing step under the view before. */
+  private void addButton(Button button) {
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    params.topMargin = Ink.space(this);
+    page.addView(button, params);
   }
 }

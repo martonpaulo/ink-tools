@@ -107,8 +107,8 @@ public final class OverlayService extends Service {
     button.setGravity(Gravity.CENTER);
     button.setTextColor(Ink.INK);
     button.setTypeface(Typeface.DEFAULT_BOLD);
-    button.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.BUTTON_SP);
-    button.setBackground(Ink.box(this, false, 0));
+    button.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.bodySp(this));
+    button.setBackground(Ink.outline(this, Ink.PAPER, Ink.INK, false));
     // The click and long-click listeners stay for accessibility actions; touch() calls them.
     button.setOnClickListener(view -> tap());
     button.setOnLongClickListener(view -> {
@@ -118,7 +118,7 @@ public final class OverlayService extends Service {
     ViewConfiguration touch = ViewConfiguration.get(this);
     gesture = new ButtonGesture(touch.getScaledTouchSlop(), ViewConfiguration.getLongPressTimeout());
     button.setOnTouchListener(this::touch);
-    int size = Ink.px(this, Ink.TARGET_DP);
+    int size = Ink.target(this);
     params = new WindowManager.LayoutParams(
         size, size,
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,

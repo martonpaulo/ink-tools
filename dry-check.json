@@ -48,9 +48,6 @@
     "number": 3,
     "url": 1
    },
-   "packages/ui-kit/src/metrics.ts": {
-    "colour": 2
-   },
    "plugins/account-sync/.eslintrc.js": {
     "repeated": 1
    },

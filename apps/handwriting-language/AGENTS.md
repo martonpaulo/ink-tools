@@ -22,11 +22,13 @@ Two surfaces ship in one build:
   after a restart of the tablet or an update of the app unless hidden.
 - **B, the app's screen** (`SettingsActivity`, the one launcher entry, «Handwriting Language»,
   with its icon `res/drawable/ic_launcher.xml`): the sidebar lists it by itself and opens it
-  ([#246](https://github.com/martonpaulo/ink-tools/issues/246)). It shows the title with «Close»
-  at the trailing edge (Back closes it too), the active language large with «Switch Language»,
-  the floating button's three choices and «Reset Button Position», the installed languages in the
-  cycle, each missing permission with the command that grants it, and the command that turns on
-  writing detection when it is off. The one-tap switch with nothing on screen is gone (owner,
+  ([#246](https://github.com/martonpaulo/ink-tools/issues/246)). It is drawn with the Supernote's
+  native controls, as the plugins' ui-kit draws them ([#275](https://github.com/martonpaulo/ink-tools/issues/275)):
+  the black title bar with × to close at the leading edge (Back closes it too), the active
+  language large with the primary button «Switch Language», the floating button's three choices
+  as radio rows and «Reset Button Position», a switch row («ON»/«OFF») for each installed language
+  in the cycle, each missing permission with the command that grants it, and the command that
+  turns on writing detection when it is off. The one-tap switch with nothing on screen is gone (owner,
   2026-11-25).
 
 ## Target surface
@@ -100,8 +102,12 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 - `javac -Werror`: a new warning fails the build.
 - Logic with no Android import goes in `ButtonGesture`, `ButtonPlace`, `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
-- All visible copy is in `Copy.java`; the e-ink look (black on white, a black outline, 64 dp
-  targets, no animation) in `Ink.java`. The launcher label lives in the manifest that
+- All visible copy is in `Copy.java`; the native controls (title bar, list row, switch, radio
+  button, caption, button) in `Ink.java`, drawn only from `Tokens`: `scripts/build.cjs` writes that
+  class before `javac` from ui-kit's `packages/ui-kit/src/tokens.json` with
+  `packages/ui-kit/android-tokens.cjs`, the one source the plugins read too, so a token changes
+  there alone; `TokensTest` fails when `Tokens` differs from it
+  ([#275](https://github.com/martonpaulo/ink-tools/issues/275)). The launcher label lives in the manifest that
   `scripts/build.cjs` writes.
 - No XML layouts: the views are built in code. The two resources are the icon,
   `res/drawable/ic_launcher.xml` (a vector, [#246](https://github.com/martonpaulo/ink-tools/issues/246)), and `WritingWatcher`'s configuration, which

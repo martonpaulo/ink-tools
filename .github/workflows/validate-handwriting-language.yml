@@ -1,13 +1,13 @@
 name: Validate Handwriting Language
 
-# Runs only when apps/handwriting-language/ (or this file, or the shared version rule) changes; the gate is the
+# Runs only when apps/handwriting-language/ (or this file, the shared version rule, or ui-kit's tokens, #275) changes; the gate is the
 # subproject's own JVM tests and APK build (#157, #160).
 on:
   push:
     branches: [main]
-    paths: ['apps/handwriting-language/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
+    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
   pull_request:
-    paths: ['apps/handwriting-language/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
+    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
   workflow_dispatch:
 
 permissions:

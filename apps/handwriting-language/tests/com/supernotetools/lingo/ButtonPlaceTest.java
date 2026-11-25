@@ -2,7 +2,7 @@ package com.supernotetools.lingo;
 
 /** Plain JVM test, no framework: a saved place stays on every screen the tablets have (#244). */
 public final class ButtonPlaceTest {
-  /** 64 dp at density 300. */
+  /** About the 10 mm touch target the floating button is (Tokens.TOUCH_TARGET_MM). */
   private static final int SIZE = 120;
   /** The Manta and the Nomad (docs/supernote.md › Screen and units), each portrait and landscape. */
   private static final int[][] SCREENS = {{1920, 2560}, {2560, 1920}, {1404, 1872}, {1872, 1404}};

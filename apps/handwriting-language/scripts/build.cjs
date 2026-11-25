@@ -13,6 +13,7 @@ const path = require('node:path');
 const {execFileSync} = require('node:child_process');
 const {jdkTool, JDK_MISSING} = require('./host-tools.cjs');
 const {versionName} = require('../../../scripts/plugin-version.cjs');
+const androidTokens = require('../../../packages/ui-kit/android-tokens.cjs');
 
 const root = path.resolve(__dirname, '..');
 const build = path.join(root, 'build');
@@ -25,6 +26,8 @@ const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
 const PURE = ['ButtonGesture', 'ButtonPlace', 'ButtonRule', 'LanguageCycle', 'LanguageFiles'];
 const TESTS = ['ButtonGestureTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest'];
+/** The native look's tokens, written from ui-kit's tokens.json before javac, never by hand (#275). */
+const TOKENS_CLASS = 'Tokens';
 /**
  * shortcut: a local debug key in .toolchain/, outside Git and unique to each checkout; an APK
  * from another checkout or CI has another key, so the tablet needs an uninstall before it.
@@ -197,7 +200,7 @@ function buildApk() {
   run(jdkTool('javac'), [
     // -Werror: a new javac warning fails the build, as in the plugins (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
-    '-cp', t.androidJar, '-d', classes, ...javaSources(path.join(root, 'src')),
+    '-cp', t.androidJar, '-d', classes, ...javaSources(path.join(root, 'src')), tokensSource(work),
   ]);
   const jar = path.join(work, 'classes.jar');
   run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);
@@ -238,21 +241,33 @@ function buildApk() {
   return apk;
 }
 
+/** Write `Tokens.java` under `work`, and with `propertiesFile` the values its test reads; its path. */
+function tokensSource(work, propertiesFile) {
+  const file = path.join(work, 'gen', ...PACKAGE.split('.'), `${TOKENS_CLASS}.java`);
+  androidTokens.write(PACKAGE, file, propertiesFile);
+  return file;
+}
+
 function test() {
   // A temporary folder: the gate may run as another user than the one that owns build/.
-  const classes = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-app-tests-'));
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-app-tests-'));
+  const classes = path.join(work, 'classes');
+  const tokens = path.join(work, 'tokens.properties');
   try {
+    run(process.execPath, ['--test', androidTokens.TEST]);
     run(jdkTool('javac'), [
       '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror', '-d', classes,
       ...PURE.map(name => path.join(root, `src/com/supernotetools/lingo/${name}.java`)),
+      tokensSource(work, tokens),
       ...javaSources(path.join(root, 'tests')),
     ]);
     for (const name of TESTS) {
       run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${name}`]);
     }
+    run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${TOKENS_CLASS}Test`, tokens]);
     testBadging();
   } finally {
-    fs.rmSync(classes, {recursive: true, force: true});
+    fs.rmSync(work, {recursive: true, force: true});
   }
 }
 

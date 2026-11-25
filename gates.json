@@ -97,6 +97,8 @@
     {"path": "plugins/plugin-diagnostics/", "gates": ["plugin-diagnostics"]},
     {"path": ".github/workflows/validate-plugin-diagnostics.yml", "gates": ["plugin-diagnostics"]},
     {"path": "apps/handwriting-language/", "gates": ["handwriting-language"]},
+    {"path": "packages/ui-kit/src/tokens.json", "gates": ["handwriting-language"]},
+    {"path": "packages/ui-kit/android-tokens*", "gates": ["handwriting-language"]},
     {"path": "apps/ink-notebook-editor/", "gates": ["docs"]},
     {"path": ".github/workflows/validate-handwriting-language.yml", "gates": ["handwriting-language"]},
     {"path": "apps/handwriting-language/scripts/", "gates": ["inktools-bridge"]},
