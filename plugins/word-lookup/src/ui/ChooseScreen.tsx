@@ -134,6 +134,8 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
                         : {uri: tile.uri}
                     }
                     resizeMode="contain"
+                    // No fade-in: each fade step is a refresh on e-ink (brief 8.4).
+                    fadeDuration={0}
                     style={styles.image}
                   />
                 </Pressable>

@@ -63,6 +63,8 @@ export function StylesGrid({
                     <Image
                       source={{uri: `file://${tile.path}`}}
                       resizeMode="contain"
+                      // No fade-in: each fade step is a refresh on e-ink (brief 8.4).
+                      fadeDuration={0}
                       style={styles.image}
                     />
                     <Text style={shared.text}>
