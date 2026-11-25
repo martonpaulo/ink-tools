@@ -1244,7 +1244,7 @@ The `init` command was run successfully during research with the name `ImageSpik
 
 ## 18. Device test protocol
 
-The agent cannot reach the Manta. The owner runs every device test, so each test must be quick and its result unambiguous.
+Superseded (2026-11-16 and 2026-11-25, [`docs/decisions.md`](../../decisions.md#decision-index)): the agent drives the Manta over `inkctl` and runs every step a command can do; the owner gets only what is his alone (taste, the real pen, his iPhone, account consent), batched once per round.
 
 ### 18.1 What the agent sends with each build
 

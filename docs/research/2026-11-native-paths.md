@@ -87,7 +87,7 @@ misses, not missing paths. Several parts are ours on purpose:
 | `getCurrentPageNum` instead of the screen counter | Keep ours | It stayed wrong with no jump ([#220](https://github.com/martonpaulo/ink-tools/issues/220)), pointing to a stale listener |
 | `predict_name` stroke class | Keep ours | Not reachable from the JS SDK |
 | Word Lookup in Documents | Out | [#141](https://github.com/martonpaulo/ink-tools/issues/141) (2026-11-15), confirmed 2026-11-25: the owner works in Notes |
-| `reloadFile` after a conversion | Adopt with conditions ([#206](https://github.com/martonpaulo/ink-tools/issues/206)) | Only when the batch answer shows no redraw, never while the pen is down; check that no stroke is lost and undo still works |
+| `reloadFile` after a conversion | Adopt with conditions ([#296](https://github.com/martonpaulo/ink-tools/issues/296)) | Only when the batch answer shows no redraw, never while the pen is down; check that no stroke is lost and undo still works |
 | Native confirm dialog | Adopt ([#296](https://github.com/martonpaulo/ink-tools/issues/296)) | Already decided in [#273](https://github.com/martonpaulo/ink-tools/issues/273); fix the wrong `docs/supernote.md` line |
 | Native error tip | Adopt for simple cases ([#296](https://github.com/martonpaulo/ink-tools/issues/296)) | Only a no-view failure with nothing to retry; `ErrorView` keeps Retry and fix actions |
 | `saveCurrentNote` before page export | Adopt ([#296](https://github.com/martonpaulo/ink-tools/issues/296)) | The latest strokes reach the PNG |
@@ -111,7 +111,7 @@ translation feature.
 
 ## Decisions and issues
 
-- Adopted official paths: [#296](https://github.com/martonpaulo/ink-tools/issues/296) and [#206](https://github.com/martonpaulo/ink-tools/issues/206).
+- Adopted official paths: [#296](https://github.com/martonpaulo/ink-tools/issues/296) (with `reloadFile`; [#206](https://github.com/martonpaulo/ink-tools/issues/206) closed before it was built).
 - Handwriting Language's button rule: [#195](https://github.com/martonpaulo/ink-tools/issues/195).
 - The level rule and the check before moving a part up: `docs/architecture.md` › Layer rules and
   `docs/decisions.md`.
