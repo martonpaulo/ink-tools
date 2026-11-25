@@ -8,6 +8,7 @@
 import {ALL_DIRECTIONS, directionId} from '@ink-tools/ink-core';
 import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search';
 import type {SettingsCodec} from './profile';
+import {MODULE_IDS, type ModuleId} from './moduleIds';
 
 export const SETTINGS_VERSION = 1;
 
@@ -218,16 +219,129 @@ function readPictureOptions(
   }
 }
 
-export const LOOKUP_SETTINGS: SettingsCodec<LookupSettings> = {
-  parse: text => parseSettings(text),
-  serialize: serializeSettings,
+/** The Lookup codec of a file with Lookup's settings alone, as Word Lookup wrote it. */
+const LOOKUP_DESCRIBE = (settings: LookupSettings): string =>
+  [
+    ...SWITCH_KEYS.map(key => `${key} ${settings[key] ? 'on' : 'off'}`),
+    ...Object.entries(settings.directions).map(
+      ([id, on]) => `${id} ${on ? 'on' : 'off'}`,
+    ),
+    `sources off [${settings.sourcesOff.join(' ')}]`,
+    `data saver ${settings.dataSaver ? 'on' : 'off'}`,
+  ].join(', ');
+
+/** The settings file's shape since Lasso Actions (#306); Word Lookup's was `lookup` alone. */
+export const LASSO_SETTINGS_VERSION = 2;
+
+/** Every module starts on: Lookup was the whole plugin before. */
+export const DEFAULT_MODULES: Record<ModuleId, boolean> = {lookup: true};
+
+export type LassoSettings = {
+  /** One switch per module; a module off registers no lasso button. */
+  modules: Record<ModuleId, boolean>;
+  lookup: LookupSettings;
+  /** The switches of modules this build does not know, kept so a write never drops them. */
+  otherModules: Record<string, unknown>;
+  /** True when the file was read in Word Lookup's shape: index.js writes it once in the new one. */
+  oldShape: boolean;
+};
+
+export const defaultLassoSettings = (): LassoSettings => ({
+  modules: {...DEFAULT_MODULES},
+  lookup: fresh(),
+  otherModules: {},
+  oldShape: false,
+});
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+/**
+ * The settings in `text`. A file with no `modules` key is Word Lookup's: all of it is Lookup's
+ * settings and every module is on, and nothing is dropped. A corrupt or missing file gives the
+ * defaults, every module on, and the problem for the log; nothing is thrown.
+ */
+export function parseLassoSettings(text: string | null): {
+  settings: LassoSettings;
+  problems: string[];
+} {
+  if (text === null) {
+    return {settings: defaultLassoSettings(), problems: []};
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    raw = undefined;
+  }
+  if (!isObject(raw) || !('modules' in raw)) {
+    // Word Lookup's shape, or not an object: Lookup's own parser names the problem.
+    const lookup = parseSettings(text);
+    return {
+      settings: {
+        ...defaultLassoSettings(),
+        lookup: lookup.settings,
+        oldShape: isObject(raw),
+      },
+      problems: lookup.problems,
+    };
+  }
+  const problems: string[] = [];
+  const modules = isObject(raw.modules) ? raw.modules : {};
+  if (!isObject(raw.modules)) {
+    problems.push('settings: modules is not an object; every module is on');
+  }
+  const switches = {...DEFAULT_MODULES};
+  for (const id of MODULE_IDS) {
+    const value = modules[id];
+    if (typeof value === 'boolean') {
+      switches[id] = value;
+    } else if (value !== undefined) {
+      problems.push(`settings: modules.${id} is not true or false; it is on`);
+    }
+  }
+  const lookup = parseSettings(
+    isObject(raw.lookup) ? JSON.stringify(raw.lookup) : null,
+  );
+  return {
+    settings: {
+      modules: switches,
+      lookup: lookup.settings,
+      otherModules: Object.fromEntries(
+        Object.entries(modules).filter(
+          ([id]) => !MODULE_IDS.includes(id as ModuleId),
+        ),
+      ),
+      oldShape: false,
+    },
+    problems: [...problems, ...lookup.problems],
+  };
+}
+
+export function serializeLassoSettings(settings: LassoSettings): string {
+  // Lookup's part is its own serialization, less the old file's version, which the new one carries.
+  const lookup = JSON.parse(serializeSettings(settings.lookup)) as Record<
+    string,
+    unknown
+  >;
+  delete lookup.version;
+  return `${JSON.stringify(
+    {
+      version: LASSO_SETTINGS_VERSION,
+      modules: {...settings.otherModules, ...settings.modules},
+      lookup,
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+export const LASSO_SETTINGS: SettingsCodec<LassoSettings> = {
+  parse: text => parseLassoSettings(text),
+  serialize: serializeLassoSettings,
   describe: settings =>
     [
-      ...SWITCH_KEYS.map(key => `${key} ${settings[key] ? 'on' : 'off'}`),
-      ...Object.entries(settings.directions).map(
-        ([id, on]) => `${id} ${on ? 'on' : 'off'}`,
-      ),
-      `sources off [${settings.sourcesOff.join(' ')}]`,
-      `data saver ${settings.dataSaver ? 'on' : 'off'}`,
+      ...MODULE_IDS.map(id => `${id} ${settings.modules[id] ? 'on' : 'off'}`),
+      LOOKUP_DESCRIBE(settings.lookup),
     ].join(', '),
 };

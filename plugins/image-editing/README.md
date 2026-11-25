@@ -39,7 +39,7 @@ shows it again. Back or **Close** closes the editor and keeps the edited picture
 
 ## Built on
 
-React Native + `sn-plugin-lib`, like `../word-lookup`, with a native Java module built by
+React Native + `sn-plugin-lib`, like `../lasso-actions`, with a native Java module built by
 `scripts/native-build.cjs`. The grey and e-ink steps come from `../../packages/picture-search`.
 
 ```bash

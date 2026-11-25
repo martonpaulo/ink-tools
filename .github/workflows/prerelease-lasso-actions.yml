@@ -1,14 +1,14 @@
-name: Prerelease Word Lookup
+name: Prerelease Lasso Actions
 
-# Each Word Lookup build becomes a GitHub prerelease carrying Lookup-<version>.snplg (#203): a device
+# Each Lasso Actions build becomes a GitHub prerelease carrying LassoActions-<version>.snplg (#203, #306): a device
 # build comes from CI, never from the owner's Mac. A push to main that changes the plugin or a package
-# it uses publishes when its word-lookup-v<package.json version> tag does not exist yet, so each version
+# it uses publishes when its lasso-actions-v<package.json version> tag does not exist yet, so each version
 # publishes once; the version follows root AGENTS.md › Product versioning (#155).
 
 on:
   push:
     branches: [main]
-    paths: ['plugins/word-lookup/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**']
+    paths: ['plugins/lasso-actions/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**']
   workflow_dispatch:
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: plugins/word-lookup
+        working-directory: plugins/lasso-actions
     steps:
       - name: Check out the pushed commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -34,7 +34,7 @@ jobs:
         id: tag
         run: |
           version="$(node ../../scripts/plugin-version.cjs .)"
-          tag="word-lookup-v$version"
+          tag="lasso-actions-v$version"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::$tag is already published; nothing to do."
             echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -49,7 +49,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: plugins/word-lookup/package-lock.json
+          cache-dependency-path: plugins/lasso-actions/package-lock.json
 
       - name: Install dependencies
         if: steps.tag.outputs.publish == 'true'
@@ -67,11 +67,11 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: |
           # The asset name carries the version so the owner can tell builds apart on the tablet.
-          asset="build/outputs/Lookup-${TAG#word-lookup-v}.snplg"
+          asset="build/outputs/LassoActions-${TAG#lasso-actions-v}.snplg"
           cp build/outputs/Lookup.snplg "$asset"
           gh release create "$TAG" "$asset" \
             --prerelease --target "$GITHUB_SHA" --title "$TAG" \
-            --notes "Word Lookup prerelease build, with its native app.npk. Install on the tablet."
+            --notes "Lasso Actions prerelease build, with its native app.npk. Install on the tablet."
 
       - name: Read the asset back
         if: steps.tag.outputs.publish == 'true'
@@ -79,6 +79,6 @@ jobs:
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
           echo "$names"
           case "$names" in
-            *"Lookup-${TAG#word-lookup-v}.snplg"*) ;;
-            *) echo "::error::Lookup-${TAG#word-lookup-v}.snplg is missing from $TAG."; exit 1 ;;
+            *"LassoActions-${TAG#lasso-actions-v}.snplg"*) ;;
+            *) echo "::error::LassoActions-${TAG#lasso-actions-v}.snplg is missing from $TAG."; exit 1 ;;
           esac

@@ -34,7 +34,7 @@ afterAll(() => fs.rmSync(path.join(CACHE, 'thumbs', NAME), {force: true}));
 
 test('a file recorded in another folder is read from this cache', () => {
   expect(
-    localFile(`/home/runner/work/_temp/base/plugins/word-lookup/lab/out/.cache/thumbs/${NAME}`),
+    localFile(`/home/runner/work/_temp/base/plugins/lasso-actions/lab/out/.cache/thumbs/${NAME}`),
   ).toBe(path.join(CACHE, 'thumbs', NAME));
 });
 

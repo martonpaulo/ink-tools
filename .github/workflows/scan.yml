@@ -92,7 +92,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [plugins/account-sync, plugins/word-lookup, plugins/device-transfer, plugins/image-editing, plugins/plugin-diagnostics, packages]
+        dir: [plugins/account-sync, plugins/lasso-actions, plugins/device-transfer, plugins/image-editing, plugins/plugin-diagnostics, packages]
     defaults:
       run:
         working-directory: ${{ matrix.dir }}

@@ -9,7 +9,7 @@ body:
       options:
         - inkctl (Mac CLI)
         - Account Sync (account-sync)
-        - Word Lookup (word-lookup)
+        - Lasso Actions (lasso-actions)
         - Image Editing (image-editing)
         - Device Transfer (device-transfer)
         - Handwriting Language (app)

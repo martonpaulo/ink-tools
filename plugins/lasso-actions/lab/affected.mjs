@@ -18,7 +18,7 @@ import {createRequire} from 'node:module';
 import path from 'node:path';
 import {product, readCases, readJson, readResults, ROOT_DIR} from './lib.mjs';
 
-const PLUGIN = 'plugins/word-lookup/';
+const PLUGIN = 'plugins/lasso-actions/';
 const ADAPTER = /^packages\/picture-search\/src\/adapters\/(\w+)\.ts$/;
 const NATIVE = 'packages/picture-search/native/';
 const REPOSITORY = path.join(ROOT_DIR, '../..');

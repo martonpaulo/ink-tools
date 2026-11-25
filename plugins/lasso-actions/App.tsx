@@ -25,8 +25,10 @@ import {ChooseScreen} from './src/ui/ChooseScreen';
 import {working} from './src/working';
 import {getSettings, saveSettings} from './src/profile';
 import {OldFolder, oldFolders} from './src/library';
+import {MODULES, activeLookup} from './src/modules';
 import {
-  defaultSettings,
+  defaultLassoSettings,
+  LassoSettings,
   LookupSettings,
   SOURCE_NAMES,
   sourceOn,
@@ -69,14 +71,14 @@ export default function App({
 
 function SettingsScreen({close}: {close: () => void}) {
   useBackKey(close);
-  const [settings, setSettings] = useState<LookupSettings | null>(null);
+  const [settings, setSettings] = useState<LassoSettings | null>(null);
   const [old, setOld] = useState<OldFolder[]>([]);
   useEffect(() => {
     let open = true;
     getSettings().then(saved => {
       if (open) {
         setSettings(saved);
-        askMissing(saved);
+        askMissing(activeLookup(saved.modules, saved.lookup));
       }
     });
     oldFolders().then(found => open && setOld(found));
@@ -84,12 +86,14 @@ function SettingsScreen({close}: {close: () => void}) {
       open = false;
     };
   }, []);
-  const shown = settings ?? defaultSettings;
-  const change = (next: LookupSettings) => {
+  const all = settings ?? defaultLassoSettings();
+  const shown = all.lookup;
+  const changeAll = (next: LassoSettings) => {
     setSettings(next);
     saveSettings(next);
-    settingsChanged(next);
+    settingsChanged(activeLookup(next.modules, next.lookup));
   };
+  const change = (lookup: LookupSettings) => changeAll({...all, lookup});
   const group = (heading: string, buttons: readonly LassoButton[]) => (
     <RowGroup caption={heading}>
       {buttons.map(button => (
@@ -108,40 +112,59 @@ function SettingsScreen({close}: {close: () => void}) {
       <TitleBar title={copy.title} onClose={close} />
       {/* The rows outgrow the Manta's height once every switch is a row of its own (#274). */}
       <ScrollView style={styles.rows}>
-        {group(
-          copy['settings.modes'],
-          BUTTONS.filter(button => 'key' in button.switch),
-        )}
-        {group(
-          copy['settings.translate'],
-          BUTTONS.filter(button => 'direction' in button.switch),
-        )}
-        <RowGroup caption={copy['settings.sources']}>
-          {SOURCE_NAMES.map(name => (
+        {/* One switch per module (#306); an off module's rows leave the view. */}
+        <RowGroup caption={copy['settings.modules']}>
+          {MODULES.map(row => (
             <SwitchRow
-              key={name}
-              title={sourceLabel(name)}
-              value={sourceOn(shown, name)}
+              key={row.id}
+              title={row.title}
+              subtitle={row.note}
+              value={all.modules[row.id]}
               disabled={settings === null}
-              onChange={on => change(withSource(shown, name, on))}
+              onChange={on =>
+                changeAll({...all, modules: {...all.modules, [row.id]: on}})
+              }
             />
           ))}
         </RowGroup>
-        {/* A row of its own, so it never reads as one more source (#275). */}
-        <SwitchGroup
-          title={copy['settings.dataSaver']}
-          subtitle={copy['settings.dataSaverHint']}
-          value={shown.dataSaver}
-          disabled={settings === null}
-          onChange={dataSaver => change({...shown, dataSaver})}
-        />
-        <RowGroup
-          caption={copy['settings.pictures']}
-          note={[
-            copy['settings.picturesHint'],
-            ...(old.length > 0 ? [copy['settings.oldFiles'](old)] : []),
-          ]}
-        />
+        {all.modules.lookup && (
+          <>
+            {group(
+              copy['settings.modes'],
+              BUTTONS.filter(button => 'key' in button.switch),
+            )}
+            {group(
+              copy['settings.translate'],
+              BUTTONS.filter(button => 'direction' in button.switch),
+            )}
+            <RowGroup caption={copy['settings.sources']}>
+              {SOURCE_NAMES.map(name => (
+                <SwitchRow
+                  key={name}
+                  title={sourceLabel(name)}
+                  value={sourceOn(shown, name)}
+                  disabled={settings === null}
+                  onChange={on => change(withSource(shown, name, on))}
+                />
+              ))}
+            </RowGroup>
+            {/* A row of its own, so it never reads as one more source (#275). */}
+            <SwitchGroup
+              title={copy['settings.dataSaver']}
+              subtitle={copy['settings.dataSaverHint']}
+              value={shown.dataSaver}
+              disabled={settings === null}
+              onChange={dataSaver => change({...shown, dataSaver})}
+            />
+            <RowGroup
+              caption={copy['settings.pictures']}
+              note={[
+                copy['settings.picturesHint'],
+                ...(old.length > 0 ? [copy['settings.oldFiles'](old)] : []),
+              ]}
+            />
+          </>
+        )}
       </ScrollView>
     </View>
   );

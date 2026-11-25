@@ -23,7 +23,7 @@ import {
 import type {Working} from '@ink-tools/ui-kit';
 import SmartShapesSettings from '../../../plugins/smart-shapes/App';
 import RealTimeConversionSettings from '../../../plugins/real-time-conversion/App';
-import WordLookupSettings from '../../../plugins/word-lookup/App';
+import LassoActionsSettings from '../../../plugins/lasso-actions/App';
 import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
@@ -134,7 +134,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
   {name: 'smart-shapes-settings', render: () => mount(<SmartShapesSettings close={() => {}} />)},
   {name: 'real-time-conversion-settings', render: () => mount(<RealTimeConversionSettings close={() => {}} />)},
-  {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
+  {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />)},

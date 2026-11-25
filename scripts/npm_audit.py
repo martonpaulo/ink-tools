@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run `npm audit --omit=dev` in a subproject and fail on any advisory not excepted (#154).
 
-    python3 scripts/npm_audit.py plugins/word-lookup [--exceptions audit-exceptions.json]
+    python3 scripts/npm_audit.py plugins/lasso-actions [--exceptions audit-exceptions.json]
 
 An exception in `audit-exceptions.json` names one advisory and the package it reaches, with the
 reason it cannot be fixed yet; `docs/security.md` › Dependency audit holds the rule. Every other

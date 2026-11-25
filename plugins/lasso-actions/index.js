@@ -16,7 +16,8 @@ import {SUMMARY_BUTTON_ID, summaryLasso} from './src/summary';
 import {syncButtons} from './src/buttons';
 import {CHOOSE_BUTTON_ID, MODES, TRANSLATIONS} from './src/modes';
 import {pictureLasso} from './src/pictures';
-import {getSettings} from './src/profile';
+import {activeLookup} from './src/modules';
+import {getSettings, saveSettings} from './src/profile';
 import {translateLasso} from './src/translation';
 import {working} from './src/working';
 
@@ -30,9 +31,15 @@ registerSettingsEntry(() => {
   console.error(`Lookup: ${error.message}`);
 });
 
-// The saved switches register their lasso buttons (#142): a switch survives a restart.
+// The saved switches register their lasso buttons (#142): a switch survives a restart. A module
+// that is off registers none (#306). A file in Word Lookup's shape is written once in the new one.
 getSettings()
-  .then(settings => syncButtons(settings))
+  .then(async settings => {
+    if (settings.oldShape) {
+      await saveSettings({...settings, oldShape: false});
+    }
+    await syncButtons(activeLookup(settings.modules, settings.lookup));
+  })
   .catch(error => {
     console.error(`Lookup: buttons: ${error.message}`);
   });
@@ -63,17 +70,19 @@ const listening = startButtonQueue(id => {
     working
       .run(() => translateLasso(translation.direction))
       .catch(error => {
-      console.error(`Lookup: translate: ${error.message}`);
-    });
+        console.error(`Lookup: translate: ${error.message}`);
+      });
     return true;
   }
   const mode = MODES.find(each => each.buttonId === id);
   if (!mode) {
     return false;
   }
-  working.run(() => pictureLasso(mode)).catch(error => {
-    console.error(`Lookup: picture: ${error.message}`);
-  });
+  working
+    .run(() => pictureLasso(mode))
+    .catch(error => {
+      console.error(`Lookup: picture: ${error.message}`);
+    });
   return true;
 });
 if (!listening.ok) {

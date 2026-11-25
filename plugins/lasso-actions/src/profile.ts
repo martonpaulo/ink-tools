@@ -14,7 +14,7 @@ import {
 } from '@ink-tools/picture-search/storage';
 import {version} from '../package.json';
 import {versionCode} from '../PluginConfig.json';
-import {LOOKUP_SETTINGS} from './settings';
+import {LASSO_SETTINGS} from './settings';
 
 export const REPOSITORY_URL = 'https://github.com/martonpaulo/ink-tools';
 
@@ -34,7 +34,10 @@ export * from '@ink-tools/picture-search/storage';
 export * from '@ink-tools/picture-search/insert';
 
 export const {getSettings, saveSettings, resetSettingsForTests} =
-  createSettingsStore(LOOKUP_SETTINGS);
+  createSettingsStore(LASSO_SETTINGS);
+
+/** Lookup's own settings, as its searches read them (#306). */
+export const getLookupSettings = async () => (await getSettings()).lookup;
 
 /**
  * `<root>/MyStyle/Lookup/pictures`, where each prepared picture is written before it goes in the

@@ -1,5 +1,5 @@
 import config from '../PluginConfig.json';
-import lookup from '../../word-lookup/PluginConfig.json';
+import lookup from '../../lasso-actions/PluginConfig.json';
 import conversion from '../../real-time-conversion/PluginConfig.json';
 
 test('plugin config declares its own generated id and both file permissions', () => {

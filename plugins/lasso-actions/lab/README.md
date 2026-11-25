@@ -43,14 +43,14 @@ artifact both runs' `results.json` and `metrics.json`. `out/.cache` goes from ru
 the `lab-cache` artifact, so a first run is slow and the next ones answer from the cache.
 
 Every run searches with Word Lookup's query languages, `PICTURE_LANGUAGES` of
-`plugins/word-lookup/src/pictureLanguages.ts` (Portuguese, Spanish, then English,
+`plugins/lasso-actions/src/pictureLanguages.ts` (Portuguese, Spanish, then English,
 [#183](https://github.com/martonpaulo/ink-tools/issues/183)); `results.json` records them as
 `languages`. Name the run `lookup-<issue>` for a change to Word Lookup's picture search. The lab
 moved here from the retired plugin it was built for
 ([#288](https://github.com/martonpaulo/ink-tools/issues/288)).
 
 A run named `lookup-photo` or `lookup-photo-…` also searches as Word Lookup's «Insert Image»
-does: the `photo` mode of `plugins/word-lookup/src/modes.ts`, with «Photos too» on, without the
+does: the `photo` mode of `plugins/lasso-actions/src/modes.ts`, with «Photos too» on, without the
 sources that mode skips, and with only the measured photo tiles kept, as `keepMode` keeps them on
 the device. Any other run searches as «Drawings» with every source
 ([#13](https://github.com/martonpaulo/ink-tools/issues/13)). `results.json` records it as `style`.
