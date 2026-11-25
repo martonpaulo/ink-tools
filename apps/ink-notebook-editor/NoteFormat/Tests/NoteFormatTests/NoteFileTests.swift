@@ -152,6 +152,36 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
         #expect(throws: NoteFormatError.blockOutOfRange(address: bitmap)) { try note.render(page: 0) }
     }
 
+    /// A one-layer page whose layer block names `encoding` and holds `bitmap`.
+    func oneLayerNote(encoding: String, style: String, bitmap: [UInt8]) -> [UInt8] {
+        var builder = NoteBuilder()
+        let header = builder.metadata([("FILE_TYPE", "NOTE")])
+        let data = builder.block(bitmap)
+        let layer = builder.metadata([
+            ("LAYERNAME", "BGLAYER"), ("LAYERPROTOCOL", encoding), ("LAYERBITMAP", String(data)),
+        ])
+        let page = builder.metadata([
+            ("PAGESTYLE", style), ("BGLAYER", String(layer)), ("LAYERSEQ", "BGLAYER"),
+        ])
+        return builder.finish(header: header, pages: [page])
+    }
+
+    @Test func testUnknownProtocolFails() throws {
+        let note = try NoteFile(bytes: oneLayerNote(encoding: "SN_ASA_COMPRESS", style: "style_white", bitmap: [0]))
+        #expect(throws: NoteFormatError.unknownProtocol("SN_ASA_COMPRESS")) { try note.render(page: 0) }
+    }
+
+    @Test func testBadCustomBackgroundFails() throws {
+        let note = try NoteFile(bytes: oneLayerNote(encoding: "RATTA_RLE", style: "user_lined", bitmap: [1, 2, 3]))
+        #expect(throws: NoteFormatError.badPicture("the given image")) { try note.render(page: 0) }
+    }
+
+    @Test func testCustomBackgroundOfAnotherSizeFails() throws {
+        let small = try #require(PageBitmap(width: 2, height: 2, pixels: [0, 0, 0, 0]).pngData())
+        let note = try NoteFile(bytes: oneLayerNote(encoding: "RATTA_RLE", style: "user_lined", bitmap: [UInt8](small)))
+        #expect(throws: NoteFormatError.badPicture("BGLAYER")) { try note.render(page: 0) }
+    }
+
     @Test func testRendersLayersOnWhite() throws {
         let image = try NoteFile(bytes: sampleNote()).render(page: 0)
         #expect(image.width == width && image.height == height)
