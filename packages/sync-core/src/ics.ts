@@ -206,8 +206,10 @@ export interface IcsFeed {
 export type WarningSink = (warnings: string[]) => void;
 
 /**
- * Largest feed or CalDAV answer parsed, in characters (#82).
- * shortcut: a generous guess; lower it to the measured size of a real iCloud REPORT answer once the owner's live check (#30) records it.
+ * Largest feed or CalDAV answer parsed, in characters (#82). Measured on the owner's iCloud on
+ * 2026-11-25: a REPORT over Account Sync's 67-day window answers 107 characters per calendar with no
+ * event, and one stored event costs 3,411 characters (its VTIMEZONE included). So 8 MiB holds about
+ * 2,400 such events: 36 a day over the window, or an ICS feed of that many.
  */
 export const MAX_ANSWER_CHARS = 8 * 1024 * 1024;
 
@@ -238,7 +240,11 @@ export function createIcsProvider(
 
 export interface CalDavOptions {
   fetch: HttpFetch<{text(): Promise<string>}>;
-  /** The calendar collections to read, e.g. found by PROPFIND on the owner's iCloud principal. */
+  /**
+   * The calendar collections to read, e.g. found by PROPFIND on the owner's iCloud principal. An
+   * iCloud subscribed calendar (resourcetype `subscribed`) answers a REPORT with no event, measured
+   * 2026-11-25 (#82): read its source as an ICS feed instead.
+   */
   calendars: IcsFeed[];
   username: string;
   /** Reads the app-specific password from the owner's secure store at call time; it is never in the repository. */
