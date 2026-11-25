@@ -200,11 +200,14 @@ Plugin Diagnostics and read the log over ADB; the fixture note was restored afte
 | beta 26, cache hit | 2 ms | 1726 ms | 216 + 392 ms | 2343 ms |
 | beta 27, cache miss | 3185 ms (Commons 557, Wikidata 1953, rank 1057) | 1486 ms | 233 + 455 ms | 5380 ms |
 | beta 27, cache hit | 2 ms | 1100 ms | 379 + 446 ms | 1932 ms |
+| beta 27, «casa» read as «a a», cache miss | 6808 ms (Commons timed out at 5037, then the thin-page retry 1607; Wikidata 2085; rank 72 and 87) | 2698 ms (downloads) | 179 + 448 ms | 10981 ms |
 
 - Recognition takes about 1 s before `time total` starts: 999, 976 and 963 ms.
 - Beta 26 measured page 1 one thumbnail per 120 ms, though each took 20 to 110 ms on three threads:
   the leader check re-ran the text scorers after every thumbnail. Beta 27 scores once; the gap is 50 ms.
 - No run stopped early (`12 of 12 measured`): the contour of one «solid» tile (479 to 780 ms) sets
   the end of the measure.
-- `time rank` is new: ranking 18 results takes 1057 ms, a third of a missed search.
+- `time rank` is new: ranking 18 results took 1057 ms in the first search after the install, and
+  87 ms in a later one on the same JS instance; the first scoring of an instance pays the rest.
+- A Commons timeout (5 s) followed by the thin-page retry made the slowest search of the round.
 

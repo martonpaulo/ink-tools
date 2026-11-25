@@ -224,7 +224,13 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `Chauvet.E103.2610191001.2559`, [#221](https://github.com/martonpaulo/ink-tools/issues/221)].
   sn-adapter keeps at most `OCCUPIED_READS_IN_FLIGHT` (4) reads in flight [unverified on the device].
 - `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
-  pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)].
+  pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)]; 963 to 999 ms
+  on the Nomad's «apple» fixture in Word Lookup 0.2.0 beta 27 [measured, 2026-11-25].
+- PluginHost's JS runs plain text work far slower than a Mac: picture-search's text scorers took
+  about 120 ms per pass over 12 results, and its first ranking in a fresh JS instance (after an
+  install) took 1057 ms for 18 results, against 87 ms later on the same instance [measured,
+  2026-11-25, Word Lookup 0.2.0 beta 26 and 27, firmware `Chauvet.E103.2610191001.2559`,
+  [#19](https://github.com/martonpaulo/ink-tools/issues/19)]. Score once and reuse it.
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
   state. `getLassoRect` then answers the selection's local rect (`{-40, 0, 140, 181}` for a sticker
   shown near (870, 1190)), and Back leaves the note and drops the pasted sticker [measured,
