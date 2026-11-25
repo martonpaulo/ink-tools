@@ -285,8 +285,10 @@ def icon_paths(icon, native, store):
     parts = []
     for part in icon["tabler"]:
         part = {"name": part} if isinstance(part, str) else part
-        placing = badge_placing(store) if part.get("badge") else part
-        mine = [place(absolute(d), placing.get("scale", 1), placing.get("at", (0, 0))) for d in store["glyphs"][part["name"]]]
+        placing = {**badge_placing(store), **part} if part.get("badge") else part  # a badge may set its own scale
+        glyph = store["glyphs"][part["name"]]
+        glyph = [glyph[i] for i in part["paths"]] if "paths" in part else glyph  # some of a glyph's paths only
+        mine = [place(absolute(d), placing.get("scale", 1), placing.get("at", (0, 0))) for d in glyph]
         if part.get("badge"):  # it cuts the strokes drawn before it, with a gap, as Tabler's own badges do
             left, top, right, bottom = outline_box([path_text(p) for p in mine], 0)
             gap = placing["gap"]

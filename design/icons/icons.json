@@ -39,9 +39,14 @@
    "out": "plugins/device-transfer/assets/icon",
    "kind": "plugin",
    "tabler": [
-    "device-tablet",
     {
-     "name": "arrows-exchange",
+     "name": "device-tablet",
+     "paths": [
+      0
+     ]
+    },
+    {
+     "name": "arrows-left-right",
      "badge": true
     }
    ]
@@ -83,11 +88,7 @@
    "out": "plugins/device-transfer/assets/receive",
    "kind": "plugin",
    "tabler": [
-    "device-tablet",
-    {
-     "name": "arrow-narrow-left",
-     "badge": true
-    }
+    "device-tablet-down"
    ]
   },
   {
@@ -107,7 +108,7 @@
    "tabler": [
     "photo",
     {
-     "name": "sparkles",
+     "name": "crop",
      "badge": true
     }
    ]
@@ -125,7 +126,7 @@
    "tabler": [
     "stethoscope",
     {
-     "name": "terminal-2",
+     "name": "terminal",
      "badge": true
     }
    ]
@@ -154,8 +155,13 @@
    "tabler": [
     "text-recognition",
     {
-     "name": "bolt",
-     "badge": true
+     "name": "check",
+     "badge": true,
+     "scale": 0.6,
+     "at": [
+      11,
+      11
+     ]
     }
    ]
   },
@@ -166,7 +172,12 @@
     "text-recognition",
     {
      "name": "x",
-     "badge": true
+     "badge": true,
+     "scale": 0.6,
+     "at": [
+      11,
+      11
+     ]
     }
    ]
   },
@@ -274,7 +285,7 @@
      "name": "letter-p",
      "scale": 0.5,
      "at": [
-      5.5,
+      7,
       12
      ]
     },
@@ -282,16 +293,16 @@
      "name": "letter-t",
      "scale": 0.5,
      "at": [
-      13,
+      14,
       12
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "corner-down-right",
+     "scale": 0.45,
      "at": [
-      13.5,
-      0
+      -1,
+      9.25
      ]
     }
    ]
@@ -320,7 +331,7 @@
      "name": "letter-e",
      "scale": 0.5,
      "at": [
-      5.5,
+      7,
       12
      ]
     },
@@ -328,16 +339,16 @@
      "name": "letter-s",
      "scale": 0.5,
      "at": [
-      13,
+      14,
       12
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "corner-down-right",
+     "scale": 0.45,
      "at": [
-      13.5,
-      0
+      -1,
+      9.25
      ]
     }
    ]
@@ -366,7 +377,7 @@
      "name": "letter-z",
      "scale": 0.5,
      "at": [
-      5.5,
+      7,
       12
      ]
     },
@@ -374,16 +385,16 @@
      "name": "letter-h",
      "scale": 0.5,
      "at": [
-      13,
+      14,
       12
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "corner-down-right",
+     "scale": 0.45,
      "at": [
-      13.5,
-      0
+      -1,
+      9.25
      ]
     }
    ]
@@ -412,7 +423,7 @@
      "name": "letter-p",
      "scale": 0.5,
      "at": [
-      5.5,
+      7,
       12
      ]
     },
@@ -420,16 +431,16 @@
      "name": "letter-t",
      "scale": 0.5,
      "at": [
-      13,
+      14,
       12
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "corner-down-right",
+     "scale": 0.45,
      "at": [
-      13.5,
-      0
+      -1,
+      9.25
      ]
     }
    ]
@@ -439,7 +450,7 @@
    "kind": "plugin",
    "planned": "#249",
    "tabler": [
-    "clipboard"
+    "clipboard-list"
    ]
   },
   {
@@ -462,7 +473,12 @@
     "clipboard",
     {
      "name": "cut",
-     "badge": true
+     "badge": true,
+     "scale": 0.6,
+     "at": [
+      11,
+      11
+     ]
     }
    ]
   },
@@ -483,7 +499,7 @@
    "kind": "plugin",
    "planned": "#252",
    "tabler": [
-    "heading"
+    "letter-h"
    ]
   },
   {
@@ -595,9 +611,9 @@
   "about": "Each tool's icons share one motif, a glyph every one of them names, and still differ at a glance (owner, 2026-11-25, #271); a tool with one icon needs none. `except` lists an icon that cannot carry the motif, with the reason.",
   "device-transfer": {
    "motif": [
-    "arrows-exchange",
+    "arrows-left-right",
     "arrow-narrow-right",
-    "arrow-narrow-left"
+    "device-tablet-down"
    ]
   },
   "image-editing": {
@@ -624,12 +640,12 @@
   },
   "collection": {
    "motif": [
-    "clipboard"
+    "clipboard",
+    "clipboard-list"
    ]
   },
   "headings": {
    "motif": [
-    "heading",
     "letter-h"
    ]
   },
@@ -640,7 +656,7 @@
   }
  },
  "badge": {
-  "about": "A part marked `badge` is scaled by `scale` and moved by `at` into the bottom-right corner, and cuts the strokes drawn before it `gap` grid units around its box, as Tabler's own badged glyphs do (photo-search, file-export), so the base keeps its full size.",
+  "about": "A part marked `badge` is scaled by `scale` and moved by `at` into the bottom-right corner, and cuts the strokes drawn before it `gap` grid units around its box, as Tabler's own badged glyphs do (photo-search, file-export), so the base keeps its full size. A badge part may set its own `scale` and `at`; any part may keep some of its glyph's `paths` (indices).",
   "scale": 0.5,
   "at": [
    13,
