@@ -24,7 +24,7 @@
     {"name": "case", "command": "python3 scripts/case_check.py --root . && python3 -B -m unittest scripts/test_case_check.py", "covers": "no two tracked paths, or extensionless module names, differ only in case (#227); the Quick check runs it on every change"},
     {"name": "icons", "command": "python3 scripts/icons.py --check && python3 -B -m unittest scripts/test_icons.py", "covers": "every icon Ink Tools shows on the tablet is drawn from design/icons/icons.json in the native outline style (stroke, colour, caps, extent), its files are current, and no two read alike (#271)"},
     {"name": "quick", "command": "cd scripts && python3 -B -m unittest test_quick_check", "covers": "the Quick check's path selection: which subprojects a change type-checks (#180)"},
-    {"name": "setup", "command": "python3 -B -m unittest scripts/test_gate_install.py", "covers": "each npm gate installs its subproject from its lockfile when node_modules is missing or older than the lockfile (#135, #222)"},
+    {"name": "setup", "command": "python3 -B -m unittest scripts/test_gate_install.py scripts/test_cloud_config.py", "covers": "each npm gate installs its subproject from its lockfile when node_modules is missing or older than the lockfile (#135, #222), and .github/cloud.json names every gate as a cloud gate but the Ink Notebook Editor's (#301)"},
     {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"}
   ],
   "rules": [
@@ -35,6 +35,8 @@
     {"path": "docs/", "gates": ["docs"]},
     {"path": "gates.json", "gates": ["docs", "setup"]},
     {"path": "scripts/test_gate_install.py", "gates": ["setup"]},
+    {"path": ".github/cloud.json", "gates": ["setup"]},
+    {"path": "scripts/test_cloud_config.py", "gates": ["setup"]},
     {"path": "scripts/npm_install.py", "gates": ["setup", "quick"]},
     {"path": "scripts/test_native_package.py", "gates": ["native"]},
     {"path": "scripts/npm_audit.py", "gates": ["audit"]},

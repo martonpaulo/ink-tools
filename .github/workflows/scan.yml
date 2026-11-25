@@ -13,9 +13,9 @@ on:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -69,8 +69,8 @@ jobs:
           python3 scripts/registry.py --root .
           python3 -B -m unittest scripts/test_registry.py
 
-      - name: Check that each npm gate installs its subproject (#135)
-        run: python3 -B -m unittest scripts/test_gate_install.py
+      - name: Check that each npm gate installs its subproject and cloud.json names every gate (#135, #301)
+        run: python3 -B -m unittest scripts/test_gate_install.py scripts/test_cloud_config.py
 
       - name: Check each plugin's light native build (#153)
         run: python3 -B -m unittest scripts/test_native_package.py
