@@ -6,6 +6,12 @@ const STROKE = 0;
 const PICTURE = 200;
 const TEXT = 500;
 const PRESSURE = 2000;
+/**
+ * The fineliner (sn-plugin-lib's pen types) and the width the 2026-11-16 round drew with: a new
+ * element's penType is 0, which the host refuses as «Invalid pen type» (code 302, #249).
+ */
+const FINELINER = 10;
+const THICKNESS = 400;
 /** `generateNotePng` at the page's own size, on white (sn-adapter's `pageImage` uses the same). */
 const PAGE_SCALE = 1;
 const WHITE_BACKGROUND = 1;
@@ -14,7 +20,8 @@ type Response = {success?: boolean; result?: unknown; error?: {code?: number; me
 type Accessor<T> = {size(): Promise<number>; getRange(start: number, count: number): Promise<T[]>; add(index: number, value: T): Promise<boolean>};
 type Element = {
   type: number;
-  stroke?: {points: Accessor<Point>; pressures: Accessor<number>; flagDraw: Accessor<boolean>};
+  thickness?: number;
+  stroke?: {points: Accessor<Point>; pressures: Accessor<number>; flagDraw: Accessor<boolean>; penType?: number};
   picture?: {rect: Rect};
   textBox?: {textRect: Rect};
 };
@@ -53,6 +60,8 @@ export const noteApi: HelperApi = {
       if (!element.stroke) {
         throw new HelperError(1, 'createElement gave no stroke');
       }
+      element.stroke.penType = FINELINER;
+      element.thickness = THICKNESS;
       for (let index = 0; index < points.length; index += 1) {
         await element.stroke.points.add(index, points[index]);
         await element.stroke.pressures.add(index, PRESSURE);

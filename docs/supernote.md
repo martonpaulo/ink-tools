@@ -367,6 +367,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     `stroke.pressures.add(i, 2000)` and `stroke.flagDraw.add(i, true)` in page pixels, then
     `insertPageElements([stroke], page, null)`. 151 points took 718 ms to add and 80 ms to insert;
     the zigzag showed as ink with `penType` 10 and `thickness` 400.
+  - `createElement(0)` gives `stroke.penType` 0, and `insertPageElements` refuses such a stroke
+    with code 302 «Invalid pen type» (logcat `readableMap2Stroke error penType:0`), whatever pen the
+    note shows; setting `penType` before the insert is required [measured, 2026-11-25, Nomad,
+    [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
   - A picture: `createElement(200)` with `picture.picturePath` a PNG under `MyStyle/` and
     `picture.rect`, then `insertPageElements`: 245 ms.
   - `lassoElements(rect)` around either one selects it in 184 to 299 ms: `getLassoElementTypeCounts`
