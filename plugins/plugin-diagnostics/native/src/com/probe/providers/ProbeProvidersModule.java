@@ -215,7 +215,17 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
     }
     List<String> revert = new ArrayList<>();
     ProbeRevert.revert(
-        new ResolverTable(resolver, base, ProbeTargets.ROW_ID, target.markerColumn, ProbeTargets.MARKER),
+        target.cancelsOnRevert()
+            ? ResolverTable.cancelling(
+                resolver,
+                base,
+                ProbeTargets.ROW_ID,
+                target.markerColumn,
+                ProbeTargets.MARKER,
+                ProbeTargets.STATUS_COLUMN,
+                ProbeTargets.CANCELLED_STATUS,
+                ProbeTargets.MODIFIED_COLUMN)
+            : new ResolverTable(resolver, base, ProbeTargets.ROW_ID, target.markerColumn, ProbeTargets.MARKER),
         target.label,
         target.markerColumn,
         createdId,

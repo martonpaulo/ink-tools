@@ -23,6 +23,16 @@ public final class ProbeTargets {
    */
   public static final String ROW_ID = "id";
 
+  /**
+   * The Calendar's revert cancels the row, as Account Sync's writer does, because its delete is a
+   * no-op on the tablet (#208, #43). They mirror the descriptor's {@code calendar.rules.cancelledStatus}
+   * and the {@code status} and {@code modified} fields; ProbeTargetsTest keeps them equal.
+   */
+  static final String STATUS_COLUMN = "status";
+
+  static final String CANCELLED_STATUS = "cancelled";
+  static final String MODIFIED_COLUMN = "lastModifiedTime";
+
   /** One provider URI to query, and how to insert and revert one marked row. */
   public static final class Target {
     public final String label;
@@ -44,6 +54,11 @@ public final class ProbeTargets {
       this.markerColumn = markerColumn;
       this.writable = writable;
       this.kind = kind;
+    }
+
+    /** Whether the revert cancels the row (the Calendar) instead of deleting it by id. */
+    public boolean cancelsOnRevert() {
+      return kind == Kind.CALENDAR;
     }
 
     /** Every column of the dry insert, the marker included, for an insert at {@code now} (epoch ms). */

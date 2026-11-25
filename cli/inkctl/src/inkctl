@@ -221,6 +221,8 @@ HELPER_UNKNOWN_ID = "unknown"
 HELPER_DATE_FORMAT = "+%m-%d %H:%M:%S.000"  # a device time `logcat -T` takes
 HELPER_TIMEOUT = 20.0
 HELPER_LOG_STEP = "inkctl logs --plugin Probe"
+PAGE_COUNTER = re.compile(r"\s*(\d+)\s*/\s*\d+\s*")  # the note bottom bar's «3 / 14», in the id of the note title (#220)
+PAGE_READS = 6  # reads of the counter after a jump, WAIT_INTERVAL apart
 # The test fixtures note (#220): one fixture per page, built by hand on the tablet; this table mirrors
 # its page map and is the one source the docs and `fixture --list` read. Rects are page pixels,
 # [left, top, right, bottom]; "serves" names the issues and checks that use the page.
@@ -908,17 +910,30 @@ def start_note(device: Device, args: argparse.Namespace, path: str, extras: list
     return done, "\n".join([*opened, *lines])
 
 
+def page_counter(device: Device) -> int | None:
+    """The page the note shows, counted from 1, read from the bottom bar's «N / total» counter."""
+    for element in device.elements():
+        found = PAGE_COUNTER.fullmatch(element["text"]) if element["id"] == NOTE_TITLE_ID else None
+        if found:
+            return int(found.group(1))
+    return None
+
+
 def show_page(device: Device, args: argparse.Namespace, page: int) -> int:
-    """Move the open note to a page, counted from 1, and prove it from Probe's read-back. The note app
-    ignores the `page` extra when the note was opened before and shows its last page (#220), so
-    Probe's `jumpToPage` does the move and answers `getCurrentPageNum`, both counted from 0."""
-    answer = helper_call(device, args, {"op": "jumpToPage", "page": page - 1})
-    shown = answer.get("page")
-    if not isinstance(shown, int) or isinstance(shown, bool):
-        raise Failure(EXIT_FAILED, "device_error", f"Probe gave no page number after the jump: {shown!r}", HELPER_LOG_STEP)
-    if shown != page - 1:
-        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the note shows page {shown + 1}, not page {page}", HELPER_LOG_STEP, extra={"page": shown + 1})
-    return page
+    """Move the open note to a page, counted from 1, and prove it from the page counter on screen.
+    The note app ignores the `page` extra when the note was opened before and shows its last page
+    (#220), so Probe's `jumpToPage` (from 0) does the move. Its `getCurrentPageNum` answer is not
+    the shown page (late, and stuck on page 10 in the 2026-11-25 round), so the screen proves it."""
+    helper_call(device, args, {"op": "jumpToPage", "page": page - 1})
+    shown = None
+    for _ in range(PAGE_READS):
+        shown = page_counter(device)
+        if shown == page:
+            return page
+        time.sleep(WAIT_INTERVAL)
+    if shown is None:
+        raise Failure(EXIT_FAILED, "device_error", "the note's page counter «N / total» is not on the screen", HELPER_LOG_STEP)
+    raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"the note shows page {shown}, not page {page}", HELPER_LOG_STEP, extra={"page": shown})
 
 
 def need_note_suffix(path: str) -> None:
