@@ -109,15 +109,20 @@ function iconProblems(root) {
     });
 }
 
+/** Prints each problem on its own line of the error stream. */
+function report(found) {
+  found.forEach(line => console.error(`plugin-version: ${line}`));
+}
+
 if (require.main === module && process.argv[2] === '--icons') {
   const found = iconProblems(process.argv[3] || '.');
-  found.forEach(line => console.error(`plugin-version: ${line}`));
+  report(found);
   process.exit(found.length > 0 ? 1 : 0);
 }
 
 if (require.main === module && process.argv[2] === '--workflows') {
   const found = allWorkflowProblems(process.argv[3] || '.');
-  found.forEach(line => console.error(`plugin-version: ${line}`));
+  report(found);
   process.exit(found.length > 0 ? 1 : 0);
 }
 
@@ -125,7 +130,7 @@ if (require.main === module) {
   const folder = process.argv[2];
   const found = problems(folder);
   if (found.length > 0) {
-    found.forEach(line => console.error(`plugin-version: ${line}`));
+    report(found);
     process.exit(1);
   }
   console.log(JSON.parse(fs.readFileSync(path.join(folder, 'package.json'), 'utf8')).version);
