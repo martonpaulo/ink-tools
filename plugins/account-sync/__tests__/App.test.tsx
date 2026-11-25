@@ -43,11 +43,14 @@ async function mount(
   });
   return tree;
 }
+/** The switch or button with that spoken name: the outermost node that acts. */
 const toggle = (tree: ReactTestRenderer, label: string) =>
-  tree.root.findByProps({
-    accessibilityRole: 'button',
-    accessibilityLabel: label,
-  });
+  tree.root.findAll(
+    node =>
+      ['switch', 'button'].includes(node.props.accessibilityRole) &&
+      node.props.accessibilityLabel === label &&
+      typeof node.props.onPress === 'function',
+  )[0];
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map(n => n.props.children);
 
@@ -57,7 +60,7 @@ test('a change is saved and is still there after a restart (#40)', async () => {
   expect(JSON.parse(files[`${DIR}/settings.json`]).modules.calendar).toBe(true);
   act(() => first.unmount());
   const second = await mount();
-  expect(toggle(second, 'Calendar').props.accessibilityState.selected).toBe(
+  expect(toggle(second, 'Calendar').props.accessibilityState.checked).toBe(
     true,
   );
   expect(screenBreaks(second.root)).toEqual([]);
@@ -174,9 +177,9 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
     }),
   );
   expect(texts(tree)).toEqual(
+    // The module's status lines are its row's grey subtitle, one line each (#274).
     expect.arrayContaining([
-      'Last synced 2026-11-16 22:15.',
-      '2 added, 0 changed, 0 removed',
+      'Last synced 2026-11-16 22:15.\n2 added, 0 changed, 0 removed',
     ]),
   );
   expect(screenBreaks(tree.root)).toEqual([]);

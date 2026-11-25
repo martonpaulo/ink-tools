@@ -1,12 +1,12 @@
 /**
  * Bridge's opt-in switches (#40): one section per module, a toggle for the module and one per
- * provider. A toggle is the ui-kit Button with `selected` for on, as the Supernote system marks
- * the open Settings section (#50); a screen reader hears the on state from `selected`. A provider
+ * provider. Each is a ui-kit `SwitchRow`, whose switch a screen reader hears as checked or not
+ * (#274). A provider
  * stays disabled while its module is off, and every change goes through the sync-core rules.
  */
 import React from 'react';
-import {Text, View} from 'react-native';
-import {Button, shared} from '@ink-tools/ui-kit';
+import {View} from 'react-native';
+import {SectionCaption, SwitchRow} from '@ink-tools/ui-kit';
 import {
   BridgeSettings,
   MODULE_PROVIDERS,
@@ -40,59 +40,43 @@ export function SettingsForm({
         const on = settings.modules[module];
         const name = copy[`module.${module}`];
         return (
-          <View key={module} style={shared.listRow}>
-            <Text accessibilityRole="header" style={shared.heading}>
-              {name}
-            </Text>
-            <View style={shared.buttons}>
-              <Button
-                label={name}
-                selected={on}
-                onPress={() => onChange(setModule(settings, module, !on))}
+          <View key={module}>
+            <SectionCaption>{name}</SectionCaption>
+            <SwitchRow
+              title={name}
+              value={on}
+              onChange={next => onChange(setModule(settings, module, next))}
+            />
+            {MODULE_PROVIDERS[module].map(provider => (
+              <SwitchRow
+                key={provider}
+                title={copy[`provider.${provider}`]}
+                value={settings.providers[provider]}
+                disabled={!on}
+                onChange={next =>
+                  onChange(setProvider(settings, provider, next))
+                }
               />
-              {MODULE_PROVIDERS[module].map(provider => (
-                <Button
-                  key={provider}
-                  label={copy[`provider.${provider}`]}
-                  selected={settings.providers[provider]}
-                  disabled={!on}
-                  onPress={() =>
-                    onChange(
-                      setProvider(
-                        settings,
-                        provider,
-                        !settings.providers[provider],
-                      ),
-                    )
-                  }
-                />
-              ))}
-              {twoWay(module) && (
-                <Button
-                  label={copy['sendTabletOnly.button']}
-                  selected={settings.sendTabletOnly[module]}
-                  disabled={!on}
-                  onPress={() =>
-                    onChange(
-                      setSendTabletOnly(
-                        settings,
-                        module,
-                        !settings.sendTabletOnly[module],
-                      ),
-                    )
-                  }
-                />
-              )}
-            </View>
-            {module === 'todo' && on && typeof tabletOnlyTasks === 'number' && (
-              <Text style={shared.hint}>
-                {format(
-                  settings.sendTabletOnly.todo
-                    ? 'sendTabletOnly.sent'
-                    : 'sendTabletOnly.kept',
-                  {count: String(tabletOnlyTasks)},
-                )}
-              </Text>
+            ))}
+            {twoWay(module) && (
+              <SwitchRow
+                title={copy['sendTabletOnly.button']}
+                subtitle={
+                  module === 'todo' && on && typeof tabletOnlyTasks === 'number'
+                    ? format(
+                        settings.sendTabletOnly.todo
+                          ? 'sendTabletOnly.sent'
+                          : 'sendTabletOnly.kept',
+                        {count: String(tabletOnlyTasks)},
+                      )
+                    : undefined
+                }
+                value={settings.sendTabletOnly[module]}
+                disabled={!on}
+                onChange={next =>
+                  onChange(setSendTabletOnly(settings, module, next))
+                }
+              />
             )}
           </View>
         );

@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {Text, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {
-  Button,
   shared,
+  TitleBar,
   useBackKey,
   useWorking,
   WorkingStrip,
@@ -107,19 +107,21 @@ export default function App({
   }
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.title}
-      </Text>
-      <EditsForm
-        settings={settings}
-        onChange={next => {
-          setSettings(next);
-          rememberSettings(next);
-        }}
-      />
-      <View style={shared.actions}>
-        <Button label={copy['settings.close']} onPress={close} />
-      </View>
+      <TitleBar title={copy.title} onClose={close} />
+      {/* One switch row per edit and per style outgrows the Manta's height (#274). */}
+      <ScrollView style={styles.rows}>
+        <EditsForm
+          settings={settings}
+          onChange={next => {
+            setSettings(next);
+            rememberSettings(next);
+          }}
+        />
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  rows: {flex: 1},
+});

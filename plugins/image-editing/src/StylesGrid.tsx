@@ -1,12 +1,12 @@
 /**
  * The Styles grid (#133): two columns of large tiles, as Ink2Pic's results grid, each the lassoed
  * picture in one style on white paper, so a transparent picture lies on paper, never on black.
- * Two toggles above, White to transparent and Thicker lines; «Close» below. No slider and no
+ * Two switch rows above, White to transparent and Thicker lines (#274); «Close» below. No slider and no
  * animation: the grid shows once all its tiles are made.
  */
 import React from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, shared} from '@ink-tools/ui-kit';
+import {Button, metrics, shared, SwitchRow} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GridState} from './styles';
 import {StyleId, StyleOptions} from './native';
@@ -39,18 +39,16 @@ export function StylesGrid({
       </Text>
       {ready ? (
         <>
-          <View style={shared.row}>
-            <Button
-              label={copy['styles.transparent']}
-              selected={ready.options.transparent}
-              onPress={() => onToggle('transparent')}
-            />
-            <Button
-              label={copy['styles.thick']}
-              selected={ready.options.thick}
-              onPress={() => onToggle('thick')}
-            />
-          </View>
+          <SwitchRow
+            title={copy['styles.transparent']}
+            value={ready.options.transparent}
+            onChange={() => onToggle('transparent')}
+          />
+          <SwitchRow
+            title={copy['styles.thick']}
+            value={ready.options.thick}
+            onChange={() => onToggle('thick')}
+          />
           <View style={styles.grid}>
             {rows.map(row => (
               <View key={row[0].style} style={styles.row}>

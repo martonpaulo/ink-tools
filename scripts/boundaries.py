@@ -59,10 +59,6 @@ OWN_CONTROLS = (
 )
 # The plugin files that drew their own controls when the kit's components landed (#273); #274 moves each.
 PENDING_CONTROLS = frozenset({
-    "plugins/account-sync/src/SettingsForm.tsx",
-    "plugins/account-sync/src/SettingsShell.tsx",
-    "plugins/image-editing/src/EditsForm.tsx",
-    "plugins/image-editing/src/StylesGrid.tsx",
     "plugins/ink2pic/src/ui/LanguagesScreen.tsx",
     "plugins/ink2pic/src/ui/Onboarding.tsx",
     "plugins/ink2pic/src/ui/SearchScreen.tsx",

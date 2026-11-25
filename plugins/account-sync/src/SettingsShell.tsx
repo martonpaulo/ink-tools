@@ -8,8 +8,8 @@
  * on the Nomad (#204, #266, #274).
  */
 import React, {useState} from 'react';
-import {Text, View} from 'react-native';
-import {Button, shared, TitleBar} from '@ink-tools/ui-kit';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Button, ListRow, metrics, shared, TitleBar} from '@ink-tools/ui-kit';
 import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
@@ -60,14 +60,17 @@ export function SettingsShell({
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={onClose} />
-      <Body state={state} />
-      {state.kind === 'ready' && state.notice && (
-        <Text accessibilityRole="alert" style={shared.text}>
-          {state.notice}
-        </Text>
-      )}
-      {state.kind === 'ready' && state.sync && <SyncLine sync={state.sync} />}
-      {state.kind === 'ready' && form}
+      {/* The module rows and one switch row per module and provider outgrow the Manta's height (#274). */}
+      <ScrollView style={styles.rows} contentContainerStyle={styles.gap}>
+        <Body state={state} />
+        {state.kind === 'ready' && state.notice && (
+          <Text accessibilityRole="alert" style={shared.text}>
+            {state.notice}
+          </Text>
+        )}
+        {state.kind === 'ready' && state.sync && <SyncLine sync={state.sync} />}
+        {state.kind === 'ready' && form}
+      </ScrollView>
     </View>
   );
 }
@@ -92,13 +95,10 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
       return (
         <View>
           {state.modules.map(module => (
-            <View key={module.id} style={shared.listRow}>
-              <Text style={shared.text}>{module.name}</Text>
-              {statusLines(module.status).map((line, index) => (
-                <Text key={index} style={shared.hint}>
-                  {line}
-                </Text>
-              ))}
+            <View key={module.id}>
+              {/* The module and its status in words, one kit row (#274); its sign-ins and its
+                  remove button follow under it. */}
+              <ListRow title={module.name} subtitle={statusLines(module.status).join('\n') || undefined} />
               {module.signIns?.map(provider => (
                 <SignInLine key={provider.id} provider={provider} />
               ))}
@@ -212,3 +212,9 @@ function Confirmed({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  rows: {flex: 1},
+  /** The screen's own gap between its parts, kept inside the scroll. */
+  gap: {gap: metrics.sectionGap},
+});

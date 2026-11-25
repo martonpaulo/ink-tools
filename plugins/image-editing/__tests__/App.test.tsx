@@ -25,6 +25,15 @@ import * as styles from '../src/styles';
 import {GridState} from '../src/styles';
 import {StylesGrid} from '../src/StylesGrid';
 
+/** The kit switch with that spoken name: the outermost node that acts. */
+const switchNamed = (tree: ReactTestRenderer, name: string) =>
+  tree.root.findAll(
+    node =>
+      node.props.accessibilityRole === 'switch' &&
+      node.props.accessibilityLabel === name &&
+      typeof node.props.onPress === 'function',
+  )[0];
+
 test('the Settings view keeps the size rules and lists every edit', async () => {
   let tree!: ReactTestRenderer;
   await act(async () => {
@@ -34,9 +43,7 @@ test('the Settings view keeps the size rules and lists every edit', async () => 
   const headers = tree.root.findAllByProps({accessibilityRole: 'header'});
   expect(headers[0].props.children).toBe('Image Editing');
   for (const edit of EDITS) {
-    expect(tree.root.findAllByProps({label: edit.name}).length).toBeGreaterThan(
-      0,
-    );
+    expect(switchNamed(tree, edit.name)).toBeTruthy();
   }
 });
 
@@ -46,9 +53,7 @@ test('Settings lists a switch per style (#133)', async () => {
     tree = renderer.create(<App />);
   });
   for (const style of STYLES) {
-    expect(
-      tree.root.findAllByProps({label: style.name}).length,
-    ).toBeGreaterThan(0);
+    expect(switchNamed(tree, style.name)).toBeTruthy();
   }
 });
 
@@ -85,13 +90,16 @@ test('the Styles grid keeps the size rules, labels each tile and says when it fa
   expect(screenBreaks(tree.root)).toEqual([]);
   await act(async () => {
     tree.root.findByProps({testID: 'style-dither'}).props.onPress();
-    tree.root.findByProps({label: 'Thicker lines'}).props.onPress();
+    switchNamed(tree, 'Thicker lines').props.onPress();
   });
   expect(onPick).toHaveBeenCalledWith('dither');
   expect(onToggle).toHaveBeenCalledWith('thick');
   expect(
-    tree.root.findByProps({label: 'White to transparent'}).props.selected,
+    switchNamed(tree, 'White to transparent').props.accessibilityState.checked,
   ).toBe(true);
+  expect(
+    switchNamed(tree, 'Thicker lines').props.accessibilityState.checked,
+  ).toBe(false);
   let failed!: ReactTestRenderer;
   await act(async () => {
     failed = renderer.create(
@@ -172,7 +180,7 @@ describe("Back does what the open screen's «Close» does (#204)", () => {
   });
 });
 
-test('Settings wraps its button rows and closes with its own «Close» (#224, #204)', async () => {
+test('Settings keeps the size rules and closes with its title bar × (#224, #204, #274)', async () => {
   const close = jest.fn();
   let tree!: ReactTestRenderer;
   await act(async () => {
@@ -180,7 +188,11 @@ test('Settings wraps its button rows and closes with its own «Close» (#224, #2
   });
   // screenBreaks fails a row of more than three buttons that does not wrap (#224).
   expect(screenBreaks(tree.root)).toEqual([]);
-  const [closeButton] = tree.root.findAllByProps({label: 'Close'});
+  const [closeButton] = tree.root.findAll(
+    node =>
+      node.props.accessibilityLabel === 'Close' &&
+      typeof node.props.onPress === 'function',
+  );
   await act(async () => {
     closeButton.props.onPress();
   });
@@ -262,7 +274,13 @@ describe('the editor view (#226)', () => {
     );
     expect(strings).not.toContain(copy['press.notPicture']);
     await act(async () => {
-      tree.root.findAllByProps({label: 'Close'})[0].props.onPress();
+      tree.root
+        .findAll(
+          node =>
+            node.props.accessibilityLabel === 'Close' &&
+            typeof node.props.onPress === 'function',
+        )[0]
+        .props.onPress();
     });
     expect(h.onClose).toHaveBeenCalledTimes(1);
   });
