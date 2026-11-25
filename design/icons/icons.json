@@ -602,6 +602,30 @@
     "hand-click"
    ],
    "plannedIf": "if a plugin"
+  },
+  {
+   "out": "design/icons/planned/smart-pen/icon",
+   "kind": "plugin",
+   "planned": "#305",
+   "tabler": [
+    "ballpen",
+    {
+     "name": "sparkles",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/lasso-actions/icon",
+   "kind": "plugin",
+   "planned": "#306",
+   "tabler": [
+    "lasso",
+    {
+     "name": "bolt",
+     "badge": true
+    }
+   ]
   }
  ],
  "retired": {},
