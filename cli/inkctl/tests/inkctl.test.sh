@@ -74,6 +74,7 @@ case "$1" in
             exit 0
         fi
         cat "$ADB_FILES/log"
+        # timing-independent: a hanging fake adb for the follow timeout; the test kills it, the length only bounds it.
         case " $* " in *" -d "*) ;; *) [ -n "${ADB_FOLLOW_FAILS:-}" ] && exit 1; [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac
         : ;;
     shell)
@@ -314,8 +315,10 @@ result=$(SUPERNOTE_ADDRESS="127.0.0.1:$closed_port" ADB_CONNECT_FAILS=1 ADB_CONN
 check "a closed port beats an old reply from the adb server" "$(printf '%s' "$result" | field "['state']")" "restarted"
 echo offline > "$files/state"
 listener=$(mktemp "$work/port.XXXXXX")
+# timing-independent: the listener only holds the port open; the test kills it by its PID.
 python3 -c 'import socket,sys,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind(("127.0.0.1",0)); s.listen(5); open(sys.argv[1],"w").write(str(s.getsockname()[1])); time.sleep(30)' "$listener" &
 listener_pid=$!
+# timing-independent: a poll with a deadline for the listener's port file.
 for _ in 1 2 3 4 5 6 7 8 9 10; do [ -s "$listener" ] && break; sleep 0.2; done
 echo offline > "$files/state"
 touch "$files/stale"
@@ -1577,6 +1580,7 @@ export SYNTHETIC_REFRESH='1//SYNTHETIC-refresh-0000_wxyz'
 python3 -B "$work/token.py" &
 token_pid=$!
 trap 'kill "$token_pid" 2>/dev/null; rm -rf "$work"' EXIT
+# timing-independent: a poll with a deadline for the fake token server's port file.
 for _ in $(seq 50); do [ -f "$KEYCHAIN/token-port" ] && break; sleep 0.1; done
 client="$KEYCHAIN/account-sync-google-oauth-client"
 printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "http://127.0.0.1:%s/token"}}' "$(cat "$KEYCHAIN/token-port")" > "$client"
@@ -1672,6 +1676,7 @@ mkdir -p "$copy/src" "$copy/scripts"
 cp "$script" "$copy/src/inkctl"
 cp "$repo_root/scripts/dry_check.py" "$copy/scripts/"
 cp "$repo_root/dry-check.json" "$copy/"
+# timing-independent: the sleep is text planted in a copy for the dry check to flag; it never runs.
 python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace("def remote_path(path: str) -> str:\n", "def remote_path(path: str) -> str:\n    time.sleep(12345)\n", 1))' "$copy/src/inkctl"
 python3 -B "$copy/scripts/dry_check.py" --root "$copy" magic >"$work/out" 2>&1
 check "the duplication gate fails on a magic value in the command" "$?" "1"

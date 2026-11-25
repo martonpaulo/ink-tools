@@ -493,6 +493,7 @@ describe('ics', () => {
     expect(warnings).toHaveLength(1);
     const started = Date.now();
     calendarData('<calendar-data'.repeat(50000), []);
+    // timing-independent: a quadratic scan of 50000 open tags takes minutes, the linear one milliseconds; load cannot close that gap.
     expect(Date.now() - started).toBeLessThan(1000);
   });
 
