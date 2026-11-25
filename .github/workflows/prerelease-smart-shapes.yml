@@ -1,18 +1,24 @@
 name: Prerelease Smart Shapes
 
-# Each Smart Shapes build becomes a GitHub prerelease carrying SmartShapes-<version>.snplg (#203): a device
-# build comes from CI, never from the owner's Mac. A push to main that changes the plugin or a package
-# it uses publishes when its smart-shapes-v<package.json version> tag does not exist yet, so each version
-# publishes once; the version follows root AGENTS.md › Product versioning (#155).
+# Each Smart Shapes build becomes a GitHub prerelease carrying SmartShapes-<version>.snplg (#203): a
+# device build comes from CI, never from the owner's Mac. A push to main that changes
+# PluginConfig.json, where the version lives, publishes (#301) when its smart-shapes-v<package.json
+# version> tag does not exist yet, so each version publishes once; the version follows root AGENTS.md
+# › Product versioning (#155).
 
 on:
   push:
     branches: [main]
-    paths: ['plugins/smart-shapes/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**']
+    paths: [plugins/smart-shapes/PluginConfig.json]
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# One publish at a time per plugin, never cancelled half way (#301).
+concurrency:
+  group: prerelease-smart-shapes
+  cancel-in-progress: false
 
 jobs:
   prerelease:
@@ -51,8 +57,17 @@ jobs:
           cache: npm
           cache-dependency-path: plugins/smart-shapes/package-lock.json
 
-      - name: Install dependencies
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
         if: steps.tag.outputs.publish == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/smart-shapes/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/smart-shapes-${{ hashFiles('plugins/smart-shapes/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.tag.outputs.publish == 'true' && steps.modules.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run the gate

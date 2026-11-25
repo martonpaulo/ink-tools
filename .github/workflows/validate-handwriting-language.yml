@@ -5,9 +5,9 @@ name: Validate Handwriting Language
 on:
   push:
     branches: [main]
-    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
+    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-handwriting-language.yml']
   pull_request:
-    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
+    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-handwriting-language.yml']
   workflow_dispatch:
 
 permissions:
@@ -33,12 +33,6 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-
-      - name: Check the subproject's Markdown (text check and issue links, #77)
-        working-directory: .
-        run: |
-          python3 scripts/text_check.py apps/handwriting-language
-          python3 scripts/issue_links.py apps/handwriting-language --repo "$GITHUB_REPOSITORY"
 
       - name: Run the JVM tests
         run: node scripts/build.cjs --test

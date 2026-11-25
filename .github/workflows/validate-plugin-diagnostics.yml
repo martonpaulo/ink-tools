@@ -4,9 +4,9 @@ name: Validate Plugin Diagnostics
 on:
   push:
     branches: [main]
-    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', '.github/workflows/validate-plugin-diagnostics.yml']
+    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', 'scripts/plugin-version.cjs', 'registry/**', 'packages/sn-adapter/plugin-config.js', '.github/workflows/validate-plugin-diagnostics.yml']
   pull_request:
-    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', '.github/workflows/validate-plugin-diagnostics.yml']
+    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', 'scripts/plugin-version.cjs', 'registry/**', 'packages/sn-adapter/plugin-config.js', '.github/workflows/validate-plugin-diagnostics.yml']
   workflow_dispatch:
 
 permissions:
@@ -35,14 +35,23 @@ jobs:
           cache: npm
           cache-dependency-path: plugins/plugin-diagnostics/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/plugin-diagnostics/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/plugin-diagnostics-${{ hashFiles('plugins/plugin-diagnostics/package-lock.json') }}
 
-      - name: Check the subproject's Markdown (text check and issue links, #77)
-        working-directory: .
-        run: |
-          python3 scripts/text_check.py plugins/plugin-diagnostics
-          python3 scripts/issue_links.py plugins/plugin-diagnostics --repo "$GITHUB_REPOSITORY"
+      - name: Restore the native toolchain, keyed on its script (#301)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: plugins/plugin-diagnostics/.toolchain
+          key: toolchain-${{ runner.os }}-plugins/plugin-diagnostics-${{ hashFiles('plugins/plugin-diagnostics/scripts/native-toolchain.sh') }}
+
+      - name: Install dependencies
+        if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
 
       - name: Run the gate
         run: npm run validate

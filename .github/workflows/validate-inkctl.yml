@@ -4,9 +4,9 @@ name: Validate inkctl
 on:
   push:
     branches: [main]
-    paths: ['cli/inkctl/**', '.github/workflows/validate-inkctl.yml']
+    paths: ['cli/inkctl/**', 'registry/**', '.github/workflows/validate-inkctl.yml']
   pull_request:
-    paths: ['cli/inkctl/**', '.github/workflows/validate-inkctl.yml']
+    paths: ['cli/inkctl/**', 'registry/**', '.github/workflows/validate-inkctl.yml']
   workflow_dispatch:
 
 permissions:

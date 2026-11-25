@@ -21,6 +21,15 @@ Each push starts 7.3 runs on average (1 to 16), about 7 run minutes. No workflow
 
 Expected saving: 7.3 → about 5.5 runs and 7.0 → about 4.5 run minutes per push.
 
+Measured for [#301](https://github.com/martonpaulo/ink-tools/issues/301) from `gh api repos/martonpaulo/ink-tools/actions/runs` (push runs on `main`, run minutes as each run's end minus its start):
+
+| Window | Pushes | Runs per push | Run minutes per push |
+| :--- | ---: | ---: | ---: |
+| The 50 pushes before the fix landed (2026-11-25, 16:43 to 23:10 UTC) | 50 | 4.5 | 3.9 |
+| The 50 pushes after it | not yet measured | | |
+
+That day's pushes were mostly documents, so the window before is already under the audit's 7.3; the row after is filled once 50 pushes have followed the landing.
+
 ## Tests
 
 6 dead or unrun, about 40 weak, about 20 duplicated, 5 costly, about 15 important behaviours untested. Test time is small next to `npm ci` and builds.

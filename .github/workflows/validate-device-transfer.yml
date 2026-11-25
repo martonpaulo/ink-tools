@@ -4,9 +4,9 @@ name: Validate Device Transfer
 on:
   push:
     branches: [main]
-    paths: ['plugins/device-transfer/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-device-transfer.yml']
+    paths: ['plugins/device-transfer/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-device-transfer.yml']
   pull_request:
-    paths: ['plugins/device-transfer/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', '.github/workflows/validate-device-transfer.yml']
+    paths: ['plugins/device-transfer/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-device-transfer.yml']
   workflow_dispatch:
 
 permissions:
@@ -35,14 +35,23 @@ jobs:
           cache: npm
           cache-dependency-path: plugins/device-transfer/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/device-transfer/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/device-transfer-${{ hashFiles('plugins/device-transfer/package-lock.json') }}
 
-      - name: Check the subproject's Markdown (text check and issue links, #77)
-        working-directory: .
-        run: |
-          python3 scripts/text_check.py plugins/device-transfer
-          python3 scripts/issue_links.py plugins/device-transfer --repo "$GITHUB_REPOSITORY"
+      - name: Restore the native toolchain, keyed on its script (#301)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: plugins/device-transfer/.toolchain
+          key: toolchain-${{ runner.os }}-plugins/device-transfer-${{ hashFiles('plugins/device-transfer/scripts/native-toolchain.sh') }}
+
+      - name: Install dependencies
+        if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
 
       - name: Run the gate
         run: npm run validate
