@@ -201,19 +201,22 @@ const describe = (what: string, r: {code: number; message: string}) =>
 
 /** No element is lassoed (#248). */
 const NO_LASSO = 'no lasso';
-
 /**
- * The picture the lasso holds, and whether pen marks came with it, or the reason it is not one.
- * shortcut: the tablet's answer to `getLassoElements` with no lasso is not measured, so a failure
- * and an empty list both read as no lasso; split them once the device check of #248 logs it.
+ * `getLassoElements`' code with no lasso: «No lasso action has been performed» (measured, Nomad,
+ * 2026-11-25, #248; docs/supernote.md › Plugins).
  */
+export const NO_LASSO_CODE = 904;
+
+/** The picture the lasso holds, and whether pen marks came with it, or the reason it is not one. */
 async function readLasso(
   deps: EditorDeps,
 ): Promise<{rect: Rect; guided: boolean} | string> {
   const lassoed = await deps.lassoed();
   if (!lassoed.ok) {
     deps.log(describe('editor: getLassoElements', lassoed));
-    return NO_LASSO;
+    return lassoed.code === NO_LASSO_CODE
+      ? NO_LASSO
+      : copy['press.failed'](copy.title, describe('getLassoElements', lassoed));
   }
   if (lassoed.value.length === 0) {
     deps.log('editor: nothing lassoed');

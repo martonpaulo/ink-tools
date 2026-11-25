@@ -18,6 +18,7 @@ import {
   EDITOR_GROUPS,
   EditorDeps,
   editorState,
+  NO_LASSO_CODE,
   openEditor,
   resetEditorForTests,
   runDrawn,
@@ -138,11 +139,23 @@ describe('a press with nothing lassoed, as from the toolbar button (#248)', () =
     expect(editorState()).toEqual({phase: 'needs'});
   });
 
-  test('a refused lasso read shows the same Needs state', async () => {
+  test("the host's no-lasso code 904 shows the same Needs state", async () => {
     const {deps} = fakeDeps();
-    deps.lassoed = jest.fn(async () => fail(1, 'no lasso'));
+    deps.lassoed = jest.fn(async () =>
+      fail(NO_LASSO_CODE, 'No lasso action has been performed. Cannot call the API!'),
+    );
     await openEditor(deps);
     expect(editorState()).toEqual({phase: 'needs'});
+  });
+
+  test('any other refused lasso read is a failure that names it', async () => {
+    const {deps} = fakeDeps();
+    deps.lassoed = jest.fn(async () => fail(7, 'host busy'));
+    await openEditor(deps);
+    expect(editorState()).toEqual({
+      phase: 'failed',
+      message: copy['press.failed'](copy.title, 'getLassoElements: 7 host busy'),
+    });
   });
 
   test('after Close, a press with a lassoed picture opens the editor clean', async () => {
