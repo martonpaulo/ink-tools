@@ -17,9 +17,20 @@ needs the same note, or the file holds a measurement switch, an environment vari
 
 A test file is `*_test.go`, `test_*.py`, `*_test.py`, `*.test.*`, `*.spec.*`, `*Tests.swift`,
 `*Test.swift`, or a code file in a `tests`, `Tests`, `test` or `__tests__` folder. Dot folders,
-`node_modules`, `vendor`, `third_party` and `.build` are left out. Prints one line per finding and
-exits 1 on any, 2 on a usage error. Python's standard library only. Adapted from Panoram's
+`node_modules`, `vendor`, `third_party` and `.build` are left out, and so are the forks the
+repository's `upstreams.json` records (each source's `localPaths`, #900). Prints one line per finding
+and exits 1 on any, 2 on a usage error. Python's standard library only. Adapted from Panoram's
 tools/sleep_guard.py (the owner's own code), which reads Go only.
+
+A project's own rules live in `sleep_guard.json` beside this script, so the script itself is copied
+unchanged (#1992):
+
+    {"rules": [{"pattern": "testing\\.Benchmark\\(", "unless": "PANORAM_PERF_TESTS",
+                "says": "testing.Benchmark in a test is a measurement; skip it unless PANORAM_PERF_TESTS=1"}],
+     "skip": ["fake*_test.go"]}
+
+A rule's `pattern` is a regex a test line must not hold unless its file names `unless`; a `skip` glob
+leaves out a test file, matched against its name, or its repository path when it holds a `/`.
 
 shortcut: a regex per line, not a parser, so a sleep inside a string counts (a fake's code usually
 is one) and a trailing comment that names a sleep counts too; a parser would need each language's
@@ -27,6 +38,8 @@ toolchain in every gate.
 """
 from __future__ import annotations
 
+import fnmatch
+import json
 import os
 import re
 import sys
@@ -51,6 +64,37 @@ ELAPSED = re.compile(
 )
 SWITCH = re.compile(r"\b[A-Z][A-Z0-9]*_PERF_TESTS\b")
 COMMENT = ("#", "//", "/*")
+OWN = Path(__file__).with_name("sleep_guard.json")  # the project's own rules (#1992)
+
+
+def own_rules(path: Path = OWN) -> tuple[list[tuple[re.Pattern, str, str]], list[str]]:
+    """The project's rules, as (pattern, the token that exempts a file, message), and its skip globs."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return [], []
+    rules = [(re.compile(rule["pattern"]), rule.get("unless", ""), rule["says"]) for rule in data.get("rules", [])]
+    return rules, list(data.get("skip", []))
+
+
+def top(root: Path) -> Path:
+    """The repository holding `root`, whose `upstreams.json` and paths the forks and skips name: the
+    nearest folder with a `.git` entry, read with no `git` call, so a leaked `GIT_DIR` cannot redirect it."""
+    return next((folder for folder in (root, *root.parents) if (folder / ".git").exists()), root)
+
+
+def forks(repository: Path) -> set[Path]:
+    """The folders and files `upstreams.json` records as copied code (#900)."""
+    try:
+        data = json.loads((repository / "upstreams.json").read_text(encoding="utf-8"))
+        return {repository / local.rstrip("/") for source in data["sources"] for local in source["localPaths"]}
+    except (OSError, ValueError, KeyError, TypeError):
+        return set()
+
+
+def skipped(path: Path, repository: Path, globs: list[str]) -> bool:
+    where = path.relative_to(repository).as_posix()
+    return any(fnmatch.fnmatch(where if "/" in glob else path.name, glob) for glob in globs)
 
 
 def is_test(path: Path, root: Path) -> bool:
@@ -61,22 +105,31 @@ def is_test(path: Path, root: Path) -> bool:
     )
 
 
-def problems(root: Path) -> list[str]:
+def problems(root: Path, own: Path = OWN) -> list[str]:
+    root = Path(root).resolve()
+    repository = top(root)
+    copied = forks(repository)
+    rules, globs = own_rules(own)
     found = []
     for folder, dirs, files in os.walk(root):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith("."))
+        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")
+                         and Path(folder, d) not in copied)
         for name in sorted(files):
             path = Path(folder, name)
-            if not is_test(path, root):
+            if not is_test(path, root) or path in copied or skipped(path, repository, globs):
                 continue
             try:
                 lines = path.read_text(encoding="utf-8").split("\n")
             except (OSError, UnicodeError):
                 continue
-            switched = bool(SWITCH.search("\n".join(lines)))
+            text = "\n".join(lines)
+            switched = bool(SWITCH.search(text))
             for index, line in enumerate(lines):
                 if line.lstrip().startswith(COMMENT):
                     continue
+                for pattern, unless, says in rules:
+                    if pattern.search(line) and not (unless and unless in text):
+                        found.append(f"{path.relative_to(root).as_posix()}:{index + 1}: {says}")
                 sleep = SLEEP.search(line)
                 bound = not switched and ASSERT.search(line) and ELAPSED.search(line)
                 if not (sleep or bound):
