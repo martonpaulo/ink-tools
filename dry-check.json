@@ -35,19 +35,14 @@
    "packages/sync-core/src/caldav.ts": {
     "number": 6
    },
-   "packages/sync-core/src/google.ts": {
-    "url": 1
-   },
    "packages/sync-core/src/ics.ts": {
     "number": 9
    },
    "packages/sync-core/src/push.ts": {
-    "number": 2,
-    "url": 1
+    "number": 2
    },
    "packages/sync-core/src/todoist.ts": {
-    "number": 3,
-    "url": 1
+    "number": 3
    },
    "plugins/account-sync/.eslintrc.js": {
     "repeated": 1

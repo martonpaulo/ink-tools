@@ -1,5 +1,6 @@
 import {CalendarEvent} from './calendar';
 import {HttpFetch} from './http';
+import services from './services.json';
 import {PULL_ONLY, TabletOnlyPolicy, maySend} from './tasks';
 
 /**
@@ -154,7 +155,7 @@ export async function applyCreated(result: PushResult, store: DeviceRelinker): P
   return errors;
 }
 
-export const GOOGLE_CALENDAR_WRITE_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+export const GOOGLE_CALENDAR_WRITE_SCOPE = services.googleScopes.write;
 
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
@@ -167,7 +168,7 @@ export function toGoogleBody(e: CalendarEvent): Record<string, unknown> {
 export function createGoogleCalendarWriter(fetch: HttpFetch, getAccessToken: () => Promise<string>): CalendarWriter {
   const call = async (method: string, calendarId: string, eventId: string, body?: unknown) => {
     const path = `/calendars/${encodeURIComponent(calendarId)}/events${eventId ? `/${encodeURIComponent(eventId)}` : ''}`;
-    const res = await fetch(`https://www.googleapis.com/calendar/v3${path}`, {
+    const res = await fetch(`${services.googleCalendarApi}${path}`, {
       method,
       headers: {Authorization: `Bearer ${await getAccessToken()}`, 'Content-Type': 'application/json'},
       ...(body === undefined ? {} : {body: JSON.stringify(body)}),

@@ -38,6 +38,12 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  turns pages to an element
   click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
   wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
+  sandbox todoist|google create|list|clean
+                                 the test project in Todoist or test calendar in Google, named
+                                 «teste ink-tools»: make it, list what it holds, or delete it;
+                                 nothing else in the account is read or changed
+  wait toast TEXT                catch a short on-screen message that holds TEXT, from the moment
+                                 the wait starts: start it, then do what shows the message
   apps                           installed packages
   plugin list                    installed plugins, from PluginHost's provider (plugin ls is the same)
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
@@ -179,6 +185,7 @@ SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
 KEYCHAIN_SERVICE = "ink-tools"
 GOOGLE_CLIENT_ACCOUNT = "ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT"
 GOOGLE_TOKEN_ACCOUNT = "ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
+GOOGLE_LOGIN_STEP = "inkctl google login"
 GOOGLE_CLIENT_COMMENT = (
     "inkctl google login and inkctl secret set google-client read this Google «Desktop app» OAuth client JSON for Ink Tools Account Sync."
     " Value lives in the Mac login Keychain; to rotate, create a new Desktop client in the Google Cloud console, store its JSON here,"
@@ -221,6 +228,15 @@ DEFAULT_LOG_LINES = 100
 DEFAULT_HISTORY_RUNS = 50
 PLUGIN_LOG_WINDOW = 5000  # a plugin's lines are picked out of this many recent ones
 FOLLOW_CHUNK = 65536
+# A toast is a window drawn for about 2 s; logcat and `dumpsys notification` carry no text for it
+# [measured, 2026-11-25, Android 11]. The toast's accessibility event does: `uiautomator events`
+# prints it as one line (TYPE_NOTIFICATION_STATE_CHANGED, class android.widget.Toast…).
+# https://developer.android.com/reference/android/view/accessibility/AccessibilityEvent#TYPE_NOTIFICATION_STATE_CHANGED
+TOAST_EVENTS = ["shell", "uiautomator", "events"]
+TOAST_EVENT = re.compile(
+    r"EventType: TYPE_NOTIFICATION_STATE_CHANGED;.*?EventTime: (?P<time>\d+);.*?PackageName: (?P<package>[^;]*);"
+    r".*?ClassName: (?P<kind>[^;]*Toast[^;]*);.*?Text: \[(?P<text>.*?)\];"
+)
 TIMING_DIGITS = 3
 MILLISECONDS = 1000
 PERIOD_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
@@ -460,9 +476,10 @@ FAILURE_ADVICE = {
     "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
     "log_error": ("the command's own log could not be read", "inkctl status"),
     "google_client": ("the login Keychain holds no «Desktop app» Google client for Account Sync", f'security add-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_CLIENT_ACCOUNT} -j "{GOOGLE_CLIENT_COMMENT}" -w'),
-    "google_denied": ("the browser's answer did not sign in: consent refused, or not this sign-in's answer", "inkctl google login"),
-    "google_refused": ("Google's answer cannot sign Account Sync in", "inkctl google login"),
-    "keychain_error": ("the login Keychain could not be read or written", "inkctl google login"),
+    "google_denied": ("the browser's answer did not sign in: consent refused, or not this sign-in's answer", GOOGLE_LOGIN_STEP),
+    "google_refused": ("Google's answer cannot sign Account Sync in", GOOGLE_LOGIN_STEP),
+    "keychain_error": ("the login Keychain could not be read or written", GOOGLE_LOGIN_STEP),
+    "api_refused": ("Todoist or Google refused the call: the stored token is revoked or lacks a scope", "inkctl secret status"),
 }
 
 
@@ -2196,8 +2213,32 @@ def element_matches(device: Device, selector: str) -> bool:
         raise
 
 
+def toast_seen(line: str, wanted: str) -> dict | None:
+    found = TOAST_EVENT.search(line)
+    if not found or wanted.casefold() not in found["text"].casefold():
+        return None
+    return {"text": found["text"], "package": found["package"], "event_time": int(found["time"])}
+
+
+def wait_toast(device: Device, args: argparse.Namespace):
+    """Read the accessibility events until a toast holding the text shows. It sees only toasts
+    shown after it starts, so an agent starts it in the background and then acts."""
+    if not args.value.strip():
+        raise bad_usage("wait toast needs the text to look for")
+    started = time.monotonic()
+    for line in device.stream(TOAST_EVENTS, args.timeout):
+        if seen := toast_seen(line, args.value):
+            waited = round(time.monotonic() - started, 1)
+            return {"kind": "toast", "value": args.value, **seen, "seconds": waited}, f"toast: {seen['text']} ({seen['package']}), after {waited} s"
+    if time.monotonic() - started < args.timeout:
+        raise Failure(EXIT_FAILED, "device_error", "uiautomator events ended early; another uiautomator call may hold the screen", "inkctl history --failures")
+    raise Failure(EXIT_TIMEOUT, "timeout", f"no toast with «{args.value}» in {args.timeout:g} s")
+
+
 def command_wait(device: Device, args: argparse.Namespace):
     """Poll one condition until it holds, always trying at least once."""
+    if args.kind == "toast":
+        return wait_toast(device, args)
     conditions = {
         "activity": lambda: args.value in device.activity(),
         "file": lambda: device.test(f"-e {shlex.quote(remote_path(args.value))}"),
@@ -3071,14 +3112,17 @@ def command_secret_status(device: Device, args: argparse.Namespace):
 # writer to the tablet. https://developers.google.com/identity/protocols/oauth2/native-app
 GOOGLE_TOKEN_LABEL = "Ink Tools Account Sync: Google Calendar"
 GOOGLE_TOKEN_COMMENT = (
-    "inkctl google login writes this Google refresh token (calendar.readonly, calendar.events) and inkctl secret set google sends it"
+    "inkctl google login writes this Google refresh token (calendar.readonly, calendar.events, calendar.app.created) and inkctl secret set google sends it"
     " to Ink Tools Account Sync. Value lives in the Mac login Keychain; to rotate, revoke it at myaccount.google.com/permissions,"
     " then run inkctl google login."
 )
-GOOGLE_SCOPES = (
-    "https://www.googleapis.com/auth/calendar.readonly",
-    "https://www.googleapis.com/auth/calendar.events",
-)
+# One owner for every Todoist and Google address and scope, and the test objects' name (#295, #297):
+# sync-core reads the same file. $INKCTL_SERVICES points the tests at a fake server.
+SERVICES = json.loads(Path(os.environ.get("INKCTL_SERVICES") or Path(__file__).resolve().parents[3] / "packages/sync-core/src/services.json").read_text())
+GOOGLE_SCOPES = (SERVICES["googleScopes"]["read"], SERVICES["googleScopes"]["write"])
+# Asked at sign-in but not required: it lets `inkctl sandbox google` make and delete only the
+# calendars it made itself. https://developers.google.com/workspace/calendar/api/auth
+GOOGLE_TEST_SCOPE = SERVICES["googleScopes"]["testCalendars"]
 GOOGLE_LOGIN_TIMEOUT = 300.0  # seconds for the person to finish the consent page
 KEYCHAIN_TIMEOUT = 10.0
 TOKEN_EXCHANGE_TIMEOUT = 30.0
@@ -3210,7 +3254,7 @@ def google_exchange(client: dict, code: str, redirect: str, verifier: str) -> di
             reason = ""
         raise Failure(EXIT_FAILED, "google_refused", f"Google refused the code (HTTP {refused.code} {reason})".replace(" )", ")")) from None
     except (urllib.error.URLError, OSError, ValueError) as lost:
-        raise Failure(EXIT_FAILED, "network_error", f"Google's token endpoint did not answer: {lost}", cause="Google's sign-in server could not be reached", next_step="inkctl google login") from None
+        raise Failure(EXIT_FAILED, "network_error", f"Google's token endpoint did not answer: {lost}", cause="Google's sign-in server could not be reached", next_step=GOOGLE_LOGIN_STEP) from None
 
 
 def login_page(failure: Failure | None) -> bytes:
@@ -3297,7 +3341,7 @@ def command_google_login(device, args: argparse.Namespace):
         redirect = f"http://{LOOPBACK_HOST}:{server.server_port}"
         address = client["auth_uri"] + "?" + urllib.parse.urlencode({
             "client_id": client["client_id"], "redirect_uri": redirect, "response_type": "code",
-            "scope": " ".join(GOOGLE_SCOPES), "state": state, "code_challenge": challenge,
+            "scope": " ".join((*GOOGLE_SCOPES, GOOGLE_TEST_SCOPE)), "state": state, "code_challenge": challenge,
             "code_challenge_method": "S256", "access_type": "offline", "prompt": "consent",
         })
         # The address holds no secret: the client id is public and the state works once.
@@ -3307,7 +3351,7 @@ def command_google_login(device, args: argparse.Namespace):
         while not outcome:
             left = deadline - time.monotonic()
             if left <= 0:
-                raise Failure(EXIT_TIMEOUT, "timeout", f"no answer from the browser within {args.timeout:g} seconds", next_step="inkctl google login")
+                raise Failure(EXIT_TIMEOUT, "timeout", f"no answer from the browser within {args.timeout:g} seconds", next_step=GOOGLE_LOGIN_STEP)
             server.timeout = left
             server.handle_request()
     if "failure" in outcome:
@@ -3324,6 +3368,172 @@ def command_google_login(device, args: argparse.Namespace):
     return data, text
 
 
+# Test sandboxes (#297): one Todoist project and one Google calendar named SANDBOX_NAME, for device
+# rounds. Every call finds the object by that exact name and touches nothing else; every write is
+# read back. Standing yes: docs/decisions.md, 2026-11-25.
+SANDBOX_NAME = SERVICES["testObjectName"]
+TODOIST_TOKEN_ACCOUNT = "ACCOUNT_SYNC_TODOIST_TOKEN"
+API_TIMEOUT = 30.0
+
+
+def api_call(service: str, method: str, url: str, token: str, body: dict | None = None):
+    """One JSON call with a bearer token; the token never reaches the output."""
+    data = None if body is None else json.dumps(body).encode()
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=data, method=method, headers=headers)
+    path = urllib.parse.urlsplit(url).path
+    try:
+        with urllib.request.urlopen(request, timeout=API_TIMEOUT) as answer:
+            raw = answer.read()
+    except urllib.error.HTTPError as refused:
+        detail = refused.read().decode(errors="replace")[:ERROR_EXCERPT]
+        scope = "insufficient" in detail.lower() and "scope" in detail.lower()
+        raise Failure(
+            EXIT_FAILED, "api_refused", f"{service} refused {method} {path} (HTTP {refused.code})",
+            next_step=GOOGLE_LOGIN_STEP if scope else "", cause="the stored token lacks a scope" if scope else "",
+            extra={"status": refused.code},
+        ) from None
+    except (urllib.error.URLError, OSError) as lost:
+        raise Failure(EXIT_FAILED, "network_error", f"{service} did not answer: {lost}", cause=f"{service} could not be reached", next_step="check the Mac's network, then run the same command") from None
+    try:
+        return json.loads(raw) if raw.strip() else None
+    except ValueError:
+        raise Failure(EXIT_FAILED, "api_refused", f"{service} answered {method} {path} with no JSON") from None
+
+
+def stored_secret(account: str, what: str) -> str:
+    value = keychain_read(account)
+    if not value:
+        raise Failure(
+            EXIT_NOT_FOUND, "not_found", f"no {what} in the Keychain item {KEYCHAIN_SERVICE} / {account}",
+            next_step=f"security add-generic-password -s {KEYCHAIN_SERVICE} -a {account} -w",
+        )
+    return value
+
+
+class TodoistSandbox:
+    service = "Todoist"
+    kind = "project"
+
+    def __init__(self):
+        self.token = stored_secret(TODOIST_TOKEN_ACCOUNT, "Todoist token")
+        self.base = SERVICES["todoistApi"]
+
+    def call(self, method: str, path: str, body: dict | None = None):
+        return api_call(self.service, method, f"{self.base}{path}", self.token, body)
+
+    def pages(self, path: str, query: dict) -> list[dict]:
+        """Every row of a list, page by page (Todoist API v1's `next_cursor`)."""
+        rows, cursor = [], None
+        while True:
+            page = {**query, **({"cursor": cursor} if cursor else {})}
+            answer = self.call("GET", f"{path}?{urllib.parse.urlencode(page)}" if page else path) or {}
+            rows += answer.get("results", [])
+            if not (cursor := answer.get("next_cursor")):
+                return rows
+
+    def find(self) -> list[dict]:
+        return [{"id": str(row["id"]), "name": row["name"]} for row in self.pages("/projects", {}) if row.get("name") == SANDBOX_NAME]
+
+    def create(self) -> dict:
+        row = self.call("POST", "/projects", {"name": SANDBOX_NAME})
+        return {"id": str(row["id"]), "name": row["name"]}
+
+    def items(self, found: dict) -> list[dict]:
+        return [{"id": str(row["id"]), "title": row.get("content", "")} for row in self.pages("/tasks", {"project_id": found["id"]})]
+
+    def remove(self, found: dict) -> None:
+        self.call("DELETE", f"/projects/{urllib.parse.quote(found['id'], safe='')}")
+
+
+class GoogleSandbox:
+    service = "Google Calendar"
+    kind = "calendar"
+
+    def __init__(self):
+        client = google_client()
+        refresh = stored_secret(GOOGLE_TOKEN_ACCOUNT, "Google refresh token")
+        self.token = google_access_token(client, refresh)
+        self.base = SERVICES["googleCalendarApi"]
+
+    def call(self, method: str, path: str, body: dict | None = None):
+        return api_call(self.service, method, f"{self.base}{path}", self.token, body)
+
+    def pages(self, path: str, query: dict) -> list[dict]:
+        """Every item of a list, page by page (Calendar API's `nextPageToken`)."""
+        rows, token = [], None
+        while True:
+            page = {**query, **({"pageToken": token} if token else {})}
+            answer = self.call("GET", f"{path}?{urllib.parse.urlencode(page)}" if page else path) or {}
+            rows += answer.get("items", [])
+            if not (token := answer.get("nextPageToken")):
+                return rows
+
+    def find(self) -> list[dict]:
+        return [{"id": row["id"], "name": row["summary"]} for row in self.pages("/users/me/calendarList", {}) if row.get("summary") == SANDBOX_NAME]
+
+    def create(self) -> dict:
+        row = self.call("POST", "/calendars", {"summary": SANDBOX_NAME})
+        return {"id": row["id"], "name": row["summary"]}
+
+    def items(self, found: dict) -> list[dict]:
+        path = f"/calendars/{urllib.parse.quote(found['id'], safe='')}/events"
+        # The API's default page is 250 events; `pages` follows nextPageToken past it.
+        return [{"id": row["id"], "title": row.get("summary", "")} for row in self.pages(path, {})]
+
+    def remove(self, found: dict) -> None:
+        self.call("DELETE", f"/calendars/{urllib.parse.quote(found['id'], safe='')}")
+
+
+SANDBOXES = {"todoist": TodoistSandbox, "google": GoogleSandbox}
+
+
+def google_access_token(client: dict, refresh: str) -> str:
+    body = urllib.parse.urlencode({
+        "client_id": client["client_id"], "client_secret": client["client_secret"],
+        "refresh_token": refresh, "grant_type": "refresh_token",
+    }).encode()
+    request = urllib.request.Request(client["token_uri"], data=body, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=TOKEN_EXCHANGE_TIMEOUT) as answer:
+            token = json.load(answer).get("access_token")
+    except urllib.error.HTTPError as refused:
+        raise Failure(EXIT_FAILED, "google_refused", f"Google refused the refresh token (HTTP {refused.code})", next_step=GOOGLE_LOGIN_STEP) from None
+    except (urllib.error.URLError, OSError, ValueError) as lost:
+        raise Failure(EXIT_FAILED, "network_error", f"Google's token endpoint did not answer: {lost}") from None
+    if not isinstance(token, str) or not token:
+        raise Failure(EXIT_FAILED, "google_refused", "Google answered no access token", next_step=GOOGLE_LOGIN_STEP)
+    return token
+
+
+def command_sandbox(device, args: argparse.Namespace):
+    sandbox = SANDBOXES[args.service]()
+    found = sandbox.find()
+    label = f"{args.service}: {sandbox.kind} «{SANDBOX_NAME}»"
+    if args.action == "create":
+        if found:
+            return {"service": args.service, "created": False, **found[0]}, f"{label} already exists ({found[0]['id']})"
+        made = sandbox.create()
+        if not any(row["id"] == made["id"] for row in sandbox.find()):
+            raise Failure(EXIT_FAILED, "api_refused", f"{label} was created but does not read back")
+        return {"service": args.service, "created": True, **made}, f"{label} created ({made['id']})"
+    if args.action == "list":
+        rows = [{**row, "items": sandbox.items(row)} for row in found]
+        lines = [] if rows else [f"{label}: none"]
+        for row in rows:
+            lines += [f"{label} ({row['id']}): {len(row['items'])} items", *(f"  {item['title']}" for item in row["items"])]
+        return {"service": args.service, "name": SANDBOX_NAME, "sandboxes": rows}, "\n".join(lines)
+    for row in found:
+        sandbox.remove(row)
+    left = sandbox.find()
+    if left:
+        raise Failure(EXIT_FAILED, "api_refused", f"{label}: {len(left)} still there after the delete")
+    removed = [row["id"] for row in found]
+    return {"service": args.service, "removed": removed}, f"{label}: {len(removed)} removed" if removed else f"{label}: none to remove"
+
+
 def command_shell(device: Device, args: argparse.Namespace):
     done = device.adb("shell", *args.words, timeout=TRANSFER_TIMEOUT)
     sys.stdout.buffer.write(done.stdout)
@@ -3331,7 +3541,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "google", "lang", "lasso", "ink")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "google", "lang", "lasso", "ink", "sandbox")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -3472,7 +3682,7 @@ def build_parser() -> argparse.ArgumentParser:
     add(commands, "click", command_click, action, changes=True).add_argument("target")
 
     waited = add(commands, "wait", command_wait)
-    waited.add_argument("kind", choices=("activity", "file", "element"))
+    waited.add_argument("kind", choices=("activity", "file", "element", "toast"))
     waited.add_argument("value")
     waited.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds")
 
@@ -3556,6 +3766,12 @@ def build_parser() -> argparse.ArgumentParser:
     login.set_defaults(needs_device=False)  # a Mac sign-in: the tablet is not reached
     login.add_argument("--timeout", type=float, default=GOOGLE_LOGIN_TIMEOUT, help="seconds to finish the consent page")
 
+    sandboxes = noun("sandbox")
+    for service in SANDBOXES:
+        tested = add(sandboxes, service, command_sandbox)
+        tested.set_defaults(needs_device=False, service=service)  # a Mac call to the service: the tablet is not reached
+        tested.add_argument("action", choices=("create", "list", "clean"))
+
     add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
     return parser
 
@@ -3569,6 +3785,8 @@ def refuses_read_only(args: argparse.Namespace) -> bool:
     """`snapshot --all` and `--find` scroll, and `firmware --download` copies, so read-only mode counts them as changes."""
     if not (args.read_only or os.environ.get("SUPERNOTE_READ_ONLY")):
         return False
+    if args.command == "sandbox" and args.action != "list":
+        return True  # create and clean change the Todoist or Google account
     return args.changes or any(getattr(args, option, None) for option in ("all", "find", "download"))
 
 

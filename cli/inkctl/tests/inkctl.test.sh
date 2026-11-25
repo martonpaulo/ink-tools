@@ -187,6 +187,11 @@ case "$1" in
                 else
                     echo 'No result found.'
                 fi ;;
+            uiautomator)
+                cat "$ADB_FILES/events"
+                # timing-independent: the real stream never ends; the test's limit ends this one.
+                [ -n "${ADB_HANG:-}" ] && exec sleep 5
+                : ;;
             "content query"*) cat "$ADB_FILES/rows" ;;
             "input tap"*)
                 if [ -f "$ADB_FILES/taps-left" ]; then
@@ -822,6 +827,24 @@ run wait element id:files --timeout 0 >/dev/null
 check "wait element sees an element" "$?" "0"
 run wait element files --timeout 0 >/dev/null 2>&1
 check "wait element refuses a bad selector" "$?" "2"
+# A toast is caught from its accessibility event (#297).
+cat > "$files/events" <<'EVENTS'
+EventType: TYPE_WINDOW_CONTENT_CHANGED; EventTime: 100; PackageName: com.ratta.supernote.note; MovementGranularity: 0; Action: 0; ContentChangeTypes: [CONTENT_CHANGE_TYPE_SUBTREE]; WindowChangeTypes: [] [ ClassName: android.widget.FrameLayout; Text: []; ContentDescription: null; ]; recordCount: 0
+EventType: TYPE_NOTIFICATION_STATE_CHANGED; EventTime: 200; PackageName: com.ratta.supernote.pluginhost; MovementGranularity: 0; Action: 0; ContentChangeTypes: []; WindowChangeTypes: [] [ ClassName: android.widget.Toast$TN; Text: [Other message]; ContentDescription: null; ]; recordCount: 0
+EventType: TYPE_NOTIFICATION_STATE_CHANGED; EventTime: 300; PackageName: com.ratta.supernote.pluginhost; MovementGranularity: 0; Action: 0; ContentChangeTypes: []; WindowChangeTypes: [] [ ClassName: android.widget.Toast$TN; Text: [Sent to the Mac]; ContentDescription: null; ]; recordCount: 0
+EVENTS
+output=$(ADB_HANG=1 run wait toast "sent to" --timeout 3 --json)
+check "wait toast finds the toast's text, in any case" "$?" "0"
+check "wait toast names the text, package and event time" "$(printf '%s' "$output" | field "['text'],d['package'],d['event_time']")" "('Sent to the Mac', 'com.ratta.supernote.pluginhost', 300)"
+check "wait toast reads the accessibility events" "$(called 'shell uiautomator events')" "1"
+started=$SECONDS
+ADB_HANG=1 run wait toast "Saved" --timeout 1 >/dev/null 2>&1
+check "wait toast times out on another text" "$?" "6"
+check "wait toast is bounded" "$((SECONDS - started < 4))" "1"
+run wait toast "Saved" --timeout 3 --json >"$work/out" 2>/dev/null
+check "an events stream that ends early is a device error" "$? $(field "['error']" < "$work/out")" "1 device_error"
+run wait toast " " --timeout 1 >/dev/null 2>&1
+check "wait toast refuses an empty text" "$?" "2"
 
 # Apps, plugins and logs.
 check "apps separates installed from system" "$(run apps --json | field "['apps'][0]['kind'],d['apps'][1]['kind']")" "('installed', 'system')"
@@ -1745,7 +1768,7 @@ check "no Keychain client is a failure that writes nothing" "$? $([ -f "$files/s
 check "no Keychain client names the item to add, with its description" "$(field "['next'].split(' -j ')[0], ' Value lives in the Mac login Keychain; to rotate, ' in d['next']" < "$work/out")" "('security add-generic-password -s ink-tools -a ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT', True)"
 mv "$client.away" "$client"
 auth=$(cat "$KEYCHAIN/auth-url")
-check "the consent asks both Calendar scopes, offline" "$(python3 -c 'import sys,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); print(q["scope"], q["access_type"], q["code_challenge_method"], q["redirect_uri"].startswith("http://127.0.0.1:"))' "$auth")" "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events offline S256 True"
+check "the consent asks both Calendar scopes and the test calendars, offline" "$(python3 -c 'import sys,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); print(q["scope"], q["access_type"], q["code_challenge_method"], q["redirect_uri"].startswith("http://127.0.0.1:"))' "$auth")" "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.app.created offline S256 True"
 check "the exchange proves the PKCE verifier" "$(python3 -c 'import sys,hashlib,base64,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); b=dict(u.parse_qsl(open(sys.argv[2]).read())); print(base64.urlsafe_b64encode(hashlib.sha256(b["code_verifier"].encode()).digest()).rstrip(b"=").decode()==q["code_challenge"], b["code"], b["grant_type"], b["redirect_uri"]==q["redirect_uri"])' "$auth" "$KEYCHAIN/token-body")" "True code-SYNTHETIC authorization_code True"
 check "the success page names the product and the state" "$(grep -c -e 'Ink Tools</span>' -e '<span>Signed in to Google</span>' "$KEYCHAIN/page.html")" "2"
 check "the page has a dark look" "$(grep -c 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "1"
@@ -1787,6 +1810,121 @@ printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "clien
 # where it registers none; the guard must stop it before it starts.
 check "the guard stops the real browser opener" "$(INKCTL_BROWSER= BROWSER="$work/bin/no-such-browser" PYTHONPATH="$work/guard" HOME="$work/home" PATH="$work/bin:$PATH" python3 -B "$script" google login --timeout 1 >/dev/null 2>&1; echo "$? $(cat "$work/real-browser-reached")")" "1 webbrowser.open"
 rm -f "$work/real-browser-reached" "$client"
+
+# Test sandboxes (#297): a fake Todoist and Google, answering in the APIs' recorded shapes.
+cat > "$work/apis.py" <<'PY'
+import http.server, json, os, sys, urllib.parse
+root = sys.argv[1]
+state = {
+    "projects": [{"id": "p-inbox", "name": "Inbox"}, {"id": "p-old", "name": "teste ink-tools old"}],
+    "tasks": {},
+    "calendars": [{"id": "primary-SYNTHETIC@example.test", "summary": "Primary"}],
+    "events": {},
+}
+serial = [0]
+def new_id(prefix):
+    serial[0] += 1
+    return f"{prefix}-{serial[0]}"
+class Api(http.server.BaseHTTPRequestHandler):
+    def answer(self, status, body=None):
+        raw = b"" if body is None else json.dumps(body).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+    def handle_call(self):
+        split = urllib.parse.urlsplit(self.path)
+        query = dict(urllib.parse.parse_qsl(split.query))
+        raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
+        body = json.loads(raw) if self.headers.get("Content-Type") == "application/json" else raw.decode()
+        open(f"{root}/api-calls", "a").write(f"{self.command} {self.path} {self.headers.get('Authorization')}\n")
+        path, method = split.path, self.command
+        if path == "/token":
+            form = dict(urllib.parse.parse_qsl(body))
+            if form.get("grant_type") != "refresh_token" or form.get("refresh_token") != "1//SYNTHETIC-refresh":
+                return self.answer(400, {"error": "invalid_grant"})
+            return self.answer(200, {"access_token": "access-SYNTHETIC", "expires_in": 3599})
+        if os.path.exists(f"{root}/api-refuses"):
+            return self.answer(403, {"error": {"code": 403, "message": "Request had insufficient authentication scopes."}})
+        if path == "/todoist/projects" and method == "GET":
+            rows = state["projects"]
+            if "cursor" not in query:  # two pages, as Todoist API v1 pages its lists
+                return self.answer(200, {"results": rows[:1], "next_cursor": "page-2"})
+            return self.answer(200, {"results": rows[1:], "next_cursor": None})
+        if path == "/todoist/projects" and method == "POST":
+            row = {"id": new_id("p"), "name": body["name"], "color": "charcoal", "is_archived": False}
+            state["projects"].append(row)
+            return self.answer(200, row)
+        if path == "/todoist/tasks" and method == "GET":
+            return self.answer(200, {"results": state["tasks"].get(query["project_id"], []), "next_cursor": None})
+        if path.startswith("/todoist/projects/") and method == "DELETE":
+            pid = urllib.parse.unquote(path.rsplit("/", 1)[1])
+            state["projects"] = [row for row in state["projects"] if row["id"] != pid]
+            return self.answer(204)
+        if path == "/google/users/me/calendarList":
+            return self.answer(200, {"kind": "calendar#calendarList", "items": state["calendars"]})
+        if path == "/google/calendars" and method == "POST":
+            row = {"kind": "calendar#calendar", "id": new_id("c") + "@group.calendar.google.com", "summary": body["summary"]}
+            state["calendars"].append(row)
+            return self.answer(200, row)
+        if path.startswith("/google/calendars/") and path.endswith("/events"):
+            cid = urllib.parse.unquote(path.split("/")[3])
+            return self.answer(200, {"kind": "calendar#events", "items": state["events"].get(cid, [])})
+        if path.startswith("/google/calendars/") and method == "DELETE":
+            cid = urllib.parse.unquote(path.rsplit("/", 1)[1])
+            state["calendars"] = [row for row in state["calendars"] if row["id"] != cid]
+            return self.answer(204)
+        return self.answer(404, {"error": "not found"})
+    do_GET = do_POST = do_DELETE = handle_call
+    def log_message(self, *ignored):
+        pass
+server = http.server.HTTPServer(("127.0.0.1", 0), Api)
+open(f"{root}/api-port.partial", "w").write(str(server.server_port))
+os.rename(f"{root}/api-port.partial", f"{root}/api-port")
+server.serve_forever()
+PY
+python3 -B "$work/apis.py" "$work" &
+api_pid=$!
+trap 'kill "$api_pid" 2>/dev/null; rm -rf "$work"' EXIT
+# timing-independent: a poll with a deadline for the fake API server's port file.
+for _ in $(seq 50); do [ -f "$work/api-port" ] && break; sleep 0.1; done
+api="http://127.0.0.1:$(cat "$work/api-port")"
+python3 -c 'import json,sys; s=json.load(open(sys.argv[1])); s["todoistApi"]=sys.argv[2]+"/todoist"; s["googleCalendarApi"]=sys.argv[2]+"/google"; json.dump(s, open(sys.argv[3], "w"))' "$repo_root/../../packages/sync-core/src/services.json" "$api" "$work/services.json"
+export INKCTL_SERVICES="$work/services.json"
+printf 'todoist-SYNTHETIC-token' > "$KEYCHAIN/ACCOUNT_SYNC_TODOIST_TOKEN"
+printf '1//SYNTHETIC-refresh' > "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
+printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "%s/token"}}' "$api" > "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT"
+check "sandbox todoist list finds none at first" "$(run sandbox todoist list --json | field "['sandboxes']")" "[]"
+output=$(run sandbox todoist create --json)
+check "sandbox todoist create makes the project" "$?" "0"
+check "sandbox todoist create names it" "$(printf '%s' "$output" | field "['created'],d['name']")" "(True, 'teste ink-tools')"
+check "sandbox todoist create sends the token as a bearer" "$(grep -c '^POST /todoist/projects Bearer todoist-SYNTHETIC-token$' "$work/api-calls")" "1"
+check "sandbox todoist create twice makes one project" "$(run sandbox todoist create --json | field "['created']") $(grep -c '^POST /todoist/projects' "$work/api-calls")" "False 1"
+check "sandbox todoist list reads the project's tasks" "$(run sandbox todoist list --json | expression "[(r['name'], r['items']) for r in d['sandboxes']]")" "[('teste ink-tools', [])]"
+check "sandbox todoist clean removes only the test project" "$(run sandbox todoist clean --json | field "['removed']") $(grep -c '^DELETE' "$work/api-calls")" "['p-1'] 1"
+check "sandbox todoist clean never touches another project" "$(grep -c -e 'p-inbox' -e 'p-old' "$work/api-calls")" "0"
+check "sandbox todoist clean again removes nothing" "$(run sandbox todoist clean)" "todoist: project «teste ink-tools»: none to remove"
+check "sandbox google create makes the calendar" "$(run sandbox google create --json | field "['created'],d['name']")" "(True, 'teste ink-tools')"
+check "sandbox google uses a refreshed access token" "$(grep -c '^POST /google/calendars Bearer access-SYNTHETIC$' "$work/api-calls")" "1"
+check "sandbox google clean removes only the test calendar" "$(run sandbox google clean --json | field "['removed']") $(grep -c 'primary-SYNTHETIC' "$work/api-calls")" "['c-2@group.calendar.google.com'] 0"
+touch "$work/api-refuses"
+run sandbox google create --json >"$work/out" 2>/dev/null
+check "a token without the scope names the sign-in" "$? $(field "['error'],d['next'],d['status']" < "$work/out")" "1 ('api_refused', 'inkctl google login', 403)"
+rm -f "$work/api-refuses"
+run --read-only sandbox todoist clean >/dev/null 2>&1
+check "read-only mode refuses a sandbox change" "$?" "11"
+run --read-only sandbox todoist list >/dev/null 2>&1
+check "read-only mode allows a sandbox list" "$?" "0"
+rm "$KEYCHAIN/ACCOUNT_SYNC_TODOIST_TOKEN"
+run sandbox todoist list --json >"$work/out" 2>/dev/null
+check "no Todoist token exits 4 and names the Keychain item" "$? $(field "['next']" < "$work/out")" "4 security add-generic-password -s ink-tools -a ACCOUNT_SYNC_TODOIST_TOKEN -w"
+check "no sandbox call reached the tablet" "$(cat "$log" | wc -l | tr -d ' ')" "0"
+check "no token reaches the output" "$(run sandbox google list --json 2>&1 | grep -c -e access-SYNTHETIC -e 1//SYNTHETIC -e client-secret-SYNTHETIC)" "0"
+kill "$api_pid"
+wait "$api_pid" 2>/dev/null
+unset INKCTL_SERVICES
+rm -f "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT" "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
 
 # Coordinates and the shell.
 run tap 12 34 >/dev/null

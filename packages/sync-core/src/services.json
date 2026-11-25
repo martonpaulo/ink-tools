@@ -1,0 +1,11 @@
+{
+  "todoistApi": "https://api.todoist.com/api/v1",
+  "googleCalendarApi": "https://www.googleapis.com/calendar/v3",
+  "googleTokenEndpoint": "https://oauth2.googleapis.com/token",
+  "googleScopes": {
+    "read": "https://www.googleapis.com/auth/calendar.readonly",
+    "write": "https://www.googleapis.com/auth/calendar.events",
+    "testCalendars": "https://www.googleapis.com/auth/calendar.app.created"
+  },
+  "testObjectName": "teste ink-tools"
+}

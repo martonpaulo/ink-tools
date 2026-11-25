@@ -1,5 +1,6 @@
 import {CalendarEvent, CalendarInfo, CalendarProvider, TimeWindow} from './calendar';
 import {HttpFetch} from './http';
+import services from './services.json';
 
 /**
  * Google Calendar as a CalendarProvider (Calendar API v3) and the access-token refresh. The sign-in
@@ -7,8 +8,9 @@ import {HttpFetch} from './http';
  * `fetch` is injected, so tests need no network. Tokens live only in the owner's secure store.
  * Not yet run against a live account: the owner verifies it on the Mac (issue #28).
  */
-const OAUTH_ENDPOINT = 'https://oauth2.googleapis.com/token';
-export const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+// services.json owns every Todoist and Google address and scope; inkctl reads the same file (#295, #297).
+const OAUTH_ENDPOINT = services.googleTokenEndpoint;
+export const GOOGLE_CALENDAR_SCOPE = services.googleScopes.read;
 
 export interface OAuthClient {
   clientId: string;
@@ -71,7 +73,7 @@ export function fromGoogleEvent(calendarId: string, e: GoogleEvent): CalendarEve
 /** `getAccessToken` is called per request so a refreshed token is always used. */
 export function createGoogleCalendarProvider(fetch: HttpFetch, getAccessToken: () => Promise<string>): CalendarProvider {
   const get = async (path: string): Promise<any> => {
-    const res = await fetch(`https://www.googleapis.com/calendar/v3${path}`, {
+    const res = await fetch(`${services.googleCalendarApi}${path}`, {
       method: 'GET',
       headers: {Authorization: `Bearer ${await getAccessToken()}`},
     });

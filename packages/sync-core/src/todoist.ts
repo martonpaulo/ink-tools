@@ -1,4 +1,5 @@
 import {HttpFetch, requireHttps} from './http';
+import services from './services.json';
 import {RemoteTask, TaskContent, TaskList, TaskProvider} from './tasks';
 
 /**
@@ -63,7 +64,7 @@ export function toTodoistBody(c: TaskContent): Record<string, unknown> {
 }
 
 export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
-  const base = requireHttps(opts.baseUrl ?? 'https://api.todoist.com/api/v1', 'Todoist base URL');
+  const base = requireHttps(opts.baseUrl ?? services.todoistApi, 'Todoist base URL');
   const enc = encodeURIComponent; // an id is one path segment, never a path (#81)
   const call = async (method: string, path: string, body?: unknown, allow404 = false) => {
     const res = await opts.fetch(`${base}${path}`, {

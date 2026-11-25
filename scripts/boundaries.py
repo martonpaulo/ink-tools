@@ -73,7 +73,6 @@ PYTHON = ".py"
 # The (path, rule) counts inkctl held when boundaries.py first read it (#295); they only go down.
 PENDING_HOST = {
     ("cli/inkctl/src/inkctl", "authority"): 2,
-    ("cli/inkctl/src/inkctl", "service"): 2,
 }
 
 

@@ -6,11 +6,12 @@ const path = require('node:path');
 
 /**
  * Layering guards (#85): a provider file imports no other provider's file, only the seams
- * (`calendar`, `tasks`, `http`); and sync-core never imports the device adapter.
+ * (`calendar`, `tasks`, `http`) and `services.json`, the one owner of the service addresses and
+ * scopes (#297); and sync-core never imports the device adapter.
  */
 const SRC = path.join(__dirname, '..', 'src');
 const PROVIDERS = ['google', 'todoist', 'ics', 'push'];
-const SEAMS = ['calendar', 'tasks', 'http'];
+const SEAMS = ['calendar', 'tasks', 'http', 'services.json'];
 
 const importsOf = (file: string): string[] =>
   [...fs.readFileSync(path.join(SRC, `${file}.ts`), 'utf8').matchAll(/from '([^']+)'/g)].map(m => m[1]);
