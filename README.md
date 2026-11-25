@@ -4,7 +4,7 @@
 
 # Ink Tools
 
-Unofficial tools for Supernote e-ink tablets: device plugins, a tablet app, a Mac CLI and a planned Mac notebook editor.
+Unofficial tools for Supernote e-ink tablets: device plugins, a tablet app, a Mac CLI and a Mac notebook editor.
 
 </div>
 

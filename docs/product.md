@@ -43,7 +43,7 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   `apps/handwriting-language`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 - **A Mac CLI**: **inkctl** drives the tablet over Wi-Fi ADB.
-- **A Mac app**, planned: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
+- **A Mac app**: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
   ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
 In beta, not yet on the tablet: **Real-Time Conversion** (`plugins/real-time-conversion/`), a plugin that turns each handwritten
