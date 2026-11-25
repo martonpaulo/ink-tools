@@ -4,3 +4,5 @@ node_modules/
 *.log
 __pycache__/
 .build/
+# Agent worktrees, made by Claude Code sessions, never part of the repository.
+.claude/worktrees/
