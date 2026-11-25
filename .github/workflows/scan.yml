@@ -7,15 +7,16 @@ name: Scan
 # npm gates install from each lockfile when node_modules is missing (#135), and each plugin's native
 # build leaves no .snplg without its app.npk (#153). No two tracked paths differ only in case, so the
 # owner's Mac, whose disk ignores case, sees every file CI sees (#227). The weekly audit fails on any advisory
-# audit-exceptions.json does not name (#154).
+# audit-exceptions.json does not name (#154). The icons (#271), the licence (#276), the Quick check's
+# selection and each validate workflow's paths against gates.json (#301) are checked here too.
 on:
   schedule:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', 'LICENSE', '.github/workflows/validate-*.yml', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', 'LICENSE', '.github/workflows/validate-*.yml', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -84,6 +85,24 @@ jobs:
       - name: Check that every plugin names an icon that exists (#248)
         run: node scripts/plugin-version.cjs --icons .
 
+      - name: Check each validate workflow's paths against gates.json and the Quick check's selection (#180, #301)
+        run: |
+          python3 scripts/workflow_paths.py --root .
+          cd scripts && python3 -B -m unittest test_quick_check test_workflow_paths
+
+      - name: Check the licence on every LICENSE file and AGENTS.md (#276)
+        run: |
+          python3 scripts/license_check.py --root .
+          python3 -B -m unittest scripts/test_license_check.py
+
+      - name: Install rsvg-convert for the icon tiles (#271)
+        run: sudo apt-get install -y --no-install-recommends librsvg2-bin
+
+      - name: Check the icons drawn from design/icons/icons.json (#271)
+        run: |
+          python3 scripts/icons.py --check
+          python3 -B -m unittest scripts/test_icons.py
+
   npm-audit:
     name: npm audit ${{ matrix.dir }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -92,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [plugins/account-sync, plugins/word-lookup, plugins/device-transfer, plugins/image-editing, plugins/plugin-diagnostics, packages]
+        dir: [plugins/account-sync, plugins/word-lookup, plugins/device-transfer, plugins/image-editing, plugins/plugin-diagnostics, plugins/real-time-conversion, plugins/smart-shapes, packages]
     defaults:
       run:
         working-directory: ${{ matrix.dir }}

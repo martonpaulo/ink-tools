@@ -4,9 +4,9 @@ name: Validate Word Lookup
 on:
   push:
     branches: [main]
-    paths: ['plugins/word-lookup/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-word-lookup.yml']
+    paths: ['plugins/word-lookup/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-word-lookup.yml']
   pull_request:
-    paths: ['plugins/word-lookup/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-word-lookup.yml']
+    paths: ['plugins/word-lookup/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-word-lookup.yml']
   workflow_dispatch:
 
 permissions:

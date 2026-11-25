@@ -5,9 +5,9 @@ name: Validate Ink Tools bridge
 on:
   push:
     branches: [main]
-    paths: ['apps/inktools-bridge/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-inktools-bridge.yml']
+    paths: ['apps/inktools-bridge/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-inktools-bridge.yml']
   pull_request:
-    paths: ['apps/inktools-bridge/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-inktools-bridge.yml']
+    paths: ['apps/inktools-bridge/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-inktools-bridge.yml']
   workflow_dispatch:
 
 permissions:

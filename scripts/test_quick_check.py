@@ -15,9 +15,10 @@ class QuickCheckSelection(unittest.TestCase):
         folders = quick_check.typecheck_dirs(ROOT, ["packages/ink-core/src/a.ts"])
         self.assertIn("packages", folders)
         self.assertIn("plugins/device-transfer", folders)
-        # Lookup imports ink-core, so it is checked (#161); Bridge does not.
+        # Lookup and Bridge import ink-core, so they are checked (#161, #301); Probe does not.
         self.assertIn("plugins/word-lookup", folders)
-        self.assertNotIn("plugins/account-sync", folders)
+        self.assertIn("plugins/account-sync", folders)
+        self.assertNotIn("plugins/plugin-diagnostics", folders)
 
     def test_docs_only_change_checks_nothing(self):
         self.assertEqual(quick_check.typecheck_dirs(ROOT, ["docs/product.md"]), [])

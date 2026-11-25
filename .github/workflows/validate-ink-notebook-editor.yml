@@ -1,13 +1,14 @@
 name: Validate Ink Notebook Editor
 
-# Runs only when apps/ink-notebook-editor/ (or this file) changes: the NoteFormat reader's own
+# Runs only when the app's code, build files, the registry it reads, the bug form it fills or this file
+# changes, never for its Markdown alone (gates.json, #301): the NoteFormat reader's own
 # `swift test` (#261), then the app's `make check`: build, lint, tests and invariants (#262).
 on:
   push:
     branches: [main]
-    paths: ['apps/ink-notebook-editor/**', '.github/workflows/validate-ink-notebook-editor.yml']
+    paths: ['apps/ink-notebook-editor/NoteFormat/**', 'apps/ink-notebook-editor/Sources/**', 'apps/ink-notebook-editor/Tests/**', 'apps/ink-notebook-editor/Support/**', 'apps/ink-notebook-editor/scripts/**', 'apps/ink-notebook-editor/Package.swift', 'apps/ink-notebook-editor/Makefile', 'apps/ink-notebook-editor/.swiftlint.yml', 'apps/ink-notebook-editor/.swift-format', 'registry/**', '.github/ISSUE_TEMPLATE/**', '.github/workflows/validate-ink-notebook-editor.yml']
   pull_request:
-    paths: ['apps/ink-notebook-editor/**', '.github/workflows/validate-ink-notebook-editor.yml']
+    paths: ['apps/ink-notebook-editor/NoteFormat/**', 'apps/ink-notebook-editor/Sources/**', 'apps/ink-notebook-editor/Tests/**', 'apps/ink-notebook-editor/Support/**', 'apps/ink-notebook-editor/scripts/**', 'apps/ink-notebook-editor/Package.swift', 'apps/ink-notebook-editor/Makefile', 'apps/ink-notebook-editor/.swiftlint.yml', 'apps/ink-notebook-editor/.swift-format', 'registry/**', '.github/ISSUE_TEMPLATE/**', '.github/workflows/validate-ink-notebook-editor.yml']
   workflow_dispatch:
 
 permissions:

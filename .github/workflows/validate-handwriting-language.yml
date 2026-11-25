@@ -5,9 +5,9 @@ name: Validate Handwriting Language
 on:
   push:
     branches: [main]
-    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
+    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-handwriting-language.yml']
   pull_request:
-    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', '.github/workflows/validate-handwriting-language.yml']
+    paths: ['apps/handwriting-language/**', 'packages/ui-kit/src/tokens.json', 'packages/ui-kit/android-tokens*', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-handwriting-language.yml']
   workflow_dispatch:
 
 permissions:

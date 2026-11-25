@@ -4,9 +4,9 @@ name: Validate Plugin Diagnostics
 on:
   push:
     branches: [main]
-    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', '.github/workflows/validate-plugin-diagnostics.yml']
+    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', 'scripts/plugin-version.cjs', 'registry/**', 'packages/sn-adapter/plugin-config.js', '.github/workflows/validate-plugin-diagnostics.yml']
   pull_request:
-    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', '.github/workflows/validate-plugin-diagnostics.yml']
+    paths: ['plugins/plugin-diagnostics/**', 'packages/native-build/**', 'packages/sn-adapter/native/**', 'packages/sn-adapter/src/internals/descriptor.json', 'scripts/plugin-version.cjs', 'registry/**', 'packages/sn-adapter/plugin-config.js', '.github/workflows/validate-plugin-diagnostics.yml']
   workflow_dispatch:
 
 permissions:

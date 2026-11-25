@@ -4,9 +4,9 @@ name: Validate shared packages
 on:
   push:
     branches: [main]
-    paths: ['packages/**', '.github/workflows/validate-packages.yml']
+    paths: ['packages/**', 'registry/**', '.github/workflows/validate-packages.yml']
   pull_request:
-    paths: ['packages/**', '.github/workflows/validate-packages.yml']
+    paths: ['packages/**', 'registry/**', '.github/workflows/validate-packages.yml']
   workflow_dispatch:
 
 permissions:
