@@ -12,8 +12,9 @@ struct RegistryTests {
         }
     }
 
-    @Test func theFormatVersionsAreTheReadersOwn() {
-        #expect(Set(Registry.NotefileFormatVersions.knownVersions) == NoteFile.knownVersions)
-        #expect(Registry.NotefileFormatVersions.signaturePrefix == NoteFile.signaturePrefix)
+    @Test func theReaderTakesItsVersionsFromTheRegistry() {
+        #expect(NoteFile.knownVersions == Set(Registry.NotefileFormatVersions.knownVersions))
+        #expect(NoteFile.knownVersions.contains(NoteFile.firstGreyscaleVersion))
+        #expect(NoteWriter.pageKeyPrefixes.allSatisfy { $0.hasSuffix("_") })
     }
 }

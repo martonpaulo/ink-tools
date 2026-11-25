@@ -18,12 +18,13 @@ public struct PageRect: Sendable, Equatable {
 
 /// Writes edited copies of a note. Each call returns the whole new file; the input stays as is.
 public enum NoteWriter {
-    static let tailMarker = Array("tail".utf8)
+    static let tailMarker = Array(Registry.NotefileWriterByteEdit.tailMarker.utf8)
     /// Footer keys that start with a page number of four digits, counted from 1: a title, a
     /// keyword or a link on that page (supernotelib's footer keys).
     /// shortcut: read from supernotelib's key names, not measured on a note with a title; the
-    /// device round of #263 checks it, a note with each kind would make it a fixture.
-    static let pageKeyPrefixes = ["TITLE_", "KEYWORD_", "LINKO_", "LINKI_"]
+    /// device round of #263 checks it, a note with each kind would make it a fixture
+    /// (registry item notefile.writer-byte-edit).
+    static let pageKeyPrefixes = Registry.NotefileWriterByteEdit.pageKeyPrefixes
     static let pageNumberDigits = 4
 
     /// Moves page `from` to the place `to`, both counted from 0. Every page block keeps its bytes;

@@ -94,17 +94,14 @@ public struct NoteFile: Sendable {
     public static let layerKeys = ["MAINLAYER", "LAYER1", "LAYER2", "LAYER3", "BGLAYER"]
 
     /// The format versions this reader was ported for, with the firmware that wrote each
-    /// (supernotelib `SupernoteXParser.SN_SIGNATURES`).
-    public static let knownVersions: Set<Int> = [
-        20200001, 20200005, 20200006, 20200007, 20200008, 20210009, 20210010,
-        20220011, 20220013, 20230014, 20230015, 20260016,
-    ]
+    /// (supernotelib `SupernoteXParser.SN_SIGNATURES`; registry item notefile.format-versions).
+    public static let knownVersions = Set(Registry.NotefileFormatVersions.knownVersions)
 
     /// The first version that stores anti-aliased greys (supernotelib `supports_highres_grayscale`).
-    static let firstGreyscaleVersion = 20230015
+    static let firstGreyscaleVersion = Registry.NotefileFormatVersions.firstGreyscaleVersion
 
     static let fileTypeLength = 4
-    static let signaturePrefix = "SN_FILE_VER_"
+    static let signaturePrefix = Registry.NotefileFormatVersions.signaturePrefix
     static let versionDigits = 8
     static let wordSize = 4
 
