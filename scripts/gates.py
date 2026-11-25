@@ -41,7 +41,7 @@ deleted file. A gate with `"coveredBy": [names]` is left out when every gate it 
 too: one test file's gate beside the parts that run its whole folder.
 
 Exit 0 ok, 2 on a usage or data error. Python's standard library and Git only. Adapted from
-Panoram's tools/gates.py (the owner's own code); project-setup `references/ci-pipelines.md` owns
+Panoram's tools/gates.py (the owner's own code); bench-setup `references/ci-pipelines.md` owns
 the rule.
 """
 from __future__ import annotations

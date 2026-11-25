@@ -4,9 +4,9 @@
     raw_command_guard.py check        hook mode: the client's PreToolUse JSON on stdin
     raw_command_guard.py scan COMMAND  the same verdict for one command string
 
-The map is `raw-commands.tsv` beside this file. `check` also refuses a GitHub MCP write (#1211): a
+The map is `raw-commands.tsv` in the CLI folder, `scripts/bench/` (#1230). `check` also refuses a GitHub MCP write (#1211): a
 `tool_name` `mcp__<server>__<tool>` whose server name holds `github` (any case) and whose tool
-`github-write-tools.tsv` beside this file lists, such as `create_pull_request` or
+`github-write-tools.tsv` there lists, such as `create_pull_request` or
 `add_issue_comment`. It names the script that scans and reads back, exits 2, and has no bypass: the
 script, or git for a file, does the same write. Every other MCP tool, reads included, passes. `check` reads Claude Code's
 payload (`tool_name` "Bash", `tool_input.command`), splits the command into simple commands at `&&`, `||`, `;`, `|`,
@@ -46,8 +46,8 @@ A third: a typed `git push` that rewrites the remote branch (`-f`, `--force`, `-
 a `+` refspec, `--mirror`, a mirror remote, #815) is refused with a pointer to the one force push allowed (#507, #773). gh's inherited
 `-R`/`--repo` is dropped before a `gh` command meets the map, wherever it stands (#773).
 
-A fourth: a typed `gh pr merge` is refused, because only the owner's ask, `project-cleanup`'s
-per-item yes or a level-high `project-backlog` lane after a passing review may merge (the merge rule
+A fourth: a typed `gh pr merge` is refused, because only the owner's ask, `bench-cleanup`'s
+per-item yes or a level-high `bench-backlog` lane after a passing review may merge (the merge rule
 in `issue-closure.md`); the command cannot show which, so the bypass reason names it (#773). In a
 Claude Code cloud session one merge passes with no bypass: `gh pr merge <N> --merge` of a Dependabot
 pull request `unattended.py` would merge there, read from GitHub first (owner D146 B, #953).
@@ -58,7 +58,7 @@ instead, since a name can match another lane's process or the agent's own shell 
 `pgrep -x NAME`, `pgrep -P PID`, `pkill -P PID` and `kill PID` pass.
 
 A sixth: a Bash command run in the background (Claude Code's `run_in_background`) whose whole body
-only waits, as `waiters.py` in project-backlog defines it (a loop on local state, or a lone `sleep`),
+only waits, as `waiters.py` in bench-backlog defines it (a loop on local state, or a lone `sleep`),
 is refused, a lone `sleep` only over 60 seconds: the harness wakes the agent when its own command
 ends (#876, #1344). A loop that polls an outside system (`gh`, `curl`) is a bounded wait and passes.
 
@@ -72,9 +72,9 @@ on its own, a file the Write tool wrote, a literal path.
 
 A command prefixed with `SKD_ALLOW_RAW="<reason>"` passes after the owner approved it; the guard
 appends the time, directory, reason and command to `.scratch/raw-command-bypass.log` in the
-Skill Deck checkout this script belongs to, never under `HOME` (#704), which `skd doctor` reports
+Skill Deck checkout this script belongs to, never under `HOME` (#704), which `bench doctor` reports
 until each entry becomes an issue that extends the script. A bypass of a rule no script will ever
-own (a merge, a force push, a hook skip) adds the rule's name as a fifth field, so `skd doctor`
+own (a merge, a force push, a hook skip) adds the rule's name as a fifth field, so `bench doctor`
 keeps it as a record and does not ask for an issue (#773).
 
 The scripts' own `gh` calls run as their subprocesses, not as agent tool calls, so no hook sees
@@ -95,7 +95,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+HERE = Path(__file__).resolve().parent
+# The CLI folder holds the helpers and data this reads: one up from scripts/bench/hooks/ (#1230), or this
+# file's own folder in the flat copy another repository commits (`settings_hooks.py vendor`, #1287).
+LIB = HERE.parent if HERE.name == "hooks" else HERE
+sys.path[:0] = [str(HERE), str(LIB)]  # hooks/ first: LIB holds the forwarders of its modules
 sys.dont_write_bytecode = True  # a hook leaves no __pycache__ in the tree it runs from
 from hook_output import error as hook_error, refuse, unreadable  # one form for every hook (#1679)
 try:  # a hook never fails on its state folder: a copy of this script alone keeps its own (#1214)
@@ -104,12 +108,11 @@ except ImportError:
     def scratch(root: Path) -> Path:
         return root / ".scratch"
 
-HERE = Path(__file__).resolve().parent
-MAP = HERE / "raw-commands.tsv"
-GITHUB_TOOLS = HERE / "github-write-tools.tsv"
+MAP = LIB / "raw-commands.tsv"
+GITHUB_TOOLS = LIB / "github-write-tools.tsv"
 # `mcp__<server>__<tool>`: a tool name holds no `__`, so the server is everything before the last one.
 MCP_TOOL = re.compile(r"mcp__(?P<server>.+)__(?P<tool>[A-Za-z0-9-]+(?:_[A-Za-z0-9-]+)*)")
-SKILLS = HERE.parents[1] / "skills"
+SKILLS = LIB.parents[1] / "skills"
 BYPASS = "SKD_ALLOW_RAW"
 # Skill Deck's own state, so it lives in this checkout's scratch folder (#704).
 LOG = scratch(SKILLS.parent) / "raw-command-bypass.log"
@@ -173,13 +176,13 @@ HOOKS = {
 FORCE = {
     "script": None,
     "usage": "push without --force; the one force push allowed purges sensitive data from history, "
-             "on the owner's approval of that exact push (skd-github-publishing-conventions, section 2, #507)",
+             "on the owner's approval of that exact push (bench-github-publishing, section 2, #507)",
 }
 MERGE = {
     "script": None,
-    "usage": "merge only as the merge rule allows: the owner's ask, project-cleanup's per-item yes, or a "
-             "level-high project-backlog lane after a passing issue-review "
-             "(skd-github-publishing-conventions, references/issue-closure.md, #476, #712)",
+    "usage": "merge only as the merge rule allows: the owner's ask, bench-cleanup's per-item yes, or a "
+             "level-high bench-backlog lane after a passing bench-issue-review "
+             "(bench-github-publishing, references/issue-closure.md, #476, #712)",
 }
 PROCESS = {
     "script": None,
@@ -231,7 +234,7 @@ ZSH_SPLIT = re.compile(r"\$[=~^][A-Za-z_][A-Za-z0-9_]*")
 SLEEP_FLOOR = 60  # seconds a lone background `sleep` may last (#1344)
 # Shell words before a command that set a variable, as `SKD_ALLOW_RAW="..." sleep 600`.
 ASSIGNMENT = re.compile(r"""([A-Za-z_][A-Za-z0-9_]*)=("[^"]*"|'[^']*'|\S*)\s+""")
-WAITERS = SKILLS / "project-backlog" / "scripts"
+WAITERS = SKILLS / "bench-backlog" / "scripts"
 # pgrep and pkill short options whose value is the rest of the word or the next word (BSD and procps).
 PGREP_VALUE = set("dFGgPtUusc")
 # Their long options (procps) whose value is the next word unless written with `=`.
@@ -298,7 +301,7 @@ def mcp_refusal(tool_name: str, row: dict) -> str:
     lines += [
         f"  usage:  {row['usage']}",
         "Run that instead, in the shell; an MCP write has no bypass. If the script cannot do this step,",
-        "ask the owner, and report it in martonpaulo/workbench (skd-github-publishing-conventions, section 15).",
+        "ask the owner, and report it in martonpaulo/workbench (bench-github-publishing, section 15).",
     ]
     return "\n".join(lines) + "\n"
 
@@ -893,11 +896,11 @@ def cloud_dependabot_merge(words: list[str], folder: str | None) -> bool:
     """Whether a typed `gh pr merge` is one a cloud session may run: owner decision D146 B (#953).
 
     Only in a Claude Code cloud session, only by a merge commit (`--merge`, the recorded method) and
-    never `--admin` or `--auto`, and only for a pull request `project-cleanup`'s `unattended.py`
+    never `--admin` or `--auto`, and only for a pull request `bench-cleanup`'s `unattended.py`
     would merge there: opened by Dependabot, every check run of its head green, only manifests and
     lockfiles changed, a major bump included. Every GitHub read that fails refuses (fail closed)."""
-    conventions = SKILLS / "skd-github-publishing-conventions" / "scripts"
-    sys.path[:0] = [str(conventions), str(SKILLS / "project-cleanup" / "scripts")]
+    conventions = SKILLS / "bench-github-publishing" / "scripts"
+    sys.path[:0] = [str(conventions), str(SKILLS / "bench-cleanup" / "scripts")]
     try:
         import session_env  # noqa: PLC0415  the one reader of the session's environment (#1223)
     except ImportError:
@@ -974,7 +977,7 @@ def by_name(words: list[str]) -> bool:
 
 def background_waiter(command: str) -> tuple[str, str] | None:
     """(the command shown, the bypass reason) when a background command only waits (#1344), else
-    None. `waiters.py` is project-backlog's definition, shared with `lane_watch.py`; when it cannot
+    None. `waiters.py` is bench-backlog's definition, shared with `lane_watch.py`; when it cannot
     be loaded, nothing is refused, since the hook never fails on its own files."""
     try:
         sys.path.insert(0, str(WAITERS))
@@ -1003,7 +1006,7 @@ def background_waiter(command: str) -> tuple[str, str] | None:
 def text_endpoint(endpoint: str, method: str | None, fields: set[str]) -> list[str] | None:
     """The map words for a repository description, release or gist write (#1289), else None."""
     if API_REPO.match(endpoint):
-        # shortcut: a JSON `--input` body passes, as project-setup's settings PATCH sends one; the
+        # shortcut: a JSON `--input` body passes, as bench-setup's settings PATCH sends one; the
         # guard cannot read a heredoc's keys, so a description sent that way is not caught (#1289).
         return ["repo", "edit"] if "description" in fields else None
     release = API_RELEASE.match(endpoint)
@@ -1342,7 +1345,7 @@ def refusal(refused: list[tuple[str, dict]]) -> str:
         "If the script cannot do this step, ask the owner. On a yes, rerun only that command as",
         f'`{BYPASS}="<reason>" <command>`; the bypass is logged for an issue that extends the script.',
         "If the script itself fails or refuses a legitimate case, report it in martonpaulo/workbench and",
-        "ask: fix it there now, work around it, or both (skd-github-publishing-conventions, section 15).",
+        "ask: fix it there now, work around it, or both (bench-github-publishing, section 15).",
     ]
     return "\n".join(lines) + "\n"
 

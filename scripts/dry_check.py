@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The DRY gate (#722): each value, block of code, cross-language rule and written rule has one owner.
 
-    dry_check.py [--root DIR] [--data FILE] [--init | --shrink | --list] [magic|duplicates|twins|documents]...
+    dry_check.py [--root DIR] [--data FILE] [--init | --shrink | --list] [magic|duplicates|twins|documents|retired]...
 
-Four checks, each reading its section of `dry-check.json` at the repository root (rules and schema:
-skd-project-standards `references/dry-checks.md`). A check whose section is absent is skipped, and says so.
+Five checks, each reading its section of `dry-check.json` at the repository root (rules and schema:
+bench-project-standards `references/dry-checks.md`). A check whose section is absent is skipped, and says so.
 
 - magic: a number, duration, URL, system path, port, colour or repeated phrase with no name, in Python,
   shell, Go or JavaScript. Ratchet per file and class (`magicValues.counts`).
@@ -16,6 +16,9 @@ skd-project-standards `references/dry-checks.md`). A check whose section is abse
   (`twins`, one row per rule).
 - documents: a page over its byte budget, and the same rule sentence written in two documents.
   Ratchet per file (`documents.repeated`).
+- retired: a renamed thing's old name, written again. Each `retired.terms` row names the term, the name
+  to use and the globs where it may stay; ratchet per file and term (`retired.counts`), so a file with no
+  row allows none (#1713).
 
 A count above its row fails and names each line. A count below its row fails too, so a ratchet only
 goes down: `--shrink` lowers the rows and never raises one. `--init` records today's counts once, for
@@ -40,8 +43,8 @@ import subprocess
 import sys
 
 DATA_FILE = "dry-check.json"
-CHECKS = ("magic", "duplicates", "twins", "documents")
-SECTION = {"magic": "magicValues", "duplicates": "duplicates", "twins": "twins", "documents": "documents"}
+CHECKS = ("magic", "duplicates", "twins", "documents", "retired")
+SECTION = {"magic": "magicValues", "duplicates": "duplicates", "twins": "twins", "documents": "documents", "retired": "retired"}
 EXIT_FINDING, EXIT_USAGE = 1, 2
 
 SUFFIXES = {
@@ -733,8 +736,76 @@ def documents_record(found, section, shrink):
     return {**section, "repeated": {p: n for p, n in sorted(counts.items()) if n}}
 
 
-RUN = {"magic": magic_check, "duplicates": duplicates_check, "twins": twins_check, "documents": documents_check}
-RECORD = {"magic": (magic_record, "counts"), "duplicates": (duplicates_record, "counts"), "documents": (documents_record, "repeated")}
+# ---------- retired: a renamed thing never comes back under its old name (#1713) ----------
+
+
+class DataError(Exception):
+    """A section the check cannot read: exit 2, never a finding."""
+
+
+def retired_terms(section):
+    """Each `terms` row with its compiled pattern: the exact term on a word boundary, case-sensitive, its
+    words separated by any whitespace, so a line break inside it still counts (#1828)."""
+    rows = []
+    for row in section.get("terms", []):
+        if not isinstance(row, dict):
+            raise DataError(f"a retired row is an object with term, use and keep: {row!r}")
+        term, use = str(row.get("term") or "").strip(), str(row.get("use") or "").strip()
+        if not term or not use:
+            raise DataError(f"a retired row needs its term and the name to use instead: {row}")
+        keep = row.get("keep", [])
+        if not isinstance(keep, list) or not all(isinstance(glob, str) for glob in keep):
+            raise DataError(f"a retired row's keep is a list of globs: {row}")
+        words = r"\s+".join(re.escape(word) for word in term.split())
+        rows.append((row, re.compile(r"(?<![\w-])" + words + r"(?![\w-])")))
+    return rows
+
+
+def retired_found(root, paths, section):
+    """(path, line, row) for each use of a retired term outside its `keep` globs and the data file."""
+    found = []
+    rows = retired_terms(section)
+    for path in paths:
+        if path == DATA_FILE:
+            continue
+        wanted = [(row, pattern) for row, pattern in rows if not matches(path, row.get("keep", []))]
+        if not wanted:
+            continue
+        text = read(root, path)
+        for row, pattern in wanted:
+            found += [(path, text.count("\n", 0, match.start()) + 1, row) for match in pattern.finditer(text)]
+    return found
+
+
+def retired_counts(found):
+    return collections.Counter((path, row["term"]) for path, _, row in found)
+
+
+def retired_check(root, paths, section):
+    found = retired_found(root, paths, section)
+    counts = {(p, t): n for p, terms in section.get("counts", {}).items() for t, n in terms.items()}
+    lines = collections.defaultdict(list)
+    for path, number, row in found:
+        issue = f" (#{row['issue']})" if row.get("issue") else ""
+        lines[(path, row["term"])].append(f"{path}:{number}: «{row['term']}» is retired: write «{row['use']}»{issue}")
+    return ratchet(retired_counts(found), counts, {}, "uses of a retired term", lines), found, f"{len(found)} retired uses"
+
+
+def retired_record(found, section, shrink):
+    have, old = retired_counts(found), section.get("counts", {})
+    keys = {(p, t) for p, terms in old.items() for t in terms} if shrink else set(have)
+    counts = {}
+    for path, term in keys:
+        left = min(have.get((path, term), 0), old[path][term]) if shrink else have[(path, term)]
+        if left:
+            counts.setdefault(path, {})[term] = left
+    return {**section, "counts": {p: dict(sorted(t.items())) for p, t in sorted(counts.items())}}
+
+
+RUN = {"magic": magic_check, "duplicates": duplicates_check, "twins": twins_check, "documents": documents_check,
+       "retired": retired_check}
+RECORD = {"magic": (magic_record, "counts"), "duplicates": (duplicates_record, "counts"), "documents": (documents_record, "repeated"),
+          "retired": (retired_record, "counts")}
 
 
 def describe(check, item):
@@ -746,6 +817,9 @@ def describe(check, item):
     if check == "documents":
         path, line, (first, first_line), sentence = item
         return f"{path}:{line}: as {first}:{first_line}: {sentence[:VALUE_SHOWN]}"
+    if check == "retired":
+        path, line, row = item
+        return f"{path}:{line}: {row['term']}"
     return f"{item.get('rule')}: {item.get('owner')} / {item.get('other')}"
 
 
@@ -793,7 +867,12 @@ def main(argv: list[str]) -> int:
             print(f"dry-check: {check} skipped, no `{name}` section in {data_path.name}")
             continue
         section = data[name]
-        problems, found, summary = RUN[check](root, paths, section)
+        try:
+            problems, found, summary = RUN[check](root, paths, section)
+        except DataError as error:
+            print(f"dry-check: {check}: {error}", file=sys.stderr)
+            status = max(status, EXIT_USAGE)
+            continue
         if mode == "list":
             for item in found:
                 print(f"{check}: {describe(check, item)}")

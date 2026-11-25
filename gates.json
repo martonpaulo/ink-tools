@@ -1,6 +1,6 @@
 {
   "gates": [
-    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 plugins/ink2pic/scripts/issue_links.py .", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file"},
+    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py .", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file"},
     {"name": "dry", "command": "python3 scripts/dry_check.py --root .", "covers": "the DRY ratchet of dry-check.json: magic values, repeated blocks, identical files, repeated rules (#197)"},
     {"name": "boundaries", "command": "python3 scripts/boundaries.py --root . && python3 -B -m unittest scripts/test_boundaries.py", "covers": "the adapter boundaries of docs/architecture.md › Layer rules, over every package and plugin (#101)"},
     {"name": "packages", "command": "cd packages && python3 ../scripts/npm_install.py && npm run validate", "covers": "sn-adapter, sync-core and ink-core; ui-kit and picture-search run in the plugin gates the rules below map their folders to (#93, #125)"},

@@ -38,7 +38,7 @@ jobs:
         working-directory: .
         run: |
           python3 plugins/ink2pic/scripts/text_check.py apps/handwriting-language
-          python3 plugins/ink2pic/scripts/issue_links.py apps/handwriting-language --repo "$GITHUB_REPOSITORY"
+          python3 scripts/issue_links.py apps/handwriting-language --repo "$GITHUB_REPOSITORY"
 
       - name: Run the JVM tests
         run: node scripts/build.cjs --test

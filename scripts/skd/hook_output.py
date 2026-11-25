@@ -5,7 +5,7 @@
 prompt or the stop on exit 2 and hands stderr to the agent. `error(script, text)` writes one
 `Error: <script>: <text>` line to stderr, where `<script>` is the hook's file name without `.py`.
 Every hook `settings_hooks.py` registers imports it, those under `skills/` through the checkout's
-`scripts/skd`; `tests/test_hook_output.py` checks each one.
+`scripts/bench`; `tests/test_hook_output.py` checks each one.
 """
 
 from __future__ import annotations

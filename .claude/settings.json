@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ \"${SKD_HOOKS:-}\" = off ]; then exit 0; fi; if [ -e \"${CLAUDE_PROJECT_DIR:-.}/.no-workbench\" ] && ! git -C \"${CLAUDE_PROJECT_DIR:-.}\" ls-files --error-unmatch .no-workbench >/dev/null 2>&1; then exit 0; fi; if [ ! -f \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" ]; then echo \"skd hook: \"\"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\"\" is missing\" >&2; exit 2; fi; exec python3 \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" check",
+            "command": "if [ \"${SKD_HOOKS:-}\" = off ]; then exit 0; fi; if [ -e \"${CLAUDE_PROJECT_DIR:-.}/.no-workbench\" ] && ! git -C \"${CLAUDE_PROJECT_DIR:-.}\" ls-files --error-unmatch .no-workbench >/dev/null 2>&1; then exit 0; fi; if [ ! -f \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" ]; then echo \"bench hook: \"\"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\"\" is missing\" >&2; exit 2; fi; exec python3 \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" check",
             "timeout": 30
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ \"${SKD_HOOKS:-}\" = off ]; then exit 0; fi; if [ -e \"${CLAUDE_PROJECT_DIR:-.}/.no-workbench\" ] && ! git -C \"${CLAUDE_PROJECT_DIR:-.}\" ls-files --error-unmatch .no-workbench >/dev/null 2>&1; then exit 0; fi; if [ ! -f \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" ]; then echo \"skd hook: \"\"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\"\" is missing\" >&2; exit 2; fi; exec python3 \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" check",
+            "command": "if [ \"${SKD_HOOKS:-}\" = off ]; then exit 0; fi; if [ -e \"${CLAUDE_PROJECT_DIR:-.}/.no-workbench\" ] && ! git -C \"${CLAUDE_PROJECT_DIR:-.}\" ls-files --error-unmatch .no-workbench >/dev/null 2>&1; then exit 0; fi; if [ ! -f \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" ]; then echo \"bench hook: \"\"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\"\" is missing\" >&2; exit 2; fi; exec python3 \"$CLAUDE_PROJECT_DIR/scripts/skd/raw_command_guard.py\" check",
             "timeout": 30
           }
         ]
@@ -29,6 +29,16 @@
           {
             "type": "command",
             "command": "if [ \"${CLAUDE_CODE_REMOTE:-}\" != true ]; then exit 0; fi; if [ \"${SKD_HOOKS:-}\" = off ]; then exit 0; fi; if [ -e \"${CLAUDE_PROJECT_DIR:-.}/.no-workbench\" ] && ! git -C \"${CLAUDE_PROJECT_DIR:-.}\" ls-files --error-unmatch .no-workbench >/dev/null 2>&1; then exit 0; fi; if [ -f \"$CLAUDE_PROJECT_DIR/skills/project-backlog/scripts/cloud_coordinator.py\" ]; then python3 \"$CLAUDE_PROJECT_DIR/skills/project-backlog/scripts/cloud_coordinator.py\" end --reason \"claude usage limit\" >&2; fi; exit 0",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "rate_limit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ \"${CLAUDE_CODE_REMOTE:-}\" != true ]; then exit 0; fi; if [ \"${SKD_HOOKS:-}\" = off ]; then exit 0; fi; if [ -e \"${CLAUDE_PROJECT_DIR:-.}/.no-workbench\" ] && ! git -C \"${CLAUDE_PROJECT_DIR:-.}\" ls-files --error-unmatch .no-workbench >/dev/null 2>&1; then exit 0; fi; if [ -f \"$CLAUDE_PROJECT_DIR/skills/bench-backlog/scripts/cloud_coordinator.py\" ]; then python3 \"$CLAUDE_PROJECT_DIR/skills/bench-backlog/scripts/cloud_coordinator.py\" end --reason \"claude usage limit\" >&2; fi; exit 0",
             "timeout": 30
           }
         ]
