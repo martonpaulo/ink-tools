@@ -141,20 +141,36 @@ public final class PinnedClientTest {
 
     requiresClientCertificate(factory, certificate, fingerprint);
 
-    // A receiver that accepts and never answers trips the read timeout, not a hang.
+    // A receiver that accepts and never answers trips the read timeout, not a hang. Over http the
+    // request went out, so it is NoAnswer, as LocalSend holding an offer for the accept is (#98);
+    // over https the TLS handshake never ended, so the receiver got nothing: a plain timeout.
     ServerSocket silent = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
     try {
-      String url = "http://127.0.0.1:" + silent.getLocalPort() + "/api/localsend/v2/prepare-upload";
+      String path = "://127.0.0.1:" + silent.getLocalPort() + "/api/localsend/v2/prepare-upload";
       long start = System.nanoTime();
       try {
-        PinnedClient.post(url, Collections.<String, String>emptyMap(), new byte[] {1}, null, null, null, 1000, 300);
+        PinnedClient.post("http" + path, Collections.<String, String>emptyMap(), new byte[] {1}, null, null, null, 1000, 300);
         throw new AssertionError("a silent receiver must time out");
       } catch (SocketTimeoutException expected) {
         long ms = (System.nanoTime() - start) / 1_000_000L;
         check(ms < 3000, "the read timeout fires in time, took " + ms + " ms");
+        check(PinnedClient.noAnswer(expected), "a request with no answer is NoAnswer: " + expected);
       }
     } finally {
       silent.close();
+    }
+    // A fresh socket: macOS refuses a second connection queued behind the closed first one.
+    ServerSocket mute = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+    try {
+      String url = "https://127.0.0.1:" + mute.getLocalPort() + "/api/localsend/v2/prepare-upload";
+      try {
+        PinnedClient.post(url, Collections.<String, String>emptyMap(), new byte[] {1}, null, fingerprint, null, 1000, 300);
+        throw new AssertionError("a silent TLS handshake must time out");
+      } catch (SocketTimeoutException expected) {
+        check(!PinnedClient.noAnswer(expected), "a stalled handshake is no offer: " + expected);
+      }
+    } finally {
+      mute.close();
     }
   }
 

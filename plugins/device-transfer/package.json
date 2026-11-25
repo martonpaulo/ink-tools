@@ -1,6 +1,6 @@
 {
   "name": "Relay",
-  "version": "0.1.0-beta.10",
+  "version": "0.1.0-beta.12",
   "description": "Supernote plugin: send the current page or a lasso selection to an iPhone or a Mac over LocalSend.",
   "private": true,
   "scripts": {

@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
@@ -45,6 +46,29 @@ public final class PinnedClient {
     IdentityChanged() {
       super("the receiver's certificate does not match its fingerprint");
     }
+  }
+
+  /**
+   * The receiver took the connection, TLS included, and did not answer in time: LocalSend holds a
+   * `prepare-upload` until the person accepts the offer (#98). Not «not reachable»: the offer
+   * arrived.
+   */
+  public static final class NoAnswer extends SocketTimeoutException {
+    private static final long serialVersionUID = 1L;
+
+    NoAnswer(int readMs) {
+      super("connected, no answer in " + readMs + " ms");
+    }
+  }
+
+  /** True when `error`, or a cause of it, is {@link NoAnswer}. */
+  public static boolean noAnswer(Throwable error) {
+    for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+      if (cause instanceof NoAnswer) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** A status and at most {@link #MAX_ANSWER_BYTES} of the answer, one byte more when longer. */
@@ -131,19 +155,27 @@ public final class PinnedClient {
       }
       long length = body != null ? body.length : file.length();
       connection.setFixedLengthStreamingMode(length);
-      OutputStream out = connection.getOutputStream();
+      // TCP and TLS first: a failure here never reached the receiver.
+      connection.connect();
       try {
-        if (body != null) {
-          out.write(body);
-        } else {
-          copy(file, out);
+        OutputStream out = connection.getOutputStream();
+        try {
+          if (body != null) {
+            out.write(body);
+          } else {
+            copy(file, out);
+          }
+        } finally {
+          out.close();
         }
-      } finally {
-        out.close();
+        int status = connection.getResponseCode();
+        InputStream in = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
+        return new Response(status, in == null ? "" : readLimited(in));
+      } catch (SocketTimeoutException late) {
+        NoAnswer waited = new NoAnswer(readMs);
+        waited.initCause(late);
+        throw waited;
       }
-      int status = connection.getResponseCode();
-      InputStream in = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
-      return new Response(status, in == null ? "" : readLimited(in));
     } finally {
       connection.disconnect();
     }

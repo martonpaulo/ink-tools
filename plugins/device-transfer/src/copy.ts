@@ -22,6 +22,7 @@ export const copy = {
   noImage: 'Could not make the picture',
   nothingSelected: 'Nothing selected',
   unreachable: (alias: string) => `${alias} not reachable`,
+  noAnswer: (alias: string) => `${alias} did not accept in time`,
   identityChanged: (alias: string) =>
     `${alias} identity changed, choose it again`,
   notLocal: (alias: string) => `${alias} is not on this network`,

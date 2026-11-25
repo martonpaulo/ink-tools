@@ -51,6 +51,27 @@ function readDevice(value: unknown): Device | null {
   };
 }
 
+/**
+ * The saved device as a new discovery finds it, by fingerprint, when its address, port, protocol
+ * or name moved; null when it is not found or nothing moved. A receiver keeps its certificate but
+ * not its address: on the tablet, a Mac saved at one DHCP address was sent to there after it got
+ * another, and every send read «not reachable» (#98).
+ */
+export function movedDevice(saved: Device | null, found: Device[]): Device | null {
+  const now = saved && found.find(each => each.fingerprint === saved.fingerprint);
+  if (!saved || !now) {
+    return null;
+  }
+  return now.alias === saved.alias && sameAddress(now, saved)
+    ? null
+    : readDevice(now);
+}
+
+/** True when two receivers are reached the same way: address, port and protocol. */
+export function sameAddress(a: Device, b: Device): boolean {
+  return a.ip === b.ip && a.port === b.port && a.protocol === b.protocol;
+}
+
 /** The saved settings; a missing or unreadable file gives a new fingerprint and no device. */
 export async function loadSettings(
   native: Relay,

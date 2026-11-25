@@ -102,6 +102,18 @@ test('a declined text says so; an empty text and an outside receiver send nothin
   expect(quiet.native.post).not.toHaveBeenCalled();
 });
 
+test('a receiver that moved gets the text at its new address (#98)', async () => {
+  const moved = {...mac, ip: lan(192, 168, 1, 43)};
+  const post = jest.fn();
+  post.mockRejectedValueOnce(Object.assign(new Error('ConnectException'), {code: 'IO'}));
+  post.mockResolvedValueOnce({status: 204, body: ''});
+  const {api} = fakeRelay({post});
+  const relocate = jest.fn(async () => moved);
+  await expect(sendText(api, sender, mac, 'Olá', relocate)).resolves.toBe('Sent to Mac');
+  expect(relocate).toHaveBeenCalledWith(mac);
+  expect(new URL(post.mock.calls[1][0]).hostname).toBe(moved.ip);
+});
+
 test('the file name is the first words, short, and never empty', () => {
   expect(textFileName('Buy milk, eggs!')).toBe('Buy milk eggs.txt');
   expect(textFileName('word '.repeat(100)).length).toBeLessThanOrEqual(

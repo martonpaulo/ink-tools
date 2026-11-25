@@ -2,11 +2,21 @@
 import {EMPTY_LASSO_CODE, fail, ok} from '@ink-tools/sn-adapter/official';
 import {Device} from '../src/localsend/protocol';
 import {relay} from '../src/native';
-import {discoverDevices, sendCapture, tempDir} from '../src/send/sendPng';
+import {
+  discoverDevices,
+  findAgain,
+  sendCapture,
+  tempDir,
+} from '../src/send/sendPng';
 
 const TMP = tempDir('/plugin');
 const pluginDir = async () => ok('/plugin');
-import {loadSettings, ownIdentity, saveSettings} from '../src/settings/device';
+import {
+  loadSettings,
+  movedDevice,
+  ownIdentity,
+  saveSettings,
+} from '../src/settings/device';
 import {fakeRelay} from '../test-support/fakeRelay';
 
 /** A synthetic LAN address from its four parts. */
@@ -96,6 +106,8 @@ test.each([
   [{status: 500}, 'Mac answered 500'],
   [coded('IDENTITY'), 'Mac identity changed, choose it again'],
   [coded('TIMEOUT'), 'Mac not reachable'],
+  // The offer arrived and was not accepted in time: never «not reachable» (#98).
+  [coded('NO_ANSWER'), 'Mac did not accept in time'],
   [coded('IO'), 'Mac not reachable'],
 ])(
   'prepare answer %p reads «%s», and the PNG is removed',
@@ -114,13 +126,112 @@ test('each step and the outcome are logged as a line, with no body or token (#98
   const sent = fakeRelay({post: answers({status: 200, body: session}, {status: 200})});
   await sendCapture(sent.api, sender, mac, TMP, 'page', made);
   const lines = logged.mock.calls.map(call => call[0]);
-  expect(lines).toHaveLength(5);
-  expect(lines[0]).toMatch(/^Relay: send: prepare-upload failed: IO SSLException in \d+ ms$/);
-  expect(lines[1]).toBe('Relay: send: selection: Mac not reachable');
-  expect(lines[2]).toMatch(/^Relay: send: prepare-upload 200 in \d+ ms$/);
-  expect(lines[3]).toMatch(/^Relay: send: upload 200 in \d+ ms$/);
-  expect(lines[4]).toBe('Relay: send: page: Sent to Mac');
+  expect(lines).toHaveLength(7);
+  // The target first: on the tablet, a send read only «ConnectException», with no address.
+  expect(lines[0]).toBe(`Relay: send: to Mac at ${mac.ip}:53317 over https`);
+  expect(lines[1]).toMatch(/^Relay: send: prepare-upload failed: IO SSLException in \d+ ms$/);
+  expect(lines[2]).toBe('Relay: send: selection: Mac not reachable');
+  expect(lines[3]).toBe(`Relay: send: to Mac at ${mac.ip}:53317 over https`);
+  expect(lines[4]).toMatch(/^Relay: send: prepare-upload 200 in \d+ ms$/);
+  expect(lines[5]).toMatch(/^Relay: send: upload 200 in \d+ ms$/);
+  expect(lines[6]).toBe('Relay: send: page: Sent to Mac');
+  expect(lines.join('\n')).not.toContain('mac-fp');
   expect(lines.join('\n')).not.toMatch(/sessionId|token|"s"/);
+});
+
+describe('a receiver that moved (#98)', () => {
+  // On the tablet, the Mac saved at one DHCP address had another a week later: every send met
+  // `ConnectException EHOSTUNREACH` at the old one and read «not reachable».
+  const moved = {...mac, ip: lan(192, 168, 1, 43)};
+  const dead = coded('IO');
+  const register = (device: Device) => ({
+    ip: device.ip,
+    text: JSON.stringify({
+      alias: device.alias,
+      fingerprint: device.fingerprint,
+      port: device.port,
+      protocol: device.protocol,
+    }),
+  });
+  const saved = JSON.stringify({fingerprint: 'self', device: mac});
+
+  function moving(found: Device[], ...replies: Parameters<typeof answers>) {
+    return fakeRelay({
+      post: answers(...replies),
+      discover: jest.fn(async () => found.map(register)),
+      readText: jest.fn(async () => saved),
+    });
+  }
+
+  test('is found again by its fingerprint, saved there, and sent to', async () => {
+    const {api, native, calls} = moving([moved], dead, {status: 200, body: session}, {status: 200});
+    const outcome = await sendCapture(
+      api,
+      sender,
+      mac,
+      TMP,
+      'selection',
+      made,
+      () => 1,
+      findAgain(api, sender, pluginDir),
+    );
+    expect(outcome).toEqual({kind: 'toast', text: 'Sent to Mac'});
+    expect((native.post as jest.Mock).mock.calls.map(call => new URL(call[0]).host)).toEqual([
+      `${mac.ip}:53317`,
+      `${moved.ip}:53317`,
+      `${moved.ip}:53317`,
+    ]);
+    expect(JSON.parse(calls.written[0])).toEqual({fingerprint: 'self', device: moved});
+    const lines = logged.mock.calls.map(call => call[0]);
+    expect(lines).toContain(`Relay: send: to Mac at ${moved.ip}:53317 over https`);
+  });
+
+  test('found nowhere else, it is not reachable, with one offer and nothing saved', async () => {
+    const {api, calls} = moving([], dead);
+    const outcome = await sendCapture(
+      api,
+      sender,
+      mac,
+      TMP,
+      'page',
+      made,
+      () => 1,
+      findAgain(api, sender, pluginDir),
+    );
+    expect(outcome).toEqual({kind: 'toast', text: 'Mac not reachable'});
+    expect(calls.written).toEqual([]);
+    expect(logged.mock.calls.map(call => call[0])).toContain(
+      'Relay: send: Mac found at no other address',
+    );
+  });
+
+  test('at the same address, a timed-out offer is never made twice', async () => {
+    const {api, native} = moving([mac], coded('TIMEOUT'));
+    const relocate = jest.fn(findAgain(api, sender, pluginDir));
+    await sendCapture(api, sender, mac, TMP, 'page', made, () => 1, relocate);
+    expect(relocate).toHaveBeenCalledTimes(1);
+    expect(native.post).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    ['a changed identity', coded('IDENTITY')],
+    ['an offer not accepted in time', coded('NO_ANSWER')],
+    ['an answer', {status: 403}],
+  ])('%s is not looked for elsewhere', async (_what, reply) => {
+    const {api, native} = moving([moved], reply);
+    const relocate = jest.fn(findAgain(api, sender, pluginDir));
+    await sendCapture(api, sender, mac, TMP, 'page', made, () => 1, relocate);
+    expect(relocate).not.toHaveBeenCalled();
+    expect(native.post).toHaveBeenCalledTimes(1);
+  });
+
+  test('movedDevice keeps what to save, and nothing when nothing moved', () => {
+    expect(movedDevice(mac, [{...moved, deviceModel: 'MacBook'}])).toEqual(moved);
+    expect(movedDevice(mac, [{...mac, alias: 'Mac 2'}])).toEqual({...mac, alias: 'Mac 2'});
+    expect(movedDevice(mac, [mac])).toBeNull();
+    expect(movedDevice(mac, [{...moved, fingerprint: 'other'}])).toBeNull();
+    expect(movedDevice(null, [moved])).toBeNull();
+  });
 });
 
 test('a send presents the certificate it announces, and none without the identity (#98)', async () => {
@@ -133,6 +244,16 @@ test('a send presents the certificate it announces, and none without the identit
   await expect(
     ownIdentity(api, settings, async () => fail(-1, 'no dir')),
   ).resolves.toEqual({fingerprint: 'saved', identityFolder: null});
+});
+
+test('an upload with no answer is not reachable, since only the offer waits for the person (#98)', async () => {
+  const {api} = fakeRelay({
+    post: answers({status: 200, body: session}, coded('NO_ANSWER')),
+  });
+  await expect(sendCapture(api, sender, mac, TMP, 'page', made)).resolves.toEqual({
+    kind: 'toast',
+    text: 'Mac not reachable',
+  });
 });
 
 test('a failed upload is never «sent»', async () => {

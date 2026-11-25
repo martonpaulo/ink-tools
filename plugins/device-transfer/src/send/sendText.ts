@@ -16,28 +16,40 @@ import {
 import {Relay} from '../native';
 import {copy} from '../copy';
 import {Self} from '../settings/device';
-import {failureText, loggedPost, sendLog, TIMEOUTS} from './sendPng';
+import {
+  Attempt,
+  failureText,
+  loggedPost,
+  Relocate,
+  sendLog,
+  TIMEOUTS,
+  unreachable,
+  withRelocation,
+} from './sendPng';
 
 /**
- * Offers one text and, when the receiver asks for it, uploads its bytes; answers the toast line,
- * which is logged too (#98).
+ * Offers one text and, when the receiver asks for it, uploads its bytes, at the device's new
+ * address when the saved one does not answer (`relocate`); answers the toast line, which is logged
+ * too (#98).
  */
 export async function sendText(
   native: Relay,
   sender: Self,
   device: Device,
   text: string,
+  relocate?: Relocate,
 ): Promise<string> {
-  const line = await offerText(native, sender, device, text);
+  const line = await checkedText(native, sender, device, text, relocate);
   sendLog(`text: ${line}`);
   return line;
 }
 
-async function offerText(
+async function checkedText(
   native: Relay,
   sender: Self,
   device: Device,
   text: string,
+  relocate: Relocate | undefined,
 ): Promise<string> {
   if (text.trim() === '') {
     return copy.noText;
@@ -45,6 +57,17 @@ async function offerText(
   if (!isPrivateAddress(device.ip)) {
     return copy.notLocal(device.alias);
   }
+  return withRelocation(device, relocate, target =>
+    offerText(native, sender, target, text),
+  );
+}
+
+async function offerText(
+  native: Relay,
+  sender: Self,
+  device: Device,
+  text: string,
+): Promise<Attempt> {
   const pinned = device.protocol === 'https' ? device.fingerprint : null;
   const offer = textOffer(text);
   const prepared = await loggedPost('prepare-upload', () =>
@@ -60,11 +83,14 @@ async function offerText(
     ),
   );
   if (!prepared.ok) {
-    return failureText(device, prepared.moduleCode);
+    return {
+      text: failureText(device, prepared.moduleCode),
+      unreachable: unreachable(prepared.moduleCode),
+    };
   }
   const session = parseTextPrepare(prepared.value.status, prepared.value.body, offer.id);
   if (session.kind !== 'session') {
-    return copy.result(session, device.alias);
+    return {text: copy.result(session, device.alias), unreachable: false};
   }
   const uploaded = await loggedPost('upload', () =>
     native.post(
@@ -78,8 +104,8 @@ async function offerText(
       TIMEOUTS.uploadMs,
     ),
   );
-  if (!uploaded.ok) {
-    return failureText(device, uploaded.moduleCode);
-  }
-  return copy.result(parseUpload(uploaded.value.status), device.alias);
+  const line = uploaded.ok
+    ? copy.result(parseUpload(uploaded.value.status), device.alias)
+    : failureText(device, uploaded.moduleCode, 'upload');
+  return {text: line, unreachable: false};
 }

@@ -28,7 +28,7 @@ import {
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
-import {Outcome, sendCapture, tempDir} from './send/sendPng';
+import {findAgain, Outcome, sendCapture, tempDir} from './send/sendPng';
 import {sendText} from './send/sendText';
 import {TextDeps} from './send/textSession';
 import {Device} from './localsend/protocol';
@@ -76,13 +76,19 @@ export async function runSend(
     return {kind: 'toast', text: copy.noImage};
   }
   const settings = await loadSettings(native, pluginDir);
+  const self = {
+    alias: ALIAS,
+    ...(await ownIdentity(native, settings, pluginDir)),
+  };
   return sendCapture(
     native,
-    {alias: ALIAS, ...(await ownIdentity(native, settings, pluginDir))},
+    self,
     settings.device,
     tempDir(dir.value),
     capture,
     capture === 'page' ? currentPage : lassoImage,
+    Date.now,
+    findAgain(native, self, pluginDir),
   );
 }
 
@@ -171,12 +177,8 @@ async function readLassoText(): Promise<string | null> {
 
 async function sendTo(device: Device, text: string, native: Relay): Promise<string> {
   const settings = await loadSettings(native);
-  return sendText(
-    native,
-    {alias: ALIAS, ...(await ownIdentity(native, settings))},
-    device,
-    text,
-  );
+  const self = {alias: ALIAS, ...(await ownIdentity(native, settings))};
+  return sendText(native, self, device, text, findAgain(native, self));
 }
 
 /** «Send Text» on the tablet (#99); the view and its toast are the caller's. */

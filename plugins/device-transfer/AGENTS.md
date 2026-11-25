@@ -16,8 +16,16 @@ first; each register body is one more answer for `parseAnnounce`. The Settings v
 and Back does each view's exit (close, stop, cancel). Since 0.1.0 beta 10, each POST presents
 the `Identity.java` certificate as our TLS client certificate, which LocalSend 1.18 requires (a
 send without one met «certificate required» and read «not reachable»), and each step and outcome
-is a `Relay: send:` log line. Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the device round
-(the found Mac and iPhone, the sends, Back reaching the view) and an address field for a device
+is a `Relay: send:` log line. Since beta 12, each send first logs its target (`to <alias> at
+<ip>:<port> over <protocol>`), and an offer that cannot connect looks for the receiver again by
+its fingerprint (`findAgain`): found at a new address, it is saved there and offered once more.
+On beta 10 every send went to the address saved a week before, which the Mac no longer held, while
+discovery found it at its new one (measured on a beta 11 test build: the saved address failed in
+its connect, the found one gave no answer within the 10 s limit). An offer the receiver took and did not answer is `NO_ANSWER`
+(`PinnedClient.NoAnswer`, «did not accept in time»), never «not reachable»: LocalSend answers
+`prepare-upload` only on the person's accept, so its window is `TIMEOUTS.prepareMs`, 60 s.
+On beta 12 «Send Selection» reached the Mac's LocalSend 1.18.2 and arrived as a PNG of only the
+selection (2026-11-25). Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): «Send Page», the iPhone, Back reaching the view and an address field for a device
 discovery cannot see.
 
 **Receive half built, not yet on the device** ([#49](https://github.com/martonpaulo/supernote-tools/issues/49)): «Receive» (sidebar, a view) runs

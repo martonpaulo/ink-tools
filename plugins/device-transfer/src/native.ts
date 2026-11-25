@@ -1,7 +1,7 @@
 /**
  * Relay's own Java module, `RelayLocalSend` (#98): the only way a plugin reaches a LocalSend
  * receiver, since `fetch` meets cleartext and self-signed HTTPS. Each call is a Result; a
- * rejection keeps the module's text code (`IDENTITY`, `TIMEOUT`, `IO`) in `moduleCode`. The
+ * rejection keeps the module's text code (`IDENTITY`, `NO_ANSWER`, `TIMEOUT`, `IO`) in `moduleCode`. The
  * receive half (#49) adds the identity, the receiver and its arrivals.
  */
 import {NativeModules} from 'react-native';
