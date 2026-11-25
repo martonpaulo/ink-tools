@@ -5,7 +5,7 @@
 
 AGENTS.md's `- README Status values:` line lists the allowed values in backticks; it is the one
 source. Every table in README.md whose last header cell is `Status` must end each row with one of
-them. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
+them; a `<br>` may stand for the space between the emoji and the word. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
 cell, 2 when AGENTS.md has no values line or README.md has no Status table.
 """
 import argparse
@@ -42,7 +42,8 @@ def bad_cells(readme_text, values):
             continue
         if set(row[-1]) <= set(":- "):
             continue
-        if row[-1] not in values:
+        # The emoji may sit on its own line above the word (owner, 2026-11-25): «🟡<br>Beta» is «🟡 Beta».
+        if row[-1].replace("<br>", " ", 1) not in values:
             bad.append((number, row[-1]))
     return found, bad
 
