@@ -2,7 +2,7 @@
   "name": "Real-Time Conversion",
   "desc": "Turns each handwritten word into typed text right after you write it, while Real-Time Text is on.",
   "author": "Marton Paulo",
-  "iconPath": "assets/convert.png",
+  "iconPath": "assets/icon.png",
   "versionName": "0.1.0 beta 7",
   "versionCode": "7",
   "pluginID": "c4f1drtuzuh0f50a",

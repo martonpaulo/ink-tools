@@ -15,7 +15,7 @@ AppRegistry.registerComponent(appName, () => App);
 registerProbe(
   () => PluginManager.showPluginView(),
   () => pressCommand(noteApi),
-  Image.resolveAssetSource(require('./assets/icon.png')).uri,
+  Image.resolveAssetSource(require('./assets/command.png')).uri, // Run Command's own icon (#271)
 ).catch(error => {
   console.error(`Probe: ${error.message}`);
 });

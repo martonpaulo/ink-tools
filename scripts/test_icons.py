@@ -1,4 +1,5 @@
 """Tests of icons.py (#271): every Ink Tools icon follows the Supernote's native outline style."""
+import json
 import math
 import re
 import struct
@@ -21,6 +22,8 @@ V = NATIVE["vector"]
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 # Two icons whose black pixels overlap by more than this share of their union read alike at a glance.
 MAX_OVERLAP = 0.7
+# Two icons of one tool share its motif by design and differ by the rest (owner, 2026-11-25, #271).
+FAMILY_OVERLAP = 0.8
 # One button's two states keep the same box and letter, and differ by their outline.
 STATE_PAIRS = {frozenset(("plugins/real-time-conversion/assets/mode-on", "plugins/real-time-conversion/assets/mode-off")): 0.85}
 # Two translate buttons that share a language share its two letters and the arrow, and differ by the
@@ -134,6 +137,41 @@ def alpha_mask(png):
     return width, height, alpha, colors
 
 
+SET = json.loads(icons.SET.read_text())
+
+
+def retired(path):
+    """Whether a file sits in a retired tool's folder, which ships nothing (#288)."""
+    return any(Path(path).relative_to(ROOT).as_posix().startswith(folder + "/") for folder in SET["retired"])
+
+
+class Families(unittest.TestCase):
+    def test_each_tool_with_several_icons_shares_its_motif(self):
+        # Owner, 2026-11-25 (#271): a tool's icons read as one family and still differ at a glance.
+        tools = {}
+        for icon in ICONS:
+            tools.setdefault(icons.tool(icon["out"]), []).append(icon)
+        families = SET["families"]
+        for name, members in tools.items():
+            if len(members) < 2:
+                continue
+            with self.subTest(name):
+                self.assertIn(name, families)
+                excepted = families[name].get("except", {})
+                for icon in members:
+                    if icon["out"].rsplit("/", 1)[1] in excepted:
+                        continue
+                    glyphs = {p if isinstance(p, str) else p["name"] for p in icon["tabler"]}
+                    self.assertTrue(glyphs & set(families[name]["motif"]), icon["out"])
+
+    def test_a_planned_icon_names_its_issue_and_lives_apart(self):
+        for icon in ICONS:
+            if "planned" in icon:
+                with self.subTest(icon["out"]):
+                    self.assertRegex(icon["planned"], r"^#\d+$")
+                    self.assertTrue(icon["out"].startswith("design/icons/planned/"))
+
+
 class Style(unittest.TestCase):
     def test_the_native_measurements_are_the_recorded_ones(self):
         self.assertEqual((V["strokeWidth"], V["viewport"], V["lineCap"]), (4, 48, "round"))
@@ -179,8 +217,16 @@ class Style(unittest.TestCase):
             left, top, right, bottom = icons.outline_box(PATHS[icon["out"]], stroke)
             with self.subTest(icon["out"]):
                 span = max(right - left, bottom - top) / (grid + 2 * pad)
-                self.assertAlmostEqual(span, icons.ink_span(icon["kind"], NATIVE), places=3)
-                self.assertAlmostEqual((left + right) / 2, grid / 2, places=3)
+                self.assertAlmostEqual(span, icons.ink_span(icon["kind"], NATIVE), delta=0.005)  # arcs are sampled
+                self.assertAlmostEqual((left + right) / 2, grid / 2, delta=0.02)  # cut pieces round to 0.001
+
+    def test_a_badge_cuts_the_strokes_under_it(self):
+        # A badge keeps the base at full size and clears its own corner, as Tabler's badged glyphs do.
+        store = {"grid": 24, "glyphs": {"bar": ["M2 20 H22"], "dot": ["M12 12 h.01"]}}
+        bar, dot = icons.icon_paths({"kind": "plugin", "tabler": ["bar", {"name": "dot", "badge": True}]}, NATIVE, store)
+        self.assertLess(icons.outline_box([bar], 0)[2], icons.outline_box([dot], 0)[0])
+        whole = icons.icon_paths({"kind": "plugin", "tabler": ["bar", "dot"]}, NATIVE, store)
+        self.assertEqual(len(whole), 2)
 
     def test_a_stroke_inside_the_margin_is_caught(self):
         # The first sheet's P (#271): its bowl's arc bulges to 44.5, past the endpoints the old check read.
@@ -247,18 +293,17 @@ class Pngs(unittest.TestCase):
         shapes = {out: ink(mask[2]) for out, mask in self.masks.items()}
         for (a, sa), (b, sb) in combinations(shapes.items(), 2):
             with self.subTest(a=a, b=b):
-                self.assertLess(len(sa & sb) / len(sa | sb), STATE_PAIRS.get(frozenset((a, b)), MAX_OVERLAP), f"{a} and {b} overlap too much")
+                self.assertLess(len(sa & sb) / len(sa | sb), STATE_PAIRS.get(frozenset((a, b)), FAMILY_OVERLAP if icons.tool(a) == icons.tool(b) else MAX_OVERLAP), f"{a} and {b} overlap too much")
 
     def test_every_plugin_asset_png_is_drawn_from_the_set(self):
         drawn = {ROOT / (i["out"] + ".png") for i in ICONS if i["kind"] == "plugin"}
         drawn |= {ROOT / f'{i["out"]}-{px}.png' for i in ICONS for px in i.get("extraPng", [])}
-        found = set(ROOT.glob("plugins/*/assets/*.png"))
+        found = {p for p in ROOT.glob("plugins/*/assets/*.png") if not retired(p)}
         self.assertEqual(sorted(p.relative_to(ROOT).as_posix() for p in found - drawn), [])
 
     def test_every_plugin_icon_path_and_launcher_icon_is_drawn_from_the_set(self):
-        import json
         outs = {i["out"] for i in ICONS}
-        for config in ROOT.glob("plugins/*/PluginConfig.json"):
+        for config in (c for c in ROOT.glob("plugins/*/PluginConfig.json") if not retired(c)):
             icon = json.loads(config.read_text())["iconPath"]
             self.assertIn((config.parent / icon).relative_to(ROOT).with_suffix("").as_posix(), outs, config)
         for launcher in ROOT.glob("apps/*/res/drawable/ic_launcher.xml"):

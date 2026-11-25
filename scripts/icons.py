@@ -163,46 +163,85 @@ def arc_points(x1, y1, rx, ry, phi, large, sweep, x2, y2):
     return out
 
 
+def polylines(segments):
+    """The points an absolute path passes, one list per subpath: lines as they are, curves and arcs
+    sampled."""
+    out, x, y, start = [], 0.0, 0.0, (0.0, 0.0)
+    for command, v in segments:
+        if command == "M":
+            x, y = v
+            start = (x, y)
+            out.append([(x, y)])
+            continue
+        if command == "L":
+            x, y = v
+            points = [(x, y)]
+        elif command in "HV":
+            x, y = (v[0], y) if command == "H" else (x, v[0])
+            points = [(x, y)]
+        elif command in "CQ":
+            ctrl = [(x, y)] + list(zip(v[::2], v[1::2]))
+            points = []
+            for step in range(1, STEPS + 1):
+                t, pts = step / STEPS, ctrl
+                while len(pts) > 1:  # de Casteljau
+                    pts = [((1 - t) * a[0] + t * b[0], (1 - t) * a[1] + t * b[1]) for a, b in zip(pts, pts[1:])]
+                points.append(pts[0])
+            x, y = ctrl[-1]
+        elif command == "A":
+            *shape, ex, ey = v
+            points = arc_points(x, y, *shape, ex, ey)
+            x, y = ex, ey
+        else:  # Z
+            x, y = start
+            points = [start]
+        out[-1] += points
+    return out
+
+
 def outline_box(paths, stroke):
     """(left, top, right, bottom) of the stroke outline of absolute paths with round caps and joins:
     the box of every point the centreline passes, curves and arcs included, grown by half the stroke."""
-    points = []
-    for d in paths:
-        x = y = 0.0
-        start = (0.0, 0.0)
-        for command, args in COMMAND.findall(d):
-            v = [float(n) for n in NUMBER.findall(args)]
-            if command == "M":
-                start = (v[0], v[1])
-            if command in "ML":
-                for i in range(0, len(v), 2):
-                    x, y = v[i], v[i + 1]
-                    points.append((x, y))
-            elif command in "HV":
-                for value in v:
-                    x, y = (value, y) if command == "H" else (x, value)
-                    points.append((x, y))
-            elif command in "CQ":
-                size = ARITY[command]
-                for i in range(0, len(v), size):
-                    group = v[i : i + size]
-                    ctrl = [(x, y)] + list(zip(group[::2], group[1::2]))
-                    for step in range(1, STEPS + 1):
-                        t, pts = step / STEPS, ctrl
-                        while len(pts) > 1:  # de Casteljau
-                            pts = [((1 - t) * a[0] + t * b[0], (1 - t) * a[1] + t * b[1]) for a, b in zip(pts, pts[1:])]
-                        points.append(pts[0])
-                    x, y = ctrl[-1]
-            elif command == "A":
-                for i in range(0, len(v), ARITY["A"]):
-                    *shape, ex, ey = v[i : i + ARITY["A"]]
-                    points += arc_points(x, y, *shape, ex, ey)
-                    x, y = ex, ey
-            elif command == "Z":
-                x, y = start
+    points = [p for d in paths for line in polylines(absolute(d)) for p in line]
     half = stroke / 2
     xs, ys = [p[0] for p in points], [p[1] for p in points]
     return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
+
+
+def inside(a, b, box):
+    """The part (t0, t1) of segment a-b inside the box (left, top, right, bottom), or None
+    (Liang-Barsky)."""
+    left, top, right, bottom = box
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    t0, t1 = 0.0, 1.0
+    for p, q in ((-dx, a[0] - left), (dx, right - a[0]), (-dy, a[1] - top), (dy, bottom - a[1])):
+        if p == 0:
+            if q < 0:
+                return None
+        elif p < 0:
+            t0 = max(t0, q / p)
+        else:
+            t1 = min(t1, q / p)
+    return (t0, t1) if t0 < t1 else None
+
+
+def cut(line, box):
+    """The pieces of a polyline that lie outside the box."""
+    pieces, piece = [], [line[0]]
+    for a, b in zip(line, line[1:]):
+        span = inside(a, b, box)
+        if span is None:
+            piece.append(b)
+            continue
+        t0, t1 = span
+        if t0 > 0:
+            piece.append((a[0] + t0 * (b[0] - a[0]), a[1] + t0 * (b[1] - a[1])))
+        pieces.append(piece)
+        piece = [(a[0] + t1 * (b[0] - a[0]), a[1] + t1 * (b[1] - a[1]))]
+        if t1 < 1:
+            piece.append(b)
+    pieces.append(piece)
+    return [p for p in pieces if len(set(p)) > 1]
 
 
 def number(value):
@@ -233,6 +272,11 @@ def ink_span(kind, native):
     return native["plugin"]["toolbar"]["inkSpanPx"] / native["plugin"]["toolbar"]["sizePx"]
 
 
+def badge_placing(store):
+    """Where a badge glyph goes: icons.json's `badge` scale, offset and gap."""
+    return json.loads(SET.read_text())["badge"]
+
+
 def icon_paths(icon, native, store):
     """The absolute stroke paths of an icon on its frame's grid, from its Tabler glyphs: placed as
     icons.json says, then scaled about their centre so the outline spans the native share of the
@@ -241,8 +285,21 @@ def icon_paths(icon, native, store):
     parts = []
     for part in icon["tabler"]:
         part = {"name": part} if isinstance(part, str) else part
-        for d in store["glyphs"][part["name"]]:
-            parts.append(place(absolute(d), part.get("scale", 1), part.get("at", (0, 0))))
+        placing = badge_placing(store) if part.get("badge") else part
+        mine = [place(absolute(d), placing.get("scale", 1), placing.get("at", (0, 0))) for d in store["glyphs"][part["name"]]]
+        if part.get("badge"):  # it cuts the strokes drawn before it, with a gap, as Tabler's own badges do
+            left, top, right, bottom = outline_box([path_text(p) for p in mine], 0)
+            gap = placing["gap"]
+            box = (left - gap, top - gap, right + gap, bottom + gap)
+            kept = []
+            for p in parts:
+                lines = polylines(p)
+                if not any(inside(a, b, box) for line in lines for a, b in zip(line, line[1:])):
+                    kept.append(p)  # untouched: it keeps its curves
+                    continue
+                kept += [[("M", list(piece[0]))] + [("L", list(q)) for q in piece[1:]] for line in lines for piece in cut(line, box)]
+            parts = kept
+        parts += mine
     left, top, right, bottom = outline_box([path_text(p) for p in parts], 0)
     grow = (ink_span(icon["kind"], native) * (grid + 2 * pad) - stroke) / max(right - left, bottom - top)
     shift = (grid / 2 - grow * (left + right) / 2, grid / 2 - grow * (top + bottom) / 2)
@@ -298,6 +355,12 @@ def texts(root=ROOT):
     return out
 
 
+def tool(out):
+    """The tool an icon belongs to: its plugin or app folder, or a planned tool's folder."""
+    parts = out.split("/")
+    return parts[1] if parts[0] in ("plugins", "apps") else parts[-2]
+
+
 def vendor(package_dir, root=ROOT):
     """Refresh tabler.json with exactly the glyphs icons.json names, from an unpacked @tabler/icons
     package of the pinned version; a missing name or another version raises."""
@@ -325,6 +388,7 @@ def render_png(svg, png, px):
 def write(root=ROOT):
     icons, _ = load(root)
     for rel, text in texts(root).items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)  # a planned tool's folder
         (root / rel).write_text(text)
     for icon in icons:
         if icon["kind"] != "plugin":
@@ -362,8 +426,10 @@ def sheet(out_dir, native_dir=None, sizes=False):
                 art = f'<svg width="{PLUGIN_PX}" height="{PLUGIN_PX}"><image width="{PLUGIN_PX}" height="{PLUGIN_PX}" href="data:image/png;base64,{data}"/></svg>'
             cells.append(("native / " + file.stem.removeprefix("native-"), art))
     for icon in icons:
-        parts_ = icon["out"].split("/")
-        cells.append((f"{parts_[1]} / {parts_[-1]}", svg_text(icon_paths(icon, native, store), native, kind=icon["kind"])))
+        label = f'{tool(icon["out"])} / {icon["out"].rsplit("/", 1)[1]}'
+        if "planned" in icon:
+            label += f' / planned {icon["planned"]} {icon.get("plannedIf", "")}'.rstrip()
+        cells.append((label, svg_text(icon_paths(icon, native, store), native, kind=icon["kind"])))
     rows = -(-len(cells) // layout["columns"])
     parts = [
         f'<svg xmlns="{SVG_NS}" width="{layout["columns"] * layout["cellWidth"]}" height="{rows * layout["cellHeight"]}">',
@@ -376,7 +442,7 @@ def sheet(out_dir, native_dir=None, sizes=False):
         # The icon's box, so a stroke that comes near or past its edge shows (owner review, #271).
         edge, side = layout["boxOffset"], PLUGIN_PX + 2 * layout["boxOffset"]  # a 1 px line just outside the icon
         parts.append(f'<rect x="{x - edge}" y="{y - edge}" width="{side}" height="{side}" fill="none" stroke="{layout["boxColor"]}"/>')
-        for row, line in enumerate(label.split(" / ", 1)):
+        for row, line in enumerate(label.split(" / ")):
             parts.append(
                 f'<text x="{x + layout["labelX"]}" y="{y + layout["labelY"] + row * layout["labelStep"]}" font-family="sans-serif" font-size="{layout["labelSize"]}" '
                 f'text-anchor="middle" fill="#000000">{line}</text>'

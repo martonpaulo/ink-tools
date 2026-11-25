@@ -1,9 +1,9 @@
 {
- "about": "Every Ink Tools icon on the tablet, built from Tabler Icons outline glyphs (design/icons/tabler.json, MIT, NOTICE.md): each icon names one Tabler glyph for its meaning, or places two or more (a glyph's `scale` about the 24 grid's origin, then `at`, its offset). icons.py scales each icon so its outline spans the native icons' share of the box, centred; a plugin icon is written on the 24 grid with native.json's padding and stroke, so its stroke and margin are the native toolbar icons'; an app's launcher icon is the same drawing doubled onto the native launcher icons' 48 grid. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
+ "about": "Every Ink Tools icon the tablet shows or will show, built from Tabler Icons outline glyphs (design/icons/tabler.json, MIT, NOTICE.md): each icon names one Tabler glyph for its meaning, or places a base glyph and a badge glyph (a glyph's `scale` about the 24 grid's origin, then `at`, its offset). icons.py scales each icon so its outline spans the native icons' share of the box, centred; a plugin icon is written on the 24 grid with native.json's padding and stroke, so its stroke and margin are the native toolbar icons'; an app's launcher icon is the same drawing on the native launcher icons' 48 grid. A `planned` icon (its issue) is for a tool or button not built yet: it is written under design/icons/planned/ and shown on the sheet marked planned. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
  "sheet": {
   "columns": 8,
   "cellWidth": 120,
-  "cellHeight": 132,
+  "cellHeight": 146,
   "padX": 12,
   "padY": 6,
   "labelX": 48,
@@ -18,7 +18,7 @@
    "out": "apps/handwriting-language/res/drawable/ic_launcher",
    "kind": "app",
    "tabler": [
-    "language"
+    "message-language"
    ]
   },
   {
@@ -39,24 +39,77 @@
    "out": "plugins/device-transfer/assets/icon",
    "kind": "plugin",
    "tabler": [
-    "devices-share"
+    "device-tablet",
+    {
+     "name": "arrows-exchange",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/send-page",
+   "kind": "plugin",
+   "tabler": [
+    "file",
+    {
+     "name": "arrow-narrow-right",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/send-selection",
+   "kind": "plugin",
+   "tabler": [
+    "marquee",
+    {
+     "name": "arrow-narrow-right",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/send-text",
+   "kind": "plugin",
+   "tabler": [
+    "align-left",
+    {
+     "name": "arrow-narrow-right",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/receive",
+   "kind": "plugin",
+   "tabler": [
+    "device-tablet",
+    {
+     "name": "arrow-narrow-left",
+     "badge": true
+    }
    ]
   },
   {
    "out": "plugins/image-editing/assets/icon",
    "kind": "plugin",
    "tabler": [
-    "crop"
+    "photo",
+    {
+     "name": "pencil",
+     "badge": true
+    }
    ]
   },
   {
-   "out": "plugins/ink2pic/assets/icon",
+   "out": "plugins/image-editing/assets/editor",
    "kind": "plugin",
-   "extraPng": [
-    512
-   ],
    "tabler": [
-    "wand"
+    "photo",
+    {
+     "name": "sparkles",
+     "badge": true
+    }
    ]
   },
   {
@@ -67,10 +120,65 @@
    ]
   },
   {
-   "out": "plugins/real-time-conversion/assets/convert",
+   "out": "plugins/plugin-diagnostics/assets/command",
+   "kind": "plugin",
+   "tabler": [
+    "stethoscope",
+    {
+     "name": "terminal-2",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/icon",
    "kind": "plugin",
    "tabler": [
     "text-recognition"
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/convert",
+   "kind": "plugin",
+   "tabler": [
+    "text-recognition",
+    {
+     "name": "arrow-narrow-right",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/mode-on",
+   "kind": "plugin",
+   "tabler": [
+    "text-recognition",
+    {
+     "name": "bolt",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/mode-off",
+   "kind": "plugin",
+   "tabler": [
+    "text-recognition",
+    {
+     "name": "x",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/undo",
+   "kind": "plugin",
+   "tabler": [
+    "text-recognition",
+    {
+     "name": "arrow-back-up",
+     "badge": true
+    }
    ]
   },
   {
@@ -88,124 +196,46 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-page",
+   "out": "plugins/word-lookup/assets/image",
    "kind": "plugin",
    "tabler": [
-    "file-export"
-   ]
-  },
-  {
-   "out": "plugins/device-transfer/assets/receive",
-   "kind": "plugin",
-   "tabler": [
-    "download"
-   ]
-  },
-  {
-   "out": "plugins/device-transfer/assets/send-selection",
-   "kind": "plugin",
-   "tabler": [
+    "camera",
     {
-     "name": "lasso",
-     "scale": 0.65,
-     "at": [
-      0,
-      0
-     ]
-    },
-    {
-     "name": "arrow-narrow-right",
-     "scale": 0.6,
-     "at": [
-      10.1,
-      10.8
-     ]
+     "name": "search",
+     "badge": true
     }
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-text",
+   "out": "plugins/word-lookup/assets/sticker",
    "kind": "plugin",
    "tabler": [
+    "sticker",
     {
-     "name": "align-left",
-     "scale": 0.65,
-     "at": [
-      0,
-      0
-     ]
-    },
-    {
-     "name": "arrow-narrow-right",
-     "scale": 0.6,
-     "at": [
-      10.1,
-      10.8
-     ]
+     "name": "search",
+     "badge": true
     }
    ]
   },
   {
-   "out": "plugins/image-editing/assets/editor",
+   "out": "plugins/word-lookup/assets/summary",
    "kind": "plugin",
    "tabler": [
-    "photo-edit"
-   ]
-  },
-  {
-   "out": "plugins/ink2pic/assets/choose",
-   "kind": "plugin",
-   "tabler": [
-    "layout-grid"
-   ]
-  },
-  {
-   "out": "plugins/ink2pic/assets/definition",
-   "kind": "plugin",
-   "tabler": [
-    "book"
-   ]
-  },
-  {
-   "out": "plugins/ink2pic/assets/insert",
-   "kind": "plugin",
-   "tabler": [
-    "photo-star"
-   ]
-  },
-  {
-   "out": "plugins/real-time-conversion/assets/mode-on",
-   "kind": "plugin",
-   "tabler": [
-    "typography"
-   ]
-  },
-  {
-   "out": "plugins/real-time-conversion/assets/mode-off",
-   "kind": "plugin",
-   "tabler": [
-    "typography-off"
-   ]
-  },
-  {
-   "out": "plugins/real-time-conversion/assets/undo",
-   "kind": "plugin",
-   "tabler": [
+    "notes",
     {
-     "name": "text-recognition",
-     "scale": 0.65,
-     "at": [
-      0,
-      0
-     ]
-    },
+     "name": "search",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/definition",
+   "kind": "plugin",
+   "tabler": [
+    "book",
     {
-     "name": "arrow-back-up",
-     "scale": 0.6,
-     "at": [
-      10.1,
-      10.8
-     ]
+     "name": "search",
+     "badge": true
     }
    ]
   },
@@ -213,35 +243,11 @@
    "out": "plugins/word-lookup/assets/choose",
    "kind": "plugin",
    "tabler": [
-    "library-photo"
-   ]
-  },
-  {
-   "out": "plugins/word-lookup/assets/definition",
-   "kind": "plugin",
-   "tabler": [
-    "vocabulary"
-   ]
-  },
-  {
-   "out": "plugins/word-lookup/assets/image",
-   "kind": "plugin",
-   "tabler": [
-    "camera"
-   ]
-  },
-  {
-   "out": "plugins/word-lookup/assets/sticker",
-   "kind": "plugin",
-   "tabler": [
-    "sticker-2"
-   ]
-  },
-  {
-   "out": "plugins/word-lookup/assets/summary",
-   "kind": "plugin",
-   "tabler": [
-    "list-details"
+    "library-photo",
+    {
+     "name": "search",
+     "badge": true
+    }
    ]
   },
   {
@@ -250,50 +256,42 @@
    "tabler": [
     {
      "name": "letter-e",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      0.6
+      -1.5,
+      0
      ]
     },
     {
      "name": "letter-s",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      0.6
+      6,
+      0
      ]
     },
     {
      "name": "letter-p",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      12.6
+      5.5,
+      12
      ]
     },
     {
      "name": "letter-t",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      12.6
+      13,
+      12
      ]
     },
     {
-     "name": "minus-vertical",
-     "scale": 0.857,
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
      "at": [
-      -8.04,
-      1.71
-     ]
-    },
-    {
-     "name": "arrow-right",
-     "scale": 0.35,
-     "at": [
-      0.5,
-      13.8
+      13.5,
+      0
      ]
     }
    ]
@@ -304,50 +302,42 @@
    "tabler": [
     {
      "name": "letter-p",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      0.6
+      -1.5,
+      0
      ]
     },
     {
      "name": "letter-t",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      0.6
+      6,
+      0
      ]
     },
     {
      "name": "letter-e",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      12.6
+      5.5,
+      12
      ]
     },
     {
      "name": "letter-s",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      12.6
+      13,
+      12
      ]
     },
     {
-     "name": "minus-vertical",
-     "scale": 0.857,
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
      "at": [
-      -8.04,
-      1.71
-     ]
-    },
-    {
-     "name": "arrow-right",
-     "scale": 0.35,
-     "at": [
-      0.5,
-      13.8
+      13.5,
+      0
      ]
     }
    ]
@@ -358,50 +348,42 @@
    "tabler": [
     {
      "name": "letter-p",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      0.6
+      -1.5,
+      0
      ]
     },
     {
      "name": "letter-t",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      0.6
+      6,
+      0
      ]
     },
     {
      "name": "letter-z",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      12.6
+      5.5,
+      12
      ]
     },
     {
      "name": "letter-h",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      12.6
+      13,
+      12
      ]
     },
     {
-     "name": "minus-vertical",
-     "scale": 0.857,
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
      "at": [
-      -8.04,
-      1.71
-     ]
-    },
-    {
-     "name": "arrow-right",
-     "scale": 0.35,
-     "at": [
-      0.5,
-      13.8
+      13.5,
+      0
      ]
     }
    ]
@@ -412,53 +394,258 @@
    "tabler": [
     {
      "name": "letter-z",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      0.6
+      -1.5,
+      0
      ]
     },
     {
      "name": "letter-h",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      0.6
+      6,
+      0
      ]
     },
     {
      "name": "letter-p",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      7.0,
-      12.6
+      5.5,
+      12
      ]
     },
     {
      "name": "letter-t",
-     "scale": 0.45,
+     "scale": 0.5,
      "at": [
-      14.0,
-      12.6
+      13,
+      12
      ]
     },
     {
-     "name": "minus-vertical",
-     "scale": 0.857,
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
      "at": [
-      -8.04,
-      1.71
-     ]
-    },
-    {
-     "name": "arrow-right",
-     "scale": 0.35,
-     "at": [
-      0.5,
-      13.8
+      13.5,
+      0
      ]
     }
    ]
+  },
+  {
+   "out": "design/icons/planned/collection/icon",
+   "kind": "plugin",
+   "planned": "#249",
+   "tabler": [
+    "clipboard"
+   ]
+  },
+  {
+   "out": "design/icons/planned/collection/add",
+   "kind": "plugin",
+   "planned": "#249",
+   "tabler": [
+    "clipboard",
+    {
+     "name": "plus",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/collection/cut",
+   "kind": "plugin",
+   "planned": "#249",
+   "tabler": [
+    "clipboard",
+    {
+     "name": "cut",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/collection/paste",
+   "kind": "plugin",
+   "planned": "#249",
+   "tabler": [
+    "clipboard",
+    {
+     "name": "arrow-narrow-down",
+     "badge": true
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/headings/icon",
+   "kind": "plugin",
+   "planned": "#252",
+   "tabler": [
+    "heading"
+   ]
+  },
+  {
+   "out": "design/icons/planned/headings/heading-1",
+   "kind": "plugin",
+   "planned": "#252",
+   "tabler": [
+    {
+     "name": "letter-h",
+     "scale": 0.6,
+     "at": [
+      -3,
+      0
+     ]
+    },
+    {
+     "name": "number-1",
+     "scale": 0.7,
+     "at": [
+      6,
+      -1.5
+     ]
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/headings/heading-2",
+   "kind": "plugin",
+   "planned": "#252",
+   "tabler": [
+    {
+     "name": "letter-h",
+     "scale": 0.6,
+     "at": [
+      -3,
+      0
+     ]
+    },
+    {
+     "name": "number-2",
+     "scale": 0.7,
+     "at": [
+      6,
+      -1.5
+     ]
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/headings/heading-3",
+   "kind": "plugin",
+   "planned": "#252",
+   "tabler": [
+    {
+     "name": "letter-h",
+     "scale": 0.6,
+     "at": [
+      -3,
+      0
+     ]
+    },
+    {
+     "name": "number-3",
+     "scale": 0.7,
+     "at": [
+      6,
+      -1.5
+     ]
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/headings/heading-4",
+   "kind": "plugin",
+   "planned": "#252",
+   "tabler": [
+    {
+     "name": "letter-h",
+     "scale": 0.6,
+     "at": [
+      -3,
+      0
+     ]
+    },
+    {
+     "name": "number-4",
+     "scale": 0.7,
+     "at": [
+      6,
+      -1.5
+     ]
+    }
+   ]
+  },
+  {
+   "out": "design/icons/planned/gestures/icon",
+   "kind": "plugin",
+   "planned": "#270",
+   "tabler": [
+    "hand-click"
+   ],
+   "plannedIf": "if a plugin"
   }
- ]
+ ],
+ "retired": {
+  "plugins/ink2pic": "retired into Word Lookup (#45) and ships nothing; its folder leaves with #288, so its assets are no longer drawn from this file"
+ },
+ "families": {
+  "about": "Each tool's icons share one motif, a glyph every one of them names, and still differ at a glance (owner, 2026-11-25, #271); a tool with one icon needs none. `except` lists an icon that cannot carry the motif, with the reason.",
+  "device-transfer": {
+   "motif": [
+    "arrows-exchange",
+    "arrow-narrow-right",
+    "arrow-narrow-left"
+   ]
+  },
+  "image-editing": {
+   "motif": [
+    "photo"
+   ]
+  },
+  "real-time-conversion": {
+   "motif": [
+    "text-recognition"
+   ]
+  },
+  "word-lookup": {
+   "motif": [
+    "search",
+    "zoom-question"
+   ],
+   "except": {
+    "translate-es-pt": "two language codes and their arrow fill the box",
+    "translate-pt-es": "as translate-es-pt",
+    "translate-pt-zh": "as translate-es-pt",
+    "translate-zh-pt": "as translate-es-pt"
+   }
+  },
+  "collection": {
+   "motif": [
+    "clipboard"
+   ]
+  },
+  "headings": {
+   "motif": [
+    "heading",
+    "letter-h"
+   ]
+  },
+  "plugin-diagnostics": {
+   "motif": [
+    "stethoscope"
+   ]
+  }
+ },
+ "badge": {
+  "about": "A part marked `badge` is scaled by `scale` and moved by `at` into the bottom-right corner, and cuts the strokes drawn before it `gap` grid units around its box, as Tabler's own badged glyphs do (photo-search, file-export), so the base keeps its full size.",
+  "scale": 0.5,
+  "at": [
+   13,
+   13
+  ],
+  "gap": 3
+ }
 }
