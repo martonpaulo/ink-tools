@@ -82,7 +82,7 @@ public final class DiscoveryTest {
       String mac = "{\"alias\":\"Mac\",\"fingerprint\":\"m\",\"port\":53317}";
       PinnedClient.Response info =
           PinnedClient.post(base + "register", Collections.<String, String>emptyMap(),
-              mac.getBytes("UTF-8"), null, identity.fingerprint, 3000, 3000);
+              mac.getBytes("UTF-8"), null, identity.fingerprint, null, 3000, 3000);
       check(info.status == 200 && info.body.contains("Supernote"), "register answers our info");
       List<Discovery.Answer> answers = registrations.answers();
       check(answers.size() == 1, "one register answer, got " + answers.size());
@@ -90,7 +90,7 @@ public final class DiscoveryTest {
       check(answers.get(0).text.equals(mac), "the register body arrives unparsed");
       PinnedClient.Response offer =
           PinnedClient.post(base + "prepare-upload", Collections.<String, String>emptyMap(),
-              "{\"files\":{}}".getBytes("UTF-8"), null, identity.fingerprint, 3000, 3000);
+              "{\"files\":{}}".getBytes("UTF-8"), null, identity.fingerprint, null, 3000, 3000);
       check(offer.status == 403, "a discovery refuses an offer, got " + offer.status);
     } finally {
       server.close();

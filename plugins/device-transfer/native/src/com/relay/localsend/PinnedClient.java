@@ -26,8 +26,9 @@ import javax.net.ssl.X509TrustManager;
 /**
  * One POST to a LocalSend receiver (#98). A receiver serves HTTPS with a self-signed certificate,
  * so the certificate is accepted only when its SHA-256 equals the fingerprint the receiver
- * announced: the pin replaces the chain and the host name, never a trust-all manager. Pure Java,
- * no Android class, so the JVM test runs it against a loopback server. Never logs a body.
+ * announced: the pin replaces the chain and the host name, never a trust-all manager. With our
+ * {@link Identity}, its certificate is our TLS client certificate, which LocalSend 1.18 requires.
+ * Pure Java, no Android class, so the JVM test runs it against a loopback server. Never logs a body.
  */
 public final class PinnedClient {
   /** The largest answer we read; the protocol parser drops anything longer. */
@@ -97,7 +98,8 @@ public final class PinnedClient {
 
   /**
    * POSTs `body` (or the bytes of `file` when `body` is null) to `url`. An `https` URL needs
-   * `pinned`; an `http` one sends in the clear, for a receiver that announced `protocol: http`.
+   * `pinned` and presents `client`, when given, as our certificate; an `http` one sends in the
+   * clear, for a receiver that announced `protocol: http`.
    */
   public static Response post(
       String url,
@@ -105,6 +107,7 @@ public final class PinnedClient {
       byte[] body,
       File file,
       String pinned,
+      Identity client,
       int connectMs,
       int readMs)
       throws IOException, GeneralSecurityException {
@@ -116,7 +119,7 @@ public final class PinnedClient {
         if (pinned == null || pinned.isEmpty()) {
           throw new IOException("an https receiver needs its fingerprint");
         }
-        pin((HttpsURLConnection) connection, pinned);
+        pin((HttpsURLConnection) connection, pinned, client);
       }
       connection.setConnectTimeout(connectMs);
       connection.setReadTimeout(readMs);
@@ -146,7 +149,7 @@ public final class PinnedClient {
     }
   }
 
-  private static void pin(HttpsURLConnection connection, final String pinned)
+  private static void pin(HttpsURLConnection connection, final String pinned, Identity client)
       throws GeneralSecurityException {
     TrustManager manager =
         new X509TrustManager() {
@@ -170,7 +173,8 @@ public final class PinnedClient {
           }
         };
     SSLContext context = SSLContext.getInstance("TLS");
-    context.init(null, new TrustManager[] {manager}, null);
+    context.init(
+        client == null ? null : client.clientKeyManagers(), new TrustManager[] {manager}, null);
     connection.setSSLSocketFactory(context.getSocketFactory());
     // The pinned certificate is the identity; a LAN address has no name to check.
     connection.setHostnameVerifier(

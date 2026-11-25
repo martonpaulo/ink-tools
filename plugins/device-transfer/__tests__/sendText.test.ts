@@ -19,7 +19,7 @@ import {fakeRelay} from '../test-support/fakeRelay';
 /** A synthetic LAN address from its four parts. */
 const lan = (...parts: number[]) => parts.join('.');
 
-const sender = {alias: 'Supernote', fingerprint: 'self'};
+const sender = {alias: 'Supernote', fingerprint: 'self', identityFolder: '/plugin'};
 const mac: Device = {
   alias: 'Mac',
   ip: lan(192, 168, 1, 20),
@@ -27,6 +27,13 @@ const mac: Device = {
   protocol: 'https',
   fingerprint: 'mac-fp',
 };
+
+// Each send logs its steps (#98); the suite keeps them out of its output and reads them here.
+let logged: jest.SpyInstance;
+beforeEach(() => {
+  logged = jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+afterEach(() => logged.mockRestore());
 
 function replies(...answers: Array<{status: number; body?: string}>) {
   const post = jest.fn();
@@ -67,6 +74,13 @@ test('a 200 with a token gets the text uploaded, and only its 200 is «sent»', 
   expect(upload[0]).toContain('/upload?sessionId=s&fileId=text&token=t');
   expect(upload[2]).toBe('Olá');
   expect(upload[3]).toBeNull();
+  // Our certificate is the client certificate on both steps (#98).
+  expect(post.mock.calls[0][5]).toBe('/plugin');
+  expect(upload[5]).toBe('/plugin');
+  // The toast line is logged, never the text (#98).
+  const lines = logged.mock.calls.map(call => call[0]).join('\n');
+  expect(lines).toContain('Relay: send: text: Sent to Mac');
+  expect(lines).not.toContain('Olá');
   const failed = fakeRelay({
     post: replies({status: 200, body: session}, {status: 500}),
   });

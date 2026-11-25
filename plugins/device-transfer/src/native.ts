@@ -43,6 +43,8 @@ export type RelayNative = {
     body: string | null,
     filePath: string | null,
     pinned: string | null,
+    /** Over HTTPS, our identity's folder: its certificate is our client certificate (#98). */
+    identityFolder: string | null,
     connectMs: number,
     readMs: number,
   ): Promise<HttpAnswer>;
@@ -103,7 +105,9 @@ export function relay(modules: Record<string, unknown> = NativeModules): Relay {
         return ok(await run(...args));
       } catch (error) {
         const code = (error as {code?: string}).code ?? 'IO';
-        return fail(MODULE_CODE, code, code);
+        // The module's message is the Java exception's class name, which a send logs (#98).
+        const message = (error as {message?: string}).message || code;
+        return fail(MODULE_CODE, message, code);
       }
     };
   return {

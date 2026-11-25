@@ -5,7 +5,7 @@
  * never a crash.
  */
 import {getPluginDirPath, Result} from '@ink-tools/sn-adapter/official';
-import {Device, isPrivateAddress} from '../localsend/protocol';
+import {Device, isPrivateAddress, Sender} from '../localsend/protocol';
 import {Relay} from '../native';
 
 export function settingsPath(pluginDir: string): string {
@@ -94,20 +94,36 @@ export async function saveSettings(
 }
 
 /**
- * Our fingerprint to a receiver: the receive half's certificate (#49), so the tablet is one
- * LocalSend device both ways; the saved one only while the identity cannot be read.
+ * Who we are on a send: what we announce, and the folder of the certificate that proves it, our
+ * TLS client certificate (#98); null when the identity cannot be read.
  */
+export type Self = Sender & {identityFolder: string | null};
+
+/**
+ * Our identity to a receiver: the receive half's certificate (#49), so the tablet is one
+ * LocalSend device both ways, and its folder, for the client certificate (#98); the saved
+ * fingerprint, with no certificate, only while the identity cannot be read.
+ */
+export async function ownIdentity(
+  native: Relay,
+  settings: Settings,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
+): Promise<Omit<Self, 'alias'>> {
+  const dir = await pluginDir();
+  if (dir.ok) {
+    const identity = await native.identity(dir.value);
+    if (identity.ok) {
+      return {fingerprint: identity.value, identityFolder: dir.value};
+    }
+  }
+  return {fingerprint: settings.fingerprint, identityFolder: null};
+}
+
+/** Our fingerprint alone, for the announce of the Settings view's search. */
 export async function ownFingerprint(
   native: Relay,
   settings: Settings,
   pluginDir: () => Promise<Result<string>> = getPluginDirPath,
 ): Promise<string> {
-  const dir = await pluginDir();
-  if (dir.ok) {
-    const identity = await native.identity(dir.value);
-    if (identity.ok) {
-      return identity.value;
-    }
-  }
-  return settings.fingerprint;
+  return (await ownIdentity(native, settings, pluginDir)).fingerprint;
 }

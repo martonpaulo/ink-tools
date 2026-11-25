@@ -205,8 +205,18 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A send from the tablet to the Mac's saved LocalSend target made no offer on the Mac: with
   LocalSend listening on TCP 53317, the tablet's TCP check of that port answered closed while the
   macOS firewall was on, and «Send Text» showed «not reachable» [measured, Device Transfer 0.1.0
-  beta 5 and 6, 2026-11-17, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. That the firewall is the only cause is
-  [unverified: the send with LocalSend allowed through it is not yet run].
+  beta 5 and 6, 2026-11-17, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. The firewall was not the only cause: with
+  LocalSend permitted through it, beta 9 still showed «not reachable» [measured, 2026-11-25].
+- LocalSend 1.18.2 requires a TLS client certificate on 53317: a client that presents none gets
+  the TLS 1.3 alert 116 «certificate required» at its first read, and any valid self-signed one
+  is accepted; its request names only its own certificate as an authority [measured, `openssl
+  s_client` to the Mac's LocalSend 1.18.2, 2026-11-25, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. Its source makes the
+  certificate optional only while web share is on, and trusts a `register` only when the claimed
+  `fingerprint` is the client certificate's SHA-256 (`packages/core/src/http/server/`). A LocalSend
+  client presents its own identity's certificate; Device Transfer presents the `Identity.java`
+  certificate it receives with, so its fingerprint matches [measured on the Mac: `PinnedClient`
+  got 200 from `register` with it and an `IOException` without it; the tablet's send is
+  unverified until the next device round].
 - The first write of a file that does not exist yet in shared storage left it empty while the call
   reported success; the next write over that file worked [measured, Lookup settings,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)]. Creating the file empty, closing

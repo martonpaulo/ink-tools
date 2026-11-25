@@ -3,6 +3,7 @@ package com.relay.localsend;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,12 +15,18 @@ import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Plain JVM test, no framework: run by `npm run test:native`. A loopback HTTPS server with a
@@ -94,7 +101,7 @@ public final class PinnedClientTest {
       // The announced fingerprint, in LocalSend's upper case, is accepted.
       PinnedClient.Response ok =
           PinnedClient.post(url, Collections.singletonMap("Content-Type", "application/json"),
-              body, null, fingerprint.toUpperCase(), 3000, 3000);
+              body, null, fingerprint.toUpperCase(), null, 3000, 3000);
       check(ok.status == 200, "pinned receiver answers 200, got " + ok.status);
       check(ok.body.contains("\"sessionId\":\"s\""), "the answer body is read");
       check(received.get() == body.length, "the request body arrives whole");
@@ -102,7 +109,7 @@ public final class PinnedClientTest {
       // A file body is streamed with its length.
       File png = new File(folder, "page.png");
       Files.write(png.toPath(), new byte[] {1, 2, 3, 4, 5});
-      PinnedClient.post(url, Collections.<String, String>emptyMap(), null, png, fingerprint, 3000, 3000);
+      PinnedClient.post(url, Collections.<String, String>emptyMap(), null, png, fingerprint, null, 3000, 3000);
       check(received.get() == 5, "the file body arrives whole");
       check(
           PinnedClient.sha256Hex(png)
@@ -115,7 +122,7 @@ public final class PinnedClientTest {
       check(!wrong.equalsIgnoreCase(fingerprint), "the wrong pin differs from the real one");
       try {
         PinnedClient.post(url, Collections.<String, String>emptyMap(), body, null,
-            wrong, 3000, 3000);
+            wrong, null, 3000, 3000);
         throw new AssertionError("a wrong fingerprint must fail");
       } catch (Exception error) {
         check(PinnedClient.identityChanged(error), "a wrong pin is IdentityChanged: " + error);
@@ -123,7 +130,7 @@ public final class PinnedClientTest {
 
       // HTTPS with no pin is refused before any connection.
       try {
-        PinnedClient.post(url, Collections.<String, String>emptyMap(), body, null, null, 3000, 3000);
+        PinnedClient.post(url, Collections.<String, String>emptyMap(), body, null, null, null, 3000, 3000);
         throw new AssertionError("https without a pin must fail");
       } catch (java.io.IOException expected) {
         check(!PinnedClient.identityChanged(expected), "no pin is not a changed identity");
@@ -132,13 +139,15 @@ public final class PinnedClientTest {
       server.stop(0);
     }
 
+    requiresClientCertificate(factory, certificate, fingerprint);
+
     // A receiver that accepts and never answers trips the read timeout, not a hang.
     ServerSocket silent = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
     try {
       String url = "http://127.0.0.1:" + silent.getLocalPort() + "/api/localsend/v2/prepare-upload";
       long start = System.nanoTime();
       try {
-        PinnedClient.post(url, Collections.<String, String>emptyMap(), new byte[] {1}, null, null, 1000, 300);
+        PinnedClient.post(url, Collections.<String, String>emptyMap(), new byte[] {1}, null, null, null, 1000, 300);
         throw new AssertionError("a silent receiver must time out");
       } catch (SocketTimeoutException expected) {
         long ms = (System.nanoTime() - start) / 1_000_000L;
@@ -146,6 +155,87 @@ public final class PinnedClientTest {
       }
     } finally {
       silent.close();
+    }
+  }
+
+  /**
+   * LocalSend 1.18 requires a client certificate and names only its own as an authority (#98);
+   * before the fix the sender sent none, and the receiver ended the TLS session with «certificate
+   * required». Our identity is presented for that request, and its fingerprint is what arrives.
+   */
+  private static void requiresClientCertificate(
+      KeyManagerFactory receiverKeys, final X509Certificate receiver, String fingerprint)
+      throws Exception {
+    final AtomicReference<String> presented = new AtomicReference<>();
+    TrustManager recorder =
+        new X509TrustManager() {
+          @Override
+          public void checkClientTrusted(X509Certificate[] chain, String authType)
+              throws CertificateException {
+            try {
+              presented.set(PinnedClient.sha256Hex(chain[0].getEncoded()));
+            } catch (java.security.GeneralSecurityException error) {
+              throw new CertificateException(error);
+            }
+          }
+
+          @Override
+          public void checkServerTrusted(X509Certificate[] chain, String authType)
+              throws CertificateException {
+            throw new CertificateException("a receiver only");
+          }
+
+          @Override
+          public X509Certificate[] getAcceptedIssuers() {
+            // LocalSend names its own certificate, never ours.
+            return new X509Certificate[] {receiver};
+          }
+        };
+    SSLContext tls = SSLContext.getInstance("TLS");
+    tls.init(receiverKeys.getKeyManagers(), new TrustManager[] {recorder}, null);
+    HttpsServer server =
+        HttpsServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+    server.setHttpsConfigurator(
+        new HttpsConfigurator(tls) {
+          @Override
+          public void configure(HttpsParameters params) {
+            SSLParameters ssl = getSSLContext().getDefaultSSLParameters();
+            ssl.setNeedClientAuth(true);
+            params.setSSLParameters(ssl);
+          }
+        });
+    server.createContext(
+        "/api/localsend/v2/prepare-upload",
+        new HttpHandler() {
+          @Override
+          public void handle(HttpExchange exchange) throws java.io.IOException {
+            drain(exchange.getRequestBody());
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+          }
+        });
+    server.start();
+    try {
+      String url =
+          "https://127.0.0.1:" + server.getAddress().getPort() + "/api/localsend/v2/prepare-upload";
+      byte[] body = "{\"info\":{}}".getBytes("UTF-8");
+      try {
+        PinnedClient.post(url, Collections.<String, String>emptyMap(), body, null, fingerprint,
+            null, 3000, 3000);
+        throw new AssertionError("a receiver that requires a client certificate refuses none");
+      } catch (java.io.IOException expected) {
+        check(!PinnedClient.identityChanged(expected), "no client certificate is no changed pin");
+      }
+      Identity identity = Identity.create(new Date());
+      PinnedClient.Response sent =
+          PinnedClient.post(url, Collections.<String, String>emptyMap(), body, null, fingerprint,
+              identity, 3000, 3000);
+      check(sent.status == 204, "with our certificate the receiver answers, got " + sent.status);
+      check(
+          identity.fingerprint.equals(presented.get()),
+          "the receiver sees our identity's certificate, got " + presented.get());
+    } finally {
+      server.stop(0);
     }
   }
 

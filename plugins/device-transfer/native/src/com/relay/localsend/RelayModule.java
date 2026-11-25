@@ -121,7 +121,8 @@ public final class RelayModule extends ReactContextBaseJavaModule {
 
   /**
    * One POST: `body` as UTF-8 text, or the bytes of `filePath` when `body` is null. Resolves with
-   * `{status, body}`.
+   * `{status, body}`. Over HTTPS, the identity in `identityFolder`, when given, is our client
+   * certificate (#98).
    */
   @ReactMethod
   public void post(
@@ -130,6 +131,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
       final String body,
       final String filePath,
       final String pinned,
+      final String identityFolder,
       final double connectMs,
       final double readMs,
       final Promise promise) {
@@ -151,6 +153,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
                       body == null ? null : body.getBytes(UTF_8),
                       body == null ? new File(filePath) : null,
                       pinned,
+                      identityFolder == null ? null : Identity.load(new File(identityFolder)),
                       (int) connectMs,
                       (int) readMs);
               WritableMap out = Arguments.createMap();

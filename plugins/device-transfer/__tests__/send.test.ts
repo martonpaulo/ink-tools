@@ -6,13 +6,13 @@ import {discoverDevices, sendCapture, tempDir} from '../src/send/sendPng';
 
 const TMP = tempDir('/plugin');
 const pluginDir = async () => ok('/plugin');
-import {loadSettings, saveSettings} from '../src/settings/device';
+import {loadSettings, ownIdentity, saveSettings} from '../src/settings/device';
 import {fakeRelay} from '../test-support/fakeRelay';
 
 /** A synthetic LAN address from its four parts. */
 const lan = (...parts: number[]) => parts.join('.');
 
-const sender = {alias: 'Supernote', fingerprint: 'self'};
+const sender = {alias: 'Supernote', fingerprint: 'self', identityFolder: '/plugin'};
 const mac: Device = {
   alias: 'Mac',
   ip: lan(192, 168, 1, 20),
@@ -20,6 +20,14 @@ const mac: Device = {
   protocol: 'https',
   fingerprint: 'mac-fp',
 };
+
+// Each send logs its steps (#98); the suite keeps them out of its output and reads them here.
+let logged: jest.SpyInstance;
+beforeEach(() => {
+  logged = jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+afterEach(() => logged.mockRestore());
+
 const made = (path: string) => Promise.resolve(ok(path));
 const session = JSON.stringify({sessionId: 's', files: {image: 't'}});
 
@@ -65,6 +73,9 @@ test('a saved device is used with no question, pinned to its fingerprint', async
     sha256: 'abc',
   });
   expect(prepare[4]).toBe('mac-fp');
+  // Our certificate is the client certificate LocalSend 1.18 requires, on both steps (#98).
+  expect(prepare[5]).toBe('/plugin');
+  expect(upload[5]).toBe('/plugin');
   expect(upload[0]).toContain('/upload?sessionId=s&fileId=image&token=t');
   expect(upload[2]).toBeNull();
   expect(upload[3]).toBe(`${TMP}/page-7.png`);
@@ -95,6 +106,34 @@ test.each([
     expect(calls.removed).toEqual([`${TMP}/page-1.png`]);
   },
 );
+
+test('each step and the outcome are logged as a line, with no body or token (#98)', async () => {
+  const refused = Object.assign(new Error('SSLException'), {code: 'IO'});
+  const {api} = fakeRelay({post: answers(refused)});
+  await sendCapture(api, sender, mac, TMP, 'selection', made);
+  const sent = fakeRelay({post: answers({status: 200, body: session}, {status: 200})});
+  await sendCapture(sent.api, sender, mac, TMP, 'page', made);
+  const lines = logged.mock.calls.map(call => call[0]);
+  expect(lines).toHaveLength(5);
+  expect(lines[0]).toMatch(/^Relay: send: prepare-upload failed: IO SSLException in \d+ ms$/);
+  expect(lines[1]).toBe('Relay: send: selection: Mac not reachable');
+  expect(lines[2]).toMatch(/^Relay: send: prepare-upload 200 in \d+ ms$/);
+  expect(lines[3]).toMatch(/^Relay: send: upload 200 in \d+ ms$/);
+  expect(lines[4]).toBe('Relay: send: page: Sent to Mac');
+  expect(lines.join('\n')).not.toMatch(/sessionId|token|"s"/);
+});
+
+test('a send presents the certificate it announces, and none without the identity (#98)', async () => {
+  const settings = {fingerprint: 'saved', device: null};
+  const {api} = fakeRelay();
+  await expect(ownIdentity(api, settings, async () => ok('/p'))).resolves.toEqual({
+    fingerprint: 'cert-fp',
+    identityFolder: '/p',
+  });
+  await expect(
+    ownIdentity(api, settings, async () => fail(-1, 'no dir')),
+  ).resolves.toEqual({fingerprint: 'saved', identityFolder: null});
+});
 
 test('a failed upload is never «sent»', async () => {
   const {api} = fakeRelay({

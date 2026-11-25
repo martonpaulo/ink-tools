@@ -26,7 +26,6 @@ import {
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
-import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
 import {Outcome, sendCapture, tempDir} from './send/sendPng';
@@ -36,7 +35,7 @@ import {Device} from './localsend/protocol';
 import {copy} from './copy';
 import {Image} from 'react-native';
 import {NoteHost, Size} from './receive/receive';
-import {loadSettings, ownFingerprint} from './settings/device';
+import {loadSettings, ownIdentity} from './settings/device';
 
 /** How the tablet names itself to a receiver. */
 export const ALIAS = 'Supernote';
@@ -77,13 +76,9 @@ export async function runSend(
     return {kind: 'toast', text: copy.noImage};
   }
   const settings = await loadSettings(native, pluginDir);
-  const sender: Sender = {
-    alias: ALIAS,
-    fingerprint: await ownFingerprint(native, settings, pluginDir),
-  };
   return sendCapture(
     native,
-    sender,
+    {alias: ALIAS, ...(await ownIdentity(native, settings, pluginDir))},
     settings.device,
     tempDir(dir.value),
     capture,
@@ -176,11 +171,12 @@ async function readLassoText(): Promise<string | null> {
 
 async function sendTo(device: Device, text: string, native: Relay): Promise<string> {
   const settings = await loadSettings(native);
-  const sender: Sender = {
-    alias: ALIAS,
-    fingerprint: await ownFingerprint(native, settings),
-  };
-  return sendText(native, sender, device, text);
+  return sendText(
+    native,
+    {alias: ALIAS, ...(await ownIdentity(native, settings))},
+    device,
+    text,
+  );
 }
 
 /** «Send Text» on the tablet (#99); the view and its toast are the caller's. */

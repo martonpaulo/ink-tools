@@ -13,7 +13,10 @@ flow; `src/settings/device.ts` the chosen device; `native/` the Java module `Rel
 `lassoImage`. Discovery announces by multicast and, for its window, serves `/register` with our
 identity (`Discovery.listen`, refusing every offer), since LocalSend answers an announce there
 first; each register body is one more answer for `parseAnnounce`. The Settings view has «Close»,
-and Back does each view's exit (close, stop, cancel). Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the device round
+and Back does each view's exit (close, stop, cancel). Since 0.1.0 beta 10, each POST presents
+the `Identity.java` certificate as our TLS client certificate, which LocalSend 1.18 requires (a
+send without one met «certificate required» and read «not reachable»), and each step and outcome
+is a `Relay: send:` log line. Still to come in [#98](https://github.com/martonpaulo/supernote-tools/issues/98): the device round
 (the found Mac and iPhone, the sends, Back reaching the view) and an address field for a device
 discovery cannot see.
 
@@ -67,10 +70,13 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
   `MAX_ANSWER_BYTES`, and drop an unknown shape.
 - Relay's own certificate is X.509 v3 (`Identity.java`): iOS LocalSend refuses v1 with
   `UnsupportedCertVersion`; a stored certificate that is not v3 is replaced. Its fingerprint is
-  the tablet's identity both ways.
+  the tablet's identity both ways, and it is our TLS client certificate on every send, for any
+  authority the receiver names (`Identity.clientKeyManagers`, `../../docs/supernote.md` ›
+  Plugins); one certificate per install.
 - The receiver serves only private IPv4 peers, within `Receiver.MAX_JSON_BYTES` and
   `MAX_FILE_BYTES`, and names a received file from its type, never the sender's file name.
-- Log no image content, token or session id; only status codes and timings.
+- Log no image content, text, token or session id; only steps, status codes, timings and the
+  toast line (`sendLog`).
 - Permissions: `INTERNET`, `FILE:READ` and `FILE:WRITE`; `__tests__/pluginConfig.test.ts` checks them.
   `src/permissions.ts` asks for each one before the first file, note or network call of a tap and
   when Settings opens, and a refusal's toast names it ([#163](https://github.com/martonpaulo/supernote-tools/issues/163)); `__tests__/permissions.test.ts`

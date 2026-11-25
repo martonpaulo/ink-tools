@@ -13,19 +13,26 @@ import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.io.ByteArrayInputStream;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.X509ExtendedKeyManager;
 
 /**
- * Relay's own TLS identity as a LocalSend receiver (#49): an RSA key and a self-signed X.509
+ * Relay's own TLS identity (#49), one per install: the receiver's server certificate and the
+ * sender's client certificate (#98). An RSA key and a self-signed X.509
  * <b>v3</b> certificate, written as DER here since PluginHost has no certificate builder. The
  * iOS LocalSend app (rustls/webpki) refuses a v1 certificate with `UnsupportedCertVersion`, the
  * defect the owner met with Notipal, so a stored certificate that is not v3 is replaced. Pure Java,
@@ -61,6 +68,70 @@ public final class Identity {
   /** The password the key store was written with, for a KeyManagerFactory. */
   public static char[] password() {
     return PASSWORD.clone();
+  }
+
+  /**
+   * Key managers that present this identity as our TLS client certificate, as every LocalSend
+   * client does with its own (#98): LocalSend 1.18 refuses a client with none, with the TLS 1.3
+   * alert «certificate required». Its request names only its own certificate as an authority, so
+   * the JDK's default manager, which picks a certificate by issuer, would send none; this one
+   * offers ours for any issuer, and only for a request that takes an RSA key.
+   */
+  public KeyManager[] clientKeyManagers() throws GeneralSecurityException {
+    final PrivateKey key = (PrivateKey) keyStore.getKey(ALIAS, PASSWORD);
+    final X509Certificate[] chain = {certificate};
+    return new KeyManager[] {
+      new X509ExtendedKeyManager() {
+        @Override
+        public String chooseClientAlias(String[] keyTypes, Principal[] issuers, Socket socket) {
+          return takesRsa(keyTypes) ? ALIAS : null;
+        }
+
+        @Override
+        public String chooseEngineClientAlias(
+            String[] keyTypes, Principal[] issuers, SSLEngine engine) {
+          return takesRsa(keyTypes) ? ALIAS : null;
+        }
+
+        @Override
+        public String[] getClientAliases(String keyType, Principal[] issuers) {
+          return takesRsa(new String[] {keyType}) ? new String[] {ALIAS} : null;
+        }
+
+        @Override
+        public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
+          return null;
+        }
+
+        @Override
+        public String[] getServerAliases(String keyType, Principal[] issuers) {
+          return null;
+        }
+
+        @Override
+        public X509Certificate[] getCertificateChain(String alias) {
+          return ALIAS.equals(alias) ? chain.clone() : null;
+        }
+
+        @Override
+        public PrivateKey getPrivateKey(String alias) {
+          return ALIAS.equals(alias) ? key : null;
+        }
+      }
+    };
+  }
+
+  /** True when one of `keyTypes` is an RSA key, our key's algorithm (RSASSA-PSS signs with it). */
+  private static boolean takesRsa(String[] keyTypes) {
+    if (keyTypes == null) {
+      return false;
+    }
+    for (String type : keyTypes) {
+      if ("RSA".equals(type) || "RSASSA-PSS".equals(type)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

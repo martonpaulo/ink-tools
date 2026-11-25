@@ -10,18 +10,32 @@ import {
   parseUpload,
   prepareUploadBody,
   prepareUploadUrl,
-  Sender,
   textOffer,
   uploadUrl,
 } from '../localsend/protocol';
 import {Relay} from '../native';
 import {copy} from '../copy';
-import {failureText, TIMEOUTS} from './sendPng';
+import {Self} from '../settings/device';
+import {failureText, loggedPost, sendLog, TIMEOUTS} from './sendPng';
 
-/** Offers one text and, when the receiver asks for it, uploads its bytes; answers the toast line. */
+/**
+ * Offers one text and, when the receiver asks for it, uploads its bytes; answers the toast line,
+ * which is logged too (#98).
+ */
 export async function sendText(
   native: Relay,
-  sender: Sender,
+  sender: Self,
+  device: Device,
+  text: string,
+): Promise<string> {
+  const line = await offerText(native, sender, device, text);
+  sendLog(`text: ${line}`);
+  return line;
+}
+
+async function offerText(
+  native: Relay,
+  sender: Self,
   device: Device,
   text: string,
 ): Promise<string> {
@@ -33,14 +47,17 @@ export async function sendText(
   }
   const pinned = device.protocol === 'https' ? device.fingerprint : null;
   const offer = textOffer(text);
-  const prepared = await native.post(
-    prepareUploadUrl(device),
-    {'Content-Type': 'application/json'},
-    prepareUploadBody(sender, offer),
-    null,
-    pinned,
-    TIMEOUTS.connectMs,
-    TIMEOUTS.prepareMs,
+  const prepared = await loggedPost('prepare-upload', () =>
+    native.post(
+      prepareUploadUrl(device),
+      {'Content-Type': 'application/json'},
+      prepareUploadBody(sender, offer),
+      null,
+      pinned,
+      sender.identityFolder,
+      TIMEOUTS.connectMs,
+      TIMEOUTS.prepareMs,
+    ),
   );
   if (!prepared.ok) {
     return failureText(device, prepared.moduleCode);
@@ -49,14 +66,17 @@ export async function sendText(
   if (session.kind !== 'session') {
     return copy.result(session, device.alias);
   }
-  const uploaded = await native.post(
-    uploadUrl(device, session, offer.id),
-    {'Content-Type': 'text/plain; charset=utf-8'},
-    text,
-    null,
-    pinned,
-    TIMEOUTS.connectMs,
-    TIMEOUTS.uploadMs,
+  const uploaded = await loggedPost('upload', () =>
+    native.post(
+      uploadUrl(device, session, offer.id),
+      {'Content-Type': 'text/plain; charset=utf-8'},
+      text,
+      null,
+      pinned,
+      sender.identityFolder,
+      TIMEOUTS.connectMs,
+      TIMEOUTS.uploadMs,
+    ),
   );
   if (!uploaded.ok) {
     return failureText(device, uploaded.moduleCode);
