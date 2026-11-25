@@ -41,6 +41,8 @@ export const PluginCommAPI = mocks(
   'insertGeometry',
   'deletePageElements',
   'resizeLassoRect',
+  'reloadFile',
+  'batchUpdatePageElements',
 );
 
 export const PluginNoteAPI = mocks(
@@ -56,6 +58,8 @@ export const PluginFileAPI = mocks(
   'getLastElement',
   'getElements',
 );
+
+export const NativeUIUtils = mocks('showRattaDialog', 'showErrorTipDialog');
 
 export const FileUtils = mocks(
   'exists',

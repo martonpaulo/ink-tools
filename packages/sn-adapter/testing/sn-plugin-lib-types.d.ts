@@ -13,4 +13,5 @@ export declare const PluginCommAPI: any;
 export declare const PluginNoteAPI: any;
 export declare const PluginFileAPI: any;
 export declare const FileUtils: any;
+export declare const NativeUIUtils: any;
 export declare const PointUtils: any;

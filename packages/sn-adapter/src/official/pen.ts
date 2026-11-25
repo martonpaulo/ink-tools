@@ -27,6 +27,12 @@ export type Motion = {
 /** Pen type 10 fineliner, 16 pressure pen, 11 marker, 15 calligraphy (docs, PenInfo). */
 export type PenInfo = {type: number; color: number; width: number};
 
+/** One point of `Stroke.recognPoints` (sn-plugin-lib 0.2.3 `RecognData`); `timestamp` -1 is none. */
+type RecognPoint = {X?: number; Y?: number; Flag?: number; timestamp?: number};
+
+/** When a stroke began and ended, from its first and last recognition point (#296). */
+export type StrokeTimes = {startedAt: number; endedAt: number};
+
 /** An element as the SDK hands it over: plain fields plus native point accessors. */
 type Accessor<T> = {
   size(): Promise<number>;
@@ -36,7 +42,7 @@ type SdkRect = {left: number; top: number; right: number; bottom: number};
 type SdkElement = {
   uuid?: string;
   type?: number;
-  stroke?: {points?: Accessor<PenPoint>} | null;
+  stroke?: {points?: Accessor<PenPoint>; recognPoints?: Accessor<RecognPoint>} | null;
   picture?: {rect?: SdkRect} | null;
   textBox?: {textRect?: SdkRect} | null;
   geometry?: {points?: PenPoint[]} | null;
@@ -130,6 +136,39 @@ export function getPenInfo(): Promise<Result<PenInfo>> {
  */
 export function strokePoints(element: object): Promise<Result<PenPoint[]>> {
   return readAll((element as SdkElement).stroke?.points);
+}
+
+const timeOf = (point: RecognPoint | undefined): number | null =>
+  typeof point?.timestamp === 'number' && Number.isFinite(point.timestamp) && point.timestamp >= 0
+    ? point.timestamp
+    : null;
+
+/**
+ * A stroke's start and end times from `Stroke.recognPoints` (#296): two reads of one point each,
+ * the first and the last, never the whole stroke. Null when the stroke has no recognition points or
+ * a timestamp is missing (-1), as on a stroke the host did not fill: the caller then uses position
+ * alone. The unit is the host's; the device round names it (#296 › Device checks).
+ */
+export async function strokeTimes(element: object): Promise<Result<StrokeTimes | null>> {
+  const accessor = (element as SdkElement).stroke?.recognPoints;
+  if (!accessor) {
+    return ok(null);
+  }
+  try {
+    const size = await accessor.size();
+    if (size <= 0) {
+      return ok(null);
+    }
+    const [first] = await accessor.getRange(0, 1);
+    const [last] = size === 1 ? [first] : await accessor.getRange(size - 1, 1);
+    const startedAt = timeOf(first);
+    const endedAt = timeOf(last);
+    return startedAt !== null && endedAt !== null && endedAt >= startedAt
+      ? ok({startedAt, endedAt})
+      : ok(null);
+  } catch (error) {
+    return thrown(error);
+  }
 }
 
 /** Frees the element's native point cache (docs, Element Caching and Release). */
