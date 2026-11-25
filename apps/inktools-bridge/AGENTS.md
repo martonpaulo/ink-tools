@@ -77,7 +77,11 @@ node scripts/build.cjs          # build/outputs/inktools-bridge-<version>.apk, s
 - The gate (`gates.json` › `inktools-bridge`, CI `validate-inktools-bridge.yml`) runs both, also
   when the Lingo app's toolchain changes.
 - `javac -Werror`: a new warning fails the build. The build fails when the APK's package is not
-  `com.martonpaulo.inktools.bridge`.
+  `com.martonpaulo.inktools.bridge`, when it has no icon, or when it has a launcher entry (the
+  Handwriting Language build's `badgingProblems`, tested in `scripts/badging.test.cjs`).
+- The one resource is the icon, `res/drawable/ic_launcher.xml`, a vector in the Ink Tools style
+  ([#260](https://github.com/martonpaulo/ink-tools/issues/260)): the app has no screen, but
+  Settings › Apps › Customize Sidebar lists every app package with its icon.
 - Logic with no Android import goes in `HostCalls`, `Command`, `Outcome`, `Fields` or
   `Callbacks` and gets a JVM test; `Bridge`, `HostClasses` and `CommandReceiver` stay thin.
 

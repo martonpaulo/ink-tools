@@ -157,17 +157,19 @@ function resources(work, aapt2) {
 }
 
 /**
- * What is wrong with the APK's `aapt2 dump badging` output (#246): the app needs its icon, and
- * exactly one launcher entry, since the sidebar lists one entry per app (#160).
+ * What is wrong with the APK's `aapt2 dump badging` output (#246): the app needs its icon, since
+ * Customize Sidebar lists every app package with it, and `launchers` launcher entries: one here,
+ * since the sidebar lists one entry per app (#160); none for Ink Tools Bridge, which has no screen
+ * (#260).
  */
-function badgingProblems(badging) {
+function badgingProblems(badging, launchers = 1) {
   const problems = [];
   if (!/^application-icon-\d+:'[^']+'$/m.test(badging) && !/^application: .*icon='[^']+'/m.test(badging)) {
     problems.push('no application icon');
   }
-  const launchers = (badging.match(/^launchable-activity:/gm) || []).length;
-  if (launchers !== 1) {
-    problems.push(`${launchers} launcher entries, not 1`);
+  const found = (badging.match(/^launchable-activity:/gm) || []).length;
+  if (found !== launchers) {
+    problems.push(`${found} launcher entries, not ${launchers}`);
   }
   return problems;
 }

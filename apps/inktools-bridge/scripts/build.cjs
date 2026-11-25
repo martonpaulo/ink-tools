@@ -8,6 +8,7 @@
  *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK) and the signing-key test
  */
 const {jdkTool, JDK_MISSING} = require('../../handwriting-language/scripts/host-tools.cjs');
+const {badgingProblems} = require('../../handwriting-language/scripts/build.cjs');
 const {versionName} = require('../../../scripts/plugin-version.cjs');
 const {execFileSync} = require('node:child_process');
 const path = require('node:path');
@@ -82,10 +83,13 @@ function javaFiles(folder) {
   return fs.readdirSync(folder).filter(name => name.endsWith('.java')).map(name => path.join(folder, name));
 }
 
+/** The app's one resource, its icon (#260): Customize Sidebar lists every app package with it. */
+const ICON = path.join(root, 'res', 'drawable', 'ic_launcher.xml');
+
 /**
  * The manifest, written from app.json so the versions cannot drift. No launcher entry: the bridge
- * has no screen. The receiver is exported for the shell and guarded by DUMP, a permission the
- * shell holds and no installed app can get. <queries> makes PluginHost visible on Android 11.
+ * has no screen; it still has an icon, which Customize Sidebar shows (#260). The receiver is
+ * exported for the shell and guarded by DUMP, a permission the shell holds and no installed app can get. <queries> makes PluginHost visible on Android 11.
  */
 function manifest(file, {versionCode, versionName: name}) {
   fs.writeFileSync(
@@ -99,7 +103,8 @@ function manifest(file, {versionCode, versionName: name}) {
   <queries>
     <package android:name="com.ratta.supernote.pluginhost" />
   </queries>
-  <application android:label="Ink Tools Bridge" android:allowBackup="false" android:hasCode="true">
+  <application android:label="Ink Tools Bridge" android:icon="@drawable/ic_launcher"
+      android:allowBackup="false" android:hasCode="true">
     <receiver android:name=".CommandReceiver" android:exported="true"
         android:permission="android.permission.DUMP" />
   </application>
@@ -163,10 +168,14 @@ function buildApk() {
   ]);
   const manifestFile = path.join(work, 'AndroidManifest.xml');
   manifest(manifestFile, info);
+  const compiled = path.join(work, 'compiled');
+  fs.mkdirSync(compiled);
+  run(t.aapt2, ['compile', '-o', compiled, ICON]);
   const unsigned = path.join(work, 'unsigned.apk');
   run(t.aapt2, [
     'link', '--manifest', manifestFile, '-I', t.androidJar,
     '--min-sdk-version', MIN_API, '--target-sdk-version', TARGET_API, '-o', unsigned,
+    ...fs.readdirSync(compiled).map(name => path.join(compiled, name)),
   ]);
   run('zip', ['-q', '-j', unsigned, path.join(dex, 'classes.dex')]);
   const aligned = path.join(work, 'aligned.apk');
@@ -181,6 +190,10 @@ function buildApk() {
   const badging = execFileSync(t.aapt2, ['dump', 'badging', apk], {encoding: 'utf8'});
   if (!badging.includes(`package: name='${PACKAGE}'`)) {
     throw Error(`the APK is not ${PACKAGE}:\n${badging}`);
+  }
+  const problems = badgingProblems(badging, 0);
+  if (problems.length > 0) {
+    throw Error(`inktools-bridge: ${problems.join('; ')}:\n${badging}`);
   }
   fs.rmSync(work, {recursive: true, force: true});
   const keyName = key.stable ? 'the stable key' : 'the local debug key';
@@ -199,7 +212,7 @@ function test() {
     for (const name of TESTS) {
       run(jdkTool('java'), ['-cp', classes, `${PACKAGE}.${name}`]);
     }
-    run(process.execPath, ['--test', path.join(__dirname, 'signing.test.cjs')]);
+    run(process.execPath, ['--test', path.join(__dirname, 'signing.test.cjs'), path.join(__dirname, 'badging.test.cjs')]);
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
   }
