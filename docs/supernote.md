@@ -693,6 +693,16 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   ADB was off (`service.adb.tcp.port` empty, `settings global adb_wifi_enabled` 0). For a few
   seconds after `inkctl wifi on`, `adb -s <serial>` over USB answers «device not found» while adbd
   restarts in TCP mode [measured, 2026-11-17, [#1](https://github.com/martonpaulo/ink-tools/issues/1), [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- Android 11's Wireless debugging (`settings put global adb_wifi_enabled 1`, Developer options on)
+  works on the Nomad but does not survive a restart: at boot adbd logs `persist.adb.tls_server.enable
+  changed to 0` and `adb wifi stopped`, and `adb_wifi_enabled` reads 0. Turning it on asks once per
+  Wi-Fi network («Allow wireless debugging on this network?», with «Always allow on this network»
+  unchecked by default); once that box is checked, the setting turns on with no dialog. Its port is
+  new each time (40231, then 43029) and the Mac finds it with `adb mdns services`
+  (`_adb-tls-connect._tcp`). `adb connect` to it worked with no pairing code, because the Nomad's
+  adbd requires no authentication at all (`ro.adb.secure` 0, adbd logs `authentication not
+  required`) [measured, 2026-11-25, Nomad, firmware Chauvet.E103.2610191001.2559,
+  [#1](https://github.com/martonpaulo/ink-tools/issues/1)].
 - The tablet sleeps between long steps (`dumpsys power` shows `mWakefulness=Asleep`), and a press
   then does nothing; `input keyevent 224` (WAKEUP) before a step wakes it [measured, 2026-11-17,
   [#214](https://github.com/martonpaulo/ink-tools/issues/214)].

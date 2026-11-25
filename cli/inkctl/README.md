@@ -120,13 +120,13 @@ copy. `inkctl google login` keeps the Google sign-in in the login Keychain, serv
 
 ## Limitations
 
-- **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet.
+- **Turned on by hand.** Wi-Fi ADB needs one USB command, and again after each restart of the tablet. Android 11's Wireless debugging does not avoid it: the system turns it off at every boot, and its port changes each time it starts (measured on a Nomad, firmware Chauvet.E103.2610191001.2559, [#1](https://github.com/martonpaulo/ink-tools/issues/1)).
 - **A sleeping tablet may not answer.** With the global setting `wifi_sleep_policy` at `2`, a Manta on firmware 3.31.45 kept answering while asleep for the 15 minutes measured, and lost 1% of battery with one port check a minute. A longer sleep is not measured. The error says whether the tablet is asleep, restarted, or off the network, and names what restores it. A stale local `adb` server is restarted by the command when the port still answers.
 - **A locked tablet is not tested.** The owner runs the tablet with no lock code, so what `input keyevent WAKEUP` and `screencap` do behind a lock screen is not known. The command never bypasses a lock code or PIN.
 - **Changing a plugin needs the Ink Tools bridge app, or the screen.** `adb` cannot call PluginHost's settings service, so a small sideloaded app does ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). With it, `plugin install` and `plugin uninstall` touch no screen (`"route": "bridge"`), and `enable`, `disable` and `allow` work; without it, the install, the permissions and the uninstall press named elements and stop on a screen they do not expect. The bridge route is not yet run on the tablet.
 - **Files sync by themselves.** On firmware 3.31.45 the tablet's own watcher picks up a copied file, and Android refuses the app's sync broadcast from ADB, so there is no `sync file` command.
 - **Private interfaces.** The intents and broadcasts are not documented by Ratta. A firmware update can change them, so run `inkctl doctor` after one. It proves a call exists, not that it still works.
-- **ADB has wide access.** ADB accepts only computers the tablet has authorized. One of those computers can read and delete every note, and Wi-Fi mode opens a port on your network until `inkctl wifi off`. See [`SECURITY.md`](SECURITY.md).
+- **ADB has wide access.** The Nomad's ADB asks no computer for authorization (`ro.adb.secure` is 0, measured on firmware Chauvet.E103.2610191001.2559, [#1](https://github.com/martonpaulo/ink-tools/issues/1)): over the cable, and over Wi-Fi while it is on, any computer can read and delete every note, and Wi-Fi mode opens a port on your network until `inkctl wifi off`. See [`SECURITY.md`](SECURITY.md).
 
 <br />
 
