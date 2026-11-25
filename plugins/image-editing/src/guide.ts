@@ -12,7 +12,7 @@
 import type {Rect} from '@ink-tools/ink-core';
 import {
   batchUpdatePageElements,
-  emrRange,
+  readEmrRange,
   EmrRange,
   emrToPage,
   getCurrentFilePath,
@@ -76,15 +76,15 @@ export function splitGuides(elements: object[], reasons: GuideReasons): Guided |
  * units); a lasso read is taken to give them too [inference, #132], so EMR units are caught as a
  * pen-up stroke's are: a point off the page.
  */
-export function pagePoints(
+export async function pagePoints(
   points: readonly PenPoint[],
   size: Size,
-  range: () => Result<EmrRange>,
-): Result<{points: PenPoint[]; emr: boolean}> {
+  range: () => Promise<Result<EmrRange>>,
+): Promise<Result<{points: PenPoint[]; emr: boolean}>> {
   if (!offPage(points, size)) {
     return {ok: true, value: {points: [...points], emr: false}};
   }
-  const emr = range();
+  const emr = await range();
   return emr.ok
     ? {ok: true, value: {points: emrToPage(points, size, emr.value), emr: true}}
     : emr;
@@ -96,7 +96,8 @@ export type GuideDeps = {
   pageNum: () => Promise<Result<number>>;
   pageSize: (note: string, page: number) => Promise<Result<Size>>;
   points: (element: object) => Promise<Result<PenPoint[]>>;
-  range: (size: Size) => Result<EmrRange>;
+  /** The EMR range of the screen, read through its display size (#269). */
+  range: () => Promise<Result<EmrRange>>;
   remove: (nums: number[], page: number) => Promise<Result<boolean>>;
   recycle: (element: object) => Promise<unknown>;
   lasso: (rect: Rect) => Promise<Result<boolean>>;
@@ -109,7 +110,7 @@ export const GUIDE_DEVICE: GuideDeps = {
   pageNum: getCurrentPageNum,
   pageSize: getPageSize,
   points: strokePoints,
-  range: emrRange,
+  range: readEmrRange,
   // An empty insert list: batchUpdatePageElements only deletes [inference, #132].
   remove: (nums, page) => batchUpdatePageElements(nums, [], page),
   recycle: recycleElement,
@@ -179,7 +180,7 @@ async function guided(
     if (!read.ok) {
       return {kind: 'failed', why: why('stroke points', read)};
     }
-    const onPage = pagePoints(read.value, size.value, () => deps.range(size.value));
+    const onPage = await pagePoints(read.value, size.value, deps.range);
     if (!onPage.ok) {
       return {kind: 'failed', why: why('EMR range', onPage)};
     }

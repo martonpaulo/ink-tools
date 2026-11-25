@@ -60,7 +60,7 @@ function world(lassoed: object[] = [picture(), stroke(5), stroke(6)]) {
     pageNum: async () => ok(0),
     pageSize: async () => ok(PAGE),
     points: async element => ok(strokes.get(element) ?? SCRIBBLE),
-    range: () => ok({maxX: 21632, maxY: 16224}),
+    range: async () => ok({maxX: 21632, maxY: 16224, display: {width: 1920, height: 2560}}),
     remove: jest.fn(async (nums: number[]) => {
       calls.push(`delete ${nums.join(',')}`);
       return ok(true);

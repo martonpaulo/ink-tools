@@ -8,7 +8,7 @@ import {PluginCommAPI, PointUtils} from 'sn-plugin-lib';
 import type {TextBoxInput} from './note';
 import {createElement, type Size} from './page';
 import type {PenPoint} from './pen';
-import {attempt, fail, ok, Result, THROWN_CODE} from './result';
+import {attempt, fail, fromResponse, ok, Result, THROWN_CODE} from './result';
 
 /** A native accessor of an element's per-point data (sn-plugin-lib 0.2.3, ElementDataAccessor). */
 type Accessor<T> = {
@@ -194,19 +194,56 @@ export async function rebuildStroke(
   }
 }
 
-/** The EMR digitizer's largest x and y for a page size (sn-plugin-lib 0.2.3, PointUtils). */
-export type EmrRange = {maxX: number; maxY: number};
+/**
+ * The screen's size in pixels (#269): `PluginCommAPI.getPageDisplaySize`, which sn-plugin-lib 0.2.3
+ * marks deprecated for getPageSize. The two differ on a page made for another Supernote model: the
+ * host scales such a page to fill the screen, and the pen's EMR points follow the screen, so they
+ * convert with this size (Snap 0.9.4's measured fact; the device round confirms the call).
+ * An answer that is not a size in whole pixels is a failure, never a default size.
+ */
+export function getDisplaySize(): Promise<Result<Size>> {
+  return attempt(() => PluginCommAPI.getPageDisplaySize(), toSize);
+}
+
+function toSize(raw: unknown): Result<Size> {
+  const answer = fromResponse<unknown>(raw);
+  if (!answer.ok) {
+    return answer;
+  }
+  const size = answer.value as Partial<Size> | null;
+  const whole = (side: unknown) => Number.isInteger(side) && (side as number) > 0;
+  return size !== null && typeof size === 'object' && whole(size.width) && whole(size.height)
+    ? ok({width: size.width as number, height: size.height as number})
+    : fail(THROWN_CODE, `expected a size in pixels, got ${JSON.stringify(answer.value)}`);
+}
 
 /**
- * The SDK's own EMR range for a page size (#206): `PointUtils.getRealMaxX` and `getRealMaxY`, which
- * answer 21632 x 16224 for the Manta's 1920 x 2560 page and throw for a page size they do not know.
+ * The EMR digitizer's largest x and y (sn-plugin-lib 0.2.3, PointUtils), and the screen size they
+ * span: the pen follows the screen, whatever the page (#269).
  */
-export function emrRange(size: Size): Result<EmrRange> {
+export type EmrRange = {maxX: number; maxY: number; display: Size};
+
+/**
+ * The SDK's own EMR range for the screen's size (#206, #269), from getDisplaySize:
+ * `PointUtils.getRealMaxX` and `getRealMaxY`, which answer 21632 x 16224 for the Manta's
+ * 1920 x 2560 screen and throw for a size they do not know.
+ */
+export function emrRange(display: Size): Result<EmrRange> {
   try {
-    return ok({maxX: PointUtils.getRealMaxX(size), maxY: PointUtils.getRealMaxY(size)});
+    return ok({
+      maxX: PointUtils.getRealMaxX(display),
+      maxY: PointUtils.getRealMaxY(display),
+      display: {width: display.width, height: display.height},
+    });
   } catch (error) {
     return thrown(error);
   }
+}
+
+/** The EMR range of the screen the pen writes on (#269): getDisplaySize, then emrRange. */
+export async function readEmrRange(): Promise<Result<EmrRange>> {
+  const display = await getDisplaySize();
+  return display.ok ? emrRange(display.value) : display;
 }
 
 /**
@@ -221,20 +258,26 @@ export function offPage(points: readonly PenPoint[], size: Size): boolean {
 }
 
 /**
- * EMR points as page pixels (#206): the formula of `PointUtils.emrPoint2Android` in sn-plugin-lib
- * 0.2.3, run here over a whole stroke so its argument check does not run per point. The EMR axes
- * are turned against the page: EMR x runs down the page and EMR y runs from the right edge to the
- * left, each scaled by the range over the page side minus one.
+ * EMR points as page pixels (#206, #269). First screen pixels: the formula of
+ * `PointUtils.emrPoint2Android` in sn-plugin-lib 0.2.3 over the range's screen size, run here over a
+ * whole stroke so its argument check does not run per point. The EMR axes are turned against the
+ * screen: EMR x runs down and EMR y runs from the right edge to the left, each scaled by the range
+ * over the screen side minus one. Then page pixels: a page made for another Supernote model fills
+ * the screen, so each side scales by the page side over the screen side; a page of the screen's own
+ * size gives the screen pixels unchanged.
  */
 export function emrToPage(
   points: readonly PenPoint[],
   size: Size,
   range: EmrRange,
 ): PenPoint[] {
-  const perPxDown = range.maxX / (size.height - 1);
-  const perPxAcross = range.maxY / (size.width - 1);
+  const {display} = range;
+  const perPxDown = range.maxX / (display.height - 1);
+  const perPxAcross = range.maxY / (display.width - 1);
+  const across = size.width / display.width;
+  const down = size.height / display.height;
   return points.map(({x, y}) => ({
-    x: size.width - 1 - y / perPxAcross,
-    y: x / perPxDown,
+    x: (display.width - 1 - y / perPxAcross) * across,
+    y: (x / perPxDown) * down,
   }));
 }

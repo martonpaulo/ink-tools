@@ -11,7 +11,7 @@ import {DEFAULT_WORD_OPTIONS, Point, rectOf} from '../src/words';
 import {fakeTablet} from '../test-support/host';
 
 const PAGE = {width: 1920, height: 2560};
-const RANGE = {maxX: 21632, maxY: 16224};
+const RANGE = {maxX: 21632, maxY: 16224, display: PAGE};
 
 /** `PointUtils.androidPoint2Emr` of sn-plugin-lib 0.2.3, to write the synthetic EMR strokes. */
 function toEmr({x, y}: Point): Point {
@@ -48,6 +48,14 @@ test('EMR points become the page pixels getElements reads', () => {
   expect(rect?.bottom).toBeCloseTo(1356, 6);
 });
 
+test('on an A6X page shown on a Manta, EMR points become the pixels of that page (#269)', () => {
+  const a6x = {width: 1404, height: 1872};
+  const emr = zigzag(CASA[0]).map(toEmr);
+  const rect = rectOf(emrToPage(emr, a6x, RANGE));
+  expect(rect?.left).toBeCloseTo((512 * 1404) / 1920, 6);
+  expect(rect?.top).toBeCloseTo((1297 * 1872) / 2560, 6);
+});
+
 test('page pixels are never taken for EMR', () => {
   expect(offPage(zigzag(CASA[0]), PAGE)).toBe(false);
 });
@@ -64,7 +72,7 @@ test('a word at the owner size in page pixels goes on', () => {
 test('a word written with EMR pen-up points converts, and undo keeps page pixels', async () => {
   const tablet = fakeTablet('casa');
   tablet.host.getPageSize = jest.fn(async () => ({ok: true as const, value: PAGE}));
-  tablet.host.emrRange = jest.fn(() => ({ok: true as const, value: RANGE}));
+  tablet.host.readEmrRange = jest.fn(async () => ({ok: true as const, value: RANGE}));
   const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
   converter.start();
   CASA.forEach((box, index) => {

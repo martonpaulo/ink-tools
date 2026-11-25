@@ -32,6 +32,7 @@ export const PluginCommAPI = mocks(
   'deleteLassoElements',
   'getCurrentFilePath',
   'getCurrentPageNum',
+  'getPageDisplaySize',
   'createElement',
   'insertPageElements',
   'getPenInfo',

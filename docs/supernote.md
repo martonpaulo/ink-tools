@@ -49,8 +49,15 @@ explained.
   raw 6627..7033 x 11625..12059 and converted to 493..544 x 784..832 page px with the formula of
   `PointUtils.emrPoint2Android` [measured, Real-Time Conversion 0.1.0 beta 2, 2026-11-17, firmware
   `Chauvet.E103.2610191001.2559`, [#206](https://github.com/martonpaulo/ink-tools/issues/206)].
-  A plugin converts them once, with the page size `getPageSize` gives (1920 x 2560 on the owner's
-  tablet).
+  A plugin converts them once, through `sn-adapter`'s `readEmrRange` and `emrToPage`.
+- EMR points follow the screen, whatever the page: they convert to screen pixels with the display
+  size, and a page made for another Supernote model (an A5X or A6X page, 1404 x 1872, on a Manta)
+  is scaled to fill the screen, so screen pixels scale to the page's own by page side over screen
+  side. Converting with the page size alone put a shape 516 px to the left on such a page
+  [reported, Snap 0.9.4 release notes, a measured fact; not yet seen on our tablets,
+  [#269](https://github.com/martonpaulo/ink-tools/issues/269)]. `sn-adapter` reads the display
+  size with `PluginCommAPI.getPageDisplaySize`, deprecated in sn-plugin-lib 0.2.3 for `getPageSize`
+  but the one call that answers the screen [inference; a device round confirms it on such a note].
 - `recognizeElements` accepts only the page's own elements, from `getElements`: on the pen-up
   elements it failed for every word with «Recognition failed. Please try again!» [measured, beta
   2]; on the same strokes read from the page it answered («converted 4 characters from 4 strokes»)

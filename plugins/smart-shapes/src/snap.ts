@@ -22,7 +22,8 @@ export type SnapHost = {
   getCurrentPageNum(): Promise<Result<number>>;
   getPageSize(path: string, page: number): Promise<Result<Size>>;
   offPage(points: readonly PenPoint[], size: Size): boolean;
-  emrRange(size: Size): Result<EmrRange>;
+  /** The EMR range of the screen, read through its display size (#269). */
+  readEmrRange(): Promise<Result<EmrRange>>;
   emrToPage(points: readonly PenPoint[], size: Size, range: EmrRange): PenPoint[];
   getPenInfo(): Promise<Result<PenInfo>>;
   getLassoRect(): Promise<Result<Rect>>;
@@ -152,7 +153,7 @@ export async function handleStroke(host: SnapHost, element: object, pen: PenStat
   }
   let points = raw.value;
   if (host.offPage(points, size.value)) {
-    const range = host.emrRange(size.value);
+    const range = await host.readEmrRange();
     if (!range.ok) {
       host.log(`EMR range: ${range.message}`);
       return 'failed';

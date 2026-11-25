@@ -48,7 +48,8 @@ export type ConvertHost = {
   getCurrentFilePath(): Promise<Result<string>>;
   getCurrentPageNum(): Promise<Result<number>>;
   getPageSize(path: string, page: number): Promise<Result<Size>>;
-  emrRange(size: Size): Result<EmrRange>;
+  /** The EMR range of the screen, read through its display size (#269). */
+  readEmrRange(): Promise<Result<EmrRange>>;
   recognizeElements(elements: object[], size: Size): Promise<Result<string>>;
   getElements(page: number, path: string): Promise<Result<object[]>>;
   createTextBox(box: TextBoxInput): Promise<Result<object>>;
@@ -219,7 +220,7 @@ export class Converter {
       return fail(size.code, `page size: ${size.message}`);
     }
     if (!this.emr && offPage(raw, size.value)) {
-      const range = this.host.emrRange(size.value);
+      const range = await this.host.readEmrRange();
       if (!range.ok) {
         return fail(range.code, `EMR range: ${range.message}`);
       }

@@ -27,7 +27,7 @@ function fakeHost(others = 0) {
     getCurrentPageNum: jest.fn(async () => ok(0)),
     getPageSize: jest.fn(async () => ok({width: 1404, height: 1872})),
     offPage: jest.fn(() => false),
-    emrRange: jest.fn(),
+    readEmrRange: jest.fn(),
     emrToPage: jest.fn(),
     getPenInfo: jest.fn(async () => ok({type: INK_PEN, color: 0, width: 500})),
     getLassoRect: jest.fn((): ReturnType<SnapHost['getLassoRect']> => Promise.resolve(fail(904, 'no lasso'))),
@@ -107,7 +107,7 @@ test('off, an open lasso, a lasso path or refused access change nothing', async 
 test('EMR points from the pen-up event are turned into page pixels first', async () => {
   const host = fakeHost();
   host.offPage.mockReturnValue(true);
-  host.emrRange.mockReturnValue(ok({maxX: 1, maxY: 1}));
+  host.readEmrRange.mockResolvedValue(ok({maxX: 1, maxY: 1, display: {width: 1920, height: 2560}}));
   host.emrToPage.mockReturnValue(CIRCLE);
   expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('circle (lasso)');
   expect(host.emrToPage).toHaveBeenCalledTimes(1);

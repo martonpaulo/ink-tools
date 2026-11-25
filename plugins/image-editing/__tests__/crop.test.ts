@@ -65,17 +65,25 @@ test('the lasso must be one picture and at least one stroke, nothing else', () =
   expect(split).toEqual({picture: RECT, guides: [stroke(5), stroke(6)]});
 });
 
-test('page pixels stay as they are; points off the page are taken as EMR', () => {
-  const range = jest.fn(() => ok({maxX: 21632, maxY: 16224}));
-  expect(pagePoints(RECTANGLE, PAGE, range)).toEqual(
+test('page pixels stay as they are; points off the page are taken as EMR', async () => {
+  const range = jest.fn(async () => ok({maxX: 21632, maxY: 16224, display: {width: 1920, height: 2560}}));
+  expect(await pagePoints(RECTANGLE, PAGE, range)).toEqual(
     ok({points: RECTANGLE, emr: false}),
   );
   expect(range).not.toHaveBeenCalled();
-  const emr = pagePoints([{x: 10816, y: 8112}], PAGE, range);
+  const emr = await pagePoints([{x: 10816, y: 8112}], PAGE, range);
   expect(emr.ok && emr.value.emr).toBe(true);
   const [point] = emr.ok ? emr.value.points : [];
   expect(Math.round(point.x)).toBe(960);
   expect(Math.round(point.y)).toBe(1280);
+});
+
+test('a guide on an A6X page shown on a Manta lands at the page pixel under the pen (#269)', async () => {
+  const range = async () => ok({maxX: 21632, maxY: 16224, display: {width: 1920, height: 2560}});
+  const emr = await pagePoints([{x: 10816, y: 8112}], {width: 1404, height: 1872}, range);
+  const [point] = emr.ok ? emr.value.points : [];
+  expect(Math.round(point.x)).toBe(702);
+  expect(Math.round(point.y)).toBe(936);
 });
 
 /** A lasso of the picture and the rectangle, and a page that records each write. */
@@ -87,7 +95,7 @@ function world(lassoed: object[] = [picture(), stroke(5)]) {
     pageNum: async () => ok(0),
     pageSize: async () => ok(PAGE),
     points: async () => ok(RECTANGLE),
-    range: () => ok({maxX: 21632, maxY: 16224}),
+    range: async () => ok({maxX: 21632, maxY: 16224, display: {width: 1920, height: 2560}}),
     remove: jest.fn(async (nums: number[]) => {
       calls.push(`delete ${nums.join(',')}`);
       return ok(true);

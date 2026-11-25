@@ -79,7 +79,7 @@ export function fakeTablet(answer = 'café') {
     getCurrentPageNum: jest.fn(async () => ok(0)),
     getPageSize: jest.fn(async () => ok({width: 1404, height: 1872})),
     // A stroke off the page asks for it; the EMR tests give the SDK's range for their page.
-    emrRange: jest.fn(() => fail(THROWN_CODE, 'the fake tablet has no EMR range')),
+    readEmrRange: jest.fn(async () => fail(THROWN_CODE, 'the fake tablet has no EMR range')),
     // As on the tablet (#206): recognition reads each element's points as page pixels at `size`,
     // so ink off the page (a pen-up element's EMR units) fails with the device's own message.
     recognizeElements: jest.fn(async (elements: object[], size: {width: number; height: number}) =>
