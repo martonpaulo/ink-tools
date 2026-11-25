@@ -1,5 +1,5 @@
 {
- "about": "Every Ink Tools icon on the tablet, drawn on the 48 x 48 grid of the Supernote's native icons (native.json): outline strokes only, no fill, round caps and joins, centerlines within 4 to 44, so the stroke outline stays within 2 to 46. A plugin icon is written with native.json's padding around the grid, so it keeps the native toolbar icons' margin. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
+ "about": "Every Ink Tools icon on the tablet, built from Tabler Icons outline glyphs (design/icons/tabler.json, MIT, NOTICE.md): each icon names one Tabler glyph for its meaning, or places two or more (a glyph's `scale` about the 24 grid's origin, then `at`, its offset). A plugin icon is written on the 24 grid with native.json's padding and stroke, so its stroke and margin are the native toolbar icons'; an app's launcher icon is the same drawing doubled onto the native launcher icons' 48 grid. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
  "sheet": {
   "columns": 8,
   "cellWidth": 120,
@@ -17,48 +17,36 @@
   {
    "out": "apps/handwriting-language/res/drawable/ic_launcher",
    "kind": "app",
-   "paths": [
-    "M8 6 H40 A4 4 0 0 1 44 10 V30 A4 4 0 0 1 40 34 H22 L12 44 V34 H8 A4 4 0 0 1 4 30 V10 A4 4 0 0 1 8 6 Z",
-    "M11 28 L17 12 L23 28 M13.5 22 H20.5",
-    "M27 24 C29 16 32 16 34 24 C35 28 37 27 38 22"
+   "tabler": [
+    "language"
    ]
   },
   {
    "out": "apps/inktools-bridge/res/drawable/ic_launcher",
    "kind": "app",
-   "paths": [
-    "M4 32 H44",
-    "M12 8 V42",
-    "M36 8 V42",
-    "M12 8 C16 28 32 28 36 8",
-    "M4 26 L12 8",
-    "M36 8 L44 26"
+   "tabler": [
+    "plug-connected"
    ]
   },
   {
    "out": "plugins/account-sync/assets/icon",
    "kind": "plugin",
-   "paths": [
-    "M14 36 C8 36 4 32 4 27 C4 22 8 19 13 19 C14 12 19 8 25 8 C32 8 37 13 37 19 C41 19 44 23 44 28 C44 33 40 36 36 36 Z",
-    "M24 18 V31 M18 26 L24 32 L30 26"
+   "tabler": [
+    "calendar-repeat"
    ]
   },
   {
    "out": "plugins/device-transfer/assets/icon",
    "kind": "plugin",
-   "paths": [
-    "M4 14 H11 V38 H4 Z",
-    "M17.5 24 H25 M21.5 20 L25.5 24 L21.5 28",
-    "M31 10 H44 V28 H31 Z",
-    "M37.5 28 V36 M32 36 H43"
+   "tabler": [
+    "arrows-exchange"
    ]
   },
   {
    "out": "plugins/image-editing/assets/icon",
    "kind": "plugin",
-   "paths": [
-    "M14 4 V34 H44",
-    "M4 14 H34 V44"
+   "tabler": [
+    "crop"
    ]
   },
   {
@@ -67,235 +55,394 @@
    "extraPng": [
     512
    ],
-   "paths": [
-    "M8 12 H28 A4 4 0 0 1 32 16 V38 A4 4 0 0 1 28 42 H8 A4 4 0 0 1 4 38 V16 A4 4 0 0 1 8 12 Z",
-    "M5 36 L13 27 L19 33 L22 30 L31 38",
-    "M36 6 L42 12 L26 28 L19 30 L21 23 Z"
+   "tabler": [
+    "wand"
    ]
   },
   {
    "out": "plugins/plugin-diagnostics/assets/icon",
    "kind": "plugin",
-   "paths": [
-    "M44 24 A20 20 0 1 1 4 24 A20 20 0 1 1 44 24",
-    "M11 25 H16 L20 16 L26 33 L30 25 H37"
+   "tabler": [
+    "stethoscope"
    ]
   },
   {
    "out": "plugins/real-time-conversion/assets/convert",
    "kind": "plugin",
-   "paths": [
-    "M4 27 C6 17 9 17 10.5 24 C12 31 15 31 17 21",
-    "M21 24 H29.5 M25 19.5 L29.5 24 L25 28.5",
-    "M34 10 H44 M39 10 V38"
+   "tabler": [
+    "text-recognition"
    ]
   },
   {
    "out": "plugins/smart-shapes/assets/shapes",
    "kind": "plugin",
-   "paths": [
-    "M22 14 A8 8 0 1 1 6 14 A8 8 0 1 1 22 14",
-    "M28 6 H42 V20 H28 Z",
-    "M14 28 L22 42 H6 Z",
-    "M28 42 L42 28 M32 28 H42 V38"
+   "tabler": [
+    "triangle-square-circle"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/icon",
    "kind": "plugin",
-   "paths": [
-    "M34 20 A14 14 0 1 1 6 20 A14 14 0 1 1 34 20",
-    "M30 30 L43 43",
-    "M13 22 C15 16 18 16 20 22 C22 28 25 27 27 20"
+   "tabler": [
+    "zoom-question"
    ]
   },
   {
    "out": "plugins/device-transfer/assets/send-page",
    "kind": "plugin",
-   "paths": [
-    "M6 6 H20 L26 12 V42 H6 Z",
-    "M20 6 V12 H26",
-    "M30 24 H44 M38 18 L44 24 L38 30"
+   "tabler": [
+    "file-export"
    ]
   },
   {
    "out": "plugins/device-transfer/assets/receive",
    "kind": "plugin",
-   "paths": [
-    "M24 6 V28 M14 20 L24 30 L34 20",
-    "M6 30 V42 H42 V30"
+   "tabler": [
+    "download"
    ]
   },
   {
    "out": "plugins/device-transfer/assets/send-selection",
    "kind": "plugin",
-   "paths": [
-    "M4 12 V4 H12",
-    "M20 4 H28 V12",
-    "M4 20 V28 H12",
-    "M12 38 H44 M38 32 L44 38 L38 44"
+   "tabler": [
+    {
+     "name": "marquee-2",
+     "scale": 0.65,
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "arrow-narrow-right",
+     "scale": 0.6,
+     "at": [
+      10.1,
+      10.8
+     ]
+    }
    ]
   },
   {
    "out": "plugins/device-transfer/assets/send-text",
    "kind": "plugin",
-   "paths": [
-    "M4 6 H30 M17 6 V30",
-    "M20 38 H44 M38 32 L44 38 L38 44"
+   "tabler": [
+    {
+     "name": "align-left",
+     "scale": 0.65,
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "arrow-narrow-right",
+     "scale": 0.6,
+     "at": [
+      10.1,
+      10.8
+     ]
+    }
    ]
   },
   {
    "out": "plugins/image-editing/assets/editor",
    "kind": "plugin",
-   "paths": [
-    "M6 42 L30 18",
-    "M34 6 V18 M28 12 H40",
-    "M12 10 V16 M9 13 H15",
-    "M38 28 V36 M34 32 H42"
+   "tabler": [
+    "photo-edit"
    ]
   },
   {
    "out": "plugins/ink2pic/assets/choose",
    "kind": "plugin",
-   "paths": [
-    "M6 6 H20 V20 H6 Z",
-    "M28 6 H42 V20 H28 Z",
-    "M6 28 H20 V42 H6 Z",
-    "M28 36 L34 42 L44 28"
+   "tabler": [
+    "library-photo"
    ]
   },
   {
    "out": "plugins/ink2pic/assets/definition",
    "kind": "plugin",
-   "paths": [
-    "M4 38 L14 8 L24 38 M7.5 28 H20.5",
-    "M42 32 A6 6 0 1 1 30 32 A6 6 0 1 1 42 32 M42 26 V38"
+   "tabler": [
+    "book"
    ]
   },
   {
    "out": "plugins/ink2pic/assets/insert",
    "kind": "plugin",
-   "paths": [
-    "M8 14 H28 A4 4 0 0 1 32 18 V38 A4 4 0 0 1 28 42 H8 A4 4 0 0 1 4 38 V18 A4 4 0 0 1 8 14 Z",
-    "M5 38 L13 29 L19 35 L22 32 L31 40",
-    "M37 4 V18 M30 11 H44"
+   "tabler": [
+    "photo-star"
    ]
   },
   {
    "out": "plugins/real-time-conversion/assets/mode-on",
    "kind": "plugin",
-   "paths": [
-    "M10 4 H38 A6 6 0 0 1 44 10 V38 A6 6 0 0 1 38 44 H10 A6 6 0 0 1 4 38 V10 A6 6 0 0 1 10 4 Z",
-    "M15 15 H33 M24 15 V35"
+   "tabler": [
+    "typography"
    ]
   },
   {
    "out": "plugins/real-time-conversion/assets/mode-off",
    "kind": "plugin",
-   "paths": [
-    "M4 14 V4 H14",
-    "M34 4 H44 V14",
-    "M44 34 V44 H34",
-    "M14 44 H4 V34",
-    "M15 15 H33 M24 15 V35"
+   "tabler": [
+    "typography-off"
    ]
   },
   {
    "out": "plugins/real-time-conversion/assets/undo",
    "kind": "plugin",
-   "paths": [
-    "M16 8 L6 18 L16 28",
-    "M6 18 H28 C37 18 42 23 42 30 C42 37 37 42 28 42 H16"
+   "tabler": [
+    "arrow-back-up"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/choose",
    "kind": "plugin",
-   "paths": [
-    "M5 10 L9 14 L15 6",
-    "M5 20 H13 V28 H5 Z",
-    "M5 34 H13 V42 H5 Z",
-    "M22 10 H44 M22 24 H44 M22 38 H44"
+   "tabler": [
+    "layout-grid"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/definition",
    "kind": "plugin",
-   "paths": [
-    "M24 12 C18 8 10 8 4 10 V38 C10 36 18 36 24 40 C30 36 38 36 44 38 V10 C38 8 30 8 24 12 Z",
-    "M24 12 V40",
-    "M10 20 H18"
+   "tabler": [
+    "book-2"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/image",
    "kind": "plugin",
-   "paths": [
-    "M4 16 H13 L17 9 H31 L35 16 H44 V40 H4 Z",
-    "M31 27 A7 7 0 1 1 17 27 A7 7 0 1 1 31 27"
+   "tabler": [
+    "camera"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/sticker",
    "kind": "plugin",
-   "paths": [
-    "M12 4 H36 A8 8 0 0 1 44 12 V28 L28 44 H12 A8 8 0 0 1 4 36 V12 A8 8 0 0 1 12 4 Z",
-    "M44 28 H32 A4 4 0 0 0 28 32 V44",
-    "M18 15 V17 M30 15 V17",
-    "M16 25 C20 31 28 31 32 25"
+   "tabler": [
+    "sticker-2"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/summary",
    "kind": "plugin",
-   "paths": [
-    "M8 4 H30 L40 14 V44 H8 Z",
-    "M30 4 V14 H40",
-    "M16 24 H32 M16 32 H32 M16 40 H24"
+   "tabler": [
+    "list-details"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-es-pt",
    "kind": "plugin",
-   "paths": [
-    "M12 5 H4 V19 H12 M4 12 H10",
-    "M27.5 7 C26 5 20 5 20 8.5 C20 12 28 11.44 28 15.5 C28 19 21.5 19 20.5 17.04",
-    "M39 7 V41 M34 36 L39 41 L44 36",
-    "M4 43 V29 H8.5 A3.5 3.5 0 0 1 8.5 36 H4",
-    "M20 29 H28 M24 29 V43"
+   "tabler": [
+    {
+     "name": "letter-e",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-s",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-p",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      12.6
+     ]
+    },
+    {
+     "name": "letter-t",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      12.6
+     ]
+    },
+    {
+     "name": "minus-vertical",
+     "scale": 0.875,
+     "at": [
+      -6.5,
+      -1.975
+     ]
+    },
+    {
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
+     "at": [
+      -2,
+      12.1
+     ]
+    }
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-pt-es",
    "kind": "plugin",
-   "paths": [
-    "M4 19 V5 H8.5 A3.5 3.5 0 0 1 8.5 12 H4",
-    "M20 5 H28 M24 5 V19",
-    "M39 7 V41 M34 36 L39 41 L44 36",
-    "M12 29 H4 V43 H12 M4 36 H10",
-    "M27.5 31 C26 29 20 29 20 32.5 C20 36 28 35.44 28 39.5 C28 43 21.5 43 20.5 41.04"
+   "tabler": [
+    {
+     "name": "letter-p",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-t",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-e",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      12.6
+     ]
+    },
+    {
+     "name": "letter-s",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      12.6
+     ]
+    },
+    {
+     "name": "minus-vertical",
+     "scale": 0.875,
+     "at": [
+      -6.5,
+      -1.975
+     ]
+    },
+    {
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
+     "at": [
+      -2,
+      12.1
+     ]
+    }
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-pt-zh",
    "kind": "plugin",
-   "paths": [
-    "M4 19 V5 H8.5 A3.5 3.5 0 0 1 8.5 12 H4",
-    "M20 5 H28 M24 5 V19",
-    "M39 7 V41 M34 36 L39 41 L44 36",
-    "M4 29 H12 L4 43 H12",
-    "M20 29 V43 M28 29 V43 M20 36 H28"
+   "tabler": [
+    {
+     "name": "letter-p",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-t",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-z",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      12.6
+     ]
+    },
+    {
+     "name": "letter-h",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      12.6
+     ]
+    },
+    {
+     "name": "minus-vertical",
+     "scale": 0.875,
+     "at": [
+      -6.5,
+      -1.975
+     ]
+    },
+    {
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
+     "at": [
+      -2,
+      12.1
+     ]
+    }
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-zh-pt",
    "kind": "plugin",
-   "paths": [
-    "M4 5 H12 L4 19 H12",
-    "M20 5 V19 M28 5 V19 M20 12 H28",
-    "M39 7 V41 M34 36 L39 41 L44 36",
-    "M4 43 V29 H8.5 A3.5 3.5 0 0 1 8.5 36 H4",
-    "M20 29 H28 M24 29 V43"
+   "tabler": [
+    {
+     "name": "letter-z",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-h",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      0.6
+     ]
+    },
+    {
+     "name": "letter-p",
+     "scale": 0.45,
+     "at": [
+      5.75,
+      12.6
+     ]
+    },
+    {
+     "name": "letter-t",
+     "scale": 0.45,
+     "at": [
+      13.25,
+      12.6
+     ]
+    },
+    {
+     "name": "minus-vertical",
+     "scale": 0.875,
+     "at": [
+      -6.5,
+      -1.975
+     ]
+    },
+    {
+     "name": "arrow-narrow-down",
+     "scale": 0.5,
+     "at": [
+      -2,
+      12.1
+     ]
+    }
    ]
   }
  ]

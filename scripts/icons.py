@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-"""Draw every Ink Tools icon in the Supernote's native outline style from one file (#271).
+"""Draw every Ink Tools icon in the Supernote's native outline style from Tabler Icons (#271).
 
-`design/icons/icons.json` holds each icon's stroke paths on the 48 x 48 grid of the native icons;
-`design/icons/native.json` holds the native measurements (stroke, colour, caps, extent). This script
-writes, for each icon, the SVG and the 96 x 96 PNG beside a plugin's button (or the vector XML of an
-app's launcher icon), so no icon drifts from its source.
+`design/icons/icons.json` names each icon's Tabler outline glyphs (one per meaning, or several placed
+side by side); `design/icons/tabler.json` keeps those glyphs from the pinned `@tabler/icons` package
+(MIT, NOTICE.md); `design/icons/native.json` holds the native measurements (stroke, colour, caps,
+margin). This script writes, for each icon, the SVG and the 96 x 96 PNG beside a plugin's button (or
+the vector XML of an app's launcher icon), so no icon drifts from its source.
 
     python3 scripts/icons.py            write every file and design/icons/sheet.png (needs rsvg-convert)
     python3 scripts/icons.py --check    fail when a written SVG or XML differs from its source
+    python3 scripts/icons.py --tabler DIR
+                                        refresh design/icons/tabler.json from an unpacked
+                                        @tabler/icons package of the pinned version
     python3 scripts/icons.py --sheet DIR [--native DIR]
-                                        write DIR/sheet.png: every icon at tablet size, beside the
-                                        SVGs in --native (drawn on the same grid) when given, and
+                                        write DIR/sheet.png: every icon at tablet size, after the
+                                        native SVGs and PNGs in --native when given, and
                                         sheet-light-<small|default|large>.png at 48, 96 and 192 px
 """
 import argparse
+import base64
 import json
 import re
 import subprocess
@@ -24,6 +29,7 @@ sys.dont_write_bytecode = True  # no __pycache__ beside the root scripts
 ROOT = Path(__file__).resolve().parent.parent
 SET = ROOT / "design" / "icons" / "icons.json"
 NATIVE = ROOT / "design" / "icons" / "native.json"
+TABLER = ROOT / "design" / "icons" / "tabler.json"
 PLUGIN_PX = 96
 SVG_NS = "http://www.w3.org/2000/svg"
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
@@ -37,21 +43,135 @@ def load(root=ROOT):
     return icons, native
 
 
-def view_box(native, pad=0):
-    """The 48 grid with `pad` grid units around it, as an SVG viewBox."""
-    side = native["vector"]["viewport"] + 2 * pad
-    return f"{-pad} {-pad} {side} {side}"
+def glyphs(root=ROOT):
+    """The Tabler store: {"version", "grid", "glyphs": {name: [path data]}, ...}."""
+    return json.loads((root / "design/icons/tabler.json").read_text())
 
 
-def svg_text(paths, native, size=PLUGIN_PX, pad=0):
+# An SVG path, read as commands: Tabler writes relative commands and number runs such as `-.657`.
+COMMAND = re.compile(r"([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)")
+NUMBER = re.compile(r"-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+ARITY = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "T": 2, "A": 7, "Z": 0}
+
+
+def absolute(d):
+    """Path `d` as [(command, numbers)] with absolute M L H V C Q A Z only: S and T become C and Q, so
+    the gate reads every coordinate where it lands."""
+    out, x, y, start, cubic, quad = [], 0.0, 0.0, (0.0, 0.0), None, None
+    for letter, args in COMMAND.findall(d):
+        up, rel = letter.upper(), letter.islower()
+        if up == "Z":
+            out.append(("Z", []))
+            (x, y), cubic, quad = start, None, None
+            continue
+        values = [float(n) for n in NUMBER.findall(args)]
+        size = ARITY[up]
+        for i in range(0, len(values), size):
+            v, ox, oy = values[i : i + size], (x if rel else 0.0), (y if rel else 0.0)
+            command = "L" if up == "M" and i else up
+            new_cubic = new_quad = None
+            if command in "ML":
+                x, y = v[0] + ox, v[1] + oy
+                out.append((command, [x, y]))
+                if command == "M":
+                    start = (x, y)
+            elif command == "H":
+                x = v[0] + ox
+                out.append(("H", [x]))
+            elif command == "V":
+                y = v[0] + oy
+                out.append(("V", [y]))
+            elif command in "CS":
+                # Pairs of x y, moved by the current point when relative; S's first control mirrors the last.
+                pairs = [(px + ox, py + oy) for px, py in zip(v[::2], v[1::2])]
+                mirror = (2 * x - cubic[0], 2 * y - cubic[1]) if cubic else (x, y)
+                first, second, (x, y) = [mirror] + pairs if command == "S" else pairs
+                out.append(("C", [*first, *second, x, y]))
+                new_cubic = second
+            elif command in "QT":
+                pairs = [(px + ox, py + oy) for px, py in zip(v[::2], v[1::2])]
+                mirror = (2 * x - quad[0], 2 * y - quad[1]) if quad else (x, y)
+                control, (x, y) = [mirror] + pairs if command == "T" else pairs
+                out.append(("Q", [*control, x, y]))
+                new_quad = control
+            elif command == "A":
+                *shape, ex, ey = v  # radii, angle and flags stay; the end point moves
+                x, y = ex + ox, ey + oy
+                out.append(("A", [*shape, x, y]))
+            cubic, quad = new_cubic, new_quad
+    return out
+
+
+def place(segments, scale=1.0, at=(0.0, 0.0)):
+    """Absolute segments scaled about the origin, then moved by `at`; an arc's radii scale, its angle
+    and flags stay."""
+    def x(v):
+        return v * scale + at[0]
+
+    def y(v):
+        return v * scale + at[1]
+
+    out = []
+    for command, v in segments:
+        if command == "H":
+            v = [x(v[0])]
+        elif command == "V":
+            v = [y(v[0])]
+        elif command == "A":
+            rx, ry, *turn, ex, ey = v
+            v = [rx * scale, ry * scale, *turn, x(ex), y(ey)]
+        else:
+            v = [x(n) if i % 2 == 0 else y(n) for i, n in enumerate(v)]
+        out.append((command, v))
+    return out
+
+
+def number(value):
+    text = f"{value:.3f}".rstrip("0").rstrip(".")
+    return "0" if text in ("-0", "") else text
+
+
+def path_text(segments):
+    return " ".join(command + " ".join(number(n) for n in v) for command, v in segments)
+
+
+def frame(kind, native):
+    """(grid, padding, stroke) of an icon kind: a plugin icon on Tabler's grid with the toolbar icons'
+    margin and stroke ratio, an app's launcher icon on the native launcher icons' 48 grid."""
+    if kind == "app":
+        v = native["vector"]
+        return v["viewport"], 0, v["strokeWidth"]
+    p = native["plugin"]
+    return p["grid"], p["padding"], p["strokeWidth"]
+
+
+def icon_paths(icon, native, store):
+    """The absolute stroke paths of an icon on its frame's grid, from its Tabler glyphs."""
+    grow = frame(icon["kind"], native)[0] / store["grid"]
+    out = []
+    for part in icon["tabler"]:
+        part = {"name": part} if isinstance(part, str) else part
+        for d in store["glyphs"][part["name"]]:
+            placed = place(absolute(d), part.get("scale", 1), part.get("at", (0, 0)))
+            out.append(path_text(place(placed, grow)))
+    return out
+
+
+def view_box(grid, pad=0):
+    """The grid with `pad` units around it, as an SVG viewBox."""
+    return f"{number(-pad)} {number(-pad)} {number(grid + 2 * pad)} {number(grid + 2 * pad)}"
+
+
+def svg_text(paths, native, size=PLUGIN_PX, kind="plugin"):
     v = native["vector"]
+    grid, pad, stroke = frame(kind, native)
     body = "\n".join(f'  <path d="{d}"/>' for d in paths)
     return (
-        f'<svg xmlns="{SVG_NS}" viewBox="{view_box(native, pad)}" '
+        f'<svg xmlns="{SVG_NS}" viewBox="{view_box(grid, pad)}" '
         f'width="{size}" height="{size}" fill="none" stroke="{v["strokeColor"]}" '
-        f'stroke-width="{v["strokeWidth"]}" stroke-linecap="{v["lineCap"]}" '
+        f'stroke-width="{number(stroke)}" stroke-linecap="{v["lineCap"]}" '
         f'stroke-linejoin="{v["lineJoin"]}">\n  <!-- Generated by scripts/icons.py from '
-        f"design/icons/icons.json (#271); edit that file. -->\n{body}\n</svg>\n"
+        f"design/icons/icons.json and Tabler Icons (MIT, NOTICE.md) (#271); edit icons.json. -->\n{body}\n</svg>\n"
     )
 
 
@@ -65,7 +185,7 @@ def xml_text(paths, native):
     )
     return (
         '<?xml version="1.0" encoding="utf-8"?>\n'
-        "<!-- Generated by scripts/icons.py from design/icons/icons.json (#271); edit that file. -->\n"
+        "<!-- Generated by scripts/icons.py from design/icons/icons.json and Tabler Icons (MIT, NOTICE.md) (#271); edit icons.json. -->\n"
         f'<vector xmlns:android="{ANDROID_NS}"\n'
         f'    android:width="{v["sizeDp"]}dp"\n    android:height="{v["sizeDp"]}dp"\n'
         f'    android:viewportWidth="{v["viewport"]}"\n    android:viewportHeight="{v["viewport"]}">\n{body}\n</vector>\n'
@@ -75,13 +195,33 @@ def xml_text(paths, native):
 def texts(root=ROOT):
     """{relative path: text} of every generated SVG and XML."""
     icons, native = load(root)
+    store = glyphs(root)
     out = {}
     for icon in icons:
+        paths = icon_paths(icon, native, store)
         if icon["kind"] == "app":
-            out[icon["out"] + ".xml"] = xml_text(icon["paths"], native)
+            out[icon["out"] + ".xml"] = xml_text(paths, native)
         else:
-            out[icon["out"] + ".svg"] = svg_text(icon["paths"], native, pad=native["plugin"]["padding"])
+            out[icon["out"] + ".svg"] = svg_text(paths, native)
     return out
+
+
+def vendor(package_dir, root=ROOT):
+    """Refresh tabler.json with exactly the glyphs icons.json names, from an unpacked @tabler/icons
+    package of the pinned version; a missing name or another version raises."""
+    package_dir = Path(package_dir)
+    store = glyphs(root)
+    version = json.loads((package_dir / "package.json").read_text())["version"]
+    if version != store["version"]:
+        raise SystemExit(f"icons: the package is {version}; tabler.json pins {store['version']}")
+    nodes = json.loads((package_dir / "tabler-nodes-outline.json").read_text())
+    icons, _ = load(root)
+    names = sorted({p if isinstance(p, str) else p["name"] for i in icons for p in i["tabler"]})
+    missing = [n for n in names if n not in nodes]
+    if missing:
+        raise SystemExit(f"icons: Tabler {version} has no {', '.join(missing)}")
+    store["glyphs"] = {n: [a["d"] for tag, a in nodes[n] if tag == "path"] for n in names}
+    (root / "design/icons/tabler.json").write_text(json.dumps(store, indent=1, ensure_ascii=False) + "\n")
 
 
 def render_png(svg, png, px):
@@ -118,15 +258,20 @@ def sheet(out_dir, native_dir=None, sizes=False):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     icons, native = load()
+    store = glyphs()
     layout = json.loads(SET.read_text())["sheet"]  # cell size, padding and caption position, in px
     cells = []
-    if native_dir:
-        for svg in sorted(Path(native_dir).glob("*.svg")):
-            cells.append(("native / " + svg.stem.removeprefix("native-"), svg.read_text()))
+    if native_dir:  # native launcher SVGs and native toolbar PNGs, each scaled to the cell
+        for file in sorted(Path(native_dir).glob("*.svg")) + sorted(Path(native_dir).glob("*.png")):
+            if file.suffix == ".svg":
+                art = file.read_text()
+            else:
+                data = base64.b64encode(file.read_bytes()).decode()
+                art = f'<svg width="{PLUGIN_PX}" height="{PLUGIN_PX}"><image width="{PLUGIN_PX}" height="{PLUGIN_PX}" href="data:image/png;base64,{data}"/></svg>'
+            cells.append(("native / " + file.stem.removeprefix("native-"), art))
     for icon in icons:
         parts_ = icon["out"].split("/")
-        pad = native["plugin"]["padding"] if icon["kind"] == "plugin" else 0
-        cells.append((f"{parts_[1]} / {parts_[-1]}", svg_text(icon["paths"], native, pad=pad)))
+        cells.append((f"{parts_[1]} / {parts_[-1]}", svg_text(icon_paths(icon, native, store), native, kind=icon["kind"])))
     rows = -(-len(cells) // layout["columns"])
     parts = [
         f'<svg xmlns="{SVG_NS}" width="{layout["columns"] * layout["cellWidth"]}" height="{rows * layout["cellHeight"]}">',
@@ -158,7 +303,11 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--sheet")
     ap.add_argument("--native")
+    ap.add_argument("--tabler")
     args = ap.parse_args(argv)
+    if args.tabler:
+        vendor(args.tabler)
+        return 0
     if args.check:
         stale = check()
         for rel in stale:

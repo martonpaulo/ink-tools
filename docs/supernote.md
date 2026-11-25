@@ -155,8 +155,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#271](https://github.com/martonpaulo/ink-tools/issues/271)]. `design/icons/native.json` records them and `design/icons/icons.json` draws every Ink Tools icon to them.
 - The Note app's toolbar and lasso icons are 64 px bitmaps with 4 px strokes whose ink keeps a
   median 11 px from the box on every side (17%) [measured, 2026-11-25, 71 icons of
-  `com.ratta.supernote.note` that draw on white, [#271](https://github.com/martonpaulo/ink-tools/issues/271)]. Each plugin icon keeps that margin:
-  it is drawn on the 48 grid and written with 10 grid units around it.
+  `com.ratta.supernote.note` that draw on white, [#271](https://github.com/martonpaulo/ink-tools/issues/271)]; 32 of their 41 single-stroke icons
+  measure 4 px across a stroke, anti-aliasing summed [measured, 2026-11-25]. Each plugin icon is a
+  Tabler glyph on its 24 grid with 5 units around it, stroke 2.125 of 34: the same stroke share and
+  at least that margin ([`decisions.md`](decisions.md#decision-index)).
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
   promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`

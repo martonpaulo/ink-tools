@@ -15,6 +15,8 @@ import icons  # noqa: E402
 
 ROOT = icons.ROOT
 ICONS, NATIVE = icons.load()
+STORE = icons.glyphs()
+PATHS = {icon["out"]: icons.icon_paths(icon, NATIVE, STORE) for icon in ICONS}
 V = NATIVE["vector"]
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 # Two icons whose black pixels overlap by more than this share of their union read alike at a glance.
@@ -26,8 +28,7 @@ STATE_PAIRS = {frozenset(("plugins/real-time-conversion/assets/mode-on", "plugin
 TRANSLATE = "plugins/word-lookup/assets/translate-"
 for _a, _b in (("es-pt", "zh-pt"), ("pt-es", "pt-zh")):
     STATE_PAIRS[frozenset((TRANSLATE + _a, TRANSLATE + _b))] = 0.85
-NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
-PAD = NATIVE["plugin"]["padding"]
+NUMBER = icons.NUMBER
 TOOLBAR = NATIVE["plugin"]["toolbar"]
 # The share of its box an icon keeps clear on every side: the native toolbar icons' for a plugin
 # icon, the native launcher icons' for an app's (owner review of the first sheet, #271).
@@ -35,8 +36,9 @@ MARGIN = {"plugin": TOOLBAR["inkMarginPx"] / TOOLBAR["sizePx"], "app": V["inkMar
 STEPS = 64  # points sampled along each curve or arc
 
 
-def vector_problems(root_element, android, pad=0):
+def vector_problems(root_element, android, kind="plugin"):
     """What breaks the native style in a parsed SVG (`android` False) or vector drawable (True)."""
+    grid, pad, stroke = icons.frame("app" if android else kind, NATIVE)
     problems = []
     attr = (lambda e, n: e.get(ANDROID + n)) if android else (lambda e, n: e.get(n))
     paths = [e for e in root_element.iter() if e.tag.split("}")[-1] == "path"]
@@ -47,8 +49,8 @@ def vector_problems(root_element, android, pad=0):
             problems.append("not a 48 dp icon on a 48 viewport")
         sources = paths
     else:
-        if root_element.get("viewBox") != icons.view_box(NATIVE, pad):
-            problems.append(f"viewBox is not the 48 grid with {pad} around it")
+        if root_element.get("viewBox") != icons.view_box(grid, pad):
+            problems.append(f"viewBox is not the {grid} grid with {pad} around it")
         sources = [root_element]
     for element in sources:
         fill = attr(element, "fillColor" if android else "fill")
@@ -60,7 +62,7 @@ def vector_problems(root_element, android, pad=0):
             problems.append(f"filled: {fill}")
         if color != V["strokeColor"]:
             problems.append(f"stroke colour {color}")
-        if width is None or float(width) != V["strokeWidth"]:
+        if width is None or float(width) != stroke:
             problems.append(f"stroke width {width}")
         if (cap, join) != (V["lineCap"], V["lineJoin"]):
             problems.append(f"caps {cap} joins {join}")
@@ -73,23 +75,10 @@ def vector_problems(root_element, android, pad=0):
     return problems
 
 
-def centerline_problems(paths):
-    """Absolute coordinates outside the native extent; relative moves are not used."""
-    problems = []
-    for d in paths:
-        if re.search(r"[a-z]", d.replace("e", "")):
-            problems.append(f"relative command in {d}")
-        for number in NUMBER.findall(d):
-            pass
-        # A, the arc flags and radii are not coordinates; every other command lists x y pairs, H and V one number.
-        for command, args in re.findall(r"([MLHVCQAZ])([^MLHVCQAZ]*)", d):
-            values = [float(n) for n in NUMBER.findall(args)]
-            if command == "A":
-                values = [v for i, v in enumerate(values) if i % 7 in (5, 6)]
-            for value in values:
-                if not V["centerlineMin"] <= value <= V["centerlineMax"]:
-                    problems.append(f"{value} is outside {V['centerlineMin']} to {V['centerlineMax']} in {d}")
-    return problems
+def absolute_problems(paths):
+    """Commands the gate cannot read where they land: relative ones, and S and T, whose control point
+    comes from the segment before."""
+    return [f"{c} in {d}" for d in paths for c in sorted(set(re.findall(r"[a-zST]", d.replace("e", ""))))]
 
 
 def arc_points(x1, y1, rx, ry, phi, large, sweep, x2, y2):
@@ -165,11 +154,14 @@ def outline_box(paths, stroke):
     return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
 
 
-def margin_problem(paths, kind, pad):
-    """None, or how the stroke outline comes nearer the box's edge than the native margin of `kind`."""
-    side = V["viewport"] + 2 * pad
-    left, top, right, bottom = outline_box(paths, V["strokeWidth"])
-    gap = min(left + pad, top + pad, V["viewport"] + pad - right, V["viewport"] + pad - bottom)
+def margin_problem(paths, kind, pad=None):
+    """None, or how the stroke outline comes nearer the box's edge than the native margin of `kind`;
+    `pad` overrides the frame's padding."""
+    grid, frame_pad, stroke = icons.frame(kind, NATIVE)
+    pad = frame_pad if pad is None else pad
+    side = grid + 2 * pad
+    left, top, right, bottom = outline_box(paths, stroke)
+    gap = min(left + pad, top + pad, grid + pad - right, grid + pad - bottom)
     need = MARGIN[kind] * side
     if gap < need - 1e-9:
         return f"the stroke comes {gap:.2f} of {side} from the edge; the native margin is {need:.2f}"
@@ -220,19 +212,38 @@ class Style(unittest.TestCase):
     def test_the_native_measurements_are_the_recorded_ones(self):
         self.assertEqual((V["strokeWidth"], V["viewport"], V["lineCap"]), (4, 48, "round"))
 
+    def test_a_plugin_icon_has_the_native_toolbar_stroke(self):
+        # The stroke's share of the box is the native toolbar icons' 4 of 64 (owner, 2026-11-25, #271).
+        grid, pad, stroke = icons.frame("plugin", NATIVE)
+        self.assertEqual(stroke / (grid + 2 * pad), TOOLBAR["strokePx"] / TOOLBAR["sizePx"])
+        self.assertEqual(grid, STORE["grid"])
+
+    def test_every_icon_is_built_from_the_pinned_tabler_glyphs(self):
+        names = {p if isinstance(p, str) else p["name"] for i in ICONS for p in i["tabler"]}
+        self.assertTrue(all(i["tabler"] for i in ICONS))
+        self.assertEqual(sorted(STORE["glyphs"]), sorted(names))  # no glyph missing, none unused
+        self.assertEqual((STORE["package"], STORE["version"]), ("@tabler/icons", "3.53.0"))
+
+    def test_relative_tabler_paths_become_absolute(self):
+        self.assertEqual(icons.path_text(icons.absolute("M7 10h14l-4 -4")), "M7 10 H21 L17 6")
+        self.assertEqual(icons.path_text(icons.absolute("M4 6v-1a1 1 0 0 1 1 -1h1m5 0h2")), "M4 6 V5 A1 1 0 0 1 5 4 H6 M11 4 H13")
+        # S reflects the last control point; numbers such as -.5 and 1.5.5 are read apart.
+        self.assertEqual(icons.path_text(icons.absolute("M0 0c1 0 2 1 2 2s1 2 2 2")), "M0 0 C1 0 2 1 2 2 C2 3 3 4 4 4")
+        self.assertEqual(icons.path_text(icons.absolute("M1 1l-.5 1.5.5 .5")), "M1 1 L0.5 2.5 L1 3")
+        self.assertEqual(icons.path_text(icons.place(icons.absolute("M2 2a1 1 0 0 1 2 0h2"), 2, (1, 1))), "M5 5 A2 2 0 0 1 9 5 H13")
+
     def test_every_generated_file_is_current(self):
         self.assertEqual(icons.check(), [])
 
-    def test_every_icon_is_stroke_only_inside_the_native_extent(self):
+    def test_every_icon_is_written_in_absolute_commands(self):
         for icon in ICONS:
             with self.subTest(icon["out"]):
-                self.assertEqual(centerline_problems(icon["paths"]), [])
+                self.assertEqual(absolute_problems(PATHS[icon["out"]]), [])
 
     def test_every_icon_keeps_the_native_margin_on_every_side(self):
         for icon in ICONS:
             with self.subTest(icon["out"]):
-                pad = PAD if icon["kind"] == "plugin" else 0
-                self.assertIsNone(margin_problem(icon["paths"], icon["kind"], pad))
+                self.assertIsNone(margin_problem(PATHS[icon["out"]], icon["kind"]))
 
     def test_a_stroke_inside_the_margin_is_caught(self):
         # The first sheet's P (#271): its bowl's arc bulges to 44.5, past the endpoints the old check read.
@@ -240,31 +251,35 @@ class Style(unittest.TestCase):
         self.assertIsNone(margin_problem(["M33 35 V13 H37 A5 5 0 0 1 37 23 H33"], "app", 0))
         # A Bezier that leaves its endpoints' box, and a plugin icon written without the padding.
         self.assertTrue(margin_problem(["M10 4 C10 -2 38 -2 38 4"], "app", 0))
-        self.assertTrue(margin_problem(["M4 24 H44"], "plugin", 0))
-        self.assertIsNone(margin_problem(["M4 24 H44"], "plugin", PAD))
+        self.assertTrue(margin_problem(["M3 12 H21"], "plugin", 0))
+        self.assertIsNone(margin_problem(["M3 12 H21"], "plugin"))
+        # Tabler keeps centrelines within 2 to 22; a glyph placed past that crosses the toolbar icons' margin.
+        self.assertIsNone(margin_problem(["M2 2 H22 V22"], "plugin"))
+        self.assertTrue(margin_problem(["M1 12 H21"], "plugin"))
 
     def test_each_written_icon_follows_the_native_style(self):
         for icon in ICONS:
             android = icon["kind"] == "app"
             file = ROOT / (icon["out"] + (".xml" if android else ".svg"))
             with self.subTest(str(file)):
-                self.assertEqual(vector_problems(ET.parse(file).getroot(), android, 0 if android else PAD), [])
+                self.assertEqual(vector_problems(ET.parse(file).getroot(), android), [])
 
     def test_a_filled_or_off_grey_or_thick_icon_is_caught(self):
-        good = icons.svg_text(["M4 4 H44"], NATIVE)
+        good = icons.svg_text(["M4 4 H20"], NATIVE)
         self.assertEqual(vector_problems(ET.fromstring(good), False), [])
-        self.assertTrue(vector_problems(ET.fromstring(good), False, PAD))
+        self.assertTrue(vector_problems(ET.fromstring(good.replace(f'viewBox="{icons.view_box(*icons.frame("plugin", NATIVE)[:2])}"', 'viewBox="0 0 24 24"')), False))
         for old, new, word in (
             ('fill="none"', 'fill="#383838"', "filled"),
             ('stroke="#000000"', 'stroke="#808080"', "stroke colour"),
-            ('stroke-width="4"', 'stroke-width="6"', "stroke width"),
+            (f'stroke-width="{icons.number(icons.frame("plugin", NATIVE)[2])}"', 'stroke-width="4"', "stroke width"),
         ):
             with self.subTest(word):
                 found = vector_problems(ET.fromstring(good.replace(old, new)), False)
                 self.assertTrue(any(word in p for p in found), found)
         self.assertTrue(any("filled" in p for p in vector_problems(ET.fromstring(
             icons.xml_text(["M4 4 H44"], NATIVE).replace("#00000000", "#ff383838")), True)))
-        self.assertTrue(centerline_problems(["M2 4 H44"]))
+        self.assertTrue(absolute_problems(["M2 4 h40"]))
+        self.assertTrue(absolute_problems(["M2 4 S4 4 6 6"]))
 
 
 class Pngs(unittest.TestCase):

@@ -27,9 +27,12 @@
       "sizePx": 64,
       "strokePx": 4,
       "inkMarginPx": 11,
-      "inkMarginNote": "the median smallest gap between the ink and the box, over the four sides; the selected states, which fill their whole box, are left out"
+      "inkMarginNote": "the median smallest gap between the ink and the box, over the four sides; the selected states, which fill their whole box, are left out",
+      "strokeNote": "re-measured 2026-11-25 (#271, third pass): across each straight run of ink in a row or column, the sum of its pixel darkness is the stroke width, anti-aliasing included; 32 of the 41 single-stroke icons give 4 px"
     },
-    "padding": 10,
-    "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). Each plugin icon is drawn on the 48 grid and written with `padding` grid units around it (viewBox -10 -10 68 68), so the stroke outline, which reaches 2 to 46 at most, keeps at least 12 of 68 (17.6%) on every side, above the toolbar icons' 11 of 64 (17.2%), and the stroke is 4 of 68, close to their 4 of 64."
+    "grid": 24,
+    "padding": 5,
+    "strokeWidth": 2.125,
+    "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). Each plugin icon is a Tabler glyph on its 24 grid written with `padding` units around it (viewBox -5 -5 34 34): the stroke, 2.125 of 34, is the toolbar icons' 4 of 64, and a glyph, whose centrelines Tabler keeps within 2 to 22, keeps its stroke outline at least 5.94 of 34 (17.5%) from the edge, above the toolbar icons' 11 of 64 (17.2%); its ink spans 65% of the box, as theirs does (42 of 64)."
   }
 }
