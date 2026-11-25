@@ -34,6 +34,9 @@ export type EditDefinition = {
 /** The one lasso button, «Image Editing», which opens the editor view (#226). */
 export const EDITOR_BUTTON_ID = 300;
 
+/** The toolbar button «Image Editing», which the owner can pin; the same editor (#248). */
+export const EDITOR_TOOLBAR_ID = 301;
+
 /**
  * The lasso button ids of the builds before #226, one per edit from 200 in `ORDER`. The start-up
  * removes them, so an update never leaves the old rows in the lasso menu.

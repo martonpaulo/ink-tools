@@ -2,12 +2,13 @@
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {
   BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
   ButtonDeps,
   EDIT_DATA_PICTURE,
   registerEditorButton,
   SHOW_FULL_VIEW,
 } from '../src/buttons';
-import {EDITOR_BUTTON_ID, EDITS, LEGACY_BUTTON_IDS} from '../src/edits';
+import {EDITOR_BUTTON_ID, EDITOR_TOOLBAR_ID, EDITS, LEGACY_BUTTON_IDS} from '../src/edits';
 
 function fakeDeps(held: readonly number[] = []) {
   const logs: string[] = [];
@@ -26,7 +27,7 @@ test('the plugin registers one lasso button, «Image Editing», for pictures, wi
   const {deps} = fakeDeps();
   expect(await registerEditorButton(deps)).toEqual(ok(true));
   const register = deps.register as jest.Mock;
-  expect(register).toHaveBeenCalledTimes(1);
+  expect(register).toHaveBeenCalledTimes(2);
   expect(register.mock.calls[0]).toEqual([
     BUTTON_TYPE_LASSO,
     ['NOTE'],
@@ -37,6 +38,35 @@ test('the plugin registers one lasso button, «Image Editing», for pictures, wi
       showType: SHOW_FULL_VIEW,
       icon: 'file:///editor.png',
     },
+  ]);
+});
+
+test('the same «Image Editing» is a toolbar button with its icon, which the owner can pin (#248)', async () => {
+  const {deps, logs} = fakeDeps();
+  await registerEditorButton(deps);
+  expect((deps.register as jest.Mock).mock.calls[1]).toEqual([
+    BUTTON_TYPE_SIDEBAR,
+    ['NOTE'],
+    {
+      id: EDITOR_TOOLBAR_ID,
+      name: 'Image Editing',
+      showType: SHOW_FULL_VIEW,
+      icon: 'file:///editor.png',
+    },
+  ]);
+  expect(logs).toContain('register Image Editing toolbar button: ok');
+  expect([EDITOR_BUTTON_ID, ...LEGACY_BUTTON_IDS]).not.toContain(EDITOR_TOOLBAR_ID);
+});
+
+test('a refused toolbar button leaves the lasso row registered (#248)', async () => {
+  const {deps, logs} = fakeDeps();
+  deps.register = jest.fn(async (type: number) =>
+    type === BUTTON_TYPE_SIDEBAR ? fail(7, 'refused') : ok(true as const),
+  ) as unknown as ButtonDeps['register'];
+  expect(await registerEditorButton(deps)).toEqual(ok(true));
+  expect(logs).toEqual([
+    'register Image Editing: ok',
+    'register Image Editing toolbar button failed: 7 refused',
   ]);
 });
 
@@ -54,6 +84,7 @@ test('the rows of earlier builds, one per edit, are removed after the registrati
   expect(LEGACY_BUTTON_IDS).not.toContain(EDITOR_BUTTON_ID);
   expect(logs).toEqual([
     'register Image Editing: ok',
+    'register Image Editing toolbar button: ok',
     `removed lasso row ${LEGACY_BUTTON_IDS[0]} of an earlier build`,
     `removed lasso row ${LEGACY_BUTTON_IDS[3]} of an earlier build`,
   ]);
@@ -63,7 +94,7 @@ test('an unregister that never settles still leaves the button registered (#226)
   const {deps} = fakeDeps();
   deps.unregister = jest.fn(() => new Promise<never>(() => {}));
   expect(await registerEditorButton(deps)).toEqual(ok(true));
-  expect(deps.register).toHaveBeenCalledTimes(1);
+  expect(deps.register).toHaveBeenCalledTimes(2);
   expect(deps.unregister).toHaveBeenCalledTimes(LEGACY_BUTTON_IDS.length);
 });
 

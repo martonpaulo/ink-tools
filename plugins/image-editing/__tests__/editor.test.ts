@@ -131,6 +131,39 @@ test('a lasso that is not one picture says so, and a missing permission asks', a
   expect(missing.deps.lassoed).not.toHaveBeenCalled();
 });
 
+describe('a press with nothing lassoed, as from the toolbar button (#248)', () => {
+  test('an empty lasso shows what the editor needs, not a failure', async () => {
+    const {deps} = fakeDeps([]);
+    await openEditor(deps);
+    expect(editorState()).toEqual({phase: 'needs'});
+  });
+
+  test('a refused lasso read shows the same Needs state', async () => {
+    const {deps} = fakeDeps();
+    deps.lassoed = jest.fn(async () => fail(1, 'no lasso'));
+    await openEditor(deps);
+    expect(editorState()).toEqual({phase: 'needs'});
+  });
+
+  test('after Close, a press with a lassoed picture opens the editor clean', async () => {
+    const empty = fakeDeps([]);
+    await openEditor(empty.deps);
+    await closeEditor(close, empty.deps);
+    expect(editorState()).toEqual({phase: 'idle'});
+    const {deps} = fakeDeps();
+    await openEditor(deps);
+    expect(editorState()).toMatchObject({phase: 'ready', rect: RECT, message: null});
+  });
+
+  test('a second press on the Needs state reads the lasso again', async () => {
+    const empty = fakeDeps([]);
+    await openEditor(empty.deps);
+    const {deps} = fakeDeps();
+    await openEditor(deps);
+    expect(editorState()).toMatchObject({phase: 'ready'});
+  });
+});
+
 test('a picture lassoed with pen marks opens guided', async () => {
   const {deps} = fakeDeps([picture(), stroke]);
   await openEditor(deps);

@@ -10,10 +10,12 @@ import {
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
-import {EDITOR_BUTTON_ID, LEGACY_BUTTON_IDS} from './edits';
+import {EDITOR_BUTTON_ID, EDITOR_TOOLBAR_ID, LEGACY_BUTTON_IDS} from './edits';
 
 /** sn-plugin-lib's lasso toolbar button (as Lookup's src/buttons.ts). */
 export const BUTTON_TYPE_LASSO = 2;
+/** sn-plugin-lib's note toolbar button, which the owner can pin (#248). */
+export const BUTTON_TYPE_SIDEBAR = 1;
 /** `editDataTypes` 2: the lasso holds a picture (sn-plugin-lib 0.2.3, NativePluginManager). */
 export const EDIT_DATA_PICTURE = 2;
 /** `showType` 1: the press opens the plugin's full view (PluginButton). */
@@ -56,6 +58,15 @@ export async function registerEditorButton(
     icon: deps.icon,
   });
   deps.log(describe(`register ${copy.title}`, result));
+  // The same editor from the note toolbar, which the owner can pin; it opens with no lasso too
+  // and then shows what it needs (#248). Its failure leaves the lasso row as it is.
+  const toolbar = await deps.register(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
+    id: EDITOR_TOOLBAR_ID,
+    name: copy.title,
+    showType: SHOW_FULL_VIEW,
+    icon: deps.icon,
+  });
+  deps.log(describe(`register ${copy.title} toolbar button`, toolbar));
   for (const id of LEGACY_BUTTON_IDS) {
     deps
       .unregister(id)

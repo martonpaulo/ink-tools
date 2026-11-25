@@ -12,7 +12,7 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {registerEditorButton} from './src/buttons';
 import {openEditor} from './src/editor';
-import {EDITOR_BUTTON_ID} from './src/edits';
+import {EDITOR_BUTTON_ID, EDITOR_TOOLBAR_ID} from './src/edits';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -20,7 +20,8 @@ registerSettingsEntry(() => showPluginView()).catch(error => {
   console.error(`Retouch: ${error.message}`);
 });
 
-// One lasso button, «Image Editing», for a lassoed picture (#226); every edit is in its view.
+// One lasso button, «Image Editing», for a lassoed picture (#226), and the same button on the
+// note toolbar (#248); every edit is in its view.
 registerEditorButton().catch(error => {
   console.error(`Retouch: buttons: ${error.message}`);
 });
@@ -28,7 +29,7 @@ registerEditorButton().catch(error => {
 // At start-up, before the view exists (Ink2Pic gotcha 11). The press opens the editor view: the
 // host shows it (`showType` 1), and the editor reads the lassoed picture (src/editor.ts).
 const listening = startButtonQueue(id => {
-  if (id !== EDITOR_BUTTON_ID) {
+  if (id !== EDITOR_BUTTON_ID && id !== EDITOR_TOOLBAR_ID) {
     return false;
   }
   console.log('Retouch: Image Editing pressed');

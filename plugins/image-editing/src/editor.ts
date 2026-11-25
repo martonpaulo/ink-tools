@@ -79,6 +79,8 @@ export type EditorState =
   | {phase: 'idle'}
   | {phase: 'opening'}
   | {phase: 'failed'; message: string}
+  /** Nothing is lassoed, as after a toolbar press on a bare page (#248). */
+  | {phase: 'needs'}
   | {
       phase: 'ready';
       /** The picture's place on the page now, in page pixels. */
@@ -197,17 +199,25 @@ export function onEditorState(
 const describe = (what: string, r: {code: number; message: string}) =>
   `${what}: ${r.code} ${r.message}`;
 
-/** The picture the lasso holds, and whether pen marks came with it, or the reason it is not one. */
+/** No element is lassoed (#248). */
+const NO_LASSO = 'no lasso';
+
+/**
+ * The picture the lasso holds, and whether pen marks came with it, or the reason it is not one.
+ * shortcut: the tablet's answer to `getLassoElements` with no lasso is not measured, so a failure
+ * and an empty list both read as no lasso; split them once the device check of #248 logs it.
+ */
 async function readLasso(
   deps: EditorDeps,
 ): Promise<{rect: Rect; guided: boolean} | string> {
   const lassoed = await deps.lassoed();
   if (!lassoed.ok) {
     deps.log(describe('editor: getLassoElements', lassoed));
-    return copy['press.failed'](
-      copy.title,
-      describe('getLassoElements', lassoed),
-    );
+    return NO_LASSO;
+  }
+  if (lassoed.value.length === 0) {
+    deps.log('editor: nothing lassoed');
+    return NO_LASSO;
   }
   try {
     const alone = onePicture(lassoed.value);
@@ -255,6 +265,10 @@ export async function openEditor(
     return;
   }
   const read = await readLasso(deps);
+  if (read === NO_LASSO) {
+    setState({phase: 'needs'});
+    return;
+  }
   if (typeof read === 'string') {
     setState({phase: 'failed', message: read});
     return;

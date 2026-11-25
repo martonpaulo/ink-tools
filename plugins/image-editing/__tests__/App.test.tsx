@@ -248,6 +248,25 @@ describe('the editor view (#226)', () => {
     ).toBeGreaterThan(0);
   });
 
+  test('nothing lassoed shows Needs: what, why, the two steps and Close (#248)', async () => {
+    const {tree, h} = await show({phase: 'needs'});
+    const strings = tree.root
+      .findAll(node => typeof node.props.children === 'string')
+      .map(node => node.props.children);
+    expect(strings).toEqual(
+      expect.arrayContaining([
+        copy['needs.lasso'],
+        copy['needs.lassoReason'],
+        ...copy['needs.lassoSteps'].map((step, i) => `${i + 1}. ${step}`),
+      ]),
+    );
+    expect(strings).not.toContain(copy['press.notPicture']);
+    await act(async () => {
+      tree.root.findAllByProps({label: 'Close'})[0].props.onPress();
+    });
+    expect(h.onClose).toHaveBeenCalledTimes(1);
+  });
+
   test('an edit switched off in Settings has no button', async () => {
     let tree!: ReactTestRenderer;
     await act(async () => {

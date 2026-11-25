@@ -9,6 +9,13 @@ export const copy = {
   'editor.lost':
     'The picture is no longer on the page here. Close, lasso it again and press Image Editing.',
   'editor.picture': 'The lassoed picture',
+  /** A press with no lasso, from the toolbar button (#248): the Needs state. */
+  'needs.lasso': 'Lasso a picture first',
+  'needs.lassoReason': 'Image Editing edits one picture on the page.',
+  'needs.lassoSteps': [
+    'Lasso one picture with the lasso tool.',
+    'Press Image Editing again.',
+  ],
   'editor.edits': 'Edit',
   'editor.pen': 'Draw with the pen',
   'editor.back': 'Go back',

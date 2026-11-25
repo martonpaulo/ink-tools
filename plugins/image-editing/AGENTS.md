@@ -6,7 +6,9 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 ## Status
 
 **Built, device round pending** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)): lasso one picture on the page and press
-**Image Editing**, the plugin's one lasso button ([#226](https://github.com/martonpaulo/ink-tools/issues/226), `src/buttons.ts`); its full view,
+**Image Editing**, the plugin's one lasso button ([#226](https://github.com/martonpaulo/ink-tools/issues/226), `src/buttons.ts`), also a note
+toolbar button the owner can pin, which with nothing lassoed shows ui-kit's Needs state
+([#248](https://github.com/martonpaulo/ink-tools/issues/248)); its full view,
 the editor (`src/editor.ts`, `src/EditorView.tsx`), shows the picture and every edit switched on in
 Settings as a button: **Enhance**, **Lighter**, **Darker**, **Undo**, **Restore original**,
 **Rotate 90°**, **Mirror**, **Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)),

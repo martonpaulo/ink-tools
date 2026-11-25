@@ -14,7 +14,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import {Button, metrics, shared} from '@ink-tools/ui-kit';
+import {Button, metrics, Needs, shared} from '@ink-tools/ui-kit';
 import type {PenPoint} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {EDITOR_GROUPS, EditorState} from './editor';
@@ -53,6 +53,18 @@ export function Editor({
   const [box, setBox] = useState<Box | null>(null);
   const [live, setLive] = useState<PenPoint[]>([]);
   const stroke = useRef<PenPoint[]>([]);
+  if (state.phase === 'needs') {
+    return (
+      <Needs
+        problem={{
+          what: copy['needs.lasso'],
+          reason: copy['needs.lassoReason'],
+          fix: {steps: [...copy['needs.lassoSteps']]},
+        }}
+        onClose={onClose}
+      />
+    );
+  }
   if (state.phase !== 'ready') {
     return (
       <EditorScreen
