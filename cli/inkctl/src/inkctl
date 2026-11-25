@@ -42,6 +42,9 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  the test project in Todoist or test calendar in Google, named
                                  «teste ink-tools»: make it, list what it holds, or delete it;
                                  nothing else in the account is read or changed
+  localsend receive|send|stop    a headless LocalSend peer on this Mac (LocalGo): receive
+                                 auto-accepts into .scratch/localsend-received over https, or
+                                 --http; send FILE... --to ALIAS|--ip HOST; stop ends it
   wait toast TEXT                catch a short on-screen message that holds TEXT, from the moment
                                  the wait starts: start it, then do what shows the message
   apps                           installed packages
@@ -99,6 +102,7 @@ import posixpath
 import re
 import selectors
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
@@ -3534,6 +3538,136 @@ def command_sandbox(device, args: argparse.Namespace):
     return {"service": args.service, "removed": removed}, f"{label}: {len(removed)} removed" if removed else f"{label}: none to remove"
 
 
+# A headless LocalSend peer on the Mac (#297): LocalGo (github.com/bethropolis/localgo, MIT), a
+# LocalSend v2.2 command line, chosen over the official localsend-cli, whose receive mode asks a key
+# for every sender that is not paired over https, and localsnd, which has no https. `receive` starts
+# `localgo serve` in its own session, auto-accepting into a test folder, and `stop` ends it by the
+# process id it recorded. https (LocalSend's default, with certificates) or plain http (`--http`),
+# as the iPhone answers with Encryption off.
+LOCALGO_INSTALL = "go install github.com/bethropolis/localgo/cmd/localgo@v0.6.9"
+LOCALSEND_FOLDER = Path(__file__).resolve().parents[3] / ".scratch/localsend-received"
+LOCALSEND_STATE = Path.home() / ".cache/inkctl/localsend.json"
+LOCALSEND_ALIAS = SERVICES["testObjectName"]
+LOCALSEND_PORT = 53317  # LocalSend's own default port
+LOCALSEND_INFO = "/api/localsend/v2/info"
+LOCALSEND_START_TIMEOUT = 15.0
+
+
+def localgo() -> str:
+    found = os.environ.get("INKCTL_LOCALGO") or shutil.which("localgo")
+    if not found:
+        raise not_found("the localgo command", LOCALGO_INSTALL)
+    return found
+
+
+def localsend_running() -> dict | None:
+    """The recorded peer, while its process still runs."""
+    if not LOCALSEND_STATE.is_file():
+        return None
+    state = json.loads(LOCALSEND_STATE.read_text())
+    try:
+        os.kill(state["pid"], 0)  # shortcut: a reused process id reads as running; record the start time if that bites
+    except ProcessLookupError:
+        LOCALSEND_STATE.unlink()
+        return None
+    return state
+
+
+def localsend_answers(protocol: str, port: int) -> bool:
+    import ssl
+
+    context = ssl.create_default_context()
+    context.check_hostname, context.verify_mode = False, ssl.CERT_NONE  # LocalSend's certificate is self-signed
+    try:
+        with urllib.request.urlopen(f"{protocol}://127.0.0.1:{port}{LOCALSEND_INFO}", timeout=PROBE_TIMEOUT, context=context):
+            return True
+    except (urllib.error.URLError, OSError):
+        return False
+
+
+def command_localsend_receive(device, args: argparse.Namespace):
+    if running := localsend_running():
+        raise Failure(EXIT_BUSY, "busy", f"a LocalSend peer already runs (process {running['pid']}); stop it first", "inkctl localsend stop")
+    protocol = "http" if args.http else "https"
+    if localsend_answers("http", args.port) or localsend_answers("https", args.port):
+        raise Failure(EXIT_BUSY, "busy", f"port {args.port} already answers LocalSend: quit the LocalSend app or pass --port")
+    folder = Path(os.path.abspath(args.folder))
+    folder.mkdir(parents=True, exist_ok=True)
+    command = [
+        localgo(), "serve", "--auto-accept", "--no-clipboard", "--quiet", "--alias", args.alias,
+        "--port", str(args.port), "--dir", str(folder), "--history", str(folder / "history.jsonl"),
+        *(["--http"] if args.http else []),
+    ]
+    with open(folder / "localgo.log", "ab") as output:
+        process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=output, stderr=output, start_new_session=True)
+    state = {"pid": process.pid, "protocol": protocol, "port": args.port, "alias": args.alias, "folder": str(folder)}
+    LOCALSEND_STATE.parent.mkdir(parents=True, exist_ok=True)
+    LOCALSEND_STATE.write_text(json.dumps(state))
+    started = time.monotonic()
+    while not localsend_answers(protocol, args.port):
+        if process.poll() is not None or time.monotonic() - started >= LOCALSEND_START_TIMEOUT:
+            stop_localsend(state)
+            raise Failure(EXIT_FAILED, "device_error", f"localgo did not answer on port {args.port}; see {folder / 'localgo.log'}")
+        time.sleep(WAIT_INTERVAL)
+    return state, f"LocalSend peer «{args.alias}» receives over {protocol} on port {args.port} into {folder} (process {process.pid})"
+
+
+def received_files(folder: str) -> list[str]:
+    root = Path(folder)
+    kept = ("localgo.log", "history.jsonl")
+    return sorted(str(path.relative_to(root)) for path in root.rglob("*") if path.is_file() and path.name not in kept)
+
+
+def stop_localsend(state: dict) -> None:
+    import signal
+
+    try:
+        os.killpg(state["pid"], signal.SIGTERM)  # its own session: the group is localgo alone
+    except ProcessLookupError:
+        pass
+    deadline = time.monotonic() + LOCALSEND_START_TIMEOUT
+    while time.monotonic() < deadline:
+        try:
+            os.kill(state["pid"], 0)
+        except ProcessLookupError:
+            break
+        try:
+            os.waitpid(state["pid"], os.WNOHANG)  # reaps it when this process started it
+        except ChildProcessError:
+            pass
+        time.sleep(WAIT_INTERVAL)
+    else:
+        raise Failure(EXIT_TIMEOUT, "timeout", f"localgo (process {state['pid']}) still runs after the stop")
+    LOCALSEND_STATE.unlink(missing_ok=True)
+
+
+def command_localsend_stop(device, args: argparse.Namespace):
+    state = localsend_running()
+    if not state:
+        return {"stopped": False}, "no LocalSend peer runs"
+    stop_localsend(state)
+    files = received_files(state["folder"])
+    return {"stopped": True, **state, "received": files}, f"LocalSend peer stopped; {len(files)} files in {state['folder']}"
+
+
+def command_localsend_send(device, args: argparse.Namespace):
+    if bool(args.to) == bool(args.ip):
+        raise bad_usage("give the receiver as --to ALIAS or --ip ADDRESS")
+    for path in args.paths:
+        if not os.path.exists(path):
+            raise not_found(path)
+    files = [part for path in args.paths for part in ("--file", path)]
+    command = [localgo(), "send", *files, *(["--to", args.to] if args.to else ["--ip", args.ip])]
+    try:
+        done = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=args.timeout, check=False)
+    except subprocess.TimeoutExpired:
+        raise Failure(EXIT_TIMEOUT, "timeout", f"the send took more than {args.timeout:g} s") from None
+    if done.returncode != 0:
+        raise Failure(EXIT_FAILED, "device_error", (done.stderr or done.stdout).strip()[:ERROR_EXCERPT] or "localgo send failed")
+    target = args.to or args.ip
+    return {"sent": args.paths, "to": target, "answer": done.stdout.strip()}, f"sent {len(args.paths)} files to {target}"
+
+
 def command_shell(device: Device, args: argparse.Namespace):
     done = device.adb("shell", *args.words, timeout=TRANSFER_TIMEOUT)
     sys.stdout.buffer.write(done.stdout)
@@ -3541,7 +3675,7 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
-NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "google", "lang", "lasso", "ink", "sandbox")
+NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "google", "lang", "lasso", "ink", "sandbox", "localsend")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -3771,6 +3905,21 @@ def build_parser() -> argparse.ArgumentParser:
         tested = add(sandboxes, service, command_sandbox)
         tested.set_defaults(needs_device=False, service=service)  # a Mac call to the service: the tablet is not reached
         tested.add_argument("action", choices=("create", "list", "clean"))
+
+    localsend = noun("localsend")
+    receive = add(localsend, "receive", command_localsend_receive)
+    receive.add_argument("--http", action="store_true", help="plain http, as LocalSend with Encryption off; default https")
+    receive.add_argument("--folder", default=str(LOCALSEND_FOLDER), help="where received files go")
+    receive.add_argument("--port", type=int, default=LOCALSEND_PORT)
+    receive.add_argument("--alias", default=LOCALSEND_ALIAS, help="the name other devices see")
+    sent = add(localsend, "send", command_localsend_send)
+    sent.add_argument("paths", nargs="+", metavar="FILE")
+    sent.add_argument("--to", help="the receiver's alias")
+    sent.add_argument("--ip", help="the receiver's address, HOST or HOST:PORT")
+    sent.add_argument("--timeout", type=float, default=TRANSFER_TIMEOUT, help="seconds")
+    add(localsend, "stop", command_localsend_stop)
+    for name in ("receive", "send", "stop"):
+        localsend.choices[name].set_defaults(needs_device=False)  # a Mac peer: the tablet is not reached
 
     add(commands, "shell", command_shell, changes=True).add_argument("words", nargs=argparse.REMAINDER)
     return parser

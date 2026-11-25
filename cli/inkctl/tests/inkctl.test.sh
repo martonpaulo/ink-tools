@@ -1926,6 +1926,58 @@ wait "$api_pid" 2>/dev/null
 unset INKCTL_SERVICES
 rm -f "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT" "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
 
+# A headless LocalSend peer (#297), over a fake localgo that answers LocalSend's info call on 127.0.0.1.
+cat > "$work/localgo.py" <<'PY'
+import http.server, os, sys
+args = sys.argv[1:]
+open(os.environ["LOCALGO_LOG"], "a").write(" ".join(args) + "\n")
+if args[0] == "send":
+    print("Sent 1 file")
+    sys.exit(int(os.environ.get("LOCALGO_SEND_EXIT", "0")))
+port = int(args[args.index("--port") + 1])
+if "--http" not in args:
+    sys.exit(3)  # the fake serves only plain http: an https start must fail and leave nothing behind
+class Info(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = b'{"alias": "teste ink-tools", "version": "2.2"}'
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+    def log_message(self, *ignored):
+        pass
+http.server.HTTPServer(("127.0.0.1", port), Info).serve_forever()
+PY
+printf '#!/bin/bash\nexec python3 -B "%s/localgo.py" "$@"\n' "$work" > "$work/bin/localgo"
+chmod +x "$work/bin/localgo"
+export LOCALGO_LOG="$work/localgo.log"
+localsend_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+output=$(run localsend receive --http --port "$localsend_port" --folder "$work/received" --json)
+check "localsend receive starts a peer" "$?" "0"
+localsend_pid=$(printf '%s' "$output" | field "['pid']")
+check "localsend receive answers the protocol, port and folder" "$(printf '%s' "$output" | field "['protocol'],d['port']==$localsend_port,d['folder']")" "('http', True, '$work/received')"
+check "localsend receive auto-accepts into the folder, with no clipboard" "$(grep -c -e "^serve --auto-accept --no-clipboard --quiet --alias teste ink-tools --port $localsend_port --dir $work/received " "$LOCALGO_LOG")" "1"
+run localsend receive --http --port "$localsend_port" --folder "$work/received" >/dev/null 2>&1
+check "a second receive is refused while one runs" "$?" "8"
+printf 'synthetic' > "$work/received/page.png"
+output=$(run localsend stop --json)
+check "localsend stop ends the peer and lists what came in" "$(printf '%s' "$output" | field "['stopped'],d['received']")" "(True, ['page.png'])"
+check "localsend stop leaves no process" "$(kill -0 "$localsend_pid" 2>/dev/null && echo running || echo gone)" "gone"
+check "localsend stop again finds none" "$(run localsend stop)" "no LocalSend peer runs"
+run localsend receive --port "$localsend_port" --folder "$work/received" --json >"$work/out" 2>/dev/null
+check "an https peer that never answers is a device error" "$? $(field "['error']" < "$work/out")" "1 device_error"
+check "a failed start leaves no record" "$([ -f "$work/home/.cache/inkctl/localsend.json" ] && echo kept || echo none)" "none"
+: > "$LOCALGO_LOG"
+run localsend send "$work/received/page.png" --ip "127.0.0.1:$localsend_port" --json >/dev/null
+check "localsend send passes each file and the address" "$(cat "$LOCALGO_LOG")" "send --file $work/received/page.png --ip 127.0.0.1:$localsend_port"
+run localsend send "$work/received/page.png" >/dev/null 2>&1
+check "localsend send needs a receiver" "$?" "2"
+run localsend send "$work/no-such-file" --to Mac >/dev/null 2>&1
+check "localsend send refuses a missing file" "$?" "4"
+LOCALGO_SEND_EXIT=1 run localsend send "$work/received/page.png" --to Mac >/dev/null 2>&1
+check "a failed send fails" "$?" "1"
+check "no localsend call reached the tablet" "$(wc -l < "$log" | tr -d ' ')" "0"
+
 # Coordinates and the shell.
 run tap 12 34 >/dev/null
 check "tap wakes the screen first" "$(called 'keyevent WAKEUP')" "1"

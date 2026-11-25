@@ -260,6 +260,14 @@
     "pattern": "['\\\"]LookupImage['\\\"]",
     "golden": "",
     "open": 295
+   },
+   {
+    "rule": "LocalSend default port: 53317",
+    "owner": "plugins/device-transfer/src/localsend",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "53317",
+    "golden": "",
+    "open": 295
    }
   ]
  },
