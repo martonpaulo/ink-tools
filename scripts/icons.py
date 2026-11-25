@@ -517,13 +517,14 @@ def tile_problems(root=ROOT):
             problems.append(f"{folder}/{name}.png: stale")
     readme = (root / "README.md").read_text(encoding="utf-8") if (root / "README.md").is_file() else ""
     editor = "design/icons/apps/ink-notebook-editor.png"
-    for row in re.findall(r'<tr><td><img src="([^"]+)"[^\n]*?<code>((?:plugins|apps)/[^/]+)/</code>', readme):
-        src, where = row
-        want = editor if where == "apps/ink-notebook-editor" else f"{folder}/{where.split('/')[1]}.png"
-        if src != want:
-            problems.append(f"README.md: the row of {where}/ shows {src}, not {want}")
-        elif not (root / want).is_file():
-            problems.append(f"README.md: {want} is missing")
+    tiles = {editor} | {f"{folder}/{name}.png" for name in sources}
+    # A Tools row opens with its tile; since #304 the row names no folder, so the tile must be one of
+    # the tiles drawn above, and it must exist (#301).
+    for src in re.findall(r'<tr><td[^>]*>(?:<(?!/td)[^>]*>)*<img src="([^"]+)"', readme):
+        if src not in tiles:
+            problems.append(f"README.md: a Tools row shows {src}, not a tile of {folder}/")
+        elif not (root / src).is_file():
+            problems.append(f"README.md: {src} is missing")
     return problems
 
 

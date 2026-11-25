@@ -27,7 +27,7 @@ MAX_OVERLAP = 0.7
 # Two icons of one tool share its motif by design and differ by the rest (owner, 2026-11-25, #271).
 FAMILY_OVERLAP = 0.8
 # One button's two states keep the same box and letter, and differ by their outline.
-STATE_PAIRS = {frozenset(("plugins/real-time-conversion/assets/mode-on", "plugins/real-time-conversion/assets/mode-off")): 0.85}
+STATE_PAIRS = {frozenset(("plugins/smart-pen/assets/mode-on", "plugins/smart-pen/assets/mode-off")): 0.85}
 # Two translate buttons that share a language share its two letters and the arrow, and differ by the
 # other language's two letters (owner, 2026-11-25, #271).
 TRANSLATE = "plugins/word-lookup/assets/translate-"
@@ -351,7 +351,8 @@ class Pngs(unittest.TestCase):
                 (root / rel).write_text((ROOT / rel).read_text())
             readme = (ROOT / "README.md").read_text(encoding="utf-8")
             (root / "README.md").write_text(readme.replace("design/icons/readme/account-sync.png", "plugins/account-sync/assets/icon.png"))
-            self.assertTrue(any("row of plugins/account-sync/" in p for p in icons.tile_problems(root)))
+            self.assertIn("README.md: a Tools row shows plugins/account-sync/assets/icon.png, not a tile of design/icons/readme/",
+                          icons.tile_problems(root))
 
     def test_no_two_icons_read_alike(self):
         def ink(alpha):
