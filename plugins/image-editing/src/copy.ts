@@ -13,10 +13,15 @@ export const copy = {
   'editor.pen': 'Draw with the pen',
   'editor.back': 'Go back',
   'editor.page': 'Every picture on the page',
-  'editor.drawErase': 'Draw with the pen over the part to erase, then press Erase.',
-  'editor.drawCrop': 'Draw a rectangle with the pen around the part to keep, then press Crop.',
+  'editor.drawErase':
+    'Draw with the pen over the part to erase, then press Erase.',
+  'editor.drawCrop':
+    'Draw a rectangle with the pen around the part to keep, then press Crop.',
   'editor.clear': 'Clear marks',
   'editor.cancel': 'Cancel',
+  /** Why the edit and Clear marks wait, next to them (interface rule 16, #233). */
+  'editor.noMarks': (edit: string) =>
+    `${edit} and Clear marks wait for a mark on the picture.`,
   'editor.close': 'Close',
   'edit.enhance': 'Enhance',
   'edit.lighter': 'Lighter',

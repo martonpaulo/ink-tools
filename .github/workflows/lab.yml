@@ -16,6 +16,10 @@ on:
       cases:
         description: 'affected, all, or a comma list of case ids and categories'
         default: affected
+      head_lab:
+        description: 'Run the base with the head''s lab code, for a lab mode the base lacks (#13)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -39,6 +43,7 @@ jobs:
       RUN: ${{ inputs.run }}
       BASE: ${{ inputs.base }}
       CASES: ${{ inputs.cases }}
+      HEAD_LAB: ${{ inputs.head_lab }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out repository
@@ -84,6 +89,11 @@ jobs:
           base_sha=$(git rev-parse "${BASE:-HEAD~1}")
           echo "BASE_SHA=$base_sha" >> "$GITHUB_ENV"
           git worktree add "$RUNNER_TEMP/base" "$base_sha"
+          if [ "$HEAD_LAB" = true ]; then
+            # The base's product code, measured by the head's lab: its scripts, never its cases.
+            find "$GITHUB_WORKSPACE/plugins/ink2pic/lab" -maxdepth 1 -type f ! -name cases.json \
+              -exec cp {} "$RUNNER_TEMP/base/plugins/ink2pic/lab/" \;
+          fi
           cd "$RUNNER_TEMP/base/plugins/ink2pic"
           npm ci
           mkdir -p lab/out

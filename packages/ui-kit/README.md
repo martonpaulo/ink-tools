@@ -43,7 +43,7 @@ accents, each with a fixed role, never as the only cue:
 | Grey | Role |
 | :--- | :--- |
 | `#000000` | text, borders, the primary button's fill |
-| `#444444` | section headings, hints and values: 9.7:1 on paper (`metrics.context`) |
+| `#444444` | section headings, hints and values: 9.7:1 on paper (`metrics.context`); a disabled control's label and dashed border |
 | `#aaaaaa` | a strong fill: the band behind a screen title, a count badge |
 | `#cccccc` | a highlight: the row being changed |
 | `#eeeeee` | a soft panel: a block of help text, an empty state |
@@ -58,6 +58,9 @@ token when the first screen uses it, named by its role.
 
 - One `Button` for every action, at least `touchTarget` high: black on white with an ink border.
 - Black fill marks the one primary action of a screen, such as Save or Start.
+- A control that cannot act, a `Button` or a tile, is a dashed outline with its label in `#444444`
+  on paper, never a black fill (`shared.disabledOutline`, `shared.disabledText`), and a line next
+  to it says why (interface rule 16, [#233](https://github.com/martonpaulo/ink-tools/issues/233)).
 - A switch is a `Button` with `selected`: the bar under its label, the box unchanged.
 - A button in a list row takes `rowButtonWidth`, so the buttons of every row share a column.
 

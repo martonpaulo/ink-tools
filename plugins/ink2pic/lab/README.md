@@ -56,7 +56,9 @@ does: the `photo` mode of `plugins/word-lookup/src/modes.ts`, with «Photos too�
 sources that mode skips, and with only the measured photo tiles kept, as `keepMode` keeps them on
 the device. Any other run searches as «Drawings» with every source
 ([#13](https://github.com/martonpaulo/ink-tools/issues/13)). `results.json` records it as `style`.
-A base older than that lab mode runs its own lab, so it searches as «Drawings».
+A base older than that lab mode runs its own lab, so it searches as «Drawings»; start the run
+with `-f head_lab=true` to measure the base's product code with the head's lab scripts (its
+`cases.json` stays the base's).
 
 ## Run it
 
