@@ -31,7 +31,7 @@ export function useWorking(working: Working): boolean {
   return on || problem !== null;
 }
 
-/** Back does nothing while the strip shows (#204): the run ends by itself, with its toast. */
+/** Back does nothing while the strip shows (#204): the run ends by itself; a failure then holds the Error view (#255). */
 const ignoreBack = () => undefined;
 
 export function WorkingStrip({working}: {working: Working}): React.JSX.Element {
