@@ -74,6 +74,16 @@ class NativePackageTest(unittest.TestCase):
             with self.subTest(plugin=plugin.name):
                 self.assertEqual(toolchain_code(plugin), first)
 
+    def test_compile_path_holds_the_annotations_react_native_omits(self):
+        # CI's javac 25 failed Image Editing on «unknown enum constant Mode.LOCAL» (#226): React
+        # Native's classes carry Infer's @Nullsafe, which its jar does not ship.
+        build = (ROOT / "packages/native-build/native-build.cjs").read_text(encoding="utf-8")
+        stub = ROOT / "packages/native-build/compile-only/com/facebook/infer/annotation/Nullsafe.java"
+        self.assertTrue(stub.is_file(), stub)
+        self.assertIn("LOCAL", stub.read_text(encoding="utf-8"))
+        self.assertRegex(build, r"'-cp', \[[^\]]*compileOnly\]")
+        self.assertNotIn("compileOnly", build.split("'--classpath'", 1)[1].split("\n", 1)[0])
+
     def test_validate_workflow_compiles_the_native_code(self):
         # Cloud sessions have no Android SDK, so CI is the only place the Android Java compiles
         # before a hand-off (#235): each native plugin's validate job builds its package.

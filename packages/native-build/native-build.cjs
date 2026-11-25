@@ -26,6 +26,12 @@ const TARGET_API = '35';
 const ANDROID_NAMESPACE = 'http://schemas.android.com/apk/res/android';
 /** The javac flags of every compile here: Java 8 bytecode, as PluginHost's runtime loads. */
 const JAVAC = ['--release', '8', '-encoding', 'UTF-8', '-Xlint:-options'];
+/**
+ * Annotation classes React Native's jar refers to but does not ship, on the compile class path only
+ * and never in app.npk: without them javac 25 warns on any class that touches one, and -Werror
+ * fails the build (Image Editing's Back key, #226).
+ */
+const COMPILE_ONLY = path.join(__dirname, 'compile-only');
 /** The paths native-toolchain.sh prints, each after the plugin's own prefix (`LOOKUP_`, `RELAY_`). */
 const PRINTED = /^[A-Z0-9]+_(BUILD_TOOLS|ANDROID_JAR|REACT_JAR|KOTLIN_JAR)=(.*)$/;
 
@@ -144,10 +150,12 @@ function nativeBuild({root, hostTools, packageClass, sources, test}) {
     const stage = path.join(out, 'npk');
     fs.mkdirSync(classes, {recursive: true});
     fs.mkdirSync(stage, {recursive: true});
+    const compileOnly = path.join(out, 'compile-only');
+    run(jdkTool('javac'), [...JAVAC, '-Werror', '-d', compileOnly, ...javaSources(COMPILE_ONLY)]);
     run(jdkTool('javac'), [
       // -Werror: a new javac warning fails the build (#32).
       ...JAVAC, '-Werror',
-      '-cp', [t.androidJar, t.reactJar, t.kotlinJar].join(path.delimiter),
+      '-cp', [t.androidJar, t.reactJar, t.kotlinJar, compileOnly].join(path.delimiter),
       '-d', classes, ...sources.flatMap(javaSources),
     ]);
     const jar = path.join(out, 'files.jar');
