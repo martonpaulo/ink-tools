@@ -2,7 +2,7 @@ package com.inktools.files;
 
 import java.util.Arrays;
 
-/** JVM tests for EinkPixels on synthetic pixels, run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for EinkPixels on synthetic pixels, run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class EinkPixelsTest {
   private static int failures = 0;
 

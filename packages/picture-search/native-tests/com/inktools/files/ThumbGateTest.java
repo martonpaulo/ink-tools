@@ -7,7 +7,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** JVM tests for ThumbGate (#46), run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for ThumbGate (#46), run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class ThumbGateTest {
   private static int failures = 0;
 

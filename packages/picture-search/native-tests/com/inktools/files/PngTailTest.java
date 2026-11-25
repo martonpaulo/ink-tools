@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-/** JVM tests for PngTail, run by `node scripts/native-build.cjs --test` (#91). */
+/** JVM tests for PngTail, run by the packages gate (`packages/native-build/package-tests.cjs`) (#91). */
 public final class PngTailTest {
   private static int failures = 0;
 

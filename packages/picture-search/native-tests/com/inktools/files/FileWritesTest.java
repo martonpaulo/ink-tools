@@ -13,7 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** JVM tests for FileWrites (#111), run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for FileWrites (#111), run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class FileWritesTest {
   private static int failures = 0;
   /** How long a writer waits, halfway, for the other one to start writing too. */

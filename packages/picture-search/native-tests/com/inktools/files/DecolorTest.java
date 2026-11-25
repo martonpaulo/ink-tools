@@ -1,6 +1,6 @@
 package com.inktools.files;
 
-/** JVM tests for Decolor on synthetic two-colour pictures, run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for Decolor on synthetic two-colour pictures, run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class DecolorTest {
   private static int failures = 0;
 

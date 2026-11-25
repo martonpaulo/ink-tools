@@ -1,6 +1,6 @@
 package com.inktools.files;
 
-/** JVM tests for ThumbMeasures on synthetic pixels, run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for ThumbMeasures on synthetic pixels, run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class ThumbMeasuresTest {
   private static final int WHITE = 0xFFFFFFFF;
   private static final int BLACK = 0xFF000000;

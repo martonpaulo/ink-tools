@@ -7,7 +7,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** JVM tests for Workers (#95), run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for Workers (#95), run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class WorkersTest {
   private static int failures = 0;
 

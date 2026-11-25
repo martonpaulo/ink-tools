@@ -2,7 +2,7 @@ package com.inktools.files;
 
 import java.io.File;
 
-/** JVM tests for SafePaths, run by `node scripts/native-build.cjs --test`. */
+/** JVM tests for SafePaths, run by the packages gate (`packages/native-build/package-tests.cjs`). */
 public final class SafePathsTest {
   private static int failures = 0;
 
