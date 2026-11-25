@@ -1040,6 +1040,79 @@ describe('leaderDecided (#19)', () => {
     expect(decided).toBeGreaterThan(20);
   });
 
+  it('fixes a winner past a conversion only when both of its ends keep it (#19)', () => {
+    const next = random(1919);
+    const pick = <T>(items: readonly T[]): T =>
+      items[Math.floor(next() * items.length)];
+    let decided = 0;
+    let past = 0;
+    for (let round = 0; round < 400; round++) {
+      const results = Array.from({length: 12}, (_, i) => {
+        const [source, title, mime] = pick(titles);
+        return {...result(`${source}:${i}`, title), source, mime};
+      });
+      const prepared = new Map<string, Prepared>();
+      const pending = new Set<string>();
+      const converting = new Map<string, Measures>();
+      const tail = 1 + Math.floor(next() * 3);
+      for (const item of results) {
+        const roll = next();
+        if (pending.size < tail && roll < 0.25) {
+          pending.add(item.id);
+          if (next() < 0.7) {
+            converting.set(item.id, pick(kinds));
+          }
+        } else if (roll < 0.9) {
+          prepared.set(item.id, {
+            measures: pick(kinds),
+            look: next() < 0.2 ? 'contour' : 'found',
+          });
+        }
+      }
+      const scores = baseScores(results, 'soup');
+      if (
+        !leaderDecided(results, prepared, pending, 'soup', false, undefined, scores, converting)
+      ) {
+        continue;
+      }
+      decided++;
+      if (!leaderDecided(results, prepared, pending, 'soup')) {
+        past++;
+      }
+      // As measureFirstPages returns it: a tile still converted ranks as a contour drawing.
+      const returned = new Map(prepared);
+      for (const [id, raw] of converting) {
+        returned.set(id, {measures: raw, look: 'contour'});
+      }
+      const winner = first(results, returned);
+      for (let outcome = 0; outcome < 20; outcome++) {
+        const completed = new Map(prepared);
+        for (const id of pending) {
+          const raw = converting.get(id);
+          const end = next();
+          if (raw) {
+            // A contour drawing, speckle shown as found, or not ended when the order returns.
+            completed.set(
+              id,
+              end < 0.4
+                ? {measures: pick(kinds), look: 'contour'}
+                : {measures: raw, look: end < 0.8 ? 'found' : 'contour'},
+            );
+          } else if (end < 0.8) {
+            completed.set(id, {
+              measures: pick(kinds),
+              look: next() < 0.2 ? 'contour' : 'found',
+            });
+          }
+        }
+        expect(first(results, completed)).toBe(winner);
+      }
+    }
+    expect(decided).toBeGreaterThan(20);
+    // The conversions stop holding the leader in some rounds.
+    expect(past).toBeGreaterThan(0);
+  });
+
   it("fixes a mode's winner only when every outcome keeps the first tile that fits (#111, #19)", () => {
     const next = random(111);
     const pick = <T>(items: readonly T[]): T =>
@@ -1154,6 +1227,32 @@ describe('leaderDecided (#19)', () => {
       );
       expect(measured.results[0].id).toBe('clean');
       expect(logLines().join('\n')).toContain('pixels: 1 of 2 measured in');
+      expect(logLines().join('\n')).toContain('leader decided');
+    });
+
+    it("returns while a tile that cannot lead is still converted (#19)", async () => {
+      // The same title: only the pixels part them, so a plain pending tile could still lead.
+      const dark: SearchResult = {...result('dark', 'Soup bowl'), mime: 'image/png'};
+      expect(needsContour(glossy, 'soup')).toBe(true);
+      expect(einkScore(clean, 'soup')).toBe(einkScore(dark, 'soup'));
+      expect(lineArt(outline)).toBeGreaterThan(lineArt(glossy));
+      const measured = await measureFirstPages(
+        [clean, dark],
+        '/p',
+        'soup',
+        {
+          analyzer: {
+            measure: async path => ok(path.endsWith('dark') ? glossy : outline),
+            // The conversion never answers, as a slow one held the device logs.
+            toContour: () => new Promise(() => {}),
+          },
+          thumb: async item => `file:///p/thumbs/${item.id}`,
+          limitMs: 60000,
+        },
+        undefined,
+        true,
+      );
+      expect(measured.results[0].id).toBe('clean');
       expect(logLines().join('\n')).toContain('leader decided');
     });
 

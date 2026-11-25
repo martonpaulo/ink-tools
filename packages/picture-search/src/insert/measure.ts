@@ -98,7 +98,8 @@ export type MeasureDeps = {
  * Measures the thumbnail at `uri` and prepares it in the look `chooseLook` gives; null when it is
  * not on the device or cannot be measured. A conversion is skipped once `late()` says the
  * result is no longer awaited: it would change nothing shown. A converted or darkened copy goes
- * to `pluginDir`'s thumbs/ folder, keyed by the result id (#103).
+ * to `pluginDir`'s thumbs/ folder, keyed by the result id (#103). `converts` hears the found
+ * measures when a contour conversion starts (#19).
  */
 async function measureFile(
   result: SearchResult,
@@ -108,6 +109,7 @@ async function measureFile(
   query: string,
   late: () => boolean = () => false,
   allContour = false,
+  converts: (found: Measures) => void = () => {},
 ): Promise<PreparedThumb | null> {
   if (!uri.startsWith(FILE_PREFIX)) {
     log(`pixels ${result.id}: not on the device, not measured`);
@@ -136,6 +138,7 @@ async function measureFile(
   }
   const path = uri.slice(FILE_PREFIX.length);
   const dest = `${thumbPath(pluginDir, result)}${CONTOUR_SUFFIX}`;
+  converts(m);
   const converted = await deps.analyzer.toContour(path, dest, MEASURE_WIDTH);
   if (!converted.ok) {
     // Shown and inserted as it is: the grid never shows what is not inserted.
@@ -268,13 +271,41 @@ export async function measureFirstPages(
   });
   // Scored once: the leader check runs after every thumbnail (#19).
   const scores = baseScores(results, query, photos);
+  // A tile under conversion holds the leader only while either end of it could lead (#19).
+  const converting = new Map<string, Measures>();
   const leads = () =>
-    leaderDecided(results, new Map(found), pending, query, photos, fits, scores);
+    leaderDecided(
+      results,
+      new Map(found),
+      pending,
+      query,
+      photos,
+      fits,
+      scores,
+      converting,
+    );
+  const check = () => {
+    if (early && !returned && leads()) {
+      decide();
+    }
+  };
   const all = Promise.all(
     firstPages.map((result, index) =>
       uris[index]
         .then(uri =>
-          measureFile(result, uri, thumbDir, deps, query, late, contourAll),
+          measureFile(
+            result,
+            uri,
+            thumbDir,
+            deps,
+            query,
+            late,
+            contourAll,
+            raw => {
+              converting.set(result.id, raw);
+              check();
+            },
+          ),
         )
         .then(measured => {
           if (measured) {
@@ -284,9 +315,8 @@ export async function measureFirstPages(
         .catch(error => log(`pixels ${result.id}: ${String(error)}`))
         .then(() => {
           pending.delete(result.id);
-          if (early && !returned && leads()) {
-            decide();
-          }
+          converting.delete(result.id);
+          check();
         }),
     ),
   );
@@ -312,6 +342,13 @@ export async function measureFirstPages(
     used.set(id, measures);
     if (thumb) {
       contourThumbs.set(id, thumb);
+    }
+  }
+  // A tile the leader did not wait for ranks as the contour drawing it was becoming, inside the
+  // bounds `leaderDecided` used; it is never the winner, so it is not inserted (#19).
+  for (const [id, measures] of converting) {
+    if (!found.has(id)) {
+      prepared.set(id, {measures, look: 'contour'});
     }
   }
   log(

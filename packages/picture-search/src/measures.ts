@@ -592,7 +592,10 @@ type Candidate = {
  * a line drawing's between 0 and `LINE_ART_WEIGHT`, min-max scaled within the set; between two
  * measured line drawings, the scale keeps their order and its range only grows. One difference
  * is left: a pending near-duplicate of the winner with a cleaner edge would take its place in
- * `dropNearDuplicates`, the same picture.
+ * `dropNearDuplicates`, the same picture. A pending thumbnail in `converting` is measured and
+ * waits for its contour drawing: it ends a contour drawing, scored at most `CONVERTED_SCALE`, or,
+ * when that drawing is speckle, as found by its own measures, so the leader need not wait for the
+ * conversion (#19).
  */
 export function leaderDecided(
   results: readonly SearchResult[],
@@ -607,6 +610,8 @@ export function leaderDecided(
    */
   fits?: (result: SearchResult, measures: Measures) => boolean,
   scores: BaseScores = baseScores(results, query, photos),
+  /** Pending thumbnails measured as found and now converted, by result id: their found measures. */
+  converting: ReadonlyMap<string, Measures> = new Map(),
 ): boolean {
   const head = results.slice(0, MEASURED_RESULTS);
   if (head.length === 0) {
@@ -643,7 +648,17 @@ export function leaderDecided(
         // Left out of the mode's list: it can lead nothing.
         return;
       }
-      if (pending.has(result.id)) {
+      const raw = converting.get(result.id);
+      if (pending.has(result.id) && raw && !result.leads) {
+        // Both ends of the conversion: a contour drawing, or speckle shown as found.
+        candidates.push({...at(LAST_SCALE), high: base + LINE_ART_WEIGHT * CONVERTED_SCALE, pending: true});
+        const set = fixedScale(raw, false);
+        candidates.push(
+          set !== undefined
+            ? {...at(set), pending: true}
+            : {...at(0), high: base + LINE_ART_WEIGHT, lineArt: lineArt(raw), pending: true},
+        );
+      } else if (pending.has(result.id)) {
         candidates.push({
           ...at(LAST_SCALE),
           high: base + LINE_ART_WEIGHT,
@@ -667,8 +682,10 @@ export function leaderDecided(
         );
       }
     });
+  // A converting thumbnail's line art joins the set only if it ends as found, so the range is
+  // that of the others: the least it can be.
   const arts = candidates.flatMap(c =>
-    c.lineArt === undefined ? [] : [c.lineArt],
+    c.lineArt === undefined || c.pending ? [] : [c.lineArt],
   );
   const range = Math.max(...arts) - Math.min(...arts);
   /** Whether `a` ranks before `b` whatever the pending thumbnails measure. */
