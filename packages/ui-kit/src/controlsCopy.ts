@@ -9,6 +9,10 @@ export const FIRST_PAGE_LABEL = 'First page';
 export const PREVIOUS_PAGE_LABEL = 'Previous page';
 export const NEXT_PAGE_LABEL = 'Next page';
 export const LAST_PAGE_LABEL = 'Last page';
+/** The pager's number, spoken, so a screen reader never says «5 slash 12» (#287). */
+export const pageOfLabel = (page: number, total: number) => `Page ${page} of ${total}`;
 export const REMOVE_LABEL = 'Remove';
 export const DELETE_LABEL = 'Delete';
 export const DOWNLOAD_LABEL = 'Download';
+/** The spoken name of the field's ×, which clears its text (#287). */
+export const CLEAR_LABEL = 'Clear';

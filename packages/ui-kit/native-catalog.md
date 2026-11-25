@@ -22,6 +22,7 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 - [Small filled button](#small-filled-button)
 - [Selection border](#selection-border)
 - [Component table](#component-table)
+- [How the native widgets draw](#how-the-native-widgets-draw)
 - [Not measured yet](#not-measured-yet)
 
 ## Method
@@ -139,12 +140,13 @@ Crop: Language & Region, `1830, 180, 50, 70`.
 
 Crops: Security & Privacy, `1640, 170, 240, 90` (off); Wi-Fi, `1640, 170, 240, 90` (on).
 
-- The track: a pill 136 x 70 px (`switchWidth`, `switchHeight`), its outline 5 to 6 px
-  (`markStroke`).
-- On: the track filled black, a white knob of 39 px at its trailing end. Off: a white track
-  with a black outline, a black knob of 41 px (`switchKnob`) at its leading end. The knob keeps
-  about 14 px to the track's outer edge.
-- The word «ON» or «OFF» before the track, `subtitle`, black, about 25 px from it (`markGap`).
+- The track: a pill 140 x 70 px, twice as wide as tall (`switchWidth`, `switchHeight`), its
+  outline 5 px (`markStroke`).
+- On: the track filled black, a white knob at its trailing end. Off: a white track with a black
+  outline, a black knob at its leading end. The knob is 47 px in both (`switchKnob`) and keeps
+  12 px to the track's outer edge. The first reading, 39 and 41 px, was cut by the screenshot's
+  threshold; the library's sizes and a new crop agree on 47 px ([#287](https://github.com/martonpaulo/ink-tools/issues/287)).
+- The word «ON» or «OFF» before the track, `subtitle`, black, 19 px from it (`switchWordGap`).
 
 ## Radio button
 
@@ -221,6 +223,26 @@ native element met maps to one Ink Tools component, or to «new».
 | Empty state | Digest («No Digests Yet», a large icon over a bold line) | icon about 90 px, bold `sp_px_30` | new |
 | Badge | a plugin's «Official» (Apps › Plugins); InkHub's like and download counts | small rounded outline | new |
 | Calendar grid | Calendar (month, `big_date` with ‹ ›, today ringed in a square) | day cells about 165 x 175 px | none needed yet |
+
+## How the native widgets draw
+
+Read from the vendor UI library compiled into `com.ratta.settings` (`supernoteuilib`, firmware
+3.31.45), decompiled with `jadx` in the lane's scratch only, never in the repository (owner,
+[#287](https://github.com/martonpaulo/ink-tools/issues/287)). Sizes are the library's `dp_px_*` and `sp_px_*` dimensions at the Manta's
+`sw1024dp`, about 1.165 px each. Ink Tools takes the ideas, never the code or the drawables.
+
+| Native widget | How it draws | Ink Tools |
+| :--- | :--- | :--- |
+| `RattaSwitch` | a row: the word, `sp_px_30`, then the track `2 x dp_px_60` by `dp_px_60` with a `dp_px_4` ink outline and round ends, the knob `dp_px_40` moved from the start to the end; on fills the track black and turns the knob white; only the track takes the tap; no animation | `Switch`: the same shape and sizes; the whole row of word and track is the target, at least `touchTarget` |
+| `TitleBar` | the black band `dp_px_114` high, the title `sp_px_40` white centred on the full width; the back target a square of the band's height at the leading edge, its ‹ `dp_px_27` x `dp_px_50` centred in it; an optional text action at the trailing edge, `sp_px_36` | `TitleBar`: the × and ‹ targets take the band's full height |
+| `TurnPageBar` | \|‹ ‹ number › ›\|: four image arrows, `dp_px_36` on the Manta, each in a `dp_px_88` target; `dp_px_68` between the arrows and «3 / 12», whose current page is bold; out of range, the arrows turn pale and stop taking taps; a 2 px line under the number only where tapping it opens a page jump | `Pager`: drawn arrows at `pagerArrow`, «page / total» with the current page bold, `pagerNumberGap`; the targets keep `touchTarget` |
+| `TextView_BlackLine_fit_Text` | the bordered button: paper with a `dp_px_2` ink outline (`black_rectangle`), label `sp_px_30`; while a finger is down it draws a thick ink line along its bottom edge, half of a `dp_px_14` stroke visible; disabled, a grey `#aaaaaa` outline and `#999999` label; the label shrinks to fit one line | `Button`: the 2 px border (`border`) and the press bar (`pressBar`); disabled stays the dashed `#444444` outline, since `#999999` is under 7:1 on paper ([#233](https://github.com/martonpaulo/ink-tools/issues/233)); the label wraps instead of shrinking, so it never falls under `minFont` |
+| `MenuItemView` | a row `dp_px_139` high: the title `sp_px_34` black, a › image `dp_px_22` x `dp_px_36` at the trailing edge, then a solid `dp_px_2` line | `ListRow` with `Chevron` in a `RowGroup`, already the same |
+| `RattaEditText` | a text field with no box of its own (the screen draws it), text `sp_px_34`; a × `dp_px_48` at its trailing edge that clears the text, shown only while it has focus and text; its own cursor and no long-press menu | `SearchField`: the × that clears (`clearMark`), shown while the field has text, focus or not, since a tap outside the input ends the focus first |
+| `PageSelectView`, `PageJumpView` | the page picker a tap on the pager's number opens | none yet: no Ink Tools screen jumps to a page |
+| `LoadingDialog` | a floating box `dp_px_821` x `dp_px_332`, paper with a `dp_px_2` ink outline, square corners, centred, nothing dimmed around it; «Prompt» `sp_px_34`, then a `dp_px_64` ⓘ and the hint, such as «Loading…», `sp_px_34`, `dp_px_21` after it; it does not close on a tap outside; static | `WorkingStrip`: the same box, the ⓘ and «Loading…» (`loadingWidth`, `loadingPaddingV`, `loadingPaddingH`, `loadingIcon`, `loadingIconGap`), with no «Prompt» line, which says nothing |
+| The Plugins list's loading | under the title bar, on paper: a static mark of eight short round-ended rays, `dp_px_150`, then «Loading…» `sp_px_40` `dp_px_68` under it, both centred | `LoadingView`: the same, drawn (`loadingMark`, `loadingMarkGap`) |
+| Progress dialogs (plugin install, sync) | a box with 12 px corners, a bold `sp_px_40` title over a 1 px line, a bar `dp_px_32` high with round ends, paper with a 1 px outline filling black, Cancel at the trailing edge | none yet: no Ink Tools progress bar ([#287](https://github.com/martonpaulo/ink-tools/issues/287)'s missing list) |
 
 ## Not measured yet
 

@@ -55,7 +55,8 @@ export function IconButton({kind, onPress, accessibilityLabel}: IconButtonProps)
 
 const ICON = metrics.iconSize;
 const HALF = Math.round(ICON / 2);
-const STROKE = metrics.border * 2;
+/** The native icons' stroke, as the ⊖ of Keyboard draws it (#272, #287). */
+const STROKE = metrics.markStroke;
 
 const styles = StyleSheet.create({
   target: {
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     width: ICON,
     height: ICON,
     borderRadius: HALF,
-    borderWidth: metrics.border,
+    borderWidth: STROKE,
     borderColor: metrics.ink,
     justifyContent: 'center',
     alignItems: 'center',
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
   bin: {
     flex: 1,
     width: ICON - STROKE * 2,
-    borderWidth: metrics.border,
+    borderWidth: STROKE,
     borderTopWidth: 0,
     borderColor: metrics.ink,
   },

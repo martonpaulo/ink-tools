@@ -170,6 +170,8 @@ describe('the native controls (#273)', () => {
   it('names the search field by its placeholder, in the placeholder grey', () => {
     const tree = render(<SearchField value="" placeholder="Search" onChangeText={noop} />);
     expect(byLabel(tree, 'Search').props.placeholderTextColor).toBe(metrics.placeholder);
+    // The text is the field's touch target: the renders found it 24 units tall (#287).
+    expect(StyleSheet.flatten(byLabel(tree, 'Search').props.style).minHeight).toBeGreaterThanOrEqual(metrics.touchTarget);
   });
 
   it.each([
@@ -183,14 +185,19 @@ describe('the native controls (#273)', () => {
       .findAll(n => typeof n.type === 'string' && n.props.accessibilityState?.disabled === true)
       .map(n => n.props.accessibilityLabel);
     expect(off).toEqual(disabled);
+    // Out of reach, the arrow is grey and thinner, never grey alone (#233, #287).
+    const bars = tree.root.findAll(n => n.props.testID === 'page-arrow' && typeof n.type === 'string');
+    expect(bars).toHaveLength(4);
   });
 
-  it('shows page/total with the current page underlined, and pages within range', () => {
+  it('shows page / total with the current page in bold, as the native pager, and pages within range (#287)', () => {
     const onPage = jest.fn();
     const tree = render(<Pager page={2} total={3} onPage={onPage} />);
     const current = tree.root.find(n => n.props.testID === 'current-page' && typeof n.type === 'string');
     expect(current.props.children).toBe(2);
-    expect(StyleSheet.flatten(current.props.style).textDecorationLine).toBe('underline');
+    expect(StyleSheet.flatten(current.props.style).fontWeight).toBe('bold');
+    expect(texts(tree)).toEqual([[expect.anything(), ' / 3'], 2]);
+    expect(hostByLabel(tree, 'Page 2 of 3')).toBeTruthy();
     for (const label of ['First page', 'Previous page', 'Next page', 'Last page']) {
       press(tree, label);
     }
@@ -237,7 +244,8 @@ describe('the native controls (#273)', () => {
     });
     expect(StyleSheet.flatten(find(three, 'row-light-line')[0].props.style)).toMatchObject({height: metrics.lightLine});
     expect(metrics.lightLine).toBeLessThan(metrics.separator);
-    expect(metrics.separator).toBeLessThan(metrics.border);
+    // The native button's border and the solid line are both dp_px_2 (#287).
+    expect(metrics.separator).toBe(metrics.border);
     // The solid line closes the group: it is the group's last child.
     const group = three.root.findAll(n => typeof n.type === 'string')[0];
     const last = group.children[group.children.length - 1] as ReactTestInstance;
@@ -345,6 +353,19 @@ describe('the native controls (#273)', () => {
     expect(style(off, 'switch-track')).toMatchObject({backgroundColor: metrics.paper, alignItems: 'flex-start'});
     expect(style(on, 'switch-knob')).toMatchObject({width: metrics.switchKnob, backgroundColor: metrics.paper});
     expect(style(off, 'switch-knob')).toMatchObject({backgroundColor: metrics.ink});
+    // As the native one: a track twice as tall as wide, the word at its own gap before it (#287).
+    expect(metrics.switchWidth).toBe(2 * metrics.switchHeight);
+    const box = on.root.find(n => n.props.accessibilityRole === 'switch' && typeof n.type === 'string');
+    expect(StyleSheet.flatten(box.props.style).gap).toBe(metrics.switchWordGap);
+  });
+
+  it('shows the field\'s × to clear its text only while it has text, as the native field (#287)', () => {
+    const onChangeText = jest.fn();
+    const tree = render(<SearchField value="tea" placeholder="Search" onChangeText={onChangeText} />);
+    press(tree, 'Clear');
+    expect(onChangeText).toHaveBeenCalledWith('');
+    act(() => tree.update(<SearchField value="" placeholder="Search" onChangeText={onChangeText} />));
+    expect(tree.root.findAll(n => n.props.accessibilityLabel === 'Clear')).toHaveLength(0);
   });
 
   it('draws one value out of several as a caption over one radio row each, the chosen one checked', () => {

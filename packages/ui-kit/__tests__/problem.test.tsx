@@ -26,9 +26,9 @@ const button = (tree: ReactTestRenderer, label: string) =>
 
 describe('the title bar of every problem view (#274)', () => {
   it('opens with the TitleBar: × first, then the title, as the header', () => {
-    const tree = render(<LoadingView onClose={jest.fn()} />);
+    const tree = render(<LoadingView title="Sample" onClose={jest.fn()} />);
     expect(tree.root.findAllByType(TitleBar)).toHaveLength(1);
-    expect(tree.root.findByProps({accessibilityRole: 'header'}).props.children).toBe(WORKING_TEXT);
+    expect(tree.root.findByProps({accessibilityRole: 'header'}).props.children).toBe('Sample');
     expect(tree.root.findAllByType(Button)).toHaveLength(0);
   });
 });
@@ -106,8 +106,11 @@ describe('ErrorView (#255)', () => {
 });
 
 describe('LoadingView (#255)', () => {
-  it('reads as the strip does, with Close', () => {
-    expect(texts(render(<LoadingView onClose={jest.fn()} />))).toEqual([WORKING_TEXT]);
+  it('shows the static loading mark and the strip\'s words under its title, as the native list loads (#287)', () => {
+    const tree = render(<LoadingView title="Sample" onClose={jest.fn()} />);
+    expect(texts(tree)).toEqual(['Sample', WORKING_TEXT]);
+    expect(tree.root.findAll(n => n.props.testID === 'loading-mark' && typeof n.type === 'string')).toHaveLength(1);
+    expect(tree.root.findByProps({accessibilityRole: 'progressbar'}).props.accessibilityLabel).toBe(WORKING_TEXT);
   });
 });
 

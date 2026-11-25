@@ -167,7 +167,7 @@ function Root({working}: {working: Working}) {
 }
 
 describe('WorkingStrip (#103)', () => {
-  it('is a dark strip that reads Loading… while the action works', async () => {
+  it('is the native loading box, paper with an ink border, that reads Loading… while the action works (#287)', async () => {
     const {working} = setup();
     const task = pending<void>();
     let tree!: ReactTestRenderer;
@@ -179,9 +179,12 @@ describe('WorkingStrip (#103)', () => {
       run = working.run(() => task.promise);
     });
     const strip = tree.root.findByProps({testID: 'working-strip'});
-    expect(StyleSheet.flatten(strip.props.style).backgroundColor).toBe(
-      metrics.ink,
-    );
+    expect(StyleSheet.flatten(strip.props.style)).toMatchObject({
+      backgroundColor: metrics.paper,
+      borderColor: metrics.ink,
+      borderWidth: metrics.border,
+      width: metrics.loadingWidth,
+    });
     expect(tree.root.findByType(Text).props.children).toBe(WORKING_TEXT);
     await act(async () => {
       task.resolve();

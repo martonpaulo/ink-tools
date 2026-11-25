@@ -3,7 +3,12 @@
 The Settings look every plugin shares ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)). Every Ink Tools surface follows the
 Supernote's own native controls, one shared component each (owner, 2026-11-25,
 [#273](https://github.com/martonpaulo/ink-tools/issues/273)); the measured catalog of those controls is
-[`native-catalog.md`](native-catalog.md) ([#272](https://github.com/martonpaulo/ink-tools/issues/272)). The tokens live in
+[`native-catalog.md`](native-catalog.md) ([#272](https://github.com/martonpaulo/ink-tools/issues/272)). Each component follows how the
+vendor's own widget works, learnt from the device's screens and from the vendor UI library decompiled
+in scratch, and redrawn in our own code, names and tokens: no vendor code, decompiled text or
+drawable enters the repository, and no vendor widget is loaded at runtime, since the controls stay
+at the highest dependency level that serves ([`docs/architecture.md` › Layer rules](../../docs/architecture.md#layer-rules); owner, 2026-11-25,
+[#287](https://github.com/martonpaulo/ink-tools/issues/287); [`native-catalog.md` › How the native widgets draw](native-catalog.md#how-the-native-widgets-draw)). The tokens live in
 [`src/tokens.json`](src/tokens.json), read by [`src/metrics.ts`](src/metrics.ts) and by the Android apps, the repeated styles in [`src/styles.ts`](src/styles.ts) and the one
 button in [`src/Button.tsx`](src/Button.tsx); a test refuses text under the minimum size and a
 control under the touch target ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)). The e-ink rules behind these conventions are in
@@ -15,7 +20,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [Type](#type)
 - [Grey as colour](#grey-as-colour)
 - [Controls](#controls)
-- [The «Loading…» strip](#the-loading-strip)
+- [The «Loading…» box](#the-loading-box)
 - [Needs, Error and Close](#needs-error-and-close)
 - [The Back key](#the-back-key)
 
@@ -77,7 +82,7 @@ accents, each with a fixed role, never as the only cue:
 | `#eeeeee` | a soft panel: a block of help text, an empty state |
 | `#ffffff` | paper |
 
-A grey that marks a state also changes a shape or a word: a selected toggle shows its bar, a
+A grey that marks a state also changes a shape or a word: a selected toggle wears the selection border, a
 disabled control its label. Lighter greys than `#444444` never carry text a person must read; the
 field's placeholder (`#595959`) is the one exception, at 7:1. A grey joins `metrics.ts` as a
 token when the first screen uses it, named by its role.
@@ -94,37 +99,41 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 
 | Component | What it draws |
 | :--- | :--- |
-| `TitleBar` | the black band: the drawn × to close (`onClose`), ‹ to go back (`onBack`), the title centred; with `paneTitle`, the native two levels, «× Settings ‹ Language & Region» |
+| `TitleBar` | the black band: the drawn × to close (`onClose`), ‹ to go back (`onBack`), each a target the band's full height, the title centred; with `paneTitle`, the native two levels, «× Settings ‹ Language & Region» |
 | `NavList` | the left navigation list: an optional icon and a label per item, the dotted line under each, the open item marked by an ink bar at its trailing edge |
 | `ListRow` | a title, an optional subtitle, a `leading` slot (the ✓) and a `trailing` slot (its control), at the native `rowHeight`, with no line of its own; with `onPress` the whole row is one button |
 | `RowGroup` | rows that belong together: an optional caption, the rows with the light dotted line between two of them, an optional `note`, and the solid line after the group |
-| `Switch` | the word «ON» or «OFF» beside a pill-shaped track, filled black with a paper knob at its trailing end when on, an ink outline with an ink knob at its leading end when off; role `switch` |
+| `Switch` | the word «ON» or «OFF» before a pill-shaped track twice as wide as tall, filled black with a paper knob at its trailing end when on, an ink outline with an ink knob at its leading end when off, the knob one size in both; role `switch` |
 | `Radio` | an ink ring, with a filled dot when `checked`; role `radio` |
 | `CheckMark` | the ✓ on the leading side of a chosen row; unchecked, the same width empty |
 | `Chevron` | the › that says a row opens a page |
-| `SearchField` | a bordered field with a drawn magnifier and a grey placeholder, its spoken name |
-| `Pager` | \|‹ ‹ page/total › ›\|, the current page underlined; a button that would leave the range is disabled |
+| `SearchField` | a bordered field with a drawn magnifier and a grey placeholder, its spoken name; a × that clears the text while the field has text |
+| `Pager` | \|‹ ‹ page / total › ›\| with drawn arrows, the current page in bold; a button that would leave the range is disabled, its arrow grey |
 | `IconButton` | `remove` (⊖), `delete` (a trash) and `download` (an arrow over a tray), each with its spoken name |
 | `Button` with `primary` | the small filled black button, such as «Scan» |
 | `SwitchRow` | an on/off setting: a `ListRow` whose trailing `Switch` speaks the row's title |
 | `SwitchGroup` | an on/off setting with no caption: a `SwitchRow` that is its own `RowGroup`, closed by the solid line |
 | `ChoiceList` | one value out of several: a `RowGroup` with one `ListRow` per value, each `Radio` spoken «setting: value», and an optional `note` |
 
-- One `Button` for every other action, at least `touchTarget` high: black on white with an ink border.
+- One `Button` for every other action, at least `touchTarget` high: black on white with the native
+  2 px ink border. While a finger is down, an ink bar lies along its bottom edge (`pressBar`), as the
+  native button shows a press: one change, no animation ([#287](https://github.com/martonpaulo/ink-tools/issues/287)).
 - Black fill marks the one primary action of a screen, such as Save or Start.
 - A control that cannot act, a `Button` or a tile, is a dashed outline with its label in `#444444`
   on paper, never a black fill (`shared.disabledOutline`, `shared.disabledText`), and a line next
   to it says why (interface rule 16, [#233](https://github.com/martonpaulo/ink-tools/issues/233)).
-- A switch is a `Switch`. A `Button` with `selected`, the bar under its label, is the old switch
+- A switch is a `Switch`. A `Button` with `selected` wears the selection border (`selectionStroke`,
+  `selectionRadius`, owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)); it is the old switch
   that [#274](https://github.com/martonpaulo/ink-tools/issues/274) moves each plugin from.
 - Every target, a button, switch, radio or checkbox, is at least `touchTarget` in each direction;
   `screenBreaks` checks it in each component's test.
 - A button in a list row takes `rowButtonWidth`, so the buttons of every row share a column.
 
-## The «Loading…» strip
+## The «Loading…» box
 
-While a no-view button works, the plugin shows one dark strip across the top of the note that
-reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/issues/103)).
+While a no-view button works, the plugin shows the native loading box centred over the note: paper
+with the 2 px ink border, the ⓘ and «Loading…», nothing dimmed around it (owner,
+[#103](https://github.com/martonpaulo/ink-tools/issues/103), [#287](https://github.com/martonpaulo/ink-tools/issues/287)).
 
 - `createWorking` in `src/working.ts` owns it. A plugin makes one with its ports (`showPluginView`,
   `closePluginView`, a toast, its log and two toast lines), and runs each no-view action through
@@ -138,9 +147,9 @@ reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/iss
 - `handOver` keeps the view open when the action opens the plugin's own screen, such as Settings
   for a missing permission.
 - The root component renders `<WorkingStrip working={working} />` while `useWorking` is true; it
-  draws the strip, or the Error state of a held failure. The strip is static text
-  with no spinner, because each frame costs an e-ink refresh. The rest of the view is transparent.
-  Whether the host shows the note through it is open: the next device round checks it.
+  draws the box, or the Error state of a held failure. The box is static, with no spinner, because
+  each frame costs an e-ink refresh. The rest of the view is transparent.
+  Opened from Settings, the screen behind shows around the box ([`docs/supernote.md`](../../docs/supernote.md#what-a-plugin-can-show-while-a-no-view-action-runs)); over a note it is still to test.
 
 ## Needs, Error and Close
 
@@ -154,7 +163,8 @@ Every tool reports what it needs after a check and what failed after a failure i
   primary button or numbered steps.
 - `ErrorView` shows what failed, the reason, the fix, and Retry when the caller gives `onRetry`.
   It is an alert and stays until the owner closes it.
-- `LoadingView` is a full view that loads, in the strip's words.
+- `LoadingView` is a full view that loads, as the native Plugins list loads: its title bar, then
+  the static loading mark and «Loading…» centred under it ([#287](https://github.com/martonpaulo/ink-tools/issues/287)).
 - Close is the `TitleBar`'s × at the leading edge of the title bar, in every full view these
   states included ([#274](https://github.com/martonpaulo/ink-tools/issues/274)); Back does what it does.
 

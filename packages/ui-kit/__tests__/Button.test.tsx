@@ -1,6 +1,9 @@
-/** Black fill is the one primary action; a selected toggle keeps its box and gains a bar (#50). */
+/**
+ * Black fill is the one primary action; a selected toggle keeps its box and wears the selection
+ * border; a press shows the native ink bar along the bottom edge (#50, #287).
+ */
 import React from 'react';
-import {Pressable, StyleSheet, Text} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {Button, ButtonProps} from '../src/Button';
 import {metrics} from '../src/metrics';
@@ -18,10 +21,17 @@ const boxStyle = (tree: ReactTestRenderer) =>
   StyleSheet.flatten(tree.root.findByType(Pressable).props.style);
 const textStyle = (tree: ReactTestRenderer) =>
   StyleSheet.flatten(tree.root.findByType(Text).props.style);
-const bars = (tree: ReactTestRenderer) =>
-  tree.root.findAll(
-    n => n.props.testID === 'selected-bar' && !n.props.children,
-  );
+const marks = (tree: ReactTestRenderer, testID: string) =>
+  tree.root.findAll(n => n.props.testID === testID && typeof n.type === 'string');
+/** The button's content while a finger is down, as Pressable draws it then. */
+function pressed(props: Partial<ButtonProps> = {}) {
+  const content = render(props).root.findByType(Pressable).props.children({pressed: true});
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = renderer.create(<View>{content}</View>);
+  });
+  return tree;
+}
 
 describe('Button (#50)', () => {
   it.each([false, true])(
@@ -48,23 +58,40 @@ describe('Button (#50)', () => {
     expect(boxStyle(render()).backgroundColor).toBe(metrics.paper);
   });
 
-  it('marks a selected toggle with a bar under the label, not a black fill', () => {
+  it('marks a selected toggle with the selection border, not a black fill (#287)', () => {
     const selected = render({selected: true});
     expect(boxStyle(selected).backgroundColor).toBe(metrics.paper);
     expect(textStyle(selected).color).toBe(metrics.ink);
-    expect(bars(selected).length).toBeGreaterThan(0);
-    expect(
-      selected.root.findByType(Pressable).props.accessibilityState,
-    ).toMatchObject({selected: true});
-    expect(bars(render())).toHaveLength(0);
+    const [border] = marks(selected, 'selection-border');
+    expect(StyleSheet.flatten(border.props.style)).toMatchObject({
+      position: 'absolute',
+      borderWidth: metrics.selectionStroke,
+      borderRadius: metrics.selectionRadius,
+      borderColor: metrics.ink,
+    });
+    expect(selected.root.findByType(Pressable).props.accessibilityState).toMatchObject({selected: true});
+    expect(marks(render(), 'selection-border')).toHaveLength(0);
+    // Disabled too, the border keeps the dashed grey of a control that cannot act (#233).
+    const [off] = marks(render({selected: true, disabled: true}), 'selection-border');
+    expect(StyleSheet.flatten(off.props.style)).toMatchObject({borderStyle: 'dashed', borderColor: metrics.context});
+    expect(StyleSheet.flatten(off.props.style).backgroundColor).toBeUndefined();
   });
 
-  it('keeps the same box when selected, so e-ink repaints no layout', () => {
-    expect(boxStyle(render({selected: true}))).toEqual(boxStyle(render()));
-    const bar = StyleSheet.flatten(
-      bars(render({selected: true}))[0].props.style,
-    );
-    expect(bar.position).toBe('absolute');
+  it('keeps the same size when selected, so e-ink repaints no layout', () => {
+    const {borderRadius, ...selected} = boxStyle(render({selected: true}));
+    expect(borderRadius).toBe(metrics.selectionRadius);
+    expect(selected).toEqual(boxStyle(render()));
+  });
+
+  it.each([false, true])('shows a press, primary %s, as a bar along the bottom edge (#287)', primary => {
+    expect(marks(render({primary}), 'press-bar')).toHaveLength(0);
+    const [bar] = marks(pressed({primary}), 'press-bar');
+    expect(StyleSheet.flatten(bar.props.style)).toMatchObject({
+      position: 'absolute',
+      bottom: 0,
+      height: metrics.pressBar,
+      backgroundColor: primary ? metrics.paper : metrics.ink,
+    });
   });
 });
 

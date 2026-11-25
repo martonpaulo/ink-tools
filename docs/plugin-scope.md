@@ -324,9 +324,9 @@ but could use some colour. Reference to study: `Laumss/sn-plugins` configuration
 design direction for every plugin's Settings, within the e-ink constraints (16 greys).
 The conventions, and what was borrowed from that reference (now Notipal), are in
 [`packages/ui-kit/README.md`](../packages/ui-kit/README.md) ([#50](https://github.com/martonpaulo/ink-tools/issues/50)).
-While a no-view action works, every plugin shows the same sign: one dark strip across the top of
-the note that reads «Loading…», removed when the action ends (owner,
-[#103](https://github.com/martonpaulo/ink-tools/issues/103)).
+While a no-view action works, every plugin shows the same sign: the native loading box, centred over
+the note, that reads «Loading…», removed when the action ends (owner,
+[#103](https://github.com/martonpaulo/ink-tools/issues/103), [#287](https://github.com/martonpaulo/ink-tools/issues/287)).
 On 2026-11-16 the owner named three more plugins whose Settings look he likes: SnapMark, PC Clipboard
 and DocuCraft; on 2026-11-25 the Supernote's own native controls replaced them as the reference
 ([ui-kit › Controls](../packages/ui-kit/README.md#controls), [#273](https://github.com/martonpaulo/ink-tools/issues/273)).

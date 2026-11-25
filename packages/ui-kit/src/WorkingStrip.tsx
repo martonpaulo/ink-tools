@@ -1,15 +1,18 @@
 /**
- * The view of the «Loading…» strip (#103, owner A7): one dark strip across the top, the rest of
- * the view clear, so the note shows below when the host draws the view over it. Static text, no
- * spinner: each frame of an animation costs an e-ink refresh. After a failure the same place shows
- * the Error state, with the reason and Close, until the owner closes it (#255).
+ * The view of a no-view action's «Loading…» (#103), as the native loading box (#287): a paper box
+ * with the thin ink border, centred on the screen, with the ⓘ and «Loading…»; the rest of the view
+ * is clear and not dimmed, so the note shows around it when the host draws the view over it. Static,
+ * no spinner: each frame of an animation costs an e-ink refresh. After a failure the view shows the
+ * Error state, with the reason and Close, until the owner closes it (#255).
  */
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {useBackKey} from './backKey';
+import {InfoMark} from './marks';
 import {metrics} from './metrics';
 import {Problem} from './problem';
 import {ErrorView} from './ProblemView';
+import {shared} from './styles';
 import {Working, WORKING_TEXT} from './working';
 
 /** The strip's state, kept current: working, the held failure, or neither. */
@@ -53,19 +56,26 @@ function Strip() {
         accessibilityLabel={WORKING_TEXT}
         accessibilityLiveRegion="polite"
         testID="working-strip">
-        <Text style={styles.text}>{WORKING_TEXT}</Text>
+        <InfoMark />
+        <Text style={[shared.text, styles.text]}>{WORKING_TEXT}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  view: {flex: 1, backgroundColor: 'transparent'},
+  view: {flex: 1, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center'},
   strip: {
-    minHeight: metrics.touchTarget,
-    justifyContent: 'center',
-    paddingHorizontal: metrics.screenPadding,
-    backgroundColor: metrics.ink,
+    width: metrics.loadingWidth,
+    maxWidth: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: metrics.loadingIconGap,
+    paddingVertical: metrics.loadingPaddingV,
+    paddingHorizontal: metrics.loadingPaddingH,
+    borderWidth: metrics.border,
+    borderColor: metrics.ink,
+    backgroundColor: metrics.paper,
   },
-  text: {fontSize: metrics.fontBody, color: metrics.paper},
+  text: {flexShrink: 1},
 });

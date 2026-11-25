@@ -132,6 +132,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A plugin can open a TCP listener and accept a connection over Wi-Fi, with the screen on and off
   [measured, 2026-11-14, [#91](https://github.com/martonpaulo/ink-tools/issues/91)].
 - HTTPS `fetch` works; cleartext `http://` fails at once [measured, `brief.md`].
+- A plugin's Java can load another app's code: `createPackageContext("com.ratta.settings",
+  CONTEXT_INCLUDE_CODE | CONTEXT_IGNORE_SECURITY)`, then its class loader loads the vendor's
+  `RattaSwitch` and makes an instance, inside PluginHost [measured, firmware 3.31.45, 2026-11-25,
+  [#287](https://github.com/martonpaulo/ink-tools/issues/287)]. Shown in a plugin view, it is not tried; Ink Tools does not use it, since its controls stay
+  at the highest dependency level that serves ([`architecture.md` › Layer rules](architecture.md#layer-rules)).
 - React Native's `URL` parses a string, but its getters throw: Account Sync 0.1.0-beta.10's To-Do
   pass failed with `URL.protocol is not implemented` [measured, 2026-11-17,
   [#209](https://github.com/martonpaulo/ink-tools/issues/209)]. React Native 0.79.2's
@@ -679,9 +684,10 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/10
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
 | Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
 
-The plugin view was chosen: a dark «Loading…» strip at the top of an otherwise transparent view
-([#103](https://github.com/martonpaulo/ink-tools/issues/103), `packages/ui-kit/README.md`). Whether the host draws the view over the note, so
-the note shows through, is still to test.
+The plugin view was chosen: the native loading box centred in an otherwise transparent view
+([#103](https://github.com/martonpaulo/ink-tools/issues/103), [#287](https://github.com/martonpaulo/ink-tools/issues/287), `packages/ui-kit/README.md`). Opened from Settings, the host draws that
+view over the screen behind it, which shows around the box undimmed [measured, Plugin Diagnostics
+test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/287)]; over a note it is still to test.
 
 ## Files and sync
 

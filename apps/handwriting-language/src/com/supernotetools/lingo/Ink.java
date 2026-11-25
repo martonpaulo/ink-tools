@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -327,7 +328,8 @@ final class Ink {
     place.setMarginEnd(inset);
     track.addView(knob, place);
     LinearLayout.LayoutParams trackSize = new LinearLayout.LayoutParams(px(context, Tokens.SWITCH_WIDTH_MM), height);
-    trackSize.setMarginStart(px(context, Tokens.MARK_GAP_MM));
+    // The native word's own gap to its track (#287).
+    trackSize.setMarginStart(px(context, Tokens.SWITCH_WORD_GAP_MM));
     box.addView(track, trackSize);
     return box;
   }
@@ -470,8 +472,28 @@ final class Ink {
     view.setEnabled(enabled);
     boolean filled = primary && enabled;
     view.setTextColor(!enabled ? CONTEXT : filled ? PAPER : INK);
-    view.setBackground(outline(context, filled ? INK : PAPER, enabled ? INK : CONTEXT, !enabled));
+    view.setBackground(pressable(context, outline(context, filled ? INK : PAPER, enabled ? INK : CONTEXT, !enabled), filled));
     return view;
+  }
+
+  /**
+   * A button's box with the native press (ui-kit `Button`, #287): while a finger is down, an ink bar
+   * lies along the bottom edge, paper on a black button; one change, no animation.
+   */
+  private static Drawable pressable(Context context, Drawable box, boolean filled) {
+    LayerDrawable down = new LayerDrawable(new Drawable[] {box, fill(filled ? PAPER : INK)});
+    down.setLayerHeight(1, devicePx(Tokens.PRESS_BAR_MM));
+    down.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
+    StateListDrawable states = new StateListDrawable();
+    states.addState(new int[] {android.R.attr.state_pressed}, down);
+    states.addState(new int[] {}, box);
+    return states;
+  }
+
+  private static GradientDrawable fill(int colour) {
+    GradientDrawable box = new GradientDrawable();
+    box.setColor(colour);
+    return box;
   }
 
   /** A box with the ink border; dashed for a control that cannot act. */

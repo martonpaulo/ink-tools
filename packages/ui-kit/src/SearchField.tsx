@@ -1,9 +1,14 @@
 /**
- * The native search field (#273): a bordered field with a drawn magnifier at its leading edge and a
- * grey placeholder; the placeholder is its spoken name.
+ * The native search field (#273, #287): a bordered field with a drawn magnifier at its leading edge
+ * and a grey placeholder, its spoken name. As the native field, a × at its trailing edge clears the
+ * text; it shows while the field has text, so an empty field shows nothing to clear. The native one
+ * also hides it without focus; here it stays, since a tap outside the input takes the focus away
+ * before the × gets it (interface audit, #287).
  */
 import React from 'react';
-import {StyleSheet, TextInput, View} from 'react-native';
+import {Pressable, StyleSheet, TextInput, View} from 'react-native';
+import {CLEAR_LABEL} from './controlsCopy';
+import {CloseMark} from './marks';
 import {metrics} from './metrics';
 import {shared} from './styles';
 
@@ -32,6 +37,15 @@ export function SearchField({value, onChangeText, placeholder, onSubmit}: Search
         returnKeyType="search"
         style={[shared.text, styles.input]}
       />
+      {value.length > 0 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={CLEAR_LABEL}
+          style={styles.clear}
+          onPress={() => onChangeText('')}>
+          <CloseMark size={metrics.clearMark} color={metrics.ink} />
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -52,7 +66,7 @@ const styles = StyleSheet.create({
     width: RING,
     height: RING,
     borderRadius: RING / 2,
-    borderWidth: metrics.border,
+    borderWidth: metrics.markStroke,
     borderColor: metrics.ink,
   },
   handle: {
@@ -60,9 +74,16 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: metrics.iconSize - RING,
-    height: metrics.border,
+    height: metrics.markStroke,
     backgroundColor: metrics.ink,
     transform: [{rotate: '45deg'}],
   },
-  input: {flex: 1, padding: 0},
+  // The text takes the field's full height, so the whole box is its touch target.
+  input: {flex: 1, alignSelf: 'stretch', minHeight: metrics.touchTarget, padding: 0},
+  clear: {
+    minWidth: metrics.touchTarget,
+    minHeight: metrics.touchTarget,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

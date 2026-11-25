@@ -6,7 +6,21 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import type {WindowName} from './html';
-import {ErrorView, LoadingView, Needs} from '@ink-tools/ui-kit';
+import {View} from 'react-native';
+import {
+  Button,
+  ErrorView,
+  LoadingView,
+  Needs,
+  Pager,
+  RowGroup,
+  SearchField,
+  shared,
+  SwitchRow,
+  TitleBar,
+  WorkingStrip,
+} from '@ink-tools/ui-kit';
+import type {Working} from '@ink-tools/ui-kit';
 import SmartShapesSettings from '../../../plugins/smart-shapes/App';
 import RealTimeConversionSettings from '../../../plugins/real-time-conversion/App';
 import WordLookupSettings from '../../../plugins/word-lookup/App';
@@ -28,6 +42,38 @@ async function mount(element: React.ReactElement): Promise<ReactTestRenderer> {
     tree = renderer.create(element);
   });
   return tree;
+}
+
+/** A run that works and never ends, so the «Loading…» box stays on screen (#287). */
+const WORKING: Working = {
+  run: () => new Promise(() => {}),
+  handOver: () => {},
+  isWorking: () => true,
+  problem: () => null,
+  subscribe: () => () => {},
+  dismiss: () => {},
+} as unknown as Working;
+
+/** The controls #287 redrew after the vendor library, each in its states, on one screen. */
+function ControlsSheet(): React.JSX.Element {
+  return (
+    <View style={shared.screen}>
+      <TitleBar title="Controls" onClose={() => {}} onBack={() => {}} />
+      <View style={shared.buttons}>
+        <Button label="Plain" onPress={() => {}} />
+        <Button label="Primary" primary onPress={() => {}} />
+        <Button label="Selected" selected onPress={() => {}} />
+        <Button label="Disabled" disabled onPress={() => {}} />
+      </View>
+      <RowGroup caption="Switches">
+        <SwitchRow title="Sample on" value onChange={() => {}} />
+        <SwitchRow title="Sample off" value={false} onChange={() => {}} />
+      </RowGroup>
+      <SearchField value="" placeholder="Search" onChangeText={() => {}} />
+      <Pager page={1} total={12} onPage={() => {}} />
+      <Pager page={5} total={12} onPage={() => {}} />
+    </View>
+  );
 }
 
 /** Nothing outlives a screen: the hook the run calls after each one unmounts. */
@@ -90,7 +136,9 @@ export const SCREENS: ScreenRender[] = [
   {name: 'real-time-conversion-settings', render: () => mount(<RealTimeConversionSettings close={() => {}} />)},
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
-  {name: 'ui-kit-loading', render: () => mount(<LoadingView onClose={() => {}} />)},
+  {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
+  {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />)},
+  {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},
   {name: 'image-editing-editor', render: () => imageEditor()},
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},

@@ -5,9 +5,11 @@
  * frame of an animation costs an e-ink refresh.
  */
 import React from 'react';
-import {Text, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {useBackKey} from './backKey';
 import {Button} from './Button';
+import {LoadingMark} from './marks';
+import {metrics} from './metrics';
 import {Problem, RETRY_TEXT} from './problem';
 import {shared} from './styles';
 import {TitleBar} from './TitleBar';
@@ -41,12 +43,24 @@ export function ErrorView({
   );
 }
 
-/** A full view that loads, in the strip's words. */
-export function LoadingView({onClose}: {onClose: () => void}): React.JSX.Element {
+/**
+ * A full view that loads, as the native Plugins list loads (#287): the title bar with the view's
+ * title, then the static loading mark and «Loading…» under it, centred on the paper below.
+ */
+export function LoadingView({title, onClose}: {title?: string; onClose: () => void}): React.JSX.Element {
   useBackKey(onClose);
   return (
     <View style={shared.screen} testID="loading-view">
-      <TitleBar title={WORKING_TEXT} onClose={onClose} />
+      <TitleBar title={title ?? ''} onClose={onClose} />
+      <View
+        style={styles.loading}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={WORKING_TEXT}
+        accessibilityLiveRegion="polite">
+        <LoadingMark />
+        <Text style={shared.title}>{WORKING_TEXT}</Text>
+      </View>
     </View>
   );
 }
@@ -99,3 +113,7 @@ function ProblemView({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {flex: 1, justifyContent: 'center', alignItems: 'center', gap: metrics.loadingMarkGap},
+});

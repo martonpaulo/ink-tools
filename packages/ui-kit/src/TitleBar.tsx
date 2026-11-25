@@ -92,16 +92,17 @@ const styles = StyleSheet.create({
   pane: {width: metrics.navPaneWidth, flexDirection: 'row', alignItems: 'center'},
   // The pane's title starts where the native one does, after the ×'s target.
   paneTitle: {flexShrink: 1, marginLeft: Math.max(0, metrics.paneTitleStart - CLOSE_SLOT)},
+  // The × and ‹ take the band's full height, as the native title bar's back target does (#287).
   close: {
     marginLeft: CLOSE_INSET,
     minWidth: metrics.touchTarget,
-    minHeight: metrics.touchTarget,
+    minHeight: metrics.titleBarHeight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   back: {
     minWidth: BACK_SLOT,
-    minHeight: metrics.touchTarget,
+    minHeight: metrics.titleBarHeight,
     paddingLeft: metrics.sideMargin,
     justifyContent: 'center',
     alignItems: 'flex-start',

@@ -2,7 +2,9 @@
  * The native switch (#273, #272): the word «ON» or «OFF» beside a pill-shaped track; on, the track
  * is filled black with a paper knob at its trailing end; off, it is an ink outline with an ink knob
  * at its leading end. Its state is a word and a fill, never grey alone. Disabled, the outline and the
- * word take the context grey and the outline is dashed (#233).
+ * word take the context grey and the outline is dashed (#233). As the native one, the word sits
+ * before the track, which is twice as wide as it is tall, and the knob is the same size on and off,
+ * with one gap to the track's outer edge on every side (#287).
  */
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -44,7 +46,7 @@ const styles = StyleSheet.create({
   target: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: metrics.markGap,
+    gap: metrics.switchWordGap,
     minWidth: metrics.touchTarget,
     minHeight: metrics.touchTarget,
   },

@@ -84,6 +84,25 @@ does for its sources):
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
   ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/plugin-diagnostics` is exempt: it
   exists to call internals directly.
+- **The highest dependency level that serves.** As with high-level and low-level languages,
+  level 1 is the highest and level 5 the lowest. Use the highest level that delivers the outcome at
+  acceptable cost and quality (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). The levels, from the highest to the lowest and so the most fragile: 1, the
+  official `sn-plugin-lib` or our own code; 2, the device's internal data, such as its content
+  providers; 3, the vendor's internal code and screens, such as a class loaded from another app;
+  4, screen automation; 5, behaviour learned from decompiled code, which changes silently and is
+  the most fragile. Impact is marked apart: level 4 affects only our tests, the others affect the
+  person. Every part below level 1 records why no higher level serves and has a probe in the
+  firmware watch ([#293](https://github.com/martonpaulo/ink-tools/issues/293)), so it never breaks silently. Move a part up when we touch it or when the
+  watch flags it, never as a rewrite campaign; before moving a part to a higher level, check why
+  it was built its way (a decision, an issue, a need the higher path lacks) and record that check. The lower the level and the higher the impact, the
+  stronger the reason must be; level 5 only when nothing else works, always with an effect test. Our own
+  code is level 1 but not free: rebuilding a whole feature the device already does well can cost
+  more than using the native one under a probe. The controls are level 1: our own measured copies,
+  built on the ideas learned from the vendor UI library ([`packages/ui-kit/README.md`](../packages/ui-kit/README.md)).
+- **A failure reads as a sentence.** Every firmware or internal failure shows the person one
+  friendly sentence that says what failed and what to do next, never a class name; the log carries
+  every detail an agent needs: the class or provider, the method, the firmware version, the app
+  versions, the exception's class and message, and the stack trace (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)).
 - **No `URL` getter on the tablet.** React Native's `URL` throws on `protocol`, `host` and the
   rest, so tablet code parses with `parseUrl` of `sync-core`; the `url` rule of
   `scripts/boundaries.py` covers every plugin, `plugins/plugin-diagnostics` included

@@ -20,7 +20,10 @@ const COLOUR = tokens.colour;
 const mm = (millimetres: number) => Math.round(millimetres * PX_PER_MM * SCALE);
 
 const space = mm(MM.space.value);
-const border = Math.max(1, mm(MM.border.value));
+/** A length in whole device pixels, at least one, so every line of one kind is as thick (#272, #275). */
+const devicePx = (millimetres: number) => Math.max(1, Math.round(millimetres * PX_PER_MM)) * SCALE;
+
+const border = devicePx(MM.border.value);
 const bodyFont = mm(MM.bodyFont.value);
 
 export const metrics = {
@@ -30,10 +33,14 @@ export const metrics = {
   rowButtonWidth: mm(MM.rowButtonWidth.value),
   border,
   /** The solid line after a group's last row, in whole device pixels so every line is as thick (#272, #275). */
-  separator: Math.max(1, Math.round(MM.separator.value * PX_PER_MM)) * SCALE,
+  separator: devicePx(MM.separator.value),
   /** The light dotted line between two rows of one group, in whole device pixels (#272). */
-  lightLine: Math.max(1, Math.round(MM.lightLine.value * PX_PER_MM)) * SCALE,
-  selectedBarHeight: border * RATIO.selectedBarBorders.value,
+  lightLine: devicePx(MM.lightLine.value),
+  /** The ink bar along a button's bottom edge while it is pressed, as the native button (#287). */
+  pressBar: devicePx(MM.pressBar.value),
+  /** The selection border around a chosen item (#272, #287). */
+  selectionStroke: devicePx(MM.selectionStroke.value),
+  selectionRadius: mm(MM.selectionRadius.value),
 
   /** Between the screen's edge and its content. */
   screenPadding: space,
@@ -41,10 +48,8 @@ export const metrics = {
   sectionGap: space,
   /** Between the controls of one row. */
   controlGap: space,
-  /** Inside a button or the field, before the label or text; the selected bar's inset too. */
+  /** Inside a button or the field, before the label or text. */
   controlPadding: space,
-  /** From a selected toggle's bar to the button's bottom edge. */
-  selectedBarInset: Math.round(space / 2),
   /** Above and below the text of a list row. */
   rowPadding: space,
   /** A list row's fixed height, as the native row, one or two lines of text (#272). */
@@ -80,12 +85,29 @@ export const metrics = {
   switchWidth: mm(MM.switchWidth.value),
   switchHeight: mm(MM.switchHeight.value),
   switchKnob: mm(MM.switchKnob.value),
+  /** Between the switch's word and its track (#287). */
+  switchWordGap: mm(MM.switchWordGap.value),
   radioSize: mm(MM.radioSize.value),
   radioDot: mm(MM.radioDot.value),
   smallButtonWidth: mm(MM.smallButtonWidth.value),
   smallButtonHeight: mm(MM.smallButtonHeight.value),
   iconSize: mm(MM.iconSize.value),
-  pageMarkHeight: border * RATIO.pageMarkBorders.value,
+  pagerArrow: mm(MM.pagerArrow.value),
+  pagerNumberGap: mm(MM.pagerNumberGap.value),
+  /** The field's × that clears its text (#287). */
+  clearMark: mm(MM.clearMark.value),
+  /** The loading box over a note, as the native one (#287). */
+  loadingWidth: mm(MM.loadingWidth.value),
+  loadingPaddingV: mm(MM.loadingPaddingV.value),
+  loadingPaddingH: mm(MM.loadingPaddingH.value),
+  loadingIcon: mm(MM.loadingIcon.value),
+  loadingIconGap: mm(MM.loadingIconGap.value),
+  /** The static loading mark of a full view that loads, and its rays as shares of its size (#287). */
+  loadingMark: mm(MM.loadingMark.value),
+  loadingMarkGap: mm(MM.loadingMarkGap.value),
+  loadingRayStart: RATIO.loadingRayStart.value,
+  loadingRayLength: RATIO.loadingRayLength.value,
+  loadingRayStroke: RATIO.loadingRayStroke.value,
 
   ink: COLOUR.ink.value,
   paper: COLOUR.paper.value,

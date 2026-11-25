@@ -1,7 +1,7 @@
 /**
- * The «Loading…» strip of a no-view action (#103, owner A7, docs/plugin-scope.md › Design
- * direction): while a lasso or toolbar button with `showType: 0` works, the plugin opens its own
- * view, which shows one dark strip across the top of the note, and closes it when the action
+ * The «Loading…» of a no-view action (#103, #287, docs/plugin-scope.md › Design direction): while a
+ * lasso or toolbar button with `showType: 0` works, the plugin opens its own view, which shows the
+ * native loading box centred over the note, and closes it when the action
  * succeeds. A failure keeps the view open on the Error state, with its reason and Close, until the
  * owner closes it (#255); a run past the timeout replaces the strip with a toast.
  *
