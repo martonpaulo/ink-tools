@@ -45,7 +45,30 @@ describe('the native file module (#142)', () => {
       '__tests__/image.test.ts',
       '__tests__/measuresDevice.test.ts',
       '__tests__/measures.test.ts',
+      '__tests__/quickInsert.test.ts',
     ];
     expect(moved.filter(file => fs.existsSync(path.join(ROOT, file)))).toEqual([]);
+  });
+
+  it('keeps no copy of the shared tests it split with the packages gate (#142, D63 A)', () => {
+    // Each title is a describe or a test that now runs in packages/picture-search/__tests__/.
+    const movedTitles = [
+      "'the picks rule (#34)'",
+      "'the measured order keeps a pick first (#34)'",
+      "'thumbnail files (#16, #46)'",
+      "'searchCached (#16)'",
+      "'settings live in the private folder, out of MyStyle (#22)'",
+      "'never writes the defaults over a file it could not read (#99)'",
+      "'reads the same clean border and measure width'",
+    ];
+    const dir = path.join(ROOT, '__tests__');
+    const copies = fs
+      .readdirSync(dir)
+      .filter(name => /\.test\.tsx?$/.test(name) && name !== 'nativeModule.test.ts')
+      .flatMap(name => {
+        const text = fs.readFileSync(path.join(dir, name), 'utf8');
+        return movedTitles.filter(title => text.includes(title)).map(title => `${name}: ${title}`);
+      });
+    expect(copies).toEqual([]);
   });
 });

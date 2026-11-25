@@ -1,12 +1,26 @@
 import {PluginManager} from 'sn-plugin-lib';
-import {insertBest, QuickInsertDeps} from '../src/flow/quickInsert';
-import {unmeasured} from '../src/flow/measure';
-import type {
-  SearchOutcome,
-  SearchResult,
-} from '@ink-tools/picture-search';
-import {copy} from '../src/ui/copy';
-import {logLines, startLog} from '../src/profile';
+import {
+  insertBest as sharedInsertBest,
+  type InsertLimit,
+  type LassoPlace,
+  type QuickInsertDeps as SharedDeps,
+  unmeasured,
+} from '../src/insert';
+import type {SearchOutcome} from '../src/search';
+import type {SearchResult} from '../src/types';
+import {logLines, startLog} from '../src/log/memory';
+import '../testing/profile';
+import {TEST_COPY as copy} from '../testing/insert';
+
+/** A plugin that records each search as a recent one, as Ink2Pic does. */
+type QuickInsertDeps = Required<SharedDeps>;
+
+const insertBest = (
+  word: string,
+  place: LassoPlace | null,
+  deps: QuickInsertDeps,
+  limit: InsertLimit = {},
+) => sharedInsertBest(word, place, deps, copy, limit);
 
 const picture = (id: string): SearchResult => ({
   id,

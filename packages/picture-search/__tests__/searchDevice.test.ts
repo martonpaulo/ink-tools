@@ -1,0 +1,174 @@
+import {NativeModules} from 'react-native';
+import {FileUtils, PluginManager} from 'sn-plugin-lib';
+import '../testing/profile';
+import {
+  closeLogFileForTests,
+  resetSessionForTests,
+} from '../src/storage';
+import {
+  deviceContext,
+  searchCached,
+  type SearchSettings,
+  searchVariant,
+} from '../src/insert';
+import type {SourceAdapter} from '../src/adapter';
+import {fullUrl} from '../src/registry';
+
+const files: Record<string, string> = {};
+const native = {
+  downloadToFile: jest.fn(),
+  readText: jest.fn(async (path: string) => files[path] ?? null),
+  writeText: jest.fn(async (path: string, text: string) => {
+    files[path] = text;
+    return null;
+  }),
+};
+
+/** What a plugin's settings say, read again at each search as a plugin's settings store is. */
+let settings: SearchSettings;
+const current = async () => settings;
+const defaults = (): SearchSettings => ({
+  languages: ['en'],
+  photos: false,
+  dataSaver: false,
+  sourceOn: () => true,
+});
+
+beforeEach(() => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  NativeModules.TestFiles = native;
+  settings = defaults();
+  resetSessionForTests();
+  closeLogFileForTests();
+  (FileUtils.getExternalDirPath as jest.Mock).mockResolvedValue([
+    '/storage/emulated/0',
+  ]);
+  (PluginManager.getPluginDirPath as jest.Mock).mockResolvedValue(
+    '/data/plugin',
+  );
+});
+
+describe('searchCached (#16)', () => {
+  it('answers a repeated search from the cache file', async () => {
+    const search = jest.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        results: [
+          {
+            id: 'openclipart:1',
+            source: 'openclipart',
+            title: 'Soup',
+            thumbUrl: 'https://openclipart.org/image/400px/1',
+            license: 'CC0 1.0',
+            attribution: 'Openclipart',
+          },
+        ],
+      },
+    });
+    const sources: SourceAdapter[] = [{name: 'openclipart', search}];
+    await searchCached('soup', current, sources);
+    const again = await searchCached('Soup ', current, sources);
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(fullUrl(again.results[0], 800)).toBe(
+      'https://openclipart.org/image/800px/1',
+    );
+    expect(Object.keys(files)).toContain('/data/plugin/search-cache.json');
+  });
+});
+
+describe('the search languages (#68)', () => {
+  it('looks the word up in the given order, and a new order is a new search', async () => {
+    settings = {...defaults(), languages: ['pt', 'en']};
+    const seen: string[][] = [];
+    const search = jest.fn(async (_query: string, ctx) => {
+      seen.push([...ctx.languages]);
+      return {
+        ok: true as const,
+        value: {
+          results: [
+            {
+              id: 'commons:Gato.png',
+              source: 'commons' as const,
+              title: 'Gato',
+              thumbUrl: 'https://upload.wikimedia.org/gato.png',
+              license: 'CC0',
+              attribution: 'Wikimedia Commons',
+            },
+          ],
+        },
+      };
+    });
+    const sources: SourceAdapter[] = [{name: 'commons', search}];
+    await searchCached('gato', current, sources);
+    expect(seen).toEqual([['pt', 'en']]);
+    settings = {...defaults(), languages: ['en', 'pt']};
+    await searchCached('gato', current, sources);
+    expect(seen).toEqual([
+      ['pt', 'en'],
+      ['en', 'pt'],
+    ]);
+  });
+});
+
+describe('the search settings (#70)', () => {
+  const answer = (name: 'openclipart' | 'commons') =>
+    jest.fn(async (_query: string, ctx) => ({
+      ok: true as const,
+      value: {
+        results: [
+          {
+            id: `${name}:1`,
+            source: name,
+            title: `${ctx.photos ? 'photo' : 'drawing'} ${ctx.dataSaver}`,
+            thumbUrl: `https://example.org/${name}.png`,
+            license: 'CC0',
+            attribution: name,
+          },
+        ],
+      },
+    }));
+
+  it('asks only the sources left on, with the style and the data saver', async () => {
+    const openclipart = answer('openclipart');
+    const commons = answer('commons');
+    const sources: SourceAdapter[] = [
+      {name: 'openclipart', search: openclipart},
+      {name: 'commons', search: commons},
+    ];
+    settings = {
+      ...defaults(),
+      sourceOn: name => name !== 'openclipart',
+      photos: true,
+      dataSaver: true,
+    };
+    const outcome = await searchCached('lamp', current, sources);
+    expect(openclipart).not.toHaveBeenCalled();
+    expect(outcome.results.map(r => r.title)).toEqual(['photo true']);
+    // Turned on again: a new search, not the answer cached without it.
+    settings = defaults();
+    await searchCached('lamp', current, sources);
+    expect(openclipart).toHaveBeenCalledTimes(1);
+  });
+
+  it('keys the cache by the context and the sources the search runs with (#99)', () => {
+    const sources: SourceAdapter[] = [
+      {name: 'openclipart', search: answer('openclipart')},
+      {name: 'commons', search: answer('commons')},
+    ];
+    const chosen = {
+      ...defaults(),
+      languages: ['pt', 'en'] as const,
+      photos: true,
+      dataSaver: true,
+    };
+    expect(searchVariant(deviceContext(chosen), sources)).toBe(
+      'pt,en|sources:openclipart,commons|photos|saver',
+    );
+    expect(
+      searchVariant(
+        deviceContext({...chosen, photos: false, dataSaver: false}),
+        sources.slice(1),
+      ),
+    ).toBe('pt,en|sources:commons');
+  });
+});

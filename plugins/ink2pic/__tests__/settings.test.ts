@@ -1,9 +1,10 @@
+/**
+ * Ink2Pic's settings codec, its groups and its folder (#68, #70). The settings store's rules (#22,
+ * #94, #99) run in the packages gate, packages/picture-search/__tests__/settings.test.ts (#142).
+ */
 import {NativeModules} from 'react-native';
 import {
-  conflictCopies,
-  createSettingsStore,
   logLines,
-  SettingsPlace,
   settingsPath,
   getSettings,
   INK2PIC_SETTINGS,
@@ -19,7 +20,6 @@ import {
   styleFlags,
 } from '../src/settings/settings';
 import type {TextStore} from '@ink-tools/picture-search';
-import {fail, ok} from '@ink-tools/sn-adapter/official';
 
 function memory(files: Record<string, string> = {}): TextStore {
   return {
@@ -97,88 +97,6 @@ describe('the settings file (#68)', () => {
     );
   });
 
-  it('keeps a file that is not JSON beside itself before any write (#94)', async () => {
-    const path = '/s/settings.json';
-    const broken = '{"languages": ["en",}';
-    const files: Record<string, string> = {[path]: broken};
-    const loaded = await loadSettings(
-      INK2PIC_SETTINGS,
-      memory(files),
-      path,
-      null,
-    );
-    expect(loaded).toEqual({
-      settings: defaultSettings(null),
-      readFailure: null,
-    });
-    const copies = Object.keys(files).filter(name =>
-      name.startsWith('/s/settings.unreadable-'),
-    );
-    expect(copies).toHaveLength(1);
-    expect(files[copies[0]]).toBe(broken);
-    expect(logLines().join('\n')).toContain(
-      'is kept as /s/settings.unreadable-',
-    );
-  });
-
-  it('refuses every write when the copy of a broken file cannot be kept (#94)', async () => {
-    const storage: TextStore = {
-      readText: async () => '[1, 2]',
-      writeText: async () => {
-        throw new Error('full');
-      },
-    };
-    const loaded = await loadSettings(
-      INK2PIC_SETTINGS,
-      storage,
-      '/s/settings.json',
-      null,
-    );
-    expect(loaded.readFailure).toContain('its copy could not be kept');
-  });
-
-  it('logs a failed read and uses the default', async () => {
-    const storage: TextStore = {
-      readText: async () => {
-        throw new Error('EACCES');
-      },
-      writeText: async () => {},
-    };
-    expect(await loadSettings(INK2PIC_SETTINGS, storage, '/x', null)).toEqual({
-      settings: defaultSettings(null),
-      readFailure: 'Error: EACCES',
-    });
-    expect(logLines().join('\n')).toContain('settings: cannot read /x');
-  });
-
-  it('never writes the defaults over a file it could not read (#99)', async () => {
-    const file = serializeSettings({...defaultSettings(null), size: 'large'});
-    const writeText = jest.fn(async () => null);
-    NativeModules.Ink2PicFiles = {
-      readText: jest.fn(async () => {
-        throw Object.assign(new Error('busy'), {code: 'IO'});
-      }),
-      writeText,
-    };
-    resetSettingsForTests();
-    expect((await getSettings()).size).toBe('medium');
-    await saveSettings({...defaultSettings(null), placement: 'beside'});
-    // The change lasts for the session; the file keeps the person's settings.
-    expect((await getSettings()).placement).toBe('beside');
-    expect(writeText).not.toHaveBeenCalled();
-    expect(logLines().join('\n')).toContain(
-      'settings: cannot read /storage/emulated/0/MyStyle/Ink2Pic/settings.json: IO: busy',
-    );
-    expect(logLines().join('\n')).toContain('settings: not saved');
-    // The next runtime reads the file again and saves as before.
-    NativeModules.Ink2PicFiles.readText = jest.fn(async () => file);
-    resetSettingsForTests();
-    expect((await getSettings()).size).toBe('large');
-    await saveSettings({...defaultSettings(null), size: 'small'});
-    expect(writeText).toHaveBeenCalledTimes(1);
-    delete NativeModules.Ink2PicFiles;
-  });
-
   it('keeps the new order across a restart, written to MyStyle/Ink2Pic', async () => {
     const files: Record<string, string> = {};
     NativeModules.Ink2PicFiles = {
@@ -199,92 +117,6 @@ describe('the settings file (#68)', () => {
     resetSettingsForTests();
     expect((await getSettings()).languages).toEqual(['pt', 'en']);
     delete NativeModules.Ink2PicFiles;
-  });
-});
-
-describe('settings live in the private folder, out of MyStyle (#22)', () => {
-  const ROOT = '/storage/emulated/0';
-  const PRIVATE = '/data/plugins/ink2pic';
-  const OWN = `${PRIVATE}/settings.json`;
-  const SHARED = `${ROOT}/MyStyle/Ink2Pic/settings.json`;
-  const large = serializeSettings({...defaultSettings(null), size: 'large'});
-  const small = serializeSettings({...defaultSettings(null), size: 'small'});
-
-  function place(
-    files: Record<string, string>,
-    names: string[] | null = null,
-    dir = ok(PRIVATE),
-  ): SettingsPlace & {written: string[]} {
-    const written: string[] = [];
-    return {
-      written,
-      storage: {
-        readText: async path => files[path] ?? null,
-        writeText: async (path, text) => {
-          written.push(path);
-          files[path] = text;
-        },
-      },
-      privateDir: async () => dir,
-      listDir: async () => ok(names),
-      sharedRoot: ROOT,
-    };
-  }
-
-  it('moves the shared file into the private folder once, and never writes in MyStyle again', async () => {
-    const files: Record<string, string> = {[SHARED]: large};
-    const where = place(files);
-    const store = createSettingsStore(INK2PIC_SETTINGS, where);
-    expect((await store.getSettings()).size).toBe('large');
-    expect(files[OWN]).toBe(large);
-    await store.saveSettings({...defaultSettings(null), size: 'small'});
-    expect(where.written).toEqual([OWN, OWN]);
-    // The shared file is left as it was; the next runtime reads the private one.
-    expect(files[SHARED]).toBe(large);
-    store.resetSettingsForTests();
-    expect((await store.getSettings()).size).toBe('small');
-    expect(where.written).toEqual([OWN, OWN]);
-  });
-
-  it('reads the newest conflict copy when the shared file is gone', async () => {
-    const old = `${ROOT}/MyStyle/Ink2Pic_CONFLICT_20261109223635230/settings.json`;
-    const newer = `${ROOT}/MyStyle/Ink2Pic_CONFLICT_20261110080000000/settings.json`;
-    const files: Record<string, string> = {[old]: small, [newer]: large};
-    const names = [
-      'Ink2Pic',
-      'Ink2Pic_CONFLICT_20261109223635230',
-      'Ink2Pic_CONFLICT_20261110080000000',
-      'Lookup_CONFLICT_20261111000000000',
-    ];
-    const store = createSettingsStore(INK2PIC_SETTINGS, place(files, names));
-    expect((await store.getSettings()).size).toBe('large');
-    expect(files[OWN]).toBe(large);
-    expect(logLines().join('\n')).toContain(`settings: moved from ${newer}`);
-  });
-
-  it('keeps the shared path with no private folder, and the defaults with no file anywhere', async () => {
-    const files: Record<string, string> = {[SHARED]: large};
-    const shared = place(files, null, fail(1, 'no dir'));
-    const store = createSettingsStore(INK2PIC_SETTINGS, shared);
-    expect((await store.getSettings()).size).toBe('large');
-    await store.saveSettings({...defaultSettings(null), size: 'small'});
-    expect(shared.written).toEqual([SHARED]);
-
-    const empty = place({});
-    const fresh = createSettingsStore(INK2PIC_SETTINGS, empty);
-    expect(await fresh.getSettings()).toEqual(defaultSettings(null));
-    expect(empty.written).toEqual([]);
-  });
-
-  it('conflictCopies takes only this folder\'s copies, newest first', () => {
-    expect(
-      conflictCopies('Ink2Pic', [
-        'Ink2Pic_CONFLICT_20261109223635230',
-        'Ink2Pic_CONFLICT_2026',
-        'Ink2Pic_CONFLICT_20261201000000000',
-        'Ink2Picx_CONFLICT_20261201000000000',
-      ]),
-    ).toEqual(['Ink2Pic_CONFLICT_20261201000000000', 'Ink2Pic_CONFLICT_20261109223635230']);
   });
 });
 
