@@ -1,0 +1,93 @@
+{
+  "area": "storage",
+  "items": [
+    {
+      "id": "storage.cloud-conflict-folder",
+      "title": "Supernote Cloud renames a folder it cannot merge to <folder>_CONFLICT_<17 digits>",
+      "level": 5,
+      "impact": "user",
+      "owner": "picture-search",
+      "readers": [
+        "picture-search"
+      ],
+      "reason": "the cloud's conflict rule is not documented; device rounds showed it",
+      "evidence": {
+        "source": "device rounds (#22); packages/picture-search/src/storage/settings.ts",
+        "date": "2026-11-15"
+      },
+      "upgradePath": "keep plugin state only in the private folder",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a conflict appears only after two devices sync"
+      },
+      "active": "picture-search src/storage/settings.ts",
+      "issues": [
+        22
+      ],
+      "values": {
+        "marker": "_CONFLICT_",
+        "digits": 17
+      }
+    },
+    {
+      "id": "storage.sign-in-drop-folder",
+      "title": "Account Sync's sign-in drop folder in .data/plugin/",
+      "level": 2,
+      "impact": "user",
+      "owner": "account-sync",
+      "readers": [
+        "account-sync"
+      ],
+      "reason": "the plugin's private folder is the only one inkctl can write and the shared cloud never syncs",
+      "evidence": {
+        "source": "device round (#124)",
+        "date": "2026-11-18"
+      },
+      "upgradePath": "an SDK secret store",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "#293 adds a read of the folder"
+      },
+      "active": "account-sync src/secretStore.ts",
+      "issues": [
+        124
+      ],
+      "values": {
+        "folder": "/storage/emulated/0/.data/plugin/inktools-account-sync"
+      }
+    },
+    {
+      "id": "storage.helper-channel",
+      "title": "Plugin Diagnostics' helper channel: MyStyle/Probe/command.json and SNPROBE log lines",
+      "level": 2,
+      "impact": "tests",
+      "owner": "plugin-diagnostics",
+      "readers": [
+        "plugin-diagnostics",
+        "inkctl"
+      ],
+      "reason": "the only file a plugin and the shell both reach is in the shared MyStyle folder",
+      "evidence": {
+        "source": "plugins/plugin-diagnostics/src/helper.ts (#148)",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "none needed: both ends are ours",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl helper"
+      },
+      "active": "plugin-diagnostics src/helper.ts",
+      "issues": [
+        148
+      ],
+      "values": {
+        "folder": "/storage/emulated/0/MyStyle/Probe",
+        "commandFile": "command.json",
+        "answerMark": "SNPROBE answer"
+      }
+    }
+  ]
+}

@@ -2,7 +2,8 @@ name: Scan
 
 # The weekly dependency audit, plus the Markdown check of the root documents on every change to them
 # (#77): no subproject workflow starts for README.md, ROADMAP.md, AGENTS.md or docs/. The adapter
-# boundaries are checked on every change to a package, a plugin or the checker (#101), and gates.json's
+# boundaries are checked on every change to a package, a plugin or the checker (#101), the registry of
+# internals and the files it writes on every change to them (#294), and gates.json's
 # npm gates install from each lockfile when node_modules is missing (#135), and each plugin's native
 # build leaves no .snplg without its app.npk (#153). No two tracked paths differ only in case, so the
 # owner's Mac, whose disk ignores case, sees every file CI sees (#227). The weekly audit fails on any advisory
@@ -12,9 +13,9 @@ on:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -62,6 +63,11 @@ jobs:
         run: |
           python3 scripts/boundaries.py --root .
           python3 -B -m unittest scripts/test_boundaries.py
+
+      - name: Check the registry of internals and the files written from it (#294)
+        run: |
+          python3 scripts/registry.py --root .
+          python3 -B -m unittest scripts/test_registry.py
 
       - name: Check that each npm gate installs its subproject (#135)
         run: python3 -B -m unittest scripts/test_gate_install.py

@@ -1,0 +1,233 @@
+{
+  "area": "pluginhost",
+  "items": [
+    {
+      "id": "pluginhost.no-back-press",
+      "title": "PluginHost never sends hardwareBackPress to a plugin view",
+      "level": 5,
+      "impact": "user",
+      "owner": "ui-kit",
+      "readers": [
+        "ui-kit"
+      ],
+      "reason": "React Native's Back event never reaches a plugin; no SDK call replaces it",
+      "evidence": {
+        "source": "measured on a Manta",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "an SDK Back event",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a key press on the tablet"
+      },
+      "active": "ui-kit src/backKey.ts",
+      "values": {}
+    },
+    {
+      "id": "pluginhost.overlay-back-key",
+      "title": "The Back key reaches a plugin only through PluginHost's overlay window",
+      "level": 5,
+      "impact": "user",
+      "owner": "image-editing",
+      "readers": [
+        "image-editing"
+      ],
+      "reason": "a plugin view lives in a focusable overlay window, not an Activity; only that window sees the key",
+      "evidence": {
+        "source": "PluginHost's window flags, decompiled; Image Editing device round",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-22"
+      },
+      "upgradePath": "an SDK Back event",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a key press on the tablet"
+      },
+      "active": "image-editing native BackKey.java",
+      "values": {}
+    },
+    {
+      "id": "pluginhost.file-sandbox",
+      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder",
+      "level": 5,
+      "impact": "user",
+      "owner": "picture-search",
+      "readers": [
+        "picture-search"
+      ],
+      "reason": "the SDK does not list the folders a plugin may write; device rounds showed the whitelist",
+      "evidence": {
+        "source": "device rounds (#22); packages/picture-search SafePaths",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-15"
+      },
+      "upgradePath": "an SDK file API that names the allowed folders",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "#293 adds a write and delete of a test file in each allowed folder"
+      },
+      "active": "picture-search native SafePaths.java",
+      "values": {
+        "sharedFolder": "MyStyle"
+      }
+    },
+    {
+      "id": "pluginhost.plugin-list",
+      "title": "PluginHost's plugin list provider",
+      "level": 2,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "no public API lists installed plugins; the provider answers the shell",
+      "evidence": {
+        "source": "content query on the tablet",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "none known",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl routes"
+      },
+      "active": "inkctl plugin list",
+      "values": {
+        "uri": "content://com.ratta.supernote.pluginhost/plugins"
+      }
+    },
+    {
+      "id": "pluginhost.setting-service",
+      "title": "PluginHost's private PluginSettingService and its binder descriptors",
+      "level": 3,
+      "impact": "tests",
+      "owner": "inktools-bridge",
+      "readers": [
+        "inktools-bridge"
+      ],
+      "reason": "no public API installs, enables or permits a plugin; the service is the only route without the screen",
+      "evidence": {
+        "source": "IPluginSetting, decompiled (docs/research/2026-11-pluginhost-control.md)",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "the screen route of inkctl (level 4) or an official install API",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inktools-bridge ping"
+      },
+      "active": "inktools-bridge HostCalls.java",
+      "issues": [
+        215
+      ],
+      "values": {
+        "hostPackage": "com.ratta.supernote.pluginhost",
+        "service": "com.ratta.supernote.pluginhost.services.PluginSettingService",
+        "descriptor": "com.ratta.supernote.plugincorelib.IPluginSetting",
+        "callbackPackage": "com.ratta.supernote.plugincorelib.callback."
+      }
+    },
+    {
+      "id": "pluginhost.call-numbers",
+      "title": "The transaction numbers of IPluginSetting's four calls",
+      "level": 5,
+      "impact": "tests",
+      "owner": "inktools-bridge",
+      "readers": [
+        "inktools-bridge"
+      ],
+      "reason": "the numbers come from the decompiled AIDL; a reordered interface would run another method, so each call checks the name behind its number first",
+      "evidence": {
+        "source": "IPluginSetting$Stub, decompiled",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "read every number from the Stub's TRANSACTION_ constants at run time (level 3)",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inktools-bridge call-number check"
+      },
+      "active": "inktools-bridge HostCalls.java",
+      "issues": [
+        215,
+        293
+      ],
+      "values": {
+        "install": 1,
+        "uninstall": 5,
+        "setEnable": 6,
+        "updatePermissions": 9,
+        "installMethod": "installPlugin",
+        "uninstallMethod": "uninstallPlugin",
+        "setEnableMethod": "setPluginEnable",
+        "updatePermissionsMethod": "updatePluginPermissions"
+      }
+    },
+    {
+      "id": "pluginhost.parcel-classes",
+      "title": "PluginHost's PluginInfo and PluginPermission classes, loaded by reflection, and the fields set on them",
+      "level": 3,
+      "impact": "tests",
+      "owner": "inktools-bridge",
+      "readers": [
+        "inktools-bridge"
+      ],
+      "reason": "the parcel layout is PluginHost's own; loading its classes avoids copying a decompiled layout",
+      "evidence": {
+        "source": "IPluginSetting method signatures, decompiled",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official install API",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inktools-bridge ping"
+      },
+      "active": "inktools-bridge HostClasses.java",
+      "issues": [
+        215
+      ],
+      "values": {
+        "pluginIdField": "pluginID",
+        "enableField": "enable",
+        "permissionNameField": "name",
+        "permissionStatusField": "status"
+      }
+    },
+    {
+      "id": "pluginhost.permission-status",
+      "title": "The permission status values; 2 is Always Allow",
+      "level": 5,
+      "impact": "tests",
+      "owner": "inktools-bridge",
+      "readers": [
+        "inktools-bridge",
+        "inkctl"
+      ],
+      "reason": "PluginPermissionManager's constants are private; the value was read in decompiled code",
+      "evidence": {
+        "source": "PluginPermissionManager.STATUS_ALWAYS, decompiled",
+        "version": "PluginHost 1.00.2610150",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official permission API",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a probe would change a plugin's permission"
+      },
+      "active": "inkctl plugin allow",
+      "values": {
+        "always": 2
+      }
+    }
+  ]
+}

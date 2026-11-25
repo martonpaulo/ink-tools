@@ -1,0 +1,200 @@
+{
+  "area": "todo",
+  "items": [
+    {
+      "id": "todo.provider",
+      "title": "The To-Do provider's authority, tables and columns",
+      "level": 2,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter",
+        "plugin-diagnostics",
+        "inkctl"
+      ],
+      "reason": "sn-plugin-lib has no task API; the provider is the only way to read and write tasks",
+      "evidence": {
+        "source": "TaskContentProvider and DataBaseTools.insert, decompiled (#212)",
+        "version": "1.00.466",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official task API in sn-plugin-lib",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "sn-adapter probeCapability(todo)"
+      },
+      "active": "sn-adapter internals/todo.ts",
+      "issues": [
+        212,
+        101
+      ],
+      "values": {},
+      "descriptor": {
+        "authority": "com.ratta.supernote.task.provider",
+        "tables": {
+          "tasks": {
+            "path": "tasks_table",
+            "columns": [
+              "id",
+              "taskListId",
+              "taskId",
+              "title",
+              "detail",
+              "lastModified",
+              "recurrence",
+              "isReminderOn",
+              "status",
+              "importance",
+              "dueTime",
+              "completedTime",
+              "links",
+              "deleted",
+              "hasSync",
+              "sort",
+              "sortCompleted",
+              "sortTime",
+              "plannedSort",
+              "plannedSortTime"
+            ],
+            "fields": {
+              "rowId": "id",
+              "listId": "taskListId",
+              "taskId": "taskId",
+              "title": "title",
+              "detail": "detail",
+              "modified": "lastModified",
+              "status": "status",
+              "due": "dueTime",
+              "completedAt": "completedTime",
+              "deleted": "deleted",
+              "hasSync": "hasSync"
+            }
+          },
+          "groups": {
+            "path": "task_group_table",
+            "columns": [
+              "id",
+              "taskListId",
+              "userId",
+              "title",
+              "lastModified",
+              "deleted",
+              "hasSync",
+              "createTime"
+            ],
+            "fields": {
+              "rowId": "id"
+            }
+          }
+        },
+        "rules": {
+          "requiredOnInsert": [
+            "title",
+            "taskId"
+          ],
+          "needsExistingList": true,
+          "allowNoList": true,
+          "writeHasSync": 0,
+          "insertDefaults": {
+            "deleted": 0,
+            "isReminderOn": 0,
+            "dueTime": 0,
+            "completedTime": 0,
+            "sort": 0,
+            "sortCompleted": 0,
+            "plannedSort": 0
+          },
+          "insertNow": [
+            "lastModified",
+            "sortTime",
+            "plannedSortTime"
+          ],
+          "statusOpen": "needsAction",
+          "statusCompleted": "completed",
+          "timeUnit": "ms"
+        }
+      }
+    },
+    {
+      "id": "todo.row-rules",
+      "title": "The To-Do app's row rules: deleted, the insert defaults, hasSync, the Inbox list, the soft delete",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the app lists a row by rules no API states (a NULL deleted hides it); only its decompiled code shows them",
+      "evidence": {
+        "source": "DataBaseTools.insert, decompiled; device round of #212",
+        "version": "1.00.466",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official task API",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a row's visibility shows only in the app; #293 adds a read round-trip on a known row"
+      },
+      "active": "sn-adapter internals/rules.ts",
+      "issues": [
+        212
+      ],
+      "values": {}
+    },
+    {
+      "id": "todo.twin-repair",
+      "title": "Account Sync's To-Do twin repair: which of two rows for one task is kept",
+      "level": 5,
+      "impact": "user",
+      "owner": "account-sync",
+      "readers": [
+        "account-sync"
+      ],
+      "reason": "the cloud sync makes twin rows by rules learned from device rounds; no API says which row is the real one",
+      "evidence": {
+        "source": "device rounds of #212; plugins/account-sync/src/deviceStores.ts twinKey",
+        "version": "1.00.466",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official task API with a stable task id",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a twin appears only after a cloud sync; the accepted risk is a real task soft-deleted, so the repair logs each removal"
+      },
+      "active": "account-sync deviceStores.ts",
+      "issues": [
+        212
+      ],
+      "values": {}
+    },
+    {
+      "id": "todo.sync-trigger",
+      "title": "The row title that starts a To-Do sync when inserted",
+      "level": 5,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "no public API starts a task sync; an insert into the provider does, as a device round showed",
+      "evidence": {
+        "source": "inkctl sync tasks, read back on the tablet",
+        "version": "1.00.466",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "none known",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl routes"
+      },
+      "active": "inkctl sync tasks",
+      "values": {
+        "title": "supernote-sync-trigger"
+      }
+    }
+  ]
+}

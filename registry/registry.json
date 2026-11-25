@@ -1,0 +1,20 @@
+{
+  "version": "2026.11.25",
+  "descriptor": {
+    "schema": 1,
+    "version": "2026.11.17",
+    "device": {
+      "model": "Manta",
+      "android": 11,
+      "calendarApp": "1.00.532",
+      "taskApp": "1.00.466",
+      "knowledgeApp": "1.00.153"
+    }
+  },
+  "ceilings": {
+    "2": 11,
+    "3": 7,
+    "4": 3,
+    "5": 22
+  }
+}

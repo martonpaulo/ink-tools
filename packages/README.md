@@ -20,7 +20,8 @@ code and never imports `sn-plugin-lib`: the plugin passes its SDK calls in as a 
 `sn-adapter` has two entries ([#101](https://github.com/martonpaulo/supernote-tools/issues/101)). `@ink-tools/sn-adapter` is the internals
 tier (`src/internals/`): content providers, their tables and columns, all read from
 `descriptor.json`, whose `fields` map our names to the device's columns, so a renamed column is a
-descriptor update. `@ink-tools/sn-adapter/official` is the official tier (`src/official/`):
+descriptor update. `descriptor.json` is written from the registry of internals (`registry/items/`,
+[#294](https://github.com/martonpaulo/ink-tools/issues/294)) by `scripts/registry.py --write`; never edit it by hand. `@ink-tools/sn-adapter/official` is the official tier (`src/official/`):
 the only code that imports `sn-plugin-lib`, each call returning a `Result`. A plugin maps both with
 `sn-adapter/plugin-config.js`; the official tier's `sn-plugin-lib` resolves from the plugin's
 `node_modules`, so the plugin gates type-check it against the real SDK. Its own tests run in the

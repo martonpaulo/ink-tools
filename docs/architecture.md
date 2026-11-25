@@ -82,7 +82,11 @@ does for its sources):
 - **Target: one registry of internals, four adapters** ([#294](https://github.com/martonpaulo/ink-tools/issues/294)). Every internal lives in one
   registry, data and not code, with one JSON Schema: per item its level, impact, owning tool,
   reason when below level 1, evidence (decompiled class or method, app versionCode, date), the path
-  to a higher level, when it was last verified, and its probe. Readers for TypeScript, Java, Python
+  to a higher level, when it was last verified, and its probe. It lives in
+  [`registry/`](../registry/schema.json): the schema, the header with the ratchet's ceiling per level
+  (a ceiling only goes down), and one file per device area in `registry/items/`;
+  `scripts/registry.py` checks it in the `registry` gate and writes `sn-adapter`'s `descriptor.json`
+  from its three provider items. Readers for TypeScript, Java, Python
   and Swift are generated from the schema with a staleness check. There are four Supernote adapters,
   one per runtime, sharing the registry and the common rules, not code: TypeScript (`sn-adapter`,
   the plugins), Java (the apps and the plugins' native code), Python (`inkctl`) and Swift (Ink
@@ -112,7 +116,8 @@ does for its sources):
   and the same value in two places passes only with a registered owner.
 - **No hand-written queries or column names.** Code asks for an operation (`completedTasks()`,
   `writeEvent(event)`); only `sn-adapter` knows the authority, the table and the column names, and
-  those come from `descriptor.json`, not from strings in the code.
+  those come from `descriptor.json`, which `scripts/registry.py` writes from the registry, not
+  from strings in the code.
 - **Imports go one way.** Feature logic never imports `sn-plugin-lib`, names a content provider or
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
   ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). `plugins/plugin-diagnostics` is exempt: it
@@ -178,6 +183,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | Image Editing | `plugins/image-editing/` | `retouch` |
 | Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
 | Real-Time Conversion | `plugins/real-time-conversion/` | `RealTimeConversion` (`pluginKey`) |
+| Smart Shapes | `plugins/smart-shapes/` | `SmartShapes` (`pluginKey`) |
 
 «Bridge» alone never names the helper app: that is the Ink Tools bridge app,
 [`apps/inktools-bridge/`](#the-tablet-apps).
@@ -246,6 +252,9 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 - **Real-Time Conversion** — turns handwriting into a text box as each word ends, with an Undo
   Conversion ([#144](https://github.com/martonpaulo/ink-tools/issues/144)); its guidance is
   [`plugins/real-time-conversion/AGENTS.md`](../plugins/real-time-conversion/AGENTS.md).
+- **Smart Shapes** — a stroke held still at its end becomes a clean triangle, circle, square,
+  rectangle or arrow, as the native Smart Straight Line does ([#253](https://github.com/martonpaulo/ink-tools/issues/253)); its guidance is
+  [`plugins/smart-shapes/AGENTS.md`](../plugins/smart-shapes/AGENTS.md).
 
 Word Lookup, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). Account Sync's three modules share `sync-core`. All of them are to go through `sn-adapter` for

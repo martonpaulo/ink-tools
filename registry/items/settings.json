@@ -1,0 +1,103 @@
+{
+  "area": "settings",
+  "items": [
+    {
+      "id": "settings.language-page",
+      "title": "The Settings app's activity and the extra that opens its handwriting language page",
+      "level": 3,
+      "impact": "user",
+      "owner": "handwriting-language",
+      "readers": [
+        "handwriting-language",
+        "inkctl"
+      ],
+      "reason": "no public intent opens a Settings page; the activity's routing extra does",
+      "evidence": {
+        "source": "SettingsActivity.handleIntentRouting, decompiled (docs/supernote.md)",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "none known",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "#293 adds a resolve of the activity without starting it"
+      },
+      "active": "handwriting-language SettingsActivity.java",
+      "issues": [
+        157
+      ],
+      "values": {
+        "package": "com.ratta.settings",
+        "activity": "com.ratta.settings.SettingsActivity",
+        "pageExtra": "activity_type",
+        "languagePage": "com.ratta.settings.input.HWLanguageSetting"
+      }
+    },
+    {
+      "id": "settings.plugin-install-screens",
+      "title": "The Settings screens inkctl walks to install a plugin, by text and id",
+      "level": 4,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "the screen route is the fallback when the bridge app is absent; no direct call installs a plugin",
+      "evidence": {
+        "source": "inkctl snapshot on the tablet (#191)",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "the bridge app's install (level 3)",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "walking the screens is the test itself"
+      },
+      "active": "inkctl plugin install",
+      "values": {
+        "path": [
+          "text:Apps",
+          "text:Plugins"
+        ],
+        "pick": "text:Select Plugin Package",
+        "confirm": "id:top_save",
+        "nextPage": "id:ll_next_page",
+        "pageNumber": "id:content_page_number"
+      }
+    },
+    {
+      "id": "settings.plugin-detail-labels",
+      "title": "A plugin's own page in Settings: Permissions, Uninstall and their texts",
+      "level": 4,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "the screen route serves when the bridge app is absent",
+      "evidence": {
+        "source": "docs/supernote.md › Plugins, measured on Relay and the retired picture plugin",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "the bridge app's calls (level 3)",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "walking the screens is the test itself"
+      },
+      "active": "inkctl plugin allow and uninstall",
+      "values": {
+        "permissions": "text:Permissions",
+        "always": "Allow",
+        "states": [
+          "Allow",
+          "Ask Every Time",
+          "Don't Allow"
+        ],
+        "uninstall": "text:Uninstall",
+        "uninstallWarning": "Its data will also be deleted",
+        "confirm": "text:OK"
+      }
+    }
+  ]
+}

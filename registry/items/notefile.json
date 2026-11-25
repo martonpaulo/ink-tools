@@ -1,0 +1,82 @@
+{
+  "area": "notefile",
+  "items": [
+    {
+      "id": "notefile.format-versions",
+      "title": "The .note format and the versions the reader accepts",
+      "level": 2,
+      "impact": "user",
+      "owner": "ink-notebook-editor",
+      "readers": [
+        "ink-notebook-editor"
+      ],
+      "reason": "the .note format is not documented; supernotelib and our reader parse it",
+      "evidence": {
+        "source": "supernotelib SupernoteXParser.SN_SIGNATURES",
+        "date": "2026-11-24"
+      },
+      "upgradePath": "a documented format or an export API",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "#293 adds a parse of a fixture note per firmware"
+      },
+      "active": "ink-notebook-editor NoteFile.swift",
+      "issues": [
+        261
+      ],
+      "values": {
+        "signaturePrefix": "SN_FILE_VER_",
+        "knownVersions": [
+          20200001,
+          20200005,
+          20200006,
+          20200007,
+          20200008,
+          20210009,
+          20210010,
+          20220011,
+          20220013,
+          20230014,
+          20230015,
+          20260016
+        ],
+        "firstGreyscaleVersion": 20230015
+      }
+    },
+    {
+      "id": "notefile.writer-byte-edit",
+      "title": "NoteWriter edits a .note file's bytes in place",
+      "level": 5,
+      "impact": "user",
+      "owner": "ink-notebook-editor",
+      "readers": [
+        "ink-notebook-editor"
+      ],
+      "reason": "no API writes a note; the byte layout was learned from supernotelib and test files",
+      "evidence": {
+        "source": "NoteWriter.swift; supernotelib",
+        "date": "2026-11-24"
+      },
+      "upgradePath": "a documented format or a write API",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a written note is checked by opening it on the tablet"
+      },
+      "active": "ink-notebook-editor NoteWriter.swift",
+      "issues": [
+        262
+      ],
+      "values": {
+        "tailMarker": "tail",
+        "pageKeyPrefixes": [
+          "TITLE_",
+          "KEYWORD_",
+          "LINKO_",
+          "LINKI_"
+        ]
+      }
+    }
+  ]
+}

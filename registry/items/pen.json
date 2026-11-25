@@ -1,0 +1,63 @@
+{
+  "area": "pen",
+  "items": [
+    {
+      "id": "pen.digitizer-units",
+      "title": "Pen-up points in digitizer units and the PointUtils ranges",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the SDK does not state the unit of a pen-up event's points; it was measured",
+      "evidence": {
+        "source": "sn-plugin-lib 0.2.3 PointUtils; measured on a Manta",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "an SDK release that documents the unit or sends screen pixels",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a pen stroke; the effect test is the Real-Time Conversion device round"
+      },
+      "active": "sn-adapter official/elements.ts",
+      "values": {}
+    },
+    {
+      "id": "pen.pen-types",
+      "title": "penType 4 is a lasso path and 16 the ink pen",
+      "level": 5,
+      "impact": "user",
+      "owner": "smart-shapes",
+      "readers": [
+        "smart-shapes"
+      ],
+      "reason": "the SDK lists pens 1, 10, 11 and 15 only; 4 and 16 were measured",
+      "evidence": {
+        "source": "measured on a Manta (Snap v0.9.0, #253)",
+        "date": "2026-11-23"
+      },
+      "upgradePath": "an SDK release that lists every penType",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a pen stroke and a lasso; the effect test is the Smart Shapes device round"
+      },
+      "active": "smart-shapes src/guard.ts",
+      "issues": [
+        253
+      ],
+      "values": {
+        "lasso": 4,
+        "ink": [
+          1,
+          10,
+          11,
+          15,
+          16
+        ]
+      }
+    }
+  ]
+}

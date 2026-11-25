@@ -1,0 +1,37 @@
+{
+  "area": "diagnostics",
+  "items": [
+    {
+      "id": "diagnostics.provider-probes",
+      "title": "Plugin Diagnostics' direct provider probes: the Digest root and digest paths, the control task and calendar rows",
+      "level": 2,
+      "impact": "tests",
+      "owner": "plugin-diagnostics",
+      "readers": [
+        "plugin-diagnostics"
+      ],
+      "reason": "the plugin exists to call the internals directly; its targets mirror the provider items",
+      "evidence": {
+        "source": "plugins/plugin-diagnostics/native ProbeTargets.java, kept equal to descriptor.json by ProbeTargetsTest (#208, #217)",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "none needed: a diagnostic tool",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "plugin-diagnostics Run Probe"
+      },
+      "active": "plugin-diagnostics native ProbeTargets.java",
+      "issues": [
+        59,
+        208,
+        217
+      ],
+      "values": {
+        "digestRootPath": "",
+        "digestPath": "digest",
+        "digestMarkerColumn": "digest_content"
+      }
+    }
+  ]
+}

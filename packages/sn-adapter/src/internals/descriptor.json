@@ -1,58 +1,209 @@
 {
   "schema": 1,
   "descriptorVersion": "2026.11.17",
-  "device": {"model": "Manta", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466", "knowledgeApp": "1.00.153"},
+  "device": {
+    "model": "Manta",
+    "android": 11,
+    "calendarApp": "1.00.532",
+    "taskApp": "1.00.466",
+    "knowledgeApp": "1.00.153"
+  },
   "calendar": {
     "authority": "com.ratta.supernote.calendar.provider",
     "tables": {
       "events": {
         "path": "data_info",
-        "columns": ["id", "calendarId", "eventId", "tag", "state", "readOnly", "isAllDay", "isSelf", "title", "content", "startTime", "endTime", "startDate", "endDate", "lastModifiedTime", "status", "recurrence", "recurringEventId", "originalStartTime", "originalStartDate"],
-        "fields": {"rowId": "id", "eventId": "eventId", "calendarId": "calendarId", "tag": "tag", "readOnly": "readOnly", "allDay": "isAllDay", "title": "title", "content": "content", "start": "startTime", "end": "endTime", "startDate": "startDate", "endDate": "endDate", "modified": "lastModifiedTime", "status": "status", "state": "state"}
+        "columns": [
+          "id",
+          "calendarId",
+          "eventId",
+          "tag",
+          "state",
+          "readOnly",
+          "isAllDay",
+          "isSelf",
+          "title",
+          "content",
+          "startTime",
+          "endTime",
+          "startDate",
+          "endDate",
+          "lastModifiedTime",
+          "status",
+          "recurrence",
+          "recurringEventId",
+          "originalStartTime",
+          "originalStartDate"
+        ],
+        "fields": {
+          "rowId": "id",
+          "eventId": "eventId",
+          "calendarId": "calendarId",
+          "tag": "tag",
+          "readOnly": "readOnly",
+          "allDay": "isAllDay",
+          "title": "title",
+          "content": "content",
+          "start": "startTime",
+          "end": "endTime",
+          "startDate": "startDate",
+          "endDate": "endDate",
+          "modified": "lastModifiedTime",
+          "status": "status",
+          "state": "state"
+        }
       },
-      "config": {"path": "config_info", "columns": []}
+      "config": {
+        "path": "config_info",
+        "columns": []
+      }
     },
-    "rules": {"writeTag": "task", "cancelledStatus": "cancelled", "writeStatus": "confirmed", "writeState": 0, "linkPrefix": "inktools:",
-      "requiredOnInsert": ["calendarId", "tag", "state", "readOnly", "isAllDay", "title", "startTime", "endTime", "lastModifiedTime", "status"]}
+    "rules": {
+      "writeTag": "task",
+      "cancelledStatus": "cancelled",
+      "writeStatus": "confirmed",
+      "writeState": 0,
+      "linkPrefix": "inktools:",
+      "requiredOnInsert": [
+        "calendarId",
+        "tag",
+        "state",
+        "readOnly",
+        "isAllDay",
+        "title",
+        "startTime",
+        "endTime",
+        "lastModifiedTime",
+        "status"
+      ]
+    }
   },
   "todo": {
     "authority": "com.ratta.supernote.task.provider",
     "tables": {
       "tasks": {
         "path": "tasks_table",
-        "columns": ["id", "taskListId", "taskId", "title", "detail", "lastModified", "recurrence", "isReminderOn", "status", "importance", "dueTime", "completedTime", "links", "deleted", "hasSync", "sort", "sortCompleted", "sortTime", "plannedSort", "plannedSortTime"],
-        "fields": {"rowId": "id", "listId": "taskListId", "taskId": "taskId", "title": "title", "detail": "detail", "modified": "lastModified", "status": "status", "due": "dueTime", "completedAt": "completedTime", "deleted": "deleted", "hasSync": "hasSync"}
+        "columns": [
+          "id",
+          "taskListId",
+          "taskId",
+          "title",
+          "detail",
+          "lastModified",
+          "recurrence",
+          "isReminderOn",
+          "status",
+          "importance",
+          "dueTime",
+          "completedTime",
+          "links",
+          "deleted",
+          "hasSync",
+          "sort",
+          "sortCompleted",
+          "sortTime",
+          "plannedSort",
+          "plannedSortTime"
+        ],
+        "fields": {
+          "rowId": "id",
+          "listId": "taskListId",
+          "taskId": "taskId",
+          "title": "title",
+          "detail": "detail",
+          "modified": "lastModified",
+          "status": "status",
+          "due": "dueTime",
+          "completedAt": "completedTime",
+          "deleted": "deleted",
+          "hasSync": "hasSync"
+        }
       },
       "groups": {
         "path": "task_group_table",
-        "columns": ["id", "taskListId", "userId", "title", "lastModified", "deleted", "hasSync", "createTime"],
-        "fields": {"rowId": "id"}
+        "columns": [
+          "id",
+          "taskListId",
+          "userId",
+          "title",
+          "lastModified",
+          "deleted",
+          "hasSync",
+          "createTime"
+        ],
+        "fields": {
+          "rowId": "id"
+        }
       }
     },
-    "rules": {"requiredOnInsert": ["title", "taskId"], "needsExistingList": true, "allowNoList": true, "writeHasSync": 0,
-      "insertDefaults": {"deleted": 0, "isReminderOn": 0, "dueTime": 0, "completedTime": 0, "sort": 0, "sortCompleted": 0, "plannedSort": 0},
-      "insertNow": ["lastModified", "sortTime", "plannedSortTime"],
+    "rules": {
+      "requiredOnInsert": [
+        "title",
+        "taskId"
+      ],
+      "needsExistingList": true,
+      "allowNoList": true,
+      "writeHasSync": 0,
+      "insertDefaults": {
+        "deleted": 0,
+        "isReminderOn": 0,
+        "dueTime": 0,
+        "completedTime": 0,
+        "sort": 0,
+        "sortCompleted": 0,
+        "plannedSort": 0
+      },
+      "insertNow": [
+        "lastModified",
+        "sortTime",
+        "plannedSortTime"
+      ],
       "statusOpen": "needsAction",
       "statusCompleted": "completed",
-      "timeUnit": "ms"}
+      "timeUnit": "ms"
+    }
   },
   "digest": {
     "authority": "com.ratta.supernote.knowledge.provider",
-    "permissions": {"read": "READ_KNOWLEDGE", "write": "WRITE_KNOWLEDGE"},
+    "permissions": {
+      "read": "READ_KNOWLEDGE",
+      "write": "WRITE_KNOWLEDGE"
+    },
     "tables": {
       "knowledge": {
         "path": "knowledge",
-        "columns": ["id", "content", "knowledge_base_unique_attribute", "source_type", "source_path", "source_page", "metadata", "comment_str", "state", "creation_time", "last_modified_time"],
-        "fields": {"content": "content", "collection": "knowledge_base_unique_attribute", "sourceType": "source_type", "metadata": "metadata", "comment": "comment_str", "created": "creation_time"}
+        "columns": [
+          "id",
+          "content",
+          "knowledge_base_unique_attribute",
+          "source_type",
+          "source_path",
+          "source_page",
+          "metadata",
+          "comment_str",
+          "state",
+          "creation_time",
+          "last_modified_time"
+        ],
+        "fields": {
+          "content": "content",
+          "collection": "knowledge_base_unique_attribute",
+          "sourceType": "source_type",
+          "metadata": "metadata",
+          "comment": "comment_str",
+          "created": "creation_time"
+        }
       }
     },
-    "rules": {"insertPath": "knowledge/insert",
+    "rules": {
+      "insertPath": "knowledge/insert",
       "countByIdentifierPath": "knowledge/count/by_unique_identifier",
       "updateByIdentifierPath": "knowledge/update/by_unique_identifier",
       "updateIdentifierKey": "knowledge_unique_identifier",
       "identifierKey": "unique_identifier",
       "sourceTypeSelfAdd": 4,
       "contentMaxLength": 15000,
-      "commentMaxLength": 2000}
+      "commentMaxLength": 2000
+    }
   }
 }

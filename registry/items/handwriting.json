@@ -1,0 +1,94 @@
+{
+  "area": "handwriting",
+  "items": [
+    {
+      "id": "handwriting.language-file",
+      "title": "The handwriting recognition language: one empty file named for the code in .data/dictionary/default/",
+      "level": 2,
+      "impact": "user",
+      "owner": "handwriting-language",
+      "readers": [
+        "handwriting-language",
+        "inkctl"
+      ],
+      "reason": "no API sets the recognition language; the file is what Settings writes and recognition reads",
+      "evidence": {
+        "source": "HWLanguageSetting.changeDefault, decompiled (docs/supernote.md › Handwriting recognition language)",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "an official language API",
+      "lastVerified": "2026-11-25",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "#293 adds a read of the folder's one file"
+      },
+      "active": "handwriting-language LanguageFiles.java",
+      "issues": [
+        157,
+        190
+      ],
+      "values": {
+        "folder": ".data/dictionary",
+        "current": "default",
+        "packs": "resources",
+        "emptyFolderLanguage": "en_US"
+      }
+    },
+    {
+      "id": "handwriting.changed-broadcast",
+      "title": "The broadcast Settings sends after a language change",
+      "level": 3,
+      "impact": "user",
+      "owner": "handwriting-language",
+      "readers": [
+        "handwriting-language",
+        "inkctl"
+      ],
+      "reason": "the keyboard and the Settings label refresh only on this broadcast",
+      "evidence": {
+        "source": "HWLanguageSetting.changeDefault, decompiled",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "an official language API",
+      "lastVerified": "2026-11-25",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "sending it is the change itself"
+      },
+      "active": "handwriting-language Switcher.java",
+      "values": {
+        "action": "hw_type_change"
+      }
+    },
+    {
+      "id": "handwriting.writing-screens",
+      "title": "The screens that take handwriting, by activity class name",
+      "level": 3,
+      "impact": "user",
+      "owner": "handwriting-language",
+      "readers": [
+        "handwriting-language"
+      ],
+      "reason": "no API says when a screen takes handwriting; the foreground activity's name does",
+      "evidence": {
+        "source": "accessibility events on the tablet (docs/supernote.md › Handwriting recognition language)",
+        "date": "2026-11-21"
+      },
+      "upgradePath": "an official event for a writing screen",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "#293 adds a resolve of each activity name"
+      },
+      "active": "handwriting-language ButtonRule.java",
+      "values": {
+        "activities": [
+          "NoteInsidePagesActivity",
+          "KnowledgeActivity",
+          "TaskActivity",
+          "HomeActivity"
+        ]
+      }
+    }
+  ]
+}

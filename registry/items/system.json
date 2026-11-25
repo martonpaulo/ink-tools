@@ -1,0 +1,94 @@
+{
+  "area": "system",
+  "items": [
+    {
+      "id": "system.device-identity",
+      "title": "The model from ro.product.board, and the vendor package prefix",
+      "level": 2,
+      "impact": "user",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "the SDK's getDeviceType answers only in a plugin; the shell reads the board property",
+      "evidence": {
+        "source": "getprop on the owner's Manta (#284)",
+        "date": "2026-11-25"
+      },
+      "upgradePath": "none known for the shell",
+      "lastVerified": "2026-11-25",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl status"
+      },
+      "active": "inkctl status",
+      "issues": [
+        284
+      ],
+      "values": {
+        "boardProperty": "ro.product.board",
+        "boards": [
+          "A5X2",
+          "A6X2"
+        ],
+        "models": [
+          "Manta",
+          "Nomad"
+        ],
+        "vendorPackagePrefix": "com.ratta."
+      }
+    },
+    {
+      "id": "system.firmware-page",
+      "title": "Ratta's firmware change-log page",
+      "level": 2,
+      "impact": "user",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "no API lists firmware versions; the support page does",
+      "evidence": {
+        "source": "support.supernote.com change log",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "a firmware feed",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl firmware"
+      },
+      "active": "inkctl firmware",
+      "values": {
+        "page": "https://support.supernote.com/en_US/change-log/how-to-update-your-supernote",
+        "host": "download-firmware.supernote.com",
+        "target": "EXPORT/update.zip"
+      }
+    },
+    {
+      "id": "system.plugin-log-tag",
+      "title": "Plugins log under ReactNativeJS in PluginHost's shared process",
+      "level": 5,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "PluginHost runs every plugin in one React Native process; its log tag was read on the tablet",
+      "evidence": {
+        "source": "logcat on the tablet",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "none needed",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl logs"
+      },
+      "active": "inkctl logs",
+      "values": {
+        "tag": "ReactNativeJS"
+      }
+    }
+  ]
+}

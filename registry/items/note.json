@@ -1,0 +1,89 @@
+{
+  "area": "note",
+  "items": [
+    {
+      "id": "note.activity",
+      "title": "The Note app's package, its page activity and the extras of a new note",
+      "level": 3,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "no public intent opens a note; the activity is started by name",
+      "evidence": {
+        "source": "dumpsys package on the tablet",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "none known",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl routes"
+      },
+      "active": "inkctl note open and note new",
+      "values": {
+        "package": "com.ratta.supernote.note",
+        "activity": "com.ratta.supernote.note/.view.NoteInsidePagesActivity",
+        "blankStyle": "style_white",
+        "normalMode": "0"
+      }
+    },
+    {
+      "id": "note.screen-ids",
+      "title": "The note screen's controls inkctl finds by description and id",
+      "level": 4,
+      "impact": "tests",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "the agent drives the note screen only through its controls",
+      "evidence": {
+        "source": "inkctl snapshot on the tablet (#189)",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "the SDK calls of a plugin for the same step",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "finding the controls is the test itself"
+      },
+      "active": "inkctl",
+      "values": {
+        "pluginsButton": "desc:plugins",
+        "lassoMore": "desc:lassoMore",
+        "lassoRow": "tv_button"
+      }
+    },
+    {
+      "id": "note.fonts-folder",
+      "title": "The Note app reads text-box fonts from MyStyle/fonts",
+      "level": 5,
+      "impact": "user",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "no API installs a font; the folder rule was learned on the tablet",
+      "evidence": {
+        "source": "docs/supernote.md › Files and sync (#247)",
+        "date": "2026-11-23"
+      },
+      "upgradePath": "an official font install",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "the font menu shows only on the screen"
+      },
+      "active": "inkctl font install",
+      "values": {
+        "folder": "MyStyle/fonts",
+        "suffixes": [
+          ".ttf",
+          ".otf"
+        ]
+      }
+    }
+  ]
+}

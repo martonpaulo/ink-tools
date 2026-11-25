@@ -1,0 +1,76 @@
+{
+  "area": "digest",
+  "items": [
+    {
+      "id": "digest.provider",
+      "title": "The Digest provider's authority, table, paths and limits",
+      "level": 2,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter",
+        "plugin-diagnostics"
+      ],
+      "reason": "sn-plugin-lib has no Digest API; the provider is the only way to add an entry",
+      "evidence": {
+        "source": "KnowledgeContentProvider, decompiled (docs/research/2026-11-digest-provider.md)",
+        "version": "1.00.153",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official Digest API in sn-plugin-lib",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "sn-adapter probeCapability(digest)"
+      },
+      "active": "sn-adapter internals/digest.ts",
+      "issues": [
+        42
+      ],
+      "values": {},
+      "descriptor": {
+        "authority": "com.ratta.supernote.knowledge.provider",
+        "permissions": {
+          "read": "READ_KNOWLEDGE",
+          "write": "WRITE_KNOWLEDGE"
+        },
+        "tables": {
+          "knowledge": {
+            "path": "knowledge",
+            "columns": [
+              "id",
+              "content",
+              "knowledge_base_unique_attribute",
+              "source_type",
+              "source_path",
+              "source_page",
+              "metadata",
+              "comment_str",
+              "state",
+              "creation_time",
+              "last_modified_time"
+            ],
+            "fields": {
+              "content": "content",
+              "collection": "knowledge_base_unique_attribute",
+              "sourceType": "source_type",
+              "metadata": "metadata",
+              "comment": "comment_str",
+              "created": "creation_time"
+            }
+          }
+        },
+        "rules": {
+          "insertPath": "knowledge/insert",
+          "countByIdentifierPath": "knowledge/count/by_unique_identifier",
+          "updateByIdentifierPath": "knowledge/update/by_unique_identifier",
+          "updateIdentifierKey": "knowledge_unique_identifier",
+          "identifierKey": "unique_identifier",
+          "sourceTypeSelfAdd": 4,
+          "contentMaxLength": 15000,
+          "commentMaxLength": 2000
+        }
+      }
+    }
+  ]
+}

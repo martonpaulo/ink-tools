@@ -1,0 +1,157 @@
+{
+  "area": "plugin-api",
+  "items": [
+    {
+      "id": "plugin-api.element-reads",
+      "title": "At most 4 element reads at once",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the SDK states no limit; more reads at once hung the host in a device round",
+      "evidence": {
+        "source": "device round, docs/supernote.md",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "an SDK release that states or removes the limit",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a probe would have to hang the host to see the limit"
+      },
+      "active": "sn-adapter official/elements.ts",
+      "values": {
+        "maxConcurrent": 4
+      }
+    },
+    {
+      "id": "plugin-api.unregister-unknown-button",
+      "title": "unregisterButton of an unknown id never answers",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the SDK documents no failure for an unknown id; the call hung in a device round",
+      "evidence": {
+        "source": "device round, docs/supernote.md",
+        "date": "2026-11-20"
+      },
+      "upgradePath": "an SDK release that answers an unknown id",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a probe would hang the plugin"
+      },
+      "active": "sn-adapter official/buttons.ts",
+      "values": {}
+    },
+    {
+      "id": "plugin-api.pen-up-uuid",
+      "title": "A pen-up element's uuid differs from getElements'; recognizeElements takes page elements only",
+      "level": 5,
+      "impact": "user",
+      "owner": "real-time-conversion",
+      "readers": [
+        "real-time-conversion"
+      ],
+      "reason": "the SDK does not say which elements recognizeElements takes; device rounds showed it",
+      "evidence": {
+        "source": "Real-Time Conversion device rounds (#184)",
+        "date": "2026-11-25"
+      },
+      "upgradePath": "an SDK release that recognises a pen-up element directly",
+      "lastVerified": "2026-11-25",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a pen stroke; the effect test is the Real-Time Conversion device round"
+      },
+      "active": "real-time-conversion src/device.ts",
+      "issues": [
+        184
+      ],
+      "values": {}
+    },
+    {
+      "id": "plugin-api.crop-erase-elements",
+      "title": "Image Editing's facts about picture elements for Crop and Erase",
+      "level": 5,
+      "impact": "user",
+      "owner": "image-editing",
+      "readers": [
+        "image-editing"
+      ],
+      "reason": "the SDK does not describe a picture element's fields after an edit; device rounds showed them",
+      "evidence": {
+        "source": "Image Editing device rounds (#136)",
+        "date": "2026-11-24"
+      },
+      "upgradePath": "an SDK picture-edit API",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a picture on a note page; the effect test is the Image Editing device round"
+      },
+      "active": "image-editing src/edit.ts",
+      "issues": [
+        136
+      ],
+      "values": {}
+    },
+    {
+      "id": "plugin-api.inserted-picture-copy",
+      "title": "An inserted PNG is copied into .data/plugin/ at the write",
+      "level": 5,
+      "impact": "user",
+      "owner": "image-editing",
+      "readers": [
+        "image-editing"
+      ],
+      "reason": "the SDK does not say where an inserted picture's file lives; a device round showed the copy",
+      "evidence": {
+        "source": "docs/supernote.md › Plugins (#130)",
+        "date": "2026-11-18"
+      },
+      "upgradePath": "an SDK call that names the inserted file",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a picture insert on a note page"
+      },
+      "active": "image-editing src/edit.ts",
+      "issues": [
+        130
+      ],
+      "values": {}
+    },
+    {
+      "id": "plugin-api.floating-insert",
+      "title": "insertImage leaves a floating selection the host commits later",
+      "level": 5,
+      "impact": "user",
+      "owner": "device-transfer",
+      "readers": [
+        "device-transfer"
+      ],
+      "reason": "the SDK does not say when an inserted picture reaches the page; a device round showed the delay",
+      "evidence": {
+        "source": "Device Transfer device round (#196)",
+        "date": "2026-11-22"
+      },
+      "upgradePath": "an SDK insert that answers once the picture is on the page",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a picture insert on a note page"
+      },
+      "active": "device-transfer src/receive/receive.ts",
+      "issues": [
+        196
+      ],
+      "values": {}
+    }
+  ]
+}

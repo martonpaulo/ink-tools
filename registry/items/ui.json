@@ -1,0 +1,32 @@
+{
+  "area": "ui",
+  "items": [
+    {
+      "id": "ui.measured-tokens",
+      "title": "The native look's sizes and colours, measured from com.ratta.settings",
+      "level": 5,
+      "impact": "user",
+      "owner": "ui-kit",
+      "readers": [
+        "ui-kit"
+      ],
+      "reason": "the vendor UI library cannot load in a plugin (#287); our copies are measured from its screens",
+      "evidence": {
+        "source": "screenshots and the decompiled supernoteuilib (#272, #287)",
+        "date": "2026-11-25"
+      },
+      "upgradePath": "an SDK component library",
+      "lastVerified": "2026-11-25",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a look is checked by a side-by-side screenshot in a device round (#299)"
+      },
+      "active": "ui-kit src/tokens.json",
+      "issues": [
+        272,
+        287
+      ],
+      "values": {}
+    }
+  ]
+}

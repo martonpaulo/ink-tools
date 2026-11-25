@@ -1,0 +1,160 @@
+{
+  "area": "calendar",
+  "items": [
+    {
+      "id": "calendar.provider",
+      "title": "The Calendar provider's authority, tables and columns",
+      "level": 2,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter",
+        "plugin-diagnostics",
+        "inkctl"
+      ],
+      "reason": "sn-plugin-lib has no calendar API; the provider is the only way to read and write events",
+      "evidence": {
+        "source": "CalendarContentProvider, a real data_info row read on the tablet (#43)",
+        "version": "1.00.532",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official calendar API in sn-plugin-lib",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "sn-adapter probeCapability(calendar)"
+      },
+      "active": "sn-adapter internals/calendar.ts",
+      "issues": [
+        43,
+        101
+      ],
+      "values": {},
+      "descriptor": {
+        "authority": "com.ratta.supernote.calendar.provider",
+        "tables": {
+          "events": {
+            "path": "data_info",
+            "columns": [
+              "id",
+              "calendarId",
+              "eventId",
+              "tag",
+              "state",
+              "readOnly",
+              "isAllDay",
+              "isSelf",
+              "title",
+              "content",
+              "startTime",
+              "endTime",
+              "startDate",
+              "endDate",
+              "lastModifiedTime",
+              "status",
+              "recurrence",
+              "recurringEventId",
+              "originalStartTime",
+              "originalStartDate"
+            ],
+            "fields": {
+              "rowId": "id",
+              "eventId": "eventId",
+              "calendarId": "calendarId",
+              "tag": "tag",
+              "readOnly": "readOnly",
+              "allDay": "isAllDay",
+              "title": "title",
+              "content": "content",
+              "start": "startTime",
+              "end": "endTime",
+              "startDate": "startDate",
+              "endDate": "endDate",
+              "modified": "lastModifiedTime",
+              "status": "status",
+              "state": "state"
+            }
+          },
+          "config": {
+            "path": "config_info",
+            "columns": []
+          }
+        },
+        "rules": {
+          "writeTag": "task",
+          "cancelledStatus": "cancelled",
+          "writeStatus": "confirmed",
+          "writeState": 0,
+          "linkPrefix": "inktools:",
+          "requiredOnInsert": [
+            "calendarId",
+            "tag",
+            "state",
+            "readOnly",
+            "isAllDay",
+            "title",
+            "startTime",
+            "endTime",
+            "lastModifiedTime",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "id": "calendar.reading-rules",
+      "title": "The Calendar app's reading rules: tag task, cancelled for a delete, the startDate format, an empty eventId",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the app shows or hides a row by rules no API states; only its decompiled code and device rounds show them",
+      "evidence": {
+        "source": "device rounds of #43 and #28; the Calendar app's list code",
+        "version": "1.00.532",
+        "date": "2026-11-17"
+      },
+      "upgradePath": "an official calendar API that writes events the app shows",
+      "lastVerified": "2026-11-17",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a row's visibility shows only on the screen; the effect test is the device round (#293 adds a read round-trip on a known row)"
+      },
+      "active": "sn-adapter internals/calendar.ts",
+      "issues": [
+        28,
+        29,
+        43
+      ],
+      "values": {}
+    },
+    {
+      "id": "calendar.sync-broadcast",
+      "title": "The broadcast that starts a Calendar sync",
+      "level": 3,
+      "impact": "user",
+      "owner": "inkctl",
+      "readers": [
+        "inkctl"
+      ],
+      "reason": "no public API starts a sync; the Calendar app's receiver is the only route",
+      "evidence": {
+        "source": "the Calendar app's dynamic receiver (dumpsys package)",
+        "version": "1.00.532",
+        "date": "2026-11-16"
+      },
+      "upgradePath": "none known: the tablet syncs on its own schedule",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "inkctl routes"
+      },
+      "active": "inkctl sync calendar",
+      "values": {
+        "action": "com.ratta.supernote.calendar.notify.sync"
+      }
+    }
+  ]
+}
