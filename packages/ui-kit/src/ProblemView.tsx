@@ -1,16 +1,16 @@
 /**
  * The full-view states a tool shows when it cannot go on, or waits (#245, #255): `Needs` after a
  * check, `ErrorView` after a failure, `LoadingView` while a full view loads. Each is one column
- * under the title row with its Close, and stays until the owner closes it. Static text only: each
+ * under the title bar with its ×, and stays until the owner closes it. Static text only: each
  * frame of an animation costs an e-ink refresh.
  */
 import React from 'react';
 import {Text, View} from 'react-native';
 import {useBackKey} from './backKey';
 import {Button} from './Button';
-import {TitleRow} from './CloseButton';
 import {Problem, RETRY_TEXT} from './problem';
 import {shared} from './styles';
+import {TitleBar} from './TitleBar';
 import {WORKING_TEXT} from './working';
 
 export type NeedsProps = {problem: Problem; onClose: () => void};
@@ -46,7 +46,7 @@ export function LoadingView({onClose}: {onClose: () => void}): React.JSX.Element
   useBackKey(onClose);
   return (
     <View style={shared.screen} testID="loading-view">
-      <TitleRow title={WORKING_TEXT} onClose={onClose} />
+      <TitleBar title={WORKING_TEXT} onClose={onClose} />
     </View>
   );
 }
@@ -67,7 +67,7 @@ function ProblemView({
       testID={testID}
       accessibilityRole={alert ? 'alert' : undefined}
       accessibilityLiveRegion={alert ? 'assertive' : undefined}>
-      <TitleRow title={problem.what} onClose={onClose} />
+      <TitleBar title={problem.what} onClose={onClose} />
       {problem.reason !== undefined && (
         <Text style={shared.hint} testID="problem-reason">
           {problem.reason}

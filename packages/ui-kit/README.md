@@ -23,8 +23,14 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 
 - One screen is one column on white paper: a title, then sections, then the actions at the
   trailing edge of the last row, as OK sits in the system dialogs (`shared.actions`).
-- A screen opens with the `TitleBar`; a setting is one `ListRow`: its name, an optional value or
-  hint under it, and its control at the trailing edge.
+- A screen opens with the `TitleBar`, its × closing the view; a setting is one `ListRow`: its
+  name, an optional value or hint under it, and its control at the trailing edge.
+- Where the native screens disagree, Ink Tools draws each kind of setting one way
+  ([#274](https://github.com/martonpaulo/ink-tools/issues/274)): an on/off setting is a `SwitchRow`
+  (a `ListRow` with a trailing `Switch`), several independent on/off items are a `SectionCaption`
+  over one `SwitchRow` each, one value out of several is a `ChoiceList` (a `SectionCaption` over
+  one `ListRow` per value with its `Radio`), and a page opened from a row is a `ListRow` with a
+  `Chevron`. Rows that outgrow the screen scroll under the title bar.
 - Every gap is the one spacing step, `SPACE_MM` (screen padding, section gap, control gap, row padding);
   a screen adds no spacing value of its own.
 - Several pages of Settings are a `NavList` in a left pane, or a page opened from a row with a
@@ -80,6 +86,8 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 | `Pager` | \|‹ ‹ page/total › ›\|, the current page underlined; a button that would leave the range is disabled |
 | `IconButton` | `remove` (⊖), `delete` (a trash) and `download` (an arrow over a tray), each with its spoken name |
 | `Button` with `primary` | the small filled black button, such as «Scan» |
+| `SwitchRow` | an on/off setting: a `ListRow` whose trailing `Switch` speaks the row's title |
+| `ChoiceList` | one value out of several: a caption over one `ListRow` per value, each `Radio` spoken «setting: value» |
 
 - One `Button` for every other action, at least `touchTarget` high: black on white with an ink border.
 - Black fill marks the one primary action of a screen, such as Save or Start.
@@ -117,7 +125,7 @@ reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/iss
 
 Every tool reports what it needs after a check and what failed after a failure in one way
 ([#245](https://github.com/martonpaulo/ink-tools/issues/245), [#255](https://github.com/martonpaulo/ink-tools/issues/255)). `src/problem.ts` owns the value, `src/ProblemView.tsx` the views,
-`src/CloseButton.tsx` the one Close.
+`src/TitleBar.tsx` the one Close, its ×.
 
 - A `Problem` is what is missing or failed, the reason when known, and one fix: `{label, run}`
   for an action the tool runs, or `{steps}` for what only the owner can do.
@@ -126,15 +134,15 @@ Every tool reports what it needs after a check and what failed after a failure i
 - `ErrorView` shows what failed, the reason, the fix, and Retry when the caller gives `onRetry`.
   It is an alert and stays until the owner closes it.
 - `LoadingView` is a full view that loads, in the strip's words.
-- Close is one outlined «Close» at the trailing edge of the title line (`TitleRow`) until these
-  views take the `TitleBar`'s × ([#273](https://github.com/martonpaulo/ink-tools/issues/273)); Back does what it does.
+- Close is the `TitleBar`'s × at the leading edge of the title bar, in every full view these
+  states included ([#274](https://github.com/martonpaulo/ink-tools/issues/274)); Back does what it does.
 
 ## The Back key
 
 PluginHost leaves a plugin's full view open on Back, and on the Nomad's PluginHost the key never
 reaches the view: it hosts plugin views outside an Activity, so React Native never emits
 `hardwareBackPress` ([`docs/supernote.md` › Plugins](../../docs/supernote.md#plugins),
-[#204](https://github.com/martonpaulo/ink-tools/issues/204)). Every full view therefore keeps a visible «Close». Each view still
+[#204](https://github.com/martonpaulo/ink-tools/issues/204)). Every full view therefore keeps a visible Close, the title bar's ×. Each view still
 registers its exit with `useBackKey`, which costs nothing and works on a host that sends the key.
 
 - `onBack` does what the view's own close or cancel button does: close the view, cancel a

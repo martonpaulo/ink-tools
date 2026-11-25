@@ -11,7 +11,6 @@ export {useWorking, WorkingStrip} from './WorkingStrip';
 export {useBackKey} from './backKey';
 export {CLOSE_TEXT, RETRY_TEXT} from './problem';
 export type {Fix, Problem} from './problem';
-export {CloseButton, TitleRow} from './CloseButton';
 export {ErrorView, LoadingView, Needs} from './ProblemView';
 // The native controls (#273), one component each.
 export {TitleBar} from './TitleBar';
@@ -30,5 +29,8 @@ export type {SearchFieldProps} from './SearchField';
 export {Pager} from './Pager';
 export type {PagerProps} from './Pager';
 export {IconButton} from './IconButton';
+// The two setting shapes built from them (#274).
+export {ChoiceList, SwitchRow} from './SettingRows';
+export type {Choice, ChoiceListProps, SwitchRowProps} from './SettingRows';
 export type {IconButtonProps, IconKind} from './IconButton';
 export type {ErrorViewProps, NeedsProps} from './ProblemView';

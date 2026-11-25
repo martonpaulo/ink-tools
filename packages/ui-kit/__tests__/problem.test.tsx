@@ -4,9 +4,9 @@ import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {catchBackKey} from '../src/backKeyTest';
 import {Button} from '../src/Button';
-import {CloseButton, TitleRow} from '../src/CloseButton';
 import {CLOSE_TEXT, reasonOf, RETRY_TEXT} from '../src/problem';
 import {ErrorView, LoadingView, Needs} from '../src/ProblemView';
+import {TitleBar} from '../src/TitleBar';
 import {WORKING_TEXT} from '../src/working';
 
 function render(element: React.JSX.Element) {
@@ -18,22 +18,18 @@ function render(element: React.JSX.Element) {
 }
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map(node => String(node.props.children));
+/** The outermost node with that label or spoken name that acts: a Button, or the title bar's ×. */
 const button = (tree: ReactTestRenderer, label: string) =>
-  tree.root.findAllByType(Button).find(node => node.props.label === label);
+  tree.root.findAll(
+    node => (node.props.accessibilityLabel ?? node.props.label) === label && typeof node.props.onPress === 'function',
+  )[0];
 
-describe('CloseButton and TitleRow (#255)', () => {
-  it('is one outlined Close that calls its caller', () => {
-    const onPress = jest.fn();
-    const tree = render(<CloseButton onPress={onPress} />);
-    const close = button(tree, CLOSE_TEXT)!;
-    expect(close.props.primary).toBeFalsy();
-    act(() => close.props.onPress());
-    expect(onPress).toHaveBeenCalledTimes(1);
-  });
-
-  it('puts the title first and Close at the trailing edge', () => {
-    const tree = render(<TitleRow title="Sample title" onClose={jest.fn()} />);
-    expect(texts(tree)).toEqual(['Sample title', CLOSE_TEXT]);
+describe('the title bar of every problem view (#274)', () => {
+  it('opens with the TitleBar: × first, then the title, as the header', () => {
+    const tree = render(<LoadingView onClose={jest.fn()} />);
+    expect(tree.root.findAllByType(TitleBar)).toHaveLength(1);
+    expect(tree.root.findByProps({accessibilityRole: 'header'}).props.children).toBe(WORKING_TEXT);
+    expect(tree.root.findAllByType(Button)).toHaveLength(0);
   });
 });
 
@@ -52,8 +48,8 @@ describe('Needs (#255)', () => {
     );
     expect(tree.root.findByProps({testID: 'needs'})).toBeTruthy();
     expect(texts(tree)).toEqual([
+      '×',
       'Sample access is off',
-      CLOSE_TEXT,
       'The sample tool reads the sample folder.',
       'Turn it on',
     ]);
@@ -70,8 +66,8 @@ describe('Needs (#255)', () => {
         onClose={jest.fn()}
       />,
     );
-    expect(texts(tree)).toEqual(['Sample setting', CLOSE_TEXT, '1. Open Sample.', '2. Turn on Sample.']);
-    expect(tree.root.findAllByType(Button)).toHaveLength(1);
+    expect(texts(tree)).toEqual(['×', 'Sample setting', '1. Open Sample.', '2. Turn on Sample.']);
+    expect(tree.root.findAllByType(Button)).toHaveLength(0);
     expect(tree.root.findAllByProps({testID: 'problem-reason'})).toHaveLength(0);
   });
 });
@@ -91,7 +87,7 @@ describe('ErrorView (#255)', () => {
       .findAllByProps({testID: 'error-view'})
       .map(node => node.props.accessibilityRole);
     expect(roles).toContain('alert');
-    expect(texts(tree)).toEqual(['Sample action failed', CLOSE_TEXT, 'sample reason', RETRY_TEXT]);
+    expect(texts(tree)).toEqual(['×', 'Sample action failed', 'sample reason', RETRY_TEXT]);
     act(() => button(tree, RETRY_TEXT)!.props.onPress());
     act(() => button(tree, CLOSE_TEXT)!.props.onPress());
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -112,7 +108,7 @@ describe('ErrorView (#255)', () => {
 
 describe('LoadingView (#255)', () => {
   it('reads as the strip does, with Close', () => {
-    expect(texts(render(<LoadingView onClose={jest.fn()} />))).toEqual([WORKING_TEXT, CLOSE_TEXT]);
+    expect(texts(render(<LoadingView onClose={jest.fn()} />))).toEqual(['×', WORKING_TEXT]);
   });
 });
 

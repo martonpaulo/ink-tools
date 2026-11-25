@@ -1,6 +1,13 @@
 import React, {useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, shared, TitleRow, useBackKey} from '@ink-tools/ui-kit';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  ChoiceList,
+  SectionCaption,
+  shared,
+  SwitchRow,
+  TitleBar,
+  useBackKey,
+} from '@ink-tools/ui-kit';
 import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import type {ShapeKind} from './src/recognize';
@@ -16,32 +23,15 @@ const SHAPES: ShapeKind[] = ['triangle', 'circle', 'square', 'rect', 'arrow'];
 
 const millimetres = (mm: number) =>
   copy['value.mm'].replace('{mm}', String(mm));
-
-/** One setting: its name above a row of buttons (Real-Time Conversion's look). */
-function Row({
-  title,
-  note,
-  children,
-}: {
-  title: string;
-  note?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.option}>
-      <Text accessibilityRole="header" style={shared.heading}>
-        {title}
-      </Text>
-      <View style={shared.buttons}>{children}</View>
-      {note ? <Text style={shared.hint}>{note}</Text> : null}
-    </View>
-  );
-}
+const SIZES = MIN_SIZE_CHOICES_MM.map(mm => ({
+  value: mm,
+  label: millimetres(mm),
+}));
 
 /**
- * Smart Shapes' Settings view (#253), every size and colour from the shared ui-kit (#93): the
- * switch, the smallest figure that becomes a shape, and each of the five shapes. A change applies
- * to the next held stroke. Close and Back close the view (#204, #255).
+ * Smart Shapes' Settings view (#253), drawn with the kit's native controls (#274): the switch, the
+ * smallest figure that becomes a shape, and each of the five shapes. A change applies to the next
+ * held stroke. The title bar's × and Back close the view (#204, #255).
  */
 export default function App({
   close = () => closePluginView(),
@@ -55,60 +45,44 @@ export default function App({
     setSettings(next);
     setLocal(next);
   };
-  const onOff = (title: string, on: boolean, set: (on: boolean) => void) =>
-    [true, false].map(value => {
-      const label = value ? copy['value.on'] : copy['value.off'];
-      return (
-        <Button
-          key={label}
-          label={label}
-          accessibilityLabel={`${title}: ${label}`}
-          selected={on === value}
-          onPress={() => set(value)}
-        />
-      );
-    });
   return (
     <View style={shared.screen}>
-      <TitleRow title={copy.title} onClose={close} />
-      <Row title={copy['settings.on']} note={copy['settings.onNote']}>
-        {onOff(copy['settings.on'], settings.on, on =>
-          change({...settings, on}),
-        )}
-      </Row>
-      <Row title={copy['settings.minSize']} note={copy['settings.minSizeNote']}>
-        {MIN_SIZE_CHOICES_MM.map(mm => (
-          <Button
-            key={mm}
-            label={millimetres(mm)}
-            accessibilityLabel={`${copy['settings.minSize']}: ${millimetres(
-              mm,
-            )}`}
-            selected={settings.minSizeMm === mm}
-            onPress={() => change({...settings, minSizeMm: mm})}
+      <TitleBar title={copy.title} onClose={close} />
+      {/* One row per size and per shape outgrows the Manta's height (#274). */}
+      <ScrollView style={styles.rows}>
+        <SwitchRow
+          title={copy['settings.on']}
+          subtitle={copy['settings.onNote']}
+          value={settings.on}
+          onChange={on => change({...settings, on})}
+        />
+        <View>
+          <ChoiceList
+            title={copy['settings.minSize']}
+            choices={SIZES}
+            value={settings.minSizeMm}
+            onChange={minSizeMm => change({...settings, minSizeMm})}
           />
-        ))}
-      </Row>
-      <Row title={copy['settings.shapes']}>
-        {SHAPES.map(kind => {
-          const on = settings.shapes[kind];
-          return (
-            <Button
+          <Text style={shared.hint}>{copy['settings.minSizeNote']}</Text>
+        </View>
+        <View>
+          <SectionCaption>{copy['settings.shapes']}</SectionCaption>
+          {SHAPES.map(kind => (
+            <SwitchRow
               key={kind}
-              label={copy[`shape.${kind}`]}
-              selected={on}
-              onPress={() =>
-                change({...settings, shapes: {...settings.shapes, [kind]: !on}})
+              title={copy[`shape.${kind}`]}
+              value={settings.shapes[kind]}
+              onChange={on =>
+                change({...settings, shapes: {...settings.shapes, [kind]: on}})
               }
             />
-          );
-        })}
-      </Row>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  /** The option's label, its buttons and its note, as Ink2Pic's Settings (#53). */
-  option: {gap: metrics.rowPadding},
+  rows: {flex: 1},
 });

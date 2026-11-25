@@ -36,11 +36,16 @@ async function open(close?: () => void): Promise<ReactTestRenderer> {
   return tree;
 }
 
+/** The switch, or the title bar's ×, with that spoken name: the outermost node that acts. */
 function toggle(tree: ReactTestRenderer, label: string) {
-  return tree.root.find(
-    node => node.props.label === label && node.props.onPress,
-  );
+  return tree.root.findAll(
+    node =>
+      node.props.accessibilityLabel === label &&
+      typeof node.props.onPress === 'function',
+  )[0];
 }
+const isChecked = (node: {props: {accessibilityState?: {checked?: boolean}}}) =>
+  node.props.accessibilityState?.checked;
 
 test('the Settings view keeps the size rules and has a header', async () => {
   const tree = await open();
@@ -53,13 +58,13 @@ test('the Settings view keeps the size rules and has a header', async () => {
 test('Settings keeps only Picture sources and Data saver for pictures, and saves each tap (#105)', async () => {
   const tree = await open();
   const labels = ['Openclipart', 'Wikimedia Commons', 'Wikidata', 'OpenMoji'];
-  expect(labels.map(label => toggle(tree, label).props.selected)).toEqual([
+  expect(labels.map(label => isChecked(toggle(tree, label)))).toEqual([
     true,
     true,
     true,
     true,
   ]);
-  expect(toggle(tree, 'Data saver').props.selected).toBe(false);
+  expect(isChecked(toggle(tree, 'Data saver'))).toBe(false);
   for (const gone of ['Size', 'Placement', 'Style', 'Lasso', 'Small']) {
     expect(
       tree.root.findAll(
@@ -83,12 +88,12 @@ test('Settings keeps only Picture sources and Data saver for pictures, and saves
 
 test('one switch per lasso button: both picture modes on, the definition off, by default', async () => {
   const tree = await open();
-  expect(MODES.map(mode => toggle(tree, mode.name).props.selected)).toEqual([
+  expect(MODES.map(mode => isChecked(toggle(tree, mode.name)))).toEqual([
     true,
     true,
   ]);
-  expect(toggle(tree, 'Insert Definition').props.selected).toBe(false);
-  expect(toggle(tree, 'Choose Image').props.selected).toBe(true);
+  expect(isChecked(toggle(tree, 'Insert Definition'))).toBe(false);
+  expect(isChecked(toggle(tree, 'Choose Image'))).toBe(true);
 });
 
 test('the «Insert Definition» switch registers its lasso button and saves the switch', async () => {
@@ -124,7 +129,7 @@ test('both picture switches off: no picture button, and Settings still opens (#1
     }),
   );
   const tree = await open();
-  expect(MODES.map(mode => toggle(tree, mode.name).props.selected)).toEqual([
+  expect(MODES.map(mode => isChecked(toggle(tree, mode.name)))).toEqual([
     false,
     false,
   ]);
@@ -139,7 +144,7 @@ test('both picture switches off: no picture button, and Settings still opens (#1
 
 test("one switch per translation direction, the owner's three on, and a tap saves the direction (#174)", async () => {
   const tree = await open();
-  const shown = (name: string) => toggle(tree, name).props.selected;
+  const shown = (name: string) => isChecked(toggle(tree, name));
   expect(
     ['ES→PT', 'PT→ES', 'ZH→PT', 'PT→ZH'].map(d => shown(`Translate ${d}`)),
   ).toEqual([true, false, true, true]);

@@ -99,6 +99,14 @@ class Boundaries(unittest.TestCase):
              ("plugins/a/src/C.tsx", "controls"), ("plugins/a/src/D.tsx", "controls"),
              ("plugins/a/src/copy.ts", "controls")])
 
+    def test_a_plugins_root_view_takes_the_kits_controls_too(self):
+        # The root App.tsx drew the switches #273's rule did not read (#274); its config files stay out.
+        self.assertEqual(self.tree({
+            "plugins/a/App.tsx": "<Button label=\"On\" selected={on} />\n",
+            "plugins/a/index.js": "const back = '‹ Back';\n",
+            "plugins/a/metro.config.js": "const s = {borderStyle: 'dotted'};\n",
+        }), [("plugins/a/App.tsx", "controls"), ("plugins/a/index.js", "controls")])
+
     def test_pending_controls_only_shrink(self):
         files = {"plugins/a/src/A.tsx": "<View style={shared.listRow}>\n", "plugins/a/src/B.tsx": "const b = 1;\n"}
         self.assertEqual(self.tree(files, frozenset({"plugins/a/src/A.tsx"})), [])

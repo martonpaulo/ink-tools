@@ -2,7 +2,6 @@
 import React from 'react';
 import {StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {Button} from '../src/Button';
 import {metrics} from '../src/metrics';
 import {CLOSE_TEXT} from '../src/problem';
 import {createWorking, Working, WORKING_TEXT} from '../src/working';
@@ -201,10 +200,10 @@ describe('WorkingStrip (#103)', () => {
       await working.run(() => Promise.reject(new Error('1503'))).catch(() => undefined);
     });
     const shown = tree.root.findAllByType(Text).map(node => node.props.children);
-    expect(shown).toEqual(['Failed.', CLOSE_TEXT, '1503']);
-    const close = tree.root
-      .findAllByType(Button)
-      .find(node => node.props.label === CLOSE_TEXT)!;
+    expect(shown).toEqual(['×', 'Failed.', '1503']);
+    const [close] = tree.root.findAll(
+      node => node.props.accessibilityLabel === CLOSE_TEXT && typeof node.props.onPress === 'function',
+    );
     await act(async () => {
       close.props.onPress();
     });

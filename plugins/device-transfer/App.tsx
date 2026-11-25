@@ -3,7 +3,9 @@ import {Text, ToastAndroid, View} from 'react-native';
 import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {
   Button,
+  ChoiceList,
   shared,
+  TitleBar,
   useBackKey,
   useWorking,
   WorkingStrip,
@@ -54,9 +56,7 @@ export function ReceiveView({
 }) {
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.title}
-      </Text>
+      <TitleBar title={copy.title} />
       <Text accessibilityLiveRegion="polite" style={shared.text}>
         {state === 'ready' ? copy.ready(ALIAS) : copy.starting}
       </Text>
@@ -81,9 +81,7 @@ export function TextView({
 }) {
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.sendText}
-      </Text>
+      <TitleBar title={copy.sendText} />
       {state.phase === 'ready' || state.phase === 'sending' ? (
         <>
           <Text style={shared.text}>{state.text}</Text>
@@ -116,7 +114,8 @@ export function TextView({
 
 /**
  * Relay's Settings view (#98): the LocalSend devices one search finds, and the one every send goes
- * to. Picking one saves it, pinned to its fingerprint; sizes and colours from the shared ui-kit.
+ * to, one radio each (#274). Picking one saves it, pinned to its fingerprint; the title bar's ×
+ * closes the view.
  */
 export default function App({
   native = defaultRelay,
@@ -206,33 +205,37 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
   const chosen = settings?.device ?? null;
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.title}
-      </Text>
-      <Text style={shared.hint}>
-        {chosen === null ? copy.devices : copy.chosen(chosen.alias)}
-      </Text>
+      <TitleBar title={copy.title} onClose={close} />
       {devices === null ? (
         <Text style={shared.text}>{copy.searching}</Text>
       ) : devices.length === 0 ? (
         <Text style={shared.text}>{copy.noDevice}</Text>
       ) : (
-        devices.map(device => (
-          <Button
-            key={device.fingerprint}
-            label={deviceLabel(device, devices)}
-            accessibilityLabel={`${device.alias}, ${device.ip}`}
-            selected={chosen?.fingerprint === device.fingerprint}
-            onPress={() => choose(device)}
-          />
-        ))
+        <ChoiceList
+          title={copy.devices}
+          choices={devices.map(device => ({
+            value: device.fingerprint,
+            label: deviceLabel(device, devices),
+          }))}
+          value={chosen?.fingerprint ?? null}
+          onChange={fingerprint => {
+            const device = devices.find(
+              each => each.fingerprint === fingerprint,
+            );
+            if (device) {
+              choose(device);
+            }
+          }}
+        />
+      )}
+      {chosen !== null && (
+        <Text style={shared.hint}>{copy.chosen(chosen.alias)}</Text>
       )}
       <Button
         label={copy.searchAgain}
         disabled={devices === null || settings === null}
         onPress={() => settings !== null && search(settings)}
       />
-      <Button label={copy.close} onPress={close} />
     </View>
   );
 }

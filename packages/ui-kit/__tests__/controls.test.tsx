@@ -7,6 +7,7 @@ import {StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {
   CheckMark,
+  ChoiceList,
   Chevron,
   IconButton,
   ListRow,
@@ -17,6 +18,7 @@ import {
   SearchField,
   SectionCaption,
   Switch,
+  SwitchRow,
   TitleBar,
 } from '../src';
 import {screenBreaks} from '../src/screenBreaks';
@@ -68,6 +70,19 @@ const EVERY_CONTROL: [string, React.JSX.Element][] = [
   ['IconButton remove', <IconButton kind="remove" onPress={noop} />],
   ['IconButton delete', <IconButton kind="delete" onPress={noop} />],
   ['IconButton download', <IconButton kind="download" onPress={noop} />],
+  ['SwitchRow', <SwitchRow title="Data saver" subtitle="Fewer pictures" value onChange={noop} />],
+  [
+    'ChoiceList',
+    <ChoiceList
+      title="Word spacing"
+      choices={[
+        {value: 'tight', label: 'Tight'},
+        {value: 'wide', label: 'Wide'},
+      ]}
+      value="tight"
+      onChange={noop}
+    />,
+  ],
 ];
 
 describe('the native controls (#273)', () => {
@@ -180,5 +195,36 @@ describe('the native controls (#273)', () => {
     expect(byLabel(render(<IconButton kind={kind} onPress={noop} />), label)).toBeTruthy();
     const named = render(<IconButton kind={kind} accessibilityLabel={`${label} English`} onPress={noop} />);
     expect(byLabel(named, `${label} English`)).toBeTruthy();
+  });
+
+  it('draws an on/off setting as one row whose switch speaks its title, and stays still when disabled', () => {
+    const onChange = jest.fn();
+    const tree = render(<SwitchRow title="Data saver" subtitle="Fewer pictures" value={false} onChange={onChange} />);
+    expect(texts(tree)).toEqual(['Data saver', 'Fewer pictures', 'OFF']);
+    press(tree, 'Data saver');
+    expect(onChange).toHaveBeenCalledWith(true);
+    const off = render(<SwitchRow title="Data saver" value={false} disabled onChange={onChange} />);
+    expect(hostByLabel(off, 'Data saver').props.accessibilityState).toMatchObject({checked: false, disabled: true});
+  });
+
+  it('draws one value out of several as a caption over one radio row each, the chosen one checked', () => {
+    const onChange = jest.fn();
+    const tree = render(
+      <ChoiceList
+        title="Word spacing"
+        choices={[
+          {value: 'tight', label: 'Tight'},
+          {value: 'wide', label: 'Wide'},
+        ]}
+        value="wide"
+        onChange={onChange}
+      />,
+    );
+    expect(texts(tree)).toEqual(['Word spacing', 'Tight', 'Wide']);
+    expect(hostByLabel(tree, 'Word spacing: Wide').props.accessibilityState).toEqual({checked: true});
+    expect(hostByLabel(tree, 'Word spacing: Tight').props.accessibilityState).toEqual({checked: false});
+    press(tree, 'Word spacing: Tight');
+    press(tree, 'Word spacing: Wide');
+    expect(onChange.mock.calls).toEqual([['tight'], ['wide']]);
   });
 });

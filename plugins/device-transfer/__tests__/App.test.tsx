@@ -43,7 +43,13 @@ test('«No LocalSend device found» closes by its Close button and by Back (#98)
     tree.root.findAllByProps({children: 'No LocalSend device found'}).length,
   ).toBeGreaterThan(0);
   await act(async () => {
-    tree.root.findByProps({label: 'Close'}).props.onPress();
+    tree.root
+      .findAll(
+        node =>
+          node.props.accessibilityLabel === 'Close' &&
+          typeof node.props.onPress === 'function',
+      )[0]
+      .props.onPress();
   });
   expect(close).toHaveBeenCalledTimes(1);
   await act(async () => {
@@ -60,14 +66,49 @@ test('picking a found device saves it with its fingerprint', async () => {
     ]),
   });
   const tree = await render(api);
+  const radio = () =>
+    tree.root.find(
+      node =>
+        typeof node.type === 'string' &&
+        node.props.accessibilityLabel === 'Send to: Mac',
+    );
+  expect(radio().props.accessibilityState.checked).toBe(false);
   await act(async () => {
-    tree.root.findByProps({label: 'Mac'}).props.onPress();
+    tree.root
+      .findAll(
+        node =>
+          node.props.accessibilityLabel === 'Send to: Mac' &&
+          typeof node.props.onPress === 'function',
+      )[0]
+      .props.onPress();
   });
   expect(JSON.parse(calls.written[0]).device).toMatchObject({
     alias: 'Mac',
     fingerprint: 'fp',
   });
-  expect(tree.root.findByProps({label: 'Mac'}).props.selected).toBe(true);
+  expect(radio().props.accessibilityState.checked).toBe(true);
+  expect(
+    tree.root.findAllByProps({children: 'Sends go to Mac'}).length,
+  ).toBeGreaterThan(0);
+});
+
+test('two receivers with one alias show apart as two radios (#274)', async () => {
+  const {api} = fakeRelay({
+    discover: jest.fn(async () => [
+      {ip: lan(10, 0, 0, 2), text: answer('Mac', 'a')},
+      {ip: lan(10, 0, 0, 3), text: answer('Mac', 'b')},
+    ]),
+  });
+  const tree = await render(api);
+  const radios = tree.root.findAll(
+    node =>
+      typeof node.type === 'string' && node.props.accessibilityRole === 'radio',
+  );
+  expect(radios.map(node => node.props.accessibilityLabel)).toEqual([
+    `Send to: Mac · ${lan(10, 0, 0, 2)}`,
+    `Send to: Mac · ${lan(10, 0, 0, 3)}`,
+  ]);
+  expect(screenBreaks(tree.root)).toEqual([]);
 });
 
 test('two receivers with one alias are told apart', () => {

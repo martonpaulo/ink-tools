@@ -195,7 +195,7 @@ test('Close and Back close Settings, and do nothing while a pass runs (#204, #26
   const pressClose = () =>
     act(() =>
       tree.root
-        .find(node => node.props.accessibilityLabel === 'Close' && node.props.onPress)
+        .findAll(node => node.props.accessibilityLabel === 'Close' && node.props.onPress)[0]
         .props.onPress(),
     );
   await act(async () => publish({running: true, runs: {}, probe: {}}));

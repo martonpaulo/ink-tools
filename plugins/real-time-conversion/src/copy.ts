@@ -24,8 +24,6 @@ export const copy = {
   'settings.font': 'Font',
   'settings.fontNote':
     "Text uses the tablet's default font. Choosing a font comes after the device check.",
-  'value.on': 'On',
-  'value.off': 'Off',
   'value.tight': 'Tight',
   'value.normal': 'Normal',
   'value.wide': 'Wide',

@@ -18,7 +18,7 @@ The rules are `docs/architecture.md` › Layer rules:
 - `url`: no code that runs on the tablet (a plugin's or package's `src/`, a plugin's `index.js`)
   constructs a `URL` or reads `searchParams`: React Native's `URL` throws on `protocol`, `host` and
   every other getter but `href`; take `parseUrl` of `@ink-tools/sync-core` (#209).
-- `controls`: no plugin `src/` draws its own native control: a switch (a `Button` with `selected`, a
+- `controls`: no plugin view (its `src/`, its root `App.tsx` and `index.js`) draws its own native control: a switch (a `Button` with `selected`, a
   view with role `switch` or `radio`), a list row (`shared.listRow`, a dotted border), or a title
   bar, pager or chevron glyph (‹ › ◀ ▶ × ✕ in a string); it takes the component of
   `@ink-tools/ui-kit` (#273). The files that still do are `PENDING_CONTROLS`, which #274 empties: a
@@ -48,7 +48,8 @@ DICTIONARY_HOST = re.compile(r"\bwiktionary\.org\b")
 CLIENT = re.compile(r"(?:^|/)sync-core/(?:src/)?(?:todoist|google|ics|http)(?:\.ts)?$")
 URL_USE = re.compile(r"\bnew\s+URL\s*\(|\.searchParams\b")
 TABLET = re.compile(r"^(?:plugins|packages)/[^/]+/(?:src/|index\.(?:js|jsx|ts|tsx)$)")
-PLUGIN_SRC = re.compile(r"^plugins/[^/]+/src/")
+# A plugin's views: its `src/`, and the root `App.tsx` and `index.js` the host mounts (#274).
+PLUGIN_VIEW = re.compile(r"^plugins/[^/]+/(?:src/|App\.tsx$|index\.(?:js|jsx|ts|tsx)$)")
 OWN_CONTROLS = (
     (re.compile(r"\bselected=\{"), "a switch drawn as a Button with selected; take Switch"),
     (re.compile(r"""accessibilityRole=\{?['"](?:switch|radio)['"]"""), "its own switch or radio; take Switch or Radio"),
@@ -108,7 +109,7 @@ def findings(root, pending=PENDING_CONTROLS):
         if exempt and not tablet:
             continue
         lines = (root / rel).read_text(encoding="utf-8", errors="replace").splitlines()
-        if suffix in SCRIPT and not test and not exempt and PLUGIN_SRC.match(rel):
+        if suffix in SCRIPT and not test and not exempt and PLUGIN_VIEW.match(rel):
             controls = own_controls(rel, lines)
             if controls:
                 drawn.add(rel)

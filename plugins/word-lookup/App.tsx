@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {
-  Button,
+  SectionCaption,
   shared,
-  TitleRow,
+  SwitchRow,
+  TitleBar,
   useBackKey,
   useWorking,
   WorkingStrip,
@@ -43,8 +44,8 @@ const sourceLabel = (name: string): string =>
  * registers or removes its button and is saved to the private folder's settings.json (#142, #22). On open, the
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
  * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156); while a
- * no-view button works, it is the «Loading…» strip (#103). Settings closes by its «Close», as the
- * Choose screen does, since Back never reaches the view on the Nomad (#204, #266). «Saved pictures» says where the inserted pictures are kept and why, and names the old
+ * no-view button works, it is the «Loading…» strip (#103). Settings closes by its title bar's ×, as the
+ * Choose screen does by its «Close», since Back never reaches the view on the Nomad (#204, #266). «Saved pictures» says where the inserted pictures are kept and why, and names the old
  * synced folders that still hold files, with the File Manager step (#23).
  */
 export default function App({
@@ -65,7 +66,7 @@ export default function App({
   );
 }
 
-/** One Settings section: its heading, then its rows. */
+/** One Settings section: its caption, then its rows. */
 function Section({
   heading,
   children,
@@ -74,10 +75,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <View style={shared.listRow}>
-      <Text accessibilityRole="header" style={shared.heading}>
-        {heading}
-      </Text>
+    <View>
+      <SectionCaption>{heading}</SectionCaption>
       {children}
     </View>
   );
@@ -108,66 +107,59 @@ function SettingsScreen({close}: {close: () => void}) {
   };
   const group = (heading: string, buttons: readonly LassoButton[]) => (
     <Section heading={heading}>
-      <View style={shared.buttons}>
-        {buttons.map(button => {
-          const on = isOn(shown, button);
-          return (
-            <Button
-              key={button.id}
-              label={button.name}
-              selected={on}
-              disabled={settings === null}
-              onPress={() => change(withSwitch(shown, button, !on))}
-            />
-          );
-        })}
-      </View>
+      {buttons.map(button => (
+        <SwitchRow
+          key={button.id}
+          title={button.name}
+          value={isOn(shown, button)}
+          disabled={settings === null}
+          onChange={on => change(withSwitch(shown, button, on))}
+        />
+      ))}
     </Section>
   );
   return (
     <View style={shared.screen}>
-      <TitleRow title={copy.title} onClose={close} />
-      {group(
-        copy['settings.modes'],
-        BUTTONS.filter(button => 'key' in button.switch),
-      )}
-      {group(
-        copy['settings.translate'],
-        BUTTONS.filter(button => 'direction' in button.switch),
-      )}
-      <Section heading={copy['settings.sources']}>
-        <View style={shared.buttons}>
-          {SOURCE_NAMES.map(name => {
-            const on = sourceOn(shown, name);
-            return (
-              <Button
-                key={name}
-                label={sourceLabel(name)}
-                selected={on}
-                disabled={settings === null}
-                onPress={() => change(withSource(shown, name, !on))}
-              />
-            );
-          })}
-        </View>
-      </Section>
-      <Section heading={copy['settings.dataSaver']}>
-        <Text style={shared.hint}>{copy['settings.dataSaverHint']}</Text>
-        <View style={shared.row}>
-          <Button
-            label={copy['settings.dataSaver']}
-            selected={shown.dataSaver}
-            disabled={settings === null}
-            onPress={() => change({...shown, dataSaver: !shown.dataSaver})}
-          />
-        </View>
-      </Section>
-      <Section heading={copy['settings.pictures']}>
-        <Text style={shared.hint}>{copy['settings.picturesHint']}</Text>
-        {old.length > 0 && (
-          <Text style={shared.hint}>{copy['settings.oldFiles'](old)}</Text>
+      <TitleBar title={copy.title} onClose={close} />
+      {/* The rows outgrow the Manta's height once every switch is a row of its own (#274). */}
+      <ScrollView style={styles.rows}>
+        {group(
+          copy['settings.modes'],
+          BUTTONS.filter(button => 'key' in button.switch),
         )}
-      </Section>
+        {group(
+          copy['settings.translate'],
+          BUTTONS.filter(button => 'direction' in button.switch),
+        )}
+        <Section heading={copy['settings.sources']}>
+          {SOURCE_NAMES.map(name => (
+            <SwitchRow
+              key={name}
+              title={sourceLabel(name)}
+              value={sourceOn(shown, name)}
+              disabled={settings === null}
+              onChange={on => change(withSource(shown, name, on))}
+            />
+          ))}
+        </Section>
+        <SwitchRow
+          title={copy['settings.dataSaver']}
+          subtitle={copy['settings.dataSaverHint']}
+          value={shown.dataSaver}
+          disabled={settings === null}
+          onChange={dataSaver => change({...shown, dataSaver})}
+        />
+        <Section heading={copy['settings.pictures']}>
+          <Text style={shared.hint}>{copy['settings.picturesHint']}</Text>
+          {old.length > 0 && (
+            <Text style={shared.hint}>{copy['settings.oldFiles'](old)}</Text>
+          )}
+        </Section>
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  rows: {flex: 1},
+});
