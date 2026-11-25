@@ -133,6 +133,7 @@ def place(segments, scale=1.0, at=(0.0, 0.0)):
     return out
 
 
+DISCRIMINANT = 4  # b*b - 4ac, a segment against a circle
 STEPS = 64  # points sampled along each curve or arc
 
 
@@ -222,7 +223,7 @@ def inside(a, b, ring):
     qa, qb, qc = dx * dx + dy * dy, 2 * (fx * dx + fy * dy), fx * fx + fy * fy - r * r
     if qa == 0:
         return (0.0, 1.0) if qc < 0 else None
-    root = qb * qb - 4 * qa * qc
+    root = qb * qb - DISCRIMINANT * qa * qc
     if root <= 0:
         return None
     root = math.sqrt(root)
