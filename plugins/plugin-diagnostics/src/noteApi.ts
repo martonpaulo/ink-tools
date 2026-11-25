@@ -1,5 +1,6 @@
 import {FileUtils, PluginCommAPI, PluginFileAPI, PluginManager, PluginNoteAPI} from 'sn-plugin-lib';
 import {HelperError, type HelperApi, type Point, type Rect} from './helper';
+import {TAG} from './probe';
 
 /** sn-plugin-lib 0.2.3 element types and the pen values the 2026-11-16 round measured (docs/supernote.md › Plugins). */
 const STROKE = 0;
@@ -43,6 +44,29 @@ async function strokePoints(element: Element): Promise<Point[]> {
   return points.getRange(0, await points.size());
 }
 
+const SAVED = 'the note saved';
+
+/** Saves the open note and logs the save and its time; never throws (#296). */
+export async function saveFirst(
+  log: (line: string) => void = line => console.log(`${TAG} ${line}`),
+  now: () => number = Date.now,
+): Promise<void> {
+  const started = now();
+  let why: string;
+  try {
+    const answer = (await PluginNoteAPI.saveCurrentNote()) as Response | null | undefined;
+    why =
+      answer?.success === true && answer.result === true
+        ? SAVED
+        : `failed: ${answer?.error?.code ?? 'no code'} ${answer?.error?.message ?? 'answered false'}`;
+  } catch (error) {
+    why = `failed: ${error instanceof Error ? error.message : String(error)}`;
+  }
+  const ms = now() - started;
+  const after = why === SAVED ? '' : ': the page is drawn as the file holds it';
+  log(`save: ${why} in ${ms} ms${after}`);
+}
+
 /** sn-plugin-lib behind HelperApi. Thin on purpose: every rule lives in helper.ts or the CLI. */
 export const noteApi: HelperApi = {
   async pageNumber() {
@@ -73,6 +97,9 @@ export const noteApi: HelperApi = {
   },
 
   async renderPage(page, pngPath) {
+    // generateNotePng reads the note's file: save first, so the newest strokes are in the PNG
+    // (#296). A failed save is logged and the page is drawn as the file holds it.
+    await saveFirst();
     const notePath = unwrap<string>('getCurrentFilePath', await PluginCommAPI.getCurrentFilePath());
     const made = unwrap<boolean>(
       'generateNotePng',

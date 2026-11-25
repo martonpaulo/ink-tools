@@ -1,10 +1,11 @@
 /** The send flow (#98): device choice, each answer's line, and no PNG left behind. */
-import {EMPTY_LASSO_CODE, fail, ok} from '@ink-tools/sn-adapter/official';
+import {EMPTY_LASSO_CODE, fail, ok, saveBeforeExport} from '@ink-tools/sn-adapter/official';
 import {Device} from '../src/localsend/protocol';
 import {relay} from '../src/native';
 import {
   discoverDevices,
   findAgain,
+  savedFirst,
   sendCapture,
   tempDir,
 } from '../src/send/sendPng';
@@ -399,5 +400,37 @@ describe('settings', () => {
     });
     const {api} = fakeRelay({readText: jest.fn(async () => text)});
     expect((await loadSettings(api, pluginDir)).device).toBeNull();
+  });
+});
+
+describe('«Send Page» saves the note first (#296)', () => {
+  it('saves before the page image is made', async () => {
+    const calls: string[] = [];
+    const make = savedFirst(
+      async path => {
+        calls.push(`make ${path}`);
+        return ok(path);
+      },
+      async () => {
+        calls.push('save');
+      },
+    );
+    expect(await make('/plugin/tmp/page.png')).toEqual(ok('/plugin/tmp/page.png'));
+    expect(calls).toEqual(['save', 'make /plugin/tmp/page.png']);
+  });
+
+  it('makes the image after a failed save, as the file holds it', async () => {
+    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const save = jest.fn(async () => fail(904, 'busy'));
+    const make = savedFirst(
+      async path => ok(path),
+      () => saveBeforeExport(line => console.log(`Relay: send: ${line}`), save),
+    );
+    expect(await make('/plugin/tmp/page.png')).toEqual(ok('/plugin/tmp/page.png'));
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith(
+      expect.stringMatching(/^Relay: send: save: failed: 904 busy in \d+ ms: the page is exported as the file holds it$/),
+    );
+    log.mockRestore();
   });
 });

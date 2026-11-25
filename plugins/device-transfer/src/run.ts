@@ -28,7 +28,7 @@ import {
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
-import {findAgain, Outcome, sendCapture, tempDir} from './send/sendPng';
+import {findAgain, Outcome, savedFirst, sendCapture, tempDir} from './send/sendPng';
 import {sendText} from './send/sendText';
 import {TextDeps} from './send/textSession';
 import {Device} from './localsend/protocol';
@@ -86,7 +86,8 @@ export async function runSend(
     settings.device,
     tempDir(dir.value),
     capture,
-    capture === 'page' ? currentPage : lassoImage,
+    // Only the page is read from the file; the lasso preview is drawn from the open page.
+    capture === 'page' ? savedFirst(currentPage) : lassoImage,
     Date.now,
     findAgain(native, self, pluginDir),
   );

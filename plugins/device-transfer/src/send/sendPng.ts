@@ -6,6 +6,7 @@ import {
   EMPTY_LASSO_CODE,
   getPluginDirPath,
   Result,
+  saveBeforeExport,
 } from '@ink-tools/sn-adapter/official';
 import {
   announce,
@@ -138,6 +139,21 @@ export function findAgain(
       await saveSettings(native, {...settings, device: moved}, pluginDir);
     }
     return moved;
+  };
+}
+
+/**
+ * «Send Page»'s PNG maker with the note saved first (#296): `generateNotePng` reads the note's file,
+ * so the strokes drawn just before the press are in the image only after a save. A failed save is
+ * logged and the page is sent as the file holds it, as before.
+ */
+export function savedFirst(
+  make: (pngPath: string) => Promise<Result<string>>,
+  save: () => Promise<void> = () => saveBeforeExport(sendLog),
+): (pngPath: string) => Promise<Result<string>> {
+  return async pngPath => {
+    await save();
+    return make(pngPath);
   };
 }
 
