@@ -37,7 +37,7 @@ export function moduleRows(
 
 /**
  * Bridge's Settings view: the saved switches, loaded from and saved to the private folder (#40).
- * Back closes it, and does nothing while a pass runs (#204). It shows the probe answer of the
+ * «Close» and Back close it, and do nothing while a pass runs (#204, #266). It shows the probe answer of the
  * runner's last pass and never probes itself: the probe runs only for a sync that needs it, and
  * only for the modules that are on (#43).
  */
@@ -53,11 +53,12 @@ export default function App({
   close?: () => void;
 }) {
   const synced = useSync(sync);
-  useBackKey(() => {
+  const exit = () => {
     if (!synced.running) {
       close();
     }
-  });
+  };
+  useBackKey(exit);
   const [settings, setSettings] = useState<BridgeSettings | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [saveProblem, setSaveProblem] = useState<string | null>(null);
@@ -119,6 +120,7 @@ export default function App({
   return (
     <SettingsShell
       state={state}
+      onClose={exit}
       form={settings && (
           <SettingsForm
             settings={settings}

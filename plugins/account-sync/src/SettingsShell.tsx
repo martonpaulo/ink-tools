@@ -4,11 +4,12 @@
  * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
  * keeps what Account Sync wrote; its «Remove what Account Sync wrote» button asks once more before
- * anything is deleted (#89).
+ * anything is deleted (#89). The title line carries ui-kit's «Close», since Back never reaches the
+ * view on the Nomad (#204, #266).
  */
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared} from '@ink-tools/ui-kit';
+import {Button, shared, TitleRow} from '@ink-tools/ui-kit';
 import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
@@ -48,16 +49,17 @@ export type ShellState =
 export function SettingsShell({
   state,
   form,
+  onClose,
 }: {
   state: ShellState;
   /** The opt-in switches (#40), drawn under the module list once the settings are ready. */
   form?: React.ReactNode;
+  /** What «Close» does: the same as Back (#266). */
+  onClose: () => void;
 }): React.JSX.Element {
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.title}
-      </Text>
+      <TitleRow title={copy.title} onClose={onClose} />
       <Body state={state} />
       {state.kind === 'ready' && state.notice && (
         <Text accessibilityRole="alert" style={shared.text}>

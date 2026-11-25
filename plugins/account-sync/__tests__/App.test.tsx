@@ -182,20 +182,29 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
   expect(screenBreaks(tree.root)).toEqual([]);
 });
 
-test('Back closes Settings, and does nothing while a pass runs (#204)', async () => {
+test('Close and Back close Settings, and do nothing while a pass runs (#204, #266)', async () => {
   const back = catchBackKey();
   const {runner, publish} = fakeRunner();
   const close = jest.fn();
+  let tree!: ReactTestRenderer;
   await act(async () => {
-    renderer.create(
+    tree = renderer.create(
       <App folder={folder as never} sync={runner} close={close} />,
     );
   });
+  const pressClose = () =>
+    act(() =>
+      tree.root
+        .find(node => node.props.accessibilityLabel === 'Close' && node.props.onPress)
+        .props.onPress(),
+    );
   await act(async () => publish({running: true, runs: {}, probe: {}}));
   expect(back.press()).toBe(true);
+  pressClose();
   expect(close).not.toHaveBeenCalled();
   await act(async () => publish({running: false, runs: {}, probe: {}}));
   expect(back.press()).toBe(true);
-  expect(close).toHaveBeenCalledTimes(1);
+  pressClose();
+  expect(close).toHaveBeenCalledTimes(2);
   back.restore();
 });

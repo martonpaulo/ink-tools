@@ -161,12 +161,13 @@ test("one switch per translation direction, the owner's three on, and a tap save
   );
 });
 
-test('Back closes the Settings view (#204)', async () => {
+test('Close and Back close the Settings view (#204, #266)', async () => {
   const back = catchBackKey();
   const close = jest.fn();
-  await open(close);
+  const tree = await open(close);
   expect(back.press()).toBe(true);
-  expect(close).toHaveBeenCalledTimes(1);
+  act(() => toggle(tree, 'Close').props.onPress());
+  expect(close).toHaveBeenCalledTimes(2);
   back.restore();
 });
 

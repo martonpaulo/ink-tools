@@ -78,7 +78,7 @@ test('a To-Do table without dueTime turns To-Do off with its reason, and Calenda
   expect(modules.map(m => m.status.state)).toEqual(['blocked', 'waiting']);
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = renderer.create(<SettingsShell state={{kind: 'ready', modules}} />);
+    tree = renderer.create(<SettingsShell state={{kind: 'ready', modules}} onClose={() => {}} />);
   });
   const texts = tree.root.findAllByType(Text).map(node => node.props.children);
   expect(texts).toContain(

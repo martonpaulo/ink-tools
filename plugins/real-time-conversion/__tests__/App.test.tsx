@@ -30,13 +30,18 @@ test('a tap on a value saves it for the next time the mode turns on', () => {
   expect(getSettings().spacing).toBe('wide');
 });
 
-test('Back closes the Settings view (#204)', () => {
+test('Close and Back close the Settings view (#204, #266)', () => {
   const back = catchBackKey();
   const close = jest.fn();
+  let tree!: ReactTestRenderer;
   act(() => {
-    renderer.create(<App close={close} />);
+    tree = renderer.create(<App close={close} />);
   });
   expect(back.press()).toBe(true);
-  expect(close).toHaveBeenCalledTimes(1);
+  const closeButton = tree.root.find(
+    node => node.props.accessibilityLabel === 'Close' && typeof node.props.onPress === 'function',
+  );
+  act(() => closeButton.props.onPress());
+  expect(close).toHaveBeenCalledTimes(2);
   back.restore();
 });

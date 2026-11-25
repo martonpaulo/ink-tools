@@ -9,7 +9,7 @@ import {copy} from '../src/copy';
 function render(state: ShellState) {
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = renderer.create(<SettingsShell state={state} />);
+    tree = renderer.create(<SettingsShell state={state} onClose={() => {}} />);
   });
   return tree;
 }
@@ -89,7 +89,7 @@ describe('SettingsShell (#93)', () => {
     const onRetry = jest.fn();
     const tree = render({kind: 'error', reason: 'x', onRetry});
     act(() =>
-      tree.root.findByProps({accessibilityRole: 'button'}).props.onPress(),
+      tree.root.findByProps({accessibilityLabel: copy['settings.retry']}).props.onPress(),
     );
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -97,6 +97,7 @@ describe('SettingsShell (#93)', () => {
   it('shows the last sync of each module and why a module that is on does not run (#88)', () => {
     expect(texts(render(STATES.modules))).toEqual([
       copy.title,
+      'Close',
       'Calendar',
       'Last synced 2026-11-14 14:05.',
       '3 added, 1 changed, 0 removed',

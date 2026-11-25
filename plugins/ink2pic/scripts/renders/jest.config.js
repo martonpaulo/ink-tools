@@ -39,6 +39,8 @@ module.exports = {
     '^react$': '<rootDir>/node_modules/react',
     '^react/(.*)$': '<rootDir>/node_modules/react/$1',
     '^react-native$': '<rootDir>/node_modules/react-native',
+    // Account Sync's Settings reads sync-core's status words (#266).
+    '^@ink-tools/sync-core$': '<rootDir>/../../packages/sync-core/src',
   },
   /** One test renders every screen: about 4 s idle, so 5 s timed out under load (#90). */
   testTimeout: 120000,

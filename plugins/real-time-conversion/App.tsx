@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Text, View} from 'react-native';
-import {Button, shared, useBackKey} from '@ink-tools/ui-kit';
+import {Button, shared, TitleRow, useBackKey} from '@ink-tools/ui-kit';
 import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {getSettings, setSettings, Settings, Spacing, Wait} from './src/settings';
@@ -57,7 +57,8 @@ function Row<V>({
 /**
  * Real-Time Conversion's Settings view (#184), every size and colour from the shared ui-kit (#93):
  * the switch's start state and the word rule's two measures (#185). The word rule reads them the
- * next time Real-Time Text turns on. Back closes the view (#204).
+ * next time Real-Time Text turns on. «Close» closes the view, since Back never reaches it on the
+ * Nomad (#204, #266); Back still closes it on a host that sends the key.
  */
 export default function App({
   close = () => closePluginView(),
@@ -73,9 +74,7 @@ export default function App({
   };
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.title}
-      </Text>
+      <TitleRow title={copy.title} onClose={close} />
       <Row
         title={copy['settings.start']}
         choices={START}

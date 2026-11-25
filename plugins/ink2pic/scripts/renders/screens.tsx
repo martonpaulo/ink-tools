@@ -26,6 +26,9 @@ import {defaultSettings, Settings} from '../../src/settings/settings';
 import type {LanguageCode} from '../../src/settings/languages';
 import {PERMISSIONS} from '../../src/onboarding/permissions';
 import SmartShapesSettings from '../../../smart-shapes/App';
+import RealTimeConversionSettings from '../../../real-time-conversion/App';
+import WordLookupSettings from '../../../word-lookup/App';
+import {SettingsShell as AccountSyncSettings} from '../../../account-sync/src/SettingsShell';
 
 export type ScreenRender = {
   name: string;
@@ -268,6 +271,9 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
   {name: 'smart-shapes-settings', render: () => mount(<SmartShapesSettings close={() => {}} />)},
+  {name: 'real-time-conversion-settings', render: () => mount(<RealTimeConversionSettings close={() => {}} />)},
+  {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
+  {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView onClose={() => {}} />)},
 ];
 

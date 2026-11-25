@@ -10,6 +10,8 @@
       "@ink-tools/picture-search": ["../../packages/picture-search/src"],
       "@ink-tools/picture-search/*": ["../../packages/picture-search/src/*"],
       "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
+      // Account Sync's Settings in the renders (#266).
+      "@ink-tools/sync-core": ["../../packages/sync-core/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

@@ -3,6 +3,7 @@ import {Text, View} from 'react-native';
 import {
   Button,
   shared,
+  TitleRow,
   useBackKey,
   useWorking,
   WorkingStrip,
@@ -42,8 +43,8 @@ const sourceLabel = (name: string): string =>
  * registers or removes its button and is saved to the private folder's settings.json (#142, #22). On open, the
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
  * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156); while a
- * no-view button works, it is the «Loading…» strip (#103). Back closes Settings, as it leaves the
- * Choose screen by its «Close» (#204). «Saved pictures» says where the inserted pictures are kept and why, and names the old
+ * no-view button works, it is the «Loading…» strip (#103). Settings closes by its «Close», as the
+ * Choose screen does, since Back never reaches the view on the Nomad (#204, #266). «Saved pictures» says where the inserted pictures are kept and why, and names the old
  * synced folders that still hold files, with the File Manager step (#23).
  */
 export default function App({
@@ -125,9 +126,7 @@ function SettingsScreen({close}: {close: () => void}) {
   );
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
-        {copy.title}
-      </Text>
+      <TitleRow title={copy.title} onClose={close} />
       {group(
         copy['settings.modes'],
         BUTTONS.filter(button => 'key' in button.switch),
