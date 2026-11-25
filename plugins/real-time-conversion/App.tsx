@@ -52,15 +52,18 @@ export default function App({
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
       {/*
-        The groups own the gap above them, so they sit in a container with none (#275); it
+        The groups own the space above them, so they sit in a container with none (#275); it
         scrolls, since the rows outgrow the Nomad's window and the turned Manta's (#284).
       */}
       <ScrollView style={styles.rows}>
-        <SwitchRow
-          title={copy['settings.start']}
-          value={settings.startOn}
-          onChange={startOn => change({...settings, startOn})}
-        />
+        {/* A row with no caption is its own group, so the solid line closes it (#272). */}
+        <RowGroup>
+          <SwitchRow
+            title={copy['settings.start']}
+            value={settings.startOn}
+            onChange={startOn => change({...settings, startOn})}
+          />
+        </RowGroup>
         <ChoiceList
           title={copy['settings.spacing']}
           choices={SPACINGS}
