@@ -25,6 +25,7 @@ import {SettingsScreen, SymbolsControl} from '../../src/ui/SettingsScreen';
 import {defaultSettings, Settings} from '../../src/settings/settings';
 import type {LanguageCode} from '../../src/settings/languages';
 import {PERMISSIONS} from '../../src/onboarding/permissions';
+import SmartShapesSettings from '../../../smart-shapes/App';
 
 export type ScreenRender = {
   name: string;
@@ -266,6 +267,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs', render: () => mount(<Needs problem={{what: 'Sample access is off', reason: 'The sample tool reads the sample folder to show your pictures.', fix: {label: 'Turn it on', run: () => {}}}} onClose={() => {}} />)},
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
+  {name: 'smart-shapes-settings', render: () => mount(<SmartShapesSettings close={() => {}} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView onClose={() => {}} />)},
 ];
 

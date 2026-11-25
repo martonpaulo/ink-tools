@@ -8,9 +8,9 @@ Scoped guidance for `plugins/smart-shapes/`. Inherits the repository root `../..
 A device plugin ([#253](https://github.com/martonpaulo/ink-tools/issues/253), owner D65 A): a stroke
 held still at its end, as the native Smart Straight Line, becomes a clean triangle, circle, square,
 rectangle or arrow. A figure smaller than the minimum size (default 16 mm, about two handwriting
-lines) always stays ink, so a held «T» in a line of text never changes. It has no button and, for
-now, no view: the tablet's own plugin switch (Settings › Apps › Plugins) turns it on and off, and the
-settings keep their defaults until the Settings view lands with its renders
+lines) always stays ink, so a held «T» in a line of text never changes. It has no button; its
+settings button opens the Settings view (`App.tsx`): the switch, the minimum size and each of the five
+shapes. Its render is the `smart-shapes-settings` screen of Ink2Pic's `npm run renders`
 ([#265](https://github.com/martonpaulo/ink-tools/issues/265)).
 
 ## How it works
