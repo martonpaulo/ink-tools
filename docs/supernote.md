@@ -21,12 +21,12 @@ learns one; a plugin's own brief keeps only what is specific to it.
 | Fact | Value | How known |
 | :--- | :--- | :--- |
 | Screen | 1920 x 2560 px, density 300 | [measured] `adb shell wm size`, `wm density`, 2026-11-14 |
-| Model | Manta (A5 X2): `ro.product.board` reads `A5X2`, `getDeviceType()` = `5`. `ro.product.model` reads `Supernote Nomad`, probably an internal name | [measured] 2026-11-14 and 2026-11-25; [official] SDK source for the type |
+| Model | Manta (A5 X2): `ro.product.board` reads `A5X2`, `getDeviceType()` = `5`. `ro.product.model` reads `Supernote Nomad`, a firmware identifier, not the model | [measured] 2026-11-14 and 2026-11-25; [official] SDK source for the type |
 | Android | 11 | [measured] `ro.build.version.release` |
 | Firmware | Chauvet 3.31.45, build `Chauvet.E103.2610191001.2559_release` | [measured] `ro.build.display.id`, 2026-11-14 |
 
-The owner's tablet is the Manta. `ro.product.model` reads «Supernote Nomad», probably an internal
-or firmware name; never take the model from it. Read `ro.product.board` (`A5X2` is the Manta, `A6X2`
+The owner's tablet is the Manta. `ro.product.model` reads «Supernote Nomad»: a firmware identifier
+shared with the Nomad line, not the model (owner, 2026-11-26). Never take the model from it. Read `ro.product.board` (`A5X2` is the Manta, `A6X2`
 the Nomad) or `getDeviceType()`, as `inkctl status` does ([#284](https://github.com/martonpaulo/ink-tools/issues/284)).
 
 ## Screen and units
