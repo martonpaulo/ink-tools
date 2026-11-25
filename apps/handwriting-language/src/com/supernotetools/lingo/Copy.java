@@ -45,6 +45,35 @@ final class Copy {
   static final String BUTTON_DESCRIPTION = "Handwriting language %s. Tap to switch to the next language.";
   static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language from the sidebar.";
 
+  static final String FAILURE_CANNOT_READ = "The language folder cannot be read. Turn on All-files access above, then try again.";
+  static final String FAILURE_CANNOT_CREATE = "The new language file could not be written. Turn on All-files access above, then try again.";
+  static final String FAILURE_CANNOT_DELETE = "The old language file could not be removed. Turn on All-files access above, then try again.";
+  static final String FAILURE_NOT_A_CODE = "That is not a language code. Pick a language from the list.";
+  static final String FAILURE_NOT_INSTALLED = "That language is not installed. Install it in Settings, Handwriting language, then try again.";
+  static final String FAILURE_NOTHING_TO_CYCLE = "No language of the cycle is installed. Install one in Settings, Handwriting language, or add an installed one to the cycle.";
+  static final String FAILURE_OTHER = "The language could not be switched. Try again, or restart the tablet if it keeps failing.";
+
+  static String failure(FileFailure.Kind kind) {
+    switch (kind) {
+      case CANNOT_READ:
+        return FAILURE_CANNOT_READ;
+      case CANNOT_CREATE:
+        return FAILURE_CANNOT_CREATE;
+      case CANNOT_DELETE:
+        return FAILURE_CANNOT_DELETE;
+      case NOT_A_CODE:
+        return FAILURE_NOT_A_CODE;
+      case NOT_INSTALLED:
+        return FAILURE_NOT_INSTALLED;
+      case NOTHING_TO_CYCLE:
+        return FAILURE_NOTHING_TO_CYCLE;
+      case FILES_OFF:
+        return FILES_OFF;
+      default:
+        return FAILURE_OTHER;
+    }
+  }
+
   static String buttonMode(ButtonRule.Mode mode) {
     switch (mode) {
       case ALWAYS:

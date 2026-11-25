@@ -99,7 +99,7 @@ public final class SettingsActivity extends Activity {
       active = Switcher.current();
       installed = Switcher.installed();
     } catch (IOException readError) {
-      readFailure = readError.getMessage();
+      readFailure = FileFailure.sentence(readError);
     }
     Button next = Ink.button(this, Copy.SWITCH_LANGUAGE, true, files);
     next.setOnClickListener(view -> switchLanguage());
@@ -164,7 +164,7 @@ public final class SettingsActivity extends Activity {
       Switcher.next(this, "screen");
       error = null;
     } catch (IOException switchError) {
-      fail(Place.SWITCH, switchError.getMessage());
+      fail(Place.SWITCH, FileFailure.sentence(switchError));
       return;
     }
     render();
@@ -211,7 +211,7 @@ public final class SettingsActivity extends Activity {
         return;
       }
     } catch (IOException readError) {
-      fail(Place.CYCLE, readError.getMessage());
+      fail(Place.CYCLE, FileFailure.sentence(readError));
       return;
     }
     error = null;

@@ -73,10 +73,10 @@ final class LanguageFiles {
    */
   void set(String code) throws IOException {
     if (!LanguageCycle.isCode(code)) {
-      throw new IOException("not a language code: " + code);
+      throw new FileFailure(FileFailure.Kind.NOT_A_CODE, "not a language code: " + code);
     }
     if (!installed().contains(code)) {
-      throw new IOException("not installed: " + code);
+      throw new FileFailure(FileFailure.Kind.NOT_INSTALLED, "not installed: " + code);
     }
     disk.createEmpty(defaults + "/" + code);
     for (String other : codeFiles()) {
@@ -91,7 +91,7 @@ final class LanguageFiles {
     List<String> cycle = new ArrayList<>(installed());
     cycle.retainAll(chosen);
     if (cycle.isEmpty()) {
-      throw new IOException("no language of the cycle is installed");
+      throw new FileFailure(FileFailure.Kind.NOTHING_TO_CYCLE, "no language of the cycle is installed");
     }
     String from = current();
     String to = LanguageCycle.next(cycle, from);

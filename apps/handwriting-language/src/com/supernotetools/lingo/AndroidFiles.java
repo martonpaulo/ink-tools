@@ -17,7 +17,7 @@ final class AndroidFiles implements LanguageFiles.Disk {
   public List<String> list(String folder) throws IOException {
     String[] names = new File(folder).list();
     if (names == null) {
-      throw new IOException("cannot read " + folder);
+      throw new FileFailure(FileFailure.Kind.CANNOT_READ, "cannot read " + folder);
     }
     return Arrays.asList(names);
   }
@@ -31,14 +31,14 @@ final class AndroidFiles implements LanguageFiles.Disk {
   public void createEmpty(String path) throws IOException {
     File file = new File(path);
     if (!file.isFile() && !file.createNewFile()) {
-      throw new IOException("cannot create " + path);
+      throw new FileFailure(FileFailure.Kind.CANNOT_CREATE, "cannot create " + path);
     }
   }
 
   @Override
   public void delete(String path) throws IOException {
     if (!new File(path).delete()) {
-      throw new IOException("cannot delete " + path);
+      throw new FileFailure(FileFailure.Kind.CANNOT_DELETE, "cannot delete " + path);
     }
   }
 }
