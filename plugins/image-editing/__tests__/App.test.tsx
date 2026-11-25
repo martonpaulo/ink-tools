@@ -1,7 +1,7 @@
 /** Retouch's Settings view keeps the shared size rules and shows one switch per edit (#136). */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {Image, ScrollView, StyleSheet} from 'react-native';
+import {Image, RootTagContext, ScrollView, StyleSheet} from 'react-native';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
@@ -10,6 +10,7 @@ import * as editor from '../src/editor';
 import {EditorState} from '../src/editor';
 import {Editor} from '../src/EditorView';
 import {copy} from '../src/copy';
+import {retouchNative} from '../src/native';
 
 const READY: EditorState = {
   phase: 'ready',
@@ -120,6 +121,32 @@ test('the Styles grid keeps the size rules, labels each tile and says when it fa
   expect(
     failed.root.findAllByProps({children: 'Could not make the styles'}).length,
   ).toBeGreaterThan(0);
+});
+
+test('the view asks the native module to route Back to its own root view (#226)', async () => {
+  const listenBackKey = jest.fn();
+  let tree!: ReactTestRenderer;
+  const app = (
+    <RootTagContext.Provider value={11}>
+      <App close={() => {}} listenBackKey={listenBackKey} />
+    </RootTagContext.Provider>
+  );
+  await act(async () => {
+    tree = renderer.create(app);
+  });
+  await act(async () => {
+    tree.update(app);
+  });
+  // Once per root view: PluginHost never sends Back to a plugin view by itself (#204).
+  expect(listenBackKey.mock.calls).toEqual([[11]]);
+});
+
+test('listenBackKey calls RetouchImage and reports a missing module (#226)', async () => {
+  const listen = jest.fn(async () => true);
+  const native = retouchNative({RetouchImage: {listenBackKey: listen}});
+  expect(await native.listenBackKey(11)).toEqual({ok: true, value: true});
+  expect(listen).toHaveBeenCalledWith(11);
+  expect((await retouchNative({}).listenBackKey(11)).ok).toBe(false);
 });
 
 describe("Back does what the open screen's «Close» does (#204)", () => {

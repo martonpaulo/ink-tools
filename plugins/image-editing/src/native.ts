@@ -95,6 +95,8 @@ type Native = {
   ): Promise<Edited>;
   /** The debug switch's folder, or null to turn it off (#134). */
   setDebugFolder(folder: string | null): Promise<boolean>;
+  /** Makes the device Back key reach the view whose React root has `rootTag` (#226). */
+  listenBackKey(rootTag: number): Promise<boolean>;
   readText(path: string): Promise<string | null>;
   writeText(path: string, text: string): Promise<null>;
   deleteFile(path: string): Promise<boolean>;
@@ -107,6 +109,7 @@ const MODULE_OF: Record<keyof Native, string> = {
   crop: IMAGE_MODULE,
   erase: IMAGE_MODULE,
   setDebugFolder: IMAGE_MODULE,
+  listenBackKey: IMAGE_MODULE,
   readText: FILES_MODULE,
   writeText: FILES_MODULE,
   deleteFile: FILES_MODULE,
@@ -149,6 +152,7 @@ export function retouchNative(
     crop: call('crop'),
     erase: call('erase'),
     setDebugFolder: call('setDebugFolder'),
+    listenBackKey: call('listenBackKey'),
     readText: call('readText'),
     writeText: call('writeText'),
     deleteFile: call('deleteFile'),

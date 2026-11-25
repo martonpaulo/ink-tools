@@ -54,6 +54,7 @@ function world() {
       return ok({width, height, left: 0, top: 0, ms: 5});
     }),
     setDebugFolder: jest.fn(async () => ok(true)),
+    listenBackKey: jest.fn(async () => ok(true)),
     readText: jest.fn(async path => ok(files.get(path) ?? null)),
     writeText: jest.fn(async (path, text) => {
       files.set(path, text);

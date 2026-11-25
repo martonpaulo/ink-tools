@@ -1,6 +1,6 @@
 {
   "name": "Retouch",
-  "version": "0.1.0-beta.14",
+  "version": "0.1.0-beta.15",
   "description": "Supernote plugin: lasso a picture on the page and make it readable on e-ink with one tap.",
   "private": true,
   "scripts": {

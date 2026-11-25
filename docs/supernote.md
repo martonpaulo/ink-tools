@@ -297,7 +297,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   listener or calls `onBackPressed` [observed in the decompiled APK, 2026-11-25; measured: no
   `ReactNativeJS` line on Back, 2026-11-17 and 2026-11-25,
   [#204](https://github.com/martonpaulo/ink-tools/issues/204)]. A full view's way out is its own
-  visible «Close»; a native key listener on the root view is untested.
+  visible «Close». The window is focusable and a window hands a key to its focused view, so Image
+  Editing 0.1.0 beta 15 makes its React root view focusable, focuses it on each show and turns Back
+  into `hardwareBackPress` (`BackKey.java`) [inference, device round pending,
+  [#226](https://github.com/martonpaulo/ink-tools/issues/226)].
 - A plugin's detail page in Settings › Apps › Plugins has a «Settings» row only when the plugin has
   a config button: on Probe's page, which has none, «Uninstall» sits where Account Sync's page has
   «Settings» (y about 920), and a blind tap there opened the uninstall dialog [measured, 2026-11-17,
