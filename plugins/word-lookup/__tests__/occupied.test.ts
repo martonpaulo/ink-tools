@@ -170,17 +170,25 @@ test('no read starts once the budget passed, and the answer comes within it (#22
   const page = Array.from({length: 540}, () => timed(20, count));
   getElements.mockResolvedValueOnce({success: true, result: page});
   const lines: string[] = [];
-  const begun = Date.now();
-  const read = await occupiedRects('/n.note', 1, line => lines.push(line), 50);
-  const took = Date.now() - begun;
-  expect(read.ok && read.value.complete).toBe(false);
-  expect(took).toBeLessThan(50 + 20);
-  const startedAtAnswer = count.started;
-  expect(startedAtAnswer).toBeLessThan(540);
-  expect(lines[0]).toMatch(/^place: page read \d+ of 540 elements in \d+ ms: partial/);
-  await new Promise(resolve => setTimeout(resolve, 60));
-  expect(count.started).toBe(startedAtAnswer);
-  expect(count.inFlight).toBe(0);
-  const recycled = page.filter(element => element.recycle.mock.calls.length > 0).length;
-  expect(recycled).toBe(startedAtAnswer);
+  // Fake timers, so the budget is measured on the test's clock, not the loaded machine's.
+  jest.useFakeTimers();
+  try {
+    const begun = Date.now();
+    const pending = occupiedRects('/n.note', 1, line => lines.push(line), 50);
+    await jest.advanceTimersByTimeAsync(50);
+    const read = await pending;
+    const took = Date.now() - begun;
+    expect(read.ok && read.value.complete).toBe(false);
+    expect(took).toBeLessThan(50 + 20);
+    const startedAtAnswer = count.started;
+    expect(startedAtAnswer).toBeLessThan(540);
+    expect(lines[0]).toMatch(/^place: page read \d+ of 540 elements in \d+ ms: partial/);
+    await jest.advanceTimersByTimeAsync(60);
+    expect(count.started).toBe(startedAtAnswer);
+    expect(count.inFlight).toBe(0);
+    const recycled = page.filter(element => element.recycle.mock.calls.length > 0).length;
+    expect(recycled).toBe(startedAtAnswer);
+  } finally {
+    jest.useRealTimers();
+  }
 });
