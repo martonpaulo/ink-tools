@@ -22,6 +22,7 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (18), 2026-11-15, firmware 3.31.45](#build-010-18-2026-11-15-firmware-33145)
 - [Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad](#word-lookup-020-beta-27-28-2026-11-25-nomad)
 - [Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Nomad](#word-lookup-020-beta-28-29-2026-11-25-nomad)
+- [Word Lookup 0.2.0 beta 30 (31), 2026-11-25, Nomad](#word-lookup-020-beta-30-31-2026-11-25-nomad)
 - [Image Editing 0.1.0 beta 13 (14), 2026-11-25, Nomad](#image-editing-010-beta-13-14-2026-11-25-nomad)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
@@ -237,6 +238,34 @@ searches each word again.
   for either word, so the cut changed no page 1 here.
 - Ranking 18 results for «appe» took 1077 ms in the second search of a fresh JS instance; the first,
   17 results for «Maea», took 136 ms. The slow rank follows the titles, not only a cold instance.
+
+## Word Lookup 0.2.0 beta 30 (31), 2026-11-25, Nomad
+
+The ranking no longer builds its style patterns on every query read, nor parses the whole OpenMoji
+index for «Insert Image», which searches without OpenMoji (`c5288e8`); the contour hold of `3ed8819`
+is in it too. Prerelease
+[`word-lookup-v0.2.0-beta.30`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.30),
+commit `1cd89f2`, installed with `inkctl plugin install`. «Insert Image» on `Note/Tests/Fixtures.note`,
+lassoed with `inkctl fixture NAME --lasso word` over Plugin Diagnostics (switched off after), log
+read over ADB; the fixture note was restored after, checksum checked
+([#19](https://github.com/martonpaulo/ink-tools/issues/19)). The first run is the first search of a
+fresh JS instance, after the install.
+
+| Run | Commons | Rank | Search | Thumbnails | Insert and lasso | `time total` |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| «apple» read as «appe», cache miss | 1395 ms | 192 ms | 1686 ms | 541 ms, 11 of 12 | 244 + 485 ms | 2978 ms |
+| «apple» read as «appe», cache hit | | | 2 ms | 413 ms, 11 of 12 | 243 + 560 ms | 1223 ms |
+| «maçã» read as «Maea», cache miss | 1820 ms | 60 ms | 1887 ms | 768 ms, 12 of 12 | 179 + 370 ms | 3212 ms |
+| «maçã» read as «Maea», cache hit | | | 2 ms | 768 ms, 12 of 12 | 194 + 442 ms | 1413 ms |
+
+- Ranking «appe» took 192 ms in a fresh instance, against 1057 ms (beta 27) and 1077 ms (beta 28);
+  «Maea» 60 ms against 136 ms. Under the Hermes VM on the Mac, on the same live lists, the change cut
+  the first «appe» ranking from 265-418 ms to 40 ms.
+- A cache hit is now inside the 1.5 s limit: 1223 and 1413 ms, against 1932 ms on beta 27.
+- A cache miss is 3.0 to 3.2 s, against 4.6 and 5.4 s on beta 28: the search's network wait
+  (Commons 1.4 to 1.8 s, Wikidata answering with it) is now most of it.
+- «maçã» inserted the same picture as on beta 27 and 28 (`commons:136995162`).
+- Recognition still takes 0.8 to 1.5 s before `time total` starts: 1458, 930, 792 and 846 ms.
 
 ## Image Editing 0.1.0 beta 13 (14), 2026-11-25, Nomad
 

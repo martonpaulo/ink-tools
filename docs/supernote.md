@@ -239,6 +239,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   install) took 1057 ms for 18 results, against 87 ms later on the same instance [measured,
   2026-11-25, Word Lookup 0.2.0 beta 26 and 27, firmware `Chauvet.E103.2610191001.2559`,
   [#19](https://github.com/martonpaulo/ink-tools/issues/19)]. Score once and reuse it.
+  Most of that cost was building patterns and parsing a data file, not the scoring: under the
+  Hermes VM React Native 0.79.2 ships (`sdks/hermesc/osx-bin/hermes`), each `new RegExp` with
+  `\p{L}` and the `iu` flags took 2 to 9 ms to build, and 11 were built per `readIntent` call. Build
+  a pattern once at module load, and parse only the part of a bundled index a call needs. With both
+  in beta 30 the first ranking took 192 ms for those 18 results, and 60 ms for 17 [measured,
+  2026-11-25, Word Lookup 0.2.0 beta 30, [#19](https://github.com/martonpaulo/ink-tools/issues/19)].
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
   state. `getLassoRect` then answers the selection's local rect (`{-40, 0, 140, 181}` for a sticker
   shown near (870, 1190)), and Back leaves the note and drops the pasted sticker [measured,
