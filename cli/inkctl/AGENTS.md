@@ -10,7 +10,7 @@
 - Repository: `martonpaulo/ink-tools` (public), subproject `cli/inkctl/`; `martonpaulo/supernote-adb` is archived
 - Public identifiers: GitHub repository and the `inkctl` command; this project is not a package or registry product.
 - Landing page: None. The repository README is the canonical project surface.
-- License: `MIT`
+- License: `CC BY-NC-SA 4.0`
 - Copyright: 2026 Marton Paulo
 - Development language: English.
 - Product copy: Not applicable; a command-line tool with English output and no localized product UI.

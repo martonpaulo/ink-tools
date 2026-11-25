@@ -1,6 +1,6 @@
 # Notice
 
-Ink2Pic is MIT-licensed ([LICENSE](LICENSE)). It adapts third-party work:
+Ink2Pic is licensed under CC BY-NC-SA 4.0 ([LICENSE](LICENSE)). It adapts third-party work:
 
 | Project | License | What Ink2Pic uses | Details |
 | --- | --- | --- | --- |

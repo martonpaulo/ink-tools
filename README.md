@@ -33,5 +33,5 @@ owner, used here only to name the device. No root, no modified firmware, no expl
 
 ## License
 
-[MIT](LICENSE) © 2026 Marton Paulo. Each subproject preserves its own `NOTICE.md` and third-party
+[CC BY-NC-SA 4.0](LICENSE) © 2026 Marton Paulo. Each subproject preserves its own `NOTICE.md` and third-party
 notices.

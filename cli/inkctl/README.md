@@ -157,4 +157,4 @@ Notes for an agent that drives the tablet in a test round, learned in the rounds
 
 ## License
 
-[MIT](LICENSE) © 2026 Marton Paulo.
+[CC BY-NC-SA 4.0](LICENSE) © 2026 Marton Paulo.

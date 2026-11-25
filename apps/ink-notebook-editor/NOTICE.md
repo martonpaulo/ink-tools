@@ -1,6 +1,6 @@
 # Notice
 
-The Ink Notebook Editor is MIT-licensed, as the repository is ([LICENSE](../../LICENSE)). It
+The Ink Notebook Editor is licensed under CC BY-NC-SA 4.0, as the repository is ([LICENSE](../../LICENSE)). It
 contains code ported from a third-party project:
 
 | Project | License | What it uses | Details |

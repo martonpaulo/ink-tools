@@ -10,7 +10,7 @@ Write a word by hand on your Supernote, lasso it, and insert a matching picture 
 
 [![Stars](https://img.shields.io/github/stars/martonpaulo/ink2pic?style=flat&labelColor=30363d&color=0a66c8&label=stars)](https://github.com/martonpaulo/ink2pic/stargazers)
 [![Latest build](https://img.shields.io/github/v/release/martonpaulo/ink2pic?include_prereleases&style=flat&labelColor=30363d&color=0a66c8&label=version)](https://github.com/martonpaulo/ink2pic/releases)
-[![License](https://img.shields.io/badge/license-MIT-0a66c8?style=flat&labelColor=30363d)](LICENSE)
+[![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-0a66c8?style=flat&labelColor=30363d)](LICENSE)
 
 [![Validate](https://img.shields.io/github/actions/workflow/status/martonpaulo/ink2pic/validate.yml?branch=main&style=flat&labelColor=30363d&label=validate)](https://github.com/martonpaulo/ink2pic/actions/workflows/validate.yml)
 [![Supernote Manta](https://img.shields.io/badge/Supernote-Manta-0a66c8?style=flat&labelColor=30363d)](https://supernote.com/)
@@ -181,7 +181,7 @@ product definition and the technical brief are in [`docs/`](docs/).
 
 ## License and credits
 
-[MIT](LICENSE) © 2026 Marton Paulo.
+[CC BY-NC-SA 4.0](LICENSE) © 2026 Marton Paulo.
 
 Pictures come from Openclipart (CC0), Wikimedia Commons (license per file, recorded with each
 picture) and OpenMoji (CC BY-SA 4.0). Data credits are in [`NOTICE.md`](NOTICE.md).

@@ -188,7 +188,7 @@ a picture already on the page. What exists:
 | [Jimp](https://github.com/jimp-dev/jimp) | Pure JavaScript image library: crop, rotate, mirror, grey, invert, threshold, a dither plugin | MIT | untested in PluginHost's React Native; whole-image work in JS is slow [inference] |
 | [OpenCV for Android](https://opencv.org/android/) and [jscanify](https://github.com/ColonelParrot/jscanify) | Deskew and perspective correction of a photographed page | Apache 2.0 (OpenCV 4.5 and later); jscanify MIT | Android 11 runs OpenCV's Java build [inference]; adds tens of MB to the `.snplg` [inference] |
 | [MediaPipe Image Segmenter](https://developers.google.com/edge/mediapipe/solutions/vision/image_segmenter/android) | On-device subject or person mask, for background removal | code Apache 2.0; each model has its own terms | to test: needs its native libraries in the plugin and fits the 2 s limit only on a small image [inference] |
-| Ink2Pic's own pixel code (`packages/picture-search/native`: `Contour.java`, `Decolor.java`, `EinkPixels.java`) | Contour drawing, decolouring, e-ink measures in plain Java on `Bitmap` | MIT, this repository | yes, measured in Ink2Pic's device rounds |
+| Ink2Pic's own pixel code (`packages/picture-search/native`: `Contour.java`, `Decolor.java`, `EinkPixels.java`) | Contour drawing, decolouring, e-ink measures in plain Java on `Bitmap` | CC BY-NC-SA 4.0, this repository | yes, measured in Ink2Pic's device rounds |
 
 Per delivery issue:
 

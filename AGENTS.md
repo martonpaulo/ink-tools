@@ -11,7 +11,7 @@
 - Public identifiers: GitHub repository and the `inkctl` CLI; the Ink2Pic and Bridge plugins. Not a package or registry product.
 - Display names ([#176](https://github.com/martonpaulo/ink-tools/issues/176)): each tool shows a feature name in Supernote's own wording, listed in [`docs/product.md`](docs/product.md#display-names); they live in `PluginConfig.json` `name`, the visible copy and the docs; each subproject's folder, gate, workflow and new tag prefix use the feature name in kebab case ([#194](https://github.com/martonpaulo/ink-tools/issues/194)), never npm packages, `pluginID`, `pluginKey` or data folders.
 - Landing page: None. The repository README is the public surface.
-- License: `MIT`
+- License: `CC BY-NC-SA 4.0` ([#276](https://github.com/martonpaulo/ink-tools/issues/276))
 - Copyright: 2026 Marton Paulo
 - Development language: English.
 - Product copy: English only; developer-facing; each subproject follows its own policy.
@@ -53,7 +53,7 @@ Before editing under a path, read the file its row names. A module with rules of
 - Do not turn analysis, research, or a read-only audit into implementation without authorization.
 - The owner calls `issue-*`, `project-*` and `bench-checkpoint` by name; every other skill is internal: offer one in plain words, never by name.
 - Be direct and evidence-based: state assumptions, risks, tradeoffs, blockers. Ask only about a material decision you cannot discover safely; otherwise make explicit, reversible assumptions.
-- Give concise progress updates during long-running work.
+- Give concise progress updates.
 
 ## Long-running operations
 

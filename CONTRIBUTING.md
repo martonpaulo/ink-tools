@@ -30,4 +30,4 @@ Report a vulnerability privately through GitHub's security advisory form of this
 
 ## License
 
-By contributing you agree that your work is released under the [MIT license](LICENSE).
+By contributing you agree that your work is released under the [CC BY-NC-SA 4.0 license](LICENSE).

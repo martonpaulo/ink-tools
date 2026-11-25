@@ -15,7 +15,7 @@ shared packages. This folder is one subproject of the `martonpaulo/ink-tools` mo
 - Repository: `martonpaulo/ink-tools` (public), folder `plugins/ink2pic/`; older links to `martonpaulo/ink2pic` issues stay as written
 - Public identifiers: `pluginKey` and React Native `appName` `Ink2Pic`; `pluginID` generated once by the first build, committed in `PluginConfig.json` and never changed; shared-storage folder `MyStyle/Ink2Pic/`; HTTP User-Agent `Ink2Pic/<versionName> (+https://github.com/martonpaulo/ink2pic)`.
 - Landing page: None. The repository README is the public surface.
-- License: `MIT`
+- License: `CC BY-NC-SA 4.0`
 - Copyright: 2026 Marton Paulo
 - Development language: English.
 - Product copy: English only, a product requirement; no other locale. Every user-facing string lives in `src/ui/copy.ts` ([brief section 8.10](docs/brief.md#810-user-facing-copy)).

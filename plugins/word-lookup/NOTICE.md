@@ -1,6 +1,6 @@
 # Notice
 
-Lookup is MIT-licensed ([LICENSE](LICENSE)). It ships third-party data:
+Lookup is licensed under CC BY-NC-SA 4.0 ([LICENSE](LICENSE)). It ships third-party data:
 
 | Project | License | What Lookup uses | Details |
 | --- | --- | --- | --- |

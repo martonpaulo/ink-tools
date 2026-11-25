@@ -1,6 +1,7 @@
 {
   "gates": [
     {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py . && python3 scripts/readme_status.py --root . && python3 -B -m unittest scripts/test_readme_status.py", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file, and the README Status vocabulary of AGENTS.md (#268)"},
+    {"name": "license", "command": "python3 scripts/license_check.py --root . && python3 -B -m unittest scripts/test_license_check.py", "covers": "every LICENSE file, AGENTS.md License line and README licence link says CC BY-NC-SA 4.0 (#276)"},
     {"name": "sleep", "command": "python3 scripts/sleep_guard.py .", "covers": "no test sleeps or bounds wall-clock time without a timing-independent note (Workbench #740, #1712)"},
     {"name": "dry", "command": "python3 scripts/dry_check.py --root .", "covers": "the DRY ratchet of dry-check.json: magic values, repeated blocks, identical files, repeated rules (#197)"},
     {"name": "boundaries", "command": "python3 scripts/boundaries.py --root . && python3 -B -m unittest scripts/test_boundaries.py", "covers": "the adapter boundaries of docs/architecture.md › Layer rules, over every package and plugin (#101)"},
@@ -26,7 +27,10 @@
     {"name": "ink2pic", "command": "cd plugins/ink2pic && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Ink2Pic plugin and its JVM tests"}
   ],
   "rules": [
-    {"path": "*.md", "gates": ["docs"]},
+    {"path": "*.md", "gates": ["docs", "license"]},
+    {"path": "LICENSE", "gates": ["license"]},
+    {"path": "scripts/license_check.py", "gates": ["license"]},
+    {"path": "scripts/test_license_check.py", "gates": ["license"]},
     {"path": "docs/", "gates": ["docs"]},
     {"path": "gates.json", "gates": ["docs", "setup"]},
     {"path": "scripts/test_gate_install.py", "gates": ["setup"]},

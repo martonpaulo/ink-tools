@@ -1,6 +1,6 @@
 # Notice
 
-`ink-core` is MIT-licensed, as the repository is ([LICENSE](../../LICENSE)). It ships third-party data:
+`ink-core` is licensed under CC BY-NC-SA 4.0, as the repository is ([LICENSE](../../LICENSE)). It ships third-party data:
 
 | Project | License | What `ink-core` uses | Details |
 | --- | --- | --- | --- |
