@@ -26,15 +26,7 @@ For people who use the tablet.
   <tr><td align="center"><br><p align="center"><img src="design/icons/apps/ink-notebook-editor.png" width="48" height="48" alt=""></p><sub><sup>🔵</sup></sub>&nbsp;<a href="apps/ink-notebook-editor/"><b>Ink Notebook Editor</b></a><br>(Mac app)<br><br></td><td><ul><li><b>Open a note</b>: read a <code>.note</code> notebook on the Mac and page through it.</li><li><b>Open from Tablet</b>: copy a note from the tablet over the cable through <code>inkctl</code> and open the copy.</li><li><b>Edit</b>: edit a note without breaking the format (planned).</li></ul></td></tr>
 </table>
 
-The dot before each name is its state today:
-
-- <sub><sup>🟢</sup></sub> Working
-- <sub><sup>🟡</sup></sub> Beta
-- <sub><sup>🔵</sup></sub> In progress
-- <sub><sup>⚪</sup></sub> Planned
-- <sub><sup>⚫</sup></sub> Internal
-
-A linked name opens its releases. The rows show the target: the tablet enables at most 10 plugins, so plugins group by surface of use ([#304](https://github.com/martonpaulo/ink-tools/issues/304)).
+<sub><sup>🟢</sup></sub>&nbsp;Working&emsp;<sub><sup>🟡</sup></sub>&nbsp;Beta&emsp;<sub><sup>🔵</sup></sub>&nbsp;In progress&emsp;<sub><sup>⚪</sup></sub>&nbsp;Planned&emsp;<sub><sup>⚫</sup></sub>&nbsp;Internal
 
 ## Developer tools
 
