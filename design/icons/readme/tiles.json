@@ -1,0 +1,46 @@
+{
+ "account-sync": {
+  "svg": "7069fb59bada655af31ef1246a1893c497fe98f1de18fffeb75a22e1a2a21917",
+  "png": "48fe0c081a2b950b501fa6123188e8b139b64a19d3b3c0feec445b757825f82b"
+ },
+ "device-transfer": {
+  "svg": "5667d19caddfaf02d3f3c8bce1fbcb55f87b00d50108d074c9c1cda467dc2bd2",
+  "png": "e2d1383ff1bfd5f53032e2461f7b0cd796856df2413fe11f2b42ad3d27b9af92"
+ },
+ "handwriting-language": {
+  "svg": "996c957bcff63b00030d2e1387b7d914ead42b6fb6ca51ea776093834f0a07c0",
+  "png": "cfe6bc14715ef13e5708b42fded4a6cc9195ab888ee0b30529609c6d5f083070"
+ },
+ "image-editing": {
+  "svg": "a815e52561653470e3d678824f1e8a3c56772075382a209169d8a44e365eb4f1",
+  "png": "959060306c2c73cf8d75ec453cbd0900449f473b1c51368bf39fb7011b4769d0"
+ },
+ "inktools-bridge": {
+  "svg": "50b22048baecd1cd2369dbb35d5d24651e7489e7a2730223d7dc629d1fd5fc0e",
+  "png": "9d993e495456f9e648d7b049ea61c96902fc21b051cb8a774a123c92e0ae8aec"
+ },
+ "lasso-actions": {
+  "svg": "37e1b2e0dca9e1252638c413b5026f39246039599e4703f8fdae567dc5fa1cdb",
+  "png": "45936d769e6785ce8efac9d7c66e6933fc01ac1924a3208213719366d4d4794f"
+ },
+ "plugin-diagnostics": {
+  "svg": "28996008461c740be3e5c2ddcc231dce8b1b641deb0756bcf91be2672a6c2349",
+  "png": "1a52b0c724df9c02e0543ea842a8cbec14a55ad341894d00f30ba9ee9229c956"
+ },
+ "real-time-conversion": {
+  "svg": "a2310e230f297dd90cbfc0016818de4606bb2561e486963cfadcfe19fbcd7864",
+  "png": "1890025be19c264863b77cc92d6ae4533fe49012bcb19520b58e43d9664fc779"
+ },
+ "smart-pen": {
+  "svg": "2099193365715f0c8ebaeaf2b5fdccfe03061e4434e145cb5ec62207edb46bfd",
+  "png": "a478d130e3de57be802caf6aebefd5fa5175de56120fe5f42209172a34463842"
+ },
+ "smart-shapes": {
+  "svg": "6e6e12c70f31d09e4b64f3365b19d4982556a3e6ec76bc37c0c2b1f771a15841",
+  "png": "e5b426d4373c13f3d95017f89ad62e89000e327ef7e755a58856ce8102a9f581"
+ },
+ "word-lookup": {
+  "svg": "dccb2e8f817e8c0192cc00dc8bd777ead20b0b1a37ad642f3c43e7ed0b76000e",
+  "png": "b1ca74a7c43f227b3dabcb6705c027a134c749593c22469d661ff0d8ffb40d25"
+ }
+}

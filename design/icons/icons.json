@@ -606,6 +606,7 @@
   {
    "out": "design/icons/planned/smart-pen/icon",
    "kind": "plugin",
+   "readme": true,
    "planned": "#305",
    "tabler": [
     "ballpen",
@@ -618,6 +619,7 @@
   {
    "out": "design/icons/planned/lasso-actions/icon",
    "kind": "plugin",
+   "readme": true,
    "planned": "#306",
    "tabler": [
     "lasso",

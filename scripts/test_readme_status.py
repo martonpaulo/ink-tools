@@ -29,11 +29,12 @@ class Vocabulary(unittest.TestCase):
         self.assertEqual(readme_status.bad_cells(html.format("🟡&nbsp;Beta"), ["🟡 Beta"]), (True, []))
         self.assertEqual(readme_status.bad_cells(html.format("Beta 1"), ["🟡 Beta"]), (True, [(3, "Beta 1")]))
 
-    def test_download_links_after_the_status_pass(self):
+    def test_a_status_wrapped_in_its_release_link_passes(self):
         html = '<table>\n  <tr><th>Tool</th><th>Status</th></tr>\n  <tr><td>A</td><td>{}</td></tr>\n</table>\n'
-        link = '<br><a href="https://example.com/releases?q=a&amp;expanded=true">Download</a>'
-        self.assertEqual(readme_status.bad_cells(html.format("🟡&nbsp;Beta" + link), ["🟡 Beta"]), (True, []))
-        self.assertEqual(readme_status.bad_cells(TABLE.format("🟡 Beta<br>[Download](https://example.com)"), ["🟡 Beta"]), (True, []))
+        link = '<a href="https://example.com/releases?q=a&amp;expanded=true">🟡&nbsp;Beta</a>'
+        self.assertEqual(readme_status.bad_cells(html.format(link), ["🟡 Beta"]), (True, []))
+        self.assertEqual(readme_status.bad_cells(TABLE.format("[🟡 Beta](https://example.com)"), ["🟡 Beta"]), (True, []))
+        self.assertEqual(readme_status.bad_cells(html.format(link.replace("Beta", "Gamma")), ["🟡 Beta"])[1][0][0], 3)
 
     def test_other_text_after_the_status_fails(self):
         html = '<table>\n  <tr><th>Tool</th><th>Status</th></tr>\n  <tr><td>A</td><td>{}</td></tr>\n</table>\n'
@@ -50,9 +51,14 @@ class Vocabulary(unittest.TestCase):
     def test_only_the_table_with_a_status_column_is_checked(self):
         html = (
             '<table>\n  <tr><th>Name</th><th>Status</th></tr>\n  <tr><td>A</td><td>🟡&nbsp;Beta</td></tr>\n</table>\n'
-            '<table>\n  <tr><th>Name</th><th>Type</th></tr>\n  <tr><td>B</td><td>CLI</td></tr>\n</table>\n'
+            '<table>\n  <tr><th>Name</th><th>What it does</th></tr>\n  <tr><td>B</td><td>CLI</td></tr>\n</table>\n'
         )
         self.assertEqual(readme_status.bad_cells(html, ["🟡 Beta"]), (True, []))
+
+    def test_a_name_and_what_it_does_table_is_ignored(self):
+        # The Developer tools and Shared code tables have no Type or Status column (owner, 2026-11-25).
+        html = '<table>\n  <tr><th>Name</th><th>What it does</th></tr>\n  <tr><td><b>A</b> (app)</td><td>x</td></tr>\n</table>\n'
+        self.assertEqual(readme_status.bad_cells(html, ["🟡 Beta"]), (False, []))
 
     def test_a_table_without_status_is_ignored(self):
         self.assertEqual(readme_status.bad_cells("| A | B |\n| :--- | :--- |\n| x | y |\n", ["🟡 Beta"]), (False, []))

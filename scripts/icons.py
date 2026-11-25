@@ -7,7 +7,7 @@ side by side); `design/icons/tabler.json` keeps those glyphs from the pinned `@t
 margin). This script writes, for each icon, the SVG and the 96 x 96 PNG beside a plugin's button (or
 the vector XML of an app's launcher icon), so no icon drifts from its source.
 
-    python3 scripts/icons.py            write every file and design/icons/sheet.png (needs rsvg-convert)
+    python3 scripts/icons.py            write every file, the README tiles included, and design/icons/sheet.png (needs rsvg-convert)
     python3 scripts/icons.py --check    fail when a written SVG or XML differs from its source
     python3 scripts/icons.py --tabler DIR
                                         refresh design/icons/tabler.json from an unpacked
@@ -19,9 +19,11 @@ the vector XML of an app's launcher icon), so no icon drifts from its source.
 """
 import argparse
 import base64
+import hashlib
 import json
 import math
 import re
+import struct
 import subprocess
 import sys
 import tempfile
@@ -35,6 +37,7 @@ TABLER = ROOT / "design" / "icons" / "tabler.json"
 PLUGIN_PX = 96
 SVG_NS = "http://www.w3.org/2000/svg"
 SVG_OPEN = f'<svg xmlns="{SVG_NS}"'
+PNG_CHUNK_FRAME = 12  # a PNG chunk's length, type and checksum around its data
 RGB_CHANNELS = 3  # the red, green and blue of an icon.json fill
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
 SHEET_ZOOMS = {"small": 0.5, "default": 1, "large": 2}  # 48, 96 and 192 px icons
@@ -404,8 +407,129 @@ def mac_icon_svg(root=ROOT):
     )
 
 
+def tile_text(icon_svg, native):
+    """An icon's SVG centred on the README's rounded tile (native.json `readme.tile`), on a 100 box."""
+    tile = native["readme"]["tile"]
+    pad = tile["padding"] * 100
+    inner = re.sub(r'width="\d+" height="\d+"', f'x="{number(pad)}" y="{number(pad)}" width="{number(100 - 2 * pad)}" height="{number(100 - 2 * pad)}"', icon_svg, count=1)
+    return (
+        f'{SVG_OPEN} viewBox="0 0 100 100" width="{PLUGIN_PX}" height="{PLUGIN_PX}">'
+        f'<rect width="100" height="100" rx="{number(tile["radius"] * 100)}" fill="{tile["fill"]}"/>{inner}</svg>\n'
+    )
+
+
+TILES = "design/icons/readme/tiles.json"  # {tile name: {"svg": sha256 of its source, "png": sha256 of its file}}
+
+
+def sha(data):
+    return hashlib.sha256(data if isinstance(data, bytes) else data.encode()).hexdigest()
+
+
+def tile_sources(root=ROOT):
+    """({tile name: tile SVG}, [problems]) for every plugin and app the repository holds (#304): each
+    `plugins/*/PluginConfig.json`'s icon (its SVG beside the PNG), each `apps/*/res/drawable/ic_launcher.xml`
+    (drawn from icons.json), and each planned tool icons.json marks `readme`; the Mac app has its own tile."""
+    icons, native = load(root)
+    store = glyphs(root)
+    by_out = {i["out"]: i for i in icons}
+    out, problems = {}, []
+    for config in sorted(root.glob("plugins/*/PluginConfig.json")):
+        svg = (config.parent / json.loads(config.read_text())["iconPath"]).with_suffix(".svg")
+        if svg.is_file():
+            out[config.parent.name] = tile_text(svg.read_text(), native)
+        else:
+            problems.append(f"{svg.relative_to(root).as_posix()}: the plugin's icon SVG is missing")
+    for launcher in sorted(root.glob("apps/*/res/drawable/ic_launcher.xml")):
+        icon = by_out.get(launcher.relative_to(root).with_suffix("").as_posix())
+        if icon:
+            out[launcher.parents[2].name] = tile_text(svg_text(icon_paths(icon, native, store), native, kind="app"), native)
+        else:
+            problems.append(f"{launcher.relative_to(root).as_posix()}: no icons.json entry draws it")
+    for icon in icons:
+        if icon.get("readme"):
+            out[tool(icon["out"])] = tile_text(svg_text(icon_paths(icon, native, store), native), native)
+    return out, problems
+
+
+def tile_text(icon_svg, native):
+    """An icon's SVG centred on the README's rounded tile (native.json `readme.tile`), on a 100 box."""
+    tile = native["readme"]["tile"]
+    pad = tile["padding"] * 100
+    box = f'x="{number(pad)}" y="{number(pad)}" width="{number(100 - 2 * pad)}" height="{number(100 - 2 * pad)}"'
+    inner = re.sub(r'width="\d+" height="\d+"', box, icon_svg, count=1)
+    return (
+        f'{SVG_OPEN} viewBox="0 0 100 100" width="{PLUGIN_PX}" height="{PLUGIN_PX}">'
+        f'<rect width="100" height="100" rx="{number(tile["radius"] * 100)}" fill="{tile["fill"]}"/>{inner}</svg>\n'
+    )
+
+
+def strip_png(data):
+    """A PNG with only its image chunks, so a render carries no time, text or colour-profile metadata."""
+    keep, pos = [data[:8]], 8
+    while pos < len(data):
+        size, kind = struct.unpack(">I4s", data[pos : pos + 8])
+        if kind in (b"IHDR", b"IDAT", b"IEND"):
+            keep.append(data[pos : pos + PNG_CHUNK_FRAME + size])
+        pos += PNG_CHUNK_FRAME + size
+    return b"".join(keep)
+
+
+def render_tile(svg_text_, png):
+    """Render a tile byte-stably: fixed size and resolution, an alpha channel, nothing but image chunks."""
+    with tempfile.TemporaryDirectory() as tmp:
+        svg = Path(tmp) / "tile.svg"
+        svg.write_text(svg_text_)
+        subprocess.run(
+            ["rsvg-convert", "--dpi-x", "96", "--dpi-y", "96", "-w", str(PLUGIN_PX), "-h", str(PLUGIN_PX), "-o", str(Path(tmp) / "tile.png"), str(svg)],
+            check=True,
+        )
+        png.write_bytes(strip_png((Path(tmp) / "tile.png").read_bytes()))
+
+
+def write_readme_pngs(root=ROOT):
+    """Write every README tile and TILES, the hashes `check` compares."""
+    _, native = load(root)
+    sources, problems = tile_sources(root)
+    if problems:
+        raise SystemExit("icons: " + "; ".join(problems))
+    folder = root / native["readme"]["tile"]["dir"]
+    folder.mkdir(parents=True, exist_ok=True)
+    record = {}
+    for name, text in sorted(sources.items()):
+        render_tile(text, folder / f"{name}.png")
+        record[name] = {"svg": sha(text), "png": sha((folder / f"{name}.png").read_bytes())}
+    (root / TILES).write_text(json.dumps(record, indent=1) + "\n")
+
+
+def tile_problems(root=ROOT):
+    """What is wrong with the README tiles: one missing or stale, a plugin or app without one, or a README
+    Tools row without its tile or with another's (never a render: the recorded hashes decide)."""
+    _, native = load(root)
+    sources, problems = tile_sources(root)
+    folder = native["readme"]["tile"]["dir"]
+    recorded = json.loads((root / TILES).read_text()) if (root / TILES).is_file() else {}
+    for name, text in sorted(sources.items()):
+        png = root / folder / f"{name}.png"
+        note = recorded.get(name)
+        if not png.is_file() or not note:
+            problems.append(f"{folder}/{name}.png: no README tile")
+        elif note["svg"] != sha(text) or note["png"] != sha(png.read_bytes()):
+            problems.append(f"{folder}/{name}.png: stale")
+    readme = (root / "README.md").read_text(encoding="utf-8") if (root / "README.md").is_file() else ""
+    editor = "design/icons/apps/ink-notebook-editor.png"
+    for row in re.findall(r'<tr><td><img src="([^"]+)"[^\n]*?<code>((?:plugins|apps)/[^/]+)/</code>', readme):
+        src, where = row
+        want = editor if where == "apps/ink-notebook-editor" else f"{folder}/{where.split('/')[1]}.png"
+        if src != want:
+            problems.append(f"README.md: the row of {where}/ shows {src}, not {want}")
+        elif not (root / want).is_file():
+            problems.append(f"README.md: {want} is missing")
+    return problems
+
+
 def write_app_pngs(root=ROOT):
-    """A README picture of each app's launcher icon: design/icons/apps/<app folder>.png at PLUGIN_PX."""
+    """A picture of each app's launcher icon: design/icons/apps/<app folder>.png at PLUGIN_PX; the Mac
+    app's is its own tile, which the README shows."""
     icons, native = load(root)
     store = glyphs(root)
     out = root / "design/icons/apps"
@@ -436,15 +560,16 @@ def write(root=ROOT):
         render_png(svg, root / (icon["out"] + ".png"), PLUGIN_PX)
         for px in icon.get("extraPng", []):
             render_png(svg, root / f'{icon["out"]}-{px}.png', px)
+    write_readme_pngs(root)
 
 
 def check(root=ROOT):
     """The generated files that are missing or differ from their source."""
     return [
-        rel
+        f"{rel} differs from design/icons/icons.json"
         for rel, text in texts(root).items()
         if not (root / rel).is_file() or (root / rel).read_text() != text
-    ]
+    ] + tile_problems(root)
 
 
 def sheet(out_dir, native_dir=None, sizes=False):
@@ -508,7 +633,7 @@ def main(argv=None):
     if args.check:
         stale = check()
         for rel in stale:
-            print(f"icons: {rel} differs from design/icons/icons.json; run python3 scripts/icons.py")
+            print(f"icons: {rel}; run python3 scripts/icons.py")
         print("icons: ok" if not stale else f"icons: {len(stale)} stale")
         return 1 if stale else 0
     if args.sheet:

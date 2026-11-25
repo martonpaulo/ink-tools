@@ -5,8 +5,7 @@
 
 AGENTS.md's `- README Status values:` line lists the allowed values in backticks; it is the one
 source. Every table in README.md, Markdown or HTML with one row per line, whose last header cell is `Status` must end each row with one of
-them; `&nbsp;` may stand for any space, to keep the status on one line. A cell may follow the value with
-`<br>` and a link whose text starts with `Download` (owner, 2026-11-25), and nothing else. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
+them; `&nbsp;` may stand for any space, to keep the status on one line. A cell may wrap the value in one link, to the piece's releases (owner, 2026-11-25), and holds nothing else. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
 cell, 2 when AGENTS.md has no values line or README.md has no Status table.
 """
 import argparse
@@ -32,12 +31,13 @@ def cells(line):
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-DOWNLOAD = re.compile(r'<br>\s*<a href="[^"]+">Download[^<]*</a>|<br>\s*\[Download[^\]]*\]\([^)]+\)')
+LINKED = re.compile(r'^<a href="[^"]+">(.*)</a>$|^\[(.*)\]\([^)]+\)$')
 
 
 def status_value(cell):
-    """A Status cell without its download links: the value, then `<br>` and a «Download» link each."""
-    return DOWNLOAD.sub("", cell).replace("&nbsp;", " ")
+    """A Status cell's value: the cell, or the text of the one release link that wraps it."""
+    linked = LINKED.match(cell)
+    return (linked.group(1) or linked.group(2) if linked else cell).replace("&nbsp;", " ")
 
 
 def is_row(line):

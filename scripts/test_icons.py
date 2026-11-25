@@ -4,6 +4,7 @@ import math
 import re
 import struct
 import sys
+import tempfile
 import zlib
 import unittest
 import xml.etree.ElementTree as ET
@@ -15,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import icons  # noqa: E402
 
 ROOT = icons.ROOT
+TILES_JSON = icons.TILES
 ICONS, NATIVE = icons.load()
 STORE = icons.glyphs()
 PATHS = {icon["out"]: icons.icon_paths(icon, NATIVE, STORE) for icon in ICONS}
@@ -104,7 +106,7 @@ def alpha_mask(png):
     while pos < len(data):
         size, kind = struct.unpack(">I4s", data[pos : pos + 8])
         chunk = data[pos + 8 : pos + 8 + size]
-        pos += 12 + size
+        pos += icons.PNG_CHUNK_FRAME + size
         if kind == b"IHDR":
             width, height, depth, color = struct.unpack(">IIBB", chunk[:10])
             if (depth, color) != (8, 6):
@@ -286,6 +288,70 @@ class Pngs(unittest.TestCase):
                 ys = [y for y, row in enumerate(alpha) for a in row if a]
                 # Any ink, even an anti-aliased edge, stays out of the margin, less one pixel of rounding.
                 self.assertGreaterEqual(min(min(xs), min(ys), size - 1 - max(xs), size - 1 - max(ys)), int(MARGIN["plugin"] * size) - 1)
+
+    def test_a_readme_tile_is_the_icon_on_the_light_rounded_tile(self):
+        # GitHub strips CSS, so the tile is in the image: a black icon reads on its dark theme too (#304).
+        tile = NATIVE["readme"]["tile"]
+        fill = tuple(int(tile["fill"][n : n + 2], 16) for n in (1, 3, 5))
+        names = icons.tile_sources()[0]
+        self.assertEqual(sorted(names), sorted(p.stem for p in (ROOT / tile["dir"]).glob("*.png")))
+        for name in names:
+            with self.subTest(name):
+                width, height, alpha, colors = alpha_mask(ROOT / tile["dir"] / f"{name}.png")
+                self.assertEqual((width, height), (icons.PLUGIN_PX, icons.PLUGIN_PX))
+                self.assertEqual(alpha[0][0], 0)  # the corner is rounded off
+                self.assertEqual(alpha[0][width // 2], 255)  # the edge is the tile
+                self.assertEqual(alpha[height // 2][2], 255)
+                self.assertIn(fill, colors)
+                self.assertTrue(any(max(c) < 60 for c in colors), "the black icon is on it")
+
+    def test_every_plugin_and_app_has_a_tile(self):
+        names = set(icons.tile_sources()[0])
+        found = {c.parent.name for c in ROOT.glob("plugins/*/PluginConfig.json")} | {p.parents[2].name for p in ROOT.glob("apps/*/res/drawable/ic_launcher.xml")}
+        self.assertLessEqual(found, names)
+        self.assertEqual(icons.tile_problems(), [])
+
+    def test_a_render_is_byte_stable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            first, second = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            text = next(iter(icons.tile_sources()[0].values()))
+            icons.render_tile(text, first)
+            icons.render_tile(text, second)
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+            self.assertEqual(first.read_bytes(), icons.strip_png(first.read_bytes()))
+            chunks, data, pos = [], first.read_bytes(), 8
+            while pos < len(data):
+                size, kind = struct.unpack(">I4s", data[pos : pos + 8])
+                chunks.append(kind)
+                pos += icons.PNG_CHUNK_FRAME + size
+            self.assertEqual(set(chunks), {b"IHDR", b"IDAT", b"IEND"})
+
+    def test_a_new_plugin_gets_a_tile_and_the_check_fails_until_it_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in ("design/icons/icons.json", "design/icons/native.json", "design/icons/tabler.json", "README.md", TILES_JSON):
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text((ROOT / rel).read_text())
+            self.assertFalse([p for p in icons.tile_problems(root) if "fake-plugin" in p])
+            plugin = root / "plugins/fake-plugin"
+            (plugin / "assets").mkdir(parents=True)
+            (plugin / "PluginConfig.json").write_text('{"iconPath": "assets/icon.png"}')
+            (plugin / "assets/icon.svg").write_text((ROOT / "plugins/account-sync/assets/icon.svg").read_text())
+            self.assertIn("design/icons/readme/fake-plugin.png: no README tile", icons.tile_problems(root))
+            icons.write_readme_pngs(root)
+            self.assertFalse([p for p in icons.tile_problems(root) if "fake-plugin" in p])
+            (plugin / "assets/icon.svg").write_text((ROOT / "plugins/device-transfer/assets/icon.svg").read_text())
+            self.assertIn("design/icons/readme/fake-plugin.png: stale", icons.tile_problems(root))
+
+    def test_a_readme_row_without_its_tile_fails_the_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in ("design/icons/icons.json", "design/icons/native.json", "design/icons/tabler.json", TILES_JSON):
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text((ROOT / rel).read_text())
+            readme = (ROOT / "README.md").read_text(encoding="utf-8")
+            (root / "README.md").write_text(readme.replace("design/icons/readme/account-sync.png", "plugins/account-sync/assets/icon.png"))
+            self.assertTrue(any("row of plugins/account-sync/" in p for p in icons.tile_problems(root)))
 
     def test_no_two_icons_read_alike(self):
         def ink(alpha):

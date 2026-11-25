@@ -21,6 +21,15 @@
     "sizePx": 64,
     "strokePx": 4
   },
+  "readme": {
+    "tile": {
+      "fill": "#f2f4f7",
+      "radius": 0.2246,
+      "padding": 0.2,
+      "dir": "design/icons/readme",
+      "note": "the README shows each icon at 48 px on this light rounded tile, drawn into the PNG because GitHub strips CSS, so a black icon reads on GitHub's dark theme too; the radius is the Ink Notebook Editor's 230 of 1024; the tablet's own icons stay as they are (#304)"
+    }
+  },
   "exception": "InkHub (res/vx.xml) is a filled black vector; it is the one native icon that is not an outline and is not followed",
   "plugin": {
     "sizePx": 96,

@@ -117,8 +117,7 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
   follows `bench-project-standards`'s `references/public-surface-style.md`.
 - README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `⚫ Internal`.
   Each Status cell of the README tool table is exactly one of them, with no issue link, progress
-  note or device note, and may then add `<br>` and one «Download» link to the piece's own releases,
-  nothing else (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
+  note or device note, and may be wrapped in one link to the piece's own releases, nothing else (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
   `scripts/readme_status.py` checks it in the `docs` gate.
 - Every fenced code block you create or materially edit has an explicit language identifier.
 - Never mark an API, a flag or a behaviour `implemented` without running it. Fix or drop a broken script; never ship it documented as working.
