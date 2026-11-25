@@ -8,7 +8,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -126,25 +125,13 @@ final class Ink {
     return band;
   }
 
-  /** The native ×: two paper strokes crossing in a square of the native size, centred in its view. */
-  static final class CloseMark extends Drawable {
-    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final int size;
+  /** A drawn mark: one paint, no alpha or colour filter of its own. */
+  abstract static class Mark extends Drawable {
+    final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    CloseMark(int size, int stroke) {
-      this.size = size;
-      paint.setColor(PAPER);
+    Mark(int stroke) {
       paint.setStrokeWidth(stroke);
-      paint.setStrokeCap(Paint.Cap.BUTT);
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-      float half = size / 2f;
-      float x = getBounds().exactCenterX();
-      float y = getBounds().exactCenterY();
-      canvas.drawLine(x - half, y - half, x + half, y + half, paint);
-      canvas.drawLine(x - half, y + half, x + half, y - half, paint);
+      paint.setStrokeCap(Paint.Cap.SQUARE);
     }
 
     @Override
@@ -163,12 +150,38 @@ final class Ink {
     }
   }
 
+  /** The native ×: two paper strokes crossing in a square of the native size, centred in its view. */
+  static final class CloseMark extends Mark {
+    private final int size;
+
+    CloseMark(int size, int stroke) {
+      super(stroke);
+      this.size = size;
+      paint.setColor(PAPER);
+      paint.setStrokeCap(Paint.Cap.BUTT);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+      float half = size / 2f;
+      float x = getBounds().exactCenterX();
+      float y = getBounds().exactCenterY();
+      canvas.drawLine(x - half, y - half, x + half, y + half, paint);
+      canvas.drawLine(x - half, y + half, x + half, y - half, paint);
+    }
+  }
+
   /**
    * A list row (ui-kit `ListRow`): the title and a trailing control, with no line of its own
    * (`group` draws the lines). The whole row is one target; the trailing control only shows.
    */
   static LinearLayout row(Context context, String title, View trailing) {
-    LinearLayout row = plainRow(context, title, trailing);
+    return row(context, title, null, trailing);
+  }
+
+  /** The same with a subtitle under the title, such as a choice's detail. */
+  static LinearLayout row(Context context, String title, String subtitle, View trailing) {
+    LinearLayout row = plainRow(context, title, subtitle, trailing);
     trailing.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     row.setClickable(true);
     row.setFocusable(true);
@@ -176,29 +189,63 @@ final class Ink {
   }
 
   /**
-   * A row whose trailing control acts by itself, such as «Switch Language» beside the active
-   * language, as the native «Scan» sits in Wi-Fi's «Select Network…» row (#272).
+   * A row that does one thing when pressed, such as «Switch to Next Language» or «Reset Button
+   * Position»: its title only, as the native Settings offer an action in its group (#272, #275);
+   * one that cannot act now is grey and still says why in the group's note.
    */
-  static LinearLayout actionRow(Context context, String title, View action) {
-    return plainRow(context, title, action);
+  static LinearLayout actionRow(Context context, String title, boolean enabled) {
+    LinearLayout row = plainRow(context, title, null, null);
+    ((TextView) row.getChildAt(0)).setTextColor(enabled ? INK : CONTEXT);
+    row.setEnabled(enabled);
+    row.setClickable(enabled);
+    row.setFocusable(true);
+    role(row, BUTTON_ROLE, null);
+    return row;
+  }
+
+  /** A row that shows a value at its trailing edge, as Settings › Language & Region's «English». */
+  static LinearLayout valueRow(Context context, String title, String value) {
+    return plainRow(context, title, null, text(context, value, Role.SUBTITLE));
+  }
+
+  /** A row that opens another screen: the native › at its trailing edge (#272). */
+  static LinearLayout chevronRow(Context context, String title) {
+    View chevron = new View(context);
+    int height = px(context, Tokens.CHEVRON_HEIGHT_MM);
+    chevron.setBackground(new Chevron(px(context, Tokens.MARK_STROKE_MM)));
+    chevron.setLayoutParams(new LinearLayout.LayoutParams(height / 2, height));
+    LinearLayout row = row(context, title, chevron);
+    role(row, BUTTON_ROLE, null);
+    return row;
   }
 
   /**
-   * A row shows a title only: a language row shows the language's name, never its code (owner,
-   * #275), so no row takes a subtitle.
+   * The title, an optional subtitle under it, and an optional trailing control. A language row
+   * shows the language's name only, never its code (owner, #275).
    */
-  private static LinearLayout plainRow(Context context, String title, View trailing) {
+  private static LinearLayout plainRow(Context context, String title, String subtitle, View trailing) {
     LinearLayout row = new LinearLayout(context);
     row.setOrientation(LinearLayout.HORIZONTAL);
     row.setGravity(Gravity.CENTER_VERTICAL);
     // The native row's fixed height (#272); text that grows with the system scale grows it.
     row.setMinimumHeight(px(context, Tokens.ROW_HEIGHT_MM));
-    int space = space(context);
-    row.addView(text(context, title, Role.ROW_TITLE), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-    LinearLayout.LayoutParams end = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    end.setMarginStart(space);
-    row.addView(trailing, end);
+    LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+    if (subtitle == null) {
+      row.addView(text(context, title, Role.ROW_TITLE), fill);
+    } else {
+      LinearLayout texts = new LinearLayout(context);
+      texts.setOrientation(LinearLayout.VERTICAL);
+      texts.addView(text(context, title, Role.ROW_TITLE));
+      texts.addView(text(context, subtitle, Role.SUBTITLE));
+      row.addView(texts, fill);
+    }
+    if (trailing != null) {
+      LinearLayout.LayoutParams end = trailing.getLayoutParams() instanceof LinearLayout.LayoutParams
+          ? (LinearLayout.LayoutParams) trailing.getLayoutParams()
+          : new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+      end.setMarginStart(px(context, Tokens.MARK_GAP_MM));
+      row.addView(trailing, end);
+    }
     return row;
   }
 
@@ -210,8 +257,8 @@ final class Ink {
   }
 
   /** A row whose trailing control is the radio button; it speaks as a radio button with its state. */
-  static LinearLayout radioRow(Context context, String title, boolean checked) {
-    LinearLayout row = row(context, title, radio(context, checked));
+  static LinearLayout radioRow(Context context, String title, String subtitle, boolean checked) {
+    LinearLayout row = row(context, title, subtitle, radio(context, checked));
     role(row, RADIO_ROLE, checked);
     return row;
   }
@@ -228,14 +275,14 @@ final class Ink {
     role(row, RADIO_ROLE, checked);
   }
 
-  /** A row's new title, in place (#281): the title is the row's first view (`plainRow`). */
-  static void setTitle(LinearLayout row, String title) {
-    title(row).setText(title);
+  /** A value row's new value, in place (#281). */
+  static void setValue(LinearLayout row, String value) {
+    value(row).setText(value);
   }
 
-  /** A row's title view, the first view `plainRow` adds. */
-  static TextView title(LinearLayout row) {
-    return (TextView) row.getChildAt(0);
+  /** A value row's value view, the trailing view `valueRow` adds. */
+  static TextView value(LinearLayout row) {
+    return (TextView) row.getChildAt(row.getChildCount() - 1);
   }
 
   /** Swaps a row's trailing control, the last view `plainRow` adds, keeping its place. */
@@ -317,16 +364,18 @@ final class Ink {
    * #272): the caption in ink at the bottom of its native box, then its rows with the light dotted
    * line between two of them and the solid line after the last, none under the caption; the note
    * that explains the group sits under the last row, above the solid line (null for none). The
-   * caption's box is the space above it.
+   * caption's box is the space above it; a group with no caption (null) starts right after the one above.
    */
   static LinearLayout group(Context context, String caption, List<? extends View> rows, String note) {
     LinearLayout group = new LinearLayout(context);
     group.setOrientation(LinearLayout.VERTICAL);
-    TextView head = text(context, caption, Role.CAPTION);
-    head.setAccessibilityHeading(true);
-    head.setGravity(Gravity.BOTTOM);
-    head.setMinHeight(px(context, Tokens.CAPTION_HEIGHT_MM));
-    group.addView(head);
+    if (caption != null) {
+      TextView head = text(context, caption, Role.CAPTION);
+      head.setAccessibilityHeading(true);
+      head.setGravity(Gravity.BOTTOM);
+      head.setMinHeight(px(context, Tokens.CAPTION_HEIGHT_MM));
+      group.addView(head);
+    }
     for (int index = 0; index < rows.size(); index++) {
       if (index > 0) {
         group.addView(lightLine(context));
@@ -345,18 +394,53 @@ final class Ink {
     return group;
   }
 
-  /** The light dotted line between two rows of one group: 1 px, 3 on, 4 off, as the native one (#272). */
+  /**
+   * The light dotted line between two rows of one group: 1 px, 3 on, 4 off, as the native one
+   * (#272). Drawn as dashes, since a dashed GradientDrawable line did not show on the tablet.
+   */
   private static View lightLine(Context context) {
-    int width = devicePx(Tokens.LIGHT_LINE_MM);
-    GradientDrawable dashes = new GradientDrawable();
-    dashes.setShape(GradientDrawable.LINE);
-    dashes.setStroke(width, INK, devicePx(Tokens.LIGHT_DASH_MM), devicePx(Tokens.LIGHT_GAP_MM));
     View line = new View(context);
-    line.setBackground(dashes);
-    // A dashed line is drawn only in software (GradientDrawable LINE with a dash).
-    line.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-    line.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, width));
+    line.setBackground(new Dashes(devicePx(Tokens.LIGHT_DASH_MM), devicePx(Tokens.LIGHT_GAP_MM)));
+    line.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, devicePx(Tokens.LIGHT_LINE_MM)));
     return line;
+  }
+
+  /** Ink dashes across the bounds' full height. */
+  static final class Dashes extends Mark {
+    private final int dash;
+    private final int gap;
+
+    Dashes(int dash, int gap) {
+      super(0);
+      this.dash = dash;
+      this.gap = gap;
+      paint.setColor(INK);
+      paint.setStyle(Paint.Style.FILL);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+      android.graphics.Rect box = getBounds();
+      for (int x = box.left; x < box.right; x += dash + gap) {
+        canvas.drawRect(x, box.top, Math.min(x + dash, box.right), box.bottom, paint);
+      }
+    }
+  }
+
+  /** The native ›: two ink strokes at a right angle, pointing to the trailing edge. */
+  static final class Chevron extends Mark {
+    Chevron(int stroke) {
+      super(stroke);
+      paint.setColor(INK);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+      android.graphics.Rect box = getBounds();
+      float inset = paint.getStrokeWidth() / 2f;
+      canvas.drawLine(box.left + inset, box.top + inset, box.right - inset, box.exactCenterY(), paint);
+      canvas.drawLine(box.right - inset, box.exactCenterY(), box.left + inset, box.bottom - inset, paint);
+    }
   }
 
   /** A line's thickness or dash in whole device pixels, at least one, as metrics.ts rounds them. */
@@ -388,30 +472,6 @@ final class Ink {
     view.setTextColor(!enabled ? CONTEXT : filled ? PAPER : INK);
     view.setBackground(outline(context, filled ? INK : PAPER, enabled ? INK : CONTEXT, !enabled));
     return view;
-  }
-
-  /**
-   * The native small filled button in a row, such as Wi-Fi's «Scan» (#272): black, its label in
-   * paper; one that cannot act is a dashed grey outline with a grey label (#233).
-   */
-  static Button smallButton(Context context, String label, boolean enabled) {
-    Button view = button(context, label, true, enabled);
-    // The touch target keeps its full height; the box drawn in it has the native height.
-    int target = target(context);
-    view.setMinHeight(target);
-    view.setMinimumHeight(target);
-    view.setMinWidth(px(context, Tokens.SMALL_BUTTON_WIDTH_MM));
-    view.setMinimumWidth(px(context, Tokens.SMALL_BUTTON_WIDTH_MM));
-    int inset = Math.max(0, (target - px(context, Tokens.SMALL_BUTTON_HEIGHT_MM)) / 2);
-    Drawable box = enabled ? fill(INK) : outline(context, PAPER, CONTEXT, true);
-    view.setBackground(new InsetDrawable(box, 0, inset, 0, inset));
-    return view;
-  }
-
-  private static GradientDrawable fill(int colour) {
-    GradientDrawable box = new GradientDrawable();
-    box.setColor(colour);
-    return box;
   }
 
   /** A box with the ink border; dashed for a control that cannot act. */

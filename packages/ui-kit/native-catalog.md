@@ -54,10 +54,10 @@ cannot change now, which is `gray` `#999999` (Date & Time › Time Zone under ne
 | :--- | :--- | :--- | :--- |
 | The black bar's titles: the screen's, the left pane's, the page's | `sp_px_40`, 24.84 sp, 46.6 px | every Settings page, `title_bar`, `plugin_detail_title` | `barTitle` |
 | A row's title, a navigation item's label | `sp_px_34`, 21.11 sp, 39.6 px | every row | `rowTitle` |
-| A section caption: «Installed Languages», «Added Keyboards (Up to 7)», «About This Plugin» | `sp_px_34` | Handwriting Recognition Language, Keyboard, a plugin's page | `caption` |
+| A section caption: «Installed Languages», «Added Keyboards (Up to 7)», «About This Plugin» | `sp_px_34` | Handwriting Recognition Language, Keyboard, a plugin's page | none: Ink Tools takes the Plugins list's smaller caption |
 | A row's subtitle and value, a description, the switch's word | `sp_px_30`, 18.63 sp, 34.9 px | Keyboard, Language & Region, `plugin_detail_desc`, Wi-Fi | `subtitle` |
 | A plugin's «By:», version and size lines | `sp_px_26`, 16.15 sp, 30.3 px | `plugin_detail_developer`, `plugin_detail_code`, `plugin_detail_size` | `subtitle`: the native size is under `minFont` |
-| The caption of the Plugins list, «Enabled (8/10)» | about `sp_px_24`, 29 px glyph height | Apps › Plugins | `caption`: the other captions are `sp_px_34`, and this one is under `minFont` |
+| The caption of the Plugins list, «Enabled (8/10)» | `sp_px_30` (`tv_hub_section_title`, a 47 px line box against the rows' 54 px) | Apps › Plugins | `caption`, in the context grey: Ink Tools adopts this smaller one so a caption never reads as a row (owner, 2026-11-25) |
 | A plugin's «Delete» row | `sp_px_36`, 22.36 sp | `plugin_detail_delete` | none yet |
 | A menu's title, «Page» | about 32 px glyph height, bold | the note's Page menu | none yet: no Ink Tools menu |
 | A menu's item | about 32 px glyph height, regular | the note's Page menu | none yet |
@@ -119,8 +119,9 @@ Ink Tools adopts the second (owner, 2026-11-25): it sets the levels apart.
 
 Crops: Keyboard, `553, 133, 1367, 99`; Handwriting Recognition Language, `553, 133, 1367, 114`.
 
-- A box 99 px tall (`dp_px_85`, `captionHeight`), its text at the bottom, `caption`, black; no line
-  under it.
+- A box 99 px tall (`dp_px_85`, `captionHeight`), its text at the bottom, no line under it. The
+  native text is black; Ink Tools draws it in the context grey at the subtitle's size, as the
+  Plugins list's smaller caption ([Text styles](#text-styles)).
 - Keyboard starts its text in line with the rows' text; Handwriting Recognition Language 12 px
   further in. Ink Tools adopts Keyboard's.
 

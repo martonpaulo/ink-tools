@@ -10,26 +10,29 @@ final class Copy {
 
   static final String PACKAGE = "com.supernotetools.lingo";
   static final String TITLE = "Handwriting Language";
-  static final String INTRO = "Switches the handwriting recognition language of the whole tablet.";
   static final String ACTIVE = "Active Language";
-  static final String SWITCH_LANGUAGE = "Switch Language";
+  static final String SWITCH_LANGUAGE = "Switch to Next Language";
   static final String CLOSE = "Close";
   static final String NOT_READ = "Not read: All-files access is off.";
   static final String FOLDER_NOT_READ = "Not read: the language folder could not be read.";
   static final String UNKNOWN = "Unknown: the language folder holds more than one language.";
   static final String BUTTON_SECTION = "Floating Button";
-  static final String BUTTON_WRITING = "Only where you write: the handwriting keyboard, a note, Digest, To-Do, Email";
-  static final String BUTTON_ALWAYS = "Always visible, over every app";
+  static final String BUTTON_WRITING = "Where You Write";
+  static final String BUTTON_WRITING_DETAIL = "The handwriting keyboard, notes, Digest, To-Do and Email";
+  static final String BUTTON_ALWAYS = "Always";
+  static final String BUTTON_ALWAYS_DETAIL = "Over every app";
   static final String BUTTON_HIDDEN = "Hidden";
-  static final String BUTTON_HELP = "One tap moves to the next language. A long press opens this screen. Drag the button to move it; it stays where you leave it. The Handwriting Language entry in the sidebar opens this screen.";
+  static final String BUTTON_HELP = "One tap switches to the next language; a long press opens this screen; drag it to move it. It hides while this screen is open.";
   static final String RESET_PLACE = "Reset Button Position";
-  static final String RESET_OFF = "The button is hidden, so it has no position to reset.";
   static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
   static final String WATCHER_COMMANDS =
       "adb shell settings put secure enabled_accessibility_services " + PACKAGE + "/.WritingWatcher\n"
           + "adb shell settings put secure accessibility_enabled 1";
   static final String CYCLE_SECTION = "Languages in the Cycle";
-  static final String CYCLE_HELP = "Only installed languages are listed. Install more in Settings, Handwriting language.";
+  static final String CYCLE_HELP = "Only installed languages are listed.";
+  static final String INSTALL_LANGUAGES = "Handwriting Recognition Language";
+  static final String INSTALL_PATH = "Install more in Settings › Display & Input › Language & Region › Handwriting Recognition Language.";
+  static final String NO_LANGUAGE_SCREEN = "This tablet has no Handwriting Recognition Language screen to open.";
   static final String CYCLE_NOT_READ = "The language folder could not be read, so the languages cannot be listed. Close this screen and open it again; if it still fails, restart the tablet.";
   static final String CYCLE_NO_FILES = "Turn on All-files access above to list the languages.";
   static final String CYCLE_LAST = "Keep at least one language in the cycle.";
@@ -48,10 +51,10 @@ final class Copy {
   static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language from the sidebar.";
 
   static final String FAILURE_CANNOT_READ = "The language folder could not be read. Close this screen and open it again; if it still fails, restart the tablet.";
-  static final String FAILURE_CANNOT_CREATE = "The new language could not be set. Tap Switch Language again; if it keeps failing, restart the tablet.";
-  static final String FAILURE_CANNOT_DELETE = "The switch did not finish, so two languages are set. Tap Switch Language again; if it keeps failing, restart the tablet.";
-  static final String FAILURE_NOT_INSTALLED = "That language is not installed. Install it in Settings, Handwriting language, then try again.";
-  static final String FAILURE_NOTHING_TO_CYCLE = "None of the languages in the cycle is installed. Install one in Settings, Handwriting language, or turn on an installed language below.";
+  static final String FAILURE_CANNOT_CREATE = "The new language could not be set. Tap Switch to Next Language again; if it keeps failing, restart the tablet.";
+  static final String FAILURE_CANNOT_DELETE = "The switch did not finish, so two languages are set. Tap Switch to Next Language again; if it keeps failing, restart the tablet.";
+  static final String FAILURE_NOT_INSTALLED = "That language is not installed. Install it in Settings › Display & Input › Language & Region › Handwriting Recognition Language, then try again.";
+  static final String FAILURE_NOTHING_TO_CYCLE = "None of the languages in the cycle is installed. Install one in Settings › Display & Input › Language & Region › Handwriting Recognition Language, or turn on an installed language below.";
   static final String FAILURE_OTHER = "The language could not be switched. Try again, or restart the tablet if it keeps failing.";
 
   static String failure(FileFailure.Kind kind) {
@@ -70,6 +73,18 @@ final class Copy {
         return FILES_OFF;
       default:
         return FAILURE_OTHER;
+    }
+  }
+
+  /** The detail under a floating-button choice, or null for none. */
+  static String buttonModeDetail(ButtonRule.Mode mode) {
+    switch (mode) {
+      case ALWAYS:
+        return BUTTON_ALWAYS_DETAIL;
+      case HIDDEN:
+        return null;
+      default:
+        return BUTTON_WRITING_DETAIL;
     }
   }
 

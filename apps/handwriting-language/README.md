@@ -23,7 +23,7 @@ adb shell am force-stop com.ratta.supernote.launcher   # the sidebar lists the a
 
 The floating button shows while the handwriting keyboard is open or a note, Digest, To-Do or Email
 is in front; drag it anywhere. Tap «Handwriting Language» in the sidebar, or long-press the
-button, to open the app: it shows the active language with «Switch Language», where the button
+button, to open the app: it shows the active language with «Switch to Next Language», where the button
 shows (only where you write, always, or hidden) and the languages in the cycle.
 
 How it works and how to change it: [`AGENTS.md`](AGENTS.md).

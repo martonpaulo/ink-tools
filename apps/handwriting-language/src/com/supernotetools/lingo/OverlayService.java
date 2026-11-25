@@ -80,6 +80,15 @@ public final class OverlayService extends Service {
     }
   }
 
+  /** Whether the app's own screen is in front: the button then hides, so it covers none of its controls (#275). */
+  private static boolean ownScreenOpen;
+
+  /** The settings screen calls this when it comes to the front (true) and when it leaves it (false). */
+  static void ownScreen(boolean open) {
+    ownScreenOpen = open;
+    refresh();
+  }
+
   /** Shows or hides the button after a window event or a settings change. */
   static void refresh() {
     if (running != null) {
@@ -139,7 +148,7 @@ public final class OverlayService extends Service {
    * hidden view keeps its window, which would still take the pen strokes over its box.
    */
   private void place() {
-    boolean visible = ButtonRule.visible(new Prefs(this).button(), WritingWatcher.watching(),
+    boolean visible = ButtonRule.visible(new Prefs(this).button(), ownScreenOpen, WritingWatcher.watching(),
         WritingWatcher.keyboardOpen(), WritingWatcher.foreground());
     if (visible == attached) {
       return;

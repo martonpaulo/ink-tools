@@ -68,9 +68,13 @@ final class ButtonRule {
   /**
    * Whether the button shows. `watching` is false while the accessibility service is off: then
    * nothing tells where the owner writes, so the button shows everywhere rather than never, and
-   * the settings screen shows the command that turns the service on.
+   * the settings screen shows the command that turns the service on. While the app's own screen is
+   * in front the button never shows, so it never covers that screen's controls (owner, #275).
    */
-  static boolean visible(Mode mode, boolean watching, boolean keyboardOpen, String foreground) {
+  static boolean visible(Mode mode, boolean ownScreen, boolean watching, boolean keyboardOpen, String foreground) {
+    if (ownScreen) {
+      return false;
+    }
     switch (mode) {
       case ALWAYS:
         return true;

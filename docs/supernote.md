@@ -542,6 +542,13 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
 [`research/2026-11-handwriting-language.md`](research/2026-11-handwriting-language.md)
 ([#151](https://github.com/martonpaulo/ink-tools/issues/151)).
 
+- Settings opens one of its pages from another app: `com.ratta.settings/.SettingsActivity` with the
+  string extra `activity_type` set to the page's class, such as
+  `com.ratta.settings.input.HWLanguageSetting` (Handwriting Recognition Language),
+  `…input.KeyboardSetting`, `…wifi.WifiSettings`, `…security.SecuritySettings`,
+  `…input.DateAndTimeSetting` or `…application.PluginManagerFragment`
+  (`SettingsActivity.isValidActivityType`); Handwriting Language's chevron row uses it [measured,
+  source, [#272](https://github.com/martonpaulo/ink-tools/issues/272)].
 - The engine is **MyScript iink** (`libiink.so`, `libMyScript*.so` in the keyboard app) [measured,
   source].
 - The active recognition language is stored as **one empty file** whose name is the language code,

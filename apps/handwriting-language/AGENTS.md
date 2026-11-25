@@ -26,10 +26,12 @@ Two surfaces ship in one build:
   native controls, as the plugins' ui-kit draws them ([#275](https://github.com/martonpaulo/ink-tools/issues/275)):
   the black title bar with the drawn × to close at the leading edge (Back closes it too) and the
   title centred on its full width, the native text style of each role in regular weight, the
-  active language as a row with the native small filled button «Switch Language» at its trailing
-  edge, as Wi-Fi's «Scan» ([#272](https://github.com/martonpaulo/ink-tools/issues/272)), the floating
-  button's three choices as radio rows and «Reset Button Position», a switch row (the native pill with
-  «ON» or «OFF» beside it) for each installed language in the cycle, each missing permission with
+  active language as a value row with «Switch to Next Language» as an action row of its group
+  ([#272](https://github.com/martonpaulo/ink-tools/issues/272)), the floating button's three
+  choices as radio rows with a short name and a detail under it and «Reset Button Position» as an
+  action row of that group, a switch row (the native pill with «ON» or «OFF» beside it) for each
+  installed language in the cycle, a chevron row that opens Settings › Handwriting Recognition
+  Language, the floating button hidden while the screen is in front (`ButtonRule`), each missing permission with
   the button to its system screen and the command that grants it, and the command that turns on writing detection when it
   is off. An error shows in bold beside the control whose action failed. It is a plain sentence with the
   next step, from `Copy`; the detail stays in the `LingoApp` log line

@@ -41,6 +41,11 @@ public final class SettingsActivity extends Activity {
   static final String EXTRA_BUTTON = "button";
   private static final String FILES_OP = "MANAGE_EXTERNAL_STORAGE";
   private static final String OVERLAY_OP = "SYSTEM_ALERT_WINDOW";
+  /** The native Settings and the extra that opens one of its pages (`SettingsActivity.handleIntentRouting`, docs/supernote.md). */
+  private static final String SETTINGS_PACKAGE = "com.ratta.settings";
+  private static final String SETTINGS_ACTIVITY = "com.ratta.settings.SettingsActivity";
+  private static final String SETTINGS_PAGE = "activity_type";
+  private static final String LANGUAGE_PAGE = "com.ratta.settings.input.HWLanguageSetting";
 
   /** Where the last error shows: beside the control whose action failed (#275). */
   private enum Place { SWITCH, PERMISSION, CYCLE }
@@ -89,7 +94,15 @@ public final class SettingsActivity extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+    // The floating button hides while this screen is in front, so it covers none of its controls.
+    OverlayService.ownScreen(true);
     render();
+  }
+
+  @Override
+  protected void onPause() {
+    OverlayService.ownScreen(false);
+    super.onPause();
   }
 
   private void readExtras(Intent intent) {
@@ -108,7 +121,6 @@ public final class SettingsActivity extends Activity {
     page.removeAllViews();
     modeRows.clear();
     languageRows.clear();
-    add(Ink.text(this, Copy.INTRO, Ink.Role.SUBTITLE));
     boolean files = Environment.isExternalStorageManager();
     boolean overlay = Settings.canDrawOverlays(this);
 
@@ -123,15 +135,16 @@ public final class SettingsActivity extends Activity {
       Log.e(Switcher.TAG, "surface=screen read error=" + readError.getMessage());
       activeReadFailed = true;
     }
-    // The native small filled button at the row's trailing edge, as Wi-Fi's «Scan» (#272, #275).
-    Button next = Ink.smallButton(this, Copy.SWITCH_LANGUAGE, files);
-    next.setOnClickListener(view -> switchLanguage());
+    // The active language as a value row, as Settings › Language & Region shows one, and the
+    // switch as an action row of the same group (owner, #275).
     String language = active == null ? Copy.UNKNOWN : LanguageCycle.name(active);
-    String title = !activeReadFailed ? language : files ? Copy.FOLDER_NOT_READ : Copy.NOT_READ;
-    activeRow = Ink.actionRow(this, title, next);
-    // A switch changes the title in place (#281): a screen reader says the new language.
-    Ink.title(activeRow).setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-    addGroup(Ink.group(this, Copy.ACTIVE, Collections.singletonList(activeRow), null));
+    String value = !activeReadFailed ? language : files ? Copy.FOLDER_NOT_READ : Copy.NOT_READ;
+    activeRow = Ink.valueRow(this, Copy.ACTIVE, value);
+    // A switch changes the value in place (#281): a screen reader says the new language.
+    Ink.value(activeRow).setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+    LinearLayout next = Ink.actionRow(this, Copy.SWITCH_LANGUAGE, files);
+    next.setOnClickListener(view -> switchLanguage());
+    addGroup(Ink.group(this, null, Arrays.asList(activeRow, next), null));
     if (!files) {
       missing(Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
     }
@@ -141,11 +154,19 @@ public final class SettingsActivity extends Activity {
     ButtonRule.Mode chosenMode = prefs.button();
     List<View> modes = new ArrayList<>();
     for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
-      LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), mode == chosenMode);
+      LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), Copy.buttonModeDetail(mode), mode == chosenMode);
       row.setOnClickListener(view -> chooseMode(mode));
       modeRows.put(mode, row);
       modes.add(row);
     }
+    // Resetting where the button sits is an action of its group, not a lone button (owner, #275).
+    boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
+    LinearLayout reset = Ink.actionRow(this, Copy.RESET_PLACE, shown);
+    reset.setOnClickListener(view -> {
+      new Prefs(this).clearPlace();
+      OverlayService.moveHome();
+    });
+    modes.add(reset);
     addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
     if (!overlay) {
       missing(Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
@@ -154,16 +175,6 @@ public final class SettingsActivity extends Activity {
       bold(Copy.WATCHER_OFF);
       add(Ink.text(this, Copy.WATCHER_FROM_COMPUTER, Ink.Role.ROW_TITLE));
       command(Copy.WATCHER_COMMANDS);
-    }
-    boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
-    Button reset = Ink.button(this, Copy.RESET_PLACE, false, shown);
-    reset.setOnClickListener(view -> {
-      new Prefs(this).clearPlace();
-      OverlayService.moveHome();
-    });
-    addButton(reset);
-    if (chosenMode == ButtonRule.Mode.HIDDEN) {
-      add(Ink.text(this, Copy.RESET_OFF, Ink.Role.HINT));
     }
 
     List<View> languages = new ArrayList<>();
@@ -180,6 +191,10 @@ public final class SettingsActivity extends Activity {
     // An unread folder lists no language: say so, not that none is installed (#275).
     String cycleNote = !files ? Copy.CYCLE_NO_FILES : installed == null ? Copy.CYCLE_NOT_READ : Copy.CYCLE_HELP;
     addGroup(Ink.group(this, Copy.CYCLE_SECTION, languages, cycleNote));
+    // The native screen that installs more languages, one tap away (owner, #275).
+    LinearLayout install = Ink.chevronRow(this, Copy.INSTALL_LANGUAGES);
+    install.setOnClickListener(view -> openLanguageScreen());
+    addGroup(Ink.group(this, null, Collections.singletonList(install), Copy.INSTALL_PATH));
     errorAt(Place.CYCLE, null);
     try {
       String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -189,7 +204,18 @@ public final class SettingsActivity extends Activity {
     }
   }
 
-  /** «Switch Language»: the next language in the cycle, as a tap on the floating button does. */
+  /** Settings › … › Handwriting Recognition Language, opened as the system opens it (#272). */
+  private void openLanguageScreen() {
+    Intent screen = new Intent().setComponent(new ComponentName(SETTINGS_PACKAGE, SETTINGS_ACTIVITY))
+        .putExtra(SETTINGS_PAGE, LANGUAGE_PAGE);
+    try {
+      startActivity(screen);
+    } catch (ActivityNotFoundException none) {
+      fail(Place.CYCLE, Copy.NO_LANGUAGE_SCREEN);
+    }
+  }
+
+  /** «Switch to Next Language»: the next language in the cycle, as a tap on the floating button does. */
   private void switchLanguage() {
     String to;
     try {
@@ -204,7 +230,7 @@ public final class SettingsActivity extends Activity {
       render();
       return;
     }
-    Ink.setTitle(activeRow, LanguageCycle.name(to));
+    Ink.setValue(activeRow, LanguageCycle.name(to));
   }
 
   /** A radio row: only the two rows that change, unless the notes under the group change too. */

@@ -310,7 +310,7 @@ describe('the native controls (#273)', () => {
     expect(StyleSheet.flatten(subtitle.props.style)).toEqual({fontSize: metrics.fontSubtitle, color: metrics.ink});
   });
 
-  it('heads a group with its caption in ink at the bottom of the native box, its note under the last row (#272, #275)', () => {
+  it('heads a group with its caption, smaller and grey, at the bottom of the native box, its note under the last row (#272, #275)', () => {
     const tree = render(
       <RowGroup caption="Smallest shape" note="A smaller figure stays handwriting.">
         <ListRow title="8 mm" />
@@ -318,7 +318,8 @@ describe('the native controls (#273)', () => {
     );
     expect(texts(tree)).toEqual(['Smallest shape', '8 mm', 'A smaller figure stays handwriting.']);
     const [caption, , note] = tree.root.findAllByType(Text).map(n => StyleSheet.flatten(n.props.style));
-    expect(caption).toEqual({fontSize: metrics.fontBody, color: metrics.ink});
+    // Smaller than the rows and grey, so a caption never reads as one more row (owner, #275).
+    expect(caption).toEqual({fontSize: metrics.fontSubtitle, color: metrics.context});
     expect(note).toMatchObject({fontSize: metrics.fontSubtitle, color: metrics.ink});
     const box = tree.root.find(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.captionHeight);
     expect(StyleSheet.flatten(box.props.style).justifyContent).toBe('flex-end');

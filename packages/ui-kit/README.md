@@ -32,8 +32,8 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   `RowGroup` with one `ListRow` per value and its `Radio`), and a page opened from a row is a
   `ListRow` with a `Chevron`. Rows that outgrow the screen scroll under the title bar.
 - Three levels, as the native screens group them (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275);
-  measured in [`native-catalog.md` › Lines](native-catalog.md#lines)): the caption (ink, the row's
-  size, at the bottom of its `captionHeight` box, no line under it), its rows of the native fixed
+  measured in [`native-catalog.md` › Lines](native-catalog.md#lines)): the caption (the subtitle's
+  size in the context grey, at the bottom of its `captionHeight` box, no line under it), its rows of the native fixed
   `rowHeight`, the light dotted line (`lightLine`) between two rows of one group, and the solid line
   (`separator`) after the group's last row. The group's `note` sits under its last row, above the
   solid line, never between a caption and its rows. `RowGroup` draws all of it; the caption's box
@@ -71,7 +71,7 @@ accents, each with a fixed role, never as the only cue:
 | Grey | Role |
 | :--- | :--- |
 | `#000000` | text, borders, the primary button's fill |
-| `#444444` | Ink Tools' own hints and status lines: 9.7:1 on paper (`metrics.context`); a disabled control's label and dashed border. The native captions, subtitles and values are ink ([#272](https://github.com/martonpaulo/ink-tools/issues/272)) |
+| `#444444` | Ink Tools' own hints and status lines: 9.7:1 on paper (`metrics.context`); a disabled control's label and dashed border. Section captions too, smaller than the rows, so the levels read apart (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275)); the native subtitles and values are ink ([#272](https://github.com/martonpaulo/ink-tools/issues/272)) |
 | `#aaaaaa` | a strong fill: the band behind a screen title, a count badge |
 | `#cccccc` | a highlight: the row being changed |
 | `#eeeeee` | a soft panel: a block of help text, an empty state |
