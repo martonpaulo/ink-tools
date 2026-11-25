@@ -37,7 +37,8 @@
       "impact": "user",
       "owner": "account-sync",
       "readers": [
-        "account-sync"
+        "account-sync",
+        "inkctl"
       ],
       "reason": "the plugin's private folder is the only one inkctl can write and the shared cloud never syncs",
       "evidence": {

@@ -24,7 +24,7 @@
       "active": "inkctl note open and note new",
       "values": {
         "package": "com.ratta.supernote.note",
-        "activity": "com.ratta.supernote.note/.view.NoteInsidePagesActivity",
+        "activity": "com.ratta.supernote.note.view.NoteInsidePagesActivity",
         "blankStyle": "style_white",
         "normalMode": "0"
       }
@@ -53,7 +53,8 @@
       "values": {
         "pluginsButton": "desc:plugins",
         "lassoMore": "desc:lassoMore",
-        "lassoRow": "tv_button"
+        "lassoRow": "tv_button",
+        "noteTitle": "tv_button"
       }
     },
     {

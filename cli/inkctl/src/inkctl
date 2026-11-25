@@ -132,11 +132,13 @@ REGISTRY_ITEMS = (
     {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new"},
     {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl"},
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
+    {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java"},
     {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
     {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inktools-bridge Command.java"},
     {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
     {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
     {"id": "settings.plugin-detail-labels", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin allow and uninstall"},
+    {"id": "storage.sign-in-drop-folder", "level": 2, "impact": "user", "owner": "account-sync", "probe": None, "unprobed": "#293 adds a read of the folder", "active": "account-sync src/secretStore.ts"},
     {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "plugin-diagnostics", "probe": "inkctl helper", "unprobed": None, "active": "plugin-diagnostics src/helper.ts"},
     {"id": "system.device-identity", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl status", "unprobed": None, "active": "inkctl status"},
     {"id": "system.firmware-page", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl firmware", "unprobed": None, "active": "inkctl firmware"},
@@ -165,7 +167,7 @@ REGISTRY = {
     },
     "note.activity": {
         "package": "com.ratta.supernote.note",
-        "activity": "com.ratta.supernote.note/.view.NoteInsidePagesActivity",
+        "activity": "com.ratta.supernote.note.view.NoteInsidePagesActivity",
         "blankStyle": "style_white",
         "normalMode": "0",
     },
@@ -173,13 +175,18 @@ REGISTRY = {
         "pluginsButton": "desc:plugins",
         "lassoMore": "desc:lassoMore",
         "lassoRow": "tv_button",
+        "noteTitle": "tv_button",
     },
     "note.fonts-folder": {
         "folder": "MyStyle/fonts",
         "suffixes": (".ttf", ".otf",),
     },
+    "pluginhost.file-sandbox": {
+        "sharedFolder": "MyStyle",
+    },
     "pluginhost.plugin-list": {
-        "uri": "content://com.ratta.supernote.pluginhost/plugins",
+        "authority": "com.ratta.supernote.pluginhost",
+        "path": "plugins",
     },
     "pluginhost.permission-status": {
         "always": 2,
@@ -205,6 +212,9 @@ REGISTRY = {
         "uninstall": "text:Uninstall",
         "uninstallWarning": "Its data will also be deleted",
         "confirm": "text:OK",
+    },
+    "storage.sign-in-drop-folder": {
+        "folder": "/storage/emulated/0/.data/plugin/inktools-account-sync",
     },
     "storage.helper-channel": {
         "folder": "/storage/emulated/0/MyStyle/Probe",
@@ -235,6 +245,11 @@ REGISTRY = {
     },
 }
 # END registry
+
+
+def component(package: str, activity: str) -> str:
+    """An activity as `am` names it: `package/.Name` when the class sits in the package."""
+    return f"{package}/{activity[len(package):]}" if activity.startswith(package + ".") else f"{package}/{activity}"
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -299,7 +314,7 @@ SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
 # The Google «Desktop app» OAuth client the tablet's token refresh needs (#200, option A, the Clarify's recommendation while the owner's answer is open): read from
 # the login Keychain item, never from stdin, and written as the two fields the refresh sends.
 GOOGLE_CLIENT_PROVIDER = "google-client"
-SIGN_IN_DROP_FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync"
+SIGN_IN_DROP_FOLDER = REGISTRY["storage.sign-in-drop-folder"]["folder"]
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
 # The login Keychain items of the Google sign-in on the Mac (#124, docs/security.md › Account Sync sign-in
 # secrets): service the consumer, account the secret's name, comment its description (credential naming rule, #277).
@@ -317,7 +332,7 @@ SHARED_ROOT = "/storage/emulated/0"
 SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
 NOTES_FOLDER = f"{SHARED_ROOT}/Note"
 TEST_NOTES_FOLDER = f"{NOTES_FOLDER}/Tests"  # test notes a round may read without --allow-notes (#193)
-NOTE_TITLE_ID = "tv_button"  # the note editor's bottom bar shows the note's name, and its page, in this id
+NOTE_TITLE_ID = REGISTRY["note.screen-ids"]["noteTitle"]  # the note editor's bottom bar shows the note's name, and its page, in this id
 ADDRESS_FILE = Path.home() / ".config/inkctl/address"
 # The address file of the command's old name, snadb (#173): still read when the new one is missing,
 # so a tablet set up before the rename stays reachable. Remove with the src/snadb shim.
@@ -368,10 +383,10 @@ SCROLL_MILLISECONDS = 300
 SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
 # Ink through Probe's «Run Command» button (#148): plugins/plugin-diagnostics/src/helper.ts owns the other side.
-HELPER_COMMAND_PATH = f"{SHARED_ROOT}/MyStyle/Probe/command.json"
+HELPER_COMMAND_PATH = f"{REGISTRY['storage.helper-channel']['folder']}/{REGISTRY['storage.helper-channel']['commandFile']}"
 HELPER_BUTTON = "text:Run Command"
-NOTE_PLUGINS_BUTTON = "desc:plugins"  # the note toolbar's plugin panel, where sidebar buttons show
-HELPER_ANSWER = re.compile(r"SNPROBE answer (?P<id>\S+) (?P<index>\d+)/(?P<count>\d+) (?P<chunk>.*)")
+NOTE_PLUGINS_BUTTON = REGISTRY["note.screen-ids"]["pluginsButton"]  # the note toolbar's plugin panel, where sidebar buttons show
+HELPER_ANSWER = re.compile(re.escape(REGISTRY["storage.helper-channel"]["answerMark"]) + r" (?P<id>\S+) (?P<index>\d+)/(?P<count>\d+) (?P<chunk>.*)")
 HELPER_UNKNOWN_ID = "unknown"
 HELPER_DATE_FORMAT = "+%m-%d %H:%M:%S.000"  # a device time `logcat -T` takes
 HELPER_TIMEOUT = 20.0
@@ -415,8 +430,8 @@ INK_STEP = 4  # px between points, about what the pen samples
 INK_ARC_DEGREES = 15
 INK_DOTTED = "ij"
 # The lasso «⋯» list (#189): a RecyclerView of `tv_button` rows under the lasso toolbar, measured 2026-11-16.
-LASSO_MORE = "desc:lassoMore"
-LASSO_ROW_ID = "tv_button"
+LASSO_MORE = REGISTRY["note.screen-ids"]["lassoMore"]
+LASSO_ROW_ID = REGISTRY["note.screen-ids"]["lassoRow"]
 LASSO_SWIPE_FROM = 0.75  # a swipe runs over half the list, slowly, so it does not fling past rows
 LASSO_SWIPE_TO = 0.25
 LASSO_SWIPE_MILLISECONDS = 800
@@ -424,31 +439,31 @@ DUMP_ATTEMPTS = 3  # the device often answers "could not get idle state" after a
 IDLE_ERROR = "could not get idle state"
 ERROR_EXCERPT = 200
 
-NOTE_PACKAGE = "com.ratta.supernote.note"
-NOTE_ACTIVITY = f"{NOTE_PACKAGE}/.view.NoteInsidePagesActivity"
+NOTE_PACKAGE = REGISTRY["note.activity"]["package"]
+NOTE_ACTIVITY = component(NOTE_PACKAGE, REGISTRY["note.activity"]["activity"])
 NOTE_SUFFIX = ".note"
-NOTE_BLANK_STYLE = "style_white"
-NOTE_MODE_NORMAL = "0"
+NOTE_BLANK_STYLE = REGISTRY["note.activity"]["blankStyle"]
+NOTE_MODE_NORMAL = REGISTRY["note.activity"]["normalMode"]
 PLUGIN_SUFFIX = ".snplg"
-PLUGIN_FOLDER = "MyStyle"
-PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
+PLUGIN_FOLDER = REGISTRY["pluginhost.file-sandbox"]["sharedFolder"]
+PLUGIN_URI = f"content://{REGISTRY['pluginhost.plugin-list']['authority']}/{REGISTRY['pluginhost.plugin-list']['path']}"
 CONTENT_QUERY = "content query --uri"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 # The Note app's text-box font menu lists every .ttf and .otf file under this folder, read
 # recursively, each file as one entry named by its file name without the extension
 # (docs/supernote.md › Files and sync, #247).
-FONT_FOLDER = f"{PLUGIN_FOLDER}/fonts"
-FONT_SUFFIXES = (".ttf", ".otf")
+FONT_FOLDER = REGISTRY["note.fonts-folder"]["folder"]
+FONT_SUFFIXES = REGISTRY["note.fonts-folder"]["suffixes"]
 FONT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._-]*$")
-FONT_NEXT_STEP = "The text-box font menu lists it after it is closed once, or after: inkctl shell am force-stop com.ratta.supernote.note"
+FONT_NEXT_STEP = f"The text-box font menu lists it after it is closed once, or after: inkctl shell am force-stop {NOTE_PACKAGE}"
 PLUGIN_CONFIG_FILE = "PluginConfig.json"
 PLUGIN_LIST_STEP = "inkctl plugin list"  # the next step that shows which plugins are installed
-SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
-PLUGIN_PATH_STEPS = ("text:Apps", "text:Plugins")
-PLUGIN_PICK_STEP = "text:Select Plugin Package"
-PLUGIN_CONFIRM_STEP = "id:top_save"
-PICKER_NEXT_PAGE = "id:ll_next_page"
-PICKER_PAGE_NUMBER = "id:content_page_number"
+SETTINGS_ACTIVITY = component(REGISTRY["settings.language-page"]["package"], REGISTRY["settings.language-page"]["activity"])
+PLUGIN_PATH_STEPS = REGISTRY["settings.plugin-install-screens"]["path"]
+PLUGIN_PICK_STEP = REGISTRY["settings.plugin-install-screens"]["pick"]
+PLUGIN_CONFIRM_STEP = REGISTRY["settings.plugin-install-screens"]["confirm"]
+PICKER_NEXT_PAGE = REGISTRY["settings.plugin-install-screens"]["nextPage"]
+PICKER_PAGE_NUMBER = REGISTRY["settings.plugin-install-screens"]["pageNumber"]
 PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
 # The Ink Tools bridge app (#215, apps/inktools-bridge/AGENTS.md): it binds PluginHost's
@@ -471,27 +486,29 @@ BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
 # plugin; an uninstall drops its Always Allow grants, so they are set again.
 ENABLE_REFUSED_STEP = ("inkctl plugin disable {id}, then inkctl plugin enable {id}; if PluginHost refuses it again, "
                        "inkctl plugin uninstall {id}, inkctl plugin install <its .snplg>, then inkctl plugin allow {id}")
-PERMISSION_STATUS_ALWAYS = 2  # PluginPermissionManager.STATUS_ALWAYS, «Always Allow» (docs/research/2026-11-pluginhost-control.md)
+PERMISSION_STATUS_ALWAYS = REGISTRY["pluginhost.permission-status"]["always"]  # PluginPermissionManager.STATUS_ALWAYS, «Always Allow»
 PLUGIN_ON_VALUES = ("1", "true")
 # A plugin's own page in Settings › Apps › Plugins (#191). docs/supernote.md › Plugins records the
 # path to Permissions and its three choices, measured on Relay (#163), and the uninstall warning,
 # measured on Ink2Pic; the other texts and the layout are not measured yet.
-PLUGIN_PERMISSIONS_STEP = "text:Permissions"  # shortcut: the path is recorded, the exact label is not; confirm it with `inkctl snapshot` on the tablet
-PERMISSION_ALWAYS = "Allow"  # Settings' always-allow choice, as recorded; shortcut: confirm on the tablet that a row shows this same text as its state
-PERMISSION_STATES = (PERMISSION_ALWAYS, "Ask Every Time", "Don't Allow")
-PLUGIN_UNINSTALL_STEP = "text:Uninstall"  # shortcut: not measured; confirm it with `inkctl snapshot` of a plugin's page on the tablet
-UNINSTALL_WARNING = "Its data will also be deleted"  # part of the confirmation's text, measured on Ink2Pic, 2026-11-16
-UNINSTALL_CONFIRM_STEP = "text:OK"  # shortcut: not measured; confirm it with `inkctl snapshot` of the confirmation on the tablet
-CALENDAR_SYNC_ACTION = "com.ratta.supernote.calendar.notify.sync"
-TASKS_URI = "content://com.ratta.supernote.task.provider/tasks_table"
-SYNC_TRIGGER_TITLE = "supernote-sync-trigger"
+PLUGIN_PERMISSIONS_STEP = REGISTRY["settings.plugin-detail-labels"]["permissions"]  # shortcut: the path is recorded, the exact label is not; confirm it with `inkctl snapshot` on the tablet
+PERMISSION_ALWAYS = REGISTRY["settings.plugin-detail-labels"]["always"]  # Settings' always-allow choice, as recorded; shortcut: confirm on the tablet that a row shows this same text as its state
+PERMISSION_STATES = REGISTRY["settings.plugin-detail-labels"]["states"]
+PLUGIN_UNINSTALL_STEP = REGISTRY["settings.plugin-detail-labels"]["uninstall"]  # shortcut: not measured; confirm it with `inkctl snapshot` of a plugin's page on the tablet
+UNINSTALL_WARNING = REGISTRY["settings.plugin-detail-labels"]["uninstallWarning"]  # part of the confirmation's text, measured 2026-11-16
+UNINSTALL_CONFIRM_STEP = REGISTRY["settings.plugin-detail-labels"]["confirm"]  # shortcut: not measured; confirm it with `inkctl snapshot` of the confirmation on the tablet
+CALENDAR_SYNC_ACTION = REGISTRY["calendar.sync-broadcast"]["action"]
+TASKS_URI = REGISTRY["todo.provider"]["tasksUri"]
+SYNC_TRIGGER_TITLE = REGISTRY["todo.sync-trigger"]["title"]
 # The handwriting recognition language: one empty file named with the code in default/, the
 # installed packs as folders in resources/ (docs/supernote.md › Handwriting recognition language, #190).
-DICTIONARY_FOLDER = f"{SHARED_ROOT}/.data/dictionary"
-LANGUAGE_CHANGED = "hw_type_change"  # what the Settings app broadcasts after a switch
+DICTIONARY_FOLDER = f"{SHARED_ROOT}/{REGISTRY['handwriting.language-file']['folder']}"
+DICTIONARY_CURRENT = REGISTRY["handwriting.language-file"]["current"]
+DICTIONARY_PACKS = REGISTRY["handwriting.language-file"]["packs"]
+LANGUAGE_CHANGED = REGISTRY["handwriting.changed-broadcast"]["action"]  # what the Settings app broadcasts after a switch
 LANGUAGE_CODE = re.compile(r"[a-z]{2}_[A-Z]{2}")
 LANGUAGE_CYCLE = ("pt_BR", "en_US", "es_ES")  # the Lingo app's LanguageCycle.DEFAULT, so both surfaces agree
-EMPTY_FOLDER_LANGUAGE = "en_US"  # the device reads an empty default/ folder as English
+EMPTY_FOLDER_LANGUAGE = REGISTRY["handwriting.language-file"]["emptyFolderLanguage"]  # the device reads an empty default/ folder as English
 LANGUAGE_MARK = "::packs::"
 
 # Which route does each job. `doctor` and `routes` read these same names, so each has one owner.
@@ -512,13 +529,13 @@ JOBS_WITHOUT_ROUTE = (
 DIRECT_CALLS = tuple({(route["kind"], route["name"]): route for route in JOB_ROUTES}.values())
 # Operations a read-back proved on a device. Accepting a call proves nothing: a provider can do nothing with it.
 PROVIDER_OPERATIONS = {
-    "com.ratta.supernote.task.provider": {
+    REGISTRY["todo.provider"]["authority"]: {
         "query": "works",
         "insert": "works, and starts a sync",
         "update": "works, and starts no sync",
         "delete": "works, and a synced row comes back from the cloud",
     },
-    "com.ratta.supernote.pluginhost": {"query": "works"},
+    REGISTRY["pluginhost.plugin-list"]["authority"]: {"query": "works"},
 }
 ROUTE_KINDS = {
     "Activity Resolver Table:": ("activity", "query-activities"),
@@ -527,16 +544,18 @@ ROUTE_KINDS = {
 }
 PROVIDER_SECTION = "ContentProvider Authorities:"
 ROUTE_MARK = "::route::"
-RATTA_PACKAGE_PREFIX = "com.ratta."
+RATTA_PACKAGE_PREFIX = REGISTRY["system.device-identity"]["vendorPackagePrefix"]
 
-FIRMWARE_PAGE = "https://support.supernote.com/en_US/change-log/how-to-update-your-supernote"
-FIRMWARE_HOST = "download-firmware.supernote.com"
-FIRMWARE_TARGET = "EXPORT/update.zip"
+FIRMWARE_PAGE = REGISTRY["system.firmware-page"]["page"]
+FIRMWARE_HOST = REGISTRY["system.firmware-page"]["host"]
+FIRMWARE_TARGET = REGISTRY["system.firmware-page"]["target"]
 FIRMWARE_MIN_BATTERY = 50
 FIRMWARE_NEXT_STEP = "On the tablet: tap OK when it asks. If no prompt appears, restart the tablet to start the update."
 # ro.product.board to the model (the SDK's getDeviceType() 5 and 4). Never ro.product.model: the owner's Manta reads
 # "Supernote Nomad" there (docs/supernote.md, #284). shortcut: only the boards checked so far.
-BOARD_MODELS = {"A5X2": "Manta", "A6X2": "Nomad"}
+BOARD_MODELS = dict(zip(REGISTRY["system.device-identity"]["boards"], REGISTRY["system.device-identity"]["models"]))
+BOARD_PROPERTY = REGISTRY["system.device-identity"]["boardProperty"]
+PLUGIN_LOG_TAG = REGISTRY["system.plugin-log-tag"]["tag"]
 # The model to the column of Ratta's firmware table. A Manta and a Nomad share one file.
 FIRMWARE_COLUMNS = {"Manta": "Manta & Nomad", "Nomad": "Manta & Nomad"}
 VERSION_NUMBER = re.compile(r"(?:^|\s)(\d+\.\d+\.\d+)(?:$|\s)")
@@ -1273,7 +1292,7 @@ def download_firmware(url: str, destination: str) -> str:
 
 def device_model(device: Device) -> str:
     """The tablet's model from its board, `Manta` or `Nomad`; the board name itself when it is not known."""
-    return model_of_board(device.shell("getprop ro.product.board"))
+    return model_of_board(device.shell(f"getprop {BOARD_PROPERTY}"))
 
 
 def model_of_board(board: str) -> str:
@@ -1450,7 +1469,7 @@ def parse_listing(output: str) -> list[dict]:
 
 def command_status(device: Device, args: argparse.Namespace):
     output = device.shell(
-        "getprop ro.build.display.id; getprop ro.product.board; wm size; dumpsys battery | grep level; "
+        f"getprop ro.build.display.id; getprop {BOARD_PROPERTY}; wm size; dumpsys battery | grep level; "
         "dumpsys activity activities | grep -m1 mResumedActivity || true"
     )
     lines = output.splitlines()
@@ -1633,8 +1652,8 @@ def command_sync_calendar(device: Device, args: argparse.Namespace):
 def read_languages(device: Device) -> dict:
     """The active code and the installed packs, in one shell call."""
     output = device.shell(
-        f"ls -1 {DICTIONARY_FOLDER}/default && echo {LANGUAGE_MARK} && "
-        f"for pack in {DICTIONARY_FOLDER}/resources/*; do if [ -d \"$pack\" ]; then echo \"${{pack##*/}}\"; fi; done",
+        f"ls -1 {DICTIONARY_FOLDER}/{DICTIONARY_CURRENT} && echo {LANGUAGE_MARK} && "
+        f"for pack in {DICTIONARY_FOLDER}/{DICTIONARY_PACKS}/*; do if [ -d \"$pack\" ]; then echo \"${{pack##*/}}\"; fi; done",
         missing=DICTIONARY_FOLDER,
     )
     active, _, packs = output.partition(LANGUAGE_MARK)
@@ -1660,7 +1679,7 @@ def set_language(device: Device, state: dict, code: str) -> tuple[dict, str]:
         raise bad_usage(f"a language code reads like pt_BR, not: {code}")
     if code not in state["installed"]:
         raise not_found(f"language pack {code}; installed: {' '.join(state['installed'])}", "inkctl lang get")
-    folder = f"{DICTIONARY_FOLDER}/default"
+    folder = f"{DICTIONARY_FOLDER}/{DICTIONARY_CURRENT}"
     others = " ".join(shlex.quote(f"{folder}/{other}") for other in state["files"] if other != code)
     device.shell(f"touch {shlex.quote(f'{folder}/{code}')}" + (f" && rm -f {others}" if others else ""))
     broadcast(device, LANGUAGE_CHANGED)
@@ -2147,7 +2166,7 @@ def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict
     press_helper(device, args.step_timeout)
     started = time.monotonic()
     while True:
-        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", "ReactNativeJS")
+        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", PLUGIN_LOG_TAG)
         parts = answer_parts(done.stdout.decode(errors="replace").splitlines(), command_id, since)
         answer = whole_answer(parts.get(command_id, {})) or whole_answer(parts.get(HELPER_UNKNOWN_ID, {}))
         if answer is not None:
@@ -3051,7 +3070,7 @@ def command_logs(device: Device, args: argparse.Namespace):
     if args.since_last:
         save_log_mark(every)
     if args.tag and not lines and find_plugins(plugin_rows(device), args.tag):
-        print(f"inkctl: a plugin logs under the tag ReactNativeJS, not {args.tag}; use --plugin {args.tag}", file=sys.stderr)
+        print(f"inkctl: a plugin logs under the tag {PLUGIN_LOG_TAG}, not {args.tag}; use --plugin {args.tag}", file=sys.stderr)
     return {"lines": [log_entry(args, line) for line in lines]}, "\n".join(lines)
 
 

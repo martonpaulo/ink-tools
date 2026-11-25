@@ -74,9 +74,8 @@ PYTHON_COMMENT = re.compile(r"^\s*#")
 HOST_TOOL = re.compile(r"^cli/[^/]+/src/")
 PYTHON = ".py"
 # The (path, rule) counts inkctl held when boundaries.py first read it (#295); they only go down.
-PENDING_HOST = {
-    ("cli/inkctl/src/inkctl", "authority"): 2,
-}
+# inkctl's two providers moved into its registry block (#294).
+PENDING_HOST = {}
 
 
 def code_files(root):

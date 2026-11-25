@@ -162,14 +162,6 @@
  "twins": {
   "rules": [
    {
-    "rule": "Plugin Diagnostics command folder and file: MyStyle/Probe/command.json",
-    "owner": "plugins/plugin-diagnostics/src",
-    "other": "cli/inkctl/src/inkctl",
-    "pattern": "MyStyle/Probe/",
-    "golden": "",
-    "open": 295
-   },
-   {
     "rule": "Plugin Diagnostics answer line mark: SNPROBE answer",
     "owner": "plugins/plugin-diagnostics/src",
     "other": "cli/inkctl/src/inkctl",
@@ -316,7 +308,7 @@
     "ink2pic": 1
    },
    "cli/inkctl/src/inkctl": {
-    "Ink2Pic": 2
+    "Ink2Pic": 1
    },
    "docs/plugin-scope.md": {
     "Ink2Pic": 7,
@@ -741,10 +733,9 @@
     "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
     "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
     "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
-    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/PageImage.swift": 1,
     "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Tablet.swift": 1,
     "apps/inktools-bridge/scripts/build.cjs": 4,
-    "cli/inkctl/src/inkctl": 13,
+    "cli/inkctl/src/inkctl": 12,
     "packages/ink-core/src/lasso.ts": 1,
     "packages/ink-core/src/place.ts": 1,
     "packages/native-build/host-tools.cjs": 1,
