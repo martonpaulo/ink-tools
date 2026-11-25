@@ -7,6 +7,10 @@ AGENTS.md's `- README Status values:` line lists the allowed values in backticks
 source. Every table in README.md, Markdown or HTML with one row per line, whose last header cell is `Status` must end each row with one of
 them; `&nbsp;` may stand for any space, to keep the status on one line. A cell may wrap the value in one link, to the piece's releases (owner, 2026-11-25), and holds nothing else. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
 cell, 2 when AGENTS.md has no values line or README.md has no Status table.
+
+A table with no Status column may hold each row's status at the end of its Name cell, after a blank
+line (`<br><br>`), below the piece's kind (owner, 2026-11-25); a row whose Name cell shows an icon
+must end that way.
 """
 import argparse
 import re
@@ -52,7 +56,7 @@ def is_row(line):
 
 def bad_cells(readme_text, values):
     """(line number, cell) for each Status cell outside `values`, and whether a Status table exists."""
-    found, bad, in_table = False, [], False
+    found, bad, in_table, name_status = False, [], False, False
     for number, line in enumerate(readme_text.splitlines(), 1):
         if line.strip() in ("<table>", "</table>"):
             in_table = in_table and line.strip() == "<table>"
@@ -62,9 +66,18 @@ def bad_cells(readme_text, values):
             continue
         row = cells(line)
         if not in_table:
-            in_table = row[-1] == "Status"
-            found = found or in_table
+            in_table = row[-1] == "Status" or (row[0] == "Name" and "Status" not in row)
+            name_status = row[-1] != "Status"
             continue
+        if name_status:
+            if "<img" not in row[0]:
+                continue
+            found = True
+            cell = row[0].rsplit("<br><br>", 1)[-1] if "<br><br>" in row[0] else row[0]
+            if status_value(cell) not in values:
+                bad.append((number, cell))
+            continue
+        found = True
         if set(row[-1]) <= set(":- "):
             continue
         # No-break spaces keep a status on one line, which widens the column (owner, 2026-11-25).
