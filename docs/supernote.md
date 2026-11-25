@@ -679,6 +679,15 @@ the note shows through, is still to test.
   keeps its list in memory and reads the folders again when it closes, so a new font shows the
   second time it opens, or at once after `am force-stop com.ratta.supernote.note` [source]. Like
   all of `MyStyle/`, the fonts sync to Supernote Cloud.
+- The font picked in one text box becomes the Note app's default: every new text box, and the
+  text that the native lasso «Recognize as Text» makes, then use it. A font check that picks
+  MoonUniform left later recognized text in Moon signs until «System Font» was picked again in a
+  new text box; a round sets it back to the font it found [measured, 2026-11-25, Nomad,
+  [#247](https://github.com/martonpaulo/ink-tools/issues/247), [#250](https://github.com/martonpaulo/ink-tools/issues/250)].
+  The setting is in the Note app's private storage, not in `settings list`.
+- A lasso «⋯» row exists only while its plugin is enabled: «Convert to Text» shows only with
+  Real-Time Conversion turned on [measured, 2026-11-25, `inkctl lasso rows`,
+  [#250](https://github.com/martonpaulo/ink-tools/issues/250)].
 
 ## Note file format
 
