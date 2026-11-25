@@ -211,7 +211,7 @@ REGISTRY = {
         "states": ("Allow", "Ask Every Time", "Don't Allow",),
         "uninstall": "text:Uninstall",
         "uninstallWarning": "Its data will also be deleted",
-        "confirm": "text:OK",
+        "confirm": "id:plugin_confirm_ok",
     },
     "storage.sign-in-drop-folder": {
         "folder": "/storage/emulated/0/.data/plugin/inktools-account-sync",
@@ -494,9 +494,9 @@ PLUGIN_ON_VALUES = ("1", "true")
 PLUGIN_PERMISSIONS_STEP = REGISTRY["settings.plugin-detail-labels"]["permissions"]  # shortcut: the path is recorded, the exact label is not; confirm it with `inkctl snapshot` on the tablet
 PERMISSION_ALWAYS = REGISTRY["settings.plugin-detail-labels"]["always"]  # Settings' always-allow choice, as recorded; shortcut: confirm on the tablet that a row shows this same text as its state
 PERMISSION_STATES = REGISTRY["settings.plugin-detail-labels"]["states"]
-PLUGIN_UNINSTALL_STEP = REGISTRY["settings.plugin-detail-labels"]["uninstall"]  # shortcut: not measured; confirm it with `inkctl snapshot` of a plugin's page on the tablet
+PLUGIN_UNINSTALL_STEP = REGISTRY["settings.plugin-detail-labels"]["uninstall"]  # measured on Plugin Diagnostics' page, 2026-11-25 (#191)
 UNINSTALL_WARNING = REGISTRY["settings.plugin-detail-labels"]["uninstallWarning"]  # part of the confirmation's text, measured 2026-11-16
-UNINSTALL_CONFIRM_STEP = REGISTRY["settings.plugin-detail-labels"]["confirm"]  # shortcut: not measured; confirm it with `inkctl snapshot` of the confirmation on the tablet
+UNINSTALL_CONFIRM_STEP = REGISTRY["settings.plugin-detail-labels"]["confirm"]  # the confirmation's own button by id: its text, «Uninstall», is also the dialog's title (#191)
 CALENDAR_SYNC_ACTION = REGISTRY["calendar.sync-broadcast"]["action"]
 TASKS_URI = REGISTRY["todo.provider"]["tasksUri"]
 SYNC_TRIGGER_TITLE = REGISTRY["todo.sync-trigger"]["title"]

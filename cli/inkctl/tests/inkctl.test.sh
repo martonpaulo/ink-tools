@@ -1062,8 +1062,8 @@ settings_screens() {
     python3 - "$files" "$@" <<'PY'
 import sys
 folder, screens = sys.argv[1], sys.argv[2:]
-def node(text, top, left=0, right=900):
-    return f'<node text="{text}" resource-id="" content-desc="" class="T" bounds="[{left},{top}][{right},{top + 100}]" />'
+def node(text, top, left=0, right=900, ident=""):
+    return f'<node text="{text}" resource-id="{ident}" content-desc="" class="T" bounds="[{left},{top}][{right},{top + 100}]" />'
 def page(*rows):
     return "<?xml version='1.0' ?><hierarchy rotation=\"0\">" + "".join(rows) + "</hierarchy>"
 def permissions(*states):
@@ -1077,7 +1077,7 @@ shown = {
     "half": permissions("Allow", "Allow", "Don't Allow"),
     "done": permissions("Allow", "Allow", "Allow"),
     "dialog": page(node("Network Access", 1000, right=1920), node("Allow", 1100, right=1920), node("Ask Every Time", 1200, right=1920), node("Don't Allow", 1300, right=1920)),
-    "confirm": page(node("Snap: Its data will also be deleted.", 1000, right=1920), node("Cancel", 1200), node("OK", 1200, 1000, 1900)),
+    "confirm": page(node("Uninstall", 800, right=1920), node("Uninstall this plugin? Its data will also be deleted.", 1000, right=1920), node("Cancel", 1200), node("Uninstall", 1200, 1000, 1900, "com.ratta.settings:id/plugin_confirm_ok")),
     "silent": page(node("Remove Snap?", 1000, right=1920), node("OK", 1200, 1000, 1900)),
 }
 for number, name in enumerate(screens, 1):

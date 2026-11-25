@@ -76,8 +76,8 @@
       ],
       "reason": "the screen route serves when the bridge app is absent",
       "evidence": {
-        "source": "docs/supernote.md › Plugins, measured on Relay and the retired picture plugin",
-        "date": "2026-11-16"
+        "source": "docs/supernote.md › Plugins, measured on Relay and the retired picture plugin; the uninstall confirmation's button (id plugin_confirm_ok, text «Uninstall») measured on Plugin Diagnostics, #191",
+        "date": "2026-11-25"
       },
       "upgradePath": "the bridge app's calls (level 3)",
       "lastVerified": "unverified",
@@ -96,7 +96,7 @@
         ],
         "uninstall": "text:Uninstall",
         "uninstallWarning": "Its data will also be deleted",
-        "confirm": "text:OK"
+        "confirm": "id:plugin_confirm_ok"
       }
     }
   ]
