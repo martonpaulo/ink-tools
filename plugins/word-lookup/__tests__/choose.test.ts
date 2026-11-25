@@ -15,6 +15,7 @@ import {
   resetChooseForTests,
 } from '../src/choose';
 import {copy, pictureCopy} from '../src/copy';
+import {pickedFor, resetPicksForTests} from '../src/picks';
 import {MODES} from '../src/modes';
 import type {QuickInsertDeps} from '../src/profile';
 
@@ -82,6 +83,16 @@ function deps(over: Partial<ChooseDeps> = {}): ChooseDeps {
 
 beforeEach(() => {
   resetChooseForTests();
+  const files: Record<string, string> = {};
+  resetPicksForTests({
+    storage: {
+      readText: async path => files[path] ?? null,
+      writeText: async (path, text) => {
+        files[path] = text;
+      },
+    },
+    folder: async () => ok('/private'),
+  });
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -235,6 +246,17 @@ test('a tap inserts at the kept place once, then closes the view', async () => {
   );
   expect(d.close).toHaveBeenCalled();
   expect(currentChoice()).toBeNull();
+});
+
+test('a tapped tile is remembered as the word\'s pick (#292)', async () => {
+  const d = deps({flow: () => flow(['a', 'b'])});
+  await openChoose(d);
+  await insertChosen(
+    illustration,
+    {result: result('b'), uri: 'u', contour: false},
+    d,
+  );
+  expect(await pickedFor('apple')).toEqual(['b']);
 });
 
 test('a failed insert keeps the view open with its sentence', async () => {

@@ -24,6 +24,7 @@ import {
 import {missingFor, BUTTONS} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';
+import {pickedFor} from './picks';
 import {PICTURE_LANGUAGES} from './pictureLanguages';
 import {showToast} from './textBox';
 import {showOwnView} from './working';
@@ -155,6 +156,7 @@ function modeMeasure(mode: Mode): MeasureDeps {
     analyzer: deviceAnalyzer,
     thumb: (result, dir) => thumbUri(result, dir),
     limitMs: MEASURE_LIMIT_MS,
+    picked: pickedFor,
     allContour: async () => false,
     photos: async () => mode.photos,
   };
@@ -186,6 +188,7 @@ export function modeDeps(
           search: (query, from, {exact, noTimerWait}) =>
             searchCached(query, search, from, undefined, {exact, noTimerWait}),
           thumbs: () => prepareThumbs(),
+          picked: pickedFor,
         },
         undefined,
         options,

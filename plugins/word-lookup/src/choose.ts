@@ -23,6 +23,7 @@ import {
 import {BUTTONS, missingFor} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {CHOOSE_BUTTON_ID, type Mode} from './modes';
+import {recordPick} from './picks';
 import {modeDeps} from './pictures';
 import {
   failureText,
@@ -253,6 +254,7 @@ export async function insertChosen(
       return {ok: false, text: failureText(done, pictureCopy[mode.kind])};
     }
     log(`choose: inserted ${tile.result.id}`);
+    await recordPick(chosen.word, tile.result.id);
     setChoice(null);
     await logged('closePluginView', deps.close);
     return done;
