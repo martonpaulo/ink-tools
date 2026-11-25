@@ -1,6 +1,6 @@
 /**
  * First open: three short steps and one grouped permission step (brief section 8.7). The steps
- * are static rows with dotted separators and Start the one black-filled action, as in the
+ * are static rows with the native solid line under each and Start the one black-filled action, as in the
  * system Settings and dialogs (#50).
  */
 import React, {useRef, useState} from 'react';

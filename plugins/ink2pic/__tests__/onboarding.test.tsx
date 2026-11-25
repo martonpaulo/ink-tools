@@ -132,7 +132,7 @@ describe('Onboarding', () => {
     expect(texts(render())).toContain(copy['onboarding.3']);
   });
 
-  it('draws the steps as rows with dotted separators and Start as the one black action (#50)', () => {
+  it('draws the steps as rows with the native solid line under each and Start as the one black action (#50, #272)', () => {
     const tree = render();
     const rows = tree.root
       .findAllByType(View)
@@ -140,8 +140,8 @@ describe('Onboarding', () => {
       .map(v => StyleSheet.flatten(v.props.style));
     expect(rows).toHaveLength(3);
     for (const row of rows) {
-      expect(row.borderStyle).toBe('dotted');
-      expect(row.borderBottomWidth).toBeGreaterThan(0);
+      expect(row.borderStyle).toBeUndefined();
+      expect(row.borderBottomWidth).toBe(metrics.separator);
       expect(row.borderWidth).toBeUndefined();
     }
     const filled = tree.root
