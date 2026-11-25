@@ -98,4 +98,52 @@ public enum RattaRLE {
         }
         return pixels
     }
+    /// The codes `encode` writes for the greys `decode` returns; any other grey is its own code.
+    static let encodeCodes = (0...255).map { code(for: UInt8($0), greyscale: false) }
+    static let greyscaleEncodeCodes = (0...255).map { code(for: UInt8($0), greyscale: true) }
+
+    static func code(for grey: UInt8, greyscale: Bool) -> UInt8 {
+        let table = greyscale ? greyscaleCodes : codes
+        // The first code of each grey, in the order the tables list black, transparent and white.
+        let preferred: [UInt8] = greyscale
+            ? [0x61, 0x62, 0x9d, 0xc9, 0x65, 0x63, 0x64] : [0x61, 0x62, 0x63, 0x64, 0x65]
+        if let found = preferred.first(where: { table[$0] == grey }) { return found }
+        // A grey that is itself a table code would decode as another grey: the nearest that is not.
+        var value = grey
+        while table[value] != nil { value = value < 0x80 ? value + 1 : value - 1 }
+        return value
+    }
+
+    /// Encodes `width * height` grey bytes, as `decode` reads them back (#263). Runs longer than
+    /// 128 pixels are a held pair plus a pair of the same code; runs of `longRun` use its marker.
+    /// A grey that only an older file stores, or that collides with a colour code, comes back as
+    /// the nearest grey `decode` returns.
+    public static func encode(_ pixels: [UInt8], greyscale: Bool) -> [UInt8] {
+        var out: [UInt8] = []
+        func emitRun(_ code: UInt8, _ count: Int) {
+            var left = count
+            while left > longRun {
+                out += [code, longRunMarker]
+                left -= longRun
+            }
+            if left <= lowBits + 1 {
+                out += [code, UInt8(left - 1)]
+            } else {
+                // decode: 1 + length + (held + 1) << 7, with held at most 126 so it is never 0xff.
+                let high = (left - 1) >> continuationShift
+                let low = (left - 1) & lowBits
+                out += [code, continuation | UInt8(high - 1), code, UInt8(low)]
+            }
+        }
+        let codes = greyscale ? greyscaleEncodeCodes : encodeCodes
+        var index = 0
+        while index < pixels.count {
+            let code = codes[Int(pixels[index])]
+            var end = index + 1
+            while end < pixels.count, codes[Int(pixels[end])] == code { end += 1 }
+            emitRun(code, end - index)
+            index = end
+        }
+        return out
+    }
 }
