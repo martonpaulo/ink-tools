@@ -120,6 +120,7 @@ case "$1" in
                 set -- $2
                 printf '%s\n' "${2##*/}" > "$ADB_FILES/lang-default" ;;  # the rm after && leaves only this file
             "find /storage/emulated/0/Note -name"*) cat "$ADB_FILES/notes-found" ;;
+            "find /storage/emulated/0/MyStyle/fonts -type f") cat "$ADB_FILES/fonts-found" ;;
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
             "am broadcast -n com.martonpaulo.inktools.bridge/"*)
                 printf '%s\n' "$2" >> "$ADB_FILES/bridge-calls"
@@ -261,6 +262,8 @@ run() {
 
 last_call() { grep -v 'dumpsys activity' "$log" | tail -1; }
 called() { grep -cF -- "$1" "$log"; }
+# The exit code of a run, then how many pushes it made: a refusal before any copy reads "<code>0".
+exit_and_pushes() { run "$@" >/dev/null 2>&1; printf '%s%s' "$?" "$(called ' push ')"; }
 field() { python3 -c "import json,sys; print(eval('d'+sys.argv[1], {'d': json.load(sys.stdin)}))" "$1"; }
 expression() { python3 -c "import json,sys; print(eval(sys.argv[1], {'d': json.load(sys.stdin)}))" "$1"; }
 
@@ -572,6 +575,35 @@ check "files push proves the copy is whole" "$?" "1"
 printf '5\n' > "$files/size"
 run files push "$work/local/absent" INBOX >/dev/null 2>&1
 check "files push of a missing local file stops with its own code" "$?" "4"
+
+# Fonts (#247): the Note app's text-box font menu reads MyStyle/fonts.
+fonts=$root/MyStyle/fonts
+mkdir -p "$work/local/fonts"
+for name in notes.txt sample.ttf.zip 'Bad;name.ttf' 'Sample Sans-Bold.TTF' SampleSans-Regular.ttf; do printf 'hello' > "$work/local/fonts/$name"; done
+check "font install refuses a file that is not a font" "$(exit_and_pushes font install "$work/local/fonts/notes.txt")" "20"
+check "font install refuses a font name inside another extension" "$(exit_and_pushes font install "$work/local/fonts/sample.ttf.zip")" "20"
+check "font install refuses a shell character in the name" "$(exit_and_pushes font install "$work/local/fonts/Bad;name.ttf")" "20"
+result=$(run font install "$work/local/fonts/Sample Sans-Bold.TTF" --json)
+check "font install copies into MyStyle/fonts under its own name" "$(called " push $work/local/fonts/Sample Sans-Bold.TTF $fonts/Sample Sans-Bold.TTF")" "1"
+check "font install names the font as the menu shows it" "$(printf '%s' "$result" | field "['fonts'][0]['name']")" "Sample Sans-Bold"
+check "font install says how the menu sees it" "$(printf '%s' "$result" | field "['next']" | grep -c 'force-stop com.ratta.supernote.note')" "1"
+printf 'f %s\n' "$fonts/SampleSans-Regular.ttf" >> "$files/paths"
+check "font install refuses to replace a font" "$(exit_and_pushes font install "$work/local/fonts/SampleSans-Regular.ttf")" "50"
+check "font list with no font folder is empty" "$(run font list --json | field "['fonts']")" "[]"
+printf 'd %s\n' "$fonts" >> "$files/paths"
+printf 'f %s\n' "$fonts/SampleSans-Regular.otf" "$fonts/Light/SampleSans-Light.otf" "$fonts/SampleSans-Regular.ttf.bak" >> "$files/paths"
+printf '%s\n' "$fonts/SampleSans-Regular.ttf" "$fonts/SampleSans-Regular.otf" "$fonts/Light/SampleSans-Light.otf" "$fonts/readme.txt" > "$files/fonts-found"
+check "font list names each file as the menu does, in subfolders too, fonts only" "$(run font list --json | expression "[(f['name'], len(f['files'])) for f in d['fonts']]")" "[('SampleSans-Light', 1), ('SampleSans-Regular', 2)]"
+: > "$files/removed"
+run font remove SampleSans-Regular >/dev/null 2>&1
+check "font remove without --yes removes nothing" "$?$(called 'rm -f')" "20"
+run font remove SampleSans-Regular --yes >/dev/null
+check "font remove takes every file of that name" "$(wc -l < "$files/removed" | tr -d ' ')" "2"
+check "font remove leaves a font whose name it prefixes" "$(grep -c 'SampleSans-Light' "$files/removed")" "0"
+run font remove Absent --yes >/dev/null 2>&1
+check "font remove of an unknown font stops with its own code" "$?" "4"
+rm -f "$files/fonts-found"
+reset_device
 
 # Sync.
 echo 2 > "$files/trigger-reads"

@@ -628,6 +628,15 @@ the note shows through, is still to test.
   `settings.json` in the private folder and read the newest conflict copy's when theirs is gone.
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/inkctl/README.md`].
+- **Custom fonts for text boxes** live in `MyStyle/fonts` ([#247](https://github.com/martonpaulo/ink-tools/issues/247)). The Note app's text-box font
+  menu lists «System Font», the built-in fonts of `/sdcard/.data/fonts` (Dolce, 851tegakizatsu,
+  Satisfy), then every `.ttf` or `.otf` file under `MyStyle/fonts`, subfolders included, each file
+  as its own entry named by its file name without the extension: Moon Uniform's three files showed
+  as `MoonUniform-Bold`, `MoonUniform-Light` and `MoonUniform-Regular`, not one family [measured,
+  2026-11-25, firmware `Chauvet.E103.2610191001.2559_release`, `inkctl font install`]. The menu
+  keeps its list in memory and reads the folders again when it closes, so a new font shows the
+  second time it opens, or at once after `am force-stop com.ratta.supernote.note` [source]. Like
+  all of `MyStyle/`, the fonts sync to Supernote Cloud.
 
 ## Network and ADB
 

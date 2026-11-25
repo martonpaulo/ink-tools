@@ -51,6 +51,8 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 | `inkctl fixture NAME` | Opens the test fixtures note, `Note/Tests/Fixtures.note`, at that fixture's page and proves the page the same way. `--lasso ITEM` then lassoes one of the fixture's rects, as `lasso rect` does. `fixture --list` prints each fixture's page, rects and the issues it serves, from the one table in `src/inkctl` (`FIXTURES`), with no tablet. The command never creates the note: when it is missing, it says so and links the [page map](https://github.com/martonpaulo/ink-tools/issues/214#issuecomment-6936338459). |
 | `inkctl note new PATH` | Creates a blank portrait note and opens it. It never replaces a file. |
 | `inkctl files ls\|pull\|push` | Lists and copies files. A push never replaces a file without `--overwrite`. |
+| `inkctl font install FILE...` | Copies `.ttf` or `.otf` fonts to `MyStyle/fonts`, where the Note app's text-box font menu reads them, and never replaces one without `--overwrite`. The menu lists each file by its name without the extension, after it is closed once or the Note app restarts ([#247](https://github.com/martonpaulo/ink-tools/issues/247)). |
+| `inkctl font list\|remove NAME` | Lists the installed fonts by the menu's name, or removes one; `remove` only names the files until it gets `--yes`. |
 | `inkctl sync tasks` | Starts a To-do sync and waits until it has run. |
 | `inkctl sync calendar` | Asks the Calendar app to sync. The app must be open, and the answer does not prove a sync ran. |
 | `inkctl lasso rows` | Opens the lasso «⋯» list when it is closed and reads every row once, in list order. It swipes only inside the list's own bounds, read again before each swipe, because the list moves with the lasso. |

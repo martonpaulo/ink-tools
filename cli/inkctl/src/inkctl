@@ -40,6 +40,10 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  through the bridge app, and prove it from the plugin's row
   plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
   plugin uninstall NAME          uninstall through the bridge app, else named elements, and prove it
+  font install FILE...           copy .ttf or .otf fonts to MyStyle/fonts, where the Note app's
+                                 text-box font menu reads them; refuses to replace without --overwrite
+  font list                      the fonts in MyStyle/fonts, by the name the font menu shows
+  font remove NAME --yes         remove a font; without --yes, only name its files
   logs [--tag T] [--lines N]     recent device log, with credentials masked; see logs --help for
                                  --level, --package, --pid, --grep, --since, --since-last,
                                  --follow and --plugin
@@ -274,6 +278,13 @@ PLUGIN_FOLDER = "MyStyle"
 PLUGIN_URI = "content://com.ratta.supernote.pluginhost/plugins"
 CONTENT_QUERY = "content query --uri"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
+# The Note app's text-box font menu lists every .ttf and .otf file under this folder, read
+# recursively, each file as one entry named by its file name without the extension
+# (docs/supernote.md › Files and sync, #247).
+FONT_FOLDER = f"{PLUGIN_FOLDER}/fonts"
+FONT_SUFFIXES = (".ttf", ".otf")
+FONT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._-]*$")
+FONT_NEXT_STEP = "The text-box font menu lists it after it is closed once, or after: inkctl shell am force-stop com.ratta.supernote.note"
 PLUGIN_CONFIG_FILE = "PluginConfig.json"
 PLUGIN_LIST_STEP = "inkctl plugin list"  # the next step that shows which plugins are installed
 SETTINGS_ACTIVITY = "com.ratta.settings/.SettingsActivity"
@@ -1335,6 +1346,68 @@ def push_file(device: Device, local: str, path: str, overwrite: bool, timeout: f
 def command_files_push(device: Device, args: argparse.Namespace):
     data = push_file(device, args.local_path, remote_path(args.path), args.overwrite)
     return data, f"pushed: {data['path']} ({data['bytes']} bytes)"
+
+
+def font_name(path: str) -> str:
+    """The name the text-box font menu shows for a font file."""
+    return os.path.splitext(os.path.basename(path))[0]
+
+
+def is_font(name: str) -> bool:
+    return name.lower().endswith(FONT_SUFFIXES)
+
+
+def command_font_install(device: Device, args: argparse.Namespace):
+    for local in args.files:
+        name = os.path.basename(local)
+        if not is_font(name):
+            raise bad_usage(f"a font file ends in .ttf or .otf: {local}")
+        if not FONT_NAME.match(name):
+            raise bad_usage(f"a font file name holds only letters, digits, spaces, '.', '-' and '_': {name}")
+        if not os.path.isfile(local):
+            raise not_found(local)
+    folder = remote_path(FONT_FOLDER)
+    device.shell(f"mkdir -p {shlex.quote(folder)}")
+    fonts = []
+    for local in args.files:
+        pushed = push_file(device, local, f"{folder}/{os.path.basename(local)}", args.overwrite)
+        fonts.append({**pushed, "name": font_name(local)})
+    lines = [f"installed: {font['path']} ({font['name']})" for font in fonts]
+    return {"fonts": fonts, "next": FONT_NEXT_STEP}, "\n".join([*lines, FONT_NEXT_STEP])
+
+
+def installed_fonts(device: Device) -> dict[str, list[str]]:
+    """Each menu name in the font folder with its files (a .ttf and an .otf can share one); no
+    folder is no font."""
+    folder = remote_path(FONT_FOLDER)
+    if not device.test(f"-d {shlex.quote(folder)}"):
+        return {}
+    fonts: dict[str, list[str]] = {}
+    for line in sorted(device.shell(f"find {shlex.quote(folder)} -type f").splitlines()):
+        path = line.strip()
+        if is_font(path):
+            fonts.setdefault(font_name(path), []).append(path)
+    return fonts
+
+
+def command_font_list(device: Device, args: argparse.Namespace):
+    rows = [{"name": name, "files": paths} for name, paths in sorted(installed_fonts(device).items())]
+    text = "\n".join(f"{row['name']}: {', '.join(row['files'])}" for row in rows)
+    return {"fonts": rows}, text or f"no font in {FONT_FOLDER}"
+
+
+def command_font_remove(device: Device, args: argparse.Namespace):
+    paths = installed_fonts(device).get(args.name)
+    if not paths:
+        raise not_found(f"font {args.name} in {FONT_FOLDER}", "inkctl font list")
+    if not args.yes:
+        names = ", ".join(os.path.basename(path) for path in paths)
+        raise bad_usage(f"this removes {names}; run it again with --yes to remove them")
+    for path in paths:
+        device.shell(f"rm -f {shlex.quote(path)}")
+        if device.test(f"-e {shlex.quote(path)}"):
+            raise Failure(EXIT_FAILED, "device_error", f"{path} is still there after rm")
+    return {"name": args.name, "removed": paths}, f"removed: {args.name} ({len(paths)} files)"
 
 
 def broadcast(device: Device, action: str) -> dict:
@@ -3197,6 +3270,15 @@ def build_parser() -> argparse.ArgumentParser:
     pushed.add_argument("local_path")
     pushed.add_argument("path")
     pushed.add_argument("--overwrite", action="store_true", help="replace an existing file")
+
+    fonts = noun("font")
+    font_install = add(fonts, "install", command_font_install, changes=True)
+    font_install.add_argument("files", nargs="+", metavar="FILE", help="a .ttf or .otf file")
+    font_install.add_argument("--overwrite", action="store_true", help="replace a font of the same file name")
+    add(fonts, "list", command_font_list)
+    font_remove = add(fonts, "remove", command_font_remove, changes=True)
+    font_remove.add_argument("name", help="a font name, as font list prints it")
+    font_remove.add_argument("--yes", action="store_true", help="remove the font's files; without it, only name them")
 
     syncs = noun("sync")
     tasks = add(syncs, "tasks", command_sync_tasks, changes=True)
