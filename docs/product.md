@@ -2,6 +2,19 @@
 
 Type: product definition. Current rules only; decision history lives in `docs/decisions.md`.
 
+## Contents
+
+- [What it is](#what-it-is)
+- [Who it is for](#who-it-is-for)
+- [The job](#the-job)
+- [What it does](#what-it-does)
+- [What it will never do](#what-it-will-never-do)
+- [How we know it worked](#how-we-know-it-worked)
+- [Constraints](#constraints)
+- [Accepted evidence gaps](#accepted-evidence-gaps)
+- [Display names](#display-names)
+- [Product versioning](#product-versioning)
+
 ## What it is
 
 A monorepo of independent, unofficial tools for Supernote e-ink tablets. Each subproject stands
@@ -23,6 +36,9 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
     with no lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion,
     and a whole lasso into one text box with its lasso button «Convert to Text»
     ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184), [#250](https://github.com/martonpaulo/ink-tools/issues/250)).
+  - **Smart Shapes** (`plugins/smart-shapes`, beta) turns a stroke held still at its end into a clean
+    triangle, circle, square, rectangle or arrow, and never changes a figure under its minimum size
+    ([#253](https://github.com/martonpaulo/ink-tools/issues/253)).
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
   `apps/handwriting-language`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).
@@ -93,7 +109,7 @@ plugin appears in the native Calendar, and an edit on the tablet reaches the sou
 
 ## Display names
 
-Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `plugins/word-lookup` is Word Lookup, `plugins/image-editing` Image Editing, `plugins/device-transfer` Device Transfer, `plugins/account-sync` Account Sync, `plugins/plugin-diagnostics` Plugin Diagnostics, `plugins/real-time-conversion` Real-Time Conversion, the Lingo app (`apps/handwriting-language`) Handwriting Language, the planned Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). A name carries no brand. Display names live in `PluginConfig.json` `name`, the visible copy and the docs, and each subproject's folder, gate, workflow and new tag prefix use the feature name in kebab case ([#194](https://github.com/martonpaulo/ink-tools/issues/194)); npm packages, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names, and tags made before the rename keep theirs.
+Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `plugins/word-lookup` is Word Lookup, `plugins/image-editing` Image Editing, `plugins/device-transfer` Device Transfer, `plugins/account-sync` Account Sync, `plugins/plugin-diagnostics` Plugin Diagnostics, `plugins/real-time-conversion` Real-Time Conversion, `plugins/smart-shapes` Smart Shapes, the Lingo app (`apps/handwriting-language`) Handwriting Language, the planned Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). A name carries no brand. Display names live in `PluginConfig.json` `name`, the visible copy and the docs, and each subproject's folder, gate, workflow and new tag prefix use the feature name in kebab case ([#194](https://github.com/martonpaulo/ink-tools/issues/194)); npm packages, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names, and tags made before the rename keep theirs.
 
 ## Product versioning
 

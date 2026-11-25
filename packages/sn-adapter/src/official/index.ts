@@ -14,4 +14,5 @@ export * from './page';
 export * from './pen';
 export * from './plugin';
 export * from './register';
+export * from './shapes';
 export * from './storage';

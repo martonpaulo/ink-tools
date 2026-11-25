@@ -1,0 +1,15 @@
+{
+  "name": "Smart Shapes",
+  "desc": "Draw a triangle, circle, square, rectangle or arrow and hold the pen still at the end: it becomes a clean shape. Small figures stay handwriting.",
+  "author": "Marton Paulo",
+  "iconPath": "assets/shapes.png",
+  "versionName": "0.1.0 beta 1",
+  "versionCode": "1",
+  "pluginID": "m3tq8fb6lyzc8f95",
+  "pluginKey": "SmartShapes",
+  "jsMainPath": "index",
+  "uses-permissions": [
+    "plugin.permission.FILE:READ",
+    "plugin.permission.FILE:WRITE"
+  ]
+}

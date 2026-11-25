@@ -16,6 +16,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
 - [real-time-conversion](#real-time-conversion)
+- [smart-shapes](#smart-shapes)
 - [Note templates](#note-templates)
 - [Design direction](#design-direction)
 
@@ -302,6 +303,14 @@ A plugin that turns each handwritten word into typed text in a font the owner ch
 writes it, with no lasso, turned on and off from one sidebar button. The research proposes it and
 the name ([`research/2026-11-live-handwriting-to-text.md`](research/2026-11-live-handwriting-to-text.md), [#144](https://github.com/martonpaulo/ink-tools/issues/144)). The owner chose to
 build it as proposed, with an «Undo the last conversion» action; it is the next plugin to build (2026-11-16).
+
+## smart-shapes
+
+Shown as **Smart Shapes**, in the wording of the native Smart Straight Line; built in [`plugins/smart-shapes/`](../plugins/smart-shapes/) ([#253](https://github.com/martonpaulo/ink-tools/issues/253)).
+
+A stroke held still at its end becomes a clean triangle, circle, square, rectangle or arrow; a
+figure under the minimum size stays ink. Based on a copy of Snap v0.9.0, its last MIT version, with
+its notice kept (owner D65 A), rather than sn-shapes or new code.
 
 ## Note templates
 

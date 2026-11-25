@@ -31,6 +31,24 @@ const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [
     {left: 1},
   ],
   [
+    'setLassoBoxState',
+    mocked(PluginCommAPI.setLassoBoxState),
+    () => lasso.setLassoBoxState(lasso.LASSO_BOX.remove),
+    true,
+  ],
+  [
+    'insertGeometry',
+    mocked(PluginCommAPI.insertGeometry),
+    () => page.insertGeometry({type: 'GEO_circle'}),
+    true,
+  ],
+  [
+    'deletePageElements',
+    mocked(PluginCommAPI.deletePageElements),
+    () => page.deletePageElements([3], 0),
+    true,
+  ],
+  [
     'recognizeElements',
     mocked(PluginCommAPI.recognizeElements),
     () => lasso.recognizeElements([], {width: 1, height: 1}),

@@ -107,6 +107,21 @@
    "plugins/real-time-conversion/test-support/ink.ts": {
     "number": 13
    },
+   "plugins/smart-shapes/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/smart-shapes/src/geometry.ts": {
+    "number": 4
+   },
+   "plugins/smart-shapes/src/hold.ts": {
+    "number": 1
+   },
+   "plugins/smart-shapes/src/recognize.ts": {
+    "number": 42
+   },
+   "plugins/smart-shapes/test-support/strokes.ts": {
+    "number": 17
+   },
    "plugins/word-lookup/.eslintrc.js": {
     "repeated": 1
    },
