@@ -18,7 +18,7 @@ import {
 import {pluginFolder} from '../storage/session';
 import {placeAtLasso} from './place';
 import {insertAsSticker} from './sticker';
-import {isFree, type LassoPlace, type Placement} from '@ink-tools/ink-core';
+import {inkUnderRect, type LassoPlace, type Placement} from '@ink-tools/ink-core';
 import {
   deleteLassoElements,
   getLassoRect,
@@ -95,8 +95,9 @@ export type InsertOptions = {
    */
   contour: boolean;
   /**
-   * Insert the picture as a Supernote sticker, through `insertSticker` (#35, owner D32 A): Lookup's
-   * «Insert Sticker». When the sticker fails, the picture insert follows, and the log says why.
+   * Insert the drawing as a Supernote sticker made of pen strokes, through `insertSticker` (#35,
+   * owner D32 A, D62 A): Lookup's «Insert Sticker». When the sticker fails, the picture insert
+   * follows, and the log says why.
    */
   sticker?: boolean;
 };
@@ -363,14 +364,16 @@ async function picture(
  * is the placed rect, or null when the host placed it: insertImage gives no rect.
  */
 async function insertInNote(
+  result: SearchResult,
   saved: Saved,
   place: LassoPlace | null,
   options: InsertOptions,
 ): Promise<Result<Rect | null>> {
   if (options.sticker) {
     const pasted = await insertAsSticker(
+      result,
       saved.path,
-      saved.size ?? {width: options.width, height: options.width},
+      saved.size ? placedSize(saved.size, options.width).width : options.width,
     );
     if (pasted.ok) {
       return pasted;
@@ -442,36 +445,6 @@ async function noteChanged(
       )}`;
 }
 
-/** True when `inner` lies wholly inside `outer`. */
-function inside(inner: Rect, outer: Rect): boolean {
-  return (
-    inner.left >= outer.left &&
-    inner.top >= outer.top &&
-    inner.right <= outer.right &&
-    inner.bottom <= outer.bottom
-  );
-}
-
-/**
- * Why a lasso of the placed picture could take the person's ink, or null when it cannot (#168):
- * the device's rect lasso selects every element inside the rect, strokes included, so the picture
- * is lassoed only when the whole page was read and nothing else crosses its rect. The word's own
- * strokes do not count once the word was deleted.
- */
-export function inkUnderPicture(
-  rect: Rect,
-  place: LassoPlace | null,
-  wordDeleted: boolean,
-): string | null {
-  if (!place?.occupied) {
-    return "the page's ink is not known";
-  }
-  const others = place.occupied.filter(
-    other => !isFree(rect, [other]) && !(wordDeleted && inside(other, place.rect)),
-  );
-  return others.length > 0 ? `${others.length} other elements in the rect` : null;
-}
-
 /**
  * Leaves the placed picture lassoed, ready to move or resize (#73), while the view is still open:
  * the lasso the view opened with survives the view (brief section 10.5, TO TEST that this one
@@ -491,7 +464,12 @@ async function lassoPlaced(
     return;
   }
   // Never a selection that holds the person's ink: a delete of it would take the strokes (#168).
-  const ink = inkUnderPicture(rect, place, wordDeleted);
+  // readLassoQuery keeps only a complete page read, so a missing one may also be a partial one.
+  const ink = inkUnderRect(
+    rect,
+    place?.occupied ? {rects: place.occupied, complete: true} : null,
+    wordDeleted && place ? place.rect : null,
+  );
   if (ink) {
     log(`lassoElements: skipped, ${ink}`);
     store.lassoSkipped?.();
@@ -569,7 +547,7 @@ export async function insertPicture(
     return atStep('download', fail(THROWN_CODE, `stopped: ${reason}`));
   }
   let at = Date.now();
-  const inserted = await insertInNote(saved.value, place, chosen);
+  const inserted = await insertInNote(result, saved.value, place, chosen);
   logTime('insert', at);
   if (!inserted.ok) {
     return atStep('place', inserted);

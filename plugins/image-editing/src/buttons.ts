@@ -1,34 +1,38 @@
 /**
- * One lasso button per edit switched on in Settings (#136), shown when the lasso holds a picture,
- * run with no view, as Lingo's direction buttons (#128), or opening a view when its row says so
- * (Styles, #133). A button exists only while its switch is on.
+ * Image Editing's one lasso button (#226): «Image Editing», shown when the lasso holds a picture,
+ * with `showType` 1, so the host opens the plugin's full view, the editor, where every edit is a
+ * button. The builds before it registered one row per edit, which crowded the lasso menu.
  */
+import {Image} from 'react-native';
 import {
   registerButton,
   Result,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
-import {EDITS, enabledEdits, RetouchSettings} from './edits';
+import {copy} from './copy';
+import {EDITOR_BUTTON_ID, LEGACY_BUTTON_IDS} from './edits';
 
 /** sn-plugin-lib's lasso toolbar button (as Lookup's src/buttons.ts). */
 export const BUTTON_TYPE_LASSO = 2;
 /** `editDataTypes` 2: the lasso holds a picture (sn-plugin-lib 0.2.3, NativePluginManager). */
 export const EDIT_DATA_PICTURE = 2;
+/** `showType` 1: the press opens the plugin's full view (PluginButton). */
+export const SHOW_FULL_VIEW = 1;
 
 export type ButtonDeps = {
   register: typeof registerButton;
   unregister: typeof unregisterButton;
   log: (line: string) => void;
+  /** The button's icon URI (#107), drawn from `assets/editor.svg` by Word Lookup's `npm run icons`. */
+  icon: string | undefined;
 };
 
 const DEVICE: ButtonDeps = {
   register: registerButton,
   unregister: unregisterButton,
   log: line => console.log(`Retouch: ${line}`),
+  icon: Image.resolveAssetSource(require('../assets/editor.png'))?.uri,
 };
-
-/** The ids the host holds now, as this runtime registered them. */
-const registered = new Set<number>();
 
 const describe = (what: string, result: Result<unknown>): string =>
   result.ok
@@ -36,36 +40,31 @@ const describe = (what: string, result: Result<unknown>): string =>
     : `${what} failed: ${result.code} ${result.message}`;
 
 /**
- * Registers the buttons of the edits switched on and removes the others. A failed call is logged
- * and leaves that button's state as it was, so the next change tries again.
+ * Registers the one «Image Editing» button first, then asks the host to remove the per-edit rows
+ * of earlier builds without waiting for them. On this firmware an `unregisterButton` of an id the
+ * plugin does not hold never answers (`docs/supernote.md` › Plugins, #226): awaiting it left the
+ * lasso menu with no Image Editing row. Each removal that does answer is logged when it settles.
  */
-export async function syncButtons(
-  settings: RetouchSettings,
+export async function registerEditorButton(
   deps: ButtonDeps = DEVICE,
-): Promise<void> {
-  const wanted = new Set(enabledEdits(settings).map(e => e.buttonId));
-  for (const edit of EDITS) {
-    const on = wanted.has(edit.buttonId);
-    if (on === registered.has(edit.buttonId)) {
-      continue;
-    }
-    const result = on
-      ? await deps.register(BUTTON_TYPE_LASSO, ['NOTE'], {
-          id: edit.buttonId,
-          name: edit.name,
-          editDataTypes: [EDIT_DATA_PICTURE],
-          showType: edit.showType,
-        })
-      : await deps.unregister(edit.buttonId);
-    deps.log(
-      describe(`${on ? 'register' : 'unregister'} ${edit.name}`, result),
-    );
-    if (result.ok) {
-      on ? registered.add(edit.buttonId) : registered.delete(edit.buttonId);
-    }
+): Promise<Result<true>> {
+  const result = await deps.register(BUTTON_TYPE_LASSO, ['NOTE'], {
+    id: EDITOR_BUTTON_ID,
+    name: copy.title,
+    editDataTypes: [EDIT_DATA_PICTURE],
+    showType: SHOW_FULL_VIEW,
+    icon: deps.icon,
+  });
+  deps.log(describe(`register ${copy.title}`, result));
+  for (const id of LEGACY_BUTTON_IDS) {
+    deps
+      .unregister(id)
+      .then(removed => {
+        if (removed.ok) {
+          deps.log(`removed lasso row ${id} of an earlier build`);
+        }
+      })
+      .catch(() => {});
   }
-}
-
-export function resetButtonsForTests(): void {
-  registered.clear();
+  return result;
 }

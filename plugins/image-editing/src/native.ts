@@ -93,6 +93,8 @@ type Native = {
     points: number[],
     ends: number[],
   ): Promise<Edited>;
+  /** The debug switch's folder, or null to turn it off (#134). */
+  setDebugFolder(folder: string | null): Promise<boolean>;
   readText(path: string): Promise<string | null>;
   writeText(path: string, text: string): Promise<null>;
   deleteFile(path: string): Promise<boolean>;
@@ -104,6 +106,7 @@ const MODULE_OF: Record<keyof Native, string> = {
   edit: IMAGE_MODULE,
   crop: IMAGE_MODULE,
   erase: IMAGE_MODULE,
+  setDebugFolder: IMAGE_MODULE,
   readText: FILES_MODULE,
   writeText: FILES_MODULE,
   deleteFile: FILES_MODULE,
@@ -145,6 +148,7 @@ export function retouchNative(
     edit: call('edit'),
     crop: call('crop'),
     erase: call('erase'),
+    setDebugFolder: call('setDebugFolder'),
     readText: call('readText'),
     writeText: call('writeText'),
     deleteFile: call('deleteFile'),

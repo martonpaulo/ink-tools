@@ -1,7 +1,28 @@
 /** Every user-facing string of Retouch. English only; never inline in components (#93). */
 export const copy = {
   title: 'Image Editing',
-  'settings.edits': 'Lasso buttons',
+  'settings.edits': 'Editor buttons',
+  /** The editor view (#226). */
+  'editor.opening': 'Reading the picture…',
+  'editor.working': 'Loading…',
+  'editor.noPreview': 'Image Editing could not read the lassoed picture.',
+  'editor.lost':
+    'The picture is no longer on the page here. Close, lasso it again and press Image Editing.',
+  'editor.picture': 'The lassoed picture',
+  'editor.edits': 'Edit',
+  'editor.pen': 'Draw with the pen',
+  'editor.back': 'Go back',
+  'editor.page': 'Every picture on the page',
+  'editor.drawErase':
+    'Draw with the pen over the part to erase, then press Erase.',
+  'editor.drawCrop':
+    'Draw a rectangle with the pen around the part to keep, then press Crop.',
+  'editor.clear': 'Clear marks',
+  'editor.cancel': 'Cancel',
+  /** Why the edit and Clear marks wait, next to them (interface rule 16, #233). */
+  'editor.noMarks': (edit: string) =>
+    `${edit} and Clear marks wait for a mark on the picture.`,
+  'editor.close': 'Close',
   'edit.enhance': 'Enhance',
   'edit.lighter': 'Lighter',
   'edit.darker': 'Darker',
@@ -63,4 +84,7 @@ export const copy = {
   /** Toasts that replace the «Loading…» strip (#103). */
   'working.failed': 'Image Editing stopped with an error.',
   'working.timeout': 'Image Editing is still working.',
+  /** The debug switch of Settings (#134). */
+  'settings.debug': 'Debug',
+  'settings.debugSave': 'Save edit input',
 } as const;

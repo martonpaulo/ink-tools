@@ -1,12 +1,12 @@
 name: Validate Account Sync
 
-# Runs only when plugins/account-sync/, the shared packages/ui-kit/ it imports (#93), or this file changes; the gate is the subproject's own `npm run validate`.
+# Runs only when plugins/account-sync/, the shared packages/ui-kit/ it imports (#93), the picture-search and sn-adapter Java it compiles, or this file changes; the gate is the subproject's own `npm run validate`, then the Android build cloud sessions cannot run (#235).
 on:
   push:
     branches: [main]
-    paths: ['plugins/account-sync/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', '.github/workflows/validate-account-sync.yml']
   pull_request:
-    paths: ['plugins/account-sync/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', '.github/workflows/validate-account-sync.yml']
   workflow_dispatch:
 
 permissions:
@@ -46,3 +46,11 @@ jobs:
 
       - name: Run the gate
         run: npm run validate
+
+      - name: Build the native-capable plugin package
+        # The JS package, then Bridge's Java module against the Android SDK (#235);
+        # native-toolchain.sh reuses the runner's SDK.
+        run: npm run build
+
+      - name: Check the package holds the native module
+        run: unzip -l build/outputs/Bridge.snplg | grep -q app.npk

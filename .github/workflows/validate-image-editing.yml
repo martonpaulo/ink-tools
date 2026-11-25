@@ -4,9 +4,9 @@ name: Validate Image Editing
 on:
   push:
     branches: [main]
-    paths: ['plugins/image-editing/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-image-editing.yml']
+    paths: ['plugins/image-editing/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-image-editing.yml']
   pull_request:
-    paths: ['plugins/image-editing/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-image-editing.yml']
+    paths: ['plugins/image-editing/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', '.github/workflows/validate-image-editing.yml']
   workflow_dispatch:
 
 permissions:

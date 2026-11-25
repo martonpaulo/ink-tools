@@ -51,6 +51,15 @@ the two lists on the same code, start a `lookup-…` run whose `base` is the com
 [#183](https://github.com/martonpaulo/ink-tools/issues/183): the base searches in English, the
 head in Lookup's languages.
 
+A run named `lookup-photo` or `lookup-photo-…` also searches as Word Lookup's «Insert Image»
+does: the `photo` mode of `plugins/word-lookup/src/modes.ts`, with «Photos too» on, without the
+sources that mode skips, and with only the measured photo tiles kept, as `keepMode` keeps them on
+the device. Any other run searches as «Drawings» with every source
+([#13](https://github.com/martonpaulo/ink-tools/issues/13)). `results.json` records it as `style`.
+A base older than that lab mode runs its own lab, so it searches as «Drawings»; start the run
+with `-f head_lab=true` to measure the base's product code with the head's lab scripts (its
+`cases.json` stays the base's).
+
 ## Run it
 
 ```bash

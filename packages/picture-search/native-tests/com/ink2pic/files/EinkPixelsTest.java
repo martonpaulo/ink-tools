@@ -27,6 +27,11 @@ public final class EinkPixelsTest {
   }
 
   public static void main(String[] args) {
+    // The ink mask «Insert Sticker» traces (#35): dark is 1, white and transparent are 0.
+    check(
+        EinkPixels.inkRows(new int[] {0xFF000000, 0xFFFFFFFF, 0x00000000, 0xFF404040}, 2, 2)
+            .equals("1001"),
+        "ink rows mark dark pixels only");
     // Flattening on white.
     check(eink(false, 0x00000000)[0] == 0xFFFFFFFF, "transparent black becomes white");
     check(eink(false, 0x00FF0000)[0] == 0xFFFFFFFF, "transparent red becomes white");

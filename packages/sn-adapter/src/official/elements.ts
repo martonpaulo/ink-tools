@@ -29,20 +29,32 @@ type StrokeElement = {
 
 /** Sample points read per bridge call: a word's stroke has a few hundred. */
 const POINTS_PER_READ = 500;
-/** More points than this are cut, so one long scribble cannot hold the bridge. */
+/**
+ * More points than this are not read, so one long scribble cannot hold the bridge; such a stroke is
+ * a failure, never a cut one reported whole, which an Undo Conversion would rebuild shorter (#229).
+ */
 export const MAX_STROKE_POINTS = 4000;
 
 function thrown(error: unknown): Result<never> {
   return fail(THROWN_CODE, error instanceof Error ? error.message : String(error));
 }
 
-/** Every value of a native accessor, at most MAX_STROKE_POINTS, read POINTS_PER_READ at a time. */
+/**
+ * Every value of a native accessor, read POINTS_PER_READ at a time; a failure when it holds more than
+ * MAX_STROKE_POINTS (#229).
+ */
 export async function readAll<T>(accessor: Accessor<T> | undefined): Promise<Result<T[]>> {
   if (!accessor) {
     return ok([]);
   }
   try {
-    const size = Math.min(await accessor.size(), MAX_STROKE_POINTS);
+    const size = await accessor.size();
+    if (size > MAX_STROKE_POINTS) {
+      return fail(
+        THROWN_CODE,
+        `the stroke has ${size} points, more than the ${MAX_STROKE_POINTS} a read takes`,
+      );
+    }
     const values: T[] = [];
     for (let start = 0; start < size; start += POINTS_PER_READ) {
       const count = Math.min(POINTS_PER_READ, size - start);

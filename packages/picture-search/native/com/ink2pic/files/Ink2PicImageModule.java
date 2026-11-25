@@ -103,6 +103,22 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
     });
   }
 
+  /**
+   * The ink mask of a prepared picture at `targetWidth` (never up), for «Insert Sticker» (#35):
+   * resolves {width, height, rows}, `rows` as {@link EinkPixels#inkRows} writes it.
+   */
+  @ReactMethod
+  public void readInkMask(String path, double targetWidth, Promise promise) {
+    ModuleWork.submit(insert, promise, () -> {
+      Pixels pixels = decode(SafePaths.checkPath(path), wholeWidth(targetWidth));
+      WritableMap result = Arguments.createMap();
+      result.putInt("width", pixels.width);
+      result.putInt("height", pixels.height);
+      result.putString("rows", EinkPixels.inkRows(pixels.argb, pixels.width, pixels.height));
+      return result;
+    });
+  }
+
   private static int wholeWidth(double targetWidth) throws SafePaths.Refused {
     int width = (int) targetWidth;
     if (width < 1 || width != targetWidth) {

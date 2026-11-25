@@ -3,7 +3,14 @@
  * the word, never over it, inserted with insertPageElements; beside it, or in place of it, when
  * the person chose so. When anything fails, the caller falls back to the host's own placement.
  */
-import {loggerOf, type LassoPlace, type Logged, type Rect, type Size} from './lasso';
+import {
+  loggerOf,
+  type LassoPlace,
+  type Logged,
+  type OccupiedRead,
+  type Rect,
+  type Size,
+} from './lasso';
 import type {Outcome} from './outcome';
 
 /** Space between the word and the picture, in page pixels. */
@@ -103,6 +110,40 @@ function crosses(a: Rect, b: Rect): boolean {
 /** True when no occupied rect crosses `rect`. */
 export function isFree(rect: Rect, occupied: readonly Rect[]): boolean {
   return !occupied.some(other => crosses(rect, other));
+}
+
+/** True when `inner` lies wholly inside `outer`. */
+function inside(inner: Rect, outer: Rect): boolean {
+  return (
+    inner.left >= outer.left &&
+    inner.top >= outer.top &&
+    inner.right <= outer.right &&
+    inner.bottom <= outer.bottom
+  );
+}
+
+/**
+ * Why a lasso of `rect` could take the person's ink, or null when it cannot (#168, #234): the
+ * device's rect lasso selects every element inside the rect, strokes included, so a placed element
+ * is lassoed only when the whole page was read and nothing else crosses its rect. A partial read
+ * refuses, as Device Transfer learned (#152). Elements wholly inside `ignored` do not count: the
+ * word's own strokes once it was deleted.
+ */
+export function inkUnderRect(
+  rect: Rect,
+  read: OccupiedRead | null,
+  ignored: Rect | null = null,
+): string | null {
+  if (read === null) {
+    return "the page's ink is not known";
+  }
+  if (!read.complete) {
+    return "only part of the page's ink is known";
+  }
+  const others = read.rects.filter(
+    other => crosses(rect, other) && !(ignored && inside(other, ignored)),
+  ).length;
+  return others > 0 ? `${others} other elements in the rect` : null;
 }
 
 /**

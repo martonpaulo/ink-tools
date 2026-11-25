@@ -16,3 +16,4 @@ export * from './runSearch';
 export * from './searchDevice';
 export * from './thumbs';
 export * from './sticker';
+export * from './strokes';

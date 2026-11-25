@@ -1,83 +1,85 @@
-import {ok} from '@ink-tools/sn-adapter/official';
+/** One «Image Editing» lasso button opens the editor; no per-edit rows (#226). */
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {
+  BUTTON_TYPE_LASSO,
   ButtonDeps,
   EDIT_DATA_PICTURE,
-  resetButtonsForTests,
-  syncButtons,
+  registerEditorButton,
+  SHOW_FULL_VIEW,
 } from '../src/buttons';
-import {
-  defaultSettings,
-  EDITS,
-  editOfButton,
-  enabledStyles,
-  setEdit,
-  setStyle,
-  STYLE_ORDER,
-} from '../src/edits';
+import {EDITOR_BUTTON_ID, EDITS, LEGACY_BUTTON_IDS} from '../src/edits';
 
-function fakeDeps() {
-  const calls: string[] = [];
+function fakeDeps(held: readonly number[] = []) {
+  const logs: string[] = [];
   const deps: ButtonDeps = {
-    register: jest.fn(async (_type, _apps, raw) => {
-      const button = raw as {name: string; editDataTypes: number[]};
-      calls.push(`+${button.name}`);
-      expect(button.editDataTypes).toEqual([EDIT_DATA_PICTURE]);
-      return ok(true as const);
-    }),
-    unregister: jest.fn(async id => {
-      calls.push(`-${id}`);
-      return ok(true as const);
-    }),
-    log: () => {},
+    register: jest.fn(async () => ok(true as const)),
+    unregister: jest.fn(async id =>
+      held.includes(id) ? ok(true as const) : fail(1, 'no such button'),
+    ),
+    log: line => logs.push(line),
+    icon: 'file:///editor.png',
   };
-  return {calls, deps};
+  return {deps, logs};
 }
 
-beforeEach(resetButtonsForTests);
-
-test('every edit starts on, each with its own lasso button for pictures', async () => {
-  const {calls, deps} = fakeDeps();
-  await syncButtons(defaultSettings, deps);
-  expect(calls).toEqual(EDITS.map(e => `+${e.name}`));
-  expect(new Set(EDITS.map(e => e.buttonId)).size).toBe(EDITS.length);
-});
-
-test('a switch turned off removes only its button, and nothing changes twice', async () => {
-  const {calls, deps} = fakeDeps();
-  await syncButtons(defaultSettings, deps);
-  calls.length = 0;
-  const off = setEdit(defaultSettings, 'darker', false);
-  await syncButtons(off, deps);
-  await syncButtons(off, deps);
-  const darker = EDITS.find(e => e.id === 'darker')!;
-  expect(calls).toEqual([`-${darker.buttonId}`]);
-});
-
-test('a pressed id maps back to its edit, and a foreign id to none', () => {
-  expect(editOfButton(EDITS[0].buttonId)?.id).toBe('enhance');
-  expect(editOfButton(1)).toBeNull();
-});
-
-test('Styles opens a view; every other edit runs with no view (#133)', async () => {
+test('the plugin registers one lasso button, «Image Editing», for pictures, with a full view', async () => {
   const {deps} = fakeDeps();
-  await syncButtons(defaultSettings, deps);
-  const shows = (deps.register as jest.Mock).mock.calls.map(
-    call => [call[2].name, call[2].showType] as const,
-  );
-  expect(shows.filter(([, show]) => show === 1)).toEqual([['Styles', 1]]);
-  expect(shows.filter(([, show]) => show === 0)).toHaveLength(EDITS.length - 1);
+  expect(await registerEditorButton(deps)).toEqual(ok(true));
+  const register = deps.register as jest.Mock;
+  expect(register).toHaveBeenCalledTimes(1);
+  expect(register.mock.calls[0]).toEqual([
+    BUTTON_TYPE_LASSO,
+    ['NOTE'],
+    {
+      id: EDITOR_BUTTON_ID,
+      name: 'Image Editing',
+      editDataTypes: [EDIT_DATA_PICTURE],
+      showType: SHOW_FULL_VIEW,
+      icon: 'file:///editor.png',
+    },
+  ]);
 });
 
-test('with every style switched off, the Styles button goes and the grid never opens empty', async () => {
-  const {calls, deps} = fakeDeps();
-  await syncButtons(defaultSettings, deps);
-  calls.length = 0;
-  const none = STYLE_ORDER.reduce(
-    (s, id) => setStyle(s, id, false),
-    defaultSettings,
+test('the rows of earlier builds, one per edit, are removed after the registration', async () => {
+  const {deps, logs} = fakeDeps([LEGACY_BUTTON_IDS[0], LEGACY_BUTTON_IDS[3]]);
+  await registerEditorButton(deps);
+  await new Promise(resolve => setImmediate(resolve));
+  expect((deps.unregister as jest.Mock).mock.calls.map(call => call[0])).toEqual([
+    ...LEGACY_BUTTON_IDS,
+  ]);
+  expect((deps.register as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+    (deps.unregister as jest.Mock).mock.invocationCallOrder[0],
   );
-  await syncButtons(none, deps);
-  const styles = EDITS.find(e => e.id === 'styles')!;
-  expect(calls).toEqual([`-${styles.buttonId}`]);
-  expect(enabledStyles(none)).toEqual([]);
+  expect(LEGACY_BUTTON_IDS).toHaveLength(EDITS.length);
+  expect(LEGACY_BUTTON_IDS).not.toContain(EDITOR_BUTTON_ID);
+  expect(logs).toEqual([
+    'register Image Editing: ok',
+    `removed lasso row ${LEGACY_BUTTON_IDS[0]} of an earlier build`,
+    `removed lasso row ${LEGACY_BUTTON_IDS[3]} of an earlier build`,
+  ]);
+});
+
+test('an unregister that never settles still leaves the button registered (#226)', async () => {
+  const {deps} = fakeDeps();
+  deps.unregister = jest.fn(() => new Promise<never>(() => {}));
+  expect(await registerEditorButton(deps)).toEqual(ok(true));
+  expect(deps.register).toHaveBeenCalledTimes(1);
+  expect(deps.unregister).toHaveBeenCalledTimes(LEGACY_BUTTON_IDS.length);
+});
+
+test('a refused registration is logged and answered', async () => {
+  const {deps, logs} = fakeDeps();
+  deps.register = jest.fn(async () => fail(7, 'refused'));
+  expect(await registerEditorButton(deps)).toEqual(fail(7, 'refused'));
+  expect(logs[0]).toBe('register Image Editing failed: 7 refused');
+});
+
+test('the button icon is drawn from its SVG and bundled by name (#107)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const assets = path.join(__dirname, '..', 'assets');
+  expect(fs.existsSync(path.join(assets, 'editor.svg'))).toBe(true);
+  expect(fs.existsSync(path.join(assets, 'editor.png'))).toBe(true);
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'buttons.ts'), 'utf8');
+  expect(source).toContain("require('../assets/editor.png')");
 });

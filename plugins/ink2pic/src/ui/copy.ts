@@ -137,6 +137,8 @@ export const copy = {
   'source.commons': 'Wikimedia',
   'source.wikidata': 'Wikipedia',
   'source.openmoji': 'Symbols',
+  /** Why the last source on cannot be turned off, next to it (#233). */
+  'settings.oneSourceStays': 'One source always stays on.',
   'settings.dataSaver': 'Data saver: fewer and smaller pictures',
   'settings.dataSaver.off': 'Off',
   'settings.dataSaver.on': 'On',
@@ -148,6 +150,8 @@ export const copy = {
   'settings.symbolsUnreadable':
     'Saved symbols cannot be read now. Open Settings again to retry.',
   'settings.symbolsDownload': 'Download symbols for offline use',
+  /** Why the download waits, next to its disabled button (#233). */
+  'settings.symbolsCounting': 'Counting the saved symbols first.',
   'settings.symbolsWhere':
     "Symbols are kept in Ink2Pic's own private folder, which Supernote file sync does not read: each file in a synced folder adds about 0.14 s to every sync, so 1,447 symbols would add about 4 minutes. A .ink2pic-symbols folder left by an earlier build is not used; delete it with the File Manager.",
   'settings.symbolsOld':

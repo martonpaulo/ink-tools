@@ -1,5 +1,10 @@
 # Project Working Agreements
 
+**Retired.** Word Lookup replaced Ink2Pic, which is uninstalled from the tablet
+([#45](https://github.com/martonpaulo/ink-tools/issues/45)); its code stays here as the seed of the
+shared packages. This folder is one subproject of the `martonpaulo/ink-tools` monorepo, whose root
+[`AGENTS.md`](../../AGENTS.md) carries the shared policy; this file holds only what is Ink2Pic's.
+
 ## Project identity and policy
 
 - Display name: `Ink2Pic`
@@ -7,7 +12,7 @@
 - Slug: `ink2pic`
 - Identifier name: `ink2pic`
 - Benefit-first description: Write a word by hand on your Supernote, lasso it, and insert a matching picture from Openclipart or Wikimedia Commons. Keyless, no phone needed.
-- Repository: `martonpaulo/ink2pic` (public)
+- Repository: `martonpaulo/ink-tools` (public), folder `plugins/ink2pic/`; older links to `martonpaulo/ink2pic` issues stay as written
 - Public identifiers: `pluginKey` and React Native `appName` `Ink2Pic`; `pluginID` generated once by the first build, committed in `PluginConfig.json` and never changed; shared-storage folder `MyStyle/Ink2Pic/`; HTTP User-Agent `Ink2Pic/<versionName> (+https://github.com/martonpaulo/ink2pic)`.
 - Landing page: None. The repository README is the public surface.
 - License: `MIT`
@@ -17,7 +22,7 @@
 - Branch policy: work on `main` only, with no branch protection, because direct pushes to `main` are the workflow; create or switch branches only when the owner asks.
 - Commit policy: commit each coherent task automatically once it is complete and `npm run validate` passes; only the change's files, one concern per commit.
 - Push policy: push each validated commit to `origin/main` automatically, so a cloud session loses nothing; a cloud session pushes `main` too, only for a `runs: cloud` issue whose gates all ran there (owner decision, 2026-11-06). Cloud setup command: `bash scripts/cloud-setup.sh` (a cloud run's start).
-- Product versioning: SemVer; `version` in `package.json` is the canonical `versionName` (the build copies it into `PluginConfig.json`), starting at `0.1.0`. `versionCode` in `PluginConfig.json` goes up by one on every build sent to the device, so each test report maps to exact code. Each build sent to the device for testing is a GitHub prerelease `v<versionName>-dev.<versionCode>` carrying `Ink2Pic-<versionName>-dev.<versionCode>.snplg`, made without asking (owner decision, 2026-11-06). A stable tag, a `CHANGELOG.md` entry and a stable GitHub release happen only when the owner asks, through `project-release`.
+- Product versioning: SemVer; `version` in `package.json` is the canonical `versionName` (the build copies it into `PluginConfig.json`), starting at `0.1.0`. `versionCode` in `PluginConfig.json` goes up by one on every build sent to the device, so each test report maps to exact code. Each build sent to the device for testing is a GitHub prerelease `ink2pic-v<versionName>-dev.<versionCode>` carrying `Ink2Pic-<versionName>-dev.<versionCode>.snplg`, made without asking (owner decision, 2026-11-06). A stable tag, a `CHANGELOG.md` entry and a stable GitHub release happen only when the owner asks, through `project-release`.
 - Merge policy: merge commits, the only method the repository allows; pull requests are rare under the `main`-only policy.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: enabled

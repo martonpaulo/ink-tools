@@ -73,6 +73,18 @@ public final class EinkPixels {
         / WEIGHT_TOTAL;
   }
 
+  /**
+   * The picture's ink as one '1' (gray below {@link #MID_GRAY} on white) or '0' per pixel, row
+   * after row: the mask «Insert Sticker» traces into pen strokes (#35).
+   */
+  public static String inkRows(int[] argb, int width, int height) {
+    StringBuilder rows = new StringBuilder(width * height);
+    for (int i = 0; i < width * height; i++) {
+      rows.append(luminance(argb[i]) < MID_GRAY ? '1' : '0');
+    }
+    return rows.toString();
+  }
+
   /** A linear stretch around the middle gray, clamped, so white stays white. */
   public static int contrast(int gray) {
     long stretched = Math.round(MID_GRAY + (gray - MID_GRAY) * CONTRAST);

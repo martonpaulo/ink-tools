@@ -23,6 +23,11 @@ that holds a picture `pictures.json` lists ([#219](https://github.com/martonpaul
 go in at the owner's one small size, 200 px, below the word; Settings
 keeps only Picture sources and Data saver for pictures, which `modeSearchSettings` reads
 ([#105](https://github.com/martonpaulo/ink-tools/issues/105)).
+«Insert Sticker» pastes a sticker made of pen strokes, since the tablet refuses a picture as a
+sticker (error 205, owner D62 A, [#35](https://github.com/martonpaulo/ink-tools/issues/35)): picture-search's `insert/strokes.ts` takes the
+outlines of a Commons SVG original, else traces the prepared picture's ink mask (`readInkMask`),
+within a 600-point budget, and `insert/sticker.ts` writes them through `convertElement2Sticker`
+and `insertSticker`; a failure inserts the picture. Its device round is open.
 «Insert Definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from Ink2Pic: `src/definition.ts` reads the lasso,
 defines it in pt then es through `src/dictionaries.ts` and inserts a 640 px text box below the word,
 with no view. «Insert Summary» ([#114](https://github.com/martonpaulo/ink-tools/issues/114)): `src/summary.ts` reads the lasso, asks ink-core's
@@ -82,7 +87,7 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
 - Each lasso button registers its own icon, distinct in silhouette ([#107](https://github.com/martonpaulo/ink-tools/issues/107)): `assets/<name>.svg`
   rendered by `npm run icons` (Playwright on `NODE_PATH`) to a 96 x 96 PNG (owner D43 A), named once
   in `src/icons.ts`; `__tests__/icons.test.ts` fails for a button with no icon, such as a new direction's.
-  `assets/contact-sheet.png` shows them all beside Device Transfer's.
+  `assets/contact-sheet.png` shows them all beside Device Transfer's and Image Editing's.
 - Permissions: `plugin.permission.INTERNET` for the dictionary and the picture sources,
   `plugin.permission.FILE:READ` for the lasso calls ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) and `plugin.permission.FILE:WRITE`
   for the settings file and the prepared pictures ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)); add another only with its first call

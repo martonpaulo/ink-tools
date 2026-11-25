@@ -8,7 +8,7 @@ import path from 'node:path';
 import {measureFirstPages, MeasureDeps} from '../src/flow/measure';
 import {startLog} from '../src/profile';
 import {ok} from '@ink-tools/sn-adapter/official';
-import type {Measures} from '@ink-tools/picture-search/measures';
+import {keepMode, type Measures} from '@ink-tools/picture-search/measures';
 import type {SearchResult} from '@ink-tools/picture-search/types';
 
 const ROOT = path.join(__dirname, '..');
@@ -128,7 +128,11 @@ const result = (id: string, canonical = false): SearchResult => ({
 });
 const results = [...ids.map(id => result(id)), result('later')];
 
-type Style = {allContour: boolean; photos: boolean};
+type Style = {
+  allContour: boolean;
+  photos: boolean;
+  mode?: 'photo' | 'illustration';
+};
 
 /** The lab's order, from its own module in Node. */
 function labOrder(query: string, style: Style): string[] {
@@ -190,7 +194,11 @@ async function deviceOrder(query: string, style: Style): Promise<string[]> {
     photos: async () => style.photos,
   };
   const measured = await measureFirstPages(results, '/t', query, deps);
-  return measured.results.map(item => item.id);
+  // A Word Lookup mode keeps only its measured tiles, as `modeDeps` does (#111).
+  const kept = style.mode
+    ? keepMode(measured.results, measured.measures, style.mode)
+    : measured.results;
+  return kept.map(item => item.id);
 }
 
 describe('the lab order is the device order (#100)', () => {
@@ -202,6 +210,8 @@ describe('the lab order is the device order (#100)', () => {
     ['cat photo', {allContour: false, photos: false}],
     ['cat', {allContour: false, photos: true}],
     ['cat', {allContour: true, photos: false}],
+    // Word Lookup's «Insert Image» (#13): only the measured photos stay.
+    ['cat', {allContour: false, photos: true, mode: 'photo' as const}],
   ])(
     'gives the same order for "%s" with %j',
     async (query, style) => {
@@ -209,6 +219,45 @@ describe('the lab order is the device order (#100)', () => {
       expect(labOrder(query, style)).toEqual(device);
       // The measures move results, so the test compares real orders.
       expect(device).not.toEqual(results.map(item => item.id));
+      expect(device.length).toBeGreaterThan(0);
+    },
+    LAB_TIMEOUT_MS,
+  );
+});
+
+/** The lab's style for a run name, from its own module in Node. */
+function labStyle(run: string): unknown {
+  const script = `
+    import {styleFor} from './lab/runner.mjs';
+    process.stdout.write(JSON.stringify(styleFor(${JSON.stringify(run)})));
+  `;
+  return JSON.parse(
+    execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      cwd: ROOT,
+      encoding: 'utf8',
+    }),
+  );
+}
+
+describe('a lookup-photo run searches as Insert Image (#13)', () => {
+  it(
+    'takes the photo mode of Word Lookup, and Drawings for any other run',
+    () => {
+      expect(labStyle('lookup-photo')).toEqual({
+        allContour: false,
+        photos: true,
+        mode: 'photo',
+        skipSources: ['openclipart', 'openmoji'],
+      });
+      expect(labStyle('lookup-photo-2')).toEqual(labStyle('lookup-photo'));
+      for (const run of ['lookup', 'lookup-photos', 'ci']) {
+        expect(labStyle(run)).toEqual({
+          allContour: false,
+          photos: false,
+          mode: null,
+          skipSources: [],
+        });
+      }
     },
     LAB_TIMEOUT_MS,
   );
