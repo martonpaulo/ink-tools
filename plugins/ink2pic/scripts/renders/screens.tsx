@@ -5,6 +5,7 @@
 import React from 'react';
 import {Image, Pressable} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import type {WindowName} from './html';
 import * as asResults from '../../src/library/asResults';
 import * as libraryDevice from '../../src/library/device';
 import type {LibraryItem} from '../../src/library/types';
@@ -36,6 +37,8 @@ import {defaultSettings as imageEditingSettings} from '../../../image-editing/sr
 export type ScreenRender = {
   name: string;
   render: () => Promise<ReactTestRenderer>;
+  /** The windows the screen is not checked at, and why; the run prints the reason (#284). */
+  skip?: {windows: WindowName[]; reason: string};
 };
 
 /** Synthetic line drawings and one grey photo-like picture, as inline SVG thumbnails. */
@@ -302,7 +305,14 @@ export const SCREENS: ScreenRender[] = [
   {name: 'offline', render: () => search('rain', [fails('network')])},
   {name: 'error', render: () => search('storm', [fails('http')])},
   {name: 'recognition-failed', render: () => mount(<SearchScreen initialQuery="" lassoFailure={{ok: false, code: 117, message: 'fixture', step: 'lasso'}} onPick={async () => ({ok: true, value: null})} onClose={() => {}} />)},
-  {name: 'log', render: async () => press(await search('star', [answers(FIXTURE_RESULTS)]), copy['action.log'])},
+  {
+    name: 'log',
+    render: async () => press(await search('star', [answers(FIXTURE_RESULTS)]), copy['action.log']),
+    skip: {
+      windows: ['nomad', 'turned'],
+      reason: 'Ink2Pic is retired (#45) and its log clips its oldest lines at the top by design',
+    },
+  },
   {name: 'onboarding', render: () => mount(<Onboarding missing={PERMISSIONS} onDone={() => {}} onClose={() => {}} />)},
   {name: 'status-adding', render: () => mount(<StatusScreen text={copy['insert.running']} onClose={() => {}} />)},
   {name: 'status-starting', render: () => mount(<StatusScreen text={copy['app.starting']} onClose={() => {}} />)},

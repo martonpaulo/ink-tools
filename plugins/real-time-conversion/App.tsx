@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   Choice,
   ChoiceList,
@@ -51,8 +51,11 @@ export default function App({
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
-      {/* The groups own the gap above them, so they sit in a container with none (#275). */}
-      <View>
+      {/*
+        The groups own the gap above them, so they sit in a container with none (#275); it
+        scrolls, since the rows outgrow the Nomad's window and the turned Manta's (#284).
+      */}
+      <ScrollView style={styles.rows}>
         <SwitchRow
           title={copy['settings.start']}
           value={settings.startOn}
@@ -74,7 +77,11 @@ export default function App({
           caption={copy['settings.font']}
           note={copy['settings.fontNote']}
         />
-      </View>
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  rows: {flex: 1},
+});

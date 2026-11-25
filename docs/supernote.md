@@ -32,7 +32,9 @@ explained.
 
 - Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
   arithmetic in `plugins/ink2pic/docs/brief.md`].
-- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs]. Handwriting Language's
+- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs; measured, Nomad, 2026-11-25,
+  `adb exec-out screencap` and `inkctl snapshot`: plugin views report coordinates in that space,
+  [#284](https://github.com/martonpaulo/ink-tools/issues/284)]. Handwriting Language's
   button place is tested on both screens, each turned both ways
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)).
 - A floating window of a sideloaded app follows a screen turn: Handwriting Language's button,

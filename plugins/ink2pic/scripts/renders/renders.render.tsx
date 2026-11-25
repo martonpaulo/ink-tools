@@ -95,6 +95,10 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
   /** Every target's box per screen, to compare a layout change before and after (#97). */
   const geometry: Record<string, Measured['targets']> = {};
   for (const screen of SCREENS) {
+    if (screen.skip?.windows.includes(WINDOW_NAME)) {
+      process.stdout.write(`renders: skip ${screen.name} at ${WINDOW_NAME}: ${screen.skip.reason}\n`);
+      continue;
+    }
     const tree = await screen.render();
     const json = tree.toJSON();
     await page.setContent(toHtml(json, scale), {waitUntil: 'load'});

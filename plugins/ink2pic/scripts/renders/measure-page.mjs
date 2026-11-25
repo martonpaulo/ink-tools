@@ -59,8 +59,23 @@ export function measurePage() {
   const texts = [...document.querySelectorAll('.text')]
     .filter(el => shown(el) && (el.textContent ?? '').trim() !== '')
     .map(el => {
-      const range = document.createRange();
-      range.selectNodeContents(el);
+      // The glyphs are the words: a space Chromium hangs past a line's end draws nothing (#284).
+      const words = [];
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        for (const match of node.data.matchAll(/\S+/g)) {
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + match[0].length);
+          words.push(...range.getClientRects());
+        }
+      }
+      const glyphs = words.reduce((all, rect) => ({
+        left: Math.min(all.left, rect.left),
+        top: Math.min(all.top, rect.top),
+        right: Math.max(all.right, rect.right),
+        bottom: Math.max(all.bottom, rect.bottom),
+      }));
       const within = [];
       const scroll = el.closest('[data-scroll]');
       const end = scroll ?? root.parentElement;
@@ -80,7 +95,7 @@ export function measurePage() {
         name: nameOf(el),
         text: (el.textContent ?? '').trim(),
         fontSize,
-        glyphs: boxOf(range.getBoundingClientRect()),
+        glyphs: boxOf(glyphs),
         within,
         scroll: scrollOf(el),
       };
