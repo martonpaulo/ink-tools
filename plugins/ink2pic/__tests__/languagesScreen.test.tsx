@@ -207,8 +207,12 @@ describe('the Settings entry (#68)', () => {
     (PluginCommAPI.getLassoElements as jest.Mock).mockReturnValue(ok([]));
   });
 
+  /** A clock that stands still, where a test needs the host's replay window (#265). */
+  let clock: jest.SpyInstance | undefined;
   afterEach(() => {
     delete NativeModules.Ink2PicFiles;
+    clock?.mockRestore();
+    clock = undefined;
   });
 
   async function settle() {
@@ -221,6 +225,9 @@ describe('the Settings entry (#68)', () => {
 
   it('opens Settings for a click that came before the view mounted, and saves a Languages tap', async () => {
     files[settingsPath()] = JSON.stringify({languages: ['zh', 'es', 'en']});
+    // The replay below must fall inside REPLAY_WINDOW_MS however slow the runner is: a CI run
+    // took longer, so the replay opened a second flow (#265).
+    clock = jest.spyOn(Date, 'now').mockReturnValue(Date.now());
     startConfigQueue();
     const click = (PluginManager.registerConfigButtonListener as jest.Mock).mock
       .calls[0][0].onClick;
