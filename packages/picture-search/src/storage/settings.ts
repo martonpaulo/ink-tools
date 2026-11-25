@@ -14,6 +14,7 @@
  */
 import { log, logged } from "../log/memory";
 import { systemLanguage, ok, Result } from "@ink-tools/sn-adapter/official";
+import { REGISTRY } from "@ink-tools/sn-adapter/registry";
 import { listDir as deviceListDir } from "./files";
 import { pluginPath, SHARED_ROOT, settingsPath } from "./paths";
 import type { TextStore } from "../cache";
@@ -108,12 +109,16 @@ export type SettingsPlace = {
 /** The file name, the one a conflict copy keeps inside its renamed folder too. */
 const SETTINGS_FILE = "settings.json";
 
-/** A folder Supernote's sync renamed: `<name>_CONFLICT_<yyyyMMddHHmmssSSS>` (#22). */
+/**
+ * A folder Supernote's sync renamed: `<name>_CONFLICT_<yyyyMMddHHmmssSSS>` (#22; registry item
+ * storage.cloud-conflict-folder).
+ */
 export function conflictCopies(folder: string, names: readonly string[]): string[] {
+  const {marker, digits} = REGISTRY.storageCloudConflictFolder;
   const pattern = new RegExp(
-    `^${folder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}_CONFLICT_(\\d{17})$`
+    `^${folder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}${marker}(\\d{${digits}})$`
   );
-  // Newest first: the 17 digits are a time, so they sort as text.
+  // Newest first: the digits are a time, so they sort as text.
   return names.filter((name) => pattern.test(name)).sort().reverse();
 }
 

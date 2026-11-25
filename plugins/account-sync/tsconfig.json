@@ -9,6 +9,8 @@
       // sn-adapter's official tier (#101); ink-core for the page types it names.
       "@ink-tools/sn-adapter": ["../../packages/sn-adapter/src"],
       "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
+      // The registry of internals (#294).
+      "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       "@ink-tools/ink-core": ["../../packages/ink-core/src"],
       // Word Lookup's Settings in the renders, which this plugin runs and checks (#288).
       "@ink-tools/picture-search": ["../../packages/picture-search/src"],

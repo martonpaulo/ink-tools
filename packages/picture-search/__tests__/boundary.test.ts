@@ -59,7 +59,7 @@ it('keeps the insert tier on its package, ink-core and the official tier (#142)'
   expect(offenders).toEqual([]);
 });
 
-it('keeps the device tier on the platform: react-native and the official tier only (#142)', () => {
+it('keeps the device tier on the platform: react-native, the official tier and the registry of internals only (#142, #294)', () => {
   const files = [...sources(join(SRC, 'storage')), ...sources(join(SRC, 'log'))];
   expect(files.length).toBeGreaterThan(0);
   const offenders = files.flatMap(file =>
@@ -68,7 +68,8 @@ it('keeps the device tier on the platform: react-native and the official tier on
         target =>
           !target.startsWith('.') &&
           target !== 'react-native' &&
-          target !== '@ink-tools/sn-adapter/official',
+          target !== '@ink-tools/sn-adapter/official' &&
+          target !== '@ink-tools/sn-adapter/registry',
       )
       .map(target => `${relative(SRC, file)} imports ${target}`),
   );

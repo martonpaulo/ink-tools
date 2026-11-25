@@ -131,7 +131,9 @@ test('inkctl writes the drop files where Bridge reads them', () => {
     path.join(__dirname, '../../../cli/inkctl/src/inkctl'),
     'utf8',
   );
-  expect(cli).toContain(`SIGN_IN_DROP_FOLDER = "${SECRET_DROP_FOLDER}"`);
+  // Both sides read registry item storage.sign-in-drop-folder (#294).
+  expect(cli).toContain('SIGN_IN_DROP_FOLDER = REGISTRY["storage.sign-in-drop-folder"]["folder"]');
+  expect(cli).toContain(`"folder": "${SECRET_DROP_FOLDER}"`);
 });
 
 import config from '../PluginConfig.json';

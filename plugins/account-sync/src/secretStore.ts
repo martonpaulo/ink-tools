@@ -5,6 +5,7 @@
  * deletes one to sign out. A refused read throws with the module's reason: an unreadable secret is
  * never shown as signed out, and never sent to a service.
  */
+import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 import {
   parseGoogleClient,
   parseSecret,
@@ -73,11 +74,10 @@ export async function readGoogleClient(
  * Where `inkctl secret set` leaves a sign-in secret (#116): `adb shell` cannot write the private
  * folder (Permission denied on the tablet, 2026-11-17), so the Mac writes a one-shot drop file in a
  * folder the plugin file guard allows and Supernote Cloud does not sync (hidden), and Bridge moves
- * it in. `cli/inkctl/src/inkctl` has the same path as `SIGN_IN_DROP_FOLDER`.
+ * it in. It is registry item storage.sign-in-drop-folder, which inkctl reads too (#294).
  * shortcut: the folder is not yet measured on the tablet; the #116 device round checks it.
  */
-export const SECRET_DROP_FOLDER =
-  '/storage/emulated/0/.data/plugin/inktools-account-sync';
+export const SECRET_DROP_FOLDER = REGISTRY.storageSignInDropFolder.folder;
 
 /** What happened to one provider's drop file; the value is never in it. */
 export type SecretDrop =

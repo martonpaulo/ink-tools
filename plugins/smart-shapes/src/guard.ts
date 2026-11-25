@@ -10,13 +10,16 @@
  * is ignored rather than guessed.
  */
 
-export const LASSO_PEN_TYPE = 4;
+import {REGISTRY} from '@ink-tools/sn-adapter/registry';
+
+/** Registry item pen.pen-types. */
+export const LASSO_PEN_TYPE = REGISTRY.penPenTypes.lasso;
 
 /**
  * SDK: 1 = pressure pen, 10 = fineliner, 11 = marker, 15 = calligraphy.
  * Measured on a Manta: 16 = ink pen (undocumented).
  */
-export const INK_PEN_TYPES: readonly number[] = [1, 10, 11, 15, 16];
+export const INK_PEN_TYPES: readonly number[] = REGISTRY.penPenTypes.ink;
 
 export type StrokeOrigin = 'ink' | 'lasso' | 'unknown';
 
