@@ -544,6 +544,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   name: a log read filtered by the plugin's name as a tag shows nothing [measured].
 - A pressed plugin row moves to the top of the plugin rows in the lasso «⋯» list, which the host
   sorts by last use [measured, 2026-11-16].
+- Image Editing's edits on the Manta take 2.1 to 3.8 s on a full-width picture (Enhance 3750 ms,
+  Lighter 2154 ms, Darker 2100 ms) and under 1.1 s on a 400 x 362 one; the table is in
+  [Image Editing's product notes](../plugins/image-editing/docs/product.md#measured-edit-times)
+  [measured, Image Editing 0.1.0 beta 15, Manta, 2026-11-25, [#145](https://github.com/martonpaulo/ink-tools/issues/145)].
+- The picture a lassoed-picture edit receives is almost all half transparent: for the 400 x 362
+  apple, Retouch's cutout log read `alpha clear 9 partial 144154 opaque 637`, grey 157/158/254,
+  so a mask built on opaque pixels clears the object [measured, Image Editing 0.1.0 beta 15, Manta,
+  2026-11-25, [#134](https://github.com/martonpaulo/ink-tools/issues/134)].
 
 ### Handwriting recognition language
 

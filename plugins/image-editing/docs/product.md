@@ -57,3 +57,21 @@ or too dark on the 16-grey screen.
 | :--- | :--- | :--- |
 | Time of one edit | Within 2 s on the Manta, measured on the device; a longer one shows the plugin's «Working…» panel ([#103](https://github.com/martonpaulo/supernote-tools/issues/103)) | Owner, 2026-11-15 ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)) |
 | Picture width after Enhance | At most the page width, never scaled up | Owner, 2026-11-15 ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)) |
+
+## Measured edit times
+
+Image Editing 0.1.0 beta 15 on the Manta, from the editor view's button to Retouch's own
+`done in` log line, on the 960 x 870 px apple fixture (`MyStyle/Fixtures/fixture-photo-apple.png`)
+([#145](https://github.com/martonpaulo/ink-tools/issues/145), 2026-11-25):
+
+| Edit | Full width (976 x 886 on the page) | Small (400 x 362) |
+| :--- | ---: | ---: |
+| Enhance | 3750 ms | 1009 ms |
+| Lighter | 2154 ms | 718 ms |
+| Darker | 2100 ms | 736 ms |
+| Undo | 1012 ms | 456 ms |
+| Restore original | 1165 ms | 495 ms |
+| Trim | | 994 ms |
+| Remove background | | 910 ms |
+
+Enhance, Lighter and Darker on a full-width picture pass the 2 s limit above.
