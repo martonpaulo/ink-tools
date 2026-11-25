@@ -178,7 +178,9 @@ public final class OverlayService extends Service {
     float[] place = new Prefs(this).place();
     float x = place != null ? place[0] : ButtonPlace.DEFAULT_X;
     float y = place != null ? place[1] : ButtonPlace.defaultY(screen.height(), params.height);
-    moveTo(ButtonPlace.pixels(x, screen.width(), params.width), ButtonPlace.pixels(y, screen.height(), params.height));
+    float[] snapped = ButtonPlace.snap(x, y, screen.width(), screen.height(), params.width);
+    moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width),
+        ButtonPlace.pixels(snapped[1], screen.height(), params.height));
   }
 
   private void moveTo(int x, int y) {
@@ -217,8 +219,13 @@ public final class OverlayService extends Service {
         } else if (result == ButtonGesture.Result.DRAG) {
           follow(x, y); // the up event can sit past the last move's point
           Rect screen = windows.getCurrentWindowMetrics().getBounds();
-          new Prefs(this).setPlace(ButtonPlace.fraction(params.x, screen.width(), params.width),
-              ButtonPlace.fraction(params.y, screen.height(), params.height));
+          // Rest against the nearest edge: one move, one refresh, no animation (#275).
+          float[] snapped = ButtonPlace.snap(ButtonPlace.fraction(params.x, screen.width(), params.width),
+              ButtonPlace.fraction(params.y, screen.height(), params.height),
+              screen.width(), screen.height(), params.width);
+          new Prefs(this).setPlace(snapped[0], snapped[1]);
+          moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width),
+              ButtonPlace.pixels(snapped[1], screen.height(), params.height));
           Log.i(Switcher.TAG, "surface=overlay moved x=" + params.x + " y=" + params.y);
         }
         return true;

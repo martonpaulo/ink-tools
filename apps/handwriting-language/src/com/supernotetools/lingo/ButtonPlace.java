@@ -36,6 +36,32 @@ final class ButtonPlace {
     return Math.max(0, Math.min(px, screen - size));
   }
 
+  /**
+   * The place the button rests at: `fx`, `fy` moved to the nearest of the four screen edges (by
+   * pixels), keeping its position along that edge, fully on screen (#275). Applied when a drag
+   * ends and again when a place is read, so an older build's middle or off-screen place snaps too.
+   * Returns `{x, y}` fractions; one of them is 0 or 1.
+   */
+  static float[] snap(float fx, float fy, int width, int height, int size) {
+    float x = clampFraction(fx);
+    float y = clampFraction(fy);
+    float left = x * Math.max(0, width - size);
+    float right = (1f - x) * Math.max(0, width - size);
+    float top = y * Math.max(0, height - size);
+    float bottom = (1f - y) * Math.max(0, height - size);
+    float nearest = Math.min(Math.min(left, right), Math.min(top, bottom));
+    if (nearest == right) {
+      return new float[] {1f, y};
+    }
+    if (nearest == left) {
+      return new float[] {0f, y};
+    }
+    if (nearest == bottom) {
+      return new float[] {x, 1f};
+    }
+    return new float[] {x, 0f};
+  }
+
   /** The default place's vertical fraction on a screen of `height`. */
   static float defaultY(int height, int size) {
     return fraction(TOP_PX, height, size);

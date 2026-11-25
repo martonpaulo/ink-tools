@@ -16,7 +16,9 @@ Two surfaces ship in one build:
 - **A, the floating button** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
   `ES`); one tap moves to the next, a long press opens the app's screen, a drag moves it
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts at the top trailing
-  corner and stays where it is dragged, saved as fractions of the screen so it stays on screen
+  corner. A drag ends against the nearest screen edge, fully on screen, keeping its place along
+  that edge (`ButtonPlace.snap`, also applied when a saved place is read, so an older middle or
+  off-screen place snaps; no animation, [#275](https://github.com/martonpaulo/ink-tools/issues/275)). The place is saved as fractions of the screen so it stays on an edge
   when the screen turns (`ButtonGesture`, `ButtonPlace`); Settings' «Reset Button Position» puts it
   back. It shows only where the owner writes, or always, or never (the setting), and comes back
   after a restart of the tablet or an update of the app unless hidden.
@@ -133,7 +135,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.11` gives the `versionName` `0.1.0 beta 11` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.12` gives the `versionName` `0.1.0 beta 12` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.
