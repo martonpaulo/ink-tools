@@ -20,6 +20,7 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (15), 2026-11-07, firmware 3.31.45](#build-010-15-2026-11-07-firmware-33145)
 - [Build 0.1.0 (16), 2026-11-07, firmware 3.31.45](#build-010-16-2026-11-07-firmware-33145)
 - [Build 0.1.0 (18), 2026-11-15, firmware 3.31.45](#build-010-18-2026-11-15-firmware-33145)
+- [Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad](#word-lookup-020-beta-27-28-2026-11-25-nomad)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
 
@@ -184,4 +185,26 @@ Prerelease [`ink2pic-v0.1.0-dev.18`](https://github.com/martonpaulo/supernote-to
 | Insert definition, «maçã», English only | A clear refusal | Pass | «Add Portuguese or Spanish to the search languages» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
 | Insert definition, «maçã», with Portuguese | A definition below the word | Partial | Inserted in 3.1 s; the box is 200 px wide, the second sense «cama» is wrong, and a picture search ran too ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
 | InkHub upload rules | The cover size and format | Pass | Upload Item takes up to 6 thumbnails in a 3:4 slot from the tablet's folders; no pixel size or file type stated ([#100](https://github.com/martonpaulo/supernote-tools/issues/100)) |
+
+## Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad
+
+The shared «Insert best picture» flow, now in Word Lookup (Ink2Pic is retired). Prerelease
+[`word-lookup-v0.2.0-beta.27`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.27),
+commit `942e2aa`, installed with `inkctl plugin install`; beta 26 measured just before as the base.
+«Insert Image» on `Note/Tests/Fixtures.note` page 1, read as «appe»; the agent lassoed the word over
+Plugin Diagnostics and read the log over ADB; the fixture note was restored after
+([#19](https://github.com/martonpaulo/ink-tools/issues/19)).
+
+| Run | Search | Thumbnails | Insert and lasso | `time total` |
+| --- | ---: | ---: | ---: | ---: |
+| beta 26, cache hit | 2 ms | 1726 ms | 216 + 392 ms | 2343 ms |
+| beta 27, cache miss | 3185 ms (Commons 557, Wikidata 1953, rank 1057) | 1486 ms | 233 + 455 ms | 5380 ms |
+| beta 27, cache hit | 2 ms | 1100 ms | 379 + 446 ms | 1932 ms |
+
+- Recognition takes about 1 s before `time total` starts: 999, 976 and 963 ms.
+- Beta 26 measured page 1 one thumbnail per 120 ms, though each took 20 to 110 ms on three threads:
+  the leader check re-ran the text scorers after every thumbnail. Beta 27 scores once; the gap is 50 ms.
+- No run stopped early (`12 of 12 measured`): the contour of one «solid» tile (479 to 780 ms) sets
+  the end of the measure.
+- `time rank` is new: ranking 18 results takes 1057 ms, a third of a missed search.
 
