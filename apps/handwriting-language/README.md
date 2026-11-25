@@ -13,7 +13,7 @@ Status: test build `0.1.0 beta 7` for a device round ([#157](https://github.com/
 ```sh
 adb uninstall com.supernotetools.dialect   # only when the old Dialect build is installed
 node scripts/build.cjs
-adb install build/outputs/lingo-app-0.1.0-beta.9.apk
+adb install build/outputs/lingo-app-0.1.0-beta.10.apk
 adb shell appops set com.supernotetools.lingo MANAGE_EXTERNAL_STORAGE allow
 adb shell appops set com.supernotetools.lingo SYSTEM_ALERT_WINDOW allow
 adb shell settings put secure enabled_accessibility_services com.supernotetools.lingo/.WritingWatcher
