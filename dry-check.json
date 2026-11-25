@@ -153,7 +153,7 @@
    "packages/ink-core": 1,
    "plugins/account-sync": 5,
    "plugins/device-transfer": 2,
-   "plugins/image-editing": 5,
+   "plugins/image-editing": 4,
    "plugins/real-time-conversion": 1
   },
   "identical": {
