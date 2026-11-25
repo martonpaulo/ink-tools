@@ -214,28 +214,27 @@ def outline_box(paths, stroke):
     return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
 
 
-def inside(a, b, box):
-    """The part (t0, t1) of segment a-b inside the box (left, top, right, bottom), or None
-    (Liang-Barsky)."""
-    left, top, right, bottom = box
+def inside(a, b, ring):
+    """The part (t0, t1) of segment a-b inside the circle (cx, cy, r), or None."""
+    cx, cy, r = ring
     dx, dy = b[0] - a[0], b[1] - a[1]
-    t0, t1 = 0.0, 1.0
-    for p, q in ((-dx, a[0] - left), (dx, right - a[0]), (-dy, a[1] - top), (dy, bottom - a[1])):
-        if p == 0:
-            if q < 0:
-                return None
-        elif p < 0:
-            t0 = max(t0, q / p)
-        else:
-            t1 = min(t1, q / p)
+    fx, fy = a[0] - cx, a[1] - cy
+    qa, qb, qc = dx * dx + dy * dy, 2 * (fx * dx + fy * dy), fx * fx + fy * fy - r * r
+    if qa == 0:
+        return (0.0, 1.0) if qc < 0 else None
+    root = qb * qb - 4 * qa * qc
+    if root <= 0:
+        return None
+    root = math.sqrt(root)
+    t0, t1 = max(0.0, (-qb - root) / (2 * qa)), min(1.0, (-qb + root) / (2 * qa))
     return (t0, t1) if t0 < t1 else None
 
 
-def cut(line, box):
-    """The pieces of a polyline that lie outside the box."""
+def cut(line, ring):
+    """The pieces of a polyline that lie outside the circle."""
     pieces, piece = [], [line[0]]
     for a, b in zip(line, line[1:]):
-        span = inside(a, b, box)
+        span = inside(a, b, ring)
         if span is None:
             piece.append(b)
             continue
@@ -248,6 +247,32 @@ def cut(line, box):
             piece.append(b)
     pieces.append(piece)
     return [p for p in pieces if len(set(p)) > 1]
+
+
+def mirror(segments, axis, grid):
+    """Absolute segments flipped across the grid's middle: x for left and right, y for top and
+    bottom; an arc turns the other way."""
+    flip_x, flip_y = axis == "x", axis == "y"
+
+    def x(v):
+        return grid - v if flip_x else v
+
+    def y(v):
+        return grid - v if flip_y else v
+
+    out = []
+    for command, v in segments:
+        if command == "H":
+            v = [x(v[0])]
+        elif command == "V":
+            v = [y(v[0])]
+        elif command == "A":
+            rx, ry, turn, large, sweep, ex, ey = v
+            v = [rx, ry, -turn, large, 1 - sweep, x(ex), y(ey)]
+        else:
+            v = [x(n) if i % 2 == 0 else y(n) for i, n in enumerate(v)]
+        out.append((command, v))
+    return out
 
 
 def number(value):
@@ -288,26 +313,31 @@ def icon_paths(icon, native, store):
     icons.json says, then scaled about their centre so the outline spans the native share of the
     box and centred in it, as the native icons are (interface audit, #271)."""
     grid, pad, stroke = frame(icon["kind"], native)
-    parts = []
+    parts, kept = [], []  # kept: the parts no badge may cut, such as a letter the badge sits beside
     for part in icon["tabler"]:
         part = {"name": part} if isinstance(part, str) else part
         placing = {**badge_placing(store), **part} if part.get("badge") else part  # a badge may set its own scale
         glyph = store["glyphs"][part["name"]]
         glyph = [glyph[i] for i in part["paths"]] if "paths" in part else glyph  # some of a glyph's paths only
-        mine = [place(absolute(d), placing.get("scale", 1), placing.get("at", (0, 0))) for d in glyph]
-        if part.get("badge"):  # it cuts the strokes drawn before it, with a gap, as Tabler's own badges do
+        segments = [absolute(d) for d in glyph]
+        if "mirror" in part:  # "x" flips left and right, "y" top and bottom, on the glyph's grid
+            segments = [mirror(s, part["mirror"], store["grid"]) for s in segments]
+        mine = [place(s, placing.get("scale", 1), placing.get("at", (0, 0))) for s in segments]
+        if part.get("badge"):  # a knocked-out ring: it cuts the strokes drawn before it, `gap` clear of its own
+            points = [q for p in mine for line in polylines(p) for q in line]
             left, top, right, bottom = outline_box([path_text(p) for p in mine], 0)
-            gap = placing["gap"]
-            box = (left - gap, top - gap, right + gap, bottom + gap)
-            kept = []
+            centre = ((left + right) / 2, (top + bottom) / 2)
+            ring = (*centre, max(math.dist(centre, q) for q in points) + placing["gap"])
+            cut_parts = []
             for p in parts:
                 lines = polylines(p)
-                if not any(inside(a, b, box) for line in lines for a, b in zip(line, line[1:])):
-                    kept.append(p)  # untouched: it keeps its curves
+                if not any(inside(a, b, ring) for line in lines for a, b in zip(line, line[1:])):
+                    cut_parts.append(p)  # untouched: it keeps its curves
                     continue
-                kept += [[("M", list(piece[0]))] + [("L", list(q)) for q in piece[1:]] for line in lines for piece in cut(line, box)]
-            parts = kept
-        parts += mine
+                cut_parts += [[("M", list(piece[0]))] + [("L", list(q)) for q in piece[1:]] for line in lines for piece in cut(line, ring)]
+            parts = cut_parts
+        (kept if part.get("keep") else parts).extend(mine)
+    parts += kept
     left, top, right, bottom = outline_box([path_text(p) for p in parts], 0)
     grow = (ink_span(icon["kind"], native) * (grid + 2 * pad) - stroke) / max(right - left, bottom - top)
     shift = (grid / 2 - grow * (left + right) / 2, grid / 2 - grow * (top + bottom) / 2)
@@ -501,6 +531,11 @@ def write_readme_pngs(root=ROOT):
     (root / TILES).write_text(json.dumps(record, indent=1) + "\n")
 
 
+# A Tools row: its tile, then its kind link, to the piece's releases (?q=name) or its folder (#268).
+ROW = (r'<tr><td[^>]*><br><p align="center"><img src="([^"]+)"[^\n]*?'
+       r'<a href="(?:[^"]*releases\?q=([a-z-]+)[^"]*|((?:plugins|apps)/[^"/]+)/)">(?:plugin|app|Mac app)</a>')
+
+
 def tile_problems(root=ROOT):
     """What is wrong with the README tiles: one missing or stale, a plugin or app without one, or a README
     Tools row without its tile or with another's (never a render: the recorded hashes decide)."""
@@ -517,11 +552,11 @@ def tile_problems(root=ROOT):
             problems.append(f"{folder}/{name}.png: stale")
     readme = (root / "README.md").read_text(encoding="utf-8") if (root / "README.md").is_file() else ""
     editor = "design/icons/apps/ink-notebook-editor.png"
-    for row in re.findall(r'<tr><td><img src="([^"]+)"[^\n]*?<code>((?:plugins|apps)/[^/]+)/</code>', readme):
-        src, where = row
-        want = editor if where == "apps/ink-notebook-editor" else f"{folder}/{where.split('/')[1]}.png"
+    for src, release, folder_link in re.findall(ROW, readme):
+        name = release or folder_link.split("/")[1]
+        want = editor if name == "ink-notebook-editor" else f"{folder}/{name}.png"
         if src != want:
-            problems.append(f"README.md: the row of {where}/ shows {src}, not {want}")
+            problems.append(f"README.md: the row of {name} shows {src}, not {want}")
         elif not (root / want).is_file():
             problems.append(f"README.md: {want} is missing")
     return problems

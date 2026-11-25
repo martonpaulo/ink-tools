@@ -222,13 +222,23 @@ class Style(unittest.TestCase):
                 self.assertAlmostEqual(span, icons.ink_span(icon["kind"], NATIVE), delta=0.005)  # arcs are sampled
                 self.assertAlmostEqual((left + right) / 2, grid / 2, delta=0.02)  # cut pieces round to 0.001
 
-    def test_a_badge_cuts_the_strokes_under_it(self):
-        # A badge keeps the base at full size and clears its own corner, as Tabler's badged glyphs do.
-        store = {"grid": 24, "glyphs": {"bar": ["M2 20 H22"], "dot": ["M12 12 h.01"]}}
-        bar, dot = icons.icon_paths({"kind": "plugin", "tabler": ["bar", {"name": "dot", "badge": True}]}, NATIVE, store)
-        self.assertLess(icons.outline_box([bar], 0)[2], icons.outline_box([dot], 0)[0])
-        whole = icons.icon_paths({"kind": "plugin", "tabler": ["bar", "dot"]}, NATIVE, store)
+    def test_a_badge_knocks_a_clear_ring_out_of_the_strokes_under_it(self):
+        # The owner read corner marks as part of the drawing (#271): every badge keeps a gap all round.
+        store = {"grid": 24, "glyphs": {"bar": ["M2 20 H22"], "dot": ["M12 20 h.01"]}}
+        *bar, dot = icons.icon_paths({"kind": "plugin", "tabler": ["bar", {"name": "dot", "badge": True, "scale": 1, "at": [0, 0]}]}, NATIVE, store)
+        left, top, right, bottom = icons.outline_box([dot], 0)
+        centre = ((left + right) / 2, (top + bottom) / 2)
+        _, _, stroke = icons.frame("plugin", NATIVE)
+        near = min(math.dist(centre, q) for d in bar for line in icons.polylines(icons.absolute(d)) for q in line)
+        self.assertGreater(near, 1.25 * stroke)  # the bar ends outside the ring, a clear gap from the badge's centre
+        self.assertEqual(len(bar), 2)  # the bar runs on at both sides of the ring
+        # A part marked keep, such as Real-Time Conversion's T, is never cut.
+        whole = icons.icon_paths({"kind": "plugin", "tabler": [{"name": "bar", "keep": True}, {"name": "dot", "badge": True, "scale": 1, "at": [0, 0]}]}, NATIVE, store)
         self.assertEqual(len(whole), 2)
+
+    def test_a_mirrored_glyph_flips_and_its_arcs_turn(self):
+        flipped = icons.mirror(icons.absolute("M2 4 H6 A2 2 0 0 1 8 6 V10"), "y", 24)
+        self.assertEqual(icons.path_text(flipped), "M2 20 H6 A2 2 0 0 0 8 18 V14")
 
     def test_a_stroke_inside_the_margin_is_caught(self):
         # The first sheet's P (#271): its bowl's arc bulges to 44.5, past the endpoints the old check read.
@@ -351,7 +361,7 @@ class Pngs(unittest.TestCase):
                 (root / rel).write_text((ROOT / rel).read_text())
             readme = (ROOT / "README.md").read_text(encoding="utf-8")
             (root / "README.md").write_text(readme.replace("design/icons/readme/account-sync.png", "plugins/account-sync/assets/icon.png"))
-            self.assertTrue(any("row of plugins/account-sync/" in p for p in icons.tile_problems(root)))
+            self.assertTrue(any("row of account-sync" in p for p in icons.tile_problems(root)))
 
     def test_no_two_icons_read_alike(self):
         def ink(alpha):
