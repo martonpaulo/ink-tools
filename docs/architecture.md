@@ -151,7 +151,9 @@ does for its sources):
 - **A failure reads as a sentence.** Every firmware or internal failure shows the person one
   friendly sentence that says what failed and what to do next, never a class name; the log carries
   every detail an agent needs: the class or provider, the method, the firmware version, the app
-  versions, the exception's class and message, and the stack trace (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)).
+  versions, the exception's class and message, and the stack trace (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). In the TypeScript adapter it is `InternalFailure` of `sn-adapter`'s `src/failure.ts`: a registry
+  item, the method, a copy key for the sentence, the firmware fingerprint, the app versions and the
+  cause chain ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
 - **No `URL` getter on the tablet.** React Native's `URL` throws on `protocol`, `host` and the
   rest, so tablet code parses with `parseUrl` of `sync-core`; the `url` rule of
   `scripts/boundaries.py` covers every plugin, `plugins/plugin-diagnostics` included

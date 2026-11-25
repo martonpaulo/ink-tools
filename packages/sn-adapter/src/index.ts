@@ -5,3 +5,4 @@
  */
 export * from './internals';
 export * from './registry.generated';
+export * from './failure';
