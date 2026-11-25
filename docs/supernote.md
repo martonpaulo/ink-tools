@@ -397,6 +397,23 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
   performed. Cannot call the API!` [measured, Image Editing 0.1.0 beta 13, Nomad, 2026-11-25,
   [#248](https://github.com/martonpaulo/ink-tools/issues/248)]. Whether a button pinned to the toolbar keeps a lasso is [unverified].
+- A lasso «⋯» row (`registerButton(2, ...)`, any `editDataTypes`) keeps the lasso, unlike a sidebar
+  button: from Plugin Diagnostics' lasso row, `getLassoRect` answered the lassoed strokes' box in
+  23 ms and `saveStickerByLasso` wrote a sticker file in 39 ms [measured, Plugin Diagnostics
+  0.0.2 beta 10, Nomad, 2026-11-25, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
+  On the same tablet and day:
+  - `lassoElements(rect)` selects strokes only: a text box inside the rect stayed out of the lasso
+    and so out of the sticker. Whether a sticker keeps a text box or a picture lassoed by hand is
+    [unverified].
+  - `insertSticker` on another page pastes the piece at the page centre, selected, in the
+    «pasted» state. In that state `getLassoRect` answers 904 in the same sidebar press and the
+    local rect `{0, 0, 180, 180}` from a lasso row; `resizeLasso` to a page rect then moves the
+    piece exactly there (38 ms).
+  - Back while a pasted piece is still selected drops it from the page. What commits a paste is
+    [unverified].
+  - A rect lasso takes every stroke inside the rect, ink already on the page included.
+  - `FileUtils.listFiles` lists a file as `{type, path}`, and answers null again once the folder
+    is empty.
 - The floating selection `insertImage` leaves shows the lasso «⋯» rows, other plugins' included,
   but is no lasso for the plugin API: `getLassoRect` answers 904, and Image Editing's «Document»
   pressed on it logged `done` and left the placed picture unchanged. After one such press, Back
