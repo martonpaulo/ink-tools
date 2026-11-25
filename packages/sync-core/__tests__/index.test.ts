@@ -492,9 +492,11 @@ describe('ics', () => {
     expect(calendarData('<calendar-data>A</calendar-data>' + '<calendar-data>'.repeat(5000), warnings)).toEqual(['A']);
     expect(warnings).toHaveLength(1);
     const started = Date.now();
-    calendarData('<calendar-data'.repeat(50000), []);
-    // timing-independent: a quadratic scan of 50000 open tags takes minutes, the linear one milliseconds; load cannot close that gap.
-    expect(Date.now() - started).toBeLessThan(1000);
+    calendarData('<calendar-data'.repeat(10000), []);
+    // On 10000 open tags the bounded scan took 113 ms and an unbounded `[^>]*` one 47 s on a loaded Mac; 50000
+    // tags against 1 s failed under load (1237 ms, #19).
+    // timing-independent: 5 s sits 40 times above the bounded scan and 9 times below the unbounded one.
+    expect(Date.now() - started).toBeLessThan(5000);
   });
 
   test('a daily rule from far in the past jumps to the window and returns the same occurrences (#82)', () => {
