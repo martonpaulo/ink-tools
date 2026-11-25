@@ -125,7 +125,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Install: copy the `.snplg` to `MyStyle/`, then Settings > Apps > Plugins > Add Plugin [official].
   Reinstalling from the existing entry reinstalls the host's managed copy, not the new file
   [reported]; a versioned file name avoids picking the wrong one.
-- Limits: 30 installed, 10 enabled [official, 3.29.44 announcement].
+- Limits: 30 installed, 10 enabled [official, 3.29.44 announcement]. PluginHost 1.00.2610150 holds both in
+  code: `PluginManager.PLUGIN_ENABLE_MAX_NUM = 10`, and enabling an 11th fails with error 201
+  `ERROR_MAX_ENABLE_NUM`; `PluginInstallManager.PLUGIN_MAX_NUM` caps installed plugins at 30
+  [decompiled, PluginHost 1.00.2610150, 2026-11-25]. Third-party plugins share the 10, so Ink Tools
+  keeps at most 8 enabled ([`decisions.md`](decisions.md), [#304](https://github.com/martonpaulo/ink-tools/issues/304)).
 - A plugin's view runs its start code once per plugin-host process: going back and opening the
   view again does not re-run it; `am force-stop com.ratta.supernote.pluginhost` starts a fresh
   process [measured, 2026-11-14, [#91](https://github.com/martonpaulo/ink-tools/issues/91)].

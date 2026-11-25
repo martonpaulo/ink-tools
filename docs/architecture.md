@@ -181,6 +181,28 @@ ink-tools/
 
 ## The plugins (on device)
 
+### Plugin grouping
+
+The tablet enables at most 10 plugins and every enabled plugin loads into one PluginHost process
+([`supernote.md`](supernote.md#plugins)), so plugins group by surface of use (owner, 2026-11-25,
+[#304](https://github.com/martonpaulo/ink-tools/issues/304)):
+
+- A new feature becomes an opt-in/out module of an existing plugin; a new plugin only when it needs its own surface.
+- At most 8 of Ink Tools' plugins are enabled, so third-party plugins keep room.
+- Not one superplugin (one crash or update would take everything), not one plugin per feature.
+
+| Plugin | Modules | Surface | Status |
+| :--- | :--- | :--- | :--- |
+| Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Planned ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); today Smart Shapes and Real-Time Conversion ship alone |
+| Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Planned ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); today Word Lookup ships alone |
+| Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
+| Device Transfer | send, receive | the page and files | unchanged |
+| Account Sync | to-do, calendar, digest | outside services | unchanged |
+
+Plugin Diagnostics stays a developer tool, off day to day. Real-Time Conversion's conversion engine
+becomes shared package code: Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»
+([#250](https://github.com/martonpaulo/ink-tools/issues/250)). The table below lists the plugins as they ship today.
+
 Each plugin is named here by its display name ([product › Display names](product.md#display-names)).
 Older code names stay in npm packages, `pluginKey`, log prefixes, data folders and older issues:
 

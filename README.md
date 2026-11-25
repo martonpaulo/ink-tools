@@ -23,10 +23,12 @@ Run inside the tablet's plugin host.
   <tr><td><b>Device Transfer</b></td><td>Send the page or a lasso selection to an iPhone or a Mac over LocalSend, and receive text or a picture into the open note.</td><td><a href="plugins/device-transfer/"><code>device-transfer/</code></a></td><td>🟡&nbsp;Beta</td></tr>
   <tr><td><b>Account Sync</b></td><td>Sync to-dos, calendars and a digest with your accounts, each module opt in.</td><td><a href="plugins/account-sync/"><code>account-sync/</code></a></td><td>🔵&nbsp;In&nbsp;progress</td></tr>
   <tr><td><b>Image Editing</b></td><td>Lasso a picture on the page and make it readable on e-ink with one tap.</td><td><a href="plugins/image-editing/"><code>image-editing/</code></a></td><td>🔵&nbsp;In&nbsp;progress</td></tr>
-  <tr><td><b>Lasso Collection</b></td><td>Lasso pieces from several pages into one collection, then paste them all together on another page.</td><td><code>lasso-collection/</code></td><td>⚪&nbsp;Planned</td></tr>
-  <tr><td><b>Quick Headings</b></td><td>Lasso a handwritten line and make it a full-width heading of level 1 to 4 in one tap.</td><td><code>quick-headings/</code></td><td>⚪&nbsp;Planned</td></tr>
+  <tr><td><b>Smart Pen</b></td><td>The pen features in one plugin, each a module you switch on or off: Smart Shapes, Real-Time Text and finger gestures. Replaces Smart Shapes and Real-Time Conversion when it lands.</td><td><code>smart-pen/</code></td><td>⚪&nbsp;Planned</td></tr>
+  <tr><td><b>Lasso Actions</b></td><td>The actions on lassoed handwriting in one plugin, each a module you switch on or off: Lookup, Convert to Text, Headings and Collection. Replaces Word Lookup when it lands.</td><td><code>lasso-actions/</code></td><td>⚪&nbsp;Planned</td></tr>
   <tr><td>Plugin Diagnostics</td><td>Quick on-device experiments for developers. Never shipped.</td><td><a href="plugins/plugin-diagnostics/"><code>plugin-diagnostics/</code></a></td><td>⚫&nbsp;Internal</td></tr>
 </table>
+
+The tablet enables at most 10 plugins, so plugins group by surface of use, with one module per feature ([`docs/architecture.md`](docs/architecture.md#plugin-grouping), [#304](https://github.com/martonpaulo/ink-tools/issues/304)). The rows above show the plugins as they ship today; Smart Pen and Lasso Actions replace the first three when their merges land.
 
 ## Tablet apps
 

@@ -17,6 +17,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [relay](#relay)
 - [real-time-conversion](#real-time-conversion)
 - [smart-shapes](#smart-shapes)
+- [Plugin grouping](#plugin-grouping)
 - [Note templates](#note-templates)
 - [Design direction](#design-direction)
 
@@ -289,8 +290,9 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
   fingerprint is the tablet's identity when it sends.
 - Whether a listener can stay open in the background is measured in the tablet round and decided
   after it (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/ink-tools/issues/143).
-- A received photo of a paper page is offered «Straighten as document», Image Editing's Document
-  mode ([#137](https://github.com/martonpaulo/ink-tools/issues/137)), so it lands as a straight, white page (owner, 2026-11-16).
+- A received photo lands as it is. «Straighten as document» lives only in Image Editing's Document
+  mode ([#137](https://github.com/martonpaulo/ink-tools/issues/137)); Device Transfer no longer offers it (owner, 2026-11-25, which replaces the
+  offer decided on 2026-11-16).
 
 Device Transfer and Account Sync stay two plugins, each with a clear name; they share no flow
 (owner, 2026-11-16).
@@ -311,6 +313,25 @@ Shown as **Smart Shapes**, in the wording of the native Smart Straight Line; bui
 A stroke held still at its end becomes a clean triangle, circle, square, rectangle or arrow; a
 figure under the minimum size stays ink. Based on a copy of Snap v0.9.0, its last MIT version, with
 its notice kept (owner D65 A), rather than sn-shapes or new code.
+
+## Plugin grouping
+
+The tablet enables at most 10 plugins ([`supernote.md`](supernote.md#plugins)), so plugins group by
+surface of use, and a feature below is a module of its plugin, switched on or off in Settings
+(owner, 2026-11-25, [#304](https://github.com/martonpaulo/ink-tools/issues/304)). The sections above and below keep the names the plugins
+ship under until the merges land.
+
+| Target plugin | Modules (today's plugin) | Acts on |
+| :--- | :--- | :--- |
+| Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes (smart-shapes), Real-Time Text and Undo Conversion (real-time-conversion), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
+| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (lookup), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), planned in real-time-conversion), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252)), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249)) | lassoed handwriting |
+| Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
+| Device Transfer | unchanged; receives a photo as it is | the page and files |
+| Account Sync | unchanged | outside services |
+
+Plugin Diagnostics stays a developer tool, off day to day. «Convert to Text»'s conversion engine
+becomes shared package code, used by Smart Pen's live conversion and Lasso Actions. Names follow
+NOTE's own naming.
 
 ## Note templates
 
