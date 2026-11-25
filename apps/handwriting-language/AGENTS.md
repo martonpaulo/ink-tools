@@ -38,7 +38,7 @@ Two surfaces ship in one build:
   ([#280](https://github.com/martonpaulo/ink-tools/issues/280)). A tap redraws only its own rows; the
   page is rebuilt when it shows again or an error or note comes or goes
   ([#281](https://github.com/martonpaulo/ink-tools/issues/281)). Each section is one group,
-  as ui-kit's `RowGroup` draws it: the caption in ink at the bottom of its box, its rows of the
+  as ui-kit's `RowGroup` draws it: the caption, smaller and grey, at the bottom of its box, its rows of the
   native height with the light dotted line between two of them, its note under the last row,
   and the solid line after the group; permissions and errors follow under the group. The page
   keeps the native side margin. A language shows only its

@@ -29,9 +29,10 @@ import java.util.Set;
 /**
  * The app's one screen (#246), opened from the sidebar, the floating button's long press and the
  * system's app preferences, drawn with the Supernote's native controls (`Ink`, #275): the title
- * bar with × to close, the active language with «Switch Language», where the floating button
- * shows as radio rows (and a reset of where it sits, #244), a switch row for each installed
- * language in the cycle, and any missing permission or service with the command that turns it on.
+ * bar with × to close, the active language with «Switch to Next Language», where the floating
+ * button shows as radio rows (and a reset of where it sits, #244), a switch row for each installed
+ * language in the cycle, a row to the native language screen, and any missing permission or
+ * service with the command that turns it on.
  * Built in code; black on white, no animation.
  *
  * Extras, for a device round over ADB: `--es button writing|always|hidden` sets the floating
