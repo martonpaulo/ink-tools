@@ -114,6 +114,10 @@ Long-running work follows the `skd-project-standards` skill's `references/long-r
 - Each limit the owner sets is one row of the product definition's `## Limits the owner set`, in the same commit; a relaxed limit keeps its row as «replaced» ([martonpaulo/skill-deck#738](https://github.com/martonpaulo/skill-deck/issues/738)).
 - README: the recorded `Display name` is the H1. Links to the live project are allowed. The rest
   follows the `skd-project-standards` skill's `references/public-surface-style.md`.
+- README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `⚫ Internal`.
+  Each Status cell of the README tool table is exactly one of them, with no issue link, progress
+  note or device note (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
+  `scripts/readme_status.py` checks it in the `docs` gate.
 - Every fenced code block you create or materially edit has an explicit language identifier.
 - Never mark an API, a flag or a behaviour `implemented` without running it. Fix or drop a broken script; never ship it documented as working.
 - Every issue or pull request reference in Markdown prose is a link to the issue's URL; code,

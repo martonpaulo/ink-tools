@@ -1,6 +1,6 @@
 {
   "gates": [
-    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py .", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file"},
+    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py . && python3 scripts/readme_status.py --root . && python3 -B -m unittest scripts/test_readme_status.py", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file, and the README Status vocabulary of AGENTS.md (#268)"},
     {"name": "sleep", "command": "python3 scripts/sleep_guard.py .", "covers": "no test sleeps or bounds wall-clock time without a timing-independent note (Workbench #740, #1712)"},
     {"name": "dry", "command": "python3 scripts/dry_check.py --root .", "covers": "the DRY ratchet of dry-check.json: magic values, repeated blocks, identical files, repeated rules (#197)"},
     {"name": "boundaries", "command": "python3 scripts/boundaries.py --root . && python3 -B -m unittest scripts/test_boundaries.py", "covers": "the adapter boundaries of docs/architecture.md › Layer rules, over every package and plugin (#101)"},
@@ -54,6 +54,8 @@
     {"path": ".claude/", "gates": ["docs"]},
     {"path": "scripts/dry_check.py", "gates": ["dry"]},
     {"path": "scripts/text_check.py", "gates": ["docs"]},
+    {"path": "scripts/readme_status.py", "gates": ["docs"]},
+    {"path": "scripts/test_readme_status.py", "gates": ["docs"]},
     {"path": "*.md", "gates": ["dry"]},
     {"path": "*.py", "gates": ["dry", "sleep"]},
     {"path": "*.sh", "gates": ["dry", "sleep"]},
