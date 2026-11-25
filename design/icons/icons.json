@@ -1,5 +1,5 @@
 {
- "about": "Every Ink Tools icon on the tablet, drawn on the 48 x 48 grid of the Supernote's native icons (native.json): outline strokes only, no fill, round caps and joins, centerlines within 4 to 44. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
+ "about": "Every Ink Tools icon on the tablet, drawn on the 48 x 48 grid of the Supernote's native icons (native.json): outline strokes only, no fill, round caps and joins, centerlines within 4 to 44, so the stroke outline stays within 2 to 46. A plugin icon is written with native.json's padding around the grid, so it keeps the native toolbar icons' margin. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
  "sheet": {
   "columns": 8,
   "cellWidth": 120,
@@ -9,7 +9,9 @@
   "labelX": 48,
   "labelY": 112,
   "labelStep": 11,
-  "labelSize": 9
+  "labelSize": 9,
+  "boxColor": "#c0c0c0",
+  "boxOffset": 0.5
  },
  "icons": [
   {
@@ -261,36 +263,44 @@
    "out": "plugins/word-lookup/assets/translate-es-pt",
    "kind": "plugin",
    "paths": [
-    "M15 16 C15 9 4 9 4 17 C4 24 15 24 15 31 C15 39 4 39 4 32",
-    "M19 24 H28 M25 20 L29 24 L25 28",
-    "M33 35 V13 H39 A5.5 5.5 0 0 1 39 24 H33"
+    "M12 5 H4 V19 H12 M4 12 H10",
+    "M25.5 7 C24 5 18 5 18 8.5 C18 12 26 11.5 26 15.5 C26 19 19.5 19 18.5 17",
+    "M39 7 V41 M34 36 L39 41 L44 36",
+    "M4 43 V29 H8.5 A3.5 3.5 0 0 1 8.5 36 H4",
+    "M18 29 H26 M22 29 V43"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-pt-es",
    "kind": "plugin",
    "paths": [
-    "M4 35 V13 H10 A5.5 5.5 0 0 1 10 24 H4",
-    "M19 24 H28 M25 20 L29 24 L25 28",
-    "M44 16 C44 9 33 9 33 17 C33 24 44 24 44 31 C44 39 33 39 33 32"
+    "M4 19 V5 H8.5 A3.5 3.5 0 0 1 8.5 12 H4",
+    "M18 5 H26 M22 5 V19",
+    "M39 7 V41 M34 36 L39 41 L44 36",
+    "M12 29 H4 V43 H12 M4 36 H10",
+    "M25.5 31 C24 29 18 29 18 32.5 C18 36 26 35.5 26 39.5 C26 43 19.5 43 18.5 41"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-pt-zh",
    "kind": "plugin",
    "paths": [
-    "M4 35 V13 H10 A5.5 5.5 0 0 1 10 24 H4",
-    "M19 24 H28 M25 20 L29 24 L25 28",
-    "M33 13 H44 L33 35 H44"
+    "M4 19 V5 H8.5 A3.5 3.5 0 0 1 8.5 12 H4",
+    "M18 5 H26 M22 5 V19",
+    "M39 7 V41 M34 36 L39 41 L44 36",
+    "M4 29 H12 L4 43 H12",
+    "M18 29 V43 M26 29 V43 M18 36 H26"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/translate-zh-pt",
    "kind": "plugin",
    "paths": [
-    "M4 13 H15 L4 35 H15",
-    "M19 24 H28 M25 20 L29 24 L25 28",
-    "M33 35 V13 H39 A5.5 5.5 0 0 1 39 24 H33"
+    "M4 5 H12 L4 19 H12",
+    "M18 5 V19 M26 5 V19 M18 12 H26",
+    "M39 7 V41 M34 36 L39 41 L44 36",
+    "M4 43 V29 H8.5 A3.5 3.5 0 0 1 8.5 36 H4",
+    "M18 29 H26 M22 29 V43"
    ]
   }
  ]

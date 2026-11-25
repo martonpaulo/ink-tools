@@ -151,6 +151,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   To-Do, Calendar, Email and Digest, pulled with `adb pull` and read with `aapt2 dump xmltree`;
   Note and Document are 64 px bitmaps with 4 px strokes; InkHub is the one filled icon,
   [#271](https://github.com/martonpaulo/ink-tools/issues/271)]. `design/icons/native.json` records them and `design/icons/icons.json` draws every Ink Tools icon to them.
+- The Note app's toolbar and lasso icons are 64 px bitmaps with 4 px strokes whose ink keeps a
+  median 11 px from the box on every side (17%) [measured, 2026-11-25, 71 icons of
+  `com.ratta.supernote.note` that draw on white, [#271](https://github.com/martonpaulo/ink-tools/issues/271)]. Each plugin icon keeps that margin:
+  it is drawn on the 48 grid and written with 10 grid units around it.
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
   promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`

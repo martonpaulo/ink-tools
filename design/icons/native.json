@@ -10,7 +10,9 @@
     "lineCap": "round",
     "lineJoin": "round",
     "centerlineMin": 4,
-    "centerlineMax": 44
+    "centerlineMax": 44,
+    "inkMargin": 2,
+    "inkMarginNote": "the stroke outline (centerline +- 2) of Settings, Digest and Email reaches 2 from the edge of the 48 box; this is the launcher icons' margin"
   },
   "bitmap": {
     "from": "launcher icons that are bitmaps: Note (supernote.note res/vD.png) and Document (supernote.document res/A_.png), 64 x 64 grey with alpha, measured on the pixels",
@@ -20,6 +22,14 @@
   "exception": "InkHub (res/vx.xml) is a filled black vector; it is the one native icon that is not an outline and is not followed",
   "plugin": {
     "sizePx": 96,
-    "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). 96 px is the native 48 dp vector at the tablet's 2x density, so the strokes are 8 px and the outline stays within 4 to 92 px."
+    "toolbar": {
+      "from": "the Note app's (com.ratta.supernote.note) 64 x 64 toolbar and lasso icons, 71 that draw on white, read on their pixels (dark below 50%), 2026-11-25 (#271)",
+      "sizePx": 64,
+      "strokePx": 4,
+      "inkMarginPx": 11,
+      "inkMarginNote": "the median smallest gap between the ink and the box, over the four sides; the selected states, which fill their whole box, are left out"
+    },
+    "padding": 10,
+    "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). Each plugin icon is drawn on the 48 grid and written with `padding` grid units around it (viewBox -10 -10 68 68), so the stroke outline, which reaches 2 to 46 at most, keeps at least 12 of 68 (17.6%) on every side, above the toolbar icons' 11 of 64 (17.2%), and the stroke is 4 of 68, close to their 4 of 64."
   }
 }
