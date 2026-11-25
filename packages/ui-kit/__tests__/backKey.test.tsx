@@ -4,6 +4,7 @@ import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {useBackKey} from '../src/backKey';
 import {catchBackKey} from '../src/backKeyTest';
+import {createWorking} from '../src/working';
 import {WorkingStrip} from '../src/WorkingStrip';
 
 function View({onBack, label}: {onBack: () => void; label: string}) {
@@ -47,7 +48,15 @@ test('the «Loading…» strip takes Back and does nothing', () => {
     renderer.create(
       <>
         <View onBack={exit} label="a" />
-        <WorkingStrip />
+        <WorkingStrip
+          working={createWorking({
+            show: async () => undefined,
+            close: async () => undefined,
+            toast: () => undefined,
+            log: () => undefined,
+            copy: {failed: 'Failed.', timeout: 'Still working.'},
+          })}
+        />
       </>,
     );
   });

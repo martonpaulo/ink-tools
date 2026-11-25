@@ -147,7 +147,7 @@ export default function App({
     }
   });
   if (useWorking(working)) {
-    return <WorkingStrip />;
+    return <WorkingStrip working={working} />;
   }
   if (texting.phase !== 'idle') {
     const deps = textDeps(

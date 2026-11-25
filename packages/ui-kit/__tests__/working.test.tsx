@@ -2,7 +2,9 @@
 import React from 'react';
 import {StyleSheet, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import {Button} from '../src/Button';
 import {metrics} from '../src/metrics';
+import {CLOSE_TEXT} from '../src/problem';
 import {createWorking, Working, WORKING_TEXT} from '../src/working';
 import {useWorking, WorkingStrip} from '../src/WorkingStrip';
 
@@ -45,12 +47,66 @@ describe('createWorking (#103)', () => {
     expect(calls).toEqual(['show', 'close']);
   });
 
-  it('clears the strip, then shows the failure toast, on a failure', async () => {
+  it('clears the strip and keeps the view open on the failure, until Close (#255)', async () => {
     const {calls, working} = setup();
     const run = working.run(() => Promise.reject(new Error('1503')));
     await expect(run).rejects.toThrow('1503');
     expect(working.isWorking()).toBe(false);
-    expect(calls).toEqual(['show', 'close', 'toast Failed.']);
+    expect(working.problem()).toEqual({what: 'Failed.', reason: '1503'});
+    expect(calls).toEqual(['show']);
+    await working.dismiss();
+    await working.dismiss();
+    expect(working.problem()).toBeNull();
+    expect(calls).toEqual(['show', 'close']);
+  });
+
+  it('holds a failure with no message as what failed, with no reason (#255)', async () => {
+    const {working} = setup();
+    await expect(working.run(() => Promise.reject(new Error('')))).rejects.toThrow();
+    expect(working.problem()).toEqual({what: 'Failed.', reason: undefined});
+  });
+
+  it('keeps the strip while a second run works, then shows the failure (#255)', async () => {
+    const {calls, working} = setup();
+    const second = pending<void>();
+    const b = working.run(() => second.promise);
+    await expect(working.run(() => Promise.reject(new Error('1503')))).rejects.toThrow();
+    expect(working.isWorking()).toBe(true);
+    second.resolve();
+    await b;
+    expect(working.isWorking()).toBe(false);
+    expect(working.problem()?.reason).toBe('1503');
+    expect(calls).toEqual(['show']);
+  });
+
+  it('starts a run after a held failure clean, and closes the view on its success (#255)', async () => {
+    const {calls, working} = setup();
+    await expect(working.run(() => Promise.reject(new Error('1503')))).rejects.toThrow();
+    await working.run(() => Promise.resolve());
+    expect(working.problem()).toBeNull();
+    expect(calls).toEqual(['show', 'show', 'close']);
+  });
+
+  it('opens the view for a failure that came before its delayed strip (#255)', async () => {
+    const {calls, working} = setup();
+    const run = working.run(() => Promise.reject(new Error('1503')), {showAfterMs: 2000});
+    await expect(run).rejects.toThrow();
+    jest.advanceTimersByTime(5000);
+    expect(working.problem()?.reason).toBe('1503');
+    expect(calls).toEqual(['show']);
+  });
+
+  it('toasts a failure that comes after the timeout closed the view', async () => {
+    const {calls, working} = setup();
+    const task = pending<void>();
+    const run = working.run(() => task.promise, {timeoutMs: 1000});
+    jest.advanceTimersByTime(1000);
+    await Promise.resolve();
+    await Promise.resolve();
+    task.reject(new Error('1503'));
+    await expect(run).rejects.toThrow();
+    expect(working.problem()).toBeNull();
+    expect(calls).toEqual(['show', 'close', 'toast Still working.', 'toast Failed.']);
   });
 
   it('clears the strip with the timeout toast while the action still runs', async () => {
@@ -104,7 +160,11 @@ describe('createWorking (#103)', () => {
 });
 
 function Root({working}: {working: Working}) {
-  return useWorking(working) ? <WorkingStrip /> : <Text>Settings</Text>;
+  return useWorking(working) ? (
+    <WorkingStrip working={working} />
+  ) : (
+    <Text>Settings</Text>
+  );
 }
 
 describe('WorkingStrip (#103)', () => {
@@ -129,5 +189,26 @@ describe('WorkingStrip (#103)', () => {
       await run;
     });
     expect(tree.root.findByType(Text).props.children).toBe('Settings');
+  });
+
+  it('shows the failure with its reason and Close in place of the strip (#255)', async () => {
+    const {calls, working} = setup();
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<Root working={working} />);
+    });
+    await act(async () => {
+      await working.run(() => Promise.reject(new Error('1503'))).catch(() => undefined);
+    });
+    const shown = tree.root.findAllByType(Text).map(node => node.props.children);
+    expect(shown).toEqual(['Failed.', CLOSE_TEXT, '1503']);
+    const close = tree.root
+      .findAllByType(Button)
+      .find(node => node.props.label === CLOSE_TEXT)!;
+    await act(async () => {
+      close.props.onPress();
+    });
+    expect(tree.root.findByType(Text).props.children).toBe('Settings');
+    expect(calls).toEqual(['show', 'close']);
   });
 });

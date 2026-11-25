@@ -79,7 +79,7 @@ export default function App({
     }
   });
   if (useWorking(working)) {
-    return <WorkingStrip />;
+    return <WorkingStrip working={working} />;
   }
   if (grid.phase !== 'idle') {
     return (

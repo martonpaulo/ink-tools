@@ -1,13 +1,15 @@
 /**
  * The «Loading…» strip of a no-view action (#103, owner A7, docs/plugin-scope.md › Design
  * direction): while a lasso or toolbar button with `showType: 0` works, the plugin opens its own
- * view, which shows one dark strip across the top of the note, and closes it when the action ends,
- * succeeds or fails. A failure, or a run past the timeout, replaces the strip with a toast.
+ * view, which shows one dark strip across the top of the note, and closes it when the action
+ * succeeds. A failure keeps the view open on the Error state, with its reason and Close, until the
+ * owner closes it (#255); a run past the timeout replaces the strip with a toast.
  *
  * The plugin view is the only surface the plugin can both show and clear on command
  * (docs/supernote.md › «What a plugin can show while a no-view action runs»). The SDK calls are
  * the plugin's ports, so this file never imports `sn-plugin-lib` (docs/architecture.md › Layer rules).
  */
+import {Problem, reasonOf} from './problem';
 
 /** The strip's one line, in the owner's words (A7). */
 export const WORKING_TEXT = 'Loading…';
@@ -24,7 +26,7 @@ export type WorkingPorts = {
   toast: (text: string) => void;
   log: (line: string) => void;
   copy: {
-    /** Shown when the action failed with no reason of its own. */
+    /** What failed, the Error state's title; the error's message is its reason. */
     failed: string;
     /** Shown when the strip is cleared at the timeout while the action still runs. */
     timeout: string;
@@ -47,7 +49,7 @@ export type WorkingRun = {
 export type Working = {
   /**
    * Runs `task` with the strip on. Resolves with the task's value, or rejects with its error after
-   * the strip is gone and the failure toast is shown.
+   * the strip is gone and the failure is held as `problem`, the view left open.
    */
   run: <T>(task: () => Promise<T>, options?: WorkingRun) => Promise<T>;
   /**
@@ -56,7 +58,11 @@ export type Working = {
    */
   handOver: () => void;
   isWorking: () => boolean;
-  /** Calls `listener` on each change of `isWorking`; the value is the unsubscribe call. */
+  /** The failure the view shows until `dismiss`, or null. */
+  problem: () => Problem | null;
+  /** Clears the held failure and closes the view, as the Error state's Close does. */
+  dismiss: () => Promise<void>;
+  /** Calls `listener` on each change of `isWorking` or `problem`; the value is the unsubscribe call. */
   subscribe: (listener: (working: boolean) => void) => () => void;
 };
 
@@ -71,6 +77,7 @@ export function createWorking(ports: WorkingPorts): Working {
   const showing = new Set<number>();
   let next = 0;
   let handedOver = false;
+  let held: Problem | null = null;
 
   const notify = () => {
     const working = showing.size > 0;
@@ -81,6 +88,8 @@ export function createWorking(ports: WorkingPorts): Working {
     showing.add(id);
     if (first) {
       handedOver = false;
+      // A new run replaces a held failure: its own ending decides what the view does next.
+      held = null;
       notify();
       ports.show().catch(error => ports.log(`strip: show failed: ${error}`));
     }
@@ -95,12 +104,17 @@ export function createWorking(ports: WorkingPorts): Working {
       handedOver = false;
       return;
     }
+    // A held failure keeps the view open for the Error state.
+    if (held !== null) {
+      return;
+    }
     try {
       await ports.close();
     } catch (error) {
-      ports.log(`strip: close failed: ${error}`);
+      closeFailed(error);
     }
   };
+  const closeFailed = (error: unknown) => ports.log(`strip: close failed: ${error}`);
 
   return {
     run: async (task, options = {}) => {
@@ -108,15 +122,19 @@ export function createWorking(ports: WorkingPorts): Working {
       const delay = options.showAfterMs ?? 0;
       let timeout: unknown = null;
       let ended = false;
+      let timedOut = false;
+      let started = false;
       const start = () => {
         if (ended) {
           return;
         }
+        started = true;
         show(id);
         // The view is open now, so its timers run.
         timeout = setTimer(() => {
           timeout = null;
           if (showing.has(id)) {
+            timedOut = true;
             ports.log('strip: still working at the timeout');
             clear(id).then(() => ports.toast(ports.copy.timeout));
           }
@@ -141,9 +159,21 @@ export function createWorking(ports: WorkingPorts): Working {
         await end();
         return value;
       } catch (error) {
-        await end();
         ports.log(`strip: the action failed: ${error}`);
-        ports.toast(ports.copy.failed);
+        // The view closed at the timeout, so that failure has only the toast left.
+        if (!timedOut) {
+          held = {what: ports.copy.failed, reason: reasonOf(error)};
+        }
+        await end();
+        if (timedOut) {
+          ports.toast(ports.copy.failed);
+        } else {
+          notify();
+          if (!started) {
+            // A delayed strip that never showed: open the view for the Error state.
+            ports.show().catch(failure => ports.log(`strip: show failed: ${failure}`));
+          }
+        }
         throw error;
       }
     },
@@ -155,6 +185,17 @@ export function createWorking(ports: WorkingPorts): Working {
       }
     },
     isWorking: () => showing.size > 0,
+    problem: () => held,
+    dismiss: async () => {
+      if (held === null) {
+        return;
+      }
+      held = null;
+      notify();
+      if (showing.size === 0) {
+        await ports.close().catch(closeFailed);
+      }
+    },
     subscribe: listener => {
       listeners.add(listener);
       return () => {

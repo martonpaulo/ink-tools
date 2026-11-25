@@ -13,6 +13,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [Grey as colour](#grey-as-colour)
 - [Controls](#controls)
 - [The «Loading…» strip](#the-loading-strip)
+- [Needs, Error and Close](#needs-error-and-close)
 - [The Back key](#the-back-key)
 - [Reference study: Notipal](#reference-study-notipal)
 - [The owner's picks: SnapMark, PC Clipboard, DocuCraft](#the-owners-picks-snapmark-pc-clipboard-docucraft)
@@ -73,14 +74,33 @@ reads «Loading…» (owner, [#103](https://github.com/martonpaulo/ink-tools/iss
   `closePluginView`, a toast, its log and two toast lines), and runs each no-view action through
   `working.run`. The strip opens the plugin view at the press, with no timer, since a JS timer may
   not fire while no view is open.
-- The run closes the view on success. A failure closes it, then shows the failure toast. A run
-  past `WORKING_TIMEOUT_MS` clears the strip with the timeout toast.
+- The run closes the view on success. A failure clears the strip and keeps the view open on the
+  Error state, with the error's message as its reason, until Close calls `working.dismiss()`
+  ([#255](https://github.com/martonpaulo/ink-tools/issues/255)). A run past `WORKING_TIMEOUT_MS` clears the strip with the timeout toast, and a
+  failure after it has only the failure toast, since the view is closed.
 - `showAfterMs` delays the strip for a fast action, such as an Image Editing edit (2 s).
 - `handOver` keeps the view open when the action opens the plugin's own screen, such as Settings
   for a missing permission.
-- The root component renders `WorkingStrip` while `useWorking` is true. The strip is static text
+- The root component renders `<WorkingStrip working={working} />` while `useWorking` is true; it
+  draws the strip, or the Error state of a held failure. The strip is static text
   with no spinner, because each frame costs an e-ink refresh. The rest of the view is transparent.
   Whether the host shows the note through it is open: the next device round checks it.
+
+## Needs, Error and Close
+
+Every tool reports what it needs after a check and what failed after a failure in one way
+([#245](https://github.com/martonpaulo/ink-tools/issues/245), [#255](https://github.com/martonpaulo/ink-tools/issues/255)). `src/problem.ts` owns the value, `src/ProblemView.tsx` the views,
+`src/CloseButton.tsx` the one Close.
+
+- A `Problem` is what is missing or failed, the reason when known, and one fix: `{label, run}`
+  for an action the tool runs, or `{steps}` for what only the owner can do.
+- `Needs` shows a check's result: what is missing, why the tool needs it, and the fix as one
+  primary button or numbered steps.
+- `ErrorView` shows what failed, the reason, the fix, and Retry when the caller gives `onRetry`.
+  It is an alert and stays until the owner closes it.
+- `LoadingView` is a full view that loads, in the strip's words.
+- Close is one outlined «Close» at the trailing edge of the title line (`TitleRow`), as in the
+  owner's picks below; Back does what it does.
 
 ## The Back key
 

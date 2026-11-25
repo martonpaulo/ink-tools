@@ -55,7 +55,7 @@ export default function App({
   const [choice, setChoice] = useState<Choice | null>(currentChoice());
   useEffect(() => onChoice(setChoice), []);
   if (useWorking(working)) {
-    return <WorkingStrip />;
+    return <WorkingStrip working={working} />;
   }
   return choice ? (
     <ChooseScreen choice={choice} />

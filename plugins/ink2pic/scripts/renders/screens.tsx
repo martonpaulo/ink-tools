@@ -11,6 +11,7 @@ import type {LibraryItem} from '../../src/library/types';
 import {log} from '../../src/profile';
 import * as deviceSearch from '../../src/search/device';
 import type {SourceAdapter} from '@ink-tools/picture-search';
+import {ErrorView, LoadingView, Needs} from '@ink-tools/ui-kit';
 import type {
   SearchResult,
   SourceOutcome,
@@ -262,6 +263,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'languages-one', render: () => languagesScreen(['en'])},
   {name: 'languages-reset-question', render: async () => press(await languagesScreen(['es', 'en']), copy['languages.reset'])},
   {name: 'status-failed', render: () => mount(<StatusScreen text={copy['error.unexpected']} onClose={() => {}} />)},
+  {name: 'ui-kit-needs', render: () => mount(<Needs problem={{what: 'Sample access is off', reason: 'The sample tool reads the sample folder to show your pictures.', fix: {label: 'Turn it on', run: () => {}}}} onClose={() => {}} />)},
+  {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
+  {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
+  {name: 'ui-kit-loading', render: () => mount(<LoadingView onClose={() => {}} />)},
 ];
 
 /** A few synthetic log lines, so the Log view shows lines as on the device. */
