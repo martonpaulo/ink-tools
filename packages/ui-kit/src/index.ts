@@ -31,7 +31,7 @@ export {Pager} from './Pager';
 export type {PagerProps} from './Pager';
 export {IconButton} from './IconButton';
 // The two setting shapes built from them (#274).
-export {ChoiceList, RowGroup, SwitchRow} from './SettingRows';
+export {ChoiceList, RowGroup, SwitchGroup, SwitchRow} from './SettingRows';
 export type {Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';
 export type {IconButtonProps, IconKind} from './IconButton';
 export type {ErrorViewProps, NeedsProps} from './ProblemView';

@@ -3,6 +3,7 @@ import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   RowGroup,
   shared,
+  SwitchGroup,
   SwitchRow,
   TitleBar,
   useBackKey,
@@ -126,16 +127,14 @@ function SettingsScreen({close}: {close: () => void}) {
             />
           ))}
         </RowGroup>
-        {/* A row of its own: its own group, so it never reads as one more source (#275). */}
-        <RowGroup>
-          <SwitchRow
-            title={copy['settings.dataSaver']}
-            subtitle={copy['settings.dataSaverHint']}
-            value={shown.dataSaver}
-            disabled={settings === null}
-            onChange={dataSaver => change({...shown, dataSaver})}
-          />
-        </RowGroup>
+        {/* A row of its own, so it never reads as one more source (#275). */}
+        <SwitchGroup
+          title={copy['settings.dataSaver']}
+          subtitle={copy['settings.dataSaverHint']}
+          value={shown.dataSaver}
+          disabled={settings === null}
+          onChange={dataSaver => change({...shown, dataSaver})}
+        />
         <RowGroup
           caption={copy['settings.pictures']}
           note={[

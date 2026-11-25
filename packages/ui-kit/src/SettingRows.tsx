@@ -98,6 +98,18 @@ export function SwitchRow({
   );
 }
 
+/**
+ * An on/off setting with no caption: its own group, so the solid line closes it and it never reads
+ * as one more row of the group beside it (#272, #275).
+ */
+export function SwitchGroup(props: SwitchRowProps): React.JSX.Element {
+  return (
+    <RowGroup>
+      <SwitchRow {...props} />
+    </RowGroup>
+  );
+}
+
 export type Choice<V> = {value: V; label: string};
 
 export type ChoiceListProps<V> = {
@@ -141,7 +153,8 @@ const styles = StyleSheet.create({
   separator: {height: metrics.separator, backgroundColor: metrics.ink},
   lightBox: {height: metrics.lightLine, overflow: 'hidden'},
   lightDashes: {
-    height: metrics.lightLine * 4,
+    // Any height over two borders: the box above shows only the top one.
+    height: metrics.markStroke,
     borderWidth: metrics.lightLine,
     borderStyle: 'dashed',
     borderColor: metrics.ink,

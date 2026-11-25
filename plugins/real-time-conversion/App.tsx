@@ -5,7 +5,7 @@ import {
   ChoiceList,
   RowGroup,
   shared,
-  SwitchRow,
+  SwitchGroup,
   TitleBar,
   useBackKey,
 } from '@ink-tools/ui-kit';
@@ -56,14 +56,11 @@ export default function App({
         scrolls, since the rows outgrow the Nomad's window and the turned Manta's (#284).
       */}
       <ScrollView style={styles.rows}>
-        {/* A row with no caption is its own group, so the solid line closes it (#272). */}
-        <RowGroup>
-          <SwitchRow
-            title={copy['settings.start']}
-            value={settings.startOn}
-            onChange={startOn => change({...settings, startOn})}
-          />
-        </RowGroup>
+        <SwitchGroup
+          title={copy['settings.start']}
+          value={settings.startOn}
+          onChange={startOn => change({...settings, startOn})}
+        />
         <ChoiceList
           title={copy['settings.spacing']}
           choices={SPACINGS}

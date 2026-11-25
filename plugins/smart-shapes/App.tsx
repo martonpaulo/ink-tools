@@ -4,6 +4,7 @@ import {
   ChoiceList,
   RowGroup,
   shared,
+  SwitchGroup,
   SwitchRow,
   TitleBar,
   useBackKey,
@@ -50,15 +51,12 @@ export default function App({
       <TitleBar title={copy.title} onClose={close} />
       {/* One row per size and per shape outgrows the Manta's height (#274). */}
       <ScrollView style={styles.rows}>
-        {/* A row with no caption is its own group, so the solid line closes it (#272). */}
-        <RowGroup>
-          <SwitchRow
-            title={copy['settings.on']}
-            subtitle={copy['settings.onNote']}
-            value={settings.on}
-            onChange={on => change({...settings, on})}
-          />
-        </RowGroup>
+        <SwitchGroup
+          title={copy['settings.on']}
+          subtitle={copy['settings.onNote']}
+          value={settings.on}
+          onChange={on => change({...settings, on})}
+        />
         <ChoiceList
           title={copy['settings.minSize']}
           choices={SIZES}

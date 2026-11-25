@@ -107,6 +107,7 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 | `IconButton` | `remove` (⊖), `delete` (a trash) and `download` (an arrow over a tray), each with its spoken name |
 | `Button` with `primary` | the small filled black button, such as «Scan» |
 | `SwitchRow` | an on/off setting: a `ListRow` whose trailing `Switch` speaks the row's title |
+| `SwitchGroup` | an on/off setting with no caption: a `SwitchRow` that is its own `RowGroup`, closed by the solid line |
 | `ChoiceList` | one value out of several: a `RowGroup` with one `ListRow` per value, each `Radio` spoken «setting: value», and an optional `note` |
 
 - One `Button` for every other action, at least `touchTarget` high: black on white with an ink border.

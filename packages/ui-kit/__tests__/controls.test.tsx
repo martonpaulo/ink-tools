@@ -18,6 +18,7 @@ import {
   RowGroup,
   SearchField,
   Switch,
+  SwitchGroup,
   SwitchRow,
   TitleBar,
 } from '../src';
@@ -241,6 +242,10 @@ describe('the native controls (#273)', () => {
     const group = three.root.findAll(n => typeof n.type === 'string')[0];
     const last = group.children[group.children.length - 1] as ReactTestInstance;
     expect(last.props.testID).toBe('group-line');
+    // An on/off setting with no caption is its own group, closed by the solid line.
+    const lone = render(<SwitchGroup title="Data saver" value onChange={noop} />);
+    expect(texts(lone)).toEqual(['Data saver', 'ON']);
+    expect(find(lone, 'group-line')).toHaveLength(1);
     const alone = render(<RowGroup><ListRow title="Alone" /></RowGroup>);
     expect(find(alone, 'row-light-line')).toEqual([]);
     expect(find(alone, 'group-line')).toHaveLength(1);
