@@ -26,6 +26,14 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     insertPicture: jest.fn().mockResolvedValue(undefined),
     insertTextBox: jest.fn().mockResolvedValue(undefined),
     insertPage: jest.fn().mockResolvedValue(undefined),
+    saveSticker: jest.fn().mockResolvedValue(undefined),
+    insertSticker: jest.fn().mockResolvedValue(undefined),
+    lassoBox: jest.fn().mockResolvedValue({left: 10, top: 20, right: 110, bottom: 220}),
+    resizeLasso: jest.fn().mockResolvedValue(undefined),
+    pluginFolder: jest.fn().mockResolvedValue('/data/plugins/x'),
+    makeDir: jest.fn().mockResolvedValue(undefined),
+    listFiles: jest.fn().mockResolvedValue(['1.sticker']),
+    deleteFile: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   } as HelperApi & Record<string, jest.Mock>;
 }
@@ -182,4 +190,50 @@ test('a note call that fails in renderPage is an answer with its code (#261)', a
   const note = api({renderPage: jest.fn().mockRejectedValue(new HelperError(802, 'generateNotePng: no note'))});
   const {answer} = await runCommand(command({op: 'renderPage', page: 0}), note);
   expect(answer).toEqual({ok: false, code: 802, message: 'generateNotePng: no note'});
+});
+
+
+describe('sticker and file probes for Collection (#249)', () => {
+  test('saveSticker saves the lasso in the plugin folder, made first, and answers the path', async () => {
+    const note = api();
+    const {answer} = await runCommand(command({op: 'saveSticker', where: 'plugin', name: '1_10_20.sticker'}), note);
+    expect(note.makeDir).toHaveBeenCalledWith('/data/plugins/x/collection/');
+    expect(note.saveSticker).toHaveBeenCalledWith('/data/plugins/x/collection/1_10_20.sticker');
+    expect(answer).toMatchObject({ok: true, path: '/data/plugins/x/collection/1_10_20.sticker'});
+  });
+
+  test('insertSticker from the Probe folder answers the page and the new lasso rect', async () => {
+    const note = api({pageNumber: jest.fn().mockResolvedValue(3)});
+    const {answer} = await runCommand(command({op: 'insertSticker', where: 'probe', name: 'a.sticker'}), note);
+    expect(note.insertSticker).toHaveBeenCalledWith(`${PROBE_FOLDER}a.sticker`);
+    expect(note.makeDir).not.toHaveBeenCalled();
+    expect(answer).toMatchObject({ok: true, page: 3, rect: {left: 10, top: 20, right: 110, bottom: 220}});
+  });
+
+  test('resizeLasso moves the lasso and answers the rect read back', async () => {
+    const note = api();
+    const rect = {left: 500, top: 600, right: 600, bottom: 800};
+    const {answer} = await runCommand(command({op: 'resizeLasso', rect}), note);
+    expect(note.resizeLasso).toHaveBeenCalledWith(rect);
+    expect(answer).toMatchObject({ok: true, op: 'resizeLasso'});
+  });
+
+  test('listFiles and deleteFile work in the named folder only', async () => {
+    const note = api();
+    expect((await runCommand(command({op: 'listFiles', where: 'plugin'}), note)).answer).toMatchObject({files: ['1.sticker']});
+    await runCommand(command({op: 'deleteFile', where: 'plugin', name: '1.sticker'}), note);
+    expect(note.deleteFile).toHaveBeenCalledWith('/data/plugins/x/collection/1.sticker');
+  });
+
+  test.each([['../x.sticker'], ['a/b'], [''], ['..']])('refuses the name %p before any note call', async name => {
+    const note = api();
+    const {answer} = await runCommand(command({op: 'deleteFile', where: 'plugin', name}), note);
+    expect(answer).toMatchObject({ok: false, code: 2});
+    expect(note.deleteFile).not.toHaveBeenCalled();
+  });
+
+  test('refuses a folder other than probe or plugin', async () => {
+    const {answer} = await runCommand(command({op: 'listFiles', where: 'notes'}), api());
+    expect(answer).toMatchObject({ok: false, code: 2, message: 'where must be probe or plugin'});
+  });
 });

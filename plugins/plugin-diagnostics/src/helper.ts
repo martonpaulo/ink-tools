@@ -28,6 +28,8 @@ export const RENDER_PATH = `${PROBE_FOLDER}page.png`;
 export const MAX_TEXT = 500;
 export const MIN_FONT_SIZE = 8;
 export const MAX_FONT_SIZE = 200;
+/** The folder under the plugin's private folder where sticker probes go (#249). */
+export const PLUGIN_STICKERS = 'collection';
 
 export type Point = {x: number; y: number};
 export type Rect = {left: number; top: number; right: number; bottom: number};
@@ -47,6 +49,19 @@ export interface HelperApi {
   insertTextBox(text: string, rect: Rect, fontSize: number): Promise<void>;
   /** Inserts a page at index `page` of the open note, with a system template such as `style_white`. */
   insertPage(page: number, template: string): Promise<void>;
+  /** Saves the lassoed elements as a sticker file (#249). */
+  saveSticker(path: string): Promise<void>;
+  /** Inserts a sticker file on the current page, where the host puts it (#249). */
+  insertSticker(path: string): Promise<void>;
+  /** The lasso's rect on the page (#249). */
+  lassoBox(): Promise<Rect>;
+  /** Moves and resizes the lasso box with what it holds to `rect` (#249). */
+  resizeLasso(rect: Rect): Promise<void>;
+  /** The plugin's private folder, with no trailing slash (#249). */
+  pluginFolder(): Promise<string>;
+  makeDir(path: string): Promise<void>;
+  listFiles(path: string): Promise<string[]>;
+  deleteFile(path: string): Promise<void>;
 }
 
 export class HelperError extends Error {
@@ -69,7 +84,16 @@ type Command =
   | {id: string; op: 'renderPage'; page: number}
   | {id: string; op: 'insertPicture'; path: string}
   | {id: string; op: 'insertTextBox'; text: string; rect: Rect; fontSize: number}
-  | {id: string; op: 'insertPage'; page: number; template: string};
+  | {id: string; op: 'insertPage'; page: number; template: string}
+  | {id: string; op: 'saveSticker' | 'insertSticker' | 'deleteFile'; where: Where; name: string}
+  | {id: string; op: 'listFiles'; where: Where}
+  | {id: string; op: 'readLassoRect'}
+  | {id: string; op: 'resizeLasso'; rect: Rect};
+
+/** Where a sticker probe keeps its file: inkctl's own folder, or the plugin's private folder (#249). */
+type Where = 'probe' | 'plugin';
+/** A plain file name in that folder: no folder part, so a command never leaves it. */
+const NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}$/;
 
 /** A system template name, as `getNoteSystemTemplates` lists them (docs/supernote.md). */
 const TEMPLATE_PATTERN = /^[a-z0-9_]+$/;
@@ -153,6 +177,20 @@ function parseRect(value: unknown): Rect {
   return {left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom};
 }
 
+function parseWhere(value: unknown): Where {
+  if (value !== 'probe' && value !== 'plugin') {
+    throw new HelperError(USAGE, 'where must be probe or plugin');
+  }
+  return value;
+}
+
+function parseName(value: unknown): string {
+  if (typeof value !== 'string' || !NAME_PATTERN.test(value) || value.includes('..')) {
+    throw new HelperError(USAGE, 'name must be a plain file name');
+  }
+  return value;
+}
+
 /** The command's id and shape, or a HelperError; the id is kept whenever it can be read. */
 export function parseCommand(text: string): Command {
   let raw: Record<string, unknown>;
@@ -183,6 +221,16 @@ export function parseCommand(text: string): Command {
       return {id, op: 'insertTextBox', text: parseText(raw.text), rect: parseRect(raw.rect), fontSize: parseFontSize(raw.fontSize)};
     case 'insertPage':
       return {id, op: 'insertPage', page: parsePage(raw.page), template: parseTemplate(raw.template)};
+    case 'saveSticker':
+    case 'insertSticker':
+    case 'deleteFile':
+      return {id, op: raw.op, where: parseWhere(raw.where), name: parseName(raw.name)};
+    case 'listFiles':
+      return {id, op: 'listFiles', where: parseWhere(raw.where)};
+    case 'readLassoRect':
+      return {id, op: 'readLassoRect'};
+    case 'resizeLasso':
+      return {id, op: 'resizeLasso', rect: parseRect(raw.rect)};
     default:
       throw new HelperError(USAGE, `unknown op: ${String(raw.op)}`);
   }
@@ -204,6 +252,16 @@ export function padded(rect: Rect): Rect {
     right: Math.min(PAGE_WIDTH, rect.right + LASSO_MARGIN),
     bottom: Math.min(PAGE_HEIGHT, rect.bottom + LASSO_MARGIN),
   };
+}
+
+/** The folder a sticker probe names, made when it is the plugin's own (#249). */
+async function folderOf(where: Where, api: HelperApi): Promise<string> {
+  if (where === 'probe') {
+    return PROBE_FOLDER;
+  }
+  const folder = `${await api.pluginFolder()}/${PLUGIN_STICKERS}/`;
+  await api.makeDir(folder);
+  return folder;
 }
 
 async function execute(command: Command, api: HelperApi): Promise<Record<string, unknown>> {
@@ -241,6 +299,30 @@ async function execute(command: Command, api: HelperApi): Promise<Record<string,
     case 'insertPage':
       await api.insertPage(command.page, command.template);
       return {page: command.page, template: command.template};
+    case 'saveSticker': {
+      const path = (await folderOf(command.where, api)) + command.name;
+      await api.saveSticker(path);
+      return {path};
+    }
+    case 'insertSticker': {
+      const path = (await folderOf(command.where, api)) + command.name;
+      await api.insertSticker(path);
+      return {page: await api.pageNumber(), path, rect: await api.lassoBox()};
+    }
+    case 'deleteFile': {
+      const path = (await folderOf(command.where, api)) + command.name;
+      await api.deleteFile(path);
+      return {path};
+    }
+    case 'listFiles': {
+      const folder = await folderOf(command.where, api);
+      return {folder, files: await api.listFiles(folder)};
+    }
+    case 'readLassoRect':
+      return {rect: await api.lassoBox()};
+    case 'resizeLasso':
+      await api.resizeLasso(command.rect);
+      return {rect: await api.lassoBox()};
   }
 }
 

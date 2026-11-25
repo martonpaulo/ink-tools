@@ -1,4 +1,4 @@
-import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
+import {FileUtils, PluginCommAPI, PluginFileAPI, PluginManager, PluginNoteAPI} from 'sn-plugin-lib';
 import {HelperError, type HelperApi, type Point, type Rect} from './helper';
 
 /** sn-plugin-lib 0.2.3 element types and the pen values the 2026-11-16 round measured (docs/supernote.md › Plugins). */
@@ -119,5 +119,49 @@ export const noteApi: HelperApi = {
       strokes.push(await strokePoints(element));
     }
     return strokes;
+  },
+
+  async saveSticker(path) {
+    unwrap('saveStickerByLasso', await PluginCommAPI.saveStickerByLasso(path));
+  },
+
+  async insertSticker(path) {
+    unwrap('insertSticker', await PluginCommAPI.insertSticker(path));
+  },
+
+  async lassoBox() {
+    return unwrap<Rect>('getLassoRect', await PluginCommAPI.getLassoRect());
+  },
+
+  async resizeLasso(rect) {
+    unwrap('resizeLassoRect', await PluginCommAPI.resizeLassoRect(rect));
+  },
+
+  async pluginFolder() {
+    const folder = await PluginManager.getPluginDirPath();
+    if (!folder) {
+      throw new HelperError(1, 'getPluginDirPath: no folder');
+    }
+    return folder.replace(/\/$/, '');
+  },
+
+  async makeDir(path) {
+    if (!(await FileUtils.exists(path)) && !(await FileUtils.makeDir(path))) {
+      throw new HelperError(1, `makeDir: ${path} was not made`);
+    }
+  },
+
+  async listFiles(path) {
+    const files = await FileUtils.listFiles(path);
+    if (!files) {
+      throw new HelperError(1, `listFiles: ${path} gave no list`);
+    }
+    return files;
+  },
+
+  async deleteFile(path) {
+    if (!(await FileUtils.deleteFile(path))) {
+      throw new HelperError(1, `deleteFile: ${path} was not deleted`);
+    }
   },
 };

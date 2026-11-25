@@ -31,7 +31,8 @@ command to `MyStyle/Probe/command.json`, press «Run Command» in the open note,
 Probe logs as `SNPROBE answer <id> <n>/<count> <json>` under `ReactNativeJS`. `src/helper.ts` runs
 the command (`insertPageElements`, `lassoElements`, `getLastElement`, `getLassoElements`, `jumpToPage`,
 then `getCurrentPageNum` as proof, [#220](https://github.com/martonpaulo/ink-tools/issues/220)); the CLI
-owns every rule. The note calls need `FILE:READ` and `FILE:WRITE` on «Always Allow».
+owns every rule. The sticker and file ops (`saveSticker`, `insertSticker`, `readLassoRect`, `resizeLasso`,
+`listFiles`, `deleteFile`) measure the host for Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249)) and have no inkctl command yet. The note calls need `FILE:READ` and `FILE:WRITE` on «Always Allow».
 
 ## The Digest-provider probe ([#59](https://github.com/martonpaulo/supernote-tools/issues/59))
 
