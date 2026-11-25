@@ -200,14 +200,18 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/icon",
+   "out": "plugins/lasso-actions/assets/icon",
    "kind": "plugin",
    "tabler": [
-    "zoom-question"
+    "lasso",
+    {
+     "name": "bolt",
+     "badge": true
+    }
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/image",
+   "out": "plugins/lasso-actions/assets/image",
    "kind": "plugin",
    "tabler": [
     "camera",
@@ -218,7 +222,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/sticker",
+   "out": "plugins/lasso-actions/assets/sticker",
    "kind": "plugin",
    "tabler": [
     "sticker",
@@ -229,7 +233,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/summary",
+   "out": "plugins/lasso-actions/assets/summary",
    "kind": "plugin",
    "tabler": [
     "notes",
@@ -240,7 +244,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/definition",
+   "out": "plugins/lasso-actions/assets/definition",
    "kind": "plugin",
    "tabler": [
     "book",
@@ -251,7 +255,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/choose",
+   "out": "plugins/lasso-actions/assets/choose",
    "kind": "plugin",
    "tabler": [
     "library-photo",
@@ -262,7 +266,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/translate-es-pt",
+   "out": "plugins/lasso-actions/assets/translate-es-pt",
    "kind": "plugin",
    "tabler": [
     {
@@ -308,7 +312,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/translate-pt-es",
+   "out": "plugins/lasso-actions/assets/translate-pt-es",
    "kind": "plugin",
    "tabler": [
     {
@@ -354,7 +358,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/translate-pt-zh",
+   "out": "plugins/lasso-actions/assets/translate-pt-zh",
    "kind": "plugin",
    "tabler": [
     {
@@ -400,7 +404,7 @@
    ]
   },
   {
-   "out": "plugins/word-lookup/assets/translate-zh-pt",
+   "out": "plugins/lasso-actions/assets/translate-zh-pt",
    "kind": "plugin",
    "tabler": [
     {
@@ -615,19 +619,6 @@
      "badge": true
     }
    ]
-  },
-  {
-   "out": "design/icons/planned/lasso-actions/icon",
-   "kind": "plugin",
-   "readme": true,
-   "planned": "#306",
-   "tabler": [
-    "lasso",
-    {
-     "name": "bolt",
-     "badge": true
-    }
-   ]
   }
  ],
  "retired": {},
@@ -650,12 +641,12 @@
     "text-recognition"
    ]
   },
-  "word-lookup": {
+  "lasso-actions": {
    "motif": [
-    "search",
-    "zoom-question"
+    "search"
    ],
    "except": {
+    "icon": "the plugin's own icon, the lasso, stands for every module; the motif marks Lookup's buttons",
     "translate-es-pt": "two language codes and their arrow fill the box",
     "translate-pt-es": "as translate-es-pt",
     "translate-pt-zh": "as translate-es-pt",

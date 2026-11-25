@@ -4,7 +4,7 @@ Ideas still being considered: no commitment, no priority, no date. An issue is w
 roadmap item is not one, and the two never hold the same item. An item leaves this page and
 becomes an issue only when the owner decides to do it.
 
-Tools that already have a folder or an issue (Word Lookup, the Handwriting Language app, Image
+Tools that already have a folder or an issue (Lasso Actions, the Handwriting Language app, Image
 Editing, Device Transfer, Account Sync, Real-Time Conversion and Ink Notebook Editor) are
 described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
 ([#141](https://github.com/martonpaulo/ink-tools/issues/141)).
@@ -35,7 +35,7 @@ Deferred by the owner on 2026-11-16, until the tools are ready to share; it repl
 [#6](https://github.com/martonpaulo/ink-tools/issues/6) and
 [#7](https://github.com/martonpaulo/ink-tools/issues/7), closed as not planned.
 
-- **Ratta's plugin review** — pass it for each plugin offered to others: Word Lookup, Image
+- **Ratta's plugin review** — pass it for each plugin offered to others: Lasso Actions, Image
   Editing, Device Transfer and Account Sync.
 - **InkHub** — list the reviewed plugins there.
 - **Announce** — post the tools, the `inkctl` CLI and the Handwriting Language app on
