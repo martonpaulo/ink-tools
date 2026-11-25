@@ -26,6 +26,11 @@ import {sizeOf} from './edit';
 const MIN_STEP = 6;
 /** The side of a drawn dot, in view pixels. */
 const DOT = 6;
+/**
+ * The least height the picture keeps, as a share of the screen: the edit list takes the height it
+ * needs first, so every button shows above «Close» when it fits, and scrolls past this (#279).
+ */
+const PICTURE_FLOOR = '30%';
 
 export type EditorProps = {
   state: EditorState;
@@ -303,7 +308,10 @@ function EditorScreen({
 
 const styles = StyleSheet.create({
   stage: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: PICTURE_FLOOR,
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
@@ -320,7 +328,8 @@ const styles = StyleSheet.create({
     lineHeight: metrics.statusLineHeight,
     minHeight: metrics.statusLineHeight,
   },
-  edits: {flex: 1, alignSelf: 'stretch'},
+  // Its own height first, shrinking to scroll only past the picture's floor (#279).
+  edits: {flexGrow: 0, flexShrink: 1, alignSelf: 'stretch'},
   groups: {gap: metrics.sectionGap},
   group: {gap: metrics.controlGap},
 });

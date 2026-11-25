@@ -20,7 +20,8 @@ drawn over the preview, mapped to page pixels, go through `cropBox` and `eraseMa
 draws nothing; when the pen lifts, Crop shows the stroke's dots, and Erase shows the picture with
 that stroke erased by the same Java erase, run on the shown image into a `<ms>-stroke.png`, one
 refresh per stroke; **Done** runs one page erase with every stroke, **Undo stroke** drops the last one
-and **Cancel** drops them all ([#278](https://github.com/martonpaulo/ink-tools/issues/278)). When the
+and **Cancel** drops them all ([#278](https://github.com/martonpaulo/ink-tools/issues/278)). The edit list takes its own height
+first, and the picture keeps at least 30% of the screen ([#279](https://github.com/martonpaulo/ink-tools/issues/279)). When the
 lasso held pen marks with the picture, they run at once through the shared `src/guide.ts`, which
 reads the marks, deletes them and lassoes the picture alone. **Styles** ([#133](https://github.com/martonpaulo/supernote-tools/issues/133)) opens its
 grid over the editor: `src/styles.ts` renders the picture in every style switched on into

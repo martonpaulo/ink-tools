@@ -2,8 +2,10 @@
  * Renders every screen as the Manta shows it, 1920 x 2560 px in 16 grey levels, to
  * .scratch/renders/<screen>.png, and fails on any e-ink rule break (brief section 8.4, #80):
  * text contrast under the floor, a target under the touch target, text under the minimum font
- * size (#85), text outside its box, or animation. Run with `npm run renders` before each device
- * build; RENDER_SCALE=1 renders 1024 x 1365 px pictures for a quick look. Uses the Chromium installed with Playwright.
+ * size (#85), text outside its box, animation, or a scroll view whose last target stays hidden
+ * or lies under another target (#279). Run with `npm run renders` before each device
+ * build; RENDER_SCALE=1 renders 1024 x 1365 px pictures for a quick look; RENDER_WINDOW=nomad or
+ * turned renders the Nomad's window or the Manta turned, into a subfolder. Uses the Chromium installed with Playwright.
  * RENDER_EVIDENCE=<folder> also writes each screen as <screen>-light-<small|default|large>.png there, the
  * renders `render_evidence.py check` asks of an interface change (the Workbench's #1727).
  */
@@ -11,8 +13,8 @@ import fs from 'fs';
 import path from 'path';
 import {act} from 'react-test-renderer';
 import {metrics} from '@ink-tools/ui-kit';
-import {animationBreaks, toHtml, WINDOW} from './html';
-import {breaksOf, Measured} from './rules';
+import {animationBreaks, toHtml, WINDOW, WINDOW_NAME} from './html';
+import {breaksOf, Measured, scrollBreaks} from './rules';
 import {fixtureLog, SCREENS, settle} from './screens';
 
 /** The few Playwright calls used here; Playwright is installed with Chromium, not in package.json. */
@@ -30,7 +32,12 @@ const {chromium} = require('playwright') as {
   chromium: {launch: () => Promise<Browser>};
 };
 
-const OUT = path.join(__dirname, '../../.scratch/renders');
+/** The Manta's renders in the folder itself, another window's in its own subfolder (#279). */
+const OUT = path.join(
+  __dirname,
+  '../../.scratch/renders',
+  WINDOW_NAME === 'manta' ? '' : WINDOW_NAME,
+);
 const MANTA_SCALE = 1.875;
 const scale = Number(process.env.RENDER_SCALE ?? MANTA_SCALE);
 /**
@@ -121,9 +128,13 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       ...contrast.unmeasured.map(u => `contrast not measured: ${u.reason}`),
     ];
     if (measured.scrolls.length) {
-      // The rows below the screen, for the eye check: each scroll view at its end (#265).
+      // The rows below the screen, for the eye check: each scroll view at its end (#265), where
+      // its last target must show, with nothing over it (#279).
       await page.evaluate(SCROLL_TO_END);
       await page.screenshot({path: path.join(OUT, `${screen.name}-end.png`)});
+      report[screen.name].push(
+        ...scrollBreaks(await page.evaluate<Measured>(MEASURE)),
+      );
     }
     await act(async () => {
       tree.unmount();

@@ -29,6 +29,9 @@ import SmartShapesSettings from '../../../smart-shapes/App';
 import RealTimeConversionSettings from '../../../real-time-conversion/App';
 import WordLookupSettings from '../../../word-lookup/App';
 import {SettingsShell as AccountSyncSettings} from '../../../account-sync/src/SettingsShell';
+import {Editor as ImageEditor} from '../../../image-editing/src/EditorView';
+import type {EditorState as ImageEditorState} from '../../../image-editing/src/editor';
+import {defaultSettings as imageEditingSettings} from '../../../image-editing/src/edits';
 
 export type ScreenRender = {
   name: string;
@@ -236,6 +239,53 @@ const CHANGED: Settings = {
   definition: true,
 };
 
+/** Image Editing's editor on a 960 x 870 picture, every edit on (#279, #278). */
+const IMAGE_EDITOR: ImageEditorState = {
+  phase: 'ready',
+  rect: {left: 100, top: 200, right: 1060, bottom: 1070},
+  preview: '/w/editor-1.png',
+  guided: false,
+  busy: null,
+  draw: null,
+  marks: [],
+  strokes: [],
+  message: null,
+};
+const noop = () => {};
+/** The picture's stage height the renders report: under its floor on the Nomad, the smallest window. */
+const STAGE_HEIGHT = 280;
+/** The editor, laid out: the picture's stage reports a size, as on the device, so the picture shows. */
+async function imageEditor(state: Partial<ImageEditorState> = {}) {
+  const tree = await mount(
+    <ImageEditor
+      state={{...IMAGE_EDITOR, ...state} as ImageEditorState}
+      settings={imageEditingSettings}
+      onEdit={noop}
+      onApply={noop}
+      onMark={noop}
+      onClear={noop}
+      onUndoStroke={noop}
+      onDone={noop}
+      onCancel={noop}
+      onClose={noop}
+    />,
+  );
+  const stage = tree.root.findAll(
+    node => typeof node.type === 'string' && typeof node.props.onLayout === 'function',
+  )[0];
+  // The stage's size is known only after a layout pass; this one fits the smallest window's stage.
+  await act(async () =>
+    stage.props.onLayout({nativeEvent: {layout: {x: 0, y: 0, width: 400, height: STAGE_HEIGHT}}}),
+  );
+  return tree;
+}
+/** A stroke across the picture, in page pixels. */
+const STROKE = [
+  {x: 300, y: 500},
+  {x: 600, y: 650},
+  {x: 900, y: 600},
+];
+
 // One line per screen, so adding one is one line.
 // prettier-ignore
 export const SCREENS: ScreenRender[] = [
@@ -275,6 +325,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView onClose={() => {}} />)},
+  {name: 'image-editing-editor', render: () => imageEditor()},
+  {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
+  {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
+  {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
 ];
 
 /** A few synthetic log lines, so the Log view shows lines as on the device. */

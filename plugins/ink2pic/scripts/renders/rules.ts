@@ -45,6 +45,38 @@ const outside = (inner: Box, outer: Box) =>
   inner.right - TOLERANCE > outer.right ||
   inner.bottom - TOLERANCE > outer.bottom;
 
+/** True when `a` and `b` share more than the tolerance on both axes. */
+const overlap = (a: Box, b: Box) =>
+  Math.min(a.right, b.right) - Math.max(a.left, b.left) > TOLERANCE &&
+  Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > TOLERANCE;
+
+const sameBox = (a: Box, b: Box) => !outside(a, b) && !outside(b, a);
+
+/**
+ * The scroll breaks of a screen measured with every scroll view at its end (#279): the last
+ * target of each scroll view shows wholly inside it, so scrolling reaches it, and no target
+ * outside a scroll view, such as a «Close» row, lies over it.
+ */
+export function scrollBreaks(measured: Measured): string[] {
+  const found: string[] = [];
+  for (const scroll of measured.scrolls) {
+    const inside = measured.targets.filter(t => t.scroll && sameBox(t.scroll, scroll.box));
+    const last = inside.reduce<(typeof inside)[number] | null>(
+      (lowest, t) => (lowest && lowest.box.bottom >= t.box.bottom ? lowest : t),
+      null,
+    );
+    if (last && outside(last.box, scroll.box)) {
+      found.push(`«${last.name}», the last target of ${scroll.name}, stays hidden at its end`);
+    }
+    for (const target of measured.targets) {
+      if (!target.scroll && overlap(target.box, scroll.box)) {
+        found.push(`«${target.name}» lies over ${scroll.name}`);
+      }
+    }
+  }
+  return found;
+}
+
 /** Every rule break of one measured screen, as one readable line each. */
 export function breaksOf(
   measured: Measured,

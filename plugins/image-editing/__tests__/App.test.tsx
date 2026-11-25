@@ -1,7 +1,7 @@
 /** Retouch's Settings view keeps the shared size rules and shows one switch per edit (#136). */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {Image, StyleSheet} from 'react-native';
+import {Image, ScrollView, StyleSheet} from 'react-native';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
@@ -440,6 +440,22 @@ describe('the editor view (#226)', () => {
     expect(stroked.h.onUndoStroke).toHaveBeenCalledTimes(1);
     expect(stroked.h.onDone).toHaveBeenCalledTimes(1);
     expect(stroked.h.onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  test('the edit list takes its own height and the picture keeps a floor (#279)', async () => {
+    const {tree} = await show(READY);
+    const scroll = tree.root.findByType(ScrollView);
+    const style = StyleSheet.flatten(scroll.props.style);
+    expect(style).toMatchObject({flexGrow: 0, flexShrink: 1});
+    const stage = tree.root.findAll(
+      node =>
+        typeof node.type === 'string' &&
+        typeof node.props.onLayout === 'function',
+    )[0];
+    expect(StyleSheet.flatten(stage.props.style)).toMatchObject({
+      flexGrow: 1,
+      minHeight: '30%',
+    });
   });
 
   test('the canvas takes no pen outside a drawing, and a failure says why', async () => {
