@@ -59,6 +59,10 @@ nonisolated enum Copy {
         String(localized: "Page \(page) of \(count)")
     }
 
+    static func templateNotShown(_ style: String) -> String {
+        String(localized: "Template \(style) cannot be drawn")
+    }
+
     static func copying(_ name: String) -> String {
         String(localized: "Copying \(name) from the tablet…")
     }

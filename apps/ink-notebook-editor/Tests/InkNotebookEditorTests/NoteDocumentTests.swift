@@ -12,8 +12,8 @@ enum Fixtures {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "NoteFormat/Tests/NoteFormatTests/Fixtures", directoryHint: .isDirectory)
 
-    /// `landscape.note` is synthetic, two landscape pages (#291), not made on the tablet.
-    static let notes = ["blank.note", "content.note", "landscape.note"]
+    /// `landscape.note` (#291) and `custom-template.note` (#308) are synthetic, not made on the tablet.
+    static let notes = ["blank.note", "content.note", "landscape.note", "templates.note", "custom-template.note"]
 
     static func data(_ name: String) throws -> Data {
         try Data(contentsOf: folder.appending(path: name))
@@ -21,6 +21,21 @@ enum Fixtures {
 
     static func note(_ name: String) throws -> NoteFile {
         guard case .note(let note) = NoteDocument(data: try data(name)).content else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        return note
+    }
+
+    /// `custom-template.note` with its template picture's signature broken, so the reader cannot
+    /// draw the template (#308).
+    static func damagedTemplateNote() throws -> NoteFile {
+        var bytes = [UInt8](try data("custom-template.note"))
+        let signature: [UInt8] = [0x89, 0x50, 0x4e, 0x47]
+        guard let start = bytes.indices.first(where: { bytes[$0...].starts(with: signature) }) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        bytes[start] = 0
+        guard case .note(let note) = NoteDocument(data: Data(bytes)).content else {
             throw CocoaError(.fileReadCorruptFile)
         }
         return note
@@ -129,6 +144,59 @@ enum Fixtures {
         }
         let fitted = try #require(await PageImages.fit(full, to: (width: 300, height: 400)))
         #expect(fitted.width == 300 && fitted.height == 400)
+    }
+
+    /// The darkest grey of the drawn dots page in the template's empty lower half, where no ink is.
+    private func darkestTemplateGrey(_ image: CGImage) throws -> UInt8 {
+        let context = try #require(
+            CGContext(
+                data: nil, width: image.width, height: image.height, bitsPerComponent: 8, bytesPerRow: image.width,
+                space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        let data = try #require(context.data).assumingMemoryBound(to: UInt8.self)
+        // Rows in memory run top to bottom; the lower half holds only the dot grid.
+        let lower = (image.height / 2 * image.width)..<(image.height * image.width)
+        return lower.map { data[$0] }.min() ?? 255
+    }
+
+    /// A page drawn small keeps its template visible: a 5 mm dot grid stayed near white at a 1x
+    /// display's size and in the thumbnail, so the page looked like ink on white (#308).
+    /// The page at a 1x display's default window size, then a thumbnail, with the darkest grey each
+    /// must reach; without darkening they were 190 and 252.
+    @Test(arguments: [(width: 504, height: 672, darkest: 128), (width: 84, height: 112, darkest: 230)])
+    func aDotTemplateStaysDarkWhenDrawnSmall(width: Int, height: Int, darkest: Int) async throws {
+        let pixels = (width: width, height: height)
+        let pages = PageImages(note: try Fixtures.note("templates.note"))
+        await pages.loadPage(1)
+        guard case .ready(let full) = pages.page(1) else {
+            Issue.record("page 2 did not draw")
+            return
+        }
+        #expect(try darkestTemplateGrey(full) == 0)
+        let small = try #require(await PageImages.fit(full, to: pixels))
+        #expect(try darkestTemplateGrey(small) < darkest, "\(height) pixels high")
+    }
+
+    @Test func theDarkeningIsOddAndAtMostHalfTheScale() {
+        #expect(PageImages.darkening(from: 2560, to: 1344) == 1)
+        #expect(PageImages.darkening(from: 2560, to: 672) == 3)
+        #expect(PageImages.darkening(from: 2560, to: 256) == 5)
+        #expect(PageImages.darkening(from: 2560, to: 150) == 7)
+        #expect(PageImages.darkening(from: 2560, to: 0) == 1)
+    }
+
+    /// A custom template whose picture is damaged: the page draws, and names the style for its marker.
+    @Test func aTemplateTheReaderCannotDrawIsNamedForThePage() async throws {
+        let pages = PageImages(note: try Fixtures.damagedTemplateNote())
+        await pages.loadPage(0)
+        guard case .ready = pages.page(0) else {
+            Issue.record("the page did not draw")
+            return
+        }
+        #expect(pages.missingTemplates[0] == "user_test_template")
+        let intact = PageImages(note: try Fixtures.note("custom-template.note"))
+        await intact.loadPage(0)
+        #expect(intact.missingTemplates[0] == nil)
     }
 
     @Test func aFailedCopyIsNamedAsACopyButKeepsTheNamedStates() {

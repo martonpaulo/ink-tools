@@ -207,10 +207,34 @@ private struct PageView: View {
         let shown = fitted.flatMap { $0.key == key ? $0.image : nil }
         return PaperImage(image: shown ?? full, label: Copy.pageOf(index + 1, count))
             .frame(width: points.width, height: points.height)
+            .overlay(alignment: .top) {
+                if let style = pages.missingTemplates[index] {
+                    TemplateMarker(style: style)
+                }
+            }
             .task(id: key) {
                 guard let image = await PageImages.fit(full, to: pixels) else { return }
                 fitted = Fitted(key: key, image: image)
             }
+    }
+}
+
+/// The sign on a page whose template could not be drawn: the ink shows, the template does not (#308).
+private struct TemplateMarker: View {
+    /// The space inside the capsule, in points.
+    static let inset = EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10)
+    /// The space between the capsule and the page's top edge, in points.
+    static let margin: CGFloat = 8
+
+    let style: String
+
+    var body: some View {
+        Label(Copy.templateNotShown(style), systemImage: "exclamationmark.triangle.fill")
+            .symbolRenderingMode(.multicolor)
+            .font(.callout)
+            .padding(Self.inset)
+            .background(.regularMaterial, in: .capsule)
+            .padding(Self.margin)
     }
 }
 

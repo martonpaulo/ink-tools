@@ -331,6 +331,16 @@
         }
       }
     },
+    "Template %@ cannot be drawn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Template %@ cannot be drawn"
+          }
+        }
+      }
+    },
     "The app could not make the folder %@: %@" : {
       "localizations" : {
         "en" : {

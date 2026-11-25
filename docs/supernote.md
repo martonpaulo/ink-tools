@@ -752,11 +752,21 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
 - The page style carries the screen's suffix in the file (`style_5mm_grid_a5x2`), while
   `insertNotePage` takes the name without it (`style_5mm_grid`) [measured]. The background of every
   template is stored in the note itself, so the note draws without the tablet's template files.
+- A page made from an imported PDF template has the style `user_pdf_<file>_<page>`; its background
+  layer says `RATTA_RLE` but holds a 1920 x 2560 RGBA PNG, and the footer names each one as
+  `STYLE_<style><md5>`; `PDFSTYLELIST` lists the styles in base64 [measured, 2026-11-25,
+  [#308](https://github.com/martonpaulo/ink-tools/issues/308)].
+- A template's dots and ruled lines are 1 to 3 pixels wide: drawn at a third of the page's size or
+  less, plain resampling leaves a 5 mm dot grid at grey 190 and a thumbnail blank, so the Ink
+  Notebook Editor darkens before it resamples [measured, 2026-11-25,
+  [#308](https://github.com/martonpaulo/ink-tools/issues/308)].
 - A text box and a picture a plugin inserts are drawn into the main layer's bitmap, so a reader of
   the bitmaps shows them with no element decoding [measured].
 - `PluginFileAPI.generateNotePng` at `times: 1` on white matches `NoteFormat`'s drawing of the same
   page to 0.003 % of pixels or less, over 9 pages: blank, three templates, a text box with a picture,
   and four handwriting pages [measured, `inkctl note png`, `note-render --compare`].
+  A second test note, dots with ink and ruled lines, matched at 0.000 % (2026-11-25,
+  [#308](https://github.com/martonpaulo/ink-tools/issues/308)).
 - A picture `PluginNoteAPI.insertImage` places stays a floating selection on screen, and Probe's call
   gave no answer in 20 s, yet the note file held the picture once the note was opened again
   [measured, 2026-11-25].

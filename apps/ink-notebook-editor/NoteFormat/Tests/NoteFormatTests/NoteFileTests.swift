@@ -166,20 +166,38 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
         return builder.finish(header: header, pages: [page])
     }
 
-    @Test func testUnknownProtocolFails() throws {
+    /// A background the reader cannot decode keeps the page and names its style (#308).
+    @Test func testUnknownTemplateEncodingNamesTheStyle() throws {
         let note = try NoteFile(bytes: oneLayerNote(encoding: "SN_ASA_COMPRESS", style: "style_white", bitmap: [0]))
-        #expect(throws: NoteFormatError.unknownProtocol("SN_ASA_COMPRESS")) { try note.render(page: 0) }
+        let image = try note.render(page: 0)
+        #expect(image.templateFailure == TemplateFailure(
+            style: "style_white", reason: .unknownProtocol("SN_ASA_COMPRESS")))
+        #expect(image.pixels.allSatisfy { $0 == RattaRLE.Grey.transparent })
     }
 
-    @Test func testBadCustomBackgroundFails() throws {
+    @Test func testBadCustomBackgroundNamesTheStyle() throws {
         let note = try NoteFile(bytes: oneLayerNote(encoding: "RATTA_RLE", style: "user_lined", bitmap: [1, 2, 3]))
-        #expect(throws: NoteFormatError.badPicture("the given image")) { try note.render(page: 0) }
+        #expect(try note.render(page: 0).templateFailure == TemplateFailure(
+            style: "user_lined", reason: .badPicture("the given image")))
     }
 
-    @Test func testCustomBackgroundOfAnotherSizeFails() throws {
+    @Test func testCustomBackgroundOfAnotherSizeNamesTheStyle() throws {
         let small = try #require(PageBitmap(width: 2, height: 2, pixels: [0, 0, 0, 0]).pngData())
         let note = try NoteFile(bytes: oneLayerNote(encoding: "RATTA_RLE", style: "user_lined", bitmap: [UInt8](small)))
-        #expect(throws: NoteFormatError.badPicture("BGLAYER")) { try note.render(page: 0) }
+        #expect(try note.render(page: 0).templateFailure == TemplateFailure(
+            style: "user_lined", reason: .badPicture("BGLAYER")))
+    }
+
+    @Test func testUnknownInkEncodingStillFails() throws {
+        var builder = NoteBuilder()
+        let header = builder.metadata([("FILE_TYPE", "NOTE")])
+        let data = builder.block([0])
+        let layer = builder.metadata([
+            ("LAYERNAME", "MAINLAYER"), ("LAYERPROTOCOL", "SN_ASA_COMPRESS"), ("LAYERBITMAP", String(data)),
+        ])
+        let page = builder.metadata([("PAGESTYLE", "style_white"), ("MAINLAYER", String(layer)), ("LAYERSEQ", "MAINLAYER")])
+        let note = try NoteFile(bytes: builder.finish(header: header, pages: [page]))
+        #expect(throws: NoteFormatError.unknownProtocol("SN_ASA_COMPRESS")) { try note.render(page: 0) }
     }
 
     @Test func testRendersLayersOnWhite() throws {

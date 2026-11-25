@@ -13,6 +13,7 @@ import Testing
 
     static let pages: [(note: String, page: Int)] = [
         ("blank", 1), ("content", 1), ("content", 2), ("content", 3), ("content", 4),
+        ("templates", 1), ("templates", 2), ("templates", 3),
     ]
 
     static func fixture(_ name: String) throws -> Data {

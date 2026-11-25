@@ -49,6 +49,18 @@ final class RenderTests {
         }
         await wide.loadPage(0)
         try await render("notebook-landscape", Self.sizes) { NotebookView(pages: wide) }
+        // A page's template draws dark enough to see at every size, and one the reader cannot
+        // draw carries its marker (#308).
+        let templates = PageImages(note: try Fixtures.note("templates.note"))
+        for index in templates.note.pages.indices {
+            await templates.loadThumbnail(index, scale: 1)
+        }
+        await templates.loadPage(1)
+        try await render("notebook-template", Self.sizes) { NotebookView(pages: templates, page: 1) }
+        let damaged = PageImages(note: try Fixtures.damagedTemplateNote())
+        await damaged.loadThumbnail(0, scale: 1)
+        await damaged.loadPage(0)
+        try await render("notebook-template-missing", Self.sizes) { NotebookView(pages: damaged) }
         let loading = PageImages(note: note)
         try await render("notebook-loading", Self.sizes) { NotebookView(pages: loading) }
         try await render("unreadable", Self.sizes) {

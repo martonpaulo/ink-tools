@@ -5,16 +5,26 @@ import CoreGraphics
 import Foundation
 import ImageIO
 
+/// A page template whose stored background the reader could not draw: its `PAGESTYLE` and why.
+/// The page is drawn without it, and the caller shows a marker and logs the style (#308).
+public struct TemplateFailure: Sendable, Equatable {
+    public let style: String
+    public let reason: NoteFormatError
+}
+
 /// A page drawn as one grey byte per pixel, 0 black to 255 white.
 public struct PageBitmap: Sendable, Equatable {
     public let width: Int
     public let height: Int
     public let pixels: [UInt8]
+    /// Set when the page's template could not be drawn under the other layers.
+    public let templateFailure: TemplateFailure?
 
-    public init(width: Int, height: Int, pixels: [UInt8]) {
+    public init(width: Int, height: Int, pixels: [UInt8], templateFailure: TemplateFailure? = nil) {
         self.width = width
         self.height = height
         self.pixels = pixels
+        self.templateFailure = templateFailure
     }
 
     /// Reads a PNG or JPEG into grey pixels, on white where it is transparent.
@@ -83,7 +93,8 @@ extension NoteFile {
     static let blankWhiteBlockSize = 0x140e
 
     /// Draws page `index`, counted from 0: the shown layers in `LAYERSEQ` order over the
-    /// background, on white.
+    /// background, on white. A background that cannot be decoded leaves the ink drawn and sets
+    /// `templateFailure`; any other layer that cannot be decoded fails the page.
     public func render(page index: Int) throws -> PageBitmap {
         guard pages.indices.contains(index) else { throw NoteFormatError.badPage(index) }
         let page = pages[index]
@@ -95,6 +106,7 @@ extension NoteFile {
             ? (portraitHeight, portraitWidth) : (portraitWidth, portraitHeight)
         var canvas = [UInt8](repeating: RattaRLE.Grey.transparent, count: width * height)
         let visibility = page.visibility
+        var templateFailure: TemplateFailure?
 
         for name in page.layerOrder.reversed() {
             // supernotelib `_get_layer_visibility`: with LAYERINFO, a layer it does not name is
@@ -103,13 +115,19 @@ extension NoteFile {
             guard shown, let layer = page.layers.first(where: { $0.name == name }),
                   layer.bitmapAddress != 0
             else { continue }
-            let pixels = try layerPixels(layer, of: page, width: width, height: height)
+            let pixels: [UInt8]
+            do {
+                pixels = try layerPixels(layer, of: page, width: width, height: height)
+            } catch let error as NoteFormatError where name == Self.backgroundLayer {
+                templateFailure = TemplateFailure(style: page.style ?? "none", reason: error)
+                continue
+            }
             // What no layer covers stays `Grey.transparent`, 255, the white of the page.
             for offset in 0..<canvas.count where pixels[offset] != RattaRLE.Grey.transparent {
                 canvas[offset] = pixels[offset]
             }
         }
-        return PageBitmap(width: width, height: height, pixels: canvas)
+        return PageBitmap(width: width, height: height, pixels: canvas, templateFailure: templateFailure)
     }
 
     func layerPixels(_ layer: Layer, of page: Page, width: Int, height: Int) throws -> [UInt8] {
