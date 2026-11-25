@@ -36,7 +36,7 @@ PLUGIN_PX = 96
 SVG_NS = "http://www.w3.org/2000/svg"
 SVG_OPEN = f'<svg xmlns="{SVG_NS}"'
 RGB_CHANNELS = 3  # the red, green and blue of an icon.json fill
-BYTE_MAX = 255
+FILL_CHANNEL_MAX = 255
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
 SHEET_ZOOMS = {"small": 0.5, "default": 1, "large": 2}  # 48, 96 and 192 px icons
 
@@ -396,7 +396,7 @@ def mac_icon_svg(root=ROOT):
     folder = root / "apps/ink-notebook-editor/Support/AppIcon.icon"
     fill = json.loads((folder / "icon.json").read_text())["fill"]["automatic-gradient"]
     channels = fill.split(":")[1].split(",")[:RGB_CHANNELS]
-    red, green, blue = (round(float(v) * BYTE_MAX) for v in channels)
+    red, green, blue = (round(float(v) * FILL_CHANNEL_MAX) for v in channels)
     page = (folder / "Assets/page.svg").read_text()
     inner = re.sub(r"</?svg[^>]*>", "", page)
     return (
