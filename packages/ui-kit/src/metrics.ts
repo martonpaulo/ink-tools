@@ -29,12 +29,16 @@ export const metrics = {
   controlHeight: mm(MM.controlHeight.value),
   rowButtonWidth: mm(MM.rowButtonWidth.value),
   border,
+  /** The line between two rows of one group, thinner than a border, in whole device pixels so every line of a group is as thick (#275). */
+  separator: Math.max(1, Math.round(MM.separator.value * PX_PER_MM)) * SCALE,
   selectedBarHeight: border * RATIO.selectedBarBorders.value,
 
   /** Between the screen's edge and its content. */
   screenPadding: space,
   /** Between the stacked parts of a screen: the bar, the status line, the grid, the page buttons. */
   sectionGap: space,
+  /** Above a group of rows, so each group reads apart from the one above (#275). */
+  groupGap: space * RATIO.groupGapSpaces.value,
   /** Between the controls of one row. */
   controlGap: space,
   /** Inside a button or the field, before the label or text; the selected bar's inset too. */
@@ -48,6 +52,10 @@ export const metrics = {
 
   minFont: mm(MM.minFont.value),
   fontBody: bodyFont,
+  /** The title bar's title, as the native one (#275). */
+  fontTitle: mm(MM.titleFont.value),
+  /** A row's subtitle, as the native one (#275). */
+  fontSubtitle: mm(MM.subtitleFont.value),
   fontLarge: bodyFont * RATIO.largeFont.value,
   statusLineHeight: Math.round(bodyFont * RATIO.lineHeight.value),
 

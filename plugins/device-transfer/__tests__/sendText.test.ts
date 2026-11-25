@@ -19,7 +19,7 @@ import {fakeRelay} from '../test-support/fakeRelay';
 /** A synthetic LAN address from its four parts. */
 const lan = (...parts: number[]) => parts.join('.');
 
-const sender = {alias: 'Supernote', fingerprint: 'self'};
+const sender = {alias: 'Supernote', fingerprint: 'self', identityFolder: '/plugin'};
 const mac: Device = {
   alias: 'Mac',
   ip: lan(192, 168, 1, 20),
@@ -27,6 +27,13 @@ const mac: Device = {
   protocol: 'https',
   fingerprint: 'mac-fp',
 };
+
+// Each send logs its steps (#98); the suite keeps them out of its output and reads them here.
+let logged: jest.SpyInstance;
+beforeEach(() => {
+  logged = jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+afterEach(() => logged.mockRestore());
 
 function replies(...answers: Array<{status: number; body?: string}>) {
   const post = jest.fn();
@@ -67,6 +74,13 @@ test('a 200 with a token gets the text uploaded, and only its 200 is «sent»', 
   expect(upload[0]).toContain('/upload?sessionId=s&fileId=text&token=t');
   expect(upload[2]).toBe('Olá');
   expect(upload[3]).toBeNull();
+  // Our certificate is the client certificate on both steps (#98).
+  expect(post.mock.calls[0][5]).toBe('/plugin');
+  expect(upload[5]).toBe('/plugin');
+  // The toast line is logged, never the text (#98).
+  const lines = logged.mock.calls.map(call => call[0]).join('\n');
+  expect(lines).toContain('Relay: send: text: Sent to Mac');
+  expect(lines).not.toContain('Olá');
   const failed = fakeRelay({
     post: replies({status: 200, body: session}, {status: 500}),
   });
@@ -86,6 +100,18 @@ test('a declined text says so; an empty text and an outside receiver send nothin
     sendText(quiet.api, sender, {...mac, ip: '8.8.8.8'}, 'x'),
   ).resolves.toBe('Mac is not on this network');
   expect(quiet.native.post).not.toHaveBeenCalled();
+});
+
+test('a receiver that moved gets the text at its new address (#98)', async () => {
+  const moved = {...mac, ip: lan(192, 168, 1, 43)};
+  const post = jest.fn();
+  post.mockRejectedValueOnce(Object.assign(new Error('ConnectException'), {code: 'IO'}));
+  post.mockResolvedValueOnce({status: 204, body: ''});
+  const {api} = fakeRelay({post});
+  const relocate = jest.fn(async () => moved);
+  await expect(sendText(api, sender, mac, 'Olá', relocate)).resolves.toBe('Sent to Mac');
+  expect(relocate).toHaveBeenCalledWith(mac);
+  expect(new URL(post.mock.calls[1][0]).hostname).toBe(moved.ip);
 });
 
 test('the file name is the first words, short, and never empty', () => {

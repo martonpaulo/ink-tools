@@ -81,7 +81,7 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
 
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
+      <Text accessibilityRole="header" style={shared.title}>
         {copy['choose.title'](choice.word)}
       </Text>
       <View style={shared.row}>
@@ -134,6 +134,8 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
                         : {uri: tile.uri}
                     }
                     resizeMode="contain"
+                    // No fade-in: each fade step is a refresh on e-ink (brief 8.4).
+                    fadeDuration={0}
                     style={styles.image}
                   />
                 </Pressable>

@@ -23,14 +23,15 @@ export {Switch} from './Switch';
 export type {SwitchProps} from './Switch';
 export {Radio} from './Radio';
 export type {RadioProps} from './Radio';
-export {CheckMark, Chevron, SectionCaption} from './marks';
+// A caption is drawn only by RowGroup, so no screen sets one apart from its rows (#275).
+export {CheckMark, Chevron} from './marks';
 export {SearchField} from './SearchField';
 export type {SearchFieldProps} from './SearchField';
 export {Pager} from './Pager';
 export type {PagerProps} from './Pager';
 export {IconButton} from './IconButton';
 // The two setting shapes built from them (#274).
-export {ChoiceList, SwitchRow} from './SettingRows';
-export type {Choice, ChoiceListProps, SwitchRowProps} from './SettingRows';
+export {ChoiceList, RowGroup, SwitchRow} from './SettingRows';
+export type {Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';
 export type {IconButtonProps, IconKind} from './IconButton';
 export type {ErrorViewProps, NeedsProps} from './ProblemView';

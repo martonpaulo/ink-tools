@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- A notebook page with ruled lines and one ink stroke; brand-free, as AGENTS.md › Name requires. -->
+  <rect x="262" y="172" width="500" height="680" rx="36" fill="#FFFFFF"/>
+  <g stroke="#C9CED6" stroke-width="10" stroke-linecap="round">
+    <line x1="322" y1="312" x2="702" y2="312"/>
+    <line x1="322" y1="402" x2="702" y2="402"/>
+    <line x1="322" y1="492" x2="702" y2="492"/>
+    <line x1="322" y1="582" x2="702" y2="582"/>
+    <line x1="322" y1="672" x2="702" y2="672"/>
+  </g>
+  <path d="M332 452 C 390 380, 430 380, 452 440 S 520 500, 560 420 S 640 360, 690 430" fill="none" stroke="#1C1F24" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

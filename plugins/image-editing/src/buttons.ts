@@ -25,7 +25,7 @@ export type ButtonDeps = {
   register: typeof registerButton;
   unregister: typeof unregisterButton;
   log: (line: string) => void;
-  /** The button's icon URI (#107), drawn from `assets/editor.svg` by Word Lookup's `npm run icons`. */
+  /** The button's icon URI (#107), drawn from `assets/editor.svg` by `scripts/icons.py`. */
   icon: string | undefined;
 };
 

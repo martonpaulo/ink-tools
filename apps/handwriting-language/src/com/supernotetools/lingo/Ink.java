@@ -5,7 +5,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
-import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -14,11 +13,12 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import java.util.List;
 
 /**
  * The Supernote's native controls, drawn as `@ink-tools/ui-kit` draws them for the plugins
- * (#273, #275): the title bar, the list row, the switch, the radio button, the section caption
- * and the bordered button. Every size, colour and control word comes from `Tokens`, which
+ * (#273, #275): the title bar, the list row, the group of rows under its caption, the switch, the
+ * radio button and the bordered button. Every size, colour and control word comes from `Tokens`, which
  * scripts/build.cjs writes from packages/ui-kit/src/tokens.json, so this class holds no value of
  * its own. Black on white, no animation (docs/supernote.md › Display).
  */
@@ -76,15 +76,16 @@ final class Ink {
     return view;
   }
 
-  /** The black band: × to close at the leading edge, the title centred (ui-kit `TitleBar`). */
-  static LinearLayout titleBar(Context context, String title, String closeName, Runnable onClose) {
-    LinearLayout band = new LinearLayout(context);
-    band.setOrientation(LinearLayout.HORIZONTAL);
-    band.setGravity(Gravity.CENTER_VERTICAL);
+  /**
+   * The black band (ui-kit `TitleBar`): × to close at the leading edge and the title centred on the
+   * band's full width, as the native title bar centres it in its parent, so the × never pushes it;
+   * the title in the native size and regular weight (owner, #275).
+   */
+  static FrameLayout titleBar(Context context, String title, String closeName, Runnable onClose) {
+    FrameLayout band = new FrameLayout(context);
     band.setBackgroundColor(INK);
     band.setMinimumHeight(px(context, Tokens.TITLE_BAR_HEIGHT_MM));
     int space = space(context);
-    band.setPadding(space, 0, space, 0);
     TextView close = new TextView(context);
     close.setText(CLOSE_GLYPH);
     close.setTextColor(PAPER);
@@ -95,29 +96,34 @@ final class Ink {
     close.setContentDescription(closeName);
     role(close, BUTTON_ROLE, null);
     close.setOnClickListener(view -> onClose.run());
-    band.addView(close, new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    FrameLayout.LayoutParams start = new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL);
+    start.setMarginStart(space);
+    band.addView(close, start);
     TextView name = new TextView(context);
     name.setText(title);
     name.setTextColor(PAPER);
-    name.setTextSize(TypedValue.COMPLEX_UNIT_SP, bodySp(context));
-    name.setTypeface(Typeface.DEFAULT_BOLD);
+    name.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp(context, Tokens.TITLE_FONT_MM));
     name.setGravity(Gravity.CENTER);
-    name.setSingleLine(true);
-    name.setEllipsize(TextUtils.TruncateAt.END);
+    // Two lines at most, never cut short (interface rule 9). Over the × and after it, as ui-kit
+    // reads them; not clickable, so a tap reaches the × under it.
+    name.setMaxLines(2);
+    name.setClickable(false);
     name.setAccessibilityHeading(true);
-    LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-    fill.setMarginStart(space);
-    band.addView(name, fill);
+    // Inset by the same width on both sides: centred on the band, never under the ×.
+    int edge = space + target(context);
+    name.setPadding(edge, 0, edge, 0);
+    band.addView(name, new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
     return band;
   }
 
   /**
-   * A list row (ui-kit `ListRow`): the title, an optional grey subtitle, a solid ink separator
-   * under it and a trailing control. The whole row is one target; the trailing control only shows.
+   * A list row (ui-kit `ListRow`): the title and a trailing control, with no line of its own
+   * (`group` draws the lines). The whole row is one target; the trailing control only shows.
    */
-  static LinearLayout row(Context context, String title, String subtitle, View trailing) {
-    LinearLayout row = plainRow(context, title, subtitle, trailing);
+  static LinearLayout row(Context context, String title, View trailing) {
+    LinearLayout row = plainRow(context, title, trailing);
     trailing.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     row.setClickable(true);
     row.setFocusable(true);
@@ -125,25 +131,22 @@ final class Ink {
   }
 
   /** A row whose trailing control acts by itself, such as «Switch Language» beside the active language. */
-  static LinearLayout actionRow(Context context, String title, String subtitle, View action) {
-    return plainRow(context, title, subtitle, action);
+  static LinearLayout actionRow(Context context, String title, View action) {
+    return plainRow(context, title, action);
   }
 
-  private static LinearLayout plainRow(Context context, String title, String subtitle, View trailing) {
+  /**
+   * A row shows a title only: a language row shows the language's name, never its code (owner,
+   * #275), so no row takes a subtitle.
+   */
+  private static LinearLayout plainRow(Context context, String title, View trailing) {
     LinearLayout row = new LinearLayout(context);
     row.setOrientation(LinearLayout.HORIZONTAL);
     row.setGravity(Gravity.CENTER_VERTICAL);
     row.setMinimumHeight(target(context));
     int space = space(context);
     row.setPadding(0, space, 0, space);
-    row.setBackground(separator(context));
-    LinearLayout texts = new LinearLayout(context);
-    texts.setOrientation(LinearLayout.VERTICAL);
-    texts.addView(text(context, title, false));
-    if (subtitle != null) {
-      texts.addView(text(context, subtitle, true));
-    }
-    row.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+    row.addView(text(context, title, false), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
     LinearLayout.LayoutParams end = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     end.setMarginStart(space);
@@ -152,15 +155,15 @@ final class Ink {
   }
 
   /** A row whose trailing control is the switch; it speaks as a switch with its state. */
-  static LinearLayout switchRow(Context context, String title, String subtitle, boolean on) {
-    LinearLayout row = row(context, title, subtitle, switchBox(context, on));
+  static LinearLayout switchRow(Context context, String title, boolean on) {
+    LinearLayout row = row(context, title, switchBox(context, on));
     role(row, SWITCH_ROLE, on);
     return row;
   }
 
   /** A row whose trailing control is the radio button; it speaks as a radio button with its state. */
   static LinearLayout radioRow(Context context, String title, boolean checked) {
-    LinearLayout row = row(context, title, null, radio(context, checked));
+    LinearLayout row = row(context, title, radio(context, checked));
     role(row, RADIO_ROLE, checked);
     return row;
   }
@@ -203,12 +206,34 @@ final class Ink {
     return target;
   }
 
-  /** A grey caption over the rows it names, such as «Languages in the cycle» (ui-kit `SectionCaption`). */
-  static TextView caption(Context context, String value) {
-    TextView view = text(context, value, true);
-    view.setPadding(0, space(context), 0, 0);
-    view.setAccessibilityHeading(true);
-    return view;
+  /**
+   * Rows that belong together, as the native Settings group them (owner, #275; ui-kit `RowGroup`):
+   * the group gap above, the grey caption with no gap under it, then its rows, with a thin ink
+   * line only between two rows, none under the caption and none under the last row, then the note
+   * that explains the group, grey, right under its last row (null for none).
+   */
+  static LinearLayout group(Context context, String caption, List<? extends View> rows, String note) {
+    LinearLayout group = new LinearLayout(context);
+    group.setOrientation(LinearLayout.VERTICAL);
+    group.setPadding(0, px(context, Tokens.SPACE_MM * Tokens.GROUP_GAP_SPACES_RATIO), 0, 0);
+    // The native caption: grey, body size, regular weight (#275).
+    TextView head = text(context, caption, true);
+    head.setAccessibilityHeading(true);
+    group.addView(head);
+    for (int index = 0; index < rows.size(); index++) {
+      if (index > 0) {
+        View line = new View(context);
+        line.setBackgroundColor(INK);
+        group.addView(line, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, px(context, Tokens.SEPARATOR_MM))));
+      }
+      group.addView(rows.get(index), new LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
+    if (note != null) {
+      group.addView(text(context, note, true));
+    }
+    return group;
   }
 
   /**
@@ -248,17 +273,6 @@ final class Ink {
       box.setStroke(width, stroke);
     }
     return box;
-  }
-
-  /** Paper with one solid ink line at the bottom: a list row's separator. */
-  private static LayerDrawable separator(Context context) {
-    GradientDrawable line = new GradientDrawable();
-    line.setColor(INK);
-    GradientDrawable paper = new GradientDrawable();
-    paper.setColor(PAPER);
-    LayerDrawable layers = new LayerDrawable(new Drawable[] {line, paper});
-    layers.setLayerInset(1, 0, 0, 0, border(context));
-    return layers;
   }
 
   /** The role a screen reader speaks, and the checked state for a switch or a radio button. */

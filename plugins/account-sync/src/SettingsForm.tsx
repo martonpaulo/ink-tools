@@ -1,12 +1,12 @@
 /**
- * Bridge's opt-in switches (#40): one section per module, a toggle for the module and one per
+ * Bridge's opt-in switches (#40): one `RowGroup` per module, under the module's caption, a toggle for the module and one per
  * provider. Each is a ui-kit `SwitchRow`, whose switch a screen reader hears as checked or not
  * (#274). A provider
  * stays disabled while its module is off, and every change goes through the sync-core rules.
  */
 import React from 'react';
 import {View} from 'react-native';
-import {SectionCaption, SwitchRow} from '@ink-tools/ui-kit';
+import {RowGroup, SwitchRow} from '@ink-tools/ui-kit';
 import {
   BridgeSettings,
   MODULE_PROVIDERS,
@@ -40,8 +40,7 @@ export function SettingsForm({
         const on = settings.modules[module];
         const name = copy[`module.${module}`];
         return (
-          <View key={module}>
-            <SectionCaption>{name}</SectionCaption>
+          <RowGroup key={module} caption={name}>
             <SwitchRow
               title={name}
               value={on}
@@ -78,7 +77,7 @@ export function SettingsForm({
                 }
               />
             )}
-          </View>
+          </RowGroup>
         );
       })}
     </View>

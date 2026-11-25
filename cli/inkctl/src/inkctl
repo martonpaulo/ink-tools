@@ -174,10 +174,16 @@ SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
 GOOGLE_CLIENT_PROVIDER = "google-client"
 SIGN_IN_DROP_FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync"
 SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
-# The login Keychain items of the Google sign-in on the Mac (#124, plugins/account-sync/AGENTS.md).
+# The login Keychain items of the Google sign-in on the Mac (#124, docs/security.md › Account Sync sign-in
+# secrets): service the consumer, account the secret's name, comment its description (credential naming rule, #277).
 KEYCHAIN_SERVICE = "ink-tools"
-GOOGLE_CLIENT_ACCOUNT = "account-sync-google-oauth-client"
-GOOGLE_TOKEN_ACCOUNT = "account-sync-google-refresh-token"
+GOOGLE_CLIENT_ACCOUNT = "ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT"
+GOOGLE_TOKEN_ACCOUNT = "ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
+GOOGLE_CLIENT_COMMENT = (
+    "inkctl google login and inkctl secret set google-client read this Google «Desktop app» OAuth client JSON for Ink Tools Account Sync."
+    " Value lives in the Mac login Keychain; to rotate, create a new Desktop client in the Google Cloud console, store its JSON here,"
+    " then delete the old client the same day."
+)
 CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 SHARED_ROOT = "/storage/emulated/0"
 SHARED_ALIASES = ("/sdcard", "/mnt/sdcard", "/storage/self/primary")
@@ -450,7 +456,7 @@ FAILURE_ADVICE = {
     "missing_call": ("a firmware update may have changed this call", "inkctl doctor"),
     "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
     "log_error": ("the command's own log could not be read", "inkctl status"),
-    "google_client": ("the login Keychain holds no «Desktop app» Google client for Account Sync", f"security add-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_CLIENT_ACCOUNT} -w"),
+    "google_client": ("the login Keychain holds no «Desktop app» Google client for Account Sync", f'security add-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_CLIENT_ACCOUNT} -j "{GOOGLE_CLIENT_COMMENT}" -w'),
     "google_denied": ("the browser's answer did not sign in: consent refused, or not this sign-in's answer", "inkctl google login"),
     "google_refused": ("Google's answer cannot sign Account Sync in", "inkctl google login"),
     "keychain_error": ("the login Keychain could not be read or written", "inkctl google login"),
@@ -3049,8 +3055,9 @@ def command_secret_status(device: Device, args: argparse.Namespace):
 # writer to the tablet. https://developers.google.com/identity/protocols/oauth2/native-app
 GOOGLE_TOKEN_LABEL = "Ink Tools Account Sync: Google Calendar"
 GOOGLE_TOKEN_COMMENT = (
-    "Google refresh token for Ink Tools Account Sync (calendar.readonly, calendar.events). Stored in the login Keychain."
-    " Rotate: revoke at myaccount.google.com/permissions and run inkctl google login."
+    "inkctl google login writes this Google refresh token (calendar.readonly, calendar.events) and inkctl secret set google sends it"
+    " to Ink Tools Account Sync. Value lives in the Mac login Keychain; to rotate, revoke it at myaccount.google.com/permissions,"
+    " then run inkctl google login."
 )
 GOOGLE_SCOPES = (
     "https://www.googleapis.com/auth/calendar.readonly",

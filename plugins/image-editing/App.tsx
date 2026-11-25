@@ -28,9 +28,11 @@ import {
   closeEditor,
   EditorState,
   editorState,
+  finishErase,
   onEditorState,
   runEditorEdit,
   stylesDone,
+  undoStroke,
 } from './src/editor';
 import {Editor} from './src/EditorView';
 import {askFilePermissions} from './src/permissions';
@@ -41,7 +43,8 @@ import {working} from './src/working';
  * grid it opens (#133), and Settings, one switch per edit the editor shows (#136), every size and
  * colour from the shared ui-kit (#93). Back does what the open screen's «Close» does: it closes
  * the styles grid back to the editor, the editor, or Settings, and does nothing while an edit runs
- * (#204). Settings has its own «Close» too: opened by the permission path, PluginHost kept the key
+ * (#204). In a pen mode it leaves the mode: Erase keeps its strokes as «Done» does, Crop drops its
+ * marks as «Cancel» does (#278). Settings has its own «Close» too: opened by the permission path, PluginHost kept the key
  * from the view on the Nomad, so Back never reached it (#204, measured on beta 7).
  */
 export default function App({
@@ -70,6 +73,9 @@ export default function App({
     } else if (grid.phase !== 'idle') {
       // «Making» is refused there too, as the grid's «Close» is disabled.
       closeStyles(closeGrid);
+    } else if (editor.phase === 'ready' && editor.draw === 'erase') {
+      // Strokes shown erased are kept, as «Done» and «Close» keep them (#278).
+      finishErase(close);
     } else if (editor.phase === 'ready' && editor.draw !== null) {
       cancelDrawing();
     } else if (editor.phase !== 'idle') {
@@ -98,9 +104,11 @@ export default function App({
         settings={settings}
         onEdit={edit => runEditorEdit(edit, close)}
         onApply={edit => applyDrawing(edit, close)}
-        onMark={addMark}
+        onMark={points => addMark(points)}
         onClear={clearMarks}
-        onCancel={cancelDrawing}
+        onUndoStroke={() => undoStroke()}
+        onDone={() => finishErase(close)}
+        onCancel={() => cancelDrawing()}
         onClose={() => closeEditor(close)}
       />
     );

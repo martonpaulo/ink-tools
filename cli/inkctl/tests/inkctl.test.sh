@@ -1631,6 +1631,9 @@ providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/syn
 check "the providers are sync-core's" "$providers" "todoist,icloud,google,google-client"
 check "the file name is sync-core's" "$(grep -c '`${provider}.secret`' "$repo_root/../../packages/sync-core/src/secrets.ts")" "1"
 
+# Every Keychain account inkctl names is the secret's name in upper snake case (credential naming rule, #277).
+check "each Keychain account is named by the rule" "$(grep -E '^[A-Z_]+_ACCOUNT = ' "$repo_root/src/inkctl" | grep -cvE '= "[A-Z][A-Z0-9_]+"$')" "0"
+
 # The Google sign-in on the Mac (#124): `security`, the browser and Google's token endpoint are stubs.
 # The real Keychain, browser and network are never reached: PATH puts the `security` stub first,
 # $BROWSER is the browser stub, and the client's token_uri is a local fake.
@@ -1642,7 +1645,7 @@ printf '%s\n' "$*" >> "$SECURITY_LOG"
 if [ "$1" = -i ]; then
     cat > "$KEYCHAIN/stdin"
     line=$(cat "$KEYCHAIN/stdin")
-    [ -f "$KEYCHAIN/write-fails" ] || printf '%s' "${line##*-w }" > "$KEYCHAIN/account-sync-google-refresh-token"
+    [ -f "$KEYCHAIN/write-fails" ] || printf '%s' "${line##*-w }" > "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
     exit 0
 fi
 [ -f "$KEYCHAIN/$5" ] || { echo 'security: The specified item could not be found in the keychain.' >&2; exit 44; }
@@ -1707,20 +1710,21 @@ token_pid=$!
 trap 'kill "$token_pid" 2>/dev/null; rm -rf "$work"' EXIT
 # timing-independent: a poll with a deadline for the fake token server's port file.
 for _ in $(seq 50); do [ -f "$KEYCHAIN/token-port" ] && break; sleep 0.1; done
-client="$KEYCHAIN/account-sync-google-oauth-client"
+client="$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT"
 printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "http://127.0.0.1:%s/token"}}' "$(cat "$KEYCHAIN/token-port")" > "$client"
 google() { run google login --timeout 20 "$@"; }
 
 echo ok > "$KEYCHAIN/token-mode"
 output=$(BROWSER_MODE=ok google --json 2>"$work/err")
 check "google login signs in" "$?" "0"
-check "google login stores the refresh token" "$(cat "$KEYCHAIN/account-sync-google-refresh-token")" "$SYNTHETIC_REFRESH"
-check "google login shows only the token's length" "$(printf '%s' "$output" | field "['length'],d['keychain']['account']")" "(${#SYNTHETIC_REFRESH}, 'account-sync-google-refresh-token')"
-check "the token goes to security on stdin" "$(grep -c "^add-generic-password -U -s ink-tools -a account-sync-google-refresh-token .* -w $SYNTHETIC_REFRESH$" "$KEYCHAIN/stdin")" "1"
+check "google login stores the refresh token" "$(cat "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN")" "$SYNTHETIC_REFRESH"
+check "google login shows only the token's length" "$(printf '%s' "$output" | field "['length'],d['keychain']['account']")" "(${#SYNTHETIC_REFRESH}, 'ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN')"
+check "the stored token carries its description" "$(grep -c ' -j "inkctl google login writes this Google refresh token .* Value lives in the Mac login Keychain; to rotate, ' "$KEYCHAIN/stdin")" "1"
+check "the token goes to security on stdin" "$(grep -c "^add-generic-password -U -s ink-tools -a ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN .* -w $SYNTHETIC_REFRESH$" "$KEYCHAIN/stdin")" "1"
 check "the token never reaches an argument" "$(grep -cF "$SYNTHETIC_REFRESH" "$SECURITY_LOG")" "0"
 check "no secret reaches the output" "$(printf '%s\n' "$output" "$(cat "$work/err")" | grep -cF -e "$SYNTHETIC_REFRESH" -e client-secret-SYNTHETIC)" "0"
 check "google login never writes the history" "$(cat "$history_file" 2>/dev/null | grep -c '"command": "google')" "0"
-check "google login names the push to the tablet" "$(printf '%s' "$output" | field "['next']")" "security find-generic-password -s ink-tools -a account-sync-google-refresh-token -w | inkctl secret set google"
+check "google login names the push to the tablet" "$(printf '%s' "$output" | field "['next']")" "security find-generic-password -s ink-tools -a ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN -w | inkctl secret set google"
 # The «Desktop app» client reaches the tablet from the Keychain item, never from stdin (#200).
 rm -f "$files/secret-written"
 output=$(printf 'ignored' | run secret set google-client --json 2>"$work/err")
@@ -1730,8 +1734,10 @@ check "secret set google-client writes its own drop file" "$(called "cat > $priv
 check "the client secret never reaches the output or an argument" "$(printf '%s\n' "$output" "$(cat "$work/err")" "$(cat "$log")" | grep -cF client-secret-SYNTHETIC)" "0"
 mv "$client" "$client.away"
 rm -f "$files/secret-written"
-run secret set google-client >/dev/null 2>&1
+run secret set google-client --json >"$work/out" 2>/dev/null
 check "no Keychain client is a failure that writes nothing" "$? $([ -f "$files/secret-written" ] && echo written || echo none)" "4 none"
+# The credential naming rule (#277): the account is the secret's name, and a new item gets its description.
+check "no Keychain client names the item to add, with its description" "$(field "['next'].split(' -j ')[0], ' Value lives in the Mac login Keychain; to rotate, ' in d['next']" < "$work/out")" "('security add-generic-password -s ink-tools -a ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT', True)"
 mv "$client.away" "$client"
 auth=$(cat "$KEYCHAIN/auth-url")
 check "the consent asks both Calendar scopes, offline" "$(python3 -c 'import sys,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); print(q["scope"], q["access_type"], q["code_challenge_method"], q["redirect_uri"].startswith("http://127.0.0.1:"))' "$auth")" "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events offline S256 True"
@@ -1739,7 +1745,7 @@ check "the exchange proves the PKCE verifier" "$(python3 -c 'import sys,hashlib,
 check "the success page names the product and the state" "$(grep -c -e 'Ink Tools</span>' -e '<span>Signed in to Google</span>' "$KEYCHAIN/page.html")" "2"
 check "the page has a dark look" "$(grep -c 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "1"
 
-rm -f "$KEYCHAIN/account-sync-google-refresh-token" "$KEYCHAIN/token-body"
+rm -f "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN" "$KEYCHAIN/token-body"
 BROWSER_MODE=badstate google --json >"$work/out" 2>/dev/null
 check "a wrong state is refused" "$?" "1"
 check "a wrong state names its error" "$(field "['error']" < "$work/out")" "google_denied"
@@ -1752,7 +1758,7 @@ echo narrow > "$KEYCHAIN/token-mode"
 BROWSER_MODE=ok google >/dev/null 2>"$work/err"
 check "a consent without calendar.events fails" "$?" "1"
 check "a narrow consent names the missing scope" "$(grep -c 'left out calendar.events;' "$work/err")" "1"
-check "a narrow consent stores nothing" "$([ -f "$KEYCHAIN/account-sync-google-refresh-token" ] && echo stored || echo none)" "none"
+check "a narrow consent stores nothing" "$([ -f "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN" ] && echo stored || echo none)" "none"
 echo refuse > "$KEYCHAIN/token-mode"
 BROWSER_MODE=ok google --json >"$work/out" 2>/dev/null
 check "a refused code fails with Google's reason" "$(field "['error'],d['message']" < "$work/out")" "('google_refused', 'Google refused the code (HTTP 400 invalid_grant)')"

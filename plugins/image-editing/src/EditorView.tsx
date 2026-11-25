@@ -1,8 +1,9 @@
 /**
  * The editor view (#226): the lassoed picture on top, every edit switched on in Settings as a
- * button below it, grouped, and «Close». Erase and Crop turn the picture into a pen canvas: each
- * stroke shows as dots when it is drawn, and «Erase» or «Crop» runs it. No slider and no live
- * preview: the picture is shown again once per edit, one refresh.
+ * button below it, grouped, and «Close». Erase and Crop turn the picture into a pen canvas. A pen
+ * move draws nothing, so it costs no refresh (#278); when the pen lifts, Erase shows the picture
+ * with that stroke erased and Crop shows the stroke's dots, one refresh per stroke. «Done» keeps
+ * the erased strokes and «Crop» runs the crop. No slider and no live preview.
  */
 import React, {useRef, useState} from 'react';
 import {
@@ -25,15 +26,25 @@ import {sizeOf} from './edit';
 const MIN_STEP = 6;
 /** The side of a drawn dot, in view pixels. */
 const DOT = 6;
+/**
+ * The least height the picture keeps, as a share of the screen: the edit list takes the height it
+ * needs first, so every button shows above «Close» when it fits, and scrolls past this (#279).
+ */
+const PICTURE_FLOOR = '30%';
 
 export type EditorProps = {
   state: EditorState;
   settings: RetouchSettings;
   onEdit: (edit: EditDefinition) => void;
+  /** Crop's confirm. */
   onApply: (edit: EditDefinition) => void;
-  /** A stroke drawn on the picture, in page pixels. */
+  /** A stroke drawn on the picture, in page pixels, when the pen lifts. */
   onMark: (points: PenPoint[]) => void;
   onClear: () => void;
+  /** Erase's «Undo»: the last stroke goes (#278). */
+  onUndoStroke: () => void;
+  /** Erase's «Done»: the erased strokes go on the page (#278). */
+  onDone: () => void;
   onCancel: () => void;
   onClose: () => void;
 };
@@ -47,11 +58,13 @@ export function Editor({
   onApply,
   onMark,
   onClear,
+  onUndoStroke,
+  onDone,
   onCancel,
   onClose,
 }: EditorProps): React.JSX.Element {
   const [box, setBox] = useState<Box | null>(null);
-  const [live, setLive] = useState<PenPoint[]>([]);
+  // The stroke being drawn lives outside React state: a move renders nothing (#278).
   const stroke = useRef<PenPoint[]>([]);
   if (state.phase === 'needs') {
     return (
@@ -95,14 +108,12 @@ export function Editor({
   const drawing = state.draw !== null && state.busy === null && scale > 0;
   const start = (event: GestureResponderEvent) => {
     stroke.current = [at(event)];
-    setLive(stroke.current);
   };
   const move = (event: GestureResponderEvent) => {
     const point = at(event);
     const last = stroke.current[stroke.current.length - 1];
     if (!last || Math.hypot(point.x - last.x, point.y - last.y) >= MIN_STEP) {
-      stroke.current = [...stroke.current, point];
-      setLive(stroke.current);
+      stroke.current.push(point);
     }
   };
   const end = () => {
@@ -110,9 +121,11 @@ export function Editor({
       onMark(stroke.current.map(toPage));
     }
     stroke.current = [];
-    setLive([]);
   };
-  const dots = [...state.marks.map(mark => mark.map(toView)), live];
+  const erasing = state.draw === 'erase';
+  // Erase shows its strokes erased in the picture, never as dots; Crop shows its marks' dots.
+  const dots = erasing ? [] : state.marks.map(mark => mark.map(toView));
+  const picturePath = state.strokes[state.strokes.length - 1] ?? state.preview;
   const edits = enabledEdits(settings);
   const status =
     state.busy !== null
@@ -151,8 +164,10 @@ export function Editor({
             onResponderTerminate={end}>
             <Image
               accessibilityLabel={copy['editor.picture']}
-              source={{uri: `file://${state.preview}`}}
+              source={{uri: `file://${picturePath}`}}
               resizeMode="stretch"
+              // Android fades a new picture in over 300 ms: refreshes on e-ink (brief 8.4).
+              fadeDuration={0}
               style={styles.picture}
             />
             {dots.flatMap((mark, k) =>
@@ -170,7 +185,35 @@ export function Editor({
           </View>
         ) : null}
       </View>
-      {state.draw !== null ? (
+      {erasing ? (
+        <>
+          <View style={shared.buttons}>
+            <Button
+              label={copy['editor.done']}
+              primary
+              disabled={state.busy !== null}
+              onPress={onDone}
+            />
+            <Button
+              label={copy['editor.undoStroke']}
+              disabled={state.busy !== null || state.marks.length === 0}
+              onPress={onUndoStroke}
+            />
+            <Button
+              label={copy['editor.cancel']}
+              disabled={state.busy !== null}
+              onPress={onCancel}
+            />
+          </View>
+          {/* Undo waits for a stroke: say why (interface rule 16, #233), on a line that stays
+              when empty, so the first stroke moves nothing (#278). */}
+          <Text style={[shared.hint, styles.hintLine]}>
+            {state.busy === null && state.marks.length === 0
+              ? copy['editor.noStrokes']
+              : ''}
+          </Text>
+        </>
+      ) : state.draw !== null ? (
         <>
           <View style={shared.buttons}>
             <Button
@@ -190,12 +233,13 @@ export function Editor({
               onPress={onCancel}
             />
           </View>
-          {/* The edit and Clear marks wait for a mark: say why (interface rule 16, #233). */}
-          {state.busy === null && state.marks.length === 0 ? (
-            <Text style={shared.hint}>
-              {copy['editor.noMarks'](editOf(state.draw).name)}
-            </Text>
-          ) : null}
+          {/* The edit and Clear marks wait for a mark: say why (interface rule 16, #233), on a
+              line that stays when empty, so the first mark moves nothing (#278). */}
+          <Text style={[shared.hint, styles.hintLine]}>
+            {state.busy === null && state.marks.length === 0
+              ? copy['editor.noMarks'](editOf(state.draw).name)
+              : ''}
+          </Text>
         </>
       ) : (
         <ScrollView style={styles.edits} contentContainerStyle={styles.groups}>
@@ -242,7 +286,7 @@ function EditorScreen({
 }): React.JSX.Element {
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
+      <Text accessibilityRole="header" style={shared.title}>
         {copy.title}
       </Text>
       <Text
@@ -264,7 +308,10 @@ function EditorScreen({
 
 const styles = StyleSheet.create({
   stage: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: PICTURE_FLOOR,
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
@@ -277,7 +324,12 @@ const styles = StyleSheet.create({
     height: DOT,
     backgroundColor: metrics.ink,
   },
-  edits: {flex: 1, alignSelf: 'stretch'},
+  hintLine: {
+    lineHeight: metrics.statusLineHeight,
+    minHeight: metrics.statusLineHeight,
+  },
+  // Its own height first, shrinking to scroll only past the picture's floor (#279).
+  edits: {flexGrow: 0, flexShrink: 1, alignSelf: 'stretch'},
   groups: {gap: metrics.sectionGap},
   group: {gap: metrics.controlGap},
 });

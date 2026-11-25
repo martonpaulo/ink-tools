@@ -85,9 +85,10 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
   (owner, [#174](https://github.com/martonpaulo/supernote-tools/issues/174)); a new pair is one row of ink-core's `PAIRS`, which adds its two
   directions with no change here except its two icons.
 - Each lasso button registers its own icon, distinct in silhouette ([#107](https://github.com/martonpaulo/ink-tools/issues/107)): `assets/<name>.svg`
-  rendered by `npm run icons` (Playwright on `NODE_PATH`) to a 96 x 96 PNG (owner D43 A), named once
+  and its 96 x 96 PNG (owner D43 A) are written by `python3 scripts/icons.py` from
+  `design/icons/icons.json` in the Supernote's native outline style ([#271](https://github.com/martonpaulo/ink-tools/issues/271)); each file is named once
   in `src/icons.ts`; `__tests__/icons.test.ts` fails for a button with no icon, such as a new direction's.
-  `assets/contact-sheet.png` shows them all beside Device Transfer's and Image Editing's.
+  `design/icons/sheet.png` shows every Ink Tools icon side by side.
 - Permissions: `plugin.permission.INTERNET` for the dictionary and the picture sources,
   `plugin.permission.FILE:READ` for the lasso calls ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) and `plugin.permission.FILE:WRITE`
   for the settings file and the prepared pictures ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)); add another only with its first call

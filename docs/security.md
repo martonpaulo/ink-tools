@@ -44,3 +44,18 @@ one on the tablet ([#223](https://github.com/martonpaulo/ink-tools/issues/223)).
   new keystore, set both secrets again and uninstall the bridge once on the tablet.
 - The Lingo app has no prerelease: its CI build is never installed, so its per-run debug key needs
   no secret.
+
+## Account Sync sign-in secrets
+
+Account Sync's sign-in secrets wait on the Mac in the login Keychain, service `ink-tools`, and reach
+the tablet only through `inkctl secret set <provider>`, which reads standard input. Each account is
+the secret's name and each item's comment is its description: what uses it, where the value lives,
+how to rotate it ([#277](https://github.com/martonpaulo/ink-tools/issues/277)). `inkctl` writes the Google comments itself.
+
+| Account | What uses it | To rotate |
+| :--- | :--- | :--- |
+| `ACCOUNT_SYNC_TODOIST_TOKEN` | Todoist tasks, through `inkctl secret set todoist` | Regenerate it in Todoist Settings › Integrations › Developer, store it here, send it again. |
+| `ACCOUNT_SYNC_ICLOUD_APPLE_ID` | The iCloud CalDAV sign-in, through `inkctl secret set icloud` | It changes only with the Apple ID; store the new one here, send it again. |
+| `ACCOUNT_SYNC_ICLOUD_PASSWORD` | The iCloud CalDAV sign-in (an app-specific password), through `inkctl secret set icloud` | Revoke it at account.apple.com, create a new one, store it here, send it again. |
+| `ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT` | `inkctl google login` and `inkctl secret set google-client` | Create a new «Desktop app» client in the Google Cloud console, store its JSON here, delete the old client the same day. |
+| `ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN` | Written by `inkctl google login`, sent by `inkctl secret set google` | Revoke it at myaccount.google.com/permissions, then run `inkctl google login`. |

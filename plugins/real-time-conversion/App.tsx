@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
-import {Text, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   Choice,
   ChoiceList,
-  SectionCaption,
+  RowGroup,
   shared,
   SwitchRow,
   TitleBar,
@@ -51,25 +51,37 @@ export default function App({
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
-      <SwitchRow
-        title={copy['settings.start']}
-        value={settings.startOn}
-        onChange={startOn => change({...settings, startOn})}
-      />
-      <ChoiceList
-        title={copy['settings.spacing']}
-        choices={SPACINGS}
-        value={settings.spacing}
-        onChange={spacing => change({...settings, spacing})}
-      />
-      <ChoiceList
-        title={copy['settings.wait']}
-        choices={WAITS}
-        value={settings.wait}
-        onChange={wait => change({...settings, wait})}
-      />
-      <SectionCaption>{copy['settings.font']}</SectionCaption>
-      <Text style={shared.text}>{copy['settings.fontNote']}</Text>
+      {/*
+        The groups own the gap above them, so they sit in a container with none (#275); it
+        scrolls, since the rows outgrow the Nomad's window and the turned Manta's (#284).
+      */}
+      <ScrollView style={styles.rows}>
+        <SwitchRow
+          title={copy['settings.start']}
+          value={settings.startOn}
+          onChange={startOn => change({...settings, startOn})}
+        />
+        <ChoiceList
+          title={copy['settings.spacing']}
+          choices={SPACINGS}
+          value={settings.spacing}
+          onChange={spacing => change({...settings, spacing})}
+        />
+        <ChoiceList
+          title={copy['settings.wait']}
+          choices={WAITS}
+          value={settings.wait}
+          onChange={wait => change({...settings, wait})}
+        />
+        <RowGroup
+          caption={copy['settings.font']}
+          note={copy['settings.fontNote']}
+        />
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  rows: {flex: 1},
+});

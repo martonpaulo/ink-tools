@@ -56,6 +56,14 @@ test('the tiles of the illustration list, then a tap inserts that tile', async (
   const tree = await open();
   expect(texts(tree)).toContain('Pictures for «apple»');
   expect(chooseResults.mock.calls[0][0].kind).toBe('illustration');
+  // A tile never fades in: each fade step is a refresh on e-ink (brief 8.4).
+  const pictures = tree.root.findAll(
+    node => node.props.resizeMode === 'contain' && node.props.source,
+  );
+  expect(pictures.length).toBeGreaterThan(0);
+  for (const picture of pictures) {
+    expect(picture.props.fadeDuration).toBe(0);
+  }
   const tiles = tree.root.findAll(
     node =>
       node.props.accessibilityLabel === 'b, from commons' && node.props.onPress,

@@ -22,15 +22,23 @@ import {
   Sender,
   uploadUrl,
 } from '../localsend/protocol';
-import {Relay} from '../native';
+import {FileInfo, HttpAnswer, Relay} from '../native';
 import {copy} from '../copy';
+import {
+  loadSettings,
+  movedDevice,
+  sameAddress,
+  saveSettings,
+  Self,
+} from '../settings/device';
 
 /** Plan › Failure behaviour: every network step has its own limit. */
 export const TIMEOUTS = {
   discoverMs: 3000,
   connectMs: 3000,
-  // The receiver may wait for the person to accept.
-  prepareMs: 10000,
+  // LocalSend answers the offer only once the person accepts it, at the Mac or the iPhone: on the
+  // tablet, 10 s ran out with the offer shown (#98).
+  prepareMs: 60000,
   uploadMs: 30000,
 } as const;
 
@@ -80,47 +88,168 @@ export async function discoverDevices(
   return {ok: true, value: [...seen.values()]};
 }
 
-/** The toast for a failed POST: a changed identity, else not reachable. */
-export function failureText(device: Device, moduleCode: string | undefined): string {
-  return moduleCode === 'IDENTITY'
-    ? copy.identityChanged(device.alias)
+/** One line of a send in the log (#98): steps, status codes, timings and the toast, never a body. */
+export function sendLog(line: string): void {
+  console.log(`Relay: send: ${line}`);
+}
+
+/**
+ * One POST of a send, logged as `<step> <status> in <ms> ms`, or `<step> failed: <code>
+ * <exception> in <ms> ms`, so a device round sees where a send stops (#98).
+ */
+export async function loggedPost(
+  step: string,
+  post: () => Promise<Result<HttpAnswer>>,
+  now: () => number = Date.now,
+): Promise<Result<HttpAnswer>> {
+  const start = now();
+  const answer = await post();
+  const ms = now() - start;
+  sendLog(
+    answer.ok
+      ? `${step} ${answer.value.status} in ${ms} ms`
+      : `${step} failed: ${answer.moduleCode ?? answer.code} ${answer.message} in ${ms} ms`,
+  );
+  return answer;
+}
+
+/** Where a send goes, for the log (#98): the address, port and protocol, never the pin. */
+export function targetLine(device: Device): string {
+  return `to ${device.alias} at ${device.ip}:${device.port} over ${device.protocol}`;
+}
+
+/** The chosen receiver at the address a new discovery finds it, saved; null when not found. */
+export type Relocate = (device: Device) => Promise<Device | null>;
+
+/**
+ * Looks for `device` again by its fingerprint and saves it when it moved (#98): a Mac keeps its
+ * certificate across a DHCP lease, not its address, and a connect to the saved one fails.
+ */
+export function findAgain(
+  native: Relay,
+  sender: Sender,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
+): Relocate {
+  return async device => {
+    const found = await discoverDevices(native, sender, pluginDir);
+    const moved = found.ok ? movedDevice(device, found.value) : null;
+    if (moved !== null) {
+      const settings = await loadSettings(native, pluginDir);
+      await saveSettings(native, {...settings, device: moved}, pluginDir);
+    }
+    return moved;
+  };
+}
+
+/** One try of a send: its toast line, and whether its offer never reached the receiver. */
+export type Attempt = {text: string; unreachable: boolean};
+
+/**
+ * Runs `attempt` at the device's saved address; when its offer cannot connect, `relocate` looks
+ * for the device by its fingerprint, and one more attempt goes to its new address. Only an offer
+ * is tried again, since nothing reached the receiver yet. Each target is logged (#98).
+ */
+export async function withRelocation(
+  device: Device,
+  relocate: Relocate | undefined,
+  attempt: (target: Device) => Promise<Attempt>,
+): Promise<string> {
+  sendLog(targetLine(device));
+  const first = await attempt(device);
+  if (!first.unreachable || relocate === undefined) {
+    return first.text;
+  }
+  const moved = await relocate(device);
+  if (moved === null || sameAddress(moved, device)) {
+    sendLog(`${device.alias} found at no other address`);
+    return first.text;
+  }
+  sendLog(targetLine(moved));
+  return (await attempt(moved)).text;
+}
+
+/**
+ * True when a failed POST never reached the receiver: a dead address, a closed port or a timeout
+ * before TLS ended; not a changed identity, nor an offer the receiver holds (`NO_ANSWER`).
+ */
+export function unreachable(moduleCode: string | undefined): boolean {
+  return moduleCode === 'IO' || moduleCode === 'TIMEOUT';
+}
+
+/**
+ * The toast for a failed POST: a changed identity, an offer not accepted in time, else not
+ * reachable. Only an offer waits for the person, so an upload with no answer is not reachable.
+ */
+export function failureText(
+  device: Device,
+  moduleCode: string | undefined,
+  step: 'offer' | 'upload' = 'offer',
+): string {
+  if (moduleCode === 'IDENTITY') {
+    return copy.identityChanged(device.alias);
+  }
+  return moduleCode === 'NO_ANSWER' && step === 'offer'
+    ? copy.noAnswer(device.alias)
     : copy.unreachable(device.alias);
 }
 
-/** Offers and uploads one PNG; the answer is the toast line. */
+/**
+ * Offers and uploads one PNG, at the device's new address when the saved one does not answer
+ * (`relocate`); the answer is the toast line.
+ */
 export async function sendFile(
   native: Relay,
-  sender: Sender,
+  sender: Self,
   device: Device,
   path: string,
   fileName: string,
+  relocate?: Relocate,
 ): Promise<string> {
   if (!isPrivateAddress(device.ip)) {
     return copy.notLocal(device.alias);
   }
-  const pinned = device.protocol === 'https' ? device.fingerprint : null;
   const info = await native.fileInfo(path);
   if (!info.ok) {
     return copy.noImage;
   }
+  return withRelocation(device, relocate, target =>
+    offerFile(native, sender, target, path, fileName, info.value),
+  );
+}
+
+async function offerFile(
+  native: Relay,
+  sender: Self,
+  device: Device,
+  path: string,
+  fileName: string,
+  info: FileInfo,
+): Promise<Attempt> {
+  const pinned = device.protocol === 'https' ? device.fingerprint : null;
   const fileId = 'image';
-  const prepared = await native.post(
-    prepareUploadUrl(device),
-    {'Content-Type': 'application/json'},
-    prepareUploadBody(sender, {
-      id: fileId,
-      fileName,
-      size: info.value.size,
-      fileType: 'image/png',
-      sha256: info.value.sha256,
-    }),
-    null,
-    pinned,
-    TIMEOUTS.connectMs,
-    TIMEOUTS.prepareMs,
+  const prepared = await loggedPost('prepare-upload', () =>
+    native.post(
+      prepareUploadUrl(device),
+      {'Content-Type': 'application/json'},
+      prepareUploadBody(sender, {
+        id: fileId,
+        fileName,
+        size: info.size,
+        fileType: 'image/png',
+        sha256: info.sha256,
+      }),
+      null,
+      pinned,
+      sender.identityFolder,
+      TIMEOUTS.connectMs,
+      TIMEOUTS.prepareMs,
+    ),
   );
   if (!prepared.ok) {
-    return failureText(device, prepared.moduleCode);
+    return {
+      text: failureText(device, prepared.moduleCode),
+      unreachable: unreachable(prepared.moduleCode),
+    };
   }
   const session = parsePrepareUpload(
     prepared.value.status,
@@ -128,35 +257,68 @@ export async function sendFile(
     fileId,
   );
   if (session.kind !== 'session') {
-    return copy.result(session, device.alias);
+    return {text: copy.result(session, device.alias), unreachable: false};
   }
-  const uploaded = await native.post(
-    uploadUrl(device, session, fileId),
-    {'Content-Type': 'image/png'},
-    null,
-    path,
-    pinned,
-    TIMEOUTS.connectMs,
-    TIMEOUTS.uploadMs,
+  const uploaded = await loggedPost('upload', () =>
+    native.post(
+      uploadUrl(device, session, fileId),
+      {'Content-Type': 'image/png'},
+      null,
+      path,
+      pinned,
+      sender.identityFolder,
+      TIMEOUTS.connectMs,
+      TIMEOUTS.uploadMs,
+    ),
   );
-  if (!uploaded.ok) {
-    return failureText(device, uploaded.moduleCode);
-  }
-  return copy.result(parseUpload(uploaded.value.status), device.alias);
+  const text = uploaded.ok
+    ? copy.result(parseUpload(uploaded.value.status), device.alias)
+    : failureText(device, uploaded.moduleCode, 'upload');
+  return {text, unreachable: false};
 }
 
 /**
  * One tap: with no chosen device, the Settings view opens; otherwise `make` writes the PNG in
- * `tmp` (`tempDir`), which is sent and then removed, whatever happened.
+ * `tmp` (`tempDir`), which is sent and then removed, whatever happened. The outcome is logged,
+ * the toast line too, since the host's toast leaves no text in the log (#98).
  */
 export async function sendCapture(
   native: Relay,
-  sender: Sender,
+  sender: Self,
   device: Device | null,
   tmp: string,
   name: string,
   make: (pngPath: string) => Promise<Result<string>>,
   now: () => number = Date.now,
+  relocate?: Relocate,
+): Promise<Outcome> {
+  const outcome = await capture(
+    native,
+    sender,
+    device,
+    tmp,
+    name,
+    make,
+    now,
+    relocate,
+  );
+  sendLog(
+    outcome.kind === 'toast'
+      ? `${name}: ${outcome.text}`
+      : `${name}: no device chosen, Settings opens`,
+  );
+  return outcome;
+}
+
+async function capture(
+  native: Relay,
+  sender: Self,
+  device: Device | null,
+  tmp: string,
+  name: string,
+  make: (pngPath: string) => Promise<Result<string>>,
+  now: () => number,
+  relocate: Relocate | undefined,
 ): Promise<Outcome> {
   if (device === null) {
     return {kind: 'choose'};
@@ -176,7 +338,14 @@ export async function sendCapture(
     written = made.value;
     return {
       kind: 'toast',
-      text: await sendFile(native, sender, device, written, fileName),
+      text: await sendFile(
+        native,
+        sender,
+        device,
+        written,
+        fileName,
+        relocate,
+      ),
     };
   } finally {
     await native.remove(pngPath);

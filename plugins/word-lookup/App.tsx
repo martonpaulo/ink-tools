@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {
-  SectionCaption,
+  RowGroup,
   shared,
   SwitchRow,
   TitleBar,
@@ -66,22 +66,6 @@ export default function App({
   );
 }
 
-/** One Settings section: its caption, then its rows. */
-function Section({
-  heading,
-  children,
-}: {
-  heading: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View>
-      <SectionCaption>{heading}</SectionCaption>
-      {children}
-    </View>
-  );
-}
-
 function SettingsScreen({close}: {close: () => void}) {
   useBackKey(close);
   const [settings, setSettings] = useState<LookupSettings | null>(null);
@@ -106,7 +90,7 @@ function SettingsScreen({close}: {close: () => void}) {
     settingsChanged(next);
   };
   const group = (heading: string, buttons: readonly LassoButton[]) => (
-    <Section heading={heading}>
+    <RowGroup caption={heading}>
       {buttons.map(button => (
         <SwitchRow
           key={button.id}
@@ -116,7 +100,7 @@ function SettingsScreen({close}: {close: () => void}) {
           onChange={on => change(withSwitch(shown, button, on))}
         />
       ))}
-    </Section>
+    </RowGroup>
   );
   return (
     <View style={shared.screen}>
@@ -131,7 +115,7 @@ function SettingsScreen({close}: {close: () => void}) {
           copy['settings.translate'],
           BUTTONS.filter(button => 'direction' in button.switch),
         )}
-        <Section heading={copy['settings.sources']}>
+        <RowGroup caption={copy['settings.sources']}>
           {SOURCE_NAMES.map(name => (
             <SwitchRow
               key={name}
@@ -141,20 +125,24 @@ function SettingsScreen({close}: {close: () => void}) {
               onChange={on => change(withSource(shown, name, on))}
             />
           ))}
-        </Section>
-        <SwitchRow
-          title={copy['settings.dataSaver']}
-          subtitle={copy['settings.dataSaverHint']}
-          value={shown.dataSaver}
-          disabled={settings === null}
-          onChange={dataSaver => change({...shown, dataSaver})}
+        </RowGroup>
+        {/* A row of its own: its own group, so it never reads as one more source (#275). */}
+        <RowGroup>
+          <SwitchRow
+            title={copy['settings.dataSaver']}
+            subtitle={copy['settings.dataSaverHint']}
+            value={shown.dataSaver}
+            disabled={settings === null}
+            onChange={dataSaver => change({...shown, dataSaver})}
+          />
+        </RowGroup>
+        <RowGroup
+          caption={copy['settings.pictures']}
+          note={[
+            copy['settings.picturesHint'],
+            ...(old.length > 0 ? [copy['settings.oldFiles'](old)] : []),
+          ]}
         />
-        <Section heading={copy['settings.pictures']}>
-          <Text style={shared.hint}>{copy['settings.picturesHint']}</Text>
-          {old.length > 0 && (
-            <Text style={shared.hint}>{copy['settings.oldFiles'](old)}</Text>
-          )}
-        </Section>
       </ScrollView>
     </View>
   );

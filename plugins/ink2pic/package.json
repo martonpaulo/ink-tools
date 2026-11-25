@@ -10,8 +10,8 @@
     "test": "node scripts/test.cjs --passWithNoTests",
     "validate": "npm run lint && npm run typecheck && npm test && python3 scripts/text_check.py && python3 scripts/issue_links.py && python3 scripts/dry_check.py --root . && python3 scripts/dry_check.py --root ../../packages/picture-search",
     "start": "react-native start",
-    "icon": "node scripts/render-icon.cjs",
     "renders": "jest --config scripts/renders/jest.config.js",
+    "renders:windows": "npm run renders && RENDER_WINDOW=nomad npm run renders && RENDER_WINDOW=turned npm run renders",
     "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package"
   },
   "dependencies": {

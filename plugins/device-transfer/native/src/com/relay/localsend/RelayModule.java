@@ -30,7 +30,8 @@ import java.util.concurrent.TimeUnit;
  * file's size and hash, the removal of a temporary PNG, and the small settings file, since
  * sn-plugin-lib 0.2.3 has no file writer. The receive half (#49): our v3 identity, the receiver,
  * and a queue of what arrives, which JS reads one item at a time and answers each offer of. Every call runs off the JS thread and
- * rejects with a text code (`IDENTITY`, `TIMEOUT`, `IO`) that sn-adapter keeps as `moduleCode`.
+ * rejects with a text code (`IDENTITY`, `NO_ANSWER`, `TIMEOUT`, `IO`) that sn-adapter keeps as
+ * `moduleCode`.
  * Never logs a body, a token or a session id.
  */
 public final class RelayModule extends ReactContextBaseJavaModule {
@@ -121,7 +122,8 @@ public final class RelayModule extends ReactContextBaseJavaModule {
 
   /**
    * One POST: `body` as UTF-8 text, or the bytes of `filePath` when `body` is null. Resolves with
-   * `{status, body}`.
+   * `{status, body}`. Over HTTPS, the identity in `identityFolder`, when given, is our client
+   * certificate (#98).
    */
   @ReactMethod
   public void post(
@@ -130,6 +132,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
       final String body,
       final String filePath,
       final String pinned,
+      final String identityFolder,
       final double connectMs,
       final double readMs,
       final Promise promise) {
@@ -151,6 +154,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
                       body == null ? null : body.getBytes(UTF_8),
                       body == null ? new File(filePath) : null,
                       pinned,
+                      identityFolder == null ? null : Identity.load(new File(identityFolder)),
                       (int) connectMs,
                       (int) readMs);
               WritableMap out = Arguments.createMap();
@@ -475,7 +479,9 @@ public final class RelayModule extends ReactContextBaseJavaModule {
     String code =
         PinnedClient.identityChanged(error)
             ? "IDENTITY"
-            : error instanceof SocketTimeoutException ? "TIMEOUT" : "IO";
+            : PinnedClient.noAnswer(error)
+                ? "NO_ANSWER"
+                : error instanceof SocketTimeoutException ? "TIMEOUT" : "IO";
     promise.reject(code, error.getClass().getSimpleName());
   }
 }

@@ -10,8 +10,31 @@ import type {ReactTestRendererJSON} from 'react-test-renderer';
 
 export type HostNode = ReactTestRendererJSON | string;
 
-/** The Manta's window in layout units: 1920 x 2560 px at PixelRatio 1.875 (brief 8.4). */
-export const WINDOW = {width: 1024, height: 2560 / 1.875} as const;
+/** The Manta's pixel ratio (brief 8.4); the Nomad's is taken as the same, at the same density. */
+const PIXEL_RATIO = 1.875;
+/**
+ * The screens, in pixels: the Manta's 1920 x 2560 and the Nomad's 1404 x 1872 (docs/supernote.md).
+ * The Nomad's is measured on a Nomad (2026-11-25, `adb exec-out screencap` and `inkctl snapshot`):
+ * plugin views report coordinates in that space (#284). Its pixel ratio is still an inference.
+ */
+const MANTA = {short: 1920, long: 2560};
+const NOMAD = {short: 1404, long: 1872};
+const units = (pixels: number) => pixels / PIXEL_RATIO;
+/**
+ * The windows a render can take, in layout units (#279): the Manta, the smallest, the Nomad, and
+ * the Manta turned, the widest. `RENDER_WINDOW` picks one; the Manta is the default.
+ */
+export const WINDOWS = {
+  manta: {width: units(MANTA.short), height: units(MANTA.long)},
+  nomad: {width: units(NOMAD.short), height: units(NOMAD.long)},
+  turned: {width: units(MANTA.long), height: units(MANTA.short)},
+} as const;
+export type WindowName = keyof typeof WINDOWS;
+export const WINDOW_NAME = (process.env.RENDER_WINDOW ?? 'manta') as WindowName;
+if (!(WINDOW_NAME in WINDOWS)) {
+  throw new Error(`RENDER_WINDOW is one of ${Object.keys(WINDOWS).join(', ')}`);
+}
+export const WINDOW = WINDOWS[WINDOW_NAME];
 /** The Manta shows 16 grey levels. */
 const GREY_LEVELS = 16;
 const CHANNEL_MAX = 255;
@@ -193,7 +216,15 @@ function element(node: HostNode, inText: boolean): string {
     return escape(node);
   }
   const {props, type} = node;
+  // React Native's Jest mock of ScrollView drops `contentContainerStyle`; the device gives it to
+  // the one content view, so the preview does too (#279).
+  const content = type === 'RCTScrollView' ? props.contentContainerStyle : undefined;
   const children = (node.children ?? [])
+    .map(child =>
+      content && typeof child !== 'string'
+        ? {...child, props: {...child.props, style: [child.props.style, content]}}
+        : child,
+    )
     .map(child => element(child, inText || type === 'Text'))
     .join('');
   const style = css(props.style) + pointerEvents(props);

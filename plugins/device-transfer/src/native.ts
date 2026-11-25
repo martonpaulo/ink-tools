@@ -1,7 +1,7 @@
 /**
  * Relay's own Java module, `RelayLocalSend` (#98): the only way a plugin reaches a LocalSend
  * receiver, since `fetch` meets cleartext and self-signed HTTPS. Each call is a Result; a
- * rejection keeps the module's text code (`IDENTITY`, `TIMEOUT`, `IO`) in `moduleCode`. The
+ * rejection keeps the module's text code (`IDENTITY`, `NO_ANSWER`, `TIMEOUT`, `IO`) in `moduleCode`. The
  * receive half (#49) adds the identity, the receiver and its arrivals.
  */
 import {NativeModules} from 'react-native';
@@ -43,6 +43,8 @@ export type RelayNative = {
     body: string | null,
     filePath: string | null,
     pinned: string | null,
+    /** Over HTTPS, our identity's folder: its certificate is our client certificate (#98). */
+    identityFolder: string | null,
     connectMs: number,
     readMs: number,
   ): Promise<HttpAnswer>;
@@ -103,7 +105,9 @@ export function relay(modules: Record<string, unknown> = NativeModules): Relay {
         return ok(await run(...args));
       } catch (error) {
         const code = (error as {code?: string}).code ?? 'IO';
-        return fail(MODULE_CODE, code, code);
+        // The module's message is the Java exception's class name, which a send logs (#98).
+        const message = (error as {message?: string}).message || code;
+        return fail(MODULE_CODE, message, code);
       }
     };
   return {

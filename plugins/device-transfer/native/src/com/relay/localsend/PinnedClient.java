@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
@@ -26,8 +27,9 @@ import javax.net.ssl.X509TrustManager;
 /**
  * One POST to a LocalSend receiver (#98). A receiver serves HTTPS with a self-signed certificate,
  * so the certificate is accepted only when its SHA-256 equals the fingerprint the receiver
- * announced: the pin replaces the chain and the host name, never a trust-all manager. Pure Java,
- * no Android class, so the JVM test runs it against a loopback server. Never logs a body.
+ * announced: the pin replaces the chain and the host name, never a trust-all manager. With our
+ * {@link Identity}, its certificate is our TLS client certificate, which LocalSend 1.18 requires.
+ * Pure Java, no Android class, so the JVM test runs it against a loopback server. Never logs a body.
  */
 public final class PinnedClient {
   /** The largest answer we read; the protocol parser drops anything longer. */
@@ -44,6 +46,29 @@ public final class PinnedClient {
     IdentityChanged() {
       super("the receiver's certificate does not match its fingerprint");
     }
+  }
+
+  /**
+   * The receiver took the connection, TLS included, and did not answer in time: LocalSend holds a
+   * `prepare-upload` until the person accepts the offer (#98). Not «not reachable»: the offer
+   * arrived.
+   */
+  public static final class NoAnswer extends SocketTimeoutException {
+    private static final long serialVersionUID = 1L;
+
+    NoAnswer(int readMs) {
+      super("connected, no answer in " + readMs + " ms");
+    }
+  }
+
+  /** True when `error`, or a cause of it, is {@link NoAnswer}. */
+  public static boolean noAnswer(Throwable error) {
+    for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+      if (cause instanceof NoAnswer) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** A status and at most {@link #MAX_ANSWER_BYTES} of the answer, one byte more when longer. */
@@ -97,7 +122,8 @@ public final class PinnedClient {
 
   /**
    * POSTs `body` (or the bytes of `file` when `body` is null) to `url`. An `https` URL needs
-   * `pinned`; an `http` one sends in the clear, for a receiver that announced `protocol: http`.
+   * `pinned` and presents `client`, when given, as our certificate; an `http` one sends in the
+   * clear, for a receiver that announced `protocol: http`.
    */
   public static Response post(
       String url,
@@ -105,6 +131,7 @@ public final class PinnedClient {
       byte[] body,
       File file,
       String pinned,
+      Identity client,
       int connectMs,
       int readMs)
       throws IOException, GeneralSecurityException {
@@ -116,7 +143,7 @@ public final class PinnedClient {
         if (pinned == null || pinned.isEmpty()) {
           throw new IOException("an https receiver needs its fingerprint");
         }
-        pin((HttpsURLConnection) connection, pinned);
+        pin((HttpsURLConnection) connection, pinned, client);
       }
       connection.setConnectTimeout(connectMs);
       connection.setReadTimeout(readMs);
@@ -128,25 +155,33 @@ public final class PinnedClient {
       }
       long length = body != null ? body.length : file.length();
       connection.setFixedLengthStreamingMode(length);
-      OutputStream out = connection.getOutputStream();
+      // TCP and TLS first: a failure here never reached the receiver.
+      connection.connect();
       try {
-        if (body != null) {
-          out.write(body);
-        } else {
-          copy(file, out);
+        OutputStream out = connection.getOutputStream();
+        try {
+          if (body != null) {
+            out.write(body);
+          } else {
+            copy(file, out);
+          }
+        } finally {
+          out.close();
         }
-      } finally {
-        out.close();
+        int status = connection.getResponseCode();
+        InputStream in = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
+        return new Response(status, in == null ? "" : readLimited(in));
+      } catch (SocketTimeoutException late) {
+        NoAnswer waited = new NoAnswer(readMs);
+        waited.initCause(late);
+        throw waited;
       }
-      int status = connection.getResponseCode();
-      InputStream in = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
-      return new Response(status, in == null ? "" : readLimited(in));
     } finally {
       connection.disconnect();
     }
   }
 
-  private static void pin(HttpsURLConnection connection, final String pinned)
+  private static void pin(HttpsURLConnection connection, final String pinned, Identity client)
       throws GeneralSecurityException {
     TrustManager manager =
         new X509TrustManager() {
@@ -170,7 +205,8 @@ public final class PinnedClient {
           }
         };
     SSLContext context = SSLContext.getInstance("TLS");
-    context.init(null, new TrustManager[] {manager}, null);
+    context.init(
+        client == null ? null : client.clientKeyManagers(), new TrustManager[] {manager}, null);
     connection.setSSLSocketFactory(context.getSocketFactory());
     // The pinned certificate is the identity; a LAN address has no name to check.
     connection.setHostnameVerifier(

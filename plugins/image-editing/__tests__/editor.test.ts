@@ -15,15 +15,19 @@ import {
   clearMarks,
   closeEditor,
   DRAW_EDITS,
+  EDITOR_DEVICE,
   EDITOR_GROUPS,
   EditorDeps,
   editorState,
+  finishErase,
   NO_LASSO_CODE,
+  onEditorState,
   openEditor,
   resetEditorForTests,
   runDrawn,
   runEditorEdit,
   stylesDone,
+  undoStroke,
 } from '../src/editor';
 import {EDITS, editOf, EditId} from '../src/edits';
 import * as edit from '../src/edit';
@@ -42,6 +46,8 @@ function fakeDeps(
   const removed: string[] = [];
   const presses: EditId[] = [];
   const toasts: string[] = [];
+  /** Each view erase: its source, destination and marks, in call order (#278). */
+  const erased: {src: string; dest: string; marks: edit.Marks}[] = [];
   const deps: EditorDeps = {
     missing: jest.fn(async () => []),
     ask: jest.fn(async () => undefined),
@@ -71,12 +77,16 @@ function fakeDeps(
       return result;
     }),
     drawn: jest.fn(async () => done),
+    eraseView: jest.fn(async (src, dest, _picture, marks) => {
+      erased.push({src, dest, marks});
+      return ok(null);
+    }),
     styles: jest.fn(async () => undefined),
     toast: text => toasts.push(text),
     now: () => previews,
     log: () => undefined,
   };
-  return {deps, lassoes, removed, presses, toasts};
+  return {deps, lassoes, removed, presses, toasts, erased};
 }
 
 const close = jest.fn();
@@ -273,41 +283,205 @@ test('Styles opens the grid on the picture, and a picked style shows the picture
   });
 });
 
-test('Erase and Crop draw with the pen in the view, then run with the marks', async () => {
-  for (const id of DRAW_EDITS) {
-    resetEditorForTests();
-    const f = fakeDeps();
-    await openEditor(f.deps);
-    await runEditorEdit(editOf(id), close, f.deps);
-    expect(editorState()).toMatchObject({draw: id, marks: []});
-    expect(f.presses).toEqual([]);
-    addMark([
+test('Crop draws with the pen in the view, then runs with the marks', async () => {
+  const f = fakeDeps();
+  await openEditor(f.deps);
+  await runEditorEdit(editOf('crop'), close, f.deps);
+  expect(editorState()).toMatchObject({draw: 'crop', marks: []});
+  expect(f.presses).toEqual([]);
+  await addMark(
+    [
       {x: 120, y: 220},
       {x: 180, y: 260},
-    ]);
-    addMark([{x: 150, y: 300}]);
-    await applyDrawing(editOf(id), close, f.deps);
-    expect(f.deps.drawn).toHaveBeenCalledWith(id, RECT, [
-      [
-        {x: 120, y: 220},
-        {x: 180, y: 260},
-      ],
-      [{x: 150, y: 300}],
-    ]);
-    expect(f.presses).toEqual([id]);
-    expect(editorState()).toMatchObject({draw: null, marks: [], rect: MOVED});
+    ],
+    f.deps,
+  );
+  await addMark([{x: 150, y: 300}], f.deps);
+  // Crop's marks are only shown, never erased in the view.
+  expect(f.erased).toEqual([]);
+  await applyDrawing(editOf('crop'), close, f.deps);
+  expect(f.deps.drawn).toHaveBeenCalledWith('crop', RECT, [
+    [
+      {x: 120, y: 220},
+      {x: 180, y: 260},
+    ],
+    [{x: 150, y: 300}],
+  ]);
+  expect(f.presses).toEqual(['crop']);
+  expect(editorState()).toMatchObject({draw: null, marks: [], rect: MOVED});
+});
+
+/** An editor in Erase mode, its stroke images named by a counter. */
+async function erasing() {
+  const f = fakeDeps();
+  let ms = 100;
+  f.deps.now = () => (ms += 1);
+  await openEditor(f.deps);
+  await runEditorEdit(editOf('erase'), close, f.deps);
+  return f;
+}
+const shownOf = () => {
+  const state = editorState();
+  return state.phase === 'ready'
+    ? state.strokes[state.strokes.length - 1] ?? state.preview
+    : null;
+};
+
+test('each Erase stroke is erased in the view when the pen lifts, the page untouched (#278)', async () => {
+  const f = await erasing();
+  const preview = shownOf();
+  await addMark([{x: 120, y: 220}], f.deps);
+  expect(f.erased).toEqual([
+    {
+      src: preview,
+      dest: '/w/102-stroke.png',
+      marks: {points: [20, 20], ends: [1]},
+    },
+  ]);
+  expect(shownOf()).toBe('/w/102-stroke.png');
+  await addMark([{x: 150, y: 300}], f.deps);
+  // The second stroke erases the picture the first one left.
+  expect(f.erased[1].src).toBe('/w/102-stroke.png');
+  expect(shownOf()).toBe('/w/103-stroke.png');
+  expect(f.presses).toEqual([]);
+  expect(f.deps.drawn).not.toHaveBeenCalled();
+});
+
+test('strokes lifted while one is erased wait their turn, in order (#278)', async () => {
+  const f = await erasing();
+  const first = addMark([{x: 120, y: 220}], f.deps);
+  await addMark([{x: 150, y: 300}], f.deps);
+  await first;
+  expect(f.erased.map(e => e.marks.points)).toEqual([
+    [20, 20],
+    [50, 100],
+  ]);
+  expect(editorState()).toMatchObject({
+    strokes: ['/w/102-stroke.png', '/w/103-stroke.png'],
+  });
+});
+
+test('Undo shows the picture before the last stroke; Cancel the one before Erase (#278)', async () => {
+  const f = await erasing();
+  const preview = shownOf();
+  await addMark([{x: 120, y: 220}], f.deps);
+  await addMark([{x: 150, y: 300}], f.deps);
+  await undoStroke(f.deps);
+  expect(shownOf()).toBe('/w/102-stroke.png');
+  expect(editorState()).toMatchObject({marks: [[{x: 120, y: 220}]]});
+  expect(f.removed).toEqual(['/w/103-stroke.png']);
+  cancelDrawing(f.deps);
+  await Promise.resolve();
+  expect(editorState()).toMatchObject({draw: null, marks: [], strokes: []});
+  expect(shownOf()).toBe(preview);
+  expect(f.removed).toEqual(['/w/103-stroke.png', '/w/102-stroke.png']);
+  expect(f.deps.drawn).not.toHaveBeenCalled();
+  expect(f.presses).toEqual([]);
+});
+
+test('Done runs one page erase with every stroke shown, then removes the stroke images (#278)', async () => {
+  const f = await erasing();
+  await addMark([{x: 120, y: 220}], f.deps);
+  await addMark([{x: 150, y: 300}], f.deps);
+  // While the page erase runs, the view keeps the last stroke image, never the old picture.
+  const whileBusy: string[][] = [];
+  onEditorState(next => {
+    if (next.phase === 'ready' && next.busy === 'erase') {
+      whileBusy.push(next.strokes);
+    }
+  });
+  await finishErase(close, f.deps);
+  expect(whileBusy.length).toBeGreaterThan(0);
+  for (const strokes of whileBusy) {
+    expect(strokes[strokes.length - 1]).toBe('/w/103-stroke.png');
   }
+  expect(f.presses).toEqual(['erase']);
+  expect(f.deps.drawn).toHaveBeenCalledTimes(1);
+  expect(f.deps.drawn).toHaveBeenCalledWith('erase', RECT, [
+    [{x: 120, y: 220}],
+    [{x: 150, y: 300}],
+  ]);
+  expect(editorState()).toMatchObject({draw: null, strokes: [], rect: MOVED});
+  expect(f.removed).toEqual(
+    expect.arrayContaining(['/w/102-stroke.png', '/w/103-stroke.png']),
+  );
+});
+
+test('Done with no stroke left, or after Undo took them all, runs no page edit (#278)', async () => {
+  const f = await erasing();
+  await addMark([{x: 120, y: 220}], f.deps);
+  await undoStroke(f.deps);
+  await finishErase(close, f.deps);
+  expect(editorState()).toMatchObject({draw: null, marks: [], strokes: []});
+  expect(f.presses).toEqual([]);
+});
+
+test('a stroke off the picture or one that fails to erase drops out and says why (#278)', async () => {
+  const f = await erasing();
+  await addMark([{x: 10, y: 10}], f.deps);
+  expect(editorState()).toMatchObject({
+    marks: [],
+    strokes: [],
+    message: copy['editor.strokeOutside'],
+  });
+  f.deps.eraseView = async () => fail(1, 'no', 'IO');
+  await addMark([{x: 120, y: 220}], f.deps);
+  expect(editorState()).toMatchObject({
+    marks: [],
+    strokes: [],
+    message: copy['editor.strokeFailed'],
+  });
+  expect(f.removed).toEqual(['/w/102-stroke.png']);
+});
+
+test('Close keeps the strokes shown erased on the page, as Done does, and leaves no stroke image (#278)', async () => {
+  const f = await erasing();
+  await addMark([{x: 120, y: 220}], f.deps);
+  await addMark([{x: 150, y: 300}], f.deps);
+  await closeEditor(close, f.deps);
+  expect(f.deps.drawn).toHaveBeenCalledWith('erase', RECT, [
+    [{x: 120, y: 220}],
+    [{x: 150, y: 300}],
+  ]);
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(editorState()).toEqual({phase: 'idle'});
+  expect(f.removed).toEqual(
+    expect.arrayContaining(['/w/102-stroke.png', '/w/103-stroke.png']),
+  );
+});
+
+test('Cancel with a stroke still being erased leaves the page as it was and no stroke image (#278)', async () => {
+  const f = await erasing();
+  await addMark([{x: 120, y: 220}], f.deps);
+  const pending = addMark([{x: 150, y: 300}], f.deps);
+  cancelDrawing(f.deps);
+  await pending;
+  // The second stroke was never erased: Cancel came first.
+  expect(f.erased).toHaveLength(1);
+  expect(f.removed).toEqual(['/w/102-stroke.png']);
+  expect(f.presses).toEqual([]);
+});
+
+test('the device erases the view with the page edit\'s own Java erase', async () => {
+  const native = jest
+    .spyOn(edit.DEVICE.native, 'erase')
+    .mockResolvedValue(ok({width: 200, height: 200, left: 0, top: 0, ms: 1}));
+  await EDITOR_DEVICE.eraseView('/w/a.png', '/w/b.png', RECT, {
+    points: [1, 2],
+    ends: [1],
+  });
+  expect(native).toHaveBeenCalledWith('/w/a.png', '', '/w/b.png', 200, 200, [1, 2], [1]);
 });
 
 test('Clear marks empties the drawing, and Cancel goes back to the edits', async () => {
   const f = fakeDeps();
   await openEditor(f.deps);
-  await runEditorEdit(editOf('erase'), close, f.deps);
-  addMark([{x: 120, y: 220}]);
+  await runEditorEdit(editOf('crop'), close, f.deps);
+  await addMark([{x: 120, y: 220}], f.deps);
   clearMarks();
-  expect(editorState()).toMatchObject({draw: 'erase', marks: []});
-  addMark([{x: 120, y: 220}]);
-  cancelDrawing();
+  expect(editorState()).toMatchObject({draw: 'crop', marks: []});
+  await addMark([{x: 120, y: 220}], f.deps);
+  cancelDrawing(f.deps);
   expect(editorState()).toMatchObject({draw: null, marks: []});
   expect(f.deps.drawn).not.toHaveBeenCalled();
 });

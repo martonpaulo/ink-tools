@@ -77,8 +77,8 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   (an assumption the owner may override, [`docs/decisions.md`](../../docs/decisions.md#decision-index)). Not yet run on the
   tablet. A file in `MyStyle/` is never a route, as it syncs to Supernote Cloud ([#23](https://github.com/martonpaulo/supernote-tools/issues/23)).
 - **On the Mac, the secrets wait in the login Keychain** (owner, 2026-11-16, [#30](https://github.com/martonpaulo/supernote-tools/issues/30), [#44](https://github.com/martonpaulo/supernote-tools/issues/44)): service
-  `ink-tools`, accounts `account-sync-todoist-token`, `account-sync-icloud-apple-id`,
-  `account-sync-icloud-password` and, once the Google sign-in runs, the Google refresh token.
+  `ink-tools`, one account per secret, named and described in
+  [Account Sync sign-in secrets](../../docs/security.md#account-sync-sign-in-secrets) ([#277](https://github.com/martonpaulo/ink-tools/issues/277)).
   An agent pipes each one from there into `inkctl secret set <provider>`, which reads standard
   input ([#116](https://github.com/martonpaulo/supernote-tools/issues/116)); no secret goes into an argument or a file.
 - **Google sign-in client** ([#124](https://github.com/martonpaulo/supernote-tools/issues/124)): the OAuth client created for the device-code flow is of the «TVs and

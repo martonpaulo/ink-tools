@@ -29,6 +29,7 @@ final class Copy {
           + "adb shell settings put secure accessibility_enabled 1";
   static final String CYCLE_SECTION = "Languages in the Cycle";
   static final String CYCLE_HELP = "Only installed languages are listed. Install more in Settings, Handwriting language.";
+  static final String CYCLE_NOT_READ = "The language folder could not be read, so the languages cannot be listed.";
   static final String CYCLE_NO_FILES = "Turn on All-files access above to list the languages.";
   static final String CYCLE_LAST = "Keep at least one language in the cycle.";
   static final String FILES_OFF = "All-files access is off, so the language cannot be switched.";

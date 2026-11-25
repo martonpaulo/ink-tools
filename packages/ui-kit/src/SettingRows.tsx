@@ -1,14 +1,53 @@
 /**
- * The two setting shapes every Settings page repeats, built from the native controls (#274), so a
- * plugin draws neither by hand: an on/off setting is one `ListRow` with a trailing `Switch`, and one
- * value out of several is a `SectionCaption` over one `ListRow` per value, each with its `Radio`.
+ * The setting shapes every Settings page repeats, built from the native controls (#274), so a
+ * plugin draws none by hand: a group of rows under its caption, an on/off setting as one `ListRow`
+ * with a trailing `Switch`, and one value out of several as a group with one `ListRow` per value,
+ * each with its `Radio`.
  */
 import React from 'react';
-import {View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {ListRow} from './ListRow';
+import {metrics} from './metrics';
+import {shared} from './styles';
 import {SectionCaption} from './marks';
 import {Radio} from './Radio';
 import {Switch} from './Switch';
+
+export type RowGroupProps = {
+  /** The group's name, the caption over its rows. */
+  caption?: string;
+  /** The rows; `false`, `null` and `undefined` are left out, so a row can be conditional. */
+  children?: React.ReactNode;
+  /** What explains the group, grey, right under its last row: one paragraph each. */
+  note?: string | readonly string[];
+};
+
+/**
+ * Rows that belong together, as the native Settings group them (owner, #275): the group gap above,
+ * the caption, then its rows, with a thin line only between two rows of the group, none under the
+ * caption and none under the last row, then its note. The group owns the gap above it, so a group
+ * with no caption still reads apart from the rows before it; its container adds no gap of its own.
+ */
+export function RowGroup({caption, children, note}: RowGroupProps): React.JSX.Element {
+  const rows = React.Children.toArray(children);
+  const notes = note === undefined ? [] : typeof note === 'string' ? [note] : note;
+  return (
+    <View style={styles.group}>
+      {caption !== undefined && <SectionCaption>{caption}</SectionCaption>}
+      {rows.map((row, index) => (
+        <React.Fragment key={React.isValidElement(row) && row.key !== null ? row.key : index}>
+          {index > 0 && <View testID="row-separator" style={styles.separator} />}
+          {row}
+        </React.Fragment>
+      ))}
+      {notes.map(paragraph => (
+        <Text key={paragraph} style={shared.hint}>
+          {paragraph}
+        </Text>
+      ))}
+    </View>
+  );
+}
 
 export type SwitchRowProps = {
   title: string;
@@ -51,6 +90,8 @@ export type ChoiceListProps<V> = {
   choices: readonly Choice<V>[];
   value: V;
   onChange: (value: V) => void;
+  /** What explains the choice, under its last value (`RowGroup`'s note). */
+  note?: string;
 };
 
 /** One value out of several; each radio speaks «<title>: <value>». */
@@ -59,10 +100,10 @@ export function ChoiceList<V>({
   choices,
   value,
   onChange,
+  note,
 }: ChoiceListProps<V>): React.JSX.Element {
   return (
-    <View>
-      <SectionCaption>{title}</SectionCaption>
+    <RowGroup caption={title} note={note}>
       {choices.map(choice => (
         <ListRow
           key={choice.label}
@@ -76,6 +117,11 @@ export function ChoiceList<V>({
           }
         />
       ))}
-    </View>
+    </RowGroup>
   );
 }
+
+const styles = StyleSheet.create({
+  group: {paddingTop: metrics.groupGap},
+  separator: {height: metrics.separator, backgroundColor: metrics.ink},
+});

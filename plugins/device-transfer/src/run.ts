@@ -26,17 +26,16 @@ import {
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
-import {Sender} from './localsend/protocol';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
-import {Outcome, sendCapture, tempDir} from './send/sendPng';
+import {findAgain, Outcome, sendCapture, tempDir} from './send/sendPng';
 import {sendText} from './send/sendText';
 import {TextDeps} from './send/textSession';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
 import {Image} from 'react-native';
 import {NoteHost, Size} from './receive/receive';
-import {loadSettings, ownFingerprint} from './settings/device';
+import {loadSettings, ownIdentity} from './settings/device';
 
 /** How the tablet names itself to a receiver. */
 export const ALIAS = 'Supernote';
@@ -77,17 +76,19 @@ export async function runSend(
     return {kind: 'toast', text: copy.noImage};
   }
   const settings = await loadSettings(native, pluginDir);
-  const sender: Sender = {
+  const self = {
     alias: ALIAS,
-    fingerprint: await ownFingerprint(native, settings, pluginDir),
+    ...(await ownIdentity(native, settings, pluginDir)),
   };
   return sendCapture(
     native,
-    sender,
+    self,
     settings.device,
     tempDir(dir.value),
     capture,
     capture === 'page' ? currentPage : lassoImage,
+    Date.now,
+    findAgain(native, self, pluginDir),
   );
 }
 
@@ -176,11 +177,8 @@ async function readLassoText(): Promise<string | null> {
 
 async function sendTo(device: Device, text: string, native: Relay): Promise<string> {
   const settings = await loadSettings(native);
-  const sender: Sender = {
-    alias: ALIAS,
-    fingerprint: await ownFingerprint(native, settings),
-  };
-  return sendText(native, sender, device, text);
+  const self = {alias: ALIAS, ...(await ownIdentity(native, settings))};
+  return sendText(native, self, device, text, findAgain(native, self));
 }
 
 /** «Send Text» on the tablet (#99); the view and its toast are the caller's. */

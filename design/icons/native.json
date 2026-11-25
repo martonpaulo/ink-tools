@@ -1,0 +1,42 @@
+{
+  "source": "Supernote Manta (A5X2), adb device SN100D20051174, system apps under /system_ext/app, pulled with adb pull, read with aapt2 dump badging and aapt2 dump xmltree, 2026-11-25 (#271)",
+  "vector": {
+    "from": "launcher icons that are vector drawables: Settings (com.ratta.settings res/sn1.xml), To-Do (supernote.task res/lO.xml), Calendar (supernote.calendar res/-I.xml), Email (supernote.email res/qT.xml), Digest (supernote.knowledge res/Rs.xml)",
+    "sizeDp": 48,
+    "viewport": 48,
+    "strokeWidth": 4,
+    "strokeColor": "#000000",
+    "fill": "none",
+    "lineCap": "round",
+    "lineJoin": "round",
+    "centerlineMin": 4,
+    "centerlineMax": 44,
+    "inkMargin": 2,
+    "inkMarginNote": "the stroke outline (centerline +- 2) of Settings, Digest and Email reaches 2 from the edge of the 48 box; this is the launcher icons' margin",
+    "inkSpan": 43,
+    "inkSpanNote": "the span icons.py fits a launcher icon's stroke outline to, on its longer side: one unit under the native launchers' 44 of 48, so rounding never crosses their margin"
+  },
+  "bitmap": {
+    "from": "launcher icons that are bitmaps: Note (supernote.note res/vD.png) and Document (supernote.document res/A_.png), 64 x 64 grey with alpha, measured on the pixels",
+    "sizePx": 64,
+    "strokePx": 4
+  },
+  "exception": "InkHub (res/vx.xml) is a filled black vector; it is the one native icon that is not an outline and is not followed",
+  "plugin": {
+    "sizePx": 96,
+    "toolbar": {
+      "from": "the Note app's (com.ratta.supernote.note) 64 x 64 toolbar and lasso icons, 71 that draw on white, read on their pixels (dark below 50%), 2026-11-25 (#271)",
+      "sizePx": 64,
+      "strokePx": 4,
+      "inkMarginPx": 11,
+      "inkMarginNote": "the median smallest gap between the ink and the box, over the four sides; the selected states, which fill their whole box, are left out",
+      "strokeNote": "re-measured 2026-11-25 (#271, third pass): across each straight run of ink in a row or column, the sum of its pixel darkness is the stroke width, anti-aliasing included; 32 of the 41 single-stroke icons give 4 px",
+      "inkSpanPx": 41,
+      "inkSpanNote": "the span icons.py fits a plugin icon's stroke outline to, on its longer side: one pixel under the native 42 of 64 (64 less the 11 px margin on each side), so rounding never crosses it"
+    },
+    "grid": 24,
+    "padding": 5,
+    "strokeWidth": 2.125,
+    "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). Each plugin icon is built from Tabler glyphs on their 24 grid, scaled about its centre so its stroke outline spans the toolbar icons' inkSpanPx of 64 on its longer side, and centred; it is written with `padding` units around the grid (viewBox -5 -5 34 34) and a stroke of 2.125 of 34, the toolbar icons' 4 of 64."
+  }
+}

@@ -79,41 +79,41 @@ public final class ReceiverTest {
     String pin = identity.fingerprint;
     try {
       PinnedClient.Response info =
-          PinnedClient.post(base + "register", NO_HEADERS, bytes("{}"), null, pin, 3000, 3000);
+          PinnedClient.post(base + "register", NO_HEADERS, bytes("{}"), null, pin, null, 3000, 3000);
       check(info.status == 200 && info.body.contains("Supernote"), "register answers our info");
 
       PinnedClient.Response text =
           PinnedClient.post(base + "prepare-upload", NO_HEADERS,
               bytes("{\"files\":{\"t\":{\"fileType\":\"text/plain\",\"preview\":\"hi\"}}}"),
-              null, pin, 3000, 3000);
+              null, pin, null, 3000, 3000);
       check(text.status == 204, "a text offer answers 204, got " + text.status);
       check(offers.poll().contains("\"preview\":\"hi\""), "the decider reads the whole body");
 
       PinnedClient.Response refused =
           PinnedClient.post(base + "prepare-upload", NO_HEADERS,
-              bytes("{\"files\":{\"x\":{\"fileType\":\"image/heic\"}}}"), null, pin, 3000, 3000);
+              bytes("{\"files\":{\"x\":{\"fileType\":\"image/heic\"}}}"), null, pin, null, 3000, 3000);
       check(refused.status == 403, "a refused offer answers 403");
 
       PinnedClient.Response image =
           PinnedClient.post(base + "prepare-upload", NO_HEADERS,
-              bytes("{\"files\":{\"f\":{\"fileType\":\"image/png\"}}}"), null, pin, 3000, 3000);
+              bytes("{\"files\":{\"f\":{\"fileType\":\"image/png\"}}}"), null, pin, null, 3000, 3000);
       check(image.status == 200 && image.body.contains(session[0]), "an image offer opens a session");
 
       PinnedClient.Response busy =
           PinnedClient.post(base + "prepare-upload", NO_HEADERS,
-              bytes("{\"files\":{\"f\":{\"fileType\":\"image/png\"}}}"), null, pin, 3000, 3000);
+              bytes("{\"files\":{\"f\":{\"fileType\":\"image/png\"}}}"), null, pin, null, 3000, 3000);
       check(busy.status == 409, "a second offer during a session is busy");
 
       String query = "upload?sessionId=" + session[0] + "&fileId=f&token=";
       PinnedClient.Response wrong =
-          PinnedClient.post(base + query + "nope", NO_HEADERS, bytes("x"), null, pin, 3000, 3000);
+          PinnedClient.post(base + query + "nope", NO_HEADERS, bytes("x"), null, pin, null, 3000, 3000);
       check(wrong.status == 403, "a wrong token is refused");
 
       File png = new File(folder, "sent.png");
       byte[] content = {(byte) 0x89, 'P', 'N', 'G', 1, 2, 3};
       Files.write(png.toPath(), content);
       PinnedClient.Response uploaded =
-          PinnedClient.post(base + query + session[1], NO_HEADERS, null, png, pin, 3000, 3000);
+          PinnedClient.post(base + query + session[1], NO_HEADERS, null, png, pin, null, 3000, 3000);
       check(uploaded.status == 200, "the right token uploads, got " + uploaded.status);
       String path = received.poll(3, TimeUnit.SECONDS);
       check(path != null && path.endsWith(".png"), "the file is handed on");
@@ -121,13 +121,13 @@ public final class ReceiverTest {
       check(!path.contains("sent"), "the sender's file name is never used");
 
       PinnedClient.Response missing =
-          PinnedClient.post(base + "nothing", NO_HEADERS, bytes("{}"), null, pin, 3000, 3000);
+          PinnedClient.post(base + "nothing", NO_HEADERS, bytes("{}"), null, pin, null, 3000, 3000);
       check(missing.status == 404, "an unknown path is 404");
 
       byte[] large = new byte[Receiver.MAX_JSON_BYTES + 1];
       Arrays.fill(large, (byte) ' ');
       PinnedClient.Response tooLarge =
-          PinnedClient.post(base + "prepare-upload", NO_HEADERS, large, null, pin, 3000, 3000);
+          PinnedClient.post(base + "prepare-upload", NO_HEADERS, large, null, pin, null, 3000, 3000);
       check(tooLarge.status == 413, "an oversized offer is 413");
     } finally {
       receiver.close();

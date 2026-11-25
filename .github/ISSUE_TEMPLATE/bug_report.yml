@@ -13,6 +13,7 @@ body:
         - Image Editing (image-editing)
         - Device Transfer (device-transfer)
         - Handwriting Language (app)
+        - Ink Notebook Editor (Mac app)
         - Other
     validations:
       required: true

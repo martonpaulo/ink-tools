@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, shared, SwitchRow} from '@ink-tools/ui-kit';
+import {Button, metrics, RowGroup, shared, SwitchRow} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GridState} from './styles';
 import {StyleId, StyleOptions} from './native';
@@ -34,21 +34,23 @@ export function StylesGrid({
     : [];
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
+      <Text accessibilityRole="header" style={shared.title}>
         {copy['edit.styles']}
       </Text>
       {ready ? (
         <>
-          <SwitchRow
-            title={copy['styles.transparent']}
-            value={ready.options.transparent}
-            onChange={() => onToggle('transparent')}
-          />
-          <SwitchRow
-            title={copy['styles.thick']}
-            value={ready.options.thick}
-            onChange={() => onToggle('thick')}
-          />
+          <RowGroup>
+            <SwitchRow
+              title={copy['styles.transparent']}
+              value={ready.options.transparent}
+              onChange={() => onToggle('transparent')}
+            />
+            <SwitchRow
+              title={copy['styles.thick']}
+              value={ready.options.thick}
+              onChange={() => onToggle('thick')}
+            />
+          </RowGroup>
           <View style={styles.grid}>
             {rows.map(row => (
               <View key={row[0].style} style={styles.row}>
@@ -63,6 +65,8 @@ export function StylesGrid({
                     <Image
                       source={{uri: `file://${tile.path}`}}
                       resizeMode="contain"
+                      // No fade-in: each fade step is a refresh on e-ink (brief 8.4).
+                      fadeDuration={0}
                       style={styles.image}
                     />
                     <Text style={shared.text}>

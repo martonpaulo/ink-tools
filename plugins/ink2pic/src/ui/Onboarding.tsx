@@ -4,7 +4,7 @@
  * system Settings and dialogs (#50).
  */
 import React, {useRef, useState} from 'react';
-import {Text, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {Button, shared} from '@ink-tools/ui-kit';
 import {ScreenTools} from './ScreenTools';
 import {
@@ -62,7 +62,7 @@ export function Onboarding({
       {STEPS.map((text, i) => (
         <View key={text} style={[shared.row, shared.listRow]} accessible>
           <Text style={shared.textLarge}>{i + 1}</Text>
-          <Text style={shared.text}>{text}</Text>
+          <Text style={[shared.text, styles.step]}>{text}</Text>
         </View>
       ))}
       {/* How to undo a wrong insert: the picture stays lassoed after it (#106). */}
@@ -89,3 +89,8 @@ export function Onboarding({
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  // Wraps beside its number instead of running past the screen on a narrow window (#284).
+  step: {flexShrink: 1},
+});

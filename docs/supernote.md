@@ -32,7 +32,9 @@ explained.
 
 - Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
   arithmetic in `plugins/ink2pic/docs/brief.md`].
-- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs]. Handwriting Language's
+- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs; measured, Nomad, 2026-11-25,
+  `adb exec-out screencap` and `inkctl snapshot`: plugin views report coordinates in that space,
+  [#284](https://github.com/martonpaulo/ink-tools/issues/284)]. Handwriting Language's
   button place is tested on both screens, each turned both ways
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)).
 - A floating window of a sideloaded app follows a screen turn: Handwriting Language's button,
@@ -146,6 +148,18 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Lasso buttons of all plugins share one «⋯» list under the lasso toolbar; each row's icon shows
   at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/ink-tools/issues/107)]. A button takes one icon, so each plugin
   ships one 96 x 96 PNG per button, which the tablet scales down to that size (owner D43 A).
+- Native launcher icons are 48 dp vector drawables on a 48 viewport: outline strokes 4 wide,
+  black, no fill, round caps and joins, centerlines within 4 to 44 [measured, 2026-11-25, Settings,
+  To-Do, Calendar, Email and Digest, pulled with `adb pull` and read with `aapt2 dump xmltree`;
+  Note and Document are 64 px bitmaps with 4 px strokes; InkHub is the one filled icon,
+  [#271](https://github.com/martonpaulo/ink-tools/issues/271)]. `design/icons/native.json` records them and `design/icons/icons.json` draws every Ink Tools icon to them.
+- The Note app's toolbar and lasso icons are 64 px bitmaps with 4 px strokes whose ink keeps a
+  median 11 px from the box on every side (17%) [measured, 2026-11-25, 71 icons of
+  `com.ratta.supernote.note` that draw on white, [#271](https://github.com/martonpaulo/ink-tools/issues/271)]; 32 of their 41 single-stroke icons
+  measure 4 px across a stroke, anti-aliasing summed [measured, 2026-11-25]. Each plugin icon is
+  built from Tabler glyphs, scaled so its ink spans 41 of 64 on its longer side and centred, with a
+  stroke of 4 of 64: the same stroke share and at least that margin
+  ([`decisions.md`](decisions.md#decision-index)).
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
   promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`
@@ -196,8 +210,18 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A send from the tablet to the Mac's saved LocalSend target made no offer on the Mac: with
   LocalSend listening on TCP 53317, the tablet's TCP check of that port answered closed while the
   macOS firewall was on, and «Send Text» showed «not reachable» [measured, Device Transfer 0.1.0
-  beta 5 and 6, 2026-11-17, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. That the firewall is the only cause is
-  [unverified: the send with LocalSend allowed through it is not yet run].
+  beta 5 and 6, 2026-11-17, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. The firewall was not the only cause: with
+  LocalSend permitted through it, beta 9 still showed «not reachable» [measured, 2026-11-25].
+- LocalSend 1.18.2 requires a TLS client certificate on 53317: a client that presents none gets
+  the TLS 1.3 alert 116 «certificate required» at its first read, and any valid self-signed one
+  is accepted; its request names only its own certificate as an authority [measured, `openssl
+  s_client` to the Mac's LocalSend 1.18.2, 2026-11-25, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. Its source makes the
+  certificate optional only while web share is on, and trusts a `register` only when the claimed
+  `fingerprint` is the client certificate's SHA-256 (`packages/core/src/http/server/`). A LocalSend
+  client presents its own identity's certificate; Device Transfer presents the `Identity.java`
+  certificate it receives with, so its fingerprint matches [measured on the Mac: `PinnedClient`
+  got 200 from `register` with it and an `IOException` without it; the tablet's send is
+  unverified until the next device round].
 - The first write of a file that does not exist yet in shared storage left it empty while the call
   reported success; the next write over that file worked [measured, Lookup settings,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)]. Creating the file empty, closing

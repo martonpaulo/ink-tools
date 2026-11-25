@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   ChoiceList,
-  SectionCaption,
+  RowGroup,
   shared,
   SwitchRow,
   TitleBar,
@@ -56,17 +56,14 @@ export default function App({
           value={settings.on}
           onChange={on => change({...settings, on})}
         />
-        <View>
-          <ChoiceList
-            title={copy['settings.minSize']}
-            choices={SIZES}
-            value={settings.minSizeMm}
-            onChange={minSizeMm => change({...settings, minSizeMm})}
-          />
-          <Text style={shared.hint}>{copy['settings.minSizeNote']}</Text>
-        </View>
-        <View>
-          <SectionCaption>{copy['settings.shapes']}</SectionCaption>
+        <ChoiceList
+          title={copy['settings.minSize']}
+          choices={SIZES}
+          value={settings.minSizeMm}
+          onChange={minSizeMm => change({...settings, minSizeMm})}
+          note={copy['settings.minSizeNote']}
+        />
+        <RowGroup caption={copy['settings.shapes']}>
           {SHAPES.map(kind => (
             <SwitchRow
               key={kind}
@@ -77,7 +74,7 @@ export default function App({
               }
             />
           ))}
-        </View>
+        </RowGroup>
       </ScrollView>
     </View>
   );
