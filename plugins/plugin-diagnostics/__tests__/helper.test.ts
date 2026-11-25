@@ -7,6 +7,7 @@ import {
   COMMAND_PATH,
   HelperError,
   LASSO_MARGIN,
+  NOTES_FOLDER,
   parseCommand,
   runCommand,
   type HelperApi,
@@ -34,6 +35,12 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     makeDir: jest.fn().mockResolvedValue(undefined),
     listFiles: jest.fn().mockResolvedValue(['1.sticker']),
     deleteFile: jest.fn().mockResolvedValue(undefined),
+    notePageCount: jest.fn().mockResolvedValue(4),
+    notePageTemplate: jest.fn().mockResolvedValue('style_5mm_grid_a5x2'),
+    notePageElements: jest.fn().mockResolvedValue([{type: 0}, {type: 500}]),
+    insertNotePage: jest.fn().mockResolvedValue(undefined),
+    insertNoteElements: jest.fn().mockResolvedValue(undefined),
+    removeNotePage: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   } as HelperApi & Record<string, jest.Mock>;
 }
@@ -184,6 +191,75 @@ test('insertPage inserts a page with a system template name only (#261)', async 
   expect(answer).toMatchObject({ok: true, page: 1, template: 'style_white'});
   const refused = await runCommand(command({op: 'insertPage', page: 1, template: '/sdcard/a.png'}), note);
   expect(refused.answer).toMatchObject({ok: false, code: 2});
+});
+
+const NOTE = `${NOTES_FOLDER}Tests/Move.note`;
+
+/** The file API calls of one move, in the order the helper made them (#263). */
+function moveCalls(note: Record<string, jest.Mock>): string[] {
+  const names = ['notePageElements', 'insertNotePage', 'insertNoteElements', 'removeNotePage'];
+  return names
+    .flatMap(name => note[name].mock.calls.map((args, index) => ({name, args, order: note[name].mock.invocationCallOrder[index]})))
+    .sort((left, right) => left.order - right.order)
+    .map(call => `${call.name}(${call.args.slice(1).map((arg: unknown) => JSON.stringify(arg)).join(', ')})`);
+}
+
+test('movePage down copies the page after the target, then removes the old page (#263)', async () => {
+  const note = api();
+  const {answer} = await runCommand(command({op: 'movePage', path: NOTE, from: 0, to: 2}), note);
+  expect(moveCalls(note)).toEqual([
+    'notePageElements(0)',
+    'insertNotePage(3, "style_5mm_grid")',
+    'insertNoteElements(3, [{"type":0},{"type":500}])',
+    'removeNotePage(0)',
+  ]);
+  expect(note.insertNotePage).toHaveBeenCalledWith(NOTE, 3, 'style_5mm_grid');
+  expect(answer).toMatchObject({ok: true, op: 'movePage', from: 0, to: 2, template: 'style_5mm_grid', storedTemplate: 'style_5mm_grid_a5x2', elements: 2});
+});
+
+test('movePage up inserts at the target and removes the old page, now one further down (#263)', async () => {
+  const note = api();
+  await runCommand(command({op: 'movePage', path: NOTE, from: 3, to: 0, template: 'style_white'}), note);
+  expect(moveCalls(note)).toEqual([
+    'notePageElements(3)',
+    'insertNotePage(0, "style_white")',
+    'insertNoteElements(0, [{"type":0},{"type":500}])',
+    'removeNotePage(4)',
+  ]);
+});
+
+test('movePage of a blank page inserts no elements (#263)', async () => {
+  const note = api({notePageElements: jest.fn().mockResolvedValue([])});
+  await runCommand(command({op: 'movePage', path: NOTE, from: 1, to: 3}), note);
+  expect(moveCalls(note)).toEqual(['notePageElements(1)', 'insertNotePage(4, "style_5mm_grid")', 'removeNotePage(1)']);
+});
+
+test('movePage refuses a one-page note, a page outside the note and a bad command before any change (#263)', async () => {
+  const one = api({notePageCount: jest.fn().mockResolvedValue(1)});
+  expect((await runCommand(command({op: 'movePage', path: NOTE, from: 0, to: 1}), one)).answer).toMatchObject({ok: false, code: 2});
+  const note = api();
+  for (const body of [
+    {path: NOTE, from: 0, to: 4},
+    {path: NOTE, from: 1, to: 1},
+    {path: NOTE, from: -1, to: 1},
+    {path: `${NOTES_FOLDER}Tests/../Move.note`, from: 0, to: 1},
+    {path: '/storage/emulated/0/MyStyle/Move.note', from: 0, to: 1},
+    {path: `${NOTES_FOLDER}Tests/Move.pdf`, from: 0, to: 1},
+    {path: NOTE, from: 0, to: 1, template: '../x'},
+  ]) {
+    expect((await runCommand(command({op: 'movePage', ...body}), note)).answer).toMatchObject({ok: false, code: 2});
+  }
+  for (const changes of [one, note]) {
+    expect(changes.insertNotePage).not.toHaveBeenCalled();
+    expect(changes.removeNotePage).not.toHaveBeenCalled();
+  }
+});
+
+test('movePage keeps the old page when the copy fails (#263)', async () => {
+  const note = api({insertNoteElements: jest.fn().mockRejectedValue(new HelperError(1501, 'insertElements: no permission'))});
+  const {answer} = await runCommand(command({op: 'movePage', path: NOTE, from: 0, to: 2}), note);
+  expect(answer).toEqual({ok: false, code: 1501, message: 'insertElements: no permission'});
+  expect(note.removeNotePage).not.toHaveBeenCalled();
 });
 
 test('a note call that fails in renderPage is an answer with its code (#261)', async () => {

@@ -173,4 +173,36 @@ export const noteApi: HelperApi = {
       throw new HelperError(1, `deleteFile: ${path} was not deleted`);
     }
   },
+
+  async notePageCount(notePath) {
+    return unwrap<number>('getNoteTotalPageNum', await PluginFileAPI.getNoteTotalPageNum(notePath));
+  },
+
+  async notePageTemplate(notePath, page) {
+    const info = unwrap<{name?: string}>('getNotePageTemplate', await PluginFileAPI.getNotePageTemplate(notePath, page));
+    if (!info?.name) {
+      throw new HelperError(1, `getNotePageTemplate: page ${page} gave no template name`);
+    }
+    return info.name;
+  },
+
+  async notePageElements(notePath, page) {
+    const elements = unwrap<unknown>('getElements', await PluginFileAPI.getElements(page, notePath));
+    if (!Array.isArray(elements)) {
+      throw new HelperError(1, `getElements: page ${page} gave no element list`);
+    }
+    return elements;
+  },
+
+  async insertNotePage(notePath, page, template) {
+    unwrap('insertNotePage', await PluginFileAPI.insertNotePage({notePath, page, template}));
+  },
+
+  async insertNoteElements(notePath, page, elements) {
+    unwrap('insertElements', await PluginFileAPI.insertElements(notePath, page, elements as object[]));
+  },
+
+  async removeNotePage(notePath, page) {
+    unwrap('removeNotePage', await PluginFileAPI.removeNotePage(notePath, page));
+  },
 };
