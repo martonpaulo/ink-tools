@@ -19,8 +19,8 @@
 - Commit policy: Commit each coherent task once it is complete and its subproject's validation passes; only the change's files, one concern per commit; issue commits end with `(#<issue number>)`.
 - Push policy: Push each validated commit to `origin/main` automatically; a cloud session pushes `main` for a `runs: cloud` issue whose gates ran there. Cloud setup command: `bash scripts/cloud-setup.sh`.
 - Quick check: `python3 scripts/quick_check.py` (`tsc --noEmit` in the subprojects `gates.json` maps the changed paths to, [#180](https://github.com/martonpaulo/ink-tools/issues/180)).
-- Interface paths: `plugins/*/App.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/ink2pic run renders`, `plugins/*/src/*.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/ink2pic run renders`, `packages/ui-kit/src/*.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/ink2pic run renders`
-- Product versioning: plugins and the Lingo app use SemVer with a numbered beta, `handwriting-language` and each plugin tag `<folder>-v<version>`; the rule, with examples, is in [`docs/product.md`](docs/product.md#product-versioning) ([#155](https://github.com/martonpaulo/ink-tools/issues/155), [#157](https://github.com/martonpaulo/ink-tools/issues/157)). Ink2Pic keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.
+- Interface paths: `plugins/*/App.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/ink2pic run renders` (light), `plugins/*/src/*.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/ink2pic run renders` (light), `packages/ui-kit/src/*.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/ink2pic run renders` (light)
+- Product versioning: plugins and the Lingo app use SemVer with a numbered beta, `handwriting-language` and each plugin tag `<folder>-v<version>`; the rule and examples: [`docs/product.md`](docs/product.md#product-versioning) ([#155](https://github.com/martonpaulo/ink-tools/issues/155), [#157](https://github.com/martonpaulo/ink-tools/issues/157)). Ink2Pic keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.
 - Merge policy: merge commits, so every branch commit reaches `main`.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: disabled
@@ -42,7 +42,7 @@ Before editing under a path, read the file its row names. A module with rules of
 | `cli/<name>/`: `cli/inkctl/` | that tool's own `AGENTS.md` (host-side tools) |
 | `apps/<name>/`: `apps/handwriting-language/`, `apps/inktools-bridge/`, `apps/ink-notebook-editor/` | that app's own `AGENTS.md` (the sideloaded Android app, the planned macOS app) and `docs/supernote.md` (device facts) |
 | `packages/` | `packages/README.md` and `docs/architecture.md` (shared packages) |
-| `templates/` | `docs/product.md` (note templates; created when the first one lands) |
+| `templates/` | `docs/product.md` (note templates, once one lands) |
 | `docs/` | `docs/product.md` |
 
 ## Instruction hierarchy and sources of truth
