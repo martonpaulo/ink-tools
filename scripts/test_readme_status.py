@@ -21,8 +21,8 @@ class Vocabulary(unittest.TestCase):
     def test_a_vocabulary_cell_passes(self):
         self.assertEqual(readme_status.bad_cells(TABLE.format("🟡 Beta"), ["🟡 Beta"]), (True, []))
 
-    def test_the_emoji_above_the_word_passes(self):
-        self.assertEqual(readme_status.bad_cells(TABLE.format("🟡<br>Beta"), ["🟡 Beta"]), (True, []))
+    def test_no_break_spaces_pass(self):
+        self.assertEqual(readme_status.bad_cells(TABLE.format("🔵&nbsp;In&nbsp;progress"), ["🔵 In progress"]), (True, []))
 
     def test_a_progress_note_fails(self):
         cell = "Beta 1, not yet on the tablet ([#144](https://example.com/144))"
