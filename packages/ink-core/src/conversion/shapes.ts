@@ -3,7 +3,7 @@
  * never becomes text, and neither does an answer that is not a word. Every ratio is to the line's
  * letter height and an [inference] default, tuned in the device round.
  */
-import type {Rect} from '@ink-tools/ink-core';
+import type {Rect} from '../lasso';
 import {isAccent, MARK_SHARE, median, type InkStroke, type Point, type Word} from './words';
 
 /** A stroke taller than this many letter heights is a drawing. */

@@ -1,5 +1,5 @@
 /** Synthetic strokes for the word rule and the shape rules: no real handwriting. */
-import type {InkStroke, Point} from '../src/words';
+import type {InkStroke, Point} from '../src/conversion/words';
 
 let next = 0;
 

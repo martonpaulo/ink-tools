@@ -15,10 +15,14 @@ import {
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
-import {Converter} from './convert';
+import {
+  Converter,
+  undoLast,
+  UndoHost,
+  UndoOutcome,
+} from '@ink-tools/ink-core/conversion';
 import {convertLasso, LassoConvertHost, LassoOutcome} from './lasso';
 import {getSettings, wordOptions} from './settings';
-import {undoLast, UndoHost, UndoOutcome} from './undo';
 
 export const BUTTON_TYPE_SIDEBAR = 1;
 export const SHOW_NO_VIEW = 0;
@@ -51,7 +55,9 @@ export type ButtonHost = {
 const NEEDS = [PERMISSION_FILE_READ, PERMISSION_FILE_WRITE] as const;
 
 const describe = (what: string, result: Result<unknown>): string =>
-  result.ok ? `${what}: ok` : `${what} failed: ${result.code} ${result.message}`;
+  result.ok
+    ? `${what}: ok`
+    : `${what} failed: ${result.code} ${result.message}`;
 
 export class Buttons {
   private converter: Converter | null = null;
@@ -100,7 +106,11 @@ export class Buttons {
     host.log(
       describe(
         'register mode',
-        await host.register(BUTTON_TYPE_SIDEBAR, ['NOTE'], this.modeButton(false)),
+        await host.register(
+          BUTTON_TYPE_SIDEBAR,
+          ['NOTE'],
+          this.modeButton(false),
+        ),
       ),
     );
     if (getSettings().startOn) {
@@ -145,7 +155,9 @@ export class Buttons {
       this.converter = null;
     }
     // The icon follows the state; a failed swap keeps the mode and is logged.
-    host.log(describe('unregister mode', await host.unregister(MODE_BUTTON_ID)));
+    host.log(
+      describe('unregister mode', await host.unregister(MODE_BUTTON_ID)),
+    );
     host.log(
       describe(
         'register mode',
@@ -161,7 +173,9 @@ export class Buttons {
   /** A press of one of the buttons; false for an id that is not this plugin's. */
   press(id: number): boolean {
     if (id === MODE_BUTTON_ID) {
-      this.turn(!this.on).catch(error => this.host.log(`mode: ${String(error)}`));
+      this.turn(!this.on).catch(error =>
+        this.host.log(`mode: ${String(error)}`),
+      );
       return true;
     }
     if (id === UNDO_BUTTON_ID) {
@@ -169,7 +183,9 @@ export class Buttons {
       return true;
     }
     if (id === LASSO_BUTTON_ID) {
-      this.convertLasso().catch(error => this.host.log(`lasso: ${String(error)}`));
+      this.convertLasso().catch(error =>
+        this.host.log(`lasso: ${String(error)}`),
+      );
       return true;
     }
     return false;
@@ -210,6 +226,8 @@ export class Buttons {
 }
 
 /** The converter for the current settings, read when the mode turns on. */
-export function converterFor(host: ConstructorParameters<typeof Converter>[0]): Converter {
+export function converterFor(
+  host: ConstructorParameters<typeof Converter>[0],
+): Converter {
   return new Converter(host, wordOptions(getSettings()));
 }

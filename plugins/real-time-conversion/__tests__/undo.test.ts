@@ -1,8 +1,12 @@
-import {boxNumber, setLastConversion, undoLast} from '../src/undo';
-import {Converter} from '../src/convert';
-import {DEFAULT_WORD_OPTIONS} from '../src/words';
+import {
+  boxNumber,
+  setLastConversion,
+  undoLast,
+  Converter,
+  DEFAULT_WORD_OPTIONS,
+} from '@ink-tools/ink-core/conversion';
 import {fakeTablet} from '../test-support/host';
-import {letter} from '../test-support/ink';
+import {letter} from '../../../packages/ink-core/testing/ink';
 
 beforeEach(() => setLastConversion(null));
 
@@ -45,15 +49,24 @@ test('a second undo finds nothing to undo', async () => {
 
 test('the last conversion is never applied on another page', async () => {
   const tablet = await convertOneWord();
-  (tablet.host.getCurrentPageNum as jest.Mock).mockResolvedValueOnce({ok: true, value: 3});
-  const calls = (tablet.host.batchUpdatePageElements as jest.Mock).mock.calls.length;
+  (tablet.host.getCurrentPageNum as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    value: 3,
+  });
+  const calls = (tablet.host.batchUpdatePageElements as jest.Mock).mock.calls
+    .length;
   expect(await undoLast(tablet.host)).toBe('nothing');
-  expect((tablet.host.batchUpdatePageElements as jest.Mock).mock.calls).toHaveLength(calls);
+  expect(
+    (tablet.host.batchUpdatePageElements as jest.Mock).mock.calls,
+  ).toHaveLength(calls);
 });
 
 test('a text box edited or removed since leaves the page untouched', async () => {
   const tablet = await convertOneWord();
-  tablet.page[0].textBox = {textRect: {left: 0, top: 100, right: 99, bottom: 160}, textContentFull: 'nao'};
+  tablet.page[0].textBox = {
+    textRect: {left: 0, top: 100, right: 99, bottom: 160},
+    textContentFull: 'nao',
+  };
   expect(await undoLast(tablet.host)).toBe('nothing');
   expect(tablet.page.map(element => element.type)).toEqual([500]);
 });
@@ -62,11 +75,22 @@ test('the box is found by its text and a rect within a few pixels', () => {
   const conversion = {
     path: 'p',
     page: 0,
-    box: {text: 'a', rect: {left: 10, top: 10, right: 50, bottom: 50}, fontSize: 30},
+    box: {
+      text: 'a',
+      rect: {left: 10, top: 10, right: 50, bottom: 50},
+      fontSize: 30,
+    },
     strokes: [],
   };
   const page = [
-    {type: 500, numInPage: 7, textBox: {textContentFull: 'a', textRect: {left: 12, top: 9, right: 50, bottom: 53}}},
+    {
+      type: 500,
+      numInPage: 7,
+      textBox: {
+        textContentFull: 'a',
+        textRect: {left: 12, top: 9, right: 50, bottom: 53},
+      },
+    },
   ];
   expect(boxNumber(conversion, page)).toEqual({ok: true, value: 7});
   expect(boxNumber(conversion, [{...page[0], type: 0}]).ok).toBe(false);

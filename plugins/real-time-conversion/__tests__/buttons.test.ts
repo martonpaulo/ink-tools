@@ -1,18 +1,28 @@
-import {Buttons, LASSO_BUTTON_ID, MODE_BUTTON_ID, UNDO_BUTTON_ID} from '../src/buttons';
+import {
+  Buttons,
+  LASSO_BUTTON_ID,
+  MODE_BUTTON_ID,
+  UNDO_BUTTON_ID,
+} from '../src/buttons';
 import {copy} from '../src/copy';
-import {Converter} from '../src/convert';
+import {
+  Converter,
+  setLastConversion,
+  DEFAULT_WORD_OPTIONS,
+} from '@ink-tools/ink-core/conversion';
 import {DEFAULT_SETTINGS, setSettings} from '../src/settings';
-import {setLastConversion} from '../src/undo';
-import {DEFAULT_WORD_OPTIONS} from '../src/words';
 import {fakeTablet} from '../test-support/host';
-import {letter} from '../test-support/ink';
+import {letter} from '../../../packages/ink-core/testing/ink';
 
 function setup(granted = true) {
   const tablet = fakeTablet();
   const toasts: string[] = [];
   const host = {
     register: jest.fn(async () => ({ok: true as const, value: true as const})),
-    unregister: jest.fn(async () => ({ok: true as const, value: true as const})),
+    unregister: jest.fn(async () => ({
+      ok: true as const,
+      value: true as const,
+    })),
     hasPermission: jest.fn(async () => ({ok: true as const, value: granted})),
     requestPermission: jest.fn(async () => ({ok: true as const, value: 2})),
     makeConverter: () => new Converter(tablet.host, DEFAULT_WORD_OPTIONS),
@@ -20,7 +30,12 @@ function setup(granted = true) {
     lasso: tablet.host,
     toast: (text: string) => toasts.push(text),
     log: () => {},
-    icons: {on: 'on.png', off: 'off.png', undo: 'undo.png', lasso: 'convert.png'},
+    icons: {
+      on: 'on.png',
+      off: 'off.png',
+      undo: 'undo.png',
+      lasso: 'convert.png',
+    },
   };
   return {tablet, toasts, host, buttons: new Buttons(host)};
 }
@@ -33,9 +48,30 @@ beforeEach(() => {
 test('every button registers at start-up, the switch off by default', async () => {
   const {host, buttons, tablet} = setup();
   await buttons.registerAll();
-  expect(host.register).toHaveBeenCalledWith(2, ['NOTE'], expect.objectContaining({id: LASSO_BUTTON_ID, name: 'Convert to Text', editDataTypes: [0], showType: 0}));
-  expect(host.register).toHaveBeenCalledWith(1, ['NOTE'], expect.objectContaining({id: UNDO_BUTTON_ID, name: 'Undo Conversion'}));
-  expect(host.register).toHaveBeenCalledWith(1, ['NOTE'], expect.objectContaining({id: MODE_BUTTON_ID, name: 'Real-Time Text', icon: 'off.png'}));
+  expect(host.register).toHaveBeenCalledWith(
+    2,
+    ['NOTE'],
+    expect.objectContaining({
+      id: LASSO_BUTTON_ID,
+      name: 'Convert to Text',
+      editDataTypes: [0],
+      showType: 0,
+    }),
+  );
+  expect(host.register).toHaveBeenCalledWith(
+    1,
+    ['NOTE'],
+    expect.objectContaining({id: UNDO_BUTTON_ID, name: 'Undo Conversion'}),
+  );
+  expect(host.register).toHaveBeenCalledWith(
+    1,
+    ['NOTE'],
+    expect.objectContaining({
+      id: MODE_BUTTON_ID,
+      name: 'Real-Time Text',
+      icon: 'off.png',
+    }),
+  );
   expect(buttons.on).toBe(false);
   expect(tablet.listening).toBe(false);
 });
@@ -52,10 +88,18 @@ test('a press switches the mode, its icon and says so', async () => {
   const {host, buttons, tablet, toasts} = setup();
   await buttons.turn(true);
   expect(tablet.listening).toBe(true);
-  expect(host.register).toHaveBeenLastCalledWith(1, ['NOTE'], expect.objectContaining({icon: 'on.png'}));
+  expect(host.register).toHaveBeenLastCalledWith(
+    1,
+    ['NOTE'],
+    expect.objectContaining({icon: 'on.png'}),
+  );
   await buttons.turn(false);
   expect(tablet.listening).toBe(false);
-  expect(host.register).toHaveBeenLastCalledWith(1, ['NOTE'], expect.objectContaining({icon: 'off.png'}));
+  expect(host.register).toHaveBeenLastCalledWith(
+    1,
+    ['NOTE'],
+    expect.objectContaining({icon: 'off.png'}),
+  );
   expect(toasts).toEqual([copy['toast.on'], copy['toast.off']]);
   expect(buttons.press(MODE_BUTTON_ID)).toBe(true);
   expect(buttons.press(999)).toBe(false);

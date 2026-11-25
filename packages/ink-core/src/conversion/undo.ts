@@ -4,7 +4,7 @@
  * kept, in memory [inference: a restart loses it, enough for «the last conversion»]; a record from
  * another note or page is never applied.
  */
-import type {Rect} from '@ink-tools/ink-core';
+import type {Rect} from '../lasso';
 import {
   fail,
   ok,

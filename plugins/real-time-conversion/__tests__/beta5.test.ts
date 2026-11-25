@@ -3,16 +3,17 @@
  * page rect is fractional (converted EMR points) was refused by batchUpdatePageElements, a
  * recognition that answered null threw at `trim`, and undo did not find the box the host wrote.
  */
-import {
-  recognizeElements,
-  textBoxFields,
-} from '@ink-tools/sn-adapter/official';
+import {recognizeElements, textBoxFields} from '@ink-tools/sn-adapter/official';
 import {PluginCommAPI} from 'sn-plugin-lib';
-import {Converter} from '../src/convert';
-import {lastConversion, setLastConversion, undoLast} from '../src/undo';
-import {DEFAULT_WORD_OPTIONS} from '../src/words';
+import {
+  Converter,
+  lastConversion,
+  setLastConversion,
+  undoLast,
+  DEFAULT_WORD_OPTIONS,
+} from '@ink-tools/ink-core/conversion';
 import {fakeTablet} from '../test-support/host';
-import {stroke} from '../test-support/ink';
+import {stroke} from '../../../packages/ink-core/testing/ink';
 
 beforeEach(() => setLastConversion(null));
 

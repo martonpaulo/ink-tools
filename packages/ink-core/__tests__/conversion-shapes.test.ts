@@ -1,6 +1,6 @@
-import {answerKept, selfCrossings, strokeKept, wordKept} from '../src/shapes';
-import type {Word} from '../src/words';
-import {letter, scribble, stroke} from '../test-support/ink';
+import {answerKept, selfCrossings, strokeKept, wordKept} from '../src/conversion/shapes';
+import type {Word} from '../src/conversion/words';
+import {letter, scribble, stroke} from '../testing/ink';
 
 const wordOf = (strokes = [letter(0), letter(30)], letterHeight = 40): Word => ({
   strokes,

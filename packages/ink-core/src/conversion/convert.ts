@@ -1,12 +1,12 @@
 /**
- * The conversion (#187): while the mode is on, each pen-up feeds the word rule (src/words.ts); a
- * finished word that src/shapes.ts lets through is recognized at the page size, from the page's own
+ * The conversion (#187): while the mode is on, each pen-up feeds the word rule (words.ts); a
+ * finished word that shapes.ts lets through is recognized at the page size, from the page's own
  * elements (#206), and ONE
  * batchUpdatePageElements call deletes its strokes and inserts a text box at its place, so the
  * page changes once per word. Nothing runs during a stroke: the work starts at pen-up, and words
  * convert one at a time. Any failure keeps the handwriting and is logged.
  */
-import type {Rect, Size} from '@ink-tools/ink-core';
+import type {Rect, Size} from '../lasso';
 import {
   type EmrRange,
   emrToPage,

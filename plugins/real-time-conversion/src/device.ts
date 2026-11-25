@@ -17,9 +17,8 @@ import {
   saveStroke,
   strokePoints,
 } from '@ink-tools/sn-adapter/official';
-import type {ConvertHost} from './convert';
+import {type ConvertHost, type UndoHost} from '@ink-tools/ink-core/conversion';
 import type {LassoConvertHost} from './lasso';
-import type {UndoHost} from './undo';
 
 const log = (line: string) => console.log(`RealTimeConversion: ${line}`);
 

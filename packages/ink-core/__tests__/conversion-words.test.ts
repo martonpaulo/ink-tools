@@ -1,5 +1,5 @@
-import {DEFAULT_WORD_OPTIONS, WordTracker} from '../src/words';
-import {accent, letter, stroke} from '../test-support/ink';
+import {DEFAULT_WORD_OPTIONS, WordTracker} from '../src/conversion/words';
+import {accent, letter, stroke} from '../testing/ink';
 
 const {idleMs, graceMs} = DEFAULT_WORD_OPTIONS;
 

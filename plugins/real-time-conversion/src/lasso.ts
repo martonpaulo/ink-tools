@@ -9,9 +9,17 @@
  * font of #144 has its device fact (`fontPath`); then the settings' font goes into the box here.
  */
 import type {Rect, Size} from '@ink-tools/ink-core';
-import type {Result, SavedStroke, TextBoxInput} from '@ink-tools/sn-adapter/official';
-import {LINE_SHARE, MIN_FONT_SIZE, type HostElement} from './convert';
-import {setLastConversion} from './undo';
+import type {
+  Result,
+  SavedStroke,
+  TextBoxInput,
+} from '@ink-tools/sn-adapter/official';
+import {
+  LINE_SHARE,
+  MIN_FONT_SIZE,
+  type HostElement,
+  setLastConversion,
+} from '@ink-tools/ink-core/conversion';
 
 /**
  * A handwritten line is about this many typed line heights tall, ascenders and descenders with
@@ -55,7 +63,11 @@ export function paragraphsOf(text: string): string {
  * The text box for `text` over the lasso's `rect`: from its top-left, at least as wide as the
  * lasso, each paragraph one line of a font sized from the lasso's height per line, inside the page.
  */
-export function lassoBoxFor(text: string, rect: Rect, page: Size): TextBoxInput {
+export function lassoBoxFor(
+  text: string,
+  rect: Rect,
+  page: Size,
+): TextBoxInput {
   const lines = Math.max(1, text.split('\n').length);
   const inkLine = (rect.bottom - rect.top) / lines;
   const fontSize = Math.max(
@@ -63,10 +75,15 @@ export function lassoBoxFor(text: string, rect: Rect, page: Size): TextBoxInput 
     Math.round(inkLine / (INK_LINE_PER_TEXT_LINE * LINE_SHARE)),
   );
   // Whole pixels, as the word box (#206); one font size more, so the host never wraps a line.
-  const width = Math.min(page.width, Math.ceil(rect.right - rect.left) + fontSize);
+  const width = Math.min(
+    page.width,
+    Math.ceil(rect.right - rect.left) + fontSize,
+  );
   const left = Math.max(0, Math.min(Math.round(rect.left), page.width - width));
   const top = Math.max(0, Math.round(rect.top));
-  const height = Math.ceil(Math.max(rect.bottom - rect.top, lines * fontSize * LINE_SHARE));
+  const height = Math.ceil(
+    Math.max(rect.bottom - rect.top, lines * fontSize * LINE_SHARE),
+  );
   return {
     text,
     fontSize,
@@ -80,7 +97,9 @@ export function lassoBoxFor(text: string, rect: Rect, page: Size): TextBoxInput 
 }
 
 /** One press of «Convert to Text». The lasso is read first: its context is short-lived. */
-export async function convertLasso(host: LassoConvertHost): Promise<LassoOutcome> {
+export async function convertLasso(
+  host: LassoConvertHost,
+): Promise<LassoOutcome> {
   const {log} = host;
   const read = await host.getLassoElements();
   if (!read.ok) {
@@ -101,13 +120,18 @@ export async function convertLasso(host: LassoConvertHost): Promise<LassoOutcome
   }
 }
 
-async function replaceLasso(host: LassoConvertHost, strokes: object[]): Promise<LassoOutcome> {
+async function replaceLasso(
+  host: LassoConvertHost,
+  strokes: object[],
+): Promise<LassoOutcome> {
   const {log} = host;
   const rect = await host.getLassoRect();
   const path = await host.getCurrentFilePath();
   const page = await host.getCurrentPageNum();
   if (!rect.ok || !path.ok || !page.ok) {
-    const failed = [rect, path, page].find(each => !each.ok) as {message: string};
+    const failed = [rect, path, page].find(each => !each.ok) as {
+      message: string;
+    };
     log(`lasso kept: ${failed.message}`);
     return 'failed';
   }
@@ -143,10 +167,20 @@ async function replaceLasso(host: LassoConvertHost, strokes: object[]): Promise<
     log(`lasso kept: createTextBox ${made.message}`);
     return 'failed';
   }
-  const nums = (strokes as HostElement[]).map(element => element.numInPage as number);
-  const written = await host.batchUpdatePageElements(nums, [made.value], page.value);
+  const nums = (strokes as HostElement[]).map(
+    element => element.numInPage as number,
+  );
+  const written = await host.batchUpdatePageElements(
+    nums,
+    [made.value],
+    page.value,
+  );
   if (!written.ok || !written.value) {
-    log(`lasso kept: batchUpdatePageElements ${written.ok ? 'answered false' : written.message}`);
+    log(
+      `lasso kept: batchUpdatePageElements ${
+        written.ok ? 'answered false' : written.message
+      }`,
+    );
     return 'failed';
   }
   setLastConversion({path: path.value, page: page.value, box, strokes: saved});

@@ -6,7 +6,7 @@
  * distance is a ratio of the writer's own letter height and letter gaps, as Ink2Pic's grouping
  * measured; the clock is passed in, so the rule runs with no timer.
  */
-import type {Rect} from '@ink-tools/ink-core';
+import type {Rect} from '../lasso';
 
 export type Point = {x: number; y: number};
 

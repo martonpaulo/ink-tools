@@ -4,10 +4,15 @@
  * «casa» on a 1920 x 2560 page, turned into EMR with the SDK's inverse formula.
  */
 import {emrToPage, offPage} from '@ink-tools/sn-adapter/official';
-import {Converter} from '../src/convert';
-import {wordKept} from '../src/shapes';
-import {lastConversion, setLastConversion} from '../src/undo';
-import {DEFAULT_WORD_OPTIONS, Point, rectOf} from '../src/words';
+import {
+  Converter,
+  wordKept,
+  lastConversion,
+  setLastConversion,
+  DEFAULT_WORD_OPTIONS,
+  Point,
+  rectOf,
+} from '@ink-tools/ink-core/conversion';
 import {fakeTablet} from '../test-support/host';
 
 const PAGE = {width: 1920, height: 2560};
@@ -71,14 +76,24 @@ test('a word at the owner size in page pixels goes on', () => {
 
 test('a word written with EMR pen-up points converts, and undo keeps page pixels', async () => {
   const tablet = fakeTablet('casa');
-  tablet.host.getPageSize = jest.fn(async () => ({ok: true as const, value: PAGE}));
-  tablet.host.readEmrRange = jest.fn(async () => ({ok: true as const, value: RANGE}));
+  tablet.host.getPageSize = jest.fn(async () => ({
+    ok: true as const,
+    value: PAGE,
+  }));
+  tablet.host.readEmrRange = jest.fn(async () => ({
+    ok: true as const,
+    value: RANGE,
+  }));
   const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
   converter.start();
   CASA.forEach((box, index) => {
     const points = zigzag(box).map(toEmr);
     // The page keeps page pixels; only the pen-up element carries EMR units (#206).
-    tablet.penUp({id: `e${index}`, rect: rectOf(points)!, points}, index * 200, zigzag(box));
+    tablet.penUp(
+      {id: `e${index}`, rect: rectOf(points)!, points},
+      index * 200,
+      zigzag(box),
+    );
   });
   await tablet.advance(800 + DEFAULT_WORD_OPTIONS.idleMs);
   await converter.idle();
@@ -92,7 +107,9 @@ test('a word written with EMR pen-up points converts, and undo keeps page pixels
   ]);
   expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(1);
   expect(tablet.logs.filter(line => line.startsWith('pen-up unit:'))).toEqual([
-    expect.stringMatching(/^pen-up unit: EMR, 5 points, .* page 512,1297 to 559,1356, page size 1920 x 2560$/),
+    expect.stringMatching(
+      /^pen-up unit: EMR, 5 points, .* page 512,1297 to 559,1356, page size 1920 x 2560$/,
+    ),
   ]);
   const saved = rectOf(lastConversion()!.strokes[0].points)!;
   expect(saved.left).toBeCloseTo(512, 6);

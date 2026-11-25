@@ -101,7 +101,7 @@
    "plugins/real-time-conversion/test-support/host.ts": {
     "number": 4
    },
-   "plugins/real-time-conversion/test-support/ink.ts": {
+   "packages/ink-core/testing/ink.ts": {
     "number": 13
    },
    "plugins/smart-shapes/.eslintrc.js": {
@@ -463,10 +463,10 @@
    "plugins/real-time-conversion/src/settings.ts": {
     "Ink2Pic": 1
    },
-   "plugins/real-time-conversion/src/shapes.ts": {
+   "packages/ink-core/src/conversion/shapes.ts": {
     "Ink2Pic": 1
    },
-   "plugins/real-time-conversion/src/words.ts": {
+   "packages/ink-core/src/conversion/words.ts": {
     "Ink2Pic": 4
    },
    "plugins/real-time-conversion/test-support/host.ts": {
@@ -663,8 +663,8 @@
     "plugins/plugin-diagnostics/src/helper.ts": 4,
     "plugins/plugin-diagnostics/src/noteApi.ts": 4,
     "plugins/real-time-conversion/src/buttons.ts": 3,
-    "plugins/real-time-conversion/src/convert.ts": 1,
-    "plugins/real-time-conversion/src/shapes.ts": 2,
+    "packages/ink-core/src/conversion/convert.ts": 1,
+    "packages/ink-core/src/conversion/shapes.ts": 2,
     "plugins/smart-shapes/src/geometry.ts": 1,
     "plugins/word-lookup/src/pictures.ts": 1,
     "plugins/word-lookup/src/textBox.ts": 2,

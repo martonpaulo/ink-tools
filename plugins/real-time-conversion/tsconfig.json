@@ -9,6 +9,7 @@
       // sn-adapter's official tier (#101); ink-core for the page types it names.
       "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
       "@ink-tools/ink-core": ["../../packages/ink-core/src"],
+      "@ink-tools/ink-core/conversion": ["../../packages/ink-core/src/conversion"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

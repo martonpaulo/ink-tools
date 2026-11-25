@@ -3,8 +3,8 @@
  * here are the page bounds Probe read back from the owner's «café» on a 1920 x 2560 page: c, a, f,
  * the f's bar, e, and the accent over the e, 27 px over letters of 40 to 44 px.
  */
-import {accentsOf, wordKept} from '../src/shapes';
-import {DEFAULT_WORD_OPTIONS, InkStroke, Word, WordTracker} from '../src/words';
+import {accentsOf, wordKept} from '../src/conversion/shapes';
+import {DEFAULT_WORD_OPTIONS, InkStroke, Word, WordTracker} from '../src/conversion/words';
 
 const CAFE: [string, number, number, number, number][] = [
   ['c', 929, 1304, 967, 1344],

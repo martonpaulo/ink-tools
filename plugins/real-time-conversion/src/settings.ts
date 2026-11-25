@@ -6,17 +6,28 @@
  * Bridge's do, so «Start with Real-Time Text on» holds only until then; upgrade when the plugin
  * storage lands (#40).
  */
-import {DEFAULT_WORD_OPTIONS, WordOptions} from './words';
+import {
+  DEFAULT_WORD_OPTIONS,
+  WordOptions,
+} from '@ink-tools/ink-core/conversion';
 
 export type Spacing = 'tight' | 'normal' | 'wide';
 export type Wait = 'short' | 'normal' | 'long';
 
 export type Settings = {startOn: boolean; spacing: Spacing; wait: Wait};
 
-export const DEFAULT_SETTINGS: Settings = {startOn: false, spacing: 'normal', wait: 'normal'};
+export const DEFAULT_SETTINGS: Settings = {
+  startOn: false,
+  spacing: 'normal',
+  wait: 'normal',
+};
 
 /** Ink2Pic's Word spacing values (brief › 8.11). */
-export const SPACING: Record<Spacing, number> = {tight: 0.7, normal: 1, wide: 1.4};
+export const SPACING: Record<Spacing, number> = {
+  tight: 0.7,
+  normal: 1,
+  wide: 1.4,
+};
 /** The idle close; Normal is the rule's default, every value above the 656 ms pause in a word. */
 export const WAIT_MS: Record<Wait, number> = {
   short: 1500,
