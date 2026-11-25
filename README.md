@@ -32,9 +32,9 @@ For people who use the tablet.
 
 <table>
   <tr><th>Name</th><th>What it does</th></tr>
-  <tr><td align="center"><b>Ink Tools CLI</b><br><a href="cli/inkctl/">CLI</a></td><td><ul><li><b>Control</b>: <code>inkctl</code> controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root.</li><li><b>Plugins</b>: install, enable, permit and uninstall plugins with no screen.</li><li><b>Notes and ink</b>: open notes, write synthetic ink, lasso and read the screen for tests.</li><li><b>Firmware watch</b>: on connect, probe every Supernote internal and report what a firmware update broke (planned).</li></ul></td></tr>
-  <tr><td align="center"><b>Ink Tools Helper</b><br>app</td><td><ul><li><b>Plugin settings</b>: lets <code>inkctl</code> install, enable and permit plugins through PluginHost's settings service.</li><li><b>Firmware watch</b>: at boot after a firmware change, probe every Supernote internal and report what broke (planned).</li></ul></td></tr>
-  <tr><td align="center"><b>Ink Tools Probe</b><br>plugin</td><td><ul><li><b>Run Command</b>: the sidebar button <code>inkctl</code> presses to write ink and lasso with no pen.</li><li><b>Probes</b>: quick on-device experiments against the tablet's providers. Never shipped.</li></ul></td></tr>
+  <tr><td><b>Ink Tools CLI</b><br><a href="cli/inkctl/">CLI</a></td><td><ul><li><b>Control</b>: <code>inkctl</code> controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root.</li><li><b>Plugins</b>: install, enable, permit and uninstall plugins with no screen.</li><li><b>Notes and ink</b>: open notes, write synthetic ink, lasso and read the screen for tests.</li><li><b>Firmware watch</b>: on connect, probe every Supernote internal and report what a firmware update broke (planned).</li></ul></td></tr>
+  <tr><td><b>Ink Tools Helper</b><br>app</td><td><ul><li><b>Plugin settings</b>: lets <code>inkctl</code> install, enable and permit plugins through PluginHost's settings service.</li><li><b>Firmware watch</b>: at boot after a firmware change, probe every Supernote internal and report what broke (planned).</li></ul></td></tr>
+  <tr><td><b>Ink Tools Probe</b><br>plugin</td><td><ul><li><b>Run Command</b>: the sidebar button <code>inkctl</code> presses to write ink and lasso with no pen.</li><li><b>Probes</b>: quick on-device experiments against the tablet's providers. Never shipped.</li></ul></td></tr>
 </table>
 
 ## Shared code
