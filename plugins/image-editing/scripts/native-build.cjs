@@ -11,7 +11,7 @@ const {nativeSources} = require('../../../packages/picture-search/plugin-config'
 
 const root = path.resolve(__dirname, '..');
 /** The picture-search classes the pure JVM tests need: no Android or React type. */
-const PURE_SHARED = ['SafePaths', 'EinkPixels', 'ThumbMeasures', 'Decolor', 'Contour'];
+const PURE_SHARED = ['Registry', 'SafePaths', 'EinkPixels', 'ThumbMeasures', 'Decolor', 'Contour'];
 
 module.exports = defineBuild(
   {

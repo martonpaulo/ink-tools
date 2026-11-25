@@ -38,9 +38,13 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
   /** The React module name, which the plugin's package gives: two plugins never share one (#142). */
   private final String name;
 
-  public Ink2PicImageModule(ReactApplicationContext context, String name) {
+  /** The only folders this module touches, the plugin's own (#302). */
+  private final SafePaths.Roots roots;
+
+  public Ink2PicImageModule(ReactApplicationContext context, String name, SafePaths.Roots roots) {
     super(context);
     this.name = name;
+    this.roots = roots;
   }
 
   @Override
@@ -69,8 +73,8 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
       Promise promise) {
     ModuleWork.submit(insert, promise, () -> {
       long start = System.nanoTime();
-      File source = SafePaths.checkPath(srcPath);
-      File target = SafePaths.checkPath(destPath);
+      File source = roots.check(srcPath);
+      File target = roots.check(destPath);
       int width = wholeWidth(targetWidth);
       boolean png = PNG.equals(format);
       if (!png && !JPG.equals(format)) {
@@ -92,8 +96,8 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
       String srcPath, String destPath, double targetWidth, boolean contour, Promise promise) {
     ModuleWork.submit(thumbs, promise, () -> {
       long start = System.nanoTime();
-      File source = SafePaths.checkPath(srcPath);
-      File target = SafePaths.checkPath(destPath);
+      File source = roots.check(srcPath);
+      File target = roots.check(destPath);
       int width = wholeWidth(targetWidth);
       Pixels prepared = prepare(source, width, true, contour);
       long bytes = write(prepared, target, true);
@@ -110,7 +114,7 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void readInkMask(String path, double targetWidth, Promise promise) {
     ModuleWork.submit(insert, promise, () -> {
-      Pixels pixels = decode(SafePaths.checkPath(path), wholeWidth(targetWidth));
+      Pixels pixels = decode(roots.check(path), wholeWidth(targetWidth));
       WritableMap result = Arguments.createMap();
       result.putInt("width", pixels.width);
       result.putInt("height", pixels.height);
@@ -163,7 +167,7 @@ public final class Ink2PicImageModule extends ReactContextBaseJavaModule {
   public void measureThumb(String path, Promise promise) {
     ModuleWork.submit(thumbs, promise, () -> {
       long start = System.nanoTime();
-      return measures(decode(SafePaths.checkPath(path), MEASURE_WIDTH), start);
+      return measures(decode(roots.check(path), MEASURE_WIDTH), start);
     });
   }
 

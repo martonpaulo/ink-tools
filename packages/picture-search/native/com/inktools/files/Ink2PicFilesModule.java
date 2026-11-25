@@ -40,9 +40,13 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   /** The React module name, which the plugin's package gives: two plugins never share one (#142). */
   private final String name;
 
-  public Ink2PicFilesModule(ReactApplicationContext context, String name) {
+  /** The only folders this module touches, the plugin's own (#302). */
+  private final SafePaths.Roots roots;
+
+  public Ink2PicFilesModule(ReactApplicationContext context, String name, SafePaths.Roots roots) {
     super(context);
     this.name = name;
+    this.roots = roots;
   }
 
   @Override
@@ -77,10 +81,10 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
     });
   }
 
-  private static Object download(String url, String destPath, ReadableMap headers)
+  private Object download(String url, String destPath, ReadableMap headers)
       throws Exception {
     SafePaths.checkHttps(url);
-    File target = SafePaths.checkPath(destPath);
+    File target = roots.check(destPath);
     HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
     connection.setConnectTimeout(TIMEOUT_MS);
     connection.setReadTimeout(TIMEOUT_MS);
@@ -108,7 +112,7 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void deleteFile(String path, Promise promise) {
     submit(promise, () -> {
-      File target = SafePaths.checkPath(path);
+      File target = roots.check(path);
       return !target.exists() || target.delete();
     });
   }
@@ -116,7 +120,7 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void writeText(String path, String text, Promise promise) {
     submit(promise, () -> {
-      File target = SafePaths.checkPath(path);
+      File target = roots.check(path);
       byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
       FileWrites.writeAtomically(target, new java.io.ByteArrayInputStream(bytes));
       return null;
@@ -131,7 +135,7 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void appendText(String path, String text, Promise promise) {
     submit(promise, () -> {
-      File target = SafePaths.checkPath(path);
+      File target = roots.check(path);
       FileWrites.append(target, text.getBytes(StandardCharsets.UTF_8));
       return null;
     });
@@ -145,7 +149,7 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void listDir(String path, Promise promise) {
     submit(promise, () -> {
-      File folder = new File(SafePaths.checkPath(path).getPath());
+      File folder = new File(roots.check(path).getPath());
       File[] entries = folder.isDirectory() ? folder.listFiles() : null;
       if (entries == null) {
         return null;
@@ -168,7 +172,7 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void listCompletePngs(String path, Promise promise) {
     submit(promise, () -> {
-      File folder = new File(SafePaths.checkPath(path).getPath());
+      File folder = new File(roots.check(path).getPath());
       File[] entries = folder.isDirectory() ? folder.listFiles() : null;
       if (entries == null) {
         return null;
@@ -191,7 +195,7 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void listSizes(String path, Promise promise) {
     submit(promise, () -> {
-      File folder = new File(SafePaths.checkPath(path).getPath());
+      File folder = new File(roots.check(path).getPath());
       File[] entries = folder.isDirectory() ? folder.listFiles() : null;
       if (entries == null) {
         return null;
@@ -210,14 +214,14 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   /** True when the file is a whole PNG (#91). */
   @ReactMethod
   public void isCompletePng(String path, Promise promise) {
-    submit(promise, () -> PngTail.isComplete(SafePaths.checkPath(path)));
+    submit(promise, () -> PngTail.isComplete(roots.check(path)));
   }
 
   /** Resolves null when the file does not exist. */
   @ReactMethod
   public void readText(String path, Promise promise) {
     submit(promise, () -> {
-      File target = SafePaths.checkPath(path);
+      File target = roots.check(path);
       if (!target.isFile()) {
         return null;
       }

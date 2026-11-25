@@ -17,7 +17,7 @@ export type PreparedImage = {
   ms: number;
 };
 
-/** The module's own rejection codes, besides BAD_PATH, TOO_LARGE, IO and MISSING. */
+/** The module's own rejection codes, besides BAD_PATH, OUTSIDE_ROOTS, TOO_LARGE, IO and MISSING. */
 export type ImageErrorCode =
   | "BAD_WIDTH"
   | "BAD_FORMAT"

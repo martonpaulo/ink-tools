@@ -28,6 +28,16 @@ To check one subproject on the Mac:
 python3 scripts/npm_audit.py plugins/word-lookup
 ```
 
+## Native file paths
+
+The shared native file and image modules of `packages/picture-search` touch only the plugin's own
+folders (owner, 2026-11-26, [#302](https://github.com/martonpaulo/ink-tools/issues/302)): its private
+folder, `EXPORT` and its own folder under `MyStyle`, plus a folder of its own the plugin names, such
+as Account Sync's sign-in drop folder. `SafePaths.Roots` refuses every other path with
+`OUTSIDE_ROOTS`, after it refuses an empty, `.` or `..` segment with `BAD_PATH` and resolves every
+link, so a link out of a folder is refused too. Each plugin's package names its folders; the
+registry item `pluginhost.file-sandbox` holds the device's folder names.
+
 ## Android signing keys
 
 The Ink Tools bridge prerelease signs its APK with one stable key, so each build updates the last

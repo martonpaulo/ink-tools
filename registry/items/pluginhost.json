@@ -51,7 +51,7 @@
     },
     {
       "id": "pluginhost.file-sandbox",
-      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder",
+      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders",
       "level": 5,
       "impact": "user",
       "owner": "picture-search",
@@ -73,7 +73,13 @@
       },
       "active": "picture-search native SafePaths.java",
       "values": {
-        "sharedFolder": "MyStyle"
+        "sharedRoot": "/storage/emulated/0",
+        "sharedFolder": "MyStyle",
+        "exportFolder": "EXPORT",
+        "privateHomes": [
+          "/data/data/com.ratta.supernote.pluginhost/files/plugins",
+          "/data/user/0/com.ratta.supernote.pluginhost/files/plugins"
+        ]
       }
     },
     {

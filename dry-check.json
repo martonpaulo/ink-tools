@@ -10,6 +10,7 @@
    "scripts/skd/**",
    "packages/sn-adapter/src/registry.generated.ts",
    "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java",
+   "packages/picture-search/native/com/inktools/files/Registry.java",
    "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java",
    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift"
   ],
@@ -342,16 +343,10 @@
    "packages/picture-search/__tests__/search.test.ts": {
     "Ink2Pic": 1
    },
-   "packages/picture-search/native-tests/com/inktools/files/SafePathsTest.java": {
-    "Ink2Pic": 3
-   },
    "packages/picture-search/native/com/inktools/files/FileWrites.java": {
     "Ink2Pic": 1
    },
    "packages/picture-search/native/com/inktools/files/Ink2PicFilesModule.java": {
-    "Ink2Pic": 1
-   },
-   "packages/picture-search/native/com/inktools/files/Ink2PicFilesPackage.java": {
     "Ink2Pic": 1
    },
    "packages/picture-search/native/com/inktools/files/ModuleWork.java": {

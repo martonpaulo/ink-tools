@@ -4,6 +4,8 @@ import com.bridge.providers.BridgeProvidersModule;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.inktools.files.Ink2PicFilesPackage;
+import com.inktools.files.Registry;
+import com.inktools.files.SafePaths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +17,16 @@ import java.util.List;
  * PluginHost calls the no-argument constructor.
  */
 public class BridgeFilesPackage extends Ink2PicFilesPackage {
+  /** PluginConfig.json `pluginID`, the name of the plugin's private folder; a test pins the two. */
+  static final String PLUGIN_ID = "4d11a9bbc6ad25e2";
+
   public BridgeFilesPackage() {
-    super("BridgeFiles", "BridgeImage");
+    // Its private folder, EXPORT, MyStyle/Bridge and the sign-in drop folder of
+    // `inkctl secret set` (registry storageSignInDropFolder, #116, #302).
+    super(
+        "BridgeFiles",
+        "BridgeImage",
+        SafePaths.Roots.plugin(PLUGIN_ID, "Bridge", Registry.StorageSignInDropFolder.FOLDER));
   }
 
   @Override

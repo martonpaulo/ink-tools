@@ -41,6 +41,8 @@ READERS = (
     Reader("typescript", "packages/sn-adapter/src/registry.generated.ts", TYPESCRIPT_TOOLS),
     Reader("java", "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java",
            ("handwriting-language",), package="com.supernotetools.lingo"),
+    Reader("java", "packages/picture-search/native/com/inktools/files/Registry.java",
+           ("picture-search",), package="com.inktools.files"),
     Reader("java", "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java",
            ("inktools-bridge",), package="com.martonpaulo.inktools.bridge"),
     Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True),

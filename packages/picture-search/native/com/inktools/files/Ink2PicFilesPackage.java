@@ -9,28 +9,32 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Listed in PluginConfig.json `reactPackages`: PluginHost finds native modules only there. The
- * no-argument constructor, the one PluginHost calls, registers Ink2Pic's module names; another
- * plugin subclasses it with its own two names, so two plugins in one host never register one name
- * twice (#142).
+ * The file and image modules a plugin's package lists in PluginConfig.json `reactPackages`, where
+ * PluginHost finds native modules. Each plugin subclasses it with a no-argument constructor, the one
+ * PluginHost calls, giving its own two module names, so two plugins in one host never register one
+ * name twice (#142), and its own folders, the only ones the modules touch (#302).
  */
-public class Ink2PicFilesPackage implements ReactPackage {
+public abstract class Ink2PicFilesPackage implements ReactPackage {
   private final String filesModule;
   private final String imageModule;
+  private final SafePaths.Roots roots;
 
-  public Ink2PicFilesPackage() {
-    this("Ink2PicFiles", "Ink2PicImage");
-  }
-
-  protected Ink2PicFilesPackage(String filesModule, String imageModule) {
+  protected Ink2PicFilesPackage(String filesModule, String imageModule, SafePaths.Roots roots) {
     this.filesModule = filesModule;
     this.imageModule = imageModule;
+    this.roots = roots;
+  }
+
+  /** The plugin's folders, for a module of its own that reads or writes files. */
+  protected SafePaths.Roots roots() {
+    return roots;
   }
 
   @Override
   public List<NativeModule> createNativeModules(ReactApplicationContext context) {
     return Arrays.<NativeModule>asList(
-        new Ink2PicFilesModule(context, filesModule), new Ink2PicImageModule(context, imageModule));
+        new Ink2PicFilesModule(context, filesModule, roots),
+        new Ink2PicImageModule(context, imageModule, roots));
   }
 
   @Override

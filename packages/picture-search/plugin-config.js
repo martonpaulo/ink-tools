@@ -26,7 +26,7 @@ exports.nativeTests = path.join(__dirname, 'native-tests');
 exports.jvmTests = {
   prefix: 'picture-search',
   files: [
-    'SafePaths', 'EinkPixels', 'ThumbGate', 'ThumbMeasures', 'Contour', 'Decolor', 'PerceptualHash',
+    'Registry', 'SafePaths', 'EinkPixels', 'ThumbGate', 'ThumbMeasures', 'Contour', 'Decolor', 'PerceptualHash',
     'PngTail', 'Workers', 'FileWrites',
   ].map(name => path.join(exports.nativeSources, `com/inktools/files/${name}.java`)),
   mains: [

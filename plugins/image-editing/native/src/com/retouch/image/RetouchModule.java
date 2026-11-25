@@ -43,8 +43,12 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
    */
   private volatile String debugFolder;
 
-  public RetouchModule(ReactApplicationContext context) {
+  /** The only folders this module touches, Retouch's own (#302). */
+  private final SafePaths.Roots roots;
+
+  public RetouchModule(ReactApplicationContext context, SafePaths.Roots roots) {
     super(context);
+    this.roots = roots;
   }
 
   @Override
@@ -93,7 +97,7 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
   public void setDebugFolder(String folder, Promise promise) {
     try {
       debugFolder =
-          folder == null || folder.isEmpty() ? null : SafePaths.checkPath(folder).getPath();
+          folder == null || folder.isEmpty() ? null : roots.check(folder).getPath();
       promise.resolve(true);
     } catch (SafePaths.Refused refused) {
       promise.reject(refused.code, refused.getMessage());
@@ -228,12 +232,12 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
       throws Exception {
     long start = System.nanoTime();
     Retouch.Edit edit = Retouch.Edit.of(editName);
-    File source = SafePaths.checkPath(srcPath);
-    File target = SafePaths.checkPath(destPath);
+    File source = roots.check(srcPath);
+    File target = roots.check(destPath);
     Retouch.Picture preview = decode(source);
     Retouch.Picture picture = Retouch.cropCentre(preview, whole(width), whole(height));
     if (beforePath != null && !beforePath.isEmpty()) {
-      write(picture, SafePaths.checkPath(beforePath));
+      write(picture, roots.check(beforePath));
     }
     int[] size = Retouch.outputSize(edit, picture.width, picture.height, whole(pageWidth));
     boolean cutout = edit == Retouch.Edit.BACKGROUND || edit == Retouch.Edit.STICKER;

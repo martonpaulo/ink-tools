@@ -24,13 +24,18 @@ test('Lookup keeps its own folder and module names', () => {
   expect(settingsPath('/sdcard')).toBe('/sdcard/MyStyle/Lookup/settings.json');
 });
 
-test('LookupFilesPackage registers the module names the profile calls', () => {
+test('LookupFilesPackage registers the module names and the folder the profile uses', () => {
   const java = readFileSync(
     join(__dirname, '../native/com/lookup/files/LookupFilesPackage.java'),
     'utf8',
   );
   expect(java).toContain(
-    `super("${LOOKUP_PROFILE.filesModule}", "${LOOKUP_PROFILE.imageModule}")`,
+    `super("${LOOKUP_PROFILE.filesModule}", "${
+      LOOKUP_PROFILE.imageModule
+    }", SafePaths.Roots.plugin(PLUGIN_ID, "${LOOKUP_PROFILE.folder.replace(
+      /^MyStyle\//,
+      '',
+    )}"))`,
   );
   const build = readFileSync(
     join(__dirname, '../scripts/native-build.cjs'),

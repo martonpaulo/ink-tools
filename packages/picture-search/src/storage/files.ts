@@ -15,11 +15,13 @@ import { pluginProfile } from "./profile";
 /**
  * The module's rejection codes, plus MISSING when PluginHost did not load it. IO carries an error
  * Android raised; `HTTP_<status>` a download that was not HTTP 200; SHORT_WRITE a write in shared
- * storage whose file holds fewer bytes than it was given (#162).
+ * storage whose file holds fewer bytes than it was given (#162); OUTSIDE_ROOTS a path outside the
+ * plugin's own folders, its private folder, EXPORT and its MyStyle folder (#302).
  */
 export type FilesErrorCode =
   | "HTTPS_ONLY"
   | "BAD_PATH"
+  | "OUTSIDE_ROOTS"
   | "TOO_LARGE"
   | "SHORT_WRITE"
   | "IO"

@@ -64,7 +64,10 @@ export const REGISTRY = {
     maxConcurrent: 4,
   },
   pluginhostFileSandbox: {
+    sharedRoot: '/storage/emulated/0',
     sharedFolder: 'MyStyle',
+    exportFolder: 'EXPORT',
+    privateHomes: ['/data/data/com.ratta.supernote.pluginhost/files/plugins', '/data/user/0/com.ratta.supernote.pluginhost/files/plugins'],
   },
   storageCloudConflictFolder: {
     marker: '_CONFLICT_',
