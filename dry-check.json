@@ -132,12 +132,6 @@
    "plugins/word-lookup/src/buttons.ts": {
     "repeated": 1
    },
-   "scripts/dry_check.py": {
-    "number": 5
-   },
-   "scripts/issue_links.py": {
-    "duration": 1
-   },
    "scripts/npm_audit.py": {
     "number": 2,
     "url": 1

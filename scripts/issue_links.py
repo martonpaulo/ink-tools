@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 
 GITHUB = "https://github.com"
+GIT_TIMEOUT = 10  # seconds for `git remote get-url`
 SKIP_DIRS = {"node_modules", "vendor", "third_party", ".build"}
 PROTECTED = re.compile(
     r"(`+).+?\1"  # code span
@@ -94,7 +95,7 @@ class OriginUnreadable(Exception):
 def origin(root: Path) -> str:
     try:
         url = subprocess.run(["git", "-C", str(root), "remote", "get-url", "origin"],
-                             capture_output=True, text=True, timeout=10).stdout.strip()
+                             capture_output=True, text=True, timeout=GIT_TIMEOUT).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         url = ""
     found = REMOTE.search(url)

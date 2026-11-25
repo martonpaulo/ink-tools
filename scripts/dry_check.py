@@ -46,6 +46,7 @@ DATA_FILE = "dry-check.json"
 CHECKS = ("magic", "duplicates", "twins", "documents", "retired")
 SECTION = {"magic": "magicValues", "duplicates": "duplicates", "twins": "twins", "documents": "documents", "retired": "retired"}
 EXIT_FINDING, EXIT_USAGE = 1, 2
+SHEBANG_BYTES = 200  # the first line of a file is read this far to find its interpreter
 
 SUFFIXES = {
     ".go": "go", ".py": "python", ".sh": "shell", ".bash": "shell",
@@ -70,7 +71,7 @@ def language(root: pathlib.Path, path: str) -> str | None:
         return SUFFIXES.get(suffix)
     try:
         with open(root / path, "rb") as handle:
-            first = handle.readline(200).decode("utf-8", "replace")
+            first = handle.readline(SHEBANG_BYTES).decode("utf-8", "replace")
     except OSError:
         return None
     if not first.startswith("#!"):
@@ -135,7 +136,8 @@ PORT = re.compile(r"(?:\blocalhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)?:\d{4,5}\b")
 COLOUR = re.compile(r"^#(?=[0-9]*[a-fA-F])(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
                     r"|^(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\((?:[^()]|\([^()]*\))*\)$")
 SENTENCE = re.compile(r"^[A-Z][a-z]+(?: [^\s]+){2,}[.!?…]?$")
-REPEATED_MINIMUM, REPEATED_TIMES = 12, 3
+REPEATED_MINIMUM = 12  # characters of a repeated phrase
+REPEATED_TIMES = 3  # times it must repeat
 VALUE_SHOWN = 60
 BEFORE_TOKEN = 24  # characters read back for a Go log call before a sentence
 
@@ -445,7 +447,8 @@ def magic_record(found, section, shrink):
 
 # ---------- duplicates: repeated blocks of code ----------
 
-WINDOW, REPEATS = 4, 3
+WINDOW = 4  # lines in a block
+REPEATS = 3  # times a block must repeat
 IDENTICAL_LINES = 50  # a whole copied file: one owner and an import, never two copies (#1237)
 COMMENT = {"python": "#", "shell": "#", "javascript": "//", "go": "//", "swift": "//"}
 STRING_ANY = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|`(?:\\.|[^`\\])*`')

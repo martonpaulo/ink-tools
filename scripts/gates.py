@@ -183,7 +183,7 @@ def changed_paths(root: pathlib.Path, staged: bool, against: str | None) -> list
 def main(argv: list[str] | None = None, loader=load) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("paths", nargs="*", help="paths to classify; '-' reads them from standard input")
-    parser.add_argument("--root", default=".", help="the repository root (default: the current folder)")
+    parser.add_argument("--root", default=".", help="the repository whose gates run (default: the current folder)")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--staged", action="store_true", help="the staged change")
     mode.add_argument("--against", metavar="REV", help="the working tree against REV (default HEAD)")
