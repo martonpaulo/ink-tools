@@ -23,6 +23,8 @@ Run inside the tablet's plugin host.
   <tr><td><b>Device Transfer</b></td><td>Send the page or a lasso selection to an iPhone or a Mac over LocalSend, and receive text or a picture into the open note.</td><td><a href="plugins/device-transfer/"><code>device-transfer/</code></a></td><td>🟡&nbsp;Beta</td></tr>
   <tr><td><b>Account Sync</b></td><td>Sync to-dos, calendars and a digest with your accounts, each module opt in.</td><td><a href="plugins/account-sync/"><code>account-sync/</code></a></td><td>🔵&nbsp;In&nbsp;progress</td></tr>
   <tr><td><b>Image Editing</b></td><td>Lasso a picture on the page and make it readable on e-ink with one tap.</td><td><a href="plugins/image-editing/"><code>image-editing/</code></a></td><td>🔵&nbsp;In&nbsp;progress</td></tr>
+  <tr><td><b>Collection</b></td><td>Lasso pieces from several pages into one collection, then paste them all together on another page.</td><td><code>collection/</code></td><td>⚪&nbsp;Planned</td></tr>
+  <tr><td><b>Headings</b></td><td>Lasso a handwritten line and make it a full-width heading of level 1 to 4 in one tap.</td><td><code>headings/</code></td><td>⚪&nbsp;Planned</td></tr>
   <tr><td>Plugin Diagnostics</td><td>Quick on-device experiments for developers. Never shipped.</td><td><a href="plugins/plugin-diagnostics/"><code>plugin-diagnostics/</code></a></td><td>⚫&nbsp;Internal</td></tr>
 </table>
 
