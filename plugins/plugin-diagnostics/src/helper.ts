@@ -30,6 +30,13 @@ export const MIN_FONT_SIZE = 8;
 export const MAX_FONT_SIZE = 200;
 /** The folder under the plugin's private folder where sticker probes go (#249). */
 export const PLUGIN_STICKERS = 'collection';
+/** The only folder `movePage` may name a note in: the shared notes folder (#263). */
+export const NOTES_FOLDER = '/storage/emulated/0/Note/';
+/**
+ * The screen suffix a page's template name carries in the file (`style_5mm_grid_a5x2`), which
+ * `insertNotePage` refuses with code 802 (docs/supernote.md › Note file format, #214).
+ */
+const SCREEN_SUFFIX = /_a[0-9]+x[0-9]*$/;
 
 export type Point = {x: number; y: number};
 export type Rect = {left: number; top: number; right: number; bottom: number};
@@ -62,6 +69,16 @@ export interface HelperApi {
   makeDir(path: string): Promise<void>;
   listFiles(path: string): Promise<string[]>;
   deleteFile(path: string): Promise<void>;
+  /** The page count of the note at `notePath`, open or not (#263). */
+  notePageCount(notePath: string): Promise<number>;
+  /** The template name `getNotePageTemplate` gives for a page of that note, as the file stores it. */
+  notePageTemplate(notePath: string, page: number): Promise<string>;
+  /** Every element of a page of that note, as the SDK gives them; the helper only passes them on. */
+  notePageElements(notePath: string, page: number): Promise<unknown[]>;
+  /** Inserts a page at index `page` of that note, with a system template. */
+  insertNotePage(notePath: string, page: number, template: string): Promise<void>;
+  insertNoteElements(notePath: string, page: number, elements: unknown[]): Promise<void>;
+  removeNotePage(notePath: string, page: number): Promise<void>;
 }
 
 export class HelperError extends Error {
@@ -90,7 +107,8 @@ type Command =
   | {id: string; op: 'deleteFile'; where: Where; name: string}
   | {id: string; op: 'listFiles'; where: Where}
   | {id: string; op: 'readLassoRect'}
-  | {id: string; op: 'resizeLasso'; rect: Rect};
+  | {id: string; op: 'resizeLasso'; rect: Rect}
+  | {id: string; op: 'movePage'; path: string; from: number; to: number; template?: string};
 
 /** Where a sticker probe keeps its file: inkctl's own folder, or the plugin's private folder (#249). */
 type Where = 'probe' | 'plugin';
@@ -168,6 +186,15 @@ function parseTemplate(value: unknown): string {
   return value;
 }
 
+/** A note file in NOTES_FOLDER, at any depth, with no `..` part; inkctl keeps it to Note/Tests/. */
+function parseNotePath(value: unknown): string {
+  const name = typeof value === 'string' && value.startsWith(NOTES_FOLDER) ? value.slice(NOTES_FOLDER.length) : '';
+  if (!name.endsWith('.note') || name.split('/').some(part => !part || part === '..' || part === '.')) {
+    throw new HelperError(USAGE, `path must be a .note file in ${NOTES_FOLDER}`);
+  }
+  return value as string;
+}
+
 function parseRect(value: unknown): Rect {
   const rect = value as Rect;
   if (!rect || !onPage(rect.left, rect.top) || !onPage(rect.right, rect.bottom)) {
@@ -236,6 +263,15 @@ export function parseCommand(text: string): Command {
       return {id, op: 'readLassoRect'};
     case 'resizeLasso':
       return {id, op: 'resizeLasso', rect: parseRect(raw.rect)};
+    case 'movePage': {
+      const from = parsePage(raw.from);
+      const to = parsePage(raw.to);
+      if (from === to) {
+        throw new HelperError(USAGE, 'from and to must be different pages');
+      }
+      const template = raw.template === undefined ? undefined : parseTemplate(raw.template);
+      return {id, op: 'movePage', path: parseNotePath(raw.path), from, to, template};
+    }
     default:
       throw new HelperError(USAGE, `unknown op: ${String(raw.op)}`);
   }
@@ -267,6 +303,34 @@ async function folderOf(where: Where, api: HelperApi): Promise<string> {
   const folder = `${await api.pluginFolder()}/${PLUGIN_STICKERS}/`;
   await api.makeDir(folder);
   return folder;
+}
+
+/**
+ * Move page `from` of a note to index `to` (both from 0), through the file API, which has no move
+ * call (#263): copy the page's elements to a new page at the target, then remove the old page.
+ * The new page goes in before the old one is removed, so the note never holds fewer pages.
+ */
+async function movePage(command: Extract<Command, {op: 'movePage'}>, api: HelperApi): Promise<Record<string, unknown>> {
+  const {path, from, to} = command;
+  const pages = await api.notePageCount(path);
+  if (pages < 2) {
+    throw new HelperError(USAGE, `the note has ${pages} page; a move needs two pages or more`);
+  }
+  if (from >= pages || to >= pages) {
+    throw new HelperError(USAGE, `from and to must be pages of the note, 0 to ${pages - 1}`);
+  }
+  const stored = await api.notePageTemplate(path, from);
+  const template = command.template ?? stored.replace(SCREEN_SUFFIX, '');
+  const elements = await api.notePageElements(path, from);
+  // Moving down, the new page goes after the target, since the old page above it still counts.
+  const inserted = to > from ? to + 1 : to;
+  const old = to > from ? from : from + 1;
+  await api.insertNotePage(path, inserted, template);
+  if (elements.length) {
+    await api.insertNoteElements(path, inserted, elements);
+  }
+  await api.removeNotePage(path, old);
+  return {path, from, to, pages: await api.notePageCount(path), template, storedTemplate: stored, elements: elements.length};
 }
 
 async function execute(command: Command, api: HelperApi): Promise<Record<string, unknown>> {
@@ -333,6 +397,8 @@ async function execute(command: Command, api: HelperApi): Promise<Record<string,
     case 'resizeLasso':
       await api.resizeLasso(command.rect);
       return {rect: await api.lassoBox()};
+    case 'movePage':
+      return movePage(command, api);
   }
 }
 

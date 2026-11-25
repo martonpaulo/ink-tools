@@ -1402,6 +1402,27 @@ run note insert-page style_white --page 2 >/dev/null
 check "note insert-page sends the template and the page, from 0" "$?$(command_field "d['op'], d['page'], d['template']")" "0('insertPage', 1, 'style_white')"
 run note insert-page ../x.png --page 2 >/dev/null 2>&1
 check "a template that is not a system name is a usage error" "$?" "2"
+# A page move goes to Probe's file API on a closed note, while another note is open (#263).
+printf 'f %s\n' "$root/Note/Tests/Move.note" "$root/Note/Tests/Round one.note" "$root/Note/Diary.note" >> "$files/paths"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"movePage","ms":700,"path":"/storage/emulated/0/Note/Tests/Move.note","from":0,"to":2,"pages":4,"template":"style_white","storedTemplate":"style_white_a5x2","elements":3}' > "$files/helper-answer"
+result=$(run note move-page Note/Tests/Move.note 1 3 --json)
+check "note move-page sends the note's path and the pages, from 0" "$?$(command_field "d['op'], d['path'], d['from'], d['to'], 'template' in d")" "0('movePage', '$root/Note/Tests/Move.note', 0, 2, False)"
+check "note move-page answers the pages from 1" "$(printf '%s' "$result" | field "['from'],d['to'],d['elements']")" "(1, 3, 3)"
+run note move-page Note/Tests/Move.note 3 1 --template style_5mm_grid >/dev/null
+check "note move-page --template sends the template" "$?$(command_field "d['from'], d['to'], d['template']")" "0(2, 0, 'style_5mm_grid')"
+rm -f "$files/command.json"
+for bad in "Note/Tests/Move.note 2 2" "Note/Tests/Move.note 0 2" "Note/Tests/Move.pdf 1 2" "Note/Tests/Move.note 1 2 --template ../x"; do
+    run note move-page $bad >/dev/null 2>&1
+    check "note move-page $bad is a usage error before any push" "$?$([ -e "$files/command.json" ] && echo pushed)" "2"
+done
+run note move-page Note/Diary.note 1 2 >/dev/null 2>&1
+check "note move-page on a note outside Note/Tests/ is refused" "$?$([ -e "$files/command.json" ] && echo pushed)" "12"
+run note move-page Note/Tests/Absent.note 1 2 >/dev/null 2>&1
+check "note move-page of a missing note is not found" "$?" "4"
+run note move-page "Note/Tests/Round one.note" 1 2 >/dev/null 2>&1
+check "note move-page refuses the open note" "$?$([ -e "$files/command.json" ] && echo pushed)" "9"
+run --read-only note move-page Note/Tests/Move.note 1 3 >/dev/null 2>&1
+check "read-only refuses note move-page" "$?" "11"
 printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
 for refused in "png 1 $work/local/diary.png" "insert-page style_white --page 2"; do
     run note $refused >/dev/null 2>&1

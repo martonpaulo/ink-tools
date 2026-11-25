@@ -28,6 +28,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  add a text box on the open test note's page, through Probe
   note insert-page TEMPLATE --page N
                                  insert page N of the open test note with a system template
+  note move-page PATH FROM TO    move page FROM of a closed test note to TO, through Probe's file
+                                 API calls, while another note is open
   lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
                                  cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
@@ -2090,6 +2092,33 @@ def command_note_insert_page(device: Device, args: argparse.Namespace):
     return answer, f"inserted: page {args.page} with {args.template} in {answer.get('ms')} ms"
 
 
+def command_note_move_page(device: Device, args: argparse.Namespace):
+    """Move a page of a closed note through Probe (#263): the file API has no move call, so Probe copies
+    the page's elements to a new page at TO and removes the old one. The note must not be the open
+    one, so the note app holds no copy of it to save over the change; the button needs another note open."""
+    need_note_suffix(args.path)
+    if args.from_page < 1 or args.to_page < 1:
+        raise bad_usage("the pages count from 1")
+    if args.from_page == args.to_page:
+        raise bad_usage("FROM and TO are the same page; nothing would move")
+    if args.template is not None and not TEMPLATE_NAME.fullmatch(args.template):
+        raise bad_usage(f"a template is a system template name such as {NOTE_BLANK_STYLE}: {args.template}")
+    path = remote_path(args.path)
+    if not args.allow_notes and not in_test_notes(path):
+        raise protected("moving a page of a note outside Note/Tests/")
+    if not device.test(f"-f {shlex.quote(path)}"):
+        raise not_found(path)
+    titles = {element["text"] for element in device.elements() if element["id"] == NOTE_TITLE_ID}
+    if posixpath.basename(path).removesuffix(NOTE_SUFFIX) in titles:
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", f"{path} is the open note; open another test note first", "inkctl note open Note/Tests/X.note")
+    command = {"op": "movePage", "path": path, "from": args.from_page - 1, "to": args.to_page - 1}
+    if args.template is not None:
+        command["template"] = args.template
+    answer = helper_call(device, args, command)
+    data = {**answer, "from": args.from_page, "to": args.to_page}
+    return data, f"moved: page {args.from_page} of {path} to page {args.to_page}, {answer.get('elements')} elements, template {answer.get('template')}, in {answer.get('ms')} ms"
+
+
 def lasso_answer(answer: dict) -> tuple[dict, str]:
     return answer, f"lassoed: {answer.get('rect')} {answer.get('counts')} in {answer.get('ms')} ms"
 
@@ -3340,7 +3369,12 @@ def build_parser() -> argparse.ArgumentParser:
     paged = add(notes, "insert-page", command_note_insert_page, changes=True)
     paged.add_argument("template", help=f"a system template name, such as {NOTE_BLANK_STYLE}")
     paged.add_argument("--page", type=int, required=True, help="the new page's number, from 1")
-    for on_note in (rendered, pictured, texted, paged):
+    moved_page = add(notes, "move-page", command_note_move_page, changes=True)
+    moved_page.add_argument("path", help="the note, which must not be the open one")
+    moved_page.add_argument("from_page", type=int, metavar="FROM", help="the page to move, from 1")
+    moved_page.add_argument("to_page", type=int, metavar="TO", help="its number after the move, from 1")
+    moved_page.add_argument("--template", help="the new page's system template; default: the page's own")
+    for on_note in (rendered, pictured, texted, paged, moved_page):
         on_note.add_argument("--allow-notes", action="store_true", help="use a note outside Note/Tests/")
 
     files = noun("files")
@@ -3395,7 +3429,7 @@ def build_parser() -> argparse.ArgumentParser:
     fixtures.add_argument("name", nargs="?", help="a fixture of Note/Tests/Fixtures.note, as --list names it")
     fixtures.add_argument("--list", dest="list_fixtures", action="store_true", help="print each fixture, its page, its rects and what it serves; no tablet is reached")
     fixtures.add_argument("--lasso", metavar="ITEM", help="then lasso this rect of the fixture, as --list names it")
-    for helped in (opened, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged):
+    for helped in (opened, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged, moved_page):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
         helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
 
