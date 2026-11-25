@@ -1,0 +1,297 @@
+{
+ "about": "Every Ink Tools icon on the tablet, drawn on the 48 x 48 grid of the Supernote's native icons (native.json): outline strokes only, no fill, round caps and joins, centerlines within 4 to 44. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
+ "sheet": {
+  "columns": 8,
+  "cellWidth": 120,
+  "cellHeight": 132,
+  "padX": 12,
+  "padY": 6,
+  "labelX": 48,
+  "labelY": 112,
+  "labelStep": 11,
+  "labelSize": 9
+ },
+ "icons": [
+  {
+   "out": "apps/handwriting-language/res/drawable/ic_launcher",
+   "kind": "app",
+   "paths": [
+    "M8 6 H40 A4 4 0 0 1 44 10 V30 A4 4 0 0 1 40 34 H22 L12 44 V34 H8 A4 4 0 0 1 4 30 V10 A4 4 0 0 1 8 6 Z",
+    "M11 28 L17 12 L23 28 M13.5 22 H20.5",
+    "M27 24 C29 16 32 16 34 24 C35 28 37 27 38 22"
+   ]
+  },
+  {
+   "out": "apps/inktools-bridge/res/drawable/ic_launcher",
+   "kind": "app",
+   "paths": [
+    "M4 32 H44",
+    "M12 8 V42",
+    "M36 8 V42",
+    "M12 8 C16 28 32 28 36 8",
+    "M4 26 L12 8",
+    "M36 8 L44 26"
+   ]
+  },
+  {
+   "out": "plugins/account-sync/assets/icon",
+   "kind": "plugin",
+   "paths": [
+    "M14 36 C8 36 4 32 4 27 C4 22 8 19 13 19 C14 12 19 8 25 8 C32 8 37 13 37 19 C41 19 44 23 44 28 C44 33 40 36 36 36 Z",
+    "M24 18 V31 M18 26 L24 32 L30 26"
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/icon",
+   "kind": "plugin",
+   "paths": [
+    "M4 14 H14 V38 H4 Z",
+    "M17 24 H26 M23 20 L27 24 L23 28",
+    "M30 10 H44 V28 H30 Z",
+    "M37 28 V36 M31 36 H43"
+   ]
+  },
+  {
+   "out": "plugins/image-editing/assets/icon",
+   "kind": "plugin",
+   "paths": [
+    "M14 4 V34 H44",
+    "M4 14 H34 V44"
+   ]
+  },
+  {
+   "out": "plugins/ink2pic/assets/icon",
+   "kind": "plugin",
+   "extraPng": [
+    512
+   ],
+   "paths": [
+    "M8 12 H28 A4 4 0 0 1 32 16 V38 A4 4 0 0 1 28 42 H8 A4 4 0 0 1 4 38 V16 A4 4 0 0 1 8 12 Z",
+    "M5 36 L13 27 L19 33 L22 30 L31 38",
+    "M36 6 L42 12 L26 28 L19 30 L21 23 Z"
+   ]
+  },
+  {
+   "out": "plugins/plugin-diagnostics/assets/icon",
+   "kind": "plugin",
+   "paths": [
+    "M44 24 A20 20 0 1 1 4 24 A20 20 0 1 1 44 24",
+    "M11 25 H16 L20 16 L26 33 L30 25 H37"
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/convert",
+   "kind": "plugin",
+   "paths": [
+    "M4 30 C7 20 10 20 12 28 C14 36 17 36 19 26",
+    "M22 26 H30 M27 22 L31 26 L27 30",
+    "M33 14 H44 M38.5 14 V36"
+   ]
+  },
+  {
+   "out": "plugins/smart-shapes/assets/shapes",
+   "kind": "plugin",
+   "paths": [
+    "M22 14 A8 8 0 1 1 6 14 A8 8 0 1 1 22 14",
+    "M28 6 H42 V20 H28 Z",
+    "M14 28 L22 42 H6 Z",
+    "M28 42 L42 28 M32 28 H42 V38"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/icon",
+   "kind": "plugin",
+   "paths": [
+    "M34 20 A14 14 0 1 1 6 20 A14 14 0 1 1 34 20",
+    "M30 30 L43 43",
+    "M13 22 C15 16 18 16 20 22 C22 28 25 27 27 20"
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/send-page",
+   "kind": "plugin",
+   "paths": [
+    "M6 6 H20 L26 12 V42 H6 Z",
+    "M20 6 V12 H26",
+    "M30 24 H44 M38 18 L44 24 L38 30"
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/receive",
+   "kind": "plugin",
+   "paths": [
+    "M24 6 V28 M14 20 L24 30 L34 20",
+    "M6 30 V42 H42 V30"
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/send-selection",
+   "kind": "plugin",
+   "paths": [
+    "M4 12 V4 H12",
+    "M20 4 H28 V12",
+    "M4 20 V28 H12",
+    "M12 38 H44 M38 32 L44 38 L38 44"
+   ]
+  },
+  {
+   "out": "plugins/device-transfer/assets/send-text",
+   "kind": "plugin",
+   "paths": [
+    "M4 6 H30 M17 6 V30",
+    "M20 38 H44 M38 32 L44 38 L38 44"
+   ]
+  },
+  {
+   "out": "plugins/image-editing/assets/editor",
+   "kind": "plugin",
+   "paths": [
+    "M6 42 L30 18",
+    "M34 6 V18 M28 12 H40",
+    "M12 10 V16 M9 13 H15",
+    "M38 28 V36 M34 32 H42"
+   ]
+  },
+  {
+   "out": "plugins/ink2pic/assets/choose",
+   "kind": "plugin",
+   "paths": [
+    "M6 6 H20 V20 H6 Z",
+    "M28 6 H42 V20 H28 Z",
+    "M6 28 H20 V42 H6 Z",
+    "M28 36 L34 42 L44 28"
+   ]
+  },
+  {
+   "out": "plugins/ink2pic/assets/definition",
+   "kind": "plugin",
+   "paths": [
+    "M4 38 L14 8 L24 38 M7.5 28 H20.5",
+    "M42 32 A6 6 0 1 1 30 32 A6 6 0 1 1 42 32 M42 26 V38"
+   ]
+  },
+  {
+   "out": "plugins/ink2pic/assets/insert",
+   "kind": "plugin",
+   "paths": [
+    "M8 14 H28 A4 4 0 0 1 32 18 V38 A4 4 0 0 1 28 42 H8 A4 4 0 0 1 4 38 V18 A4 4 0 0 1 8 14 Z",
+    "M5 38 L13 29 L19 35 L22 32 L31 40",
+    "M37 4 V18 M30 11 H44"
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/mode-on",
+   "kind": "plugin",
+   "paths": [
+    "M10 4 H38 A6 6 0 0 1 44 10 V38 A6 6 0 0 1 38 44 H10 A6 6 0 0 1 4 38 V10 A6 6 0 0 1 10 4 Z",
+    "M15 15 H33 M24 15 V35"
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/mode-off",
+   "kind": "plugin",
+   "paths": [
+    "M4 14 V4 H14",
+    "M20 4 H28",
+    "M34 4 H44 V14",
+    "M44 20 V28",
+    "M44 34 V44 H34",
+    "M28 44 H20",
+    "M14 44 H4 V34",
+    "M4 28 V20",
+    "M15 15 H33 M24 15 V35"
+   ]
+  },
+  {
+   "out": "plugins/real-time-conversion/assets/undo",
+   "kind": "plugin",
+   "paths": [
+    "M16 8 L6 18 L16 28",
+    "M6 18 H28 C37 18 42 23 42 30 C42 37 37 42 28 42 H16"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/choose",
+   "kind": "plugin",
+   "paths": [
+    "M5 10 L9 14 L15 6",
+    "M5 20 H13 V28 H5 Z",
+    "M5 34 H13 V42 H5 Z",
+    "M22 10 H44 M22 24 H44 M22 38 H44"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/definition",
+   "kind": "plugin",
+   "paths": [
+    "M24 12 C18 8 10 8 4 10 V38 C10 36 18 36 24 40 C30 36 38 36 44 38 V10 C38 8 30 8 24 12 Z",
+    "M24 12 V40",
+    "M10 20 H18"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/image",
+   "kind": "plugin",
+   "paths": [
+    "M6 8 H42 A2 2 0 0 1 44 10 V38 A2 2 0 0 1 42 40 H6 A2 2 0 0 1 4 38 V10 A2 2 0 0 1 6 8 Z",
+    "M5 36 L16 24 L24 32 L30 26 L43 38",
+    "M33 17 H33.1"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/sticker",
+   "kind": "plugin",
+   "paths": [
+    "M8 4 H40 V28 L28 44 H8 Z",
+    "M40 28 H32 A4 4 0 0 0 28 32 V44",
+    "M18 14 V16 M30 14 V16",
+    "M16 24 C20 30 28 30 32 24"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/summary",
+   "kind": "plugin",
+   "paths": [
+    "M8 4 H30 L40 14 V44 H8 Z",
+    "M30 4 V14 H40",
+    "M16 24 H32 M16 32 H32 M16 40 H24"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/translate-es-pt",
+   "kind": "plugin",
+   "paths": [
+    "M15 16 C15 9 4 9 4 17 C4 24 15 24 15 31 C15 39 4 39 4 32",
+    "M19 24 H28 M25 20 L29 24 L25 28",
+    "M33 35 V13 H39 A5.5 5.5 0 0 1 39 24 H33"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/translate-pt-es",
+   "kind": "plugin",
+   "paths": [
+    "M4 35 V13 H10 A5.5 5.5 0 0 1 10 24 H4",
+    "M19 24 H28 M25 20 L29 24 L25 28",
+    "M44 16 C44 9 33 9 33 17 C33 24 44 24 44 31 C44 39 33 39 33 32"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/translate-pt-zh",
+   "kind": "plugin",
+   "paths": [
+    "M4 35 V13 H10 A5.5 5.5 0 0 1 10 24 H4",
+    "M19 24 H28 M25 20 L29 24 L25 28",
+    "M33 13 H44 L33 35 H44"
+   ]
+  },
+  {
+   "out": "plugins/word-lookup/assets/translate-zh-pt",
+   "kind": "plugin",
+   "paths": [
+    "M4 13 H15 L4 35 H15",
+    "M19 24 H28 M25 20 L29 24 L25 28",
+    "M33 35 V13 H39 A5.5 5.5 0 0 1 39 24 H33"
+   ]
+  }
+ ]
+}

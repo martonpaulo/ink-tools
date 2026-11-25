@@ -1,7 +1,7 @@
 import {readFileSync} from 'fs';
 import {join} from 'path';
 
-// The PNGs come from assets/icon.svg through `npm run icon` (#31).
+// The PNGs come from assets/icon.svg through `python3 scripts/icons.py` at the repository root (#31, #271).
 // A PNG keeps its width and height as big-endian integers at bytes 16 and 20 (the IHDR chunk).
 function pngSize(file: string): {width: number; height: number} {
   const bytes = readFileSync(join(__dirname, '..', 'assets', file));

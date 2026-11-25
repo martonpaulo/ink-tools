@@ -146,6 +146,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Lasso buttons of all plugins share one «⋯» list under the lasso toolbar; each row's icon shows
   at about 60 px [measured, 2026-11-15 screenshot, [#107](https://github.com/martonpaulo/ink-tools/issues/107)]. A button takes one icon, so each plugin
   ships one 96 x 96 PNG per button, which the tablet scales down to that size (owner D43 A).
+- Native launcher icons are 48 dp vector drawables on a 48 viewport: outline strokes 4 wide,
+  black, no fill, round caps and joins, centerlines within 4 to 44 [measured, 2026-11-25, Settings,
+  To-Do, Calendar, Email and Digest, pulled with `adb pull` and read with `aapt2 dump xmltree`;
+  Note and Document are 64 px bitmaps with 4 px strokes; InkHub is the one filled icon,
+  [#271](https://github.com/martonpaulo/ink-tools/issues/271)]. `design/icons/native.json` records them and `design/icons/icons.json` draws every Ink Tools icon to them.
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
   promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`

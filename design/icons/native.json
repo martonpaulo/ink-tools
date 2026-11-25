@@ -1,0 +1,25 @@
+{
+  "source": "Supernote Manta (A5X2), adb device SN100D20051174, system apps under /system_ext/app, pulled with adb pull, read with aapt2 dump badging and aapt2 dump xmltree, 2026-11-25 (#271)",
+  "vector": {
+    "from": "launcher icons that are vector drawables: Settings (com.ratta.settings res/sn1.xml), To-Do (supernote.task res/lO.xml), Calendar (supernote.calendar res/-I.xml), Email (supernote.email res/qT.xml), Digest (supernote.knowledge res/Rs.xml)",
+    "sizeDp": 48,
+    "viewport": 48,
+    "strokeWidth": 4,
+    "strokeColor": "#000000",
+    "fill": "none",
+    "lineCap": "round",
+    "lineJoin": "round",
+    "centerlineMin": 4,
+    "centerlineMax": 44
+  },
+  "bitmap": {
+    "from": "launcher icons that are bitmaps: Note (supernote.note res/vD.png) and Document (supernote.document res/A_.png), 64 x 64 grey with alpha, measured on the pixels",
+    "sizePx": 64,
+    "strokePx": 4
+  },
+  "exception": "InkHub (res/vx.xml) is a filled black vector; it is the one native icon that is not an outline and is not followed",
+  "plugin": {
+    "sizePx": 96,
+    "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). 96 px is the native 48 dp vector at the tablet's 2x density, so the strokes are 8 px and the outline stays within 4 to 92 px."
+  }
+}
