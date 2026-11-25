@@ -11,14 +11,13 @@ import {
   resizeThumb,
   searchCommons,
   searchUrl,
-} from '@ink-tools/picture-search/adapters/commons';
-import {PAGE_SIZE} from '@ink-tools/picture-search/pages';
-import {fullUrl} from '@ink-tools/picture-search/registry';
-import {USER_AGENT} from '../src/config';
-import {createContext, FetchLike} from '@ink-tools/picture-search/fetcher';
+} from '../src/adapters/commons';
+import {PAGE_SIZE} from '../src/pages';
+import {fullUrl} from '../src/registry';
+import {createContext, FetchLike} from '../src/fetcher';
 
 const ctx = (fetch: FetchLike) =>
-  createContext({fetch, userAgent: USER_AGENT, languages: ['en']});
+  createContext({fetch, userAgent: 'test', languages: ['en']});
 
 const fixture = (name: string) =>
   readFileSync(join(__dirname, 'fixtures', name), 'utf8');
@@ -98,9 +97,7 @@ describe('searchCommons', () => {
     });
     await searchCommons('soup', ctx(fetch));
     const headers = fetch.mock.calls[0][1].headers;
-    expect(headers['User-Agent']).toMatch(
-      /^Ink2Pic\/.+github\.com\/martonpaulo\/ink2pic/,
-    );
+    expect(headers['User-Agent']).toBe('test');
     expect(headers['Api-User-Agent']).toBe(headers['User-Agent']);
   });
 

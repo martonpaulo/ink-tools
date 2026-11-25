@@ -2,9 +2,9 @@ import {
   dropNearDuplicates,
   DUPLICATE_BITS,
   hashDistance,
-} from '@ink-tools/picture-search/duplicates';
-import type {Measures} from '@ink-tools/picture-search/measures';
-import type {SearchResult} from '@ink-tools/picture-search/types';
+} from '../src/duplicates';
+import type {Measures} from '../src/measures';
+import type {SearchResult} from '../src/types';
 
 const result = (id: string, canonical = false): SearchResult => ({
   id,

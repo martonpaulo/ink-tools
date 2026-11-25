@@ -1,4 +1,4 @@
-import {createFetcher, FetchLike} from '@ink-tools/picture-search/fetcher';
+import {createFetcher, FetchLike} from '../src/fetcher';
 
 const reply = (status: number, body = '') =>
   jest.fn().mockResolvedValue({

@@ -5,13 +5,12 @@ import {
   parseSearchPage,
   searchOpenclipart,
   searchUrl,
-} from '@ink-tools/picture-search/adapters/openclipart';
-import {fullUrl} from '@ink-tools/picture-search/registry';
-import {USER_AGENT} from '../src/config';
-import {createContext, FetchLike} from '@ink-tools/picture-search/fetcher';
+} from '../src/adapters/openclipart';
+import {fullUrl} from '../src/registry';
+import {createContext, FetchLike} from '../src/fetcher';
 
 const ctx = (fetch: FetchLike) =>
-  createContext({fetch, userAgent: USER_AGENT, languages: ['en']});
+  createContext({fetch, userAgent: 'test', languages: ['en']});
 
 const fixture = (name: string) =>
   readFileSync(join(__dirname, 'fixtures', name), 'utf8');
@@ -91,7 +90,7 @@ describe('searchOpenclipart', () => {
     expect(fetch.mock.calls[0][0]).toBe(
       'https://openclipart.org/search/?query=soup',
     );
-    expect(fetch.mock.calls[0][1].headers['User-Agent']).toMatch(/^Ink2Pic\//);
+    expect(fetch.mock.calls[0][1].headers['User-Agent']).toBe('test');
   });
 
   it('keeps fewer, smaller thumbnails with the data saver (#70)', async () => {

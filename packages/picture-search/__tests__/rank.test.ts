@@ -1,11 +1,11 @@
-import {hasStyle, readIntent, words} from '@ink-tools/picture-search/query';
+import {hasStyle, readIntent, words} from '../src/query';
 import {
   einkScore,
   PHOTO_SCORERS,
   rankForEink,
-} from '@ink-tools/picture-search/rank';
-import {PAGE_SIZE} from '@ink-tools/picture-search/types';
-import type {SearchResult, SourceName} from '@ink-tools/picture-search/types';
+} from '../src/rank';
+import {PAGE_SIZE} from '../src/types';
+import type {SearchResult, SourceName} from '../src/types';
 
 const r = (
   source: SourceName,

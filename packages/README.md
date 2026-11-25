@@ -32,7 +32,9 @@ path (`@ink-tools/picture-search/rank`) for tests. Its Java keeps the package na
 Lookup's); it holds the React Native file module too, whose `Ink2PicFilesPackage` registers
 Ink2Pic's module names and takes another plugin's two names in a subclass, as Lookup's
 `LookupFilesPackage` does ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)), and Bridge's `BridgeFilesPackage`, which reads and
-writes only its Settings file ([#40](https://github.com/martonpaulo/ink-tools/issues/40)). Its TypeScript and JVM tests run in the Ink2Pic gate, beside the
+writes only its Settings file ([#40](https://github.com/martonpaulo/ink-tools/issues/40)). Its search tests (the sources, the ranking, the cache, with their recorded answers in
+`picture-search/__tests__/fixtures/`) run in the packages gate, type-checked with Node's types
+([#142](https://github.com/martonpaulo/ink-tools/issues/142), owner D63 A); its other TypeScript tests and its JVM tests still run in the Ink2Pic gate, beside the
 mocks they share, and the other plugin gates that use it type-check it and test their own bindings. Its insert tier
 (`/insert`) holds «Insert best picture»: the cached search, the stored thumbnails, the measured
 order, the insert and the no-view press guard; each plugin binds it to its own settings, copy and

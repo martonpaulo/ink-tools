@@ -1,15 +1,15 @@
 import {readFileSync} from 'fs';
 import {join} from 'path';
-import {BREAKER_OPEN_MS, createBreaker} from '@ink-tools/picture-search/breaker';
-import {cachedSearch} from '@ink-tools/picture-search/cache';
-import {systemClock} from '@ink-tools/picture-search/clock';
-import type {SourceAdapter} from '@ink-tools/picture-search/adapter';
-import {PAGE_SIZE, isThin} from '@ink-tools/picture-search/pages';
-import {searchAll} from '@ink-tools/picture-search/search';
-import {searchState} from '@ink-tools/picture-search/state';
-import {createContext, FetchLike} from '@ink-tools/picture-search/fetcher';
-import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search/registry';
-import type {SearchResult, SourceOutcome} from '@ink-tools/picture-search/types';
+import {BREAKER_OPEN_MS, createBreaker} from '../src/breaker';
+import {cachedSearch} from '../src/cache';
+import {systemClock} from '../src/clock';
+import type {SourceAdapter} from '../src/adapter';
+import {PAGE_SIZE, isThin} from '../src/pages';
+import {searchAll} from '../src/search';
+import {searchState} from '../src/state';
+import {createContext, FetchLike} from '../src/fetcher';
+import {DEFAULT_ADAPTERS} from '../src/registry';
+import type {SearchResult, SourceOutcome} from '../src/types';
 
 const result = (id: string): SearchResult => ({
   id,

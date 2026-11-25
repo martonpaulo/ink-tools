@@ -1,17 +1,16 @@
 /** The written line's search words (#87): question words cut, then one titles check. */
 import {readFileSync} from 'fs';
 import {join} from 'path';
-import {USER_AGENT} from '../src/config';
-import {searchWikidata} from '@ink-tools/picture-search/adapters/wikidata';
-import {createContext, FetchLike} from '@ink-tools/picture-search/fetcher';
+import {searchWikidata} from '../src/adapters/wikidata';
+import {createContext, FetchLike} from '../src/fetcher';
 import {
   forgetKnownHit,
   knownHit,
   parseTitles,
   resolvePhrase,
   titlesUrl,
-} from '@ink-tools/picture-search/phrase';
-import {stripQuestion, trailingGroups} from '@ink-tools/picture-search/query';
+} from '../src/phrase';
+import {stripQuestion, trailingGroups} from '../src/query';
 
 const fixture = (name: string) =>
   readFileSync(join(__dirname, 'fixtures', name), 'utf8');
@@ -21,7 +20,7 @@ const ok = (text: string) => ({
   text: () => Promise.resolve(text),
 });
 const ctx = (fetch: FetchLike, languages: readonly string[]) =>
-  createContext({fetch, userAgent: USER_AGENT, languages});
+  createContext({fetch, userAgent: 'test', languages});
 const TITLES = fixture('wikipedia-titles.json');
 const ALL = ['pt', 'en', 'es', 'zh'];
 

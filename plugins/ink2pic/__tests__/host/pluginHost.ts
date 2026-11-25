@@ -79,7 +79,18 @@ export const NOTE_PATH = `${SHARED_ROOT}/Note/example.note`;
 export const PLUGIN_DIR =
   '/data/user/0/com.ratta.supernote.pluginhost/files/plugins/simulated';
 
-const FIXTURES = join(__dirname, '..', 'fixtures');
+// The source answers live with the package they test (#142).
+const FIXTURES = join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  '..',
+  'packages',
+  'picture-search',
+  '__tests__',
+  'fixtures',
+);
 
 export type HostElement = {
   uuid: string;

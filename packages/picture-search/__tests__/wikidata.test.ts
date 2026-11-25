@@ -1,6 +1,5 @@
 import {readFileSync} from 'fs';
 import {join} from 'path';
-import {USER_AGENT} from '../src/config';
 import {
   entityUrl,
   isQueryArticle,
@@ -17,12 +16,12 @@ import {
   searchWikidata,
   wikidataAdapter,
   wikipediaUrl,
-} from '@ink-tools/picture-search/adapters/wikidata';
-import {createContext, FetchLike} from '@ink-tools/picture-search/fetcher';
-import {lookupLanguages, normalise} from '@ink-tools/picture-search/query';
+} from '../src/adapters/wikidata';
+import {createContext, FetchLike} from '../src/fetcher';
+import {lookupLanguages, normalise} from '../src/query';
 
 const ctx = (fetch: FetchLike, languages: readonly string[] = ['en']) =>
-  createContext({fetch, userAgent: USER_AGENT, languages});
+  createContext({fetch, userAgent: 'test', languages});
 
 const fixture = (name: string) =>
   readFileSync(join(__dirname, 'fixtures', name), 'utf8');
@@ -376,9 +375,7 @@ describe('searchWikidata', () => {
     expect(urls.find(url => url.includes('haswbstatement'))).toContain(
       encodeURIComponent('haswbstatement:P180=Q100 filetype:bitmap'),
     );
-    expect(fetch.mock.calls[0][1].headers['Api-User-Agent']).toMatch(
-      /^Ink2Pic\//,
-    );
+    expect(fetch.mock.calls[0][1].headers['Api-User-Agent']).toBe('test');
     if (!outcome.ok) {
       throw new Error(outcome.message);
     }

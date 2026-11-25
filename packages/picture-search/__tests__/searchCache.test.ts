@@ -4,13 +4,13 @@ import {
   CACHE_VERSION,
   cachedSearch,
   cacheKey,
-} from '@ink-tools/picture-search/cache';
-import type {SearchOutcome} from '@ink-tools/picture-search/search';
-import type {SearchResult} from '@ink-tools/picture-search/types';
-import {systemClock} from '@ink-tools/picture-search/clock';
-import {fullUrl} from '@ink-tools/picture-search/registry';
-import {searchState} from '@ink-tools/picture-search/state';
-import type {TextStore} from '@ink-tools/picture-search';
+} from '../src/cache';
+import type {SearchOutcome} from '../src/search';
+import type {SearchResult} from '../src/types';
+import {systemClock} from '../src/clock';
+import {fullUrl} from '../src/registry';
+import {searchState} from '../src/state';
+import type {TextStore} from '../src';
 
 const PATH = '/plugin/search-cache.json';
 const NOW = Date.UTC(2026, 10, 6, 12);

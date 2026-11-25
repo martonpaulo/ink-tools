@@ -1,16 +1,16 @@
-import INDEX from '@ink-tools/picture-search/data/openmoji-index.json';
+import INDEX from '../src/data/openmoji-index.json';
 import {
   matchSymbols,
   searchOpenmoji,
-} from '@ink-tools/picture-search/adapters/openmoji';
-import {createContext} from '@ink-tools/picture-search/fetcher';
-import {rankForEink} from '@ink-tools/picture-search/rank';
+} from '../src/adapters/openmoji';
+import {createContext} from '../src/fetcher';
+import {rankForEink} from '../src/rank';
 import {
   DEFAULT_ADAPTERS,
   insertUrl,
   isSourceName,
-} from '@ink-tools/picture-search/registry';
-import type {SearchResult} from '@ink-tools/picture-search/types';
+} from '../src/registry';
+import type {SearchResult} from '../src/types';
 
 const fetch = jest.fn(async () => {
   throw new Error('OpenMoji matched a word over the network');
