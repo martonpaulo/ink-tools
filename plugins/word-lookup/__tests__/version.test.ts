@@ -9,6 +9,7 @@ const {
   problems,
   workflowProblems,
   allWorkflowProblems,
+  iconProblems,
 } = require('../../../scripts/plugin-version.cjs');
 
 test('a numbered beta reads «0.2.0 beta 3» on the tablet, a release «0.2.0»', () => {
@@ -52,4 +53,30 @@ test('a hyphenated name is checked too, such as inktools-bridge (#215)', () => {
   expect(allWorkflowProblems(root)).toEqual([
     'prerelease-inktools-bridge.yml: computed tag v$version does not start with inktools-bridge-v',
   ]);
+});
+
+test('every plugin names an icon that is in its folder (#248)', () => {
+  expect(iconProblems(join(__dirname, '..', '..', '..'))).toEqual([]);
+});
+
+test('an empty or missing iconPath is a problem (#248)', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const root = fs.mkdtempSync(join(os.tmpdir(), 'icons-'));
+  const plugin = (name: string, iconPath: string) => {
+    fs.mkdirSync(join(root, 'plugins', name), {recursive: true});
+    fs.writeFileSync(join(root, 'plugins', name, 'PluginConfig.json'), JSON.stringify({iconPath}));
+  };
+  plugin('empty', '');
+  plugin('missing', 'assets/icon.png');
+  plugin('present', 'icon.png');
+  fs.writeFileSync(join(root, 'plugins', 'present', 'icon.png'), 'png');
+  try {
+    expect(iconProblems(root)).toEqual([
+      'plugins/empty/PluginConfig.json: iconPath is empty',
+      'plugins/missing/PluginConfig.json: iconPath assets/icon.png is not a file',
+    ]);
+  } finally {
+    fs.rmSync(root, {recursive: true});
+  }
 });

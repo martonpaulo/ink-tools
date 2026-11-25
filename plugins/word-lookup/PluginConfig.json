@@ -2,7 +2,7 @@
   "name": "Word Lookup",
   "desc": "Lasso a handwritten word and insert a picture, a photo, a short definition or a translation for it.",
   "author": "Marton Paulo",
-  "iconPath": "",
+  "iconPath": "assets/icon.png",
   "versionName": "0.2.0 beta 28",
   "versionCode": "29",
   "pluginID": "t2obvupqt3edmnrr",

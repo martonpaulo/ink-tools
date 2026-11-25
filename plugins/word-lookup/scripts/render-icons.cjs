@@ -1,5 +1,6 @@
 // Renders each lasso button icon, assets/<name>.svg, to the 96 x 96 PNG the button registers
-// (#107; one size per button, owner D43 A), Image Editing's lasso icon the same way, and
+// (#107; one size per button, owner D43 A), Image Editing's lasso icon the same way, each plugin
+// icon, assets/icon.svg, that `PluginConfig.json` names (#248), and
 // assets/contact-sheet.png: every icon at 96 px and at the lasso list's 60 px, with Device Transfer's
 // and Image Editing's lasso icons beside them for the shared style.
 // Chromium (Playwright, as Ink2Pic's `npm run icon`) draws each SVG, so a PNG never drifts from it.
@@ -40,6 +41,8 @@ async function main() {
     const buttons = [
       ...svgs.map(file => [assets, file]),
       ...editingSvgs.map(file => [editingAssets, file]),
+      // Device Transfer's plugin icon (#248); its button icons are drawn by hand.
+      [transferAssets, 'icon.svg'],
     ];
     for (const [dir, file] of buttons) {
       const svg = fs.readFileSync(path.join(dir, file), 'utf8');

@@ -7,6 +7,7 @@
  *
  *   node scripts/plugin-version.cjs plugins/<name>   prints the tag version, or fails on a mismatch
  *   node scripts/plugin-version.cjs --workflows .      fails when a prerelease tag lacks its plugin name
+ *   node scripts/plugin-version.cjs --icons .          fails when a plugin's iconPath is empty or missing
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -87,6 +88,33 @@ function allWorkflowProblems(root) {
     );
 }
 
+/**
+ * The plugins under `root` whose `PluginConfig.json` names no icon, or one that is not in the
+ * plugin folder (#248): the plugin list then shows no icon, with no warning from the build.
+ */
+function iconProblems(root) {
+  const plugins = path.join(root, 'plugins');
+  return fs
+    .readdirSync(plugins)
+    .filter(name => fs.existsSync(path.join(plugins, name, 'PluginConfig.json')))
+    .flatMap(name => {
+      const config = path.join(plugins, name, 'PluginConfig.json');
+      const {iconPath} = JSON.parse(fs.readFileSync(config, 'utf8'));
+      if (!iconPath) {
+        return [`plugins/${name}/PluginConfig.json: iconPath is empty`];
+      }
+      return fs.existsSync(path.join(plugins, name, iconPath))
+        ? []
+        : [`plugins/${name}/PluginConfig.json: iconPath ${iconPath} is not a file`];
+    });
+}
+
+if (require.main === module && process.argv[2] === '--icons') {
+  const found = iconProblems(process.argv[3] || '.');
+  found.forEach(line => console.error(`plugin-version: ${line}`));
+  process.exit(found.length > 0 ? 1 : 0);
+}
+
 if (require.main === module && process.argv[2] === '--workflows') {
   const found = allWorkflowProblems(process.argv[3] || '.');
   found.forEach(line => console.error(`plugin-version: ${line}`));
@@ -103,4 +131,4 @@ if (require.main === module) {
   console.log(JSON.parse(fs.readFileSync(path.join(folder, 'package.json'), 'utf8')).version);
 }
 
-module.exports = {versionName, problems, workflowProblems, allWorkflowProblems};
+module.exports = {versionName, problems, workflowProblems, allWorkflowProblems, iconProblems};

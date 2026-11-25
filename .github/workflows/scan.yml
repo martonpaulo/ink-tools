@@ -70,6 +70,9 @@ jobs:
       - name: Check that every prerelease tag carries its plugin name (#155)
         run: node scripts/plugin-version.cjs --workflows .
 
+      - name: Check that every plugin names an icon that exists (#248)
+        run: node scripts/plugin-version.cjs --icons .
+
   npm-audit:
     name: npm audit ${{ matrix.dir }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
