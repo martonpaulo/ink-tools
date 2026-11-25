@@ -47,7 +47,7 @@ Sideloaded Android apps.
 
 <table>
   <tr><th width="170">App</th><th width="400">What it does</th><th width="150">Folder</th><th width="120">Status</th></tr>
-  <tr><td><b>Ink Notebook Editor</b></td><td>Read and edit <code>.note</code> notebooks on the Mac without breaking the format.</td><td><a href="apps/ink-notebook-editor/"><code>ink-notebook-editor/</code></a></td><td>⚪&nbsp;Planned</td></tr>
+  <tr><td><b>Ink Notebook Editor</b></td><td>Read and edit <code>.note</code> notebooks on the Mac without breaking the format.</td><td><a href="apps/ink-notebook-editor/"><code>ink-notebook-editor/</code></a></td><td>🔵&nbsp;In&nbsp;progress</td></tr>
 </table>
 
 ## Shared code

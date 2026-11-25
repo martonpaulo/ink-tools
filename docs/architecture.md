@@ -111,7 +111,7 @@ ink-tools/
   apps/
     handwriting-language/ # sideloaded tablet app: switch the handwriting language tablet-wide
     inktools-bridge/ # sideloaded helper app: lets inkctl install, enable and permit plugins
-    ink-notebook-editor/ # planned macOS app, Ink Notebook Editor: docs only, no code yet
+    ink-notebook-editor/ # macOS app, Ink Notebook Editor: a read-only .note reader for now
 ```
 
 ## The plugins (on device)
@@ -222,8 +222,7 @@ measures are `packages/picture-search`.
 - **`inkctl`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
   codes, no root (formerly `supernote-adb`, then `snadb`, which still runs as a shim,
   [#173](https://github.com/martonpaulo/ink-tools/issues/173)).
-- **Ink Notebook Editor** (`apps/ink-notebook-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac. Planned; the folder holds its
-  `AGENTS.md` and no code yet ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
+- **Ink Notebook Editor** (`apps/ink-notebook-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). It opens a note read-only, from a file or from the tablet through `inkctl`, and pages through it ([#262](https://github.com/martonpaulo/ink-tools/issues/262)); editing follows.
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
 
