@@ -210,6 +210,24 @@ describe('sticker and file probes for Collection (#249)', () => {
     expect(answer).toMatchObject({ok: true, page: 3, rect: {left: 10, top: 20, right: 110, bottom: 220}});
   });
 
+  test('saveSticker with a rect lassoes it in the same press, then saves', async () => {
+    const note = api();
+    const rect = {left: 100, top: 200, right: 900, bottom: 800};
+    const {answer} = await runCommand(command({op: 'saveSticker', where: 'probe', name: 'a.sticker', rect}), note);
+    expect(note.lasso).toHaveBeenCalledWith(rect);
+    const order = (mock: unknown) => (mock as jest.Mock).mock.invocationCallOrder[0];
+    expect(order(note.lasso)).toBeLessThan(order(note.saveSticker));
+    expect(answer).toMatchObject({ok: true, counts: {trailNum: 1}});
+  });
+
+  test('insertSticker with moveTo moves the pasted piece in the same press', async () => {
+    const note = api();
+    const moveTo = {left: 300, top: 1500, right: 400, bottom: 1700};
+    const {answer} = await runCommand(command({op: 'insertSticker', where: 'plugin', name: 'a.sticker', moveTo}), note);
+    expect(note.resizeLasso).toHaveBeenCalledWith(moveTo);
+    expect(answer).toMatchObject({ok: true, rect: {left: 10}, moved: {left: 10}});
+  });
+
   test('resizeLasso moves the lasso and answers the rect read back', async () => {
     const note = api();
     const rect = {left: 500, top: 600, right: 600, bottom: 800};

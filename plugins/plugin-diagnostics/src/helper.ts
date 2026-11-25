@@ -85,7 +85,9 @@ type Command =
   | {id: string; op: 'insertPicture'; path: string}
   | {id: string; op: 'insertTextBox'; text: string; rect: Rect; fontSize: number}
   | {id: string; op: 'insertPage'; page: number; template: string}
-  | {id: string; op: 'saveSticker' | 'insertSticker' | 'deleteFile'; where: Where; name: string}
+  | {id: string; op: 'saveSticker'; where: Where; name: string; rect?: Rect}
+  | {id: string; op: 'insertSticker'; where: Where; name: string; moveTo?: Rect}
+  | {id: string; op: 'deleteFile'; where: Where; name: string}
   | {id: string; op: 'listFiles'; where: Where}
   | {id: string; op: 'readLassoRect'}
   | {id: string; op: 'resizeLasso'; rect: Rect};
@@ -221,10 +223,13 @@ export function parseCommand(text: string): Command {
       return {id, op: 'insertTextBox', text: parseText(raw.text), rect: parseRect(raw.rect), fontSize: parseFontSize(raw.fontSize)};
     case 'insertPage':
       return {id, op: 'insertPage', page: parsePage(raw.page), template: parseTemplate(raw.template)};
+    // A press of «Run Command» clears the lasso (code 904), so a lasso-based op lassoes in the same press (#249).
     case 'saveSticker':
+      return {id, op: 'saveSticker', where: parseWhere(raw.where), name: parseName(raw.name), rect: raw.rect === undefined ? undefined : parseRect(raw.rect)};
     case 'insertSticker':
+      return {id, op: 'insertSticker', where: parseWhere(raw.where), name: parseName(raw.name), moveTo: raw.moveTo === undefined ? undefined : parseRect(raw.moveTo)};
     case 'deleteFile':
-      return {id, op: raw.op, where: parseWhere(raw.where), name: parseName(raw.name)};
+      return {id, op: 'deleteFile', where: parseWhere(raw.where), name: parseName(raw.name)};
     case 'listFiles':
       return {id, op: 'listFiles', where: parseWhere(raw.where)};
     case 'readLassoRect':
@@ -301,13 +306,18 @@ async function execute(command: Command, api: HelperApi): Promise<Record<string,
       return {page: command.page, template: command.template};
     case 'saveSticker': {
       const path = (await folderOf(command.where, api)) + command.name;
+      const counts = command.rect ? await api.lasso(command.rect) : undefined;
       await api.saveSticker(path);
-      return {path};
+      return {path, counts};
     }
     case 'insertSticker': {
       const path = (await folderOf(command.where, api)) + command.name;
       await api.insertSticker(path);
-      return {page: await api.pageNumber(), path, rect: await api.lassoBox()};
+      const rect = await api.lassoBox();
+      if (command.moveTo) {
+        await api.resizeLasso(command.moveTo);
+      }
+      return {page: await api.pageNumber(), path, rect, moved: command.moveTo ? await api.lassoBox() : undefined};
     }
     case 'deleteFile': {
       const path = (await folderOf(command.where, api)) + command.name;
