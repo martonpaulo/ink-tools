@@ -23,8 +23,8 @@ const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 const MIN_API = '30';
 const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
-const PURE = ['ButtonRule', 'LanguageCycle', 'LanguageFiles'];
-const TESTS = ['ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest'];
+const PURE = ['ButtonGesture', 'ButtonPlace', 'ButtonRule', 'LanguageCycle', 'LanguageFiles'];
+const TESTS = ['ButtonGestureTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest'];
 /**
  * shortcut: a local debug key in .toolchain/, outside Git and unique to each checkout; an APK
  * from another checkout or CI has another key, so the tablet needs an uninstall before it.
@@ -126,6 +126,7 @@ function manifest(file, {versionCode, versionName: name}) {
     <receiver android:name=".BootReceiver" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
       </intent-filter>
     </receiver>
   </application>

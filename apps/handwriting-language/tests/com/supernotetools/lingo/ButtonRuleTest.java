@@ -25,6 +25,12 @@ public final class ButtonRuleTest {
     check(ButtonRule.isWritingScreen("TaskActivity"), "a simple class name matches");
     check(!ButtonRule.isWritingScreen(null), "null is no screen");
 
+    check(ButtonRule.restartsOn("android.intent.action.BOOT_COMPLETED", Mode.WRITING), "a tablet restart starts the button again");
+    check(ButtonRule.restartsOn("android.intent.action.MY_PACKAGE_REPLACED", Mode.ALWAYS), "an app update starts the button again");
+    check(!ButtonRule.restartsOn("android.intent.action.MY_PACKAGE_REPLACED", Mode.HIDDEN), "a hidden button stays off after an update");
+    check(!ButtonRule.restartsOn("android.intent.action.SCREEN_ON", Mode.ALWAYS), "another event starts nothing");
+    check(!ButtonRule.restartsOn(null, Mode.ALWAYS), "no action starts nothing");
+
     check(ButtonRule.mode(null) == Mode.WRITING, "the default is only where you write");
     check(ButtonRule.mode("bogus") == Mode.WRITING, "an unknown key is the default");
     for (Mode mode : Mode.values()) {

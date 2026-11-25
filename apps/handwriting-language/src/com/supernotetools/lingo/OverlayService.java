@@ -8,13 +8,21 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.TextView;
 import java.io.IOException;
@@ -22,17 +30,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Surface A: a small button at the right screen edge over other apps
- * (`TYPE_APPLICATION_OVERLAY`, SYSTEM_ALERT_WINDOW). It shows the active language's short code;
- * one tap moves to the next, a long press opens the settings screen. ButtonRule says when it
- * shows, from what WritingWatcher reads (#195). A foreground service, so the system keeps it while
- * other apps run; the service runs unless the button is hidden.
+ * Surface A: a small button over other apps (`TYPE_APPLICATION_OVERLAY`, SYSTEM_ALERT_WINDOW),
+ * at the top trailing corner until the owner drags it elsewhere (#244). It shows the active
+ * language's short code; one tap moves to the next, a long press opens the settings screen, a
+ * drag moves it (ButtonGesture tells them apart, ButtonPlace keeps it on screen). ButtonRule says
+ * when it shows, from what WritingWatcher reads (#195). A foreground service, so the system keeps
+ * it while other apps run; the service runs unless the button is hidden.
  */
 public final class OverlayService extends Service {
   private static final String CHANNEL = "overlay";
   private static final int NOTIFICATION_ID = 1;
-  /** Where lane 4's test button sat (docs/research/2026-11-handwriting-language.md § 10). */
-  private static final int TOP_PX = 600;
 
   /** The running service, so WritingWatcher can ask it to show or hide; main thread only. */
   private static OverlayService running;
@@ -41,6 +48,16 @@ public final class OverlayService extends Service {
   private WindowManager.LayoutParams params;
   private TextView button;
   private boolean attached;
+  private ButtonGesture gesture;
+  private final Handler main = new Handler(Looper.getMainLooper());
+  private final Runnable longPress = () -> {
+    if (button != null && gesture.longPressDue(SystemClock.uptimeMillis())) {
+      button.performLongClick();
+    }
+  };
+  /** The window's place when the touch began, so a drag moves it by the touch's offset. */
+  private int startX;
+  private int startY;
   private final BroadcastReceiver changed = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -54,6 +71,13 @@ public final class OverlayService extends Service {
 
   static void stop(Context context) {
     context.stopService(new Intent(context, OverlayService.class));
+  }
+
+  /** Puts the button back at its default place after Settings resets it; nothing while it is off. */
+  static void moveHome() {
+    if (running != null) {
+      running.moveToSaved();
+    }
   }
 
   /** Shows or hides the button after a window event or a settings change. */
@@ -85,20 +109,25 @@ public final class OverlayService extends Service {
     button.setTypeface(Typeface.DEFAULT_BOLD);
     button.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.BUTTON_SP);
     button.setBackground(Ink.box(this, false, 0));
+    // The click and long-click listeners stay for accessibility actions; touch() calls them.
     button.setOnClickListener(view -> tap());
     button.setOnLongClickListener(view -> {
       startActivity(new Intent(this, SettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
       return true;
     });
+    ViewConfiguration touch = ViewConfiguration.get(this);
+    gesture = new ButtonGesture(touch.getScaledTouchSlop(), ViewConfiguration.getLongPressTimeout());
+    button.setOnTouchListener(this::touch);
     int size = Ink.px(this, Ink.TARGET_DP);
     params = new WindowManager.LayoutParams(
         size, size,
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+        // In screen: x and y are screen pixels, as the touch's raw points and the window metrics are.
+        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
         PixelFormat.OPAQUE);
-    params.gravity = Gravity.TOP | Gravity.END;
-    params.y = TOP_PX;
+    params.gravity = Gravity.TOP | Gravity.LEFT;
     params.windowAnimations = 0;
+    moveToSaved();
     registerReceiver(changed, new IntentFilter(Switcher.CHANGED));
     show(null);
     running = this;
@@ -123,6 +152,81 @@ public final class OverlayService extends Service {
     attached = visible;
     Log.i(Switcher.TAG, "surface=overlay " + (visible ? "shown" : "hidden")
         + " keyboard=" + WritingWatcher.keyboardOpen() + " foreground=" + WritingWatcher.foreground());
+  }
+
+  /** The screen turned or changed size: the same fractions, on the new screen. */
+  @Override
+  public void onConfigurationChanged(Configuration changed) {
+    super.onConfigurationChanged(changed);
+    if (button != null) {
+      moveToSaved();
+    }
+  }
+
+  /** Places the window at the saved fractions, or the default top trailing corner. */
+  private void moveToSaved() {
+    Rect screen = windows.getCurrentWindowMetrics().getBounds();
+    float[] place = new Prefs(this).place();
+    float x = place != null ? place[0] : ButtonPlace.DEFAULT_X;
+    float y = place != null ? place[1] : ButtonPlace.defaultY(screen.height(), params.height);
+    moveTo(ButtonPlace.pixels(x, screen.width(), params.width), ButtonPlace.pixels(y, screen.height(), params.height));
+  }
+
+  private void moveTo(int x, int y) {
+    params.x = x;
+    params.y = y;
+    if (attached) {
+      windows.updateViewLayout(button, params);
+    }
+  }
+
+  /** One motion event on the button: ButtonGesture decides; the view's own click handling never runs. */
+  private boolean touch(View view, MotionEvent event) {
+    float x = event.getRawX();
+    float y = event.getRawY();
+    long ms = event.getEventTime();
+    switch (event.getActionMasked()) {
+      case MotionEvent.ACTION_DOWN:
+        gesture.down(x, y, ms);
+        startX = params.x;
+        startY = params.y;
+        main.postDelayed(longPress, ViewConfiguration.getLongPressTimeout());
+        return true;
+      case MotionEvent.ACTION_MOVE:
+        if (gesture.move(x, y, ms)) {
+          main.removeCallbacks(longPress);
+          follow(x, y);
+        }
+        return true;
+      case MotionEvent.ACTION_UP:
+        main.removeCallbacks(longPress);
+        ButtonGesture.Result result = gesture.up(ms);
+        if (result == ButtonGesture.Result.TAP) {
+          view.performClick();
+        } else if (result == ButtonGesture.Result.LONG_PRESS) {
+          view.performLongClick();
+        } else if (result == ButtonGesture.Result.DRAG) {
+          follow(x, y); // the up event can sit past the last move's point
+          Rect screen = windows.getCurrentWindowMetrics().getBounds();
+          new Prefs(this).setPlace(ButtonPlace.fraction(params.x, screen.width(), params.width),
+              ButtonPlace.fraction(params.y, screen.height(), params.height));
+          Log.i(Switcher.TAG, "surface=overlay moved x=" + params.x + " y=" + params.y);
+        }
+        return true;
+      case MotionEvent.ACTION_CANCEL:
+        main.removeCallbacks(longPress);
+        gesture.cancel();
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  /** Moves the window by the touch's offset from where it began, kept on screen. */
+  private void follow(float x, float y) {
+    Rect screen = windows.getCurrentWindowMetrics().getBounds();
+    moveTo(ButtonPlace.clamp(startX + Math.round(gesture.dx(x)), screen.width(), params.width),
+        ButtonPlace.clamp(startY + Math.round(gesture.dy(y)), screen.height(), params.height));
   }
 
   @Override
@@ -167,6 +271,7 @@ public final class OverlayService extends Service {
   public void onDestroy() {
     if (button != null) {
       running = null;
+      main.removeCallbacks(longPress);
       unregisterReceiver(changed);
       if (attached) {
         windows.removeView(button);

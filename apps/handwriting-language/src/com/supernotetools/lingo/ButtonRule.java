@@ -35,6 +35,18 @@ final class ButtonRule {
   static final List<String> WRITING_SCREENS =
       Arrays.asList("NoteInsidePagesActivity", "KnowledgeActivity", "TaskActivity", "HomeActivity");
 
+  /**
+   * The system events after which the button's service starts again: a restart of the tablet, and
+   * an update of the app, which stops the service (#244). Intent action names, so no Android import.
+   */
+  static final List<String> RESTART_ACTIONS =
+      Arrays.asList("android.intent.action.BOOT_COMPLETED", "android.intent.action.MY_PACKAGE_REPLACED");
+
+  /** Whether `action` starts the service again: one of RESTART_ACTIONS, unless the button is hidden. */
+  static boolean restartsOn(String action, Mode mode) {
+    return mode != Mode.HIDDEN && RESTART_ACTIONS.contains(action);
+  }
+
   /** The stored or typed choice; null or an unknown key is the default. */
   static Mode mode(String key) {
     for (Mode mode : Mode.values()) {

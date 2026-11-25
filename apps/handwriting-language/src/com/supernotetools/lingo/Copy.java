@@ -17,7 +17,8 @@ final class Copy {
   static final String BUTTON_WRITING = "Only where you write: the handwriting keyboard, a note, Digest, To-Do, Email";
   static final String BUTTON_ALWAYS = "Always visible, over every app";
   static final String BUTTON_HIDDEN = "Hidden";
-  static final String BUTTON_HELP = "One tap moves to the next language. A long press opens these settings. The Handwriting Language entry in the sidebar switches with nothing on screen.";
+  static final String BUTTON_HELP = "One tap moves to the next language. A long press opens these settings. Drag the button to move it; it stays where you leave it. The Handwriting Language entry in the sidebar switches with nothing on screen.";
+  static final String RESET_PLACE = "Reset Button Position";
   static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
   static final String WATCHER_COMMANDS =
       "adb shell settings put secure enabled_accessibility_services " + PACKAGE + "/.WritingWatcher\n"

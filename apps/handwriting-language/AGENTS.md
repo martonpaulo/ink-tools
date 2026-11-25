@@ -13,15 +13,18 @@ Language» and «Handwriting Language Settings» ([#176](https://github.com/mart
 and tag prefix say `handwriting-language` ([#194](https://github.com/martonpaulo/ink-tools/issues/194)).
 Two surfaces ship in one build:
 
-- **A, the floating button** (`OverlayService`): a box at the right screen edge that shows the
-  active language (`PT`, `EN`, `ES`); one tap moves to the next, a long press opens the settings
-  screen. It shows only where the owner writes, or always, or never (the setting), and comes back
-  after a restart unless hidden.
+- **A, the floating button** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
+  `ES`); one tap moves to the next, a long press opens the settings screen, a drag moves it
+  ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts at the top trailing
+  corner and stays where it is dragged, saved as fractions of the screen so it stays on screen
+  when the screen turns (`ButtonGesture`, `ButtonPlace`); Settings' «Reset Button Position» puts it
+  back. It shows only where the owner writes, or always, or never (the setting), and comes back
+  after a restart of the tablet or an update of the app unless hidden.
 - **B, the launcher entry** (`SwitchActivity`, label «Lingo»): the sidebar lists it by itself; one
   tap moves to the next language with nothing on screen.
 
 The settings screen (`SettingsActivity`, a second launcher entry «Handwriting Language Settings») shows the
-active language, the floating button's three choices, the installed languages in the cycle and each missing
+active language, the floating button's three choices and «Reset Button Position», the installed languages in the cycle and each missing
 permission with the command that grants it, and the command that turns on writing detection when
 it is off.
 
@@ -94,7 +97,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - The gate (`gates.json` › `handwriting-language`, CI `validate-handwriting-language.yml`) runs both.
 - `javac -Werror`: a new warning fails the build.
-- Logic with no Android import goes in `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
+- Logic with no Android import goes in `ButtonGesture`, `ButtonPlace`, `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
 - All visible copy is in `Copy.java`; the e-ink look (black on white, a black outline, 64 dp
   targets, no animation) in `Ink.java`. The two launcher labels live in the manifest that
@@ -107,7 +110,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.2` gives the `versionName` `0.1.0 beta 2` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.3` gives the `versionName` `0.1.0 beta 3` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.

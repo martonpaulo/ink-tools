@@ -31,6 +31,13 @@ explained.
 
 - Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
   arithmetic in `plugins/ink2pic/docs/brief.md`].
+- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs]. Handwriting Language's
+  button place is tested on both screens, each turned both ways
+  ([#244](https://github.com/martonpaulo/ink-tools/issues/244)).
+- A floating window of a sideloaded app follows a screen turn: Handwriting Language's button,
+  saved at the lower leading corner, sat at (0, 1800) on the turned 2560 x 1920 screen and back at
+  (0, 2440) after [measured, `user_rotation` 1 then 0, 2026-11-25,
+  [#244](https://github.com/martonpaulo/ink-tools/issues/244)].
 - A page has the same 1920 x 2560 size; `getPageSize` answers it [measured, build 0.1.0 (3)].
 - Stroke points from `getElements` are page pixels [measured, Probe, 2026-11-17,
   [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. The pen digitizer (EMR) spans 21632 x

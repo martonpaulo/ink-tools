@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The one settings screen: the active language, where the floating button shows, the languages
+ * The one settings screen: the active language, where the floating button shows (and a reset of
+ * where it sits, #244), the languages
  * in the cycle, and any missing permission or service with the command that turns it on.
  * A long press on the floating button opens it, since the sidebar lists only the first entry. Built in code (no XML
  * resources, so the light build needs no resource step); black on white, no animation.
@@ -123,6 +124,11 @@ public final class SettingsActivity extends Activity {
       command.setTextIsSelectable(true);
     }
     text(Copy.BUTTON_HELP, Ink.TEXT_SP, false);
+    Button reset = button(Copy.RESET_PLACE);
+    reset.setOnClickListener(view -> {
+      new Prefs(this).clearPlace();
+      OverlayService.moveHome();
+    });
 
     section(Copy.CYCLE_SECTION);
     text(Copy.CYCLE_HELP, Ink.TEXT_SP, false);
@@ -202,14 +208,7 @@ public final class SettingsActivity extends Activity {
     TextView command = text(Copy.grantCommand(op), Ink.TEXT_SP, false);
     command.setTypeface(Typeface.MONOSPACE);
     command.setTextIsSelectable(true);
-    Button open = new Button(this);
-    open.setText(Copy.OPEN_PERMISSION);
-    open.setAllCaps(false);
-    open.setTextColor(Ink.INK);
-    open.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.TEXT_SP);
-    open.setBackground(Ink.box(this, false, 0));
-    open.setStateListAnimator(null);
-    open.setMinHeight(Ink.px(this, Ink.TARGET_DP));
+    Button open = button(Copy.OPEN_PERMISSION);
     open.setOnClickListener(view -> {
       try {
         startActivity(new Intent(screen, Uri.parse("package:" + getPackageName())));
@@ -218,7 +217,20 @@ public final class SettingsActivity extends Activity {
         render();
       }
     });
-    add(open);
+  }
+
+  /** A full-width outlined button, the e-ink look. */
+  private Button button(String label) {
+    Button view = new Button(this);
+    view.setText(label);
+    view.setAllCaps(false);
+    view.setTextColor(Ink.INK);
+    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.TEXT_SP);
+    view.setBackground(Ink.box(this, false, 0));
+    view.setStateListAnimator(null);
+    view.setMinHeight(Ink.px(this, Ink.TARGET_DP));
+    add(view);
+    return view;
   }
 
   private void section(String title) {
