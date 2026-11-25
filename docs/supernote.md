@@ -388,6 +388,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A Word Lookup or Device Transfer insert leaves the inserted picture lassoed, but a plugin command
   run after it clears the lasso: `getLassoElementTypeCounts` then answers 904 [measured, Probe,
   2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Lasso again by the element's rect before pressing a row.
+- A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
+  Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
+  menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
+  performed. Cannot call the API!` [measured, Image Editing 0.1.0 beta 13, Nomad, 2026-11-25,
+  [#248](https://github.com/martonpaulo/ink-tools/issues/248)]. Whether a button pinned to the toolbar keeps a lasso is [unverified].
 - The floating selection `insertImage` leaves shows the lasso «⋯» rows, other plugins' included,
   but is no lasso for the plugin API: `getLassoRect` answers 904, and Image Editing's «Document»
   pressed on it logged `done` and left the placed picture unchanged. After one such press, Back

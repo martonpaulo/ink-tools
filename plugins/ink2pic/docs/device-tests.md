@@ -22,6 +22,7 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (18), 2026-11-15, firmware 3.31.45](#build-010-18-2026-11-15-firmware-33145)
 - [Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad](#word-lookup-020-beta-27-28-2026-11-25-nomad)
 - [Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Nomad](#word-lookup-020-beta-28-29-2026-11-25-nomad)
+- [Image Editing 0.1.0 beta 13 (14), 2026-11-25, Nomad](#image-editing-010-beta-13-14-2026-11-25-nomad)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
 
@@ -236,3 +237,19 @@ searches each word again.
   for either word, so the cut changed no page 1 here.
 - Ranking 18 results for «appe» took 1077 ms in the second search of a fresh JS instance; the first,
   17 results for «Maea», took 136 ms. The slow rank follows the titles, not only a cold instance.
+
+## Image Editing 0.1.0 beta 13 (14), 2026-11-25, Nomad
+
+The toolbar button and the plugin icon ([#248](https://github.com/martonpaulo/ink-tools/issues/248)). Prerelease
+[`image-editing-v0.1.0-beta.13`](https://github.com/martonpaulo/ink-tools/releases/tag/image-editing-v0.1.0-beta.13),
+commit `2f374d9`, installed with `inkctl plugin install`, driven with `inkctl`; nothing was written
+on the fixture note.
+
+| Check | Expected | Result | Evidence |
+| --- | --- | --- | --- |
+| Plugin icon | The plugin list holds an icon | Pass | `iconPath` reads the plugin's own `icon.png` |
+| Buttons | Lasso row and toolbar button both registered | Pass | `register Image Editing: ok`, `register Image Editing toolbar button: ok` |
+| Toolbar press, nothing lassoed | Needs: «Lasso a picture first», two steps, Close | Pass | the view showed it; `getLassoElements` answered 904; Close closed it |
+| Toolbar press after a lasso, through the «Plugins» menu | The editor on the picture | Fail | opening the menu cleared the lasso: 904 again, so Needs showed |
+
+- A pinned toolbar button is one tap with no menu; whether it keeps the lasso needs the owner's pin.
