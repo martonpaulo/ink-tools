@@ -50,7 +50,7 @@ export const copy = {
     'Word Lookup translates words with online dictionaries, Wiktionary and Apertium.',
   'permission.files': 'Word Lookup reads the word you lasso on the page.',
   'permission.write':
-    'Word Lookup saves your settings in MyStyle/Lookup and puts each picture in your note.',
+    'Word Lookup puts each picture in your note.',
   'permission.pictures':
     'Word Lookup searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
   /** Written on the note below the word: a word with no definition is never guessed (#115). */

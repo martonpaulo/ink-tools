@@ -1,5 +1,5 @@
 /**
- * The person's settings, as `MyStyle/Ink2Pic/settings.json` keeps them (#68, #70): their shape,
+ * The person's settings, as the private folder's `settings.json` keeps them (#68, #70, #22): their shape,
  * their defaults, the one step of each Settings tap, and the reading of a file that may be
  * hand-edited. Pure; the device store is picture-search's `createSettingsStore`, through
  * `src/profile.ts` (#142). A key or a value it does not

@@ -583,7 +583,10 @@ the note shows through, is still to test.
   `MyStyle/Retouch/history.json`, 5 s after the write) [measured, 2026-11-16].
   Retouch keeps its working files in its private folder since [#198](https://github.com/martonpaulo/ink-tools/issues/198); whether
   the note app takes an inserted PNG from there is [to test, [#198](https://github.com/martonpaulo/ink-tools/issues/198)].
-- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)].
+- A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)]. It takes a
+  child changed on the tablet since the last sync and the folder deleted and recreated on the
+  cloud side (the launcher's `SingleSyncTask`, [#22](https://github.com/martonpaulo/ink-tools/issues/22)), so Ink2Pic and Word Lookup keep
+  `settings.json` in the private folder and read the newest conflict copy's when theirs is gone.
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/inkctl/README.md`].
 

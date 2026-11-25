@@ -42,7 +42,7 @@ const FILE_READ: Need = {
   permission: PERMISSION_FILE_READ,
   reason: copy['permission.files'],
 };
-/** The settings file is written to MyStyle/Lookup, and each picture goes in the note (#142). */
+/** Each picture goes in the note (#142); the settings live in the private folder (#22). */
 const FILE_WRITE: Need = {
   permission: PERMISSION_FILE_WRITE,
   reason: copy['permission.write'],

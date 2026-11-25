@@ -39,7 +39,7 @@ const sourceLabel = (name: string): string =>
  * Lookup's Settings view: one switch per lasso button, every size and colour from the shared ui-kit
  * (#93), named as its button (#167): «Insert Sticker», «Insert Image» (#111), «Choose Image»,
  * «Insert Definition» (#115), then one «Translate ES→PT» switch per direction (#174). Each switch
- * registers or removes its button and is saved to MyStyle/Lookup/settings.json (#142). On open, the
+ * registers or removes its button and is saved to the private folder's settings.json (#142, #22). On open, the
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
  * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156); while a
  * no-view button works, it is the «Loading…» strip (#103). Back closes Settings, as it leaves the

@@ -1,6 +1,9 @@
 import {NativeModules} from 'react-native';
 import {
+  conflictCopies,
+  createSettingsStore,
   logLines,
+  SettingsPlace,
   settingsPath,
   getSettings,
   INK2PIC_SETTINGS,
@@ -16,6 +19,7 @@ import {
   styleFlags,
 } from '../src/settings/settings';
 import type {TextStore} from '@ink-tools/picture-search';
+import {fail, ok} from '@ink-tools/sn-adapter/official';
 
 function memory(files: Record<string, string> = {}): TextStore {
   return {
@@ -195,6 +199,92 @@ describe('the settings file (#68)', () => {
     resetSettingsForTests();
     expect((await getSettings()).languages).toEqual(['pt', 'en']);
     delete NativeModules.Ink2PicFiles;
+  });
+});
+
+describe('settings live in the private folder, out of MyStyle (#22)', () => {
+  const ROOT = '/storage/emulated/0';
+  const PRIVATE = '/data/plugins/ink2pic';
+  const OWN = `${PRIVATE}/settings.json`;
+  const SHARED = `${ROOT}/MyStyle/Ink2Pic/settings.json`;
+  const large = serializeSettings({...defaultSettings(null), size: 'large'});
+  const small = serializeSettings({...defaultSettings(null), size: 'small'});
+
+  function place(
+    files: Record<string, string>,
+    names: string[] | null = null,
+    dir = ok(PRIVATE),
+  ): SettingsPlace & {written: string[]} {
+    const written: string[] = [];
+    return {
+      written,
+      storage: {
+        readText: async path => files[path] ?? null,
+        writeText: async (path, text) => {
+          written.push(path);
+          files[path] = text;
+        },
+      },
+      privateDir: async () => dir,
+      listDir: async () => ok(names),
+      sharedRoot: ROOT,
+    };
+  }
+
+  it('moves the shared file into the private folder once, and never writes in MyStyle again', async () => {
+    const files: Record<string, string> = {[SHARED]: large};
+    const where = place(files);
+    const store = createSettingsStore(INK2PIC_SETTINGS, where);
+    expect((await store.getSettings()).size).toBe('large');
+    expect(files[OWN]).toBe(large);
+    await store.saveSettings({...defaultSettings(null), size: 'small'});
+    expect(where.written).toEqual([OWN, OWN]);
+    // The shared file is left as it was; the next runtime reads the private one.
+    expect(files[SHARED]).toBe(large);
+    store.resetSettingsForTests();
+    expect((await store.getSettings()).size).toBe('small');
+    expect(where.written).toEqual([OWN, OWN]);
+  });
+
+  it('reads the newest conflict copy when the shared file is gone', async () => {
+    const old = `${ROOT}/MyStyle/Ink2Pic_CONFLICT_20261109223635230/settings.json`;
+    const newer = `${ROOT}/MyStyle/Ink2Pic_CONFLICT_20261110080000000/settings.json`;
+    const files: Record<string, string> = {[old]: small, [newer]: large};
+    const names = [
+      'Ink2Pic',
+      'Ink2Pic_CONFLICT_20261109223635230',
+      'Ink2Pic_CONFLICT_20261110080000000',
+      'Lookup_CONFLICT_20261111000000000',
+    ];
+    const store = createSettingsStore(INK2PIC_SETTINGS, place(files, names));
+    expect((await store.getSettings()).size).toBe('large');
+    expect(files[OWN]).toBe(large);
+    expect(logLines().join('\n')).toContain(`settings: moved from ${newer}`);
+  });
+
+  it('keeps the shared path with no private folder, and the defaults with no file anywhere', async () => {
+    const files: Record<string, string> = {[SHARED]: large};
+    const shared = place(files, null, fail(1, 'no dir'));
+    const store = createSettingsStore(INK2PIC_SETTINGS, shared);
+    expect((await store.getSettings()).size).toBe('large');
+    await store.saveSettings({...defaultSettings(null), size: 'small'});
+    expect(shared.written).toEqual([SHARED]);
+
+    const empty = place({});
+    const fresh = createSettingsStore(INK2PIC_SETTINGS, empty);
+    expect(await fresh.getSettings()).toEqual(defaultSettings(null));
+    expect(empty.written).toEqual([]);
+  });
+
+  it('conflictCopies takes only this folder\'s copies, newest first', () => {
+    expect(
+      conflictCopies('Ink2Pic', [
+        'Ink2Pic_CONFLICT_20261109223635230',
+        'Ink2Pic_CONFLICT_2026',
+        'Ink2Pic_CONFLICT_20261201000000000',
+        'Ink2Picx_CONFLICT_20261201000000000',
+      ]),
+    ).toEqual(['Ink2Pic_CONFLICT_20261201000000000', 'Ink2Pic_CONFLICT_20261109223635230']);
   });
 });
 

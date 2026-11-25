@@ -42,8 +42,9 @@ gives each direction of ink-core's `ALL_DIRECTIONS` its id after «Choose Image�
 reads the lasso, translates it in that one direction through ink-core's shared flow (`translateAll`:
 Wiktionary, then Apertium for PT-ES; a ZH input through the pinyin index) and inserts the line in
 the same 640 px box below the word as the definition (`src/textBox.ts`); its device round is open.
-Each button follows its Settings switch (`src/buttons.ts`); the switches live in
-`MyStyle/Lookup/settings.json` (`src/settings.ts`) with the `directions` map, the picture modes on
+Each button follows its Settings switch (`src/buttons.ts`); the switches live in `settings.json`
+in the private plugin folder, moved once from `MyStyle/Lookup/` or its newest `_CONFLICT_` copy
+([#22](https://github.com/martonpaulo/ink-tools/issues/22), picture-search's settings store) (`src/settings.ts`) with the `directions` map, the picture modes on
 by default, the definition off, the summary on, ES→PT, ZH→PT and PT→ZH on, PT→ES off. `src/profile.ts`
 is Lookup's entry into picture-search's file store and insert tier ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): folder
 `MyStyle/Lookup`, native modules `LookupFiles` and `LookupImage`, registered by
