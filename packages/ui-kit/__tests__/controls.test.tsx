@@ -248,6 +248,8 @@ describe('the native controls (#273)', () => {
     const rows = three.root.findAll(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.rowHeight);
     expect(rows).toHaveLength(3);
     rows.forEach(row => expect(StyleSheet.flatten(row.props.style).borderBottomWidth).toBeUndefined());
+    // No padding adds to the native height: a row is 162 px on the Manta, not 162 plus padding.
+    rows.forEach(row => expect(StyleSheet.flatten(row.props.style).paddingVertical).toBeUndefined());
   });
 
   it('centres the title on the full band, whatever sits at its edges, in the native size and weight (#275)', () => {

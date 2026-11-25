@@ -45,7 +45,6 @@ export const shared = StyleSheet.create({
   /** A list row with the solid line under it, the last row too, as in the native Settings (#272). */
   listRow: {
     minHeight: metrics.rowHeight,
-    paddingVertical: metrics.rowPadding,
     borderBottomWidth: metrics.separator,
     borderColor: metrics.ink,
   },

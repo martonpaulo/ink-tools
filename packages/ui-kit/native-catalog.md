@@ -61,7 +61,7 @@ cannot change now, which is `gray` `#999999` (Date & Time › Time Zone under ne
 | A plugin's «Delete» row | `sp_px_36`, 22.36 sp | `plugin_detail_delete` | none yet |
 | A menu's title, «Page» | about 32 px glyph height, bold | the note's Page menu | none yet: no Ink Tools menu |
 | A menu's item | about 32 px glyph height, regular | the note's Page menu | none yet |
-| Ink Tools' own hints and status lines | none: the native Settings show no grey hint | | `hint`, in the context grey |
+| Ink Tools' own hints and status lines | none: the native Settings show no grey hint but a value that cannot change, `sp_px_30` | | `hint`, the subtitle's size in the context grey |
 
 ## Title bar
 
@@ -72,7 +72,7 @@ Crop: Language & Region, `0, 0, 1920, 133`.
   (`markStroke`), its centre 70 px from the leading edge (`closeCentre`), centred on the band's
   height.
 - Two levels («× Settings ‹ Language & Region»): the left pane's part is 552 px wide
-  (`navPaneWidth`), the × then the pane's title starting at 142 px; the page's part starts after
+  (`navPaneWidth`), the × then the pane's title starting at 142 px (`paneTitleStart`); the page's part starts after
   the 2 px pane divider, its ‹ (31 x 56 px, `backMarkHeight`) starting 51 px in, in line with the
   rows' text, and its title centred on that part, not on the screen.
 - One level, as an Ink Tools plugin's screen: the × at the leading edge and the title centred on

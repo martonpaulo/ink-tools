@@ -1,5 +1,5 @@
 /**
- * The native list row (#273): a title, an optional grey subtitle under it, a leading slot for the ✓
+ * The native list row (#273): a title, an optional subtitle under it, a leading slot for the ✓
  * of a chosen item and a trailing slot for its control (Chevron, Switch, Radio, an IconButton). A
  * row with `onPress` is one button; without it, only its control acts. It has the native row's fixed
  * height and draws no line: `RowGroup` draws the line after each row (#272, #275).
@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: metrics.controlGap,
+    // The native fixed height holds the touch target and two lines; no padding adds to it (#272).
     minHeight: metrics.rowHeight,
-    paddingVertical: metrics.rowPadding,
   },
   target: {minWidth: metrics.touchTarget},
   texts: {flex: 1},

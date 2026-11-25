@@ -90,7 +90,8 @@ const styles = StyleSheet.create({
   level: {flex: 1, flexDirection: 'row', alignItems: 'center'},
   slot: {flexDirection: 'row', alignItems: 'center'},
   pane: {width: metrics.navPaneWidth, flexDirection: 'row', alignItems: 'center'},
-  paneTitle: {flexShrink: 1},
+  // The pane's title starts where the native one does, after the ×'s target.
+  paneTitle: {flexShrink: 1, marginLeft: Math.max(0, metrics.paneTitleStart - CLOSE_SLOT)},
   close: {
     marginLeft: CLOSE_INSET,
     minWidth: metrics.touchTarget,

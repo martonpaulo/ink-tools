@@ -18,7 +18,7 @@ export type RowGroupProps = {
   caption?: string;
   /** The rows; `false`, `null` and `undefined` are left out, so a row can be conditional. */
   children?: React.ReactNode;
-  /** What explains the group, grey, right under its last row: one paragraph each. */
+  /** What explains the group, right under its last row: one paragraph each. */
   note?: string | readonly string[];
 };
 
@@ -67,7 +67,7 @@ function LightLine(): React.JSX.Element {
 
 export type SwitchRowProps = {
   title: string;
-  /** A hint or the current state in words, grey under the title. */
+  /** A hint or the current state in words, under the title. */
   subtitle?: string;
   value: boolean;
   onChange: (value: boolean) => void;

@@ -193,7 +193,6 @@ final class Ink {
     // The native row's fixed height (#272); text that grows with the system scale grows it.
     row.setMinimumHeight(px(context, Tokens.ROW_HEIGHT_MM));
     int space = space(context);
-    row.setPadding(0, space, 0, space);
     row.addView(text(context, title, Role.ROW_TITLE), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
     LinearLayout.LayoutParams end = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);

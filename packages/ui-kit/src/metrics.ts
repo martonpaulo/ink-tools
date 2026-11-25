@@ -68,6 +68,7 @@ export const metrics = {
   titleBarHeight: mm(MM.titleBarHeight.value),
   navMarkWidth: mm(MM.navMarkWidth.value),
   navPaneWidth: mm(MM.navPaneWidth.value),
+  paneTitleStart: mm(MM.paneTitleStart.value),
   /** The stroke of the drawn marks: ×, ‹, ›, the radio's ring (#272). */
   markStroke: mm(MM.markStroke.value),
   closeMark: mm(MM.closeMark.value),
