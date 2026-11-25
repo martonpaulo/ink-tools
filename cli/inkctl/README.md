@@ -104,8 +104,10 @@ copy. `inkctl google login` keeps the Google sign-in in the login Keychain, serv
 | `SUPERNOTE_READ_ONLY` | environment | When set, refuses every command that changes the tablet. |
 | `INKCTL_BROWSER` | environment | A program that `google login` runs with the consent address, instead of the system browser. The tests set it to a stub. |
 | `~/.config/inkctl/address` | your computer | The tablet's address, on its first line. |
-| `account-sync-google-oauth-client` | login Keychain, service `ink-tools` | The JSON of the Google OAuth client of type «Desktop app», which `google login` reads. |
-| `account-sync-google-refresh-token` | login Keychain, service `ink-tools` | The Google refresh token `google login` writes. While the consent screen is in «Testing», it lasts 7 days. |
+| `ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT` | login Keychain, service `ink-tools` | The JSON of the Google OAuth client of type «Desktop app», which `google login` reads. |
+| `ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN` | login Keychain, service `ink-tools` | The Google refresh token `google login` writes. While the consent screen is in «Testing», it lasts 7 days. |
+
+Every Keychain item's name, description and rotation is in [Account Sync sign-in secrets](../../docs/security.md#account-sync-sign-in-secrets).
 
 ---
 
