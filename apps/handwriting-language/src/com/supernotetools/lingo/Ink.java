@@ -13,6 +13,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -213,6 +214,37 @@ final class Ink {
     LinearLayout row = row(context, title, radio(context, checked));
     role(row, RADIO_ROLE, checked);
     return row;
+  }
+
+  /** A switch row's new state, in place (#281): only its trailing switch is drawn again. */
+  static void setSwitch(LinearLayout row, boolean on) {
+    replaceTrailing(row, switchBox(row.getContext(), on));
+    role(row, SWITCH_ROLE, on);
+  }
+
+  /** A radio row's new state, in place (#281). */
+  static void setRadio(LinearLayout row, boolean checked) {
+    replaceTrailing(row, radio(row.getContext(), checked));
+    role(row, RADIO_ROLE, checked);
+  }
+
+  /** A row's new title, in place (#281): the title is the row's first view (`plainRow`). */
+  static void setTitle(LinearLayout row, String title) {
+    title(row).setText(title);
+  }
+
+  /** A row's title view, the first view `plainRow` adds. */
+  static TextView title(LinearLayout row) {
+    return (TextView) row.getChildAt(0);
+  }
+
+  /** Swaps a row's trailing control, the last view `plainRow` adds, keeping its place. */
+  private static void replaceTrailing(LinearLayout row, View trailing) {
+    int last = row.getChildCount() - 1;
+    ViewGroup.LayoutParams params = row.getChildAt(last).getLayoutParams();
+    row.removeViewAt(last);
+    trailing.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    row.addView(trailing, params);
   }
 
   /**

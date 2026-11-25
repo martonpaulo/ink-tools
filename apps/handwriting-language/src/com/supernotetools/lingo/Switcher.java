@@ -25,7 +25,7 @@ final class Switcher {
     long start = SystemClock.elapsedRealtime();
     try {
       if (!Environment.isExternalStorageManager()) {
-        throw new IOException(Copy.FILES_OFF);
+        throw new FileFailure(FileFailure.Kind.FILES_OFF, "all-files access is off");
       }
       LanguageFiles.Switch step = files().cycle(new Prefs(context).cycle());
       context.sendBroadcast(new Intent(CHANGED));

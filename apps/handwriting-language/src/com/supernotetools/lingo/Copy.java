@@ -15,6 +15,7 @@ final class Copy {
   static final String SWITCH_LANGUAGE = "Switch Language";
   static final String CLOSE = "Close";
   static final String NOT_READ = "Not read: All-files access is off.";
+  static final String FOLDER_NOT_READ = "Not read: the language folder could not be read.";
   static final String UNKNOWN = "Unknown: the language folder holds more than one language.";
   static final String BUTTON_SECTION = "Floating Button";
   static final String BUTTON_WRITING = "Only where you write: the handwriting keyboard, a note, Digest, To-Do, Email";
@@ -29,7 +30,7 @@ final class Copy {
           + "adb shell settings put secure accessibility_enabled 1";
   static final String CYCLE_SECTION = "Languages in the Cycle";
   static final String CYCLE_HELP = "Only installed languages are listed. Install more in Settings, Handwriting language.";
-  static final String CYCLE_NOT_READ = "The language folder could not be read, so the languages cannot be listed.";
+  static final String CYCLE_NOT_READ = "The language folder could not be read, so the languages cannot be listed. Close this screen and open it again; if it still fails, restart the tablet.";
   static final String CYCLE_NO_FILES = "Turn on All-files access above to list the languages.";
   static final String CYCLE_LAST = "Keep at least one language in the cycle.";
   static final String FILES_OFF = "All-files access is off, so the language cannot be switched.";
@@ -45,6 +46,32 @@ final class Copy {
   static final String BUTTON_FAILED = "!";
   static final String BUTTON_DESCRIPTION = "Handwriting language %s. Tap to switch to the next language.";
   static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language from the sidebar.";
+
+  static final String FAILURE_CANNOT_READ = "The language folder could not be read. Close this screen and open it again; if it still fails, restart the tablet.";
+  static final String FAILURE_CANNOT_CREATE = "The new language could not be set. Tap Switch Language again; if it keeps failing, restart the tablet.";
+  static final String FAILURE_CANNOT_DELETE = "The switch did not finish, so two languages are set. Tap Switch Language again; if it keeps failing, restart the tablet.";
+  static final String FAILURE_NOT_INSTALLED = "That language is not installed. Install it in Settings, Handwriting language, then try again.";
+  static final String FAILURE_NOTHING_TO_CYCLE = "None of the languages in the cycle is installed. Install one in Settings, Handwriting language, or turn on an installed language below.";
+  static final String FAILURE_OTHER = "The language could not be switched. Try again, or restart the tablet if it keeps failing.";
+
+  static String failure(FileFailure.Kind kind) {
+    switch (kind) {
+      case CANNOT_READ:
+        return FAILURE_CANNOT_READ;
+      case CANNOT_CREATE:
+        return FAILURE_CANNOT_CREATE;
+      case CANNOT_DELETE:
+        return FAILURE_CANNOT_DELETE;
+      case NOT_INSTALLED:
+        return FAILURE_NOT_INSTALLED;
+      case NOTHING_TO_CYCLE:
+        return FAILURE_NOTHING_TO_CYCLE;
+      case FILES_OFF:
+        return FILES_OFF;
+      default:
+        return FAILURE_OTHER;
+    }
+  }
 
   static String buttonMode(ButtonRule.Mode mode) {
     switch (mode) {

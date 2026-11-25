@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -17,8 +18,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,6 +48,14 @@ public final class SettingsActivity extends Activity {
   private LinearLayout page;
   private String error;
   private Place errorPlace;
+  /**
+   * The rows a tap changes in place (#281): a full rebuild redraws the whole e-ink page and sends
+   * screen-reader focus back to the top, so it stays for a resume and a change of the notes.
+   */
+  private LinearLayout activeRow;
+  private boolean activeReadFailed;
+  private final Map<ButtonRule.Mode, LinearLayout> modeRows = new EnumMap<>(ButtonRule.Mode.class);
+  private final Map<String, LinearLayout> languageRows = new HashMap<>();
 
   @Override
   protected void onCreate(Bundle state) {
@@ -86,31 +99,39 @@ public final class SettingsActivity extends Activity {
   }
 
   /**
-   * Rebuilt on each resume, since a permission may have changed in between. Each section is one
+   * Rebuilt on each resume, since a permission may have changed in between; a tap changes only its
+   * own rows unless an error or a note comes or goes (#281). Each section is one
    * group (`Ink.group`): its caption, its rows, then the note that explains it; a missing
    * permission or an error follows under it, so no text sits between a caption and its rows (#275).
    */
   private void render() {
     page.removeAllViews();
+    modeRows.clear();
+    languageRows.clear();
     add(Ink.text(this, Copy.INTRO, Ink.Role.SUBTITLE));
     boolean files = Environment.isExternalStorageManager();
     boolean overlay = Settings.canDrawOverlays(this);
 
     List<String> installed = null;
     String active = null;
-    String readFailure = null;
+    activeReadFailed = false;
     try {
       active = Switcher.current();
       installed = Switcher.installed();
     } catch (IOException readError) {
-      readFailure = readError.getMessage();
+      // The row says what is missing; the cycle note under it gives the next step (#280).
+      Log.e(Switcher.TAG, "surface=screen read error=" + readError.getMessage());
+      activeReadFailed = true;
     }
     // The native small filled button at the row's trailing edge, as Wi-Fi's «Scan» (#272, #275).
     Button next = Ink.smallButton(this, Copy.SWITCH_LANGUAGE, files);
     next.setOnClickListener(view -> switchLanguage());
     String language = active == null ? Copy.UNKNOWN : LanguageCycle.name(active);
-    String title = readFailure == null ? language : files ? readFailure : Copy.NOT_READ;
-    addGroup(Ink.group(this, Copy.ACTIVE, Collections.singletonList(Ink.actionRow(this, title, next)), null));
+    String title = !activeReadFailed ? language : files ? Copy.FOLDER_NOT_READ : Copy.NOT_READ;
+    activeRow = Ink.actionRow(this, title, next);
+    // A switch changes the title in place (#281): a screen reader says the new language.
+    Ink.title(activeRow).setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+    addGroup(Ink.group(this, Copy.ACTIVE, Collections.singletonList(activeRow), null));
     if (!files) {
       missing(Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
     }
@@ -121,10 +142,8 @@ public final class SettingsActivity extends Activity {
     List<View> modes = new ArrayList<>();
     for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
       LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), mode == chosenMode);
-      row.setOnClickListener(view -> {
-        setButton(mode);
-        render();
-      });
+      row.setOnClickListener(view -> chooseMode(mode));
+      modeRows.put(mode, row);
       modes.add(row);
     }
     addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
@@ -154,6 +173,7 @@ public final class SettingsActivity extends Activity {
         // The name only: a code such as pt_BR stays in the log and the preferences (owner, #275).
         LinearLayout row = Ink.switchRow(this, LanguageCycle.name(code), chosen.contains(code));
         row.setOnClickListener(view -> toggle(code));
+        languageRows.put(code, row);
         languages.add(row);
       }
     }
@@ -171,14 +191,37 @@ public final class SettingsActivity extends Activity {
 
   /** «Switch Language»: the next language in the cycle, as a tap on the floating button does. */
   private void switchLanguage() {
+    String to;
     try {
-      Switcher.next(this, "screen");
-      error = null;
+      to = Switcher.next(this, "screen");
     } catch (IOException switchError) {
-      fail(Place.SWITCH, switchError.getMessage());
+      fail(Place.SWITCH, FileFailure.sentence(switchError));
       return;
     }
-    render();
+    if (error != null || activeReadFailed) {
+      // The error, or the unread title, leaves the page: only a rebuild removes it.
+      error = null;
+      render();
+      return;
+    }
+    Ink.setTitle(activeRow, LanguageCycle.name(to));
+  }
+
+  /** A radio row: only the two rows that change, unless the notes under the group change too. */
+  private void chooseMode(ButtonRule.Mode mode) {
+    ButtonRule.Mode before = new Prefs(this).button();
+    setButton(mode);
+    if (!modeNotes(before).equals(modeNotes(mode))) {
+      render();
+      return;
+    }
+    Ink.setRadio(modeRows.get(before), false);
+    Ink.setRadio(modeRows.get(mode), true);
+  }
+
+  /** What the page shows under the floating-button group for `mode`: the watcher note, the reset. */
+  private List<Boolean> modeNotes(ButtonRule.Mode mode) {
+    return Arrays.asList(mode == ButtonRule.Mode.WRITING && !watcherOn(), mode == ButtonRule.Mode.HIDDEN);
   }
 
   private void setButton(ButtonRule.Mode mode) {
@@ -222,12 +265,17 @@ public final class SettingsActivity extends Activity {
         return;
       }
     } catch (IOException readError) {
-      fail(Place.CYCLE, readError.getMessage());
+      Log.e(Switcher.TAG, "surface=screen read error=" + readError.getMessage());
+      fail(Place.CYCLE, FileFailure.sentence(readError));
       return;
     }
-    error = null;
     prefs.setCycle(chosen);
-    render();
+    if (error != null) {
+      error = null;
+      render();
+    } else {
+      Ink.setSwitch(languageRows.get(code), chosen.contains(code));
+    }
     // The button's label depends on the cycle (CN and TW when both Chinese codes are in it).
     if (prefs.button() != ButtonRule.Mode.HIDDEN) {
       sendBroadcast(new Intent(Switcher.CHANGED).setPackage(getPackageName()));

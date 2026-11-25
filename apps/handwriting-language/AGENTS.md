@@ -31,7 +31,11 @@ Two surfaces ship in one build:
   button's three choices as radio rows and «Reset Button Position», a switch row (the native pill with
   «ON» or «OFF» beside it) for each installed language in the cycle, each missing permission with
   the button to its system screen and the command that grants it, and the command that turns on writing detection when it
-  is off. An error shows in bold beside the control whose action failed. Each section is one group,
+  is off. An error shows in bold beside the control whose action failed. It is a plain sentence with the
+  next step, from `Copy`; the detail stays in the `LingoApp` log line
+  ([#280](https://github.com/martonpaulo/ink-tools/issues/280)). A tap redraws only its own rows; the
+  page is rebuilt when it shows again or an error or note comes or goes
+  ([#281](https://github.com/martonpaulo/ink-tools/issues/281)). Each section is one group,
   as ui-kit's `RowGroup` draws it: the caption in ink at the bottom of its box, its rows of the
   native height with the light dotted line between two of them, its note under the last row,
   and the solid line after the group; permissions and errors follow under the group. The page
@@ -127,7 +131,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.8` gives the `versionName` `0.1.0 beta 8` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.9` gives the `versionName` `0.1.0 beta 9` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.
