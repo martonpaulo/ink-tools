@@ -1,8 +1,8 @@
 /**
  * The native list row (#273): a title, an optional grey subtitle under it, a leading slot for the ✓
  * of a chosen item and a trailing slot for its control (Chevron, Switch, Radio, an IconButton). A
- * row with `onPress` is one button; without it, only its control acts. It draws no line: `RowGroup`
- * draws the separators, only between the rows of one group (#275).
+ * row with `onPress` is one button; without it, only its control acts. It has the native row's fixed
+ * height and draws no line: `RowGroup` draws the line after each row (#272, #275).
  */
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -23,7 +23,7 @@ export function ListRow({title, subtitle, leading, trailing, onPress}: ListRowPr
       {leading}
       <View style={styles.texts}>
         <Text style={shared.text}>{title}</Text>
-        {subtitle !== undefined && <Text style={[shared.hint, styles.subtitle]}>{subtitle}</Text>}
+        {subtitle !== undefined && <Text style={shared.subtitle}>{subtitle}</Text>}
       </View>
       {trailing}
     </>
@@ -47,11 +47,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: metrics.controlGap,
-    minHeight: metrics.touchTarget,
+    minHeight: metrics.rowHeight,
     paddingVertical: metrics.rowPadding,
   },
   target: {minWidth: metrics.touchTarget},
   texts: {flex: 1},
-  /** The native subtitle's size (#275). */
-  subtitle: {fontSize: metrics.fontSubtitle},
 });

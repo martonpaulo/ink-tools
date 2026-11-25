@@ -200,7 +200,7 @@ describe('WorkingStrip (#103)', () => {
       await working.run(() => Promise.reject(new Error('1503'))).catch(() => undefined);
     });
     const shown = tree.root.findAllByType(Text).map(node => node.props.children);
-    expect(shown).toEqual(['×', 'Failed.', '1503']);
+    expect(shown).toEqual(['Failed.', '1503']);
     const [close] = tree.root.findAll(
       node => node.props.accessibilityLabel === CLOSE_TEXT && typeof node.props.onPress === 'function',
     );

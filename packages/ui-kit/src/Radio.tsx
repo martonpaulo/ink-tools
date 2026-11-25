@@ -1,4 +1,4 @@
-/** The native radio button (#273): an ink ring, with a filled dot when chosen, in a touch target. */
+/** The native radio button (#273, #272): an ink ring, with a filled dot when chosen, in a touch target, at the native sizes. */
 import React from 'react';
 import {Pressable, StyleSheet, View} from 'react-native';
 import {metrics} from './metrics';
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     width: metrics.radioSize,
     height: metrics.radioSize,
     borderRadius: metrics.radioSize / 2,
-    borderWidth: metrics.border,
+    borderWidth: metrics.markStroke,
     borderColor: metrics.ink,
     justifyContent: 'center',
     alignItems: 'center',

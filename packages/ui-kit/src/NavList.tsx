@@ -1,6 +1,7 @@
 /**
- * The native left navigation list (#273): an optional icon and a label per item, a dotted separator
- * under each, and the open item marked by an ink bar at its trailing edge, never by grey alone.
+ * The native left navigation list (#273, #272): an optional icon and a label per item, the native
+ * dotted line under each, the last too, and the open item marked by an ink bar at its trailing edge,
+ * never by grey alone.
  */
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -43,11 +44,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: metrics.controlGap,
-    minHeight: metrics.touchTarget,
+    minHeight: metrics.rowHeight,
     minWidth: metrics.touchTarget,
     paddingHorizontal: metrics.controlPadding,
-    borderBottomWidth: metrics.border,
-    borderStyle: 'dotted',
+    borderBottomWidth: metrics.separator,
+    borderStyle: 'dashed',
     borderColor: metrics.ink,
   },
   label: {flex: 1},

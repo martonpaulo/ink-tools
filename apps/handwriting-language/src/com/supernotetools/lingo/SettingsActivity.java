@@ -56,8 +56,10 @@ public final class SettingsActivity extends Activity {
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
     page = new LinearLayout(this);
     page.setOrientation(LinearLayout.VERTICAL);
+    // The native side margin; each group's caption box is the space above it (#272).
+    int side = Ink.px(this, Tokens.SIDE_MARGIN_MM);
     int space = Ink.space(this);
-    page.setPadding(space, space, space, space);
+    page.setPadding(side, 0, side, space);
     ScrollView scroll = new ScrollView(this);
     scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
     scroll.addView(page);
@@ -90,7 +92,7 @@ public final class SettingsActivity extends Activity {
    */
   private void render() {
     page.removeAllViews();
-    add(Ink.text(this, Copy.INTRO, false));
+    add(Ink.text(this, Copy.INTRO, Ink.Role.SUBTITLE));
     boolean files = Environment.isExternalStorageManager();
     boolean overlay = Settings.canDrawOverlays(this);
 
@@ -103,7 +105,8 @@ public final class SettingsActivity extends Activity {
     } catch (IOException readError) {
       readFailure = readError.getMessage();
     }
-    Button next = Ink.button(this, Copy.SWITCH_LANGUAGE, true, files);
+    // The native small filled button at the row's trailing edge, as Wi-Fi's «Scan» (#272, #275).
+    Button next = Ink.smallButton(this, Copy.SWITCH_LANGUAGE, files);
     next.setOnClickListener(view -> switchLanguage());
     String language = active == null ? Copy.UNKNOWN : LanguageCycle.name(active);
     String title = readFailure == null ? language : files ? readFailure : Copy.NOT_READ;
@@ -130,7 +133,7 @@ public final class SettingsActivity extends Activity {
     }
     if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
       bold(Copy.WATCHER_OFF);
-      add(Ink.text(this, Copy.WATCHER_FROM_COMPUTER, false));
+      add(Ink.text(this, Copy.WATCHER_FROM_COMPUTER, Ink.Role.ROW_TITLE));
       command(Copy.WATCHER_COMMANDS);
     }
     boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
@@ -141,7 +144,7 @@ public final class SettingsActivity extends Activity {
     });
     addButton(reset);
     if (chosenMode == ButtonRule.Mode.HIDDEN) {
-      add(Ink.text(this, Copy.RESET_OFF, true));
+      add(Ink.text(this, Copy.RESET_OFF, Ink.Role.HINT));
     }
 
     List<View> languages = new ArrayList<>();
@@ -160,7 +163,7 @@ public final class SettingsActivity extends Activity {
     errorAt(Place.CYCLE, null);
     try {
       String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-      add(Ink.text(this, Copy.VERSION + " " + version, true));
+      add(Ink.text(this, Copy.VERSION + " " + version, Ink.Role.HINT));
     } catch (PackageManager.NameNotFoundException impossible) {
       throw new IllegalStateException(impossible);
     }
@@ -244,7 +247,7 @@ public final class SettingsActivity extends Activity {
     });
     addButton(button);
     errorAt(Place.PERMISSION, null);
-    add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, false));
+    add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, Ink.Role.ROW_TITLE));
     command(Copy.grantCommand(op));
   }
 
@@ -266,14 +269,14 @@ public final class SettingsActivity extends Activity {
   }
 
   private void bold(String value) {
-    TextView view = Ink.text(this, value, false);
+    TextView view = Ink.text(this, value, Ink.Role.ROW_TITLE);
     view.setTypeface(Typeface.DEFAULT_BOLD);
     add(view);
   }
 
   /** A command to type on the computer: monospace and selectable. */
   private void command(String value) {
-    TextView view = Ink.text(this, value, false);
+    TextView view = Ink.text(this, value, Ink.Role.ROW_TITLE);
     view.setTypeface(Typeface.MONOSPACE);
     view.setTextIsSelectable(true);
     add(view);

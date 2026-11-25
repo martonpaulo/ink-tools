@@ -29,16 +29,16 @@ export const metrics = {
   controlHeight: mm(MM.controlHeight.value),
   rowButtonWidth: mm(MM.rowButtonWidth.value),
   border,
-  /** The line between two rows of one group, thinner than a border, in whole device pixels so every line of a group is as thick (#275). */
+  /** The solid line after a group's last row, in whole device pixels so every line is as thick (#272, #275). */
   separator: Math.max(1, Math.round(MM.separator.value * PX_PER_MM)) * SCALE,
+  /** The light dotted line between two rows of one group, in whole device pixels (#272). */
+  lightLine: Math.max(1, Math.round(MM.lightLine.value * PX_PER_MM)) * SCALE,
   selectedBarHeight: border * RATIO.selectedBarBorders.value,
 
   /** Between the screen's edge and its content. */
   screenPadding: space,
   /** Between the stacked parts of a screen: the bar, the status line, the grid, the page buttons. */
   sectionGap: space,
-  /** Above a group of rows, so each group reads apart from the one above (#275). */
-  groupGap: space * RATIO.groupGapSpaces.value,
   /** Between the controls of one row. */
   controlGap: space,
   /** Inside a button or the field, before the label or text; the selected bar's inset too. */
@@ -47,6 +47,12 @@ export const metrics = {
   selectedBarInset: Math.round(space / 2),
   /** Above and below the text of a list row. */
   rowPadding: space,
+  /** A list row's fixed height, as the native row, one or two lines of text (#272). */
+  rowHeight: mm(MM.rowHeight.value),
+  /** From a pane's edge to a row's text, and from a row's last control to the other edge (#272). */
+  sideMargin: mm(MM.sideMargin.value),
+  /** A section caption's box, its text at the bottom (#272). */
+  captionHeight: mm(MM.captionHeight.value),
   /** Between the tiles of the results grid. */
   tileGap: space,
 
@@ -61,9 +67,22 @@ export const metrics = {
 
   titleBarHeight: mm(MM.titleBarHeight.value),
   navMarkWidth: mm(MM.navMarkWidth.value),
+  navPaneWidth: mm(MM.navPaneWidth.value),
+  /** The stroke of the drawn marks: ×, ‹, ›, the radio's ring (#272). */
+  markStroke: mm(MM.markStroke.value),
+  closeMark: mm(MM.closeMark.value),
+  closeCentre: mm(MM.closeCentre.value),
+  backMarkHeight: mm(MM.backMarkHeight.value),
+  chevronHeight: mm(MM.chevronHeight.value),
+  /** Between a row's value and its ›, and between the switch's word and its track (#272). */
+  markGap: mm(MM.markGap.value),
   switchWidth: mm(MM.switchWidth.value),
+  switchHeight: mm(MM.switchHeight.value),
+  switchKnob: mm(MM.switchKnob.value),
   radioSize: mm(MM.radioSize.value),
   radioDot: mm(MM.radioDot.value),
+  smallButtonWidth: mm(MM.smallButtonWidth.value),
+  smallButtonHeight: mm(MM.smallButtonHeight.value),
   iconSize: mm(MM.iconSize.value),
   pageMarkHeight: border * RATIO.pageMarkBorders.value,
 
@@ -76,3 +95,18 @@ export const metrics = {
   /** Selected text in the field: a light grey, so the ink text stays readable over it. */
   selection: COLOUR.selection.value,
 } as const;
+
+type TextRole = keyof typeof tokens.text;
+type Font = keyof typeof MM;
+type Colour = keyof typeof COLOUR;
+
+/**
+ * One text style per native role (#272), from tokens.json's `text` group, which Ink.java reads too:
+ * its size and colour; every native role is regular weight.
+ */
+export const textStyles = Object.fromEntries(
+  Object.entries(tokens.text).map(([role, {value}]) => [
+    role,
+    {fontSize: mm(MM[value.font as Font].value), color: COLOUR[value.colour as Colour].value},
+  ]),
+) as Record<TextRole, {fontSize: number; color: string}>;

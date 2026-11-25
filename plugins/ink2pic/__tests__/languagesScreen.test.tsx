@@ -108,7 +108,7 @@ describe('LanguagesScreen (#68)', () => {
     }
   });
 
-  it('draws its section labels as headings in the context grey and regular weight, as the native caption (#50, #275)', () => {
+  it('draws its section labels as headings in ink and regular weight, as the native caption (#272, #275)', () => {
     const {tree} = screen(['en', 'pt']);
     const headings = tree.root.findAll(
       node => node.type === Text && node.props.accessibilityRole === 'header',
@@ -120,7 +120,7 @@ describe('LanguagesScreen (#68)', () => {
       node => node.props.children !== copy['languages.title'],
     )) {
       const style = StyleSheet.flatten(heading.props.style);
-      expect(style).toEqual(expect.objectContaining({color: metrics.context}));
+      expect(style).toEqual(expect.objectContaining({color: metrics.ink}));
       expect(style.fontWeight).toBeUndefined();
     }
   });

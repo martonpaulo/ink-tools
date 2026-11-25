@@ -1,9 +1,14 @@
 package com.supernotetools.lingo;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -17,8 +22,9 @@ import java.util.List;
 
 /**
  * The Supernote's native controls, drawn as `@ink-tools/ui-kit` draws them for the plugins
- * (#273, #275): the title bar, the list row, the group of rows under its caption, the switch, the
- * radio button and the bordered button. Every size, colour and control word comes from `Tokens`, which
+ * (#273, #275, #272): the title bar, the list row, the group of rows under its caption, the switch,
+ * the radio button, the bordered button and the small filled button, and the text style of each
+ * native role. Every size, colour, text style and control word comes from `Tokens`, which
  * scripts/build.cjs writes from packages/ui-kit/src/tokens.json, so this class holds no value of
  * its own. Black on white, no animation (docs/supernote.md › Display).
  */
@@ -31,7 +37,6 @@ final class Ink {
   private static final String SWITCH_ROLE = "android.widget.Switch";
   private static final String RADIO_ROLE = "android.widget.RadioButton";
   private static final String BUTTON_ROLE = "android.widget.Button";
-  private static final String CLOSE_GLYPH = "×";
 
   /**
    * Millimetres in pixels, rounded to whole layout units first, as metrics.ts does, so a control
@@ -55,55 +60,57 @@ final class Ink {
     return px(context, Tokens.SPACE_MM);
   }
 
-  static float bodySp(Context context) {
-    return sp(context, Tokens.BODY_FONT_MM);
-  }
-
-  static float largeSp(Context context) {
-    return bodySp(context) * Tokens.LARGE_FONT_RATIO;
-  }
-
   static int target(Context context) {
     return px(context, Tokens.TOUCH_TARGET_MM);
   }
 
-  /** Body text in ink, or in the context grey for a hint or a value. */
-  static TextView text(Context context, String value, boolean grey) {
+  /** The native text roles (tokens.json `text`, #272): each its size and colour, all regular weight. */
+  enum Role {
+    BAR_TITLE(Tokens.BAR_TITLE_STYLE_FONT_MM, Tokens.BAR_TITLE_STYLE_COLOUR),
+    CAPTION(Tokens.CAPTION_STYLE_FONT_MM, Tokens.CAPTION_STYLE_COLOUR),
+    ROW_TITLE(Tokens.ROW_TITLE_STYLE_FONT_MM, Tokens.ROW_TITLE_STYLE_COLOUR),
+    SUBTITLE(Tokens.SUBTITLE_STYLE_FONT_MM, Tokens.SUBTITLE_STYLE_COLOUR),
+    HINT(Tokens.HINT_STYLE_FONT_MM, Tokens.HINT_STYLE_COLOUR);
+
+    final float fontMm;
+    final int colour;
+
+    Role(float fontMm, int colour) {
+      this.fontMm = fontMm;
+      this.colour = colour;
+    }
+  }
+
+  /** Text in the style of its native role. */
+  static TextView text(Context context, String value, Role role) {
     TextView view = new TextView(context);
     view.setText(value);
-    view.setTextColor(grey ? CONTEXT : INK);
-    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, bodySp(context));
+    view.setTextColor(role.colour);
+    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp(context, role.fontMm));
     return view;
   }
 
   /**
-   * The black band (ui-kit `TitleBar`): × to close at the leading edge and the title centred on the
-   * band's full width, as the native title bar centres it in its parent, so the × never pushes it;
-   * the title in the native size and regular weight (owner, #275).
+   * The black band (ui-kit `TitleBar`): the drawn × at the leading edge, its centre where the native
+   * one sits (#272), and the title centred on the band's full width, as the native title bar centres
+   * it in its parent, so the × never pushes it; the title in the native size and regular weight
+   * (owner, #275).
    */
   static FrameLayout titleBar(Context context, String title, String closeName, Runnable onClose) {
     FrameLayout band = new FrameLayout(context);
     band.setBackgroundColor(INK);
     band.setMinimumHeight(px(context, Tokens.TITLE_BAR_HEIGHT_MM));
-    int space = space(context);
-    TextView close = new TextView(context);
-    close.setText(CLOSE_GLYPH);
-    close.setTextColor(PAPER);
-    close.setTextSize(TypedValue.COMPLEX_UNIT_SP, largeSp(context));
-    close.setGravity(Gravity.CENTER);
-    close.setMinWidth(target(context));
-    close.setMinHeight(target(context));
+    int target = target(context);
+    View close = new View(context);
+    close.setBackground(new CloseMark(px(context, Tokens.CLOSE_MARK_MM), px(context, Tokens.MARK_STROKE_MM)));
     close.setContentDescription(closeName);
     role(close, BUTTON_ROLE, null);
     close.setOnClickListener(view -> onClose.run());
-    FrameLayout.LayoutParams start = new FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL);
-    start.setMarginStart(space);
+    FrameLayout.LayoutParams start = new FrameLayout.LayoutParams(target, target, Gravity.START | Gravity.CENTER_VERTICAL);
+    int inset = Math.max(0, px(context, Tokens.CLOSE_CENTRE_MM) - target / 2);
+    start.setMarginStart(inset);
     band.addView(close, start);
-    TextView name = new TextView(context);
-    name.setText(title);
-    name.setTextColor(PAPER);
-    name.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp(context, Tokens.TITLE_FONT_MM));
+    TextView name = text(context, title, Role.BAR_TITLE);
     name.setGravity(Gravity.CENTER);
     // Two lines at most, never cut short (interface rule 9). Over the × and after it, as ui-kit
     // reads them; not clickable, so a tap reaches the × under it.
@@ -111,11 +118,48 @@ final class Ink {
     name.setClickable(false);
     name.setAccessibilityHeading(true);
     // Inset by the same width on both sides: centred on the band, never under the ×.
-    int edge = space + target(context);
+    int edge = inset + target;
     name.setPadding(edge, 0, edge, 0);
     band.addView(name, new FrameLayout.LayoutParams(
         FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
     return band;
+  }
+
+  /** The native ×: two paper strokes crossing in a square of the native size, centred in its view. */
+  static final class CloseMark extends Drawable {
+    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final int size;
+
+    CloseMark(int size, int stroke) {
+      this.size = size;
+      paint.setColor(PAPER);
+      paint.setStrokeWidth(stroke);
+      paint.setStrokeCap(Paint.Cap.BUTT);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+      float half = size / 2f;
+      float x = getBounds().exactCenterX();
+      float y = getBounds().exactCenterY();
+      canvas.drawLine(x - half, y - half, x + half, y + half, paint);
+      canvas.drawLine(x - half, y + half, x + half, y - half, paint);
+    }
+
+    @Override
+    public void setAlpha(int alpha) {
+      paint.setAlpha(alpha);
+    }
+
+    @Override
+    public void setColorFilter(ColorFilter filter) {
+      paint.setColorFilter(filter);
+    }
+
+    @Override
+    public int getOpacity() {
+      return PixelFormat.TRANSLUCENT;
+    }
   }
 
   /**
@@ -130,7 +174,10 @@ final class Ink {
     return row;
   }
 
-  /** A row whose trailing control acts by itself, such as «Switch Language» beside the active language. */
+  /**
+   * A row whose trailing control acts by itself, such as «Switch Language» beside the active
+   * language, as the native «Scan» sits in Wi-Fi's «Select Network…» row (#272).
+   */
   static LinearLayout actionRow(Context context, String title, View action) {
     return plainRow(context, title, action);
   }
@@ -143,10 +190,11 @@ final class Ink {
     LinearLayout row = new LinearLayout(context);
     row.setOrientation(LinearLayout.HORIZONTAL);
     row.setGravity(Gravity.CENTER_VERTICAL);
-    row.setMinimumHeight(target(context));
+    // The native row's fixed height (#272); text that grows with the system scale grows it.
+    row.setMinimumHeight(px(context, Tokens.ROW_HEIGHT_MM));
     int space = space(context);
     row.setPadding(0, space, 0, space);
-    row.addView(text(context, title, false), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+    row.addView(text(context, title, Role.ROW_TITLE), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
     LinearLayout.LayoutParams end = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     end.setMarginStart(space);
@@ -168,14 +216,41 @@ final class Ink {
     return row;
   }
 
-  /** The switch (ui-kit `Switch`): a bordered box that reads «ON», filled black, or «OFF», on paper. */
-  static TextView switchBox(Context context, boolean on) {
-    TextView box = text(context, on ? Tokens.ON_TEXT : Tokens.OFF_TEXT, false);
-    box.setTextColor(on ? PAPER : INK);
-    box.setGravity(Gravity.CENTER);
-    box.setMinWidth(px(context, Tokens.SWITCH_WIDTH_MM));
-    box.setMinHeight(target(context));
-    box.setBackground(outline(context, on ? INK : PAPER, INK, false));
+  /**
+   * The switch (ui-kit `Switch`, #272): «ON» or «OFF» beside a pill-shaped track; on, the track is
+   * filled black with a paper knob at its trailing end; off, an ink outline with an ink knob at its
+   * leading end.
+   */
+  static LinearLayout switchBox(Context context, boolean on) {
+    LinearLayout box = new LinearLayout(context);
+    box.setOrientation(LinearLayout.HORIZONTAL);
+    box.setGravity(Gravity.CENTER_VERTICAL);
+    box.setMinimumHeight(target(context));
+    box.addView(text(context, on ? Tokens.ON_TEXT : Tokens.OFF_TEXT, Role.SUBTITLE));
+    int height = px(context, Tokens.SWITCH_HEIGHT_MM);
+    int stroke = px(context, Tokens.MARK_STROKE_MM);
+    GradientDrawable pill = new GradientDrawable();
+    pill.setCornerRadius(height / 2f);
+    pill.setColor(on ? INK : PAPER);
+    pill.setStroke(stroke, INK);
+    FrameLayout track = new FrameLayout(context);
+    track.setBackground(pill);
+    GradientDrawable dot = new GradientDrawable();
+    dot.setShape(GradientDrawable.OVAL);
+    dot.setColor(on ? PAPER : INK);
+    View knob = new View(context);
+    knob.setBackground(dot);
+    int size = px(context, Tokens.SWITCH_KNOB_MM);
+    FrameLayout.LayoutParams place = new FrameLayout.LayoutParams(
+        size, size, (on ? Gravity.END : Gravity.START) | Gravity.CENTER_VERTICAL);
+    // The same gap to the track's outer edge on every side, as the native knob.
+    int inset = (height - size) / 2;
+    place.setMarginStart(inset);
+    place.setMarginEnd(inset);
+    track.addView(knob, place);
+    LinearLayout.LayoutParams trackSize = new LinearLayout.LayoutParams(px(context, Tokens.SWITCH_WIDTH_MM), height);
+    trackSize.setMarginStart(px(context, Tokens.MARK_GAP_MM));
+    box.addView(track, trackSize);
     return box;
   }
 
@@ -184,7 +259,7 @@ final class Ink {
     GradientDrawable ring = new GradientDrawable();
     ring.setShape(GradientDrawable.OVAL);
     ring.setColor(PAPER);
-    ring.setStroke(border(context), INK);
+    ring.setStroke(px(context, Tokens.MARK_STROKE_MM), INK);
     int size = px(context, Tokens.RADIO_SIZE_MM);
     ring.setSize(size, size);
     Drawable mark = ring;
@@ -207,33 +282,55 @@ final class Ink {
   }
 
   /**
-   * Rows that belong together, as the native Settings group them (owner, #275; ui-kit `RowGroup`):
-   * the group gap above, the grey caption with no gap under it, then its rows, with a thin ink
-   * line only between two rows, none under the caption and none under the last row, then the note
-   * that explains the group, grey, right under its last row (null for none).
+   * Rows that belong together, as the native screens group them (owner, #275; ui-kit `RowGroup`,
+   * #272): the caption in ink at the bottom of its native box, then its rows with the light dotted
+   * line between two of them and the solid line after the last, none under the caption; the note
+   * that explains the group sits under the last row, above the solid line (null for none). The
+   * caption's box is the space above it.
    */
   static LinearLayout group(Context context, String caption, List<? extends View> rows, String note) {
     LinearLayout group = new LinearLayout(context);
     group.setOrientation(LinearLayout.VERTICAL);
-    group.setPadding(0, px(context, Tokens.SPACE_MM * Tokens.GROUP_GAP_SPACES_RATIO), 0, 0);
-    // The native caption: grey, body size, regular weight (#275).
-    TextView head = text(context, caption, true);
+    TextView head = text(context, caption, Role.CAPTION);
     head.setAccessibilityHeading(true);
+    head.setGravity(Gravity.BOTTOM);
+    head.setMinHeight(px(context, Tokens.CAPTION_HEIGHT_MM));
     group.addView(head);
     for (int index = 0; index < rows.size(); index++) {
       if (index > 0) {
-        View line = new View(context);
-        line.setBackgroundColor(INK);
-        group.addView(line, new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, px(context, Tokens.SEPARATOR_MM))));
+        group.addView(lightLine(context));
       }
       group.addView(rows.get(index), new LinearLayout.LayoutParams(
           LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
     }
     if (note != null) {
-      group.addView(text(context, note, true));
+      TextView explain = text(context, note, Role.SUBTITLE);
+      explain.setPadding(0, 0, 0, space(context));
+      group.addView(explain);
     }
+    View line = new View(context);
+    line.setBackgroundColor(INK);
+    group.addView(line, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, devicePx(Tokens.SEPARATOR_MM)));
     return group;
+  }
+
+  /** The light dotted line between two rows of one group: 1 px, 3 on, 4 off, as the native one (#272). */
+  private static View lightLine(Context context) {
+    int width = devicePx(Tokens.LIGHT_LINE_MM);
+    GradientDrawable dashes = new GradientDrawable();
+    dashes.setShape(GradientDrawable.LINE);
+    dashes.setStroke(width, INK, devicePx(Tokens.LIGHT_DASH_MM), devicePx(Tokens.LIGHT_GAP_MM));
+    View line = new View(context);
+    line.setBackground(dashes);
+    // A dashed line is drawn only in software (GradientDrawable LINE with a dash).
+    line.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    line.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, width));
+    return line;
+  }
+
+  /** A line's thickness or dash in whole device pixels, at least one, as metrics.ts rounds them. */
+  private static int devicePx(float mm) {
+    return Math.max(1, Math.round(mm * Tokens.PX_PER_MM));
   }
 
   /**
@@ -247,7 +344,7 @@ final class Ink {
     // The ui-kit button's label is regular weight; Material's button text is medium and spaced.
     view.setTypeface(Typeface.DEFAULT);
     view.setLetterSpacing(0);
-    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, bodySp(context));
+    view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp(context, Role.ROW_TITLE.fontMm));
     view.setStateListAnimator(null);
     view.setMinHeight(px(context, Tokens.CONTROL_HEIGHT_MM));
     view.setMinimumHeight(px(context, Tokens.CONTROL_HEIGHT_MM));
@@ -260,6 +357,30 @@ final class Ink {
     view.setTextColor(!enabled ? CONTEXT : filled ? PAPER : INK);
     view.setBackground(outline(context, filled ? INK : PAPER, enabled ? INK : CONTEXT, !enabled));
     return view;
+  }
+
+  /**
+   * The native small filled button in a row, such as Wi-Fi's «Scan» (#272): black, its label in
+   * paper; one that cannot act is a dashed grey outline with a grey label (#233).
+   */
+  static Button smallButton(Context context, String label, boolean enabled) {
+    Button view = button(context, label, true, enabled);
+    // The touch target keeps its full height; the box drawn in it has the native height.
+    int target = target(context);
+    view.setMinHeight(target);
+    view.setMinimumHeight(target);
+    view.setMinWidth(px(context, Tokens.SMALL_BUTTON_WIDTH_MM));
+    view.setMinimumWidth(px(context, Tokens.SMALL_BUTTON_WIDTH_MM));
+    int inset = Math.max(0, (target - px(context, Tokens.SMALL_BUTTON_HEIGHT_MM)) / 2);
+    Drawable box = enabled ? fill(INK) : outline(context, PAPER, CONTEXT, true);
+    view.setBackground(new InsetDrawable(box, 0, inset, 0, inset));
+    return view;
+  }
+
+  private static GradientDrawable fill(int colour) {
+    GradientDrawable box = new GradientDrawable();
+    box.setColor(colour);
+    return box;
   }
 
   /** A box with the ink border; dashed for a control that cannot act. */

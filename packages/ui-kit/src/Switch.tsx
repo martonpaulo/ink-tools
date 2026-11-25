@@ -1,9 +1,11 @@
 /**
- * The native switch (#273): a bordered box that reads «ON», filled black, or «OFF», on paper, so
- * its state is a word and a fill, never grey alone. It replaces a `Button` with `selected`.
+ * The native switch (#273, #272): the word «ON» or «OFF» beside a pill-shaped track; on, the track
+ * is filled black with a paper knob at its trailing end; off, it is an ink outline with an ink knob
+ * at its leading end. Its state is a word and a fill, never grey alone. Disabled, the outline and the
+ * word take the context grey and the outline is dashed (#233).
  */
 import React from 'react';
-import {Pressable, StyleSheet, Text} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {OFF_TEXT, ON_TEXT} from './controlsCopy';
 import {metrics} from './metrics';
 import {shared} from './styles';
@@ -23,23 +25,48 @@ export function Switch({value, onChange, accessibilityLabel, disabled = false}: 
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{checked: value, disabled}}
       disabled={disabled}
-      style={[shared.outline, styles.box, value && styles.on, disabled && shared.disabledOutline]}
+      style={styles.target}
       onPress={() => onChange(!value)}>
-      <Text style={[shared.text, value && styles.onText, disabled && shared.disabledText]}>
-        {value ? ON_TEXT : OFF_TEXT}
-      </Text>
+      <Text style={[shared.subtitle, disabled && shared.disabledText]}>{value ? ON_TEXT : OFF_TEXT}</Text>
+      <View
+        testID="switch-track"
+        style={[styles.track, value && styles.trackOn, disabled && styles.trackDisabled]}>
+        <View testID="switch-knob" style={[styles.knob, value && styles.knobOn, disabled && styles.knobDisabled]} />
+      </View>
     </Pressable>
   );
 }
 
+/** The knob's gap to the track's outer edge, the same on every side, as the native one. */
+const KNOB_INSET = (metrics.switchHeight - metrics.switchKnob) / 2 - metrics.markStroke;
+
 const styles = StyleSheet.create({
-  box: {
-    minWidth: metrics.switchWidth,
-    minHeight: metrics.touchTarget,
-    justifyContent: 'center',
+  target: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: metrics.paper,
+    gap: metrics.markGap,
+    minWidth: metrics.touchTarget,
+    minHeight: metrics.touchTarget,
   },
-  on: {backgroundColor: metrics.ink},
-  onText: {color: metrics.paper},
+  track: {
+    width: metrics.switchWidth,
+    height: metrics.switchHeight,
+    borderRadius: metrics.switchHeight / 2,
+    borderWidth: metrics.markStroke,
+    borderColor: metrics.ink,
+    backgroundColor: metrics.paper,
+    paddingHorizontal: KNOB_INSET,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  trackOn: {backgroundColor: metrics.ink, alignItems: 'flex-end'},
+  trackDisabled: {borderColor: metrics.context, borderStyle: 'dashed', backgroundColor: metrics.paper},
+  knob: {
+    width: metrics.switchKnob,
+    height: metrics.switchKnob,
+    borderRadius: metrics.switchKnob / 2,
+    backgroundColor: metrics.ink,
+  },
+  knobOn: {backgroundColor: metrics.paper},
+  knobDisabled: {backgroundColor: metrics.context},
 });

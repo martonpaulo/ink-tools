@@ -3,8 +3,8 @@
 The Settings look every plugin shares ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)). Every Ink Tools surface follows the
 Supernote's own native controls, one shared component each (owner, 2026-11-25,
 [#273](https://github.com/martonpaulo/ink-tools/issues/273)); the measured catalog of those controls is
-[#272](https://github.com/martonpaulo/ink-tools/issues/272). The tokens live in
-[`src/metrics.ts`](src/metrics.ts), the repeated styles in [`src/styles.ts`](src/styles.ts) and the one
+[`native-catalog.md`](native-catalog.md) ([#272](https://github.com/martonpaulo/ink-tools/issues/272)). The tokens live in
+[`src/tokens.json`](src/tokens.json), read by [`src/metrics.ts`](src/metrics.ts) and by the Android apps, the repeated styles in [`src/styles.ts`](src/styles.ts) and the one
 button in [`src/Button.tsx`](src/Button.tsx); a test refuses text under the minimum size and a
 control under the touch target ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)). The e-ink rules behind these conventions are in
 [`docs/supernote.md` › Designing for the screen](../../docs/supernote.md#designing-for-the-screen).
@@ -31,13 +31,15 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   with their caption over one `SwitchRow` each, one value out of several is a `ChoiceList` (a
   `RowGroup` with one `ListRow` per value and its `Radio`), and a page opened from a row is a
   `ListRow` with a `Chevron`. Rows that outgrow the screen scroll under the title bar.
-- Three levels, as the native Settings group them (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275)): the
-  caption (grey, regular, nothing under it), its rows, and a thin line (`separator`, thinner than a
-  control's `border`, in whole device pixels) only between two rows of one group, never under the
-  caption or the last row; the group's `note` follows right under its last row, never between a
-  caption and its rows. `RowGroup` draws all of it and owns `groupGap` above it, so its container
-  adds no gap of its own; a row with no caption is a `RowGroup` too. A `ListRow` draws no line and
-  a screen draws no caption by itself: `SectionCaption` is not exported.
+- Three levels, as the native screens group them (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275);
+  measured in [`native-catalog.md` › Lines](native-catalog.md#lines)): the caption (ink, the row's
+  size, at the bottom of its `captionHeight` box, no line under it), its rows of the native fixed
+  `rowHeight`, the light dotted line (`lightLine`) between two rows of one group, and the solid line
+  (`separator`) after the group's last row. The group's `note` sits under its last row, above the
+  solid line, never between a caption and its rows. `RowGroup` draws all of it; the caption's box
+  is the space above a group, so its container adds no gap of its own; a row with no caption is a
+  `RowGroup` too. A `ListRow` draws no line and a screen draws no caption by itself:
+  `SectionCaption` is not exported.
 - A language shows only its name, never its code such as `pt_BR` (owner,
   [#275](https://github.com/martonpaulo/ink-tools/issues/275)).
 - Every other gap is the one spacing step, `SPACE_MM` (screen padding, section gap, control gap,
@@ -47,16 +49,17 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 
 ## Type
 
-- The native Settings' sizes, all regular weight, measured from `com.ratta.settings`
-  ([#275](https://github.com/martonpaulo/ink-tools/issues/275)): the title bar's title (`fontTitle`),
-  the body (`fontBody`) for row titles, captions, values and buttons, and a row's subtitle
-  (`fontSubtitle`); a screen's own title, where it has no title bar yet, takes `fontTitle`
-  (`shared.title`); `fontLarge` only for the ×, ‹ and › glyphs; nothing under `minFont`. The
-  values are the Manta's (`sw1024dp`); on a narrower screen the native Settings use smaller ones,
-  which Ink Tools does not follow, since its row would fall under `minFont`.
-- A section heading is body size, regular weight, in the context grey (`shared.heading`), as the
-  native caption; a hint or a current value is body size in the context grey (`shared.hint`). No
-  italic, no handwritten font.
+- One text style per native role, all regular weight, in `tokens.json`'s `text` group and
+  `textStyles` ([`native-catalog.md` › Text styles](native-catalog.md#text-styles)): `barTitle` (the
+  black bar's titles, `shared.barTitle`), `caption` (`shared.heading`), `rowTitle` (row titles and
+  body text, `shared.text`), `subtitle` (a row's subtitle or value, a group's note, a description,
+  the switch's word, `shared.subtitle`) and `hint` (Ink Tools' own grey hints and status lines,
+  `shared.hint`); a screen's own title, where it has no title bar yet, takes `fontTitle`
+  (`shared.title`); nothing under `minFont`. The values are the Manta's (`sw1024dp`); on a narrower
+  screen the native Settings use smaller ones, which Ink Tools does not follow, since its row would
+  fall under `minFont`.
+- The ×, ‹ and › are drawn strokes at the native size (`closeMark`, `backMarkHeight`,
+  `chevronHeight`, `markStroke`), never text glyphs. No italic, no handwritten font.
 - The title bar centres its title on its full width, as the native one does: the × and ‹ never
   push it aside.
 
@@ -68,7 +71,7 @@ accents, each with a fixed role, never as the only cue:
 | Grey | Role |
 | :--- | :--- |
 | `#000000` | text, borders, the primary button's fill |
-| `#444444` | section headings, hints and values: 9.7:1 on paper (`metrics.context`); a disabled control's label and dashed border |
+| `#444444` | Ink Tools' own hints and status lines: 9.7:1 on paper (`metrics.context`); a disabled control's label and dashed border. The native captions, subtitles and values are ink ([#272](https://github.com/martonpaulo/ink-tools/issues/272)) |
 | `#aaaaaa` | a strong fill: the band behind a screen title, a count badge |
 | `#cccccc` | a highlight: the row being changed |
 | `#eeeeee` | a soft panel: a block of help text, an empty state |
@@ -91,11 +94,11 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 
 | Component | What it draws |
 | :--- | :--- |
-| `TitleBar` | the black band: × to close (`onClose`), ‹ to go back (`onBack`), the title centred, and `paneTitle` over a left pane |
-| `NavList` | the left navigation list: an optional icon and a label per item, a dotted separator, the open item marked by an ink bar at its trailing edge |
-| `ListRow` | a title, an optional grey subtitle, a `leading` slot (the ✓) and a `trailing` slot (its control), with no line of its own; with `onPress` the whole row is one button |
-| `RowGroup` | rows that belong together: the group gap, an optional caption, the rows with a thin line only between two of them, an optional grey `note` |
-| `Switch` | a bordered box that reads «ON», filled black, or «OFF», on paper; role `switch` |
+| `TitleBar` | the black band: the drawn × to close (`onClose`), ‹ to go back (`onBack`), the title centred; with `paneTitle`, the native two levels, «× Settings ‹ Language & Region» |
+| `NavList` | the left navigation list: an optional icon and a label per item, the dotted line under each, the open item marked by an ink bar at its trailing edge |
+| `ListRow` | a title, an optional subtitle, a `leading` slot (the ✓) and a `trailing` slot (its control), at the native `rowHeight`, with no line of its own; with `onPress` the whole row is one button |
+| `RowGroup` | rows that belong together: an optional caption, the rows with the light dotted line between two of them, an optional `note`, and the solid line after the group |
+| `Switch` | the word «ON» or «OFF» beside a pill-shaped track, filled black with a paper knob at its trailing end when on, an ink outline with an ink knob at its leading end when off; role `switch` |
 | `Radio` | an ink ring, with a filled dot when `checked`; role `radio` |
 | `CheckMark` | the ✓ on the leading side of a chosen row; unchecked, the same width empty |
 | `Chevron` | the › that says a row opens a page |

@@ -34,6 +34,15 @@ test('the properties list every token by the same name', () => {
   assert.equal(properties(SAMPLE), 'PX_PER_MM=11.8\nTITLE_BAR_HEIGHT_MM=14\nLARGE_FONT_RATIO=2\nCONTEXT_COLOUR=#444444\nON_TEXT=ON\n');
 });
 
+test('a text style resolves its font and colour', () => {
+  const styled = {mm: {bodyFont: {value: 3.35}}, colour: {ink: {value: '#000000'}}, text: {rowTitle: {value: {font: 'bodyFont', colour: 'ink'}}}};
+  assert.deepEqual(entries(styled).slice(2), [
+    {name: 'ROW_TITLE_STYLE_FONT_MM', type: 'float', value: 3.35},
+    {name: 'ROW_TITLE_STYLE_COLOUR', type: 'int', value: '#000000'},
+  ]);
+  assert.throws(() => entries({...styled, text: {rowTitle: {value: {font: 'nope', colour: 'ink'}}}}), /text\.rowTitle names a font/);
+});
+
 test('a short colour, a text size and an unknown group are refused', () => {
   assert.throws(() => entries({colour: {ink: {value: '#000'}}}), /colour\.ink is not a #rrggbb colour/);
   assert.throws(() => entries({mm: {space: {value: '3'}}}), /mm\.space is not a number/);

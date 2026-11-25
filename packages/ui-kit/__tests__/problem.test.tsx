@@ -48,7 +48,6 @@ describe('Needs (#255)', () => {
     );
     expect(tree.root.findByProps({testID: 'needs'})).toBeTruthy();
     expect(texts(tree)).toEqual([
-      '×',
       'Sample access is off',
       'The sample tool reads the sample folder.',
       'Turn it on',
@@ -66,7 +65,7 @@ describe('Needs (#255)', () => {
         onClose={jest.fn()}
       />,
     );
-    expect(texts(tree)).toEqual(['×', 'Sample setting', '1. Open Sample.', '2. Turn on Sample.']);
+    expect(texts(tree)).toEqual(['Sample setting', '1. Open Sample.', '2. Turn on Sample.']);
     expect(tree.root.findAllByType(Button)).toHaveLength(0);
     expect(tree.root.findAllByProps({testID: 'problem-reason'})).toHaveLength(0);
   });
@@ -87,7 +86,7 @@ describe('ErrorView (#255)', () => {
       .findAllByProps({testID: 'error-view'})
       .map(node => node.props.accessibilityRole);
     expect(roles).toContain('alert');
-    expect(texts(tree)).toEqual(['×', 'Sample action failed', 'sample reason', RETRY_TEXT]);
+    expect(texts(tree)).toEqual(['Sample action failed', 'sample reason', RETRY_TEXT]);
     act(() => button(tree, RETRY_TEXT)!.props.onPress());
     act(() => button(tree, CLOSE_TEXT)!.props.onPress());
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -108,7 +107,7 @@ describe('ErrorView (#255)', () => {
 
 describe('LoadingView (#255)', () => {
   it('reads as the strip does, with Close', () => {
-    expect(texts(render(<LoadingView onClose={jest.fn()} />))).toEqual(['×', WORKING_TEXT]);
+    expect(texts(render(<LoadingView onClose={jest.fn()} />))).toEqual([WORKING_TEXT]);
   });
 });
 

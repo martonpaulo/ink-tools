@@ -23,28 +23,44 @@ export type RowGroupProps = {
 };
 
 /**
- * Rows that belong together, as the native Settings group them (owner, #275): the group gap above,
- * the caption, then its rows, with a thin line only between two rows of the group, none under the
- * caption and none under the last row, then its note. The group owns the gap above it, so a group
- * with no caption still reads apart from the rows before it; its container adds no gap of its own.
+ * Rows that belong together, as the native screens group them (owner, #275; #272): the caption at
+ * the bottom of its box, then its rows with the light dotted line between two of them, and the
+ * solid line after the last, as the native Page menu and Settings › Apps › Plugins draw them. A note
+ * sits under the last row, above the solid line, as the native note of «Usage and Diagnostics». The
+ * caption's box is the space above a group; its container adds none.
  */
 export function RowGroup({caption, children, note}: RowGroupProps): React.JSX.Element {
   const rows = React.Children.toArray(children);
   const notes = note === undefined ? [] : typeof note === 'string' ? [note] : note;
   return (
-    <View style={styles.group}>
+    <View>
       {caption !== undefined && <SectionCaption>{caption}</SectionCaption>}
       {rows.map((row, index) => (
         <React.Fragment key={React.isValidElement(row) && row.key !== null ? row.key : index}>
-          {index > 0 && <View testID="row-separator" style={styles.separator} />}
+          {index > 0 && <LightLine />}
           {row}
         </React.Fragment>
       ))}
       {notes.map(paragraph => (
-        <Text key={paragraph} style={shared.hint}>
+        <Text key={paragraph} style={[shared.subtitle, styles.note]}>
           {paragraph}
         </Text>
       ))}
+      <View testID="group-line" style={styles.separator} />
+    </View>
+  );
+}
+
+/**
+ * The light dotted line: the top edge of a dashed box cut to the line's height, since React Native
+ * dashes a border only when all four sides are drawn. shortcut: React Native draws 3 on, 3 off at
+ * 1 px where the native line is 3 on, 4 off (`lightDash`, `lightGap`); Ink.java draws the native
+ * pattern. Upgrade with a drawn line if the owner sees the difference.
+ */
+function LightLine(): React.JSX.Element {
+  return (
+    <View testID="row-light-line" style={styles.lightBox}>
+      <View style={styles.lightDashes} />
     </View>
   );
 }
@@ -122,6 +138,13 @@ export function ChoiceList<V>({
 }
 
 const styles = StyleSheet.create({
-  group: {paddingTop: metrics.groupGap},
   separator: {height: metrics.separator, backgroundColor: metrics.ink},
+  lightBox: {height: metrics.lightLine, overflow: 'hidden'},
+  lightDashes: {
+    height: metrics.lightLine * 4,
+    borderWidth: metrics.lightLine,
+    borderStyle: 'dashed',
+    borderColor: metrics.ink,
+  },
+  note: {paddingBottom: metrics.rowPadding},
 });

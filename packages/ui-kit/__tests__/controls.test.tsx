@@ -98,11 +98,12 @@ describe('the native controls (#273)', () => {
     expect(screenBreaks(render(element).root)).toEqual([]);
   });
 
-  it('draws the title bar as a black band with × and ‹, the title centred', () => {
+  it('draws the title bar as a black band with the drawn × and ‹, the title centred', () => {
     const onClose = jest.fn();
     const onBack = jest.fn();
     const tree = render(<TitleBar title="Keyboard" onClose={onClose} onBack={onBack} />);
-    expect(texts(tree)).toEqual(['×', '‹', 'Keyboard']);
+    // × and ‹ are drawn strokes at the native size, not text glyphs (#272).
+    expect(texts(tree)).toEqual(['Keyboard']);
     press(tree, 'Close');
     press(tree, 'Back');
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -215,9 +216,9 @@ describe('the native controls (#273)', () => {
     expect(hostByLabel(off, 'Data saver').props.accessibilityState).toMatchObject({checked: false, disabled: true});
   });
 
-  it('draws a line only between two rows of one group: none under the caption, none under the last row (#275)', () => {
-    const separators = (tree: ReactTestRenderer) =>
-      tree.root.findAll(n => n.props.testID === 'row-separator' && typeof n.type === 'string');
+  it('draws the light line between two rows of a group and the solid line after its last, none under the caption (#272, #275)', () => {
+    const find = (tree: ReactTestRenderer, id: string) =>
+      tree.root.findAll(n => n.props.testID === id && typeof n.type === 'string');
     const three = render(
       <RowGroup caption="Floating Button">
         <ListRow title="Always" />
@@ -227,14 +228,24 @@ describe('the native controls (#273)', () => {
       </RowGroup>,
     );
     expect(texts(three)).toEqual(['Floating Button', 'Always', 'Only where you write', 'Hidden']);
-    expect(separators(three)).toHaveLength(2);
-    expect(StyleSheet.flatten(separators(three)[0].props.style)).toEqual({
+    expect(find(three, 'row-light-line')).toHaveLength(2);
+    expect(find(three, 'group-line')).toHaveLength(1);
+    expect(StyleSheet.flatten(find(three, 'group-line')[0].props.style)).toEqual({
       height: metrics.separator,
       backgroundColor: metrics.ink,
     });
+    expect(StyleSheet.flatten(find(three, 'row-light-line')[0].props.style)).toMatchObject({height: metrics.lightLine});
+    expect(metrics.lightLine).toBeLessThan(metrics.separator);
     expect(metrics.separator).toBeLessThan(metrics.border);
-    expect(separators(render(<RowGroup><ListRow title="Alone" /></RowGroup>))).toEqual([]);
-    const rows = three.root.findAll(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.touchTarget);
+    // The solid line closes the group: it is the group's last child.
+    const group = three.root.findAll(n => typeof n.type === 'string')[0];
+    const last = group.children[group.children.length - 1] as ReactTestInstance;
+    expect(last.props.testID).toBe('group-line');
+    const alone = render(<RowGroup><ListRow title="Alone" /></RowGroup>);
+    expect(find(alone, 'row-light-line')).toEqual([]);
+    expect(find(alone, 'group-line')).toHaveLength(1);
+    // Each row has the native fixed height and draws no line of its own.
+    const rows = three.root.findAll(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.rowHeight);
     expect(rows).toHaveLength(3);
     rows.forEach(row => expect(StyleSheet.flatten(row.props.style).borderBottomWidth).toBeUndefined());
   });
@@ -245,17 +256,43 @@ describe('the native controls (#273)', () => {
     const titleStyle = (tree: ReactTestRenderer) =>
       StyleSheet.flatten(tree.root.find(n => typeof n.type === 'string' && n.props.accessibilityRole === 'header').props.style);
     expect(titleStyle(closeOnly)).toEqual({fontSize: metrics.fontTitle, color: metrics.paper, flex: 1, textAlign: 'center'});
-    // The band's children: the leading buttons, the title, and an empty slot as wide as the buttons.
+    // The level's children: the leading slot, the title, and an empty slot as wide as the leading one.
     const slots = (tree: ReactTestRenderer) => {
-      const band = tree.root.findAll(n => typeof n.type === 'string')[0];
-      const children = band.children.filter((n): n is ReactTestInstance => typeof n !== 'string');
+      const title = tree.root.find(n => typeof n.type === 'string' && n.props.accessibilityRole === 'header');
+      let level = title.parent as ReactTestInstance;
+      while (typeof level.type !== 'string') {
+        level = level.parent as ReactTestInstance;
+      }
+      const children = level.children.filter((n): n is ReactTestInstance => typeof n !== 'string');
       return [children[0], children[children.length - 1]].map(n => StyleSheet.flatten(n.props.style).width);
     };
-    expect(slots(closeOnly)).toEqual([metrics.touchTarget, metrics.touchTarget]);
-    const wide = metrics.touchTarget * 2 + metrics.controlGap;
-    expect(slots(both)).toEqual([wide, wide]);
+    const [lead, trail] = slots(closeOnly);
+    expect(lead).toBe(trail);
+    expect(lead).toBeGreaterThanOrEqual(metrics.touchTarget);
+    const [leadBoth, trailBoth] = slots(both);
+    expect(leadBoth).toBe(trailBoth);
+    expect(leadBoth).toBeGreaterThan(lead);
     const header = closeOnly.root.find(n => typeof n.type === 'string' && n.props.accessibilityRole === 'header');
     expect(header.props.numberOfLines).toBe(2);
+  });
+
+  it('draws the native two levels: × and the pane title over the left pane, ‹ and the page title over the rest (#272)', () => {
+    const tree = render(<TitleBar paneTitle="Settings" title="Language & Region" onClose={noop} onBack={noop} />);
+    expect(texts(tree)).toEqual(['Settings', 'Language & Region']);
+    const pane = tree.root.find(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.width === metrics.navPaneWidth);
+    expect(pane.findAll(n => n.props.accessibilityLabel === 'Close' && typeof n.type === 'string')).toHaveLength(1);
+    expect(pane.findAll(n => n.props.accessibilityLabel === 'Back')).toHaveLength(0);
+  });
+
+  it('draws the ×, ‹ and › at the native size (#272)', () => {
+    const square = (tree: ReactTestRenderer) =>
+      tree.root.findAll(n => typeof n.type === 'string').map(n => StyleSheet.flatten(n.props.style));
+    const close = square(render(<TitleBar title="Keyboard" onClose={noop} />)).find(
+      style => style?.width === metrics.closeMark && style?.height === metrics.closeMark,
+    );
+    expect(close).toBeTruthy();
+    const [chevronBox] = square(render(<Chevron />));
+    expect(chevronBox).toMatchObject({width: metrics.chevronHeight / 2, height: metrics.chevronHeight});
   });
 
   it('takes the native sizes: the title above the body, the subtitle under it, none under minFont (#275)', () => {
@@ -263,10 +300,10 @@ describe('the native controls (#273)', () => {
     expect(metrics.fontSubtitle).toBeLessThan(metrics.fontBody);
     expect(metrics.fontSubtitle).toBeGreaterThanOrEqual(metrics.minFont);
     const subtitle = render(<ListRow title="Keyboard" subtitle="English" />).root.findAllByType(Text)[1];
-    expect(StyleSheet.flatten(subtitle.props.style).fontSize).toBe(metrics.fontSubtitle);
+    expect(StyleSheet.flatten(subtitle.props.style)).toEqual({fontSize: metrics.fontSubtitle, color: metrics.ink});
   });
 
-  it('sets a group apart: the group gap above it, the caption, its note right under the last row (#275)', () => {
+  it('heads a group with its caption in ink at the bottom of the native box, its note under the last row (#272, #275)', () => {
     const tree = render(
       <RowGroup caption="Smallest shape" note="A smaller figure stays handwriting.">
         <ListRow title="8 mm" />
@@ -274,15 +311,32 @@ describe('the native controls (#273)', () => {
     );
     expect(texts(tree)).toEqual(['Smallest shape', '8 mm', 'A smaller figure stays handwriting.']);
     const [caption, , note] = tree.root.findAllByType(Text).map(n => StyleSheet.flatten(n.props.style));
-    expect(caption).toEqual({fontSize: metrics.fontBody, color: metrics.context});
-    expect(note).toEqual({fontSize: metrics.fontBody, color: metrics.context});
+    expect(caption).toEqual({fontSize: metrics.fontBody, color: metrics.ink});
+    expect(note).toMatchObject({fontSize: metrics.fontSubtitle, color: metrics.ink});
+    const box = tree.root.find(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.captionHeight);
+    expect(StyleSheet.flatten(box.props.style).justifyContent).toBe('flex-end');
+    // The solid line comes after the note, which belongs to the last row.
     const group = tree.root.findAll(n => typeof n.type === 'string')[0];
-    expect(StyleSheet.flatten(group.props.style)).toEqual({paddingTop: metrics.groupGap});
-    expect(metrics.groupGap).toBeGreaterThan(metrics.sectionGap);
-    const noCaption = render(<RowGroup><ListRow title="Data saver" /></RowGroup>);
-    expect(StyleSheet.flatten(noCaption.root.findAll(n => typeof n.type === 'string')[0].props.style)).toEqual({
-      paddingTop: metrics.groupGap,
+    const last = group.children[group.children.length - 1] as ReactTestInstance;
+    expect(last.props.testID).toBe('group-line');
+  });
+
+  it('draws the native switch: the word beside a pill, filled when on, its knob at the trailing end (#272)', () => {
+    const style = (tree: ReactTestRenderer, id: string) =>
+      StyleSheet.flatten(tree.root.find(n => n.props.testID === id && typeof n.type === 'string').props.style);
+    const on = render(<Switch value accessibilityLabel="Wi-Fi" onChange={noop} />);
+    const off = render(<Switch value={false} accessibilityLabel="Wi-Fi" onChange={noop} />);
+    expect(texts(on)).toEqual(['ON']);
+    expect(texts(off)).toEqual(['OFF']);
+    expect(style(on, 'switch-track')).toMatchObject({
+      width: metrics.switchWidth,
+      height: metrics.switchHeight,
+      backgroundColor: metrics.ink,
+      alignItems: 'flex-end',
     });
+    expect(style(off, 'switch-track')).toMatchObject({backgroundColor: metrics.paper, alignItems: 'flex-start'});
+    expect(style(on, 'switch-knob')).toMatchObject({width: metrics.switchKnob, backgroundColor: metrics.paper});
+    expect(style(off, 'switch-knob')).toMatchObject({backgroundColor: metrics.ink});
   });
 
   it('draws one value out of several as a caption over one radio row each, the chosen one checked', () => {

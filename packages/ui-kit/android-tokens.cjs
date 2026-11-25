@@ -9,7 +9,9 @@
  *
  * Names: `pxPerMm` is PX_PER_MM; a size `titleBarHeight` is TITLE_BAR_HEIGHT_MM (float
  * millimetres); a ratio `largeFont` is LARGE_FONT_RATIO (float); a colour `context` is
- * CONTEXT_COLOUR (an opaque ARGB int); a word `on` is ON_TEXT (String).
+ * CONTEXT_COLOUR (an opaque ARGB int); a word `on` is ON_TEXT (String); a text style `rowTitle`,
+ * which names an `mm` font and a colour, is ROW_TITLE_STYLE_FONT_MM and ROW_TITLE_STYLE_COLOUR, their
+ * values resolved (#272).
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -27,6 +29,8 @@ const GROUPS = {
 /** The keys of tokens.json that are not tokens. */
 const ABOUT = 'about';
 const SCALE = 'pxPerMm';
+/** The group of text styles: each names a font of `mm` and a colour of `colour` (#272). */
+const TEXT = 'text';
 const COLOUR = /^#[0-9a-f]{6}$/i;
 
 const upperSnake = name => name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
@@ -42,9 +46,23 @@ function entries(tokens) {
       found.push({name: 'PX_PER_MM', type: 'float', value: number(key, group.value)});
       continue;
     }
+    if (key === TEXT) {
+      for (const [name, token] of Object.entries(group)) {
+        const style = token.value ?? {};
+        const prefix = upperSnake(name) + '_STYLE';
+        const font = (tokens.mm ?? {})[style.font];
+        const colour = (tokens.colour ?? {})[style.colour];
+        if (!font || !colour) {
+          throw Error(`tokens.json: text.${name} names a font of mm and a colour of colour: ${JSON.stringify(style)}`);
+        }
+        found.push({name: `${prefix}_FONT_MM`, type: 'float', value: valueOf('float', `mm.${style.font}`, font.value)});
+        found.push({name: `${prefix}_COLOUR`, type: 'int', value: valueOf('int', `colour.${style.colour}`, colour.value)});
+      }
+      continue;
+    }
     const kind = GROUPS[key];
     if (!kind) {
-      throw Error(`tokens.json: unknown group "${key}"; known: ${[SCALE, ...Object.keys(GROUPS)].join(', ')}`);
+      throw Error(`tokens.json: unknown group "${key}"; known: ${[SCALE, ...Object.keys(GROUPS), TEXT].join(', ')}`);
     }
     for (const [name, token] of Object.entries(group)) {
       const where = `${key}.${name}`;

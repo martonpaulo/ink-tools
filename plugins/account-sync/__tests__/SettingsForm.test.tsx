@@ -84,7 +84,7 @@ describe('SettingsForm (#40)', () => {
     expect(onChange.mock.calls[0][0].providers.todoist).toBe(false);
   });
 
-  it('draws each module name as a section caption in the context grey (#50, #274)', () => {
+  it('draws each module name as a section caption in ink, as the native caption (#272, #274)', () => {
     const {tree} = render(defaultSettings());
     const headings = tree.root.findAll(
       n => n.type === Text && n.props.accessibilityRole === 'header',
@@ -96,7 +96,7 @@ describe('SettingsForm (#40)', () => {
     ]);
     for (const heading of headings) {
       expect(StyleSheet.flatten(heading.props.style)).toEqual(
-        expect.objectContaining({color: metrics.context}),
+        expect.objectContaining({color: metrics.ink}),
       );
     }
   });

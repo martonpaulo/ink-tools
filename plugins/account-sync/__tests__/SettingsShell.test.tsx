@@ -96,7 +96,6 @@ describe('SettingsShell (#93)', () => {
 
   it('shows the last sync of each module and why a module that is on does not run (#88)', () => {
     expect(texts(render(STATES.modules))).toEqual([
-      '×',
       copy.title,
       'Calendar',
       'Last synced 2026-11-14 14:05.\n3 added, 1 changed, 0 removed\nNot synced (1):\nWork: HTTP 500',

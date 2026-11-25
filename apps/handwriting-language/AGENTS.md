@@ -24,16 +24,18 @@ Two surfaces ship in one build:
   with its icon `res/drawable/ic_launcher.xml`): the sidebar lists it by itself and opens it
   ([#246](https://github.com/martonpaulo/ink-tools/issues/246)). It is drawn with the Supernote's
   native controls, as the plugins' ui-kit draws them ([#275](https://github.com/martonpaulo/ink-tools/issues/275)):
-  the black title bar with × to close at the leading edge (Back closes it too) and the title
-  centred on its full width, the native type sizes in regular weight, the active
-  language as a row with the primary button «Switch Language» at its trailing edge, the floating
-  button's three choices as radio rows and «Reset Button Position», a switch row («ON»/«OFF») for
-  each installed language in the cycle, each missing permission with the button to its system
-  screen and the command that grants it, and the command that turns on writing detection when it
+  the black title bar with the drawn × to close at the leading edge (Back closes it too) and the
+  title centred on its full width, the native text style of each role in regular weight, the
+  active language as a row with the native small filled button «Switch Language» at its trailing
+  edge, as Wi-Fi's «Scan» ([#272](https://github.com/martonpaulo/ink-tools/issues/272)), the floating
+  button's three choices as radio rows and «Reset Button Position», a switch row (the native pill with
+  «ON» or «OFF» beside it) for each installed language in the cycle, each missing permission with
+  the button to its system screen and the command that grants it, and the command that turns on writing detection when it
   is off. An error shows in bold beside the control whose action failed. Each section is one group,
-  as ui-kit's `RowGroup` draws it: the group gap, the grey caption, its rows with a thin line
-  only between two of them, and its note right under the last row; permissions and errors follow
-  under the group. A language shows only its
+  as ui-kit's `RowGroup` draws it: the caption in ink at the bottom of its box, its rows of the
+  native height with the light dotted line between two of them, its note under the last row,
+  and the solid line after the group; permissions and errors follow under the group. The page
+  keeps the native side margin. A language shows only its
   name, never its code such as `pt_BR`, which stays in the log and the preferences (owner,
   [#275](https://github.com/martonpaulo/ink-tools/issues/275)). The one-tap switch with nothing on screen is gone (owner,
   2026-11-25).
@@ -110,7 +112,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 - Logic with no Android import goes in `ButtonGesture`, `ButtonPlace`, `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
 - All visible copy is in `Copy.java`; the native controls (title bar, list row, switch, radio
-  button, caption, button) in `Ink.java`, drawn only from `Tokens`: `scripts/build.cjs` writes that
+  button, caption, button, small filled button, the lines) and the text roles (`Ink.Role`) in `Ink.java`, drawn only from `Tokens`: `scripts/build.cjs` writes that
   class before `javac` from ui-kit's `packages/ui-kit/src/tokens.json` with
   `packages/ui-kit/android-tokens.cjs`, the one source the plugins read too, so a token changes
   there alone; `TokensTest` fails when `Tokens` differs from it
@@ -125,7 +127,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.7` gives the `versionName` `0.1.0 beta 7` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.8` gives the `versionName` `0.1.0 beta 8` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.

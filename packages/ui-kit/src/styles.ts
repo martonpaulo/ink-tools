@@ -1,6 +1,6 @@
 /** The styles every screen repeats, built from the tokens in metrics.ts (#53, #94). */
 import {StyleSheet} from 'react-native';
-import {metrics} from './metrics';
+import {metrics, textStyles} from './metrics';
 
 /** The lines the status line reserves: the longest failure sentences wrap once on the Manta. */
 export const STATUS_LINES = 2;
@@ -42,12 +42,11 @@ export const shared = StyleSheet.create({
     gap: metrics.controlGap,
     justifyContent: 'flex-end',
   },
-  /** A list row with its dotted separator, as in the system Settings (brief 8.4, #50). */
+  /** A list row with the solid line under it, the last row too, as in the native Settings (#272). */
   listRow: {
-    minHeight: metrics.touchTarget,
+    minHeight: metrics.rowHeight,
     paddingVertical: metrics.rowPadding,
-    borderBottomWidth: metrics.border,
-    borderStyle: 'dotted',
+    borderBottomWidth: metrics.separator,
     borderColor: metrics.ink,
   },
   /** The one status line, with its lines reserved so nothing above or below it moves. */
@@ -55,11 +54,16 @@ export const shared = StyleSheet.create({
     lineHeight: metrics.statusLineHeight,
     minHeight: metrics.statusLineHeight * STATUS_LINES,
   },
-  text: {fontSize: metrics.fontBody, color: metrics.ink},
-  /** A section heading, as the native caption: body size, regular weight, in the context grey (README › Type, #275). */
-  heading: {fontSize: metrics.fontBody, color: metrics.context},
-  /** A hint or a current value under a row's name: body size in the context grey (#50). */
-  hint: {fontSize: metrics.fontBody, color: metrics.context},
+  /** A row's title, and body text (the `rowTitle` role, #272). */
+  text: textStyles.rowTitle,
+  /** A section heading, as the native caption: ink, the row's size (the `caption` role, #272). */
+  heading: textStyles.caption,
+  /** A row's subtitle or value, a group's note, a description (the `subtitle` role, #272). */
+  subtitle: textStyles.subtitle,
+  /** A hint or a status line of Ink Tools' own, in the context grey (the `hint` role, #50). */
+  hint: textStyles.hint,
+  /** The title in the black bar: the screen's, the left pane's and the page's (the `barTitle` role, #272). */
+  barTitle: textStyles.barTitle,
   /** A screen's own title, where it has no title bar yet: the native title's size (#275). */
   title: {fontSize: metrics.fontTitle, color: metrics.ink},
   /** The ×, ‹ and › glyphs. */
