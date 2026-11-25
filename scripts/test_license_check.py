@@ -1,4 +1,5 @@
 """Tests of license_check.py (#276): the project licence is CC BY-NC-SA 4.0 everywhere."""
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -28,6 +29,14 @@ class LicenseCheck(unittest.TestCase):
 
     def test_mit_agents_line_fails(self):
         self.assertEqual(len(license_check.check(tree({"AGENTS.md": "- License: `MIT`\n"}))), 1)
+
+    def test_ignored_scratch_clone_is_not_read(self):
+        # A lane cloned third-party code into an ignored scratch folder (2026-11-25).
+        root = tree({"LICENSE": GOOD, ".gitignore": ".scratch/\n"})
+        (root / ".scratch" / "clone").mkdir(parents=True)
+        (root / ".scratch" / "clone" / "LICENSE").write_text("MIT License\n", encoding="utf-8")
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        self.assertEqual(license_check.check(root), [])
 
     def test_mit_readme_link_fails(self):
         self.assertEqual(len(license_check.check(tree({"README.md": "[MIT](LICENSE) (c)\n"}))), 1)

@@ -10,6 +10,7 @@ Prints one `path:line: text` per bad line. Exit 0 pass, 1 a bad line.
 """
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -20,7 +21,17 @@ SHOWN_CHARS = 80  # how much of a bad line is printed
 
 
 def files(root, name):
-    return [p for p in sorted(root.rglob(name)) if "node_modules" not in p.parts]
+    """The files called NAME that Git does not ignore, so a scratch clone of third-party code is
+    never read; outside a Git checkout, every one but node_modules."""
+    listed = subprocess.run(
+        ["git", "-C", str(root), "ls-files", "-co", "--exclude-standard"],
+        capture_output=True, text=True,
+    )
+    if listed.returncode == 0:
+        found = (root / line for line in listed.stdout.splitlines() if Path(line).name == name)
+    else:
+        found = root.rglob(name)
+    return [p for p in sorted(found) if "node_modules" not in p.parts]
 
 
 def check(root):
