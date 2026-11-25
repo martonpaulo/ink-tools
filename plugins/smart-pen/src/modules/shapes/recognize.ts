@@ -49,7 +49,11 @@ export type Metrics = {
   triErr: number;
 };
 
-export type Recognition = {shape: Shape | null; reason: string; metrics?: Metrics};
+export type Recognition = {
+  shape: Shape | null;
+  reason: string;
+  metrics?: Metrics;
+};
 
 /** A rectangle whose sides differ by at most this share of the longer one is a square. */
 export const SQUARE_SHARE = 0.12;
@@ -74,7 +78,10 @@ export function resample(points: P[], n: number): P[] {
     let d = dist(prev, cur);
     while (d > 0 && acc + d >= step && out.length < n) {
       const t = (step - acc) / d;
-      prev = {x: prev.x + t * (cur.x - prev.x), y: prev.y + t * (cur.y - prev.y)};
+      prev = {
+        x: prev.x + t * (cur.x - prev.x),
+        y: prev.y + t * (cur.y - prev.y),
+      };
       out.push(prev);
       d = dist(prev, cur);
       acc = 0;
@@ -126,7 +133,12 @@ export function countCorners(loop: P[], window = 4, minTurn = 50): number {
 }
 
 /** Least-squares circle fit (Kasa). */
-export function fitCircle(pts: P[]): {cx: number; cy: number; r: number; err: number} {
+export function fitCircle(pts: P[]): {
+  cx: number;
+  cy: number;
+  r: number;
+  err: number;
+} {
   let sx = 0;
   let sy = 0;
   let sxx = 0;
@@ -183,7 +195,12 @@ export function fitCircle(pts: P[]): {cx: number; cy: number; r: number; err: nu
   const r = Math.sqrt(Math.max(0, cx * cx + cy * cy - F));
   const err =
     r > 0
-      ? pts.reduce((s, p) => s + Math.abs(Math.hypot(p.x - mx - cx, p.y - my - cy) - r), 0) / n / r
+      ? pts.reduce(
+          (s, p) => s + Math.abs(Math.hypot(p.x - mx - cx, p.y - my - cy) - r),
+          0,
+        ) /
+        n /
+        r
       : 1;
   return {cx: cx + mx, cy: cy + my, r, err};
 }
@@ -227,7 +244,12 @@ export function fitRect(pts: P[], snapDegrees: number) {
       const q = rotate(p, a);
       return (
         s +
-        Math.min(Math.abs(q.x - best.l), Math.abs(q.x - best.r), Math.abs(q.y - best.t), Math.abs(q.y - best.b))
+        Math.min(
+          Math.abs(q.x - best.l),
+          Math.abs(q.x - best.r),
+          Math.abs(q.y - best.t),
+          Math.abs(q.y - best.b),
+        )
       );
     }, 0) /
     pts.length /
@@ -247,7 +269,10 @@ function toSegment(p: P, a: P, b: P): number {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len2 = dx * dx + dy * dy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+  const t =
+    len2 === 0
+      ? 0
+      : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
   return dist(p, {x: a.x + t * dx, y: a.y + t * dy});
 }
 
@@ -284,8 +309,12 @@ export function fitTriangle(loop: P[]): {corners: [P, P, P]; err: number} {
   const longest = Math.max(dist(a, b), dist(b, c), dist(c, a), 1);
   const shortestHeight = Math.max(1, area2 / longest);
   const mean =
-    loop.reduce((s, p) => s + Math.min(toSegment(p, a, b), toSegment(p, b, c), toSegment(p, c, a)), 0) /
-    loop.length;
+    loop.reduce(
+      (s, p) =>
+        s +
+        Math.min(toSegment(p, a, b), toSegment(p, b, c), toSegment(p, c, a)),
+      0,
+    ) / loop.length;
   return {corners, err: mean / shortestHeight};
 }
 
@@ -347,7 +376,10 @@ export function recognizeArrow(
   const maxDev = Math.max(...devs) / chord;
   const meanDev = devs.reduce((s, d) => s + d, 0) / devs.length / chord;
   if (maxDev > 0.09 * k || meanDev > 0.04 * k) {
-    return {shape: null, reason: `arrow: shaft not straight (${(maxDev * 100).toFixed(0)}%)`};
+    return {
+      shape: null,
+      reason: `arrow: shaft not straight (${(maxDev * 100).toFixed(0)}%)`,
+    };
   }
 
   const head = path.slice(tipIdx);
@@ -369,7 +401,10 @@ export function recognizeArrow(
   if (Math.min(left, right) < 0.25 * span) {
     return {shape: null, reason: 'arrow: head on one side only'};
   }
-  return {shape: {kind: 'arrow', tail, tip: snapDirection(tail, tip, snapDegrees)}, reason: 'arrow'};
+  return {
+    shape: {kind: 'arrow', tail, tip: snapDirection(tail, tip, snapDegrees)},
+    reason: 'arrow',
+  };
 }
 
 /** Keeps the tail; turns the shaft to horizontal or vertical when it is within `maxDegrees` of it. */
@@ -381,7 +416,9 @@ export function snapDirection(tail: P, tip: P, maxDegrees: number): P {
   if (off > maxDegrees) {
     return tip;
   }
-  return Math.abs(dx) >= Math.abs(dy) ? {x: tip.x, y: tail.y} : {x: tail.x, y: tip.y};
+  return Math.abs(dx) >= Math.abs(dy)
+    ? {x: tip.x, y: tail.y}
+    : {x: tail.x, y: tip.y};
 }
 
 /** Angle between each barb and the shaft. */
@@ -392,7 +429,12 @@ const BARB_DEGREES = 30;
  * filled, so the polyline zigzags across the triangle, rung after rung, `fillSpacing` apart: rungs
  * closer than the line width merge into a solid head.
  */
-export function arrowPoints(tail: P, tip: P, headLength: number, fillSpacing = 0): P[] {
+export function arrowPoints(
+  tail: P,
+  tip: P,
+  headLength: number,
+  fillSpacing = 0,
+): P[] {
   const len = Math.max(1, dist(tail, tip));
   const h = headLength;
   const bx = (tail.x - tip.x) / len;
@@ -407,10 +449,17 @@ export function arrowPoints(tail: P, tip: P, headLength: number, fillSpacing = 0
   const pts = [tail, tip, left, right, tip];
   if (fillSpacing > 0) {
     const rungs = Math.ceil((h * Math.cos(a)) / fillSpacing);
-    const along = (end: P, f: number) => ({x: tip.x + f * (end.x - tip.x), y: tip.y + f * (end.y - tip.y)});
+    const along = (end: P, f: number) => ({
+      x: tip.x + f * (end.x - tip.x),
+      y: tip.y + f * (end.y - tip.y),
+    });
     for (let i = 1; i <= rungs; i++) {
       const f = i / rungs;
-      pts.push(...(i % 2 ? [along(left, f), along(right, f)] : [along(right, f), along(left, f)]));
+      pts.push(
+        ...(i % 2
+          ? [along(left, f), along(right, f)]
+          : [along(right, f), along(left, f)]),
+      );
     }
   }
   return pts;
@@ -427,7 +476,10 @@ export function recognize(raw: P[], opts: RecognizeOptions): Recognition {
   const height = Math.max(...ys) - Math.min(...ys);
   const big = Math.max(width, height);
   if (!(big >= opts.minSize)) {
-    return {shape: null, reason: `too small (${Math.round(width)}x${Math.round(height)} px)`};
+    return {
+      shape: null,
+      reason: `too small (${Math.round(width)}x${Math.round(height)} px)`,
+    };
   }
   // Tolerance 1..5 gives a factor 0.6..1.4 on every threshold.
   const k = 0.4 + 0.2 * Math.min(5, Math.max(1, opts.tolerance));
@@ -449,40 +501,81 @@ export function recognize(raw: P[], opts: RecognizeOptions): Recognition {
   // corners of a long thin rectangle's short side merged into one.
   const shortSide = Math.max(1, Math.min(rect.w, rect.h));
   const perimeter = 2 * (rect.w + rect.h);
-  const fine = Math.min(512, Math.max(64, Math.ceil(perimeter / (shortSide / 8))));
-  const corners = countCorners(
-    fine === 64 ? loop : resample([...path.slice(0, end + 1), path[0]], fine + 1).slice(0, fine),
+  const fine = Math.min(
+    512,
+    Math.max(64, Math.ceil(perimeter / (shortSide / 8))),
   );
-  const metrics: Metrics = {width, height, gap, corners, rectErr: rect.err, circErr: circle.err, triErr: tri.err};
+  const corners = countCorners(
+    fine === 64
+      ? loop
+      : resample([...path.slice(0, end + 1), path[0]], fine + 1).slice(0, fine),
+  );
+  const metrics: Metrics = {
+    width,
+    height,
+    gap,
+    corners,
+    rectErr: rect.err,
+    circErr: circle.err,
+    triErr: tri.err,
+  };
 
   if (gap > 0.25 * k) {
     if (!opts.shapes.arrow) {
       return {shape: null, reason: 'shape not closed', metrics};
     }
     const arrow = recognizeArrow(path, opts.minSize, k, opts.arrowSnapDegrees);
-    return {...arrow, reason: arrow.shape ? arrow.reason : `shape not closed; ${arrow.reason}`, metrics};
+    return {
+      ...arrow,
+      reason: arrow.shape ? arrow.reason : `shape not closed; ${arrow.reason}`,
+      metrics,
+    };
   }
   const boxy =
     Math.min(rect.w, rect.h) >= opts.minSize / 2 &&
-    ((corners >= 3 && corners <= 6 && rect.err <= 0.07 * k) || (rect.err <= 0.03 * k && circle.err > 0.05));
+    ((corners >= 3 && corners <= 6 && rect.err <= 0.07 * k) ||
+      (rect.err <= 0.03 * k && circle.err > 0.05));
   if (boxy && rect.err <= circle.err && rect.err <= tri.err) {
-    const squareish = Math.abs(rect.w - rect.h) <= SQUARE_SHARE * Math.max(rect.w, rect.h);
+    const squareish =
+      Math.abs(rect.w - rect.h) <= SQUARE_SHARE * Math.max(rect.w, rect.h);
     if (squareish && opts.shapes.square) {
-      return {shape: {kind: 'square', corners: squareOf(rect.corners)}, reason: 'square', metrics};
+      return {
+        shape: {kind: 'square', corners: squareOf(rect.corners)},
+        reason: 'square',
+        metrics,
+      };
     }
     if (opts.shapes.rect) {
-      return {shape: {kind: 'rect', corners: rect.corners}, reason: 'rectangle', metrics};
+      return {
+        shape: {kind: 'rect', corners: rect.corners},
+        reason: 'rectangle',
+        metrics,
+      };
     }
   }
-  const triangleOk = opts.shapes.triangle && corners >= 2 && corners <= 4 && tri.err <= 0.06 * k;
+  const triangleOk =
+    opts.shapes.triangle && corners >= 2 && corners <= 4 && tri.err <= 0.06 * k;
   if (triangleOk && tri.err < rect.err) {
-    return {shape: {kind: 'triangle', corners: tri.corners}, reason: 'triangle', metrics};
+    return {
+      shape: {kind: 'triangle', corners: tri.corners},
+      reason: 'triangle',
+      metrics,
+    };
   }
-  const aspect = Math.max(rect.w, rect.h) / Math.max(1, Math.min(rect.w, rect.h));
-  const circleOk = opts.shapes.circle && corners <= 3 && circle.err <= 0.09 * k && aspect <= 1 + 0.5 * k;
+  const aspect =
+    Math.max(rect.w, rect.h) / Math.max(1, Math.min(rect.w, rect.h));
+  const circleOk =
+    opts.shapes.circle &&
+    corners <= 3 &&
+    circle.err <= 0.09 * k &&
+    aspect <= 1 + 0.5 * k;
   if (circleOk) {
     // Always a perfect circle, even from a slightly oval stroke.
-    return {shape: {kind: 'circle', cx: circle.cx, cy: circle.cy, r: circle.r}, reason: 'circle', metrics};
+    return {
+      shape: {kind: 'circle', cx: circle.cx, cy: circle.cy, r: circle.r},
+      reason: 'circle',
+      metrics,
+    };
   }
   return {shape: null, reason: 'shape not recognized', metrics};
 }

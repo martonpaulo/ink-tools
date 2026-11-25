@@ -1,6 +1,5 @@
-/** Every user-facing string of Real-Time Conversion. English only; never inline in components (#93). */
+/** Every user-facing string of Smart Pen's Real-Time Text module. English only; never inline in components (#93). */
 export const copy = {
-  title: 'Real-Time Conversion',
   /** The sidebar switch (#184): Supernote's own wording, a noun in title case. */
   'button.mode': 'Real-Time Text',
   /** The sidebar undo (#188), as the tablet's verb-and-noun buttons read. */

@@ -4,15 +4,14 @@ import {
   MIN_SIZE_CHOICES_MM,
   minSizePx,
   PX_PER_MM,
-} from '../src/settings';
+} from '../src/modules/shapes/settings';
 
 test('the default minimum size is one of the choices, about two handwriting lines', () => {
   expect(MIN_SIZE_CHOICES_MM).toContain(DEFAULT_SETTINGS.minSizeMm);
   expect(minSizePx(DEFAULT_SETTINGS)).toBeCloseTo(16 * PX_PER_MM);
 });
 
-test('every shape starts on, and the feature starts on', () => {
-  expect(DEFAULT_SETTINGS.on).toBe(true);
+test('every shape starts on', () => {
   expect(Object.values(DEFAULT_SETTINGS.shapes)).toEqual([
     true,
     true,

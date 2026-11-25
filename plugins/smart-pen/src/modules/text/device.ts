@@ -20,7 +20,7 @@ import {
 import {type ConvertHost, type UndoHost} from '@ink-tools/ink-core/conversion';
 import type {LassoConvertHost} from './lasso';
 
-const log = (line: string) => console.log(`RealTimeConversion: ${line}`);
+const log = (line: string) => console.log(`SmartPen: text: ${line}`);
 
 export const DEVICE_CONVERT: ConvertHost = {
   onPenUp,

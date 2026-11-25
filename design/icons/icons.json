@@ -132,14 +132,18 @@
    ]
   },
   {
-   "out": "plugins/real-time-conversion/assets/icon",
+   "out": "plugins/smart-pen/assets/icon",
    "kind": "plugin",
    "tabler": [
-    "text-recognition"
+    "ballpen",
+    {
+     "name": "sparkles",
+     "badge": true
+    }
    ]
   },
   {
-   "out": "plugins/real-time-conversion/assets/convert",
+   "out": "plugins/smart-pen/assets/convert",
    "kind": "plugin",
    "tabler": [
     "text-recognition",
@@ -150,7 +154,7 @@
    ]
   },
   {
-   "out": "plugins/real-time-conversion/assets/mode-on",
+   "out": "plugins/smart-pen/assets/mode-on",
    "kind": "plugin",
    "tabler": [
     "text-recognition",
@@ -166,7 +170,7 @@
    ]
   },
   {
-   "out": "plugins/real-time-conversion/assets/mode-off",
+   "out": "plugins/smart-pen/assets/mode-off",
    "kind": "plugin",
    "tabler": [
     "text-recognition",
@@ -182,7 +186,7 @@
    ]
   },
   {
-   "out": "plugins/real-time-conversion/assets/undo",
+   "out": "plugins/smart-pen/assets/undo",
    "kind": "plugin",
    "tabler": [
     "text-recognition",
@@ -190,13 +194,6 @@
      "name": "arrow-back-up",
      "badge": true
     }
-   ]
-  },
-  {
-   "out": "plugins/smart-shapes/assets/shapes",
-   "kind": "plugin",
-   "tabler": [
-    "triangle-square-circle"
    ]
   },
   {
@@ -604,19 +601,6 @@
    "plannedIf": "if a plugin"
   },
   {
-   "out": "design/icons/planned/smart-pen/icon",
-   "kind": "plugin",
-   "readme": true,
-   "planned": "#305",
-   "tabler": [
-    "ballpen",
-    {
-     "name": "sparkles",
-     "badge": true
-    }
-   ]
-  },
-  {
    "out": "design/icons/planned/lasso-actions/icon",
    "kind": "plugin",
    "readme": true,
@@ -645,10 +629,13 @@
     "photo"
    ]
   },
-  "real-time-conversion": {
+  "smart-pen": {
    "motif": [
     "text-recognition"
-   ]
+   ],
+   "except": {
+    "icon": "the plugin's own icon, the pen, stands for every module; the motif marks Real-Time Text's buttons"
+   }
   },
   "word-lookup": {
    "motif": [

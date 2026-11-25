@@ -1,5 +1,9 @@
 /** «Convert to Text» (#250) over a fake page: one recognition, one page change, undone by «Undo Conversion». */
-import {convertLasso, lassoBoxFor, paragraphsOf} from '../src/lasso';
+import {
+  convertLasso,
+  lassoBoxFor,
+  paragraphsOf,
+} from '../src/modules/text/lasso';
 import {
   MIN_FONT_SIZE,
   lastConversion,

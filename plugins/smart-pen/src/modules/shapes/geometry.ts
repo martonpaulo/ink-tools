@@ -40,7 +40,12 @@ export function geometryFor(shape: Shape, pen: Pen, select: boolean): object {
   let points: P[];
   if (shape.kind === 'arrow') {
     const fill = Math.max(2, (0.4 * base.penWidth) / 100);
-    points = arrowPoints(shape.tail, shape.tip, arrowHeadLength(base.penWidth) * HEAD_SCALE, fill);
+    points = arrowPoints(
+      shape.tail,
+      shape.tip,
+      arrowHeadLength(base.penWidth) * HEAD_SCALE,
+      fill,
+    );
   } else {
     points = [...shape.corners, shape.corners[0]];
   }

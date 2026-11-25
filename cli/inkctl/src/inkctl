@@ -407,8 +407,8 @@ FIXTURE_LABEL = [60, 40, 1860, 110]  # every page's typed label, a text box at i
 FIXTURES = (
     {"name": "apple", "page": 1, "content": "the word «apple», handwritten", "rects": {"word": [500, 400, 727, 518]}, "serves": ["#13", "#35", "#169", "#19"]},
     {"name": "maca", "page": 2, "content": "the word «maçã», handwritten", "rects": {"word": [500, 400, 762, 511]}, "serves": ["#114", "Word Lookup definitions"]},
-    {"name": "casa", "page": 3, "content": "the word «casa», handwritten", "rects": {"word": [500, 400, 697, 447]}, "serves": ["Word Lookup translation", "Real-Time Conversion"]},
-    {"name": "cafe", "page": 4, "content": "the word «café» with its accent, handwritten", "rects": {"word": [500, 400, 684, 486]}, "serves": ["Real-Time Conversion accents", "#144"]},
+    {"name": "casa", "page": 3, "content": "the word «casa», handwritten", "rects": {"word": [500, 400, 697, 447]}, "serves": ["Word Lookup translation", "Smart Pen Real-Time Text"]},
+    {"name": "cafe", "page": 4, "content": "the word «café» with its accent, handwritten", "rects": {"word": [500, 400, 684, 486]}, "serves": ["Smart Pen Real-Time Text accents", "#144"]},
     {"name": "coffee", "page": 5, "content": "label only: «coffee» is still to be written with the pen", "rects": {}, "serves": ["Word Lookup English cases"]},
     {"name": "translation", "page": 6, "content": "Spanish and Chinese words, handwritten", "rects": {"aprovechar": [300, 400, 795, 506], "manzana": [300, 700, 760, 769], "pingguo": [300, 1000, 593, 1127]}, "serves": ["#127"]},
     {"name": "full-name", "page": 7, "content": "a full name at the end of a line, and the name alone", "rects": {"line": [60, 383, 1868, 558], "name": [300, 900, 1316, 1075]}, "serves": ["#18"]},
@@ -416,7 +416,7 @@ FIXTURES = (
     {"name": "marks", "page": 9, "content": "an arrow and a scribble, handwritten; a drawing is still to be made with the pen", "rects": {"arrow": [300, 500, 542, 534], "scribble": [900, 450, 1349, 621]}, "serves": ["#165", "Real-Time Conversion non-words"]},
     {"name": "photo", "page": 10, "content": "an inserted apple photo, 960 x 870, placed by the host near the page centre; its rect is not measured", "rects": {}, "serves": ["#170", "#182", "#137", "#196", "#145", "#134"]},
     {"name": "illustration", "page": 11, "content": "an inserted banana line drawing", "rects": {"drawing": [640, 1053, 1280, 1506]}, "serves": ["Image Editing on clipart", "#134"]},
-    {"name": "blank", "page": 12, "content": "label only", "rects": {}, "serves": ["Real-Time Conversion pen tests"]},
+    {"name": "blank", "page": 12, "content": "label only", "rects": {}, "serves": ["Smart Pen pen tests"]},
     {"name": "below-word", "page": 13, "content": "handwriting right below a word", "rects": {"word": [577, 400, 804, 518], "line": [500, 560, 1252, 662]}, "serves": ["#152", "#168"]},
 )
 PAGE_WIDTH = 1920  # the owner's tablet (docs/supernote.md › Screen and units)

@@ -19,7 +19,7 @@
       "lastVerified": "unverified",
       "publicApiRequest": "not asked",
       "probe": {
-        "unprobed": "needs a pen stroke; the effect test is the Real-Time Conversion device round"
+        "unprobed": "needs a pen stroke; the effect test is the Smart Pen device round"
       },
       "active": "sn-adapter official/elements.ts",
       "values": {}
@@ -29,9 +29,9 @@
       "title": "penType 4 is a lasso path and 16 the ink pen",
       "level": 5,
       "impact": "user",
-      "owner": "smart-shapes",
+      "owner": "smart-pen",
       "readers": [
-        "smart-shapes"
+        "smart-pen"
       ],
       "reason": "the SDK lists pens 1, 10, 11 and 15 only; 4 and 16 were measured",
       "evidence": {
@@ -42,9 +42,9 @@
       "lastVerified": "unverified",
       "publicApiRequest": "not asked",
       "probe": {
-        "unprobed": "needs a pen stroke and a lasso; the effect test is the Smart Shapes device round"
+        "unprobed": "needs a pen stroke and a lasso; the effect test is the Smart Pen device round"
       },
-      "active": "smart-shapes src/guard.ts",
+      "active": "smart-pen src/modules/shapes/guard.ts",
       "issues": [
         253
       ],

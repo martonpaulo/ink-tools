@@ -1,10 +1,7 @@
 /**
- * Real-Time Conversion's settings (#184), one owner for every default. The word rule reads them
- * when the mode turns on.
- *
- * shortcut: the settings live in memory and reset when the plugin restarts, as Lingo's and
- * Bridge's do, so «Start with Real-Time Text on» holds only until then; upgrade when the plugin
- * storage lands (#40).
+ * Real-Time Text's settings (#184), one owner for every default. The word rule reads them when the
+ * mode turns on. Smart Pen's settings file keeps them (src/settings.ts, #305) and sets them here at
+ * start-up.
  */
 import {
   DEFAULT_WORD_OPTIONS,

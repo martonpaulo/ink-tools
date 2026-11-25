@@ -11,7 +11,7 @@ import {
   type UndoHost,
   type InkStroke,
 } from '@ink-tools/ink-core/conversion';
-import type {LassoConvertHost} from '../src/lasso';
+import type {LassoConvertHost} from '../src/modules/text/lasso';
 
 export type FakeElement = {
   uuid: string;

@@ -1,14 +1,14 @@
-name: Prerelease Real-Time Conversion
+name: Prerelease Smart Pen
 
-# Each Real-Time Conversion build becomes a GitHub prerelease carrying RealTimeConversion-<version>.snplg (#203): a device
+# Each Smart Pen build becomes a GitHub prerelease carrying SmartPen-<version>.snplg (#203, #305): a device
 # build comes from CI, never from the owner's Mac. A push to main that changes the plugin or a package
-# it uses publishes when its real-time-conversion-v<package.json version> tag does not exist yet, so each version
+# it uses publishes when its smart-pen-v<package.json version> tag does not exist yet, so each version
 # publishes once; the version follows root AGENTS.md › Product versioning (#155).
 
 on:
   push:
     branches: [main]
-    paths: ['plugins/real-time-conversion/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**']
+    paths: ['plugins/smart-pen/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'packages/picture-search/**']
   workflow_dispatch:
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: plugins/real-time-conversion
+        working-directory: plugins/smart-pen
     steps:
       - name: Check out the pushed commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -34,7 +34,7 @@ jobs:
         id: tag
         run: |
           version="$(node ../../scripts/plugin-version.cjs .)"
-          tag="real-time-conversion-v$version"
+          tag="smart-pen-v$version"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::$tag is already published; nothing to do."
             echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -49,7 +49,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: plugins/real-time-conversion/package-lock.json
+          cache-dependency-path: plugins/smart-pen/package-lock.json
 
       - name: Install dependencies
         if: steps.tag.outputs.publish == 'true'
@@ -59,7 +59,7 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: npm run validate
 
-      - name: Build the plugin package
+      - name: Build the package with its native app.npk
         if: steps.tag.outputs.publish == 'true'
         run: npm run build
 
@@ -67,11 +67,11 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: |
           # The asset name carries the version so the owner can tell builds apart on the tablet.
-          asset="build/outputs/RealTimeConversion-${TAG#real-time-conversion-v}.snplg"
+          asset="build/outputs/SmartPen-${TAG#smart-pen-v}.snplg"
           cp build/outputs/RealTimeConversion.snplg "$asset"
           gh release create "$TAG" "$asset" \
             --prerelease --target "$GITHUB_SHA" --title "$TAG" \
-            --notes "Real-Time Conversion prerelease build. Install on the tablet."
+            --notes "Smart Pen prerelease build, with its native app.npk. Install on the tablet."
 
       - name: Read the asset back
         if: steps.tag.outputs.publish == 'true'
@@ -79,6 +79,6 @@ jobs:
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
           echo "$names"
           case "$names" in
-            *"RealTimeConversion-${TAG#real-time-conversion-v}.snplg"*) ;;
-            *) echo "::error::RealTimeConversion-${TAG#real-time-conversion-v}.snplg is missing from $TAG."; exit 1 ;;
+            *"SmartPen-${TAG#smart-pen-v}.snplg"*) ;;
+            *) echo "::error::SmartPen-${TAG#smart-pen-v}.snplg is missing from $TAG."; exit 1 ;;
           esac

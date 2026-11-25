@@ -1,5 +1,5 @@
 // Stroke generators copied from Snap v0.9.0 __tests__/recognize.test.ts (MIT, Copyright (c) 2026 Charles Cheval), see ../NOTICE.md (#253).
-import type {P} from '../src/recognize';
+import type {P} from '../src/modules/shapes/recognize';
 
 export function hand(points: P[], amp: number, seed = 7): P[] {
   let s = seed;
@@ -27,7 +27,15 @@ export function polyline(vertices: P[], perSide = 40): P[] {
   return out;
 }
 
-export function arc(cx: number, cy: number, rx: number, ry: number, turns: number, start = 0, n = 150): P[] {
+export function arc(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  turns: number,
+  start = 0,
+  n = 150,
+): P[] {
   return Array.from({length: n}, (_, i) => {
     const a = start + (i / (n - 1)) * turns * 2 * Math.PI;
     return {x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a)};
@@ -43,11 +51,23 @@ export function rotateAll(points: P[], deg: number, c: P): P[] {
 }
 
 /** Rectangle drawn from top-left, clockwise; `end` = where the pen stops. */
-export const rect = (l: number, t: number, r: number, b: number, end: P = {x: l, y: t + 10}) =>
-  polyline([{x: l, y: t}, {x: r, y: t}, {x: r, y: b}, {x: l, y: b}, end]);
+export const rect = (
+  l: number,
+  t: number,
+  r: number,
+  b: number,
+  end: P = {x: l, y: t + 10},
+) => polyline([{x: l, y: t}, {x: r, y: t}, {x: r, y: b}, {x: l, y: b}, end]);
 
 /** Hand-drawn arrow: shaft from `a` to `b`, then a head of size `h` drawn in one of the usual ways. */
-export function arrow(a: P, b: P, h: number, style: 'barb-tip-barb' | 'triangle' | 'open-v', deg = 30, bow = 0): P[] {
+export function arrow(
+  a: P,
+  b: P,
+  h: number,
+  style: 'barb-tip-barb' | 'triangle' | 'open-v',
+  deg = 30,
+  bow = 0,
+): P[] {
   const len = Math.hypot(b.x - a.x, b.y - a.y);
   const bx = (a.x - b.x) / len;
   const by = (a.y - b.y) / len;
@@ -62,7 +82,10 @@ export function arrow(a: P, b: P, h: number, style: 'barb-tip-barb' | 'triangle'
     'open-v': [b, barb(1), barb(-1)],
   };
   // Optional bow: the shaft passes through a midpoint pushed sideways by `bow` × its length.
-  const mid = {x: (a.x + b.x) / 2 - by * bow * len, y: (a.y + b.y) / 2 + bx * bow * len};
+  const mid = {
+    x: (a.x + b.x) / 2 - by * bow * len,
+    y: (a.y + b.y) / 2 + bx * bow * len,
+  };
   const shaft = bow ? [a, mid] : [a];
   return polyline([...shaft, ...heads[style]], 30);
 }

@@ -2,6 +2,6 @@
  "gates": {"command": ["python3", "scripts/gates.py", "-"],
            "cloud": ["docs", "license", "sleep", "dry", "boundaries", "registry", "packages",
                      "account-sync", "image-editing", "word-lookup", "device-transfer",
-                     "real-time-conversion", "smart-shapes", "plugin-diagnostics",
+                     "smart-pen", "plugin-diagnostics",
                      "handwriting-language", "inktools-bridge", "inkctl", "native", "audit",
                      "versions", "case", "icons", "quick", "setup", "design"]}}

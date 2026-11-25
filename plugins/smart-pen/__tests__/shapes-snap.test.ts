@@ -1,9 +1,17 @@
 /** The replace over a fake page (#253): hold, lasso route, number route, failures. */
 import {fail, ok, type PenPoint} from '@ink-tools/sn-adapter/official';
-import {HoldTracker} from '../src/hold';
-import {createRunner} from '../src/run';
-import {DEFAULT_SETTINGS, HOLD_MS, setSettings} from '../src/settings';
-import {handleStroke, type PenState, type SnapHost} from '../src/snap';
+import {HoldTracker} from '../src/modules/shapes/hold';
+import {createRunner} from '../src/modules/shapes/run';
+import {
+  DEFAULT_SETTINGS,
+  HOLD_MS,
+  setSettings,
+} from '../src/modules/shapes/settings';
+import {
+  handleStroke,
+  type PenState,
+  type SnapHost,
+} from '../src/modules/shapes/snap';
 import {arc, hand} from '../test-support/strokes';
 
 const CIRCLE: PenPoint[] = hand(arc(500, 500, 200, 200, 1.05), 6);
@@ -20,7 +28,13 @@ function fakeHost(others = 0) {
   const host = {
     strokePoints: jest.fn(async (e: object) => ok((e as FakeElement).points)),
     saveStroke: jest.fn(async () =>
-      ok({points: CIRCLE, pressures: [], penType: INK_PEN, penColor: 0, thickness: 0}),
+      ok({
+        points: CIRCLE,
+        pressures: [],
+        penType: INK_PEN,
+        penColor: 0,
+        thickness: 0,
+      }),
     ),
     restoreStroke: jest.fn(async () => ok(true)),
     getCurrentFilePath: jest.fn(async () => ok('/Note/Tests/a.note')),
@@ -30,10 +44,16 @@ function fakeHost(others = 0) {
     readEmrRange: jest.fn(),
     emrToPage: jest.fn(),
     getPenInfo: jest.fn(async () => ok({type: INK_PEN, color: 0, width: 500})),
-    getLassoRect: jest.fn((): ReturnType<SnapHost['getLassoRect']> => Promise.resolve(fail(904, 'no lasso'))),
+    getLassoRect: jest.fn(
+      (): ReturnType<SnapHost['getLassoRect']> =>
+        Promise.resolve(fail(904, 'no lasso')),
+    ),
     lassoElements: jest.fn(async () => ok(true)),
     getLassoElements: jest.fn(async () =>
-      ok([stroke, ...Array.from({length: others}, () => strokeOf([{x: 1, y: 1}]))]),
+      ok([
+        stroke,
+        ...Array.from({length: others}, () => strokeOf([{x: 1, y: 1}])),
+      ]),
     ),
     deleteLassoElements: jest.fn(async () => ok(true)),
     clearLasso: jest.fn(async () => ok(true)),
@@ -54,22 +74,30 @@ beforeEach(() => setSettings(DEFAULT_SETTINGS));
 
 test('a held circle becomes a circle, deleted through the lasso so the undo history stays', async () => {
   const host = fakeHost();
-  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('circle (lasso)');
+  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe(
+    'circle (lasso)',
+  );
   expect(host.deleteLassoElements).toHaveBeenCalledTimes(1);
   expect(host.deletePageElements).not.toHaveBeenCalled();
-  expect(host.insertGeometry).toHaveBeenCalledWith(expect.objectContaining({type: 'GEO_circle', penWidth: 500}));
+  expect(host.insertGeometry).toHaveBeenCalledWith(
+    expect.objectContaining({type: 'GEO_circle', penWidth: 500}),
+  );
 });
 
 test('the same circle not held stays ink', async () => {
   const host = fakeHost();
   expect(await handleStroke(host, strokeOf(CIRCLE), quick)).toBe('no hold');
-  expect(await handleStroke(host, strokeOf(CIRCLE), {...held, stillMs: null})).toBe('no hold');
+  expect(
+    await handleStroke(host, strokeOf(CIRCLE), {...held, stillMs: null}),
+  ).toBe('no hold');
   expect(host.insertGeometry).not.toHaveBeenCalled();
 });
 
 test('a circle drawn around words never deletes the words: the stroke goes by its number', async () => {
   const host = fakeHost(3);
-  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('circle (number)');
+  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe(
+    'circle (number)',
+  );
   expect(host.deleteLassoElements).not.toHaveBeenCalled();
   expect(host.clearLasso).toHaveBeenCalledTimes(1);
   expect(host.deletePageElements).toHaveBeenCalledWith([7], 0);
@@ -87,16 +115,21 @@ test('a failed insert writes the stroke back', async () => {
   const host = fakeHost();
   host.insertGeometry.mockResolvedValue(fail(1501, 'refused'));
   expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('failed');
-  expect(host.restoreStroke).toHaveBeenCalledWith(expect.objectContaining({points: CIRCLE}), 0);
+  expect(host.restoreStroke).toHaveBeenCalledWith(
+    expect.objectContaining({points: CIRCLE}),
+    0,
+  );
 });
 
-test('off, an open lasso, a lasso path or refused access change nothing', async () => {
+test('an open lasso, a lasso path or refused access change nothing', async () => {
   const host = fakeHost();
-  setSettings({...DEFAULT_SETTINGS, on: false});
-  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('off');
   setSettings(DEFAULT_SETTINGS);
-  expect(await handleStroke(host, {...strokeOf(CIRCLE), stroke: {penType: 4}}, held)).toBe('not ink');
-  host.getLassoRect.mockResolvedValueOnce(ok({left: 0, top: 0, right: 1, bottom: 1}));
+  expect(
+    await handleStroke(host, {...strokeOf(CIRCLE), stroke: {penType: 4}}, held),
+  ).toBe('not ink');
+  host.getLassoRect.mockResolvedValueOnce(
+    ok({left: 0, top: 0, right: 1, bottom: 1}),
+  );
   expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('lasso active');
   host.ensureAccess.mockResolvedValueOnce(false);
   expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('failed');
@@ -107,9 +140,13 @@ test('off, an open lasso, a lasso path or refused access change nothing', async 
 test('EMR points from the pen-up event are turned into page pixels first', async () => {
   const host = fakeHost();
   host.offPage.mockReturnValue(true);
-  host.readEmrRange.mockResolvedValue(ok({maxX: 1, maxY: 1, display: {width: 1920, height: 2560}}));
+  host.readEmrRange.mockResolvedValue(
+    ok({maxX: 1, maxY: 1, display: {width: 1920, height: 2560}}),
+  );
   host.emrToPage.mockReturnValue(CIRCLE);
-  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('circle (lasso)');
+  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe(
+    'circle (lasso)',
+  );
   expect(host.emrToPage).toHaveBeenCalledTimes(1);
 });
 
@@ -120,7 +157,14 @@ test('the runner reads the hold from the motion listener, even when the lift com
     now: () => now,
     sleep: () => new Promise(() => undefined),
   });
-  const pen = (action: number, x: number, t: number) => ({action, x, y: 500, eventTime: t, downTime: 1, toolType: 2});
+  const pen = (action: number, x: number, t: number) => ({
+    action,
+    x,
+    y: 500,
+    eventTime: t,
+    downTime: 1,
+    toolType: 2,
+  });
   runner.motion(pen(0, 300, 0));
   runner.motion(pen(2, 700, 100));
   const outcome = runner.penUp([strokeOf(CIRCLE)]);

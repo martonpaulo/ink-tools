@@ -118,6 +118,23 @@ export class Buttons {
     }
   }
 
+  /**
+   * Stops the mode and removes every button, as switching the module off in Settings does (#305):
+   * the open words are dropped untouched, as turning the mode off drops them.
+   */
+  async unregisterAll(): Promise<void> {
+    const {host} = this;
+    this.converter?.turnOff();
+    this.converter = null;
+    for (const [what, id] of [
+      ['lasso', LASSO_BUTTON_ID],
+      ['undo', UNDO_BUTTON_ID],
+      ['mode', MODE_BUTTON_ID],
+    ] as const) {
+      host.log(describe(`unregister ${what}`, await host.unregister(id)));
+    }
+  }
+
   /** True when every file permission is granted; otherwise asks, and the dialog shows next press. */
   private async permitted(): Promise<boolean> {
     for (const permission of NEEDS) {

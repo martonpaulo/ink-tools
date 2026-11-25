@@ -20,8 +20,8 @@ HEADER = "Written by scripts/registry.py from registry/ (#294); never edit it by
 BLOCK_START = "# BEGIN registry: " + HEADER
 BLOCK_END = "# END registry"
 # The tools whose code runs in the plugins' JavaScript: they read sn-adapter's reader.
-TYPESCRIPT_TOOLS = ("sn-adapter", "ui-kit", "picture-search", "account-sync", "smart-shapes",
-                    "real-time-conversion", "image-editing", "device-transfer", "word-lookup",
+TYPESCRIPT_TOOLS = ("sn-adapter", "ui-kit", "picture-search", "account-sync", "smart-pen",
+                    "image-editing", "device-transfer", "word-lookup",
                     "plugin-diagnostics")
 CONTENT = "content://"
 # The item table's fields, in the order of `cells`.

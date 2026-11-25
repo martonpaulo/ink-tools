@@ -30,7 +30,7 @@ import {
 import {copy} from './copy';
 import type {SnapHost} from './snap';
 
-const log = (line: string) => console.log(`SmartShapes: ${line}`);
+const log = (line: string) => console.log(`SmartPen: shapes: ${line}`);
 
 let access = false;
 

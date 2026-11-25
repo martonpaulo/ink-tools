@@ -54,7 +54,9 @@ export class HoldTracker {
       this.anchor = {x: e.x, y: e.y};
       this.anchorTime = e.eventTime;
       this.lastUp = null;
-    } else if (Math.hypot(e.x - this.anchor.x, e.y - this.anchor.y) > this.radius()) {
+    } else if (
+      Math.hypot(e.x - this.anchor.x, e.y - this.anchor.y) > this.radius()
+    ) {
       this.anchor = {x: e.x, y: e.y};
       this.anchorTime = e.eventTime;
     }

@@ -1,7 +1,14 @@
 // Copied from Snap v0.9.0 (MIT, Copyright (c) 2026 Charles Cheval), see ../NOTICE.md (#253).
-import {HoldTracker} from '../src/hold';
+import {HoldTracker} from '../src/modules/shapes/hold';
 
-const pen = (action: number, x: number, y: number, t: number) => ({action, x, y, eventTime: t, downTime: 1, toolType: 2});
+const pen = (action: number, x: number, y: number, t: number) => ({
+  action,
+  x,
+  y,
+  eventTime: t,
+  downTime: 1,
+  toolType: 2,
+});
 
 test('final pause measured between last movement and pen lift', () => {
   const h = new HoldTracker(() => 10);
@@ -30,7 +37,14 @@ test('no pause, stale measurement, finger ignored', () => {
 
 test('pen state: down and up, with a count of strokes started', async () => {
   const h = new HoldTracker(() => 12);
-  const ev = (action: number, t: number) => ({action, x: 0, y: 0, eventTime: t, downTime: 1000, toolType: 2});
+  const ev = (action: number, t: number) => ({
+    action,
+    x: 0,
+    y: 0,
+    eventTime: t,
+    downTime: 1000,
+    toolType: 2,
+  });
   expect(h.penDown).toBe(false);
   h.feed(ev(0, 1000), 1000);
   expect(h.penDown).toBe(true);

@@ -27,7 +27,9 @@ export function strokeOrigin(penType: unknown): StrokeOrigin {
   if (penType === LASSO_PEN_TYPE) {
     return 'lasso';
   }
-  return typeof penType === 'number' && INK_PEN_TYPES.includes(penType) ? 'ink' : 'unknown';
+  return typeof penType === 'number' && INK_PEN_TYPES.includes(penType)
+    ? 'ink'
+    : 'unknown';
 }
 
 export const isInk = (penType: unknown) => strokeOrigin(penType) === 'ink';

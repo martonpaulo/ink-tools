@@ -8,11 +8,23 @@
  * history [community, Snap v0.9.0]. The page is never changed while the pen writes the next stroke.
  */
 import type {Rect, Size} from '@ink-tools/ink-core';
-import type {EmrRange, PenInfo, PenPoint, Result, SavedStroke} from '@ink-tools/sn-adapter/official';
+import type {
+  EmrRange,
+  PenInfo,
+  PenPoint,
+  Result,
+  SavedStroke,
+} from '@ink-tools/sn-adapter/official';
 import {isInk} from './guard';
 import {geometryFor, type Pen} from './geometry';
 import {recognize, type Shape} from './recognize';
-import {getSettings, HOLD_MS, minSizePx, SNAP_DEGREES, TOLERANCE} from './settings';
+import {
+  getSettings,
+  HOLD_MS,
+  minSizePx,
+  SNAP_DEGREES,
+  TOLERANCE,
+} from './settings';
 
 export type SnapHost = {
   strokePoints(element: object): Promise<Result<PenPoint[]>>;
@@ -24,7 +36,11 @@ export type SnapHost = {
   offPage(points: readonly PenPoint[], size: Size): boolean;
   /** The EMR range of the screen, read through its display size (#269). */
   readEmrRange(): Promise<Result<EmrRange>>;
-  emrToPage(points: readonly PenPoint[], size: Size, range: EmrRange): PenPoint[];
+  emrToPage(
+    points: readonly PenPoint[],
+    size: Size,
+    range: EmrRange,
+  ): PenPoint[];
   getPenInfo(): Promise<Result<PenInfo>>;
   getLassoRect(): Promise<Result<Rect>>;
   lassoElements(rect: Rect): Promise<Result<boolean>>;
@@ -48,19 +64,27 @@ export type PenState = {
   whenUp(): Promise<void>;
 };
 
-type StrokeFields = {stroke?: {penType?: number} | null; numInPage?: number; layerNum?: number};
+type StrokeFields = {
+  stroke?: {penType?: number} | null;
+  numInPage?: number;
+  layerNum?: number;
+};
 
 /** Pixels added around the stroke's rect, so the lasso takes all of it. */
 const LASSO_MARGIN = 2;
 
 export type Outcome =
-  | 'off'
   | 'not ink'
   | 'no hold'
   | 'lasso active'
   | 'no shape'
   | 'failed'
   | `${Shape['kind']} (${'lasso' | 'number'})`;
+
+/** True when the outcome replaced the stroke with a shape, so no other module may use it (#305). */
+export function replaced(outcome: Outcome): boolean {
+  return / \((lasso|number)\)$/.test(outcome);
+}
 
 function bounds(points: readonly PenPoint[]): Rect {
   const xs = points.map(p => p.x);
@@ -73,10 +97,15 @@ function bounds(points: readonly PenPoint[]): Rect {
   };
 }
 
-const same = (a: PenPoint, b: PenPoint) => Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1;
+const same = (a: PenPoint, b: PenPoint) =>
+  Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1;
 
 /** True when `element` is an ink stroke with the same first and last point as `raw`. */
-async function isTheStroke(host: SnapHost, element: object, raw: readonly PenPoint[]): Promise<boolean> {
+async function isTheStroke(
+  host: SnapHost,
+  element: object,
+  raw: readonly PenPoint[],
+): Promise<boolean> {
   if (!isInk((element as StrokeFields).stroke?.penType)) {
     return false;
   }
@@ -90,15 +119,24 @@ async function isTheStroke(host: SnapHost, element: object, raw: readonly PenPoi
 }
 
 /** Deletes the stroke through the lasso, which keeps the undo history; false when it cannot. */
-async function removeByLasso(host: SnapHost, raw: readonly PenPoint[], pagePoints: PenPoint[]): Promise<boolean> {
+async function removeByLasso(
+  host: SnapHost,
+  raw: readonly PenPoint[],
+  pagePoints: PenPoint[],
+): Promise<boolean> {
   const lassoed = await host.lassoElements(bounds(pagePoints));
   if (!lassoed.ok || !lassoed.value) {
     return false;
   }
   const inside = await host.getLassoElements();
-  const alone = inside.ok && inside.value.length === 1 && (await isTheStroke(host, inside.value[0], raw));
+  const alone =
+    inside.ok &&
+    inside.value.length === 1 &&
+    (await isTheStroke(host, inside.value[0], raw));
   if (inside.ok) {
-    await Promise.all(inside.value.map(element => host.recycleElement(element)));
+    await Promise.all(
+      inside.value.map(element => host.recycleElement(element)),
+    );
   }
   if (alone) {
     const deleted = await host.deleteLassoElements();
@@ -111,7 +149,11 @@ async function removeByLasso(host: SnapHost, raw: readonly PenPoint[], pagePoint
 }
 
 /** Deletes the stroke by its number, found as the page's last element; this clears the undo history. */
-async function removeByNumber(host: SnapHost, raw: readonly PenPoint[], page: number): Promise<boolean> {
+async function removeByNumber(
+  host: SnapHost,
+  raw: readonly PenPoint[],
+  page: number,
+): Promise<boolean> {
   const last = await host.getLastElement();
   if (!last.ok || !last.value) {
     return false;
@@ -128,11 +170,12 @@ async function removeByNumber(host: SnapHost, raw: readonly PenPoint[], page: nu
   }
 }
 
-export async function handleStroke(host: SnapHost, element: object, pen: PenState): Promise<Outcome> {
+export async function handleStroke(
+  host: SnapHost,
+  element: object,
+  pen: PenState,
+): Promise<Outcome> {
   const settings = getSettings();
-  if (!settings.on) {
-    return 'off';
-  }
   if (!isInk((element as StrokeFields).stroke?.penType)) {
     return 'not ink';
   }
@@ -143,7 +186,11 @@ export async function handleStroke(host: SnapHost, element: object, pen: PenStat
   const path = await host.getCurrentFilePath();
   const page = await host.getCurrentPageNum();
   if (!raw.ok || !path.ok || !page.ok) {
-    host.log(`read failed: ${[raw, path, page].map(r => (r.ok ? 'ok' : r.message)).join(', ')}`);
+    host.log(
+      `read failed: ${[raw, path, page]
+        .map(r => (r.ok ? 'ok' : r.message))
+        .join(', ')}`,
+    );
     return 'failed';
   }
   const size = await host.getPageSize(path.value, page.value);
@@ -194,14 +241,29 @@ export async function handleStroke(host: SnapHost, element: object, pen: PenStat
     }
   }
   const info = await host.getPenInfo();
-  const sdkStroke = (element as {stroke?: {penType?: number; penColor?: number}}).stroke;
+  const sdkStroke = (
+    element as {stroke?: {penType?: number; penColor?: number}}
+  ).stroke;
   const style: Pen = info.ok
     ? info.value
-    : {type: sdkStroke?.penType ?? 0, color: sdkStroke?.penColor ?? 0, width: 0};
-  const inserted = await host.insertGeometry(geometryFor(found.shape, style, false));
+    : {
+        type: sdkStroke?.penType ?? 0,
+        color: sdkStroke?.penColor ?? 0,
+        width: 0,
+      };
+  const inserted = await host.insertGeometry(
+    geometryFor(found.shape, style, false),
+  );
   if (!inserted.ok || !inserted.value) {
-    const restored = await host.restoreStroke({...saved.value, points}, page.value);
-    host.log(`insert failed, stroke ${restored.ok ? 'restored' : `lost: ${restored.message}`}`);
+    const restored = await host.restoreStroke(
+      {...saved.value, points},
+      page.value,
+    );
+    host.log(
+      `insert failed, stroke ${
+        restored.ok ? 'restored' : `lost: ${restored.message}`
+      }`,
+    );
     return 'failed';
   }
   host.log(`${found.shape.kind} by ${how}`);

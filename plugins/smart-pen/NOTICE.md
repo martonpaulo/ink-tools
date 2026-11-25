@@ -1,8 +1,8 @@
 # Notice
 
-Smart Shapes is licensed under CC BY-NC-SA 4.0 ([LICENSE](LICENSE)).
+Smart Pen is licensed under CC BY-NC-SA 4.0 ([LICENSE](LICENSE)).
 
-Its recognizer (`src/recognize.ts`), hold detection (`src/hold.ts`) and stroke guard (`src/guard.ts`), with their tests, are copied and adapted from Snap v0.9.0
+Its Smart Shapes module's recognizer (`src/modules/shapes/recognize.ts`), hold detection (`src/modules/shapes/hold.ts`) and stroke guard (`src/modules/shapes/guard.ts`), with their tests (`__tests__/shapes-*.test.ts`), are copied and adapted from Snap v0.9.0
 ([CharlesCheval/supernote-snap at v0.9.0](https://github.com/CharlesCheval/supernote-snap/tree/v0.9.0)), the last version released under the MIT licence; later versions are under another licence and are not used ([#253](https://github.com/martonpaulo/ink-tools/issues/253)). Its licence:
 
 ```text

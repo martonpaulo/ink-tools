@@ -3,14 +3,14 @@ import {
   LASSO_BUTTON_ID,
   MODE_BUTTON_ID,
   UNDO_BUTTON_ID,
-} from '../src/buttons';
-import {copy} from '../src/copy';
+} from '../src/modules/text/buttons';
+import {copy} from '../src/modules/text/copy';
 import {
   Converter,
   setLastConversion,
   DEFAULT_WORD_OPTIONS,
 } from '@ink-tools/ink-core/conversion';
-import {DEFAULT_SETTINGS, setSettings} from '../src/settings';
+import {DEFAULT_SETTINGS, setSettings} from '../src/modules/text/settings';
 import {fakeTablet} from '../test-support/host';
 import {letter} from '../../../packages/ink-core/testing/ink';
 
@@ -82,6 +82,21 @@ test('«Start with Real-Time Text on» starts listening at start-up', async () =
   await buttons.registerAll();
   expect(buttons.on).toBe(true);
   expect(tablet.listening).toBe(true);
+});
+
+test('switching the module off stops the mode and removes every button (#305)', async () => {
+  const {host, buttons, tablet} = setup();
+  await buttons.registerAll();
+  await buttons.turn(true, false);
+  host.unregister.mockClear();
+  await buttons.unregisterAll();
+  expect(buttons.on).toBe(false);
+  expect(tablet.listening).toBe(false);
+  expect(host.unregister.mock.calls).toEqual([
+    [LASSO_BUTTON_ID],
+    [UNDO_BUTTON_ID],
+    [MODE_BUTTON_ID],
+  ]);
 });
 
 test('a press switches the mode, its icon and says so', async () => {

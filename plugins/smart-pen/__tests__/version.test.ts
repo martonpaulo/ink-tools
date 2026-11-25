@@ -3,6 +3,6 @@ import {join} from 'path';
 
 const {problems} = require('../../../scripts/plugin-version.cjs');
 
-test("Real-Time Conversion's PluginConfig.json matches its package.json", () => {
+test("Smart Pen's PluginConfig.json matches its package.json", () => {
   expect(problems(join(__dirname, '..'))).toEqual([]);
 });

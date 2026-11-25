@@ -1,5 +1,5 @@
 // Copied from Snap v0.9.0 (MIT, Copyright (c) 2026 Charles Cheval), see ../NOTICE.md (#253).
-import {strokeOrigin, isInk} from '../src/guard';
+import {strokeOrigin, isInk} from '../src/modules/shapes/guard';
 
 test('lasso paths (penType 4) are never treated as ink', () => {
   expect(strokeOrigin(4)).toBe('lasso');
