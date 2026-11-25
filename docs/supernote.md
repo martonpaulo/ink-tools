@@ -609,8 +609,11 @@ the note shows through, is still to test.
   before: a note opened before reopens at its last page and the extra is ignored, while a plugin's
   `PluginCommAPI.jumpToPage(page)` (from 0) moves to the page [measured, 2026-11-17, Nomad,
   [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. So `inkctl note open --page` and
-  `inkctl fixture` move with the Probe's `jumpToPage` and prove the page with `getCurrentPageNum`
-  read after it; that read-back is [unverified] on the tablet.
+  `inkctl fixture` move with the Probe's `jumpToPage`. Probe's `getCurrentPageNum` read right after
+  the jump is not the shown page: it was often the page before the jump, and stayed at 8 on page 10
+  [measured, 2026-11-25, Nomad, [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. They prove the page from the note's page counter «N / total»
+  in the `tv_button` text instead, read up to 6 times; that counter's text is [unverified] on the
+  tablet until the next device round.
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
   (`adb tcpip 5555`); `inkctl wifi on` over the cable restores it [measured, 2026-11-16,
   [#1](https://github.com/martonpaulo/ink-tools/issues/1)]. USB ADB came back authorized, with no prompt, about 20 s after power-on, and Wi-Fi
