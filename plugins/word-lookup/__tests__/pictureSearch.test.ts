@@ -1,6 +1,6 @@
 /**
- * Lookup reaches Ink2Pic's picture search through the shared package (#125): the name resolves in
- * Jest, tsc and Metro, and the source registry it ships is the one Ink2Pic uses.
+ * Lookup reaches the picture search through the shared package (#125): the name resolves in Jest,
+ * tsc and Metro, and it ships the package's source registry.
  */
 import {DEFAULT_ADAPTERS, PAGE_SIZE} from '@ink-tools/picture-search';
 

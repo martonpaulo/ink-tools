@@ -2,8 +2,8 @@
 /**
  * Account Sync's native code: picture-search's file and image modules with its own
  * `BridgeFilesPackage`, which registers them as `BridgeFiles` and `BridgeImage`; Account Sync uses
- * only the small text reads and writes, for its Settings file. Their JVM tests run in the Ink2Pic
- * gate, built by the shared light native build,
+ * only the small text reads and writes, for its Settings file. Their JVM tests run in the packages
+ * gate (#254), built by the shared light native build,
  * packages/native-build/native-build.cjs (#231), which documents the commands.
  */
 const path = require('node:path');

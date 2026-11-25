@@ -30,12 +30,12 @@ test("Lookup's PluginConfig.json matches its package.json", () => {
 
 test('a prerelease tag carries its plugin name (#155)', () => {
   const good =
-    'on:\n  push:\n    tags: [\'ink2pic-v*-dev.*\']\n          tag="lookup-v$version"\n';
+    'on:\n  push:\n    tags: [\'other-v*-dev.*\']\n          tag="lookup-v$version"\n';
   expect(
-    workflowProblems('lookup', good.replace('ink2pic-v*-dev.*', 'lookup-v*')),
+    workflowProblems('lookup', good.replace('other-v*-dev.*', 'lookup-v*')),
   ).toEqual([]);
   expect(workflowProblems('lookup', good)).toEqual([
-    'tag trigger "ink2pic-v*-dev.*" does not start with lookup-v',
+    'tag trigger "other-v*-dev.*" does not start with lookup-v',
   ]);
   expect(workflowProblems('relay', '          tag="v$version"\n')).toEqual([
     'computed tag v$version does not start with relay-v',

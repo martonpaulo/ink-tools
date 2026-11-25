@@ -4,7 +4,8 @@
   "description": "Supernote plugin: lasso a handwritten word and insert a picture, a photo, a short definition or a translation for it.",
   "private": true,
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && npm run lint:sn-adapter",
+    "lint:sn-adapter": "eslint --max-warnings 0 -c .eslintrc.js --resolve-plugins-relative-to . ../../packages/sn-adapter/src/official ../../packages/sn-adapter/official.ts",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "validate": "npm run lint && npm run typecheck && npm test",

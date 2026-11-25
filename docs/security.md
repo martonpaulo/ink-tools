@@ -1,7 +1,8 @@
 # Security
 
-The monorepo's security rules that every subproject shares. Ink2Pic's answer to each item of the
-application-security standard is in [`plugins/ink2pic/docs/security.md`](../plugins/ink2pic/docs/security.md).
+The monorepo's security rules that every subproject shares. The retired picture plugin's answer to
+each item of the application-security standard is archived in
+[`research/plugin-brief/security.md`](research/plugin-brief/security.md) ([#288](https://github.com/martonpaulo/ink-tools/issues/288)).
 
 ## Dependency audit
 

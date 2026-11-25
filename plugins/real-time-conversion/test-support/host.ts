@@ -21,7 +21,7 @@ export type FakeElement = {
 
 /** The tablet's answer when recognition cannot read the ink (device log, #206). */
 export const RECOGNITION_FAILED = 'Recognition failed. Please try again!';
-/** Its code, as Ink2Pic's lasso-size failure gave it (plugins/ink2pic/docs/brief.md). */
+/** Its code, as Ink2Pic's lasso-size failure gave it (docs/research/plugin-brief/brief.md). */
 export const RECOGNITION_FAILED_CODE = 117;
 /** The SDK's code for a parameter its schema refuses (sn-plugin-lib 0.2.3 VerifyUtils, APIError 107). */
 export const PARAM_REFUSED_CODE = 107;

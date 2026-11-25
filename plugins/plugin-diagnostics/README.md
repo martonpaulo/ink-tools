@@ -5,7 +5,7 @@ The tablet shows it as «Plugin Diagnostics»; `probe` stays its internal name, 
 A permanent, developer-only Supernote plugin for quick on-device experiments. It is not shipped to
 users and has no release; its `.snplg` is a developer prerelease (`plugin-diagnostics-v<version>`; tags made before [#194](https://github.com/martonpaulo/ink-tools/issues/194) start with `probe-v`, workflow `prerelease-plugin-diagnostics.yml`, published when `PluginConfig.json` changes on `main`; raise `versionCode` for a new build), never a user release.
 
-Same runtime and pinned versions as [`../ink2pic`](../ink2pic): React Native 0.79.2 and `sn-plugin-lib`
+Same runtime and pinned versions as every plugin here: React Native 0.79.2 and `sn-plugin-lib`
 0.2.3. It registers the plugin Settings entry (like [`../account-sync`](../account-sync)) and one note sidebar button,
 «Run Command», which `inkctl` presses to write ink and lasso with no pen (see below).
 
@@ -16,7 +16,7 @@ Same runtime and pinned versions as [`../ink2pic`](../ink2pic): React Native 0.7
 2. Build: `npm install && npm run build` writes `build/outputs/Probe.snplg`, with the native module
    (`app.npk`) inside. CI builds the same package and checks it holds `app.npk`. The build runs `bash buildPlugin.sh`
    (the JS package; it always skips its own Gradle step, because this plugin has no `android/` folder)
-   and then `node scripts/native-build.cjs --package`, the light javac + D8 + aapt2 build that Ink2Pic
+   and then `node scripts/native-build.cjs --package`, the light javac + D8 + aapt2 build every native plugin
    uses, which adds `app.npk` and the `reactPackages` entry. `npm run test:native` runs its JVM tests.
 3. Install it with `inkctl plugin install`, then open Probe in the plugin Settings and press «Run Probe».
 4. Read the result in the view, or in logcat (see below).

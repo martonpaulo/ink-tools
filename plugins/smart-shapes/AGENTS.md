@@ -10,8 +10,8 @@ held still at its end, as the native Smart Straight Line, becomes a clean triang
 rectangle or arrow. A figure smaller than the minimum size (default 16 mm, about two handwriting
 lines) always stays ink, so a held «T» in a line of text never changes. It has no button; its
 settings button opens the Settings view (`App.tsx`): the switch, the minimum size and each of the five
-shapes. Its render is the `smart-shapes-settings` screen of Ink2Pic's `npm run renders`
-([#265](https://github.com/martonpaulo/ink-tools/issues/265)).
+shapes. Its render is the `smart-shapes-settings` screen of the renders, `npm -C plugins/account-sync run renders`
+([#265](https://github.com/martonpaulo/ink-tools/issues/265), [#288](https://github.com/martonpaulo/ink-tools/issues/288)).
 
 ## How it works
 

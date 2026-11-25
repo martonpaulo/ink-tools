@@ -3,14 +3,14 @@
 The picture search with no platform in it: no React Native, no `sn-plugin-lib`, no file or
 network API of its own. Everything it needs comes in through its options, so the same code runs on
 the Supernote, in Node (the search lab, [#63](https://github.com/martonpaulo/ink2pic/issues/63)) and in another project. A test in
-`plugins/ink2pic/__tests__/sdk-boundary.test.ts` fails when a file here imports anything outside this folder.
+`packages/picture-search/__tests__/boundary.test.ts` fails when a file here imports anything outside this folder.
 
 The device tier is the exception, kept apart in `storage/` and `log/` ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): the plugin's native file and image
 modules, its settings file, its session log and the run log. It imports only `react-native` and
 `@ink-tools/sn-adapter/official`, the core never imports it, and a plugin reaches it through
 `@ink-tools/picture-search/storage` from its own profile module, which calls
 `setPluginProfile({name, folder, filesModule, imageModule, userAgent})` first
-(`plugins/ink2pic/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
+(`plugins/word-lookup/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
 over its own settings model. The insert tier, `insert/`, holds what a lasso button runs on the
 page: `readLassoQuery` and `placeAtLasso`, ink-core's lasso read and placement over the official
 SDK wrappers, and «Insert best picture» ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): `searchCached` over a plugin's `SearchSettings`,
@@ -52,7 +52,7 @@ Every failure is a `Failure` with a typed `kind` (`network`, `timeout`, `http`, 
 - `adapters/`: one file per source, each with its URL builders and parsers.
 - `adapters/openmoji.ts` and `data/openmoji-index.json`: symbols for abstract words, matched on
   the device with no request ([#67](https://github.com/martonpaulo/ink2pic/issues/67)). Rebuild the index with
-  `node scripts/build-openmoji-index.cjs`; `--check` fails when the committed file differs.
+  `node packages/picture-search/scripts/build-openmoji-index.cjs`; `--check` fails when the committed file differs.
 - `registry.ts`: the default adapters and the picture host of each source that owns results.
 - `fetcher.ts`: the only network path, with the User-Agent and the per-request timeout.
 - `clock.ts`: the injected clock and log.

@@ -53,7 +53,7 @@ Only Scribble is live, and it works because the target is a text field: the syst
 
 | Need | Call | Status |
 | :--- | :--- | :--- |
-| Know a stroke ended, with no lasso | `PluginManager.registerEventListener('event_pen_up', order, listener)`: the only event the docs list; its message is the `Element[]` just written | [official]; whether it arrives while the plugin view is closed is open, Ink2Pic's spike removed its listeners on close ([brief](../../plugins/ink2pic/docs/brief.md#811-the-last-word)) |
+| Know a stroke ended, with no lasso | `PluginManager.registerEventListener('event_pen_up', order, listener)`: the only event the docs list; its message is the `Element[]` just written | [official]; whether it arrives while the plugin view is closed is open, Ink2Pic's spike removed its listeners on close ([brief](plugin-brief/brief.md#811-the-last-word)) |
 | Follow the pen between strokes | `registerMotionListener(order, listener)`: `MotionEvent` with `action` 0 down, 1 up, 2 move, `toolType` 2 for the pen | [official]; same open point |
 | A stroke's place and time | Elements carry no time and no rect; the rect comes from `stroke.points`, in page pixels | [official, Ink2Pic's brief] |
 | Word ends | Pauses inside a word (130 to 656 ms) and between words (578 to 1122 ms) overlap on the owner's tablet, so a timer alone cannot find the end of a word; position can (Ink2Pic's «Lasso last word» grouping) | [measured, Ink2Pic build 15, [#75](https://github.com/martonpaulo/ink2pic/issues/75)] |
@@ -71,7 +71,7 @@ Only Scribble is live, and it works because the target is a text field: the syst
 
 **The word-end rule.** A word is converted only when it is certainly finished:
 
-1. At each pen-up, the plugin adds the stroke to the open word if it sits on the word's line and nearer than the word gap; the gap is a ratio of the writer's own letter height and letter gaps, as Ink2Pic's grouping measured ([brief](../../plugins/ink2pic/docs/brief.md#811-the-last-word)).
+1. At each pen-up, the plugin adds the stroke to the open word if it sits on the word's line and nearer than the word gap; the gap is a ratio of the writer's own letter height and letter gaps, as Ink2Pic's grouping measured ([brief](plugin-brief/brief.md#811-the-last-word)).
 2. A stroke a word gap to the right, or on a new line, closes the previous word; that word goes to recognition.
 3. The last word of a pause closes after an idle time with no pen-down, about 2 s [inference, to tune on the device], longer than the longest pause inside a word measured (656 ms).
 4. A short stroke above or on the open word (an accent, an i-dot, a tilde) joins it, also after the word closed, so «não» and «café» convert whole. A closed word waits one more short time before conversion for this [inference].

@@ -2,7 +2,8 @@
  "magicValues": {
   "folders": [],
   "exclude": [
-   "plugins/ink2pic/**",
+   "plugins/word-lookup/lab/**",
+   "packages/ui-kit/renders/**",
    "**/android/**",
    "**/buildPlugin.sh",
    "**/buildPlugin.ps1",
@@ -138,7 +139,8 @@
  "duplicates": {
   "depth": 2,
   "exclude": [
-   "plugins/ink2pic/**",
+   "plugins/word-lookup/lab/**",
+   "packages/ui-kit/renders/**",
    "**/android/**",
    "**/buildPlugin.sh",
    "**/buildPlugin.ps1",
@@ -166,7 +168,6 @@
    "**/*.md"
   ],
   "exclude": [
-   "plugins/ink2pic/**",
    "docs/research/**",
    "cli/inkctl/docs/research/**"
   ],
@@ -175,6 +176,359 @@
    "plugins/image-editing/AGENTS.md": 3,
    "plugins/real-time-conversion/AGENTS.md": 2,
    "plugins/word-lookup/AGENTS.md": 3
+  }
+ },
+ "retired": {
+  "terms": [
+   {
+    "term": "Ink2Pic",
+    "use": "Word Lookup, or «the retired picture plugin» for history",
+    "keep": [
+     "docs/decisions.md",
+     "docs/research/**"
+    ],
+    "issue": 288
+   },
+   {
+    "term": "ink2pic",
+    "use": "word-lookup, or «the retired picture plugin» for history",
+    "keep": [
+     "docs/decisions.md",
+     "docs/research/**"
+    ],
+    "issue": 288
+   }
+  ],
+  "counts": {
+   "cli/inkctl/docs/product.md": {
+    "ink2pic": 1
+   },
+   "cli/inkctl/src/inkctl": {
+    "Ink2Pic": 2
+   },
+   "docs/plugin-scope.md": {
+    "Ink2Pic": 7,
+    "ink2pic": 3
+   },
+   "docs/supernote.md": {
+    "Ink2Pic": 4,
+    "ink2pic": 3
+   },
+   "packages/README.md": {
+    "ink2pic": 1
+   },
+   "packages/ink-core/src/lasso.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/ink-core/src/outcome.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/ink-core/src/place.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/native-build/host-tools.cjs": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/NOTICE.md": {
+    "ink2pic": 2
+   },
+   "packages/picture-search/__tests__/http.test.ts": {
+    "Ink2Pic": 3
+   },
+   "packages/picture-search/__tests__/insertPicture.test.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/picture-search/__tests__/quickInsert.test.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/__tests__/search.test.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/__tests__/settings.test.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/picture-search/__tests__/thumbs.test.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/picture-search/__tests__/twins.test.ts": {
+    "Ink2Pic": 1,
+    "ink2pic": 2
+   },
+   "packages/picture-search/dry-check.json": {
+    "ink2pic": 3
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/ContourTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/DecolorTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/EinkPixelsTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/FileWritesTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/PerceptualHashTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/PngTailTest.java": {
+    "ink2pic": 2
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/SafePathsTest.java": {
+    "Ink2Pic": 3,
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/ThumbGateTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/ThumbMeasuresTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/TwinsTest.java": {
+    "Ink2Pic": 2,
+    "ink2pic": 1
+   },
+   "packages/picture-search/native-tests/com/ink2pic/files/WorkersTest.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/Contour.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/Decolor.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/EinkPixels.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/FileWrites.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesModule.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesPackage.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/Ink2PicImageModule.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/ModuleWork.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/PerceptualHash.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/PngTail.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/SafePaths.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/ThumbGate.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/ThumbMeasures.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/native/com/ink2pic/files/Workers.java": {
+    "ink2pic": 1
+   },
+   "packages/picture-search/plugin-config.js": {
+    "ink2pic": 2
+   },
+   "packages/picture-search/src/README.md": {
+    "Ink2Pic": 1,
+    "ink2pic": 5
+   },
+   "packages/picture-search/src/insert/failure.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/guard.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/insertPicture.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/measure.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/quickInsert.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/runSearch.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/searchDevice.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/insert/thumbs.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/picture-search/src/picks.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/storage/files.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/picture-search/src/storage/logFile.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/picture-search/src/storage/profile.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/sn-adapter/src/official/buttons.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/sn-adapter/src/official/elements.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/sn-adapter/src/official/headings.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/sn-adapter/src/official/shapes.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/sn-adapter/src/official/storage.ts": {
+    "Ink2Pic": 2
+   },
+   "packages/ui-kit/src/metrics.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/ui-kit/src/screenBreaks.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/ui-kit/src/tokens.json": {
+    "Ink2Pic": 1
+   },
+   "packages/ui-kit/src/working.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/account-sync/native/com/bridge/files/BridgeFilesPackage.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "plugins/account-sync/scripts/native-toolchain.sh": {
+    "ink2pic": 1
+   },
+   "plugins/device-transfer/index.js": {
+    "Ink2Pic": 1
+   },
+   "plugins/device-transfer/src/receive/receive.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/image-editing/index.js": {
+    "Ink2Pic": 1
+   },
+   "plugins/image-editing/native/src/com/retouch/image/Retouch.java": {
+    "Ink2Pic": 2,
+    "ink2pic": 3
+   },
+   "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": {
+    "Ink2Pic": 3,
+    "ink2pic": 2
+   },
+   "plugins/image-editing/native/src/com/retouch/image/RetouchPackage.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "plugins/image-editing/native/tests/com/retouch/image/RetouchTest.java": {
+    "ink2pic": 1
+   },
+   "plugins/image-editing/scripts/native-build.cjs": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "plugins/image-editing/src/StylesGrid.tsx": {
+    "Ink2Pic": 1
+   },
+   "plugins/image-editing/src/native.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/real-time-conversion/index.js": {
+    "Ink2Pic": 1
+   },
+   "plugins/real-time-conversion/src/settings.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/real-time-conversion/src/shapes.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/real-time-conversion/src/words.ts": {
+    "Ink2Pic": 4
+   },
+   "plugins/real-time-conversion/test-support/host.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/__tests__/App.test.tsx": {
+    "Ink2Pic": 2
+   },
+   "plugins/word-lookup/__tests__/labAffected.test.ts": {
+    "ink2pic": 1
+   },
+   "plugins/word-lookup/__tests__/library.test.ts": {
+    "Ink2Pic": 4
+   },
+   "plugins/word-lookup/index.js": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/lab/LabPixels.java": {
+    "ink2pic": 5
+   },
+   "plugins/word-lookup/lab/LabTiming.java": {
+    "ink2pic": 5
+   },
+   "plugins/word-lookup/lab/README.md": {
+    "ink2pic": 7
+   },
+   "plugins/word-lookup/lab/pixelorder.mjs": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "plugins/word-lookup/lab/timing.mjs": {
+    "ink2pic": 2
+   },
+   "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java": {
+    "Ink2Pic": 1,
+    "ink2pic": 1
+   },
+   "plugins/word-lookup/scripts/native-toolchain.sh": {
+    "ink2pic": 1
+   },
+   "plugins/word-lookup/src/definition.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/src/library.ts": {
+    "Ink2Pic": 5
+   },
+   "plugins/word-lookup/src/modes.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/src/pictureLanguages.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/src/pictures.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/src/profile.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/word-lookup/src/settings.ts": {
+    "Ink2Pic": 2
+   },
+   "plugins/word-lookup/src/textBox.ts": {
+    "Ink2Pic": 2
+   },
+   "plugins/word-lookup/src/ui/ChooseScreen.tsx": {
+    "Ink2Pic": 2
+   },
+   "plugins/word-lookup/tsconfig.json": {
+    "Ink2Pic": 1
+   }
   }
  }
 }

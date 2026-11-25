@@ -17,7 +17,7 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
 - The word-end rule ([#185](https://github.com/martonpaulo/ink-tools/issues/185), `src/words.ts`): position closes a word, an idle time
   closes the last one, and a mark (accent, i-dot, tilde) joins its word within a grace time; an
   accent never counts toward the letter height and is never judged tall. Every
-  distance is a ratio to the line's letter height, from Ink2Pic's brief › 8.11.
+  distance is a ratio to the line's letter height, from the plugin brief › 8.11 (`../../docs/research/plugin-brief/brief.md`).
 - What stays handwriting ([#186](https://github.com/martonpaulo/ink-tools/issues/186), `src/shapes.ts`): tall, long or scribbled strokes, very large
   writing, and an answer that is empty, has no letter, or is one character for wide ink.
 - The conversion ([#187](https://github.com/martonpaulo/ink-tools/issues/187), `src/convert.ts`): recognition at the page size of the
@@ -51,7 +51,7 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   [#148](https://github.com/martonpaulo/ink-tools/issues/148)); a no-view button needs both «Always Allow» ([#170](https://github.com/martonpaulo/ink-tools/issues/170)).
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
-- Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md` and
+- Before an `sn-plugin-lib` call, read the recorded gotchas in `../../docs/research/plugin-brief/brief.md` and
   `../../docs/supernote.md`.
 
 ## Device round
@@ -65,4 +65,4 @@ line breaks, and the box's font size against the handwriting.
 
 ## Reuse
 
-Scaffold copied from the removed Lingo plugin (no native module, [#161](https://github.com/martonpaulo/ink-tools/issues/161)), which took it from `../account-sync` and `../ink2pic`.
+Scaffold copied from the removed Lingo plugin (no native module, [#161](https://github.com/martonpaulo/ink-tools/issues/161)), which took it from `../account-sync` and the first plugin.

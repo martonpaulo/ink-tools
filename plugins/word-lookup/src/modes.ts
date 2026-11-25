@@ -14,8 +14,8 @@ import type {PictureMode, SourceAdapter} from '@ink-tools/picture-search';
 import {copy} from './copy';
 
 /**
- * The first button id of Lookup: Ink2Pic's ids run from 100 to 901, and both plugins stay
- * installed until Ink2Pic is retired (owner D40), so Lookup keeps its own range.
+ * The first button id of Lookup: its own range since it was first installed beside the retired
+ * picture plugin (owner D40, #288).
  */
 export const FIRST_BUTTON_ID = 1000;
 

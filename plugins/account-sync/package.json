@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "validate": "npm run lint && npm run typecheck && npm test",
+    "renders": "jest --config ../../packages/ui-kit/renders/jest.config.js",
+    "renders:windows": "npm run renders && RENDER_WINDOW=nomad npm run renders && RENDER_WINDOW=turned npm run renders",
     "start": "react-native start",
     "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package"
   },

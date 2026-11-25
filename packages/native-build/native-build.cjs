@@ -1,8 +1,8 @@
 /**
  * The light native build every plugin with native code shares (#231), without Gradle: javac, D8 and
  * aapt2 produce build/native/app.npk, an APK-format ZIP that PluginHost loads. Adapted from the
- * pipeline of Keplex/supernote-pic2note at 5a210f8 (MIT, see plugins/ink2pic/NOTICE.md), first as
- * Ink2Pic's own script (#11), then copied into each plugin (#59, #98, #136, #142, #40) until this
+ * pipeline of Keplex/supernote-pic2note at 5a210f8 (MIT, see NOTICE.md beside it), first as
+ * the first plugin's own script (#11), then copied into each plugin (#59, #98, #136, #142, #40) until this
  * one replaced the copies.
  *
  * Each plugin keeps a thin `scripts/native-build.cjs` that names its package class and its Java

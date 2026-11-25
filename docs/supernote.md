@@ -32,7 +32,7 @@ the Nomad) or `getDeviceType()`, as `inkctl status` does ([#284](https://github.
 ## Screen and units
 
 - Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
-  arithmetic in `plugins/ink2pic/docs/brief.md`].
+  arithmetic in [`research/plugin-brief/brief.md`](research/plugin-brief/brief.md)].
 - Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs only; never measured: the
   owner's tablet is the Manta, [#284](https://github.com/martonpaulo/ink-tools/issues/284)]. Handwriting Language's
   button place is tested on both screens, each turned both ways
@@ -179,10 +179,9 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#128](https://github.com/martonpaulo/ink-tools/issues/128)].
 - After a no-view lasso button inserts its text, the lasso is gone [measured, 2026-11-16, Lingo].
 - Two plugins with native modules installed side by side: whether PluginHost gives each its own
-  React host and class loader is not known [to test, [#142](https://github.com/martonpaulo/ink-tools/issues/142)]. Ink2Pic and Lookup both
-  ship the Java of `com.ink2pic.files` and register their modules under their own names
-  (`Ink2PicFiles` and `Ink2PicImage`, `LookupFiles` and `LookupImage`), so neither name is
-  registered twice in one host either way.
+  React host and class loader is not known [to test, [#142](https://github.com/martonpaulo/ink-tools/issues/142)]. Each plugin that ships
+  the Java of `com.ink2pic.files` registers its modules under its own names (Lookup's
+  `LookupFiles` and `LookupImage`), so no name is registered twice in one host either way.
 - Every enabled plugin loads into one PluginHost process: after a host restart the log shows
   `getPackages packageName:<ReactPackage>` then `load pluginKey:<key>` for each plugin in turn
   (Lookup's `LookupFilesPackage`, Relay's `RelayPackage`, Retouch's `RetouchPackage`), with no
@@ -668,7 +667,7 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/10
 | Surface | Show and clear | Where it is known from |
 | :--- | :--- | :--- |
 | Toast | `sn-plugin-lib` has none. React Native's own `ToastAndroid` (not the plugin API) shows a text toast with the app context, so it needs no activity; it has no cancel call and disappears after about 2 s or 3.5 s by itself | [official] docs index; React Native 0.79.2 `ToastModule.kt`. A plugin's toast shows at the bottom centre of the note for about 2 s [measured, Relay, 2026-11-16] |
-| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, `plugins/ink2pic/docs/device-tests.md`]. Both pass `getCurrentActivity()`, which the host leaves null, and a native exception destroys the plugin (`plugins/ink2pic/docs/brief.md` section 10.5) |
+| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, [`research/plugin-brief/device-tests.md`](research/plugin-brief/device-tests.md)]. Both pass `getCurrentActivity()`, which the host leaves null, and a native exception destroys the plugin ([`research/plugin-brief/brief.md`](research/plugin-brief/brief.md) section 10.5) |
 | Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; whether the view can be small or see-through over the note: to test |
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
 | Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
@@ -700,7 +699,7 @@ the note shows through, is still to test.
   the note app takes an inserted PNG from there is [to test, [#198](https://github.com/martonpaulo/ink-tools/issues/198)].
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)]. It takes a
   child changed on the tablet since the last sync and the folder deleted and recreated on the
-  cloud side (the launcher's `SingleSyncTask`, [#22](https://github.com/martonpaulo/ink-tools/issues/22)), so Ink2Pic and Word Lookup keep
+  cloud side (the launcher's `SingleSyncTask`, [#22](https://github.com/martonpaulo/ink-tools/issues/22)), so Word Lookup keeps
   `settings.json` in the private folder and read the newest conflict copy's when theirs is gone.
 - The tablet's own watcher picks up a copied file; Android refuses the sync broadcast from ADB
   [measured, `cli/inkctl/README.md`].
