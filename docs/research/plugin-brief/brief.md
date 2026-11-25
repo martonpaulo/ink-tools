@@ -955,7 +955,11 @@ INFERENCE is marked.
 
 - A `RuntimeException` thrown in a native module destroys the plugin: lifecycle 4 then 5, never
   3, with no retry and no message. `getCurrentActivity()` is always null: the host resumes React
-  with no activity, so an SDK native method that dereferences it throws and the plugin dies.
+  with no activity, so an SDK native method that dereferences it throws and the plugin dies. The
+  host's own dialogs are not such a method: on PluginHost 1.00.2610150 `HostUIImpl` swaps a null
+  activity for the application context, so `NativeUIUtils.showRattaDialog` and
+  `showErrorTipDialog` leave the plugin alive ([`../../supernote.md`](../../supernote.md) › Ratta dialog,
+  [#296](https://github.com/martonpaulo/ink-tools/issues/296)).
 - The host closes a view that shows nothing: about 5 s after show it looks for one visible,
   non-transparent child of non-zero size, re-checks 3 s later, then closes (lifecycle 3). Render
   an opaque, sized view at once.

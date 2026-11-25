@@ -4,7 +4,7 @@
  * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
  * keeps what Account Sync wrote; its «Remove what Account Sync wrote» button asks once more before
- * anything is deleted (#89). The title bar carries ui-kit's ×, since Back never reaches the view
+ * anything is deleted (#89), in the host's own confirm dialog (#273, #296). The title bar carries ui-kit's ×, since Back never reaches the view
  * on the Nomad (#204, #266, #274).
  */
 import React, {useState} from 'react';
@@ -17,6 +17,7 @@ import {
   shared,
   TitleBar,
 } from '@ink-tools/ui-kit';
+import {confirm, type Result} from '@ink-tools/sn-adapter/official';
 import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
@@ -53,12 +54,24 @@ export type ShellState =
   /** `notice`: a problem that leaves the screen usable, such as a save that failed (#40). */
   | {kind: 'ready'; modules: ModuleRow[]; notice?: string; sync?: SyncControl};
 
+/**
+ * Asks a destructive question: true for the action, false for Cancel; a failure when the dialog
+ * could not be shown. sn-adapter's `confirm`, the host's dialog, unless a test passes its own.
+ */
+export type Ask = (
+  question: string,
+  action: string,
+  cancel: string,
+) => Promise<Result<boolean>>;
+
 export function SettingsShell({
   state,
   form,
   onClose,
+  ask = confirm,
 }: {
   state: ShellState;
+  ask?: Ask;
   /** The opt-in switches (#40), drawn under the module list once the settings are ready. */
   form?: React.ReactNode;
   /** What the title bar's × does: the same as Back (#266). */
@@ -69,7 +82,7 @@ export function SettingsShell({
       <TitleBar title={copy.title} onClose={onClose} />
       {/* The module rows and one switch row per module and provider outgrow the Manta's height (#274). */}
       <ScrollView style={styles.rows} contentContainerStyle={styles.gap}>
-        <Body state={state} />
+        <Body state={state} ask={ask} />
         {state.kind === 'ready' && state.notice && (
           <Text accessibilityRole="alert" style={shared.text}>
             {state.notice}
@@ -82,7 +95,7 @@ export function SettingsShell({
   );
 }
 
-function Body({state}: {state: ShellState}): React.JSX.Element {
+function Body({state, ask}: {state: ShellState; ask: Ask}): React.JSX.Element {
   switch (state.kind) {
     case 'loading':
       return <Text style={shared.text}>{copy['settings.loading']}</Text>;
@@ -111,7 +124,7 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
                 subtitle={statusLines(module.status).join('\n') || undefined}
               />
               {module.signIns?.map(provider => (
-                <SignInLine key={provider.id} provider={provider} />
+                <SignInLine key={provider.id} provider={provider} ask={ask} />
               ))}
               {module.status.state === 'off' && module.onRemoveWritten && (
                 <Confirmed
@@ -119,6 +132,7 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
                   question={format('remove.confirm', {module: module.name})}
                   yes={copy['remove.yes']}
                   onConfirm={module.onRemoveWritten}
+                  ask={ask}
                 />
               )}
             </View>
@@ -148,7 +162,13 @@ function SyncLine({sync}: {sync: SyncControl}): React.JSX.Element {
 }
 
 /** A provider's sign-in in words: the masked tail and a sign-out, or how to sign in (#90). */
-function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
+function SignInLine({
+  provider,
+  ask,
+}: {
+  provider: ProviderSignIn;
+  ask: Ask;
+}): React.JSX.Element {
   const {signIn} = provider;
   switch (signIn.state) {
     case 'signedOut':
@@ -180,33 +200,55 @@ function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
             question={format('signOut.confirm', {provider: provider.name})}
             yes={copy['signOut.yes']}
             onConfirm={provider.onSignOut}
+            ask={ask}
           />
         </View>
       );
   }
 }
 
-/** A destructive action: one press asks, the second does it, Cancel does nothing (#89, #90). */
+/**
+ * A destructive action: one press asks in the host's confirm dialog, and only its action does it;
+ * Cancel and Back do nothing (#89, #90, #296). When the dialog cannot be shown, the question is
+ * drawn here instead, with its own Cancel, so the action is never done unasked nor lost.
+ */
 function Confirmed({
   label,
   accessibilityLabel,
   question,
   yes,
   onConfirm,
+  ask,
 }: {
   label: string;
   accessibilityLabel?: string;
   question: string;
   yes: string;
   onConfirm: () => void;
+  ask: Ask;
 }): React.JSX.Element {
   const [asking, setAsking] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const press = async () => {
+    setWaiting(true);
+    const answer = await ask(question, yes, copy.cancel);
+    setWaiting(false);
+    if (!answer.ok) {
+      console.log(`[Bridge] confirm: the dialog failed: ${answer.code} ${answer.message}; asked in the view`);
+      setAsking(true);
+    } else if (answer.value) {
+      onConfirm();
+    }
+  };
   if (!asking) {
     return (
       <Button
         label={label}
         accessibilityLabel={accessibilityLabel}
-        onPress={() => setAsking(true)}
+        disabled={waiting}
+        onPress={() => {
+          press();
+        }}
       />
     );
   }

@@ -7,9 +7,10 @@ import {DEFAULT_WORD_OPTIONS} from '../src/words';
 import {fakeTablet} from '../test-support/host';
 import {letter} from '../test-support/ink';
 
-function setup(granted = true) {
+function setup(granted = true, tipShown = true) {
   const tablet = fakeTablet();
   const toasts: string[] = [];
+  const tips: string[] = [];
   const host = {
     register: jest.fn(async () => ({ok: true as const, value: true as const})),
     unregister: jest.fn(async () => ({ok: true as const, value: true as const})),
@@ -19,10 +20,16 @@ function setup(granted = true) {
     undo: tablet.host,
     lasso: tablet.host,
     toast: (text: string) => toasts.push(text),
+    errorTip: (text: string) => {
+      tips.push(text);
+      return tipShown
+        ? ({ok: true as const, value: true as const})
+        : ({ok: false as const, code: -1, message: 'no window'});
+    },
     log: () => {},
     icons: {on: 'on.png', off: 'off.png', undo: 'undo.png', lasso: 'convert.png'},
   };
-  return {tablet, toasts, host, buttons: new Buttons(host)};
+  return {tablet, toasts, tips, host, buttons: new Buttons(host)};
 }
 
 beforeEach(() => {
@@ -59,6 +66,22 @@ test('a press switches the mode, its icon and says so', async () => {
   expect(toasts).toEqual([copy['toast.on'], copy['toast.off']]);
   expect(buttons.press(MODE_BUTTON_ID)).toBe(true);
   expect(buttons.press(999)).toBe(false);
+});
+
+test('a pen-up listener the host refuses shows the host error tip, nothing to retry (#296)', async () => {
+  const {buttons, tablet, toasts, tips} = setup();
+  tablet.host.onPenUp = () => ({ok: false, code: -1, message: 'refused'});
+  expect(await buttons.turn(true)).toBe(false);
+  expect(tips).toEqual([copy['toast.failed']]);
+  expect(toasts).toEqual([]);
+  expect(buttons.on).toBe(false);
+});
+
+test('when the error tip cannot show, a toast says it instead (#296)', async () => {
+  const {buttons, tablet, toasts} = setup(true, false);
+  tablet.host.onPenUp = () => ({ok: false, code: -1, message: 'refused'});
+  expect(await buttons.turn(true)).toBe(false);
+  expect(toasts).toEqual([copy['toast.failed']]);
 });
 
 test('without the file permissions the mode stays off and asks for them', async () => {
