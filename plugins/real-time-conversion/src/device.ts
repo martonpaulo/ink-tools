@@ -10,8 +10,10 @@ import {
   getLassoElements,
   getLassoRect,
   getPageSize,
+  onMotion,
   onPenUp,
   rebuildStroke,
+  reloadFile,
   recognizeElements,
   recycleElement,
   saveStroke,
@@ -26,6 +28,8 @@ const log = (line: string) => console.log(`RealTimeConversion: ${line}`);
 
 export const DEVICE_CONVERT: ConvertHost = {
   onPenUp,
+  onMotion,
+  reloadFile,
   strokePoints,
   strokeTimes,
   saveStroke,

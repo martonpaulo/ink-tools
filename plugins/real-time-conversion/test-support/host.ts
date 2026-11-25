@@ -44,6 +44,7 @@ export function fakeTablet(answer = 'café') {
   let time = 0;
   let timers: {at: number; run: () => void}[] = [];
   let listener: ((elements: object[]) => void) | null = null;
+  let motion: ((event: {action: number}) => void) | null = null;
   const page: FakeElement[] = [];
   const logs: string[] = [];
   const renumber = () => page.forEach((element, index) => (element.numInPage = index));
@@ -66,6 +67,13 @@ export function fakeTablet(answer = 'café') {
         listener = null;
       });
     }),
+    onMotion: jest.fn(next => {
+      motion = next as (event: {action: number}) => void;
+      return ok(() => {
+        motion = null;
+      });
+    }),
+    reloadFile: jest.fn(async () => ok(true)),
     strokePoints: jest.fn(async element => ok((element as FakeElement).points ?? [])),
     strokeTimes: jest.fn(async element => ok((element as FakeElement).times ?? null)),
     saveStroke: jest.fn(async element =>
@@ -141,6 +149,10 @@ export function fakeTablet(answer = 'café') {
     },
     get listening() {
       return listener !== null;
+    },
+    /** Sends one pen motion: 0 down, 1 up (MotionEvent). */
+    motion(action: number) {
+      motion?.({action});
     },
     /**
      * Writes the synthetic stroke on the page and ends it with a pen-up at `at`. The pen-up element

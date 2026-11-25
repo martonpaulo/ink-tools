@@ -1,4 +1,5 @@
 import {
+  afterBatch,
   Converter,
   elementShape,
   MATCH_TOLERANCE_PX,
@@ -241,5 +242,67 @@ describe('pen times (#296)', () => {
     await converter.idle();
     expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(1);
     expect(tablet.logs).toContain('times: none filled, read in 0 ms: position alone');
+  });
+});
+
+describe('reloadFile after a conversion (#296)', () => {
+  test('afterBatch: a redraw needs none; a pen down or unknown never reloads', () => {
+    expect(afterBatch(0, 'up')).toBe('redrawn');
+    expect(afterBatch(true, 'up')).toBe('reload');
+    expect(afterBatch(1, 'up')).toBe('reload');
+    expect(afterBatch(true, 'down')).toBe('pen down');
+    expect(afterBatch(true, 'unknown')).toBe('pen unknown');
+  });
+
+  test('a batch with no redraw reloads the page once the pen is up, and logs its answer', async () => {
+    const tablet = fakeTablet('café');
+    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+    await writeWord(tablet, converter);
+    expect(tablet.host.reloadFile).toHaveBeenCalledTimes(1);
+    expect(tablet.logs).toContain('batch: answered true');
+    expect(tablet.logs).toContain('reload: answered true in 0 ms');
+  });
+
+  test('never reloads while the pen is down', async () => {
+    const tablet = fakeTablet('café');
+    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+    converter.start();
+    [0, 30, 60].forEach((left, index) => tablet.penUp(letter(left), index * 200));
+    tablet.motion(0);
+    await tablet.advance(400 + DEFAULT_WORD_OPTIONS.idleMs);
+    await converter.idle();
+    expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(1);
+    expect(tablet.host.reloadFile).not.toHaveBeenCalled();
+    expect(tablet.logs).toContain('reload: not run: pen down');
+  });
+
+  test('a failed motion listener means no reload, said once', async () => {
+    const tablet = fakeTablet('café');
+    (tablet.host.onMotion as jest.Mock).mockReturnValueOnce({ok: false, code: -1, message: 'refused'});
+    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+    await writeWord(tablet, converter);
+    expect(tablet.host.reloadFile).not.toHaveBeenCalled();
+    expect(tablet.logs).toContain('motion listener failed: refused: no reload after a conversion');
+    expect(tablet.logs).toContain('reload: not run: pen unknown');
+  });
+
+  test('a failed reload keeps the conversion and is logged', async () => {
+    const tablet = fakeTablet('café');
+    (tablet.host.reloadFile as jest.Mock).mockResolvedValueOnce({ok: false, code: 7, message: 'no note'});
+    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+    await writeWord(tablet, converter);
+    expect(tablet.page[tablet.page.length - 1].textBox?.textContentFull).toBe('café');
+    expect(tablet.logs).toContain('reload failed: 7 no note in 0 ms');
+  });
+
+  test('turning the mode off removes the motion listener too', async () => {
+    const tablet = fakeTablet();
+    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
+    converter.start();
+    const stopMotion = (tablet.host.onMotion as jest.Mock).mock.results[0].value.value;
+    expect(typeof stopMotion).toBe('function');
+    converter.turnOff();
+    tablet.motion(0);
+    expect(converter.running).toBe(false);
   });
 });

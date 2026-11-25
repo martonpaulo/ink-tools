@@ -42,7 +42,8 @@ research note `../../docs/research/2026-11-live-handwriting-to-text.md`.
   `src/convert.ts`, `src/undo.ts` and `src/buttons.ts` take their host as a parameter, so the tests
   drive them with fakes and synthetic strokes.
 - `src/words.ts` and `src/shapes.ts` stay pure: no SDK, no timer; the clock is passed in.
-- Nothing runs while the pen is down: the work starts at pen-up. A failure keeps the handwriting and
+- Nothing runs while the pen is down: the work starts at pen-up. The motion listener only notes
+  down and up, so a conversion's `reloadFile` never runs mid-stroke ([#296](https://github.com/martonpaulo/ink-tools/issues/296)). A failure keeps the handwriting and
   is logged; never a success-shaped default. A stroke whose points cannot be read (over
   `MAX_STROKE_POINTS`, for one) keeps its word, the words waiting and the strokes of the next idle
   time on the page ([#229](https://github.com/martonpaulo/ink-tools/issues/229)).
