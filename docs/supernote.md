@@ -13,6 +13,7 @@ learns one; a plugin's own brief keeps only what is specific to it.
 - [Designing for the screen](#designing-for-the-screen)
 - [Plugins](#plugins)
 - [Files and sync](#files-and-sync)
+- [Note file format](#note-file-format)
 - [Network and ADB](#network-and-adb)
 
 ## The owner's tablet
@@ -637,6 +638,30 @@ the note shows through, is still to test.
   keeps its list in memory and reads the folders again when it closes, so a new font shows the
   second time it opens, or at once after `am force-stop com.ratta.supernote.note` [source]. Like
   all of `MyStyle/`, the fonts sync to Supernote Cloud.
+
+## Note file format
+
+Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
+`Chauvet.E103.2610191001.2559_release`), read with the Ink Notebook Editor's `NoteFormat`
+([#261](https://github.com/martonpaulo/ink-tools/issues/261)):
+
+- A new note starts `noteSN_FILE_VER_20260016`; the header says `APPLY_EQUIPMENT` `N5`, so pages are
+  1920 x 2560 [measured].
+- A page has a main and a background layer, both `RATTA_RLE`; the three other layers are absent
+  (address `0`) until used, and `LAYERINFO` lists them as deleted [measured].
+- The page style carries the screen's suffix in the file (`style_5mm_grid_a5x2`), while
+  `insertNotePage` takes the name without it (`style_5mm_grid`) [measured]. The background of every
+  template is stored in the note itself, so the note draws without the tablet's template files.
+- A text box and a picture a plugin inserts are drawn into the main layer's bitmap, so a reader of
+  the bitmaps shows them with no element decoding [measured].
+- `PluginFileAPI.generateNotePng` at `times: 1` on white matches `NoteFormat`'s drawing of the same
+  page to 0.003 % of pixels or less, over 9 pages: blank, three templates, a text box with a picture,
+  and four handwriting pages [measured, `inkctl note png`, `note-render --compare`].
+- A picture `PluginNoteAPI.insertImage` places stays a floating selection on screen, and Probe's call
+  gave no answer in 20 s, yet the note file held the picture once the note was opened again
+  [measured, 2026-11-25].
+- The note file holds no serial number or account: the header's `FILE_ID` and each `PAGEID` are
+  random [measured].
 
 ## Network and ADB
 

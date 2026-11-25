@@ -31,11 +31,12 @@ The reader exists, the app does not yet: the order is the Plan of [#48](https://
    `supernote-typescript` matched `supernote-tool`'s PNG pixel for pixel, but for the page white (255
    here, as `supernote-tool` gives). The sample with no `LAYERPROTOCOL` fails with a named error, as it
    fails in `supernote-tool`.
-2. Make the test notebooks: blank and template notes with `inkctl note new`, pages with an inserted
-   picture and a text box through a plugin, and the handwriting notes already under `Note/Tests/` on
-   the tablet. Never use the owner's own notebooks as fixtures.
-3. Build a reader and check it page by page against the tablet's own rendering of each test
-   notebook.
+2. Test notebooks: `NoteFormat/Tests/NoteFormatTests/Fixtures/` holds notes the agent made on the
+   tablet with `inkctl note new`, `note insert-page`, `note insert-text` and `note insert-picture`,
+   each page beside the tablet's own PNG from `inkctl note png`. Handwriting from `Note/Tests/` is
+   compared on the Mac only and never committed; never use the owner's own notebooks as fixtures.
+3. Checked: every fixture page, and four handwriting pages, match the tablet's PNG to 0.003 % of
+   pixels or less ([`docs/supernote.md` › Note file format](../../docs/supernote.md#note-file-format)).
 
 Editing and write-back follow only once the reader is faithful.
 

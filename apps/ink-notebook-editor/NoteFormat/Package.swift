@@ -12,6 +12,8 @@ let package = Package(
     targets: [
         .target(name: "NoteFormat"),
         .executableTarget(name: "note-render", dependencies: ["NoteFormat"]),
-        .testTarget(name: "NoteFormatTests", dependencies: ["NoteFormat"]),
+        .testTarget(
+            name: "NoteFormatTests", dependencies: ["NoteFormat"],
+            resources: [.copy("Fixtures")]),
     ]
 )
