@@ -40,6 +40,8 @@ const inPage = (file: string, name: string, args = '') =>
     .replace(`export function ${name}`, `function ${name}`)}; return ${name}(${args}); })()`;
 const MEASURE = inPage('measure-page.mjs', 'measurePage');
 const CONTRAST = inPage('contrast-check.mjs', 'contrastCheck', '{focusRings: false}');
+const SCROLL_TO_END =
+  "document.querySelectorAll('[data-scroll]').forEach(el => { el.scrollTop = el.scrollHeight; })";
 
 type ContrastResult = {
   failures: {kind: string; text?: string; ratio: number; required: number}[];
@@ -87,6 +89,11 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       ),
       ...contrast.unmeasured.map(u => `contrast not measured: ${u.reason}`),
     ];
+    if (measured.scrolls.length) {
+      // The rows below the screen, for the eye check: each scroll view at its end (#265).
+      await page.evaluate(SCROLL_TO_END);
+      await page.screenshot({path: path.join(OUT, `${screen.name}-end.png`)});
+    }
     await act(async () => {
       tree.unmount();
       settle();

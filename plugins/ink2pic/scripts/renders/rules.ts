@@ -2,7 +2,9 @@
  * The e-ink rules a rendered screen is checked against (brief section 8.4, #80): every target the
  * person taps is at least the touch target on both sides, no text is smaller than the minimum font
  * size (#85), no text runs outside its own box, the boxes around it or the screen, and every
- * target and text stays inside the screen padding, so nothing touches the edge (#97).
+ * target and text stays inside the screen padding, so nothing touches the edge (#97). Content inside
+ * a scroll view may run below the screen, as the person scrolls to it; the scroll view itself
+ * keeps the padding, so a row lost below the screen and a scrolling list are told apart (#265).
  * measure-page.mjs measures the page; contrast is checked in the page by the shared
  * contrast-check.mjs; animation from the host tree (html.ts).
  */
@@ -12,11 +14,11 @@ export type Box = {left: number; top: number; right: number; bottom: number};
 export type Measured = {
   /** The screen's box. */
   screen: Box;
-  /** Every visible element the person can tap. */
-  targets: {name: string; width: number; height: number; box: Box}[];
+  /** Every visible element the person can tap; `scroll` is the scroll view it sits in. */
+  targets: {name: string; width: number; height: number; box: Box; scroll?: Box}[];
   /**
    * Every visible text: its smallest font size in units, the box of its glyphs, and the boxes it
-   * must stay inside.
+   * must stay inside, up to the scroll view it sits in, if any.
    */
   texts: {
     name: string;
@@ -24,7 +26,10 @@ export type Measured = {
     fontSize: number;
     glyphs: Box;
     within: {name: string; box: Box}[];
+    scroll?: Box;
   }[];
+  /** Every visible scroll view, by its visible box. */
+  scrolls: {name: string; box: Box}[];
 };
 
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
@@ -53,13 +58,21 @@ export function breaksOf(
     right: screen.right - screenPadding,
     bottom: screen.bottom - screenPadding,
   };
+  // Scrolled content is held to the padding on its sides only: it scrolls up into view.
+  const reach = ({box, scroll}: {box: Box; scroll?: Box}) =>
+    outside(box, scroll ? {...inside, top: box.top, bottom: box.bottom} : inside);
   // A target and the text inside it are named once.
   const intruders = new Set(
     [
-      ...measured.targets.map(({name, box}) => ({name, box})),
-      ...measured.texts.map(({text, glyphs}) => ({name: text.slice(0, 60), box: glyphs})),
+      ...measured.scrolls,
+      ...measured.targets,
+      ...measured.texts.map(({text, glyphs, scroll}) => ({
+        name: text.slice(0, 60),
+        box: glyphs,
+        scroll,
+      })),
     ]
-      .filter(({box}) => outside(box, inside))
+      .filter(reach)
       .map(({name}) => name),
   );
   for (const name of intruders) {

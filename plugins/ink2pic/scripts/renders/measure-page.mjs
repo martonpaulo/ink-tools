@@ -31,6 +31,17 @@ export function measurePage() {
     right: rect.right / zoom,
     bottom: rect.bottom / zoom,
   });
+  const scrollOf = (el) => {
+    const view = el.parentElement?.closest('[data-scroll]');
+    return view ? boxOf(view.getBoundingClientRect()) : undefined;
+  };
+
+  const scrolls = [...document.querySelectorAll('[data-scroll]')]
+    .filter(shown)
+    .map(el => ({
+      name: `scroll view «${nameOf(el)}»`,
+      box: boxOf(el.getBoundingClientRect()),
+    }));
 
   const targets = [...document.querySelectorAll('[data-target]')]
     .filter(el => shown(el) && getComputedStyle(el).pointerEvents !== 'none')
@@ -41,6 +52,7 @@ export function measurePage() {
         width: rect.width / zoom,
         height: rect.height / zoom,
         box: boxOf(rect),
+        scroll: scrollOf(el),
       };
     });
 
@@ -50,7 +62,9 @@ export function measurePage() {
       const range = document.createRange();
       range.selectNodeContents(el);
       const within = [];
-      for (let e = el; e && e !== root.parentElement; e = e.parentElement) {
+      const scroll = el.closest('[data-scroll]');
+      const end = scroll ?? root.parentElement;
+      for (let e = el; e && e !== end; e = e.parentElement) {
         within.push({
           name: e === root ? 'the screen' : `«${nameOf(e)}»`,
           box: boxOf(e.getBoundingClientRect()),
@@ -68,7 +82,8 @@ export function measurePage() {
         fontSize,
         glyphs: boxOf(range.getBoundingClientRect()),
         within,
+        scroll: scrollOf(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls};
 }

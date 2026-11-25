@@ -13,6 +13,7 @@ const measured = (over: Partial<Measured>): Measured => ({
   screen: screen.box,
   targets: [],
   texts: [],
+  scrolls: [],
   ...over,
 });
 
@@ -46,6 +47,12 @@ describe('renders: the Manta page (#80)', () => {
     ]);
     expect(html.match(/data-target/g)).toHaveLength(2);
     expect(html).toContain('color: rgb(85, 85, 85)">Type a word<');
+  });
+
+  it('lets a scroll view scroll its content (#265)', () => {
+    const html = toHtml({type: 'RCTScrollView', props: {style: {flex: 1}}, children: null});
+    expect(html).toContain('data-scroll');
+    expect(html).toContain('flex: 1 1 0%; overflow-y: auto');
   });
 
   it('finds a spinner and a picture that fades in', () => {
@@ -138,5 +145,55 @@ describe('renders: the e-ink rules (#80)', () => {
     expect(
       breaksOf(measured({texts: [text('IN USE', 10.5), text('Search', 19)]}), limits),
     ).toEqual(['text «IN USE» is 10.5 units, under 19']);
+  });
+
+  describe('a screen taller than the window (#265)', () => {
+    const scroll = box(5, 100, 1019, 1280);
+    const row = (over: object = {}) => ({
+      name: 'Reset all',
+      text: 'Reset all',
+      fontSize: 21,
+      glyphs: box(20, 1500, 200, 1530),
+      within: [{name: '«row»', box: box(5, 1480, 1019, 1560)}],
+      ...over,
+    });
+
+    it('passes a row below the screen inside a scroll view', () => {
+      expect(
+        breaksOf(
+          measured({
+            scrolls: [{name: 'scroll view «rows»', box: scroll}],
+            targets: [{name: 'Reset all', width: 180, height: 80, box: box(20, 1480, 200, 1560), scroll}],
+            texts: [row({scroll})],
+          }),
+          limits,
+        ),
+      ).toEqual([]);
+    });
+
+    it('fails the same row lost below the screen with no scroll view', () => {
+      expect(
+        breaksOf(measured({texts: [row({within: [screen]})]}), limits),
+      ).toEqual([
+        '«Reset all» reaches into the screen padding',
+        'text «Reset all» runs outside the screen',
+      ]);
+    });
+
+    it('fails a scrolled row wider than the screen, and a scroll view in the padding', () => {
+      expect(
+        breaksOf(
+          measured({
+            scrolls: [{name: 'scroll view «rows»', box: box(5, 100, 1019, 1364)}],
+            texts: [row({scroll, glyphs: box(20, 1500, 1022, 1530)})],
+          }),
+          limits,
+        ),
+      ).toEqual([
+        '«scroll view «rows»» reaches into the screen padding',
+        '«Reset all» reaches into the screen padding',
+        'text «Reset all» runs outside «row»',
+      ]);
+    });
   });
 });

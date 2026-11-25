@@ -8,7 +8,7 @@
  * (#23).
  */
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {
   canTurnOff,
   ChoiceKey,
@@ -263,83 +263,106 @@ export function SettingsScreen({
         <LogView />
       ) : (
         <>
-          <View style={[shared.row, shared.listRow]}>
-            <View style={styles.grow}>
-              <Text style={shared.text}>{copy['settings.languages']}</Text>
-              <Text style={shared.text}>
-                {settings.languages.map(languageName).join(', ')}
-              </Text>
-            </View>
-            <Button
-              label={copy['settings.languagesOpen']}
-              accessibilityLabel={copy['settings.languagesOpenLabel']}
-              onPress={onLanguages}
-            />
-          </View>
-          <ChoiceRow name="size" settings={settings} onChange={onChange} />
-          <ChoiceRow name="placement" settings={settings} onChange={onChange} />
-          <Text style={shared.text}>{copy['settings.placementNote']}</Text>
-          <ChoiceRow name="style" settings={settings} onChange={onChange} />
-          <ChoiceRow name="spacing" settings={settings} onChange={onChange} />
-          <Option label={copy['settings.sources']}>
-            {SOURCE_NAMES.map(name => {
-              const on = sourceOn(settings, name);
-              return (
+          {/* The rows scroll: on the Manta they reach below the screen (#265). */}
+          <ScrollView style={styles.grow}>
+            <View style={styles.rows}>
+              <View style={[shared.row, shared.listRow]}>
+                <View style={styles.grow}>
+                  <Text style={shared.text}>{copy['settings.languages']}</Text>
+                  <Text style={shared.text}>
+                    {settings.languages.map(languageName).join(', ')}
+                  </Text>
+                </View>
                 <Button
-                  key={name}
-                  label={copy[`source.${name}` as CopyKey] ?? name}
-                  selected={on}
-                  disabled={on && !canTurnOff(settings, name)}
-                  onPress={() => onChange({type: 'source', name, on: !on})}
+                  label={copy['settings.languagesOpen']}
+                  accessibilityLabel={copy['settings.languagesOpenLabel']}
+                  onPress={onLanguages}
                 />
-              );
-            })}
-          </Option>
-          {/* A source that cannot be turned off: say why (interface rule 16, #233). */}
-          {SOURCE_NAMES.filter(name => sourceOn(settings, name)).length ===
-            1 && (
-            <Text style={shared.hint}>{copy['settings.oneSourceStays']}</Text>
-          )}
-          <SwitchRow name="dataSaver" settings={settings} onChange={onChange} />
-          <SwitchRow
-            name="definition"
-            settings={settings}
-            onChange={onChange}
-          />
-          {/* One row, label and action side by side: a second line would push the actions off. */}
-          <View style={[shared.row, shared.listRow]}>
-            <Text style={[shared.text, styles.grow]}>
-              {symbolsNow?.unreadable
-                ? copy['settings.symbolsUnreadable']
-                : symbolsNow
-                ? fill('settings.symbols', {
-                    saved: symbolsNow.saved,
-                    total: symbolsNow.total,
-                  })
-                : copy['source.openmoji']}
-            </Text>
-            <Button
-              label={copy['settings.symbolsDownload']}
-              disabled={
-                !symbolsNow || symbolsNow.unreadable || bottom === 'downloading'
-              }
-              onPress={askSymbols}
-            />
-          </View>
-          {/* The download waits for the count: say why (interface rule 16, #233). */}
-          {!symbolsNow && (
-            <Text style={shared.hint}>{copy['settings.symbolsCounting']}</Text>
-          )}
-          {/* Where the symbols are kept and why, as the owner asked (#23). */}
-          <Text style={shared.text}>{copy['settings.symbolsWhere']}</Text>
-          {symbolsNow?.oldFiles ? (
-            <Text style={shared.text}>
-              {fill('settings.symbolsOld', {count: symbolsNow.oldFiles})}
-            </Text>
-          ) : null}
+              </View>
+              <ChoiceRow name="size" settings={settings} onChange={onChange} />
+              <ChoiceRow
+                name="placement"
+                settings={settings}
+                onChange={onChange}
+              />
+              <Text style={shared.text}>{copy['settings.placementNote']}</Text>
+              <ChoiceRow name="style" settings={settings} onChange={onChange} />
+              <ChoiceRow
+                name="spacing"
+                settings={settings}
+                onChange={onChange}
+              />
+              <Option label={copy['settings.sources']}>
+                {SOURCE_NAMES.map(name => {
+                  const on = sourceOn(settings, name);
+                  return (
+                    <Button
+                      key={name}
+                      label={copy[`source.${name}` as CopyKey] ?? name}
+                      selected={on}
+                      disabled={on && !canTurnOff(settings, name)}
+                      onPress={() => onChange({type: 'source', name, on: !on})}
+                    />
+                  );
+                })}
+              </Option>
+              {/* A source that cannot be turned off: say why (interface rule 16, #233). */}
+              {SOURCE_NAMES.filter(name => sourceOn(settings, name)).length ===
+                1 && (
+                <Text style={shared.hint}>
+                  {copy['settings.oneSourceStays']}
+                </Text>
+              )}
+              <SwitchRow
+                name="dataSaver"
+                settings={settings}
+                onChange={onChange}
+              />
+              <SwitchRow
+                name="definition"
+                settings={settings}
+                onChange={onChange}
+              />
+              {/* One row, label and action side by side: a second line would push the actions off. */}
+              <View style={[shared.row, shared.listRow]}>
+                <Text style={[shared.text, styles.grow]}>
+                  {symbolsNow?.unreadable
+                    ? copy['settings.symbolsUnreadable']
+                    : symbolsNow
+                    ? fill('settings.symbols', {
+                        saved: symbolsNow.saved,
+                        total: symbolsNow.total,
+                      })
+                    : copy['source.openmoji']}
+                </Text>
+                <Button
+                  label={copy['settings.symbolsDownload']}
+                  disabled={
+                    !symbolsNow ||
+                    symbolsNow.unreadable ||
+                    bottom === 'downloading'
+                  }
+                  onPress={askSymbols}
+                />
+              </View>
+              {/* The download waits for the count: say why (interface rule 16, #233). */}
+              {!symbolsNow && (
+                <Text style={shared.hint}>
+                  {copy['settings.symbolsCounting']}
+                </Text>
+              )}
+              {/* Where the symbols are kept and why, as the owner asked (#23). */}
+              <Text style={shared.text}>{copy['settings.symbolsWhere']}</Text>
+              {symbolsNow?.oldFiles ? (
+                <Text style={shared.text}>
+                  {fill('settings.symbolsOld', {count: symbolsNow.oldFiles})}
+                </Text>
+              ) : null}
+            </View>
+          </ScrollView>
           {/* The line beside the actions, at the bottom: a question or a result never moves the
               options above, and the screen keeps its padding free (#97). */}
-          <View style={[shared.actions, styles.bottom]}>
+          <View style={shared.actions}>
             <Text style={[shared.text, shared.statusLine, styles.grow]}>
               {symbolsLine ?? BOTTOM_TEXT[bottom]}
             </Text>
@@ -377,8 +400,8 @@ export function SettingsScreen({
 
 const styles = StyleSheet.create({
   grow: {flex: 1},
-  /** At the bottom of the screen, without a spacer and its section gap. */
-  bottom: {marginTop: 'auto'},
+  /** The rows inside the scroll view keep the screen's gap between them. */
+  rows: {gap: metrics.sectionGap},
   /** The option's label above its row of values. */
   option: {gap: metrics.rowPadding},
 });

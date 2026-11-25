@@ -8,7 +8,11 @@ const base = require('../../jest.config');
 
 /**
  * Playwright is installed globally with its Chromium, not in package.json, so the renders resolve
- * it from the global root, for any user, the gate user too (#90).
+ * it from the global root, for any user, the gate user too (#90). A Mac without it uses a
+ * throwaway copy, never a global install (#265): `npm install --prefix <tmp> playwright`, then
+ * `PLAYWRIGHT_BROWSERS_PATH=<tmp>/browsers npx --prefix <tmp> playwright install chromium`, then
+ * `NODE_PATH=<tmp>/node_modules PLAYWRIGHT_BROWSERS_PATH=<tmp>/browsers npm run renders`; Jest's
+ * resolver reads NODE_PATH. Remove <tmp> afterwards.
  */
 const globalRoot = execFileSync('npm', ['root', '-g'], {encoding: 'utf8'}).trim();
 

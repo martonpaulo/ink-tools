@@ -222,6 +222,11 @@ function element(node: HostNode, inText: boolean): string {
         source?.uri ?? '',
       )}" style="${style}; object-fit: ${fit}" alt="">`;
     }
+    case 'RCTScrollView':
+      // React Native's ScrollView: its content scrolls inside its box (#265).
+      return `<div class="view" data-scroll ${attributes(
+        node,
+      )} style="${style}; overflow-y: auto">${children}</div>`;
     default:
       return `<div class="view" ${attributes(
         node,
