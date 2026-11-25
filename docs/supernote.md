@@ -447,6 +447,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [measured, Nomad, bridge 0.1.0 beta 2, 2026-11-17,
   [#225](https://github.com/martonpaulo/ink-tools/issues/225)]. Why the thread keeps the other id
   is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`.
+- An enable through the bridge after a disable once got no callback: PluginHost logged
+  `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
+  uninstall and an install loaded it [reported by the device round of 2026-11-17, Image Editing,
+  [#228](https://github.com/martonpaulo/ink-tools/issues/228)]. It did not happen again on
+  Plugin Diagnostics or on Image Editing 0.1.0 beta 12, whose `.npk` loaded between
+  `setCurrentPluginId` and `clearCurrentPluginId` and whose buttons came back in 1 s; each enable
+  also logs `DENY reason=system_dir_listing path=/sys/devices/system/cpu`, which stops nothing
+  [measured, Nomad, 2026-11-25, [#228](https://github.com/martonpaulo/ink-tools/issues/228)]. The cause is [unverified]; a refused
+  enable makes `inkctl plugin enable` fail with that `DENY` line and the steps that load it again.
 - The built-in Sticker plugin has no enable switch; every other plugin is turned on or off in
   Settings › Apps › Plugins [reported by the device round of 2026-11-17, not re-measured, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - A plugin's `console.log` lines reach logcat under the tag `ReactNativeJS`, not under the plugin's

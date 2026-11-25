@@ -300,6 +300,10 @@ BRIDGE_ANSWER = re.compile(r'Broadcast completed: result=(-?\d+)(?:, data="(.*)"
 BRIDGE_CALL_TIMEOUT = 75  # the app waits up to 50 s for PluginHost's callback, under Android's 60 s
 BRIDGE_NEXT_STEP = "adb install the Ink Tools bridge APK (apps/inktools-bridge), or use the screen route for an install"
 BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
+# What cleared the refused enable of 2026-11-17 (#228): an uninstall and an install loaded the
+# plugin; an uninstall drops its Always Allow grants, so they are set again.
+ENABLE_REFUSED_STEP = ("inkctl plugin disable {id}, then inkctl plugin enable {id}; if PluginHost refuses it again, "
+                       "inkctl plugin uninstall {id}, inkctl plugin install <its .snplg>, then inkctl plugin allow {id}")
 PERMISSION_STATUS_ALWAYS = 2  # PluginPermissionManager.STATUS_ALWAYS, «Always Allow» (docs/research/2026-11-pluginhost-control.md)
 PLUGIN_ON_VALUES = ("1", "true")
 # A plugin's own page in Settings › Apps › Plugins (#191). docs/supernote.md › Plugins records the
@@ -2333,6 +2337,15 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
     return data, f"{data['action']}: {config['id']} {config['version']}"
 
 
+def host_denials(device: Device, since: str, plugin_id: str) -> list[str]:
+    """PluginHost's refusals of this plugin's own files logged since `since`, such as the
+    `PluginSec DENY reason=other_plugin` on its .npk that left an enable unanswered (#228). Other
+    refusals, such as the CPU folder listing every enable logs, are not this plugin's."""
+    done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", "PluginSec")
+    lines = done.stdout.decode(errors="replace").splitlines()
+    return [line.strip() for line in lines if PLUGIN_DENIED.search(line) and plugin_id in line]
+
+
 def command_plugin_enable(device: Device, args: argparse.Namespace):
     wanted = args.plugin_state == "enable"
     row = resolve_plugin(device, args.plugin)
@@ -2341,12 +2354,21 @@ def command_plugin_enable(device: Device, args: argparse.Namespace):
         data = {"plugin": plugin_id, "enable": wanted, "action": "unchanged", "row": row}
         return data, f"unchanged: {plugin_id} is already {'enabled' if wanted else 'disabled'}"
     require_bridge(device)
-    answer = bridge_call(device, args.plugin_state, pluginID=plugin_id)
+    since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
 
     def changed():
         return next((item for item in plugin_rows(device) if item.get("pluginID") == plugin_id and is_enabled(item) == wanted), None)
 
-    row = wait_until(args.timeout, changed, f"{plugin_id} is not {'enabled' if wanted else 'disabled'} in the plugin list")
+    try:
+        answer = bridge_call(device, args.plugin_state, pluginID=plugin_id)
+        row = wait_until(args.timeout, changed, f"{plugin_id} is not {'enabled' if wanted else 'disabled'} in the plugin list")
+    except Failure as failure:
+        denials = host_denials(device, since, plugin_id) if wanted else []
+        if denials:
+            failure.message += f"; PluginHost refused the plugin's own files: {denials[0]}"
+            failure.next_step = ENABLE_REFUSED_STEP.format(id=plugin_id)
+            failure.extra = {**failure.extra, "denied": denials}
+        raise
     data = {"plugin": plugin_id, "enable": wanted, "action": "enabled" if wanted else "disabled", "route": "bridge", "bridge": answer, "row": row}
     return data, f"{data['action']}: {plugin_id}"
 

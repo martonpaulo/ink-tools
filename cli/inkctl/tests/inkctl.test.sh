@@ -941,6 +941,21 @@ check "plugin disable sends op disable" "$(bridge_calls | tail -1)" "am broadcas
 printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=true\n' > "$files/rows-after-bridge"
 check "plugin disable times out when the list never changes" "$(exit_of plugin disable Snap --timeout 0)" "6"
+# #228: an enable PluginHost leaves unanswered names its refusal of the plugin's own files, never a CPU listing.
+cp "$files/log" "$work/log-before-enable"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=false\n' | tee "$files/rows" > "$files/rows-after-bridge"
+printf 'Broadcast completed: result=5, data="timeout no callback"\n' > "$files/bridge-answer"
+printf '%s\n' '11-16 23:00:02.000 I/PluginSec( 1): DENY tid=2 reason=other_plugin path=/data/plugins/new.plugin/app_1.npk' \
+  '11-16 23:00:02.100 I/PluginSec( 1): DENY tid=3 reason=system_dir_listing path=/sys/devices/system/cpu' > "$files/log"
+result=$(run plugin enable Snap --json 2>/dev/null)
+check "a refused enable fails with PluginHost's refusal of its own files" "$?$(printf '%s' "$result" | expression "len(d['denied']), 'other_plugin' in d['message'], 'system_dir_listing' in d['message']")" "6(1, True, False)"
+check "a refused enable says how to load the plugin again" "$(printf '%s' "$result" | expression "d['next'].startswith('inkctl plugin disable new.plugin')")" "True"
+check "a refused enable reads only PluginHost's log since the call" "$(called 'logcat -d -v time -T 11-16 23:00:00.000 -s PluginSec')" "1"
+: > "$files/log"
+result=$(run plugin enable Snap --json 2>/dev/null)
+check "an unanswered enable with no refusal keeps the bridge log step" "$?$(printf '%s' "$result" | field "['next']")" "6inkctl logs --tag InkToolsBridge"
+cp "$work/log-before-enable" "$files/log"
+printf 'Broadcast completed: result=1, data="ok onSuccess PluginInfo{pluginID=new.plugin}"\n' > "$files/bridge-answer"
 check "plugin enable names a missing plugin" "$(exit_of plugin enable Nothing)" "4"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, enable=false\n' > "$files/rows"
 rm -f "$files/bridge-installed"
