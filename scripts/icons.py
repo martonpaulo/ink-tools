@@ -20,6 +20,7 @@ the vector XML of an app's launcher icon), so no icon drifts from its source.
 import argparse
 import base64
 import json
+import math
 import re
 import subprocess
 import sys
@@ -126,6 +127,84 @@ def place(segments, scale=1.0, at=(0.0, 0.0)):
     return out
 
 
+STEPS = 64  # points sampled along each curve or arc
+
+
+def arc_points(x1, y1, rx, ry, phi, large, sweep, x2, y2):
+    """Points along an SVG arc, by the endpoint-to-centre conversion of SVG 1.1 F.6.5."""
+    if (x1, y1) == (x2, y2):
+        return []
+    if not rx or not ry:
+        return [(x2, y2)]
+    cos, sin = math.cos(math.radians(phi)), math.sin(math.radians(phi))
+    dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
+    xp, yp = cos * dx + sin * dy, -sin * dx + cos * dy
+    rx, ry = abs(rx), abs(ry)
+    grow = xp * xp / (rx * rx) + yp * yp / (ry * ry)
+    if grow > 1:
+        rx, ry = rx * math.sqrt(grow), ry * math.sqrt(grow)
+    num = rx * rx * ry * ry - rx * rx * yp * yp - ry * ry * xp * xp
+    root = math.sqrt(max(0.0, num / (rx * rx * yp * yp + ry * ry * xp * xp)))
+    if large == sweep:
+        root = -root
+    cxp, cyp = root * rx * yp / ry, -root * ry * xp / rx
+    cx, cy = cos * cxp - sin * cyp + (x1 + x2) / 2, sin * cxp + cos * cyp + (y1 + y2) / 2
+    start = math.atan2((yp - cyp) / ry, (xp - cxp) / rx)
+    delta = math.atan2((-yp - cyp) / ry, (-xp - cxp) / rx) - start
+    if sweep and delta < 0:
+        delta += 2 * math.pi
+    elif not sweep and delta > 0:
+        delta -= 2 * math.pi
+    out = []
+    for i in range(1, STEPS + 1):
+        t = start + delta * i / STEPS
+        ex, ey = rx * math.cos(t), ry * math.sin(t)
+        out.append((cos * ex - sin * ey + cx, sin * ex + cos * ey + cy))
+    return out
+
+
+def outline_box(paths, stroke):
+    """(left, top, right, bottom) of the stroke outline of absolute paths with round caps and joins:
+    the box of every point the centreline passes, curves and arcs included, grown by half the stroke."""
+    points = []
+    for d in paths:
+        x = y = 0.0
+        start = (0.0, 0.0)
+        for command, args in COMMAND.findall(d):
+            v = [float(n) for n in NUMBER.findall(args)]
+            if command == "M":
+                start = (v[0], v[1])
+            if command in "ML":
+                for i in range(0, len(v), 2):
+                    x, y = v[i], v[i + 1]
+                    points.append((x, y))
+            elif command in "HV":
+                for value in v:
+                    x, y = (value, y) if command == "H" else (x, value)
+                    points.append((x, y))
+            elif command in "CQ":
+                size = ARITY[command]
+                for i in range(0, len(v), size):
+                    group = v[i : i + size]
+                    ctrl = [(x, y)] + list(zip(group[::2], group[1::2]))
+                    for step in range(1, STEPS + 1):
+                        t, pts = step / STEPS, ctrl
+                        while len(pts) > 1:  # de Casteljau
+                            pts = [((1 - t) * a[0] + t * b[0], (1 - t) * a[1] + t * b[1]) for a, b in zip(pts, pts[1:])]
+                        points.append(pts[0])
+                    x, y = ctrl[-1]
+            elif command == "A":
+                for i in range(0, len(v), ARITY["A"]):
+                    *shape, ex, ey = v[i : i + ARITY["A"]]
+                    points += arc_points(x, y, *shape, ex, ey)
+                    x, y = ex, ey
+            elif command == "Z":
+                x, y = start
+    half = stroke / 2
+    xs, ys = [p[0] for p in points], [p[1] for p in points]
+    return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
+
+
 def number(value):
     text = f"{value:.3f}".rstrip("0").rstrip(".")
     return "0" if text in ("-0", "") else text
@@ -145,16 +224,29 @@ def frame(kind, native):
     return p["grid"], p["padding"], p["strokeWidth"]
 
 
+def ink_span(kind, native):
+    """The share of its box an icon's stroke outline spans, on its longer side: the native toolbar
+    icons' for a plugin icon, the native launcher icons' for an app's, each a little under, so
+    rounding never crosses their margin."""
+    if kind == "app":
+        return native["vector"]["inkSpan"] / native["vector"]["viewport"]
+    return native["plugin"]["toolbar"]["inkSpanPx"] / native["plugin"]["toolbar"]["sizePx"]
+
+
 def icon_paths(icon, native, store):
-    """The absolute stroke paths of an icon on its frame's grid, from its Tabler glyphs."""
-    grow = frame(icon["kind"], native)[0] / store["grid"]
-    out = []
+    """The absolute stroke paths of an icon on its frame's grid, from its Tabler glyphs: placed as
+    icons.json says, then scaled about their centre so the outline spans the native share of the
+    box and centred in it, as the native icons are (interface audit, #271)."""
+    grid, pad, stroke = frame(icon["kind"], native)
+    parts = []
     for part in icon["tabler"]:
         part = {"name": part} if isinstance(part, str) else part
         for d in store["glyphs"][part["name"]]:
-            placed = place(absolute(d), part.get("scale", 1), part.get("at", (0, 0)))
-            out.append(path_text(place(placed, grow)))
-    return out
+            parts.append(place(absolute(d), part.get("scale", 1), part.get("at", (0, 0))))
+    left, top, right, bottom = outline_box([path_text(p) for p in parts], 0)
+    grow = (ink_span(icon["kind"], native) * (grid + 2 * pad) - stroke) / max(right - left, bottom - top)
+    shift = (grid / 2 - grow * (left + right) / 2, grid / 2 - grow * (top + bottom) / 2)
+    return [path_text(place(p, grow, shift)) for p in parts]
 
 
 def view_box(grid, pad=0):

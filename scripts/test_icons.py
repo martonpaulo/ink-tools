@@ -33,7 +33,6 @@ TOOLBAR = NATIVE["plugin"]["toolbar"]
 # The share of its box an icon keeps clear on every side: the native toolbar icons' for a plugin
 # icon, the native launcher icons' for an app's (owner review of the first sheet, #271).
 MARGIN = {"plugin": TOOLBAR["inkMarginPx"] / TOOLBAR["sizePx"], "app": V["inkMargin"] / V["viewport"]}
-STEPS = 64  # points sampled along each curve or arc
 
 
 def vector_problems(root_element, android, kind="plugin"):
@@ -81,86 +80,13 @@ def absolute_problems(paths):
     return [f"{c} in {d}" for d in paths for c in sorted(set(re.findall(r"[a-zST]", d.replace("e", ""))))]
 
 
-def arc_points(x1, y1, rx, ry, phi, large, sweep, x2, y2):
-    """Points along an SVG arc, by the endpoint-to-centre conversion of SVG 1.1 F.6.5."""
-    if (x1, y1) == (x2, y2):
-        return []
-    if not rx or not ry:
-        return [(x2, y2)]
-    cos, sin = math.cos(math.radians(phi)), math.sin(math.radians(phi))
-    dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
-    xp, yp = cos * dx + sin * dy, -sin * dx + cos * dy
-    rx, ry = abs(rx), abs(ry)
-    grow = xp * xp / (rx * rx) + yp * yp / (ry * ry)
-    if grow > 1:
-        rx, ry = rx * math.sqrt(grow), ry * math.sqrt(grow)
-    num = rx * rx * ry * ry - rx * rx * yp * yp - ry * ry * xp * xp
-    root = math.sqrt(max(0.0, num / (rx * rx * yp * yp + ry * ry * xp * xp)))
-    if large == sweep:
-        root = -root
-    cxp, cyp = root * rx * yp / ry, -root * ry * xp / rx
-    cx, cy = cos * cxp - sin * cyp + (x1 + x2) / 2, sin * cxp + cos * cyp + (y1 + y2) / 2
-    start = math.atan2((yp - cyp) / ry, (xp - cxp) / rx)
-    delta = math.atan2((-yp - cyp) / ry, (-xp - cxp) / rx) - start
-    if sweep and delta < 0:
-        delta += 2 * math.pi
-    elif not sweep and delta > 0:
-        delta -= 2 * math.pi
-    out = []
-    for i in range(1, STEPS + 1):
-        t = start + delta * i / STEPS
-        ex, ey = rx * math.cos(t), ry * math.sin(t)
-        out.append((cos * ex - sin * ey + cx, sin * ex + cos * ey + cy))
-    return out
-
-
-def outline_box(paths, stroke):
-    """(left, top, right, bottom) of the stroke outline of absolute paths with round caps and joins:
-    the box of every point the centreline passes, curves and arcs included, grown by half the stroke."""
-    points = []
-    for d in paths:
-        x = y = 0.0
-        start = (0.0, 0.0)
-        for command, args in re.findall(r"([MLHVCQAZ])([^MLHVCQAZ]*)", d):
-            v = [float(n) for n in NUMBER.findall(args)]
-            if command == "M":
-                start = (v[0], v[1])
-            if command in "ML":
-                for i in range(0, len(v), 2):
-                    x, y = v[i], v[i + 1]
-                    points.append((x, y))
-            elif command in "HV":
-                for value in v:
-                    x, y = (value, y) if command == "H" else (x, value)
-                    points.append((x, y))
-            elif command in "CQ":
-                n = 6 if command == "C" else 4
-                for i in range(0, len(v), n):
-                    ctrl = [(x, y)] + [(v[i + k], v[i + k + 1]) for k in range(0, n, 2)]
-                    for step in range(1, STEPS + 1):
-                        t, pts = step / STEPS, ctrl
-                        while len(pts) > 1:  # de Casteljau
-                            pts = [((1 - t) * a[0] + t * b[0], (1 - t) * a[1] + t * b[1]) for a, b in zip(pts, pts[1:])]
-                        points.append(pts[0])
-                    x, y = ctrl[-1]
-            elif command == "A":
-                for i in range(0, len(v), 7):
-                    points += arc_points(x, y, *v[i : i + 5], v[i + 5], v[i + 6])
-                    x, y = v[i + 5], v[i + 6]
-            elif command == "Z":
-                x, y = start
-    half = stroke / 2
-    xs, ys = [p[0] for p in points], [p[1] for p in points]
-    return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
-
-
 def margin_problem(paths, kind, pad=None):
     """None, or how the stroke outline comes nearer the box's edge than the native margin of `kind`;
     `pad` overrides the frame's padding."""
     grid, frame_pad, stroke = icons.frame(kind, NATIVE)
     pad = frame_pad if pad is None else pad
     side = grid + 2 * pad
-    left, top, right, bottom = outline_box(paths, stroke)
+    left, top, right, bottom = icons.outline_box(paths, stroke)
     gap = min(left + pad, top + pad, grid + pad - right, grid + pad - bottom)
     need = MARGIN[kind] * side
     if gap < need - 1e-9:
@@ -244,6 +170,17 @@ class Style(unittest.TestCase):
         for icon in ICONS:
             with self.subTest(icon["out"]):
                 self.assertIsNone(margin_problem(PATHS[icon["out"]], icon["kind"]))
+
+    def test_every_icon_spans_the_native_share_of_its_box(self):
+        # Fitted, not Tabler's own optical size: the audit measured a 58% median span against the
+        # native 66% (#271).
+        for icon in ICONS:
+            grid, pad, stroke = icons.frame(icon["kind"], NATIVE)
+            left, top, right, bottom = icons.outline_box(PATHS[icon["out"]], stroke)
+            with self.subTest(icon["out"]):
+                span = max(right - left, bottom - top) / (grid + 2 * pad)
+                self.assertAlmostEqual(span, icons.ink_span(icon["kind"], NATIVE), places=3)
+                self.assertAlmostEqual((left + right) / 2, grid / 2, places=3)
 
     def test_a_stroke_inside_the_margin_is_caught(self):
         # The first sheet's P (#271): its bowl's arc bulges to 44.5, past the endpoints the old check read.

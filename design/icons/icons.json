@@ -1,5 +1,5 @@
 {
- "about": "Every Ink Tools icon on the tablet, built from Tabler Icons outline glyphs (design/icons/tabler.json, MIT, NOTICE.md): each icon names one Tabler glyph for its meaning, or places two or more (a glyph's `scale` about the 24 grid's origin, then `at`, its offset). A plugin icon is written on the 24 grid with native.json's padding and stroke, so its stroke and margin are the native toolbar icons'; an app's launcher icon is the same drawing doubled onto the native launcher icons' 48 grid. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
+ "about": "Every Ink Tools icon on the tablet, built from Tabler Icons outline glyphs (design/icons/tabler.json, MIT, NOTICE.md): each icon names one Tabler glyph for its meaning, or places two or more (a glyph's `scale` about the 24 grid's origin, then `at`, its offset). icons.py scales each icon so its outline spans the native icons' share of the box, centred; a plugin icon is written on the 24 grid with native.json's padding and stroke, so its stroke and margin are the native toolbar icons'; an app's launcher icon is the same drawing doubled onto the native launcher icons' 48 grid. scripts/icons.py writes each SVG and 96 px PNG (plugins) or vector XML (apps) from this file (#271).",
  "sheet": {
   "columns": 8,
   "cellWidth": 120,
@@ -39,7 +39,7 @@
    "out": "plugins/device-transfer/assets/icon",
    "kind": "plugin",
    "tabler": [
-    "arrows-exchange"
+    "devices-share"
    ]
   },
   {
@@ -106,7 +106,7 @@
    "kind": "plugin",
    "tabler": [
     {
-     "name": "marquee-2",
+     "name": "lasso",
      "scale": 0.65,
      "at": [
       0,
@@ -156,7 +156,7 @@
    "out": "plugins/ink2pic/assets/choose",
    "kind": "plugin",
    "tabler": [
-    "library-photo"
+    "layout-grid"
    ]
   },
   {
@@ -191,21 +191,36 @@
    "out": "plugins/real-time-conversion/assets/undo",
    "kind": "plugin",
    "tabler": [
-    "arrow-back-up"
+    {
+     "name": "text-recognition",
+     "scale": 0.65,
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "arrow-back-up",
+     "scale": 0.6,
+     "at": [
+      10.1,
+      10.8
+     ]
+    }
    ]
   },
   {
    "out": "plugins/word-lookup/assets/choose",
    "kind": "plugin",
    "tabler": [
-    "layout-grid"
+    "library-photo"
    ]
   },
   {
    "out": "plugins/word-lookup/assets/definition",
    "kind": "plugin",
    "tabler": [
-    "book-2"
+    "vocabulary"
    ]
   },
   {
@@ -237,7 +252,7 @@
      "name": "letter-e",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       0.6
      ]
     },
@@ -245,7 +260,7 @@
      "name": "letter-s",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       0.6
      ]
     },
@@ -253,7 +268,7 @@
      "name": "letter-p",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       12.6
      ]
     },
@@ -261,24 +276,24 @@
      "name": "letter-t",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       12.6
      ]
     },
     {
      "name": "minus-vertical",
-     "scale": 0.875,
+     "scale": 0.857,
      "at": [
-      -6.5,
-      -1.975
+      -8.04,
+      1.71
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "arrow-right",
+     "scale": 0.35,
      "at": [
-      -2,
-      12.1
+      0.5,
+      13.8
      ]
     }
    ]
@@ -291,7 +306,7 @@
      "name": "letter-p",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       0.6
      ]
     },
@@ -299,7 +314,7 @@
      "name": "letter-t",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       0.6
      ]
     },
@@ -307,7 +322,7 @@
      "name": "letter-e",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       12.6
      ]
     },
@@ -315,24 +330,24 @@
      "name": "letter-s",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       12.6
      ]
     },
     {
      "name": "minus-vertical",
-     "scale": 0.875,
+     "scale": 0.857,
      "at": [
-      -6.5,
-      -1.975
+      -8.04,
+      1.71
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "arrow-right",
+     "scale": 0.35,
      "at": [
-      -2,
-      12.1
+      0.5,
+      13.8
      ]
     }
    ]
@@ -345,7 +360,7 @@
      "name": "letter-p",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       0.6
      ]
     },
@@ -353,7 +368,7 @@
      "name": "letter-t",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       0.6
      ]
     },
@@ -361,7 +376,7 @@
      "name": "letter-z",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       12.6
      ]
     },
@@ -369,24 +384,24 @@
      "name": "letter-h",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       12.6
      ]
     },
     {
      "name": "minus-vertical",
-     "scale": 0.875,
+     "scale": 0.857,
      "at": [
-      -6.5,
-      -1.975
+      -8.04,
+      1.71
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "arrow-right",
+     "scale": 0.35,
      "at": [
-      -2,
-      12.1
+      0.5,
+      13.8
      ]
     }
    ]
@@ -399,7 +414,7 @@
      "name": "letter-z",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       0.6
      ]
     },
@@ -407,7 +422,7 @@
      "name": "letter-h",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       0.6
      ]
     },
@@ -415,7 +430,7 @@
      "name": "letter-p",
      "scale": 0.45,
      "at": [
-      5.75,
+      7.0,
       12.6
      ]
     },
@@ -423,24 +438,24 @@
      "name": "letter-t",
      "scale": 0.45,
      "at": [
-      13.25,
+      14.0,
       12.6
      ]
     },
     {
      "name": "minus-vertical",
-     "scale": 0.875,
+     "scale": 0.857,
      "at": [
-      -6.5,
-      -1.975
+      -8.04,
+      1.71
      ]
     },
     {
-     "name": "arrow-narrow-down",
-     "scale": 0.5,
+     "name": "arrow-right",
+     "scale": 0.35,
      "at": [
-      -2,
-      12.1
+      0.5,
+      13.8
      ]
     }
    ]
