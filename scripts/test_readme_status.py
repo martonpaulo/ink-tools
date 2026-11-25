@@ -72,6 +72,8 @@ class Vocabulary(unittest.TestCase):
         html = '<table>\n  <tr><th>Name</th><th>What it does</th></tr>\n  <tr>' + row + '<td>x</td></tr>\n</table>\n'
         self.assertEqual(readme_status.bad_cells(html.format("🟡"), ["🟡 Beta"]), (True, []))
         self.assertEqual(readme_status.bad_cells(html.format("🟣"), ["🟡 Beta"]), (True, [(3, "🟣")]))
+        # A smaller dot is the emoji inside <sub><sup> (owner, 2026-11-25).
+        self.assertEqual(readme_status.bad_cells(html.format("<sub><sup>🟡</sup></sub>"), ["🟡 Beta"]), (True, []))
 
     def test_a_table_without_status_is_ignored(self):
         self.assertEqual(readme_status.bad_cells("| A | B |\n| :--- | :--- |\n| x | y |\n", ["🟡 Beta"]), (False, []))

@@ -72,7 +72,7 @@ def bad_cells(readme_text, values):
             if "<img" not in row[0]:
                 continue
             found = True
-            text = re.sub(r"^.*?</p>", "", row[0])
+            text = re.sub(r"</?su[bp]>", "", re.sub(r"^.*?</p>", "", row[0]))
             dot = text.replace("&nbsp;", " ").split(" ", 1)[0]
             if dot not in {value.split(" ", 1)[0] for value in values}:
                 bad.append((number, dot))
