@@ -14,8 +14,8 @@ export type HostNode = ReactTestRendererJSON | string;
 const PIXEL_RATIO = 1.875;
 /**
  * The screens, in pixels: the Manta's 1920 x 2560 and the Nomad's 1404 x 1872 (docs/supernote.md).
- * The Nomad's is measured on a Nomad (2026-11-25, `adb exec-out screencap` and `inkctl snapshot`):
- * plugin views report coordinates in that space (#284). Its pixel ratio is still an inference.
+ * The Nomad's size is from the official specs only, never measured: the owner's tablet is the Manta
+ * (#284). Its pixel ratio is still an inference.
  */
 const MANTA = {short: 1920, long: 2560};
 const NOMAD = {short: 1404, long: 1872};

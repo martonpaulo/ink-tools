@@ -1,7 +1,7 @@
 /** What a lookup may use from a lasso read (#165, #166), over the answers recorded on the tablet. */
 import {checkLookup, lookupWords, rectProblem, type LassoQuery} from '../src';
 
-/** The Nomad's page, in page pixels (docs/supernote.md). */
+/** The Nomad's page, in page pixels (docs/supernote.md, official specs only). */
 const NOMAD = {width: 1404, height: 1872};
 /** `getLassoRect` for a pasted sticker shown near (870, 1190) (#165, 2026-11-16). */
 const PASTED = {left: -40, top: 0, right: 140, bottom: 181};

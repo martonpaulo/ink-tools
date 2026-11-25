@@ -43,7 +43,7 @@ function fontSizeOf(node: ReactTestInstance): unknown {
 }
 
 /**
- * The most buttons a row that does not wrap may hold: more ran past the Nomad's right edge in
+ * The most buttons a row that does not wrap may hold: more ran past the Manta's right edge in
  * Image Editing's Settings (#224), so a longer row uses `shared.buttons`.
  */
 export const MAX_UNWRAPPED_BUTTONS = 3;

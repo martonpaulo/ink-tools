@@ -5,7 +5,7 @@ analysis only: the APK was read on the Mac and never run. One tablet round is st
 confirm the insert (see [What a device round must confirm](#what-a-device-round-must-confirm)).
 
 Target: `SupernoteKnowledge` 1.00.153 (`versionCode` 100153), package
-`com.ratta.supernote.knowledge`, pulled from the owner's Nomad. SHA-256 of the APK:
+`com.ratta.supernote.knowledge`, pulled from the owner's Manta. SHA-256 of the APK:
 `b5f1df9086d5fdc0bd5212fe6c5fc08b2308ef58fb0313a7937f865297db74b8`. It was decompiled with `jadx`
 (sources, then resources for the manifest). Decompiled vendor code stays in the session scratch and
 is never committed, so each citation gives the decompiled file and line, not the code.

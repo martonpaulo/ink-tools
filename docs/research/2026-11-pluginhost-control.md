@@ -1,15 +1,15 @@
 # PluginHost control: driving plugins from the Mac over adb, without the screen
 
 Status: research for [#214](https://github.com/martonpaulo/ink-tools/issues/214), 2026-11-17.
-Static analysis on the Mac; one read-only command was run on the owner's Nomad. No state-changing
+Static analysis on the Mac; one read-only command was run on the owner's Manta. No state-changing
 command was run from this lane (the tablet was held by another round).
 
-Question: which non-visual (no UI tapping) routes exist to drive the Supernote Nomad's plugin
+Question: which non-visual (no UI tapping) routes exist to drive the Supernote Manta's plugin
 system and notes from the Mac over `adb` — install or upgrade a `.snplg`, set permissions to
 «Always Allow», enable or disable a plugin, trigger a plugin button, open or redraw a note, and
 read plugin or note state.
 
-Targets, pulled read-only from the owner's Nomad (serial withheld, build
+Targets, pulled read-only from the owner's Manta (serial withheld, build
 `Chauvet.E103.2610191001.2559_release`) and decompiled with `jadx`:
 
 - `com.ratta.supernote.pluginhost` (PluginHost), `versionName` 1.00.2610150, `versionCode`
@@ -198,4 +198,4 @@ a general button trigger would also need the helper app of section 2. This candi
   `manager/PluginManager.java`, `security/PluginPermissionManager.java`,
   `plugincorelib/IPluginSetting.java`, `receiver/PluginReceiver.java`,
   `jadx-ph-res/resources/AndroidManifest.xml`.
-- `content query` output on the owner's Nomad, 2026-11-17.
+- `content query` output on the owner's Manta, 2026-11-17.

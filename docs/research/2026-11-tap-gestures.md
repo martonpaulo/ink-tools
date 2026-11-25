@@ -1,7 +1,7 @@
 # Custom tap gestures in NOTE: what a service or a plugin can see and press
 
 Status: research for [#251](https://github.com/martonpaulo/ink-tools/issues/251), 2026-11-25.
-One agent-driven device round on the owner's Nomad (firmware `Chauvet.E103.2610191001.2559_release`,
+One agent-driven device round on the owner's Manta (firmware `Chauvet.E103.2610191001.2559_release`,
 Android 11, API 30) with a throwaway accessibility service, Gesture Probe
 (`com.martonpaulo.inktools.gestureprobe`), driven by broadcasts and `inkctl`, on a blank test note.
 The probe was turned off and uninstalled after the round, and the test note deleted; the tablet's

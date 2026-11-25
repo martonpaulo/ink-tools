@@ -2,7 +2,7 @@
 
 Status: research, rewritten 2026-11-16 for [#151](https://github.com/martonpaulo/ink-tools/issues/151) (successor of [#146](https://github.com/martonpaulo/ink-tools/issues/146)), with the owner's tablet and the decompiled firmware in hand. No code shipped; a build follows once the owner picks a direction. Visual summary for the decision: [Handwriting Language Switch](https://claude.ai/artifact/Gn2mWD21UYyGjgRC88EsfM).
 
-Marks, as in [`../supernote.md`](../supernote.md): **[measured]** on the owner's tablet (Supernote Nomad, firmware `Chauvet.E103.2610191001.2559`, Android 11); **[source]** read in the decompiled firmware apps or the framework, with file and line; **[official]** the vendor's documents or the `sn-plugin-lib` 0.2.3 sources; **[inference]** reasoned, not run. Decompiled vendor code lives only in the session scratch and is never committed (`cli/snadb/AGENTS.md`), so citations give the class and line, not the code.
+Marks, as in [`../supernote.md`](../supernote.md): **[measured]** on the owner's tablet (Supernote Manta, firmware `Chauvet.E103.2610191001.2559`, Android 11); **[source]** read in the decompiled firmware apps or the framework, with file and line; **[official]** the vendor's documents or the `sn-plugin-lib` 0.2.3 sources; **[inference]** reasoned, not run. Decompiled vendor code lives only in the session scratch and is never committed (`cli/snadb/AGENTS.md`), so citations give the class and line, not the code.
 
 ## Contents
 

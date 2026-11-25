@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "descriptorVersion": "2026.11.17",
-  "device": {"model": "Supernote Nomad", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466", "knowledgeApp": "1.00.153"},
+  "device": {"model": "Manta", "android": 11, "calendarApp": "1.00.532", "taskApp": "1.00.466", "knowledgeApp": "1.00.153"},
   "calendar": {
     "authority": "com.ratta.supernote.calendar.provider",
     "tables": {

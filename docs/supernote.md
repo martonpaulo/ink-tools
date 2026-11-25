@@ -21,20 +21,20 @@ learns one; a plugin's own brief keeps only what is specific to it.
 | Fact | Value | How known |
 | :--- | :--- | :--- |
 | Screen | 1920 x 2560 px, density 300 | [measured] `adb shell wm size`, `wm density`, 2026-11-14 |
-| Model string | `ro.product.model` reads `Supernote Nomad`, though the screen is the Manta's (A5 X2, `getDeviceType()` = `5`) | [measured] 2026-11-14; [official] SDK source for the type |
+| Model | Manta (A5 X2): `ro.product.board` reads `A5X2`, `getDeviceType()` = `5`. `ro.product.model` reads `Supernote Nomad`, probably an internal name | [measured] 2026-11-14 and 2026-11-25; [official] SDK source for the type |
 | Android | 11 | [measured] `ro.build.version.release` |
 | Firmware | Chauvet 3.31.45, build `Chauvet.E103.2610191001.2559_release` | [measured] `ro.build.display.id`, 2026-11-14 |
 
-Write «the owner's tablet» in issues and docs, not a model name, until the model string is
-explained.
+The owner's tablet is the Manta. `ro.product.model` reads «Supernote Nomad», probably an internal
+or firmware name; never take the model from it. Read `ro.product.board` (`A5X2` is the Manta, `A6X2`
+the Nomad) or `getDeviceType()`, as `inkctl status` does ([#284](https://github.com/martonpaulo/ink-tools/issues/284)).
 
 ## Screen and units
 
 - Manta: 1920 x 2560 px, 10.7 inch, 3:4, about 299 ppi, so 1 mm is about 11.8 px [official specs,
   arithmetic in `plugins/ink2pic/docs/brief.md`].
-- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs; measured, Nomad, 2026-11-25,
-  `adb exec-out screencap` and `inkctl snapshot`: plugin views report coordinates in that space,
-  [#284](https://github.com/martonpaulo/ink-tools/issues/284)]. Handwriting Language's
+- Nomad: 1404 x 1872 px, 7.8 inch, 3:4, about 300 ppi [official specs only; never measured: the
+  owner's tablet is the Manta, [#284](https://github.com/martonpaulo/ink-tools/issues/284)]. Handwriting Language's
   button place is tested on both screens, each turned both ways
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)).
 - A floating window of a sideloaded app follows a screen turn: Handwriting Language's button,
@@ -227,7 +227,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)]. Creating the file empty, closing
   it, then opening it again to write gives the full content on the first save: Word Lookup 0.2.0
   beta 10 wrote all 259 bytes of a new `MyStyle/Lookup/settings.json`, and the switch set before
-  a PluginHost restart was the one read after it [measured, Nomad, 2026-11-16,
+  a PluginHost restart was the one read after it [measured, Manta, 2026-11-16,
   [#162](https://github.com/martonpaulo/ink-tools/issues/162)].
 - A plugin that declares only `FILE:READ` reads a file it did not write under
   `/storage/emulated/0/.data/plugin/`, and its delete throws `SecurityException: Plugin [...] has no
@@ -244,7 +244,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A pen stroke drawn over a picture joins the picture's lasso: a closed rectangle stroke inside a
   200 x 200 picture, lassoed by the picture's rect, gave `getLassoElementTypeCounts`
   `{"trailNum":1,"bitmapNum":1}`, and the «⋯» list kept Image Editing's rows next to the stroke
-  rows [measured, Nomad, 2026-11-17, [#132](https://github.com/martonpaulo/ink-tools/issues/132)].
+  rows [measured, Manta, 2026-11-17, [#132](https://github.com/martonpaulo/ink-tools/issues/132)].
   Image Editing's Crop and Erase rely on three facts not yet measured, each logged on its press: a lassoed
   stroke's points read in page pixels, as a page read's do (points off the page are taken as EMR);
   each lassoed stroke has its `numInPage`; and `batchUpdatePageElements(nums, [], page)` with an
@@ -264,7 +264,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   sn-adapter keeps at most `OCCUPIED_READS_IN_FLIGHT` (4) reads in flight [unverified on the device].
 - `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
   pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)]; 963 to 999 ms
-  on the Nomad's «apple» fixture in Word Lookup 0.2.0 beta 27 [measured, 2026-11-25].
+  on the Manta's «apple» fixture in Word Lookup 0.2.0 beta 27 [measured, 2026-11-25].
 - PluginHost's JS runs plain text work far slower than a Mac: picture-search's text scorers took
   about 120 ms per pass over 12 results, and its first ranking in a fresh JS instance (after an
   install) took 1057 ms for 18 results, against 87 ms later on the same instance [measured,
@@ -289,7 +289,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [measured, 2026-11-17, [#204](https://github.com/martonpaulo/ink-tools/issues/204)]; with its «Close» button (Image Editing beta 8) it
   closes back to Settings [measured, 2026-11-17, [#224](https://github.com/martonpaulo/ink-tools/issues/224)].
 - React Native's `hardwareBackPress`, and so `BackHandler`, never reaches a plugin view: PluginHost
-  1.00.2610150 (the Nomad's) shows every plugin's root view in one `PluginContainer`, a
+  1.00.2610150 (the Manta's) shows every plugin's root view in one `PluginContainer`, a
   `FrameLayout` added with `WindowManager.addView` as a `TYPE_PHONE` overlay (type 2002, flags
   `0x520`, focusable), never in an Activity. React Native emits the event only from
   `ReactInstanceManager.onBackPressed` or `ReactHostImpl.onBackPressed`, which only `ReactActivity`
@@ -406,7 +406,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     the zigzag showed as ink with `penType` 10 and `thickness` 400.
   - `createElement(0)` gives `stroke.penType` 0, and `insertPageElements` refuses such a stroke
     with code 302 «Invalid pen type» (logcat `readableMap2Stroke error penType:0`), whatever pen the
-    note shows; setting `penType` before the insert is required [measured, 2026-11-25, Nomad,
+    note shows; setting `penType` before the insert is required [measured, 2026-11-25, Manta,
     [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
   - A picture: `createElement(200)` with `picture.picturePath` a PNG under `MyStyle/` and
     `picture.rect`, then `insertPageElements`: 245 ms.
@@ -432,12 +432,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
-  performed. Cannot call the API!` [measured, Image Editing 0.1.0 beta 13, Nomad, 2026-11-25,
+  performed. Cannot call the API!` [measured, Image Editing 0.1.0 beta 13, Manta, 2026-11-25,
   [#248](https://github.com/martonpaulo/ink-tools/issues/248)]. Whether a button pinned to the toolbar keeps a lasso is [unverified].
 - A lasso «⋯» row (`registerButton(2, ...)`, any `editDataTypes`) keeps the lasso, unlike a sidebar
   button: from Plugin Diagnostics' lasso row, `getLassoRect` answered the lassoed strokes' box in
   23 ms and `saveStickerByLasso` wrote a sticker file in 39 ms [measured, Plugin Diagnostics
-  0.0.2 beta 10, Nomad, 2026-11-25, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
+  0.0.2 beta 10, Manta, 2026-11-25, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
   On the same tablet and day:
   - `lassoElements(rect)` selects strokes only: a text box inside the rect stayed out of the lasso
     and so out of the sticker. Whether a sticker keeps a text box or a picture lassoed by hand is
@@ -503,7 +503,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md), [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. The Ink Tools
   bridge app holds that binder ([#215](https://github.com/martonpaulo/ink-tools/issues/215)); through it a plugin list took 1.35 s,
   «Always Allow» 3.5 s, an install 2.9 s, a disable 2.4 s and an enable 3.1 s, where the screen
-  path took about 40 s, 60 to 240 s and about 25 s each [measured, Nomad, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+  path took about 40 s, 60 to 240 s and about 25 s each [measured, Manta, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - PluginHost's log tags for a round: `PluginInstallManager` (install), `PluginContainerService`
   (the `PluginHostService`), `PluginSettingService`, `PluginsContentProvider`, `PluginManager` and
   `PluginPermissionManager` [source, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
@@ -515,7 +515,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   landed: PluginHost's log shows it seeds a current plugin per thread, and the binder thread
   that served the call still carried Account Sync's id. The plugin list showed the new version, and
   after `am force-stop com.ratta.supernote.pluginhost` the next installs answered `updated:`
-  [measured, Nomad, bridge 0.1.0 beta 2, 2026-11-17,
+  [measured, Manta, bridge 0.1.0 beta 2, 2026-11-17,
   [#225](https://github.com/martonpaulo/ink-tools/issues/225)]. Why the thread keeps the other id
   is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`.
 - An enable through the bridge after a disable once got no callback: PluginHost logged
@@ -525,7 +525,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   Plugin Diagnostics or on Image Editing 0.1.0 beta 12, whose `.npk` loaded between
   `setCurrentPluginId` and `clearCurrentPluginId` and whose buttons came back in 1 s; each enable
   also logs `DENY reason=system_dir_listing path=/sys/devices/system/cpu`, which stops nothing
-  [measured, Nomad, 2026-11-25, [#228](https://github.com/martonpaulo/ink-tools/issues/228)]. The cause is [unverified]; a refused
+  [measured, Manta, 2026-11-25, [#228](https://github.com/martonpaulo/ink-tools/issues/228)]. The cause is [unverified]; a refused
   enable makes `inkctl plugin enable` fail with that `DENY` line and the steps that load it again.
 - The built-in Sticker plugin has no enable switch; every other plugin is turned on or off in
   Settings › Apps › Plugins [reported by the device round of 2026-11-17, not re-measured, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
@@ -713,7 +713,7 @@ the note shows through, is still to test.
 - The font picked in one text box becomes the Note app's default: every new text box, and the
   text that the native lasso «Recognize as Text» makes, then use it. A font check that picks
   MoonUniform left later recognized text in Moon signs until «System Font» was picked again in a
-  new text box; a round sets it back to the font it found [measured, 2026-11-25, Nomad,
+  new text box; a round sets it back to the font it found [measured, 2026-11-25, Manta,
   [#247](https://github.com/martonpaulo/ink-tools/issues/247), [#250](https://github.com/martonpaulo/ink-tools/issues/250)].
   The setting is in the Note app's private storage, not in `settings list`.
 - A lasso «⋯» row exists only while its plugin is enabled: «Convert to Text» shows only with
@@ -748,7 +748,7 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
 
 - The lasso tool takes the pen only: a loop drawn with `input motionevent` (touch) or
   `input stylus motionevent` selects nothing, and `sendevent` to the `Wacom-pen` node
-  (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Nomad,
+  (`/dev/input/event7`) is refused (`Permission denied`, SELinux) [measured, 2026-11-16, Manta,
   [#148](https://github.com/martonpaulo/ink-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
   A plugin's `lassoElements(rect)` does lasso with no pen (see Plugins), so a helper plugin button
   is the route an agent has.
@@ -761,11 +761,11 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   Wi-Fi only and lost it with the tablet's Wi-Fi off [measured, 2026-11-16].
 - The note app takes the `page` extra of `am start` (from 0) only for a note it has not opened
   before: a note opened before reopens at its last page and the extra is ignored, while a plugin's
-  `PluginCommAPI.jumpToPage(page)` (from 0) moves to the page [measured, 2026-11-17, Nomad,
+  `PluginCommAPI.jumpToPage(page)` (from 0) moves to the page [measured, 2026-11-17, Manta,
   [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. So `inkctl note open --page` and
   `inkctl fixture` move with the Probe's `jumpToPage`. Probe's `getCurrentPageNum` read right after
   the jump is not the shown page: it was often the page before the jump, and stayed at 8 on page 10
-  [measured, 2026-11-25, Nomad, [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. They prove the page from the note's page counter «N / total»
+  [measured, 2026-11-25, Manta, [#220](https://github.com/martonpaulo/ink-tools/issues/220)]. They prove the page from the note's page counter «N / total»
   in the `tv_button` text instead, read up to 6 times; that counter's text is [unverified] on the
   tablet until the next device round.
 - After a tablet restart, `inkctl status` fails with exit 3 and names the USB route
@@ -775,14 +775,14 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   seconds after `inkctl wifi on`, `adb -s <serial>` over USB answers «device not found» while adbd
   restarts in TCP mode [measured, 2026-11-17, [#1](https://github.com/martonpaulo/ink-tools/issues/1), [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - Android 11's Wireless debugging (`settings put global adb_wifi_enabled 1`, Developer options on)
-  works on the Nomad but does not survive a restart: at boot adbd logs `persist.adb.tls_server.enable
+  works on the Manta but does not survive a restart: at boot adbd logs `persist.adb.tls_server.enable
   changed to 0` and `adb wifi stopped`, and `adb_wifi_enabled` reads 0. Turning it on asks once per
   Wi-Fi network («Allow wireless debugging on this network?», with «Always allow on this network»
   unchecked by default); once that box is checked, the setting turns on with no dialog. Its port is
   new each time (40231, then 43029) and the Mac finds it with `adb mdns services`
-  (`_adb-tls-connect._tcp`). `adb connect` to it worked with no pairing code, because the Nomad's
+  (`_adb-tls-connect._tcp`). `adb connect` to it worked with no pairing code, because the Manta's
   adbd requires no authentication at all (`ro.adb.secure` 0, adbd logs `authentication not
-  required`) [measured, 2026-11-25, Nomad, firmware Chauvet.E103.2610191001.2559,
+  required`) [measured, 2026-11-25, Manta, firmware Chauvet.E103.2610191001.2559,
   [#1](https://github.com/martonpaulo/ink-tools/issues/1)].
 - The tablet sleeps between long steps (`dumpsys power` shows `mWakefulness=Asleep`), and a press
   then does nothing; `input keyevent 224` (WAKEUP) before a step wakes it [measured, 2026-11-17,

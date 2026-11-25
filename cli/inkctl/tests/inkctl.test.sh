@@ -84,7 +84,8 @@ case "$1" in
     shell)
         case "$2" in
             "getprop ro.build.display.id") if [ -f "$ADB_FILES/firmware-id" ]; then cat "$ADB_FILES/firmware-id"; else echo Firmware.1; fi ;;
-            "getprop ro.product.model") cat "$ADB_FILES/model" ;;
+            "getprop ro.product.model") echo "Supernote Nomad" ;;
+            "getprop ro.product.board") cat "$ADB_FILES/model" ;;
             "dumpsys battery"*) cat "$ADB_FILES/battery" ;;
             "sha256sum "*) cat "$ADB_FILES/checksum" ;;
             "dumpsys activity broadcasts") cat "$ADB_FILES/broadcasts" ;;
@@ -107,7 +108,7 @@ case "$1" in
                 for authority in com.ratta.supernote.task.provider com.ratta.supernote.pluginhost; do
                     grep -qF "$authority" "$ADB_FILES/gone" || printf '  [%s]:\n' "$authority"
                 done ;;
-            getprop*) printf 'Firmware.1\nPhysical size: 1920x2560\n  level: 93\n    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/foreground")" ;;
+            getprop*) printf 'Firmware.1\n%s\nPhysical size: 1920x2560\n  level: 93\n    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/model" 2>/dev/null)" "$(cat "$ADB_FILES/foreground")" ;;
             dumpsys*) printf '    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/foreground")" ;;
             "if [ "*)
                 condition=${2#if \[ }; condition=${condition%% \]; then*}
@@ -386,7 +387,7 @@ HTML
 python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1],"w"); z.writestr("a.txt","x"); z.close()' "$files/firmware.bin"
 wc -c < "$files/firmware.bin" | tr -d ' ' > "$files/size"
 python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest(), "x")' "$files/firmware.bin" > "$files/checksum"
-echo "Supernote Nomad" > "$files/model"
+echo "A5X2" > "$files/model"
 echo "Chauvet.E103.2610191001.2559_release" > "$files/firmware-id"
 echo "  level: 93" > "$files/battery"
 result=$(firmware firmware --json)
@@ -438,10 +439,14 @@ firmware firmware --download >/dev/null 2>&1
 check "firmware refuses a broken download" "$?$(called ' push ')" "130"
 cp "$work/firmware.bin.saved" "$files/firmware.bin"
 rm "$files/firmware.bin.keep"
-echo "Supernote A9" > "$files/model"
+echo "A9" > "$files/model"
 firmware firmware >/dev/null 2>&1
 check "firmware stops on a model it does not know" "$?" "1"
-echo "Supernote Nomad" > "$files/model"
+echo "A5X2" > "$files/model"
+check "status names the Manta from its board, not from the model string" "$(run status --json | field "['model']")" "Manta"
+echo "A6X2" > "$files/model"
+check "status names the Nomad from its board" "$(run status --json | field "['model']")" "Nomad"
+echo "A5X2" > "$files/model"
 echo "<p>nothing</p>" > "$files/page.html"
 firmware firmware >/dev/null 2>&1
 check "firmware stops when the page has changed" "$?" "1"

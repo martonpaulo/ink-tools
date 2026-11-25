@@ -397,8 +397,11 @@ FIRMWARE_HOST = "download-firmware.supernote.com"
 FIRMWARE_TARGET = "EXPORT/update.zip"
 FIRMWARE_MIN_BATTERY = 50
 FIRMWARE_NEXT_STEP = "On the tablet: tap OK when it asks. If no prompt appears, restart the tablet to start the update."
-# ro.product.model to the column of Ratta's table. A Manta and a Nomad share one file. shortcut: only the models checked so far.
-FIRMWARE_MODELS = {"Supernote Manta": "Manta & Nomad", "Supernote Nomad": "Manta & Nomad"}
+# ro.product.board to the model (the SDK's getDeviceType() 5 and 4). Never ro.product.model: the owner's Manta reads
+# "Supernote Nomad" there (docs/supernote.md, #284). shortcut: only the boards checked so far.
+BOARD_MODELS = {"A5X2": "Manta", "A6X2": "Nomad"}
+# The model to the column of Ratta's firmware table. A Manta and a Nomad share one file.
+FIRMWARE_COLUMNS = {"Manta": "Manta & Nomad", "Nomad": "Manta & Nomad"}
 VERSION_NUMBER = re.compile(r"(?:^|\s)(\d+\.\d+\.\d+)(?:$|\s)")
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
@@ -1130,10 +1133,20 @@ def download_firmware(url: str, destination: str) -> str:
     return digest.hexdigest()
 
 
+def device_model(device: Device) -> str:
+    """The tablet's model from its board, `Manta` or `Nomad`; the board name itself when it is not known."""
+    return model_of_board(device.shell("getprop ro.product.board"))
+
+
+def model_of_board(board: str) -> str:
+    board = board.strip()
+    return BOARD_MODELS.get(board, board)
+
+
 def command_firmware(device: Device, args: argparse.Namespace):
     installed = args.installed or device.shell("getprop ro.build.display.id").strip()
-    model = device.shell("getprop ro.product.model").strip()
-    column = FIRMWARE_MODELS.get(model)
+    model = device_model(device)
+    column = FIRMWARE_COLUMNS.get(model)
     if not column:
         raise Failure(EXIT_FAILED, "device_error", f"no known firmware file for this model: {model}", next_step=FIRMWARE_PAGE)
     try:
@@ -1299,15 +1312,18 @@ def parse_listing(output: str) -> list[dict]:
 
 def command_status(device: Device, args: argparse.Namespace):
     output = device.shell(
-        "getprop ro.build.display.id; wm size; dumpsys battery | grep level; "
+        "getprop ro.build.display.id; getprop ro.product.board; wm size; dumpsys battery | grep level; "
         "dumpsys activity activities | grep -m1 mResumedActivity || true"
     )
-    first = output.splitlines()[0].strip() if output.strip() else ""
+    lines = output.splitlines()
+    first = lines[0].strip() if output.strip() else ""
+    board = lines[1] if len(lines) > 1 else ""
     size = re.search(r"Physical size: (\S+)", output)
     level = re.search(r"level: (\d+)", output)
     resumed = RESUMED.search(output)
     data = {
         "serial": device.serial,
+        "model": model_of_board(board),
         "firmware": first,
         "screen": size.group(1) if size else "",
         "battery": int(level.group(1)) if level else None,

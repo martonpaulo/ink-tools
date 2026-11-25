@@ -14,7 +14,7 @@ One row per item of the Skill Deck application-security standard. This project i
 | 8 | No mass assignment | No stored objects from outside | Not applicable | no data layer | None |
 | 9 | Parameterized queries | Yes: device shell commands | Met | paths and extras go through `shlex.quote` in `src/inkctl` | None |
 | 10 | Validate every input from outside | Yes: arguments and device output | Met | suffix, selector and PNG checks, tested in `tests/inkctl.test.sh` | None |
-| 11 | No sensitive screen without authentication | No screens | Not applicable | command line only; the Nomad's ADB authorizes no computer (`ro.adb.secure` 0, [#1](https://github.com/martonpaulo/ink-tools/issues/1)), so Wi-Fi ADB stays off unless a round needs it | None |
+| 11 | No sensitive screen without authentication | No screens | Not applicable | command line only; the Manta's ADB authorizes no computer (`ro.adb.secure` 0, [#1](https://github.com/martonpaulo/ink-tools/issues/1)), so Wi-Fi ADB stays off unless a round needs it | None |
 | 12 | Validate the session on the server | No server | Not applicable | local command only | None |
 | 13 | `HttpOnly`, `Secure` and `SameSite` cookies | No cookies | Not applicable | local command only | None |
 | 14 | Hashed passwords and limited sign-in attempts | No sign-in | Not applicable | local command only | None |

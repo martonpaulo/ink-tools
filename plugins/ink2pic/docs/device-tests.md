@@ -20,10 +20,10 @@ through the PluginHost simulator ([#79](https://github.com/martonpaulo/ink2pic/i
 - [Build 0.1.0 (15), 2026-11-07, firmware 3.31.45](#build-010-15-2026-11-07-firmware-33145)
 - [Build 0.1.0 (16), 2026-11-07, firmware 3.31.45](#build-010-16-2026-11-07-firmware-33145)
 - [Build 0.1.0 (18), 2026-11-15, firmware 3.31.45](#build-010-18-2026-11-15-firmware-33145)
-- [Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad](#word-lookup-020-beta-27-28-2026-11-25-nomad)
-- [Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Nomad](#word-lookup-020-beta-28-29-2026-11-25-nomad)
-- [Word Lookup 0.2.0 beta 30 (31), 2026-11-25, Nomad](#word-lookup-020-beta-30-31-2026-11-25-nomad)
-- [Image Editing 0.1.0 beta 13 (14), 2026-11-25, Nomad](#image-editing-010-beta-13-14-2026-11-25-nomad)
+- [Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Manta](#word-lookup-020-beta-27-28-2026-11-25-manta)
+- [Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Manta](#word-lookup-020-beta-28-29-2026-11-25-manta)
+- [Word Lookup 0.2.0 beta 30 (31), 2026-11-25, Manta](#word-lookup-020-beta-30-31-2026-11-25-manta)
+- [Image Editing 0.1.0 beta 13 (14), 2026-11-25, Manta](#image-editing-010-beta-13-14-2026-11-25-manta)
 
 ## Build 0.1.0 (1), 2026-11-06, firmware 3.31.45
 
@@ -189,7 +189,7 @@ Prerelease [`ink2pic-v0.1.0-dev.18`](https://github.com/martonpaulo/supernote-to
 | Insert definition, «maçã», with Portuguese | A definition below the word | Partial | Inserted in 3.1 s; the box is 200 px wide, the second sense «cama» is wrong, and a picture search ran too ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)) |
 | InkHub upload rules | The cover size and format | Pass | Upload Item takes up to 6 thumbnails in a 3:4 slot from the tablet's folders; no pixel size or file type stated ([#100](https://github.com/martonpaulo/supernote-tools/issues/100)) |
 
-## Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Nomad
+## Word Lookup 0.2.0 beta 27 (28), 2026-11-25, Manta
 
 The shared «Insert best picture» flow, now in Word Lookup (Ink2Pic is retired). Prerelease
 [`word-lookup-v0.2.0-beta.27`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.27),
@@ -214,7 +214,7 @@ Plugin Diagnostics and read the log over ADB; the fixture note was restored afte
   87 ms in a later one on the same JS instance; the first scoring of an instance pays the rest.
 - A Commons timeout (5 s) followed by the thin-page retry made the slowest search of the round.
 
-## Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Nomad
+## Word Lookup 0.2.0 beta 28 (29), 2026-11-25, Manta
 
 The Wikidata supplement now waits at most 1.5 s after the main sources (owner D67 C). Prerelease
 [`word-lookup-v0.2.0-beta.28`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.28),
@@ -239,7 +239,7 @@ searches each word again.
 - Ranking 18 results for «appe» took 1077 ms in the second search of a fresh JS instance; the first,
   17 results for «Maea», took 136 ms. The slow rank follows the titles, not only a cold instance.
 
-## Word Lookup 0.2.0 beta 30 (31), 2026-11-25, Nomad
+## Word Lookup 0.2.0 beta 30 (31), 2026-11-25, Manta
 
 The ranking no longer builds its style patterns on every query read, nor parses the whole OpenMoji
 index for «Insert Image», which searches without OpenMoji (`c5288e8`); the contour hold of `3ed8819`
@@ -267,7 +267,7 @@ fresh JS instance, after the install.
 - «maçã» inserted the same picture as on beta 27 and 28 (`commons:136995162`).
 - Recognition still takes 0.8 to 1.5 s before `time total` starts: 1458, 930, 792 and 846 ms.
 
-## Image Editing 0.1.0 beta 13 (14), 2026-11-25, Nomad
+## Image Editing 0.1.0 beta 13 (14), 2026-11-25, Manta
 
 The toolbar button and the plugin icon ([#248](https://github.com/martonpaulo/ink-tools/issues/248)). Prerelease
 [`image-editing-v0.1.0-beta.13`](https://github.com/martonpaulo/ink-tools/releases/tag/image-editing-v0.1.0-beta.13),

@@ -156,7 +156,7 @@ Every tool reports what it needs after a check and what failed after a failure i
 
 ## The Back key
 
-PluginHost leaves a plugin's full view open on Back, and on the Nomad's PluginHost the key never
+PluginHost leaves a plugin's full view open on Back, and on the Manta's PluginHost the key never
 reaches the view: it hosts plugin views outside an Activity, so React Native never emits
 `hardwareBackPress` ([`docs/supernote.md` › Plugins](../../docs/supernote.md#plugins),
 [#204](https://github.com/martonpaulo/ink-tools/issues/204)). Every full view therefore keeps a visible Close, the title bar's ×. Each view still
