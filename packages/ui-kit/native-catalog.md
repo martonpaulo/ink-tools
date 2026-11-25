@@ -21,6 +21,7 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 - [Icons](#icons)
 - [Small filled button](#small-filled-button)
 - [Selection border](#selection-border)
+- [Component table](#component-table)
 - [Not measured yet](#not-measured-yet)
 
 ## Method
@@ -185,10 +186,43 @@ Ink Tools adopts the sidebar's, the rounded one the owner named (2026-11-25), wi
 inset. Applying it to every component is
 [#287](https://github.com/martonpaulo/ink-tools/issues/287).
 
+## Component table
+
+From the sweep of 2026-11-25: a `screencap` and an `inkctl snapshot --all` of each screen (a plain
+`snapshot` in a note, where scrolling could draw), element ids and bounds in screen pixels. Every
+native element met maps to one Ink Tools component, or to «new».
+
+| Component | Native instances (screen, element id, size) | Measured | Ink Tools |
+| :--- | :--- | :--- | :--- |
+| Title bar, one level | Feedback (`titleBar` 1920 x 133, `ivBack` 31 x 58); InkHub (`titleContainer`, `ivBack`); Mail (`containerTitle`); a plugin's page (`plugin_detail_title`) | 133 px band; the title 63 px line box (`sp_px_40`); ‹ 31 x 58 px | `TitleBar` |
+| Title bar, two levels | Settings (`main_activity_ic_close` 140 x 133, the pane 551 px) | × in a 140 px slot; pane title at 142 px | `TitleBar` with `paneTitle` |
+| Title bar, white with icon buttons | Calendar (`top_bar_view` 1920 x 133, icons 102 x 102); Mail (`btnCompose`, `email_search`, `email_sync` 109 x 133); Digest | white band, black icons, 2 px line under it (`viewLineTop`, `viewDividerTitle` 1920 x 2) | new |
+| Left navigation list | Settings (`ll_*` 551 x 147, `indicator_*` 9 x 147); To-Do (`schedule_group_*` 503 x 132, icon 56); Digest (`knowledge_base_list` 503, items with `item_divider` 503 x 1); InkHub (`navItemView` 503 x 128, `viewDivider` 391 x 2); Mail (589, items 130) | panes 503, 551 or 589 px; items 128 to 147 px; icon 56 px; the open item: Settings an ink bar 9 px, the apps a bordered box | `NavList` (Settings variant); the apps' bordered box is the selection border |
+| List row | every Settings page (162 px); Apps › Plugins (`tv_name`, 176 px with an icon); Add Keyboard, Add Language (two lines, 162 px) | [List row](#list-row) | `ListRow` |
+| Value row | Language & Region («English ›»), Date & Time | value `sp_px_30`, 26 px before › | `ListRow` with a trailing value (Android: `Ink.valueRow`) |
+| Section caption | Plugins (`tv_hub_section_title`, 47 px line box); Handwriting Recognition Language, Keyboard (54 px) | [Section caption](#section-caption) | `SectionCaption` in `RowGroup` |
+| Lines | [Lines](#lines); the sidebar (`separator_line` 62 x 1, centred in 116); Digest (`item_divider` 503 x 1) | solid 2 px, light dotted 1 px, nav dotted 2 px, short centred 62 x 1 px | `RowGroup`, `NavList`; the short divider is new |
+| Switch | Wi-Fi, Security & Privacy, My Device (Bluetooth, Pogo Pin), a plugin's page | [Switch](#switch) | `Switch`, `SwitchRow`, `SwitchGroup` |
+| Radio button | Handwriting Recognition Language | [Radio button](#radio-button) | `Radio`, `ChoiceList` |
+| Add and remove | Add Keyboard (⊕ per row), Keyboard (⊖), Add Language (download arrow), Handwriting Recognition Language (cloud, trash) | icons 52 to 60 px | `IconButton` (`remove`, `delete`, `download`); ⊕ is new |
+| Round check on the leading side | To-Do (an open task's ring) | ring at the row's leading edge | `CheckMark` covers the ✓; the ring is new |
+| Chevron row | Language & Region, Keyboard («Add Keyboard ›»), My Device, a plugin's page («Permissions ›») | [Chevron](#chevron) | `ListRow` with `Chevron` (Android: `Ink.chevronRow`) |
+| Full-width outlined button | a plugin's page (`plugin_detail_delete` 1255 x 140, «Uninstall») | 140 px tall, the row's width, outline | `Button` |
+| Small filled button | Wi-Fi («Scan» 193 x 79) | [Small filled button](#small-filled-button) | `Button` with `primary` |
+| Confirm dialog | a note's Delete This Page (`parentPanel` 1382 x 445; title «Prompt»; `dialog_tips_img` 75 x 75; `dialog_tips_message`; `dialog_cancel` and `dialog_fix` 198 x 84) | the cancel outlined, the action filled black, both 198 x 84 at the trailing edge | `showRattaDialog` (the host draws it) |
+| Menu popup | a note's sidebar › Page (`tv_title` «Page», items `tv_button` 448 x 139) | bordered box, bold title with a solid line under it, items 141 px, light lines in a group, solid between groups | new |
+| Tool popup | a document's pen menu («Pens»: sizes, a ⊖ slider ⊕, colour swatches, «Restore Defaults») | bordered box with a title, the chosen size ringed | new |
+| Sidebar button | a note (`button_container` 116 x 141, icon 63, `button_tag`); a document (119 x 116) | icon 63 px; the open tool in the selection border | none: plugins register their icon, the host draws it |
+| Selection border | the sidebar's open tool; Manage Pages' current page; the apps' open nav item (To-Do, Digest, Mail) | [Selection border](#selection-border) | tokens only; [#287](https://github.com/martonpaulo/ink-tools/issues/287) |
+| Pager | Add Language (first, previous, «1 / 5», next, last); Mail; Manage Pages; a document's page bar (`side_pageBar` 1920 x 116) | the current page underlined | `Pager` |
+| Search field | Add Language («Enter language name» with a magnifier); To-Do («Enter task» with a calendar icon and a grey «Add») | underline only, no box | `SearchField` |
+| Empty state | Digest («No Digests Yet», a large icon over a bold line) | icon about 90 px, bold `sp_px_30` | new |
+| Badge | a plugin's «Official» (Apps › Plugins); InkHub's like and download counts | small rounded outline | new |
+| Calendar grid | Calendar (month, `big_date` with ‹ ›, today ringed in a square) | day cells about 165 x 175 px | none needed yet |
+
 ## Not measured yet
 
-Read only on the screens above; the rest of the native surface is still to read
-([#272](https://github.com/martonpaulo/ink-tools/issues/272)): the short centred divider of the
-note's sidebar, the search field, the pager's sizes, the system dialogs `showRattaDialog` and
-`showErrorTipDialog`, confirm and rename dialogs, toasts, the keyboard, the lasso toolbar, the pen
-and eraser menus, Files, To-Do, Calendar, Digest, Mail, InkHub and the Home screen.
+Still to read ([#272](https://github.com/martonpaulo/ink-tools/issues/272)): the rename dialog and
+Files' «⋯» menu, toasts, the keyboard and its open state, the lasso toolbar and its list, the
+eraser menu, the Home screen, and each new component's exact pixel sizes, which the table above
+gives only as element bounds.
