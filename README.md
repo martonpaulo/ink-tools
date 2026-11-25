@@ -4,12 +4,14 @@
 
 # Ink Tools
 
-Unofficial tools for Supernote e-ink tablets: device plugins, a tablet app, a Mac CLI and a Mac notebook editor.
+Unofficial tools for Supernote e-ink tablets: device plugins, a tablet app, a Mac control tool and a Mac notebook editor.
 
 </div>
 
 A monorepo of independent subprojects. Each keeps its own `AGENTS.md`, versioning and releases;
 plugins and the tablet apps use SemVer with a numbered beta.
+
+Status: <sub><sup>🟢</sup></sub>&nbsp;Working&emsp;<sub><sup>🟡</sup></sub>&nbsp;Beta&emsp;<sub><sup>🔵</sup></sub>&nbsp;In progress&emsp;<sub><sup>⚪</sup></sub>&nbsp;Planned&emsp;<sub><sup>⚫</sup></sub>&nbsp;Internal
 
 ## Tools
 
@@ -26,15 +28,14 @@ For people who use the tablet.
   <tr><td align="center"><br><p align="center"><img src="design/icons/apps/ink-notebook-editor.png" width="48" height="48" alt=""></p><sub><sup>🔵</sup></sub>&nbsp;<b>Ink Notebook Editor</b><br><a href="apps/ink-notebook-editor/">Mac app</a><br><br></td><td><ul><li><b>Open a note</b>: read a <code>.note</code> notebook on the Mac and page through it.</li><li><b>Open from Tablet</b>: copy a note from the tablet over the cable through <code>inkctl</code> and open the copy.</li><li><b>Edit</b>: edit a note without breaking the format (planned).</li></ul></td></tr>
 </table>
 
-<sub><sup>🟢</sup></sub>&nbsp;Working&emsp;<sub><sup>🟡</sup></sub>&nbsp;Beta&emsp;<sub><sup>🔵</sup></sub>&nbsp;In progress&emsp;<sub><sup>⚪</sup></sub>&nbsp;Planned&emsp;<sub><sup>⚫</sup></sub>&nbsp;Internal
 
 ## Developer tools
 
 <table>
   <tr><th>Name</th><th>What it does</th></tr>
-  <tr><td><b>Ink Tools CLI</b><br><a href="cli/inkctl/">CLI</a></td><td><ul><li><b>Control</b>: <code>inkctl</code> controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root.</li><li><b>Plugins</b>: install, enable, permit and uninstall plugins with no screen.</li><li><b>Notes and ink</b>: open notes, write synthetic ink, lasso and read the screen for tests.</li><li><b>Firmware watch</b>: on connect, probe every Supernote internal and report what a firmware update broke (planned).</li></ul></td></tr>
-  <tr><td><b>Ink Tools Helper</b><br>app</td><td><ul><li><b>Plugin settings</b>: lets <code>inkctl</code> install, enable and permit plugins through PluginHost's settings service.</li><li><b>Firmware watch</b>: at boot after a firmware change, probe every Supernote internal and report what broke (planned).</li></ul></td></tr>
-  <tr><td><b>Ink Tools Probe</b><br>plugin</td><td><ul><li><b>Run Command</b>: the sidebar button <code>inkctl</code> presses to write ink and lasso with no pen.</li><li><b>Probes</b>: quick on-device experiments against the tablet's providers. Never shipped.</li></ul></td></tr>
+  <tr><td align="center"><br><sub><sup>🟢</sup></sub>&nbsp;<b>Ink Tools Control</b><br><a href="cli/inkctl/">CLI</a><br><br></td><td><ul><li><b>Control</b>: <code>inkctl</code> controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root.</li><li><b>Plugins</b>: install, enable, permit and uninstall plugins with no screen.</li><li><b>Notes and ink</b>: open notes, write synthetic ink, lasso and read the screen for tests.</li><li><b>Firmware watch</b>: on connect, probe every Supernote internal and report what a firmware update broke (planned).</li></ul></td></tr>
+  <tr><td align="center"><br><p align="center"><img src="design/icons/readme/inktools-bridge.png" width="48" height="48" alt=""></p><sub><sup>⚫</sup></sub>&nbsp;<b>Ink Tools Helper</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=inktools-bridge&amp;expanded=true">app</a><br><br></td><td><ul><li><b>Plugin settings</b>: lets <code>inkctl</code> install, enable and permit plugins through PluginHost's settings service.</li><li><b>Firmware watch</b>: at boot after a firmware change, probe every Supernote internal and report what broke (planned).</li></ul></td></tr>
+  <tr><td align="center"><br><p align="center"><img src="design/icons/readme/plugin-diagnostics.png" width="48" height="48" alt=""></p><sub><sup>⚫</sup></sub>&nbsp;<b>Ink Tools Probe</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=plugin-diagnostics&amp;expanded=true">plugin</a><br><br></td><td><ul><li><b>Run Command</b>: the sidebar button <code>inkctl</code> presses to write ink and lasso with no pen.</li><li><b>Probes</b>: quick on-device experiments against the tablet's providers. Never shipped.</li></ul></td></tr>
 </table>
 
 ## Shared code
