@@ -40,10 +40,10 @@ run in the packages gate, type-checked with Node's types, the last with the test
 `picture-search/testing/profile.ts`
 ([#142](https://github.com/martonpaulo/ink-tools/issues/142), owner D63 A); the measures run there too, and so do «Insert best picture», the
 device search, the stored thumbnails, the picks rule, the settings store and the Java and
-TypeScript twins, with the test copy of `picture-search/testing/insert.ts` and the test codec of
-`picture-search/testing/settings.ts`. The insert itself, whose tests drive Ink2Pic's library, and
-the JVM tests still run in the Ink2Pic gate; Ink2Pic's tests keep only its own bindings (its
-settings codec, its grid, its picks file, its PluginHost simulator), and the other plugin gates
+TypeScript twins and the insert, with the test copy and the in-memory picture store of
+`picture-search/testing/insert.ts` and the test codec of `picture-search/testing/settings.ts`. The
+JVM tests still run in the Ink2Pic gate; Ink2Pic's tests keep only its own bindings (its settings
+codec, its grid, its picks file, its library, its PluginHost simulator), and the other plugin gates
 that use the package type-check it and test their own bindings. Its insert tier
 (`/insert`) holds «Insert best picture»: the cached search, the stored thumbnails, the measured
 order, the insert and the no-view press guard; each plugin binds it to its own settings, copy and

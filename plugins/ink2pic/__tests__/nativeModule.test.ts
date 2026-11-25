@@ -60,6 +60,10 @@ describe('the native file module (#142)', () => {
       "'settings live in the private folder, out of MyStyle (#22)'",
       "'never writes the defaults over a file it could not read (#99)'",
       "'reads the same clean border and measure width'",
+      "'insertPicture (#12)'",
+      "'the early download of Insert best picture (#88)'",
+      "'the inserted picture is left lassoed (#73)'",
+      "'the insert options from Settings (#70)'",
     ];
     const dir = path.join(ROOT, '__tests__');
     const copies = fs
