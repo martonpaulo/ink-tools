@@ -34,7 +34,7 @@ export function StylesGrid({
     : [];
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
+      <Text accessibilityRole="header" style={shared.title}>
         {copy['edit.styles']}
       </Text>
       {ready ? (

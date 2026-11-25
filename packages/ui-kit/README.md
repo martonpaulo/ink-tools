@@ -32,7 +32,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   `RowGroup` with one `ListRow` per value and its `Radio`), and a page opened from a row is a
   `ListRow` with a `Chevron`. Rows that outgrow the screen scroll under the title bar.
 - Three levels, as the native Settings group them (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275)): the
-  caption (bold grey, nothing under it), its rows, and a thin line (`separator`, thinner than a
+  caption (grey, regular, nothing under it), its rows, and a thin line (`separator`, thinner than a
   control's `border`, in whole device pixels) only between two rows of one group, never under the
   caption or the last row; the group's `note` follows right under its last row, never between a
   caption and its rows. `RowGroup` draws all of it and owns `groupGap` above it, so its container
@@ -47,10 +47,18 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 
 ## Type
 
-- Two sizes only: the title (`fontLarge`) and the body (`fontBody`) for names, values and
-  buttons; nothing under `minFont`.
-- A section heading is body size, bold, in the context grey (`shared.heading`); a hint or a
-  current value is body size in the context grey (`shared.hint`). No italic, no handwritten font.
+- The native Settings' sizes, all regular weight, measured from `com.ratta.settings`
+  ([#275](https://github.com/martonpaulo/ink-tools/issues/275)): the title bar's title (`fontTitle`),
+  the body (`fontBody`) for row titles, captions, values and buttons, and a row's subtitle
+  (`fontSubtitle`); a screen's own title, where it has no title bar yet, takes `fontTitle`
+  (`shared.title`); `fontLarge` only for the ×, ‹ and › glyphs; nothing under `minFont`. The
+  values are the Manta's (`sw1024dp`); on a narrower screen the native Settings use smaller ones,
+  which Ink Tools does not follow, since its row would fall under `minFont`.
+- A section heading is body size, regular weight, in the context grey (`shared.heading`), as the
+  native caption; a hint or a current value is body size in the context grey (`shared.hint`). No
+  italic, no handwritten font.
+- The title bar centres its title on its full width, as the native one does: the × and ‹ never
+  push it aside.
 
 ## Grey as colour
 

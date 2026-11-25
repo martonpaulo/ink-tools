@@ -5,7 +5,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
-import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -77,15 +76,16 @@ final class Ink {
     return view;
   }
 
-  /** The black band: × to close at the leading edge, the title centred (ui-kit `TitleBar`). */
-  static LinearLayout titleBar(Context context, String title, String closeName, Runnable onClose) {
-    LinearLayout band = new LinearLayout(context);
-    band.setOrientation(LinearLayout.HORIZONTAL);
-    band.setGravity(Gravity.CENTER_VERTICAL);
+  /**
+   * The black band (ui-kit `TitleBar`): × to close at the leading edge and the title centred on the
+   * band's full width, as the native title bar centres it in its parent, so the × never pushes it;
+   * the title in the native size and regular weight (owner, #275).
+   */
+  static FrameLayout titleBar(Context context, String title, String closeName, Runnable onClose) {
+    FrameLayout band = new FrameLayout(context);
     band.setBackgroundColor(INK);
     band.setMinimumHeight(px(context, Tokens.TITLE_BAR_HEIGHT_MM));
     int space = space(context);
-    band.setPadding(space, 0, space, 0);
     TextView close = new TextView(context);
     close.setText(CLOSE_GLYPH);
     close.setTextColor(PAPER);
@@ -96,20 +96,25 @@ final class Ink {
     close.setContentDescription(closeName);
     role(close, BUTTON_ROLE, null);
     close.setOnClickListener(view -> onClose.run());
-    band.addView(close, new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    FrameLayout.LayoutParams start = new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL);
+    start.setMarginStart(space);
+    band.addView(close, start);
     TextView name = new TextView(context);
     name.setText(title);
     name.setTextColor(PAPER);
-    name.setTextSize(TypedValue.COMPLEX_UNIT_SP, bodySp(context));
-    name.setTypeface(Typeface.DEFAULT_BOLD);
+    name.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp(context, Tokens.TITLE_FONT_MM));
     name.setGravity(Gravity.CENTER);
-    name.setSingleLine(true);
-    name.setEllipsize(TextUtils.TruncateAt.END);
+    // Two lines at most, never cut short (interface rule 9). Over the × and after it, as ui-kit
+    // reads them; not clickable, so a tap reaches the × under it.
+    name.setMaxLines(2);
+    name.setClickable(false);
     name.setAccessibilityHeading(true);
-    LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-    fill.setMarginStart(space);
-    band.addView(name, fill);
+    // Inset by the same width on both sides: centred on the band, never under the ×.
+    int edge = space + target(context);
+    name.setPadding(edge, 0, edge, 0);
+    band.addView(name, new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
     return band;
   }
 
@@ -203,7 +208,7 @@ final class Ink {
 
   /**
    * Rows that belong together, as the native Settings group them (owner, #275; ui-kit `RowGroup`):
-   * the group gap above, the bold grey caption with no gap under it, then its rows, with a thin ink
+   * the group gap above, the grey caption with no gap under it, then its rows, with a thin ink
    * line only between two rows, none under the caption and none under the last row, then the note
    * that explains the group, grey, right under its last row (null for none).
    */
@@ -211,8 +216,8 @@ final class Ink {
     LinearLayout group = new LinearLayout(context);
     group.setOrientation(LinearLayout.VERTICAL);
     group.setPadding(0, px(context, Tokens.SPACE_MM * Tokens.GROUP_GAP_SPACES_RATIO), 0, 0);
+    // The native caption: grey, body size, regular weight (#275).
     TextView head = text(context, caption, true);
-    head.setTypeface(Typeface.DEFAULT_BOLD);
     head.setAccessibilityHeading(true);
     group.addView(head);
     for (int index = 0; index < rows.size(); index++) {

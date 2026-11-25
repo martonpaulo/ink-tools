@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import {StyleSheet, Text} from 'react-native';
-import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import renderer, {act, ReactTestInstance, ReactTestRenderer} from 'react-test-renderer';
 import {
   CheckMark,
   ChoiceList,
@@ -239,7 +239,34 @@ describe('the native controls (#273)', () => {
     rows.forEach(row => expect(StyleSheet.flatten(row.props.style).borderBottomWidth).toBeUndefined());
   });
 
-  it('sets a group apart: the group gap above it, a bold caption, its note right under the last row (#275)', () => {
+  it('centres the title on the full band, whatever sits at its edges, in the native size and weight (#275)', () => {
+    const closeOnly = render(<TitleBar title="Keyboard" onClose={noop} />);
+    const both = render(<TitleBar title="Keyboard" onClose={noop} onBack={noop} />);
+    const titleStyle = (tree: ReactTestRenderer) =>
+      StyleSheet.flatten(tree.root.find(n => typeof n.type === 'string' && n.props.accessibilityRole === 'header').props.style);
+    expect(titleStyle(closeOnly)).toEqual({fontSize: metrics.fontTitle, color: metrics.paper, flex: 1, textAlign: 'center'});
+    // The band's children: the leading buttons, the title, and an empty slot as wide as the buttons.
+    const slots = (tree: ReactTestRenderer) => {
+      const band = tree.root.findAll(n => typeof n.type === 'string')[0];
+      const children = band.children.filter((n): n is ReactTestInstance => typeof n !== 'string');
+      return [children[0], children[children.length - 1]].map(n => StyleSheet.flatten(n.props.style).width);
+    };
+    expect(slots(closeOnly)).toEqual([metrics.touchTarget, metrics.touchTarget]);
+    const wide = metrics.touchTarget * 2 + metrics.controlGap;
+    expect(slots(both)).toEqual([wide, wide]);
+    const header = closeOnly.root.find(n => typeof n.type === 'string' && n.props.accessibilityRole === 'header');
+    expect(header.props.numberOfLines).toBe(2);
+  });
+
+  it('takes the native sizes: the title above the body, the subtitle under it, none under minFont (#275)', () => {
+    expect(metrics.fontTitle).toBeGreaterThan(metrics.fontBody);
+    expect(metrics.fontSubtitle).toBeLessThan(metrics.fontBody);
+    expect(metrics.fontSubtitle).toBeGreaterThanOrEqual(metrics.minFont);
+    const subtitle = render(<ListRow title="Keyboard" subtitle="English" />).root.findAllByType(Text)[1];
+    expect(StyleSheet.flatten(subtitle.props.style).fontSize).toBe(metrics.fontSubtitle);
+  });
+
+  it('sets a group apart: the group gap above it, the caption, its note right under the last row (#275)', () => {
     const tree = render(
       <RowGroup caption="Smallest shape" note="A smaller figure stays handwriting.">
         <ListRow title="8 mm" />
@@ -247,7 +274,7 @@ describe('the native controls (#273)', () => {
     );
     expect(texts(tree)).toEqual(['Smallest shape', '8 mm', 'A smaller figure stays handwriting.']);
     const [caption, , note] = tree.root.findAllByType(Text).map(n => StyleSheet.flatten(n.props.style));
-    expect(caption).toEqual({fontSize: metrics.fontBody, fontWeight: 'bold', color: metrics.context});
+    expect(caption).toEqual({fontSize: metrics.fontBody, color: metrics.context});
     expect(note).toEqual({fontSize: metrics.fontBody, color: metrics.context});
     const group = tree.root.findAll(n => typeof n.type === 'string')[0];
     expect(StyleSheet.flatten(group.props.style)).toEqual({paddingTop: metrics.groupGap});

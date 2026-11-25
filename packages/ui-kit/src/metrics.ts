@@ -52,6 +52,10 @@ export const metrics = {
 
   minFont: mm(MM.minFont.value),
   fontBody: bodyFont,
+  /** The title bar's title, as the native one (#275). */
+  fontTitle: mm(MM.titleFont.value),
+  /** A row's subtitle, as the native one (#275). */
+  fontSubtitle: mm(MM.subtitleFont.value),
   fontLarge: bodyFont * RATIO.largeFont.value,
   statusLineHeight: Math.round(bodyFont * RATIO.lineHeight.value),
 

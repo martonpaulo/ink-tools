@@ -56,9 +56,12 @@ export const shared = StyleSheet.create({
     minHeight: metrics.statusLineHeight * STATUS_LINES,
   },
   text: {fontSize: metrics.fontBody, color: metrics.ink},
-  /** A section heading: body size, bold, in the context grey (README › Type, #50). */
-  heading: {fontSize: metrics.fontBody, fontWeight: 'bold', color: metrics.context},
+  /** A section heading, as the native caption: body size, regular weight, in the context grey (README › Type, #275). */
+  heading: {fontSize: metrics.fontBody, color: metrics.context},
   /** A hint or a current value under a row's name: body size in the context grey (#50). */
   hint: {fontSize: metrics.fontBody, color: metrics.context},
+  /** A screen's own title, where it has no title bar yet: the native title's size (#275). */
+  title: {fontSize: metrics.fontTitle, color: metrics.ink},
+  /** The ×, ‹ and › glyphs. */
   textLarge: {fontSize: metrics.fontLarge, color: metrics.ink},
 });

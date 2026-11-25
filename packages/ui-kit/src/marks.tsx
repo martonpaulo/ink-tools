@@ -25,8 +25,9 @@ export function Chevron(): React.JSX.Element {
 }
 
 /**
- * A caption such as «Installed Languages»: bold grey, with no gap under it, so it reads as the head
- * of the rows it names and apart from a grey hint; `RowGroup` draws it and the gap above (#275).
+ * A caption such as «Installed Languages»: grey, in the native caption's size and regular weight,
+ * with no gap under it, so it reads as the head of the rows it names; `RowGroup` draws it and the
+ * gap above (#275).
  */
 export function SectionCaption({children}: {children: string}): React.JSX.Element {
   return (

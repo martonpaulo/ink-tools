@@ -24,13 +24,14 @@ Two surfaces ship in one build:
   with its icon `res/drawable/ic_launcher.xml`): the sidebar lists it by itself and opens it
   ([#246](https://github.com/martonpaulo/ink-tools/issues/246)). It is drawn with the Supernote's
   native controls, as the plugins' ui-kit draws them ([#275](https://github.com/martonpaulo/ink-tools/issues/275)):
-  the black title bar with × to close at the leading edge (Back closes it too), the active
+  the black title bar with × to close at the leading edge (Back closes it too) and the title
+  centred on its full width, the native type sizes in regular weight, the active
   language as a row with the primary button «Switch Language» at its trailing edge, the floating
   button's three choices as radio rows and «Reset Button Position», a switch row («ON»/«OFF») for
   each installed language in the cycle, each missing permission with the button to its system
   screen and the command that grants it, and the command that turns on writing detection when it
   is off. An error shows in bold beside the control whose action failed. Each section is one group,
-  as ui-kit's `RowGroup` draws it: the group gap, the bold grey caption, its rows with a thin line
+  as ui-kit's `RowGroup` draws it: the group gap, the grey caption, its rows with a thin line
   only between two of them, and its note right under the last row; permissions and errors follow
   under the group. A language shows only its
   name, never its code such as `pt_BR`, which stays in the log and the preferences (owner,
@@ -124,7 +125,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.6` gives the `versionName` `0.1.0 beta 6` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.7` gives the `versionName` `0.1.0 beta 7` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.

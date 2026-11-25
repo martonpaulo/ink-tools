@@ -81,7 +81,7 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
 
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
+      <Text accessibilityRole="header" style={shared.title}>
         {copy['choose.title'](choice.word)}
       </Text>
       <View style={shared.row}>

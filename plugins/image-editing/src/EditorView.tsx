@@ -286,7 +286,7 @@ function EditorScreen({
 }): React.JSX.Element {
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.textLarge}>
+      <Text accessibilityRole="header" style={shared.title}>
         {copy.title}
       </Text>
       <Text

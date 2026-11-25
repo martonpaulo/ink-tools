@@ -23,7 +23,7 @@ export function ListRow({title, subtitle, leading, trailing, onPress}: ListRowPr
       {leading}
       <View style={styles.texts}>
         <Text style={shared.text}>{title}</Text>
-        {subtitle !== undefined && <Text style={shared.hint}>{subtitle}</Text>}
+        {subtitle !== undefined && <Text style={[shared.hint, styles.subtitle]}>{subtitle}</Text>}
       </View>
       {trailing}
     </>
@@ -52,4 +52,6 @@ const styles = StyleSheet.create({
   },
   target: {minWidth: metrics.touchTarget},
   texts: {flex: 1},
+  /** The native subtitle's size (#275). */
+  subtitle: {fontSize: metrics.fontSubtitle},
 });
