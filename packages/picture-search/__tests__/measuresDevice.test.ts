@@ -1,12 +1,13 @@
 import {NativeModules} from 'react-native';
 import {MODULE_CODE} from '@ink-tools/sn-adapter/official';
-import {deviceAnalyzer} from '../src/profile';
+import '../testing/profile';
+import {deviceAnalyzer} from '../src/storage';
 
 const native = {measureThumb: jest.fn(), convertThumb: jest.fn()};
 
 beforeEach(() => {
   jest.resetAllMocks();
-  NativeModules.Ink2PicImage = native;
+  NativeModules.TestImage = native;
 });
 
 describe('deviceAnalyzer (#66)', () => {

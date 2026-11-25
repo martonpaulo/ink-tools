@@ -2,7 +2,7 @@ import {
   attempt,
   fromResponse,
   THROWN_CODE,
-} from '@ink-tools/sn-adapter/official';
+} from '../src/official';
 
 describe('fromResponse', () => {
   it('maps success to its result', () => {

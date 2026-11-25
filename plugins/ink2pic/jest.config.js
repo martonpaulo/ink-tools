@@ -14,8 +14,10 @@ module.exports = {
     ...uiKit.jest.moduleNameMapper,
     ...inkCore.jestModuleNameMapper,
     ...snAdapter.jestModuleNameMapper,
-    // picture-search's tests run here, beside the mocks they share (#125).
+    // picture-search's tests that drive Ink2Pic's own flow run here (#125).
     ...pictureSearch.jestModuleNameMapper,
+    // The SDK mock lives with the official tier, whose own tests use it in the packages gate (#142).
+    '^sn-plugin-lib$': snAdapter.jestSdkMock,
   },
   // A test fails on a console.error it did not expect (#112).
   setupFilesAfterEnv: ['<rootDir>/__tests__/host/consoleSetup.ts'],

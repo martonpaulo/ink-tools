@@ -3,8 +3,9 @@ import {
   measureFirstPages,
   MeasureDeps,
   measureThumb,
-} from '../src/flow/measure';
-import {logLines, startLog} from '../src/profile';
+} from '../src/insert';
+import '../testing/profile';
+import {logLines, startLog} from '../src/log/memory';
 import {ok, fail, MODULE_CODE} from '@ink-tools/sn-adapter/official';
 import {
   baseScores,
@@ -22,15 +23,16 @@ import {
   pixelScorer,
   Prepared,
   reorderByMeasures,
-} from '@ink-tools/picture-search/measures';
-import * as rank from '@ink-tools/picture-search/rank';
-import {einkScore} from '@ink-tools/picture-search/rank';
-import {cachedSearch} from '@ink-tools/picture-search/cache';
-import {readIntent} from '@ink-tools/picture-search/query';
+  splitPrepared,
+} from '../src/measures';
+import * as rank from '../src/rank';
+import {einkScore} from '../src/rank';
+import {cachedSearch} from '../src/cache';
+import {readIntent} from '../src/query';
 import type {
   SearchResult,
   SourceName,
-} from '@ink-tools/picture-search/types';
+} from '../src/types';
 
 /** A white page; each picture below changes what it needs. */
 const paper: Measures = {
@@ -605,11 +607,15 @@ describe('measureFirstPages (#66)', () => {
     ]);
     const text = logLines().join('\n');
     expect(text).toMatch(/pixels line: outline lineArt \d\.\d\d in 2 ms/);
-    expect(text).toContain('pixels dark: solid');
-    expect(text).toContain('pixels web: not on the device, not measured');
-    expect(text).toContain('pixels bad: NOT_IMAGE: cannot decode');
-    expect(text).toContain('pixels: 3 of 5 measured');
-    expect(text).toContain('contour dark: 7 ms, now outline');
+    for (const line of [
+      'pixels dark: solid',
+      'pixels web: not on the device, not measured',
+      'pixels bad: NOT_IMAGE: cannot decode',
+      'pixels: 3 of 5 measured',
+      'contour dark: 7 ms, now outline',
+    ]) {
+      expect(text).toContain(line);
+    }
   });
 
   it('shows and inserts dark clip art as its contour drawing', async () => {
@@ -984,14 +990,7 @@ describe('leaderDecided (#19)', () => {
     results: SearchResult[],
     prepared: ReadonlyMap<string, Prepared>,
   ) => {
-    const measures = new Map<string, Measures>();
-    const converted = new Set<string>();
-    for (const [id, {measures: m, look}] of prepared) {
-      measures.set(id, m);
-      if (look === 'contour') {
-        converted.add(id);
-      }
-    }
+    const {measures, converted} = splitPrepared(prepared);
     return reorderByMeasures(results, measures, 'soup', converted)[0]?.id;
   };
 
@@ -1057,14 +1056,7 @@ describe('leaderDecided (#19)', () => {
         results: SearchResult[],
         prepared: ReadonlyMap<string, Prepared>,
       ) => {
-        const measures = new Map<string, Measures>();
-        const converted = new Set<string>();
-        for (const [id, {measures: m, look: shown}] of prepared) {
-          measures.set(id, m);
-          if (shown === 'contour') {
-            converted.add(id);
-          }
-        }
+        const {measures, converted} = splitPrepared(prepared);
         const ordered = reorderByMeasures(results, measures, 'soup', converted, photos);
         return keepMode(ordered, measures, mode)[0]?.id;
       };

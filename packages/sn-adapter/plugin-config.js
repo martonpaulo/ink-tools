@@ -3,8 +3,9 @@
  * `ink-core/plugin-config.js` does: Metro bundles the package's TypeScript from this folder into the
  * .snplg, and its `sn-plugin-lib` import resolves from the plugin's node_modules (ui-kit's
  * `nodeModulesPaths`), so the plugin keeps one copy. The plugin's tsconfig.json maps the same names
- * by `paths`. The internals tier's tests run in the packages gate; the official tier is tested by
- * the plugins that call it, which have `sn-plugin-lib`. The Java in `native/` (the dry insert's
+ * by `paths`. Both tiers' own tests run in the packages gate, the official tier's against the SDK
+ * mock and type stand-in in `testing/` (#142); the plugins that call it type-check it against the
+ * real `sn-plugin-lib`. The Java in `native/` (the dry insert's
  * revert by row id, #213, and whether an insert wrote a row, #217) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
  * its JVM tests in `native-tests/` run in the Account Sync gate.
  */
@@ -31,6 +32,9 @@ exports.metro = part => ({
     extraNodeModules: {...(part.resolver || {}).extraNodeModules, [NAME]: __dirname},
   },
 });
+
+/** The Jest mock of `sn-plugin-lib`, which the packages gate maps too (#142). */
+exports.jestSdkMock = path.join(__dirname, 'testing', 'sn-plugin-lib.ts');
 
 /** The Jest moduleNameMapper part: both entries, to their source. */
 exports.jestModuleNameMapper = {

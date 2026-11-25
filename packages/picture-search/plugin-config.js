@@ -4,8 +4,9 @@
  * the .snplg, and Jest maps the name, and a deep path such as `/rank`, to its source. The plugin's
  * tsconfig.json maps the same names by `paths`. The Java in `native/` (the pixel measures and the
  * native file module, #142) is compiled by the plugin's `scripts/native-build.cjs`, whose `--test`
- * runs the JVM tests of `native-tests/`; the search core's tests run in the Ink2Pic gate, where the
- * mocks they share live.
+ * runs the JVM tests of `native-tests/`. The search core's tests, the measures and the device tier's
+ * image module, file store and memory log run in the packages gate (#142); the insert flow's tests,
+ * which drive Ink2Pic's own copy, settings and library, still run in the Ink2Pic gate.
  */
 const path = require('path');
 

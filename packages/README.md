@@ -23,8 +23,10 @@ tier (`src/internals/`): content providers, their tables and columns, all read f
 descriptor update. `@ink-tools/sn-adapter/official` is the official tier (`src/official/`):
 the only code that imports `sn-plugin-lib`, each call returning a `Result`. A plugin maps both with
 `sn-adapter/plugin-config.js`; the official tier's `sn-plugin-lib` resolves from the plugin's
-`node_modules`, so this folder leaves it out of its type check, and the plugin gates type-check and
-test it. `scripts/boundaries.py` keeps every other folder off the SDK and the providers.
+`node_modules`, so the plugin gates type-check it against the real SDK. Its own tests run in the
+packages gate against `sn-adapter/testing/`: the SDK's Jest mock, a loose type stand-in and the
+native module registry, which `packages/jest.config.js` and `tsconfig.base.json` map, and which
+Ink2Pic's Jest maps too ([#142](https://github.com/martonpaulo/ink-tools/issues/142)). `scripts/boundaries.py` keeps every other folder off the SDK and the providers.
 
 `picture-search` is wired the same way by `picture-search/plugin-config.js`, which also maps a deep
 path (`@ink-tools/picture-search/rank`) for tests. Its Java keeps the package name
@@ -33,9 +35,12 @@ Lookup's); it holds the React Native file module too, whose `Ink2PicFilesPackage
 Ink2Pic's module names and takes another plugin's two names in a subclass, as Lookup's
 `LookupFilesPackage` does ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)), and Bridge's `BridgeFilesPackage`, which reads and
 writes only its Settings file ([#40](https://github.com/martonpaulo/ink-tools/issues/40)). Its search tests (the sources, the ranking, the cache, with their recorded answers in
-`picture-search/__tests__/fixtures/`) run in the packages gate, type-checked with Node's types
-([#142](https://github.com/martonpaulo/ink-tools/issues/142), owner D63 A); its other TypeScript tests and its JVM tests still run in the Ink2Pic gate, beside the
-mocks they share, and the other plugin gates that use it type-check it and test their own bindings. Its insert tier
+`picture-search/__tests__/fixtures/`) and its device tier's file store, image module and memory log
+run in the packages gate, type-checked with Node's types, the last with the test profile of
+`picture-search/testing/profile.ts`
+([#142](https://github.com/martonpaulo/ink-tools/issues/142), owner D63 A); the measures run there too. The insert flow's tests (quick insert, insert picture,
+thumbnails, picks, twins, the device search and the settings), which drive Ink2Pic's own copy,
+settings codec, library and PluginHost simulator, and its JVM tests still run in the Ink2Pic gate, and the other plugin gates that use it type-check it and test their own bindings. Its insert tier
 (`/insert`) holds «Insert best picture»: the cached search, the stored thumbnails, the measured
 order, the insert and the no-view press guard; each plugin binds it to its own settings, copy and
 stores, and Ink2Pic hands in its library, picks and OpenMoji symbols, which stay in Ink2Pic.

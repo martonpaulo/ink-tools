@@ -34,4 +34,18 @@ describe('the native file module (#142)', () => {
     expect(fs.existsSync(path.join(ROOT, 'src/flow/lassoQuery.ts'))).toBe(false);
     expect(fs.existsSync(path.join(ROOT, 'src/flow/place.ts'))).toBe(false);
   });
+
+  it("keeps no copy of the packages' own tests or the SDK mock in the plugin (#142, D63 A)", () => {
+    // They run in the packages gate, so the packages stay tested without Ink2Pic.
+    const moved = [
+      '__mocks__/sn-plugin-lib.ts',
+      '__tests__/sdk.test.ts',
+      '__tests__/result.test.ts',
+      '__tests__/memory-log.test.ts',
+      '__tests__/image.test.ts',
+      '__tests__/measuresDevice.test.ts',
+      '__tests__/measures.test.ts',
+    ];
+    expect(moved.filter(file => fs.existsSync(path.join(ROOT, file)))).toEqual([]);
+  });
 });

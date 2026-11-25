@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "include": ["src", "__tests__"],
-  // The official tier imports sn-plugin-lib, which only the plugins install: their gates typecheck
-  // and test it (#101), as they do ui-kit (#93).
+  // The official tier imports sn-plugin-lib, which only the plugins install: their gates type-check
+  // it (#101), as they do ui-kit (#93). Its tests here reach it against the loose stand-in (#142).
   "exclude": ["src/official"]
 }

@@ -6,7 +6,7 @@ import {
   onLog,
   startLog,
   PERSON_TIMEOUT_MS,
-} from '../src/profile';
+} from '../src/log/memory';
 import {TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 
 beforeEach(() => {

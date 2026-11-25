@@ -1,12 +1,13 @@
 import {NativeModules} from 'react-native';
 import {MODULE_CODE} from '@ink-tools/sn-adapter/official';
-import {prepareForEink} from '../src/profile';
+import '../testing/profile';
+import {prepareForEink} from '../src/storage';
 
 const native = {prepareForEink: jest.fn()};
 
 beforeEach(() => {
   jest.resetAllMocks();
-  NativeModules.Ink2PicImage = native;
+  NativeModules.TestImage = native;
 });
 
 describe('prepareForEink (#17)', () => {
@@ -51,10 +52,10 @@ describe('prepareForEink (#17)', () => {
   });
 
   it('fails clearly when the module is not loaded', async () => {
-    delete NativeModules.Ink2PicImage;
+    delete NativeModules.TestImage;
     const result = await prepareForEink('/s/a', '/s/b.png', 640);
     expect(result.ok === false && result.message).toMatch(
-      /^MISSING: Ink2PicImage .*reactPackages/,
+      /^MISSING: TestImage .*reactPackages/,
     );
     expect(result.ok === false && result.moduleCode).toBe('MISSING');
   });

@@ -504,6 +504,22 @@ export function chooseLook(
   return isFaintLines(found) ? 'darkened' : 'found';
 }
 
+/** Each prepared tile's measures, and the ids shown as their contour drawing (#66, #83). */
+export function splitPrepared(prepared: ReadonlyMap<string, Prepared>): {
+  measures: Map<string, Measures>;
+  converted: Set<string>;
+} {
+  const measures = new Map<string, Measures>();
+  const converted = new Set<string>();
+  for (const [id, {measures: m, look}] of prepared) {
+    measures.set(id, m);
+    if (look === 'contour') {
+      converted.add(id);
+    }
+  }
+  return {measures, converted};
+}
+
 /**
  * Pages 1 and 2 in the order the device shows them (#66, #89): `reorderByMeasures` over what each
  * measured thumbnail shows, the contour drawings after the pictures shown as found (#83), then
@@ -516,14 +532,7 @@ export function orderMeasured(
   photos = false,
   scores?: BaseScores,
 ): SearchResult[] {
-  const measures = new Map<string, Measures>();
-  const converted = new Set<string>();
-  for (const [id, {measures: m, look}] of prepared) {
-    measures.set(id, m);
-    if (look === 'contour') {
-      converted.add(id);
-    }
-  }
+  const {measures, converted} = splitPrepared(prepared);
   const ordered = reorderByMeasures(
     results,
     measures,

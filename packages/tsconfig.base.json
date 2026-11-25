@@ -8,6 +8,12 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["jest"]
+    "types": ["jest"],
+    // The packages' own tests run without the SDK or React Native: these stand-ins answer for them
+    // (#142); Jest maps the names to its mocks (jest.config.js). A plugin's tsconfig checks the real ones.
+    "paths": {
+      "sn-plugin-lib": ["./sn-adapter/testing/sn-plugin-lib-types.d.ts"],
+      "react-native": ["./sn-adapter/testing/react-native.ts"]
+    }
   }
 }

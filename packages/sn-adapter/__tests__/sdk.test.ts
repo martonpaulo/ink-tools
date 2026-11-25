@@ -4,11 +4,11 @@ import {
   PluginManager,
   PluginNoteAPI,
 } from 'sn-plugin-lib';
-import * as lasso from '@ink-tools/sn-adapter/official';
-import * as note from '@ink-tools/sn-adapter/official';
-import * as page from '@ink-tools/sn-adapter/official';
-import * as plugin from '@ink-tools/sn-adapter/official';
-import {THROWN_CODE} from '@ink-tools/sn-adapter/official';
+import * as lasso from '../src/official';
+import * as note from '../src/official';
+import * as page from '../src/official';
+import * as plugin from '../src/official';
+import {THROWN_CODE} from '../src/official';
 
 const sdkFailure = {success: false, error: {code: 904, message: 'no lasso'}};
 const success = (result: unknown) => ({success: true, result});

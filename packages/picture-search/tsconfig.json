@@ -1,7 +1,8 @@
 {
   "extends": "../tsconfig.base.json",
   // Only the tests are roots: tsc follows their imports into src. The insert, storage and log
-  // folders import sn-plugin-lib, which only the plugins install; their gates typecheck them (#142).
+  // folders import sn-plugin-lib, which only the plugins install: here it is the loose stand-in of
+  // tsconfig.base.json, and the plugin gates type-check them against the real SDK (#142).
   // The adapter tests read their recorded answers from disk with Node's fs.
   "compilerOptions": {"types": ["jest", "node"]},
   "include": ["__tests__"]
