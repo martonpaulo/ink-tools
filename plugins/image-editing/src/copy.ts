@@ -20,8 +20,9 @@ export const copy = {
   'editor.pen': 'Draw with the pen',
   'editor.back': 'Go back',
   'editor.page': 'Every picture on the page',
+  /** Erase erases each stroke when the pen lifts, and Done keeps them (#278). */
   'editor.drawErase':
-    'Draw with the pen over the part to erase, then press Erase.',
+    'Draw over the part to erase. It is erased when you lift the pen. Press Done to keep the changes.',
   'editor.drawCrop':
     'Draw a rectangle with the pen around the part to keep, then press Crop.',
   'editor.clear': 'Clear marks',
@@ -29,6 +30,14 @@ export const copy = {
   /** Why the edit and Clear marks wait, next to them (interface rule 16, #233). */
   'editor.noMarks': (edit: string) =>
     `${edit} and Clear marks wait for a mark on the picture.`,
+  'editor.done': 'Done',
+  'editor.undoStroke': 'Undo stroke',
+  /** Why Undo stroke waits in Erase, next to it (interface rule 16, #233). */
+  'editor.noStrokes': 'Undo stroke waits for an erased stroke.',
+  'editor.strokeOutside':
+    'That stroke was not on the picture, so nothing was erased.',
+  'editor.strokeFailed':
+    'Image Editing could not erase that stroke. Draw it again.',
   'editor.close': 'Close',
   'edit.enhance': 'Enhance',
   'edit.lighter': 'Lighter',

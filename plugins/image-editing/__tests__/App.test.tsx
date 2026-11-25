@@ -1,6 +1,7 @@
 /** Retouch's Settings view keeps the shared size rules and shows one switch per edit (#136). */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import {Image, StyleSheet} from 'react-native';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
@@ -18,6 +19,7 @@ const READY: EditorState = {
   busy: null,
   draw: null,
   marks: [],
+  strokes: [],
   message: null,
 };
 
@@ -88,6 +90,10 @@ test('the Styles grid keeps the size rules, labels each tile and says when it fa
     );
   });
   expect(screenBreaks(tree.root)).toEqual([]);
+  // A tile never fades in: each fade step is a refresh on e-ink (brief 8.4).
+  for (const image of tree.root.findAllByType(Image)) {
+    expect(image.props.fadeDuration).toBe(0);
+  }
   await act(async () => {
     tree.root.findByProps({testID: 'style-dither'}).props.onPress();
     switchNamed(tree, 'Thicker lines').props.onPress();
@@ -177,6 +183,17 @@ describe("Back does what the open screen's «Close» does (#204)", () => {
     back.press();
     expect(closeEditor).toHaveBeenCalledWith(close);
     expect(close).not.toHaveBeenCalled();
+    // In Erase, Back keeps the strokes shown erased, as Done does (#278).
+    const finish = jest
+      .spyOn(editor, 'finishErase')
+      .mockResolvedValue(undefined);
+    state.mockReturnValue({...READY, draw: 'erase'});
+    await act(async () => {
+      renderer.create(<App close={close} />);
+    });
+    back.press();
+    expect(finish).toHaveBeenCalledWith(close);
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -205,6 +222,8 @@ describe('the editor view (#226)', () => {
     'onApply',
     'onMark',
     'onClear',
+    'onUndoStroke',
+    'onDone',
     'onCancel',
     'onClose',
   ] as const;
@@ -299,42 +318,54 @@ describe('the editor view (#226)', () => {
     expect(tree.root.findAllByProps({label: 'Darker'})).toEqual([]);
   });
 
-  test('with no mark yet, the edit and Clear marks are disabled and say why (#233)', async () => {
-    const why = copy['editor.noMarks']('Erase');
-    const strings = (tree: ReactTestRenderer) =>
-      tree.root
-        .findAll(node => typeof node.props.children === 'string')
-        .map(node => node.props.children);
-    const empty = await show({...READY, draw: 'erase', marks: []});
+  const strings = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAll(node => typeof node.props.children === 'string')
+      .map(node => node.props.children);
+  const at = (x: number, y: number) => ({
+    nativeEvent: {locationX: x, locationY: y},
+  });
+  /** The drawn dots: the views the canvas holds beside the picture. */
+  const dots = (tree: ReactTestRenderer) =>
+    tree.root.findAll(
+      node =>
+        typeof node.type === 'string' && node.props.pointerEvents === 'none',
+    );
+
+  test('with no mark yet, Crop and Clear marks are disabled and say why (#233)', async () => {
+    const why = copy['editor.noMarks']('Crop');
+    const empty = await show({...READY, draw: 'crop', marks: []});
     expect(
-      empty.tree.root.findAllByProps({label: 'Erase'})[0].props.disabled,
+      empty.tree.root.findAllByProps({label: 'Crop'})[0].props.disabled,
     ).toBe(true);
     expect(strings(empty.tree)).toContain(why);
     const marked = await show({
       ...READY,
-      draw: 'erase',
+      draw: 'crop',
       marks: [[{x: 1, y: 1}]],
     });
     expect(strings(marked.tree)).not.toContain(why);
   });
 
-  test('while drawing, a pen stroke on the picture comes back in page pixels', async () => {
+  test('a Crop stroke draws nothing while the pen moves and its dots once it lifts (#278)', async () => {
     const {tree, h} = await show({
       ...READY,
-      draw: 'erase',
+      draw: 'crop',
       marks: [[{x: 150, y: 250}]],
     });
     layOut(tree);
     expect(screenBreaks(tree.root)).toEqual([]);
     const canvas = tree.root.findByProps({testID: 'editor-canvas'});
     expect(canvas.props.onStartShouldSetResponder()).toBe(true);
-    const at = (x: number, y: number) => ({
-      nativeEvent: {locationX: x, locationY: y},
-    });
+    expect(dots(tree)).toHaveLength(1);
     act(() => {
       canvas.props.onResponderGrant(at(0, 0));
       canvas.props.onResponderMove(at(1, 1));
       canvas.props.onResponderMove(at(40, 60));
+    });
+    // No dot of the stroke being drawn: a move renders nothing.
+    expect(dots(tree)).toHaveLength(1);
+    act(() => {
       canvas.props.onResponderRelease();
     });
     // 200 x 200 picture in a 400 x 400 stage: two view pixels per page pixel.
@@ -343,15 +374,72 @@ describe('the editor view (#226)', () => {
       {x: 120, y: 230},
     ]);
     await act(async () => {
-      tree.root.findAllByProps({label: 'Erase'})[0].props.onPress();
+      tree.root.findAllByProps({label: 'Crop'})[0].props.onPress();
       tree.root.findAllByProps({label: 'Clear marks'})[0].props.onPress();
       tree.root.findAllByProps({label: 'Cancel'})[0].props.onPress();
     });
     expect(h.onApply).toHaveBeenCalledWith(
-      expect.objectContaining({id: 'erase'}),
+      expect.objectContaining({id: 'crop'}),
     );
     expect(h.onClear).toHaveBeenCalledTimes(1);
     expect(h.onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  test('Erase shows no dot, the last erased stroke, and Done, Undo and Cancel (#278)', async () => {
+    const {tree, h} = await show({...READY, draw: 'erase', marks: []});
+    layOut(tree);
+    expect(screenBreaks(tree.root)).toEqual([]);
+    expect(tree.root.findAllByProps({label: 'Erase'})).toEqual([]);
+    expect(
+      tree.root.findAllByProps({label: 'Undo stroke'})[0].props.disabled,
+    ).toBe(true);
+    expect(strings(tree)).toContain(copy['editor.noStrokes']);
+    // The hint keeps its line when it empties, so the first stroke moves nothing.
+    const hintLine = (t: ReactTestRenderer) =>
+      t.root.findAll(
+        node =>
+          typeof node.type === 'string' &&
+          (node.props.children === '' ||
+            node.props.children === copy['editor.noStrokes']),
+      );
+    expect(hintLine(tree)).toHaveLength(1);
+    const canvas = tree.root.findByProps({testID: 'editor-canvas'});
+    act(() => {
+      canvas.props.onResponderGrant(at(0, 0));
+      canvas.props.onResponderMove(at(40, 60));
+    });
+    expect(dots(tree)).toEqual([]);
+    act(() => {
+      canvas.props.onResponderRelease();
+    });
+    expect(h.onMark).toHaveBeenCalledTimes(1);
+    const stroked = await show({
+      ...READY,
+      draw: 'erase',
+      marks: [[{x: 150, y: 250}]],
+      strokes: ['/w/1-stroke.png', '/w/2-stroke.png'],
+    });
+    layOut(stroked.tree);
+    expect(dots(stroked.tree)).toEqual([]);
+    const picture = stroked.tree.root.findByType(Image);
+    expect(picture.props.source).toEqual({uri: 'file:///w/2-stroke.png'});
+    // Each stroke swaps the picture: it must not fade in, a refresh per step (brief 8.4).
+    expect(picture.props.fadeDuration).toBe(0);
+    expect(strings(stroked.tree)).not.toContain(copy['editor.noStrokes']);
+    expect(hintLine(stroked.tree)).toHaveLength(1);
+    expect(
+      StyleSheet.flatten(hintLine(stroked.tree)[0].props.style).minHeight,
+    ).toBeGreaterThan(0);
+    await act(async () => {
+      stroked.tree.root
+        .findAllByProps({label: 'Undo stroke'})[0]
+        .props.onPress();
+      stroked.tree.root.findAllByProps({label: 'Done'})[0].props.onPress();
+      stroked.tree.root.findAllByProps({label: 'Cancel'})[0].props.onPress();
+    });
+    expect(stroked.h.onUndoStroke).toHaveBeenCalledTimes(1);
+    expect(stroked.h.onDone).toHaveBeenCalledTimes(1);
+    expect(stroked.h.onCancel).toHaveBeenCalledTimes(1);
   });
 
   test('the canvas takes no pen outside a drawing, and a failure says why', async () => {
