@@ -1,7 +1,7 @@
 /**
  * One picture inserted by picture-search's insert tier (#12, #142), over the in-memory picture
- * store of testing/insert.ts. How Ink2Pic's library finds a picture in its own style stays in
- * Ink2Pic's insertPicture test (#103, D63 A).
+ * store of testing/insert.ts. How a plugin's library finds a picture in its own style is the
+ * plugin's to test (#103, #302).
  */
 import {NativeModules} from 'react-native';
 import {FileUtils, PluginCommAPI, PluginNoteAPI, PluginManager} from 'sn-plugin-lib';

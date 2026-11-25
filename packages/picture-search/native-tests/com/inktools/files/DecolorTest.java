@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 /** JVM tests for Decolor on synthetic two-colour pictures, run by `node scripts/native-build.cjs --test`. */
 public final class DecolorTest {

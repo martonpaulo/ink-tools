@@ -318,9 +318,6 @@
     "Ink2Pic": 4,
     "ink2pic": 3
    },
-   "packages/README.md": {
-    "ink2pic": 1
-   },
    "packages/ink-core/src/lasso.ts": {
     "Ink2Pic": 1
    },
@@ -339,111 +336,26 @@
    "packages/picture-search/__tests__/http.test.ts": {
     "Ink2Pic": 3
    },
-   "packages/picture-search/__tests__/insertPicture.test.ts": {
-    "Ink2Pic": 2
-   },
    "packages/picture-search/__tests__/quickInsert.test.ts": {
     "Ink2Pic": 1
    },
    "packages/picture-search/__tests__/search.test.ts": {
     "Ink2Pic": 1
    },
-   "packages/picture-search/__tests__/settings.test.ts": {
-    "Ink2Pic": 2
+   "packages/picture-search/native-tests/com/inktools/files/SafePathsTest.java": {
+    "Ink2Pic": 3
    },
-   "packages/picture-search/__tests__/thumbs.test.ts": {
-    "Ink2Pic": 2
+   "packages/picture-search/native/com/inktools/files/FileWrites.java": {
+    "Ink2Pic": 1
    },
-   "packages/picture-search/__tests__/twins.test.ts": {
-    "Ink2Pic": 1,
-    "ink2pic": 2
+   "packages/picture-search/native/com/inktools/files/Ink2PicFilesModule.java": {
+    "Ink2Pic": 1
    },
-   "packages/picture-search/dry-check.json": {
-    "ink2pic": 3
+   "packages/picture-search/native/com/inktools/files/Ink2PicFilesPackage.java": {
+    "Ink2Pic": 1
    },
-   "packages/picture-search/native-tests/com/ink2pic/files/ContourTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/DecolorTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/EinkPixelsTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/FileWritesTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/PerceptualHashTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/PngTailTest.java": {
-    "ink2pic": 2
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/SafePathsTest.java": {
-    "Ink2Pic": 3,
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/ThumbGateTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/ThumbMeasuresTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/TwinsTest.java": {
-    "Ink2Pic": 2,
-    "ink2pic": 1
-   },
-   "packages/picture-search/native-tests/com/ink2pic/files/WorkersTest.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/Contour.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/Decolor.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/EinkPixels.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/FileWrites.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesModule.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesPackage.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/Ink2PicImageModule.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/ModuleWork.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/PerceptualHash.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/PngTail.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/SafePaths.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/ThumbGate.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/ThumbMeasures.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/native/com/ink2pic/files/Workers.java": {
-    "ink2pic": 1
-   },
-   "packages/picture-search/plugin-config.js": {
-    "ink2pic": 2
+   "packages/picture-search/native/com/inktools/files/ModuleWork.java": {
+    "Ink2Pic": 1
    },
    "packages/picture-search/src/README.md": {
     "Ink2Pic": 1,
@@ -513,8 +425,7 @@
     "Ink2Pic": 1
    },
    "plugins/account-sync/native/com/bridge/files/BridgeFilesPackage.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
+    "Ink2Pic": 1
    },
    "plugins/account-sync/scripts/native-toolchain.sh": {
     "ink2pic": 1
@@ -529,23 +440,16 @@
     "Ink2Pic": 1
    },
    "plugins/image-editing/native/src/com/retouch/image/Retouch.java": {
-    "Ink2Pic": 2,
-    "ink2pic": 3
+    "Ink2Pic": 2
    },
    "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": {
-    "Ink2Pic": 3,
-    "ink2pic": 2
+    "Ink2Pic": 3
    },
    "plugins/image-editing/native/src/com/retouch/image/RetouchPackage.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
-   },
-   "plugins/image-editing/native/tests/com/retouch/image/RetouchTest.java": {
-    "ink2pic": 1
+    "Ink2Pic": 1
    },
    "plugins/image-editing/scripts/native-build.cjs": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
+    "Ink2Pic": 1
    },
    "plugins/image-editing/src/StylesGrid.tsx": {
     "Ink2Pic": 1
@@ -571,34 +475,20 @@
    "plugins/word-lookup/__tests__/App.test.tsx": {
     "Ink2Pic": 2
    },
-   "plugins/word-lookup/__tests__/labAffected.test.ts": {
-    "ink2pic": 1
-   },
    "plugins/word-lookup/__tests__/library.test.ts": {
     "Ink2Pic": 4
    },
    "plugins/word-lookup/index.js": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/lab/LabPixels.java": {
-    "ink2pic": 5
-   },
-   "plugins/word-lookup/lab/LabTiming.java": {
-    "ink2pic": 5
-   },
    "plugins/word-lookup/lab/README.md": {
     "ink2pic": 7
    },
    "plugins/word-lookup/lab/pixelorder.mjs": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
-   },
-   "plugins/word-lookup/lab/timing.mjs": {
-    "ink2pic": 2
+    "Ink2Pic": 1
    },
    "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java": {
-    "Ink2Pic": 1,
-    "ink2pic": 1
+    "Ink2Pic": 1
    },
    "plugins/word-lookup/scripts/native-toolchain.sh": {
     "ink2pic": 1
@@ -677,16 +567,16 @@
     "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/IssueReport.swift": {
      "url": 1
     },
-    "packages/picture-search/native/com/ink2pic/files/Decolor.java": {
+    "packages/picture-search/native/com/inktools/files/Decolor.java": {
      "number": 31
     },
-    "packages/picture-search/native/com/ink2pic/files/FileWrites.java": {
+    "packages/picture-search/native/com/inktools/files/FileWrites.java": {
      "repeated": 2
     },
-    "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesModule.java": {
+    "packages/picture-search/native/com/inktools/files/Ink2PicFilesModule.java": {
      "number": 2
     },
-    "packages/picture-search/native/com/ink2pic/files/ThumbMeasures.java": {
+    "packages/picture-search/native/com/inktools/files/ThumbMeasures.java": {
      "number": 4
     },
     "plugins/account-sync/native/com/bridge/providers/BridgeProvidersModule.java": {
@@ -740,12 +630,12 @@
     "packages/ink-core/src/place.ts": 1,
     "packages/native-build/host-tools.cjs": 1,
     "packages/native-build/native-build.cjs": 1,
-    "packages/picture-search/native/com/ink2pic/files/Contour.java": 3,
-    "packages/picture-search/native/com/ink2pic/files/Decolor.java": 1,
-    "packages/picture-search/native/com/ink2pic/files/EinkPixels.java": 6,
-    "packages/picture-search/native/com/ink2pic/files/Ink2PicFilesModule.java": 2,
-    "packages/picture-search/native/com/ink2pic/files/Ink2PicImageModule.java": 2,
-    "packages/picture-search/native/com/ink2pic/files/ThumbMeasures.java": 2,
+    "packages/picture-search/native/com/inktools/files/Contour.java": 3,
+    "packages/picture-search/native/com/inktools/files/Decolor.java": 1,
+    "packages/picture-search/native/com/inktools/files/EinkPixels.java": 6,
+    "packages/picture-search/native/com/inktools/files/Ink2PicFilesModule.java": 2,
+    "packages/picture-search/native/com/inktools/files/Ink2PicImageModule.java": 2,
+    "packages/picture-search/native/com/inktools/files/ThumbMeasures.java": 2,
     "packages/picture-search/src/adapters/commons.ts": 1,
     "packages/picture-search/src/adapters/openclipart.ts": 3,
     "packages/picture-search/src/fetcher.ts": 3,

@@ -51,7 +51,7 @@ test('a file the lab loads picks every case', () => {
   expect(affected(`${PLUGIN}src/dictionaries.ts`).split(',')).toEqual(all);
   expect(affected(`${PLUGIN}src/pictureLanguages.ts`).split(',')).toEqual(all);
   expect(
-    affected('packages/picture-search/native/com/ink2pic/files/Contour.java').split(','),
+    affected('packages/picture-search/native/com/inktools/files/Contour.java').split(','),
   ).toEqual(all);
 });
 

@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

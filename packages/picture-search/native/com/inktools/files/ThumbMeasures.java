@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 /**
  * Cheap pixel measures of one thumbnail (research note 2026-11-search-ranking sections 3 and 4,

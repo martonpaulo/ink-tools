@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +72,7 @@ public final class FileWritesTest {
    * one of them whole, never a mix, with no `.part` file left.
    */
   private static void twoWritersOnePath() throws Exception {
-    File folder = Files.createTempDirectory("ink2pic-file-writes-").toFile();
+    File folder = Files.createTempDirectory("inktools-file-writes-").toFile();
     File target = new File(folder, "openclipart-1.png");
     byte[] first = filled(1);
     byte[] second = filled(2);
@@ -130,7 +130,7 @@ public final class FileWritesTest {
    * (#162): the first save of a new settings file holds the whole text.
    */
   private static void firstWriteOfNewFile() throws Exception {
-    File folder = Files.createTempDirectory("ink2pic-first-write-").toFile();
+    File folder = Files.createTempDirectory("inktools-first-write-").toFile();
     File target = new File(folder, "settings.json");
     byte[] text = "{\"insertDefinition\":true}".getBytes(StandardCharsets.UTF_8);
     FileWrites.Opener tablet = file -> file.exists() ? new FileOutputStream(file, false) : dropping(file);
@@ -149,7 +149,7 @@ public final class FileWritesTest {
 
   /** A write that leaves fewer bytes on disk than it was given fails, never reports success (#162). */
   private static void droppedWriteFails() throws Exception {
-    File folder = Files.createTempDirectory("ink2pic-short-write-").toFile();
+    File folder = Files.createTempDirectory("inktools-short-write-").toFile();
     File target = new File(folder, "settings.json");
     byte[] text = "{}".getBytes(StandardCharsets.UTF_8);
     String code = null;

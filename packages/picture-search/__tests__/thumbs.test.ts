@@ -1,6 +1,6 @@
 /**
- * The stored thumbnails (#16, #46) of picture-search's insert tier. The grid that shows them is
- * Ink2Pic's, and its tests stay in Ink2Pic's thumbs test (#142, D63 A).
+ * The stored thumbnails (#16, #46) of picture-search's insert tier. The grid that shows them
+ * belongs to the plugin that draws it; no test here covers it (#302).
  */
 import {NativeModules} from 'react-native';
 import {PluginManager} from 'sn-plugin-lib';

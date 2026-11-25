@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 /** JVM tests for PerceptualHash on synthetic pictures, run by `node scripts/native-build.cjs --test`. */
 public final class PerceptualHashTest {

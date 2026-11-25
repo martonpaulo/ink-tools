@@ -1,8 +1,8 @@
-import com.ink2pic.files.Contour;
-import com.ink2pic.files.Decolor;
-import com.ink2pic.files.EinkPixels;
-import com.ink2pic.files.PerceptualHash;
-import com.ink2pic.files.ThumbMeasures;
+import com.inktools.files.Contour;
+import com.inktools.files.Decolor;
+import com.inktools.files.EinkPixels;
+import com.inktools.files.PerceptualHash;
+import com.inktools.files.ThumbMeasures;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;

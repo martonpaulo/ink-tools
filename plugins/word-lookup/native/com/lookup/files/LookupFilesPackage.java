@@ -1,6 +1,6 @@
 package com.lookup.files;
 
-import com.ink2pic.files.Ink2PicFilesPackage;
+import com.inktools.files.Ink2PicFilesPackage;
 
 /**
  * Listed in Lookup's PluginConfig.json `reactPackages` by scripts/native-build.cjs: picture-search's

@@ -1,8 +1,8 @@
 package com.retouch.image;
 
-import com.ink2pic.files.Contour;
-import com.ink2pic.files.Decolor;
-import com.ink2pic.files.EinkPixels;
+import com.inktools.files.Contour;
+import com.inktools.files.Decolor;
+import com.inktools.files.EinkPixels;
 import java.util.Arrays;
 
 /**

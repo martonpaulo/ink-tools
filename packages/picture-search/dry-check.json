@@ -14,21 +14,21 @@
    {
     "rule": "clean border: from this white share of the frame the picture stands on paper",
     "owner": "src/measures.ts",
-    "other": "native/com/ink2pic/files/EinkPixels.java",
+    "other": "native/com/inktools/files/EinkPixels.java",
     "pattern": "CLEAN_BORDER = 0\\.85",
     "golden": "native/twins.json"
    },
    {
     "rule": "Measures fields: the bridge contract of measureThumb",
     "owner": "src/measures.ts",
-    "other": "native/com/ink2pic/files/ThumbMeasures.java",
+    "other": "native/com/inktools/files/ThumbMeasures.java",
     "pattern": "\\bobjectShare\\b",
     "golden": "native/twins.json"
    },
    {
     "rule": "measure width: the thumbnail width the measures and the drawings are taken at",
     "owner": "src/insert/measure.ts",
-    "other": "native/com/ink2pic/files/EinkPixels.java",
+    "other": "native/com/inktools/files/EinkPixels.java",
     "pattern": "MEASURE_WIDTH = 400",
     "golden": "native/twins.json"
    }

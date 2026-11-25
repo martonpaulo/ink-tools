@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 /**
  * Pixel and size math for a picture shown on the 16-gray e-ink screen (brief section 7, issue #17).

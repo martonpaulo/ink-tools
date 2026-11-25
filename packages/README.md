@@ -31,7 +31,7 @@ the renders' Jest maps too ([#142](https://github.com/martonpaulo/ink-tools/issu
 
 `picture-search` is wired the same way by `picture-search/plugin-config.js`, which also maps a deep
 path (`@ink-tools/picture-search/rank`) for tests. Its Java keeps the package name
-`com.ink2pic.files`, from the retired plugin it was written for, and is compiled by each plugin's
+`com.inktools.files`, from the retired plugin it was written for, and is compiled by each plugin's
 `scripts/native-build.cjs` that uses it; it holds the React Native file module too, whose
 `Ink2PicFilesPackage` takes a plugin's two module names in a subclass, as Lookup's
 `LookupFilesPackage` does ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)), and Bridge's `BridgeFilesPackage`, which reads and

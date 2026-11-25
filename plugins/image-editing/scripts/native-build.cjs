@@ -24,7 +24,7 @@ module.exports = defineBuild(
         prefix: 'retouch',
         files: [
           path.join(root, 'native/src/com/retouch/image/Retouch.java'),
-          ...PURE_SHARED.map(name => path.join(nativeSources, `com/ink2pic/files/${name}.java`)),
+          ...PURE_SHARED.map(name => path.join(nativeSources, `com/inktools/files/${name}.java`)),
           ...javaSources(path.join(root, 'native/tests')),
         ],
         mains: ['com.retouch.image.RetouchTest'],

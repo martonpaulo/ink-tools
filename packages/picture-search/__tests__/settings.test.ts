@@ -1,7 +1,7 @@
 /**
  * The settings store every plugin builds over its own codec (#68, #22, #94, #99), with the test
- * codec of testing/settings.ts. Ink2Pic's codec and folder stay in Ink2Pic's settings test
- * (#142, D63 A).
+ * codec of testing/settings.ts. Each plugin's own codec and folder are the plugin's to test
+ * (#142, #302).
  */
 import {NativeModules} from 'react-native';
 import '../testing/profile';

@@ -1,6 +1,6 @@
 package com.retouch.image;
 
-import com.ink2pic.files.Decolor;
+import com.inktools.files.Decolor;
 
 /** Plain JVM test, no framework: run by `npm run test:native` (#136). */
 public final class RetouchTest {

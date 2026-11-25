@@ -1,10 +1,10 @@
 /**
  * The TypeScript side of the rules both languages hold (#100), against native/twins.json (#125),
- * which native-tests/com/ink2pic/files/TwinsTest.java reads too; dry-check.json's `twins` names
+ * which native-tests/com/inktools/files/TwinsTest.java reads too; dry-check.json's `twins` names
  * each rule's owner. The Measures contract is written four times (the Java module's map, the
  * `ThumbMeasures` fields, the `Measures` type, the PluginHost simulator's fake): every copy is
- * checked here, in TwinsTest or, for the simulator, in Ink2Pic's twins test (#142, D63 A), so a
- * field added on one side only fails.
+ * checked here or in TwinsTest, so a field added on one side only fails; the simulator's fake
+ * has no check since the retired picture plugin's twins test went (#288, #302).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,7 +51,7 @@ const sorted = (keys: Iterable<string>) => [...keys].sort();
 /** The keys `Ink2PicImageModule.measureThumb` puts in the map it answers. */
 function moduleKeys(): string[] {
   const java = fs.readFileSync(
-    path.join(ROOT, 'native/com/ink2pic/files/Ink2PicImageModule.java'),
+    path.join(ROOT, 'native/com/inktools/files/Ink2PicImageModule.java'),
     'utf8',
   );
   const start = java.indexOf('public void measureThumb(');

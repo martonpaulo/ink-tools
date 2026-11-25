@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 /**
  * Turns dark clip art, or a picture asked for as an outline, into a contour drawing for e-ink

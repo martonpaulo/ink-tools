@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 /**
  * A perceptual hash of a thumbnail, to find near-duplicates on one page (#89): the difference

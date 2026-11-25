@@ -3,7 +3,7 @@ package com.bridge.files;
 import com.bridge.providers.BridgeProvidersModule;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.ink2pic.files.Ink2PicFilesPackage;
+import com.inktools.files.Ink2PicFilesPackage;
 import java.util.ArrayList;
 import java.util.List;
 

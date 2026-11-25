@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 /**
  * The Java side of the rules both languages hold (#100), against `packages/picture-search/native/twins.json` (#125), which
- * Ink2Pic's `__tests__/twins.test.ts` reads too. Run by Ink2Pic's `node scripts/native-build.cjs --test`
- * from the plugin's folder, which the path below is relative to.
+ * `__tests__/twins.test.ts` reads too. Run by the packages gate (`packages/native-build/package-tests.cjs`)
+ * from this package's folder, which the path below is relative to (#302).
  */
 public final class TwinsTest {
   private static final String GOLDEN = "../../packages/picture-search/native/twins.json";

@@ -1,4 +1,4 @@
-package com.ink2pic.files;
+package com.inktools.files;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,7 +16,7 @@ public final class PngTailTest {
   }
 
   private static File write(byte[] bytes) throws IOException {
-    File file = File.createTempFile("ink2pic-png", ".png");
+    File file = File.createTempFile("inktools-png", ".png");
     file.deleteOnExit();
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(bytes);
@@ -40,7 +40,7 @@ public final class PngTailTest {
     check(!PngTail.isComplete(write(java.util.Arrays.copyOf(whole, 6000))), "a cut-off PNG is not");
     check(!PngTail.isComplete(write(new byte[0])), "an empty file is not");
     check(!PngTail.isComplete(write(PngTail.IEND)), "IEND alone is too small");
-    check(!PngTail.isComplete(new File("/nonexistent/ink2pic.png")), "a missing file is not");
+    check(!PngTail.isComplete(new File("/nonexistent/inktools.png")), "a missing file is not");
     if (failures > 0) {
       System.err.println(failures + " failed");
       System.exit(1);
