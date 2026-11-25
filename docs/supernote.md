@@ -574,7 +574,16 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
     overlay alone cannot see the keyboard.
   - `UsageStatsManager.queryEvents` with the `GET_USAGE_STATS` app-op granted by `appops` lists
     each resumed activity (6 ms), but only when asked, so it needs a timer.
-  - A `uiautomator` dump (`inkctl snapshot`) restarts the service (`onServiceConnected` again).
+  - A `uiautomator` dump (`inkctl snapshot`, also `inkctl screen`) restarts the service
+    (`onServiceConnected` again); `adb exec-out screencap -p` does not.
+  - NOTE's toolbar buttons are nodes with stable content descriptions (`pen_1`, `eraser_1`,
+    `lasso`, …), not clickable: `ACTION_CLICK` fails, a `dispatchGesture` tap at the centre selects
+    the tool in about 100 ms. No node shows which tool is selected. With the tablet asleep the
+    tree is empty. An untouchable overlay with `FLAG_WATCH_OUTSIDE_TOUCH` gets each touch-down with
+    its source but no position or tool type. The pen (`Wacom-pen`) is source `0x5002`, a
+    touchscreen, which Android 11's touch exploration takes too [official, AOSP] [measured, 2026-11-25,
+    [#251](https://github.com/martonpaulo/ink-tools/issues/251),
+    [tap gestures study](research/2026-11-tap-gestures.md)].
 - Settings › Apps › Customize Sidebar lists one item per app package, by its label: the Lingo app
   shows once, «Lingo», although it has two launcher activities, and a sidebar tap opens the first
   one [measured, 2026-11-16, Lingo app 0.1.0 beta 2,
