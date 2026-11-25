@@ -39,12 +39,14 @@ export const PluginCommAPI = mocks(
   'insertSticker',
   'insertGeometry',
   'deletePageElements',
+  'resizeLassoRect',
 );
 
 export const PluginNoteAPI = mocks(
   'insertText',
   'insertImage',
   'saveCurrentNote',
+  'setLassoTitle',
 );
 
 export const PluginFileAPI = mocks(

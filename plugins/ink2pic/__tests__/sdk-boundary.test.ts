@@ -97,10 +97,11 @@ it('has no SDK wrapper that nothing calls (#54)', () => {
   // result.ts is the Result type every wrapper returns; register.ts and storage.ts serve Bridge
   // too, and image.ts serves Relay (#98) and Retouch (#136), whose own tests call them;
   // file.ts serves Relay alone (#143); elements.ts serves Real-Time Conversion alone (#187);
-  // shapes.ts serves Smart Shapes alone (#253).
+  // shapes.ts serves Smart Shapes alone (#253); headings.ts serves Headings alone (#252).
   const shared = new Set([
     'elements.ts',
     'shapes.ts',
+    'headings.ts',
     'file.ts',
     'result.ts',
     'register.ts',

@@ -7,6 +7,7 @@ export * from './result';
 export * from './buttons';
 export * from './elements';
 export * from './file';
+export * from './headings';
 export * from './image';
 export * from './lasso';
 export * from './note';

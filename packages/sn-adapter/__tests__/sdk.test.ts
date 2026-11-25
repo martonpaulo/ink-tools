@@ -49,6 +49,18 @@ const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [
     true,
   ],
   [
+    'setLassoTitle',
+    mocked(PluginNoteAPI.setLassoTitle),
+    () => note.setLassoTitle(note.TITLE_STYLE.shadow),
+    true,
+  ],
+  [
+    'resizeLassoRect',
+    mocked(PluginCommAPI.resizeLassoRect),
+    () => lasso.resizeLassoRect({left: 0, top: 10, right: 1404, bottom: 90}),
+    true,
+  ],
+  [
     'recognizeElements',
     mocked(PluginCommAPI.recognizeElements),
     () => lasso.recognizeElements([], {width: 1, height: 1}),
@@ -113,6 +125,25 @@ describe.each(responseCalls)('%s', (_name, sdkCall, wrapper, value) => {
       code: THROWN_CODE,
       message: 'bridge down',
     });
+  });
+});
+
+describe('Headings calls (#252)', () => {
+  it('passes the title style as the SDK params object', async () => {
+    mocked(PluginNoteAPI.setLassoTitle).mockResolvedValue(success(true));
+    await note.setLassoTitle(note.TITLE_STYLE.black);
+    expect(PluginNoteAPI.setLassoTitle).toHaveBeenCalledWith({style: 1});
+  });
+
+  it('numbers the styles as the SDK does, 0 removing the title', () => {
+    expect(note.TITLE_STYLE).toEqual({none: 0, black: 1, lightGrey: 2, darkGrey: 3, shadow: 4});
+  });
+
+  it('passes the page rect to resizeLassoRect unchanged', async () => {
+    const rect = {left: 0, top: 10, right: 1404, bottom: 90};
+    mocked(PluginCommAPI.resizeLassoRect).mockResolvedValue(success(true));
+    await lasso.resizeLassoRect(rect);
+    expect(PluginCommAPI.resizeLassoRect).toHaveBeenCalledWith(rect);
   });
 });
 
