@@ -30,55 +30,8 @@ func read(_ path: String) -> NoteFile {
     }
 }
 
-/// The page blocks `diff` compares besides the layers: the strokes and elements, the recognised
-/// text and its file, and the text boxes.
-let pageBlocks = ["TOTALPATH", "RECOGNTEXT", "RECOGNFILE", "PAGETEXTBOX"]
-let footerPrefixes = ["TITLE_", "KEYWORD_", "LINKO_", "LINKI_"]
-
-func blockBytes(_ file: NoteFile, _ address: Int?) -> ArraySlice<UInt8>? {
-    guard let address, address != 0 else { return nil }
-    return try? file.block(at: address)
-}
-
-func compare(_ name: String, _ before: ArraySlice<UInt8>?, _ after: ArraySlice<UInt8>?) -> String {
-    switch (before, after) {
-    case (nil, nil): return "\(name) absent"
-    case (nil, let new?): return "\(name) added (\(new.count) bytes)"
-    case (_?, nil): return "\(name) removed"
-    case (let old?, let new?):
-        return old == new ? "\(name) equal" : "\(name) changed (\(old.count) -> \(new.count) bytes)"
-    }
-}
-
 func diff(_ beforePath: String, _ afterPath: String) {
-    let before = read(beforePath), after = read(afterPath)
-    print("pages: \(before.pages.count) -> \(after.pages.count)")
-    let afterIndex = Dictionary(
-        after.pages.enumerated().compactMap { entry in entry.element.metadata["PAGEID"].map { ($0, entry.offset) } },
-        uniquingKeysWith: { first, _ in first })
-    for (index, page) in before.pages.enumerated() {
-        guard let id = page.metadata["PAGEID"], let found = afterIndex[id] else {
-            print("page \(index + 1): not found in AFTER")
-            continue
-        }
-        let other = after.pages[found]
-        var parts = [page.metadata == other.metadata ? "metadata equal" : "metadata changed"]
-        for key in NoteFile.layerKeys {
-            let old = page.layers.first { $0.key == key }, new = other.layers.first { $0.key == key }
-            parts.append(compare(key, blockBytes(before, old?.bitmapAddress), blockBytes(after, new?.bitmapAddress)))
-        }
-        for key in pageBlocks {
-            parts.append(compare(key, blockBytes(before, page.metadata.address(key)),
-                                 blockBytes(after, other.metadata.address(key))))
-        }
-        print("page \(index + 1) -> \(found + 1): " + parts.joined(separator: ", "))
-    }
-    for prefix in footerPrefixes {
-        let old = before.footer.pairs.filter { $0.key.hasPrefix(prefix) }
-        let new = after.footer.pairs.filter { $0.key.hasPrefix(prefix) }
-        guard !old.isEmpty || !new.isEmpty else { continue }
-        print("footer \(prefix): \(old.count) -> \(new.count), values \(old.map(\.value) == new.map(\.value) ? "equal" : "changed")")
-    }
+    NoteDiff.lines(read(beforePath), read(afterPath)).forEach { print($0) }
 }
 
 /// The command, its positional arguments and its `--key value` options.

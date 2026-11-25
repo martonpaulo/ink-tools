@@ -70,6 +70,76 @@ import Testing
         #expect(box.contains { drawn[$0] == RattaRLE.Grey.black })
         #expect(edited.pages[1].metadata["PAGEID"] == file.pages[1].metadata["PAGEID"])
     }
+
+    @Test func testAPictureIsDrawnIntoTheMainLayerOnly() throws {
+        let file = try Self.content()
+        let black = PageBitmap(width: 4, height: 4, pixels: [UInt8](repeating: 0, count: 16))
+        let png = try #require(black.pngData())
+        let rect = PageRect(x: 200, y: 300, width: 160, height: 80)
+        let edited = try NoteFile(bytes: try NoteWriter.drawPicture(file, page: 2, imageData: png, in: rect))
+        let footer = NoteWriter.footerAddress(file)
+        #expect(Array(edited.bytes[..<footer]) == Array(file.bytes[..<footer]))
+        for index in [0, 1, 3] { #expect(edited.pages[index] == file.pages[index]) }
+        let drawn = try edited.render(page: 2).pixels
+        let width = file.pageSize.width
+        let inside = (rect.y..<(rect.y + rect.height)).flatMap { row in
+            (rect.x..<(rect.x + rect.width)).map { row * width + $0 }
+        }
+        #expect(inside.allSatisfy { drawn[$0] == RattaRLE.Grey.black })
+        // Outside the rectangle the page is as it was.
+        let before = try file.render(page: 2).pixels
+        let outside = Set(0..<drawn.count).subtracting(inside)
+        #expect(outside.allSatisfy { drawn[$0] == before[$0] })
+    }
+
+    @Test func testAPictureOutsideTheNoteIsRefused() throws {
+        let file = try Self.content()
+        let png = try #require(PageBitmap(width: 1, height: 1, pixels: [0]).pngData())
+        #expect(throws: NoteFormatError.badPage(4)) {
+            try NoteWriter.drawPicture(file, page: 4, imageData: png, in: PageRect(x: 0, y: 0, width: 1, height: 1))
+        }
+    }
+}
+
+/// `note-tool diff`: which blocks of each page an edit kept (#263).
+@Suite struct NoteDiffTests {
+    @Test func testAMoveKeepsEveryPageBlock() throws {
+        let file = try NoteWriterTests.content()
+        let moved = try NoteFile(bytes: try NoteWriter.movePage(file, from: 1, to: 3))
+        let lines = NoteDiff.lines(file, moved)
+        #expect(lines.first == "pages: 4 -> 4")
+        #expect(lines.contains { $0.hasPrefix("page 2 -> 4: metadata equal, MAINLAYER equal") })
+        let pageLines = lines.filter { $0.hasPrefix("page ") }
+        #expect(pageLines.count == 4)
+        #expect(pageLines.allSatisfy { !$0.contains("changed") && !$0.contains("added") && !$0.contains("removed") })
+    }
+
+    @Test func testAnEditNamesTheChangedLayerOnly() throws {
+        let file = try NoteWriterTests.content()
+        let edited = try NoteFile(bytes: try NoteWriter.drawText(
+            file, page: 1, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
+        let lines = NoteDiff.lines(file, edited)
+        let page2 = try #require(lines.first { $0.hasPrefix("page 2 -> 2: ") })
+        #expect(page2.contains("metadata changed"))
+        #expect(page2.contains("MAINLAYER changed"))
+        #expect(page2.contains("BGLAYER equal"))
+        for number in [1, 3, 4] {
+            let line = try #require(lines.first { $0.hasPrefix("page \(number) -> \(number): ") })
+            #expect(!line.contains("changed"))
+        }
+    }
+
+    @Test func testAPageMissingFromAfterIsNamed() throws {
+        var builder = NoteBuilder()
+        let header = builder.metadata([("FILE_TYPE", "NOTE")])
+        let page = builder.metadata([("PAGEID", "P1")])
+        let one = try NoteFile(bytes: builder.finish(header: header, pages: [page]))
+        var other = NoteBuilder()
+        let otherHeader = other.metadata([("FILE_TYPE", "NOTE")])
+        let otherPage = other.metadata([("PAGEID", "P2")])
+        let two = try NoteFile(bytes: other.finish(header: otherHeader, pages: [otherPage]))
+        #expect(NoteDiff.lines(one, two) == ["pages: 1 -> 1", "page 1: not found in AFTER"])
+    }
 }
 
 @Suite struct RattaRLEEncodeTests {
