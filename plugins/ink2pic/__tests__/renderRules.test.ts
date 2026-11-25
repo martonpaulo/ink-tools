@@ -36,6 +36,11 @@ describe('renders: the Manta page (#80)', () => {
     );
   });
 
+  it("turns a view as React Native's transform does, for ui-kit's drawn marks (#272)", () => {
+    expect(css({transform: [{rotate: '45deg'}]})).toBe('transform: rotate(45deg)');
+    expect(css({transform: [{translateX: 4}, {rotate: '-45deg'}]})).toBe('transform: translateX(4px) rotate(-45deg)');
+  });
+
   it('marks a pressable as a target and shows an empty field with its placeholder', () => {
     const html = toHtml([
       {type: 'View', props: {accessibilityRole: 'button'}, children: null},

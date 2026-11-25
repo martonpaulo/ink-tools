@@ -172,6 +172,15 @@ export function css(style: unknown): string {
       out.push(`${kebab(key)}: ${eInkColor(value) ?? 'transparent'}`);
     } else if (PASSED.has(key)) {
       out.push(`${kebab(key)}: ${value}`);
+    } else if (key === 'transform' && Array.isArray(value)) {
+      // [{rotate: '45deg'}] as `rotate(45deg)`: the drawn ×, ‹ and › of ui-kit (#272).
+      const parts = value.flatMap(step =>
+        Object.entries(step as Record<string, unknown>).map(
+          ([name, amount]) =>
+            `${name}(${typeof amount === 'number' && name.startsWith('translate') ? `${amount}px` : amount})`,
+        ),
+      );
+      out.push(`transform: ${parts.join(' ')}`);
     }
   }
   return out.join('; ');
