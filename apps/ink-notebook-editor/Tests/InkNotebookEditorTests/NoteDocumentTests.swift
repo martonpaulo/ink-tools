@@ -12,7 +12,8 @@ enum Fixtures {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "NoteFormat/Tests/NoteFormatTests/Fixtures", directoryHint: .isDirectory)
 
-    static let notes = ["blank.note", "content.note"]
+    /// `landscape.note` is synthetic, two landscape pages (#291), not made on the tablet.
+    static let notes = ["blank.note", "content.note", "landscape.note"]
 
     static func data(_ name: String) throws -> Data {
         try Data(contentsOf: folder.appending(path: name))

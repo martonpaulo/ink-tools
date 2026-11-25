@@ -41,6 +41,14 @@ final class RenderTests {
         }
         await drawn.loadPage(1)
         try await render("notebook", Self.sizes) { NotebookView(pages: drawn, page: 1) }
+        // A landscape page draws wide and upright, its thumbnail too (#291).
+        let landscape = try Fixtures.note("landscape.note")
+        let wide = PageImages(note: landscape)
+        for index in landscape.pages.indices {
+            await wide.loadThumbnail(index, scale: 1)
+        }
+        await wide.loadPage(0)
+        try await render("notebook-landscape", Self.sizes) { NotebookView(pages: wide) }
         let loading = PageImages(note: note)
         try await render("notebook-loading", Self.sizes) { NotebookView(pages: loading) }
         try await render("unreadable", Self.sizes) {

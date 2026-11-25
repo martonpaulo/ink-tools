@@ -124,19 +124,21 @@ private struct ThumbnailRow: View {
     let pages: PageImages
 
     var body: some View {
+        // The row is as tall as its page's thumbnail, so a landscape page leaves no blank band (#291).
+        let fitted = PageFit.fitted(page: pages.size(of: index), in: PageImages.thumbnailBox)
         VStack(spacing: 4) {
             Group {
                 switch pages.thumbnail(index) {
                 case .ready(let image):
                     PaperImage(image: image)
                 case .loading:
-                    PaperPlaceholder(size: PageFit.fitted(page: pages.size(of: index), in: PageImages.thumbnailBox))
+                    PaperPlaceholder(size: fitted)
                 case .failed:
-                    PaperPlaceholder(size: PageFit.fitted(page: pages.size(of: index), in: PageImages.thumbnailBox))
+                    PaperPlaceholder(size: fitted)
                         .overlay { Image(systemName: "exclamationmark.triangle").foregroundStyle(.red) }
                 }
             }
-            .frame(width: PageImages.thumbnailBox.width, height: PageImages.thumbnailBox.height)
+            .frame(width: PageImages.thumbnailBox.width, height: fitted.height)
             Text("\(index + 1)")
                 .font(.caption)
                 .monospacedDigit()
