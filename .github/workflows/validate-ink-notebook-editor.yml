@@ -1,0 +1,36 @@
+name: Validate Ink Notebook Editor
+
+# Runs only when apps/ink-notebook-editor/ (or this file) changes; the gate is the NoteFormat
+# package's own `swift test` on a macOS runner, since the app is a macOS app (#261).
+on:
+  push:
+    branches: [main]
+    paths: ['apps/ink-notebook-editor/**', '.github/workflows/validate-ink-notebook-editor.yml']
+  pull_request:
+    paths: ['apps/ink-notebook-editor/**', '.github/workflows/validate-ink-notebook-editor.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate ink-notebook-editor
+    runs-on: macos-15
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/ink-notebook-editor/NoteFormat
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Show the Swift toolchain
+        run: swift --version
+
+      - name: Test NoteFormat
+        run: swift test

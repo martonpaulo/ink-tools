@@ -9,7 +9,7 @@ A macOS app that reads and edits `.note` notebook files on the Mac without break
 like editing a PDF ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). The scope is in
 [`docs/plugin-scope.md` › Ink Notebook Editor](../../docs/plugin-scope.md#ink-notebook-editor);
 the folder's place in the monorepo is in [`docs/architecture.md`](../../docs/architecture.md).
-No code yet: this folder holds the plan until the first delivery starts.
+The reader exists, the app does not yet: the order is the Plan of [#48](https://github.com/martonpaulo/ink-tools/issues/48), with sub-issues [#261](https://github.com/martonpaulo/ink-tools/issues/261) to [#264](https://github.com/martonpaulo/ink-tools/issues/264).
 
 ## Scope
 
@@ -25,9 +25,12 @@ No code yet: this folder holds the plan until the first delivery starts.
 
 ## First delivery: a faithful reader
 
-1. Search first for existing `.note` parsers, such as `supernotelib`, and record what each one reads
-   and what it gets wrong; reuse one when it is faithful, and say which gap forces new code
-   (`skd-build-or-reuse`).
+1. Reuse, decided in [#261](https://github.com/martonpaulo/ink-tools/issues/261): `NoteFormat/` is a Swift port of
+   `supernote-tool`'s reader (Apache-2.0, [NOTICE](NOTICE.md)). A Mac app cannot ship its Python
+   runtime, and no Swift or macOS reader exists. Its page 1 of each public sample of
+   `supernote-typescript` matched `supernote-tool`'s PNG pixel for pixel, but for the page white (255
+   here, as `supernote-tool` gives). The sample with no `LAYERPROTOCOL` fails with a named error, as it
+   fails in `supernote-tool`.
 2. Make the test notebooks: blank and template notes with `inkctl note new`, pages with an inserted
    picture and a text box through a plugin, and the handwriting notes already under `Note/Tests/` on
    the tablet. Never use the owner's own notebooks as fixtures.
@@ -44,5 +47,7 @@ description, never in the name, the bundle identifier or the icon
 
 ## Validation
 
-Until code exists, the root `docs` gate covers this folder (`gates.json`). The first code change
-adds the app's own gate and workflow, and a row for it in the root `ci-pipelines` divergence.
+The gate `ink-notebook-editor` runs `swift test` in `NoteFormat/` (`gates.json`), in CI on a macOS
+runner (`.github/workflows/validate-ink-notebook-editor.yml`, one of the per-subproject workflows of
+the root `ci-pipelines` divergence). A reader change keeps every parse and decode failure a `NoteFormatError`, never a blank
+page, and adds its test in `NoteFormat/Tests/`.
