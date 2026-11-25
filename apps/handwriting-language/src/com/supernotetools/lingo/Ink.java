@@ -5,11 +5,13 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -102,6 +104,7 @@ final class Ink {
     name.setTypeface(Typeface.DEFAULT_BOLD);
     name.setGravity(Gravity.CENTER);
     name.setSingleLine(true);
+    name.setEllipsize(TextUtils.TruncateAt.END);
     name.setAccessibilityHeading(true);
     LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
     fill.setMarginStart(space);
@@ -114,6 +117,19 @@ final class Ink {
    * under it and a trailing control. The whole row is one target; the trailing control only shows.
    */
   static LinearLayout row(Context context, String title, String subtitle, View trailing) {
+    LinearLayout row = plainRow(context, title, subtitle, trailing);
+    trailing.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    row.setClickable(true);
+    row.setFocusable(true);
+    return row;
+  }
+
+  /** A row whose trailing control acts by itself, such as «Switch Language» beside the active language. */
+  static LinearLayout actionRow(Context context, String title, String subtitle, View action) {
+    return plainRow(context, title, subtitle, action);
+  }
+
+  private static LinearLayout plainRow(Context context, String title, String subtitle, View trailing) {
     LinearLayout row = new LinearLayout(context);
     row.setOrientation(LinearLayout.HORIZONTAL);
     row.setGravity(Gravity.CENTER_VERTICAL);
@@ -128,15 +144,10 @@ final class Ink {
       texts.addView(text(context, subtitle, true));
     }
     row.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-    if (trailing != null) {
-      trailing.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-      LinearLayout.LayoutParams end = new LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-      end.setMarginStart(space);
-      row.addView(trailing, end);
-    }
-    row.setClickable(true);
-    row.setFocusable(true);
+    LinearLayout.LayoutParams end = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    end.setMarginStart(space);
+    row.addView(trailing, end);
     return row;
   }
 
@@ -183,11 +194,12 @@ final class Ink {
       both.setLayerInset(1, inset, inset, inset, inset);
       mark = both;
     }
-    TextView target = new TextView(context);
-    target.setGravity(Gravity.CENTER);
-    target.setMinWidth(target(context));
-    target.setMinHeight(target(context));
-    target.setCompoundDrawablesRelativeWithIntrinsicBounds(mark, null, null, null);
+    View ringView = new View(context);
+    ringView.setBackground(mark);
+    FrameLayout target = new FrameLayout(context);
+    target.setMinimumWidth(target(context));
+    target.setMinimumHeight(target(context));
+    target.addView(ringView, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
     return target;
   }
 
@@ -207,6 +219,9 @@ final class Ink {
     Button view = new Button(context);
     view.setText(label);
     view.setAllCaps(false);
+    // The ui-kit button's label is regular weight; Material's button text is medium and spaced.
+    view.setTypeface(Typeface.DEFAULT);
+    view.setLetterSpacing(0);
     view.setTextSize(TypedValue.COMPLEX_UNIT_SP, bodySp(context));
     view.setStateListAnimator(null);
     view.setMinHeight(px(context, Tokens.CONTROL_HEIGHT_MM));

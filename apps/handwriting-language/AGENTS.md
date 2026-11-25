@@ -25,10 +25,11 @@ Two surfaces ship in one build:
   ([#246](https://github.com/martonpaulo/ink-tools/issues/246)). It is drawn with the Supernote's
   native controls, as the plugins' ui-kit draws them ([#275](https://github.com/martonpaulo/ink-tools/issues/275)):
   the black title bar with × to close at the leading edge (Back closes it too), the active
-  language large with the primary button «Switch Language», the floating button's three choices
-  as radio rows and «Reset Button Position», a switch row («ON»/«OFF») for each installed language
-  in the cycle, each missing permission with the command that grants it, and the command that
-  turns on writing detection when it is off. The one-tap switch with nothing on screen is gone (owner,
+  language as a row with the primary button «Switch Language» at its trailing edge, the floating
+  button's three choices as radio rows and «Reset Button Position», a switch row («ON»/«OFF») for
+  each installed language in the cycle, each missing permission with the button to its system
+  screen and the command that grants it, and the command that turns on writing detection when it
+  is off. An error shows in bold beside the control whose action failed. The one-tap switch with nothing on screen is gone (owner,
   2026-11-25).
 
 ## Target surface

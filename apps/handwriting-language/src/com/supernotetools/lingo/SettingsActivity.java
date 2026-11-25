@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
-import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -36,8 +35,12 @@ public final class SettingsActivity extends Activity {
   private static final String FILES_OP = "MANAGE_EXTERNAL_STORAGE";
   private static final String OVERLAY_OP = "SYSTEM_ALERT_WINDOW";
 
+  /** Where the last error shows: beside the control whose action failed (#275). */
+  private enum Place { SWITCH, PERMISSION, CYCLE }
+
   private LinearLayout page;
   private String error;
+  private Place errorPlace;
 
   @Override
   protected void onCreate(Bundle state) {
@@ -82,35 +85,33 @@ public final class SettingsActivity extends Activity {
   private void render() {
     page.removeAllViews();
     add(Ink.text(this, Copy.INTRO, false));
-    if (error != null) {
-      add(Ink.caption(this, Copy.SWITCH_FAILED));
-      add(Ink.text(this, error, false));
-    }
     boolean files = Environment.isExternalStorageManager();
     boolean overlay = Settings.canDrawOverlays(this);
     if (!files) {
-      missing(Copy.FILES_OFF, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+      missing(Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
     }
 
     add(Ink.caption(this, Copy.ACTIVE));
     List<String> installed = null;
+    String active = null;
+    String readFailure = null;
     try {
-      String active = Switcher.current();
-      TextView name = Ink.text(this, active == null ? Copy.UNKNOWN : LanguageCycle.name(active) + "  (" + active + ")", false);
-      name.setTextSize(TypedValue.COMPLEX_UNIT_SP, Ink.largeSp(this));
-      add(name);
+      active = Switcher.current();
       installed = Switcher.installed();
     } catch (IOException readError) {
-      add(Ink.text(this, files ? readError.getMessage() : Copy.FILES_OFF, false));
+      readFailure = readError.getMessage();
     }
     Button next = Ink.button(this, Copy.SWITCH_LANGUAGE, true, files);
     next.setOnClickListener(view -> switchLanguage());
-    addButton(next);
+    String language = active == null ? Copy.UNKNOWN : LanguageCycle.name(active);
+    String title = readFailure == null ? language : files ? readFailure : Copy.NOT_READ;
+    add(Ink.actionRow(this, title, active, next));
+    errorAt(Place.SWITCH, Copy.SWITCH_FAILED);
 
     Prefs prefs = new Prefs(this);
     add(Ink.caption(this, Copy.BUTTON_SECTION));
     if (!overlay) {
-      missing(Copy.OVERLAY_OFF, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+      missing(Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
     }
     ButtonRule.Mode chosenMode = prefs.button();
     for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
@@ -123,19 +124,24 @@ public final class SettingsActivity extends Activity {
     }
     if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
       bold(Copy.WATCHER_OFF);
-      add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, false));
+      add(Ink.text(this, Copy.WATCHER_FROM_COMPUTER, false));
       command(Copy.WATCHER_COMMANDS);
     }
     add(Ink.text(this, Copy.BUTTON_HELP, true));
-    Button reset = Ink.button(this, Copy.RESET_PLACE, false, true);
+    boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
+    Button reset = Ink.button(this, Copy.RESET_PLACE, false, shown);
     reset.setOnClickListener(view -> {
       new Prefs(this).clearPlace();
       OverlayService.moveHome();
     });
     addButton(reset);
+    if (chosenMode == ButtonRule.Mode.HIDDEN) {
+      add(Ink.text(this, Copy.RESET_OFF, true));
+    }
 
     add(Ink.caption(this, Copy.CYCLE_SECTION));
-    add(Ink.text(this, Copy.CYCLE_HELP, true));
+    add(Ink.text(this, files ? Copy.CYCLE_HELP : Copy.CYCLE_NO_FILES, true));
+    errorAt(Place.CYCLE, null);
     if (installed != null) {
       Set<String> chosen = prefs.cycle();
       for (String code : installed) {
@@ -158,7 +164,8 @@ public final class SettingsActivity extends Activity {
       Switcher.next(this, "screen");
       error = null;
     } catch (IOException switchError) {
-      error = switchError.getMessage();
+      fail(Place.SWITCH, switchError.getMessage());
+      return;
     }
     render();
   }
@@ -200,13 +207,11 @@ public final class SettingsActivity extends Activity {
       List<String> left = Switcher.installed();
       left.retainAll(chosen);
       if (left.isEmpty()) {
-        error = Copy.CYCLE_LAST;
-        render();
+        fail(Place.CYCLE, Copy.CYCLE_LAST);
         return;
       }
     } catch (IOException readError) {
-      error = readError.getMessage();
-      render();
+      fail(Place.CYCLE, readError.getMessage());
       return;
     }
     error = null;
@@ -218,20 +223,38 @@ public final class SettingsActivity extends Activity {
     }
   }
 
-  private void missing(String what, String op, String screen) {
+  /** A missing permission: what it stops, the button to its system screen, then the ADB command. */
+  private void missing(String what, String open, String op, String screen) {
     bold(what);
-    add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, false));
-    command(Copy.grantCommand(op));
-    Button open = Ink.button(this, Copy.OPEN_PERMISSION, false, true);
-    open.setOnClickListener(view -> {
+    Button button = Ink.button(this, open, false, true);
+    button.setOnClickListener(view -> {
       try {
         startActivity(new Intent(screen, Uri.parse("package:" + getPackageName())));
       } catch (ActivityNotFoundException none) {
-        error = Copy.NO_PERMISSION_SCREEN;
-        render();
+        fail(Place.PERMISSION, Copy.NO_PERMISSION_SCREEN);
       }
     });
-    addButton(open);
+    addButton(button);
+    errorAt(Place.PERMISSION, null);
+    add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, false));
+    command(Copy.grantCommand(op));
+  }
+
+  private void fail(Place place, String message) {
+    error = message;
+    errorPlace = place;
+    render();
+  }
+
+  /** The last error, in bold ink, when it belongs here, under its own heading when it has one. */
+  private void errorAt(Place place, String heading) {
+    if (error == null || errorPlace != place) {
+      return;
+    }
+    if (heading != null) {
+      bold(heading);
+    }
+    bold(error);
   }
 
   private void bold(String value) {
@@ -256,10 +279,11 @@ public final class SettingsActivity extends Activity {
     page.addView(view, params);
   }
 
-  /** A button at its own width, at the leading edge, one spacing step under the view before. */
+  /** A button at its own width at the trailing edge, as OK sits in the system dialogs (ui-kit `shared.actions`). */
   private void addButton(Button button) {
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    params.gravity = android.view.Gravity.END;
     params.topMargin = Ink.space(this);
     page.addView(button, params);
   }

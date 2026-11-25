@@ -11,27 +11,32 @@ final class Copy {
   static final String PACKAGE = "com.supernotetools.lingo";
   static final String TITLE = "Handwriting Language";
   static final String INTRO = "Switches the handwriting recognition language of the whole tablet.";
-  static final String ACTIVE = "Active language";
+  static final String ACTIVE = "Active Language";
   static final String SWITCH_LANGUAGE = "Switch Language";
   static final String CLOSE = "Close";
+  static final String NOT_READ = "Not read: All-files access is off.";
   static final String UNKNOWN = "Unknown: the language folder holds more than one language.";
-  static final String BUTTON_SECTION = "Floating button";
+  static final String BUTTON_SECTION = "Floating Button";
   static final String BUTTON_WRITING = "Only where you write: the handwriting keyboard, a note, Digest, To-Do, Email";
   static final String BUTTON_ALWAYS = "Always visible, over every app";
   static final String BUTTON_HIDDEN = "Hidden";
   static final String BUTTON_HELP = "One tap moves to the next language. A long press opens this screen. Drag the button to move it; it stays where you leave it. The Handwriting Language entry in the sidebar opens this screen.";
   static final String RESET_PLACE = "Reset Button Position";
+  static final String RESET_OFF = "The button is hidden, so it has no position to reset.";
   static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
   static final String WATCHER_COMMANDS =
       "adb shell settings put secure enabled_accessibility_services " + PACKAGE + "/.WritingWatcher\n"
           + "adb shell settings put secure accessibility_enabled 1";
-  static final String CYCLE_SECTION = "Languages in the cycle";
+  static final String CYCLE_SECTION = "Languages in the Cycle";
   static final String CYCLE_HELP = "Only installed languages are listed. Install more in Settings, Handwriting language.";
+  static final String CYCLE_NO_FILES = "Turn on All-files access above to list the languages.";
   static final String CYCLE_LAST = "Keep at least one language in the cycle.";
   static final String FILES_OFF = "All-files access is off, so the language cannot be switched.";
   static final String OVERLAY_OFF = "Display over other apps is off, so the floating button cannot show.";
-  static final String GRANT_FROM_COMPUTER = "Grant it from the computer:";
-  static final String OPEN_PERMISSION = "Open the permission screen";
+  static final String GRANT_FROM_COMPUTER = "Or run this on a computer with ADB:";
+  static final String WATCHER_FROM_COMPUTER = "Turn it on from a computer with ADB:";
+  static final String OPEN_FILES_PERMISSION = "Open All-Files Access Settings";
+  static final String OPEN_OVERLAY_PERMISSION = "Open Display Over Apps Settings";
   static final String NO_PERMISSION_SCREEN = "This tablet has no screen for this permission. Use the command above.";
   static final String SWITCH_FAILED = "The last switch failed:";
   static final String VERSION = "Version";
