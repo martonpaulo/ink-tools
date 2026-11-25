@@ -36,6 +36,12 @@ class Vocabulary(unittest.TestCase):
         self.assertEqual(readme_status.bad_cells(TABLE.format("[🟡 Beta](https://example.com)"), ["🟡 Beta"]), (True, []))
         self.assertEqual(readme_status.bad_cells(html.format(link.replace("Beta", "Gamma")), ["🟡 Beta"])[1][0][0], 3)
 
+    def test_the_emoji_before_a_linked_word_passes(self):
+        html = '<table>\n  <tr><th>Tool</th><th>Status</th></tr>\n  <tr><td>A</td><td>{}</td></tr>\n</table>\n'
+        link = '🟡&nbsp;<a href="https://example.com/releases?q=a&amp;expanded=true">Beta</a>'
+        self.assertEqual(readme_status.bad_cells(html.format(link), ["🟡 Beta"]), (True, []))
+        self.assertEqual(readme_status.bad_cells(html.format(link.replace("Beta<", "Gamma<")), ["🟡 Beta"])[1][0][0], 3)
+
     def test_other_text_after_the_status_fails(self):
         html = '<table>\n  <tr><th>Tool</th><th>Status</th></tr>\n  <tr><td>A</td><td>{}</td></tr>\n</table>\n'
         for cell in ('🟡 Beta<br>Not yet on the tablet', '🟡 Beta<br><a href="https://example.com">Docs</a>', '🟡 Beta <a href="https://example.com">Download</a>'):

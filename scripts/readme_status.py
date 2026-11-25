@@ -32,10 +32,15 @@ def cells(line):
 
 
 LINKED = re.compile(r'^<a href="[^"]+">(.*)</a>$|^\[(.*)\]\([^)]+\)$')
+# The emoji stays outside the link, so only the word is underlined (owner, 2026-11-25).
+EMOJI_THEN_LINK = re.compile(r'^(\S+)(?:&nbsp;| )<a href="[^"]+">([^<]*)</a>$')
 
 
 def status_value(cell):
     """A Status cell's value: the cell, or the text of the one release link that wraps it."""
+    split = EMOJI_THEN_LINK.match(cell)
+    if split:
+        return f"{split.group(1)} {split.group(2)}".replace("&nbsp;", " ")
     linked = LINKED.match(cell)
     return (linked.group(1) or linked.group(2) if linked else cell).replace("&nbsp;", " ")
 
