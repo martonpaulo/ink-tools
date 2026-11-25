@@ -115,7 +115,7 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 - Each limit the owner sets is one row of the product definition's `## Limits the owner set`, in the same commit; a relaxed limit keeps its row as «replaced» ([martonpaulo/skill-deck#738](https://github.com/martonpaulo/skill-deck/issues/738)).
 - README: the recorded `Display name` is the H1. Links to the live project are allowed. The rest
   follows `bench-project-standards`'s `references/public-surface-style.md`.
-- README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `⚫ Internal`.
+- README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `🟣 Internal`.
   In the README Tools table each status is the emoji of one of them, before the name in the Name cell, with a legend under the table;
   the kind under the name (plugin, app, Mac app; no parentheses) links to the piece's own releases when it has them, else to its folder (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
   `scripts/readme_status.py` checks it in the `docs` gate.
