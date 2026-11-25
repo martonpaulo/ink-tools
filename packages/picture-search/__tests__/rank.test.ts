@@ -602,6 +602,34 @@ describe('namesakes of a plain word (#13)', () => {
   });
 });
 
+describe('the query intent (#19)', () => {
+  it('reads the same styles on every call: the shared patterns keep no state', () => {
+    for (let i = 0; i < 3; i++) {
+      expect([...readIntent('apple logo').styles]).toEqual(['logo']);
+      expect(readIntent('apple logo').subject).toEqual(['apple']);
+      expect([...readIntent('apple').styles]).toEqual([]);
+    }
+  });
+
+  it('builds no pattern per call: compiling them was most of the ranking on the tablet', () => {
+    const Original = globalThis.RegExp;
+    let built = 0;
+    class CountingRegExp extends Original {
+      constructor(pattern: string | RegExp, flags?: string) {
+        super(pattern, flags);
+        built++;
+      }
+    }
+    globalThis.RegExp = CountingRegExp as RegExpConstructor;
+    try {
+      readIntent('photo of an apple logo');
+    } finally {
+      globalThis.RegExp = Original;
+    }
+    expect(built).toBe(0);
+  });
+});
+
 describe('filler words in the query (#110)', () => {
   it('«photo of a cat» has the subject «cat», not «of a cat»', () => {
     expect(readIntent('photo of a cat').subject).toEqual(['cat']);

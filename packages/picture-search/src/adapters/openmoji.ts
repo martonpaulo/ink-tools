@@ -66,13 +66,25 @@ export function fold(text: string): string {
     .trim();
 }
 
+/** A field's name, the first item before its keywords: «grinning face;cheerful;…/…». */
+function fieldName(text: string): string {
+  return fold(text.split('/')[0].split(';')[0]);
+}
+
+/** An index line: `<hex> <abstract 0|1>`, then one field per language, tab-separated. */
+function readLine(line: string): {hex: string; abstract: boolean; fields: string[]} {
+  const [head, ...fields] = line.split('\t');
+  const [hex, abstract] = head.split(' ');
+  return {hex, abstract: abstract === '1', fields};
+}
+
 function parseField(text: string): Words | undefined {
   if (!text) {
     return undefined;
   }
   const [main, ...weak] = text.split('/');
-  const [name, ...strong] = main.split(';');
-  const folded = fold(name);
+  const [, ...strong] = main.split(';');
+  const folded = fieldName(text);
   return {
     name: folded,
     nameWords: folded.split(' '),
@@ -87,8 +99,7 @@ let parsed: Emoji[] | undefined;
 /** The index, read on the first search only. */
 function symbols(): Emoji[] {
   parsed ??= INDEX.entries.map(line => {
-    const [head, ...fields] = line.split('\t');
-    const [hex, abstract] = head.split(' ');
+    const {hex, abstract, fields} = readLine(line);
     const byLanguage = new Map<string, Words>();
     INDEX.languages.forEach((lang, i) => {
       const words = parseField(fields[i]);
@@ -98,7 +109,7 @@ function symbols(): Emoji[] {
     });
     return {
       hex,
-      abstract: abstract === '1',
+      abstract,
       title: fields[0].split(/[;/]/)[0],
       byLanguage,
     };
@@ -237,15 +248,32 @@ let things: Set<string> | undefined;
  * kind of the subject («vintage», «blank») (#24). Read from the shipped index: no request.
  */
 export function namesThing(word: string): boolean {
-  things ??= new Set(
-    symbols()
-      .filter(symbol => !symbol.abstract)
-      .map(symbol => symbol.byLanguage.get('en')?.name ?? '')
-      .filter(name => name !== '' && !name.includes(' ')),
-  );
+  things ??= thingNames();
   return (
     things.has(word) || (word.endsWith('s') && things.has(word.slice(0, -1)))
   );
+}
+
+/**
+ * The one-word English names of the things, read from each index line's head and English field
+ * only: «Insert Image» searches without OpenMoji, so parsing the whole index here cost the
+ * ranking about 1 s on the tablet's first search of a word a title names (#19).
+ */
+function thingNames(): Set<string> {
+  const english = INDEX.languages.indexOf('en');
+  const names = new Set<string>();
+  for (const line of INDEX.entries) {
+    const {abstract, fields} = readLine(line);
+    const field = fields[english];
+    if (abstract || !field) {
+      continue;
+    }
+    const name = fieldName(field);
+    if (name !== '' && !name.includes(' ')) {
+      names.add(name);
+    }
+  }
+  return names;
 }
 
 /** Every symbol's code, in OpenMoji's order: what «Download symbols» fetches (#91). */

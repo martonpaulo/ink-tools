@@ -126,12 +126,22 @@ export type QueryIntent = {
   person?: true;
 };
 
+/**
+ * Each group's pattern with the `g` flag, built once: Hermes spends about 3 ms compiling each one,
+ * and `readIntent` runs per result and per thumbnail, so building them per call was most of the
+ * ranking's time on the tablet (#19).
+ */
+const GLOBAL_STYLE_GROUPS = (Object.keys(STYLE_GROUPS) as StyleGroup[]).map(
+  group => [group, new RegExp(STYLE_GROUPS[group].source, 'giu')] as const,
+);
+
 /** The query without its style words, and the style groups they named. */
 function splitStyles(query: string): {rest: string; styles: Set<StyleGroup>} {
   const styles = new Set<StyleGroup>();
   let rest = query;
-  for (const group of Object.keys(STYLE_GROUPS) as StyleGroup[]) {
-    const global = new RegExp(STYLE_GROUPS[group].source, 'giu');
+  for (const [group, global] of GLOBAL_STYLE_GROUPS) {
+    // A `g` pattern's `test` starts at its `lastIndex`; `replace` below sets it back to 0.
+    global.lastIndex = 0;
     if (global.test(rest)) {
       styles.add(group);
       rest = rest.replace(global, ' ');

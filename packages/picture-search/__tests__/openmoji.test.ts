@@ -152,3 +152,38 @@ describe('symbols in the ranking (#67)', () => {
     expect(ranked.map(result => result.source)).toContain('openmoji');
   });
 });
+
+describe('the things the ranker reads from the index (#24, #19)', () => {
+  it('names a one-word thing and its plural, never an abstract symbol or a phrase', () => {
+    const {namesThing} = require('../src/adapters/openmoji');
+    expect(namesThing('owl')).toBe(true);
+    expect(namesThing('owls')).toBe(true);
+    expect(namesThing('house')).toBe(true);
+    expect(namesThing('dizzy')).toBe(false);
+    expect(namesThing('grinning face')).toBe(false);
+    expect(namesThing('vintage')).toBe(false);
+  });
+
+  it('reads the names without parsing every symbol: «Insert Image» searches without OpenMoji', () => {
+    // A full parse builds one language map per symbol; on the tablet that cost the first ranking
+    // about 1 s (#19). Counted through a Map that the module builds during the call.
+    const Original = globalThis.Map;
+    let built = 0;
+    class CountingMap<K, V> extends Original<K, V> {
+      constructor(entries?: readonly (readonly [K, V])[] | null) {
+        super(entries);
+        built++;
+      }
+    }
+    jest.isolateModules(() => {
+      const {namesThing} = require('../src/adapters/openmoji');
+      globalThis.Map = CountingMap as MapConstructor;
+      try {
+        expect(namesThing('owl')).toBe(true);
+      } finally {
+        globalThis.Map = Original;
+      }
+    });
+    expect(built).toBe(0);
+  });
+});

@@ -169,6 +169,9 @@ export function readParseAnswer(body: string): string | null {
 
 /** A reading in brackets, such as pinyin: Latin letters with their tone marks. */
 const READING = /[(（]\s*([\p{Script=Latin}\s'’]+)\s*[)）]/u;
+/** The reading at the end of a translation, and every reading in a line: built once (#19). */
+const READING_AT_END = new RegExp(`^(.*?)\\s*${READING.source}$`, 'u');
+const READINGS = new RegExp(READING.source, 'gu');
 
 /** One translation's text: `[[maçã]]` or `苹果 (píngguǒ)`, its reading split out. */
 function translationOf(
@@ -179,7 +182,7 @@ function translationOf(
   const text = plainText(raw);
   if (text === '') return null;
   // A reading in brackets after the word, such as pinyin: Latin letters with their tone marks.
-  const reading = new RegExp(`^(.*?)\\s*${READING.source}$`, 'u').exec(text);
+  const reading = READING_AT_END.exec(text);
   const translation: Translation = reading
     ? {text: reading[1].trim(), reading: reading[2].trim()}
     : after
@@ -248,7 +251,7 @@ export function parseTranslations(
       // (píngguǒ), (línqín)` (#127).
       const end = (match.index ?? 0) + match[0].length;
       const tail = line.slice(end).split('{{')[0];
-      const readings = [...tail.matchAll(new RegExp(READING.source, 'gu'))].map(r => r[1].trim());
+      const readings = [...tail.matchAll(READINGS)].map(r => r[1].trim());
       const words = templateTranslations(name, args, to) ?? [];
       for (const [i, {word, reading}] of words.entries()) {
         const translation = translationOf(word, sense, reading ?? readings[i]);
