@@ -43,6 +43,26 @@ function javaSources(folder) {
 }
 
 /**
+ * Compiles `files` with the JDK alone and runs each of `mains` headless, with `javaArgs`, through
+ * `jdkTool`, from `cwd` (a test may read a file by a relative path). A temporary folder: the gate may run as another user than the one that owns build/.
+ * The plugins' `--test` and the packages gate (`package-tests.cjs`, #254) both run here.
+ */
+function jvmTests({jdkTool, cwd, prefix, files, mains, javaArgs = []}) {
+  const run = (binary, args) => execFileSync(binary, args, {cwd, stdio: 'inherit'});
+  const classes = fs.mkdtempSync(path.join(os.tmpdir(), `${prefix}-native-tests-`));
+  // Compile inside the try, so a compile error also removes the folder.
+  try {
+    run(jdkTool('javac'), [...JAVAC, '-Werror', '-d', classes, ...files]);
+    for (const main of mains) {
+      // Headless: a test that touches AWT would otherwise show a Java app in the macOS Dock.
+      run(jdkTool('java'), ['-Djava.awt.headless=true', ...javaArgs, '-cp', classes, main]);
+    }
+  } finally {
+    fs.rmSync(classes, {recursive: true, force: true});
+  }
+}
+
+/**
  * The build of one plugin.
  * - `root`: the plugin folder, which holds PluginConfig.json, package.json and scripts/.
  * - `hostTools`: the plugin's `scripts/host-tools.cjs` (`jdkTool`, `JDK_MISSING`).
@@ -183,25 +203,9 @@ function nativeBuild({root, hostTools, packageClass, sources, test}) {
     console.log(`native: ${name} ${fs.statSync(path.join(outputs, name)).size} bytes with app.npk`);
   }
 
-  /**
-   * Compiles `files` with the JDK alone and runs each of `mains` headless, with `javaArgs`. A
-   * temporary folder: the gate may run as another user than the one that owns build/.
-   */
-  function jvmTests({prefix, files, mains, javaArgs = []}) {
-    const classes = fs.mkdtempSync(path.join(os.tmpdir(), `${prefix}-native-tests-`));
-    // Compile inside the try, so a compile error also removes the folder.
-    try {
-      run(jdkTool('javac'), [...JAVAC, '-d', classes, ...files]);
-      for (const main of mains) {
-        // Headless: a test that touches AWT would otherwise show a Java app in the macOS Dock.
-        run(jdkTool('java'), ['-Djava.awt.headless=true', ...javaArgs, '-cp', classes, main]);
-      }
-    } finally {
-      fs.rmSync(classes, {recursive: true, force: true});
-    }
-  }
-
-  const testNative = test ? () => test({jvmTests, javaSources}) : undefined;
+  const testNative = test
+    ? () => test({jvmTests: options => jvmTests({jdkTool, cwd: root, ...options}), javaSources})
+    : undefined;
   return {buildNative, packagePlugin, testNative};
 }
 
@@ -236,4 +240,4 @@ function defineBuild(options, isMain) {
   return {...builder, javaSources};
 }
 
-module.exports = {defineBuild, javaSources, nativeBuild};
+module.exports = {defineBuild, javaSources, jvmTests, nativeBuild};

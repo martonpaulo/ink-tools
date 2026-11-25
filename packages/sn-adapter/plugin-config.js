@@ -7,7 +7,7 @@
  * mock and type stand-in in `testing/` (#142); the plugins that call it type-check it against the
  * real `sn-plugin-lib`. The Java in `native/` (the dry insert's
  * revert by row id, #213, and whether an insert wrote a row, #217) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
- * its JVM tests in `native-tests/` run in the Account Sync gate.
+ * its JVM tests in `native-tests/` run in the packages gate (`jvmTests` below, #254).
  */
 const path = require('path');
 
@@ -18,6 +18,18 @@ exports.nativeSources = path.join(__dirname, 'native');
 
 /** The JVM tests of that Java, which need only a JDK. */
 exports.nativeTests = path.join(__dirname, 'native-tests');
+
+/**
+ * What the packages gate's JVM tests compile and run (#254): the Android-free classes of
+ * `native/` and the mains, with every test in `native-tests/`.
+ */
+exports.jvmTests = {
+  prefix: 'sn-adapter',
+  files: ['DryInsertRevert', 'InsertAnswer'].map(name =>
+    path.join(exports.nativeSources, `com/inktools/provider/${name}.java`),
+  ),
+  mains: ['com.inktools.provider.DryInsertRevertTest', 'com.inktools.provider.InsertAnswerTest'],
+};
 
 /**
  * Adds the package to another Metro config part, such as ui-kit's: Metro's mergeConfig replaces

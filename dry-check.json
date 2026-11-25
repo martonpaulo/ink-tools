@@ -9,9 +9,6 @@
    "scripts/skd/**"
   ],
   "counts": {
-   "apps/handwriting-language/scripts/host-tools.cjs": {
-    "repeated": 1
-   },
    "apps/handwriting-language/scripts/toolchain.sh": {
     "repeated": 1,
     "url": 2
@@ -57,17 +54,11 @@
    "plugins/account-sync/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/account-sync/scripts/host-tools.cjs": {
-    "repeated": 1
-   },
    "plugins/account-sync/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
    },
    "plugins/device-transfer/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/device-transfer/scripts/host-tools.cjs": {
     "repeated": 1
    },
    "plugins/device-transfer/scripts/native-toolchain.sh": {
@@ -86,9 +77,6 @@
    "plugins/image-editing/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/image-editing/scripts/host-tools.cjs": {
-    "repeated": 1
-   },
    "plugins/image-editing/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
@@ -102,9 +90,6 @@
    "plugins/plugin-diagnostics/App.tsx": {
     "colour": 1,
     "number": 4
-   },
-   "plugins/plugin-diagnostics/scripts/host-tools.cjs": {
-    "repeated": 1
    },
    "plugins/plugin-diagnostics/scripts/native-toolchain.sh": {
     "repeated": 3,
@@ -123,9 +108,6 @@
     "number": 13
    },
    "plugins/word-lookup/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/word-lookup/scripts/host-tools.cjs": {
     "repeated": 1
    },
    "plugins/word-lookup/scripts/native-toolchain.sh": {
@@ -157,7 +139,7 @@
    "scripts/skd/**"
   ],
   "counts": {
-   "apps/handwriting-language": 3,
+   "apps/handwriting-language": 1,
    "cli/inkctl": 1,
    "packages/ink-core": 1,
    "plugins/account-sync": 5,
@@ -166,9 +148,6 @@
    "plugins/real-time-conversion": 1
   },
   "identical": {
-   "plugins/plugin-diagnostics/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
-   "plugins/device-transfer/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
-   "plugins/image-editing/scripts/host-tools.cjs": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
    "plugins/device-transfer/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
    "plugins/image-editing/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)"
   }

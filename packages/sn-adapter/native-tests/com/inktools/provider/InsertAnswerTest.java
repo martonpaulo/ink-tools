@@ -1,6 +1,6 @@
 package com.inktools.provider;
 
-/** JVM checks of the written-row rule (#217); run by the Account Sync gate, `npm run test:native` in plugins/account-sync. */
+/** JVM checks of the written-row rule (#217); run by the packages gate, `npm run test:native` in packages/ (#254). */
 public final class InsertAnswerTest {
   private static void check(boolean ok, String what) {
     if (!ok) {
