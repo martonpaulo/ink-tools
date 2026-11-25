@@ -1,5 +1,5 @@
 /**
- * The send flow (#98): make the PNG, offer it to the chosen receiver, upload it, say how it went,
+ * The send flow (#98): make the PNG, offer it to the picked receiver (#307), upload it, say how it went,
  * and remove the PNG on every path.
  */
 import {
@@ -52,8 +52,11 @@ export function tempDir(pluginDir: string): string {
   return `${pluginDir}/tmp`;
 }
 
-/** What one tap ends in: a line for the toast, or the Settings view to pick a device. */
-export type Outcome = {kind: 'toast'; text: string} | {kind: 'choose'};
+/** What one send ends in: a line for the toast. */
+export type Outcome = {kind: 'toast'; text: string};
+
+/** Called with the receiver at the address that took the item, once it was sent (#307). */
+export type Delivered = (target: Device) => Promise<void>;
 
 /**
  * Every receiver that answers one announce, by multicast or by `/register`, one per fingerprint,
@@ -118,12 +121,13 @@ export function targetLine(device: Device): string {
   return `to ${device.alias} at ${device.ip}:${device.port} over ${device.protocol}`;
 }
 
-/** The chosen receiver at the address a new discovery finds it, saved; null when not found. */
+/** The picked receiver at the address a new discovery finds it, saved; null when not found. */
 export type Relocate = (device: Device) => Promise<Device | null>;
 
 /**
- * Looks for `device` again by its fingerprint and saves it when it moved (#98): a Mac keeps its
- * certificate across a DHCP lease, not its address, and a connect to the saved one fails.
+ * Looks for `device` again by its fingerprint and saves it as the last pick when it moved (#98,
+ * #307): a Mac keeps its certificate across a DHCP lease, not its address, and a connect to the
+ * saved one fails.
  */
 export function findAgain(
   native: Relay,
@@ -135,37 +139,54 @@ export function findAgain(
     const moved = found.ok ? movedDevice(device, found.value) : null;
     if (moved !== null) {
       const settings = await loadSettings(native, pluginDir);
-      await saveSettings(native, {...settings, device: moved}, pluginDir);
+      await saveSettings(native, {...settings, last: moved}, pluginDir);
     }
     return moved;
   };
 }
 
-/** One try of a send: its toast line, and whether its offer never reached the receiver. */
-export type Attempt = {text: string; unreachable: boolean};
+/**
+ * One try of a send: its toast line, whether its offer never reached the receiver, and whether the
+ * receiver took the item.
+ */
+export type Attempt = {text: string; unreachable: boolean; sent: boolean};
 
 /**
  * Runs `attempt` at the device's saved address; when its offer cannot connect, `relocate` looks
  * for the device by its fingerprint, and one more attempt goes to its new address. Only an offer
- * is tried again, since nothing reached the receiver yet. Each target is logged (#98).
+ * is tried again, since nothing reached the receiver yet. Each target is logged (#98); the target
+ * that took the item goes to `delivered` (#307).
  */
 export async function withRelocation(
   device: Device,
   relocate: Relocate | undefined,
   attempt: (target: Device) => Promise<Attempt>,
+  delivered?: Delivered,
 ): Promise<string> {
+  const tried = await relocated(device, relocate, attempt);
+  if (tried.sent && delivered !== undefined) {
+    await delivered(tried.target);
+  }
+  return tried.text;
+}
+
+async function relocated(
+  device: Device,
+  relocate: Relocate | undefined,
+  attempt: (target: Device) => Promise<Attempt>,
+): Promise<Attempt & {target: Device}> {
   sendLog(targetLine(device));
   const first = await attempt(device);
   if (!first.unreachable || relocate === undefined) {
-    return first.text;
+    return {...first, target: device};
   }
   const moved = await relocate(device);
   if (moved === null || sameAddress(moved, device)) {
     sendLog(`${device.alias} found at no other address`);
-    return first.text;
+    return {...first, target: device};
   }
   sendLog(targetLine(moved));
-  return (await attempt(moved)).text;
+  return {...(await attempt(moved)), target: moved};
 }
 
 /**
@@ -195,7 +216,7 @@ export function failureText(
 
 /**
  * Offers and uploads one PNG, at the device's new address when the saved one does not answer
- * (`relocate`); the answer is the toast line.
+ * (`relocate`); the answer is the toast line, and a sent PNG's target goes to `delivered`.
  */
 export async function sendFile(
   native: Relay,
@@ -204,6 +225,7 @@ export async function sendFile(
   path: string,
   fileName: string,
   relocate?: Relocate,
+  delivered?: Delivered,
 ): Promise<string> {
   if (!isPrivateAddress(device.ip)) {
     return copy.notLocal(device.alias);
@@ -212,8 +234,11 @@ export async function sendFile(
   if (!info.ok) {
     return copy.noImage;
   }
-  return withRelocation(device, relocate, target =>
-    offerFile(native, sender, target, path, fileName, info.value),
+  return withRelocation(
+    device,
+    relocate,
+    target => offerFile(native, sender, target, path, fileName, info.value),
+    delivered,
   );
 }
 
@@ -249,6 +274,7 @@ async function offerFile(
     return {
       text: failureText(device, prepared.moduleCode),
       unreachable: unreachable(prepared.moduleCode),
+      sent: false,
     };
   }
   const session = parsePrepareUpload(
@@ -257,7 +283,11 @@ async function offerFile(
     fileId,
   );
   if (session.kind !== 'session') {
-    return {text: copy.result(session, device.alias), unreachable: false};
+    return {
+      text: copy.result(session, device.alias),
+      unreachable: false,
+      sent: session.kind === 'sent',
+    };
   }
   const uploaded = await loggedPost('upload', () =>
     native.post(
@@ -271,26 +301,29 @@ async function offerFile(
       TIMEOUTS.uploadMs,
     ),
   );
-  const text = uploaded.ok
-    ? copy.result(parseUpload(uploaded.value.status), device.alias)
-    : failureText(device, uploaded.moduleCode, 'upload');
-  return {text, unreachable: false};
+  const result = uploaded.ok ? parseUpload(uploaded.value.status) : null;
+  const text =
+    result !== null
+      ? copy.result(result, device.alias)
+      : failureText(device, uploaded.ok ? undefined : uploaded.moduleCode, 'upload');
+  return {text, unreachable: false, sent: result?.kind === 'sent'};
 }
 
 /**
- * One tap: with no chosen device, the Settings view opens; otherwise `make` writes the PNG in
- * `tmp` (`tempDir`), which is sent and then removed, whatever happened. The outcome is logged,
- * the toast line too, since the host's toast leaves no text in the log (#98).
+ * One send to the picked device (#307): `make` writes the PNG in `tmp` (`tempDir`), which is sent
+ * and then removed, whatever happened. The outcome is logged, the toast line too, since the host's
+ * toast leaves no text in the log (#98).
  */
 export async function sendCapture(
   native: Relay,
   sender: Self,
-  device: Device | null,
+  device: Device,
   tmp: string,
   name: string,
   make: (pngPath: string) => Promise<Result<string>>,
   now: () => number = Date.now,
   relocate?: Relocate,
+  delivered?: Delivered,
 ): Promise<Outcome> {
   const outcome = await capture(
     native,
@@ -301,28 +334,23 @@ export async function sendCapture(
     make,
     now,
     relocate,
+    delivered,
   );
-  sendLog(
-    outcome.kind === 'toast'
-      ? `${name}: ${outcome.text}`
-      : `${name}: no device chosen, Settings opens`,
-  );
+  sendLog(`${name}: ${outcome.text}`);
   return outcome;
 }
 
 async function capture(
   native: Relay,
   sender: Self,
-  device: Device | null,
+  device: Device,
   tmp: string,
   name: string,
   make: (pngPath: string) => Promise<Result<string>>,
   now: () => number,
   relocate: Relocate | undefined,
+  delivered: Delivered | undefined,
 ): Promise<Outcome> {
-  if (device === null) {
-    return {kind: 'choose'};
-  }
   const fileName = `${name}-${now()}.png`;
   const pngPath = `${tmp}/${fileName}`;
   let written: string | null = null;
@@ -345,6 +373,7 @@ async function capture(
         written,
         fileName,
         relocate,
+        delivered,
       ),
     };
   } finally {

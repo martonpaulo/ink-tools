@@ -18,6 +18,7 @@ import {copy} from '../copy';
 import {Self} from '../settings/device';
 import {
   Attempt,
+  Delivered,
   failureText,
   loggedPost,
   Relocate,
@@ -30,7 +31,7 @@ import {
 /**
  * Offers one text and, when the receiver asks for it, uploads its bytes, at the device's new
  * address when the saved one does not answer (`relocate`); answers the toast line, which is logged
- * too (#98).
+ * too (#98). A sent text's target goes to `delivered` (#307).
  */
 export async function sendText(
   native: Relay,
@@ -38,8 +39,9 @@ export async function sendText(
   device: Device,
   text: string,
   relocate?: Relocate,
+  delivered?: Delivered,
 ): Promise<string> {
-  const line = await checkedText(native, sender, device, text, relocate);
+  const line = await checkedText(native, sender, device, text, relocate, delivered);
   sendLog(`text: ${line}`);
   return line;
 }
@@ -50,6 +52,7 @@ async function checkedText(
   device: Device,
   text: string,
   relocate: Relocate | undefined,
+  delivered: Delivered | undefined,
 ): Promise<string> {
   if (text.trim() === '') {
     return copy.noText;
@@ -57,8 +60,11 @@ async function checkedText(
   if (!isPrivateAddress(device.ip)) {
     return copy.notLocal(device.alias);
   }
-  return withRelocation(device, relocate, target =>
-    offerText(native, sender, target, text),
+  return withRelocation(
+    device,
+    relocate,
+    target => offerText(native, sender, target, text),
+    delivered,
   );
 }
 
@@ -86,11 +92,16 @@ async function offerText(
     return {
       text: failureText(device, prepared.moduleCode),
       unreachable: unreachable(prepared.moduleCode),
+      sent: false,
     };
   }
   const session = parseTextPrepare(prepared.value.status, prepared.value.body, offer.id);
   if (session.kind !== 'session') {
-    return {text: copy.result(session, device.alias), unreachable: false};
+    return {
+      text: copy.result(session, device.alias),
+      unreachable: false,
+      sent: session.kind === 'sent',
+    };
   }
   const uploaded = await loggedPost('upload', () =>
     native.post(
@@ -104,8 +115,10 @@ async function offerText(
       TIMEOUTS.uploadMs,
     ),
   );
-  const line = uploaded.ok
-    ? copy.result(parseUpload(uploaded.value.status), device.alias)
-    : failureText(device, uploaded.moduleCode, 'upload');
-  return {text: line, unreachable: false};
+  const result = uploaded.ok ? parseUpload(uploaded.value.status) : null;
+  const line =
+    result !== null
+      ? copy.result(result, device.alias)
+      : failureText(device, uploaded.ok ? undefined : uploaded.moduleCode, 'upload');
+  return {text: line, unreachable: false, sent: result?.kind === 'sent'};
 }

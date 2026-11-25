@@ -122,12 +122,14 @@ test('the file name is the first words, short, and never empty', () => {
   expect(textFileName('?!')).toBe('text.txt');
 });
 
+const iphone: Device = {...mac, alias: 'iPhone', fingerprint: 'iphone-fp'};
+
 function deps(overrides: Partial<TextDeps> = {}): TextDeps {
   return {
     permissions: jest.fn(async () => null),
     refused: (permission: string) => `refused ${permission}`,
     read: jest.fn(async () => 'Buy milk'),
-    device: jest.fn(async () => mac),
+    devices: jest.fn(async () => [mac, iphone]),
     send: jest.fn(async () => 'Sent to Mac'),
     closeView: jest.fn(),
     toast: jest.fn(),
@@ -138,17 +140,19 @@ function deps(overrides: Partial<TextDeps> = {}): TextDeps {
 describe('the view', () => {
   afterEach(() => cancelTextSend({closeView: () => {}}));
 
-  test('shows the recognised text first, and «Send» sends it once', async () => {
+  test('shows the recognised text and every receiver found, and a tap sends it once to that one (#307)', async () => {
     const d = deps();
     await startTextSend(d);
     expect(textState()).toEqual({
       phase: 'ready',
       text: 'Buy milk',
-      device: mac,
+      devices: [mac, iphone],
     });
     expect(d.send).not.toHaveBeenCalled();
-    await confirmTextSend(d);
-    expect(d.send).toHaveBeenCalledWith(mac, 'Buy milk');
+    await confirmTextSend(d, iphone);
+    await confirmTextSend(d, mac);
+    expect(d.send).toHaveBeenCalledTimes(1);
+    expect(d.send).toHaveBeenCalledWith(iphone, 'Buy milk');
     expect(d.toast).toHaveBeenCalledWith('Sent to Mac');
     expect(d.closeView).toHaveBeenCalled();
     expect(textState().phase).toBe('idle');
@@ -158,7 +162,7 @@ describe('the view', () => {
     const d = deps();
     await startTextSend(d);
     cancelTextSend(d);
-    await confirmTextSend(d);
+    await confirmTextSend(d, mac);
     expect(d.send).not.toHaveBeenCalled();
     expect(d.closeView).toHaveBeenCalled();
   });
@@ -169,13 +173,13 @@ describe('the view', () => {
       const d = deps({read: jest.fn(async () => read)});
       await startTextSend(d);
       expect(textState().phase).toBe('empty');
-      await confirmTextSend(d);
+      await confirmTextSend(d, mac);
       expect(d.send).not.toHaveBeenCalled();
     },
   );
 
-  test('with no device chosen, Settings shows and the lasso is not read', async () => {
-    const d = deps({device: jest.fn(async () => null)});
+  test('with no receiver found, Settings shows «No LocalSend device found» and the lasso is not read', async () => {
+    const d = deps({devices: jest.fn(async () => [])});
     await startTextSend(d);
     expect(textState().phase).toBe('idle');
     expect(d.read).not.toHaveBeenCalled();

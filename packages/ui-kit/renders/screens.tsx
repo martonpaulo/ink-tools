@@ -28,6 +28,9 @@ import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-syn
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
+import {PickView as DeviceTransferPick} from '../../../plugins/device-transfer/src/PickDevice';
+import {TextView as DeviceTransferText} from '../../../plugins/device-transfer/App';
+import type {Device as TransferDevice} from '../../../plugins/device-transfer/src/localsend/protocol';
 
 export type ScreenRender = {
   name: string;
@@ -126,6 +129,13 @@ const STROKE = [
   {x: 900, y: 600},
 ];
 
+/** Device Transfer's receivers (#307): synthetic, two with one alias to show them apart. */
+const TRANSFER_DEVICES: TransferDevice[] = [
+  {alias: 'Mac', deviceModel: 'MacBook', ip: '10.0.0.2', port: 53317, protocol: 'https', fingerprint: 'aaaaaa111111'},
+  {alias: 'iPhone', deviceModel: 'iPhone', ip: '10.0.0.3', port: 53317, protocol: 'https', fingerprint: 'bbbbbb222222'},
+  {alias: 'Mac', ip: '10.0.0.4', port: 53317, protocol: 'https', fingerprint: 'cccccc333333'},
+];
+
 // One line per screen, so adding one is one line.
 // prettier-ignore
 export const SCREENS: ScreenRender[] = [
@@ -142,5 +152,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'image-editing-editor', render: () => imageEditor()},
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
+  {name: 'device-transfer-pick', render: () => mount(<DeviceTransferPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
+  {name: 'device-transfer-text', render: () => mount(<DeviceTransferText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
 ];

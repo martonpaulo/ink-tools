@@ -1,6 +1,6 @@
 /**
- * Relay's settings (#98): the chosen receiver, with the fingerprint it is pinned to, and our own
- * fingerprint for the announce. One small JSON file in the private folder, since a shared path
+ * Relay's settings (#98, #307): each receiver's pinned fingerprint by alias, the receiver picked
+ * last, listed first, and our own fingerprint for the announce. One small JSON file in the private folder, since a shared path
  * outside PluginHost's whitelist cannot be written (#164); an unreadable file is a fresh start,
  * never a crash.
  */
@@ -15,9 +15,60 @@ export function settingsPath(pluginDir: string): string {
 export type Settings = {
   /** Who we are to a receiver; made once, kept. */
   fingerprint: string;
-  /** The receiver every send goes to, or null until the person picks one. */
-  device: Device | null;
+  /**
+   * Each receiver's fingerprint by alias, pinned on the first item it took (#307): a known alias
+   * that announces another fingerprint is refused, never pinned again.
+   */
+  pins: Record<string, string>;
+  /** The receiver picked last, listed first on the next send; null before the first pick. */
+  last: Device | null;
 };
+
+/** What a receiver's announced fingerprint is to its pin (#307). */
+export type PinCheck = 'new' | 'same' | 'changed';
+
+/** `new` for an alias never sent to, `same` for its pinned fingerprint, else `changed`. */
+export function checkPin(settings: Settings, device: Device): PinCheck {
+  const pin = Object.prototype.hasOwnProperty.call(settings.pins, device.alias)
+    ? settings.pins[device.alias]
+    : undefined;
+  if (pin === undefined) {
+    return 'new';
+  }
+  return pin === device.fingerprint ? 'same' : 'changed';
+}
+
+/**
+ * The settings once `device` took an item: its fingerprint pinned when its alias is new, and it is
+ * the last pick. A changed fingerprint keeps the old pin (#307).
+ */
+export function afterSent(settings: Settings, device: Device): Settings {
+  const pins =
+    checkPin(settings, device) === 'new'
+      ? {...settings.pins, [device.alias]: device.fingerprint}
+      : settings.pins;
+  return {...settings, pins, last: device};
+}
+
+/** The found receivers with the last pick first, the rest in answer order (#307). */
+export function lastFirst(found: Device[], last: Device | null): Device[] {
+  const first = last && found.find(each => each.fingerprint === last.fingerprint);
+  return first ? [first, ...found.filter(each => each !== first)] : found;
+}
+
+/** Only string fingerprints by string alias; anything else in the file is dropped. */
+function readPins(value: unknown): Record<string, string> {
+  const pins: Record<string, string> = {};
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return pins;
+  }
+  for (const [alias, fingerprint] of Object.entries(value)) {
+    if (typeof fingerprint === 'string' && fingerprint.length > 0) {
+      pins[alias] = fingerprint;
+    }
+  }
+  return pins;
+}
 
 function newFingerprint(random: () => number): string {
   let text = '';
@@ -72,7 +123,10 @@ export function sameAddress(a: Device, b: Device): boolean {
   return a.ip === b.ip && a.port === b.port && a.protocol === b.protocol;
 }
 
-/** The saved settings; a missing or unreadable file gives a new fingerprint and no device. */
+/**
+ * The saved settings; a missing or unreadable file gives a new fingerprint, no pin and no last
+ * pick. A file from before #307, with one chosen `device`, keeps it as the last pick and its pin.
+ */
 export async function loadSettings(
   native: Relay,
   pluginDir: () => Promise<Result<string>> = getPluginDirPath,
@@ -95,7 +149,12 @@ export async function loadSettings(
     typeof parsed.fingerprint === 'string' && parsed.fingerprint.length > 0
       ? parsed.fingerprint
       : newFingerprint(random);
-  return {fingerprint, device: readDevice(parsed.device)};
+  const pins = readPins(parsed.pins);
+  const last = readDevice('last' in parsed ? parsed.last : parsed.device);
+  if (last !== null && !('pins' in parsed)) {
+    pins[last.alias] = last.fingerprint;
+  }
+  return {fingerprint, pins, last};
 }
 
 export async function saveSettings(

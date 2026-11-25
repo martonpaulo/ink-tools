@@ -6,9 +6,12 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 ## Status
 
 **Built, not yet on the device** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)): «Send Page» (sidebar) and «Send Selection» (lasso
-toolbar) send a PNG to the LocalSend device chosen in Settings, with a toast for the result.
-`src/localsend/protocol.ts` owns the LocalSend v2 bodies and answers; `src/send/sendPng.ts` the
-flow; `src/settings/device.ts` the chosen device; `native/` the Java module `RelayLocalSend`
+toolbar) send a PNG to the LocalSend device picked from a list on each send ([#307](https://github.com/martonpaulo/ink-tools/issues/307): `findForSend`,
+`src/send/pickSession.ts`, `src/PickDevice.tsx`; none found opens Settings' «No LocalSend device
+found»), with a toast for the result. `src/localsend/protocol.ts` owns the LocalSend v2 bodies and
+answers; `src/send/sendPng.ts` the flow; `src/settings/device.ts` the pins, a fingerprint per alias
+set on the first sent item and refused when it changes (`pinnedSend`), and the last pick, listed
+first; `native/` the Java module `RelayLocalSend`
 (discovery, the pinned POST, the settings file); the sn-adapter official tier gives `pageImage` and
 `lassoImage`. Discovery announces by multicast and, for its window, serves `/register` with our
 identity (`Discovery.listen`, refusing every offer), since LocalSend answers an announce there
@@ -48,8 +51,8 @@ at (`centredRect`, the picture's own size from `Image.getSize`) is lassoed. Stil
 come: whether the receiver can stay on with the view closed.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
-lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with «Send to <device>» and
-«Cancel» (`src/send/textSession.ts`, `TextView`), and offers it as one `text/plain` file whose
+lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with the devices found, one tap
+each to send ([#307](https://github.com/martonpaulo/ink-tools/issues/307)), and «Cancel» (`src/send/textSession.ts`, `TextView`), and offers it as one `text/plain` file whose
 `preview` is the text (`textOffer`); a 204 is «sent», a 200 uploads the bytes
 (`src/send/sendText.ts`). To test on the device: how the iOS and macOS LocalSend apps show it.
 

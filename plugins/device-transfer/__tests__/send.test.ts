@@ -57,16 +57,7 @@ function coded(code: string): Error {
   return Object.assign(new Error(code), {code});
 }
 
-test('with no device chosen, the tap opens Settings and makes no picture', async () => {
-  const {api} = fakeRelay();
-  const make = jest.fn(made);
-  await expect(sendCapture(api, sender, null, TMP, 'page', make)).resolves.toEqual({
-    kind: 'choose',
-  });
-  expect(make).not.toHaveBeenCalled();
-});
-
-test('a saved device is used with no question, pinned to its fingerprint', async () => {
+test('the picked device is sent to, pinned to its fingerprint', async () => {
   const post = answers({status: 200, body: session}, {status: 200});
   const {api, calls} = fakeRelay({post});
   const outcome = await sendCapture(api, sender, mac, TMP, 'page', made, () => 7);
@@ -104,7 +95,7 @@ test.each([
   [{status: 403}, 'Mac declined'],
   [{status: 409}, 'Mac is busy with another transfer'],
   [{status: 500}, 'Mac answered 500'],
-  [coded('IDENTITY'), 'Mac identity changed, choose it again'],
+  [coded('IDENTITY'), 'Mac identity changed, not sent'],
   [coded('TIMEOUT'), 'Mac not reachable'],
   // The offer arrived and was not accepted in time: never «not reachable» (#98).
   [coded('NO_ANSWER'), 'Mac did not accept in time'],
@@ -153,7 +144,7 @@ describe('a receiver that moved (#98)', () => {
       protocol: device.protocol,
     }),
   });
-  const saved = JSON.stringify({fingerprint: 'self', device: mac});
+  const saved = JSON.stringify({fingerprint: 'self', pins: {Mac: mac.fingerprint}, last: mac});
 
   function moving(found: Device[], ...replies: Parameters<typeof answers>) {
     return fakeRelay({
@@ -181,7 +172,11 @@ describe('a receiver that moved (#98)', () => {
       `${moved.ip}:53317`,
       `${moved.ip}:53317`,
     ]);
-    expect(JSON.parse(calls.written[0])).toEqual({fingerprint: 'self', device: moved});
+    expect(JSON.parse(calls.written[0])).toEqual({
+      fingerprint: 'self',
+      pins: {Mac: mac.fingerprint},
+      last: moved,
+    });
     const lines = logged.mock.calls.map(call => call[0]);
     expect(lines).toContain(`Relay: send: to Mac at ${moved.ip}:53317 over https`);
   });
@@ -235,7 +230,7 @@ describe('a receiver that moved (#98)', () => {
 });
 
 test('a send presents the certificate it announces, and none without the identity (#98)', async () => {
-  const settings = {fingerprint: 'saved', device: null};
+  const settings = {fingerprint: 'saved', pins: {}, last: null};
   const {api} = fakeRelay();
   await expect(ownIdentity(api, settings, async () => ok('/p'))).resolves.toEqual({
     fingerprint: 'cert-fp',
@@ -376,17 +371,18 @@ describe('settings', () => {
   test('a missing or unreadable file starts fresh with a new fingerprint', async () => {
     const {api} = fakeRelay({readText: jest.fn(async () => '{oops')});
     const settings = await loadSettings(api, pluginDir, () => 0.5);
-    expect(settings).toEqual({fingerprint: '8'.repeat(32), device: null});
+    expect(settings).toEqual({fingerprint: '8'.repeat(32), pins: {}, last: null});
   });
 
-  test('the chosen device survives a save and a load, pin included', async () => {
+  test('the pins and the last pick survive a save and a load (#307)', async () => {
     const {api, calls} = fakeRelay();
-    await saveSettings(api, {fingerprint: 'f', device: mac}, pluginDir);
+    await saveSettings(api, {fingerprint: 'f', pins: {Mac: mac.fingerprint}, last: mac}, pluginDir);
     const read = jest.fn(async (_path: string) => calls.written[0]);
     const {api: again} = fakeRelay({readText: read});
     await expect(loadSettings(again, pluginDir)).resolves.toEqual({
       fingerprint: 'f',
-      device: mac,
+      pins: {Mac: mac.fingerprint},
+      last: mac,
     });
     // In the private folder: a shared path is outside the whitelist (#164).
     expect(read).toHaveBeenCalledWith('/plugin/settings.json');
@@ -398,6 +394,6 @@ describe('settings', () => {
       device: {...mac, ip: '8.8.8.8'},
     });
     const {api} = fakeRelay({readText: jest.fn(async () => text)});
-    expect((await loadSettings(api, pluginDir)).device).toBeNull();
+    expect((await loadSettings(api, pluginDir)).last).toBeNull();
   });
 });

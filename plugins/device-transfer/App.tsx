@@ -13,7 +13,15 @@ import {
 import {copy} from './src/copy';
 import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';
-import {ALIAS, textDeps} from './src/run';
+import {ALIAS, pickDeps, textDeps} from './src/run';
+import {PickDevice, PickView} from './src/PickDevice';
+import {
+  cancelPick,
+  onPickState,
+  pickDevice,
+  pickState,
+  PickState,
+} from './src/send/pickSession';
 import {
   cancelTextSend,
   confirmTextSend,
@@ -67,8 +75,8 @@ export function ReceiveView({
 }
 
 /**
- * «Send Text» (#99): the recognised text, read before it is sent, with «Send to <device>» and
- * «Cancel»; an empty recognition shows only «Close».
+ * «Send Text» (#99): the recognised text, read before it is sent, with the receivers found, one
+ * tap each to send (#307), and «Cancel»; an empty recognition shows only «Close».
  */
 export function TextView({
   state,
@@ -76,7 +84,7 @@ export function TextView({
   onCancel,
 }: {
   state: TextState;
-  onSend: () => void;
+  onSend: (device: Device) => void;
   onCancel: () => void;
 }) {
   return (
@@ -85,10 +93,9 @@ export function TextView({
       {state.phase === 'ready' || state.phase === 'sending' ? (
         <>
           <Text style={shared.text}>{state.text}</Text>
-          <Button
-            label={copy.sendTo(state.device.alias)}
-            disabled={state.phase === 'sending'}
-            onPress={onSend}
+          <PickDevice
+            devices={state.devices}
+            onPick={state.phase === 'ready' ? onSend : undefined}
           />
           <Button
             label={copy.cancel}
@@ -113,9 +120,9 @@ export function TextView({
 }
 
 /**
- * Relay's Settings view (#98): the LocalSend devices one search finds, and the one every send goes
- * to, one radio each (#274). Picking one saves it, pinned to its fingerprint; the title bar's ×
- * closes the view.
+ * Relay's views: the «Loading…» strip, «Send Text», the pick of «Send Page» and «Send Selection»
+ * (#307), «Receive», else Settings (#98): the LocalSend devices one search finds, one radio each
+ * (#274), the one picked listed first on each send; the title bar's × closes the view.
  */
 export default function App({
   native = defaultRelay,
@@ -123,8 +130,11 @@ export default function App({
 }: Props) {
   const [receiving, setReceiving] = useState<ReceiveState>(receiveState());
   const [texting, setTexting] = useState<TextState>(textState());
+  const [picking, setPicking] = useState<PickState>(pickState());
   useEffect(() => onReceiveState(setReceiving), []);
   useEffect(() => onTextState(setTexting), []);
+  useEffect(() => onPickState(setPicking), []);
+  const toast = (line: string) => ToastAndroid.show(line, ToastAndroid.SHORT);
   // The Back key does what each screen's own exit button does (#98, #204): PluginHost leaves a
   // plugin's view open on Back otherwise (`docs/supernote.md` › Plugins).
   useBackKey(() => {
@@ -132,13 +142,9 @@ export default function App({
     if (working.isWorking() || text === 'reading' || text === 'sending') {
       // A send or a read in flight ends by itself, with its toast.
     } else if (text !== 'idle') {
-      cancelTextSend(
-        textDeps(
-          close,
-          line => ToastAndroid.show(line, ToastAndroid.SHORT),
-          native,
-        ),
-      );
+      cancelTextSend(textDeps(close, toast, native));
+    } else if (pickState().phase !== 'idle') {
+      cancelPick({closeView: close});
     } else if (receiveState() !== 'idle') {
       native.stopReceive();
     } else {
@@ -149,16 +155,23 @@ export default function App({
     return <WorkingStrip working={working} />;
   }
   if (texting.phase !== 'idle') {
-    const deps = textDeps(
-      close,
-      line => ToastAndroid.show(line, ToastAndroid.SHORT),
-      native,
-    );
+    const deps = textDeps(close, toast, native);
     return (
       <TextView
         state={texting}
-        onSend={() => confirmTextSend(deps)}
+        onSend={device => confirmTextSend(deps, device)}
         onCancel={() => cancelTextSend(deps)}
+      />
+    );
+  }
+  if (picking.phase === 'picking') {
+    const deps = pickDeps(close, toast, native);
+    return (
+      <PickView
+        title={picking.capture === 'page' ? copy.sendPage : copy.sendSelection}
+        devices={picking.devices}
+        onPick={device => pickDevice(deps, device)}
+        onClose={() => cancelPick(deps)}
       />
     );
   }
@@ -197,12 +210,12 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
     if (settings === null) {
       return;
     }
-    const next = {...settings, device};
+    const next = {...settings, last: device};
     setSettings(next);
     saveSettings(native, next);
   };
 
-  const chosen = settings?.device ?? null;
+  const chosen = settings?.last ?? null;
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
@@ -212,7 +225,7 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
         <Text style={shared.text}>{copy.noDevice}</Text>
       ) : (
         <ChoiceList
-          title={copy.devices}
+          title={copy.listedFirst}
           choices={devices.map(device => ({
             value: device.fingerprint,
             label: deviceLabel(device, devices),

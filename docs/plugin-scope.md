@@ -271,9 +271,13 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
 **Send half** ([#98](https://github.com/martonpaulo/ink-tools/issues/98)):
 
 - «Send Page» in the note's sidebar sends the current page as a PNG; «Send Selection» in the lasso
-  toolbar sends only the selection. One tap, no view: the result is a short toast.
-- The person picks the receiving device once in Relay's Settings; later sends go to it, pinned to
-  the fingerprint it announced. A changed certificate is a failed send, never a silent re-pin.
+  toolbar sends only the selection. The result is a short toast.
+- Each send, «Send Text» too, lists the LocalSend devices found, the last one picked first, and one
+  tap sends to that one; none found shows «No LocalSend device found» (owner, 2026-11-25,
+  [#307](https://github.com/martonpaulo/ink-tools/issues/307), which replaces D42 B's one receiver
+  chosen in Settings). Settings only picks the device listed first.
+- Each alias is pinned to the fingerprint it announced on its first sent item. A changed
+  certificate is a failed send, never a silent re-pin.
 - Not in scope: the whole note as a PDF, which the Supernote Partner app already exports (product
   audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)); a device without LocalSend; anything over the internet.
   Sending lassoed handwriting as typed text lives here, beside «Send Page»

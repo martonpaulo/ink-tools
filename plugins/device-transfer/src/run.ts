@@ -1,6 +1,6 @@
 /**
- * One tap of «Send page» or «Send selection» (#98), from the settings to the toast line, and the
- * note side of «Receive» (#49).
+ * One tap of «Send page» or «Send selection» (#98), from the search for receivers through the
+ * pick (#307) to the toast line, and the note side of «Receive» (#49).
  */
 import {
   closePluginView,
@@ -28,14 +28,32 @@ import {
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine} from './permissions';
-import {findAgain, Outcome, sendCapture, tempDir} from './send/sendPng';
+import {
+  Delivered,
+  discoverDevices,
+  findAgain,
+  Outcome,
+  sendCapture,
+  sendLog,
+  tempDir,
+} from './send/sendPng';
 import {sendText} from './send/sendText';
 import {TextDeps} from './send/textSession';
+import {Capture, PickDeps} from './send/pickSession';
+import {working} from './working';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
 import {Image} from 'react-native';
 import {NoteHost, Size} from './receive/receive';
-import {loadSettings, ownIdentity} from './settings/device';
+import {
+  afterSent,
+  checkPin,
+  lastFirst,
+  loadSettings,
+  ownIdentity,
+  saveSettings,
+  Self,
+} from './settings/device';
 
 /** How the tablet names itself to a receiver. */
 export const ALIAS = 'Supernote';
@@ -46,7 +64,7 @@ export const SEND_SELECTION_ID = 101;
 export const RECEIVE_ID = 102;
 export const SEND_TEXT_ID = 103;
 
-export type Capture = 'page' | 'selection';
+export type {Capture} from './send/pickSession';
 
 async function currentPage(pngPath: string): Promise<Result<string>> {
   const note = await getCurrentFilePath();
@@ -60,36 +78,100 @@ async function currentPage(pngPath: string): Promise<Result<string>> {
   return pageImage(note.value, page.value, pngPath);
 }
 
-export async function runSend(
-  capture: Capture,
-  native: Relay = relay(),
-  ensure: () => Promise<string | null> = ensurePermissions,
+/** What a send tap finds (#307): a toast line, the receivers to pick from, or none at all. */
+export type Found =
+  | {kind: 'toast'; text: string}
+  | {kind: 'pick'; devices: Device[]}
+  | {kind: 'none'};
+
+/** The receivers one search finds, the last pick first (#307); none is `none`, never a pick. */
+export async function findReceivers(
+  native: Relay,
   pluginDir: () => Promise<Result<string>> = getPluginDirPath,
-): Promise<Outcome> {
-  // Before the first file or network call (#163): without it every file call fails.
-  const refused = await ensure();
-  if (refused !== null) {
-    return {kind: 'toast', text: refusedLine(refused)};
-  }
-  const dir = await pluginDir();
-  if (!dir.ok) {
-    return {kind: 'toast', text: copy.noImage};
-  }
+): Promise<Device[]> {
   const settings = await loadSettings(native, pluginDir);
   const self = {
     alias: ALIAS,
     ...(await ownIdentity(native, settings, pluginDir)),
   };
-  return sendCapture(
+  const found = await discoverDevices(native, self, pluginDir);
+  return found.ok ? lastFirst(found.value, settings.last) : [];
+}
+
+/** The tap of «Send Page» or «Send Selection»: the permissions, then the search (#163, #307). */
+export async function findForSend(
+  native: Relay = relay(),
+  ensure: () => Promise<string | null> = ensurePermissions,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
+): Promise<Found> {
+  // Before the first file or network call (#163): without it every file call fails.
+  const refused = await ensure();
+  if (refused !== null) {
+    return {kind: 'toast', text: refusedLine(refused)};
+  }
+  const devices = await findReceivers(native, pluginDir);
+  sendLog(`found ${devices.length} receivers`);
+  return devices.length === 0 ? {kind: 'none'} : {kind: 'pick', devices};
+}
+
+/**
+ * Sends to the picked `device` when its fingerprint is its pin or it is new; a known alias with
+ * another fingerprint is refused, and its pin is kept (#307). The receiver that took the item is
+ * pinned and becomes the last pick.
+ */
+export async function pinnedSend(
+  native: Relay,
+  device: Device,
+  send: (self: Self, delivered: Delivered) => Promise<string>,
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
+): Promise<string> {
+  const settings = await loadSettings(native, pluginDir);
+  if (checkPin(settings, device) === 'changed') {
+    const line = copy.identityChanged(device.alias);
+    sendLog(`${device.alias} announced another fingerprint: ${line}`);
+    return line;
+  }
+  const self = {
+    alias: ALIAS,
+    ...(await ownIdentity(native, settings, pluginDir)),
+  };
+  return send(self, async target => {
+    const now = await loadSettings(native, pluginDir);
+    await saveSettings(native, afterSent(now, target), pluginDir);
+  });
+}
+
+/** The picked device's send of the page or the selection (#307), to the toast line. */
+export async function sendPicked(
+  capture: Capture,
+  device: Device,
+  native: Relay = relay(),
+  pluginDir: () => Promise<Result<string>> = getPluginDirPath,
+): Promise<Outcome> {
+  const dir = await pluginDir();
+  if (!dir.ok) {
+    return {kind: 'toast', text: copy.noImage};
+  }
+  const text = await pinnedSend(
     native,
-    self,
-    settings.device,
-    tempDir(dir.value),
-    capture,
-    capture === 'page' ? currentPage : lassoImage,
-    Date.now,
-    findAgain(native, self, pluginDir),
+    device,
+    async (self, delivered) =>
+      (
+        await sendCapture(
+          native,
+          self,
+          device,
+          tempDir(dir.value),
+          capture,
+          capture === 'page' ? currentPage : lassoImage,
+          Date.now,
+          findAgain(native, self, pluginDir),
+          delivered,
+        )
+      ).text,
+    pluginDir,
   );
+  return {kind: 'toast', text};
 }
 
 async function currentPageSize(): Promise<Result<Size>> {
@@ -175,10 +257,25 @@ async function readLassoText(): Promise<string | null> {
   return read.value.query;
 }
 
-async function sendTo(device: Device, text: string, native: Relay): Promise<string> {
-  const settings = await loadSettings(native);
-  const self = {alias: ALIAS, ...(await ownIdentity(native, settings))};
-  return sendText(native, self, device, text, findAgain(native, self));
+function sendTo(device: Device, text: string, native: Relay): Promise<string> {
+  return pinnedSend(native, device, (self, delivered) =>
+    sendText(native, self, device, text, findAgain(native, self), delivered),
+  );
+}
+
+/** The pick of «Send Page» and «Send Selection» on the tablet (#307), under the strip. */
+export function pickDeps(
+  closeView: () => void,
+  toast: (line: string) => void,
+  native: Relay = relay(),
+): PickDeps {
+  return {
+    send: async (capture, device) => (await sendPicked(capture, device, native)).text,
+    run: task => working.run(task),
+    toast,
+    log,
+    closeView,
+  };
 }
 
 /** «Send Text» on the tablet (#99); the view and its toast are the caller's. */
@@ -191,7 +288,7 @@ export function textDeps(
     permissions: ensurePermissions,
     refused: refusedLine,
     read: readLassoText,
-    device: async () => (await loadSettings(native)).device,
+    devices: () => findReceivers(native),
     send: (device, text) => sendTo(device, text, native),
     closeView,
     toast,
