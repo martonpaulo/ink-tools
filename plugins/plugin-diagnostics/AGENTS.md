@@ -14,8 +14,8 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
 
 - A probe goes only in `probeBody` (`src/probe.ts`). Reset it to the default body before landing, so
   `main` always holds the default: the runtime keys and the native Digest-provider probe ([#59](https://github.com/martonpaulo/supernote-tools/issues/59)).
-- The command helper is a permanent part, outside `probeBody` ([#148](https://github.com/martonpaulo/ink-tools/issues/148)): the note sidebar button «Run Command»
-  (`src/register.ts`) reads inkctl's command file `MyStyle/Probe/command.json` (`ProbeCommandFile`,
+- The command helper is a permanent part, outside `probeBody` ([#148](https://github.com/martonpaulo/ink-tools/issues/148)): «Run Command», a note sidebar button and
+  a lasso menu row for calls that need a lasso made by hand ([#249](https://github.com/martonpaulo/ink-tools/issues/249)) (`src/register.ts`), reads inkctl's command file `MyStyle/Probe/command.json` (`ProbeCommandFile`,
   only that folder), runs it through `src/helper.ts` (insert strokes, lasso a rect or the last
   element, read the lassoed strokes, jump to a page and read it back; render a page to PNG, place a
   picture from `MyStyle/Probe/`, add a text box, insert a page with a system template, [#261](https://github.com/martonpaulo/ink-tools/issues/261); save and insert a sticker, read and move the lasso box, list and delete a file in `MyStyle/Probe/` or the plugin's own `collection/` folder, for Collection's device measures, [#249](https://github.com/martonpaulo/ink-tools/issues/249)) and logs `SNPROBE answer <id> <n>/<count> <json>` under
