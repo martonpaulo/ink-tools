@@ -79,7 +79,7 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
   `FILE:DELETE` too ([#182](https://github.com/martonpaulo/supernote-tools/issues/182)).
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
-- Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.
+- Before an `sn-plugin-lib` call, read the recorded gotchas in `../../docs/research/plugin-brief/brief.md`.
 
 ## Reuse
 

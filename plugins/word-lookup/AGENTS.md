@@ -6,10 +6,10 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 ## Status
 
 **Lasso buttons** over a Settings view ([#110](https://github.com/martonpaulo/supernote-tools/issues/110), [#111](https://github.com/martonpaulo/supernote-tools/issues/111), [#115](https://github.com/martonpaulo/supernote-tools/issues/115)), built to `Lookup.snplg`
-with its native `app.npk`; the device round of the picture buttons is still open. Ink2Pic's picture
+with its native `app.npk`; the device round of the picture buttons is still open. The picture
 search, pixel measures, file store, settings store and «Insert best picture» flow are
-`../../packages/picture-search`, shared with Ink2Pic ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)); Ink2Pic's library and picks
-stay in Ink2Pic (D40 B), which is retired later (owner D45).
+`../../packages/picture-search` ([#125](https://github.com/martonpaulo/supernote-tools/issues/125), [#142](https://github.com/martonpaulo/supernote-tools/issues/142)); the retired plugin's library and picks
+were not carried over (D40 B). Its search lab is `lab/` ([#63](https://github.com/martonpaulo/ink-tools/issues/63), [#288](https://github.com/martonpaulo/ink-tools/issues/288)).
 Button names follow the wording of Supernote's own lasso menu, a verb and a noun in title case
 (owner, [#167](https://github.com/martonpaulo/supernote-tools/issues/167)). `src/modes.ts` owns the two picture modes, «Insert Sticker» (illustration) and «Insert Image» (photo): button ids from
 1000, Settings keys and search style, with the measured split `keepMode` in the shared package
@@ -28,7 +28,7 @@ sticker (error 205, owner D62 A, [#35](https://github.com/martonpaulo/ink-tools/
 outlines of a Commons SVG original, else traces the prepared picture's ink mask (`readInkMask`),
 within a 600-point budget, and `insert/sticker.ts` writes them through `convertElement2Sticker`
 and `insertSticker`; a failure inserts the picture. Its device round is open.
-«Insert Definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from Ink2Pic: `src/definition.ts` reads the lasso,
+«Insert Definition» ([#115](https://github.com/martonpaulo/supernote-tools/issues/115)), moved here from the retired picture plugin: `src/definition.ts` reads the lasso,
 defines it in pt then es through `src/dictionaries.ts` and inserts a 640 px text box below the word,
 with no view. «Insert Summary» ([#114](https://github.com/martonpaulo/ink-tools/issues/114)): `src/summary.ts` reads the lasso, asks ink-core's
 Wikipedia extract (`summarizeFirst`, pt then es, 3 sentences) through `src/dictionaries.ts` and
@@ -57,14 +57,13 @@ insert went in the free band (measured, 2026-11-17, [#214](https://github.com/ma
 ## What it is
 
 Write a word, lasso it, insert a picture, a photo, a short definition or a translation. It is the evolution of
-`../ink2pic` and the planned definition mode. Scope and pains: `../../docs/plugin-scope.md`
+the retired picture plugin and the planned definition mode. Scope and pains: `../../docs/plugin-scope.md`
 (section `lookup`). Layers: `../../docs/architecture.md`.
 
 ## Rules
 
-- `lookup` is a new plugin beside Ink2Pic, with its own `pluginID`, never Ink2Pic renamed: both stay
-  installed until Ink2Pic is retired (owner D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110), `../../docs/decisions.md`).
-  `__tests__/pluginConfig.test.ts` fails if the two ids are the same.
+- `lookup` is a new plugin with its own `pluginID`, never the retired picture plugin renamed (owner
+  D40, [#110](https://github.com/martonpaulo/supernote-tools/issues/110), `../../docs/decisions.md`).
 - Each direct insert mode (illustration, photo, text) is its own lasso button, chosen before the
   search, never a toggle after it. The «Choose Image» screen is the one exception: behind its one
   button it may switch between its Illustrations and Photos tabs (owner, [#156](https://github.com/martonpaulo/supernote-tools/issues/156)).
@@ -97,9 +96,9 @@ Write a word, lasso it, insert a picture, a photo, a short definition or a trans
   PluginProfile first; never import `@ink-tools/picture-search/storage` or `/insert` elsewhere.
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
-- Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.
+- Before an `sn-plugin-lib` call, read the recorded gotchas in `../../docs/research/plugin-brief/brief.md`.
 
 ## Reuse
 
-Scaffold copied from `../lingo`, which took it from `../account-sync` and `../ink2pic` (same runtime,
+Scaffold copied from `../lingo`, which took it from `../account-sync` and the first plugin (same runtime,
 build and release shape).

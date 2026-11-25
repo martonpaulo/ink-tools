@@ -14,10 +14,13 @@ module.exports = {
     // The CC-CEDICT pinyin index, «Insert translation»'s ZH input (#129, #158).
     ...inkCore.jestPinyinDataMapper,
     ...snAdapter.jestModuleNameMapper,
-    // Ink2Pic's picture search, shared for Lookup's picture buttons (#125).
+    // The shared picture search, for Lookup's picture buttons (#125).
     ...pictureSearch.jestModuleNameMapper,
   },
   // The shared package's own tests run in Bridge's suite (#93).
   roots: ['<rootDir>'],
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.scratch/'],
+  // The search lab (lab/, #63) runs on its own against the live sources, never in the gate; the
+  // tests of its own logic do (#288).
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.scratch/', '<rootDir>/lab/'],
+  modulePathIgnorePatterns: ['<rootDir>/.scratch/', '<rootDir>/lab/'],
 };

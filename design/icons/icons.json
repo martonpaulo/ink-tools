@@ -604,9 +604,7 @@
    "plannedIf": "if a plugin"
   }
  ],
- "retired": {
-  "plugins/ink2pic": "retired into Word Lookup (#45) and ships nothing; its folder leaves with #288, so its assets are no longer drawn from this file"
- },
+ "retired": {},
  "families": {
   "about": "Each tool's icons share one motif, a glyph every one of them names, and still differ at a glance (owner, 2026-11-25, #271); a tool with one icon needs none. `except` lists an icon that cannot carry the motif, with the reason.",
   "device-transfer": {

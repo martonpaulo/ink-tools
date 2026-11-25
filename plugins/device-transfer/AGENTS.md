@@ -95,7 +95,7 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
   through `TextFiles.delete`, which never throws, so every promise settles.
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
-- Before an `sn-plugin-lib` call, read the recorded gotchas in `../ink2pic/docs/brief.md`.
+- Before an `sn-plugin-lib` call, read the recorded gotchas in `../../docs/research/plugin-brief/brief.md`.
 
 ## Reuse
 

@@ -11,7 +11,7 @@ import type {Size} from './receive';
 
 /** More pages than a scan of study cards needs, and few enough to render in seconds. */
 export const MAX_PDF_PAGES = 50;
-/** The Manta's page, used when no note is open to measure (`../ink2pic/docs/brief.md`). */
+/** The Manta's page, used when no note is open to measure (`docs/research/plugin-brief/brief.md`). */
 export const DEFAULT_PAGE: Size = {width: 1920, height: 2560};
 export const NOTE_DIR = `${SHARED_ROOT}/Note`;
 /** The PNGs go beside the received PDF, in Relay's temporary folder (`tempDir`, #164). */

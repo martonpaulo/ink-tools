@@ -5,8 +5,8 @@
  * tsconfig.json maps the same names by `paths`. The Java in `native/` (the pixel measures and the
  * native file module, #142) is compiled by the plugin's `scripts/native-build.cjs`; the JVM tests
  * of `native-tests/` run in the packages gate (`jvmTests` below, #254). The search core's tests, the measures and the device tier's
- * image module, file store and memory log run in the packages gate (#142); the insert flow's tests,
- * which drive Ink2Pic's own copy, settings and library, still run in the Ink2Pic gate.
+ * image module, file store and memory log run in the packages gate (#142), and so do the insert
+ * flow's tests (#288).
  */
 const path = require('path');
 

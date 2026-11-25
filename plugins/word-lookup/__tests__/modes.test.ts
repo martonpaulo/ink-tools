@@ -11,10 +11,9 @@ import {
   pixelKind,
   SearchResult,
 } from '@ink-tools/picture-search';
-import * as ink2pic from '../../ink2pic/src/buttons';
 import {FIRST_BUTTON_ID, MODES, modeAdapters} from '../src/modes';
 
-/** A white page; each tile below changes what it needs (as Ink2Pic's measures tests do). */
+/** A white page; each tile below changes what it needs. */
 const paper: Measures = {
   width: 400,
   height: 400,
@@ -181,15 +180,11 @@ test('the tiles measure as the kinds the split reads', () => {
   expect(pixelKind(blank)).toBe('blank');
 });
 
-test('each mode has its own button id, never one of Ink2Pic', () => {
-  const ink2picIds = Object.values(ink2pic).filter(
-    value => typeof value === 'number' && value >= 100,
-  );
+test('each mode has its own button id, from Lookup\'s first one', () => {
   const ids = MODES.map(mode => mode.buttonId);
   expect(new Set(ids).size).toBe(MODES.length);
   ids.forEach(id => {
     expect(id).toBeGreaterThanOrEqual(FIRST_BUTTON_ID);
-    expect(ink2picIds).not.toContain(id);
   });
   expect(MODES.map(mode => mode.name)).toEqual([
     'Insert Sticker',

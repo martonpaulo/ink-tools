@@ -4,8 +4,6 @@
   package first, and the tablet fails to load it.
 - Every copy of `scripts/native-toolchain.sh` is the same script, apart from its comments and the
   prefix of the names it prints, so one fix reaches them all.
-
-Ink2Pic is left out: it is being retired and gets no new work.
 """
 
 import json
@@ -17,7 +15,6 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-RETIRED = {"ink2pic"}
 PRINTED_NAME = re.compile(r"\b[A-Z0-9]+_(BUILD_TOOLS|ANDROID_JAR|REACT_JAR|KOTLIN_JAR)\b")
 
 
@@ -25,7 +22,7 @@ def native_plugins():
     return sorted(
         folder
         for folder in (ROOT / "plugins").iterdir()
-        if (folder / "scripts/native-build.cjs").is_file() and folder.name not in RETIRED
+        if (folder / "scripts/native-build.cjs").is_file()
     )
 
 

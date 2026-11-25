@@ -2,7 +2,7 @@
 /**
  * Word Lookup's native code: picture-search's file and image modules with its own
  * `LookupFilesPackage`, which registers them as `LookupFiles` and `LookupImage`; their JVM tests run
- * in the Ink2Pic gate, built by the shared light native build,
+ * in the packages gate (#254), built by the shared light native build,
  * packages/native-build/native-build.cjs (#231), which documents the commands.
  */
 const path = require('node:path');

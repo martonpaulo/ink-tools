@@ -1,10 +1,9 @@
 /**
- * Lookup's profile (#142): its own folder and native module names beside Ink2Pic's, the names its
- * Java package registers, and its settings file read with defaults and written back.
+ * Lookup's profile (#142): its own folder and native module names, the names its Java package
+ * registers, and its settings file read with defaults and written back.
  */
 import {readFileSync} from 'fs';
 import {join} from 'path';
-import {INK2PIC_PROFILE} from '../../ink2pic/src/profile';
 import {LOOKUP_PROFILE, settingsPath} from '../src/profile';
 import {
   defaultSettings,
@@ -15,11 +14,10 @@ import {
   withSource,
 } from '../src/settings';
 
-test('Lookup keeps its own folder and module names, never Ink2Pic’s', () => {
+test('Lookup keeps its own folder and module names', () => {
   expect(LOOKUP_PROFILE.folder).toBe('MyStyle/Lookup');
-  expect(LOOKUP_PROFILE.folder).not.toBe(INK2PIC_PROFILE.folder);
-  expect(LOOKUP_PROFILE.filesModule).not.toBe(INK2PIC_PROFILE.filesModule);
-  expect(LOOKUP_PROFILE.imageModule).not.toBe(INK2PIC_PROFILE.imageModule);
+  expect(LOOKUP_PROFILE.filesModule).toBe('LookupFiles');
+  expect(LOOKUP_PROFILE.imageModule).toBe('LookupImage');
   expect(LOOKUP_PROFILE.userAgent).toMatch(/^Lookup\/\S+ \(\+https:\/\//);
   // The search cache keeps only this build's answers (#210).
   expect(LOOKUP_PROFILE.build).toBe(require('../PluginConfig.json').versionCode);

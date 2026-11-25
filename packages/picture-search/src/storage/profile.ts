@@ -2,7 +2,7 @@
  * What makes the device tier one plugin's (#142): its folder in shared storage, the names its own
  * native modules register (`Ink2PicFilesPackage`'s constructor) and its HTTP User-Agent. Each
  * plugin sets its profile once, in the module its code imports this tier through
- * (`plugins/ink2pic/src/profile.ts`), so two plugins in one host never share a folder or a module.
+ * (`plugins/word-lookup/src/profile.ts`), so two plugins in one host never share a folder or a module.
  */
 
 export type PluginProfile = {

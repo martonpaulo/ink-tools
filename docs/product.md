@@ -22,8 +22,8 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
 
 - **Plugins**, which run inside the tablet's plugin host on `sn-plugin-lib`:
   - **Word Lookup** (`plugins/word-lookup`) turns a lassoed handwritten word into an inserted illustration, photo, short
-    definition or translation. It replaces **ink2pic**, which is retired and uninstalled from the
-    tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)), and the **lingo** plugin, removed now that translation is Lookup's
+    definition or translation. It replaces the first picture plugin, retired and uninstalled from
+    the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)) and removed from the repository ([#288](https://github.com/martonpaulo/ink-tools/issues/288)), and the **lingo** plugin, removed now that translation is Lookup's
     «Translate ES→PT» buttons ([#174](https://github.com/martonpaulo/ink-tools/issues/174), [#158](https://github.com/martonpaulo/ink-tools/issues/158), [#161](https://github.com/martonpaulo/ink-tools/issues/161)).
   - **Account Sync** (`plugins/account-sync`) syncs the owner's to-dos and his Google, Apple and ICS calendars with the native
     Supernote apps.
@@ -113,4 +113,4 @@ Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each too
 
 ## Product versioning
 
-Every plugin but Ink2Pic uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/handwriting-language/app.json` and its tag `handwriting-language-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). Ink2Pic, retiring, keeps `0.1.0-dev.19`; inkctl and the monorepo are unversioned.
+Every plugin uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets. A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/handwriting-language/app.json` and its tag `handwriting-language-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). inkctl and the monorepo are unversioned.

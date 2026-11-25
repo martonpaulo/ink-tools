@@ -59,12 +59,6 @@ OWN_CONTROLS = (
 )
 # The plugin files that drew their own controls when the kit's components landed (#273); #274 moves each.
 PENDING_CONTROLS = frozenset({
-    "plugins/ink2pic/src/ui/LanguagesScreen.tsx",
-    "plugins/ink2pic/src/ui/Onboarding.tsx",
-    "plugins/ink2pic/src/ui/SearchScreen.tsx",
-    "plugins/ink2pic/src/ui/SettingsScreen.tsx",
-    "plugins/ink2pic/src/ui/ToolBar.tsx",
-    "plugins/ink2pic/src/ui/copy.ts",
     "plugins/word-lookup/src/ui/ChooseScreen.tsx",
 })
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")

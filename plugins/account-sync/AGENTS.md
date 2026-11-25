@@ -13,7 +13,7 @@ code in `../../packages/`. Every size and colour of a screen comes from `@ink-to
 ## What it is
 
 A Supernote device plugin (React Native + `sn-plugin-lib`, pinned as the PluginHost runtime fixes
-them, like `../ink2pic`) that syncs Google, iCloud (CalDAV) and ICS calendars with the **native**
+them, like every plugin here) that syncs Google, iCloud (CalDAV) and ICS calendars with the **native**
 Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provider.
 
 ## Load-bearing facts (from device investigation, 2026-11-13)
@@ -90,4 +90,4 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
 
 ## Reuse
 
-Scaffold and patterns come from `../ink2pic` (same runtime, build and release shape).
+Scaffold and patterns come from the first plugin, removed in [#288](https://github.com/martonpaulo/ink-tools/issues/288) (same runtime, build and release shape).

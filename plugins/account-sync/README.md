@@ -29,4 +29,4 @@ research notes.
 
 ## Built on
 
-React Native + `sn-plugin-lib`, like `../ink2pic`. Setup is the first issue.
+React Native + `sn-plugin-lib`, like every plugin here. Setup is the first issue.
