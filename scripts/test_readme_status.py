@@ -24,6 +24,11 @@ class Vocabulary(unittest.TestCase):
     def test_no_break_spaces_pass(self):
         self.assertEqual(readme_status.bad_cells(TABLE.format("🔵&nbsp;In&nbsp;progress"), ["🔵 In progress"]), (True, []))
 
+    def test_an_html_table_is_read(self):
+        html = '<table>\n  <tr><th width="170">Tool</th><th width="120">Status</th></tr>\n  <tr><td><b>A</b></td><td>{}</td></tr>\n</table>\n'
+        self.assertEqual(readme_status.bad_cells(html.format("🟡&nbsp;Beta"), ["🟡 Beta"]), (True, []))
+        self.assertEqual(readme_status.bad_cells(html.format("Beta 1"), ["🟡 Beta"]), (True, [(3, "Beta 1")]))
+
     def test_a_progress_note_fails(self):
         cell = "Beta 1, not yet on the tablet ([#144](https://example.com/144))"
         self.assertEqual(readme_status.bad_cells(TABLE.format(cell), ["🟡 Beta"]), (True, [(3, cell)]))

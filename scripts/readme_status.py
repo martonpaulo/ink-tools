@@ -4,7 +4,7 @@
     readme_status.py [--root DIR]
 
 AGENTS.md's `- README Status values:` line lists the allowed values in backticks; it is the one
-source. Every table in README.md whose last header cell is `Status` must end each row with one of
+source. Every table in README.md, Markdown or HTML with one row per line, whose last header cell is `Status` must end each row with one of
 them; `&nbsp;` may stand for any space, to keep the status on one line. Prints one `README.md:<line>: <cell>` line per bad cell. Exit 0 when all pass, 1 on a bad
 cell, 2 when AGENTS.md has no values line or README.md has no Status table.
 """
@@ -25,14 +25,25 @@ def allowed(agents_text):
 
 
 def cells(line):
+    """A row's cells: a Markdown `| a | b |` row, or an HTML `<tr><td>a</td><td>b</td></tr>` row on one line."""
+    if line.lstrip().startswith("<tr>"):
+        return [re.sub(r"<[^>]+>", "", cell).strip() for cell in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", line)]
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def is_row(line):
+    """True for a Markdown table row or a one-line HTML table row (fixed widths need HTML, owner 2026-11-25)."""
+    return line.startswith("|") or line.lstrip().startswith("<tr>")
 
 
 def bad_cells(readme_text, values):
     """(line number, cell) for each Status cell outside `values`, and whether a Status table exists."""
     found, bad, in_table = False, [], False
     for number, line in enumerate(readme_text.splitlines(), 1):
-        if not line.startswith("|"):
+        if line.strip() in ("<table>", "</table>"):
+            in_table = in_table and line.strip() == "<table>"
+            continue
+        if not is_row(line):
             in_table = False
             continue
         row = cells(line)
