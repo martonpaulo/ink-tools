@@ -24,6 +24,7 @@ import math
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True  # no __pycache__ beside the root scripts
@@ -387,7 +388,40 @@ def render_png(svg, png, px):
     )
 
 
+def mac_icon_svg(root=ROOT):
+    """The Mac app's `AppIcon.icon` as one SVG: its page layer on a rounded square of its fill colour."""
+    folder = root / "apps/ink-notebook-editor/Support/AppIcon.icon"
+    fill = json.loads((folder / "icon.json").read_text())["fill"]["automatic-gradient"]
+    red, green, blue = (round(float(v) * 255) for v in fill.split(":")[1].split(",")[:3])
+    page = (folder / "Assets/page.svg").read_text()
+    inner = re.sub(r"</?svg[^>]*>", "", page)
+    return (
+        f'<svg xmlns="{SVG_NS}" viewBox="0 0 1024 1024" width="1024" height="1024">'
+        f'<rect width="1024" height="1024" rx="230" fill="#{red:02x}{green:02x}{blue:02x}"/>{inner}</svg>\n'
+    )
+
+
+def write_app_pngs(root=ROOT):
+    """A README picture of each app's launcher icon: design/icons/apps/<app folder>.png at PLUGIN_PX."""
+    icons, native = load(root)
+    store = glyphs(root)
+    out = root / "design/icons/apps"
+    out.mkdir(parents=True, exist_ok=True)
+    sources = {
+        tool(i["out"]): svg_text(icon_paths(i, native, store), native, kind="app")
+        for i in icons
+        if i["kind"] == "app"
+    }
+    sources["ink-notebook-editor"] = mac_icon_svg(root)
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, text in sources.items():
+            svg = Path(tmp) / f"{name}.svg"
+            svg.write_text(text)
+            render_png(svg, out / f"{name}.png", PLUGIN_PX)
+
+
 def write(root=ROOT):
+    write_app_pngs(root)
     icons, _ = load(root)
     for rel, text in texts(root).items():
         (root / rel).parent.mkdir(parents=True, exist_ok=True)  # a planned tool's folder

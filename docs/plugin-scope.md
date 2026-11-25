@@ -324,7 +324,7 @@ ship under until the merges land.
 | Target plugin | Modules (today's plugin) | Acts on |
 | :--- | :--- | :--- |
 | Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes (smart-shapes), Real-Time Text and Undo Conversion (real-time-conversion), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
-| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (lookup), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), planned in real-time-conversion), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252)), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249)) | lassoed handwriting |
+| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (lookup), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), planned in real-time-conversion), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
 | Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
 | Device Transfer | unchanged; receives a photo as it is | the page and files |
 | Account Sync | unchanged | outside services |

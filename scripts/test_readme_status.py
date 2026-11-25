@@ -29,12 +29,30 @@ class Vocabulary(unittest.TestCase):
         self.assertEqual(readme_status.bad_cells(html.format("🟡&nbsp;Beta"), ["🟡 Beta"]), (True, []))
         self.assertEqual(readme_status.bad_cells(html.format("Beta 1"), ["🟡 Beta"]), (True, [(3, "Beta 1")]))
 
+    def test_download_links_after_the_status_pass(self):
+        html = '<table>\n  <tr><th>Tool</th><th>Status</th></tr>\n  <tr><td>A</td><td>{}</td></tr>\n</table>\n'
+        link = '<br><a href="https://example.com/releases?q=a&amp;expanded=true">Download</a>'
+        self.assertEqual(readme_status.bad_cells(html.format("🟡&nbsp;Beta" + link), ["🟡 Beta"]), (True, []))
+        self.assertEqual(readme_status.bad_cells(TABLE.format("🟡 Beta<br>[Download](https://example.com)"), ["🟡 Beta"]), (True, []))
+
+    def test_other_text_after_the_status_fails(self):
+        html = '<table>\n  <tr><th>Tool</th><th>Status</th></tr>\n  <tr><td>A</td><td>{}</td></tr>\n</table>\n'
+        for cell in ('🟡 Beta<br>Not yet on the tablet', '🟡 Beta<br><a href="https://example.com">Docs</a>', '🟡 Beta <a href="https://example.com">Download</a>'):
+            self.assertEqual(readme_status.bad_cells(html.format(cell), ["🟡 Beta"]), (True, [(3, cell)]))
+
     def test_a_progress_note_fails(self):
         cell = "Beta 1, not yet on the tablet ([#144](https://example.com/144))"
         self.assertEqual(readme_status.bad_cells(TABLE.format(cell), ["🟡 Beta"]), (True, [(3, cell)]))
 
     def test_the_word_without_its_emoji_fails(self):
         self.assertEqual(readme_status.bad_cells(TABLE.format("Beta"), ["🟡 Beta"]), (True, [(3, "Beta")]))
+
+    def test_only_the_table_with_a_status_column_is_checked(self):
+        html = (
+            '<table>\n  <tr><th>Name</th><th>Status</th></tr>\n  <tr><td>A</td><td>🟡&nbsp;Beta</td></tr>\n</table>\n'
+            '<table>\n  <tr><th>Name</th><th>Type</th></tr>\n  <tr><td>B</td><td>CLI</td></tr>\n</table>\n'
+        )
+        self.assertEqual(readme_status.bad_cells(html, ["🟡 Beta"]), (True, []))
 
     def test_a_table_without_status_is_ignored(self):
         self.assertEqual(readme_status.bad_cells("| A | B |\n| :--- | :--- |\n| x | y |\n", ["🟡 Beta"]), (False, []))
