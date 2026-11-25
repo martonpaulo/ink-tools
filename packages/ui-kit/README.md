@@ -1,6 +1,9 @@
 # ui-kit: Settings UI conventions
 
-The Settings look every plugin shares ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)). The tokens live in
+The Settings look every plugin shares ([#50](https://github.com/martonpaulo/supernote-tools/issues/50)). Every Ink Tools surface follows the
+Supernote's own native controls, one shared component each (owner, 2026-11-25,
+[#273](https://github.com/martonpaulo/ink-tools/issues/273)); the measured catalog of those controls is
+[#272](https://github.com/martonpaulo/ink-tools/issues/272). The tokens live in
 [`src/metrics.ts`](src/metrics.ts), the repeated styles in [`src/styles.ts`](src/styles.ts) and the one
 button in [`src/Button.tsx`](src/Button.tsx); a test refuses text under the minimum size and a
 control under the touch target ([#93](https://github.com/martonpaulo/supernote-tools/issues/93)). The e-ink rules behind these conventions are in
@@ -15,19 +18,17 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [The «Loading…» strip](#the-loading-strip)
 - [Needs, Error and Close](#needs-error-and-close)
 - [The Back key](#the-back-key)
-- [Reference study: Notipal](#reference-study-notipal)
-- [The owner's picks: SnapMark, PC Clipboard, DocuCraft](#the-owners-picks-snapmark-pc-clipboard-docucraft)
 
 ## Layout
 
 - One screen is one column on white paper: a title, then sections, then the actions at the
   trailing edge of the last row, as OK sits in the system dialogs (`shared.actions`).
-- A setting is one list row (`shared.listRow`): its name, an optional value or hint under it, and
-  its control at the trailing edge. Rows end with the dotted ink separator of the system Settings.
+- A screen opens with the `TitleBar`; a setting is one `ListRow`: its name, an optional value or
+  hint under it, and its control at the trailing edge.
 - Every gap is the one spacing step, `SPACE_MM` (screen padding, section gap, control gap, row padding);
   a screen adds no spacing value of its own.
-- Several pages of Settings are tabs at the top, the open one marked with the selected bar,
-  rather than a second screen reached by a back button.
+- Several pages of Settings are a `NavList` in a left pane, or a page opened from a row with a
+  `Chevron` and left with the title bar's ‹, as the system Settings does.
 
 ## Type
 
@@ -57,12 +58,38 @@ token when the first screen uses it, named by its role.
 
 ## Controls
 
-- One `Button` for every action, at least `touchTarget` high: black on white with an ink border.
+One component per native control, each drawn only from the tokens of `src/metrics.ts`, so a
+screen draws no control of its own; the `controls` rule of `scripts/boundaries.py` fails a plugin's
+`src/` that does ([#273](https://github.com/martonpaulo/ink-tools/issues/273)). The sizes of the new
+tokens are defaults marked for [#272](https://github.com/martonpaulo/ink-tools/issues/272), whose catalog replaces them in
+`metrics.ts` alone. Every glyph and icon is redrawn, never a native drawable. The native confirm
+and error dialogs are `sn-plugin-lib`'s `NativeUIUtils.showRattaDialog` and `showErrorTipDialog`,
+never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them today.
+
+| Component | What it draws |
+| :--- | :--- |
+| `TitleBar` | the black band: × to close (`onClose`), ‹ to go back (`onBack`), the title centred, and `paneTitle` over a left pane |
+| `NavList` | the left navigation list: an optional icon and a label per item, a dotted separator, the open item marked by an ink bar at its trailing edge |
+| `ListRow` | a title, an optional grey subtitle, a solid separator, a `leading` slot (the ✓) and a `trailing` slot (its control); with `onPress` the whole row is one button |
+| `Switch` | a bordered box that reads «ON», filled black, or «OFF», on paper; role `switch` |
+| `Radio` | an ink ring, with a filled dot when `checked`; role `radio` |
+| `CheckMark` | the ✓ on the leading side of a chosen row; unchecked, the same width empty |
+| `Chevron` | the › that says a row opens a page |
+| `SectionCaption` | a grey caption over the rows it names, such as «Installed Languages» |
+| `SearchField` | a bordered field with a drawn magnifier and a grey placeholder, its spoken name |
+| `Pager` | \|‹ ‹ page/total › ›\|, the current page underlined; a button that would leave the range is disabled |
+| `IconButton` | `remove` (⊖), `delete` (a trash) and `download` (an arrow over a tray), each with its spoken name |
+| `Button` with `primary` | the small filled black button, such as «Scan» |
+
+- One `Button` for every other action, at least `touchTarget` high: black on white with an ink border.
 - Black fill marks the one primary action of a screen, such as Save or Start.
 - A control that cannot act, a `Button` or a tile, is a dashed outline with its label in `#444444`
   on paper, never a black fill (`shared.disabledOutline`, `shared.disabledText`), and a line next
   to it says why (interface rule 16, [#233](https://github.com/martonpaulo/ink-tools/issues/233)).
-- A switch is a `Button` with `selected`: the bar under its label, the box unchanged.
+- A switch is a `Switch`. A `Button` with `selected`, the bar under its label, is the old switch
+  that [#274](https://github.com/martonpaulo/ink-tools/issues/274) moves each plugin from.
+- Every target, a button, switch, radio or checkbox, is at least `touchTarget` in each direction;
+  `screenBreaks` checks it in each component's test.
 - A button in a list row takes `rowButtonWidth`, so the buttons of every row share a column.
 
 ## The «Loading…» strip
@@ -99,8 +126,8 @@ Every tool reports what it needs after a check and what failed after a failure i
 - `ErrorView` shows what failed, the reason, the fix, and Retry when the caller gives `onRetry`.
   It is an alert and stays until the owner closes it.
 - `LoadingView` is a full view that loads, in the strip's words.
-- Close is one outlined «Close» at the trailing edge of the title line (`TitleRow`), as in the
-  owner's picks below; Back does what it does.
+- Close is one outlined «Close» at the trailing edge of the title line (`TitleRow`) until these
+  views take the `TitleBar`'s × ([#273](https://github.com/martonpaulo/ink-tools/issues/273)); Back does what it does.
 
 ## The Back key
 
@@ -116,46 +143,3 @@ registers its exit with `useBackKey`, which costs nothing and works on a host th
 - The key always ends at the hook, so the host's default never runs on top of it.
 - A test catches the handlers with `catchBackKey` from `@ink-tools/ui-kit/backKeyTest` and
   presses the key as React Native does, newest handler first.
-
-## Reference study: Notipal
-
-The reference the issue names, `Laumss/sn-plugins`, is now Notipal
-([Not-Just-Supernote/sn-plugin-notipal](https://github.com/Not-Just-Supernote/sn-plugin-notipal), MIT),
-read at `28bc67c` (2026-11-10). Its Settings panel is native Android views
-(`android/app/src/main/java/me/laumss/notipal/panels/ConfigPanel.kt`).
-
-Borrowed:
-
-- Tabs across the top for the pages of Settings (Tools, Connections, About).
-- A row of name, value under it in grey, and a small outlined button at the trailing edge.
-- A bottom bar with outlined secondary buttons on the leading side and one filled primary button
-  on the trailing side.
-- An About page with the plugin's name large and bold and its version under it in grey.
-
-Avoided:
-
-- Hint and value text in `#666666` and `#777777`: 5.7:1 and 4.5:1 on white, under the 7:1 these
-  conventions keep for text; `#444444` replaces both.
-- Font sizes chosen per view (14, 15, 16.15, 17, 21.11, 22 sp): here the ramp has two.
-
-## The owner's picks: SnapMark, PC Clipboard, DocuCraft
-
-The owner finds the Settings pages of three third-party plugins pretty (Inbox general comment,
-2026-11-16, with four photos of the tablet). What they share, read from the photos:
-
-- The whole page sits on a light grey panel, not white paper, with the title bold at the leading
-  edge and «Close» as an outlined button at the trailing edge of the same line (SnapMark, PC Clipboard).
-- Each setting is a bold heading, one line of grey hint under it, then its choices as a row of
-  outlined buttons; the chosen one is filled black with white text (SnapMark: «A new note each»,
-  «Off», «Open the snap», «Keep», «Copy»).
-- Pages are tabs as outlined buttons beside «Close», the open one filled black (PC Clipboard:
-  Clipboard, Phone, Settings), or text tabs across the top with a bar under the open one (DocuCraft).
-- One filled black primary button per section («Find my computer»); a text field with its action
-  button inline on the same row («Connect»).
-- The About page groups each link as a bordered card: a QR code at the leading edge, a bold title,
-  a grey hint and the address (DocuCraft 0.2.16).
-
-Open against these conventions: here a selected switch shows a bar under its label and keeps the
-box unchanged ([Controls](#controls)), and the page is white paper ([Layout](#layout)); the picks
-fill the chosen option black and use a grey page. Nothing changes until the owner chooses.
-

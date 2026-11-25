@@ -51,6 +51,23 @@ describe('screenBreaks (#93)', () => {
       ),
     ).toEqual([`button «Tiny» is ${small} x ${small} units, under ${metrics.touchTarget}`]);
   });
+  it.each(['switch', 'radio', 'checkbox'] as const)(
+    'fails a %s under the touch target, as a button (#273)',
+    role => {
+      const small = metrics.touchTarget - 1;
+      expect(
+        breaks(
+          <Pressable
+            accessibilityRole={role}
+            accessibilityLabel="Tiny"
+            style={{width: small, height: small}}
+            onPress={() => {}}
+          />,
+        ),
+      ).toEqual([`button «Tiny» is ${small} x ${small} units, under ${metrics.touchTarget}`]);
+    },
+  );
+
   it('fails a row of more than three buttons that does not wrap, and passes it wrapped (#224)', () => {
     const four = (style: object) => (
       <View style={style}>

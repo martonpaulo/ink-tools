@@ -61,6 +61,9 @@ function rowOf(node: ReactTestInstance): ReactTestInstance | null {
   return null;
 }
 
+/** The roles a finger presses, each held to the touch target: a switch or a radio too (#273). */
+const TARGET_ROLES = new Set(['button', 'switch', 'radio', 'checkbox']);
+
 /** Every size-rule break under `root`, as one readable line each; none is an empty list. */
 export function screenBreaks(root: ReactTestInstance): string[] {
   const found: string[] = [];
@@ -74,7 +77,7 @@ export function screenBreaks(root: ReactTestInstance): string[] {
     }
   }
   const buttons = root.findAll(
-    n => hostName(n) !== undefined && n.props.accessibilityRole === 'button',
+    n => hostName(n) !== undefined && TARGET_ROLES.has(n.props.accessibilityRole),
   );
   for (const node of buttons) {
     const style = StyleSheet.flatten(node.props.style) ?? {};

@@ -33,6 +33,24 @@ const LINE_HEIGHT_RATIO = 1.3;
 /** A selected toggle's bar is this many borders thick. */
 const SELECTED_BAR_BORDERS = 2;
 
+/*
+ * The native controls (#273). Each size below is a [DEFAULT, measure in #272]: the catalog of the
+ * Supernote's own Settings replaces it with the measured value and its source, here alone.
+ */
+/** The black band of the title bar. */
+const TITLE_BAR_HEIGHT_MM = 14;
+/** The bar that marks the open item of the navigation list, at its trailing edge. */
+const NAV_MARK_WIDTH_MM = 1;
+/** The switch's box, wide enough for «OFF». */
+const SWITCH_WIDTH_MM = 16;
+/** The radio button's ring and its filled dot. */
+const RADIO_SIZE_MM = 6;
+const RADIO_DOT_MM = 3;
+/** The drawn icons of the icon buttons: the remove ring, the trash and the download arrow. */
+const ICON_SIZE_MM = 6;
+/** The underline of the pager's current page. */
+const PAGE_MARK_BORDERS = 2;
+
 const mm = (millimetres: number) => Math.round(millimetres * PX_PER_MM * SCALE);
 
 const space = mm(SPACE_MM);
@@ -66,6 +84,14 @@ export const metrics = {
   fontBody: bodyFont,
   fontLarge: bodyFont * LARGE_FONT_RATIO,
   statusLineHeight: Math.round(bodyFont * LINE_HEIGHT_RATIO),
+
+  titleBarHeight: mm(TITLE_BAR_HEIGHT_MM),
+  navMarkWidth: mm(NAV_MARK_WIDTH_MM),
+  switchWidth: mm(SWITCH_WIDTH_MM),
+  radioSize: mm(RADIO_SIZE_MM),
+  radioDot: mm(RADIO_DOT_MM),
+  iconSize: mm(ICON_SIZE_MM),
+  pageMarkHeight: border * PAGE_MARK_BORDERS,
 
   ink: '#000000',
   paper: '#ffffff',

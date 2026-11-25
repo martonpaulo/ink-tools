@@ -10,7 +10,7 @@ import boundaries  # noqa: E402
 
 
 class Boundaries(unittest.TestCase):
-    def tree(self, files):
+    def tree(self, files, pending=frozenset()):
         """A fixture tree of {relative path: text}; returns the findings as (path, rule) pairs."""
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -18,7 +18,7 @@ class Boundaries(unittest.TestCase):
                 path = root / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8")
-            return [(rel, rule) for rel, _number, rule, _text in boundaries.findings(root)]
+            return [(rel, rule) for rel, _number, rule, _text in boundaries.findings(root, pending)]
 
     def test_sdk_only_in_the_official_tier(self):
         self.assertEqual(self.tree({
@@ -80,6 +80,30 @@ class Boundaries(unittest.TestCase):
             "plugins/plugin-diagnostics/src/p.ts": "const host = new URL(x).host;\n",
         }), [("packages/ink-core/src/w.ts", "url"), ("packages/sync-core/src/http.ts", "url"),
              ("plugins/a/index.js", "url"), ("plugins/plugin-diagnostics/src/p.ts", "url")])
+
+    def test_plugins_take_the_kits_controls(self):
+        self.assertEqual(self.tree({
+            "plugins/a/src/Form.tsx": "import {Switch, ListRow} from '@ink-tools/ui-kit';\n<Switch value={on} />\n",
+            "plugins/a/src/notes.ts": "// a 53 × 52 rect, the ‹ glyph\nconst size = 3; // 4 × 5\n",
+            "plugins/a/__tests__/Form.test.tsx": "<Button selected={on} />\n",
+            "packages/ui-kit/src/TitleBar.tsx": "<GlyphButton glyph=\"×\" />\nstyle={shared.listRow}\n",
+            "plugins/plugin-diagnostics/src/View.tsx": "<Button selected={on} />\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "plugins/a/src/A.tsx": "<Button label=\"Sync\" selected={on} />\n",
+            "plugins/a/src/B.tsx": "<Pressable accessibilityRole=\"switch\" />\n",
+            "plugins/a/src/C.tsx": "<View style={shared.listRow}>\n",
+            "plugins/a/src/D.tsx": "const s = {borderStyle: 'dotted'};\n",
+            "plugins/a/src/copy.ts": "  'nav.next': '▶',\n",
+        }), [("plugins/a/src/A.tsx", "controls"), ("plugins/a/src/B.tsx", "controls"),
+             ("plugins/a/src/C.tsx", "controls"), ("plugins/a/src/D.tsx", "controls"),
+             ("plugins/a/src/copy.ts", "controls")])
+
+    def test_pending_controls_only_shrink(self):
+        files = {"plugins/a/src/A.tsx": "<View style={shared.listRow}>\n", "plugins/a/src/B.tsx": "const b = 1;\n"}
+        self.assertEqual(self.tree(files, frozenset({"plugins/a/src/A.tsx"})), [])
+        self.assertEqual(self.tree(files, frozenset({"plugins/a/src/A.tsx", "plugins/a/src/B.tsx"})),
+                         [("plugins/a/src/B.tsx", "controls")])
 
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({

@@ -18,6 +18,11 @@ The rules are `docs/architecture.md` › Layer rules:
 - `url`: no code that runs on the tablet (a plugin's or package's `src/`, a plugin's `index.js`)
   constructs a `URL` or reads `searchParams`: React Native's `URL` throws on `protocol`, `host` and
   every other getter but `href`; take `parseUrl` of `@ink-tools/sync-core` (#209).
+- `controls`: no plugin `src/` draws its own native control: a switch (a `Button` with `selected`, a
+  view with role `switch` or `radio`), a list row (`shared.listRow`, a dotted border), or a title
+  bar, pager or chevron glyph (‹ › ◀ ▶ × ✕ in a string); it takes the component of
+  `@ink-tools/ui-kit` (#273). The files that still do are `PENDING_CONTROLS`, which #274 empties: a
+  listed file that no longer draws one is a finding too, so the list only shrinks.
 
 `plugins/plugin-diagnostics/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
@@ -43,6 +48,28 @@ DICTIONARY_HOST = re.compile(r"\bwiktionary\.org\b")
 CLIENT = re.compile(r"(?:^|/)sync-core/(?:src/)?(?:todoist|google|ics|http)(?:\.ts)?$")
 URL_USE = re.compile(r"\bnew\s+URL\s*\(|\.searchParams\b")
 TABLET = re.compile(r"^(?:plugins|packages)/[^/]+/(?:src/|index\.(?:js|jsx|ts|tsx)$)")
+PLUGIN_SRC = re.compile(r"^plugins/[^/]+/src/")
+OWN_CONTROLS = (
+    (re.compile(r"\bselected=\{"), "a switch drawn as a Button with selected; take Switch"),
+    (re.compile(r"""accessibilityRole=\{?['"](?:switch|radio)['"]"""), "its own switch or radio; take Switch or Radio"),
+    (re.compile(r"\bshared\.listRow\b"), "its own list row; take ListRow"),
+    (re.compile(r"""borderStyle:\s*['"]dotted['"]"""), "its own dotted separator; take ListRow or NavList"),
+    (re.compile(r"""(['"`])[^'"`]*[‹›◀▶×✕][^'"`]*\1"""), "its own title bar, pager or chevron glyph; take TitleBar, Pager or Chevron"),
+)
+# The plugin files that drew their own controls when the kit's components landed (#273); #274 moves each.
+PENDING_CONTROLS = frozenset({
+    "plugins/account-sync/src/SettingsForm.tsx",
+    "plugins/account-sync/src/SettingsShell.tsx",
+    "plugins/image-editing/src/EditsForm.tsx",
+    "plugins/image-editing/src/StylesGrid.tsx",
+    "plugins/ink2pic/src/ui/LanguagesScreen.tsx",
+    "plugins/ink2pic/src/ui/Onboarding.tsx",
+    "plugins/ink2pic/src/ui/SearchScreen.tsx",
+    "plugins/ink2pic/src/ui/SettingsScreen.tsx",
+    "plugins/ink2pic/src/ui/ToolBar.tsx",
+    "plugins/ink2pic/src/ui/copy.ts",
+    "plugins/word-lookup/src/ui/ChooseScreen.tsx",
+})
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 
 
@@ -63,9 +90,17 @@ def is_test(rel):
     return bool(TEST_PARTS & set(rel.split("/")[:-1]))
 
 
-def findings(root):
+def own_controls(rel, lines):
+    """[(path, line number, rule, text)] for each native control a plugin file draws itself."""
+    return [(rel, number, "controls", "draws " + text)
+            for number, line in enumerate(lines, 1) if not LINE_COMMENT.match(line)
+            for pattern, text in OWN_CONTROLS if pattern.search(line)]
+
+
+def findings(root, pending=PENDING_CONTROLS):
     """[(path, line number, rule, text)] for every broken rule under root."""
     found = []
+    drawn = set()
     for rel, suffix in code_files(root):
         exempt = rel.startswith(EXEMPT)
         test = is_test(rel)
@@ -73,6 +108,12 @@ def findings(root):
         if exempt and not tablet:
             continue
         lines = (root / rel).read_text(encoding="utf-8", errors="replace").splitlines()
+        if suffix in SCRIPT and not test and not exempt and PLUGIN_SRC.match(rel):
+            controls = own_controls(rel, lines)
+            if controls:
+                drawn.add(rel)
+            if rel not in pending:
+                found.extend(controls)
         for number, line in enumerate(lines, 1):
             if LINE_COMMENT.match(line):
                 continue
@@ -92,6 +133,8 @@ def findings(root):
                     found.append((rel, number, "dictionary", "names the dictionary host wiktionary.org outside ink-core"))
             if AUTHORITY.search(line) and not test and not rel.startswith("packages/sn-adapter/"):
                 found.append((rel, number, "authority", "names the provider %s outside sn-adapter" % AUTHORITY.search(line).group(0)))
+    for rel in sorted(pending - drawn):
+        found.append((rel, 0, "controls", "draws no control of its own any more; remove it from PENDING_CONTROLS"))
     return sorted(found)
 
 
