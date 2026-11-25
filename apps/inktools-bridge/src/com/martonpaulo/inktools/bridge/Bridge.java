@@ -100,6 +100,11 @@ final class Bridge {
         default:
           return Outcome.of(Outcome.USAGE, "no call for " + command.op);
       }
+      String refused = HostCalls.refusal(Callback.transactions(classes.loader, HostCalls.DESCRIPTOR), code);
+      if (refused != null) {
+        Log.w(TAG, "call op=" + command.op + " " + refused);
+        return Outcome.of(Outcome.FAILED, refused);
+      }
       Log.i(TAG, "call op=" + command.op + " code=" + code);
       service.transact(code, data, reply, 0);
       reply.readException();

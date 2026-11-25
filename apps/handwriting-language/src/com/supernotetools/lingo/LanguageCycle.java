@@ -14,9 +14,6 @@ final class LanguageCycle {
   /** The cycle a new install starts with, and the order every cycle keeps (#157). */
   static final List<String> DEFAULT = Collections.unmodifiableList(Arrays.asList("pt_BR", "en_US", "es_ES"));
 
-  /** The device reads an empty `default/` folder as English (docs/research/2026-11-handwriting-language.md § 4). */
-  static final String EMPTY_FOLDER_LANGUAGE = "en_US";
-
   private static final Pattern CODE = Pattern.compile("[a-z]{2}_[A-Z]{2}");
 
   private LanguageCycle() {}

@@ -43,7 +43,11 @@ adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32
 
 - `HostCalls` owns the wire: the descriptor, the transaction codes (`installPlugin` 1,
   `uninstallPlugin` 5, `setPluginEnable` 6, `updatePluginPermissions` 9) and the argument order,
-  written as AIDL writes them. Its JVM test pins every one.
+  written as AIDL writes them. Its JVM test pins every one. The names and numbers come from
+  `Registry.java`, written from the registry of internals ([#294](https://github.com/martonpaulo/ink-tools/issues/294)), and before each call
+  the bridge reads PluginHost's own `IPluginSetting$Stub` constants and refuses the call, with
+  `failed`, when the number does not belong to the method the registry names (5 is uninstall) or
+  the Stub has no constant to check it by.
 - The body of a `PluginInfo` or a `PluginPermission` is written by PluginHost's own class:
   `HostClasses` loads PluginHost's code (`createPackageContext` with `CONTEXT_INCLUDE_CODE`), finds
   the classes from the `IPluginSetting` method signatures, sets only the fields [#215](https://github.com/martonpaulo/ink-tools/issues/215) names

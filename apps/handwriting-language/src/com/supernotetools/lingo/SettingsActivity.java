@@ -42,11 +42,6 @@ public final class SettingsActivity extends Activity {
   static final String EXTRA_BUTTON = "button";
   private static final String FILES_OP = "MANAGE_EXTERNAL_STORAGE";
   private static final String OVERLAY_OP = "SYSTEM_ALERT_WINDOW";
-  /** The native Settings and the extra that opens one of its pages (`SettingsActivity.handleIntentRouting`, docs/supernote.md). */
-  private static final String SETTINGS_PACKAGE = "com.ratta.settings";
-  private static final String SETTINGS_ACTIVITY = "com.ratta.settings.SettingsActivity";
-  private static final String SETTINGS_PAGE = "activity_type";
-  private static final String LANGUAGE_PAGE = "com.ratta.settings.input.HWLanguageSetting";
 
   /** Where the last error shows: beside the control whose action failed (#275). */
   private enum Place { SWITCH, PERMISSION, CYCLE }
@@ -207,8 +202,8 @@ public final class SettingsActivity extends Activity {
 
   /** Settings › … › Handwriting Recognition Language, opened as the system opens it (#272). */
   private void openLanguageScreen() {
-    Intent screen = new Intent().setComponent(new ComponentName(SETTINGS_PACKAGE, SETTINGS_ACTIVITY))
-        .putExtra(SETTINGS_PAGE, LANGUAGE_PAGE);
+    Intent screen = new Intent().setComponent(new ComponentName(Registry.SettingsLanguagePage.PACKAGE, Registry.SettingsLanguagePage.ACTIVITY))
+        .putExtra(Registry.SettingsLanguagePage.PAGE_EXTRA, Registry.SettingsLanguagePage.LANGUAGE_PAGE);
     try {
       startActivity(screen);
     } catch (ActivityNotFoundException none) {
@@ -305,7 +300,7 @@ public final class SettingsActivity extends Activity {
     }
     // The button's label depends on the cycle (CN and TW when both Chinese codes are in it).
     if (prefs.button() != ButtonRule.Mode.HIDDEN) {
-      sendBroadcast(new Intent(Switcher.CHANGED).setPackage(getPackageName()));
+      sendBroadcast(new Intent(Registry.HandwritingChangedBroadcast.ACTION).setPackage(getPackageName()));
     }
   }
 

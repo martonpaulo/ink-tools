@@ -130,7 +130,10 @@
         "hostPackage": "com.ratta.supernote.pluginhost",
         "service": "com.ratta.supernote.pluginhost.services.PluginSettingService",
         "descriptor": "com.ratta.supernote.plugincorelib.IPluginSetting",
-        "callbackPackage": "com.ratta.supernote.plugincorelib.callback."
+        "callbackPackage": "com.ratta.supernote.plugincorelib.callback.",
+        "installCallback": "IPluginInstallCallback",
+        "setCallback": "IPluginSetCallback",
+        "uninstallCallback": "IPluginUninstallCallback"
       }
     },
     {
@@ -204,7 +207,7 @@
     },
     {
       "id": "pluginhost.permission-status",
-      "title": "The permission status values; 2 is Always Allow",
+      "title": "The permission status values: -1 the lowest (cancelled), 2 Always Allow",
       "level": 5,
       "impact": "tests",
       "owner": "inktools-bridge",
@@ -224,9 +227,10 @@
       "probe": {
         "unprobed": "a probe would change a plugin's permission"
       },
-      "active": "inkctl plugin allow",
+      "active": "inktools-bridge Command.java",
       "values": {
-        "always": 2
+        "always": 2,
+        "lowest": -1
       }
     }
   ]

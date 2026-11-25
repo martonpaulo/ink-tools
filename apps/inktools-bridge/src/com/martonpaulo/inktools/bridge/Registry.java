@@ -35,7 +35,7 @@ public final class Registry {
       new Item("pluginhost.setting-service", 3, "tests", "inktools-bridge", "inktools-bridge ping", null, "inktools-bridge HostCalls.java"),
       new Item("pluginhost.call-numbers", 5, "tests", "inktools-bridge", "inktools-bridge call-number check", null, "inktools-bridge HostCalls.java"),
       new Item("pluginhost.parcel-classes", 3, "tests", "inktools-bridge", "inktools-bridge ping", null, "inktools-bridge HostClasses.java"),
-      new Item("pluginhost.permission-status", 5, "tests", "inktools-bridge", null, "a probe would change a plugin's permission", "inkctl plugin allow")));
+      new Item("pluginhost.permission-status", 5, "tests", "inktools-bridge", null, "a probe would change a plugin's permission", "inktools-bridge Command.java")));
 
   /** PluginHost's private PluginSettingService and its binder descriptors (pluginhost.setting-service). */
   public static final class PluginhostSettingService {
@@ -43,6 +43,9 @@ public final class Registry {
     public static final String SERVICE = "com.ratta.supernote.pluginhost.services.PluginSettingService";
     public static final String DESCRIPTOR = "com.ratta.supernote.plugincorelib.IPluginSetting";
     public static final String CALLBACK_PACKAGE = "com.ratta.supernote.plugincorelib.callback.";
+    public static final String INSTALL_CALLBACK = "IPluginInstallCallback";
+    public static final String SET_CALLBACK = "IPluginSetCallback";
+    public static final String UNINSTALL_CALLBACK = "IPluginUninstallCallback";
 
     private PluginhostSettingService() {}
   }
@@ -71,9 +74,10 @@ public final class Registry {
     private PluginhostParcelClasses() {}
   }
 
-  /** The permission status values; 2 is Always Allow (pluginhost.permission-status). */
+  /** The permission status values: -1 the lowest (cancelled), 2 Always Allow (pluginhost.permission-status). */
   public static final class PluginhostPermissionStatus {
     public static final int ALWAYS = 2;
+    public static final int LOWEST = -1;
 
     private PluginhostPermissionStatus() {}
   }

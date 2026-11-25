@@ -8,9 +8,9 @@ import java.util.List;
 
 /** {@link LanguageFiles.Disk} over java.io; needs all-files access (MANAGE_EXTERNAL_STORAGE). */
 final class AndroidFiles implements LanguageFiles.Disk {
-  /** `/sdcard/.data/dictionary` on the tablet (docs/supernote.md › Handwriting recognition language). */
+  /** The language folder on the shared storage (registry item handwriting.language-file). */
   static String root() {
-    return new File(Environment.getExternalStorageDirectory(), ".data/dictionary").getPath();
+    return new File(Environment.getExternalStorageDirectory(), Registry.HandwritingLanguageFile.FOLDER).getPath();
   }
 
   @Override

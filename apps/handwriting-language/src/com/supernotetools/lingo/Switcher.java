@@ -12,12 +12,6 @@ import java.util.List;
 final class Switcher {
   static final String TAG = "LingoApp";
 
-  /**
-   * What the Settings app broadcasts after a change (`HWLanguageSetting.changeDefault`); the
-   * keyboard and the Settings label refresh from it. Recognition reads the file on each call.
-   */
-  static final String CHANGED = "hw_type_change";
-
   private Switcher() {}
 
   /** The new code; throws with a message the settings screen shows. */
@@ -28,7 +22,8 @@ final class Switcher {
         throw new FileFailure(FileFailure.Kind.FILES_OFF, "all-files access is off");
       }
       LanguageFiles.Switch step = files().cycle(new Prefs(context).cycle());
-      context.sendBroadcast(new Intent(CHANGED));
+      // The keyboard and the Settings label refresh from it; recognition reads the file on each call.
+      context.sendBroadcast(new Intent(Registry.HandwritingChangedBroadcast.ACTION));
       Log.i(TAG, "surface=" + surface + " from=" + step.from + " to=" + step.to
           + " ms=" + (SystemClock.elapsedRealtime() - start));
       return step.to;

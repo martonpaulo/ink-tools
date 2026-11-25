@@ -133,7 +133,7 @@ REGISTRY_ITEMS = (
     {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl"},
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
     {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
-    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inkctl plugin allow"},
+    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inktools-bridge Command.java"},
     {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
     {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
     {"id": "settings.plugin-detail-labels", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin allow and uninstall"},
@@ -183,6 +183,7 @@ REGISTRY = {
     },
     "pluginhost.permission-status": {
         "always": 2,
+        "lowest": -1,
     },
     "settings.language-page": {
         "package": "com.ratta.settings",

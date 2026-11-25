@@ -19,10 +19,10 @@ import java.util.regex.Pattern;
 public final class Command {
   public enum Op { PING, INSTALL, ENABLE, DISABLE, UNINSTALL, ALLOW }
 
-  /** PluginPermissionManager.STATUS_ALWAYS, «Always Allow». */
-  public static final int STATUS_ALWAYS = 2;
+  /** PluginPermissionManager.STATUS_ALWAYS, «Always Allow» (registry item pluginhost.permission-status). */
+  public static final int STATUS_ALWAYS = Registry.PluginhostPermissionStatus.ALWAYS;
   /** STATUS_CANCELLED to STATUS_ALWAYS: the values PluginHost knows. */
-  private static final int STATUS_LOWEST = -1;
+  private static final int STATUS_LOWEST = Registry.PluginhostPermissionStatus.LOWEST;
   /** Only the shared storage: PluginHost opens the path itself, with its own rights. */
   private static final Pattern SHARED_PATH = Pattern.compile("^/(sdcard|storage/emulated/0)/.+\\.snplg$");
   private static final Pattern PLUGIN_ID = Pattern.compile("^[A-Za-z0-9._-]+$");

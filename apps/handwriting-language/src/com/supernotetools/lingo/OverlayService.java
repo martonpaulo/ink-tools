@@ -137,7 +137,7 @@ public final class OverlayService extends Service {
     params.gravity = Gravity.TOP | Gravity.LEFT;
     params.windowAnimations = 0;
     moveToSaved();
-    registerReceiver(changed, new IntentFilter(Switcher.CHANGED));
+    registerReceiver(changed, new IntentFilter(Registry.HandwritingChangedBroadcast.ACTION));
     show(null);
     running = this;
     place();

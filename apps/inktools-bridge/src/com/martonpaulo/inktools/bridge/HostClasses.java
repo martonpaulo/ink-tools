@@ -33,9 +33,9 @@ final class HostClasses {
     Class<?> info = null;
     Class<?> permission = null;
     for (Method method : setting.getMethods()) {
-      if (method.getName().equals("setPluginEnable")) {
+      if (method.getName().equals(Registry.PluginhostCallNumbers.SET_ENABLE_METHOD)) {
         info = method.getParameterTypes()[0];
-      } else if (method.getName().equals("updatePluginPermissions")) {
+      } else if (method.getName().equals(Registry.PluginhostCallNumbers.UPDATE_PERMISSIONS_METHOD)) {
         Type list = method.getGenericParameterTypes()[1];
         if (list instanceof ParameterizedType) {
           permission = (Class<?>) ((ParameterizedType) list).getActualTypeArguments()[0];
@@ -43,7 +43,8 @@ final class HostClasses {
       }
     }
     if (info == null || permission == null) {
-      throw new ClassNotFoundException(HostCalls.DESCRIPTOR + " lacks setPluginEnable or updatePluginPermissions");
+      throw new ClassNotFoundException(HostCalls.DESCRIPTOR + " lacks " + Registry.PluginhostCallNumbers.SET_ENABLE_METHOD
+          + " or " + Registry.PluginhostCallNumbers.UPDATE_PERMISSIONS_METHOD);
     }
     return new HostClasses(loader, info, permission);
   }
@@ -51,15 +52,15 @@ final class HostClasses {
   /** A PluginInfo with only the two fields setPluginEnable and uninstallPlugin read. */
   Object pluginInfo(String pluginId, boolean enable) throws ReflectiveOperationException {
     Object value = pluginInfo.getDeclaredConstructor().newInstance();
-    Fields.set(value, "pluginID", pluginId);
-    Fields.set(value, "enable", enable);
+    Fields.set(value, Registry.PluginhostParcelClasses.PLUGIN_ID_FIELD, pluginId);
+    Fields.set(value, Registry.PluginhostParcelClasses.ENABLE_FIELD, enable);
     return value;
   }
 
   Object permission(String name, int status) throws ReflectiveOperationException {
     Object value = pluginPermission.getDeclaredConstructor().newInstance();
-    Fields.set(value, "name", name);
-    Fields.set(value, "status", status);
+    Fields.set(value, Registry.PluginhostParcelClasses.PERMISSION_NAME_FIELD, name);
+    Fields.set(value, Registry.PluginhostParcelClasses.PERMISSION_STATUS_FIELD, status);
     return value;
   }
 

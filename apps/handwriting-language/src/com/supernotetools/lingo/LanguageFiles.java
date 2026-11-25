@@ -42,8 +42,8 @@ final class LanguageFiles {
 
   LanguageFiles(Disk disk, String root) {
     this.disk = disk;
-    this.defaults = root + "/default";
-    this.resources = root + "/resources";
+    this.defaults = root + "/" + Registry.HandwritingLanguageFile.CURRENT;
+    this.resources = root + "/" + Registry.HandwritingLanguageFile.PACKS;
   }
 
   /** The installed language packs, in cycle order. */
@@ -57,11 +57,11 @@ final class LanguageFiles {
     return LanguageCycle.order(codes);
   }
 
-  /** The active language; EMPTY_FOLDER_LANGUAGE for an empty folder; null with several files. */
+  /** The active language; the registry's empty-folder language for an empty folder; null with several files. */
   String current() throws IOException {
     List<String> codes = codeFiles();
     if (codes.isEmpty()) {
-      return LanguageCycle.EMPTY_FOLDER_LANGUAGE;
+      return Registry.HandwritingLanguageFile.EMPTY_FOLDER_LANGUAGE;
     }
     return codes.size() == 1 ? codes.get(0) : null;
   }

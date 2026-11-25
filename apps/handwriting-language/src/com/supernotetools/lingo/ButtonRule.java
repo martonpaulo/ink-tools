@@ -27,13 +27,12 @@ final class ButtonRule {
   static final Mode DEFAULT = Mode.WRITING;
 
   /**
-   * The handwriting screens, by activity class name (docs/supernote.md › Handwriting recognition
-   * language): Note pages, Digest, To-Do, Email.
+   * The handwriting screens, by activity class name (registry item handwriting.writing-screens):
+   * Note pages, Digest, To-Do, Email.
    * shortcut: matched by simple class name, since the measure recorded no package; a same-named
    * activity of another app also counts. Match the full name once a device round records it.
    */
-  static final List<String> WRITING_SCREENS =
-      Arrays.asList("NoteInsidePagesActivity", "KnowledgeActivity", "TaskActivity", "HomeActivity");
+  static final List<String> WRITING_SCREENS = Registry.HandwritingWritingScreens.ACTIVITIES;
 
   /**
    * The system events after which the button's service starts again: a restart of the tablet, and
