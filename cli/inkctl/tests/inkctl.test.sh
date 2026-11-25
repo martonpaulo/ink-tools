@@ -64,9 +64,13 @@ case "$1" in
             cat "$ADB_FILES/tree.xml"
         fi ;;
     pull)
-        if ! grep -qF "$2" "$ADB_FILES/paths"; then echo "adb: error: remote object '$2' does not exist" >&2; exit 1; fi ;;
+        if ! grep -qF "$2" "$ADB_FILES/paths"; then echo "adb: error: remote object '$2' does not exist" >&2; exit 1; fi
+        if [ -f "$ADB_FILES/pull-content" ]; then cp "$ADB_FILES/pull-content" "$3"; fi ;;
     push)
-        case "$3" in *MyStyle/Probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;; esac ;;
+        case "$3" in
+            *MyStyle/Probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
+            *MyStyle/Probe/picture.*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
+        esac ;;
     logcat)
         if [ -f "$ADB_FILES/helper-answer" ]; then
             id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$ADB_FILES/command.json")
@@ -1365,6 +1369,47 @@ run note open "Note/A note.note" --page 3 >/dev/null 2>"$work/err"
 check "note open --page with no page counter on screen fails and says so" "$?$(grep -c 'page counter' "$work/err")" "11"
 run note open "Note/A note.note" --page 0 >/dev/null 2>&1
 check "note open --page 0 is a usage error before any start" "$?$(called 'am start')" "20"
+# The tablet's PNG of a page and the test notebooks' inserts, through Probe (#261).
+helper_ready
+render="$root/MyStyle/Probe/page.png"
+printf 'f %s\n' "$render" >> "$files/paths"
+printf 'PNG' > "$files/pull-content"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png"}' > "$files/helper-answer"
+result=$(run note png 2 "$work/local/page2.png" --json)
+check "note png asks Probe for the page, from 0, and pulls it" "$?$(command_field "d['op'], d['page']")$(printf '%s' "$result" | field "['page'],d['bytes']")$(cat "$work/local/page2.png")" "0('renderPage', 1)(2, 3)PNG"
+check "note png removes the tablet's copy" "$(grep -cxF "rm -f $render" "$files/removed")" "1"
+run note png 2 "$work/local/page2.png" >/dev/null 2>&1
+check "note png refuses to replace a local file before any push" "$?$(called ' push ')" "50"
+printf 'f %s\n' "$render" >> "$files/paths"
+run note png 2 "$work/local/page2.png" --overwrite >/dev/null
+check "note png --overwrite replaces it" "$?" "0"
+run note png 0 "$work/local/page0.png" >/dev/null 2>&1
+check "note png 0 is a usage error" "$?" "2"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPicture","ms":90,"page":0,"path":"/storage/emulated/0/MyStyle/Probe/picture.png"}' > "$files/helper-answer"
+printf 'picture' > "$work/local/square.png"
+run note insert-picture "$work/local/square.png" >/dev/null
+check "note insert-picture pushes the picture to Probe's folder and names it" "$?$(called "push $work/local/square.png $root/MyStyle/Probe/picture.png")$(command_field "d['op'], d['path']")" "01('insertPicture', '/storage/emulated/0/MyStyle/Probe/picture.png')"
+printf 'gif' > "$work/local/square.gif"
+run note insert-picture "$work/local/square.gif" >/dev/null 2>&1
+check "note insert-picture of a GIF is a usage error before any push" "$?$(called "square.gif")" "20"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertTextBox","ms":90,"page":0,"rect":{"left":100,"top":200,"right":900,"bottom":320}}' > "$files/helper-answer"
+run note insert-text "Test box" --at 100 200 --size 800 120 >/dev/null
+check "note insert-text sends the text, the rect and the font size" "$?$(command_field "d['op'], d['text'], d['rect'], d['fontSize']")" "0('insertTextBox', 'Test box', {'left': 100, 'top': 200, 'right': 900, 'bottom': 320}, 40)"
+run note insert-text "Test box" --at 1800 200 --size 800 120 >/dev/null 2>&1
+check "a text box that leaves the page is a usage error" "$?" "2"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPage","ms":400,"page":1,"template":"style_white"}' > "$files/helper-answer"
+run note insert-page style_white --page 2 >/dev/null
+check "note insert-page sends the template and the page, from 0" "$?$(command_field "d['op'], d['page'], d['template']")" "0('insertPage', 1, 'style_white')"
+run note insert-page ../x.png --page 2 >/dev/null 2>&1
+check "a template that is not a system name is a usage error" "$?" "2"
+printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
+for refused in "png 1 $work/local/diary.png" "insert-page style_white --page 2"; do
+    run note $refused >/dev/null 2>&1
+    check "note ${refused%% *} on a note outside Note/Tests/ is refused" "$?" "12"
+done
+run --read-only note insert-page style_white --page 2 >/dev/null 2>&1
+check "read-only refuses note insert-page" "$?" "11"
+rm -f "$files/pull-content" "$work/local/page2.png" "$work/local/square.png" "$work/local/square.gif"
 rm -f "$files/helper-answer" "$files/command.json" "$files/notes-found"
 cp "$work/tree-before-helper" "$files/tree.xml"
 reset_device

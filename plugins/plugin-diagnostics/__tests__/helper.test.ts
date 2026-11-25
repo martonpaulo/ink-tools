@@ -1,6 +1,8 @@
 import {pressCommand} from '../src/command';
 import {
   ANSWER_CHUNK,
+  PROBE_FOLDER,
+  RENDER_PATH,
   answerLines,
   COMMAND_PATH,
   HelperError,
@@ -20,6 +22,10 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     lastElementRect: jest.fn().mockResolvedValue({left: 100, top: 200, right: 300, bottom: 260}),
     lassoStrokes: jest.fn().mockResolvedValue([[{x: 1, y: 2}, {x: 3, y: 4}]]),
     jumpToPage: jest.fn().mockResolvedValue(undefined),
+    renderPage: jest.fn().mockResolvedValue(undefined),
+    insertPicture: jest.fn().mockResolvedValue(undefined),
+    insertTextBox: jest.fn().mockResolvedValue(undefined),
+    insertPage: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   } as HelperApi & Record<string, jest.Mock>;
 }
@@ -122,4 +128,58 @@ test('a press with no readable file answers once, as unknown', async () => {
   const lines: string[] = [];
   await pressCommand(api(), {ProbeProviders: {readCommand}}, line => lines.push(line));
   expect(lines).toEqual([expect.stringMatching(/^SNPROBE answer unknown 1\/1 \{"ok":false,"code":1,"message":"command file: not in /)]);
+});
+
+test('renderPage writes the page to RENDER_PATH and answers the path (#261)', async () => {
+  const note = api();
+  const {answer} = await runCommand(command({op: 'renderPage', page: 3}), note);
+  expect(note.renderPage).toHaveBeenCalledWith(3, RENDER_PATH);
+  expect(answer).toMatchObject({ok: true, op: 'renderPage', page: 3, path: RENDER_PATH});
+});
+
+test('insertPicture places a picture from the Probe folder only (#261)', async () => {
+  const note = api({pageNumber: jest.fn().mockResolvedValue(1)});
+  const path = `${PROBE_FOLDER}square.png`;
+  const {answer} = await runCommand(command({op: 'insertPicture', path}), note);
+  expect(note.insertPicture).toHaveBeenCalledWith(path);
+  expect(answer).toMatchObject({ok: true, page: 1, path});
+  for (const bad of ['/sdcard/Note/a.png', `${PROBE_FOLDER}../a.png`, `${PROBE_FOLDER}sub/a.png`, `${PROBE_FOLDER}a.gif`, `${PROBE_FOLDER}.png`]) {
+    const refused = await runCommand(command({op: 'insertPicture', path: bad}), note);
+    expect(refused.answer).toMatchObject({ok: false, code: 2});
+  }
+  expect(note.insertPicture).toHaveBeenCalledTimes(1);
+});
+
+test('insertTextBox checks the text, the rect and the font size before the note call (#261)', async () => {
+  const note = api();
+  const rect = {left: 100, top: 200, right: 900, bottom: 320};
+  const {answer} = await runCommand(command({op: 'insertTextBox', text: 'Test box', rect, fontSize: 40}), note);
+  expect(note.insertTextBox).toHaveBeenCalledWith('Test box', rect, 40);
+  expect(answer).toMatchObject({ok: true, rect});
+  for (const body of [
+    {text: ' ', rect, fontSize: 40},
+    {text: 'x'.repeat(501), rect, fontSize: 40},
+    {text: 'ok', rect, fontSize: 7},
+    {text: 'ok', rect, fontSize: 40.5},
+    {text: 'ok', rect: {left: 10, top: 10, right: 5, bottom: 20}, fontSize: 40},
+  ]) {
+    const refused = await runCommand(command({op: 'insertTextBox', ...body}), note);
+    expect(refused.answer).toMatchObject({ok: false, code: 2});
+  }
+  expect(note.insertTextBox).toHaveBeenCalledTimes(1);
+});
+
+test('insertPage inserts a page with a system template name only (#261)', async () => {
+  const note = api();
+  const {answer} = await runCommand(command({op: 'insertPage', page: 1, template: 'style_white'}), note);
+  expect(note.insertPage).toHaveBeenCalledWith(1, 'style_white');
+  expect(answer).toMatchObject({ok: true, page: 1, template: 'style_white'});
+  const refused = await runCommand(command({op: 'insertPage', page: 1, template: '/sdcard/a.png'}), note);
+  expect(refused.answer).toMatchObject({ok: false, code: 2});
+});
+
+test('a note call that fails in renderPage is an answer with its code (#261)', async () => {
+  const note = api({renderPage: jest.fn().mockRejectedValue(new HelperError(802, 'generateNotePng: no note'))});
+  const {answer} = await runCommand(command({op: 'renderPage', page: 0}), note);
+  expect(answer).toEqual({ok: false, code: 802, message: 'generateNotePng: no note'});
 });

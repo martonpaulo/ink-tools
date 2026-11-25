@@ -1,4 +1,4 @@
-import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
+import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {HelperError, type HelperApi, type Point, type Rect} from './helper';
 
 /** sn-plugin-lib 0.2.3 element types and the pen values the 2026-11-16 round measured (docs/supernote.md › Plugins). */
@@ -6,6 +6,9 @@ const STROKE = 0;
 const PICTURE = 200;
 const TEXT = 500;
 const PRESSURE = 2000;
+/** `generateNotePng` at the page's own size, on white (sn-adapter's `pageImage` uses the same). */
+const PAGE_SCALE = 1;
+const WHITE_BACKGROUND = 1;
 
 type Response = {success?: boolean; result?: unknown; error?: {code?: number; message?: string}};
 type Accessor<T> = {size(): Promise<number>; getRange(start: number, count: number): Promise<T[]>; add(index: number, value: T): Promise<boolean>};
@@ -58,6 +61,33 @@ export const noteApi: HelperApi = {
       elements.push(element);
     }
     unwrap('insertPageElements', await PluginCommAPI.insertPageElements(elements, page, null));
+  },
+
+  async renderPage(page, pngPath) {
+    const notePath = unwrap<string>('getCurrentFilePath', await PluginCommAPI.getCurrentFilePath());
+    const made = unwrap<boolean>(
+      'generateNotePng',
+      await PluginFileAPI.generateNotePng({notePath, page, times: PAGE_SCALE, pngPath, type: WHITE_BACKGROUND}),
+    );
+    if (made !== true) {
+      throw new HelperError(1, 'generateNotePng: the page image was not generated');
+    }
+  },
+
+  async insertPicture(path) {
+    unwrap('insertImage', await PluginNoteAPI.insertImage(path));
+  },
+
+  async insertTextBox(text, rect, fontSize) {
+    // sn-plugin-lib 0.2.3 TextBox: a plain, left-aligned, fixed-width box in the host's font.
+    const textRect = {left: Math.round(rect.left), top: Math.round(rect.top), right: Math.round(rect.right), bottom: Math.round(rect.bottom)};
+    const box = {fontSize, fontPath: null, textContentFull: text, textRect, textDigestData: null, textAlign: 0, textBold: 0, textItalics: 0, textFrameWidthType: 0, textFrameStyle: 0, textEditable: 0};
+    unwrap('insertText', await PluginNoteAPI.insertText(box));
+  },
+
+  async insertPage(page, template) {
+    const notePath = unwrap<string>('getCurrentFilePath', await PluginCommAPI.getCurrentFilePath());
+    unwrap('insertNotePage', await PluginFileAPI.insertNotePage({notePath, page, template}));
   },
 
   async lasso(rect) {

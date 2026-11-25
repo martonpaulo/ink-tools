@@ -20,6 +20,14 @@ export const PAGE_HEIGHT = 2560;
 export const LASSO_MARGIN = 8;
 /** At most this many points in one command, so one press stays within a few seconds. */
 export const MAX_POINTS = 5000;
+/** The only folder a command may name a file in: inkctl's own folder (`MyStyle/Probe/`). */
+export const PROBE_FOLDER = '/storage/emulated/0/MyStyle/Probe/';
+/** Where `renderPage` writes the page's PNG for inkctl to pull (#261). */
+export const RENDER_PATH = `${PROBE_FOLDER}page.png`;
+/** A text box's text, and its font size in page pixels, kept to what one press needs. */
+export const MAX_TEXT = 500;
+export const MIN_FONT_SIZE = 8;
+export const MAX_FONT_SIZE = 200;
 
 export type Point = {x: number; y: number};
 export type Rect = {left: number; top: number; right: number; bottom: number};
@@ -32,6 +40,13 @@ export interface HelperApi {
   lastElementRect(): Promise<Rect>;
   lassoStrokes(): Promise<Point[][]>;
   jumpToPage(page: number): Promise<void>;
+  /** Writes page `page` of the open note to `pngPath`, at the page's size, on white. */
+  renderPage(page: number, pngPath: string): Promise<void>;
+  /** Places a PNG or JPEG on the current page, where the host puts it. */
+  insertPicture(path: string): Promise<void>;
+  insertTextBox(text: string, rect: Rect, fontSize: number): Promise<void>;
+  /** Inserts a page at index `page` of the open note, with a system template such as `style_white`. */
+  insertPage(page: number, template: string): Promise<void>;
 }
 
 export class HelperError extends Error {
@@ -50,7 +65,15 @@ type Command =
   | {id: string; op: 'lassoRect'; rect: Rect}
   | {id: string; op: 'lassoLast'}
   | {id: string; op: 'readLasso'}
-  | {id: string; op: 'jumpToPage'; page: number};
+  | {id: string; op: 'jumpToPage'; page: number}
+  | {id: string; op: 'renderPage'; page: number}
+  | {id: string; op: 'insertPicture'; path: string}
+  | {id: string; op: 'insertTextBox'; text: string; rect: Rect; fontSize: number}
+  | {id: string; op: 'insertPage'; page: number; template: string};
+
+/** A system template name, as `getNoteSystemTemplates` lists them (docs/supernote.md). */
+const TEMPLATE_PATTERN = /^[a-z0-9_]+$/;
+const PICTURE_PATTERN = /\.(png|jpe?g)$/i;
 
 function onPage(x: unknown, y: unknown): boolean {
   return (
@@ -89,6 +112,36 @@ function parsePage(value: unknown): number {
   return value;
 }
 
+/** A picture file in PROBE_FOLDER, with no folder below it. */
+function parsePicture(value: unknown): string {
+  const name = typeof value === 'string' && value.startsWith(PROBE_FOLDER) ? value.slice(PROBE_FOLDER.length) : '';
+  if (!name || name.includes('/') || name.startsWith('.') || !PICTURE_PATTERN.test(name)) {
+    throw new HelperError(USAGE, `path must be a .png, .jpg or .jpeg file in ${PROBE_FOLDER}`);
+  }
+  return value as string;
+}
+
+function parseText(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim() || value.length > MAX_TEXT) {
+    throw new HelperError(USAGE, `text must hold 1 to ${MAX_TEXT} characters`);
+  }
+  return value;
+}
+
+function parseFontSize(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < MIN_FONT_SIZE || value > MAX_FONT_SIZE) {
+    throw new HelperError(USAGE, `fontSize must be a whole number from ${MIN_FONT_SIZE} to ${MAX_FONT_SIZE}`);
+  }
+  return value;
+}
+
+function parseTemplate(value: unknown): string {
+  if (typeof value !== 'string' || !TEMPLATE_PATTERN.test(value)) {
+    throw new HelperError(USAGE, 'template must be a system template name such as style_white');
+  }
+  return value;
+}
+
 function parseRect(value: unknown): Rect {
   const rect = value as Rect;
   if (!rect || !onPage(rect.left, rect.top) || !onPage(rect.right, rect.bottom)) {
@@ -122,6 +175,14 @@ export function parseCommand(text: string): Command {
       return {id, op: raw.op};
     case 'jumpToPage':
       return {id, op: 'jumpToPage', page: parsePage(raw.page)};
+    case 'renderPage':
+      return {id, op: 'renderPage', page: parsePage(raw.page)};
+    case 'insertPicture':
+      return {id, op: 'insertPicture', path: parsePicture(raw.path)};
+    case 'insertTextBox':
+      return {id, op: 'insertTextBox', text: parseText(raw.text), rect: parseRect(raw.rect), fontSize: parseFontSize(raw.fontSize)};
+    case 'insertPage':
+      return {id, op: 'insertPage', page: parsePage(raw.page), template: parseTemplate(raw.template)};
     default:
       throw new HelperError(USAGE, `unknown op: ${String(raw.op)}`);
   }
@@ -168,6 +229,18 @@ async function execute(command: Command, api: HelperApi): Promise<Record<string,
       await api.jumpToPage(command.page);
       return {page: await api.pageNumber()};
     }
+    case 'renderPage':
+      await api.renderPage(command.page, RENDER_PATH);
+      return {page: command.page, path: RENDER_PATH};
+    case 'insertPicture':
+      await api.insertPicture(command.path);
+      return {page: await api.pageNumber(), path: command.path};
+    case 'insertTextBox':
+      await api.insertTextBox(command.text, command.rect, command.fontSize);
+      return {page: await api.pageNumber(), rect: command.rect};
+    case 'insertPage':
+      await api.insertPage(command.page, command.template);
+      return {page: command.page, template: command.template};
   }
 }
 

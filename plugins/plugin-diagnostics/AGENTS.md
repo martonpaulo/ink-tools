@@ -17,7 +17,8 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
 - The command helper is a permanent part, outside `probeBody` ([#148](https://github.com/martonpaulo/ink-tools/issues/148)): the note sidebar button «Run Command»
   (`src/register.ts`) reads inkctl's command file `MyStyle/Probe/command.json` (`ProbeCommandFile`,
   only that folder), runs it through `src/helper.ts` (insert strokes, lasso a rect or the last
-  element, read the lassoed strokes, jump to a page and read it back) and logs `SNPROBE answer <id> <n>/<count> <json>` under
+  element, read the lassoed strokes, jump to a page and read it back; render a page to PNG, place a
+  picture from `MyStyle/Probe/`, add a text box, insert a page with a system template, [#261](https://github.com/martonpaulo/ink-tools/issues/261)) and logs `SNPROBE answer <id> <n>/<count> <json>` under
   `ReactNativeJS`. `cli/inkctl/src/inkctl` owns the other side; change both together. The helper
   only executes: text to strokes and every refusal live in the CLI. The probe view runs the probe
   on «Run Probe», never on mount, because a «Run Command» press mounts the view's component too.
