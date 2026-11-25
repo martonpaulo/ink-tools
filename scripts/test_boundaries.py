@@ -33,15 +33,27 @@ class Boundaries(unittest.TestCase):
             "plugins/a/src/b.ts": "const lib = require('sn-plugin-lib');\n",
         }), [("plugins/a/index.js", "sdk"), ("plugins/a/src/b.ts", "sdk")])
 
-    def test_authority_only_in_sn_adapter(self):
+    def test_a_vendor_name_only_in_the_registry(self):
+        # Allowed: a generated reader, the exempt Plugin Diagnostics, tests and comments (#294).
         self.assertEqual(self.tree({
-            "packages/sn-adapter/src/internals/todo.ts": "const a = 'com.ratta.supernote.task.provider';\n",
+            "packages/sn-adapter/src/registry.generated.ts": "  authority: 'com.ratta.supernote.task.provider',\n",
+            "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java": "String A = \"com.ratta.supernote.pluginhost\";\n",
+            "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift": "let a = \"com.ratta.supernote.note\"\n",
             "plugins/plugin-diagnostics/native/src/P.java": "String a = \"com.ratta.supernote.task.provider\";\n",
             "plugins/a/__tests__/a.test.ts": "expect(uri).toContain('com.ratta.supernote.task.provider');\n",
+            "apps/x/Tests/XTests/A.swift": "let a = \"com.ratta.settings\"\n",
+            "apps/x/Sources/X/B.swift": "// com.ratta.settings is only a comment here\n",
         }), [])
+
+    def test_a_hard_coded_internal_fails_in_each_language(self):
         self.assertEqual(self.tree({
-            "plugins/a/native/src/F.java": "Uri u = Uri.parse(\"content://com.ratta.supernote.calendar.provider/data_info\");\n",
-        }), [("plugins/a/native/src/F.java", "authority")])
+            "plugins/a/src/a.ts": "const uri = 'content://com.ratta.supernote.calendar.provider/data_info';\n",
+            "plugins/a/native/src/F.java": "String page = \"com.ratta.settings.input.HWLanguageSetting\";\n",
+            "apps/x/Sources/X/B.swift": "let folder = \"/sdcard/.data/dictionary\"\n",
+            "cli/t/src/t": "#!/usr/bin/env python3\nCHANGED = \"hw_type_change\"\n",
+            "packages/sn-adapter/src/internals/todo.ts": "const a = 'com.ratta.supernote.task.provider';\n",
+        }), [("apps/x/Sources/X/B.swift", "vendor"), ("cli/t/src/t", "vendor"), ("packages/sn-adapter/src/internals/todo.ts", "vendor"),
+             ("plugins/a/native/src/F.java", "vendor"), ("plugins/a/src/a.ts", "vendor")])
 
     def test_service_clients_stay_in_sync_core(self):
         self.assertEqual(self.tree({
@@ -119,16 +131,16 @@ class Boundaries(unittest.TestCase):
                 "TASKS = \"content://com.ratta.supernote.task.provider/tasks\"\n"
                 "SCOPE = \"https://www.googleapis.com/auth/calendar.events\"\n")
         files = {"cli/t/src/t": tool, "cli/t/src/notes.txt": tool, "cli/t/README.md": tool}
-        self.assertEqual(self.tree(files), [("cli/t/src/t", "authority"), ("cli/t/src/t", "service")])
-        self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "authority"): 1, ("cli/t/src/t", "service"): 1}), [])
-        self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "authority"): 2, ("cli/t/src/t", "service"): 1}),
-                         [("cli/t/src/t", "authority")])
+        self.assertEqual(self.tree(files), [("cli/t/src/t", "vendor"), ("cli/t/src/t", "service")])
+        self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "vendor"): 1, ("cli/t/src/t", "service"): 1}), [])
+        self.assertEqual(self.tree(files, pending_host={("cli/t/src/t", "vendor"): 2, ("cli/t/src/t", "service"): 1}),
+                         [("cli/t/src/t", "vendor")])
 
     def test_a_host_tools_registry_block_is_not_a_finding(self):
         # The block is written from the registry, where an internal may be named (#294).
         tool = ("#!/usr/bin/env python3\n%s\n    \"tasksUri\": \"content://com.ratta.supernote.task.provider/tasks\",\n%s\n"
                 "TASKS = \"content://com.ratta.supernote.task.provider/tasks\"\n" % (boundaries.registry_readers.BLOCK_START, boundaries.registry_readers.BLOCK_END))
-        self.assertEqual(self.tree({"cli/t/src/t": tool}), [("cli/t/src/t", "authority")])
+        self.assertEqual(self.tree({"cli/t/src/t": tool}), [("cli/t/src/t", "vendor")])
 
     def test_build_folders_are_skipped(self):
         self.assertEqual(self.tree({

@@ -85,6 +85,7 @@
     {"path": "*.swift", "gates": ["dry", "sleep"]},
     {"path": "packages/", "gates": ["boundaries", "packages"]},
     {"path": "plugins/", "gates": ["boundaries"]},
+    {"path": "apps/", "gates": ["boundaries"]},
     {"path": "scripts/boundaries.py", "gates": ["boundaries"]},
     {"path": "scripts/test_boundaries.py", "gates": ["boundaries"]},
     {"path": "cli/inkctl/src/", "gates": ["boundaries"]},

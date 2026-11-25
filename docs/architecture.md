@@ -100,7 +100,9 @@ does for its sources):
   tests run on both, and the old one leaves once the new passes; no tool changes. Before acting, a
   module checks its item's status and kill switch; after acting, it reads back. Plugins reach the
   internal providers through their native Java. A boundary check fails on a vendor name
-  (`com.ratta.`, a provider URI, a vendor class, a private path) written outside the registry.
+  (`com.ratta.`, a provider URI, a vendor class, a private path) written outside the registry: the
+  `vendor` rule of `scripts/boundaries.py`, over TypeScript, Java, Swift and inkctl's Python, with the
+  generated readers and inkctl's registry block as the only places a name may stand.
 - **Target: the firmware watch** ([#293](https://github.com/martonpaulo/ink-tools/issues/293)). It runs one probe per registry item when the
   environment fingerprint changes (`Build.FINGERPRINT`, every vendor app's `versionCode`, the
   registry version; versions are labels, never gates), in the InkTools Bridge app and when `inkctl`

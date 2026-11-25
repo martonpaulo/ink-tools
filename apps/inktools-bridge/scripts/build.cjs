@@ -16,6 +16,10 @@ const fs = require('node:fs');
 const os = require('node:os');
 
 const root = path.resolve(__dirname, '..');
+/** PluginHost's package, which the app must see: registry item pluginhost.setting-service (#294). */
+const HOST_PACKAGE = require('../../../registry/items/pluginhost.json').items.find(
+  item => item.id === 'pluginhost.setting-service',
+).values.hostPackage;
 const build = path.join(root, 'build');
 const TOOLCHAIN = path.resolve(root, '../handwriting-language/scripts/toolchain.sh');
 /** The owner's rule for new apps: com.martonpaulo.<project>.<app>. Never rename it: the tablet keys grants on it. */
@@ -101,7 +105,7 @@ function manifest(file, {versionCode, versionName: name}) {
     android:versionName="${name}">
   <uses-sdk android:minSdkVersion="${MIN_API}" android:targetSdkVersion="${TARGET_API}" />
   <queries>
-    <package android:name="com.ratta.supernote.pluginhost" />
+    <package android:name="${HOST_PACKAGE}" />
   </queries>
   <application android:label="Ink Tools Bridge" android:icon="@drawable/ic_launcher"
       android:allowBackup="false" android:hasCode="true">

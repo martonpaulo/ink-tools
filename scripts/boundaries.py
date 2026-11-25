@@ -7,8 +7,11 @@ The rules are `docs/architecture.md` › Layer rules:
 
 - `sdk`: only `packages/sn-adapter/src/official/` imports `sn-plugin-lib`, so an SDK change is fixed
   in one place. Tests and Jest mocks may import it to drive its mock.
-- `authority`: only `packages/sn-adapter/` names a Supernote content provider
-  (`com.ratta.supernote.<app>.provider`); there it comes from `descriptor.json`. Tests may name one.
+- `vendor`: no code names a Supernote internal (a `com.ratta.` package, provider, activity or
+  broadcast, a private `.data/` path, a vendor class or the language broadcast) outside the registry
+  of internals (#294): `registry/items/` is the allowlist, and a tool reads the name through its
+  generated reader (`registry_readers.READERS`, or the registry block inside inkctl). Read in
+  TypeScript and JavaScript, Java and Kotlin, Swift and the host tools' Python. Tests may name one.
 - `service`: no code outside `packages/sync-core/src/` names a service host (`api.todoist.com`,
   `www.googleapis.com`, `oauth2.googleapis.com`), and no code outside `packages/sync-core/` imports a
   service client module (`todoist`, `google`, `ics`, `http`) by its path: a plugin takes the
@@ -25,12 +28,12 @@ The rules are `docs/architecture.md` › Layer rules:
   listed file that no longer draws one is a finding too, so the list only shrinks.
 
 The host tools' Python under `cli/<tool>/src/` (inkctl is one extensionless file, read by its `#!`
-line, #295) is read for `authority`, `service` and `dictionary`. The values inkctl still names when
+line, #295) is read for `vendor`, `service` and `dictionary`. The values inkctl still names when
 this landed are `PENDING_HOST` counts, which #295's value moves lower: a count above its row names
 each line, and a count below it is a finding too, so the counts only go down.
 
 `plugins/plugin-diagnostics/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
-read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java` and `.kt` for `authority`), never a
+read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java`, `.kt` and `.swift` for `vendor`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
 """
@@ -42,6 +45,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import registry_readers  # noqa: E402  the registry block's markers have one owner
 
+# The generated readers, where the registry's names are written (#294).
+READER_FILES = frozenset(reader.path for reader in registry_readers.READERS if not reader.block)
+
 SKIP = {"node_modules", ".git", ".scratch", ".claude", "build", "android", ".toolchain"}
 SCRIPT = {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"}
 NATIVE = {".java", ".kt"}
@@ -50,7 +56,15 @@ TEST_PARTS = {"__tests__", "__mocks__", "tests"}
 
 # An import target: `from 'x'`, `import 'x'`, `require('x')`, `import('x')`, `jest.mock('x'`.
 IMPORT = re.compile(r"""(?:\bfrom\s+|\bimport\s+|\brequire\(\s*|\bimport\(\s*|\bjest\.mock\(\s*)['"]([^'"]+)['"]""")
-AUTHORITY = re.compile(r"com\.ratta\.supernote\.\w+\.provider")
+# A Supernote internal: a vendor package (and so its providers, activities and broadcasts), a
+# private folder of the shared storage, a vendor class reached by name, or the language broadcast.
+VENDOR = re.compile(
+    r"com\.ratta\.|(?:^|[\s/'\"(])\.data/(?:dictionary|plugin)\b|\bhw_type_change\b"
+    r"|\b(?:IPluginSetting|PluginSettingService|HWLanguageSetting|NoteInsidePagesActivity)\b")
+VENDOR_TEXT = "names the Supernote internal %s outside the registry; add it to registry/items and read it through the tool's reader"
+SWIFT = {".swift"}
+# Test code may name an internal, in each language's own test folder.
+VENDOR_TEST_PARTS = {"Tests", "native-tests", "testing"}
 HOST = re.compile(r"\b(?:api\.todoist\.com|www\.googleapis\.com|oauth2\.googleapis\.com)\b")
 DICTIONARY_HOST = re.compile(r"\bwiktionary\.org\b")
 CLIENT = re.compile(r"(?:^|/)sync-core/(?:src/)?(?:todoist|google|ics|http)(?:\.ts)?$")
@@ -87,7 +101,7 @@ def code_files(root):
             if entry.is_dir():
                 if entry.name not in SKIP:
                     stack.append(entry)
-            elif entry.suffix in SCRIPT | NATIVE:
+            elif entry.suffix in SCRIPT | NATIVE | SWIFT:
                 yield entry.relative_to(root).as_posix(), entry.suffix
             elif HOST_TOOL.match(entry.relative_to(root).as_posix()) and is_python(entry):
                 yield entry.relative_to(root).as_posix(), PYTHON
@@ -132,7 +146,7 @@ def host_findings(rel, lines):
         if in_registry or PYTHON_COMMENT.match(line):
             continue
         for pattern, rule, text in (
-            (AUTHORITY, "authority", "names the provider %s outside sn-adapter"),
+            (VENDOR, "vendor", VENDOR_TEXT),
             (HOST, "service", "names the service host %s outside sync-core"),
             (DICTIONARY_HOST, "dictionary", "names the dictionary host %s outside ink-core"),
         ):
@@ -140,6 +154,12 @@ def host_findings(rel, lines):
             if hit:
                 found.append((rel, number, rule, text % hit.group(0)))
     return found
+
+
+def vendor_findings(rel, lines):
+    """[(path, line number, rule, text)] for each Supernote internal a file names outside a comment."""
+    return [(rel, number, "vendor", VENDOR_TEXT % VENDOR.search(line).group(0).strip(" /'\"("))
+            for number, line in enumerate(lines, 1) if not LINE_COMMENT.match(line) and VENDOR.search(line)]
 
 
 def host_ratchet(found, pending):
@@ -169,6 +189,10 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
             continue
         exempt = rel.startswith(EXEMPT)
         test = is_test(rel)
+        if suffix in SWIFT:
+            if not exempt and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:
+                found += vendor_findings(rel, (root / rel).read_text(encoding="utf-8", errors="replace").splitlines())
+            continue
         tablet = suffix in SCRIPT and not test and bool(TABLET.match(rel))
         if exempt and not tablet:
             continue
@@ -196,8 +220,8 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
                     found.append((rel, number, "service", "names the service host %s outside sync-core" % HOST.search(line).group(0)))
                 if DICTIONARY_HOST.search(line) and not test and not rel.startswith("packages/ink-core/src/"):
                     found.append((rel, number, "dictionary", "names the dictionary host wiktionary.org outside ink-core"))
-            if AUTHORITY.search(line) and not test and not rel.startswith("packages/sn-adapter/"):
-                found.append((rel, number, "authority", "names the provider %s outside sn-adapter" % AUTHORITY.search(line).group(0)))
+            if VENDOR.search(line) and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:
+                found.append((rel, number, "vendor", VENDOR_TEXT % VENDOR.search(line).group(0).strip(" /'\"(")))
     found += host_ratchet(host, pending_host)
     for rel in sorted(pending - drawn):
         found.append((rel, 0, "controls", "draws no control of its own any more; remove it from PENDING_CONTROLS"))
