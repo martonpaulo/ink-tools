@@ -1,4 +1,4 @@
-import {pressCommand} from '../src/command';
+import {createCommandRunner, LISTEN_MS, LISTEN_POLL_MS, pressCommand} from '../src/command';
 import {
   ANSWER_CHUNK,
   PROBE_FOLDER,
@@ -329,5 +329,152 @@ describe('sticker and file probes for Collection (#249)', () => {
   test('refuses a folder other than probe or plugin', async () => {
     const {answer} = await runCommand(command({op: 'listFiles', where: 'notes'}), api());
     expect(answer).toMatchObject({ok: false, code: 2, message: 'where must be probe or plugin'});
+  });
+});
+
+describe('batch: many steps in one press (#286)', () => {
+  const strokes = [[[100, 200], [120, 240]]];
+
+  test('runs each step in order and answers each step with its own result', async () => {
+    const note = api();
+    const {id, answer} = await runCommand(
+      command({op: 'batch', steps: [{op: 'insertStrokes', strokes}, {op: 'lassoLast'}, {op: 'insertStrokes', strokes}]}),
+      note,
+    );
+    expect(id).toBe(ID);
+    expect(answer).toMatchObject({ok: true, op: 'batch'});
+    const steps = (answer as unknown as {steps: Array<Record<string, unknown>>}).steps;
+    expect(steps.map(step => [step.ok, step.op])).toEqual([
+      [true, 'insertStrokes'],
+      [true, 'lassoLast'],
+      [true, 'insertStrokes'],
+    ]);
+    expect(steps[0]).toMatchObject({page: 0, strokes: 1, rect: {left: 100, top: 200, right: 120, bottom: 240}});
+    expect(note.insertStrokes).toHaveBeenCalledTimes(2);
+  });
+
+  test('stops at the first failure, keeping the answers of the steps before it', async () => {
+    const insertStrokes = jest
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new HelperError(1501, 'insertPageElements: no permission'));
+    const note = api({insertStrokes});
+    const steps = [1, 2, 3, 4].map(() => ({op: 'insertStrokes', strokes}));
+    const {answer} = await runCommand(command({op: 'batch', steps}), note);
+    expect(answer).toMatchObject({ok: false, code: 1501, step: 3, message: 'step 3 (insertStrokes): insertPageElements: no permission'});
+    const answered = (answer as unknown as {steps: Array<Record<string, unknown>>}).steps;
+    expect(answered.map(step => step.ok)).toEqual([true, true, false]);
+    expect(insertStrokes).toHaveBeenCalledTimes(3);
+  });
+
+  test.each([
+    ['no steps', {op: 'batch', steps: []}, 'steps must be a list of 1 to 64'],
+    ['too many steps', {op: 'batch', steps: Array.from({length: 65}, () => ({op: 'lassoLast'}))}, '1 to 64'],
+    ['a batch inside a batch', {op: 'batch', steps: [{op: 'batch', steps: [{op: 'lassoLast'}]}]}, 'step 1 must be one command'],
+    ['a bad step', {op: 'batch', steps: [{op: 'lassoLast'}, {op: 'jumpToPage', page: -1}]}, 'step 2: page must be a page index'],
+  ])('refuses %s before any note call', async (_name, body, message) => {
+    const note = api();
+    const {id, answer} = await runCommand(command(body), note);
+    expect(id).toBe(ID);
+    expect(answer).toMatchObject({ok: false, code: 2});
+    expect(String((answer as {message: string}).message)).toContain(message);
+    Object.values(note).forEach(call => expect(call).not.toHaveBeenCalled());
+  });
+});
+
+describe('the listener between presses (#286)', () => {
+  function fakeTimers() {
+    let tick: (() => void) | null = null;
+    return {
+      timers: {
+        setInterval: jest.fn((fn: () => void) => {
+          tick = fn;
+          return 1;
+        }),
+        clearInterval: jest.fn(() => {
+          tick = null;
+        }),
+      },
+      fire: () => tick?.(),
+      running: () => tick !== null,
+    };
+  }
+
+  function setup(first: string) {
+    let file = first;
+    let clock = 1000;
+    const readCommand = jest.fn(async () => file);
+    const lines: string[] = [];
+    const fake = fakeTimers();
+    const note = api();
+    const runner = createCommandRunner(note, {ProbeProviders: {readCommand}}, line => lines.push(line), () => clock, fake.timers);
+    return {
+      runner,
+      note,
+      lines,
+      fake,
+      write: (text: string) => {
+        file = text;
+      },
+      advance: (ms: number) => {
+        clock += ms;
+      },
+    };
+  }
+
+  const other = 'ffee0011';
+  const second = JSON.stringify({id: other, op: 'lassoLast'});
+
+  test('after a press, a new command in the file runs with no press', async () => {
+    const run = setup(command({op: 'lassoLast'}));
+    await run.runner.press();
+    expect(run.fake.running()).toBe(true);
+    run.write(second);
+    await run.runner.listen();
+    expect(run.lines.map(line => line.split(' ')[2])).toEqual([ID, other]);
+    expect(run.note.lasso).toHaveBeenCalledTimes(2);
+  });
+
+  test('a command already run is never run again: a listener read skips it, a press logs its answer again', async () => {
+    const run = setup(command({op: 'lassoLast'}));
+    await run.runner.press();
+    await run.runner.listen();
+    await run.runner.press();
+    expect(run.note.lasso).toHaveBeenCalledTimes(1);
+    expect(run.lines).toHaveLength(2);
+    expect(run.lines[1]).toBe(run.lines[0]);
+  });
+
+  test('a press while the listener runs the same command runs it once', async () => {
+    const run = setup(command({op: 'lassoLast'}));
+    await run.runner.press();
+    run.write(second);
+    let release: () => void = () => undefined;
+    (run.note.lasso as jest.Mock).mockImplementationOnce(() => new Promise(resolve => (release = () => resolve({trailNum: 1}))));
+    const listening = run.runner.listen();
+    await new Promise(resolve => setImmediate(resolve));
+    const pressing = run.runner.press();
+    release();
+    await Promise.all([listening, pressing]);
+    expect(run.note.lasso).toHaveBeenCalledTimes(2);
+    expect(run.lines.filter(line => line.includes(` ${other} `))).toHaveLength(1);
+  });
+
+  test('a listener read of a half-written file with no readable id logs nothing', async () => {
+    const run = setup(command({op: 'lassoLast'}));
+    await run.runner.press();
+    run.write('{"op": "lassoLast"');
+    await run.runner.listen();
+    expect(run.lines).toHaveLength(1);
+  });
+
+  test('the listener stops LISTEN_MS after the last command', async () => {
+    const run = setup(command({op: 'lassoLast'}));
+    await run.runner.press();
+    run.advance(LISTEN_MS + 1);
+    run.fake.fire();
+    expect(run.fake.running()).toBe(false);
+    expect(run.fake.timers.setInterval).toHaveBeenCalledWith(expect.any(Function), LISTEN_POLL_MS);
   });
 });

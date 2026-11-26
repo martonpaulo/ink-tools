@@ -19,7 +19,7 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
   only that folder), runs it through `src/helper.ts` (insert strokes, lasso a rect or the last
   element, read the lassoed strokes, jump to a page and read it back; render a page to PNG, place a
   picture from `MyStyle/Probe/`, add a text box, insert a page with a system template, [#261](https://github.com/martonpaulo/ink-tools/issues/261); save and insert a sticker, read and move the lasso box, list and delete a file in `MyStyle/Probe/` or the plugin's own `collection/` folder, for Collection's device measures, [#249](https://github.com/martonpaulo/ink-tools/issues/249); move a page of a closed note in `Note/` by path through the file API, a new page with the old one's elements, then the old one removed, [#263](https://github.com/martonpaulo/ink-tools/issues/263)) and logs `SNPROBE answer <id> <n>/<count> <json>` under
-  `ReactNativeJS`. `cli/inkctl/src/inkctl` owns the other side; change both together. The helper
+  `ReactNativeJS`. A `batch` command runs a list of these in one press and answers each step ([#286](https://github.com/martonpaulo/ink-tools/issues/286)). After each command `src/command.ts` reads the file again every 270 ms for 120 s and runs a new id with no press; an id runs at most once, and a press of one already run logs its answer again ([#286](https://github.com/martonpaulo/ink-tools/issues/286)). `cli/inkctl/src/inkctl` owns the other side; change both together. The helper
   only executes: text to strokes and every refusal live in the CLI. The probe view runs the probe
   on «Run Probe», never on mount, because a «Run Command» press mounts the view's component too.
 - Lines are logged with the tag `SNPROBE`. Never log a secret or a person's data.

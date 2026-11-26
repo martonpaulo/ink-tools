@@ -27,6 +27,8 @@ export const PAGE_HEIGHT = 2560;
 export const LASSO_MARGIN = 8;
 /** At most this many points in one command, so one press stays within a few seconds. */
 export const MAX_POINTS = 5000;
+/** At most this many steps in one `batch` command, each held to its own command's limits (#286). */
+export const MAX_BATCH_STEPS = 64;
 /** Where `renderPage` writes the page's PNG for inkctl to pull (#261). */
 export const RENDER_PATH = `${PROBE_FOLDER}page.png`;
 /** A text box's text, and its font size in page pixels, kept to what one press needs. */
@@ -97,7 +99,10 @@ const ID_PATTERN = /^[0-9a-f]{8,64}$/;
 /** A command that is not one of these shapes is refused before any note call. */
 const USAGE = 2;
 
-type Command =
+type Command = Step | {id: string; op: 'batch'; steps: Step[]};
+
+/** One command of the channel; a `batch` holds a list of them, run in order in one press (#286). */
+type Step =
   | {id: string; op: 'insertStrokes'; strokes: Point[][]}
   | {id: string; op: 'lassoRect'; rect: Rect}
   | {id: string; op: 'lassoLast'}
@@ -237,6 +242,30 @@ export function parseCommand(text: string): Command {
   if (!ID_PATTERN.test(id)) {
     throw new HelperError(USAGE, 'the command has no hex id');
   }
+  if (raw.op === 'batch') {
+    return {id, op: 'batch', steps: parseSteps(id, raw.steps)};
+  }
+  return parseStep(id, raw);
+}
+
+/** A batch's steps: 1 to MAX_BATCH_STEPS commands of any op but `batch`, each checked as alone (#286). */
+function parseSteps(id: string, value: unknown): Step[] {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_BATCH_STEPS) {
+    throw new HelperError(USAGE, `steps must be a list of 1 to ${MAX_BATCH_STEPS} commands`);
+  }
+  return value.map((step, index) => {
+    if (!step || typeof step !== 'object' || (step as {op?: unknown}).op === 'batch') {
+      throw new HelperError(USAGE, `step ${index + 1} must be one command, not a batch`);
+    }
+    try {
+      return parseStep(id, step as Record<string, unknown>);
+    } catch (error) {
+      throw new HelperError(USAGE, `step ${index + 1}: ${(error as Error).message}`);
+    }
+  });
+}
+
+function parseStep(id: string, raw: Record<string, unknown>): Step {
   switch (raw.op) {
     case 'insertStrokes':
       return {id, op: 'insertStrokes', strokes: parseStrokes(raw.strokes)};
@@ -338,7 +367,32 @@ async function movePage(command: Extract<Command, {op: 'movePage'}>, api: Helper
   return {path, from, to, pages: await api.notePageCount(path), template, storedTemplate: stored, elements: elements.length};
 }
 
-async function execute(command: Command, api: HelperApi): Promise<Record<string, unknown>> {
+/** A batch step that failed: the steps before it ran, and their answers stay in the batch's answer. */
+class StepError extends HelperError {
+  constructor(code: number, message: string, readonly step: number, readonly steps: object[]) {
+    super(code, message);
+  }
+}
+
+/** Each step's own answer, `{ok, op, ms, ...}`, in order; the first failure stops the batch (#286). */
+async function runSteps(steps: Step[], api: HelperApi, now: () => number): Promise<Record<string, unknown>> {
+  const answers: object[] = [];
+  for (const [index, step] of steps.entries()) {
+    const started = now();
+    try {
+      const result = await execute(step, api);
+      answers.push({ok: true, op: step.op, ms: now() - started, ...result});
+    } catch (error) {
+      const code = error instanceof HelperError ? error.code : 1;
+      const message = (error as Error).message;
+      answers.push({ok: false, op: step.op, code, message});
+      throw new StepError(code, `step ${index + 1} (${step.op}): ${message}`, index + 1, answers);
+    }
+  }
+  return {steps: answers};
+}
+
+async function execute(command: Step, api: HelperApi): Promise<Record<string, unknown>> {
   switch (command.op) {
     case 'insertStrokes': {
       const page = await api.pageNumber();
@@ -417,19 +471,23 @@ export async function runCommand(text: string, api: HelperApi, now: () => number
   try {
     const command = parseCommand(text);
     id = command.id;
-    const result = await execute(command, api);
+    const result = command.op === 'batch' ? await runSteps(command.steps, api, now) : await execute(command, api);
     return {id, answer: {ok: true, op: command.op, ms: now() - started, ...result}};
   } catch (error) {
     const code = error instanceof HelperError ? error.code : 1;
-    const raw = (() => {
-      try {
-        return JSON.parse(text)?.id;
-      } catch {
-        return '';
-      }
-    })();
-    id = id || (typeof raw === 'string' && ID_PATTERN.test(raw) ? raw : UNKNOWN_ID);
-    return {id, answer: {ok: false, code, message: (error as Error).message}};
+    id = id || commandId(text) || UNKNOWN_ID;
+    const batch = error instanceof StepError ? {step: error.step, steps: error.steps} : {};
+    return {id, answer: {ok: false, code, message: (error as Error).message, ...batch}};
+  }
+}
+
+/** The command's hex id when the text is a JSON object that carries one, else null; never throws. */
+export function commandId(text: string): string | null {
+  try {
+    const id = JSON.parse(text)?.id;
+    return typeof id === 'string' && ID_PATTERN.test(id) ? id : null;
+  } catch {
+    return null;
   }
 }
 
