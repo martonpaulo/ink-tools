@@ -82,7 +82,7 @@ test('a To-Do table without dueTime turns To-Do off with its reason, and Calenda
   });
   const texts = tree.root.findAllByType(Text).map(node => node.props.children);
   expect(texts).toContain(
-    `On, but not running: ${tasksUri} lacks columns: dueTime`,
+    `On, but not running: ${tasksUri} lacks columns: dueTime.`,
   );
 });
 

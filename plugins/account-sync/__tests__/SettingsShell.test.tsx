@@ -100,7 +100,7 @@ describe('SettingsShell (#93)', () => {
       'Calendar',
       'Last synced 2026-11-14 14:05.\n3 added, 1 changed, 0 removed\nNot synced (1):\nWork: HTTP 500',
       'To-do',
-      'On, but not running: the To-Do provider did not answer',
+      'On, but not running: the To-Do provider did not answer.',
     ]);
   });
 

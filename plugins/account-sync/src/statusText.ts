@@ -54,7 +54,8 @@ export function statusLines(status: ModuleStatus): string[] {
       const {reasons, at} = status;
       const lines = [
         format('status.blocked', {
-          reasons: reasons.slice(0, SHOWN_MESSAGES).join('; '),
+          // The line ends with one period, so a reason's own final period is dropped (#368).
+          reasons: reasons.slice(0, SHOWN_MESSAGES).join('; ').replace(/\.$/, ''),
         }),
       ];
       if (reasons.length > SHOWN_MESSAGES) {

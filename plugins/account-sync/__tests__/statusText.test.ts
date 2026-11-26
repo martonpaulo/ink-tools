@@ -22,7 +22,7 @@ describe('statusLines (#88)', () => {
   it('says off, why a module that is on does not run, and that nothing ran yet', () => {
     expect(statusLines({state: 'off'})).toEqual(['Off.']);
     expect(statusLines({state: 'blocked', reasons: ['a', 'b']})).toEqual([
-      'On, but not running: a; b',
+      'On, but not running: a; b.',
     ]);
     expect(statusLines({state: 'waiting'})).toEqual([
       'On. Not synced since Account Sync started.',
@@ -33,7 +33,7 @@ describe('statusLines (#88)', () => {
     const base = defaultSettings();
     const on = {...base, modules: {...base.modules, todo: true}};
     const [line] = statusLines(moduleStatus('todo', on, {}, {}));
-    expect(line).toBe(`On, but not running: ${DEVICE_CHECK_PENDING}`);
+    expect(line).toBe(`On, but not running: ${DEVICE_CHECK_PENDING}.`);
     expect(line.split(':')).toHaveLength(2);
   });
 
@@ -42,7 +42,7 @@ describe('statusLines (#88)', () => {
     expect(
       statusLines({state: 'blocked', reasons, at: run().at}),
     ).toEqual([
-      `On, but not running: ${reasons.slice(0, SHOWN_MESSAGES).join('; ')}`,
+      `On, but not running: ${reasons.slice(0, SHOWN_MESSAGES).join('; ')}.`,
       'and 1 more in the log',
       'Last tried 2026-11-14 09:07.',
     ]);
