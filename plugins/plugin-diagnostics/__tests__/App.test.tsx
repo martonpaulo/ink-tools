@@ -66,8 +66,18 @@ test('a probe that found the native module missing shows the Needs state with it
   expect(tree.root.findByProps({testID: 'needs'})).toBeDefined();
   expect(texts(tree)).toEqual(expect.arrayContaining([need.what, need.reason, `1. ${need.steps[0]}`, `2. ${need.steps[1]}`]));
   expect(screenBreaks(tree.root)).toEqual([]);
+  const command = tree.root.find(node => node.props.testID === CODE_BLOCK_ID && typeof node.type === 'string');
+  expect(command.findByProps({children: need.command}).props.children).toBe(need.command);
   await press(tree, 'Close');
   expect(close).toHaveBeenCalledTimes(1);
+});
+
+test('no frame shows before a run, and a run with no lines says so (#405)', async () => {
+  const {tree} = await mount({lines: [], status: 'done'});
+  expect(tree.root.findAll(node => node.props.testID === CODE_BLOCK_ID)).toEqual([]);
+  await press(tree, 'Run Probe');
+  expect(tree.root.findAll(node => node.props.testID === CODE_BLOCK_ID)).toEqual([]);
+  expect(texts(tree)).toContain(copy.noLines);
 });
 
 test('Back closes the view as Close does (#204)', async () => {

@@ -3,8 +3,11 @@
  * failure, what failed. Screens draw it with `Needs` or `ErrorView`; the value holds no view.
  */
 
-/** The one fix: an action the tool runs itself, or the exact steps only the owner can do. */
-export type Fix = {label: string; run: () => void} | {steps: string[]};
+/**
+ * The one fix: an action the tool runs itself, or the exact steps only the owner can do, with the
+ * one command they name, shown in ui-kit's CodeBlock so it never wraps (#405).
+ */
+export type Fix = {label: string; run: () => void} | {steps: string[]; command?: string};
 
 export type Problem = {
   /** What is missing or what failed, in plain words. */
@@ -16,6 +19,8 @@ export type Problem = {
 
 /** The one name of the button that closes a full view (#255, card D69). */
 export const CLOSE_TEXT = 'Close';
+/** The spoken name of a fix's command (#405). */
+export const COMMAND_TEXT = 'Command';
 /** The button that runs a failed action again. */
 export const RETRY_TEXT = 'Retry';
 

@@ -6,7 +6,7 @@ export const TAG = 'SNPROBE';
 export type Log = (line: string) => void;
 
 /** What a probe found missing, why it needs it, and the steps only the owner can do (#257). */
-export type ProbeNeed = {what: string; reason: string; steps: readonly string[]};
+export type ProbeNeed = {what: string; reason: string; steps: readonly string[]; command?: string};
 
 /** Thrown by a probe that found something missing: the view shows it as the Needs state (#257). */
 export class NeedError extends Error {

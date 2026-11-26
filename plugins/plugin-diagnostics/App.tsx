@@ -53,7 +53,7 @@ export default function App({
     const need = state.outcome.need;
     return (
       <Needs
-        problem={{what: need.what, reason: need.reason, fix: {steps: [...need.steps]}}}
+        problem={{what: need.what, reason: need.reason, fix: {steps: [...need.steps], command: need.command}}}
         onClose={close}
       />
     );
@@ -67,7 +67,8 @@ export default function App({
       />
     );
   }
-  const lines = state.phase === 'ended' ? state.outcome.lines : [];
+  // The block shows the output of a run that ended; before any run there is nothing to frame.
+  const lines = state.phase === 'ended' ? state.outcome.lines : null;
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
@@ -75,7 +76,8 @@ export default function App({
       <View style={shared.buttons}>
         <Button label={copy.run} onPress={start} primary />
       </View>
-      <CodeBlock lines={lines} label={copy.output} />
+      {lines !== null && lines.length > 0 && <CodeBlock lines={lines} label={copy.output} />}
+      {lines !== null && lines.length === 0 && <Text style={shared.hint}>{copy.noLines}</Text>}
     </View>
   );
 }

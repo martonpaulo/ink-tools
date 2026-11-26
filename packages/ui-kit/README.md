@@ -197,10 +197,12 @@ Code, JSON and logs show only in `CodeBlock`, never in a plain `Text`
 - an ink-bordered box about half the window high (`codeBlockHeight`);
 - the lines never wrap: the box scrolls sideways, with its bar at the box's bottom, and down
   inside, both bars kept drawn (`persistentScrollbar`), so nothing flashes on e-ink;
+- the inner scroll is at least as wide as the box, so a short log keeps its bar at the box's edge;
+- `fit` sizes the box to its lines, for the one command a `Needs` fix names (`command`);
 - the `code` text style: the system monospaced face (`monospace`), ink on paper, at the minimum
   size, so more of a line shows.
 
 A screen in `renders/screens.tsx` lists the raw lines it is fed as `raw`, and the renders fail when
 one of them, or any monospaced text, shows outside the block (`rawBreaks` in `renders/rules.ts`).
-Headless Chromium hides scroll bars, so the renders show the box and its cut lines, not the bars;
+A screen shows the block only when it has lines to show. Headless Chromium hides scroll bars, so the renders show the box and its cut lines, not the bars;
 the device round checks both scroll directions.

@@ -8,9 +8,10 @@ import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {useBackKey} from './backKey';
 import {Button} from './Button';
+import {CodeBlock} from './CodeBlock';
 import {LoadingMark} from './marks';
 import {metrics} from './metrics';
-import {Problem, RETRY_TEXT} from './problem';
+import {COMMAND_TEXT, Problem, RETRY_TEXT} from './problem';
 import {shared} from './styles';
 import {TitleBar} from './TitleBar';
 import {WORKING_TEXT} from './working';
@@ -95,6 +96,9 @@ function ProblemView({
             </Text>
           ))}
         </View>
+      )}
+      {fix !== undefined && 'steps' in fix && fix.command !== undefined && (
+        <CodeBlock lines={[fix.command]} label={COMMAND_TEXT} fit />
       )}
       {(fix !== undefined && 'run' in fix) || onRetry ? (
         <View style={shared.buttons}>
