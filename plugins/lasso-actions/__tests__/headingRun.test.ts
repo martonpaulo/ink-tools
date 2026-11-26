@@ -19,6 +19,12 @@ function fakeHost(over: Partial<HeadingHost> = {}) {
       calls.push(`title ${style}`);
       return ok(true);
     },
+    select: async rect => {
+      calls.push(
+        `select ${rect.left},${rect.top},${rect.right},${rect.bottom}`,
+      );
+      return ok(true);
+    },
     resize: async rect => {
       calls.push(
         `resize ${rect.left},${rect.top},${rect.right},${rect.bottom}`,
@@ -45,11 +51,22 @@ test('a lassoed word becomes a level 2 heading at the leading margin, across the
       bottom: 460,
     },
   });
+  // The title clears the lasso on the tablet (device round 6), so its strokes are lassoed again.
   expect(calls).toEqual([
     `title ${TITLE_STYLE.shadow}`,
+    'select 600,400,800,460',
     `resize ${HEADING_MARGIN},400,${PAGE.width - HEADING_MARGIN},460`,
   ]);
   expect(toasts).toEqual([]);
+});
+
+test('a lasso the title cleared and that cannot be made again keeps the title, unmoved, and says so', async () => {
+  const {host, calls, toasts} = fakeHost({
+    select: async () => fail(904, 'No lasso action has been performed'),
+  });
+  expect(await applyHeading(2, host)).toEqual({ok: false, why: 'relasso'});
+  expect(calls).toEqual([`title ${TITLE_STYLE.shadow}`]);
+  expect(toasts).toEqual([copy['heading.notMoved']]);
 });
 
 test('a level pressed twice only sets the style again, at the same place', async () => {
@@ -102,6 +119,6 @@ test('a failed resize keeps the title and says the heading was not moved', async
     resize: async () => fail(-1, 'thrown'),
   });
   expect(await applyHeading(2, host)).toEqual({ok: false, why: 'resize'});
-  expect(calls).toEqual([`title ${TITLE_STYLE.shadow}`]);
+  expect(calls).toEqual([`title ${TITLE_STYLE.shadow}`, 'select 600,400,800,460']);
   expect(toasts).toEqual([copy['heading.notMoved']]);
 });

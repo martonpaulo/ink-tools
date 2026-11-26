@@ -459,6 +459,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - A Lasso Actions or Device Link insert leaves the inserted picture lassoed, but a plugin command
   run after it clears the lasso: `getLassoElementTypeCounts` then answers 904 [measured, Probe,
   2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Lasso again by the element's rect before pressing a row.
+- `setLassoTitle` clears the lasso once it makes the title: from a lasso row, a `resizeLassoRect`
+  right after it answered `904 No lasso action has been performed` [measured, Lasso Actions 0.2.0
+  beta 33, Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings lassoes the title's strokes again by their rect before it moves
+  them; whether that lasso keeps the title is [unverified].
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
