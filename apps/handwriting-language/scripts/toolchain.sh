@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install the light Android toolchain into .toolchain/: build-tools 35 (aapt2, D8, zipalign,
 # apksigner) and platform 35 (android.jar), each archive checked against a pinned SHA-1. The same
-# archives and pins as the plugins' scripts/native-toolchain.sh (#59, #153), without React Native.
+# archives and pins as packages/native-build/native-toolchain.sh (#59, #153), without React Native.
 # Reuses ANDROID_HOME when it already holds both (a GitHub runner). Prints the two paths
 # scripts/build.cjs reads.
 #

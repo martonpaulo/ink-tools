@@ -6,8 +6,8 @@
  * one replaced the copies.
  *
  * Each plugin keeps a thin `scripts/native-build.cjs` that names its package class and its Java
- * folders and calls `defineBuild`; its own `scripts/native-toolchain.sh` and `scripts/host-tools.cjs`
- * stay, as `scripts/test_native_package.py` checks them per plugin.
+ * folders and calls `defineBuild`; its tools come from this folder's `native-toolchain.sh`, the one
+ * copy, run for the plugin's folder (#295).
  *
  *   node scripts/native-build.cjs            build build/native/app.npk
  *   node scripts/native-build.cjs --package  build it and add it to build/outputs/<name>.snplg,
@@ -32,7 +32,9 @@ const JAVAC = ['--release', '8', '-encoding', 'UTF-8', '-Xlint:-options'];
  * fails the build (Image Editing's Back key, #226).
  */
 const COMPILE_ONLY = path.join(__dirname, 'compile-only');
-/** The paths native-toolchain.sh prints, each after the plugin's own prefix (`LOOKUP_`, `RELAY_`). */
+/** The one toolchain script, which installs into the plugin's `.toolchain/` (#295). */
+const TOOLCHAIN = path.join(__dirname, 'native-toolchain.sh');
+/** The paths native-toolchain.sh prints, each after its `NATIVE_` prefix. */
 const PRINTED = /^[A-Z0-9]+_(BUILD_TOOLS|ANDROID_JAR|REACT_JAR|KOTLIN_JAR)=(.*)$/;
 
 /** Every `.java` file under `folder`, in directory order. */
@@ -86,9 +88,9 @@ function nativeBuild({root, hostTools, packageClass, sources, test}) {
     return execFileSync(binary, args, {cwd: root, stdio: 'inherit', ...options});
   }
 
-  /** Paths printed by scripts/native-toolchain.sh, which installs what is missing. */
+  /** Paths printed by native-toolchain.sh, which installs what is missing. */
   function tools() {
-    const text = execFileSync('bash', [path.join(root, 'scripts/native-toolchain.sh')], {
+    const text = execFileSync('bash', [TOOLCHAIN, root], {
       cwd: root,
       encoding: 'utf8',
     });
@@ -108,7 +110,7 @@ function nativeBuild({root, hostTools, packageClass, sources, test}) {
     };
     for (const [name, file] of Object.entries(result)) {
       if (!file || !fs.existsSync(file)) {
-        throw Error(`Missing ${name}: ${file}. Run scripts/native-toolchain.sh.`);
+        throw Error(`Missing ${name}: ${file}. Run bash ${TOOLCHAIN} ${root}.`);
       }
     }
     return result;

@@ -23,7 +23,6 @@
   ],
   "counts": {
    "apps/handwriting-language/scripts/toolchain.sh": {
-    "repeated": 1,
     "url": 2
    },
    "cli/inkctl/scripts/dry_check.py": {
@@ -53,6 +52,9 @@
    "packages/sync-core/src/ics.ts": {
     "number": 9
    },
+   "packages/native-build/native-toolchain.sh": {
+    "url": 4
+   },
    "packages/sync-core/src/push.ts": {
     "number": 2
    },
@@ -62,16 +64,8 @@
    "plugins/account-sync/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/account-sync/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
-   },
    "plugins/device-link/.eslintrc.js": {
     "repeated": 1
-   },
-   "plugins/device-link/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
    },
    "plugins/device-link/src/localsend/protocol.ts": {
     "number": 23
@@ -85,36 +79,20 @@
    "plugins/image-editing/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/image-editing/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
-   },
    "plugins/image-editing/src/buttons.ts": {
     "repeated": 1
    },
    "plugins/ink-tools-probe/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/ink-tools-probe/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
-   },
    "plugins/lasso-actions/.eslintrc.js": {
     "repeated": 1
-   },
-   "plugins/lasso-actions/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
    },
    "plugins/lasso-actions/src/buttons.ts": {
     "repeated": 1
    },
    "plugins/smart-pen/.eslintrc.js": {
     "repeated": 1
-   },
-   "plugins/smart-pen/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
    },
    "plugins/smart-pen/src/modules/shapes/geometry.ts": {
     "number": 4
@@ -151,18 +129,14 @@
    "scripts/skd/**"
   ],
   "counts": {
-   "apps/handwriting-language": 1,
    "cli/inkctl": 1,
    "packages/ink-core": 1,
-   "plugins/account-sync": 5,
+   "plugins/account-sync": 4,
    "plugins/device-link": 1,
    "plugins/image-editing": 1,
    "plugins/smart-pen": 1
   },
-  "identical": {
-   "plugins/device-link/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
-   "plugins/image-editing/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)"
-  }
+  "identical": {}
  },
  "twins": {
   "rules": [
@@ -459,9 +433,6 @@
    "plugins/account-sync/native/com/bridge/files/BridgeFilesPackage.java": {
     "Ink2Pic": 1
    },
-   "plugins/account-sync/scripts/native-toolchain.sh": {
-    "ink2pic": 1
-   },
    "plugins/device-link/src/receive/receive.ts": {
     "Ink2Pic": 1
    },
@@ -503,9 +474,6 @@
    },
    "plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java": {
     "Ink2Pic": 1
-   },
-   "plugins/lasso-actions/scripts/native-toolchain.sh": {
-    "ink2pic": 1
    },
    "plugins/lasso-actions/src/definition.ts": {
     "Ink2Pic": 1

@@ -75,7 +75,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: plugins/account-sync/.toolchain
-          key: toolchain-${{ runner.os }}-plugins/account-sync-${{ hashFiles('plugins/account-sync/scripts/native-toolchain.sh') }}
+          key: toolchain-${{ runner.os }}-plugins/account-sync-${{ hashFiles('packages/native-build/native-toolchain.sh') }}
 
       - name: Install dependencies
         if: steps.tag.outputs.publish == 'true' && steps.modules.outputs.cache-hit != 'true'

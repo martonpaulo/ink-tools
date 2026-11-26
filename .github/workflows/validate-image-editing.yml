@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: plugins/image-editing/.toolchain
-          key: toolchain-${{ runner.os }}-plugins/image-editing-${{ hashFiles('plugins/image-editing/scripts/native-toolchain.sh') }}
+          key: toolchain-${{ runner.os }}-plugins/image-editing-${{ hashFiles('packages/native-build/native-toolchain.sh') }}
 
       - name: Install dependencies
         if: steps.modules.outputs.cache-hit != 'true'

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Install the light native toolchain (#305, copied from ../lasso-actions) into .toolchain/, each archive checked
-# against a pinned SHA-1. Reuses ANDROID_HOME when it already holds build-tools 35.0.0 and
-# platform 35 (a GitHub runner). Prints the three paths native-build.cjs reads.
+# Install the light native toolchain into a plugin's .toolchain/, each archive checked against a
+# pinned SHA-1: the one copy every plugin's native build runs (#40, #153; one owner since #295).
+# Reuses ANDROID_HOME when it already holds build-tools 35.0.0 and platform 35 (a GitHub runner).
+# Prints the paths native-build.cjs reads.
 #
-#   bash scripts/native-toolchain.sh
+#   bash packages/native-build/native-toolchain.sh <plugin folder>
 set -euo pipefail
-root="$(cd "$(dirname "$0")/.." && pwd)"
+root="$(cd "${1:?the plugin folder}" && pwd)"
 dir="$root/.toolchain"
 mkdir -p "$dir"
 
@@ -49,7 +50,7 @@ fetch https://maven-central.storage-download.googleapis.com/maven2/com/facebook/
 fetch https://maven-central.storage-download.googleapis.com/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.jar \
   618b539767b4899b4660a83006e052b63f1db551 kotlin-stdlib.jar
 
-echo "SMARTPEN_BUILD_TOOLS=$build_tools"
-echo "SMARTPEN_ANDROID_JAR=$platform/android.jar"
-echo "SMARTPEN_REACT_JAR=$dir/react-android.jar"
-echo "SMARTPEN_KOTLIN_JAR=$dir/kotlin-stdlib.jar"
+echo "NATIVE_BUILD_TOOLS=$build_tools"
+echo "NATIVE_ANDROID_JAR=$platform/android.jar"
+echo "NATIVE_REACT_JAR=$dir/react-android.jar"
+echo "NATIVE_KOTLIN_JAR=$dir/kotlin-stdlib.jar"

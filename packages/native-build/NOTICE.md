@@ -21,7 +21,7 @@ of that repository): `javac` for Java 8, D8 with minimum API 27, `aapt2 link`, a
 `native-build.cjs` of this folder is a new script that follows this pipeline, which every plugin
 with native code calls ([#231](https://github.com/martonpaulo/ink-tools/issues/231)). Changed: it uses the
 `zip` and `unzip` commands instead of the `fflate` library, writes the Android manifest from
-`PluginConfig.json`, gets its tools from `scripts/native-toolchain.sh` with pinned SHA-1 checks,
+`PluginConfig.json`, gets its tools from `native-toolchain.sh` with pinned SHA-1 checks,
 and runs the plugin's own JVM tests. Not taken: Pic2Note's Java code, image editor and Windows
 toolchain discovery.
 
