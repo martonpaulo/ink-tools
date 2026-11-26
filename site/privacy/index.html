@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Privacy policy · Ink Tools</title>
+  <meta name="description" content="What each Ink Tools plugin sends, to which service, and where your account tokens are kept. Ink Tools runs no server and collects no data.">
+  <link rel="canonical" href="https://inktools.martonpaulo.com/privacy/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ink Tools">
+  <meta property="og:url" content="https://inktools.martonpaulo.com/privacy/">
+  <meta property="og:title" content="Privacy policy · Ink Tools">
+  <meta property="og:description" content="What each Ink Tools plugin sends, to which service, and where your account tokens are kept. Ink Tools runs no server and collects no data.">
+  <meta property="og:image" content="https://inktools.martonpaulo.com/social-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Ink Tools: a Supernote page with a lassoed handwritten word and the Lasso Actions buttons.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://inktools.martonpaulo.com/social-card.jpg">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles/main.css">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Ink Tools", "item": "https://inktools.martonpaulo.com/"}, {"@type": "ListItem", "position": 2, "name": "Privacy policy", "item": "https://inktools.martonpaulo.com/privacy/"}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/"><img src="/favicon.svg" width="28" height="28" alt="">Ink Tools</a>
+      <nav aria-label="Main">
+        <ul>
+          <li><a href="/#tools">Tools</a></li>
+          <li><a href="/privacy/" aria-current="page">Privacy</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="/">Ink Tools</a></li>
+          <li aria-current="page">Privacy policy</li>
+        </ol>
+      </nav>
+      <h1>Privacy policy</h1>
+      <p class="lead">Last updated 26 November 2026. Ink Tools runs no server. It collects no analytics, has no account of its own and sells nothing. Each tool below sends data only to the service named, and only when you use that feature.</p>
+
+      <h2 id="account-sync">Account Sync</h2>
+      <p>Account Sync brings your to-dos and calendars onto the tablet. Every account is off until you connect it in the plugin's Settings. The tablet talks to each service directly; nothing passes through a server of ours.</p>
+      <ul>
+        <li><strong>Todoist</strong> (<code>api.todoist.com</code>): reads your tasks and projects, and sends back the tasks you add, change, complete or delete on the tablet. It uses a Todoist API token you create.</li>
+        <li><strong>Google Calendar</strong> (<code>www.googleapis.com</code>, <code>oauth2.googleapis.com</code>): reads the events of the calendars you choose, and sends back the events you add, change or delete on the tablet. It uses a Google sign-in you make on your Mac with <code>inkctl</code>.</li>
+        <li><strong>iCloud Calendar</strong> (<code>caldav.icloud.com</code>): reads and writes the events of your iCloud calendars over CalDAV, with your Apple ID and an app-specific password.</li>
+        <li><strong>ICS calendars</strong>: reads each calendar feed address you enter. Nothing is sent to it.</li>
+        <li><strong>Telegram</strong> (planned, not yet released): the Digest module will sync the tablet's Digest with your own Telegram «Saved Messages» through the official Telegram API, after you sign in. This policy will say exactly what it sends before it ships.</li>
+      </ul>
+      <p>Your tokens and passwords are kept in two places only: in the plugin's private folder on your tablet, and in your Mac's login Keychain when you sign in from the Mac. They are never written to a log or sent anywhere except to the service they belong to.</p>
+
+      <h3 id="google-limited-use">Google user data</h3>
+      <p>Ink Tools' use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. Account Sync reads and writes Google Calendar events only to show them in the tablet's Calendar and to carry your tablet edits back. It does not transfer them to anyone else, does not use them for advertising, and no person reads them. You can remove its access at any time in your Google Account's security settings.</p>
+
+      <h2 id="lasso-actions">Lasso Actions</h2>
+      <p>When you press a Lasso Actions button, the word you lassoed, as recognised text, is sent to the public service that button uses. Nothing else from your note is sent, and no account is used.</p>
+      <ul>
+        <li><strong>Pictures</strong>: Wikimedia Commons, Wikidata and Wikipedia (<code>wikimedia.org</code>, <code>wikidata.org</code>, <code>wikipedia.org</code>) and Openclipart (<code>openclipart.org</code>). The built-in emoji set needs no network.</li>
+        <li><strong>Definitions</strong>: Wiktionary (<code>wiktionary.org</code>).</li>
+        <li><strong>Summaries</strong>: Wikipedia (<code>wikipedia.org</code>).</li>
+        <li><strong>Translations</strong>: Apertium (<code>apertium.org</code>).</li>
+      </ul>
+      <p>Each service receives your tablet's network address, as with any web request, and handles it under its own privacy policy.</p>
+
+      <h2 id="device-transfer">Device Transfer</h2>
+      <p>Device Transfer sends a page, a selection or text to a LocalSend device you pick, and receives from one, only on your local network. It finds devices with LocalSend's discovery on that network and sends over an encrypted connection straight to the device. Nothing goes over the internet.</p>
+
+      <h2 id="plugin-diagnostics">Plugin Diagnostics</h2>
+      <p>Plugin Diagnostics is a developer tool for testing Ink Tools on a tablet; it is never released to users. It holds the network permission only so that a test can try a network call. It sends no data of yours to any service, and writes its results to the tablet's own log.</p>
+
+      <h2 id="no-network">Tools that use no network</h2>
+      <ul>
+        <li><strong>Image Editing</strong> and <strong>Smart Pen</strong> work on the tablet only and have no network permission.</li>
+        <li><strong>Handwriting Language</strong> only changes the tablet's own recognition language setting.</li>
+        <li><strong>Ink Notebook Editor</strong> and <strong>inkctl</strong> run on your Mac and talk only to your tablet, over USB or your local network. <code>inkctl</code> also makes the Google sign-in with Google when you ask it to.</li>
+      </ul>
+
+      <h2 id="this-site">This website</h2>
+      <p>This site is a set of static pages served by GitHub Pages. It uses no cookies, no script and no analytics. GitHub may keep its own server logs under the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub Privacy Statement</a>.</p>
+
+      <h2 id="contact">Contact</h2>
+      <p>For a question about this policy, or to report a problem, <a href="https://github.com/martonpaulo/ink-tools/issues/new" target="_blank" rel="noopener">open an issue on GitHub</a>. Changes to this policy are made in the public repository, so every earlier version stays visible.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 Marton Paulo · CC BY-NC-SA 4.0</p>
+      <ul>
+        <li><a href="https://github.com/martonpaulo/ink-tools" target="_blank" rel="noopener">Source</a></li>
+        <li><a href="https://github.com/martonpaulo/ink-tools/issues" target="_blank" rel="noopener">Issues</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

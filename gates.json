@@ -24,7 +24,8 @@
     {"name": "icons", "command": "python3 scripts/icons.py --check && python3 -B -m unittest scripts/test_icons.py", "covers": "every icon Ink Tools shows on the tablet is drawn from design/icons/icons.json in the native outline style (stroke, colour, caps, extent), its files are current, and no two read alike (#271)"},
     {"name": "quick", "command": "python3 scripts/workflow_paths.py --root . && cd scripts && python3 -B -m unittest test_quick_check test_workflow_paths", "covers": "the Quick check's path selection: which subprojects a change type-checks (#180), and each validate workflow's paths equal to the gates.json rules of its gate (#301)"},
     {"name": "setup", "command": "python3 -B -m unittest scripts/test_gate_install.py scripts/test_cloud_config.py", "covers": "each npm gate installs its subproject from its lockfile when node_modules is missing or older than the lockfile (#135, #222), and .github/cloud.json names every gate as a cloud gate but the Ink Notebook Editor's (#301)"},
-    {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"}
+    {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"},
+    {"name": "site", "command": "bash scripts/validate-site.sh && python3 scripts/site_privacy.py --root . && python3 -B -m unittest scripts/test_site_privacy.py", "covers": "the home page and privacy policy in site/: the Workbench site check, and both pages present with a privacy section for every plugin that declares INTERNET (#371)"}
   ],
   "rules": [
     {"path": "*.md", "gates": ["docs", "license"]},
@@ -139,6 +140,17 @@
     {"path": "cli/inkctl/", "gates": ["inkctl"]},
     {"path": ".github/workflows/validate-inkctl.yml", "gates": ["inkctl"]},
     {"path": "design/", "gates": ["design"]},
-    {"path": ".github/workflows/validate-design.yml", "gates": ["design"]}
+    {"path": ".github/workflows/validate-design.yml", "gates": ["design"]},
+    {"path": "site/", "gates": ["site"]},
+    {"path": "design/social-card/", "gates": ["site"]},
+    {"path": "scripts/validate-site.sh", "gates": ["site"]},
+    {"path": "scripts/version-site-assets.sh", "gates": ["site"]},
+    {"path": "scripts/social-card.sh", "gates": ["site"]},
+    {"path": "scripts/lib/", "gates": ["site"]},
+    {"path": "scripts/site_privacy.py", "gates": ["site"]},
+    {"path": "scripts/test_site_privacy.py", "gates": ["site"]},
+    {"path": "plugins/*/PluginConfig.json", "gates": ["site"]},
+    {"path": "packages/sn-adapter/src/official/plugin.ts", "gates": ["site"]},
+    {"path": ".github/workflows/validate-site.yml", "gates": ["site"]}
   ]
 }

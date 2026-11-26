@@ -1,0 +1,70 @@
+name: Validate site
+
+# The home page and privacy policy at inktools.martonpaulo.com (#371). Runs only when the site, its
+# checks or a plugin's permissions change. A push to main that passes the gate deploys the site to
+# GitHub Pages; the Pages site's custom domain is set through the Pages API, not by site/CNAME.
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'design/social-card/**', 'scripts/validate-site.sh', 'scripts/version-site-assets.sh', 'scripts/social-card.sh', 'scripts/lib/**', 'scripts/site_privacy.py', 'scripts/test_site_privacy.py', 'plugins/*/PluginConfig.json', 'packages/sn-adapter/src/official/plugin.ts', '.github/workflows/validate-site.yml']
+  pull_request:
+    paths: ['site/**', 'design/social-card/**', 'scripts/validate-site.sh', 'scripts/version-site-assets.sh', 'scripts/social-card.sh', 'scripts/lib/**', 'scripts/site_privacy.py', 'scripts/test_site_privacy.py', 'plugins/*/PluginConfig.json', 'packages/sn-adapter/src/official/plugin.ts', '.github/workflows/validate-site.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate
+        run: |
+          bash scripts/validate-site.sh
+          python3 scripts/site_privacy.py --root .
+          python3 -B -m unittest scripts/test_site_privacy.py
+
+      # The deploy publishes a staged copy whose asset addresses carry ?v=<md5>, so a changed
+      # stylesheet never pairs with cached HTML (Workbench public-pages.md section 10).
+      - name: Stage the site
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          cp -R site "$RUNNER_TEMP/site"
+          bash scripts/version-site-assets.sh --site "$RUNNER_TEMP/site"
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        env:
+          # v5 still emits DEP0040 from its bundled Actions toolkit on Node 24.
+          NODE_OPTIONS: --disable-warning=DEP0040

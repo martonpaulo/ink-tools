@@ -1,0 +1,76 @@
+<!doctype html>
+<!--
+  Ink Tools social card (#371, Workbench public-pages.md section 5, skill-deck #261).
+  Render: scripts/social-card.sh, which writes site/social-card.jpg (1200x630, JPEG q92, 4:4:4).
+  Pattern A: the visual is a redrawing of the tablet page with a lassoed word and the Lasso Actions
+  toolbar. Ground: an ink-blue gradient, for ink on paper.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Gabarito"; src: url("../fonts/Gabarito[wght].ttf"); font-weight: 400 900; }
+  @font-face { font-family: "Figtree"; src: url("../fonts/Figtree[wght].ttf"); font-weight: 300 900; }
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative;
+    background: radial-gradient(circle at 78% 30%, rgba(140, 184, 230, 0.35), transparent 55%),
+      linear-gradient(135deg, #10263f 0%, #1e4670 55%, #2f6aa3 100%);
+    font-family: "Figtree", sans-serif;
+    color: #ffffff;
+  }
+  .copy { position: absolute; left: 96px; top: 50%; width: 440px; transform: translateY(-50%); }
+  .eyebrow {
+    display: inline-block; padding: 8px 16px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16); font-size: 19px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  h1 { margin: 24px 0 16px; font-family: "Gabarito", sans-serif; font-weight: 700; font-size: 88px; line-height: 1; }
+  .promise { margin: 0 0 28px; font-size: 38px; font-weight: 500; line-height: 1.2; }
+  .domain { font-size: 24px; font-weight: 500; color: #d6e6f6; }
+  .tablet {
+    position: absolute; left: 640px; top: 70px; width: 520px; height: 640px;
+    border-radius: 22px; background: #efefef;
+    box-shadow: 0 40px 80px rgba(15, 23, 42, 0.30), 0 8px 20px rgba(15, 23, 42, 0.12);
+  }
+  .lines { position: absolute; inset: 70px 40px auto 40px; }
+  .lines div { height: 2px; background: #c9c9c9; margin-bottom: 54px; }
+  .ink { position: absolute; left: 70px; top: 120px; }
+  .lasso {
+    position: absolute; left: 52px; top: 104px; width: 236px; height: 110px;
+    border: 3px dashed #383838; border-radius: 8px;
+  }
+  .toolbar {
+    position: absolute; left: 52px; top: 232px; display: flex; gap: 0;
+    background: #ffffff; border: 2px solid #000000; border-radius: 10px; overflow: hidden;
+    color: #000000; font-size: 20px; font-weight: 600;
+  }
+  .toolbar span { padding: 14px 18px; border-right: 2px solid #000000; }
+  .toolbar span:last-child { border-right: 0; }
+  .inserted { position: absolute; left: 70px; top: 330px; width: 130px; height: 130px; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <span class="eyebrow">Free · Open source</span>
+    <h1>Ink Tools</h1>
+    <p class="promise">Plugins and Mac tools for your Supernote</p>
+    <span class="domain">inktools.martonpaulo.com</span>
+  </div>
+  <div class="tablet" aria-hidden="true">
+    <div class="lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    <svg class="ink" width="200" height="80" viewBox="0 0 200 80">
+      <path d="M32 34 C22 24 8 32 10 46 C12 58 28 58 32 44 L33 55 M42 30 L42 76 M42 38 C48 26 64 28 64 42 C64 56 48 58 42 48 M74 30 L74 76 M74 38 C80 26 96 28 96 42 C96 56 80 58 74 48 M108 8 L108 55 M120 44 L144 44 C144 30 122 28 120 44 C118 58 138 60 146 52"
+        fill="none" stroke="#000000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="lasso"></div>
+    <div class="toolbar"><span>Insert Sticker</span><span>Translate</span><span>Definition</span></div>
+    <svg class="inserted" viewBox="0 0 130 130">
+      <path d="M65 34 C40 20 14 36 18 70 C22 104 48 122 65 112 C82 122 108 104 112 70 C116 36 90 20 65 34 Z"
+        fill="none" stroke="#000000" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M65 34 C64 22 70 12 80 8" fill="none" stroke="#000000" stroke-width="5" stroke-linecap="round"/>
+      <path d="M70 22 C82 10 98 14 102 22 C90 30 78 28 70 22 Z" fill="none" stroke="#000000" stroke-width="4"/>
+    </svg>
+  </div>
+</body>
+</html>
