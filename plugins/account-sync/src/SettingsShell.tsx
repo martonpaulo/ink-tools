@@ -5,7 +5,7 @@
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
  * keeps what Account Sync wrote; its «Remove what Account Sync wrote» button asks once more before
  * anything is deleted (#89). The title bar carries ui-kit's ×, since Back never reaches the view
- * on the Nomad (#204, #266, #274).
+ * on the Manta (#204, #266, #274).
  */
 import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';

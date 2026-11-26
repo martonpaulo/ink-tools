@@ -93,7 +93,7 @@
     {"path": "scripts/boundaries.py", "gates": ["boundaries"]},
     {"path": "scripts/test_boundaries.py", "gates": ["boundaries"]},
     {"path": "cli/inkctl/src/", "gates": ["boundaries"]},
-    {"path": "packages/ui-kit/", "gates": ["account-sync", "word-lookup", "device-transfer", "image-editing", "smart-pen"]},
+    {"path": "packages/ui-kit/", "gates": ["account-sync", "word-lookup", "device-transfer", "image-editing", "smart-pen", "plugin-diagnostics"]},
     {"path": "packages/ink-core/", "gates": ["packages", "account-sync", "word-lookup", "device-transfer", "image-editing", "smart-pen"]},
     {"path": "packages/picture-search/", "gates": ["packages", "account-sync", "word-lookup", "image-editing", "smart-pen"]},
     {"path": "packages/sync-core/", "gates": ["packages", "account-sync"]},

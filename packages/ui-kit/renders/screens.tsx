@@ -166,6 +166,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
+  {name: 'account-sync-connect', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})}} onClose={noop} />)},
   {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
