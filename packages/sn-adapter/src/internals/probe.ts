@@ -44,14 +44,23 @@ const TEST_WRITE: Partial<Record<Capability, (d: Descriptor) => {where: Row; val
 /** Why a capability with no test write stays unable to write. */
 export const NO_TEST_WRITE = 'no test write: the provider refuses deletes, so a test row would stay (#42)';
 
+/**
+ * What kind of problem the probe found, in our words (#417): the provider was `silent`, its schema
+ * `changed`, it `refused` the test write, the test write was `unsafe` (it changed a row), or there is
+ * `noTestWrite` for it. A tool shows a sentence per kind; the detail goes only to the log.
+ */
+export type ProbeProblemKind = 'silent' | 'changed' | 'refused' | 'unsafe' | 'noTestWrite';
+
 export interface CapabilityStatus {
   capability: Capability;
   /** Every table answered with the columns the descriptor lists. */
   available: boolean;
   /** A test write into the write table passed and changed no row; false when reads failed first. */
   canWrite: boolean;
-  /** Human-readable reasons: provider silent, columns missing, or the write refused. */
+  /** The log's details: provider silent, columns missing, or the write refused; never shown as they are. */
   problems: string[];
+  /** Each problem's kind, in the order of `problems` (#417). */
+  kinds: ProbeProblemKind[];
 }
 
 /**
@@ -65,17 +74,22 @@ export async function probeCapability(
 ): Promise<CapabilityStatus> {
   const module = descriptor[capability];
   const problems: string[] = [];
+  const kinds: ProbeProblemKind[] = [];
+  const add = (kind: ProbeProblemKind, detail: string) => {
+    kinds.push(kind);
+    problems.push(detail);
+  };
   for (const [name, table] of Object.entries(module.tables)) {
     const uri = contentUri(module, name);
     let actual: string[];
     try {
       actual = await reader.columnsOf(uri);
     } catch (e) {
-      problems.push(`${uri} did not answer: ${e instanceof Error ? e.message : String(e)}`);
+      add('silent', `${uri} did not answer: ${e instanceof Error ? e.message : String(e)}`);
       continue;
     }
     const missing = table.columns.filter(c => !actual.includes(c));
-    if (missing.length) problems.push(`${uri} lacks columns: ${missing.join(', ')}`);
+    if (missing.length) add('changed', `${uri} lacks columns: ${missing.join(', ')}`);
   }
   const available = problems.length === 0;
   // No write is tried against a schema that already failed to match.
@@ -83,7 +97,7 @@ export async function probeCapability(
   const table = WRITE_TABLE[capability];
   const write = TEST_WRITE[capability];
   if (available && (!table || !write)) {
-    problems.push(NO_TEST_WRITE);
+    add('noTestWrite', NO_TEST_WRITE);
   } else if (available && table && write) {
     const uri = contentUri(module, table);
     const {where, values} = write(descriptor);
@@ -93,13 +107,13 @@ export async function probeCapability(
       if (changed === 0) {
         canWrite = true;
       } else {
-        problems.push(`${uri} changed ${changed} rows on a test write that selects none`);
+        add('unsafe', `${uri} changed ${changed} rows on a test write that selects none`);
       }
     } catch (e) {
-      problems.push(`${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);
+      add('refused', `${uri} refused a test write: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-  return {capability, available, canWrite, problems};
+  return {capability, available, canWrite, problems, kinds};
 }
 
 /** Every capability the descriptor holds, in the order `probeAll` answers. */

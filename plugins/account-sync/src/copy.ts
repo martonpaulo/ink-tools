@@ -11,6 +11,19 @@ export const copy = {
   'about.digest': 'Saves messages from a connected account to Digest. No account connects yet.',
   'status.blocked': 'On, but not running: {reasons}.',
   'status.tried': 'Last tried at {time}.',
+  /**
+   * Why the device check blocks a module, one sentence per kind of probe problem (#417); each
+   * follows «On, but not running: », and the provider, table and columns go only to the log.
+   */
+  'probe.changed': "the tablet's {app} app changed, so {app} sync is paused until Account Sync is updated",
+  'probe.silent': "the tablet's {app} app did not answer the device check",
+  'probe.refused': "the tablet's {app} app refused the safe test write, so nothing is written",
+  'probe.unsafe': "the tablet's {app} app did not keep to the safe test write, so nothing is written",
+  'probe.unknown': "the tablet's {app} app did not pass the device check",
+  'probe.noTestWrite': "the tablet's {app} app has no safe test write yet, so nothing is written",
+  'app.todo': 'To-Do',
+  'app.calendar': 'Calendar',
+  'app.digest': 'Digest',
   'status.waiting': 'Not synced yet.',
   /** One short line per module, as native Settings states a status (#411): when, then what changed. */
   'status.synced': 'Synced at {time} · {changes}',

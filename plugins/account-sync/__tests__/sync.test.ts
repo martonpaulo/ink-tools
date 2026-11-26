@@ -8,6 +8,7 @@ import {
 import type {CapabilityStatus} from '@ink-tools/sn-adapter';
 import type {Row} from '@ink-tools/sn-adapter';
 import {ContentRows, createDeviceStores} from '../src/deviceStores';
+import {format} from '../src/copy';
 import {
   AUTO_SYNC_MINUTES,
   calendarWindow,
@@ -24,6 +25,7 @@ const ON: CapabilityStatus[] = (['calendar', 'todo', 'digest'] as const).map(
     available: true,
     canWrite: true,
     problems: [],
+    kinds: [],
   }),
 );
 
@@ -245,7 +247,7 @@ test('a cleared module is probed once per host; a blocked one again at the next 
   const probe = jest.fn(async (capabilities: string[]) =>
     ON.filter(status => capabilities.includes(status.capability)).map(status =>
       status.capability === 'todo'
-        ? {...status, canWrite: false, problems: ['refused a test write']}
+        ? {...status, canWrite: false, problems: ['refused a test write'], kinds: ['refused' as const]}
         : status,
     ),
   );
@@ -253,7 +255,7 @@ test('a cleared module is probed once per host; a blocked one again at the next 
   await runner.syncNow();
   const second = await runner.syncNow();
   expect(probe.mock.calls).toEqual([[['calendar', 'todo']], [['todo']]]);
-  expect(second.probe).toEqual({calendar: [], todo: ['refused a test write']});
+  expect(second.probe).toEqual({calendar: [], todo: [format('probe.refused', {app: 'To-Do'})]});
 });
 
 test('a missing Google client or sign-in is an error of the run, never an empty calendar', async () => {

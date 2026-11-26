@@ -43,7 +43,7 @@ import {
 import type {Capability, CapabilityStatus} from '@ink-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
 import type {SecretDrop} from './secretStore';
-import {capabilitiesOf, probeProblems} from './probe';
+import {capabilitiesOf, probeDetails, probeProblems} from './probe';
 import {logBlocked, logRun} from './statusText';
 
 /** The automatic pass while the plugin host lives; a guess until a device round measures the cost. */
@@ -423,10 +423,12 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       }
     }
     const plan = activePlan(settings.value, availability(statuses));
+    // The log keeps the probe's details; the status shows only its sentences (#417).
+    const details = probeDetails(statuses);
     for (const id of load ? [] : plan.blocked) {
       logBlocked(
         id,
-        probe[id]?.length ? probe[id]! : ['the device check has not answered'],
+        details[id]?.length ? details[id]! : ['the device check has not answered'],
         log,
       );
     }

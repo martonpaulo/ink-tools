@@ -67,7 +67,13 @@ test('probe: the Digest is never test-written, as a plugin cannot delete the row
     },
   });
   expect(tried).toEqual([]);
-  expect(digest).toEqual({capability: 'digest', available: true, canWrite: false, problems: [NO_TEST_WRITE]});
+  expect(digest).toEqual({
+    capability: 'digest',
+    available: true,
+    canWrite: false,
+    problems: [NO_TEST_WRITE],
+    kinds: ['noTestWrite'],
+  });
 });
 
 test('the Digest reads the knowledge table, not the old digest path the provider refuses (#42)', () => {
