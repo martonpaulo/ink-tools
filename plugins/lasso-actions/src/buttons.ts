@@ -28,7 +28,7 @@ import type {LookupSettings, SwitchKey} from './settings';
 
 /** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
 export const BUTTON_TYPE_LASSO = 2;
-/** The NOTE toolbar's «Plugins» menu button (docs/supernote.md), as Device Transfer's. */
+/** The NOTE toolbar's «Plugins» menu button (docs/supernote.md), as Device Link's. */
 export const BUTTON_TYPE_SIDEBAR = 1;
 export const EDIT_DATA_STROKES = 0;
 export const SHOW_NO_VIEW = 0;
