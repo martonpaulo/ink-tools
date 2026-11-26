@@ -85,28 +85,30 @@ final class Bridge {
     Parcel reply = Parcel.obtain();
     try {
       ParcelWire wire = new ParcelWire(data);
+      // The port's implementation the registry names (#294); a missing one throws, never a guess.
+      HostCalls.PluginCalls calls = HostCalls.port(Registry.ITEMS, HostCalls.IMPLEMENTATIONS);
       Callback callback = null;
       int code;
       switch (command.op) {
         case INSTALL:
           callback = new Callback(HostCalls.INSTALL_CALLBACK, classes);
-          code = HostCalls.install(wire, command.path, callback);
+          code = calls.install(wire, command.path, callback);
           break;
         case ENABLE:
         case DISABLE:
           callback = new Callback(HostCalls.SET_CALLBACK, classes);
-          code = HostCalls.setEnable(wire, classes.pluginInfo(command.pluginId, command.op == Command.Op.ENABLE), callback);
+          code = calls.setEnable(wire, classes.pluginInfo(command.pluginId, command.op == Command.Op.ENABLE), callback);
           break;
         case UNINSTALL:
           callback = new Callback(HostCalls.UNINSTALL_CALLBACK, classes);
-          code = HostCalls.uninstall(wire, classes.pluginInfo(command.pluginId, false), callback);
+          code = calls.uninstall(wire, classes.pluginInfo(command.pluginId, false), callback);
           break;
         case ALLOW:
           List<Object> permissions = new ArrayList<>();
           for (String name : command.permissions) {
             permissions.add(classes.permission(name, command.status));
           }
-          code = HostCalls.updatePermissions(wire, command.pluginId, permissions);
+          code = calls.updatePermissions(wire, command.pluginId, permissions);
           break;
         default:
           return Outcome.of(Outcome.USAGE, "no call for " + command.op);

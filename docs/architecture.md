@@ -105,7 +105,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   Account Sync's Calendar, To-Do and Digest stores go through, with their contract tests in
   `__tests__/devicePorts.test.ts`; Handwriting Language's `LanguageFiles.port`; NoteFormat's
   `NoteReader` port, which `NoteFile(bytes:)` reads through, with the editor's own turned-off
-  state; the Helper's check of its three host-call items before a call; and inkctl's
+  state; the Helper's `HostCalls.PluginCalls` port, picked by `pluginhost.setting-service`'s `active`, and its check of its three host-call items before a call; and inkctl's
   `COMMAND_ITEMS`, read before each command but `status`, `firmware` and `logs`. Plugins reach the
   internal providers through their native Java. A boundary check fails on a vendor name
   (`com.ratta.`, a provider URI, a vendor class, a private path) written outside the registry: the

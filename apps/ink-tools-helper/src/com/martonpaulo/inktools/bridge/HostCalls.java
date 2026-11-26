@@ -51,6 +51,68 @@ public final class HostCalls {
 
   private HostCalls() {}
 
+  /**
+   * The host-call port (#294, docs/architecture.md › Layer rules): the four plugin operations in our
+   * words, each writing its call into a {@link Wire} and answering the call number to send. The
+   * registry item pluginhost.setting-service names the implementation in use by its {@code active}.
+   */
+  interface PluginCalls {
+    int install(Wire wire, String path, Object callback);
+
+    int setEnable(Wire wire, Object pluginInfo, Object callback);
+
+    int uninstall(Wire wire, Object pluginInfo, Object callback);
+
+    int updatePermissions(Wire wire, String pluginId, List<?> permissions);
+  }
+
+  /** The item whose {@code active} names the port's implementation. */
+  static final String PORT_ITEM = "pluginhost.setting-service";
+
+  /** Level 3: PluginHost's binder interface, written by the static methods below. */
+  static final PluginCalls BINDER = new PluginCalls() {
+    @Override
+    public int install(Wire wire, String path, Object callback) {
+      return HostCalls.install(wire, path, callback);
+    }
+
+    @Override
+    public int setEnable(Wire wire, Object pluginInfo, Object callback) {
+      return HostCalls.setEnable(wire, pluginInfo, callback);
+    }
+
+    @Override
+    public int uninstall(Wire wire, Object pluginInfo, Object callback) {
+      return HostCalls.uninstall(wire, pluginInfo, callback);
+    }
+
+    @Override
+    public int updatePermissions(Wire wire, String pluginId, List<?> permissions) {
+      return HostCalls.updatePermissions(wire, pluginId, permissions);
+    }
+  };
+
+  /** Each implementation by the name a registry item's {@code active} gives it; one per level. */
+  static final java.util.Map<String, PluginCalls> IMPLEMENTATIONS =
+      java.util.Collections.singletonMap("ink-tools-helper HostCalls.java", BINDER);
+
+  /**
+   * The implementation the registry names for {@link #PORT_ITEM}. A name with no implementation
+   * throws: the registry and the code disagree, and no other implementation is taken.
+   */
+  static PluginCalls port(List<Registry.Item> items, java.util.Map<String, PluginCalls> implementations) {
+    for (Registry.Item item : items) {
+      if (item.id.equals(PORT_ITEM)) {
+        PluginCalls chosen = implementations.get(item.active);
+        if (chosen == null) {
+          throw new IllegalStateException("no implementation of " + item.id + " for its active " + item.active);
+        }
+        return chosen;
+      }
+    }
+    throw new IllegalArgumentException("no registry item " + PORT_ITEM);
+  }
+
   /** installPlugin(String path, IPluginInstallCallback cb): installs or upgrades. */
   public static int install(Wire wire, String path, Object callback) {
     wire.writeInterfaceToken(DESCRIPTOR);

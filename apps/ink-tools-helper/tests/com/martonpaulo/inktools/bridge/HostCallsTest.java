@@ -49,33 +49,38 @@ public final class HostCallsTest {
     check(HostCalls.UNINSTALL_CALLBACK.equals("com.ratta.supernote.plugincorelib.callback.IPluginUninstallCallback"),
         "the uninstall callback descriptor is PluginHost's, in the callback package");
 
-    Recorder install = new Recorder();
-    check(HostCalls.install(install, "/sdcard/MyStyle/X.snplg", "cb") == 1, "installPlugin is transaction 1");
-    check(install.writes.equals(Arrays.asList(token, "string /sdcard/MyStyle/X.snplg", "binder cb")),
-        "installPlugin writes the path, then the callback: " + install.writes);
+    // The port's shared contract (#294): every implementation writes PluginHost's encoding.
+    for (java.util.Map.Entry<String, HostCalls.PluginCalls> implementation : HostCalls.IMPLEMENTATIONS.entrySet()) {
+      HostCalls.PluginCalls calls = implementation.getValue();
+      Recorder install = new Recorder();
+      check(calls.install(install, "/sdcard/MyStyle/X.snplg", "cb") == 1, "installPlugin is transaction 1");
+      check(install.writes.equals(Arrays.asList(token, "string /sdcard/MyStyle/X.snplg", "binder cb")),
+          "installPlugin writes the path, then the callback: " + install.writes);
 
-    Recorder enable = new Recorder();
-    check(HostCalls.setEnable(enable, "info", "cb") == 6, "setPluginEnable is transaction 6");
-    check(enable.writes.equals(Arrays.asList(token, "int 1", "body info", "binder cb")),
-        "setPluginEnable writes a non-null PluginInfo, then the callback: " + enable.writes);
+      Recorder enable = new Recorder();
+      check(calls.setEnable(enable, "info", "cb") == 6, "setPluginEnable is transaction 6");
+      check(enable.writes.equals(Arrays.asList(token, "int 1", "body info", "binder cb")),
+          "setPluginEnable writes a non-null PluginInfo, then the callback: " + enable.writes);
 
-    Recorder uninstall = new Recorder();
-    check(HostCalls.uninstall(uninstall, "info", "cb") == 5, "uninstallPlugin is transaction 5");
-    check(uninstall.writes.equals(Arrays.asList(token, "int 1", "body info", "binder cb")),
-        "uninstallPlugin writes a non-null PluginInfo, then the callback: " + uninstall.writes);
+      Recorder uninstall = new Recorder();
+      check(calls.uninstall(uninstall, "info", "cb") == 5, "uninstallPlugin is transaction 5");
+      check(uninstall.writes.equals(Arrays.asList(token, "int 1", "body info", "binder cb")),
+          "uninstallPlugin writes a non-null PluginInfo, then the callback: " + uninstall.writes);
 
-    Recorder nothing = new Recorder();
-    HostCalls.setEnable(nothing, null, "cb");
-    check(nothing.writes.equals(Arrays.asList(token, "int 0", "binder cb")), "a null parcelable is the int 0 alone");
+      Recorder nothing = new Recorder();
+      calls.setEnable(nothing, null, "cb");
+      check(nothing.writes.equals(Arrays.asList(token, "int 0", "binder cb")), "a null parcelable is the int 0 alone");
 
-    Recorder allow = new Recorder();
-    check(HostCalls.updatePermissions(allow, "abc", Arrays.asList("read", "write")) == 9, "updatePluginPermissions is transaction 9");
-    check(allow.writes.equals(Arrays.asList(token, "string abc", "int 2", "int 1", "body read", "int 1", "body write")),
-        "updatePluginPermissions writes the id, the list size, then each permission: " + allow.writes);
+      Recorder allow = new Recorder();
+      check(calls.updatePermissions(allow, "abc", Arrays.asList("read", "write")) == 9, "updatePluginPermissions is transaction 9");
+      check(allow.writes.equals(Arrays.asList(token, "string abc", "int 2", "int 1", "body read", "int 1", "body write")),
+          "updatePluginPermissions writes the id, the list size, then each permission: " + allow.writes);
 
-    Recorder empty = new Recorder();
-    HostCalls.updatePermissions(empty, "abc", Collections.emptyList());
-    check(empty.writes.equals(Arrays.asList(token, "string abc", "int 0")), "an empty list is its size alone");
+      Recorder empty = new Recorder();
+      calls.updatePermissions(empty, "abc", Collections.emptyList());
+      check(empty.writes.equals(Arrays.asList(token, "string abc", "int 0")), "an empty list is its size alone");
+    }
+    port();
     System.out.println("HostCallsTest ok");
   }
 
@@ -95,6 +100,21 @@ public final class HostCallsTest {
         numbers.probe, numbers.unprobed, numbers.active, "until 2026-12-31: the numbers moved"));
     check(HostCalls.turnedOff(items).id.equals("pluginhost.call-numbers"), "the call numbers turned off stop every host call");
     check(Copy.FAILURES.containsKey(Copy.TURNED_OFF), "the stop has its sentence");
+  }
+
+  /** The registry names the binder implementation; a name with no implementation is refused (#294). */
+  static void port() {
+    check(HostCalls.port(Registry.ITEMS, HostCalls.IMPLEMENTATIONS) == HostCalls.BINDER, "the registry names the binder calls");
+    List<Registry.Item> items = new ArrayList<>(Registry.ITEMS);
+    Registry.Item item = InternalFailure.item(HostCalls.PORT_ITEM);
+    items.set(items.indexOf(item), new Registry.Item(item.id, item.level, item.impact, item.owner, item.probe,
+        item.unprobed, "ink-tools-helper NextCalls.java", item.off));
+    try {
+      HostCalls.port(items, HostCalls.IMPLEMENTATIONS);
+      throw new AssertionError("an active name with no implementation is refused");
+    } catch (IllegalStateException expected) {
+      check(expected.getMessage().contains("NextCalls.java"), "the refusal names the active implementation");
+    }
   }
 
   static void check(boolean condition, String what) {
