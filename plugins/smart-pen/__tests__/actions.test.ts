@@ -12,7 +12,7 @@ const TAPE: PenTape = {
 
 function host(overrides: Partial<PenActionsHost> = {}): PenActionsHost {
   return {
-    start: jest.fn(),
+    start: jest.fn(() => ({ok: true as const, value: true as const})),
     stop: () => ({ok: true, value: {tape: TAPE, dropped: 0}}),
     replay: jest.fn(async () => ({ok: true as const, value: {motions: 0, penUps: 1, strokes: 1, listenerErrors: 0}})),
     ...overrides,
@@ -26,6 +26,13 @@ test('record-pen on starts the recorder, off answers the tape', async () => {
   expect(fake.start).toHaveBeenCalled();
   const off = await actions['record-pen']({on: false});
   expect(off).toMatchObject({tape: TAPE, dropped: 0, line: 'SmartPen: pen recording off: 1 events, 0 dropped'});
+});
+
+test('record-pen on with every module off is refused before the pen writes (#449)', async () => {
+  const actions = penActions(host({start: () => ({ok: false, code: -1, message: 'no pen listener is on: turn the plugin module on first'})}));
+  const refused = actions['record-pen']({on: true});
+  await expect(refused).rejects.toBeInstanceOf(ActionRefused);
+  await expect(refused).rejects.toThrow('no pen listener is on');
 });
 
 test('record-pen without on is refused', async () => {

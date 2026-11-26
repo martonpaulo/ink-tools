@@ -80,7 +80,10 @@ Pen replay ([#298](https://github.com/martonpaulo/ink-tools/issues/298)): `src/a
 `record-pen` and `replay-pen` on sn-adapter's action channel, ticked by `SmartPenTicks` with no view
 open, from `action.json` in `.data/plugin/inktools-smart-pen/`. Once per release the owner writes a
 word and holds a circle 1 s after `inkctl ink record start`; `inkctl ink record stop FILE`
-saves the tape, and each round replays it with `inkctl ink replay FILE --plugin smart-pen` on a
+saves the tape; with every module off, `record start` refuses, as nothing would hear the pen
+([#449](https://github.com/martonpaulo/ink-tools/issues/449)). A round that switches a module off
+turns it on again before it ends. Each round replays the tape with
+`inkctl ink replay FILE --plugin smart-pen` on a
 fresh mode start (a converter that saw EMR points from the real pen keeps reading EMR).
 
 ## Build and test

@@ -34,7 +34,7 @@ export async function readActionFile(read: typeof readText = readText): Promise<
 }
 
 export type PenActionsHost = {
-  start(): void;
+  start(): Result<true>;
   stop(): Result<{tape: PenTape; dropped: number}>;
   replay(tape: PenTape): Promise<Result<ReplayCounts>>;
 };
@@ -52,7 +52,11 @@ export function penActions(host: PenActionsHost = DEVICE): Record<string, Action
         throw new ActionRefused('record-pen needs args.on, true or false');
       }
       if (args.on) {
-        host.start();
+        // With every module off nothing hears the pen: refuse before the owner writes (#449).
+        const started = host.start();
+        if (!started.ok) {
+          throw new ActionRefused(started.message);
+        }
         return {line: 'SmartPen: pen recording on'};
       }
       const stopped = host.stop();

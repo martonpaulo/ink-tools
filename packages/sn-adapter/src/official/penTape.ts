@@ -70,10 +70,20 @@ export function penRecording(): boolean {
   return recording !== null;
 }
 
-/** Starts a new tape, dropping any open one. */
-export function startPenRecording(now: () => number = Date.now): void {
+/** Why a recording or a replay cannot run: the plugin's modules are all off, so nothing hears the pen. */
+const NO_LISTENER = 'no pen listener is on: turn the plugin module on first';
+
+/**
+ * Starts a new tape, dropping any open one. With no pen listener on it fails, as the tape could
+ * only stay empty: a recording reads the pen through the plugin's own listeners (#449).
+ */
+export function startPenRecording(now: () => number = Date.now): Result<true> {
+  if (penUpListeners.size === 0 && motionListeners.size === 0) {
+    return fail(THROWN_CODE, NO_LISTENER);
+  }
   recording = {now, startedAt: now(), firstStrokeAt: null, events: [], dropped: 0};
   recordedMessages = new WeakSet<object>();
+  return ok(true);
 }
 
 /** Ends the recording and answers its tape and how many events it could not keep; a failure when none was on. */
@@ -268,7 +278,7 @@ function deliver<T>(listeners: Set<(value: T) => void>, value: T): number {
  */
 export async function replayPenTape(tape: PenTape, host: ReplayHost = DEVICE_REPLAY): Promise<Result<ReplayCounts>> {
   if (penUpListeners.size === 0 && motionListeners.size === 0) {
-    return fail(THROWN_CODE, 'no pen listener is on: turn the plugin module on first');
+    return fail(THROWN_CODE, NO_LISTENER);
   }
   const page = await host.page();
   if (!page.ok) {

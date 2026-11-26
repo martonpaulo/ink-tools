@@ -1,6 +1,7 @@
 /** Smart Pen's pen-up router (#305): Smart Shapes decides first, and a replaced stroke is never converted. */
 import {ok} from '@ink-tools/sn-adapter/official';
 import {createPenRouter, type ShapesPenUp} from '../src/pen';
+import {applyModules} from '../src/modules';
 import type {Outcome} from '../src/modules/shapes/snap';
 
 const setup = () => {
@@ -38,6 +39,28 @@ test('with no module listening there is no device listener', () => {
   const {router, device} = setup();
   expect(router.listening).toBe(false);
   expect(device.onPenUp).not.toHaveBeenCalled();
+});
+
+test('at start-up Smart Shapes listens with the Real-Time Text mode off (#449)', async () => {
+  const {router, device, fire} = setup();
+  const shape = shapes('no hold');
+  // As index.js: starting Real-Time Text registers its buttons only; its pen-up listener waits for
+  // the mode button, while Smart Shapes takes the router's listener as it starts.
+  const host = {
+    startText: async () => {},
+    stopText: async () => {},
+    startShapes: () => {
+      router.setShapes(shape.penUp);
+    },
+    stopShapes: () => {
+      router.setShapes(null);
+    },
+  };
+  await applyModules(host, null, {text: true, shapes: true});
+  expect(device.onPenUp).toHaveBeenCalledTimes(1);
+  expect(router.listening).toBe(true);
+  await fire([{uuid: 'a'}]);
+  expect(shape.penUp).toHaveBeenCalledTimes(1);
 });
 
 test('a stroke Smart Shapes replaced never reaches Real-Time Text', async () => {

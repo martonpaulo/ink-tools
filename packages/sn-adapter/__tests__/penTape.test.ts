@@ -240,4 +240,16 @@ describe('recording', () => {
   test('stopping with no recording on is a failure, never an empty tape', () => {
     expect(stopPenRecording().ok).toBe(false);
   });
+
+  test('with no listener on, a recording does not start and says why (#449)', () => {
+    const started = startPenRecording();
+    expect(started).toMatchObject({ok: false, message: expect.stringContaining('no pen listener is on')});
+    expect(stopPenRecording().ok).toBe(false);
+  });
+
+  test('a recording starts once one module listens, with no pen-up listener needed', () => {
+    onMotion(() => {});
+    expect(startPenRecording().ok).toBe(true);
+    expect(stopPenRecording().ok).toBe(true);
+  });
 });
