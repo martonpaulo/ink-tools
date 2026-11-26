@@ -5,6 +5,8 @@
  * target and text stays inside the screen padding, so nothing touches the edge (#97). Content inside
  * a scroll view may run below the screen, as the person scrolls to it; the scroll view itself
  * keeps the padding, so a row lost below the screen and a scrolling list are told apart (#265).
+ * The title bar is the one exception: it touches the top, left and right edges, as NOTE's native
+ * band does, and what sits in it keeps the bar's own insets instead of the padding (#309).
  * measure-page.mjs measures the page; contrast is checked in the page by the shared
  * contrast-check.mjs; animation from the host tree (html.ts).
  */
@@ -15,7 +17,7 @@ export type Measured = {
   /** The screen's box. */
   screen: Box;
   /** Every visible element the person can tap; `scroll` is the scroll view it sits in. */
-  targets: {name: string; width: number; height: number; box: Box; scroll?: Box}[];
+  targets: {name: string; width: number; height: number; box: Box; scroll?: Box; bar?: boolean}[];
   /**
    * Every visible text: its smallest font size in units, the box of its glyphs, and the boxes it
    * must stay inside, up to the scroll view it sits in, if any.
@@ -27,9 +29,13 @@ export type Measured = {
     glyphs: Box;
     within: {name: string; box: Box}[];
     scroll?: Box;
+    /** True inside the title bar. */
+    bar?: boolean;
   }[];
   /** Every visible scroll view, by its visible box. */
   scrolls: {name: string; box: Box}[];
+  /** Every visible title bar, by its box. */
+  bars: {name: string; box: Box}[];
 };
 
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
@@ -77,6 +83,14 @@ export function scrollBreaks(measured: Measured): string[] {
   return found;
 }
 
+/** The title bars that do not touch the screen's top, left and right edges (#309). */
+export function barBreaks({screen, bars}: Pick<Measured, 'screen' | 'bars'>): string[] {
+  return bars.flatMap(({name, box}) => {
+    const off = (['top', 'left', 'right'] as const).filter(edge => Math.abs(box[edge] - screen[edge]) > TOLERANCE);
+    return off.length ? [`${name} does not touch the screen's ${off.join(', ')} edge`] : [];
+  });
+}
+
 /** Every rule break of one measured screen, as one readable line each. */
 export function breaksOf(
   measured: Measured,
@@ -90,23 +104,26 @@ export function breaksOf(
     right: screen.right - screenPadding,
     bottom: screen.bottom - screenPadding,
   };
-  // Scrolled content is held to the padding on its sides only: it scrolls up into view.
-  const reach = ({box, scroll}: {box: Box; scroll?: Box}) =>
-    outside(box, scroll ? {...inside, top: box.top, bottom: box.bottom} : inside);
+  // Scrolled content is held to the padding on its sides only: it scrolls up into view. The title
+  // bar and what sits in it are held to the edges instead, which barBreaks checks.
+  const reach = ({box, scroll, bar}: {box: Box; scroll?: Box; bar?: boolean}) =>
+    !bar && outside(box, scroll ? {...inside, top: box.top, bottom: box.bottom} : inside);
   // A target and the text inside it are named once.
   const intruders = new Set(
     [
       ...measured.scrolls,
       ...measured.targets,
-      ...measured.texts.map(({text, glyphs, scroll}) => ({
+      ...measured.texts.map(({text, glyphs, scroll, bar}) => ({
         name: text.slice(0, 60),
         box: glyphs,
         scroll,
+        bar,
       })),
     ]
       .filter(reach)
       .map(({name}) => name),
   );
+  found.push(...barBreaks(measured));
   for (const name of intruders) {
     found.push(`«${name}» reaches into the screen padding`);
   }

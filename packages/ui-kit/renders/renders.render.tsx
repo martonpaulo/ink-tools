@@ -2,8 +2,8 @@
  * Renders every screen as the Manta shows it, 1920 x 2560 px in 16 grey levels, to
  * .scratch/renders/<screen>.png, and fails on any e-ink rule break (brief section 8.4, #80):
  * text contrast under the floor, a target under the touch target, text under the minimum font
- * size (#85), text outside its box, animation, or a scroll view whose last target stays hidden
- * or lies under another target (#279). Run with `npm run renders` before each device
+ * size (#85), text outside its box, animation, a scroll view whose last target stays hidden
+ * or lies under another target (#279), or a title bar that does not touch the top, left and right edges (#309). Run with `npm run renders` before each device
  * build; RENDER_SCALE=1 renders 1024 x 1365 px pictures for a quick look; RENDER_WINDOW=nomad or
  * turned renders the Nomad's window or the Manta turned, into a subfolder. Uses the Chromium installed with Playwright.
  * RENDER_EVIDENCE=<folder> also writes each screen as <screen>-light-<small|default|large>.png there, the

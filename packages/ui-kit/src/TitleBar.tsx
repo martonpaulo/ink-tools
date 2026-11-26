@@ -4,6 +4,9 @@
  * `paneTitle` it has the native two levels, «× Settings ‹ Language & Region»: the × and the pane's
  * title over the left pane, then ‹ and the page's title centred over the rest. Without it, the
  * title is centred on the band's full width, and the × never pushes it (owner, #275).
+ * The band runs from edge to edge at the top of the screen, as the native one does (#309): it
+ * opens a `shared.screen` and reaches back over that view's padding, which stays on the content
+ * below it, so every screen gets the native band with no layout of its own.
  */
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -43,6 +46,9 @@ function Back({onBack}: {onBack: () => void}): React.JSX.Element {
   );
 }
 
+/** The band's testID, which the renders' edge rule finds the band by (#309). */
+export const TITLE_BAR_ID = 'title-bar';
+
 /** A title centred between two slots of the same width, so what sits in the leading one never pushes it. */
 function Centred({title, lead, slot}: {title: string; lead: React.ReactNode; slot: number}): React.JSX.Element {
   return (
@@ -60,7 +66,7 @@ function Centred({title, lead, slot}: {title: string; lead: React.ReactNode; slo
 export function TitleBar({title, onClose, onBack, paneTitle}: TitleBarProps): React.JSX.Element {
   if (paneTitle !== undefined) {
     return (
-      <View style={styles.band}>
+      <View style={styles.band} testID={TITLE_BAR_ID}>
         <View style={[styles.pane, !onClose && {paddingLeft: metrics.sideMargin}]}>
           {onClose && <Close onClose={onClose} />}
           <Text numberOfLines={1} style={[shared.barTitle, styles.paneTitle]}>
@@ -79,14 +85,21 @@ export function TitleBar({title, onClose, onBack, paneTitle}: TitleBarProps): Re
   );
   const slot = (onClose ? CLOSE_SLOT : 0) + (onBack ? BACK_SLOT : 0);
   return (
-    <View style={styles.band}>
+    <View style={styles.band} testID={TITLE_BAR_ID}>
       <Centred title={title} lead={lead} slot={slot} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  band: {flexDirection: 'row', minHeight: metrics.titleBarHeight, backgroundColor: metrics.ink},
+  // Over the screen's padding on the top and both sides, so the band touches the edges (#309).
+  band: {
+    flexDirection: 'row',
+    minHeight: metrics.titleBarHeight,
+    backgroundColor: metrics.ink,
+    marginTop: -metrics.screenPadding,
+    marginHorizontal: -metrics.screenPadding,
+  },
   level: {flex: 1, flexDirection: 'row', alignItems: 'center'},
   slot: {flexDirection: 'row', alignItems: 'center'},
   pane: {width: metrics.navPaneWidth, flexDirection: 'row', alignItems: 'center'},

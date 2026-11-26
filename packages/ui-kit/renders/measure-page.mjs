@@ -31,6 +31,10 @@ export function measurePage() {
     right: rect.right / zoom,
     bottom: rect.bottom / zoom,
   });
+  // The native title bar draws its own insets, so what sits in it is held to the edges, not the
+  // padding (#309); the band's testID is ui-kit's TITLE_BAR_ID.
+  const BAR = '[data-name="title-bar"]';
+  const inBar = (el) => Boolean(el.closest(BAR));
   const scrollOf = (el) => {
     const view = el.parentElement?.closest('[data-scroll]');
     return view ? boxOf(view.getBoundingClientRect()) : undefined;
@@ -53,8 +57,13 @@ export function measurePage() {
         height: rect.height / zoom,
         box: boxOf(rect),
         scroll: scrollOf(el),
+        bar: inBar(el),
       };
     });
+
+  const bars = [...document.querySelectorAll(BAR)]
+    .filter(shown)
+    .map(el => ({name: 'the title bar', box: boxOf(el.getBoundingClientRect())}));
 
   const texts = [...document.querySelectorAll('.text')]
     .filter(el => shown(el) && (el.textContent ?? '').trim() !== '')
@@ -98,7 +107,8 @@ export function measurePage() {
         glyphs: boxOf(glyphs),
         within,
         scroll: scrollOf(el),
+        bar: inBar(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars};
 }

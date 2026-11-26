@@ -34,7 +34,7 @@ const WAITS: Choice<Wait>[] = [
  * Real-Time Conversion's Settings view (#184), every size and colour from the shared ui-kit (#93):
  * the switch's start state and the word rule's two measures (#185). The word rule reads them the
  * next time Real-Time Text turns on. The title bar's × closes the view, since Back never reaches it on the
- * Nomad (#204, #266); Back still closes it on a host that sends the key.
+ * Manta (#204, #266); Back still closes it on a host that sends the key.
  */
 export default function App({
   close = () => closePluginView(),

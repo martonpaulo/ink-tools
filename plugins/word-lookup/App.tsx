@@ -46,7 +46,7 @@ const sourceLabel = (name: string): string =>
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
  * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156); while a
  * no-view button works, it is the «Loading…» strip (#103). Settings closes by its title bar's ×, as the
- * Choose screen does by its «Close», since Back never reaches the view on the Nomad (#204, #266). «Saved pictures» says where the inserted pictures are kept and why, and names the old
+ * Choose screen does by its «Close», since Back never reaches the view on the Manta (#204, #266). «Saved pictures» says where the inserted pictures are kept and why, and names the old
  * synced folders that still hold files, with the File Manager step (#23).
  */
 export default function App({
