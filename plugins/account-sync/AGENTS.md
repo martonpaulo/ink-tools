@@ -54,7 +54,8 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   stays blocked with the reason.
 - **Sync runner** ([#28](https://github.com/martonpaulo/ink-tools/issues/28), [#44](https://github.com/martonpaulo/ink-tools/issues/44)): `src/sync.ts` runs sync-core's `runBridgeSync`, one
   pass when PluginHost loads Bridge (`index.js`), one every `AUTO_SYNC_MINUTES` while the host
-  lives, the same runner behind Settings' «Sync now» and inkctl's `plugin action account-sync sync`
+  lives, on the native `BridgeTicks` timer, since a JS timer stops while no view shows
+  ([#283](https://github.com/martonpaulo/ink-tools/issues/283)), the same runner behind Settings' «Sync now» and inkctl's `plugin action account-sync sync`
   (`src/actions.ts`, a request in the sign-in drop folder, [#283](https://github.com/martonpaulo/ink-tools/issues/283)), and one after a tablet edit:
   `src/providerWatch.ts` starts a pass on `BridgeProviders`' change event, a `ContentObserver` on the
   Calendar and To-Do, debounced and blind to our own writes (`ChangeGate`, JVM tests in

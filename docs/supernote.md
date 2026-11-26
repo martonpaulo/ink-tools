@@ -317,11 +317,19 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   receiver and a messenger service; no intent opens one plugin's view [measured, `dumpsys
   package`, [#139](https://github.com/martonpaulo/ink-tools/issues/139)].
 - So a plugin's own action runs by a file, not an intent: inkctl writes `action.json` in a folder
-  the plugin reads, and the plugin reads it on a JS timer in PluginHost
+  the plugin reads, and the plugin reads it on a timer in PluginHost
   (`packages/sn-adapter/src/official/actions.ts`, `inkctl plugin action`); a plugin with no action
-  yet is pressed with `inkctl click` on its named element. How soon the timer answers, and whether
-  it runs while the tablet sleeps, is [unverified]
+  yet is pressed with `inkctl click` on its named element
   ([#283](https://github.com/martonpaulo/ink-tools/issues/283)).
+- A plugin's JS timer (`setInterval`) does not fire while PluginHost shows none of that plugin's
+  views: with no view open, `inkctl plugin action` got no answer in 100 s, also after a host
+  restart, and with Account Sync's Settings open the same request answered in 8 to 11 s. A native
+  event does reach the JavaScript with no view: the provider observer started a sync pass from the
+  home screen [measured, Manta, device round 5, 2026-11-26,
+  [#283](https://github.com/martonpaulo/ink-tools/issues/283), [#296](https://github.com/martonpaulo/ink-tools/issues/296)].
+  So the plugins' timers tick from a native `Handler` (sn-adapter `TickModule`), which counts
+  uptime and so waits while the tablet sleeps [inference; device check on
+  [#283](https://github.com/martonpaulo/ink-tools/issues/283)].
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no

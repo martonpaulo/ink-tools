@@ -7,9 +7,11 @@
  *
  * A request is `{"id": hex, "action": name, "args": {...}, "at": <the tablet's time in ms>}`. One
  * older than ACTION_MAX_AGE_MS, such as a file left from before a host restart, is answered
- * `stale` and never run. The timer is the one PluginHost already runs for Account Sync's automatic
- * pass; whether it runs while the tablet sleeps is a device check of #283.
+ * `stale` and never run. A JS timer does not fire while PluginHost shows none of the plugin's views
+ * (device round 5, #283), so each plugin passes `nativeTimers`, which tick from the plugin's native
+ * `TickModule` with no view open.
  */
+import {NativeEventEmitter, NativeModules} from 'react-native';
 
 /** The request file's name, in each plugin's own folder. */
 export const ACTION_FILE = 'action.json';
@@ -36,6 +38,12 @@ export interface ActionTimers {
   setInterval(fn: () => void, ms: number): unknown;
   clearInterval(handle: unknown): void;
 }
+
+/** The JS timers, which stop while no view of the plugin shows (#283). */
+const jsTimers: ActionTimers = {
+  setInterval: (fn, ms) => setInterval(fn, ms),
+  clearInterval: handle => clearInterval(handle as ReturnType<typeof setInterval>),
+};
 
 export interface ActionChannelOptions {
   /** The plugin's name in the answer lines, as inkctl names it: its folder name, such as `account-sync`. */
@@ -102,10 +110,7 @@ export function startActionChannel({
   actions,
   log = line => console.log(line),
   now = Date.now,
-  timers = {
-    setInterval: (fn, ms) => setInterval(fn, ms),
-    clearInterval: handle => clearInterval(handle as ReturnType<typeof setInterval>),
-  },
+  timers = jsTimers,
 }: ActionChannelOptions): ActionChannel {
   const answered: string[] = [];
   let busy = false;
@@ -157,4 +162,51 @@ export function startActionChannel({
     channel.check();
   }, ACTION_POLL_MS);
   return channel;
+}
+
+/** The calls of a plugin's native `TickModule` (sn-adapter `native/com/inktools/timer`). */
+export type TickModule = {start(key: number, periodMs: number): void; stop(key: number): void};
+
+/** Subscribes to an event of the module; answers the stop. */
+export type TickSubscribe = (event: string, listener: (key: number) => void) => () => void;
+
+/**
+ * `setInterval` and `clearInterval` on the native timer the plugin registered as `name`, such as
+ * `BridgeTicks` (#283, #370): its ticks reach JavaScript with no plugin view open, where a JS timer
+ * stops. Without the module (a build without the native code), the JS timers, and one log line that
+ * says they stop with no view.
+ */
+export function nativeTimers(
+  name: string,
+  log: (line: string) => void = line => console.log(line),
+  modules: Record<string, unknown> = NativeModules,
+  subscribe?: TickSubscribe,
+): ActionTimers {
+  const module = modules[name] as TickModule | undefined;
+  if (!module?.start || !module?.stop) {
+    log(`INKTOOLS timers: no native ${name} module: JS timers, which stop while no view of the plugin shows`);
+    return jsTimers;
+  }
+  const listen: TickSubscribe =
+    subscribe ??
+    ((event, listener) => {
+      const subscription = new NativeEventEmitter(module as never).addListener(event, listener);
+      return () => subscription.remove();
+    });
+  const ticks = new Map<number, () => void>();
+  let next = 1;
+  listen(`${name}Tick`, key => ticks.get(key)?.());
+  return {
+    setInterval(fn, ms) {
+      const key = next++;
+      ticks.set(key, fn);
+      module.start(key, ms);
+      return key;
+    },
+    clearInterval(handle) {
+      const key = handle as number;
+      ticks.delete(key);
+      module.stop(key);
+    },
+  };
 }

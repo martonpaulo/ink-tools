@@ -26,3 +26,15 @@ test('run-probe fails, never a success, when the probe needs the native step (#2
   await expect(runProbeAction({})({})).rejects.toThrow('probe needs: The native module ProbeProviders is missing');
   spy.mockRestore();
 });
+
+test('the action channel ticks on the native ProbeTicks timer, which runs with no view open (#283)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const index: string = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
+  const java: string = fs.readFileSync(
+    path.join(__dirname, '..', 'native/src/com/probe/providers/ProbePackage.java'),
+    'utf8',
+  );
+  expect(java).toContain('new TickModule(context, "ProbeTicks")');
+  expect(index).toContain("timers: nativeTimers('ProbeTicks')");
+});

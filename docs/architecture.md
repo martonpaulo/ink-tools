@@ -252,10 +252,12 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
     `origin: 'service'`), soft-deleted, never a task the owner wrote on the tablet and never the
     service's copy; **digest** writes nothing yet. A provider has no button of its own: its rows go
     with the module's.
-  - **Open question — background lifecycle** ([#370](https://github.com/martonpaulo/ink-tools/issues/370)). The config listener only fires when the owner opens
-    Settings. Periodic sync with the view closed needs a background trigger or a kept-alive plugin;
-    whether PluginHost allows that is unconfirmed and is the first thing Plugin Diagnostics must answer before
-    the Account Sync design commits to it.
+  - **Background lifecycle** ([#370](https://github.com/martonpaulo/ink-tools/issues/370), [#283](https://github.com/martonpaulo/ink-tools/issues/283)). Every enabled plugin lives in
+    the PluginHost process with no view open, and a native event reaches its JavaScript then (the
+    provider observer's pass ran from the home screen), but a JS timer does not fire. So the
+    automatic sync and the action channel tick on a native timer, sn-adapter's `TickModule` (level
+    1: Android's `Handler`); it counts uptime, so it waits while the tablet sleeps. Whether the
+    process survives a long sleep is a device check of [#370](https://github.com/martonpaulo/ink-tools/issues/370).
   - **Google sign-in cannot use the device-code flow.** Google's OAuth flow for limited-input
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,

@@ -9,7 +9,7 @@ import {registerProbe} from './src/register';
 import {createCommandRunner} from './src/command';
 import {noteApi} from './src/noteApi';
 import {readActionFile, runProbeAction} from './src/actions';
-import {startActionChannel} from '@ink-tools/sn-adapter/actions';
+import {nativeTimers, startActionChannel} from '@ink-tools/sn-adapter/actions';
 import {PluginManager} from 'sn-plugin-lib';
 
 AppRegistry.registerComponent(appName, () => App);
@@ -30,4 +30,6 @@ startActionChannel({
   plugin: 'plugin-diagnostics',
   read: () => readActionFile(),
   actions: {'run-probe': runProbeAction(PluginManager)},
+  // The native ProbeTicks timer (ProbePackage): a JS timer stops while no Probe view shows (#283).
+  timers: nativeTimers('ProbeTicks'),
 });

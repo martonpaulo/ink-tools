@@ -1,6 +1,7 @@
 /**
  * What runs a sync on the tablet (#28, #44): the Settings view's «Sync now» (#40) and the automatic
- * pass, one at PluginHost start and one every `AUTO_SYNC_MINUTES` while the host lives. Before
+ * pass, one at PluginHost start and one every `AUTO_SYNC_MINUTES` while the host lives, on the
+ * timers `index.js` passes (the native ones, #283). Before
  * this, no code on the tablet called `runBridgeSync`. This file binds sync-core's runner to the
  * device: the saved Settings, the sign-in files (#90), the device probe (#43) and the Calendar and
  * To-Do stores over the content providers. It keeps the state between passes and the runs Settings
