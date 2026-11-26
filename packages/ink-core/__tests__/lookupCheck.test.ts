@@ -5,6 +5,13 @@ import {checkLookup, lookupWords, rectProblem, type LassoQuery} from '../src';
 const NOMAD = {width: 1404, height: 1872};
 /** `getLassoRect` for a pasted sticker shown near (870, 1190) (#165, 2026-11-16). */
 const PASTED = {left: -40, top: 0, right: 140, bottom: 181};
+/** `getLassoRect` for a pasted sticker at the Manta's page centre (#165, device round 6, 2026-11-26). */
+const PASTED_AT_CORNER = {left: 0, top: 0, right: 214, bottom: 180};
+/** A synthetic page read like that round's, in page pixels: the word «cat» near (500, 600), the sticker. */
+const PAGE_ELEMENTS = [
+  {left: 500, top: 560, right: 640, bottom: 620},
+  {left: 595, top: 830, right: 809, bottom: 1010},
+];
 /** A lassoed sticker drawing, recognized by `recognizeElements` (#166, 2026-11-16). */
 const STICKER_TEXT = '• :.\n÷\n÷:.\n.\n.';
 
@@ -39,6 +46,18 @@ describe('rectProblem (#165)', () => {
   it('keeps a rect on the page', () => {
     expect(rectProblem(word.place!.rect, NOMAD)).toBeNull();
   });
+
+  it('refuses a local rect with no negative side that touches no element of the page (#165)', () => {
+    expect(rectProblem(PASTED_AT_CORNER, NOMAD, PAGE_ELEMENTS)).toMatch(/touches no element/);
+  });
+
+  it('keeps a rect over its own elements, one sharing an edge, and any rect with no page read', () => {
+    const lassoed = {left: 490, top: 550, right: 650, bottom: 630};
+    expect(rectProblem(lassoed, NOMAD, PAGE_ELEMENTS)).toBeNull();
+    expect(rectProblem({left: 400, top: 500, right: 500, bottom: 560}, NOMAD, PAGE_ELEMENTS)).toBeNull();
+    expect(rectProblem(PASTED_AT_CORNER, NOMAD)).toBeNull();
+    expect(rectProblem(PASTED_AT_CORNER, NOMAD, [])).toBeNull();
+  });
 });
 
 describe('checkLookup', () => {
@@ -48,6 +67,14 @@ describe('checkLookup', () => {
 
   it('stops a pasted selection before anything is placed, with no place for a note (#165)', () => {
     const pasted = {...word, place: {...word.place!, rect: PASTED}};
+    expect(checkLookup(pasted)).toMatchObject({ok: false, why: 'unplaced', place: null});
+  });
+
+  it('stops a pasted rect with no negative side once the page read shows it touches nothing (#165)', () => {
+    const pasted = {
+      ...word,
+      place: {...word.place!, rect: PASTED_AT_CORNER, occupied: PAGE_ELEMENTS},
+    };
     expect(checkLookup(pasted)).toMatchObject({ok: false, why: 'unplaced', place: null});
   });
 

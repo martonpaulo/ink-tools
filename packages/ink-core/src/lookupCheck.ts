@@ -20,12 +20,15 @@ export function lookupWords(text: string): string | null {
 
 /**
  * Why a lasso rect is not where the selection is on the page, or null when it can be used: a
- * pasted selection answers its own local rect, with a negative side (#165, docs/supernote.md).
- * shortcut: the rect is checked against the page only, not against the lassoed elements' own
- * rects, which cost two bridge calls per stroke; add that once a local rect with no negative side
- * is measured.
+ * pasted selection answers its own local rect (#165, docs/supernote.md), with a negative side
+ * (`{-40, 0, 140, 181}`, Nomad) or at the page's corner (`{0, 0, 214, 180}`, Manta, device round 6).
+ * With the page read's element rects (`occupied`, #152), a rect that touches none of them is
+ * refused too: the lassoed elements are on the page, so a true lasso rect touches them.
+ * shortcut: the rect is checked against every element of the page, not the lassoed ones, which cost
+ * two bridge calls per stroke; a local rect over other ink still passes; read the lassoed elements'
+ * own rects once that is seen.
  */
-export function rectProblem(rect: Rect, pageSize: Size): string | null {
+export function rectProblem(rect: Rect, pageSize: Size, occupied?: Rect[]): string | null {
   const text = JSON.stringify(rect);
   if (rect.left < 0 || rect.top < 0) {
     return `the lasso rect ${text} has a negative side`;
@@ -36,7 +39,15 @@ export function rectProblem(rect: Rect, pageSize: Size): string | null {
   if (rect.right > pageSize.width || rect.bottom > pageSize.height) {
     return `the lasso rect ${text} is past the page`;
   }
+  if (occupied && occupied.length > 0 && !occupied.some(element => touches(rect, element))) {
+    return `the lasso rect ${text} touches no element of the page`;
+  }
   return null;
+}
+
+/** True when the two rects overlap or share an edge. */
+function touches(a: Rect, b: Rect): boolean {
+  return a.left <= b.right && b.left <= a.right && a.top <= b.bottom && b.top <= a.bottom;
 }
 
 export type LookupRefusal = {
@@ -53,7 +64,7 @@ export function checkLookup(
   read: LassoQuery,
 ): {ok: true; value: LassoQuery} | ({ok: false} & LookupRefusal) {
   const problem = read.place
-    ? rectProblem(read.place.rect, read.place.pageSize)
+    ? rectProblem(read.place.rect, read.place.pageSize, read.place.occupied)
     : null;
   if (problem) {
     return {ok: false, why: 'unplaced', message: problem, place: null};

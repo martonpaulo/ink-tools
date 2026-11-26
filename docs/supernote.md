@@ -325,7 +325,8 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   2026-11-25, Word Lookup 0.2.0 beta 30, [#19](https://github.com/martonpaulo/ink-tools/issues/19)].
 - The built-in Sticker plugin pastes a sticker as strokes and leaves it selected in a «pasted»
   state. `getLassoRect` then answers the selection's local rect (`{-40, 0, 140, 181}` for a sticker
-  shown near (870, 1190)), and Back leaves the note and drops the pasted sticker [measured,
+  shown near (870, 1190); `{0, 0, 214, 180}`, with no negative side, for one at the Manta's page
+  centre), and Back leaves the note and drops the pasted sticker [measured,
   [#165](https://github.com/martonpaulo/ink-tools/issues/165)].
 - A finger drag (`adb shell input swipe`) on a lassoed selection does not move it [measured].
 - The Back key does not close a plugin's full view (Lookup and Relay Settings, Relay «Receive»):
