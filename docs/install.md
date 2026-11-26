@@ -48,8 +48,8 @@ prerelease for testing.
 
 1. Download the plugin's `.snplg` file from [inktools.martonpaulo.com](https://inktools.martonpaulo.com/#tools).
 2. Copy the file into the tablet's `MyStyle` folder, over a USB cable or Supernote Cloud.
-3. On the tablet, open Settings › Apps › Plugins › Select Plugin Package, choose the file and tap Install.
-4. Allow what it asks for, then turn the plugin on in Settings › Apps › Plugins.
+3. On the tablet, open **Settings** › **Apps** › **Plugins** › **Select Plugin Package**, choose the file and tap **Install**.
+4. Allow what it asks for, then turn the plugin on in **Settings** › **Apps** › **Plugins**.
 
 ## Update a plugin
 
@@ -57,7 +57,7 @@ Copy the new `.snplg` into `MyStyle` and install it the same way. Choose the fil
 
 ## Remove a plugin
 
-Open Settings › Apps › Plugins, tap the plugin, then tap Uninstall. Your notes stay as they are.
+Open **Settings** › **Apps** › **Plugins**, tap the plugin, then tap **Uninstall**. Your notes stay as they are.
 
 ## Install the tablet app
 
@@ -84,4 +84,4 @@ steps:
 | Allow permissions | `inkctl plugin permissions NAME` |
 | Turn on | `inkctl plugin enable NAME` |
 | Remove | `inkctl plugin uninstall NAME` |
-| Select Plugin Package and the permission prompt on screen | by hand, in the device round |
+| **Select Plugin Package** and the permission prompt on screen | by hand, in the device round |

@@ -165,9 +165,45 @@ class Layout(unittest.TestCase):
         body = text.split("## Install a plugin", 1)[1].split("\n## ", 1)[0]
         steps = [line for line in body.splitlines() if line[:1].isdigit()]
         self.assertLessEqual(len(steps), 4)
-        self.assertIn("Settings › Apps › Plugins", body)
+        self.assertIn("**Settings** › **Apps** › **Plugins**", body)
         self.assertIn("`MyStyle`", body)
         self.assertNotIn("10 plugins", text)
+
+    def test_interface_names_are_bold_and_render_as_strong(self):
+        self.assertEqual(site_figures.install_problems((ROOT / "docs/install.md").read_text(encoding="utf-8")), [])
+        good = "## Install a plugin\n\n1. Open **Settings** › **Apps** › **Plugins**, choose `MyStyle` and tap **Install**.\n"
+        self.assertEqual(site_figures.install_problems(good), [])
+        for bad in (good.replace("**Settings**", "Settings"), good.replace("**Apps**", "Apps"),
+                    good.replace("**Plugins**", "Plugins"), good.replace("tap **Install**", "tap Install"),
+                    good.replace("Install a plugin", "Remove a plugin").replace("**Apps**", "Apps")):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.install_problems(bad))
+        self.assertEqual(site_figures.install_problems("## How each step is checked\n\nSettings › Apps\n"), [])
+        self.assertEqual(site_figures.inline("tap **Install** in `MyStyle`"), "tap <strong>Install</strong> in <code>MyStyle</code>")
+        self.assertEqual(site_figures.inline("**Settings** › **Apps**"), "<strong>Settings</strong>&nbsp;› <strong>Apps</strong>")
+
+
+class Subtitle(unittest.TestCase):
+    """Owner, on #444: the centered hero subtitle is the one text that may keep a width cap."""
+
+    def test_only_the_hero_summary_takes_the_subtitle_width(self):
+        self.assertEqual(site_figures.width_problems(".hero-summary { max-width: var(--width-subtitle); }"), [])
+        for bad in (".hero-summary { max-width: 40rem; }", ".hero-summary { max-width: 60ch; }",
+                    ".lead { max-width: var(--width-subtitle); }", ".hero p { max-width: var(--width-subtitle); }",
+                    ".hero-summary, .lead { max-width: var(--width-subtitle); }",
+                    ".hero-summary { width: var(--width-subtitle); }"):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.width_problems(bad))
+
+    def test_the_class_marks_only_the_paragraph_under_the_title(self):
+        good = '<h1 id="t">Title</h1>\n  <p class="hero-summary">Short line.</p><p>Body text.</p>'
+        self.assertEqual(site_figures.subtitle_problems("x.html", good), [])
+        self.assertEqual(site_figures.subtitle_problems("x.html", "<h1>T</h1><p>x</p>"), [])
+        for bad in (good.replace("<p>Body", '<p class="hero-summary">Body'),
+                    '<h1>T</h1><p>x</p><p class="hero-summary">late</p>',
+                    '<h1>T</h1><ul class="hero-summary"><li>x</li></ul>'):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.subtitle_problems("x.html", bad))
 
 
 if __name__ == "__main__":

@@ -25,6 +25,11 @@ It also fails on a repeated fact or a narrowed section (#439):
 - a width the layout does not own: every <section> holds one `.container`, `.container` alone is
   `var(--page-width)` wide, the header's width, and no text takes a width cap (no `max-width`, no
   `ch` length), so no section's or paragraph's content box is narrower than the header's (#444);
+  the one exception is `.hero-summary`, the centered subtitle directly under a page's `<h1>`, at most
+  one per page, whose `max-width` is `var(--width-subtitle)` (owner, on #444; #443);
+- a tablet interface name the install guide does not show in bold: in each `## Install`, `## Update`
+  and `## Remove` section of docs/install.md, every item of a «›» menu path and the button after
+  «tap» is `**bold**`; a folder stays `code` (#443);
 - a card or install box whose title sits lower than its padding: `.card` and `.install` share one
   padding, and no rule gives a heading inside a section a top margin (#443).
 
@@ -58,6 +63,10 @@ BLOCKS = ("stats", "tools", "install", "credits")
 COLUMNS = (3, 2)  # the card grids' column counts, desktop then tablet; a phone shows one column
 KIND_LABELS = {"plugin": "Plugin", "app": "Tablet app", "Mac app": "Mac app", "CLI": "Mac command line"}
 INSTALL_HEADING = re.compile(r"^## (Install .+)$", re.M)
+STEP_HEADING = re.compile(r"^## ((?:Install|Update|Remove) .+)$", re.M)
+SUBTITLE = "hero-summary"  # the one text that may take a width cap: the hero subtitle (owner, on #444)
+SUBTITLE_WIDTH = "var(--width-subtitle)"
+BOLD = r"\*\*[^*]+\*\*"
 STABLE = re.compile(r"-v(\d+\.\d+\.\d+)$")
 BETA = re.compile(r"-v(\d+\.\d+\.\d+-beta\.\d+)$")
 RELEASE_FILES = (".snplg", ".apk")
@@ -81,9 +90,12 @@ def slug(text):
 
 
 def inline(text, base=""):
-    """Inline Markdown as page HTML: `code` and [text](url); a path relative to `base`, the folder of
-    the Markdown file it comes from, links to GitHub; a link to this site's home page stays on the page."""
+    """Inline Markdown as page HTML: `code`, **bold** (a tablet interface name, #443) and [text](url); a
+    path relative to `base`, the folder of the Markdown file it comes from, links to GitHub; a link to
+    this site's home page stays on the page."""
     out = re.sub(r"`([^`]+)`", r"<code>\1</code>", esc(text))
+    out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
+    out = out.replace(" › ", "&nbsp;› ")  # a menu path wraps after its «›», never before it
 
     def link(match):
         label, url = match.group(1), html.unescape(match.group(2))
@@ -272,18 +284,25 @@ def markdown_steps(text, source):
     return out
 
 
+def md_sections(text, heading):
+    """[(title, body)] for every `## ` section of a Markdown text whose heading `heading` matches."""
+    out = []
+    for head in heading.finditer(text):
+        rest = text[head.end():]
+        nxt = re.search(r"^## ", rest, re.M)
+        out.append((head.group(1), rest[:nxt.start()] if nxt else rest))
+    return out
+
+
 def install_block(text):
     """Every `## Install ...` section of docs/install.md, in its order, plugin first."""
-    heads = list(INSTALL_HEADING.finditer(text))
-    if not heads or not heads[0].group(1).lower().endswith("plugin"):
+    heads = md_sections(text, INSTALL_HEADING)
+    if not heads or not heads[0][0].lower().endswith("plugin"):
         raise SystemExit("docs/install.md: the first «## Install ...» section must be the plugin's")
     out = ["", '<div class="grid-3 install-grid">']
     lone = lone_classes(len(heads), first_spans=True)
-    for index, head in enumerate(heads):
-        rest = text[head.end():]
-        nxt = re.search(r"^## ", rest, re.M)
-        body = rest[:nxt.start()] if nxt else rest
-        out += [f'  <article class="{with_lone("install", index, lone)}">', f"    <h3>{esc(head.group(1))}</h3>"]
+    for index, (title, body) in enumerate(heads):
+        out += [f'  <article class="{with_lone("install", index, lone)}">', f"    <h3>{esc(title)}</h3>"]
         out += ["    " + line for line in markdown_steps(body, "docs/install.md")]
         out.append("  </article>")
     return out + ["</div>", ""]
@@ -436,10 +455,39 @@ def width_problems(css):
             value = value.strip()
             if value == "var(--page-width)" and prop == "width" and selectors == [".container"]:
                 continue
+            if value == SUBTITLE_WIDTH and prop == "max-width" and selectors == [f".{SUBTITLE}"]:
+                continue
             if prop in ("width", "inline-size") and SMALL_LENGTH.match(value) and not value.endswith("ch"):
                 continue
             problems.append(f"{CSS}: {', '.join(selectors)} {{ {prop}: {value} }}: only .container sets the width "
                             "(var(--page-width)); text never takes a width cap (#444)")
+    return problems
+
+
+def subtitle_problems(name, page):
+    """A `.hero-summary` that is not the one paragraph directly under the page's `<h1>` (owner, on #444)."""
+    count = len(re.findall(rf'class="[^"]*\b{SUBTITLE}\b', page))
+    placed = len(re.findall(rf'</h1>\s*<p class="{SUBTITLE}">', page))
+    if count > 1 or count != placed:
+        return [f"{name}: .{SUBTITLE} marks only the one <p> directly under the page's <h1>, found {count}"]
+    return []
+
+
+def install_problems(text, source="docs/install.md"):
+    """A tablet interface name the install guide writes without bold (#443): each item of a «›» path,
+    and the button after «tap», in every Install, Update and Remove section."""
+    problems = []
+    for title, body in md_sections(text, STEP_HEADING):
+        for line in body.splitlines():
+            for path in re.findall(r"[^,.;:()]*›[^,.;:()]*", line):
+                parts = [part.strip() for part in path.split("›")]
+                # The first item ends its part, the last starts its part, every other is the whole part.
+                checks = [(parts[0], BOLD + "$")] + [(part, f"^{BOLD}$") for part in parts[1:-1]] + [(parts[-1], "^" + BOLD)]
+                for part, pattern in checks:
+                    if not re.search(pattern, part):
+                        problems.append(f"{source}: «{part}» in «{title}» names a tablet menu item: write it **bold**")
+            for word in re.findall(r"\btap ([A-Z]\w*)", line):
+                problems.append(f"{source}: «tap {word}» in «{title}»: write the button **bold**")
     return problems
 
 
@@ -473,9 +521,10 @@ def box_problems(css):
 def page_problems(root):
     css = (root / CSS).read_text(encoding="utf-8")
     problems = width_problems(css) + box_problems(css)
+    problems += install_problems((root / "docs/install.md").read_text(encoding="utf-8"))
     for name in PAGES:
         page = (root / name).read_text(encoding="utf-8")
-        problems += section_problems(name, page) + repetition_problems(name, page)
+        problems += section_problems(name, page) + repetition_problems(name, page) + subtitle_problems(name, page)
     return problems
 
 

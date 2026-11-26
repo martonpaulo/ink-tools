@@ -21,6 +21,8 @@
   /* The one width token (#439): the header, every section, every grid and all text share it through
      .container; no text carries a width cap of its own (#444). site_figures.py --check holds it. */
   --page-width: min(73.75rem, 100% - 2.5rem);
+  /* The one exception (owner, on #444): the centered hero subtitle under the page title, .hero-summary. */
+  --width-subtitle: 42rem;
   --control-height: 3rem;
   --glyph-tile: 3rem;
   /* One even padding for every card and install box (#443). */
@@ -525,7 +527,8 @@ main {
   font-size: var(--text-2xl);
 }
 
-.hero p:not(.eyebrow, .actions, .hero-stats) {
+.hero-summary {
+  max-width: var(--width-subtitle);
   margin: 0 auto var(--space-l);
   color: var(--secondary);
   font-size: var(--text-md);
