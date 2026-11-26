@@ -119,8 +119,15 @@ struct NoteIndexTests {
     }
 
     /// Vision reads typed words drawn into a page, and their box stands where they were drawn,
-    /// in page pixels from the top left.
-    @Test func testVisionFindsDrawnWordsWhereTheyStand() async throws {
+    /// in page pixels from the top left. GitHub's macOS runner is a virtual machine where Vision's
+    /// accurate model fails to compile (`e5rt_e5_compiler_compile call failed`, every run since
+    /// 898b8ec, #303), so the test runs on a real Mac only: the local gate.
+    /// shortcut: skipped on GitHub's runner; run it there once its image compiles Vision's model.
+    @Test(
+        .disabled(
+            if: ProcessInfo.processInfo.environment["GITHUB_ACTIONS"] != nil,
+            "Vision cannot compile its model on GitHub's macOS VM"))
+    func testVisionFindsDrawnWordsWhereTheyStand() async throws {
         let base = try Fixtures.note("content.note")
         let rect = PageRect(x: 200, y: 400, width: 1200, height: 160)
         let note = try NoteFile(
