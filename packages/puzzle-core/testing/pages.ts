@@ -13,12 +13,15 @@ import {
   drawOutsideClues,
   drawRegions,
   drawSquareLattice,
+  drawKakuro,
   drawText,
   drawTriangleLattice,
   FONT_WEIGHTS,
+  generateKakuro,
   generateNonogram,
   generateSudoku,
   generateWordSearch,
+  kakuroPageSpec,
   layoutPage,
   puzzleCode,
   type PageLayout,
@@ -71,6 +74,14 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawRegions(r, layout.grid, (c, row) => Math.floor(c / puzzle.shape.boxCols) + puzzle.shape.boxRows * Math.floor(row / puzzle.shape.boxRows));
     puzzle.givens.forEach((v, i) => v > 0 && drawCellText(r, layout.grid, i % side, Math.floor(i / side), String(v), 'given'));
     drawFooter(r, layout, { game: 'Sudoku', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Put 1 to 9 once in each row, each column and each box.' });
+    return r;
+  }],
+  ['kakuro-10mm-portrait-right', () => {
+    const puzzle = generateKakuro('P1', 12, 'medium');
+    const layout = layoutPage(kakuroPageSpec(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 }));
+    const r = createPage(layout);
+    drawKakuro(r, layout.grid, puzzle);
+    drawFooter(r, layout, { game: 'Kakuro', difficulty: 'Medium', code: puzzleCode(puzzle.id), rule: 'Write 1 to 9 so each run adds up to its sum, with no digit twice in a run.' });
     return r;
   }],
   ['page-10mm-landscape-right', () => {

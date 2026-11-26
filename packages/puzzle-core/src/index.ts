@@ -11,5 +11,7 @@ export * from './sudoku';
 export * from './nonogram';
 export * from './maze';
 export * from './word-search';
+export * from './kakuro';
+export * from './kakuro-page';
 export * from './page';
 export * from './check';

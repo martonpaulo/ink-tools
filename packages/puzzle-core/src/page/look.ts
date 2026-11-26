@@ -73,6 +73,8 @@ export const PAGE_MM = {
 export const TEXT_SIZE = {
   given: 0.62,
   clue: 0.26,
+  /** The two sums of a split clue cell (kakuro), each in its half. */
+  splitClue: 0.34,
   outsideClue: 0.48,
   /** How deep one outside clue sits across the grid's edge. */
   outsideSlot: 0.65,
