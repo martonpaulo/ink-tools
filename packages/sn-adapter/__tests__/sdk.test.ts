@@ -308,6 +308,36 @@ describe('the editor helper calls (#312)', () => {
     expect(await page.placeElement(stroke, 0, rect)).toMatchObject({ok: false, message: 'setRange did not write the points'});
   });
 
+  it("transforms a stroke's points, outline and box through a matrix: a quarter turn (#326)", async () => {
+    const setRange = jest.fn(async () => true);
+    const points = {size: async () => 2, getRange: async () => [{x: 100, y: 200}, {x: 300, y: 200}], setRange};
+    const outline = jest.fn(async () => true);
+    const ring = [{x: 100.5, y: 200}];
+    const box = {up_left_point_x: 100, up_left_point_y: 190, down_right_point_x: 300, down_right_point_y: 210};
+    const stroke = {
+      type: 0,
+      pageNum: -1,
+      contoursSrc: {size: async () => 1, getRange: async () => [ring], setRange: outline},
+      recognizeResult: box,
+      stroke: {points},
+    };
+    // A quarter turn clockwise on the page: (x, y) to (1000 - y, x).
+    const turned = await page.transformElement(stroke, 3, [0, 1, -1, 0, 1000, 0], {width: 1920, height: 2560});
+    expect(turned).toMatchObject({ok: true, value: {pageNum: 3}});
+    expect(setRange).toHaveBeenCalledWith(0, 2, [{x: 800, y: 100}, {x: 800, y: 300}]);
+    expect(outline).toHaveBeenCalledWith(0, 1, [[{x: 800, y: 100.5}]]);
+    expect(stroke.recognizeResult).toEqual({up_left_point_x: 790, up_left_point_y: 100, down_right_point_x: 810, down_right_point_y: 300});
+  });
+
+  it('refuses a transform that takes a stroke off the page, before writing, and any element but a stroke (#326)', async () => {
+    const setRange = jest.fn(async () => true);
+    const stroke = {type: 0, stroke: {points: {size: async () => 1, getRange: async () => [{x: 10, y: 10}], setRange}}};
+    const flipped = await page.transformElement(stroke, 0, [-1, 0, 0, 1, 0, 0], {width: 1920, height: 2560});
+    expect(flipped).toMatchObject({ok: false, message: 'the transform takes the stroke off the page, to -10, 10'});
+    expect(setRange).not.toHaveBeenCalled();
+    expect((await page.transformElement({type: 200, picture: {}}, 0, [1, 0, 0, 1, 0, 0], {width: 1920, height: 2560})).ok).toBe(false);
+  });
+
   it('sets pageNum to the page index, as a read answers -1 and a modify below 0 is refused (#312)', async () => {
     const text = {type: 500, pageNum: -1, textBox: {textRect: rect}};
     expect(await page.placeElement(text, 2, rect)).toMatchObject({ok: true, value: {pageNum: 2}});

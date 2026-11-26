@@ -26,6 +26,7 @@ function host(open: string | null = OTHER, overrides: Partial<EditHost> = {}) {
     },
     getElement: record('getElement', {type: 500}),
     place: record('place', {type: 500, placed: true}),
+    transform: record('transform', {type: 0, transformed: true}),
     insertOpen: record('insertOpen', true),
     insertByPath: record('insertByPath', true),
     modifyOpen: record('modifyOpen', [4]),
@@ -90,6 +91,31 @@ describe('operations on a closed note go through the file API by path', () => {
     const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 5, rect: RECT}]}));
     expect(refused.detail).toMatchObject({refusal: 'bad-request', step: 1});
     expect(calls).toEqual([]);
+  });
+
+  it('transforms each stroke, read by its number, then modifies them in one call (#326)', async () => {
+    const {fake, calls} = host(OTHER, {getElement: async (...args) => ok({type: 0, num: args[2]})});
+    const matrix = [0, 1, -1, 0, 2000, 0];
+    const answer = await editAction(fake)({path: NOTE, ops: [{op: 'transformElements', page: 1, nums: [2, 7], matrix}]});
+    expect(calls).toEqual([
+      `transform ${JSON.stringify([{type: 0, num: 2}, 1, matrix])}`,
+      `transform ${JSON.stringify([{type: 0, num: 7}, 1, matrix])}`,
+      `modifyByPath ${JSON.stringify([NOTE, 1, [{type: 0, transformed: true}, {type: 0, transformed: true}]])}`,
+    ]);
+    expect(answer).toMatchObject({results: [{ok: true, op: 'transformElements', transformed: 2}]});
+  });
+
+  it('refuses to transform a picture or a text box, which is sent a rect, and modifies nothing (#326)', async () => {
+    const {fake, calls} = host(OTHER, {getElement: async () => ok({type: 200})});
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [3], matrix: [-1, 0, 0, 1, 500, 0]}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request', step: 1});
+    expect(calls).toEqual([]);
+  });
+
+  it('transforms on the open note after a save, through the open-note modify (#326)', async () => {
+    const {fake, calls} = host(NOTE, {getElement: async () => ok({type: 0})});
+    await editAction(fake)({path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [1], matrix: [1, 0, 0, -1, 0, 800]}]});
+    expect(calls.map(call => call.split(' ')[0])).toEqual(['save', 'transform', 'modifyOpen']);
   });
 
   it('refuses a modify file outside the helper folder (#312)', async () => {
@@ -158,6 +184,10 @@ describe('each refusal is named, with the open note', () => {
     ['too many operations', {path: NOTE, ops: Array.from({length: LIMITS.operations + 1}, () => ({op: 'openNote'}))}, 'bad-request'],
     ['an unknown op', {path: NOTE, ops: [{op: 'format'}]}, 'bad-request'],
     ['a colour that is not a pen tone', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{kind: 'stroke', points: [[1, 1], [2, 2]], penColor: 0xff0000, thickness: 400}]}]}, 'bad-request'],
+    ['a matrix of five numbers', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [1], matrix: [1, 0, 0, 1, 0]}]}, 'bad-request'],
+    ['a matrix that flattens the stroke', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [1], matrix: [1, 2, 2, 4, 0, 0]}]}, 'bad-request'],
+    ['a matrix with no number', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [1], matrix: [1, 0, 0, 1, 0, null]}]}, 'bad-request'],
+    ['a transform of no element', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [], matrix: [1, 0, 0, 1, 0, 0]}]}, 'bad-request'],
     ['a rect off the page', {path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: {left: 0, top: 0, right: 5000, bottom: 10}}]}, 'bad-request'],
     ['a template path outside MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: '/storage/emulated/0/Document/grid.png'}]}, 'bad-request'],
     ['a template path that climbs out of MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: `${CUSTOM_TEMPLATE_FOLDER}/../Note/grid.png`}]}, 'bad-request'],

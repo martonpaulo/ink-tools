@@ -78,7 +78,7 @@ and the pictures in `.data/plugin/inktools-device-link/` (`EDITOR_FOLDER`), read
 `RelayLocalSend.readText`. `src/editor/operations.ts` owns the operations and the named refusals;
 on the open note the element calls are the open-note calls, and a modify or page change saves the
 note first; on another note, the file API by path. A picture moves as a new picture from the file
-the request names, then the old one deleted, as a modify draws it twice (`docs/supernote.md`). `src/editor/penGate.ts` holds each edit while
+the request names, then the old one deleted, as a modify draws it twice (`docs/supernote.md`). `transformElements` maps strokes through one matrix, their points, outline and box, for a resize, a rotation or a flip, and refuses a picture, a text box or a stroke it takes off the page ([#326](https://github.com/martonpaulo/ink-tools/issues/326)). `src/editor/penGate.ts` holds each edit while
 the pen is on the page, at most 20 s. The action `save-note` (`src/editor/save.ts`) saves the open
 note, which inkctl asks before it opens another note ([#426](https://github.com/martonpaulo/ink-tools/issues/426)). The action `templates` (`src/editor/templates.ts`) lists the tablet's page templates for the
 editor's Insert Page, the system ones by name and the PNGs straight in `MyStyle/` by full path,

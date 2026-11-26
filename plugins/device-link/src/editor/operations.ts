@@ -16,7 +16,9 @@ import {
   pluginDataFolder,
   SHARED_ROOT,
   type ActionResult,
+  STROKE_TYPE,
   type EditRect,
+  type Matrix,
   type NewElement,
   type Result,
 } from '@ink-tools/sn-adapter/official';
@@ -49,6 +51,7 @@ export const REFUSAL = {
 export type Operation =
   | {op: 'insertElements'; page: number; elements: NewElement[]}
   | {op: 'modifyElements'; page: number; num: number; rect: EditRect; file?: string}
+  | {op: 'transformElements'; page: number; nums: number[]; matrix: Matrix}
   | {op: 'deleteElements'; page: number; nums: number[]}
   | {op: 'insertPage'; page: number; template: string}
   | {op: 'removePage'; page: number}
@@ -64,6 +67,8 @@ export interface EditHost {
   build(spec: NewElement): Promise<Result<object>>;
   getElement(path: string, page: number, num: number): Promise<Result<object>>;
   place(element: object, page: number, rect: EditRect): Promise<Result<object>>;
+  /** Scales, rotates or flips a stroke through `matrix`, refused when it leaves the page (#326). */
+  transform(element: object, page: number, matrix: Matrix): Promise<Result<object>>;
   insertOpen(page: number, elements: object[]): Promise<Result<unknown>>;
   insertByPath(path: string, page: number, elements: object[]): Promise<Result<unknown>>;
   modifyOpen(page: number, elements: object[]): Promise<Result<unknown>>;
@@ -86,6 +91,28 @@ function check(condition: boolean, message: string): void {
 
 function wholeIn(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+}
+
+function parseNums(value: unknown): number[] {
+  check(
+    Array.isArray(value) && value.length > 0 && value.length <= LIMITS.elements && value.every(num => wholeIn(num, 1, Number.MAX_SAFE_INTEGER)),
+    `nums must hold 1 to ${LIMITS.elements} element numbers from 1`,
+  );
+  return value as number[];
+}
+
+/** The smallest determinant a matrix may have: below it, the stroke would fold into a line. */
+const FLATTEST = 1e-6;
+
+/** Six finite numbers, a, b, c, d, tx and ty, that do not flatten the stroke (#326). */
+function parseMatrix(value: unknown): Matrix {
+  check(
+    Array.isArray(value) && value.length === 6 && value.every(entry => typeof entry === 'number' && Number.isFinite(entry)),
+    'matrix must hold six numbers: a, b, c, d, tx and ty',
+  );
+  const [a, b, c, d] = value as number[];
+  check(Math.abs(a * d - b * c) >= FLATTEST, 'matrix must not flatten the element');
+  return value as Matrix;
 }
 
 function parsePage(value: unknown): number {
@@ -156,11 +183,10 @@ function parseOperation(value: unknown): Operation {
         rect: parseRect(raw.rect),
         ...(raw.file === undefined ? {} : {file: parsePictureFile(raw.file)}),
       };
-    case 'deleteElements': {
-      const nums = raw.nums;
-      check(Array.isArray(nums) && nums.length > 0 && nums.length <= LIMITS.elements && nums.every(num => wholeIn(num, 1, Number.MAX_SAFE_INTEGER)), `nums must hold 1 to ${LIMITS.elements} element numbers from 1`);
-      return {op: 'deleteElements', page: parsePage(raw.page), nums: nums as number[]};
-    }
+    case 'transformElements':
+      return {op: 'transformElements', page: parsePage(raw.page), nums: parseNums(raw.nums), matrix: parseMatrix(raw.matrix)};
+    case 'deleteElements':
+      return {op: 'deleteElements', page: parsePage(raw.page), nums: parseNums(raw.nums)};
     case 'insertPage':
       // A system template by its name, or a custom one by the full path of its PNG in MyStyle/ (#451).
       check(
@@ -243,6 +269,19 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
       await must('modify', open ? host.modifyOpen(operation.page, [placed]) : host.modifyByPath(path, operation.page, [placed]));
       return {page: operation.page, num: operation.num, rect: operation.rect};
     }
+    case 'transformElements': {
+      // Strokes only: a picture or a text box is sent a rect by modifyElements (#326).
+      const transformed: object[] = [];
+      for (const num of operation.nums) {
+        const element = await must(`element ${num}`, host.getElement(path, operation.page, num), REFUSAL.noElement);
+        if ((element as {type?: number}).type !== STROKE_TYPE) {
+          throw new Stopped(REFUSAL.badRequest, `element ${num} is not a stroke: a picture or a text box is sent a rect`);
+        }
+        transformed.push(await must(`transform of element ${num}`, host.transform(element, operation.page, operation.matrix)));
+      }
+      await must('modify', open ? host.modifyOpen(operation.page, transformed) : host.modifyByPath(path, operation.page, transformed));
+      return {page: operation.page, transformed: transformed.length};
+    }
     case 'deleteElements':
       await must('delete', open ? host.deleteOpen(operation.page, operation.nums) : host.deleteByPath(path, operation.page, operation.nums));
       return {page: operation.page, deleted: operation.nums.length};
@@ -284,7 +323,7 @@ async function openNotePath(host: EditHost): Promise<string | null> {
 }
 
 /** Operations whose read or write of the open note needs its newest ink in the file first. */
-const SAVES_FIRST = new Set<Operation['op']>(['modifyElements', 'insertPage', 'removePage']);
+const SAVES_FIRST = new Set<Operation['op']>(['modifyElements', 'transformElements', 'insertPage', 'removePage']);
 
 /** The action `edit`: never a success for an operation that did not apply. */
 export function editAction(host: EditHost, now: () => number = Date.now) {

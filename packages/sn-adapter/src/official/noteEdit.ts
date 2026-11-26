@@ -111,12 +111,15 @@ function mapPoint(point: PenPoint, from: EditRect, to: EditRect, round = true): 
   return round ? {x: Math.round(x), y: Math.round(y)} : {x, y};
 }
 
+/** A point's new place, sample points rounded to whole pixels when `round`. */
+type PointMap = (point: PenPoint, round: boolean) => PenPoint;
+
 /**
  * Moves the stroke's stored outline with its points: the tablet does not make it again, and the
  * lasso selects by it, so a stroke moved without it is lassoed at its old place (device round 13,
  * #325). A stroke with no outline has nothing to move.
  */
-async function moveOutline(element: Placed, from: EditRect, to: EditRect): Promise<Result<true>> {
+async function moveOutline(element: Placed, map: PointMap): Promise<Result<true>> {
   const outline = element.contoursSrc;
   if (!outline) {
     return ok(true);
@@ -131,37 +134,84 @@ async function moveOutline(element: Placed, from: EditRect, to: EditRect): Promi
   if (!outline.setRange) {
     return fail(THROWN_CODE, 'the stroke outline cannot be written');
   }
-  const moved = read.value.map(ring => ring.map(point => mapPoint(point, from, to, false)));
+  const moved = read.value.map(ring => ring.map(point => map(point, false)));
   return (await outline.setRange(0, moved.length, moved)) ? ok(true) : fail(THROWN_CODE, 'setRange did not write the outline');
 }
 
 /**
- * Moves the stroke's stored box (`recognizeResult`) with its points, rounded outward. A modify of the
- * open note keeps the box it is sent, so a stroke moved without it is lassoed only by a rect that
- * holds both places; a modify of a closed note makes the box again (device round, Manta, #452).
+ * Moves the stroke's stored box (`recognizeResult`) with its points: the bounds of its four mapped
+ * corners, rounded outward, so a rotation keeps the ink inside. A modify of the open note keeps the
+ * box it is sent, so a stroke moved without it is lassoed only by a rect that holds both places; a
+ * modify of a closed note makes the box again (device round, Manta, #452).
  */
-function moveBox(element: Placed, from: EditRect, to: EditRect): void {
+function moveBox(element: Placed, map: PointMap): void {
   const box = element.recognizeResult;
   const sides = [box?.up_left_point_x, box?.up_left_point_y, box?.down_right_point_x, box?.down_right_point_y];
   if (!box || !sides.every(side => typeof side === 'number' && Number.isFinite(side))) {
     return;
   }
   const [left, top, right, bottom] = sides as number[];
-  const start = mapPoint({x: left, y: top}, from, to, false);
-  const end = mapPoint({x: right, y: bottom}, from, to, false);
-  box.up_left_point_x = Math.floor(start.x);
-  box.up_left_point_y = Math.floor(start.y);
-  box.down_right_point_x = Math.ceil(end.x);
-  box.down_right_point_y = Math.ceil(end.y);
+  const corners = [
+    {x: left, y: top},
+    {x: right, y: top},
+    {x: right, y: bottom},
+    {x: left, y: bottom},
+  ].map(corner => map(corner, false));
+  const bounds = boundsOf(corners);
+  box.up_left_point_x = Math.floor(bounds.left);
+  box.up_left_point_y = Math.floor(bounds.top);
+  box.down_right_point_x = Math.ceil(bounds.right);
+  box.down_right_point_y = Math.ceil(bounds.bottom);
+}
+
+/** Writes a stroke's sample points from index 0. */
+type WritePoints = (values: PenPoint[]) => Promise<boolean>;
+
+/** The stroke's sample points and their writer, or why it cannot be moved. */
+async function strokePoints(placed: Placed): Promise<Result<{write: WritePoints; read: PenPoint[]}>> {
+  const points = placed.stroke?.points;
+  const setRange = points?.setRange;
+  if (placed.type !== STROKE_TYPE || !points || !setRange) {
+    return fail(THROWN_CODE, `an element of type ${String(placed.type)} cannot be moved`);
+  }
+  const read = await readAll(points);
+  if (!read.ok) {
+    return read;
+  }
+  if (!read.value.length) {
+    return fail(THROWN_CODE, 'the stroke has no points');
+  }
+  return ok({write: values => setRange.call(points, 0, values.length, values), read: read.value});
+}
+
+/**
+ * Writes a stroke's points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`),
+ * its stored outline (`contoursSrc`) with another, and its stored box (`recognizeResult`), each
+ * through `map`.
+ * shortcut: setRange's end index is read as exclusive, as getRange counts; the device round checks it.
+ */
+async function writeStroke(placed: Placed, write: WritePoints, read: PenPoint[], map: PointMap): Promise<Result<object>> {
+  const moved = read.map(point => map(point, true));
+  try {
+    if (!(await write(moved))) {
+      return fail(THROWN_CODE, 'setRange did not write the points');
+    }
+    const outline = await moveOutline(placed, map);
+    if (!outline.ok) {
+      return outline;
+    }
+    moveBox(placed, map);
+    return ok(placed);
+  } catch (error) {
+    return fail(THROWN_CODE, error instanceof Error ? error.message : String(error));
+  }
 }
 
 /**
  * Moves and sizes an element read by `getElement` to `rect` on `page`, in place, for a modify call.
  * `pageNum` is set to `page`: a read answers -1, -2 or 0 for the same element, and a modify below 0
- * is refused, code 107 (device round 13, #312). A picture's or text box's rect, or a stroke's points mapped from their bounds to `rect`. The stroke
- * writes its points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`), its
- * stored outline (`contoursSrc`) with another, and its stored box (`recognizeResult`), by the same mapping.
- * shortcut: setRange's end index is read as exclusive, as getRange counts; the device round checks it.
+ * is refused, code 107 (device round 13, #312). A picture's or text box's rect, or a stroke's points,
+ * outline and box mapped from the points' bounds to `rect` (`writeStroke`).
  */
 export async function placeElement(element: object, page: number, rect: EditRect): Promise<Result<object>> {
   const placed = element as Placed;
@@ -174,31 +224,42 @@ export async function placeElement(element: object, page: number, rect: EditRect
     placed.textBox.textRect = rect;
     return ok(element);
   }
-  const points = placed.stroke?.points;
-  if (placed.type !== STROKE_TYPE || !points?.setRange) {
-    return fail(THROWN_CODE, `an element of type ${String(placed.type)} cannot be moved`);
+  const stroke = await strokePoints(placed);
+  if (!stroke.ok) {
+    return stroke;
   }
-  const read = await readAll(points);
-  if (!read.ok) {
-    return read;
-  }
-  if (!read.value.length) {
-    return fail(THROWN_CODE, 'the stroke has no points');
-  }
-  const from = boundsOf(read.value);
-  const moved = read.value.map(point => mapPoint(point, from, rect));
-  try {
-    if (!(await points.setRange(0, moved.length, moved))) {
-      return fail(THROWN_CODE, 'setRange did not write the points');
-    }
-    const outline = await moveOutline(placed, from, rect);
-    if (!outline.ok) {
-      return outline;
-    }
-    moveBox(placed, from, rect);
-    return ok(element);
-  } catch (error) {
-    return fail(THROWN_CODE, error instanceof Error ? error.message : String(error));
-  }
+  const from = boundsOf(stroke.value.read);
+  return writeStroke(placed, stroke.value.write, stroke.value.read, (point, round) => mapPoint(point, from, rect, round));
 }
 
+/** An affine map of page pixels, as CoreGraphics orders it: x' = a x + c y + tx, y' = b x + d y + ty. */
+export type Matrix = [a: number, b: number, c: number, d: number, tx: number, ty: number];
+
+/** The page a transformed stroke must stay on, in pixels. */
+export type PageSize = {width: number; height: number};
+
+/**
+ * Scales, rotates or flips a stroke read by `getElement` through `matrix`, in place, for a modify
+ * call (#326): its points, outline and box, as `placeElement` maps them through a rect. A stroke
+ * the matrix takes off the page is refused before anything is written. Only a stroke: a rect is
+ * all a picture or a text box holds, so the Mac sends those a rect.
+ */
+export async function transformElement(element: object, page: number, matrix: Matrix, size: PageSize): Promise<Result<object>> {
+  const placed = element as Placed;
+  placed.pageNum = page;
+  const stroke = await strokePoints(placed);
+  if (!stroke.ok) {
+    return stroke;
+  }
+  const [a, b, c, d, tx, ty] = matrix;
+  const map: PointMap = (point, round) => {
+    const x = a * point.x + c * point.y + tx;
+    const y = b * point.x + d * point.y + ty;
+    return round ? {x: Math.round(x), y: Math.round(y)} : {x, y};
+  };
+  const off = stroke.value.read.map(point => map(point, true)).find(point => point.x < 0 || point.y < 0 || point.x > size.width || point.y > size.height);
+  if (off) {
+    return fail(THROWN_CODE, `the transform takes the stroke off the page, to ${off.x}, ${off.y}`);
+  }
+  return writeStroke(placed, stroke.value.write, stroke.value.read, map);
+}

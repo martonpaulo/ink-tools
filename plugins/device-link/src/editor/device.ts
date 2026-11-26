@@ -19,10 +19,11 @@ import {
   placeElement,
   removeNotePage,
   saveCurrentNote,
+  transformElement,
   ACTION_FILE,
 } from '@ink-tools/sn-adapter/official';
 import type {Relay} from '../native';
-import {EDITOR_FOLDER, type EditHost} from './operations';
+import {EDITOR_FOLDER, PAGE, type EditHost} from './operations';
 import type {PenGate} from './penGate';
 import type {TemplateHost} from './templates';
 
@@ -46,6 +47,7 @@ export function deviceEditHost(pen: PenGate): EditHost & TemplateHost {
     build: buildElement,
     getElement,
     place: placeElement,
+    transform: (element, page, matrix) => transformElement(element, page, matrix, PAGE),
     insertOpen: (page, elements) => insertPageElements(elements, page),
     insertByPath: insertElements,
     modifyOpen: (page, elements) => modifyPageElements(elements, page),
