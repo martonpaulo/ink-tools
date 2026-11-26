@@ -814,6 +814,16 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   [measured, 2026-11-25].
 - The note file holds no serial number or account: the header's `FILE_ID` and each `PAGEID` are
   random [measured].
+- A page's handwriting recognition, when the note uses Real-Time Recognition, is a block that
+  `RECOGNTEXT` points at: base64 JSON whose `elements` of type `Text` hold `words`, each a `label`
+  and a `bounding-box` (`x`, `y`, `width`, `height`); a space between words has no box. The box is
+  in millimetres at the page's 300 dpi: on five Manta notes every box ended within 162 x 216 mm,
+  the 1920 x 2560 page, and a word's box times 300 / 25.4 enclosed its ink. `RECOGNSTATUS` is 1
+  when the recognition is done and 2 while it runs; a page at 2 still held the words of an earlier
+  run, so the Ink Notebook Editor reads only pages at 1 [measured on the Mac, 2026-11-26,
+  [#321](https://github.com/martonpaulo/ink-tools/issues/321)].
+- Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
+  [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 
 ## Network and ADB
 

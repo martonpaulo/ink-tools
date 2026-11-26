@@ -15,6 +15,8 @@ struct NotebookWindow: View {
     var columns: NavigationSplitViewVisibility = .automatic
     @Environment(\.openDocument) private var openDocument
     @State private var dropFailure: String?
+    /// The note's words, read in the background for Find in Note and Copy as Text (#321).
+    @State private var indexer = NoteIndexer()
 
     var body: some View {
         Group {
@@ -26,6 +28,9 @@ struct NotebookWindow: View {
             case .note(let note):
                 NotebookView(pages: PageImages(note: note), columns: columns)
             }
+        }
+        .task {
+            if case .note(let note) = document.content { await indexer.run(note: note) }
         }
         .frame(
             minWidth: Self.minimum.width, idealWidth: idealSize.width, minHeight: Self.minimum.height,
