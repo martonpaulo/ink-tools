@@ -139,6 +139,29 @@ struct NoteIndexTests {
         #expect(drawn.contains(CGPoint(x: harvest.box.midX, y: harvest.box.midY)), "box \(harvest.box)")
     }
 
+    /// A Mac whose Neural Engine or GPU cannot compile Vision's model reads the page on the CPU
+    /// (#319), and a cancelled read is never tried again.
+    @Test func testAFailedReadTriesTheCPUOnceAndACancelledOneNever() async throws {
+        struct CompileFailed: Error {}
+        let tries = FakeRecognizer.Counter()
+        let read = try await VisionRecognizer.withCPUFallback { onCPU in
+            tries.add()
+            if !onCPU { throw CompileFailed() }
+            return "read on the CPU"
+        }
+        #expect(read == "read on the CPU")
+        #expect(tries.value == 2)
+
+        let cancelled = FakeRecognizer.Counter()
+        await #expect(throws: CancellationError.self) {
+            try await VisionRecognizer.withCPUFallback { _ -> String in
+                cancelled.add()
+                throw CancellationError()
+            }
+        }
+        #expect(cancelled.value == 1)
+    }
+
     @Test func testThePreferredLanguagesThatVisionReadsAreKept() {
         let languages = VisionRecognizer(preferred: ["pt-BR", "en-GB", "xx"]).languages.map(Locale.Language.init)
         #expect(languages.map(\.languageCode) == [.portuguese, .english])

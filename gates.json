@@ -27,7 +27,7 @@
     {"name": "device-build", "command": "python3 -B -m unittest scripts/test_device_build.py", "covers": "scripts/device_build.py, the build of main for a device check, over a fake checkout and runner (#310)"},
     {"name": "setup", "command": "python3 -B -m unittest scripts/test_gate_install.py scripts/test_cloud_config.py", "covers": "each npm gate installs its subproject from its lockfile when node_modules is missing or older than the lockfile (#135, #222), and .github/cloud.json names every gate as a cloud gate but the Ink Notebook Editor's (#301)"},
     {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"},
-    {"name": "site", "command": "bash scripts/validate-site.sh && python3 scripts/site_privacy.py --root . && python3 -B -m unittest scripts/test_site_privacy.py", "covers": "the home page and privacy policy in site/: the Workbench site check, and both pages present with a privacy section for every plugin that declares INTERNET (#371)"}
+    {"name": "site", "command": "bash scripts/validate-site.sh && python3 scripts/site_privacy.py --root . && python3 -B -m unittest scripts/test_site_privacy.py && python3 scripts/site_media.py check && python3 -B -m unittest scripts/test_site_media.py", "covers": "the home page and privacy policy in site/: the Workbench site check, and both pages present with a privacy section for every plugin that declares INTERNET (#371); the tool pictures and videos the shot list of design/site-media names: sizes, budget, text alternatives and the page blocks (#414)"}
   ],
   "rules": [
     {"path": "*.md", "gates": ["docs", "license"]},
@@ -162,6 +162,10 @@
     {"path": "scripts/lib/", "gates": ["site"]},
     {"path": "scripts/site_privacy.py", "gates": ["site"]},
     {"path": "scripts/test_site_privacy.py", "gates": ["site"]},
+    {"path": "scripts/site_media.py", "gates": ["site"]},
+    {"path": "scripts/site_capture.py", "gates": ["site"]},
+    {"path": "scripts/test_site_media.py", "gates": ["site"]},
+    {"path": "design/site-media/", "gates": ["site"]},
     {"path": "plugins/*/PluginConfig.json", "gates": ["site"]},
     {"path": "packages/sn-adapter/src/official/plugin.ts", "gates": ["site"]},
     {"path": ".github/workflows/validate-site.yml", "gates": ["site"]}
