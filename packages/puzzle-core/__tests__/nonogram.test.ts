@@ -90,6 +90,28 @@ describe('generateNonogram', () => {
     expect(rateNonogram(generateNonogram('S2', { width: 5, height: 5 }, 'hard'))?.difficulty).toBe('hard');
   });
 
+  test('a thin picture gives every band for every seed', () => {
+    // With the easy limit from the longer side, a picture 5 or 6 cells across rated easy so often
+    // that medium failed for up to 26 of 30 seeds on these shapes (#435).
+    const failures: string[] = [];
+    for (const [thin, longest] of [[5, 19], [6, 16]]) {
+      for (let long = 11; long <= longest; long++) {
+        for (const size of [{ width: thin, height: long }, { width: long, height: thin }]) {
+          for (const band of NONOGRAM_BANDS) {
+            for (let seed = 1; seed <= 30; seed++) {
+              try {
+                generateNonogram(`S${seed}`, size, band);
+              } catch {
+                failures.push(`${size.width} x ${size.height} ${band} S${seed}`);
+              }
+            }
+          }
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
   test('a wide picture keeps its width and height apart', () => {
     const puzzle = generateNonogram('W', { width: 15, height: 10 }, 'medium');
     expect([puzzle.rows.length, puzzle.columns.length, puzzle.id.size]).toEqual([10, 15, '15X10']);

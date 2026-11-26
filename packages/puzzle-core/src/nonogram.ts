@@ -274,7 +274,11 @@ export interface NonogramRating {
   probes: number;
 }
 
-/** Up to this many sweeps per 10 cells of the longer side, a line-solvable picture is easy. */
+/**
+ * Up to this many sweeps per 10 cells of the shorter side, a line-solvable picture is easy. The
+ * shorter side, so a thin picture (5 x 15), which line solving finishes in few sweeps, can still
+ * rate medium (#435, owner D96 A).
+ */
 const EASY_SWEEPS_PER_10 = 3;
 
 /**
@@ -295,7 +299,7 @@ function rateTowards(grid: Grid, target: Difficulty | null): NonogramRating | nu
   const cells = newCells(grid);
   const lines = linesOf(grid);
   const count = lines.cells.length;
-  const easyLimit = Math.ceil((Math.max(grid.width, grid.height) * EASY_SWEEPS_PER_10) / 10);
+  const easyLimit = Math.ceil((Math.min(grid.width, grid.height) * EASY_SWEEPS_PER_10) / 10);
   // A line none of whose cells changed since it was solved would give the same answer again
   // (line solving finds all it can at once), so a sweep skips it; the sweep count is unchanged.
   const dirty = new Array<boolean>(count).fill(true);
