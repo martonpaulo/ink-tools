@@ -85,7 +85,7 @@ case "$1" in
         fi
         cat "$ADB_FILES/log"
         # timing-independent: a hanging fake adb for the follow timeout; the test kills it, the length only bounds it.
-        case " $* " in *" -d "*) ;; *) [ -n "${ADB_FOLLOW_FAILS:-}" ] && exit 1; [ -n "${ADB_HANG:-}" ] && exec sleep 5 ;; esac
+        case " $* " in *" -d "*) ;; *) [ -n "${ADB_FOLLOW_FAILS:-}" ] && exit 1; [ -n "${ADB_HANG:-}" ] && exec sleep 30 ;; esac
         : ;;
     shell)
         case "$2" in
@@ -196,7 +196,7 @@ case "$1" in
             uiautomator)
                 cat "$ADB_FILES/events"
                 # timing-independent: the real stream never ends; the test's limit ends this one.
-                [ -n "${ADB_HANG:-}" ] && exec sleep 5
+                [ -n "${ADB_HANG:-}" ] && exec sleep 30
                 : ;;
             "content query"*) cat "$ADB_FILES/rows" ;;
             "input tap"*)
@@ -846,7 +846,8 @@ check "wait toast reads the accessibility events" "$(called 'shell uiautomator e
 started=$SECONDS
 ADB_HANG=1 run wait toast "Saved" --timeout 1 >/dev/null 2>&1
 check "wait toast times out on another text" "$?" "6"
-check "wait toast is bounded" "$((SECONDS - started < 4))" "1"
+# The fake hangs 30 s and the limit is 1 s: 15 s proves the limit ended it, with room for a loaded Mac.
+check "wait toast is bounded" "$((SECONDS - started < 15))" "1"
 run wait toast "Saved" --timeout 3 --json >"$work/out" 2>/dev/null
 check "an events stream that ends early is a device error" "$? $(field "['error']" < "$work/out")" "1 device_error"
 run wait toast " " --timeout 1 >/dev/null 2>&1
@@ -1654,7 +1655,8 @@ started=$SECONDS
 output=$(ADB_HANG=1 run logs --follow --timeout 1 --json)
 status=$?
 check "logs --follow ends at its limit without failing" "$status" "0"
-check "logs --follow is bounded" "$((SECONDS - started < 4))" "1"
+# The fake hangs 30 s and the limit is 1 s: 15 s proves the limit ended it, with room for a loaded Mac.
+check "logs --follow is bounded" "$((SECONDS - started < 15))" "1"
 check "logs --follow in JSON keeps the lines" "$(printf '%s' "$output" | field "['lines'].__len__()")" "4"
 ADB_FOLLOW_FAILS=1 run logs --follow --timeout 2 >/dev/null 2>&1
 check "logs --follow reports a logcat that failed" "$?" "1"
