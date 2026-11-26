@@ -30,8 +30,8 @@
       "features": [
         {"name": "Word Lookup", "text": "lasso a handwritten word, then Insert Sticker (a clean illustration), Insert Image (a photo), Choose Image (pick from the results), Insert Definition, Insert Summary (three sentences from Wikipedia) or Translate, one button per language pair, such as «Translate ES→PT»."},
         {"name": "Convert to Text", "text": "turn the whole lassoed handwriting into one text box."},
-        {"name": "Headings", "text": "Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin.", "planned": true},
-        {"name": "Collection", "text": "Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page.", "planned": true}
+        {"name": "Headings", "text": "Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin, across the page."},
+        {"name": "Collection", "text": "Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page."}
       ],
       "map": {
         "outside": ["Wiktionary · Wikipedia", "Wikimedia Commons · Wikidata", "Openclipart · OpenMoji", "Apertium"],

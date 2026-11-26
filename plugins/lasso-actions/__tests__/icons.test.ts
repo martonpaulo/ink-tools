@@ -9,9 +9,12 @@ import {
   syncButtons,
 } from '../src/buttons';
 import {ICONS} from '../src/icons';
+import {MODULES} from '../src/modules';
 import {defaultSettings} from '../src/settings';
 
 const assets = join(__dirname, '..', 'assets');
+/** Every module's buttons (#306): Lookup's, then Headings' (#252). */
+const ALL = MODULES.flatMap(row => row.buttons);
 
 // A PNG keeps its width and height as big-endian integers at bytes 16 and 20 (the IHDR chunk).
 function pngSize(file: string): {width: number; height: number} {
@@ -21,7 +24,7 @@ function pngSize(file: string): {width: number; height: number} {
 }
 
 describe('lasso button icons (#107)', () => {
-  it.each(BUTTONS.map(button => [button.name, button.icon]))(
+  it.each(ALL.map(button => [button.name, button.icon]))(
     '%s names an icon file, its SVG source and a bundled 96 x 96 PNG',
     (_name, icon) => {
       expect(existsSync(join(assets, icon))).toBe(true);
@@ -34,12 +37,12 @@ describe('lasso button icons (#107)', () => {
   );
 
   it('gives every button its own icon, by name and by content', () => {
-    const icons = BUTTONS.map(button => button.icon);
-    expect(new Set(icons).size).toBe(BUTTONS.length);
+    const icons = ALL.map(button => button.icon);
+    expect(new Set(icons).size).toBe(ALL.length);
     const contents = icons.map(file =>
       readFileSync(join(assets, file)).toString('base64'),
     );
-    expect(new Set(contents).size).toBe(BUTTONS.length);
+    expect(new Set(contents).size).toBe(ALL.length);
   });
 
   it('registers each switched-on button with its own icon URI', async () => {

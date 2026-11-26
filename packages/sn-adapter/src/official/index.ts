@@ -6,6 +6,7 @@
 export * from './result';
 export * from './actions';
 export * from './buttons';
+export * from './collection';
 export * from './dialog';
 export * from './elements';
 export * from './file';

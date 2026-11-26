@@ -12,20 +12,15 @@ import {
 } from '@ink-tools/ui-kit';
 import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
-import {
-  askMissing,
-  BUTTONS,
-  isOn,
-  LassoButton,
-  settingsChanged,
-  withSwitch,
-} from './src/buttons';
+import {askStates, BUTTONS, isOn, LassoButton, withSwitch} from './src/buttons';
 import {Choice, currentChoice, onChoice} from './src/choose';
 import {ChooseScreen} from './src/ui/ChooseScreen';
+import {CollectionScreen} from './src/ui/CollectionScreen';
+import {collectionOpen, onCollection} from './src/collection/view';
 import {working} from './src/working';
 import {getSettings, saveSettings} from './src/profile';
 import {OldFolder, oldFolders} from './src/library';
-import {MODULES, activeLookup} from './src/modules';
+import {MODULES, moduleStates, modulesChanged} from './src/modules';
 import {
   defaultLassoSettings,
   LassoSettings,
@@ -48,7 +43,8 @@ const sourceLabel = (name: string): string =>
  * view asks for each permission a switched-on button still needs: a press with one missing opens it.
  * While «Choose picture» has a word waiting, the view is its Choose screen instead (#156); while a
  * no-view button works, it is the «Loading…» strip (#103). Settings closes by its title bar's ×, as the
- * Choose screen does by its «Close», since Back never reaches the view on the Manta (#204, #266). «Saved pictures» says where the inserted pictures are kept and why, and names the old
+ * Choose screen does by its «Close», since Back never reaches the view on the Manta (#204, #266).
+ * While «Paste Collection» has opened it, the view is the collection's screen (#249). «Saved pictures» says where the inserted pictures are kept and why, and names the old
  * synced folders that still hold files, with the File Manager step (#23).
  */
 export default function App({
@@ -58,12 +54,17 @@ export default function App({
   close?: () => void;
 }) {
   const [choice, setChoice] = useState<Choice | null>(currentChoice());
+  const [collection, setCollection] = useState(collectionOpen());
   useEffect(() => onChoice(setChoice), []);
+  useEffect(() => onCollection(setCollection), []);
   if (useWorking(working)) {
     return <WorkingStrip working={working} />;
   }
-  return choice ? (
-    <ChooseScreen choice={choice} />
+  if (choice) {
+    return <ChooseScreen choice={choice} />;
+  }
+  return collection ? (
+    <CollectionScreen close={close} />
   ) : (
     <SettingsScreen close={close} />
   );
@@ -78,7 +79,7 @@ function SettingsScreen({close}: {close: () => void}) {
     getSettings().then(saved => {
       if (open) {
         setSettings(saved);
-        askMissing(activeLookup(saved.modules, saved.lookup));
+        askStates(moduleStates(saved));
       }
     });
     oldFolders().then(found => open && setOld(found));
@@ -91,7 +92,7 @@ function SettingsScreen({close}: {close: () => void}) {
   const changeAll = (next: LassoSettings) => {
     setSettings(next);
     saveSettings(next);
-    settingsChanged(activeLookup(next.modules, next.lookup));
+    modulesChanged(next);
   };
   const change = (lookup: LookupSettings) => changeAll({...all, lookup});
   const group = (heading: string, buttons: readonly LassoButton[]) => (
