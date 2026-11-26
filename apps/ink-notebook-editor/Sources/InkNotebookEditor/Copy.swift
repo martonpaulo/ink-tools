@@ -1,4 +1,5 @@
 import Foundation
+import InkNotebookEditorKit
 
 /// Every visible word of Ink Notebook Editor, in one place. English only (AGENTS.md, product
 /// copy); each value goes through `String(localized:)`, and `make strings` refreshes the catalog.
@@ -155,5 +156,28 @@ nonisolated enum Copy {
 
     static func headingLabel(_ text: String, _ level: Int, _ page: Int, _ count: Int) -> String {
         String(localized: "\(text), level \(level), page \(page) of \(count)")
+    }
+
+    // MARK: Undo and Redo (#328)
+
+    static let undoBare = String(localized: "Undo")
+    static let redoBare = String(localized: "Redo")
+
+    /// The Edit menu's Undo item for the newest edit, or the bare item with nothing to undo.
+    static func undo(_ edit: NoteEdit?) -> String {
+        guard let edit else { return undoBare }
+        return String(localized: "Undo \(name(of: edit))")
+    }
+
+    static func redo(_ edit: NoteEdit?) -> String {
+        guard let edit else { return redoBare }
+        return String(localized: "Redo \(name(of: edit))")
+    }
+
+    /// An edit's name in the menu.
+    static func name(of edit: NoteEdit) -> String {
+        switch edit {
+        case .movePage: String(localized: "Move Page")
+        }
     }
 }

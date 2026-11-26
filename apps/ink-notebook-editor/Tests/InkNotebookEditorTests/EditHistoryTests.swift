@@ -1,0 +1,87 @@
+import Foundation
+import InkNotebookEditorKit
+import NoteFormat
+import Testing
+
+@testable import InkNotebookEditor
+
+/// Undo and redo of the editor's edits, on the Mac (#328).
+@Suite struct EditHistoryTests {
+    static let pages = ["P1", "P2", "P3", "P4"]
+
+    @Test(arguments: [(0, 2), (3, 0), (1, 2)])
+    func aPageMoveAndItsInverseGiveThePagesBack(from: Int, to: Int) throws {
+        let edit = NoteEdit.movePage(from: from, to: to)
+        let moved = try #require(edit.apply(to: Self.pages))
+        #expect(moved != Self.pages)
+        #expect(edit.inverse.apply(to: moved) == Self.pages)
+    }
+
+    @Test func aMoveThatDoesNotFitIsRefused() {
+        #expect(NoteEdit.movePage(from: 1, to: 1).apply(to: Self.pages) == nil)
+        #expect(NoteEdit.movePage(from: 4, to: 0).apply(to: Self.pages) == nil)
+        #expect(NoteEdit.movePage(from: 0, to: -1).apply(to: Self.pages) == nil)
+    }
+
+    @Test func undoOfAQueuedEditDropsItAndSendsNothing() {
+        var history = EditHistory()
+        let id = history.record(.movePage(from: 0, to: 2))
+        #expect(history.undo() == .drop(id))
+        #expect(history.undoKind == nil && history.redoKind == .movePage(from: 0, to: 2))
+    }
+
+    @Test func undoOfASentOrAppliedEditSendsItsInverse() {
+        var history = EditHistory()
+        let first = history.record(.movePage(from: 0, to: 2))
+        history.sent(first)
+        let second = history.record(.movePage(from: 3, to: 1))
+        history.applied(second)
+        #expect(history.delivery(of: second) == .applied)
+        #expect(history.undo() == .send(.movePage(from: 1, to: 3)))
+        #expect(history.undo() == .send(.movePage(from: 2, to: 0)))
+        #expect(history.undo() == nil)
+    }
+
+    @Test func redoRecordsTheEditAgainAndANewEditEmptiesRedo() {
+        var history = EditHistory()
+        history.record(.movePage(from: 0, to: 2))
+        _ = history.undo()
+        let redone = history.redo()
+        #expect(redone?.1 == .movePage(from: 0, to: 2))
+        #expect(redone.flatMap { history.delivery(of: $0.0) } == .queued)
+        _ = history.undo()
+        history.record(.movePage(from: 1, to: 3))
+        #expect(history.redo() == nil)
+    }
+
+    @Test func aRefusedEditLeavesTheHistoryAndGivesItsInverseToDrawBack() {
+        var history = EditHistory()
+        let kept = history.record(.movePage(from: 0, to: 1))
+        let refused = history.record(.movePage(from: 2, to: 3))
+        #expect(history.refused(refused) == .movePage(from: 3, to: 2))
+        #expect(history.refused(refused) == nil)
+        #expect(history.undo() == .drop(kept))
+    }
+
+    @Test func theMenuNamesTheEdit() {
+        var history = EditHistory()
+        #expect(Copy.undo(history.undoKind) == Copy.undoBare)
+        history.record(.movePage(from: 0, to: 2))
+        #expect(Copy.undo(history.undoKind) == "Undo Move Page")
+        _ = history.undo()
+        #expect(Copy.redo(history.redoKind) == "Redo Move Page")
+    }
+
+    /// The written note agrees with the model: a page move then its inverse, written with
+    /// NoteWriter, gives the fixture's pages back in order.
+    @Test func aWrittenMoveAndItsInverseGiveTheNoteBack() throws {
+        let note = try Fixtures.note("content.note")
+        let ids = note.pages.map { $0.metadata["PAGEID"] ?? "" }
+        let edit = NoteEdit.movePage(from: 0, to: 2)
+        guard case .movePage(let from, let to) = edit, case .movePage(let back, let into) = edit.inverse else { return }
+        let moved = try NoteFile(bytes: NoteWriter.movePage(note, from: from, to: to))
+        #expect(moved.pages.map { $0.metadata["PAGEID"] ?? "" } == edit.apply(to: ids))
+        let restored = try NoteFile(bytes: NoteWriter.movePage(moved, from: back, to: into))
+        #expect(restored.pages.map { $0.metadata["PAGEID"] ?? "" } == ids)
+    }
+}
