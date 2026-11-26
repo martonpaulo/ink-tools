@@ -171,6 +171,15 @@
     {"path": "design/site-media/", "gates": ["site"]},
     {"path": "plugins/*/PluginConfig.json", "gates": ["site"]},
     {"path": "packages/sn-adapter/src/official/plugin.ts", "gates": ["site"]},
+    {"path": "scripts/site_figures.py", "gates": ["site"]},
+    {"path": "scripts/test_site_figures.py", "gates": ["site"]},
+    {"path": "scripts/readme_figures.py", "gates": ["site"]},
+    {"path": "docs/tools.json", "gates": ["site"]},
+    {"path": "docs/releases.json", "gates": ["site"]},
+    {"path": "docs/install.md", "gates": ["site"]},
+    {"path": "README.md", "gates": ["site"]},
+    {"path": "design/icons/readme/", "gates": ["site"]},
+    {"path": "design/icons/apps/", "gates": ["site"]},
     {"path": ".github/workflows/validate-site.yml", "gates": ["site"]}
   ]
 }
