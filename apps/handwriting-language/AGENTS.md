@@ -111,12 +111,12 @@ No Gradle: the same light toolchain as the plugins' native code (`javac`, D8, `a
 SHA-1 checks, or taken from `ANDROID_HOME` on a CI runner. A JDK is found by `scripts/host-tools.cjs`.
 
 ```sh
-node scripts/build.cjs --test   # JVM tests of the button rule, the cycle and the file switch
+node scripts/build.cjs --test   # JVM tests of the button rule, the cycle, the file switch and the look check
 node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed and verified
 ```
 
 - The gate (`gates.json` › `handwriting-language`, CI `validate-handwriting-language.yml`) runs both, with `javac -Werror`: a new warning fails the build. It does not run the renders:
-  `RENDER_EVIDENCE=<dir> node scripts/renders.cjs` draws the real screen off screen, with no device, on Robolectric's native graphics (JVM; first run downloads about 400 MB into `.toolchain/renders/`): five states at three widths, `renders/ScreenRenders.java`, asked for by the root `AGENTS.md` › Interface paths ([#285](https://github.com/martonpaulo/ink-tools/issues/285)); its font is not the tablet's.
+  `RENDER_EVIDENCE=<dir> node scripts/renders.cjs` draws the real screen off screen, with no device, on Robolectric's native graphics (JVM; first run downloads about 400 MB into `.toolchain/renders/`): five states at three widths, `renders/ScreenRenders.java`, asked for by the root `AGENTS.md` › Interface paths ([#285](https://github.com/martonpaulo/ink-tools/issues/285)); its font is not the tablet's. `node scripts/look-check.cjs --screen NAME --ours PNG --out SHEET.png` measures a render against the native values and draws the side-by-side sheet ([`native-catalog.md`](../../packages/ui-kit/native-catalog.md#look-check), [#299](https://github.com/martonpaulo/ink-tools/issues/299)).
 - Logic with no Android import goes in `ButtonGesture`, `ButtonPlace`, `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
 - All visible copy is in `Copy.java`; the native controls (title bar, list row, switch, radio

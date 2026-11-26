@@ -8,6 +8,8 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 ## Contents
 
 - [Method](#method)
+- [Look check](#look-check)
+- [Reference screens](#reference-screens)
 - [Text styles](#text-styles)
 - [Title bar](#title-bar)
 - [Navigation list](#navigation-list)
@@ -47,6 +49,33 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 - A crop is named by its screen and its rectangle `x, y, width, height` in screen pixels, so a
   fresh screenshot gives it again. No native image is kept in the repository (the Clarify of
   [#272](https://github.com/martonpaulo/ink-tools/issues/272)): the controls are redrawn.
+
+## Look check
+
+`node apps/handwriting-language/scripts/look-check.cjs --screen NAME --ours OURS.png --out SHEET.png`
+([#299](https://github.com/martonpaulo/ink-tools/issues/299)) measures a picture of one of our screens, 1920 px wide
+or any other width, against the values of this page, which `tokens.json` holds: the black bar, the
+rule to rule height of a row, a caption's box and its row, the solid and dotted rules, both side margins, the
+switch's track and the radio ring, and the text grey and its contrast. It prints each value as `same` or `differs`, the
+native value then ours, and draws one sheet: our picture with its rules and their pitch marked, the native rhythm
+drawn from these values (a native row where ours is a row; ours kept, hatched, where the catalog has no
+value, such as a note), and the table. The values are in pixels of the Manta (11.8 px per mm) at any picture
+width, since every token is in millimetres. `--native NATIVE.png` takes a screencap of the native screen
+and measures it the same way, in place of the catalog's values. The JVM test
+(`apps/handwriting-language/look/LookTest.java`) runs the measure over a recorded picture of our own screen.
+What it cannot measure stays for the owner's taste: the order of the rows, the wording and the whitespace of a note.
+
+## Reference screens
+
+The native screen each of our screens is judged against, and what the check measures there. A screen
+with no row has no native model yet.
+
+| Our screen | Native reference | What the catalog measured there |
+| :--- | :--- | :--- |
+| Handwriting Language | Settings › Handwriting Recognition Language (radio rows, caption, chevron), Language & Region (value row, chevron), Security & Privacy (switch) | row 162 px, caption box 112 px, side margin 51 px, radio ring 54 px, switch 140 x 70 px, chevron 23 x 42 px |
+| Each plugin's settings and its other screens | Apps › Plugins and a plugin's page (`plugin_detail_*`) | the 133 px bar, rows with an icon 176 px, the light line between rows, the full-width «Uninstall» button 140 px |
+| A list of pages with a current one | Page › Manage Pages | the selection border: stroke 7 px, 12 px inset |
+| A confirm dialog | A note's Delete This Page | the dialog's buttons 198 x 84 px |
 
 ## Text styles
 

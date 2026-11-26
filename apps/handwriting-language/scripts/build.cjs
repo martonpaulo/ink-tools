@@ -265,6 +265,7 @@ function test() {
       run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${name}`]);
     }
     run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${TOKENS_CLASS}Test`, tokens]);
+    require('./look-check.cjs').test(path.join(work, 'look'));
     testBadging();
   } finally {
     fs.rmSync(work, {recursive: true, force: true});
@@ -290,6 +291,18 @@ function testBadging() {
   console.log('badging rule ok');
 }
 
+// Before the main block: scripts/look-check.cjs, which the test below loads, reads these.
+module.exports = {NATIVE_ACCESS, app, failOnMissingJdk, badgingProblems, buildApk, javaSources, test, tokensSource, tools};
+
+/** A missing JDK is one line saying what to install, not a stack trace (#78); any other error is thrown on. */
+function failOnMissingJdk(error) {
+  if (error.message !== JDK_MISSING) {
+    throw error;
+  }
+  console.error(`lingo-app: ${error.message}`);
+  process.exit(1);
+}
+
 if (require.main === module) {
   try {
     if (process.argv.includes('--test')) {
@@ -298,13 +311,7 @@ if (require.main === module) {
       buildApk();
     }
   } catch (error) {
-    // A missing JDK is one line saying what to install, not a stack trace (#78).
-    if (error.message !== JDK_MISSING) {
-      throw error;
-    }
-    console.error(`lingo-app: ${error.message}`);
-    process.exit(1);
+    failOnMissingJdk(error);
   }
 }
 
-module.exports = {NATIVE_ACCESS, app, badgingProblems, buildApk, javaSources, test, tokensSource, tools};

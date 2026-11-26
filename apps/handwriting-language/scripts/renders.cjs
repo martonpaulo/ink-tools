@@ -13,11 +13,11 @@
  */
 const {execFileSync} = require('node:child_process');
 const crypto = require('node:crypto');
-const {jdkBin, jdkTool, JDK_MISSING} = require('./host-tools.cjs');
+const {jdkBin, jdkTool} = require('./host-tools.cjs');
+const {NATIVE_ACCESS, failOnMissingJdk, app, javaSources, tokensSource, tools} = require('./build.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
-const {NATIVE_ACCESS, app, javaSources, tokensSource, tools} = require('./build.cjs');
 
 const root = path.resolve(__dirname, '..');
 const repo = path.resolve(root, '../..');
@@ -109,9 +109,5 @@ function renders() {
 try {
   renders();
 } catch (error) {
-  if (error.message !== JDK_MISSING) {
-    throw error;
-  }
-  console.error(`lingo-app: ${error.message}`);
-  process.exit(1);
+  failOnMissingJdk(error);
 }
