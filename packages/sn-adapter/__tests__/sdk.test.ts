@@ -292,6 +292,16 @@ describe('the editor helper calls (#312)', () => {
     expect(await page.placeElement(stroke, 0, rect)).toMatchObject({ok: false, message: 'setRange did not write the outline'});
   });
 
+  it("moves a stroke's stored box with its points, which a modify of the open note keeps as sent (#452)", async () => {
+    const points = {size: async () => 2, getRange: async () => [{x: 0, y: 0}, {x: 10, y: 20}], setRange: jest.fn(async () => true)};
+    const box = {up_left_point_x: -1, up_left_point_y: -1, down_right_point_x: 11, down_right_point_y: 21, predict_name: 'others'};
+    const stroke = {type: 0, recognizeResult: box, stroke: {points}};
+    expect((await page.placeElement(stroke, 0, rect)).ok).toBe(true);
+    expect(stroke.recognizeResult).toEqual({up_left_point_x: 80, up_left_point_y: 190, down_right_point_x: 320, down_right_point_y: 410, predict_name: 'others'});
+    const unboxed = {type: 0, recognizeResult: null, stroke: {points}};
+    expect(await page.placeElement(unboxed, 0, rect)).toMatchObject({ok: true, value: {recognizeResult: null}});
+  });
+
   it('refuses to place an element it cannot move, and a stroke whose write fails', async () => {
     expect((await page.placeElement({type: 700}, 0, rect)).ok).toBe(false);
     const stroke = {type: 0, stroke: {points: {size: async () => 1, getRange: async () => [{x: 1, y: 1}], setRange: async () => false}}};

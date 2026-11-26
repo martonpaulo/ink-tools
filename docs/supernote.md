@@ -977,6 +977,16 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   [«Inspecting the Supernote .note format»](https://walnut356.github.io/posts/inspecting-the-supernote-note-format); that an eraser
   stroke is a record of colour 255 is that post's, not yet seen here, and one note with several
   text boxes and an erased stroke waits for a device round.
+- A stroke's record box is the element's `recognizeResult` (`up_left_point_x` to
+  `down_right_point_y`, page pixels) in the plugin API. A modify of a closed note by path makes the
+  box again from the points; `modifyPageElements` on the open note keeps the box it is sent. A stroke
+  moved there with its points and outline but its old box stayed at the old place in the file, and
+  the lasso then took it only with a rect that held its new place and the page's lower-right corner
+  (1250 to 1910 by 1750 to 2550 for a stroke drawn at 1280, 1780 to 1920), never with one around its
+  drawing or its old place. Sent with the box moved too, it was lassoed by a rect around its drawing,
+  and the file box followed [measured, Manta, 2026-11-26,
+  [#452](https://github.com/martonpaulo/ink-tools/issues/452)]. So `placeElement` moves the box with
+  the points.
 - Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
   [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 

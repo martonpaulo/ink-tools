@@ -82,12 +82,16 @@ type Placed = {
   pageNum?: number;
   /** The stored outline the lasso selects by, rings of float page pixels (docs/research/2026-11-note-format.md). */
   contoursSrc?: {size(): Promise<number>; getRange(start: number, count: number): Promise<PenPoint[][]>; setRange?(index: number, end: number, values: PenPoint[][]): Promise<boolean>} | null;
+  /** The stored box the lasso tests first, in page pixels; only a modify of a closed note makes it again (#452). */
+  recognizeResult?: StoredBox | null;
   picture?: {rect?: EditRect} | null;
   textBox?: {textRect?: EditRect} | null;
   stroke?: {
     points?: {size(): Promise<number>; getRange(start: number, count: number): Promise<PenPoint[]>; setRange?(index: number, end: number, values: PenPoint[]): Promise<boolean>};
   } | null;
 };
+
+type StoredBox = {up_left_point_x?: number; up_left_point_y?: number; down_right_point_x?: number; down_right_point_y?: number};
 
 function boundsOf(points: PenPoint[]): EditRect {
   const xs = points.map(point => point.x);
@@ -132,11 +136,31 @@ async function moveOutline(element: Placed, from: EditRect, to: EditRect): Promi
 }
 
 /**
+ * Moves the stroke's stored box (`recognizeResult`) with its points, rounded outward. A modify of the
+ * open note keeps the box it is sent, so a stroke moved without it is lassoed only by a rect that
+ * holds both places; a modify of a closed note makes the box again (device round, Manta, #452).
+ */
+function moveBox(element: Placed, from: EditRect, to: EditRect): void {
+  const box = element.recognizeResult;
+  const sides = [box?.up_left_point_x, box?.up_left_point_y, box?.down_right_point_x, box?.down_right_point_y];
+  if (!box || !sides.every(side => typeof side === 'number' && Number.isFinite(side))) {
+    return;
+  }
+  const [left, top, right, bottom] = sides as number[];
+  const start = mapPoint({x: left, y: top}, from, to, false);
+  const end = mapPoint({x: right, y: bottom}, from, to, false);
+  box.up_left_point_x = Math.floor(start.x);
+  box.up_left_point_y = Math.floor(start.y);
+  box.down_right_point_x = Math.ceil(end.x);
+  box.down_right_point_y = Math.ceil(end.y);
+}
+
+/**
  * Moves and sizes an element read by `getElement` to `rect` on `page`, in place, for a modify call.
  * `pageNum` is set to `page`: a read answers -1, -2 or 0 for the same element, and a modify below 0
  * is refused, code 107 (device round 13, #312). A picture's or text box's rect, or a stroke's points mapped from their bounds to `rect`. The stroke
- * writes its points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`), and its
- * stored outline (`contoursSrc`) with another, by the same mapping.
+ * writes its points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`), its
+ * stored outline (`contoursSrc`) with another, and its stored box (`recognizeResult`), by the same mapping.
  * shortcut: setRange's end index is read as exclusive, as getRange counts; the device round checks it.
  */
 export async function placeElement(element: object, page: number, rect: EditRect): Promise<Result<object>> {
@@ -168,7 +192,11 @@ export async function placeElement(element: object, page: number, rect: EditRect
       return fail(THROWN_CODE, 'setRange did not write the points');
     }
     const outline = await moveOutline(placed, from, rect);
-    return outline.ok ? ok(element) : outline;
+    if (!outline.ok) {
+      return outline;
+    }
+    moveBox(placed, from, rect);
+    return ok(element);
   } catch (error) {
     return fail(THROWN_CODE, error instanceof Error ? error.message : String(error));
   }
