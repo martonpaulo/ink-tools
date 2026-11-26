@@ -12,6 +12,7 @@
  */
 import {REGISTRY} from '../registry.generated';
 import {insertPageElements, createElement, getCurrentPageNum} from './page';
+import {saveCurrentNote} from './note';
 import {rebuildStroke, type SavedStroke} from './elements';
 import type {Motion, StrokeTimes} from './pen';
 import {fail, ok, Result, THROWN_CODE} from './result';
@@ -224,6 +225,8 @@ export interface ReplayHost {
   page(): Promise<Result<number>>;
   /** A new stroke element holding `stroke`, inserted on `page`. */
   insert(stroke: SavedStroke, page: number): Promise<Result<object>>;
+  /** Writes the open note to its file, so what the replay inserted is kept (#298). */
+  save(): Promise<Result<boolean>>;
   sleep(ms: number): Promise<void>;
   now(): number;
 }
@@ -239,6 +242,7 @@ export const DEVICE_REPLAY: ReplayHost = {
     const inserted = await insertPageElements([element.value], page);
     return inserted.ok ? ok(element.value) : inserted;
   },
+  save: saveCurrentNote,
   sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
   now: () => Date.now(),
 };
@@ -295,6 +299,13 @@ export async function replayPenTape(tape: PenTape, host: ReplayHost = DEVICE_REP
       replayedTimes.set(inserted.value, times ? {startedAt: base + times.startedAt, endedAt: base + times.endedAt} : null);
       elements.push(inserted.value);
       counts.strokes += 1;
+    }
+    // An inserted stroke stays out of the note file until a save (docs/supernote.md, #296), and a
+    // conversion's reload draws the page from that file. Saved before the listeners run, the
+    // replayed stroke is in the file before any listener's write or reload, and after a close (#298).
+    const saved = await host.save();
+    if (!saved.ok || saved.value !== true) {
+      return fail(saved.ok ? THROWN_CODE : saved.code, `pen-up ${counts.penUps + 1}: the note did not save: ${saved.ok ? 'answered false' : saved.message}`);
     }
     counts.listenerErrors += deliver(penUpListeners, elements);
     counts.penUps += 1;

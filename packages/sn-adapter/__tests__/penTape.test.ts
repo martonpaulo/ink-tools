@@ -34,11 +34,18 @@ const TAPE: PenTape = {
 function fakeHost(overrides: Partial<ReplayHost> = {}) {
   const inserted: Array<{stroke: SavedStroke; page: number}> = [];
   const waits: number[] = [];
+  /** What the host did, in order: each insert and each save. */
+  const calls: string[] = [];
   const host: ReplayHost = {
     page: async () => ({ok: true, value: 3}),
     insert: async (stroke, page) => {
       inserted.push({stroke, page});
+      calls.push('insert');
       return {ok: true, value: {uuid: `replayed-${inserted.length}`}};
+    },
+    save: async () => {
+      calls.push('save');
+      return {ok: true, value: true};
     },
     sleep: async ms => {
       waits.push(ms);
@@ -46,7 +53,7 @@ function fakeHost(overrides: Partial<ReplayHost> = {}) {
     now: () => 1_000_000,
     ...overrides,
   };
-  return {host, inserted, waits};
+  return {host, inserted, waits, calls};
 }
 
 /** The host's pen-up and motion callbacks, as PluginManager received them. */
@@ -77,6 +84,31 @@ test('a replay inserts each stroke on the open page and hands it to the pen-up l
   expect(motions).toEqual([0, 1]);
   expect(penUps).toEqual([[{uuid: 'replayed-1'}]]);
   expect(waits).toEqual([0, 40, 10]);
+});
+
+test('the note is saved after a pen-up is inserted and before its listeners run', async () => {
+  // Device round 8 (#298): a replayed circle showed on the screen, but the reopened note held
+  // nothing, as an inserted stroke stays out of the file until a save.
+  const {host, calls} = fakeHost();
+  onPenUp(() => {
+    calls.push('listener');
+  });
+  const result = await replayPenTape(TAPE, host);
+  expect(result.ok).toBe(true);
+  expect(calls).toEqual(['insert', 'save', 'listener']);
+});
+
+test.each([
+  ['answers false', {ok: true, value: false} as const, 'pen-up 1: the note did not save: answered false'],
+  ['fails', {ok: false, code: 1501, message: 'no permission'} as const, 'pen-up 1: the note did not save: no permission'],
+])('a save that %s stops the replay before the listeners', async (_name, answer, message) => {
+  const penUps: object[][] = [];
+  onPenUp(elements => penUps.push(elements));
+  const {host} = fakeHost({save: async () => answer});
+  const result = await replayPenTape(TAPE, host);
+  expect(result.ok).toBe(false);
+  expect(!result.ok && result.message).toBe(message);
+  expect(penUps).toEqual([]);
 });
 
 test('a replayed stroke answers its recorded times, shifted to the replay', async () => {
