@@ -169,9 +169,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - The Note app's toolbar and lasso icons are 64 px bitmaps with 4 px strokes whose ink keeps a
   median 11 px from the box on every side (17%) [measured, 2026-11-25, 71 icons of
   `com.ratta.supernote.note` that draw on white, [#271](https://github.com/martonpaulo/ink-tools/issues/271)]; 32 of their 41 single-stroke icons
-  measure 4 px across a stroke, anti-aliasing summed [measured, 2026-11-25]. Each plugin icon is
-  built from Tabler glyphs, scaled so its ink spans 41 of 64 on its longer side and centred, with a
-  stroke of 4 of 64: the same stroke share and at least that margin
+  measure 4 px across a stroke, anti-aliasing summed [measured, 2026-11-25].
+- The official plugins' icons fill more of their box than the Note app's toolbar icons: the Sticker
+  plugin's `icon.png` (0.1.124, shipped inside PluginHost's APK) is 48 px, its ink spans 44 px with a
+  2 px margin, and its stroke is 4 px. Settings > Plugins scales every plugin's icon file into the
+  same box of about 57 screen px, where Sticker and Palette spanned 52 px with a 4.6 px stroke and
+  the Ink Tools icons drawn to the toolbar values 34 to 36 px with a 3.6 px stroke [measured, Manta,
+  2026-11-26, [#450](https://github.com/martonpaulo/ink-tools/issues/450)]. Each plugin icon is built
+  from Tabler glyphs, scaled so its ink spans the Sticker icon's 44 of 48 on its longer side (a
+  quarter pixel under) and centred, with a stroke of 4 of 48
   ([`decisions.md`](decisions.md#decision-index)).
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
   promise stays pending forever [measured and device data, 2026-11-17, Image Editing 0.1.0 beta 11,

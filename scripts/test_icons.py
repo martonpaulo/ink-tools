@@ -35,10 +35,10 @@ TRANSLATE = "plugins/lasso-actions/assets/translate-"
 for _a, _b in (("es-pt", "zh-pt"), ("pt-es", "pt-zh")):
     STATE_PAIRS[frozenset((TRANSLATE + _a, TRANSLATE + _b))] = 0.85
 NUMBER = icons.NUMBER
-TOOLBAR = NATIVE["plugin"]["toolbar"]
-# The share of its box an icon keeps clear on every side: the native toolbar icons' for a plugin
-# icon, the native launcher icons' for an app's (owner review of the first sheet, #271).
-MARGIN = {"plugin": TOOLBAR["inkMarginPx"] / TOOLBAR["sizePx"], "app": V["inkMargin"] / V["viewport"]}
+REFERENCE = icons.plugin_reference(NATIVE)
+# The share of its box an icon keeps clear on every side: the official plugins' icons' for a plugin
+# icon (#450), the native launcher icons' for an app's (owner review of the first sheet, #271).
+MARGIN = {"plugin": REFERENCE["inkMarginPx"] / REFERENCE["sizePx"], "app": V["inkMargin"] / V["viewport"]}
 
 
 def vector_problems(root_element, android, kind="plugin"):
@@ -67,7 +67,7 @@ def vector_problems(root_element, android, kind="plugin"):
             problems.append(f"filled: {fill}")
         if color != V["strokeColor"]:
             problems.append(f"stroke colour {color}")
-        if width is None or float(width) != stroke:
+        if width is None or width != icons.number(stroke):
             problems.append(f"stroke width {width}")
         if (cap, join) != (V["lineCap"], V["lineJoin"]):
             problems.append(f"caps {cap} joins {join}")
@@ -140,6 +140,13 @@ def alpha_mask(png):
     return width, height, alpha, colors
 
 
+def ink_span_px(alpha):
+    """The longer side of the box of pixels at least half opaque; 0 for no ink."""
+    xs = [x for row in alpha for x, a in enumerate(row) if a >= 128]
+    ys = [y for y, row in enumerate(alpha) for a in row if a >= 128]
+    return max(max(xs) - min(xs), max(ys) - min(ys)) + 1 if xs else 0
+
+
 SET = json.loads(icons.SET.read_text())
 
 
@@ -179,10 +186,12 @@ class Style(unittest.TestCase):
     def test_the_native_measurements_are_the_recorded_ones(self):
         self.assertEqual((V["strokeWidth"], V["viewport"], V["lineCap"]), (4, 48, "round"))
 
-    def test_a_plugin_icon_has_the_native_toolbar_stroke(self):
-        # The stroke's share of the box is the native toolbar icons' 4 of 64 (owner, 2026-11-25, #271).
+    def test_a_plugin_icon_has_the_official_plugins_stroke(self):
+        # The stroke's share of the box is the official plugins' icons' 4 of 48 (#450), which replaced
+        # the Note app toolbar's 4 of 64 (#271).
         grid, pad, stroke = icons.frame("plugin", NATIVE)
-        self.assertEqual(stroke / (grid + 2 * pad), TOOLBAR["strokePx"] / TOOLBAR["sizePx"])
+        self.assertAlmostEqual(stroke / (grid + 2 * pad), REFERENCE["strokePx"] / REFERENCE["sizePx"])
+        self.assertEqual(NATIVE["plugin"]["reference"], "official")
         self.assertEqual(grid, STORE["grid"])
 
     def test_every_icon_is_built_from_the_pinned_tabler_glyphs(self):
@@ -221,7 +230,7 @@ class Style(unittest.TestCase):
             with self.subTest(icon["out"]):
                 span = max(right - left, bottom - top) / (grid + 2 * pad)
                 self.assertAlmostEqual(span, icons.ink_span(icon["kind"], NATIVE), delta=0.005)  # arcs are sampled
-                self.assertAlmostEqual((left + right) / 2, grid / 2, delta=0.02)  # cut pieces round to 0.001
+                self.assertAlmostEqual((left + right) / 2, grid / 2, delta=0.03)  # cut pieces round to 0.001, then grow 1.4 times (#450)
 
     def test_a_badge_knocks_a_clear_ring_out_of_the_strokes_under_it(self):
         # The owner read corner marks as part of the drawing (#271): every badge keeps a gap all round.
@@ -247,11 +256,11 @@ class Style(unittest.TestCase):
         self.assertIsNone(margin_problem(["M33 35 V13 H37 A5 5 0 0 1 37 23 H33"], "app", 0))
         # A Bezier that leaves its endpoints' box, and a plugin icon written without the padding.
         self.assertTrue(margin_problem(["M10 4 C10 -2 38 -2 38 4"], "app", 0))
-        self.assertTrue(margin_problem(["M3 12 H21"], "plugin", 0))
-        self.assertIsNone(margin_problem(["M3 12 H21"], "plugin"))
-        # Tabler keeps centrelines within 2 to 22; a glyph placed past that crosses the toolbar icons' margin.
+        self.assertTrue(margin_problem(["M1 12 H23"], "plugin", 0))
+        self.assertIsNone(margin_problem(["M1 12 H23"], "plugin"))
+        # A glyph placed past the padding crosses the official plugin icons' margin (#450).
         self.assertIsNone(margin_problem(["M2 2 H22 V22"], "plugin"))
-        self.assertTrue(margin_problem(["M1 12 H21"], "plugin"))
+        self.assertTrue(margin_problem(["M-4 12 H21"], "plugin"))
 
     def test_each_written_icon_follows_the_native_style(self):
         for icon in ICONS:
@@ -268,6 +277,8 @@ class Style(unittest.TestCase):
             ('fill="none"', 'fill="#383838"', "filled"),
             ('stroke="#000000"', 'stroke="#808080"', "stroke colour"),
             (f'stroke-width="{icons.number(icons.frame("plugin", NATIVE)[2])}"', 'stroke-width="4"', "stroke width"),
+            # The Note app toolbar's 4 of 64, which read thin beside the official plugins (#450).
+            (f'stroke-width="{icons.number(icons.frame("plugin", NATIVE)[2])}"', 'stroke-width="2.125"', "stroke width"),
         ):
             with self.subTest(word):
                 found = vector_problems(ET.fromstring(good.replace(old, new)), False)
@@ -299,6 +310,22 @@ class Pngs(unittest.TestCase):
                 ys = [y for y, row in enumerate(alpha) for a in row if a]
                 # Any ink, even an anti-aliased edge, stays out of the margin, less one pixel of rounding.
                 self.assertGreaterEqual(min(min(xs), min(ys), size - 1 - max(xs), size - 1 - max(ys)), int(MARGIN["plugin"] * size) - 1)
+
+    def test_each_plugin_png_spans_as_the_official_icons(self):
+        # #450: at 96 px, a plugin icon's ink spans the official plugins' icons' 44 of 48 on its longer
+        # side, within one pixel, read the same way (pixels at least half opaque), so it reads at their
+        # size beside them. Its stroke is checked exactly on the vector (vector_problems).
+        span_px = REFERENCE["inkSpanPx"] * icons.PLUGIN_PX / REFERENCE["sizePx"]
+        for out, (_, _, alpha, _) in self.masks.items():
+            with self.subTest(out):
+                self.assertLessEqual(abs(ink_span_px(alpha) - span_px), 1)
+
+    def test_a_small_plugin_png_is_caught(self):
+        # The toolbar-sized drawing of #271 spanned 62 of 96, 26 px under the official icons' 88.
+        size = icons.PLUGIN_PX
+        ring = [bytes(255 if 17 <= x < 79 and (y < 23 or y >= 73 or x < 23 or x >= 73) else 0 for x in range(size)) if 17 <= y < 79 else bytes(size) for y in range(size)]
+        self.assertEqual(ink_span_px(ring), 62)
+        self.assertEqual(ink_span_px([bytes(size)] * size), 0)
 
     def test_a_readme_tile_is_the_icon_on_the_light_rounded_tile(self):
         # GitHub strips CSS, so the tile is in the image: a black icon reads on its dark theme too (#304).
@@ -373,7 +400,7 @@ class Pngs(unittest.TestCase):
         for name, text in sources.items():
             with self.subTest(name):
                 self.assertIn(f'fill="{tile["fill"]}"', text)
-                self.assertIn(f'stroke-width="{NATIVE["plugin"]["strokeWidth"]}"', text)
+                self.assertIn(f'stroke-width="{icons.number(icons.frame("plugin", NATIVE)[2])}"', text)
                 self.assertNotIn("<image", text)
         self.assertLess(tile["padding"], NATIVE["readme"]["tile"]["padding"])  # the glyph a little larger than the README's
 

@@ -287,22 +287,36 @@ def path_text(segments):
 
 
 def frame(kind, native):
-    """(grid, padding, stroke) of an icon kind: a plugin icon on Tabler's grid with the toolbar icons'
-    margin and stroke ratio, an app's launcher icon on the native launcher icons' 48 grid."""
+    """(grid, padding, stroke) of an icon kind: a plugin icon on Tabler's grid with the reference
+    plugin icons' stroke share of the box (#450), an app's launcher icon on the native launcher icons'
+    48 grid."""
     if kind == "app":
         v = native["vector"]
         return v["viewport"], 0, v["strokeWidth"]
     p = native["plugin"]
-    return p["grid"], p["padding"], p["strokeWidth"]
+    ref = plugin_reference(native)
+    return p["grid"], p["padding"], (p["grid"] + 2 * p["padding"]) * ref["strokePx"] / ref["sizePx"]
+
+
+# A quarter pixel of the reference's own size, half a pixel of a 96 px plugin icon: the fitted span
+# stays that much under the reference's, so anti-aliasing never crosses its margin (#450).
+SPAN_UNDER_PX = 0.25
+
+
+def plugin_reference(native):
+    """The measured icons a plugin icon is sized and stroked to: native.json's plugin `reference`,
+    the official plugins' own icon since the owner found ours smaller than theirs (#450)."""
+    return native["plugin"][native["plugin"]["reference"]]
 
 
 def ink_span(kind, native):
-    """The share of its box an icon's stroke outline spans, on its longer side: the native toolbar
-    icons' for a plugin icon, the native launcher icons' for an app's, each a little under, so
+    """The share of its box an icon's stroke outline spans, on its longer side: the reference plugin
+    icons' for a plugin icon (#450), the native launcher icons' for an app's, a little under, so
     rounding never crosses their margin."""
     if kind == "app":
         return native["vector"]["inkSpan"] / native["vector"]["viewport"]
-    return native["plugin"]["toolbar"]["inkSpanPx"] / native["plugin"]["toolbar"]["sizePx"]
+    ref = plugin_reference(native)
+    return (ref["inkSpanPx"] - SPAN_UNDER_PX) / ref["sizePx"]
 
 
 def badge_placing(store):
