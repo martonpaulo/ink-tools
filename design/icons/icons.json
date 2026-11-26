@@ -124,11 +124,7 @@
    "out": "plugins/ink-tools-probe/assets/command",
    "kind": "plugin",
    "tabler": [
-    "stethoscope",
-    {
-     "name": "terminal",
-     "badge": true
-    }
+    "terminal"
    ]
   },
   {
@@ -666,7 +662,10 @@
   "ink-tools-probe": {
    "motif": [
     "stethoscope"
-   ]
+   ],
+   "except": {
+    "command": "the owner found the stethoscope with a prompt badge unreadable and asked for a plain command glyph (#271); Probe is a developer tool with two buttons"
+   }
   }
  },
  "badge": {
