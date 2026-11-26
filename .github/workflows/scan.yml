@@ -111,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [plugins/account-sync, plugins/word-lookup, plugins/device-transfer, plugins/image-editing, plugins/plugin-diagnostics, plugins/real-time-conversion, plugins/smart-shapes, packages]
+        dir: [plugins/account-sync, plugins/word-lookup, plugins/device-transfer, plugins/image-editing, plugins/plugin-diagnostics, plugins/smart-pen, packages]
     defaults:
       run:
         working-directory: ${{ matrix.dir }}

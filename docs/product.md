@@ -30,16 +30,16 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   - **Image Editing** (`plugins/image-editing`) makes a picture on the page readable on e-ink.
   - **Device Transfer** (`plugins/device-transfer`) moves pictures and text between the tablet and the owner's iPhone and Mac over
     LocalSend.
-  - Planned: **Smart Pen** (Smart Shapes, Real-Time Text and gestures) and **Lasso Actions** (Lookup, Convert to Text, Headings and Collection, whose buttons are «Heading 1» to «Heading 4» and «Add to Collection», «Cut to Collection», «Paste Collection») will replace Smart Shapes, Real-Time Conversion and Word Lookup, one plugin per surface of use ([#304](https://github.com/martonpaulo/ink-tools/issues/304), [architecture](architecture.md#plugin-grouping)).
+  - Planned: **Lasso Actions** (Lookup, Convert to Text, Headings and Collection, whose buttons are «Heading 1» to «Heading 4» and «Add to Collection», «Cut to Collection», «Paste Collection») will replace Word Lookup, one plugin per surface of use, as Smart Pen already does for the pen ([#304](https://github.com/martonpaulo/ink-tools/issues/304), [architecture](architecture.md#plugin-grouping)).
   - **Plugin Diagnostics** (`plugins/plugin-diagnostics`) is a developer-only plugin for device
     experiments.
-  - **Real-Time Conversion** (`plugins/real-time-conversion`, being built) turns each handwritten word into typed text
-    with no lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion,
-    and a whole lasso into one text box with its lasso button «Convert to Text»
-    ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184), [#250](https://github.com/martonpaulo/ink-tools/issues/250)).
-  - **Smart Shapes** (`plugins/smart-shapes`, beta) turns a stroke held still at its end into a clean
-    triangle, circle, square, rectangle or arrow, and never changes a figure under its minimum size
-    ([#253](https://github.com/martonpaulo/ink-tools/issues/253)).
+  - **Smart Pen** (`plugins/smart-pen`, beta) holds the pen features, each a module switched on or off
+    in its Settings ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): **Real-Time Text** turns each handwritten word into typed text with no
+    lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion, and a
+    whole lasso into one text box with its lasso button «Convert to Text» until Lasso Actions takes it
+    ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184), [#250](https://github.com/martonpaulo/ink-tools/issues/250)); **Smart Shapes** turns a stroke held still at its end into a
+    clean triangle, circle, square, rectangle or arrow, and never changes a figure under its minimum
+    size ([#253](https://github.com/martonpaulo/ink-tools/issues/253)).
 - **A tablet app**, sideloaded with `adb install` because a plugin cannot do the job: **Handwriting Language** (the Lingo app,
   `apps/handwriting-language`) switches the handwriting recognition language of the whole tablet with one tap
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)).
@@ -47,8 +47,8 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
 - **A Mac app**: **Ink Notebook Editor** reads and edits Supernote `.note` files on the Mac
   ([#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
-In beta, not yet on the tablet: **Real-Time Conversion** (`plugins/real-time-conversion/`), a plugin that turns each handwritten
-word into typed text with no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144)).
+In beta, not yet on the tablet: **Smart Pen** (`plugins/smart-pen/`), whose Real-Time Text turns each handwritten
+word into typed text with no lasso, from its sidebar button «Real-Time Text» ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#305](https://github.com/martonpaulo/ink-tools/issues/305)).
 
 «Supernote» is Ratta's trademark, so a tool's name, icon and look carry no brand. The brand appears
 only as a referential use, to say what the tools work with: «Unofficial tools for Supernote e-ink
@@ -110,7 +110,7 @@ plugin appears in the native Calendar, and an edit on the tablet reaches the sou
 
 ## Display names
 
-Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `plugins/word-lookup` is Word Lookup, `plugins/image-editing` Image Editing, `plugins/device-transfer` Device Transfer, `plugins/account-sync` Account Sync, `plugins/plugin-diagnostics` Plugin Diagnostics, `plugins/real-time-conversion` Real-Time Conversion, `plugins/smart-shapes` Smart Shapes, the Lingo app (`apps/handwriting-language`) Handwriting Language, the Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). Planned, not shipped yet ([#304](https://github.com/martonpaulo/ink-tools/issues/304)): **Smart Pen** (`plugins/smart-pen`, Smart Shapes, Real-Time Text and the gestures of [#270](https://github.com/martonpaulo/ink-tools/issues/270)) replaces Smart Shapes and Real-Time Conversion, and **Lasso Actions** (`plugins/lasso-actions`, Lookup, Convert to Text, the Headings group with «Heading 1» to «Heading 4», and the Collection group with «Add to Collection», «Cut to Collection», «Paste Collection») replaces Word Lookup; the developer tools become **Ink Tools Control** (command `inkctl`, unchanged), **Ink Tools Helper** (`apps/ink-tools-helper`, today Ink Tools Bridge) and **Ink Tools Probe** (`plugins/ink-tools-probe`, today Plugin Diagnostics) ([#303](https://github.com/martonpaulo/ink-tools/issues/303)); until each merge or rename lands, today's plugins ship under today's names, and the buttons keep their names. A name carries no brand. Display names live in `PluginConfig.json` `name`, the visible copy and the docs, and each subproject's folder, gate, workflow and new tag prefix use the feature name in kebab case ([#194](https://github.com/martonpaulo/ink-tools/issues/194)); npm packages, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names, and tags made before the rename keep theirs.
+Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each tool shows a feature name in Supernote's own wording and its buttons read like the tablet's (a verb and a noun in title case): `plugins/word-lookup` is Word Lookup, `plugins/image-editing` Image Editing, `plugins/device-transfer` Device Transfer, `plugins/account-sync` Account Sync, `plugins/plugin-diagnostics` Plugin Diagnostics, `plugins/smart-pen` Smart Pen (its modules Real-Time Text and Smart Shapes, [#305](https://github.com/martonpaulo/ink-tools/issues/305)), the Lingo app (`apps/handwriting-language`) Handwriting Language, the Mac app Ink Notebook Editor, the CLI `inkctl` ([#173](https://github.com/martonpaulo/ink-tools/issues/173)). Planned, not shipped yet ([#304](https://github.com/martonpaulo/ink-tools/issues/304)): the gestures of [#270](https://github.com/martonpaulo/ink-tools/issues/270) become a Smart Pen module, and **Lasso Actions** (`plugins/lasso-actions`, Lookup, Convert to Text, the Headings group with «Heading 1» to «Heading 4», and the Collection group with «Add to Collection», «Cut to Collection», «Paste Collection») replaces Word Lookup; the developer tools become **Ink Tools Control** (command `inkctl`, unchanged), **Ink Tools Helper** (`apps/ink-tools-helper`, today Ink Tools Bridge) and **Ink Tools Probe** (`plugins/ink-tools-probe`, today Plugin Diagnostics) ([#303](https://github.com/martonpaulo/ink-tools/issues/303)); until each merge or rename lands, today's plugins ship under today's names, and the buttons keep their names. A name carries no brand. Display names live in `PluginConfig.json` `name`, the visible copy and the docs, and each subproject's folder, gate, workflow and new tag prefix use the feature name in kebab case ([#194](https://github.com/martonpaulo/ink-tools/issues/194)); npm packages, `pluginID`, `pluginKey`, log prefixes and data folders keep the short internal names, and tags made before the rename keep theirs.
 
 ## Product versioning
 

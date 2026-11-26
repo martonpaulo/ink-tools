@@ -1,5 +1,5 @@
 /**
- * The page elements Real-Time Conversion reads and writes (#187, #188, #206): pen-up points turned
+ * The page elements Smart Pen's Real-Time Text reads and writes (#187, #188, #206): pen-up points turned
  * from EMR into page pixels, a text box element, a stroke saved and
  * rebuilt, and the one-call delete-and-insert. Kept apart from page.ts and pen.ts, whose every
  * wrapper Ink2Pic calls (its sdk-boundary test), as image.ts and file.ts are.

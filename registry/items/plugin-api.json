@@ -54,9 +54,9 @@
       "title": "A pen-up element's uuid differs from getElements'; recognizeElements takes page elements only",
       "level": 5,
       "impact": "user",
-      "owner": "real-time-conversion",
+      "owner": "smart-pen",
       "readers": [
-        "real-time-conversion"
+        "smart-pen"
       ],
       "reason": "the SDK does not say which elements recognizeElements takes; device rounds showed it",
       "evidence": {
@@ -67,9 +67,9 @@
       "lastVerified": "2026-11-25",
       "publicApiRequest": "not asked",
       "probe": {
-        "unprobed": "needs a pen stroke; the effect test is the Real-Time Conversion device round"
+        "unprobed": "needs a pen stroke; the effect test is the Smart Pen device round"
       },
-      "active": "real-time-conversion src/device.ts",
+      "active": "smart-pen src/modules/text/device.ts",
       "issues": [
         184
       ],

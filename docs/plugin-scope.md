@@ -15,8 +15,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
-- [real-time-conversion](#real-time-conversion)
-- [smart-shapes](#smart-shapes)
+- [smart-pen](#smart-pen)
 - [Plugin grouping](#plugin-grouping)
 - [Note templates](#note-templates)
 - [Design direction](#design-direction)
@@ -297,22 +296,23 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
 Device Transfer and Account Sync stay two plugins, each with a clear name; they share no flow
 (owner, 2026-11-16).
 
-## real-time-conversion
+## smart-pen
 
-Shown as **Real-Time Conversion**, with the sidebar buttons «Real-Time Text» and «Undo Conversion» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)); built in [`plugins/real-time-conversion/`](../plugins/real-time-conversion/), formerly the planned `typeset` (owner, 2026-11-16, [#184](https://github.com/martonpaulo/ink-tools/issues/184)).
+Shown as **Smart Pen**; built in [`plugins/smart-pen/`](../plugins/smart-pen/) ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) from the two plugins below, each now a module
+switched on or off in its Settings, so the pen features take one plugin slot. It keeps Real-Time
+Conversion's `pluginID` and `pluginKey`, so the tablet updates it in place.
 
-A plugin that turns each handwritten word into typed text in a font the owner chose, soon after he
-writes it, with no lasso, turned on and off from one sidebar button. The research proposes it and
-the name ([`research/2026-11-live-handwriting-to-text.md`](research/2026-11-live-handwriting-to-text.md), [#144](https://github.com/martonpaulo/ink-tools/issues/144)). The owner chose to
-build it as proposed, with an «Undo the last conversion» action; it is the next plugin to build (2026-11-16).
-
-## smart-shapes
-
-Shown as **Smart Shapes**, in the wording of the native Smart Straight Line; built in [`plugins/smart-shapes/`](../plugins/smart-shapes/) ([#253](https://github.com/martonpaulo/ink-tools/issues/253)).
-
-A stroke held still at its end becomes a clean triangle, circle, square, rectangle or arrow; a
-figure under the minimum size stays ink. Based on a copy of Snap v0.9.0, its last MIT version, with
-its notice kept (owner D65 A), rather than sn-shapes or new code.
+- **Real-Time Text**, with the sidebar buttons «Real-Time Text» and «Undo Conversion»
+  ([#176](https://github.com/martonpaulo/ink-tools/issues/176)), formerly the plugin Real-Time Conversion and before that the planned `typeset` (owner,
+  2026-11-16, [#184](https://github.com/martonpaulo/ink-tools/issues/184)): each handwritten word becomes typed text in a font the owner chose, soon
+  after he writes it, with no lasso, turned on and off from one sidebar button. The research
+  proposes it and the name ([`research/2026-11-live-handwriting-to-text.md`](research/2026-11-live-handwriting-to-text.md), [#144](https://github.com/martonpaulo/ink-tools/issues/144)). The owner chose
+  to build it as proposed, with an «Undo the last conversion» action (2026-11-16).
+- **Smart Shapes**, in the wording of the native Smart Straight Line ([#253](https://github.com/martonpaulo/ink-tools/issues/253)): a stroke held
+  still at its end becomes a clean triangle, circle, square, rectangle or arrow; a figure under the
+  minimum size stays ink. Based on a copy of Snap v0.9.0, its last MIT version, with its notice
+  kept (owner D65 A), rather than sn-shapes or new code. It decides first on each pen-up, so a
+  stroke it turned into a shape is never also converted.
 
 ## Plugin grouping
 
@@ -323,8 +323,8 @@ ship under until the merges land.
 
 | Target plugin | Modules (today's plugin) | Acts on |
 | :--- | :--- | :--- |
-| Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes (smart-shapes), Real-Time Text and Undo Conversion (real-time-conversion), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
-| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (lookup), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), planned in real-time-conversion), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
+| Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes, Real-Time Text and Undo Conversion (built, smart-pen), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
+| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (lookup), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), in smart-pen until it moves), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
 | Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
 | Device Transfer | unchanged; receives a photo as it is | the page and files |
 | Account Sync | unchanged | outside services |

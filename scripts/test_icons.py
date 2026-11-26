@@ -27,7 +27,7 @@ MAX_OVERLAP = 0.7
 # Two icons of one tool share its motif by design and differ by the rest (owner, 2026-11-25, #271).
 FAMILY_OVERLAP = 0.8
 # One button's two states keep the same box and letter, and differ by their outline.
-STATE_PAIRS = {frozenset(("plugins/real-time-conversion/assets/mode-on", "plugins/real-time-conversion/assets/mode-off")): 0.85}
+STATE_PAIRS = {frozenset(("plugins/smart-pen/assets/mode-on", "plugins/smart-pen/assets/mode-off")): 0.85}
 # Two translate buttons that share a language share its two letters and the arrow, and differ by the
 # other language's two letters (owner, 2026-11-25, #271).
 TRANSLATE = "plugins/word-lookup/assets/translate-"

@@ -27,10 +27,11 @@ const packages = fs
   .filter(({source}) => /extends Ink2PicFilesPackage\b/.test(source));
 
 describe("each plugin's file roots", () => {
-  it('finds the three plugins that use the shared file module', () => {
+  it('finds the four plugins that use the shared file module', () => {
     expect(packages.map(p => p.plugin).sort()).toEqual([
       'account-sync',
       'image-editing',
+      'smart-pen',
       'word-lookup',
     ]);
   });

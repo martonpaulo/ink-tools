@@ -38,6 +38,9 @@
    "packages/ink-core/src/wiktionary.ts": {
     "url": 1
    },
+   "packages/ink-core/testing/ink.ts": {
+    "number": 13
+   },
    "packages/sync-core/src/caldav.ts": {
     "number": 6
    },
@@ -94,31 +97,29 @@
     "repeated": 3,
     "url": 4
    },
-   "plugins/real-time-conversion/.eslintrc.js": {
+   "plugins/smart-pen/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/real-time-conversion/src/buttons.ts": {
-    "repeated": 1
+   "plugins/smart-pen/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
    },
-   "plugins/real-time-conversion/test-support/host.ts": {
+   "plugins/smart-pen/src/modules/shapes/geometry.ts": {
     "number": 4
    },
-   "plugins/real-time-conversion/test-support/ink.ts": {
-    "number": 13
-   },
-   "plugins/smart-shapes/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/smart-shapes/src/geometry.ts": {
-    "number": 4
-   },
-   "plugins/smart-shapes/src/hold.ts": {
+   "plugins/smart-pen/src/modules/shapes/hold.ts": {
     "number": 1
    },
-   "plugins/smart-shapes/src/recognize.ts": {
+   "plugins/smart-pen/src/modules/shapes/recognize.ts": {
     "number": 42
    },
-   "plugins/smart-shapes/test-support/strokes.ts": {
+   "plugins/smart-pen/src/modules/text/buttons.ts": {
+    "repeated": 1
+   },
+   "plugins/smart-pen/test-support/host.ts": {
+    "number": 4
+   },
+   "plugins/smart-pen/test-support/strokes.ts": {
     "number": 17
    },
    "plugins/word-lookup/.eslintrc.js": {
@@ -152,9 +153,9 @@
    "cli/inkctl": 1,
    "packages/ink-core": 1,
    "plugins/account-sync": 5,
-   "plugins/device-transfer": 2,
-   "plugins/image-editing": 4,
-   "plugins/real-time-conversion": 1
+   "plugins/device-transfer": 1,
+   "plugins/image-editing": 2,
+   "plugins/smart-pen": 1
   },
   "identical": {
    "plugins/device-transfer/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
@@ -280,7 +281,7 @@
   "repeated": {
    "plugins/device-transfer/AGENTS.md": 1,
    "plugins/image-editing/AGENTS.md": 3,
-   "plugins/real-time-conversion/AGENTS.md": 2,
+   "plugins/smart-pen/AGENTS.md": 2,
    "plugins/word-lookup/AGENTS.md": 3
   }
  },
@@ -319,6 +320,12 @@
    "docs/supernote.md": {
     "Ink2Pic": 4,
     "ink2pic": 3
+   },
+   "packages/ink-core/src/conversion/shapes.ts": {
+    "Ink2Pic": 1
+   },
+   "packages/ink-core/src/conversion/words.ts": {
+    "Ink2Pic": 4
    },
    "packages/ink-core/src/lasso.ts": {
     "Ink2Pic": 1
@@ -453,19 +460,13 @@
    "plugins/image-editing/src/native.ts": {
     "Ink2Pic": 1
    },
-   "plugins/real-time-conversion/index.js": {
+   "plugins/smart-pen/index.js": {
     "Ink2Pic": 1
    },
-   "plugins/real-time-conversion/src/settings.ts": {
+   "plugins/smart-pen/src/modules/text/settings.ts": {
     "Ink2Pic": 1
    },
-   "plugins/real-time-conversion/src/shapes.ts": {
-    "Ink2Pic": 1
-   },
-   "plugins/real-time-conversion/src/words.ts": {
-    "Ink2Pic": 4
-   },
-   "plugins/real-time-conversion/test-support/host.ts": {
+   "plugins/smart-pen/test-support/host.ts": {
     "Ink2Pic": 1
    },
    "plugins/word-lookup/__tests__/App.test.tsx": {
@@ -657,10 +658,10 @@
     "plugins/image-editing/src/working.ts": 1,
     "plugins/plugin-diagnostics/src/helper.ts": 4,
     "plugins/plugin-diagnostics/src/noteApi.ts": 4,
-    "plugins/real-time-conversion/src/buttons.ts": 3,
-    "plugins/real-time-conversion/src/convert.ts": 1,
-    "plugins/real-time-conversion/src/shapes.ts": 2,
-    "plugins/smart-shapes/src/geometry.ts": 1,
+    "plugins/smart-pen/src/modules/text/buttons.ts": 3,
+    "packages/ink-core/src/conversion/convert.ts": 1,
+    "packages/ink-core/src/conversion/shapes.ts": 2,
+    "plugins/smart-pen/src/modules/shapes/geometry.ts": 1,
     "plugins/word-lookup/src/pictures.ts": 1,
     "plugins/word-lookup/src/textBox.ts": 2,
     "scripts/dry_cross.py": 1,

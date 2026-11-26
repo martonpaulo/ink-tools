@@ -21,8 +21,8 @@ import {
   WorkingStrip,
 } from '@ink-tools/ui-kit';
 import type {Working} from '@ink-tools/ui-kit';
-import SmartShapesSettings from '../../../plugins/smart-shapes/App';
-import RealTimeConversionSettings from '../../../plugins/real-time-conversion/App';
+import SmartPenSettings from '../../../plugins/smart-pen/App';
+import {DEFAULT_PEN_SETTINGS} from '../../../plugins/smart-pen/src/settings';
 import WordLookupSettings from '../../../plugins/word-lookup/App';
 import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
@@ -132,8 +132,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs', render: () => mount(<Needs problem={{what: 'Sample access is off', reason: 'The sample tool reads the sample folder to show your pictures.', fix: {label: 'Turn it on', run: () => {}}}} onClose={() => {}} />)},
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
-  {name: 'smart-shapes-settings', render: () => mount(<SmartShapesSettings close={() => {}} />)},
-  {name: 'real-time-conversion-settings', render: () => mount(<RealTimeConversionSettings close={() => {}} />)},
+  {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},

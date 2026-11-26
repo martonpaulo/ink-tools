@@ -5,7 +5,7 @@ roadmap item is not one, and the two never hold the same item. An item leaves th
 becomes an issue only when the owner decides to do it.
 
 Tools that already have a folder or an issue (Word Lookup, the Handwriting Language app, Image
-Editing, Device Transfer, Account Sync, Real-Time Conversion and Ink Notebook Editor) are
+Editing, Device Transfer, Account Sync, Smart Pen and Ink Notebook Editor) are
 described in [`docs/plugin-scope.md`](docs/plugin-scope.md), not here
 ([#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 

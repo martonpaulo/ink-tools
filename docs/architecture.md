@@ -199,15 +199,15 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 
 | Plugin | Modules | Surface | Status |
 | :--- | :--- | :--- | :--- |
-| Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Planned ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); today Smart Shapes and Real-Time Conversion ship alone |
+| Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Built ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); Gestures not yet |
 | Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Planned ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); today Word Lookup ships alone |
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
 | Device Transfer | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
 
-Plugin Diagnostics stays a developer tool, off day to day. Real-Time Conversion's conversion engine
-becomes shared package code: Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»
-([#250](https://github.com/martonpaulo/ink-tools/issues/250)). The table below lists the plugins as they ship today.
+Plugin Diagnostics stays a developer tool, off day to day. The conversion engine is shared package code,
+`ink-core`'s `@ink-tools/ink-core/conversion` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»
+([#250](https://github.com/martonpaulo/ink-tools/issues/250)); until [#306](https://github.com/martonpaulo/ink-tools/issues/306) moves it, Smart Pen still carries that lasso button. The table below lists the plugins as they ship today.
 
 Each plugin is named here by its display name ([product › Display names](product.md#display-names)).
 Older code names stay in npm packages, `pluginKey`, log prefixes, data folders and older issues:
@@ -219,8 +219,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | Device Transfer | `plugins/device-transfer/` | `relay` |
 | Image Editing | `plugins/image-editing/` | `retouch` |
 | Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
-| Real-Time Conversion | `plugins/real-time-conversion/` | `RealTimeConversion` (`pluginKey`) |
-| Smart Shapes | `plugins/smart-shapes/` | `SmartShapes` (`pluginKey`) |
+| Smart Pen | `plugins/smart-pen/` | `RealTimeConversion` (`pluginKey`, kept from Real-Time Conversion so the tablet updates it in place, [#305](https://github.com/martonpaulo/ink-tools/issues/305)) |
 
 «Bridge» alone never names the helper app: that is the Ink Tools bridge app,
 [`apps/inktools-bridge/`](#the-tablet-apps).
@@ -286,12 +285,11 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   `picture-search`'s `Decolor` and `EinkPixels`.
 - **Plugin Diagnostics** — a minimal plugin for on-device investigation (provider reachability,
   permission checks), reused whenever a device question comes up.
-- **Real-Time Conversion** — turns handwriting into a text box as each word ends, with an Undo
-  Conversion ([#144](https://github.com/martonpaulo/ink-tools/issues/144)); its guidance is
-  [`plugins/real-time-conversion/AGENTS.md`](../plugins/real-time-conversion/AGENTS.md).
-- **Smart Shapes** — a stroke held still at its end becomes a clean triangle, circle, square,
-  rectangle or arrow, as the native Smart Straight Line does ([#253](https://github.com/martonpaulo/ink-tools/issues/253)); its guidance is
-  [`plugins/smart-shapes/AGENTS.md`](../plugins/smart-shapes/AGENTS.md).
+- **Smart Pen** — the pen features, each a module switched on or off in its Settings ([#305](https://github.com/martonpaulo/ink-tools/issues/305)):
+  Real-Time Text turns handwriting into a text box as each word ends, with an Undo Conversion
+  ([#144](https://github.com/martonpaulo/ink-tools/issues/144)), and Smart Shapes turns a stroke held still at its end into a clean triangle, circle,
+  square, rectangle or arrow, as the native Smart Straight Line does ([#253](https://github.com/martonpaulo/ink-tools/issues/253)); its guidance is
+  [`plugins/smart-pen/AGENTS.md`](../plugins/smart-pen/AGENTS.md).
 
 Word Lookup, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). Account Sync's three modules share `sync-core`. All of them are to go through `sn-adapter` for

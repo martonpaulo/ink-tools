@@ -22,8 +22,17 @@ exports.metro = part => ({
   },
 });
 
-/** The Jest moduleNameMapper part. */
-exports.jestModuleNameMapper = {[`^${NAME}$`]: SOURCE};
+/**
+ * The Jest moduleNameMapper part: the package, and its conversion engine's own entry (#305), which
+ * Metro finds as `conversion.ts` at the package root by itself.
+ */
+exports.jestModuleNameMapper = {
+  [`^${NAME}$`]: SOURCE,
+  [`^${NAME}/conversion$`]: path.join(SOURCE, 'conversion'),
+};
+
+/** The synthetic strokes the engine's tests write, for a plugin's tests of it (#305). */
+exports.testInk = path.join(__dirname, 'testing', 'ink');
 
 /**
  * The Jest part for `@ink-tools/ink-core/pinyin-data` (#129), the entry only a plugin with a

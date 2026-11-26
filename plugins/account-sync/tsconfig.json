@@ -12,6 +12,8 @@
       // The registry of internals (#294).
       "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       "@ink-tools/ink-core": ["../../packages/ink-core/src"],
+      // The conversion engine, for Smart Pen's Settings view in the renders (#305).
+      "@ink-tools/ink-core/conversion": ["../../packages/ink-core/src/conversion"],
       // Word Lookup's Settings in the renders, which this plugin runs and checks (#288).
       "@ink-tools/picture-search": ["../../packages/picture-search/src"],
       "@ink-tools/picture-search/*": ["../../packages/picture-search/src/*"],

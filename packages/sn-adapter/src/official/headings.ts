@@ -1,7 +1,7 @@
 /**
  * The calls Headings alone makes (#252): a lasso made a native title and the lasso box resized.
  * Kept apart from lasso.ts and page.ts, whose every wrapper Ink2Pic calls (its sdk-boundary test),
- * as shapes.ts is for Smart Shapes.
+ * as shapes.ts is for Smart Pen's Smart Shapes.
  */
 import {PluginCommAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {attempt, Result} from './result';

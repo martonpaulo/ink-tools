@@ -1,7 +1,7 @@
 /**
- * The calls Smart Shapes alone makes (#253): a geometry insert, a delete by element number and the
+ * The calls Smart Pen's Smart Shapes alone makes (#253): a geometry insert, a delete by element number and the
  * lasso box state. Kept apart from lasso.ts and page.ts, whose every wrapper Ink2Pic calls (its
- * sdk-boundary test), as elements.ts is for Real-Time Conversion.
+ * sdk-boundary test), as elements.ts is for Real-Time Text.
  */
 import {PluginCommAPI} from 'sn-plugin-lib';
 import {attempt, Result} from './result';
