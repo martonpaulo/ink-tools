@@ -13,11 +13,12 @@ import {
 import {clearChoice, openChoose} from './src/choose';
 import {DEFINE_BUTTON_ID, defineLasso} from './src/definition';
 import {SUMMARY_BUTTON_ID, summaryLasso} from './src/summary';
-import {syncButtons} from './src/buttons';
 import {CHOOSE_BUTTON_ID, MODES, TRANSLATIONS} from './src/modes';
 import {pictureLasso} from './src/pictures';
 import {warmRanking} from '@ink-tools/picture-search';
-import {activeLookup} from './src/modules';
+import {syncModules} from './src/modules';
+import {headingLevel} from './src/headings/buttons';
+import {headingLasso} from './src/headings/run';
 import {getSettings, saveSettings} from './src/profile';
 import {translateLasso} from './src/translation';
 import {working} from './src/working';
@@ -39,7 +40,7 @@ getSettings()
     if (settings.oldShape) {
       await saveSettings({...settings, oldShape: false});
     }
-    await syncButtons(activeLookup(settings.modules, settings.lookup));
+    await syncModules(settings);
   })
   .catch(error => {
     console.error(`Lookup: buttons: ${error.message}`);
@@ -52,6 +53,16 @@ const listening = startButtonQueue(id => {
   if (id === CHOOSE_BUTTON_ID) {
     // Reads the lasso, then opens the view on the Choose screen (#156).
     openChoose();
+    return true;
+  }
+  const level = headingLevel(id);
+  if (level !== null) {
+    // Headings (#252): the lasso becomes a native title, moved to the margin.
+    working
+      .run(() => headingLasso(level))
+      .catch(error => {
+        console.error(`Lookup: heading: ${error.message}`);
+      });
     return true;
   }
   if (id === DEFINE_BUTTON_ID) {

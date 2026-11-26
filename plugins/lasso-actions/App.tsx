@@ -12,20 +12,13 @@ import {
 } from '@ink-tools/ui-kit';
 import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
-import {
-  askMissing,
-  BUTTONS,
-  isOn,
-  LassoButton,
-  settingsChanged,
-  withSwitch,
-} from './src/buttons';
+import {askStates, BUTTONS, isOn, LassoButton, withSwitch} from './src/buttons';
 import {Choice, currentChoice, onChoice} from './src/choose';
 import {ChooseScreen} from './src/ui/ChooseScreen';
 import {working} from './src/working';
 import {getSettings, saveSettings} from './src/profile';
 import {OldFolder, oldFolders} from './src/library';
-import {MODULES, activeLookup} from './src/modules';
+import {MODULES, moduleStates, modulesChanged} from './src/modules';
 import {
   defaultLassoSettings,
   LassoSettings,
@@ -78,7 +71,7 @@ function SettingsScreen({close}: {close: () => void}) {
     getSettings().then(saved => {
       if (open) {
         setSettings(saved);
-        askMissing(activeLookup(saved.modules, saved.lookup));
+        askStates(moduleStates(saved));
       }
     });
     oldFolders().then(found => open && setOld(found));
@@ -91,7 +84,7 @@ function SettingsScreen({close}: {close: () => void}) {
   const changeAll = (next: LassoSettings) => {
     setSettings(next);
     saveSettings(next);
-    settingsChanged(activeLookup(next.modules, next.lookup));
+    modulesChanged(next);
   };
   const change = (lookup: LookupSettings) => changeAll({...all, lookup});
   const group = (heading: string, buttons: readonly LassoButton[]) => (

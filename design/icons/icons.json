@@ -504,9 +504,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-1",
+   "out": "plugins/lasso-actions/assets/heading-1",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -527,9 +526,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-2",
+   "out": "plugins/lasso-actions/assets/heading-2",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -550,9 +548,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-3",
+   "out": "plugins/lasso-actions/assets/heading-3",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -573,9 +570,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-4",
+   "out": "plugins/lasso-actions/assets/heading-4",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -630,10 +626,11 @@
   },
   "lasso-actions": {
    "motif": [
-    "search"
+    "search",
+    "letter-h"
    ],
    "except": {
-    "icon": "the plugin's own icon, the lasso, stands for every module; the motif marks Lookup's buttons",
+    "icon": "the plugin's own icon, the lasso, stands for every module; `search` marks Lookup's buttons, `letter-h` Headings' (#252)",
     "translate-es-pt": "two language codes and their arrow fill the box",
     "translate-pt-es": "as translate-es-pt",
     "translate-pt-zh": "as translate-es-pt",

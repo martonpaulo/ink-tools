@@ -233,8 +233,11 @@ const LOOKUP_DESCRIBE = (settings: LookupSettings): string =>
 /** The settings file's shape since Lasso Actions (#306); Word Lookup's was `lookup` alone. */
 export const LASSO_SETTINGS_VERSION = 2;
 
-/** Every module starts on: Lookup was the whole plugin before. */
-export const DEFAULT_MODULES: Record<ModuleId, boolean> = {lookup: true};
+/** Every module starts on: Lookup was the whole plugin before, and a new module's buttons are wanted (#252). */
+export const DEFAULT_MODULES: Record<ModuleId, boolean> = {
+  lookup: true,
+  headings: true,
+};
 
 export type LassoSettings = {
   /** One switch per module; a module off registers no lasso button. */

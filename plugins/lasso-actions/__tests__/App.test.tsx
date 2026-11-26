@@ -2,6 +2,7 @@
  * Lookup's Settings view keeps the shared size rules, shows one switch per lasso button, and each
  * switch registers or removes its button and is saved (#93, #111, #115, #142, #167, #174).
  */
+import {headingLevel} from '../src/headings/buttons';
 import React from 'react';
 import {NativeModules} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
@@ -138,7 +139,8 @@ test('both picture switches off: no picture button, and Settings still opens (#1
   });
   const ids = jest
     .mocked(PluginManager.registerButton)
-    .mock.calls.map(call => (call[2] as {id: number}).id);
+    .mock.calls.map(call => (call[2] as {id: number}).id)
+    .filter(id => headingLevel(id) === null);
   expect(ids).toEqual([DEFINE_BUTTON_ID]);
 });
 
@@ -187,6 +189,7 @@ test('the Lookup module switch removes every Lookup button and its rows, and is 
   const writes = files.writeText.mock.calls as unknown as [string, string][];
   expect(JSON.parse(writes[writes.length - 1][1]).modules).toEqual({
     lookup: false,
+    headings: true,
   });
 });
 

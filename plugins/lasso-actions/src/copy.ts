@@ -8,7 +8,19 @@ export const copy = {
   'module.lookup': 'Lookup',
   'module.lookupNote':
     'Lasso a handwritten word and insert a picture, a definition, a summary or a translation for it.',
+  'module.headings': 'Headings',
+  'module.headingsNote':
+    'Lasso a handwritten line and make it a heading of level 1 to 4, across the page.',
   'settings.modes': 'Lasso buttons',
+  /** «Heading 1» to «Heading 4» (owner, #304). */
+  'button.heading': (level: number) => `Heading ${level}`,
+  'permission.heading':
+    'Lasso Actions makes the lassoed line a heading in your note.',
+  /** Toasts of a Headings press (#252). */
+  'heading.noLasso': 'Lasso a handwritten line first, then press a heading.',
+  'heading.failed': 'The heading could not be made.',
+  'heading.notMoved':
+    'The heading was made, but it could not be moved to the margin.',
   'button.define': 'Insert Definition',
   /** A 3-sentence bio or topic summary from Wikipedia (#114). */
   'button.summary': 'Insert Summary',
@@ -54,8 +66,7 @@ export const copy = {
   'permission.translate':
     'Lasso Actions translates words with online dictionaries, Wiktionary and Apertium.',
   'permission.files': 'Lasso Actions reads the word you lasso on the page.',
-  'permission.write':
-    'Lasso Actions puts each picture in your note.',
+  'permission.write': 'Lasso Actions puts each picture in your note.',
   'permission.pictures':
     'Lasso Actions searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
   /** Written on the note below the word: a word with no definition is never guessed (#115). */
