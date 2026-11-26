@@ -59,9 +59,7 @@ its own Settings** — a user turns on only the modules, sources and language pa
 
 ### Layer rules
 
-The owner's rules for keeping each part replaceable (2026-11-14, as Panoram's
-[ADR 0001](https://github.com/martonpaulo/panoram/blob/main/docs/adr/0001-source-neutral-kit.md)
-does for its sources):
+The owner's rules for keeping each part replaceable (2026-11-14):
 
 - **Our own model, in our words.** Feature logic reads and writes only this repository's types (a
   task, an event, a picture result), never a service's or the device's shapes. Each adapter
@@ -226,7 +224,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 
 - **Account Sync** — brings external services onto the device. Three modules, each opt in/out: **to-do**
   (Todoist <-> native To-Do), **calendar** (Google / iCloud / ICS <-> native Calendar), **digest**
-  (Panoram Saved -> native Digest, pending feasibility). Each provider is a separate toggle. One
+  (two-way sync between the native Digest and the owner's Telegram «Saved Messages» through Telegram's official API, pending feasibility). Each provider is a separate toggle. One
   plugin, not a bundle of separate plugins.
   - **Settings-only, no note surface.** Account Sync is pure configuration plus background sync; it has
     nothing to do with a note's canvas. The plugin API supports this: a note plugin's `index.js` (Word Lookup's, for one) registers

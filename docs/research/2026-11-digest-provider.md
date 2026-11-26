@@ -190,7 +190,7 @@ creation_time                    the time the item was saved, in ms
 
 Before each insert the sync asks `knowledge/count/by_unique_identifier/<id>`; a count above zero
 means the item is already there, and an edit goes through `knowledge/update/by_unique_identifier`
-[inference from the rules above]. An item removed in Panoram stays in the Digest, as the provider
+[inference from the rules above]. An item removed from the Saved source stays in the Digest, as the provider
 refuses deletes.
 
 ## 7. Pictures

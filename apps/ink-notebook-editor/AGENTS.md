@@ -44,7 +44,7 @@ A computer editor for one note at a time (owner, 2026-11-26; the feature list is
 - Search across all notes, Spotlight indexing, tabs and two notes side by side; Find in Note stays.
 - Sharing with other people, collaboration, comments, publishing.
 - Managing To-Do, Calendar or Digest; a later Quick capture only sends to them (Todoist, Apple
-  Calendar, and Panoram for Digest) and never writes the tablet's database.
+  Calendar, and Telegram «Saved Messages» for Digest) and never writes the tablet's database.
 - The Partner app or an own sync server; Supernote Cloud beyond the editor's own note files.
 
 ## First delivery: a faithful reader

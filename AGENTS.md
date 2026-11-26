@@ -1,5 +1,7 @@
 # Project Working Agreements
 
+Every change follows [`docs/architecture.md` › Layer rules](docs/architecture.md#layer-rules); a change that cannot is stopped and reported, never worked around (owner, 2026-11-26).
+
 ## Project identity and policy
 
 - Display name: `Ink Tools` (renamed from Supernote Tools on 2026-11-16, [#177](https://github.com/martonpaulo/ink-tools/issues/177))
@@ -70,6 +72,8 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 5. Make a short plan only for complex, risky, ambiguous, or multi-file work.
 
 ## Scope, reuse, and implementation
+
+- Ink Tools features use only public services and the user's own accounts, never one of the owner's private apps (Panoram, for one); every account connection is off until the person connects it in Settings, its row showing «Connect» ([`docs/plugin-scope.md`](docs/plugin-scope.md#rules-for-every-feature), owner, 2026-11-26).
 
 - **Research before building.** Before creating anything new here, search for tools and projects
   that already do it — device plugins, sideloaded Android apps (especially ones built for the

@@ -18,6 +18,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [smart-pen](#smart-pen)
 - [Plugin grouping](#plugin-grouping)
 - [Note templates](#note-templates)
+- [Rules for every feature](#rules-for-every-feature)
 - [Design direction](#design-direction)
 
 ## The two pains driving everything
@@ -257,7 +258,7 @@ Owner decisions of 2026-11-26 (the checklist with each governing issue is in
   the pen tones; no colour enters a note and no colour preview is shown.
 - **Quick capture** (later): a shortcut sends the selection or typed text without leaving the note.
   To-Do goes to Todoist through its API; Calendar creates the event in Apple Calendar through
-  EventKit and opens it there; Digest goes to Panoram, the only target that uses it. Text by
+  EventKit and opens it there; Digest goes to the owner's Telegram «Saved Messages», through the official Telegram API (TDLib), never to Panoram. Text by
   default; an image when the selection is an image; ink is recognised and sent as text when it is
   plain text, and as an image when it mixes text with arrows, diagrams or other marks. The editor
   never writes the tablet's database.
@@ -290,7 +291,7 @@ cable through `inkctl`, with no ADB code of its own (owner, 2026-11-16,
 
 Shown on the tablet as **Account Sync**; a sync button, where one exists, says «Sync Accounts» ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
 
-Settled: to-do + calendar + digest, each opt in/out, settings-only (no note surface). Input scope
+Settled: to-do + calendar + digest, each opt in/out, settings-only (no note surface). Digest is a two-way sync between the tablet's Digest and the owner's Telegram «Saved Messages» ([#42](https://github.com/martonpaulo/ink-tools/issues/42)): the tablet sends to Saved Messages and receives from it, never re-imports what it sent itself, and sends text when the content is plain text and an image when it holds drawings or arrows. Telegram is always reached through its official API (TDLib, with an `api_id` from my.telegram.org and a one-time login code, owner-only items). Input scope
 is **only** those three — the owner does not want PDFs, read-later or other-app references pulled in
 by `bridge`. See [`architecture.md`](architecture.md).
 
@@ -398,6 +399,13 @@ NOTE's own naming.
 
 Parked by the owner ([#141](https://github.com/martonpaulo/ink-tools/issues/141)): nothing is built until he asks. A template here means
 something simple, such as one generated sudoku page, not a large set.
+
+## Rules for every feature
+
+Owner decisions of 2026-11-26:
+
+- **Public services and the user's own accounts only.** Ink Tools features use only public services and the person's own accounts, never one of the owner's private apps. Ink Tools never connects to Panoram, which is the owner's private app; Digest uses Telegram instead.
+- **Every account connection is off until the person connects it in Settings.** This holds for Telegram, Todoist, Google and iCloud. Without a connection, its row shows «Connect», and the rest of the plugin works normally.
 
 ## Design direction
 
