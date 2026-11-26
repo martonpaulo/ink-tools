@@ -238,6 +238,34 @@ nonisolated enum Copy {
         return words.prefix(1).uppercased() + words.dropFirst()
     }
 
+    // MARK: Insert (#264)
+
+    static let insertMenu = String(localized: "Insert")
+    static let insertPictureEllipsis = String(localized: "Picture…")
+    static let textBoxNote = String(
+        localized:
+            "The tablet sets the text in its own font, in black. The Mac shows it in its own font until the tablet's copy returns."
+    )
+    static let insertScreenshot = String(localized: "Screenshot")
+    static let insertTextBoxEllipsis = String(localized: "Text Box…")
+    static let greysNote = String(
+        localized: "The tablet shows 16 greys, so the picture is shown and sent in them.")
+    static let insertPictureTitle = String(localized: "Insert Picture")
+    static let insertTextBoxTitle = String(localized: "Insert Text Box")
+    static let pictureWidth = String(localized: "Width")
+
+    static func cannotInsert(_ reason: String) -> String {
+        String(localized: "The picture could not be inserted: \(reason)")
+    }
+
+    static func fontSize(_ size: Int) -> String {
+        String(localized: "Font size: \(size)")
+    }
+
+    static func percentOfPage(_ share: Double) -> String {
+        String(localized: "\(share.formatted(.percent.precision(.fractionLength(0)))) of the page's width")
+    }
+
     /// An edit's name in the menu.
     static func name(of edit: NoteEdit) -> String {
         switch edit {
@@ -246,6 +274,9 @@ nonisolated enum Copy {
         case .removePage: String(localized: "Delete Page")
         case .restorePage: String(localized: "Restore Page")
         case .moveElements: String(localized: "Move")
+        case .insertPicture: String(localized: "Insert Picture")
+        case .insertText: String(localized: "Insert Text Box")
+        case .revertInsert: String(localized: "Remove Insert")
         }
     }
 }

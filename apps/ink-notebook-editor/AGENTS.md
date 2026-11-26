@@ -121,6 +121,9 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   ([#325](https://github.com/martonpaulo/ink-tools/issues/325)); no Mac code writes strokes, so `LiftedInk` draws the move at once from the
   page's own pixels until the tablet's copy comes back. On a note from a file the drag still takes
   the selection out to another app.
+- Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
+  or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
+  (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
 - `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 
 Differences from the standard, each for a reason:

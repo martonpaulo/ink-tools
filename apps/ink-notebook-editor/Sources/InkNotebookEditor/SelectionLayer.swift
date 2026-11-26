@@ -1,6 +1,7 @@
 import AppKit
 import InkNotebookEditorKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The selection on one page (#324): a click, a drag of the rectangle or the lasso, Shift to add
 /// or remove, and the selection drawn as each element's box and a dashed frame with handles
@@ -28,6 +29,7 @@ struct SelectionLayer: View {
     @State private var lifted: LiftedInk?
     @Environment(NoteText.self) private var text: NoteText?
     @Environment(NoteEditor.self) private var editor: NoteEditor?
+    @Environment(\.openDocument) private var openDocument
 
     /// Page pixels per point.
     private var pixels: CGFloat {
@@ -50,6 +52,12 @@ struct SelectionLayer: View {
                 context.draw(
                     Image(decorative: lifted.ink, scale: 1),
                     in: at.offsetBy(dx: CGFloat(move.dx) / pixels, dy: CGFloat(move.dy) / pixels))
+            }
+            // Each picture or text box on its way, at its box (#264).
+            for (rect, image) in editor?.insertions(on: index) ?? [] {
+                let box = CGRect(
+                    x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top)
+                context.draw(Image(decorative: image, scale: 1), in: points(box))
             }
             context.translateBy(x: shift.width, y: shift.height)
             // A picture or a text box shows its own frame; a stroke shows only in the frame around
@@ -108,9 +116,29 @@ struct SelectionLayer: View {
                 }
             }
         }
+        // A picture or a PDF dropped on a page of a note from the tablet is placed where it was
+        // dropped (#264); a note dropped here opens in its own window, as on the window.
+        .dropDestination(for: URL.self) { urls, location in drop(urls, at: location) }
         .accessibilityElement()
         .accessibilityLabel(Copy.selectedCount(items.count))
         .accessibilityHidden(items.isEmpty)
+    }
+
+    /// Opens dropped notes, and asks to place a dropped picture on a note from the tablet.
+    private func drop(_ urls: [URL], at location: CGPoint) -> Bool {
+        let notes = urls.filter { TabletListing.isNote($0.lastPathComponent) }
+        for url in notes {
+            Task { try? await openDocument(at: url) }
+        }
+        guard let editor, editor.canEdit,
+            let picture = urls.first(where: { url in
+                PictureImport.types.contains { UTType(filenameExtension: url.pathExtension)?.conforms(to: $0) == true }
+            })
+        else { return !notes.isEmpty }
+        InsertActions.request(editor: editor, page: index, centre: page(location)) {
+            try PictureImport.image(at: picture)
+        }
+        return true
     }
 
     /// A drag on the selection: it lifts the selection's ink, follows the pointer within the page,

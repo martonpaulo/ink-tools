@@ -48,6 +48,10 @@ struct InkNotebookEditorApp: App {
             CommandGroup(before: .toolbar) {
                 ViewCommands()
             }
+            // An Insert menu, as Pages holds one (#264).
+            CommandMenu(Copy.insertMenu) {
+                InsertCommands()
+            }
             CommandMenu(Copy.goMenu) {
                 GoCommands()
             }

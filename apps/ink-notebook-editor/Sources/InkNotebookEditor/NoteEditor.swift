@@ -42,6 +42,8 @@ final class NoteEditor {
     var insertNextTo: Int?
     /// The page Edit › Delete Page… removes, while its confirmation shows (#329).
     var removalAsked: Int?
+    /// The picture or text an insert waits on, while its sheet shows (#264).
+    var insertRequest: InsertRequest?
     /// A restore is running: no edit starts meanwhile.
     private(set) var restoring = false
 
@@ -55,6 +57,8 @@ final class NoteEditor {
     @ObservationIgnored private var nextTicket = 0
     /// The lifted ink of each move on its way, by ticket, drawn at its offset (#325).
     private(set) var lifts: [Int: LiftedInk] = [:]
+    /// What each insert on its way shows, by ticket: its picture or its text (#264).
+    private(set) var insertImages: [Int: CGImage] = [:]
     /// The open run of nudges: its ticket, until the key is released (#325).
     @ObservationIgnored private var run: Int?
     /// The page whose newest change was a move of this editor, so its selection stays.
@@ -231,6 +235,41 @@ final class NoteEditor {
         }
     }
 
+    /// Inserts a picture already in Manta greys at `rect` on `page`, drawn at once from `image`,
+    /// the same picture the tablet gets (#264).
+    @discardableResult
+    func insertPicture(page: Int, file: URL, rect: EditRect, image: CGImage) -> Bool {
+        insert(.insertPicture(page: page, file: file, rect: rect), image: image)
+    }
+
+    /// Inserts a typed text box at `rect` on `page`, drawn at once in the system font (#264).
+    /// shortcut: the tablet's text box font is not on the Mac, so the drawing differs a little
+    /// until the tablet's copy returns.
+    @discardableResult
+    func insertText(page: Int, text: String, rect: EditRect, fontSize: Int) -> Bool {
+        let image = TextPreview.image(
+            text, width: rect.right - rect.left, height: rect.bottom - rect.top, fontSize: fontSize)
+        return insert(.insertText(page: page, text: text, rect: rect, fontSize: fontSize), image: image)
+    }
+
+    private func insert(_ edit: NoteEdit, image: CGImage?) -> Bool {
+        guard record(edit) else { return false }
+        if let image, let ticket = pending.last?.ticket { insertImages[ticket] = image }
+        return true
+    }
+
+    /// The inserts on their way to page `index`: each box and what it shows.
+    func insertions(on index: Int) -> [(rect: EditRect, image: CGImage)] {
+        pending.compactMap { waiting in
+            guard let image = insertImages[waiting.ticket] else { return nil }
+            switch waiting.edit {
+            case .insertPicture(let page, _, let rect) where page == index: return (rect, image)
+            case .insertText(let page, _, let rect, _) where page == index: return (rect, image)
+            default: return nil
+            }
+        }
+    }
+
     /// The moves on their way to page `index`, with their lifted ink once it is ready.
     func moves(on index: Int) -> [(move: ElementMove, lifted: LiftedInk)] {
         pending.compactMap { waiting in
@@ -241,7 +280,7 @@ final class NoteEditor {
     }
 
     /// The page's size in pixels, as it is drawn.
-    private func pageSize(_ index: Int) -> (width: Int, height: Int) {
+    func pageSize(_ index: Int) -> (width: Int, height: Int) {
         let size = shown.pageSize
         guard shown.pages.indices.contains(index) else { return size }
         return shown.pages[index].isHorizontal ? (size.height, size.width) : size
@@ -257,14 +296,17 @@ final class NoteEditor {
                 // An edit that already left is taken back by its inverse, as one the tablet applied.
                 if await sender?.drop(waiting.ticket) == true {
                     pending.removeAll { $0.ticket == waiting.ticket }
+                    lifts[waiting.ticket] = nil
+                    insertImages[waiting.ticket] = nil
                     redraw()
                 } else {
                     send(waiting.edit.inverse, history: nil)
                 }
             }
         case .send(let inverse):
-            if case .restorePage = inverse {
-                // The page and its ink are only in the backup kept just before the removal.
+            if inverse.restoresBackup {
+                // A removed page and its ink, or the page before an insert, are only in the
+                // backup kept just before that edit's send.
                 guard let id = undone, let backup = removalBackups[id] else { return }
                 send(inverse, history: nil, backup: backup)
             } else {
@@ -361,11 +403,12 @@ final class NoteEditor {
             pending.removeAll { $0.ticket == ticket }
             if let id = done?.history {
                 history.applied(id)
-                if case .removePage = done?.edit { removalBackups[id] = backup }
+                if done?.edit.undoneByBackup == true { removalBackups[id] = backup }
             }
             // shortcut: the lifted ink leaves as the copy comes back, so the page shows its old
             // drawing until the new one is ready; keep it until then if that blink is seen.
             lifts[ticket] = nil
+            insertImages[ticket] = nil
             if case .moveElements(let move) = done?.edit { movedPage = move.page } else { movedPage = nil }
             reloadBase()
             refreshBackups()
@@ -373,6 +416,7 @@ final class NoteEditor {
             guard let refused = pending.first(where: { $0.ticket == ticket }) else { return }
             pending.removeAll { $0.ticket == ticket }
             lifts[ticket] = nil
+            insertImages[ticket] = nil
             if run == ticket { run = nil }
             if let id = refused.history {
                 _ = history.refused(id)
@@ -422,11 +466,12 @@ final class NoteEditor {
             return try NotePreview.insertingPage(note, at: at, like: source)
         case .removePage(let at):
             return try NotePreview.removingPage(note, at: at)
-        case .restorePage:
+        case .restorePage, .revertInsert:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
-        case .moveElements:
-            // Drawn over the page from its lifted ink (`moves(on:)`).
+        case .moveElements, .insertPicture, .insertText:
+            // Drawn over the page: a move from its lifted ink (`moves(on:)`), an insert from its
+            // picture or its text (`insertions(on:)`).
             return note
         }
     }

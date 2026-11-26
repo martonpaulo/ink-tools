@@ -219,6 +219,55 @@ import Testing
         #expect(editor.refusal?.contains("no-element") == true)
     }
 
+    @Test func anInsertedPictureIsDrawnAtOnceSentAsAnElementAndUndoneByItsBackup() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        let picture = try PictureImport.make(try PictureImportTests.colourImage(), folder: folder)
+        let rect = EditRect(left: 100, top: 100, right: 500, bottom: 300)
+        #expect(editor.insertPicture(page: 1, file: picture.file, rect: rect, image: picture.image))
+        #expect(editor.insertions(on: 1).map(\.rect) == [rect])
+        await settle(editor)
+        let sent = try #require(tablet.sent.first { $0["op"] as? String == "insertElements" })
+        let element = try #require((sent["elements"] as? [[String: Any]])?.first)
+        #expect(
+            element["kind"] as? String == "picture"
+                && element["file"] as? String == picture.file.path(percentEncoded: false))
+        #expect(
+            editor.insertions(on: 1).isEmpty
+                && editor.history.undoKind == .insertPicture(page: 1, file: picture.file, rect: rect))
+        editor.undo()
+        await settle(editor)
+        #expect(tablet.bytes == original)
+        #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
+    }
+
+    @Test func pastedTextIsOneTextBoxInTheMiddleOfThePageInBlack() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        #expect(editor.pasteText("Plan\nBuy paper", page: 0))
+        await settle(editor)
+        let sent = try #require(tablet.sent.first { $0["op"] as? String == "insertElements" })
+        let element = try #require((sent["elements"] as? [[String: Any]])?.first)
+        #expect(element["kind"] as? String == "text" && element["text"] as? String == "Plan\nBuy paper")
+        #expect(element["fontSize"] as? Int == InsertSheet.defaultFontSize)
+        // No colour travels with a text box: the tablet sets it in black.
+        #expect(element.keys.sorted() == ["fontSize", "kind", "rect", "text"])
+        let rect = try #require(element["rect"] as? [String: Int])
+        let page = editor.pageSize(0)
+        #expect(((rect["left"] ?? 0) + (rect["right"] ?? 0)) / 2 == page.width / 2)
+    }
+
+    @Test func aRefusedInsertLeavesThePageAndSaysWhy() async throws {
+        let editor = try editor()
+        tablet.failEdit = .failed("device-link edit: tablet-refused: operation 1")
+        #expect(
+            editor.insertText(
+                page: 0, text: "Hello", rect: EditRect(left: 0, top: 0, right: 600, bottom: 60), fontSize: 40))
+        await settle(editor)
+        #expect(editor.insertions(on: 0).isEmpty && editor.history.undoKind == nil)
+        #expect(editor.refusal?.contains("tablet-refused") == true)
+    }
+
     @Test func revertToTheOldestBackupGivesTheNoteBackAndStartsUndoOver() async throws {
         let editor = try editor()
         #expect(!editor.canRevert)

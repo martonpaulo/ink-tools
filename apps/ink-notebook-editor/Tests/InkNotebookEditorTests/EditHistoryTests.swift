@@ -102,6 +102,15 @@ import Testing
         #expect(NoteEdit.restorePage(at: 1).apply(to: removed)?.count == pages.count)
     }
 
+    /// An insert is undone by the backup kept before its send (#264).
+    @Test func anInsertIsUndoneByItsBackup() {
+        let rect = EditRect(left: 0, top: 0, right: 10, bottom: 10)
+        let picture = NoteEdit.insertPicture(page: 1, file: URL(filePath: "/tmp/p.png"), rect: rect)
+        #expect(picture.inverse == .revertInsert(page: 1) && picture.undoneByBackup)
+        #expect(NoteEdit.insertText(page: 0, text: "a", rect: rect, fontSize: 40).inverse.restoresBackup)
+        #expect(picture.apply(to: ["a", "b"]) == ["a", "b"] && picture.apply(to: ["a"]) == nil)
+    }
+
     @Test func theMenuNamesTheEdit() {
         var history = EditHistory()
         #expect(Copy.undo(history.undoKind) == Copy.undoBare)

@@ -76,9 +76,14 @@ public struct TabletOperation: Sendable, Equatable {
             self.init(note: note, baseHash: baseHash, page: at, change: .removePage)
         case .moveElements(let move):
             self.init(note: note, baseHash: baseHash, page: move.page, change: .placeElements(move.placements))
-        case .restorePage(let at):
+        case .insertPicture(let page, let file, let rect):
+            self.init(note: note, baseHash: baseHash, page: page, change: .insertPicture(file, rect: rect))
+        case .insertText(let page, let text, let rect, let fontSize):
+            self.init(
+                note: note, baseHash: baseHash, page: page, change: .insertText(text, rect: rect, fontSize: fontSize))
+        case .restorePage(let page), .revertInsert(let page):
             guard let backup else { return nil }
-            self.init(note: note, baseHash: baseHash, page: at, change: .restoreBackup(backup))
+            self.init(note: note, baseHash: baseHash, page: page, change: .restoreBackup(backup))
         }
     }
 

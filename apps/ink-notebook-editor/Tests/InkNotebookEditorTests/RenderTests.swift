@@ -236,6 +236,65 @@ final class RenderTests {
         }
     }
 
+    /// Inserting a picture and a text box (#264): each sheet over the window it opens from, as a
+    /// sheet is a window of its own, and both inserts drawn at once while on their way.
+    @Test func insertStates() async throws {
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+        let copy = scratch.appending(path: "Inserted.note")
+        try Fixtures.data("content.note").write(to: copy)
+        let note = try Fixtures.note("content.note")
+        let live = LiveNote(
+            tabletPath: "Note/Inserted.note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
+        live.watches = false
+        let editor = NoteEditor(
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            backups: NoteBackups(folder: scratch.appending(path: "InsertBackups")))
+        let drawn = PageImages(note: note)
+        for index in note.pages.indices {
+            await drawn.loadThumbnail(index, scale: 1)
+        }
+        await drawn.loadPage(1)
+        // A colour gradient, shown in the tablet's greys.
+        let context = try #require(
+            CGContext(
+                data: nil, width: 480, height: 320, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        for band in 0..<6 {
+            context.setFillColor(red: CGFloat(band) / 5, green: 0.3, blue: 1 - CGFloat(band) / 5, alpha: 1)
+            context.fill(CGRect(x: band * 80, y: 0, width: 80, height: 320))
+        }
+        let picture = try PictureImport.make(try #require(context.makeImage()), folder: scratch)
+        let sheet = { (request: InsertRequest) in
+            ZStack(alignment: .top) {
+                NotebookView(pages: drawn, page: 1, live: live, editor: editor)
+                InsertSheet(editor: editor, request: request)
+                    .background(.background, in: .rect(cornerRadius: 12))
+                    .shadow(radius: 12)
+                    .padding(.top, 52)
+            }
+        }
+        try await render("insert-picture", Self.sizes) {
+            sheet(InsertRequest(page: 1, content: .picture(picture)))
+        }
+        try await render("insert-text", Self.sizes) {
+            sheet(InsertRequest(page: 1, content: .text("Shopping\nPaper, ink, tea")))
+        }
+        let size = editor.pageSize(1)
+        let page = CGSize(width: size.width, height: size.height)
+        editor.insertPicture(
+            page: 1, file: picture.file,
+            rect: PicturePlacement.box(
+                pixels: CGSize(width: 480, height: 320), centredOn: CGPoint(x: 960, y: 700), page: page),
+            image: picture.image)
+        editor.insertText(
+            page: 1, text: "Shopping\nPaper, ink, tea",
+            rect: TextBoxPlacement.box(lines: 2, fontSize: 60, centredOn: CGPoint(x: 960, y: 1500), page: page),
+            fontSize: 60)
+        try await render("insert-sending", Self.sizes) {
+            NotebookView(pages: drawn, page: 1, live: live, editor: editor)
+        }
+    }
+
     /// The system's alert with the confirmation's words, as SwiftUI's `alert` shows them, drawn off
     /// screen: the panel is laid out and cached, never ordered in. The test process has no app
     /// icon, so the alert shows the system's generic one.

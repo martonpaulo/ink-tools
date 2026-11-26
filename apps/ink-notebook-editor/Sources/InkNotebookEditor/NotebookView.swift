@@ -323,6 +323,15 @@ struct NotebookView: View {
         .focusable()
         .focusEffectDisabled()
         .focused($pageFocused)
+        // Edit › Paste on a note from the tablet: a picture to place, or text as a text box (#264).
+        .onPasteCommand(
+            of: [.image, .plainText, .rtf],
+            validator: { types in
+                editor?.canEdit == true && navigator.index != nil ? types : nil
+            }
+        ) { _ in
+            if let editor, let page = navigator.index { InsertActions.paste(.general, editor: editor, page: page) }
+        }
         // Edit › Copy takes the current page out as PNG, PDF and its text (#323).
         .onCopyCommand {
             if let (page, items) = viewer.selected(in: pages, on: navigator.index), let text {

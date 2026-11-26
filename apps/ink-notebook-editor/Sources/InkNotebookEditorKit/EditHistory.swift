@@ -14,6 +14,13 @@ public enum NoteEdit: Sendable, Equatable {
     case restorePage(at: Int)
     /// Moves a selection on its page (#325).
     case moveElements(ElementMove)
+    /// Inserts a picture, already in Manta greys, at `rect` on `page` (#264).
+    case insertPicture(page: Int, file: URL, rect: EditRect)
+    /// Inserts a typed text box at `rect` on `page` (#264).
+    case insertText(page: Int, text: String, rect: EditRect, fontSize: Int)
+    /// Puts `page` back as it was before an insert, from the backup kept before its send: the
+    /// undo of an insert, whose new element's number is known only on the tablet (#264).
+    case revertInsert(page: Int)
 
     /// The edit that undoes this one.
     public var inverse: NoteEdit {
@@ -23,6 +30,25 @@ public enum NoteEdit: Sendable, Equatable {
         case .removePage(let at): .restorePage(at: at)
         case .restorePage(let at): .removePage(at: at)
         case .moveElements(let move): .moveElements(move.inverse)
+        case .insertPicture(let page, _, _), .insertText(let page, _, _, _): .revertInsert(page: page)
+        // An insert undone is done again by Redo, never by this inverse.
+        case .revertInsert(let page): .revertInsert(page: page)
+        }
+    }
+
+    /// Whether this edit puts back a backup, so the editor names the backup its undo restores.
+    public var restoresBackup: Bool {
+        switch self {
+        case .restorePage, .revertInsert: true
+        default: false
+        }
+    }
+
+    /// Whether the backup kept before this edit's send is what undoes it.
+    public var undoneByBackup: Bool {
+        switch self {
+        case .removePage, .insertPicture, .insertText: true
+        default: false
         }
     }
 
@@ -47,6 +73,8 @@ public enum NoteEdit: Sendable, Equatable {
         case .moveElements(let move):
             // A move keeps the pages; it fits a page of the note and moves something.
             guard pages.indices.contains(move.page), !move.isEmpty else { return nil }
+        case .insertPicture(let page, _, _), .insertText(let page, _, _, _), .revertInsert(let page):
+            guard pages.indices.contains(page) else { return nil }
         }
         return changed
     }

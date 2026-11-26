@@ -103,6 +103,9 @@ struct EditDialogs: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .sheet(item: insertRequest) { request in
+                if let editor { InsertSheet(editor: editor, request: request) }
+            }
             .sheet(item: insertNextTo) { page in
                 if let editor { InsertPageSheet(editor: editor, page: page.value, inserted: show) }
             }
@@ -135,6 +138,10 @@ struct EditDialogs: ViewModifier {
     struct Page: Identifiable {
         let value: Int
         var id: Int { value }
+    }
+
+    private var insertRequest: Binding<InsertRequest?> {
+        Binding(get: { editor?.insertRequest }, set: { editor?.insertRequest = $0 })
     }
 
     private var insertNextTo: Binding<Page?> {

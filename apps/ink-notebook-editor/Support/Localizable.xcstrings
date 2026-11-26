@@ -81,6 +81,16 @@
         }
       }
     },
+    "%@ of the page's width" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ of the page's width"
+          }
+        }
+      }
+    },
     "%@, level %lld, page %lld of %lld" : {
       "localizations" : {
         "en" : {
@@ -431,6 +441,16 @@
         }
       }
     },
+    "Font size: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font size: %lld"
+          }
+        }
+      }
+    },
     "Go" : {
       "localizations" : {
         "en" : {
@@ -497,6 +517,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Insert Page…"
+          }
+        }
+      }
+    },
+    "Insert Picture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert Picture"
+          }
+        }
+      }
+    },
+    "Insert Text Box" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert Text Box"
           }
         }
       }
@@ -821,6 +861,16 @@
         }
       }
     },
+    "Picture…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picture…"
+          }
+        }
+      }
+    },
     "Place" : {
       "localizations" : {
         "en" : {
@@ -921,6 +971,16 @@
         }
       }
     },
+    "Remove Insert" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Insert"
+          }
+        }
+      }
+    },
     "Report an Issue…" : {
       "localizations" : {
         "en" : {
@@ -967,6 +1027,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Revert to Backup"
+          }
+        }
+      }
+    },
+    "Screenshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot"
           }
         }
       }
@@ -1047,6 +1117,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Template %@ cannot be drawn"
+          }
+        }
+      }
+    },
+    "Text Box…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text Box…"
           }
         }
       }
@@ -1201,6 +1281,16 @@
         }
       }
     },
+    "The picture could not be inserted: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The picture could not be inserted: %@"
+          }
+        }
+      }
+    },
     "The selection has no recognised words." : {
       "localizations" : {
         "en" : {
@@ -1237,6 +1327,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The tablet is not connected"
+          }
+        }
+      }
+    },
+    "The tablet sets the text in its own font, in black. The Mac shows it in its own font until the tablet's copy returns." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet sets the text in its own font, in black. The Mac shows it in its own font until the tablet's copy returns."
+          }
+        }
+      }
+    },
+    "The tablet shows 16 greys, so the picture is shown and sent in them." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet shows 16 greys, so the picture is shown and sent in them."
           }
         }
       }
@@ -1347,6 +1457,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wait until every edit reached the tablet."
+          }
+        }
+      }
+    },
+    "Width" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Width"
           }
         }
       }
