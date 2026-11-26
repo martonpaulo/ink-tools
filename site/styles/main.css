@@ -1,11 +1,11 @@
 /*
- * Ink Tools site (#371): plain HTML and CSS, no client script. Light and dark follow the system.
+ * Ink Tools site (#371, #437): plain HTML and CSS, no client script, light only.
  * 1 Tokens, 2 Base, 3 Layout, 4 Components, 5 Site chrome, 6 Sections, 9 Responsive.
  */
 
 /* 1 Tokens */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --space-3xs: 0.25rem;
   --space-2xs: 0.5rem;
   --space-xs: 0.75rem;
@@ -33,34 +33,33 @@
   --transition-interactive: transform var(--duration-fast) ease-out, box-shadow var(--duration-fast) ease-out,
     background-color var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 
-  --bg: #f7f7f5;
+  /* Light only (owner, #437). Warm near-black ink on white and paper, after supernote.eu's palette. */
+  --bg: #faf8f5;
   --surface: #ffffff;
-  --text: #1c1c1c;
-  --secondary: #555555;
-  --line: #dddddd;
-  --accent: #2f5d8a;
-  --accent-hover: #24496d;
+  --text: #231916;
+  --secondary: #5e5652;
+  --line: #e7e2dc;
+  --accent: #231916;
+  --accent-hover: #4a3a35;
   --button-primary-fg: #ffffff;
-  --button-primary-bg: #2f5d8a;
-  --button-primary-bg-hover: #24496d;
-  --shadow-button: 0 8px 22px color-mix(in srgb, var(--accent) 28%, transparent);
-  --shadow-button-hover: 0 12px 28px color-mix(in srgb, var(--accent) 34%, transparent);
+  --button-primary-bg: #231916;
+  --button-primary-bg-hover: #4a3a35;
+  --shadow-button: 0 6px 18px color-mix(in srgb, var(--accent) 18%, transparent);
+  --shadow-button-hover: 0 10px 24px color-mix(in srgb, var(--accent) 24%, transparent);
+  /* Status badges: text and tint per README status, AA on their tint; the word is the cue. */
+  --status-working-fg: #1d5b2c;
+  --status-working-bg: #e3f1e6;
+  --status-beta-fg: #774800;
+  --status-beta-bg: #fbefd6;
+  --status-in-progress-fg: #1f4c7a;
+  --status-in-progress-bg: #e2ecf7;
+  --status-planned-fg: #4a4442;
+  --status-planned-bg: #eeeceb;
+  --status-internal-fg: #5a2f7a;
+  --status-internal-bg: #efe7f5;
+  --status-broken-fg: #8a1f14;
+  --status-broken-bg: #f9e2df;
   --accent-tint: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #161616;
-    --surface: #1f1f1f;
-    --text: #ededed;
-    --secondary: #b4b4b4;
-    --line: #333333;
-    --accent: #8cb8e6;
-    --accent-hover: #b0d0f0;
-    --button-primary-fg: #10243a;
-    --button-primary-bg: #8cb8e6;
-    --button-primary-bg-hover: #b0d0f0;
-  }
 }
 
 /* 2 Base */
@@ -88,6 +87,8 @@ h1,
 h2,
 h3 {
   line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
 
@@ -112,7 +113,7 @@ a:focus-visible {
 }
 
 /* External links: the arrow is drawn here once, never in the markup. */
-a[href^="http"]::after {
+a[href^="http"]:not(.button)::after {
   content: "\2009\2197";
 }
 
@@ -184,6 +185,67 @@ main {
   }
 }
 
+.button.secondary {
+  border: 1px solid var(--text);
+  color: var(--text);
+}
+
+.button.secondary:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-xs);
+  color: var(--secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-working { color: var(--status-working-fg); background: var(--status-working-bg); }
+.status-beta { color: var(--status-beta-fg); background: var(--status-beta-bg); }
+.status-in-progress { color: var(--status-in-progress-fg); background: var(--status-in-progress-bg); }
+.status-planned { color: var(--status-planned-fg); background: var(--status-planned-bg); }
+.status-internal { color: var(--status-internal-fg); background: var(--status-internal-bg); }
+.status-broken { color: var(--status-broken-fg); background: var(--status-broken-bg); }
+
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -193,26 +255,107 @@ main {
 }
 
 .card {
+  display: flex;
+  flex-direction: column;
   padding: var(--space-l);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--surface);
 }
 
-.card h3 {
-  margin: 0 0 var(--space-2xs);
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+  margin: 0 0 var(--space-s);
 }
 
-.card p {
-  margin: 0;
-  color: var(--secondary);
+.card-head img {
+  flex: none;
+}
+
+.card-head .badge {
+  margin-left: auto;
+}
+
+.card h3 {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-md);
 }
 
 .kind {
-  display: block;
-  margin-bottom: var(--space-2xs);
   color: var(--secondary);
   font-size: var(--text-sm);
+}
+
+.features {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--secondary);
+}
+
+.features li + li {
+  margin-top: var(--space-3xs);
+}
+
+.features strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.download {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-s);
+  margin: auto 0 0;
+  padding-top: var(--space-m);
+}
+
+.version {
+  color: var(--secondary);
+  font-size: var(--text-sm);
+}
+
+.install-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.install {
+  padding: var(--space-l);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.install:first-child {
+  grid-column: 1 / -1;
+}
+
+.install h3 {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-md);
+}
+
+.install p {
+  margin: 0 0 var(--space-xs);
+  color: var(--secondary);
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.steps li + li {
+  margin-top: var(--space-2xs);
+}
+
+.credits li + li {
+  margin-top: var(--space-3xs);
 }
 
 /* A tool's picture or video (#414): written by scripts/site_media.py inside its card. */
@@ -374,18 +517,13 @@ main {
   text-align: center;
 }
 
-.hero img {
-  display: block;
-  margin: 0 auto var(--space-m);
-}
-
 .hero h1 {
   margin: 0 auto var(--space-s);
   max-width: 20ch;
   font-size: var(--text-2xl);
 }
 
-.hero p {
+.hero p:not(.eyebrow, .actions) {
   margin: 0 auto var(--space-l);
   max-width: 46rem;
   color: var(--secondary);
@@ -406,8 +544,18 @@ main {
   max-width: var(--measure-prose);
 }
 
-.section > .container > .grid-3 {
+.section > .container > :where(.grid-3, .install-grid) {
   max-width: none;
+}
+
+.section .lead {
+  margin: calc(-1 * var(--space-xs)) 0 var(--space-m);
+  color: var(--secondary);
+  font-size: var(--text-md);
+}
+
+.section h3 {
+  margin: var(--space-l) 0 var(--space-2xs);
 }
 
 .page {
@@ -450,7 +598,8 @@ main {
     --page-width: calc(100% - 2rem);
   }
 
-  .grid-3 {
+  .grid-3,
+  .install-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

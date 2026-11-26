@@ -1,0 +1,47 @@
+{
+  "about": "Written by scripts/site_figures.py fetch from the GitHub releases (#437): for each release prefix of docs/tools.json, the newest stable release, else the newest beta, and its file. The home page's Download buttons link these files.",
+  "releases": {
+    "account-sync": {
+      "tag": "account-sync-v0.1.0-beta.30",
+      "version": "0.1.0-beta.30",
+      "file": "Bridge-0.1.0-beta.30.snplg",
+      "stable": false
+    },
+    "device-link": {
+      "tag": "device-link-v0.1.0",
+      "version": "0.1.0",
+      "file": "Relay-0.1.0.snplg",
+      "stable": true
+    },
+    "image-editing": {
+      "tag": "image-editing-v0.1.0-beta.17",
+      "version": "0.1.0-beta.17",
+      "file": "Retouch-0.1.0-beta.17.snplg",
+      "stable": false
+    },
+    "ink-tools-helper": {
+      "tag": "ink-tools-helper-v0.1.0-beta.7",
+      "version": "0.1.0-beta.7",
+      "file": "ink-tools-helper-0.1.0-beta.7.apk",
+      "stable": false
+    },
+    "ink-tools-probe": {
+      "tag": "ink-tools-probe-v0.0.2-beta.14",
+      "version": "0.0.2-beta.14",
+      "file": "Probe-0.0.2-beta.14.snplg",
+      "stable": false
+    },
+    "lasso-actions": {
+      "tag": "lasso-actions-v0.2.0-beta.33",
+      "version": "0.2.0-beta.33",
+      "file": "LassoActions-0.2.0-beta.33.snplg",
+      "stable": false
+    },
+    "smart-pen": {
+      "tag": "smart-pen-v0.1.0",
+      "version": "0.1.0",
+      "file": "SmartPen-0.1.0.snplg",
+      "stable": true
+    }
+  }
+}

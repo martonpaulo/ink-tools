@@ -1,7 +1,7 @@
 # Install Ink Tools on a Supernote
 
 How a person outside the project installs, updates and removes an Ink Tools plugin on a Supernote
-tablet ([#373](https://github.com/martonpaulo/ink-tools/issues/373)). Read the notice first.
+tablet, and installs the other tools ([#373](https://github.com/martonpaulo/ink-tools/issues/373)). Read the notice first.
 
 ## Contents
 
@@ -10,6 +10,9 @@ tablet ([#373](https://github.com/martonpaulo/ink-tools/issues/373)). Read the n
 - [Install a plugin](#install-a-plugin)
 - [Update a plugin](#update-a-plugin)
 - [Remove a plugin](#remove-a-plugin)
+- [Install the tablet app](#install-the-tablet-app)
+- [Install the Mac app](#install-the-mac-app)
+- [Install the Mac command line](#install-the-mac-command-line)
 - [How each step is checked](#how-each-step-is-checked)
 
 ## Before you install
@@ -43,8 +46,9 @@ prerelease for testing.
 
 ## Install a plugin
 
-1. Open the tool's release on the [releases page](https://github.com/martonpaulo/ink-tools/releases)
-   and download its `.snplg` file, named as the table above shows. Keep the file name: it carries
+1. Download the tool's `.snplg` file with its Download button on
+   [inktools.martonpaulo.com](https://inktools.martonpaulo.com/#tools), or from its release on the
+   [releases page](https://github.com/martonpaulo/ink-tools/releases). Keep the file name: it carries
    the version.
 2. Connect the tablet to the computer with a USB cable, or use Supernote Cloud, and copy the file
    into the tablet's `MyStyle` folder.
@@ -68,6 +72,28 @@ prerelease for testing.
 1. Open Settings, then Apps, then Plugins, and tap the plugin.
 2. Tap Uninstall and confirm. Your notes stay as they are.
 3. Delete the `.snplg` from `MyStyle` if you do not need it again.
+
+## Install the tablet app
+
+Handwriting Language has no release yet: it waits for a build signed with a release key. Until then
+it installs only from a copy of the repository, over a cable, as its
+[README](../apps/handwriting-language/README.md#install) shows.
+
+## Install the Mac app
+
+Ink Notebook Editor is in progress and has no release yet. It builds on a Mac from a copy of the
+repository, as its [README](../apps/ink-notebook-editor/README.md) shows.
+
+## Install the Mac command line
+
+Ink Tools Control (`inkctl`) is for developers and has no release: it runs from a copy of the repository.
+
+1. On the Mac, install Python 3.9 or later and Android's `adb` tool.
+2. On the tablet, turn on Sideloading in Settings
+   ([how](../cli/inkctl/docs/research/2026-11-adb-on-supernote.md#steps)).
+3. In Terminal, copy the repository: `git clone https://github.com/martonpaulo/ink-tools`.
+4. Follow the Quick Start of [Ink Tools Control](../cli/inkctl/README.md): it puts `inkctl` on your
+   path and connects it to the tablet.
 
 ## How each step is checked
 

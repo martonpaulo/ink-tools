@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
   <title>Ink Tools · Supernote plugins and Mac tools</title>
   <meta name="description" content="Free, open-source plugins, a tablet app and Mac tools for Supernote e-ink tablets: sync calendars and to-dos, look up words and send pages.">
   <link rel="canonical" href="https://inktools.martonpaulo.com/">
@@ -33,6 +33,8 @@
       <nav aria-label="Main">
         <ul>
           <li><a href="/#tools">Tools</a></li>
+          <li><a href="/#install">Install</a></li>
+          <li><a href="/#credits">Credits</a></li>
           <li><a href="/privacy/">Privacy</a></li>
         </ul>
       </nav>
@@ -40,80 +42,200 @@
   </header>
 
   <main id="main">
-    <section class="hero">
+    <section class="hero" aria-labelledby="hero-title">
       <div class="container">
-        <img src="/favicon.svg" width="96" height="96" alt="">
-        <h1>Tools for your Supernote tablet</h1>
-        <p>Plugins and a tablet app that sync your calendars and to-dos, look up words, edit pictures and send pages to your phone, plus tools for the Mac. Free and open source. Unofficial: not made by Ratta.</p>
-        <a class="button primary" href="https://github.com/martonpaulo/ink-tools/releases" target="_blank" rel="noopener">Download on GitHub</a>
+        <p class="eyebrow">Unofficial · free · open source</p>
+        <h1 id="hero-title">Tools for your Supernote tablet</h1>
+        <p>Plugins and a tablet app that turn handwriting into shapes, text and pictures, sync your calendars and to-dos, and send pages to your phone, plus tools for the Mac. Not made by Ratta.</p>
+        <p class="actions">
+          <a class="button primary" href="#tools">See the tools</a>
+          <a class="button secondary" href="#install">How to install, step by step</a>
+        </p>
       </div>
     </section>
-
-    <section class="section" id="tools">
+    <!-- site-tools:start: written by scripts/site_figures.py -->
+    <section class="section" id="tools" aria-labelledby="tools-title">
       <div class="container">
-        <h2>The tools</h2>
-        <ul class="grid-3">
-          <li class="card">
+      <h2 id="tools-title">Tools</h2>
+      <p class="lead">For people who use the tablet.</p>
+      <ul class="grid-3 cards">
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/smart-pen.png" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
-            <h3>Account Sync</h3>
-            <p>Syncs the tablet's To-Do with Todoist, and its Calendar with Google, iCloud and ICS calendars. Every account is off until you connect it.</p>
-            <!-- media:account-sync: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:account-sync -->
-          </li>
-          <li class="card">
+            <span class="badge status-working">Working</span>
+          </p>
+          <h3>Smart Pen</h3>
+          <ul class="features"><li><strong>Smart Shapes</strong>: draw a triangle, circle, square, rectangle or arrow and hold the pen still at the end; it becomes a clean shape, and letters stay handwriting.</li><li><strong>Real-Time Text</strong>: while it is on, each handwritten word becomes typed text at its place, with no lasso; drawings stay handwriting.</li><li><strong>Undo Conversion</strong>: brings the last converted word back as handwriting.</li><li><strong>Gestures</strong>: a finger double or triple tap picks a pen, the eraser or the lasso, as you map it. <em>(planned)</em></li></ul>
+          <p class="download">
+            <a class="button primary" href="https://github.com/martonpaulo/ink-tools/releases/download/smart-pen-v0.1.0/SmartPen-0.1.0.snplg" target="_blank" rel="noopener">Download<span class="visually-hidden"> Smart Pen</span></a>
+            <a class="version" href="https://github.com/martonpaulo/ink-tools/releases/tag/smart-pen-v0.1.0" target="_blank" rel="noopener">Version 0.1.0</a>
+          </p>
+          <!-- media:smart-pen: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:smart-pen -->
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/lasso-actions.png" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
-            <h3>Lasso Actions</h3>
-            <p>Lasso a handwritten word to insert a picture of it, a short definition, a Wikipedia summary or a translation.</p>
-            <!-- media:lasso-actions: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:lasso-actions -->
-          </li>
-          <li class="card">
+            <span class="badge status-beta">Beta</span>
+          </p>
+          <h3>Lasso Actions</h3>
+          <ul class="features"><li><strong>Word Lookup</strong>: lasso a handwritten word, then Insert Sticker (a clean illustration), Insert Image (a photo), Choose Image (pick from the results), Insert Definition, Insert Summary (three sentences from Wikipedia) or Translate, one button per language pair, such as «Translate ES→PT».</li><li><strong>Convert to Text</strong>: turn the whole lassoed handwriting into one text box.</li><li><strong>Headings</strong>: Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin, across the page.</li><li><strong>Collection</strong>: Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page.</li></ul>
+          <p class="download">
+            <a class="button primary" href="https://github.com/martonpaulo/ink-tools/releases/download/lasso-actions-v0.2.0-beta.33/LassoActions-0.2.0-beta.33.snplg" target="_blank" rel="noopener">Download<span class="visually-hidden"> Lasso Actions</span></a>
+            <a class="version" href="https://github.com/martonpaulo/ink-tools/releases/tag/lasso-actions-v0.2.0-beta.33" target="_blank" rel="noopener">Beta build 0.2.0-beta.33</a>
+          </p>
+          <!-- media:lasso-actions: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:lasso-actions -->
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/image-editing.png" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
-            <h3>Device Link</h3>
-            <p>Sends a page, a selection or typed text to an iPhone or a Mac over LocalSend, and receives text or a picture into the open note.</p>
-            <!-- media:device-link: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:device-link -->
-          </li>
-          <li class="card">
+            <span class="badge status-beta">Beta</span>
+          </p>
+          <h3>Image Editing</h3>
+          <ul class="features"><li><strong>Enhance</strong>: make a lassoed picture readable on e-ink with one tap; Lighter and Darker adjust it.</li><li><strong>Crop</strong>: draw a rectangle with the pen around the part to keep.</li><li><strong>Erase</strong>: draw over the part to erase with the pen.</li><li><strong>Remove background</strong>: keep the subject and drop what is behind it.</li><li><strong>Make sticker</strong>: turn the picture into a sticker.</li><li><strong>Document</strong>: straighten a photographed page as a document.</li></ul>
+          <p class="download">
+            <a class="button primary" href="https://github.com/martonpaulo/ink-tools/releases/download/image-editing-v0.1.0-beta.17/Retouch-0.1.0-beta.17.snplg" target="_blank" rel="noopener">Download<span class="visually-hidden"> Image Editing</span></a>
+            <a class="version" href="https://github.com/martonpaulo/ink-tools/releases/tag/image-editing-v0.1.0-beta.17" target="_blank" rel="noopener">Beta build 0.1.0-beta.17</a>
+          </p>
+          <!-- media:image-editing: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:image-editing -->
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/device-link.png" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
-            <h3>Image Editing</h3>
-            <p>Makes a lassoed picture readable on e-ink, crops it, erases parts, removes the background or straightens a photographed page.</p>
-            <!-- media:image-editing: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:image-editing -->
-          </li>
-          <li class="card">
+            <span class="badge status-working">Working</span>
+          </p>
+          <h3>Device Link</h3>
+          <ul class="features"><li><strong>Send Page</strong>: send the open page to an iPhone or a Mac over LocalSend.</li><li><strong>Send Selection</strong>: send a lasso selection, as typed text or as a picture; you choose on each send.</li><li><strong>Receive</strong>: receive text, a picture or a PDF into the open note.</li><li><strong>Editor helper</strong>: applies the Ink Notebook Editor&#x27;s edits from the Mac to the tablet&#x27;s notes.</li></ul>
+          <p class="download">
+            <a class="button primary" href="https://github.com/martonpaulo/ink-tools/releases/download/device-link-v0.1.0/Relay-0.1.0.snplg" target="_blank" rel="noopener">Download<span class="visually-hidden"> Device Link</span></a>
+            <a class="version" href="https://github.com/martonpaulo/ink-tools/releases/tag/device-link-v0.1.0" target="_blank" rel="noopener">Version 0.1.0</a>
+          </p>
+          <!-- media:device-link: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:device-link -->
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/account-sync.png" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
-            <h3>Smart Pen</h3>
-            <p>Turns a held stroke into a clean shape, and each handwritten word into typed text right after you write it.</p>
-            <!-- media:smart-pen: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:smart-pen -->
-          </li>
-          <li class="card">
+            <span class="badge status-beta">Beta</span>
+          </p>
+          <h3>Account Sync</h3>
+          <ul class="features"><li><strong>To-Do</strong>: sync the tablet&#x27;s to-dos with Todoist.</li><li><strong>Calendar</strong>: sync Google, iCloud and ICS calendars with the tablet&#x27;s calendar.</li><li><strong>Digest</strong>: sync the Digest both ways with your Telegram «Saved Messages». <em>(planned)</em></li></ul>
+          <p class="download">
+            <a class="button primary" href="https://github.com/martonpaulo/ink-tools/releases/download/account-sync-v0.1.0-beta.30/Bridge-0.1.0-beta.30.snplg" target="_blank" rel="noopener">Download<span class="visually-hidden"> Account Sync</span></a>
+            <a class="version" href="https://github.com/martonpaulo/ink-tools/releases/tag/account-sync-v0.1.0-beta.30" target="_blank" rel="noopener">Beta build 0.1.0-beta.30</a>
+          </p>
+          <!-- media:account-sync: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:account-sync -->
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/puzzles.png" width="48" height="48" alt="">
+            <span class="kind">Plugin</span>
+            <span class="badge status-in-progress">In progress</span>
+          </p>
+          <h3>Puzzles</h3>
+          <ul class="features"><li><strong>New game</strong>: pick a game, a language and a difficulty; the game is a new page after the current one, its grid drawn as the page background, so erasing never removes it.</li><li><strong>Show solution</strong>: shows the answer over the plugin&#x27;s view, never on the page.</li><li><strong>Check</strong>: reads what you wrote and marks the wrong cells.</li></ul>
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/handwriting-language.png" width="48" height="48" alt="">
             <span class="kind">Tablet app</span>
-            <h3>Handwriting Language</h3>
-            <p>Switches the handwriting recognition language of the whole tablet with one tap.</p>
-            <!-- media:handwriting-language: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:handwriting-language -->
-          </li>
-          <li class="card">
+            <span class="badge status-beta">Beta</span>
+          </p>
+          <h3>Handwriting Language</h3>
+          <ul class="features"><li><strong>Switch Language</strong>: switch the handwriting recognition language of the whole tablet with one tap.</li><li><strong>Floating button</strong>: a small button where you write, shown only while there is text or ink input.</li></ul>
+          <!-- media:handwriting-language: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:handwriting-language -->
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/ink-notebook-editor.png" width="48" height="48" alt="">
             <span class="kind">Mac app</span>
-            <h3>Ink Notebook Editor</h3>
-            <p>Opens a Supernote <code>.note</code> notebook on the Mac, or copies one from the tablet over the cable.</p>
-            <!-- media:ink-notebook-editor: written by scripts/site_media.py from design/site-media/shots.json -->
-            <!-- /media:ink-notebook-editor -->
-          </li>
-          <li class="card">
-            <span class="kind">Mac command line</span>
-            <h3>inkctl</h3>
-            <p>Controls the tablet from the Mac over Wi-Fi or USB: installs plugins, opens notes and runs tests, without root.</p>
-          </li>
-        </ul>
+            <span class="badge status-in-progress">In progress</span>
+          </p>
+          <h3>Ink Notebook Editor</h3>
+          <ul class="features"><li><strong>Open a note</strong>: read a <code>.note</code> notebook on the Mac and page through it.</li><li><strong>Open from Tablet</strong>: copy a note from the tablet over the cable through <code>inkctl</code> and open the copy.</li><li><strong>Edit</strong>: edit a note on the Mac without breaking the format, and send the edits back through Device Link.</li></ul>
+          <!-- media:ink-notebook-editor: written by scripts/site_media.py from design/site-media/shots.json -->
+          <!-- /media:ink-notebook-editor -->
+        </li>
+      </ul>
       </div>
     </section>
 
-    <section class="section" id="risk">
+    <section class="section" id="developer" aria-labelledby="developer-title">
       <div class="container">
-        <h2>Before you install</h2>
+      <h2 id="developer-title">Developer tools</h2>
+      <ul class="grid-3 cards">
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/ink-tools-control.png" width="48" height="48" alt="">
+            <span class="kind">Mac command line</span>
+            <span class="badge status-working">Working</span>
+          </p>
+          <h3>Ink Tools Control</h3>
+          <ul class="features"><li><strong>Control</strong>: <code>inkctl</code> controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root.</li><li><strong>Plugins</strong>: install, enable, permit and uninstall plugins with no screen.</li><li><strong>Notes and ink</strong>: open notes, write synthetic ink, lasso and read the screen for tests.</li><li><strong>Firmware watch</strong>: on connect, check every device dependency and report what a firmware update broke.</li></ul>
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/ink-tools-helper.png" width="48" height="48" alt="">
+            <span class="kind">Tablet app</span>
+            <span class="badge status-internal">Internal</span>
+          </p>
+          <h3>Ink Tools Helper</h3>
+          <ul class="features"><li><strong>Plugin settings</strong>: lets <code>inkctl</code> install, enable and permit plugins with no screen.</li><li><strong>Firmware watch</strong>: at boot after a firmware change, check every device dependency and report what broke.</li></ul>
+        </li>
+        <li class="card">
+          <p class="card-head">
+            <img src="/icons/ink-tools-probe.png" width="48" height="48" alt="">
+            <span class="kind">Plugin</span>
+            <span class="badge status-internal">Internal</span>
+          </p>
+          <h3>Ink Tools Probe</h3>
+          <ul class="features"><li><strong>Run Command</strong>: the sidebar button <code>inkctl</code> presses to write ink and lasso with no pen.</li><li><strong>Probes</strong>: quick on-device experiments for our tests. Never shipped.</li></ul>
+        </li>
+      </ul>
+      </div>
+    </section>
+    <!-- site-tools:end -->
+
+    <section class="section" id="install" aria-labelledby="install-title">
+      <div class="container">
+        <h2 id="install-title">Install in a few minutes</h2>
+        <p class="lead">Most people need only a plugin: download its file, copy it to the tablet and install it from Settings. No root, no modified firmware.</p>
+        <!-- site-install:start: written by scripts/site_figures.py -->
+        <div class="install-grid">
+          <article class="install">
+            <h3>Install a plugin</h3>
+            <ol class="steps"><li>Download the tool&#x27;s <code>.snplg</code> file with its Download button on <a href="https://inktools.martonpaulo.com/#tools" target="_blank" rel="noopener">inktools.martonpaulo.com</a>, or from its release on the <a href="https://github.com/martonpaulo/ink-tools/releases" target="_blank" rel="noopener">releases page</a>. Keep the file name: it carries the version.</li><li>Connect the tablet to the computer with a USB cable, or use Supernote Cloud, and copy the file into the tablet&#x27;s <code>MyStyle</code> folder.</li><li>On the tablet, open Settings, then Apps, then Plugins, and tap Select Plugin Package. In Select Plugin, choose the file, then tap Install.</li><li>When the tablet asks, allow the permissions the release notes list. A plugin that is refused a permission shows what it needs and how to give it.</li><li>Tap the plugin in the Plugins list to open its page, and turn it on with the switch there. The tablet keeps at most 10 plugins on at one time.</li></ol>
+          </article>
+          <article class="install">
+            <h3>Install the tablet app</h3>
+            <p>Handwriting Language has no release yet: it waits for a build signed with a release key. Until then it installs only from a copy of the repository, over a cable, as its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/handwriting-language/README.md#install" target="_blank" rel="noopener">README</a> shows.</p>
+          </article>
+          <article class="install">
+            <h3>Install the Mac app</h3>
+            <p>Ink Notebook Editor is in progress and has no release yet. It builds on a Mac from a copy of the repository, as its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/ink-notebook-editor/README.md" target="_blank" rel="noopener">README</a> shows.</p>
+          </article>
+          <article class="install">
+            <h3>Install the Mac command line</h3>
+            <p>Ink Tools Control (<code>inkctl</code>) is for developers and has no release: it runs from a copy of the repository.</p>
+            <ol class="steps"><li>On the Mac, install Python 3.9 or later and Android&#x27;s <code>adb</code> tool.</li><li>On the tablet, turn on Sideloading in Settings (<a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/docs/research/2026-11-adb-on-supernote.md#steps" target="_blank" rel="noopener">how</a>).</li><li>In Terminal, copy the repository: <code>git clone https://github.com/martonpaulo/ink-tools</code>.</li><li>Follow the Quick Start of <a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/README.md" target="_blank" rel="noopener">Ink Tools Control</a>: it puts <code>inkctl</code> on your path and connects it to the tablet.</li></ol>
+          </article>
+        </div>
+        <!-- site-install:end -->
+      </div>
+    </section>
+
+    <section class="section" id="risk" aria-labelledby="risk-title">
+      <div class="container">
+        <h2 id="risk-title">Before you install</h2>
         <div class="notice">
 <!-- risk-notice:start: written by scripts/risk_notice.py from docs/risk-notice.md -->
 <p><strong>Ink Tools is unofficial.</strong> It is not made, affiliated with, endorsed or reviewed by Ratta. «Supernote» is a trademark of its owner and names the device only.</p>
@@ -123,14 +245,45 @@
         </div>
       </div>
     </section>
+
+    <section class="section" id="credits" aria-labelledby="credits-title">
+      <div class="container">
+        <h2 id="credits-title">Built in public, on shared work</h2>
+        <!-- site-credits:start: written by scripts/site_figures.py -->
+        <p>A special thank-you to the authors of these Supernote projects. Ink Tools stands on their work: some of their code runs inside it, and some of their ideas shaped it.</p>
+        <ul class="credits">
+          <li><a href="https://github.com/jya-dev/supernote-tool" target="_blank" rel="noopener">jya-dev/supernote-tool</a>: the <code>.note</code> reader and RLE decoder, ported to Swift.</li>
+          <li><a href="https://github.com/CharlesCheval/supernote-snap" target="_blank" rel="noopener">CharlesCheval/supernote-snap</a>: the Smart Shapes recognizer, hold detection and stroke guard.</li>
+          <li><a href="https://github.com/Keplex/supernote-pic2note" target="_blank" rel="noopener">Keplex/supernote-pic2note</a>: the native build pipeline without Gradle.</li>
+          <li><a href="https://github.com/AgP42/SuperFun" target="_blank" rel="noopener">AgP42/SuperFun</a>: the word-search theme word banks; a set of games inside one plugin.</li>
+          <li><a href="https://github.com/wolfsolver/Supernote-InkGames" target="_blank" rel="noopener">wolfsolver/Supernote-InkGames</a>: puzzles generated for the page, solved with the pen.</li>
+          <li><a href="https://github.com/Laumss/Inkling" target="_blank" rel="noopener">Laumss/Inkling</a>: write a picture file, then insert it on the page.</li>
+          <li><a href="https://github.com/Laumss/sn-plugins" target="_blank" rel="noopener">Laumss/sn-plugins</a>: the Settings screen conventions in <code>ui-kit</code>.</li>
+          <li><a href="https://github.com/ridget/supernote-mcp" target="_blank" rel="noopener">ridget/supernote-mcp</a>: inkctl touches the tablet only when it is called.</li>
+          <li><a href="https://github.com/CRSiegfried/inkbridge" target="_blank" rel="noopener">CRSiegfried/inkbridge</a>: inkctl leaves transcription to whoever calls it.</li>
+        </ul>
+        <p>Each project&#x27;s licence, and what Ink Tools took from it, is in the <code>NOTICE.md</code> of the part that uses it.</p>
+        <h3 id="license">License</h3>
+        <p><a href="https://github.com/martonpaulo/ink-tools/blob/main/LICENSE" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> © 2026 Marton Paulo. Each subproject preserves its own <code>NOTICE.md</code> and third-party notices.</p>
+        <!-- site-credits:end -->
+      </div>
+    </section>
+
+    <section class="section" id="privacy" aria-labelledby="privacy-title">
+      <div class="container">
+        <h2 id="privacy-title">Privacy</h2>
+        <p>Ink Tools runs no server, collects no analytics and has no account of its own. A tool sends data only to the service you use it with, and each release lists those services.</p>
+        <p><a href="/privacy/">Read the privacy policy</a></p>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p>© 2026 Marton Paulo · CC BY-NC-SA 4.0</p>
+      <p>Developed by <a href="https://martonpaulo.com" target="_blank" rel="noopener">Marton Paulo</a> · © 2026 · CC BY-NC-SA 4.0 · Unofficial, not affiliated with Ratta</p>
       <ul>
-        <li><a href="https://github.com/martonpaulo/ink-tools" target="_blank" rel="noopener">Source</a></li>
-        <li><a href="https://github.com/martonpaulo/ink-tools/issues" target="_blank" rel="noopener">Issues</a></li>
+        <li><a href="https://github.com/martonpaulo/ink-tools/issues" target="_blank" rel="noopener">Report an issue</a></li>
+        <li><a href="https://github.com/martonpaulo/ink-tools" target="_blank" rel="noopener">GitHub</a></li>
       </ul>
     </div>
   </footer>
