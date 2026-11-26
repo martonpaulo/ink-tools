@@ -205,8 +205,7 @@ function ConnectLine({provider}: {provider: ProviderSignIn}): React.JSX.Element 
         </Text>
       ) : (
         <Button
-          label={copy['connect.button']}
-          accessibilityLabel={format('connect.label', {provider: provider.name})}
+          label={format('connect.label', {provider: provider.name})}
           onPress={() => setShown(true)}
         />
       )}

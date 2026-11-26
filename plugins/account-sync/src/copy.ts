@@ -25,7 +25,6 @@ export const copy = {
   cancel: 'Cancel',
   'signIn.in': '{provider}: signed in ({tail}).',
   'signIn.out': '{provider}: not connected.',
-  'connect.button': 'Connect',
   'connect.label': 'Connect {provider}',
   'connect.how': 'To connect {provider}, run inkctl secret set {id} on the Mac, then press Sync now.',
   'signIn.unreadable': '{provider}: the sign-in did not read: {reason}',
