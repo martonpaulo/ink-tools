@@ -1,6 +1,6 @@
 {
   "name": "RealTimeConversion",
-  "version": "0.1.0-beta.8",
+  "version": "0.1.0",
   "description": "Supernote plugin: the pen features in one plugin, each a module switched on or off in Settings: Real-Time Text turns each finished word into a text box, and Smart Shapes turns a held stroke into a clean shape.",
   "private": true,
   "scripts": {
