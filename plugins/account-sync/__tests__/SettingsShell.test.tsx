@@ -165,6 +165,21 @@ describe('SettingsShell (#93)', () => {
       expect(texts(tree)).toContain(copy['remove.about']);
     });
 
+    it('stays pressable after Back closed the host dialog with no answer (#296)', async () => {
+      const onRemove = jest.fn();
+      // Back: the first question never settles; the next press asks again and is answered.
+      const answers = [new Promise<never>(() => {}), Promise.resolve(ok(true))];
+      const ask = jest.fn((_q: string, _a: string, _c: string) => answers.shift()!);
+      const tree = render(READY, () => {}, offModule(onRemove), defaultSettings(), ask);
+      act(() => {
+        control(tree, copy['remove.yes']).props.onPress();
+      });
+      expect(control(tree, copy['remove.yes']).props.disabled).toBeFalsy();
+      await press(tree, copy['remove.yes']);
+      expect(ask).toHaveBeenCalledTimes(2);
+      expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
     it('is not offered while the module is on', () => {
       const tree = render(READY, () => {}, [{...offModule(() => {})[0], status: {state: 'waiting'}}], ON);
       expect(texts(tree)).not.toContain(copy['remove.title']);

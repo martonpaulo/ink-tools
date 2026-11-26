@@ -251,8 +251,10 @@ function RemoveRow({
 
 /**
  * A destructive row action (#89, #90, #296): one press asks in the host's confirm dialog, and only
- * its action does it; Cancel and Back do nothing. When the dialog cannot be shown, the row asks
- * itself, with Cancel beside the action, so the action is never done unasked nor lost.
+ * its action does it; Cancel and Back do nothing. The row keeps no «asking» state of its own while
+ * the dialog shows: Back gives no answer, and sn-adapter's `confirm` settles that question as a
+ * Cancel at the next press, so the row stays pressable (#296). When the dialog cannot be shown, the
+ * row asks itself, with Cancel beside the action, so the action is never done unasked nor lost.
  */
 function Confirmed({
   title,
@@ -274,11 +276,8 @@ function Confirmed({
   ask: Ask;
 }): React.JSX.Element {
   const [asking, setAsking] = useState(false);
-  const [waiting, setWaiting] = useState(false);
   const press = async () => {
-    setWaiting(true);
     const answer = await ask(question, yes, copy.cancel);
-    setWaiting(false);
     if (!answer.ok) {
       console.log(`[Bridge] confirm: the dialog failed: ${answer.code} ${answer.message}; asked in the view`);
       setAsking(true);
@@ -294,7 +293,6 @@ function Confirmed({
         action={{
           label,
           accessibilityLabel,
-          disabled: waiting,
           onPress: () => {
             press();
           },

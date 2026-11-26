@@ -38,6 +38,26 @@ describe('confirm (showRattaDialog)', () => {
   });
 });
 
+describe('confirm after Back (#296)', () => {
+  it('settles a question Back closed as a Cancel when the next one is asked', async () => {
+    // Back closes the host dialog with no answer: its promise never settles.
+    mocked(NativeUIUtils.showRattaDialog).mockReturnValueOnce(new Promise(() => {}));
+    const first = confirm('Sign out?', 'Sign out', 'Cancel');
+    mocked(NativeUIUtils.showRattaDialog).mockResolvedValueOnce(true);
+    const second = confirm('Sign out?', 'Sign out', 'Cancel');
+    expect(await first).toEqual(ok(false));
+    expect(await second).toEqual(ok(true));
+    expect(NativeUIUtils.showRattaDialog).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves an answered question as it was answered', async () => {
+    mocked(NativeUIUtils.showRattaDialog).mockResolvedValueOnce(true);
+    expect(await confirm('q', 'a', 'c')).toEqual(ok(true));
+    mocked(NativeUIUtils.showRattaDialog).mockResolvedValueOnce(false);
+    expect(await confirm('q', 'a', 'c')).toEqual(ok(false));
+  });
+});
+
 describe('errorTip (showErrorTipDialog)', () => {
   it('shows the text, and turns a throw into a failure', () => {
     expect(errorTip('Could not start')).toEqual(ok(true));
