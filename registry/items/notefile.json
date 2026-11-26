@@ -12,7 +12,7 @@
       ],
       "reason": "the .note format is not documented; supernotelib and our reader parse it",
       "evidence": {
-        "source": "supernotelib SupernoteXParser.SN_SIGNATURES; recognition boxes measured against rendered ink on Manta notes; element records measured on the fixtures content.note and landscape-tablet.note",
+        "source": "supernotelib SupernoteXParser.SN_SIGNATURES; recognition boxes measured against rendered ink on Manta notes; element records measured on the fixtures content.note and landscape-tablet.note; text box, Heading and Heading style records measured on notes made on a Manta (firmware Chauvet.E103.2610191001.2559, 2026-11-26)",
         "date": "2026-11-26"
       },
       "upgradePath": "a documented format or an export API",
@@ -25,7 +25,8 @@
       "issues": [
         261,
         321,
-        324
+        324,
+        331
       ],
       "values": {
         "signaturePrefix": "SN_FILE_VER_",
@@ -47,7 +48,15 @@
         "recognitionBoxDotsPerInch": 300,
         "pictureKind": "bitmap",
         "strokeDocument": "superNoteNote",
-        "eraserColour": 255
+        "eraserColour": 255,
+        "textBoxKind": "0000",
+        "headingKind": "0001",
+        "headingStyles": [
+          "1000254",
+          "1000000",
+          "1157254",
+          "1201000"
+        ]
       }
     },
     {

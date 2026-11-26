@@ -31,6 +31,9 @@ public enum Registry {
         public static let pictureKind: String = "bitmap"
         public static let strokeDocument: String = "superNoteNote"
         public static let eraserColour: Int = 255
+        public static let textBoxKind: String = "0000"
+        public static let headingKind: String = "0001"
+        public static let headingStyles: [String] = ["1000254", "1000000", "1157254", "1201000"]
     }
 
     /// NoteWriter edits a .note file's bytes in place (notefile.writer-byte-edit).

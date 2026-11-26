@@ -24,7 +24,7 @@ public struct PageElement: Sendable, Equatable {
 extension NoteFile {
     /// Every element of page `index`, in the order the page stores them, the last on top. A page
     /// with no element records has none. An eraser record is left out: it hides ink, it is not
-    /// an element.
+    /// an element. A Heading's record is left out too: `headings()` reads it from the footer.
     public func elements(page index: Int) throws -> [PageElement] {
         guard pages.indices.contains(index) else { throw NoteFormatError.badPage(index) }
         let page = pages[index]
@@ -113,12 +113,18 @@ enum ElementRecord {
                 return CGPoint(x: CGFloat(width - inFromRight) * scale, y: CGFloat(down) * scale)
             }
             let kind: PageElement.Kind
-            if try name(at: kindName) == values.pictureKind {
+            let named = try name(at: kindName)
+            if named == values.pictureKind {
                 kind = .picture
             } else if try name(at: documentKind) == values.strokeDocument {
                 kind = .stroke
-            } else {
+            } else if named == values.textBoxKind {
                 kind = .textBox
+            } else if named == values.headingKind {
+                // A Heading's band is read from the footer (`headings()`), not as an element.
+                return nil
+            } else {
+                throw failure("element \(number + 1) is of an unknown kind «\(named)»")
             }
             let bounds: CGRect
             if kind == .stroke {

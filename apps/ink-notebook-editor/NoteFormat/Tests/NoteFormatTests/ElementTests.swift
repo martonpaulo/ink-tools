@@ -51,6 +51,29 @@ import Testing
         }
     }
 
+    /// `elements-tablet.note`, made on the tablet (#324): two lines of `inkctl ink write` (23
+    /// strokes), two text boxes from `inkctl note insert-text` and a 400 x 300 picture from
+    /// `inkctl note insert-picture`, stored in the order they were made.
+    @Test func everyKindOfATabletNoteReadsInItsOrder() throws {
+        let elements = try Self.note("elements-tablet").elements(page: 0)
+        #expect(elements.map(\.kind) == Array(repeating: .stroke, count: 23) + [.textBox, .picture, .textBox])
+        #expect(elements.allSatisfy { $0.layer == 0 })
+        // «hello world» at 200, 300 and «erase me» at 200, 1848, each about 108 and 62 pixels tall.
+        let lines = elements.prefix(23).map(\.bounds).reduce(CGRect.null) { $0.union($1) }
+        Self.expect(lines, near: CGRect(x: 198, y: 298, width: 646, height: 1612))
+        Self.expect(elements[23].bounds, near: CGRect(x: 200, y: 600, width: 900, height: 54))
+        Self.expect(elements[24].bounds, near: CGRect(x: 760, y: 1130, width: 400, height: 300))
+        Self.expect(elements[25].bounds, near: CGRect(x: 200, y: 1300, width: 900, height: 54))
+    }
+
+    @Test func aRecordOfAnUnknownKindThrows() throws {
+        var bytes = try Self.bytes("content")
+        // The first record (the text box) renamed: its kind name starts 52 bytes into the record.
+        let name = try Self.block(bytes) + 4 + 52
+        bytes[name] = UInt8(ascii: "9")
+        #expect(throws: NoteFormatError.self) { try NoteFile(bytes: bytes).elements(page: 0) }
+    }
+
     @Test func aPageOutsideTheNoteIsRefused() throws {
         #expect(throws: NoteFormatError.badPage(9)) { try Self.note("content").elements(page: 9) }
     }
