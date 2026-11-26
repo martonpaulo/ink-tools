@@ -40,7 +40,9 @@ Paste, Clear and «Keep After Paste» (saved as `collection.keepAfterPaste`, def
 (`src/collection/run.ts`) closes the plugin view, inserts each piece with `insertSticker` and moves
 it with `resizeLassoRect` to its place, asked again at once, up to 80 times, while NOTE has not
 lassoed the piece yet (904; a timer never fired with the view closed, device round 9), the group shifted onto the page as one, lassoes
-the union with `lassoElements`, then empties the collection unless kept; a failed piece stops the
+the union with `lassoElements`, then empties the collection unless kept, and keeps it whole when
+the union lasso fails, the one check that the pieces are on the page (device round 9 lost the
+first of two pieces); a failed piece stops the
 paste, keeps the collection and logs the call that failed. With the view in front no lasso call
 reached a pasted piece (device rounds 6 and 7). The host behaviours it rests on (a second paste, the union lasso taking ink already
 there) are Task 1 of [#249](https://github.com/martonpaulo/ink-tools/issues/249); its device round is open.

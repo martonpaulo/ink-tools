@@ -284,6 +284,16 @@ test('on the Manta a paste with the view still open stops after piece 1, naming 
   );
 });
 
+test('a paste whose pieces cannot be lassoed on the page keeps the collection (#249, round 9)', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  await addToCollection(fake.host, false);
+  fake.host.select = async () => ok(false);
+  expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'unchecked'});
+  expect(await countPieces(fake.host)).toBe(2);
+  expect(fake.toasts.at(-1)).toBe(copy['collection.notChecked']);
+});
+
 test('an empty collection pastes nothing and says so', async () => {
   const fake = fakeHost();
   expect(await pasteCollection(fake.host, false)).toEqual({

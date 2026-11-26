@@ -56,6 +56,8 @@ export const copy = {
     `The paste stopped after ${pasted} ${
       pasted === 1 ? 'piece' : 'pieces'
     }. The collection is kept.`,
+  'collection.notChecked':
+    'The pasted pieces could not be found on the page. The collection is kept.',
   'collection.notCleared': (left: number) =>
     `${left} ${
       left === 1 ? 'piece' : 'pieces'

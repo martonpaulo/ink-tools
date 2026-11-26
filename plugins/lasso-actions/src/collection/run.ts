@@ -66,6 +66,7 @@ export type CollectionFailure =
   | 'page'
   | 'insert'
   | 'kept'
+  | 'unchecked'
   | 'clear';
 
 const done = (result: Result<boolean>) => result.ok && result.value;
@@ -219,10 +220,15 @@ export async function pasteCollection(
     }
   }
   const selected = await host.select(placed.union);
-  if (!done(selected)) {
-    host.log(`${tag}: lassoElements ${whyNot(selected)}`);
-  }
   const count = listed.pieces.length;
+  if (!done(selected)) {
+    // The union lasso is the one check that the pieces are on the page: device round 9 lost the
+    // first of two pieces, whose second move took the first piece's lasso, and the union lasso
+    // answered false. So the collection stays whole unless the pasted pieces can be lassoed.
+    host.log(`${tag}: lassoElements ${whyNot(selected)}; the collection is kept`);
+    host.toast(copy['collection.notChecked']);
+    return {ok: false, why: 'unchecked'};
+  }
   if (keep) {
     host.toast(copy['collection.pasted'](count));
     return {ok: true, count};
