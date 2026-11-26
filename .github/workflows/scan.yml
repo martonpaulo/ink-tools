@@ -47,8 +47,11 @@ jobs:
           python3 scripts/readme_figures.py --root . --check
           python3 -B -m unittest scripts/test_readme_figures.py
 
-      - name: Check the DRY ratchet
-        run: python3 scripts/dry_check.py --root .
+      - name: Check the DRY ratchet, and one constant value named in two tools (#295)
+        run: |
+          python3 scripts/dry_check.py --root .
+          python3 scripts/dry_cross.py --root .
+          python3 -B -m unittest scripts/test_dry_cross.py
 
       - name: Check that no test sleeps or bounds wall-clock time without a note
         run: python3 scripts/sleep_guard.py .
@@ -70,6 +73,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # plugin-version.cjs --identity reads every PluginConfig.json of the history (#295).
+          fetch-depth: 0
 
       - name: Check the adapter boundaries
         run: |
@@ -98,6 +104,11 @@ jobs:
 
       - name: Check that every plugin names an icon that exists (#248)
         run: node scripts/plugin-version.cjs --icons .
+
+      - name: Check each plugin's names, its rising versionCode and the shared pins (#295)
+        run: |
+          node scripts/plugin-version.cjs --identity .
+          node --test scripts/plugin-version.test.cjs
 
       - name: Check each validate workflow's paths against gates.json and the Quick check's selection (#180, #301)
         run: |
