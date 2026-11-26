@@ -3665,40 +3665,45 @@ VERIFIER_BYTES = 64  # 86 characters, inside PKCE's 43 to 128
 # reaches the Keychain line, so that line needs no quoting.
 REFRESH_TOKEN_SHAPE = re.compile(r"[A-Za-z0-9._/~+-]+")
 PROJECT_ICON = Path(__file__).resolve().parents[3] / "design/icon.svg"  # the one copy of the icon (#97)
+# The Ink Tools site (#371) owns the page's look and its address: its stylesheet is inlined as it
+# is, and its CNAME names the host, so the page copies no value (#413).
+SITE_FOLDER = Path(__file__).resolve().parents[3] / "site"
+SITE_STYLES = SITE_FOLDER / "styles/main.css"
+SITE_HOST = SITE_FOLDER / "CNAME"
+PRIVACY_PATH = "/privacy/"
 GOOGLE_PUSH_STEP = f"security find-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_TOKEN_ACCOUNT} -w | inkctl secret set google"
-# The page the browser shows after the consent, in the Settings look of packages/ui-kit/README.md:
-# one column on paper, two type sizes, the ui-kit greys, a state word and a shape, light and dark.
+# The page the browser shows after the consent, in the Ink Tools site's look (#413): the site's
+# stylesheet, header and page layout, served from this Mac's loopback address with nothing loaded
+# from the network (RFC 8252). The state shows as a word and a shape: a circle for done, a square
+# for failed. The few rules below use only the site's tokens.
 LOGIN_PAGE = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>{title} - Ink Tools</title>
+<title>{title} · Ink Tools</title>
 <style>
-:root {{ --paper: #ffffff; --ink: #000000; --context: #444444; --panel: #eeeeee; }}
-@media (prefers-color-scheme: dark) {{
-  :root {{ --paper: #000000; --ink: #ffffff; --context: #bbbbbb; --panel: #222222; }}
-}}
-body {{ margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.5 -apple-system, system-ui, sans-serif; }}
-main {{ max-width: 34rem; margin: 0 auto; padding: 48px 16px; }}
-.product {{ display: flex; align-items: center; gap: 12px; font-weight: 700; }}
-.product svg {{ width: 40px; height: 40px; }}
-h1 {{ display: flex; align-items: center; gap: 12px; font-size: 28px; line-height: 1.25; margin: 32px 0 16px; }}
-.mark {{ flex: none; width: 40px; height: 40px; border: 3px solid var(--ink); border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }}
-.failed .mark {{ border-radius: 4px; }}
-p {{ margin: 0 0 16px; }}
-.detail {{ color: var(--context); }}
-.next {{ background: var(--panel); padding: 16px; border-left: 4px solid var(--ink); }}
+{styles}
+.state {{ display: flex; align-items: center; gap: var(--space-xs); }}
+.mark {{ flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--glyph-tile); height: var(--glyph-tile); border: medium solid currentColor;
+  border-radius: var(--radius-pill); font-size: var(--text-xl); }}
+.failed .mark {{ border-radius: var(--radius-m); }}
+.brand svg {{ width: var(--space-l); height: var(--space-l); }}
 </style>
 </head>
 <body class="{state}">
-<main>
-<div class="product"><span aria-hidden="true">{icon}</span><span>Ink Tools</span></div>
-<h1><span class="mark" aria-hidden="true">{mark}</span><span>{title}</span></h1>
-<p class="detail">{detail}</p>
-<p class="next"><strong>Next:</strong> {next}</p>
+<header class="site-header">
+<div class="container"><div class="brand"><span aria-hidden="true">{icon}</span><span>Ink Tools</span></div></div>
+</header>
+<main class="page">
+<div class="container">
+<h1 class="state"><span class="mark" aria-hidden="true">{mark}</span><span>{title}</span></h1>
+<p class="lead">{detail}</p>
+<p class="notice"><strong>Next:</strong> {next}</p>
+{privacy}
+</div>
 </main>
 </body>
 </html>
@@ -3789,24 +3794,40 @@ def google_exchange(client: dict, code: str, redirect: str, verifier: str) -> di
         raise Failure(EXIT_FAILED, "network_error", f"Google's token endpoint did not answer: {lost}", cause="Google's sign-in server could not be reached", next_step=GOOGLE_LOGIN_STEP) from None
 
 
-def login_page(failure: Failure | None) -> bytes:
+def site_file(path: Path) -> str:
+    """A file of the site in this checkout, or "" when a copy of the command has no site beside it:
+    the page then still shows its words, unstyled."""
     try:
-        icon = PROJECT_ICON.read_text()
+        return path.read_text()
     except OSError:
-        icon = ""  # a copy of the command without the repository still shows the name
+        return ""
+
+
+def privacy_link() -> str:
+    """The privacy policy's link on the site, from the site's own CNAME; none without a site."""
+    host = site_file(SITE_HOST).strip()
+    if not host:
+        return ""
+    address = html.escape(f"https://{host}{PRIVACY_PATH}")
+    return f'<p>How Ink Tools uses your Google data: <a href="{address}">Privacy policy</a></p>'
+
+
+def login_page(failure: Failure | None) -> bytes:
     if failure is None:
         fields = {
             "state": "signed-in", "mark": "&#10003;", "title": "Signed in to Google",
             "detail": "Account Sync may now read your calendars and add events. The sign-in is kept in this Mac's login Keychain.",
-            "next": "Close this tab and go back to the terminal.",
+            "next": "You are done. Close this tab and go back to the terminal.",
+            "privacy": privacy_link(),
         }
     else:
         fields = {
             "state": "failed", "mark": "&#10005;", "title": "Sign-in failed",
             "detail": html.escape(failure.message),
             "next": "Close this tab and run <code>inkctl google login</code> again in the terminal.",
+            "privacy": "",
         }
-    return LOGIN_PAGE.format(icon=icon, **fields).encode()
+    return LOGIN_PAGE.format(icon=site_file(PROJECT_ICON), styles=site_file(SITE_STYLES), **fields).encode()
 
 
 def open_consent(address: str) -> None:
