@@ -129,6 +129,45 @@ final class RenderTests {
         try await render("page-failed", Self.sizes) { StateView(.pageFailed("page 2: the layer bitmap ends early")) }
     }
 
+    /// A tablet that never answers in a render's time, so an edit stays on its way.
+    final class SlowTablet: TabletWriting {
+        func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
+            // timing-independent: a stand-in for a tablet that has not answered yet; no result waits on it.
+            try? await Task.sleep(for: .seconds(60))
+            throw .cancelled
+        }
+        func push(_ local: URL, to note: String) async throws(InkctlFailure) { throw .cancelled }
+        func pull(_ note: String, to destination: URL) async throws(InkctlFailure) { throw .cancelled }
+    }
+
+    /// The edits of a note from the tablet (#313, #314, #330): a page move drawn at once while it
+    /// is on its way, the status line counting it, and a refused edit's bar. Nothing reaches a
+    /// tablet: the watch never starts, and the tablet is a stand-in that never answers.
+    @Test func editStates() async throws {
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+        let copy = scratch.appending(path: "Garden.note")
+        try Fixtures.data("content.note").write(to: copy)
+        let live = LiveNote(
+            tabletPath: "Note/Garden.note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
+        live.watches = false
+        let editor = NoteEditor(
+            tabletPath: live.tabletPath, copy: copy, base: try Fixtures.note("content.note"), tablet: SlowTablet(),
+            backups: NoteBackups(folder: scratch.appending(path: "Backups")))
+        editor.movePage(from: 0, to: 2)
+        let moved = PageImages(note: editor.shown)
+        for index in moved.note.pages.indices {
+            await moved.loadThumbnail(index, scale: 1)
+        }
+        await moved.loadPage(2)
+        try await render("edit-sending", Self.sizes) {
+            NotebookView(pages: moved, page: 2, live: live, editor: editor)
+        }
+        editor.refusal = WriteFailure.openOnTablet.message
+        try await render("edit-refused", Self.sizes) {
+            NotebookView(pages: moved, page: 2, live: live, editor: editor)
+        }
+    }
+
     /// Find in Note with matches, with none and while the handwriting is read (#322), and the
     /// Headings sidebar with its outline and empty (#331). The note is `content.note` with typed
     /// words drawn in and two Headings added; Vision reads the words, as in the app.

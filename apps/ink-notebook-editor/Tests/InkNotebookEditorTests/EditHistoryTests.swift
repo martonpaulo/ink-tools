@@ -63,6 +63,28 @@ import Testing
         #expect(history.undo() == .drop(kept))
     }
 
+    @Test func aRefusedUndoPutsTheEditBackAsApplied() {
+        var history = EditHistory()
+        history.record(.movePage(from: 0, to: 2))
+        _ = history.undo()
+        let restored = history.restore(.movePage(from: 0, to: 2))
+        #expect(restored)
+        #expect(history.redoKind == nil && history.undoKind == .movePage(from: 0, to: 2))
+        #expect(history.undo() == .send(.movePage(from: 2, to: 0)))
+        let other = history.restore(.movePage(from: 1, to: 3))
+        #expect(!other)
+    }
+
+    /// A list's drag counts the destination before the row leaves: dropped before the row after
+    /// it, a page stays.
+    @Test func aDragInThePageListIsOnePageMove() {
+        #expect(NoteEdit.pageDrag(0, before: 4) == .movePage(from: 0, to: 3))
+        #expect(NoteEdit.pageDrag(3, before: 0) == .movePage(from: 3, to: 0))
+        #expect(NoteEdit.pageDrag(1, before: 1) == nil)
+        #expect(NoteEdit.pageDrag(1, before: 2) == nil)
+        #expect(NoteEdit.pageDrag(1, before: 3) == .movePage(from: 1, to: 2))
+    }
+
     @Test func theMenuNamesTheEdit() {
         var history = EditHistory()
         #expect(Copy.undo(history.undoKind) == Copy.undoBare)

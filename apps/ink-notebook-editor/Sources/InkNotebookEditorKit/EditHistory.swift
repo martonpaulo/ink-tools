@@ -25,6 +25,14 @@ public enum NoteEdit: Sendable, Equatable {
             return moved
         }
     }
+
+    /// The page move a list's drag makes: `source` dropped before the row `destination`, both
+    /// counted from 0 before the row leaves, as SwiftUI's `onMove` counts them; nil when the page
+    /// stays where it is.
+    public static func pageDrag(_ source: Int, before destination: Int) -> NoteEdit? {
+        let to = destination > source ? destination - 1 : destination
+        return to == source ? nil : .movePage(from: source, to: to)
+    }
 }
 
 /// Where an edit stands on its way to the tablet.
@@ -82,6 +90,17 @@ public struct EditHistory: Sendable, Equatable {
     public mutating func refused(_ id: EditID) -> NoteEdit? {
         guard let index = done.firstIndex(where: { $0.id == id }) else { return nil }
         return done.remove(at: index).edit.inverse
+    }
+
+    /// The tablet refused the inverse an undo sent: the note still holds `edit`, so it is done
+    /// again, as applied, and leaves the redo list. False when no undone edit is `edit`.
+    @discardableResult
+    public mutating func restore(_ edit: NoteEdit) -> Bool {
+        guard let index = undone.lastIndex(of: edit) else { return false }
+        undone.remove(at: index)
+        let id = push(edit)
+        set(id, .applied)
+        return true
     }
 
     /// Undoes the newest edit: nil with nothing to undo.

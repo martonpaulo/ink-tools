@@ -174,6 +174,30 @@ nonisolated enum Copy {
         return String(localized: "Redo \(name(of: edit))")
     }
 
+    // MARK: Edits (#313, #314, #330)
+
+    static let movePageUp = String(localized: "Move Page Up")
+    static let movePageDown = String(localized: "Move Page Down")
+    static let revertToBackup = String(localized: "Revert to Backup")
+    static let revertMessage = String(
+        localized:
+            "The note on the tablet is replaced by this backup. A backup of the note as it is now is kept first, and Undo starts over."
+    )
+    static let noBackups = String(localized: "No Backups Yet")
+    static let revert = String(localized: "Revert")
+    static let dismiss = String(localized: "Dismiss")
+
+    static func revertTitle(_ date: String) -> String {
+        String(localized: "Revert the note to the backup of \(date)?")
+    }
+
+    static let editOnlyFromTablet = String(localized: "Open the note from the tablet to edit it.")
+    static let waitForSends = String(localized: "Wait until every edit reached the tablet.")
+
+    static func sendingEdits(_ count: Int) -> String {
+        String(localized: "Edits on their way to the tablet: \(count)")
+    }
+
     /// An edit's name in the menu.
     static func name(of edit: NoteEdit) -> String {
         switch edit {

@@ -211,6 +211,16 @@
         }
       }
     },
+    "Dismiss" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "en" : {
@@ -227,6 +237,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drawing the page…"
+          }
+        }
+      }
+    },
+    "Edits on their way to the tablet: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edits on their way to the tablet: %lld"
           }
         }
       }
@@ -431,6 +451,26 @@
         }
       }
     },
+    "Move Page Down" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Page Down"
+          }
+        }
+      }
+    },
+    "Move Page Up" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Page Up"
+          }
+        }
+      }
+    },
     "Next Match" : {
       "localizations" : {
         "en" : {
@@ -447,6 +487,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Next Page"
+          }
+        }
+      }
+    },
+    "No Backups Yet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Backups Yet"
           }
         }
       }
@@ -577,6 +627,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open from Tablet…"
+          }
+        }
+      }
+    },
+    "Open the note from the tablet to edit it." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the note from the tablet to edit it."
           }
         }
       }
@@ -717,6 +777,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Report an Issue…"
+          }
+        }
+      }
+    },
+    "Revert" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revert"
+          }
+        }
+      }
+    },
+    "Revert the note to the backup of %@?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revert the note to the backup of %@?"
+          }
+        }
+      }
+    },
+    "Revert to Backup" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revert to Backup"
           }
         }
       }
@@ -911,6 +1001,16 @@
         }
       }
     },
+    "The note on the tablet is replaced by this backup. A backup of the note as it is now is kept first, and Undo starts over." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note on the tablet is replaced by this backup. A backup of the note as it is now is kept first, and Undo starts over."
+          }
+        }
+      }
+    },
     "The page has no image." : {
       "localizations" : {
         "en" : {
@@ -1067,6 +1167,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Undo %@"
+          }
+        }
+      }
+    },
+    "Wait until every edit reached the tablet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wait until every edit reached the tablet."
           }
         }
       }

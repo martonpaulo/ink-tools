@@ -107,6 +107,13 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   background, one at a time; a run of nudges on the same elements is one request when it ends; a
   refusal gives back the editor's undo and a plain message; after a send only the edited page is
   drawn again. No operation reads a page's elements on the tablet.
+- In the app, `NoteEditor` holds one note's edits, for a note opened from the tablet only: it draws
+  the Mac's copy with every edit still on its way applied in order, so a refusal or an undo of a
+  waiting edit only leaves that list; Edit › Undo and Redo follow `EditHistory`
+  ([#328](https://github.com/martonpaulo/ink-tools/issues/328)), File › Revert to Backup lists the
+  note's backups, and a refusal shows its sentence in a bar over the pages. Page moves, by a drag
+  in the page list or Edit › Move Page Up and Down, are the first edit
+  ([#330](https://github.com/martonpaulo/ink-tools/issues/330)).
 - `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 
 Differences from the standard, each for a reason:

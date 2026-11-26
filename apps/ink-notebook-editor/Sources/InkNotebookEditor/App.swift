@@ -24,12 +24,21 @@ struct InkNotebookEditorApp: App {
             CommandGroup(after: .newItem) {
                 OpenFromTabletCommand()
             }
+            CommandGroup(after: .saveItem) {
+                RevertCommands()
+            }
+            // Undo and Redo of the note's edits, named by the history (#328).
+            CommandGroup(replacing: .undoRedo) {
+                UndoCommands()
+            }
             // Edit › Find replaces the text-editing items: the notes are read only (#322).
             CommandGroup(replacing: .textEditing) {
                 FindCommands()
             }
             CommandGroup(after: .pasteboard) {
                 CopyTextCommands()
+                Divider()
+                MovePageCommands()
             }
             CommandGroup(before: .toolbar) {
                 SidebarCommands()
@@ -202,5 +211,85 @@ private struct CopyTextCommands: View {
         guard let words = text?.text(pages: pages) else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(words, forType: .string)
+    }
+}
+
+/// Edit › Undo and Redo: the note's edits, through the write path (#313, #328). A text field in
+/// front, such as the find bar's, keeps its own undo; a note opened from a file has no edits.
+private struct UndoCommands: View {
+    @FocusedValue(\.noteEditor) private var editor
+
+    var body: some View {
+        Button(Copy.undo(editor?.history.undoKind)) {
+            if let editor, !Self.textInFront {
+                editor.undo()
+            } else {
+                NSApp.sendAction(Selector(("undo:")), to: nil, from: nil)
+            }
+        }
+        .keyboardShortcut("z")
+        .disabled(editor.map { !$0.canUndo } ?? false)
+        Button(Copy.redo(editor?.history.redoKind)) {
+            if let editor, !Self.textInFront {
+                editor.redo()
+            } else {
+                NSApp.sendAction(Selector(("redo:")), to: nil, from: nil)
+            }
+        }
+        .keyboardShortcut("z", modifiers: [.command, .shift])
+        .disabled(editor.map { !$0.canRedo } ?? false)
+    }
+
+    /// Whether the keyboard is in a text field, whose typing has its own undo.
+    static var textInFront: Bool { NSApp.keyWindow?.firstResponder is NSText }
+}
+
+/// Edit › Move Page Up and Move Page Down: the current page one place up or down (#330), on a
+/// note opened from the tablet.
+private struct MovePageCommands: View {
+    @FocusedValue(\.noteEditor) private var editor
+    @FocusedValue(\.pageNavigator) private var navigator
+
+    var body: some View {
+        item(Copy.movePageUp, by: -1)
+        item(Copy.movePageDown, by: 1)
+    }
+
+    private func item(_ title: String, by step: Int) -> some View {
+        let from = navigator?.wrappedValue.index
+        let to = from.map { $0 + step }
+        let fits = editor?.canEdit == true && to.map { (0..<(editor?.pageCount ?? 0)).contains($0) } == true
+        return Button(title) {
+            guard let editor, let from, let to, editor.movePage(from: from, to: to) else { return }
+            navigator?.wrappedValue.show(to)
+        }
+        .disabled(!fits)
+        .help(editor == nil ? Copy.editOnlyFromTablet : "")
+    }
+}
+
+/// File › Revert to Backup: the note's backups by date, newest first, as TextEdit's File ›
+/// Revert To lists versions (#313). The window asks before it replaces the tablet's note.
+struct RevertCommands: View {
+    @FocusedValue(\.noteEditor) private var editor
+
+    var body: some View {
+        Menu(Copy.revertToBackup) {
+            if let editor, !editor.backups.isEmpty {
+                ForEach(editor.backups, id: \.self) { backup in
+                    Button(Self.title(backup)) { editor.revertCandidate = backup }
+                }
+            } else {
+                Button(Copy.noBackups) {}
+                    .disabled(true)
+            }
+        }
+        .disabled(editor?.canRevert != true)
+        .help(editor == nil ? Copy.editOnlyFromTablet : editor?.pending.isEmpty == false ? Copy.waitForSends : "")
+    }
+
+    /// A backup's date and time, as the menu and the confirmation name it.
+    static func title(_ backup: URL) -> String {
+        NoteBackups.date(of: backup)?.formatted(date: .abbreviated, time: .standard) ?? backup.lastPathComponent
     }
 }

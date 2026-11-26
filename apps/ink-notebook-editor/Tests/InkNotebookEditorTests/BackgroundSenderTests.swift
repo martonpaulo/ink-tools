@@ -49,6 +49,19 @@ import Testing
         #expect(queue.waiting.map(\.undo) == [1, 9])
     }
 
+    @Test func anUndoDropsAWaitingEditAndNotOneThatLeft() {
+        var queue = EditQueue<Int>()
+        queue.drew(Self.nudge(1), undo: 1)
+        queue.nudged(Self.nudge(2, number: 7), undo: 2)
+        let waiting = queue.drop(2)
+        #expect(waiting)
+        #expect(queue.run == nil && queue.waiting.map(\.undo) == [1])
+        _ = queue.next()
+        let left = queue.drop(1)
+        #expect(!left)
+        #expect(queue.waiting.isEmpty)
+    }
+
     @Test func onlyTheEditedPageIsRedrawnAfterAPull() {
         #expect(pagesToRedraw(after: Self.nudge(1)) == [1])
         #expect(pagesToRedraw(after: TabletOperation(.movePage(from: 0, to: 2), note: Self.note, baseHash: "h")) == nil)
@@ -85,12 +98,13 @@ import Testing
         await sender.drew(Self.nudge(1), undo: 42)
         #expect(
             outcomes.all == [
+                .started(42),
                 .refused(
                     undo: 42,
-                    message: WriteFailure.tablet(.failed("device-link edit: no-element: operation 1")).message)
+                    message: WriteFailure.tablet(.failed("device-link edit: no-element: operation 1")).message),
             ])
         #expect(
-            outcomes.all.first.map { if case .refused(_, let text) = $0 { text.contains("no-element") } else { false } }
+            outcomes.all.last.map { if case .refused(_, let text) = $0 { text.contains("no-element") } else { false } }
                 == true)
     }
 
@@ -105,7 +119,7 @@ import Testing
         await sender.nudged(Self.nudge(1), undo: 1)
         await sender.nudged(Self.nudge(2, number: 9), undo: 2)
         await sender.endRun()
-        #expect(outcomes.all == [.applied(redraw: [1]), .applied(redraw: [1])])
+        #expect(outcomes.all == [.started(1), .applied(1, redraw: [1]), .started(2), .applied(2, redraw: [1])])
         #expect(tablet.calls == ["edit modifyElements", "pull", "edit modifyElements", "pull"])
     }
 

@@ -13,8 +13,11 @@ public struct QueuedEdit<Undo: Sendable & Equatable>: Sendable, Equatable {
 
 /// What the editor does after the tablet answers.
 public enum SendOutcome<Undo: Sendable & Equatable>: Sendable, Equatable {
-    /// Draw these pages again, from 0; nil when pages were added, removed or moved: all of them.
-    case applied(redraw: Set<Int>?)
+    /// The edit left the queue for the tablet: an undo can no longer drop it.
+    case started(Undo)
+    /// The tablet applied the edit: draw these pages again, from 0; nil when pages were added,
+    /// removed or moved: all of them.
+    case applied(Undo, redraw: Set<Int>?)
     /// Draw `undo` to take the edit back, and show `message`.
     case refused(undo: Undo, message: String)
 }
@@ -54,6 +57,15 @@ public struct EditQueue<Undo: Sendable & Equatable>: Sendable, Equatable {
         guard let open = run else { return }
         waiting.append(open)
         run = nil
+    }
+
+    /// Takes a waiting edit off the queue, as an undo of an edit never sent: false when it is not
+    /// waiting, as it left for the tablet. The open run is never dropped: it ends first.
+    public mutating func drop(_ undo: Undo) -> Bool {
+        endRun()
+        guard let index = waiting.firstIndex(where: { $0.undo == undo }) else { return false }
+        waiting.remove(at: index)
+        return true
     }
 
     /// The next edit to send, taken off the queue.
@@ -164,17 +176,23 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
         await drain()
     }
 
+    /// Drops a waiting edit: false when it already left for the tablet.
+    public func drop(_ undo: Undo) -> Bool {
+        queue.drop(undo)
+    }
+
     /// Sends until the queue is empty; a second call while one sends returns at once.
     func drain() async {
         guard !sending else { return }
         sending = true
         defer { sending = false }
         while let edit = queue.next() {
+            outcome(.started(edit.undo))
             do {
                 let old = edit.operation.baseHash
                 try await path.send(edit.operation, copy: copy)
                 if let new = try? path.hash(copy) { queue.rebase(from: old, to: new) }
-                outcome(.applied(redraw: pagesToRedraw(after: edit.operation)))
+                outcome(.applied(edit.undo, redraw: pagesToRedraw(after: edit.operation)))
             } catch {
                 outcome(.refused(undo: edit.undo, message: error.message))
             }

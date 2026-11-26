@@ -81,11 +81,14 @@ struct SyncStatusLine: View {
     static let inset = EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12)
 
     let live: LiveNote
+    /// The edits still on their way to the tablet (#314).
+    var sending = 0
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            let (text, symbol, problem) = Self.words(live.watch, now: context.date)
-            Label(text, systemImage: symbol)
+            let (synced, symbol, problem) = Self.words(live.watch, now: context.date)
+            let text = sending > 0 && !problem ? Copy.sendingEdits(sending) : synced
+            Label(text, systemImage: sending > 0 && !problem ? "arrow.up.circle" : symbol)
                 .symbolRenderingMode(problem ? .multicolor : .hierarchical)
                 .font(.callout)
                 .monospacedDigit()
