@@ -74,6 +74,9 @@ export const copy = {
   'press.permission':
     'Image Editing needs file access. Choose Always Allow for both questions, then press again.',
   'press.notPicture': 'Lasso one picture only, then press again.',
+  /** An edit that reached the image step without its input (#295). */
+  'edit.cropNoBox': 'Crop has no box',
+  'edit.eraseNoMarks': 'Erase has no marks',
   'press.notEdited': 'Image Editing has not changed this picture yet.',
   /** Crop's toasts (#132): what to draw and lasso. */
   'press.cropNoGuide':

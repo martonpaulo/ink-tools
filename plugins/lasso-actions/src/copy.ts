@@ -75,6 +75,10 @@ export const copy = {
   'heading.failedReason': 'Close, then lasso the line and press the heading again.',
   'heading.notMoved':
     'The heading was made, but it could not be moved to the margin.',
+  /** The picture modes' lasso buttons and «Choose Image» (#156, #295). */
+  'button.sticker': 'Insert Sticker',
+  'button.image': 'Insert Image',
+  'button.choose': 'Choose Image',
   'button.define': 'Insert Definition',
   /** A 3-sentence bio or topic summary from Wikipedia (#114). */
   'button.summary': 'Insert Summary',

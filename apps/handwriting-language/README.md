@@ -5,7 +5,7 @@ the whole tablet with one tap: from a small floating button where you write, or 
 the sidebar. It works with the languages already installed on the tablet. Lingo is its
 internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
 
-Status: test build `0.1.0 beta 7` for a device round ([#157](https://github.com/martonpaulo/supernote-tools/issues/157)). It was called Dialect until
+Status: test build for device rounds ([#157](https://github.com/martonpaulo/supernote-tools/issues/157)); its version is `app.json`'s `version`. It was called Dialect until
 `0.1.0 beta 1` ([#160](https://github.com/martonpaulo/supernote-tools/issues/160)).
 
 ## Install

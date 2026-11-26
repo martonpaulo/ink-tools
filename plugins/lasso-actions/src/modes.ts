@@ -47,7 +47,7 @@ export const MODES: readonly Mode[] = [
     // Drawings, engravings and OpenMoji: Ink2Pic's «Drawings» style, line art first.
     kind: 'illustration',
     buttonId: FIRST_BUTTON_ID,
-    name: 'Insert Sticker',
+    name: copy['button.sticker'],
     settingKey: 'illustration',
     photos: false,
     skipSources: [],
@@ -58,7 +58,7 @@ export const MODES: readonly Mode[] = [
     // Real photos: Commons with no drawings filter; clip art and symbols are no photos.
     kind: 'photo',
     buttonId: FIRST_BUTTON_ID + 1,
-    name: 'Insert Image',
+    name: copy['button.image'],
     settingKey: 'photo',
     photos: true,
     skipSources: ['openclipart', 'openmoji'],
@@ -72,7 +72,7 @@ export const MODES: readonly Mode[] = [
  * FIRST_BUTTON_ID + MODES.length (src/definition.ts).
  */
 export const CHOOSE_BUTTON_ID = FIRST_BUTTON_ID + MODES.length + 1;
-export const CHOOSE_BUTTON_NAME = 'Choose Image';
+export const CHOOSE_BUTTON_NAME = copy['button.choose'];
 
 /** One translation button: its direction, its Settings key and its id and name. */
 export type Translation = {

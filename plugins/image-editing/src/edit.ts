@@ -17,6 +17,7 @@ import {
   PICTURE_TYPE,
   Result,
 } from '@ink-tools/sn-adapter/official';
+import {copy} from './copy';
 import {EditId} from './edits';
 import {
   Change,
@@ -265,11 +266,11 @@ async function pixelEdit(
 ): Promise<Done> {
   const box = pixel === 'crop' ? options.box : undefined;
   if (pixel === 'crop' && !box) {
-    return {kind: 'failed', why: 'Crop has no box'};
+    return {kind: 'failed', why: copy['edit.cropNoBox']};
   }
   const marks = pixel === 'erase' ? options.marks : undefined;
   if (pixel === 'erase' && !marks) {
-    return {kind: 'failed', why: 'Erase has no marks'};
+    return {kind: 'failed', why: copy['edit.eraseNoMarks']};
   }
   const width = await deps.pageWidth(place.note, place.page);
   if (!width.ok) {
