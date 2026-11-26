@@ -65,6 +65,12 @@ nonisolated enum Copy {
     static let pageHasNoWords = String(localized: "This page has no recognised words.")
     static let selectionHasNoWords = String(localized: "The selection has no recognised words.")
     static let untitledNote = String(localized: "Note")
+
+    // MARK: A live note (#315)
+
+    static let syncing = String(localized: "Syncing…")
+    static let tabletNotConnected = String(localized: "Tablet not connected. Connect the cable and unlock it.")
+    static let copyUnreadable = String(localized: "The note copied from the tablet cannot be read.")
     static let readingHandwritingStart = String(localized: "Reading the handwriting…")
 
     // MARK: Open from Tablet
@@ -102,6 +108,21 @@ nonisolated enum Copy {
 
     static func pageOfSelected(_ page: Int, _ count: Int, _ selected: Int) -> String {
         String(localized: "Page \(page) of \(count), \(selected) selected")
+    }
+
+    static func syncedAgo(_ seconds: Int) -> String {
+        String(localized: "Synced \(seconds) s ago")
+    }
+
+    /// A failure's reason as a sentence, and the retry.
+    static func syncFailed(_ reason: String) -> String {
+        let sentence = reason.hasSuffix(".") ? reason : reason + "."
+        return String(localized: "\(sentence) The app tries again in 2 s.")
+    }
+
+    /// Which copy a window still shows while the tablet does not answer, after a space.
+    static func showingCopy(from time: Date) -> String {
+        String(localized: " Showing the copy from \(time.formatted(date: .omitted, time: .standard)).")
     }
 
     static func selectedCount(_ selected: Int) -> String {

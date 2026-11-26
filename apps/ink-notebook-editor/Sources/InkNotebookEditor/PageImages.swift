@@ -33,7 +33,13 @@ final class PageImages {
         }
     }
 
-    let note: NoteFile
+    private(set) var note: NoteFile
+    /// Counts the notes `update` took, so the views that draw pages ask again after one (#315).
+    private(set) var generation = 0
+    /// The pages and thumbnails whose drawing is of an older copy, and the pages being drawn.
+    @ObservationIgnored private var stalePages: Set<Int> = []
+    @ObservationIgnored private var staleThumbnails: [ThumbnailSize: Set<Int>] = [:]
+    @ObservationIgnored private var drawingPages: Set<Int> = []
     private(set) var pages: [Int: State] = [:]
     private(set) var thumbnails: [ThumbnailSize: [Int: State]] = [:]
     /// The style of each drawn page whose template could not be drawn (#308).
@@ -57,10 +63,14 @@ final class PageImages {
     func page(_ index: Int) -> State { pages[index] ?? .loading }
     func thumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar) -> State { thumbnails[size]?[index] ?? .loading }
 
-    /// Draws one page at full size, unless it is drawn or being drawn.
+    /// Draws one page at full size, unless it is drawn or being drawn. A page a newer copy
+    /// changed keeps its old drawing on screen until the new one is ready (#315).
     func loadPage(_ index: Int) async {
-        guard pages[index] == nil else { return }
-        pages[index] = .loading
+        guard pages[index] == nil || stalePages.contains(index), !drawingPages.contains(index) else { return }
+        stalePages.remove(index)
+        drawingPages.insert(index)
+        defer { drawingPages.remove(index) }
+        if pages[index] == nil { pages[index] = .loading }
         let (state, missing) = await Self.draw(note, index, thumbnailPixels: nil, logger: logger)
         // A page scrolled away while it drew is not kept.
         guard pages[index] != nil else { return }
@@ -122,10 +132,42 @@ final class PageImages {
         }
     }
 
+    /// Takes a newer copy of the note (#315): the pages that did not change keep their drawings,
+    /// the changed ones draw again and show their old drawing meanwhile; when pages were added,
+    /// removed or moved, every page draws again. Returns the changed pages, nil for every page.
+    @discardableResult
+    func update(_ newer: NoteFile) -> Set<Int>? {
+        let changed = NoteDiff.changedPages(note, newer)
+        note = newer
+        generation += 1
+        guard let changed else {
+            pages = [:]
+            thumbnails = [:]
+            missingTemplates = [:]
+            elements = [:]
+            stalePages = []
+            staleThumbnails = [:]
+            return nil
+        }
+        stalePages.formUnion(changed)
+        for index in changed {
+            elements[index] = nil
+            for size in ThumbnailSize.allCases {
+                staleThumbnails[size, default: []].insert(index)
+            }
+        }
+        return changed
+    }
+
+    /// Whether page `index` shows a drawing of an older copy, waiting for its new one.
+    func isStale(_ index: Int) -> Bool { stalePages.contains(index) }
+
     /// Draws one thumbnail, as many pixels as its box shows on a display of `scale`.
     func loadThumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar, scale: CGFloat) async {
-        guard thumbnails[size]?[index] == nil else { return }
-        thumbnails[size, default: [:]][index] = .loading
+        let stale = staleThumbnails[size, default: []].contains(index)
+        guard thumbnails[size]?[index] == nil || stale else { return }
+        staleThumbnails[size]?.remove(index)
+        if thumbnails[size]?[index] == nil { thumbnails[size, default: [:]][index] = .loading }
         let points = PageFit.fitted(page: self.size(of: index), in: size.box)
         let pixels = PageFit.pixels(for: points, scale: scale)
         let (state, missing) = await Self.draw(note, index, thumbnailPixels: pixels, logger: logger)

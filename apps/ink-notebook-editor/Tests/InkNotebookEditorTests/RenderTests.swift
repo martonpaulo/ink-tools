@@ -75,6 +75,27 @@ final class RenderTests {
             CGRect(x: 290, y: 290, width: 300, height: 130), in: strokes.selectable(0) ?? [])
         some.selection.take(found, page: 0, adding: false)
         try await render("selection-landscape", Self.sizes) { NotebookView(pages: strokes, viewer: some) }
+        // A note opened from the tablet carries its sync line in each state (#315); the renders
+        // never start the watch, so nothing reaches the tablet.
+        let stamp = NoteStamp(bytes: 377_142, modified: "2026-11-26T09:10:01+01:00")
+        var offline = NoteWatch()
+        offline.failed(.notConnected("no tablet answers on USB or Wi-Fi"))
+        var gone = NoteWatch()
+        gone.failed(.notFound("Note/Garden.note is not on the tablet."))
+        for (state, watch) in [
+            ("syncing", NoteWatch()), ("synced", NoteWatch()), ("offline", offline), ("failed", gone),
+        ] {
+            try await render("sync-\(state)", Self.sizes) {
+                // Synced 3 s before each render, however long the renders before it took.
+                var shown = watch
+                if state == "synced" { shown.pulled(stamp, at: Date().addingTimeInterval(-3)) }
+                let live = LiveNote(
+                    tabletPath: "Note/Garden.note", local: scratch.appending(path: "Garden.note"),
+                    inkctl: Inkctl(executable: nil, environment: [:]), watch: shown)
+                live.watches = false
+                return NotebookView(pages: drawn, live: live)
+            }
+        }
         // A landscape page draws wide and upright, its thumbnail too (#291).
         let landscape = try Fixtures.note("landscape.note")
         let wide = PageImages(note: landscape)

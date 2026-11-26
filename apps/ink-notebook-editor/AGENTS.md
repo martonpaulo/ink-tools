@@ -78,7 +78,8 @@ with this folder as its root: `Package.swift`, `Makefile`, `Support/`, `scripts/
 
 - `Sources/InkNotebookEditorKit/`: pure logic, Foundation and CoreGraphics only (`scripts/validate.sh`
   checks it): page navigation, page fit, the zoom steps and fit rules
-  ([#319](https://github.com/martonpaulo/ink-tools/issues/319)), the tablet listing and the `inkctl` client.
+  ([#319](https://github.com/martonpaulo/ink-tools/issues/319)), the tablet listing, the `inkctl` client and the
+  watch of a note opened from the tablet ([#315](https://github.com/martonpaulo/ink-tools/issues/315)).
 - `Sources/InkNotebookEditor/`: the SwiftUI app, `MainActor` by default. A read-only
   `DocumentGroup(viewing:)` of the imported type `com.martonpaulo.inktools.notebookeditor.note`,
   declared in `Support/Info.plist` with the role Viewer, so Ratta's own app keeps the `.note` files.

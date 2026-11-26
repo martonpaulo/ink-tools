@@ -44,6 +44,40 @@ public enum NoteDiff {
         return lines
     }
 
+    /// The pages of `after` that differ from the same page of `before`: their metadata, a layer
+    /// or an element block changed (#315). `nil` when the pages were added, removed or moved, so
+    /// every page is new.
+    public static func changedPages(_ before: NoteFile, _ after: NoteFile) -> Set<Int>? {
+        let ids = { (file: NoteFile) in file.pages.map { $0.metadata["PAGEID"] } }
+        guard before.pages.count == after.pages.count, ids(before) == ids(after) else { return nil }
+        var changed = Set<Int>()
+        for (index, (old, new)) in zip(before.pages, after.pages).enumerated() {
+            let layers = NoteFile.layerKeys.contains { key in
+                let oldLayer = old.layers.first { $0.key == key }
+                let newLayer = new.layers.first { $0.key == key }
+                return block(before, oldLayer?.bitmapAddress) != block(after, newLayer?.bitmapAddress)
+            }
+            let blocks = pageBlocks.contains { key in
+                block(before, old.metadata.address(key)) != block(after, new.metadata.address(key))
+            }
+            if layers || blocks || !sameMetadata(old.metadata, new.metadata) {
+                changed.insert(index)
+            }
+        }
+        return changed
+    }
+
+    /// Two page metadata blocks alike but for their addresses, which move whenever any block before
+    /// them grows.
+    static func sameMetadata(_ old: Metadata, _ new: Metadata) -> Bool {
+        let kept = { (metadata: Metadata) in
+            metadata.pairs.filter { pair in
+                !(NoteFile.layerKeys + pageBlocks).contains(pair.key)
+            }
+        }
+        return kept(old) == kept(new)
+    }
+
     static func block(_ file: NoteFile, _ address: Int?) -> ArraySlice<UInt8>? {
         guard let address, address != 0 else { return nil }
         return try? file.block(at: address)

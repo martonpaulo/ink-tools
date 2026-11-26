@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    " Showing the copy from %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Showing the copy from %@."
+          }
+        }
+      }
+    },
+    "%@ The app tries again in 2 s." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ The app tries again in 2 s."
+          }
+        }
+      }
+    },
     "%@ is not a path inkctl can copy." : {
       "localizations" : {
         "en" : {
@@ -11,12 +31,32 @@
         }
       }
     },
+    "%@ is not a path inkctl can read." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is not a path inkctl can read."
+          }
+        }
+      }
+    },
     "%@ is not a path the app can copy." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ is not a path the app can copy."
+          }
+        }
+      }
+    },
+    "%@ is not on the tablet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is not on the tablet."
           }
         }
       }
@@ -651,6 +691,36 @@
         }
       }
     },
+    "Synced %lld s ago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synced %lld s ago"
+          }
+        }
+      }
+    },
+    "Syncing…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing…"
+          }
+        }
+      }
+    },
+    "Tablet not connected. Connect the cable and unlock it." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablet not connected. Connect the cable and unlock it."
+          }
+        }
+      }
+    },
     "Template %@ cannot be drawn" : {
       "localizations" : {
         "en" : {
@@ -717,6 +787,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The handwriting is still being read."
+          }
+        }
+      }
+    },
+    "The note copied from the tablet cannot be read." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note copied from the tablet cannot be read."
           }
         }
       }
@@ -947,6 +1027,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "inkctl is not installed"
+          }
+        }
+      }
+    },
+    "inkctl is not installed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inkctl is not installed."
           }
         }
       }

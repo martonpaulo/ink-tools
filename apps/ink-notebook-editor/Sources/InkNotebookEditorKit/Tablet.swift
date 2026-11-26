@@ -78,6 +78,16 @@ public struct TabletCopyLocation: Sendable, Equatable {
         return parts.reduce(root) { $0.appending(path: $1, directoryHint: .notDirectory) }
     }
 
+    /// The tablet path a local copy came from, relative to the shared storage, as `localURL`
+    /// makes it; nil for a file outside the copies folder, which is not a tablet note (#315).
+    public func tabletPath(for local: URL) -> String? {
+        let base = root.standardizedFileURL.pathComponents
+        let parts = local.standardizedFileURL.pathComponents
+        guard parts.count > base.count, Array(parts.prefix(base.count)) == base else { return nil }
+        let path = parts.dropFirst(base.count).joined(separator: "/")
+        return localURL(for: path) == nil ? nil : path
+    }
+
     /// The tablet's shared storage, where inkctl's relative paths start.
     public static let sharedStorage = "/storage/emulated/0"
 }

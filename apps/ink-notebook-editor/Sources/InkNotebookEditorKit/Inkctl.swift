@@ -105,6 +105,20 @@ public struct Inkctl: Sendable {
         }
     }
 
+    /// The size and time of one note: `inkctl --json --read-only files ls PATH` of the note itself
+    /// lists that one file (#315). A listing without it means the note is gone.
+    public func stamp(of tabletPath: String) async throws(InkctlFailure) -> NoteStamp {
+        guard !tabletPath.hasPrefix("-") else {
+            throw .failed(String(localized: "\(tabletPath) is not a path inkctl can read."))
+        }
+        let listing = try await list(folder: tabletPath)
+        let name = (tabletPath as NSString).lastPathComponent
+        guard let entry = listing.entries.first(where: { $0.name == name && !$0.isFolder }) else {
+            throw .notFound(String(localized: "\(tabletPath) is not on the tablet."))
+        }
+        return NoteStamp(bytes: entry.bytes, modified: entry.modified)
+    }
+
     /// Copies one note to `destination` with `inkctl --json --read-only files pull --allow-notes`:
     /// the owner picks the note, so the notes folder is allowed. The copy lands under a temporary
     /// name beside `destination` and replaces it only when inkctl succeeds, so a failed pull

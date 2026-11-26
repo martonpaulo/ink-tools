@@ -19,6 +19,9 @@ struct NotebookWindow: View {
     @State private var dropFailure: String?
     /// The note's words, read in the background for Find in Note and Copy as Text (#321).
     @State private var text = NoteText(indexer: NoteIndexer())
+    /// The watch of a note opened from the tablet (#315); nil for any other file.
+    @State private var live: LiveNote?
+    @Environment(\.documentConfiguration) private var configuration
 
     var body: some View {
         Group {
@@ -28,10 +31,11 @@ struct NotebookWindow: View {
             case .note(let note) where note.pages.isEmpty:
                 StateView(.noPages) { OpenAnotherButton() }
             case .note(let note):
-                NotebookView(pages: PageImages(note: note), columns: columns)
+                NotebookView(pages: PageImages(note: note), columns: columns, live: live)
             }
         }
         .environment(text)
+        .onAppear { live = live ?? LiveNote.of(configuration?.fileURL) }
         .task {
             text.name = name
             if case .note(let note) = document.content { await text.indexer.run(note: note) }
@@ -93,11 +97,14 @@ struct NotebookView: View {
     @FocusState private var pageFocused: Bool
     @Environment(\.displayScale) private var displayScale
     @Environment(NoteText.self) private var text: NoteText?
+    /// The watch of a note opened from the tablet, which keeps its pages fresh (#315).
+    let live: LiveNote?
 
     init(
         pages: PageImages, page: Int = 0, columns: NavigationSplitViewVisibility = .automatic,
-        viewer: PageViewer = PageViewer(), sidebar: SidebarMode = .pages
+        viewer: PageViewer = PageViewer(), sidebar: SidebarMode = .pages, live: LiveNote? = nil
     ) {
+        self.live = live
         _pages = State(initialValue: pages)
         _navigator = State(initialValue: PageNavigator(pageCount: pages.note.pages.count, index: page))
         _columns = State(initialValue: columns)
@@ -217,6 +224,22 @@ struct NotebookView: View {
                 PageGrid(pages: pages, navigator: $navigator, viewer: viewer)
             }
         }
+        // A note from the tablet stays live while its window is open: the task ends with the
+        // window, so no watch runs with no window (#315).
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if let live { SyncStatusLine(live: live) }
+        }
+        .task(id: live?.tabletPath) {
+            guard let live, live.watches else { return }
+            await live.run { newer in
+                let changed = pages.update(newer)
+                // A selection names elements by their place on the page, which a change moves.
+                if let page = viewer.selection.page, changed?.contains(page) ?? true { viewer.selection.clear() }
+                if newer.pages.count != navigator.pageCount {
+                    navigator = PageNavigator(pageCount: newer.pages.count, index: navigator.index ?? 0)
+                }
+            }
+        }
         // The pages hold the keyboard focus, so the page keys work with the sidebar shown or
         // hidden, and Page Up and Page Down never scroll the list instead.
         .focusable()
@@ -241,7 +264,9 @@ struct NotebookView: View {
                 ForEach(0..<navigator.pageCount, id: \.self) { index in
                     ThumbnailRow(index: index, count: navigator.pageCount, pages: pages)
                         .id(index)
-                        .task(id: displayScale) { await pages.loadThumbnail(index, scale: displayScale) }
+                        .task(id: DrawKey(scale: displayScale, generation: pages.generation)) {
+                            await pages.loadThumbnail(index, scale: displayScale)
+                        }
                         // A thumbnail dragged to Finder or another app gives its page (#323).
                         .onDrag { text?.provider(of: pages.note, page: index) ?? NSItemProvider() }
                 }
@@ -345,7 +370,7 @@ private struct PageScroll: View {
             .onScrollTargetVisibilityChange(idType: Int.self, threshold: Self.visibleShare) { visible = Set($0) }
             // The pages in view and their neighbours draw, and no other page stays drawn. Before the
             // scroll reports its pages, the current page draws.
-            .task(id: visible) {
+            .task(id: VisibleKey(pages: visible, generation: pages.generation)) {
                 await pages.show(visible.isEmpty ? Set([navigator.index ?? 0]) : visible)
             }
             .onChange(of: position.viewID(type: Int.self)) { _, page in
@@ -439,7 +464,9 @@ private struct PageGrid: View {
                             viewer.layout = .scroll
                         }
                         .id(index)
-                        .task(id: displayScale) { await pages.loadThumbnail(index, .grid, scale: displayScale) }
+                        .task(id: DrawKey(scale: displayScale, generation: pages.generation)) {
+                            await pages.loadThumbnail(index, .grid, scale: displayScale)
+                        }
                     }
                 }
                 .padding(Self.spacing)
@@ -546,6 +573,18 @@ private struct ViewerToolbar: ToolbarContent {
             }
         }
     }
+}
+
+/// What a thumbnail is drawn for: the display's scale and the copy of the note (#315).
+struct DrawKey: Hashable {
+    let scale: CGFloat
+    let generation: Int
+}
+
+/// The pages in view of one copy of the note, so a newer copy draws them again (#315).
+struct VisibleKey: Hashable {
+    let pages: Set<Int>
+    let generation: Int
 }
 
 /// The keys that turn pages in a notebook window: the arrows, Page Up and Page Down, Home and End.
