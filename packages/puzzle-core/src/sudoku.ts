@@ -1,13 +1,16 @@
 /**
- * Classic sudoku from 4 x 4 to 16 x 16 (#380): a full grid drawn from the seed, then clues removed
- * in a seeded order while the puzzle keeps exactly one solution (exact cover) and its rating stays
- * within the band asked for. The result is our own model; drawing it is the page renderer's job.
+ * Classic sudoku from 4 x 4 to 16 x 16 (#380). Digging: a full grid drawn from the seed, then clues
+ * removed in a seeded order while the techniques of the band still finish it, which proves one
+ * solution. Digging runs on the Mac into a bank; a game takes a bank entry by its seed and shows it
+ * another way, which keeps its one solution and its band. The result is our own model; drawing it
+ * is the page renderer's job.
  */
 
 import { type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
-import { childSeed, createRandom } from './random';
-import { bandRank, rateSudoku, type SudokuRating, type SudokuShape } from './sudoku-techniques';
+import { childSeed, createRandom, type Random } from './random';
+import { SUDOKU_BANK } from './sudoku-bank';
+import { bandRank, finishSudoku, isSingleAt, rateSudoku, solvesWithin, type SudokuRating, type SudokuShape } from './sudoku-techniques';
 
 /**
  * The sizes offered and their boxes (rows x columns), with the bands each one can reach: a band is
@@ -110,27 +113,32 @@ function attempt(shape: SudokuShape, seed: string, difficulty: Difficulty): { gi
   for (const cell of random.shuffle(givens.map((_, i) => i))) {
     const value = givens[cell];
     givens[cell] = 0;
-    if (countSudokuSolutions(shape, givens) !== 1) {
-      givens[cell] = value;
-      continue;
-    }
-    const rating = rateSudoku(shape, givens, difficulty);
-    if (rating.difficulty === null) givens[cell] = value;
+    // A grid the techniques finish has exactly one solution: each step is forced, and the givens
+    // come from a full grid, so no separate uniqueness count is needed. The givens so far are
+    // finished by the techniques, so a cell they force at once needs no new rating (#380, tablet speed).
+    if (isSingleAt(shape, givens, cell, value)) continue;
+    if (!solvesWithin(shape, givens, difficulty)) givens[cell] = value;
   }
   return { givens, solution, rating: rateSudoku(shape, givens) };
 }
 
-/**
- * A sudoku of the given size and band from the seed: the same three arguments always give the same
- * puzzle. Throws on a size not offered, a band the size cannot reach, or when the attempts run out.
- */
-export function generateSudoku(seed: string, size: number, difficulty: Difficulty): Sudoku {
+function offeredShape(size: number, difficulty: Difficulty): SudokuShape {
   const offered = SUDOKU_SIZES[size];
   if (!offered) throw new RangeError(`sudoku size ${size} is not offered: ${Object.keys(SUDOKU_SIZES).join(', ')}`);
   if (!offered.bands.includes(difficulty)) {
     throw new RangeError(`a ${size} x ${size} sudoku offers ${offered.bands.join(', ')}, not ${difficulty}`);
   }
-  const shape: SudokuShape = { size: offered.size, boxRows: offered.boxRows, boxCols: offered.boxCols };
+  return { size: offered.size, boxRows: offered.boxRows, boxCols: offered.boxCols };
+}
+
+/**
+ * Digs a sudoku from the seed: a full grid, then clues removed while the techniques of the band
+ * still finish it, attempt after attempt until the band is exact. The same arguments always give
+ * the same puzzle. It can take seconds for a hard band on the tablet, so the plugin does not call
+ * it: `scripts/sudoku-bank.cjs` runs it on the Mac to write the bank `generateSudoku` reads.
+ */
+export function digSudoku(seed: string, size: number, difficulty: Difficulty): Sudoku {
+  const shape = offeredShape(size, difficulty);
   for (let i = 0; i < SUDOKU_ATTEMPTS; i++) {
     const made = attempt(shape, childSeed(seed, i), difficulty);
     if (made.rating.difficulty !== null && bandRank(made.rating.difficulty) === bandRank(difficulty)) {
@@ -138,4 +146,69 @@ export function generateSudoku(seed: string, size: number, difficulty: Difficult
     }
   }
   throw new Error(`no ${difficulty} ${size} x ${size} sudoku from seed «${seed}» in ${SUDOKU_ATTEMPTS} attempts`);
+}
+
+/** A bank entry's digit base: one digit per cell holds every value up to 16. */
+const BANK_RADIX = 36;
+
+/** A bank entry's text: one base-36 digit per cell, row by row, 0 for an empty cell. */
+export const encodeSudoku = (values: readonly number[]): string => values.map(v => v.toString(BANK_RADIX)).join('');
+export const decodeSudoku = (text: string): number[] => [...text].map(ch => parseInt(ch, BANK_RADIX));
+
+/** A shuffle of 0..count-1 in groups of `group`: the groups move, and the members within each. */
+function groupedOrder(random: Random, count: number, group: number): number[] {
+  const order: number[] = [];
+  for (const g of random.shuffle(Array.from({ length: count / group }, (_, i) => i))) {
+    for (const member of random.shuffle(Array.from({ length: group }, (_, i) => i))) order.push(g * group + member);
+  }
+  return order;
+}
+
+/**
+ * The same puzzle seen another way: digits relabelled, bands and the rows in each band moved,
+ * stacks and the columns in each moved, and a square-box grid perhaps mirrored on its diagonal.
+ * Each keeps the rows, columns and boxes as units, so the solution stays unique and the same
+ * techniques finish it.
+ */
+function transformSudoku(shape: SudokuShape, values: readonly number[], random: Random): number[] {
+  const n = shape.size;
+  const digits = [0, ...random.shuffle(Array.from({ length: n }, (_, i) => i + 1))];
+  const rows = groupedOrder(random, n, shape.boxRows);
+  const columns = groupedOrder(random, n, shape.boxCols);
+  const mirror = shape.boxRows === shape.boxCols && random.int(2) === 1;
+  const out = new Array<number>(n * n);
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const from = rows[r] * n + columns[c];
+      out[mirror ? c * n + r : r * n + c] = digits[values[from]];
+    }
+  }
+  return out;
+}
+
+/** How many seeded views of bank entries are tried before giving up; one is expected to do. */
+const BANK_TRIES = 8;
+
+/**
+ * A sudoku of the given size and band from the seed: the same three arguments always give the same
+ * puzzle. It takes a dug puzzle of that size and band from the bank and shows it another way, both
+ * chosen by the seed, so it is ready at once on the tablet (#380). Throws on a size not offered or
+ * a band the size cannot reach.
+ */
+export function generateSudoku(seed: string, size: number, difficulty: Difficulty): Sudoku {
+  const shape = offeredShape(size, difficulty);
+  const entries = SUDOKU_BANK[`${size}:${difficulty}`];
+  if (!entries?.length) throw new Error(`the sudoku bank has no ${difficulty} ${size} x ${size} puzzle`);
+  for (let i = 0; i < BANK_TRIES; i++) {
+    const random = createRandom(childSeed(seed, `bank/${i}`));
+    const givens = transformSudoku(shape, decodeSudoku(random.pick(entries)), random);
+    const rating = rateSudoku(shape, givens);
+    // The techniques finish every bank puzzle, and what they find is its one solution.
+    const solution = finishSudoku(shape, givens);
+    // The views keep the band; the check keeps a puzzle of another band from ever reaching a player.
+    if (solution && rating.difficulty === difficulty) {
+      return { id: { game: 'sudoku', size: String(size), difficulty, seed }, shape, givens, solution, rating };
+    }
+  }
+  throw new Error(`no ${difficulty} ${size} x ${size} sudoku from seed «${seed}» in ${BANK_TRIES} views of the bank`);
 }

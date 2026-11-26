@@ -64,12 +64,23 @@ export interface SudokuRating {
   steps: number;
 }
 
+/** Where a unit crosses another: the shared cells, and the other unit's cells outside this one. */
+interface Crossing {
+  cells: number[];
+  outside: number[];
+}
+
 interface Geometry {
   shape: SudokuShape;
   units: number[][];
   /** For each cell, the indices of its row, column and box in `units`. */
   unitsOf: number[][];
   peers: number[][];
+  /**
+   * For each unit, its crossings grouped by the kind of the other unit: a row or a column has one
+   * group (its boxes); a box has two (its rows, then its columns), the order `unitsOf` gives.
+   */
+  crossings: Crossing[][][];
 }
 
 const geometries = new Map<string, Geometry>();
@@ -96,7 +107,18 @@ export function geometry(shape: SudokuShape): Geometry {
     for (const u of us) for (const other of units[u]) if (other !== cell) set.add(other);
     return [...set].sort((a, b) => a - b);
   });
-  const made = { shape, units, unitsOf, peers };
+  const crossingsWith = (u: number, others: number[]): Crossing[] =>
+    others.map(other => ({
+      cells: units[u].filter(cell => unitsOf[cell].includes(other)),
+      outside: units[other].filter(cell => !unitsOf[cell].includes(u)),
+    }));
+  const boxesOf = (unit: number[]): number[] => [...new Set(unit.map(cell => unitsOf[cell][2]))];
+  const crossings = units.map((unit, u) =>
+    u < 2 * n
+      ? [crossingsWith(u, boxesOf(unit))]
+      : [crossingsWith(u, [...new Set(unit.map(cell => unitsOf[cell][0]))]), crossingsWith(u, [...new Set(unit.map(cell => unitsOf[cell][1]))])],
+  );
+  const made = { shape, units, unitsOf, peers, crossings };
   geometries.set(key, made);
   return made;
 }
@@ -128,39 +150,55 @@ class Board {
     const n = geo.shape.size; // at most 16, so every mask fits in one integer
     const all = (1 << n) - 1;
     this.values = values.slice();
-    this.candidates = values.map(v => (v ? 0 : all));
-    values.forEach((v, cell) => {
-      if (v) for (const p of geo.peers[cell]) this.candidates[p] &= ~bit(v);
-    });
+    const candidates = new Array<number>(values.length);
+    for (let cell = 0; cell < values.length; cell++) candidates[cell] = values[cell] ? 0 : all;
+    for (let cell = 0; cell < values.length; cell++) {
+      if (!values[cell]) continue;
+      const clear = ~bit(values[cell]);
+      const around = geo.peers[cell];
+      for (let i = 0; i < around.length; i++) candidates[around[i]] &= clear;
+    }
+    this.candidates = candidates;
   }
 
   place(cell: number, value: number): void {
+    const { candidates } = this;
     this.values[cell] = value;
-    this.candidates[cell] = 0;
-    for (const p of this.geo.peers[cell]) this.candidates[p] &= ~bit(value);
+    candidates[cell] = 0;
+    const clear = ~bit(value);
+    const around = this.geo.peers[cell];
+    for (let i = 0; i < around.length; i++) candidates[around[i]] &= clear;
   }
 
   apply(step: SudokuStep): void {
-    for (const e of step.eliminations) this.candidates[e.cell] &= ~bit(e.value);
-    for (const p of step.placements) this.place(p.cell, p.value);
+    const { eliminations, placements } = step;
+    for (let i = 0; i < eliminations.length; i++) this.candidates[eliminations[i].cell] &= ~bit(eliminations[i].value);
+    for (let i = 0; i < placements.length; i++) this.place(placements[i].cell, placements[i].value);
   }
 
+  // Plain index loops in the solver's hot paths: the tablet's engine has no JIT, so a callback or
+  // an iterator per cell costs several times a loop (#380, measured with `node --jitless`).
   solved(): boolean {
-    return this.values.every(v => v !== 0);
+    const { values } = this;
+    for (let cell = 0; cell < values.length; cell++) if (values[cell] === 0) return false;
+    return true;
   }
 
   /** True when an empty cell has no candidate left: the givens contradict each other. */
   broken(): boolean {
-    return this.values.some((v, cell) => v === 0 && this.candidates[cell] === 0);
+    const { values, candidates } = this;
+    for (let cell = 0; cell < values.length; cell++) if (values[cell] === 0 && candidates[cell] === 0) return true;
+    return false;
   }
 }
 
 type Finder = (board: Board) => SudokuStep | null;
 
 const nakedSingle: Finder = board => {
-  for (let cell = 0; cell < board.values.length; cell++) {
-    const mask = board.candidates[cell];
-    if (board.values[cell] === 0 && popcount(mask) === 1) {
+  const { values, candidates } = board;
+  for (let cell = 0; cell < values.length; cell++) {
+    const mask = candidates[cell];
+    if (values[cell] === 0 && mask !== 0 && (mask & (mask - 1)) === 0) {
       return { technique: 'naked single', placements: [{ cell, value: lowestValue(mask) }], eliminations: [] };
     }
   }
@@ -168,38 +206,85 @@ const nakedSingle: Finder = board => {
 };
 
 const hiddenSingle: Finder = board => {
-  const n = board.geo.shape.size;
-  for (const unit of board.geo.units) {
-    for (let v = 1; v <= n; v++) {
-      let where = -1;
-      let count = 0;
-      for (const cell of unit) {
-        if (board.candidates[cell] & bit(v)) {
-          where = cell;
-          count++;
-        }
+  const { candidates } = board;
+  const { units } = board.geo;
+  for (let u = 0; u < units.length; u++) {
+    const unit = units[u];
+    // The values seen once and more than once in the unit; the lowest seen exactly once is the
+    // single, as a scan of the values in order would find it.
+    let once = 0;
+    let twice = 0;
+    for (let i = 0; i < unit.length; i++) {
+      const mask = candidates[unit[i]];
+      twice |= once & mask;
+      once |= mask;
+    }
+    const single = once & ~twice;
+    if (single === 0) continue;
+    const value = lowestValue(single);
+    const b = bit(value);
+    for (let i = 0; i < unit.length; i++) {
+      if (candidates[unit[i]] & b) {
+        return { technique: 'hidden single', placements: [{ cell: unit[i], value }], eliminations: [] };
       }
-      if (count === 1) return { technique: 'hidden single', placements: [{ cell: where, value: v }], eliminations: [] };
     }
   }
   return null;
 };
 
-/** Pointing and claiming: a value confined to one unit's overlap with another leaves the rest of the other. */
+/**
+ * Pointing and claiming: a value confined to one unit's overlap with another leaves the rest of the
+ * other. Units are tried in order, values from the lowest, and a box's rows before its columns.
+ */
 const lockedCandidates: Finder = board => {
-  const n = board.geo.shape.size;
-  const { units, unitsOf } = board.geo;
+  const { candidates } = board;
+  const { units, crossings } = board.geo;
   for (let u = 0; u < units.length; u++) {
-    for (let v = 1; v <= n; v++) {
-      const cells = units[u].filter(cell => board.candidates[cell] & bit(v));
-      if (cells.length < 2) continue;
-      // Every other unit that holds all of these cells.
-      for (const other of unitsOf[cells[0]]) {
-        if (other === u || !cells.every(cell => unitsOf[cell].includes(other))) continue;
-        const eliminations = units[other]
-          .filter(cell => !cells.includes(cell) && board.candidates[cell] & bit(v))
-          .map(cell => ({ cell, value: v }));
-        if (eliminations.length) return { technique: 'locked candidates', placements: [], eliminations };
+    const unit = units[u];
+    // The values with two or more candidate cells in the unit.
+    let once = 0;
+    let many = 0;
+    for (let i = 0; i < unit.length; i++) {
+      const mask = candidates[unit[i]];
+      many |= once & mask;
+      once |= mask;
+    }
+    if (many === 0) continue;
+    // Per group, the values that lie in one crossing only.
+    const groups = crossings[u];
+    const confined: number[] = [];
+    let anyConfined = 0;
+    for (let g = 0; g < groups.length; g++) {
+      let seen = 0;
+      let again = 0;
+      const group = groups[g];
+      for (let k = 0; k < group.length; k++) {
+        const crossing = group[k];
+        let union = 0;
+        for (let i = 0; i < crossing.cells.length; i++) union |= candidates[crossing.cells[i]];
+        again |= seen & union;
+        seen |= union;
+      }
+      confined.push(many & seen & ~again);
+      anyConfined |= confined[g];
+    }
+    for (let left = anyConfined; left; left &= left - 1) {
+      const b = left & -left;
+      for (let g = 0; g < groups.length; g++) {
+        if (!(confined[g] & b)) continue;
+        const group = groups[g];
+        for (let k = 0; k < group.length; k++) {
+          const crossing = group[k];
+          let inside = false;
+          for (let i = 0; i < crossing.cells.length; i++) if (candidates[crossing.cells[i]] & b) inside = true;
+          if (!inside) continue;
+          const eliminations: CellValue[] = [];
+          const { outside } = crossing;
+          for (let i = 0; i < outside.length; i++) {
+            if (candidates[outside[i]] & b) eliminations.push({ cell: outside[i], value: lowestValue(b) });
+          }
+          if (eliminations.length) return { technique: 'locked candidates', placements: [], eliminations };
+        }
       }
     }
   }
@@ -335,10 +420,18 @@ const FINDERS: Record<Technique, Finder> = {
   swordfish: fish(3, 'swordfish'),
 };
 
+/** TECHNIQUE_BANDS as parallel arrays, read by index in the solver's loop. */
+const ORDERED_FINDERS: readonly Finder[] = TECHNIQUE_BANDS.map(([technique]) => FINDERS[technique]);
+const ORDERED_RANKS: readonly number[] = TECHNIQUE_BANDS.map(([, band]) => bandRank(band));
+/** How many techniques at the head of TECHNIQUE_BANDS are singles. */
+const SINGLES = 2;
+const RANK_OF = new Map<Technique, number>(TECHNIQUE_BANDS.map(([technique, band]) => [technique, bandRank(band)]));
+
 function findStep(board: Board, ceiling: Difficulty): SudokuStep | null {
-  for (const [technique, band] of TECHNIQUE_BANDS) {
-    if (bandRank(band) > bandRank(ceiling)) break;
-    const step = FINDERS[technique](board);
+  const top = bandRank(ceiling);
+  for (let i = 0; i < ORDERED_FINDERS.length; i++) {
+    if (ORDERED_RANKS[i] > top) break;
+    const step = ORDERED_FINDERS[i](board);
     if (step) return step;
   }
   return null;
@@ -357,7 +450,7 @@ export function rateSudoku(shape: SudokuShape, values: readonly number[], ceilin
     if (board.broken()) return { difficulty: null, hardest, steps };
     const step = findStep(board, ceiling);
     if (!step) return { difficulty: null, hardest, steps };
-    const rank = bandRank(TECHNIQUE_BANDS.find(([t]) => t === step.technique)![1]);
+    const rank = RANK_OF.get(step.technique) as number;
     if (rank > hardestRank) {
       hardestRank = rank;
       hardest = step.technique;
@@ -366,6 +459,105 @@ export function rateSudoku(shape: SudokuShape, values: readonly number[], ceilin
     steps++;
   }
   return { difficulty: hardestRank < 0 ? 'easy' : BAND_ORDER[hardestRank], hardest, steps };
+}
+
+/** Places every naked and hidden single the board shows, pass after pass, until none is left. */
+function placeSingles(board: Board): void {
+  const { values, candidates } = board;
+  const { units } = board.geo;
+  for (let progress = true; progress; ) {
+    progress = false;
+    for (let cell = 0; cell < values.length; cell++) {
+      const mask = candidates[cell];
+      if (values[cell] === 0 && mask !== 0 && (mask & (mask - 1)) === 0) {
+        board.place(cell, lowestValue(mask));
+        progress = true;
+      }
+    }
+    for (let u = 0; u < units.length; u++) {
+      const unit = units[u];
+      let once = 0;
+      let twice = 0;
+      for (let i = 0; i < unit.length; i++) {
+        const mask = candidates[unit[i]];
+        twice |= once & mask;
+        once |= mask;
+      }
+      for (let single = once & ~twice; single; single &= single - 1) {
+        const b = single & -single;
+        for (let i = 0; i < unit.length; i++) {
+          // A cell an earlier single of this pass filled has no candidates left; the next check
+          // of `broken` then finds the clash.
+          if (candidates[unit[i]] & b) {
+            board.place(unit[i], lowestValue(b));
+            progress = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * The grid the techniques up to `ceiling` finish, or null when they cannot: finished exactly when
+ * `rateSudoku(...).difficulty !== null`, found faster. Singles reach the same end in any order, so
+ * they are placed in batches; a harder technique is still applied one step at a time, after the
+ * singles run out, as `rateSudoku` applies it (#380, tablet speed).
+ */
+export function finishSudoku(shape: SudokuShape, values: readonly number[], ceiling: Difficulty = 'expert'): number[] | null {
+  const board = new Board(geometry(shape), values);
+  const top = bandRank(ceiling);
+  for (;;) {
+    placeSingles(board);
+    if (board.broken()) return null;
+    if (board.solved()) return board.values;
+    let step: SudokuStep | null = null;
+    // Singles are spent, so the search starts at the first harder technique.
+    for (let i = SINGLES; i < ORDERED_FINDERS.length && !step; i++) {
+      if (ORDERED_RANKS[i] > top) break;
+      step = ORDERED_FINDERS[i](board);
+    }
+    if (!step) return null;
+    board.apply(step);
+  }
+}
+
+/** Whether the techniques up to `ceiling` finish the puzzle. */
+export const solvesWithin = (shape: SudokuShape, values: readonly number[], ceiling: Difficulty): boolean =>
+  finishSudoku(shape, values, ceiling) !== null;
+
+/**
+ * True when the empty `cell` of `values` must hold `value` by a naked or hidden single read
+ * straight from the filled cells: its peers hold every other value, or every other empty cell of
+ * one of its units sees `value`. The generator uses it to keep a removal without a full rating:
+ * these techniques reach the same end in any order, so a grid the techniques finish stays finished
+ * after one such cell is emptied (#380).
+ */
+export function isSingleAt(shape: SudokuShape, values: readonly number[], cell: number, value: number): boolean {
+  const geo = geometry(shape);
+  const { peers, units, unitsOf } = geo;
+  const b = bit(value);
+  const seen = (target: number): number => {
+    let mask = 0;
+    const around = peers[target];
+    for (let i = 0; i < around.length; i++) if (values[around[i]]) mask |= bit(values[around[i]]);
+    return mask;
+  };
+  const all = (1 << shape.size) - 1;
+  if ((seen(cell) | b) === all && !(seen(cell) & b)) return true;
+  for (const u of unitsOf[cell]) {
+    let alone = true;
+    for (const other of units[u]) {
+      if (other === cell || values[other]) continue;
+      if (!(seen(other) & b)) {
+        alone = false;
+        break;
+      }
+    }
+    if (alone) return true;
+  }
+  return false;
 }
 
 /**

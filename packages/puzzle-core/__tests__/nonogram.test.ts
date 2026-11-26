@@ -65,6 +65,12 @@ describe('generateNonogram', () => {
     expect(puzzle.solution.some(Boolean) && !puzzle.solution.every(Boolean)).toBe(true);
   });
 
+  test('a seed that once ran out of attempts finds its puzzle', () => {
+    // At the old fill chance, under 1 % of 15 x 10 pictures rated medium, and this seed found none
+    // in all its attempts (#380).
+    expect(rateNonogram(generateNonogram('S1', { width: 15, height: 10 }, 'medium'))?.difficulty).toBe('medium');
+  });
+
   test('a wide picture keeps its width and height apart', () => {
     const puzzle = generateNonogram('W', { width: 15, height: 10 }, 'medium');
     expect([puzzle.rows.length, puzzle.columns.length, puzzle.id.size]).toEqual([10, 15, '15X10']);

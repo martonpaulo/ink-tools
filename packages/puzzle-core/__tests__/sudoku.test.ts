@@ -1,5 +1,7 @@
-import { countSudokuSolutions, generateSudoku, solveSudoku, SUDOKU_SIZES } from '../src/sudoku';
-import { geometry, nextSudokuStep, rateSudoku, type SudokuShape } from '../src/sudoku-techniques';
+import { countSudokuSolutions, decodeSudoku, digSudoku, encodeSudoku, generateSudoku, solveSudoku, SUDOKU_SIZES } from '../src/sudoku';
+import { SUDOKU_BANK } from '../src/sudoku-bank';
+import { finishSudoku, geometry, isSingleAt, nextSudokuStep, rateSudoku, solvesWithin, type SudokuShape } from '../src/sudoku-techniques';
+import { createRandom } from '../src/random';
 
 const NINE: SudokuShape = { size: 9, boxRows: 3, boxCols: 3 };
 const grid = (text: string): number[] => [...text].map(ch => (ch === '.' ? 0 : Number(ch)));
@@ -107,8 +109,83 @@ describe('generateSudoku', () => {
     expect(generateSudoku('', 4, 'easy')).toEqual(generateSudoku('', 4, 'easy'));
   });
 
+  test('many seeds keep the band, one solution and the givens of their solution', () => {
+    for (const [size, band] of offered) {
+      for (let i = 0; i < 6; i++) {
+        const puzzle = generateSudoku(`MANY${i}`, size, band);
+        expect([size, band, puzzle.rating.difficulty]).toEqual([size, band, band]);
+        expect(valid(puzzle.shape, puzzle.solution)).toBe(true);
+        puzzle.givens.forEach((v, cell) => v && expect(v).toBe(puzzle.solution[cell]));
+        if (size <= 9) expect(countSudokuSolutions(puzzle.shape, puzzle.givens)).toBe(1);
+      }
+    }
+  });
+
   test('a size or band not offered is refused', () => {
     expect(() => generateSudoku('S', 5, 'easy')).toThrow('not offered');
     expect(() => generateSudoku('S', 4, 'hard')).toThrow('offers easy, not hard');
+  });
+});
+
+describe('the sudoku bank', () => {
+  const offered = Object.values(SUDOKU_SIZES).flatMap(({ bands, ...shape }) => bands.map(band => [shape.size, band, shape] as const));
+
+  test.each(offered)('every size %i %s entry is distinct, finished by its band and rated that band', (_size, band, shape) => {
+    const entries = SUDOKU_BANK[`${shape.size}:${band}`];
+    expect(entries.length).toBeGreaterThan(0);
+    expect(new Set(entries).size).toBe(entries.length);
+    for (const text of entries) {
+      const givens = decodeSudoku(text);
+      expect(givens).toHaveLength(shape.size * shape.size);
+      expect(encodeSudoku(givens)).toBe(text);
+      expect(solvesWithin(shape, givens, band)).toBe(true);
+      expect(rateSudoku(shape, givens).difficulty).toBe(band);
+    }
+  });
+
+  test('the bank is what the digger makes from its seeds', () => {
+    // scripts/sudoku-bank.cjs writes entry 0 from the seed bank/<size>/<band>/0.
+    expect(encodeSudoku(digSudoku('bank/9/hard/0', 9, 'hard').givens)).toBe(SUDOKU_BANK['9:hard'][0]);
+    expect(encodeSudoku(digSudoku('bank/16/medium/0', 16, 'medium').givens)).toBe(SUDOKU_BANK['16:medium'][0]);
+  });
+});
+
+describe('the fast checks agree with the full rating', () => {
+  /** Grids part of the way through digging: a solution with a seeded share of cells emptied. */
+  function holed(shape: SudokuShape, seed: string, share: number): number[] {
+    const solution = solveSudoku(shape, new Array(shape.size * shape.size).fill(0)) as number[];
+    const random = createRandom(seed);
+    return solution.map(v => (random.chance(share) ? 0 : v));
+  }
+
+  test('finishSudoku finishes exactly what rateSudoku rates, with the one solution', () => {
+    for (const size of [4, 6, 9, 12]) {
+      const { boxRows, boxCols } = SUDOKU_SIZES[size];
+      const shape = { size, boxRows, boxCols };
+      for (let i = 0; i < 25; i++) {
+        const values = holed(shape, `H${i}`, 45 + i);
+        for (const ceiling of ['easy', 'medium', 'hard', 'expert'] as const) {
+          const finished = finishSudoku(shape, values, ceiling);
+          expect(finished !== null).toBe(rateSudoku(shape, values, ceiling).difficulty !== null);
+          if (finished) expect(finished).toEqual(solveSudoku(shape, values));
+        }
+      }
+    }
+  });
+
+  test('isSingleAt holds only where a naked or hidden single places the value', () => {
+    const values = grid(KNOWN[0].text);
+    const solution = solveSudoku(NINE, values) as number[];
+    const step = nextSudokuStep(NINE, values);
+    const placed = step?.placements[0];
+    expect(placed).toBeDefined();
+    if (!placed) return;
+    expect(isSingleAt(NINE, values, placed.cell, placed.value)).toBe(true);
+    // A cell of the full solution emptied alone is always a naked single.
+    const full = solution.slice();
+    full[40] = 0;
+    expect(isSingleAt(NINE, full, 40, solution[40])).toBe(true);
+    // The empty grid forces nothing.
+    expect(isSingleAt(NINE, new Array(81).fill(0), 0, 1)).toBe(false);
   });
 });

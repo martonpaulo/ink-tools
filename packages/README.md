@@ -67,6 +67,14 @@ bundles them only when it imports `src/words-data.ts` or one `words/<lang>.json`
 list differs, and `--refresh` takes Tatoeba's newer weekly export and records its SHA-256. The
 packages gate runs the pipeline's own tests, not the download.
 
+`puzzle-core`'s sudokus come from a bank, `src/sudoku-bank.ts` (16 dug puzzles per size and band,
+about 35 kB): `generateSudoku` takes one entry by the seed and shows it with seeded digits, rows
+and columns, so a hard 16 x 16 is ready in milliseconds on the tablet, where digging one took
+seconds ([#380](https://github.com/martonpaulo/ink-tools/issues/380)). `puzzle-core/scripts/sudoku-bank.cjs`
+rewrites the bank from `digSudoku` with fixed seeds, and `puzzle-core/scripts/profile.cjs` times
+the pinned seeds; under `node --jitless`, the nearest Node gets to the tablet's engine with no
+JIT. Both read a `tsc` build of `src`, as their headers show.
+
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
 `--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).

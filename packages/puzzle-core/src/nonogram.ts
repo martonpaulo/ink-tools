@@ -54,71 +54,94 @@ export function lineClue(cells: readonly boolean[]): number[] {
  * Every cell all placements of the clue agree on, given what is known (full line solving). Returns
  * null when no placement fits. Prefix and suffix tables make it linear in length times blocks.
  */
+/**
+ * The line solver's tables, kept between calls and grown when a longer line comes: the tablet's
+ * engine has no JIT, and allocating them on each of the thousands of calls of one generation was
+ * a large part of its time (#380). The solver is never re-entered, so one set serves every call.
+ */
+const tables = { blocked: new Int32Array(0), prefix: new Uint8Array(0), suffix: new Uint8Array(0), mayEmpty: new Uint8Array(0), fillCount: new Int32Array(0) };
+
+function tablesFor(n: number, w: number): typeof tables {
+  const cells = (n + 2) * w;
+  if (tables.blocked.length < n + 1) {
+    tables.blocked = new Int32Array(n + 1);
+    tables.mayEmpty = new Uint8Array(n);
+    tables.fillCount = new Int32Array(n + 1);
+  }
+  if (tables.prefix.length < cells) {
+    tables.prefix = new Uint8Array(cells);
+    tables.suffix = new Uint8Array(cells);
+  }
+  tables.prefix.fill(0, 0, cells);
+  tables.suffix.fill(0, 0, cells);
+  tables.mayEmpty.fill(0, 0, n);
+  tables.fillCount.fill(0, 0, n + 1);
+  return tables;
+}
+
 export function solveLine(clue: readonly number[], line: readonly Cell[]): Cell[] | null {
   const n = line.length;
   const k = clue.length;
-  const canEmpty = (i: number): boolean => line[i] !== FILLED;
+  // The tables are flat, row i at i * w. Checks are written inline, not as helper calls: a call
+  // costs much on an engine with no JIT.
+  const w = k + 1;
+  const { blocked, prefix, suffix, mayEmpty, fillCount } = tablesFor(n, w);
   // blocked[i] counts cells before i that must stay empty, so a block's range is checked in O(1).
-  const blocked = new Int32Array(n + 1);
+  blocked[0] = 0;
   for (let i = 0; i < n; i++) blocked[i + 1] = blocked[i] + (line[i] === EMPTY ? 1 : 0);
-  const fits = (start: number, length: number): boolean => blocked[start + length] - blocked[start] === 0;
 
   // prefix[i][j]: cells [0, i) hold exactly the first j blocks.
-  const prefix: boolean[][] = Array.from({ length: n + 1 }, () => new Array<boolean>(k + 1).fill(false));
-  prefix[0][0] = true;
+  prefix[0] = 1;
   for (let i = 1; i <= n; i++) {
     for (let j = 0; j <= k; j++) {
-      let ok = canEmpty(i - 1) && prefix[i - 1][j];
+      let ok = line[i - 1] !== FILLED && prefix[(i - 1) * w + j] === 1;
       if (!ok && j > 0) {
         const s = clue[j - 1];
         const start = i - s;
-        if (start >= 0 && fits(start, s)) ok = start === 0 ? j === 1 : canEmpty(start - 1) && prefix[start - 1][j - 1];
+        if (start >= 0 && blocked[start + s] === blocked[start]) ok = start === 0 ? j === 1 : line[start - 1] !== FILLED && prefix[(start - 1) * w + j - 1] === 1;
       }
-      prefix[i][j] = ok;
+      if (ok) prefix[i * w + j] = 1;
     }
   }
-  if (!prefix[n][k]) return null;
+  if (!prefix[n * w + k]) return null;
   // suffix[i][j]: cells [i, n) hold exactly blocks j to k-1.
-  const suffix: boolean[][] = Array.from({ length: n + 2 }, () => new Array<boolean>(k + 1).fill(false));
-  suffix[n][k] = true;
+  suffix[n * w + k] = 1;
   for (let i = n - 1; i >= 0; i--) {
     for (let j = k; j >= 0; j--) {
-      let ok = canEmpty(i) && suffix[i + 1][j];
+      let ok = line[i] !== FILLED && suffix[(i + 1) * w + j] === 1;
       if (!ok && j < k) {
         const s = clue[j];
         const end = i + s;
-        if (end <= n && fits(i, s)) ok = end === n ? j === k - 1 : canEmpty(end) && suffix[end + 1][j + 1];
+        if (end <= n && blocked[i + s] === blocked[i]) ok = end === n ? j === k - 1 : line[end] !== FILLED && suffix[(end + 1) * w + j + 1] === 1;
       }
-      suffix[i][j] = ok;
+      if (ok) suffix[i * w + j] = 1;
     }
   }
 
-  const mayEmpty = new Array<boolean>(n).fill(false);
-  const fillCount = new Int32Array(n + 1);
   for (let i = 0; i < n; i++) {
-    if (!canEmpty(i)) continue;
-    for (let j = 0; j <= k && !mayEmpty[i]; j++) if (prefix[i][j] && suffix[i + 1][j]) mayEmpty[i] = true;
+    if (line[i] === FILLED) continue;
+    for (let j = 0; j <= k && !mayEmpty[i]; j++) if (prefix[i * w + j] && suffix[(i + 1) * w + j]) mayEmpty[i] = 1;
   }
   for (let j = 0; j < k; j++) {
     const s = clue[j];
     for (let p = 0; p + s <= n; p++) {
-      if (!fits(p, s)) continue;
-      const before = p === 0 ? j === 0 : canEmpty(p - 1) && prefix[p - 1][j];
+      if (blocked[p + s] !== blocked[p]) continue;
+      const before = p === 0 ? j === 0 : line[p - 1] !== FILLED && prefix[(p - 1) * w + j] === 1;
       if (!before) continue;
       const end = p + s;
-      const after = end === n ? j === k - 1 : canEmpty(end) && suffix[end + 1][j + 1];
+      const after = end === n ? j === k - 1 : line[end] !== FILLED && suffix[(end + 1) * w + j + 1] === 1;
       if (!after) continue;
       fillCount[p]++;
       fillCount[end]--;
     }
   }
-  const out: Cell[] = [];
+  const out = new Array<Cell>(n);
   let running = 0;
   for (let i = 0; i < n; i++) {
     running += fillCount[i];
     const mayFill = running > 0;
     if (!mayFill && !mayEmpty[i]) return null;
-    out.push(mayFill && mayEmpty[i] ? UNKNOWN : mayFill ? FILLED : EMPTY);
+    out[i] = mayFill && mayEmpty[i] ? UNKNOWN : mayFill ? FILLED : EMPTY;
   }
   return out;
 }
@@ -130,50 +153,68 @@ interface Grid {
   columns: readonly (readonly number[])[];
 }
 
-const lineCells = (grid: Grid, line: number): number[] =>
-  line < grid.height
-    ? Array.from({ length: grid.width }, (_, c) => line * grid.width + c)
-    : Array.from({ length: grid.height }, (_, r) => r * grid.width + (line - grid.height));
-const clueOf = (grid: Grid, line: number): readonly number[] => (line < grid.height ? grid.rows[line] : grid.columns[line - grid.height]);
+/** The clues with the cells of every line (rows, then columns), built once per solve. */
+interface Lines {
+  grid: Grid;
+  cells: number[][];
+  clues: (readonly number[])[];
+}
+
+function linesOf(grid: Grid): Lines {
+  const cells: number[][] = [];
+  for (let r = 0; r < grid.height; r++) cells.push(Array.from({ length: grid.width }, (_, c) => r * grid.width + c));
+  for (let c = 0; c < grid.width; c++) cells.push(Array.from({ length: grid.height }, (_, r) => r * grid.width + c));
+  return { grid, cells, clues: [...grid.rows, ...grid.columns] };
+}
+
+/** The row and the column line of a cell. */
+const crossOf = (grid: Grid, cell: number): [number, number] => [Math.floor(cell / grid.width), grid.height + (cell % grid.width)];
 
 /** Solves one line in place; returns the cells it set, or null on a contradiction. */
-function solveInPlace(grid: Grid, cells: Cell[], line: number): number[] | null {
-  const at = lineCells(grid, line);
-  const solved = solveLine(clueOf(grid, line), at.map(i => cells[i]));
+function solveInPlace(lines: Lines, cells: Cell[], line: number): number[] | null {
+  const at = lines.cells[line];
+  const known = new Array<Cell>(at.length);
+  let open = false;
+  for (let i = 0; i < at.length; i++) {
+    known[i] = cells[at[i]];
+    if (known[i] === UNKNOWN) open = true;
+  }
+  const solved = solveLine(lines.clues[line], known);
   if (!solved) return null;
   const set: number[] = [];
-  at.forEach((cell, i) => {
+  if (!open) return set;
+  for (let i = 0; i < at.length; i++) {
+    const cell = at[i];
     if (cells[cell] === UNKNOWN && solved[i] !== UNKNOWN) {
       cells[cell] = solved[i];
       set.push(cell);
     }
-  });
+  }
   return set;
 }
 
 /** Line solving to a fixed point, revisiting only the lines a new cell touches; false on a contradiction. */
-function propagate(grid: Grid, cells: Cell[], dirty: number[] = Array.from({ length: grid.height + grid.width }, (_, i) => i)): boolean {
+function propagate(lines: Lines, cells: Cell[], dirty: number[] = lines.cells.map((_, i) => i)): boolean {
+  const { grid } = lines;
   const queued = new Array<boolean>(grid.height + grid.width).fill(false);
   const queue: number[] = [];
-  for (const line of dirty) {
-    if (!queued[line]) {
-      queued[line] = true;
-      queue.push(line);
+  for (let i = 0; i < dirty.length; i++) {
+    if (!queued[dirty[i]]) {
+      queued[dirty[i]] = true;
+      queue.push(dirty[i]);
     }
   }
   for (let head = 0; head < queue.length; head++) {
     const line = queue[head];
     queued[line] = false;
-    const set = solveInPlace(grid, cells, line);
+    const set = solveInPlace(lines, cells, line);
     if (!set) return false;
-    for (const cell of set) {
-      const row = Math.floor(cell / grid.width);
-      const column = grid.height + (cell % grid.width);
-      for (const other of [row, column]) {
-        if (other !== line && !queued[other]) {
-          queued[other] = true;
-          queue.push(other);
-        }
+    // A cell a row set touches its column, and the other way round; the line itself is done.
+    for (let i = 0; i < set.length; i++) {
+      const other = line < grid.height ? grid.height + (set[i] % grid.width) : Math.floor(set[i] / grid.width);
+      if (!queued[other]) {
+        queued[other] = true;
+        queue.push(other);
       }
     }
   }
@@ -182,8 +223,9 @@ function propagate(grid: Grid, cells: Cell[], dirty: number[] = Array.from({ len
 
 /** Solutions of the clues, counted up to `limit`, by line solving and branching on a cell. */
 export function countNonogramSolutions(grid: Grid, limit = 2): number {
+  const lines = linesOf(grid);
   const search = (cells: Cell[]): number => {
-    if (!propagate(grid, cells)) return 0;
+    if (!propagate(lines, cells)) return 0;
     const open = cells.indexOf(UNKNOWN);
     if (open < 0) return 1;
     let count = 0;
@@ -215,39 +257,65 @@ const EASY_SWEEPS_PER_10 = 3;
  * probing `hard`.
  */
 export function rateNonogram(grid: Grid): NonogramRating | null {
+  return rateTowards(grid, null);
+}
+
+/**
+ * `rateNonogram`, but with a `target` band it gives up, returning null, as soon as the clues
+ * cannot rate that band: past the easy sweeps for `easy`, and before probing for `easy` and
+ * `medium`. The generator rejects most pictures this way, and probing is the slow part (#380).
+ */
+function rateTowards(grid: Grid, target: Difficulty | null): NonogramRating | null {
   const cells = new Array<Cell>(grid.width * grid.height).fill(UNKNOWN);
-  const lines = grid.height + grid.width;
+  const lines = linesOf(grid);
+  const count = lines.cells.length;
+  const easyLimit = Math.ceil((Math.max(grid.width, grid.height) * EASY_SWEEPS_PER_10) / 10);
+  // A line none of whose cells changed since it was solved would give the same answer again
+  // (line solving finds all it can at once), so a sweep skips it; the sweep count is unchanged.
+  const dirty = new Array<boolean>(count).fill(true);
   let sweeps = 0;
   for (let changed = true; changed; ) {
     changed = false;
     sweeps++;
-    for (let line = 0; line < lines; line++) {
-      const set = solveInPlace(grid, cells, line);
+    for (let line = 0; line < count; line++) {
+      if (!dirty[line]) continue;
+      dirty[line] = false;
+      const set = solveInPlace(lines, cells, line);
       if (!set) return null;
-      if (set.length) changed = true;
+      if (!set.length) continue;
+      changed = true;
+      for (let i = 0; i < set.length; i++) {
+        const [row, column] = crossOf(grid, set[i]);
+        dirty[line < grid.height ? column : row] = true;
+      }
     }
+    // A sweep that changed cells counts; one more past the limit cannot rate easy.
+    if (target === 'easy' && changed && sweeps > easyLimit) return null;
   }
   sweeps--; // the last sweep only confirmed the fixed point
+  if (target !== null && target !== 'hard' && cells.includes(UNKNOWN)) return null;
+  // Probing: a value of an open cell that breaks a line fixes the other value. A probe that fails
+  // stays failed as more cells become known, so one scan goes on after a probe instead of
+  // starting over, and the scans end when one sets nothing.
   let probes = 0;
-  while (cells.includes(UNKNOWN)) {
-    let probed = false;
-    for (let i = 0; i < cells.length && !probed; i++) {
+  for (let probed = true; probed && cells.includes(UNKNOWN); ) {
+    probed = false;
+    for (let i = 0; i < cells.length; i++) {
       if (cells[i] !== UNKNOWN) continue;
       for (const value of [FILLED, EMPTY] as const) {
         const trial = cells.slice();
         trial[i] = value;
-        if (!propagate(grid, trial, [Math.floor(i / grid.width), grid.height + (i % grid.width)])) {
+        if (!propagate(lines, trial, crossOf(grid, i))) {
           cells[i] = value === FILLED ? EMPTY : FILLED;
-          if (!propagate(grid, cells, [Math.floor(i / grid.width), grid.height + (i % grid.width)])) return null;
+          if (!propagate(lines, cells, crossOf(grid, i))) return null;
           probes++;
           probed = true;
           break;
         }
       }
     }
-    if (!probed) return null;
   }
-  const easyLimit = Math.ceil((Math.max(grid.width, grid.height) * EASY_SWEEPS_PER_10) / 10);
+  if (cells.includes(UNKNOWN)) return null;
   const difficulty: Difficulty = probes > 0 ? 'hard' : sweeps <= easyLimit ? 'easy' : 'medium';
   return { difficulty, sweeps, probes };
 }
@@ -286,8 +354,12 @@ export function cluesOf(width: number, height: number, solution: readonly boolea
 }
 
 const NONOGRAM_ATTEMPTS = 360;
-/** Fill chance in percent before smoothing, per band: denser pictures tend to need less. */
-const DENSITY: Record<string, number> = { easy: 62, medium: 55, hard: 50 };
+/**
+ * Fill chance in percent before smoothing, per band: denser pictures tend to need less. Each value
+ * gives its band most often over sides 10 to 25 (#380: at 55 and 50, under 1 % of 15 x 10 pictures
+ * rated medium or hard, so a puzzle took hundreds of attempts or none was found).
+ */
+const DENSITY: Record<string, number> = { easy: 62, medium: 45, hard: 40 };
 
 /**
  * A nonogram of the given size and band from the seed. Throws on a side outside 5 to 30, a band not
@@ -308,7 +380,7 @@ export function generateNonogram(seed: string, size: NonogramSize, difficulty: D
     if (filled === 0 || filled === solution.length) continue;
     const grid = cluesOf(width, height, solution);
     // A rating proves uniqueness: every deduction it makes is forced, and it finishes the grid.
-    if (rateNonogram(grid)?.difficulty !== difficulty) continue;
+    if (rateTowards(grid, difficulty)?.difficulty !== difficulty) continue;
     return {
       id: { game: 'nonogram', size: `${width}X${height}`, difficulty, seed },
       width,
