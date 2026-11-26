@@ -1262,6 +1262,14 @@ check "a note of the same name outside Note/Tests/ stays protected" "$?" "12"
 printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
 run screen "$work/local/note.png" >/dev/null 2>&1
 check "a title that names no test note stays protected" "$?" "12"
+# A plugin view that fills the screen hides the note, so its capture needs no flag (device round 6, #421).
+cp "$files/tree.xml" "$work/tree-note"
+printf '%s' '<?xml version="1.0" ?><hierarchy rotation="0"><node package="com.ratta.supernote.pluginhost" text="" resource-id="" content-desc="" class="F" bounds="[0,0][1920,2560]"><node package="com.ratta.supernote.pluginhost" text="Close" resource-id="" content-desc="" class="T" bounds="[0,0][10,10]" /></node></hierarchy>' > "$files/tree.xml"
+check "screen captures a full-screen plugin view over a note (#421)" "$(run screen "$work/local/view.png" --json | field "['bytes']")" "12"
+printf '%s' '<?xml version="1.0" ?><hierarchy rotation="0"><node package="com.ratta.supernote.pluginhost" text="Close" resource-id="" content-desc="" class="T" bounds="[400,800][1500,1800]" /></hierarchy>' > "$files/tree.xml"
+run screen "$work/local/view.png" >/dev/null 2>&1
+check "a smaller plugin view over a note stays protected (#421)" "$?" "12"
+cp "$work/tree-note" "$files/tree.xml"
 cp "$work/tree-saved" "$files/tree.xml"
 reset_device
 printf '%s' "$note_activity" > "$files/am-goes-to"
@@ -1390,6 +1398,27 @@ check "ink write places the text's top-left corner at --at" "$(command_field "mi
 check "ink write presses Run Command and reads Probe's answer" "$(called 'input tap 350 1450')$(printf '%s' "$result" | field "['ok'],d['rect']['left']")" "1(True, 100)"
 check "ink write reads only the log after its push" "$(called 'logcat -d -v time -T 11-16 23:00:00.000 -s ReactNativeJS')" "1"
 check "ink write presses Run Command from its one screen read (#286)" "$(called 'uiautomator dump')" "1"
+# With more than 8 plugins «Run Command» sits below the Plugins panel's first rows (device round 6, #421).
+helper_panel() {  # the note with its title, and the panel's list holding the given rows
+    printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node resource-id=\"\" text=\"\" content-desc=\"plugins\" class=\"L\" bounds=\"[0,1400][116,1540]\" /><node resource-id=\"\" text=\"\" content-desc=\"\" class=\"ListView\" scrollable=\"true\" bounds=\"[200,1000][700,1800]\">"
+    top=1000
+    for name in "$@"; do
+        printf "<node resource-id=\"\" text=\"%s\" content-desc=\"\" class=\"T\" bounds=\"[200,%s][700,%s]\" />" "$name" "$top" "$((top + 100))"
+        top=$((top + 100))
+    done
+    printf "</node><node resource-id=\"a:id/tv_button\" text=\"Round one\" content-desc=\"\" class=\"T\" bounds=\"[1401,2444][1769,2560]\" /></hierarchy>"
+}
+helper_ready
+printf "<?xml version='1.0' ?><hierarchy rotation=\"0\"><node resource-id=\"\" text=\"\" content-desc=\"plugins\" class=\"L\" bounds=\"[0,1400][116,1540]\" /><node resource-id=\"a:id/tv_button\" text=\"Round one\" content-desc=\"\" class=\"T\" bounds=\"[1401,2444][1769,2560]\" /></hierarchy>" > "$files/page1.xml"
+helper_panel P1 P2 P3 P4 P5 P6 P7 P8 > "$files/page2.xml"
+helper_panel P5 P6 P7 P8 "Run Command" > "$files/page3.xml"
+echo 1 > "$files/page"
+echo 1 > "$files/advance-after"
+touch "$files/no-return"
+run ink write "a" --at 100 200 >/dev/null 2>&1
+check "ink write scrolls the Plugins panel to Run Command and presses it (#421)" "$?$(called 'input swipe')$(called 'input tap 450 1450')" "011"
+rm -f "$files/no-return" "$files/advance-after"
+stop_pages
 helper_ready
 run --time ink write "a" --at 100 200 >/dev/null 2>"$work/err"
 check "--time prints the run's own time on stderr (#286)" "$?$(grep -cE '^time: [0-9]+([.][0-9]+)? s$' "$work/err")" "01"
@@ -1544,7 +1573,11 @@ check "note png removes the tablet's copy" "$(grep -cxF "rm -f $render" "$files/
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png","pictures":2}' > "$files/helper-answer"
 printf 'f %s\n' "$render" >> "$files/paths"
 run note png 2 "$work/local/page2b.png" >/dev/null 2>"$work/err"
-check "note png says the tablet's PNG leaves out the page's pictures (#263)" "$?$(grep -c 'leaves out the page.s 2 picture' "$work/err")" "01"
+check "note png says the tablet's PNG leaves out the page's pictures (#263)" "$?$(grep -c 'leaves out the page.s 2 pictures;' "$work/err")" "01"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png","pictures":1}' > "$files/helper-answer"
+printf 'f %s\n' "$render" >> "$files/paths"
+run note png 2 "$work/local/page2c.png" >/dev/null 2>"$work/err"
+check "note png names one picture in the singular, never «picture(s)» (#421)" "$?$(grep -c 'page.s 1 picture;' "$work/err")$(grep -c 'picture(s)' "$work/err")" "010"
 run note png 2 "$work/local/page2.png" >/dev/null 2>&1
 check "note png refuses to replace a local file before any push" "$?$(called ' push ')" "50"
 printf 'f %s\n' "$render" >> "$files/paths"

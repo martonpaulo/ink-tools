@@ -1174,8 +1174,21 @@ def test_note_on_screen(device: Device) -> bool:
     return bool(named) and all(in_test_notes(path) for path in named)
 
 
+def plugin_view_fills_screen(device: Device) -> bool:
+    """Whether a plugin view covers the whole screen, so no note shows behind it (#421): a node of
+    the host's package whose bounds are the full screen. A screen that does not settle counts as none."""
+    full = f'bounds="[0,0][{PAGE_WIDTH},{PAGE_HEIGHT}]"'
+    for _ in range(DUMP_ATTEMPTS):
+        dump = device.adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
+        if IDLE_ERROR not in dump:
+            return any(PLUGIN_VIEW_MARK in node and full in node for node in dump.split("<node")[1:])
+    return False
+
+
 def note_screen_allowed(device: Device, allow_notes: bool) -> bool:
-    return allow_notes or device.activity() != NOTE_ACTIVITY or test_note_on_screen(device)
+    """A note on the screen is the owner's unless proven a test note, or hidden by a full-screen plugin view (#421)."""
+    return (allow_notes or device.activity() != NOTE_ACTIVITY or test_note_on_screen(device)
+            or plugin_view_fills_screen(device))
 
 
 def protected(what: str) -> Failure:
@@ -1187,7 +1200,7 @@ def after_action(device: Device, args: argparse.Namespace, before: str, result: 
     now = device.activity()
     result.update({"activity_before": before, "activity": now, "changed": before != now})
     lines = [f"activity: {before} -> {now}" if before != now else f"activity: {now}"]
-    if args.screen and now == NOTE_ACTIVITY and not args.allow_notes and not test_note_on_screen(device):
+    if args.screen and not note_screen_allowed(device, args.allow_notes):
         result["screen_refused"] = "a note is on the screen; pass --allow-notes to capture it"
         lines.append(f"screen: {result['screen_refused']}")
     elif args.screen:
@@ -2311,6 +2324,11 @@ def press_helper(device: Device, limit: float) -> None:
         return
     if not shown:
         press_element(device, expect_element(device, NOTE_PLUGINS_BUTTON, limit))
+        # The panel shows 8 rows; with more plugins «Run Command» sits further down its list (#421).
+        expect_screen(device, lambda elements: True if any(item["scrollable"] for item in elements)
+                      or find_selector(elements, HELPER_BUTTON) else None, limit, "the plugin panel is not on the screen")
+        press_element(device, scroll_until_found(device, HELPER_BUTTON, SCROLL_STEPS)["found"])
+        return
     press_element(device, expect_element(device, HELPER_BUTTON, limit))
 
 
@@ -2402,7 +2420,8 @@ def command_note_png(device: Device, args: argparse.Namespace):
     # PNG is never taken as proof of a picture; note-render of the pulled file draws them.
     pictures = answer.get("pictures")
     if pictures:
-        print(f"the tablet's page PNG leaves out the page's {pictures} picture(s); render the pulled .note with note-render to see them", file=sys.stderr, flush=True)
+        noun = "picture" if pictures == 1 else "pictures"
+        print(f"the tablet's page PNG leaves out the page's {pictures} {noun}; render the pulled .note with note-render to see them", file=sys.stderr, flush=True)
     elif pictures is None and "pictures" in answer:
         print("the page's pictures did not count; the tablet's page PNG leaves out any picture", file=sys.stderr, flush=True)
     return data, text
