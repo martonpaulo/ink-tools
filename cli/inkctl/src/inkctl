@@ -93,7 +93,8 @@ sets the sleep between the reads of every wait.
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
 ~/.config/inkctl/address (or, from before the rename, ~/.config/snadb/address), as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
 ADB over Wi-Fi is enabled over USB with `inkctl wifi on` (`adb tcpip 5555`); a restart of the device turns
-it off. When one authorized tablet is attached by USB, every command goes over the cable instead, so
+it off. When the stored port refuses, the port Android's Wireless debugging announces over mDNS
+(`adb mdns services`) for exactly the stored address is tried once. When one authorized tablet is attached by USB, every command goes over the cable instead, so
 the work goes on with the tablet's Wi-Fi off; `status` names the link.
 """
 
@@ -694,13 +695,29 @@ class Failure(Exception):
 
 
 USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
+REFUSED = "Connection refused"
+# The service Android's Wireless debugging announces with its port, which is new after each restart (#1).
+MDNS_CONNECT_SERVICE = "_adb-tls-connect._tcp"
+MDNS_ROW_FIELDS = 3  # an `adb mdns services` row: instance name, service type, HOST:PORT
 # What a failed connection says about the tablet, measured on a Manta: the first match decides.
 # A refused port comes first: a stale `adb` server can repeat `No route to host` after the tablet woke with ADB off.
 UNREACHABLE_STATES = (
-    (("Connection refused",), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
+    ((REFUSED,), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
     (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "inkctl status"),
     (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "inkctl status"),
 )
+
+
+def mdns_port(listing: str, host: str) -> str:
+    """The port of the `adb mdns services` row of the TLS connect service at exactly `host`, else "".
+    A row of another device never counts, so a stale announcement cannot redirect a command."""
+    for line in listing.splitlines():
+        fields = line.split()
+        if len(fields) == MDNS_ROW_FIELDS and fields[1].rstrip(".") == MDNS_CONNECT_SERVICE:
+            row_host, _, row_port = fields[2].rpartition(":")
+            if row_host == host and row_port.isdigit():
+                return row_port
+    return ""
 
 
 def unreachable(serial: str, evidence: str = "") -> Failure:
@@ -898,7 +915,28 @@ class Device:
             reply = self.request_connection()
             if self.is_ready():
                 return
-        raise unreachable(self.serial, f"{port_problem} {reply}")
+        evidence = f"{port_problem} {reply}"
+        if REFUSED in evidence and self.follow_mdns_port():
+            return
+        raise unreachable(self.serial, evidence)
+
+    def follow_mdns_port(self) -> bool:
+        """After a restart, Wireless debugging listens on a new port (#1): connect once to the port the
+        tablet announces over mDNS, and only when the announced address is the stored one."""
+        host, _, port = self.wifi.rpartition(":")
+        listing = self.adb("mdns", "services", serial=False).stdout.decode(errors="replace")
+        announced = mdns_port(listing, host)
+        if not announced or announced == port:
+            return False
+        stored = self.serial
+        moved = f"{host}:{announced}"
+        self.log.secrets.insert(0, moved)  # before the bare host, so the whole address is masked
+        self.serial = self.wifi = moved
+        self.request_connection()
+        if self.is_ready():
+            return True
+        self.serial = self.wifi = stored  # the failure names the stored address, which the owner knows
+        return False
 
     def shell(self, command: str, timeout: float = CALL_TIMEOUT, missing: str = "") -> str:
         """Run a device shell command and return its output; `missing` names what a not-found is."""

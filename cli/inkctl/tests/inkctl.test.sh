@@ -42,10 +42,12 @@ printf '%s\n' "$*" >> "$ADB_LOG"
 # secret write drains it, so a call that inherits a piped secret swallows it.
 if [ -n "${ADB_READS_STDIN:-}" ]; then case "$*" in *"umask 077; mkdir -p "*) ;; *) cat >> "$ADB_FILES/swallowed" ;; esac; fi
 if [ "$1" = connect ]; then
+    if [ -n "${ADB_CONNECT_OPEN:-}" ] && [ "$2" = "$ADB_CONNECT_OPEN" ]; then echo device > "$ADB_FILES/state"; echo "connected to $2"; exit 0; fi
     if [ -z "${ADB_CONNECT_FAILS:-}" ] && { [ ! -f "$ADB_FILES/stale" ] || [ -f "$ADB_FILES/killed" ]; }; then echo device > "$ADB_FILES/state"; fi
     printf '%s\n' "${ADB_CONNECT_REPLY:-connected to $2}"
     exit 0
 fi
+if [ "$1" = mdns ]; then echo 'List of discovered mdns services'; [ -f "$ADB_FILES/mdns" ] && cat "$ADB_FILES/mdns"; exit 0; fi
 if [ "$1" = kill-server ]; then touch "$ADB_FILES/killed"; exit 0; fi
 if [ "$1" = devices ]; then echo 'List of devices attached'; cat "$ADB_FILES/usb"; exit 0; fi
 [ "$1" = -s ] && shift 2
@@ -325,6 +327,21 @@ echo offline > "$files/state"
 result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status --json 2>/dev/null)
 check "a restarted tablet is named" "$(printf '%s' "$result" | field "['state'],d['next']")" "('restarted', 'adb tcpip 5555')"
 check "a restarted tablet gets the route that restores it" "$(printf '%s' "$result" | grep -c 'connect the USB cable')" "1"
+check "a restarted tablet with no mDNS row keeps the USB route" "$(called 'mdns services')$(called 'connect device-a.test:')" "11"
+# Wireless debugging after a restart (#1): the stored port refuses, the tablet announces a new one over mDNS.
+printf 'adb-1-a\t_adb-tls-connect._tcp\tdevice-b.test:40001\nadb-1-a\t_adb-tls-pairing._tcp\tdevice-a.test:40002\nadb-1-a\t_adb-tls-connect._tcp\tdevice-a.test:37241\n' > "$files/mdns"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_OPEN=device-a.test:37241 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status --json --log-paths 2>/dev/null)
+check "a refused port follows the port the tablet announces over mDNS" "$?$(called 'connect device-a.test:37241')$(called '-s device-a.test:37241 get-state')" "011"
+check "a row of another device or service is never used" "$(called 'device-b.test')$(called ':40002')" "00"
+check "the run log masks the announced address" "$(tail -1 "$work/home/.cache/inkctl/history.jsonl" | grep -cF 'connect [device]')$(tail -1 "$work/home/.cache/inkctl/history.jsonl" | grep -cF '37241')" "10"
+echo offline > "$files/state"
+ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status >/dev/null 2>"$work/err"
+check "an announced port that does not connect keeps the USB route" "$?$(called 'connect device-a.test:37241')$(grep -c 'connect the USB cable' "$work/err")" "311"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_OPEN=device-a.test:37241 ADB_CONNECT_REPLY='failed to connect: No route to host' run status --json 2>/dev/null)
+check "a sleeping tablet does not read mDNS" "$(called 'mdns services')" "0"
+rm -f "$files/mdns"
 echo offline > "$files/state"
 result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Operation timed out' run status --json 2>/dev/null)
 check "a tablet off the network is named" "$(printf '%s' "$result" | field "['state']")" "off_network"
