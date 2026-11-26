@@ -496,7 +496,7 @@ ACTION_PLUGINS = {
     # the pictures an edit inserts (plugins/device-link/src/editor/operations.ts EDITOR_FOLDER, #312).
     "device-link": {
         "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-device-link",
-        "actions": ("edit",),
+        "actions": ("edit", "save-note"),
     },
     # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298).
     "smart-pen": {
@@ -1367,12 +1367,27 @@ def start_activity(device: Device, arguments: str) -> None:
         raise Failure(EXIT_FAILED, "device_error", output.strip())
 
 
+def save_open_note(device: Device, args: argparse.Namespace) -> dict:
+    """Save the note open on screen through Device Link's `save-note` (#426). Opening another note by
+    intent does not save the open one: a native lasso delete and a Collection paste were missing from
+    the file after a switch (device round 10). A save that fails stops the switch."""
+    try:
+        return run_action(device, "device-link", "save-note", {}, args.timeout)
+    except Failure as failure:
+        raise Failure(failure.code, failure.kind, f"the open note did not save, so no other note was opened: {failure.message}", failure.next_step) from failure
+
+
 def start_note(device: Device, args: argparse.Namespace, path: str, extras: list[str], page: int | None = None) -> tuple[dict, str]:
-    """Open the note; with a page, also prove the page it shows before the screen is read."""
+    """Open the note; with a page, also prove the page it shows before the screen is read. A note
+    already open is saved first, so the switch keeps what was done on it (#426)."""
     before = device.activity()
+    saved = save_open_note(device, args) if before == NOTE_ACTIVITY else None
     quoted = " ".join(shlex.quote(part) for part in extras)
     start_activity(device, f"-a android.intent.action.VIEW -n {NOTE_ACTIVITY} {quoted}")
     result, opened = {"path": path}, [f"opened: {path}"]
+    if saved is not None:
+        result["saved"] = saved.get("openNote")
+        opened.insert(0, f"saved first: {saved.get('openNote')}")
     if page is not None:
         result["page"] = show_page(device, args, page)
         opened.append(f"page: {page}")

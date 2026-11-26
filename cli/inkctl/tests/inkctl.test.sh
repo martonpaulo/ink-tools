@@ -75,16 +75,20 @@ case "$1" in
             *MyStyle/Probe/picture.*|*inktools-device-link/picture-*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size"; printf '%s\n' "$3" >> "$ADB_FILES/picture-paths" ;;
         esac ;;
     logcat)
-        if [ -f "$ADB_FILES/action-answer" ]; then
+        # A plugin action's answer and Probe's answer can both be in the log: a note switch saves
+        # through Device Link before Probe jumps (#426).
+        answered=
+        if [ -f "$ADB_FILES/action-answer" ] && [ -f "$ADB_FILES/action.json" ]; then
             id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$ADB_FILES/action.json")
             sed "s/ACTION_ID/$id/" "$ADB_FILES/action-answer"
-            exit 0
+            answered=1
         fi
-        if [ -f "$ADB_FILES/helper-answer" ]; then
+        if [ -f "$ADB_FILES/helper-answer" ] && [ -f "$ADB_FILES/command.json" ]; then
             id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$ADB_FILES/command.json")
             sed "s/COMMAND_ID/$id/" "$ADB_FILES/helper-answer"
-            exit 0
+            answered=1
         fi
+        [ -n "$answered" ] && exit 0
         cat "$ADB_FILES/log"
         # timing-independent: a hanging fake adb for the follow timeout; the test kills it, the length only bounds it.
         case " $* " in *" -d "*) ;; *) [ -n "${ADB_FOLLOW_FAILS:-}" ] && exit 1; [ -n "${ADB_HANG:-}" ] && exec sleep 30 ;; esac
@@ -1435,6 +1439,8 @@ helper_ready() {
     helper_screen > "$files/tree.xml"
     printf '%s\n' "$root/Note/Tests/Round one.note" > "$files/notes-found"
     answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertStrokes","ms":80,"page":0,"strokes":7,"rect":{"left":100,"top":248,"right":400,"bottom":335}}' > "$files/helper-answer"
+    # A note is open, so a switch saves it through Device Link first (#426).
+    printf '11-16 23:00:01.000 I/ReactNativeJS(  900): INKTOOLS action device-link ACTION_ID 1/1 {"ok":true,"action":"save-note","line":"saved","openNote":"%s","saved":true}\n' "$root/Note/Tests/Round one.note" > "$files/action-answer"
 }
 command_field() { python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(eval(sys.argv[2], {'d': d}))" "$files/command.json" "$1"; }
 cp "$files/tree.xml" "$work/tree-before-helper"
@@ -1734,6 +1740,23 @@ check "note edit on a note outside Note/Tests/ is refused" "$(exit_and_pushes no
 check "note edit of a missing note is not found" "$(exit_and_pushes note edit Note/Tests/Absent.note "$work/local/ops.json")" "40"
 check "read-only refuses note edit" "$(exit_and_pushes --read-only note edit Note/Tests/Edit.note "$work/local/ops.json")" "110"
 rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/bad-ops.json"
+
+# A note open on screen is saved through Device Link before another note opens (#426): a switch by
+# intent lost a native lasso delete and a Collection paste (device round 10).
+printf 'Status: ok\nActivity: x\n' > "$files/am"
+printf '%s' "$note_activity" > "$files/foreground"
+action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"save-note\",\"line\":\"DeviceLink: save-note: saved $root/Note/Tests/Other.note\",\"openNote\":\"$root/Note/Tests/Other.note\",\"saved\":true}" > "$files/action-answer"
+result=$(run note open "Note/A note.note")
+check "note open over an open note asks Device Link to save it first" "$?$(action_field "d['action']")$(cat "$files/action-path")" "0save-note$helper_folder/action.json"
+check "the save is pushed before the next note starts" "$(grep -n -E ' push |am start' "$log" | head -1 | grep -c ' push ')$(called 'am start')" "11"
+check "note open names the note it saved" "$(printf '%s' "$result" | head -1)" "saved first: $root/Note/Tests/Other.note"
+action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":1,"message":"saveCurrentNote did not save the open note: answered false"}' > "$files/action-answer"
+run note open "Note/A note.note" >/dev/null 2>"$work/err"
+check "a failed save stops the switch with why and starts nothing" "$?$(called 'am start')$(grep -c 'the open note did not save, so no other note was opened' "$work/err")" "101"
+rm -f "$files/action-answer"
+printf '%s' "$calendar_activity" > "$files/foreground"
+run note open "Note/A note.note" >/dev/null
+check "with no note open nothing is saved" "$(called ' push ')$(called 'am start')" "01"
 
 # Pen replay (#298): record the real pen in Smart Pen, save the tape, play it back on a test note.
 tape='{"version":1,"events":[{"at":0,"penUp":[{"points":[{"x":1,"y":2}],"pressures":[2000],"penType":10,"penColor":0,"thickness":200,"times":null}]}]}'
