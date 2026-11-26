@@ -251,16 +251,6 @@
         }
       }
     },
-    "Open Page" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open Page"
-          }
-        }
-      }
-    },
     "Open another .note file, or copy the note from the tablet again." : {
       "localizations" : {
         "en" : {

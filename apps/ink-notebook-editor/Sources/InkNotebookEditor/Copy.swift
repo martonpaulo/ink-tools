@@ -21,7 +21,6 @@ nonisolated enum Copy {
     static let zoomToFit = String(localized: "Zoom to Fit")
     static let zoomToWidth = String(localized: "Zoom to Width")
     static let zoom = String(localized: "Zoom")
-    static let openPage = String(localized: "Open Page")
 
     // MARK: Notebook window
 

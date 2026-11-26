@@ -327,15 +327,13 @@ private struct PageGrid: View {
                     spacing: Self.spacing
                 ) {
                     ForEach(0..<navigator.pageCount, id: \.self) { index in
-                        // A click selects the page and a double click opens it, as in Preview.
+                        // A click opens the page (#319); the keys move the selection and Return opens it.
                         GridCell(
-                            index: index, count: navigator.pageCount, pages: pages, isCurrent: index == navigator.index,
-                            select: { navigator.show(index) },
-                            open: {
-                                navigator.show(index)
-                                viewer.layout = .scroll
-                            }
-                        )
+                            index: index, count: navigator.pageCount, pages: pages, isCurrent: index == navigator.index
+                        ) {
+                            navigator.show(index)
+                            viewer.layout = .scroll
+                        }
                         .id(index)
                         .task(id: displayScale) { await pages.loadThumbnail(index, .grid, scale: displayScale) }
                     }
@@ -369,13 +367,12 @@ private struct GridCell: View {
     let count: Int
     let pages: PageImages
     let isCurrent: Bool
-    let select: () -> Void
     let open: () -> Void
 
     var body: some View {
         let box = PageImages.ThumbnailSize.grid.box
         let fitted = PageFit.fitted(page: pages.size(of: index), in: box)
-        Button(action: select) {
+        Button(action: open) {
             VStack(spacing: Self.inset) {
                 Thumbnail(state: pages.thumbnail(index, .grid), size: fitted)
                     .padding(Self.inset)
@@ -393,11 +390,9 @@ private struct GridCell: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .simultaneousGesture(TapGesture(count: 2).onEnded(open))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(ThumbnailRow.label(index, count, pages.thumbnail(index, .grid)))
         .accessibilityAddTraits(isCurrent ? [.isButton, .isSelected] : .isButton)
-        .accessibilityAction(named: Copy.openPage, open)
     }
 }
 
