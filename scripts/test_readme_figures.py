@@ -182,18 +182,21 @@ class Pieces(unittest.TestCase):
         self.assertEqual(readme_figures.data_problems(ROOT, data), [])
 
     def test_the_credits_list_each_group_with_its_rows_and_links(self):
-        credits = {"intro": "Thanks.", "notCredited": [], "groups": [
-            {"title": "Code we use", "column": "What Ink Tools uses", "rows": [
+        credits = {"intro": "Thanks.", "closing": "Licences are in NOTICE.md.", "notCredited": [], "groups": [
+            {"title": "Code we use", "rows": [
                 {"project": "lib", "url": "https://github.com/a/lib", "author": "A", "text": "the reader",
                  "where": "x/NOTICE.md", "version": "v1.0"}]},
-            {"title": "Ideas we follow", "column": "Idea", "rows": [
+            {"title": "Ideas we follow", "rows": [
                 {"project": "idea", "url": "https://github.com/b/idea", "author": "B", "text": "one plugin",
                  "where": "docs/y.md"}]}]}
         block = readme_figures.credits_block(credits)
         self.assertTrue(block.startswith(readme_figures.CREDITS_START) and block.endswith(readme_figures.CREDITS_END))
         self.assertLess(block.index("### Code we use"), block.index("### Ideas we follow"))
-        self.assertIn("| [lib](https://github.com/a/lib) v1.0 | A | the reader | [`x/NOTICE.md`](x/NOTICE.md) |", block)
-        self.assertIn("| Project | Author | Idea | Where |", block)
+        lines = block.splitlines()
+        for line in ("- [lib](https://github.com/a/lib) v1.0 by A: the reader.",
+                     "- [idea](https://github.com/b/idea) by B: one plugin.", "Licences are in NOTICE.md."):
+            self.assertIn(line, lines)
+        self.assertFalse([line for line in lines if "|" in line])  # a thank-you list, never a table (#425)
 
     def test_notice_links_are_credited_left_out_or_our_own(self):
         root = Path(tempfile.mkdtemp())

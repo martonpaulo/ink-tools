@@ -162,16 +162,15 @@ def repository(url):
 
 
 def credits_block(credits):
-    """The README Credits section: one Markdown table per group, each row linking its NOTICE.md or doc."""
+    """The README Credits section: a thank-you, then one bullet per project in each group, no table (#425)."""
     out = [CREDITS_START, "", "## Credits", "", credits["intro"], ""]
     for group in credits["groups"]:
-        out += [f"### {group['title']}", "", f"| Project | Author | {group['column']} | Where |",
-                "| :--- | :--- | :--- | :--- |"]
+        out += [f"### {group['title']}", ""]
         for row in group["rows"]:
             version = f" {row['version']}" if row.get("version") else ""
-            out.append(f"| [{row['project']}]({row['url']}){version} | {row['author']} | {row['text']} "
-                       f"| [`{row['where']}`]({row['where']}) |")
+            out.append(f"- [{row['project']}]({row['url']}){version} by {row['author']}: {row['text']}.")
         out.append("")
+    out += [credits["closing"], ""]
     return "\n".join(out + [CREDITS_END])
 
 

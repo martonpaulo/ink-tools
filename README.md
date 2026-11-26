@@ -16,27 +16,25 @@ at inktools.martonpaulo.com, is planned ([#371](https://github.com/martonpaulo/i
 
 ## Credits
 
-Ink Tools builds on other Supernote projects. Each licence text stays in the `NOTICE.md` the row links.
+A special thank-you to the authors of these Supernote projects. Ink Tools stands on their work: some of their code runs inside it, and some of their ideas shaped it.
 
 ### Code we use
 
-| Project | Author | What Ink Tools uses | Where |
-| :--- | :--- | :--- | :--- |
-| [supernote-tool](https://github.com/jya-dev/supernote-tool) | jya | The `.note` reader and RLE decoder, ported to Swift | [`apps/ink-notebook-editor/NOTICE.md`](apps/ink-notebook-editor/NOTICE.md) |
-| [supernote-snap](https://github.com/CharlesCheval/supernote-snap) v0.9.0 | Charles Cheval | The Smart Shapes recognizer, hold detection and stroke guard | [`plugins/smart-pen/NOTICE.md`](plugins/smart-pen/NOTICE.md) |
-| [supernote-pic2note](https://github.com/Keplex/supernote-pic2note) | Keplex | The native build pipeline without Gradle | [`packages/native-build/NOTICE.md`](packages/native-build/NOTICE.md) |
-| [SuperFun](https://github.com/AgP42/SuperFun) | AgP42 | The word-search theme word banks | [`packages/puzzle-core/NOTICE.md`](packages/puzzle-core/NOTICE.md) |
+- [supernote-tool](https://github.com/jya-dev/supernote-tool) by jya: the `.note` reader and RLE decoder, ported to Swift.
+- [supernote-snap](https://github.com/CharlesCheval/supernote-snap) v0.9.0 by Charles Cheval: the Smart Shapes recognizer, hold detection and stroke guard.
+- [supernote-pic2note](https://github.com/Keplex/supernote-pic2note) by Keplex: the native build pipeline without Gradle.
+- [SuperFun](https://github.com/AgP42/SuperFun) by AgP42: the word-search theme word banks.
 
 ### Ideas we follow
 
-| Project | Author | Idea | Where |
-| :--- | :--- | :--- | :--- |
-| [Supernote-InkGames](https://github.com/wolfsolver/Supernote-InkGames) | wolfsolver | Puzzles generated for the page, solved with the pen | [`docs/research/2026-11-paper-games.md`](docs/research/2026-11-paper-games.md) |
-| [SuperFun](https://github.com/AgP42/SuperFun) | AgP42 | A set of games inside one plugin | [`docs/research/2026-11-paper-games.md`](docs/research/2026-11-paper-games.md) |
-| [Inkling](https://github.com/Laumss/Inkling) | Laumss | Write a picture file, then insert it on the page | [`docs/research/plugin-brief/brief.md`](docs/research/plugin-brief/brief.md) |
-| [sn-plugins](https://github.com/Laumss/sn-plugins) | Laumss | The Settings screen conventions in `ui-kit` | [`docs/plugin-scope.md`](docs/plugin-scope.md) |
-| [supernote-mcp](https://github.com/ridget/supernote-mcp) | ridget | inkctl: touch the tablet only when called | [`cli/inkctl/docs/product.md`](cli/inkctl/docs/product.md) |
-| [inkbridge](https://github.com/CRSiegfried/inkbridge) | CRSiegfried | inkctl: leave transcription to the caller | [`cli/inkctl/docs/product.md`](cli/inkctl/docs/product.md) |
+- [Supernote-InkGames](https://github.com/wolfsolver/Supernote-InkGames) by wolfsolver: puzzles generated for the page, solved with the pen.
+- [SuperFun](https://github.com/AgP42/SuperFun) by AgP42: a set of games inside one plugin.
+- [Inkling](https://github.com/Laumss/Inkling) by Laumss: write a picture file, then insert it on the page.
+- [sn-plugins](https://github.com/Laumss/sn-plugins) by Laumss: the Settings screen conventions in `ui-kit`.
+- [supernote-mcp](https://github.com/ridget/supernote-mcp) by ridget: inkctl touches the tablet only when it is called.
+- [inkbridge](https://github.com/CRSiegfried/inkbridge) by CRSiegfried: inkctl leaves transcription to whoever calls it.
+
+Each project's licence, and what Ink Tools took from it, is in the `NOTICE.md` of the part that uses it.
 
 <!-- credits:end -->
 

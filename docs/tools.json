@@ -208,21 +208,22 @@
     }
   ],
   "credits": {
-    "intro": "Ink Tools builds on other Supernote projects. Each licence text stays in the `NOTICE.md` the row links.",
+    "intro": "A special thank-you to the authors of these Supernote projects. Ink Tools stands on their work: some of their code runs inside it, and some of their ideas shaped it.",
+    "closing": "Each project's licence, and what Ink Tools took from it, is in the `NOTICE.md` of the part that uses it.",
     "groups": [
-      {"title": "Code we use", "column": "What Ink Tools uses", "rows": [
-        {"project": "supernote-tool", "url": "https://github.com/jya-dev/supernote-tool", "author": "jya", "text": "The `.note` reader and RLE decoder, ported to Swift", "where": "apps/ink-notebook-editor/NOTICE.md"},
-        {"project": "supernote-snap", "url": "https://github.com/CharlesCheval/supernote-snap", "author": "Charles Cheval", "text": "The Smart Shapes recognizer, hold detection and stroke guard", "where": "plugins/smart-pen/NOTICE.md", "version": "v0.9.0"},
-        {"project": "supernote-pic2note", "url": "https://github.com/Keplex/supernote-pic2note", "author": "Keplex", "text": "The native build pipeline without Gradle", "where": "packages/native-build/NOTICE.md"},
-        {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "The word-search theme word banks", "where": "packages/puzzle-core/NOTICE.md"}
+      {"title": "Code we use", "rows": [
+        {"project": "supernote-tool", "url": "https://github.com/jya-dev/supernote-tool", "author": "jya", "text": "the `.note` reader and RLE decoder, ported to Swift", "where": "apps/ink-notebook-editor/NOTICE.md"},
+        {"project": "supernote-snap", "url": "https://github.com/CharlesCheval/supernote-snap", "author": "Charles Cheval", "text": "the Smart Shapes recognizer, hold detection and stroke guard", "where": "plugins/smart-pen/NOTICE.md", "version": "v0.9.0"},
+        {"project": "supernote-pic2note", "url": "https://github.com/Keplex/supernote-pic2note", "author": "Keplex", "text": "the native build pipeline without Gradle", "where": "packages/native-build/NOTICE.md"},
+        {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "the word-search theme word banks", "where": "packages/puzzle-core/NOTICE.md"}
       ]},
-      {"title": "Ideas we follow", "column": "Idea", "rows": [
-        {"project": "Supernote-InkGames", "url": "https://github.com/wolfsolver/Supernote-InkGames", "author": "wolfsolver", "text": "Puzzles generated for the page, solved with the pen", "where": "docs/research/2026-11-paper-games.md"},
-        {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "A set of games inside one plugin", "where": "docs/research/2026-11-paper-games.md"},
-        {"project": "Inkling", "url": "https://github.com/Laumss/Inkling", "author": "Laumss", "text": "Write a picture file, then insert it on the page", "where": "docs/research/plugin-brief/brief.md"},
-        {"project": "sn-plugins", "url": "https://github.com/Laumss/sn-plugins", "author": "Laumss", "text": "The Settings screen conventions in `ui-kit`", "where": "docs/plugin-scope.md"},
-        {"project": "supernote-mcp", "url": "https://github.com/ridget/supernote-mcp", "author": "ridget", "text": "inkctl: touch the tablet only when called", "where": "cli/inkctl/docs/product.md"},
-        {"project": "inkbridge", "url": "https://github.com/CRSiegfried/inkbridge", "author": "CRSiegfried", "text": "inkctl: leave transcription to the caller", "where": "cli/inkctl/docs/product.md"}
+      {"title": "Ideas we follow", "rows": [
+        {"project": "Supernote-InkGames", "url": "https://github.com/wolfsolver/Supernote-InkGames", "author": "wolfsolver", "text": "puzzles generated for the page, solved with the pen", "where": "docs/research/2026-11-paper-games.md"},
+        {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "a set of games inside one plugin", "where": "docs/research/2026-11-paper-games.md"},
+        {"project": "Inkling", "url": "https://github.com/Laumss/Inkling", "author": "Laumss", "text": "write a picture file, then insert it on the page", "where": "docs/research/plugin-brief/brief.md"},
+        {"project": "sn-plugins", "url": "https://github.com/Laumss/sn-plugins", "author": "Laumss", "text": "the Settings screen conventions in `ui-kit`", "where": "docs/plugin-scope.md"},
+        {"project": "supernote-mcp", "url": "https://github.com/ridget/supernote-mcp", "author": "ridget", "text": "inkctl touches the tablet only when it is called", "where": "cli/inkctl/docs/product.md"},
+        {"project": "inkbridge", "url": "https://github.com/CRSiegfried/inkbridge", "author": "CRSiegfried", "text": "inkctl leaves transcription to whoever calls it", "where": "cli/inkctl/docs/product.md"}
       ]}
     ],
     "notCredited": [
