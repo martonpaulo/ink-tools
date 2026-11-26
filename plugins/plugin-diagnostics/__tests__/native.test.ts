@@ -12,7 +12,7 @@ test('a build without the native module needs the native step instead of passing
   const need = await needOf(runNativeProviderProbe(l => lines.push(l), {}));
   expect(lines).toEqual([]);
   expect(need.what).toContain('ProbeProviders is missing');
-  expect(need.steps[0]).toContain('npm -C plugins/plugin-diagnostics run build');
+  expect(need.steps[0]).toContain('python3 scripts/device_build.py plugins/plugin-diagnostics --install');
 });
 
 test('logs each native line, then starts the heartbeat', async () => {

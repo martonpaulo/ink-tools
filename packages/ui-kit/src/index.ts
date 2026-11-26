@@ -30,6 +30,9 @@ export type {SearchFieldProps} from './SearchField';
 export {Pager} from './Pager';
 export type {PagerProps} from './Pager';
 export {IconButton} from './IconButton';
+// The one box for raw text: code, JSON and logs (#405).
+export {CODE_BLOCK_ID, CodeBlock} from './CodeBlock';
+export type {CodeBlockProps} from './CodeBlock';
 // The two setting shapes built from them (#274).
 export {ChoiceList, RowGroup, SwitchGroup, SwitchRow} from './SettingRows';
 export type {Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';

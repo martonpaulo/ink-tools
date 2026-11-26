@@ -108,6 +108,8 @@ export const metrics = {
   loadingRayStart: RATIO.loadingRayStart.value,
   loadingRayLength: RATIO.loadingRayLength.value,
   loadingRayStroke: RATIO.loadingRayStroke.value,
+  /** The code block's height as a share of the window's: about half the screen (#405). */
+  codeBlockHeight: RATIO.codeBlockHeight.value,
 
   ink: COLOUR.ink.value,
   paper: COLOUR.paper.value,
@@ -125,11 +127,16 @@ type Colour = keyof typeof COLOUR;
 
 /**
  * One text style per native role (#272), from tokens.json's `text` group, which Ink.java reads too:
- * its size and colour; every native role is regular weight.
+ * its size and colour, and its font family where the role names one (the code block's, #405);
+ * every native role is regular weight.
  */
 export const textStyles = Object.fromEntries(
   Object.entries(tokens.text).map(([role, {value}]) => [
     role,
-    {fontSize: mm(MM[value.font as Font].value), color: COLOUR[value.colour as Colour].value},
+    {
+      fontSize: mm(MM[value.font as Font].value),
+      color: COLOUR[value.colour as Colour].value,
+      ...('family' in value ? {fontFamily: value.family} : {}),
+    },
   ]),
-) as Record<TextRole, {fontSize: number; color: string}>;
+) as Record<TextRole, {fontSize: number; color: string; fontFamily?: string}>;

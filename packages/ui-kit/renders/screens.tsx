@@ -46,6 +46,8 @@ export type ScreenRender = {
   skip?: {windows: WindowName[]; reason: string};
   /** Why the screen is no full view, so it needs no title bar; a full view always has one (#311). */
   notFullView?: string;
+  /** The raw lines (code, JSON, a log) the screen is fed: each must show in ui-kit's CodeBlock (#405). */
+  raw?: readonly string[];
 };
 
 async function mount(element: React.ReactElement): Promise<ReactTestRenderer> {
@@ -146,6 +148,12 @@ async function diagnostics(outcome: ProbeOutcome): Promise<ReactTestRenderer> {
   await act(async () => run.props.onPress());
   return tree;
 }
+/** A probe's output for the code block (#405): one line far wider than the screen, then many short ones. */
+const PROBE_LINES = [
+  `runtime keys: ${Array.from({length: 40}, (_, i) => `sampleKey${i}`).join(',')}`,
+  ...Array.from({length: 58}, (_, i) => `native probe step ${i + 1}: {"provider":"sample","rows":${i},"ok":true}`),
+  'probe done',
+];
 /** A stroke across the picture, in page pixels. */
 const STROKE = [
   {x: 300, y: 500},
@@ -171,6 +179,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
   {name: 'plugin-diagnostics', render: () => mount(<PluginDiagnostics close={noop} run={async () => ({lines: [], status: 'done'})} />)},
+  {name: 'plugin-diagnostics-done', render: () => diagnostics({lines: PROBE_LINES, status: 'done'}), raw: PROBE_LINES},
   {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']})},
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},

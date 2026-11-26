@@ -7,7 +7,7 @@
  * keeps the padding, so a row lost below the screen and a scrolling list are told apart (#265).
  * The title bar is the one exception: it touches the top, left and right edges, as NOTE's native
  * band does, and what sits in it keeps the bar's own insets instead of the padding (#309), and
- * every full view has one (#311).
+ * every full view has one (#311). Raw text, such as a log, shows only in ui-kit's CodeBlock (#405).
  * measure-page.mjs measures the page; contrast is checked in the page by the shared
  * contrast-check.mjs; animation from the host tree (html.ts).
  */
@@ -32,6 +32,10 @@ export type Measured = {
     scroll?: Box;
     /** True inside the title bar. */
     bar?: boolean;
+    /** True inside ui-kit's CodeBlock (#405). */
+    code?: boolean;
+    /** True when drawn in a monospaced face. */
+    monospace?: boolean;
   }[];
   /** Every visible scroll view, by its visible box. */
   scrolls: {name: string; box: Box}[];
@@ -99,6 +103,23 @@ export function barBreaks({screen, bars}: Pick<Measured, 'screen' | 'bars'>): st
  */
 export function missingBarBreaks({bars}: Pick<Measured, 'bars'>): string[] {
   return bars.length ? [] : ["has no title bar: a full view opens with ui-kit's TitleBar"];
+}
+
+/**
+ * Raw text shown outside ui-kit's CodeBlock (#405): every line of `raw`, the code, JSON or log the
+ * screen was fed, must show inside the block, and only the block draws a monospaced face.
+ */
+export function rawBreaks({texts}: Pick<Measured, 'texts'>, raw: readonly string[] = []): string[] {
+  const lines = new Set(raw.map(line => line.trim()));
+  return texts.flatMap(({text, code, monospace}) => {
+    if (code) {
+      return [];
+    }
+    if (lines.has(text)) {
+      return [`raw text «${text.slice(0, 60)}» shows outside ui-kit's CodeBlock`];
+    }
+    return monospace ? [`text «${text.slice(0, 60)}» is monospaced outside ui-kit's CodeBlock`] : [];
+  });
 }
 
 /** Every rule break of one measured screen, as one readable line each. */

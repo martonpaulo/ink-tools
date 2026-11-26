@@ -3,6 +3,7 @@ import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {CODE_BLOCK_ID} from '@ink-tools/ui-kit';
 import App from '../App';
 import type {ProbeOutcome} from '../src/probe';
 import {copy} from '../src/copy';
@@ -37,10 +38,12 @@ test('the probe view keeps the size rules, has the title bar with Close, and nev
   expect(close).toHaveBeenCalledTimes(1);
 });
 
-test('a probe that ends shows its lines under «Run Probe», with Close', async () => {
+test('a probe that ends shows its lines in ui-kit\'s code block under «Run Probe», with Close (#405)', async () => {
   const {tree} = await mount({lines: ['runtime keys: a', 'probe done'], status: 'done'});
   await press(tree, 'Run Probe');
-  expect(texts(tree)).toEqual(expect.arrayContaining(['runtime keys: a', 'probe done']));
+  const block = tree.root.find(node => node.props.testID === CODE_BLOCK_ID && typeof node.type === 'string');
+  expect(block.props.accessibilityLabel).toBe(copy.output);
+  expect(block.findAll(node => typeof node.type === 'string' && typeof node.props.children === 'string').map(node => node.props.children)).toEqual(['runtime keys: a', 'probe done']);
   expect(control(tree, 'Close')).toBeDefined();
 });
 

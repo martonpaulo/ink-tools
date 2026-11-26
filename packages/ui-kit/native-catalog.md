@@ -21,6 +21,7 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 - [Icons](#icons)
 - [Small filled button](#small-filled-button)
 - [Selection border](#selection-border)
+- [Code block](#code-block)
 - [Component table](#component-table)
 - [How the native widgets draw](#how-the-native-widgets-draw)
 - [Not measured yet](#not-measured-yet)
@@ -189,6 +190,13 @@ Crop: Wi-Fi, `1660, 520, 220, 100`.
 Ink Tools adopts the sidebar's, the rounded one the owner named (2026-11-25), with the page's
 inset. Applying it to every component is
 [#287](https://github.com/martonpaulo/ink-tools/issues/287).
+
+## Code block
+
+The native screens show no raw text, so the code block has no native model
+([#405](https://github.com/martonpaulo/ink-tools/issues/405)). It reuses the native ink border
+(`border`) and the minimum text size, and takes the system monospaced face, `monospace`. Which face
+the tablet draws for it is [to measure] in the next device round.
 
 ## Component table
 

@@ -35,16 +35,28 @@ export function measurePage() {
   // padding (#309); the band's testID is ui-kit's TITLE_BAR_ID.
   const BAR = '[data-name="title-bar"]';
   const inBar = (el) => Boolean(el.closest(BAR));
+  // Content of a sideways scroll view runs past its sides, as the person scrolls to it: what shows
+  // is the part inside it, so each box is held to its sides (#405).
+  const shownX = (el, box) => {
+    const side = el.parentElement?.closest('[data-scroll-x]');
+    if (!side) {
+      return box;
+    }
+    const edge = boxOf(side.getBoundingClientRect());
+    return {...box, left: Math.max(box.left, edge.left), right: Math.min(box.right, edge.right)};
+  };
   const scrollOf = (el) => {
     const view = el.parentElement?.closest('[data-scroll]');
-    return view ? boxOf(view.getBoundingClientRect()) : undefined;
+    return view ? shownX(view, boxOf(view.getBoundingClientRect())) : undefined;
   };
+  // ui-kit's CodeBlock, the one place raw text shows (#405); its testID is ui-kit's CODE_BLOCK_ID.
+  const CODE = '[data-name="code-block"]';
 
   const scrolls = [...document.querySelectorAll('[data-scroll]')]
     .filter(shown)
     .map(el => ({
       name: `scroll view «${nameOf(el)}»`,
-      box: boxOf(el.getBoundingClientRect()),
+      box: shownX(el, boxOf(el.getBoundingClientRect())),
     }));
 
   const targets = [...document.querySelectorAll('[data-target]')]
@@ -104,7 +116,9 @@ export function measurePage() {
         name: nameOf(el),
         text: (el.textContent ?? '').trim(),
         fontSize,
-        glyphs: boxOf(glyphs),
+        glyphs: shownX(el, boxOf(glyphs)),
+        code: Boolean(el.closest(CODE)),
+        monospace: /monospace/i.test(getComputedStyle(el).fontFamily),
         within,
         scroll: scrollOf(el),
         bar: inBar(el),

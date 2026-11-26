@@ -1,7 +1,7 @@
 /** Plugin Diagnostics' own strings, English only (#257); the shared ones come from ui-kit. */
 const REBUILD_STEPS = [
-  'On the Mac, build the plugin with «npm -C plugins/plugin-diagnostics run build», which adds the native step.',
-  'Install the new Probe.snplg on the tablet with inkctl, then run the probe again.',
+  'On the Mac, build and install Probe from main with «python3 scripts/device_build.py plugins/plugin-diagnostics --install», which adds the native step (#310).',
+  'Run the probe again.',
 ];
 
 export const copy = {
@@ -9,6 +9,8 @@ export const copy = {
   run: 'Run Probe',
   hint: 'Runs the probe in src/probe.ts. Each line also goes to logcat under SNPROBE.',
   failed: 'The probe failed',
+  /** The code block's spoken name (#405). */
+  output: 'Probe output',
   'needs.native': {
     what: 'The native module ProbeProviders is missing',
     reason: 'This build has no native step, so the probe cannot read the Digest provider.',

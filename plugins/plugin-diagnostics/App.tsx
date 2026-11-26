@@ -1,8 +1,9 @@
 import React, {useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Text, View} from 'react-native';
 import {PluginManager} from 'sn-plugin-lib';
 import {
   Button,
+  CodeBlock,
   ErrorView,
   LoadingView,
   Needs,
@@ -74,17 +75,7 @@ export default function App({
       <View style={shared.buttons}>
         <Button label={copy.run} onPress={start} primary />
       </View>
-      <ScrollView style={styles.lines}>
-        {lines.map((line, index) => (
-          <Text key={index} style={shared.text}>
-            {line}
-          </Text>
-        ))}
-      </ScrollView>
+      <CodeBlock lines={lines} label={copy.output} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  lines: {flex: 1},
-});

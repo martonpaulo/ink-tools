@@ -23,6 +23,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - [The «Loading…» box](#the-loading-box)
 - [Needs, Error and Close](#needs-error-and-close)
 - [The Back key](#the-back-key)
+- [Raw text](#raw-text)
 
 ## Layout
 
@@ -187,3 +188,19 @@ registers its exit with `useBackKey`, which costs nothing and works on a host th
 - The key always ends at the hook, so the host's default never runs on top of it.
 - A test catches the handlers with `catchBackKey` from `@ink-tools/ui-kit/backKeyTest` and
   presses the key as React Native does, newest handler first.
+
+## Raw text
+
+Code, JSON and logs show only in `CodeBlock`, never in a plain `Text`
+([#405](https://github.com/martonpaulo/ink-tools/issues/405)):
+
+- an ink-bordered box about half the window high (`codeBlockHeight`);
+- the lines never wrap: the box scrolls sideways, with its bar at the box's bottom, and down
+  inside, both bars kept drawn (`persistentScrollbar`), so nothing flashes on e-ink;
+- the `code` text style: the system monospaced face (`monospace`), ink on paper, at the minimum
+  size, so more of a line shows.
+
+A screen in `renders/screens.tsx` lists the raw lines it is fed as `raw`, and the renders fail when
+one of them, or any monospaced text, shows outside the block (`rawBreaks` in `renders/rules.ts`).
+Headless Chromium hides scroll bars, so the renders show the box and its cut lines, not the bars;
+the device round checks both scroll directions.

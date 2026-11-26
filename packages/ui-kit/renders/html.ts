@@ -263,10 +263,15 @@ function element(node: HostNode, inText: boolean): string {
       )}" style="${style}; object-fit: ${fit}" alt="">`;
     }
     case 'RCTScrollView':
-      // React Native's ScrollView: its content scrolls inside its box (#265).
-      return `<div class="view" data-scroll ${attributes(
-        node,
-      )} style="${style}; overflow-y: auto">${children}</div>`;
+      // React Native's ScrollView: its content scrolls inside its box (#265); a horizontal one
+      // scrolls sideways and its content takes its natural width, so a line never wraps (#405).
+      return props.horizontal
+        ? `<div class="view" data-scroll data-scroll-x ${attributes(
+            node,
+          )} style="${style}; overflow-x: auto; overflow-y: hidden">${children}</div>`
+        : `<div class="view" data-scroll ${attributes(
+            node,
+          )} style="${style}; overflow-y: auto">${children}</div>`;
     default:
       return `<div class="view" ${attributes(
         node,
@@ -296,6 +301,7 @@ html, body { margin: 0; background: #fff; }
 .text { display: block; font-size: ${DEFAULT_FONT_SIZE}px; color: #000;
   white-space: pre-wrap; overflow-wrap: break-word; }
 .inner { display: inline; }
+[data-scroll-x] > .view { width: max-content; min-width: 100%; height: 100%; }
 .input { justify-content: center; overflow: hidden; white-space: pre; }
 .field { overflow: hidden; }
 .image { filter: grayscale(1) url(#levels); }
