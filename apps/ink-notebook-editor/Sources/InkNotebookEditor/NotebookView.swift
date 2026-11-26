@@ -295,8 +295,18 @@ private struct PageScroll: View {
         _navigator = navigator
         self.viewer = viewer
         let page = navigator.wrappedValue.index ?? 0
-        _position = State(initialValue: ScrollPosition(id: page, anchor: .top))
+        _position = State(initialValue: Self.position(of: page))
         _inView = State(initialValue: page)
+    }
+
+    /// The scroll's place for `page`: the top of the content for the first page, so its margin
+    /// shows below the toolbar, as the safe area keeps it; else the page's top (#319).
+    static func position(of page: Int) -> ScrollPosition {
+        page == 0 ? ScrollPosition(edge: .top) : ScrollPosition(id: page, anchor: .top)
+    }
+
+    private func scroll(to page: Int) {
+        if page == 0 { position.scrollTo(edge: .top) } else { position.scrollTo(id: page, anchor: .top) }
     }
 
     var body: some View {
@@ -346,12 +356,12 @@ private struct PageScroll: View {
             .onChange(of: navigator.index) { _, page in
                 guard let page, page != inView else { return }
                 inView = page
-                position.scrollTo(id: page, anchor: .top)
+                scroll(to: page)
             }
             // The scroll opens at the current page; the initial position alone is not always applied
             // before the first layout.
             .onAppear {
-                if let page = navigator.index { position.scrollTo(id: page, anchor: .top) }
+                if let page = navigator.index { scroll(to: page) }
             }
             // A new zoom keeps the place under the fingers of a pinch, else at the middle of the
             // window, where it was, and the same share of the width, as Preview zooms.
