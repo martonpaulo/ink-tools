@@ -21,11 +21,13 @@ import {
   Result,
   TextBoxInput,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {LANGUAGES} from './definition';
 import {summarize} from './dictionaries';
 import {FIRST_BUTTON_ID} from './modes';
 import {checkedRead, insertBox, readLasso} from './textBox';
+import {working} from './working';
 
 /**
  * A block of its own, far after the translation buttons, whose ids grow with each new pair of
@@ -41,8 +43,8 @@ export type SummaryDeps = {
   ) => Promise<SummaryResult>;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
-  /** The device toast when absent. */
-  toast?: (text: string) => void;
+  /** Holds a failure on ui-kit's Error state (#428). */
+  fail: (problem: Problem) => void;
   now: () => number;
 };
 
@@ -50,6 +52,7 @@ const DEVICE: SummaryDeps = {
   read: readLasso,
   summarize: (term, languages) => summarize(term, languages),
   insert: insertText,
+  fail: problem => working.hold(problem),
   log: line => console.log(`Lookup: ${line}`),
   now: Date.now,
 };

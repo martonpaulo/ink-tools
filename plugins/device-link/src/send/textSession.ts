@@ -4,6 +4,7 @@
  * or «No text recognized» with «Close». With no receiver found, the view shows Settings and its
  * «No LocalSend device found».
  */
+import type {Problem} from '@ink-tools/ui-kit';
 import {Device} from '../localsend/protocol';
 
 export type TextState =
@@ -37,8 +38,8 @@ export function onTextState(listener: (next: TextState) => void): () => void {
 export type TextDeps = {
   /** Asks for each declared permission; the first refused one, or null (#163). */
   permissions(): Promise<string | null>;
-  /** The toast for a refused permission. */
-  refused(permission: string): string;
+  /** The Needs state of a refused permission: its name and the steps that allow it (#256). */
+  refused(permission: string): Problem;
   /** The lassoed handwriting as text; null when none was recognised or the call failed. */
   read(): Promise<string | null>;
   /** The receivers one search finds, the last pick first (#307); empty when none answers. */
@@ -47,6 +48,8 @@ export type TextDeps = {
   send(device: Device, text: string): Promise<string>;
   closeView(): void;
   toast(line: string): void;
+  /** Holds the Needs state on the view, which stays open until Close (#428). */
+  needs(problem: Problem): void;
 };
 
 /** The button press: reads the lasso and shows what it found. A press while one runs is ignored. */
@@ -57,9 +60,9 @@ export async function startTextSend(deps: TextDeps): Promise<void> {
   setState({phase: 'reading'});
   const missing = await deps.permissions();
   if (missing !== null) {
+    // The view stays open on the Needs state; its Close closes it (#428).
     setState(IDLE);
-    deps.closeView();
-    deps.toast(deps.refused(missing));
+    deps.needs(deps.refused(missing));
     return;
   }
   const devices = await deps.devices();

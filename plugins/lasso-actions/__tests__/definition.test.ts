@@ -21,6 +21,7 @@ import {
 import {iconUri} from '../src/icons';
 import {FIRST_BUTTON_ID, MODES} from '../src/modes';
 import {copy} from '../src/copy';
+import {UNPLACED} from '../src/textBox';
 import {defaultSettings} from '../src/settings';
 
 const place: LassoPlace = {
@@ -45,6 +46,7 @@ function deps(over: Partial<DefineDeps> = {}): DefineDeps & {lines: string[]} {
     define: async () => found,
     insert: jest.fn(async () => ok(true)),
     log: line => lines.push(line),
+    fail: jest.fn(),
     now: () => 0,
     lines,
     ...over,
@@ -232,12 +234,11 @@ describe('a read it may not use stops before the dictionary (#165, #166)', () =>
     expect((d.insert as jest.Mock).mock.calls[0][0].text).toBe(copy['error.unreadable']);
   });
 
-  test("a pasted selection's local rect writes nothing and shows a toast", async () => {
-    const toast = jest.fn();
+  test("a pasted selection's local rect writes nothing and holds the Error state (#428)", async () => {
     const pasted = {...place, rect: {left: -40, top: 0, right: 140, bottom: 181}};
-    const d = deps({read: async () => ({ok: true, value: {query: 'maçã', place: pasted}}), toast});
+    const d = deps({read: async () => ({ok: true, value: {query: 'maçã', place: pasted}})});
     expect(await defineLasso(d)).toEqual({ok: false, text: copy['error.unplaced']});
     expect(d.insert).not.toHaveBeenCalled();
-    expect(toast).toHaveBeenCalledWith(copy['error.unplaced']);
+    expect(d.fail).toHaveBeenCalledWith(UNPLACED);
   });
 });

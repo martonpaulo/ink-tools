@@ -21,12 +21,13 @@ import {
   TextBoxInput,
   TIMEOUT_CODE,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {missingFor, BUTTONS, Need, permissionProblem} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';
 import {pickedFor} from './picks';
 import {PICTURE_LANGUAGES} from './pictureLanguages';
-import {showToast} from './textBox';
+import {UNPLACED} from './textBox';
 import {working} from './working';
 import {Mode, modeAdapters} from './modes';
 import {findKept, privatePicturesDir, recordKept} from './library';
@@ -244,8 +245,8 @@ export type PictureDeps = {
   write: (box: TextBoxInput) => Promise<Result<boolean>>;
   /** Shows the Needs state of the missing permissions, with «Allow» (#256). */
   needs: (missing: readonly Need[]) => void;
-  /** The device toast when absent. */
-  toast?: (text: string) => void;
+  /** Holds a failure on ui-kit's Error state, which opens the view (#256, #428). */
+  fail: (problem: Problem) => void;
 };
 
 const DEVICE: PictureDeps = {
@@ -263,6 +264,7 @@ const DEVICE: PictureDeps = {
       permissionProblem(missing, () => working.dismiss()),
       'needs',
     ),
+  fail: problem => working.hold(problem),
 };
 
 /** One press at a time across both picture buttons (#93). */
@@ -331,7 +333,7 @@ export async function pictureLasso(
     if (!checked.ok) {
       log(`${name}: ${checked.why}, ${checked.message}`);
       if (checked.why === 'unplaced') {
-        (deps.toast ?? showToast)(copy['error.unplaced']);
+        deps.fail(UNPLACED);
       } else if (checked.place) {
         await writeNote(deps, checked.place, copy['error.unreadable']);
       }

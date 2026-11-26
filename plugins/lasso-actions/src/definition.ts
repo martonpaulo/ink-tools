@@ -21,10 +21,12 @@ import {
   Result,
   TextBoxInput,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {definers, SOURCE_NAMES} from './dictionaries';
 import {FIRST_BUTTON_ID, MODES} from './modes';
 import {checkedRead, insertBox, readLasso} from './textBox';
+import {working} from './working';
 
 export {BOX_WIDTH, boxRect, FONT_SIZE} from './textBox';
 
@@ -46,8 +48,8 @@ export type DefineDeps = {
   ) => Promise<DefinitionResult>;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
-  /** The device toast when absent. */
-  toast?: (text: string) => void;
+  /** Holds a failure on ui-kit's Error state (#428). */
+  fail: (problem: Problem) => void;
   now: () => number;
 };
 
@@ -55,6 +57,7 @@ const DEVICE: DefineDeps = {
   read: readLasso,
   define: (word, languages) => defineFirst(definers(), word, languages),
   insert: insertText,
+  fail: problem => working.hold(problem),
   log: line => console.log(`Lookup: ${line}`),
   now: Date.now,
 };

@@ -116,15 +116,8 @@ ARGUMENT_LINES = 4
 FAILURE_WORD = re.compile(r"error|fail|refus|permission", re.IGNORECASE)
 HELD = re.compile(r"\b(?:hold|fail|needs|ask)\(|\bthrow\b|\bset\w*(?:Problem|Error)\(")
 STRING = re.compile(r"""'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`""")
-# The plugin files whose failure toasts stood alone when the toast rule landed (#259); #428 empties it.
-PENDING_TOASTS = {
-    "plugins/device-link/src/send/textSession.ts": 1,
-    "plugins/lasso-actions/src/choose.ts": 1,
-    "plugins/lasso-actions/src/headings/run.ts": 1,
-    "plugins/lasso-actions/src/pictures.ts": 1,
-    "plugins/lasso-actions/src/textBox.ts": 1,
-    "plugins/smart-pen/src/modules/text/buttons.ts": 3,
-}
+# The plugin files whose failure toasts stood alone when the toast rule landed (#259); #428 emptied it.
+PENDING_TOASTS = {}
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 PYTHON_COMMENT = re.compile(r"^\s*#")
 HOST_TOOL = re.compile(r"^cli/[^/]+/src/")

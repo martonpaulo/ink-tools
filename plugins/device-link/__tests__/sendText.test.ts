@@ -15,6 +15,9 @@ import {
   textState,
 } from '../src/send/textSession';
 import {fakeRelay} from '../test-support/fakeRelay';
+import {refusedProblem} from '../src/permissions';
+import {textDeps} from '../src/run';
+import {working} from '../src/working';
 
 /** A synthetic LAN address from its four parts. */
 const lan = (...parts: number[]) => parts.join('.');
@@ -127,12 +130,13 @@ const iphone: Device = {...mac, alias: 'iPhone', fingerprint: 'iphone-fp'};
 function deps(overrides: Partial<TextDeps> = {}): TextDeps {
   return {
     permissions: jest.fn(async () => null),
-    refused: (permission: string) => `refused ${permission}`,
+    refused: (permission: string) => ({what: `refused ${permission}`}),
     read: jest.fn(async () => 'Buy milk'),
     devices: jest.fn(async () => [mac, iphone]),
     send: jest.fn(async () => 'Sent to Mac'),
     closeView: jest.fn(),
     toast: jest.fn(),
+    needs: jest.fn(),
     ...overrides,
   };
 }
@@ -185,13 +189,23 @@ describe('the view', () => {
     expect(d.read).not.toHaveBeenCalled();
   });
 
-  test('a refused permission closes the view with a toast that names it', async () => {
+  test('a refused permission holds the Needs state that names it, with no toast (#428)', async () => {
     const d = deps({
       permissions: jest.fn(async () => 'plugin.permission.INTERNET'),
     });
     await startTextSend(d);
-    expect(d.toast).toHaveBeenCalledWith('refused plugin.permission.INTERNET');
+    expect(d.needs).toHaveBeenCalledWith({what: 'refused plugin.permission.INTERNET'});
+    expect(d.toast).not.toHaveBeenCalled();
+    expect(d.closeView).not.toHaveBeenCalled();
     expect(d.read).not.toHaveBeenCalled();
     expect(textState().phase).toBe('idle');
   });
+});
+
+test('on the tablet a refused permission of «Send Text» holds ui-kit\'s Needs state (#428)', async () => {
+  const problem = refusedProblem('plugin.permission.INTERNET');
+  textDeps(() => {}, () => {}).needs(problem);
+  expect(working.heldState()).toBe('needs');
+  expect(working.problem()).toBe(problem);
+  await working.dismiss();
 });

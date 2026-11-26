@@ -29,7 +29,7 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
-import {ensurePermissions, refusedLine, refusedProblem} from './permissions';
+import {ensurePermissions, refusedProblem} from './permissions';
 
 /** The native timer module `RelayPackage.java` registers; index.js ticks the editor helper on it. */
 const TICKS_MODULE = 'DeviceLinkTicks';
@@ -308,11 +308,12 @@ export function textDeps(
 ): TextDeps {
   return {
     permissions: ensurePermissions,
-    refused: refusedLine,
+    refused: refusedProblem,
     read: readLassoText,
     devices: () => findReceivers(native),
     send: (device, text) => sendTo(device, text, native),
     closeView,
     toast,
+    needs: problem => working.hold(problem, 'needs'),
   };
 }

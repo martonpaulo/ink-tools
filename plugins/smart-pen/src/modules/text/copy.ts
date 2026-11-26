@@ -14,8 +14,10 @@ export const copy = {
   'toast.converted': 'Converted to text',
   'toast.empty': 'Lasso some handwriting first',
   'toast.convertFailed': 'Could not convert the handwriting',
-  'toast.permission':
-    'Allow Read Files and Modify Files, then tap the button again',
+  /** The Needs state of a missing file permission (#428): what is missing, why, and «Allow». */
+  'needs.permission': 'Smart Pen needs Read Files and Modify Files',
+  'needs.reason': 'Real-Time Text reads the page size and writes the converted text on the page.',
+  'needs.allow': 'Allow',
   'toast.failed': 'Real-Time Text could not start',
   /** The Error state's reason under a failed conversion or undo (#257); the details go to the log. */
   'error.again': 'Close, then press the button again.',

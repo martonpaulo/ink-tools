@@ -137,9 +137,12 @@ export const copy = {
   'error.place': 'There is no room below the lassoed word.',
   /** Written on the note below the selection: no word was recognized in it (#166). */
   'error.unreadable': 'The handwriting could not be read.',
-  /** A toast: a pasted selection has no place on the page yet (#165). */
+  /** The Error state of a pasted selection with no place on the page yet (#165, #428). */
+  'error.unplacedWhat': 'The selection has no place on the page yet.',
   'error.unplaced':
     'Put the selection down on the page first, then press again.',
+  /** The Error state's reason when «Choose picture» read no word (#166, #428). */
+  'error.unreadableReason': 'Close, then lasso the handwritten word and press again.',
   'error.insert': 'The definition could not be inserted on the page.',
   /** Toasts that replace the «Loading…» strip (#103). */
   'working.failed': 'Lasso Actions stopped with an error.',

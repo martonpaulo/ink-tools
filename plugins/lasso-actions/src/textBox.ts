@@ -28,6 +28,7 @@ import {
   TextBoxInput,
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 
 /** The text size in page pixels, as Ink2Pic's definition box [INFERENCE]. */
@@ -118,18 +119,24 @@ export function showToast(text: string): void {
   ToastAndroid.show(text, ToastAndroid.SHORT);
 }
 
+/** The Error state of a lasso that is a pasted piece with no place on the page yet (#165, #428). */
+export const UNPLACED: Problem = {
+  what: copy['error.unplacedWhat'],
+  reason: copy['error.unplaced'],
+};
+
 /** What a text button's press needs to stop on a read it may not use (#165, #166). */
 export type CheckDeps = {
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
-  /** The device toast when absent. */
-  toast?: (text: string) => void;
+  /** Holds a failure on ui-kit's Error state, which opens the view (#256, #428). */
+  fail: (problem: Problem) => void;
 };
 
 /**
  * The read as a text button uses it, through ink-core's `checkLookup`: its words and a place on
- * the page; else why the press stops. A rect that is not on the page places nothing and shows a
- * toast (#165); a recognition with no word writes so below the selection, before any lookup (#166).
+ * the page; else why the press stops. A rect that is not on the page places nothing and holds the
+ * Error state (#165, #428); a recognition with no word writes so below the selection, before any lookup (#166).
  */
 export async function checkedRead(
   read: Outcome<LassoQuery, CallFailure>,
@@ -146,7 +153,7 @@ export async function checkedRead(
   }
   deps.log(`${tag}: ${checked.why}, ${checked.message}`);
   if (checked.why === 'unplaced') {
-    (deps.toast ?? showToast)(copy['error.unplaced']);
+    deps.fail(UNPLACED);
     return {ok: false, text: copy['error.unplaced']};
   }
   if (checked.place) {

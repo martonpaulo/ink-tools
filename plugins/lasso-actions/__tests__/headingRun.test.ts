@@ -1,9 +1,11 @@
 /** One Headings press over a fake page (#252): the order of the calls and each failure. */
 import {fail, ok, TITLE_STYLE} from '@ink-tools/sn-adapter/official';
 import {HEADING_MARGIN} from '../src/headings/levels';
-import {applyHeading, HeadingHost} from '../src/headings/run';
+import {applyHeading, DEVICE_HOST, HeadingHost} from '../src/headings/run';
+import {working} from '../src/working';
 import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from '../src/copy';
+import {UNPLACED} from '../src/textBox';
 
 const PAGE = {width: 1404, height: 1872};
 const WORD = {left: 600, top: 400, right: 800, bottom: 460};
@@ -91,13 +93,14 @@ test('no lasso changes nothing and says to lasso first', async () => {
   expect(toasts).toEqual([copy['heading.noLasso']]);
 });
 
-test("a pasted selection's local rect places nothing (#165)", async () => {
-  const {host, calls, toasts} = fakeHost({
+test("a pasted selection's local rect places nothing and holds the Error state (#165, #428)", async () => {
+  const {host, calls, toasts, failures} = fakeHost({
     lassoRect: async () => ok({left: -90, top: -90, right: 90, bottom: 90}),
   });
   expect(await applyHeading(1, host)).toEqual({ok: false, why: 'unplaced'});
   expect(calls).toEqual([]);
-  expect(toasts).toEqual([copy['error.unplaced']]);
+  expect(toasts).toEqual([]);
+  expect(failures).toEqual([UNPLACED]);
 });
 
 test('an unread page size changes nothing', async () => {
@@ -191,4 +194,21 @@ test('each press uses Settings › Heading Size: own size keeps the width, full 
     rect: {left: HEADING_MARGIN, top: 400, right: PAGE.width - HEADING_MARGIN, bottom: 460},
   });
   expect(full.calls.at(-1)).toBe(`resize ${HEADING_MARGIN},400,${PAGE.width - HEADING_MARGIN},460`);
+});
+
+test("on the tablet a pasted selection holds ui-kit's Error state with its reason (#428)", async () => {
+  const host: HeadingHost = {
+    ...DEVICE_HOST,
+    lassoRect: async () => ok({left: -90, top: -90, right: 90, bottom: 90}),
+    size: async () => 'own',
+    pageSize: async () => ok(PAGE),
+    log: () => {},
+  };
+  expect(await applyHeading(1, host)).toEqual({ok: false, why: 'unplaced'});
+  expect(working.heldState()).toBe('error');
+  expect(working.problem()).toEqual({
+    what: copy['error.unplacedWhat'],
+    reason: copy['error.unplaced'],
+  });
+  await working.dismiss();
 });

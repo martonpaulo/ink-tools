@@ -38,7 +38,9 @@ import {
   stateText,
   thumbUri,
 } from './profile';
-import {showToast} from './textBox';
+import type {Problem} from '@ink-tools/ui-kit';
+import {UNPLACED} from './textBox';
+import {working} from './working';
 
 /** The lassoed word the Choose screen is for, and where its picture goes. */
 export type Choice = {word: string; place: LassoPlace | null};
@@ -59,8 +61,14 @@ export type ChooseDeps = {
   /** The mode's search, measure and insert. */
   flow: (mode: Mode) => QuickInsertDeps;
   thumb: (result: SearchResult, dir: string) => Promise<string>;
-  /** The device toast when absent. */
-  toast?: (text: string) => void;
+  /** Holds a failure on ui-kit's Error state, which opens the view (#256, #428). */
+  fail: (problem: Problem) => void;
+};
+
+/** The Error state of a lasso with no word in it (#166, #428). */
+const UNREADABLE: Problem = {
+  what: copy['error.unreadable'],
+  reason: copy['error.unreadableReason'],
 };
 
 const DEVICE: ChooseDeps = {
@@ -72,6 +80,7 @@ const DEVICE: ChooseDeps = {
   close: closePluginView,
   flow: mode => modeDeps(mode),
   thumb: thumbUri,
+  fail: problem => working.hold(problem),
 };
 
 let choice: Choice | null = null;
@@ -102,7 +111,7 @@ export function clearChoice(): void {
 
 /**
  * The press of «Choose picture». It reads the lasso before the view opens; a failed read opens no
- * view and is logged. A missing permission opens the view on Settings, which asks for it. Never
+ * view and is logged; a word it may not use opens the view on the Error state (#428). A missing permission opens the view on Settings, which asks for it. Never
  * rejects; true when the view opened on the Choose screen.
  */
 export async function openChoose(deps: ChooseDeps = DEVICE): Promise<boolean> {
@@ -119,13 +128,11 @@ export async function openChoose(deps: ChooseDeps = DEVICE): Promise<boolean> {
       log(`choose: no word, ${query.code} ${query.message}`);
       return false;
     }
-    // As the picture buttons: no word or no place on the page opens no view (#165, #166).
+    // No word or no place on the page opens the view on the Error state, never Choose (#165, #166, #428).
     const checked = checkLookup(query.value);
     if (!checked.ok) {
       log(`choose: ${checked.why}, ${checked.message}`);
-      (deps.toast ?? showToast)(
-        copy[checked.why === 'unplaced' ? 'error.unplaced' : 'error.unreadable'],
-      );
+      deps.fail(checked.why === 'unplaced' ? UNPLACED : UNREADABLE);
       return false;
     }
     log(`choose: "${checked.value.query}"`);

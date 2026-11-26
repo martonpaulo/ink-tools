@@ -34,6 +34,7 @@ function deps(
     summarize: async () => ({summary: found, errors: []}),
     insert: jest.fn(async () => ok(true)),
     log: line => lines.push(line),
+    fail: jest.fn(),
     now: () => 0,
     lines,
     ...over,

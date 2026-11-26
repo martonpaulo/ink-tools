@@ -37,6 +37,8 @@ function setup(granted = true, tipShown = true) {
         : ({ok: false as const, code: -1, message: 'no window'});
     },
     fail: jest.fn(),
+    needs: jest.fn(),
+    dismiss: jest.fn(),
     log: () => {},
     icons: {
       on: 'on.png',
@@ -137,19 +139,28 @@ test('a pen-up listener the host refuses shows the host error tip, nothing to re
   expect(buttons.on).toBe(false);
 });
 
-test('when the error tip cannot show, a toast says it instead (#296)', async () => {
-  const {buttons, tablet, toasts} = setup(true, false);
+test('when the error tip cannot show, the Error state says it, with no toast (#296, #428)', async () => {
+  const {host, buttons, tablet, toasts} = setup(true, false);
   tablet.host.onPenUp = () => ({ok: false, code: -1, message: 'refused'});
   expect(await buttons.turn(true)).toBe(false);
-  expect(toasts).toEqual([copy['toast.failed']]);
+  expect(toasts).toEqual([]);
+  expect(host.fail).toHaveBeenCalledWith({what: copy['toast.failed'], reason: copy['error.again']});
 });
 
-test('without the file permissions the mode stays off and asks for them', async () => {
+test('without the file permissions the mode stays off on the Needs state, whose «Allow» asks for each (#428)', async () => {
   const {host, buttons, tablet, toasts} = setup(false);
   expect(await buttons.turn(true)).toBe(false);
   expect(tablet.listening).toBe(false);
-  expect(host.requestPermission).toHaveBeenCalled();
-  expect(toasts).toEqual([copy['toast.permission']]);
+  expect(toasts).toEqual([]);
+  expect(host.requestPermission).not.toHaveBeenCalled();
+  const problem = host.needs.mock.calls[0][0];
+  expect(problem).toMatchObject({what: copy['needs.permission'], reason: copy['needs.reason']});
+  expect(problem.fix.label).toBe(copy['needs.allow']);
+  problem.fix.run();
+  // setImmediate runs once every pending promise step has run: no clock is read.
+  await new Promise(setImmediate);
+  expect(host.requestPermission).toHaveBeenCalledTimes(2);
+  expect(host.dismiss).toHaveBeenCalled();
 });
 
 test('Undo Conversion with nothing converted says so', async () => {
@@ -165,7 +176,8 @@ test('«Convert to Text» converts the lasso and says so; without the permission
   expect(toasts).toEqual([copy['toast.converted']]);
   const denied = setup(false);
   expect(await denied.buttons.convertLasso()).toBeNull();
-  expect(denied.toasts).toEqual([copy['toast.permission']]);
+  expect(denied.toasts).toEqual([]);
+  expect(denied.host.needs).toHaveBeenCalledTimes(1);
   expect(denied.tablet.host.getLassoElements).not.toHaveBeenCalled();
 });
 

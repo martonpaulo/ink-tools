@@ -7,6 +7,7 @@ import {LassoPlace} from '@ink-tools/ink-core';
 import {Measures, pixelKind, SearchResult} from '@ink-tools/picture-search';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy, pictureCopy} from '../src/copy';
+import {UNPLACED} from '../src/textBox';
 import {MODES} from '../src/modes';
 import {
   LOOKUP_PICTURES,
@@ -257,6 +258,7 @@ describe('a press (#111)', () => {
       ),
       write: jest.fn(async () => ok(true)),
       needs: jest.fn(),
+      fail: jest.fn(),
       ...over,
     } as PictureDeps & {[K in keyof PictureDeps]: jest.Mock};
   }
@@ -313,14 +315,13 @@ describe('a press (#111)', () => {
     expect(d.write).not.toHaveBeenCalled();
   });
 
-  test("a pasted selection's local rect places nothing and shows a toast (#165)", async () => {
-    const toast = jest.fn();
+  test("a pasted selection's local rect places nothing and holds the Error state (#165, #428)", async () => {
     const pasted = {...place, rect: {left: -40, top: 0, right: 140, bottom: 181}};
-    const d = press({read: jest.fn(async () => ok({query: 'apple', place: pasted})), toast});
+    const d = press({read: jest.fn(async () => ok({query: 'apple', place: pasted}))});
     expect(await pictureLasso(illustration, d)).toBeNull();
     expect(d.insert).not.toHaveBeenCalled();
     expect(d.write).not.toHaveBeenCalled();
-    expect(toast).toHaveBeenCalledWith(copy['error.unplaced']);
+    expect(d.fail).toHaveBeenCalledWith(UNPLACED);
   });
 
   test('a recognition with no letter searches nothing and says so below it (#166)', async () => {

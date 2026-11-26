@@ -28,9 +28,11 @@ import {
   Result,
   TextBoxInput,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {SOURCE_NAMES, translators} from './dictionaries';
 import {checkedRead, insertBox, readLasso} from './textBox';
+import {working} from './working';
 
 export type TranslateDeps = {
   read: () => Promise<Outcome<LassoQuery, CallFailure>>;
@@ -38,8 +40,8 @@ export type TranslateDeps = {
   pinyin: () => PinyinIndex;
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
   log: (line: string) => void;
-  /** The device toast when absent. */
-  toast?: (text: string) => void;
+  /** Holds a failure on ui-kit's Error state (#428). */
+  fail: (problem: Problem) => void;
 };
 
 const DEVICE: TranslateDeps = {
@@ -47,6 +49,7 @@ const DEVICE: TranslateDeps = {
   translate: query => translateFirst(translators(), query),
   pinyin: cedictPinyinIndex,
   insert: insertText,
+  fail: problem => working.hold(problem),
   log: line => console.log(`Lookup: ${line}`),
 };
 

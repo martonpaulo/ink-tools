@@ -19,7 +19,7 @@ import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
 import {working} from '../working';
 import {currentPageSize} from '../pageSize';
-import {lookupLog, showToast, whyNot} from '../textBox';
+import {lookupLog, showToast, UNPLACED, whyNot} from '../textBox';
 import {getSettings} from '../profile';
 import {levelStyle, placement, type HeadingLevel, type HeadingSize} from './levels';
 
@@ -75,7 +75,7 @@ export async function applyHeading(
   const target = problem ? null : placement(rect.value, page.value, size);
   if (!target) {
     host.log(`${tag}: ${problem ?? 'no place on the page'}`);
-    host.toast(copy['error.unplaced']);
+    host.fail(UNPLACED);
     return {ok: false, why: 'unplaced'};
   }
   const titled = await host.setTitle(levelStyle(level));

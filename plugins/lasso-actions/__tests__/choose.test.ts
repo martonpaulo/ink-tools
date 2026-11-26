@@ -15,6 +15,7 @@ import {
   resetChooseForTests,
 } from '../src/choose';
 import {copy, pictureCopy} from '../src/copy';
+import {UNPLACED} from '../src/textBox';
 import {pickedFor, resetPicksForTests} from '../src/picks';
 import {MODES} from '../src/modes';
 import type {QuickInsertDeps} from '../src/profile';
@@ -77,6 +78,7 @@ function deps(over: Partial<ChooseDeps> = {}): ChooseDeps {
     close: jest.fn(async () => ok(true)),
     flow: () => flow(['a', 'b']),
     thumb: async r => `file:///thumbs/${r.id}.png`,
+    fail: jest.fn(),
     ...over,
   };
 }
@@ -296,15 +298,18 @@ test('Close drops the word and inserts nothing', async () => {
   ).toBeNull();
 });
 
-test('a pasted rect or a text with no letter opens no view (#165, #166)', async () => {
-  const toast = jest.fn();
+test('a pasted rect or a text with no letter holds the Error state, never Choose (#165, #166, #428)', async () => {
+  const held = jest.fn();
   const pasted = {...place, rect: {left: -40, top: 0, right: 140, bottom: 181}};
-  const unplaced = deps({read: async () => ok({query: 'apple', place: pasted}), toast});
+  const unplaced = deps({read: async () => ok({query: 'apple', place: pasted}), fail: held});
   expect(await openChoose(unplaced)).toBe(false);
-  const unreadable = deps({read: async () => ok({query: '÷:.', place}), toast});
+  const unreadable = deps({read: async () => ok({query: '÷:.', place}), fail: held});
   expect(await openChoose(unreadable)).toBe(false);
   expect(unplaced.show).not.toHaveBeenCalled();
   expect(unreadable.show).not.toHaveBeenCalled();
-  expect(toast.mock.calls).toEqual([[copy['error.unplaced']], [copy['error.unreadable']]]);
+  expect(held.mock.calls).toEqual([
+    [UNPLACED],
+    [{what: copy['error.unreadable'], reason: copy['error.unreadableReason']}],
+  ]);
   expect(currentChoice()).toBeNull();
 });

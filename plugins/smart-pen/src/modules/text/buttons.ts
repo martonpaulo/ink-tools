@@ -53,6 +53,10 @@ export type ButtonHost = {
   errorTip: (text: string) => Result<true>;
   /** Holds a failure on the tablet on ui-kit's Error state, with its reason and Close (#257). */
   fail: (problem: Problem) => void;
+  /** Holds a missing permission on ui-kit's Needs state, which opens the view (#428). */
+  needs: (problem: Problem) => void;
+  /** Closes the held state and its view. */
+  dismiss: () => void;
   log: (line: string) => void;
   icons: Icons;
 };
@@ -149,17 +153,42 @@ export class Buttons {
     }
   }
 
-  /** True when every file permission is granted; otherwise asks, and the dialog shows next press. */
+  /**
+   * True when every file permission is granted; otherwise holds the Needs state, whose «Allow»
+   * asks for each missing one while the view shows, then closes it (#428), as Lasso Actions does (#256).
+   */
   private async permitted(): Promise<boolean> {
+    const {host} = this;
+    const missing: string[] = [];
     for (const permission of NEEDS) {
-      const granted = await this.host.hasPermission(permission);
+      const granted = await host.hasPermission(permission);
       if (!granted.ok || !granted.value) {
-        this.host.log(`permission ${permission} missing: asked`);
-        this.host.requestPermission(permission).catch(() => {});
-        return false;
+        missing.push(permission);
       }
     }
-    return true;
+    if (missing.length === 0) {
+      return true;
+    }
+    host.log(`permissions missing: ${missing.join(', ')}`);
+    host.needs({
+      what: copy['needs.permission'],
+      reason: copy['needs.reason'],
+      fix: {
+        label: copy['needs.allow'],
+        run: () => {
+          this.ask(missing)
+            .catch(error => host.log(`request failed: ${String(error)}`))
+            .then(() => host.dismiss());
+        },
+      },
+    });
+    return false;
+  }
+
+  private async ask(missing: readonly string[]): Promise<void> {
+    for (const permission of missing) {
+      this.host.log(describe(`request ${permission}`, await this.host.requestPermission(permission)));
+    }
   }
 
   /** Turns the mode on or off; false when it could not turn on. */
@@ -170,7 +199,6 @@ export class Buttons {
     }
     if (on) {
       if (!(await this.permitted())) {
-        host.toast(copy['toast.permission']);
         return false;
       }
       const converter = host.makeConverter();
@@ -179,8 +207,9 @@ export class Buttons {
       if (!started.ok) {
         const tip = host.errorTip(copy['toast.failed']);
         if (!tip.ok) {
+          // No tip: the Error state says it, and its own toast stands in when no view opens (#428).
           host.log(describe('error tip', tip));
-          host.toast(copy['toast.failed']);
+          host.fail(failed(copy['toast.failed']));
         }
         return false;
       }
@@ -229,7 +258,6 @@ export class Buttons {
   /** «Convert to Text» (#250); null when a file permission is still missing. */
   async convertLasso(): Promise<LassoOutcome | null> {
     if (!(await this.permitted())) {
-      this.host.toast(copy['toast.permission']);
       return null;
     }
     // A word still converting finishes first, so «Undo Conversion» keeps the lasso's conversion.

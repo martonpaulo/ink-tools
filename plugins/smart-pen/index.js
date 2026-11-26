@@ -59,6 +59,8 @@ const buttons = new Buttons({
   toast: text => ToastAndroid.show(text, ToastAndroid.SHORT),
   errorTip,
   fail: problem => working.hold(problem),
+  needs: problem => working.hold(problem, 'needs'),
+  dismiss: () => working.dismiss(),
   log,
   icons: {
     on: Image.resolveAssetSource(require('./assets/mode-on.png')).uri,

@@ -177,8 +177,8 @@ The owner's rules for keeping each part replaceable (2026-11-14):
 - **Every full view closes, and no failure is a toast alone.** Each full view of a plugin shows
   ui-kit's Close, and each failure stays on screen in ui-kit's Error or Needs state; the `close`
   and `toast` rules of `scripts/boundaries.py` cover every plugin, `plugins/ink-tools-probe`
-  included, and the lone toasts left are `PENDING_TOASTS`, which
-  [#428](https://github.com/martonpaulo/ink-tools/issues/428) empties ([#259](https://github.com/martonpaulo/ink-tools/issues/259)).
+  included, and `PENDING_TOASTS` is empty since
+  [#428](https://github.com/martonpaulo/ink-tools/issues/428) ([#259](https://github.com/martonpaulo/ink-tools/issues/259)).
 
 ## Shared packages
 

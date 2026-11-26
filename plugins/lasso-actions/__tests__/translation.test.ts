@@ -50,6 +50,7 @@ function run(query: string, lookup: (q: TranslationQuery) => LookupResult) {
     pinyin: () => INDEX,
     insert,
     log: () => {},
+    fail: jest.fn(),
   };
   return {deps, asked, insert};
 }
