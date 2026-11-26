@@ -50,11 +50,18 @@ export interface WordSearch {
 export interface WordSearchOptions {
   /** The letters of the grid and of the filler, A to Z by default; Spanish adds Ñ. */
   alphabet?: string;
+  /**
+   * Words the filler letters must never spell, in any of the eight directions: the language's
+   * offensive words (`words/avoid.json`). A reading inside the placed words alone is left as it is.
+   */
+  avoid?: readonly string[];
 }
 
 const WORD_SEARCH_ATTEMPTS = 40;
 const PLACE_TRIES = 175;
 const FILL_TRIES = 20;
+/** How many times the filler cells of an avoided reading are drawn again before the fill is dropped. */
+const REPAIR_TRIES = 80;
 
 function cellsOf(size: number, row: number, col: number, direction: Direction, length: number): number[] | null {
   const [dr, dc] = DIRECTIONS[direction];
@@ -87,6 +94,56 @@ export function findWord(size: number, letters: readonly string[], word: string)
     }
   }
   return found;
+}
+
+interface AvoidIndex {
+  words: ReadonlySet<string>;
+  shortest: number;
+  longest: number;
+}
+
+function avoidIndex(avoid: readonly string[]): AvoidIndex | null {
+  const words = avoid.filter(word => word.length > 0);
+  if (words.length === 0) return null;
+  const lengths = words.map(word => [...word].length);
+  return { words: new Set(words), shortest: Math.min(...lengths), longest: Math.max(...lengths) };
+}
+
+/** The cells of the first avoided word the grid spells through at least one filler cell, or null. */
+export function avoidedReading(size: number, letters: readonly string[], filler: readonly boolean[], avoid: readonly string[]): number[] | null {
+  const index = avoidIndex(avoid);
+  return index && firstAvoided(size, letters, filler, index);
+}
+
+function firstAvoided(size: number, letters: readonly string[], filler: readonly boolean[], index: AvoidIndex): number[] | null {
+  for (let start = 0; start < size * size; start++) {
+    for (const [dr, dc] of Object.values(DIRECTIONS)) {
+      let text = '';
+      let touchesFiller = false;
+      const cells: number[] = [];
+      for (let i = 0; i < index.longest; i++) {
+        const r = Math.floor(start / size) + dr * i;
+        const c = (start % size) + dc * i;
+        if (r < 0 || c < 0 || r >= size || c >= size) break;
+        const cell = r * size + c;
+        cells.push(cell);
+        text += letters[cell];
+        touchesFiller ||= filler[cell];
+        if (touchesFiller && cells.length >= index.shortest && index.words.has(text)) return cells;
+      }
+    }
+  }
+  return null;
+}
+
+/** Draws the filler cells of each avoided reading again until none is left; false when it never clears. */
+function clearFiller(size: number, letters: string[], filler: readonly boolean[], index: AvoidIndex, alphabet: readonly string[], random: Random): boolean {
+  for (let t = 0; t < REPAIR_TRIES; t++) {
+    const hit = firstAvoided(size, letters, filler, index);
+    if (!hit) return true;
+    for (const cell of hit) if (filler[cell]) letters[cell] = random.pick(alphabet);
+  }
+  return false;
 }
 
 function placeAll(size: number, words: readonly string[], directions: readonly Direction[], random: Random): { letters: string[]; placed: PlacedWord[] } | string {
@@ -138,6 +195,7 @@ export function generateWordSearch(seed: string, size: number, difficulty: Diffi
   order.sort((a, b) => [...b.word].length - [...a.word].length || a.index - b.index);
   const sorted = order.map(o => o.word);
   const directions = WORD_SEARCH_DIRECTIONS[difficulty];
+  const avoid = avoidIndex(options.avoid ?? []);
 
   let failed = '';
   for (let i = 0; i < WORD_SEARCH_ATTEMPTS; i++) {
@@ -147,8 +205,10 @@ export function generateWordSearch(seed: string, size: number, difficulty: Diffi
       failed = result;
       continue;
     }
+    const filler = result.letters.map(letter => letter === '');
     for (let f = 0; f < FILL_TRIES; f++) {
       const letters = result.letters.map(letter => letter || random.pick(alphabet));
+      if (avoid && !clearFiller(size, letters, filler, avoid, alphabet, random)) continue;
       if (words.every(word => findWord(size, letters, word).length === 1)) {
         return { id: { game: 'word-search', size: String(size), difficulty, seed }, size, letters, words: result.placed };
       }
@@ -157,6 +217,6 @@ export function generateWordSearch(seed: string, size: number, difficulty: Diffi
   throw new Error(
     failed
       ? `«${failed}» found no place in a ${size} x ${size} word search from seed «${seed}» in ${WORD_SEARCH_ATTEMPTS} attempts`
-      : `no ${size} x ${size} word search from seed «${seed}» left each word only once in ${WORD_SEARCH_ATTEMPTS} attempts`,
+      : `no ${size} x ${size} word search from seed «${seed}» left each word only once, with no avoided word, in ${WORD_SEARCH_ATTEMPTS} attempts`,
   );
 }

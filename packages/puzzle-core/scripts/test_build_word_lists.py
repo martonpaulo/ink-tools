@@ -32,6 +32,17 @@ class Fold(unittest.TestCase):
         self.assertEqual(b.fold("niño", "pt"), "NINO")
 
 
+class Avoid(unittest.TestCase):
+    def test_the_avoid_file_keeps_folded_words_of_three_letters_or_more_sorted(self):
+        bad = {lang: set() for lang in b.LANGUAGES}
+        bad["pt"] = {"MERDA", "CU", "BOSTA"}
+        data = json.loads(b.avoid_file(bad))
+        self.assertEqual(data["words"]["pt"], ["BOSTA", "MERDA"])
+        self.assertEqual(data["words"]["en"], [])
+        self.assertEqual(data["sources"], [f"ldnoobw-{lang}" for lang in b.LANGUAGES])
+        self.assertEqual(data["minLetters"], b.AVOID_MIN_LETTERS)
+
+
 class Tokens(unittest.TestCase):
     def test_contractions_are_left_out_and_french_elisions_split(self):
         self.assertEqual(b.tokens("Don't stop, Tom!", "en"), ["stop", "Tom"])

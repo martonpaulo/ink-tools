@@ -11,5 +11,6 @@ export * from './sudoku';
 export * from './nonogram';
 export * from './maze';
 export * from './word-search';
+export * from './games/word-search';
 export * from './page';
 export * from './check';

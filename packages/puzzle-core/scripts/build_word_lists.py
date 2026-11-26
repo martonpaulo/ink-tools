@@ -4,7 +4,9 @@
     build_word_lists.py [--cache DIR] [--check] [--refresh]
 
 Writes `words/<lang>.json` for EN, PT, ES, DE and FR: the words in the language's grid letters,
-most frequent first, a fill score per word, and the word-search themes. Every source is pinned in
+most frequent first, a fill score per word, and the word-search themes. Writes `words/avoid.json`
+too: each language's offensive words of three letters or more, folded the same way, which a word
+search's filler letters must never spell (#385). Every source is pinned in
 `words/sources.json` with its URL, SHA-256 and licence; a download whose SHA-256 differs stops the
 build and names the source. `--cache` keeps the downloads in DIR and reads them from there next
 time. `--check` builds and fails when a committed list differs. `--refresh` takes the current
@@ -13,8 +15,8 @@ new SHA-256 and date in `words/sources.json`.
 
 Sources (licences in `NOTICE.md`): Tatoeba sentences (CC BY 2.0 FR) give the word frequencies of
 every language, and only word counts are kept, never a sentence; SCOWL (its own permissive
-licence) confirms the English words; the LDNOOBW lists (CC BY 4.0) remove offensive words and are
-not bundled; SuperFun's word banks (MIT) give the EN, DE, FR and ES themes, and
+licence) confirms the English words; the LDNOOBW lists (CC BY 4.0) remove offensive words, and their
+folded single words are bundled in `words/avoid.json`; SuperFun's word banks (MIT) give the EN, DE, FR and ES themes, and
 `words/themes-pt.source.json`, written for this package, the Portuguese ones. Not used: CC BY-SA
 data (Wiktionary, kaikki.org, wordfreq, Lexique, OdeNet) and the Hunspell dictionaries, whose
 GPL, LGPL or MPL terms are outside the licences the repository allows.
@@ -62,6 +64,9 @@ NAME_EVIDENCE = 10
 SCOWL_SIZE = 50  # SCOWL sizes 10 to 50 are the common English words
 DOWNLOAD_SECONDS = 90  # the largest file, Tatoeba's English export, is about 25 MB
 TATOEBA_FIELDS = 3  # id, language, text
+# The filler of a word search avoids offensive words this long or longer: a two-letter one is
+# read in almost every grid, and none of them is offensive on its own.
+AVOID_MIN_LETTERS = 3
 
 # German writes every noun with a capital, so its names are the words the other languages read as
 # names; ß and the capital ẞ fold to SS.
@@ -162,6 +167,18 @@ def bad_words(data: bytes, lang: str) -> set[str]:
             if folded:
                 out.add(folded)
     return out
+
+
+def avoid_file(bad: dict[str, set[str]]) -> str:
+    """`words/avoid.json`: per language, the offensive words a filler must never spell, sorted."""
+    data = {
+        "about": "Offensive words a word search's filler letters must never spell (#385), folded to each "
+                 "grid's letters by build_word_lists.py from the LDNOOBW lists (CC BY 4.0, NOTICE.md).",
+        "sources": [f"ldnoobw-{lang}" for lang in LANGUAGES],
+        "minLetters": AVOID_MIN_LETTERS,
+        "words": {lang: sorted(w for w in bad[lang] if len(w) >= AVOID_MIN_LETTERS) for lang in LANGUAGES},
+    }
+    return json.dumps(data, ensure_ascii=False, indent=1) + "\n"
 
 
 def superfun_themes(data: bytes) -> list[dict]:
@@ -308,8 +325,9 @@ def build(cache: pathlib.Path, refresh: bool) -> dict[str, str]:
     pt_themes = json.loads(PT_THEMES.read_text(encoding="utf-8"))["themes"]
 
     files = {}
+    bad_by_lang = {lang: bad_words(get(f"ldnoobw-{lang}"), lang) for lang in LANGUAGES}
     for lang in LANGUAGES:
-        bad = bad_words(get(f"ldnoobw-{lang}"), lang)
+        bad = bad_by_lang[lang]
         ranked = word_list(lang, counts[lang], names[lang], bad, english if lang == "en" else None)
         # Every spelling Tatoeba holds, names included: «España» restores ESPAÑA in a theme.
         known = {fold(word, lang) for word in counts[lang][0]}
@@ -324,6 +342,7 @@ def build(cache: pathlib.Path, refresh: bool) -> dict[str, str]:
             "themes": themes_for(lang, superfun, pt_themes, known, bad),
         }
         files[f"{lang}.json"] = json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n"
+    files["avoid.json"] = avoid_file(bad_by_lang)
     if refresh:
         files["sources.json"] = json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
     return files
@@ -354,7 +373,9 @@ def main() -> int:
         return 1
     for name, text in files.items():
         if name.endswith(".json") and name != "sources.json":
-            print(f"{name}: {len(json.loads(text)['words'])} words")
+            words = json.loads(text)["words"]
+            count = sum(map(len, words.values())) if isinstance(words, dict) else len(words)
+            print(f"{name}: {count} words")
     return 0
 
 
