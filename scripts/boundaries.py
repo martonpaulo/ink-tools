@@ -29,13 +29,25 @@ The rules are `docs/architecture.md` › Layer rules:
 - `buttons`: no plugin declares its own sn-plugin-lib button, show or lasso-data value (a constant
   named `BUTTON_TYPE_…`, `SHOW_…VIEW`, `EDIT_DATA_…`, `SIDEBAR`, `LASSO`, `NO_VIEW` or
   `ANY_LASSO_DATA`); it imports them from `@ink-tools/sn-adapter/official` or `/buttons` (#295).
+- `close`: every full view of a plugin shows ui-kit's one Close (#245, #259). In a plugin view's
+  `.tsx`, each `<TitleBar` element passes `onClose=`, and a file that binds Back with `useBackKey(`,
+  which every full view does (#204), passes `onClose=` to a `TitleBar`, `ErrorView`, `Needs` or
+  `LoadingView`.
+- `toast`: no failure path of a plugin view ends in a toast alone (#245, #259): a failure stays on
+  screen in ui-kit's Error or Needs state. A failure toast is a toast call (`ToastAndroid.show`,
+  `showToast` or a `toast` port) inside a `catch`, or whose text names a failure (`error`, `fail`,
+  `refus`, `permission`). It passes when the rest of its block hands the failure to a held state
+  (`hold(`, `fail(`, `needs(`, `ask(`, `throw`, or a `set…Problem(` or `set…Error(` call). The
+  toasts that still stood alone when this landed are `PENDING_TOASTS` counts, which only go down.
+  shortcut: a failure is told by its words and its `catch`; a toast of a failure whose text names
+  none of them passes; upgrade to a typed failure port when one slips through.
 
 The host tools' Python under `cli/<tool>/src/` (inkctl is one extensionless file, read by its `#!`
 line, #295) is read for `vendor`, `service` and `dictionary`. The values inkctl still names when
 this landed are `PENDING_HOST` counts, which #295's value moves lower: a count above its row names
 each line, and a count below it is a finding too, so the counts only go down.
 
-`plugins/ink-tools-probe/` is exempt from every rule but `url`, `vendor` and `buttons`: it exists to call the SDK
+`plugins/ink-tools-probe/` is exempt from every rule but `url`, `vendor`, `buttons`, `close` and `toast`: it exists to call the SDK
 directly, and reads the internals it probes through its readers like every tool (#294). Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java`, `.kt` and `.swift` for `vendor`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
@@ -91,6 +103,28 @@ PENDING_CONTROLS = frozenset({
 OWN_BUTTON_VALUE = re.compile(
     r"\b(?:const|let|var)\s+(?:BUTTON_TYPE_\w+|SHOW_\w*VIEW|EDIT_DATA_\w+|SIDEBAR|LASSO|NO_VIEW|ANY_LASSO_DATA)\s*=")
 PLUGIN_CODE = re.compile(r"^plugins/[^/]+/")
+TITLE_BAR = re.compile(r"<TitleBar\b")
+ON_CLOSE = re.compile(r"\bonClose=")
+BACK_KEY = re.compile(r"\buseBackKey\(")
+# `(deps.toast ?? showToast)(text)` calls the port or its default.
+TOAST_CALL = re.compile(r"\b(?:ToastAndroid\.show|showToast|toast)\s*\)?\s*\(")
+# A declaration of the port or the helper, never a call: `toast(line: string)`, `function showToast(`.
+TOAST_DECLARATION = re.compile(r"\bfunction\s+$")
+DECLARED_ARGUMENT = re.compile(r"\s*\w+\s*:\s*\w")
+# How many lines a toast call's argument may span, its own line included.
+ARGUMENT_LINES = 4
+FAILURE_WORD = re.compile(r"error|fail|refus|permission", re.IGNORECASE)
+HELD = re.compile(r"\b(?:hold|fail|needs|ask)\(|\bthrow\b|\bset\w*(?:Problem|Error)\(")
+STRING = re.compile(r"""'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`""")
+# The plugin files whose failure toasts stood alone when the toast rule landed (#259); #428 empties it.
+PENDING_TOASTS = {
+    "plugins/device-link/src/send/textSession.ts": 1,
+    "plugins/lasso-actions/src/choose.ts": 1,
+    "plugins/lasso-actions/src/headings/run.ts": 1,
+    "plugins/lasso-actions/src/pictures.ts": 1,
+    "plugins/lasso-actions/src/textBox.ts": 1,
+    "plugins/smart-pen/src/modules/text/buttons.ts": 3,
+}
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 PYTHON_COMMENT = re.compile(r"^\s*#")
 HOST_TOOL = re.compile(r"^cli/[^/]+/src/")
@@ -136,6 +170,114 @@ def own_controls(rel, lines):
     return [(rel, number, "controls", "draws " + text)
             for number, line in enumerate(lines, 1) if not LINE_COMMENT.match(line)
             for pattern, text in OWN_CONTROLS if pattern.search(line)]
+
+
+def no_close(rel, lines):
+    """[(path, line number, rule, text)] for each full view of a `.tsx` file that shows no Close."""
+    found = []
+    code = [(number, line) for number, line in enumerate(lines, 1) if not LINE_COMMENT.match(line)]
+    for at, (number, line) in enumerate(code):
+        if TITLE_BAR.search(line):
+            element = ""
+            for _n, rest in code[at:]:
+                element += rest[rest.find("<TitleBar"):] if not element else rest
+                if "/>" in rest or rest.rstrip().endswith(">") and element.count("<") == 1:
+                    break
+            if not ON_CLOSE.search(element):
+                found.append((rel, number, "close", "a TitleBar with no onClose; every full view shows ui-kit's Close"))
+    back = next((number for number, line in code if BACK_KEY.search(line)), None)
+    if back is not None and not any(ON_CLOSE.search(line) for _n, line in code):
+        found.append((rel, back, "close", "a full view (it binds Back) that passes onClose to no TitleBar, ErrorView, Needs or LoadingView"))
+    return found
+
+
+def lone_toasts(rel, lines):
+    """[(path, line number, rule, text)] for each failure toast whose block holds the failure nowhere."""
+    found = []
+    scanned = catch_regions(lines)
+    for at, line in enumerate(lines):
+        if LINE_COMMENT.match(line):
+            continue
+        call = TOAST_CALL.search(line)
+        if not call or TOAST_DECLARATION.search(line[:call.start()]) or DECLARED_ARGUMENT.match(line[call.end():]):
+            continue
+        argument = line[call.end():]
+        follow = at + 1
+        while argument.count("(") + 1 > argument.count(")") and follow < len(lines) and follow < at + ARGUMENT_LINES:
+            argument += lines[follow]
+            follow += 1
+        if not (scanned[at] or FAILURE_WORD.search(argument)):
+            continue
+        if any(HELD.search(rest) for rest in block_after(lines, at)):
+            continue
+        found.append((rel, at + 1, "toast", "a failure reported by a toast alone; hold it in ui-kit's Error or Needs state"))
+    return found
+
+
+def strip(line):
+    """The line's code without its strings' text or a trailing `//` comment."""
+    code = STRING.sub("''", line)
+    cut = code.find("//")
+    return code[:cut] if cut >= 0 else code
+
+
+def catch_regions(lines):
+    """Per line: whether it sits inside a `catch` block or a `.catch(` callback."""
+    inside = []
+    depth = 0
+    opened = []  # the depth outside each open catch
+    pending = None
+    for line in lines:
+        code = "" if LINE_COMMENT.match(line) else strip(line)
+        touched = bool(opened)
+        index = 0
+        while index < len(code):
+            if code.startswith("catch", index) and not (index and (code[index - 1].isalnum() or code[index - 1] == "_")):
+                pending = depth
+                index += len("catch")
+                continue
+            char = code[index]
+            if char in "({":
+                depth += 1
+            elif char in ")}":
+                depth -= 1
+                if opened and depth == opened[-1]:
+                    opened.pop()
+            if pending is not None and char == "{" and depth == pending + 1:
+                opened.append(pending)
+                pending = None
+            elif pending is not None and char == "(" and depth == pending + 1 and code[:index].rstrip().endswith(".catch"):
+                opened.append(pending)
+                pending = None
+            touched = touched or bool(opened)
+            index += 1
+        inside.append(touched)
+    return inside
+
+
+def block_after(lines, at):
+    """The lines from `at` to the end of the block that holds it."""
+    depth = 0
+    for line in lines[at:]:
+        yield line
+        code = strip(line)
+        depth += code.count("{") - code.count("}")
+        if depth < 0:
+            return
+
+
+def toast_ratchet(found, pending):
+    """The toast findings above their file's `PENDING_TOASTS` count, and each count now too high."""
+    have = {}
+    for rel, _number, _rule, _text in found:
+        have[rel] = have.get(rel, 0) + 1
+    out = []
+    for rel in sorted(set(have) | set(pending)):
+        if have.get(rel, 0) > pending.get(rel, 0):
+            out += [item for item in found if item[0] == rel]
+        elif have.get(rel, 0) < pending.get(rel, 0):
+            out.append((rel, 0, "toast", "holds %d lone failure toasts, PENDING_TOASTS says %d; lower it" % (have.get(rel, 0), pending[rel])))
+    return out
 
 
 def host_findings(rel, lines):
@@ -185,10 +327,12 @@ def host_ratchet(found, pending):
     return out
 
 
-def findings(root, pending=PENDING_CONTROLS, pending_host=None):
+def findings(root, pending=PENDING_CONTROLS, pending_host=None, pending_toasts=None):
     """[(path, line number, rule, text)] for every broken rule under root."""
     pending_host = PENDING_HOST if pending_host is None else pending_host
+    pending_toasts = PENDING_TOASTS if pending_toasts is None else pending_toasts
     found = []
+    toasts = []
     drawn = set()
     host = []
     for rel, suffix in code_files(root):
@@ -209,6 +353,10 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
                 drawn.add(rel)
             if rel not in pending:
                 found.extend(controls)
+        if suffix in SCRIPT and not test and PLUGIN_VIEW.match(rel):
+            if suffix == ".tsx":
+                found += no_close(rel, lines)
+            toasts += lone_toasts(rel, lines)
         for number, line in enumerate(lines, 1):
             if LINE_COMMENT.match(line):
                 continue
@@ -231,6 +379,7 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
                 if DICTIONARY_HOST.search(line) and not test and not rel.startswith("packages/ink-core/src/"):
                     found.append((rel, number, "dictionary", "names the dictionary host wiktionary.org outside ink-core"))
     found += host_ratchet(host, pending_host)
+    found += toast_ratchet(toasts, pending_toasts)
     for rel in sorted(pending - drawn):
         found.append((rel, 0, "controls", "draws no control of its own any more; remove it from PENDING_CONTROLS"))
     return sorted(found)

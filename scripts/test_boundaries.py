@@ -10,7 +10,7 @@ import boundaries  # noqa: E402
 
 
 class Boundaries(unittest.TestCase):
-    def tree(self, files, pending=frozenset(), pending_host=None):
+    def tree(self, files, pending=frozenset(), pending_host=None, pending_toasts=None):
         """A fixture tree of {relative path: text}; returns the findings as (path, rule) pairs."""
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -18,7 +18,7 @@ class Boundaries(unittest.TestCase):
                 path = root / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8")
-            return [(rel, rule) for rel, _number, rule, _text in boundaries.findings(root, pending, pending_host or {})]
+            return [(rel, rule) for rel, _number, rule, _text in boundaries.findings(root, pending, pending_host or {}, pending_toasts or {})]
 
     def test_sdk_only_in_the_official_tier(self):
         self.assertEqual(self.tree({
@@ -138,6 +138,53 @@ class Boundaries(unittest.TestCase):
             "plugins/b/src/c.ts": "const EDIT_DATA_STROKES = 0;\n",
         }), [("plugins/a/index.js", "buttons"), ("plugins/b/src/c.ts", "buttons"),
              ("plugins/ink-tools-probe/src/register.ts", "buttons")])
+
+    def test_every_full_view_shows_the_kits_close(self):
+        # Allowed: a bar with onClose on one line or several, a full view on the Error state (#259).
+        self.assertEqual(self.tree({
+            "plugins/a/App.tsx": "useBackKey(close);\nreturn <TitleBar title={t} onClose={close} />;\n",
+            "plugins/a/src/Sub.tsx": "<TitleBar\n  title={t}\n  onClose={busy ? undefined : leave}\n/>\n",
+            "plugins/a/src/Failed.tsx": "useBackKey(close);\nreturn <ErrorView problem={p} onClose={close} />;\n",
+            "plugins/a/__tests__/v.test.tsx": "<TitleBar title='x' />\n",
+            "packages/ui-kit/src/ProblemView.tsx": "useBackKey(onClose);\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "plugins/a/src/Bar.tsx": "<TitleBar\n  title={t}\n  onBack={back}\n/>\n<Text>{t}</Text>\n",
+            "plugins/a/App.tsx": "useBackKey(close);\nreturn <View><Button onPress={close} /></View>;\n",
+            "plugins/ink-tools-probe/App.tsx": "useBackKey(close);\nreturn <TitleBar title={t} />;\n",
+        }), [("plugins/a/App.tsx", "close"), ("plugins/a/src/Bar.tsx", "close"),
+             ("plugins/ink-tools-probe/App.tsx", "close"), ("plugins/ink-tools-probe/App.tsx", "close")])
+
+    def test_a_failure_never_ends_in_a_toast_alone(self):
+        # Allowed: a notice, a toast whose block holds the failure, the port and helper declarations.
+        self.assertEqual(self.tree({
+            "plugins/a/src/run.ts": (
+                "host.toast(copy['collection.added'](count));\n"
+                "if (missing) {\n  deps.toast(copy['press.permission']);\n  await deps.ask();\n}\n"
+                "} catch (error) {\n  toast(copy.failed);\n  throw error;\n}\n"
+                "export function showToast(text: string): void {\n  ToastAndroid.show(text, ToastAndroid.SHORT);\n}\n"
+                "type Deps = {\n  toast(line: string): void;\n};\n"
+                "// toast(copy.failed) is only a comment\n"),
+            "plugins/a/__tests__/run.test.ts": "toast(copy['error.unplaced']);\n",
+            "packages/ui-kit/src/working.ts": "ports.toast(ports.copy.failed);\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "plugins/a/src/run.ts": (
+                "if (!ok) {\n  (deps.toast ?? showToast)(copy['error.unplaced']);\n  return null;\n}\n"
+                "try {\n  await go();\n} catch (error) {\n  host.toast(copy.title);\n}\n"
+                "go().catch(error => ToastAndroid.show(String(error), ToastAndroid.SHORT));\n"
+                "this.host.toast(\n  copy['toast.failed'],\n);\n"),
+            "plugins/a/App.tsx": "const done = () => showToast(copy.refused);\n",
+        }), [("plugins/a/App.tsx", "toast"), ("plugins/a/src/run.ts", "toast"), ("plugins/a/src/run.ts", "toast"),
+             ("plugins/a/src/run.ts", "toast"), ("plugins/a/src/run.ts", "toast")])
+
+    def test_pending_toasts_only_shrink(self):
+        files = {"plugins/a/src/run.ts": "toast(copy['error.unplaced']);\n"}
+        self.assertEqual(self.tree(files, pending_toasts={"plugins/a/src/run.ts": 1}), [])
+        self.assertEqual(self.tree(files, pending_toasts={"plugins/a/src/run.ts": 2}), [("plugins/a/src/run.ts", "toast")])
+        self.assertEqual(self.tree({"plugins/a/src/run.ts": "toast(copy['error.unplaced']);\ntoast(copy.failed);\n"},
+                                   pending_toasts={"plugins/a/src/run.ts": 1}),
+                         [("plugins/a/src/run.ts", "toast"), ("plugins/a/src/run.ts", "toast")])
 
     def test_pending_controls_only_shrink(self):
         files = {"plugins/a/src/A.tsx": "<View style={shared.listRow}>\n", "plugins/a/src/B.tsx": "const b = 1;\n"}
