@@ -842,6 +842,14 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
   `MyStyle/Retouch/history.json`, 5 s after the write) [measured, 2026-11-16].
   Retouch keeps its working files in its private folder since [#198](https://github.com/martonpaulo/ink-tools/issues/198); whether
   the note app takes an inserted PNG from there is [to test, [#198](https://github.com/martonpaulo/ink-tools/issues/198)].
+- So a plugin keeps its own files out of `MyStyle/`. Files only the plugin reads go in its private
+  folder. Files inkctl or `adb shell` must reach (a request, a rendered page, a debug picture) go in
+  its folder of the hidden `.data/plugin/`, `inktools-<plugin folder>`, which sn-adapter's
+  `pluginDataFolder` names for every plugin: the plugin file guard allows it, `adb shell` writes it
+  and Supernote Cloud does not sync it ([#22](https://github.com/martonpaulo/ink-tools/issues/22), [#148](https://github.com/martonpaulo/ink-tools/issues/148),
+  [#367](https://github.com/martonpaulo/ink-tools/issues/367)). What stays in `MyStyle/` is
+  what the person or another app must see there: stickers for the Sticker import, fonts, and Word
+  Lookup's measured fallback for an insert from the private folder that failed.
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)]. It takes a
   child changed on the tablet since the last sync and the folder deleted and recreated on the
   cloud side (the launcher's `SingleSyncTask`, [#22](https://github.com/martonpaulo/ink-tools/issues/22)), so Word Lookup keeps

@@ -5,13 +5,12 @@
  * as PNGs in `DEBUG_DIR`, for the Mac lane to pull. Off by default; it resets when Retouch
  * restarts, as every setting does until #40's storage.
  */
-import {Result, SHARED_ROOT} from '@ink-tools/sn-adapter/official';
-import {REGISTRY} from '@ink-tools/sn-adapter/registry';
+import {pluginDataFolder, Result} from '@ink-tools/sn-adapter/official';
 import {RetouchSettings} from './edits';
 import {RetouchNative} from './native';
 
 /** Image Editing's own folder in the hidden `.data/plugin/`, beside Account Sync's drop folder. */
-export const DEBUG_HOME = `${SHARED_ROOT}/${REGISTRY.pluginhostFileSandbox.hiddenFolder}/inktools-image-editing`;
+export const DEBUG_HOME = pluginDataFolder('inktools-image-editing');
 
 /**
  * In the hidden `.data/plugin/`, which the plugin file guard allows, `adb shell` reads and

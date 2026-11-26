@@ -13,16 +13,15 @@ import {
   replayPenTape,
   type ReplayCounts,
   type Result,
-  SHARED_ROOT,
+  pluginDataFolder,
   startPenRecording,
   stopPenRecording,
   type Action,
 } from '@ink-tools/sn-adapter/official';
-import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 import {readText} from '@ink-tools/picture-search/storage';
 
 /** Smart Pen's own folder in the hidden `.data/plugin/`; SmartPenFilesPackage.java `ACTION_HOME`. */
-export const ACTION_HOME = `${SHARED_ROOT}/${REGISTRY.pluginhostFileSandbox.hiddenFolder}/inktools-smart-pen`;
+export const ACTION_HOME = pluginDataFolder('inktools-smart-pen');
 export const ACTION_PATH = `${ACTION_HOME}/${ACTION_FILE}`;
 
 /** The request file's text, null when there is none; a refused read throws its reason. */

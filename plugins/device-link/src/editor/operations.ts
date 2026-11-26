@@ -12,16 +12,16 @@ import {
   ACTION_FAILED,
   ActionRefused,
   MAX_STROKE_POINTS,
+  pluginDataFolder,
   SHARED_ROOT,
   type ActionResult,
   type EditRect,
   type NewElement,
   type Result,
 } from '@ink-tools/sn-adapter/official';
-import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 
 /** Device Link's folder in the hidden `.data/plugin/`: inkctl writes the request and the pictures there. */
-export const EDITOR_FOLDER = `${SHARED_ROOT}/${REGISTRY.pluginhostFileSandbox.hiddenFolder}/inktools-device-link/`;
+export const EDITOR_FOLDER = `${pluginDataFolder('inktools-device-link')}/`;
 /** The only folder a request may name a note in. */
 export const NOTES_FOLDER = `${SHARED_ROOT}/Note/`;
 /** The most a request may hold: operations, elements in one operation, and a text box's characters. */

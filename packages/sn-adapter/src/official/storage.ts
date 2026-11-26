@@ -11,6 +11,20 @@ import {attempt, ok, Result} from './result';
 export const SHARED_ROOT = '/storage/emulated/0';
 
 /**
+ * A plugin's own folder in the hidden `.data/plugin/` (the registry's `pluginhost.file-sandbox`):
+ * the one home of a plugin's files that inkctl or `adb shell` must reach, such as a request file, a
+ * rendered page or a debug picture. The plugin file guard allows it and Supernote Cloud does not
+ * sync it, while every file in `MyStyle/` is uploaded within seconds (#22, #148, #367). `name` is the
+ * folder's name, `inktools-<plugin folder>`.
+ */
+export function pluginDataFolder(name: string): string {
+  if (!/^inktools-[a-z0-9-]+$/.test(name)) {
+    throw new Error(`pluginDataFolder: ${name} is not inktools-<plugin folder>`);
+  }
+  return `${SHARED_ROOT}/${REGISTRY.pluginhostFileSandbox.hiddenFolder}/${name}`;
+}
+
+/**
  * The shared folders whose `.sticker` files the built-in Sticker plugin's import lists (the
  * registry's `pluginhost.file-sandbox`, #35): a sticker a plugin keeps there is found again.
  */
