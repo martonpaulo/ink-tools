@@ -171,6 +171,21 @@ final class PhotoFixtures {
     return base * (1 - 0.28 * shadow(x, y));
   }
 
+  /**
+   * `picture` as the Manta's lasso preview gives it (#134, beta 15): every pixel at the opacity
+   * `alpha`, its colours kept unpremultiplied, except one pixel in 250, opaque, so partial alpha
+   * covers 99.6 % of the pixels as the device's 144154 of 144800 do.
+   */
+  static Retouch.Picture translucent(Retouch.Picture picture, int alpha) {
+    int[] argb = picture.argb.clone();
+    for (int i = 0; i < argb.length; i++) {
+      if (i % 250 != 0) {
+        argb[i] = (alpha << 24) | (argb[i] & 0x00FFFFFF);
+      }
+    }
+    return new Retouch.Picture(argb, picture.width, picture.height);
+  }
+
   /** How many pixels the soft apple's outline takes to go from the table to the apple. */
   static final double SOFT_EDGE = 8;
 

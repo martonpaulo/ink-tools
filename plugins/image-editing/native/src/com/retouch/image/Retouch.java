@@ -216,7 +216,7 @@ public final class Retouch {
   }
 
   private static boolean isMargin(int argb) {
-    return (argb >>> 24) <= TRIM_CLEAR
+    return alphaOf(argb) <= TRIM_CLEAR
         || (((argb >> 16) & MAX) >= TRIM_WHITE
             && ((argb >> 8) & MAX) >= TRIM_WHITE
             && (argb & MAX) >= TRIM_WHITE);
@@ -904,8 +904,40 @@ public final class Retouch {
    * white goes. Upgrade to a segmenter (the MediaPipe trial of #134) when that shows on the device.
    */
   public static boolean[] backgroundMask(Picture picture) {
-    return groundMask(picture, BACKGROUND_STEP, BACKGROUND_DRIFT, true, objectMask(picture),
+    Picture seen = overWhite(picture);
+    return groundMask(seen, BACKGROUND_STEP, BACKGROUND_DRIFT, true, objectMask(seen),
         BACKGROUND_HULL_DRIFT);
+  }
+
+  /**
+   * The picture as the page shows it, composited over white paper, opaque (#134). The device's
+   * lasso preview is half transparent almost everywhere (alpha partial on 144154 of 144800
+   * pixels, `docs/supernote.md` › Plugins): its alpha is the whole picture's opacity, not a
+   * cut-out shape. So each alpha counts against the picture's own opacity, the median alpha of its
+   * pixels whose alpha is not 0, and a pixel at or above it counts as opaque; an alpha of 0 becomes
+   * white. Even a faint opacity (below {@link #TRIM_CLEAR}) keeps its colours, so the flood never
+   * takes the whole picture as clear. An opaque picture is returned as its own colours.
+   */
+  static Picture overWhite(Picture picture) {
+    int[] histogram = new int[MAX + 1];
+    int shown = 0;
+    for (int argb : picture.argb) {
+      if (alphaOf(argb) != 0) {
+        histogram[alphaOf(argb)]++;
+        shown++;
+      }
+    }
+    int opacity = shown == 0 ? MAX : Math.max(1, rank(histogram, (shown - 1) / 2));
+    int[] out = new int[picture.argb.length];
+    for (int i = 0; i < out.length; i++) {
+      int argb = picture.argb[i];
+      int a = Math.min(MAX, alphaOf(argb) * MAX / opacity);
+      int r = ((argb >> 16) & MAX) * a / MAX + MAX - a;
+      int g = ((argb >> 8) & MAX) * a / MAX + MAX - a;
+      int b = (argb & MAX) * a / MAX + MAX - a;
+      out[i] = OPAQUE | (r << 16) | (g << 8) | b;
+    }
+    return new Picture(out, picture.width, picture.height);
   }
 
   /**
@@ -1088,8 +1120,13 @@ public final class Retouch {
     return bg;
   }
 
+  /** A colour's alpha, 0 (clear) to 255 (opaque). */
+  private static int alphaOf(int argb) {
+    return argb >>> 24;
+  }
+
   private static boolean isClear(int argb) {
-    return (argb >>> 24) <= TRIM_CLEAR;
+    return alphaOf(argb) <= TRIM_CLEAR;
   }
 
   /** The largest difference of two colours over their red, green and blue. */
@@ -1341,7 +1378,8 @@ public final class Retouch {
 
   /**
    * One log line about an edit's input picture (#134, the device-only background failure): its
-   * size, how many pixels are clear, partly clear and opaque, the gray (the mean of the three
+   * size, how many pixels are clear, partly clear and opaque, the alpha of the partly clear ones
+   * as min, median and max, the gray (the mean of the three
    * channels) of the opaque pixels as min, median and max, and the mean colour of the clear ones,
    * so a transparent ground read as black or white shows. Never a pixel's position or content.
    */
@@ -1350,9 +1388,10 @@ public final class Retouch {
     int partial = 0;
     long[] clearSum = new long[3];
     int[] grays = new int[MAX + 1];
+    int[] alphas = new int[MAX + 1];
     int opaque = 0;
     for (int argb : picture.argb) {
-      int alpha = argb >>> 24;
+      int alpha = alphaOf(argb);
       int r = (argb >> 16) & MAX;
       int g = (argb >> 8) & MAX;
       int b = argb & MAX;
@@ -1363,6 +1402,7 @@ public final class Retouch {
         clearSum[2] += b;
       } else if (alpha < MAX) {
         partial++;
+        alphas[alpha]++;
       } else {
         opaque++;
         grays[(r + g + b) / 3]++;
@@ -1373,6 +1413,10 @@ public final class Retouch {
         .append(" alpha clear ").append(clear)
         .append(" partial ").append(partial)
         .append(" opaque ").append(opaque);
+    if (partial > 0) {
+      line.append(" partial alpha ").append(rank(alphas, 0)).append('/')
+          .append(rank(alphas, (partial - 1) / 2)).append('/').append(rank(alphas, partial - 1));
+    }
     if (opaque > 0) {
       line.append(" gray ").append(rank(grays, 0)).append('/')
           .append(rank(grays, (opaque - 1) / 2)).append('/').append(rank(grays, opaque - 1));

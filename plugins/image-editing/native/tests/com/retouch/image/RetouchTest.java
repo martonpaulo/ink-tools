@@ -39,6 +39,8 @@ public final class RetouchTest {
     documentCleansALitSurfaceToWhiteWithoutAPage();
     backgroundClearsAnUnevenGroundAndTheShadow();
     backgroundKeepsASoftGrayAppleWhoseShadowFadesIntoIt();
+    backgroundKeepsTheAppleOfAHalfTransparentPreview();
+    overWhiteShowsThePictureAsThePageDoes();
     eraseNeedsItsMarksAndKeepsTheSize();
     eraseClearsABandAlongAnOpenMark();
     eraseClearsTheInsideOfAClosedMark();
@@ -674,6 +676,37 @@ public final class RetouchTest {
   }
 
   /**
+   * #134 on the Manta (beta 15): the lasso preview is half transparent almost everywhere (partial
+   * alpha on 144154 of 144800 pixels) and the cutout cleared the apple with the ground. The mask
+   * is built over white now, so the apple stays at a half and at a faint opacity alike.
+   */
+  private static void backgroundKeepsTheAppleOfAHalfTransparentPreview() {
+    for (int alpha : new int[] {0x80, 0x0C}) {
+      Retouch.Picture photo = PhotoFixtures.translucent(PhotoFixtures.softGrayApple(), alpha);
+      long partial = java.util.Arrays.stream(photo.argb)
+          .filter(p -> (p >>> 24) != 0 && (p >>> 24) != 0xFF).count();
+      check(partial * 1000 >= photo.argb.length * 995L,
+          "the fixture is partly clear like the device's: " + partial + " of " + photo.argb.length);
+      checkAppleCutout(photo, (int) PhotoFixtures.SOFT_EDGE);
+    }
+  }
+
+  private static void overWhiteShowsThePictureAsThePageDoes() {
+    Retouch.Picture opaque = new Retouch.Picture(new int[] {gray(10), gray(200), 0x00000000}, 3, 1);
+    Retouch.Picture seen = Retouch.overWhite(opaque);
+    check(seen.argb[0] == gray(10) && seen.argb[1] == gray(200) && seen.argb[2] == WHITE,
+        "an opaque pixel keeps its colour and a clear one is white");
+    // One opacity for the whole picture: each pixel counts as opaque against it, a fainter one lighter.
+    Retouch.Picture faint = new Retouch.Picture(
+        new int[] {0x40000000, 0x40000000, 0x40C8C8C8, 0x20000000}, 4, 1);
+    Retouch.Picture shown = Retouch.overWhite(faint);
+    check(shown.argb[0] == gray(0) && shown.argb[2] == gray(200),
+        "the picture's own opacity counts as opaque");
+    check(near(shown.argb[3], 128), "half the picture's opacity is half way to white: "
+        + Integer.toHexString(shown.argb[3]));
+  }
+
+  /**
    * Background removal on an apple fixture: nothing inside the apple, `edge` pixels in from its
    * outline, is cleared; nearly all the table and the shadow away from the outline are.
    */
@@ -747,7 +780,8 @@ public final class RetouchTest {
     // Two clear black pixels, one half-clear, and opaque grays 10, 100 and 200.
     int[] argb = {0x00000000, 0x00000000, 0x80FFFFFF, gray(10), gray(100), gray(200)};
     String line = Retouch.inputStats(new Retouch.Picture(argb, 3, 2));
-    check(line.equals("3x2 alpha clear 2 partial 1 opaque 3 gray 10/100/200 clear rgb 0,0,0"),
+    check(line.equals(
+        "3x2 alpha clear 2 partial 1 opaque 3 partial alpha 128/128/128 gray 10/100/200 clear rgb 0,0,0"),
         "the stats name the size, the alpha counts, the grays and the clear colour: " + line);
     String opaque = Retouch.inputStats(new Retouch.Picture(new int[] {WHITE}, 1, 1));
     check(opaque.equals("1x1 alpha clear 0 partial 0 opaque 1 gray 255/255/255"),

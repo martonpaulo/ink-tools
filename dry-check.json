@@ -590,7 +590,7 @@
      "number": 28
     },
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": {
-     "number": 23
+     "number": 21
     },
     "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": {
      "repeated": 1
