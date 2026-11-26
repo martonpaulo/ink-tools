@@ -89,12 +89,12 @@ class PageChecks(unittest.TestCase):
     def test_a_short_label_may_repeat(self):
         self.assertEqual(site_figures.repetition_problems("x.html", "<p>Version 0.1.0</p><p>Version 0.1.0</p>"), [])
 
-    def test_only_the_container_sets_the_width_and_only_a_paragraph_a_measure(self):
-        good = (".container { width: var(--page-width); } .section p, .hero p:not(.a, .b) { max-width: var(--measure-prose); }"
-                ".dot::before { width: 0.5em; } .shot img { width: 100%; }")
+    def test_only_the_container_sets_the_width_and_no_text_is_capped(self):
+        good = ".container { width: var(--page-width); } .dot::before { width: 0.5em; } .shot img { width: 100%; }"
         self.assertEqual(site_figures.width_problems(good), [])
-        for bad in (".section > .container > :where(p, ul, div) { max-width: var(--measure-prose); }",
-                    ".hero h1 { max-width: 20ch; }", ".notice { max-width: 46rem; }", ".grid { width: var(--page-width); }"):
+        for bad in (".section p { max-width: var(--measure-prose); }", ".page p { max-width: 70ch; }",  # #444
+                    ".hero h1 { max-width: 20ch; }", ".notice { max-width: 46rem; }", ".grid { width: var(--page-width); }",
+                    ".lead { width: 60ch; }"):
             with self.subTest(bad):
                 self.assertTrue(site_figures.width_problems(bad))
 

@@ -18,12 +18,11 @@
   --radius-m: 0.75rem;
   --radius-xl: 1.5rem;
   --radius-pill: 999px;
-  /* The one width token (#439): the header, every section and every grid share it through .container;
-     only a running-text paragraph keeps a reading measure. site_figures.py --check holds both. */
+  /* The one width token (#439): the header, every section, every grid and all text share it through
+     .container; no text carries a width cap of its own (#444). site_figures.py --check holds it. */
   --page-width: min(73.75rem, 100% - 2.5rem);
   --control-height: 3rem;
   --glyph-tile: 3rem;
-  --measure-prose: 70ch;
   --text-sm: 0.875rem;
   --text-md: 1.125rem;
   --text-xl: 1.75rem;
@@ -529,7 +528,6 @@ main {
 
 .hero p:not(.eyebrow, .actions) {
   margin: 0 auto var(--space-l);
-  max-width: var(--measure-prose);
   color: var(--secondary);
   font-size: var(--text-md);
 }
@@ -544,9 +542,6 @@ main {
   font-size: var(--text-xl);
 }
 
-.section p {
-  max-width: var(--measure-prose);
-}
 
 .section .lead {
   margin: calc(-1 * var(--space-xs)) 0 var(--space-m);
@@ -576,9 +571,6 @@ main {
   margin: var(--space-m) 0 var(--space-2xs);
 }
 
-.page p {
-  max-width: var(--measure-prose);
-}
 
 .page .lead {
   color: var(--secondary);

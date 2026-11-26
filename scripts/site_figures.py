@@ -21,8 +21,8 @@ It also fails on a repeated fact or a narrowed section (#439):
 - a sentence of four words or more, or a link target, that appears twice on a page outside its
   navigation (the site header and any <nav>);
 - a width the layout does not own: every <section> holds one `.container`, `.container` alone is
-  `var(--page-width)` wide, the header's width, and only a paragraph (`p`) takes a `max-width`, which
-  is `var(--measure-prose)`, so no section's content box is narrower than the header's.
+  `var(--page-width)` wide, the header's width, and no text takes a width cap (no `max-width`, no
+  `ch` length), so no section's or paragraph's content box is narrower than the header's (#444).
 """
 import argparse
 import html
@@ -356,8 +356,8 @@ SMALL_LENGTH = re.compile(r"^-?[\d.]+(px|em)$|^100%$")  # an icon, a dot, a hidd
 
 def width_problems(css):
     """A width declaration the layout does not own (#439): only `.container` takes `var(--page-width)`,
-    the header's width; only a paragraph takes a `max-width`, `var(--measure-prose)`; any other width
-    is a small fixed size or 100%, never a measure that narrows a section."""
+    the header's width; no text takes a width cap of its own (#444): no `max-width` or
+    `max-inline-size` at all, and no length in `ch`; any other width is a small fixed size or 100%."""
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
     problems = []
     for selectors, body in RULE.findall(css):
@@ -368,12 +368,10 @@ def width_problems(css):
             value = value.strip()
             if value == "var(--page-width)" and prop == "width" and selectors == [".container"]:
                 continue
-            if value == "var(--measure-prose)" and prop == "max-width" and all(re.search(r"(^|[\s>+~])p(\.[\w-]+|:[\w-]+(\([^)]*\))?)*$", sel) for sel in selectors):
-                continue
-            if prop in ("width", "inline-size") and SMALL_LENGTH.match(value):
+            if prop in ("width", "inline-size") and SMALL_LENGTH.match(value) and not value.endswith("ch"):
                 continue
             problems.append(f"{CSS}: {', '.join(selectors)} {{ {prop}: {value} }}: only .container sets the width "
-                            "(var(--page-width)) and only a paragraph a measure (var(--measure-prose))")
+                            "(var(--page-width)); text never takes a width cap (#444)")
     return problems
 
 
