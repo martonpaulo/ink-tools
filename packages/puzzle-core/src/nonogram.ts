@@ -5,9 +5,13 @@
  * The band comes from the solve: `easy` when line solving (every placement of each row and column
  * at once) finishes in few sweeps, `medium` when it needs more, `hard` when it also needs probing
  * (a cell whose one value breaks a line). A picture that still needs a guess is never offered.
+ *
+ * A shape and band the generator cannot reach within the tablet's time budget comes from a bank of
+ * pictures drawn on the Mac instead, as the sudokus do (#434).
  */
 
 import { type Difficulty, type PuzzleId } from './code';
+import { NONOGRAM_BANK } from './nonogram-bank';
 import { childSeed, createRandom, type Random } from './random';
 
 export interface NonogramSize {
@@ -414,18 +418,36 @@ function attemptsFor(cells: number): number {
  */
 const DENSITY: Record<string, number> = { easy: 62, medium: 45, hard: 40 };
 
-/**
- * A nonogram of the given size and band from the seed. Throws on a side outside 5 to 30, a band not
- * offered, or when the attempts run out.
- */
-export function generateNonogram(seed: string, size: NonogramSize, difficulty: Difficulty): Nonogram {
-  const { width, height } = size;
-  for (const side of [width, height]) {
+function checkSize(size: NonogramSize, difficulty: Difficulty): void {
+  for (const side of [size.width, size.height]) {
     if (!Number.isInteger(side) || side < NONOGRAM_MIN_SIDE || side > NONOGRAM_MAX_SIDE) {
       throw new RangeError(`a nonogram side is ${NONOGRAM_MIN_SIDE} to ${NONOGRAM_MAX_SIDE} cells, not ${side}`);
     }
   }
   if (!NONOGRAM_BANDS.includes(difficulty)) throw new RangeError(`a nonogram offers ${NONOGRAM_BANDS.join(', ')}, not ${difficulty}`);
+}
+
+function nonogramOf(seed: string, width: number, height: number, difficulty: Difficulty, solution: boolean[], grid: Grid): Nonogram {
+  return {
+    id: { game: 'nonogram', size: `${width}X${height}`, difficulty, seed },
+    width,
+    height,
+    rows: grid.rows.map(r => r.slice()),
+    columns: grid.columns.map(c => c.slice()),
+    solution,
+  };
+}
+
+/**
+ * Draws a nonogram from the seed: seeded pictures, attempt after attempt, until one rates the band.
+ * The same arguments always give the same puzzle. A large hard picture can take seconds on the
+ * tablet, so `generateNonogram` reads the bank for the shapes and bands that do, and
+ * `scripts/nonogram-bank.cjs` runs this on the Mac to write that bank (#434). Throws on a side
+ * outside 5 to 25, a band not offered, or when the attempts run out.
+ */
+export function drawNonogram(seed: string, size: NonogramSize, difficulty: Difficulty): Nonogram {
+  checkSize(size, difficulty);
+  const { width, height } = size;
   const attempts = attemptsFor(width * height);
   for (let i = 0; i < attempts; i++) {
     const random = createRandom(childSeed(seed, i));
@@ -435,14 +457,81 @@ export function generateNonogram(seed: string, size: NonogramSize, difficulty: D
     const grid = cluesOf(width, height, solution);
     // A rating proves uniqueness: every deduction it makes is forced, and it finishes the grid.
     if (rateTowards(grid, difficulty)?.difficulty !== difficulty) continue;
-    return {
-      id: { game: 'nonogram', size: `${width}X${height}`, difficulty, seed },
-      width,
-      height,
-      rows: grid.rows.map(r => r.slice()),
-      columns: grid.columns.map(c => c.slice()),
-      solution,
-    };
+    return nonogramOf(seed, width, height, difficulty, solution, grid);
   }
   throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${attempts} attempts`);
+}
+
+/** A bank entry's digit base: five cells per base-32 digit. */
+const BANK_RADIX = 32;
+const BANK_BITS = 5;
+
+/** A bank entry's text: the cells row by row, five per base-32 digit, the first cell the high bit. */
+export function encodePicture(cells: readonly boolean[]): string {
+  let text = '';
+  for (let i = 0; i < cells.length; i += BANK_BITS) {
+    let digit = 0;
+    for (let b = 0; b < BANK_BITS; b++) digit = digit * 2 + (cells[i + b] ? 1 : 0);
+    text += digit.toString(BANK_RADIX);
+  }
+  return text;
+}
+
+export function decodePicture(text: string, count: number): boolean[] {
+  if (text.length !== Math.ceil(count / BANK_BITS)) throw new RangeError(`a bank entry of ${count} cells has ${Math.ceil(count / BANK_BITS)} digits, not ${text.length}`);
+  const cells: boolean[] = [];
+  for (const ch of text) {
+    const digit = parseInt(ch, BANK_RADIX);
+    for (let b = BANK_BITS - 1; b >= 0; b--) cells.push(((digit >> b) & 1) === 1);
+  }
+  return cells.slice(0, count);
+}
+
+/**
+ * The same picture seen another way: perhaps mirrored left to right, top to bottom, and, for a
+ * square, on its diagonal. Each turns rows into rows (or columns) with the clues reversed or
+ * swapped, so the clues keep one solution, and line solving and probing finish them as before.
+ */
+function viewPicture(cells: readonly boolean[], width: number, height: number, random: Random): boolean[] {
+  const flipColumns = random.int(2) === 1;
+  const flipRows = random.int(2) === 1;
+  const diagonal = width === height && random.int(2) === 1;
+  const out = new Array<boolean>(cells.length);
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const rr = flipRows ? height - 1 - r : r;
+      const cc = flipColumns ? width - 1 - c : c;
+      out[diagonal ? cc * width + rr : rr * width + cc] = cells[r * width + c];
+    }
+  }
+  return out;
+}
+
+/** How many seeded views of bank entries are tried before giving up; one is expected to do. */
+const BANK_TRIES = 8;
+
+/**
+ * A nonogram of the given size and band from the seed: the same three arguments always give the
+ * same puzzle. A shape and band in the bank takes a drawn picture from it and shows it another way,
+ * both chosen by the seed, so it is ready at once on the tablet (#434); every other one is drawn
+ * live. Throws on a side outside 5 to 25, a band not offered, or when the attempts run out.
+ */
+export function generateNonogram(seed: string, size: NonogramSize, difficulty: Difficulty): Nonogram {
+  checkSize(size, difficulty);
+  const { width, height } = size;
+  const entries = NONOGRAM_BANK[`${width}x${height}:${difficulty}`];
+  if (!entries) return drawNonogram(seed, size, difficulty);
+  for (let i = 0; i < BANK_TRIES; i++) {
+    const random = createRandom(childSeed(seed, `bank/${i}`));
+    const solution = viewPicture(decodePicture(random.pick(entries), width * height), width, height, random);
+    const grid = cluesOf(width, height, solution);
+    // A view only relabels rows and columns, so line solving reaches the same cells and probing
+    // finishes what it left: the view keeps one solution and the need for probing. The sweeps line
+    // solving takes can change, so easy and medium are rated again. Hard is checked by line solving
+    // alone, which must leave cells open: rating it again would run the probing, the slow part.
+    // The check keeps a puzzle of another band from ever reaching a player.
+    const fits = difficulty === 'hard' ? rateTowards(grid, 'medium') === null : rateTowards(grid, difficulty)?.difficulty === difficulty;
+    if (fits) return nonogramOf(seed, width, height, difficulty, solution, grid);
+  }
+  throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${BANK_TRIES} views of the bank`);
 }
