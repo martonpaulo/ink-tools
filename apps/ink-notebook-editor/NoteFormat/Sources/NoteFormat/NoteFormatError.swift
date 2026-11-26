@@ -17,6 +17,8 @@ public enum NoteFormatError: Error, Equatable, CustomStringConvertible {
     case badPicture(String)
     /// A page's recognition block cannot be read, counted from 0 (#321).
     case badRecognition(page: Int, reason: String)
+    /// A Heading's footer key or block cannot be read (#331).
+    case badHeading(String)
 
     public var description: String {
         switch self {
@@ -36,6 +38,8 @@ public enum NoteFormatError: Error, Equatable, CustomStringConvertible {
             return "The background picture of layer \(layer) cannot be decoded."
         case .badRecognition(let page, let reason):
             return "The handwriting recognition of page \(page + 1) cannot be read: \(reason)."
+        case .badHeading(let reason):
+            return "A Heading cannot be read: \(reason)."
         }
     }
 }

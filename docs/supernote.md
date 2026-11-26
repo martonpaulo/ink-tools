@@ -822,6 +822,12 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   when the recognition is done and 2 while it runs; a page at 2 still held the words of an earlier
   run, so the Ink Notebook Editor reads only pages at 1 [measured on the Mac, 2026-11-26,
   [#321](https://github.com/martonpaulo/ink-tools/issues/321)].
+- A Heading is a block the footer names `TITLE_` with its page from 1 in four digits and its place
+  on the page: `TITLELEVEL`, `TITLERECT` and `TITLERECTORI` (`x,y,width,height` in page pixels),
+  `TITLEBITMAP` and `TITLEPROTOCOL` `RATTA_RLE`. The picture is the handwriting under the Heading,
+  as large as its box, not the whole page [measured on the Mac on one Heading of a Manta note,
+  2026-11-26, [#331](https://github.com/martonpaulo/ink-tools/issues/331)]; a note with a Heading
+  of each level waits for a device round.
 - Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
   [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 
