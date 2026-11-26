@@ -461,3 +461,26 @@ export function rankForEink(
   const seen = new Set<string>();
   return ordered.filter(result => !seen.has(result.id) && seen.add(result.id));
 }
+
+/** A picture no source returns, ranked only to warm the scorers. */
+const WARM_RESULT: SearchResult = {
+  id: 'warm:apple',
+  source: 'commons',
+  title: 'Red apple drawing on a table',
+  thumbUrl: 'https://example.invalid/warm.png',
+  license: 'CC0 1.0',
+  attribution: '',
+  mime: 'image/png',
+};
+
+/**
+ * Does once per JS instance what the first ranking of a press would otherwise do (#19): builds
+ * OpenMoji's thing names, which a title naming another thing reads, and runs every scorer once.
+ * Call it at start-up, outside a press; the result is thrown away.
+ */
+export function warmRanking(): void {
+  namesThing('apple');
+  for (const scorers of [DEFAULT_SCORERS, PHOTO_SCORERS]) {
+    rankForEink([[WARM_RESULT]], 'apple', scorers);
+  }
+}

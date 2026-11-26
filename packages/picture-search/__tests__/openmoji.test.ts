@@ -186,4 +186,32 @@ describe('the things the ranker reads from the index (#24, #19)', () => {
     });
     expect(built).toBe(0);
   });
+
+  it('builds the names in the start-up warm-up, so the first press builds none (#19)', () => {
+    // thingNames builds one Set of names; counted through a Set built during each call.
+    const Original = globalThis.Set;
+    let built = 0;
+    class CountingSet<T> extends Original<T> {
+      constructor(values?: readonly T[] | null) {
+        super(values);
+        built++;
+      }
+    }
+    jest.isolateModules(() => {
+      const {warmRanking} = require('../src/rank');
+      const {namesThing} = require('../src/adapters/openmoji');
+      const count = (call: () => void): number => {
+        built = 0;
+        globalThis.Set = CountingSet as SetConstructor;
+        try {
+          call();
+        } finally {
+          globalThis.Set = Original;
+        }
+        return built;
+      };
+      expect(count(() => warmRanking())).toBeGreaterThan(0);
+      expect(count(() => expect(namesThing('owl')).toBe(true))).toBe(0);
+    });
+  });
 });

@@ -50,7 +50,7 @@ export type {
   Prepared,
 } from './measures';
 export {pageCount, pageOf} from './pages';
-export {DEFAULT_SCORERS, einkScore, rankForEink} from './rank';
+export {DEFAULT_SCORERS, einkScore, rankForEink, warmRanking} from './rank';
 export type {Scorer} from './rank';
 export {DEFAULT_ADAPTERS, fullUrl, insertUrl, isSourceName} from './registry';
 export {searchAll} from './search';

@@ -16,6 +16,7 @@ import {SUMMARY_BUTTON_ID, summaryLasso} from './src/summary';
 import {syncButtons} from './src/buttons';
 import {CHOOSE_BUTTON_ID, MODES, TRANSLATIONS} from './src/modes';
 import {pictureLasso} from './src/pictures';
+import {warmRanking} from '@ink-tools/picture-search';
 import {getSettings} from './src/profile';
 import {translateLasso} from './src/translation';
 import {working} from './src/working';
@@ -79,3 +80,13 @@ const listening = startButtonQueue(id => {
 if (!listening.ok) {
   console.error(`Lookup: button listener failed: ${listening.message}`);
 }
+
+// Once per JS instance, after the buttons are registered: the first press then ranks as fast as
+// the next one, since the scorers' first-run cost is spent here (#19).
+setTimeout(() => {
+  try {
+    warmRanking();
+  } catch (error) {
+    console.error(`Lookup: warm-up: ${error.message}`);
+  }
+}, 0);
