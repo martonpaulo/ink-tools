@@ -2381,7 +2381,15 @@ def command_note_png(device: Device, args: argparse.Namespace):
         device.shell(f"rm -f {shlex.quote(HELPER_RENDER_PATH)}")
     size = os.path.getsize(args.local_path)
     data = {**answer, "page": args.page, "local": args.local_path, "bytes": size}
-    return data, f"page {args.page}: {args.local_path} ({size} bytes) in {answer.get('ms')} ms"
+    text = f"page {args.page}: {args.local_path} ({size} bytes) in {answer.get('ms')} ms"
+    # The tablet's PNG leaves every picture element out (device round 5, #263): say so, so the
+    # PNG is never taken as proof of a picture; note-render of the pulled file draws them.
+    pictures = answer.get("pictures")
+    if pictures:
+        print(f"the tablet's page PNG leaves out the page's {pictures} picture(s); render the pulled .note with note-render to see them", file=sys.stderr, flush=True)
+    elif pictures is None and "pictures" in answer:
+        print("the page's pictures did not count; the tablet's page PNG leaves out any picture", file=sys.stderr, flush=True)
+    return data, text
 
 
 def command_note_insert_picture(device: Device, args: argparse.Namespace):

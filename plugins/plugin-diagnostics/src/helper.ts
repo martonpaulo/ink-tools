@@ -57,7 +57,7 @@ export interface HelperApi {
   lassoStrokes(): Promise<Point[][]>;
   jumpToPage(page: number): Promise<void>;
   /** Writes page `page` of the open note to `pngPath`, at the page's size, on white. */
-  renderPage(page: number, pngPath: string): Promise<void>;
+  renderPage(page: number, pngPath: string): Promise<{pictures: number | null}>;
   /** Places a PNG or JPEG on the current page, where the host puts it. */
   insertPicture(path: string): Promise<void>;
   insertTextBox(text: string, rect: Rect, fontSize: number): Promise<void>;
@@ -416,8 +416,8 @@ async function execute(command: Step, api: HelperApi): Promise<Record<string, un
       return {page: await api.pageNumber()};
     }
     case 'renderPage':
-      await api.renderPage(command.page, RENDER_PATH);
-      return {page: command.page, path: RENDER_PATH};
+      // `pictures`: the page's picture elements, which the tablet's PNG leaves out (#263).
+      return {page: command.page, path: RENDER_PATH, ...(await api.renderPage(command.page, RENDER_PATH))};
     case 'insertPicture':
       await api.insertPicture(command.path);
       return {page: await api.pageNumber(), path: command.path};

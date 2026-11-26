@@ -4,7 +4,7 @@ import {noteApi, saveFirst} from '../src/noteApi';
 
 jest.mock('sn-plugin-lib', () => ({
   PluginCommAPI: {createElement: jest.fn(), insertPageElements: jest.fn(), getCurrentFilePath: jest.fn()},
-  PluginFileAPI: {generateNotePng: jest.fn()},
+  PluginFileAPI: {generateNotePng: jest.fn(), getElements: jest.fn(), insertNotePage: jest.fn()},
   PluginNoteAPI: {saveCurrentNote: jest.fn()},
   PluginManager: {},
   FileUtils: {},
@@ -50,5 +50,51 @@ describe('renderPage saves the note first (#296)', () => {
     (PluginNoteAPI.saveCurrentNote as jest.Mock).mockRejectedValue(new Error('no note'));
     await saveFirst(line => lines.push(line), () => clock.shift() ?? 0);
     expect(lines).toEqual(['save: failed: no note in 12 ms: the page is drawn as the file holds it']);
+  });
+});
+
+describe('the page PNG leaves pictures out, so the render counts them (#263)', () => {
+  beforeEach(() => {
+    (PluginCommAPI.getCurrentFilePath as jest.Mock).mockResolvedValue({success: true, result: '/Note/a.note'});
+    (PluginFileAPI.generateNotePng as jest.Mock).mockResolvedValue({success: true, result: true});
+    (PluginNoteAPI.saveCurrentNote as jest.Mock).mockResolvedValue({success: true, result: true});
+  });
+
+  test('answers the picture elements of the rendered page', async () => {
+    (PluginFileAPI.getElements as jest.Mock).mockResolvedValue({success: true, result: [{type: 200}, {type: 0}, {type: 200}]});
+    expect(await noteApi.renderPage(1, '/p.png')).toEqual({pictures: 2});
+    expect(PluginFileAPI.getElements).toHaveBeenCalledWith(1, '/Note/a.note');
+  });
+
+  test('answers null, never 0, when the elements did not read', async () => {
+    (PluginFileAPI.getElements as jest.Mock).mockResolvedValue({success: false, error: {code: 1, message: 'x'}});
+    expect(await noteApi.renderPage(1, '/p.png')).toEqual({pictures: null});
+  });
+});
+
+describe('insertPage saves the open note first, or inserts nothing (#263)', () => {
+  const calls: string[] = [];
+  beforeEach(() => {
+    calls.length = 0;
+    (PluginCommAPI.getCurrentFilePath as jest.Mock).mockResolvedValue({success: true, result: '/Note/a.note'});
+    (PluginFileAPI.insertNotePage as jest.Mock).mockImplementation(async () => {
+      calls.push('insert');
+      return {success: true, result: true};
+    });
+  });
+
+  test('saves before the insert, which would drop the unsaved ink', async () => {
+    (PluginNoteAPI.saveCurrentNote as jest.Mock).mockImplementation(async () => {
+      calls.push('save');
+      return {success: true, result: true};
+    });
+    await noteApi.insertPage(1, 'style_white');
+    expect(calls).toEqual(['save', 'insert']);
+  });
+
+  test('a failed save inserts no page', async () => {
+    (PluginNoteAPI.saveCurrentNote as jest.Mock).mockResolvedValue({success: false, error: {code: 904, message: 'busy'}});
+    await expect(noteApi.insertPage(1, 'style_white')).rejects.toThrow(/no page was inserted/);
+    expect(calls).toEqual([]);
   });
 });

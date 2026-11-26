@@ -23,7 +23,7 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     lastElementRect: jest.fn().mockResolvedValue({left: 100, top: 200, right: 300, bottom: 260}),
     lassoStrokes: jest.fn().mockResolvedValue([[{x: 1, y: 2}, {x: 3, y: 4}]]),
     jumpToPage: jest.fn().mockResolvedValue(undefined),
-    renderPage: jest.fn().mockResolvedValue(undefined),
+    renderPage: jest.fn().mockResolvedValue({pictures: 1}),
     insertPicture: jest.fn().mockResolvedValue(undefined),
     insertTextBox: jest.fn().mockResolvedValue(undefined),
     insertPage: jest.fn().mockResolvedValue(undefined),
@@ -149,7 +149,7 @@ test('renderPage writes the page to RENDER_PATH and answers the path (#261)', as
   const note = api();
   const {answer} = await runCommand(command({op: 'renderPage', page: 3}), note);
   expect(note.renderPage).toHaveBeenCalledWith(3, RENDER_PATH);
-  expect(answer).toMatchObject({ok: true, op: 'renderPage', page: 3, path: RENDER_PATH});
+  expect(answer).toMatchObject({ok: true, op: 'renderPage', page: 3, path: RENDER_PATH, pictures: 1});
 });
 
 test('insertPicture places a picture from the Probe folder only (#261)', async () => {

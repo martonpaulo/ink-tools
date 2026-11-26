@@ -448,6 +448,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - `PluginFileAPI.insertNotePage` needs a template name from `PluginCommAPI.getNoteSystemTemplates()`
   (for example `style_white`): the name `getNotePageTemplate` returns (`style_white_a5x2`) fails with
   «802 Background template file does not exist!» [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- `insertNotePage` on the open note drops the ink written on it since its last save: three notes
+  inked page by page with an insert between pages kept no stroke at all, while inserting every page
+  first, then writing, kept all of it [measured, Manta, device round 5, 2026-11-26,
+  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So Probe's `insertPage` saves the
+  note first (`saveCurrentNote`) and inserts nothing when the save fails.
 - Right after a plugin's `PluginCommAPI.jumpToPage`, the next press of the plugins button is lost;
   a wait of about 4 s before it works, and 1.5 s was too short on a page with a picture [measured,
   Probe, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
@@ -792,6 +797,11 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   and four handwriting pages [measured, `inkctl note png`, `note-render --compare`].
   A second test note, dots with ink and ruled lines, matched at 0.000 % (2026-11-25,
   [#308](https://github.com/martonpaulo/ink-tools/issues/308)).
+- `generateNotePng` leaves out every picture element, whatever wrote it: a picture the file holds
+  and the screen shows was missing from the PNG (0.61 % of pixels), while `note-render` of the
+  pulled file drew it [measured, Manta, device round 5, 2026-11-26,
+  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So that PNG never proves a picture;
+  `inkctl note png` says how many it left out.
 - A picture `PluginNoteAPI.insertImage` places stays a floating selection on screen, and Probe's call
   gave no answer in 20 s, yet the note file held the picture once the note was opened again
   [measured, 2026-11-25].

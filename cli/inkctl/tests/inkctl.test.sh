@@ -1509,6 +1509,10 @@ answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","m
 result=$(run note png 2 "$work/local/page2.png" --json)
 check "note png asks Probe for the page, from 0, and pulls it" "$?$(command_field "d['op'], d['page']")$(printf '%s' "$result" | field "['page'],d['bytes']")$(cat "$work/local/page2.png")" "0('renderPage', 1)(2, 3)PNG"
 check "note png removes the tablet's copy" "$(grep -cxF "rm -f $render" "$files/removed")" "1"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png","pictures":2}' > "$files/helper-answer"
+printf 'f %s\n' "$render" >> "$files/paths"
+run note png 2 "$work/local/page2b.png" >/dev/null 2>"$work/err"
+check "note png says the tablet's PNG leaves out the page's pictures (#263)" "$?$(grep -c 'leaves out the page.s 2 picture' "$work/err")" "01"
 run note png 2 "$work/local/page2.png" >/dev/null 2>&1
 check "note png refuses to replace a local file before any push" "$?$(called ' push ')" "50"
 printf 'f %s\n' "$render" >> "$files/paths"
