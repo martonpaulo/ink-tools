@@ -105,7 +105,7 @@ public final class HostCalls {
   /**
    * Null when PluginHost's own {@code IPluginSetting$Stub} gives {@code code} to the method the
    * registry names for it; else why the call is refused (#294, #293). The numbers come from
-   * decompiled code: a reordered interface would run another method under the same number, and 5
+   * device data, not an official API: a reordered interface would run another method under the same number, and 5
    * is uninstall, so no call goes out unchecked. A Stub without the constant is refused too: no
    * fallback for a Supernote internal.
    *

@@ -17,7 +17,7 @@ import java.util.WeakHashMap;
  * time PluginHost adds it again, and turns Back into the `hardwareBackPress` event that
  * `useBackKey` listens to, so the JavaScript side keeps one route for Back.
  *
- * <p>shortcut: inferred from the decompiled PluginHost 1.00.2610150 (window flags 0x520, no key
+ * <p>shortcut: inferred from PluginHost 1.00.2610150's observed behaviour (window flags 0x520, no key
  * handling of its own), not yet measured on the tablet; drop this class if a device round shows
  * the key never reaches the focused root view.
  */

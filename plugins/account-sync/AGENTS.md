@@ -93,7 +93,7 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   one issued while the app was in «Testing» kept its 7-day life, so the owner signed in again once. The
   consent screen shows «Google hasn't verified this app», and the app is capped at 100 users;
   verification is not planned, as the owner is the one user.
-- The private design and reverse-engineering notes live in the workbench research folder.
+- The private design and device-study notes live in the workbench research folder.
 
 ## Reuse
 

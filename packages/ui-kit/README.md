@@ -4,8 +4,8 @@ The Settings look every plugin shares ([#50](https://github.com/martonpaulo/supe
 Supernote's own native controls, one shared component each (owner, 2026-11-25,
 [#273](https://github.com/martonpaulo/ink-tools/issues/273)); the measured catalog of those controls is
 [`native-catalog.md`](native-catalog.md) ([#272](https://github.com/martonpaulo/ink-tools/issues/272)). Each component follows how the
-vendor's own widget works, learnt from the device's screens and from the vendor UI library decompiled
-in scratch, and redrawn in our own code, names and tokens: no vendor code, decompiled text or
+vendor's own widget works, learnt from the device's screens and from measuring the vendor's own controls,
+and redrawn in our own code, names and tokens: no vendor code, vendor text or
 drawable enters the repository, and no vendor widget is loaded at runtime, since the controls stay
 at the highest dependency level that serves ([`docs/architecture.md` › Layer rules](../../docs/architecture.md#layer-rules); owner, 2026-11-25,
 [#287](https://github.com/martonpaulo/ink-tools/issues/287); [`native-catalog.md` › How the native widgets draw](native-catalog.md#how-the-native-widgets-draw)). The tokens live in

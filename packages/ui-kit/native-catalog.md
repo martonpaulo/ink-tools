@@ -36,8 +36,8 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
   `com.ratta.settings.input.KeyboardSetting`, `com.ratta.settings.input.HWLanguageSetting`,
   `com.ratta.settings.wifi.WifiSettings`, `com.ratta.settings.security.SecuritySettings`,
   `com.ratta.settings.input.DateAndTimeSetting` or
-  `com.ratta.settings.application.PluginManagerFragment` (read from `SettingsActivity` with
-  `jadx`).
+  `com.ratta.settings.application.PluginManagerFragment` (the targets `SettingsActivity`
+  routes to, observed on the device).
 - Colours and size names come from `aapt2 dump resources` of `com.ratta.settings`: its
   `dp_px_*` and `sp_px_*` dimensions (the `sw1024dp` values on the Manta) and its colours
   (`black` `#000000`, `gray` `#999999`, `dark` `#666666`).
@@ -234,8 +234,8 @@ native element met maps to one Ink Tools component, or to «new».
 
 ## How the native widgets draw
 
-Read from the vendor UI library compiled into `com.ratta.settings` (`supernoteuilib`, firmware
-3.31.45), decompiled with `jadx` in the lane's scratch only, never in the repository (owner,
+Measured from the vendor UI library in `com.ratta.settings` (`supernoteuilib`, firmware
+3.31.45) on the device; no vendor material enters the repository (owner,
 [#287](https://github.com/martonpaulo/ink-tools/issues/287)). Sizes are the library's `dp_px_*` and `sp_px_*` dimensions at the Manta's
 `sw1024dp`, about 1.165 px each. Ink Tools takes the ideas, never the code or the drawables.
 
