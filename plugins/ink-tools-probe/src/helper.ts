@@ -12,6 +12,10 @@ const CHANNEL = REGISTRY.storageHelperChannel;
 
 /** The only folder a command may name a file in: inkctl's own folder (`MyStyle/Probe/`). */
 export const PROBE_FOLDER = `${CHANNEL.folder}/`;
+/** Registry item pluginhost.file-sandbox: the shared root and its MyStyle folder. */
+const SANDBOX = REGISTRY.pluginhostFileSandbox;
+/** The shared folder a plugin writes page backgrounds in (`MyStyle/`), which `insertNotePage` reads (#377). */
+export const SHARED_FOLDER = `${SANDBOX.sharedRoot}/${SANDBOX.sharedFolder}/`;
 /** Where inkctl pushes the command; `cli/inkctl/src/inkctl` reads the same registry item. */
 export const COMMAND_PATH = `${PROBE_FOLDER}${CHANNEL.commandFile}`;
 /** Every answer line starts with this, then the command id, the chunk number and the count. */
@@ -128,6 +132,8 @@ const NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}$/;
 /** A system template name, as `getNoteSystemTemplates` lists them (docs/supernote.md). */
 const TEMPLATE_PATTERN = /^[a-z0-9_]+$/;
 const PICTURE_PATTERN = /\.(png|jpe?g)$/i;
+/** A page background a plugin made: a PNG straight in SHARED_FOLDER (#377). */
+const BACKGROUND_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.png$/;
 
 function onPage(x: unknown, y: unknown): boolean {
   return (
@@ -189,11 +195,20 @@ function parseFontSize(value: unknown): number {
   return value;
 }
 
+/**
+ * A system template name such as style_white, or the full path of a PNG in SHARED_FOLDER, which
+ * `insertNotePage` takes as the page's background (#377); device round 11 found the path refused
+ * here (#379).
+ */
 function parseTemplate(value: unknown): string {
-  if (typeof value !== 'string' || !TEMPLATE_PATTERN.test(value)) {
-    throw new HelperError(USAGE, 'template must be a system template name such as style_white');
+  if (typeof value === 'string' && TEMPLATE_PATTERN.test(value)) {
+    return value;
   }
-  return value;
+  const name = typeof value === 'string' && value.startsWith(SHARED_FOLDER) ? value.slice(SHARED_FOLDER.length) : '';
+  if (BACKGROUND_PATTERN.test(name)) {
+    return value as string;
+  }
+  throw new HelperError(USAGE, `template must be a system template name such as style_white, or a .png file in ${SHARED_FOLDER}`);
 }
 
 /** A note file in NOTES_FOLDER, at any depth, with no `..` part; inkctl keeps it to Note/Tests/. */

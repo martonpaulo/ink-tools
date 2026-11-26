@@ -2,6 +2,7 @@ import {createCommandRunner, LISTEN_MS, LISTEN_POLL_MS, pressCommand} from '../s
 import {
   ANSWER_CHUNK,
   PROBE_FOLDER,
+  SHARED_FOLDER,
   RENDER_PATH,
   answerLines,
   COMMAND_PATH,
@@ -184,13 +185,28 @@ test('insertTextBox checks the text, the rect and the font size before the note 
   expect(note.insertTextBox).toHaveBeenCalledTimes(1);
 });
 
-test('insertPage inserts a page with a system template name only (#261)', async () => {
+test('insertPage inserts a page with a system template name (#261)', async () => {
   const note = api();
   const {answer} = await runCommand(command({op: 'insertPage', page: 1, template: 'style_white'}), note);
   expect(note.insertPage).toHaveBeenCalledWith(1, 'style_white');
   expect(answer).toMatchObject({ok: true, page: 1, template: 'style_white'});
   const refused = await runCommand(command({op: 'insertPage', page: 1, template: '/sdcard/a.png'}), note);
   expect(refused.answer).toMatchObject({ok: false, code: 2});
+});
+
+test('insertPage takes a PNG in the shared folder as the background, and nothing deeper (#379)', async () => {
+  // Device round 11 found a MyStyle PNG path refused here, although insertNotePage takes it (#377).
+  // The channel left MyStyle for the hidden plugin folder (#148); the background stays in MyStyle.
+  expect(SHARED_FOLDER).toBe('/storage/emulated/0/MyStyle/');
+  const note = api();
+  const png = `${SHARED_FOLDER}r11-sudoku.png`;
+  const {answer} = await runCommand(command({op: 'insertPage', page: 1, template: png}), note);
+  expect(note.insertPage).toHaveBeenCalledWith(1, png);
+  expect(answer).toMatchObject({ok: true, template: png});
+  for (const template of [`${SHARED_FOLDER}../a.png`, `${SHARED_FOLDER}Probe/a.png`, `${PROBE_FOLDER}a.png`, `${SHARED_FOLDER}a.jpg`, `${SHARED_FOLDER}.png`]) {
+    const refused = await runCommand(command({op: 'insertPage', page: 1, template}), note);
+    expect([template, refused.answer]).toEqual([template, expect.objectContaining({ok: false, code: 2})]);
+  }
 });
 
 const NOTE = `${NOTES_FOLDER}Tests/Move.note`;
