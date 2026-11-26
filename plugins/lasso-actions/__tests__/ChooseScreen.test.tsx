@@ -107,6 +107,35 @@ test('a failed insert shows its sentence and keeps the tiles', async () => {
   expect(texts(tree)).toContain('the picture could not be saved.');
 });
 
+test('the title bar\'s Close leaves, and is gone while an insert runs (#256)', async () => {
+  chooseResults.mockResolvedValue({tiles: [tile('a')], text: null});
+  let inserted!: (answer: {ok: boolean; text: string}) => void;
+  insertChosen.mockReturnValue(
+    new Promise(resolve => {
+      inserted = resolve;
+    }),
+  );
+  const tree = await open();
+  const closeOf = () =>
+    tree.root.findAll(
+      node => node.props.accessibilityLabel === 'Close' && typeof node.props.onPress === 'function',
+    );
+  expect(closeOf()).not.toEqual([]);
+  const [first] = tree.root.findAll(
+    node =>
+      node.props.accessibilityLabel === 'a, from commons' && node.props.onPress,
+  );
+  await act(async () => {
+    first.props.onPress();
+  });
+  expect(closeOf()).toEqual([]);
+  await act(async () => {
+    inserted({ok: false, text: 'the picture could not be saved.'});
+  });
+  await act(async () => closeOf()[0].props.onPress());
+  expect(closeChoose).toHaveBeenCalledTimes(1);
+});
+
 test('Back leaves as «Close» does, and does nothing while an insert runs (#204)', async () => {
   const back = catchBackKey();
   chooseResults.mockResolvedValue({tiles: [tile('a')], text: null});
@@ -134,7 +163,7 @@ test('Back leaves as «Close» does, and does nothing while an insert runs (#204
   back.restore();
 });
 
-describe('the grid leaves «More» and «Close» clear of every tile (#169)', () => {
+describe('the grid leaves «More» clear of every tile (#169)', () => {
   const styleOf = (node: {props: {style?: unknown}}) =>
     (StyleSheet.flatten(node.props.style as ViewStyle) ?? {}) as ViewStyle;
 

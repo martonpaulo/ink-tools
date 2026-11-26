@@ -148,6 +148,36 @@ test('the receive view keeps the size rules, names the tablet and stops (#49)', 
     tree.root.findByProps({label: 'Stop'}).props.onPress();
   });
   expect(onStop).toHaveBeenCalledTimes(1);
+  // The title bar's Close stops the receive too (#256).
+  await act(async () => {
+    tree.root.findByProps({accessibilityLabel: 'Close'}).props.onPress();
+  });
+  expect(onStop).toHaveBeenCalledTimes(2);
+});
+
+test('Send Text keeps the title bar\'s Close while it waits, never while it reads or sends (#256)', async () => {
+  const onCancel = jest.fn();
+  const mac = {alias: 'Mac', ip: '10.0.0.2', port: 53317, fingerprint: 'mac', protocol: 'https'} as never;
+  const closeOf = (tree: ReactTestRenderer) =>
+    tree.root.findAll(n => n.props.accessibilityLabel === 'Close' && typeof n.props.onPress === 'function');
+  type State = React.ComponentProps<typeof TextView>['state'];
+  const waiting: State[] = [{phase: 'ready', text: 'Buy milk', devices: [mac]}, {phase: 'empty'}];
+  for (const state of waiting) {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<TextView state={state} onSend={() => {}} onCancel={onCancel} />);
+    });
+    await act(async () => closeOf(tree)[0].props.onPress());
+  }
+  expect(onCancel).toHaveBeenCalledTimes(2);
+  const working: State[] = [{phase: 'reading'}, {phase: 'sending', text: 'Buy milk', devices: [mac], to: mac}];
+  for (const state of working) {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(<TextView state={state} onSend={() => {}} onCancel={onCancel} />);
+    });
+    expect(closeOf(tree)).toEqual([]);
+  }
 });
 
 test('the send half announces the certificate fingerprint, the saved one only without it', async () => {
@@ -196,6 +226,7 @@ test('«Send Text» shows the text with one row per receiver and Cancel, or only
       <TextView state={{phase: 'empty'}} onSend={onSend} onCancel={() => {}} />,
     );
   });
-  expect(empty.root.findAllByProps({label: 'Close'}).length).toBeGreaterThan(0);
+  // The empty view's one way out is the title bar's × (#256).
+  expect(empty.root.findAllByProps({accessibilityLabel: 'Close'}).length).toBeGreaterThan(0);
   expect(rows(empty, 'Mac')).toEqual([]);
 });
