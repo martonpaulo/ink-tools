@@ -112,41 +112,33 @@ describe('the pen pause beside position (#296)', () => {
   // 40 px gap is neither, and position alone keeps it in the word.
   const wide = {...DEFAULT_WORD_OPTIONS, spacing: 1.4};
 
-  test('a gap wider than a letter gap with a long pause closes the word', () => {
+  /** Adds each stroke at its time; answers the words handed on by `at`. */
+  const run = (strokes: [ReturnType<typeof letter>, number][], at: number) => {
     const tracker = new WordTracker(wide);
-    tracker.add(timed(0, 0), 100);
-    tracker.add(timed(30, 200), 300);
+    strokes.forEach(([each, time]) => tracker.add(each, time));
+    return {early: tracker.tick(at + graceMs), late: tracker.tick(at + idleMs)};
+  };
+  const sizes = (words: {strokes: unknown[]}[]) => words.map(word => word.strokes.length);
+
+  test('a gap wider than a letter gap with a long pause closes the word', () => {
     // 40 px after the second letter (right edge 50), drawn 800 ms after it ended.
-    tracker.add(timed(90, 1100), 1200);
-    const [first] = tracker.tick(1200 + graceMs);
-    expect(first.strokes).toHaveLength(2);
+    const {early} = run([[timed(0, 0), 100], [timed(30, 200), 300], [timed(90, 1100), 1200]], 1200);
+    expect(sizes(early)).toEqual([2]);
   });
 
   test('the same gap with a short pause stays in the word', () => {
-    const tracker = new WordTracker(wide);
-    tracker.add(timed(0, 0), 100);
-    tracker.add(timed(30, 200), 300);
-    tracker.add(timed(90, 500), 600);
-    expect(tracker.tick(600 + graceMs)).toEqual([]);
-    expect(tracker.tick(600 + idleMs)[0].strokes).toHaveLength(3);
+    const {early, late} = run([[timed(0, 0), 100], [timed(30, 200), 300], [timed(90, 500), 600]], 600);
+    expect([sizes(early), sizes(late)]).toEqual([[], [3]]);
   });
 
   test('without pen times the rule is position alone', () => {
-    const tracker = new WordTracker(wide);
-    tracker.add(letter(0), 100);
-    tracker.add(letter(30), 300);
-    tracker.add(letter(90), 1200);
-    expect(tracker.tick(1200 + graceMs)).toEqual([]);
-    expect(tracker.tick(1200 + idleMs)[0].strokes).toHaveLength(3);
+    const {early, late} = run([[letter(0), 100], [letter(30), 300], [letter(90), 1200]], 1200);
+    expect([sizes(early), sizes(late)]).toEqual([[], [3]]);
   });
 
   test('a long pause alone never splits letter gaps', () => {
-    const tracker = new WordTracker(wide);
-    tracker.add(timed(0, 0), 100);
     // 1500 ms pauses, under the idle time, with 10 px letter gaps.
-    tracker.add(timed(30, 1600), 1700);
-    tracker.add(timed(60, 3200), 3300);
-    expect(tracker.tick(3300 + graceMs)).toEqual([]);
-    expect(tracker.tick(3300 + idleMs)[0].strokes).toHaveLength(3);
+    const {early, late} = run([[timed(0, 0), 100], [timed(30, 1600), 1700], [timed(60, 3200), 3300]], 3300);
+    expect([sizes(early), sizes(late)]).toEqual([[], [3]]);
   });
 });

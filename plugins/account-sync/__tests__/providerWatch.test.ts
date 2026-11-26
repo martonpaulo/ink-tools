@@ -1,7 +1,7 @@
 /** A tablet edit starts a sync beside the timer (#296). */
 import {BUNDLED_DESCRIPTOR, contentUri} from '@ink-tools/sn-adapter';
 import {
-  CHANGE_DEBOUNCE_MS,
+  CHANGE_DEBOUNCE_SECONDS,
   CHANGED_EVENT,
   Subscribe,
   watchProviders,
@@ -40,7 +40,7 @@ test('each change event starts one extra pass; the timer is untouched', async ()
   const watch = jest.fn(async () => 2);
   const log = jest.fn();
   await watchProviders(runner, log, {watch}, events.subscribe);
-  expect(watch).toHaveBeenCalledWith(watchedUris(), CHANGE_DEBOUNCE_MS);
+  expect(watch).toHaveBeenCalledWith(watchedUris(), CHANGE_DEBOUNCE_SECONDS * 1000);
   expect(runner.syncNow).not.toHaveBeenCalled();
   events.emit(CHANGED_EVENT);
   expect(runner.syncNow).toHaveBeenCalledTimes(1);

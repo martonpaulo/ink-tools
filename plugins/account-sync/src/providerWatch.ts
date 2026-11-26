@@ -14,7 +14,8 @@ import type {SyncRunner} from './sync';
 export const CHANGED_EVENT = 'BridgeProvidersChanged';
 
 /** A burst of row changes waits this long for its last one [inference: one edit writes a few rows]. */
-export const CHANGE_DEBOUNCE_MS = 2000;
+export const CHANGE_DEBOUNCE_SECONDS = 2;
+const MS_PER_SECOND = 1000;
 
 /** The calls of the Java module the watch needs. */
 export type WatchModule = {
@@ -53,7 +54,7 @@ export async function watchProviders(
     runner.syncNow();
   });
   try {
-    const watched = await module.watch(watchedUris(), CHANGE_DEBOUNCE_MS);
+    const watched = await module.watch(watchedUris(), CHANGE_DEBOUNCE_SECONDS * MS_PER_SECOND);
     log(`[Bridge] watch: ${watched} providers watched`);
     return stop;
   } catch (e) {

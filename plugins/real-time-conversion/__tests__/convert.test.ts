@@ -14,9 +14,14 @@ import {letter, stroke} from '../test-support/ink';
 
 beforeEach(() => setLastConversion(null));
 
-async function writeWord(tablet: ReturnType<typeof fakeTablet>, converter: Converter) {
+async function writeWord(
+  tablet: ReturnType<typeof fakeTablet>,
+  converter: Converter,
+  afterInk: () => void = () => {},
+) {
   converter.start();
   [0, 30, 60].forEach((left, index) => tablet.penUp(letter(left), index * 200));
+  afterInk();
   await tablet.advance(400 + DEFAULT_WORD_OPTIONS.idleMs);
   await converter.idle();
 }
@@ -254,23 +259,22 @@ describe('reloadFile after a conversion (#296)', () => {
     expect(afterBatch(true, 'unknown')).toBe('pen unknown');
   });
 
+  /** One word written and converted on `tablet`, with `afterInk` run once the ink is down. */
+  const converted = async (tablet: ReturnType<typeof fakeTablet>, afterInk?: () => void) =>
+    writeWord(tablet, new Converter(tablet.host, DEFAULT_WORD_OPTIONS), afterInk);
+
   test('a batch with no redraw reloads the page once the pen is up, and logs its answer', async () => {
     const tablet = fakeTablet('café');
-    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
-    await writeWord(tablet, converter);
+    await converted(tablet);
     expect(tablet.host.reloadFile).toHaveBeenCalledTimes(1);
-    expect(tablet.logs).toContain('batch: answered true');
-    expect(tablet.logs).toContain('reload: answered true in 0 ms');
+    expect(tablet.logs).toEqual(
+      expect.arrayContaining(['batch: answered true', 'reload: answered true in 0 ms']),
+    );
   });
 
   test('never reloads while the pen is down', async () => {
     const tablet = fakeTablet('café');
-    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
-    converter.start();
-    [0, 30, 60].forEach((left, index) => tablet.penUp(letter(left), index * 200));
-    tablet.motion(0);
-    await tablet.advance(400 + DEFAULT_WORD_OPTIONS.idleMs);
-    await converter.idle();
+    await converted(tablet, () => tablet.motion(0));
     expect(tablet.host.batchUpdatePageElements).toHaveBeenCalledTimes(1);
     expect(tablet.host.reloadFile).not.toHaveBeenCalled();
     expect(tablet.logs).toContain('reload: not run: pen down');
@@ -279,18 +283,19 @@ describe('reloadFile after a conversion (#296)', () => {
   test('a failed motion listener means no reload, said once', async () => {
     const tablet = fakeTablet('café');
     (tablet.host.onMotion as jest.Mock).mockReturnValueOnce({ok: false, code: -1, message: 'refused'});
-    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
-    await writeWord(tablet, converter);
-    expect(tablet.host.reloadFile).not.toHaveBeenCalled();
-    expect(tablet.logs).toContain('motion listener failed: refused: no reload after a conversion');
-    expect(tablet.logs).toContain('reload: not run: pen unknown');
+    await converted(tablet);
+    expect(tablet.logs).toEqual(
+      expect.arrayContaining([
+        'motion listener failed: refused: no reload after a conversion',
+        'reload: not run: pen unknown',
+      ]),
+    );
   });
 
   test('a failed reload keeps the conversion and is logged', async () => {
     const tablet = fakeTablet('café');
     (tablet.host.reloadFile as jest.Mock).mockResolvedValueOnce({ok: false, code: 7, message: 'no note'});
-    const converter = new Converter(tablet.host, DEFAULT_WORD_OPTIONS);
-    await writeWord(tablet, converter);
+    await converted(tablet);
     expect(tablet.page[tablet.page.length - 1].textBox?.textContentFull).toBe('café');
     expect(tablet.logs).toContain('reload failed: 7 no note in 0 ms');
   });
