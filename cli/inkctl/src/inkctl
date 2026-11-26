@@ -613,6 +613,10 @@ BRIDGE_CALL_TIMEOUT = 75  # the app waits up to 50 s for PluginHost's callback, 
 BRIDGE_PROBE_PREFIX = "ink-tools-helper"  # a registry probe the Helper runs, by its name's first word
 BRIDGE_NEXT_STEP = "adb install the Ink Tools Helper APK (apps/ink-tools-helper), or use the screen route for an install"
 BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
+ACTIVITY_OP = "activity"  # the Helper's op for the start and end signal of each command on the tablet (#430)
+ACTIVITY_START = "start"
+ACTIVITY_END = "end"
+ACTIVITY_TIMEOUT = PROBE_TIMEOUT  # a signal never holds a command up longer than this
 # What cleared the refused enable of 2026-11-17 (#228): an uninstall and an install loaded the
 # plugin; an uninstall drops its Always Allow grants, so they are set again.
 ENABLE_REFUSED_STEP = ("inkctl plugin disable {id}, then inkctl plugin enable {id}; if PluginHost refuses it again, "
@@ -3359,7 +3363,7 @@ def bridge_call(device: Device, op: str, **extras) -> str:
     return bridge_answer(*bridge_result(device, op, **extras))
 
 
-def bridge_result(device: Device, op: str, **extras) -> tuple:
+def bridge_result(device: Device, op: str, call_timeout: float = BRIDGE_CALL_TIMEOUT, **extras) -> tuple:
     """One ordered broadcast to the bridge app: its result code and answer text."""
     words = ["am", "broadcast", "-n", BRIDGE_RECEIVER, "-f", str(BRIDGE_INCLUDE_STOPPED), "--es", "op", op]
     for key, value in extras.items():
@@ -3367,7 +3371,7 @@ def bridge_result(device: Device, op: str, **extras) -> tuple:
             words += ["--ez", key, "true" if value else "false"]
             continue
         words += ["--ei" if isinstance(value, int) else "--es", key, str(value)]
-    output = device.shell(shlex.join(words), timeout=BRIDGE_CALL_TIMEOUT)
+    output = device.shell(shlex.join(words), timeout=call_timeout)
     match = BRIDGE_ANSWER.search(output)
     if not match:
         raise Failure(EXIT_FAILED, "device_error", output.strip()[:ERROR_EXCERPT] or "am broadcast gave no result")
@@ -3385,6 +3389,17 @@ def bridge_answer(code: int, answer: str) -> str:
     if code == BRIDGE_TIMEOUT_RESULT:
         raise Failure(EXIT_TIMEOUT, "timeout", f"the bridge: {answer}", BRIDGE_LOG_STEP)
     raise Failure(EXIT_FAILED, "device_error", f"the bridge ({BRIDGE_RESULTS.get(code, code)}): {answer}", BRIDGE_LOG_STEP)
+
+
+def signal_activity(device: Device, state: str) -> bool:
+    """Tell the Ink Tools Helper that a command starts or ends on the tablet, so its mark can show
+    that inkctl is driving it (#430). Best effort: a missing or older Helper, which answers no
+    receiver or a usage refusal, or a slow answer never changes the command's result or exit code."""
+    try:
+        bridge_result(device, ACTIVITY_OP, call_timeout=ACTIVITY_TIMEOUT, state=state)
+    except Failure:
+        return False
+    return True
 
 
 def plugin_row(device: Device, plugin_id: str) -> dict:
@@ -5047,6 +5062,7 @@ def main() -> int:
     if getattr(args, "list_fixtures", False):  # `fixture --list` only reads the table in this file
         args.needs_device = args.changes = False
     code, kind, device, before, after = EXIT_OK, None, None, "", ""
+    signalled = False  # the start signal reached the tablet, so the end signal is owed
     try:
         if poll_seconds(os.environ.get(POLL_VARIABLE)) is None:
             low, high = POLL_SECONDS_RANGE
@@ -5060,6 +5076,7 @@ def main() -> int:
                 if args.handler is not command_firmware:
                     watch_on_connect(device)
                 before = front_app(device)
+                signalled = signal_activity(device, ACTIVITY_START)
         if args.handler in COMMAND_ITEMS:
             require_on(COMMAND_ITEMS[args.handler], command_name(args), device)
         data, text = args.handler(device, args)
@@ -5087,6 +5104,8 @@ def main() -> int:
     if args.needs_device:
         if device and kind != "unreachable":
             after = front_app(device)
+        if signalled and kind != "unreachable":
+            signal_activity(device, ACTIVITY_END)
         log.finish(command_name(args), code, kind, before, after)
     if args.time:
         print(f"time: {log.seconds()} s", file=sys.stderr)
