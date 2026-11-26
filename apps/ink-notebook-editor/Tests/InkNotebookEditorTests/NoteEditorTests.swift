@@ -302,6 +302,27 @@ import Testing
         #expect(editor.movedPage == nil)
     }
 
+    @Test func aDraggedPictureMovesAsANewFileDrawnFromTheDragsInk() async throws {
+        let editor = try editor()
+        let folder = try WritePathTests.makeFolder("moved-pictures")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        editor.pictureFolder = { folder }
+        tabletApplies { @Sendable in $0 }
+        let picture = try picture()
+        let lifted = try #require(
+            await LiftedInk.make(try NoteFile(data: original), page: 0, items: [picture.selectable]))
+        #expect(editor.moveElements(ElementMove(page: 0, elements: [picture], dx: 40, dy: 60), lifted: lifted))
+        for _ in 0..<500 where editor.pending.isEmpty {
+            // timing-independent: a poll on the picture's file with a deadline.
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(editor.liftedChanges(on: 0).first?.lifted.frame == lifted.frame)
+        await settle(editor)
+        let sent = try #require(tablet.sent.first { $0["op"] as? String == "modifyElements" })
+        #expect((sent["file"] as? String)?.hasPrefix(folder.path(percentEncoded: false)) == true)
+        #expect((sent["rect"] as? [String: Int])?["left"] == picture.box.left + 40)
+    }
+
     @Test func aTextBoxIsNeverTurnedAndTheBarSaysWhy() async throws {
         let editor = try editor()
         let elements = try selection()

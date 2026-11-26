@@ -263,7 +263,13 @@ final class RenderTests {
         viewer.selection.selectAll(Set(items.map(\.id)), page: 0)
         let move = ElementMove(page: 0, elements: items.map(MovedElement.init), dx: -300, dy: 500)
         let lifted = await LiftedInk.make(note, page: 0, items: items)
+        // The selection holds a picture: it moves as a new file, made before the move is drawn (#326).
+        editor.pictureFolder = { self.scratch }
         editor.moveElements(move, lifted: lifted)
+        for _ in 0..<500 where editor.liftedChanges(on: 0).isEmpty {
+            // timing-independent: a poll on the picture's file with a deadline; the render is checked by eye.
+            try? await Task.sleep(for: .milliseconds(10))
+        }
         try await render("move-sending", Self.sizes) {
             NotebookView(pages: drawn, viewer: viewer, live: live, editor: editor)
         }

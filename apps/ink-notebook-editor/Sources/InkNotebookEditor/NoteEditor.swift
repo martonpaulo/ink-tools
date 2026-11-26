@@ -250,7 +250,7 @@ final class NoteEditor {
         guard !pictureOnItsWay(move.page) else { return false }
         if move.elements.contains(where: \.isPicture) {
             // A picture moves as a new picture file at its new place (#326).
-            Task { await send(Self.shift(move)) }
+            Task { await send(Self.shift(move), lifted: lifted) }
             return true
         }
         let size = pageSize(move.page)
@@ -408,8 +408,8 @@ final class NoteEditor {
 
     /// Keeps a transform on its page, refuses a turned text box, makes each picture's new file
     /// from the Mac's copy, then draws and sends it. A refusal shows its plain message and changes
-    /// nothing.
-    private func send(_ transform: ElementTransform) async -> Bool {
+    /// nothing. `lifted` is the ink a drag already lifted, for a first change of its selection.
+    private func send(_ transform: ElementTransform, lifted: LiftedInk? = nil) async -> Bool {
         guard canEdit, !transform.isEmpty, !pictureOnItsWay(transform.page) else { return false }
         let size = pageSize(transform.page)
         guard let kept = transform.clamped(width: size.width, height: size.height) else {
@@ -445,7 +445,9 @@ final class NoteEditor {
                 return false
             }
         }
-        return record(.transformElements(kept.with(pictureFiles: files)))
+        guard record(.transformElements(kept.with(pictureFiles: files))) else { return false }
+        if let lifted, let ticket = pending.last?.ticket, !unlifted.contains(ticket) { lifts[ticket] = lifted }
+        return true
     }
 
     /// The elements `records` of `page` in the Mac's copy, as a selection names them.

@@ -103,7 +103,7 @@ nonisolated struct PictureImport: @unchecked Sendable {
     /// place (#326).
     /// shortcut: the reader does not decode a picture element's own pixels, so its pixels are cut
     /// from the page as the Mac draws it without its template, and ink drawn over the picture goes
-    /// with it; decode the record's pixels once the format research names their layout.
+    /// with it; take the record's own PNG once #447 reads it.
     @concurrent
     static func transformed(
         _ note: NoteFile, page: Int, box: EditRect, matrix: PageMatrix, folder: URL
