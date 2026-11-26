@@ -103,10 +103,9 @@ export function strokeSpan(grid: Grid, stroke: InkStroke): { from: number; to: n
 }
 
 /**
- * [inference] shares of a cell, tuned in the device round: a stroke runs along a straight line
- * when its points stay this near it and cover this much of its length.
+ * [inference] a share of a cell, tuned in the device round: a stroke runs along a straight line when
+ * its points within `STRIKE_MAX_BOW` of it, as straight as a strike, cover this much of its length.
  */
-export const ALONG_BAND = 0.35;
 export const ALONG_MIN_COVER = 0.6;
 /** A line's length is measured in this many parts per cell. */
 const ALONG_PARTS_PER_CELL = 6;
@@ -133,7 +132,7 @@ export function strokesAlong(grid: Grid, from: readonly [number, number], to: re
       const u = (x - grid.x) / grid.cell;
       const v = (y - grid.y) / grid.cell;
       const [along, off] = horizontal ? [u, v] : [v, u];
-      if (Math.abs(off - across) > ALONG_BAND || along < start || along >= end) continue;
+      if (Math.abs(off - across) > STRIKE_MAX_BOW || along < start || along >= end) continue;
       covered.add(Math.floor(((along - start) / (end - start)) * parts));
     }
     if (covered.size >= ALONG_MIN_COVER * parts) count++;

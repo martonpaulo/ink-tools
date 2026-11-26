@@ -50,21 +50,28 @@ export interface Bridges {
 }
 
 export const BRIDGES_BANDS: readonly Difficulty[] = ['easy', 'medium', 'hard'];
-export const BRIDGES_LIMITS = { minSide: 5, maxSide: 15 } as const;
+/** A hard grid needs `hardMinSide` cells a side: under it, fewer than 1 seed in 2 found one in the attempts. */
+export const BRIDGES_LIMITS = { minSide: 5, maxSide: 15, hardMinSide: 7 } as const;
 /** The most bridges one pair of islands can share. */
 export const MAX_BRIDGES = 2;
 
 /** One island per this many cells, about; the research report's sizes hold 10 to 45 islands. */
 const CELLS_PER_ISLAND = 5;
 /** How often a new bridge is double, in percent, per band: doubles give the count rules more to work with. */
-const DOUBLE_PERCENT: Record<string, number> = { easy: 55, medium: 35, hard: 25 };
+const DOUBLE_PERCENT: Record<string, number> = { easy: 55, medium: 35, hard: 15 };
 /** How often a pair that sees each other gets an extra bridge, in percent: loops make a grid harder. */
-const LOOP_PERCENT: Record<string, number> = { easy: 10, medium: 25, hard: 40 };
+const LOOP_PERCENT: Record<string, number> = { easy: 10, medium: 25, hard: 60 };
 /** The growth gives up a placement after this many tries per wanted island. */
 const TRIES_PER_ISLAND = 40;
 /** Fewer islands than this share of the wanted count is a failed attempt. */
 const MIN_FILL_PERCENT = 70;
-const ATTEMPTS = 300;
+/**
+ * shortcut: a hard grid is found by chance among the grown ones. With 500 attempts 1 seed in 150 of
+ * 8 x 8 found none; with these, none of 150 seeds each of 7 x 7, 8 x 8 and 9 x 9 failed, and easy and
+ * medium never failed. A seed that still finds none throws. Upgrade to a generator that steers
+ * towards probing if the plugin shows that failure or the tablet is too slow.
+ */
+const ATTEMPTS = 750;
 
 /** Edge domains are bit sets of the counts still possible: bit k for k bridges. */
 const ALL_COUNTS = 0b111;
@@ -401,6 +408,9 @@ export function generateBridges(seed: string, size: BridgesSize, difficulty: Dif
     }
   }
   if (!BRIDGES_BANDS.includes(difficulty)) throw new RangeError(`Bridges offers ${BRIDGES_BANDS.join(', ')}, not ${difficulty}`);
+  if (difficulty === 'hard' && Math.min(width, height) < BRIDGES_LIMITS.hardMinSide) {
+    throw new RangeError(`a hard Bridges grid is at least ${BRIDGES_LIMITS.hardMinSide} cells a side, not ${width} x ${height}`);
+  }
   for (let i = 0; i < ATTEMPTS; i++) {
     const islands = grow(createRandom(childSeed(seed, i)), width, height, difficulty);
     if (!islands) continue;

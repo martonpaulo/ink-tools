@@ -79,7 +79,7 @@ describe('generateBridges', () => {
   test('the same seed gives the same grid, and fixed seeds pin their output', () => {
     expect(generateBridges('S', { width: 9, height: 9 }, 'hard')).toEqual(generateBridges('S', { width: 9, height: 9 }, 'hard'));
     expect(digest(generateBridges('P1', { width: 7, height: 7 }, 'easy'))).toBe('c1ad1b69');
-    expect(digest(generateBridges('P1', { width: 13, height: 13 }, 'hard'))).toBe('31784057');
+    expect(digest(generateBridges('P1', { width: 13, height: 13 }, 'hard'))).toBe('9282889e');
   });
 
   test('its code names the game and types back', () => {
@@ -92,6 +92,7 @@ describe('generateBridges', () => {
     expect(() => generateBridges('S', { width: 4, height: 7 }, 'easy')).toThrow('5 to 15 cells, not 4');
     expect(() => generateBridges('S', { width: 7, height: 16 }, 'easy')).toThrow('not 16');
     expect(() => generateBridges('S', { width: 7, height: 7 }, 'expert')).toThrow('easy, medium, hard, not expert');
+    expect(() => generateBridges('S', { width: 6, height: 15 }, 'hard')).toThrow('at least 7 cells a side, not 6 x 15');
   });
 });
 
