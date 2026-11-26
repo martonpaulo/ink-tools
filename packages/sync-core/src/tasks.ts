@@ -167,7 +167,14 @@ export async function syncTasks(
     previous = previous.map(l => (repaired.moved[l.localId] ? {...l, localId: repaired.moved[l.localId]} : l));
     found = repaired.found;
   }
-  const devices = new Map((await store.list()).map(t => [t.localId, t]));
+  // Two rows may share one id, such as a deleted copy beside the task pulled again after
+  // «Remove what Account Sync wrote»: the live one stands for the task, so a deleted copy is never
+  // read as the person's delete and sent to the service (#423).
+  const devices = new Map<string, DeviceTask>();
+  for (const t of await store.list()) {
+    const seen = devices.get(t.localId);
+    if (!seen || (seen.deleted && !t.deleted)) devices.set(t.localId, t);
+  }
   // A found pair starts from the tablet's content: a service change since then is copied to the
   // tablet, and nothing is sent to the service for a task it already holds.
   const taken = new Set([...previous.map(l => l.remoteId), ...previous.map(l => l.localId)]);

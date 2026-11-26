@@ -122,3 +122,25 @@ test('sync marks the tasks it imports from the service, and only those', async (
     {remoteId: 'r2', localId: 'l0', fingerprint: fingerprint(t.tasks[0])},
   ]);
 });
+
+test('a deleted copy beside the live task of the same id is never sent to the service as a delete (#423)', async () => {
+  const removed: string[] = [];
+  const remote: RemoteTask[] = [{remoteId: 'r1', title: 'Buy milk', detail: '', due: null, completed: false, modified: 1}];
+  const provider: TaskProvider = {
+    list: async () => remote,
+    get: async id => remote.find(r => r.remoteId === id) ?? null,
+    create: async x => ({...x, remoteId: 'r2', modified: 1}),
+    update: async (id, x) => ({...x, remoteId: id, modified: 1}),
+    remove: async id => {
+      removed.push(id);
+    },
+  };
+  const live = {...task('svc-r1', 'Buy milk'), modified: 1};
+  const gone = {...live, deleted: true};
+  for (const rows of [[gone, live], [live, gone]]) {
+    const t = todo(rows);
+    const links: TaskLink[] = [{remoteId: 'r1', localId: 'svc-r1', fingerprint: fingerprint(live), origin: 'service'}];
+    await syncTasks(provider, t.store, links);
+  }
+  expect(removed).toEqual([]);
+});

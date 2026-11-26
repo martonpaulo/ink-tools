@@ -596,3 +596,35 @@ describe('Remove what Account Sync wrote (#423)', () => {
     expect(out.errors).toHaveLength(1);
   });
 });
+
+test('a pass asked for during a removal runs after it, never in its place (#423)', async () => {
+  let release!: () => void;
+  const held = new Promise<void>(resolve => (release = resolve));
+  const real = createDeviceStores(rows(), () => NOW);
+  const order: string[] = [];
+  const calendar = {
+    ...real.calendar,
+    listOurs: async (w: Parameters<typeof real.calendar.listOurs>[0]) => {
+      if (w.to === Number.MAX_SAFE_INTEGER) {
+        order.push('removal');
+        await held;
+        return [];
+      }
+      return real.calendar.listOurs(w);
+    },
+  };
+  const probe = jest.fn(async (capabilities: Parameters<NonNullable<SyncDevice['probe']>>[0]) => {
+    order.push('pass');
+    return ON.filter(status => capabilities.includes(status.capability));
+  });
+  const runner = createSyncRunner(device({stores: {...real, calendar}, probe}));
+  const removal = runner.removeWritten('calendar');
+  await Promise.resolve();
+  const pass = runner.syncNow();
+  await new Promise(resolve => setImmediate(resolve));
+  expect(order).toEqual(['removal']);
+  release();
+  await removal;
+  await pass;
+  expect(order).toEqual(['removal', 'pass']);
+});

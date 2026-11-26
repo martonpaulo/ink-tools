@@ -368,6 +368,8 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
   let state: BridgeState = initialBridgeState();
   let current: SyncSnapshot = {running: false, runs: {}, probe: {}};
   let pass: Promise<SyncSnapshot> | null = null;
+  /** True while `pass` holds a removal, not a sync pass. */
+  let removing = false;
   /**
    * The capabilities the probe cleared since the host started; each is probed once, and one that
    * failed is probed again at the next pass that needs it.
@@ -461,7 +463,9 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
    * After a removal the next pass must not read the removed rows as the person's edits: a Calendar
    * row is removed by cancelling it, which the push would send to the service as a delete. So the
    * Calendar's sync time moves past the removal and its baseline empties; the To-Do keeps only the
-   * links of the tasks that stay.
+   * links of the tasks that stay. shortcut: an edit on a row the removal did not take, such as a
+   * tablet-made row with no link yet, is older than the new sync time and is not sent; upgrade by
+   * keeping each removed row's key out of the push instead, if a device round shows such rows.
    */
   const remove = async (module: TwoWayModule): Promise<CleanupResult> => {
     const stores = device.stores;
@@ -478,9 +482,10 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
     return result;
   };
 
-  return {
+  const runner: SyncRunner = {
     removeWritten(module) {
       const removal = (pass ?? Promise.resolve(current)).then(() => {
+        removing = true;
         publish({...current, running: true});
         return remove(module).catch(
           (e): CleanupResult => ({removed: 0, errors: [(e as Error).message]}),
@@ -492,6 +497,7 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       });
       // A pass pressed during the removal joins this promise, then sees the state it left.
       const mine: Promise<SyncSnapshot> = done.then(() => {
+        removing = false;
         if (pass === mine) {
           pass = null;
         }
@@ -503,6 +509,10 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       return done;
     },
     syncNow(options = {}) {
+      // A pass asked for during a removal runs after it, never in its place (#423).
+      if (pass && removing) {
+        return pass.then(() => runner.syncNow(options));
+      }
       if (pass) {
         return pass;
       }
@@ -529,6 +539,7 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       return () => listeners.delete(listener);
     },
   };
+  return runner;
 }
 
 export interface Timers {
