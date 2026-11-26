@@ -10,6 +10,12 @@
  * `stale` and never run. A JS timer does not fire while PluginHost shows none of the plugin's views
  * (device round 5, #283), so each plugin passes `nativeTimers`, which tick from the plugin's native
  * `TickModule` with no view open.
+ *
+ * A request comes in a run of several, as an Ink Notebook Editor session or a device round sends
+ * them: after each one the channel also reads the file every ACTION_BURST_POLL_MS, until
+ * ACTION_BURST_MS pass with no new request. The idle read stays ACTION_POLL_MS, so an idle plugin
+ * reads its file no more often than before; within a run, an edit no longer waits up to a whole
+ * idle tick (1.2 s of a 3.1 to 4.1 s call on a 504-stroke page, device round 10, #314).
  */
 import {NativeEventEmitter, NativeModules} from 'react-native';
 
@@ -18,6 +24,9 @@ export const ACTION_FILE = 'action.json';
 /** Every answer line starts with this, then the plugin, the request id, the chunk and the count. */
 export const ACTION_MARK = 'INKTOOLS action';
 export const ACTION_POLL_MS = 1_200;
+/** The read interval while a run of requests goes on, and how long a run lasts after its last request. */
+export const ACTION_BURST_POLL_MS = ACTION_POLL_MS / 8;
+export const ACTION_BURST_MS = 2 * 60_000;
 export const ACTION_MAX_AGE_MS = 60_000;
 /** A logcat line holds about 4 KB with its prefix; a longer answer goes in chunks of this many characters. */
 export const ACTION_CHUNK = 3200;
@@ -121,6 +130,24 @@ export function startActionChannel({
 }: ActionChannelOptions): ActionChannel {
   const answered: string[] = [];
   let busy = false;
+  let burst: unknown = null;
+  let lastRequest = 0;
+
+  /** Reads fast from now until ACTION_BURST_MS pass with no new request. */
+  function hurry() {
+    lastRequest = now();
+    if (burst !== null) {
+      return;
+    }
+    burst = timers.setInterval(() => {
+      if (now() - lastRequest > ACTION_BURST_MS) {
+        timers.clearInterval(burst);
+        burst = null;
+        return;
+      }
+      channel.check();
+    }, ACTION_BURST_POLL_MS);
+  }
 
   async function answer(text: string): Promise<object> {
     const started = now();
@@ -158,6 +185,7 @@ export function startActionChannel({
         }
         answered.push(id);
         answered.splice(0, Math.max(0, answered.length - IDS_KEPT));
+        hurry();
         actionLines(plugin, id, await answer(text)).forEach(log);
       } finally {
         busy = false;
@@ -165,6 +193,10 @@ export function startActionChannel({
     },
     stop() {
       timers.clearInterval(handle);
+      if (burst !== null) {
+        timers.clearInterval(burst);
+        burst = null;
+      }
     },
   };
   const handle = timers.setInterval(() => {

@@ -1,4 +1,6 @@
 import {
+  ACTION_BURST_MS,
+  ACTION_BURST_POLL_MS,
   ACTION_CHUNK,
   ActionRefused,
   ACTION_MAX_AGE_MS,
@@ -43,6 +45,44 @@ test('reads the file every ACTION_POLL_MS and stops on stop', () => {
   expect(run.timers.setInterval).toHaveBeenCalledWith(expect.any(Function), ACTION_POLL_MS);
   run.channel.stop();
   expect(run.timers.clearInterval).toHaveBeenCalledWith(7);
+});
+
+test('after a request it reads fast until a run of requests ends, then only at the idle tick', async () => {
+  // Device round 10 (#314): on a 504-stroke page the edit took 0.4 to 0.55 s, the whole call 3.1
+  // to 4.1 s, about 1.2 s of it the idle read's wait.
+  let clock = NOW;
+  let file: string | null = null;
+  const ticks = new Map<number, () => void>();
+  let next = 1;
+  const timers = {
+    setInterval: jest.fn((fn: () => void) => {
+      ticks.set(next, fn);
+      return next++;
+    }),
+    clearInterval: jest.fn((handle: unknown) => ticks.delete(handle as number)),
+  };
+  const read = jest.fn(async () => file);
+  const sync = jest.fn(async () => ({line: 'done'}));
+  const channel = startActionChannel({plugin: 'account-sync', read, actions: {sync}, log: () => {}, now: () => clock, timers});
+  expect(timers.setInterval).toHaveBeenCalledTimes(1);
+
+  file = JSON.stringify({id: ID, at: clock, args: {}, action: 'sync'});
+  await channel.check();
+  expect(timers.setInterval).toHaveBeenLastCalledWith(expect.any(Function), ACTION_BURST_POLL_MS);
+  const fast = timers.setInterval.mock.results[1].value as number;
+
+  file = JSON.stringify({id: 'b2c3d4e5', at: clock, args: {}, action: 'sync'});
+  ticks.get(fast)?.();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(sync).toHaveBeenCalledTimes(2);
+  expect(timers.setInterval).toHaveBeenCalledTimes(2); // one fast read for the whole run
+
+  clock += ACTION_BURST_MS + 1;
+  ticks.get(fast)?.();
+  expect(timers.clearInterval).toHaveBeenCalledWith(fast);
+  expect([...ticks.keys()]).toEqual([1]); // only the idle tick is left
+  channel.stop();
+  expect(ticks.size).toBe(0);
 });
 
 test('runs a new request once and answers its own line and detail', async () => {
