@@ -1298,6 +1298,7 @@ answer_line() {  # the time, then the answer's tail after the id
 }
 helper_ready() {
     reset_device
+    rm -f "$work/home/.cache/inkctl/helper-answered"
     printf '%s' "$note_activity" > "$files/foreground"
     helper_screen > "$files/tree.xml"
     printf '%s\n' "$root/Note/Tests/Round one.note" > "$files/notes-found"
@@ -1358,6 +1359,53 @@ run lasso last-insert >/dev/null 2>&1
 check "with no note open the helper stops before any push or press" "$?$(called ' push ')$(called 'input tap')" "900"
 run --read-only ink write "a" --at 100 200 >/dev/null 2>&1
 check "read-only refuses ink write" "$?" "11"
+# A Probe that answered in its listen window takes the next command with no press (#286).
+answered_file="$work/home/.cache/inkctl/helper-answered"
+helper_ready
+run ink write "a" --at 100 200 >/dev/null
+check "Probe's answer starts its listen window" "$?$(test -s "$answered_file" && echo kept)" "0kept"
+run ink write "b" --at 100 200 >/dev/null
+check "within the window a command needs no press and no read for the button" "$?$(called 'input tap')$(called 'uiautomator dump')" "001"
+python3 -c 'import time; print(time.time() - 600)' > "$answered_file"
+run ink write "c" --at 100 200 >/dev/null
+check "after the window inkctl presses Run Command again" "$?$(called 'input tap 350 1450')" "01"
+
+# A batch: many steps in one push and one press (#286).
+batch_answer() { answer_line '11-16 23:00:01.000' "COMMAND_ID 1/1 $1" > "$files/helper-answer"; }
+cat > "$work/local/batch.json" <<'JSON'
+{"steps": [{"do": "ink write", "text": "ab", "at": [100, 200], "size": 40}, {"do": "lasso rect", "rect": [90, 190, 200, 80]}, {"do": "lasso last-insert"}, {"do": "ink strokes", "file": "sample.json", "at": [500, 600]}]}
+JSON
+helper_ready
+batch_answer '{"ok":true,"op":"batch","ms":900,"steps":[{"ok":true,"op":"insertStrokes","ms":300,"page":0,"strokes":3,"rect":{"left":100}},{"ok":true,"op":"lassoRect","ms":100,"rect":{"left":90},"counts":{"trailNum":3}},{"ok":true,"op":"lassoLast","ms":100,"rect":{"left":92},"counts":{"trailNum":3}},{"ok":true,"op":"insertStrokes","ms":300,"page":0,"strokes":2,"rect":{"left":500}}]}'
+run batch "$work/local/batch.json" > "$work/out"
+check "batch sends every step in one command, with one push and one press" "$?$(command_field "d['op'], [step['op'] for step in d['steps']]")$(called ' push ')$(called 'input tap')" "0('batch', ['insertStrokes', 'lassoRect', 'lassoLast', 'insertStrokes'])11"
+check "batch turns each step as its own command does" "$(command_field "d['steps'][1]['rect'], d['steps'][3]['strokes'][1][0], min(p[0] for s in d['steps'][0]['strokes'] for p in s)")" "({'left': 90, 'top': 190, 'right': 290, 'bottom': 270}, [540, 610], 100)"
+check "batch prints one line per step, then the total" "$(grep -c '^step [1-4] ' "$work/out")$(grep -c '^step 2 lasso rect: lassoed: ' "$work/out")$(tail -1 "$work/out")" "41batch: 4 steps in 900 ms"
+check "batch in JSON answers each step's own result" "$(run batch "$work/local/batch.json" --json | field "['ok'],[(s['do'], s['ok']) for s in d['steps']][0],d['steps'][3]['points']")" "(True, ('ink write', True), 4)"
+batch_answer '{"ok":false,"code":1501,"message":"step 2 (lassoRect): no permission","step":2,"steps":[{"ok":true,"op":"insertStrokes","ms":300,"strokes":3,"rect":{"left":100}},{"ok":false,"op":"lassoRect","code":1501,"message":"no permission"}]}'
+run batch "$work/local/batch.json" > "$work/out" 2>"$work/err"
+check "a refused step fails the batch and names the step, after the lines of the steps before it" "$?$(grep -c 'step 2 (lassoRect): no permission' "$work/err")$(grep -c '^step 1 ink write: inserted: ' "$work/out")$(grep -c '^step 2' "$work/out")" "1110"
+check "a refused step in JSON carries the step and the answers so far" "$(run batch "$work/local/batch.json" --json 2>/dev/null | field "['step'], len(d['steps'])")" "(2, 2)"
+batch_answer '{"ok":true,"op":"batch","ms":10,"steps":[{"ok":true,"op":"insertStrokes","ms":3}]}'
+run batch "$work/local/batch.json" >/dev/null 2>"$work/err"
+check "an answer with fewer steps than sent is a failure" "$?$(grep -c 'answered 1 of 4 steps' "$work/err")" "11"
+helper_ready
+printf '{"steps": [{"do": "lasso last-insert"}, {"do": "lasso rect", "rect": [10, 10, 0, 5]}]}' > "$work/local/bad.json"
+run batch "$work/local/bad.json" >/dev/null 2>"$work/err"
+check "a bad step is a usage error naming it, before any push" "$?$(called ' push ')$(grep -c 'step 2: a lasso needs a width and a height' "$work/err")" "201"
+printf '[{"do": "tap", "x": 1}]' > "$work/local/bad.json"
+run batch "$work/local/bad.json" >/dev/null 2>"$work/err"
+check "a step outside the batch's commands is refused, naming the ones it takes" "$?$(grep -c 'step 1: «do» must be one of: ink write, ink strokes, lasso rect, lasso last-insert' "$work/err")" "21"
+printf '{"steps": []}' > "$work/local/bad.json"
+check "a batch with no steps is a usage error" "$(exit_and_pushes batch "$work/local/bad.json")" "20"
+check "a missing batch file is not found" "$(exit_and_pushes batch "$work/local/none.json")" "40"
+printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
+check "a batch with ink on a note outside Note/Tests/ is refused" "$(exit_and_pushes batch "$work/local/batch.json")" "120"
+printf '[{"do": "lasso last-insert"}]' > "$work/local/lasso.json"
+batch_answer '{"ok":true,"op":"batch","ms":10,"steps":[{"ok":true,"op":"lassoLast","ms":3,"rect":{"left":1},"counts":{}}]}'
+run batch "$work/local/lasso.json" >/dev/null
+check "a batch of lasso steps only needs no test-note check, as lasso last-insert" "$?" "0"
+
 # Paging through Probe and the test fixtures note (#220): the note app ignores the page extra for a
 # note opened before, so Probe jumps and reads the page back.
 fixtures="$root/Note/Tests/Fixtures.note"

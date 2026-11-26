@@ -22,6 +22,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   ink write TEXT --at X Y        write the text as synthetic strokes on a note under Note/Tests/
   ink strokes FILE --at X Y      insert a saved stroke sample there
   ink save FILE                  save the lassoed strokes as a sample
+  batch FILE                     run a JSON list of ink write, ink strokes, lasso rect and lasso
+                                 last-insert steps through Probe in one press; one line per step
   note png PAGE LOCAL            the tablet's own PNG of a page of the open test note, through Probe
   note insert-picture FILE       place a PNG or JPEG on the open test note's page, through Probe
   note insert-text TEXT --at X Y --size W H
@@ -417,6 +419,13 @@ HELPER_TIMEOUT = 20.0
 HELPER_LOG_STEP = "inkctl logs --plugin Probe"
 HELPER_FOLDER = posixpath.dirname(HELPER_COMMAND_PATH)
 HELPER_RENDER_PATH = f"{HELPER_FOLDER}/page.png"  # Probe's RENDER_PATH (src/helper.ts, #261)
+# After each command Probe reads its file again for LISTEN_MS (plugins/plugin-diagnostics/src/command.ts,
+# its owner, #286); inkctl waits for the answer with no press while that window is open, less a margin.
+HELPER_LISTEN_SECONDS = 110.0
+HELPER_LISTEN_WAIT = 2.0  # seconds for a listening Probe to answer before inkctl presses after all
+HELPER_ANSWERED_FILE = Path.home() / ".cache/inkctl/helper-answered"  # the time of Probe's last answer
+BATCH_STEPS = ("ink write", "ink strokes", "lasso rect", "lasso last-insert")
+RECT_NUMBERS = ("x", "y", "width", "height")  # a page rectangle, as `lasso rect X Y W H` takes it
 PICTURE_SUFFIXES = (".png", ".jpg", ".jpeg")
 TEXT_FONT_SIZE = 40  # page pixels, a text box's font size by default
 TEMPLATE_NAME = re.compile(r"[a-z0-9_]+")  # a system template, as getNoteSystemTemplates names it
@@ -2185,6 +2194,38 @@ def whole_answer(parts: dict):
     return json.loads("".join(parts[index][1] for index in range(1, count + 1)))
 
 
+def read_helper_answer(device: Device, command_id: str, since: str, limit: float):
+    """Probe's whole answer to this command, or None when none came within `limit` seconds."""
+    started = time.monotonic()
+    while True:
+        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", PLUGIN_LOG_TAG)
+        parts = answer_parts(done.stdout.decode(errors="replace").splitlines(), command_id, since)
+        answer = whole_answer(parts.get(command_id, {})) or whole_answer(parts.get(HELPER_UNKNOWN_ID, {}))
+        if answer is not None:
+            return answer
+        if time.monotonic() - started >= limit:
+            return None
+        time.sleep(WAIT_INTERVAL)
+
+
+def helper_listening() -> bool:
+    """Whether Probe answered recently enough that it still reads its command file with no press (#286)."""
+    try:
+        answered = float(HELPER_ANSWERED_FILE.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return False
+    return 0 <= time.time() - answered < HELPER_LISTEN_SECONDS
+
+
+def note_helper_answered() -> None:
+    """Keep the time of Probe's answer; a file that cannot be written only costs the next call a press."""
+    try:
+        HELPER_ANSWERED_FILE.parent.mkdir(parents=True, exist_ok=True)
+        HELPER_ANSWERED_FILE.write_text(f"{time.time()}\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
 def press_helper(device: Device, limit: float) -> None:
     """Press «Run Command» from the one screen read that shows it: open the note's plugin panel
     first when the button is not on screen, and read again only then (#286)."""
@@ -2209,19 +2250,18 @@ def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict
         push_file(device, local, HELPER_COMMAND_PATH, overwrite=True)
     since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
     device.wake()
-    press_helper(device, args.step_timeout)
-    started = time.monotonic()
-    while True:
-        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", PLUGIN_LOG_TAG)
-        parts = answer_parts(done.stdout.decode(errors="replace").splitlines(), command_id, since)
-        answer = whole_answer(parts.get(command_id, {})) or whole_answer(parts.get(HELPER_UNKNOWN_ID, {}))
-        if answer is not None:
-            break
-        if time.monotonic() - started >= args.timeout:
-            raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", HELPER_LOG_STEP)
-        time.sleep(WAIT_INTERVAL)
+    # A Probe that answered within its listen window runs the pushed file with no press (#286). Its
+    # ids run once, so a press after a late answer only logs that answer again.
+    answer = read_helper_answer(device, command_id, since, HELPER_LISTEN_WAIT) if helper_listening() else None
+    if answer is None:
+        press_helper(device, args.step_timeout)
+        answer = read_helper_answer(device, command_id, since, args.timeout)
+    if answer is None:
+        raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", HELPER_LOG_STEP)
+    note_helper_answered()
     if not answer.get("ok"):
-        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", HELPER_LOG_STEP)
+        steps = {"step": answer["step"], "steps": answer.get("steps", [])} if "step" in answer else {}
+        raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", HELPER_LOG_STEP, extra=steps)
     return answer
 
 
@@ -2236,7 +2276,10 @@ def need_test_note(device: Device, allow_notes: bool) -> None:
 def insert_ink(device: Device, args: argparse.Namespace, strokes: list) -> tuple[dict, str]:
     check_on_page(strokes)
     need_test_note(device, args.allow_notes)
-    answer = helper_call(device, args, {"op": "insertStrokes", "strokes": strokes})
+    return ink_answer(strokes, helper_call(device, args, {"op": "insertStrokes", "strokes": strokes}))
+
+
+def ink_answer(strokes: list, answer: dict) -> tuple[dict, str]:
     points = sum(len(stroke) for stroke in strokes)
     data = {**answer, "points": points}
     return data, f"inserted: {len(strokes)} strokes, {points} points, rect {answer.get('rect')}, in {answer.get('ms')} ms"
@@ -2350,16 +2393,98 @@ def lasso_answer(answer: dict) -> tuple[dict, str]:
     return answer, f"lassoed: {answer.get('rect')} {answer.get('counts')} in {answer.get('ms')} ms"
 
 
-def command_lasso_rect(device: Device, args: argparse.Namespace):
-    if args.width <= 0 or args.height <= 0:
+def lasso_rect(x: int, y: int, width: int, height: int) -> dict:
+    """The page rectangle of `lasso rect X Y W H`, checked on the page."""
+    if width <= 0 or height <= 0:
         raise bad_usage("a lasso needs a width and a height")
-    rect = {"left": args.x, "top": args.y, "right": args.x + args.width, "bottom": args.y + args.height}
+    rect = {"left": x, "top": y, "right": x + width, "bottom": y + height}
     check_on_page([[[rect["left"], rect["top"]], [rect["right"], rect["bottom"]]]])
-    return lasso_answer(helper_call(device, args, {"op": "lassoRect", "rect": rect}))
+    return rect
+
+
+def command_lasso_rect(device: Device, args: argparse.Namespace):
+    return lasso_answer(helper_call(device, args, {"op": "lassoRect", "rect": lasso_rect(args.x, args.y, args.width, args.height)}))
 
 
 def command_lasso_last_insert(device: Device, args: argparse.Namespace):
     return lasso_answer(helper_call(device, args, {"op": "lassoLast"}))
+
+
+def batch_numbers(step: dict, key: str, count: int) -> list[int]:
+    value = step.get(key)
+    if not isinstance(value, list) or len(value) != count or not all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in value):
+        raise bad_usage(f"«{key}» must be a list of {count} numbers")
+    return [round(item) for item in value]
+
+
+def batch_step(step, folder: str) -> tuple[dict, list | None]:
+    """One step of a batch file as Probe's command, and its strokes when it inserts ink (#286)."""
+    if not isinstance(step, dict) or step.get("do") not in BATCH_STEPS:
+        raise bad_usage(f"«do» must be one of: {', '.join(BATCH_STEPS)}")
+    kind = step["do"]
+    if kind == "lasso last-insert":
+        return {"op": "lassoLast"}, None
+    if kind == "lasso rect":
+        return {"op": "lassoRect", "rect": lasso_rect(*batch_numbers(step, "rect", len(RECT_NUMBERS)))}, None
+    left, top = batch_numbers(step, "at", 2)
+    if kind == "ink write":
+        text, size = step.get("text"), step.get("size", INK_SIZE)
+        if not isinstance(text, str) or not text or not isinstance(size, (int, float)) or isinstance(size, bool) or size <= 0:
+            raise bad_usage("ink write needs «text» and a positive «size»")
+        strokes = text_strokes(text, left, top, size)
+    else:
+        sample = step.get("file")
+        if not isinstance(sample, str) or not sample:
+            raise bad_usage("ink strokes needs «file», a sample as ink save writes it")
+        strokes = moved(read_sample(os.path.join(folder, sample)), left, top)
+    check_on_page(strokes)
+    return {"op": "insertStrokes", "strokes": strokes}, strokes
+
+
+def read_batch(path: str) -> list:
+    """A batch file's steps: `{"steps": [...]}` or the list itself, each `{"do": ..., ...}`."""
+    try:
+        loaded = json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise not_found(path) from error
+    except (OSError, ValueError) as error:
+        raise bad_usage(f"{path} is not a JSON batch: {error}") from error
+    steps = loaded.get("steps") if isinstance(loaded, dict) else loaded
+    if not isinstance(steps, list) or not steps:
+        raise bad_usage(f"{path} holds no steps: give {{\"steps\": [{{\"do\": \"ink write\", ...}}]}}")
+    return steps
+
+
+def batch_line(index: int, kind: str, strokes, answer: dict) -> tuple[dict, str]:
+    data, text = ink_answer(strokes, answer) if strokes is not None else lasso_answer(answer)
+    return {**data, "do": kind}, f"step {index} {kind}: {text}"
+
+
+def command_batch(device: Device, args: argparse.Namespace):
+    """Run a file of helper steps through Probe in one push and one press (#286)."""
+    folder = os.path.dirname(os.path.abspath(args.file))
+    planned = []
+    for index, step in enumerate(read_batch(args.file), start=1):
+        try:
+            planned.append((step["do"], *batch_step(step, folder)))
+        except Failure as failure:
+            raise Failure(failure.code, failure.kind, f"step {index}: {failure.message}", failure.next_step) from failure
+    if any(strokes is not None for _, _, strokes in planned):
+        need_test_note(device, args.allow_notes)
+    try:
+        answer = helper_call(device, args, {"op": "batch", "steps": [command for _, command, _ in planned]})
+    except Failure as failure:
+        if "step" not in failure.extra:
+            raise
+        ran = failure.extra["steps"][:-1]
+        lines = [batch_line(index, kind, strokes, step)[1] for index, ((kind, _, strokes), step) in enumerate(zip(planned, ran), start=1)]
+        failure.text = "\n".join(lines)
+        raise
+    results = [batch_line(index, kind, strokes, step) for index, ((kind, _, strokes), step) in enumerate(zip(planned, answer.get("steps", [])), start=1)]
+    if len(results) != len(planned):
+        raise Failure(EXIT_FAILED, "device_error", f"Probe answered {len(results)} of {len(planned)} steps", HELPER_LOG_STEP)
+    data = {"ok": True, "ms": answer.get("ms"), "steps": [data for data, _ in results]}
+    return data, "\n".join([*(text for _, text in results), f"batch: {len(results)} steps in {answer.get('ms')} ms"])
 
 
 def command_snapshot(device: Device, args: argparse.Namespace):
@@ -3963,7 +4088,7 @@ def build_parser() -> argparse.ArgumentParser:
         lasso_command.add_argument("--max-steps", type=int, default=SCROLL_STEPS, help="swipes through the list")
         lasso_command.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help="seconds for the list to open")
     boxed = add(lassos, "rect", command_lasso_rect, changes=True)
-    for edge in ("x", "y", "width", "height"):
+    for edge in RECT_NUMBERS:
         boxed.add_argument(edge, type=int, help="page pixels")
     last = add(lassos, "last-insert", command_lasso_last_insert, changes=True)
 
@@ -3978,11 +4103,14 @@ def build_parser() -> argparse.ArgumentParser:
     for placed in (written, sampled):
         placed.add_argument("--at", nargs=2, type=int, metavar=("X", "Y"), required=True, help="the ink's top-left corner, in page pixels")
         placed.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
+    batched = add(commands, "batch", command_batch, changes=True)
+    batched.add_argument("file", help="a JSON list of steps, each {\"do\": \"ink write\"|\"ink strokes\"|\"lasso rect\"|\"lasso last-insert\", ...}")
+    batched.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
     fixtures = add(commands, "fixture", command_fixture, action, changes=True)
     fixtures.add_argument("name", nargs="?", help="a fixture of Note/Tests/Fixtures.note, as --list names it")
     fixtures.add_argument("--list", dest="list_fixtures", action="store_true", help="print each fixture, its page, its rects and what it serves; no tablet is reached")
     fixtures.add_argument("--lasso", metavar="ITEM", help="then lasso this rect of the fixture, as --list names it")
-    for helped in (opened, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged, moved_page):
+    for helped in (opened, batched, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged, moved_page):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
         helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
 
