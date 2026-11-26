@@ -15,11 +15,13 @@ public enum Registry {
         /// Why no safe probe exists yet; nil when the item has a probe.
         public let unprobed: String?
         public let active: String
+        /// The kill switch: why the module is off and until when it is reviewed; nil when it is on (#293).
+        public let off: String?
     }
 
     public static let items: [Item] = [
-        Item(id: "notefile.format-versions", level: 2, impact: "user", owner: "ink-notebook-editor", probe: nil, unprobed: "#293 adds a parse of a fixture note per firmware", active: "ink-notebook-editor NoteFile.swift"),
-        Item(id: "notefile.writer-byte-edit", level: 5, impact: "user", owner: "ink-notebook-editor", probe: nil, unprobed: "a written note is checked by opening it on the tablet", active: "ink-notebook-editor NoteWriter.swift"),
+        Item(id: "notefile.format-versions", level: 2, impact: "user", owner: "ink-notebook-editor", probe: nil, unprobed: "#293 adds a parse of a fixture note per firmware", active: "ink-notebook-editor NoteFile.swift", off: nil),
+        Item(id: "notefile.writer-byte-edit", level: 5, impact: "user", owner: "ink-notebook-editor", probe: nil, unprobed: "a written note is checked by opening it on the tablet", active: "ink-notebook-editor NoteWriter.swift", off: nil),
     ]
 
     /// The .note format and the versions the reader accepts (notefile.format-versions).

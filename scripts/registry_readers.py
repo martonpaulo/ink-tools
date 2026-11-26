@@ -171,12 +171,16 @@ def typescript(reader, version, items):
         "  /** Why no safe probe exists yet; null when the item has a probe. */",
         "  readonly unprobed: string | null;",
         "  readonly active: string;",
+        "  /** The kill switch: why the module is off and until when it is reviewed; null when it is on (#293). */",
+        "  readonly off: string | null;",
         "}",
         "",
         "export const REGISTRY_ITEMS: readonly RegistryItem[] = [",
     ]
     for item in items:
-        lines.append("  {%s}," % ", ".join("%s: %s" % pair for pair in zip(FIELDS, cells(item, ts_value, "null"))))
+        off = off_text(item)
+        row = cells(item, ts_value, "null") + ["null" if off is None else ts_value(off)]
+        lines.append("  {%s}," % ", ".join("%s: %s" % pair for pair in zip(FIELDS + ("off",), row)))
     lines += ["];", "", "/** Each item's values, by the item's id in camel case. */", "export const REGISTRY = {"]
     for item in items:
         values = values_of(item)
@@ -342,12 +346,16 @@ def swift(reader, version, items):
         "        /// Why no safe probe exists yet; nil when the item has a probe.",
         "        public let unprobed: String?",
         "        public let active: String",
+        "        /// The kill switch: why the module is off and until when it is reviewed; nil when it is on (#293).",
+        "        public let off: String?",
         "    }",
         "",
         "    public static let items: [Item] = [",
     ]
     for item in items:
-        lines.append("        Item(%s)," % ", ".join("%s: %s" % pair for pair in zip(FIELDS, cells(item, quoted, "nil"))))
+        off = off_text(item)
+        row = cells(item, quoted, "nil") + ["nil" if off is None else quoted(off)]
+        lines.append("        Item(%s)," % ", ".join("%s: %s" % pair for pair in zip(FIELDS + ("off",), row)))
     lines.append("    ]")
     for item in items:
         values = values_of(item)

@@ -120,6 +120,11 @@ class RegistryTest(unittest.TestCase):
             self.assertIn('{"id": "%s.provider"' % area, inkctl)
         self.assertIn('"off": "until 2999-01-01: the To-Do columns changed"}', inkctl)
         self.assertNotIn('"todo.provider": {', inkctl)
+        ts = (self.root / "packages/sn-adapter/src/registry.generated.ts").read_text()
+        self.assertIn("off: 'until 2999-01-01: the To-Do columns changed'}", ts)
+        self.assertIn("readonly off: string | null;", ts)
+        swift = (self.root / "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
+        self.assertIn("public let off: String?", swift)
 
     def test_an_item_below_level_one_needs_a_reason(self):
         del self.areas["todo"][0]["reason"]
