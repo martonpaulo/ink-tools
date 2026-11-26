@@ -82,6 +82,8 @@ click, tap, swipe and note accept --snapshot (add a fresh snapshot to the result
 --allow-notes lets files pull and screen read the notes folder or a note on the screen; notes under
 Note/Tests/ need no flag.
 --trace prints each ADB call to stderr as it runs. --log-paths also keeps full call arguments.
+--time prints the run's own time on stderr at its end. $INKCTL_POLL_SECONDS (0.05 to 5, default 0.5)
+sets the sleep between the reads of every wait.
 
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
 ~/.config/inkctl/address (or, from before the rename, ~/.config/snadb/address), as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
@@ -362,7 +364,26 @@ FIRMWARE_TRANSFER_TIMEOUT = 3600
 STEP_TIMEOUT = 20.0
 STEP_TIMEOUT_HELP = "seconds each screen may take"
 INSTALL_TIMEOUT = 60.0
-WAIT_INTERVAL = 0.5
+# Every poll sleeps this long between reads; $INKCTL_POLL_SECONDS sets it for a round (#286).
+POLL_VARIABLE = "INKCTL_POLL_SECONDS"
+SCREEN_CHANGING = ("input ", "am ")  # a shell call that starts so can change what the screen shows
+POLL_SECONDS_DEFAULT = 0.5
+POLL_SECONDS_RANGE = (0.05, 5.0)
+
+
+def poll_seconds(value: str | None) -> float | None:
+    """The poll interval $INKCTL_POLL_SECONDS gives, the default when it is unset, or None when it is not a number in range."""
+    if value is None or value == "":
+        return POLL_SECONDS_DEFAULT
+    try:
+        seconds = float(value)
+    except ValueError:
+        return None
+    low, high = POLL_SECONDS_RANGE
+    return seconds if low <= seconds <= high else None
+
+
+WAIT_INTERVAL = poll_seconds(os.environ.get(POLL_VARIABLE)) or POLL_SECONDS_DEFAULT
 DEFAULT_LOG_LINES = 100
 DEFAULT_HISTORY_RUNS = 50
 PLUGIN_LOG_WINDOW = 5000  # a plugin's lines are picked out of this many recent ones
@@ -722,12 +743,16 @@ class RunLog:
         if self.trace:
             print(f"trace: {name} {entry['seconds']} s exit {code}", file=sys.stderr, flush=True)
 
+    def seconds(self) -> float:
+        """The run's time so far, as `inkctl history` and `--time` print it."""
+        return round(time.monotonic() - self.started, TIMING_DIGITS)
+
     def finish(self, command: str, code: int, kind, before: str = "", after: str = "") -> None:
         """Add this run's line. A log that cannot be written never changes the command's result."""
         line = self.clean(json.dumps({
             "time": self.started_at.isoformat(timespec="seconds"),
             "command": command,
-            "seconds": round(time.monotonic() - self.started, TIMING_DIGITS),
+            "seconds": self.seconds(),
             "exit": code,
             "error": kind,
             "app_before": before,
@@ -763,12 +788,16 @@ class Device:
         self.wifi = serial if wifi is None else wifi  # HOST:PORT of Wi-Fi ADB, or "" when none is recorded
         self.link = link
         self.log = log
+        self.awake = False  # this run has woken the screen once
+        self.screen: list[dict] | None = None  # the last screen read, until a call that can change the screen (#286)
 
     def adb(self, *args: str, timeout: float = CALL_TIMEOUT, serial: bool = True, stdin: bytes | None = None):
         """`stdin` carries a value that must never reach argv, such as a secret. Without one, the call
         reads nothing: `adb shell` forwards inherited input, so an earlier call would swallow a piped
         secret before `secret set` reads it."""
         prefix = ["adb", "-s", self.serial] if serial else ["adb"]
+        if args and args[0] == "shell" and any(arg.startswith(SCREEN_CHANGING) for arg in args[1:]):
+            self.screen = None
         started = time.monotonic()
         feed = {"input": stdin} if stdin is not None else {"stdin": subprocess.DEVNULL}
         try:
@@ -852,8 +881,12 @@ class Device:
         raise Failure(EXIT_FAILED, "device_error", problem or f"device call failed: {command}")
 
     def wake(self) -> None:
-        """Turn the screen on, doing nothing if it is on. `am start -W` hangs on a sleeping screen."""
+        """Turn the screen on, doing nothing if it is on. `am start -W` hangs on a sleeping screen.
+        Once per run: a second wake would only drop the screen read the run already holds."""
+        if self.awake:
+            return
         self.shell("input keyevent WAKEUP")
+        self.awake = True
 
     def test(self, condition: str) -> bool:
         return self.shell(f"if [ {condition} ]; then echo yes; else echo no; fi").strip() == "yes"
@@ -867,8 +900,13 @@ class Device:
         for _ in range(attempts):
             dump = self.adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
             if IDLE_ERROR not in dump:
-                return parse_elements(dump)
+                self.screen = parse_elements(dump)
+                return self.screen
         raise Failure(EXIT_BUSY, "busy", f"the screen did not settle after {attempts} tries; try again")
+
+    def shown(self) -> list[dict]:
+        """The screen read this run already holds, when no call since could have changed the screen; else a new read."""
+        return self.screen if self.screen is not None else self.elements()
 
     def capture(self, destination: str) -> int:
         """Save a screen capture whole or not at all, and return its size."""
@@ -2148,8 +2186,13 @@ def whole_answer(parts: dict):
 
 
 def press_helper(device: Device, limit: float) -> None:
-    """Press «Run Command»: open the note's plugin panel first when the button is not on screen."""
-    if not find_selector(device.elements(), HELPER_BUTTON):
+    """Press «Run Command» from the one screen read that shows it: open the note's plugin panel
+    first when the button is not on screen, and read again only then (#286)."""
+    shown = find_selector(device.shown(), HELPER_BUTTON)
+    if len(shown) == 1:
+        press_element(device, shown[0])
+        return
+    if not shown:
         press_element(device, expect_element(device, NOTE_PLUGINS_BUTTON, limit))
     press_element(device, expect_element(device, HELPER_BUTTON, limit))
 
@@ -2183,7 +2226,9 @@ def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict
 
 
 def need_test_note(device: Device, allow_notes: bool) -> None:
-    """Ink goes only on a test note, unless the caller allows the owner's notes too."""
+    """Ink goes only on a test note, unless the caller allows the owner's notes too. The screen is
+    woken first, so the read the check makes is the one «Run Command» is pressed from (#286)."""
+    device.wake()
     if not allow_notes and not test_note_on_screen(device):
         raise protected("writing on a note outside Note/Tests/")
 
@@ -3823,6 +3868,7 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--read-only", action="store_true", default=argparse.SUPPRESS, help="refuse every change on the device")
     common.add_argument("--trace", action="store_true", default=argparse.SUPPRESS, help="print each ADB call to stderr")
     common.add_argument("--log-paths", action="store_true", default=argparse.SUPPRESS, help="keep full call arguments in the log")
+    common.add_argument("--time", action="store_true", default=argparse.SUPPRESS, help="print the run's own time on stderr at its end")
     action = argparse.ArgumentParser(add_help=False)
     action.add_argument("--snapshot", action="store_true", help="add a fresh snapshot to the result")
     action.add_argument("--screen", metavar="FILE", help="save a fresh capture")
@@ -3838,6 +3884,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--read-only", action="store_true", default=False, help="refuse every change on the device")
     parser.add_argument("--trace", action="store_true", default=False, help="print each ADB call to stderr")
     parser.add_argument("--log-paths", action="store_true", default=False, help="keep full call arguments in the log")
+    parser.add_argument("--time", action="store_true", default=False, help="print the run's own time on stderr at its end")
     commands = parser.add_subparsers(dest="command", required=True)
 
     def add(group, name: str, handler, *parents, changes: bool = False) -> argparse.ArgumentParser:
@@ -4099,6 +4146,9 @@ def main() -> int:
         args.needs_device = args.changes = False
     code, kind, device, before, after = EXIT_OK, None, None, "", ""
     try:
+        if poll_seconds(os.environ.get(POLL_VARIABLE)) is None:
+            low, high = POLL_SECONDS_RANGE
+            raise bad_usage(f"${POLL_VARIABLE} must be a number of seconds from {low:g} to {high:g}")
         if refuses_read_only(args):
             raise Failure(EXIT_READ_ONLY, "read_only", f"read-only mode refuses: {command_name(args)}")
         if args.needs_device:
@@ -4132,6 +4182,8 @@ def main() -> int:
         if device and kind != "unreachable":
             after = front_app(device)
         log.finish(command_name(args), code, kind, before, after)
+    if args.time:
+        print(f"time: {log.seconds()} s", file=sys.stderr)
     return code
 
 

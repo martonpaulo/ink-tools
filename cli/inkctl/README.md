@@ -92,7 +92,7 @@ The command was called `snadb` until 2026-11-16 ([#173](https://github.com/marto
 
 `--read-only` or `SUPERNOTE_READ_ONLY` refuses every command that changes the tablet. `files pull` and `screen` refuse the notes folder and a note on the screen unless you pass `--allow-notes`. Test notes under `Note/Tests/` need no flag: a pull of a path inside that folder, and a capture when the title the note shows names a note there and no note outside it.
 
-Every command takes `--json`. A failure in JSON has `cause` and `next`, the next command to try. `--trace` prints each ADB call to stderr as it runs.
+Every command takes `--json`. A failure in JSON has `cause` and `next`, the next command to try. `--trace` prints each ADB call to stderr as it runs. `--time` prints the run's own time on stderr at its end, the same time `inkctl history` keeps ([#286](https://github.com/martonpaulo/ink-tools/issues/286)).
 
 <br />
 
@@ -105,6 +105,7 @@ copy. `inkctl google login` keeps the Google sign-in in the login Keychain, serv
 | :--- | :--- | :--- |
 | `SUPERNOTE_ADDRESS` | environment | The tablet's address. It wins over the file below. |
 | `SUPERNOTE_READ_ONLY` | environment | When set, refuses every command that changes the tablet. |
+| `INKCTL_POLL_SECONDS` | environment | The sleep between the reads of every wait, from 0.05 to 5 seconds (default 0.5); any other value is a usage error ([#286](https://github.com/martonpaulo/ink-tools/issues/286)). |
 | `INKCTL_BROWSER` | environment | A program that `google login` runs with the consent address, instead of the system browser. The tests set it to a stub. |
 | `~/.config/inkctl/address` | your computer | The tablet's address, on its first line. |
 | `INKCTL_SERVICES` | environment | A JSON file in place of `packages/sync-core/src/services.json`, the one owner of the Todoist and Google addresses, scopes and the test objects' name. The tests point it at a fake server. |

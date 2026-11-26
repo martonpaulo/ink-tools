@@ -1311,6 +1311,16 @@ check "ink write pushes the strokes of each letter and accent" "$?$(command_fiel
 check "ink write places the text's top-left corner at --at" "$(command_field "min(p[0] for s in d['strokes'] for p in s), min(p[1] for s in d['strokes'] for p in s) >= 200")" "(100, True)"
 check "ink write presses Run Command and reads Probe's answer" "$(called 'input tap 350 1450')$(printf '%s' "$result" | field "['ok'],d['rect']['left']")" "1(True, 100)"
 check "ink write reads only the log after its push" "$(called 'logcat -d -v time -T 11-16 23:00:00.000 -s ReactNativeJS')" "1"
+check "ink write presses Run Command from its one screen read (#286)" "$(called 'uiautomator dump')" "1"
+helper_ready
+run --time ink write "a" --at 100 200 >/dev/null 2>"$work/err"
+check "--time prints the run's own time on stderr (#286)" "$?$(grep -cE '^time: [0-9]+([.][0-9]+)? s$' "$work/err")" "01"
+for value in 0 abc 9; do
+    INKCTL_POLL_SECONDS=$value run status >/dev/null 2>"$work/err"
+    check "INKCTL_POLL_SECONDS=$value is a usage error before any adb call (#286)" "$?$(grep -c . "$log")$(grep -c INKCTL_POLL_SECONDS "$work/err")" "201"
+done
+INKCTL_POLL_SECONDS=0.05 run status >/dev/null 2>&1
+check "INKCTL_POLL_SECONDS in range is taken (#286)" "$?" "0"
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/2 {"ok":true,"op":"lassoLast","rect":{"left":92,' > "$files/helper-answer"
 answer_line '11-16 23:00:01.001' 'COMMAND_ID 2/2 "top":240,"right":408,"bottom":343},"counts":{"trailNum":7},"ms":200}' >> "$files/helper-answer"
 check "lasso last-insert joins an answer in two chunks" "$(run lasso last-insert --json | field "['counts']")$(command_field "d['op']")" "{'trailNum': 7}lassoLast"
