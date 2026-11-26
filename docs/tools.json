@@ -1,5 +1,5 @@
 {
-  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; map.sources lists each outside service group, one item per line, with the service adapter it enters through (via) when it has one; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's levels (#407, #412).",
+  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; map.sources lists each outside service group, one item per line, with the service adapter it enters through (via) when it has one; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's levels (#407, #412); network lists each service a plugin sends data to, which its release notes print, an empty list for none (#373).",
   "sections": [
     {"id": "tools", "title": "Tools", "intro": "For people who use the tablet."},
     {"id": "developer", "title": "Developer tools", "intro": ""}
@@ -7,6 +7,7 @@
   "tools": [
     {
       "name": "Smart Pen", "section": "tools", "kind": "plugin", "status": "Beta",
+      "network": [],
       "icon": "design/icons/readme/smart-pen.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=smart-pen&expanded=true",
       "features": [
@@ -25,6 +26,7 @@
     },
     {
       "name": "Lasso Actions", "section": "tools", "kind": "plugin", "status": "Beta",
+      "network": ["Wikimedia Commons and Wikidata: the word you look up, to find a picture", "Openclipart: the word you look up, to find a drawing", "GitHub: to download the word lists and emoji pictures it uses; nothing of yours is sent"],
       "icon": "design/icons/readme/lasso-actions.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=lasso-actions&expanded=true",
       "features": [
@@ -47,6 +49,7 @@
     },
     {
       "name": "Image Editing", "section": "tools", "kind": "plugin", "status": "In progress",
+      "network": [],
       "icon": "design/icons/readme/image-editing.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=image-editing&expanded=true",
       "features": [
@@ -67,6 +70,7 @@
     },
     {
       "name": "Device Link", "section": "tools", "kind": "plugin", "status": "Beta",
+      "network": ["LocalSend devices you pick on your own local network; nothing goes to the internet"],
       "icon": "design/icons/readme/device-link.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-link&expanded=true",
       "features": [
@@ -87,6 +91,7 @@
     },
     {
       "name": "Account Sync", "section": "tools", "kind": "plugin", "status": "In progress",
+      "network": ["Google Calendar, only when you connect a Google account", "Todoist, only when you connect a Todoist account", "iCloud Calendar (CalDAV), only when you connect an Apple ID", "Each calendar feed (ICS) address you add"],
       "icon": "design/icons/readme/account-sync.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=account-sync&expanded=true",
       "features": [

@@ -90,15 +90,25 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: npm run build
 
-      - name: Create the prerelease
+      - name: Create the prerelease, or the draft of a stable release
         if: steps.tag.outputs.publish == 'true'
         run: |
           # The asset name carries the version so the owner can tell builds apart on the tablet.
           asset="build/outputs/Relay-${TAG#device-link-v}.snplg"
           cp build/outputs/Relay.snplg "$asset"
-          gh release create "$TAG" "$asset" \
-            --prerelease --target "$GITHUB_SHA" --title "$TAG" \
-            --notes "Relay test build (#98): Send page and Send selection over LocalSend. Install on the tablet, pick a device in Settings, then send."
+          # A beta is a prerelease. A stable version waits as a draft, with notes written from the
+          # repository's data, until the owner publishes it (#373).
+          case "$TAG" in
+            *-beta.*)
+              gh release create "$TAG" "$asset" \
+                --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+                --notes "Relay test build (#98): Send page and Send selection over LocalSend. Install on the tablet, pick a device in Settings, then send." ;;
+            *)
+              python3 ../../scripts/release_notes.py --root ../.. plugins/device-link > "$RUNNER_TEMP/notes.md"
+              gh release create "$TAG" "$asset" \
+                --draft --target "$GITHUB_SHA" --title "Device Link ${TAG#device-link-v}" \
+                --notes-file "$RUNNER_TEMP/notes.md" ;;
+          esac
 
       - name: Read the asset back
         if: steps.tag.outputs.publish == 'true'

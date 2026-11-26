@@ -89,15 +89,25 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: npm run build
 
-      - name: Create the prerelease
+      - name: Create the prerelease, or the draft of a stable release
         if: steps.tag.outputs.publish == 'true'
         run: |
           # The asset name carries the version so the owner can tell builds apart on the tablet.
           asset="build/outputs/Bridge-${TAG#account-sync-v}.snplg"
           cp build/outputs/Bridge.snplg "$asset"
-          gh release create "$TAG" "$asset" \
-            --prerelease --target "$GITHUB_SHA" --title "$TAG" \
-            --notes "Bridge prerelease build. Install on the tablet; Bridge appears only in plugin Settings, never in a note."
+          # A beta is a prerelease. A stable version waits as a draft, with notes written from the
+          # repository's data, until the owner publishes it (#373).
+          case "$TAG" in
+            *-beta.*)
+              gh release create "$TAG" "$asset" \
+                --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+                --notes "Bridge prerelease build. Install on the tablet; Bridge appears only in plugin Settings, never in a note." ;;
+            *)
+              python3 ../../scripts/release_notes.py --root ../.. plugins/account-sync > "$RUNNER_TEMP/notes.md"
+              gh release create "$TAG" "$asset" \
+                --draft --target "$GITHUB_SHA" --title "Account Sync ${TAG#account-sync-v}" \
+                --notes-file "$RUNNER_TEMP/notes.md" ;;
+          esac
 
       - name: Read the asset back
         if: steps.tag.outputs.publish == 'true'

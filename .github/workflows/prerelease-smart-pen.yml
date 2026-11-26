@@ -90,15 +90,25 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: npm run build
 
-      - name: Create the prerelease
+      - name: Create the prerelease, or the draft of a stable release
         if: steps.tag.outputs.publish == 'true'
         run: |
           # The asset name carries the version so the owner can tell builds apart on the tablet.
           asset="build/outputs/SmartPen-${TAG#smart-pen-v}.snplg"
           cp build/outputs/RealTimeConversion.snplg "$asset"
-          gh release create "$TAG" "$asset" \
-            --prerelease --target "$GITHUB_SHA" --title "$TAG" \
-            --notes "Smart Pen prerelease build, with its native app.npk. Install on the tablet."
+          # A beta is a prerelease. A stable version waits as a draft, with notes written from the
+          # repository's data, until the owner publishes it (#373).
+          case "$TAG" in
+            *-beta.*)
+              gh release create "$TAG" "$asset" \
+                --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+                --notes "Smart Pen prerelease build, with its native app.npk. Install on the tablet." ;;
+            *)
+              python3 ../../scripts/release_notes.py --root ../.. plugins/smart-pen > "$RUNNER_TEMP/notes.md"
+              gh release create "$TAG" "$asset" \
+                --draft --target "$GITHUB_SHA" --title "Smart Pen ${TAG#smart-pen-v}" \
+                --notes-file "$RUNNER_TEMP/notes.md" ;;
+          esac
 
       - name: Read the asset back
         if: steps.tag.outputs.publish == 'true'
