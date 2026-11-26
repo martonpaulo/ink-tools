@@ -1,0 +1,561 @@
+{
+ "language": "es",
+ "entries": [
+  {
+   "answer": "GATO",
+   "clue": "Mascota que maúlla"
+  },
+  {
+   "answer": "PERRO",
+   "clue": "Mascota que ladra"
+  },
+  {
+   "answer": "VACA",
+   "clue": "Animal de granja que da leche"
+  },
+  {
+   "answer": "CERDO",
+   "clue": "Animal rosado de granja"
+  },
+  {
+   "answer": "GALLINA",
+   "clue": "Ave que pone huevos"
+  },
+  {
+   "answer": "BUHO",
+   "clue": "Ave que caza de noche"
+  },
+  {
+   "answer": "ABEJA",
+   "clue": "Insecto que hace miel"
+  },
+  {
+   "answer": "HORMIGA",
+   "clue": "Insecto pequeño que vive en colonia"
+  },
+  {
+   "answer": "ZORRO",
+   "clue": "Animal astuto de cola roja"
+  },
+  {
+   "answer": "CABALLO",
+   "clue": "Animal que se monta"
+  },
+  {
+   "answer": "OVEJA",
+   "clue": "Animal que da lana"
+  },
+  {
+   "answer": "CABRA",
+   "clue": "Animal de granja con barba"
+  },
+  {
+   "answer": "RATON",
+   "clue": "Pequeño roedor"
+  },
+  {
+   "answer": "LEON",
+   "clue": "Gran felino con melena"
+  },
+  {
+   "answer": "TIGRE",
+   "clue": "Gran felino con rayas"
+  },
+  {
+   "answer": "OSO",
+   "clue": "Animal grande que hiberna"
+  },
+  {
+   "answer": "LOBO",
+   "clue": "Animal salvaje que aúlla"
+  },
+  {
+   "answer": "PEZ",
+   "clue": "Animal que respira por branquias"
+  },
+  {
+   "answer": "BALLENA",
+   "clue": "El animal más grande del mar"
+  },
+  {
+   "answer": "PATO",
+   "clue": "Ave que hace cuac"
+  },
+  {
+   "answer": "RANA",
+   "clue": "Animal verde que salta y croa"
+  },
+  {
+   "answer": "SERPIENTE",
+   "clue": "Reptil sin patas"
+  },
+  {
+   "answer": "MANZANA",
+   "clue": "Fruta roja o verde"
+  },
+  {
+   "answer": "PERA",
+   "clue": "Fruta estrecha por arriba"
+  },
+  {
+   "answer": "LIMON",
+   "clue": "Fruta ácida y amarilla"
+  },
+  {
+   "answer": "UVA",
+   "clue": "Fruta del vino"
+  },
+  {
+   "answer": "MELON",
+   "clue": "Fruta grande y dulce de verano"
+  },
+  {
+   "answer": "PAN",
+   "clue": "Alimento de harina horneado"
+  },
+  {
+   "answer": "ARROZ",
+   "clue": "Grano blanco de la paella"
+  },
+  {
+   "answer": "LECHE",
+   "clue": "Bebida blanca de la vaca"
+  },
+  {
+   "answer": "QUESO",
+   "clue": "Alimento hecho de leche"
+  },
+  {
+   "answer": "HUEVO",
+   "clue": "Lo que pone la gallina"
+  },
+  {
+   "answer": "SAL",
+   "clue": "Condimento blanco del mar"
+  },
+  {
+   "answer": "AZUCAR",
+   "clue": "Endulza el café"
+  },
+  {
+   "answer": "SOPA",
+   "clue": "Plato líquido y caliente"
+  },
+  {
+   "answer": "TARTA",
+   "clue": "Dulce de cumpleaños"
+  },
+  {
+   "answer": "AGUA",
+   "clue": "Líquido que bebemos"
+  },
+  {
+   "answer": "VINO",
+   "clue": "Bebida hecha de uva"
+  },
+  {
+   "answer": "CABEZA",
+   "clue": "Parte de arriba del cuerpo"
+  },
+  {
+   "answer": "MANO",
+   "clue": "Tiene cinco dedos"
+  },
+  {
+   "answer": "PIE",
+   "clue": "Parte del cuerpo sobre la que estamos de pie"
+  },
+  {
+   "answer": "BRAZO",
+   "clue": "Miembro entre el hombro y la mano"
+  },
+  {
+   "answer": "PIERNA",
+   "clue": "Miembro con el que andamos"
+  },
+  {
+   "answer": "OJO",
+   "clue": "Con él vemos"
+  },
+  {
+   "answer": "OREJA",
+   "clue": "Con ella oímos"
+  },
+  {
+   "answer": "NARIZ",
+   "clue": "Con ella olemos"
+  },
+  {
+   "answer": "BOCA",
+   "clue": "Con ella comemos"
+  },
+  {
+   "answer": "DIENTE",
+   "clue": "Pieza blanca de la boca"
+  },
+  {
+   "answer": "CORAZON",
+   "clue": "Órgano que bombea la sangre"
+  },
+  {
+   "answer": "MADRE",
+   "clue": "Quien nos dio la vida"
+  },
+  {
+   "answer": "PADRE",
+   "clue": "Esposo de la madre"
+  },
+  {
+   "answer": "HERMANA",
+   "clue": "Hija de los mismos padres"
+  },
+  {
+   "answer": "HERMANO",
+   "clue": "Hijo de los mismos padres"
+  },
+  {
+   "answer": "BEBE",
+   "clue": "Niño muy pequeño"
+  },
+  {
+   "answer": "AMIGO",
+   "clue": "Persona en quien confiamos"
+  },
+  {
+   "answer": "REY",
+   "clue": "Monarca del reino"
+  },
+  {
+   "answer": "REINA",
+   "clue": "Esposa del rey"
+  },
+  {
+   "answer": "CASA",
+   "clue": "Lugar donde se vive"
+  },
+  {
+   "answer": "PUERTA",
+   "clue": "Se abre para entrar"
+  },
+  {
+   "answer": "VENTANA",
+   "clue": "Abertura de cristal en la pared"
+  },
+  {
+   "answer": "TECHO",
+   "clue": "Parte de arriba de una habitación"
+  },
+  {
+   "answer": "CAMA",
+   "clue": "Mueble para dormir"
+  },
+  {
+   "answer": "SILLA",
+   "clue": "Asiento con respaldo"
+  },
+  {
+   "answer": "MESA",
+   "clue": "Mueble para comer"
+  },
+  {
+   "answer": "LIBRO",
+   "clue": "Objeto que se lee"
+  },
+  {
+   "answer": "LLAVE",
+   "clue": "Abre la cerradura"
+  },
+  {
+   "answer": "RELOJ",
+   "clue": "Marca la hora"
+  },
+  {
+   "answer": "COCHE",
+   "clue": "Vehículo de cuatro ruedas"
+  },
+  {
+   "answer": "TREN",
+   "clue": "Va sobre raíles"
+  },
+  {
+   "answer": "BARCO",
+   "clue": "Flota en el agua"
+  },
+  {
+   "answer": "AVION",
+   "clue": "Vuela con pasajeros"
+  },
+  {
+   "answer": "CALLE",
+   "clue": "Camino entre las casas"
+  },
+  {
+   "answer": "CIUDAD",
+   "clue": "Lugar con muchas calles y edificios"
+  },
+  {
+   "answer": "RIO",
+   "clue": "Agua que corre hacia el mar"
+  },
+  {
+   "answer": "MAR",
+   "clue": "Gran extensión de agua salada"
+  },
+  {
+   "answer": "LAGO",
+   "clue": "Agua rodeada de tierra"
+  },
+  {
+   "answer": "ISLA",
+   "clue": "Tierra rodeada de agua"
+  },
+  {
+   "answer": "PLAYA",
+   "clue": "Arena junto al mar"
+  },
+  {
+   "answer": "ARENA",
+   "clue": "Granos finos de la playa"
+  },
+  {
+   "answer": "PIEDRA",
+   "clue": "Trozo de roca"
+  },
+  {
+   "answer": "ARBOL",
+   "clue": "Planta alta con tronco"
+  },
+  {
+   "answer": "HOJA",
+   "clue": "Parte verde del árbol"
+  },
+  {
+   "answer": "FLOR",
+   "clue": "Parte de colores de la planta"
+  },
+  {
+   "answer": "ROSA",
+   "clue": "Flor con espinas"
+  },
+  {
+   "answer": "BOSQUE",
+   "clue": "Muchos árboles juntos"
+  },
+  {
+   "answer": "MONTAÑA",
+   "clue": "Tierra muy alta"
+  },
+  {
+   "answer": "SOL",
+   "clue": "Estrella del día"
+  },
+  {
+   "answer": "LUNA",
+   "clue": "Brilla de noche"
+  },
+  {
+   "answer": "ESTRELLA",
+   "clue": "Punto de luz en el cielo nocturno"
+  },
+  {
+   "answer": "CIELO",
+   "clue": "Espacio azul sobre nosotros"
+  },
+  {
+   "answer": "LLUVIA",
+   "clue": "Agua que cae de las nubes"
+  },
+  {
+   "answer": "NIEVE",
+   "clue": "Copos blancos y fríos"
+  },
+  {
+   "answer": "VIENTO",
+   "clue": "Aire en movimiento"
+  },
+  {
+   "answer": "NUBE",
+   "clue": "Forma blanca en el cielo"
+  },
+  {
+   "answer": "FUEGO",
+   "clue": "Quema y calienta"
+  },
+  {
+   "answer": "HIELO",
+   "clue": "Agua congelada"
+  },
+  {
+   "answer": "ROJO",
+   "clue": "Color de la sangre"
+  },
+  {
+   "answer": "AZUL",
+   "clue": "Color del cielo"
+  },
+  {
+   "answer": "VERDE",
+   "clue": "Color de la hierba"
+  },
+  {
+   "answer": "NEGRO",
+   "clue": "Color de la noche"
+  },
+  {
+   "answer": "BLANCO",
+   "clue": "Color de la nieve"
+  },
+  {
+   "answer": "DIA",
+   "clue": "Veinticuatro horas"
+  },
+  {
+   "answer": "NOCHE",
+   "clue": "Parte oscura del día"
+  },
+  {
+   "answer": "SEMANA",
+   "clue": "Siete días"
+  },
+  {
+   "answer": "MES",
+   "clue": "Unos treinta días"
+  },
+  {
+   "answer": "AÑO",
+   "clue": "Doce meses"
+  },
+  {
+   "answer": "VERANO",
+   "clue": "Estación más calurosa"
+  },
+  {
+   "answer": "INVIERNO",
+   "clue": "Estación más fría"
+  },
+  {
+   "answer": "ESCUELA",
+   "clue": "Lugar donde aprenden los niños"
+  },
+  {
+   "answer": "MEDICO",
+   "clue": "Cuida a los enfermos"
+  },
+  {
+   "answer": "DINERO",
+   "clue": "Sirve para pagar"
+  },
+  {
+   "answer": "ORO",
+   "clue": "Metal precioso amarillo"
+  },
+  {
+   "answer": "ZAPATO",
+   "clue": "Calzado que cubre el pie"
+  },
+  {
+   "answer": "SOMBRERO",
+   "clue": "Se lleva en la cabeza"
+  },
+  {
+   "answer": "CAMISA",
+   "clue": "Prenda con cuello y botones"
+  },
+  {
+   "answer": "VESTIDO",
+   "clue": "Prenda femenina de una pieza"
+  },
+  {
+   "answer": "MUSICA",
+   "clue": "Arte de los sonidos"
+  },
+  {
+   "answer": "JUEGO",
+   "clue": "Diversión con reglas"
+  },
+  {
+   "answer": "PELOTA",
+   "clue": "Juguete redondo"
+  },
+  {
+   "answer": "SUEÑO",
+   "clue": "Historia que se ve durmiendo"
+  },
+  {
+   "answer": "NOMBRE",
+   "clue": "Cómo se llama alguien"
+  },
+  {
+   "answer": "PALABRA",
+   "clue": "Unidad de la lengua"
+  },
+  {
+   "answer": "ACEITE",
+   "clue": "Líquido para freír"
+  },
+  {
+   "answer": "ARTE",
+   "clue": "Pintura o escultura"
+  },
+  {
+   "answer": "AIRE",
+   "clue": "Lo que respiramos"
+  },
+  {
+   "answer": "FIN",
+   "clue": "Lo contrario de principio"
+  },
+  {
+   "answer": "DOS",
+   "clue": "Uno más uno"
+  },
+  {
+   "answer": "DIEZ",
+   "clue": "Dos veces cinco"
+  },
+  {
+   "answer": "SEIS",
+   "clue": "Media docena"
+  },
+  {
+   "answer": "NUEVE",
+   "clue": "Tres veces tres"
+  },
+  {
+   "answer": "TINTA",
+   "clue": "Líquido del bolígrafo"
+  },
+  {
+   "answer": "AJO",
+   "clue": "Condimento de dientes blancos"
+  },
+  {
+   "answer": "LUZ",
+   "clue": "Lo contrario de oscuridad"
+  },
+  {
+   "answer": "PAZ",
+   "clue": "Lo contrario de guerra"
+  },
+  {
+   "answer": "MIEL",
+   "clue": "Dulce que hacen las abejas"
+  },
+  {
+   "answer": "TIA",
+   "clue": "Hermana del padre o de la madre"
+  },
+  {
+   "answer": "HUESO",
+   "clue": "Parte dura del esqueleto"
+  },
+  {
+   "answer": "NIÑO",
+   "clue": "Persona de pocos años"
+  },
+  {
+   "answer": "OTOÑO",
+   "clue": "Estación en que caen las hojas"
+  }
+ ]
+}

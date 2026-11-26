@@ -3,15 +3,16 @@
  * shared, typed back and regenerated, and a daily puzzle is seeded by the date.
  *
  *   SU-9-H-7K2Q9X   sudoku, 9 x 9, hard, seed 7K2Q9X
+ *   CW-13PT-E-3F    crossword, 13 x 13 in Portuguese, easy, seed 3F
  */
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const GAMES = ['sudoku', 'nonogram', 'maze', 'word-search'] as const;
+export const GAMES = ['sudoku', 'nonogram', 'maze', 'word-search', 'crossword'] as const;
 export type Game = (typeof GAMES)[number];
 
-const GAME_CODES: Record<Game, string> = { sudoku: 'SU', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS' };
+const GAME_CODES: Record<Game, string> = { sudoku: 'SU', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', crossword: 'CW' };
 const BAND_CODES: Record<Difficulty, string> = { easy: 'E', medium: 'M', hard: 'H', expert: 'X' };
 
 /** Crockford's base 32: no I, L, O or U, so a hand-copied code is not misread. */
@@ -22,7 +23,7 @@ const CODE_PARTS = 4;
 
 export interface PuzzleId {
   game: Game;
-  /** The game's size token: `9` for a sudoku, `10X15` for a nonogram, `C12` for a circular maze. */
+  /** The game's size token: `9` for a sudoku, `10X15` for a nonogram, `C12` for a circular maze, `13EN` for a crossword. */
   size: string;
   difficulty: Difficulty;
   seed: string;

@@ -2,6 +2,6 @@
 export * from './look';
 export { createRaster, assertNativeGreys, fillRect, fillPolygon, fillDisc, strokeLine, type Raster } from './raster';
 export { encodePng } from './png';
-export { drawText, drawCentredText, measureText, capHeight, FONT_WEIGHTS, type FontWeight, type TextAlign, type TextStyle } from './font';
+export { drawText, drawCentredText, measureText, pageText, capHeight, FONT_WEIGHTS, type FontWeight, type TextAlign, type TextStyle } from './font';
 export * from './grid';
 export * from './layout';
