@@ -47,7 +47,10 @@ adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32
   `Registry.java`, written from the registry of internals ([#294](https://github.com/martonpaulo/ink-tools/issues/294)), and before each call
   the bridge reads PluginHost's own `IPluginSetting$Stub` constants and refuses the call, with
   `failed`, when the number does not belong to the method the registry names (5 is uninstall) or
-  the Stub has no constant to check it by.
+  the Stub has no constant to check it by. The refusal is an `InternalFailure` (the Java adapter's
+  failure value, as sn-adapter's `failure.ts` defines it): the answer is one sentence from `Copy`, and
+  the `InkToolsBridge` log holds the registry item, the method, `Build.FINGERPRINT`, PluginHost's
+  version and the cause chain ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
 - The body of a `PluginInfo` or a `PluginPermission` is written by PluginHost's own class:
   `HostClasses` loads PluginHost's code (`createPackageContext` with `CONTEXT_INCLUDE_CODE`), finds
   the classes from the `IPluginSetting` method signatures, sets only the fields [#215](https://github.com/martonpaulo/ink-tools/issues/215) names

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -29,6 +30,8 @@ final class Bridge {
   /** Under the 60 s a background broadcast may take before Android reports it as not answering. */
   private static final long CALLBACK_SECONDS = 50;
   private static final long BIND_SECONDS = 10;
+  /** The registry item a refused call number belongs to (#294). */
+  private static final String CALL_NUMBERS_ITEM = "pluginhost.call-numbers";
 
   private final Context context;
 
@@ -102,8 +105,11 @@ final class Bridge {
       }
       String refused = HostCalls.refusal(Callback.transactions(classes.loader, HostCalls.DESCRIPTOR), code);
       if (refused != null) {
-        Log.w(TAG, "call op=" + command.op + " " + refused);
-        return Outcome.of(Outcome.FAILED, refused);
+        InternalFailure failure = new InternalFailure(
+            CALL_NUMBERS_ITEM, command.op.name().toLowerCase(java.util.Locale.ROOT), Copy.HOST_CHANGED,
+            Build.FINGERPRINT, hostVersions(), new IllegalStateException(refused));
+        Log.w(TAG, "call op=" + command.op + " " + failure.agentLog());
+        return Outcome.of(Outcome.FAILED, failure.userSentence(Copy.FAILURES));
       }
       Log.i(TAG, "call op=" + command.op + " code=" + code);
       service.transact(code, data, reply, 0);
@@ -119,6 +125,17 @@ final class Bridge {
       data.recycle();
       reply.recycle();
     }
+  }
+
+  /** PluginHost's version name, for a failure's log (#294); {@link InternalFailure#UNREAD} when it cannot be read. */
+  private Map<String, String> hostVersions() {
+    Map<String, String> apps = new HashMap<>();
+    try {
+      apps.put(HostCalls.HOST_PACKAGE, context.getPackageManager().getPackageInfo(HostCalls.HOST_PACKAGE, 0).versionName);
+    } catch (android.content.pm.PackageManager.NameNotFoundException error) {
+      apps.put(HostCalls.HOST_PACKAGE, InternalFailure.UNREAD);
+    }
+    return apps;
   }
 
   /** The service binder, handed over from the main thread. */

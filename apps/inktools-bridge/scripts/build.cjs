@@ -30,8 +30,8 @@ const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 const MIN_API = '30';
 const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
-const PURE = ['HostCalls', 'Command', 'Outcome', 'Fields', 'Callbacks', 'Registry'];
-const TESTS = ['HostCallsTest', 'CommandTest', 'FieldsTest', 'RegistryTest'];
+const PURE = ['HostCalls', 'Command', 'Outcome', 'Fields', 'Callbacks', 'Registry', 'InternalFailure', 'Copy'];
+const TESTS = ['HostCallsTest', 'CommandTest', 'FieldsTest', 'RegistryTest', 'InternalFailureTest'];
 /**
  * shortcut: without the stable key, a local debug key in .toolchain/, outside Git and unique to each
  * checkout, as the Lingo app does; an APK from another checkout has another key, so the tablet needs
