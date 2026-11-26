@@ -6,6 +6,8 @@
  */
 import {
   createPage,
+  drawArrowword,
+  generateArrowword,
   drawCellText,
   drawFooter,
   drawHexLattice,
@@ -24,6 +26,7 @@ import {
   type PageLayout,
   type Raster,
 } from '../src';
+import { maskedClueBank } from './clue-bank';
 
 const PANEL_TEXT = { size: 48, first: 60, step: 64 } as const;
 
@@ -90,6 +93,14 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawCellText(r, layout.grid, 4, 1, '2', 'given');
     drawWordPanel(r, layout, ['Panel', 'right']);
     drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
+    return r;
+  }],
+  ['page-15mm-arrowword', () => {
+    const puzzle = generateArrowword('P1', 'hard', maskedClueBank('pt'));
+    const layout = layoutPage({ orientation: 'portrait', hand: 'right', cellMm: 15, lattice: 'square', columns: puzzle.columns, rows: puzzle.rows });
+    const r = createPage(layout);
+    drawArrowword(r, layout.grid, puzzle);
+    drawFooter(r, layout, { game: 'Arrowword', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Write each answer from its clue, in the direction of its arrow.' });
     return r;
   }],
 ];

@@ -80,4 +80,8 @@ export const TEXT_SIZE = {
   icon: 0.64,
   /** The footer's text, in millimetres of em (3 mm or more, the screen's floor). */
   footerMm: 3.4,
+  /** An arrowword's clue text in its clue cell, in millimetres of em: the screen's floor. */
+  arrowClueMm: 3,
+  /** The line step of a clue's wrapped lines, as a share of its em. */
+  lineStep: 1.1,
 } as const;

@@ -1,4 +1,5 @@
-import { digest, generateMaze, generateNonogram, generateSudoku, generateWordSearch } from '../src';
+import { digest, generateArrowword, generateMaze, generateNonogram, generateSudoku, generateWordSearch } from '../src';
+import { maskedClueBank } from '../testing/clue-bank';
 
 /**
  * Pinned digests of one puzzle per game (#380). They change only when generation changes on
@@ -15,6 +16,7 @@ const PINNED: readonly [string, () => unknown, string][] = [
   ['maze 20 x 27 hard', () => generateMaze('P1', { shape: 'rectangle', width: 20, height: 27 }, 'hard'), '05d4c8e9'],
   ['maze 12 rings medium', () => generateMaze('P1', { shape: 'circle', rings: 12 }, 'medium'), 'a8c651b9'],
   ['word search 12 hard', () => generateWordSearch('P1', 12, 'hard', ['GATO', 'CACHORRO', 'LEAO', 'URSO', 'SAPO', 'PATO', 'CABRA', 'PEIXE']), 'fd1f2606'],
+  ['arrowword PT 8 x 8 medium', () => generateArrowword('P1', 'medium', maskedClueBank('pt')), '8fd9d42e'],
 ];
 
 describe('the same seed gives the same puzzle everywhere', () => {
