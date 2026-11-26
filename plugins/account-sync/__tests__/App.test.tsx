@@ -95,8 +95,9 @@ test('a failed save is said on the screen; a failed load offers a retry', async 
   const broken = await mount({
     folder: async () => fail(THROWN_CODE, 'getPluginDirPath returned nothing'),
   });
-  expect(texts(broken)).toContain(
-    'The settings did not load: getPluginDirPath returned nothing',
+  // The Error state (#256): what failed, then the reason under it.
+  expect(texts(broken)).toEqual(
+    expect.arrayContaining(['The settings did not load', 'getPluginDirPath returned nothing']),
   );
 });
 

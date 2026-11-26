@@ -27,7 +27,7 @@ import LassoActionsSettings from '../../../plugins/lasso-actions/App';
 import PluginDiagnostics from '../../../plugins/plugin-diagnostics/App';
 import {copy as diagnosticsCopy} from '../../../plugins/plugin-diagnostics/src/copy';
 import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
-import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
+import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
 import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
@@ -177,6 +177,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
   {name: 'account-sync-connect', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})}} onClose={noop} />)},
   {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
+  {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},
+  {name: 'account-sync-needs-connect', render: () => mount(<Needs problem={accountSyncConnect({id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: noop})} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
   {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},
