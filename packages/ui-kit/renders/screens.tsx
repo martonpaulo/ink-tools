@@ -23,10 +23,10 @@ import {
 import type {Working} from '@ink-tools/ui-kit';
 import SmartPenSettings from '../../../plugins/smart-pen/App';
 import {DEFAULT_PEN_SETTINGS} from '../../../plugins/smart-pen/src/settings';
+import LassoActionsSettings from '../../../plugins/lasso-actions/App';
 import PluginDiagnostics from '../../../plugins/plugin-diagnostics/App';
 import {copy as diagnosticsCopy} from '../../../plugins/plugin-diagnostics/src/copy';
 import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
-import WordLookupSettings from '../../../plugins/word-lookup/App';
 import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
@@ -160,10 +160,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
+  {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
   {name: 'plugin-diagnostics', render: () => mount(<PluginDiagnostics close={noop} run={async () => ({lines: [], status: 'done'})} />)},
   {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']})},
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
-  {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
   {name: 'account-sync-connect', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})}} onClose={noop} />)},

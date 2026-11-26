@@ -1,6 +1,6 @@
 {"mac_paths": ["apps/ink-notebook-editor/", "*.swift"],
  "gates": {"command": ["python3", "scripts/gates.py", "-"],
            "cloud": ["docs", "license", "sleep", "dry", "boundaries", "registry", "packages",
-                     "account-sync", "image-editing", "word-lookup", "device-transfer",
+                     "account-sync", "image-editing", "lasso-actions", "device-transfer",
                      "smart-pen", "plugin-diagnostics", "inkctl",
                      "native", "audit", "versions", "case", "icons", "quick", "setup", "design"]}}

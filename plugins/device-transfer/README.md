@@ -45,5 +45,5 @@ From the Mac, tap «Receive» and drop the text or the picture on «Supernote» 
 
 ## Built on
 
-React Native + `sn-plugin-lib`, like `../word-lookup`, with a native Java module for the network, as
+React Native + `sn-plugin-lib`, like `../lasso-actions`, with a native Java module for the network, as
 `../plugin-diagnostics` has.

@@ -29,7 +29,7 @@ device into an editable, durable form on the Mac, **not** sharing it with other 
 
 ## lookup
 
-Shown on the tablet as **Word Lookup** ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
+Shown on the tablet as Word Lookup ([#176](https://github.com/martonpaulo/ink-tools/issues/176)), now the Lookup module of **Lasso Actions** ([#306](https://github.com/martonpaulo/ink-tools/issues/306)), in [`plugins/lasso-actions/`](../plugins/lasso-actions/); the plugin keeps Word Lookup's `pluginID` and `pluginKey`, so the tablet updates it in place.
 
 Evolution of `ink2pic`: write a word, lasso it, insert something. `lookup` is a new plugin with its
 own `pluginID` and everything Ink2Pic did moved into it (owner D45, [#125](https://github.com/martonpaulo/ink-tools/issues/125)); it does not carry
@@ -166,7 +166,7 @@ Very useful:
   photographed page from the phone ([#137](https://github.com/martonpaulo/ink-tools/issues/137)).
 - Erase with the pen, background removal, make a sticker
   ([#134](https://github.com/martonpaulo/ink-tools/issues/134)).
-- The picture Word Lookup just inserted stays lassoed, so Image Editing's buttons are one tap
+- The picture Lasso Actions just inserted stays lassoed, so Image Editing's buttons are one tap
   away; Lookup never opens Image Editing by itself (owner, replacing
   [#139](https://github.com/martonpaulo/ink-tools/issues/139); [#168](https://github.com/martonpaulo/ink-tools/issues/168)).
 - «Enhance All Images» and «Undo All Images», in the editor of any one picture, run Enhance or
@@ -386,7 +386,7 @@ ship under until the merges land.
 | Target plugin | Modules (today's plugin) | Acts on |
 | :--- | :--- | :--- |
 | Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes, Real-Time Text and Undo Conversion (built, smart-pen), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
-| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (lookup), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), in smart-pen until it moves), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
+| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (built, lasso-actions), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), in smart-pen until it moves), Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
 | Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
 | Device Transfer | unchanged; receives a photo as it is | the page and files |
 | Account Sync | unchanged | outside services |

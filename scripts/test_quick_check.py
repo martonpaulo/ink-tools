@@ -9,14 +9,14 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 class QuickCheckSelection(unittest.TestCase):
     def test_one_plugin_path_checks_that_plugin_only(self):
-        self.assertEqual(quick_check.typecheck_dirs(ROOT, ["plugins/word-lookup/src/a.ts"]), ["plugins/word-lookup"])
+        self.assertEqual(quick_check.typecheck_dirs(ROOT, ["plugins/lasso-actions/src/a.ts"]), ["plugins/lasso-actions"])
 
     def test_packages_path_checks_packages_and_the_plugins_gates_map_it_to(self):
         folders = quick_check.typecheck_dirs(ROOT, ["packages/ink-core/src/a.ts"])
         self.assertIn("packages", folders)
         self.assertIn("plugins/device-transfer", folders)
         # Lookup and Bridge import ink-core, so they are checked (#161, #301); Probe does not.
-        self.assertIn("plugins/word-lookup", folders)
+        self.assertIn("plugins/lasso-actions", folders)
         self.assertIn("plugins/account-sync", folders)
         self.assertNotIn("plugins/plugin-diagnostics", folders)
 

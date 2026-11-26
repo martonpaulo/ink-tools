@@ -10,7 +10,7 @@ modules, its settings file, its session log and the run log. It imports only `re
 `@ink-tools/sn-adapter/official`, the core never imports it, and a plugin reaches it through
 `@ink-tools/picture-search/storage` from its own profile module, which calls
 `setPluginProfile({name, folder, filesModule, imageModule, userAgent})` first
-(`plugins/word-lookup/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
+(`plugins/lasso-actions/src/profile.ts`). `createSettingsStore(codec)` gives a plugin its settings store
 over its own settings model. The insert tier, `insert/`, holds what a lasso button runs on the
 page: `readLassoQuery` and `placeAtLasso`, ink-core's lasso read and placement over the official
 SDK wrappers, and «Insert best picture» ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)): `searchCached` over a plugin's `SearchSettings`,

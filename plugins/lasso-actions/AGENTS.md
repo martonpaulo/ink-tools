@@ -1,9 +1,21 @@
-# Lookup — agent guidance
+# Lasso Actions — agent guidance
 
-Scoped guidance for `plugins/word-lookup/`. Inherits the repository root `../../AGENTS.md`; this file holds
+Scoped guidance for `plugins/lasso-actions/`. Inherits the repository root `../../AGENTS.md`; this file holds
 only what is specific here. A `CLAUDE.md` symlink points at this file.
 
-## Status
+## Modules
+
+Lasso Actions is Word Lookup renamed ([#306](https://github.com/martonpaulo/ink-tools/issues/306)): it keeps the `pluginID` `t2obvupqt3edmnrr` and the
+`pluginKey` `Lookup` (also `package.json` and `app.json` `name`, the log prefix and `MyStyle/Lookup`),
+so the tablet updates it in place and its private folder keeps its `settings.json`. `src/modules.ts`
+is the module table; a module that is off registers no lasso button (`activeLookup`). Only Lookup is
+built: «Convert to Text» joins once Smart Pen's conversion engine is on `main`
+([#305](https://github.com/martonpaulo/ink-tools/issues/305)), and Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252)) and Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249)) stay paused. The settings file is
+`{version: 2, modules, lookup}` (`src/settings.ts`); Word Lookup's file, with no `modules` key, is
+read whole as `lookup` and written once in the new shape at start-up; a module switch a newer build
+wrote is kept.
+
+## Lookup
 
 **Lasso buttons** over a Settings view ([#110](https://github.com/martonpaulo/supernote-tools/issues/110), [#111](https://github.com/martonpaulo/supernote-tools/issues/111), [#115](https://github.com/martonpaulo/supernote-tools/issues/115)), built to `Lookup.snplg`
 with its native `app.npk`; the device round of the picture buttons is still open. The picture

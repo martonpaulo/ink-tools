@@ -31,8 +31,8 @@ describe("each plugin's file roots", () => {
     expect(packages.map(p => p.plugin).sort()).toEqual([
       'account-sync',
       'image-editing',
+      'lasso-actions',
       'smart-pen',
-      'word-lookup',
     ]);
   });
 

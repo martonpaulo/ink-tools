@@ -34,7 +34,7 @@ import {
   createPressGuard,
   deviceAnalyzer,
   Done,
-  getSettings,
+  getLookupSettings,
   insertBest,
   insertPicture,
   InsertLimit,
@@ -178,7 +178,8 @@ export function modeDeps(
     ...(await wordKeptOptions(LOOKUP_PICTURES)),
     sticker: mode.sticker,
   });
-  const search = async () => modeSearchSettings(mode, await getSettings());
+  const search = async () =>
+    modeSearchSettings(mode, await getLookupSettings());
   return {
     search: (word, _sources, _isNewest, options) =>
       runSearch(
@@ -245,7 +246,7 @@ export type PictureDeps = {
 };
 
 const DEVICE: PictureDeps = {
-  settings: getSettings,
+  settings: getLookupSettings,
   folder: pluginFolder,
   missing: mode =>
     missingFor(BUTTONS.filter(button => button.id === mode.buttonId)),

@@ -64,7 +64,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /plugins/word-lookup
+    directory: /plugins/lasso-actions
     schedule:
       interval: weekly
       day: monday

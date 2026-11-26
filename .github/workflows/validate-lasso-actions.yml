@@ -1,12 +1,12 @@
-name: Validate Word Lookup
+name: Validate Lasso Actions
 
-# Runs only when plugins/word-lookup/, the shared packages/ui-kit/ it imports (#93), or this file changes; the gate is the subproject's own `npm run validate`.
+# Runs only when plugins/lasso-actions/, the shared packages/ui-kit/ it imports (#93), or this file changes; the gate is the subproject's own `npm run validate`.
 on:
   push:
     branches: [main]
-    paths: ['plugins/word-lookup/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-word-lookup.yml']
+    paths: ['plugins/lasso-actions/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-lasso-actions.yml']
   pull_request:
-    paths: ['plugins/word-lookup/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-word-lookup.yml']
+    paths: ['plugins/lasso-actions/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-lasso-actions.yml']
   workflow_dispatch:
 
 permissions:
@@ -18,12 +18,12 @@ concurrency:
 
 jobs:
   validate:
-    name: validate word-lookup
+    name: validate lasso-actions
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: plugins/word-lookup
+        working-directory: plugins/lasso-actions
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,21 +33,21 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: plugins/word-lookup/package-lock.json
+          cache-dependency-path: plugins/lasso-actions/package-lock.json
 
       - name: Restore node_modules, keyed on the lockfile (#301)
         id: modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            plugins/word-lookup/node_modules
-          key: node-modules-${{ runner.os }}-node24-plugins/word-lookup-${{ hashFiles('plugins/word-lookup/package-lock.json') }}
+            plugins/lasso-actions/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/lasso-actions-${{ hashFiles('plugins/lasso-actions/package-lock.json') }}
 
       - name: Restore the native toolchain, keyed on its script (#301)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: plugins/word-lookup/.toolchain
-          key: toolchain-${{ runner.os }}-plugins/word-lookup-${{ hashFiles('plugins/word-lookup/scripts/native-toolchain.sh') }}
+          path: plugins/lasso-actions/.toolchain
+          key: toolchain-${{ runner.os }}-plugins/lasso-actions-${{ hashFiles('plugins/lasso-actions/scripts/native-toolchain.sh') }}
 
       - name: Install dependencies
         if: steps.modules.outputs.cache-hit != 'true'
@@ -57,7 +57,7 @@ jobs:
         run: npm run validate
 
       - name: Build the native-capable plugin package
-        # The JS package, then picture-search's Java under Lookup's module names (#142);
+        # The JS package, then picture-search's Java under Lookup's module names, the code name Lasso Actions keeps (#142, #306);
         # native-toolchain.sh reuses the runner's SDK. The Mac cannot build app.npk yet (#153).
         run: npm run build
 
@@ -67,6 +67,6 @@ jobs:
       - name: Upload the plugin package for the device round
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: Lookup-snplg
-          path: plugins/word-lookup/build/outputs/Lookup.snplg
+          name: LassoActions-snplg
+          path: plugins/lasso-actions/build/outputs/Lookup.snplg
           if-no-files-found: error

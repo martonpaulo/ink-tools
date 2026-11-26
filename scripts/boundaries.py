@@ -82,7 +82,7 @@ OWN_CONTROLS = (
 )
 # The plugin files that drew their own controls when the kit's components landed (#273); #274 moves each.
 PENDING_CONTROLS = frozenset({
-    "plugins/word-lookup/src/ui/ChooseScreen.tsx",
+    "plugins/lasso-actions/src/ui/ChooseScreen.tsx",
 })
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 PYTHON_COMMENT = re.compile(r"^\s*#")

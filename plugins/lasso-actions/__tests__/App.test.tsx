@@ -52,7 +52,7 @@ test('the Settings view keeps the size rules and has a header', async () => {
   expect(screenBreaks(tree.root)).toEqual([]);
   expect(
     tree.root.findAllByProps({accessibilityRole: 'header'})[0].props.children,
-  ).toBe('Word Lookup');
+  ).toBe('Lasso Actions');
 });
 
 test('Settings keeps only Picture sources and Data saver for pictures, and saves each tap (#105)', async () => {
@@ -79,7 +79,7 @@ test('Settings keeps only Picture sources and Data saver for pictures, and saves
     toggle(tree, 'Data saver').props.onPress();
   });
   const writes = files.writeText.mock.calls as unknown as [string, string][];
-  expect(JSON.parse(writes[writes.length - 1][1])).toMatchObject({
+  expect(JSON.parse(writes[writes.length - 1][1]).lookup).toMatchObject({
     sourcesOff: ['openmoji'],
     dataSaver: true,
   });
@@ -111,7 +111,7 @@ test('the «Insert Definition» switch registers its lasso button and saves the 
     string,
   ];
   expect(path).toMatch(/\/MyStyle\/Lookup\/settings\.json$/);
-  expect(JSON.parse(text)).toMatchObject({
+  expect(JSON.parse(text).lookup).toMatchObject({
     definition: true,
     illustration: true,
     photo: true,
@@ -153,7 +153,7 @@ test("one switch per translation direction, the owner's three on, and a tap save
   });
   expect(shown('Translate PT→ES')).toBe(true);
   const [, text] = files.writeText.mock.calls[0] as unknown as [string, string];
-  expect(JSON.parse(text).directions).toEqual({
+  expect(JSON.parse(text).lookup.directions).toEqual({
     'es-pt': true,
     'pt-es': true,
     'zh-pt': true,
@@ -164,6 +164,30 @@ test("one switch per translation direction, the owner's three on, and a tap save
     ['NOTE'],
     expect.objectContaining({name: 'Translate PT→ES'}),
   );
+});
+
+test('the Lookup module switch removes every Lookup button and its rows, and is saved (#306)', async () => {
+  const tree = await open();
+  // Turning a switch on registers its button, so the module switch has one to remove.
+  await act(async () => {
+    toggle(tree, 'Insert Definition').props.onPress();
+  });
+  await act(async () => {
+    toggle(tree, 'Lookup').props.onPress();
+  });
+  const removed = jest
+    .mocked(PluginManager.unregisterButton)
+    .mock.calls.map(call => call[0]);
+  expect(removed).toContain(DEFINE_BUTTON_ID);
+  expect(
+    tree.root.findAll(
+      node => node.props.accessibilityLabel === 'Insert Definition',
+    ),
+  ).toEqual([]);
+  const writes = files.writeText.mock.calls as unknown as [string, string][];
+  expect(JSON.parse(writes[writes.length - 1][1]).modules).toEqual({
+    lookup: false,
+  });
 });
 
 test('Close and Back close the Settings view (#204, #266)', async () => {
@@ -200,6 +224,15 @@ describe('Saved pictures (#23)', () => {
     expect(shown.join('\n')).toContain(
       'MyStyle/Ink2Pic/symbols (2 files). Each file adds about 0.14 s to every Supernote file sync. Delete these folders with the File Manager.',
     );
+  });
+
+  test('stays when Lookup is off, since the old folders slow every sync (#306)', async () => {
+    files.readText.mockResolvedValue(
+      JSON.stringify({version: 2, modules: {lookup: false}}),
+    );
+    const shown = texts(await open());
+    expect(shown).toContain('Saved pictures');
+    expect(shown).not.toContain('Insert Definition');
   });
 
   test('shows no old-folder note when no old folder holds a file', async () => {

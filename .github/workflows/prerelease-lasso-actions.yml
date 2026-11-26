@@ -1,15 +1,15 @@
-name: Prerelease Word Lookup
+name: Prerelease Lasso Actions
 
-# Each Word Lookup build becomes a GitHub prerelease carrying Lookup-<version>.snplg (#203): a device
+# Each Lasso Actions build becomes a GitHub prerelease carrying LassoActions-<version>.snplg (#203, #306): a device
 # build comes from CI, never from the owner's Mac. A push to main that changes PluginConfig.json,
-# where the version lives, publishes (#301) when its word-lookup-v<package.json version> tag does not
+# where the version lives, publishes (#301) when its lasso-actions-v<package.json version> tag does not
 # exist yet, so each version publishes once; the version follows root AGENTS.md › Product versioning
 # (#155).
 
 on:
   push:
     branches: [main]
-    paths: [plugins/word-lookup/PluginConfig.json]
+    paths: [plugins/lasso-actions/PluginConfig.json]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ permissions:
 
 # One publish at a time per plugin, never cancelled half way (#301).
 concurrency:
-  group: prerelease-word-lookup
+  group: prerelease-lasso-actions
   cancel-in-progress: false
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: plugins/word-lookup
+        working-directory: plugins/lasso-actions
     steps:
       - name: Check out the pushed commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,7 +40,7 @@ jobs:
         id: tag
         run: |
           version="$(node ../../scripts/plugin-version.cjs .)"
-          tag="word-lookup-v$version"
+          tag="lasso-actions-v$version"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::$tag is already published; nothing to do."
             echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -55,7 +55,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: plugins/word-lookup/package-lock.json
+          cache-dependency-path: plugins/lasso-actions/package-lock.json
 
       - name: Restore node_modules, keyed on the lockfile (#301)
         id: modules
@@ -63,15 +63,15 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            plugins/word-lookup/node_modules
-          key: node-modules-${{ runner.os }}-node24-plugins/word-lookup-${{ hashFiles('plugins/word-lookup/package-lock.json') }}
+            plugins/lasso-actions/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/lasso-actions-${{ hashFiles('plugins/lasso-actions/package-lock.json') }}
 
       - name: Restore the native toolchain, keyed on its script (#301)
         if: steps.tag.outputs.publish == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: plugins/word-lookup/.toolchain
-          key: toolchain-${{ runner.os }}-plugins/word-lookup-${{ hashFiles('plugins/word-lookup/scripts/native-toolchain.sh') }}
+          path: plugins/lasso-actions/.toolchain
+          key: toolchain-${{ runner.os }}-plugins/lasso-actions-${{ hashFiles('plugins/lasso-actions/scripts/native-toolchain.sh') }}
 
       - name: Install dependencies
         if: steps.tag.outputs.publish == 'true' && steps.modules.outputs.cache-hit != 'true'
@@ -89,11 +89,11 @@ jobs:
         if: steps.tag.outputs.publish == 'true'
         run: |
           # The asset name carries the version so the owner can tell builds apart on the tablet.
-          asset="build/outputs/Lookup-${TAG#word-lookup-v}.snplg"
+          asset="build/outputs/LassoActions-${TAG#lasso-actions-v}.snplg"
           cp build/outputs/Lookup.snplg "$asset"
           gh release create "$TAG" "$asset" \
             --prerelease --target "$GITHUB_SHA" --title "$TAG" \
-            --notes "Word Lookup prerelease build, with its native app.npk. Install on the tablet."
+            --notes "Lasso Actions prerelease build, with its native app.npk. Install on the tablet."
 
       - name: Read the asset back
         if: steps.tag.outputs.publish == 'true'
@@ -101,6 +101,6 @@ jobs:
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
           echo "$names"
           case "$names" in
-            *"Lookup-${TAG#word-lookup-v}.snplg"*) ;;
-            *) echo "::error::Lookup-${TAG#word-lookup-v}.snplg is missing from $TAG."; exit 1 ;;
+            *"LassoActions-${TAG#lasso-actions-v}.snplg"*) ;;
+            *) echo "::error::LassoActions-${TAG#lasso-actions-v}.snplg is missing from $TAG."; exit 1 ;;
           esac

@@ -1,8 +1,10 @@
-# Word Lookup
+# Lasso Actions
 
-On the tablet this plugin is called **Word Lookup**; `lookup` stays its internal name, and the folder is `word-lookup` ([#176](https://github.com/martonpaulo/ink-tools/issues/176)).
+On the tablet this plugin is called **Lasso Actions**, formerly Word Lookup; `lookup` stays its internal name, and the folder is `lasso-actions` ([#176](https://github.com/martonpaulo/ink-tools/issues/176), [#306](https://github.com/martonpaulo/ink-tools/issues/306)).
 
-A Supernote plugin: write a word by hand, lasso it, and insert a picture, a photo, a short
+Each action on lassoed handwriting is a module you switch on or off in its Settings; an off module has no lasso button. Lookup is the first module; «Convert to Text» joins it from Smart Pen, and Headings and Collection are planned.
+
+Its **Lookup** module: write a word by hand, lasso it, and insert a picture, a photo, a short
 definition or a translation for it. It replaces the first picture plugin, which is retired and uninstalled from the
 tablet ([#45](https://github.com/martonpaulo/supernote-tools/issues/45)), and it takes over translation from the retiring Lingo plugin ([#159](https://github.com/martonpaulo/supernote-tools/issues/159)).
 

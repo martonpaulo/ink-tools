@@ -2,13 +2,18 @@ import {Direction, directionName} from '@ink-tools/ink-core';
 
 /** Every user-facing string of Lookup. English only; never inline in components (#93). */
 export const copy = {
-  title: 'Word Lookup',
+  title: 'Lasso Actions',
+  /** The module switches (#306). */
+  'settings.modules': 'Modules',
+  'module.lookup': 'Lookup',
+  'module.lookupNote':
+    'Lasso a handwritten word and insert a picture, a definition, a summary or a translation for it.',
   'settings.modes': 'Lasso buttons',
   'button.define': 'Insert Definition',
   /** A 3-sentence bio or topic summary from Wikipedia (#114). */
   'button.summary': 'Insert Summary',
   'permission.summary':
-    'Word Lookup reads a short summary of the word from Wikipedia.',
+    'Lasso Actions reads a short summary of the word from Wikipedia.',
   /** Written on the note below the word: a term with no article is never guessed (#114). */
   'summary.none': (word: string) => `${word}: no summary found`,
   'summary.failed': (word: string) => `${word}: Wikipedia could not be reached`,
@@ -26,7 +31,7 @@ export const copy = {
   /** Where the inserted pictures are kept, and why (#23, owner D13 B). */
   'settings.pictures': 'Saved pictures',
   'settings.picturesHint':
-    'Word Lookup keeps each picture it inserted in its own plugin folder, so it can insert it again without a download. Supernote file sync does not read that folder: each file in a synced folder adds about 0.14 s to every file sync.',
+    'Lasso Actions keeps each picture it inserted in its own plugin folder, so it can insert it again without a download. Supernote file sync does not read that folder: each file in a synced folder adds about 0.14 s to every file sync.',
   /** Files earlier versions left in synced folders, with the way out (#23). */
   'settings.oldFiles': (
     folders: readonly {folder: string; files: number | null}[],
@@ -45,14 +50,14 @@ export const copy = {
   'source.wikidata': 'Wikidata',
   'source.openmoji': 'OpenMoji',
   'permission.internet':
-    'Word Lookup looks words up in an online dictionary, Wiktionary.',
+    'Lasso Actions looks words up in an online dictionary, Wiktionary.',
   'permission.translate':
-    'Word Lookup translates words with online dictionaries, Wiktionary and Apertium.',
-  'permission.files': 'Word Lookup reads the word you lasso on the page.',
+    'Lasso Actions translates words with online dictionaries, Wiktionary and Apertium.',
+  'permission.files': 'Lasso Actions reads the word you lasso on the page.',
   'permission.write':
-    'Word Lookup puts each picture in your note.',
+    'Lasso Actions puts each picture in your note.',
   'permission.pictures':
-    'Word Lookup searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
+    'Lasso Actions searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
   /** Written on the note below the word: a word with no definition is never guessed (#115). */
   'definition.none': (word: string) => `${word}: no definition found`,
   'definition.failed': (word: string) =>
@@ -67,8 +72,8 @@ export const copy = {
     'Put the selection down on the page first, then press again.',
   'error.insert': 'The definition could not be inserted on the page.',
   /** Toasts that replace the «Loading…» strip (#103). */
-  'working.failed': 'Word Lookup stopped with an error.',
-  'working.timeout': 'Word Lookup is still working.',
+  'working.failed': 'Lasso Actions stopped with an error.',
+  'working.timeout': 'Lasso Actions is still working.',
   /** A toast after an insert that touches other ink, which a lasso would take with it (#168). */
   'picture.unselected':
     'The picture touches your writing, so it is not selected.',
@@ -101,11 +106,11 @@ const pictureFailures = {
   'error.sourcesDown':
     'the picture sources did not answer. Try again in a minute.',
   'error.permission.internet':
-    'Word Lookup needs Network Access to search pictures.',
+    'Lasso Actions needs Network Access to search pictures.',
   'error.permission.files':
-    'Word Lookup needs Read Files and Modify Files to save pictures.',
+    'Lasso Actions needs Read Files and Modify Files to save pictures.',
   'error.permission.settings':
-    'To allow it, open Settings > Apps > Plugins > Word Lookup > Permissions.',
+    'To allow it, open Settings > Apps > Plugins > Lasso Actions > Permissions.',
   'error.save':
     'the picture could not be saved. Free some space and try again.',
   'error.downloadOffline':

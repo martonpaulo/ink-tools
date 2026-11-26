@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the light native toolchain (#305, copied from ../word-lookup) into .toolchain/, each archive checked
+# Install the light native toolchain (#305, copied from ../lasso-actions) into .toolchain/, each archive checked
 # against a pinned SHA-1. Reuses ANDROID_HOME when it already holds build-tools 35.0.0 and
 # platform 35 (a GitHub runner). Prints the three paths native-build.cjs reads.
 #

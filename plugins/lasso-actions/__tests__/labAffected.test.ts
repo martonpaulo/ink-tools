@@ -10,7 +10,7 @@ import path from 'node:path';
 const ROOT = path.join(__dirname, '..');
 const RUN = `test-affected-${process.pid}`;
 const RUN_DIR = path.join(ROOT, 'lab', 'out', RUN);
-const PLUGIN = 'plugins/word-lookup/';
+const PLUGIN = 'plugins/lasso-actions/';
 const CORE = 'packages/picture-search/src/';
 
 const tile = (source: string, canonical = false) => ({source, canonical});

@@ -1,5 +1,5 @@
 import config from '../PluginConfig.json';
-import lookup from '../../word-lookup/PluginConfig.json';
+import lookup from '../../lasso-actions/PluginConfig.json';
 
 test('plugin config keeps Real-Time Conversion identity and both file permissions (#305)', () => {
   // The tablet updates Real-Time Conversion in place: the same pluginID and pluginKey.

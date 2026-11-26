@@ -2,7 +2,7 @@
  "magicValues": {
   "folders": [],
   "exclude": [
-   "plugins/word-lookup/lab/**",
+   "plugins/lasso-actions/lab/**",
    "packages/ui-kit/renders/**",
    "**/android/**",
    "**/buildPlugin.sh",
@@ -118,14 +118,14 @@
    "plugins/smart-pen/test-support/strokes.ts": {
     "number": 17
    },
-   "plugins/word-lookup/.eslintrc.js": {
+   "plugins/lasso-actions/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/word-lookup/scripts/native-toolchain.sh": {
+   "plugins/lasso-actions/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
    },
-   "plugins/word-lookup/src/buttons.ts": {
+   "plugins/lasso-actions/src/buttons.ts": {
     "repeated": 1
    },
    "scripts/npm_audit.py": {
@@ -137,7 +137,7 @@
  "duplicates": {
   "depth": 2,
   "exclude": [
-   "plugins/word-lookup/lab/**",
+   "plugins/lasso-actions/lab/**",
    "packages/ui-kit/renders/**",
    "**/android/**",
    "**/buildPlugin.sh",
@@ -242,16 +242,16 @@
    },
    {
     "rule": "Word Lookup native module name: LookupFiles",
-    "owner": "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java",
-    "other": "plugins/word-lookup/src/profile.ts",
+    "owner": "plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java",
+    "other": "plugins/lasso-actions/src/profile.ts",
     "pattern": "['\\\"]LookupFiles['\\\"]",
     "golden": "",
     "open": 295
    },
    {
     "rule": "Word Lookup native module name: LookupImage",
-    "owner": "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java",
-    "other": "plugins/word-lookup/src/profile.ts",
+    "owner": "plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java",
+    "other": "plugins/lasso-actions/src/profile.ts",
     "pattern": "['\\\"]LookupImage['\\\"]",
     "golden": "",
     "open": 295
@@ -294,7 +294,7 @@
    "plugins/device-transfer/AGENTS.md": 1,
    "plugins/image-editing/AGENTS.md": 3,
    "plugins/smart-pen/AGENTS.md": 2,
-   "plugins/word-lookup/AGENTS.md": 3
+   "plugins/lasso-actions/AGENTS.md": 3
   }
  },
  "retired": {
@@ -310,7 +310,7 @@
    },
    {
     "term": "ink2pic",
-    "use": "word-lookup, or «the retired picture plugin» for history",
+    "use": "lasso-actions, or «the retired picture plugin» for history",
     "keep": [
      "docs/decisions.md",
      "docs/research/**"
@@ -481,55 +481,55 @@
    "plugins/smart-pen/test-support/host.ts": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/__tests__/App.test.tsx": {
+   "plugins/lasso-actions/__tests__/App.test.tsx": {
     "Ink2Pic": 2
    },
-   "plugins/word-lookup/__tests__/library.test.ts": {
+   "plugins/lasso-actions/__tests__/library.test.ts": {
     "Ink2Pic": 4
    },
-   "plugins/word-lookup/index.js": {
+   "plugins/lasso-actions/index.js": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/lab/README.md": {
+   "plugins/lasso-actions/lab/README.md": {
     "ink2pic": 7
    },
-   "plugins/word-lookup/lab/pixelorder.mjs": {
+   "plugins/lasso-actions/lab/pixelorder.mjs": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/native/com/lookup/files/LookupFilesPackage.java": {
+   "plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/scripts/native-toolchain.sh": {
+   "plugins/lasso-actions/scripts/native-toolchain.sh": {
     "ink2pic": 1
    },
-   "plugins/word-lookup/src/definition.ts": {
+   "plugins/lasso-actions/src/definition.ts": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/src/library.ts": {
+   "plugins/lasso-actions/src/library.ts": {
     "Ink2Pic": 5
    },
-   "plugins/word-lookup/src/modes.ts": {
+   "plugins/lasso-actions/src/modes.ts": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/src/pictureLanguages.ts": {
+   "plugins/lasso-actions/src/pictureLanguages.ts": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/src/pictures.ts": {
+   "plugins/lasso-actions/src/pictures.ts": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/src/profile.ts": {
+   "plugins/lasso-actions/src/profile.ts": {
     "Ink2Pic": 1
    },
-   "plugins/word-lookup/src/settings.ts": {
+   "plugins/lasso-actions/src/settings.ts": {
     "Ink2Pic": 2
    },
-   "plugins/word-lookup/src/textBox.ts": {
+   "plugins/lasso-actions/src/textBox.ts": {
     "Ink2Pic": 2
    },
-   "plugins/word-lookup/src/ui/ChooseScreen.tsx": {
+   "plugins/lasso-actions/src/ui/ChooseScreen.tsx": {
     "Ink2Pic": 2
    },
-   "plugins/word-lookup/tsconfig.json": {
+   "plugins/lasso-actions/tsconfig.json": {
     "Ink2Pic": 1
    }
   }
@@ -674,8 +674,8 @@
     "packages/ink-core/src/conversion/convert.ts": 1,
     "packages/ink-core/src/conversion/shapes.ts": 2,
     "plugins/smart-pen/src/modules/shapes/geometry.ts": 1,
-    "plugins/word-lookup/src/pictures.ts": 1,
-    "plugins/word-lookup/src/textBox.ts": 2,
+    "plugins/lasso-actions/src/pictures.ts": 1,
+    "plugins/lasso-actions/src/textBox.ts": 2,
     "scripts/dry_cross.py": 1,
     "scripts/icons.py": 1,
     "scripts/license_check.py": 1

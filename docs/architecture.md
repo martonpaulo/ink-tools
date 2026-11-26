@@ -166,12 +166,12 @@ ink-tools/
   packages/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
-    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Word Lookup, Device Transfer, Image Editing)
-    picture-search/ # the picture search core and its pure-Java pixel measures (for Word Lookup and Image Editing)
+    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Lasso Actions, Device Transfer, Image Editing)
+    picture-search/ # the picture search core and its pure-Java pixel measures (for Lasso Actions and Image Editing)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     account-sync/   # to-do + calendar + digest, each module and provider opt in/out
-    word-lookup/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
+    lasso-actions/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
     device-transfer/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     image-editing/  # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
     plugin-diagnostics/ # permanent on-device investigation plugin
@@ -198,7 +198,7 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Plugin | Modules | Surface | Status |
 | :--- | :--- | :--- | :--- |
 | Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Built ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); Gestures not yet |
-| Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Planned ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); today Word Lookup ships alone |
+| Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Built with Lookup ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); Convert to Text still in Smart Pen until it moves; Headings and Collection paused |
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
 | Device Transfer | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
@@ -213,7 +213,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | Display name | Folder | Code name |
 | :--- | :--- | :--- |
 | Account Sync | `plugins/account-sync/` | `bridge` (npm package, `BridgeFilesPackage`) |
-| Word Lookup | `plugins/word-lookup/` | `lookup` |
+| Lasso Actions | `plugins/lasso-actions/` | `lookup` (`pluginKey` `Lookup`, kept from Word Lookup so the tablet updates it in place, [#306](https://github.com/martonpaulo/ink-tools/issues/306)) |
 | Device Transfer | `plugins/device-transfer/` | `relay` |
 | Image Editing | `plugins/image-editing/` | `retouch` |
 | Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
@@ -227,7 +227,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   (two-way sync between the native Digest and the owner's Telegram «Saved Messages» through Telegram's official API, pending feasibility). Each provider is a separate toggle. One
   plugin, not a bundle of separate plugins.
   - **Settings-only, no note surface.** Account Sync is pure configuration plus background sync; it has
-    nothing to do with a note's canvas. The plugin API supports this: a note plugin's `index.js` (Word Lookup's, for one) registers
+    nothing to do with a note's canvas. The plugin API supports this: a note plugin's `index.js` (Lasso Actions's, for one) registers
     the note buttons (`registerButton(..., ['NOTE'], ...)`) and the plugin's Settings entry
     (`registerConfigButton()` + `startConfigQueue()`) **independently**. Account Sync registers only the
     config button and no NOTE buttons, so it appears only in the plugin settings, never in notes.
@@ -270,7 +270,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
     «unverified app» warning. The app stays in «Testing» for now (owner, 2026-11-16,
     [#124](https://github.com/martonpaulo/ink-tools/issues/124)). The loopback flow needs an OAuth client of the «Desktop app» type:
     the existing client is a «TVs and Limited Input devices» one, with no redirect URIs.
-- **Word Lookup** — write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
+- **Lasso Actions** (formerly Word Lookup) — actions on lassoed handwriting, each a module switched on or off in its Settings ([#306](https://github.com/martonpaulo/ink-tools/issues/306)). Its Lookup module: write a word, lasso it, insert an **illustration**, a **photo**, a **definition**
   or a **translation**; each mode opt in/out, and each language pair opt in/out under the
   translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced the
   first picture plugin, which is retired, uninstalled from the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)) and removed
@@ -289,12 +289,12 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   square, rectangle or arrow, as the native Smart Straight Line does ([#253](https://github.com/martonpaulo/ink-tools/issues/253)); its guidance is
   [`plugins/smart-pen/AGENTS.md`](../plugins/smart-pen/AGENTS.md).
 
-Word Lookup, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
+Lasso Actions, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). Account Sync's three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/ink-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
 `sn-adapter`, `ink-core` and `picture-search` the same way. Every plugin calls `sn-plugin-lib` only
-through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). The first picture plugin was the seed of `ink-core` and of Word Lookup's picture modes; it is retired and removed ([#288](https://github.com/martonpaulo/ink-tools/issues/288)), and Word Lookup
+through `sn-adapter`'s official tier ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). The first picture plugin was the seed of `ink-core` and of Lasso Actions's picture modes; it is retired and removed ([#288](https://github.com/martonpaulo/ink-tools/issues/288)), and Lasso Actions
 finds stickers, pictures and text (owner D45, [#125](https://github.com/martonpaulo/ink-tools/issues/125)). Its picture search core and pixel
 measures are `packages/picture-search`.
 
