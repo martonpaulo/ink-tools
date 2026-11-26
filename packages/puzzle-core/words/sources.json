@@ -1,0 +1,138 @@
+{
+  "about": "Every source of the Puzzles word lists (#381): build_word_lists.py downloads each pinned file and checks its SHA-256; words/*.json name the ones they use. Licences: NOTICE.md.",
+  "allowedLicences": [
+    "CC BY 2.0 FR",
+    "CC BY 4.0",
+    "SCOWL",
+    "MIT",
+    "CC BY-NC-SA 4.0"
+  ],
+  "sources": {
+    "tatoeba-en": {
+      "name": "Tatoeba sentences",
+      "url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2",
+      "sha256": "0c4d3b18152bd6507bbf77ab690532b25de1e60da950f68705b3c88935c01fb4",
+      "licence": "CC BY 2.0 FR",
+      "attribution": "Tatoeba (https://tatoeba.org), its contributors",
+      "snapshot": true,
+      "retrieved": "2026-11-26",
+      "bundled": "word counts only, no sentence",
+      "use": "word frequency, proper-noun and rare-word filters"
+    },
+    "tatoeba-pt": {
+      "name": "Tatoeba sentences",
+      "url": "https://downloads.tatoeba.org/exports/per_language/por/por_sentences.tsv.bz2",
+      "sha256": "d79dfc10fdd0959a259e282f097ea6be59dd58d3d1fe69b1559fd8499efaab7c",
+      "licence": "CC BY 2.0 FR",
+      "attribution": "Tatoeba (https://tatoeba.org), its contributors",
+      "snapshot": true,
+      "retrieved": "2026-11-26",
+      "bundled": "word counts only, no sentence",
+      "use": "word frequency, proper-noun and rare-word filters"
+    },
+    "tatoeba-es": {
+      "name": "Tatoeba sentences",
+      "url": "https://downloads.tatoeba.org/exports/per_language/spa/spa_sentences.tsv.bz2",
+      "sha256": "7872d2e66debfd8e73e96cc9bca9560a32cc914aee9c820649d7d3d5e7353f48",
+      "licence": "CC BY 2.0 FR",
+      "attribution": "Tatoeba (https://tatoeba.org), its contributors",
+      "snapshot": true,
+      "retrieved": "2026-11-26",
+      "bundled": "word counts only, no sentence",
+      "use": "word frequency, proper-noun and rare-word filters"
+    },
+    "tatoeba-de": {
+      "name": "Tatoeba sentences",
+      "url": "https://downloads.tatoeba.org/exports/per_language/deu/deu_sentences.tsv.bz2",
+      "sha256": "e16c57e695bfeccccb455c305d262c5cbe2aa74a5c1e1edb725d53cf907309ac",
+      "licence": "CC BY 2.0 FR",
+      "attribution": "Tatoeba (https://tatoeba.org), its contributors",
+      "snapshot": true,
+      "retrieved": "2026-11-26",
+      "bundled": "word counts only, no sentence",
+      "use": "word frequency, proper-noun and rare-word filters"
+    },
+    "tatoeba-fr": {
+      "name": "Tatoeba sentences",
+      "url": "https://downloads.tatoeba.org/exports/per_language/fra/fra_sentences.tsv.bz2",
+      "sha256": "c9e91cc5a0640db7bfc4423fadf3985db42df08dafce4983d4c6b8c2cf7a4d3d",
+      "licence": "CC BY 2.0 FR",
+      "attribution": "Tatoeba (https://tatoeba.org), its contributors",
+      "snapshot": true,
+      "retrieved": "2026-11-26",
+      "bundled": "word counts only, no sentence",
+      "use": "word frequency, proper-noun and rare-word filters"
+    },
+    "scowl": {
+      "name": "SCOWL 2020.12.07",
+      "url": "https://downloads.sourceforge.net/project/wordlist/SCOWL/2020.12.07/scowl-2020.12.07.tar.gz",
+      "sha256": "5587667caa20c4891390c2d42dbb4d5c4c3f41bee77af1457ece3ba23fb859cc",
+      "licence": "SCOWL",
+      "attribution": "Kevin Atkinson and the SCOWL contributors (http://wordlist.aspell.net)",
+      "bundled": "which English words are kept",
+      "use": "English word validity, sizes up to 50"
+    },
+    "ldnoobw-en": {
+      "name": "List of Dirty, Naughty, Obscene and Otherwise Bad Words",
+      "url": "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/5faf2ba42d7b1c0977169ec3611df25a3c08eb13/en",
+      "sha256": "af851ecef1d5f212caba17339b12ac39cc2fef7d78c74876f67237644fcee8bd",
+      "licence": "CC BY 4.0",
+      "attribution": "Shutterstock and the LDNOOBW contributors",
+      "bundled": "no: a build-time filter",
+      "use": "removes offensive words"
+    },
+    "ldnoobw-pt": {
+      "name": "List of Dirty, Naughty, Obscene and Otherwise Bad Words",
+      "url": "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/5faf2ba42d7b1c0977169ec3611df25a3c08eb13/pt",
+      "sha256": "05ef524b0bb7f83f87257f6ec4dabf70e16b8bb6930f769fb93deaf608ff196d",
+      "licence": "CC BY 4.0",
+      "attribution": "Shutterstock and the LDNOOBW contributors",
+      "bundled": "no: a build-time filter",
+      "use": "removes offensive words"
+    },
+    "ldnoobw-es": {
+      "name": "List of Dirty, Naughty, Obscene and Otherwise Bad Words",
+      "url": "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/5faf2ba42d7b1c0977169ec3611df25a3c08eb13/es",
+      "sha256": "073334261cc2e7c08339faefd2f19f9623e8240a0ac18fe2a26c368b897496ce",
+      "licence": "CC BY 4.0",
+      "attribution": "Shutterstock and the LDNOOBW contributors",
+      "bundled": "no: a build-time filter",
+      "use": "removes offensive words"
+    },
+    "ldnoobw-de": {
+      "name": "List of Dirty, Naughty, Obscene and Otherwise Bad Words",
+      "url": "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/5faf2ba42d7b1c0977169ec3611df25a3c08eb13/de",
+      "sha256": "ebe44d7772897390e27f7bec412fdcdf0efc294e4db157f8487c4cd8d4fabd55",
+      "licence": "CC BY 4.0",
+      "attribution": "Shutterstock and the LDNOOBW contributors",
+      "bundled": "no: a build-time filter",
+      "use": "removes offensive words"
+    },
+    "ldnoobw-fr": {
+      "name": "List of Dirty, Naughty, Obscene and Otherwise Bad Words",
+      "url": "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/5faf2ba42d7b1c0977169ec3611df25a3c08eb13/fr",
+      "sha256": "79763a705e08256b393952852bb63aa903f4485e0ef02f70735f5e50efff213c",
+      "licence": "CC BY 4.0",
+      "attribution": "Shutterstock and the LDNOOBW contributors",
+      "bundled": "no: a build-time filter",
+      "use": "removes offensive words"
+    },
+    "superfun": {
+      "name": "SuperFun word-search banks",
+      "url": "https://raw.githubusercontent.com/AgP42/SuperFun/34d6f312e888cfa9df00f561c2bd810c89c6eca2/src/wordsearch.js",
+      "sha256": "9f35334dcdeb672d644f6d6d2ac11e2b0a3215659d988a2c4c131acd0fc245e4",
+      "licence": "MIT",
+      "attribution": "Copyright (c) 2026 AgP42",
+      "bundled": "theme names and words, folded",
+      "use": "EN, DE, FR and ES word-search themes"
+    },
+    "themes-pt": {
+      "name": "Ink Tools Portuguese themes",
+      "path": "words/themes-pt.source.json",
+      "licence": "CC BY-NC-SA 4.0",
+      "attribution": "Ink Tools",
+      "bundled": "theme names and words, folded",
+      "use": "PT word-search themes"
+    }
+  }
+}

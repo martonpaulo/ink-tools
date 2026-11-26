@@ -6,7 +6,8 @@
     "typecheck": "npm run typecheck --workspaces",
     "test": "jest",
     "test:native": "node native-build/package-tests.cjs",
-    "validate": "npm run typecheck && npm test && npm run test:native && npm run dry",
+    "test:words": "python3 -B -m unittest discover -s puzzle-core/scripts -t puzzle-core/scripts",
+    "validate": "npm run typecheck && npm test && npm run test:words && npm run test:native && npm run dry",
     "dry": "python3 ../scripts/dry_check.py --root picture-search"
   },
   "devDependencies": {
