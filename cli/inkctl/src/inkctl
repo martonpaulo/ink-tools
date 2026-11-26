@@ -36,6 +36,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  insert page N of the open test note with a system template
   note move-page PATH FROM TO    move page FROM of a closed test note to TO, through Probe's file
                                  API calls, while another note is open
+  note edit PATH OPS.json        apply the Ink Notebook Editor's operations to a test note, open or
+                                 not, through Device Link's helper, with no screen tap (#312)
   lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
                                  cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
@@ -61,7 +63,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  --same-version updates a build of main that keeps its version (#310)
   plugin enable|disable NAME     turn a plugin on or off through the bridge app, and prove it
   plugin action PLUGIN ACTION    run a plugin's own action with no screen and print its result:
-                                 account-sync sync [--module calendar|todo], ink-tools-probe run-probe
+                                 account-sync sync [--module calendar|todo], ink-tools-probe run-probe,
+                                 device-link edit (through note edit)
   plugin allow NAME [PERM...]    set permissions (default: every one it uses) to Always Allow
                                  through the bridge app, and prove it from the plugin's row
   plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
@@ -489,6 +492,12 @@ ACTION_SYNC_MODULES = ("calendar", "todo")
 ACTION_PLUGINS = {
     "account-sync": {"folder": SIGN_IN_DROP_FOLDER, "actions": ("sync",)},
     "ink-tools-probe": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
+    # Device Link's folder in the hidden .data/plugin/, where the editor helper reads its request and
+    # the pictures an edit inserts (plugins/device-link/src/editor/operations.ts EDITOR_FOLDER, #312).
+    "device-link": {
+        "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-device-link",
+        "actions": ("edit",),
+    },
     # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298).
     "smart-pen": {
         "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-smart-pen",
@@ -2754,6 +2763,49 @@ def command_note_move_page(device: Device, args: argparse.Namespace):
     return data, f"moved: page {args.from_page} of {path} to page {args.to_page}, {answer.get('elements')} elements, template {answer.get('template')}, in {answer.get('ms')} ms"
 
 
+def edit_operations(path: str) -> list:
+    """The operations of `note edit`: a JSON list, or an object with `ops`, read from PATH (#312)."""
+    try:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise not_found(path)
+    except (OSError, ValueError) as error:
+        raise bad_usage(f"{path} is not a JSON list of operations: {error}")
+    operations = raw.get("ops") if isinstance(raw, dict) else raw
+    if not isinstance(operations, list) or not operations or not all(isinstance(item, dict) for item in operations):
+        raise bad_usage(f"{path} holds no list of operations")
+    return operations
+
+
+def command_note_edit(device: Device, args: argparse.Namespace):
+    """Apply the Ink Notebook Editor's operations to one note through Device Link's helper, with no
+    screen tap (#312). Each picture an element names by a local `file` is copied to the helper's
+    folder first; the plugin checks every operation, and its refusal is named in the answer."""
+    need_note_suffix(args.path)
+    path = remote_path(args.path)
+    if not args.allow_notes and not in_test_notes(path):
+        raise protected("editing a note outside Note/Tests/")
+    operations = edit_operations(args.operations)
+    folder = ACTION_PLUGINS["device-link"]["folder"]
+    pictures = [element for operation in operations for element in operation.get("elements") or [] if isinstance(element, dict) and element.get("kind") == "picture"]
+    for element in pictures:
+        local = str(element.get("file", ""))
+        suffix = os.path.splitext(local)[1].lower()
+        if suffix not in PICTURE_SUFFIXES:
+            raise bad_usage(f"a picture is a .png, .jpg or .jpeg file: {local}")
+        if not os.path.isfile(local):
+            raise not_found(local)
+    if not device.test(f"-f {shlex.quote(path)}"):
+        raise not_found(path)
+    device.shell(f"mkdir -p {shlex.quote(folder)}")
+    for index, element in enumerate(pictures, start=1):
+        remote = f"{folder}/picture-{index}{os.path.splitext(element['file'])[1].lower()}"
+        push_file(device, element["file"], remote, overwrite=True)
+        element["file"] = remote
+    answer = run_action(device, "device-link", "edit", {"path": path, "ops": operations}, args.timeout)
+    return answer, f"edited: {len(answer.get('results', []))} operations on {path} in {answer.get('ms')} ms; open note: {answer.get('openNote')}"
+
+
 def lasso_answer(answer: dict) -> tuple[dict, str]:
     return answer, f"lassoed: {answer.get('rect')} {answer.get('counts')} in {answer.get('ms')} ms"
 
@@ -4639,7 +4691,11 @@ def build_parser() -> argparse.ArgumentParser:
     moved_page.add_argument("from_page", type=int, metavar="FROM", help="the page to move, from 1")
     moved_page.add_argument("to_page", type=int, metavar="TO", help="its number after the move, from 1")
     moved_page.add_argument("--template", help="the new page's system template; default: the page's own")
-    for on_note in (rendered, pictured, texted, paged, moved_page):
+    edited = add(notes, "edit", command_note_edit, changes=True)
+    edited.add_argument("path", help="the note, open or not")
+    edited.add_argument("operations", help="a JSON file: a list of the Ink Notebook Editor's operations")
+    edited.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
+    for on_note in (rendered, pictured, texted, paged, moved_page, edited):
         on_note.add_argument("--allow-notes", action="store_true", help="use a note outside Note/Tests/")
 
     files = noun("files")

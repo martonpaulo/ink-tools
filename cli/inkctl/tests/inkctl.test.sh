@@ -72,7 +72,7 @@ case "$1" in
         case "$3" in
             */action.json) cp "$2" "$ADB_FILES/action.json"; printf '%s\n' "$3" > "$ADB_FILES/action-path"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
             *MyStyle/Probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
-            *MyStyle/Probe/picture.*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
+            *MyStyle/Probe/picture.*|*inktools-device-link/picture-*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size"; printf '%s\n' "$3" >> "$ADB_FILES/picture-paths" ;;
         esac ;;
     logcat)
         if [ -f "$ADB_FILES/action-answer" ]; then
@@ -1708,7 +1708,32 @@ check "an unknown action is refused before any push" "$(exit_and_pushes plugin a
 check "a plugin with no actions is refused before any push" "$(exit_and_pushes plugin action smart-shapes sync)" "20"
 check "--module is only for account-sync sync" "$(exit_and_pushes plugin action ink-tools-probe run-probe --module todo)" "20"
 check "read-only refuses plugin action" "$(exit_and_pushes --read-only plugin action account-sync sync)" "110"
-rm -f "$files/action-answer"
+
+# The Ink Notebook Editor's operations through Device Link's helper, with no screen tap (#312).
+helper_folder="$root/.data/plugin/inktools-device-link"
+printf 'f %s\n' "$root/Note/Tests/Edit.note" "$root/Note/Diary.note" >> "$files/paths"
+printf 'png' > "$work/local/edit.png"
+printf '[{"op":"deleteElements","page":0,"nums":[2]},{"op":"insertElements","page":1,"elements":[{"kind":"picture","file":"%s","rect":{"left":1,"top":2,"right":30,"bottom":40}}]}]' "$work/local/edit.png" > "$work/local/ops.json"
+action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"edit\",\"ms\":300,\"line\":\"DeviceLink: edit: 2 operations applied\",\"openNote\":\"$root/Note/Tests/Other.note\",\"results\":[{\"ok\":true},{\"ok\":true}]}" > "$files/action-answer"
+: > "$files/picture-paths"
+result=$(run note edit Note/Tests/Edit.note "$work/local/ops.json")
+check "note edit writes the request in Device Link's folder and prints the answer" "$?$(cat "$files/action-path")|$result" "0$helper_folder/action.json|edited: 2 operations on $root/Note/Tests/Edit.note in 300 ms; open note: $root/Note/Tests/Other.note"
+check "note edit sends the note's path and the operations as the action edit" "$(action_field "d['action'], d['args']['path'], [op['op'] for op in d['args']['ops']]")" "('edit', '$root/Note/Tests/Edit.note', ['deleteElements', 'insertElements'])"
+check "note edit copies each picture to the helper's folder and names it there" "$(cat "$files/picture-paths")|$(action_field "d['args']['ops'][1]['elements'][0]['file']")" "$helper_folder/picture-1.png|$helper_folder/picture-1.png"
+check "note edit presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
+action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":2,"message":"no-element: operation 1 (deleteElements): page 0 has no element 2","refusal":"no-element","openNote":null}' > "$files/action-answer"
+run note edit Note/Tests/Edit.note "$work/local/ops.json" >/dev/null 2>"$work/err"
+check "a refusal of the helper exits 2 and names it" "$?$(grep -c 'device-link edit: no-element: operation 1' "$work/err")" "21"
+action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":1,"message":"tablet-refused: operation 2 (insertElements): insert: code 802","refusal":"tablet-refused"}' > "$files/action-answer"
+check "a call the tablet refused exits 1" "$(exit_and_pushes note edit Note/Tests/Edit.note "$work/local/ops.json")" "12"
+printf '{"op":"openNote"}' > "$work/local/bad-ops.json"
+check "a file that holds no list of operations is a usage error before any push" "$(exit_and_pushes note edit Note/Tests/Edit.note "$work/local/bad-ops.json")" "20"
+printf '[{"op":"insertElements","page":0,"elements":[{"kind":"picture","file":"%s"}]}]' "$work/local/edit.gif" > "$work/local/bad-ops.json"
+check "a picture that is not a PNG or JPEG is a usage error before any push" "$(exit_and_pushes note edit Note/Tests/Edit.note "$work/local/bad-ops.json")" "20"
+check "note edit on a note outside Note/Tests/ is refused" "$(exit_and_pushes note edit Note/Diary.note "$work/local/ops.json")" "120"
+check "note edit of a missing note is not found" "$(exit_and_pushes note edit Note/Tests/Absent.note "$work/local/ops.json")" "40"
+check "read-only refuses note edit" "$(exit_and_pushes --read-only note edit Note/Tests/Edit.note "$work/local/ops.json")" "110"
+rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/bad-ops.json"
 
 # Pen replay (#298): record the real pen in Smart Pen, save the tape, play it back on a test note.
 tape='{"version":1,"events":[{"at":0,"penUp":[{"points":[{"x":1,"y":2}],"pressures":[2000],"penType":10,"penColor":0,"thickness":200,"times":null}]}]}'
