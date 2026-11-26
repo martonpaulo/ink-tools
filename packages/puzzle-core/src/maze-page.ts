@@ -28,6 +28,8 @@ export const MAZE_WALL_PX = 4;
 const CIRCLE_MARGIN = 0.2;
 /** An arc is drawn in chords about this share of a cell long. */
 const ARC_CHORD = 0.25;
+/** The middle of a cell or a ring, as a share of its size. */
+const MIDDLE = 0.5;
 const PATH_STEP = 0.1;
 const FULL_TURN = 2 * Math.PI;
 const FOOTER_RULE = 'Draw a line from the start to the end without crossing a wall.';
@@ -143,14 +145,14 @@ export function drawMazePage(maze: Maze, layout: PageLayout, difficultyLabel: st
 export function mazeCellCentre(maze: Maze, grid: Grid, cell: number): [number, number] {
   if (maze.size.shape === 'rectangle') {
     const { width } = maze.size;
-    return [grid.x + ((cell % width) + 0.5) * grid.cell, grid.y + (Math.floor(cell / width) + 0.5) * grid.cell];
+    return [grid.x + ((cell % width) + MIDDLE) * grid.cell, grid.y + (Math.floor(cell / width) + MIDDLE) * grid.cell];
   }
   const [cx, cy] = centreOf(grid);
   const starts = ringStarts(maze.ringCells);
   const ring = starts.filter(start => start <= cell).length - 1;
   if (ring === 0) return [cx, cy];
-  const angle = ((cell - starts[ring] + 0.5) / maze.ringCells[ring]) * FULL_TURN;
-  const radius = (ring + 0.5) * grid.cell;
+  const angle = ((cell - starts[ring] + MIDDLE) / maze.ringCells[ring]) * FULL_TURN;
+  const radius = (ring + MIDDLE) * grid.cell;
   return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
 }
 
@@ -173,7 +175,7 @@ export function mazeCellAt(maze: Maze, grid: Grid, x: number, y: number): number
   const count = maze.ringCells[ring];
   const turn = (((Math.atan2(y - cy, x - cx) % FULL_TURN) + FULL_TURN) % FULL_TURN) / FULL_TURN;
   const along = turn * count - Math.floor(turn * count);
-  if (along < CIRCLE_MARGIN / (ring + 0.5) || along > 1 - CIRCLE_MARGIN / (ring + 0.5)) return null;
+  if (along < CIRCLE_MARGIN / (ring + MIDDLE) || along > 1 - CIRCLE_MARGIN / (ring + MIDDLE)) return null;
   return ringStarts(maze.ringCells)[ring] + Math.min(count - 1, Math.floor(turn * count));
 }
 
