@@ -59,7 +59,7 @@ Button names follow the wording of Supernote's own lasso menu, a verb and a noun
 1000, Settings keys and search style, with the measured split `keepMode` in the shared package
 ([#111](https://github.com/martonpaulo/supernote-tools/issues/111)). `src/pictures.ts` runs each as a no-view press over picture-search's shared
 «Insert best picture» flow, with the mode's sources and style; only the mode's measured tiles stay,
-and a press that inserts nothing writes its sentence below the word. Pictures go to
+and a press that inserts nothing writes its sentence below the word. A written line searches the longest trailing word group that is a Wikipedia article, else its last word (picture-search's `resolvePhrase`, one request), and the picture goes below those words, their share of the lasso by characters (`wordsRect`, [#18](https://github.com/martonpaulo/ink-tools/issues/18)). Pictures go to
 `pictures/` of the private plugin folder, out of Supernote file sync, and are reused from there
 through `pictures.json` (`src/library.ts`, [#23](https://github.com/martonpaulo/ink-tools/issues/23)); a failed insert from there is tried once from
 `MyStyle/Lookup/pictures`, and Settings names the old synced folders still holding files, never one

@@ -13,8 +13,10 @@ import {
   modeDeps,
   modeSearchSettings,
   PICTURE_WIDTH,
+  phraseOf,
   PictureDeps,
   pictureLasso,
+  wordsRect,
 } from '../src/pictures';
 import {
   insertBest,
@@ -340,6 +342,34 @@ describe('a press (#111)', () => {
     expect(d.insert.mock.calls[0][1]).toBe('apple pie');
   });
 
+  test('a written line searches the words its phrase check chose, placed below them (#18)', async () => {
+    const phrase = jest.fn(async () => ({query: 'Miguel de Cervantes', words: 3}));
+    const line = 'Quem foi Miguel de Cervantes';
+    const d = press({
+      read: jest.fn(async () => ok({query: line, place})),
+      phrase,
+      insert: jest.fn(
+        async (): Promise<QuickInsert> => ({ok: false, text: 'no photo found.'}),
+      ),
+    });
+    await pictureLasso(photoMode, d);
+    expect(phrase).toHaveBeenCalledWith(photoMode, line);
+    expect(d.insert.mock.calls[0][1]).toBe('Miguel de Cervantes');
+    const at = d.insert.mock.calls[0][2];
+    // The lasso the recheck compares stays whole; the picture goes below the chosen words.
+    expect(at.rect).toEqual(place.rect);
+    expect(at.words).toEqual(wordsRect(place.rect, line, 3));
+    expect(d.write.mock.calls[0][0].text).toBe(
+      copy['picture.failed']('Miguel de Cervantes', 'no photo found.'),
+    );
+  });
+
+  test('a phrase that is the whole line keeps the whole lasso (#18)', async () => {
+    const d = press({phrase: jest.fn(async () => ({query: 'maçã', words: 1}))});
+    await pictureLasso(photoMode, d);
+    expect(d.insert.mock.calls[0][2]).toEqual({...place, recheck: true});
+  });
+
   test('one press at a time across both buttons', async () => {
     let finish: () => void = () => {};
     const slow = press({
@@ -399,4 +429,60 @@ test('«Insert Sticker» asks for a sticker, «Insert Image» for a picture (#35
   await modeDeps(illustration).insert(picked, 'apple', place, false, plain, null, () => null);
   await modeDeps(photoMode).insert(picked, 'apple', place, false, plain, null, () => null);
   expect(shared.mock.calls.map(call => call[5]?.sticker)).toEqual([true, false]);
+});
+
+describe('the words of a written line (#18)', () => {
+  const answer = (text: string) => ({ok: true, status: 200, text: async () => text});
+  /** The titles check: each listed title is an article with an item; every other is missing. */
+  const titles = (found: Record<string, string>) => {
+    const urls: string[] = [];
+    const fetch = jest.fn(async (url: string) => {
+      urls.push(url);
+      return answer(
+        JSON.stringify({
+          query: {
+            pages: Object.entries(found).map(([title, item]) => ({
+              title,
+              pageprops: {wikibase_item: item},
+            })),
+          },
+        }),
+      );
+    });
+    return {fetch, urls};
+  };
+
+  it.each([
+    ['Quem foi Miguel de Cervantes', 'Miguel de Cervantes', 3, {'Miguel de Cervantes': 'Q5682', Cervantes: 'Q1'}],
+    ['Eu comi uma banana', 'banana', 1, {Banana: 'Q503'}],
+    ['ontem eu viajei até a China', 'China', 1, {China: 'Q148'}],
+    ['Who was Ada Lovelace', 'Ada Lovelace', 2, {'Ada Lovelace': 'Q7259'}],
+    ['¿Quién fue Simón Bolívar?', 'Simón Bolívar', 2, {'Simón Bolívar': 'Q8605'}],
+  ])('«%s» searches «%s» with at most one titles request', async (line, searched, words, found) => {
+    const net = titles(found);
+    expect(await phraseOf(photoMode, line, defaultSettings, net.fetch)).toEqual({query: searched, words});
+    expect(net.urls.length).toBeLessThanOrEqual(1);
+  });
+
+  test('no title among the groups searches the last word; a failed check too', async () => {
+    const none = await phraseOf(photoMode, 'Eu comi uma xyzzy', defaultSettings, titles({}).fetch);
+    expect(none.query).toBe('xyzzy');
+    const down = jest.fn(async () => ({ok: false, status: 503, text: async () => ''}));
+    const failed = await phraseOf(photoMode, 'Quem foi Miguel de Cervantes', defaultSettings, down);
+    expect(failed).toEqual({query: 'Cervantes', words: 1});
+  });
+
+  test('one word asks nothing', async () => {
+    const net = titles({});
+    expect(await phraseOf(illustration, 'maçã', defaultSettings, net.fetch)).toEqual({query: 'maçã', words: 1});
+    expect(net.fetch).not.toHaveBeenCalled();
+  });
+
+  test('the chosen words take the right share of the lasso, by their characters', () => {
+    const rect = {left: 0, top: 10, right: 280, bottom: 60};
+    // «Quem foi Miguel de Cervantes» is 28 characters, «Miguel de Cervantes» 19 of them.
+    expect(wordsRect(rect, 'Quem foi Miguel de Cervantes', 3)).toEqual({...rect, left: 90});
+    expect(wordsRect(rect, 'Quem foi Miguel de Cervantes', 5)).toBeNull();
+    expect(wordsRect(rect, 'maçã', 1)).toBeNull();
+  });
 });

@@ -249,7 +249,7 @@ export async function placeAtLasso<F extends {ok: false; message: string}>(
 ): Promise<Outcome<Rect, F>> {
   const logged = loggerOf(host);
   const occupied = place.occupied ?? [];
-  const rect = placeRect(place.rect, picture, place.pageSize, placement, occupied);
+  const rect = placeRect(place.words ?? place.rect, picture, place.pageSize, placement, occupied);
   if (!rect) {
     return host.failure(`no band of ${MIN_PLACE_BAND} px beside the lasso`);
   }
