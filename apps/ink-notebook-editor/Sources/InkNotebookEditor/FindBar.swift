@@ -64,6 +64,20 @@ final class NoteText {
         return Copy.matchOf(current + 1, search.matches.count)
     }
 
+    /// A newer copy of the note arrived (#315): its Headings are read again when next shown, its
+    /// changed pages' words are read again, and the find runs again once they are.
+    func refresh(note: NoteFile, changed: Set<Int>?) async {
+        forgetHeadings()
+        await indexer.refresh(note: note, changed: changed)
+        find()
+    }
+
+    /// Drops the Headings read from an older copy, before the window shows the newer one.
+    func forgetHeadings() {
+        headingsRead = nil
+        pictures = [:]
+    }
+
     /// The note's Headings, read from its footer the first time they are asked for.
     func headings(of note: NoteFile) -> Result<[Heading], NoteFormatError> {
         if let headingsRead { return headingsRead }

@@ -232,7 +232,10 @@ struct NotebookView: View {
         .task(id: live?.tabletPath) {
             guard let live, live.watches else { return }
             await live.run { newer in
+                text?.forgetHeadings()
                 let changed = pages.update(newer)
+                // Find and Copy as Text read the newer copy too.
+                if let text { Task { await text.refresh(note: newer, changed: changed) } }
                 // A selection names elements by their place on the page, which a change moves.
                 if let page = viewer.selection.page, changed?.contains(page) ?? true { viewer.selection.clear() }
                 if newer.pages.count != navigator.pageCount {

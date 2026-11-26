@@ -18,6 +18,9 @@ final class NoteIndexer {
     }
 
     private(set) var state = State.idle
+    /// Counts the copies of the note the indexer was given; a reading of an older copy stops and
+    /// leaves the state to the newer one (#315).
+    @ObservationIgnored private var generation = 0
     @ObservationIgnored private let store: NoteIndexStore
     @ObservationIgnored private let recognizer: any PageRecognizer
     @ObservationIgnored private let pageImage: PageImage
@@ -47,31 +50,53 @@ final class NoteIndexer {
     /// A second call while one runs or after it finished does nothing.
     func run(note: NoteFile) async {
         guard state == .idle else { return }
+        await index(note, pages: nil, keeping: nil)
+    }
+
+    /// Brings the index to a newer copy of the note, as a live note pulls one (#315): the words of
+    /// the pages that did not change stay, the `changed` pages are read again; every page is when
+    /// `changed` is nil or no index is ready yet. A reading of the older copy still under way
+    /// stops.
+    func refresh(note: NoteFile, changed: Set<Int>?) async {
+        if case .ready(let old) = state, let changed {
+            await index(note, pages: changed, keeping: old)
+        } else {
+            await index(note, pages: nil, keeping: nil)
+        }
+    }
+
+    /// Reads `pages` of `note` (every page when nil) and keeps `old`'s words of the others.
+    private func index(_ note: NoteFile, pages: Set<Int>?, keeping old: NoteIndex?) async {
+        generation += 1
+        let mine = generation
+        let current = { mine == self.generation }
         let count = note.pages.count
-        state = .indexing(done: 0, of: count)
+        let reading = (pages ?? Set(0..<count)).filter { $0 < count }.sorted()
+        // A refresh keeps showing the older index until the newer one is ready.
+        if old == nil { state = .indexing(done: 0, of: reading.count) }
         let digest = await Self.digest(note.bytes)
         let languages = recognizer.languages
         if let stored = await Self.stored(store, digest: digest, languages: languages) {
-            state = .ready(stored)
+            if current() { state = .ready(stored) }
             return
         }
-        var tablet: [IndexedWord] = []
-        var mac: [IndexedWord] = []
-        var read: Set<Int> = []
-        for page in 0..<count {
-            guard !Task.isCancelled else {
-                state = .idle
+        let kept = old.map { index in index.words.filter { !reading.contains($0.page) && $0.page < count } } ?? []
+        var words = kept
+        var readPages: Set<Int> = old.map { $0.pages.subtracting(reading).filter { $0 < count } } ?? []
+        for (done, page) in reading.enumerated() {
+            guard !Task.isCancelled, current() else {
+                if current() { state = .idle }
                 return
             }
             let result = await Self.read(note, page: page, recognizer: recognizer, pageImage: pageImage, logger: logger)
-            tablet += result.tablet
-            mac += result.mac
-            if result.complete { read.insert(page) }
-            state = .indexing(done: page + 1, of: count)
+            words += NoteIndex.merged(tablet: result.tablet, mac: result.mac)
+            if result.complete { readPages.insert(page) }
+            if old == nil, current() { state = .indexing(done: done + 1, of: reading.count) }
         }
-        let index = NoteIndex(languages: languages, words: NoteIndex.merged(tablet: tablet, mac: mac), pages: read)
-        await Self.save(index, to: store, digest: digest, logger: logger)
-        state = .ready(index)
+        guard current() else { return }
+        let built = NoteIndex(languages: languages, words: words, pages: readPages)
+        await Self.save(built, to: store, digest: digest, logger: logger)
+        if current() { state = .ready(built) }
     }
 
     /// The stored index, read and decoded off the main actor.

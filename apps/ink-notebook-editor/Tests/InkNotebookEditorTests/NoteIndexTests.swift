@@ -194,3 +194,62 @@ final class FakeRecognizer: PageRecognizer {
         func add() { lock.withLock { count += 1 } }
     }
 }
+
+/// A live note's index follows each newer copy (#315).
+@MainActor
+struct NoteIndexRefreshTests {
+    @Test func aNewerCopyReadsOnlyItsChangedPagesAgain() async throws {
+        let store = try NoteIndexTests.scratch()
+        defer { try? FileManager.default.removeItem(at: store) }
+        let recognizer = FakeRecognizer(delay: .zero)
+        let indexer = NoteIndexer(store: NoteIndexStore(root: store), recognizer: recognizer)
+        let note = try Fixtures.note("content.note")
+        await indexer.run(note: note)
+        #expect(recognizer.calls.value == note.pages.count)
+        let written = try NoteFile(
+            bytes: NoteWriter.drawText(
+                note, page: 2, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
+        await indexer.refresh(note: written, changed: [2])
+        // Only page 3 is read again; the other pages keep their words.
+        #expect(recognizer.calls.value == note.pages.count + 1)
+        guard case .ready(let index) = indexer.state else {
+            Issue.record("the index is not ready: \(indexer.state)")
+            return
+        }
+        #expect(Set(index.words.map(\.page)) == Set(note.pages.indices))
+        #expect(index.words.count == note.pages.count)
+    }
+
+    @Test func aNoteWithMovedPagesIsReadAgainWhole() async throws {
+        let store = try NoteIndexTests.scratch()
+        defer { try? FileManager.default.removeItem(at: store) }
+        let recognizer = FakeRecognizer(delay: .zero)
+        let indexer = NoteIndexer(store: NoteIndexStore(root: store), recognizer: recognizer)
+        let note = try Fixtures.note("content.note")
+        await indexer.run(note: note)
+        let moved = try NoteFile(bytes: NoteWriter.movePage(note, from: 0, to: 2))
+        await indexer.refresh(note: moved, changed: nil)
+        #expect(recognizer.calls.value == 2 * note.pages.count)
+        guard case .ready = indexer.state else {
+            Issue.record("the index is not ready: \(indexer.state)")
+            return
+        }
+    }
+
+    @Test func theFindRunsAgainOnTheNewerCopy() async throws {
+        let store = try NoteIndexTests.scratch()
+        defer { try? FileManager.default.removeItem(at: store) }
+        let text = NoteText(
+            indexer: NoteIndexer(store: NoteIndexStore(root: store), recognizer: FakeRecognizer(delay: .zero)))
+        let note = try Fixtures.note("content.note")
+        await text.indexer.run(note: note)
+        text.query = "word"
+        #expect(text.search.matches.count == note.pages.count)
+        let written = try NoteFile(
+            bytes: NoteWriter.drawText(
+                note, page: 2, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
+        await text.refresh(note: written, changed: [2])
+        #expect(text.search.matches.count == note.pages.count)
+        #expect(text.index != nil)
+    }
+}
