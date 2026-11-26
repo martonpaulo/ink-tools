@@ -251,16 +251,6 @@
         }
       }
     },
-    "Custom template" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom template"
-          }
-        }
-      }
-    },
     "Delete" : {
       "localizations" : {
         "en" : {
@@ -271,12 +261,42 @@
         }
       }
     },
+    "Delete %lld Pages…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete %lld Pages…"
+          }
+        }
+      }
+    },
+    "Delete %lld pages?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete %lld pages?"
+          }
+        }
+      }
+    },
     "Delete Page" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete Page"
+          }
+        }
+      }
+    },
+    "Delete Pages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Pages"
           }
         }
       }
@@ -851,12 +871,12 @@
         }
       }
     },
-    "Pages to delete: %lld. The tablet deletes them with their ink; Edit › Undo puts them back." : {
+    "Pages with custom templates cannot be added from the Mac yet." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pages to delete: %lld. The tablet deletes them with their ink; Edit › Undo puts them back."
+            "value" : "Pages with custom templates cannot be added from the Mac yet."
           }
         }
       }
@@ -1007,6 +1027,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restore Page"
+          }
+        }
+      }
+    },
+    "Restore Pages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Pages"
           }
         }
       }
@@ -1317,6 +1347,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The tablet changed other pages too (%@), so the send stopped. Check the note on the tablet."
+          }
+        }
+      }
+    },
+    "The tablet deletes pages %@ with their ink. Edit › Undo puts them back." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet deletes pages %@ with their ink. Edit › Undo puts them back."
+          }
+        }
+      }
+    },
+    "The tablet deletes the page with its ink. Edit › Undo puts it back." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet deletes the page with its ink. Edit › Undo puts it back."
           }
         }
       }

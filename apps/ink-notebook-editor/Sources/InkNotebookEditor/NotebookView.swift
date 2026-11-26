@@ -112,12 +112,14 @@ struct NotebookView: View {
     init(
         pages: PageImages, page: Int = 0, columns: NavigationSplitViewVisibility = .automatic,
         viewer: PageViewer = PageViewer(), sidebar: SidebarMode = .pages, live: LiveNote? = nil,
-        editor: NoteEditor? = nil
+        editor: NoteEditor? = nil, picked: Set<Int> = []
     ) {
         self.live = live
         self.editor = editor
         _pages = State(initialValue: pages)
-        _navigator = State(initialValue: PageNavigator(pageCount: pages.note.pages.count, index: page))
+        var navigator = PageNavigator(pageCount: pages.note.pages.count, index: page)
+        navigator.pick(picked)
+        _navigator = State(initialValue: navigator)
         _columns = State(initialValue: columns)
         _viewer = State(initialValue: viewer)
         _sidebar = State(initialValue: sidebar)
@@ -277,6 +279,9 @@ struct NotebookView: View {
         }
         if newer.pages.count != navigator.pageCount {
             navigator = PageNavigator(pageCount: newer.pages.count, index: navigator.index ?? 0)
+        } else if changed == nil {
+            // The pages may stand in a new order, so the list's selection no longer names them.
+            navigator.pick([])
         }
     }
 
@@ -288,9 +293,12 @@ struct NotebookView: View {
 
     /// Moves a page by a drag in the page list, and the current page goes with it.
     private func dragPages(_ source: IndexSet, _ destination: Int) {
-        guard let editor, let from = source.first, let edit = NoteEdit.pageDrag(from, before: destination),
+        // One page moves at a time; a drag of several selected pages moves none.
+        guard let editor, source.count == 1, let from = source.first,
+            let edit = NoteEdit.pageDrag(from, before: destination),
             case .movePage(_, let to) = edit, editor.movePage(from: from, to: to)
         else { return }
+        navigator.pick([])
         navigator.show(to)
     }
 
@@ -367,14 +375,17 @@ struct NotebookView: View {
                         }
                         // A thumbnail dragged to Finder or another app gives its page (#323).
                         .itemProvider { text?.provider(of: pages.note, page: index) }
-                        .contextMenu { PageMenu(editor: editor, page: index) }
+                        .contextMenu { PageMenu(editor: editor, row: index, pages: menuPages(index)) }
+                        // One page moves at a time, so a row of a selection of several stays.
+                        .moveDisabled(navigator.picked.count > 1 && navigator.picked.contains(index))
                 }
                 // A thumbnail dragged within the list moves its page, on a note from the tablet (#330).
                 .onMove(perform: pageDrag)
             }
-            // Delete in the page list asks to delete the page in front (#329).
+            // Delete in the page list asks to delete the selected pages (#329).
             .onDeleteCommand {
-                if editor?.canRemovePage == true { editor?.removalAsked = navigator.index }
+                // Every page selected: a note keeps one, so the key only beeps, as a refused key does.
+                if let editor, !editor.askRemoval(of: navigator.selectedPages) { NSSound.beep() }
             }
             .onChange(of: navigator.index) { _, index in
                 if let index { list.scrollTo(index) }
@@ -383,13 +394,21 @@ struct NotebookView: View {
         .accessibilityLabel(Copy.pages)
     }
 
-    /// A click in the page list shows that page and gives the focus back to the page.
-    private var selection: Binding<Int?> {
+    /// The pages a row's context menu acts on: the selection when the row is in it, else that row,
+    /// as Finder's context menu does.
+    private func menuPages(_ row: Int) -> [Int] {
+        let selected = navigator.selectedPages
+        return selected.contains(row) ? selected : [row]
+    }
+
+    /// A click in the page list shows that page and gives the focus back to the page; Command-click
+    /// and Shift-click select several pages, as Preview's sidebar does, for Delete Page… (#329).
+    private var selection: Binding<Set<Int>> {
         Binding(
-            get: { navigator.index },
+            get: { Set(navigator.selectedPages) },
             set: {
-                if let page = $0 { navigator.show(page) }
-                pageFocused = true
+                navigator.pick($0)
+                if $0.count == 1 { pageFocused = true }
             })
     }
 }

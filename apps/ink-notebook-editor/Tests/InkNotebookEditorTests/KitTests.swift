@@ -35,6 +35,45 @@ import Testing
         navigator.show(0)
         #expect(navigator.index == 0)
     }
+
+    /// The page list's selection of several pages (#329): a page command acts on it while it holds
+    /// the current page, and a page turned outside it clears it.
+    @Test func severalPickedPagesFollowTheCurrentPage() {
+        var navigator = PageNavigator(pageCount: 5, index: 1)
+        #expect(navigator.selectedPages == [1])
+        navigator.pick([1, 3])
+        #expect(navigator.index == 3 && navigator.selectedPages == [1, 3])
+        navigator.pick([3])
+        #expect(navigator.index == 3 && navigator.selectedPages == [3])
+        navigator.pick([0, 3, 9])
+        #expect(navigator.selectedPages == [0, 3])
+        #expect(navigator.index == 0)
+        navigator.go(.next)
+        #expect(navigator.selectedPages == [1] && navigator.picked.isEmpty)
+        navigator.go(.previous)
+        #expect(navigator.selectedPages == [0])
+        navigator.pick([0, 2])
+        navigator.pick([2])
+        #expect(navigator.index == 2)
+        navigator.pick([])
+        #expect(navigator.index == 2 && navigator.selectedPages == [2])
+        // A Shift-click down the list shows the page clicked; one up the list too.
+        navigator.pick(Set(2...4))
+        #expect(navigator.index == 4)
+        navigator.pick([0, 1, 2, 3, 4])
+        #expect(navigator.index == 0)
+    }
+}
+
+/// The template name an added page is sent with (#329).
+@Suite struct PageTemplateTests {
+    @Test func aPageStyleGivesTheNameTheTabletTakes() {
+        #expect(PageTemplate.systemName(ofStyle: "style_white_a5x2") == "style_white")
+        #expect(PageTemplate.systemName(ofStyle: "style_5mm_grid_a5x2") == "style_5mm_grid")
+        #expect(PageTemplate.systemName(ofStyle: "style_white") == "style_white")
+        #expect(PageTemplate.systemName(ofStyle: "user_dots") == nil)
+        #expect(PageTemplate.systemName(ofStyle: "user_pdf_plan_1") == nil)
+    }
 }
 
 @Suite struct PageFitTests {

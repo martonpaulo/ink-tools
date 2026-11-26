@@ -9,12 +9,17 @@ struct PageCommands: View {
 
     var body: some View {
         let page = navigator?.wrappedValue.index
+        let selected = navigator?.wrappedValue.selectedPages ?? []
         Button(Copy.insertPageEllipsis) { editor?.insertNextTo = page }
-            .disabled(editor?.canEdit != true || page == nil)
-            .help(editor == nil ? Copy.editOnlyFromTablet : "")
-        Button(Copy.deletePageEllipsis) { editor?.removalAsked = page }
-            .disabled(editor?.canRemovePage != true || page == nil)
-            .help(editor == nil ? Copy.editOnlyFromTablet : editor?.canRemovePage == false ? Copy.lastPageStays : "")
+            .disabled(editor?.canInsertPage != true || page == nil)
+            .help(
+                editor == nil
+                    ? Copy.editOnlyFromTablet : editor?.templates.isEmpty == true ? Copy.noSystemTemplate : "")
+        Button(Copy.deletePagesEllipsis(selected.count)) { editor?.askRemoval(of: selected) }
+            .disabled(editor?.canRemove(selected.count) != true)
+            .help(
+                editor == nil
+                    ? Copy.editOnlyFromTablet : editor?.canRemove(selected.count) == false ? Copy.lastPageStays : "")
     }
 }
 
@@ -44,8 +49,7 @@ struct InsertPageSheet: View {
         self.editor = editor
         self.page = page
         self.inserted = inserted
-        let style = editor.shown.pages.indices.contains(page) ? editor.shown.pages[page].style : nil
-        _template = State(initialValue: style ?? editor.templates.first ?? "")
+        _template = State(initialValue: editor.template(of: page) ?? editor.templates.first ?? "")
     }
 
     var body: some View {
@@ -80,17 +84,20 @@ struct InsertPageSheet: View {
     }
 }
 
-/// The page list's context menu: Insert Page… and Delete Page… for that page (#329).
+/// The page list's context menu: Insert Page… next to `row`, the row clicked, and Delete Page… for
+/// `pages`, the selection when the row is in it (#329).
 struct PageMenu: View {
     let editor: NoteEditor?
-    let page: Int
+    let row: Int
+    let pages: [Int]
 
     var body: some View {
         if let editor {
-            Button(Copy.insertPageEllipsis) { editor.insertNextTo = page }
-                .disabled(!editor.canEdit)
-            Button(Copy.deletePageEllipsis) { editor.removalAsked = page }
-                .disabled(!editor.canRemovePage)
+            Button(Copy.insertPageEllipsis) { editor.insertNextTo = row }
+                .disabled(!editor.canInsertPage)
+                .help(editor.templates.isEmpty ? Copy.noSystemTemplate : "")
+            Button(Copy.deletePagesEllipsis(pages.count)) { editor.askRemoval(of: pages) }
+                .disabled(!editor.canRemove(pages.count))
         }
     }
 }
@@ -110,16 +117,16 @@ struct EditDialogs: ViewModifier {
                 if let editor { InsertPageSheet(editor: editor, page: page.value, inserted: show) }
             }
             .alert(
-                Copy.deletePageTitle((editor?.removalAsked ?? 0) + 1), isPresented: asked(\.removalAsked),
+                Copy.deletePagesTitle(editor?.removalAsked ?? []), isPresented: asked(\.removalAsked),
                 presenting: editor?.removalAsked
-            ) { page in
+            ) { pages in
                 Button(Copy.delete, role: .destructive) {
-                    guard let editor, editor.removePage(at: page) else { return }
-                    show(min(page, editor.pageCount - 1))
+                    guard let editor, let first = pages.first, editor.removePages(at: pages) else { return }
+                    show(min(first, editor.pageCount - 1))
                 }
                 Button(Copy.cancel, role: .cancel) {}
-            } message: { _ in
-                Text(Copy.deletePagesMessage(1))
+            } message: { pages in
+                Text(Copy.deletePagesMessage(pages))
             }
             .alert(
                 Copy.revertTitle(editor?.revertCandidate.map(RevertCommands.title) ?? ""),

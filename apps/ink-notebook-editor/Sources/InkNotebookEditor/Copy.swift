@@ -204,6 +204,11 @@ nonisolated enum Copy {
     static let insertPageEllipsis = String(localized: "Insert Page…")
     static let deletePageEllipsis = String(localized: "Delete Page…")
 
+    /// Delete Page… for one page, «Delete 3 Pages…» for several (#329).
+    static func deletePagesEllipsis(_ count: Int) -> String {
+        count > 1 ? String(localized: "Delete \(count) Pages…") : deletePageEllipsis
+    }
+
     static func beforePage(_ page: Int) -> String {
         String(localized: "Before Page \(page)")
     }
@@ -224,16 +229,26 @@ nonisolated enum Copy {
         String(localized: "Delete page \(page)?")
     }
 
-    static func deletePagesMessage(_ count: Int) -> String {
-        String(
-            localized: "Pages to delete: \(count). The tablet deletes them with their ink; Edit › Undo puts them back.")
+    /// The confirmation's title: the page by its number, or how many pages, from 0-based `pages`.
+    static func deletePagesTitle(_ pages: [Int]) -> String {
+        pages.count == 1 ? deletePageTitle(pages[0] + 1) : String(localized: "Delete \(pages.count) pages?")
     }
+
+    /// The confirmation's message, naming each page of several by its number, from 0-based `pages`.
+    static func deletePagesMessage(_ pages: [Int]) -> String {
+        guard pages.count > 1 else {
+            return String(localized: "The tablet deletes the page with its ink. Edit › Undo puts it back.")
+        }
+        let numbers = pages.map { String($0 + 1) }.formatted(.list(type: .and))
+        return String(localized: "The tablet deletes pages \(numbers) with their ink. Edit › Undo puts them back.")
+    }
+
+    static let noSystemTemplate = String(localized: "Pages with custom templates cannot be added from the Mac yet.")
 
     /// A template's name as the menu shows it, from its style: `style_8mm_ruled` reads «8mm ruled».
     /// shortcut: made from the style id, not the tablet's own names; use those once `inkctl` lists
     /// the tablet's templates (#329).
     static func templateName(_ style: String) -> String {
-        if style.hasPrefix("user_") { return String(localized: "Custom template") }
         let words = style.replacingOccurrences(of: "style_", with: "").replacingOccurrences(of: "_", with: " ")
         return words.prefix(1).uppercased() + words.dropFirst()
     }
@@ -271,8 +286,10 @@ nonisolated enum Copy {
         switch edit {
         case .movePage: String(localized: "Move Page")
         case .insertPage: String(localized: "Insert Page")
-        case .removePage: String(localized: "Delete Page")
-        case .restorePage: String(localized: "Restore Page")
+        case .removePages(let at) where at.count > 1: String(localized: "Delete Pages")
+        case .removePages: String(localized: "Delete Page")
+        case .restorePages(let at) where at.count > 1: String(localized: "Restore Pages")
+        case .restorePages: String(localized: "Restore Page")
         case .moveElements: String(localized: "Move")
         case .insertPicture: String(localized: "Insert Picture")
         case .insertText: String(localized: "Insert Text Box")

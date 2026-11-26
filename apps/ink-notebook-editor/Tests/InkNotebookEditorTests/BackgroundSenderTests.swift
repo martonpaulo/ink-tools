@@ -74,7 +74,7 @@ import Testing
             .movePage(from: 0, to: 1), .insertText("a", rect: rect, fontSize: 40),
             .insertPicture(URL(filePath: "/tmp/p.png"), rect: rect),
             .placeElements([ElementPlacement(number: 1, rect: rect)]), .deleteElements([1]),
-            .insertPage(template: "style_white"), .removePage,
+            .insertPage(template: "style_white"), .removePages([0]),
         ]
         let writes: Set<String> = ["insertElements", "modifyElements", "deleteElements", "insertPage", "removePage"]
         for change in changes {

@@ -119,12 +119,16 @@ import Testing
         let insert = try #require(
             TabletOperation(.insertPage(at: 2, template: "style_white"), note: Self.note, baseHash: "h"))
         #expect(insert.route == .tablet && insert.helperOperations == [.insertPage(page: 2, template: "style_white")])
-        let remove = try #require(TabletOperation(.removePage(at: 1), note: Self.note, baseHash: "h"))
+        let remove = try #require(TabletOperation(.removePages(at: [1]), note: Self.note, baseHash: "h"))
         #expect(remove.helperOperations == [.removePage(page: 1)] && remove.editedPages == [1])
-        #expect(TabletOperation(.restorePage(at: 1), note: Self.note, baseHash: "h") == nil)
+        // Several pages: one request, highest first, so each number still names its page.
+        let several = try #require(TabletOperation(.removePages(at: [0, 3, 1]), note: Self.note, baseHash: "h"))
+        #expect(several.helperOperations == [.removePage(page: 3), .removePage(page: 1), .removePage(page: 0)])
+        #expect(several.editedPages == [0, 1, 3] && several.page == 0 && several.route == .tablet)
+        #expect(TabletOperation(.restorePages(at: [1]), note: Self.note, baseHash: "h") == nil)
         let backup = URL(filePath: "/tmp/backup.note")
         let restore = try #require(
-            TabletOperation(.restorePage(at: 1), note: Self.note, baseHash: "h", backup: backup))
+            TabletOperation(.restorePages(at: [1]), note: Self.note, baseHash: "h", backup: backup))
         #expect(restore.route == .mac && restore.change == .restoreBackup(backup))
         #expect(restore.editedPages.isEmpty && restore.helperOperations.isEmpty)
     }
@@ -162,7 +166,7 @@ import Testing
     @Test func anOperationOnAnotherBaseIsRefusedBeforeAnyCall() async throws {
         let tablet = FakeTablet(bytes: Data("base".utf8))
         let copy = try copy("newer")
-        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .removePage)
+        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .removePages([0]))
         await #expect(throws: WriteFailure.staleBase) { try await self.path(tablet).send(operation, copy: copy) }
         #expect(tablet.calls.isEmpty)
         #expect(try NoteBackups(folder: folder.appending(path: "Backups")).list(for: Self.note).isEmpty)

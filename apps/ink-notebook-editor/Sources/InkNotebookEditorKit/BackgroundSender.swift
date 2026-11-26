@@ -105,7 +105,7 @@ public struct EditQueue<Undo: Sendable & Equatable>: Sendable, Equatable {
 /// The pages to draw again after an operation applied, from 0; nil for all of them.
 public func pagesToRedraw(after operation: TabletOperation) -> Set<Int>? {
     switch operation.change {
-    case .movePage, .insertPage, .removePage, .restoreBackup: nil
+    case .movePage, .insertPage, .removePages, .restoreBackup: nil
     default: [operation.page]
     }
 }

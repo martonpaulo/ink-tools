@@ -9,7 +9,10 @@ public enum PageMove: Sendable, CaseIterable {
 /// never wraps; a notebook with no pages has no current page.
 public struct PageNavigator: Sendable, Equatable {
     public let pageCount: Int
-    public private(set) var index: Int?
+    public private(set) var index: Int? {
+        // A page turned outside the list's selection leaves it.
+        didSet { if let index, !picked.contains(index) { picked = [] } }
+    }
 
     public init(pageCount: Int, index: Int = 0) {
         self.pageCount = max(pageCount, 0)
@@ -40,5 +43,30 @@ public struct PageNavigator: Sendable, Equatable {
     public mutating func show(_ page: Int) {
         guard (0..<pageCount).contains(page) else { return }
         index = page
+    }
+
+    /// The pages the page list selects with Command-click or Shift-click (#329).
+    public private(set) var picked: Set<Int> = []
+
+    /// The pages a page command acts on: the list's selection when it holds the current page, else
+    /// the current page alone. Lowest first.
+    public var selectedPages: [Int] {
+        guard let index else { return [] }
+        return picked.contains(index) ? picked.sorted() : [index]
+    }
+
+    /// Takes the page list's selection: the current page becomes the page the click reached, the
+    /// far end of the pages it added (a Shift-click down the list ends at its highest), else the
+    /// selection's lowest page when the current one left it. Pages outside the notebook are ignored.
+    public mutating func pick(_ pages: Set<Int>) {
+        let kept = pages.filter((0..<pageCount).contains)
+        let added = kept.subtracting(selectedPages)
+        let below = added.allSatisfy { $0 > (index ?? 0) }
+        picked = kept
+        if let page = below ? added.max() : added.min() {
+            index = page
+        } else if let index, !kept.contains(index), let page = kept.min() {
+            self.index = page
+        }
     }
 }

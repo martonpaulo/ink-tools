@@ -40,8 +40,8 @@ final class NoteEditor {
     var revertCandidate: URL?
     /// The page Edit › Insert Page… adds next to, while its sheet shows (#329).
     var insertNextTo: Int?
-    /// The page Edit › Delete Page… removes, while its confirmation shows (#329).
-    var removalAsked: Int?
+    /// The pages Edit › Delete Page… removes, lowest first, while its confirmation shows (#329).
+    var removalAsked: [Int]?
     /// The picture or text an insert waits on, while its sheet shows (#264).
     var insertRequest: InsertRequest?
     /// A restore is running: no edit starts meanwhile.
@@ -162,19 +162,41 @@ final class NoteEditor {
         record(.insertPage(at: at, template: template))
     }
 
-    /// Removes page `at` (from 0); never the last page (#329).
+    /// Removes the pages `at` (each from 0) as one edit and one Undo; never every page (#329).
     @discardableResult
-    func removePage(at: Int) -> Bool {
-        record(.removePage(at: at))
+    func removePages(at: [Int]) -> Bool {
+        record(.removePages(at: at))
     }
 
-    /// Whether a page may be removed: a note keeps at least one page.
-    var canRemovePage: Bool { canEdit && pageCount > 1 }
+    /// Whether `count` pages may be removed: a note keeps at least one page.
+    func canRemove(_ count: Int) -> Bool { canEdit && count > 0 && count < pageCount }
 
-    /// The templates the note's pages use, in page order, each once: what an added page may take.
+    /// Whether a page may be removed.
+    var canRemovePage: Bool { canRemove(1) }
+
+    /// Asks the window to confirm the removal of `pages`; false when they cannot be removed.
+    @discardableResult
+    func askRemoval(of pages: [Int]) -> Bool {
+        guard canRemove(pages.count) else { return false }
+        removalAsked = pages
+        return true
+    }
+
+    /// Whether a page may be added: the note's pages use a system template the tablet takes.
+    var canInsertPage: Bool { canEdit && !templates.isEmpty }
+
+    /// The system templates the note's pages use, in page order, each once: what an added page may
+    /// take. A custom template is left out: the tablet takes it only as its picture's path.
     var templates: [String] {
         var seen = Set<String>()
-        return shown.pages.compactMap(\.style).filter { seen.insert($0).inserted }
+        return shown.pages.compactMap { $0.style.flatMap(PageTemplate.systemName(ofStyle:)) }
+            .filter { seen.insert($0).inserted }
+    }
+
+    /// The system template of page `index`, when it has one.
+    func template(of index: Int) -> String? {
+        guard shown.pages.indices.contains(index) else { return nil }
+        return shown.pages[index].style.flatMap(PageTemplate.systemName(ofStyle:))
     }
 
     private func record(_ edit: NoteEdit) -> Bool {
@@ -493,11 +515,14 @@ final class NoteEditor {
             return try NoteFile(bytes: NoteWriter.movePage(note, from: from, to: to))
         case .insertPage(let at, let template):
             // The new page takes the template layer of a page that has its template.
-            let source = note.pages.firstIndex { $0.style == template } ?? min(at, note.pages.count - 1)
+            let source =
+                note.pages.firstIndex { $0.style.flatMap(PageTemplate.systemName(ofStyle:)) == template }
+                ?? min(at, note.pages.count - 1)
             return try NotePreview.insertingPage(note, at: at, like: source)
-        case .removePage(let at):
-            return try NotePreview.removingPage(note, at: at)
-        case .restorePage, .revertInsert, .restoreElements:
+        case .removePages(let at):
+            // Highest first, so each number still names its page.
+            return try at.sorted(by: >).reduce(note) { try NotePreview.removingPage($0, at: $1) }
+        case .restorePages, .revertInsert, .restoreElements:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
         case .moveElements, .insertPicture, .insertText, .deleteElements:

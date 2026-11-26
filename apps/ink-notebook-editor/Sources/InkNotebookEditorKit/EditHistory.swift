@@ -8,10 +8,10 @@ public enum NoteEdit: Sendable, Equatable {
     case movePage(from: Int, to: Int)
     /// Adds a page of no ink at `at` (from 0, up to the page count) on a system or note template.
     case insertPage(at: Int, template: String)
-    /// Removes the page at `at`, from 0; never the last page.
-    case removePage(at: Int)
-    /// Puts back the page a removal took out at `at`, with its content: the undo of a removal.
-    case restorePage(at: Int)
+    /// Removes the pages at `at`, each from 0, as one edit; never every page of the note.
+    case removePages(at: [Int])
+    /// Puts back the pages a removal took out at `at`, with their content: the undo of a removal.
+    case restorePages(at: [Int])
     /// Moves a selection on its page (#325).
     case moveElements(ElementMove)
     /// Inserts a picture, already in Manta greys, at `rect` on `page` (#264).
@@ -31,9 +31,9 @@ public enum NoteEdit: Sendable, Equatable {
     public var inverse: NoteEdit {
         switch self {
         case .movePage(let from, let to): .movePage(from: to, to: from)
-        case .insertPage(let at, _): .removePage(at: at)
-        case .removePage(let at): .restorePage(at: at)
-        case .restorePage(let at): .removePage(at: at)
+        case .insertPage(let at, _): .removePages(at: [at])
+        case .removePages(let at): .restorePages(at: at)
+        case .restorePages(let at): .removePages(at: at)
         case .moveElements(let move): .moveElements(move.inverse)
         case .insertPicture(let page, _, _), .insertText(let page, _, _, _): .revertInsert(page: page)
         // An insert undone is done again by Redo, never by this inverse.
@@ -46,7 +46,7 @@ public enum NoteEdit: Sendable, Equatable {
     /// Whether this edit puts back a backup, so the editor names the backup its undo restores.
     public var restoresBackup: Bool {
         switch self {
-        case .restorePage, .revertInsert, .restoreElements: true
+        case .restorePages, .revertInsert, .restoreElements: true
         default: false
         }
     }
@@ -54,7 +54,7 @@ public enum NoteEdit: Sendable, Equatable {
     /// Whether the backup kept before this edit's send is what undoes it.
     public var undoneByBackup: Bool {
         switch self {
-        case .removePage, .insertPicture, .insertText, .deleteElements: true
+        case .removePages, .insertPicture, .insertText, .deleteElements: true
         default: false
         }
     }
@@ -63,20 +63,30 @@ public enum NoteEdit: Sendable, Equatable {
     static let newPage = "new"
 
     /// The page order after this edit, `pages` holding each page's id; nil when the edit does not
-    /// fit the note: a page outside it, a move to where the page already is, or the removal of
-    /// the last page.
+    /// fit the note: a page outside it, a move to where the page already is, a page named twice,
+    /// or the removal of every page.
     public func apply(to pages: [String]) -> [String]? {
         var changed = pages
         switch self {
         case .movePage(let from, let to):
             guard pages.indices.contains(from), pages.indices.contains(to), from != to else { return nil }
             changed.insert(changed.remove(at: from), at: to)
-        case .insertPage(let at, _), .restorePage(let at):
+        case .insertPage(let at, _):
             guard (0...pages.count).contains(at) else { return nil }
             changed.insert(Self.newPage, at: at)
-        case .removePage(let at):
-            guard pages.indices.contains(at), pages.count > 1 else { return nil }
-            changed.remove(at: at)
+        case .restorePages(let at):
+            // Each page goes back at its place in the note before the removal, lowest first.
+            guard !at.isEmpty, Set(at).count == at.count else { return nil }
+            for index in at.sorted() {
+                guard (0...changed.count).contains(index) else { return nil }
+                changed.insert(Self.newPage, at: index)
+            }
+        case .removePages(let at):
+            guard !at.isEmpty, Set(at).count == at.count, at.count < pages.count,
+                at.allSatisfy(pages.indices.contains)
+            else { return nil }
+            // Highest first, so each number still names the page it named.
+            for index in at.sorted(by: >) { changed.remove(at: index) }
         case .moveElements(let move):
             // A move keeps the pages; it fits a page of the note and moves something.
             guard pages.indices.contains(move.page), !move.isEmpty else { return nil }

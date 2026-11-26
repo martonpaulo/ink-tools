@@ -187,21 +187,24 @@ final class RenderTests {
                     .padding(.top, 52)
             }
         }
-        for dark in [false, true] {
-            let alert = try Self.alertImage(
-                title: Copy.deletePageTitle(3), message: Copy.deletePagesMessage(1),
-                buttons: [Copy.delete, Copy.cancel], dark: dark)
-            for (sizeName, size) in Self.sizes {
-                let png = try await OffscreenWindow.png(
-                    of: AnyView(
-                        ZStack {
-                            NotebookView(pages: moved, page: 2, live: live, editor: editor)
-                            // The alert's panel draws its material behind it on screen only.
-                            Image(nsImage: alert)
-                                .background(.regularMaterial, in: .rect(cornerRadius: 16))
-                                .shadow(radius: 12)
-                        }), size: size, dark: dark)
-                try png.write(to: folder.appending(path: "delete-page-\(dark ? "dark" : "light")-\(sizeName).png"))
+        // One page, and two pages selected in the page list with Command-click.
+        for (name, pages) in [("delete-page", [2]), ("delete-pages", [1, 2])] {
+            for dark in [false, true] {
+                let alert = try Self.alertImage(
+                    title: Copy.deletePagesTitle(pages), message: Copy.deletePagesMessage(pages),
+                    buttons: [Copy.delete, Copy.cancel], dark: dark)
+                for (sizeName, size) in Self.sizes {
+                    let png = try await OffscreenWindow.png(
+                        of: AnyView(
+                            ZStack {
+                                NotebookView(pages: moved, page: 2, live: live, editor: editor, picked: Set(pages))
+                                // The alert's panel draws its material behind it on screen only.
+                                Image(nsImage: alert)
+                                    .background(.regularMaterial, in: .rect(cornerRadius: 16))
+                                    .shadow(radius: 12)
+                            }), size: size, dark: dark)
+                    try png.write(to: folder.appending(path: "\(name)-\(dark ? "dark" : "light")-\(sizeName).png"))
+                }
             }
         }
     }

@@ -118,7 +118,10 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   ([#330](https://github.com/martonpaulo/ink-tools/issues/330)).
 - Pages are added and deleted by the helper ([#329](https://github.com/martonpaulo/ink-tools/issues/329)); the Mac draws them at once from
   `NotePreview`, an in-memory copy never written or sent. A deleted page's ink is only in the
-  backup kept before its send, so its undo is that backup, by Revert to Backup's route B.
+  backup kept before its send, so its undo is that backup, by Revert to Backup's route B. Pages
+  selected together in the page list are deleted as one edit, one request and one Undo. An added
+  page is sent with its system template name (`PageTemplate`), without the screen suffix a page
+  style carries in the file, which the tablet refuses.
 - A selection moves by a drag on it or the arrow keys, a run of nudges one request
   ([#325](https://github.com/martonpaulo/ink-tools/issues/325)); no Mac code writes strokes, so `LiftedInk` draws the move at once from the
   page's own pixels until the tablet's copy comes back. On a note from a file the drag still takes

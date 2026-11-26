@@ -92,14 +92,29 @@ import Testing
         #expect(NoteEdit.insertPage(at: 1, template: "style_white").apply(to: pages) == ["a", "new", "b", "c"])
         #expect(NoteEdit.insertPage(at: 3, template: "style_white").apply(to: pages) == ["a", "b", "c", "new"])
         #expect(NoteEdit.insertPage(at: 4, template: "style_white").apply(to: pages) == nil)
-        #expect(NoteEdit.removePage(at: 0).apply(to: pages) == ["b", "c"])
-        #expect(NoteEdit.removePage(at: 3).apply(to: pages) == nil)
-        #expect(NoteEdit.removePage(at: 0).apply(to: ["a"]) == nil)
-        #expect(NoteEdit.insertPage(at: 1, template: "style_white").inverse == .removePage(at: 1))
-        #expect(NoteEdit.removePage(at: 2).inverse == .restorePage(at: 2))
-        #expect(NoteEdit.restorePage(at: 2).inverse == .removePage(at: 2))
-        let removed = NoteEdit.removePage(at: 1).apply(to: pages) ?? []
-        #expect(NoteEdit.restorePage(at: 1).apply(to: removed)?.count == pages.count)
+        #expect(NoteEdit.removePages(at: [0]).apply(to: pages) == ["b", "c"])
+        #expect(NoteEdit.removePages(at: [3]).apply(to: pages) == nil)
+        #expect(NoteEdit.removePages(at: [0]).apply(to: ["a"]) == nil)
+        #expect(NoteEdit.insertPage(at: 1, template: "style_white").inverse == .removePages(at: [1]))
+        #expect(NoteEdit.removePages(at: [2]).inverse == .restorePages(at: [2]))
+        #expect(NoteEdit.restorePages(at: [2]).inverse == .removePages(at: [2]))
+        let removed = NoteEdit.removePages(at: [1]).apply(to: pages) ?? []
+        #expect(NoteEdit.restorePages(at: [1]).apply(to: removed)?.count == pages.count)
+    }
+
+    /// Several pages removed as one edit (#329): the pages picked leave, never shifted ones, and
+    /// their restore puts each back at its place; every page, none, or a page twice is refused.
+    @Test func severalPagesAreRemovedAsOneEdit() {
+        let pages = ["a", "b", "c", "d"]
+        #expect(NoteEdit.removePages(at: [0, 2]).apply(to: pages) == ["b", "d"])
+        #expect(NoteEdit.removePages(at: [3, 1]).apply(to: pages) == ["a", "c"])
+        #expect(NoteEdit.removePages(at: [0, 1, 2, 3]).apply(to: pages) == nil)
+        #expect(NoteEdit.removePages(at: []).apply(to: pages) == nil)
+        #expect(NoteEdit.removePages(at: [1, 1]).apply(to: pages) == nil)
+        #expect(NoteEdit.removePages(at: [1, 4]).apply(to: pages) == nil)
+        let restored = NoteEdit.restorePages(at: [2, 0]).apply(to: ["b", "d"])
+        #expect(restored == ["new", "b", "new", "d"])
+        #expect(NoteEdit.removePages(at: [0, 2]).undoneByBackup && NoteEdit.restorePages(at: [0, 2]).restoresBackup)
     }
 
     /// An insert is undone by the backup kept before its send (#264).

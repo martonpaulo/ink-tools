@@ -42,8 +42,8 @@ public struct TabletOperation: Sendable, Equatable {
         case deleteElements([Int])
         /// Inserts a page at `page` with a system template such as `style_white`.
         case insertPage(template: String)
-        /// Removes the page at `page`.
-        case removePage
+        /// Removes the pages at these places, each from 0; `page` is the lowest.
+        case removePages([Int])
         /// Puts the note back as the backup kept before an edit: Revert to Backup's route, for
         /// the undo of a removal (#329).
         case restoreBackup(URL)
@@ -72,8 +72,9 @@ public struct TabletOperation: Sendable, Equatable {
             self.init(note: note, baseHash: baseHash, page: from, change: .movePage(from: from, to: to))
         case .insertPage(let at, let template):
             self.init(note: note, baseHash: baseHash, page: at, change: .insertPage(template: template))
-        case .removePage(let at):
-            self.init(note: note, baseHash: baseHash, page: at, change: .removePage)
+        case .removePages(let at):
+            guard let lowest = at.min() else { return nil }
+            self.init(note: note, baseHash: baseHash, page: lowest, change: .removePages(at.sorted()))
         case .moveElements(let move):
             self.init(note: note, baseHash: baseHash, page: move.page, change: .placeElements(move.placements))
         case .insertPicture(let page, let file, let rect):
@@ -85,7 +86,10 @@ public struct TabletOperation: Sendable, Equatable {
             self.init(
                 note: note, baseHash: baseHash, page: page,
                 change: .deleteElements(elements.map { $0.record + 1 }.sorted()))
-        case .restorePage(let page), .revertInsert(let page), .restoreElements(let page):
+        case .restorePages(let pages):
+            guard let backup, let lowest = pages.min() else { return nil }
+            self.init(note: note, baseHash: baseHash, page: lowest, change: .restoreBackup(backup))
+        case .revertInsert(let page), .restoreElements(let page):
             guard let backup else { return nil }
             self.init(note: note, baseHash: baseHash, page: page, change: .restoreBackup(backup))
         }
@@ -103,6 +107,7 @@ public struct TabletOperation: Sendable, Equatable {
     public var editedPages: Set<Int> {
         switch change {
         case .movePage, .insertPage, .restoreBackup: []
+        case .removePages(let pages): Set(pages)
         default: [page]
         }
     }
@@ -134,7 +139,8 @@ public struct TabletOperation: Sendable, Equatable {
             placements.map { .modifyElements(page: page, num: $0.number, rect: $0.rect) }
         case .deleteElements(let numbers): [.deleteElements(page: page, nums: numbers)]
         case .insertPage(let template): [.insertPage(page: page, template: template)]
-        case .removePage: [.removePage(page: page)]
+        // Highest first, so each number still names the page the owner picked.
+        case .removePages(let pages): pages.sorted(by: >).map { .removePage(page: $0) }
         }
     }
 }

@@ -120,10 +120,13 @@ import Testing
         tabletApplies { @Sendable in try NotePreview.insertingPage($0, at: 1, like: 0) }
         #expect(editor.insertPage(at: 1, template: template))
         #expect(editor.shown.pages.count == before.count + 1)
-        #expect(editor.shown.pages[1].style == template)
+        #expect(editor.shown.pages[1].style.flatMap(PageTemplate.systemName(ofStyle:)) == template)
         await settle(editor)
         #expect(try NoteFile(data: tablet.bytes).pages.count == before.count + 1)
         #expect(tablet.sent.first?["op"] as? String == "insertPage")
+        // The tablet takes the system name: the page's own style, with its screen suffix, is refused.
+        #expect(tablet.sent.first?["template"] as? String == template)
+        #expect(editor.shown.pages[0].style?.hasSuffix("_a5x2") == true && !template.hasSuffix("_a5x2"))
         tabletApplies { @Sendable in try NotePreview.removingPage($0, at: 1) }
         editor.undo()
         await settle(editor)
@@ -134,7 +137,7 @@ import Testing
     @Test func aDeletedPageComesBackWithItsInkByItsBackup() async throws {
         let editor = try editor()
         tabletApplies { @Sendable in try NotePreview.removingPage($0, at: 0) }
-        #expect(editor.removePage(at: 0))
+        #expect(editor.removePages(at: [0]))
         #expect(editor.shown.pages.count == 3)
         await settle(editor)
         #expect(try NoteFile(data: tablet.bytes).pages.count == 3)
@@ -144,18 +147,49 @@ import Testing
         await settle(editor)
         #expect(tablet.bytes == original)
         #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
-        #expect(editor.history.redoKind == .removePage(at: 0))
+        #expect(editor.history.redoKind == .removePages(at: [0]))
+    }
+
+    /// Two pages deleted at once (#329): drawn at once, one request of two removals, highest first,
+    /// and one Undo puts both back with their ink by the backup kept before the send.
+    @Test func severalPagesAreDeletedAtOnceAndOneUndoPutsThemBack() async throws {
+        let editor = try editor()
+        let before = Self.ids(editor.shown)
+        tabletApplies { @Sendable in try NotePreview.removingPage(NotePreview.removingPage($0, at: 3), at: 1) }
+        #expect(editor.removePages(at: [1, 3]))
+        #expect(Self.ids(editor.shown) == [before[0], before[2]])
+        await settle(editor)
+        #expect(try Self.ids(tablet.bytes) == [before[0], before[2]])
+        let removals = tablet.sent.filter { $0["op"] as? String == "removePage" }
+        #expect(removals.compactMap { $0["page"] as? Int } == [3, 1])
+        #expect(Copy.name(of: try #require(editor.history.undoKind)) == "Delete Pages")
+        editor.undo()
+        #expect(editor.shown.pages.count == before.count)
+        await settle(editor)
+        #expect(tablet.bytes == original)
+        #expect(editor.history.redoKind == .removePages(at: [1, 3]))
+    }
+
+    @Test func everyPageAtOnceIsNeverDeleted() throws {
+        let editor = try editor()
+        #expect(!editor.canRemove(editor.pageCount))
+        editor.askRemoval(of: Array(0..<editor.pageCount))
+        #expect(editor.removalAsked == nil)
+        #expect(!editor.removePages(at: Array(0..<editor.pageCount)))
+        #expect(editor.pending.isEmpty && tablet.calls.isEmpty)
+        editor.askRemoval(of: [0, 2])
+        #expect(editor.removalAsked == [0, 2])
     }
 
     @Test func theLastPageIsNeverDeleted() async throws {
         let editor = try editor()
         tabletApplies { @Sendable in try NotePreview.removingPage($0, at: 0) }
         for _ in 0..<3 {
-            #expect(editor.removePage(at: 0))
+            #expect(editor.removePages(at: [0]))
             await settle(editor)
         }
         #expect(!editor.canRemovePage)
-        #expect(!editor.removePage(at: 0))
+        #expect(!editor.removePages(at: [0]))
         #expect(editor.pending.isEmpty && editor.shown.pages.count == 1)
     }
 
