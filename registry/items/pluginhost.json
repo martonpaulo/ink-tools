@@ -51,7 +51,7 @@
     },
     {
       "id": "pluginhost.file-sandbox",
-      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders; the built-in Sticker plugin keeps its library in its own private folder, and its import lists .sticker files in the shared folders named here",
+      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders; the built-in Sticker plugin keeps its library in its own private folder, and its Import lists sticker collections, ZIP files with the stickerCollectionExtension that hold .sticker files, from stickerCollectionFolder; a sticker path in one of the stickerImportFolders is moved to the plugin's own folder",
       "level": 5,
       "impact": "user",
       "owner": "picture-search",
@@ -61,9 +61,9 @@
       ],
       "reason": "the SDK does not list the folders a plugin may write; device rounds showed the whitelist",
       "evidence": {
-        "source": "device rounds (#22); packages/picture-search SafePaths; the Sticker plugin's import folders: device data (#35)",
+        "source": "device rounds (#22); packages/picture-search SafePaths; the Sticker plugin's import: device data, and device round 7 (#35), where Import opened at EXPORT and listed neither a lone .sticker there nor a folder of them",
         "version": "PluginHost 1.00.2610150",
-        "date": "2026-11-15"
+        "date": "2026-11-26"
       },
       "upgradePath": "an SDK file API that names the allowed folders",
       "lastVerified": "unverified",
@@ -81,6 +81,8 @@
           "/data/data/com.ratta.supernote.pluginhost/files/plugins",
           "/data/user/0/com.ratta.supernote.pluginhost/files/plugins"
         ],
+        "stickerCollectionExtension": "snstk",
+        "stickerCollectionFolder": "EXPORT",
         "stickerImportFolders": [
           "Document",
           "EXPORT",
