@@ -18,6 +18,8 @@ public enum NoteEdit: Sendable, Equatable {
     case insertPicture(page: Int, file: URL, rect: EditRect)
     /// Inserts a typed text box at `rect` on `page` (#264).
     case insertText(page: Int, text: String, rect: EditRect, fontSize: Int)
+    /// Resizes, rotates or flips a selection on its page (#326).
+    case transformElements(ElementTransform)
     /// Deletes the selected elements of `page` (#327).
     case deleteElements(page: Int, elements: [MovedElement])
     /// Puts `page`'s deleted elements back, from the backup kept before the delete's send: no
@@ -38,6 +40,8 @@ public enum NoteEdit: Sendable, Equatable {
         case .insertPicture(let page, _, _), .insertText(let page, _, _, _): .revertInsert(page: page)
         // An insert undone is done again by Redo, never by this inverse.
         case .revertInsert(let page): .revertInsert(page: page)
+        // A matrix inverse would drift by the tablet's whole-pixel rounding: the backup is exact.
+        case .transformElements(let transform): .restoreElements(page: transform.page)
         case .deleteElements(let page, _): .restoreElements(page: page)
         case .restoreElements(let page): .restoreElements(page: page)
         }
@@ -54,7 +58,7 @@ public enum NoteEdit: Sendable, Equatable {
     /// Whether the backup kept before this edit's send is what undoes it.
     public var undoneByBackup: Bool {
         switch self {
-        case .removePages, .insertPicture, .insertText, .deleteElements: true
+        case .removePages, .insertPicture, .insertText, .deleteElements, .transformElements: true
         default: false
         }
     }
@@ -95,6 +99,10 @@ public enum NoteEdit: Sendable, Equatable {
             guard pages.indices.contains(page) else { return nil }
         case .deleteElements(let page, let elements):
             guard pages.indices.contains(page), !elements.isEmpty else { return nil }
+        case .transformElements(let transform):
+            guard pages.indices.contains(transform.page), !transform.isEmpty, transform.refusal == nil else {
+                return nil
+            }
         }
         return changed
     }

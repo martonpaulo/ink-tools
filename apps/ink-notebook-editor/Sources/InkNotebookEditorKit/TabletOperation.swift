@@ -38,6 +38,8 @@ public struct TabletOperation: Sendable, Equatable {
         case insertPicture(URL, rect: EditRect)
         /// Moves or resizes each element, by its number on the page from 1, to its rect.
         case placeElements([ElementPlacement])
+        /// Resizes, rotates or flips elements: each target one tablet call, in order (#326).
+        case transformElements([TransformTarget])
         /// Deletes the elements, by their numbers on the page from 1.
         case deleteElements([Int])
         /// Inserts a page at `page` with a system template such as `style_white`.
@@ -82,6 +84,9 @@ public struct TabletOperation: Sendable, Equatable {
         case .insertText(let page, let text, let rect, let fontSize):
             self.init(
                 note: note, baseHash: baseHash, page: page, change: .insertText(text, rect: rect, fontSize: fontSize))
+        case .transformElements(let transform):
+            guard transform.refusal == nil else { return nil }
+            self.init(note: note, baseHash: baseHash, page: transform.page, change: .transformElements(transform.targets))
         case .deleteElements(let page, let elements):
             self.init(
                 note: note, baseHash: baseHash, page: page,
@@ -137,6 +142,15 @@ public struct TabletOperation: Sendable, Equatable {
             [.insertElements(page: page, elements: [.picture(file.path(percentEncoded: false), rect: rect)])]
         case .placeElements(let placements):
             placements.map { .modifyElements(page: page, num: $0.number, rect: $0.rect) }
+        case .transformElements(let targets):
+            targets.map { target in
+                switch target {
+                case .strokes(let numbers, let matrix): .transformElements(page: page, nums: numbers, matrix: matrix.values)
+                case .textBox(let number, let rect): .modifyElements(page: page, num: number, rect: rect)
+                case .picture(let number, let rect, let file):
+                    .modifyElements(page: page, num: number, rect: rect, file: file.path(percentEncoded: false))
+                }
+            }
         case .deleteElements(let numbers): [.deleteElements(page: page, nums: numbers)]
         case .insertPage(let template): [.insertPage(page: page, template: template)]
         // Highest first, so each number still names the page the owner picked.
@@ -159,13 +173,15 @@ public struct ElementPlacement: Sendable, Equatable {
 /// An operation of the tablet helper, in its JSON shape.
 public enum HelperOperation: Sendable, Equatable, Encodable {
     case insertElements(page: Int, elements: [HelperElement])
-    case modifyElements(page: Int, num: Int, rect: EditRect)
+    /// A picture names its new file: the helper inserts it at `rect` and deletes the old one.
+    case modifyElements(page: Int, num: Int, rect: EditRect, file: String? = nil)
+    case transformElements(page: Int, nums: [Int], matrix: [Double])
     case deleteElements(page: Int, nums: [Int])
     case insertPage(page: Int, template: String)
     case removePage(page: Int)
     case openNote
 
-    private enum Key: String, CodingKey { case op, page, elements, num, rect, nums, template }
+    private enum Key: String, CodingKey { case op, page, elements, num, rect, file, nums, matrix, template }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: Key.self)
@@ -174,11 +190,17 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
             try container.encode("insertElements", forKey: .op)
             try container.encode(page, forKey: .page)
             try container.encode(elements, forKey: .elements)
-        case .modifyElements(let page, let num, let rect):
+        case .modifyElements(let page, let num, let rect, let file):
             try container.encode("modifyElements", forKey: .op)
             try container.encode(page, forKey: .page)
             try container.encode(num, forKey: .num)
             try container.encode(rect, forKey: .rect)
+            try container.encodeIfPresent(file, forKey: .file)
+        case .transformElements(let page, let nums, let matrix):
+            try container.encode("transformElements", forKey: .op)
+            try container.encode(page, forKey: .page)
+            try container.encode(nums, forKey: .nums)
+            try container.encode(matrix, forKey: .matrix)
         case .deleteElements(let page, let nums):
             try container.encode("deleteElements", forKey: .op)
             try container.encode(page, forKey: .page)

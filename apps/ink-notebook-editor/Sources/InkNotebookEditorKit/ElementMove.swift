@@ -10,17 +10,22 @@ public struct MovedElement: Sendable, Equatable {
     public let box: EditRect
     public let points: [CGPoint]
     public let isArea: Bool
+    /// A picture: it moves, turns and flips as a new picture file (#326).
+    public let isPicture: Bool
 
-    public init(record: Int, box: EditRect, points: [CGPoint] = [], isArea: Bool = true) {
+    public init(record: Int, box: EditRect, points: [CGPoint] = [], isArea: Bool = true, isPicture: Bool = false) {
         self.record = record
         self.box = box
         self.points = points
         self.isArea = isArea
+        self.isPicture = isPicture
     }
 
     /// The element as a selection names it, where the move started.
     public init(_ item: Selectable) {
-        self.init(record: item.record, box: EditRect(item.bounds), points: item.points, isArea: item.isArea)
+        self.init(
+            record: item.record, box: EditRect(item.bounds), points: item.points, isArea: item.isArea,
+            isPicture: item.isPicture)
     }
 
     /// The element as the page shows it before the move, for drawing it lifted.
@@ -28,13 +33,14 @@ public struct MovedElement: Sendable, Equatable {
         Selectable(
             id: record,
             bounds: CGRect(x: box.left, y: box.top, width: box.right - box.left, height: box.bottom - box.top),
-            points: points, isArea: isArea, record: record)
+            points: points, isArea: isArea, isPicture: isPicture, record: record)
     }
 
     func moved(_ dx: Int, _ dy: Int) -> MovedElement {
         MovedElement(
             record: record, box: ElementMove.offset(box, dx, dy),
-            points: points.map { CGPoint(x: $0.x + CGFloat(dx), y: $0.y + CGFloat(dy)) }, isArea: isArea)
+            points: points.map { CGPoint(x: $0.x + CGFloat(dx), y: $0.y + CGFloat(dy)) }, isArea: isArea,
+            isPicture: isPicture)
     }
 }
 

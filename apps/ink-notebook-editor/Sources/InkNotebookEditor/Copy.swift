@@ -315,6 +315,12 @@ nonisolated enum Copy {
         case .insertPicture: String(localized: "Insert Picture")
         case .insertText: String(localized: "Insert Text Box")
         case .revertInsert: String(localized: "Remove Insert")
+        case .transformElements(let transform):
+            switch transform.kind {
+            case .resize: String(localized: "Resize")
+            case .rotate: String(localized: "Rotate")
+            case .flip: String(localized: "Flip")
+            }
         case .deleteElements: String(localized: "Delete")
         case .restoreElements: String(localized: "Restore")
         }

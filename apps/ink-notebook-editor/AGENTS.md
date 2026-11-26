@@ -129,6 +129,12 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   ([#325](https://github.com/martonpaulo/ink-tools/issues/325)); no Mac code writes strokes, so `LiftedInk` draws the move at once from the
   page's own pixels until the tablet's copy comes back. On a note from a file the drag still takes
   the selection out to another app.
+- A resize, a rotation or a flip of a selection is one `ElementTransform`
+  ([#326](https://github.com/martonpaulo/ink-tools/issues/326)): one matrix about the selection frame,
+  kept on the page; strokes take the helper's `transformElements`, a text box its new rect and is
+  never turned, a picture a new picture file at its new box; its undo is the backup kept before its
+  send. The app does not offer it yet: the handles, the menu items and the picture files are the open
+  Tasks of [#326](https://github.com/martonpaulo/ink-tools/issues/326).
 - Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
   or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.

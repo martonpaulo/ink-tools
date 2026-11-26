@@ -556,8 +556,8 @@ final class NoteEditor {
         case .restorePages, .revertInsert, .restoreElements:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
-        case .moveElements, .insertPicture, .insertText, .deleteElements:
-            // Drawn over the page: a move from its lifted ink (`moves(on:)`), an insert from its
+        case .moveElements, .transformElements, .insertPicture, .insertText, .deleteElements:
+            // Drawn over the page: a move or a transform from its lifted ink, an insert from its
             // picture or its text (`insertions(on:)`).
             return note
         }
