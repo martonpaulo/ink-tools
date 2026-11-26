@@ -243,11 +243,24 @@ nonisolated enum Copy {
         return String(localized: "The tablet deletes pages \(numbers) with their ink. Edit › Undo puts them back.")
     }
 
-    static let noSystemTemplate = String(localized: "Pages with custom templates cannot be added from the Mac yet.")
+    static let noSystemTemplate = String(localized: "No page of this note uses a template the Mac can send.")
+    static let readingTemplates = String(localized: "Reading the tablet's templates…")
+    static let customTemplates = String(localized: "Custom")
+
+    /// Why the sheet offers only the note's own templates, with inkctl's words.
+    static func templatesFailed(_ reason: String) -> String {
+        String(localized: "The tablet's templates did not load, so only this note's templates are offered: \(reason)")
+    }
+
+    /// A template's name as the picker shows it: a system one from its id, a custom one by its file name.
+    static func templateName(_ choice: PageTemplateChoice) -> String {
+        choice.isCustom ? choice.name : templateName(choice.value)
+    }
 
     /// A template's name as the menu shows it, from its style: `style_8mm_ruled` reads «8mm ruled».
-    /// shortcut: made from the style id, not the tablet's own names; use those once `inkctl` lists
-    /// the tablet's templates (#329).
+    /// shortcut: made from the style id, since the tablet's list names each system template only by
+    /// its id (sn-plugin-lib 0.2.3 answers `name`, `vUri`, `hUri`, #451); use the tablet's own words
+    /// if a later list gives them.
     static func templateName(_ style: String) -> String {
         let words = style.replacingOccurrences(of: "style_", with: "").replacingOccurrences(of: "_", with: " ")
         return words.prefix(1).uppercased() + words.dropFirst()

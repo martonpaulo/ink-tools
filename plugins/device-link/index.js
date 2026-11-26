@@ -39,6 +39,7 @@ import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
 import {working} from './src/working';
 import {editAction} from './src/editor/operations';
+import {templatesAction} from './src/editor/templates';
 import {deviceEditHost, readEditorRequest} from './src/editor/device';
 import {PenGate} from './src/editor/penGate';
 import {saveNoteAction} from './src/editor/save';
@@ -167,13 +168,13 @@ registerSettingsEntry(() => {
 
 // The Ink Notebook Editor's tablet helper (#312): inkctl's request file, read on the native timer,
 // which ticks with no view open; an edit waits while the pen is on the page. `save-note` saves the
-// open note before inkctl opens another (#426).
+// open note before inkctl opens another (#426); `templates` lists the tablet's page templates (#451).
 const pen = new PenGate();
 report('pen listener', onMotion(event => pen.motion(event)));
 const editHost = deviceEditHost(pen);
 startActionChannel({
   plugin: 'device-link',
   read: () => readEditorRequest(relay()),
-  actions: {edit: editAction(editHost), 'save-note': saveNoteAction(editHost)},
+  actions: {edit: editAction(editHost), 'save-note': saveNoteAction(editHost), templates: templatesAction(editHost)},
   timers: nativeTimers('DeviceLinkTicks'),
 });

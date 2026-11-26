@@ -2,6 +2,7 @@
 import {ActionRefused, fail, ok} from '@ink-tools/sn-adapter/official';
 import {EDITOR_FOLDER, editAction, LIMITS, NOTES_FOLDER, type EditHost} from '../src/editor/operations';
 import {PEN_PAUSE, PenGate} from '../src/editor/penGate';
+import {CUSTOM_TEMPLATE_FOLDER, templatesAction} from '../src/editor/templates';
 
 const NOTE = `${NOTES_FOLDER}Tests/Editor.note`;
 const OTHER = `${NOTES_FOLDER}Tests/Open.note`;
@@ -158,6 +159,9 @@ describe('each refusal is named, with the open note', () => {
     ['an unknown op', {path: NOTE, ops: [{op: 'format'}]}, 'bad-request'],
     ['a colour that is not a pen tone', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{kind: 'stroke', points: [[1, 1], [2, 2]], penColor: 0xff0000, thickness: 400}]}]}, 'bad-request'],
     ['a rect off the page', {path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: {left: 0, top: 0, right: 5000, bottom: 10}}]}, 'bad-request'],
+    ['a template path outside MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: '/storage/emulated/0/Document/grid.png'}]}, 'bad-request'],
+    ['a template path that climbs out of MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: `${CUSTOM_TEMPLATE_FOLDER}/../Note/grid.png`}]}, 'bad-request'],
+    ['a template in a folder of MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: `${CUSTOM_TEMPLATE_FOLDER}/fonts/grid.png`}]}, 'bad-request'],
     ['a picture outside the helper folder', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{kind: 'picture', file: '/sdcard/x.png', rect: RECT}]}]}, 'bad-request'],
   ])('%s is refused before any call', async (_name, args, name) => {
     const {fake, calls} = host();
@@ -172,6 +176,12 @@ describe('each refusal is named, with the open note', () => {
     const {fake, calls} = host();
     await editAction(fake)({path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{kind: 'picture', file: `${EDITOR_FOLDER}p1.png`, rect: RECT}]}]});
     expect(calls[0]).toBe('build picture');
+  });
+
+  it('a custom template is taken as the full path of its PNG in MyStyle (#451)', async () => {
+    const {fake, calls} = host();
+    await editAction(fake)({path: NOTE, ops: [{op: 'insertPage', page: 1, template: `${CUSTOM_TEMPLATE_FOLDER}/Week plan.png`}]});
+    expect(calls).toEqual([`insertPage ${JSON.stringify([NOTE, 1, `${CUSTOM_TEMPLATE_FOLDER}/Week plan.png`])}`]);
   });
 
   it('a page past the note is page-out-of-range; inserting at the end is allowed', async () => {
@@ -253,5 +263,39 @@ describe('the pen pause', () => {
     const time = clock();
     expect(await new PenGate(time).idle()).toBe(true);
     expect(time.sleep).not.toHaveBeenCalled();
+  });
+});
+
+describe('the action templates (#451)', () => {
+  const entry = (name: string, folder = false) => ({path: `${CUSTOM_TEMPLATE_FOLDER}/${name}`, folder});
+
+  it('lists the system templates by name and the PNGs straight in MyStyle by path, nothing else', async () => {
+    const folders: string[] = [];
+    const answer = await templatesAction({
+      systemTemplates: async () => ok(['style_white', 'style_8mm_lines']),
+      listFolder: async path => {
+        folders.push(path);
+        return ok([entry('week.png'), entry('Device Link 0.2.0.snplg'), entry('fonts', true), entry('Lookup', true), entry('Grid.PNG'), entry('.hidden.png')]);
+      },
+    })();
+    expect(folders).toEqual([CUSTOM_TEMPLATE_FOLDER]);
+    expect(answer).toEqual({
+      line: 'DeviceLink: templates: 2 system, 2 custom',
+      system: [{name: 'style_white'}, {name: 'style_8mm_lines'}],
+      custom: [
+        {name: 'Grid', path: `${CUSTOM_TEMPLATE_FOLDER}/Grid.PNG`},
+        {name: 'week', path: `${CUSTOM_TEMPLATE_FOLDER}/week.png`},
+      ],
+    });
+  });
+
+  it('an empty MyStyle gives no custom template', async () => {
+    const answer = await templatesAction({systemTemplates: async () => ok(['style_white']), listFolder: async () => ok([])})();
+    expect(answer).toMatchObject({custom: []});
+  });
+
+  it('a failed system list or folder read is a failure, never an empty list', async () => {
+    await expect(templatesAction({systemTemplates: async () => fail(-1, 'no list'), listFolder: async () => ok([])})()).rejects.toThrow('getNoteSystemTemplates failed: -1 no list');
+    await expect(templatesAction({systemTemplates: async () => ok(['style_white']), listFolder: async () => fail(-1, 'Dir is not exists')})()).rejects.toThrow('Dir is not exists');
   });
 });

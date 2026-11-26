@@ -175,6 +175,17 @@ public struct Inkctl: Sendable, TabletWriting {
         _ = try await run(["files", "push", "--overwrite", local.path(percentEncoded: false), note], writes: true)
     }
 
+    /// The tablet's page templates (`inkctl --json --read-only note templates`, #451), from Device
+    /// Link's helper: the system ones by name, the PNGs in `MyStyle/` by full path.
+    public func templates() async throws(InkctlFailure) -> [PageTemplateChoice] {
+        let result = try await run(["note", "templates"])
+        do {
+            return try TabletTemplates.parse(result.stdout)
+        } catch {
+            throw .failed(String(localized: "inkctl answered something that is not the tablet's template list."))
+        }
+    }
+
     private func run(_ arguments: [String], writes: Bool = false) async throws(InkctlFailure) -> CommandResult {
         guard let executable else { throw .missing }
         let result: CommandResult

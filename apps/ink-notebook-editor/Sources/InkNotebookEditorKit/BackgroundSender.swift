@@ -139,7 +139,7 @@ extension WriteFailure {
 
 extension InkctlFailure {
     /// inkctl's own words, or what the app knows of the failure.
-    var words: String {
+    public var words: String {
         switch self {
         case .missing: String(localized: "inkctl is not installed.")
         case .notConnected(let text), .notFound(let text), .failed(let text): text

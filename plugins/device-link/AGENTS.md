@@ -80,7 +80,9 @@ on the open note the element calls are the open-note calls, and a modify or page
 note first; on another note, the file API by path. A picture moves as a new picture from the file
 the request names, then the old one deleted, as a modify draws it twice (`docs/supernote.md`). `src/editor/penGate.ts` holds each edit while
 the pen is on the page, at most 20 s. The action `save-note` (`src/editor/save.ts`) saves the open
-note, which inkctl asks before it opens another note ([#426](https://github.com/martonpaulo/ink-tools/issues/426)). To test on the device: each operation with the screen
+note, which inkctl asks before it opens another note ([#426](https://github.com/martonpaulo/ink-tools/issues/426)). The action `templates` (`src/editor/templates.ts`) lists the tablet's page templates for the
+editor's Insert Page, the system ones by name and the PNGs straight in `MyStyle/` by full path,
+which `insertPage` also takes ([#451](https://github.com/martonpaulo/ink-tools/issues/451)). To test on the device: each operation with the screen
 untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.
 
 ## What it is

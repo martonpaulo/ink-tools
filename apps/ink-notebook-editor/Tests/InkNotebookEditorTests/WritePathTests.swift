@@ -56,6 +56,16 @@ import Testing
             calls.append("pull")
             try? bytes.write(to: destination)
         }
+
+        /// The tablet's templates (#451): `templateList`, or `failTemplates` when set.
+        var templateList: [PageTemplateChoice] = [.system("style_white"), .system("style_8mm_lines")]
+        var failTemplates: InkctlFailure?
+
+        func templates() async throws(InkctlFailure) -> [PageTemplateChoice] {
+            calls.append("templates")
+            if let failTemplates { throw failTemplates }
+            return templateList
+        }
     }
 
     func copy(_ text: String = "base") throws -> URL {

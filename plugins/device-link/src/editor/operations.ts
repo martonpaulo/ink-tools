@@ -20,6 +20,7 @@ import {
   type NewElement,
   type Result,
 } from '@ink-tools/sn-adapter/official';
+import {CUSTOM_TEMPLATE_FOLDER, isCustomTemplatePath} from './templates';
 
 /** Device Link's folder in the hidden `.data/plugin/`: inkctl writes the request and the pictures there. */
 export const EDITOR_FOLDER = `${pluginDataFolder('inktools-device-link')}/`;
@@ -161,7 +162,11 @@ function parseOperation(value: unknown): Operation {
       return {op: 'deleteElements', page: parsePage(raw.page), nums: nums as number[]};
     }
     case 'insertPage':
-      check(typeof raw.template === 'string' && /^[a-z0-9_]+$/.test(raw.template), 'template must be a system template name such as style_white');
+      // A system template by its name, or a custom one by the full path of its PNG in MyStyle/ (#451).
+      check(
+        (typeof raw.template === 'string' && /^[a-z0-9_]+$/.test(raw.template)) || isCustomTemplatePath(raw.template),
+        `template must be a system template name such as style_white, or a .png straight in ${CUSTOM_TEMPLATE_FOLDER}/`,
+      );
       return {op: 'insertPage', page: parsePage(raw.page), template: raw.template as string};
     case 'removePage':
       return {op: 'removePage', page: parsePage(raw.page)};

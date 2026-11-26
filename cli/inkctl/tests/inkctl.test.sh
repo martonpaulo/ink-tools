@@ -1783,6 +1783,23 @@ check "note edit of a missing note is not found" "$(exit_and_pushes note edit No
 check "read-only refuses note edit" "$(exit_and_pushes --read-only note edit Note/Tests/Edit.note "$work/local/ops.json")" "110"
 rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/move-ops.json" "$work/local/bad-ops.json"
 
+# The tablet's page templates through Device Link's action templates, read-only (#451).
+action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"templates\",\"line\":\"DeviceLink: templates: 2 system, 1 custom\",\"system\":[{\"name\":\"style_white\"},{\"name\":\"style_8mm_lines\"}],\"custom\":[{\"name\":\"week\",\"path\":\"$root/MyStyle/week.png\"}]}" > "$files/action-answer"
+result=$(run --read-only note templates)
+check "note templates runs under --read-only and prints each template" "$?$(action_field "d['action'], d['args']")|$result" "0('templates', {})|system: style_white
+system: style_8mm_lines
+custom: week: $root/MyStyle/week.png"
+check "note templates in JSON answers both lists" "$(run note templates --json | field "['system'][1]['name'], d['custom']")" "('style_8mm_lines', [{'name': 'week', 'path': '$root/MyStyle/week.png'}])"
+check "note templates presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
+action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"templates","system":[],"custom":[]}' > "$files/action-answer"
+check "an answer with no system template is a failure, never an empty list" "$(exit_and_pushes note templates)" "11"
+action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"templates","system":[{"name":"style_white"}],"custom":[{"name":"week"}]}' > "$files/action-answer"
+check "a custom template with no path is a failure" "$(exit_and_pushes note templates)" "11"
+action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":1,"message":"getNoteSystemTemplates failed: -1 no list"}' > "$files/action-answer"
+run note templates >/dev/null 2>"$work/err"
+check "a failed list exits 1 with the helper's message" "$?$(grep -c 'getNoteSystemTemplates failed' "$work/err")" "11"
+rm -f "$files/action-answer"
+
 # A note open on screen is saved through Device Link before another note opens (#426): a switch by
 # intent lost a native lasso delete and a Collection paste (device round 10).
 printf 'Status: ok\nActivity: x\n' > "$files/am"

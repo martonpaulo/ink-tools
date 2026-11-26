@@ -1,6 +1,6 @@
 import {FileUtils} from 'sn-plugin-lib';
 import {REGISTRY} from '../registry.generated';
-import {attempt, ok, Result} from './result';
+import {attempt, fail, ok, Result, THROWN_CODE} from './result';
 
 /**
  * The device's shared storage root, as the host's own paths show it (`getCurrentFilePath` answered
@@ -39,5 +39,29 @@ export async function makeFolder(path: string): Promise<Result<boolean>> {
   return attempt(
     async () => (await FileUtils.exists(path)) || (await FileUtils.makeDir(path)),
     raw => ok(raw === true),
+  );
+}
+
+/** One entry of a folder: its full path, and whether it is a folder. */
+export type FolderEntry = {path: string; folder: boolean};
+
+/**
+ * The entries straight in the folder at `path` (official `FileUtils.listFiles`, #451). sn-plugin-lib
+ * 0.2.3 answers `{path, type}` per entry, type 0 a folder, and null for an empty folder
+ * (docs/supernote.md); a missing folder is a failure.
+ */
+export async function listFolder(path: string): Promise<Result<FolderEntry[]>> {
+  return attempt(
+    () => FileUtils.listFiles(path),
+    raw => {
+      if (raw === null || raw === undefined) {
+        return ok([]);
+      }
+      const entries = Array.isArray(raw) ? (raw as {path?: unknown; type?: unknown}[]) : null;
+      if (!entries || !entries.every(entry => typeof entry?.path === 'string' && (entry.type === 0 || entry.type === 1))) {
+        return fail(THROWN_CODE, `listFiles answered no folder listing for ${path}`);
+      }
+      return ok(entries.map(entry => ({path: entry.path as string, folder: entry.type === 0})));
+    },
   );
 }

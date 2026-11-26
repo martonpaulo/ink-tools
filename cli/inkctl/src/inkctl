@@ -38,6 +38,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  API calls, while another note is open
   note edit PATH OPS.json        apply the Ink Notebook Editor's operations to a test note, open or
                                  not, through Device Link's helper, with no screen tap (#312)
+  note templates                 the tablet's page templates, through Device Link: system ones by
+                                 name, the PNGs in MyStyle by full path; read-only (#451)
   lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
                                  cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
@@ -502,7 +504,7 @@ ACTION_PLUGINS = {
     # the pictures an edit inserts (plugins/device-link/src/editor/operations.ts EDITOR_FOLDER, #312).
     "device-link": {
         "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-device-link",
-        "actions": ("edit", "save-note"),
+        "actions": ("edit", "save-note", "templates"),
     },
     # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298).
     "smart-pen": {
@@ -2901,6 +2903,20 @@ def command_note_edit(device: Device, args: argparse.Namespace):
     return answer, f"edited: {len(answer.get('results', []))} operations on {path} in {answer.get('ms')} ms; open note: {answer.get('openNote')}"
 
 
+def command_note_templates(device: Device, args: argparse.Namespace):
+    """The tablet's page templates, each by the value `note insert-page` and the editor's
+    `insertPage` take, from Device Link's action `templates` (#451): the system ones by name, the
+    PNGs straight in MyStyle by full path. It changes nothing on the tablet, so --read-only runs it."""
+    answer = run_action(device, "device-link", "templates", {}, args.timeout)
+    system, custom = answer.get("system"), answer.get("custom")
+    named = lambda items, keys: isinstance(items, list) and all(isinstance(item, dict) and all(isinstance(item.get(key), str) and item[key] for key in keys) for item in items)
+    if not system or not named(system, ("name",)) or not named(custom, ("name", "path")):
+        raise Failure(EXIT_FAILED, "device_error", "Device Link answered no template list", logs_step("device-link"))
+    data = {"system": [{"name": item["name"]} for item in system], "custom": [{"name": item["name"], "path": item["path"]} for item in custom]}
+    lines = [f"system: {item['name']}" for item in data["system"]] + [f"custom: {item['name']}: {item['path']}" for item in data["custom"]]
+    return data, "\n".join(lines)
+
+
 def lasso_answer(answer: dict) -> tuple[dict, str]:
     return answer, f"lassoed: {answer.get('rect')} {answer.get('counts')} in {answer.get('ms')} ms"
 
@@ -4805,6 +4821,7 @@ def build_parser() -> argparse.ArgumentParser:
     moved_page.add_argument("from_page", type=int, metavar="FROM", help="the page to move, from 1")
     moved_page.add_argument("to_page", type=int, metavar="TO", help="its number after the move, from 1")
     moved_page.add_argument("--template", help="the new page's system template; default: the page's own")
+    add(notes, "templates", command_note_templates).add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
     edited = add(notes, "edit", command_note_edit, changes=True)
     edited.add_argument("path", help="the note, open or not")
     edited.add_argument("operations", help="a JSON file: a list of the Ink Notebook Editor's operations")

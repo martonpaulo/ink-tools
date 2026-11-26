@@ -46,8 +46,11 @@ final class NoteEditor {
     var insertRequest: InsertRequest?
     /// A restore is running: no edit starts meanwhile.
     private(set) var restoring = false
+    /// The templates Insert Page… offers, read from the tablet each time its sheet opens (#451).
+    var templateList = TemplateList.loading
 
     @ObservationIgnored private let path: WritePath
+    @ObservationIgnored private let tablet: any TabletWriting
     @ObservationIgnored private let backupStore: NoteBackups
     @ObservationIgnored private var sender: BackgroundSender<Int>?
     @ObservationIgnored private var outcomes: AsyncStream<SendOutcome<Int>>.Continuation?
@@ -75,6 +78,7 @@ final class NoteEditor {
         self.base = base
         self.shown = base
         self.backupStore = backups
+        self.tablet = tablet
         let path = Self.writePath(tablet: tablet, backups: backups)
         self.path = path
         let (stream, continuation) = AsyncStream.makeStream(of: SendOutcome<Int>.self)
@@ -182,21 +186,42 @@ final class NoteEditor {
         return true
     }
 
-    /// Whether a page may be added: the note's pages use a system template the tablet takes.
-    var canInsertPage: Bool { canEdit && !templates.isEmpty }
+    /// Whether a page may be added; its sheet reads the tablet's templates (#451).
+    var canInsertPage: Bool { canEdit }
 
-    /// The system templates the note's pages use, in page order, each once: what an added page may
-    /// take. A custom template is left out: the tablet takes it only as its picture's path.
-    var templates: [String] {
-        var seen = Set<String>()
-        return shown.pages.compactMap { $0.style.flatMap(PageTemplate.systemName(ofStyle:)) }
-            .filter { seen.insert($0).inserted }
+    /// What Insert Page… offers: the tablet's templates while it answers, else the note's own.
+    enum TemplateList: Equatable {
+        case loading
+        case tablet([PageTemplateChoice])
+        /// The tablet did not answer: the note's own system templates, and why.
+        case noteOnly([PageTemplateChoice], reason: String)
+
+        var choices: [PageTemplateChoice] {
+            switch self {
+            case .loading: []
+            case .tablet(let choices), .noteOnly(let choices, _): choices
+            }
+        }
     }
 
-    /// The system template of page `index`, when it has one.
-    func template(of index: Int) -> String? {
-        guard shown.pages.indices.contains(index) else { return nil }
-        return shown.pages[index].style.flatMap(PageTemplate.systemName(ofStyle:))
+    /// Reads the tablet's templates for an add next to `page`, its template first; on a failure,
+    /// the system templates the note's pages use, each once, with the failure's sentence.
+    func loadTemplates(nextTo page: Int) async {
+        templateList = .loading
+        let style = shown.pages.indices.contains(page) ? shown.pages[page].style : nil
+        do {
+            templateList = .tablet(TabletTemplates.ordered(try await tablet.templates(), first: style))
+        } catch {
+            templateList = .noteOnly(TabletTemplates.ordered(noteTemplates, first: style), reason: error.words)
+        }
+    }
+
+    /// The system templates the note's pages use, in page order, each once. A custom template is
+    /// left out: the note holds its picture, not the path in `MyStyle/` the tablet takes.
+    var noteTemplates: [PageTemplateChoice] {
+        var seen = Set<String>()
+        return shown.pages.compactMap { $0.style.flatMap(PageTemplate.systemName(ofStyle:)) }
+            .filter { seen.insert($0).inserted }.map(PageTemplateChoice.system)
     }
 
     private func record(_ edit: NoteEdit) -> Bool {
@@ -514,11 +539,12 @@ final class NoteEditor {
         case .movePage(let from, let to):
             return try NoteFile(bytes: NoteWriter.movePage(note, from: from, to: to))
         case .insertPage(let at, let template):
-            // The new page takes the template layer of a page that has its template.
-            let source =
-                note.pages.firstIndex { $0.style.flatMap(PageTemplate.systemName(ofStyle:)) == template }
-                ?? min(at, note.pages.count - 1)
-            return try NotePreview.insertingPage(note, at: at, like: source)
+            // The new page takes the template layer of a page that has its template; with none,
+            // the Mac has no picture of it and draws the page blank until the tablet's comes back.
+            let choice = PageTemplateChoice.of(value: template)
+            let source = note.pages.firstIndex { $0.style.map(choice.matches(style:)) ?? false }
+            return try NotePreview.insertingPage(
+                note, at: at, like: source ?? min(at, note.pages.count - 1), keepsTemplate: source != nil)
         case .removePages(let at):
             // Highest first, so each number still names its page.
             return try at.sorted(by: >).reduce(note) { try NotePreview.removingPage($0, at: $1) }

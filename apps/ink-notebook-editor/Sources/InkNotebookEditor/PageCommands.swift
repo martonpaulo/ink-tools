@@ -12,9 +12,7 @@ struct PageCommands: View {
         let selected = navigator?.wrappedValue.selectedPages ?? []
         Button(Copy.insertPageEllipsis) { editor?.insertNextTo = page }
             .disabled(editor?.canInsertPage != true || page == nil)
-            .help(
-                editor == nil
-                    ? Copy.editOnlyFromTablet : editor?.templates.isEmpty == true ? Copy.noSystemTemplate : "")
+            .help(editor == nil ? Copy.editOnlyFromTablet : "")
         Button(Copy.deletePagesEllipsis(selected.count)) { editor?.askRemoval(of: selected) }
             .disabled(editor?.canRemove(selected.count) != true)
             .help(
@@ -30,8 +28,9 @@ enum InsertPlace: Hashable, CaseIterable {
     func index(nextTo page: Int) -> Int { self == .before ? page : page + 1 }
 }
 
-/// The sheet of Edit › Insert Page…: where the page goes and its template, each template this note
-/// uses, the page in front's first (#329). The tablet draws the template; the Mac shows it at once.
+/// The sheet of Edit › Insert Page…: where the page goes and its template, from the tablet's list,
+/// the page in front's first (#329, #451); while the list loads a progress line shows, and when the
+/// tablet does not answer, the note's own templates with why. The tablet draws the template.
 struct InsertPageSheet: View {
     /// The sheet's width, in points, as a Preview sheet of two choices.
     static let width: CGFloat = 340
@@ -40,19 +39,26 @@ struct InsertPageSheet: View {
 
     let editor: NoteEditor
     let page: Int
+    /// Reads the tablet's list when the sheet opens; a render sets the list itself and passes false.
+    let loads: Bool
     let inserted: (Int) -> Void
     @State private var place = InsertPlace.after
-    @State private var template: String
+    @State private var template: String?
     @Environment(\.dismiss) private var dismiss
 
-    init(editor: NoteEditor, page: Int, inserted: @escaping (Int) -> Void) {
+    init(editor: NoteEditor, page: Int, loads: Bool = true, inserted: @escaping (Int) -> Void) {
         self.editor = editor
         self.page = page
+        self.loads = loads
         self.inserted = inserted
-        _template = State(initialValue: editor.template(of: page) ?? editor.templates.first ?? "")
     }
 
     var body: some View {
+        let list = editor.templateList
+        let choices = list.choices
+        let system = choices.filter { !$0.isCustom }
+        let custom = choices.filter(\.isCustom)
+        let chosen = template ?? choices.first?.value
         VStack(alignment: .leading, spacing: 16) {
             Text(Copy.insertPageTitle)
                 .font(.headline)
@@ -62,9 +68,34 @@ struct InsertPageSheet: View {
                     Text(Copy.afterPage(page + 1)).tag(InsertPlace.after)
                 }
                 .pickerStyle(.radioGroup)
-                Picker(Copy.template, selection: $template) {
-                    ForEach(editor.templates, id: \.self) { Text(Copy.templateName($0)).tag($0) }
+                if list == .loading {
+                    LabeledContent(Copy.template) {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small)
+                            Text(Copy.readingTemplates).foregroundStyle(.secondary)
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                } else {
+                    Picker(Copy.template, selection: Binding(get: { chosen ?? "" }, set: { template = $0 })) {
+                        ForEach(system) { Text(Copy.templateName($0)).tag($0.value) }
+                        if !custom.isEmpty {
+                            Section(Copy.customTemplates) {
+                                ForEach(custom) { Text(Copy.templateName($0)).tag($0.value) }
+                            }
+                        }
+                    }
+                    .disabled(choices.isEmpty)
                 }
+            }
+            if case .noteOnly(let fallback, let reason) = list {
+                Label(
+                    fallback.isEmpty ? Copy.noSystemTemplate : Copy.templatesFailed(reason),
+                    systemImage: "exclamationmark.triangle"
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Spacer()
@@ -72,15 +103,19 @@ struct InsertPageSheet: View {
                     .keyboardShortcut(.cancelAction)
                 Button(Copy.insert) {
                     let at = place.index(nextTo: page)
-                    if editor.insertPage(at: at, template: template) { inserted(at) }
+                    if let chosen, editor.insertPage(at: at, template: chosen) { inserted(at) }
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(template.isEmpty)
+                .disabled(chosen == nil)
             }
         }
         .padding(Self.inset)
         .frame(width: Self.width)
+        .task {
+            guard loads else { return }
+            await editor.loadTemplates(nextTo: page)
+        }
     }
 }
 
@@ -95,7 +130,6 @@ struct PageMenu: View {
         if let editor {
             Button(Copy.insertPageEllipsis) { editor.insertNextTo = row }
                 .disabled(!editor.canInsertPage)
-                .help(editor.templates.isEmpty ? Copy.noSystemTemplate : "")
             Button(Copy.deletePagesEllipsis(pages.count)) { editor.askRemoval(of: pages) }
                 .disabled(!editor.canRemove(pages.count))
         }

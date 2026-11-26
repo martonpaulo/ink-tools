@@ -121,7 +121,10 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   backup kept before its send, so its undo is that backup, by Revert to Backup's route B. Pages
   selected together in the page list are deleted as one edit, one request and one Undo. An added
   page is sent with its system template name (`PageTemplate`), without the screen suffix a page
-  style carries in the file, which the tablet refuses.
+  style carries in the file, which the tablet refuses. Insert Page… offers the tablet's own
+  templates, system and custom, read each time its sheet opens (`inkctl note templates`,
+  `TabletTemplates`, [#451](https://github.com/martonpaulo/ink-tools/issues/451)), else the note's
+  own with why; a page on a template no page uses is drawn blank until the tablet's copy returns.
 - A selection moves by a drag on it or the arrow keys, a run of nudges one request
   ([#325](https://github.com/martonpaulo/ink-tools/issues/325)); no Mac code writes strokes, so `LiftedInk` draws the move at once from the
   page's own pixels until the tablet's copy comes back. On a note from a file the drag still takes

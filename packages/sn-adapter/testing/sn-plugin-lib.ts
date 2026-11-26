@@ -44,6 +44,7 @@ export const PluginCommAPI = mocks(
   'reloadFile',
   'batchUpdatePageElements',
   'saveStickerByLasso',
+  'getNoteSystemTemplates',
 );
 
 export const PluginNoteAPI = mocks(

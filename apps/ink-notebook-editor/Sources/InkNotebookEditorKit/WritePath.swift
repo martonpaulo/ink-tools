@@ -38,6 +38,8 @@ public protocol TabletWriting: Sendable {
     /// Replaces `note` with the Mac's file.
     func push(_ local: URL, to note: String) async throws(InkctlFailure)
     func pull(_ note: String, to destination: URL) async throws(InkctlFailure)
+    /// The tablet's page templates an added page may take, a read that changes nothing (#451).
+    func templates() async throws(InkctlFailure) -> [PageTemplateChoice]
 }
 
 public struct WritePath: Sendable {

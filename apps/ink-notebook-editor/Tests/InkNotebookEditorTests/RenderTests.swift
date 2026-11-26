@@ -146,6 +146,7 @@ final class RenderTests {
         }
         func push(_ local: URL, to note: String) async throws(InkctlFailure) { throw .cancelled }
         func pull(_ note: String, to destination: URL) async throws(InkctlFailure) { throw .cancelled }
+        func templates() async throws(InkctlFailure) -> [PageTemplateChoice] { [] }
     }
 
     /// The edits of a note from the tablet (#313, #314, #330): a page move drawn at once while it
@@ -178,13 +179,35 @@ final class RenderTests {
         // Insert Page… and Delete Page… (#329): the sheet under the toolbar and the confirmation in
         // the middle of the window, each over the window they open from. A sheet and an alert are
         // windows of their own, so each is drawn on its own and set over the window's render.
-        try await render("insert-page", Self.sizes) {
-            ZStack(alignment: .top) {
-                NotebookView(pages: moved, page: 2, live: live, editor: editor)
-                InsertPageSheet(editor: editor, page: 2) { _ in }
-                    .background(.background, in: .rect(cornerRadius: 12))
-                    .shadow(radius: 12)
-                    .padding(.top, 52)
+        // The sheet while the tablet's list loads, with the tablet's list (system and custom), and
+        // with the note's own templates when the tablet did not answer (#451).
+        let lists: [(String, NoteEditor.TemplateList)] = [
+            ("insert-page-loading", .loading),
+            (
+                "insert-page",
+                .tablet([
+                    .system("style_8mm_ruled_line"), .system("style_white"), .system("style_5mm_grid"),
+                    .system("style_5mm_dots"),
+                    .custom(name: "Week plan", path: "/storage/emulated/0/MyStyle/Week plan.png"),
+                ])
+            ),
+            (
+                "insert-page-note-only",
+                .noteOnly(
+                    editor.noteTemplates,
+                    reason: InkctlFailure.notConnected("No tablet answered over USB or Wi-Fi.").words)
+            ),
+        ]
+        for (name, list) in lists {
+            editor.templateList = list
+            try await render(name, Self.sizes) {
+                ZStack(alignment: .top) {
+                    NotebookView(pages: moved, page: 2, live: live, editor: editor)
+                    InsertPageSheet(editor: editor, page: 2, loads: false) { _ in }
+                        .background(.background, in: .rect(cornerRadius: 12))
+                        .shadow(radius: 12)
+                        .padding(.top, 52)
+                }
             }
         }
         // One page, and two pages selected in the page list with Command-click.

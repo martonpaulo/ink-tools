@@ -1,6 +1,6 @@
 /** Note files a plugin makes, rather than the open note it edits (#143, Relay). */
-import {PluginFileAPI} from 'sn-plugin-lib';
-import {attempt, BAD_ARGUMENT_CODE, fail, Result} from './result';
+import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
+import {attempt, BAD_ARGUMENT_CODE, fail, ok, Result, THROWN_CODE} from './result';
 
 /**
  * Creates a portrait note at `notePath` whose first page has the PNG at `templatePath` as its
@@ -49,4 +49,23 @@ export function insertPageAfter(
     return Promise.resolve(fail(BAD_ARGUMENT_CODE, `the current page counts from 0, not ${current}`));
   }
   return insertNotePage(notePath, current + 1, template);
+}
+
+/**
+ * The tablet's own page templates, by the name `insertNotePage` takes, such as `style_white`
+ * (#451). sn-plugin-lib 0.2.3's `getNoteSystemTemplates` answers a bare list of `{name, vUri, hUri}`,
+ * not an `{success, result}` response; an answer that is no list, is empty, or holds an entry with
+ * no name is a failure, never an empty list.
+ */
+export function noteSystemTemplates(): Promise<Result<string[]>> {
+  return attempt(
+    () => PluginCommAPI.getNoteSystemTemplates(),
+    raw => {
+      const names = Array.isArray(raw) ? raw.map(item => (item as {name?: unknown} | null)?.name) : [];
+      if (names.length === 0 || !names.every(name => typeof name === 'string' && name.length > 0)) {
+        return fail(THROWN_CODE, `getNoteSystemTemplates answered no template list: ${JSON.stringify(raw)}`);
+      }
+      return ok(names as string[]);
+    },
+  );
 }

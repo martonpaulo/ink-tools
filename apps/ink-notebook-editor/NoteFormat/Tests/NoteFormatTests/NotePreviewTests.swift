@@ -40,6 +40,16 @@ import Testing
         #expect(added.pages[1].metadata["TOTALPATH"] ?? "0" == "0")
     }
 
+    @Test func testAnAddedPageOnATemplateNoPageUsesIsDrawnBlank() throws {
+        let file = try NoteWriterTests.content()
+        // Page 2 is on the 5 mm grid: kept, the lines show; not kept, the page is white (#451).
+        let kept = try NotePreview.insertingPage(file, at: 1, like: 1).render(page: 1)
+        let blank = try NotePreview.insertingPage(file, at: 1, like: 1, keepsTemplate: false).render(page: 1)
+        #expect(kept.pixels.contains { $0 < 250 })
+        #expect(!blank.pixels.contains { $0 < 250 })
+        #expect(blank.pixels.count == kept.pixels.count)
+    }
+
     @Test func testTitlesAndKeywordsKeepTheirPagesAroundAnAdd() throws {
         let added = try NotePreview.insertingPage(Self.titled(), at: 1, like: 0)
         #expect(added.footer["TITLE_00040120"] == "3")

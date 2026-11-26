@@ -9,19 +9,34 @@ public enum NotePreview {
 
     /// The note with a page of no ink at `index` (from 0, up to the page count), on the template of
     /// page `source`: its template layer and its orientation, and none of its ink or elements.
-    /// Titles, keywords and links of the pages from `index` on keep their pages.
-    public static func insertingPage(_ file: NoteFile, at index: Int, like source: Int) throws -> NoteFile {
+    /// Titles, keywords and links of the pages from `index` on keep their pages. With
+    /// `keepsTemplate` false the page is blank too: the Mac has no picture of a template no page of
+    /// the note uses, so it draws white until the tablet's page comes back (#451).
+    public static func insertingPage(
+        _ file: NoteFile, at index: Int, like source: Int, keepsTemplate: Bool = true
+    ) throws -> NoteFile {
         guard (0...file.pages.count).contains(index) else { throw NoteFormatError.badPage(index) }
         guard file.pages.indices.contains(source) else { throw NoteFormatError.badPage(source) }
         let page = file.pages[source]
         let background = page.layers.first { $0.name == NoteFile.backgroundLayer }?.key
+        var out = Array(file.bytes[..<NoteWriter.footerAddress(file)])
+        // A blank template is the template layer's own block with no bitmap: a page with no layer
+        // at all is not a page the reader draws.
+        var blankLayer: Int?
+        if !keepsTemplate, let background, let layerAddress = page.metadata.address(background), layerAddress != 0 {
+            let layer = try NoteFile.metadata(file.bytes, at: layerAddress).pairs.map {
+                $0.key == "LAYERBITMAP" ? Metadata.Pair(key: $0.key, value: "0") : $0
+            }
+            blankLayer = out.count
+            out += NoteWriter.lengthPrefixed(NoteWriter.text(layer))
+        }
         let pairs = page.metadata.pairs.map { pair -> Metadata.Pair in
+            if pair.key == background, let blankLayer { return Metadata.Pair(key: pair.key, value: String(blankLayer)) }
             let ink = NoteFile.layerKeys.contains(pair.key) && pair.key != background
             if ink || emptyBlocks.contains(pair.key) { return Metadata.Pair(key: pair.key, value: "0") }
             if pair.key == "PAGEID" { return Metadata.Pair(key: pair.key, value: "\(pair.value)-added-\(index)") }
             return pair
         }
-        var out = Array(file.bytes[..<NoteWriter.footerAddress(file)])
         let address = out.count
         out += NoteWriter.lengthPrefixed(NoteWriter.text(pairs))
         var addresses = try NoteWriter.pageAddresses(file)

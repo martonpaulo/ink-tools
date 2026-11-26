@@ -251,6 +251,16 @@
         }
       }
     },
+    "Custom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        }
+      }
+    },
     "Delete" : {
       "localizations" : {
         "en" : {
@@ -711,6 +721,16 @@
         }
       }
     },
+    "No page of this note uses a template the Mac can send." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No page of this note uses a template the Mac can send."
+          }
+        }
+      }
+    },
     "No results" : {
       "localizations" : {
         "en" : {
@@ -871,16 +891,6 @@
         }
       }
     },
-    "Pages with custom templates cannot be added from the Mac yet." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pages with custom templates cannot be added from the Mac yet."
-          }
-        }
-      }
-    },
     "Picture…" : {
       "localizations" : {
         "en" : {
@@ -937,6 +947,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reading the handwriting…"
+          }
+        }
+      }
+    },
+    "Reading the tablet's templates…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the tablet's templates…"
           }
         }
       }
@@ -1421,6 +1441,16 @@
         }
       }
     },
+    "The tablet's templates did not load, so only this note's templates are offered: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet's templates did not load, so only this note's templates are offered: %@"
+          }
+        }
+      }
+    },
     "This file is not a notebook the app can read" : {
       "localizations" : {
         "en" : {
@@ -1607,6 +1637,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "inkctl answered something that is not the helper's answer."
+          }
+        }
+      }
+    },
+    "inkctl answered something that is not the tablet's template list." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inkctl answered something that is not the tablet's template list."
           }
         }
       }

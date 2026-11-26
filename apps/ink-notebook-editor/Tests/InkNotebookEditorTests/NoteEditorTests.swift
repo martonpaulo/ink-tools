@@ -116,7 +116,7 @@ import Testing
     @Test func anAddedPageIsDrawnAtOnceOnItsTemplateAndUndoneByItsRemoval() async throws {
         let editor = try editor()
         let before = Self.ids(editor.shown)
-        let template = try #require(editor.templates.first)
+        let template = try #require(editor.noteTemplates.first?.value)
         tabletApplies { @Sendable in try NotePreview.insertingPage($0, at: 1, like: 0) }
         #expect(editor.insertPage(at: 1, template: template))
         #expect(editor.shown.pages.count == before.count + 1)
@@ -132,6 +132,45 @@ import Testing
         await settle(editor)
         #expect(try Self.ids(tablet.bytes) == before)
         #expect(tablet.sent.last?["op"] as? String == "removePage")
+    }
+
+    @Test func theSheetOffersTheTabletsTemplatesThePageInFrontsFirst() async throws {
+        let editor = try editor()
+        tablet.templateList = [
+            .system("style_white"), .system("style_5mm_grid"), .system("style_8mm_lines"),
+            .custom(name: "week", path: "/storage/emulated/0/MyStyle/week.png"),
+        ]
+        // Page 2 of the fixture is on the 5 mm grid (#451).
+        await editor.loadTemplates(nextTo: 1)
+        #expect(
+            editor.templateList.choices.map(\.value) == [
+                "style_5mm_grid", "style_white", "style_8mm_lines", "/storage/emulated/0/MyStyle/week.png",
+            ])
+        #expect(tablet.calls.last == "templates")
+        if case .tablet = editor.templateList {} else { Issue.record("not the tablet's list: \(editor.templateList)") }
+    }
+
+    @Test func theSheetFallsBackToTheNotesTemplatesWhenTheTabletDoesNotAnswer() async throws {
+        let editor = try editor()
+        tablet.failTemplates = .notConnected("No tablet answered.")
+        await editor.loadTemplates(nextTo: 2)
+        #expect(
+            editor.templateList
+                == .noteOnly(
+                    ["style_8mm_ruled_line", "style_white", "style_5mm_grid", "style_5mm_dots"]
+                        .map(PageTemplateChoice.system),
+                    reason: "No tablet answered."))
+    }
+
+    @Test(arguments: ["style_8mm_lines", "/storage/emulated/0/MyStyle/week.png"])
+    func aPageOnATemplateNoPageUsesIsSentByItsValueAndDrawnBlank(template: String) async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in try NotePreview.insertingPage($0, at: 1, like: 0) }
+        #expect(editor.insertPage(at: 1, template: template))
+        // Drawn at once with no template: the Mac has no picture of it (#451).
+        #expect(!(try editor.shown.render(page: 1)).pixels.contains { $0 < 250 })
+        await settle(editor)
+        #expect(tablet.sent.first?["template"] as? String == template)
     }
 
     @Test func aDeletedPageComesBackWithItsInkByItsBackup() async throws {

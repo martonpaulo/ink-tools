@@ -66,6 +66,38 @@ enum LoadedMac {
             ])
     }
 
+    @Test func theTabletsTemplatesAreReadReadOnly() async throws {
+        let inkctl = try fake(
+            #"echo '{"system": [{"name": "style_white"}, {"name": "style_5mm_grid"}], "custom": [{"name": "week", "path": "/storage/emulated/0/MyStyle/week.png"}]}'"#
+        )
+        let choices = try await inkctl.templates()
+        #expect(
+            choices == [
+                .system("style_white"), .system("style_5mm_grid"),
+                .custom(name: "week", path: "/storage/emulated/0/MyStyle/week.png"),
+            ])
+        #expect(try arguments() == ["--json", "--read-only", "note", "templates"])
+    }
+
+    @Test(arguments: [
+        #"{"system": [], "custom": []}"#, #"{"system": [{"name": "style_white"}], "custom": [{"name": "week"}]}"#,
+        #"{"system": [{"name": ""}], "custom": []}"#, "[]",
+    ])
+    func anAnswerThatIsNoTemplateListIsAFailure(answer: String) async throws {
+        let inkctl = try fake("echo '\(answer)'")
+        await #expect(throws: InkctlFailure.self) { try await inkctl.templates() }
+    }
+
+    @Test func thePageInFrontsTemplateComesFirst() {
+        let week = PageTemplateChoice.custom(name: "week", path: "/storage/emulated/0/MyStyle/week.png")
+        let choices: [PageTemplateChoice] = [.system("style_white"), .system("style_5mm_grid"), week]
+        #expect(TabletTemplates.ordered(choices, first: "style_5mm_grid_a5x2").first == .system("style_5mm_grid"))
+        #expect(TabletTemplates.ordered(choices, first: "user_week.png").first == week)
+        #expect(TabletTemplates.ordered(choices, first: "user_other").map(\.value) == choices.map(\.value))
+        #expect(TabletTemplates.ordered(choices, first: nil) == choices)
+        #expect(PageTemplateChoice.of(value: week.value) == week)
+    }
+
     @Test func aRefusalOfTheHelperIsAFailureWithItsWords() async throws {
         let inkctl = try fake(
             #"echo '{"error": "usage", "message": "device-link edit: no-element: operation 1"}'; exit 2"#)

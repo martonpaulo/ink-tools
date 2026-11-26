@@ -12,8 +12,10 @@ import {
   insertElements,
   insertNotePage,
   insertPageElements,
+  listFolder,
   modifyElements,
   modifyPageElements,
+  noteSystemTemplates,
   placeElement,
   removeNotePage,
   saveCurrentNote,
@@ -22,6 +24,7 @@ import {
 import type {Relay} from '../native';
 import {EDITOR_FOLDER, type EditHost} from './operations';
 import type {PenGate} from './penGate';
+import type {TemplateHost} from './templates';
 
 /** Where inkctl writes the request: `ACTION_PLUGINS['device-link']` in cli/inkctl/src/inkctl. */
 export const EDITOR_ACTION_PATH = `${EDITOR_FOLDER}${ACTION_FILE}`;
@@ -35,7 +38,7 @@ export async function readEditorRequest(native: Relay): Promise<string | null> {
   return text.value;
 }
 
-export function deviceEditHost(pen: PenGate): EditHost {
+export function deviceEditHost(pen: PenGate): EditHost & TemplateHost {
   return {
     openNote: getCurrentFilePath,
     saveOpenNote: saveCurrentNote,
@@ -52,5 +55,7 @@ export function deviceEditHost(pen: PenGate): EditHost {
     insertPage: insertNotePage,
     removePage: removeNotePage,
     penIdle: () => pen.idle(),
+    systemTemplates: noteSystemTemplates,
+    listFolder,
   };
 }
