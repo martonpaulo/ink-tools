@@ -1,4 +1,6 @@
 import AppKit
+import InkNotebookEditorKit
+import NoteFormat
 import SwiftUI
 import Testing
 
@@ -53,5 +55,29 @@ import Testing
             #expect(lightest > 0.85, "the light sidebar is not light: \(lightest)")
             #expect(darkest < 0.5, "the sidebar's text is not dark in light mode: \(darkest)")
         }
+    }
+
+    /// The Headings sidebar of a note with none: its «No Headings» state, text only.
+    struct NoHeadings: View {
+        let note: NoteFile
+
+        var body: some View {
+            NavigationSplitView(columnVisibility: .constant(.all)) {
+                HeadingsList(note: note, navigator: .constant(PageNavigator(pageCount: note.pages.count)), chosen: {})
+            } detail: {
+                Color.clear
+            }
+        }
+    }
+
+    @Test func theNoHeadingsStateDrawsLightInADarkSidebar() async throws {
+        let note = try Fixtures.note("content.note")
+        let png = try await OffscreenWindow.png(
+            of: AnyView(NoHeadings(note: note)), size: CGSize(width: 640, height: 420), dark: true)
+        let bitmap = try #require(NSBitmapImageRep(data: png))
+        let greys = (60..<410).flatMap { y in
+            (16..<140).compactMap { bitmap.colorAt(x: $0, y: y)?.usingColorSpace(.deviceGray)?.whiteComponent }
+        }
+        #expect((greys.max() ?? 0) > 0.7, "the «No Headings» text is not light in dark mode")
     }
 }

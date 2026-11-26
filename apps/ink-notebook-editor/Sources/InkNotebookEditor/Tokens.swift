@@ -10,6 +10,8 @@ enum Tokens {
     /// (#420). The label colour draws light in dark mode with no filter, on screen and in the
     /// renders.
     static let sidebarText = Color(nsColor: .labelColor)
+    /// Secondary text in the sidebar, as `sidebarText` is for primary text.
+    static let sidebarSecondaryText = Color(nsColor: .secondaryLabelColor)
     /// Text on a selected sidebar row, whose background is the accent: AppKit's text on a
     /// selection, light in both appearances.
     static let selectedSidebarText = Color(nsColor: .alternateSelectedControlTextColor)
@@ -17,5 +19,10 @@ enum Tokens {
     /// The sidebar's text colour for a row drawn on `prominence`.
     static func sidebarText(on prominence: BackgroundProminence) -> Color {
         prominence == .increased ? selectedSidebarText : sidebarText
+    }
+
+    /// The sidebar's secondary text colour for a row drawn on `prominence`.
+    static func sidebarSecondaryText(on prominence: BackgroundProminence) -> Color {
+        prominence == .increased ? selectedSidebarText : sidebarSecondaryText
     }
 }

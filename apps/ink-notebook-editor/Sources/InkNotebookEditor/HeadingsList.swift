@@ -72,6 +72,8 @@ struct HeadingsList: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // The sidebar's text tokens, so a dark render draws it light (#420).
+        .foregroundStyle(Tokens.sidebarText, Tokens.sidebarSecondaryText)
         .accessibilityLabel(Copy.headings)
     }
 
@@ -122,6 +124,7 @@ private struct HeadingRow: View {
     let heading: Heading
     let count: Int
     @Environment(NoteText.self) private var text: NoteText?
+    @Environment(\.backgroundProminence) private var prominence
 
     init(note: NoteFile, heading: Heading, count: Int) {
         self.note = note
@@ -145,7 +148,7 @@ private struct HeadingRow: View {
                 let size = CGSize(
                     width: CGFloat(picture.width) * Self.pictureHeight / CGFloat(max(picture.height, 1)),
                     height: Self.pictureHeight)
-                Color(nsColor: .labelColor)
+                Tokens.sidebarText(on: prominence)
                     .frame(width: size.width, height: size.height)
                     .mask {
                         Image(decorative: picture, scale: 1)
@@ -164,6 +167,7 @@ private struct HeadingRow: View {
                 .monospacedDigit()
         }
         .padding(.leading, CGFloat(level - 1) * Self.indent)
+        .foregroundStyle(Tokens.sidebarText(on: prominence), Tokens.sidebarSecondaryText(on: prominence))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Copy.headingLabel(words ?? Copy.heading, level, heading.page + 1, count))
     }
