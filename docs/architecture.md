@@ -202,6 +202,7 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
 | Device Transfer | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
+| Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Planned |
 
 Plugin Diagnostics stays a developer tool, off day to day. The conversion engine is shared package code,
 `ink-core`'s `@ink-tools/ink-core/conversion` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»

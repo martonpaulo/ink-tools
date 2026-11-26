@@ -17,7 +17,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [relay](#relay)
 - [smart-pen](#smart-pen)
 - [Plugin grouping](#plugin-grouping)
-- [Note templates](#note-templates)
+- [Puzzles](#puzzles)
 - [Rules for every feature](#rules-for-every-feature)
 - [Design direction](#design-direction)
 
@@ -394,15 +394,34 @@ ship under until the merges land.
 | Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
 | Device Transfer | unchanged; receives a photo as it is | the page and files |
 | Account Sync | unchanged | outside services |
+| Puzzles ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | new, planned: the games of [Puzzles](#puzzles) | a new page after the current one |
 
 Plugin Diagnostics stays a developer tool, off day to day. «Convert to Text»'s conversion engine
 becomes shared package code, used by Smart Pen's live conversion and Lasso Actions. Names follow
 NOTE's own naming.
 
-## Note templates
+## Puzzles
 
-Parked by the owner ([#141](https://github.com/martonpaulo/ink-tools/issues/141)): nothing is built until he asks. A template here means
-something simple, such as one generated sudoku page, not a large set.
+Formerly «Note templates», parked by the owner ([#141](https://github.com/martonpaulo/ink-tools/issues/141)). Now approved work (owner, 2026-11-26,
+[#376](https://github.com/martonpaulo/ink-tools/issues/376)): a generator of simple paper puzzles and pen games for the tablet, such as sudoku
+and crosswords in several languages. The game list comes from a research report of such games; each
+game is a sub-issue of [#376](https://github.com/martonpaulo/ink-tools/issues/376).
+
+- **A plugin of its own**, «Puzzles» (working name), with a full view to pick the game, the language
+  and the difficulty, show the solution and check the answer; not a module, because it needs its own
+  surface ([Plugin grouping](#plugin-grouping)).
+- **A new page after the current one.** A game never draws over a page; its grid and clues are the
+  page's background, as a template is, so erasing an entry never erases the grid.
+- **Answers stay off the page.** «Show solution» shows the answer in the plugin's view and leaves the
+  note unchanged; «Check» reads the ink with the tablet's recognition and marks wrong cells without
+  showing the answer: reliable for digits, best effort for letters. No solution page.
+- **Solo puzzles** have one generated solution; **two-player pen games** (tic-tac-toe, dots and
+  boxes, battleship, paper soccer, hangman) are pass-and-play pages with a grid and a score area and
+  no answer check.
+- **Shared code.** The generator and the word lists are a shared package, so the Ink Notebook Editor
+  can later add «Insert game».
+- **Device probes first**: whether a plugin can insert a page with its own background, and how well
+  the recognition reads handwritten digits in grid cells.
 
 ## Rules for every feature
 
