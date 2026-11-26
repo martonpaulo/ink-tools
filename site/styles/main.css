@@ -215,6 +215,27 @@ main {
   font-size: var(--text-sm);
 }
 
+/* A tool's picture or video (#414): written by scripts/site_media.py inside its card. */
+.shot {
+  margin: var(--space-m) 0 0;
+}
+
+.shot img,
+.shot video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+}
+
+.shot figcaption {
+  margin-top: var(--space-2xs);
+  color: var(--secondary);
+  font-size: var(--text-sm);
+}
+
 .notice {
   padding: var(--space-m);
   border: 1px solid var(--line);

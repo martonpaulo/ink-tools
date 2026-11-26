@@ -1,0 +1,99 @@
+{
+  "about": "The one owner of the site's tool pictures and videos (#414): each shot's slot (a tool card of site/index.html), size, text alternative, caption and the steps that take it again. scripts/site_capture.py takes the shots on the Mac with the tablet over inkctl, on test notes under Note/Tests/ with synthetic content only; scripts/site_media.py writes each card's media block from the files present in site/media/ and checks them in the site gate.",
+  "budget": {"pictureBytes": 250000, "videoBytes": 2000000, "videoSeconds": 8},
+  "slots": ["smart-pen", "lasso-actions", "image-editing", "device-link", "account-sync", "handwriting-language", "ink-notebook-editor"],
+  "shots": [
+    {
+      "id": "smart-pen-shapes", "slot": "smart-pen", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
+      "alt": "A Supernote test page with a hand-drawn triangle, circle and arrow turned into clean shapes.",
+      "caption": "Smart Shapes: hold the pen still at the end of a stroke and it becomes a clean shape.",
+      "steps": [
+        {"inkctl": ["fixture", "blank"]},
+        {"hand": "Draw a triangle, a circle and an arrow, holding the pen still at the end of each, then press Enter."}
+      ]
+    },
+    {
+      "id": "smart-pen-text", "slot": "smart-pen", "kind": "video", "source": "tablet", "width": 720, "height": 960, "seconds": 8, "posterAt": 6,
+      "alt": "Video: a handwritten word on a Supernote test page becomes typed text right after it is written.",
+      "caption": "Real-Time Text: the word «casa» is written by hand and becomes typed text at its place, with no lasso.",
+      "steps": [
+        {"inkctl": ["fixture", "blank"]},
+        {"hand": "Turn Real-Time Text on, then press Enter; the recording starts and you write «casa» on the page."}
+      ]
+    },
+    {
+      "id": "lasso-actions-insert", "slot": "lasso-actions", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
+      "alt": "A Supernote test page with the handwritten word «apple» lassoed and a picture of an apple inserted beside it.",
+      "caption": "Insert Image: lasso a handwritten word and a picture of it lands on the page.",
+      "steps": [
+        {"inkctl": ["fixture", "apple", "--lasso", "word"]},
+        {"inkctl": ["lasso", "press", "Insert Image"]},
+        {"hand": "Wait until the picture is on the page, then press Enter."}
+      ]
+    },
+    {
+      "id": "lasso-actions-video", "slot": "lasso-actions", "kind": "video", "source": "tablet", "width": 720, "height": 960, "seconds": 8, "posterAt": 7,
+      "alt": "Video: the handwritten word «apple» is lassoed and Insert Image places a picture of an apple on the page.",
+      "caption": "The word «apple» is lassoed, Insert Image is pressed in the lasso menu, and a picture of an apple appears beside the word.",
+      "steps": [
+        {"inkctl": ["fixture", "apple", "--lasso", "word"]}
+      ],
+      "record": [
+        {"inkctl": ["lasso", "press", "Insert Image"]}
+      ]
+    },
+    {
+      "id": "image-editing-edit", "slot": "image-editing", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
+      "alt": "The Image Editing window on a Supernote, showing a lassoed photo of an apple with its editing buttons.",
+      "caption": "Image Editing: lasso a picture to make it readable on e-ink, crop it or remove its background.",
+      "steps": [
+        {"inkctl": ["fixture", "photo"]},
+        {"hand": "Lasso the apple photo, press Image Editing in the lasso menu, then press Enter."}
+      ]
+    },
+    {
+      "id": "device-link-send", "slot": "device-link", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
+      "alt": "The Device Link window on a Supernote, ready to send the open test page to a nearby device.",
+      "caption": "Send Page: the open page goes to an iPhone or a Mac on the same network.",
+      "steps": [
+        {"inkctl": ["localsend", "receive"]},
+        {"inkctl": ["fixture", "apple"]},
+        {"hand": "Press Send Page in the toolbar and wait until the Mac is listed, then press Enter."}
+      ]
+    },
+    {
+      "id": "device-link-video", "slot": "device-link", "kind": "video", "source": "tablet", "width": 720, "height": 960, "seconds": 8, "posterAt": 4,
+      "alt": "Video: a Supernote test page is sent to a Mac, then a picture sent from the Mac lands in the open note.",
+      "caption": "The open test page is sent to the Mac, then a picture sent from the Mac is received into the same note.",
+      "steps": [
+        {"inkctl": ["localsend", "receive"]},
+        {"inkctl": ["fixture", "apple"]},
+        {"hand": "Open Receive in Device Link, then press Enter; the recording starts and the Mac sends the picture."}
+      ],
+      "record": [
+        {"inkctl": ["localsend", "send", "plugins/image-editing/native/tests/fixtures/apple-on-leaves.png", "--ip", "{tablet_ip}"]}
+      ]
+    },
+    {
+      "id": "account-sync-settings", "slot": "account-sync", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
+      "alt": "Account Sync's settings on a Supernote, with every account off and a Connect button on each row.",
+      "caption": "Account Sync: every account stays off until you connect it.",
+      "steps": [
+        {"hand": "Open Account Sync's settings with no account connected, then press Enter."}
+      ]
+    },
+    {
+      "id": "handwriting-language-switch", "slot": "handwriting-language", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
+      "alt": "The Handwriting Language app on a Supernote, listing the installed recognition languages with one selected.",
+      "caption": "Handwriting Language: one tap switches the recognition language of the whole tablet.",
+      "steps": [
+        {"hand": "Open Handwriting Language from the app list, then press Enter."}
+      ]
+    },
+    {
+      "id": "ink-notebook-editor-notebook", "slot": "ink-notebook-editor", "kind": "picture", "source": "mac-render", "render": "notebook-light-default.png", "width": 1000, "height": 720,
+      "alt": "The Ink Notebook Editor window on a Mac, showing a page of a test notebook with handwriting.",
+      "caption": "Ink Notebook Editor: a Supernote notebook opened on the Mac."
+    }
+  ]
+}
