@@ -1,4 +1,5 @@
-import { cluesOf, countNonogramSolutions, generateNonogram, lineClue, NONOGRAM_BANDS, rateNonogram, solveLine } from '../src/nonogram';
+import { cluesOf, countNonogramSolutions, decodePicture, drawNonogram, encodePicture, generateNonogram, lineClue, NONOGRAM_BANDS, rateNonogram, solveLine } from '../src/nonogram';
+import { NONOGRAM_BANK } from '../src/nonogram-bank';
 import { createRandom, digest } from '../src/random';
 
 const U = -1;
@@ -124,5 +125,50 @@ describe('generateNonogram', () => {
   test('a side or band out of range is refused', () => {
     expect(() => generateNonogram('S', { width: 4, height: 10 }, 'easy')).toThrow('5 to 25');
     expect(() => generateNonogram('S', { width: 10, height: 10 }, 'expert')).toThrow('not expert');
+  });
+});
+
+describe('the nonogram bank', () => {
+  test('a picture survives its bank text', () => {
+    const random = createRandom('bank text');
+    for (const count of [25, 26, 29, 250, 625]) {
+      const cells = Array.from({ length: count }, () => random.chance(50));
+      expect(decodePicture(encodePicture(cells), count)).toEqual(cells);
+    }
+    expect(() => decodePicture('00', 25)).toThrow('5 digits');
+  });
+
+  const pairs = Object.keys(NONOGRAM_BANK);
+
+  test('the bank holds the slow shapes and bands, each entry the right size', () => {
+    expect(pairs.length).toBeGreaterThan(0);
+    for (const pair of pairs) {
+      const [shape, band] = pair.split(':');
+      const [width, height] = shape.split('x').map(Number);
+      expect(NONOGRAM_BANDS).toContain(band);
+      expect(new Set(NONOGRAM_BANK[pair]).size).toBe(16);
+      for (const text of NONOGRAM_BANK[pair]) expect(text).toHaveLength(Math.ceil((width * height) / 5));
+    }
+  });
+
+  test.each(pairs)('%s keeps one solution and its band over 60 seeds', pair => {
+    const [shape, band] = pair.split(':') as [string, (typeof NONOGRAM_BANDS)[number]];
+    const [width, height] = shape.split('x').map(Number);
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 60; seed++) {
+      const puzzle = generateNonogram(`S${seed}`, { width, height }, band);
+      // The rating finishes the grid by forced steps only, which proves one solution; a search
+      // for a second one is left out, as it takes minutes over the whole bank.
+      expect(rateNonogram(puzzle)?.difficulty).toBe(band);
+      expect(cluesOf(width, height, puzzle.solution).rows).toEqual(puzzle.rows);
+      seen.add(encodePicture(puzzle.solution));
+    }
+    // The seed picks among the entries and their views, so the 60 puzzles are not one picture.
+    expect(seen.size).toBeGreaterThan(16);
+  });
+
+  test('a shape and band outside the bank is drawn live, as before', () => {
+    expect(NONOGRAM_BANK['15x10:medium']).toBeUndefined();
+    expect(generateNonogram('P1', { width: 15, height: 10 }, 'medium')).toEqual(drawNonogram('P1', { width: 15, height: 10 }, 'medium'));
   });
 });

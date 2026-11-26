@@ -7,15 +7,10 @@
  *   npx tsc -p packages/puzzle-core --outDir OUT --module commonjs --noEmit false
  *   node packages/puzzle-core/scripts/sudoku-bank.cjs OUT/src > packages/puzzle-core/src/sudoku-bank.ts
  */
-const path = require('path');
+const { builtCore } = require('./built-core.cjs');
 
 const ENTRIES = 16;
-const [, , built] = process.argv;
-if (!built) {
-  console.error('usage: sudoku-bank.cjs BUILT_SRC_DIR > src/sudoku-bank.ts');
-  process.exit(2);
-}
-const core = require(path.resolve(built, 'index.js'));
+const { core } = builtCore('sudoku-bank.cjs BUILT_SRC_DIR > src/sudoku-bank.ts');
 const lines = [];
 for (const [size, offered] of Object.entries(core.SUDOKU_SIZES)) {
   for (const band of offered.bands) {

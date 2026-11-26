@@ -6,17 +6,62 @@
  *
  *   npx tsc -p packages/puzzle-core --outDir OUT --module commonjs --noEmit false
  *   node --jitless packages/puzzle-core/scripts/profile.cjs OUT/src [runs]
+ *
+ * `sweep` times every nonogram shape and band instead (#434): each width and height from 5 to 25,
+ * SEEDS seeds each (default 12), printed as shape, band, median and slowest ms of CPU. WIDTHS
+ * (`20-25` or `5,9`) keeps some widths, so parallel runs can split the sweep:
+ *
+ *   node --jitless packages/puzzle-core/scripts/profile.cjs OUT/src sweep
  */
-const path = require('path');
+const { builtCore } = require('./built-core.cjs');
 
-const [, , built, runsText] = process.argv;
-if (!built) {
-  console.error('usage: profile.cjs BUILT_SRC_DIR [runs]');
-  process.exit(2);
+const {
+  core,
+  rest: [runsText],
+} = builtCore('profile.cjs BUILT_SRC_DIR [runs | sweep]');
+/** The seeds per shape and band of a sweep, as #434 measures them. */
+const SWEEP_SEEDS = 12;
+
+/** CPU time of one call in ms, not wall time, so other work on the machine does not skew it. */
+function cpuMs(make) {
+  const start = process.cpuUsage();
+  const made = make();
+  const used = process.cpuUsage(start);
+  return [(used.user + used.system) / MICROSECONDS_PER_MS, made];
 }
-const core = require(path.resolve(built, 'index.js'));
-const runs = Number(runsText || 1);
+
+function widthsOf(text) {
+  const out = new Set();
+  for (const part of text.split(',')) {
+    const [from, to = from] = part.split('-').map(Number);
+    for (let w = from; w <= to; w++) out.add(w);
+  }
+  return out;
+}
+
+function sweep() {
+  const seeds = Number(process.env.SEEDS || SWEEP_SEEDS);
+  const widths = process.env.WIDTHS ? widthsOf(process.env.WIDTHS) : null;
+  for (let width = core.NONOGRAM_MIN_SIDE; width <= core.NONOGRAM_MAX_SIDE; width++) {
+    if (widths && !widths.has(width)) continue;
+    for (let height = core.NONOGRAM_MIN_SIDE; height <= core.NONOGRAM_MAX_SIDE; height++) {
+      for (const band of core.NONOGRAM_BANDS) {
+        const times = [];
+        for (let seed = 1; seed <= seeds; seed++) times.push(cpuMs(() => core.generateNonogram(`S${seed}`, { width, height }, band))[0]);
+        times.sort((a, b) => a - b);
+        const median = (times[(seeds - 1) >> 1] + times[seeds >> 1]) / 2;
+        console.log(`${width}x${height}\t${band}\t${median.toFixed(0)}\t${times[seeds - 1].toFixed(0)}`);
+      }
+    }
+  }
+}
+
 const MICROSECONDS_PER_MS = 1000;
+if (runsText === 'sweep') {
+  sweep();
+  process.exit(0);
+}
+const runs = Number(runsText || 1);
 const WORDS = ['GATO', 'CACHORRO', 'LEAO', 'URSO', 'SAPO', 'PATO', 'CABRA', 'PEIXE'];
 const CASES = [
   ['sudoku 4 x 4 easy', () => core.generateSudoku('P1', 4, 'easy')],
@@ -33,11 +78,9 @@ for (const [name, make] of CASES) {
   const times = [];
   let found = '';
   for (let i = 0; i < runs; i++) {
-    // CPU time, not wall time, so other work on the machine does not skew the figure.
-    const start = process.cpuUsage();
-    found = core.digest(make());
-    const used = process.cpuUsage(start);
-    times.push((used.user + used.system) / MICROSECONDS_PER_MS);
+    const [ms, made] = cpuMs(make);
+    found = core.digest(made);
+    times.push(ms);
   }
   console.log(`${name}\t${found}\t${times.map(t => t.toFixed(0)).join(' / ')} ms CPU`);
 }
