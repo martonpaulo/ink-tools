@@ -20,6 +20,8 @@ struct SelectionLayer: View {
     let index: Int
     let pages: PageImages
     let viewer: PageViewer
+    /// The page's size in pixels, from the page that holds the layer (#329).
+    let pixelSize: CGSize
     /// The page's drawn size, in points.
     let size: CGSize
     /// The drag in progress, in points.
@@ -33,7 +35,7 @@ struct SelectionLayer: View {
 
     /// Page pixels per point.
     private var pixels: CGFloat {
-        size.width > 0 ? pages.size(of: index).width / size.width : 1
+        size.width > 0 ? pixelSize.width / size.width : 1
     }
 
     var body: some View {
@@ -150,7 +152,7 @@ struct SelectionLayer: View {
     private func move(_ items: [Selectable], editor: NoteEditor) -> some Gesture {
         DragGesture(minimumDistance: 1)
             .onChanged { value in
-                let size = pages.size(of: index)
+                let size = pixelSize
                 dragged = ElementMove(
                     page: index, elements: items.map(MovedElement.init), dx: Int(value.translation.width * pixels),
                     dy: Int(value.translation.height * pixels)

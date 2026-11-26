@@ -60,6 +60,17 @@ final class PageImages {
             ? CGSize(width: size.height, height: size.width) : CGSize(width: size.width, height: size.height)
     }
 
+    /// Every page's place and size in pixels, the values a list of the pages draws from. A list's row
+    /// is drawn again once after a newer copy removed its page and before the list shrinks, so a
+    /// row never reads the note itself (#329).
+    var pageSizes: [PageSize] { note.pages.indices.map { PageSize(index: $0, pixels: size(of: $0)) } }
+
+    /// A page's place in the note, from 0, and its size in pixels.
+    struct PageSize {
+        let index: Int
+        let pixels: CGSize
+    }
+
     func page(_ index: Int) -> State { pages[index] ?? .loading }
     func thumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar) -> State { thumbnails[size]?[index] ?? .loading }
 
@@ -164,6 +175,8 @@ final class PageImages {
 
     /// Draws one thumbnail, as many pixels as its box shows on a display of `scale`.
     func loadThumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar, scale: CGFloat) async {
+        // The task of a row whose page a delete removed may still start once (#329).
+        guard note.pages.indices.contains(index) else { return }
         let stale = staleThumbnails[size, default: []].contains(index)
         guard thumbnails[size]?[index] == nil || stale else { return }
         staleThumbnails[size]?.remove(index)

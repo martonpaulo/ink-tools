@@ -19,13 +19,30 @@ import Testing
         var body: some View {
             NavigationSplitView(columnVisibility: .constant(.all)) {
                 List {
-                    ForEach(0..<pages.note.pages.count, id: \.self) { index in
-                        ThumbnailRow(index: index, count: pages.note.pages.count, pages: pages)
+                    ForEach(pages.pageSizes, id: \.index) { page in
+                        ThumbnailRow(page: page, count: pages.note.pages.count, pages: pages)
                     }
                 }
             } detail: {
                 Color.clear
             }
+        }
+    }
+
+    /// After a delete, SwiftUI draws the page list's row of the removed page once more against the
+    /// newer note, before the list shrinks; the app stopped there on the Manta round of 2026-11-26
+    /// (#329). The row draws from the size the list gave it, and its thumbnail task returns.
+    @Test func aRowOfAPageTheNoteNoLongerHasStillDraws() async throws {
+        let pages = PageImages(note: try Fixtures.note("content.note"))
+        let gone = PageImages.PageSize(index: pages.note.pages.count, pixels: pages.size(of: 0))
+        let png = try await OffscreenWindow.png(
+            of: AnyView(List { ThumbnailRow(page: gone, count: pages.note.pages.count, pages: pages) }),
+            size: CGSize(width: 200, height: 240), dark: false)
+        #expect(!png.isEmpty)
+        await pages.loadThumbnail(gone.index, scale: 1)
+        guard case .loading = pages.thumbnail(gone.index) else {
+            Issue.record("a thumbnail was drawn for a page the note does not have")
+            return
         }
     }
 

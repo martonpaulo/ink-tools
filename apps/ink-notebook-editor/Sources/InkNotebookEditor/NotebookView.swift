@@ -367,8 +367,9 @@ struct NotebookView: View {
     private var pageList: some View {
         ScrollViewReader { list in
             List(selection: selection) {
-                ForEach(0..<navigator.pageCount, id: \.self) { index in
-                    ThumbnailRow(index: index, count: navigator.pageCount, pages: pages)
+                ForEach(pages.pageSizes, id: \.index) { page in
+                    let index = page.index
+                    ThumbnailRow(page: page, count: navigator.pageCount, pages: pages)
                         .id(index)
                         .task(id: DrawKey(scale: displayScale, generation: pages.generation)) {
                             await pages.loadThumbnail(index, scale: displayScale)
@@ -467,10 +468,11 @@ private struct PageScroll: View {
                 // Each page carries half the margin above and below it, so a page scrolled to the top
                 // keeps a margin above it, and two pages keep a whole margin between them.
                 LazyVStack(spacing: 0) {
-                    ForEach(0..<navigator.pageCount, id: \.self) { index in
+                    ForEach(pages.pageSizes, id: \.index) { page in
+                        let index = page.index
                         PageView(
-                            index: index, count: navigator.pageCount, pages: pages,
-                            size: viewer.zoom.size(of: pages.size(of: index), in: viewport, scale: displayScale),
+                            page: page, count: navigator.pageCount, pages: pages,
+                            size: viewer.zoom.size(of: page.pixels, in: viewport, scale: displayScale),
                             viewer: viewer
                         )
                         .padding(.vertical, PageView.margin / 2)
@@ -546,16 +548,13 @@ private struct PageScroll: View {
     /// The pages' heights at `zoom`, for the place a zoom keeps.
     private func stack(_ zoom: PageZoom, _ viewport: CGSize) -> PageStack {
         PageStack(
-            heights: (0..<navigator.pageCount).map {
-                zoom.size(of: pages.size(of: $0), in: viewport, scale: displayScale).height
-            },
+            heights: pages.pageSizes.map { zoom.size(of: $0.pixels, in: viewport, scale: displayScale).height },
             margin: PageView.margin)
     }
 
     /// The widest page at `zoom`, in points.
     private func widest(_ zoom: PageZoom, _ viewport: CGSize) -> CGFloat {
-        (0..<navigator.pageCount).map { zoom.size(of: pages.size(of: $0), in: viewport, scale: displayScale).width }
-            .max() ?? 0
+        pages.pageSizes.map { zoom.size(of: $0.pixels, in: viewport, scale: displayScale).width }.max() ?? 0
     }
 }
 
@@ -579,10 +578,11 @@ private struct PageGrid: View {
                     ],
                     spacing: Self.spacing
                 ) {
-                    ForEach(0..<navigator.pageCount, id: \.self) { index in
+                    ForEach(pages.pageSizes, id: \.index) { page in
+                        let index = page.index
                         // A click opens the page (#319); the keys move the selection and Return opens it.
                         GridCell(
-                            index: index, count: navigator.pageCount, pages: pages, isCurrent: index == navigator.index
+                            page: page, count: navigator.pageCount, pages: pages, isCurrent: index == navigator.index
                         ) {
                             navigator.show(index)
                             viewer.layout = .scroll
@@ -618,15 +618,17 @@ private struct GridCell: View {
     /// page number, in points.
     static let inset: CGFloat = 6
 
-    let index: Int
+    /// The page's place and size, from the list that holds the cell (#329).
+    let page: PageImages.PageSize
     let count: Int
     let pages: PageImages
     let isCurrent: Bool
     let open: () -> Void
 
     var body: some View {
+        let index = page.index
         let box = PageImages.ThumbnailSize.grid.box
-        let fitted = PageFit.fitted(page: pages.size(of: index), in: box)
+        let fitted = PageFit.fitted(page: page.pixels, in: box)
         Button(action: open) {
             VStack(spacing: Self.inset) {
                 Thumbnail(state: pages.thumbnail(index, .grid), size: fitted)
@@ -720,17 +722,20 @@ enum PageKeys {
     ]
 }
 
-/// One page in the page list: its thumbnail and number.
+/// One page in the page list: its thumbnail and number. The page's size comes from the list, never
+/// from the note: a row of a page that a delete removed is still drawn once after the note lost
+/// that page (#329).
 struct ThumbnailRow: View {
-    let index: Int
+    let page: PageImages.PageSize
     let count: Int
     let pages: PageImages
     @Environment(\.backgroundProminence) private var prominence
 
     var body: some View {
+        let index = page.index
         // The row is as tall as its page's thumbnail, so a landscape page leaves no blank band (#291).
         let box = PageImages.ThumbnailSize.sidebar.box
-        let fitted = PageFit.fitted(page: pages.size(of: index), in: box)
+        let fitted = PageFit.fitted(page: page.pixels, in: box)
         VStack(spacing: 4) {
             Thumbnail(state: pages.thumbnail(index), size: fitted)
                 .frame(width: box.width, height: fitted.height)
@@ -779,7 +784,8 @@ private struct PageView: View {
     /// The space around the pages and between them, in points.
     static let margin: CGFloat = 24
 
-    let index: Int
+    /// The page's place and size in pixels, from the list that holds the page (#329).
+    let page: PageImages.PageSize
     let count: Int
     let pages: PageImages
     /// The page's drawn size, in points.
@@ -802,7 +808,7 @@ private struct PageView: View {
 
     var body: some View {
         Group {
-            switch pages.page(index) {
+            switch pages.page(page.index) {
             case .ready(let full):
                 page(full)
             case .loading:
@@ -819,25 +825,25 @@ private struct PageView: View {
     /// The page drawn from a raster resampled to its drawn pixels; at Actual Size or larger the
     /// page's own raster shows, never one resampled up.
     private func page(_ full: CGImage) -> some View {
-        let pixels = PageFit.pixels(for: size, scale: displayScale)
-        let resample = pixels.width < full.width
-        let key = Key(index: index, width: pixels.width, height: pixels.height)
+        let drawn = PageFit.pixels(for: size, scale: displayScale)
+        let resample = drawn.width < full.width
+        let key = Key(index: page.index, width: drawn.width, height: drawn.height)
         let shown = resample ? fitted.flatMap { $0.key == key ? $0.image : nil } : nil
-        return PaperImage(image: shown ?? full, label: Copy.pageOf(index + 1, count))
+        return PaperImage(image: shown ?? full, label: Copy.pageOf(page.index + 1, count))
             .frame(width: size.width, height: size.height)
             .overlay {
-                SelectionLayer(index: index, pages: pages, viewer: viewer, size: size)
+                SelectionLayer(index: page.index, pages: pages, viewer: viewer, pixelSize: page.pixels, size: size)
             }
             .overlay(alignment: .top) {
-                if let style = pages.missingTemplates[index] {
+                if let style = pages.missingTemplates[page.index] {
                     PageMarker(text: Copy.templateNotShown(style))
-                } else if case .failure = pages.elements[index] {
+                } else if case .failure = pages.elements[page.index] {
                     PageMarker(text: Copy.elementsNotSelectable)
                 }
             }
-            .overlay { FindMarks(page: index, pixels: pages.size(of: index), size: size) }
+            .overlay { FindMarks(page: page.index, pixels: page.pixels, size: size) }
             .task(id: key) {
-                guard resample, let image = await PageImages.fit(full, to: pixels) else { return }
+                guard resample, let image = await PageImages.fit(full, to: drawn) else { return }
                 fitted = Fitted(key: key, image: image)
             }
     }
