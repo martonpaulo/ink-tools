@@ -1,6 +1,6 @@
 /**
  * Lasso Actions' modules (#306), one row each: its id, its title in Settings and its lasso buttons.
- * A module that is off registers no lasso button. Lookup and Headings (#252) are built: «Convert
+ * A module that is off registers no button. Lookup, Headings (#252) and Collection (#249) are built: «Convert
  * to Text» joins from Smart Pen once its engine is on `main` (#305), and each other module adds a
  * row here when it is built. A switch a newer build wrote for a module this build does not know is
  * kept in the settings file (src/settings.ts), never dropped.
@@ -15,6 +15,7 @@ import {
   type PluginButton,
 } from './buttons';
 import {copy} from './copy';
+import {COLLECTION_BUTTONS} from './collection/buttons';
 import {HEADING_BUTTONS} from './headings/buttons';
 import {SWITCH_KEYS, type LassoSettings, type LookupSettings} from './settings';
 
@@ -41,6 +42,12 @@ export const MODULES: readonly ModuleRow[] = [
     title: copy['module.headings'],
     note: copy['module.headingsNote'],
     buttons: HEADING_BUTTONS,
+  },
+  {
+    id: 'collection',
+    title: copy['module.collection'],
+    note: copy['module.collectionNote'],
+    buttons: COLLECTION_BUTTONS,
   },
 ];
 

@@ -6,17 +6,15 @@
  */
 import {rectProblem, type Rect, type Size} from '@ink-tools/ink-core';
 import {
-  getCurrentFilePath,
-  getCurrentPageNum,
   getLassoRect,
-  getPageSize,
   resizeLassoRect,
   Result,
   setLassoTitle,
   type TitleStyle,
 } from '@ink-tools/sn-adapter/official';
 import {copy} from '../copy';
-import {lookupLog, showToast} from '../textBox';
+import {currentPageSize} from '../pageSize';
+import {lookupLog, showToast, whyNot} from '../textBox';
 import {levelStyle, placement, type HeadingLevel} from './levels';
 
 export type HeadingHost = {
@@ -32,9 +30,6 @@ export type HeadingHost = {
 export type HeadingOutcome =
   | {ok: true; rect: Rect}
   | {ok: false; why: 'lasso' | 'page' | 'unplaced' | 'title' | 'resize'};
-
-const why = (result: Result<boolean>): string =>
-  result.ok ? 'answered false' : `${result.code} ${result.message}`;
 
 /**
  * Makes the lasso a heading of `level`. Nothing changes when the lasso or the page cannot be read,
@@ -68,31 +63,18 @@ export async function applyHeading(
   }
   const titled = await host.setTitle(levelStyle(level));
   if (!titled.ok || !titled.value) {
-    host.log(`${tag}: setLassoTitle ${why(titled)}`);
+    host.log(`${tag}: setLassoTitle ${whyNot(titled)}`);
     host.toast(copy['heading.failed']);
     return {ok: false, why: 'title'};
   }
   const resized = await host.resize(target);
   if (!resized.ok || !resized.value) {
-    host.log(`${tag}: resizeLassoRect ${why(resized)}`);
+    host.log(`${tag}: resizeLassoRect ${whyNot(resized)}`);
     host.toast(copy['heading.notMoved']);
     return {ok: false, why: 'resize'};
   }
   host.log(`${tag}: done at ${JSON.stringify(target)}`);
   return {ok: true, rect: target};
-}
-
-/** The current page's size, from its note's path and number. */
-export async function currentPageSize(): Promise<Result<Size>> {
-  const path = await getCurrentFilePath();
-  if (!path.ok) {
-    return path;
-  }
-  const page = await getCurrentPageNum();
-  if (!page.ok) {
-    return page;
-  }
-  return getPageSize(path.value, page.value);
 }
 
 export const DEVICE_HOST: HeadingHost = {

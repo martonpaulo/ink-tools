@@ -3,6 +3,7 @@
  * switch registers or removes its button and is saved (#93, #111, #115, #142, #167, #174).
  */
 import {headingLevel} from '../src/headings/buttons';
+import {ADD_ID} from '../src/collection/buttons';
 import React from 'react';
 import {NativeModules} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
@@ -140,7 +141,7 @@ test('both picture switches off: no picture button, and Settings still opens (#1
   const ids = jest
     .mocked(PluginManager.registerButton)
     .mock.calls.map(call => (call[2] as {id: number}).id)
-    .filter(id => headingLevel(id) === null);
+    .filter(id => headingLevel(id) === null && id < ADD_ID);
   expect(ids).toEqual([DEFINE_BUTTON_ID]);
 });
 
@@ -190,6 +191,7 @@ test('the Lookup module switch removes every Lookup button and its rows, and is 
   expect(JSON.parse(writes[writes.length - 1][1]).modules).toEqual({
     lookup: false,
     headings: true,
+    collection: true,
   });
 });
 

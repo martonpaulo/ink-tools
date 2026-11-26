@@ -24,6 +24,8 @@ import type {Working} from '@ink-tools/ui-kit';
 import SmartPenSettings from '../../../plugins/smart-pen/App';
 import {DEFAULT_PEN_SETTINGS} from '../../../plugins/smart-pen/src/settings';
 import LassoActionsSettings from '../../../plugins/lasso-actions/App';
+import {CollectionScreen as LassoCollection} from '../../../plugins/lasso-actions/src/ui/CollectionScreen';
+import type {CollectionHost} from '../../../plugins/lasso-actions/src/collection/run';
 import PluginDiagnostics from '../../../plugins/plugin-diagnostics/App';
 import {copy as diagnosticsCopy} from '../../../plugins/plugin-diagnostics/src/copy';
 import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
@@ -162,6 +164,23 @@ const TRANSFER_DEVICES: TransferDevice[] = [
   {alias: 'Mac', ip: '10.0.0.4', port: 53317, protocol: 'https', fingerprint: 'cccccc333333'},
 ];
 
+/** A collection of three pieces for Lasso Actions' Collection view (#249). */
+const answer = async <T,>(value: T) => ({ok: true as const, value});
+const COLLECTION_HOST: CollectionHost = {
+  folder: () => answer('/plugin'),
+  list: () => answer(['collection-1_0_0_5_5.sticker', 'collection-2_0_0_5_5.sticker', 'collection-3_0_0_5_5.sticker']),
+  remove: () => answer(true),
+  lassoRect: () => answer({left: 0, top: 0, right: 5, bottom: 5}),
+  pageSize: () => answer({width: 1404, height: 1872}),
+  saveSticker: () => answer(true),
+  deleteLasso: () => answer(true),
+  insertSticker: () => answer(true),
+  resize: () => answer(true),
+  select: () => answer(true),
+  toast: noop,
+  log: noop,
+};
+
 // One line per screen, so adding one is one line.
 // prettier-ignore
 export const SCREENS: ScreenRender[] = [
@@ -170,6 +189,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
+  {name: 'lasso-actions-collection', render: () => mount(<LassoCollection close={noop} host={COLLECTION_HOST} />)},
   {name: 'plugin-diagnostics', render: () => mount(<PluginDiagnostics close={noop} run={async () => ({lines: [], status: 'done'})} />)},
   {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']})},
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},

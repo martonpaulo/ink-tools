@@ -455,9 +455,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/collection/add",
+   "out": "plugins/lasso-actions/assets/collection-add",
    "kind": "plugin",
-   "planned": "#249",
    "tabler": [
     "clipboard",
     {
@@ -467,9 +466,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/collection/cut",
+   "out": "plugins/lasso-actions/assets/collection-cut",
    "kind": "plugin",
-   "planned": "#249",
    "tabler": [
     "clipboard",
     {
@@ -484,9 +482,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/collection/paste",
+   "out": "plugins/lasso-actions/assets/collection-paste",
    "kind": "plugin",
-   "planned": "#249",
    "tabler": [
     "clipboard",
     {
@@ -627,10 +624,11 @@
   "lasso-actions": {
    "motif": [
     "search",
-    "letter-h"
+    "letter-h",
+    "clipboard"
    ],
    "except": {
-    "icon": "the plugin's own icon, the lasso, stands for every module; `search` marks Lookup's buttons, `letter-h` Headings' (#252)",
+    "icon": "the plugin's own icon, the lasso, stands for every module; `search` marks Lookup's buttons, `letter-h` Headings' (#252), `clipboard` Collection's (#249)",
     "translate-es-pt": "two language codes and their arrow fill the box",
     "translate-pt-es": "as translate-es-pt",
     "translate-pt-zh": "as translate-es-pt",

@@ -237,12 +237,19 @@ export const LASSO_SETTINGS_VERSION = 2;
 export const DEFAULT_MODULES: Record<ModuleId, boolean> = {
   lookup: true,
   headings: true,
+  collection: true,
 };
+
+/** Collection's own setting (#249): a paste empties the collection unless this is on. */
+export type CollectionSettings = {keepAfterPaste: boolean};
+
+export const DEFAULT_COLLECTION: CollectionSettings = {keepAfterPaste: false};
 
 export type LassoSettings = {
   /** One switch per module; a module off registers no lasso button. */
   modules: Record<ModuleId, boolean>;
   lookup: LookupSettings;
+  collection: CollectionSettings;
   /** The switches of modules this build does not know, kept so a write never drops them. */
   otherModules: Record<string, unknown>;
   /** True when the file was read in Word Lookup's shape: index.js writes it once in the new one. */
@@ -252,6 +259,7 @@ export type LassoSettings = {
 export const defaultLassoSettings = (): LassoSettings => ({
   modules: {...DEFAULT_MODULES},
   lookup: fresh(),
+  collection: {...DEFAULT_COLLECTION},
   otherModules: {},
   oldShape: false,
 });
@@ -306,10 +314,25 @@ export function parseLassoSettings(text: string | null): {
   const lookup = parseSettings(
     isObject(raw.lookup) ? JSON.stringify(raw.lookup) : null,
   );
+  const collection = {...DEFAULT_COLLECTION};
+  // A missing `collection` is a file from before Collection; anything else not an object is wrong.
+  const keep = isObject(raw.collection)
+    ? raw.collection.keepAfterPaste
+    : raw.collection === undefined
+    ? undefined
+    : null;
+  if (typeof keep === 'boolean') {
+    collection.keepAfterPaste = keep;
+  } else if (keep !== undefined) {
+    problems.push(
+      'settings: collection.keepAfterPaste is not true or false; it is off',
+    );
+  }
   return {
     settings: {
       modules: switches,
       lookup: lookup.settings,
+      collection,
       otherModules: Object.fromEntries(
         Object.entries(modules).filter(
           ([id]) => !MODULE_IDS.includes(id as ModuleId),
@@ -333,6 +356,7 @@ export function serializeLassoSettings(settings: LassoSettings): string {
       version: LASSO_SETTINGS_VERSION,
       modules: {...settings.otherModules, ...settings.modules},
       lookup,
+      collection: settings.collection,
     },
     null,
     2,
@@ -346,5 +370,6 @@ export const LASSO_SETTINGS: SettingsCodec<LassoSettings> = {
     [
       ...MODULE_IDS.map(id => `${id} ${settings.modules[id] ? 'on' : 'off'}`),
       LOOKUP_DESCRIBE(settings.lookup),
+      `keep after paste ${settings.collection.keepAfterPaste ? 'on' : 'off'}`,
     ].join(', '),
 };

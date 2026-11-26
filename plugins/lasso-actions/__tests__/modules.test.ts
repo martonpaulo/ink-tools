@@ -8,6 +8,7 @@ import {
   syncModules,
 } from '../src/modules';
 import {HEADING_BUTTONS} from '../src/headings/buttons';
+import {COLLECTION_BUTTONS} from '../src/collection/buttons';
 import {
   defaultSettings,
   LASSO_SETTINGS_VERSION,
@@ -17,13 +18,17 @@ import {
 } from '../src/settings';
 import {
   BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
+  EDIT_DATA_STROKES,
+  SHOW_FULL_VIEW,
+  SHOW_NO_VIEW,
   ButtonDeps,
   isOn,
   LassoButton,
   resetButtonsForTests,
 } from '../src/buttons';
 
-const ALL_ON = {lookup: true, headings: true};
+const ALL_ON = {lookup: true, headings: true, collection: true};
 
 test('every module id has one row', () => {
   expect(MODULES.map(row => row.id)).toEqual([...MODULE_IDS]);
@@ -55,7 +60,7 @@ test("Word Lookup's file is read whole as Lookup's settings, every module on, to
 test('a file already in the new shape is read as it is, not marked for a rewrite', () => {
   const settings = {
     ...parseLassoSettings(null).settings,
-    modules: {lookup: false, headings: true},
+    modules: {lookup: false, headings: true, collection: true},
     otherModules: {convert: true},
   };
   const again = parseLassoSettings(serializeLassoSettings(settings));
@@ -65,6 +70,7 @@ test('a file already in the new shape is read as it is, not marked for a rewrite
     convert: true,
     lookup: false,
     headings: true,
+    collection: true,
   });
 });
 
@@ -100,7 +106,7 @@ test('Headings registers its four lasso buttons while it is on, and none while i
     expect.arrayContaining([ids[0]]),
   );
   // Turning Lookup off leaves the Headings buttons on.
-  expect(on({lookup: false, headings: true})).toEqual(ids);
+  expect(on({lookup: false, headings: true, collection: false})).toEqual(ids);
 
   resetButtonsForTests();
   const deps = {
@@ -130,4 +136,50 @@ test('Headings registers its four lasso buttons while it is on, and none while i
   );
   expect(deps.unregister.mock.calls.map(([id]) => id)).toEqual(ids);
   resetButtonsForTests();
+});
+
+test('Collection registers two lasso rows and one toolbar button with a view, and keeps its setting (#249)', async () => {
+  resetButtonsForTests();
+  const deps = {
+    register: jest.fn(async () => ok(true as const)),
+    unregister: jest.fn(async (_id: number) => ok(true as const)),
+    hasPermission: jest.fn(async () => ok(true)),
+    requestPermission: jest.fn(async () => ok(2)),
+    log: () => {},
+  } satisfies ButtonDeps;
+  await syncModules(parseLassoSettings(null).settings, deps);
+  const calls = deps.register.mock.calls as unknown as [
+    number,
+    string[],
+    {id: number; name: string; showType: number; editDataTypes?: number[]},
+  ][];
+  const ids = COLLECTION_BUTTONS.map(button => button.id);
+  expect(
+    calls
+      .filter(([, , config]) => ids.includes(config.id))
+      .map(([type, , config]) => [
+        type,
+        config.name,
+        config.showType,
+        config.editDataTypes,
+      ]),
+  ).toEqual([
+    [BUTTON_TYPE_LASSO, 'Add to Collection', SHOW_NO_VIEW, [EDIT_DATA_STROKES]],
+    [BUTTON_TYPE_LASSO, 'Cut to Collection', SHOW_NO_VIEW, [EDIT_DATA_STROKES]],
+    [BUTTON_TYPE_SIDEBAR, 'Paste Collection', SHOW_FULL_VIEW, undefined],
+  ]);
+  resetButtonsForTests();
+
+  const defaults = parseLassoSettings(null).settings;
+  expect(defaults.collection).toEqual({keepAfterPaste: false});
+  const kept = parseLassoSettings(
+    serializeLassoSettings({...defaults, collection: {keepAfterPaste: true}}),
+  );
+  expect(kept.problems).toEqual([]);
+  expect(kept.settings.collection).toEqual({keepAfterPaste: true});
+  const wrong = parseLassoSettings(
+    JSON.stringify({modules: {}, collection: {keepAfterPaste: 'yes'}}),
+  );
+  expect(wrong.settings.collection).toEqual({keepAfterPaste: false});
+  expect(wrong.problems).toHaveLength(1);
 });

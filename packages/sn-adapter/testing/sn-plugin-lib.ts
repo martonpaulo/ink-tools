@@ -41,6 +41,7 @@ export const PluginCommAPI = mocks(
   'insertGeometry',
   'deletePageElements',
   'resizeLassoRect',
+  'saveStickerByLasso',
 );
 
 export const PluginNoteAPI = mocks(
