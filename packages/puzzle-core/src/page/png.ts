@@ -44,36 +44,46 @@ class ByteSink {
     this.buffer[this.length++] = byte;
   }
   pushAll(bytes: ArrayLike<number>): void {
-    for (let i = 0; i < bytes.length; i++) this.push(bytes[i]);
+    if (this.length + bytes.length > this.buffer.length) {
+      const bigger = new Uint8Array(Math.max(this.buffer.length * 2, this.length + bytes.length));
+      bigger.set(this.buffer.subarray(0, this.length));
+      this.buffer = bigger;
+    }
+    this.buffer.set(bytes, this.length);
+    this.length += bytes.length;
   }
   bytes(): Uint8Array {
     return this.buffer.slice(0, this.length);
   }
 }
 
-/** Deflate's bit order: values least significant bit first, Huffman codes most significant first. */
+/**
+ * Deflate's bit stream, least significant bit first. Each symbol is written in one call from a
+ * table that holds its code already reversed, so a symbol costs one shift and one or two bytes
+ * out: round 11 measured 1.9 to 3.6 s of encoding on the tablet when each bit was a call (#379).
+ */
 class BitWriter {
   private bits = 0;
   private count = 0;
   constructor(readonly sink: ByteSink) {}
-  write(value: number, n: number): void {
-    for (let i = 0; i < n; i++) {
-      this.bits |= ((value >>> i) & 1) << this.count;
-      if (++this.count === 8) this.flushByte();
+  /** Writes the low `n` bits of `value`, n at most 24. */
+  put(value: number, n: number): void {
+    this.bits |= value << this.count;
+    this.count += n;
+    while (this.count >= BYTE_BITS) {
+      this.sink.push(this.bits & 0xff);
+      this.bits >>>= BYTE_BITS;
+      this.count -= BYTE_BITS;
     }
   }
-  writeCode(code: number, n: number): void {
-    for (let i = n - 1; i >= 0; i--) this.write((code >>> i) & 1, 1);
-  }
   finish(): void {
-    if (this.count > 0) this.flushByte();
-  }
-  private flushByte(): void {
-    this.sink.push(this.bits);
+    if (this.count > 0) this.sink.push(this.bits & 0xff);
     this.bits = 0;
     this.count = 0;
   }
 }
+
+const BYTE_BITS = 8;
 
 /** RFC 1951 3.2.6: the fixed codes, as ranges of symbols [first, end) with the first code and its bits. */
 const FIXED_CODES: readonly (readonly [first: number, end: number, code: number, bits: number])[] = [
@@ -85,21 +95,42 @@ const FIXED_CODES: readonly (readonly [first: number, end: number, code: number,
 /** Distance 1 is distance code 0, five bits, no extra bits. */
 const DISTANCE_ONE = { code: 0, bits: 5 } as const;
 
-function writeSymbol(out: BitWriter, symbol: number): void {
-  for (const [first, end, code, bits] of FIXED_CODES) {
-    if (symbol < end) {
-      out.writeCode(code + symbol - first, bits);
-      return;
-    }
+/** A Huffman code, written most significant bit first, as the low bits of a least-first stream. */
+function reversed(code: number, bits: number): number {
+  let out = 0;
+  for (let i = 0; i < bits; i++) out |= ((code >>> i) & 1) << (bits - 1 - i);
+  return out;
+}
+
+/** Each fixed symbol's code, reversed, and its length in bits. */
+const SYMBOL_CODE = new Int32Array(FIXED_CODES[FIXED_CODES.length - 1][1]);
+const SYMBOL_BITS = new Uint8Array(SYMBOL_CODE.length);
+for (const [first, end, code, bits] of FIXED_CODES) {
+  for (let symbol = first; symbol < end; symbol++) {
+    SYMBOL_CODE[symbol] = reversed(code + symbol - first, bits);
+    SYMBOL_BITS[symbol] = bits;
   }
 }
 
-function writeMatch(out: BitWriter, length: number): void {
+/** Each match length's whole code: the length code, its extra bits and the distance-1 code. */
+const MATCH_CODE = new Int32Array(MAX_MATCH + 1);
+const MATCH_BITS = new Uint8Array(MAX_MATCH + 1);
+for (let length = MIN_MATCH; length <= MAX_MATCH; length++) {
   let code = LENGTH_BASE.length - 1;
   while (LENGTH_BASE[code] > length) code--;
-  writeSymbol(out, FIRST_LENGTH_CODE + code);
-  out.write(length - LENGTH_BASE[code], LENGTH_EXTRA[code]);
-  out.writeCode(DISTANCE_ONE.code, DISTANCE_ONE.bits);
+  const symbol = FIRST_LENGTH_CODE + code;
+  const extra = LENGTH_EXTRA[code];
+  MATCH_CODE[length] =
+    SYMBOL_CODE[symbol] | ((length - LENGTH_BASE[code]) << SYMBOL_BITS[symbol]) | (reversed(DISTANCE_ONE.code, DISTANCE_ONE.bits) << (SYMBOL_BITS[symbol] + extra));
+  MATCH_BITS[length] = SYMBOL_BITS[symbol] + extra + DISTANCE_ONE.bits;
+}
+
+function writeSymbol(out: BitWriter, symbol: number): void {
+  out.put(SYMBOL_CODE[symbol], SYMBOL_BITS[symbol]);
+}
+
+function writeMatch(out: BitWriter, length: number): void {
+  out.put(MATCH_CODE[length], MATCH_BITS[length]);
 }
 
 /** True for each byte value that is one of the 16 native greys. */
@@ -121,8 +152,8 @@ const WORD = 4;
 function deflatePage(raster: Raster, sink: ByteSink): number {
   const { width, height, pixels } = raster;
   const out = new BitWriter(sink);
-  out.write(1, 1); // the last block
-  out.write(1, 2); // fixed Huffman codes
+  out.put(1, 1); // the last block
+  out.put(1, 2); // fixed Huffman codes
   let a = 1;
   let b = 0;
   let sinceReduce = 0;
@@ -178,6 +209,10 @@ function deflatePage(raster: Raster, sink: ByteSink): number {
       for (let x = 0; x < width; x++) byteAt(y, x);
       continue;
     }
+    if (raster.changedRows && raster.changedRows[y] === 0) {
+      zeros(width);
+      continue;
+    }
     const row = y * rowWords;
     let same = 0;
     for (let w = 0; w < rowWords; w++) {
@@ -187,7 +222,27 @@ function deflatePage(raster: Raster, sink: ByteSink): number {
       }
       if (same > 0) zeros(same * WORD);
       same = 0;
-      for (let x = w * WORD; x < (w + 1) * WORD; x++) byteAt(y, x);
+      // take() and byteAt(), written inline for the bytes that differ from the row above: the
+      // tablet's engine pays for every call (#379, device round 11).
+      const end = (w + 1) * WORD + y * width;
+      for (let at = w * WORD + y * width; at < end; at++) {
+        const v = pixels[at];
+        if (NATIVE[v] === 0) assertNativeGreys(raster);
+        const byte = (v - pixels[at - width]) & 0xff;
+        a += byte;
+        b += a;
+        if (++sinceReduce === ADLER_BLOCK) {
+          a %= ADLER_MOD;
+          b %= ADLER_MOD;
+          sinceReduce = 0;
+        }
+        if (byte === runByte) runLength++;
+        else {
+          flushRun();
+          runByte = byte;
+          runLength = 1;
+        }
+      }
     }
     if (same > 0) zeros(same * WORD);
   }

@@ -33,6 +33,7 @@ import {
   type PageSpec,
   type Raster,
 } from '../src';
+import { SAMPLE_PAGES } from '../testing/pages';
 
 /**
  * Golden images of the page renderer (#379). Each render is compared pixel by pixel with its PNG
@@ -88,6 +89,9 @@ function expectGolden(name: string, raster: Raster): void {
 }
 
 const SWATCH = 720;
+
+/** The same pixels with no changed-row flags, for a test that writes pixels directly. */
+const unflagged = ({ width, height, pixels }: Raster): Raster => ({ width, height, pixels });
 const square = (columns: number, rows: number, cell = 118): Grid => ({ lattice: 'square', x: 60, y: 60, cell, columns, rows });
 
 /** A swatch with a square lattice already drawn, for the primitives drawn over one. */
@@ -106,7 +110,7 @@ describe('the 16 native greys', () => {
   });
 
   test('the check fails on a pixel that is not one of them, and so does the encoder', () => {
-    const raster = createRaster(8, 4);
+    const raster = unflagged(createRaster(8, 4));
     raster.pixels[2 * 8 + 5] = 0x10;
     expect(() => assertNativeGreys(raster)).toThrow('pixel (5, 2) is 0x10, not one of the 16 native greys');
     expect(() => encodePng(raster)).toThrow('not one of the 16 native greys');
@@ -124,12 +128,22 @@ describe('the 16 native greys', () => {
 
 describe('the PNG', () => {
   test('decodes with zlib to the same pixels', () => {
-    const raster = createRaster(301, 97);
+    const raster = unflagged(createRaster(301, 97));
     for (let i = 0; i < raster.pixels.length; i++) raster.pixels[i] = NATIVE_GREYS[(i * 7 + (i >> 5)) % 16];
     fillRect(raster, 0, 40, 301, 30, 'paper');
     const back = decodePng(encodePng(raster));
     expect([back.width, back.height]).toEqual([301, 97]);
     expect(Buffer.from(back.pixels).equals(Buffer.from(raster.pixels))).toBe(true);
+  });
+
+  test('a page skips the rows its paint calls left equal, and packs to the same bytes', () => {
+    // The encoder trusts the changed-row flags the paint calls keep (#379, device round 11): a
+    // flag missed by a paint call would leave a row out, so each sample page must encode to the
+    // same bytes as its pixels compared row by row.
+    for (const [name, draw] of SAMPLE_PAGES) {
+      const raster = draw();
+      expect([name, Buffer.from(encodePng(raster)).equals(Buffer.from(encodePng(unflagged(raster))))]).toEqual([name, true]);
+    }
   });
 
   test('a blank page packs small', () => {
@@ -213,70 +227,9 @@ describe('each primitive matches its golden image', () => {
   });
 });
 
-function drawWordPanel(r: Raster, layout: PageLayout, words: readonly string[]): void {
-  const panel = layout.sidePanel;
-  if (!panel) throw new Error('this layout has no side panel');
-  words.forEach((word, i) => drawText(r, word, panel.x, panel.y + 60 + i * 64, { size: 48, weight: 400, tone: 'ink' }));
-}
-
 describe('each preset and layout matches its golden page', () => {
-  test('7 mm, portrait, right hand: a nonogram with outside clues', () => {
-    const puzzle = generateNonogram('P1', { width: 15, height: 10 }, 'medium');
-    const deepest = (lists: number[][]) => Math.max(...lists.map((l) => l.length));
-    const layout = layoutPage({
-      orientation: 'portrait', hand: 'right', cellMm: 7, lattice: 'square', columns: 15, rows: 10,
-      clues: { top: deepest(puzzle.columns), left: deepest(puzzle.rows) },
-    });
-    const r = createPage(layout);
-    drawSquareLattice(r, layout.grid);
-    drawOutsideClues(r, layout.grid, 'top', puzzle.columns.map((l) => l.map(String)), layout.clueGap);
-    drawOutsideClues(r, layout.grid, 'left', puzzle.rows.map((l) => l.map(String)), layout.clueGap);
-    drawFooter(r, layout, { game: 'Nonogram', difficulty: 'Medium', code: puzzleCode(puzzle.id), rule: 'Fill the cells so each row and column shows its runs, in order.' });
-    expectGolden('page-7mm-portrait-right', r);
-  });
-
-  test('10 mm, portrait, left hand: a word search with its list on the right', () => {
-    const words = ['GATO', 'CACHORRO', 'LEAO', 'URSO', 'SAPO', 'PATO', 'CABRA', 'PEIXE'];
-    const puzzle = generateWordSearch('P1', 10, 'hard', words);
-    const layout = layoutPage({ orientation: 'portrait', hand: 'left', cellMm: 10, lattice: 'square', columns: 10, rows: 10, sidePanelMm: 30 });
-    const r = createPage(layout);
-    drawSquareLattice(r, layout.grid);
-    puzzle.letters.forEach((letter, i) => drawCellText(r, layout.grid, i % 10, Math.floor(i / 10), letter, 'given'));
-    drawWordPanel(r, layout, words);
-    drawFooter(r, layout, { game: 'Word search', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Find each word of the list: across, down, diagonal or backwards.' });
-    expectGolden('page-10mm-portrait-left', r);
-  });
-
-  test('15 mm, portrait, right hand: a sudoku with its boxes', () => {
-    const puzzle = generateSudoku('P1', 9, 'hard');
-    const layout = layoutPage({ orientation: 'portrait', hand: 'right', cellMm: 15, lattice: 'square', columns: 9, rows: 9 });
-    const r = createPage(layout);
-    drawSquareLattice(r, layout.grid);
-    drawRegions(r, layout.grid, (c, row) => Math.floor(c / 3) + 3 * Math.floor(row / 3));
-    puzzle.givens.forEach((v, i) => v > 0 && drawCellText(r, layout.grid, i % 9, Math.floor(i / 9), String(v), 'given'));
-    drawFooter(r, layout, { game: 'Sudoku', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Put 1 to 9 once in each row, each column and each box.' });
-    expectGolden('page-15mm-portrait-right', r);
-  });
-
-  test('10 mm, landscape, right hand: a hex lattice with its panel on the left', () => {
-    const layout = layoutPage({ orientation: 'landscape', hand: 'right', cellMm: 10, lattice: 'hex', columns: 12, rows: 10, sidePanelMm: 40 });
-    const r = createPage(layout);
-    drawHexLattice(r, layout.grid);
-    drawCellText(r, layout.grid, 3, 2, '4', 'given');
-    drawIcon(r, layout.grid, 6, 5, 'pearl-black');
-    drawWordPanel(r, layout, ['Panel', 'left']);
-    drawFooter(r, layout, { game: 'Hex lattice', difficulty: 'Easy', code: 'TEST-0001', rule: 'A landscape page with the panel away from the right hand.' });
-    expectGolden('page-10mm-landscape-right', r);
-  });
-
-  test('10 mm, landscape, left hand: a triangle lattice with its panel on the right', () => {
-    const layout = layoutPage({ orientation: 'landscape', hand: 'left', cellMm: 10, lattice: 'triangle', columns: 25, rows: 10, sidePanelMm: 40 });
-    const r = createPage(layout);
-    drawTriangleLattice(r, layout.grid);
-    drawCellText(r, layout.grid, 4, 1, '2', 'given');
-    drawWordPanel(r, layout, ['Panel', 'right']);
-    drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
-    expectGolden('page-10mm-landscape-left', r);
+  test.each(SAMPLE_PAGES.map(([name, draw]) => [name, draw] as const))('%s', (name, draw) => {
+    expectGolden(name, draw());
   });
 });
 
