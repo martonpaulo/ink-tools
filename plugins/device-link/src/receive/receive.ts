@@ -6,6 +6,7 @@
  */
 import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
 import {Result, TextBoxInput} from '@ink-tools/sn-adapter/official';
+import type {HeldState, Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
 import {
   announce,
@@ -17,7 +18,7 @@ import {
   Taken,
 } from '../localsend/protocol';
 import {Relay} from '../native';
-import {refusedLine as permissionLine} from '../permissions';
+import {refusedProblem} from '../permissions';
 import {tempDir} from '../send/sendPng';
 import {NoteFiles, pdfToNote} from './pdfNote';
 
@@ -272,8 +273,14 @@ function refusedLine(taken: Taken | null): string {
   }
 }
 
+/** A receive that failed: the view holds it in ui-kit's Error or Needs state (#438). */
+export type ReceiveHeld = {problem: Problem; state: HeldState};
+
+/** The Error state of a receiver that failed; the details go to the log. */
+const RECEIVE_FAILED: ReceiveHeld = {problem: {what: copy.receiveFailed}, state: 'error'};
+
 /**
- * Receives one item and places it; answers the toast line. `onReady` runs once the tablet is
+ * Receives one item and places it; answers the toast line, or the failure the view holds (#438). `onReady` runs once the tablet is
  * visible. A refused offer keeps the window open for the next one.
  */
 export async function receiveOne(
@@ -283,19 +290,19 @@ export async function receiveOne(
   onReady: () => void = () => {},
   now: () => number = Date.now,
   windowMs: number = RECEIVE_WINDOW_MS,
-): Promise<string> {
+): Promise<string | ReceiveHeld> {
   // Before the first file, note or network call (#163): without it every file call fails.
   const missing = await host.permissions();
   if (missing !== null) {
-    return permissionLine(missing);
+    return {problem: refusedProblem(missing), state: 'needs'};
   }
   const dir = await host.pluginDir();
   if (!dir.ok) {
-    return copy.receiveFailed;
+    return RECEIVE_FAILED;
   }
   const fingerprint = await native.identity(dir.value);
   if (!fingerprint.ok) {
-    return copy.receiveFailed;
+    return RECEIVE_FAILED;
   }
   const self = {alias, fingerprint: fingerprint.value};
   const started = await native.startReceive(
@@ -308,7 +315,7 @@ export async function receiveOne(
     announceAnswer(self),
   );
   if (!started.ok) {
-    return copy.receiveFailed;
+    return RECEIVE_FAILED;
   }
   await removeLastImage(native);
   onReady();
@@ -318,7 +325,7 @@ export async function receiveOne(
     for (let left = windowMs; left > 0; left = deadline - now()) {
       const next = await native.nextReceived(left);
       if (!next.ok) {
-        return copy.receiveFailed;
+        return RECEIVE_FAILED;
       }
       const arrival = next.value;
       if (arrival === null) {

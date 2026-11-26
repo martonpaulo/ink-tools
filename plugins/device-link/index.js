@@ -91,11 +91,17 @@ registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
 /** The view shows «Ready to receive» until one item lands in the note (#49). */
 function receive() {
   runReceive(relay(), noteHost, ALIAS, () => showPluginView())
-    .then(line => {
-      if (line !== null) {
-        closePluginView();
-        ToastAndroid.show(line, ToastAndroid.SHORT);
+    .then(end => {
+      if (end === null) {
+        return;
       }
+      if (typeof end !== 'string') {
+        // A failed receive stays on screen in the Error or Needs state (#438).
+        working.hold(end.problem, end.state);
+        return;
+      }
+      closePluginView();
+      ToastAndroid.show(end, ToastAndroid.SHORT);
     })
     .catch(error => console.error(`Relay: receive failed: ${error.message}`));
 }

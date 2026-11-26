@@ -3,7 +3,7 @@
  * and a second tap on «Receive» starts nothing.
  */
 import {Relay} from '../native';
-import {NoteHost, receiveOne} from './receive';
+import {NoteHost, ReceiveHeld, receiveOne} from './receive';
 
 export type ReceiveState = 'idle' | 'starting' | 'ready';
 
@@ -28,7 +28,7 @@ export function onReceiveState(listener: (next: ReceiveState) => void): () => vo
 }
 
 /**
- * One receive; answers the toast line, or null when one is already running. Closing the view never
+ * One receive; answers the toast line, the failure to hold (#438), or null when one is already running. Closing the view never
  * stops it (#289): the native receiver runs on its own thread until an item lands, the window ends
  * or «Stop» is pressed, so a tap on «Receive» while one runs shows its view again, with «Stop».
  */
@@ -37,7 +37,7 @@ export async function runReceive(
   host: NoteHost,
   alias: string,
   showView: () => void,
-): Promise<string | null> {
+): Promise<string | ReceiveHeld | null> {
   if (state !== 'idle') {
     showView();
     return null;

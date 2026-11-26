@@ -203,6 +203,7 @@ const COLLECTION_HOST: CollectionHost = {
   select: () => answer(true),
   ask: () => answer(true),
   toast: noop,
+  fail: noop,
   log: noop,
 };
 

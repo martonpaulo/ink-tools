@@ -36,11 +36,13 @@ The rules are `docs/architecture.md` › Layer rules:
 - `toast`: no failure path of a plugin view ends in a toast alone (#245, #259): a failure stays on
   screen in ui-kit's Error or Needs state. A failure toast is a toast call (`ToastAndroid.show`,
   `showToast` or a `toast` port) inside a `catch`, or whose text names a failure (`error`, `fail`,
-  `refus`, `permission`). It passes when the rest of its block hands the failure to a held state
+  `refus`, `permission`), or whose block then returns a failure value (`ok: false`, as a `stop(`
+  helper does, #438). It passes when the rest of its block hands the failure to a held state
   (`hold(`, `fail(`, `needs(`, `ask(`, `throw`, or a `set…Problem(` or `set…Error(` call). The
   toasts that still stood alone when this landed are `PENDING_TOASTS` counts, which only go down.
-  shortcut: a failure is told by its words and its `catch`; a toast of a failure whose text names
-  none of them passes; upgrade to a typed failure port when one slips through.
+  shortcut: a failure is told by its words, its `catch` and an `ok: false` it returns; a toast of a
+  failure line returned from another function passes; upgrade to a typed failure port when one
+  slips through.
 
 The host tools' Python under `cli/<tool>/src/` (inkctl is one extensionless file, read by its `#!`
 line, #295) is read for `vendor`, `service` and `dictionary`. The values inkctl still names when
@@ -114,6 +116,8 @@ DECLARED_ARGUMENT = re.compile(r"\s*\w+\s*:\s*\w")
 # How many lines a toast call's argument may span, its own line included.
 ARGUMENT_LINES = 4
 FAILURE_WORD = re.compile(r"error|fail|refus|permission", re.IGNORECASE)
+# A failure value the toast's block returns, such as a `stop(` helper's `{ok: false, why}` (#438).
+FAILURE_VALUE = re.compile(r"\bok\s*:\s*false\b")
 HELD = re.compile(r"\b(?:hold|fail|needs|ask)\(|\bthrow\b|\bset\w*(?:Problem|Error)\(")
 STRING = re.compile(r"""'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`""")
 # The plugin files whose failure toasts stood alone when the toast rule landed (#259); #428 emptied it.
@@ -199,7 +203,8 @@ def lone_toasts(rel, lines):
         while argument.count("(") + 1 > argument.count(")") and follow < len(lines) and follow < at + ARGUMENT_LINES:
             argument += lines[follow]
             follow += 1
-        if not (scanned[at] or FAILURE_WORD.search(argument)):
+        if not (scanned[at] or FAILURE_WORD.search(argument)
+                or any(FAILURE_VALUE.search(strip(rest)) for rest in block_after(lines, at))):
             continue
         if any(HELD.search(rest) for rest in block_after(lines, at)):
             continue

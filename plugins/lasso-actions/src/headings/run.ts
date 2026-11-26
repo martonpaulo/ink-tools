@@ -19,7 +19,7 @@ import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
 import {working} from '../working';
 import {currentPageSize} from '../pageSize';
-import {lookupLog, showToast, UNPLACED, whyNot} from '../textBox';
+import {lookupLog, UNPLACED, whyNot} from '../textBox';
 import {getSettings} from '../profile';
 import {levelStyle, placement, type HeadingLevel, type HeadingSize} from './levels';
 
@@ -32,7 +32,6 @@ export type HeadingHost = {
   /** Lassoes the strokes inside a page rect again. */
   select: (rect: Rect) => Promise<Result<boolean>>;
   resize: (rect: Rect) => Promise<Result<boolean>>;
-  toast: (text: string) => void;
   /** Holds a failure on the tablet on the Error state, with its reason and Close (#256). */
   fail: (problem: Problem) => void;
   log: (line: string) => void;
@@ -41,7 +40,10 @@ export type HeadingHost = {
 /** The Error state of a heading the tablet could not make (#256). */
 const FAILED: Problem = {what: copy['heading.failed'], reason: copy['heading.failedReason']};
 
-/** How a press ended: the toast or the Error state it showed names it to the person. */
+/** The title stays, but its strokes did not reach the margin (#438). */
+const NOT_MOVED: Problem = {what: copy['heading.notMoved']};
+
+/** How a press ended: the Error state it held names it to the person (#438). */
 export type HeadingOutcome =
   | {ok: true; rect: Rect}
   | {ok: false; why: 'lasso' | 'page' | 'unplaced' | 'title' | 'relasso' | 'resize'};
@@ -63,7 +65,7 @@ export async function applyHeading(
   const [rect, page, size] = await Promise.all([host.lassoRect(), host.pageSize(), host.size()]);
   if (!rect.ok) {
     host.log(`${tag}: lasso failed: ${rect.code} ${rect.message}`);
-    host.toast(copy['heading.noLasso']);
+    host.fail({what: copy['heading.noLasso']});
     return {ok: false, why: 'lasso'};
   }
   if (!page.ok) {
@@ -88,13 +90,13 @@ export async function applyHeading(
   const selected = await host.select(rect.value);
   if (!selected.ok || !selected.value) {
     host.log(`${tag}: lassoElements ${whyNot(selected)}`);
-    host.toast(copy['heading.notMoved']);
+    host.fail(NOT_MOVED);
     return {ok: false, why: 'relasso'};
   }
   const resized = await host.resize(target);
   if (!resized.ok || !resized.value) {
     host.log(`${tag}: resizeLassoRect ${whyNot(resized)}`);
-    host.toast(copy['heading.notMoved']);
+    host.fail(NOT_MOVED);
     return {ok: false, why: 'resize'};
   }
   host.log(`${tag}: done at ${JSON.stringify(target)} in ${Date.now() - started} ms`);
@@ -108,7 +110,6 @@ export const DEVICE_HOST: HeadingHost = {
   setTitle: setLassoTitle,
   select: lassoElements,
   resize: resizeLassoRect,
-  toast: showToast,
   fail: problem => working.hold(problem),
   log: lookupLog,
 };

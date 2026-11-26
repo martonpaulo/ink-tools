@@ -6,6 +6,7 @@ import {CLOSE_TEXT, WorkingStrip} from '@ink-tools/ui-kit';
 import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {permissionProblem} from '../src/buttons';
 import {copy} from '../src/copy';
+import {addToCollection, type CollectionHost} from '../src/collection/run';
 import {applyHeading} from '../src/headings/run';
 
 function setup() {
@@ -32,7 +33,6 @@ test('a heading the tablet could not make shows the Error state with its reason 
         setTitle: async () => ok(true),
         select: async () => ok(true),
         resize: async () => ok(true),
-        toast: () => undefined,
         fail: problem => working.hold(problem),
         log: line => lines.push(line),
       }),
@@ -70,4 +70,26 @@ test('a missing permission shows the Needs state; «Allow» asks for it, then cl
   });
   expect(asked).toEqual([need.permission]);
   expect(working.problem()).toBeNull();
+});
+
+test('a Collection piece that cannot be written holds the Error state, not a toast alone (#438)', async () => {
+  const {working, tree} = setup();
+  const toasts: string[] = [];
+  const host = {
+    folder: async () => ok('/plugin'),
+    list: async () => ok(null),
+    lassoRect: async () => ok({left: 100, top: 200, right: 300, bottom: 260}),
+    pageSize: async () => ok({width: 1404, height: 1872}),
+    saveSticker: async () => fail(-1, 'thrown'),
+    toast: (text: string) => toasts.push(text),
+    fail: problem => working.hold(problem),
+    log: () => undefined,
+  } as Partial<CollectionHost> as CollectionHost;
+  await act(async () => {
+    await working.run(() => addToCollection(host, false));
+  });
+  expect(tree().root.findAllByProps({testID: 'error-view'}).length).toBeGreaterThan(0);
+  expect(texts(tree())).toEqual([copy['collection.notSaved']]);
+  expect(toasts).toEqual([]);
+  expect(pressable(tree(), CLOSE_TEXT).length).toBeGreaterThan(0);
 });

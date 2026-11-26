@@ -12,7 +12,6 @@ const WORD = {left: 600, top: 400, right: 800, bottom: 460};
 
 function fakeHost(over: Partial<HeadingHost> = {}) {
   const calls: string[] = [];
-  const toasts: string[] = [];
   const failures: Problem[] = [];
   const host: HeadingHost = {
     lassoRect: async () => ok(WORD),
@@ -34,16 +33,15 @@ function fakeHost(over: Partial<HeadingHost> = {}) {
       );
       return ok(true);
     },
-    toast: text => toasts.push(text),
     fail: problem => failures.push(problem),
     log: () => {},
     ...over,
   };
-  return {host, calls, toasts, failures};
+  return {host, calls, failures};
 }
 
 test('a lassoed word becomes a level 2 heading at the leading margin, at its own size', async () => {
-  const {host, calls, toasts} = fakeHost();
+  const {host, calls, failures} = fakeHost();
   const outcome = await applyHeading(2, host);
   expect(outcome).toEqual({
     ok: true,
@@ -61,16 +59,16 @@ test('a lassoed word becomes a level 2 heading at the leading margin, at its own
     'select 600,400,800,460',
     `resize ${HEADING_MARGIN},400,${HEADING_MARGIN + 200},460`,
   ]);
-  expect(toasts).toEqual([]);
+  expect(failures).toEqual([]);
 });
 
 test('a lasso the title cleared and that cannot be made again keeps the title, unmoved, and says so', async () => {
-  const {host, calls, toasts} = fakeHost({
+  const {host, calls, failures} = fakeHost({
     select: async () => fail(904, 'No lasso action has been performed'),
   });
   expect(await applyHeading(2, host)).toEqual({ok: false, why: 'relasso'});
   expect(calls).toEqual([`title ${TITLE_STYLE.shadow}`]);
-  expect(toasts).toEqual([copy['heading.notMoved']]);
+  expect(failures).toEqual([{what: copy['heading.notMoved']}]); // held, not a toast alone (#438)
 });
 
 test('a level pressed twice only sets the style again, at the same place', async () => {
@@ -85,21 +83,20 @@ test('a level pressed twice only sets the style again, at the same place', async
 });
 
 test('no lasso changes nothing and says to lasso first', async () => {
-  const {host, calls, toasts} = fakeHost({
+  const {host, calls, failures} = fakeHost({
     lassoRect: async () => fail(904, 'No lasso action has been performed'),
   });
   expect(await applyHeading(1, host)).toEqual({ok: false, why: 'lasso'});
   expect(calls).toEqual([]);
-  expect(toasts).toEqual([copy['heading.noLasso']]);
+  expect(failures).toEqual([{what: copy['heading.noLasso']}]); // held, not a toast alone (#438)
 });
 
 test("a pasted selection's local rect places nothing and holds the Error state (#165, #428)", async () => {
-  const {host, calls, toasts, failures} = fakeHost({
+  const {host, calls, failures} = fakeHost({
     lassoRect: async () => ok({left: -90, top: -90, right: 90, bottom: 90}),
   });
   expect(await applyHeading(1, host)).toEqual({ok: false, why: 'unplaced'});
   expect(calls).toEqual([]);
-  expect(toasts).toEqual([]);
   expect(failures).toEqual([UNPLACED]);
 });
 
@@ -110,22 +107,21 @@ test('an unread page size changes nothing', async () => {
 });
 
 test('a refused title leaves the lasso untouched', async () => {
-  const {host, calls, toasts, failures} = fakeHost({
+  const {host, calls, failures} = fakeHost({
     setTitle: async () => ok(false),
   });
   expect(await applyHeading(4, host)).toEqual({ok: false, why: 'title'});
   expect(calls).toEqual([]);
-  expect(toasts).toEqual([]);
   expect(failures.map(failure => failure.what)).toEqual([copy['heading.failed']]);
 });
 
 test('a failed resize keeps the title and says the heading was not moved', async () => {
-  const {host, calls, toasts} = fakeHost({
+  const {host, calls, failures} = fakeHost({
     resize: async () => fail(-1, 'thrown'),
   });
   expect(await applyHeading(2, host)).toEqual({ok: false, why: 'resize'});
   expect(calls).toEqual([`title ${TITLE_STYLE.shadow}`, 'select 600,400,800,460']);
-  expect(toasts).toEqual([copy['heading.notMoved']]);
+  expect(failures).toEqual([{what: copy['heading.notMoved']}]); // held, not a toast alone (#438)
 });
 
 /**

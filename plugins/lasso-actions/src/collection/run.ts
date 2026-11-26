@@ -20,10 +20,12 @@ import {
   Result,
   saveStickerByLasso,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
 import {currentPageSize} from '../pageSize';
 import {deleteFile, listDir, pluginFolder} from '../profile';
-import {lookupLog, showToast, whyNot} from '../textBox';
+import {lookupLog, showToast, UNPLACED, whyNot} from '../textBox';
+import {working} from '../working';
 import {
   nextSeq,
   pieceName,
@@ -49,7 +51,10 @@ export type CollectionHost = {
   closeView: () => Promise<Result<boolean>>;
   /** Asks `question` in the host's confirm dialog; true only for `action`. */
   ask: (question: string, action: string, cancel: string) => Promise<Result<boolean>>;
+  /** A success line, such as «Added: 2 pieces». */
   toast: (text: string) => void;
+  /** Holds a failure on the tablet in ui-kit's Error state, with Close (#438). */
+  fail: (problem: Problem) => void;
   log: (line: string) => void;
 };
 
@@ -151,12 +156,13 @@ async function listPieces(
   return {dir: dir.value, pieces: piecesIn(names.value ?? [])};
 }
 
+/** Ends an action on a failure, held in the Error state, not a toast alone (#438). */
 function stop(
   host: CollectionHost,
   why: CollectionFailure,
-  text: string,
+  problem: string | Problem,
 ): CollectionOutcome {
-  host.toast(text);
+  host.fail(typeof problem === 'string' ? {what: problem} : problem);
   return {ok: false, why};
 }
 
@@ -181,7 +187,7 @@ export async function addToCollection(
   if (problem) {
     // A pasted selection answers its own local rect (#165): its page place is unknown.
     host.log(`${tag}: ${problem}`);
-    return stop(host, 'unplaced', copy['error.unplaced']);
+    return stop(host, 'unplaced', UNPLACED);
   }
   const listed = await listPieces(host, tag);
   if (!listed) {
@@ -256,19 +262,18 @@ export async function pasteCollection(
     // first of two pieces, whose second move took the first piece's lasso, and the union lasso
     // answered false. So the collection stays whole unless the pasted pieces can be lassoed.
     host.log(`${tag}: lassoElements ${whyNot(selected)}; the collection is kept`);
-    host.toast(copy['collection.notChecked']);
-    return {ok: false, why: 'unchecked'};
+    return stop(host, 'unchecked', copy['collection.notChecked']);
   }
   if (keep) {
     host.toast(copy['collection.pasted'](count));
     return {ok: true, count};
   }
   const left = await removePieces(host, listed, tag);
-  host.toast(
-    left === 0
-      ? copy['collection.pasted'](count)
-      : copy['collection.notCleared'](left),
-  );
+  if (left === 0) {
+    host.toast(copy['collection.pasted'](count));
+  } else {
+    host.fail({what: copy['collection.notCleared'](left)});
+  }
   return {ok: true, count: left};
 }
 
@@ -347,5 +352,6 @@ export const DEVICE_HOST: CollectionHost = {
   closeView: closePluginView,
   ask: confirm,
   toast: showToast,
+  fail: problem => working.hold(problem),
   log: lookupLog,
 };

@@ -2,6 +2,7 @@
 import {inkUnderRect} from '@ink-tools/ink-core';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
+import {refusedProblem} from '../src/permissions';
 import {
   addedRect,
   centredRect,
@@ -207,11 +208,11 @@ test('a port in use or a missing module is «Could not start receiving»', async
       throw Object.assign(new Error('x'), {code: 'IO'});
     }),
   });
-  await expect(receiveOne(busy.api, note(), 'Supernote')).resolves.toBe(copy.receiveFailed);
+  // Held in the Error state, never a toast alone (#438).
+  const held = {problem: {what: copy.receiveFailed}, state: 'error'};
+  await expect(receiveOne(busy.api, note(), 'Supernote')).resolves.toEqual(held);
   const noDir = note({pluginDir: jest.fn(async () => fail(-1, 'none'))});
-  await expect(receiveOne(fakeRelay().api, noDir, 'Supernote')).resolves.toBe(
-    copy.receiveFailed,
-  );
+  await expect(receiveOne(fakeRelay().api, noDir, 'Supernote')).resolves.toEqual(held);
 });
 
 test('a text with no open note is «Open a note first»', async () => {
@@ -252,9 +253,11 @@ test('a refused permission names it and starts nothing (#163)', async () => {
   const host = note({
     permissions: jest.fn(async () => 'plugin.permission.FILE:WRITE'),
   });
-  await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(
-    copy.permissionRefused('File write'),
-  );
+  // The Needs state with the steps that allow it, never a toast alone (#438).
+  await expect(receiveOne(api, host, 'Supernote')).resolves.toEqual({
+    problem: refusedProblem('plugin.permission.FILE:WRITE'),
+    state: 'needs',
+  });
   expect(native.startReceive).not.toHaveBeenCalled();
   expect(host.pageSize).not.toHaveBeenCalled();
 });

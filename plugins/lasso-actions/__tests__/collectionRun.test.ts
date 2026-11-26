@@ -19,6 +19,8 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
   const files = new Set<string>();
   const calls: string[] = [];
   const toasts: string[] = [];
+  /** What each held Error state names (#438). */
+  const failures: string[] = [];
   const logs: string[] = [];
   let lasso: Result<Rect> = ok({left: 100, top: 200, right: 300, bottom: 260});
   let answer = true;
@@ -72,6 +74,7 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
       return ok(answer);
     },
     toast: text => toasts.push(text),
+    fail: problem => failures.push(problem.what),
     log: line => logs.push(line),
     ...over,
   };
@@ -81,6 +84,7 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
     files,
     calls,
     toasts,
+    failures,
     lassoAt: (rect: Result<Rect>) => {
       lasso = rect;
     },
@@ -118,7 +122,7 @@ test('Cut to Collection deletes the lasso only after the sticker was written', a
     why: 'save',
   });
   expect(failing.calls).toEqual([]);
-  expect(failing.toasts).toEqual([copy['collection.notSaved']]);
+  expect(failing.failures).toEqual([copy['collection.notSaved']]);
 });
 
 test('no lasso, or a pasted selection with no page place, adds nothing', async () => {
@@ -134,9 +138,11 @@ test('no lasso, or a pasted selection with no page place, adds nothing', async (
     why: 'unplaced',
   });
   expect(fake.calls).toEqual([]);
-  expect(fake.toasts).toEqual([
+  // Each failure holds the Error state, never a toast alone (#438).
+  expect(fake.toasts).toEqual([]);
+  expect(fake.failures).toEqual([
     copy['collection.noLasso'],
-    copy['error.unplaced'],
+    copy['error.unplacedWhat'],
   ]);
 });
 
@@ -183,7 +189,7 @@ test('a piece that fails stops the paste and keeps the collection whole', async 
     ok: false,
     why: 'insert',
   });
-  expect(fake.toasts.at(-1)).toBe(copy['collection.notPasted'](1));
+  expect(fake.failures).toEqual([copy['collection.notPasted'](1)]);
   expect(await countPieces(fake.host)).toBe(2);
 });
 
@@ -197,7 +203,7 @@ test('a pasted piece that cannot be moved stops the paste, and the log names the
   expect(fake.logs.at(-1)).toBe(
     'collection paste: collection-1_100_200_200_60.sticker: resizeLassoRect answered false',
   );
-  expect(fake.toasts.at(-1)).toBe(copy['collection.notPasted'](0));
+  expect(fake.failures).toEqual([copy['collection.notPasted'](0)]);
   expect(await countPieces(fake.host)).toBe(1);
 });
 
@@ -303,7 +309,7 @@ test('a paste whose pieces cannot be lassoed on the page keeps the collection (#
   fake.host.select = async () => ok(false);
   expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'unchecked'});
   expect(await countPieces(fake.host)).toBe(2);
-  expect(fake.toasts.at(-1)).toBe(copy['collection.notChecked']);
+  expect(fake.failures).toEqual([copy['collection.notChecked']]);
 });
 
 test('an empty collection pastes nothing and says so', async () => {
@@ -313,7 +319,7 @@ test('an empty collection pastes nothing and says so', async () => {
     why: 'empty',
   });
   expect(fake.calls).toEqual([]);
-  expect(fake.toasts).toEqual([copy['collection.empty']]);
+  expect(fake.failures).toEqual([copy['collection.empty']]);
 });
 
 test("Clear Collection deletes every piece, and the folder's other files stay", async () => {
@@ -343,7 +349,7 @@ test('a confirm dialog that fails keeps every piece and says so', async () => {
   fake.host.ask = async () => fail(-1, 'thrown');
   expect(await clearCollection(fake.host)).toEqual({ok: false, why: 'kept'});
   expect(await countPieces(fake.host)).toBe(1);
-  expect(fake.toasts.at(-1)).toBe(copy['collection.notAsked']);
+  expect(fake.failures).toEqual([copy['collection.notAsked']]);
 });
 
 test('a plugin restart between Add and Paste keeps the pieces: they are read from the folder', async () => {

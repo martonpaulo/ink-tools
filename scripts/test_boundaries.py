@@ -178,6 +178,15 @@ class Boundaries(unittest.TestCase):
         }), [("plugins/a/App.tsx", "toast"), ("plugins/a/src/run.ts", "toast"), ("plugins/a/src/run.ts", "toast"),
              ("plugins/a/src/run.ts", "toast"), ("plugins/a/src/run.ts", "toast")])
 
+    def test_a_toast_of_a_variable_line_that_returns_a_failure_is_found(self):
+        # #438: Collection's `stop(` toasted every failure by a variable line the words never named.
+        self.assertEqual(self.tree({
+            "plugins/a/src/run.ts": (
+                "function stop(host, why, text) {\n  host.toast(text);\n  return {ok: false, why};\n}\n"
+                "function held(host, why, problem) {\n  host.fail(problem);\n  return {ok: false, why};\n}\n"
+                "function added(host, count) {\n  host.toast(copy.added(count));\n  return {ok: true, count};\n}\n"),
+        }), [("plugins/a/src/run.ts", "toast")])
+
     def test_pending_toasts_only_shrink(self):
         files = {"plugins/a/src/run.ts": "toast(copy['error.unplaced']);\n"}
         self.assertEqual(self.tree(files, pending_toasts={"plugins/a/src/run.ts": 1}), [])

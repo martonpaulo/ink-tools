@@ -52,6 +52,7 @@ function folderHost(names: string[]): CollectionHost & {names: string[]} {
     closeView: async () => ok(true),
     ask: async () => ok(true),
     toast: () => {},
+    fail: () => {},
     log: () => {},
   };
   return host;
