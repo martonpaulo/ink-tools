@@ -8,7 +8,10 @@
  *   node scripts/plugin-version.cjs plugins/<name>   prints the tag version, or fails on a mismatch
  *   node scripts/plugin-version.cjs --workflows .      fails when a prerelease tag lacks its plugin name
  *   node scripts/plugin-version.cjs --icons .          fails when a plugin's iconPath is empty or missing
- *   node scripts/plugin-version.cjs --identity .       fails when a plugin's names, versionCode or pins drift (#295)
+ *   node scripts/plugin-version.cjs --identity .       fails when a plugin's names, versionCode or pins drift (#295),
+ *                                                      or its version was used under an earlier folder (#410)
+ *   node scripts/plugin-version.cjs --published plugins/<name>   fails when that version was used under
+ *                                                      an earlier folder name, naming the earlier tag (#410)
  */
 const {execFileSync} = require('node:child_process');
 const fs = require('node:fs');
@@ -29,6 +32,9 @@ const PENDING_IDENTITY = new Set([
 const SHARED_PINS = ['react-native', 'react', 'sn-plugin-lib'];
 /** The copy module's title line: `title: 'Word Lookup',`. */
 const COPY_TITLE = /^\s*title:\s*'([^']+)'/m;
+
+/** The output limit of one Git call: the whole history of every PluginConfig.json fits under it. */
+const GIT_OUTPUT_BYTES = 256 * 1024 * 1024;
 
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.([1-9]\d*))?$/;
 
@@ -241,7 +247,122 @@ function configHistory(root, name) {
   return [...history, {at: 'the working copy', ...JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'))}];
 }
 
-/** Every identity, pin and versionCode problem under `root`. */
+/** The package.json version a tablet versionName comes from: `0.2.0 beta 3` gives `0.2.0-beta.3`. */
+function tagVersion(name) {
+  return String(name).replace(/ beta (\d+)$/, '-beta.$1');
+}
+
+/**
+ * The problems with one plugin's current version against the versions its pluginID held under
+ * other folders (#410): a rename keeps the pluginID, so a versionName or versionCode an earlier
+ * folder used is already on the tablet, which refuses it as «already installed». `current` is
+ * `{folder, pluginID, versionName, versionCode}`; each `earlier` entry adds `at` (a commit) and
+ * `tag` (the published tag, or null). One line per earlier folder and field, the tag first.
+ */
+function reuseProblems(current, earlier) {
+  const found = new Map();
+  const ordered = [...earlier].sort((a, b) => Number(Boolean(b.tag)) - Number(Boolean(a.tag)));
+  for (const entry of ordered) {
+    if (entry.pluginID !== current.pluginID || entry.folder === current.folder) {
+      continue;
+    }
+    for (const field of ['versionName', 'versionCode']) {
+      const key = `${entry.folder} ${field}`;
+      if (String(entry[field]) !== String(current[field]) || found.has(key)) {
+        continue;
+      }
+      const where = entry.tag ? `published as ${entry.tag}` : `used at ${entry.at}`;
+      found.set(
+        key,
+        `plugins/${current.folder}: ${field} ${JSON.stringify(String(current[field]))} of pluginID ` +
+          `${current.pluginID} was already ${where} under plugins/${entry.folder}; raise the version`,
+      );
+    }
+  }
+  return [...found.values()];
+}
+
+/** A Git runner for `root`: the output of `git -C root ...args`, with `input` on standard input. */
+function gitIn(root) {
+  return (args, input) =>
+    execFileSync('git', ['-C', root, ...args], {encoding: 'utf8', input, maxBuffer: GIT_OUTPUT_BYTES, stdio: ['pipe', 'pipe', 'ignore']});
+}
+
+/**
+ * Every PluginConfig.json version in the Git history of `root` and in its tags, as the
+ * `earlier` entries of reuseProblems (#410). A tag `<folder>-v<version>` is the build of
+ * `plugins/<folder>` it names; the history covers folders whose tags CI does not fetch. Throws in
+ * a shallow clone, whose history is cut: a short history would pass a version it cannot see.
+ */
+function earlierVersions(root) {
+  const git = gitIn(root);
+  if (git(['rev-parse', '--is-shallow-repository']).trim() === 'true') {
+    throw Error(`${root} is a shallow clone; run git fetch --unshallow --tags to read every earlier version`);
+  }
+  const blobs = [];
+  let commit = null;
+  for (const line of git(['log', '--format=@%h', '--name-only', '--diff-filter=d', '--', 'plugins/*/PluginConfig.json']).split('\n')) {
+    if (line.startsWith('@')) {
+      commit = line.slice(1);
+    } else if (line) {
+      blobs.push({at: commit, tag: null, file: line});
+    }
+  }
+  for (const tag of git(['tag', '--list']).split('\n').filter(Boolean)) {
+    const match = /^([a-z0-9-]+)-v(\d+\.\d+\.\d+(?:-beta\.\d+)?)$/.exec(tag);
+    if (match) {
+      blobs.push({at: tag, tag, file: `plugins/${match[1]}/PluginConfig.json`, version: match[2]});
+    }
+  }
+  if (blobs.length === 0) {
+    return [];
+  }
+  const objects = Buffer.from(git(['cat-file', '--batch'], blobs.map(blob => `${blob.at}:${blob.file}\n`).join('')));
+  const entries = [];
+  let offset = 0;
+  for (const blob of blobs) {
+    const end = objects.indexOf(10, offset);
+    const header = objects.toString('utf8', offset, end).split(' ');
+    offset = end + 1;
+    if (header[header.length - 1] === 'missing') {
+      continue; // a tag of an app, or of a plugin whose folder had another name then
+    }
+    const size = Number(header[2]);
+    const text = objects.toString('utf8', offset, offset + size);
+    offset += size + 1; // the content, then the newline cat-file adds after it
+    let config;
+    try {
+      config = JSON.parse(text);
+    } catch {
+      continue; // an early commit whose PluginConfig.json did not parse; no tablet build came from it
+    }
+    const folder = blob.file.split('/')[1];
+    if (blob.version && tagVersion(config.versionName) !== blob.version) {
+      continue; // the tag points at a commit whose PluginConfig.json holds another version
+    }
+    entries.push({at: blob.at, tag: blob.tag, folder, pluginID: config.pluginID, versionName: config.versionName, versionCode: config.versionCode});
+  }
+  return entries;
+}
+
+/** The current version of one plugin folder, as the `current` argument of reuseProblems. */
+function currentVersion(root, name) {
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'plugins', name, 'PluginConfig.json'), 'utf8'));
+  return {folder: name, pluginID: config.pluginID, versionName: config.versionName, versionCode: config.versionCode};
+}
+
+/** The reuse problems of the plugin folders `names` under `root` (#410); a shallow clone is one. */
+function allReuseProblems(root, names = pluginFolders(root)) {
+  let earlier;
+  try {
+    earlier = earlierVersions(root);
+  } catch (error) {
+    return [error.message];
+  }
+  return names.flatMap(name => reuseProblems(currentVersion(root, name), earlier));
+}
+
+/** Every identity, pin, versionCode and reuse problem under `root`. */
 function allIdentityProblems(root) {
   return [
     ...identityProblems(root),
@@ -249,6 +370,7 @@ function allIdentityProblems(root) {
     ...pluginFolders(root).flatMap(name =>
       codeProblems(configHistory(root, name)).map(line => `plugins/${name}/PluginConfig.json: ${line}`),
     ),
+    ...allReuseProblems(root),
   ];
 }
 
@@ -265,6 +387,13 @@ if (require.main === module && process.argv[2] === '--icons') {
 
 if (require.main === module && process.argv[2] === '--identity') {
   const found = allIdentityProblems(process.argv[3] || '.');
+  report(found);
+  process.exit(found.length > 0 ? 1 : 0);
+}
+
+if (require.main === module && process.argv[2] === '--published') {
+  const folder = path.resolve(process.argv[3] || '.');
+  const found = allReuseProblems(path.resolve(folder, '..', '..'), [path.basename(folder)]);
   report(found);
   process.exit(found.length > 0 ? 1 : 0);
 }
@@ -295,4 +424,7 @@ module.exports = {
   pinProblems,
   codeProblems,
   allIdentityProblems,
+  reuseProblems,
+  earlierVersions,
+  allReuseProblems,
 };

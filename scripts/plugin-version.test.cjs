@@ -1,15 +1,16 @@
 /**
- * Tests of plugin-version.cjs's identity, pin and versionCode checks (#295), over fixture trees:
+ * Tests of plugin-version.cjs's identity, pin, versionCode (#295) and reuse (#410) checks, over fixture trees:
  * each fails once and passes once. The version and tag rules are tested in each plugin's
  * __tests__/version.test.ts.
  */
 const assert = require('node:assert/strict');
+const {execFileSync} = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
-const {identityProblems, pinProblems, codeProblems, allIdentityProblems} = require('./plugin-version.cjs');
+const {identityProblems, pinProblems, codeProblems, allIdentityProblems, allReuseProblems} = require('./plugin-version.cjs');
 
 const roots = [];
 test.after(() => roots.forEach(root => fs.rmSync(root, {recursive: true, force: true})));
@@ -71,6 +72,47 @@ test('versionCode never falls, and rises with every versionName', () => {
   assert.deepEqual(codeProblems([at('0.1.0 beta 1', '4', 'a1'), at('0.1.0 beta 2', '4', 'b2'), at('0.1.0 beta 3', '3', 'c3')]), [
     'versionName moves to "0.1.0 beta 2" at b2, but versionCode stays 4',
     'versionCode falls from 4 to 3 at c3',
+  ]);
+});
+
+/** A Git fixture: plugins/old at 0.1.0 beta 2, tagged old-v0.1.0-beta.2, then renamed to plugins/new. */
+function renamedHistory() {
+  const root = tree({old: {'PluginConfig.json': {pluginID: 'fixture00plugin1', versionName: '0.1.0 beta 2', versionCode: '3'}}});
+  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com', ...args], {stdio: 'ignore'});
+  git('init', '-q');
+  git('add', '.');
+  git('commit', '-q', '-m', 'old');
+  git('tag', 'old-v0.1.0-beta.2');
+  git('mv', 'plugins/old', 'plugins/new');
+  git('commit', '-q', '-m', 'rename');
+  return {root, git};
+}
+
+test('a renamed plugin may not reuse a version published under its earlier folder (#410)', () => {
+  const {root} = renamedHistory();
+  assert.deepEqual(allReuseProblems(root), [
+    'plugins/new: versionName "0.1.0 beta 2" of pluginID fixture00plugin1 was already published as old-v0.1.0-beta.2 under plugins/old; raise the version',
+    'plugins/new: versionCode "3" of pluginID fixture00plugin1 was already published as old-v0.1.0-beta.2 under plugins/old; raise the version',
+  ]);
+  const config = path.join(root, 'plugins', 'new', 'PluginConfig.json');
+  fs.writeFileSync(config, JSON.stringify({pluginID: 'fixture00plugin1', versionName: '0.1.0 beta 3', versionCode: '4'}));
+  assert.deepEqual(allReuseProblems(root), []);
+});
+
+test('an unpublished version of the earlier folder is found in the history, without tags (#410)', () => {
+  const {root, git} = renamedHistory();
+  git('tag', '-d', 'old-v0.1.0-beta.2');
+  const [first] = allReuseProblems(root);
+  assert.match(first, /^plugins\/new: versionName "0\.1\.0 beta 2" .* was already used at [0-9a-f]+ under plugins\/old;/);
+});
+
+test('a shallow clone fails, since its history cannot show every earlier version (#410)', () => {
+  const {root} = renamedHistory();
+  const shallow = fs.mkdtempSync(path.join(os.tmpdir(), 'shallow-'));
+  roots.push(shallow);
+  execFileSync('git', ['clone', '-q', '--depth', '1', `file://${root}`, shallow], {stdio: 'ignore'});
+  assert.deepEqual(allReuseProblems(shallow), [
+    `${shallow} is a shallow clone; run git fetch --unshallow --tags to read every earlier version`,
   ]);
 });
 
