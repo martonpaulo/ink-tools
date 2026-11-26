@@ -157,6 +157,23 @@ describe('createWorking (#103)', () => {
     expect(calls).toEqual(['show', 'close']);
   });
 
+  it('toasts a held problem when the view cannot open (#257)', async () => {
+    const calls: string[] = [];
+    const working = createWorking({
+      show: async () => Promise.reject(new Error('no view')),
+      close: async () => calls.push('close'),
+      toast: text => calls.push(`toast ${text}`),
+      log: () => undefined,
+      copy: {failed: 'Failed.', timeout: 'Still working.'},
+    });
+    working.hold({what: 'Could not undo.'});
+    for (let turn = 0; turn < 5; turn++) {
+      await Promise.resolve();
+    }
+    expect(working.problem()).toBeNull();
+    expect(calls).toEqual(['toast Could not undo.']);
+  });
+
   it('keeps the view open after a run whose task held a problem (#256)', async () => {
     const {calls, working} = setup();
     await working.run(async () => working.hold({what: 'Needs Network.'}, 'needs'));

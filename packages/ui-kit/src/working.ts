@@ -206,7 +206,15 @@ export function createWorking(ports: WorkingPorts): Working {
       notify();
       // A run's strip keeps the view open, and its ending then leaves it on the held state.
       if (showing.size === 0 && !open) {
-        ports.show().catch(error => ports.log(`strip: show failed: ${error}`));
+        ports.show().catch(error => {
+          // No view to show it on: the toast says what failed, as before the Error state (#257).
+          ports.log(`strip: show failed: ${error}`);
+          if (held === problem) {
+            held = null;
+            notify();
+            ports.toast(problem.what);
+          }
+        });
       }
     },
     dismiss: async () => {

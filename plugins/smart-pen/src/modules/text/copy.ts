@@ -17,6 +17,8 @@ export const copy = {
   'toast.permission':
     'Allow Read Files and Modify Files, then tap the button again',
   'toast.failed': 'Real-Time Text could not start',
+  /** The Error state's reason under a failed conversion or undo (#257); the details go to the log. */
+  'error.again': 'Close, then press the button again.',
   'settings.start': 'Start with Real-Time Text on',
   'settings.spacing': 'Word spacing',
   'settings.wait': 'Wait before converting',

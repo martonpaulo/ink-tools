@@ -14,6 +14,7 @@ import {
   Result,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {
   Converter,
@@ -49,6 +50,8 @@ export type ButtonHost = {
    * and no fix to offer, such as a pen-up listener the host refused; a failed tip falls back to a toast.
    */
   errorTip: (text: string) => Result<true>;
+  /** Holds a failure on the tablet on ui-kit's Error state, with its reason and Close (#257). */
+  fail: (problem: Problem) => void;
   log: (line: string) => void;
   icons: Icons;
 };
@@ -63,6 +66,11 @@ const describe = (what: string, result: Result<unknown>): string =>
   result.ok
     ? `${what}: ok`
     : `${what} failed: ${result.code} ${result.message}`;
+
+/** The Error state of a conversion or undo that failed on the tablet (#257). */
+function failed(what: string): Problem {
+  return {what, reason: copy['error.again']};
+}
 
 export class Buttons {
   private converter: Converter | null = null;
@@ -226,13 +234,13 @@ export class Buttons {
     // A word still converting finishes first, so «Undo Conversion» keeps the lasso's conversion.
     await this.converter?.idle();
     const outcome = await convertLasso(this.host.lasso);
-    this.host.toast(
-      outcome === 'converted'
-        ? copy['toast.converted']
-        : outcome === 'empty'
-        ? copy['toast.empty']
-        : copy['toast.convertFailed'],
-    );
+    if (outcome === 'failed') {
+      this.host.fail(failed(copy['toast.convertFailed']));
+    } else {
+      this.host.toast(
+        outcome === 'converted' ? copy['toast.converted'] : copy['toast.empty'],
+      );
+    }
     return outcome;
   }
 
@@ -240,13 +248,13 @@ export class Buttons {
     // A word still converting finishes first, so the undo meets the page it left.
     await this.converter?.idle();
     const outcome = await undoLast(this.host.undo);
-    this.host.toast(
-      outcome === 'undone'
-        ? copy['toast.undone']
-        : outcome === 'nothing'
-        ? copy['toast.nothing']
-        : copy['toast.undoFailed'],
-    );
+    if (outcome === 'failed') {
+      this.host.fail(failed(copy['toast.undoFailed']));
+    } else {
+      this.host.toast(
+        outcome === 'undone' ? copy['toast.undone'] : copy['toast.nothing'],
+      );
+    }
     return outcome;
   }
 }
