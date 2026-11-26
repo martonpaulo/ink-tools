@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import NoteFormat
 
-/// The reader's port (#294) and the kill switch before each read and edit (#293).
+/// The reader's port (#294) and the kill switch before each read (#293).
 @Suite struct NoteReadingTests {
     static func turnedOff(_ id: String) -> [Registry.Item] {
         Registry.items.map { item in
@@ -34,17 +34,10 @@ import Testing
             Issue.record("a reader turned off read the note")
         } catch let failure as InternalFailure {
             #expect(failure.item.id == NoteReader.itemId)
-            #expect(failure.description.hasPrefix("This part of Ink Notebook Editor is turned off"))
+            #expect(failure.description.hasPrefix("Ink Notebook Editor cannot open notebooks in this version"))
             let log = failure.agentLog.split(separator: "\n")
             #expect(log[0].contains("registry=notefile.format-versions") && log[0].contains("method=readNote"))
             #expect(log[1] == "cause ModuleOff: turned off until 2026-12-31: the format moved")
         }
-    }
-
-    @Test func testAWriterTurnedOffStopsBeforeItEdits() throws {
-        #expect(throws: InternalFailure.self) {
-            try NoteWriter.requireOn("movePage", items: Self.turnedOff(NoteWriter.itemId))
-        }
-        try NoteWriter.requireOn("movePage")
     }
 }

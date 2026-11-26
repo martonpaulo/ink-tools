@@ -24,8 +24,8 @@ final class Copy {
     Map<String, String> failures = new HashMap<>();
     failures.put(HOST_CHANGED, "PluginHost changed in a firmware update, so the bridge refused this call."
         + " Read the reason with: inkctl logs --tag InkToolsBridge");
-    failures.put(TURNED_OFF, "Plugin changes through the helper are turned off in this version, as a firmware update changed PluginHost."
-        + " Update Ink Tools to turn them on again.");
+    failures.put(TURNED_OFF, "Ink Tools Helper does not change plugins in this version because a firmware update changed PluginHost;"
+        + " update Ink Tools to turn this on again.");
     FAILURES = Collections.unmodifiableMap(failures);
   }
 

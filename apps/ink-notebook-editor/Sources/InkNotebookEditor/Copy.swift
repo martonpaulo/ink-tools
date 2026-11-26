@@ -35,6 +35,7 @@ nonisolated enum Copy {
     static let pageFailedNext = String(localized: "Other pages may still open. Copy the note from the tablet again.")
     static let unreadableTitle = String(localized: "This file is not a notebook the app can read")
     static let unreadableNext = String(localized: "Open another .note file, or copy the note from the tablet again.")
+    static let turnedOffTitle = String(localized: "Notebooks cannot be opened in this version")
     static let noPagesTitle = String(localized: "This notebook has no pages")
     static let noPagesNext = String(localized: "Open another .note file.")
     static let openAnother = String(localized: "Open Another File…")

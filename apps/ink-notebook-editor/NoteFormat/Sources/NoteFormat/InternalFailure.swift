@@ -9,7 +9,7 @@ public struct InternalFailure: Error, CustomStringConvertible {
 
     /// The person's sentence for each copy key.
     public static let copy: [String: String] = [
-        "turnedOff": "This part of Ink Notebook Editor is turned off in this version, as a tablet update changed the notebook format. Update Ink Tools to turn it on again.",
+        "turnedOff": "Ink Notebook Editor cannot open notebooks in this version because a tablet update changed the notebook format, so update Ink Tools to open them again.",
     ]
 
     public let item: Registry.Item
@@ -55,6 +55,11 @@ public struct InternalFailure: Error, CustomStringConvertible {
 /// A module whose kill switch is off (#293): the cause of its failure, with the switch's reason.
 public struct ModuleOff: Error, CustomStringConvertible {
     public let reason: String
+
+    public init(reason: String) {
+        self.reason = reason
+    }
+
     public var description: String { "turned off \(reason)" }
 }
 

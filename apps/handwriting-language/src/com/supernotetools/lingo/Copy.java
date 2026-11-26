@@ -18,6 +18,7 @@ final class Copy {
   static final String SWITCH_LANGUAGE = "Switch to Next Language";
   static final String CLOSE = "Close";
   static final String NOT_READ = "Not read: All-files access is off.";
+  static final String TURNED_OFF = "Turned off in this version";
   static final String FOLDER_NOT_READ = "Not read: the language folder could not be read.";
   static final String UNKNOWN = "Unknown: the language folder holds more than one language.";
   static final String BUTTON_SECTION = "Floating Button";
@@ -59,7 +60,7 @@ final class Copy {
   static final String FAILURE_CANNOT_DELETE = "The switch did not finish, so two languages are set. Tap Switch to Next Language again; if it keeps failing, restart the tablet.";
   static final String FAILURE_NOT_INSTALLED = "That language is not installed. Install it in Settings › Display & Input › Language & Region › Handwriting Recognition Language, then try again.";
   static final String FAILURE_NOTHING_TO_CYCLE = "None of the languages in the cycle is installed. Install one in Settings › Display & Input › Language & Region › Handwriting Recognition Language, or turn on an installed language below.";
-  static final String FAILURE_TURNED_OFF = "Language switching is turned off in this version, as a tablet update changed how the language is stored. Update Ink Tools to turn it on again.";
+  static final String FAILURE_TURNED_OFF = "Language switching is turned off in this version because a tablet update changed how the language is stored, so update Ink Tools to turn it on again.";
   static final String FAILURE_OTHER = "The language could not be switched. Try again, or restart the tablet if it keeps failing.";
 
   static String failure(FileFailure.Kind kind) {

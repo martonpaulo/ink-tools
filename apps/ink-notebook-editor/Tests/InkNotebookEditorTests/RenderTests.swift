@@ -126,6 +126,14 @@ final class RenderTests {
         try await render("unreadable", Self.sizes) {
             NotebookWindow(document: NoteDocument(data: Data("not a note".utf8)))
         }
+        try await render("turned-off", Self.sizes) {
+            NotebookWindow(
+                document: NoteDocument(data: Data()) { _ in
+                    throw InternalFailure(
+                        item: Registry.items[0], method: "readNote", copyKey: "turnedOff",
+                        cause: ModuleOff(reason: "until 2026-12-31"))
+                })
+        }
         try await render("page-failed", Self.sizes) { StateView(.pageFailed("page 2: the layer bitmap ends early")) }
     }
 

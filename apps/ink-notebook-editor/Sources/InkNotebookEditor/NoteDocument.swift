@@ -15,6 +15,8 @@ nonisolated struct NoteDocument: FileDocument {
         case note(NoteFile)
         /// The bytes are not a notebook the reader knows, with the reader's reason.
         case unreadable(String)
+        /// The registry turned the notebook reader off (#293), with the sentence that says so.
+        case turnedOff(String)
     }
 
     static let readableContentTypes: [UTType] = [.inkNote]
@@ -23,8 +25,15 @@ nonisolated struct NoteDocument: FileDocument {
     let content: Content
 
     init(data: Data) {
+        self.init(data: data) { try NoteFile(data: $0) }
+    }
+
+    /// `read` is the reader; a test passes one that fails as the registry's kill switch does.
+    init(data: Data, read: (Data) throws -> NoteFile) {
         do {
-            content = .note(try NoteFile(data: data))
+            content = .note(try read(data))
+        } catch let failure as InternalFailure where failure.copyKey == "turnedOff" {
+            content = .turnedOff(failure.description)
         } catch {
             content = .unreadable(String(describing: error))
         }

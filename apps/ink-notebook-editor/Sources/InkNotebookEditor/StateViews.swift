@@ -22,6 +22,12 @@ struct StateMessage: Equatable {
             systemImage: "exclamationmark.triangle")
     }
 
+    /// The reader is turned off in this version (#293): no other file opens either, so the one
+    /// next step is the sentence's own, and no Open Another button stands beside it.
+    static func turnedOff(_ sentence: String) -> StateMessage {
+        StateMessage(kind: .problem, title: Copy.turnedOffTitle, detail: sentence, systemImage: "nosign")
+    }
+
     static let noPages = StateMessage(
         kind: .empty, title: Copy.noPagesTitle, detail: Copy.noPagesNext, systemImage: "doc")
 

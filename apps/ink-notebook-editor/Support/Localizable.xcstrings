@@ -661,6 +661,16 @@
         }
       }
     },
+    "Notebooks cannot be opened in this version" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notebooks cannot be opened in this version"
+          }
+        }
+      }
+    },
     "Nothing on this page can be selected" : {
       "localizations" : {
         "en" : {

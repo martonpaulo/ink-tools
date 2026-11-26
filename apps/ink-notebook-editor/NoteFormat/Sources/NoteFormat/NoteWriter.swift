@@ -26,18 +26,11 @@ public enum NoteWriter {
     /// (registry item notefile.writer-byte-edit).
     static let pageKeyPrefixes = Registry.NotefileWriterByteEdit.pageKeyPrefixes
     static let pageNumberDigits = 4
-    static let itemId = "notefile.writer-byte-edit"
-
-    /// Before an edit, the writer item's kill switch (#293): off, the edit stops and writes nothing.
-    static func requireOn(_ method: String, items: [Registry.Item] = Registry.items) throws {
-        try Registry.requireOn(Registry.item(itemId, in: items), method: method)
-    }
 
     /// Moves page `from` to the place `to`, both counted from 0. Every page block keeps its bytes;
     /// only the footer changes: the page addresses in the new order, and the page number of each
     /// title, keyword and link key.
     public static func movePage(_ file: NoteFile, from: Int, to: Int) throws -> [UInt8] {
-        try requireOn("movePage")
         let count = file.pages.count
         guard (0..<count).contains(from) else { throw NoteFormatError.badPage(from) }
         guard (0..<count).contains(to) else { throw NoteFormatError.badPage(to) }
@@ -74,7 +67,6 @@ public enum NoteWriter {
     public static func drawPicture(
         _ file: NoteFile, page index: Int, imageData: Data, in rect: PageRect
     ) throws -> [UInt8] {
-        try requireOn("drawPicture")
         let picture = try PageBitmap(imageData: imageData).scaled(to: rect)
         return try replaceMainLayer(file, page: index) { pixels, width in
             for row in 0..<rect.height {
@@ -93,7 +85,6 @@ public enum NoteWriter {
     public static func drawText(
         _ file: NoteFile, page index: Int, text: String, in rect: PageRect, fontSize: Double
     ) throws -> [UInt8] {
-        try requireOn("drawText")
         let coverage = textCoverage(text, width: rect.width, height: rect.height, fontSize: fontSize)
         return try replaceMainLayer(file, page: index) { pixels, width in
             for row in 0..<rect.height {

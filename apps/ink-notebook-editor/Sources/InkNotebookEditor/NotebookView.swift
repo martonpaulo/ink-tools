@@ -30,6 +30,8 @@ struct NotebookWindow: View {
             switch document.content {
             case .unreadable(let reason):
                 StateView(.unreadable(reason)) { OpenAnotherButton() }
+            case .turnedOff(let sentence):
+                StateView(.turnedOff(sentence)) { EmptyView() }
             case .note(let note) where note.pages.isEmpty:
                 StateView(.noPages) { OpenAnotherButton() }
             case .note(let note):

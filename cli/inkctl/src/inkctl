@@ -815,7 +815,7 @@ def unreachable(serial: str, evidence: str = "") -> Failure:
 # The person's sentence for each copy key of an InternalFailure (#294).
 INTERNAL_COPY = {
     "languageNotSet": "The handwriting language did not change on the tablet. Run inkctl lang get to see the folder, then try again; restart the tablet if it keeps failing.",
-    "turnedOff": "This command is turned off in this version of inkctl, as a firmware update changed what it uses. Run inkctl firmware check to see what changed, and update Ink Tools.",
+    "turnedOff": "This command is turned off in this version of inkctl because a firmware update changed a tablet feature it uses; run inkctl firmware check to see the change, then update Ink Tools.",
 }
 UNREAD = "unread"  # what the log says for a fingerprint or an app version that could not be read
 

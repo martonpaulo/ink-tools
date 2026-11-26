@@ -123,6 +123,8 @@ public final class SettingsActivity extends Activity {
     List<String> installed = null;
     String active = null;
     activeReadFailed = false;
+    // A module the registry turned off (#293): the screen says so and how to turn it on, never «restart».
+    boolean turnedOff = false;
     try {
       active = Switcher.current();
       installed = Switcher.installed();
@@ -130,15 +132,16 @@ public final class SettingsActivity extends Activity {
       // The row says what is missing; the cycle note under it gives the next step (#280).
       Log.e(Switcher.TAG, "surface=screen read error=" + readError.getMessage());
       activeReadFailed = true;
+      turnedOff = readError instanceof FileFailure && ((FileFailure) readError).kind == FileFailure.Kind.TURNED_OFF;
     }
     // The active language as a value row, as Settings › Language & Region shows one, and the
     // switch as an action row of the same group (owner, #275).
     String language = active == null ? Copy.UNKNOWN : LanguageCycle.name(active);
-    String value = !activeReadFailed ? language : files ? Copy.FOLDER_NOT_READ : Copy.NOT_READ;
+    String value = !activeReadFailed ? language : turnedOff ? Copy.TURNED_OFF : files ? Copy.FOLDER_NOT_READ : Copy.NOT_READ;
     activeRow = Ink.valueRow(this, Copy.ACTIVE, value);
     // A switch changes the value in place (#281): a screen reader says the new language.
     Ink.value(activeRow).setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-    LinearLayout next = Ink.actionRow(this, Copy.SWITCH_LANGUAGE, files);
+    LinearLayout next = Ink.actionRow(this, Copy.SWITCH_LANGUAGE, files && !turnedOff);
     next.setOnClickListener(view -> switchLanguage());
     addGroup(Ink.group(this, null, Arrays.asList(activeRow, next), null));
     if (!files) {
@@ -185,7 +188,8 @@ public final class SettingsActivity extends Activity {
       }
     }
     // An unread folder lists no language: say so, not that none is installed (#275).
-    String cycleNote = !files ? Copy.CYCLE_NO_FILES : installed == null ? Copy.CYCLE_NOT_READ : Copy.CYCLE_HELP;
+    String cycleNote = !files ? Copy.CYCLE_NO_FILES
+        : turnedOff ? Copy.FAILURE_TURNED_OFF : installed == null ? Copy.CYCLE_NOT_READ : Copy.CYCLE_HELP;
     addGroup(Ink.group(this, Copy.CYCLE_SECTION, languages, cycleNote));
     // The native screen that installs more languages, one tap away (owner, #275).
     LinearLayout install = Ink.chevronRow(this, Copy.INSTALL_LANGUAGES);

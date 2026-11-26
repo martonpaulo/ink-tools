@@ -65,6 +65,8 @@ public class ScreenRenders {
     boolean files = true;
     boolean overlay = true;
     boolean watcher = true;
+    /** Whether the registry turned the language folder's module off (#293). */
+    boolean turnedOff;
     /** The codes left in the cycle. */
     String[] cycle = {"en_US", "pt_BR", "es_ES"};
   }
@@ -103,6 +105,13 @@ public class ScreenRenders {
     State state = new State();
     state.cycle = new String[] {"en_US", "es_ES"};
     render("handwriting-language-one-language-off", state);
+  }
+
+  @Test
+  public void turnedOff() throws Exception {
+    State state = new State();
+    state.turnedOff = true;
+    render("handwriting-language-turned-off", state);
   }
 
   /** One state at the three widths; each state is its own test, so its storage starts empty. */
@@ -156,6 +165,10 @@ public class ScreenRenders {
   /** The permissions, the language folders and the preferences one state asks for. */
   private void prepare(Context context, State state) throws IOException {
     AllFilesAccess.allFiles = state.files;
+    Registry.Item item = InternalFailure.item(FileFailure.LANGUAGE_FILE_ITEM);
+    Switcher.languageItem = state.turnedOff
+        ? new Registry.Item(item.id, item.level, item.impact, item.owner, item.probe, item.unprobed, item.active, "until 2026-12-31")
+        : item;
     ShadowSettings.setCanDrawOverlays(state.overlay);
     Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
         state.watcher ? new ComponentName(context, WritingWatcher.class).flattenToString() : "");

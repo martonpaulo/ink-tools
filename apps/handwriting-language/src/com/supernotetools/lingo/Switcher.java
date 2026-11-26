@@ -60,8 +60,11 @@ final class Switcher {
     return files().installed();
   }
 
+  /** The language folder's registry item; the render of the turned-off screen swaps in one that is off (#293). */
+  static Registry.Item languageItem = InternalFailure.item(FileFailure.LANGUAGE_FILE_ITEM);
+
   private static LanguageFiles files() {
-    LanguageFiles.Disk disk = LanguageFiles.port(InternalFailure.item(FileFailure.LANGUAGE_FILE_ITEM),
+    LanguageFiles.Disk disk = LanguageFiles.port(languageItem,
         Collections.<String, LanguageFiles.Disk>singletonMap(LanguageFiles.ANDROID_FILES, new AndroidFiles()));
     return new LanguageFiles(disk, AndroidFiles.root());
   }

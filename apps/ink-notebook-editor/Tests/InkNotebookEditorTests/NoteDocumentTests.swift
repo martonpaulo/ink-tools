@@ -70,6 +70,21 @@ enum Fixtures {
         #expect(!reason.isEmpty)
     }
 
+    /// A reader turned off by the registry (#293) opens its own state, not «not a notebook».
+    @Test func aReaderTurnedOffOpensTheTurnedOffState() {
+        let document = NoteDocument(data: Data()) { _ in
+            throw InternalFailure(
+                item: Registry.items[0], method: "readNote", copyKey: "turnedOff",
+                cause: ModuleOff(reason: "until 2026-12-31"))
+        }
+        guard case .turnedOff(let sentence) = document.content else {
+            Issue.record("a turned-off reader opened as \(document.content)")
+            return
+        }
+        #expect(sentence == InternalFailure.copy["turnedOff"])
+        #expect(StateMessage.turnedOff(sentence).title == Copy.turnedOffTitle)
+    }
+
     @Test func theDocumentTypeReadsNoteFilesAndWritesNothing() {
         #expect(NoteDocument.readableContentTypes == [.inkNote])
         #expect(NoteDocument.writableContentTypes.isEmpty)
