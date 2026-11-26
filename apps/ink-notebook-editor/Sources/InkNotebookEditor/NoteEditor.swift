@@ -392,7 +392,7 @@ final class NoteEditor {
     /// the page starts until it is applied. The refusal bar says so.
     private func pictureOnItsWay(_ page: Int) -> Bool {
         let waiting = pictureWaiting(on: page)
-        if waiting { refusal = Copy.pictureOnItsWay }
+        if waiting { refusal = Copy.refusal(.pictureOnItsWay) }
         return waiting
     }
 
@@ -418,11 +418,11 @@ final class NoteEditor {
         guard canEdit, !transform.isEmpty, !pictureOnItsWay(transform.page) else { return false }
         let size = pageSize(transform.page)
         guard let kept = transform.clamped(width: size.width, height: size.height) else {
-            refusal = Copy.transformTooLarge
+            refusal = Copy.refusal(.tooLarge)
             return false
         }
         guard kept.refusal != .textBoxTurned else {
-            refusal = Copy.textBoxTurned
+            refusal = Copy.refusal(.textBoxTurned)
             return false
         }
         var files: [Int: URL] = [:]
@@ -442,11 +442,11 @@ final class NoteEditor {
                         ).file
                 }
             } catch {
-                refusal = Copy.pictureNotTransformed
+                refusal = Copy.refusal(.pictureNotPrepared)
                 return false
             }
             guard files.count == pictures.count else {
-                refusal = Copy.pictureNotTransformed
+                refusal = Copy.refusal(.pictureNotPrepared)
                 return false
             }
         }

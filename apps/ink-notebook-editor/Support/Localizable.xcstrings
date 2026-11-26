@@ -141,12 +141,12 @@
         }
       }
     },
-    "A text box can be resized, but not rotated or flipped: the tablet keeps a text box upright." : {
+    "A text box can be resized but not rotated or flipped: the tablet keeps it upright." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A text box can be resized, but not rotated or flipped: the tablet keeps a text box upright."
+            "value" : "A text box can be resized but not rotated or flipped: the tablet keeps it upright."
           }
         }
       }
@@ -1451,12 +1451,12 @@
         }
       }
     },
-    "The picture could not be prepared for the tablet, so nothing changed. Try again." : {
+    "The picture could not be prepared for the tablet. Try again." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The picture could not be prepared for the tablet, so nothing changed. Try again."
+            "value" : "The picture could not be prepared for the tablet. Try again."
           }
         }
       }
@@ -1671,12 +1671,12 @@
         }
       }
     },
-    "Wait until the picture's last change reaches the tablet, then change this page again." : {
+    "Wait until the picture's change reaches the tablet, then try again." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wait until the picture's last change reaches the tablet, then change this page again."
+            "value" : "Wait until the picture's change reaches the tablet, then try again."
           }
         }
       }

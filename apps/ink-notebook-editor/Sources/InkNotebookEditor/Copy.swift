@@ -201,20 +201,32 @@ nonisolated enum Copy {
 
     // MARK: Resize, rotate and flip (#326)
 
-    static let rotateLeft = String(localized: "Rotate Left")
-    static let rotateRight = String(localized: "Rotate Right")
-    static let flipHorizontal = String(localized: "Flip Horizontal")
-    static let flipVertical = String(localized: "Flip Vertical")
-    static let makeLarger = String(localized: "Make Larger")
-    static let makeSmaller = String(localized: "Make Smaller")
-    static let transformTooLarge = String(
-        localized: "The selection does not fit on the page after this change. Nothing changed.")
-    static let textBoxTurned = String(
-        localized: "A text box can be resized, but not rotated or flipped: the tablet keeps a text box upright.")
-    static let pictureNotTransformed = String(
-        localized: "The picture could not be prepared for the tablet, so nothing changed. Try again.")
-    static let pictureOnItsWay = String(
-        localized: "Wait until the picture's last change reaches the tablet, then change this page again.")
+    /// A change's name in Tools and in VoiceOver's actions, as Preview's Tools menu names them.
+    static func name(of change: SelectionChange) -> String {
+        switch change {
+        case .rotateLeft: String(localized: "Rotate Left")
+        case .rotateRight: String(localized: "Rotate Right")
+        case .flipHorizontal: String(localized: "Flip Horizontal")
+        case .flipVertical: String(localized: "Flip Vertical")
+        case .makeLarger: String(localized: "Make Larger")
+        case .makeSmaller: String(localized: "Make Smaller")
+        }
+    }
+
+    /// Why a change of a selection did not start, and what to do.
+    enum ChangeRefusal {
+        case tooLarge, textBoxTurned, pictureNotPrepared, pictureOnItsWay
+    }
+
+    static func refusal(_ refusal: ChangeRefusal) -> String {
+        switch refusal {
+        case .tooLarge: String(localized: "The selection does not fit on the page after this change. Nothing changed.")
+        case .textBoxTurned:
+            String(localized: "A text box can be resized but not rotated or flipped: the tablet keeps it upright.")
+        case .pictureNotPrepared: String(localized: "The picture could not be prepared for the tablet. Try again.")
+        case .pictureOnItsWay: String(localized: "Wait until the picture's change reaches the tablet, then try again.")
+        }
+    }
 
     // MARK: Pages (#329)
 

@@ -293,7 +293,7 @@ import Testing
             })
         // The tablet renumbers the page's elements as it replaces the picture: nothing waits on it.
         #expect(!editor.moveElements(ElementMove(page: 0, elements: [picture], dx: 5, dy: 5)))
-        #expect(editor.refusal == Copy.pictureOnItsWay)
+        #expect(editor.refusal == Copy.refusal(.pictureOnItsWay))
         await settle(editor)
         let sent = tablet.sent.filter { $0["op"] as? String == "modifyElements" }
         #expect(sent.count == 1 && sent.first?["num"] as? Int == picture.record + 1)
@@ -342,7 +342,7 @@ import Testing
         let turned = await editor.transform(elements.map(\.selectable), page: 0) {
             .flip(page: 0, elements: $0, horizontal: true)
         }
-        #expect(!turned && editor.refusal == Copy.textBoxTurned && editor.pending.isEmpty)
+        #expect(!turned && editor.refusal == Copy.refusal(.textBoxTurned) && editor.pending.isEmpty)
     }
 
     @Test func tenNudgesAreOneRequestAndOneUndo() async throws {

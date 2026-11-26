@@ -409,7 +409,7 @@ enum SelectionChange: CaseIterable {
     static let menu: [SelectionChange] = [.rotateLeft, .rotateRight, .flipHorizontal, .flipVertical]
 
     /// The share Make Larger grows the selection by, and Make Smaller undoes.
-    static let step = 1.25
+    static let step: Double = 5 / 4
 
     /// Whether the change turns or mirrors the selection, which a text box refuses.
     var turns: Bool { self != .makeLarger && self != .makeSmaller }
@@ -419,16 +419,7 @@ enum SelectionChange: CaseIterable {
         !items.contains { $0.isArea && !$0.isPicture }
     }
 
-    var title: String {
-        switch self {
-        case .makeLarger: Copy.makeLarger
-        case .makeSmaller: Copy.makeSmaller
-        case .rotateLeft: Copy.rotateLeft
-        case .rotateRight: Copy.rotateRight
-        case .flipHorizontal: Copy.flipHorizontal
-        case .flipVertical: Copy.flipVertical
-        }
-    }
+    var title: String { Copy.name(of: self) }
 
     /// Preview's shortcuts for its rotations; the flips have none there.
     var shortcut: KeyboardShortcut? {
