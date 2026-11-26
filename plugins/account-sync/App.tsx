@@ -6,9 +6,12 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {useArmOnRoot, useBackKey} from '@ink-tools/ui-kit';
 import {
+  ACCOUNT_PROVIDERS,
+  AccountProvider,
   BridgeSettings,
   MODULE_PROVIDERS,
   MODULES,
+  setAccount,
 } from '@ink-tools/sync-core/settings';
 import {
   ModuleRun,
@@ -122,18 +125,24 @@ export default function App({
   );
   const [signIns, setSignIns] = useState<SignIns>({});
 
+  const accounts = settings?.accounts;
   const readSignIns = useCallback(async () => {
     const read: SignIns = {};
     for (const provider of MODULES.flatMap(signInProviders)) {
-      read[provider] = await signInState(store, provider);
+      read[provider] = await signInState(
+        store,
+        provider,
+        accounts?.[provider as AccountProvider],
+      );
     }
     setSignIns(read);
-  }, [store]);
+  }, [store, accounts]);
 
-  // A pass moves a sign-in dropped by `inkctl secret set` in, so read them again after each one.
+  // A pass moves a sign-in dropped by `inkctl secret set` in and reads its account (#433), so read
+  // the settings and the sign-ins again after each one.
   useEffect(() => {
     readSignIns();
-  }, [readSignIns, synced.runs]);
+  }, [readSignIns]);
 
   const signOut = async (provider: SecretProvider) => {
     try {
@@ -143,8 +152,15 @@ export default function App({
       setSaveProblem(
         format('signOut.problem', {provider: copy[`provider.${provider as 'todoist'}`]}),
       );
+      await readSignIns();
+      return;
     }
-    await readSignIns();
+    // A sign-out forgets the account it named, so no row names an account that is gone (#433).
+    if (settings && (ACCOUNT_PROVIDERS as string[]).includes(provider)) {
+      await change(setAccount(settings, provider as AccountProvider, undefined));
+    } else {
+      await readSignIns();
+    }
   };
 
   const [removeNotice, setRemoveNotice] = useState<string | null>(null);
@@ -173,6 +189,19 @@ export default function App({
   useEffect(() => {
     load();
   }, [load]);
+
+  // A pass keeps each service's account in the settings file (#433): read it again after each
+  // run, so the rows name it and a later switch change never writes the older file back.
+  useEffect(() => {
+    if (!Object.keys(synced.runs).length) {
+      return;
+    }
+    loadSettings(folder).then(loaded => {
+      if (loaded.ok) {
+        setSettings(loaded.value);
+      }
+    });
+  }, [folder, synced.runs]);
 
   const change = async (next: BridgeSettings) => {
     setSettings(next);

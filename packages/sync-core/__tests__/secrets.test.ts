@@ -1,5 +1,5 @@
-/** Sign-in secrets: file names, the masked tail and the parse of a stored value (#90). */
-import {SecretStore, maskSecret, parseGoogleClient, parseICloudSignIn, parseSecret, secretFileName, signInState} from '../src';
+/** Sign-in secrets: file names, the account a row names and the parse of a stored value (#90, #433). */
+import {SecretStore, parseGoogleClient, parseICloudSignIn, parseSecret, secretFileName, signInState} from '../src';
 
 const SYNTHETIC = 'synthetic-token-0000-wxyz';
 
@@ -8,11 +8,6 @@ test('each provider has its own file, and an unknown one is refused', () => {
   expect(secretFileName('icloud')).toBe('icloud.secret');
   expect(secretFileName('google-client')).toBe('google-client.secret');
   expect(() => secretFileName('../x' as never)).toThrow('unknown provider');
-});
-
-test('Settings sees only the last four characters', () => {
-  expect(maskSecret(SYNTHETIC)).toBe('…wxyz');
-  expect(maskSecret('abc')).toBe('…');
 });
 
 test('a piped newline is dropped; an empty value or a control character is refused', () => {
@@ -26,9 +21,17 @@ function store(read: SecretStore['read']): SecretStore {
   return {read, remove: async () => {}};
 }
 
-test('the sign-in state: signed out, signed in with the tail, and an unreadable file kept apart', async () => {
+test('the sign-in state: signed out, signed in with its account, and an unreadable file kept apart (#433)', async () => {
   expect(await signInState(store(async () => null), 'todoist')).toEqual({state: 'signedOut'});
-  expect(await signInState(store(async () => SYNTHETIC), 'todoist')).toEqual({state: 'signedIn', tail: '…wxyz'});
+  expect(await signInState(store(async () => SYNTHETIC), 'todoist')).toEqual({state: 'signedIn'});
+  expect(await signInState(store(async () => SYNTHETIC), 'todoist', 'tester@example.com')).toEqual({
+    state: 'signedIn',
+    account: 'tester@example.com',
+  });
+  // iCloud's account is the Apple ID half of its sign-in; the password half never leaves it.
+  const icloud = await signInState(store(async () => 'tester@example.com:abcd-efgh-ijkl-mnop'), 'icloud');
+  expect(icloud).toEqual({state: 'signedIn', account: 'tester@example.com'});
+  expect(await signInState(store(async () => 'no-colon'), 'icloud')).toEqual({state: 'signedIn'});
   expect(
     await signInState(store(async () => {
       throw new Error('read failed');
@@ -52,4 +55,11 @@ test('the iCloud sign-in is <Apple ID>:<app-specific password>, split at the fir
   expect(() => parseICloudSignIn('abcd-efgh-ijkl-mnop')).toThrow('not <Apple ID>:<app-specific password>');
   expect(() => parseICloudSignIn(':abcd')).toThrow('no Apple ID');
   expect(() => parseICloudSignIn('tester@example.com:')).toThrow('no app-specific password');
+});
+
+test('no sign-in state holds any part of its secret (#433)', async () => {
+  for (const provider of ['todoist', 'google', 'icloud', 'google-client'] as const) {
+    const state = JSON.stringify(await signInState(store(async () => `tester@example.com:${SYNTHETIC}`), provider));
+    for (let i = 0; i + 3 <= SYNTHETIC.length; i++) expect(state).not.toContain(SYNTHETIC.slice(i, i + 3));
+  }
 });

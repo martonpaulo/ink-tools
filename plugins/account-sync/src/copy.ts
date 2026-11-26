@@ -50,7 +50,9 @@ export const copy = {
   'remove.problem': '{module}: {count} of what Account Sync wrote did not go. Try again.',
   cancel: 'Cancel',
   'account.title': '{provider} account',
-  'signIn.in': 'Signed in ({tail})',
+  /** A connected service names its account, never any part of its secret (#433). */
+  'signIn.as': 'Connected as {account}',
+  'signIn.in': 'Connected',
   'signIn.out': 'Not connected',
   'connect.button': 'Connect',
   'connect.label': 'Connect {provider}',

@@ -511,6 +511,28 @@ describe('iCloud and ICS on the tablet (#30)', () => {
     expect(snap.runs.calendar?.calendars).toEqual([{calendarId: CAL, name: 'Home', provider: 'icloud'}]);
   });
 
+  test('the calendar name of a feed is kept by the address Settings holds, never the address in a row (#433)', async () => {
+    const net = apple();
+    const named: SyncDevice['fetch'] = async (url, init) => {
+      const res = await net.fetch(url, init);
+      return url.endsWith('holidays.ics')
+        ? {...res, text: async () => (await res.text()).replace('BEGIN:VEVENT', 'X-WR-CALNAME:Holidays\r\nBEGIN:VEVENT')}
+        : res;
+    };
+    let stored = on();
+    const d = device({
+      fetch: named,
+      loadSettings: async () => ({ok: true, value: stored}),
+      saveSettings: async s => {
+        stored = s;
+        return {ok: true};
+      },
+      secrets: {read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null), remove: async () => {}},
+    });
+    await createSyncRunner(d).syncNow();
+    expect(stored.accounts).toEqual({ics: {[FEED]: 'Holidays'}});
+  });
+
   test('iCloud gets the CalDAV writer and ICS none, so only iCloud takes tablet edits', async () => {
     const d = device({
       fetch: apple().fetch,
@@ -650,4 +672,72 @@ test('a pass asked for during a removal runs after it, never in its place (#423)
   await removal;
   await pass;
   expect(order).toEqual(['removal', 'pass']);
+});
+
+describe('the account each service is signed in to (#433)', () => {
+  const EMAIL = 'tester@example.com';
+  /** The fake network, with Todoist's user and Google's primary calendar answered or refused. */
+  function accounts(answer: boolean) {
+    const net = network();
+    const fetch: SyncDevice['fetch'] = async (url, init) => {
+      const asked = url.endsWith('/user') || url.endsWith('/calendars/primary');
+      if (!asked) {
+        return net.fetch(url, init);
+      }
+      net.calls.push(url);
+      const body = url.endsWith('/user') ? {email: EMAIL, full_name: 'Test User'} : {id: EMAIL};
+      return {ok: answer, status: answer ? 200 : 503, json: async () => body, text: async () => ''};
+    };
+    return {calls: net.calls, fetch};
+  }
+  const keeping = (start: BridgeSettings) => {
+    let stored = start;
+    return {
+      get: () => stored,
+      over: {
+        loadSettings: async () => ({ok: true as const, value: stored}),
+        saveSettings: async (s: BridgeSettings) => {
+          stored = s;
+          return {ok: true};
+        },
+      },
+    };
+  };
+
+  test('a pass reads each account with the existing sign-in and keeps it in Settings, never in the log', async () => {
+    const net = accounts(true);
+    const kept = keeping(settings('google', 'todoist'));
+    const d = device({fetch: net.fetch, ...kept.over});
+    await createSyncRunner(d).syncNow();
+    expect(kept.get().accounts).toEqual({todoist: `Test User (${EMAIL})`, google: EMAIL});
+    // Google's read reuses the pass's one access token.
+    expect(net.calls.filter(c => c.includes('oauth2'))).toHaveLength(1);
+    expect(d.lines.join('\n')).not.toContain(EMAIL);
+  });
+
+  test('an account that cannot be read keeps the earlier name, and the log says why without it', async () => {
+    const start = {...settings('google', 'todoist'), accounts: {google: EMAIL}};
+    const kept = keeping(start);
+    const d = device({fetch: accounts(false).fetch, ...kept.over});
+    await createSyncRunner(d).syncNow();
+    expect(kept.get().accounts).toEqual({google: EMAIL});
+    expect(d.lines).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^\[Bridge\] account: todoist: not read, so its row says Connected: .*HTTP 503/),
+        expect.stringMatching(/^\[Bridge\] account: google: not read, so its row says Connected: .*HTTP 503/),
+      ]),
+    );
+    expect(d.lines.join('\n')).not.toContain(EMAIL);
+  });
+
+  test('a sign-in just moved in forgets the old account when the new one does not read', async () => {
+    const kept = keeping({...settings('google', 'todoist'), accounts: {google: EMAIL, todoist: EMAIL}});
+    const d = device({
+      fetch: accounts(false).fetch,
+      importSecrets: async () => [{provider: 'google', moved: true}],
+      ...kept.over,
+    });
+    await createSyncRunner(d).syncNow();
+    expect(kept.get().accounts).toEqual({todoist: EMAIL});
+  });
 });

@@ -33,10 +33,7 @@ test('reads the file inkctl writes, by sync-core name, dropping the pipe newline
   const store = createSecretStore(folder, native);
   expect(await store.read('todoist')).toBe('tok-1234');
   expect(await store.read('google')).toBeNull();
-  expect(await signInState(store, 'todoist')).toEqual({
-    state: 'signedIn',
-    tail: '…1234',
-  });
+  expect(await signInState(store, 'todoist')).toEqual({state: 'signedIn'});
 });
 
 test('a broken file or a refused read is never signed out', async () => {

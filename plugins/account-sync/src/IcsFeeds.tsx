@@ -1,6 +1,6 @@
 /**
- * The ICS feeds of the Calendar module (#30): one row per feed, named by its place and host only,
- * since a private feed's address is a secret, each with «Remove»; then a field for a new
+ * The ICS feeds of the Calendar module (#30): one row per feed, named by its place and the calendar
+ * name the feed gives, else its host (#433), never the address, since a private feed's address is a secret, each with «Remove»; then a field for a new
  * `https:` or `webcal:` address and «Add feed». A wrong address says why in words and adds
  * nothing; past the limit «Add feed» is disabled and says why. Every change goes through the
  * sync-core rules, which own the address check and the limit.
@@ -11,7 +11,7 @@ import {ActionRow, Button, ListRow, metrics, RowGroup, shared} from '@ink-tools/
 import {
   addIcsFeed,
   BridgeSettings,
-  icsFeedName,
+  icsFeedLabel,
   MAX_ICS_FEEDS,
   removeIcsFeed,
 } from '@ink-tools/sync-core/settings';
@@ -53,7 +53,7 @@ export function IcsFeeds({
         <ListRow title={copy['ics.empty']} />
       ) : (
         settings.icsFeeds.map((url, index) => {
-          const name = icsFeedName(url, index);
+          const name = icsFeedLabel(settings, url, index);
           return (
             <ActionRow
               key={url}

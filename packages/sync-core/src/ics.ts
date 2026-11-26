@@ -31,6 +31,19 @@ export function unfold(text: string): string[] {
 }
 const unescapeText = (s: string) => s.replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
 
+/**
+ * The calendar's own name (#433): the `X-WR-CALNAME` most feeds put in the calendar header, before
+ * the first component. Undefined when the feed gives none.
+ */
+export function icsCalendarName(text: string): string | undefined {
+  for (const line of unfold(text)) {
+    if (line.startsWith('BEGIN:') && line !== 'BEGIN:VCALENDAR') return undefined;
+    const m = /^X-WR-CALNAME(?:;[^:]*)?:(.*)$/i.exec(line);
+    if (m) return unescapeText(m[1]).trim() || undefined;
+  }
+  return undefined;
+}
+
 export function parseTime(params: string, value: string): {ms: number; allDay: boolean} {
   const allDay = /VALUE=DATE(?!-)/.test(params) || /^\d{8}$/.test(value);
   const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?/.exec(value);
@@ -218,18 +231,25 @@ export function withinLimit(text: string, what: string): string {
   return text;
 }
 
+/** Where the ICS provider reports each feed's calendar name as it reads it (#433). */
+export type IcsNameSink = (feedId: string, name: string) => void;
+
 /** Read-only ICS subscriptions, one calendar per feed. */
 export function createIcsProvider(
   fetchText: (url: string) => Promise<string>,
   feeds: IcsFeed[],
   onWarnings: WarningSink = () => {},
+  onName: IcsNameSink = () => {},
 ): CalendarProvider {
   return {
     listCalendars: async (): Promise<CalendarInfo[]> => feeds.map(f => ({calendarId: f.id, name: f.name})),
     async listEvents(calendarId, w) {
       const feed = feeds.find(f => f.id === calendarId);
       if (!feed) throw new Error(`unknown ICS feed ${calendarId}`);
-      const {events, warnings} = parseIcs(withinLimit(await fetchText(requireHttps(httpsUrl(feed.url), 'ICS feed')), 'ICS feed'));
+      const text = withinLimit(await fetchText(requireHttps(httpsUrl(feed.url), 'ICS feed')), 'ICS feed');
+      const name = icsCalendarName(text);
+      if (name) onName(calendarId, name);
+      const {events, warnings} = parseIcs(text);
       const found = [...warnings];
       const out = expandEvents(calendarId, events, w, found);
       if (found.length) onWarnings(found);

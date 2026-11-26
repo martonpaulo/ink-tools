@@ -2024,7 +2024,7 @@ synthetic=tok-SYNTHETIC-0000-wxyz
 output=$(printf '%s\r\n' "$synthetic" | run secret set todoist --json)
 check "secret set writes the value from stdin without its line end" "$(cat "$files/secret-written")" "$synthetic"
 check "secret set writes a temp name, then renames it" "$(called "mkdir -p $private && cat > $private/todoist.secret.partial && mv $private/todoist.secret.partial $private/todoist.secret")" "1"
-check "secret set shows only the last four characters" "$(printf '%s' "$output" | field "['tail']")" "…wxyz"
+check "secret set shows no part of the secret" "$(printf '%s' "$output" | grep -c wxyz)" "0"
 check "the secret never reaches an adb argument" "$(grep -cF "$synthetic" "$log")" "0"
 check "the secret never reaches the history" "$(grep -cF "$synthetic" "$history_file")" "0"
 rm -f "$files/secret-written"
@@ -2047,7 +2047,7 @@ rm -f "$files/write-fails"
 printf 'x' | SUPERNOTE_READ_ONLY=1 run secret set todoist >/dev/null 2>&1
 check "read-only mode refuses secret set" "$?" "11"
 printf 'f %s\n' "$private/todoist.secret" >> "$files/paths"
-check "secret status shows the tail of a stored secret" "$(run secret status | head -1)" "todoist: waiting for Account Sync (…wxyz)"
+check "secret status shows a stored secret, no part of it" "$(run secret status | head -1)" "todoist: waiting for Account Sync"
 check "secret status names a provider with none" "$(run secret status | tail -1)" "google-client: nothing waiting"
 check "secret remove takes back a waiting secret" "$(run secret remove todoist)" "todoist: the waiting secret was removed"
 check "secret status reads back nothing waiting" "$(run secret status | head -1)" "todoist: nothing waiting"

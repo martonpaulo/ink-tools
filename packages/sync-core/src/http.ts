@@ -60,3 +60,6 @@ export function basicCredentials(username: string, password: string): string {
   }
   return out;
 }
+
+/** The Authorization value of a call with an OAuth access token, read at that moment. */
+export const bearer = async (getAccessToken: () => Promise<string>): Promise<string> => `Bearer ${await getAccessToken()}`;

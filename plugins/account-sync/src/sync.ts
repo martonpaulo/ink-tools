@@ -8,6 +8,8 @@
  * shows (#88), in memory: «last synced» is the last run since the plugin host started (#39).
  */
 import {
+  ACCOUNT_PROVIDERS,
+  AccountProvider,
   activePlan,
   basicCredentials,
   BridgeModules,
@@ -21,6 +23,8 @@ import {
   createIcsProvider,
   createTodoistProvider,
   discoverCalDavCalendars,
+  fetchGoogleAccount,
+  fetchTodoistAccount,
   HttpFetch,
   httpsUrl,
   ICLOUD_CALDAV_ROOT,
@@ -38,9 +42,10 @@ import {
   removeImportedTasks,
   runBridgeSync,
   SecretStore,
+  setAccount,
+  setIcsNames,
   TimeWindow,
   TwoWayModule,
-  TWO_WAY_MODULES,
 } from '@ink-tools/sync-core';
 import type {CleanupResult} from '@ink-tools/sync-core';
 import type {Capability, CapabilityStatus} from '@ink-tools/sn-adapter';
@@ -117,7 +122,18 @@ const failing = (id: ProviderId, reason: string): CalendarSource => ({
 const signedOut = (id: string) =>
   `not signed in: on the Mac, run inkctl secret set ${id}`;
 
-async function googleSource(device: SyncDevice): Promise<CalendarSource> {
+/**
+ * What a pass learns of the accounts it signs in to (#433): a reader per service, run after the
+ * sync, and each ICS feed's calendar name by its address as Settings keeps it. Never logged.
+ */
+export interface AccountReads {
+  readers: Partial<Record<AccountProvider, () => Promise<string>>>;
+  ics: Record<string, string>;
+}
+
+export const noAccountReads = (): AccountReads => ({readers: {}, ics: {}});
+
+async function googleSource(device: SyncDevice, accounts: AccountReads): Promise<CalendarSource> {
   const refresh = await device.secrets.read('google');
   if (refresh === null) {
     return failing('google', signedOut('google'));
@@ -140,6 +156,7 @@ async function googleSource(device: SyncDevice): Promise<CalendarSource> {
   let pending: Promise<string> | undefined;
   const access = () =>
     (pending ??= refreshAccessToken(device.fetch, client, refresh));
+  accounts.readers.google = () => fetchGoogleAccount(device.fetch, access);
   return {
     id: 'google',
     provider: createGoogleCalendarProvider(device.fetch, access),
@@ -199,14 +216,20 @@ async function icloudSource(device: SyncDevice): Promise<CalendarSource> {
  * is reported, never sent. A feed's id is its HTTPS address, unique across sources; its name holds
  * only the host, as a private feed's path is a secret.
  */
-function icsSource(device: SyncDevice, feeds: string[]): CalendarSource {
+function icsSource(device: SyncDevice, feeds: string[], accounts: AccountReads): CalendarSource {
   if (!feeds.length) {
     return failing('ics', 'no ICS feed address in Settings');
   }
   const named = feeds.map((url, i) => {
     const https = httpsUrl(url);
-    return {id: https, url: https, name: icsFeedName(https, i)};
+    return {id: https, url: https, name: icsFeedName(https, i), address: url};
   });
+  const onName = (id: string, name: string) => {
+    const feed = named.find(f => f.id === id);
+    if (feed) {
+      accounts.ics[feed.address] = name;
+    }
+  };
   const fetchText = async (url: string) => {
     const res = await device.fetch(url, {method: 'GET', headers: {Accept: 'text/calendar'}});
     if (!res.ok) {
@@ -216,7 +239,7 @@ function icsSource(device: SyncDevice, feeds: string[]): CalendarSource {
   };
   return {
     id: 'ics',
-    provider: createIcsProvider(fetchText, named, warnTo(device, 'ics')),
+    provider: createIcsProvider(fetchText, named, warnTo(device, 'ics'), onName),
   };
 }
 
@@ -229,6 +252,7 @@ export async function buildModules(
   providers: ProviderId[],
   icsFeeds: string[] = [],
   defaultCalendarId?: string,
+  accounts: AccountReads = noAccountReads(),
 ): Promise<BridgeModules> {
   const modules: BridgeModules = {};
   // Without the content providers the probe cannot have passed, so no module is in the plan.
@@ -240,11 +264,11 @@ export async function buildModules(
   for (const id of providers) {
     try {
       if (id === 'google') {
-        sources.push(await googleSource(device));
+        sources.push(await googleSource(device, accounts));
       } else if (id === 'icloud') {
         sources.push(await icloudSource(device));
       } else if (id === 'ics') {
-        sources.push(icsSource(device, icsFeeds));
+        sources.push(icsSource(device, icsFeeds, accounts));
       }
     } catch (e) {
       sources.push(
@@ -272,6 +296,10 @@ export async function buildModules(
         token === null
           ? null
           : createTodoistProvider({token, fetch: device.fetch});
+      if (token !== null) {
+        const options = {token, fetch: device.fetch};
+        accounts.readers.todoist = () => fetchTodoistAccount(options);
+      }
     } catch (e) {
       // A sign-in that does not read fails the to-do run with its reason, never «not signed in».
       const reason = `the sign-in did not read: ${(e as Error).message}`;
@@ -338,31 +366,52 @@ const availability = (statuses: CapabilityStatus[]): ModuleAvailability =>
     ]),
   );
 
-/** Record each module's first-link time in Settings once, re-read first so no switch is lost. */
-async function keepFirstLinked(
+/**
+ * Keep what a pass learned in Settings, re-read first so no switch is lost: each module's first-link
+ * time, once, and the account each service is signed in to (#433). An account read that fails keeps
+ * the name an earlier pass read, and the log says why, without the name; a service whose sign-in was
+ * just moved in forgets the old name first, so a row never names the account signed out of.
+ */
+async function keepSettings(
   device: SyncDevice,
   state: BridgeState,
+  accounts: AccountReads,
+  movedIn: string[],
   log: (line: string) => void,
 ): Promise<void> {
   if (!device.saveSettings) {
     return;
   }
+  const names: Partial<Record<AccountProvider, string>> = {};
+  for (const [id, read] of Object.entries(accounts.readers) as [AccountProvider, () => Promise<string>][]) {
+    try {
+      names[id] = await read();
+    } catch (e) {
+      log(`[Bridge] account: ${id}: not read, so its row says Connected: ${(e as Error).message}`);
+    }
+  }
   const fresh = await device.loadSettings();
   if (!fresh.ok) {
     return;
   }
-  const missing = TWO_WAY_MODULES.filter(
-    m => state.firstLinked[m] !== undefined && fresh.value.firstLinked[m] === undefined,
-  );
-  if (!missing.length) {
-    return;
-  }
-  const saved = await device.saveSettings({
+  let next: BridgeSettings = {
     ...fresh.value,
     firstLinked: {...state.firstLinked, ...fresh.value.firstLinked},
-  });
+  };
+  for (const id of ACCOUNT_PROVIDERS) {
+    if (names[id] !== undefined) {
+      next = setAccount(next, id, names[id]);
+    } else if (movedIn.includes(id)) {
+      next = setAccount(next, id, undefined);
+    }
+  }
+  next = setIcsNames(next, accounts.ics);
+  if (JSON.stringify(next) === JSON.stringify(fresh.value)) {
+    return;
+  }
+  const saved = await device.saveSettings(next);
   if (!saved.ok) {
-    log(`[Bridge] sync: the first-link time was not saved: ${saved.message}`);
+    log(`[Bridge] sync: the settings were not saved: ${saved.message}`);
   }
 }
 
@@ -386,9 +435,13 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
 
   const run = async ({load = false, only}: PassOptions): Promise<SyncSnapshot> => {
     publish({...current, running: true});
+    const movedIn: string[] = [];
     if (device.importSecrets) {
       try {
         for (const drop of await device.importSecrets()) {
+          if (drop.moved) {
+            movedIn.push(drop.provider);
+          }
           log(
             drop.moved
               ? `[Bridge] secrets: ${drop.provider} moved in from the drop folder`
@@ -443,15 +496,17 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
     }
     const runs = {...current.runs};
     if (plan.modules.length) {
+      const accounts = noAccountReads();
       const modules = await buildModules(
         device,
         plan.providers,
         settings.value.icsFeeds,
         settings.value.defaultCalendarId,
+        accounts,
       );
       const done = await runBridgeSync(plan, modules, state, device.now);
       state = done.state;
-      await keepFirstLinked(device, state, log);
+      await keepSettings(device, state, accounts, movedIn, log);
       for (const [id, r] of Object.entries(done.runs) as [
         ModuleId,
         ModuleRun,

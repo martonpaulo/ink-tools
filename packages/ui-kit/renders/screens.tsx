@@ -93,7 +93,7 @@ function ControlsSheet(): React.JSX.Element {
       </View>
       <Button label="Destructive" kind="destructive" onPress={() => {}} />
       <RowGroup caption="Row actions">
-        <ActionRow title="Sample account" subtitle="Signed in (…wxyz)" action={{label: 'Sign out', onPress: () => {}}} />
+        <ActionRow title="Sample account" subtitle="Connected as tester@example.com" action={{label: 'Sign out', onPress: () => {}}} />
         <ActionRow title="Sample confirm" subtitle="Remove the sample?" secondAction={{label: 'Cancel', onPress: () => {}}} action={{label: 'Remove', onPress: () => {}}} />
       </RowGroup>
       <RowGroup caption="Switches">
@@ -214,7 +214,7 @@ const OWNER_RUNS = {
   todo: {module: 'todo' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 0}, errors: [], warnings: [], keptLocal: 233},
   calendar: {module: 'calendar' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 1}, errors: [], warnings: [], keptLocal: 0},
 };
-const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, tail: '…wxyz'}, google: {state: 'signedIn' as const, tail: '…abcd'}, icloud: {state: 'signedIn' as const, tail: '…efgh'}};
+const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, account: 'Test User (tester@example.com)'}, google: {state: 'signedIn' as const, account: 'tester@example.com'}, icloud: {state: 'signedIn' as const, account: 'tester@example.org'}};
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
 const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}) =>
@@ -236,7 +236,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ink-tools-probe-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
   {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS)},
   {name: 'account-sync-settings', render: () => accountSync(accountSyncDefaults())},
-  {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})},
+  {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', account: 'tester@example.com'}})},
   {name: 'account-sync-connect', render: () => accountSync(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})},
   {name: 'account-sync-ics-feeds', render: () => accountSync(ICS_FEEDS)},
   {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},

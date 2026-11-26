@@ -234,9 +234,16 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
     ...base,
     modules: {...base.modules, todo: true},
     providers: {...base.providers, todoist: true},
+    accounts: {todoist: 'tester@example.com'},
   });
   const tree = await mountApp(<App folder={folder as never} secrets={secrets} />);
-  expect(texts(tree)).toEqual(expect.arrayContaining(['Todoist account', 'Signed in (…wxyz)']));
+  expect(texts(tree)).toEqual(expect.arrayContaining(['Todoist account', 'Connected as tester@example.com']));
+  // No row shows any part of the secret, not even its last characters (#433).
+  const shown = texts(tree).join(' ');
+  const value = stored.todoist!;
+  for (let i = 0; i + 4 <= value.length; i++) {
+    expect(shown).not.toContain(value.slice(i, i + 4));
+  }
   const press = (label: string) =>
     tree.root.findAll(
       n =>
@@ -248,6 +255,8 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
   expect(secrets.remove).toHaveBeenCalledWith('todoist');
   expect(texts(tree)).toContain(copy['signIn.out']);
   expect(press('Connect Todoist')).toBeDefined();
+  // The sign-out forgets the account it named (#433).
+  expect(JSON.parse(files[`${DIR}/settings.json`]).accounts).toEqual({});
   expect(screenBreaks(tree.root)).toEqual([]);
 });
 
