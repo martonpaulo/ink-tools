@@ -133,8 +133,13 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   ([#326](https://github.com/martonpaulo/ink-tools/issues/326)): one matrix about the selection frame,
   kept on the page; strokes take the helper's `transformElements`, a text box its new rect and is
   never turned, a picture a new picture file at its new box; its undo is the backup kept before its
-  send. The app does not offer it yet: the handles, the menu items and the picture files are the open
-  Tasks of [#326](https://github.com/martonpaulo/ink-tools/issues/326).
+  send. The selection's handles resize it, Shift keeping the proportion, the knob above it rotates
+  it, Shift by 15°, and Tools › Rotate Left, Rotate Right, Flip Horizontal and Flip Vertical, also
+  VoiceOver actions, turn it. A change made before the tablet answers builds on the changes on
+  their way (`ElementChain`), drawn from the ink the first of them lifted. A picture's new file is
+  cut from the Mac's copy of the page, so ink over it goes with it, and a moved picture goes the
+  same way; no element change of a page starts while a picture's change is on its way to it, as the
+  tablet renumbers the page's elements.
 - Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
   or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
