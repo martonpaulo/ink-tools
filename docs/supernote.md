@@ -522,7 +522,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   button: from Ink Tools Probe's lasso row, `getLassoRect` answered the lassoed strokes' box in
   23 ms and `saveStickerByLasso` wrote a sticker file in 39 ms [measured, Ink Tools Probe
   0.0.2 beta 10, Manta, 2026-11-25, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
-  On the same tablet and day:
+  The same `saveStickerByLasso`, run from Probe's action-file listener or its sidebar button,
+  answered `904 No lasso action has been performed`: only a press
+  of a lasso row saves a sticker, so a round makes its Collection pieces with the lasso row «Add to
+  Collection» [measured, Ink Tools Probe from `main` `f807989`, Manta, 2026-11-26,
+  [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
+  On the same tablet and day as the first:
   - `lassoElements(rect)` selects strokes only: a text box inside the rect stayed out of the lasso
     and so out of the sticker. Whether a sticker keeps a text box or a picture lassoed by hand is
     [unverified].
