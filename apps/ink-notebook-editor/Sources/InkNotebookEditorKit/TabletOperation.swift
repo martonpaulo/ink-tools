@@ -183,37 +183,49 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
 
     private enum Key: String, CodingKey { case op, page, elements, num, rect, file, nums, matrix, template }
 
+    /// The helper's name of the operation.
+    private var name: String {
+        switch self {
+        case .insertElements: "insertElements"
+        case .modifyElements: "modifyElements"
+        case .transformElements: "transformElements"
+        case .deleteElements: "deleteElements"
+        case .insertPage: "insertPage"
+        case .removePage: "removePage"
+        case .openNote: "openNote"
+        }
+    }
+
+    /// The page the operation targets, from 0; none for `openNote`.
+    private var page: Int? {
+        switch self {
+        case .insertElements(let page, _), .modifyElements(let page, _, _, _), .transformElements(let page, _, _),
+            .deleteElements(let page, _), .insertPage(let page, _), .removePage(let page):
+            page
+        case .openNote: nil
+        }
+    }
+
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: Key.self)
+        try container.encode(name, forKey: .op)
+        try container.encodeIfPresent(page, forKey: .page)
         switch self {
-        case .insertElements(let page, let elements):
-            try container.encode("insertElements", forKey: .op)
-            try container.encode(page, forKey: .page)
+        case .insertElements(_, let elements):
             try container.encode(elements, forKey: .elements)
-        case .modifyElements(let page, let num, let rect, let file):
-            try container.encode("modifyElements", forKey: .op)
-            try container.encode(page, forKey: .page)
+        case .modifyElements(_, let num, let rect, let file):
             try container.encode(num, forKey: .num)
             try container.encode(rect, forKey: .rect)
             try container.encodeIfPresent(file, forKey: .file)
-        case .transformElements(let page, let nums, let matrix):
-            try container.encode("transformElements", forKey: .op)
-            try container.encode(page, forKey: .page)
+        case .transformElements(_, let nums, let matrix):
             try container.encode(nums, forKey: .nums)
             try container.encode(matrix, forKey: .matrix)
-        case .deleteElements(let page, let nums):
-            try container.encode("deleteElements", forKey: .op)
-            try container.encode(page, forKey: .page)
+        case .deleteElements(_, let nums):
             try container.encode(nums, forKey: .nums)
-        case .insertPage(let page, let template):
-            try container.encode("insertPage", forKey: .op)
-            try container.encode(page, forKey: .page)
+        case .insertPage(_, let template):
             try container.encode(template, forKey: .template)
-        case .removePage(let page):
-            try container.encode("removePage", forKey: .op)
-            try container.encode(page, forKey: .page)
-        case .openNote:
-            try container.encode("openNote", forKey: .op)
+        case .removePage, .openNote:
+            break
         }
     }
 }

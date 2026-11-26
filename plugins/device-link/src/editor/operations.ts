@@ -101,14 +101,16 @@ function parseNums(value: unknown): number[] {
   return value as number[];
 }
 
+/** A matrix's six numbers, in their order. */
+const MATRIX_PARTS = ['a', 'b', 'c', 'd', 'tx', 'ty'];
 /** The smallest determinant a matrix may have: below it, the stroke would fold into a line. */
 const FLATTEST = 1e-6;
 
 /** Six finite numbers, a, b, c, d, tx and ty, that do not flatten the stroke (#326). */
 function parseMatrix(value: unknown): Matrix {
   check(
-    Array.isArray(value) && value.length === 6 && value.every(entry => typeof entry === 'number' && Number.isFinite(entry)),
-    'matrix must hold six numbers: a, b, c, d, tx and ty',
+    Array.isArray(value) && value.length === MATRIX_PARTS.length && value.every(entry => typeof entry === 'number' && Number.isFinite(entry)),
+    `matrix must hold six numbers: ${MATRIX_PARTS.join(', ')}`,
   );
   const [a, b, c, d] = value as number[];
   check(Math.abs(a * d - b * c) >= FLATTEST, 'matrix must not flatten the element');
