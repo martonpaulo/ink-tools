@@ -5,3 +5,4 @@ validate:
 	python3 scripts/issue_links.py .
 	python3 scripts/sleep_guard.py .
 	python3 scripts/dry_check.py --root .
+	python3 scripts/text_width_check.py site
