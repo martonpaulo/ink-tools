@@ -172,7 +172,7 @@ private struct CopyTextCommands: View {
 
     var body: some View {
         let page = navigator?.wrappedValue.index
-        let selected = pages.flatMap { viewer?.selected(in: $0) }
+        let selected = pages.flatMap { viewer?.selected(in: $0, on: page) }
         let frame = selected?.items.map(\.bounds).reduce(CGRect.null) { $0.union($1) }
         let pageText =
             if let selected, let frame {
@@ -188,7 +188,10 @@ private struct CopyTextCommands: View {
         .keyboardShortcut("c", modifiers: [.command, .option])
         // A page with no recognised words leaves the pasteboard as it is.
         .disabled(pageText?.isEmpty != false)
-        .help(text?.index == nil ? Copy.textNotReady : pageText?.isEmpty == true ? Copy.pageHasNoWords : "")
+        .help(
+            text?.index == nil
+                ? Copy.textNotReady
+                : pageText?.isEmpty == true ? (selected == nil ? Copy.pageHasNoWords : Copy.selectionHasNoWords) : "")
         Button(Copy.copyNoteAsText) { copy(pages: nil) }
             .keyboardShortcut("c", modifiers: [.command, .option, .shift])
             .disabled(text?.index == nil)

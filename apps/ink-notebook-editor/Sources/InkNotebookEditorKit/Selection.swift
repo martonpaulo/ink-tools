@@ -11,12 +11,15 @@ public struct Selectable: Sendable, Equatable {
     public let points: [CGPoint]
     /// A picture or a text box, hit anywhere inside its frame; a stroke is hit along its path.
     public let isArea: Bool
+    /// A picture: a copy keeps its own greys, its paper too (#323).
+    public let isPicture: Bool
 
-    public init(id: Int, bounds: CGRect, points: [CGPoint], isArea: Bool) {
+    public init(id: Int, bounds: CGRect, points: [CGPoint], isArea: Bool, isPicture: Bool = false) {
         self.id = id
         self.bounds = bounds
         self.points = points
         self.isArea = isArea
+        self.isPicture = isPicture
     }
 
     /// The points a rectangle or a lasso must hold to select it: an area's four corners, a

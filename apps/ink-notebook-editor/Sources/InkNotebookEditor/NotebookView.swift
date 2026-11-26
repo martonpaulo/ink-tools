@@ -224,7 +224,7 @@ struct NotebookView: View {
         .focused($pageFocused)
         // Edit › Copy takes the current page out as PNG, PDF and its text (#323).
         .onCopyCommand {
-            if let (page, items) = viewer.selected(in: pages), let text {
+            if let (page, items) = viewer.selected(in: pages, on: navigator.index), let text {
                 return [text.provider(of: pages.note, page: page, selected: items)]
             }
             guard let page = navigator.index, let provider = text?.provider(of: pages.note, page: page) else {
@@ -809,13 +809,18 @@ private struct SelectionLayer: View {
                 }
         )
         // A drag that starts on the selection takes its ink and words out to another app (#323).
+        // Only the selected elements' own boxes, so a click or a new rectangle between them
+        // still reaches the page.
         .overlay(alignment: .topLeading) {
-            if let box = frame(items), let text {
-                Color.clear
-                    .contentShape(.rect)
-                    .frame(width: box.width, height: box.height)
-                    .offset(x: box.minX, y: box.minY)
-                    .onDrag { text.provider(of: pages.note, page: index, selected: items) }
+            if let text {
+                ForEach(items, id: \.id) { item in
+                    let box = points(item.bounds)
+                    Color.clear
+                        .contentShape(.rect)
+                        .frame(width: max(box.width, Self.handle), height: max(box.height, Self.handle))
+                        .offset(x: box.minX, y: box.minY)
+                        .onDrag { text.provider(of: pages.note, page: index, selected: items) }
+                }
             }
         }
         .accessibilityElement()
@@ -830,7 +835,7 @@ private struct SelectionLayer: View {
     }
 
     /// Ends a click or a drag: the elements it found replace the selection, or with Shift add to
-    /// it. A drag that starts on the selection's frame never gets here: it takes the selection out
+    /// it. A drag that starts on a selected element never gets here: it takes the selection out
     /// to another app (#323). A click on a page whose elements are still being read applies once they are.
     private func finish(_ value: DragGesture.Value) {
         let adding = NSEvent.modifierFlags.contains(.shift)

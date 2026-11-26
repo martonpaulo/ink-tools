@@ -101,10 +101,9 @@ extension NoteText {
     /// The selected elements `items` of page `index` of `note` for a copy or a drag: their ink on
     /// transparent, and their words once they are read (#323).
     func provider(of note: NoteFile, page index: Int, selected items: [Selectable]) -> NSItemProvider {
-        let boxes = items.map(\.bounds)
-        let frame = boxes.reduce(CGRect.null) { $0.union($1) }
+        let frame = items.map(\.bounds).reduce(CGRect.null) { $0.union($1) }
         return PageExport.selectionProvider(
-            note: note, page: index, boxes: boxes, areas: items.filter(\.isArea).map(\.bounds),
+            note: note, page: index, items: items,
             name: PageExport.selectionName(note: name.isEmpty ? Copy.untitledNote : name, page: index),
             text: text(page: index, in: frame) ?? "")
     }

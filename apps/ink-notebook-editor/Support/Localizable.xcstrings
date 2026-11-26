@@ -761,6 +761,16 @@
         }
       }
     },
+    "The selection has no recognised words." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selection has no recognised words."
+          }
+        }
+      }
+    },
     "The tablet is not connected" : {
       "localizations" : {
         "en" : {

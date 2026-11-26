@@ -89,10 +89,11 @@ final class PageViewer {
         max(Int((width - spacing) / (cell + spacing)), 1)
     }
 
-    /// The selected elements and their page, when any are selected and their page's elements are
-    /// read (#323).
-    func selected(in pages: PageImages) -> (page: Int, items: [Selectable])? {
-        guard let page = selection.page, !selection.isEmpty, let all = pages.selectable(page) else { return nil }
+    /// The selected elements of page `current` when any are selected there and its elements are
+    /// read (#323); a selection on another page is not the one in view, so it is not copied.
+    func selected(in pages: PageImages, on current: Int?) -> (page: Int, items: [Selectable])? {
+        guard let page = selection.page, page == current, !selection.isEmpty, let all = pages.selectable(page)
+        else { return nil }
         return (page, all.filter { selection.ids.contains($0.id) })
     }
 

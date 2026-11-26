@@ -63,6 +63,7 @@ nonisolated enum Copy {
     static let copyNoteAsText = String(localized: "Copy Note as Text")
     static let textNotReady = String(localized: "The handwriting is still being read.")
     static let pageHasNoWords = String(localized: "This page has no recognised words.")
+    static let selectionHasNoWords = String(localized: "The selection has no recognised words.")
     static let untitledNote = String(localized: "Note")
     static let readingHandwritingStart = String(localized: "Reading the handwriting…")
 
