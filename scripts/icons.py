@@ -298,11 +298,6 @@ def frame(kind, native):
     return p["grid"], p["padding"], (p["grid"] + 2 * p["padding"]) * ref["strokePx"] / ref["sizePx"]
 
 
-# A quarter pixel of the reference's own size, half a pixel of a 96 px plugin icon: the fitted span
-# stays that much under the reference's, so anti-aliasing never crosses its margin (#450).
-SPAN_UNDER_PX = 0.25
-
-
 def plugin_reference(native):
     """The measured icons a plugin icon is sized and stroked to: native.json's plugin `reference`,
     the official plugins' own icon since the owner found ours smaller than theirs (#450)."""
@@ -316,7 +311,7 @@ def ink_span(kind, native):
     if kind == "app":
         return native["vector"]["inkSpan"] / native["vector"]["viewport"]
     ref = plugin_reference(native)
-    return (ref["inkSpanPx"] - SPAN_UNDER_PX) / ref["sizePx"]
+    return (ref["inkSpanPx"] - ref["fitUnderPx"]) / ref["sizePx"]
 
 
 def badge_placing(store):
