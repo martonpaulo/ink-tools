@@ -27,7 +27,7 @@ export const MAZE_WALL_PX = 4;
 /** A path point this near a ring or a spoke is in no cell, as for a rectangle (`PATH_MARGIN`). */
 const CIRCLE_MARGIN = 0.2;
 /** An arc is drawn in chords about this share of a cell long. */
-const ARC_CHORD = 0.25;
+const ARC_CHORD = 0.2;
 /** The middle of a cell or a ring, as a share of its size. */
 const MIDDLE = 0.5;
 const PATH_STEP = 0.1;
