@@ -31,7 +31,9 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 - A screen opens with the `TitleBar` as the first child of `shared.screen`, its × closing the view;
   the bar reaches over the screen padding to touch the top, left and right edges, as the native
   band does, and the renders fail a bar that does not
-  ([#309](https://github.com/martonpaulo/ink-tools/issues/309)); a setting is one `ListRow`: its
+  ([#309](https://github.com/martonpaulo/ink-tools/issues/309)) and a full view with no bar; a
+  render line marks a screen that is no full view, such as the «Loading…» box, with its reason
+  ([#311](https://github.com/martonpaulo/ink-tools/issues/311)); a setting is one `ListRow`: its
   name, an optional value or hint under it, and its control at the trailing edge.
 - Where the native screens disagree, Ink Tools draws each kind of setting one way
   ([#274](https://github.com/martonpaulo/ink-tools/issues/274)): an on/off setting is a `SwitchRow`

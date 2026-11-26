@@ -4,7 +4,7 @@ import {StyleSheet, View} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {metrics, shared, TitleBar} from '../src';
 import {TITLE_BAR_ID} from '../src/TitleBar';
-import {barBreaks, breaksOf, Box, Measured} from '../renders/rules';
+import {barBreaks, breaksOf, Box, Measured, missingBarBreaks} from '../renders/rules';
 
 const SCREEN: Box = {left: 0, top: 0, right: 1024, bottom: 1365};
 const pad = metrics.screenPadding;
@@ -40,6 +40,15 @@ describe('barBreaks (#309)', () => {
     expect(breaksOf(measured, metrics)).toEqual([]);
     expect(breaksOf({...measured, targets: [{...close, bar: false}]}, metrics)).toEqual([
       '«Close» reaches into the screen padding',
+    ]);
+  });
+});
+
+describe('missingBarBreaks (#311)', () => {
+  it('passes a full view with a title bar and fails one without', () => {
+    expect(missingBarBreaks({bars: [bar(FULL)]})).toEqual([]);
+    expect(missingBarBreaks({bars: []})).toEqual([
+      "has no title bar: a full view opens with ui-kit's TitleBar",
     ]);
   });
 });

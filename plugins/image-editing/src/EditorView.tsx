@@ -15,7 +15,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import {Button, metrics, Needs, shared} from '@ink-tools/ui-kit';
+import {Button, metrics, Needs, shared, TitleBar} from '@ink-tools/ui-kit';
 import type {PenPoint} from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {EDITOR_GROUPS, EditorState} from './editor';
@@ -270,8 +270,10 @@ export function Editor({
 }
 
 /**
- * The editor's frame: the title, a status line that keeps its two lines when empty, so a message
- * never moves the picture (one refresh less), the screen's content, and «Close».
+ * The editor's frame: ui-kit's black title bar with the plugin title, as the Settings screen opens
+ * (#311), a status line that keeps its two lines when empty, so a message
+ * never moves the picture (one refresh less), the screen's content, and «Close». The bar's ×
+ * runs the same close as «Close», and leaves the bar while «Close» is disabled (#311).
  */
 function EditorScreen({
   status,
@@ -286,9 +288,7 @@ function EditorScreen({
 }): React.JSX.Element {
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.title}>
-        {copy.title}
-      </Text>
+      <TitleBar title={copy.title} onClose={closeDisabled ? undefined : onClose} />
       <Text
         accessibilityLiveRegion="polite"
         style={[shared.text, shared.statusLine]}>

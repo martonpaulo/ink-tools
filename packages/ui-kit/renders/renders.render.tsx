@@ -3,7 +3,7 @@
  * .scratch/renders/<screen>.png, and fails on any e-ink rule break (brief section 8.4, #80):
  * text contrast under the floor, a target under the touch target, text under the minimum font
  * size (#85), text outside its box, animation, a scroll view whose last target stays hidden
- * or lies under another target (#279), or a title bar that does not touch the top, left and right edges (#309). Run with `npm run renders` before each device
+ * or lies under another target (#279), a title bar that does not touch the top, left and right edges (#309), or a full view with no title bar (#311). Run with `npm run renders` before each device
  * build; RENDER_SCALE=1 renders 1024 x 1365 px pictures for a quick look; RENDER_WINDOW=nomad or
  * turned renders the Nomad's window or the Manta turned, into a subfolder. Uses the Chromium installed with Playwright.
  * RENDER_EVIDENCE=<folder> also writes each screen as <screen>-light-<small|default|large>.png there, the
@@ -14,7 +14,7 @@ import path from 'path';
 import {act} from 'react-test-renderer';
 import {metrics} from '@ink-tools/ui-kit';
 import {animationBreaks, toHtml, WINDOW, WINDOW_NAME} from './html';
-import {breaksOf, Measured, scrollBreaks} from './rules';
+import {breaksOf, Measured, missingBarBreaks, scrollBreaks} from './rules';
 import {SCREENS, settle} from './screens';
 
 /** The few Playwright calls used here; Playwright is installed with Chromium, not in package.json. */
@@ -125,6 +125,7 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
     report[screen.name] = [
       ...animationBreaks(json),
       ...breaksOf(measured, metrics),
+      ...(screen.notFullView ? [] : missingBarBreaks(measured)),
       ...contrast.failures.map(
         f => `contrast ${f.ratio}:1 under ${f.required}:1 for «${f.text ?? f.kind}»`,
       ),

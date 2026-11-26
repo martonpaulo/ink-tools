@@ -3,6 +3,7 @@ import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {Image, RootTagContext, ScrollView, StyleSheet} from 'react-native';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
+import {TitleBar} from '@ink-tools/ui-kit';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {defaultSettings, EDITS, setEdit, STYLES} from '../src/edits';
@@ -60,9 +61,10 @@ test('Settings lists a switch per style (#133)', async () => {
   }
 });
 
-test('the Styles grid keeps the size rules, labels each tile and says when it failed (#133)', async () => {
+test('the Styles grid keeps the size rules, labels each tile, says when it failed and opens with the title bar (#133, #311)', async () => {
   const onPick = jest.fn();
   const onToggle = jest.fn();
+  const onClose = jest.fn();
   const ready: GridState = {
     phase: 'ready',
     tiles: [
@@ -114,13 +116,20 @@ test('the Styles grid keeps the size rules, labels each tile and says when it fa
         state={{phase: 'failed'}}
         onPick={onPick}
         onToggle={onToggle}
-        onClose={() => {}}
+        onClose={onClose}
       />,
     );
   });
   expect(
     failed.root.findAllByProps({children: 'Could not make the styles'}).length,
   ).toBeGreaterThan(0);
+  // The grid opens with ui-kit's title bar, whose × closes as «Close» does (#311).
+  const [bar] = failed.root.findAllByType(TitleBar);
+  expect(bar?.props.title).toBe(copy['edit.styles']);
+  await act(async () => {
+    bar.props.onClose();
+  });
+  expect(onClose).toHaveBeenCalledTimes(1);
 });
 
 test('the view asks the native module to route Back to its own root view (#226)', async () => {
@@ -282,6 +291,34 @@ describe('the editor view (#226)', () => {
       });
     });
   }
+
+  // The editor opens with ui-kit's black title bar, never a heading text (#311).
+  test.each<[string, EditorState]>([
+    ['opening', {phase: 'opening'}],
+    ['failed', {phase: 'failed', message: 'Sample failure'}],
+    ['ready', READY],
+  ])('the %s editor draws the title bar, whose × closes as Close does (#311)', async (_, state) => {
+    const {tree, h} = await show(state);
+    const [bar] = tree.root.findAllByType(TitleBar);
+    expect(bar?.props.title).toBe(copy.title);
+    const headings = tree.root.findAll(
+      node =>
+        typeof node.type === 'string' &&
+        node.props.accessibilityRole === 'header' &&
+        node.props.children === copy.title,
+    );
+    // The one header with the title is the bar's own.
+    expect(headings).toHaveLength(1);
+    if (state.phase === 'opening') {
+      // «Close» waits while the editor opens, and so does the ×.
+      expect(bar.props.onClose).toBeUndefined();
+      return;
+    }
+    await act(async () => {
+      bar.props.onClose();
+    });
+    expect(h.onClose).toHaveBeenCalledTimes(1);
+  });
 
   test('it keeps the size rules and shows every edit as a button, then Close', async () => {
     const {tree, h} = await show(READY);

@@ -28,12 +28,15 @@ import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-syn
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
+import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/StylesGrid';
 
 export type ScreenRender = {
   name: string;
   render: () => Promise<ReactTestRenderer>;
   /** The windows the screen is not checked at, and why; the run prints the reason (#284). */
   skip?: {windows: WindowName[]; reason: string};
+  /** Why the screen is no full view, so it needs no title bar; a full view always has one (#311). */
+  notFullView?: string;
 };
 
 async function mount(element: React.ReactElement): Promise<ReactTestRenderer> {
@@ -114,9 +117,12 @@ async function imageEditor(state: Partial<ImageEditorState> = {}) {
     node => typeof node.type === 'string' && typeof node.props.onLayout === 'function',
   )[0];
   // The stage's size is known only after a layout pass; this one fits the smallest window's stage.
-  await act(async () =>
-    stage.props.onLayout({nativeEvent: {layout: {x: 0, y: 0, width: 400, height: STAGE_HEIGHT}}}),
-  );
+  // An editor still opening has no stage yet.
+  if (stage) {
+    await act(async () =>
+      stage.props.onLayout({nativeEvent: {layout: {x: 0, y: 0, width: 400, height: STAGE_HEIGHT}}}),
+    );
+  }
   return tree;
 }
 /** A stroke across the picture, in page pixels. */
@@ -136,10 +142,12 @@ export const SCREENS: ScreenRender[] = [
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
-  {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />)},
+  {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
   {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},
   {name: 'image-editing-editor', render: () => imageEditor()},
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
+  {name: 'image-editing-opening', render: () => imageEditor({phase: 'opening'})},
+  {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed'}} onPick={noop} onToggle={noop} onClose={noop} />)},
 ];

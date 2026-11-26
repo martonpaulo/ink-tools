@@ -6,7 +6,8 @@
  * a scroll view may run below the screen, as the person scrolls to it; the scroll view itself
  * keeps the padding, so a row lost below the screen and a scrolling list are told apart (#265).
  * The title bar is the one exception: it touches the top, left and right edges, as NOTE's native
- * band does, and what sits in it keeps the bar's own insets instead of the padding (#309).
+ * band does, and what sits in it keeps the bar's own insets instead of the padding (#309), and
+ * every full view has one (#311).
  * measure-page.mjs measures the page; contrast is checked in the page by the shared
  * contrast-check.mjs; animation from the host tree (html.ts).
  */
@@ -89,6 +90,15 @@ export function barBreaks({screen, bars}: Pick<Measured, 'screen' | 'bars'>): st
     const off = (['top', 'left', 'right'] as const).filter(edge => Math.abs(box[edge] - screen[edge]) > TOLERANCE);
     return off.length ? [`${name} does not touch the screen's ${off.join(', ')} edge`] : [];
   });
+}
+
+/**
+ * A full view with no title bar (#311): every plugin full view opens with ui-kit's TitleBar, as
+ * NOTE's native screens do. A screen that is no full view, such as the working strip, says so in
+ * its render line instead.
+ */
+export function missingBarBreaks({bars}: Pick<Measured, 'bars'>): string[] {
+  return bars.length ? [] : ["has no title bar: a full view opens with ui-kit's TitleBar"];
 }
 
 /** Every rule break of one measured screen, as one readable line each. */
