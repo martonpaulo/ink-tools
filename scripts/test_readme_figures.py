@@ -17,7 +17,8 @@ SCRIPT = ROOT / "scripts/readme_figures.py"
 
 def copy_inputs(target):
     """A throwaway root holding only what the generator reads, and the README it writes into."""
-    for rel in ("AGENTS.md", "README.md", "docs/tools.json", "docs/architecture.md", "registry/items"):
+    for rel in ("AGENTS.md", "README.md", "docs/tools.json", "docs/architecture.md", "registry/items",
+                "design/icons/readme", "design/icons/apps"):
         source, dest = ROOT / rel, target / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         (shutil.copytree if source.is_dir() else shutil.copy)(source, dest)
@@ -87,38 +88,78 @@ class Pieces(unittest.TestCase):
         self.assertTrue(all(lv["Public name"] and lv["Tested by"] for lv in levels))
         self.assertTrue(rule.startswith("Use the highest level") and "#" not in rule)
 
-    def test_the_level_table_has_a_chip_name_and_count_per_level(self):
+    def test_the_level_table_has_a_keycap_name_and_count_per_level(self):
         levels, rule = readme_figures.load_levels(ROOT)
         block = readme_figures.levels_block(levels, rule, {1: 0, 2: 4, 3: 0, 4: 1, 5: 9})
-        rows = [line for line in block.splitlines() if line.startswith("| ") and line[2] in "🟩🟦🟨🟪🟥"]
+        rows = [line for line in block.splitlines() if line.startswith("| ") and line[2].isdigit()]
         self.assertEqual(len(rows), 5)
-        self.assertTrue(rows[0].startswith("| 🟩 1 · Official plugin API |") and rows[0].endswith("| none needed |"))
+        self.assertTrue(rows[0].startswith("| 1\ufe0f\u20e3 Official plugin API |") and rows[0].endswith("| none needed |"))
         self.assertTrue(rows[4].endswith("| 9 |") and "**silently**" in rows[4])
         self.assertLess(block.index(rule), block.index("| Level |"))
-        self.assertIn("Level 1 is the highest and the steadiest", block.split("| 🟥 5")[1])
+        self.assertIn("Level 1 is the highest and the steadiest", block.split("| 5\ufe0f\u20e3")[1])
         self.assertNotIn("<img", block)
+        self.assertFalse(set(block) & set("🟩🟦🟨🟪🟥"))
 
-    def test_the_tool_map_is_a_titled_mermaid_flowchart_with_one_chain_per_tool(self):
+    def test_the_tool_map_draws_each_part_once_top_to_bottom(self):
         data = {"tools": [
-            {"name": "Pen", "status": "Beta", "map": {"outside": [], "service": [], "logic": ["shapes"],
-                                                      "supernote": "ts", "tablet": ["the page"], "registry": ["pen"]}},
-            {"name": "Sync", "status": "Planned", "map": {"outside": ["Todoist"], "service": ["TaskProvider"],
-                                                          "logic": ["compare"], "supernote": "java",
-                                                          "tablet": ["To-Do"], "registry": []}},
-            {"name": "Probe", "status": "Internal"}]}
-        block = readme_figures.map_block(data, {"pen": {5}})
+            {"name": "Pen", "kind": "plugin", "status": "Beta",
+             "map": {"sources": [], "logic": ["shapes"], "supernote": "ts", "tablet": ["the page"], "registry": ["pen"]}},
+            {"name": "Sync", "kind": "plugin", "status": "Beta",
+             "map": {"sources": [{"outside": ["Todoist"], "via": "TaskProvider"},
+                                 {"outside": ["Chat app"], "via": "Digest source", "planned": True}],
+                     "logic": ["compare"], "supernote": "ts", "tablet": ["To-Do", "Calendar"], "registry": []}},
+            {"name": "Editor", "kind": "Mac app", "status": "Planned",
+             "map": {"sources": [{"outside": ["files", "on the Mac"]}], "logic": ["read"], "supernote": "swift",
+                     "tablet": ["notes"], "registry": []}},
+            {"name": "Control", "kind": "CLI", "status": "Working",
+             "map": {"sources": [], "logic": ["inkctl"], "supernote": "python", "tablet": ["screens"], "registry": ["c"]}},
+            {"name": "Probe", "kind": "plugin", "status": "Internal"}]}
+        block = readme_figures.map_block(data, {"pen": {5}, "c": {2, 3}})
         mermaid = block.split("```mermaid\n")[1].split("```")[0]
-        self.assertTrue(mermaid.startswith("flowchart LR\n  accTitle: ") and "\n  accDescr: " in mermaid)
-        for key, head in readme_figures.MAP_COLUMNS:
-            self.assertIn(f'subgraph {key}["{head}"]', mermaid)
-        self.assertIn("pen_tool --> pen_adapter --> pen_tablet", mermaid)
-        self.assertIn("sync_outside --> sync_service --> sync_tool --> sync_adapter --> sync_tablet", mermaid)
-        self.assertIn("class sync_outside,sync_service,sync_tool,sync_adapter,sync_tablet planned", mermaid)
-        self.assertIn("classDef planned stroke-dasharray", mermaid)
-        self.assertIn('pen_tablet["the page<br>levels 🟩1 🟥5"]', mermaid)
-        self.assertNotIn("probe", mermaid)
-        self.assertIn("| Pen | nothing from outside | sn-adapter | 🟩 1 🟥 5 |", block)
-        self.assertIn("| Sync (planned) | Todoist | TaskProvider; Java reader |  |", block)
+        self.assertTrue(mermaid.startswith("flowchart TB\n  accTitle: ") and "\n  accDescr: " in mermaid)
+        # One node per adapter and one registry and tablet, however many tools use them.
+        self.assertEqual(mermaid.count('a_ts["'), 1)
+        self.assertEqual(mermaid.count('registry["'), 1)
+        self.assertEqual(mermaid.count("--> tablet"), 1)
+        self.assertNotIn("a_java", mermaid)
+        self.assertNotIn("g_apps", mermaid)
+        # A group with one runtime has one edge to its adapter; a mixed group one per tool.
+        self.assertIn("g_plugins --> a_ts", mermaid)
+        self.assertIn("t_editor --> a_swift", mermaid)
+        self.assertIn("t_control --> a_python", mermaid)
+        self.assertNotIn("t_pen --> a_ts", mermaid)
+        # An outside group reaches its tool through its service adapter, or straight when it has none.
+        self.assertIn("o_todoist --> s_taskprovider", mermaid)
+        self.assertIn("s_taskprovider --> t_sync", mermaid)
+        self.assertIn("o_chat_app -.-> s_digest_source", mermaid)
+        self.assertIn("o_files -.-> t_editor", mermaid)
+        self.assertIn('o_files["files<br/>on the Mac"]', mermaid)
+        self.assertIn("class o_chat_app,s_digest_source,t_editor,o_files planned", mermaid)
+        # No levels in the map; they stay in the table, as keycaps separated by spaces.
+        self.assertNotIn("level", mermaid.split("accDescr")[1].split("\n", 1)[1].lower())
+        self.assertNotIn("\u20e3", mermaid)
+        self.assertNotIn("probe", mermaid.lower().split("accdescr")[1].split("\n", 1)[1])
+        self.assertIn("| Pen | nothing from outside | sn-adapter | the page | 1\ufe0f\u20e3 5\ufe0f\u20e3 |", block)
+        self.assertIn("| Sync | Todoist<br>Chat app (planned) | TaskProvider<br>Digest source (planned)<br>sn-adapter "
+                      "| To-Do<br>Calendar | 1\ufe0f\u20e3 |", block)
+
+    def test_a_row_without_an_icon_file_fails(self):
+        data = {"tools": [{"name": "A", "icon": "design/icons/readme/none.png"}, {"name": "B"},
+                          {"name": "C", "icon": "design/icons/readme/smart-pen.png"}]}
+        problems = readme_figures.data_problems(ROOT, data)
+        self.assertEqual(len(problems), 2)
+        self.assertTrue(problems[0].startswith("docs/tools.json: A: no icon file") and "B: no icon" in problems[1])
+
+    def test_a_list_joined_with_a_dot_fails(self):
+        data = {"tools": [{"name": "A", "icon": "design/icons/readme/smart-pen.png",
+                           "map": {"sources": [{"outside": ["Todoist \u00b7 Google"]}], "logic": [], "tablet": ["a"]}}]}
+        problems = readme_figures.data_problems(ROOT, data)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("give each item its own line", problems[0])
+
+    def test_every_repository_row_has_an_icon(self):
+        data = json.loads((ROOT / "docs/tools.json").read_text(encoding="utf-8"))
+        self.assertEqual(readme_figures.data_problems(ROOT, data), [])
 
     def test_a_missing_marker_stops_the_generation(self):
         with self.assertRaises(SystemExit):
