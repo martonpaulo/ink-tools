@@ -533,7 +533,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   - `insertSticker` answers before NOTE lassoes the pasted piece: NOTE logged the piece's lasso
     about 250 ms after the answer, and a `resizeLassoRect` sent 6 ms after it answered 904, with
     the plugin view closed [measured, Lasso Actions 0.2.0 beta 33, Manta, 2026-11-26,
-    [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. Paste Collection asks the move again until it is taken. A paste that waited on
+    [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. A paste that waited on
     `setTimeout` between two asks, after `closePluginView`, never asked again: no second call in
     5 minutes [measured, Lasso Actions 0.2.0 beta 33, Manta, 2026-11-26,
     [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. Whether every timer stops while no view of the plugin shows is [unverified].
@@ -541,7 +541,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     answered success at once: the first piece was still lassoed, so the move took it, and NOTE then
     lassoed the second piece at the page centre. The first piece was gone from the page and the
     union `lassoElements` answered false [measured, Lasso Actions 0.2.0 beta 33, Manta,
-    2026-11-26, [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. What tells the new piece's lasso from the old one is [unverified].
+    2026-11-26, [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. So Paste Collection reads `getLassoRect` before each
+    `insertSticker` and asks it again at once until it answers another rect, then moves the
+    piece. Whether `getLassoRect` answers the new piece's rect with the view closed, and so tells
+    the new lasso from the old one, is [unverified].
   - Back while a pasted piece is still selected drops it from the page. What commits a paste is
     [unverified].
   - A rect lasso takes every stroke inside the rect, ink already on the page included.

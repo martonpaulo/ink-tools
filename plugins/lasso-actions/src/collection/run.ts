@@ -10,10 +10,12 @@ import {
   closePluginView,
   confirm,
   deleteLassoElements,
+  fail,
   getLassoRect,
   insertSticker,
   lassoElements,
   NO_LASSO_CODE,
+  ok,
   resizeLassoRect,
   Result,
   saveStickerByLasso,
@@ -72,29 +74,62 @@ export type CollectionFailure =
 const done = (result: Result<boolean>) => result.ok && result.value;
 
 /**
- * `insertSticker` answers before NOTE lassoes the pasted piece: about 250 ms later on the Manta,
- * and a `resizeLassoRect` in between answers 904 (device round 9, #249). The move is asked again at
- * once, up to this many times: no timer, since a paste waiting on `setTimeout` with the view closed
- * never asked again (device round 9). Each ask is one bridge round trip, about 6 ms when refused.
+ * `insertSticker` answers before NOTE lassoes the pasted piece: about 250 ms later on the Manta
+ * (device round 9, #249). Until then the lasso is the one there before the paste: none, so a move
+ * answers 904 (piece 1 took 56 asks), or the piece pasted before it, so a move answers success and
+ * moves that piece instead (piece 2 moved piece 1 off its place, and the union lasso then failed).
+ * So the paste asks `getLassoRect` again at once until it answers a rect other than the one before
+ * the paste, up to this many times: no timer, since a paste waiting on `setTimeout` with the view
+ * closed never asked again (device round 9). Each ask is one bridge round trip, about 6 ms.
  */
 export const PASTE_SETTLE_TRIES = 80;
 
-/** Moves the piece just pasted to `rect`, once NOTE has lassoed it; logs how many asks it took. */
-async function movePasted(
+const sameRect = (a: Rect, b: Rect) =>
+  a.left === b.left && a.top === b.top && a.right === b.right && a.bottom === b.bottom;
+
+/** The lasso now, or null when there is none (904). */
+async function currentLasso(host: CollectionHost): Promise<Result<Rect | null>> {
+  const rect = await host.lassoRect();
+  if (rect.ok) {
+    return rect;
+  }
+  return rect.code === NO_LASSO_CODE ? ok(null) : rect;
+}
+
+/**
+ * Pastes one piece and moves it to `rect` once NOTE has lassoed it: the lasso differs from
+ * `before`, the one read before the paste. Logs how many asks the new lasso took.
+ */
+async function pasteAndMove(
   host: CollectionHost,
+  path: string,
   rect: Rect,
   tag: string,
-): Promise<Result<boolean>> {
-  let moved = await host.resize(rect);
-  let tries = 0;
-  while (!moved.ok && moved.code === NO_LASSO_CODE && tries < PASTE_SETTLE_TRIES) {
-    tries += 1;
-    moved = await host.resize(rect);
+): Promise<{call: string; result: Result<boolean>}> {
+  const before = await currentLasso(host);
+  if (!before.ok) {
+    return {call: 'getLassoRect', result: before};
   }
-  if (tries > 0) {
-    host.log(`${tag}: move asked again ${tries} times`);
+  const inserted = await host.insertSticker(path);
+  if (!done(inserted)) {
+    return {call: 'insertSticker', result: inserted};
   }
-  return moved;
+  for (let tries = 1; tries <= PASTE_SETTLE_TRIES; tries++) {
+    const now = await currentLasso(host);
+    if (!now.ok) {
+      return {call: 'getLassoRect', result: now};
+    }
+    if (now.value !== null && (before.value === null || !sameRect(now.value, before.value))) {
+      if (tries > 1) {
+        host.log(`${tag}: the pasted piece was lassoed after ${tries} asks`);
+      }
+      return {call: 'resizeLassoRect', result: await host.resize(rect)};
+    }
+  }
+  return {
+    call: 'getLassoRect',
+    result: fail(NO_LASSO_CODE, `no new lasso after ${PASTE_SETTLE_TRIES} asks`),
+  };
 }
 
 type Listed = {dir: string; pieces: (Piece & {name: string})[]};
@@ -182,7 +217,7 @@ export async function addToCollection(
  * round 6) and the paste stopped after piece 1 with `answered false` once it was lassoed again at
  * the page centre (device round 7). From a lasso row, with no view in front, `resizeLassoRect`
  * right after `insertSticker` moved the piece exactly (docs/supernote.md, #249), so the paste
- * runs that way, asking the move again until NOTE has lassoed the piece (`movePasted`).
+ * runs that way, moving each piece once NOTE has lassoed it (`pasteAndMove`).
  */
 export async function pasteCollection(
   host: CollectionHost,
@@ -208,14 +243,9 @@ export async function pasteCollection(
   }
   for (const [index, piece] of listed.pieces.entries()) {
     const path = `${listed.dir}/${piece.name}`;
-    const inserted = await host.insertSticker(path);
-    if (!done(inserted)) {
-      host.log(`${tag}: ${piece.name}: insertSticker ${whyNot(inserted)}`);
-      return stop(host, 'insert', copy['collection.notPasted'](index));
-    }
-    const moved = await movePasted(host, placed.targets[index], tag);
-    if (!done(moved)) {
-      host.log(`${tag}: ${piece.name}: resizeLassoRect ${whyNot(moved)}`);
+    const {call, result} = await pasteAndMove(host, path, placed.targets[index], tag);
+    if (!done(result)) {
+      host.log(`${tag}: ${piece.name}: ${call} ${whyNot(result)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));
     }
   }
