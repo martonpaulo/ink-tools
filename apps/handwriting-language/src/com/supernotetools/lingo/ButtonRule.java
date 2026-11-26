@@ -65,12 +65,27 @@ final class ButtonRule {
   }
 
   /**
+   * The package whose overlay window is a plugin view (registry item handwriting.writing-screens):
+   * PluginHost shows every plugin view, a plugin's Settings included, in its own window over the
+   * screen behind it, never in an Activity, so the foreground activity still names that screen.
+   */
+  static final String PLUGIN_VIEW_PACKAGE = Registry.HandwritingWritingScreens.PLUGIN_VIEW_PACKAGE;
+
+  /** Whether a window of `packageName` is a plugin view. */
+  static boolean isPluginView(CharSequence packageName) {
+    return packageName != null && PLUGIN_VIEW_PACKAGE.contentEquals(packageName);
+  }
+
+  /**
    * Whether the button shows. `watching` is false while the accessibility service is off: then
    * nothing tells where the owner writes, so the button shows everywhere rather than never, and
    * the settings screen shows the command that turns the service on. While the app's own screen is
    * in front the button never shows, so it never covers that screen's controls (owner, #275).
+   * While a plugin view is open, the writing screen behind it takes no handwriting, so only the
+   * keyboard shows the button there (#415).
    */
-  static boolean visible(Mode mode, boolean ownScreen, boolean watching, boolean keyboardOpen, String foreground) {
+  static boolean visible(
+      Mode mode, boolean ownScreen, boolean watching, boolean keyboardOpen, boolean pluginView, String foreground) {
     if (ownScreen) {
       return false;
     }
@@ -80,7 +95,7 @@ final class ButtonRule {
       case HIDDEN:
         return false;
       default:
-        return !watching || keyboardOpen || isWritingScreen(foreground);
+        return !watching || keyboardOpen || (!pluginView && isWritingScreen(foreground));
     }
   }
 }

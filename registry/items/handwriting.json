@@ -62,7 +62,7 @@
     },
     {
       "id": "handwriting.writing-screens",
-      "title": "The screens that take handwriting, by activity class name",
+      "title": "The screens that take handwriting, by activity class name, and the package whose overlay window is a plugin view, never one",
       "level": 3,
       "impact": "user",
       "owner": "handwriting-language",
@@ -71,7 +71,7 @@
       ],
       "reason": "no API says when a screen takes handwriting; the foreground activity's name does",
       "evidence": {
-        "source": "accessibility events on the tablet (docs/supernote.md › Handwriting recognition language)",
+        "source": "accessibility events on the tablet (docs/supernote.md › Handwriting recognition language); a plugin view is PluginHost's overlay window, never an Activity (docs/supernote.md, #415)",
         "date": "2026-11-21"
       },
       "upgradePath": "an official event for a writing screen",
@@ -87,7 +87,8 @@
           "KnowledgeActivity",
           "TaskActivity",
           "HomeActivity"
-        ]
+        ],
+        "pluginViewPackage": "com.ratta.supernote.pluginhost"
       }
     }
   ]

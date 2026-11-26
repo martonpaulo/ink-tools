@@ -2,6 +2,7 @@ package com.supernotetools.lingo;
 
 import android.accessibilityservice.AccessibilityService;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 /**
@@ -15,6 +16,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 public final class WritingWatcher extends AccessibilityService {
   private static volatile boolean watching;
   private static volatile boolean keyboard;
+  private static volatile boolean pluginView;
   private static volatile String foreground;
 
   static boolean watching() {
@@ -23,6 +25,11 @@ public final class WritingWatcher extends AccessibilityService {
 
   static boolean keyboardOpen() {
     return keyboard;
+  }
+
+  /** Whether a plugin view, PluginHost's overlay window, is on screen (#415). */
+  static boolean pluginViewOpen() {
+    return pluginView;
   }
 
   static String foreground() {
@@ -56,12 +63,27 @@ public final class WritingWatcher extends AccessibilityService {
 
   private void readWindows() {
     boolean open = false;
+    boolean plugin = false;
     for (AccessibilityWindowInfo window : getWindows()) {
       if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
         open = true;
+      } else if (!plugin) {
+        plugin = isPluginView(window);
       }
     }
     keyboard = open;
+    pluginView = plugin;
+  }
+
+  /** Whether `window` belongs to PluginHost: its root node names the package (#415). */
+  private static boolean isPluginView(AccessibilityWindowInfo window) {
+    AccessibilityNodeInfo root = window.getRoot();
+    if (root == null) {
+      return false;
+    }
+    boolean plugin = ButtonRule.isPluginView(root.getPackageName());
+    root.recycle();
+    return plugin;
   }
 
   @Override

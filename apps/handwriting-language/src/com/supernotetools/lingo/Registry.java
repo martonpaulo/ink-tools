@@ -54,9 +54,10 @@ public final class Registry {
     private HandwritingChangedBroadcast() {}
   }
 
-  /** The screens that take handwriting, by activity class name (handwriting.writing-screens). */
+  /** The screens that take handwriting, by activity class name, and the package whose overlay window is a plugin view, never one (handwriting.writing-screens). */
   public static final class HandwritingWritingScreens {
     public static final List<String> ACTIVITIES = Collections.unmodifiableList(Arrays.asList("NoteInsidePagesActivity", "KnowledgeActivity", "TaskActivity", "HomeActivity"));
+    public static final String PLUGIN_VIEW_PACKAGE = "com.ratta.supernote.pluginhost";
 
     private HandwritingWritingScreens() {}
   }

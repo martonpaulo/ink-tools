@@ -46,6 +46,8 @@ public final class OverlayService extends Service {
 
   private WindowManager windows;
   private WindowManager.LayoutParams params;
+  /** The gap between the button and every screen edge (ButtonPlace, #415). */
+  private int inset;
   private TextView button;
   private boolean attached;
   private ButtonGesture gesture;
@@ -128,6 +130,7 @@ public final class OverlayService extends Service {
     gesture = new ButtonGesture(touch.getScaledTouchSlop(), ViewConfiguration.getLongPressTimeout());
     button.setOnTouchListener(this::touch);
     int size = Ink.target(this);
+    inset = Ink.space(this);
     params = new WindowManager.LayoutParams(
         size, size,
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -149,7 +152,7 @@ public final class OverlayService extends Service {
    */
   private void place() {
     boolean visible = ButtonRule.visible(new Prefs(this).button(), ownScreenOpen, WritingWatcher.watching(),
-        WritingWatcher.keyboardOpen(), WritingWatcher.foreground());
+        WritingWatcher.keyboardOpen(), WritingWatcher.pluginViewOpen(), WritingWatcher.foreground());
     if (visible == attached) {
       return;
     }
@@ -160,7 +163,8 @@ public final class OverlayService extends Service {
     }
     attached = visible;
     Log.i(Switcher.TAG, "surface=overlay " + (visible ? "shown" : "hidden")
-        + " keyboard=" + WritingWatcher.keyboardOpen() + " foreground=" + WritingWatcher.foreground());
+        + " keyboard=" + WritingWatcher.keyboardOpen() + " plugin=" + WritingWatcher.pluginViewOpen()
+        + " foreground=" + WritingWatcher.foreground());
   }
 
   /** The screen turned or changed size: the same fractions, on the new screen. */
@@ -177,10 +181,10 @@ public final class OverlayService extends Service {
     Rect screen = windows.getCurrentWindowMetrics().getBounds();
     float[] place = new Prefs(this).place();
     float x = place != null ? place[0] : ButtonPlace.DEFAULT_X;
-    float y = place != null ? place[1] : ButtonPlace.defaultY(screen.height(), params.height);
-    float[] snapped = ButtonPlace.snap(x, y, screen.width(), screen.height(), params.width);
-    moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width),
-        ButtonPlace.pixels(snapped[1], screen.height(), params.height));
+    float y = place != null ? place[1] : ButtonPlace.defaultY(screen.height(), params.height, inset);
+    float[] snapped = ButtonPlace.snap(x, y, screen.width(), screen.height(), params.width, inset);
+    moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width, inset),
+        ButtonPlace.pixels(snapped[1], screen.height(), params.height, inset));
   }
 
   private void moveTo(int x, int y) {
@@ -220,12 +224,12 @@ public final class OverlayService extends Service {
           follow(x, y); // the up event can sit past the last move's point
           Rect screen = windows.getCurrentWindowMetrics().getBounds();
           // Rest against the nearest edge: one move, one refresh, no animation (#275).
-          float[] snapped = ButtonPlace.snap(ButtonPlace.fraction(params.x, screen.width(), params.width),
-              ButtonPlace.fraction(params.y, screen.height(), params.height),
-              screen.width(), screen.height(), params.width);
+          float[] snapped = ButtonPlace.snap(ButtonPlace.fraction(params.x, screen.width(), params.width, inset),
+              ButtonPlace.fraction(params.y, screen.height(), params.height, inset),
+              screen.width(), screen.height(), params.width, inset);
           new Prefs(this).setPlace(snapped[0], snapped[1]);
-          moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width),
-              ButtonPlace.pixels(snapped[1], screen.height(), params.height));
+          moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width, inset),
+              ButtonPlace.pixels(snapped[1], screen.height(), params.height, inset));
           Log.i(Switcher.TAG, "surface=overlay moved x=" + params.x + " y=" + params.y);
         }
         return true;
@@ -241,8 +245,8 @@ public final class OverlayService extends Service {
   /** Moves the window by the touch's offset from where it began, kept on screen. */
   private void follow(float x, float y) {
     Rect screen = windows.getCurrentWindowMetrics().getBounds();
-    moveTo(ButtonPlace.clamp(startX + Math.round(gesture.dx(x)), screen.width(), params.width),
-        ButtonPlace.clamp(startY + Math.round(gesture.dy(y)), screen.height(), params.height));
+    moveTo(ButtonPlace.clamp(startX + Math.round(gesture.dx(x)), screen.width(), params.width, inset),
+        ButtonPlace.clamp(startY + Math.round(gesture.dy(y)), screen.height(), params.height, inset));
   }
 
   @Override

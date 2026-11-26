@@ -16,7 +16,7 @@ Two surfaces ship in one build:
 - **A, the floating button** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
   `ES`); one tap moves to the next, a long press opens the app's screen, a drag moves it
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts at the top trailing
-  corner. A drag ends against the nearest screen edge, fully on screen, keeping its place along
+  corner. A drag ends against the nearest screen edge, fully on screen, `space` from it ([#415](https://github.com/martonpaulo/ink-tools/issues/415)), keeping its place along
   that edge (`ButtonPlace.snap`, also applied when a saved place is read, so an older middle or
   off-screen place snaps; no animation, [#275](https://github.com/martonpaulo/ink-tools/issues/275)). The place is saved as fractions of the screen so it stays on an edge
   when the screen turns (`ButtonGesture`, `ButtonPlace`); Settings' «Reset Button Position» puts it
@@ -55,9 +55,9 @@ The owner's choice after trying both on the tablet ([#151](https://github.com/ma
 
 - The floating button shows only where the owner writes: while the handwriting keyboard is open,
   or while a handwriting screen is in front (Note pages `NoteInsidePagesActivity`, Digest
-  `KnowledgeActivity`, To-Do `TaskActivity`, Email `HomeActivity`); hidden elsewhere. One setting
-  keeps it always visible or always hidden instead. The rule is `ButtonRule`; while the service is
-  off the button shows everywhere, so the switch still works.
+  `KnowledgeActivity`, To-Do `TaskActivity`, Email `HomeActivity`) with no plugin view (PluginHost's
+  window, read from `getWindows()`, [#415](https://github.com/martonpaulo/ink-tools/issues/415)) over it; hidden elsewhere. One setting keeps it always visible
+  or hidden instead. The rule is `ButtonRule`; with the service off it shows everywhere.
 - Detection is an `AccessibilityService` in this app (`WritingWatcher`), enabled once over ADB, that reacts to window
   events only, with no timer: a `TYPE_INPUT_METHOD` window in `getWindows()` (about 140 ms after
   the keyboard opens) or a listed foreground activity. An `inkctl snapshot` restarts the service,
