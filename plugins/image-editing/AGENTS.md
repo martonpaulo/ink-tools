@@ -60,6 +60,10 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
   removes the preview and state PNGs of Retouch's own naming that earlier builds left in
   `MyStyle/Retouch/`, and those in `work/` older than the session that the history does not name;
   it logs one `sweep:` line per folder ([#182](https://github.com/martonpaulo/ink-tools/issues/182)).
+- Remove background and Make sticker: `Retouch.backgroundMask` floods a plain ground from the
+  frame's edge by tone; a textured ground (the edge hull covers 80 % of the frame, dark leaves on
+  the beta 16 round) goes to `GraphCut.java`, a GrabCut-style minimum cut by texture and place,
+  tested on the device's own input (`native/tests/fixtures/apple-on-leaves.png`, [#134](https://github.com/martonpaulo/ink-tools/issues/134)).
 - Debug switch ([#134](https://github.com/martonpaulo/ink-tools/issues/134)): «Save edit input» in Settings, off by default and reset
   on restart, makes `RetouchModule` save each edit's lasso preview, the picture it edits and, for
   Remove background and Make sticker, the mask (black kept, white cleared) as

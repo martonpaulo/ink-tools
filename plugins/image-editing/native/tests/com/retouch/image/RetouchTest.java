@@ -40,6 +40,7 @@ public final class RetouchTest {
     backgroundClearsAnUnevenGroundAndTheShadow();
     backgroundKeepsASoftGrayAppleWhoseShadowFadesIntoIt();
     backgroundKeepsTheAppleOfAHalfTransparentPreview();
+    backgroundClearsTheDarkLeavesAroundTheDevicesApple();
     overWhiteShowsThePictureAsThePageDoes();
     eraseNeedsItsMarksAndKeepsTheSize();
     eraseClearsABandAlongAnOpenMark();
@@ -689,6 +690,59 @@ public final class RetouchTest {
       check(partial * 1000 >= photo.argb.length * 995L,
           "the fixture is partly clear like the device's: " + partial + " of " + photo.argb.length);
       checkAppleCutout(photo, (int) PhotoFixtures.SOFT_EDGE);
+    }
+  }
+
+  /**
+   * #134 on the Manta (beta 16): the picture the edit read, saved by «Save edit input», a dark
+   * apple on dark leaves, partly clear on 83 % of its pixels. The tone flood kept the apple and
+   * most of the leaves; now the apple stays and every leaf away from it goes.
+   */
+  private static void backgroundClearsTheDarkLeavesAroundTheDevicesApple() {
+    Retouch.Picture photo = readPng("native/tests/fixtures/apple-on-leaves.png");
+    int w = photo.width;
+    long start = System.nanoTime();
+    boolean[] bg = Retouch.backgroundMask(photo);
+    long ms = (System.nanoTime() - start) / 1_000_000;
+    // The apple's body and the leaves well away from it, measured on the fixture (200 x 133).
+    long core = 0;
+    long coreKept = 0;
+    long leaves = 0;
+    long leavesCleared = 0;
+    for (int i = 0; i < bg.length; i++) {
+      double x = i % w - 92;
+      double y = i / w - 66;
+      if (square(x / 30) + square(y / 22) <= 1) {
+        core++;
+        coreKept += bg[i] ? 0 : 1;
+      }
+      if (square(x / 60) + square(y / 48) > 1) {
+        leaves++;
+        leavesCleared += bg[i] ? 1 : 0;
+      }
+    }
+    check(coreKept * 100 >= core * 95, "the apple stays: " + coreKept + " of " + core);
+    check(leavesCleared * 100 >= leaves * 95,
+        "the leaves go: " + leavesCleared + " of " + leaves + " cleared");
+    System.out.println("background on the " + w + " x " + photo.height + " leaves fixture: " + ms
+        + " ms on the JVM");
+  }
+
+  private static double square(double v) {
+    return v * v;
+  }
+
+  /** A PNG fixture as unpremultiplied ARGB pixels, read from the plugin folder. */
+  private static Retouch.Picture readPng(String path) {
+    try {
+      java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new java.io.File(path));
+      int w = image.getWidth();
+      int h = image.getHeight();
+      int[] argb = new int[w * h];
+      image.getRGB(0, 0, w, h, argb, 0, w);
+      return new Retouch.Picture(argb, w, h);
+    } catch (java.io.IOException error) {
+      throw new AssertionError("cannot read " + path + ": " + error.getMessage());
     }
   }
 

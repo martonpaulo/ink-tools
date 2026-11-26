@@ -92,6 +92,12 @@ public final class Retouch {
    * the margin's ring of plain ground goes while the object and its contact shadow stay.
    */
   public static final int BACKGROUND_HULL_DRIFT = 24;
+  /**
+   * When the object's hull covers at least this share of the frame, the ground is textured (dark
+   * leaves, wood grain): every patch of it has an edge, so the tone flood cannot find the object,
+   * and {@link GraphCut} cuts it instead (#134, beta 16 device round).
+   */
+  public static final double BACKGROUND_TEXTURED = 0.8;
 
   static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
@@ -930,14 +936,32 @@ public final class Retouch {
    * into the object's dark side with no edge stops at the hull, not inside the object (beta 9
    * cleared a whole apple that way). Near white still goes inside it.
    *
-   * <p>shortcut: one convex object per picture; two objects keep the ground between them unless it
-   * is near white, and a textured ground (wood grain) makes the hull the whole frame, so only near
-   * white goes. Upgrade to a segmenter (the MediaPipe trial of #134) when that shows on the device.
+   * A textured ground (dark leaves, wood grain) makes the hull nearly the whole frame
+   * ({@link #BACKGROUND_TEXTURED}); the flood then kept every leaf as dark as the object, so that
+   * picture goes to {@link GraphCut}, which tells the object from the ground by texture and place.
+   *
+   * <p>shortcut: one convex object per picture on a plain ground; two objects keep the ground
+   * between them unless it is near white. Upgrade to a segmenter (the MediaPipe trial of #134) when
+   * that shows on the device.
    */
   public static boolean[] backgroundMask(Picture picture) {
     Picture seen = overWhite(picture);
-    return groundMask(seen, BACKGROUND_STEP, BACKGROUND_DRIFT, true, objectMask(seen),
-        BACKGROUND_HULL_DRIFT);
+    boolean[] hull = objectMask(seen);
+    int inside = 0;
+    for (boolean in : hull) {
+      if (in) {
+        inside++;
+      }
+    }
+    boolean textured = inside >= BACKGROUND_TEXTURED * hull.length;
+    if (textured && Math.min(seen.width, seen.height) >= GraphCut.MIN_SIDE) {
+      boolean[] bg = GraphCut.subject(seen);
+      for (int i = 0; i < bg.length; i++) {
+        bg[i] = !bg[i];
+      }
+      return bg;
+    }
+    return groundMask(seen, BACKGROUND_STEP, BACKGROUND_DRIFT, true, hull, BACKGROUND_HULL_DRIFT);
   }
 
   /**
