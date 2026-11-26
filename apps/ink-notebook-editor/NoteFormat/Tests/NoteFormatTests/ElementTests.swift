@@ -105,6 +105,14 @@ import Testing
         })
     }
 
+    /// The four strokes Real-Time Text replaced stay in the block with a negative trail status;
+    /// the tablet no longer draws them, so they are no elements (#362).
+    @Test func aStrokeTheTabletNoLongerDrawsIsNoElement() throws {
+        let elements = try Self.note("realtime-text-tablet").elements(page: 0)
+        #expect(elements.map(\.kind) == [.stroke, .textBox], "\(elements.map(\.kind))")
+        #expect(elements.map(\.record) == [4, 5])
+    }
+
     @Test func aTextBoxWithTheStrokeDocumentNameStaysATextBox() throws {
         var bytes = try Self.bytes("content")
         // The first record (the text box) gets the stroke document name, as Real-Time Text writes it.

@@ -56,6 +56,9 @@ enum ElementRecord {
     /// A disabled area is three points of two words.
     static let disabledAreaLength = 24
     static let pointLength = 8
+    /// The arrays after the points, each a count then its items: pressures, angles, draw flags,
+    /// smoothed points and their greys, by the size of one item. The record's trail status follows.
+    static let arraysAfterPoints = [2, 4, 1, 8, 4]
 
     static func elements(_ bytes: [UInt8], pageHeight: Int, page: Int) throws -> [PageElement] {
         let reader = Reader(bytes: bytes, page: page)
@@ -97,6 +100,19 @@ enum ElementRecord {
             return String(decoding: field.prefix { $0 != 0 }, as: UTF8.self)
         }
 
+        /// The signed trail status that follows the arrays after the points, which start at `offset`.
+        func trailStatus(after offset: Int) throws -> Int32 {
+            var at = offset
+            for itemLength in arraysAfterPoints {
+                let items = try word(at: at)
+                guard items <= (bytes.count - at - ElementRecord.word) / itemLength else {
+                    throw failure("an array after the points runs past its record")
+                }
+                at += ElementRecord.word + items * itemLength
+            }
+            return Int32(bitPattern: UInt32(truncatingIfNeeded: try word(at: at)))
+        }
+
         func element(pageHeight: Int, number: Int) throws -> PageElement? {
             let values = Registry.NotefileFormatVersions.self
             guard try word(at: colour) != values.eraserColour else { return nil }
@@ -116,6 +132,13 @@ enum ElementRecord {
                 let down = try word(at: at)
                 let inFromRight = try word(at: at + ElementRecord.word)
                 return CGPoint(x: CGFloat(width - inFromRight) * scale, y: CGFloat(down) * scale)
+            }
+            // A negative trail status means the tablet no longer draws the record: erased,
+            // deleted by the lasso, moved (the moved copy is a later record) or replaced by
+            // Real-Time Text. It is no element (community documentation, measured on
+            // `realtime-text-tablet.note`, #362).
+            guard try trailStatus(after: pointsAt + ElementRecord.word + count * pointLength) >= 0 else {
+                return nil
             }
             let kind: PageElement.Kind
             // The kind names come first: a text box that Real-Time Text inserts carries the
