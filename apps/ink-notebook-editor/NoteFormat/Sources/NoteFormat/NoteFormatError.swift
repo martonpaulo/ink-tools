@@ -15,6 +15,8 @@ public enum NoteFormatError: Error, Equatable, CustomStringConvertible {
     case badPage(Int)
     /// A background picture of a custom template could not be decoded.
     case badPicture(String)
+    /// A page's element records cannot be read (#324).
+    case badElement(String)
     /// A page's recognition block cannot be read, counted from 0 (#321).
     case badRecognition(page: Int, reason: String)
     /// A Heading's footer key or block cannot be read (#331).
@@ -36,6 +38,8 @@ public enum NoteFormatError: Error, Equatable, CustomStringConvertible {
             return "The notebook has no page \(page + 1)."
         case .badPicture(let layer):
             return "The background picture of layer \(layer) cannot be decoded."
+        case .badElement(let reason):
+            return "The strokes and elements of a page cannot be read: \(reason)."
         case .badRecognition(let page, let reason):
             return "The handwriting recognition of page \(page + 1) cannot be read: \(reason)."
         case .badHeading(let reason):

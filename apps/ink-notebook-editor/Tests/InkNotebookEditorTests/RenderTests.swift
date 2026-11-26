@@ -59,6 +59,21 @@ final class RenderTests {
         try await render("notebook-grid", Self.sizes) {
             NotebookView(pages: drawn, page: 1, viewer: PageViewer(layout: .grid))
         }
+        // A selection: every element of page 1, a text box and a picture, framed with handles; and
+        // strokes of a landscape page selected under the pointer (#324).
+        await drawn.loadElements(0)
+        let all = PageViewer()
+        all.selection.selectAll(Set((drawn.selectable(0) ?? []).map(\.id)), page: 0)
+        try await render("selection", Self.sizes) { NotebookView(pages: drawn, viewer: all) }
+        let strokes = PageImages(note: try Fixtures.note("landscape-tablet.note"))
+        await strokes.loadPage(0)
+        await strokes.loadThumbnail(0, scale: 1)
+        await strokes.loadElements(0)
+        let some = PageViewer()
+        let found = HitTest.rectangle(
+            CGRect(x: 290, y: 290, width: 300, height: 130), in: strokes.selectable(0) ?? [])
+        some.selection.take(found, page: 0, adding: false)
+        try await render("selection-landscape", Self.sizes) { NotebookView(pages: strokes, viewer: some) }
         // A landscape page draws wide and upright, its thumbnail too (#291).
         let landscape = try Fixtures.note("landscape.note")
         let wide = PageImages(note: landscape)

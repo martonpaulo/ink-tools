@@ -28,6 +28,9 @@ public enum Registry {
         public static let knownVersions: [Int] = [20200001, 20200005, 20200006, 20200007, 20200008, 20210009, 20210010, 20220011, 20220013, 20230014, 20230015, 20260016]
         public static let firstGreyscaleVersion: Int = 20230015
         public static let recognitionBoxDotsPerInch: Int = 300
+        public static let pictureKind: String = "bitmap"
+        public static let strokeDocument: String = "superNoteNote"
+        public static let eraserColour: Int = 255
     }
 
     /// NoteWriter edits a .note file's bytes in place (notefile.writer-byte-edit).

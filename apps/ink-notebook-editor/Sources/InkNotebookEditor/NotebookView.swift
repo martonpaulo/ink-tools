@@ -131,7 +131,20 @@ struct NotebookView: View {
             .focused($pageFocused)
         }
         .toolbar { ViewerToolbar(viewer: viewer) }
-        .navigationSubtitle(navigator.index.map { Copy.pageOf($0 + 1, navigator.pageCount) } ?? "")
+        .navigationSubtitle(subtitle)
+        // Edit › Select All and Escape, by the menu or by the keys when no menu holds them (#324).
+        .onCommand(#selector(NSResponder.selectAll(_:))) { selectAll() }
+        .onExitCommand { viewer.selection.clear() }
+        .onKeyPress(.escape) {
+            guard !viewer.selection.isEmpty else { return .ignored }
+            viewer.selection.clear()
+            return .handled
+        }
+        .onKeyPress(characters: ["a"]) { press in
+            guard press.modifiers == .command else { return .ignored }
+            selectAll()
+            return .handled
+        }
         .focusedSceneValue(\.pageNavigator, $navigator)
         .focusedSceneValue(\.pageViewer, viewer)
         .onKeyPress(keys: Set(PageKeys.moves.keys).union([.return])) { press in
@@ -161,6 +174,25 @@ struct NotebookView: View {
         }
         .onChange(of: displayScale, initial: true) { _, scale in viewer.scale = scale }
         .onAppear { pageFocused = true }
+    }
+
+    /// «Page 2 of 4», and how many elements are selected when any are.
+    private var subtitle: String {
+        guard let index = navigator.index else { return "" }
+        let selected = viewer.selection.page == index ? viewer.selection.ids.count : 0
+        return selected > 0
+            ? Copy.pageOfSelected(index + 1, navigator.pageCount, selected)
+            : Copy.pageOf(index + 1, navigator.pageCount)
+    }
+
+    /// Selects every element of the current page, once its elements are read.
+    private func selectAll() {
+        guard viewer.layout == .scroll, let index = navigator.index else { return }
+        Task {
+            await pages.loadElements(index)
+            guard let items = pages.selectable(index) else { return }
+            viewer.selection.selectAll(Set(items.map(\.id)), page: index)
+        }
     }
 
     /// A click in the page list shows that page and gives the focus back to the page.
@@ -218,7 +250,8 @@ private struct PageScroll: View {
                     ForEach(0..<navigator.pageCount, id: \.self) { index in
                         PageView(
                             index: index, count: navigator.pageCount, pages: pages,
-                            size: viewer.zoom.size(of: pages.size(of: index), in: viewport, scale: displayScale)
+                            size: viewer.zoom.size(of: pages.size(of: index), in: viewport, scale: displayScale),
+                            viewer: viewer
                         )
                         .padding(.vertical, PageView.margin / 2)
                         .id(index)
@@ -413,6 +446,19 @@ private struct ViewerToolbar: ToolbarContent {
             .labelStyle(.iconOnly)
         }
         ToolbarItem {
+            Picker(Copy.selectionTool, selection: $viewer.tool) {
+                Label(Copy.rectangularSelection, systemImage: "rectangle.dashed").tag(
+                    PageViewer.SelectionTool.rectangle
+                )
+                .help(Copy.rectangularSelection)
+                Label(Copy.lassoSelection, systemImage: "lasso").tag(PageViewer.SelectionTool.lasso)
+                    .help(Copy.lassoSelection)
+            }
+            .pickerStyle(.segmented)
+            .labelStyle(.iconOnly)
+            .disabled(viewer.layout != .scroll)
+        }
+        ToolbarItem {
             ControlGroup {
                 Button(Copy.zoomOut, systemImage: "minus.magnifyingglass") {
                     if let zoom = viewer.zoomedOut { viewer.zoom = zoom }
@@ -501,6 +547,7 @@ private struct PageView: View {
     let pages: PageImages
     /// The page's drawn size, in points.
     let size: CGSize
+    let viewer: PageViewer
     @Environment(\.displayScale) private var displayScale
     @State private var fitted: Fitted?
 
@@ -541,9 +588,14 @@ private struct PageView: View {
         let shown = resample ? fitted.flatMap { $0.key == key ? $0.image : nil } : nil
         return PaperImage(image: shown ?? full, label: Copy.pageOf(index + 1, count))
             .frame(width: size.width, height: size.height)
+            .overlay {
+                SelectionLayer(index: index, pages: pages, viewer: viewer, size: size)
+            }
             .overlay(alignment: .top) {
                 if let style = pages.missingTemplates[index] {
-                    TemplateMarker(style: style)
+                    PageMarker(text: Copy.templateNotShown(style))
+                } else if case .failure = pages.elements[index] {
+                    PageMarker(text: Copy.elementsNotSelectable)
                 }
             }
             .task(id: key) {
@@ -553,17 +605,18 @@ private struct PageView: View {
     }
 }
 
-/// The sign on a page whose template could not be drawn: the ink shows, the template does not (#308).
-private struct TemplateMarker: View {
+/// The sign on a page that shows but lacks a part: a template that could not be drawn, while the
+/// ink shows (#308), or elements that cannot be read, so nothing on it selects (#324).
+private struct PageMarker: View {
     /// The space inside the capsule, in points.
     static let inset = EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10)
     /// The space between the capsule and the page's top edge, in points.
     static let margin: CGFloat = 8
 
-    let style: String
+    let text: String
 
     var body: some View {
-        Label(Copy.templateNotShown(style), systemImage: "exclamationmark.triangle.fill")
+        Label(text, systemImage: "exclamationmark.triangle.fill")
             .symbolRenderingMode(.multicolor)
             .font(.callout)
             .padding(Self.inset)
@@ -608,5 +661,144 @@ struct OpenAnotherButton: View {
         Button(Copy.openAnother) {
             NSDocumentController.shared.openDocument(nil)
         }
+    }
+}
+
+/// The selection on one page (#324): a click, a drag of the rectangle or the lasso, Shift to add
+/// or remove, and the selection drawn as each element's box and a dashed frame with handles
+/// around them all. Read-only: it names elements and changes nothing in the note.
+private struct SelectionLayer: View {
+    /// How far from a stroke a click still takes it, and a drag shorter than this is a click,
+    /// in points.
+    static let reach: CGFloat = 4
+    /// The side of a handle, in points.
+    static let handle: CGFloat = 7
+    /// The dash of the frame around a selection and of a drag in progress, in points.
+    static let dash: [CGFloat] = [4, 3]
+
+    let index: Int
+    let pages: PageImages
+    let viewer: PageViewer
+    /// The page's drawn size, in points.
+    let size: CGSize
+    /// The drag in progress, in points.
+    @State private var path: [CGPoint] = []
+
+    /// Page pixels per point.
+    private var pixels: CGFloat {
+        size.width > 0 ? pages.size(of: index).width / size.width : 1
+    }
+
+    var body: some View {
+        let selected = viewer.selection.page == index ? viewer.selection.ids : []
+        let items = (pages.selectable(index) ?? []).filter { selected.contains($0.id) }
+        Canvas { context, _ in
+            let accent = GraphicsContext.Shading.color(.accentColor)
+            // A picture or a text box shows its own frame; a stroke shows only in the frame around
+            // the selection, so no box covers the ink.
+            for item in items where item.isArea {
+                context.stroke(Path(points(item.bounds)), with: accent, lineWidth: 1)
+            }
+            if let box = frame(items) {
+                context.stroke(Path(box), with: accent, style: StrokeStyle(lineWidth: 1, dash: Self.dash))
+                for corner in Self.handles(of: box) {
+                    let square = Path(
+                        CGRect(
+                            x: corner.x - Self.handle / 2, y: corner.y - Self.handle / 2, width: Self.handle,
+                            height: Self.handle))
+                    context.fill(square, with: .color(.white))
+                    context.stroke(square, with: accent, lineWidth: 1)
+                }
+            }
+            if path.count > 1 {
+                var drag = Path()
+                if viewer.tool == .lasso {
+                    drag.addLines(path)
+                } else if let start = path.first, let end = path.last {
+                    drag.addRect(Self.rect(start, end))
+                }
+                context.stroke(drag, with: accent, style: StrokeStyle(lineWidth: 1, dash: Self.dash))
+            }
+        }
+        .contentShape(.rect)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    if path.isEmpty { path = [value.startLocation] }
+                    path.append(value.location)
+                }
+                .onEnded { value in
+                    finish(value)
+                    path = []
+                }
+        )
+        .accessibilityElement()
+        .accessibilityLabel(Copy.selectedCount(items.count))
+        .accessibilityHidden(items.isEmpty)
+    }
+
+    /// The frame around the selected `items` on screen, its handles on its edge, or `nil`.
+    private func frame(_ items: [Selectable]) -> CGRect? {
+        items.map(\.bounds).reduce(nil) { ($0 ?? $1).union($1) }
+            .map { points($0).insetBy(dx: -Self.handle, dy: -Self.handle) }
+    }
+
+    /// Ends a click or a drag: the elements it found replace the selection, or with Shift add to
+    /// it. A drag that starts on the selection's frame changes nothing: moving and resizing come
+    /// with the edits. A click on a page whose elements are still being read applies once they are.
+    private func finish(_ value: DragGesture.Value) {
+        let adding = NSEvent.modifierFlags.contains(.shift)
+        let moved = hypot(value.translation.width, value.translation.height) >= Self.reach
+        let selected = viewer.selection.page == index ? viewer.selection.ids : []
+        let shown = (pages.selectable(index) ?? []).filter { selected.contains($0.id) }
+        if moved, let box = frame(shown), box.insetBy(dx: -Self.handle, dy: -Self.handle).contains(value.startLocation)
+        {
+            return
+        }
+        let start = page(value.startLocation)
+        let end = page(value.location)
+        let lasso = path.map(page)
+        let tool = viewer.tool
+        let tolerance = Self.reach * pixels
+        let apply = { (items: [Selectable]) in
+            if !moved {
+                viewer.selection.click(HitTest.click(end, in: items, tolerance: tolerance), page: index, adding: adding)
+            } else if tool == .lasso {
+                viewer.selection.take(HitTest.lasso(lasso, in: items), page: index, adding: adding)
+            } else {
+                viewer.selection.take(HitTest.rectangle(Self.rect(start, end), in: items), page: index, adding: adding)
+            }
+        }
+        if let items = pages.selectable(index) {
+            apply(items)
+        } else {
+            Task {
+                await pages.loadElements(index)
+                if let items = pages.selectable(index) { apply(items) }
+            }
+        }
+    }
+
+    /// A point on screen in the page's pixels.
+    private func page(_ point: CGPoint) -> CGPoint {
+        CGPoint(x: point.x * pixels, y: point.y * pixels)
+    }
+
+    /// A box in the page's pixels on screen.
+    private func points(_ rect: CGRect) -> CGRect {
+        CGRect(x: rect.minX / pixels, y: rect.minY / pixels, width: rect.width / pixels, height: rect.height / pixels)
+    }
+
+    static func rect(_ start: CGPoint, _ end: CGPoint) -> CGRect {
+        CGRect(
+            x: min(start.x, end.x), y: min(start.y, end.y), width: abs(end.x - start.x), height: abs(end.y - start.y))
+    }
+
+    /// The eight handles of a frame: its corners and the middles of its sides.
+    static func handles(of box: CGRect) -> [CGPoint] {
+        [box.minX, box.midX, box.maxX].flatMap { x in
+            [box.minY, box.midY, box.maxY].map { CGPoint(x: x, y: $0) }
+        }
+        .filter { $0 != CGPoint(x: box.midX, y: box.midY) }
     }
 }

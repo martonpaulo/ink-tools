@@ -13,8 +13,16 @@ final class PageViewer {
         case grid
     }
 
+    /// How a drag selects on a page, as Preview's Rectangular and Lasso Selection (#324).
+    enum SelectionTool: Hashable {
+        case rectangle, lasso
+    }
+
     var layout: Layout
     var zoom: PageZoom
+    var tool: SelectionTool = .rectangle
+    /// The elements selected on one page: read-only, the base the edits build on (#324).
+    var selection = PageSelection()
     /// The space a page is fitted in, in points, without the margin around it.
     var viewport: CGSize = .zero
     /// The current page's size in pixels.

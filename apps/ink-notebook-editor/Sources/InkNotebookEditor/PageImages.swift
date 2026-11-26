@@ -38,6 +38,9 @@ final class PageImages {
     private(set) var thumbnails: [ThumbnailSize: [Int: State]] = [:]
     /// The style of each drawn page whose template could not be drawn (#308).
     private(set) var missingTemplates: [Int: String] = [:]
+    /// The selectable elements of each page in view, decoded once, in page pixels (#324); the
+    /// reader's reason for a page whose elements cannot be read.
+    private(set) var elements: [Int: Result<[Selectable], ElementFailure>] = [:]
     private let logger = Logger(subsystem: "com.martonpaulo.inktools.notebookeditor", category: "pages")
 
     init(note: NoteFile) {
@@ -75,6 +78,46 @@ final class PageImages {
         }
         for index in visible.sorted() + [first - 1, last + 1] where kept.contains(index) {
             await loadPage(index)
+        }
+        for index in visible.sorted() {
+            await loadElements(index)
+        }
+    }
+
+    /// Why a page's elements cannot be selected: the reader's words.
+    struct ElementFailure: Error, Equatable {
+        let reason: String
+    }
+
+    /// The page's elements, read from the Mac's own copy of the note, never from the tablet; a
+    /// page's elements are decoded once and kept, as they are small (#324).
+    func loadElements(_ index: Int) async {
+        guard elements[index] == nil else { return }
+        elements[index] = await Self.decode(note, index, logger: logger)
+    }
+
+    /// The selectable elements of a page, ready, or `nil` while they decode or when they failed.
+    func selectable(_ index: Int) -> [Selectable]? {
+        guard case .success(let items) = elements[index] else { return nil }
+        return items
+    }
+
+    @concurrent
+    private static func decode(_ note: NoteFile, _ index: Int, logger: Logger) async -> Result<
+        [Selectable], ElementFailure
+    > {
+        do {
+            let found = try note.elements(page: index)
+            return .success(
+                found.enumerated().map { id, element in
+                    Selectable(
+                        id: id, bounds: element.bounds, points: element.points, isArea: element.kind != .stroke)
+                })
+        } catch {
+            logger.error(
+                "page \(index + 1, privacy: .public): elements not read: \(String(describing: error), privacy: .public)"
+            )
+            return .failure(ElementFailure(reason: String(describing: error)))
         }
     }
 

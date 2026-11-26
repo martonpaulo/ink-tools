@@ -839,6 +839,22 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   as large as its box, not the whole page [measured on the Mac on one Heading of a Manta note,
   2026-11-26, [#331](https://github.com/martonpaulo/ink-tools/issues/331)]; a note with a Heading
   of each level waits for a device round.
+- A page's strokes, pictures and text boxes are records in the block `TOTALPATH` points at: a
+  count, then one length-prefixed record each, in drawing order. A record holds its pen, colour,
+  thickness and layer, a kind name (`others` for a pen stroke, `bitmap` for a picture), a box in
+  page pixels (left, top, right, bottom), the page's size in screen units, and its points in screen
+  units, measured down from the top and in from the right edge; the page height in pixels over
+  the height in screen units turns them into page pixels (0.118 on the Manta). A stroke's box holds
+  its ink: on a landscape page of 11 strokes the boxes spanned x 398 to 804 and y 298 to 410, and
+  the tablet's PNG has its ink at x 398 to 803 and y 298 to 409, upright. A picture's and a text
+  box's box does not match their frame, while their five points (a closed rectangle) do: a text
+  box at 200, 200, 1200 x 54 and a picture at 720, 1120, 480 x 320 [measured on the Mac on
+  `content.note` and `landscape-tablet.note`, 2026-11-26,
+  [#324](https://github.com/martonpaulo/ink-tools/issues/324)]. The field layout follows the
+  public description in walnut356's post
+  [«Inspecting the Supernote .note format»](https://walnut356.github.io/posts/inspecting-the-supernote-note-format); that an eraser
+  stroke is a record of colour 255 is that post's, not yet seen here, and one note with several
+  text boxes and an erased stroke waits for a device round.
 - Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
   [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 

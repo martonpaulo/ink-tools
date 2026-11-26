@@ -12,7 +12,7 @@
       ],
       "reason": "the .note format is not documented; supernotelib and our reader parse it",
       "evidence": {
-        "source": "supernotelib SupernoteXParser.SN_SIGNATURES; recognition boxes measured against rendered ink on Manta notes",
+        "source": "supernotelib SupernoteXParser.SN_SIGNATURES; recognition boxes measured against rendered ink on Manta notes; element records measured on the fixtures content.note and landscape-tablet.note",
         "date": "2026-11-26"
       },
       "upgradePath": "a documented format or an export API",
@@ -24,7 +24,8 @@
       "active": "ink-notebook-editor NoteFile.swift",
       "issues": [
         261,
-        321
+        321,
+        324
       ],
       "values": {
         "signaturePrefix": "SN_FILE_VER_",
@@ -43,7 +44,10 @@
           20260016
         ],
         "firstGreyscaleVersion": 20230015,
-        "recognitionBoxDotsPerInch": 300
+        "recognitionBoxDotsPerInch": 300,
+        "pictureKind": "bitmap",
+        "strokeDocument": "superNoteNote",
+        "eraserColour": 255
       }
     },
     {
