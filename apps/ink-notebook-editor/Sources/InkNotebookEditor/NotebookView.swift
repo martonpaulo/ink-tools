@@ -150,6 +150,7 @@ struct NotebookView: View {
         }
         .focusedSceneValue(\.pageNavigator, $navigator)
         .focusedSceneValue(\.pageViewer, viewer)
+        .focusedSceneValue(\.pageImages, pages)
         .focusedSceneValue(\.noteText, text)
         .focusedSceneValue(\.sidebarMode, $sidebar)
         // View › Pages and Headings show the sidebar too, when it is hidden.
@@ -223,6 +224,9 @@ struct NotebookView: View {
         .focused($pageFocused)
         // Edit › Copy takes the current page out as PNG, PDF and its text (#323).
         .onCopyCommand {
+            if let (page, items) = viewer.selected(in: pages), let text {
+                return [text.provider(of: pages.note, page: page, selected: items)]
+            }
             guard let page = navigator.index, let provider = text?.provider(of: pages.note, page: page) else {
                 return []
             }
@@ -263,6 +267,9 @@ struct NotebookView: View {
 extension FocusedValues {
     /// How the notebook window in front shows its pages, for the View menu.
     @Entry var pageViewer: PageViewer?
+    /// The drawn pages and their elements of the notebook window in front, for Edit › Copy as Text
+    /// of a selection (#323).
+    @Entry var pageImages: PageImages?
 }
 
 /// Every page, one below the other, each drawn as it scrolls into view (#319). The scroll follows
@@ -741,6 +748,7 @@ private struct SelectionLayer: View {
     let size: CGSize
     /// The drag in progress, in points.
     @State private var path: [CGPoint] = []
+    @Environment(NoteText.self) private var text: NoteText?
 
     /// Page pixels per point.
     private var pixels: CGFloat {
@@ -790,6 +798,16 @@ private struct SelectionLayer: View {
                     path = []
                 }
         )
+        // A drag that starts on the selection takes its ink and words out to another app (#323).
+        .overlay(alignment: .topLeading) {
+            if let box = frame(items), let text {
+                Color.clear
+                    .contentShape(.rect)
+                    .frame(width: box.width, height: box.height)
+                    .offset(x: box.minX, y: box.minY)
+                    .onDrag { text.provider(of: pages.note, page: index, selected: items) }
+            }
+        }
         .accessibilityElement()
         .accessibilityLabel(Copy.selectedCount(items.count))
         .accessibilityHidden(items.isEmpty)
@@ -802,8 +820,8 @@ private struct SelectionLayer: View {
     }
 
     /// Ends a click or a drag: the elements it found replace the selection, or with Shift add to
-    /// it. A drag that starts on the selection's frame changes nothing: moving and resizing come
-    /// with the edits. A click on a page whose elements are still being read applies once they are.
+    /// it. A drag that starts on the selection's frame never gets here: it takes the selection out
+    /// to another app (#323). A click on a page whose elements are still being read applies once they are.
     private func finish(_ value: DragGesture.Value) {
         let adding = NSEvent.modifierFlags.contains(.shift)
         let moved = hypot(value.translation.width, value.translation.height) >= Self.reach

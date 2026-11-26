@@ -89,6 +89,13 @@ final class PageViewer {
         max(Int((width - spacing) / (cell + spacing)), 1)
     }
 
+    /// The selected elements and their page, when any are selected and their page's elements are
+    /// read (#323).
+    func selected(in pages: PageImages) -> (page: Int, items: [Selectable])? {
+        guard let page = selection.page, !selection.isEmpty, let all = pages.selectable(page) else { return nil }
+        return (page, all.filter { selection.ids.contains($0.id) })
+    }
+
     /// Sets `zoom` from the View menu, which shows the pages if the grid is in front.
     func show(_ zoom: PageZoom) {
         layout = .scroll

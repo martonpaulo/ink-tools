@@ -94,8 +94,9 @@ extension NoteFile {
 
     /// Draws page `index`, counted from 0: the shown layers in `LAYERSEQ` order over the
     /// background, on white. A background that cannot be decoded leaves the ink drawn and sets
-    /// `templateFailure`; any other layer that cannot be decoded fails the page.
-    public func render(page index: Int) throws -> PageBitmap {
+    /// `templateFailure`; any other layer that cannot be decoded fails the page. Without
+    /// `template`, the background layer is left out: the ink alone, on white (#323).
+    public func render(page index: Int, template: Bool = true) throws -> PageBitmap {
         guard pages.indices.contains(index) else { throw NoteFormatError.badPage(index) }
         let page = pages[index]
         guard !page.layers.isEmpty else {
@@ -112,7 +113,8 @@ extension NoteFile {
             // supernotelib `_get_layer_visibility`: with LAYERINFO, a layer it does not name is
             // hidden, except MAINLAYER. Without LAYERINFO every layer is shown.
             let shown = visibility.isEmpty || (visibility[name] ?? (name == Self.mainLayer))
-            guard shown, let layer = page.layers.first(where: { $0.name == name }),
+            guard shown, template || name != Self.backgroundLayer,
+                  let layer = page.layers.first(where: { $0.name == name }),
                   layer.bitmapAddress != 0
             else { continue }
             let pixels: [UInt8]

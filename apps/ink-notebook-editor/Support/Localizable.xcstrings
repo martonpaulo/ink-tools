@@ -131,6 +131,16 @@
         }
       }
     },
+    "Copy Selection as Text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Selection as Text"
+          }
+        }
+      }
+    },
     "Copying %@ from the tablet…" : {
       "localizations" : {
         "en" : {
@@ -807,6 +817,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This page has no recognised words."
+          }
+        }
+      }
+    },
+    "Tools" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tools"
           }
         }
       }

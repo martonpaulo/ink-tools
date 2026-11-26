@@ -89,6 +89,26 @@ final class NoteText {
 }
 
 extension NoteText {
+    /// The words whose middle lies inside `frame` (page pixels) on page `index`, in reading
+    /// order; nil while the indexer runs (#323).
+    func text(page: Int, in frame: CGRect) -> String? {
+        index.map { found in
+            ReadingOrder.text(
+                found.textWords(pages: [page]).filter { frame.contains(CGPoint(x: $0.box.midX, y: $0.box.midY)) })
+        }
+    }
+
+    /// The selected elements `items` of page `index` of `note` for a copy or a drag: their ink on
+    /// transparent, and their words once they are read (#323).
+    func provider(of note: NoteFile, page index: Int, selected items: [Selectable]) -> NSItemProvider {
+        let boxes = items.map(\.bounds)
+        let frame = boxes.reduce(CGRect.null) { $0.union($1) }
+        return PageExport.selectionProvider(
+            note: note, page: index, boxes: boxes, areas: items.filter(\.isArea).map(\.bounds),
+            name: PageExport.selectionName(note: name.isEmpty ? Copy.untitledNote : name, page: index),
+            text: text(page: index, in: frame) ?? "")
+    }
+
     /// Page `index` of `note` for a copy or a drag: PNG, PDF and its words once they are read.
     func provider(of note: NoteFile, page index: Int) -> NSItemProvider {
         PageExport.itemProvider(

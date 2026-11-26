@@ -58,6 +58,8 @@ nonisolated enum Copy {
     static let headingsFailedTitle = String(localized: "The Headings cannot be read")
     static let headingsFailedNext = String(localized: "The pages still show. Copy the note again to see its Headings.")
     static let copyPageAsText = String(localized: "Copy Page as Text")
+    static let copySelectionAsText = String(localized: "Copy Selection as Text")
+    static let toolsMenu = String(localized: "Tools")
     static let copyNoteAsText = String(localized: "Copy Note as Text")
     static let textNotReady = String(localized: "The handwriting is still being read.")
     static let pageHasNoWords = String(localized: "This page has no recognised words.")

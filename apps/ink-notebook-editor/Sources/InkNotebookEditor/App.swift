@@ -41,6 +41,9 @@ struct InkNotebookEditorApp: App {
             CommandMenu(Copy.goMenu) {
                 GoCommands()
             }
+            CommandMenu(Copy.toolsMenu) {
+                ToolCommands()
+            }
             CommandGroup(replacing: .help) {
                 ReportIssueCommand()
             }
@@ -139,16 +142,48 @@ private struct ReportIssueCommand: View {
     }
 }
 
-/// Edit › Copy Page as Text and Copy Note as Text: the recognised words in reading order (#323).
+/// Tools › Rectangular Selection and Lasso Selection, as Preview's Tools menu holds them (#324).
+private struct ToolCommands: View {
+    @FocusedValue(\.pageViewer) private var viewer
+
+    var body: some View {
+        tool(Copy.rectangularSelection, .rectangle)
+        tool(Copy.lassoSelection, .lasso)
+    }
+
+    private func tool(_ title: String, _ tool: PageViewer.SelectionTool) -> some View {
+        Toggle(
+            title,
+            isOn: Binding(
+                get: { viewer?.tool == tool },
+                set: { if $0 { viewer?.tool = tool } })
+        )
+        .disabled(viewer?.layout != .scroll)
+    }
+}
+
+/// Edit › Copy as Text and Copy Note as Text: the recognised words in reading order, of the
+/// selection when there is one, else of the current page (#323).
 private struct CopyTextCommands: View {
     @FocusedValue(\.noteText) private var text
     @FocusedValue(\.pageNavigator) private var navigator
+    @FocusedValue(\.pageViewer) private var viewer
+    @FocusedValue(\.pageImages) private var pages
 
     var body: some View {
         let page = navigator?.wrappedValue.index
-        let pageText = page.flatMap { text?.text(pages: [$0]) }
-        Button(Copy.copyPageAsText) {
-            if let page { copy(pages: [page]) }
+        let selected = pages.flatMap { viewer?.selected(in: $0) }
+        let frame = selected?.items.map(\.bounds).reduce(CGRect.null) { $0.union($1) }
+        let pageText =
+            if let selected, let frame {
+                text?.text(page: selected.page, in: frame)
+            } else {
+                page.flatMap { text?.text(pages: [$0]) }
+            }
+        Button(selected == nil ? Copy.copyPageAsText : Copy.copySelectionAsText) {
+            guard let pageText, !pageText.isEmpty else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(pageText, forType: .string)
         }
         .keyboardShortcut("c", modifiers: [.command, .option])
         // A page with no recognised words leaves the pasteboard as it is.
