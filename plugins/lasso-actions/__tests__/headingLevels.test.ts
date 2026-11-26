@@ -71,3 +71,13 @@ test('an empty rect or a page narrower than its margins places nothing', () => {
     ),
   ).toBeNull();
 });
+
+test('full width spans the writing width at the lasso\'s own top and height (owner D90)', () => {
+  expect(placement({left: 600, top: 400, right: 800, bottom: 460}, PAGE, 'full')).toEqual({
+    left: HEADING_MARGIN,
+    top: 400,
+    right: PAGE.width - HEADING_MARGIN,
+    bottom: 460,
+  });
+  expect(placement({left: 600, top: 400, right: 800, bottom: 460}, PAGE, 'own')?.right).toBe(HEADING_MARGIN + 200);
+});

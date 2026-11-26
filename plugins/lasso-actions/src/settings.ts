@@ -9,6 +9,7 @@ import {ALL_DIRECTIONS, directionId} from '@ink-tools/ink-core';
 import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search';
 import type {SettingsCodec} from './profile';
 import {MODULE_IDS, type ModuleId} from './moduleIds';
+import {DEFAULT_HEADING_SIZE, HEADING_SIZES, type HeadingSize} from './headings/levels';
 
 export const SETTINGS_VERSION = 1;
 
@@ -245,11 +246,15 @@ export type CollectionSettings = {keepAfterPaste: boolean};
 
 export const DEFAULT_COLLECTION: CollectionSettings = {keepAfterPaste: false};
 
+/** Headings' own setting (owner D90): the size each press gives the heading. */
+export type HeadingsSettings = {size: HeadingSize};
+
 export type LassoSettings = {
   /** One switch per module; a module off registers no lasso button. */
   modules: Record<ModuleId, boolean>;
   lookup: LookupSettings;
   collection: CollectionSettings;
+  headings: HeadingsSettings;
   /** The switches of modules this build does not know, kept so a write never drops them. */
   otherModules: Record<string, unknown>;
   /** True when the file was read in Word Lookup's shape: index.js writes it once in the new one. */
@@ -260,6 +265,7 @@ export const defaultLassoSettings = (): LassoSettings => ({
   modules: {...DEFAULT_MODULES},
   lookup: fresh(),
   collection: {...DEFAULT_COLLECTION},
+  headings: {size: DEFAULT_HEADING_SIZE},
   otherModules: {},
   oldShape: false,
 });
@@ -328,11 +334,20 @@ export function parseLassoSettings(text: string | null): {
       'settings: collection.keepAfterPaste is not true or false; it is off',
     );
   }
+  const headings = {size: DEFAULT_HEADING_SIZE};
+  // A missing `headings` is a file from before the size choice; anything else wrong is named.
+  const size = isObject(raw.headings) ? raw.headings.size : raw.headings === undefined ? undefined : null;
+  if (HEADING_SIZES.includes(size as HeadingSize)) {
+    headings.size = size as HeadingSize;
+  } else if (size !== undefined) {
+    problems.push('settings: headings.size is not own or full; own size is used');
+  }
   return {
     settings: {
       modules: switches,
       lookup: lookup.settings,
       collection,
+      headings,
       otherModules: Object.fromEntries(
         Object.entries(modules).filter(
           ([id]) => !MODULE_IDS.includes(id as ModuleId),
@@ -357,6 +372,7 @@ export function serializeLassoSettings(settings: LassoSettings): string {
       modules: {...settings.otherModules, ...settings.modules},
       lookup,
       collection: settings.collection,
+      headings: settings.headings,
     },
     null,
     2,
@@ -371,5 +387,6 @@ export const LASSO_SETTINGS: SettingsCodec<LassoSettings> = {
       ...MODULE_IDS.map(id => `${id} ${settings.modules[id] ? 'on' : 'off'}`),
       LOOKUP_DESCRIBE(settings.lookup),
       `keep after paste ${settings.collection.keepAfterPaste ? 'on' : 'off'}`,
+      `heading size ${settings.headings.size}`,
     ].join(', '),
 };

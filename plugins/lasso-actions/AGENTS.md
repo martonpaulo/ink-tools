@@ -21,10 +21,12 @@ wrote is kept.
 
 «Heading 1» to «Heading 4» ([#252](https://github.com/martonpaulo/ink-tools/issues/252)), no-view lasso buttons: `src/headings/levels.ts` maps each level
 to a native title style (1 black, 2 shadow, 3 dark grey, 4 light grey) and places the heading on
-its own line at the leading margin, at the handwriting's own size (`HEADING_MARGIN`, inferred until
-the device probe, Task 1 of [#252](https://github.com/martonpaulo/ink-tools/issues/252), measures it): `resizeLassoRect` scales the strokes to the
-rect it gets, and a title's box is its strokes' box (device round 7), so a heading is never
-widened. `src/headings/run.ts` reads the lasso and the page size together, sets the title through
+its own line at the leading margin (`HEADING_MARGIN`, inferred until the device probe, Task 1 of
+[#252](https://github.com/martonpaulo/ink-tools/issues/252), measures it), at the size Settings › «Heading Size» names, saved as
+`headings.size` and read at each press (owner D90): «Own Size», the default, keeps the
+handwriting's width; «Full Width» spans the writing width. `resizeLassoRect` scales the strokes to
+the rect it gets, and a title's box is its strokes' box (device round 7), so «Full Width» stretches
+the handwriting. `src/headings/run.ts` reads the lasso and the page size together, sets the title through
 sn-adapter's `setLassoTitle`, lassoes its strokes again, then moves them with `resizeLassoRect`: a
 move sent before the title in the same press was lost (device round 9). A failed title changes
 nothing; a failed move keeps the title and says so.

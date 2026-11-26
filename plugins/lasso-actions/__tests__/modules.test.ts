@@ -183,3 +183,14 @@ test('Collection registers two lasso rows and one toolbar button with a view, an
   expect(wrong.settings.collection).toEqual({keepAfterPaste: false});
   expect(wrong.problems).toHaveLength(1);
 });
+
+test('Heading Size is saved, own size by default, and a wrong value falls back to it (owner D90)', () => {
+  const defaults = parseLassoSettings(null).settings;
+  expect(defaults.headings).toEqual({size: 'own'});
+  const full = parseLassoSettings(serializeLassoSettings({...defaults, headings: {size: 'full'}}));
+  expect(full.problems).toEqual([]);
+  expect(full.settings.headings).toEqual({size: 'full'});
+  const wrong = parseLassoSettings(JSON.stringify({modules: {}, headings: {size: 'wide'}}));
+  expect(wrong.settings.headings).toEqual({size: 'own'});
+  expect(wrong.problems).toEqual(['settings: headings.size is not own or full; own size is used']);
+});

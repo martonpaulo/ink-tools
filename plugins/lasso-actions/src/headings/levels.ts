@@ -2,8 +2,9 @@
  * Headings' pure rules (#252): which native title style each level gets, and where a heading goes.
  * The host's title has four styles and no levels, so «Heading 1» to «Heading 4» is a map onto them
  * (the #252 Plan's map, accepted). A heading sits on its own line at the page's leading margin
- * (owner D78 A, D81 A), at its handwriting's own size: the tablet cannot widen a title past its
- * strokes without stretching them (device round 7).
+ * (owner D78 A, D81 A), at the size Settings › «Heading Size» names (owner D90): its handwriting's
+ * own size, the default, or the full writing width, which stretches the strokes to it, since the
+ * tablet cannot widen a title past its strokes otherwise (device round 7).
  */
 import type {Rect, Size} from '@ink-tools/ink-core';
 import {TITLE_STYLE, type TitleStyle} from '@ink-tools/sn-adapter/official';
@@ -19,6 +20,11 @@ const LEVEL_STYLE: Readonly<Record<HeadingLevel, TitleStyle>> = {
   4: TITLE_STYLE.lightGrey,
 };
 
+/** Settings › «Heading Size» (owner D90): `own`, the handwriting's own size, or `full`, the writing width. */
+export const HEADING_SIZES = ['own', 'full'] as const;
+export type HeadingSize = (typeof HEADING_SIZES)[number];
+export const DEFAULT_HEADING_SIZE: HeadingSize = 'own';
+
 export function levelStyle(level: HeadingLevel): TitleStyle {
   return LEVEL_STYLE[level];
 }
@@ -31,24 +37,26 @@ export function levelStyle(level: HeadingLevel): TitleStyle {
 export const HEADING_MARGIN = 96;
 
 /**
- * Where the heading of the lassoed `rect` goes on a page of `page` size: moved to the leading
- * margin at its own size, at the lasso's own top and height, so it stays on its line and keeps the
- * handwriting's proportions. `resizeLassoRect` scales the strokes to the rect it is given, and the
+ * Where the heading of the lassoed `rect` goes on a page of `page` size: at the leading margin, at
+ * the lasso's own top and height, so it stays on its line. With `own` it keeps the handwriting's
+ * width and proportions: `resizeLassoRect` scales the strokes to the rect it is given, and the
  * title's box is its strokes' box (device round 7, #252: a 290 px lasso sent to 1,728 px stretched
- * «save» from 280 to 1,666 px), so a heading cannot be wider than its handwriting. A lasso wider
- * than the writing width starts nearer the edge, never past it; one that reaches past the page's
- * foot is moved back onto it; null when the page is narrower than its margins or the rect is empty.
+ * «save» from 280 to 1,666 px), so only `full` makes it as wide as the writing width, stretching
+ * the strokes. A lasso wider than the writing width starts nearer the edge, never past it; one
+ * that reaches past the page's foot is moved back onto it; null when the page is narrower than its
+ * margins or the rect is empty.
  */
 export function placement(
   rect: Rect,
   page: Size,
+  size: HeadingSize = DEFAULT_HEADING_SIZE,
   margin = HEADING_MARGIN,
 ): Rect | null {
-  const width = rect.right - rect.left;
   const height = rect.bottom - rect.top;
-  if (width <= 0 || height <= 0 || page.width <= 2 * margin) {
+  if (rect.right - rect.left <= 0 || height <= 0 || page.width <= 2 * margin) {
     return null;
   }
+  const width = size === 'full' ? page.width - 2 * margin : rect.right - rect.left;
   const left = Math.min(margin, Math.max(0, page.width - width));
   const tall = Math.min(height, page.height);
   const top = Math.min(Math.max(0, rect.top), page.height - tall);

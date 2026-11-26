@@ -27,6 +27,7 @@ test('a heading the tablet could not make shows the Error state with its reason 
     await working.run(() =>
       applyHeading(2, {
         lassoRect: async () => ok({left: 600, top: 400, right: 800, bottom: 460}),
+        size: async () => 'own',
         pageSize: async () => fail(-1, 'thrown'),
         setTitle: async () => ok(true),
         select: async () => ok(true),

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import {
+  ChoiceList,
   RowGroup,
   shared,
   SwitchGroup,
@@ -21,6 +22,7 @@ import {working} from './src/working';
 import {getSettings, saveSettings} from './src/profile';
 import {OldFolder, oldFolders} from './src/library';
 import {MODULES, moduleStates, modulesChanged} from './src/modules';
+import {HEADING_SIZES} from './src/headings/levels';
 import {
   defaultLassoSettings,
   LassoSettings,
@@ -131,6 +133,18 @@ function SettingsScreen({close}: {close: () => void}) {
             />
           ))}
         </RowGroup>
+        {settings !== null && all.modules.headings && (
+          <ChoiceList
+            title={copy['settings.headingSize']}
+            choices={HEADING_SIZES.map(size => ({
+              value: size,
+              label: copy[size === 'own' ? 'settings.headingOwn' : 'settings.headingFull'],
+            }))}
+            value={all.headings.size}
+            onChange={size => changeAll({...all, headings: {size}})}
+            note={copy['settings.headingSizeHint']}
+          />
+        )}
         {settings !== null && all.modules.lookup && (
           <>
             {group(

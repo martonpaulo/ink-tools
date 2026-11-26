@@ -14,6 +14,7 @@ function fakeHost(over: Partial<HeadingHost> = {}) {
   const failures: Problem[] = [];
   const host: HeadingHost = {
     lassoRect: async () => ok(WORD),
+    size: async () => 'own',
     pageSize: async () => ok(PAGE),
     setTitle: async style => {
       calls.push(`title ${style}`);
@@ -179,4 +180,15 @@ test('the press asks for the lasso and the page size together, before the title'
   });
   await applyHeading(1, host);
   expect(order.slice(0, 2)).toEqual(['lasso asked', 'page asked']);
+});
+
+test('each press uses Settings › Heading Size: own size keeps the width, full width spans the page (owner D90)', async () => {
+  const own = fakeHost();
+  expect(await applyHeading(2, own.host)).toMatchObject({ok: true, rect: {left: HEADING_MARGIN, right: HEADING_MARGIN + 200}});
+  const full = fakeHost({size: async () => 'full'});
+  expect(await applyHeading(2, full.host)).toMatchObject({
+    ok: true,
+    rect: {left: HEADING_MARGIN, top: 400, right: PAGE.width - HEADING_MARGIN, bottom: 460},
+  });
+  expect(full.calls.at(-1)).toBe(`resize ${HEADING_MARGIN},400,${PAGE.width - HEADING_MARGIN},460`);
 });

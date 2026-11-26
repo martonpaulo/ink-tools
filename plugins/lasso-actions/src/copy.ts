@@ -92,6 +92,11 @@ export const copy = {
   'settings.translate': 'Translation buttons',
   /** The picture options left in Settings (owner's presets, #105). */
   'settings.sources': 'Picture sources',
+  /** Headings' size choice (owner D90). */
+  'settings.headingSize': 'Heading Size',
+  'settings.headingOwn': 'Own Size',
+  'settings.headingFull': 'Full Width',
+  'settings.headingSizeHint': 'Full Width stretches the handwriting to the width of the page.',
   'settings.dataSaver': 'Data saver',
   'settings.dataSaverHint': 'Fewer and smaller pictures per search.',
   /** Where the inserted pictures are kept, and why (#23, owner D13 B). */
