@@ -10,11 +10,12 @@
  * No screen shows raw text outside it: the renders fail one that does (`rawBreaks`).
  */
 import React from 'react';
-import {ScrollView, StyleSheet, Text, ToastAndroid, useWindowDimensions, View} from 'react-native';
 // React Native's own clipboard module: sn-plugin-lib has none, and this is the public React Native
-// API the host's runtime ships (level 1). shortcut: the core module is marked for removal in a
-// later React Native; move to its successor package when the plugins' pinned version drops it.
-import {Clipboard} from 'react-native/Libraries/Components/Clipboard/Clipboard';
+// API the host's runtime ships (level 1). It is read from the package root, whose getter returns
+// the module's default export; the deep path's typings name a `Clipboard` export the file does not
+// have, so a named import there is undefined at run time (#405). shortcut: the core module is marked
+// for removal in a later React Native; move to its successor package when the pinned version drops it.
+import {Clipboard, ScrollView, StyleSheet, Text, ToastAndroid, useWindowDimensions, View} from 'react-native';
 import {Button} from './Button';
 import {COPIED_TEXT, COPY_LABEL} from './controlsCopy';
 import {metrics, textStyles} from './metrics';
@@ -23,11 +24,8 @@ import {shared} from './styles';
 /** The testID the renders find a code block by (`rawBreaks`, #405). */
 export const CODE_BLOCK_ID = 'code-block';
 
-/** Puts `text` on the tablet's clipboard and says so. */
-export type CopyText = (text: string) => void;
-
-/** The clipboard and a short toast, both public React Native API. */
-export const copyToClipboard: CopyText = text => {
+/** Puts `text` on the tablet's clipboard and says so in a short toast, both public React Native API. */
+export const copyToClipboard = (text: string): void => {
   Clipboard.setString(text);
   ToastAndroid.show(COPIED_TEXT, ToastAndroid.SHORT);
 };
@@ -39,11 +37,9 @@ export type CodeBlockProps = {
   label: string;
   /** Size the box to its lines, not half the window: for a command of a line or two. */
   fit?: boolean;
-  /** What «Copy» does; the clipboard and a toast, unless a test passes its own. */
-  copy?: CopyText;
 };
 
-export function CodeBlock({lines, label, fit = false, copy = copyToClipboard}: CodeBlockProps): React.JSX.Element {
+export function CodeBlock({lines, label, fit = false}: CodeBlockProps): React.JSX.Element {
   const {height} = useWindowDimensions();
   return (
     <View style={styles.block}>
@@ -53,7 +49,7 @@ export function CodeBlock({lines, label, fit = false, copy = copyToClipboard}: C
           <Button
             label={COPY_LABEL}
             accessibilityLabel={`${COPY_LABEL}: ${label}`}
-            onPress={() => copy(lines.join('\n'))}
+            onPress={() => copyToClipboard(lines.join('\n'))}
           />
         </View>
       )}

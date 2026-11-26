@@ -1,10 +1,11 @@
 /** The one box for raw text (#405): half the window high, up and down only with wrapped lines, a monospaced face, «Copy». */
 import React from 'react';
-import {StyleSheet, useWindowDimensions} from 'react-native';
+import {Clipboard, StyleSheet, ToastAndroid, useWindowDimensions} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {CODE_BLOCK_ID, CodeBlock, metrics} from '../src';
 import {Box, Measured, rawBreaks} from '../renders/rules';
 import {screenBreaks} from '../src/screenBreaks';
+import {COPIED_TEXT} from '../src/controlsCopy';
 
 const LONG = `runtime keys: ${Array.from({length: 40}, (_, i) => `sampleKey${i}`).join(',')}`;
 
@@ -59,16 +60,17 @@ describe('CodeBlock (#405)', () => {
     }
   });
 
-  it('copies the whole text with «Copy», and offers no Copy with nothing to copy', () => {
-    const copy = jest.fn();
-    let tree!: ReactTestRenderer;
-    act(() => {
-      tree = renderer.create(<CodeBlock lines={[LONG, 'probe done']} label="Sample output" copy={copy} />);
-    });
+  // The real copy runs, against React Native's jest mock of the clipboard module: a test that
+  // passed its own copy let a broken import ship (device round 6, #405).
+  it('copies the whole text to the clipboard with «Copy» and says so, and offers no Copy with nothing to copy', () => {
+    const setString = jest.spyOn(Clipboard, 'setString');
+    const toast = jest.spyOn(ToastAndroid, 'show');
+    const tree = mount([LONG, 'probe done']);
     const button = tree.root.find(node => node.props.accessibilityLabel === 'Copy: Sample output' && node.props.nativeID !== undefined);
     expect(button.props.nativeID).toBe('button-secondary');
     act(() => button.props.onPress());
-    expect(copy).toHaveBeenCalledWith(`${LONG}\nprobe done`);
+    expect(setString).toHaveBeenCalledWith(`${LONG}\nprobe done`);
+    expect(toast).toHaveBeenCalledWith(COPIED_TEXT, ToastAndroid.SHORT);
     expect(mount([]).root.findAll(node => node.props.accessibilityLabel === 'Copy: Sample output')).toHaveLength(0);
   });
 

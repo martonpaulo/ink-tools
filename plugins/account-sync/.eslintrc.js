@@ -17,6 +17,9 @@ module.exports = {
             message: 'No animation on e-ink (brief section 8.4).',
           },
         ],
+        // A deep React Native path's typings can name an export its file lacks (#405); ui-kit,
+        // which this config lints, is where the one such import was.
+        patterns: [{group: ['react-native/Libraries/*'], message: "Import from 'react-native', whose typings match its exports (#405)."}],
       },
     ],
   },
