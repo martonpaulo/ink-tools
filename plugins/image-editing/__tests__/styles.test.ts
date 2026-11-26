@@ -36,7 +36,6 @@ function world(stored: Record<string, string> = {}, failing: string[] = []) {
     crop: jest.fn(),
     erase: jest.fn(),
     setDebugFolder: jest.fn(async () => ok(true)),
-    listenBackKey: jest.fn(async () => ok(true)),
     readText: jest.fn(async path => ok(files.get(path) ?? null)),
     writeText: jest.fn(async (path, text) => {
       files.set(path, text);

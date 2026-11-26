@@ -1,13 +1,14 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {RootTagContext, ScrollView, StyleSheet, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   shared,
   TitleBar,
+  useArmOnRoot,
   useBackKey,
   useWorking,
   WorkingStrip,
 } from '@ink-tools/ui-kit';
-import {closePluginView} from '@ink-tools/sn-adapter/official';
+import {armBackKey as armModule, closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {EditsForm} from './src/EditsForm';
 import {currentSettings, rememberSettings} from './src/edits';
@@ -35,7 +36,7 @@ import {
   undoStroke,
 } from './src/editor';
 import {Editor} from './src/EditorView';
-import {retouchNative} from './src/native';
+import {BACK_MODULE} from './src/native';
 import {askFilePermissions} from './src/permissions';
 import {working} from './src/working';
 
@@ -51,26 +52,15 @@ import {working} from './src/working';
  */
 export default function App({
   close = () => closePluginView(),
-  listenBackKey = rootTag =>
-    retouchNative()
-      .listenBackKey(rootTag)
-      .then(result =>
-        console.log(
-          `Retouch: back key: ${result.ok ? 'listening' : result.message}`,
-        ),
-      ),
+  armBackKey = rootTag => armModule(BACK_MODULE, rootTag),
 }: {
   /** Closes the plugin view; tests pass a fake. */
   close?: () => void;
-  /** Routes the device Back key to this view's root (#226); tests pass a fake. */
-  listenBackKey?: (rootTag: number) => void;
+  /** Arms the shared Back key module on this view's root (#226, #300); tests pass a fake. */
+  armBackKey?: (rootTag: number) => void;
 }) {
-  const rootTag = useContext(RootTagContext);
-  useEffect(() => {
-    listenBackKey(rootTag);
-    // Once per root view: the native listener outlives each show of the view.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootTag]);
+  // Once per root view, through the shared hook every plugin view uses (#300).
+  useArmOnRoot(armBackKey);
   const [settings, setSettings] = useState(currentSettings());
   const [grid, setGrid] = useState<GridState>(gridState());
   const [editor, setEditor] = useState<EditorState>(editorState());
