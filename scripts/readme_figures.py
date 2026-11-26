@@ -8,7 +8,9 @@ Sources, each the one owner of its values:
   `credits`, the Supernote projects the README Credits section names (#424);
 - docs/architecture.md › Layer rules: the level table's public columns and the rule sentence;
 - registry/items/: how many items sit at each level, and each tool's levels;
-- AGENTS.md's `- README Status values:` line: the status dots and their legend.
+- AGENTS.md's `- README Status values:` line: the status dots and their legend;
+- docs/tool-facts.json (written by scripts/tool_facts.py) and the registry's `off` kill switches: which
+  released tool is Broken now, with its reason and issue (#436).
 
 Writes four README blocks, each between its marker comments: the Credits section (CREDITS_START), the
 Tools tables (TOOLS_START), the
@@ -53,6 +55,7 @@ KEYCAPS = {n: f"{n}\ufe0f\u20e3" for n in range(1, 6)}
 # A GitHub repository link, as owner/name, in a NOTICE.md (#424).
 REPOSITORY = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?(?=[/)#>\s`]|$)")
 OWN_OWNER = "martonpaulo/"
+FACTS = "docs/tool-facts.json"
 GROUPS = (("plugins", "Tablet plugins", ("plugin",)), ("apps", "Tablet apps", ("app",)),
           ("mac", "Mac", ("Mac app", "CLI")))
 
@@ -93,6 +96,42 @@ def load_registry(root):
     return counts, tools
 
 
+def load_off(root):
+    """(readers, off, issues) for each registry item whose kill switch is set: the firmware watch's
+    broken result, recorded in the repository (#293)."""
+    out = []
+    for path in sorted((root / "registry/items").glob("*.json")):
+        for item in json.loads(path.read_text(encoding="utf-8"))["items"]:
+            if "off" in item:
+                out.append((set(item["readers"]), item["off"], item.get("issues", []), item["id"]))
+    return out
+
+
+RELEASED = ("Working", "Beta")
+BROKEN = "Broken"
+ISSUES = "https://github.com/martonpaulo/ink-tools/issues/"
+
+
+def broken_tools(tools, facts, off_items):
+    """{tool name: (reason, issue number)} for each released tool that fails now (#436): a registry item
+    it reads is switched off, or an open regression issue names it. A tool that is not released
+    (In progress, Planned, Internal) is never Broken; its status already says it is not ready."""
+    broken = {}
+    for tool in tools:
+        if tool["status"] not in RELEASED:
+            continue
+        readers = set((tool.get("map") or {}).get("registry", []))
+        for item_readers, off, issues, item_id in off_items:
+            if readers & item_readers:
+                if not issues:
+                    raise SystemExit(f"registry: {item_id} is off but names no issue; add its issue to `issues`")
+                broken.setdefault(tool["name"], (off["reason"], issues[0]))
+        for regression in facts.get("regressions", []):
+            if regression["tool"] == tool["name"]:
+                broken.setdefault(tool["name"], (regression["title"], regression["number"]))
+    return broken
+
+
 def row_levels(tool, registry_tools):
     """A map row's levels: its registry tools' levels, and 1 when it runs on the official API."""
     levels = set()
@@ -118,7 +157,9 @@ def plain(text):
 # ---------------------------------------------------------------- README block
 
 
-def readme_block(data, values):
+def readme_block(data, values, broken=None):
+    """The Tools tables; a tool in `broken` shows the Broken dot and its reason, linked to its issue (#436)."""
+    broken = broken or {}
     dots = {value.split(" ", 1)[1]: value.split(" ", 1)[0] for value in values}
     out = []
     for section in data["sections"]:
@@ -132,7 +173,15 @@ def readme_block(data, values):
             icon = (f'<p align="center"><img src="{tool["icon"]}" width="48" height="48" alt=""></p>'
                     if tool.get("icon") else "")
             note = f"<br><sub>{code(tool['note'])}</sub>" if tool.get("note") else ""
-            name = (f'<td align="center"><br>{icon}<sub><sup>{dots[tool["status"]]}</sup></sub>&nbsp;'
+            status = tool["status"]
+            if tool["name"] in broken:
+                reason, number = broken[tool["name"]]
+                status = BROKEN
+                if BROKEN not in dots:
+                    raise SystemExit(f"AGENTS.md: {tool['name']} is Broken, but the README Status values line has no "
+                                     f"`🔴 {BROKEN}`; add it there")
+                note += f'<br><sub>{BROKEN}: {esc(reason)} (<a href="{ISSUES}{number}">#{number}</a>)</sub>'
+            name = (f'<td align="center"><br>{icon}<sub><sup>{dots[status]}</sup></sub>&nbsp;'
                     f'<b>{esc(tool["name"])}</b><br><a href="{esc(tool["link"])}">{esc(tool["kind"])}</a>{note}<br><br></td>')
             items = "".join(
                 f"<li><b>{esc(f['name'])}</b>: {code(f['text'])}{' (planned)' if f.get('planned') else ''}</li>"
@@ -340,6 +389,9 @@ def data_problems(root, data):
     line in the tool map's data, where each item takes its own line (owner, 2026-11-26)."""
     problems = []
     for tool in data["tools"]:
+        if tool.get("status") == BROKEN:
+            problems.append(f"docs/tools.json: {tool['name']}: Broken comes from the firmware watch or a regression "
+                            "issue, never by hand; set the status the tool had before it broke")
         icon = tool.get("icon")
         if not icon or not (root / icon).is_file():
             problems.append(f"docs/tools.json: {tool['name']}: no icon file ({icon or 'no icon'}); draw it with scripts/icons.py")
@@ -397,7 +449,9 @@ def generate(root):
     counts, registry_tools = load_registry(root)
     readme = (root / "README.md").read_text(encoding="utf-8")
     readme = with_block(readme, credits_block(data["credits"]), CREDITS_START, CREDITS_END)
-    readme = with_block(readme, readme_block(data, values), TOOLS_START, TOOLS_END)
+    facts = json.loads((root / FACTS).read_text(encoding="utf-8"))
+    broken = broken_tools(data["tools"], facts, load_off(root))
+    readme = with_block(readme, readme_block(data, values, broken), TOOLS_START, TOOLS_END)
     readme = with_block(readme, map_block(data, registry_tools), MAP_START, MAP_END)
     readme = with_block(readme, levels_block(levels, rule, counts), LEVELS_START, LEVELS_END)
     return {"README.md": readme}

@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.dont_write_bytecode = True  # no __pycache__ beside the root scripts, which no gate rule names
@@ -17,7 +18,7 @@ SCRIPT = ROOT / "scripts/readme_figures.py"
 
 def copy_inputs(target):
     """A throwaway root holding only what the generator reads, and the README it writes into."""
-    for rel in ("AGENTS.md", "README.md", "docs/tools.json", "docs/architecture.md", "registry/items",
+    for rel in ("AGENTS.md", "README.md", "docs/tools.json", "docs/tool-facts.json", "docs/architecture.md", "registry/items",
                 "design/icons/readme", "design/icons/apps"):
         source, dest = ROOT / rel, target / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +88,24 @@ class Drift(unittest.TestCase):
         self.assertEqual(check(self.tmp).returncode, 1)
         subprocess.run([sys.executable, "-B", str(SCRIPT), "--root", str(self.tmp)], check=True)
         self.assertEqual(check(self.tmp).returncode, 0)
+
+    def test_a_broken_tool_with_a_stable_release_is_never_lowered_to_working(self):
+        self.edit_json("registry/items/pen.json", lambda data: data["items"][1].update(
+            off={"reason": "The pen menu does not open.", "review": "2099-01-01"}, issues=[901]))
+        self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="Working"))
+        with self.assertRaises(SystemExit) as stop:  # no Broken value in AGENTS.md yet: a plain stop
+            readme_figures.generate(self.tmp)
+        self.assertIn("has no `🔴 Broken`", str(stop.exception))
+        agents = self.tmp / "AGENTS.md"
+        agents.write_text(agents.read_text(encoding="utf-8").replace("`🟣 Internal`.", "`🟣 Internal`, `🔴 Broken`."),
+                          encoding="utf-8")
+        with mock.patch.object(readme_figures, "release_tags", lambda root, prefix: [f"{prefix}-v1.0.0"] if prefix == "smart-pen" else []):
+            readme = readme_figures.generate(self.tmp)["README.md"]
+        self.assertIn("<sub><sup>🔴</sup></sub>&nbsp;<b>Smart Pen</b>", readme)
+
+    def test_a_broken_status_typed_by_hand_fails(self):
+        self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="Broken"))
+        self.assert_fails("Broken comes from the firmware watch or a regression issue, never by hand")
 
 
 class Pieces(unittest.TestCase):
@@ -199,6 +218,32 @@ class Pieces(unittest.TestCase):
                                  "- [b/idea](https://github.com/b/idea): one plugin."])  # owner, #429
         self.assertIn("Licences are in NOTICE.md.", lines)
         self.assertFalse([line for line in lines if "|" in line or line.startswith("###")])
+
+    def test_a_broken_watch_result_turns_a_tool_broken_and_back(self):
+        tools = [{"name": "Pen", "status": "Working", "map": {"registry": ["smart-pen"]}},
+                 {"name": "Lab", "status": "In progress", "map": {"registry": ["smart-pen"]}}]
+        off = [({"smart-pen"}, {"reason": "The pen menu does not open.", "review": "2026-12-01"}, [901], "pen.menu")]
+        self.assertEqual(readme_figures.broken_tools(tools, {}, off), {"Pen": ("The pen menu does not open.", 901)})
+        self.assertEqual(readme_figures.broken_tools(tools, {}, []), {})  # the switch back on: Working again
+
+    def test_an_open_regression_issue_turns_its_tool_broken(self):
+        tools = [{"name": "Pen", "status": "Beta"}, {"name": "Help", "status": "Internal"}]
+        facts = {"regressions": [{"number": 7, "title": "Pen draws nothing", "tool": "Pen"},
+                                 {"number": 8, "title": "Help fails", "tool": "Help"}]}
+        self.assertEqual(readme_figures.broken_tools(tools, facts, []), {"Pen": ("Pen draws nothing", 7)})
+
+    def test_an_off_item_with_no_issue_stops_the_generation(self):
+        tools = [{"name": "Pen", "status": "Working", "map": {"registry": ["smart-pen"]}}]
+        with self.assertRaises(SystemExit):
+            readme_figures.broken_tools(tools, {}, [({"smart-pen"}, {"reason": "x", "review": "2026-12-01"}, [], "pen.a")])
+
+    def test_a_broken_tool_shows_the_broken_dot_reason_and_issue(self):
+        data = {"sections": [{"id": "tools", "title": "Tools", "intro": ""}],
+                "tools": [{"name": "Pen", "section": "tools", "status": "Working", "kind": "plugin", "link": "x",
+                           "features": []}]}
+        block = readme_figures.readme_block(data, ["🟢 Working", "🔴 Broken"], {"Pen": ("It fails", 9)})
+        self.assertIn("<sub><sup>🔴</sup></sub>&nbsp;<b>Pen</b>", block)
+        self.assertIn('Broken: It fails (<a href="https://github.com/martonpaulo/ink-tools/issues/9">#9</a>)', block)
 
     def test_a_status_behind_its_releases_fails(self):
         tools = [{"name": "Pen", "status": "Beta", "link": "https://x/releases?q=pen&expanded=true"},

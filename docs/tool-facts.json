@@ -1,0 +1,4 @@
+{
+  "about": "Written by scripts/tool_facts.py from GitHub; never edit it by hand. regressions: each open issue labelled regression whose title names a tool, which turns that released tool Broken (#436).",
+  "regressions": []
+}
