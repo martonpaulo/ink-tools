@@ -135,7 +135,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.12` gives the `versionName` `0.1.0 beta 12` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.13` gives the `versionName` `0.1.0 beta 13` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.
