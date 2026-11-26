@@ -467,6 +467,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   right after it answered `904 No lasso action has been performed` [measured, Lasso Actions 0.2.0
   beta 33, Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings lassoes the title's strokes again by their rect before it moves
   them; whether that lasso keeps the title is [unverified].
+- `resizeLassoRect` keeps the lasso on the moved strokes, and `setLassoTitle` then makes them a
+  title where they are; `getLassoRect` right after the move still answered the box before it
+  [measured, Ink Tools Probe 0.0.2 beta 14 and Lasso Actions 0.2.0 beta 33, Manta, 2026-11-26,
+  [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings now moves first and titles after, with no second lasso.
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
@@ -484,6 +488,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     «pasted» state. In that state `getLassoRect` answers 904 in the same sidebar press and the
     local rect `{0, 0, 180, 180}` from a lasso row; `resizeLasso` to a page rect then moves the
     piece exactly there (38 ms).
+  - `insertSticker` answers before NOTE lassoes the pasted piece: NOTE logged the piece's lasso
+    about 250 ms after the answer, and a `resizeLassoRect` sent 6 ms after it answered 904, with
+    the plugin view closed [measured, Lasso Actions 0.2.0 beta 33, Manta, 2026-11-26,
+    [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. Paste Collection asks the move again until it is taken.
   - Back while a pasted piece is still selected drops it from the page. What commits a paste is
     [unverified].
   - A rect lasso takes every stroke inside the rect, ink already on the page included.

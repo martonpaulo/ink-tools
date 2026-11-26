@@ -201,6 +201,7 @@ const COLLECTION_HOST: CollectionHost = {
   closeView: () => answer(true),
   resize: () => answer(true),
   select: () => answer(true),
+  wait: async () => {},
   ask: () => answer(true),
   toast: noop,
   log: noop,

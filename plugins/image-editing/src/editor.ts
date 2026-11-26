@@ -20,6 +20,7 @@ import {
   getLassoElements,
   lassoElements,
   lassoImage,
+  NO_LASSO_CODE,
   PenPoint,
   recycleElement,
   Result,
@@ -236,11 +237,6 @@ const describe = (what: string, r: {code: number; message: string}) =>
 
 /** No element is lassoed (#248). */
 const NO_LASSO = 'no lasso';
-/**
- * `getLassoElements`' code with no lasso: «No lasso action has been performed» (measured, Manta,
- * 2026-11-25, #248; docs/supernote.md › Plugins).
- */
-export const NO_LASSO_CODE = 904;
 
 /** The picture the lasso holds, and whether pen marks came with it, or the reason it is not one. */
 async function readLasso(

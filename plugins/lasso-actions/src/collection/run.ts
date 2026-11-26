@@ -13,6 +13,7 @@ import {
   getLassoRect,
   insertSticker,
   lassoElements,
+  NO_LASSO_CODE,
   resizeLassoRect,
   Result,
   saveStickerByLasso,
@@ -44,6 +45,8 @@ export type CollectionHost = {
   select: (rect: Rect) => Promise<Result<boolean>>;
   /** Closes the plugin view, so the note is in front while the pieces go in. */
   closeView: () => Promise<Result<boolean>>;
+  /** Resolves after `ms` milliseconds. */
+  wait: (ms: number) => Promise<void>;
   /** Asks `question` in the host's confirm dialog; true only for `action`. */
   ask: (question: string, action: string, cancel: string) => Promise<Result<boolean>>;
   toast: (text: string) => void;
@@ -68,6 +71,28 @@ export type CollectionFailure =
   | 'clear';
 
 const done = (result: Result<boolean>) => result.ok && result.value;
+
+/**
+ * `insertSticker` answers before NOTE lassoes the pasted piece: about 250 ms later on the Manta
+ * (device round 9, #249), and a `resizeLassoRect` in between answers 904. The move is asked again
+ * every step, up to the number of steps (2 s in all), until it is taken.
+ */
+export const PASTE_SETTLE_STEP_MS = 50;
+export const PASTE_SETTLE_STEPS = 40;
+
+/** Moves the piece just pasted to `rect`, once NOTE has lassoed it. */
+async function movePasted(host: CollectionHost, rect: Rect): Promise<Result<boolean>> {
+  let moved = await host.resize(rect);
+  for (
+    let step = 0;
+    !moved.ok && moved.code === NO_LASSO_CODE && step < PASTE_SETTLE_STEPS;
+    step += 1
+  ) {
+    await host.wait(PASTE_SETTLE_STEP_MS);
+    moved = await host.resize(rect);
+  }
+  return moved;
+}
 
 type Listed = {dir: string; pieces: (Piece & {name: string})[]};
 
@@ -154,7 +179,7 @@ export async function addToCollection(
  * round 6) and the paste stopped after piece 1 with `answered false` once it was lassoed again at
  * the page centre (device round 7). From a lasso row, with no view in front, `resizeLassoRect`
  * right after `insertSticker` moved the piece exactly (docs/supernote.md, #249), so the paste
- * runs that way. Whether closing the view is enough is the next device round's check.
+ * runs that way, asking the move again until NOTE has lassoed the piece (`movePasted`).
  */
 export async function pasteCollection(
   host: CollectionHost,
@@ -185,7 +210,7 @@ export async function pasteCollection(
       host.log(`${tag}: ${piece.name}: insertSticker ${whyNot(inserted)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));
     }
-    const moved = await host.resize(placed.targets[index]);
+    const moved = await movePasted(host, placed.targets[index]);
     if (!done(moved)) {
       host.log(`${tag}: ${piece.name}: resizeLassoRect ${whyNot(moved)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));
@@ -282,6 +307,7 @@ export const DEVICE_HOST: CollectionHost = {
   resize: resizeLassoRect,
   select: lassoElements,
   closeView: closePluginView,
+  wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
   ask: confirm,
   toast: showToast,
   log: lookupLog,

@@ -6,6 +6,12 @@ import type {Rect} from '@ink-tools/ink-core';
 
 export type {Rect};
 
+/**
+ * The host's answer to a lasso call while no lasso is on the page: «No lasso action has been
+ * performed. Cannot call the API!» (measured, Manta, 2026-11-25, #248; docs/supernote.md).
+ */
+export const NO_LASSO_CODE = 904;
+
 /** Read before anything else: lasso context is ephemeral (brief section 4.8). */
 export function getLassoElements(): Promise<Result<object[]>> {
   return attempt(() => PluginCommAPI.getLassoElements());

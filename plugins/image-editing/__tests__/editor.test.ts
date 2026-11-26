@@ -1,6 +1,7 @@
 /** The editor view's actions (#226): open on the lassoed picture, run each edit, draw, close. */
 import {
   fail,
+  NO_LASSO_CODE,
   ok,
   PICTURE_TYPE,
   STROKE_TYPE,
@@ -20,7 +21,6 @@ import {
   EditorDeps,
   editorState,
   finishErase,
-  NO_LASSO_CODE,
   onEditorState,
   openEditor,
   resetEditorForTests,
