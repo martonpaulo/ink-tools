@@ -129,8 +129,10 @@ Crops: Language & Region, `553, 133, 1367, 410`; Keyboard, `553, 133, 1367, 920`
 
 - Height: 162 px (`dp_px_139`, `rowHeight`) with one or two lines of text, then the line under it.
 - Side margins: the text starts 51 px after the pane's edge, and the line and the trailing
-  control end 51 px before the other edge (`dp_px_44`, `sideMargin`). Handwriting Recognition
-  Language ends them 79 px before it; Ink Tools adopts 51 px.
+  control end 51 px before the other edge (`dp_px_44`, `sideMargin`). A list of radio rows,
+  Handwriting Recognition Language, ends them 79 px before it (`radioListTrailingMargin`), as
+  device round 9's look check measured again; ui-kit's `ChoiceList` ends there and a render rule
+  checks it ([#299](https://github.com/martonpaulo/ink-tools/issues/299)).
 - A value at the trailing edge, «English ›»: `subtitle`, black, 26 px before the › (`markGap`).
 - A two-line title (Handwriting Recognition Language) keeps the 162 px height.
 

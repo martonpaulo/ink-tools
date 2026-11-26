@@ -87,6 +87,11 @@ export function measurePage() {
     .filter(shown)
     .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect())}));
 
+  // ui-kit's list of radio rows, by its RADIO_LIST_ID (#299).
+  const radioLists = [...document.querySelectorAll('[data-kind="radio-list"]')]
+    .filter(shown)
+    .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect())}));
+
   const bars = [...document.querySelectorAll(BAR)]
     .filter(shown)
     .map(el => ({name: 'the title bar', box: boxOf(el.getBoundingClientRect())}));
@@ -140,5 +145,5 @@ export function measurePage() {
         bar: inBar(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions, radioLists};
 }

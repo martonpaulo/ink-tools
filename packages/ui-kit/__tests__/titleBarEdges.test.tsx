@@ -36,7 +36,7 @@ describe('barBreaks (#309)', () => {
       box: {left: 0, top: 0, right: metrics.touchTarget, bottom: metrics.titleBarHeight},
       bar: true,
     };
-    const measured: Measured = {screen: SCREEN, targets: [close], texts: [], scrolls: [], bars: [bar(FULL)], rows: [], captions: []};
+    const measured: Measured = {screen: SCREEN, targets: [close], texts: [], scrolls: [], bars: [bar(FULL)], rows: [], captions: [], radioLists: []};
     expect(breaksOf(measured, metrics)).toEqual([]);
     expect(breaksOf({...measured, targets: [{...close, bar: false}]}, metrics)).toEqual([
       '«Close» reaches into the screen padding',

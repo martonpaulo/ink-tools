@@ -60,6 +60,8 @@ export const metrics = {
   rowHeight: mm(MM.rowHeight.value),
   /** From a pane's edge to a row's text, and from a row's last control to the other edge (#272). */
   sideMargin,
+  /** On a list of radio rows, from the ring and the lines to the other edge, as native (#299). */
+  radioListTrailingMargin: mm(MM.radioListTrailingMargin.value),
   /** A section caption's box, its text at the bottom (#272). */
   captionHeight: mm(MM.captionHeight.value),
   /** Between the tiles of the results grid. */

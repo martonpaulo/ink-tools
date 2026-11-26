@@ -25,6 +25,7 @@ const NATIVE: Native = {
   textSizes: [...new Set([...Object.values(textStyles).map(style => style.fontSize), metrics.fontTitle, metrics.fontLarge])],
   rowHeight: metrics.rowHeight,
   screenPadding: metrics.screenPadding,
+  radioListTrailingMargin: metrics.radioListTrailingMargin,
   actionSpread: metrics.rowHeight,
 };
 

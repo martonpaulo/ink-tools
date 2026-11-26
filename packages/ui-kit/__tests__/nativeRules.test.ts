@@ -6,7 +6,7 @@
 import {Measured, Native, nativeBreaks} from '../renders/rules';
 
 const SCREEN = {left: 0, top: 0, right: 1000, bottom: 1400};
-const NATIVE: Native = {textSizes: [19, 21], rowHeight: 86, screenPadding: 27, actionSpread: 86};
+const NATIVE: Native = {textSizes: [19, 21], rowHeight: 86, screenPadding: 27, radioListTrailingMargin: 42, actionSpread: 86};
 const box = (left: number, top: number, right: number, bottom: number) => ({left, top, right, bottom});
 const target = (name: string, kind: string, b: ReturnType<typeof box>, inRow = false) => ({
   name,
@@ -24,6 +24,7 @@ const page = (extra: Partial<Measured>): Measured => ({
   bars: [],
   rows: [],
   captions: [],
+  radioLists: [],
   ...extra,
 });
 
@@ -115,5 +116,19 @@ describe('nativeBreaks (#411)', () => {
       const status = {name: 's', text: 'Loading…', fontSize: 19, glyphs: box(27, 98, 300, 120), within: []};
       expect(nativeBreaks(page({bars: [bar], captions: [caption(140)], texts: [status]}), NATIVE)).toEqual([]);
     });
+  });
+});
+
+describe('the radio list\'s trailing margin (#299)', () => {
+  // Round 9's look check: the native Handwriting Recognition Language ends its radio rows 79 px
+  // from the edge, ours 51 px, the margin of every other row.
+  it('passes a radio list that ends at the native radio list margin', () => {
+    expect(nativeBreaks(page({radioLists: [{name: 'Language', box: box(27, 200, 958, 600)}]}), NATIVE)).toEqual([]);
+  });
+
+  it('fails a radio list that ends at the side margin of other rows', () => {
+    expect(nativeBreaks(page({radioLists: [{name: 'Language', box: box(27, 200, 973, 600)}]}), NATIVE)).toEqual([
+      'radio list «Language» ends 27 from the edge, not the native 42',
+    ]);
   });
 });

@@ -161,7 +161,13 @@ export type ChoiceListProps<V> = {
   note?: string;
 };
 
-/** One value out of several; each radio speaks «<title>: <value>». */
+/** The `nativeID` of a list of radio rows, which the render rules find it by (#299). */
+export const RADIO_LIST_ID = 'radio-list';
+
+/**
+ * One value out of several; each radio speaks «<title>: <value>». The list ends further from the
+ * screen's edge than other rows, as the native list of radio rows does (#299).
+ */
 export function ChoiceList<V>({
   title,
   choices,
@@ -170,26 +176,29 @@ export function ChoiceList<V>({
   note,
 }: ChoiceListProps<V>): React.JSX.Element {
   return (
-    <RowGroup caption={title} note={note}>
-      {choices.map(choice => (
-        <ListRow
-          key={choice.label}
-          title={choice.label}
-          trailing={
-            <Radio
-              checked={choice.value === value}
-              accessibilityLabel={`${title}: ${choice.label}`}
-              onPress={() => onChange(choice.value)}
-            />
-          }
-        />
-      ))}
-    </RowGroup>
+    <View nativeID={RADIO_LIST_ID} style={styles.radioList}>
+      <RowGroup caption={title} note={note}>
+        {choices.map(choice => (
+          <ListRow
+            key={choice.label}
+            title={choice.label}
+            trailing={
+              <Radio
+                checked={choice.value === value}
+                accessibilityLabel={`${title}: ${choice.label}`}
+                onPress={() => onChange(choice.value)}
+              />
+            }
+          />
+        ))}
+      </RowGroup>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   group: {marginBottom: metrics.sectionGap},
+  radioList: {marginRight: metrics.radioListTrailingMargin - metrics.sideMargin},
   separator: {height: metrics.separator, backgroundColor: metrics.ink},
   lightBox: {height: metrics.lightLine, overflow: 'hidden'},
   lightDashes: {

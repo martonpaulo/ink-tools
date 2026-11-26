@@ -34,7 +34,7 @@ export {IconButton} from './IconButton';
 export {CODE_BLOCK_ID, CodeBlock, copyToClipboard} from './CodeBlock';
 export type {CodeBlockProps} from './CodeBlock';
 // The two setting shapes built from them (#274).
-export {ActionRow, ChoiceList, RowGroup, SwitchGroup, SwitchRow} from './SettingRows';
+export {ActionRow, ChoiceList, RADIO_LIST_ID, RowGroup, SwitchGroup, SwitchRow} from './SettingRows';
 export type {ActionRowProps, Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';
 export type {IconButtonProps, IconKind} from './IconButton';
 export type {ErrorViewProps, NeedsProps} from './ProblemView';

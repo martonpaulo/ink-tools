@@ -58,6 +58,8 @@ export type Measured = {
   rows: {name: string; box: Box}[];
   /** Every visible section caption's box, ui-kit's `SECTION_CAPTION_ID` (#416). */
   captions: {name: string; box: Box}[];
+  /** Every visible list of radio rows, ui-kit's `RADIO_LIST_ID` (#299). */
+  radioLists: {name: string; box: Box}[];
 };
 
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
@@ -206,6 +208,8 @@ export type Native = {
   textSizes: number[];
   rowHeight: number;
   screenPadding: number;
+  /** On a list of radio rows, from its end to the screen's other edge (#299). */
+  radioListTrailingMargin: number;
   /** The height two screen-level actions stay within, so they read as one place. */
   actionSpread: number;
 };
@@ -217,7 +221,8 @@ const SCREEN_ACTIONS = ['button-primary', 'button-destructive', 'bar-action'];
  * The native Settings rules a screen keeps (#411): one button hierarchy, where only a destructive
  * button spans the width, a row action sits in a row and a row holds no other button; the
  * screen-level actions in one place; text only in a native role's size; each list row at the
- * native height, starting at the native inset; and a caption that is the first part under the title
+ * native height, starting at the native inset; a list of radio rows ending at the native radio
+ * list's trailing margin (#299); and a caption that is the first part under the title
  * bar starts its box at the bar's bottom line (#416).
  */
 export function nativeBreaks(measured: Measured, native: Native): string[] {
@@ -261,6 +266,14 @@ export function nativeBreaks(measured: Measured, native: Native): string[] {
     }
     if (Math.abs(row.box.left - (screen.left + native.screenPadding)) > TOLERANCE) {
       found.push(`row «${row.name.slice(0, 40)}» starts off the native inset ${native.screenPadding}`);
+    }
+  }
+  for (const list of measured.radioLists) {
+    const margin = screen.right - list.box.right;
+    if (Math.abs(margin - native.radioListTrailingMargin) > TOLERANCE) {
+      found.push(
+        `radio list «${list.name.slice(0, 40)}» ends ${margin} from the edge, not the native ${native.radioListTrailingMargin}`,
+      );
     }
   }
   found.push(...firstCaptionBreaks(measured));
