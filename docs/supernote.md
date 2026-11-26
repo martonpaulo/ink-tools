@@ -547,7 +547,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   after `am force-stop com.ratta.supernote.pluginhost` the next installs answered `updated:`
   [measured, Manta, bridge 0.1.0 beta 2, 2026-11-17,
   [#225](https://github.com/martonpaulo/ink-tools/issues/225)]. Why the thread keeps the other id
-  is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`.
+  is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`. In device
+  round 5 (Manta, 2026-11-26) an install answered error 100 while another plugin's view was open,
+  so `inkctl plugin install` refuses while the screen holds a window of the host's package
+  ([#418](https://github.com/martonpaulo/ink-tools/issues/418)).
 - After an install PluginHost restarts, and its plugin list gives an empty answer until it is back:
   a landed install then failed its read-back on 2 of 2 tries [measured, Manta, device round 5,
   2026-11-26]; the install's reads wait for an answer up to `--timeout`

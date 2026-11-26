@@ -142,6 +142,7 @@ REGISTRY_ITEMS = (
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
     {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java"},
     {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
+    {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "inktools-bridge", "probe": "inktools-bridge ping", "unprobed": None, "active": "inktools-bridge HostCalls.java"},
     {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inktools-bridge Command.java"},
     {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
     {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
@@ -199,6 +200,15 @@ REGISTRY = {
     "pluginhost.plugin-list": {
         "authority": "com.ratta.supernote.pluginhost",
         "path": "plugins",
+    },
+    "pluginhost.setting-service": {
+        "hostPackage": "com.ratta.supernote.pluginhost",
+        "service": "com.ratta.supernote.pluginhost.services.PluginSettingService",
+        "descriptor": "com.ratta.supernote.plugincorelib.IPluginSetting",
+        "callbackPackage": "com.ratta.supernote.plugincorelib.callback.",
+        "installCallback": "IPluginInstallCallback",
+        "setCallback": "IPluginSetCallback",
+        "uninstallCallback": "IPluginUninstallCallback",
     },
     "pluginhost.permission-status": {
         "always": 2,
@@ -497,6 +507,9 @@ NOTE_MODE_NORMAL = REGISTRY["note.activity"]["normalMode"]
 PLUGIN_SUFFIX = ".snplg"
 PLUGIN_FOLDER = REGISTRY["pluginhost.file-sandbox"]["sharedFolder"]
 PLUGIN_URI = f"content://{REGISTRY['pluginhost.plugin-list']['authority']}/{REGISTRY['pluginhost.plugin-list']['path']}"
+# A plugin view is a window of the host's package; an install while one shows answers error 100 (#418).
+PLUGIN_VIEW_MARK = f'package="{REGISTRY["pluginhost.setting-service"]["hostPackage"]}"'
+PLUGIN_VIEW_OPEN = "a plugin view is open on the tablet, and PluginHost refuses an install while one shows (error 100): close it with its own close button, then run the install again"
 # After an install PluginHost restarts, and its plugin list answers nothing until it is back (#419).
 PLUGIN_LIST_RESTARTING = "the plugin list gave no answer for {limit:g} s: PluginHost restarts after an install; run inkctl plugin list once it answers"
 CONTENT_QUERY = "content query --uri"
@@ -2702,6 +2715,15 @@ def settled_plugin_rows(device: Device, limit: float) -> list[dict]:
         time.sleep(WAIT_INTERVAL)
 
 
+def plugin_view_shown(device: Device) -> bool:
+    """True when the screen holds a plugin view, a window of the host's package (#418). A screen
+    that does not settle counts as none: the install's own answer then says what happened."""
+    for _ in range(DUMP_ATTEMPTS):
+        dump = device.adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
+        if IDLE_ERROR not in dump:
+            return PLUGIN_VIEW_MARK in dump
+    return False
+
 
 def shown_plugin_names(row: dict) -> list[str]:
     """The names a plugin shows, one for each language."""
@@ -3117,6 +3139,8 @@ def command_plugin_action(device: Device, args: argparse.Namespace):
 def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
+    if plugin_view_shown(device):
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", PLUGIN_VIEW_OPEN)
     installed = [row for row in settled_plugin_rows(device, args.timeout) if row.get("pluginID") == config["id"]]
     same = bool(installed) and same_build(installed[0], config, installed[0].get("versionName"))
     if same and not args.same_version:

@@ -117,7 +117,8 @@
       "impact": "tests",
       "owner": "inktools-bridge",
       "readers": [
-        "inktools-bridge"
+        "inktools-bridge",
+        "inkctl"
       ],
       "reason": "no public API installs, enables or permits a plugin; the service is the only route without the screen",
       "evidence": {
@@ -133,7 +134,8 @@
       },
       "active": "inktools-bridge HostCalls.java",
       "issues": [
-        215
+        215,
+        418
       ],
       "values": {
         "hostPackage": "com.ratta.supernote.pluginhost",
