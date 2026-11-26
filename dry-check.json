@@ -12,6 +12,7 @@
    "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java",
    "packages/picture-search/native/com/inktools/files/Registry.java",
    "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java",
+   "plugins/plugin-diagnostics/native/src/com/probe/providers/Registry.java",
    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift"
   ],
   "counts": {

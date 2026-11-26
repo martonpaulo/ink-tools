@@ -131,8 +131,10 @@ does for its sources):
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
   ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). It reads inkctl too, for the provider and
   service-host rules; inkctl's existing names are counts that only go down
-  ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). `plugins/plugin-diagnostics` is exempt: it
-  exists to call internals directly.
+  ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). `plugins/plugin-diagnostics` is exempt from
+  the SDK and service rules, since it exists to call internals directly, but names each internal it
+  probes only through its registry readers, as every tool does
+  ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
 - **The highest dependency level that serves.** As with high-level and low-level languages,
   level 1 is the highest and level 5 the lowest. Use the highest level that delivers the outcome at
   acceptable cost and quality (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). The levels, from the highest to the lowest and so the most fragile: 1, the

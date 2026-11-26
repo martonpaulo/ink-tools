@@ -32,7 +32,8 @@ line, #295) is read for `vendor`, `service` and `dictionary`. The values inkctl 
 this landed are `PENDING_HOST` counts, which #295's value moves lower: a count above its row names
 each line, and a count below it is a finding too, so the counts only go down.
 
-`plugins/plugin-diagnostics/` is exempt from every rule but `url`: it exists to call the internals directly. Only code is
+`plugins/plugin-diagnostics/` is exempt from every rule but `url` and `vendor`: it exists to call the SDK
+directly, and reads the internals it probes through its readers like every tool (#294). Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java`, `.kt` and `.swift` for `vendor`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
@@ -190,12 +191,10 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
         exempt = rel.startswith(EXEMPT)
         test = is_test(rel)
         if suffix in SWIFT:
-            if not exempt and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:
+            if not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:
                 found += vendor_findings(rel, (root / rel).read_text(encoding="utf-8", errors="replace").splitlines())
             continue
         tablet = suffix in SCRIPT and not test and bool(TABLET.match(rel))
-        if exempt and not tablet:
-            continue
         lines = (root / rel).read_text(encoding="utf-8", errors="replace").splitlines()
         if suffix in SCRIPT and not test and not exempt and PLUGIN_VIEW.match(rel):
             controls = own_controls(rel, lines)
@@ -208,6 +207,8 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
                 continue
             if tablet and URL_USE.search(line):
                 found.append((rel, number, "url", "uses React Native's URL, whose getters throw; take parseUrl of sync-core"))
+            if VENDOR.search(line) and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:
+                found.append((rel, number, "vendor", VENDOR_TEXT % VENDOR.search(line).group(0).strip(" /'\"(")))
             if exempt:
                 continue
             if suffix in SCRIPT:
@@ -220,8 +221,6 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
                     found.append((rel, number, "service", "names the service host %s outside sync-core" % HOST.search(line).group(0)))
                 if DICTIONARY_HOST.search(line) and not test and not rel.startswith("packages/ink-core/src/"):
                     found.append((rel, number, "dictionary", "names the dictionary host wiktionary.org outside ink-core"))
-            if VENDOR.search(line) and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:
-                found.append((rel, number, "vendor", VENDOR_TEXT % VENDOR.search(line).group(0).strip(" /'\"(")))
     found += host_ratchet(host, pending_host)
     for rel in sorted(pending - drawn):
         found.append((rel, 0, "controls", "draws no control of its own any more; remove it from PENDING_CONTROLS"))

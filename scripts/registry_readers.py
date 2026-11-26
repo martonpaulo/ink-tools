@@ -45,6 +45,8 @@ READERS = (
            ("picture-search",), package="com.inktools.files"),
     Reader("java", "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java",
            ("inktools-bridge",), package="com.martonpaulo.inktools.bridge"),
+    Reader("java", "plugins/plugin-diagnostics/native/src/com/probe/providers/Registry.java",
+           ("plugin-diagnostics",), package="com.probe.providers"),
     Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True),
     Reader("swift", "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift",
            ("ink-notebook-editor",)),

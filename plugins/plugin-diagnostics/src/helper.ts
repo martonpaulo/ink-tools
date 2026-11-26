@@ -5,10 +5,17 @@
  * The CLI owns every rule (text to strokes, rect arithmetic, refusals); this side only executes.
  */
 
-/** Where inkctl pushes the command; `cli/inkctl/src/inkctl` names the same path. */
-export const COMMAND_PATH = '/storage/emulated/0/MyStyle/Probe/command.json';
+import {REGISTRY} from '@ink-tools/sn-adapter/registry';
+
+/** Registry item storage.helper-channel, which inkctl reads too (#294). */
+const CHANNEL = REGISTRY.storageHelperChannel;
+
+/** The only folder a command may name a file in: inkctl's own folder (`MyStyle/Probe/`). */
+export const PROBE_FOLDER = `${CHANNEL.folder}/`;
+/** Where inkctl pushes the command; `cli/inkctl/src/inkctl` reads the same registry item. */
+export const COMMAND_PATH = `${PROBE_FOLDER}${CHANNEL.commandFile}`;
 /** Every answer line starts with this, then the command id, the chunk number and the count. */
-export const ANSWER_MARK = 'SNPROBE answer';
+export const ANSWER_MARK = CHANNEL.answerMark;
 /** The id of an answer whose command carries none it could read. */
 export const UNKNOWN_ID = 'unknown';
 /** A logcat line holds about 4 KB; a longer answer goes in chunks of this many characters. */
@@ -20,8 +27,6 @@ export const PAGE_HEIGHT = 2560;
 export const LASSO_MARGIN = 8;
 /** At most this many points in one command, so one press stays within a few seconds. */
 export const MAX_POINTS = 5000;
-/** The only folder a command may name a file in: inkctl's own folder (`MyStyle/Probe/`). */
-export const PROBE_FOLDER = '/storage/emulated/0/MyStyle/Probe/';
 /** Where `renderPage` writes the page's PNG for inkctl to pull (#261). */
 export const RENDER_PATH = `${PROBE_FOLDER}page.png`;
 /** A text box's text, and its font size in page pixels, kept to what one press needs. */

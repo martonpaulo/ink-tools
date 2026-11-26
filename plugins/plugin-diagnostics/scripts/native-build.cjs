@@ -24,7 +24,8 @@ module.exports = defineBuild(
       jvmTests({
         prefix: 'probe',
         files: [
-          ...TESTED.map(name => path.join(root, `native/src/com/probe/providers/${name}.java`)),
+          // Registry.java: the reader scripts/registry.py writes for this plugin (#294).
+          ...[...TESTED, 'Registry'].map(name => path.join(root, `native/src/com/probe/providers/${name}.java`)),
           ...['DryInsertRevert', 'InsertAnswer'].map(name =>
             path.join(adapter.nativeSources, `com/inktools/provider/${name}.java`),
           ),

@@ -8,8 +8,10 @@ import java.util.Map;
 
 /**
  * The providers the probe tries (#59): the Digest (Knowledge) provider under test and two
- * known-open providers as controls. The URIs and marker columns come from the sn-adapter
- * descriptor (packages/sn-adapter/src/internals/descriptor.json); keep the two in step.
+ * known-open providers as controls. The URIs come from the registry of internals through {@link
+ * Registry}, which scripts/registry.py writes (#294): the provider items' authorities and tables,
+ * and the Digest paths and marker column of diagnostics.provider-probes. The columns still mirror
+ * the sn-adapter descriptor, which ProbeTargetsTest keeps them equal to.
  */
 public final class ProbeTargets {
   /** Written into a dry insert and the only row the revert may delete. */
@@ -119,24 +121,29 @@ public final class ProbeTargets {
     return row;
   }
 
+  /**
+   * A Digest provider URI: its root for an empty path, else the path under the root. The root is the
+   * registry's knowledge table URI without its one-part table path, so the URI scheme keeps one owner.
+   */
+  static String digestUri(String path) {
+    String table = Registry.DigestProvider.KNOWLEDGE_URI;
+    String root = table.substring(0, table.lastIndexOf('/'));
+    return path.isEmpty() ? root : root + "/" + path;
+  }
+
   private static final List<Target> ALL =
       Collections.unmodifiableList(
           Arrays.asList(
-              new Target("digest-root", "content://com.ratta.supernote.knowledge.provider", "", false),
               new Target(
-                  "digest", "content://com.ratta.supernote.knowledge.provider/digest", "digest_content", true),
+                  "digest-root", digestUri(Registry.DiagnosticsProviderProbes.DIGEST_ROOT_PATH), "", false),
               new Target(
-                  "control-task",
-                  "content://com.ratta.supernote.task.provider/tasks_table",
-                  "title",
-                  true,
-                  Kind.TASK),
+                  "digest",
+                  digestUri(Registry.DiagnosticsProviderProbes.DIGEST_PATH),
+                  Registry.DiagnosticsProviderProbes.DIGEST_MARKER_COLUMN,
+                  true),
+              new Target("control-task", Registry.TodoProvider.TASKS_URI, "title", true, Kind.TASK),
               new Target(
-                  "control-calendar",
-                  "content://com.ratta.supernote.calendar.provider/data_info",
-                  "title",
-                  true,
-                  Kind.CALENDAR)));
+                  "control-calendar", Registry.CalendarProvider.EVENTS_URI, "title", true, Kind.CALENDAR)));
 
   private ProbeTargets() {}
 

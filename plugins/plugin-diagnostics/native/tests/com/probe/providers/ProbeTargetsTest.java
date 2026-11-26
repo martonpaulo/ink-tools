@@ -30,6 +30,7 @@ public final class ProbeTargetsTest {
     calendarRevertCancelsLikeAccountSync();
     taskRowFillsTheDescriptorColumns();
     rowKeyIsTheDescriptors();
+    urisAreTheRegistrys();
     System.out.println("ProbeTargetsTest ok");
   }
 
@@ -77,6 +78,20 @@ public final class ProbeTargetsTest {
       }
       check(found > 0, part[0] + " maps a rowId field");
     }
+  }
+
+  /** #294: every target URI is the registry's, through the generated reader, and the descriptor's authority. */
+  static void urisAreTheRegistrys() {
+    String json = descriptor();
+    check(target("control-calendar").uri.equals(Registry.CalendarProvider.EVENTS_URI), "the calendar URI is the registry's events table");
+    check(target("control-task").uri.equals(Registry.TodoProvider.TASKS_URI), "the task URI is the registry's tasks table");
+    check(target("digest").markerColumn.equals(Registry.DiagnosticsProviderProbes.DIGEST_MARKER_COLUMN), "the digest marker column is the registry's");
+    for (String authority :
+        new String[] {Registry.CalendarProvider.AUTHORITY, Registry.TodoProvider.AUTHORITY, Registry.DigestProvider.AUTHORITY}) {
+      check(json.contains("\"authority\": \"" + authority + "\""), "the descriptor names the authority " + authority);
+    }
+    check(target("digest-root").uri.endsWith(Registry.DigestProvider.AUTHORITY), "the digest root is the registry's authority");
+    check(ProbeCommandFile.FOLDER.equals(Registry.StorageHelperChannel.FOLDER), "the command folder is the registry's helper channel");
   }
 
   static Set<String> requiredOnInsert(String rules, String section) {

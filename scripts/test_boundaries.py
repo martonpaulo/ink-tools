@@ -34,12 +34,13 @@ class Boundaries(unittest.TestCase):
         }), [("plugins/a/index.js", "sdk"), ("plugins/a/src/b.ts", "sdk")])
 
     def test_a_vendor_name_only_in_the_registry(self):
-        # Allowed: a generated reader, the exempt Plugin Diagnostics, tests and comments (#294).
+        # Allowed: a generated reader, Plugin Diagnostics' own included, tests and comments (#294).
         self.assertEqual(self.tree({
             "packages/sn-adapter/src/registry.generated.ts": "  authority: 'com.ratta.supernote.task.provider',\n",
             "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java": "String A = \"com.ratta.supernote.pluginhost\";\n",
             "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift": "let a = \"com.ratta.supernote.note\"\n",
-            "plugins/plugin-diagnostics/native/src/P.java": "String a = \"com.ratta.supernote.task.provider\";\n",
+            "plugins/plugin-diagnostics/native/src/com/probe/providers/Registry.java": "String A = \"com.ratta.supernote.task.provider\";\n",
+            "plugins/plugin-diagnostics/native/tests/com/probe/providers/PTest.java": "String a = \"com.ratta.supernote.task.provider\";\n",
             "plugins/a/__tests__/a.test.ts": "expect(uri).toContain('com.ratta.supernote.task.provider');\n",
             "apps/x/Tests/XTests/A.swift": "let a = \"com.ratta.settings\"\n",
             "apps/x/Sources/X/B.swift": "// com.ratta.settings is only a comment here\n",
@@ -52,8 +53,12 @@ class Boundaries(unittest.TestCase):
             "apps/x/Sources/X/B.swift": "let folder = \"/sdcard/.data/dictionary\"\n",
             "cli/t/src/t": "#!/usr/bin/env python3\nCHANGED = \"hw_type_change\"\n",
             "packages/sn-adapter/src/internals/todo.ts": "const a = 'com.ratta.supernote.task.provider';\n",
+            # Plugin Diagnostics reads the internals it probes through its readers too (#294).
+            "plugins/plugin-diagnostics/native/src/P.java": "String a = \"com.ratta.supernote.task.provider\";\n",
+            "plugins/plugin-diagnostics/src/p.ts": "const uri = 'content://com.ratta.supernote.task.provider';\n",
         }), [("apps/x/Sources/X/B.swift", "vendor"), ("cli/t/src/t", "vendor"), ("packages/sn-adapter/src/internals/todo.ts", "vendor"),
-             ("plugins/a/native/src/F.java", "vendor"), ("plugins/a/src/a.ts", "vendor")])
+             ("plugins/a/native/src/F.java", "vendor"), ("plugins/a/src/a.ts", "vendor"),
+             ("plugins/plugin-diagnostics/native/src/P.java", "vendor"), ("plugins/plugin-diagnostics/src/p.ts", "vendor")])
 
     def test_service_clients_stay_in_sync_core(self):
         self.assertEqual(self.tree({

@@ -12,7 +12,8 @@ import java.nio.charset.StandardCharsets;
  * {@link #FOLDER}, inside PluginHost's whitelist (MyStyle), and at most {@link #MAX_BYTES}. Pure Java.
  */
 final class ProbeCommandFile {
-  static final String FOLDER = "/storage/emulated/0/MyStyle/Probe";
+  /** Registry item storage.helper-channel (#294). */
+  static final String FOLDER = Registry.StorageHelperChannel.FOLDER;
   static final int MAX_BYTES = 1 << 20;
 
   private ProbeCommandFile() {}
