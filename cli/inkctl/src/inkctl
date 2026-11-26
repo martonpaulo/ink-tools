@@ -2901,6 +2901,18 @@ def proven_row(device: Device, config: dict, limit: float, installed: list, sinc
     return wait_for_plugin(device, config, limit, True)
 
 
+def remove_package(device: Device, path: str) -> bool:
+    """Remove the package an install pushed, once the plugin list proved the install: `MyStyle/`
+    syncs to Supernote Cloud file by file, so each kept copy is one more file there (#409). True
+    only when the read-back no longer finds it; a failed install never calls this, so its copy
+    stays for a retry."""
+    device.shell(f"rm -f {shlex.quote(path)}")
+    if device.test(f"-e {shlex.quote(path)}"):
+        print(f"the installed package is still on the tablet after rm: {path}", file=sys.stderr, flush=True)
+        return False
+    return True
+
+
 def bridge_installed(device: Device) -> bool:
     """`pm path` prints the APK of an installed package and nothing, with exit 1, for a missing one."""
     done = device.adb("shell", f"pm path {BRIDGE_PACKAGE}")
@@ -3006,6 +3018,7 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
         row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
     else:
         print(f"the bridge reported a failure, but {config['id']} {config['version']} is in the plugin list: {answer}", file=sys.stderr, flush=True)
+    removed = remove_package(device, pushed["path"])
     data = {
         "plugin": config["id"],
         "version": config["version"],
@@ -3015,6 +3028,7 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
         "enabled": None,
         "limit": None,
         "bridge": answer,
+        "removed": removed,
         "row": row,
     }
     return data, f"{data['action']}: {config['id']} {config['version']}"
@@ -3163,6 +3177,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     press_element(device, expect_element(device, f"text:{name}", args.step_timeout))
     press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
     row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
+    removed = remove_package(device, pushed["path"])
     data = {
         "plugin": config["id"],
         "version": config["version"],
@@ -3170,6 +3185,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
         "route": "screen",
         "path": pushed["path"],
         **limit,
+        "removed": removed,
         "row": row,
     }
     return data, f"{data['action']}: {config['id']} {config['version']}"

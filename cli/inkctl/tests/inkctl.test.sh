@@ -914,6 +914,7 @@ check "plugin install opens Settings" "$(called "am start -W -n com.ratta.settin
 check "plugin install presses each step" "$(called 'input tap')" "5"
 check "plugin install reports the limit before installing" "$(grep -c 'plugins enabled: 9 of 10' "$work/err")" "1"
 check "plugin install pushes the file" "$(called " push $work/local/test.snplg $root/MyStyle/test.snplg")" "1"
+check "plugin install removes the package once the list proves it (#409)" "$(called "rm -f $root/MyStyle/test.snplg")$(printf '%s' "$result" | field "['removed']")" "1True"
 run plugin install "$work/local/test.snplg" >/dev/null 2>&1
 check "plugin install refuses the same version" "$?$(called ' push ')" "50"
 python3 - "$work/local/test.snplg" <<'PY'
@@ -1021,11 +1022,16 @@ check "plugin install goes through the bridge when it is installed" "$(printf '%
 check "the bridge install names the pushed path" "$(bridge_calls)" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op install --es path $root/MyStyle/test.snplg"
 check "the bridge install presses nothing on the screen" "$(called 'input tap')$(called 'SettingsActivity')" "00"
 check "the bridge install keeps PluginHost's answer" "$(printf '%s' "$result" | field "['bridge']")" "ok onSuccess PluginInfo{pluginID=new.plugin}"
+# #409: MyStyle/ syncs to Supernote Cloud, so a proven install leaves no package there.
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+echo "f $root/MyStyle/test.snplg" >> "$files/paths"
+result=$(run plugin install "$work/local/test.snplg" --overwrite --json 2>/dev/null)
+check "a proven install leaves no package in MyStyle, read back (#409)" "$?$(printf '%s' "$result" | field "['removed']")$(grep -cxF "f $root/MyStyle/test.snplg" "$files/paths")$(called "[ -e $root/MyStyle/test.snplg ]")" "0True02"
 rm -f "$files/rows-after-bridge"
 printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
 printf 'Broadcast completed: result=2, data="failed onFailed PluginError{code=3}"\n' > "$files/bridge-answer"
 run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
-check "a refused bridge install fails with PluginHost's error" "$?$(grep -c 'onFailed PluginError{code=3}' "$work/err")" "11"
+check "a refused bridge install fails with PluginHost's error, keeping the package for a retry (#409)" "$?$(grep -c 'onFailed PluginError{code=3}' "$work/err")$(called 'rm -f ')" "110"
 # #225: PluginHost can answer onFailed after the update landed; the list's version decides.
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
