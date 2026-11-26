@@ -122,7 +122,7 @@ final class PageImages {
                 found.enumerated().map { id, element in
                     Selectable(
                         id: id, bounds: element.bounds, points: element.points, isArea: element.kind != .stroke,
-                        isPicture: element.kind == .picture)
+                        isPicture: element.kind == .picture, record: element.record)
                 })
         } catch {
             logger.error(

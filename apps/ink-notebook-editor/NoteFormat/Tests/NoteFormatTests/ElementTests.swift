@@ -66,6 +66,27 @@ import Testing
         Self.expect(elements[25].bounds, near: CGRect(x: 200, y: 1300, width: 900, height: 54))
     }
 
+    /// Each element names its place in the page's block, for the tablet's element number (#325):
+    /// in order, and past a left-out Heading or eraser record.
+    @Test func eachElementNamesItsRecord() throws {
+        let elements = try Self.note("elements-tablet").elements(page: 0)
+        #expect(elements.map(\.record) == Array(0..<26))
+        let headed = try Self.note("headings-tablet")
+        for page in headed.pages.indices {
+            let records = try headed.elements(page: page).map(\.record)
+            #expect(zip(records, records.dropFirst()).allSatisfy { $0 < $1 })
+        }
+    }
+
+    /// Without its ink, a page draws its template alone: what a lifted selection leaves (#325).
+    @Test func aPageWithoutItsInkIsItsTemplate() throws {
+        let note = try Self.note("elements-tablet")
+        let drawn = try note.render(page: 0)
+        let template = try note.render(page: 0, ink: false)
+        #expect(drawn.pixels.contains { $0 < 128 })
+        #expect(!template.pixels.contains { $0 < 128 })
+    }
+
     /// `realtime-text-tablet.note`, made on the tablet in device round 8 (#298, #324): a replayed
     /// word that Real-Time Text turned into a text box. That text box carries the stroke document
     /// name, so the kind name decides before the document name does.

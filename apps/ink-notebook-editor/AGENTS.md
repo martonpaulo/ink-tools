@@ -117,6 +117,10 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
 - Pages are added and deleted by the helper ([#329](https://github.com/martonpaulo/ink-tools/issues/329)); the Mac draws them at once from
   `NotePreview`, an in-memory copy never written or sent. A deleted page's ink is only in the
   backup kept before its send, so its undo is that backup, by Revert to Backup's route B.
+- A selection moves by a drag on it or the arrow keys, a run of nudges one request
+  ([#325](https://github.com/martonpaulo/ink-tools/issues/325)); no Mac code writes strokes, so `LiftedInk` draws the move at once from the
+  page's own pixels until the tablet's copy comes back. On a note from a file the drag still takes
+  the selection out to another app.
 - `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 
 Differences from the standard, each for a reason:

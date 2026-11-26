@@ -19,6 +19,11 @@ public struct PageElement: Sendable, Equatable {
     public let bounds: CGRect
     /// The path a stroke follows; the corners of a picture's or a text box's frame.
     public let points: [CGPoint]
+    /// The element's place in the page's element block, from 0, erasers and Headings counted:
+    /// the tablet's element number less one (#325).
+    /// shortcut: the tablet's numbering is read as the block's order, not yet measured on the
+    /// tablet; the device round of #325 checks it.
+    public let record: Int
 }
 
 extension NoteFile {
@@ -145,7 +150,8 @@ enum ElementRecord {
                 }
                 bounds = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
             }
-            return PageElement(kind: kind, layer: try word(at: layer), bounds: bounds, points: points)
+            return PageElement(
+                kind: kind, layer: try word(at: layer), bounds: bounds, points: points, record: number)
         }
     }
 }

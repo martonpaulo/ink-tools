@@ -12,6 +12,8 @@ public enum NoteEdit: Sendable, Equatable {
     case removePage(at: Int)
     /// Puts back the page a removal took out at `at`, with its content: the undo of a removal.
     case restorePage(at: Int)
+    /// Moves a selection on its page (#325).
+    case moveElements(ElementMove)
 
     /// The edit that undoes this one.
     public var inverse: NoteEdit {
@@ -20,6 +22,7 @@ public enum NoteEdit: Sendable, Equatable {
         case .insertPage(let at, _): .removePage(at: at)
         case .removePage(let at): .restorePage(at: at)
         case .restorePage(let at): .removePage(at: at)
+        case .moveElements(let move): .moveElements(move.inverse)
         }
     }
 
@@ -41,6 +44,9 @@ public enum NoteEdit: Sendable, Equatable {
         case .removePage(let at):
             guard pages.indices.contains(at), pages.count > 1 else { return nil }
             changed.remove(at: at)
+        case .moveElements(let move):
+            // A move keeps the pages; it fits a page of the note and moves something.
+            guard pages.indices.contains(move.page), !move.isEmpty else { return nil }
         }
         return changed
     }

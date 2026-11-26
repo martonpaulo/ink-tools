@@ -159,6 +159,66 @@ import Testing
         #expect(editor.pending.isEmpty && editor.shown.pages.count == 1)
     }
 
+    /// The selection of page 1 of `content.note`: its text box and its picture.
+    func selection() throws -> [MovedElement] {
+        try NoteFile(data: original).elements(page: 0).map { element in
+            MovedElement(
+                record: element.record, box: EditRect(element.bounds), points: element.points,
+                isArea: element.kind != .stroke)
+        }
+    }
+
+    @Test func aDraggedSelectionIsDrawnAtOnceAndSentAsOneModify() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        let elements = try selection()
+        let move = ElementMove(page: 0, elements: elements, dx: 120, dy: -40)
+        // The drag lifted the selection's ink: its pixels under the selection, none elsewhere.
+        let lifted = try #require(
+            await LiftedInk.make(try NoteFile(data: original), page: 0, items: elements.map(\.selectable)))
+        #expect(lifted.frame.contains(CGRect(x: 760, y: 1130, width: 300, height: 200)))
+        #expect(editor.moveElements(move, lifted: lifted))
+        // Drawn from the lifted ink before the tablet answers.
+        #expect(editor.moves(on: 0).map(\.move) == [move])
+        await settle(editor)
+        let sent = tablet.sent.filter { $0["op"] as? String == "modifyElements" }
+        #expect(sent.count == elements.count)
+        #expect(sent.compactMap { $0["num"] as? Int } == elements.map { $0.record + 1 })
+        #expect(editor.history.undoKind == .moveElements(move))
+        #expect(editor.movedPage == 0)
+    }
+
+    @Test func tenNudgesAreOneRequestAndOneUndo() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        let elements = try selection()
+        for _ in 0..<10 { editor.nudge(elements, page: 0, dx: 0, dy: 4) }
+        #expect(editor.pending.count == 1 && editor.history.undoKind == nil)
+        editor.endNudges()
+        await settle(editor)
+        #expect(
+            tablet.calls.filter { $0.hasPrefix("edit") } == [
+                "edit " + elements.map { _ in "modifyElements" }.joined(separator: ",")
+            ])
+        let rects = tablet.sent.compactMap { $0["rect"] as? [String: Int] }
+        #expect(rects.first?["top"] == elements[0].box.top + 40)
+        #expect(editor.history.undoKind == .moveElements(ElementMove(page: 0, elements: elements, dx: 0, dy: 40)))
+        editor.undo()
+        await settle(editor)
+        #expect(
+            tablet.sent.suffix(elements.count).compactMap { ($0["rect"] as? [String: Int])?["top"] }
+                == elements.map(\.box.top))
+    }
+
+    @Test func aRefusedMoveLeavesTheSelectionInPlaceAndSaysWhy() async throws {
+        let editor = try editor()
+        tablet.failEdit = .failed("device-link edit: no-element: operation 1")
+        #expect(editor.moveElements(ElementMove(page: 0, elements: try selection(), dx: 10, dy: 10)))
+        await settle(editor)
+        #expect(editor.moves(on: 0).isEmpty && editor.history.undoKind == nil)
+        #expect(editor.refusal?.contains("no-element") == true)
+    }
+
     @Test func revertToTheOldestBackupGivesTheNoteBackAndStartsUndoOver() async throws {
         let editor = try editor()
         #expect(!editor.canRevert)

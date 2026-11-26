@@ -4,7 +4,9 @@ import SwiftUI
 
 /// The selection on one page (#324): a click, a drag of the rectangle or the lasso, Shift to add
 /// or remove, and the selection drawn as each element's box and a dashed frame with handles
-/// around them all. Read-only: it names elements and changes nothing in the note.
+/// around them all. On a note from the tablet a drag on the selection moves it, drawn at once
+/// from its lifted ink, as are the moves still on their way (#325); elsewhere it takes the
+/// selection out to another app (#323).
 struct SelectionLayer: View {
     /// How far from a stroke a click still takes it, and a drag shorter than this is a click,
     /// in points.
@@ -21,7 +23,11 @@ struct SelectionLayer: View {
     let size: CGSize
     /// The drag in progress, in points.
     @State private var path: [CGPoint] = []
+    /// The selection's move under the pointer, and its ink lifted off the page.
+    @State private var dragged: ElementMove?
+    @State private var lifted: LiftedInk?
     @Environment(NoteText.self) private var text: NoteText?
+    @Environment(NoteEditor.self) private var editor: NoteEditor?
 
     /// Page pixels per point.
     private var pixels: CGFloat {
@@ -31,8 +37,21 @@ struct SelectionLayer: View {
     var body: some View {
         let selected = viewer.selection.page == index ? viewer.selection.ids : []
         let items = (pages.selectable(index) ?? []).filter { selected.contains($0.id) }
+        let shift = offset(of: items)
         Canvas { context, _ in
             let accent = GraphicsContext.Shading.color(.accentColor)
+            // Each move on its way, then the one under the pointer: the template where the
+            // selection was, and its ink at its new place.
+            var moves = editor?.moves(on: index) ?? []
+            if let dragged, let lifted { moves.append((dragged, lifted)) }
+            for (move, lifted) in moves {
+                let at = points(lifted.frame)
+                context.draw(Image(decorative: lifted.hole, scale: 1), in: at)
+                context.draw(
+                    Image(decorative: lifted.ink, scale: 1),
+                    in: at.offsetBy(dx: CGFloat(move.dx) / pixels, dy: CGFloat(move.dy) / pixels))
+            }
+            context.translateBy(x: shift.width, y: shift.height)
             // A picture or a text box shows its own frame; a stroke shows only in the frame around
             // the selection, so no box covers the ink.
             for item in items where item.isArea {
@@ -49,6 +68,7 @@ struct SelectionLayer: View {
                     context.stroke(square, with: accent, lineWidth: 1)
                 }
             }
+            context.translateBy(x: -shift.width, y: -shift.height)
             if path.count > 1 {
                 var drag = Path()
                 if viewer.tool == .lasso {
@@ -75,20 +95,56 @@ struct SelectionLayer: View {
         // Only the selected elements' own boxes, so a click or a new rectangle between them
         // still reaches the page.
         .overlay(alignment: .topLeading) {
-            if let text {
-                ForEach(items, id: \.id) { item in
-                    let box = points(item.bounds)
-                    Color.clear
-                        .contentShape(.rect)
-                        .frame(width: max(box.width, Self.handle), height: max(box.height, Self.handle))
-                        .offset(x: box.minX, y: box.minY)
-                        .onDrag { text.provider(of: pages.note, page: index, selected: items) }
+            ForEach(items, id: \.id) { item in
+                let box = points(item.bounds)
+                let target = Color.clear
+                    .contentShape(.rect)
+                    .frame(width: max(box.width, Self.handle), height: max(box.height, Self.handle))
+                    .offset(x: box.minX + shift.width, y: box.minY + shift.height)
+                if let editor, editor.canEdit {
+                    target.gesture(move(items, editor: editor))
+                } else if let text {
+                    target.onDrag { text.provider(of: pages.note, page: index, selected: items) }
                 }
             }
         }
         .accessibilityElement()
         .accessibilityLabel(Copy.selectedCount(items.count))
         .accessibilityHidden(items.isEmpty)
+    }
+
+    /// A drag on the selection: it lifts the selection's ink, follows the pointer within the page,
+    /// and on release hands the move to the editor (#325).
+    private func move(_ items: [Selectable], editor: NoteEditor) -> some Gesture {
+        DragGesture(minimumDistance: 1)
+            .onChanged { value in
+                let size = pages.size(of: index)
+                dragged = ElementMove(
+                    page: index, elements: items.map(MovedElement.init), dx: Int(value.translation.width * pixels),
+                    dy: Int(value.translation.height * pixels)
+                )
+                .clamped(width: Int(size.width), height: Int(size.height))
+                if lifted == nil {
+                    let note = pages.note
+                    Task { lifted = await LiftedInk.make(note, page: index, items: items) }
+                }
+            }
+            .onEnded { _ in
+                if let dragged, !dragged.isEmpty { editor.moveElements(dragged, lifted: lifted) }
+                dragged = nil
+                lifted = nil
+            }
+    }
+
+    /// How far the selection's frame is drawn from its elements' boxes, in points: the drag under
+    /// the pointer, and the moves of these elements still on their way.
+    private func offset(of items: [Selectable]) -> CGSize {
+        let records = Set(items.map(\.record))
+        var moves = (editor?.moves(on: index) ?? []).map(\.move).filter { Set($0.elements.map(\.record)) == records }
+        if let dragged { moves.append(dragged) }
+        return CGSize(
+            width: CGFloat(moves.map(\.dx).reduce(0, +)) / pixels,
+            height: CGFloat(moves.map(\.dy).reduce(0, +)) / pixels)
     }
 
     /// The frame around the selected `items` on screen, its handles on its edge, or `nil`.

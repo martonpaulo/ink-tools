@@ -74,6 +74,8 @@ public struct TabletOperation: Sendable, Equatable {
             self.init(note: note, baseHash: baseHash, page: at, change: .insertPage(template: template))
         case .removePage(let at):
             self.init(note: note, baseHash: baseHash, page: at, change: .removePage)
+        case .moveElements(let move):
+            self.init(note: note, baseHash: baseHash, page: move.page, change: .placeElements(move.placements))
         case .restorePage(let at):
             guard let backup else { return nil }
             self.init(note: note, baseHash: baseHash, page: at, change: .restoreBackup(backup))

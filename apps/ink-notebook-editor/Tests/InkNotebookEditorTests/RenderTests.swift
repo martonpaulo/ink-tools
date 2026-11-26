@@ -206,6 +206,36 @@ final class RenderTests {
         }
     }
 
+    /// A selection moved on a note from the tablet (#325): drawn at once at its new place from its
+    /// lifted ink, its frame with it, and the template where it was, while the move is on its way.
+    @Test func moveStates() async throws {
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+        let copy = scratch.appending(path: "Moved.note")
+        try Fixtures.data("content.note").write(to: copy)
+        let note = try Fixtures.note("content.note")
+        let live = LiveNote(
+            tabletPath: "Note/Moved.note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
+        live.watches = false
+        let editor = NoteEditor(
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            backups: NoteBackups(folder: scratch.appending(path: "MovedBackups")))
+        let drawn = PageImages(note: note)
+        for index in note.pages.indices {
+            await drawn.loadThumbnail(index, scale: 1)
+        }
+        await drawn.loadPage(0)
+        await drawn.loadElements(0)
+        let items = drawn.selectable(0) ?? []
+        let viewer = PageViewer()
+        viewer.selection.selectAll(Set(items.map(\.id)), page: 0)
+        let move = ElementMove(page: 0, elements: items.map(MovedElement.init), dx: -300, dy: 500)
+        let lifted = await LiftedInk.make(note, page: 0, items: items)
+        editor.moveElements(move, lifted: lifted)
+        try await render("move-sending", Self.sizes) {
+            NotebookView(pages: drawn, viewer: viewer, live: live, editor: editor)
+        }
+    }
+
     /// The system's alert with the confirmation's words, as SwiftUI's `alert` shows them, drawn off
     /// screen: the panel is laid out and cached, never ordered in. The test process has no app
     /// icon, so the alert shows the system's generic one.

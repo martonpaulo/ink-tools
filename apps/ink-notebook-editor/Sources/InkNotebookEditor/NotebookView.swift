@@ -178,6 +178,7 @@ struct NotebookView: View {
         .focusedSceneValue(\.noteText, text)
         .focusedSceneValue(\.sidebarMode, $sidebar)
         .focusedSceneValue(\.noteEditor, editor)
+        .environment(editor)
         // An edit draws at once: the Mac's copy with every edit on its way (#314).
         .onChange(of: editor?.revision) {
             if let editor { take(editor.shown) }
@@ -190,28 +191,10 @@ struct NotebookView: View {
         .onChange(of: text?.search.currentMatch) { _, match in
             if let match { navigator.show(match.page) }
         }
-        .onKeyPress(keys: Set(PageKeys.moves.keys).union([.return])) { press in
-            if let target = viewer.scroll(for: press.key) {
-                viewer.scrollTarget = target
-                return .handled
-            }
-            if viewer.layout == .grid, let index = navigator.index {
-                // In the grid, the arrows move by a cell and by a row, and Return opens the page.
-                switch press.key {
-                case .return:
-                    viewer.layout = .scroll
-                    return .handled
-                case .upArrow, .downArrow:
-                    let step = press.key == .upArrow ? -viewer.gridColumns : viewer.gridColumns
-                    navigator.show(min(max(index + step, 0), navigator.pageCount - 1))
-                    return .handled
-                default: break
-                }
-            }
-            guard let move = PageKeys.moves[press.key] else { return .ignored }
-            navigator.go(move)
-            return .handled
-        }
+        // The arrows nudge a selection on a note from the tablet, a run of them sent as one move
+        // when the key is released (#325); with no selection they turn pages.
+        .onKeyPress(keys: Set(Self.nudges.keys), phases: [.down, .repeat, .up], action: nudge)
+        .onKeyPress(keys: Set(PageKeys.moves.keys).union([.return]), action: turn)
         .onChange(of: navigator.index, initial: true) { _, index in
             if let index { viewer.page = pages.size(of: index) }
         }
@@ -228,14 +211,62 @@ struct NotebookView: View {
             : Copy.pageOf(index + 1, navigator.pageCount)
     }
 
+    /// A page key: the scroll, a cell of the grid, or a page.
+    private func turn(_ press: KeyPress) -> KeyPress.Result {
+        if let target = viewer.scroll(for: press.key) {
+            viewer.scrollTarget = target
+            return .handled
+        }
+        if viewer.layout == .grid, let index = navigator.index {
+            // In the grid, the arrows move by a cell and by a row, and Return opens the page.
+            switch press.key {
+            case .return:
+                viewer.layout = .scroll
+                return .handled
+            case .upArrow, .downArrow:
+                let step = press.key == .upArrow ? -viewer.gridColumns : viewer.gridColumns
+                navigator.show(min(max(index + step, 0), navigator.pageCount - 1))
+                return .handled
+            default: break
+            }
+        }
+        guard let move = PageKeys.moves[press.key] else { return .ignored }
+        navigator.go(move)
+        return .handled
+    }
+
+    /// Each arrow's direction, for a nudge.
+    static let nudges: [KeyEquivalent: (dx: Int, dy: Int)] = [
+        .leftArrow: (-1, 0), .rightArrow: (1, 0), .upArrow: (0, -1), .downArrow: (0, 1),
+    ]
+
+    /// Nudges the selection on the page in front by one step, Shift for ten; the release ends the
+    /// run. Ignored with no selection there, or on a note opened from a file.
+    private func nudge(_ press: KeyPress) -> KeyPress.Result {
+        // A release ends the run, even when the selection went away during it.
+        if press.phase == .up { editor?.endNudges() }
+        guard let editor, editor.canEdit, viewer.layout == .scroll, let page = viewer.selection.page,
+            page == navigator.index, let direction = Self.nudges[press.key],
+            let items = pages.selectable(page)?.filter({ viewer.selection.ids.contains($0.id) }), !items.isEmpty
+        else { return .ignored }
+        if press.phase == .up { return .handled }
+        let step = ElementMove.nudge(
+            magnification: viewer.magnification, scale: displayScale, shift: press.modifiers.contains(.shift))
+        editor.nudge(items.map(MovedElement.init), page: page, dx: direction.dx * step, dy: direction.dy * step)
+        return .handled
+    }
+
     /// Draws a newer note: the tablet's copy, or the Mac's copy with the edits on their way.
     private func take(_ newer: NoteFile) {
         text?.forgetHeadings()
         let changed = pages.update(newer)
         // Find and Copy as Text read the newer copy too.
         if let text { Task { await text.refresh(note: newer, changed: changed) } }
-        // A selection names elements by their place on the page, which a change moves.
-        if let page = viewer.selection.page, changed?.contains(page) ?? true { viewer.selection.clear() }
+        // A selection names elements by their place on the page, which a change moves; a move of
+        // this window's keeps each element's place, so its selection stays (#325).
+        if let page = viewer.selection.page, changed?.contains(page) ?? true, editor?.movedPage != page {
+            viewer.selection.clear()
+        }
         if newer.pages.count != navigator.pageCount {
             navigator = PageNavigator(pageCount: newer.pages.count, index: navigator.index ?? 0)
         }

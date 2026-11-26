@@ -13,13 +13,16 @@ public struct Selectable: Sendable, Equatable {
     public let isArea: Bool
     /// A picture: a copy keeps its own greys, its paper too (#323).
     public let isPicture: Bool
+    /// The element's place in the page's element block, which names it to the tablet (#325).
+    public let record: Int
 
-    public init(id: Int, bounds: CGRect, points: [CGPoint], isArea: Bool, isPicture: Bool = false) {
+    public init(id: Int, bounds: CGRect, points: [CGPoint], isArea: Bool, isPicture: Bool = false, record: Int? = nil) {
         self.id = id
         self.bounds = bounds
         self.points = points
         self.isArea = isArea
         self.isPicture = isPicture
+        self.record = record ?? id
     }
 
     /// The points a rectangle or a lasso must hold to select it: an area's four corners, a

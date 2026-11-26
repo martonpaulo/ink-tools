@@ -53,6 +53,12 @@ final class NoteEditor {
     /// The chain of hand-overs to the sender, so two edits reach it in the order they were made.
     @ObservationIgnored private var handOver: Task<Void, Never>?
     @ObservationIgnored private var nextTicket = 0
+    /// The lifted ink of each move on its way, by ticket, drawn at its offset (#325).
+    private(set) var lifts: [Int: LiftedInk] = [:]
+    /// The open run of nudges: its ticket, until the key is released (#325).
+    @ObservationIgnored private var run: Int?
+    /// The page whose newest change was a move of this editor, so its selection stays.
+    private(set) var movedPage: Int?
     /// The backup kept just before each applied page removal: its undo puts that note back (#329).
     @ObservationIgnored private var removalBackups: [EditID: URL] = [:]
     private let logger = Logger(subsystem: "com.martonpaulo.inktools.notebookeditor", category: "edit")
@@ -167,8 +173,78 @@ final class NoteEditor {
 
     private func record(_ edit: NoteEdit) -> Bool {
         guard canEdit, edit.apply(to: shown.pages.indices.map(String.init)) != nil else { return false }
+        endNudges()
         send(edit, history: history.record(edit))
         return true
+    }
+
+    /// Moves a selection by a drag, kept on its page (#325): drawn at once from its lifted ink,
+    /// `lifted` when the drag already lifted it, sent in the background.
+    @discardableResult
+    func moveElements(_ move: ElementMove, lifted: LiftedInk? = nil) -> Bool {
+        let size = pageSize(move.page)
+        let kept = move.clamped(width: size.width, height: size.height)
+        guard record(.moveElements(kept)) else { return false }
+        if let lifted, let ticket = pending.last?.ticket { lifts[ticket] = lifted }
+        return true
+    }
+
+    /// One arrow-key nudge of a selection: it joins the open run when it moves the same elements,
+    /// so a run is one request and one Undo when the key is released (`endNudges`).
+    func nudge(_ elements: [MovedElement], page: Int, dx: Int, dy: Int) {
+        guard canEdit, !elements.isEmpty else { return }
+        let size = pageSize(page)
+        if let ticket = run, let index = pending.firstIndex(where: { $0.ticket == ticket }),
+            case .moveElements(let open) = pending[index].edit, open.page == page,
+            open.elements.map(\.record) == elements.map(\.record)
+        {
+            let moved = open.by(dx: dx, dy: dy).clamped(width: size.width, height: size.height)
+            pending[index] = Pending(ticket: ticket, edit: .moveElements(moved), history: nil)
+            hand(.moveElements(moved), ticket: ticket, nudge: true)
+            return
+        }
+        endNudges()
+        let move = ElementMove(page: page, elements: elements, dx: dx, dy: dy)
+            .clamped(width: size.width, height: size.height)
+        run = send(.moveElements(move), history: nil, nudge: true)
+    }
+
+    /// The arrow key was released: the run becomes one edit in the history and one request.
+    func endNudges() {
+        guard let ticket = run else { return }
+        run = nil
+        guard let index = pending.firstIndex(where: { $0.ticket == ticket }),
+            case .moveElements(let move) = pending[index].edit
+        else { return }
+        if move.isEmpty {
+            pending.remove(at: index)
+            lifts[ticket] = nil
+            Task { [sender] in _ = await sender?.drop(ticket) }
+            return
+        }
+        pending[index] = Pending(
+            ticket: ticket, edit: .moveElements(move), history: history.record(.moveElements(move)))
+        let previous = handOver
+        handOver = Task { [sender] in
+            await previous?.value
+            await sender?.endRun()
+        }
+    }
+
+    /// The moves on their way to page `index`, with their lifted ink once it is ready.
+    func moves(on index: Int) -> [(move: ElementMove, lifted: LiftedInk)] {
+        pending.compactMap { waiting in
+            guard case .moveElements(let move) = waiting.edit, move.page == index, let lifted = lifts[waiting.ticket]
+            else { return nil }
+            return (move, lifted)
+        }
+    }
+
+    /// The page's size in pixels, as it is drawn.
+    private func pageSize(_ index: Int) -> (width: Int, height: Int) {
+        let size = shown.pageSize
+        guard shown.pages.indices.contains(index) else { return size }
+        return shown.pages[index].isHorizontal ? (size.height, size.width) : size
     }
 
     func undo() {
@@ -225,11 +301,23 @@ final class NoteEditor {
         refreshBackups()
     }
 
-    private func send(_ edit: NoteEdit, history id: EditID?, backup: URL? = nil) {
+    @discardableResult
+    private func send(_ edit: NoteEdit, history id: EditID?, backup: URL? = nil, nudge: Bool = false) -> Int {
         let ticket = nextTicket
         nextTicket += 1
         pending.append(Pending(ticket: ticket, edit: edit, history: id, backup: backup))
-        redraw()
+        if case .moveElements(let move) = edit {
+            // A move leaves the note as it is: its lifted ink is drawn over the page instead.
+            lift(move, ticket: ticket)
+        } else {
+            redraw()
+        }
+        hand(edit, ticket: ticket, backup: backup, nudge: nudge)
+        return ticket
+    }
+
+    /// Hands one edit to the sender, after every edit made before it.
+    private func hand(_ edit: NoteEdit, ticket: Int, backup: URL? = nil, nudge: Bool = false) {
         let previous = handOver
         let copy = copy
         let note = tabletPath
@@ -239,7 +327,22 @@ final class NoteEditor {
             // each edit ahead of it applies.
             let base = await Self.baseHash(copy)
             guard let operation = TabletOperation(edit, note: note, baseHash: base, backup: backup) else { return }
-            await sender?.drew(operation, undo: ticket)
+            if nudge {
+                await sender?.nudged(operation, undo: ticket)
+            } else {
+                await sender?.drew(operation, undo: ticket)
+            }
+        }
+    }
+
+    /// Lifts a move's elements off the page as it is shown, for drawing the move at once.
+    private func lift(_ move: ElementMove, ticket: Int) {
+        let note = shown
+        Task {
+            guard lifts[ticket] == nil,
+                let lifted = await LiftedInk.make(note, page: move.page, items: move.elements.map(\.selectable))
+            else { return }
+            if pending.contains(where: { $0.ticket == ticket }) { lifts[ticket] = lifted }
         }
     }
 
@@ -260,11 +363,17 @@ final class NoteEditor {
                 history.applied(id)
                 if case .removePage = done?.edit { removalBackups[id] = backup }
             }
+            // shortcut: the lifted ink leaves as the copy comes back, so the page shows its old
+            // drawing until the new one is ready; keep it until then if that blink is seen.
+            lifts[ticket] = nil
+            if case .moveElements(let move) = done?.edit { movedPage = move.page } else { movedPage = nil }
             reloadBase()
             refreshBackups()
         case .refused(let ticket, let message):
             guard let refused = pending.first(where: { $0.ticket == ticket }) else { return }
             pending.removeAll { $0.ticket == ticket }
+            lifts[ticket] = nil
+            if run == ticket { run = nil }
             if let id = refused.history {
                 _ = history.refused(id)
             } else {
@@ -316,6 +425,9 @@ final class NoteEditor {
         case .restorePage:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
+        case .moveElements:
+            // Drawn over the page from its lifted ink (`moves(on:)`).
+            return note
         }
     }
 

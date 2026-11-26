@@ -245,6 +245,7 @@ nonisolated enum Copy {
         case .insertPage: String(localized: "Insert Page")
         case .removePage: String(localized: "Delete Page")
         case .restorePage: String(localized: "Restore Page")
+        case .moveElements: String(localized: "Move")
         }
     }
 }
