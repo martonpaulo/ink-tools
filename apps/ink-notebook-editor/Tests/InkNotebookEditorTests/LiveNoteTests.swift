@@ -146,6 +146,7 @@ import Testing
         // The first look pulls; then the watch waits NoteWatch.interval between looks.
         while pullCount() == 0 {
             // A sleep, not a yield, since a spin takes the CPU the fake needs to start.
+            // timing-independent: waits on the pull, bounded by the test's time limit.
             try await Task.sleep(for: .milliseconds(10))
         }
         watch.cancel()
