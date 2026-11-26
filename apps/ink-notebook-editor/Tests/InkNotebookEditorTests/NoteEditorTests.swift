@@ -162,6 +162,17 @@ import Testing
                     reason: "No tablet answered."))
     }
 
+    @Test func aSheetThatOpensAgainStartsLoadingAndAClosedSheetsReadLeavesNoFailure() async throws {
+        let editor = try editor()
+        await editor.loadTemplates(nextTo: 0)
+        #expect(editor.templateList != .loading)
+        editor.insertNextTo = 0
+        #expect(editor.templateList == .loading)
+        tablet.failTemplates = .cancelled
+        await editor.loadTemplates(nextTo: 0)
+        #expect(editor.templateList == .loading)
+    }
+
     @Test(arguments: ["style_8mm_lines", "/storage/emulated/0/MyStyle/week.png"])
     func aPageOnATemplateNoPageUsesIsSentByItsValueAndDrawnBlank(template: String) async throws {
         let editor = try editor()

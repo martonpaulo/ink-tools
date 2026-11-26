@@ -36,6 +36,8 @@ struct InsertPageSheet: View {
     static let width: CGFloat = 340
     /// The space around the sheet's content, in points, as a system sheet's.
     static let inset: CGFloat = 20
+    /// The most lines the failure sentence takes; the whole sentence is in its help tag.
+    static let failureLines = 4
 
     let editor: NoteEditor
     let page: Int
@@ -70,13 +72,13 @@ struct InsertPageSheet: View {
                 .pickerStyle(.radioGroup)
                 if list == .loading {
                     LabeledContent(Copy.template) {
-                        HStack(spacing: 6) {
+                        HStack {
                             ProgressView().controlSize(.small)
                             Text(Copy.readingTemplates).foregroundStyle(.secondary)
                         }
                         .accessibilityElement(children: .combine)
                     }
-                } else {
+                } else if !choices.isEmpty {
                     Picker(Copy.template, selection: Binding(get: { chosen ?? "" }, set: { template = $0 })) {
                         ForEach(system) { Text(Copy.templateName($0)).tag($0.value) }
                         if !custom.isEmpty {
@@ -85,17 +87,16 @@ struct InsertPageSheet: View {
                             }
                         }
                     }
-                    .disabled(choices.isEmpty)
                 }
             }
             if case .noteOnly(let fallback, let reason) = list {
-                Label(
-                    fallback.isEmpty ? Copy.noSystemTemplate : Copy.templatesFailed(reason),
-                    systemImage: "exclamationmark.triangle"
-                )
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                let message = Copy.templatesFailed(reason, noteHasTemplates: !fallback.isEmpty)
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.callout)
+                    .lineLimit(Self.failureLines)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .help(message)
+                    .onAppear { AccessibilityNotification.Announcement(message).post() }
             }
             HStack {
                 Spacer()

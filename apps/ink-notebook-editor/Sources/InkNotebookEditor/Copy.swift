@@ -243,13 +243,21 @@ nonisolated enum Copy {
         return String(localized: "The tablet deletes pages \(numbers) with their ink. Edit › Undo puts them back.")
     }
 
-    static let noSystemTemplate = String(localized: "No page of this note uses a template the Mac can send.")
     static let readingTemplates = String(localized: "Reading the tablet's templates…")
     static let customTemplates = String(localized: "Custom")
 
-    /// Why the sheet offers only the note's own templates, with inkctl's words.
-    static func templatesFailed(_ reason: String) -> String {
-        String(localized: "The tablet's templates did not load, so only this note's templates are offered: \(reason)")
+    /// Why the sheet offers only the note's own templates, or none, with inkctl's words as their own
+    /// sentence and the next step: the list is read again when the sheet opens (#451).
+    static func templatesFailed(_ reason: String, noteHasTemplates: Bool) -> String {
+        noteHasTemplates
+            ? String(
+                localized:
+                    "Only this note's templates are shown: the tablet's list did not load. \(reason) Connect the tablet, then open Insert Page again."
+            )
+            : String(
+                localized:
+                    "The tablet's list did not load, and no page of this note uses a template the Mac can send. \(reason) Connect the tablet, then open Insert Page again."
+            )
     }
 
     /// A template's name as the picker shows it: a system one from its id, a custom one by its file name.

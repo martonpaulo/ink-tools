@@ -38,8 +38,11 @@ final class NoteEditor {
     private(set) var backups: [URL] = []
     /// The backup File › Revert to Backup picked, waiting for the window's confirmation.
     var revertCandidate: URL?
-    /// The page Edit › Insert Page… adds next to, while its sheet shows (#329).
-    var insertNextTo: Int?
+    /// The page Edit › Insert Page… adds next to, while its sheet shows (#329). A sheet that opens
+    /// starts on `.loading`, never on the list an earlier sheet read (#451).
+    var insertNextTo: Int? {
+        didSet { if insertNextTo != nil { templateList = .loading } }
+    }
     /// The pages Edit › Delete Page… removes, lowest first, while its confirmation shows (#329).
     var removalAsked: [Int]?
     /// The picture or text an insert waits on, while its sheet shows (#264).
@@ -211,6 +214,8 @@ final class NoteEditor {
         let style = shown.pages.indices.contains(page) ? shown.pages[page].style : nil
         do {
             templateList = .tablet(TabletTemplates.ordered(try await tablet.templates(), first: style))
+        } catch .cancelled {
+            // The sheet closed while the list loaded: nothing to show, and no failure.
         } catch {
             templateList = .noteOnly(TabletTemplates.ordered(noteTemplates, first: style), reason: error.words)
         }

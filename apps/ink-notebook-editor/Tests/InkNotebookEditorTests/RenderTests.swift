@@ -181,21 +181,28 @@ final class RenderTests {
         // windows of their own, so each is drawn on its own and set over the window's render.
         // The sheet while the tablet's list loads, with the tablet's list (system and custom), and
         // with the note's own templates when the tablet did not answer (#451).
+        let front = editor.shown.pages[2].style
         let lists: [(String, NoteEditor.TemplateList)] = [
             ("insert-page-loading", .loading),
             (
                 "insert-page",
-                .tablet([
-                    .system("style_8mm_ruled_line"), .system("style_white"), .system("style_5mm_grid"),
-                    .system("style_5mm_dots"),
-                    .custom(name: "Week plan", path: "/storage/emulated/0/MyStyle/Week plan.png"),
-                ])
+                .tablet(
+                    TabletTemplates.ordered(
+                        [
+                            .system("style_white"), .system("style_5mm_grid"), .system("style_8mm_ruled_line"),
+                            .system("style_5mm_dots"),
+                            .custom(name: "Week plan", path: "/storage/emulated/0/MyStyle/Week plan.png"),
+                        ], first: front))
             ),
             (
                 "insert-page-note-only",
                 .noteOnly(
-                    editor.noteTemplates,
+                    TabletTemplates.ordered(editor.noteTemplates, first: front),
                     reason: InkctlFailure.notConnected("No tablet answered over USB or Wi-Fi.").words)
+            ),
+            (
+                "insert-page-no-template",
+                .noteOnly([], reason: InkctlFailure.notConnected("No tablet answered over USB or Wi-Fi.").words)
             ),
         ]
         for (name, list) in lists {

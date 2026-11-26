@@ -721,16 +721,6 @@
         }
       }
     },
-    "No page of this note uses a template the Mac can send." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No page of this note uses a template the Mac can send."
-          }
-        }
-      }
-    },
     "No results" : {
       "localizations" : {
         "en" : {
@@ -777,6 +767,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "Only this note's templates are shown: the tablet's list did not load. %@ Connect the tablet, then open Insert Page again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only this note's templates are shown: the tablet's list did not load. %@ Connect the tablet, then open Insert Page again."
           }
         }
       }
@@ -1431,22 +1431,22 @@
         }
       }
     },
+    "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Connect the tablet, then open Insert Page again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Connect the tablet, then open Insert Page again."
+          }
+        }
+      }
+    },
     "The tablet's note is not the backup after the restore." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The tablet's note is not the backup after the restore."
-          }
-        }
-      }
-    },
-    "The tablet's templates did not load, so only this note's templates are offered: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The tablet's templates did not load, so only this note's templates are offered: %@"
           }
         }
       }
