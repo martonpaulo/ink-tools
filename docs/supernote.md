@@ -128,7 +128,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Limits: 30 installed, 10 enabled [official, 3.29.44 announcement]. PluginHost 1.00.2610150 holds both in
   code: `PluginManager.PLUGIN_ENABLE_MAX_NUM = 10`, and enabling an 11th fails with error 201
   `ERROR_MAX_ENABLE_NUM`; `PluginInstallManager.PLUGIN_MAX_NUM` caps installed plugins at 30
-  [decompiled, PluginHost 1.00.2610150, 2026-11-25]. Third-party plugins share the 10, so Ink Tools
+  [device data, PluginHost 1.00.2610150, 2026-11-25]. Third-party plugins share the 10, so Ink Tools
   keeps at most 8 enabled ([`decisions.md`](decisions.md), [#304](https://github.com/martonpaulo/ink-tools/issues/304)).
 - A plugin's view runs its start code once per plugin-host process: going back and opening the
   view again does not re-run it; `am force-stop com.ratta.supernote.pluginhost` starts a fresh
@@ -170,7 +170,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   stroke of 4 of 64: the same stroke share and at least that margin
   ([`decisions.md`](decisions.md#decision-index)).
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
-  promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
+  promise stays pending forever [measured and device data, 2026-11-17, Image Editing 0.1.0 beta 11,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`
   throws `Throwable("Plugin button is not exists!")`, and its caller answers
   `promise.resolve(th)`, a Java `Throwable` the React Native bridge cannot pass. A plugin that
@@ -302,7 +302,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `0x520`, focusable), never in an Activity. React Native emits the event only from
   `ReactInstanceManager.onBackPressed` or `ReactHostImpl.onBackPressed`, which only `ReactActivity`
   and `ReactFragment` call, and no PluginHost class overrides `dispatchKeyEvent`, sets a key
-  listener or calls `onBackPressed` [observed in the decompiled APK, 2026-11-25; measured: no
+  listener or calls `onBackPressed` [device data, PluginHost, 2026-11-25; measured: no
   `ReactNativeJS` line on Back, 2026-11-17 and 2026-11-25,
   [#204](https://github.com/martonpaulo/ink-tools/issues/204)]. A full view's way out is its own
   visible «Close». The window is focusable and a window hands a key to its focused view, so Image
@@ -342,7 +342,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   is refused before its URI is read. `source_type` 4 («self add») shows as «custom source», with no
   note or document. An entry holds text only: `content` of 1 to 15,000 characters, `comment_str`
   up to 2,000, a collection, `metadata` JSON and an optional `.mark` file; there is no image column
-  [source, decompiled, 2026-11-17, [#42](https://github.com/martonpaulo/ink-tools/issues/42)]. An insert from a plugin is
+  [source, device data, 2026-11-17, [#42](https://github.com/martonpaulo/ink-tools/issues/42)]. An insert from a plugin is
   [unverified: not yet run on the tablet].
 - The To-Do app lists only `tasks_table` rows with `deleted = 0`: 278 rows inserted with `deleted`,
   `sort`, `taskId` and their siblings NULL were in its lists' counts as 0, and the one row the native
@@ -350,7 +350,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [measured, Account Sync 0.1.0 beta 15, [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. Account Sync now writes every column a native
   insert fills (the descriptor's `insertDefaults` and `insertNow`) and its own `taskId`. A list
   whose `taskListId` Account Sync made (`inktools…`) kept it after the native sync (`hasSync = 1`).
-  A task with an empty `taskListId` is an unfiled task, the app's own Inbox [decompiled
+  A task with an empty `taskListId` is an unfiled task, the app's own Inbox [observed device behaviour of
   `DataBaseTools.insert`; a pulled unfiled task is not yet seen on the tablet].
 - After a pass of Account Sync 0.1.0 beta 15, the native To-Do cloud sync left 5 extra rows in a
   list Account Sync made: `hasSync = 1`, a `taskId` of its own, and the list, title and due time of
@@ -369,7 +369,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   matches no row, and it runs only in a sync pass that needs a module that is on, never when the
   host loads Account Sync [[#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Its Calendar writer updates and cancels a pulled event by its row id.
 - The calendar provider never deletes a row: `CalendarContentProvider.delete` calls
-  `DataBaseTools.delete`, whose body is `return 0;` [source, decompiled `SupernoteCalendar.apk`,
+  `DataBaseTools.delete`, whose body is `return 0;` [source, device data, `SupernoteCalendar.apk`,
   firmware `Chauvet.E103.2610191001.2559`, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The app removes a synced event by
   `status = 'cancelled'` and a new `lastModifiedTime`; `adb shell content update` with that status
   on 7 test rows hid them from the Calendar app, and the rows stay in the table [measured,
@@ -377,7 +377,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - The Calendar app's month dots (`DataBaseTools.getDuringEvent`) and day list (`getTodayEvent`)
   read every `data_info` row with `status = 'confirmed' AND recurrence is null` in one loop inside
   one `try`, and for an `isAllDay` 1 row call `DateUtils.getLongDate(startDate)`, which is
-  `startDate.split("-")` on a `yyyy-MM-dd` text [source, decompiled `SupernoteCalendar.apk`,
+  `startDate.split("-")` on a `yyyy-MM-dd` text [source, device data, `SupernoteCalendar.apk`,
   firmware `Chauvet.E103.2610191001.2559`, [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. An all-day row with `startDate` NULL throws
   `NullPointerException` and the loop drops it and every later row: Account Sync 0.1.0 beta 23 and
   24 showed one event of 217, and filling `startDate` and `endDate` on the 29 all-day rows showed
@@ -516,7 +516,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   copy. The callbacks (`IPluginInstallCallback`, `IPluginSetCallback`, `IPluginUninstallCallback`)
   are in package `com.ratta.supernote.plugincorelib.callback`. A button press by intent exists only
   for the built-in Sticker plugin (`a5db6166e8fe8e17`, exported `PluginHostService`, `action=VIEW`
-  with the extra `action=plugin`) [source, decompiled PluginHost `1.00.2610150`,
+  with the extra `action=plugin`) [source, device data, PluginHost `1.00.2610150`,
   [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md), [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. The Ink Tools
   bridge app holds that binder ([#215](https://github.com/martonpaulo/ink-tools/issues/215)); through it a plugin list took 1.35 s,
   «Always Allow» 3.5 s, an install 2.9 s, a disable 2.4 s and an enable 3.1 s, where the screen
@@ -590,11 +590,11 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   outside the whitelist (`Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `InkHub/temp`
   and `.data/plugin`), so the guard in `libcore.io.BlockGuardOs` (posix layer, gated by the thread's
   plugin id) denies `listFiles`, `createNewFile` and `FileOutputStream` [measured, Probe
-  `voc4oo2ysd7cdnkc`, 2026-11-16; source]. But a plugin **can switch it by a sandbox bypass**: a
+  `voc4oo2ysd7cdnkc`, 2026-11-16; source]. But a plugin **can switch it through a route outside the plugin file API**: a
   child process (`ProcessBuilder("sh","-c", …)`) and the system Documents provider
   (`DocumentsContract.createDocument`) both wrote the folder on the tablet; reflection to the raw
   Os, the host main-looper thread and a plain new thread were denied [measured]. The host runs as
-  `android.uid.system`. A bypassing plugin suits the owner's device only and would likely fail store
+  `android.uid.system`. A plugin that takes such a route suits the owner's device only and would likely fail store
   review ([#6](https://github.com/martonpaulo/ink-tools/issues/6)).
 - The Settings handwriting-language screen opens via `com.ratta.settings/.SettingsActivity` with
   `com.ratta.settings.input.HWLanguageSetting` [source]. From any text field the owner reaches it in
@@ -606,7 +606,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   Settings tile added with `cmd statusbar add-tile` lands in `sysui_qs_tiles` but its
   `TileService` is never bound, and `cmd statusbar click-tile` does nothing [measured, test app,
   2026-11-16]. A Quick Settings tile is no surface on this device.
-- **A sideloaded app switches the language with no bypass.** With `MANAGE_EXTERNAL_STORAGE`
+- **A sideloaded app switches the language through its own permission.** With `MANAGE_EXTERNAL_STORAGE`
   (`appops set … allow`), a test app created the new code file, deleted the old one and broadcast
   `hw_type_change` in 6 to 10 ms [measured, 2026-11-16]. Two surfaces work:
   - A **floating button** (`TYPE_APPLICATION_OVERLAY`, `SYSTEM_ALERT_WINDOW` by `appops`) stays
@@ -700,8 +700,8 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/10
 | Surface | Show and clear | Where it is known from |
 | :--- | :--- | :--- |
 | Toast | `sn-plugin-lib` has none. React Native's own `ToastAndroid` (not the plugin API) shows a text toast with the app context, so it needs no activity; it has no cancel call and disappears after about 2 s or 3.5 s by itself | [official] docs index; React Native 0.79.2 `ToastModule.kt`. A plugin's toast shows at the bottom centre of the note for about 2 s [measured, Relay, 2026-11-16]. Its text is in no log: logcat shows only `WindowManager: addWindow win:Window{… Toast}` and `NotificationService: Toast already killed. pkg=com.ratta.supernote.pluginhost`, and `dumpsys notification` lists no toast; `inkctl wait toast` reads its accessibility event instead [measured, 2026-11-25, Android 11, [#297](https://github.com/martonpaulo/ink-tools/issues/297)] |
-| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, [`research/plugin-brief/device-tests.md`](research/plugin-brief/device-tests.md)]. Both pass `getCurrentActivity()`, which the host leaves null; on PluginHost 1.00.2610150 `HostUIImpl` swaps a null context for the application context and raises the window to type 2002, so the plugin lives on [decompiled, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md); device check on [#296](https://github.com/martonpaulo/ink-tools/issues/296)]. The older note in [`research/plugin-brief/brief.md`](research/plugin-brief/brief.md) section 10.5 predates this host |
-| Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; but the host sets the window to −1 × −1 for every `showType` but 0, so a plugin view is always full screen [decompiled, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md)] |
+| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, [`research/plugin-brief/device-tests.md`](research/plugin-brief/device-tests.md)]. Both pass `getCurrentActivity()`, which the host leaves null; on PluginHost 1.00.2610150 `HostUIImpl` swaps a null context for the application context and raises the window to type 2002, so the plugin lives on [device data, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md); device check on [#296](https://github.com/martonpaulo/ink-tools/issues/296)]. The older note in [`research/plugin-brief/brief.md`](research/plugin-brief/brief.md) section 10.5 predates this host |
+| Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; but the host sets the window to −1 × −1 for every `showType` but 0, so a plugin view is always full screen [device data, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md)] |
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
 | Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
 

@@ -20,7 +20,7 @@ Two things under the plugins change outside our control, so neither may be hardc
 
 1. **Supernote's internal APIs.** Content-provider authorities and columns, the `tag=task` write
    rule, the To-Do and Digest database schemas, and the Supernote Cloud endpoints are all
-   undocumented and can change with a firmware update. They were found by reverse engineering, not a
+   undocumented and can change with a firmware update. They were learned from observed device behaviour, not a
    contract.
 2. **The external services.** Today to-do syncs with Todoist and the calendar with Google; tomorrow
    it could be another task app or another calendar. The dictionary and translation back-ends are
@@ -83,7 +83,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
 
 - **Target: one registry of internals, four adapters** ([#294](https://github.com/martonpaulo/ink-tools/issues/294)). Every internal lives in one
   registry, data and not code, with one JSON Schema: per item its level, impact, owning tool,
-  reason when below level 1, evidence (decompiled class or method, app versionCode, date), the path
+  reason when below level 1, evidence (the vendor class or method, app versionCode, date), the path
   to a higher level, when it was last verified, and its probe. It lives in
   [`registry/`](../registry/schema.json): the schema, the header with the ratchet's ceiling per level
   (a ceiling only goes down), and one file per device area in `registry/items/`;
@@ -142,7 +142,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   acceptable cost and quality (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). The levels, from the highest to the lowest and so the most fragile: 1, the
   official `sn-plugin-lib` or our own code; 2, the device's internal data, such as its content
   providers; 3, the vendor's internal code and screens, such as a class loaded from another app;
-  4, screen automation; 5, behaviour learned from decompiled code, which changes silently and is
+  4, screen automation; 5, observed device behaviour that no API states, which changes silently and is
   the most fragile. Impact is marked apart: level 4 affects only our tests, the others affect the
   person. Every part below level 1 records why no higher level serves and has a probe in the
   firmware watch ([#293](https://github.com/martonpaulo/ink-tools/issues/293)), so it never breaks silently. Move a part up when we touch it or when the
@@ -356,7 +356,7 @@ secrets ([#223](https://github.com/martonpaulo/ink-tools/issues/223), [`security
 ## What this means for the cloud agent
 
 Build the pure layers (`sync-core`, `ink-core`, provider implementations) and unit-test them with no
-device and no secrets. The `sn-adapter` descriptor is filled from the private reverse-engineering
+device and no secrets. The `sn-adapter` descriptor is filled from the private device-study
 notes. Anything that needs the physical tablet or a live account is verified by the owner on the
 Mac, not faked in the cloud.
 
