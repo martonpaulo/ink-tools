@@ -36,10 +36,11 @@ sn-adapter's `saveStickerByLasso` as one host sticker file in the private plugin
 collection survives a restart with no index file; a cut deletes the lassoed ink only after the
 write. «Paste Collection», a NOTE toolbar button, opens `src/ui/CollectionScreen.tsx`: the count,
 Paste, Clear and «Keep After Paste» (saved as `collection.keepAfterPaste`, default off). Paste
-(`src/collection/run.ts`) inserts each piece with `insertSticker`, moves it with
-`resizeLassoRect` to its place, the group shifted onto the page as one, lassoes the union with
-`lassoElements`, then empties the collection unless kept; a failed piece stops the paste and keeps
-the collection. The host behaviours it rests on (a second paste, the union lasso taking ink already
+(`src/collection/run.ts`) closes the plugin view, inserts each piece with `insertSticker` and moves
+it with `resizeLassoRect` right after to its place, the group shifted onto the page as one, lassoes
+the union with `lassoElements`, then empties the collection unless kept; a failed piece stops the
+paste, keeps the collection and logs the call that failed. With the view in front no lasso call
+reached a pasted piece (device rounds 6 and 7). The host behaviours it rests on (a second paste, the union lasso taking ink already
 there) are Task 1 of [#249](https://github.com/martonpaulo/ink-tools/issues/249); its device round is open.
 
 ## Lookup

@@ -7,6 +7,7 @@
  */
 import {rectProblem, type Rect, type Size} from '@ink-tools/ink-core';
 import {
+  closePluginView,
   deleteLassoElements,
   getLassoRect,
   insertSticker,
@@ -21,7 +22,6 @@ import {deleteFile, listDir, pluginFolder} from '../profile';
 import {lookupLog, showToast, whyNot} from '../textBox';
 import {
   nextSeq,
-  pastedRect,
   pieceName,
   piecesIn,
   placements,
@@ -41,6 +41,8 @@ export type CollectionHost = {
   insertSticker: (path: string) => Promise<Result<boolean>>;
   resize: (rect: Rect) => Promise<Result<boolean>>;
   select: (rect: Rect) => Promise<Result<boolean>>;
+  /** Closes the plugin view, so the note is in front while the pieces go in. */
+  closeView: () => Promise<Result<boolean>>;
   toast: (text: string) => void;
   log: (line: string) => void;
 };
@@ -138,10 +140,17 @@ export async function addToCollection(
 }
 
 /**
- * «Paste Collection»: each piece goes on the current page in the order it was taken, is lassoed
- * again where the host pasted it, and moves to its place, the group shifted onto the page as one; then the whole group is lassoed, so the
- * person moves it as one selection. The collection is emptied unless `keep`; a piece that fails
- * stops the paste and keeps the collection whole.
+ * «Paste Collection»: the plugin view closes, then each piece goes on the current page in the
+ * order it was taken and moves to its place, the group shifted onto the page as one; then the
+ * whole group is lassoed, so the person moves it as one selection. The collection is emptied
+ * unless `keep`; a piece that fails stops the paste, keeps the collection whole and logs the call
+ * that failed.
+ *
+ * With the view open, a pasted piece took no lasso call: `resizeLassoRect` answered 904 (device
+ * round 6) and the paste stopped after piece 1 with `answered false` once it was lassoed again at
+ * the page centre (device round 7). From a lasso row, with no view in front, `resizeLassoRect`
+ * right after `insertSticker` moved the piece exactly (docs/supernote.md, #249), so the paste
+ * runs that way. Whether closing the view is enough is the next device round's check.
  */
 export async function pasteCollection(
   host: CollectionHost,
@@ -161,19 +170,20 @@ export async function pasteCollection(
     host.log(`${tag}: page size failed`);
     return stop(host, 'page', copy['collection.failed']);
   }
+  const closed = await host.closeView();
+  if (!done(closed)) {
+    host.log(`${tag}: closePluginView ${whyNot(closed)}`);
+  }
   for (const [index, piece] of listed.pieces.entries()) {
     const path = `${listed.dir}/${piece.name}`;
-    // From the view a pasted piece is no lasso the API can use (904 on the tablet, device round 6):
-    // lasso it again where the host pasted it, then move it.
     const inserted = await host.insertSticker(path);
-    const selected = done(inserted)
-      ? await host.select(pastedRect(piece.rect, page.value))
-      : inserted;
-    const moved = done(selected)
-      ? await host.resize(placed.targets[index])
-      : selected;
+    if (!done(inserted)) {
+      host.log(`${tag}: ${piece.name}: insertSticker ${whyNot(inserted)}`);
+      return stop(host, 'insert', copy['collection.notPasted'](index));
+    }
+    const moved = await host.resize(placed.targets[index]);
     if (!done(moved)) {
-      host.log(`${tag}: ${piece.name}: ${whyNot(moved)}`);
+      host.log(`${tag}: ${piece.name}: resizeLassoRect ${whyNot(moved)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));
     }
   }
@@ -248,6 +258,7 @@ export const DEVICE_HOST: CollectionHost = {
   insertSticker,
   resize: resizeLassoRect,
   select: lassoElements,
+  closeView: closePluginView,
   toast: showToast,
   log: lookupLog,
 };

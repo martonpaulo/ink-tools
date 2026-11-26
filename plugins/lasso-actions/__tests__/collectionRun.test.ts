@@ -18,6 +18,7 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
   const files = new Set<string>();
   const calls: string[] = [];
   const toasts: string[] = [];
+  const logs: string[] = [];
   let lasso: Result<Rect> = ok({left: 100, top: 200, right: 300, bottom: 260});
   const host: CollectionHost = {
     folder: async () => ok(DIR),
@@ -57,12 +58,17 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
       );
       return ok(true);
     },
+    closeView: async () => {
+      calls.push('close view');
+      return ok(true);
+    },
     toast: text => toasts.push(text),
-    log: () => {},
+    log: line => logs.push(line),
     ...over,
   };
   return {
     host,
+    logs,
     files,
     calls,
     toasts,
@@ -131,13 +137,11 @@ test('Paste Collection puts every piece in order at its place, lassoes the group
   fake.toasts.length = 0;
   expect(await pasteCollection(fake.host, false)).toEqual({ok: true, count: 0});
   expect(fake.calls).toEqual([
-    // Each paste lands at the page centre with no usable lasso (device round 6): lassoed again
-    // there, then moved.
+    // The view closes first; each piece is then moved right after its paste (#249).
+    'close view',
     `insert ${DIR}/collection-1_100_200_200_60.sticker`,
-    'select 602,906,802,966',
     'move 100,200,300,260',
     `insert ${DIR}/collection-2_500_900_300_100.sticker`,
-    'select 552,886,852,986',
     'move 500,900,800,1000',
     'select 100,200,800,1000',
     `remove ${DIR}/collection-1_100_200_200_60.sticker`,
@@ -170,15 +174,76 @@ test('a piece that fails stops the paste and keeps the collection whole', async 
   expect(await countPieces(fake.host)).toBe(2);
 });
 
-test('a pasted piece that cannot be lassoed again stops the paste before any move', async () => {
+test('a pasted piece that cannot be moved stops the paste, and the log names the call', async () => {
   const fake = fakeHost();
   await addToCollection(fake.host, false);
   fake.calls.length = 0;
-  fake.host.select = async () => fail(904, 'No lasso action has been performed');
+  fake.host.resize = async () => ok(false);
   expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'insert'});
-  expect(fake.calls).toEqual([`insert ${DIR}/collection-1_100_200_200_60.sticker`]);
+  expect(fake.calls).toEqual(['close view', `insert ${DIR}/collection-1_100_200_200_60.sticker`]);
+  expect(fake.logs.at(-1)).toBe(
+    'collection paste: collection-1_100_200_200_60.sticker: resizeLassoRect answered false',
+  );
   expect(fake.toasts.at(-1)).toBe(copy['collection.notPasted'](0));
   expect(await countPieces(fake.host)).toBe(1);
+});
+
+/**
+ * The Manta as device rounds 6 and 7 recorded it (#249): `insertSticker` leaves the piece at the
+ * page centre in the pasted state. While the plugin view is in front, no lasso call reaches it:
+ * `resizeLassoRect` answers 904 and `lassoElements` at the page centre answers false. With no view
+ * in front, `resizeLassoRect` right after the paste moves it (a lasso row, docs/supernote.md).
+ */
+function mantaPage(fake: ReturnType<typeof fakeHost>) {
+  let viewOpen = true;
+  let pasted = false;
+  const placed: string[] = [];
+  Object.assign(fake.host, {
+    closeView: async () => {
+      viewOpen = false;
+      return ok(true);
+    },
+    insertSticker: async (path: string) => {
+      pasted = true;
+      placed.push(path.slice(DIR.length + 1));
+      return ok(true);
+    },
+    resize: async () => {
+      if (viewOpen || !pasted) {
+        return fail(904, 'No lasso action has been performed. Cannot call the API!');
+      }
+      pasted = false;
+      return ok(true);
+    },
+    select: async () => ok(!viewOpen && !pasted),
+  });
+  return placed;
+}
+
+test('on the Manta two pieces both go in once the view is closed (#249)', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  fake.lassoAt(ok({left: 500, top: 900, right: 800, bottom: 1000}));
+  await addToCollection(fake.host, false);
+  const placed = mantaPage(fake);
+  expect(await pasteCollection(fake.host, false)).toEqual({ok: true, count: 0});
+  expect(placed).toEqual([
+    'collection-1_100_200_200_60.sticker',
+    'collection-2_500_900_300_100.sticker',
+  ]);
+});
+
+test('on the Manta a paste with the view still open stops after piece 1, naming the call', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  await addToCollection(fake.host, false);
+  mantaPage(fake);
+  fake.host.closeView = async () => fail(-1, 'thrown');
+  expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'insert'});
+  expect(fake.logs).toContain('collection paste: closePluginView -1 thrown');
+  expect(fake.logs.at(-1)).toBe(
+    'collection paste: collection-1_100_200_200_60.sticker: resizeLassoRect 904 No lasso action has been performed. Cannot call the API!',
+  );
 });
 
 test('an empty collection pastes nothing and says so', async () => {
