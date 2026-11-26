@@ -6,12 +6,16 @@
  * each change, and a toast says the new state in words (no colour cue alone).
  */
 import {
+  BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
+  EDIT_DATA_STROKES,
   hasPermission,
   PERMISSION_FILE_READ,
   PERMISSION_FILE_WRITE,
   registerButton,
   requestPermission,
   Result,
+  SHOW_NO_VIEW,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
 import type {Problem} from '@ink-tools/ui-kit';
@@ -25,13 +29,10 @@ import {
 import {convertLasso, LassoConvertHost, LassoOutcome} from './lasso';
 import {getSettings, wordOptions} from './settings';
 
-export const BUTTON_TYPE_SIDEBAR = 1;
-export const SHOW_NO_VIEW = 0;
+// sn-plugin-lib's button values, owned by sn-adapter (#295).
+export {BUTTON_TYPE_LASSO, BUTTON_TYPE_SIDEBAR, EDIT_DATA_STROKES, SHOW_NO_VIEW};
 export const MODE_BUTTON_ID = 100;
 export const UNDO_BUTTON_ID = 101;
-/** sn-plugin-lib's lasso toolbar button, for strokes (as Lookup's src/buttons.ts). */
-export const BUTTON_TYPE_LASSO = 2;
-export const EDIT_DATA_STROKES = 0;
 export const LASSO_BUTTON_ID = 102;
 
 export type Icons = {on: string; off: string; undo: string; lasso: string};

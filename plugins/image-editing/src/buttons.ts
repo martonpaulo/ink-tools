@@ -5,21 +5,19 @@
  */
 import {Image} from 'react-native';
 import {
+  BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
+  EDIT_DATA_PICTURE,
   registerButton,
   Result,
+  SHOW_FULL_VIEW,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './copy';
 import {EDITOR_BUTTON_ID, EDITOR_TOOLBAR_ID, LEGACY_BUTTON_IDS} from './edits';
 
-/** sn-plugin-lib's lasso toolbar button (as Lookup's src/buttons.ts). */
-export const BUTTON_TYPE_LASSO = 2;
-/** sn-plugin-lib's note toolbar button, which the owner can pin (#248). */
-export const BUTTON_TYPE_SIDEBAR = 1;
-/** `editDataTypes` 2: the lasso holds a picture (sn-plugin-lib 0.2.3, NativePluginManager). */
-export const EDIT_DATA_PICTURE = 2;
-/** `showType` 1: the press opens the plugin's full view (PluginButton). */
-export const SHOW_FULL_VIEW = 1;
+// sn-plugin-lib's button values, owned by sn-adapter (#295).
+export {BUTTON_TYPE_LASSO, BUTTON_TYPE_SIDEBAR, EDIT_DATA_PICTURE, SHOW_FULL_VIEW};
 
 export type ButtonDeps = {
   register: typeof registerButton;

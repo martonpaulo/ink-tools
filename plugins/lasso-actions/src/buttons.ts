@@ -5,6 +5,9 @@
  * the view is open to show the question.
  */
 import {
+  BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
+  EDIT_DATA_STROKES,
   hasPermission,
   PERMISSION_FILE_READ,
   PERMISSION_FILE_WRITE,
@@ -12,6 +15,8 @@ import {
   registerButton,
   requestPermission,
   Result,
+  SHOW_FULL_VIEW,
+  SHOW_NO_VIEW,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
 import type {Problem} from '@ink-tools/ui-kit';
@@ -27,13 +32,8 @@ import {
 } from './modes';
 import type {LookupSettings, SwitchKey} from './settings';
 
-/** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
-export const BUTTON_TYPE_LASSO = 2;
-/** The NOTE toolbar's «Plugins» menu button (docs/supernote.md), as Device Link's. */
-export const BUTTON_TYPE_SIDEBAR = 1;
-export const EDIT_DATA_STROKES = 0;
-export const SHOW_NO_VIEW = 0;
-export const SHOW_FULL_VIEW = 1;
+// sn-plugin-lib's button values, owned by sn-adapter (#295).
+export {BUTTON_TYPE_LASSO, BUTTON_TYPE_SIDEBAR, EDIT_DATA_STROKES, SHOW_FULL_VIEW, SHOW_NO_VIEW};
 
 export type Need = {permission: string; reason: string};
 
