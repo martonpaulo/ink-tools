@@ -36,6 +36,7 @@ function setup(granted = true, tipShown = true) {
         ? ({ok: true as const, value: true as const})
         : ({ok: false as const, code: -1, message: 'no window'});
     },
+    fail: jest.fn(),
     log: () => {},
     icons: {
       on: 'on.png',
@@ -166,4 +167,18 @@ test('«Convert to Text» converts the lasso and says so; without the permission
   expect(await denied.buttons.convertLasso()).toBeNull();
   expect(denied.toasts).toEqual([copy['toast.permission']]);
   expect(denied.tablet.host.getLassoElements).not.toHaveBeenCalled();
+});
+
+test('a conversion that fails on the tablet holds the Error state, with no toast (#257)', async () => {
+  const {host, buttons, toasts} = setup();
+  host.lasso = {
+    ...host.lasso,
+    getLassoElements: jest.fn(async () => ({ok: false as const, code: -1, message: 'thrown'})),
+  } as typeof host.lasso;
+  expect(await buttons.convertLasso()).toBe('failed');
+  expect(toasts).toEqual([]);
+  expect(host.fail).toHaveBeenCalledWith({
+    what: copy['toast.convertFailed'],
+    reason: copy['error.again'],
+  });
 });

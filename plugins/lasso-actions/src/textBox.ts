@@ -41,6 +41,10 @@ const CHAR_WIDTH = 0.55;
  */
 export const BOX_WIDTH = 640;
 
+/** Why a host call that answers true on success did not: its failure, or a plain false. */
+export const whyNot = (result: Result<boolean>): string =>
+  result.ok ? 'answered false' : `${result.code} ${result.message}`;
+
 /** One line of Lookup's log. */
 export const lookupLog = (line: string) => console.log(`Lookup: ${line}`);
 
@@ -53,8 +57,7 @@ export function readLasso(): Promise<Outcome<LassoQuery, CallFailure>> {
     getCurrentPageNum,
     getPageSize,
     recognizeElements,
-    getOccupied: (path, page) =>
-      occupiedRects(path, page, lookupLog),
+    getOccupied: (path, page) => occupiedRects(path, page, lookupLog),
     log: lookupLog,
     emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
     failure: message => fail(THROWN_CODE, message),
@@ -104,10 +107,7 @@ export async function insertBox(
   }
   const inserted = await insert({text, rect, fontSize: FONT_SIZE});
   if (!inserted.ok || !inserted.value) {
-    const why = inserted.ok
-      ? 'answered false'
-      : `${inserted.code} ${inserted.message}`;
-    log(`${tag}: insertText ${why}`);
+    log(`${tag}: insertText ${whyNot(inserted)}`);
     return {ok: false, why: 'insert'};
   }
   return {ok: true, rect};
@@ -150,7 +150,13 @@ export async function checkedRead(
     return {ok: false, text: copy['error.unplaced']};
   }
   if (checked.place) {
-    await insertBox(copy['error.unreadable'], checked.place, deps.insert, deps.log, tag);
+    await insertBox(
+      copy['error.unreadable'],
+      checked.place,
+      deps.insert,
+      deps.log,
+      tag,
+    );
   }
   return {ok: false, text: copy['error.unreadable']};
 }

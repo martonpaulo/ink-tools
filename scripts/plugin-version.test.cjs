@@ -78,7 +78,9 @@ test('versionCode never falls, and rises with every versionName', () => {
 /** A Git fixture: plugins/old at 0.1.0 beta 2, tagged old-v0.1.0-beta.2, then renamed to plugins/new. */
 function renamedHistory() {
   const root = tree({old: {'PluginConfig.json': {pluginID: 'fixture00plugin1', versionName: '0.1.0 beta 2', versionCode: '3'}}});
-  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com', ...args], {stdio: 'ignore'});
+  // The fixture never signs: a Mac whose global config signs tags would make `git tag` ask for a message.
+  const fixture = ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com', '-c', 'commit.gpgSign=false', '-c', 'tag.gpgSign=false'];
+  const git = (...args) => execFileSync('git', ['-C', root, ...fixture, ...args], {stdio: 'ignore'});
   git('init', '-q');
   git('add', '.');
   git('commit', '-q', '-m', 'old');

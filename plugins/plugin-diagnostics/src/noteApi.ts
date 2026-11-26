@@ -46,11 +46,11 @@ async function strokePoints(element: Element): Promise<Point[]> {
 
 const SAVED = 'the note saved';
 
-/** Saves the open note and logs the save and its time; never throws (#296). */
+/** Saves the open note and logs the save and its time; true when it saved. Never throws (#296). */
 export async function saveFirst(
   log: (line: string) => void = line => console.log(`${TAG} ${line}`),
   now: () => number = Date.now,
-): Promise<void> {
+): Promise<boolean> {
   const started = now();
   let why: string;
   try {
@@ -65,6 +65,22 @@ export async function saveFirst(
   const ms = now() - started;
   const after = why === SAVED ? '' : ': the page is drawn as the file holds it';
   log(`save: ${why} in ${ms} ms${after}`);
+  return why === SAVED;
+}
+
+/**
+ * The picture elements on page `page` of the note at `notePath`, or null when the page's elements
+ * did not read: the tablet's page PNG leaves every picture out (device round 5, #263), so the
+ * answer says how many are missing from it.
+ */
+async function picturesOn(notePath: string, page: number): Promise<number | null> {
+  try {
+    const answer = (await PluginFileAPI.getElements(page, notePath)) as Response | null | undefined;
+    const elements = answer?.success === true ? answer.result : null;
+    return Array.isArray(elements) ? elements.filter(e => (e as Element)?.type === PICTURE).length : null;
+  } catch {
+    return null;
+  }
 }
 
 /** sn-plugin-lib behind HelperApi. Thin on purpose: every rule lives in helper.ts or the CLI. */
@@ -108,6 +124,7 @@ export const noteApi: HelperApi = {
     if (made !== true) {
       throw new HelperError(1, 'generateNotePng: the page image was not generated');
     }
+    return {pictures: await picturesOn(notePath, page)};
   },
 
   async insertPicture(path) {
@@ -122,6 +139,11 @@ export const noteApi: HelperApi = {
   },
 
   async insertPage(page, template) {
+    // insertNotePage rewrites the open note's file and drops the ink written since its last save
+    // (device round 5, #263): save first, and insert nothing when the save fails.
+    if (!(await saveFirst())) {
+      throw new HelperError(1, 'saveCurrentNote did not save the open note: an insert would drop its unsaved ink, so no page was inserted');
+    }
     const notePath = unwrap<string>('getCurrentFilePath', await PluginCommAPI.getCurrentFilePath());
     unwrap('insertNotePage', await PluginFileAPI.insertNotePage({notePath, page, template}));
   },

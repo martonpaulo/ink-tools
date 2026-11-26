@@ -9,6 +9,9 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {metrics} from './metrics';
 import {shared} from './styles';
 
+/** The `nativeID` of every list row, which the render rules find rows by (#411). */
+export const LIST_ROW_ID = 'list-row';
+
 export type ListRowProps = {
   title: string;
   subtitle?: string;
@@ -29,12 +32,17 @@ export function ListRow({title, subtitle, leading, trailing, onPress}: ListRowPr
     </>
   );
   if (!onPress) {
-    return <View style={styles.row}>{content}</View>;
+    return (
+      <View nativeID={LIST_ROW_ID} style={styles.row}>
+        {content}
+      </View>
+    );
   }
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={subtitle === undefined ? title : `${title}, ${subtitle}`}
+      nativeID={LIST_ROW_ID}
       style={[styles.row, styles.target]}
       onPress={onPress}>
       {content}

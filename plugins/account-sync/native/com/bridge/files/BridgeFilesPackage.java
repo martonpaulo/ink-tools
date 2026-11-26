@@ -6,6 +6,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.inktools.files.Ink2PicFilesPackage;
 import com.inktools.files.Registry;
 import com.inktools.files.SafePaths;
+import com.inktools.timer.TickModule;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,8 @@ import java.util.List;
 public class BridgeFilesPackage extends Ink2PicFilesPackage {
   /** PluginConfig.json `pluginID`, the name of the plugin's private folder; a test pins the two. */
   static final String PLUGIN_ID = "4d11a9bbc6ad25e2";
+  /** The native timer's module name; index.js passes the same name to `nativeTimers`. */
+  static final String TICKS_MODULE = "BridgeTicks";
 
   public BridgeFilesPackage() {
     // Its private folder, EXPORT, MyStyle/Bridge and the sign-in drop folder of
@@ -33,6 +36,8 @@ public class BridgeFilesPackage extends Ink2PicFilesPackage {
   public List<NativeModule> createNativeModules(ReactApplicationContext context) {
     List<NativeModule> modules = new ArrayList<>(super.createNativeModules(context));
     modules.add(new BridgeProvidersModule(context));
+    // The timer of the automatic sync and the action channel, which ticks with no view open (#283).
+    modules.add(new TickModule(context, TICKS_MODULE));
     return modules;
   }
 }

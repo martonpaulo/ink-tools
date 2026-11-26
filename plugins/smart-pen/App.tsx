@@ -8,6 +8,9 @@ import {
   SwitchRow,
   TitleBar,
   useBackKey,
+  useWorking,
+  WorkingStrip,
+  type Working,
 } from '@ink-tools/ui-kit';
 import {closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
@@ -20,6 +23,7 @@ import {MIN_SIZE_CHOICES_MM} from './src/modules/shapes/settings';
 import {getSettings, saveSettings} from './src/profile';
 import {applySettings} from './src/runtime';
 import {DEFAULT_PEN_SETTINGS, type PenSettings} from './src/settings';
+import {working as deviceWorking} from './src/working';
 
 const SPACINGS: Choice<Spacing>[] = [
   {value: 'tight', label: textCopy['value.tight']},
@@ -38,6 +42,24 @@ const SIZES = MIN_SIZE_CHOICES_MM.map(mm => ({
   label: shapesCopy['value.mm'].replace('{mm}', String(mm)),
 }));
 
+/** A button's failure holds the view on ui-kit's Error state until Close (#257); else Settings. */
+export default function App(props: SettingsProps & {working?: Working}) {
+  const {working = deviceWorking, ...settings} = props;
+  if (useWorking(working)) {
+    return <WorkingStrip working={working} />;
+  }
+  return <Settings {...settings} />;
+}
+
+type SettingsProps = {
+  /** Closes the plugin view; tests pass a fake. */
+  close?: () => void;
+  /** The settings store and the runtime; tests pass fakes. */
+  load?: () => Promise<PenSettings>;
+  save?: (next: PenSettings) => Promise<void>;
+  apply?: (next: PenSettings) => Promise<void>;
+};
+
 /**
  * Smart Pen's Settings view (#305), every size and colour from the shared ui-kit (#93): one switch
  * per module, then the settings of each module that is on. A switch starts or stops its module at
@@ -47,19 +69,12 @@ const SIZES = MIN_SIZE_CHOICES_MM.map(mm => ({
  * view, since Back never reaches it on the Manta (#204, #266); Back still closes it on a host that
  * sends the key.
  */
-export default function App({
+function Settings({
   close = () => closePluginView(),
   load = getSettings,
   save = saveSettings,
   apply = applySettings,
-}: {
-  /** Closes the plugin view; tests pass a fake. */
-  close?: () => void;
-  /** The settings store and the runtime; tests pass fakes. */
-  load?: () => Promise<PenSettings>;
-  save?: (next: PenSettings) => Promise<void>;
-  apply?: (next: PenSettings) => Promise<void>;
-}) {
+}: SettingsProps) {
   useBackKey(close);
   const [settings, setLocal] = useState<PenSettings | null>(null);
   const [problem, setProblem] = useState<string | undefined>(undefined);

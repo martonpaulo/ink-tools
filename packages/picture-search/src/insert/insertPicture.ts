@@ -17,7 +17,7 @@ import {
 } from '../storage/paths';
 import {pluginFolder} from '../storage/session';
 import {placeAtLasso} from './place';
-import {insertAsSticker} from './sticker';
+import {insertAsSticker, PICTURE_SVG_MESSAGE} from './sticker';
 import {inkUnderRect, type LassoPlace, type Placement} from '@ink-tools/ink-core';
 import {
   deleteLassoElements,
@@ -77,6 +77,11 @@ export type PictureStore = {
    * (#168), as a short toast in the plugin's own words.
    */
   lassoSkipped?: () => void;
+  /**
+   * Tells the person «Insert Sticker» put the picture in instead, since its drawing is raster
+   * pictures and not lines (#35), as a short toast in the plugin's own words.
+   */
+  stickerRefused?: () => void;
 };
 
 const noSymbol = async (): Promise<string | null> => null;
@@ -368,6 +373,7 @@ async function insertInNote(
   saved: Saved,
   place: LassoPlace | null,
   options: InsertOptions,
+  store: PictureStore,
 ): Promise<Result<Rect | null>> {
   if (options.sticker) {
     const pasted = await insertAsSticker(
@@ -379,6 +385,9 @@ async function insertInNote(
       return pasted;
     }
     log(`sticker: ${pasted.message}; inserted as a picture instead`);
+    if (pasted.message === PICTURE_SVG_MESSAGE) {
+      store.stickerRefused?.();
+    }
   }
   if (place && saved.size) {
     const placed = await placeAtLasso(
@@ -547,7 +556,7 @@ export async function insertPicture(
     return atStep('download', fail(THROWN_CODE, `stopped: ${reason}`));
   }
   let at = Date.now();
-  const inserted = await insertInNote(result, saved.value, place, chosen);
+  const inserted = await insertInNote(result, saved.value, place, chosen, store);
   logTime('insert', at);
   if (!inserted.ok) {
     return atStep('place', inserted);

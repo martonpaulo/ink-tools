@@ -22,6 +22,9 @@ struct InkNotebookEditorApp: App {
             CommandGroup(after: .newItem) {
                 OpenFromTabletCommand()
             }
+            CommandGroup(before: .toolbar) {
+                ViewCommands()
+            }
             CommandMenu(Copy.goMenu) {
                 GoCommands()
             }
@@ -65,6 +68,43 @@ private struct GoCommands: View {
         Button(title) { navigator?.wrappedValue.go(move) }
             .keyboardShortcut(shortcut)
             .disabled(navigator?.wrappedValue.allows(move) != true)
+    }
+}
+
+/// The View menu's layout and zoom items for the notebook window in front, with Preview's names
+/// and its zoom keys (#319).
+private struct ViewCommands: View {
+    @FocusedValue(\.pageViewer) private var viewer
+
+    var body: some View {
+        layout(Copy.continuousScroll, .scroll, "1")
+        layout(Copy.contactSheet, .grid, "2")
+        Divider()
+        zoom(Copy.actualSize, viewer.map { _ in .magnification(1) }, KeyboardShortcut("0"))
+        zoom(Copy.zoomIn, viewer?.zoomedIn, KeyboardShortcut("+"))
+        zoom(Copy.zoomOut, viewer?.zoomedOut, KeyboardShortcut("-"))
+        zoom(Copy.zoomToFit, viewer.map { _ in .fitPage }, KeyboardShortcut("9"))
+        zoom(Copy.zoomToWidth, viewer.map { _ in .fitWidth }, KeyboardShortcut("9", modifiers: [.option, .command]))
+        Divider()
+    }
+
+    private func layout(_ title: String, _ layout: PageViewer.Layout, _ key: KeyEquivalent) -> some View {
+        Toggle(
+            title,
+            isOn: Binding(
+                get: { viewer?.layout == layout },
+                set: { if $0 { viewer?.layout = layout } })
+        )
+        .keyboardShortcut(key)
+        .disabled(viewer == nil)
+    }
+
+    private func zoom(_ title: String, _ zoom: PageZoom?, _ shortcut: KeyboardShortcut) -> some View {
+        Button(title) {
+            if let zoom { viewer?.show(zoom) }
+        }
+        .keyboardShortcut(shortcut)
+        .disabled(zoom == nil)
     }
 }
 

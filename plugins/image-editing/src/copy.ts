@@ -90,6 +90,10 @@ export const copy = {
   'press.eraseOutside':
     'Draw the marks on the picture itself, then press Erase again.',
   'press.failed': (edit: string, why: string) => `${edit} did not work: ${why}`,
+  /** The Error state of a press that failed on the tablet (#256); the details go to the log. */
+  'press.failedTitle': (edit: string) => `${edit} did not work`,
+  'page.failedTitle': 'The page could not be read',
+  'press.failedReason': 'Close, then press the edit again.',
   /** The toast of a page-wide press (#140). */
   'page.done': (edited: number, pictures: number) =>
     pictures === 0

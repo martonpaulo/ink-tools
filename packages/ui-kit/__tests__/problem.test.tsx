@@ -53,7 +53,7 @@ describe('Needs (#255)', () => {
       'Turn it on',
     ]);
     const fix = button(tree, 'Turn it on')!;
-    expect(fix.props.primary).toBe(true);
+    expect(fix.props.kind).toBe('primary');
     act(() => fix.props.onPress());
     expect(run).toHaveBeenCalledTimes(1);
   });

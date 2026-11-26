@@ -12,6 +12,19 @@ nonisolated enum Copy {
     static let nextPage = String(localized: "Next Page")
     static let firstPage = String(localized: "First Page")
     static let lastPage = String(localized: "Last Page")
+    static let continuousScroll = String(localized: "Continuous Scroll")
+    static let contactSheet = String(localized: "Contact Sheet")
+    static let viewLayout = String(localized: "Show Pages As")
+    static let actualSize = String(localized: "Actual Size")
+    static let zoomIn = String(localized: "Zoom In")
+    static let zoomOut = String(localized: "Zoom Out")
+    static let zoomToFit = String(localized: "Zoom to Fit")
+    static let zoomToWidth = String(localized: "Zoom to Width")
+    static let zoom = String(localized: "Zoom")
+    static let selectionTool = String(localized: "Selection Tool")
+    static let rectangularSelection = String(localized: "Rectangular Selection")
+    static let lassoSelection = String(localized: "Lasso Selection")
+    static let elementsNotSelectable = String(localized: "Nothing on this page can be selected")
 
     // MARK: Notebook window
 
@@ -57,6 +70,14 @@ nonisolated enum Copy {
 
     static func pageOf(_ page: Int, _ count: Int) -> String {
         String(localized: "Page \(page) of \(count)")
+    }
+
+    static func pageOfSelected(_ page: Int, _ count: Int, _ selected: Int) -> String {
+        String(localized: "Page \(page) of \(count), \(selected) selected")
+    }
+
+    static func selectedCount(_ selected: Int) -> String {
+        String(localized: "Elements selected: \(selected)")
     }
 
     static func templateNotShown(_ style: String) -> String {

@@ -6,11 +6,10 @@ confirm the insert (see [What a device round must confirm](#what-a-device-round-
 
 Target: `SupernoteKnowledge` 1.00.153 (`versionCode` 100153), package
 `com.ratta.supernote.knowledge`, pulled from the owner's Manta. SHA-256 of the APK:
-`b5f1df9086d5fdc0bd5212fe6c5fc08b2308ef58fb0313a7937f865297db74b8`. It was decompiled with `jadx`
-(sources, then resources for the manifest). Decompiled vendor code stays in the session scratch and
-is never committed, so each citation gives the decompiled file and line, not the code.
+`b5f1df9086d5fdc0bd5212fe6c5fc08b2308ef58fb0313a7937f865297db74b8`. Vendor material stays out of
+the repository, so each citation gives a class and line, not the code.
 
-Marks, as in [`../supernote.md`](../supernote.md): **[source]** read in the decompiled app;
+Marks, as in [`../supernote.md`](../supernote.md): **[source]** device data, read in the app on the tablet;
 **[measured]** on the tablet; **[inference]** reasoned, not run.
 
 ## Contents
@@ -232,7 +231,7 @@ entries to Supernote Cloud, as the 2026-11-13 note on [#42](https://github.com/m
 
 ## Sources
 
-- `jadx` output of the APK above, in the session scratch: `KnowledgeContentProvider.java`,
+- Device data of the APK above, outside the repository: `KnowledgeContentProvider.java`,
   `KnowledgeFieldNameConstants.java`, `KnowledgeDB_Impl.java`, `KnowledgeDao_Impl.java`,
   `KnowledgeListAdapter.java`, `AutoSyncTaskManager.java`, `DigestDatabaseHelper.java`,
   `FileManageProvider.java`, `AndroidManifest.xml`.

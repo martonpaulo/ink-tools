@@ -273,6 +273,14 @@ function shapePolylines(tag: string, a: Record<string, string>): Polyline[] {
   return [];
 }
 
+/**
+ * True when the SVG embeds raster pictures (`<image>`): its vector shapes are then at most a frame
+ * around them, and a sticker of its outlines is an empty square (device round 6, #35).
+ */
+export function svgEmbedsPictures(svg: string): boolean {
+  return /<(?:svg:)?image[\s/>]/i.test(svg);
+}
+
 /** Containers whose content is never drawn where it stands. */
 const HIDDEN = new Set(['defs', 'clipPath', 'mask', 'symbol', 'pattern', 'marker', 'metadata', 'title', 'desc', 'style']);
 

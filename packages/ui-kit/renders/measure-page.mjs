@@ -45,6 +45,8 @@ export function measurePage() {
     const edge = boxOf(side.getBoundingClientRect());
     return {...box, left: Math.max(box.left, edge.left), right: Math.min(box.right, edge.right)};
   };
+  // ui-kit's list row, by its LIST_ROW_ID (#411).
+  const ROW = '[data-kind="list-row"]';
   const scrollOf = (el) => {
     const view = el.parentElement?.closest('[data-scroll]');
     return view ? shownX(view, boxOf(view.getBoundingClientRect())) : undefined;
@@ -70,8 +72,15 @@ export function measurePage() {
         box: boxOf(rect),
         scroll: scrollOf(el),
         bar: inBar(el),
+        // The ui-kit kind (a button's level, a list row) and whether it sits in a list row (#411).
+        kind: el.getAttribute('data-kind') ?? undefined,
+        inRow: Boolean(el.parentElement?.closest(ROW)),
       };
     });
+
+  const rows = [...document.querySelectorAll(ROW)]
+    .filter(shown)
+    .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect())}));
 
   const bars = [...document.querySelectorAll(BAR)]
     .filter(shown)
@@ -118,11 +127,13 @@ export function measurePage() {
         fontSize,
         glyphs: shownX(el, boxOf(glyphs)),
         code: Boolean(el.closest(CODE)),
+        // The code block's box, so a line that runs past its side is caught: lines wrap (#405).
+        codeBox: el.closest(CODE) ? boxOf(el.closest(CODE).getBoundingClientRect()) : undefined,
         monospace: /monospace/i.test(getComputedStyle(el).fontFamily),
         within,
         scroll: scrollOf(el),
         bar: inBar(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows};
 }

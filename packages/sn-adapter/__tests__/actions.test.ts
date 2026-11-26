@@ -3,6 +3,7 @@ import {
   ACTION_MAX_AGE_MS,
   ACTION_POLL_MS,
   actionLines,
+  nativeTimers,
   startActionChannel,
   type Action,
 } from '../src/official/actions';
@@ -124,4 +125,53 @@ test('a long answer is split in numbered chunks that join back to the JSON', () 
   expect(lines).toHaveLength(3);
   expect(lines[0].startsWith(`INKTOOLS action plugin-diagnostics ${ID} 1/3 `)).toBe(true);
   expect(JSON.parse(lines.map(line => line.replace(/^(\S+ ){4}\S+ /, '')).join(''))).toEqual(answer);
+});
+
+describe('nativeTimers (#283)', () => {
+  function native() {
+    const listeners: Record<string, (key: number) => void> = {};
+    const module = {start: jest.fn(), stop: jest.fn()};
+    const subscribe = jest.fn((event: string, listener: (key: number) => void) => {
+      listeners[event] = listener;
+      return () => {};
+    });
+    const lines: string[] = [];
+    const timers = nativeTimers('BridgeTicks', line => lines.push(line), {BridgeTicks: module}, subscribe);
+    return {module, timers, lines, tick: (key: number) => listeners.BridgeTicksTick(key)};
+  }
+
+  test('runs each interval on its own native tick, never a JS timer', () => {
+    const run = native();
+    const first = jest.fn();
+    const second = jest.fn();
+    const a = run.timers.setInterval(first, ACTION_POLL_MS);
+    const b = run.timers.setInterval(second, 30 * 60_000);
+    expect(run.module.start).toHaveBeenCalledWith(a, ACTION_POLL_MS);
+    expect(run.module.start).toHaveBeenCalledWith(b, 30 * 60_000);
+    run.tick(a as number);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+    run.timers.clearInterval(a);
+    expect(run.module.stop).toHaveBeenCalledWith(a);
+    run.tick(a as number);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(run.lines).toEqual([]);
+  });
+
+  test('says so, and uses the JS timers, when the plugin has no such module', () => {
+    const lines: string[] = [];
+    const timers = nativeTimers('BridgeTicks', line => lines.push(line), {});
+    expect(lines).toEqual(['INKTOOLS timers: no native BridgeTicks module: JS timers, which stop while no view of the plugin shows']);
+    const handle = timers.setInterval(() => {}, 1000);
+    timers.clearInterval(handle);
+  });
+
+  test('drives the channel: a native tick reads the request file', async () => {
+    const run = native();
+    const read = jest.fn(async () => null);
+    startActionChannel({plugin: 'account-sync', read, actions: {}, timers: run.timers});
+    const key = run.module.start.mock.calls[0][0];
+    run.tick(key);
+    expect(read).toHaveBeenCalledTimes(1);
+  });
 });

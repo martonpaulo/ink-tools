@@ -71,6 +71,8 @@ export async function runCalendarModule(
 ): Promise<{run: ModuleRun; state: CalendarState}> {
   const total: CalendarSyncResult = {created: 0, updated: 0, removed: 0, errors: []};
   const warnings: string[] = [];
+  // Tablet-only events the pass left on the tablet: a count for Settings' «Send tablet-only items», never a warning (#411).
+  let keptLocal = 0;
   if (m.store.repair) {
     // A failed repair stops the pass: an old row it could not fix would read as no pulled event, and
     // the pull would add a second row for it (#28).
@@ -131,7 +133,7 @@ export async function runCalendarModule(
       }
       const defaultHere = m.defaultCalendarId && owner.get(m.defaultCalendarId) === source ? m.defaultCalendarId : undefined;
       const pushed = await pushCalendarEdits(mine, state.baseline, source.writer, defaultHere, remote, policy);
-      if (pushed.keptLocal) warnings.push(keptWarning(pushed.keptLocal, 'event'));
+      keptLocal += pushed.keptLocal;
       total.created += pushed.created.length;
       total.updated += pushed.updated;
       total.removed += pushed.deleted;
@@ -177,11 +179,8 @@ export async function runCalendarModule(
   const at = now();
   const sourceSync = {...state.sourceSync};
   for (const source of readable) sourceSync[source.id] = stalled.has(source.id) ? (state.sourceSync?.[source.id] ?? state.lastSync) : at;
-  return {run: calendarRun(at, total, warnings), state: {lastSync: at, sourceSync, baseline}};
+  return {run: {...calendarRun(at, total, warnings), keptLocal}, state: {lastSync: at, sourceSync, baseline}};
 }
-
-const keptWarning = (n: number, kind: string) =>
-  `${n} tablet-only ${kind}(s) stayed on the tablet; turn on «Send tablet-only items» to send them`;
 
 export interface TodoModule {
   provider: TaskProvider;
@@ -196,7 +195,6 @@ export async function runTodoModule(
   policy: TabletOnlyPolicy = PULL_ONLY,
 ): Promise<{run: ModuleRun; links: TaskLink[]}> {
   const result = await syncTasks(m.provider, m.store, links, policy);
-  if (result.keptLocal) result.warnings.push(keptWarning(result.keptLocal, 'task'));
   return {run: tasksRun(now(), result), links: result.links};
 }
 

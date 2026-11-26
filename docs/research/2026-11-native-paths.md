@@ -2,7 +2,7 @@
 
 Status: research, 2026-11-25. Firmware `Chauvet.E103.2610191001.2559_release` (3.31.45, 2026-10-20),
 PluginHost 1.00.2610150, `sn-plugin-lib` 0.2.3 (the latest on npm, 2026-10-12). Read-only `adb`
-only; nothing was installed, changed or tapped. Decompiled vendor code stays in the session scratch
+only; nothing was installed, changed or tapped. Vendor material stays in the session scratch
 (`.scratch/native-survey/`) and never in the repository.
 
 ## Contents
@@ -23,7 +23,7 @@ keeping the layered, pluggable architecture. Every finding was rated on the depe
 the history of the part it would replace: a decision, an issue, or a need the higher path lacks.
 
 Sources: the SDK in `plugins/word-lookup/node_modules/sn-plugin-lib`; 17 vendor APKs pulled from
-`/system_ext/app/*` and decompiled with `jadx`; `framework.jar` (`EinkManager`, `View`); read-only
+`/system_ext/app/*` (device data); `framework.jar` (`EinkManager`, `View`); read-only
 `dumpsys`, `service list`, `getprop`, `settings list` and one provider read; the official changelog
 and docs; npm and GitHub.
 

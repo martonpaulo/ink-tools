@@ -3,10 +3,10 @@
  * support `@ink-tools/ui-kit/backKeyTest`, both kept out of this entry and so out of the bundle. */
 export {metrics} from './metrics';
 export {shared, STATUS_LINES} from './styles';
-export {Button} from './Button';
-export type {ButtonProps} from './Button';
+export {Button, BUTTON_KINDS, buttonId} from './Button';
+export type {ButtonKind, ButtonProps} from './Button';
 export {createWorking, WORKING_TEXT, WORKING_TIMEOUT_MS} from './working';
-export type {Working, WorkingPorts, WorkingRun} from './working';
+export type {HeldState, Working, WorkingPorts, WorkingRun} from './working';
 export {useWorking, WorkingStrip} from './WorkingStrip';
 export {useBackKey} from './backKey';
 export {CLOSE_TEXT, RETRY_TEXT} from './problem';
@@ -14,7 +14,7 @@ export type {Fix, Problem} from './problem';
 export {ErrorView, LoadingView, Needs} from './ProblemView';
 // The native controls (#273), one component each.
 export {TitleBar} from './TitleBar';
-export type {TitleBarProps} from './TitleBar';
+export type {BarAction, TitleBarProps} from './TitleBar';
 export {NavList} from './NavList';
 export type {NavItem, NavListProps} from './NavList';
 export {ListRow} from './ListRow';
@@ -31,10 +31,10 @@ export {Pager} from './Pager';
 export type {PagerProps} from './Pager';
 export {IconButton} from './IconButton';
 // The one box for raw text: code, JSON and logs (#405).
-export {CODE_BLOCK_ID, CodeBlock} from './CodeBlock';
+export {CODE_BLOCK_ID, CodeBlock, copyToClipboard} from './CodeBlock';
 export type {CodeBlockProps} from './CodeBlock';
 // The two setting shapes built from them (#274).
-export {ChoiceList, RowGroup, SwitchGroup, SwitchRow} from './SettingRows';
-export type {Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';
+export {ActionRow, ChoiceList, RowGroup, SwitchGroup, SwitchRow} from './SettingRows';
+export type {ActionRowProps, Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';
 export type {IconButtonProps, IconKind} from './IconButton';
 export type {ErrorViewProps, NeedsProps} from './ProblemView';

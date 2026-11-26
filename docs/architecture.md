@@ -20,7 +20,7 @@ Two things under the plugins change outside our control, so neither may be hardc
 
 1. **Supernote's internal APIs.** Content-provider authorities and columns, the `tag=task` write
    rule, the To-Do and Digest database schemas, and the Supernote Cloud endpoints are all
-   undocumented and can change with a firmware update. They were found by reverse engineering, not a
+   undocumented and can change with a firmware update. They were learned from observed device behaviour, not a
    contract.
 2. **The external services.** Today to-do syncs with Todoist and the calendar with Google; tomorrow
    it could be another task app or another calendar. The dictionary and translation back-ends are
@@ -83,7 +83,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
 
 - **Target: one registry of internals, four adapters** ([#294](https://github.com/martonpaulo/ink-tools/issues/294)). Every internal lives in one
   registry, data and not code, with one JSON Schema: per item its level, impact, owning tool,
-  reason when below level 1, evidence (decompiled class or method, app versionCode, date), the path
+  reason when below level 1, evidence (the vendor class or method, app versionCode, date), the path
   to a higher level, when it was last verified, and its probe. It lives in
   [`registry/`](../registry/schema.json): the schema, the header with the ratchet's ceiling per level
   (a ceiling only goes down), and one file per device area in `registry/items/`;
@@ -142,7 +142,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   acceptable cost and quality (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). The levels, from the highest to the lowest and so the most fragile: 1, the
   official `sn-plugin-lib` or our own code; 2, the device's internal data, such as its content
   providers; 3, the vendor's internal code and screens, such as a class loaded from another app;
-  4, screen automation; 5, behaviour learned from decompiled code, which changes silently and is
+  4, screen automation; 5, observed device behaviour that no API states, which changes silently and is
   the most fragile. Impact is marked apart: level 4 affects only our tests, the others affect the
   person. Every part below level 1 records why no higher level serves and has a probe in the
   firmware watch ([#293](https://github.com/martonpaulo/ink-tools/issues/293)), so it never breaks silently. Move a part up when we touch it or when the
@@ -170,13 +170,13 @@ ink-tools/
   packages/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
-    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Lasso Actions, Device Transfer, Image Editing)
+    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Lasso Actions, Device Link, Image Editing)
     picture-search/ # the picture search core and its pure-Java pixel measures (for Lasso Actions and Image Editing)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     account-sync/   # to-do + calendar + digest, each module and provider opt in/out
     lasso-actions/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
-    device-transfer/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
+    device-link/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     image-editing/  # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
     plugin-diagnostics/ # permanent on-device investigation plugin
   cli/
@@ -204,7 +204,7 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Built ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); Gestures not yet |
 | Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Built with Lookup ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); Convert to Text still in Smart Pen until it moves; Headings and Collection paused |
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
-| Device Transfer | send, receive | the page and files | unchanged |
+| Device Link | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
 | Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Planned |
 
@@ -219,7 +219,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | :--- | :--- | :--- |
 | Account Sync | `plugins/account-sync/` | `bridge` (npm package, `BridgeFilesPackage`) |
 | Lasso Actions | `plugins/lasso-actions/` | `lookup` (`pluginKey` `Lookup`, kept from Word Lookup so the tablet updates it in place, [#306](https://github.com/martonpaulo/ink-tools/issues/306)) |
-| Device Transfer | `plugins/device-transfer/` | `relay` |
+| Device Link | `plugins/device-link/` | `relay` |
 | Image Editing | `plugins/image-editing/` | `retouch` |
 | Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
 | Smart Pen | `plugins/smart-pen/` | `RealTimeConversion` (`pluginKey`, kept from Real-Time Conversion so the tablet updates it in place, [#305](https://github.com/martonpaulo/ink-tools/issues/305)) |
@@ -252,10 +252,12 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
     `origin: 'service'`), soft-deleted, never a task the owner wrote on the tablet and never the
     service's copy; **digest** writes nothing yet. A provider has no button of its own: its rows go
     with the module's.
-  - **Open question — background lifecycle** ([#370](https://github.com/martonpaulo/ink-tools/issues/370)). The config listener only fires when the owner opens
-    Settings. Periodic sync with the view closed needs a background trigger or a kept-alive plugin;
-    whether PluginHost allows that is unconfirmed and is the first thing Plugin Diagnostics must answer before
-    the Account Sync design commits to it.
+  - **Background lifecycle** ([#370](https://github.com/martonpaulo/ink-tools/issues/370), [#283](https://github.com/martonpaulo/ink-tools/issues/283)). Every enabled plugin lives in
+    the PluginHost process with no view open, and a native event reaches its JavaScript then (the
+    provider observer's pass ran from the home screen), but a JS timer does not fire. So the
+    automatic sync and the action channel tick on a native timer, sn-adapter's `TickModule` (level
+    1: Android's `Handler`); it counts uptime, so it waits while the tablet sleeps. Whether the
+    process survives a long sleep is a device check of [#370](https://github.com/martonpaulo/ink-tools/issues/370).
   - **Google sign-in cannot use the device-code flow.** Google's OAuth flow for limited-input
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,
@@ -281,7 +283,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced the
   first picture plugin, which is retired, uninstalled from the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)) and removed
   from the repository ([#288](https://github.com/martonpaulo/ink-tools/issues/288)).
-- **Device Transfer** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
+- **Device Link** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
   LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/ink-tools/issues/98), [#49](https://github.com/martonpaulo/ink-tools/issues/49)). Its network half is a native
   Java module, as Plugin Diagnostics' listener is.
 - **Image Editing** — edit an image already on the page: lasso it and tap Enhance, Lighter, Darker, Undo or
@@ -295,7 +297,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   square, rectangle or arrow, as the native Smart Straight Line does ([#253](https://github.com/martonpaulo/ink-tools/issues/253)); its guidance is
   [`plugins/smart-pen/AGENTS.md`](../plugins/smart-pen/AGENTS.md).
 
-Lasso Actions, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
+Lasso Actions, Device Link and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). Account Sync's three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/ink-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and
@@ -356,7 +358,7 @@ secrets ([#223](https://github.com/martonpaulo/ink-tools/issues/223), [`security
 ## What this means for the cloud agent
 
 Build the pure layers (`sync-core`, `ink-core`, provider implementations) and unit-test them with no
-device and no secrets. The `sn-adapter` descriptor is filled from the private reverse-engineering
+device and no secrets. The `sn-adapter` descriptor is filled from the private device-study
 notes. Anything that needs the physical tablet or a live account is verified by the owner on the
 Mac, not faked in the cloud.
 

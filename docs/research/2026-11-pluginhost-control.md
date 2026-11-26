@@ -10,7 +10,7 @@ system and notes from the Mac over `adb` — install or upgrade a `.snplg`, set 
 read plugin or note state.
 
 Targets, pulled read-only from the owner's Manta (serial withheld, build
-`Chauvet.E103.2610191001.2559_release`) and decompiled with `jadx`:
+`Chauvet.E103.2610191001.2559_release`), read as device data:
 
 - `com.ratta.supernote.pluginhost` (PluginHost), `versionName` 1.00.2610150, `versionCode`
   1002610150, `targetSdk` 35, runs as `android.uid.system`. APK SHA-256
@@ -19,9 +19,9 @@ Targets, pulled read-only from the owner's Manta (serial withheld, build
   `com.ratta.supernote.pluginclient`.
 - `com.ratta.supernote.note` (SupernoteNote).
 
-Decompiled vendor code stays in the session scratch and is never committed; each citation gives the
-decompiled file and line. Marks, as in [`../supernote.md`](../supernote.md): **[source]** read in
-the decompiled app; **[measured]** on the tablet; **[inference]** reasoned, not run.
+Vendor material stays in the session scratch and is never committed; each citation gives a
+file and line. Marks, as in [`../supernote.md`](../supernote.md): **[source]** device data, read
+in the app on the tablet; **[measured]** on the tablet; **[inference]** reasoned, not run.
 
 ## Contents
 
@@ -57,7 +57,7 @@ the decompiled app; **[measured]** on the tablet; **[inference]** reasoned, not 
 ## 1. Read plugin state (proven, read-only)
 
 `PluginsContentProvider` is exported with no permission
-(`jadx-ph-res/resources/AndroidManifest.xml:87`, `authorities="com.ratta.supernote.pluginhost"`).
+(`AndroidManifest.xml:87`, `authorities="com.ratta.supernote.pluginhost"`).
 Its `query` serves the `plugin` table read-only; `insert`, `update` and `delete` on the plugin URIs
 throw `UnsupportedOperationException` (`provider/PluginsContentProvider.java:70-73,170-199`).
 **[source]**
@@ -92,7 +92,7 @@ without opening Settings, which is the single biggest device-round cost today
 
 The exported service `PluginSettingService` returns an `IPluginSetting.Stub` binder from `onBind`
 (`services/PluginSettingService.java:378-382`). In the manifest it is `exported="true"` with **no
-`android:permission`** (`jadx-ph-res/resources/AndroidManifest.xml:56-59`), so any app that binds it
+`android:permission`** (`AndroidManifest.xml:56-59`), so any app that binds it
 can call every method. **[source]**
 
 The interface descriptor is `com.ratta.supernote.plugincorelib.IPluginSetting`
@@ -134,7 +134,7 @@ binds `PluginSettingService`, implements the callback binders, and exposes the f
 
 ## 3. The exported components, and why most are dead ends
 
-From `jadx-ph-res/resources/AndroidManifest.xml`: **[source]**
+From PluginHost's `AndroidManifest.xml`: **[source]**
 
 - `PluginSettingService`, `PluginHostService`, `PluginStickerService`: exported services (AIDL
   binders). Only reachable by binding; see sections 2 and 4.
@@ -153,7 +153,7 @@ own `assets/plugins` and runs on host upgrade, not from `/sdcard`
 
 ## 4. Trigger the handwriting Sticker side button by intent
 
-`PluginHostService` is exported with no permission (`jadx-ph-res/resources/AndroidManifest.xml:60-63`).
+`PluginHostService` is exported with no permission (`AndroidManifest.xml:60-63`).
 Its `onStartCommand` handles `action=android.intent.action.VIEW` with string extra `action=plugin`,
 and then presses the side button of the **hardcoded** handwriting Sticker plugin
 (`pluginID a5db6166e8fe8e17`) only (`services/PluginHostService.java:379-396`). **[source]**
@@ -192,10 +192,10 @@ a general button trigger would also need the helper app of section 2. This candi
 
 ## Sources
 
-- Decompiled PluginHost 1.00.2610150 (`jadx`, sources and resources), session scratch only.
+- Device data of PluginHost 1.00.2610150 (classes and resources), session scratch only.
 - `provider/PluginsContentProvider.java`, `services/PluginSettingService.java`,
   `services/PluginHostService.java`, `install/PluginInstallManager.java`,
   `manager/PluginManager.java`, `security/PluginPermissionManager.java`,
   `plugincorelib/IPluginSetting.java`, `receiver/PluginReceiver.java`,
-  `jadx-ph-res/resources/AndroidManifest.xml`.
+  `AndroidManifest.xml`.
 - `content query` output on the owner's Manta, 2026-11-17.

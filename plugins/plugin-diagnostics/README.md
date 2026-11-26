@@ -42,7 +42,9 @@ can a plugin reach the Digest (Knowledge) provider that `adb` is denied? The nat
 
 - a `ContentResolver.query`, and
 - a dry `insert` of one row marked `SNPROBE dry insert`, then a `delete` that removes only rows
-  carrying that marker.
+  carrying that marker; for the Calendar control, a `test-write` instead: an update of `status`
+  selected by row id `-1`, which matches no row, so no row is inserted, since the Calendar cannot
+  delete a row again ([#213](https://github.com/martonpaulo/ink-tools/issues/213)).
 
 Targets: `content://com.ratta.supernote.knowledge.provider` (root) and `.../digest`, plus the
 known-open task (`tasks_table`) and calendar (`data_info`) providers as controls. If the controls
@@ -56,9 +58,9 @@ Read the result after you open Probe from the plugin Settings:
 adb logcat -s SNPROBE
 ```
 
-Each line reads `<target> <query|insert|delete-marked> OK <detail>`, `DENIED SecurityException: <message>`
+Each line reads `<target> <query|insert|test-write|delete-marked> OK <detail>`, `DENIED SecurityException: <message>`
 or `FAILED <ExceptionClass>: <message>`. The revert deletes the new row, and every older marked row, by its
-row id ([#213](https://github.com/martonpaulo/ink-tools/issues/213)); the Calendar's delete removes nothing on the tablet, so for `control-calendar` it sets `status` to `cancelled` instead, as Account Sync does ([#208](https://github.com/martonpaulo/ink-tools/issues/208)). A `LEFTOVER` line means a marked row may remain: delete the
+row id ([#213](https://github.com/martonpaulo/ink-tools/issues/213)); the Calendar's delete removes nothing on the tablet, so for `control-calendar`, which inserts no row, the revert sets `status` to `cancelled` on any marked row an older probe left, as Account Sync does ([#208](https://github.com/martonpaulo/ink-tools/issues/208)). A `LEFTOVER` line means a marked row may remain: delete the
 rows whose marker column equals `SNPROBE dry insert`. After the three results the module logs a
 `heartbeat` line every 5 seconds for about 30 seconds: close the plugin view and watch whether the lines
 go on (the bridge background-lifecycle question).

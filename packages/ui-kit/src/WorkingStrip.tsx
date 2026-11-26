@@ -11,13 +11,21 @@ import {useBackKey} from './backKey';
 import {InfoMark} from './marks';
 import {metrics} from './metrics';
 import {Problem} from './problem';
-import {ErrorView} from './ProblemView';
+import {ErrorView, Needs} from './ProblemView';
 import {shared} from './styles';
 import {Working, WORKING_TEXT} from './working';
 
 /** The strip's state, kept current: working, the held failure, or neither. */
-function useWorkingState(working: Working): {on: boolean; problem: Problem | null} {
-  const read = () => ({on: working.isWorking(), problem: working.problem()});
+function useWorkingState(working: Working): {
+  on: boolean;
+  problem: Problem | null;
+  needs: boolean;
+} {
+  const read = () => ({
+    on: working.isWorking(),
+    problem: working.problem(),
+    needs: working.heldState() === 'needs',
+  });
   const [state, setState] = useState(read);
   useEffect(() => {
     setState(read());
@@ -38,9 +46,14 @@ export function useWorking(working: Working): boolean {
 const ignoreBack = () => undefined;
 
 export function WorkingStrip({working}: {working: Working}): React.JSX.Element {
-  const {on, problem} = useWorkingState(working);
+  const {on, problem, needs} = useWorkingState(working);
   if (!on && problem !== null) {
-    return <ErrorView problem={problem} onClose={() => working.dismiss()} />;
+    const close = () => working.dismiss();
+    return needs ? (
+      <Needs problem={problem} onClose={close} />
+    ) : (
+      <ErrorView problem={problem} onClose={close} />
+    );
   }
   return <Strip />;
 }

@@ -54,7 +54,7 @@ adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32
 - The body of a `PluginInfo` or a `PluginPermission` is written by PluginHost's own class:
   `HostClasses` loads PluginHost's code (`createPackageContext` with `CONTEXT_INCLUDE_CODE`), finds
   the classes from the `IPluginSetting` method signatures, sets only the fields [#215](https://github.com/martonpaulo/ink-tools/issues/215) names
-  (`pluginID`, `enable`; `name`, `status`) and calls their `writeToParcel`. So no decompiled
+  (`pluginID`, `enable`; `name`, `status`) and calls their `writeToParcel`. So no vendor
   layout is copied into this repository, and a PluginHost update that reorders fields still works.
 - The callback is a plain `Binder` under PluginHost's callback descriptor. Its method names come
   from PluginHost's generated `Stub` constants (`Callbacks`); without them, code 1 is success.

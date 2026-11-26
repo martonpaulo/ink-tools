@@ -3,7 +3,7 @@
   "svg": "7069fb59bada655af31ef1246a1893c497fe98f1de18fffeb75a22e1a2a21917",
   "png": "48fe0c081a2b950b501fa6123188e8b139b64a19d3b3c0feec445b757825f82b"
  },
- "device-transfer": {
+ "device-link": {
   "svg": "7c595aa2c5e1e48220d0b20b3f5627551078823168652152a36228c8ec72ca40",
   "png": "1cc9c90cd64f18065beb04539a6fc5b5845f41c6f917777e648920592a52a525"
  },
@@ -14,6 +14,10 @@
  "image-editing": {
   "svg": "abd3ca4ba693ba8ffb11e1344f8391d1643497c6cc526d894f502af6afa65c77",
   "png": "0079e2fe303286f84bd068e77aa84619cfc079c4fa3ff194970d4a1e50a7352a"
+ },
+ "inkctl": {
+  "svg": "b40ba2a5eb2fd13a0b86c381e495b01947ab5dff6124519caf3b9aaa196cc131",
+  "png": "598493c29ce54dc541d34048d49d54cb67cb3e5cf44056aa7d8444c5bdc7e7e8"
  },
  "inktools-bridge": {
   "svg": "50b22048baecd1cd2369dbb35d5d24651e7489e7a2730223d7dc629d1fd5fc0e",
@@ -26,6 +30,10 @@
  "plugin-diagnostics": {
   "svg": "28996008461c740be3e5c2ddcc231dce8b1b641deb0756bcf91be2672a6c2349",
   "png": "1a52b0c724df9c02e0543ea842a8cbec14a55ad341894d00f30ba9ee9229c956"
+ },
+ "puzzles": {
+  "svg": "67ee4f20707b7745bf5ff2d64ec13c9109f64bb0bb9e0d71b44a605e0276fec4",
+  "png": "5814a46af0bdde8ca806c8f075a1bda8028e4539234a1ea8cadede60b3675b12"
  },
  "smart-pen": {
   "svg": "fc8c91bfd881e855846c969db81c15a58f6d66c28e180867cb434a7b62ddc115",

@@ -36,7 +36,7 @@
       ],
       "reason": "a plugin view lives in a focusable overlay window, not an Activity; only that window sees the key",
       "evidence": {
-        "source": "PluginHost's window flags, decompiled; Image Editing device round",
+        "source": "PluginHost's window flags, measured on the tablet; Image Editing device round",
         "version": "PluginHost 1.00.2610150",
         "date": "2026-11-22"
       },
@@ -51,7 +51,7 @@
     },
     {
       "id": "pluginhost.file-sandbox",
-      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders",
+      "title": "PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders; the built-in Sticker plugin keeps its library in its own private folder, and its import lists .sticker files in the shared folders named here",
       "level": 5,
       "impact": "user",
       "owner": "picture-search",
@@ -61,7 +61,7 @@
       ],
       "reason": "the SDK does not list the folders a plugin may write; device rounds showed the whitelist",
       "evidence": {
-        "source": "device rounds (#22); packages/picture-search SafePaths",
+        "source": "device rounds (#22); packages/picture-search SafePaths; the Sticker plugin's import folders: device data (#35)",
         "version": "PluginHost 1.00.2610150",
         "date": "2026-11-15"
       },
@@ -80,8 +80,19 @@
         "privateHomes": [
           "/data/data/com.ratta.supernote.pluginhost/files/plugins",
           "/data/user/0/com.ratta.supernote.pluginhost/files/plugins"
+        ],
+        "stickerImportFolders": [
+          "Document",
+          "EXPORT",
+          "MyStyle",
+          "Note",
+          "SCREENSHOT",
+          "INBOX"
         ]
-      }
+      },
+      "issues": [
+        35
+      ]
     },
     {
       "id": "pluginhost.plugin-list",
@@ -117,11 +128,12 @@
       "impact": "tests",
       "owner": "inktools-bridge",
       "readers": [
-        "inktools-bridge"
+        "inktools-bridge",
+        "inkctl"
       ],
       "reason": "no public API installs, enables or permits a plugin; the service is the only route without the screen",
       "evidence": {
-        "source": "IPluginSetting, decompiled (docs/research/2026-11-pluginhost-control.md)",
+        "source": "IPluginSetting, device data (docs/research/2026-11-pluginhost-control.md)",
         "version": "PluginHost 1.00.2610150",
         "date": "2026-11-17"
       },
@@ -133,7 +145,8 @@
       },
       "active": "inktools-bridge HostCalls.java",
       "issues": [
-        215
+        215,
+        418
       ],
       "values": {
         "hostPackage": "com.ratta.supernote.pluginhost",
@@ -154,9 +167,9 @@
       "readers": [
         "inktools-bridge"
       ],
-      "reason": "the numbers come from the decompiled AIDL; a reordered interface would run another method, so each call checks the name behind its number first",
+      "reason": "the numbers come from PluginHost's interface as seen in device data; a reordered interface would run another method, so each call checks the name behind its number first",
       "evidence": {
-        "source": "IPluginSetting$Stub, decompiled",
+        "source": "IPluginSetting$Stub, device data",
         "version": "PluginHost 1.00.2610150",
         "date": "2026-11-17"
       },
@@ -191,9 +204,9 @@
       "readers": [
         "inktools-bridge"
       ],
-      "reason": "the parcel layout is PluginHost's own; loading its classes avoids copying a decompiled layout",
+      "reason": "the parcel layout is PluginHost's own; loading its classes avoids copying that layout",
       "evidence": {
-        "source": "IPluginSetting method signatures, decompiled",
+        "source": "IPluginSetting method signatures, device data",
         "version": "PluginHost 1.00.2610150",
         "date": "2026-11-17"
       },
@@ -224,9 +237,9 @@
         "inktools-bridge",
         "inkctl"
       ],
-      "reason": "PluginPermissionManager's constants are private; the value was read in decompiled code",
+      "reason": "PluginPermissionManager's constants are private; the value was read in device data",
       "evidence": {
-        "source": "PluginPermissionManager.STATUS_ALWAYS, decompiled",
+        "source": "PluginPermissionManager.STATUS_ALWAYS, device data",
         "version": "PluginHost 1.00.2610150",
         "date": "2026-11-17"
       },

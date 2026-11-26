@@ -4,6 +4,7 @@ import {REGISTRY} from '../src/registry.generated';
 import {
   batchRedrawn,
   confirm,
+  DOUBLE_PRESS_MS,
   errorTip,
   ok,
   fail,
@@ -35,6 +36,36 @@ describe('confirm (showRattaDialog)', () => {
     expect(await confirm('q', 'a', 'c')).toMatchObject({ok: false, code: THROWN_CODE});
     mocked(NativeUIUtils.showRattaDialog).mockRejectedValue(new Error('no window'));
     expect(await confirm('q', 'a', 'c')).toEqual(fail(THROWN_CODE, 'no window'));
+  });
+});
+
+describe('confirm after Back (#296)', () => {
+  it('settles a question Back closed as a Cancel when the next one is asked', async () => {
+    // Back closes the host dialog with no answer: its promise never settles.
+    mocked(NativeUIUtils.showRattaDialog).mockReturnValueOnce(new Promise(() => {}));
+    const first = confirm('Sign out?', 'Sign out', 'Cancel', () => 0);
+    mocked(NativeUIUtils.showRattaDialog).mockResolvedValueOnce(true);
+    const second = confirm('Sign out?', 'Sign out', 'Cancel', () => DOUBLE_PRESS_MS);
+    expect(await first).toEqual(ok(false));
+    expect(await second).toEqual(ok(true));
+    expect(NativeUIUtils.showRattaDialog).toHaveBeenCalledTimes(2);
+  });
+
+  it('answers a double press «no» and keeps the first dialog and its answer', async () => {
+    let answer!: (value: boolean) => void;
+    mocked(NativeUIUtils.showRattaDialog).mockReturnValueOnce(new Promise(resolve => (answer = resolve)));
+    const first = confirm('Remove?', 'Remove', 'Cancel', () => 10_000);
+    expect(await confirm('Remove?', 'Remove', 'Cancel', () => 10_000 + DOUBLE_PRESS_MS - 1)).toEqual(ok(false));
+    answer(true);
+    expect(await first).toEqual(ok(true));
+    expect(NativeUIUtils.showRattaDialog).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves an answered question as it was answered', async () => {
+    mocked(NativeUIUtils.showRattaDialog).mockResolvedValueOnce(true);
+    expect(await confirm('q', 'a', 'c')).toEqual(ok(true));
+    mocked(NativeUIUtils.showRattaDialog).mockResolvedValueOnce(false);
+    expect(await confirm('q', 'a', 'c')).toEqual(ok(false));
   });
 });
 

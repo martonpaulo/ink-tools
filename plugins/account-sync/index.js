@@ -9,6 +9,7 @@ import {bridgeSync} from './src/service';
 import {startAutoSync} from './src/sync';
 import {watchProviders} from './src/providerWatch';
 import {
+  nativeTimers,
   registerSettingsEntry,
   showPluginView,
   startActionChannel,
@@ -22,16 +23,21 @@ registerSettingsEntry(() => showPluginView()).catch(error => {
   console.error(`Bridge: ${error.message}`);
 });
 
-// The automatic sync (#28, #44): one pass when PluginHost loads Bridge, then one every
-// AUTO_SYNC_MINUTES while the host process lives (docs/supernote.md: every enabled plugin loads
-// into one PluginHost process at its start).
-startAutoSync(bridgeSync);
+// A JS timer stops while no Account Sync view shows (#283): both timers below tick from the native
+// BridgeTicks module (BridgeFilesPackage.TICKS_MODULE) instead.
+const timers = nativeTimers('BridgeTicks');
+
+// The automatic sync (#28, #44, #370): one pass when PluginHost loads Bridge, then one every
+// AUTO_SYNC_MINUTES while the host process lives, view or not (docs/supernote.md: every enabled
+// plugin loads into one PluginHost process at its start).
+startAutoSync(bridgeSync, timers);
 
 // «Sync now» by command from inkctl, with no screen (#283): `inkctl plugin action account-sync sync`.
 startActionChannel({
   plugin: 'account-sync',
   read: () => readActionFile(),
   actions: {sync: syncAction(bridgeSync)},
+  timers,
 });
 
 // A tablet edit of the Calendar or the To-Do syncs at once, beside the timer (#296).

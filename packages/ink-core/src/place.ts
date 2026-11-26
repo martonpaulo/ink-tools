@@ -126,7 +126,7 @@ function inside(inner: Rect, outer: Rect): boolean {
  * Why a lasso of `rect` could take the person's ink, or null when it cannot (#168, #234): the
  * device's rect lasso selects every element inside the rect, strokes included, so a placed element
  * is lassoed only when the whole page was read and nothing else crosses its rect. A partial read
- * refuses, as Device Transfer learned (#152). Elements wholly inside `ignored` do not count: the
+ * refuses, as Device Link learned (#152). Elements wholly inside `ignored` do not count: the
  * word's own strokes once it was deleted.
  */
 export function inkUnderRect(

@@ -8,12 +8,37 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 Lasso Actions is Word Lookup renamed ([#306](https://github.com/martonpaulo/ink-tools/issues/306)): it keeps the `pluginID` `t2obvupqt3edmnrr` and the
 `pluginKey` `Lookup` (also `package.json` and `app.json` `name`, the log prefix and `MyStyle/Lookup`),
 so the tablet updates it in place and its private folder keeps its `settings.json`. `src/modules.ts`
-is the module table; a module that is off registers no lasso button (`activeLookup`). Only Lookup is
-built: «Convert to Text» joins once Smart Pen's conversion engine is on `main`
-([#305](https://github.com/martonpaulo/ink-tools/issues/305)), and Headings ([#252](https://github.com/martonpaulo/ink-tools/issues/252)) and Collection ([#249](https://github.com/martonpaulo/ink-tools/issues/249)) stay paused. The settings file is
-`{version: 2, modules, lookup}` (`src/settings.ts`); Word Lookup's file, with no `modules` key, is
+is the module table; a module that is off registers no button (`moduleStates`, `activeLookup` for
+Lookup's own switches). Lookup, Headings and Collection are built: «Convert to Text» joins once Smart Pen's
+conversion engine is on `main` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)). Each module lives in its own folder under `src/`
+(`src/headings/`, `src/collection/`), with button ids of its own (Headings from 2000, Collection
+after them). The settings file is
+`{version: 2, modules, lookup, collection}` (`src/settings.ts`); Word Lookup's file, with no `modules` key, is
 read whole as `lookup` and written once in the new shape at start-up; a module switch a newer build
 wrote is kept.
+
+## Headings
+
+«Heading 1» to «Heading 4» ([#252](https://github.com/martonpaulo/ink-tools/issues/252)), no-view lasso buttons: `src/headings/levels.ts` maps each level
+to a native title style (1 black, 2 shadow, 3 dark grey, 4 light grey) and places the heading on
+its own line from the leading margin across the writing width (`HEADING_MARGIN`, inferred until
+the device probe, Task 1 of [#252](https://github.com/martonpaulo/ink-tools/issues/252), measures it); `src/headings/run.ts` sets the title through
+sn-adapter's `setLassoTitle`, then moves the lasso box with `resizeLassoRect`. A failed title
+changes nothing; a failed move keeps the title and says so. Its device round is open.
+
+## Collection
+
+«Add to Collection» and «Cut to Collection» ([#249](https://github.com/martonpaulo/ink-tools/issues/249)), no-view lasso rows, write the lasso with
+sn-adapter's `saveStickerByLasso` as one host sticker file in the private plugin folder, named
+`collection-<seq>_<left>_<top>_<width>_<height>.sticker` (`src/collection/collection.ts`), so the
+collection survives a restart with no index file; a cut deletes the lassoed ink only after the
+write. «Paste Collection», a NOTE toolbar button, opens `src/ui/CollectionScreen.tsx`: the count,
+Paste, Clear and «Keep After Paste» (saved as `collection.keepAfterPaste`, default off). Paste
+(`src/collection/run.ts`) inserts each piece with `insertSticker`, moves it with
+`resizeLassoRect` to its place, the group shifted onto the page as one, lassoes the union with
+`lassoElements`, then empties the collection unless kept; a failed piece stops the paste and keeps
+the collection. The host behaviours it rests on (a second paste, the union lasso taking ink already
+there) are Task 1 of [#249](https://github.com/martonpaulo/ink-tools/issues/249); its device round is open.
 
 ## Lookup
 

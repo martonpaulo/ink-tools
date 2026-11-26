@@ -16,6 +16,13 @@ export const ICONS: Readonly<Record<string, number>> = {
   'translate-pt-es.png': require('../assets/translate-pt-es.png'),
   'translate-zh-pt.png': require('../assets/translate-zh-pt.png'),
   'translate-pt-zh.png': require('../assets/translate-pt-zh.png'),
+  'heading-1.png': require('../assets/heading-1.png'),
+  'heading-2.png': require('../assets/heading-2.png'),
+  'heading-3.png': require('../assets/heading-3.png'),
+  'heading-4.png': require('../assets/heading-4.png'),
+  'collection-add.png': require('../assets/collection-add.png'),
+  'collection-cut.png': require('../assets/collection-cut.png'),
+  'collection-paste.png': require('../assets/collection-paste.png'),
 };
 
 /** The URI the host loads for `file`, or undefined when no icon has that name. */

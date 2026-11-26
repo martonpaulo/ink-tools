@@ -17,7 +17,6 @@ function runner(snapshot: Partial<SyncSnapshot>): SyncRunner & {syncNow: jest.Mo
   return {
     syncNow: jest.fn(async () => ({running: false, runs: {}, probe: {}, ...snapshot})),
     snapshot: jest.fn(),
-    tabletOnlyTasks: jest.fn(),
     subscribe: jest.fn(),
   } as unknown as SyncRunner & {syncNow: jest.Mock};
 }
@@ -61,4 +60,19 @@ test('the reader answers the text, null for no file, and throws a refused read',
   expect(await readActionFile(files(jest.fn().mockResolvedValue('{"id":"a1b2c3d4"}')))).toBe('{"id":"a1b2c3d4"}');
   expect(await readActionFile(files(jest.fn().mockResolvedValue(null)))).toBeNull();
   await expect(readActionFile(files(jest.fn().mockRejectedValue(new Error('outside the roots'))))).rejects.toThrow('outside the roots');
+});
+
+test('the automatic sync and the action channel tick on the native timer, which runs with no view open (#283)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const index: string = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
+  const java: string = fs.readFileSync(
+    path.join(__dirname, '..', 'native/com/bridge/files/BridgeFilesPackage.java'),
+    'utf8',
+  );
+  const name = /TICKS_MODULE = "(\w+)"/.exec(java)?.[1];
+  expect(name).toBe('BridgeTicks');
+  expect(index).toContain(`nativeTimers('${name}')`);
+  expect(index).toMatch(/startAutoSync\(bridgeSync, timers\)/);
+  expect(index.slice(index.indexOf('startActionChannel({'))).toMatch(/^ {2}timers,\n\}\);/m);
 });

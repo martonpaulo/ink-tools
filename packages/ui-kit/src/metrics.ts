@@ -25,6 +25,7 @@ const devicePx = (millimetres: number) => Math.max(1, Math.round(millimetres * P
 
 const border = devicePx(MM.border.value);
 const bodyFont = mm(MM.bodyFont.value);
+const sideMargin = mm(MM.sideMargin.value);
 
 export const metrics = {
   touchTarget: mm(MM.touchTarget.value),
@@ -42,8 +43,11 @@ export const metrics = {
   selectionStroke: devicePx(MM.selectionStroke.value),
   selectionRadius: mm(MM.selectionRadius.value),
 
-  /** Between the screen's edge and its content. */
-  screenPadding: space,
+  /**
+   * Between the screen's edge and its content: the native side margin, so a row's text starts
+   * where the native Settings rows do (#272, #411).
+   */
+  screenPadding: sideMargin,
   /** Between the stacked parts of a screen: the bar, the status line, the grid, the page buttons. */
   sectionGap: space,
   /** Between the controls of one row. */
@@ -55,7 +59,7 @@ export const metrics = {
   /** A list row's fixed height, as the native row, one or two lines of text (#272). */
   rowHeight: mm(MM.rowHeight.value),
   /** From a pane's edge to a row's text, and from a row's last control to the other edge (#272). */
-  sideMargin: mm(MM.sideMargin.value),
+  sideMargin,
   /** A section caption's box, its text at the bottom (#272). */
   captionHeight: mm(MM.captionHeight.value),
   /** Between the tiles of the results grid. */

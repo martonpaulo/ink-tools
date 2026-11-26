@@ -37,14 +37,15 @@ describe('Button (#50)', () => {
   it.each([false, true])(
     'draws a disabled button, primary %s, as a grey dashed outline on paper (#233)',
     primary => {
-      const off = render({primary, disabled: true});
+      const kind = primary ? 'primary' : 'secondary';
+      const off = render({kind, disabled: true});
       expect(boxStyle(off)).toMatchObject({
         borderStyle: 'dashed',
         borderColor: metrics.context,
         backgroundColor: metrics.paper,
       });
       expect(textStyle(off).color).toBe(metrics.context);
-      const on = render({primary});
+      const on = render({kind});
       expect(boxStyle(on).borderColor).toBe(metrics.ink);
       expect(boxStyle(on).borderStyle).toBeUndefined();
       expect(textStyle(on).color).toBe(primary ? metrics.paper : metrics.ink);
@@ -52,7 +53,7 @@ describe('Button (#50)', () => {
   );
 
   it('fills only the primary action black', () => {
-    const primary = render({primary: true});
+    const primary = render({kind: 'primary'});
     expect(boxStyle(primary).backgroundColor).toBe(metrics.ink);
     expect(textStyle(primary).color).toBe(metrics.paper);
     expect(boxStyle(render()).backgroundColor).toBe(metrics.paper);
@@ -84,8 +85,9 @@ describe('Button (#50)', () => {
   });
 
   it.each([false, true])('shows a press, primary %s, as a bar along the bottom edge (#287)', primary => {
-    expect(marks(render({primary}), 'press-bar')).toHaveLength(0);
-    const [bar] = marks(pressed({primary}), 'press-bar');
+    const kind = primary ? 'primary' : 'secondary';
+    expect(marks(render({kind}), 'press-bar')).toHaveLength(0);
+    const [bar] = marks(pressed({kind}), 'press-bar');
     expect(StyleSheet.flatten(bar.props.style)).toMatchObject({
       position: 'absolute',
       bottom: 0,
@@ -110,5 +112,16 @@ describe('Grey as colour (#50)', () => {
     for (const grey of [metrics.ink, metrics.context, metrics.placeholder]) {
       expect((paper + 0.05) / (luminance(grey) + 0.05)).toBeGreaterThanOrEqual(7);
     }
+  });
+});
+
+describe('the button hierarchy (#411)', () => {
+  it('spans the width only for a destructive action, gives a row action the row column, and names each level', () => {
+    expect(boxStyle(render({kind: 'destructive'})).alignSelf).toBe('stretch');
+    expect(boxStyle(render({kind: 'secondary'})).alignSelf).toBe('flex-start');
+    expect(boxStyle(render({kind: 'primary'})).alignSelf).toBe('flex-start');
+    expect(boxStyle(render({kind: 'row'})).width).toBe(metrics.rowButtonWidth);
+    expect(render().root.findByType(Pressable).props.nativeID).toBe('button-secondary');
+    expect(render({kind: 'row'}).root.findByType(Pressable).props.nativeID).toBe('button-row');
   });
 });

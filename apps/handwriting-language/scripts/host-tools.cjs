@@ -1,6 +1,6 @@
 /**
  * Finds a JDK that really runs for the app build and tests, copied unchanged in code from
- * ../../../plugins/device-transfer/scripts/host-tools.cjs (#78, #74). On macOS `/usr/bin/java` is a stub that fails when no JDK
+ * ../../../plugins/device-link/scripts/host-tools.cjs (#78, #74). On macOS `/usr/bin/java` is a stub that fails when no JDK
  * is registered, even with Homebrew's openjdk installed. Finds only; never installs.
  */
 const fs = require('node:fs');

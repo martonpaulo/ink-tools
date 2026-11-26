@@ -33,5 +33,6 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
   To-Do's NOT NULL columns and the row key, [#208](https://github.com/martonpaulo/ink-tools/issues/208), [#217](https://github.com/martonpaulo/ink-tools/issues/217)) mirror
   `packages/sn-adapter/src/internals/descriptor.json`, and `ProbeTargetsTest` keeps them equal to it; a descriptor
   change runs this gate. Whether an insert wrote a row is sn-adapter's `InsertAnswer`, shared with Account Sync. It only reads, and inserts one row marked
-  `SNPROBE dry insert` that it reverts at once; it never logs a row's value. `npm run build` must give
+  `SNPROBE dry insert` that it reverts at once, except in the Calendar, whose write test is an update
+  of `status` selected by row id `-1` that changes no row ([#213](https://github.com/martonpaulo/ink-tools/issues/213)); it never logs a row's value. `npm run build` must give
   a `Probe.snplg` that holds `app.npk` (native step), never a JS-only package.

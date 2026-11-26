@@ -41,8 +41,8 @@ The firmware part (step 3) ran on the owner's Mac; its findings are in [a commen
 - CONFIRMED. The only `.so` (`android/src/main/cpp/FileVisit.cpp`, `native-lib.cpp`) ships as
   source: a recursive file walk for `getFileList` / `getImageList`; `opendir` failure returns early
   (`FileVisit.cpp` line 72). No exception thrown.
-- Ghidra was not needed: no native binary that needs pseudocode was obtained (no `app.npk`, no
-  firmware). Installing it was skipped, per the skill's "install only when such a binary appears".
+- No native-code study was needed: no native binary was obtained (no `app.npk`, no
+  firmware). Installing a native tool was skipped, per the skill's "install only when such a binary appears".
 
 ## (a) requestPermission: values, and can it hang
 
@@ -178,7 +178,7 @@ Java silently drops `nativeCodePackage` from the generated config (lines 155-160
 ## Firmware (step 3)
 
 - Done on the owner's Mac: firmware 3.31.45 (1.07 GB) was downloaded from Ratta's help page, the
-  PluginHost and Note app APKs were decompiled with jadx, and the findings were posted on
+  PluginHost and Note app APKs were studied as device data, and the findings were posted on
   [#34](https://github.com/martonpaulo/ink2pic/issues/34#issuecomment-6694734043). The cloud
   session could not reach `support.supernote.com`.
 

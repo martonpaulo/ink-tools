@@ -12,7 +12,7 @@ import {
   setModule,
   setProvider,
 } from '@ink-tools/sync-core/settings';
-import {SettingsForm} from '../src/SettingsForm';
+import {SettingsForm, tabletOnlyNotice} from '../src/SettingsForm';
 import {copy, format} from '../src/copy';
 
 function render(settings: BridgeSettings, onChange = jest.fn()) {
@@ -35,14 +35,15 @@ const toggle = (tree: ReactTestRenderer, label: string) =>
 const state = (tree: ReactTestRenderer, label: string) =>
   toggle(tree, label).props.accessibilityState;
 
+// Each module's switch says «Sync <module>», so it never repeats the group caption above it (#411).
 const ALL = [
-  'To-Do',
+  'Sync To-Do',
   'Todoist',
-  'Calendar',
+  'Sync Calendar',
   'Google',
   'iCloud',
   'ICS',
-  'Digest',
+  'Sync Digest',
 ];
 
 describe('SettingsForm (#40)', () => {
@@ -63,7 +64,7 @@ describe('SettingsForm (#40)', () => {
 
   it('turns a module on, then a provider, through the model', () => {
     const {tree, onChange} = render(defaultSettings());
-    act(() => toggle(tree, 'Calendar').props.onPress());
+    act(() => toggle(tree, 'Sync Calendar').props.onPress());
     expect(onChange).toHaveBeenLastCalledWith(
       setModule(defaultSettings(), 'calendar', true),
     );
@@ -83,7 +84,7 @@ describe('SettingsForm (#40)', () => {
     );
     const {tree, onChange} = render(on);
     expect(state(tree, 'Todoist').checked).toBe(true);
-    act(() => toggle(tree, 'To-Do').props.onPress());
+    act(() => toggle(tree, 'Sync To-Do').props.onPress());
     expect(onChange.mock.calls[0][0].providers.todoist).toBe(false);
   });
 
@@ -103,6 +104,16 @@ describe('SettingsForm (#40)', () => {
         expect.objectContaining({color: metrics.context}),
       );
     }
+  });
+
+  it('never repeats a group caption as the title of a row under it (device round 6, #411)', () => {
+    const {tree} = render(defaultSettings());
+    const captions = new Set(
+      tree.root.findAll(n => n.type === Text && n.props.accessibilityRole === 'header').map(h => h.props.children),
+    );
+    const switches = tree.root.findAll(n => n.props.accessibilityRole === 'switch' && typeof n.props.onPress === 'function');
+    expect(switches.length).toBeGreaterThan(0);
+    expect(switches.map(n => n.props.accessibilityLabel).filter(label => captions.has(label))).toEqual([]);
   });
 
   it('a disabled provider switch never changes the settings', () => {
@@ -203,5 +214,62 @@ describe('the ICS feeds field (#30)', () => {
     expect(screenBreaks(render(addIcsFeed(ICS_ON, SECRET)).tree.root)).toEqual(
       [],
     );
+  });
+});
+
+describe('the tablet-only notice, said once at its own setting (#411)', () => {
+  const todoOn = setModule(defaultSettings(), 'todo', true);
+  const calendarOn = setModule(defaultSettings(), 'calendar', true);
+  const ran = (module: 'todo' | 'calendar', keptLocal: number) => ({
+    id: module,
+    name: module === 'todo' ? 'To-Do' : 'Calendar',
+    status: {
+      state: 'ran' as const,
+      run: {module, at: 0, counts: {added: 0, changed: 0, removed: 0}, errors: [], warnings: [], keptLocal},
+    },
+  });
+
+  it('says what the switch sends and to where before a pass counted, or with none left (device round 6)', () => {
+    // A count read from the tablet alone before the first pass was twice the real one (486 for 233).
+    expect(tabletOnlyNotice('todo', todoOn)).toBe(
+      'Turn this on to send tasks that exist only on the tablet to Todoist.',
+    );
+    expect(tabletOnlyNotice('todo', todoOn, ran('todo', 0))).toBe(
+      'Turn this on to send tasks that exist only on the tablet to Todoist.',
+    );
+    expect(tabletOnlyNotice('calendar', calendarOn)).toBe(
+      'Turn this on to send events that exist only on the tablet to Google and iCloud.',
+    );
+    const sending = {...calendarOn, sendTabletOnly: {...calendarOn.sendTabletOnly, calendar: true}};
+    expect(tabletOnlyNotice('calendar', sending)).toBe(
+      'Sends events that exist only on the tablet to Google and iCloud at each sync.',
+    );
+    expect(tabletOnlyNotice('todo', defaultSettings())).toBeUndefined();
+  });
+
+  it('names one item in the singular and more in the plural, never «task(s)»', () => {
+    expect(tabletOnlyNotice('todo', todoOn, ran('todo', 1))).toBe(
+      '1 task exists only on the tablet. Turn this on to send it to Todoist.',
+    );
+    expect(tabletOnlyNotice('todo', todoOn, ran('todo', 233))).toBe(
+      '233 tasks exist only on the tablet. Turn this on to send them to Todoist.',
+    );
+    expect(tabletOnlyNotice('calendar', calendarOn, ran('calendar', 2))).toBe(
+      '2 events exist only on the tablet. Turn this on to send them to Google and iCloud.',
+    );
+  });
+
+  it('says where the items go once the switch is on', () => {
+    const sending = {...todoOn, sendTabletOnly: {...todoOn.sendTabletOnly, todo: true}};
+    expect(tabletOnlyNotice('todo', sending, ran('todo', 1))).toBe('1 task goes to Todoist at the next sync.');
+  });
+
+  it('shows the count only under «Send tablet-only items», not in the module status', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<SettingsForm settings={todoOn} onChange={() => {}} modules={[ran('todo', 233)]} />);
+    });
+    const shown = tree.root.findAllByType(Text).map(n => n.props.children).filter(t => typeof t === 'string');
+    expect(shown.filter(t => (t as string).includes('233'))).toHaveLength(1);
   });
 });

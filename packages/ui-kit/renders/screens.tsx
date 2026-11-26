@@ -8,6 +8,7 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import type {WindowName} from './html';
 import {View} from 'react-native';
 import {
+  ActionRow,
   Button,
   ErrorView,
   LoadingView,
@@ -24,20 +25,29 @@ import type {Working} from '@ink-tools/ui-kit';
 import SmartPenSettings from '../../../plugins/smart-pen/App';
 import {DEFAULT_PEN_SETTINGS} from '../../../plugins/smart-pen/src/settings';
 import LassoActionsSettings from '../../../plugins/lasso-actions/App';
+import {CollectionScreen as LassoCollection} from '../../../plugins/lasso-actions/src/ui/CollectionScreen';
+import type {CollectionHost} from '../../../plugins/lasso-actions/src/collection/run';
 import PluginDiagnostics from '../../../plugins/plugin-diagnostics/App';
 import {copy as diagnosticsCopy} from '../../../plugins/plugin-diagnostics/src/copy';
 import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
 import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
+import type {BridgeSettings as AccountSyncSettingsValue} from '@ink-tools/sync-core/settings';
 import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
 import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/StylesGrid';
-import {PickView as DeviceTransferPick} from '../../../plugins/device-transfer/src/PickDevice';
-import {ReceiveView as DeviceTransferReceive, TextView as DeviceTransferText} from '../../../plugins/device-transfer/App';
-import type {Device as TransferDevice} from '../../../plugins/device-transfer/src/localsend/protocol';
+import {PickView as DeviceLinkPick} from '../../../plugins/device-link/src/PickDevice';
+import {ReceiveView as DeviceLinkReceive, TextView as DeviceLinkText} from '../../../plugins/device-link/App';
+import type {Device as TransferDevice} from '../../../plugins/device-link/src/localsend/protocol';
+import {refusedProblem as deviceLinkRefused} from '../../../plugins/device-link/src/permissions';
+import {sendFailedProblem as deviceLinkSendFailed} from '../../../plugins/device-link/src/run';
+import {copy as deviceLinkCopy} from '../../../plugins/device-link/src/copy';
+import {permissionProblem as lassoActionsPermission, FILE_WRITE as LASSO_FILE_WRITE} from '../../../plugins/lasso-actions/src/buttons';
+import {copy as imageEditingCopy} from '../../../plugins/image-editing/src/copy';
+import {copy as smartPenTextCopy} from '../../../plugins/smart-pen/src/modules/text/copy';
 
 export type ScreenRender = {
   name: string;
@@ -64,6 +74,8 @@ const WORKING: Working = {
   handOver: () => {},
   isWorking: () => true,
   problem: () => null,
+  heldState: () => null,
+  hold: () => {},
   subscribe: () => () => {},
   dismiss: () => {},
 } as unknown as Working;
@@ -75,10 +87,15 @@ function ControlsSheet(): React.JSX.Element {
       <TitleBar title="Controls" onClose={() => {}} onBack={() => {}} />
       <View style={shared.buttons}>
         <Button label="Plain" onPress={() => {}} />
-        <Button label="Primary" primary onPress={() => {}} />
+        <Button label="Primary" kind="primary" onPress={() => {}} />
         <Button label="Selected" selected onPress={() => {}} />
         <Button label="Disabled" disabled onPress={() => {}} />
       </View>
+      <Button label="Destructive" kind="destructive" onPress={() => {}} />
+      <RowGroup caption="Row actions">
+        <ActionRow title="Sample account" subtitle="Signed in (…wxyz)" action={{label: 'Sign out', onPress: () => {}}} />
+        <ActionRow title="Sample confirm" subtitle="Remove the sample?" secondAction={{label: 'Cancel', onPress: () => {}}} action={{label: 'Remove', onPress: () => {}}} />
+      </RowGroup>
       <RowGroup caption="Switches">
         <SwitchRow title="Sample on" value onChange={() => {}} />
         <SwitchRow title="Sample off" value={false} onChange={() => {}} />
@@ -163,29 +180,62 @@ const STROKE = [
 
 /** Account Sync with To-Do and Todoist on, before the first sync, signed in to Todoist (#116, #368). */
 const SIGNED_IN = accountSyncProvider(accountSyncModule(accountSyncDefaults(), 'todo', true), 'todoist', true);
-/** Device Transfer's receivers (#307): synthetic, two with one alias to show them apart. */
+/** Device Link's receivers (#307): synthetic, two with one alias to show them apart. */
 const TRANSFER_DEVICES: TransferDevice[] = [
   {alias: 'Mac', deviceModel: 'MacBook', ip: '10.0.0.2', port: 53317, protocol: 'https', fingerprint: 'aaaaaa111111'},
   {alias: 'iPhone', deviceModel: 'iPhone', ip: '10.0.0.3', port: 53317, protocol: 'https', fingerprint: 'bbbbbb222222'},
   {alias: 'Mac', ip: '10.0.0.4', port: 53317, protocol: 'https', fingerprint: 'cccccc333333'},
 ];
 
+/** A collection of three pieces for Lasso Actions' Collection view (#249). */
+const answer = async <T,>(value: T) => ({ok: true as const, value});
+const COLLECTION_HOST: CollectionHost = {
+  folder: () => answer('/plugin'),
+  list: () => answer(['collection-1_0_0_5_5.sticker', 'collection-2_0_0_5_5.sticker', 'collection-3_0_0_5_5.sticker']),
+  remove: () => answer(true),
+  lassoRect: () => answer({left: 0, top: 0, right: 5, bottom: 5}),
+  pageSize: () => answer({width: 1404, height: 1872}),
+  saveSticker: () => answer(true),
+  deleteLasso: () => answer(true),
+  insertSticker: () => answer(true),
+  resize: () => answer(true),
+  select: () => answer(true),
+  toast: noop,
+  log: noop,
+};
+
+/** The owner's tablet state of 2026-11-26 (#411): To-Do, Calendar and their accounts on, Digest off, after a sync. */
+const OWNER_AT = new Date(2026, 10, 26, 3, 49).getTime();
+const OWNER = accountSyncProvider(accountSyncProvider(accountSyncProvider(accountSyncProvider(accountSyncModule(accountSyncModule(accountSyncDefaults(), 'todo', true), 'calendar', true), 'todoist', true), 'google', true), 'icloud', true), 'ics', true);
+const OWNER_RUNS = {
+  todo: {module: 'todo' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 0}, errors: [], warnings: [], keptLocal: 233},
+  calendar: {module: 'calendar' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 1}, errors: [], warnings: [], keptLocal: 0},
+};
+const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, tail: '…wxyz'}, google: {state: 'signedIn' as const, tail: '…abcd'}, icloud: {state: 'signedIn' as const, tail: '…efgh'}};
+const SYNC = {running: false, onSyncNow: noop};
+/** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
+const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}) =>
+  mount(<AccountSyncSettings state={{kind: 'ready', sync: SYNC}} renderForm={onConnect => <AccountSyncForm settings={settings} onChange={noop} modules={accountSyncRows(settings, {todo: [], calendar: []}, runs, signIns)} onConnect={onConnect} now={OWNER_AT} />} onClose={noop} />);
+
 // One line per screen, so adding one is one line.
 // prettier-ignore
 export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs', render: () => mount(<Needs problem={{what: 'Sample access is off', reason: 'The sample tool reads the sample folder to show your pictures.', fix: {label: 'Turn it on', run: () => {}}}} onClose={() => {}} />)},
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
-  {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
+  {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Link stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
+  {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
+  {name: 'lasso-actions-collection', render: () => mount(<LassoCollection close={noop} host={COLLECTION_HOST} />)},
   {name: 'plugin-diagnostics', render: () => mount(<PluginDiagnostics close={noop} run={async () => ({lines: [], status: 'done'})} />)},
   {name: 'plugin-diagnostics-done', render: () => diagnostics({lines: PROBE_LINES, status: 'done'}), raw: PROBE_LINES},
   {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']}), raw: [diagnosticsCopy['needs.native'].command]},
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
-  {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
-  {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
-  {name: 'account-sync-connect', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})}} onClose={noop} />)},
-  {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
+  {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS)},
+  {name: 'account-sync-settings', render: () => accountSync(accountSyncDefaults())},
+  {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})},
+  {name: 'account-sync-connect', render: () => accountSync(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})},
+  {name: 'account-sync-ics-feeds', render: () => accountSync(ICS_FEEDS)},
   {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},
   {name: 'account-sync-needs-connect', render: () => mount(<Needs problem={accountSyncConnect({id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: noop})} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
@@ -194,9 +244,13 @@ export const SCREENS: ScreenRender[] = [
   {name: 'image-editing-editor', render: () => imageEditor()},
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
-  {name: 'device-transfer-pick', render: () => mount(<DeviceTransferPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
-  {name: 'device-transfer-text', render: () => mount(<DeviceTransferText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
-  {name: 'device-transfer-receive', render: () => mount(<DeviceTransferReceive state="ready" onStop={noop} />)},
+  {name: 'device-link-pick', render: () => mount(<DeviceLinkPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
+  {name: 'device-link-text', render: () => mount(<DeviceLinkText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
+  {name: 'device-link-receive', render: () => mount(<DeviceLinkReceive state="ready" onStop={noop} />)},
+  {name: 'device-link-needs-permission', render: () => mount(<Needs problem={deviceLinkRefused('plugin.permission.FILE:READ')} onClose={noop} />)},
+  {name: 'device-link-error', render: () => mount(<ErrorView problem={deviceLinkSendFailed(deviceLinkCopy.noImage)} onClose={noop} />)},
+  {name: 'lasso-actions-needs-permission', render: () => mount(<Needs problem={lassoActionsPermission([LASSO_FILE_WRITE], noop)} onClose={noop} />)},
+  {name: 'image-editing-error', render: () => mount(<ErrorView problem={{what: imageEditingCopy['press.failedTitle']('Enhance'), reason: imageEditingCopy['press.failedReason']}} onClose={noop} />)},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
   {name: 'image-editing-opening', render: () => imageEditor({phase: 'opening'})},
   {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed'}} onPick={noop} onToggle={noop} onClose={noop} />)},

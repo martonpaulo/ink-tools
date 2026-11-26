@@ -61,6 +61,12 @@ const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [
     true,
   ],
   [
+    'saveStickerByLasso',
+    mocked(PluginCommAPI.saveStickerByLasso),
+    () => lasso.saveStickerByLasso('/plugin/collection-1.sticker'),
+    true,
+  ],
+  [
     'recognizeElements',
     mocked(PluginCommAPI.recognizeElements),
     () => lasso.recognizeElements([], {width: 1, height: 1}),

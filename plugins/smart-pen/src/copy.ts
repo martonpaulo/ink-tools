@@ -11,4 +11,7 @@ export const copy = {
   'settings.loadFailed':
     'Could not read the settings file, so these are the defaults. A change is kept until the tablet restarts.',
   'settings.changeFailed': 'Could not apply or save that change. Try again.',
+  /** The «Loading…» view's lines (#103, #257): what failed and the timeout's toast. */
+  'working.failed': 'Smart Pen stopped with an error.',
+  'working.timeout': 'Smart Pen is still working.',
 } as const;

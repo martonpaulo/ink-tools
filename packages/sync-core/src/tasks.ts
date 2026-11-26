@@ -109,12 +109,6 @@ export function maySend(modified: number | undefined, policy: TabletOnlyPolicy):
   return policy.firstLinked !== undefined && modified !== undefined && modified > policy.firstLinked;
 }
 
-/** Open, unlinked tablet tasks the policy keeps on the tablet: what Settings shows before a sync. */
-export function tabletOnlyKept(devices: DeviceTask[], links: TaskLink[], policy: TabletOnlyPolicy): number {
-  const linked = new Set(links.map(l => l.localId));
-  return devices.filter(d => !linked.has(d.localId) && !d.deleted && !d.completed && !maySend(d.modified, policy)).length;
-}
-
 export interface SyncResult {
   links: TaskLink[];
   /** Tablet-only tasks the policy kept on the tablet this pass. */

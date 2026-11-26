@@ -6,7 +6,7 @@
 Sources, each the one owner of its values:
 - docs/tools.json: every tool row (the README Tools and Developer tools tables, the tool map);
 - docs/architecture.md › Layer rules: the level table's public columns and the rule sentence;
-- registry/items/: how many items sit at each level, and each tool's level circles;
+- registry/items/: how many items sit at each level, and each tool's levels;
 - AGENTS.md's `- README Status values:` line: the status dots and their legend.
 
 Writes three README blocks, each between its marker comments: the Tools tables (TOOLS_START), the
@@ -35,18 +35,17 @@ LEVELS_START = "<!-- levels:start: written by scripts/readme_figures.py from doc
 LEVELS_END = "<!-- levels:end -->"
 
 ADAPTERS = {
-    "ts": ("sn-adapter", "TypeScript: official API + registry"),
-    "java": ("Java reader", "from the one registry"),
-    "python": ("Python reader", "from the one registry"),
-    "swift": ("Swift reader", "from the one registry"),
+    "ts": ("sn-adapter", "TypeScript"),
+    "java": ("Java reader",),
+    "swift": ("Swift reader",),
+    "python": ("Python reader",),
 }
 LEVELS = range(1, 6)
-# The coloured chip of each level, in the order of the owner's palette (green for the steadiest).
-CHIPS = {1: "🟩", 2: "🟦", 3: "🟨", 4: "🟪", 5: "🟥"}
-# The tool map's columns, left to right: the subgraph id and its heading.
-MAP_COLUMNS = (("outside", "Outside world"), ("service", "Service adapter"), ("tool", "Tool + pure logic"),
-               ("adapter", "Supernote adapter"), ("tablet", "On the tablet · levels"))
-
+# Each level as a keycap emoji (owner, 2026-11-26, #412).
+KEYCAPS = {n: f"{n}\ufe0f\u20e3" for n in range(1, 6)}
+# The tool map's groups, by where a tool runs, from its tools.json kind: (subgraph id, heading, kinds).
+GROUPS = (("plugins", "Tablet plugins", ("plugin",)), ("apps", "Tablet apps", ("app",)),
+          ("mac", "Mac", ("Mac app", "CLI")))
 
 def esc(text):
     return html.escape(text, quote=True)
@@ -86,7 +85,7 @@ def load_registry(root):
 
 
 def row_levels(tool, registry_tools):
-    """A map row's level circles: its registry tools' levels, and 1 when it runs on the official API."""
+    """A map row's levels: its registry tools' levels, and 1 when it runs on the official API."""
     levels = set()
     for name in tool["map"]["registry"]:
         levels |= registry_tools.get(name, set())
@@ -160,7 +159,7 @@ def levels_block(levels, rule, counts):
             breaks = f"**{breaks}**"
         impact = "affects only our tests" if "test" in lv["Impact"] else "affects the person"
         count = str(counts[n]) if counts[n] else "none needed"
-        out.append(f"| {CHIPS[n]} {n} · {lv['Public name']} | {lv['Public examples']} | {breaks}; {impact} "
+        out.append(f"| {KEYCAPS[n]} {lv['Public name']} | {lv['Public examples']} | {breaks}; {impact} "
                    f"| {lv['Tested by']} | {count} |")
     out += ["", "Level 1 is the highest and the steadiest; level 5 is the lowest and changes with no error.", "",
             LEVELS_END]
@@ -171,72 +170,132 @@ def levels_block(levels, rule, counts):
 
 
 def node_text(lines, bold_first=False):
-    """Mermaid node label: one line per entry, the first bold when asked, quotes as entities."""
+    """A Mermaid node label: one line per entry, the first bold when asked, quotes as entities."""
     parts = [plain(line).replace('"', "#quot;") for line in lines]
     if bold_first and parts:
         parts[0] = f"<b>{parts[0]}</b>"
-    return "<br>".join(parts)
+    return "<br/>".join(parts)
 
 
-def chips(levels, sep=" "):
-    """Each level as its chip and number; `sep=""` keeps them together where a Mermaid label wraps."""
-    return " ".join(f"{CHIPS[n]}{sep}{n}" for n in levels)
+def keycaps(levels):
+    """Each level as its keycap, separated by spaces: «1️⃣ 2️⃣ 5️⃣»."""
+    return " ".join(KEYCAPS[n] for n in levels)
+
+
+def cell(lines):
+    """A Markdown table cell with one item per line."""
+    return "<br>".join(plain(line) for line in lines)
 
 
 def slug(name):
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
 
+def group_of(tool):
+    """The tool map group of a tool, from its kind."""
+    for key, _, kinds in GROUPS:
+        if tool["kind"] in kinds:
+            return key
+    raise SystemExit(f"docs/tools.json: {tool['name']}: kind {tool['kind']!r} has no tool map group")
+
+
 def map_block(data, registry_tools):
-    """The tool map as one Mermaid flowchart, a column per subgraph and a chain per tool, and a table of
-    the same facts for readers without Mermaid."""
+    """The tool map as one top-to-bottom Mermaid flowchart that draws each part once (owner, 2026-11-26,
+    #412): the outside service groups, the service adapters, the tools in three groups by where they run,
+    the Supernote adapters, the registry and the tablet; and a table of the same facts with the levels."""
     rows = [t for t in data["tools"] if "map" in t]
     names = "; ".join(t["name"] + (" (planned)" if t["status"] == "Planned" else "") for t in rows)
-    columns = {key: [] for key, _ in MAP_COLUMNS}
-    chains, planned, table = [], [], []
+    outside, services, edges, planned, table = [], {}, [], [], []
+    members = {key: [] for key, _, _ in GROUPS}
     for tool in rows:
-        m, base = tool["map"], slug(tool["name"])
+        m, node = tool["map"], "t_" + slug(tool["name"])
         is_planned = tool["status"] == "Planned"
-        levels = row_levels(tool, registry_tools)
         title = tool["name"] + (" (planned)" if is_planned else "")
-        adapter = ADAPTERS[m["supernote"]]
-        cells = {"outside": node_text(m["outside"]), "service": node_text(m["service"]),
-                 "tool": node_text([title] + m["logic"], bold_first=True),
-                 "adapter": node_text(adapter, bold_first=True),
-                 "tablet": node_text(m["tablet"] + [f"levels {chips(levels, sep='')}"])}
-        chain = []
-        for key, _ in MAP_COLUMNS:
-            if cells[key]:
-                columns[key].append(f'    {base}_{key}["{cells[key]}"]')
-                chain.append(f"{base}_{key}")
-        chains.append("  " + " --> ".join(chain))
+        members[group_of(tool)].append((node, tool))
         if is_planned:
-            planned += chain
-        source = ", ".join(plain(x) for x in m["outside"]) or "nothing from outside"
-        via = ", ".join(plain(x) for x in m["service"])
-        table.append(f"| {title} | {source} | {via + '; ' if via else ''}{adapter[0]} | {chips(levels)} |")
-    out = [MAP_START, "", "```mermaid", "flowchart LR",
+            planned.append(node)
+        for source in m["sources"]:
+            source_node = "o_" + slug(source["outside"][0])
+            dashed = source.get("planned") or is_planned
+            outside.append(f'    {source_node}["{node_text(source["outside"])}"]')
+            if dashed:
+                planned.append(source_node)
+            if source.get("via"):
+                service = "s_" + slug(source["via"])
+                services.setdefault(service, f'    {service}["{node_text([source["via"]])}"]')
+                if dashed:
+                    planned.append(service)
+                edges += [(source_node, service, dashed), (service, node, dashed)]
+            else:
+                edges.append((source_node, node, dashed))
+        levels = row_levels(tool, registry_tools)
+        sources = [f"{s['outside'][i]}" + (" (planned)" if s.get("planned") and i == 0 else "")
+                   for s in m["sources"] for i in range(len(s["outside"]))]
+        via = [s["via"] + (" (planned)" if s.get("planned") else "") for s in m["sources"] if s.get("via")]
+        table.append(f"| {title} | {cell(sources) or 'nothing from outside'} | {cell(via + [ADAPTERS[m['supernote']][0]])} "
+                     f"| {cell(m['tablet'])} | {keycaps(levels)} |")
+    used = []
+    for key, _, _ in GROUPS:
+        runtimes = {t["map"]["supernote"] for _, t in members[key]}
+        if len(runtimes) == 1:
+            edges.append((f"g_{key}", f"a_{runtimes.pop()}", False))
+        else:
+            edges += [(node, f"a_{t['map']['supernote']}", False) for node, t in members[key]]
+        used += [t["map"]["supernote"] for _, t in members[key]]
+    adapters = [a for a in ADAPTERS if a in used]
+    out = [MAP_START, "", "```mermaid", "flowchart TB",
            "  accTitle: Tool map: where each tool's data comes from and where it lands",
-           "  accDescr: One chain per tool, left to right: the outside world, the service adapter, the tool and its "
-           f"pure logic, the Supernote adapter, and what it changes on the tablet with its dependency levels. Tools: {names}."]
-    for key, head in MAP_COLUMNS:
-        out += [f'  subgraph {key}["{head}"]', "    direction TB"] + columns[key] + ["  end"]
-    out += chains
-    out += ["  classDef planned stroke-dasharray: 5 5",
-            "  classDef registry stroke-width: 2px"]
-    out.append("  class " + ",".join(f"{slug(t['name'])}_adapter" for t in rows) + " registry")
+           "  accDescr: Top to bottom: the outside services, the service adapters they enter through, the tools "
+           "grouped by where they run (tablet plugins, tablet apps, Mac), the Supernote adapter of each runtime, "
+           f"the one registry of device dependencies they all read, and the tablet. Tools: {names}."]
+    out += ['  subgraph outside["Outside world"]'] + outside + ["  end"]
+    out += ['  subgraph services["Service adapters"]'] + list(services.values()) + ["  end"]
+    for key, head, _ in GROUPS:
+        if not members[key]:
+            continue
+        out.append(f'  subgraph g_{key}["{head}"]')
+        out += [f'    {node}["{node_text([t["name"] + (" (planned)" if node in planned else "")] + t["map"]["logic"], bold_first=True)}"]'
+                for node, t in members[key]]
+        out.append("  end")
+    out += ['  subgraph adapters["Supernote adapters"]']
+    out += [f'    a_{a}["{node_text(ADAPTERS[a], bold_first=True)}"]' for a in adapters] + ["  end"]
+    out += ['  registry["<b>Registry</b><br/>of device dependencies"]', '  tablet["<b>Supernote tablet</b>"]']
+    out += [f"  {a} {'-.->' if dashed else '-->'} {b}" for a, b, dashed in edges]
+    out += [f"  a_{a} --> registry" for a in adapters] + ["  registry --> tablet"]
+    out += ["  classDef planned stroke-dasharray: 5 5"]
     if planned:
-        out.append("  class " + ",".join(planned) + " planned")
-    out += ["```", "", "| Tool | Source | Adapter | Levels |", "| :--- | :--- | :--- | :--- |"] + table + ["", MAP_END]
+        out.append("  class " + ",".join(dict.fromkeys(planned)) + " planned")
+    out += ["```", "", "| Tool | Source | Adapter | On the tablet | Levels |", "| :--- | :--- | :--- | :--- | :--- |"]
+    out += table + ["", MAP_END]
     return "\n".join(out)
 
 
 # ---------------------------------------------------------------- main
 
 
+def data_problems(root, data):
+    """What docs/tools.json breaks: a row with no icon file (#412), or a list joined with «·» on one
+    line in the tool map's data, where each item takes its own line (owner, 2026-11-26)."""
+    problems = []
+    for tool in data["tools"]:
+        icon = tool.get("icon")
+        if not icon or not (root / icon).is_file():
+            problems.append(f"docs/tools.json: {tool['name']}: no icon file ({icon or 'no icon'}); draw it with scripts/icons.py")
+        m = tool.get("map") or {}
+        texts = m.get("logic", []) + m.get("tablet", [])
+        for source in m.get("sources", []):
+            texts += source["outside"] + [source.get("via") or ""]
+        problems += [f"docs/tools.json: {tool['name']}: «{x}» joins a list with «·»; give each item its own line"
+                     for x in texts if "\u00b7" in x]
+    return problems
+
+
 def generate(root):
     """{relative path: expected text} for every file this script owns."""
     data = json.loads((root / "docs/tools.json").read_text(encoding="utf-8"))
+    problems = data_problems(root, data)
+    if problems:
+        raise SystemExit("\n".join(problems))
     values = readme_status.allowed((root / "AGENTS.md").read_text(encoding="utf-8"))
     if not values:
         raise SystemExit("AGENTS.md: no README Status values line")

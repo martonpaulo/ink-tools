@@ -13,7 +13,7 @@
       ],
       "reason": "no public intent opens a Settings page; the activity's routing extra does",
       "evidence": {
-        "source": "SettingsActivity.handleIntentRouting, decompiled (docs/supernote.md)",
+        "source": "SettingsActivity.handleIntentRouting, observed device behaviour (docs/supernote.md)",
         "date": "2026-11-20"
       },
       "upgradePath": "none known",

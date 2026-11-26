@@ -4,6 +4,7 @@
  */
 import {readFileSync} from 'fs';
 import {join} from 'path';
+import {OLD_FOLDERS} from '../src/library';
 import {LOOKUP_PROFILE, settingsPath} from '../src/profile';
 import {
   defaultSettings,
@@ -35,8 +36,17 @@ test('LookupFilesPackage registers the module names and the folder the profile u
     }", SafePaths.Roots.plugin(PLUGIN_ID, "${LOOKUP_PROFILE.folder.replace(
       /^MyStyle\//,
       '',
-    )}"))`,
+    )}", RETIRED + "library", RETIRED + "symbols"))`,
   );
+  // Every old folder Settings counts is one the allowlist lets Lasso Actions read: the round
+  // logged OUTSIDE_ROOTS for both of the retired picture plugin's folders and named them unreadable (#302).
+  for (const folder of OLD_FOLDERS) {
+    const [, owner, leaf] = folder.split('/');
+    expect(
+      `MyStyle/${owner}` === LOOKUP_PROFILE.folder ||
+        java.includes(`"/${owner}/"`) && java.includes(`RETIRED + "${leaf}"`),
+    ).toBe(true);
+  }
   const build = readFileSync(
     join(__dirname, '../scripts/native-build.cjs'),
     'utf8',

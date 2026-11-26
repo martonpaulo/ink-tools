@@ -10,7 +10,8 @@ starts with `cd DIR &&` names a subproject; when DIR/package.json has a `typeche
 DIR/node_modules matches its lockfile (`npm_install.py`, #222), `npm run typecheck` runs there. Subprojects without that script (the JVM
 and Python gates) are skipped: the full gate still runs them. ESLint is left to the gate, since it is
 not cheap on the larger plugins. Every run first refuses tracked paths that differ only in case
-(`case_check.py`, #227), since a case-insensitive disk would merge them. Exit 0 pass, 1 a type error (its lines are printed), 2 a usage error.
+(`case_check.py`, #227), since a case-insensitive disk would merge them, and tracked text that states
+the method used on vendor software (`public_wording.py`, #408). Exit 0 pass, 1 a type error (its lines are printed), 2 a usage error.
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import case_check  # noqa: E402
 import gates  # noqa: E402
 import npm_install  # noqa: E402
+import public_wording  # noqa: E402
 
 CD_PREFIX = re.compile(r"^cd (\S+) &&")
 
@@ -70,6 +72,9 @@ def main(argv: list[str] | None = None) -> int:
     for kind, first, second in case_check.collisions(case_check.tracked(root)):
         failed = 1
         print(f"quick case: {kind}: {first} <-> {second}")
+    for path, line, text in public_wording.hits(root):
+        failed = 1
+        print(f"quick wording: {path}:{line}: {text}")
     for folder in folders:
         if not npm_install.is_current(root / folder):
             print(f"quick {folder}: skipped, node_modules missing or older than the lockfile (the gate installs it)")

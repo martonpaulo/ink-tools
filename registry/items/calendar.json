@@ -110,7 +110,7 @@
       "readers": [
         "sn-adapter"
       ],
-      "reason": "the app shows or hides a row by rules no API states; only its decompiled code and device rounds show them",
+      "reason": "the app shows or hides a row by rules no API states; only observed app behaviour and device rounds show them",
       "evidence": {
         "source": "device rounds of #43 and #28; the Calendar app's list code",
         "version": "1.00.532",

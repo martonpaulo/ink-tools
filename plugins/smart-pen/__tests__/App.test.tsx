@@ -3,7 +3,11 @@ import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {WorkingStrip} from '@ink-tools/ui-kit';
+import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import App from '../App';
+import {copy} from '../src/copy';
+import {copy as textCopy} from '../src/modules/text/copy';
 import {DEFAULT_PEN_SETTINGS, type PenSettings} from '../src/settings';
 
 const mount = async (
@@ -155,4 +159,25 @@ test('the view shows Close before the settings file is read (#257)', async () =>
   });
   expect(control(tree, 'Close')).toBeDefined();
   expect(labels(tree)).not.toContain('Smart Shapes');
+});
+
+test('a button that failed on the tablet shows the Error state with its reason and Close, in place of Settings (#257)', async () => {
+  const working = quietWorking({failed: copy['working.failed'], timeout: copy['working.timeout']});
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(
+      <App working={working} close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />,
+    );
+  });
+  await act(async () => {
+    working.hold({what: textCopy['toast.undoFailed'], reason: textCopy['error.again']});
+  });
+  expect(tree.root.findAllByType(WorkingStrip).length).toBe(1);
+  expect(shownTexts(tree.root)).toEqual([textCopy['toast.undoFailed'], textCopy['error.again']]);
+  const [close] = pressables(tree.root);
+  await act(async () => {
+    close.props.onPress();
+  });
+  expect(working.problem()).toBeNull();
+  expect(tree.root.findAllByType(WorkingStrip).length).toBe(0);
 });

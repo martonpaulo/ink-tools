@@ -1,5 +1,5 @@
 /** The device's shared storage root, owned by sn-adapter (#101). */
-import { SHARED_ROOT } from "@ink-tools/sn-adapter/official";
+import { SHARED_ROOT, STICKER_IMPORT_FOLDERS } from "@ink-tools/sn-adapter/official";
 import { pluginProfile } from "./profile";
 
 export { SHARED_ROOT };
@@ -69,4 +69,16 @@ export function logsDir(externalRoot = SHARED_ROOT): string {
  */
 export function settingsPath(externalRoot = SHARED_ROOT): string {
   return pluginPath("settings.json", externalRoot);
+}
+
+/**
+ * `<root>/<folder>/stickers`, where «Insert Sticker» keeps each sticker it makes (#35). The
+ * built-in Sticker plugin's library lives in its own private folder, which no plugin writes; its
+ * import lists `.sticker` files in the shared folders the registry's `pluginhost.file-sandbox`
+ * names, so a sticker here is found again from Sticker › import. Null when the profile's folder is
+ * not in one of them.
+ */
+export function stickersDir(externalRoot = SHARED_ROOT): string | null {
+  const top = pluginProfile().folder.split("/")[0];
+  return STICKER_IMPORT_FOLDERS.includes(top) ? pluginPath("stickers", externalRoot) : null;
 }

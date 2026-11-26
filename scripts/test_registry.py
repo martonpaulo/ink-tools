@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ITEM = {
     "id": "calendar.provider", "title": "The Calendar provider", "level": 2, "impact": "user",
     "owner": "sn-adapter", "readers": ["sn-adapter"], "reason": "no official calendar API",
-    "evidence": {"source": "a decompiled class", "date": "2026-11-17"}, "upgradePath": "an official API",
+    "evidence": {"source": "a vendor class, observed device behaviour", "date": "2026-11-17"}, "upgradePath": "an official API",
     "lastVerified": "unverified", "publicApiRequest": "not asked", "probe": {"name": "probeCapability"},
     "active": "internals/calendar.ts", "values": {"action": "an.action"},
     "descriptor": {"authority": "a.provider", "tables": {}, "rules": {}},

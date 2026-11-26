@@ -32,6 +32,7 @@ import {STILL_RADIUS_PX} from './src/modules/shapes/settings';
 import {createPenRouter} from './src/pen';
 import {getSettings} from './src/profile';
 import {applySettings, setModuleHost} from './src/runtime';
+import {working} from './src/working';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -55,6 +56,7 @@ const buttons = new Buttons({
   lasso: DEVICE_LASSO,
   toast: text => ToastAndroid.show(text, ToastAndroid.SHORT),
   errorTip,
+  fail: problem => working.hold(problem),
   log,
   icons: {
     on: Image.resolveAssetSource(require('./assets/mode-on.png')).uri,

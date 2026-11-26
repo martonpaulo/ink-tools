@@ -93,7 +93,8 @@ sets the sleep between the reads of every wait.
 The device's address is $SUPERNOTE_ADDRESS, else the first line of
 ~/.config/inkctl/address (or, from before the rename, ~/.config/snadb/address), as HOST or HOST:PORT. PATH is relative to the shared storage, or absolute.
 ADB over Wi-Fi is enabled over USB with `inkctl wifi on` (`adb tcpip 5555`); a restart of the device turns
-it off. When one authorized tablet is attached by USB, every command goes over the cable instead, so
+it off. When the stored port refuses, the port Android's Wireless debugging announces over mDNS
+(`adb mdns services`) for exactly the stored address is tried once. When one authorized tablet is attached by USB, every command goes over the cable instead, so
 the work goes on with the tablet's Wi-Fi off; `status` names the link.
 """
 
@@ -141,6 +142,7 @@ REGISTRY_ITEMS = (
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
     {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java"},
     {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
+    {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "inktools-bridge", "probe": "inktools-bridge ping", "unprobed": None, "active": "inktools-bridge HostCalls.java"},
     {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inktools-bridge Command.java"},
     {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
     {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
@@ -194,10 +196,20 @@ REGISTRY = {
         "exportFolder": "EXPORT",
         "hiddenFolder": ".data/plugin",
         "privateHomes": ("/data/data/com.ratta.supernote.pluginhost/files/plugins", "/data/user/0/com.ratta.supernote.pluginhost/files/plugins",),
+        "stickerImportFolders": ("Document", "EXPORT", "MyStyle", "Note", "SCREENSHOT", "INBOX",),
     },
     "pluginhost.plugin-list": {
         "authority": "com.ratta.supernote.pluginhost",
         "path": "plugins",
+    },
+    "pluginhost.setting-service": {
+        "hostPackage": "com.ratta.supernote.pluginhost",
+        "service": "com.ratta.supernote.pluginhost.services.PluginSettingService",
+        "descriptor": "com.ratta.supernote.plugincorelib.IPluginSetting",
+        "callbackPackage": "com.ratta.supernote.plugincorelib.callback.",
+        "installCallback": "IPluginInstallCallback",
+        "setCallback": "IPluginSetCallback",
+        "uninstallCallback": "IPluginUninstallCallback",
     },
     "pluginhost.permission-status": {
         "always": 2,
@@ -496,6 +508,11 @@ NOTE_MODE_NORMAL = REGISTRY["note.activity"]["normalMode"]
 PLUGIN_SUFFIX = ".snplg"
 PLUGIN_FOLDER = REGISTRY["pluginhost.file-sandbox"]["sharedFolder"]
 PLUGIN_URI = f"content://{REGISTRY['pluginhost.plugin-list']['authority']}/{REGISTRY['pluginhost.plugin-list']['path']}"
+# A plugin view is a window of the host's package; an install while one shows answers error 100 (#418).
+PLUGIN_VIEW_MARK = f'package="{REGISTRY["pluginhost.setting-service"]["hostPackage"]}"'
+PLUGIN_VIEW_OPEN = "a plugin view is open on the tablet, and PluginHost refuses an install while one shows (error 100): close it with its own close button, then run the install again"
+# After an install PluginHost restarts, and its plugin list answers nothing until it is back (#419).
+PLUGIN_LIST_RESTARTING = "the plugin list gave no answer for {limit:g} s: PluginHost restarts after an install; run inkctl plugin list once it answers"
 CONTENT_QUERY = "content query --uri"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 # The Note app's text-box font menu lists every .ttf and .otf file under this folder, read
@@ -694,13 +711,29 @@ class Failure(Exception):
 
 
 USB_RESTORE = f"connect the USB cable and run: adb tcpip {ADB_PORT}"
+REFUSED = "Connection refused"
+# The service Android's Wireless debugging announces with its port, which is new after each restart (#1).
+MDNS_CONNECT_SERVICE = "_adb-tls-connect._tcp"
+MDNS_ROW_FIELDS = 3  # an `adb mdns services` row: instance name, service type, HOST:PORT
 # What a failed connection says about the tablet, measured on a Manta: the first match decides.
 # A refused port comes first: a stale `adb` server can repeat `No route to host` after the tablet woke with ADB off.
 UNREACHABLE_STATES = (
-    (("Connection refused",), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
+    ((REFUSED,), "restarted", "ADB over Wi-Fi is off, usually after a restart", f"To restore it, {USB_RESTORE}", f"adb tcpip {ADB_PORT}"),
     (("No route to host",), "asleep", "the tablet is asleep, or its Wi-Fi is off", "Wake the tablet, then try again.", "inkctl status"),
     (("timed out", "not known", "nodename nor servname", "resolution"), "off_network", "the address does not answer on this network", f"Is it on this Wi-Fi? After a restart, {USB_RESTORE}", "inkctl status"),
 )
+
+
+def mdns_port(listing: str, host: str) -> str:
+    """The port of the `adb mdns services` row of the TLS connect service at exactly `host`, else "".
+    A row of another device never counts, so a stale announcement cannot redirect a command."""
+    for line in listing.splitlines():
+        fields = line.split()
+        if len(fields) == MDNS_ROW_FIELDS and fields[1].rstrip(".") == MDNS_CONNECT_SERVICE:
+            row_host, _, row_port = fields[2].rpartition(":")
+            if row_host == host and row_port.isdigit():
+                return row_port
+    return ""
 
 
 def unreachable(serial: str, evidence: str = "") -> Failure:
@@ -898,7 +931,28 @@ class Device:
             reply = self.request_connection()
             if self.is_ready():
                 return
-        raise unreachable(self.serial, f"{port_problem} {reply}")
+        evidence = f"{port_problem} {reply}"
+        if REFUSED in evidence and self.follow_mdns_port():
+            return
+        raise unreachable(self.serial, evidence)
+
+    def follow_mdns_port(self) -> bool:
+        """After a restart, Wireless debugging listens on a new port (#1): connect once to the port the
+        tablet announces over mDNS, and only when the announced address is the stored one."""
+        host, _, port = self.wifi.rpartition(":")
+        listing = self.adb("mdns", "services", serial=False).stdout.decode(errors="replace")
+        announced = mdns_port(listing, host)
+        if not announced or announced == port:
+            return False
+        stored = self.serial
+        moved = f"{host}:{announced}"
+        self.log.secrets.insert(0, moved)  # before the bare host, so the whole address is masked
+        self.serial = self.wifi = moved
+        self.request_connection()
+        if self.is_ready():
+            return True
+        self.serial = self.wifi = stored  # the failure names the stored address, which the owner knows
+        return False
 
     def shell(self, command: str, timeout: float = CALL_TIMEOUT, missing: str = "") -> str:
         """Run a device shell command and return its output; `missing` names what a not-found is."""
@@ -2343,7 +2397,15 @@ def command_note_png(device: Device, args: argparse.Namespace):
         device.shell(f"rm -f {shlex.quote(HELPER_RENDER_PATH)}")
     size = os.path.getsize(args.local_path)
     data = {**answer, "page": args.page, "local": args.local_path, "bytes": size}
-    return data, f"page {args.page}: {args.local_path} ({size} bytes) in {answer.get('ms')} ms"
+    text = f"page {args.page}: {args.local_path} ({size} bytes) in {answer.get('ms')} ms"
+    # The tablet's PNG leaves every picture element out (device round 5, #263): say so, so the
+    # PNG is never taken as proof of a picture; note-render of the pulled file draws them.
+    pictures = answer.get("pictures")
+    if pictures:
+        print(f"the tablet's page PNG leaves out the page's {pictures} picture(s); render the pulled .note with note-render to see them", file=sys.stderr, flush=True)
+    elif pictures is None and "pictures" in answer:
+        print("the page's pictures did not count; the tablet's page PNG leaves out any picture", file=sys.stderr, flush=True)
+    return data, text
 
 
 def command_note_insert_picture(device: Device, args: argparse.Namespace):
@@ -2637,6 +2699,33 @@ def plugin_rows(device: Device) -> list[dict]:
     return query_rows(device, f"{CONTENT_QUERY} {PLUGIN_URI}")
 
 
+def settled_plugin_rows(device: Device, limit: float) -> list[dict]:
+    """The plugin list, read again while it gives an empty answer, as it does while PluginHost
+    restarts after an install (device round 5, #419), up to `limit` seconds. Any other answer, rows,
+    the provider's own «no rows» or an error text, counts at once."""
+    started = time.monotonic()
+    while True:
+        output = device.shell(f"{CONTENT_QUERY} {PLUGIN_URI}")
+        if output.strip():
+            rows = parse_rows(output)
+            if not rows and NO_ROWS not in output:
+                raise Failure(EXIT_FAILED, "device_error", output.strip())
+            return rows
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_FAILED, "device_error", PLUGIN_LIST_RESTARTING.format(limit=limit), PLUGIN_LIST_STEP)
+        time.sleep(WAIT_INTERVAL)
+
+
+def plugin_view_shown(device: Device) -> bool:
+    """True when the screen holds a plugin view, a window of the host's package (#418). A screen
+    that does not settle counts as none: the install's own answer then says what happened."""
+    for _ in range(DUMP_ATTEMPTS):
+        dump = device.adb("exec-out", "uiautomator", "dump", "/dev/tty").stdout.decode(errors="replace")
+        if IDLE_ERROR not in dump:
+            return PLUGIN_VIEW_MARK in dump
+    return False
+
+
 def shown_plugin_names(row: dict) -> list[str]:
     """The names a plugin shows, one for each language."""
     shown = row.get("name", "")
@@ -2774,7 +2863,7 @@ def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) 
     """Prove the install from the list. An update needs the version column, or nothing proves it changed."""
     started = time.monotonic()
     while True:
-        for row in plugin_rows(device):
+        for row in settled_plugin_rows(device, max(0.0, limit - (time.monotonic() - started))):
             if row.get("pluginID") != config["id"]:
                 continue
             if updating and "versionName" not in row:
@@ -2811,6 +2900,18 @@ def proven_row(device: Device, config: dict, limit: float, installed: list, sinc
             raise Failure(EXIT_TIMEOUT, "timeout", f"PluginHost logged no update of {config['id']} from {path} after {limit:g} s", f"inkctl logs --tag {HOST_INSTALL_TAG}")
         time.sleep(WAIT_INTERVAL)
     return wait_for_plugin(device, config, limit, True)
+
+
+def remove_package(device: Device, path: str) -> bool:
+    """Remove the package an install pushed, once the plugin list proved the install: `MyStyle/`
+    syncs to Supernote Cloud file by file, so each kept copy is one more file there (#409). True
+    only when the read-back no longer finds it; a failed install never calls this, so its copy
+    stays for a retry."""
+    device.shell(f"rm -f {shlex.quote(path)}")
+    if device.test(f"-e {shlex.quote(path)}"):
+        print(f"the installed package is still on the tablet after rm: {path}", file=sys.stderr, flush=True)
+        return False
+    return True
 
 
 def bridge_installed(device: Device) -> bool:
@@ -2898,11 +2999,11 @@ def wait_until(limit: float, condition, message: str):
         time.sleep(WAIT_INTERVAL)
 
 
-def landed_despite_failure(device: Device, config: dict):
+def landed_despite_failure(device: Device, config: dict, limit: float):
     """The plugin's row when PluginHost answered onFailed yet holds the file's build: its binder
     thread can carry another plugin's id and refuse the callback after the update landed
     (docs/supernote.md, #225). None when the list does not prove the build."""
-    for row in plugin_rows(device):
+    for row in settled_plugin_rows(device, limit):
         if row.get("pluginID") == config["id"] and "versionName" in row and same_build(row, config, row["versionName"]):
             return row
     return None
@@ -2912,12 +3013,13 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
     code, answer = bridge_result(device, "install", path=pushed["path"])
     # The list proves a failure that landed only when the version changed (#225).
-    row = landed_despite_failure(device, config) if code == BRIDGE_FAILED and since is None else None
+    row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None else None
     if row is None:
         bridge_answer(code, answer)
         row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
     else:
         print(f"the bridge reported a failure, but {config['id']} {config['version']} is in the plugin list: {answer}", file=sys.stderr, flush=True)
+    removed = remove_package(device, pushed["path"])
     data = {
         "plugin": config["id"],
         "version": config["version"],
@@ -2927,6 +3029,7 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
         "enabled": None,
         "limit": None,
         "bridge": answer,
+        "removed": removed,
         "row": row,
     }
     return data, f"{data['action']}: {config['id']} {config['version']}"
@@ -3051,7 +3154,9 @@ def command_plugin_action(device: Device, args: argparse.Namespace):
 def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
-    installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
+    if plugin_view_shown(device):
+        raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", PLUGIN_VIEW_OPEN)
+    installed = [row for row in settled_plugin_rows(device, args.timeout) if row.get("pluginID") == config["id"]]
     same = bool(installed) and same_build(installed[0], config, installed[0].get("versionName"))
     if same and not args.same_version:
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", PLUGIN_LIST_STEP)
@@ -3073,6 +3178,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     press_element(device, expect_element(device, f"text:{name}", args.step_timeout))
     press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
     row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
+    removed = remove_package(device, pushed["path"])
     data = {
         "plugin": config["id"],
         "version": config["version"],
@@ -3080,6 +3186,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
         "route": "screen",
         "path": pushed["path"],
         **limit,
+        "removed": removed,
         "row": row,
     }
     return data, f"{data['action']}: {config['id']} {config['version']}"
@@ -3559,40 +3666,45 @@ VERIFIER_BYTES = 64  # 86 characters, inside PKCE's 43 to 128
 # reaches the Keychain line, so that line needs no quoting.
 REFRESH_TOKEN_SHAPE = re.compile(r"[A-Za-z0-9._/~+-]+")
 PROJECT_ICON = Path(__file__).resolve().parents[3] / "design/icon.svg"  # the one copy of the icon (#97)
+# The Ink Tools site (#371) owns the page's look and its address: its stylesheet is inlined as it
+# is, and its CNAME names the host, so the page copies no value (#413).
+SITE_FOLDER = Path(__file__).resolve().parents[3] / "site"
+SITE_STYLES = SITE_FOLDER / "styles/main.css"
+SITE_HOST = SITE_FOLDER / "CNAME"
+PRIVACY_PATH = "/privacy/"
 GOOGLE_PUSH_STEP = f"security find-generic-password -s {KEYCHAIN_SERVICE} -a {GOOGLE_TOKEN_ACCOUNT} -w | inkctl secret set google"
-# The page the browser shows after the consent, in the Settings look of packages/ui-kit/README.md:
-# one column on paper, two type sizes, the ui-kit greys, a state word and a shape, light and dark.
+# The page the browser shows after the consent, in the Ink Tools site's look (#413): the site's
+# stylesheet, header and page layout, served from this Mac's loopback address with nothing loaded
+# from the network (RFC 8252). The state shows as a word and a shape: a circle for done, a square
+# for failed. The few rules below use only the site's tokens.
 LOGIN_PAGE = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>{title} - Ink Tools</title>
+<title>{title} · Ink Tools</title>
 <style>
-:root {{ --paper: #ffffff; --ink: #000000; --context: #444444; --panel: #eeeeee; }}
-@media (prefers-color-scheme: dark) {{
-  :root {{ --paper: #000000; --ink: #ffffff; --context: #bbbbbb; --panel: #222222; }}
-}}
-body {{ margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.5 -apple-system, system-ui, sans-serif; }}
-main {{ max-width: 34rem; margin: 0 auto; padding: 48px 16px; }}
-.product {{ display: flex; align-items: center; gap: 12px; font-weight: 700; }}
-.product svg {{ width: 40px; height: 40px; }}
-h1 {{ display: flex; align-items: center; gap: 12px; font-size: 28px; line-height: 1.25; margin: 32px 0 16px; }}
-.mark {{ flex: none; width: 40px; height: 40px; border: 3px solid var(--ink); border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }}
-.failed .mark {{ border-radius: 4px; }}
-p {{ margin: 0 0 16px; }}
-.detail {{ color: var(--context); }}
-.next {{ background: var(--panel); padding: 16px; border-left: 4px solid var(--ink); }}
+{styles}
+.state {{ display: flex; align-items: center; gap: var(--space-xs); }}
+.mark {{ flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--glyph-tile); height: var(--glyph-tile); border: medium solid currentColor;
+  border-radius: var(--radius-pill); font-size: var(--text-xl); }}
+.failed .mark {{ border-radius: var(--radius-m); }}
+.brand svg {{ width: var(--space-l); height: var(--space-l); }}
 </style>
 </head>
 <body class="{state}">
-<main>
-<div class="product"><span aria-hidden="true">{icon}</span><span>Ink Tools</span></div>
-<h1><span class="mark" aria-hidden="true">{mark}</span><span>{title}</span></h1>
-<p class="detail">{detail}</p>
-<p class="next"><strong>Next:</strong> {next}</p>
+<header class="site-header">
+<div class="container"><div class="brand"><span aria-hidden="true">{icon}</span><span>Ink Tools</span></div></div>
+</header>
+<main class="page">
+<div class="container">
+<h1 class="state"><span class="mark" aria-hidden="true">{mark}</span><span>{title}</span></h1>
+<p class="lead">{detail}</p>
+<p class="notice"><strong>Next:</strong> {next}</p>
+{privacy}
+</div>
 </main>
 </body>
 </html>
@@ -3683,24 +3795,40 @@ def google_exchange(client: dict, code: str, redirect: str, verifier: str) -> di
         raise Failure(EXIT_FAILED, "network_error", f"Google's token endpoint did not answer: {lost}", cause="Google's sign-in server could not be reached", next_step=GOOGLE_LOGIN_STEP) from None
 
 
-def login_page(failure: Failure | None) -> bytes:
+def site_file(path: Path) -> str:
+    """A file of the site in this checkout, or "" when a copy of the command has no site beside it:
+    the page then still shows its words, unstyled."""
     try:
-        icon = PROJECT_ICON.read_text()
+        return path.read_text()
     except OSError:
-        icon = ""  # a copy of the command without the repository still shows the name
+        return ""
+
+
+def privacy_link() -> str:
+    """The privacy policy's link on the site, from the site's own CNAME; none without a site."""
+    host = site_file(SITE_HOST).strip()
+    if not host:
+        return ""
+    address = html.escape(f"https://{host}{PRIVACY_PATH}")
+    return f'<p>How Ink Tools uses your Google data: <a href="{address}">Privacy policy</a></p>'
+
+
+def login_page(failure: Failure | None) -> bytes:
     if failure is None:
         fields = {
             "state": "signed-in", "mark": "&#10003;", "title": "Signed in to Google",
             "detail": "Account Sync may now read your calendars and add events. The sign-in is kept in this Mac's login Keychain.",
-            "next": "Close this tab and go back to the terminal.",
+            "next": "You are done. Close this tab and go back to the terminal.",
+            "privacy": privacy_link(),
         }
     else:
         fields = {
             "state": "failed", "mark": "&#10005;", "title": "Sign-in failed",
             "detail": html.escape(failure.message),
             "next": "Close this tab and run <code>inkctl google login</code> again in the terminal.",
+            "privacy": "",
         }
-    return LOGIN_PAGE.format(icon=icon, **fields).encode()
+    return LOGIN_PAGE.format(icon=site_file(PROJECT_ICON), styles=site_file(SITE_STYLES), **fields).encode()
 
 
 def open_consent(address: str) -> None:

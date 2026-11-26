@@ -190,7 +190,7 @@ export function Editor({
           <View style={shared.buttons}>
             <Button
               label={copy['editor.done']}
-              primary
+              kind="primary"
               disabled={state.busy !== null}
               onPress={onDone}
             />
@@ -218,7 +218,7 @@ export function Editor({
           <View style={shared.buttons}>
             <Button
               label={editOf(state.draw).name}
-              primary
+              kind="primary"
               disabled={state.busy !== null || state.marks.length === 0}
               onPress={() => onApply(editOf(state.draw!))}
             />

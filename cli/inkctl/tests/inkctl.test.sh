@@ -42,10 +42,12 @@ printf '%s\n' "$*" >> "$ADB_LOG"
 # secret write drains it, so a call that inherits a piped secret swallows it.
 if [ -n "${ADB_READS_STDIN:-}" ]; then case "$*" in *"umask 077; mkdir -p "*) ;; *) cat >> "$ADB_FILES/swallowed" ;; esac; fi
 if [ "$1" = connect ]; then
+    if [ -n "${ADB_CONNECT_OPEN:-}" ] && [ "$2" = "$ADB_CONNECT_OPEN" ]; then echo device > "$ADB_FILES/state"; echo "connected to $2"; exit 0; fi
     if [ -z "${ADB_CONNECT_FAILS:-}" ] && { [ ! -f "$ADB_FILES/stale" ] || [ -f "$ADB_FILES/killed" ]; }; then echo device > "$ADB_FILES/state"; fi
     printf '%s\n' "${ADB_CONNECT_REPLY:-connected to $2}"
     exit 0
 fi
+if [ "$1" = mdns ]; then echo 'List of discovered mdns services'; [ -f "$ADB_FILES/mdns" ] && cat "$ADB_FILES/mdns"; exit 0; fi
 if [ "$1" = kill-server ]; then touch "$ADB_FILES/killed"; exit 0; fi
 if [ "$1" = devices ]; then echo 'List of devices attached'; cat "$ADB_FILES/usb"; exit 0; fi
 [ "$1" = -s ] && shift 2
@@ -198,7 +200,13 @@ case "$1" in
                 # timing-independent: the real stream never ends; the test's limit ends this one.
                 [ -n "${ADB_HANG:-}" ] && exec sleep 30
                 : ;;
-            "content query"*) cat "$ADB_FILES/rows" ;;
+            "content query"*)
+                # $ADB_FILES/rows-silent: that many reads answer nothing, as while PluginHost restarts (#419).
+                if [ -f "$ADB_FILES/rows-silent" ] && [ "$(cat "$ADB_FILES/rows-silent")" -gt 0 ]; then
+                    echo $(($(cat "$ADB_FILES/rows-silent") - 1)) > "$ADB_FILES/rows-silent"
+                else
+                    cat "$ADB_FILES/rows"
+                fi ;;
             "input tap"*)
                 if [ -f "$ADB_FILES/taps-left" ]; then
                     left=$(($(cat "$ADB_FILES/taps-left") - 1))
@@ -325,6 +333,21 @@ echo offline > "$files/state"
 result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status --json 2>/dev/null)
 check "a restarted tablet is named" "$(printf '%s' "$result" | field "['state'],d['next']")" "('restarted', 'adb tcpip 5555')"
 check "a restarted tablet gets the route that restores it" "$(printf '%s' "$result" | grep -c 'connect the USB cable')" "1"
+check "a restarted tablet with no mDNS row keeps the USB route" "$(called 'mdns services')$(called 'connect device-a.test:')" "11"
+# Wireless debugging after a restart (#1): the stored port refuses, the tablet announces a new one over mDNS.
+printf 'adb-1-a\t_adb-tls-connect._tcp\tdevice-b.test:40001\nadb-1-a\t_adb-tls-pairing._tcp\tdevice-a.test:40002\nadb-1-a\t_adb-tls-connect._tcp\tdevice-a.test:37241\n' > "$files/mdns"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_OPEN=device-a.test:37241 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status --json --log-paths 2>/dev/null)
+check "a refused port follows the port the tablet announces over mDNS" "$?$(called 'connect device-a.test:37241')$(called '-s device-a.test:37241 get-state')" "011"
+check "a row of another device or service is never used" "$(called 'device-b.test')$(called ':40002')" "00"
+check "the run log masks the announced address" "$(tail -1 "$work/home/.cache/inkctl/history.jsonl" | grep -cF 'connect [device]')$(tail -1 "$work/home/.cache/inkctl/history.jsonl" | grep -cF '37241')" "10"
+echo offline > "$files/state"
+ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Connection refused' run status >/dev/null 2>"$work/err"
+check "an announced port that does not connect keeps the USB route" "$?$(called 'connect device-a.test:37241')$(grep -c 'connect the USB cable' "$work/err")" "311"
+echo offline > "$files/state"
+result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_OPEN=device-a.test:37241 ADB_CONNECT_REPLY='failed to connect: No route to host' run status --json 2>/dev/null)
+check "a sleeping tablet does not read mDNS" "$(called 'mdns services')" "0"
+rm -f "$files/mdns"
 echo offline > "$files/state"
 result=$(ADB_CONNECT_FAILS=1 ADB_CONNECT_REPLY='failed to connect: Operation timed out' run status --json 2>/dev/null)
 check "a tablet off the network is named" "$(printf '%s' "$result" | field "['state']")" "off_network"
@@ -891,6 +914,7 @@ check "plugin install opens Settings" "$(called "am start -W -n com.ratta.settin
 check "plugin install presses each step" "$(called 'input tap')" "5"
 check "plugin install reports the limit before installing" "$(grep -c 'plugins enabled: 9 of 10' "$work/err")" "1"
 check "plugin install pushes the file" "$(called " push $work/local/test.snplg $root/MyStyle/test.snplg")" "1"
+check "plugin install removes the package once the list proves it (#409)" "$(called "rm -f $root/MyStyle/test.snplg")$(printf '%s' "$result" | field "['removed']")" "1True"
 run plugin install "$work/local/test.snplg" >/dev/null 2>&1
 check "plugin install refuses the same version" "$?$(called ' push ')" "50"
 python3 - "$work/local/test.snplg" <<'PY'
@@ -998,11 +1022,16 @@ check "plugin install goes through the bridge when it is installed" "$(printf '%
 check "the bridge install names the pushed path" "$(bridge_calls)" "am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op install --es path $root/MyStyle/test.snplg"
 check "the bridge install presses nothing on the screen" "$(called 'input tap')$(called 'SettingsActivity')" "00"
 check "the bridge install keeps PluginHost's answer" "$(printf '%s' "$result" | field "['bridge']")" "ok onSuccess PluginInfo{pluginID=new.plugin}"
+# #409: MyStyle/ syncs to Supernote Cloud, so a proven install leaves no package there.
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+echo "f $root/MyStyle/test.snplg" >> "$files/paths"
+result=$(run plugin install "$work/local/test.snplg" --overwrite --json 2>/dev/null)
+check "a proven install leaves no package in MyStyle, read back (#409)" "$?$(printf '%s' "$result" | field "['removed']")$(grep -cxF "f $root/MyStyle/test.snplg" "$files/paths")$(called "[ -e $root/MyStyle/test.snplg ]")" "0True02"
 rm -f "$files/rows-after-bridge"
 printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
 printf 'Broadcast completed: result=2, data="failed onFailed PluginError{code=3}"\n' > "$files/bridge-answer"
 run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
-check "a refused bridge install fails with PluginHost's error" "$?$(grep -c 'onFailed PluginError{code=3}' "$work/err")" "11"
+check "a refused bridge install fails with PluginHost's error, keeping the package for a retry (#409)" "$?$(grep -c 'onFailed PluginError{code=3}' "$work/err")$(called 'rm -f ')" "110"
 # #225: PluginHost can answer onFailed after the update landed; the list's version decides.
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
@@ -1013,6 +1042,26 @@ check "a bridge onFailed that landed logs the host's error once" "$(grep -c 'onF
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' | tee "$files/rows" > "$files/rows-after-bridge"
 run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
 check "a bridge onFailed whose version did not change still fails" "$?$(grep -c 'onFailed PluginError{errorCode=100}' "$work/err")" "11"
+# #419: PluginHost restarts after an install, and its list answers nothing for a while.
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
+printf 'Broadcast completed: result=1, data="ok onSuccess PluginInfo{pluginID=new.plugin}"\n' > "$files/bridge-answer"
+echo 3 > "$files/rows-silent"
+result=$(run plugin install "$work/local/test.snplg" --overwrite --json 2>"$work/err")
+check "plugin install reads the list again while PluginHost restarts, and proves the update (#419)" "$?$(printf '%s' "$result" | field "['action'],d['row']['versionName']")$(cat "$files/rows-silent")" "0('updated', '2.0')0"
+rm -f "$files/rows-after-bridge"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
+echo 999 > "$files/rows-silent"
+run plugin install "$work/local/test.snplg" --overwrite --timeout 0 >/dev/null 2>"$work/err"
+check "a list that never answers fails after the limit, naming the restart (#419)" "$?$(grep -c 'PluginHost restarts after an install' "$work/err")" "11"
+rm -f "$files/rows-silent"
+# #418: an install while a plugin view shows makes PluginHost answer error 100; refuse before any push.
+cp "$files/tree.xml" "$work/tree-before-view"
+printf '%s' '<?xml version="1.0" ?><hierarchy rotation="0"><node package="com.ratta.supernote.pluginhost" text="Close" resource-id="" content-desc="" class="T" bounds="[0,0][10,10]" /></hierarchy>' > "$files/tree.xml"
+: > "$files/bridge-calls"
+run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
+check "plugin install refuses while a plugin view is open, before any push (#418)" "$?$(grep -c 'a plugin view is open on the tablet' "$work/err")$(called ' push ')$(bridge_calls)" "910"
+cp "$work/tree-before-view" "$files/tree.xml"
 rm -f "$files/rows-after-bridge"
 printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
 printf 'Broadcast completed: result=5, data="timeout no callback"\n' > "$files/bridge-answer"
@@ -1492,6 +1541,10 @@ answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","m
 result=$(run note png 2 "$work/local/page2.png" --json)
 check "note png asks Probe for the page, from 0, and pulls it" "$?$(command_field "d['op'], d['page']")$(printf '%s' "$result" | field "['page'],d['bytes']")$(cat "$work/local/page2.png")" "0('renderPage', 1)(2, 3)PNG"
 check "note png removes the tablet's copy" "$(grep -cxF "rm -f $render" "$files/removed")" "1"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png","pictures":2}' > "$files/helper-answer"
+printf 'f %s\n' "$render" >> "$files/paths"
+run note png 2 "$work/local/page2b.png" >/dev/null 2>"$work/err"
+check "note png says the tablet's PNG leaves out the page's pictures (#263)" "$?$(grep -c 'leaves out the page.s 2 picture' "$work/err")" "01"
 run note png 2 "$work/local/page2.png" >/dev/null 2>&1
 check "note png refuses to replace a local file before any push" "$?$(called ' push ')" "50"
 printf 'f %s\n' "$render" >> "$files/paths"
@@ -1887,13 +1940,17 @@ check "the consent asks both Calendar scopes and the test calendars, offline" "$
 check "the exchange proves the PKCE verifier" "$(python3 -c 'import sys,hashlib,base64,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); b=dict(u.parse_qsl(open(sys.argv[2]).read())); print(base64.urlsafe_b64encode(hashlib.sha256(b["code_verifier"].encode()).digest()).rstrip(b"=").decode()==q["code_challenge"], b["code"], b["grant_type"], b["redirect_uri"]==q["redirect_uri"])' "$auth" "$KEYCHAIN/token-body")" "True code-SYNTHETIC authorization_code True"
 check "the success page names the product and the state" "$(grep -c -e 'Ink Tools</span>' -e '<span>Signed in to Google</span>' "$KEYCHAIN/page.html")" "2"
 check "the page has a dark look" "$(grep -c 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "1"
+# #413: the page wears the site's look, from the site's own files, and loads nothing from the network.
+check "the page inlines the site's stylesheet whole, tokens and font stack included" "$(python3 -c 'import sys; page=open(sys.argv[1]).read(); css=open(sys.argv[2]).read(); print(css in page, "--accent:" in page, "font-family: -apple-system" in page)' "$KEYCHAIN/page.html" "$repo_root/../../site/styles/main.css")" "True True True"
+check "the success page says it is done and links the site's privacy policy" "$(grep -c -e 'You are done. Close this tab' -e '<a href="https://inktools.martonpaulo.com/privacy/">Privacy policy</a>' "$KEYCHAIN/page.html")" "2"
+check "the page loads nothing: no stylesheet, script, image or other address" "$(grep -c -e '<link' -e '<script' -e '<img' -e 'src=' -e 'url(' "$KEYCHAIN/page.html")$(grep -o 'href="[^"]*"' "$KEYCHAIN/page.html" | sort -u | tr '\n' ' ')" "0href=\"https://inktools.martonpaulo.com/privacy/\" "
 
 rm -f "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN" "$KEYCHAIN/token-body"
 BROWSER_MODE=badstate google --json >"$work/out" 2>/dev/null
 check "a wrong state is refused" "$?" "1"
 check "a wrong state names its error" "$(field "['error']" < "$work/out")" "google_denied"
 check "a wrong state exchanges no code" "$([ -f "$KEYCHAIN/token-body" ] && echo exchanged || echo none)" "none"
-check "a wrong state shows the failure page" "$(grep -c '<span>Sign-in failed</span>' "$KEYCHAIN/page.html")" "1"
+check "a wrong state shows the failure page, in the site's look, with the next step" "$(grep -c -e '<span>Sign-in failed</span>' -e 'class="failed"' -e 'run <code>inkctl google login</code> again' -e 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "4"
 BROWSER_MODE=denied google >/dev/null 2>"$work/err"
 check "a refused consent fails" "$?" "1"
 check "a refused consent names Google's answer" "$(grep -c 'access_denied' "$work/err")" "1"

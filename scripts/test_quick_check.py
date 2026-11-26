@@ -14,7 +14,7 @@ class QuickCheckSelection(unittest.TestCase):
     def test_packages_path_checks_packages_and_the_plugins_gates_map_it_to(self):
         folders = quick_check.typecheck_dirs(ROOT, ["packages/ink-core/src/a.ts"])
         self.assertIn("packages", folders)
-        self.assertIn("plugins/device-transfer", folders)
+        self.assertIn("plugins/device-link", folders)
         # Lookup and Bridge import ink-core, so they are checked (#161, #301); Probe does not.
         self.assertIn("plugins/lasso-actions", folders)
         self.assertIn("plugins/account-sync", folders)

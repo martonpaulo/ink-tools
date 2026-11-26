@@ -18,7 +18,18 @@ export type Measured = {
   /** The screen's box. */
   screen: Box;
   /** Every visible element the person can tap; `scroll` is the scroll view it sits in. */
-  targets: {name: string; width: number; height: number; box: Box; scroll?: Box; bar?: boolean}[];
+  targets: {
+    name: string;
+    width: number;
+    height: number;
+    box: Box;
+    scroll?: Box;
+    bar?: boolean;
+    /** The ui-kit kind, from the component's `nativeID`: a button's level, the bar's action, a row. */
+    kind?: string;
+    /** True when the target sits inside a list row. */
+    inRow?: boolean;
+  }[];
   /**
    * Every visible text: its smallest font size in units, the box of its glyphs, and the boxes it
    * must stay inside, up to the scroll view it sits in, if any.
@@ -34,6 +45,8 @@ export type Measured = {
     bar?: boolean;
     /** True inside ui-kit's CodeBlock (#405). */
     code?: boolean;
+    /** The box of the code block the text sits in (#405). */
+    codeBox?: Box;
     /** True when drawn in a monospaced face. */
     monospace?: boolean;
   }[];
@@ -41,6 +54,8 @@ export type Measured = {
   scrolls: {name: string; box: Box}[];
   /** Every visible title bar, by its box. */
   bars: {name: string; box: Box}[];
+  /** Every visible ui-kit list row, by its box (#411). */
+  rows: {name: string; box: Box}[];
 };
 
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
@@ -111,9 +126,11 @@ export function missingBarBreaks({bars}: Pick<Measured, 'bars'>): string[] {
  */
 export function rawBreaks({texts}: Pick<Measured, 'texts'>, raw: readonly string[] = []): string[] {
   const lines = new Set(raw.map(line => line.trim()));
-  return texts.flatMap(({text, code, monospace}) => {
+  return texts.flatMap(({text, code, codeBox, glyphs, monospace}) => {
     if (code) {
-      return [];
+      // The block scrolls up and down only: a long line wraps inside its sides (owner, #405).
+      const past = codeBox && (glyphs.left + TOLERANCE < codeBox.left || glyphs.right - TOLERANCE > codeBox.right);
+      return past ? [`code line «${text.slice(0, 60)}» runs past the code block's side: its lines wrap`] : [];
     }
     if (lines.has(text)) {
       return [`raw text «${text.slice(0, 60)}» shows outside ui-kit's CodeBlock`];
@@ -176,6 +193,71 @@ export function breaksOf(
     const around = text.within.find(({box}) => outside(text.glyphs, box));
     if (around) {
       found.push(`text «${text.text.slice(0, 60)}» runs outside ${around.name}`);
+    }
+  }
+  return found;
+}
+
+/** The native sizes a screen keeps to (#272, #411): the text roles' sizes, the row's height and inset. */
+export type Native = {
+  /** Every font size a native text role has; a text of another size breaks the type scale. */
+  textSizes: number[];
+  rowHeight: number;
+  screenPadding: number;
+  /** The height two screen-level actions stay within, so they read as one place. */
+  actionSpread: number;
+};
+
+/** The button levels (ui-kit `buttonId`) and the bar's action (`BAR_ACTION_ID`). */
+const SCREEN_ACTIONS = ['button-primary', 'button-destructive', 'bar-action'];
+
+/**
+ * The native Settings rules a screen keeps (#411): one button hierarchy, where only a destructive
+ * button spans the width, a row action sits in a row and a row holds no other button; the
+ * screen-level actions in one place; text only in a native role's size; and each list row at the
+ * native height, starting at the native inset.
+ */
+export function nativeBreaks(measured: Measured, native: Native): string[] {
+  const found: string[] = [];
+  const {screen} = measured;
+  const content = screen.right - screen.left - 2 * native.screenPadding;
+  for (const target of measured.targets) {
+    const {kind, name} = target;
+    if (!kind?.startsWith('button-')) {
+      continue;
+    }
+    if (kind !== 'button-destructive' && target.width + TOLERANCE >= content) {
+      found.push(`button «${name}» spans the width: only a destructive button does; a row's action is an ActionRow`);
+    }
+    if (kind === 'button-row' && !target.inRow) {
+      found.push(`row action «${name}» stands outside a list row`);
+    }
+    if (kind !== 'button-row' && target.inRow) {
+      found.push(`button «${name}» sits in a list row: a row's action is kind «row»`);
+    }
+  }
+  const actions = measured.targets.filter(t => t.kind && SCREEN_ACTIONS.includes(t.kind));
+  for (const a of actions) {
+    for (const b of actions) {
+      if (a !== b && a.box.top < b.box.top && b.box.top - a.box.bottom > native.actionSpread) {
+        found.push(`screen actions «${a.name}» and «${b.name}» stand apart: put them in one place`);
+      }
+    }
+  }
+  const sizes = native.textSizes.map(size => size.toFixed(1));
+  for (const text of measured.texts) {
+    if (!native.textSizes.some(size => Math.abs(size - text.fontSize) <= TOLERANCE)) {
+      found.push(
+        `text «${text.text.slice(0, 60)}» is ${text.fontSize} units, no native text role (${sizes.join(', ')})`,
+      );
+    }
+  }
+  for (const row of measured.rows) {
+    if (row.box.bottom - row.box.top + TOLERANCE < native.rowHeight) {
+      found.push(`row «${row.name.slice(0, 40)}» is under the native row height ${native.rowHeight}`);
+    }
+    if (Math.abs(row.box.left - (screen.left + native.screenPadding)) > TOLERANCE) {
+      found.push(`row «${row.name.slice(0, 40)}» starts off the native inset ${native.screenPadding}`);
     }
   }
   return found;

@@ -14,6 +14,7 @@ import {
   Result,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
 import {iconUri} from './icons';
@@ -28,22 +29,25 @@ import type {LookupSettings, SwitchKey} from './settings';
 
 /** sn-plugin-lib's lasso toolbar button, for strokes, with no view (as Lingo's src/buttons.ts). */
 export const BUTTON_TYPE_LASSO = 2;
+/** The NOTE toolbar's «Plugins» menu button (docs/supernote.md), as Device Link's. */
+export const BUTTON_TYPE_SIDEBAR = 1;
 export const EDIT_DATA_STROKES = 0;
 export const SHOW_NO_VIEW = 0;
+export const SHOW_FULL_VIEW = 1;
 
-type Need = {permission: string; reason: string};
+export type Need = {permission: string; reason: string};
 
-const INTERNET: Need = {
+export const INTERNET: Need = {
   permission: PERMISSION_INTERNET,
   reason: copy['permission.internet'],
 };
 /** Without file read the host refuses the lasso calls with error 1503 (device round, 2026-11-16, #128). */
-const FILE_READ: Need = {
+export const FILE_READ: Need = {
   permission: PERMISSION_FILE_READ,
   reason: copy['permission.files'],
 };
 /** Each picture goes in the note (#142); the settings live in the private folder (#22). */
-const FILE_WRITE: Need = {
+export const FILE_WRITE: Need = {
   permission: PERMISSION_FILE_WRITE,
   reason: copy['permission.write'],
 };
@@ -54,15 +58,24 @@ const FILE_WRITE: Need = {
  */
 export type SwitchRef = {key: SwitchKey} | {direction: string};
 
-/** One lasso button: its switch, its id and name, and what its press needs. */
-export type LassoButton = {
-  switch: SwitchRef;
+/** One button the plugin registers: its id and name, its icon and what its press needs. */
+export type PluginButton = {
   id: number;
   name: string;
   /** Its icon file in `assets/`, distinct for each button (#107). */
   icon: string;
   needs: readonly Need[];
+  /** A lasso «⋯» row by default; `sidebar` is the NOTE toolbar's «Plugins» menu (#249). */
+  kind?: 'lasso' | 'sidebar';
+  /** True when a press opens the plugin's view; a no-view press by default. */
+  showView?: boolean;
 };
+
+/** One of Lookup's lasso buttons: a plugin button with its Settings switch. */
+export type LassoButton = PluginButton & {switch: SwitchRef};
+
+/** A button and whether it should be registered now. */
+export type ButtonState = {button: PluginButton; on: boolean};
 
 /** Whether `button`'s switch is on in `settings`. */
 export const isOn = (settings: LookupSettings, {switch: ref}: LassoButton) =>
@@ -159,23 +172,39 @@ const describe = (what: string, result: Result<unknown>): string =>
  * Each button follows its switch; a failed call is logged and leaves the state as it was, so the
  * next change tries again. Turning a switch off and on again leaves one button, never two.
  */
-export async function syncButtons(
+export function syncButtons(
   settings: LookupSettings,
   deps: ButtonDeps = DEVICE,
 ): Promise<void> {
-  for (const button of BUTTONS) {
-    const on = isOn(settings, button);
+  return syncStates(lookupStates(settings), deps);
+}
+
+/** Lookup's buttons, each on while its switch is. */
+export const lookupStates = (settings: LookupSettings): ButtonState[] =>
+  BUTTONS.map(button => ({button, on: isOn(settings, button)}));
+
+/** Each button in `states` follows its `on`, as `syncButtons` (any module's buttons, #306). */
+export async function syncStates(
+  states: readonly ButtonState[],
+  deps: ButtonDeps = DEVICE,
+): Promise<void> {
+  for (const {button, on} of states) {
     if (on === registered.has(button.id)) {
       continue;
     }
+    const sidebar = button.kind === 'sidebar';
     const result = on
-      ? await deps.register(BUTTON_TYPE_LASSO, ['NOTE'], {
-          id: button.id,
-          name: button.name,
-          icon: iconUri(button.icon),
-          editDataTypes: [EDIT_DATA_STROKES],
-          showType: SHOW_NO_VIEW,
-        })
+      ? await deps.register(
+          sidebar ? BUTTON_TYPE_SIDEBAR : BUTTON_TYPE_LASSO,
+          ['NOTE'],
+          {
+            id: button.id,
+            name: button.name,
+            icon: iconUri(button.icon),
+            ...(sidebar ? {} : {editDataTypes: [EDIT_DATA_STROKES]}),
+            showType: button.showView ? SHOW_FULL_VIEW : SHOW_NO_VIEW,
+          },
+        )
       : await deps.unregister(button.id);
     deps.log(
       describe(`${on ? 'register' : 'unregister'} ${button.name}`, result),
@@ -192,7 +221,7 @@ export async function syncButtons(
 
 /** The permissions the buttons that are on need and the host has not granted, each once. */
 export async function missingFor(
-  buttons: readonly LassoButton[],
+  buttons: readonly PluginButton[],
   deps: Pick<ButtonDeps, 'hasPermission'> = DEVICE,
 ): Promise<Need[]> {
   const missing: Need[] = [];
@@ -208,25 +237,71 @@ export async function missingFor(
   return missing;
 }
 
-/** Asks for each permission a switched-on button needs and the host has not granted. */
-export async function askMissing(
-  settings: LookupSettings,
-  deps: ButtonDeps = DEVICE,
+/**
+ * The Needs state of a press whose permissions the host does not grant now (#256): why each is
+ * needed, and «Allow», which asks for each while the view shows, then runs `done`.
+ */
+export function permissionProblem(
+  missing: readonly Need[],
+  done: () => void,
+  deps: Pick<ButtonDeps, 'requestPermission' | 'log'> = DEVICE,
+): Problem {
+  return {
+    what: copy['needs.permission'],
+    reason: missing.map(need => need.reason).join(' '),
+    fix: {
+      label: copy['needs.allow'],
+      run: () => {
+        askNeeds(missing, deps)
+          .catch(error => deps.log(`request failed: ${error}`))
+          .then(done);
+      },
+    },
+  };
+}
+
+async function askNeeds(
+  missing: readonly Need[],
+  deps: Pick<ButtonDeps, 'requestPermission' | 'log'>,
 ): Promise<void> {
-  const on = BUTTONS.filter(button => isOn(settings, button));
-  for (const need of await missingFor(on, deps)) {
+  for (const need of missing) {
     const asked = await deps.requestPermission(need.permission, need.reason);
     deps.log(describe(`request ${need.permission}`, asked));
   }
 }
 
-/** The Settings path: the buttons follow the switches, then each missing permission is asked. */
-export async function settingsChanged(
+/** Asks for each permission a switched-on button needs and the host has not granted. */
+export function askMissing(
   settings: LookupSettings,
   deps: ButtonDeps = DEVICE,
 ): Promise<void> {
-  await syncButtons(settings, deps);
-  await askMissing(settings, deps);
+  return askStates(lookupStates(settings), deps);
+}
+
+/** Asks for each permission a button that is on in `states` needs and the host has not granted. */
+export async function askStates(
+  states: readonly ButtonState[],
+  deps: ButtonDeps = DEVICE,
+): Promise<void> {
+  const on = states.filter(state => state.on).map(state => state.button);
+  await askNeeds(await missingFor(on, deps), deps);
+}
+
+/** The Settings path: the buttons follow the switches, then each missing permission is asked. */
+export function settingsChanged(
+  settings: LookupSettings,
+  deps: ButtonDeps = DEVICE,
+): Promise<void> {
+  return statesChanged(lookupStates(settings), deps);
+}
+
+/** `settingsChanged` over any module's buttons (#306). */
+export async function statesChanged(
+  states: readonly ButtonState[],
+  deps: ButtonDeps = DEVICE,
+): Promise<void> {
+  await syncStates(states, deps);
+  await askStates(states, deps);
 }
 
 export function resetButtonsForTests(): void {

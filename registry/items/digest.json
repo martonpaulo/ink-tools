@@ -13,7 +13,7 @@
       ],
       "reason": "sn-plugin-lib has no Digest API; the provider is the only way to add an entry",
       "evidence": {
-        "source": "KnowledgeContentProvider, decompiled (docs/research/2026-11-digest-provider.md)",
+        "source": "KnowledgeContentProvider, observed device behaviour (docs/research/2026-11-digest-provider.md)",
         "version": "1.00.153",
         "date": "2026-11-17"
       },

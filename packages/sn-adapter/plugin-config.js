@@ -6,7 +6,8 @@
  * by `paths`. Both tiers' own tests run in the packages gate, the official tier's against the SDK
  * mock and type stand-in in `testing/` (#142); the plugins that call it type-check it against the
  * real `sn-plugin-lib`. The Java in `native/` (the dry insert's
- * revert by row id, #213, and whether an insert wrote a row, #217) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
+ * revert by row id, #213, whether an insert wrote a row, #217, and the timer that ticks with no view
+ * open, `timer/TickModule.java`, #283) is compiled by Account Sync's and the Probe's `scripts/native-build.cjs`;
  * its JVM tests in `native-tests/` run in the packages gate (`jvmTests` below, #254).
  */
 const path = require('path');

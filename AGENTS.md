@@ -40,7 +40,7 @@ Before editing under a path, read the file its row names. A module with rules of
 
 | Path | Read first |
 | :--- | :--- |
-| `plugins/account-sync/`, `plugins/device-transfer/`, `plugins/image-editing/`, `plugins/plugin-diagnostics/`, `plugins/smart-pen/`, `plugins/lasso-actions/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) and `docs/supernote.md` (device facts; add each new one there) |
+| `plugins/account-sync/`, `plugins/device-link/`, `plugins/image-editing/`, `plugins/plugin-diagnostics/`, `plugins/smart-pen/`, `plugins/lasso-actions/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) and `docs/supernote.md` (device facts; add each new one there) |
 | `cli/<name>/`: `cli/inkctl/` | that tool's own `AGENTS.md` (host-side tools) |
 | `apps/<name>/`: `apps/handwriting-language/`, `apps/inktools-bridge/`, `apps/ink-notebook-editor/` | that app's own `AGENTS.md` (the sideloaded Android apps, the macOS app) and `docs/supernote.md` (device facts) |
 | `packages/` | `packages/README.md` and `docs/architecture.md` (shared packages) |
@@ -75,11 +75,8 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 
 - Ink Tools features use only public services and the user's own accounts, never one of the owner's private apps (Panoram, for one); every account connection is off until the person connects it in Settings, its row showing «Connect» ([`docs/plugin-scope.md`](docs/plugin-scope.md#rules-for-every-feature), owner, 2026-11-26).
 
-- **Research before building.** Before creating anything new here, search for tools and projects
-  that already do it — device plugins, sideloaded Android apps (especially ones built for the
-  Supernote), GitHub code, CLIs, services. Prefer reusing or basing on an existing one; we build new
-  only because nothing existing satisfies what we want, and we say which gap forces it. Study the device and third-party software with `rea`/Ghidra and the decompiled apps
-  before designing against them. (`bench-code-reuse` and `bench-code-third-party` own the method.)
+- **Research before building.** Before creating anything new here, search for tools and projects that already do it — device plugins, sideloaded Android apps (especially ones built for the Supernote), GitHub code, CLIs, services. Prefer reusing or basing on an existing one; we build new only because nothing existing satisfies what we want, and we say which gap forces it. Study how the device and third-party software behave before designing against them. (`bench-code-reuse` and `bench-code-third-party` own the method.)
+- **Public wording.** The repository is public: write a device fact by what it is and how it was seen («observed device behaviour», «device data», «measured on the tablet»), never by the method used on vendor software, and name a vendor internal only where code needs it; `registry/items/` is the one home of internal names. `scripts/public_wording.py` holds the forbidden terms and fails on them (gate `wording`, [#408](https://github.com/martonpaulo/ink-tools/issues/408)).
 - Preserve behavior outside the task and unrelated or uncommitted user changes.
 - Follow the patterns this project already repeats. When a change would break a recorded pattern or establish a new one, stop and ask first, naming the existing pattern, the proposed one, and why the existing one does not fit.
 - When a change sets or fixes a pattern, the same delivery adds the cheapest automatic check that guards it: a lint or type rule, a test over the repository, a gate script. A larger check becomes its own issue ([martonpaulo/skill-deck#732](https://github.com/martonpaulo/skill-deck/issues/732)).
@@ -122,7 +119,7 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 - README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `🟣 Internal`.
   In the README Tools table each status is the emoji of one of them, before the name in the Name cell, with a legend under the table;
   the kind under the name (plugin, app, Mac app; no parentheses) links to the piece's own releases when it has them, else to its folder (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
-  `scripts/readme_status.py` checks it in the `docs` gate; `scripts/readme_figures.py` writes the tool tables, the tool map (a Mermaid flowchart with a table of the same facts) and the level table from `docs/tools.json`, between marker comments, and that gate fails when they fall behind; the README holds no diagram image (owner, 2026-11-26, [#407](https://github.com/martonpaulo/ink-tools/issues/407)).
+  `scripts/readme_status.py` checks it in the `docs` gate; `scripts/readme_figures.py` writes the tool tables, the tool map (a top-to-bottom Mermaid flowchart that draws each part once, tools grouped by where they run, with a table of the same facts) and the level table (levels as keycaps) from `docs/tools.json`, between marker comments, and that gate fails when they fall behind or a row has no icon; the README holds no diagram image (owner, 2026-11-26, [#407](https://github.com/martonpaulo/ink-tools/issues/407), [#412](https://github.com/martonpaulo/ink-tools/issues/412)).
 - Every fenced code block you create or materially edit has an explicit language identifier.
 - Never mark an API, a flag or a behaviour `implemented` without running it. Fix or drop a broken script; never ship it documented as working.
 - Every issue or pull request reference in Markdown prose is a link to the issue's URL; code,

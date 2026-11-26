@@ -1,5 +1,5 @@
 {
-  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's level circles (#407).",
+  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; map.sources lists each outside service group, one item per line, with the service adapter it enters through (via) when it has one; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's levels (#407, #412).",
   "sections": [
     {"id": "tools", "title": "Tools", "intro": "For people who use the tablet."},
     {"id": "developer", "title": "Developer tools", "intro": ""}
@@ -16,10 +16,10 @@
         {"name": "Gestures", "text": "a finger double or triple tap picks a pen, the eraser or the lasso, as you map it.", "planned": true}
       ],
       "map": {
-        "outside": [], "service": [],
+        "sources": [],
         "logic": ["ink-core: shapes and conversion"],
         "supernote": "ts",
-        "tablet": ["the page", "strokes, shapes and text boxes"],
+        "tablet": ["the page", "strokes", "shapes", "text boxes"],
         "registry": ["smart-pen"]
       }
     },
@@ -30,15 +30,18 @@
       "features": [
         {"name": "Word Lookup", "text": "lasso a handwritten word, then Insert Sticker (a clean illustration), Insert Image (a photo), Choose Image (pick from the results), Insert Definition, Insert Summary (three sentences from Wikipedia) or Translate, one button per language pair, such as «Translate ES→PT»."},
         {"name": "Convert to Text", "text": "turn the whole lassoed handwriting into one text box."},
-        {"name": "Headings", "text": "Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin.", "planned": true},
-        {"name": "Collection", "text": "Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page.", "planned": true}
+        {"name": "Headings", "text": "Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin, across the page."},
+        {"name": "Collection", "text": "Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page."}
       ],
       "map": {
-        "outside": ["Wiktionary · Wikipedia", "Wikimedia Commons · Wikidata", "Openclipart · OpenMoji", "Apertium"],
-        "service": ["DictionaryProvider", "picture sources", "translator"],
+        "sources": [
+          {"outside": ["Wiktionary", "Wikipedia"], "via": "DictionaryProvider"},
+          {"outside": ["Wikimedia Commons", "Wikidata", "Openclipart", "OpenMoji"], "via": "picture sources"},
+          {"outside": ["Apertium"], "via": "translator"}
+        ],
         "logic": ["ink-core: write, recognise, insert", "picture-search: rank"],
         "supernote": "ts",
-        "tablet": ["the page", "lasso, picture, sticker, text"],
+        "tablet": ["the page", "lasso", "picture", "sticker", "text"],
         "registry": ["lasso-actions", "picture-search"]
       }
     },
@@ -55,7 +58,7 @@
         {"name": "Document", "text": "straighten a photographed page as a document."}
       ],
       "map": {
-        "outside": [], "service": [],
+        "sources": [],
         "logic": ["picture-search: pixel measures"],
         "supernote": "ts",
         "tablet": ["the page", "a lassoed picture"],
@@ -63,10 +66,9 @@
       }
     },
     {
-      "name": "Device Transfer", "section": "tools", "kind": "plugin", "status": "Beta",
-      "icon": "design/icons/readme/device-transfer.png",
-      "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-transfer&expanded=true",
-      "note": "[being renamed Device Link](https://github.com/martonpaulo/ink-tools/issues/369)",
+      "name": "Device Link", "section": "tools", "kind": "plugin", "status": "Beta",
+      "icon": "design/icons/readme/device-link.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-link&expanded=true",
       "features": [
         {"name": "Send Page", "text": "send the open page to an iPhone or a Mac over LocalSend."},
         {"name": "Send Selection", "text": "send a lasso selection, as typed text or as a picture; you choose on each send."},
@@ -74,12 +76,13 @@
         {"name": "Editor helper", "text": "applies the Ink Notebook Editor's edits from the Mac to the tablet's notes.", "planned": true}
       ],
       "map": {
-        "outside": ["iPhone · Mac", "LocalSend app", "Ink Notebook Editor (planned)"],
-        "service": ["LocalSend v2 protocol"],
+        "sources": [
+          {"outside": ["LocalSend app", "on an iPhone or a Mac"], "via": "LocalSend v2 protocol"}
+        ],
         "logic": ["ink-core: page to PNG, receive and insert"],
         "supernote": "ts",
-        "tablet": ["the page", "notes and files"],
-        "registry": ["device-transfer"]
+        "tablet": ["the page", "notes", "files"],
+        "registry": ["device-link"]
       }
     },
     {
@@ -92,16 +95,20 @@
         {"name": "Digest", "text": "sync the Digest both ways with your Telegram «Saved Messages».", "planned": true}
       ],
       "map": {
-        "outside": ["Todoist", "Google Calendar", "iCloud (CalDAV) · ICS links", "Telegram Saved Messages (planned)"],
-        "service": ["TaskProvider", "CalendarProvider ×3", "Digest source (planned)"],
+        "sources": [
+          {"outside": ["Todoist"], "via": "TaskProvider"},
+          {"outside": ["Google Calendar", "iCloud (CalDAV)", "ICS links"], "via": "CalendarProvider"},
+          {"outside": ["Telegram Saved Messages"], "via": "Digest source", "planned": true}
+        ],
         "logic": ["sync-core: compare and decide"],
         "supernote": "ts",
-        "tablet": ["To-Do · Calendar · Digest", "the tablet's own apps"],
+        "tablet": ["the tablet's own apps", "To-Do", "Calendar", "Digest (planned)"],
         "registry": ["account-sync"]
       }
     },
     {
       "name": "Puzzles", "section": "tools", "kind": "plugin", "status": "Planned",
+      "icon": "design/icons/readme/puzzles.png",
       "link": "https://github.com/martonpaulo/ink-tools/issues/376",
       "features": [
         {"name": "New game", "text": "pick a game, a language and a difficulty; the game is a new page after the current one, its grid drawn as the page background, so erasing never removes it."},
@@ -109,7 +116,7 @@
         {"name": "Check", "text": "reads what you wrote and marks the wrong cells."}
       ],
       "map": {
-        "outside": [], "service": [],
+        "sources": [],
         "logic": ["puzzle generator and word lists"],
         "supernote": "ts",
         "tablet": ["a new page", "the grid as its background"],
@@ -125,7 +132,7 @@
         {"name": "Floating button", "text": "a small button where you write, shown only while there is text or ink input."}
       ],
       "map": {
-        "outside": [], "service": [],
+        "sources": [],
         "logic": ["the language cycle"],
         "supernote": "java",
         "tablet": ["the handwriting language", "the floating button"],
@@ -139,11 +146,12 @@
       "features": [
         {"name": "Open a note", "text": "read a `.note` notebook on the Mac and page through it."},
         {"name": "Open from Tablet", "text": "copy a note from the tablet over the cable through `inkctl` and open the copy."},
-        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Transfer.", "planned": true}
+        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Link.", "planned": true}
       ],
       "map": {
-        "outside": ["Mac", "files on the Mac"],
-        "service": [],
+        "sources": [
+          {"outside": ["note files on the Mac"]}
+        ],
         "logic": ["NoteFormat: read and draw a note"],
         "supernote": "swift",
         "tablet": ["notes", "through inkctl"],
@@ -152,6 +160,7 @@
     },
     {
       "name": "Ink Tools Control", "section": "developer", "kind": "CLI", "status": "Working",
+      "icon": "design/icons/readme/inkctl.png",
       "link": "cli/inkctl/",
       "features": [
         {"name": "Control", "text": "`inkctl` controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root."},
@@ -160,11 +169,10 @@
         {"name": "Firmware watch", "text": "on connect, check every device dependency and report what a firmware update broke.", "planned": true}
       ],
       "map": {
-        "outside": ["Mac", "USB or Wi-Fi ADB"],
-        "service": [],
-        "logic": ["inkctl"],
+        "sources": [],
+        "logic": ["inkctl", "over USB or Wi-Fi ADB"],
         "supernote": "python",
-        "tablet": ["screens, settings, notes", "for tests and setup"],
+        "tablet": ["screens", "settings", "notes", "for tests and setup"],
         "registry": ["inkctl"]
       }
     },
@@ -177,7 +185,7 @@
         {"name": "Firmware watch", "text": "at boot after a firmware change, check every device dependency and report what broke.", "planned": true}
       ],
       "map": {
-        "outside": [], "service": [],
+        "sources": [],
         "logic": ["the plugin settings calls"],
         "supernote": "java",
         "tablet": ["plugin settings"],

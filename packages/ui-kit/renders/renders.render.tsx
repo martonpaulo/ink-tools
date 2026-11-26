@@ -3,7 +3,9 @@
  * .scratch/renders/<screen>.png, and fails on any e-ink rule break (brief section 8.4, #80):
  * text contrast under the floor, a target under the touch target, text under the minimum font
  * size (#85), text outside its box, animation, a scroll view whose last target stays hidden
- * or lies under another target (#279), a title bar that does not touch the top, left and right edges (#309), or a full view with no title bar (#311), or raw text outside ui-kit's CodeBlock (#405). Run with `npm run renders` before each device
+ * or lies under another target (#279), a title bar that does not touch the top, left and right edges (#309), or a full view with no title bar (#311), raw text outside ui-kit's CodeBlock (#405), or a break of native Settings (#411): a full-width button
+ * that is no destructive one, a row action outside a row, two screen actions apart, a text size no
+ * native role has, a list row off the native height or inset. Run with `npm run renders` before each device
  * build; RENDER_SCALE=1 renders 1024 x 1365 px pictures for a quick look; RENDER_WINDOW=nomad or
  * turned renders the Nomad's window or the Manta turned, into a subfolder. Uses the Chromium installed with Playwright.
  * RENDER_EVIDENCE=<folder> also writes each screen as <screen>-light-<small|default|large>.png there, the
@@ -13,9 +15,18 @@ import fs from 'fs';
 import path from 'path';
 import {act} from 'react-test-renderer';
 import {metrics} from '@ink-tools/ui-kit';
+import {textStyles} from '../src/metrics';
 import {animationBreaks, toHtml, WINDOW, WINDOW_NAME} from './html';
-import {breaksOf, Measured, missingBarBreaks, rawBreaks, scrollBreaks} from './rules';
+import {breaksOf, Measured, missingBarBreaks, Native, nativeBreaks, rawBreaks, scrollBreaks} from './rules';
 import {SCREENS, settle} from './screens';
+
+/** The native sizes from the tokens (#272, #411): every text role's size, a screen's own title and the large glyphs. */
+const NATIVE: Native = {
+  textSizes: [...new Set([...Object.values(textStyles).map(style => style.fontSize), metrics.fontTitle, metrics.fontLarge])],
+  rowHeight: metrics.rowHeight,
+  screenPadding: metrics.screenPadding,
+  actionSpread: metrics.rowHeight,
+};
 
 /** The few Playwright calls used here; Playwright is installed with Chromium, not in package.json. */
 type Page = {
@@ -125,6 +136,7 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
     report[screen.name] = [
       ...animationBreaks(json),
       ...breaksOf(measured, metrics),
+      ...nativeBreaks(measured, NATIVE),
       ...(screen.notFullView ? [] : missingBarBreaks(measured)),
       ...rawBreaks(measured, screen.raw),
       ...contrast.failures.map(

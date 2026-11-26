@@ -36,7 +36,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/icon",
+   "out": "plugins/device-link/assets/icon",
    "kind": "plugin",
    "tabler": [
     {
@@ -52,7 +52,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-page",
+   "out": "plugins/device-link/assets/send-page",
    "kind": "plugin",
    "tabler": [
     "file",
@@ -63,7 +63,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-selection",
+   "out": "plugins/device-link/assets/send-selection",
    "kind": "plugin",
    "tabler": [
     "marquee",
@@ -74,7 +74,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-text",
+   "out": "plugins/device-link/assets/send-text",
    "kind": "plugin",
    "tabler": [
     "align-left",
@@ -85,7 +85,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/receive",
+   "out": "plugins/device-link/assets/receive",
    "kind": "plugin",
    "tabler": [
     "device-tablet-down"
@@ -455,9 +455,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/collection/add",
+   "out": "plugins/lasso-actions/assets/collection-add",
    "kind": "plugin",
-   "planned": "#249",
    "tabler": [
     "clipboard",
     {
@@ -467,9 +466,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/collection/cut",
+   "out": "plugins/lasso-actions/assets/collection-cut",
    "kind": "plugin",
-   "planned": "#249",
    "tabler": [
     "clipboard",
     {
@@ -484,9 +482,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/collection/paste",
+   "out": "plugins/lasso-actions/assets/collection-paste",
    "kind": "plugin",
-   "planned": "#249",
    "tabler": [
     "clipboard",
     {
@@ -504,9 +501,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-1",
+   "out": "plugins/lasso-actions/assets/heading-1",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -527,9 +523,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-2",
+   "out": "plugins/lasso-actions/assets/heading-2",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -550,9 +545,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-3",
+   "out": "plugins/lasso-actions/assets/heading-3",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -573,9 +567,8 @@
    ]
   },
   {
-   "out": "design/icons/planned/headings/heading-4",
+   "out": "plugins/lasso-actions/assets/heading-4",
    "kind": "plugin",
-   "planned": "#252",
    "tabler": [
     {
      "name": "letter-h",
@@ -603,12 +596,29 @@
     "hand-click"
    ],
    "plannedIf": "if a plugin"
+  },
+  {
+   "out": "design/icons/planned/puzzles/icon",
+   "kind": "plugin",
+   "planned": "#376",
+   "readme": true,
+   "tabler": [
+    "puzzle"
+   ]
+  },
+  {
+   "out": "design/icons/cli/inkctl/icon",
+   "kind": "plugin",
+   "readme": true,
+   "tabler": [
+    "terminal-2"
+   ]
   }
  ],
  "retired": {},
  "families": {
   "about": "Each tool's icons share one motif, a glyph every one of them names, and still differ at a glance (owner, 2026-11-25, #271); a tool with one icon needs none. `except` lists an icon that cannot carry the motif, with the reason.",
-  "device-transfer": {
+  "device-link": {
    "motif": [
     "arrows-left-right",
     "arrow-narrow-right",
@@ -630,10 +640,12 @@
   },
   "lasso-actions": {
    "motif": [
-    "search"
+    "search",
+    "letter-h",
+    "clipboard"
    ],
    "except": {
-    "icon": "the plugin's own icon, the lasso, stands for every module; the motif marks Lookup's buttons",
+    "icon": "the plugin's own icon, the lasso, stands for every module; `search` marks Lookup's buttons, `letter-h` Headings' (#252), `clipboard` Collection's (#249)",
     "translate-es-pt": "two language codes and their arrow fill the box",
     "translate-pt-es": "as translate-es-pt",
     "translate-pt-zh": "as translate-es-pt",

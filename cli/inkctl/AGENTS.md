@@ -134,7 +134,7 @@ Before editing under a path, read the file its row names. A module with rules of
 - A call that changes the tablet never replaces a file or presses a stale reference without an explicit request.
 - Only one session uses the tablet at a time. One standing yes per round covers changes on the tablet within its scope (owner, 2026-11-25, [`docs/decisions.md`](../../docs/decisions.md#decision-index)): test builds of our own tools, notes under `Note/Tests/`, the Mac's LocalSend opened for the round, and Todoist and Google objects named «teste ink-tools». Anything outside that scope waits for the owner's yes. A write counts as done only after a read-back.
 - Tests drive `src/inkctl` through the `adb` stub in `tests/inkctl.test.sh`, with `device-a.test` as the address.
-- Never commit an address, serial number, account or note name, or material from decompiled apps or firmware. `docs/research/` holds public sources only.
+- Never commit an address, serial number, account or note name, or vendor app or firmware code. `docs/research/` holds public sources only.
 
 ## Agent skill paths
 

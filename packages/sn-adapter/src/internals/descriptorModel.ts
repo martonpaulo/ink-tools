@@ -52,7 +52,7 @@ export interface TodoRules {
   requiredOnInsert: string[];
   /** A non-empty `taskListId` must name an open `task_group_table` row ("taskList is not Exist"). */
   needsExistingList: boolean;
-  /** An empty `taskListId` is an unfiled task, the app's own Inbox (decompiled `DataBaseTools.insert`, #212). */
+  /** An empty `taskListId` is an unfiled task, the app's own Inbox (observed device behaviour of `DataBaseTools.insert`, #212). */
   allowNoList: boolean;
   writeHasSync: number;
   /**

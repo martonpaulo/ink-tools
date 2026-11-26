@@ -57,7 +57,7 @@ enum Fixtures {
                 continue
             }
             #expect(CGSize(width: image.width, height: image.height) == pages.size(of: index))
-            let fitted = PageFit.fitted(page: pages.size(of: index), in: PageImages.thumbnailBox)
+            let fitted = PageFit.fitted(page: pages.size(of: index), in: PageImages.ThumbnailSize.sidebar.box)
             #expect(thumbnail.width == Int(fitted.width) * 2)
         }
     }
@@ -75,14 +75,33 @@ enum Fixtures {
         #expect(NoteDocument.writableContentTypes.isEmpty)
     }
 
-    @Test func onlyTheLastFewFullPagesStayDrawn() async throws {
+    @Test func thePagesInViewAndTheirNeighboursDrawAndNoOtherStays() async throws {
+        let note = try Fixtures.note("content.note")
+        #expect(note.pages.count >= 4)
+        let pages = PageImages(note: note)
+        await pages.show([0])
+        #expect(Set(pages.pages.keys) == [0, 1])
+        let last = note.pages.count - 1
+        await pages.show([last])
+        #expect(Set(pages.pages.keys) == [last - 1, last])
+        #expect(pages.pages.values.allSatisfy { if case .ready = $0 { true } else { false } })
+        // Every page on screen draws and stays, however many show at the smallest zoom (#319).
+        await pages.show(Set(note.pages.indices))
+        #expect(pages.pages.count == note.pages.count)
+    }
+
+    @Test func aThumbnailOfEachSizeFitsItsOwnBox() async throws {
         let note = try Fixtures.note("content.note")
         let pages = PageImages(note: note)
-        for index in note.pages.indices {
-            await pages.loadPage(index)
+        for size in PageImages.ThumbnailSize.allCases {
+            await pages.loadThumbnail(0, size, scale: 1)
+            guard case .ready(let image) = pages.thumbnail(0, size) else {
+                Issue.record("the \(size) thumbnail did not draw")
+                continue
+            }
+            let fitted = PageFit.fitted(page: pages.size(of: 0), in: size.box)
+            #expect(image.width == Int(fitted.width) && image.height == Int(fitted.height))
         }
-        #expect(pages.pages.count == min(PageImages.keptPages, note.pages.count))
-        #expect(pages.pages[note.pages.count - 1] != nil)
     }
 
     @Test func thePageKeysTurnPagesBothWays() {

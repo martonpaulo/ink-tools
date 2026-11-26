@@ -1,0 +1,111 @@
+name: Prerelease Device Link
+
+# Each Relay test build becomes a GitHub prerelease carrying Relay.snplg (#98), so the owner can
+# download it for the tablet. A cloud session cannot push a tag, so a push to main that changes
+# PluginConfig.json publishes when its device-link-v<package.json version> tag does not exist yet; the
+# version follows root AGENTS.md › Product versioning (#155), checked by scripts/plugin-version.cjs.
+# A device-round build: a prerelease until the device round passes.
+
+on:
+  push:
+    branches: [main]
+    paths: [plugins/device-link/PluginConfig.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time per plugin, never cancelled half way (#301).
+concurrency:
+  group: prerelease-device-link
+  cancel-in-progress: false
+
+jobs:
+  prerelease:
+    name: prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: plugins/device-link
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history and every tag, so the version check below sees earlier folder names (#410).
+          fetch-depth: 0
+
+      - name: Resolve the tag from PluginConfig.json
+        id: tag
+        run: |
+          version="$(node ../../scripts/plugin-version.cjs .)"
+          tag="device-link-v$version"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$tag is already published; nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A version an earlier folder name of this plugin used is already on the tablet (#410).
+          node ../../scripts/plugin-version.cjs --published .
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: plugins/device-link/package-lock.json
+
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/device-link/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/device-link-${{ hashFiles('plugins/device-link/package-lock.json') }}
+
+      - name: Restore the native toolchain, keyed on its script (#301)
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: plugins/device-link/.toolchain
+          key: toolchain-${{ runner.os }}-plugins/device-link-${{ hashFiles('plugins/device-link/scripts/native-toolchain.sh') }}
+
+      - name: Install dependencies
+        if: steps.tag.outputs.publish == 'true' && steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run the gate
+        if: steps.tag.outputs.publish == 'true'
+        run: npm run validate
+
+      - name: Build the native-capable package
+        if: steps.tag.outputs.publish == 'true'
+        run: npm run build
+
+      - name: Create the prerelease
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          # The asset name carries the version so the owner can tell builds apart on the tablet.
+          asset="build/outputs/Relay-${TAG#device-link-v}.snplg"
+          cp build/outputs/Relay.snplg "$asset"
+          gh release create "$TAG" "$asset" \
+            --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+            --notes "Relay test build (#98): Send page and Send selection over LocalSend. Install on the tablet, pick a device in Settings, then send."
+
+      - name: Read the asset back
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          echo "$names"
+          case "$names" in
+            *"Relay-${TAG#device-link-v}.snplg"*) ;;
+            *) echo "::error::Relay-${TAG#device-link-v}.snplg is missing from $TAG."; exit 1 ;;
+          esac

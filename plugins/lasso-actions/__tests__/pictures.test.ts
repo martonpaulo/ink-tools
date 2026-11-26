@@ -256,7 +256,7 @@ describe('a press (#111)', () => {
         }),
       ),
       write: jest.fn(async () => ok(true)),
-      show: jest.fn(async () => ok(true)),
+      needs: jest.fn(),
       ...over,
     } as PictureDeps & {[K in keyof PictureDeps]: jest.Mock};
   }
@@ -296,12 +296,13 @@ describe('a press (#111)', () => {
     expect(d.read).not.toHaveBeenCalled();
   });
 
-  test('a missing permission opens the view, which asks for it', async () => {
+  test('a missing permission shows the Needs state, which asks for it (#256)', async () => {
+    const need = {permission: 'plugin.permission.FILE:WRITE', reason: 'Why.'};
     const d = press({
-      missing: jest.fn(async () => ['plugin.permission.FILE:WRITE']),
+      missing: jest.fn(async () => [need]),
     });
     expect(await pictureLasso(illustration, d)).toBeNull();
-    expect(d.show).toHaveBeenCalled();
+    expect(d.needs).toHaveBeenCalledWith([need]);
     expect(d.read).not.toHaveBeenCalled();
   });
 
@@ -359,6 +360,18 @@ describe('a press (#111)', () => {
     // Once it ends, the next press runs.
     expect((await pictureLasso(photoMode, press()))?.ok).toBe(true);
   });
+});
+
+test('a sticker refused for a drawing of raster pictures says so in one short toast (#35)', () => {
+  const {ToastAndroid} =
+    jest.requireActual<typeof import('react-native')>('react-native');
+  const show = jest.spyOn(ToastAndroid, 'show').mockImplementation(() => {});
+  LOOKUP_PICTURES.stickerRefused?.();
+  expect(show).toHaveBeenCalledWith(
+    'This drawing is made of pictures, not lines, so it went in as an image.',
+    ToastAndroid.SHORT,
+  );
+  show.mockRestore();
 });
 
 test('a picture left unselected over the ink says so in a short toast (#168)', () => {

@@ -8,7 +8,64 @@ export const copy = {
   'module.lookup': 'Lookup',
   'module.lookupNote':
     'Lasso a handwritten word and insert a picture, a definition, a summary or a translation for it.',
+  'module.headings': 'Headings',
+  'module.headingsNote':
+    'Lasso a handwritten line and make it a heading of level 1 to 4, across the page.',
+  'module.collection': 'Collection',
+  'module.collectionNote':
+    'Lasso pieces from several pages one after another, then paste them together on another page.',
+  /** Collection's buttons and view (owner, #304; #249). */
+  'button.collectionAdd': 'Add to Collection',
+  'button.collectionCut': 'Cut to Collection',
+  'button.collectionPaste': 'Paste Collection',
+  'button.collectionClear': 'Clear Collection',
+  'permission.collection':
+    'Lasso Actions keeps the pieces you collect in its own folder and pastes them in your note.',
+  'collection.title': 'Collection',
+  'collection.count': (count: number | null) =>
+    count === null
+      ? 'The collection cannot be read.'
+      : count === 0
+      ? 'The collection is empty.'
+      : `${count} ${count === 1 ? 'piece' : 'pieces'} in the collection.`,
+  'collection.keep': 'Keep After Paste',
+  'collection.keepHint': 'Keep the pieces after a paste, to paste them again.',
+  /** Toasts of a Collection action (#249). */
+  'collection.added': (count: number) =>
+    `Added: ${count} ${count === 1 ? 'piece' : 'pieces'}`,
+  'collection.pasted': (count: number) =>
+    `Pasted: ${count} ${count === 1 ? 'piece' : 'pieces'}`,
+  'collection.cleared': 'The collection is empty.',
+  'collection.empty':
+    'The collection is empty. Lasso something and press Add to Collection.',
+  'collection.noLasso': 'Lasso something first, then press again.',
+  'collection.notSaved':
+    'The selection could not be added. Nothing was deleted.',
+  'collection.notCut': (count: number) =>
+    `Added: ${count} ${
+      count === 1 ? 'piece' : 'pieces'
+    }, but the selection could not be deleted from the page.`,
+  'collection.notPasted': (pasted: number) =>
+    `The paste stopped after ${pasted} ${
+      pasted === 1 ? 'piece' : 'pieces'
+    }. The collection is kept.`,
+  'collection.notCleared': (left: number) =>
+    `${left} ${
+      left === 1 ? 'piece' : 'pieces'
+    } could not be removed from the collection.`,
+  'collection.failed': 'The collection could not be read.',
   'settings.modes': 'Lasso buttons',
+  /** «Heading 1» to «Heading 4» (owner, #304). */
+  'button.heading': (level: number) => `Heading ${level}`,
+  'permission.heading':
+    'Lasso Actions makes the lassoed line a heading in your note.',
+  /** Toasts of a Headings press (#252). */
+  'heading.noLasso': 'Lasso a handwritten line first, then press a heading.',
+  'heading.failed': 'The heading could not be made.',
+  /** The Error state's reason under a failed heading (#256); the details go to the log. */
+  'heading.failedReason': 'Close, then lasso the line and press the heading again.',
+  'heading.notMoved':
+    'The heading was made, but it could not be moved to the margin.',
   'button.define': 'Insert Definition',
   /** A 3-sentence bio or topic summary from Wikipedia (#114). */
   'button.summary': 'Insert Summary',
@@ -54,8 +111,7 @@ export const copy = {
   'permission.translate':
     'Lasso Actions translates words with online dictionaries, Wiktionary and Apertium.',
   'permission.files': 'Lasso Actions reads the word you lasso on the page.',
-  'permission.write':
-    'Lasso Actions puts each picture in your note.',
+  'permission.write': 'Lasso Actions puts each picture in your note.',
   'permission.pictures':
     'Lasso Actions searches Wikimedia Commons, Openclipart and OpenMoji for the word you lasso.',
   /** Written on the note below the word: a word with no definition is never guessed (#115). */
@@ -77,6 +133,9 @@ export const copy = {
   /** A toast after an insert that touches other ink, which a lasso would take with it (#168). */
   'picture.unselected':
     'The picture touches your writing, so it is not selected.',
+  /** A toast after «Insert Sticker» put a picture in: its drawing has no lines to draw (#35). */
+  'sticker.pictureDrawing':
+    'This drawing is made of pictures, not lines, so it went in as an image.',
   /** Written on the note below the word: a word with no translation is never guessed (#158). */
   'translation.none': (word: string) => `${word}: no translation found`,
   'translation.failed': (word: string) =>
@@ -90,6 +149,9 @@ export const copy = {
   'choose.inserting': 'Putting the picture in your note.',
   'choose.tile': (title: string, source: string) => `${title}, from ${source}`,
   'choose.noWord': 'Lasso a handwritten word first, then press Choose Image.',
+  /** The Needs state of a press whose permission the host does not grant now (#256). */
+  'needs.permission': 'Lasso Actions needs a permission',
+  'needs.allow': 'Allow',
 } as const;
 
 /**

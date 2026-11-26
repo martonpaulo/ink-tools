@@ -1,6 +1,7 @@
 /**
  * What runs a sync on the tablet (#28, #44): the Settings view's «Sync now» (#40) and the automatic
- * pass, one at PluginHost start and one every `AUTO_SYNC_MINUTES` while the host lives. Before
+ * pass, one at PluginHost start and one every `AUTO_SYNC_MINUTES` while the host lives, on the
+ * timers `index.js` passes (the native ones, #283). Before
  * this, no code on the tablet called `runBridgeSync`. This file binds sync-core's runner to the
  * device: the saved Settings, the sign-in files (#90), the device probe (#43) and the Calendar and
  * To-Do stores over the content providers. It keeps the state between passes and the runs Settings
@@ -35,14 +36,13 @@ import {
   refreshAccessToken,
   runBridgeSync,
   SecretStore,
-  tabletOnlyKept,
   TimeWindow,
   TWO_WAY_MODULES,
 } from '@ink-tools/sync-core';
 import type {Capability, CapabilityStatus} from '@ink-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
 import type {SecretDrop} from './secretStore';
-import {capabilitiesOf, probeProblems} from './probe';
+import {capabilitiesOf, probeDetails, probeProblems} from './probe';
 import {logBlocked, logRun} from './statusText';
 
 /** The automatic pass while the plugin host lives; a guess until a device round measures the cost. */
@@ -314,11 +314,6 @@ export interface SyncRunner {
   /** One pass; a press while one runs joins it instead of starting a second. */
   syncNow(options?: PassOptions): Promise<SyncSnapshot>;
   snapshot(): SyncSnapshot;
-  /**
-   * How many open tablet To-Do tasks with no link would stay on the tablet at the next pass, for
-   * Settings to show before the first «Sync now»; null when the tablet cannot be read.
-   */
-  tabletOnlyTasks(settings: BridgeSettings): Promise<number | null>;
   subscribe(listener: (s: SyncSnapshot) => void): () => void;
 }
 
@@ -422,10 +417,12 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       }
     }
     const plan = activePlan(settings.value, availability(statuses));
+    // The log keeps the probe's details; the status shows only its sentences (#417).
+    const details = probeDetails(statuses);
     for (const id of load ? [] : plan.blocked) {
       logBlocked(
         id,
-        probe[id]?.length ? probe[id]! : ['the device check has not answered'],
+        details[id]?.length ? details[id]! : ['the device check has not answered'],
         log,
       );
     }
@@ -466,21 +463,6 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       return pass;
     },
     snapshot: () => current,
-    async tabletOnlyTasks(settings) {
-      if (!device.stores) {
-        return null;
-      }
-      try {
-        const tasks = await device.stores.tasks.list();
-        return tabletOnlyKept(tasks, state.links, {
-          firstLinked: state.firstLinked.todo,
-          sendTabletOnly: settings.sendTabletOnly.todo,
-        });
-      } catch (e) {
-        log(`[Bridge] sync: the To-Do did not read: ${(e as Error).message}`);
-        return null;
-      }
-    },
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

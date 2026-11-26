@@ -63,6 +63,8 @@ export const shared = StyleSheet.create({
   hint: textStyles.hint,
   /** The title in the black bar: the screen's, the left pane's and the page's (the `barTitle` role, #272). */
   barTitle: textStyles.barTitle,
+  /** The text action at the black bar's trailing edge (the `barAction` role, #411). */
+  barAction: textStyles.barAction,
   /** A screen's own title, where it has no title bar yet: the native title's size (#275). */
   title: {fontSize: metrics.fontTitle, color: metrics.ink},
   /** The ×, ‹ and › glyphs. */

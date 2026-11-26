@@ -204,6 +204,10 @@ function attributes(node: ReactTestRendererJSON): string {
   if (name) {
     parts.push(`data-name="${escape(name)}"`);
   }
+  // A ui-kit component's kind, such as a button's level or a list row, for the render rules (#411).
+  if (typeof props.nativeID === 'string') {
+    parts.push(`data-kind="${escape(props.nativeID)}"`);
+  }
   if (tappable(props) || node.type === 'TextInput') {
     parts.push('data-target');
   }
@@ -264,7 +268,7 @@ function element(node: HostNode, inText: boolean): string {
     }
     case 'RCTScrollView':
       // React Native's ScrollView: its content scrolls inside its box (#265); a horizontal one
-      // scrolls sideways and its content takes its natural width, so a line never wraps (#405).
+      // scrolls sideways and its content takes its natural width.
       return props.horizontal
         ? `<div class="view" data-scroll data-scroll-x ${attributes(
             node,

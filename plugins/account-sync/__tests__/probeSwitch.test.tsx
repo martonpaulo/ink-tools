@@ -17,7 +17,10 @@ import {
   setModule,
 } from '@ink-tools/sync-core';
 import {probeProblems} from '../src/probe';
-import {ModuleRow, SettingsShell} from '../src/SettingsShell';
+import {format} from '../src/copy';
+import {statusLine} from '../src/statusText';
+import type {ModuleRow} from '../src/SettingsShell';
+import {SettingsForm} from '../src/SettingsForm';
 
 const D = BUNDLED_DESCRIPTOR;
 
@@ -78,19 +81,37 @@ test('a To-Do table without dueTime turns To-Do off with its reason, and Calenda
   expect(modules.map(m => m.status.state)).toEqual(['blocked', 'waiting']);
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = renderer.create(<SettingsShell state={{kind: 'ready', modules}} onClose={() => {}} />);
+    tree = renderer.create(<SettingsForm settings={settings} onChange={() => {}} modules={modules} />);
   });
   const texts = tree.root.findAllByType(Text).map(node => node.props.children);
   expect(texts).toContain(
-    `On, but not running: ${tasksUri} lacks columns: dueTime.`,
+    "On, but not running: the tablet's To-Do app changed, so To-Do sync is paused until Account Sync is updated.",
   );
+});
+
+test('a blocked status never shows a provider URI, a table or a column name (#417)', async () => {
+  const columns = D.todo.tables.tasks.columns.filter(c => c !== 'dueTime');
+  for (const answer of [
+    device({[tasksUri]: columns}),
+    device({[tasksUri]: new Error('no provider')}),
+    device({}, [tasksUri]),
+  ]) {
+    const [todo] = await rows(answer);
+    expect(todo.status.state).toBe('blocked');
+    const shown = statusLine(todo.status, '');
+    expect(shown).not.toMatch(/content:\/\/|_table|dueTime|provider\b/);
+    const words = shown.split(/[^\w]+/);
+    for (const column of D.todo.tables.tasks.columns) {
+      expect(words).not.toContain(column);
+    }
+  }
 });
 
 test('a provider that does not answer turns its module off, never throws past the probe', async () => {
   const modules = await rows(device({[tasksUri]: new Error('no provider')}));
   expect(modules[0].status).toEqual({
     state: 'blocked',
-    reasons: [`${tasksUri} did not answer: no provider`],
+    reasons: [format('probe.silent', {app: 'To-Do'})],
   });
   expect(modules[1].status.state).toBe('waiting');
 });
@@ -99,7 +120,7 @@ test('a To-Do table that reads but refuses writes turns To-Do off (#67)', async 
   const modules = await rows(device({}, [tasksUri]));
   expect(modules[0].status).toEqual({
     state: 'blocked',
-    reasons: [`${tasksUri} refused a test write: Permission Denial`],
+    reasons: [format('probe.refused', {app: 'To-Do'})],
   });
   expect(modules[1].status.state).toBe('waiting');
 });

@@ -128,7 +128,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Limits: 30 installed, 10 enabled [official, 3.29.44 announcement]. PluginHost 1.00.2610150 holds both in
   code: `PluginManager.PLUGIN_ENABLE_MAX_NUM = 10`, and enabling an 11th fails with error 201
   `ERROR_MAX_ENABLE_NUM`; `PluginInstallManager.PLUGIN_MAX_NUM` caps installed plugins at 30
-  [decompiled, PluginHost 1.00.2610150, 2026-11-25]. Third-party plugins share the 10, so Ink Tools
+  [device data, PluginHost 1.00.2610150, 2026-11-25]. Third-party plugins share the 10, so Ink Tools
   keeps at most 8 enabled ([`decisions.md`](decisions.md), [#304](https://github.com/martonpaulo/ink-tools/issues/304)).
 - A plugin's view runs its start code once per plugin-host process: going back and opening the
   view again does not re-run it; `am force-stop com.ratta.supernote.pluginhost` starts a fresh
@@ -170,7 +170,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   stroke of 4 of 64: the same stroke share and at least that margin
   ([`decisions.md`](decisions.md#decision-index)).
 - `PluginManager.unregisterButton(id)` of an id the plugin does not hold never answers: the JS
-  promise stays pending forever [measured and decompiled, 2026-11-17, Image Editing 0.1.0 beta 11,
+  promise stays pending forever [measured and device data, 2026-11-17, Image Editing 0.1.0 beta 11,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]. `PluginButtonManager.unregisterPluginButtonInternal`
   throws `Throwable("Plugin button is not exists!")`, and its caller answers
   `promise.resolve(th)`, a Java `Throwable` the React Native bridge cannot pass. A plugin that
@@ -226,7 +226,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   s_client` to the Mac's LocalSend 1.18.2, 2026-11-25, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. Its source makes the
   certificate optional only while web share is on, and trusts a `register` only when the claimed
   `fingerprint` is the client certificate's SHA-256 (`packages/core/src/http/server/`). A LocalSend
-  client presents its own identity's certificate; Device Transfer presents the `Identity.java`
+  client presents its own identity's certificate; Device Link presents the `Identity.java`
   certificate it receives with, so its fingerprint matches [measured on the Mac: `PinnedClient`
   got 200 from `register` with it and an `IOException` without it; the tablet's send is
   unverified until the next device round].
@@ -302,7 +302,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `0x520`, focusable), never in an Activity. React Native emits the event only from
   `ReactInstanceManager.onBackPressed` or `ReactHostImpl.onBackPressed`, which only `ReactActivity`
   and `ReactFragment` call, and no PluginHost class overrides `dispatchKeyEvent`, sets a key
-  listener or calls `onBackPressed` [observed in the decompiled APK, 2026-11-25; measured: no
+  listener or calls `onBackPressed` [device data, PluginHost, 2026-11-25; measured: no
   `ReactNativeJS` line on Back, 2026-11-17 and 2026-11-25,
   [#204](https://github.com/martonpaulo/ink-tools/issues/204)]. A full view's way out is its own
   visible «Close». The window is focusable and a window hands a key to its focused view, so Image
@@ -317,11 +317,19 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   receiver and a messenger service; no intent opens one plugin's view [measured, `dumpsys
   package`, [#139](https://github.com/martonpaulo/ink-tools/issues/139)].
 - So a plugin's own action runs by a file, not an intent: inkctl writes `action.json` in a folder
-  the plugin reads, and the plugin reads it on a JS timer in PluginHost
+  the plugin reads, and the plugin reads it on a timer in PluginHost
   (`packages/sn-adapter/src/official/actions.ts`, `inkctl plugin action`); a plugin with no action
-  yet is pressed with `inkctl click` on its named element. How soon the timer answers, and whether
-  it runs while the tablet sleeps, is [unverified]
+  yet is pressed with `inkctl click` on its named element
   ([#283](https://github.com/martonpaulo/ink-tools/issues/283)).
+- A plugin's JS timer (`setInterval`) does not fire while PluginHost shows none of that plugin's
+  views: with no view open, `inkctl plugin action` got no answer in 100 s, also after a host
+  restart, and with Account Sync's Settings open the same request answered in 8 to 11 s. A native
+  event does reach the JavaScript with no view: the provider observer started a sync pass from the
+  home screen [measured, Manta, device round 5, 2026-11-26,
+  [#283](https://github.com/martonpaulo/ink-tools/issues/283), [#296](https://github.com/martonpaulo/ink-tools/issues/296)].
+  So the plugins' timers tick from a native `Handler` (sn-adapter `TickModule`), which counts
+  uptime and so waits while the tablet sleeps [inference; device check on
+  [#283](https://github.com/martonpaulo/ink-tools/issues/283)].
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no
@@ -342,7 +350,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   is refused before its URI is read. `source_type` 4 («self add») shows as «custom source», with no
   note or document. An entry holds text only: `content` of 1 to 15,000 characters, `comment_str`
   up to 2,000, a collection, `metadata` JSON and an optional `.mark` file; there is no image column
-  [source, decompiled, 2026-11-17, [#42](https://github.com/martonpaulo/ink-tools/issues/42)]. An insert from a plugin is
+  [source, device data, 2026-11-17, [#42](https://github.com/martonpaulo/ink-tools/issues/42)]. An insert from a plugin is
   [unverified: not yet run on the tablet].
 - The To-Do app lists only `tasks_table` rows with `deleted = 0`: 278 rows inserted with `deleted`,
   `sort`, `taskId` and their siblings NULL were in its lists' counts as 0, and the one row the native
@@ -350,7 +358,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [measured, Account Sync 0.1.0 beta 15, [#212](https://github.com/martonpaulo/ink-tools/issues/212)]. Account Sync now writes every column a native
   insert fills (the descriptor's `insertDefaults` and `insertNow`) and its own `taskId`. A list
   whose `taskListId` Account Sync made (`inktools…`) kept it after the native sync (`hasSync = 1`).
-  A task with an empty `taskListId` is an unfiled task, the app's own Inbox [decompiled
+  A task with an empty `taskListId` is an unfiled task, the app's own Inbox [observed device behaviour of
   `DataBaseTools.insert`; a pulled unfiled task is not yet seen on the tablet].
 - After a pass of Account Sync 0.1.0 beta 15, the native To-Do cloud sync left 5 extra rows in a
   list Account Sync made: `hasSync = 1`, a `taskId` of its own, and the list, title and due time of
@@ -369,7 +377,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   matches no row, and it runs only in a sync pass that needs a module that is on, never when the
   host loads Account Sync [[#43](https://github.com/martonpaulo/ink-tools/issues/43)]. Its Calendar writer updates and cancels a pulled event by its row id.
 - The calendar provider never deletes a row: `CalendarContentProvider.delete` calls
-  `DataBaseTools.delete`, whose body is `return 0;` [source, decompiled `SupernoteCalendar.apk`,
+  `DataBaseTools.delete`, whose body is `return 0;` [source, device data, `SupernoteCalendar.apk`,
   firmware `Chauvet.E103.2610191001.2559`, [#43](https://github.com/martonpaulo/ink-tools/issues/43)]. The app removes a synced event by
   `status = 'cancelled'` and a new `lastModifiedTime`; `adb shell content update` with that status
   on 7 test rows hid them from the Calendar app, and the rows stay in the table [measured,
@@ -377,7 +385,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - The Calendar app's month dots (`DataBaseTools.getDuringEvent`) and day list (`getTodayEvent`)
   read every `data_info` row with `status = 'confirmed' AND recurrence is null` in one loop inside
   one `try`, and for an `isAllDay` 1 row call `DateUtils.getLongDate(startDate)`, which is
-  `startDate.split("-")` on a `yyyy-MM-dd` text [source, decompiled `SupernoteCalendar.apk`,
+  `startDate.split("-")` on a `yyyy-MM-dd` text [source, device data, `SupernoteCalendar.apk`,
   firmware `Chauvet.E103.2610191001.2559`, [#28](https://github.com/martonpaulo/ink-tools/issues/28)]. An all-day row with `startDate` NULL throws
   `NullPointerException` and the loop drops it and every later row: Account Sync 0.1.0 beta 23 and
   24 showed one event of 217, and filling `startDate` and `endDate` on the 29 all-day rows showed
@@ -440,12 +448,21 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - `PluginFileAPI.insertNotePage` needs a template name from `PluginCommAPI.getNoteSystemTemplates()`
   (for example `style_white`): the name `getNotePageTemplate` returns (`style_white_a5x2`) fails with
   «802 Background template file does not exist!» [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
+- `insertNotePage` on the open note drops the ink written on it since its last save: three notes
+  inked page by page with an insert between pages kept no stroke at all, while inserting every page
+  first, then writing, kept all of it [measured, Manta, device round 5, 2026-11-26,
+  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So Probe's `insertPage` saves the
+  note first (`saveCurrentNote`) and inserts nothing when the save fails.
 - Right after a plugin's `PluginCommAPI.jumpToPage`, the next press of the plugins button is lost;
   a wait of about 4 s before it works, and 1.5 s was too short on a page with a picture [measured,
   Probe, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
-- A Word Lookup or Device Transfer insert leaves the inserted picture lassoed, but a plugin command
+- A Lasso Actions or Device Link insert leaves the inserted picture lassoed, but a plugin command
   run after it clears the lasso: `getLassoElementTypeCounts` then answers 904 [measured, Probe,
   2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Lasso again by the element's rect before pressing a row.
+- `setLassoTitle` clears the lasso once it makes the title: from a lasso row, a `resizeLassoRect`
+  right after it answered `904 No lasso action has been performed` [measured, Lasso Actions 0.2.0
+  beta 33, Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings lassoes the title's strokes again by their rect before it moves
+  them; whether that lasso keeps the title is [unverified].
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
@@ -478,7 +495,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   120 ms after the insert held 0 elements, and later the page held it as `type=200 rect=[498, 680,
   1421, 1880]`, a 923 x 1200 JPEG centred on the 1920 x 2560 page at its own size [measured,
   Device Transfer 0.1.0 beta 8, 2026-11-17, [#196](https://github.com/martonpaulo/ink-tools/issues/196)]. When it lands is [unverified]; Device
-  Transfer reads again every 250 ms for up to 3 s.
+  Link reads again every 250 ms for up to 3 s.
 - Permissions of a no-view button [measured, 2026-11-16, Retouch and a probe,
   [#170](https://github.com/martonpaulo/ink-tools/issues/170)]:
   - After a PluginHost start, the first press of a plugin's button mounts the plugin's root
@@ -516,7 +533,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   copy. The callbacks (`IPluginInstallCallback`, `IPluginSetCallback`, `IPluginUninstallCallback`)
   are in package `com.ratta.supernote.plugincorelib.callback`. A button press by intent exists only
   for the built-in Sticker plugin (`a5db6166e8fe8e17`, exported `PluginHostService`, `action=VIEW`
-  with the extra `action=plugin`) [source, decompiled PluginHost `1.00.2610150`,
+  with the extra `action=plugin`) [source, device data, PluginHost `1.00.2610150`,
   [`research/2026-11-pluginhost-control.md`](research/2026-11-pluginhost-control.md), [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. The Ink Tools
   bridge app holds that binder ([#215](https://github.com/martonpaulo/ink-tools/issues/215)); through it a plugin list took 1.35 s,
   «Always Allow» 3.5 s, an install 2.9 s, a disable 2.4 s and an enable 3.1 s, where the screen
@@ -534,7 +551,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   after `am force-stop com.ratta.supernote.pluginhost` the next installs answered `updated:`
   [measured, Manta, bridge 0.1.0 beta 2, 2026-11-17,
   [#225](https://github.com/martonpaulo/ink-tools/issues/225)]. Why the thread keeps the other id
-  is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`.
+  is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`. In device
+  round 5 (Manta, 2026-11-26) an install answered error 100 while another plugin's view was open,
+  so `inkctl plugin install` refuses while the screen holds a window of the host's package
+  ([#418](https://github.com/martonpaulo/ink-tools/issues/418)).
+- After an install PluginHost restarts, and its plugin list gives an empty answer until it is back:
+  a landed install then failed its read-back on 2 of 2 tries [measured, Manta, device round 5,
+  2026-11-26]; the install's reads wait for an answer up to `--timeout`
+  ([#419](https://github.com/martonpaulo/ink-tools/issues/419)).
 - An enable through the bridge after a disable once got no callback: PluginHost logged
   `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
   uninstall and an install loaded it [reported by the device round of 2026-11-17, Image Editing,
@@ -590,11 +614,11 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   outside the whitelist (`Document, EXPORT, INBOX, MyStyle, Note, SCREENSHOT`, plus `InkHub/temp`
   and `.data/plugin`), so the guard in `libcore.io.BlockGuardOs` (posix layer, gated by the thread's
   plugin id) denies `listFiles`, `createNewFile` and `FileOutputStream` [measured, Probe
-  `voc4oo2ysd7cdnkc`, 2026-11-16; source]. But a plugin **can switch it by a sandbox bypass**: a
+  `voc4oo2ysd7cdnkc`, 2026-11-16; source]. But a plugin **can switch it through a route outside the plugin file API**: a
   child process (`ProcessBuilder("sh","-c", …)`) and the system Documents provider
   (`DocumentsContract.createDocument`) both wrote the folder on the tablet; reflection to the raw
   Os, the host main-looper thread and a plain new thread were denied [measured]. The host runs as
-  `android.uid.system`. A bypassing plugin suits the owner's device only and would likely fail store
+  `android.uid.system`. A plugin that takes such a route suits the owner's device only and would likely fail store
   review ([#6](https://github.com/martonpaulo/ink-tools/issues/6)).
 - The Settings handwriting-language screen opens via `com.ratta.settings/.SettingsActivity` with
   `com.ratta.settings.input.HWLanguageSetting` [source]. From any text field the owner reaches it in
@@ -606,7 +630,7 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   Settings tile added with `cmd statusbar add-tile` lands in `sysui_qs_tiles` but its
   `TileService` is never bound, and `cmd statusbar click-tile` does nothing [measured, test app,
   2026-11-16]. A Quick Settings tile is no surface on this device.
-- **A sideloaded app switches the language with no bypass.** With `MANAGE_EXTERNAL_STORAGE`
+- **A sideloaded app switches the language through its own permission.** With `MANAGE_EXTERNAL_STORAGE`
   (`appops set … allow`), a test app created the new code file, deleted the old one and broadcast
   `hw_type_change` in 6 to 10 ms [measured, 2026-11-16]. Two surfaces work:
   - A **floating button** (`TYPE_APPLICATION_OVERLAY`, `SYSTEM_ALERT_WINDOW` by `appops`) stays
@@ -700,8 +724,8 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/10
 | Surface | Show and clear | Where it is known from |
 | :--- | :--- | :--- |
 | Toast | `sn-plugin-lib` has none. React Native's own `ToastAndroid` (not the plugin API) shows a text toast with the app context, so it needs no activity; it has no cancel call and disappears after about 2 s or 3.5 s by itself | [official] docs index; React Native 0.79.2 `ToastModule.kt`. A plugin's toast shows at the bottom centre of the note for about 2 s [measured, Relay, 2026-11-16]. Its text is in no log: logcat shows only `WindowManager: addWindow win:Window{… Toast}` and `NotificationService: Toast already killed. pkg=com.ratta.supernote.pluginhost`, and `dumpsys notification` lists no toast; `inkctl wait toast` reads its accessibility event instead [measured, 2026-11-25, Android 11, [#297](https://github.com/martonpaulo/ink-tools/issues/297)] |
-| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, [`research/plugin-brief/device-tests.md`](research/plugin-brief/device-tests.md)]. Both pass `getCurrentActivity()`, which the host leaves null; on PluginHost 1.00.2610150 `HostUIImpl` swaps a null context for the application context and raises the window to type 2002, so the plugin lives on [decompiled, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md); device check on [#296](https://github.com/martonpaulo/ink-tools/issues/296)]. The older note in [`research/plugin-brief/brief.md`](research/plugin-brief/brief.md) section 10.5 predates this host |
-| Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; but the host sets the window to −1 × −1 for every `showType` but 0, so a plugin view is always full screen [decompiled, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md)] |
+| Ratta dialog | `NativeUIUtils.showErrorTipDialog(text)` and `showRattaDialog(text, left, right, isSuccess)` open the host's own dialogs; there is no call to close them | [official] SDK source only, not in the docs; the module exists on the device [measured, [`research/plugin-brief/device-tests.md`](research/plugin-brief/device-tests.md)]. Both pass `getCurrentActivity()`, which the host leaves null; on PluginHost 1.00.2610150 `HostUIImpl` swaps a null context for the application context and raises the window to type 2002, so the plugin lives on [device data, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md); device check on [#296](https://github.com/martonpaulo/ink-tools/issues/296)]. Back closes `showRattaDialog`'s dialog with neither button's answer, so its promise never settles [measured, Manta, 2026-11-26, [#296](https://github.com/martonpaulo/ink-tools/issues/296)]; sn-adapter's `confirm` settles that question as a Cancel when the next one is asked. The older note in [`research/plugin-brief/brief.md`](research/plugin-brief/brief.md) section 10.5 predates this host |
+| Plugin view | `showPluginView()` and `closePluginView()` open and close the plugin's own view on command | [official] [showPluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/show-plugin-view), [closePluginView](https://docs.supernote.com/en/api-reference/supernote-plugin/plugin-manager/close-plugin-view). The SDK's JSDoc names a «center dialog» region with a width and height, which the documented `PluginButton` lacks; but the host sets the window to −1 × −1 for every `showType` but 0, so a plugin view is always full screen [device data, 2026-11-25, [`research/2026-11-native-paths.md`](research/2026-11-native-paths.md)] |
 | Element on the page | `insertPageElements` then `deletePageElements` | [official] API. It writes into the note file: a plugin the host kills leaves it there, and it adds undo steps |
 | Button name or state | `modifyButton`, `setButtonState` | [official] API; the lasso toolbar is hidden while the action runs [inference] |
 
@@ -712,6 +736,13 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
 
 ## Files and sync
 
+- The built-in Sticker plugin keeps its sticker library in its own private folder, with an index
+  of its own, which no other plugin writes; its import screen lists `.sticker` files in the
+  shared folders (`Document`, `EXPORT`, `MyStyle`, `Note`, `SCREENSHOT`, `INBOX`) [device data,
+  2026-11-26, [#35](https://github.com/martonpaulo/ink-tools/issues/35); the registry's `pluginhost.file-sandbox`]. A `.sticker`
+  file under the plugin's private folder is never listed [measured, Manta, 2026-11-26]. So «Insert
+  Sticker» keeps its stickers in `MyStyle/Lookup/stickers`, which syncs to Supernote Cloud;
+  whether that import lists a subfolder's files is [unverified, [#35](https://github.com/martonpaulo/ink-tools/issues/35)].
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
   [#23](https://github.com/martonpaulo/ink-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
@@ -784,11 +815,48 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   and four handwriting pages [measured, `inkctl note png`, `note-render --compare`].
   A second test note, dots with ink and ruled lines, matched at 0.000 % (2026-11-25,
   [#308](https://github.com/martonpaulo/ink-tools/issues/308)).
+- `generateNotePng` leaves out every picture element, whatever wrote it: a picture the file holds
+  and the screen shows was missing from the PNG (0.61 % of pixels), while `note-render` of the
+  pulled file drew it [measured, Manta, device round 5, 2026-11-26,
+  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So that PNG never proves a picture;
+  `inkctl note png` says how many it left out.
 - A picture `PluginNoteAPI.insertImage` places stays a floating selection on screen, and Probe's call
   gave no answer in 20 s, yet the note file held the picture once the note was opened again
   [measured, 2026-11-25].
 - The note file holds no serial number or account: the header's `FILE_ID` and each `PAGEID` are
   random [measured].
+- A page's handwriting recognition, when the note uses Real-Time Recognition, is a block that
+  `RECOGNTEXT` points at: base64 JSON whose `elements` of type `Text` hold `words`, each a `label`
+  and a `bounding-box` (`x`, `y`, `width`, `height`); a space between words has no box. The box is
+  in millimetres at the page's 300 dpi: on five Manta notes every box ended within 162 x 216 mm,
+  the 1920 x 2560 page, and a word's box times 300 / 25.4 enclosed its ink. `RECOGNSTATUS` is 1
+  when the recognition is done and 2 while it runs; a page at 2 still held the words of an earlier
+  run, so the Ink Notebook Editor reads only pages at 1 [measured on the Mac, 2026-11-26,
+  [#321](https://github.com/martonpaulo/ink-tools/issues/321)].
+- A Heading is a block the footer names `TITLE_` with its page from 1 in four digits and its place
+  on the page: `TITLELEVEL`, `TITLERECT` and `TITLERECTORI` (`x,y,width,height` in page pixels),
+  `TITLEBITMAP` and `TITLEPROTOCOL` `RATTA_RLE`. The picture is the handwriting under the Heading,
+  as large as its box, not the whole page [measured on the Mac on one Heading of a Manta note,
+  2026-11-26, [#331](https://github.com/martonpaulo/ink-tools/issues/331)]; a note with a Heading
+  of each level waits for a device round.
+- A page's strokes, pictures and text boxes are records in the block `TOTALPATH` points at: a
+  count, then one length-prefixed record each, in drawing order. A record holds its pen, colour,
+  thickness and layer, a kind name (`others` for a pen stroke, `bitmap` for a picture), a box in
+  page pixels (left, top, right, bottom), the page's size in screen units, and its points in screen
+  units, measured down from the top and in from the right edge; the page height in pixels over
+  the height in screen units turns them into page pixels (0.118 on the Manta). A stroke's box holds
+  its ink: on a landscape page of 11 strokes the boxes spanned x 398 to 804 and y 298 to 410, and
+  the tablet's PNG has its ink at x 398 to 803 and y 298 to 409, upright. A picture's and a text
+  box's box does not match their frame, while their five points (a closed rectangle) do: a text
+  box at 200, 200, 1200 x 54 and a picture at 720, 1120, 480 x 320 [measured on the Mac on
+  `content.note` and `landscape-tablet.note`, 2026-11-26,
+  [#324](https://github.com/martonpaulo/ink-tools/issues/324)]. The field layout follows the
+  public description in walnut356's post
+  [«Inspecting the Supernote .note format»](https://walnut356.github.io/posts/inspecting-the-supernote-note-format); that an eraser
+  stroke is a record of colour 255 is that post's, not yet seen here, and one note with several
+  text boxes and an erased stroke waits for a device round.
+- Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
+  [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 
 ## Network and ADB
 
