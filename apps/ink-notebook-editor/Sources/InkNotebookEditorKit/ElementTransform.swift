@@ -46,7 +46,8 @@ public struct PageMatrix: Sendable, Equatable {
     public func then(_ next: PageMatrix) -> PageMatrix {
         PageMatrix(
             a: a * next.a + b * next.c, b: a * next.b + b * next.d, c: c * next.a + d * next.c,
-            d: c * next.b + d * next.d, tx: tx * next.a + ty * next.c + next.tx, ty: tx * next.b + ty * next.d + next.ty)
+            d: c * next.b + d * next.d, tx: tx * next.a + ty * next.c + next.tx, ty: tx * next.b + ty * next.d + next.ty
+        )
     }
 
     /// The map moved by `dx`, `dy` page pixels after it.
@@ -179,7 +180,9 @@ public struct ElementTransform: Sendable, Equatable {
             TransformTarget.strokes(Array(strokes[start..<min(start + Self.numbersPerCall, strokes.count)]), matrix)
         }
         let areas = transformed.filter(\.isArea).sorted { $0.record > $1.record }
-        let textBoxes = areas.filter { !$0.isPicture }.map { TransformTarget.textBox(number: $0.record + 1, rect: $0.box) }
+        let textBoxes = areas.filter { !$0.isPicture }.map {
+            TransformTarget.textBox(number: $0.record + 1, rect: $0.box)
+        }
         let pictures = areas.compactMap { element -> TransformTarget? in
             guard element.isPicture, let file = pictureFiles[element.record] else { return nil }
             return .picture(number: element.record + 1, rect: element.box, file: file)

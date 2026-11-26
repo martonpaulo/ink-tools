@@ -86,7 +86,8 @@ public struct TabletOperation: Sendable, Equatable {
                 note: note, baseHash: baseHash, page: page, change: .insertText(text, rect: rect, fontSize: fontSize))
         case .transformElements(let transform):
             guard transform.refusal == nil else { return nil }
-            self.init(note: note, baseHash: baseHash, page: transform.page, change: .transformElements(transform.targets))
+            self.init(
+                note: note, baseHash: baseHash, page: transform.page, change: .transformElements(transform.targets))
         case .deleteElements(let page, let elements):
             self.init(
                 note: note, baseHash: baseHash, page: page,
@@ -145,7 +146,8 @@ public struct TabletOperation: Sendable, Equatable {
         case .transformElements(let targets):
             targets.map { target in
                 switch target {
-                case .strokes(let numbers, let matrix): .transformElements(page: page, nums: numbers, matrix: matrix.values)
+                case .strokes(let numbers, let matrix):
+                    .transformElements(page: page, nums: numbers, matrix: matrix.values)
                 case .textBox(let number, let rect): .modifyElements(page: page, num: number, rect: rect)
                 case .picture(let number, let rect, let file):
                     .modifyElements(page: page, num: number, rect: rect, file: file.path(percentEncoded: false))

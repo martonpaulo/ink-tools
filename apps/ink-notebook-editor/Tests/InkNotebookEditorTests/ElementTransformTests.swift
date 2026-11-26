@@ -27,7 +27,8 @@ import Testing
         let line = MovedElement(
             record: 1, box: EditRect(left: 100, top: 200, right: 300, bottom: 200),
             points: [CGPoint(x: 100, y: 200), CGPoint(x: 300, y: 200)], isArea: false)
-        let resize = ElementTransform.resize(page: 0, elements: [line], to: CGRect(x: 100, y: 250, width: 100, height: 0))
+        let resize = ElementTransform.resize(
+            page: 0, elements: [line], to: CGRect(x: 100, y: 250, width: 100, height: 0))
         #expect(resize.transformed[0].points == [CGPoint(x: 100, y: 250), CGPoint(x: 200, y: 250)])
         let turn = ElementTransform.quarterTurn(page: 0, elements: [line], clockwise: true)
         #expect(turn.transformed[0].points == [CGPoint(x: 200, y: 100), CGPoint(x: 200, y: 300)])
@@ -80,7 +81,10 @@ import Testing
     @Test func aHandleDraggedPastTheOppositeSideStopsAtTheSmallestSide() {
         let frame = CGRect(x: 100, y: 100, width: 200, height: 100)
         let folded = ElementTransform.resized(frame, handle: .left, to: CGPoint(x: 900, y: 0), keepRatio: false)
-        #expect(folded == CGRect(x: 300 - ElementTransform.smallestSide, y: 100, width: ElementTransform.smallestSide, height: 100))
+        #expect(
+            folded
+                == CGRect(
+                    x: 300 - ElementTransform.smallestSide, y: 100, width: ElementTransform.smallestSide, height: 100))
     }
 
     @Test func aTurnNearTheEdgeIsMovedBackOnThePageAndOneTooLargeIsRefused() throws {
@@ -148,7 +152,8 @@ import Testing
             TabletOperation(.transformElements(turn), note: "/storage/emulated/0/Note/a.note", baseHash: "h"))
         #expect(operation.route == .tablet && operation.editedPages == [1])
         let json = try #require(
-            try JSONSerialization.jsonObject(with: JSONEncoder().encode(operation.helperOperations)) as? [[String: Any]])
+            try JSONSerialization.jsonObject(with: JSONEncoder().encode(operation.helperOperations)) as? [[String: Any]]
+        )
         #expect(json.count == 2)
         #expect(json[0]["op"] as? String == "transformElements" && json[0]["nums"] as? [Int] == [1])
         #expect(json[0]["matrix"] as? [Double] == turn.matrix.values)
