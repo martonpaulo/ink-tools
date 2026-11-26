@@ -13,15 +13,30 @@ The reader and a read-only app exist ([#262](https://github.com/martonpaulo/ink-
 
 ## Scope
 
+A computer editor for one note at a time (owner, 2026-11-26; the feature list is in
+[`docs/plugin-scope.md` › Ink Notebook Editor](../../docs/plugin-scope.md#ink-notebook-editor)):
+
 - Open a `.note` file on the Mac and show every page faithfully.
-- Edit it without loss: insert images, add text blocks, reorder pages.
-- Write the file back so the tablet still opens it correctly.
+- Find and take content out: Mac OCR and the tablet's recognition, Find in Note, copy as text or
+  image, and export (searchable PDF, Markdown) as getting the owner's own content out.
+- Edit it without loss: select, move, resize, rotate, delete, copy and paste, pages, pictures,
+  typed text boxes, Headings.
+- The Mac shows, the tablet writes: every edit is a request that the tablet helper, a module of an
+  existing plugin ([#304](https://github.com/martonpaulo/ink-tools/issues/304)), applies with the
+  tablet's file API; the Mac pulls the note back and checks the untouched pages.
+- Edit without waiting: the Mac draws each edit at once and sends it in the background, reads
+  strokes from its own copy, sends only the targets, joins a run of edits into one request and
+  redraws only the edited page; an edit kind slower than the write-path round's ceiling on a page
+  of 500 or more strokes stays out of the first release.
+- Mac OCR only reads and indexes: it never writes into the file.
 
 ## Out of scope
 
-- OCR or handwriting-to-text.
-- Handwriting input on the Mac.
-- Sharing or exporting to other people; it is not a priority.
+- Handwriting or drawing input on the Mac.
+- Search across all notes; Find in Note stays.
+- Sharing with other people, collaboration, comments, publishing.
+- Managing To-Do, Calendar or Digest; a later Quick capture only sends to them, through Panoram,
+  and never writes the tablet's database.
 
 ## First delivery: a faithful reader
 

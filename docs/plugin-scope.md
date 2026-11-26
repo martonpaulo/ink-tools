@@ -210,15 +210,49 @@ an image ([#130](https://github.com/martonpaulo/ink-tools/issues/130)).
 
 Named by the owner on 2026-11-16, a brand-free name; the working name was `desk` ([#175](https://github.com/martonpaulo/ink-tools/issues/175)).
 
-A macOS app that **reads and edits** the owner's `.note` files **without breaking the format** —
-like editing a PDF. Scope (interview 2026-11-14, revised):
+A macOS app that **reads and edits** the owner's `.note` files **without breaking the format**: a
+computer editor for one note at a time, with mouse and keyboard. **The Mac shows, the tablet
+writes**: each edit is one request to a helper on the tablet, whose own file API applies it; the
+Mac pulls the saved file back and redraws it (owner, 2026-11-26, [#48](https://github.com/martonpaulo/ink-tools/issues/48)).
 
-- Open a `.note` on the Mac and see it faithfully.
-- Edit it non-destructively: insert images, add text blocks, reorder pages.
-- Write the file back so the Supernote still opens it correctly.
+First release (30 features, each in a sub-issue of [#48](https://github.com/martonpaulo/ink-tools/issues/48)):
 
-**Out of scope:** no OCR / handwriting-to-text, and no handwriting *input* on the Mac. Sharing or
-export to other people is not a priority either. The value is a safe `.note` editor on a big screen.
+- **View:** zoom and continuous scroll, thumbnails and a page grid, follow the note open on the tablet.
+- **Find and take out:** automatic OCR on the Mac, the tablet's own recognition, Find in Note
+  (Command-F), Copy as Text, copy or drag out as an image.
+- **Edit:** select, move, resize, rotate and flip any selection (pictures already in the note
+  included), delete, copy, cut and paste, undo and redo.
+- **Pages:** add, delete, duplicate, reorder.
+- **Insert and structure:** a picture, a typed text box in a font the tablet has, a sidebar of the
+  note's Headings.
+- **Safety and sync:** one write path, a helper on the tablet, a live session over the cable, the
+  open-note guard, conflicts kept as two copies, the 10 newest backups, a firmware watch, and
+  Edit without waiting.
+
+Owner decisions of 2026-11-26:
+
+- **OCR and ink-to-text are in.** Mac OCR only reads and indexes; it never writes into the file.
+- **Export is in** as getting his own content out (copy, searchable PDF, Markdown), never sharing.
+- **Collection and Headings on both sides:** the tablet's lasso buttons stay
+  ([#249](https://github.com/martonpaulo/ink-tools/issues/249), [#252](https://github.com/martonpaulo/ink-tools/issues/252)); the Mac gets its own version.
+- **The tablet helper lives inside an existing plugin** ([#304](https://github.com/martonpaulo/ink-tools/issues/304)), never a new plugin slot.
+- **Speed is a requirement** (Edit without waiting): the Mac draws an edit at once and sends it in
+  the background, undoing it with a message if the tablet refuses; it reads strokes from its own
+  copy of the file and sends only the targets, never reading a whole page on the tablet; a run of
+  edits such as arrow-key nudges becomes one request on release; on the way back it redraws only
+  the edited page. The write-path round times each edit kind on pages of 500 or more strokes
+  against a set ceiling, and a kind over the ceiling stays out of the first release until it is faster.
+- **Quick capture** (later): a shortcut sends the selection or typed text to To-Do, Calendar or
+  Digest without leaving the note, through Panoram; the editor never writes the tablet's database.
+
+Later features (40) are listed in their tracking issue, so none is lost.
+
+**Out of scope:** handwriting or drawing input on the Mac; search across all notes (the editor
+works on one note at a time; Find in Note stays); Word Lookup, translation, definitions, summaries
+and AI writing; Real-Time Text, Smart Shapes and pen gestures; managing To-Do, Calendar or Digest
+(Quick capture only sends to them); sharing, collaboration, comments, publishing; riding on Supernote
+Cloud or the Partner app; own ADB code; PDFs, EPUBs and `.mark` files; math conversion, audio, typed
+documents; Windows, Linux, iPad or web; template generation (parked, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 The full editor is the goal from the start, not a viewer and exporter first on `supernotelib`
 (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). It fetches and writes back the tablet's notes over the
