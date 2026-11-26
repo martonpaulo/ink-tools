@@ -77,6 +77,21 @@ final class ButtonRule {
   }
 
   /**
+   * Whether a window is a plugin view, by its root node's package or by its title. Over Account
+   * Sync's Settings the root package alone never told (device round 7, #415: the button stayed and
+   * no line was logged), so a title naming the package counts too [unverified]; the watcher's log
+   * line names each window's package and title for the next device round.
+   */
+  static boolean isPluginWindow(CharSequence rootPackage, CharSequence title) {
+    return isPluginView(rootPackage) || isPluginView(title);
+  }
+
+  /** One window of a watcher log line: its type, root package and title, `-` for a missing one. */
+  static String windowEntry(int type, CharSequence rootPackage, CharSequence title) {
+    return type + ":" + (rootPackage == null ? "-" : rootPackage) + ":" + (title == null ? "-" : title);
+  }
+
+  /**
    * Whether the button shows. `watching` is false while the accessibility service is off: then
    * nothing tells where the owner writes, so the button shows everywhere rather than never, and
    * the settings screen shows the command that turns the service on. While the app's own screen is

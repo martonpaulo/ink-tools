@@ -28,6 +28,11 @@ public final class ButtonRuleTest {
     check(ButtonRule.isPluginView("com.ratta.supernote.pluginhost"), "PluginHost's window is a plugin view");
     check(!ButtonRule.isPluginView("com.ratta.supernote.note"), "the note app's window is none");
     check(!ButtonRule.isPluginView(null), "a window with no package is none");
+    check(ButtonRule.isPluginWindow(null, "com.ratta.supernote.pluginhost"), "PluginHost's window with no root content counts by its title (#415)");
+    check(ButtonRule.isPluginWindow("com.ratta.supernote.pluginhost", null), "PluginHost's window counts by its root package");
+    check(!ButtonRule.isPluginWindow("com.ratta.settings", "Settings"), "the Settings window is none");
+    check(!ButtonRule.isPluginWindow(null, null), "a window with neither is none");
+    check(ButtonRule.windowEntry(2002, null, null).equals("2002:-:-"), "a log entry marks what is missing");
 
     check(ButtonRule.visible(Mode.ALWAYS, false, true, false, false, SETTINGS), "always visible shows it in Settings");
     check(!ButtonRule.visible(Mode.HIDDEN, false, true, true, false, NOTE), "hidden never shows it");

@@ -1,6 +1,7 @@
 package com.supernotetools.lingo;
 
 import android.accessibilityservice.AccessibilityService;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -18,6 +19,8 @@ public final class WritingWatcher extends AccessibilityService {
   private static volatile boolean keyboard;
   private static volatile boolean pluginView;
   private static volatile String foreground;
+  /** The last reading logged, so a line is written only when what the watcher sees changes. */
+  private String logged = "";
 
   static boolean watching() {
     return watching;
@@ -61,29 +64,35 @@ public final class WritingWatcher extends AccessibilityService {
     OverlayService.refresh();
   }
 
+  /**
+   * Reads every window: the keyboard is a `TYPE_INPUT_METHOD` one, a plugin view is PluginHost's
+   * (#415). Each change of what it sees is one `LingoApp` line naming every window, so a device
+   * round reads what the watcher saw even when the button did not change.
+   */
   private void readWindows() {
     boolean open = false;
     boolean plugin = false;
+    StringBuilder windows = new StringBuilder();
     for (AccessibilityWindowInfo window : getWindows()) {
+      AccessibilityNodeInfo root = window.getRoot();
+      CharSequence rootPackage = root == null ? null : root.getPackageName();
+      if (root != null) {
+        root.recycle();
+      }
+      windows.append(' ').append(ButtonRule.windowEntry(window.getType(), rootPackage, window.getTitle()));
       if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
         open = true;
-      } else if (!plugin) {
-        plugin = isPluginView(window);
+      } else if (ButtonRule.isPluginWindow(rootPackage, window.getTitle())) {
+        plugin = true;
       }
     }
     keyboard = open;
     pluginView = plugin;
-  }
-
-  /** Whether `window` belongs to PluginHost: its root node names the package (#415). */
-  private static boolean isPluginView(AccessibilityWindowInfo window) {
-    AccessibilityNodeInfo root = window.getRoot();
-    if (root == null) {
-      return false;
+    String line = "watcher keyboard=" + open + " plugin=" + plugin + " foreground=" + foreground + " windows=" + windows;
+    if (!line.equals(logged)) {
+      logged = line;
+      Log.i(Switcher.TAG, line);
     }
-    boolean plugin = ButtonRule.isPluginView(root.getPackageName());
-    root.recycle();
-    return plugin;
   }
 
   @Override
