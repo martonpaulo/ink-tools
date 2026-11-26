@@ -162,6 +162,7 @@
     {"path": "site/", "gates": ["site"]},
     {"path": "design/social-card/", "gates": ["site"]},
     {"path": "scripts/validate-site.sh", "gates": ["site"]},
+    {"path": "scripts/text_width_check.py", "gates": ["site"]},
     {"path": "scripts/version-site-assets.sh", "gates": ["site"]},
     {"path": "scripts/social-card.sh", "gates": ["site"]},
     {"path": "scripts/lib/", "gates": ["site"]},

@@ -6,9 +6,9 @@ name: Validate site
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'design/social-card/**', 'scripts/validate-site.sh', 'scripts/version-site-assets.sh', 'scripts/social-card.sh', 'scripts/lib/**', 'scripts/site_privacy.py', 'scripts/test_site_privacy.py', 'scripts/site_media.py', 'scripts/site_capture.py', 'scripts/test_site_media.py', 'design/site-media/**', 'scripts/site_figures.py', 'scripts/test_site_figures.py', 'scripts/readme_figures.py', 'docs/tools.json', 'docs/releases.json', 'docs/install.md', 'README.md', 'design/icons/readme/**', 'design/icons/apps/**', 'plugins/*/PluginConfig.json', 'packages/sn-adapter/src/official/plugin.ts', '.github/workflows/validate-site.yml']
+    paths: ['site/**', 'design/social-card/**', 'scripts/validate-site.sh', 'scripts/text_width_check.py', 'scripts/version-site-assets.sh', 'scripts/social-card.sh', 'scripts/lib/**', 'scripts/site_privacy.py', 'scripts/test_site_privacy.py', 'scripts/site_media.py', 'scripts/site_capture.py', 'scripts/test_site_media.py', 'design/site-media/**', 'scripts/site_figures.py', 'scripts/test_site_figures.py', 'scripts/readme_figures.py', 'docs/tools.json', 'docs/releases.json', 'docs/install.md', 'README.md', 'design/icons/readme/**', 'design/icons/apps/**', 'plugins/*/PluginConfig.json', 'packages/sn-adapter/src/official/plugin.ts', '.github/workflows/validate-site.yml']
   pull_request:
-    paths: ['site/**', 'design/social-card/**', 'scripts/validate-site.sh', 'scripts/version-site-assets.sh', 'scripts/social-card.sh', 'scripts/lib/**', 'scripts/site_privacy.py', 'scripts/test_site_privacy.py', 'scripts/site_media.py', 'scripts/site_capture.py', 'scripts/test_site_media.py', 'design/site-media/**', 'scripts/site_figures.py', 'scripts/test_site_figures.py', 'scripts/readme_figures.py', 'docs/tools.json', 'docs/releases.json', 'docs/install.md', 'README.md', 'design/icons/readme/**', 'design/icons/apps/**', 'plugins/*/PluginConfig.json', 'packages/sn-adapter/src/official/plugin.ts', '.github/workflows/validate-site.yml']
+    paths: ['site/**', 'design/social-card/**', 'scripts/validate-site.sh', 'scripts/text_width_check.py', 'scripts/version-site-assets.sh', 'scripts/social-card.sh', 'scripts/lib/**', 'scripts/site_privacy.py', 'scripts/test_site_privacy.py', 'scripts/site_media.py', 'scripts/site_capture.py', 'scripts/test_site_media.py', 'design/site-media/**', 'scripts/site_figures.py', 'scripts/test_site_figures.py', 'scripts/readme_figures.py', 'docs/tools.json', 'docs/releases.json', 'docs/install.md', 'README.md', 'design/icons/readme/**', 'design/icons/apps/**', 'plugins/*/PluginConfig.json', 'packages/sn-adapter/src/official/plugin.ts', '.github/workflows/validate-site.yml']
   workflow_dispatch:
 
 permissions:
@@ -30,6 +30,7 @@ jobs:
       - name: Validate
         run: |
           bash scripts/validate-site.sh
+          python3 scripts/text_width_check.py site
           python3 scripts/site_privacy.py --root .
           python3 -B -m unittest scripts/test_site_privacy.py
           python3 scripts/site_media.py check
