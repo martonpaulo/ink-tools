@@ -74,4 +74,22 @@ Image Editing 0.1.0 beta 15 on the Manta, from the editor view's button to Retou
 | Trim | | 994 ms |
 | Remove background | | 910 ms |
 
-Enhance, Lighter and Darker on a full-width picture pass the 2 s limit above.
+Enhance, Lighter and Darker on a full-width picture passed the 2 s limit above only after the
+one-pass edits and the fast PNG encoder ([#145](https://github.com/martonpaulo/ink-tools/issues/145)).
+Image Editing 0.1.0 beta 16 on the Manta, 976 x 886 picture, editor view, 2026-11-26:
+
+| Edit | Press to page | Phases (decode, edit, write) |
+| :--- | ---: | :--- |
+| Enhance | 941 ms | 43, 181, 32 ms |
+| Lighter | 876 ms | 42, 138, 33 ms |
+| Darker | 902 ms | 43, 139, 33 ms |
+| Undo | 678 ms | |
+| Restore original | 683 ms | |
+| Remove background (200 x 133) | 611 to 706 ms | |
+
+Every edit is within 2 s, so the «Working…» panel does not show for one. The note app shows the
+gray PNG the new encoder writes, and the picture keeps its size (no smaller rect after Enhance).
+The lasso menu holds one «Image Editing» row that opens the editor
+([#226](https://github.com/martonpaulo/ink-tools/issues/226)), so no edit runs with no view;
+previews and states live in the private `work/` folder
+([#198](https://github.com/martonpaulo/ink-tools/issues/198)).
