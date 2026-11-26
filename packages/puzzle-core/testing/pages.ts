@@ -8,6 +8,7 @@ import {
   createPage,
   drawCellText,
   drawFooter,
+  drawHitoriPage,
   drawHexLattice,
   drawIcon,
   drawOutsideClues,
@@ -16,6 +17,7 @@ import {
   drawText,
   drawTriangleLattice,
   FONT_WEIGHTS,
+  generateHitori,
   generateNonogram,
   generateSudoku,
   generateWordSearch,
@@ -92,4 +94,5 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
     return r;
   }],
+  ['hitori-15mm-portrait-right', () => drawHitoriPage(generateHitori('P1', 8, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
 ];
