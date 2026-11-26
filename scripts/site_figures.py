@@ -206,11 +206,12 @@ def download(tool, releases):
             "      </p>"]
 
 
-def card(tool, releases, media, classes="card"):
+def card(tool, releases, media, classes="card", broken=None):
+    """One tool's card; `broken` is its (reason, issue number) when it fails now (#436)."""
     kind = KIND_LABELS.get(tool["kind"])
     if not kind:
         raise SystemExit(f"docs/tools.json: {tool['name']}: kind {tool['kind']!r} has no page label")
-    status = tool["status"]
+    status = readme_figures.BROKEN if broken else tool["status"]
     items = "".join(f"<li><strong>{esc(f['name'])}</strong>: {inline(f['text'])}"
                     f"{' <em>(planned)</em>' if f.get('planned') else ''}</li>" for f in tool["features"])
     out = [f'    <li class="{classes}">',
@@ -221,6 +222,9 @@ def card(tool, releases, media, classes="card"):
            "      </p>",
            f"      <h3>{esc(tool['name'])}</h3>",
            f"      <ul class=\"features\">{items}</ul>"]
+    if broken:
+        reason, number = broken
+        out.append(f'      <p>{esc(reason)} (<a href="{readme_figures.ISSUES}{number}" {EXTERNAL}>#{number}</a>)</p>')
     out += download(tool, releases)
     slot = slug(tool["name"])
     if slot in media:
@@ -228,7 +232,9 @@ def card(tool, releases, media, classes="card"):
     return out + ["    </li>"]
 
 
-def tools_block(data, releases, media):
+def tools_block(data, releases, media, broken=None):
+    """The tool cards of each section; `broken` is readme_figures.broken_tools's map (#436)."""
+    broken = broken or {}
     out = []
     for section in data["sections"]:
         out += ["", f'<section class="section" id="{section["id"]}" aria-labelledby="{section["id"]}-title">',
@@ -239,7 +245,7 @@ def tools_block(data, releases, media):
         tools = [t for t in data["tools"] if t["section"] == section["id"]]
         lone = lone_classes(len(tools))
         for index, tool in enumerate(tools):
-            out += card(tool, releases, media, with_lone("card", index, lone))
+            out += card(tool, releases, media, with_lone("card", index, lone), broken.get(tool["name"]))
         out += ["  </ul>", "  </div>", "</section>"]
     return out + [""]
 
@@ -323,7 +329,9 @@ def generate(root):
     page = (root / PAGE).read_text(encoding="utf-8")
     media = media_blocks(root, page)
     page = replace(page, "stats", stats_block(json.loads((root / RELEASES).read_text(encoding="utf-8"))), "        ")
-    page = replace(page, "tools", tools_block(data, releases, media), "    ")
+    facts = json.loads((root / readme_figures.FACTS).read_text(encoding="utf-8"))
+    broken = readme_figures.broken_tools(data["tools"], facts, readme_figures.load_off(root))
+    page = replace(page, "tools", tools_block(data, releases, media, broken), "    ")
     page = replace(page, "install", install_block((root / "docs/install.md").read_text(encoding="utf-8")), "        ")
     page = replace(page, "credits", credits_block(data["credits"]), "        ")
     return page

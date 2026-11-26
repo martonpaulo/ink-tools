@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import site_figures  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-INPUTS = ("AGENTS.md", "README.md", "docs/tools.json", "docs/releases.json", "docs/install.md",
+INPUTS = ("AGENTS.md", "README.md", "docs/tools.json", "docs/tool-facts.json", "docs/releases.json", "docs/install.md",
           "design/site-media/shots.json", "site/index.html")
 
 
@@ -42,6 +42,7 @@ class Page(unittest.TestCase):
         for rel in INPUTS:
             (self.tmp / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(ROOT / rel, self.tmp / rel)
+        shutil.copytree(ROOT / "registry/items", self.tmp / "registry/items")
 
     def test_the_committed_page_is_a_fresh_generation(self):
         self.assertEqual(site_figures.generate(self.tmp), (ROOT / "site/index.html").read_text(encoding="utf-8"))
@@ -52,6 +53,17 @@ class Page(unittest.TestCase):
         (self.tmp / "docs/tools.json").write_text(json.dumps(data), encoding="utf-8")
         page = site_figures.generate(self.tmp)
         self.assertIn('<span class="badge status-planned">Planned</span>', page)
+
+    def test_a_regression_issue_turns_a_released_tool_broken_with_its_reason(self):
+        # #436: the README showed Broken with its reason and issue; the page kept the typed status.
+        facts = self.tmp / "docs/tool-facts.json"
+        data = json.loads(facts.read_text(encoding="utf-8"))
+        data["regressions"] = [{"tool": "Smart Pen", "title": "Pen draws nothing", "number": 901}]
+        facts.write_text(json.dumps(data), encoding="utf-8")
+        page = site_figures.generate(self.tmp)
+        card = page[page.index("<h3>Smart Pen</h3>") - 400:page.index("<h3>Smart Pen</h3>") + 2000]
+        self.assertIn('<span class="badge status-broken">Broken</span>', card)
+        self.assertIn('Pen draws nothing (<a href="https://github.com/martonpaulo/ink-tools/issues/901"', card)
 
     def test_media_written_by_site_media_survives_and_is_stable(self):
         page = self.tmp / "site/index.html"
