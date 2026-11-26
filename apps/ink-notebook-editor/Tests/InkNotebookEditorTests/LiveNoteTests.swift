@@ -136,15 +136,16 @@ import Testing
         #expect(pullCount() == 2)
     }
 
-    @Test func theWatchStopsWithItsTask() async throws {
+    // timing-independent: the limit only turns a hang into a failure, as for
+    // aCancelledPullStopsInkctlAndLeavesNoFile (#148, #446); the test waits on the pull itself.
+    @Test(.timeLimit(.minutes(LoadedMac.minutes)))
+    func theWatchStopsWithItsTask() async throws {
         let live = try live()
         try record(bytes: 1, modified: "a")
         let watch = Task { await live.run { _ in } }
-        // The first look pulls; then the watch waits NoteWatch.interval between looks. A loaded
-        // machine starts the fake inkctl slowly, so the bound is wide.
-        let deadline = ContinuousClock.now + .seconds(LoadedMac.minutes * 60)
-        while pullCount() == 0, ContinuousClock.now < deadline {
-            // timing-independent: waits on the pull, bounded, never on a time.
+        // The first look pulls; then the watch waits NoteWatch.interval between looks.
+        while pullCount() == 0 {
+            // A sleep, not a yield, since a spin takes the CPU the fake needs to start.
             try await Task.sleep(for: .milliseconds(10))
         }
         watch.cancel()
