@@ -121,6 +121,7 @@ import sys
 import tempfile
 import math
 import time
+import traceback
 import unicodedata
 import urllib.error
 import urllib.parse
@@ -135,30 +136,56 @@ from pathlib import Path
 # BEGIN registry: Written by scripts/registry.py from registry/ (#294); never edit it by hand.
 REGISTRY_VERSION = "2026.11.25"
 # Each item: id, level (docs/architecture.md › Layer rules), impact, owner, probe or None,
-# the reason it is unprobed or None, and the implementation that serves it.
+# the reason it is unprobed or None, the implementation that serves it, and its kill switch:
+# why and until when its module is off, or None when it is on (#293).
+# Every item of the registry, for the firmware watch (#293).
 REGISTRY_ITEMS = (
-    {"id": "calendar.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(calendar)", "unprobed": None, "active": "sn-adapter internals/calendar.ts"},
-    {"id": "calendar.sync-broadcast", "level": 3, "impact": "user", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync calendar"},
-    {"id": "handwriting.language-file", "level": 2, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a read of the folder's one file", "active": "handwriting-language LanguageFiles.java"},
-    {"id": "handwriting.changed-broadcast", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "sending it is the change itself", "active": "handwriting-language Switcher.java"},
-    {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new"},
-    {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl"},
-    {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
-    {"id": "pen.replay-route", "level": 1, "impact": "tests", "owner": "sn-adapter", "probe": None, "unprobed": "needs one real-pen recording; the effect test is Smart Pen's replay in the device round (#298)", "active": "sn-adapter official/penTape.ts"},
-    {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java"},
-    {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
-    {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "ink-tools-helper", "probe": "ink-tools-helper ping", "unprobed": None, "active": "ink-tools-helper HostCalls.java"},
-    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "ink-tools-helper", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "ink-tools-helper Command.java"},
-    {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
-    {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
-    {"id": "settings.plugin-detail-labels", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin allow and uninstall"},
-    {"id": "storage.sign-in-drop-folder", "level": 2, "impact": "user", "owner": "account-sync", "probe": None, "unprobed": "#293 adds a read of the folder", "active": "account-sync src/secretStore.ts"},
-    {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "ink-tools-probe", "probe": "inkctl helper", "unprobed": None, "active": "ink-tools-probe src/helper.ts"},
-    {"id": "system.device-identity", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl status", "unprobed": None, "active": "inkctl status"},
-    {"id": "system.firmware-page", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl firmware", "unprobed": None, "active": "inkctl firmware"},
-    {"id": "system.plugin-log-tag", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl logs", "unprobed": None, "active": "inkctl logs"},
-    {"id": "todo.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(todo)", "unprobed": None, "active": "sn-adapter internals/todo.ts"},
-    {"id": "todo.sync-trigger", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync tasks"},
+    {"id": "calendar.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(calendar)", "unprobed": None, "active": "sn-adapter internals/calendar.ts", "off": None},
+    {"id": "calendar.reading-rules", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "a row's visibility shows only on the screen; the effect test is the device round (#293 adds a read round-trip on a known row)", "active": "sn-adapter internals/calendar.ts", "off": None},
+    {"id": "calendar.sync-broadcast", "level": 3, "impact": "user", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync calendar", "off": None},
+    {"id": "diagnostics.provider-probes", "level": 2, "impact": "tests", "owner": "ink-tools-probe", "probe": "ink-tools-probe Run Probe", "unprobed": None, "active": "ink-tools-probe native ProbeTargets.java", "off": None},
+    {"id": "digest.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(digest)", "unprobed": None, "active": "sn-adapter internals/digest.ts", "off": None},
+    {"id": "handwriting.language-file", "level": 2, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a read of the folder's one file", "active": "handwriting-language LanguageFiles.java", "off": None},
+    {"id": "handwriting.changed-broadcast", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "sending it is the change itself", "active": "handwriting-language Switcher.java", "off": None},
+    {"id": "handwriting.writing-screens", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of each activity name", "active": "handwriting-language ButtonRule.java", "off": None},
+    {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new", "off": None},
+    {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl", "off": None},
+    {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install", "off": None},
+    {"id": "notefile.format-versions", "level": 2, "impact": "user", "owner": "ink-notebook-editor", "probe": None, "unprobed": "#293 adds a parse of a fixture note per firmware", "active": "ink-notebook-editor NoteFile.swift", "off": None},
+    {"id": "notefile.writer-byte-edit", "level": 5, "impact": "user", "owner": "ink-notebook-editor", "probe": None, "unprobed": "a written note is checked by opening it on the tablet", "active": "ink-notebook-editor NoteWriter.swift", "off": None},
+    {"id": "pen.digitizer-units", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "needs a pen stroke; the effect test is the Smart Pen device round", "active": "sn-adapter official/elements.ts", "off": None},
+    {"id": "pen.pen-types", "level": 5, "impact": "user", "owner": "smart-pen", "probe": None, "unprobed": "needs a pen stroke and a lasso; the effect test is the Smart Pen device round", "active": "smart-pen src/modules/shapes/guard.ts", "off": None},
+    {"id": "pen.replay-route", "level": 1, "impact": "tests", "owner": "sn-adapter", "probe": None, "unprobed": "needs one real-pen recording; the effect test is Smart Pen's replay in the device round (#298)", "active": "sn-adapter official/penTape.ts", "off": None},
+    {"id": "plugin-api.element-reads", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "a probe would have to hang the host to see the limit", "active": "sn-adapter official/elements.ts", "off": None},
+    {"id": "plugin-api.unregister-unknown-button", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "a probe would hang the plugin", "active": "sn-adapter official/buttons.ts", "off": None},
+    {"id": "plugin-api.pen-up-uuid", "level": 5, "impact": "user", "owner": "smart-pen", "probe": None, "unprobed": "needs a pen stroke; the effect test is the Smart Pen device round", "active": "smart-pen src/modules/text/device.ts", "off": None},
+    {"id": "plugin-api.crop-erase-elements", "level": 5, "impact": "user", "owner": "image-editing", "probe": None, "unprobed": "needs a picture on a note page; the effect test is the Image Editing device round", "active": "image-editing src/edit.ts", "off": None},
+    {"id": "plugin-api.inserted-picture-copy", "level": 5, "impact": "user", "owner": "image-editing", "probe": None, "unprobed": "needs a picture insert on a note page", "active": "image-editing src/edit.ts", "off": None},
+    {"id": "plugin-api.floating-insert", "level": 5, "impact": "user", "owner": "device-link", "probe": None, "unprobed": "needs a picture insert on a note page", "active": "device-link src/receive/receive.ts", "off": None},
+    {"id": "plugin-api.batch-no-redraw", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "needs a conversion on a note page; the effect test is the Smart Pen device round (#296)", "active": "sn-adapter official/elements.ts", "off": None},
+    {"id": "pluginhost.no-back-press", "level": 5, "impact": "user", "owner": "ui-kit", "probe": None, "unprobed": "needs a key press on the tablet", "active": "ui-kit src/backKey.ts", "off": None},
+    {"id": "pluginhost.overlay-back-key", "level": 5, "impact": "user", "owner": "image-editing", "probe": None, "unprobed": "needs a key press on the tablet", "active": "image-editing native BackKey.java", "off": None},
+    {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java", "off": None},
+    {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list", "off": None},
+    {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "ink-tools-helper", "probe": "ink-tools-helper ping", "unprobed": None, "active": "ink-tools-helper HostCalls.java", "off": None},
+    {"id": "pluginhost.call-numbers", "level": 5, "impact": "tests", "owner": "ink-tools-helper", "probe": "ink-tools-helper call-number check", "unprobed": None, "active": "ink-tools-helper HostCalls.java", "off": None},
+    {"id": "pluginhost.parcel-classes", "level": 3, "impact": "tests", "owner": "ink-tools-helper", "probe": "ink-tools-helper ping", "unprobed": None, "active": "ink-tools-helper HostClasses.java", "off": None},
+    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "ink-tools-helper", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "ink-tools-helper Command.java", "off": None},
+    {"id": "pluginhost.host-dialogs", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "a dialog waits for a press on the tablet; the effect test is the #296 device round", "active": "sn-adapter official/dialog.ts", "off": None},
+    {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java", "off": None},
+    {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install", "off": None},
+    {"id": "settings.plugin-detail-labels", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin allow and uninstall", "off": None},
+    {"id": "storage.cloud-conflict-folder", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "a conflict appears only after two devices sync", "active": "picture-search src/storage/settings.ts", "off": None},
+    {"id": "storage.sign-in-drop-folder", "level": 2, "impact": "user", "owner": "account-sync", "probe": None, "unprobed": "#293 adds a read of the folder", "active": "account-sync src/secretStore.ts", "off": None},
+    {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "ink-tools-probe", "probe": "inkctl helper", "unprobed": None, "active": "ink-tools-probe src/helper.ts", "off": None},
+    {"id": "system.device-identity", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl status", "unprobed": None, "active": "inkctl status", "off": None},
+    {"id": "system.firmware-page", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl firmware", "unprobed": None, "active": "inkctl firmware", "off": None},
+    {"id": "system.plugin-log-tag", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl logs", "unprobed": None, "active": "inkctl logs", "off": None},
+    {"id": "todo.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(todo)", "unprobed": None, "active": "sn-adapter internals/todo.ts", "off": None},
+    {"id": "todo.row-rules", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "a row's visibility shows only in the app; #293 adds a read round-trip on a known row", "active": "sn-adapter internals/rules.ts", "off": None},
+    {"id": "todo.twin-repair", "level": 5, "impact": "user", "owner": "account-sync", "probe": None, "unprobed": "a twin appears only after a cloud sync; the accepted risk is a real task soft-deleted, so the repair logs each removal", "active": "account-sync deviceStores.ts", "off": None},
+    {"id": "todo.sync-trigger", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync tasks", "off": None},
+    {"id": "ui.measured-tokens", "level": 5, "impact": "user", "owner": "ui-kit", "probe": None, "unprobed": "a look is checked by a side-by-side screenshot in a device round (#299)", "active": "ui-kit src/tokens.json", "off": None},
 )
 # Each item's values, by its id.
 REGISTRY = {
@@ -310,13 +337,14 @@ EXIT_CODES = """exit codes:
   7  the reference is stale: take a new snapshot
   8  the screen never settled, so no snapshot came back: try again
   9  a step found a screen it did not expect, and pressed nothing more
-  10 doctor found a call this command relies on missing from the device
+  10 doctor found a call this command relies on missing from the device, or firmware check a broken internal
   11 read-only mode refused a command that changes the device
   12 the notes folder or a note on the screen is protected: pass --allow-notes
   13 the firmware was refused: not newer, not from Ratta, or the battery is too low
   14 the Ink Tools Helper app is not on the device: install its APK (apps/ink-tools-helper)
 
 a failure in --json has the fields: error, message, cause, next
+(an internal_failure adds registry, the item, and log, every detail for an agent)
 
 each run adds one JSON line to ~/.cache/inkctl/history.jsonl, with the fields:
   time       when the run started, UTC
@@ -566,6 +594,7 @@ BRIDGE_USAGE = 3
 BRIDGE_TIMEOUT_RESULT = 5
 BRIDGE_ANSWER = re.compile(r'Broadcast completed: result=(-?\d+)(?:, data="(.*)")?')
 BRIDGE_CALL_TIMEOUT = 75  # the app waits up to 50 s for PluginHost's callback, under Android's 60 s
+BRIDGE_PROBE_PREFIX = "ink-tools-helper"  # a registry probe the Helper runs, by its name's first word
 BRIDGE_NEXT_STEP = "adb install the Ink Tools Helper APK (apps/ink-tools-helper), or use the screen route for an install"
 BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
 # What cleared the refused enable of 2026-11-17 (#228): an uninstall and an install loaded the
@@ -631,6 +660,10 @@ ROUTE_KINDS = {
 PROVIDER_SECTION = "ContentProvider Authorities:"
 ROUTE_MARK = "::route::"
 RATTA_PACKAGE_PREFIX = REGISTRY["system.device-identity"]["vendorPackagePrefix"]
+PROVIDERS_DUMP = "dumpsys package providers"  # every provider authority, read by doctor and the firmware watch
+BROADCASTS_DUMP = "dumpsys activity broadcasts"  # the receivers registered at run time
+FINGERPRINT_PROPERTY = "ro.build.fingerprint"  # Android's Build.FINGERPRINT, the firmware watch's first input (#293)
+PACKAGE_VERSION = re.compile(r"package:(?P<package>\S+) versionCode:(?P<code>\d+)")
 
 FIRMWARE_PAGE = REGISTRY["system.firmware-page"]["page"]
 FIRMWARE_HOST = REGISTRY["system.firmware-page"]["host"]
@@ -712,6 +745,7 @@ FAILURE_ADVICE = {
     "google_refused": ("Google's answer cannot sign Account Sync in", GOOGLE_LOGIN_STEP),
     "keychain_error": ("the login Keychain could not be read or written", GOOGLE_LOGIN_STEP),
     "api_refused": ("Todoist or Google refused the call: the stored token is revoked or lacks a scope", "inkctl secret status"),
+    "internal_failure": ("a firmware update may have changed a Supernote internal this command uses", "inkctl firmware check"),
 }
 
 
@@ -767,6 +801,68 @@ def unreachable(serial: str, evidence: str = "") -> Failure:
         f"{serial} does not answer. Is it on this Wi-Fi? After a restart, {USB_RESTORE}",
         extra={"state": "no_answer"},
     )
+
+
+# The person's sentence for each copy key of an InternalFailure (#294).
+INTERNAL_COPY = {
+    "languageNotSet": "The handwriting language did not change on the tablet. Run inkctl lang get to see the folder, then try again; restart the tablet if it keeps failing.",
+}
+UNREAD = "unread"  # what the log says for a fingerprint or an app version that could not be read
+
+
+class InternalFailure(Failure):
+    """The Python adapter's failure value for a Supernote internal (#294, docs/architecture.md › Layer
+    rules, «A failure reads as a sentence»), as sn-adapter's src/failure.ts defines it: the person
+    reads one sentence, chosen by a copy key from INTERNAL_COPY; the agent's log carries the registry
+    item, the method, the firmware fingerprint, the app versions and the whole cause chain."""
+
+    def __init__(self, item_id: str, method: str, copy_key: str, environment: dict, cause, code: int = EXIT_FAILED):
+        item = next((entry for entry in REGISTRY_ITEMS if entry["id"] == item_id), None)
+        if item is None:
+            raise ValueError(f"no registry item {item_id}")
+        sentence = INTERNAL_COPY.get(copy_key)
+        if not sentence:
+            raise ValueError(f"no copy for {copy_key}")
+        self.item, self.method, self.copy_key, self.environment, self.internal_cause = item, method, copy_key, environment, cause
+        log = self.agent_log()
+        super().__init__(code, "internal_failure", sentence, extra={"registry": item_id, "log": log}, text=log)
+
+    def agent_log(self) -> str:
+        """One header line of every field, then each cause with its stack, outermost first."""
+        apps = ",".join(f"{app}@{version}" for app, version in self.environment.get("apps", {}).items()) or UNREAD
+        header = " ".join((
+            f"registry={self.item['id']}", f"level={self.item['level']}", f"owner={self.item['owner']}",
+            f"active={self.item['active']}", f"method={self.method}",
+            f"firmware={self.environment.get('firmware') or UNREAD}", f"apps={apps}",
+        ))
+        return "\n".join([header, *(f"cause {entry}" for entry in cause_chain(self.internal_cause))])
+
+
+def cause_chain(cause) -> list[str]:
+    """Each exception of the chain, outermost first, as `Class: message` and its stack; a loop ends it.
+    A cause that is not an exception is one entry of its text."""
+    chain, seen = [], set()
+    while cause is not None and id(cause) not in seen:
+        seen.add(id(cause))
+        if not isinstance(cause, BaseException):
+            chain.append(f"{type(cause).__name__}: {cause}")
+            break
+        stack = "".join(traceback.format_tb(cause.__traceback__)).rstrip()
+        chain.append(f"{type(cause).__name__}: {cause}" + (f"\n{stack}" if stack else ""))
+        cause = cause.__cause__ or cause.__context__
+    return chain
+
+
+def device_environment(device) -> dict:
+    """The tablet's `Build.FINGERPRINT` and each vendor app's versionCode, in one shell call (#293, #294)."""
+    output = device.shell(f"getprop {FINGERPRINT_PROPERTY}; pm list packages --show-versioncode")
+    lines = output.splitlines()
+    firmware = lines[0].strip() if lines else ""
+    apps = {}
+    for match in map(PACKAGE_VERSION.fullmatch, (line.strip() for line in lines[1:])):
+        if match and match["package"].startswith(RATTA_PACKAGE_PREFIX):
+            apps[match["package"]] = int(match["code"])
+    return {"firmware": firmware, "apps": dict(sorted(apps.items()))}
 
 
 def not_found(what: str, next_step: str = "") -> Failure:
@@ -1459,7 +1555,152 @@ def model_of_board(board: str) -> str:
     return BOARD_MODELS.get(board, board)
 
 
+def environment_fingerprint(environment: dict) -> str:
+    """SHA-256 of `Build.FINGERPRINT`, each vendor app with its versionCode in name order, and the
+    registry's version (#293), the Helper's Watch.fingerprint text; versions are labels, never gates."""
+    lines = [f"firmware={environment['firmware']}", *(f"{app}={code}" for app, code in sorted(environment["apps"].items())),
+             f"registry={REGISTRY_VERSION}"]
+    return hashlib.sha256("\n".join(lines).encode()).hexdigest()
+
+
+def board_changed(device: Device):
+    board = device.shell(f"getprop {BOARD_PROPERTY}").strip()
+    return None if board in BOARD_MODELS else f"the board {board or '(empty)'} is none the registry names"
+
+
+def route_probe(kind: str, name: str, dynamic: bool = False):
+    """A probe over doctor's read-only check of one call: None when it holds; raises WatchUnknown when it cannot be seen now."""
+    def probe(device: Device, seen: dict):
+        exists = call_exists(device, {"kind": kind, "name": name, "dynamic": dynamic}, seen["providers"], seen["broadcasts"])
+        if exists is None:
+            raise WatchUnknown(f"the {kind} {name} registers only while its app runs; open the app and check again")
+        return None if exists else f"no {kind} {name} on this firmware"
+    return probe
+
+
+class WatchUnknown(Exception):
+    """A probe that cannot tell now: its item reads unprobed with this reason, never ok."""
+
+
+# inkctl's own probes, by registry item (#293): each only reads. The Helper probes the providers,
+# PluginHost's service, classes and call numbers on the tablet; the rest name their probe elsewhere.
+WATCH_PROBES = {
+    "note.activity": route_probe("activity", NOTE_ACTIVITY),
+    "calendar.sync-broadcast": route_probe("receiver", CALENDAR_SYNC_ACTION, dynamic=True),
+    "todo.sync-trigger": route_probe("provider", TASKS_URI),
+    "pluginhost.plugin-list": route_probe("provider", PLUGIN_URI),
+    "system.device-identity": lambda device, seen: board_changed(device),
+}
+WATCH_STATUSES = ("ok", "broken", "unprobed")
+WATCH_FOLDER = Path.home() / ".cache/inkctl/watch"  # one result file per environment fingerprint
+WATCH_LAST_FILE = WATCH_FOLDER / "last"  # the fingerprint inkctl last saw on connect
+WATCH_CARD_ID = "firmware-check"  # the Inbox card each run updates, by this stable id
+HELPER_WATCH_LINE = re.compile(r"watch (?P<fingerprint>[0-9a-f]+)(?P<items>.*)")
+
+
+def helper_watch(device: Device) -> tuple[dict, str]:
+    """The Helper's own results by item id, as {id: (status, detail)}, and why there are none."""
+    try:
+        code, answer = bridge_result(device, "watch", force=True)
+    except Failure as failure:
+        return {}, failure.message
+    match = HELPER_WATCH_LINE.fullmatch(answer.removeprefix("ok ").removeprefix("failed ").strip())
+    if code not in (BRIDGE_OK, BRIDGE_FAILED) or not match:
+        return {}, f"the Ink Tools Helper did not answer the watch ({BRIDGE_RESULTS.get(code, code)}): {answer or 'no answer'}; {BRIDGE_NEXT_STEP}"
+    results = {}
+    for entry in match["items"].split(" | ")[1:]:
+        item_id, _, rest = entry.partition(" ")
+        status, _, detail = rest.partition(" ")
+        if status in WATCH_STATUSES:
+            results[item_id] = (status, detail)
+    return results, ""
+
+
+def watch_results(device: Device) -> list[dict]:
+    """One result per registry item, in the registry's order: ok, broken with what changed, or
+    unprobed with its reason. A kill switch that is off, or an item with no safe probe, is never probed."""
+    seen = {"providers": device.shell(PROVIDERS_DUMP), "broadcasts": device.shell(BROADCASTS_DUMP)}
+    helper, helper_missing = helper_watch(device)
+    results = []
+    for item in REGISTRY_ITEMS:
+        probe = WATCH_PROBES.get(item["id"])
+        if item["off"]:
+            status, detail = "unprobed", f"turned off {item['off']}"
+        elif item["unprobed"]:
+            status, detail = "unprobed", item["unprobed"]
+        elif probe:
+            try:
+                changed = probe(device, seen)
+                status, detail = ("broken", changed) if changed else ("ok", "")
+            except WatchUnknown as unknown:
+                status, detail = "unprobed", str(unknown)
+            except Failure as failure:
+                status, detail = "broken", failure.message
+        elif item["id"] in helper:
+            status, detail = helper[item["id"]]
+        elif item["probe"].startswith(BRIDGE_PROBE_PREFIX) and helper_missing:
+            status, detail = "unprobed", helper_missing
+        else:
+            status, detail = "unprobed", f"probed by {item['probe']}"
+        results.append({"id": item["id"], "level": item["level"], "owner": item["owner"], "status": status, "detail": detail})
+    return results
+
+
+def firmware_check(device: Device) -> tuple[dict, str]:
+    """Every probe once: the table, its result file and the card object (#293)."""
+    environment = device_environment(device)
+    fingerprint = environment_fingerprint(environment)
+    results = watch_results(device)
+    broken = [result for result in results if result["status"] == "broken"]
+    card = {
+        "id": WATCH_CARD_ID,
+        "title": f"Firmware check: {len(broken)} of {len(results)} internals broken" if broken else f"Firmware check: nothing broken in {len(results)} internals",
+        "lines": [f"{result['id']} ({result['owner']}): {result['detail']}" for result in broken],
+    }
+    data = {
+        "fingerprint": fingerprint, "firmware": environment["firmware"], "apps": environment["apps"],
+        "registry": REGISTRY_VERSION, "items": results,
+        "counts": {status: sum(result["status"] == status for result in results) for status in WATCH_STATUSES},
+        "card": card,
+    }
+    WATCH_FOLDER.mkdir(parents=True, exist_ok=True)
+    (WATCH_FOLDER / f"{fingerprint}.json").write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n")
+    WATCH_LAST_FILE.write_text(fingerprint + "\n")
+    lines = [f"fingerprint: {fingerprint}", f"firmware: {environment['firmware']}"]
+    lines += [f"{result['id']}\t{result['level']}\t{result['status']}" + (f"\t{result['detail']}" if result["detail"] else "") for result in results]
+    return data, "\n".join(lines)
+
+
+def command_firmware_check(device: Device, args: argparse.Namespace):
+    data, text = firmware_check(device)
+    if data["counts"]["broken"]:
+        raise Failure(EXIT_CALL_MISSING, "missing_call", f"{data['counts']['broken']} internals are broken on this firmware", extra=data, text=text)
+    return data, text
+
+
+def watch_on_connect(device: Device) -> None:
+    """The fingerprint check on connect (#293): when the tablet's environment differs from the one
+    inkctl last saw, run every probe once and say so on stderr. The first sighting only records it;
+    a watch failure never stops the command that connected."""
+    try:
+        fingerprint = environment_fingerprint(device_environment(device))
+        last = WATCH_LAST_FILE.read_text().strip() if WATCH_LAST_FILE.is_file() else ""
+        if fingerprint == last:
+            return
+        if not last:
+            WATCH_FOLDER.mkdir(parents=True, exist_ok=True)
+            WATCH_LAST_FILE.write_text(fingerprint + "\n")
+            return
+        data, _ = firmware_check(device)
+        print(f"inkctl: the tablet changed since the last run; firmware check: {data['counts']['broken']} broken, "
+              f"{data['counts']['ok']} ok, {data['counts']['unprobed']} unprobed; details: inkctl firmware check", file=sys.stderr)
+    except (Failure, OSError) as error:
+        print(f"inkctl: the firmware check on connect did not run: {error}", file=sys.stderr)
+
+
 def command_firmware(device: Device, args: argparse.Namespace):
+    if args.action == "check":
+        return command_firmware_check(device, args)
     installed = args.installed or device.shell("getprop ro.build.display.id").strip()
     model = device_model(device)
     column = FIRMWARE_COLUMNS.get(model)
@@ -1598,8 +1839,8 @@ def command_routes(device: Device, args: argparse.Namespace):
 
 def command_doctor(device: Device, args: argparse.Namespace):
     firmware = device.shell("getprop ro.build.display.id").strip()
-    providers = device.shell("dumpsys package providers")
-    broadcasts = device.shell("dumpsys activity broadcasts")
+    providers = device.shell(PROVIDERS_DUMP)
+    broadcasts = device.shell(BROADCASTS_DUMP)
     calls = [
         {"kind": call["kind"], "name": call["name"], "exists": call_exists(device, call, providers, broadcasts)}
         for call in DIRECT_CALLS
@@ -1802,7 +2043,7 @@ def command_sync_tasks(device: Device, args: argparse.Namespace):
 
 def command_sync_calendar(device: Device, args: argparse.Namespace):
     """The Calendar app registers this receiver only while it runs, and an unheard broadcast still answers 0."""
-    if CALENDAR_SYNC_ACTION not in device.shell("dumpsys activity broadcasts"):
+    if CALENDAR_SYNC_ACTION not in device.shell(BROADCASTS_DUMP):
         raise Failure(EXIT_FAILED, "device_error", "the Calendar app is not running, so nothing would hear this; open it first", next_step="inkctl doctor")
     data = {"app": "calendar", **broadcast(device, CALENDAR_SYNC_ACTION)}
     return data, "sync asked: calendar"
@@ -1844,7 +2085,8 @@ def set_language(device: Device, state: dict, code: str) -> tuple[dict, str]:
     broadcast(device, LANGUAGE_CHANGED)
     after = read_languages(device)
     if after["files"] != [code]:
-        raise Failure(EXIT_FAILED, "device_error", f"the language folder holds {after['files']} after the switch, not [{code}]")
+        raise InternalFailure("handwriting.language-file", "setLanguage", "languageNotSet", device_environment(device),
+                              f"the language folder holds {after['files']} after the switch, not [{code}]")
     data = {**after, "before": state["language"]}
     return data, f"language: {state['language']} -> {code}"
 
@@ -2973,6 +3215,9 @@ def bridge_result(device: Device, op: str, **extras) -> tuple:
     """One ordered broadcast to the bridge app: its result code and answer text."""
     words = ["am", "broadcast", "-n", BRIDGE_RECEIVER, "-f", str(BRIDGE_INCLUDE_STOPPED), "--es", "op", op]
     for key, value in extras.items():
+        if isinstance(value, bool):
+            words += ["--ez", key, "true" if value else "false"]
+            continue
         words += ["--ei" if isinstance(value, int) else "--es", key, str(value)]
     output = device.shell(shlex.join(words), timeout=BRIDGE_CALL_TIMEOUT)
     match = BRIDGE_ANSWER.search(output)
@@ -4365,6 +4610,7 @@ def build_parser() -> argparse.ArgumentParser:
     add(commands, "doctor", command_doctor)
     add(commands, "routes", command_routes).add_argument("package", nargs="?", help="one package; default: every Ratta package")
     firmware = add(commands, "firmware", command_firmware)
+    firmware.add_argument("action", nargs="?", choices=("check",), help="check: run every registry probe once and print each item's status (#293)")
     firmware.add_argument("--download", action="store_true", help="download the newest firmware and copy it to EXPORT")
     firmware.add_argument("--overwrite", action="store_true", help="replace an earlier copy on the device")
     firmware.add_argument("--installed", metavar="X.Y.Z", help="the version Settings > About shows, because the device's build id holds none")
@@ -4640,6 +4886,8 @@ def main() -> int:
             device = open_device(args, log)
             if args.connects:
                 device.connect()
+                if args.handler is not command_firmware:
+                    watch_on_connect(device)
                 before = front_app(device)
         data, text = args.handler(device, args)
     except Failure as failure:

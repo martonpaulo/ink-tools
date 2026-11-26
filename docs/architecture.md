@@ -114,7 +114,8 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   and says so. One card per run lists what broke, updated by a stable id, and each run feeds a
   compatibility table per fingerprint. Recorded fixtures per fingerprint run in CI against the
   adapters. Built so far: the Helper's `watch` op and boot run (`apps/ink-tools-helper/AGENTS.md`
-  › The firmware watch) and the `off` field of the registry, whose review date fails the
+  › The firmware watch), `inkctl firmware check` and its fingerprint check on connect
+  (`cli/inkctl/README.md`), and the `off` field of the registry, whose review date fails the
   `registry` gate once passed. Prior art: [`research/2026-11-architecture-prior-art.md`](research/2026-11-architecture-prior-art.md).
 - **No fallback for a Supernote internal.** A broken internal stops its module and says so; it never
   takes a hidden second path. Outside services may keep a second source, such as the offline then
@@ -160,7 +161,8 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   versions, the exception's class and message, and the stack trace (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). In the TypeScript adapter it is `InternalFailure` of `sn-adapter`'s `src/failure.ts`: a registry
   item, the method, a copy key for the sentence, the firmware fingerprint, the app versions and the
   cause chain; in the Java adapter it is `InternalFailure.java`, which `scripts/registry.py` writes
-  beside the `Registry.java` of the Ink Tools Helper and of Handwriting Language
+  beside the `Registry.java` of the Ink Tools Helper and of Handwriting Language, and in the Python
+  adapter `InternalFailure` of `cli/inkctl/src/inkctl`
   ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
 - **No `URL` getter on the tablet.** React Native's `URL` throws on `protocol`, `host` and the
   rest, so tablet code parses with `parseUrl` of `sync-core`; the `url` rule of

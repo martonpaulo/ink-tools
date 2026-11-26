@@ -42,7 +42,7 @@ class Reader:
         # A Java reader with `failure` also gets the adapter's failure value, InternalFailure.java,
         # beside it: one text for every Java tool that reports a failed internal (#294).
         self.failure = failure
-        # A Java reader with `watch` lists every item in its table, for the firmware watch (#293);
+        # A Java or Python reader with `watch` lists every item in its table, for the firmware watch (#293);
         # its values stay those of the items its tools read.
         self.watch = watch
 
@@ -57,7 +57,7 @@ READERS = (
            ("ink-tools-helper",), package="com.martonpaulo.inktools.bridge", failure=True, watch=True),
     Reader("java", "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
            ("ink-tools-probe",), package="com.probe.providers"),
-    Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True),
+    Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True, watch=True),
     Reader("swift", "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift",
            ("ink-notebook-editor",)),
 )
@@ -287,13 +287,17 @@ def py_value(value):
     return quoted(value)
 
 
-def python(reader, version, items):
+def python(reader, version, items, table=None):
     lines = [BLOCK_START, "REGISTRY_VERSION = %s" % quoted(version),
              "# Each item: id, level (docs/architecture.md › Layer rules), impact, owner, probe or None,",
-             "# the reason it is unprobed or None, and the implementation that serves it.",
+             "# the reason it is unprobed or None, the implementation that serves it, and its kill switch:",
+             "# why and until when its module is off, or None when it is on (#293).",
+             "# %s" % ("Every item of the registry, for the firmware watch (#293)." if table is not None else "The items this tool reads."),
              "REGISTRY_ITEMS = ("]
-    for item in items:
-        lines.append("    {%s}," % ", ".join("%s: %s" % (quoted(name), cell) for name, cell in zip(FIELDS, cells(item, quoted, "None"))))
+    for item in (items if table is None else table):
+        off = off_text(item)
+        row = cells(item, quoted, "None") + ["None" if off is None else quoted(off)]
+        lines.append("    {%s}," % ", ".join("%s: %s" % (quoted(name), cell) for name, cell in zip(FIELDS + ("off",), row)))
     lines += [")", "# Each item's values, by its id.", "REGISTRY = {"]
     for item in items:
         values = values_of(item)

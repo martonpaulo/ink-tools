@@ -115,6 +115,11 @@ class RegistryTest(unittest.TestCase):
         self.assertNotIn("class TodoProvider", helper)
         lingo = (self.root / "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java").read_text()
         self.assertNotIn('new Item("todo.provider"', lingo)
+        inkctl = (self.root / "cli/inkctl/src/inkctl").read_text()
+        for area in registry.DESCRIPTOR_AREAS:
+            self.assertIn('{"id": "%s.provider"' % area, inkctl)
+        self.assertIn('"off": "until 2999-01-01: the To-Do columns changed"}', inkctl)
+        self.assertNotIn('"todo.provider": {', inkctl)
 
     def test_an_item_below_level_one_needs_a_reason(self):
         del self.areas["todo"][0]["reason"]

@@ -116,6 +116,9 @@ case "$1" in
                 for authority in com.ratta.supernote.task.provider com.ratta.supernote.pluginhost; do
                     grep -qF "$authority" "$ADB_FILES/gone" || printf '  [%s]:\n' "$authority"
                 done ;;
+            "getprop ro.build.fingerprint; pm list packages --show-versioncode")
+                cat "$ADB_FILES/fingerprint" 2>/dev/null || echo test/fingerprint:11/1
+                printf 'package:com.ratta.supernote.note versionCode:%s\npackage:com.example.two versionCode:3\n' "$(cat "$ADB_FILES/note-version" 2>/dev/null || echo 100)" ;;
             getprop*) printf 'Firmware.1\n%s\nPhysical size: 1920x2560\n  level: 93\n    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/model" 2>/dev/null)" "$(cat "$ADB_FILES/foreground")" ;;
             dumpsys*) printf '    mResumedActivity: ActivityRecord{fa2 u0 %s t1}\n' "$(cat "$ADB_FILES/foreground")" ;;
             "if [ "*)
@@ -130,6 +133,7 @@ case "$1" in
                 if [ -f "$ADB_FILES/lang-missing" ]; then echo "ls: x: No such file or directory" >&2; exit 1; fi
                 cat "$ADB_FILES/lang-default"; echo ::packs::; cat "$ADB_FILES/lang-packs" ;;
             "touch /storage/emulated/0/.data/dictionary"*)
+                [ -f "$ADB_FILES/lang-stuck" ] && exit 0
                 set -- $2
                 printf '%s\n' "${2##*/}" > "$ADB_FILES/lang-default" ;;  # the rm after && leaves only this file
             "find /storage/emulated/0/Note -name"*) cat "$ADB_FILES/notes-found" ;;
@@ -571,6 +575,48 @@ run doctor >/dev/null 2>&1
 check "doctor finds a missing activity" "$?" "10"
 : > "$files/gone"
 check "help lists the doctor exit code" "$(python3 -B "$script" --help | grep -c '10 doctor found')" "1"
+
+
+# The firmware watch (#293): every registry item once, ok, broken or unprobed.
+: > "$files/gone"
+printf 'com.ratta.supernote.calendar.notify.sync:\n' > "$files/broadcasts"
+echo "A5X2" > "$files/model"
+printf 'Broadcast completed: result=1, data="ok watch abc | calendar.provider ok | todo.provider ok | digest.provider ok | pluginhost.setting-service ok | pluginhost.parcel-classes ok | pluginhost.call-numbers broken stub numbers uninstallPlugin 4, not 5"\n' > "$files/bridge-answer"
+: > "$files/bridge-calls"
+result=$(run firmware check --json 2>/dev/null)
+check "firmware check stops with doctor's code when an item is broken" "$?" "10"
+check "firmware check lists every registry item once" "$(printf '%s' "$result" | expression "len(d['items']) == len({i['id'] for i in d['items']}) > 40")" "True"
+check "firmware check reads inkctl's own probes" "$(printf '%s' "$result" | expression "[i['status'] for i in d['items'] if i['id'] in ('note.activity', 'pluginhost.plugin-list', 'system.device-identity', 'calendar.sync-broadcast')]")" "['ok', 'ok', 'ok', 'ok']"
+check "firmware check takes the Helper's results, broken with what changed" "$(printf '%s' "$result" | expression "[(i['status'], i['detail']) for i in d['items'] if i['id'] == 'pluginhost.call-numbers']")" "[('broken', 'stub numbers uninstallPlugin 4, not 5')]"
+check "firmware check forces the Helper's watch" "$(grep -c -- '--es op watch --ez force true' "$files/bridge-calls")" "1"
+check "an item with no safe probe stays unprobed with its reason" "$(printf '%s' "$result" | expression "[i['status'] for i in d['items'] if i['id'] == 'note.screen-ids']")" "['unprobed']"
+check "an item probed elsewhere is unprobed, never ok" "$(printf '%s' "$result" | expression "[i['detail'] for i in d['items'] if i['id'] == 'system.firmware-page']")" "['probed by inkctl firmware']"
+check "firmware check gives one card with the broken items" "$(printf '%s' "$result" | field "['card']['id'],d['card']['lines']")" "('firmware-check', ['pluginhost.call-numbers (ink-tools-helper): stub numbers uninstallPlugin 4, not 5'])"
+fingerprint=$(printf '%s' "$result" | field "['fingerprint']")
+check "firmware check keeps its result per fingerprint" "$(field "['counts']['broken']" < "$work/home/.cache/inkctl/watch/$fingerprint.json")" "1"
+check "firmware check names the vendor apps only" "$(printf '%s' "$result" | field "['apps']")" "{'com.ratta.supernote.note': 100}"
+echo "$note_activity" > "$files/gone"
+printf 'Broadcast completed: result=1, data="ok watch abc | calendar.provider ok"\n' > "$files/bridge-answer"
+check "a gone activity reads broken" "$(run firmware check --json 2>/dev/null | expression "[(i['status'], i['detail']) for i in d['items'] if i['id'] == 'note.activity']")" "[('broken', 'no activity $note_activity on this firmware')]"
+echo 'com.ratta.supernote.calendar.notify.sync' > "$files/gone"
+: > "$files/broadcasts"
+rm -f "$files/bridge-answer"
+result=$(run firmware check --json)
+: > "$files/gone"
+check "an idle app's receiver is unprobed, not broken" "$(printf '%s' "$result" | expression "[i['status'] for i in d['items'] if i['id'] == 'calendar.sync-broadcast']")" "['unprobed']"
+check "without the Helper its items are unprobed with the install step" "$(printf '%s' "$result" | expression "[i['status'] for i in d['items'] if i['id'] == 'pluginhost.call-numbers'], 'Helper' in [i['detail'] for i in d['items'] if i['id'] == 'pluginhost.call-numbers'][0]")" "(['unprobed'], True)"
+run status >/dev/null 2>"$work/err"
+check "an unchanged tablet runs no check on connect" "$(called 'dumpsys package providers')$(grep -c 'firmware check' "$work/err")" "00"
+echo 101 > "$files/note-version"
+run status >/dev/null 2>"$work/err"
+check "a vendor app update runs the check once on connect" "$(called 'dumpsys package providers')$(grep -c 'the tablet changed since the last run' "$work/err")" "11"
+run status >/dev/null 2>"$work/err"
+check "the next connect finds it unchanged" "$(called 'dumpsys package providers')" "0"
+echo test/fingerprint:11/2 > "$files/fingerprint"
+run status >/dev/null 2>"$work/err"
+check "a firmware update runs the check on connect" "$(grep -c 'the tablet changed since the last run' "$work/err")" "1"
+rm -f "$files/fingerprint" "$files/note-version" "$files/bridge-answer" "$work/home/.cache/inkctl/watch/last"
+: > "$files/bridge-calls"
 
 # Notes.
 run note open "Note/A note.note" --page 3 >/dev/null
@@ -1299,10 +1345,11 @@ check "status says Wi-Fi ADB is on" "$(run status --json | field "['wifi_adb']")
 check "status names the Wi-Fi link" "$(run status --json | field "['link']")" "wifi"
 
 # The USB cable (#171): one authorized tablet on USB carries every call, with or without Wi-Fi.
+# Each connecting command makes 3 calls of its own and one for the firmware watch's fingerprint (#293).
 reset_device
 printf 'USB0001\tdevice\n' > "$files/usb"
 result=$(run status --json)
-check "one tablet on USB carries the calls" "$(printf '%s' "$result" | field "['link']")$(called '-s USB0001 shell')$(called "-s $serial")" "usb30"
+check "one tablet on USB carries the calls" "$(printf '%s' "$result" | field "['link']")$(called '-s USB0001 shell')$(called "-s $serial")" "usb40"
 check "the cable needs no adb connect" "$(called 'connect ')" "0"
 check "status over the cable asks whether Wi-Fi ADB is on" "$(printf '%s' "$result" | field "['wifi_adb']")" "off"
 check "the USB serial is masked in the log" "$(tail -1 "$history_file" | grep -c USB0001)" "0"
@@ -1310,15 +1357,15 @@ HOME="$work/empty" PATH="$work/bin:$PATH" ADB_LOG="$log" ADB_FILES="$files" pyth
 check "the cable works with no address recorded" "$?" "0"
 printf 'USB0001\tdevice\n%s\toffline\n' "$serial" > "$files/usb"
 run status >/dev/null
-check "an offline Wi-Fi device leaves the cable in use" "$?$(called '-s USB0001 shell')" "03"
+check "an offline Wi-Fi device leaves the cable in use" "$?$(called '-s USB0001 shell')" "04"
 result=$(run wifi off --json)
 check "wifi off over the cable closes the port and keeps the cable" "$(called '-s USB0001 usb')$(called "disconnect $serial")$(printf '%s' "$result" | field "['wifi_adb']")" "11off"
 printf 'USB0001\tdevice\nUSB0002\tdevice\n' > "$files/usb"
 run status >/dev/null
-check "two tablets on USB leave Wi-Fi in use" "$(called "-s $serial shell")$(called '-s USB0001 shell')" "30"
+check "two tablets on USB leave Wi-Fi in use" "$(called "-s $serial shell")$(called '-s USB0001 shell')" "40"
 printf 'USB0001\tunauthorized\n' > "$files/usb"
 run status >/dev/null
-check "an unauthorized cable leaves Wi-Fi in use" "$(called "-s $serial shell")" "3"
+check "an unauthorized cable leaves Wi-Fi in use" "$(called "-s $serial shell")" "4"
 reset_device
 check "help lists the read-only exit code" "$(python3 -B "$script" --help | grep -c '11 read-only')" "1"
 
@@ -1708,6 +1755,13 @@ check "an empty default folder reads as English" "$(run lang get --json | field 
 printf 'pt_BR\n' > "$files/lang-default"
 run lang set en_US --read-only >/dev/null 2>&1
 check "lang set is a change, refused in read-only mode" "$?$(called touch)" "110"
+touch "$files/lang-stuck"
+result=$(run lang set en_US --json 2>/dev/null)
+check "a switch the folder does not show is an internal failure" "$?$(printf '%s' "$result" | field "['error'],d['registry']")" "1('internal_failure', 'handwriting.language-file')"
+check "its log names the item, the method, the firmware and the vendor apps" "$(printf '%s' "$result" | expression "all(f in d['log'].splitlines()[0] for f in ('level=2', 'method=setLanguage', 'firmware=test/fingerprint:11/1', 'apps=com.ratta.supernote.note@100'))")" "True"
+check "its log carries the cause" "$(printf '%s' "$result" | expression "d['log'].splitlines()[1]")" "cause str: the language folder holds ['pt_BR'] after the switch, not [en_US]"
+check "the person reads one sentence with the next step" "$(printf '%s' "$result" | expression "d['message'].startswith('The handwriting language did not change') and 'registry' not in d['message']")" "True"
+rm -f "$files/lang-stuck"
 touch "$files/lang-missing"
 run lang get >/dev/null 2>&1
 check "a missing language folder stops with not found" "$?" "4"
@@ -1786,7 +1840,7 @@ check "a run names the app in front" "$(run history --json --limit 1 | field "['
 check "the log file is private" "$(python3 -c 'import os,sys; print(format(os.stat(sys.argv[1]).st_mode & 0o777, "o"))' "$history_file")" "600"
 run files ls "Note" >/dev/null
 check "a run names its command" "$(run history --json --limit 1 | field "['runs'][0]['command']")" "files ls"
-check "a call keeps its verb and timing" "$(run history --json --limit 1 | expression "[c['call'] for c in d['runs'][0]['calls']]")" "['devices', 'get-state', 'shell dumpsys', 'shell ls', 'shell dumpsys']"
+check "a call keeps its verb and timing" "$(run history --json --limit 1 | expression "[c['call'] for c in d['runs'][0]['calls']]")" "['devices', 'get-state', 'shell getprop', 'shell dumpsys', 'shell ls', 'shell dumpsys']"
 run note open "Note/A note.note" >/dev/null
 check "the log keeps no path" "$(grep -c 'A note' "$history_file")" "0"
 check "the log masks the address" "$(grep -c 'device-a' "$history_file")" "0"
