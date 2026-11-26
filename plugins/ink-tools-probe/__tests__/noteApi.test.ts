@@ -37,13 +37,13 @@ describe('renderPage saves the note first (#296)', () => {
       calls.push('save');
       return {success: true, result: true};
     });
-    await noteApi.renderPage(0, '/storage/emulated/0/MyStyle/Probe/page.png');
+    await noteApi.renderPage(0, '/storage/emulated/0/.data/plugin/inktools-probe/page.png');
     expect(calls).toEqual(['save', 'png']);
   });
 
   test('draws the page after a failed or thrown save, and logs it', async () => {
     (PluginNoteAPI.saveCurrentNote as jest.Mock).mockResolvedValue({success: false, error: {code: 904, message: 'busy'}});
-    await noteApi.renderPage(0, '/storage/emulated/0/MyStyle/Probe/page.png');
+    await noteApi.renderPage(0, '/storage/emulated/0/.data/plugin/inktools-probe/page.png');
     expect(calls).toEqual(['png']);
     const lines: string[] = [];
     const clock = [0, 12];

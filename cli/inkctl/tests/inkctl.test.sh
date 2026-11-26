@@ -71,8 +71,8 @@ case "$1" in
     push)
         case "$3" in
             */action.json) cp "$2" "$ADB_FILES/action.json"; printf '%s\n' "$3" > "$ADB_FILES/action-path"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
-            *MyStyle/Probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
-            *MyStyle/Probe/picture.*|*inktools-device-link/picture-*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size"; printf '%s\n' "$3" >> "$ADB_FILES/picture-paths" ;;
+            *inktools-probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
+            *inktools-probe/picture.*|*inktools-device-link/picture-*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size"; printf '%s\n' "$3" >> "$ADB_FILES/picture-paths" ;;
         esac ;;
     logcat)
         # A plugin action's answer and Probe's answer can both be in the log: a note switch saves
@@ -1616,18 +1616,18 @@ run note open "Note/A note.note" --page 0 >/dev/null 2>&1
 check "note open --page 0 is a usage error before any start" "$?$(called 'am start')" "20"
 # The tablet's PNG of a page and the test notebooks' inserts, through Probe (#261).
 helper_ready
-render="$root/MyStyle/Probe/page.png"
+render="$root/.data/plugin/inktools-probe/page.png"
 printf 'f %s\n' "$render" >> "$files/paths"
 printf 'PNG' > "$files/pull-content"
-answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png"}' > "$files/helper-answer"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/.data/plugin/inktools-probe/page.png"}' > "$files/helper-answer"
 result=$(run note png 2 "$work/local/page2.png" --json)
 check "note png asks Probe for the page, from 0, and pulls it" "$?$(command_field "d['op'], d['page']")$(printf '%s' "$result" | field "['page'],d['bytes']")$(cat "$work/local/page2.png")" "0('renderPage', 1)(2, 3)PNG"
 check "note png removes the tablet's copy" "$(grep -cxF "rm -f $render" "$files/removed")" "1"
-answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png","pictures":2}' > "$files/helper-answer"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/.data/plugin/inktools-probe/page.png","pictures":2}' > "$files/helper-answer"
 printf 'f %s\n' "$render" >> "$files/paths"
 run note png 2 "$work/local/page2b.png" >/dev/null 2>"$work/err"
 check "note png says the tablet's PNG leaves out the page's pictures (#263)" "$?$(grep -c 'leaves out the page.s 2 pictures;' "$work/err")" "01"
-answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/MyStyle/Probe/page.png","pictures":1}' > "$files/helper-answer"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"renderPage","ms":300,"page":1,"path":"/storage/emulated/0/.data/plugin/inktools-probe/page.png","pictures":1}' > "$files/helper-answer"
 printf 'f %s\n' "$render" >> "$files/paths"
 run note png 2 "$work/local/page2c.png" >/dev/null 2>"$work/err"
 check "note png names one picture in the singular, never «picture(s)» (#421)" "$?$(grep -c 'page.s 1 picture;' "$work/err")$(grep -c 'picture(s)' "$work/err")" "010"
@@ -1638,10 +1638,10 @@ run note png 2 "$work/local/page2.png" --overwrite >/dev/null
 check "note png --overwrite replaces it" "$?" "0"
 run note png 0 "$work/local/page0.png" >/dev/null 2>&1
 check "note png 0 is a usage error" "$?" "2"
-answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPicture","ms":90,"page":0,"path":"/storage/emulated/0/MyStyle/Probe/picture.png"}' > "$files/helper-answer"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPicture","ms":90,"page":0,"path":"/storage/emulated/0/.data/plugin/inktools-probe/picture.png"}' > "$files/helper-answer"
 printf 'picture' > "$work/local/square.png"
 run note insert-picture "$work/local/square.png" >/dev/null
-check "note insert-picture pushes the picture to Probe's folder and names it" "$?$(called "push $work/local/square.png $root/MyStyle/Probe/picture.png")$(command_field "d['op'], d['path']")" "01('insertPicture', '/storage/emulated/0/MyStyle/Probe/picture.png')"
+check "note insert-picture pushes the picture to Probe's folder and names it" "$?$(called "push $work/local/square.png $root/.data/plugin/inktools-probe/picture.png")$(command_field "d['op'], d['path']")" "01('insertPicture', '/storage/emulated/0/.data/plugin/inktools-probe/picture.png')"
 printf 'gif' > "$work/local/square.gif"
 run note insert-picture "$work/local/square.gif" >/dev/null 2>&1
 check "note insert-picture of a GIF is a usage error before any push" "$?$(called "square.gif")" "20"
@@ -1709,7 +1709,7 @@ check "plugin action presses nothing and reads no screen" "$(called 'input ')$(c
 check "plugin action in JSON answers the plugin's own answer" "$(run plugin action account-sync sync --json | field "['ok'],d['modules']")" "(True, ['todo'])"
 action_line 'ink-tools-probe ACTION_ID 1/2 {"ok":true,"action":"run-probe","ms":40,' > "$files/action-answer"
 action_line 'ink-tools-probe ACTION_ID 2/2 "line":"SNPROBE probe done","lines":["probe done"]}' >> "$files/action-answer"
-check "run-probe joins an answer in chunks, in MyStyle/Probe/" "$(run plugin action ink-tools-probe run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/MyStyle/Probe/action.json"
+check "run-probe joins an answer in chunks, in Probe's hidden folder" "$(run plugin action ink-tools-probe run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/.data/plugin/inktools-probe/action.json"
 action_line 'account-sync ACTION_ID 1/1 {"ok":true,"action":"sync","line":"another plugin"}' > "$files/action-answer"
 check "an answer of another plugin is not this one's, and no answer times out" "$(exit_and_pushes plugin action ink-tools-probe run-probe --timeout 0)" "61"
 action_line 'account-sync ACTION_ID 1/1 {"ok":false,"code":1,"message":"no module ran: none is on"}' > "$files/action-answer"

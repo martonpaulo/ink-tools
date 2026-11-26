@@ -64,6 +64,26 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
         });
   }
 
+  /**
+   * Issue #148, #22: removes the files older builds left in MyStyle/Probe, which Supernote Cloud
+   * syncs (ProbeLegacyFiles), and resolves with how many it removed; never rejects.
+   */
+  @ReactMethod
+  public void removeLegacyFiles(final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              promise.resolve(ProbeLegacyFiles.remove(new java.io.File(ProbeLegacyFiles.FOLDER)).size());
+            } catch (Throwable error) {
+              Log.w(TAG, "legacy files: " + ProbeFormat.oneLine(String.valueOf(error.getMessage())));
+              promise.resolve(0);
+            }
+          }
+        });
+  }
+
   /** Resolves with every line logged, in order. Never rejects: a failure is a result line. */
   @ReactMethod
   public void run(final Promise promise) {

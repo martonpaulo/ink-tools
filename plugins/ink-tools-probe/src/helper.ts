@@ -10,7 +10,10 @@ import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 /** Registry item storage.helper-channel, which inkctl reads too (#294). */
 const CHANNEL = REGISTRY.storageHelperChannel;
 
-/** The only folder a command may name a file in: inkctl's own folder (`MyStyle/Probe/`). */
+/**
+ * The only folder a command may name a file in: Probe's folder of the hidden `.data/plugin/`, which
+ * inkctl writes and Supernote Cloud does not sync; in `MyStyle/Probe/` every command uploaded (#148).
+ */
 export const PROBE_FOLDER = `${CHANNEL.folder}/`;
 /** Where inkctl pushes the command; `cli/inkctl/src/inkctl` reads the same registry item. */
 export const COMMAND_PATH = `${PROBE_FOLDER}${CHANNEL.commandFile}`;

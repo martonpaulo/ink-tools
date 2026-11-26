@@ -68,9 +68,9 @@ public final class Registry {
     private DigestProvider() {}
   }
 
-  /** Ink Tools Probe's helper channel: MyStyle/Probe/command.json and SNPROBE log lines (storage.helper-channel). */
+  /** Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/ and SNPROBE log lines (storage.helper-channel). */
   public static final class StorageHelperChannel {
-    public static final String FOLDER = "/storage/emulated/0/MyStyle/Probe";
+    public static final String FOLDER = "/storage/emulated/0/.data/plugin/inktools-probe";
     public static final String COMMAND_FILE = "command.json";
     public static final String ANSWER_MARK = "SNPROBE answer";
 

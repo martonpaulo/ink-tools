@@ -27,7 +27,7 @@ Check before you trust a result: run `npm run validate` (lint, typecheck, tests)
 
 `inkctl ink write`, `ink strokes`, `ink save`, `lasso rect`, `lasso last-insert`, `note open --page`
 and `fixture` push one JSON
-command to `MyStyle/Probe/command.json`, press «Run Command» in the open note, and read the answer
+command to `.data/plugin/inktools-probe/command.json`, press «Run Command» in the open note, and read the answer
 Probe logs as `SNPROBE answer <id> <n>/<count> <json>` under `ReactNativeJS`. `src/helper.ts` runs
 the command (`insertPageElements`, `lassoElements`, `getLastElement`, `getLassoElements`, `jumpToPage`,
 then `getCurrentPageNum` as proof, [#220](https://github.com/martonpaulo/ink-tools/issues/220)); the CLI

@@ -951,6 +951,22 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   [#148](https://github.com/martonpaulo/ink-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
   A plugin's `lassoElements(rect)` does lasso with no pen (see Plugins), so a helper plugin button
   is the route an agent has.
+- The helper route, timed through Probe's «Run Command» [measured, 2026-11-26, Manta, Ink Tools
+  Probe 0.0.2 beta 11, [#148](https://github.com/martonpaulo/ink-tools/issues/148)]:
+  - `inkctl ink write` of one word: 8 strokes, 289 points, `insertStrokes` 1136 ms, 14.3 s per command.
+  - `inkctl lasso last-insert`: `lassoLast` 202 ms, 10.7 s per command. `inkctl lasso rect` around
+    the written word: 8 trails lassoed in 149 ms, 11.0 s per command. Both show the lasso toolbar.
+  - `inkctl lasso rows` read 21 rows in 39.6 s; `inkctl lasso press` took 32.9 s the first time and
+    10.4 s the second.
+  - So most of a command's time is outside the plugin call: inkctl's push, press and log read.
+  - The rect goes through the plugin API, never through touch input, so the tool selected on the
+    toolbar does not matter: with the pen tool selected, `lasso rect` selected the text box under
+    the rect and drew no ink. No pen-tool refusal is needed.
+  - Recognition reads strokes a plugin inserted: «maçã» written by `ink write` read as «maga» with
+    the `en_US` recognition language and as «maçã» with `pt_BR`.
+  - A command file in `MyStyle/Probe/` was uploaded to Supernote Cloud within 2 s of each command;
+    the channel now lives in Probe's folder of the hidden `.data/plugin/`, and Probe removes its old
+    files from `MyStyle/Probe/` at start, with `FILE:DELETE` granted ([#22](https://github.com/martonpaulo/ink-tools/issues/22)).
 - Pen replay ([#298](https://github.com/martonpaulo/ink-tools/issues/298)): a stroke a plugin
   inserts with `insertPageElements` (as `inkctl ink write` does) raises no `event_pen_up`, so no
   conversion or shape starts from it [observed device behaviour, device rounds of

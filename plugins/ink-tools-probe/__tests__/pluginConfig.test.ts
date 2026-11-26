@@ -6,5 +6,7 @@ test('plugin config declares a generated id and no extra permission', () => {
     'plugin.permission.INTERNET',
     'plugin.permission.FILE:READ',
     'plugin.permission.FILE:WRITE',
+    // Removes the files older builds left in MyStyle/Probe at start (#148, docs/supernote.md › Plugins).
+    'plugin.permission.FILE:DELETE',
   ]);
 });

@@ -8,7 +8,7 @@ import {name as appName} from './app.json';
 import {registerProbe} from './src/register';
 import {createCommandRunner} from './src/command';
 import {noteApi} from './src/noteApi';
-import {readActionFile, runProbeAction} from './src/actions';
+import {readActionFile, removeLegacyFiles, runProbeAction} from './src/actions';
 import {nativeTimers, startActionChannel} from '@ink-tools/sn-adapter/actions';
 import {PluginManager} from 'sn-plugin-lib';
 
@@ -24,6 +24,9 @@ registerProbe(
 ).catch(error => {
   console.error(`Probe: ${error.message}`);
 });
+
+// Files older builds left in MyStyle/Probe, which Supernote Cloud syncs (#148, #22).
+removeLegacyFiles();
 
 // «Run Probe» by command from inkctl, with no screen (#283): `inkctl plugin action ink-tools-probe run-probe`.
 startActionChannel({

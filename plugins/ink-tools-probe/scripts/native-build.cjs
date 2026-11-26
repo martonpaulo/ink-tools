@@ -12,7 +12,7 @@ const adapter = require('../../../packages/sn-adapter/plugin-config');
 const root = path.resolve(__dirname, '..');
 /** The sn-adapter descriptor the native targets mirror (ProbeTargets.java). */
 const DESCRIPTOR = path.join(root, '../../packages/sn-adapter/src/internals/descriptor.json');
-const TESTED = ['ProbeTargets', 'ProbeFormat', 'ProbeListener', 'ProbeCommandFile', 'ProbeRevert'];
+const TESTED = ['ProbeTargets', 'ProbeFormat', 'ProbeListener', 'ProbeCommandFile', 'ProbeRevert', 'ProbeLegacyFiles'];
 
 module.exports = defineBuild(
   {

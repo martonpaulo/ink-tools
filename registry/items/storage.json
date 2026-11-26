@@ -62,7 +62,7 @@
     },
     {
       "id": "storage.helper-channel",
-      "title": "Ink Tools Probe's helper channel: MyStyle/Probe/command.json and SNPROBE log lines",
+      "title": "Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/ and SNPROBE log lines",
       "level": 2,
       "impact": "tests",
       "owner": "ink-tools-probe",
@@ -70,7 +70,7 @@
         "ink-tools-probe",
         "inkctl"
       ],
-      "reason": "the only file a plugin and the shell both reach is in the shared MyStyle folder",
+      "reason": "the hidden .data/plugin/ is where a plugin and the shell both reach a file that Supernote Cloud does not sync; in MyStyle/Probe each command was uploaded (#148)",
       "evidence": {
         "source": "plugins/ink-tools-probe/src/helper.ts (#148)",
         "date": "2026-11-16"
@@ -86,7 +86,7 @@
         148
       ],
       "values": {
-        "folder": "/storage/emulated/0/MyStyle/Probe",
+        "folder": "/storage/emulated/0/.data/plugin/inktools-probe",
         "commandFile": "command.json",
         "answerMark": "SNPROBE answer"
       }

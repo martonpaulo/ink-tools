@@ -98,7 +98,7 @@ export const REGISTRY = {
     folder: '/storage/emulated/0/.data/plugin/inktools-account-sync',
   },
   storageHelperChannel: {
-    folder: '/storage/emulated/0/MyStyle/Probe',
+    folder: '/storage/emulated/0/.data/plugin/inktools-probe',
     commandFile: 'command.json',
     answerMark: 'SNPROBE answer',
   },
