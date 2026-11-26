@@ -653,7 +653,6 @@
     "plugins/device-transfer/src/receive/receive.ts": 3,
     "plugins/device-transfer/src/run.ts": 3,
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": 3,
-    "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": 1,
     "plugins/image-editing/src/edits.ts": 2,
     "plugins/image-editing/src/working.ts": 1,
     "plugins/plugin-diagnostics/src/helper.ts": 4,

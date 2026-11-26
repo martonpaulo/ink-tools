@@ -49,6 +49,7 @@ public final class RetouchTest {
     eraseRefusesBadMarkEnds();
     inputStatsCountAlphaAndGrays();
     maskPictureIsBlackWhereKept();
+    pngWritesGrayAndRgbaThatDecodeBack();
     System.out.println("RetouchTest ok");
   }
 
@@ -791,6 +792,51 @@ public final class RetouchTest {
   private static void maskPictureIsBlackWhereKept() {
     Retouch.Picture mask = Retouch.maskPicture(new boolean[] {true, false}, 2, 1);
     check(mask.argb[0] == WHITE && mask.argb[1] == gray(0), "cleared is white, kept is black");
+  }
+
+  /** #145: Retouch's own PNG encoder, read back by the JDK's decoder, gives the same pixels. */
+  private static void pngWritesGrayAndRgbaThatDecodeBack() {
+    Retouch.Picture grays = new Retouch.Picture(new int[] {gray(0), gray(17), gray(136), WHITE,
+        gray(255), gray(68)}, 3, 2);
+    check(Png.colourType(grays) == Png.GRAY, "an opaque gray picture is written as gray");
+    checkRoundTrip(grays);
+    Retouch.Picture colour = new Retouch.Picture(new int[] {0xFFFF0000, 0x8000FF00, 0x00000000,
+        0x7F123456}, 2, 2);
+    check(Png.colourType(colour) == Png.RGBA, "colour or alpha is written as RGBA");
+    checkRoundTrip(colour);
+    Retouch.Picture photo = PhotoFixtures.apple();
+    Retouch.enhance(photo);
+    checkRoundTrip(photo);
+    checkRoundTrip(new Retouch.Picture(new int[] {0x80FFFFFF}, 1, 1));
+  }
+
+  private static void checkRoundTrip(Retouch.Picture picture) {
+    try {
+      java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+      Png.write(picture, bytes);
+      java.awt.image.BufferedImage read = javax.imageio.ImageIO.read(
+          new java.io.ByteArrayInputStream(bytes.toByteArray()));
+      check(read != null && read.getWidth() == picture.width && read.getHeight() == picture.height,
+          "the PNG decodes at its size");
+      // The raster's samples, as getRGB moves a gray image through a linear gray colour space.
+      java.awt.image.Raster raster = read.getRaster();
+      boolean gray = raster.getNumBands() == 1;
+      for (int y = 0; y < picture.height; y++) {
+        for (int x = 0; x < picture.width; x++) {
+          int want = picture.argb[y * picture.width + x];
+          int got = gray
+              ? gray(raster.getSample(x, y, 0))
+              : raster.getSample(x, y, 3) << 24 | raster.getSample(x, y, 0) << 16
+                  | raster.getSample(x, y, 1) << 8 | raster.getSample(x, y, 2);
+          // A clear pixel's colour is not kept by every decoder; its alpha is.
+          check(want >>> 24 == 0 ? got >>> 24 == 0 : got == want,
+              "pixel " + x + "," + y + " is " + Integer.toHexString(got) + ", not "
+                  + Integer.toHexString(want));
+        }
+      }
+    } catch (java.io.IOException error) {
+      throw new AssertionError("PNG round trip failed: " + error);
+    }
   }
 
   private static void check(boolean condition, String what) {

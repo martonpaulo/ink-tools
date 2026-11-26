@@ -93,7 +93,7 @@ public final class Retouch {
    */
   public static final int BACKGROUND_HULL_DRIFT = 24;
 
-  private static final int MAX = 255;
+  static final int MAX = 255;
   private static final int OPAQUE = 0xFF000000;
   /** Make sticker's opaque white card (#134). */
   private static final int WHITE = 0xFFFFFFFF;
@@ -247,23 +247,46 @@ public final class Retouch {
    * unchanged.
    */
   public static void sharpen(int[] gray, int width, int height, double amount) {
-    int[] source = new int[gray.length];
-    for (int i = 0; i < gray.length; i++) {
-      source[i] = gray[i] & MAX;
-    }
+    sharpen(gray, width, height, amount, null);
+  }
+
+  /**
+   * {@link #sharpen}, each result gray then mapped through `out` (256 greys, or null for none), in
+   * one pass (#145): the 3 x 3 sum is a column sum of three rows added across, so each pixel costs
+   * a few array reads, not nine clamped ones.
+   */
+  private static void sharpen(int[] gray, int width, int height, double amount, int[] out) {
+    int[] above = new int[width];
+    int[] row = new int[width];
+    int[] below = new int[width];
+    int[] column = new int[width];
+    readRow(gray, width, 0, row);
+    System.arraycopy(row, 0, above, 0, width);
     for (int y = 0; y < height; y++) {
+      readRow(gray, width, Math.min(height - 1, y + 1), below);
       for (int x = 0; x < width; x++) {
-        int sum = 0;
-        for (int dy = -1; dy <= 1; dy++) {
-          int row = Math.max(0, Math.min(height - 1, y + dy)) * width;
-          for (int dx = -1; dx <= 1; dx++) {
-            sum += source[row + Math.max(0, Math.min(width - 1, x + dx))];
-          }
-        }
-        int centre = source[y * width + x];
-        long value = Math.round(centre + amount * (centre - sum / 9.0));
-        gray[y * width + x] = grayPixel((int) Math.max(0, Math.min(MAX, value)));
+        column[x] = above[x] + row[x] + below[x];
       }
+      int base = y * width;
+      for (int x = 0; x < width; x++) {
+        int sum = column[x == 0 ? 0 : x - 1] + column[x] + column[x == width - 1 ? x : x + 1];
+        int centre = row[x];
+        long value = Math.round(centre + amount * (centre - sum / 9.0));
+        int g = value < 0 ? 0 : value > MAX ? MAX : (int) value;
+        gray[base + x] = grayPixel(out == null ? g : out[g]);
+      }
+      int[] spare = above;
+      above = row;
+      row = below;
+      below = spare;
+    }
+  }
+
+  /** Row `y`'s grays (the low byte of each pixel) into `into`. */
+  private static void readRow(int[] gray, int width, int y, int[] into) {
+    int base = y * width;
+    for (int x = 0; x < width; x++) {
+      into[x] = gray[base + x] & MAX;
     }
   }
 
@@ -276,24 +299,32 @@ public final class Retouch {
 
   /**
    * Enhance for e-ink, in place on `picture`, already at its output size: gray that keeps colour
-   * contrast, the gamma step, sharpen, then Ink2Pic's e-ink curve and its 16 greys.
+   * contrast, the gamma step, sharpen, then Ink2Pic's e-ink curve and its 16 greys. The curve and
+   * the greys are one table read in the sharpen's pass (#145), the same result as
+   * {@link EinkPixels#toEink} on its gray pixels.
    */
   public static void enhance(Picture picture) {
     Decolor.apply(picture.argb, picture.width, picture.height);
     applyTable(picture.argb, gammaTable(ENHANCE_GAMMA));
-    sharpen(picture.argb, picture.width, picture.height, SHARPEN_AMOUNT);
-    EinkPixels.toEink(picture.argb, true);
+    int[] eink = new int[MAX + 1];
+    for (int g = 0; g <= MAX; g++) {
+      eink[g] = EinkPixels.quantize(EinkPixels.contrast(g));
+    }
+    sharpen(picture.argb, picture.width, picture.height, SHARPEN_AMOUNT, eink);
   }
 
   /**
    * One Lighter or Darker step, in place: the picture is made gray first, as a picture that was
    * never enhanced may still be in colour, then one gamma step and the 16 greys. No contrast curve,
-   * so a repeated tap changes only the gamma.
+   * so a repeated tap changes only the gamma. The gamma and the greys are one table (#145).
    */
   public static void step(Picture picture, boolean lighter) {
     Decolor.apply(picture.argb, picture.width, picture.height);
-    applyTable(picture.argb, gammaTable(lighter ? GAMMA_STEP : 1 / GAMMA_STEP));
-    toGreys(picture.argb);
+    int[] table = gammaTable(lighter ? GAMMA_STEP : 1 / GAMMA_STEP);
+    for (int g = 0; g <= MAX; g++) {
+      table[g] = EinkPixels.quantize(table[g]);
+    }
+    applyTable(picture.argb, table);
   }
 
   /** The picture turned 90 degrees clockwise (#131): a new picture, its width and height swapped. */

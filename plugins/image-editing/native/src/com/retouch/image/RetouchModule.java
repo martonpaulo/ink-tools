@@ -16,6 +16,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.UIManagerHelper;
 import com.inktools.files.EinkPixels;
 import com.inktools.files.SafePaths;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.util.concurrent.RejectedExecutionException;
  */
 public final class RetouchModule extends ReactContextBaseJavaModule {
   /** PNG is lossless, so the encoder ignores its quality. */
-  private static final int PNG_QUALITY = 100;
   private static final double NANOS_PER_MS = 1e6;
   /** One edit at a time, off the React Native thread. */
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -235,6 +235,7 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     File source = roots.check(srcPath);
     File target = roots.check(destPath);
     Retouch.Picture preview = decode(source);
+    long decoded = System.nanoTime();
     Retouch.Picture picture = Retouch.cropCentre(preview, whole(width), whole(height));
     if (beforePath != null && !beforePath.isEmpty()) {
       write(picture, roots.check(beforePath));
@@ -280,13 +281,20 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     } else {
       picture = Retouch.apply(edit, picture);
     }
+    long edited = System.nanoTime();
     write(picture, target);
+    long end = System.nanoTime();
+    // #145: where a full-width edit's time goes, for the device round.
+    Log.i(TAG, "Retouch: " + editName + ": " + picture.width + "x" + picture.height
+        + " decode " + Math.round((decoded - start) / NANOS_PER_MS)
+        + " ms, edit " + Math.round((edited - decoded) / NANOS_PER_MS)
+        + " ms, write " + Math.round((end - edited) / NANOS_PER_MS) + " ms");
     WritableMap result = Arguments.createMap();
     result.putInt("width", picture.width);
     result.putInt("height", picture.height);
     result.putInt("left", box != null ? box[0] : 0);
     result.putInt("top", box != null ? box[1] : 0);
-    result.putDouble("ms", (System.nanoTime() - start) / NANOS_PER_MS);
+    result.putDouble("ms", (end - start) / NANOS_PER_MS);
     if (edit == Retouch.Edit.DOCUMENT) {
       result.putString("quad", Retouch.describeQuad(found[0]));
     }
@@ -378,17 +386,12 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
       throw new IOException("cannot create folder " + parent);
     }
-    Bitmap bitmap =
-        Bitmap.createBitmap(picture.argb, picture.width, picture.height, Bitmap.Config.ARGB_8888);
-    try (OutputStream output = new FileOutputStream(target)) {
-      if (!bitmap.compress(Bitmap.CompressFormat.PNG, PNG_QUALITY, output)) {
-        throw new SafePaths.Refused("ENCODE", "cannot encode PNG for " + target);
-      }
+    // Png, not Bitmap.compress: zlib's fastest level, gray when the picture is (#145).
+    try (OutputStream output = new BufferedOutputStream(new FileOutputStream(target))) {
+      Png.write(picture, output);
     } catch (Exception error) {
       target.delete();
       throw error;
-    } finally {
-      bitmap.recycle();
     }
   }
 }

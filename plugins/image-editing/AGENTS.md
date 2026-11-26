@@ -49,7 +49,9 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
 - Edit: `native/src/com/retouch/image/Retouch.java`, plain Java, tested on the JVM
   (`npm run test:native`). It reuses `Decolor` and `EinkPixels` from `../../packages/picture-search/native`.
 - Write: `modifyPageElements` with the lassoed element and the new `picture.picturePath`
-  (`src/edit.ts`).
+  (`src/edit.ts`). Each PNG is encoded by `native/src/com/retouch/image/Png.java`, zlib's fastest
+  level and gray for an opaque gray picture, not `Bitmap.compress` ([#145](https://github.com/martonpaulo/ink-tools/issues/145)); every edit logs its
+  decode, edit and write times under the `Retouch` log tag.
 - Undo and Restore original: `src/history.ts` keeps each picture's states as PNG files in the
   working folder, listed in `history.json`, found again by note, page and rect.
 - Working folder: `work/` in the private plugin folder (`getPluginDirPath`), which Supernote
