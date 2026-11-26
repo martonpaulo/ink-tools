@@ -167,15 +167,22 @@ private struct ToolCommands: View {
         tool(Copy.rectangularSelection, .rectangle)
         tool(Copy.lassoSelection, .lasso)
         Divider()
-        ForEach(SelectionChange.allCases, id: \.self) { change in
+        ForEach(SelectionChange.menu, id: \.self) { change in
             Button(change.title) {
                 guard let editor, let page = viewer?.selection.page else { return }
                 change.apply(to: selected, page: page, editor: editor)
             }
             .keyboardShortcut(change.shortcut)
-            .disabled(editor?.canEdit != true || selected.isEmpty)
+            .disabled(!can(change))
             .help(editor == nil ? Copy.editOnlyFromTablet : "")
         }
+    }
+
+    /// Whether `change` can start: a selection on a note from the tablet, no text box for a turn,
+    /// and no picture's change on its way to the page (#326).
+    private func can(_ change: SelectionChange) -> Bool {
+        guard let editor, editor.canEdit, let page = viewer?.selection.page, !selected.isEmpty else { return false }
+        return (!change.turns || SelectionChange.turns(selected)) && !editor.pictureWaiting(on: page)
     }
 
     /// The selected elements of the window in front.

@@ -641,6 +641,26 @@
         }
       }
     },
+    "Make Larger" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make Larger"
+          }
+        }
+      }
+    },
+    "Make Smaller" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make Smaller"
+          }
+        }
+      }
+    },
     "Make a Heading on the tablet, then copy the note again." : {
       "localizations" : {
         "en" : {
@@ -1081,86 +1101,6 @@
         }
       }
     },
-    "Resize from the bottom edge" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the bottom edge"
-          }
-        }
-      }
-    },
-    "Resize from the bottom left corner" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the bottom left corner"
-          }
-        }
-      }
-    },
-    "Resize from the bottom right corner" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the bottom right corner"
-          }
-        }
-      }
-    },
-    "Resize from the left edge" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the left edge"
-          }
-        }
-      }
-    },
-    "Resize from the right edge" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the right edge"
-          }
-        }
-      }
-    },
-    "Resize from the top edge" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the top edge"
-          }
-        }
-      }
-    },
-    "Resize from the top left corner" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the top left corner"
-          }
-        }
-      }
-    },
-    "Resize from the top right corner" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resize from the top right corner"
-          }
-        }
-      }
-    },
     "Restore" : {
       "localizations" : {
         "en" : {
@@ -1511,22 +1451,22 @@
         }
       }
     },
-    "The picture could not be made ready for the tablet. Nothing changed." : {
+    "The picture could not be prepared for the tablet, so nothing changed. Try again." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The picture could not be made ready for the tablet. Nothing changed."
+            "value" : "The picture could not be prepared for the tablet, so nothing changed. Try again."
           }
         }
       }
     },
-    "The selection does not fit on the page once turned." : {
+    "The selection does not fit on the page after this change. Nothing changed." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The selection does not fit on the page once turned."
+            "value" : "The selection does not fit on the page after this change. Nothing changed."
           }
         }
       }

@@ -391,12 +391,17 @@ final class NoteEditor {
     /// place and deletes the old one, which renumbers the page's elements, so no element change of
     /// the page starts until it is applied. The refusal bar says so.
     private func pictureOnItsWay(_ page: Int) -> Bool {
-        let waiting = pending.contains { waiting in
+        let waiting = pictureWaiting(on: page)
+        if waiting { refusal = Copy.pictureOnItsWay }
+        return waiting
+    }
+
+    /// Whether a picture's change is on its way to `page`, for the menu items it holds back.
+    func pictureWaiting(on page: Int) -> Bool {
+        pending.contains { waiting in
             guard case .transformElements(let transform) = waiting.edit else { return false }
             return transform.page == page && transform.elements.contains(where: \.isPicture)
         }
-        if waiting { refusal = Copy.pictureOnItsWay }
-        return waiting
     }
 
     /// A move as the transform that shifts its elements by its offset.

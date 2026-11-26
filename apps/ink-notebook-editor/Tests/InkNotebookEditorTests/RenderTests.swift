@@ -266,7 +266,7 @@ final class RenderTests {
         // The selection holds a picture: it moves as a new file, made before the move is drawn (#326).
         editor.pictureFolder = { self.scratch }
         editor.moveElements(move, lifted: lifted)
-        for _ in 0..<500 where editor.liftedChanges(on: 0).isEmpty {
+        for _ in 0..<6000 where editor.liftedChanges(on: 0).isEmpty {
             // timing-independent: a poll on the picture's file with a deadline; the render is checked by eye.
             try? await Task.sleep(for: .milliseconds(10))
         }

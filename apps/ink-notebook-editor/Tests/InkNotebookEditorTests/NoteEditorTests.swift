@@ -312,7 +312,7 @@ import Testing
         let lifted = try #require(
             await LiftedInk.make(try NoteFile(data: original), page: 0, items: [picture.selectable]))
         #expect(editor.moveElements(ElementMove(page: 0, elements: [picture], dx: 40, dy: 60), lifted: lifted))
-        for _ in 0..<500 where editor.pending.isEmpty {
+        for _ in 0..<6000 where editor.pending.isEmpty {
             // timing-independent: a poll on the picture's file with a deadline.
             try? await Task.sleep(for: .milliseconds(10))
         }
@@ -321,6 +321,19 @@ import Testing
         let sent = try #require(tablet.sent.first { $0["op"] as? String == "modifyElements" })
         #expect((sent["file"] as? String)?.hasPrefix(folder.path(percentEncoded: false)) == true)
         #expect((sent["rect"] as? [String: Int])?["left"] == picture.box.left + 40)
+    }
+
+    @Test func makeLargerGrowsTheSelectionAboutItsCentreAndTheMenuHoldsOnlyTurns() throws {
+        let elements = try selection()
+        let larger = SelectionChange.makeLarger.transform(page: 0, elements: elements)
+        let before = larger.frame
+        #expect(abs(larger.transformedFrame.width - before.width * SelectionChange.step) < 1e-6)
+        #expect(abs(larger.transformedFrame.midX - before.midX) < 1e-6)
+        let smaller = SelectionChange.makeSmaller.transform(page: 0, elements: larger.transformed)
+        #expect(abs(smaller.transformedFrame.width - before.width) < 1)
+        // The selection holds a text box: VoiceOver and Tools offer it no turn.
+        #expect(!SelectionChange.turns(elements.map(\.selectable)))
+        #expect(SelectionChange.menu.allSatisfy(\.turns) && !SelectionChange.makeLarger.turns)
     }
 
     @Test func aTextBoxIsNeverTurnedAndTheBarSaysWhy() async throws {

@@ -55,6 +55,8 @@ struct SelectionLayer: View {
         let current = (live?.transformed ?? elements).map(\.selectable)
         let shift = offset()
         let editable = editor?.canEdit == true && !items.isEmpty
+        // A text box only resizes: the tablet keeps it upright.
+        let turnable = editable && SelectionChange.turns(items)
         Canvas { context, _ in
             let accent = GraphicsContext.Shading.color(.accentColor)
             // Each selection's changes on their way, the one under the pointer last: the template
@@ -84,11 +86,12 @@ struct SelectionLayer: View {
             }
             if let box = frame(current) {
                 context.stroke(Path(box), with: accent, style: StrokeStyle(lineWidth: 1, dash: Self.dash))
-                if editable {
-                    // The rotation knob, joined to the middle of the top edge (#326).
+                if turnable {
+                    // The rotation knob, joined to the middle of the top edge, or of the bottom
+                    // edge when the page has no room above (#326).
                     let knob = Self.knobPoint(of: box)
                     var stem = Path()
-                    stem.move(to: CGPoint(x: box.midX, y: box.minY))
+                    stem.move(to: CGPoint(x: box.midX, y: knob.y < box.minY ? box.minY : box.maxY))
                     stem.addLine(to: knob)
                     context.stroke(stem, with: accent, lineWidth: 1)
                     let circle = Path(
@@ -147,7 +150,7 @@ struct SelectionLayer: View {
                 }
             }
             if let editor, editable, let box = frame(current) {
-                handles(box, items: items, elements: elements, editor: editor)
+                handles(box, items: items, elements: elements, editor: editor, turnable: turnable)
             }
         }
         .coordinateSpace(.named(Self.space))
@@ -159,7 +162,7 @@ struct SelectionLayer: View {
         .accessibilityHidden(items.isEmpty)
         .accessibilityActions {
             if let editor, editable {
-                ForEach(SelectionChange.allCases, id: \.self) { change in
+                ForEach(SelectionChange.allCases.filter { !$0.turns || turnable }, id: \.self) { change in
                     Button(change.title) { change.apply(to: items, page: index, editor: editor) }
                 }
             }
@@ -184,8 +187,9 @@ struct SelectionLayer: View {
     }
 
     /// The eight resize handles and the rotation knob of the frame `box`, on screen (#326).
+    /// VoiceOver reaches them as the selection's actions: Make Larger and Smaller, Rotate, Flip.
     private func handles(
-        _ box: CGRect, items: [Selectable], elements: [MovedElement], editor: NoteEditor
+        _ box: CGRect, items: [Selectable], elements: [MovedElement], editor: NoteEditor, turnable: Bool
     ) -> some View {
         Group {
             ForEach(ResizeHandle.allCases, id: \.self) { handle in
@@ -194,17 +198,20 @@ struct SelectionLayer: View {
                     .contentShape(.rect)
                     .frame(width: 2 * Self.handle, height: 2 * Self.handle)
                     .offset(x: at.x - Self.handle, y: at.y - Self.handle)
+                    .pointerStyle(.frameResize(position: handle.position))
                     .gesture(resize(handle, items: items, elements: elements, editor: editor))
-                    .accessibilityLabel(Copy.resizeHandle(handle))
             }
-            let knob = Self.knobPoint(of: box)
-            Color.clear
-                .contentShape(.rect)
-                .frame(width: 2 * Self.handle, height: 2 * Self.handle)
-                .offset(x: knob.x - Self.handle, y: knob.y - Self.handle)
-                .gesture(rotate(items: items, elements: elements, editor: editor))
-                .accessibilityLabel(Copy.rotateFreely)
+            if turnable {
+                let knob = Self.knobPoint(of: box)
+                Color.clear
+                    .contentShape(.rect)
+                    .frame(width: 2 * Self.handle, height: 2 * Self.handle)
+                    .offset(x: knob.x - Self.handle, y: knob.y - Self.handle)
+                    .pointerStyle(.grabIdle)
+                    .gesture(rotate(items: items, elements: elements, editor: editor))
+            }
         }
+        .accessibilityHidden(true)
     }
 
     /// A drag on a handle: the frame follows the pointer, the opposite side staying, Shift keeping
@@ -304,10 +311,16 @@ struct SelectionLayer: View {
         CGSize(width: CGFloat(dragged?.dx ?? 0) / pixels, height: CGFloat(dragged?.dy ?? 0) / pixels)
     }
 
-    /// The frame around the selected `items` on screen, its handles on its edge, or `nil`.
+    /// The frame around the selected `items` on screen, its handles on its edge, or `nil`; kept
+    /// inside the page by half a handle, so a selection at its edge shows every handle.
     private func frame(_ items: [Selectable]) -> CGRect? {
-        items.map(\.bounds).reduce(nil) { ($0 ?? $1).union($1) }
+        let page = CGRect(origin: .zero, size: size).insetBy(dx: Self.handle / 2, dy: Self.handle / 2)
+        return items.map(\.bounds).reduce(nil) { ($0 ?? $1).union($1) }
             .map { points($0).insetBy(dx: -Self.handle, dy: -Self.handle) }
+            .map { box in
+                let kept = box.intersection(page)
+                return kept.isNull ? box : kept
+            }
     }
 
     /// Ends a click or a drag: the elements it found replace the selection, or with Shift add to
@@ -380,19 +393,36 @@ struct SelectionLayer: View {
         return CGPoint(x: x, y: y)
     }
 
-    /// Where the rotation knob sits above `box`.
+    /// Where the rotation knob sits: above `box`, or below it when the page has no room above.
     static func knobPoint(of box: CGRect) -> CGPoint {
-        CGPoint(x: box.midX, y: box.minY - knob)
+        box.minY - knob >= handle
+            ? CGPoint(x: box.midX, y: box.minY - knob) : CGPoint(x: box.midX, y: box.maxY + knob)
     }
 }
 
 /// Rotate Left and Right and Flip Horizontal and Vertical of a selection, from the Tools menu and
 /// VoiceOver's actions, as Preview's Tools menu names them (#326).
 enum SelectionChange: CaseIterable {
-    case rotateLeft, rotateRight, flipHorizontal, flipVertical
+    case rotateLeft, rotateRight, flipHorizontal, flipVertical, makeLarger, makeSmaller
+
+    /// The changes Tools holds; Make Larger and Smaller are VoiceOver's way to resize.
+    static let menu: [SelectionChange] = [.rotateLeft, .rotateRight, .flipHorizontal, .flipVertical]
+
+    /// The share Make Larger grows the selection by, and Make Smaller undoes.
+    static let step = 1.25
+
+    /// Whether the change turns or mirrors the selection, which a text box refuses.
+    var turns: Bool { self != .makeLarger && self != .makeSmaller }
+
+    /// Whether `items` can be turned: they hold no text box.
+    static func turns(_ items: [Selectable]) -> Bool {
+        !items.contains { $0.isArea && !$0.isPicture }
+    }
 
     var title: String {
         switch self {
+        case .makeLarger: Copy.makeLarger
+        case .makeSmaller: Copy.makeSmaller
         case .rotateLeft: Copy.rotateLeft
         case .rotateRight: Copy.rotateRight
         case .flipHorizontal: Copy.flipHorizontal
@@ -405,7 +435,7 @@ enum SelectionChange: CaseIterable {
         switch self {
         case .rotateLeft: KeyboardShortcut("l")
         case .rotateRight: KeyboardShortcut("r")
-        case .flipHorizontal, .flipVertical: nil
+        case .flipHorizontal, .flipVertical, .makeLarger, .makeSmaller: nil
         }
     }
 
@@ -415,12 +445,40 @@ enum SelectionChange: CaseIterable {
         case .rotateRight: .quarterTurn(page: page, elements: elements, clockwise: true)
         case .flipHorizontal: .flip(page: page, elements: elements, horizontal: true)
         case .flipVertical: .flip(page: page, elements: elements, horizontal: false)
+        case .makeLarger, .makeSmaller:
+            .resize(
+                page: page, elements: elements,
+                to: Self.scaled(elements, by: self == .makeLarger ? Self.step : 1 / Self.step))
         }
+    }
+
+    /// The selection's frame grown by `share` about its centre.
+    static func scaled(_ elements: [MovedElement], by share: Double) -> CGRect {
+        let frame = ElementTransform(page: 0, elements: elements, matrix: .identity).frame
+        let width = frame.width * share
+        let height = frame.height * share
+        return CGRect(x: frame.midX - width / 2, y: frame.midY - height / 2, width: width, height: height)
     }
 
     /// Changes the selected `items` of `page`, drawn at once and sent in the background.
     @MainActor
     func apply(to items: [Selectable], page: Int, editor: NoteEditor) {
         Task { await editor.transform(items, page: page) { transform(page: page, elements: $0) } }
+    }
+}
+
+extension ResizeHandle {
+    /// The pointer a handle shows, as a window's edges and corners show it.
+    var position: FrameResizePosition {
+        switch self {
+        case .topLeft: .topLeading
+        case .top: .top
+        case .topRight: .topTrailing
+        case .right: .trailing
+        case .bottomRight: .bottomTrailing
+        case .bottom: .bottom
+        case .bottomLeft: .bottomLeading
+        case .left: .leading
+        }
     }
 }
