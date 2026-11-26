@@ -21,6 +21,7 @@ import {
   generateWordSearch,
   layoutPage,
   puzzleCode,
+  renderBoardPage,
   type PageLayout,
   type Raster,
 } from '../src';
@@ -92,4 +93,7 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
     return r;
   }],
+  ['board-dots-and-boxes', () => renderBoardPage('dots-and-boxes')],
+  ['board-gomoku', () => renderBoardPage('gomoku', { hand: 'left' })],
+  ['board-ultimate-tic-tac-toe', () => renderBoardPage('ultimate-tic-tac-toe', { orientation: 'landscape' })],
 ];
