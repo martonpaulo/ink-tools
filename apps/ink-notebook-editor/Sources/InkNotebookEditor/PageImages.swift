@@ -6,8 +6,8 @@ import Observation
 import os
 
 /// The drawn pages of one open notebook. Pages decode off the main actor; the window keeps a
-/// thumbnail of every page it has shown and the full raster of only the last few pages, since one
-/// full page is several megabytes.
+/// thumbnail of every page it has shown, per thumbnail size, and the full raster of only the pages
+/// in view and their neighbours, since one full page is several megabytes.
 @Observable
 final class PageImages {
     enum State {
@@ -16,17 +16,28 @@ final class PageImages {
         case failed(String)
     }
 
-    /// The thumbnail box of the page list, in points.
-    static let thumbnailBox = CGSize(width: 112, height: 150)
-    /// How many full pages stay drawn: the current one and its neighbours.
-    static let keptPages = 3
+    /// The two places a page shows small: the page list and the grid of every page (#319).
+    enum ThumbnailSize: CaseIterable {
+        case sidebar, grid
+
+        /// The page list's thumbnail box, and the grid's, in points.
+        static let sidebarBox = CGSize(width: 112, height: 150)
+        static let gridBox = CGSize(width: 180, height: 240)
+
+        /// The box the thumbnail fits in, in points.
+        var box: CGSize {
+            switch self {
+            case .sidebar: Self.sidebarBox
+            case .grid: Self.gridBox
+            }
+        }
+    }
 
     let note: NoteFile
     private(set) var pages: [Int: State] = [:]
-    private(set) var thumbnails: [Int: State] = [:]
+    private(set) var thumbnails: [ThumbnailSize: [Int: State]] = [:]
     /// The style of each drawn page whose template could not be drawn (#308).
     private(set) var missingTemplates: [Int: String] = [:]
-    @ObservationIgnored private var recent: [Int] = []
     private let logger = Logger(subsystem: "com.martonpaulo.inktools.notebookeditor", category: "pages")
 
     init(note: NoteFile) {
@@ -41,35 +52,41 @@ final class PageImages {
     }
 
     func page(_ index: Int) -> State { pages[index] ?? .loading }
-    func thumbnail(_ index: Int) -> State { thumbnails[index] ?? .loading }
+    func thumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar) -> State { thumbnails[size]?[index] ?? .loading }
 
     /// Draws one page at full size, unless it is drawn or being drawn.
     func loadPage(_ index: Int) async {
-        touch(index)
         guard pages[index] == nil else { return }
         pages[index] = .loading
         let (state, missing) = await Self.draw(note, index, thumbnailPixels: nil, logger: logger)
+        // A page scrolled away while it drew is not kept.
+        guard pages[index] != nil else { return }
         pages[index] = state
         missingTemplates[index] = missing
     }
 
-    /// Draws one thumbnail, as many pixels as the box shows on a display of `scale`.
-    func loadThumbnail(_ index: Int, scale: CGFloat) async {
-        guard thumbnails[index] == nil else { return }
-        thumbnails[index] = .loading
-        let points = PageFit.fitted(page: size(of: index), in: Self.thumbnailBox)
-        let pixels = PageFit.pixels(for: points, scale: scale)
-        let (state, missing) = await Self.draw(note, index, thumbnailPixels: pixels, logger: logger)
-        thumbnails[index] = state
-        missingTemplates[index] = missing
+    /// Draws the pages in `visible` and one page on each side, and drops every other page's full
+    /// raster. A page on screen is never dropped, however many show at the smallest zoom (#319).
+    func show(_ visible: Set<Int>) async {
+        guard let first = visible.min(), let last = visible.max() else { return }
+        let kept = max(first - 1, 0)...min(last + 1, note.pages.count - 1)
+        for index in pages.keys where !kept.contains(index) {
+            pages[index] = nil
+        }
+        for index in visible.sorted() + [first - 1, last + 1] where kept.contains(index) {
+            await loadPage(index)
+        }
     }
 
-    private func touch(_ index: Int) {
-        recent.removeAll { $0 == index }
-        recent.append(index)
-        while recent.count > Self.keptPages {
-            pages[recent.removeFirst()] = nil
-        }
+    /// Draws one thumbnail, as many pixels as its box shows on a display of `scale`.
+    func loadThumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar, scale: CGFloat) async {
+        guard thumbnails[size]?[index] == nil else { return }
+        thumbnails[size, default: [:]][index] = .loading
+        let points = PageFit.fitted(page: self.size(of: index), in: size.box)
+        let pixels = PageFit.pixels(for: points, scale: scale)
+        let (state, missing) = await Self.draw(note, index, thumbnailPixels: pixels, logger: logger)
+        thumbnails[size, default: [:]][index] = state
+        missingTemplates[index] = missing
     }
 
     @concurrent

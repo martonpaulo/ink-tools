@@ -156,3 +156,102 @@ import Testing
                 == .notConnected("no tablet"))
     }
 }
+
+@Suite struct PageZoomTests {
+    static let portrait = CGSize(width: 1404, height: 1872)
+    static let landscape = CGSize(width: 1872, height: 1404)
+    static let viewport = CGSize(width: 900, height: 600)
+
+    @Test func zoomToFitShowsTheWholePageByItsOwnAspect() {
+        #expect(
+            PageZoom.fitPage.size(of: Self.portrait, in: Self.viewport, scale: 2) == CGSize(width: 450, height: 600))
+        #expect(
+            PageZoom.fitPage.size(of: Self.landscape, in: Self.viewport, scale: 2) == CGSize(width: 800, height: 600))
+    }
+
+    @Test func zoomToWidthFillsTheWidthWhateverTheHeight() {
+        #expect(
+            PageZoom.fitWidth.size(of: Self.portrait, in: Self.viewport, scale: 1) == CGSize(width: 900, height: 1200))
+        #expect(
+            PageZoom.fitWidth.size(of: Self.landscape, in: Self.viewport, scale: 1) == CGSize(width: 900, height: 675))
+    }
+
+    @Test(arguments: [1.0, 2.0])
+    func actualSizeDrawsOnePagePixelPerDisplayPixel(scale: CGFloat) {
+        let size = PageZoom.magnification(1).size(of: Self.portrait, in: Self.viewport, scale: scale)
+        #expect(size.width * scale == Self.portrait.width && size.height * scale == Self.portrait.height)
+    }
+
+    @Test func zoomInAndOutStepFromTheShownMagnification() {
+        // Zoom to Fit shows a 1872-pixel page in 600 points at 2x: a magnification of 0.64.
+        let fit = PageZoom.fitPage
+        #expect(fit.zoomedIn(page: Self.portrait, viewport: Self.viewport, scale: 2) == .magnification(0.67))
+        #expect(fit.zoomedOut(page: Self.portrait, viewport: Self.viewport, scale: 2) == .magnification(0.5))
+        let one = PageZoom.magnification(1)
+        #expect(one.zoomedIn(page: Self.portrait, viewport: Self.viewport, scale: 1) == .magnification(1.25))
+        #expect(one.zoomedOut(page: Self.portrait, viewport: Self.viewport, scale: 1) == .magnification(0.75))
+    }
+
+    @Test func aRoundedMagnificationCountsAsItsStep() {
+        let shown = PageZoom.magnification(0.329)
+        #expect(shown.zoomedIn(page: Self.portrait, viewport: Self.viewport, scale: 1) == .magnification(0.5))
+    }
+
+    @Test func zoomStopsAtBothEndsOfTheSteps() {
+        let largest = PageZoom.magnification(PageZoom.steps[PageZoom.steps.count - 1])
+        let smallest = PageZoom.magnification(PageZoom.steps[0])
+        #expect(largest.zoomedIn(page: Self.portrait, viewport: Self.viewport, scale: 1) == nil)
+        #expect(smallest.zoomedOut(page: Self.portrait, viewport: Self.viewport, scale: 1) == nil)
+    }
+
+    @Test func aPinchStaysWithinTheSteps() {
+        #expect(PageZoom.pinched(from: 1, by: 1.5) == .magnification(1.5))
+        #expect(PageZoom.pinched(from: 2, by: 10) == .magnification(PageZoom.steps[PageZoom.steps.count - 1]))
+        #expect(PageZoom.pinched(from: 0.5, by: 0.1) == .magnification(PageZoom.steps[0]))
+    }
+
+    @Test func aPageOrViewportWithNoAreaHasNoSize() {
+        #expect(PageZoom.fitPage.size(of: .zero, in: Self.viewport, scale: 1) == .zero)
+        #expect(PageZoom.fitWidth.size(of: Self.portrait, in: .zero, scale: 1) == .zero)
+    }
+}
+
+@Suite struct PageStackTests {
+    /// Three pages of 100, 50 and 100 points, 24 apart: tops at 24, 148 and 222.
+    static let stack = PageStack(heights: [100, 50, 100], margin: 24)
+
+    struct Place: Equatable {
+        let page: Int
+        let fraction: CGFloat
+    }
+
+    static func place(_ y: CGFloat) -> Place? {
+        stack.place(at: y).map { Place(page: $0.page, fraction: $0.fraction) }
+    }
+
+    @Test func eachPageStartsAMarginBelowThePageAbove() {
+        #expect(Self.stack.top(of: 0) == 24)
+        #expect(Self.stack.top(of: 1) == 148)
+        #expect(Self.stack.top(of: 2) == 222)
+    }
+
+    @Test func anOffsetIsAPageAndAShareOfItsHeight() {
+        #expect(Self.place(74) == Place(page: 0, fraction: 0.5))
+        #expect(Self.place(173) == Place(page: 1, fraction: 0.5))
+        // In a margin: the nearest edge.
+        #expect(Self.place(130) == Place(page: 0, fraction: 1))
+        #expect(Self.place(140) == Place(page: 1, fraction: 0))
+        #expect(Self.place(9999) == Place(page: 2, fraction: 1))
+        #expect(PageStack(heights: [], margin: 24).place(at: 0) == nil)
+    }
+
+    @Test func aZoomKeepsThePlaceUnderItsAnchor() {
+        // The middle of a 40-point view at 54 is the middle of page 1 (offset 173); at twice the
+        // size page 1 is 100 tall from 248, so its middle is at 298 and the view's top at 278.
+        let zoomed = PageStack(heights: [200, 100, 200], margin: 24)
+        #expect(Self.stack.keeping(20, at: 153, in: zoomed) == 278)
+        // A pinch at the view's top keeps that place at the top.
+        #expect(Self.stack.keeping(0, at: 173, in: zoomed) == 298)
+        #expect(Self.stack.keeping(20, at: 0, in: zoomed) >= 0)
+    }
+}

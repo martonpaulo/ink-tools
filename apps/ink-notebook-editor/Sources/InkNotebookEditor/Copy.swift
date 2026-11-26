@@ -12,6 +12,16 @@ nonisolated enum Copy {
     static let nextPage = String(localized: "Next Page")
     static let firstPage = String(localized: "First Page")
     static let lastPage = String(localized: "Last Page")
+    static let continuousScroll = String(localized: "Continuous Scroll")
+    static let contactSheet = String(localized: "Contact Sheet")
+    static let viewLayout = String(localized: "Show Pages As")
+    static let actualSize = String(localized: "Actual Size")
+    static let zoomIn = String(localized: "Zoom In")
+    static let zoomOut = String(localized: "Zoom Out")
+    static let zoomToFit = String(localized: "Zoom to Fit")
+    static let zoomToWidth = String(localized: "Zoom to Width")
+    static let zoom = String(localized: "Zoom")
+    static let openPage = String(localized: "Open Page")
 
     // MARK: Notebook window
 

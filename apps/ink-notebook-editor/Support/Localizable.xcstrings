@@ -41,6 +41,16 @@
         }
       }
     },
+    "Actual Size" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actual Size"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "en" : {
@@ -57,6 +67,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Connect the tablet by cable or Wi-Fi, unlock it, then try again."
+          }
+        }
+      }
+    },
+    "Contact Sheet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact Sheet"
+          }
+        }
+      }
+    },
+    "Continuous Scroll" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuous Scroll"
           }
         }
       }
@@ -221,6 +251,16 @@
         }
       }
     },
+    "Open Page" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Page"
+          }
+        }
+      }
+    },
     "Open another .note file, or copy the note from the tablet again." : {
       "localizations" : {
         "en" : {
@@ -327,6 +367,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Report an Issue…"
+          }
+        }
+      }
+    },
+    "Show Pages As" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Pages As"
           }
         }
       }
@@ -467,6 +517,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Try Again"
+          }
+        }
+      }
+    },
+    "Zoom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        }
+      }
+    },
+    "Zoom In" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom In"
+          }
+        }
+      }
+    },
+    "Zoom Out" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom Out"
+          }
+        }
+      }
+    },
+    "Zoom to Fit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom to Fit"
+          }
+        }
+      }
+    },
+    "Zoom to Width" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom to Width"
           }
         }
       }

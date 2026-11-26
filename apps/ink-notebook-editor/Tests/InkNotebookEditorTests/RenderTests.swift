@@ -41,6 +41,24 @@ final class RenderTests {
         }
         await drawn.loadPage(1)
         try await render("notebook", Self.sizes) { NotebookView(pages: drawn, page: 1) }
+        // Zoomed in, every page in one scroll at Zoom to Width and at the smallest step, and the
+        // grid of every page with the current one selected (#319).
+        for index in note.pages.indices {
+            await drawn.loadPage(index)
+            await drawn.loadThumbnail(index, .grid, scale: 1)
+        }
+        try await render("notebook-zoomed", Self.sizes) {
+            NotebookView(pages: drawn, page: 1, viewer: PageViewer(zoom: .magnification(2)))
+        }
+        try await render("notebook-width", Self.sizes) {
+            NotebookView(pages: drawn, page: 1, viewer: PageViewer(zoom: .fitWidth))
+        }
+        try await render("notebook-scroll", Self.sizes) {
+            NotebookView(pages: drawn, viewer: PageViewer(zoom: .magnification(PageZoom.steps[0])))
+        }
+        try await render("notebook-grid", Self.sizes) {
+            NotebookView(pages: drawn, page: 1, viewer: PageViewer(layout: .grid))
+        }
         // A landscape page draws wide and upright, its thumbnail too (#291).
         let landscape = try Fixtures.note("landscape.note")
         let wide = PageImages(note: landscape)
