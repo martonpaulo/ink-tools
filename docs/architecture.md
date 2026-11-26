@@ -172,6 +172,7 @@ ink-tools/
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
     ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Lasso Actions, Device Link, Image Editing)
     picture-search/ # the picture search core and its pure-Java pixel measures (for Lasso Actions and Image Editing)
+    puzzle-core/    # Puzzles: seeded generators with one solution and a difficulty rating (for Puzzles, later the editor)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     account-sync/   # to-do + calendar + digest, each module and provider opt in/out

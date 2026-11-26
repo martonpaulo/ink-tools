@@ -1,7 +1,7 @@
 {
   "name": "ink-tools-packages",
   "private": true,
-  "workspaces": ["sn-adapter", "sync-core", "ink-core", "picture-search"],
+  "workspaces": ["sn-adapter", "sync-core", "ink-core", "picture-search", "puzzle-core"],
   "scripts": {
     "typecheck": "npm run typecheck --workspaces",
     "test": "jest",
