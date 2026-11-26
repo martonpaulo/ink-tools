@@ -61,6 +61,8 @@ final class Switcher {
   }
 
   private static LanguageFiles files() {
-    return new LanguageFiles(new AndroidFiles(), AndroidFiles.root());
+    LanguageFiles.Disk disk = LanguageFiles.port(InternalFailure.item(FileFailure.LANGUAGE_FILE_ITEM),
+        Collections.<String, LanguageFiles.Disk>singletonMap(LanguageFiles.ANDROID_FILES, new AndroidFiles()));
+    return new LanguageFiles(disk, AndroidFiles.root());
   }
 }

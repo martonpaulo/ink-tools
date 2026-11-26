@@ -33,8 +33,8 @@ public final class FileFailureTest {
       FileFailure failure = new FileFailure(kind, "cannot touch the language file");
       InternalFailure internal = failure.internal("switch", "test/fingerprint:11/1", apps);
       boolean device = kind == FileFailure.Kind.CANNOT_READ || kind == FileFailure.Kind.CANNOT_CREATE
-          || kind == FileFailure.Kind.CANNOT_DELETE;
-      LanguageCycleTest.check((internal != null) == device, kind + " is an internal failure only when the folder failed");
+          || kind == FileFailure.Kind.CANNOT_DELETE || kind == FileFailure.Kind.TURNED_OFF;
+      LanguageCycleTest.check((internal != null) == device, kind + " is an internal failure only when the folder failed or was turned off");
       if (internal == null) {
         continue;
       }

@@ -15,6 +15,8 @@ final class FileFailure extends IOException {
     NOT_INSTALLED,
     NOTHING_TO_CYCLE,
     FILES_OFF,
+    /** The registry's kill switch turned the language folder's module off (#293). */
+    TURNED_OFF,
     OTHER
   }
 
@@ -31,13 +33,14 @@ final class FileFailure extends IOException {
   /**
    * The Java adapter's failure value when the device's language folder failed a read or a write
    * (#294), so the log carries the item, the firmware and the app versions; null for a failure
-   * that is not the device's, such as a pack that is not installed or access that is off.
+   * that is not the device's or the kill switch's, such as a pack that is not installed or access that is off.
    */
   InternalFailure internal(String method, String firmware, Map<String, String> apps) {
     switch (kind) {
       case CANNOT_READ:
       case CANNOT_CREATE:
       case CANNOT_DELETE:
+      case TURNED_OFF:
         return new InternalFailure(LANGUAGE_FILE_ITEM, method, kind.name(), firmware, apps, this);
       default:
         return null;

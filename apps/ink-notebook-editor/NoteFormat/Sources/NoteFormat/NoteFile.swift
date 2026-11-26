@@ -117,7 +117,13 @@ public struct NoteFile: Sendable {
         try self.init(bytes: [UInt8](data))
     }
 
+    /// Reads `bytes` through the reader's port (#294), so every caller passes the kill switch (#293).
     public init(bytes: [UInt8]) throws {
+        self = try NoteReader.port().read(bytes: bytes)
+    }
+
+    /// The level-2 parse itself (`FormatReader`).
+    init(parsing bytes: [UInt8]) throws {
         self.bytes = bytes
         let signatureEnd = Self.fileTypeLength + Self.signaturePrefix.count + Self.versionDigits
         guard bytes.count > signatureEnd + Self.wordSize,

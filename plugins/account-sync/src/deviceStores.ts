@@ -15,8 +15,12 @@ import {
   contentUri,
   Descriptor,
   eventToRow,
+  IMPLEMENTATION,
   legacyRowRepair,
+  port,
   readCalendarLink,
+  REGISTRY_ITEMS,
+  RegistryItem,
   Row,
   rowToDeviceEdit,
   rowToEvent,
@@ -584,13 +588,18 @@ export interface DeviceStores {
   tasks: DeviceTaskStore;
 }
 
+/**
+ * Each store is a port (#294): the registry item's `active` names its implementation, and each call
+ * checks the item's kill switch first, so a module turned off stops with `ModuleOff` (#293).
+ */
 export function createDeviceStores(
   rows: ContentRows,
   now: () => number,
   d: Descriptor = BUNDLED_DESCRIPTOR,
+  items: readonly RegistryItem[] = REGISTRY_ITEMS,
 ): DeviceStores {
   return {
-    calendar: createDeviceCalendar(rows, now, d),
-    tasks: createDeviceTasks(rows, now, d),
+    calendar: port('calendar.provider', {[IMPLEMENTATION.calendarRows]: createDeviceCalendar(rows, now, d)}, items),
+    tasks: port('todo.provider', {[IMPLEMENTATION.todoRows]: createDeviceTasks(rows, now, d)}, items),
   };
 }

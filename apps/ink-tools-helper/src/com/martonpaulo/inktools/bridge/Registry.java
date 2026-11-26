@@ -41,7 +41,7 @@ public final class Registry {
       new Item("calendar.sync-broadcast", 3, "user", "inkctl", "inkctl routes", null, "inkctl sync calendar", null),
       new Item("diagnostics.provider-probes", 2, "tests", "ink-tools-probe", "ink-tools-probe Run Probe", null, "ink-tools-probe native ProbeTargets.java", null),
       new Item("digest.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(digest)", null, "sn-adapter internals/digest.ts", null),
-      new Item("handwriting.language-file", 2, "user", "handwriting-language", null, "#293 adds a read of the folder's one file", "handwriting-language LanguageFiles.java", null),
+      new Item("handwriting.language-file", 2, "user", "handwriting-language", null, "#293 adds a read of the folder's one file", "handwriting-language AndroidFiles.java", null),
       new Item("handwriting.changed-broadcast", 3, "user", "handwriting-language", null, "sending it is the change itself", "handwriting-language Switcher.java", null),
       new Item("handwriting.writing-screens", 3, "user", "handwriting-language", null, "#293 adds a resolve of each activity name", "handwriting-language ButtonRule.java", null),
       new Item("note.activity", 3, "tests", "inkctl", "inkctl routes", null, "inkctl note open and note new", null),

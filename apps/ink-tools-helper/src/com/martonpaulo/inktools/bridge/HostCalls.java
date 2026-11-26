@@ -127,6 +127,23 @@ public final class HostCalls {
     return null;
   }
 
+  /**
+   * The registry items every host call goes through (#293): the service binding, PluginHost's
+   * classes and the call numbers. Before a call, {@link #turnedOff} reads their kill switches.
+   */
+  static final List<String> CALL_ITEMS = java.util.Collections.unmodifiableList(java.util.Arrays.asList(
+      "pluginhost.setting-service", "pluginhost.parcel-classes", "pluginhost.call-numbers"));
+
+  /** The first of {@link #CALL_ITEMS} whose kill switch is off in {@code items}, or null when all are on (#293). */
+  static Registry.Item turnedOff(List<Registry.Item> items) {
+    for (Registry.Item item : items) {
+      if (item.off != null && CALL_ITEMS.contains(item.id)) {
+        return item;
+      }
+    }
+    return null;
+  }
+
   /** Null when every call number the registry names passes {@link #refusal}; else each refusal, joined (#293). */
   public static String callNumbersChanged(Map<String, Integer> stub) {
     StringBuilder changed = new StringBuilder();

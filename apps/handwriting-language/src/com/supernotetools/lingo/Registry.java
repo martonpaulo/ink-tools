@@ -36,7 +36,7 @@ public final class Registry {
 
   /** The items this app reads. */
   public static final List<Item> ITEMS = Collections.unmodifiableList(Arrays.asList(
-      new Item("handwriting.language-file", 2, "user", "handwriting-language", null, "#293 adds a read of the folder's one file", "handwriting-language LanguageFiles.java", null),
+      new Item("handwriting.language-file", 2, "user", "handwriting-language", null, "#293 adds a read of the folder's one file", "handwriting-language AndroidFiles.java", null),
       new Item("handwriting.changed-broadcast", 3, "user", "handwriting-language", null, "sending it is the change itself", "handwriting-language Switcher.java", null),
       new Item("handwriting.writing-screens", 3, "user", "handwriting-language", null, "#293 adds a resolve of each activity name", "handwriting-language ButtonRule.java", null),
       new Item("settings.language-page", 3, "user", "handwriting-language", null, "#293 adds a resolve of the activity without starting it", "handwriting-language SettingsActivity.java", null)));

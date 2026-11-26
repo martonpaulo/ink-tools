@@ -15,12 +15,17 @@ final class Copy {
   /** PluginHost's interface no longer matches the registry, so the call was refused before it went out. */
   static final String HOST_CHANGED = "hostChanged";
 
+  /** The registry's kill switch turned the host calls off, so nothing was sent (#293). */
+  static final String TURNED_OFF = "turnedOff";
+
   static final Map<String, String> FAILURES;
 
   static {
     Map<String, String> failures = new HashMap<>();
     failures.put(HOST_CHANGED, "PluginHost changed in a firmware update, so the bridge refused this call."
         + " Read the reason with: inkctl logs --tag InkToolsBridge");
+    failures.put(TURNED_OFF, "Plugin changes through the helper are turned off in this version, as a firmware update changed PluginHost."
+        + " Update Ink Tools to turn them on again.");
     FAILURES = Collections.unmodifiableMap(failures);
   }
 

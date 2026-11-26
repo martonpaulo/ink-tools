@@ -38,6 +38,7 @@ public final class HostCallsTest {
   }
 
   public static void main(String[] args) {
+    killSwitch();
     String token = "token com.ratta.supernote.plugincorelib.IPluginSetting";
     check(HostCalls.DESCRIPTOR.equals("com.ratta.supernote.plugincorelib.IPluginSetting"), "the descriptor is PluginHost's");
     check(HostCalls.SERVICE.equals("com.ratta.supernote.pluginhost.services.PluginSettingService"), "the service is PluginHost's");
@@ -76,6 +77,24 @@ public final class HostCallsTest {
     HostCalls.updatePermissions(empty, "abc", Collections.emptyList());
     check(empty.writes.equals(Arrays.asList(token, "string abc", "int 0")), "an empty list is its size alone");
     System.out.println("HostCallsTest ok");
+  }
+
+  /** A host call reads its items' kill switches first; any one off stops it, other items do not (#293). */
+  static void killSwitch() {
+    check(HostCalls.turnedOff(Registry.ITEMS) == null, "every host call item is on in the registry");
+    for (String id : HostCalls.CALL_ITEMS) {
+      InternalFailure.item(id);
+    }
+    List<Registry.Item> items = new ArrayList<>(Registry.ITEMS);
+    Registry.Item other = InternalFailure.item("todo.provider");
+    items.set(items.indexOf(other), new Registry.Item(other.id, other.level, other.impact, other.owner, other.probe,
+        other.unprobed, other.active, "until 2026-12-31: another module"));
+    check(HostCalls.turnedOff(items) == null, "an item outside the host calls does not stop them");
+    Registry.Item numbers = InternalFailure.item("pluginhost.call-numbers");
+    items.set(items.indexOf(numbers), new Registry.Item(numbers.id, numbers.level, numbers.impact, numbers.owner,
+        numbers.probe, numbers.unprobed, numbers.active, "until 2026-12-31: the numbers moved"));
+    check(HostCalls.turnedOff(items).id.equals("pluginhost.call-numbers"), "the call numbers turned off stop every host call");
+    check(Copy.FAILURES.containsKey(Copy.TURNED_OFF), "the stop has its sentence");
   }
 
   static void check(boolean condition, String what) {

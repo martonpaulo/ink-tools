@@ -1787,6 +1787,27 @@ check "its log names the item, the method, the firmware and the vendor apps" "$(
 check "its log carries the cause" "$(printf '%s' "$result" | expression "d['log'].splitlines()[1]")" "cause str: the language folder holds ['pt_BR'] after the switch, not [en_US]"
 check "the person reads one sentence with the next step" "$(printf '%s' "$result" | expression "d['message'].startswith('The handwriting language did not change') and 'registry' not in d['message']")" "True"
 rm -f "$files/lang-stuck"
+# The kill switch (#293): a copy of inkctl whose registry turns the language folder off stops the
+# command before it touches the tablet, and says so; other commands still run. The copy sits in a
+# tree of the repository's shape, as inkctl finds its shared files from its own path.
+mkdir -p "$work/off-tree/cli/inkctl/src"
+ln -s "$repo_root/../../packages" "$work/off-tree/packages"
+python3 - "$script" "$work/off-tree/cli/inkctl/src/inkctl" <<'PY'
+import sys
+source = open(sys.argv[1]).read()
+item = '"active": "handwriting-language AndroidFiles.java", "off": None}'
+assert source.count(item) == 1, "the language item's registry row moved"
+open(sys.argv[2], "w").write(source.replace(item, item.replace('"off": None', '"off": "until 2026-12-31: the folder moved"')))
+PY
+on_script=$script
+script=$work/off-tree/cli/inkctl/src/inkctl
+result=$(run lang set en_US --json 2>/dev/null)
+check "a command whose item is turned off stops as an internal failure" "$?$(printf '%s' "$result" | field "['error'],d['registry']")" "1('internal_failure', 'handwriting.language-file')"
+check "it touches no file and names the reason in its log" "$(called touch)$(printf '%s' "$result" | expression "'turned off until 2026-12-31: the folder moved' in d['log']")" "0True"
+check "the person reads that the command is turned off" "$(printf '%s' "$result" | expression "d['message'].startswith('This command is turned off')")" "True"
+run status >/dev/null 2>&1
+check "a command outside the item still runs" "$?" "0"
+script=$on_script
 touch "$files/lang-missing"
 run lang get >/dev/null 2>&1
 check "a missing language folder stops with not found" "$?" "4"

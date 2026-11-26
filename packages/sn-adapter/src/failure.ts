@@ -1,4 +1,5 @@
-import {REGISTRY_ITEMS, RegistryItem} from './registry.generated';
+import {registryItem} from './port';
+import {RegistryItem} from './registry.generated';
 
 /**
  * The one failure value of the TypeScript adapter for a Supernote internal (#294,
@@ -31,11 +32,7 @@ export function internalFailure(
   environment: Environment,
   cause: unknown,
 ): InternalFailure {
-  const item = REGISTRY_ITEMS.find(entry => entry.id === id);
-  if (!item) {
-    throw new Error(`no registry item ${id}`);
-  }
-  return {item, method, copyKey, environment, cause};
+  return {item: registryItem(id), method, copyKey, environment, cause};
 }
 
 /** The person's sentence: the tool's copy for the key. A missing key throws, never a blank. */

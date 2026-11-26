@@ -47,6 +47,14 @@ final class Bridge {
         return Outcome.of(Outcome.FAILED, error.toString());
       }
     }
+    // Before acting, the kill switch (#293): a module turned off in the registry stops and says so.
+    Registry.Item off = HostCalls.turnedOff(Registry.ITEMS);
+    if (off != null) {
+      InternalFailure failure = new InternalFailure(off.id, command.op.name().toLowerCase(java.util.Locale.ROOT), Copy.TURNED_OFF,
+          Build.FINGERPRINT, hostVersions(), new IllegalStateException(off.id + " is turned off " + off.off));
+      Log.w(TAG, "call op=" + command.op + " " + failure.agentLog());
+      return Outcome.of(Outcome.FAILED, failure.userSentence(Copy.FAILURES));
+    }
     HostClasses classes;
     try {
       classes = HostClasses.load(context);

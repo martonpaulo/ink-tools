@@ -279,6 +279,14 @@
     "open": 295
    },
    {
+    "rule": "A failure log's word for a firmware or app version it could not read: unread",
+    "owner": "cli/inkctl/src/inkctl",
+    "other": "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/InternalFailure.swift",
+    "pattern": "\"unread\"",
+    "golden": "",
+    "open": 295
+   },
+   {
     "rule": "Plugin action channel answer line mark: INKTOOLS action",
     "owner": "packages/sn-adapter/src/official/actions.ts",
     "other": "cli/inkctl/src/inkctl",

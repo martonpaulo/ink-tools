@@ -100,7 +100,13 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   `readPage`) with one implementation per level, and the registry names the active one: moving a
   part to a higher level adds the new implementation beside the old one, the port's shared contract
   tests run on both, and the old one leaves once the new passes; no tool changes. Before acting, a
-  module checks its item's status and kill switch; after acting, it reads back. Plugins reach the
+  module checks its item's status and kill switch; after acting, it reads back. Built so far
+  ([#293](https://github.com/martonpaulo/ink-tools/issues/293)): `sn-adapter`'s `port()` (`src/port.ts`), which
+  Account Sync's Calendar, To-Do and Digest stores go through, with their contract tests in
+  `__tests__/devicePorts.test.ts`; Handwriting Language's `LanguageFiles.port`; NoteFormat's
+  `NoteReader` port, which `NoteFile(bytes:)` reads through, and `NoteWriter`'s check before each
+  edit; the Helper's check of its three host-call items before a call; and inkctl's
+  `COMMAND_ITEMS`, read before each command but `status`, `firmware` and `logs`. Plugins reach the
   internal providers through their native Java. A boundary check fails on a vendor name
   (`com.ratta.`, a provider URI, a vendor class, a private path) written outside the registry: the
   `vendor` rule of `scripts/boundaries.py`, over TypeScript, Java, Swift and inkctl's Python, with the

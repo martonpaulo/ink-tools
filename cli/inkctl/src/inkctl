@@ -148,7 +148,7 @@ REGISTRY_ITEMS = (
     {"id": "calendar.sync-broadcast", "level": 3, "impact": "user", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl sync calendar", "off": None},
     {"id": "diagnostics.provider-probes", "level": 2, "impact": "tests", "owner": "ink-tools-probe", "probe": "ink-tools-probe Run Probe", "unprobed": None, "active": "ink-tools-probe native ProbeTargets.java", "off": None},
     {"id": "digest.provider", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeCapability(digest)", "unprobed": None, "active": "sn-adapter internals/digest.ts", "off": None},
-    {"id": "handwriting.language-file", "level": 2, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a read of the folder's one file", "active": "handwriting-language LanguageFiles.java", "off": None},
+    {"id": "handwriting.language-file", "level": 2, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a read of the folder's one file", "active": "handwriting-language AndroidFiles.java", "off": None},
     {"id": "handwriting.changed-broadcast", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "sending it is the change itself", "active": "handwriting-language Switcher.java", "off": None},
     {"id": "handwriting.writing-screens", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of each activity name", "active": "handwriting-language ButtonRule.java", "off": None},
     {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new", "off": None},
@@ -815,6 +815,7 @@ def unreachable(serial: str, evidence: str = "") -> Failure:
 # The person's sentence for each copy key of an InternalFailure (#294).
 INTERNAL_COPY = {
     "languageNotSet": "The handwriting language did not change on the tablet. Run inkctl lang get to see the folder, then try again; restart the tablet if it keeps failing.",
+    "turnedOff": "This command is turned off in this version of inkctl, as a firmware update changed what it uses. Run inkctl firmware check to see what changed, and update Ink Tools.",
 }
 UNREAD = "unread"  # what the log says for a fingerprint or an app version that could not be read
 
@@ -845,6 +846,17 @@ class InternalFailure(Failure):
             f"firmware={self.environment.get('firmware') or UNREAD}", f"apps={apps}",
         ))
         return "\n".join([header, *(f"cause {entry}" for entry in cause_chain(self.internal_cause))])
+
+
+def require_on(item_id: str, method: str, device) -> None:
+    """Before acting, the kill switch (#293): a command whose registry item is turned off stops and
+    says so, with the item's reason in the log; it never takes another path."""
+    item = next((entry for entry in REGISTRY_ITEMS if entry["id"] == item_id), None)
+    if item is None:
+        raise ValueError(f"no registry item {item_id}")
+    if item["off"] is not None:
+        raise InternalFailure(item_id, method, "turnedOff", device_environment(device),
+                              f"{item_id} is turned off {item['off']}")
 
 
 def cause_chain(cause) -> list[str]:
@@ -4622,6 +4634,23 @@ def command_shell(device: Device, args: argparse.Namespace):
     raise SystemExit(done.returncode)
 
 
+# The registry item each command acts through, whose kill switch `main` reads before the command
+# runs (#293). `status`, `firmware` and `logs` stay out: they are how a turned-off module is seen.
+COMMAND_ITEMS = {
+    command_note_open: "note.activity",
+    command_note_new: "note.activity",
+    command_font_install: "note.fonts-folder",
+    command_sync_tasks: "todo.sync-trigger",
+    command_sync_calendar: "calendar.sync-broadcast",
+    command_lang_get: "handwriting.language-file",
+    command_lang_set: "handwriting.language-file",
+    command_lang_cycle: "handwriting.language-file",
+    command_plugin_ls: "pluginhost.plugin-list",
+    command_plugin_install: "settings.plugin-install-screens",
+    command_plugin_allow: "settings.plugin-detail-labels",
+    command_plugin_uninstall: "settings.plugin-detail-labels",
+}
+
 NOUNS = ("note", "files", "sync", "plugin", "wifi", "secret", "google", "lang", "lasso", "ink", "sandbox", "localsend")
 
 
@@ -4945,6 +4974,8 @@ def main() -> int:
                 if args.handler is not command_firmware:
                     watch_on_connect(device)
                 before = front_app(device)
+        if args.handler in COMMAND_ITEMS:
+            require_on(COMMAND_ITEMS[args.handler], command_name(args), device)
         data, text = args.handler(device, args)
     except Failure as failure:
         code, kind = failure.code, failure.kind

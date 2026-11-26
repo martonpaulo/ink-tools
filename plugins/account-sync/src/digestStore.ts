@@ -15,6 +15,10 @@ import {
   digestCountUri,
   digestInsertUri,
   digestUpdateUri,
+  IMPLEMENTATION,
+  port,
+  REGISTRY_ITEMS,
+  RegistryItem,
   toDigestInsert,
   toDigestUpdate,
 } from '@ink-tools/sn-adapter';
@@ -46,7 +50,14 @@ export function createDeviceDigest(
   rows: ContentRows,
   collection = '',
   d: Descriptor = BUNDLED_DESCRIPTOR,
+  items: readonly RegistryItem[] = REGISTRY_ITEMS,
 ): DeviceDigest {
+  // A port (#294): the registry item names the implementation; a module turned off stops (#293).
+  return port('digest.provider', {[IMPLEMENTATION.digestRows]: providerDigest(rows, collection, d)}, items);
+}
+
+/** The level-2 implementation: the Digest provider's rows. */
+export function providerDigest(rows: ContentRows, collection: string, d: Descriptor): DeviceDigest {
   const countOf = async (entry: DigestEntry): Promise<number> => {
     const answer = await rows.query(digestCountUri(d, entry.sourceId), {});
     const count = answer[0]?.[COUNT_COLUMN];

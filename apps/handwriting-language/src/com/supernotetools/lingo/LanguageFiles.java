@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The device's handwriting language on disk: one empty file named with the code in
@@ -16,7 +17,7 @@ final class LanguageFiles {
     /** The names in a folder; throws when it cannot be read. */
     List<String> list(String folder) throws IOException;
 
-    boolean isFolder(String path);
+    boolean isFolder(String path) throws IOException;
 
     /** Creates an empty file, or keeps one that exists; throws when it cannot. */
     void createEmpty(String path) throws IOException;
@@ -33,6 +34,63 @@ final class LanguageFiles {
     Switch(String from, String to) {
       this.from = from;
       this.to = to;
+    }
+  }
+
+  /** The level-2 implementation's name, as the registry item's {@code active} gives it (#294). */
+  static final String ANDROID_FILES = "handwriting-language AndroidFiles.java";
+
+  /**
+   * The language folder's port (#294, docs/architecture.md › Layer rules): the implementation the
+   * registry item names as active, with every operation checking the item's kill switch first
+   * (#293). A missing implementation throws: no other one is taken in its place.
+   */
+  static Disk port(Registry.Item item, Map<String, Disk> implementations) {
+    Disk chosen = implementations.get(item.active);
+    if (chosen == null) {
+      throw new IllegalStateException("no implementation of " + item.id + " for its active " + item.active);
+    }
+    return new Switched(item, chosen);
+  }
+
+  /** A {@link Disk} that refuses every operation, before it runs, while the item's kill switch is off. */
+  private static final class Switched implements Disk {
+    private final Registry.Item item;
+    private final Disk disk;
+
+    Switched(Registry.Item item, Disk disk) {
+      this.item = item;
+      this.disk = disk;
+    }
+
+    private void requireOn(String method) throws FileFailure {
+      if (item.off != null) {
+        throw new FileFailure(FileFailure.Kind.TURNED_OFF, item.id + " is turned off " + item.off + "; " + method + " did not run");
+      }
+    }
+
+    @Override
+    public List<String> list(String folder) throws IOException {
+      requireOn("list");
+      return disk.list(folder);
+    }
+
+    @Override
+    public boolean isFolder(String path) throws IOException {
+      requireOn("isFolder");
+      return disk.isFolder(path);
+    }
+
+    @Override
+    public void createEmpty(String path) throws IOException {
+      requireOn("createEmpty");
+      disk.createEmpty(path);
+    }
+
+    @Override
+    public void delete(String path) throws IOException {
+      requireOn("delete");
+      disk.delete(path);
     }
   }
 
