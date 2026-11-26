@@ -44,6 +44,11 @@ export type ButtonHost = {
   undo: UndoHost;
   lasso: LassoConvertHost;
   toast: (text: string) => void;
+  /**
+   * The host's error tip (sn-adapter's `errorTip`, #296): only for a failure with nothing to retry
+   * and no fix to offer, such as a pen-up listener the host refused; a failed tip falls back to a toast.
+   */
+  errorTip: (text: string) => Result<true>;
   log: (line: string) => void;
   icons: Icons;
 };
@@ -163,7 +168,11 @@ export class Buttons {
       const started = converter.start();
       host.log(describe('pen-up listener', started));
       if (!started.ok) {
-        host.toast(copy['toast.failed']);
+        const tip = host.errorTip(copy['toast.failed']);
+        if (!tip.ok) {
+          host.log(describe('error tip', tip));
+          host.toast(copy['toast.failed']);
+        }
         return false;
       }
       this.converter = converter;

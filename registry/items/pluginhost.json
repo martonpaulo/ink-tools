@@ -241,6 +241,35 @@
         "always": 2,
         "lowest": -1
       }
+    },
+    {
+      "id": "pluginhost.host-dialogs",
+      "title": "The host dialogs show with no activity, and showRattaDialog's isSuccess false draws the Prompt dialog",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the SDK passes getCurrentActivity(), which PluginHost leaves null; HostUIImpl swaps it for the application context (observed device behaviour); the docs do not describe isSuccess",
+      "evidence": {
+        "source": "PluginHost 1.00.2610150 HostUIImpl, observed device behaviour (docs/supernote.md › Ratta dialog); packages/ui-kit/native-catalog.md › Confirm dialog",
+        "date": "2026-11-25"
+      },
+      "upgradePath": "an SDK dialog call documented for a plugin with no view",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "a dialog waits for a press on the tablet; the effect test is the #296 device round"
+      },
+      "active": "sn-adapter official/dialog.ts",
+      "issues": [
+        273,
+        296
+      ],
+      "values": {
+        "questionStyle": false
+      }
     }
   ]
 }

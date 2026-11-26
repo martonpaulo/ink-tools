@@ -10,12 +10,15 @@ import {
   getLassoElements,
   getLassoRect,
   getPageSize,
+  onMotion,
   onPenUp,
   rebuildStroke,
+  reloadFile,
   recognizeElements,
   recycleElement,
   saveStroke,
   strokePoints,
+  strokeTimes,
 } from '@ink-tools/sn-adapter/official';
 import {type ConvertHost, type UndoHost} from '@ink-tools/ink-core/conversion';
 import type {LassoConvertHost} from './lasso';
@@ -24,7 +27,10 @@ const log = (line: string) => console.log(`SmartPen: text: ${line}`);
 
 export const DEVICE_CONVERT: ConvertHost = {
   onPenUp,
+  onMotion,
+  reloadFile,
   strokePoints,
+  strokeTimes,
   saveStroke,
   recycleElement,
   getCurrentFilePath,

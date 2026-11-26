@@ -3,14 +3,14 @@
   "items": [
     {
       "id": "pen.digitizer-units",
-      "title": "Pen-up points in digitizer units and the PointUtils ranges",
+      "title": "Pen-up points in digitizer units, the PointUtils ranges and the stroke time unit",
       "level": 5,
       "impact": "user",
       "owner": "sn-adapter",
       "readers": [
         "sn-adapter"
       ],
-      "reason": "the SDK does not state the unit of a pen-up event's points; it was measured",
+      "reason": "the SDK does not state the unit of a pen-up event's points, measured, nor of Stroke.recognPoints' timestamps [inference: milliseconds]",
       "evidence": {
         "source": "sn-plugin-lib 0.2.3 PointUtils; measured on a Manta",
         "date": "2026-11-20"
@@ -22,7 +22,9 @@
         "unprobed": "needs a pen stroke; the effect test is the Smart Pen device round"
       },
       "active": "sn-adapter official/elements.ts",
-      "values": {}
+      "values": {
+        "strokeTimeMsPerUnit": 1
+      }
     },
     {
       "id": "pen.pen-types",

@@ -33,6 +33,7 @@ import {
   discoverDevices,
   findAgain,
   Outcome,
+  savedFirst,
   sendCapture,
   sendLog,
   tempDir,
@@ -163,7 +164,8 @@ export async function sendPicked(
           device,
           tempDir(dir.value),
           capture,
-          capture === 'page' ? currentPage : lassoImage,
+          // Only the page is read from the file; the lasso preview is drawn from the open page.
+          capture === 'page' ? savedFirst(currentPage) : lassoImage,
           Date.now,
           findAgain(native, self, pluginDir),
           delivered,

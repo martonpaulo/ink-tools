@@ -6,6 +6,7 @@ import {AppRegistry, Image, ToastAndroid} from 'react-native';
 import App from './App';
 import {name as appName} from './app.json';
 import {
+  errorTip,
   hasPermission,
   initPlugin,
   onMotion,
@@ -53,6 +54,7 @@ const buttons = new Buttons({
   undo: DEVICE_UNDO,
   lasso: DEVICE_LASSO,
   toast: text => ToastAndroid.show(text, ToastAndroid.SHORT),
+  errorTip,
   log,
   icons: {
     on: Image.resolveAssetSource(require('./assets/mode-on.png')).uri,

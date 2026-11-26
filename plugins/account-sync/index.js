@@ -7,6 +7,7 @@ import App from './App';
 import {name as appName} from './app.json';
 import {bridgeSync} from './src/service';
 import {startAutoSync} from './src/sync';
+import {watchProviders} from './src/providerWatch';
 import {
   registerSettingsEntry,
   showPluginView,
@@ -32,3 +33,6 @@ startActionChannel({
   read: () => readActionFile(),
   actions: {sync: syncAction(bridgeSync)},
 });
+
+// A tablet edit of the Calendar or the To-Do syncs at once, beside the timer (#296).
+watchProviders(bridgeSync);

@@ -154,7 +154,7 @@ Use the highest level that delivers the outcome at acceptable cost and quality.
 | 🟦 2 · Device data | Calendar, To-Do and Digest entries; the handwriting language; the note file format | any firmware update; the probe sees it; affects the person | a tablet probe of fields, paths and versions | 11 |
 | 🟨 3 · System screens and components | native switches and bars, the helper app, Settings shortcuts | any firmware update; a call fails; affects the person | a tablet probe that loads and checks each one | 7 |
 | 🟪 4 · Screen automation | find buttons by their text in Settings and in notes | any interface change; a step fails; affects only our tests | `inkctl doctor` before each test round | 3 |
-| 🟥 5 · Observed device behaviour | the Back key, pen units, how Calendar and To-Do read entries | **silently**; affects the person | an effect test: write, read back, compare | 22 |
+| 🟥 5 · Observed device behaviour | the Back key, pen units, how Calendar and To-Do read entries | **silently**; affects the person | an effect test: write, read back, compare | 24 |
 
 Level 1 is the highest and the steadiest; level 5 is the lowest and changes with no error.
 

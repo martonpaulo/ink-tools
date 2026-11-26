@@ -152,6 +152,35 @@
         196
       ],
       "values": {}
+    },
+    {
+      "id": "plugin-api.batch-no-redraw",
+      "title": "batchUpdatePageElements changes the page without drawing it; the host's code 0 is a redraw",
+      "level": 5,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the SDK does not say whether a batch redraws the page; a device round showed none, and the host's redraw code is observed device behaviour",
+      "evidence": {
+        "source": "docs/supernote.md › Screen and units (#206); PluginHost's batch handler, observed device behaviour (docs/research/2026-11-native-paths.md)",
+        "date": "2026-11-25"
+      },
+      "upgradePath": "an SDK batch that redraws the page, or answers whether it did",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs a conversion on a note page; the effect test is the Smart Pen device round (#296)"
+      },
+      "active": "sn-adapter official/elements.ts",
+      "issues": [
+        206,
+        296
+      ],
+      "values": {
+        "redrawCode": 0
+      }
     }
   ]
 }

@@ -4,7 +4,7 @@
  * Settings screen needs: loading, an error with a retry, no module yet, and each module's status in
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
  * keeps what Account Sync wrote; its «Remove what Account Sync wrote» button asks once more before
- * anything is deleted (#89). The title bar carries ui-kit's ×, since Back never reaches the view
+ * anything is deleted (#89), in the host's own confirm dialog (#273, #296). The title bar carries ui-kit's ×, since Back never reaches the view
  * on the Manta (#204, #266, #274). A settings read that failed is ui-kit's Error state with its
  * reason and Retry, and «Connect» opens the Needs state with the steps that connect the account
  * (#256); each keeps the ×.
@@ -22,6 +22,7 @@ import {
   TitleBar,
 } from '@ink-tools/ui-kit';
 import type {Problem} from '@ink-tools/ui-kit';
+import {confirm, type Result} from '@ink-tools/sn-adapter/official';
 import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
@@ -58,12 +59,24 @@ export type ShellState =
   /** `notice`: a problem that leaves the screen usable, such as a save that failed (#40). */
   | {kind: 'ready'; modules: ModuleRow[]; notice?: string; sync?: SyncControl};
 
+/**
+ * Asks a destructive question: true for the action, false for Cancel; a failure when the dialog
+ * could not be shown. sn-adapter's `confirm`, the host's dialog, unless a test passes its own.
+ */
+export type Ask = (
+  question: string,
+  action: string,
+  cancel: string,
+) => Promise<Result<boolean>>;
+
 export function SettingsShell({
   state,
   form,
   onClose,
+  ask = confirm,
 }: {
   state: ShellState;
+  ask?: Ask;
   /** The opt-in switches (#40), drawn under the module list once the settings are ready. */
   form?: React.ReactNode;
   /** What the title bar's × does: the same as Back (#266). */
@@ -88,7 +101,7 @@ export function SettingsShell({
       <TitleBar title={copy.title} onClose={onClose} />
       {/* The module rows and one switch row per module and provider outgrow the Manta's height (#274). */}
       <ScrollView style={styles.rows} contentContainerStyle={styles.gap}>
-        <Body state={state} onConnect={setConnecting} />
+        <Body state={state} onConnect={setConnecting} ask={ask} />
         {state.kind === 'ready' && state.notice && (
           <Text accessibilityRole="alert" style={shared.text}>
             {state.notice}
@@ -116,9 +129,11 @@ type Connect = (provider: ProviderSignIn) => void;
 function Body({
   state,
   onConnect,
+  ask,
 }: {
   state: Exclude<ShellState, {kind: 'error'}>;
   onConnect: Connect;
+  ask: Ask;
 }): React.JSX.Element {
   switch (state.kind) {
     case 'loading':
@@ -139,7 +154,7 @@ function Body({
                 subtitle={statusLines(module.status).join('\n') || undefined}
               />
               {module.signIns?.map(provider => (
-                <SignInLine key={provider.id} provider={provider} onConnect={onConnect} />
+                <SignInLine key={provider.id} provider={provider} onConnect={onConnect} ask={ask} />
               ))}
               {module.status.state === 'off' && module.onRemoveWritten && (
                 <Confirmed
@@ -147,6 +162,7 @@ function Body({
                   question={format('remove.confirm', {module: module.name})}
                   yes={copy['remove.yes']}
                   onConfirm={module.onRemoveWritten}
+                  ask={ask}
                 />
               )}
             </View>
@@ -179,16 +195,22 @@ function SyncLine({sync}: {sync: SyncControl}): React.JSX.Element {
 function SignInLine({
   provider,
   onConnect,
+  ask,
 }: {
   provider: ProviderSignIn;
   onConnect: Connect;
+  ask: Ask;
 }): React.JSX.Element {
   // Its own gap and a space before the next module's divider, so the line, its button and the
   // divider never touch (#116).
-  return <View style={styles.signIn}>{signInParts(provider, onConnect)}</View>;
+  return <View style={styles.signIn}>{signInParts(provider, onConnect, ask)}</View>;
 }
 
-function signInParts(provider: ProviderSignIn, onConnect: Connect): React.JSX.Element {
+function signInParts(
+  provider: ProviderSignIn,
+  onConnect: Connect,
+  ask: Ask,
+): React.JSX.Element {
   const {signIn} = provider;
   switch (signIn.state) {
     case 'signedOut':
@@ -216,6 +238,7 @@ function signInParts(provider: ProviderSignIn, onConnect: Connect): React.JSX.El
             question={format('signOut.confirm', {provider: provider.name})}
             yes={copy['signOut.yes']}
             onConfirm={provider.onSignOut}
+            ask={ask}
           />
         </>
       );
@@ -247,27 +270,48 @@ function ConnectLine({
   );
 }
 
-/** A destructive action: one press asks, the second does it, Cancel does nothing (#89, #90). */
+/**
+ * A destructive action: one press asks in the host's confirm dialog, and only its action does it;
+ * Cancel and Back do nothing (#89, #90, #296). When the dialog cannot be shown, the question is
+ * drawn here instead, with its own Cancel, so the action is never done unasked nor lost.
+ */
 function Confirmed({
   label,
   accessibilityLabel,
   question,
   yes,
   onConfirm,
+  ask,
 }: {
   label: string;
   accessibilityLabel?: string;
   question: string;
   yes: string;
   onConfirm: () => void;
+  ask: Ask;
 }): React.JSX.Element {
   const [asking, setAsking] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const press = async () => {
+    setWaiting(true);
+    const answer = await ask(question, yes, copy.cancel);
+    setWaiting(false);
+    if (!answer.ok) {
+      console.log(`[Bridge] confirm: the dialog failed: ${answer.code} ${answer.message}; asked in the view`);
+      setAsking(true);
+    } else if (answer.value) {
+      onConfirm();
+    }
+  };
   if (!asking) {
     return (
       <Button
         label={label}
         accessibilityLabel={accessibilityLabel}
-        onPress={() => setAsking(true)}
+        disabled={waiting}
+        onPress={() => {
+          press();
+        }}
       />
     );
   }

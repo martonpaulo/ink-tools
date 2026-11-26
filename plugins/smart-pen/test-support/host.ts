@@ -18,6 +18,8 @@ export type FakeElement = {
   type: number;
   numInPage?: number;
   points?: {x: number; y: number}[];
+  /** The pen times a pen-up element carries (#296); none when absent. */
+  times?: {startedAt: number; endedAt: number};
   textBox?: {textRect: object; textContentFull: string};
 };
 
@@ -47,6 +49,7 @@ export function fakeTablet(answer = 'café') {
   let time = 0;
   let timers: {at: number; run: () => void}[] = [];
   let listener: ((elements: object[]) => void) | null = null;
+  let motion: ((event: {action: number}) => void) | null = null;
   const page: FakeElement[] = [];
   const logs: string[] = [];
   const renumber = () =>
@@ -78,8 +81,18 @@ export function fakeTablet(answer = 'café') {
         listener = null;
       });
     }),
+    onMotion: jest.fn(next => {
+      motion = next as (event: {action: number}) => void;
+      return ok(() => {
+        motion = null;
+      });
+    }),
+    reloadFile: jest.fn(async () => ok(true)),
     strokePoints: jest.fn(async element =>
       ok((element as FakeElement).points ?? []),
+    ),
+    strokeTimes: jest.fn(async element =>
+      ok((element as FakeElement).times ?? null),
     ),
     saveStroke: jest.fn(async element =>
       ok<SavedStroke>({
@@ -175,6 +188,10 @@ export function fakeTablet(answer = 'café') {
     get listening() {
       return listener !== null;
     },
+    /** Sends one pen motion: 0 down, 1 up (MotionEvent). */
+    motion(action: number) {
+      motion?.({action});
+    },
     /**
      * Writes the synthetic stroke on the page and ends it with a pen-up at `at`. The pen-up element
      * carries `stroke.points` in the pen's unit; the page keeps `pagePoints`, its page pixels, as
@@ -194,7 +211,9 @@ export function fakeTablet(answer = 'café') {
       };
       page.push(element);
       renumber();
-      listener?.([{uuid: stroke.id, type: 0, points: stroke.points}]);
+      listener?.([
+        {uuid: stroke.id, type: 0, points: stroke.points, ...(stroke.times ? {times: stroke.times} : {})},
+      ]);
     },
     /** Moves the clock, running each timer that falls due. */
     async advance(to: number) {

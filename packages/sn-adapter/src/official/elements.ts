@@ -8,6 +8,7 @@ import {PluginCommAPI, PointUtils} from 'sn-plugin-lib';
 import type {TextBoxInput} from './note';
 import {createElement, type Size} from './page';
 import type {PenPoint} from './pen';
+import {REGISTRY} from '../registry.generated';
 import {attempt, fail, fromResponse, ok, Result, THROWN_CODE} from './result';
 
 /** A native accessor of an element's per-point data (sn-plugin-lib 0.2.3, ElementDataAccessor). */
@@ -113,6 +114,16 @@ export function batchUpdatePageElements(
   return attempt(() =>
     PluginCommAPI.batchUpdatePageElements(deleteNums, elements, page, layer),
   );
+}
+
+/**
+ * Whether the host drew the page after a `batchUpdatePageElements` that answered `answer` (#296):
+ * only its redraw code does (registry `plugin-api.batch-no-redraw`). sn-plugin-lib 0.2.3 hands the
+ * plugin a boolean in that code's place, and its `true` came with no redraw [measured, #206], so
+ * today every written batch needs a `reloadFile` to show.
+ */
+export function batchRedrawn(answer: unknown): boolean {
+  return answer === REGISTRY.pluginApiBatchNoRedraw.redrawCode;
 }
 
 /**

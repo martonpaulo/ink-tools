@@ -28,9 +28,11 @@ export const REGISTRY_ITEMS: readonly RegistryItem[] = [
   {id: 'plugin-api.crop-erase-elements', level: 5, impact: 'user', owner: 'image-editing', probe: null, unprobed: 'needs a picture on a note page; the effect test is the Image Editing device round', active: 'image-editing src/edit.ts'},
   {id: 'plugin-api.inserted-picture-copy', level: 5, impact: 'user', owner: 'image-editing', probe: null, unprobed: 'needs a picture insert on a note page', active: 'image-editing src/edit.ts'},
   {id: 'plugin-api.floating-insert', level: 5, impact: 'user', owner: 'device-transfer', probe: null, unprobed: 'needs a picture insert on a note page', active: 'device-transfer src/receive/receive.ts'},
+  {id: 'plugin-api.batch-no-redraw', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'needs a conversion on a note page; the effect test is the Smart Pen device round (#296)', active: 'sn-adapter official/elements.ts'},
   {id: 'pluginhost.no-back-press', level: 5, impact: 'user', owner: 'ui-kit', probe: null, unprobed: 'needs a key press on the tablet', active: 'ui-kit src/backKey.ts'},
   {id: 'pluginhost.overlay-back-key', level: 5, impact: 'user', owner: 'image-editing', probe: null, unprobed: 'needs a key press on the tablet', active: 'image-editing native BackKey.java'},
   {id: 'pluginhost.file-sandbox', level: 5, impact: 'user', owner: 'picture-search', probe: null, unprobed: '#293 adds a write and delete of a test file in each allowed folder', active: 'picture-search native SafePaths.java'},
+  {id: 'pluginhost.host-dialogs', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a dialog waits for a press on the tablet; the effect test is the #296 device round', active: 'sn-adapter official/dialog.ts'},
   {id: 'storage.cloud-conflict-folder', level: 5, impact: 'user', owner: 'picture-search', probe: null, unprobed: 'a conflict appears only after two devices sync', active: 'picture-search src/storage/settings.ts'},
   {id: 'storage.sign-in-drop-folder', level: 2, impact: 'user', owner: 'account-sync', probe: null, unprobed: '#293 adds a read of the folder', active: 'account-sync src/secretStore.ts'},
   {id: 'storage.helper-channel', level: 2, impact: 'tests', owner: 'plugin-diagnostics', probe: 'inkctl helper', unprobed: null, active: 'plugin-diagnostics src/helper.ts'},
@@ -56,6 +58,9 @@ export const REGISTRY = {
     authority: 'com.ratta.supernote.knowledge.provider',
     knowledgeUri: 'content://com.ratta.supernote.knowledge.provider/knowledge',
   },
+  penDigitizerUnits: {
+    strokeTimeMsPerUnit: 1,
+  },
   penPenTypes: {
     lasso: 4,
     ink: [1, 10, 11, 15, 16],
@@ -63,12 +68,18 @@ export const REGISTRY = {
   pluginApiElementReads: {
     maxConcurrent: 4,
   },
+  pluginApiBatchNoRedraw: {
+    redrawCode: 0,
+  },
   pluginhostFileSandbox: {
     sharedRoot: '/storage/emulated/0',
     sharedFolder: 'MyStyle',
     exportFolder: 'EXPORT',
     hiddenFolder: '.data/plugin',
     privateHomes: ['/data/data/com.ratta.supernote.pluginhost/files/plugins', '/data/user/0/com.ratta.supernote.pluginhost/files/plugins'],
+  },
+  pluginhostHostDialogs: {
+    questionStyle: false,
   },
   storageCloudConflictFolder: {
     marker: '_CONFLICT_',

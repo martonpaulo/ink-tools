@@ -4,13 +4,17 @@ import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {CLOSE_TEXT, RETRY_TEXT} from '@ink-tools/ui-kit';
-import {SettingsShell, ShellState} from '../src/SettingsShell';
+import {fail, ok, THROWN_CODE} from '@ink-tools/sn-adapter/official';
+import {Ask, SettingsShell, ShellState} from '../src/SettingsShell';
 import {copy} from '../src/copy';
 
-function render(state: ShellState, onClose: () => void = () => {}) {
+/** The host dialog cannot be shown in a test: by default every question is drawn in the view. */
+const noDialog: Ask = async () => fail(THROWN_CODE, 'no dialog in a test');
+
+function render(state: ShellState, onClose: () => void = () => {}, ask: Ask = noDialog) {
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = renderer.create(<SettingsShell state={state} onClose={onClose} />);
+    tree = renderer.create(<SettingsShell state={state} onClose={onClose} ask={ask} />);
   });
   return tree;
 }
@@ -119,27 +123,48 @@ describe('SettingsShell (#93)', () => {
       kind: 'ready',
       modules: [{id: 'calendar', name: 'Calendar', status: {state}, onRemoveWritten}],
     });
-    const press = (tree: ReactTestRenderer, label: string) =>
-      act(() => tree.root.findByProps({accessibilityLabel: label}).props.onPress());
+    const press = async (tree: ReactTestRenderer, label: string) =>
+      act(async () => tree.root.findByProps({accessibilityLabel: label}).props.onPress());
 
-    it('asks before removing, and removes only on the second press', () => {
+    it('asks in the host dialog and removes only on its action (#296)', async () => {
+      const onRemove = jest.fn();
+      const ask = jest.fn(async (_q: string, _a: string, _c: string) => ok(true));
+      const tree = render(offModule(onRemove), () => {}, ask);
+      await press(tree, copy['remove.button']);
+      expect(ask).toHaveBeenCalledWith(
+        'Remove what Account Sync wrote for Calendar? Your own events and tasks stay.',
+        copy['remove.yes'],
+        copy.cancel,
+      );
+      expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    it('removes nothing when the host dialog answers Cancel (#296)', async () => {
+      const onRemove = jest.fn();
+      const tree = render(offModule(onRemove), () => {}, async () => ok(false));
+      await press(tree, copy['remove.button']);
+      expect(onRemove).not.toHaveBeenCalled();
+      expect(tree.root.findAllByProps({accessibilityLabel: copy['remove.yes']})).toHaveLength(0);
+    });
+
+    it('asks in the view when the host dialog fails, and removes only on the second press', async () => {
       const onRemove = jest.fn();
       const tree = render(offModule(onRemove));
-      press(tree, copy['remove.button']);
+      await press(tree, copy['remove.button']);
       expect(onRemove).not.toHaveBeenCalled();
       expect(texts(tree)).toContain(
         'Remove what Account Sync wrote for Calendar? Your own events and tasks stay.',
       );
       expect(screenBreaks(tree.root)).toEqual([]);
-      press(tree, copy['remove.yes']);
+      await press(tree, copy['remove.yes']);
       expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
-    it('cancels without removing anything', () => {
+    it('cancels without removing anything', async () => {
       const onRemove = jest.fn();
       const tree = render(offModule(onRemove));
-      press(tree, copy['remove.button']);
-      press(tree, copy.cancel);
+      await press(tree, copy['remove.button']);
+      await press(tree, copy.cancel);
       expect(onRemove).not.toHaveBeenCalled();
       expect(tree.root.findAllByProps({accessibilityLabel: copy['remove.button']})).not.toHaveLength(0);
     });
@@ -166,8 +191,8 @@ describe('SettingsShell (#93)', () => {
         },
       ],
     });
-    const press = (tree: ReactTestRenderer, label: string) =>
-      act(() =>
+    const press = async (tree: ReactTestRenderer, label: string) =>
+      act(async () =>
         tree.root
           .findAll(n => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]
           .props.onPress(),
@@ -186,11 +211,11 @@ describe('SettingsShell (#93)', () => {
       expect(tree.root.findAllByProps({accessibilityLabel: 'Sign out of iCloud'})).toHaveLength(0);
     });
 
-    it('offers Connect for a provider with no connection, which opens the Needs state with its steps (owner, 2026-11-26; #256)', () => {
+    it('offers Connect for a provider with no connection, which opens the Needs state with its steps (owner, 2026-11-26; #256)', async () => {
       const onClose = jest.fn();
       const tree = render(withSignIns(() => {}), onClose);
       expect(tree.root.findAllByProps({accessibilityLabel: 'Connect Todoist'})).toHaveLength(0);
-      press(tree, 'Connect iCloud');
+      await press(tree, 'Connect iCloud');
       expect(tree.root.findByProps({testID: 'needs'})).toBeTruthy();
       expect(texts(tree)).toEqual([
         'iCloud is not connected',
@@ -200,20 +225,33 @@ describe('SettingsShell (#93)', () => {
       ]);
       expect(screenBreaks(tree.root)).toEqual([]);
       // Its × goes back to Settings, never closes the plugin.
-      press(tree, CLOSE_TEXT);
+      await press(tree, CLOSE_TEXT);
       expect(onClose).not.toHaveBeenCalled();
       expect(texts(tree)).toContain('iCloud: not connected.');
     });
 
-    it('signs out only after the confirmation, and Cancel keeps the sign-in', () => {
+    it('signs out only after the confirmation, and Cancel keeps the sign-in', async () => {
       const onSignOut = jest.fn();
       const tree = render(withSignIns(onSignOut));
-      press(tree, 'Sign out of Todoist');
-      press(tree, copy.cancel);
+      await press(tree, 'Sign out of Todoist');
+      await press(tree, copy.cancel);
       expect(onSignOut).not.toHaveBeenCalled();
-      press(tree, 'Sign out of Todoist');
+      await press(tree, 'Sign out of Todoist');
       expect(texts(tree)).toContain('Sign out of Todoist? Account Sync deletes its sign-in from the tablet.');
-      press(tree, copy['signOut.yes']);
+      await press(tree, copy['signOut.yes']);
+      expect(onSignOut).toHaveBeenCalledTimes(1);
+    });
+
+    it('signs out from the host dialog, which asks the same question (#296)', async () => {
+      const onSignOut = jest.fn();
+      const ask = jest.fn(async (_q: string, _a: string, _c: string) => ok(true));
+      const tree = render(withSignIns(onSignOut), () => {}, ask);
+      await press(tree, 'Sign out of Todoist');
+      expect(ask).toHaveBeenCalledWith(
+        'Sign out of Todoist? Account Sync deletes its sign-in from the tablet.',
+        copy['signOut.yes'],
+        copy.cancel,
+      );
       expect(onSignOut).toHaveBeenCalledTimes(1);
     });
   });

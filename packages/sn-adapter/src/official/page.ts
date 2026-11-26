@@ -60,3 +60,12 @@ export function convertElement2Sticker(
 export function insertSticker(path: string): Promise<Result<boolean>> {
   return attempt(() => PluginCommAPI.insertSticker(path));
 }
+
+/**
+ * Draws the open page again from its file (#296): the host runs `reloadCurrentNotePage`. It is for
+ * a page change the host did not draw, such as a `batchUpdatePageElements` that answered without a
+ * redraw; never while the pen is down, as a reload mid-stroke may drop that stroke.
+ */
+export function reloadFile(): Promise<Result<boolean>> {
+  return attempt(() => PluginCommAPI.reloadFile());
+}

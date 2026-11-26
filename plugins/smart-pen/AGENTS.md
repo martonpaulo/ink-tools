@@ -55,7 +55,9 @@ settings in memory, and each switch that changed starts or stops its module.
 - Every SDK call goes through `@ink-tools/sn-adapter/official`, gathered in each module's
   `device.ts`; the rest take their host as a parameter, so the tests drive them with fakes and
   synthetic strokes.
-- Nothing runs while the pen is down: the work starts at pen-up. A failure keeps the handwriting and
+- Nothing runs while the pen is down: the work starts at pen-up. Real-Time Text's motion listener
+  only notes down and up, so a conversion's `reloadFile` never runs mid-stroke
+  ([#296](https://github.com/martonpaulo/ink-tools/issues/296)). A failure keeps the handwriting and
   is logged; never a success-shaped default.
 - Turning Real-Time Text off removes its pen-up listener at once and drops the open words untouched.
 - Permissions: `FILE:READ` (page size, the stroke) and `FILE:WRITE` (the page change, code 1501

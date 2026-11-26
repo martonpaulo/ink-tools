@@ -4,17 +4,22 @@
  * elements (#206), and ONE
  * batchUpdatePageElements call deletes its strokes and inserts a text box at its place, so the
  * page changes once per word. Nothing runs during a stroke: the work starts at pen-up, and words
- * convert one at a time. Any failure keeps the handwriting and is logged.
+ * convert one at a time. Any failure keeps the handwriting and is logged. The host does not draw a
+ * plugin's batch (docs/supernote.md), so a conversion ends with `reloadFile`, only with the pen up
+ * (#296).
  */
 import type {Rect, Size} from '../lasso';
 import {
   type EmrRange,
   emrToPage,
   fail,
+  batchRedrawn,
+  type Motion,
   offPage,
   ok,
   type Result,
   type SavedStroke,
+  type StrokeTimes,
   type TextBoxInput,
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
@@ -36,13 +41,52 @@ export const CHAR_WIDTH = 0.55;
  */
 export const LOG_PEN_UP_UNIT = true;
 
+/**
+ * Logs, once per mode start, the first pen-up stroke's pen times and how long their read took, so
+ * the device round names their unit and read cost (#296). On until that round.
+ */
+export const LOG_STROKE_TIMES = true;
+
+/** MotionEvent's actions (Android): the pen touches, lifts, or the gesture is cancelled. */
+export const ACTION_DOWN = 0;
+export const ACTION_UP = 1;
+export const ACTION_CANCEL = 3;
+
+/** Whether the pen is on the screen; unknown when the motion listener could not register. */
+export type PenState = 'up' | 'down' | 'unknown';
+
+/** What follows a written batch (#296): a reload, or why none runs. */
+export type AfterBatch = 'reload' | 'redrawn' | 'pen down' | 'pen unknown';
+
+/**
+ * A reload runs only when the batch answer shows no redraw (sn-adapter's `batchRedrawn`) and the
+ * pen is up: a reload mid-stroke
+ * may drop the stroke being drawn, so a pen down or unknown skips it, and the next conversion or
+ * page change draws the page.
+ */
+export function afterBatch(answer: unknown, pen: PenState): AfterBatch {
+  if (batchRedrawn(answer)) {
+    return 'redrawn';
+  }
+  if (pen === 'down') {
+    return 'pen down';
+  }
+  return pen === 'up' ? 'reload' : 'pen unknown';
+}
+
 /** The fields of a host element this module reads. */
 export type HostElement = {uuid?: string; type?: number; numInPage?: number};
 
 /** The SDK calls the conversion makes, each through sn-adapter; tests pass a fake. */
 export type ConvertHost = {
   onPenUp(listener: (elements: object[]) => void): Result<() => void>;
+  /** Pen motion, read only for down and up, so a reload never runs mid-stroke (#296). */
+  onMotion(listener: (motion: Motion) => void): Result<() => void>;
+  /** Draws the open page again from its file (#296). */
+  reloadFile(): Promise<Result<boolean>>;
   strokePoints(element: object): Promise<Result<Point[]>>;
+  /** The stroke's pen times from its recognition points; null when the host filled none (#296). */
+  strokeTimes(element: object): Promise<Result<StrokeTimes | null>>;
   saveStroke(element: object): Promise<Result<SavedStroke>>;
   recycleElement(element: object): Promise<Result<true>>;
   getCurrentFilePath(): Promise<Result<string>>;
@@ -85,6 +129,8 @@ export function textBoxFor(text: string, word: Word, page: Size): TextBoxInput {
 export class Converter {
   private tracker: WordTracker<object>;
   private stop: (() => void) | null = null;
+  private stopMotion: (() => void) | null = null;
+  private pen: PenState = 'unknown';
   private timer: unknown = null;
   private queue: Promise<void> = Promise.resolve();
   /** Pen-ups are read in the order they came, each at the time it came. */
@@ -95,6 +141,7 @@ export class Converter {
   private emr: EmrRange | null = null;
   private unitLogged = false;
   private matchLogged = false;
+  private timesLogged = false;
   /** When the last stroke whose points could not be read came, or a stroke kept after it (#229). */
   private unreadAt: number | null = null;
 
@@ -116,6 +163,20 @@ export class Converter {
       return listening;
     }
     this.stop = listening.value;
+    // A field write per motion, nothing more: the work still starts at pen-up.
+    const motion = this.host.onMotion(({action}) => {
+      if (action === ACTION_DOWN) {
+        this.pen = 'down';
+      } else if (action === ACTION_UP || action === ACTION_CANCEL) {
+        this.pen = 'up';
+      }
+    });
+    this.stopMotion = motion.ok ? motion.value : null;
+    // Before the first motion the pen is up: the press that turned the mode on has ended.
+    this.pen = motion.ok ? 'up' : 'unknown';
+    if (!motion.ok) {
+      this.host.log(`motion listener failed: ${motion.message}: no reload after a conversion`);
+    }
     // shortcut: the page size and the unit are read once per mode start; a note of another page
     // size opened while the mode stays on keeps the first one, until turning the mode off and on.
     this.size = null;
@@ -123,6 +184,7 @@ export class Converter {
     this.unreadAt = null;
     this.unitLogged = false;
     this.matchLogged = false;
+    this.timesLogged = false;
     return ok(true);
   }
 
@@ -133,6 +195,9 @@ export class Converter {
   turnOff(): void {
     this.stop?.();
     this.stop = null;
+    this.stopMotion?.();
+    this.stopMotion = null;
+    this.pen = 'unknown';
     if (this.timer !== null) {
       this.host.clearTimer(this.timer);
       this.timer = null;
@@ -182,10 +247,56 @@ export class Converter {
         this.free([element]);
         continue;
       }
-      const stroke: InkStroke<object> = {id: uuid, rect, points: points.value, element};
+      const times = await this.readTimes(element);
+      const stroke: InkStroke<object> = {
+        id: uuid,
+        rect,
+        points: points.value,
+        element,
+        ...(times ? {times} : {}),
+      };
       this.handOn(this.tracker.add(stroke, at));
     }
     this.schedule();
+  }
+
+  /**
+   * The stroke's pen times, a second word-end signal beside position (#296); a failed or empty read
+   * leaves the stroke to position alone, and is logged once per mode start with the first answer.
+   */
+  private async readTimes(element: object): Promise<StrokeTimes | null> {
+    const started = this.host.now();
+    const times = await this.host.strokeTimes(element);
+    if (LOG_STROKE_TIMES && !this.timesLogged) {
+      this.timesLogged = true;
+      const ms = this.host.now() - started;
+      this.host.log(
+        !times.ok
+          ? `times: ${times.message} in ${ms} ms: position alone`
+          : times.value
+          ? `times: first ${times.value.startedAt} to ${times.value.endedAt}, read in ${ms} ms`
+          : `times: none filled, read in ${ms} ms: position alone`,
+      );
+    }
+    return times.ok ? times.value : null;
+  }
+
+  /** Draws the page the batch changed, when afterBatch allows it; every outcome is logged (#296). */
+  private async redraw(answer: unknown): Promise<void> {
+    this.host.log(`batch: answered ${String(answer)}`);
+    const next = afterBatch(answer, this.pen);
+    if (next !== 'reload') {
+      this.host.log(`reload: not run: ${next}`);
+      return;
+    }
+    const started = this.host.now();
+    const reloaded = await this.host.reloadFile();
+    const ms = this.host.now() - started;
+    this.host.log(
+      reloaded.ok
+        ? `reload: answered ${String(reloaded.value)} in ${ms} ms`
+        : `reload failed: ${reloaded.code} ${reloaded.message} in ${ms} ms`,
+    );
   }
 
   /** Whether `at` comes within the idle time of a stroke whose points could not be read (#229). */
@@ -402,6 +513,7 @@ export class Converter {
       }
       setLastConversion({path: path.value, page: page.value, box, strokes: saved});
       log(`converted ${[...box.text].length} characters from ${nums.length} strokes`);
+      await this.redraw(written.value);
     } finally {
       // The page read is freed only now: it may share its native cache with the word's strokes.
       this.free(read.value);

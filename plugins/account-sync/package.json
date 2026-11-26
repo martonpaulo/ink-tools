@@ -8,11 +8,12 @@
     "lint:ui-kit": "eslint --max-warnings 0 -c .eslintrc.js --resolve-plugins-relative-to . ../../packages/ui-kit",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "validate": "npm run lint && npm run typecheck && npm test",
+    "validate": "npm run lint && npm run typecheck && npm test && npm run test:native",
     "renders": "jest --config ../../packages/ui-kit/renders/jest.config.js",
     "renders:windows": "npm run renders && RENDER_WINDOW=nomad npm run renders && RENDER_WINDOW=turned npm run renders",
     "start": "react-native start",
-    "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package"
+    "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package",
+    "test:native": "node scripts/native-build.cjs --test"
   },
   "dependencies": {
     "react": "19.0.0",
