@@ -139,6 +139,9 @@ API_RELATION = re.compile(r"^/?repos/[^/]+/[^/]+/issues/[^/]+/(sub_issues?(/prio
 API_REPO = re.compile(r"^/?repos/[^/]+/[^/]+/?$")
 API_RELEASE = re.compile(r"^/?repos/[^/]+/[^/]+/releases(?P<rest>/[^/]+)?/?$")
 API_GIST = re.compile(r"^/?gists(?P<rest>/[^/]+)?/?$")
+# An Actions write (a dispatch, rerun, cancel or delete): the App token a Mac session exports reads
+# Actions only, so it answers HTTP 403; gh_rest.py runs it on the owner's login (#1980).
+API_ACTIONS = re.compile(r"^/?repos/[^/]+/[^/]+/actions/(workflows|runs|caches|jobs)(/|$)")
 SCRIPT_LIMIT = 1_000_000
 GIT_SECONDS = 5  # a local `git` read the guard waits for before it gives up
 # A here-string (`<<< word`) opens no here-document, so its `<<` never counts (#1410).
@@ -1021,7 +1024,7 @@ def text_endpoint(endpoint: str, method: str | None, fields: set[str]) -> list[s
 def api_write(words: list[str], rows: list[dict]) -> dict | None:
     """The map row that owns a `gh api` write to an issue, its comments or relations, or a pull
     request, its review comments, reviews or merge (#658, #1211), a repository description, a
-    release or a gist (#1289), else None.
+    release or a gist (#1289), an Actions workflow, run, job or cache (#1980), else None.
 
     A write is `--method`/`-X` other than GET, or any field or `--input` without an explicit GET.
     Other endpoints, labels and repository settings included, pass; a pull request PATCH with no
@@ -1052,6 +1055,8 @@ def api_write(words: list[str], rows: list[dict]) -> dict | None:
     wanted = text_endpoint(endpoint, method, fields)
     if wanted:
         return next((row for row in rows if row["words"] == wanted), None)
+    if API_ACTIONS.match(endpoint):
+        return next((row for row in rows if row["words"] == ["workflow", "run"]), None)
     if API_RELATION.match(endpoint):
         return next((row for row in rows if row["words"] == ["issue", "edit"] and "--add-sub-issue*" in row["flags"]), None)
     pull = API_PULL.match(endpoint)
