@@ -10,7 +10,9 @@ import {startAutoSync} from './src/sync';
 import {
   registerSettingsEntry,
   showPluginView,
+  startActionChannel,
 } from '@ink-tools/sn-adapter/official';
+import {readActionFile, syncAction} from './src/actions';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -23,3 +25,10 @@ registerSettingsEntry(() => showPluginView()).catch(error => {
 // AUTO_SYNC_MINUTES while the host process lives (docs/supernote.md: every enabled plugin loads
 // into one PluginHost process at its start).
 startAutoSync(bridgeSync);
+
+// «Sync now» by command from inkctl, with no screen (#283): `inkctl plugin action account-sync sync`.
+startActionChannel({
+  plugin: 'account-sync',
+  read: () => readActionFile(),
+  actions: {sync: syncAction(bridgeSync)},
+});

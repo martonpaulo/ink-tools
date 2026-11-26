@@ -27,7 +27,7 @@ the only code that imports `sn-plugin-lib`, each call returning a `Result`. A pl
 `node_modules`, so the plugin gates type-check it against the real SDK. Its own tests run in the
 packages gate against `sn-adapter/testing/`: the SDK's Jest mock, a loose type stand-in and the
 native module registry, which `packages/jest.config.js` and `tsconfig.base.json` map, and which
-the renders' Jest maps too ([#142](https://github.com/martonpaulo/ink-tools/issues/142), [#288](https://github.com/martonpaulo/ink-tools/issues/288)). `scripts/boundaries.py` keeps every other folder off the SDK and the providers.
+the renders' Jest maps too ([#142](https://github.com/martonpaulo/ink-tools/issues/142), [#288](https://github.com/martonpaulo/ink-tools/issues/288)). `scripts/boundaries.py` keeps every other folder off the SDK and the providers. A third entry, `@ink-tools/sn-adapter/actions`, is the action channel alone (`src/official/actions.ts`, also in the official tier): a plugin reads its `action.json` on a timer and runs the named action, so inkctl runs a plugin's own action by command with no screen; Plugin Diagnostics, which reads no other part of the official tier, maps only it ([#283](https://github.com/martonpaulo/ink-tools/issues/283)).
 
 `picture-search` is wired the same way by `picture-search/plugin-config.js`, which also maps a deep
 path (`@ink-tools/picture-search/rank`) for tests. Its Java keeps the package name

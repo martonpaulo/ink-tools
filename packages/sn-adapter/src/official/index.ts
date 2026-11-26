@@ -4,6 +4,7 @@
  * the internals tier, which changes without notice, is the package's main entry.
  */
 export * from './result';
+export * from './actions';
 export * from './buttons';
 export * from './elements';
 export * from './file';

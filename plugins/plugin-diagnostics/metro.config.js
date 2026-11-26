@@ -5,7 +5,7 @@ const snAdapter = require('../../packages/sn-adapter/plugin-config');
  * Metro configuration
  * https://reactnative.dev/docs/metro
  *
- * sn-adapter resolves from its folder, for the registry of internals (#294).
+ * sn-adapter resolves from its folder, for the registry of internals (#294) and the action channel (#283).
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */

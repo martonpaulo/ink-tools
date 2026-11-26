@@ -34,7 +34,7 @@ exports.jvmTests = {
 /**
  * Adds the package to another Metro config part, such as ui-kit's: Metro's mergeConfig replaces
  * `watchFolders` and `extraNodeModules` rather than joining them. `/official` resolves to this
- * folder's `official.ts`, and `/registry` to `registry.ts` (#294).
+ * folder's `official.ts`, `/registry` to `registry.ts` (#294) and `/actions` to `actions.ts` (#283).
  */
 exports.metro = part => ({
   ...part,
@@ -48,9 +48,10 @@ exports.metro = part => ({
 /** The Jest mock of `sn-plugin-lib`, which the packages gate maps too (#142). */
 exports.jestSdkMock = path.join(__dirname, 'testing', 'sn-plugin-lib.ts');
 
-/** The Jest moduleNameMapper part: the three entries, to their source. */
+/** The Jest moduleNameMapper part: the four entries, to their source. */
 exports.jestModuleNameMapper = {
   [`^${NAME}$`]: path.join(__dirname, 'src'),
   [`^${NAME}/official$`]: path.join(__dirname, 'src', 'official'),
   [`^${NAME}/registry$`]: path.join(__dirname, 'src', 'registry.generated'),
+  [`^${NAME}/actions$`]: path.join(__dirname, 'src', 'official', 'actions'),
 };

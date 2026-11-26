@@ -2,8 +2,9 @@
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
     "paths": {
-      // The registry of internals (#294), the only part of sn-adapter this plugin reads.
+      // The registry of internals (#294) and the action channel (#283), the only parts of sn-adapter this plugin reads.
       "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
+      "@ink-tools/sn-adapter/actions": ["../../packages/sn-adapter/actions"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   }

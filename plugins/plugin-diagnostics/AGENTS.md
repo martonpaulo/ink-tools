@@ -22,6 +22,7 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
   `ReactNativeJS`. A `batch` command runs a list of these in one press and answers each step ([#286](https://github.com/martonpaulo/ink-tools/issues/286)). After each command `src/command.ts` reads the file again every 270 ms for 120 s and runs a new id with no press; an id runs at most once, and a press of one already run logs its answer again ([#286](https://github.com/martonpaulo/ink-tools/issues/286)). `cli/inkctl/src/inkctl` owns the other side; change both together. The helper
   only executes: text to strokes and every refusal live in the CLI. The probe view runs the probe
   on «Run Probe», never on mount, because a «Run Command» press mounts the view's component too.
+- «Run Probe» also runs by command, with no screen: `src/actions.ts` gives sn-adapter's action channel (`@ink-tools/sn-adapter/actions`) the `run-probe` action and the reader of `MyStyle/Probe/action.json` ([#283](https://github.com/martonpaulo/ink-tools/issues/283)).
 - Lines are logged with the tag `SNPROBE`. Never log a secret or a person's data.
 - Validate with `npm run validate`. A result found on the device goes to the issue or a research
   note, never kept as a claim without the device run.

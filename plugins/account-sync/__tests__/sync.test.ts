@@ -528,3 +528,12 @@ describe('iCloud and ICS on the tablet (#30)', () => {
     ).toMatch(/^the iCloud calendars did not read: CalDAV refused the sign-in/);
   });
 });
+
+test('a pass with only one module probes and runs that module alone (#283)', async () => {
+  const probe = jest.fn(async (capabilities: string[]) =>
+    ON.filter(status => capabilities.includes(status.capability)),
+  );
+  const done = await createSyncRunner(device({probe})).syncNow({only: 'todo'});
+  expect(probe.mock.calls).toEqual([[['todo']]]);
+  expect(Object.keys(done.runs)).toEqual(['todo']);
+});

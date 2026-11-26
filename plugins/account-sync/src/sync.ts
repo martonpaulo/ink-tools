@@ -298,6 +298,16 @@ export interface PassOptions {
    * start (#43). The probe runs at «Sync now» and at the automatic pass.
    */
   load?: boolean;
+  /** Only this module, when it is on: inkctl's `sync --module` (#283). */
+  only?: ModuleId;
+}
+
+/** The settings with every module but `only` turned off, for a pass of that module alone (#283). */
+export function onlyModule(settings: BridgeSettings, only: ModuleId): BridgeSettings {
+  const modules = Object.fromEntries(
+    Object.entries(settings.modules).map(([id, on]) => [id, on && id === only]),
+  ) as Record<ModuleId, boolean>;
+  return {...settings, modules};
 }
 
 export interface SyncRunner {
@@ -364,7 +374,7 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
     listeners.forEach(l => l(current));
   };
 
-  const run = async ({load = false}: PassOptions): Promise<SyncSnapshot> => {
+  const run = async ({load = false, only}: PassOptions): Promise<SyncSnapshot> => {
     publish({...current, running: true});
     if (device.importSecrets) {
       try {
@@ -383,13 +393,14 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
         );
       }
     }
-    const settings = await device.loadSettings();
-    if (!settings.ok) {
+    const loaded = await device.loadSettings();
+    if (!loaded.ok) {
       log(
-        `[Bridge] sync: not run: the settings did not load: ${settings.message}`,
+        `[Bridge] sync: not run: the settings did not load: ${loaded.message}`,
       );
-      return {...current, running: false, problem: settings.message};
+      return {...current, running: false, problem: loaded.message};
     }
+    const settings = only ? {...loaded, value: onlyModule(loaded.value, only)} : loaded;
     // Only the modules that are on are probed, and never in the load pass (#43).
     const wanted = capabilitiesOf(settings.value);
     const statuses: CapabilityStatus[] = wanted.flatMap(c => cleared.get(c) ?? []);
