@@ -38,6 +38,24 @@ as Account Sync's sign-in drop folder. `SafePaths.Roots` refuses every other pat
 link, so a link out of a folder is refused too. Each plugin's package names its folders; the
 registry item `pluginhost.file-sandbox` holds the device's folder names.
 
+## Wi-Fi ADB after a restart
+
+The route the owner chose for [#1](https://github.com/martonpaulo/ink-tools/issues/1) (Inbox D74 A, 2026-11-25) keeps Wi-Fi ADB on
+across restarts, with no USB cable:
+
+- Only the Ink Tools Bridge holds `WRITE_SECURE_SETTINGS`, granted once by the owner with
+  `adb shell pm grant` over the cable. Its boot receiver runs only on boot and writes only
+  `adb_wifi_enabled`.
+- The exposure the owner accepted: the Manta's ADB asks no computer for authorization
+  (`ro.adb.secure` is 0, firmware Chauvet.E103.2610191001.2559), so while Wireless debugging is on,
+  any computer on the home Wi-Fi can read and delete every note and install apps. It is on from each
+  boot until it is turned off in Settings › Developer options.
+- `inkctl` follows a port from `adb mdns services` only when the row's address is exactly the stored
+  one, so another device's announcement cannot redirect its commands. The run log masks the new
+  address as it masks the stored one.
+- To close it: turn Wireless debugging off, and revoke the grant with
+  `adb shell pm revoke com.martonpaulo.inktools.bridge android.permission.WRITE_SECURE_SETTINGS`.
+
 ## Android signing keys
 
 The Ink Tools bridge prerelease signs its APK with one stable key, so each build updates the last
