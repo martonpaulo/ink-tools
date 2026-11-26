@@ -1,7 +1,10 @@
 // ui-kit is React Native code: its tests run in Bridge's suite, which has React Native (#93).
 const snAdapter = require('./sn-adapter/plugin-config');
+const uiKit = require('./ui-kit/plugin-config');
 
 module.exports = {
+  // The load-scaled time limit every plugin's suite uses too (#422).
+  testTimeout: uiKit.testTimeout(),
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/ui-kit/'],
   // The SDK and the native module registry are not installed here: the packages' own tests call
   // the official tier and the device tier against these stand-ins (#142). tsconfig.base.json maps
