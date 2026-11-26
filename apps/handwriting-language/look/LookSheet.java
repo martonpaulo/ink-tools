@@ -41,7 +41,7 @@ final class LookSheet {
   private static final float DOT_PHASE = 0f;
   private static final int LABEL_WIDTH = 64;
   private static final int HALF = 2;
-  private static final int NAME_X = 90;
+  private static final int NAME_X = 112;
   private static final int RGB_BITS = 0xffffff;
   private static final float DASH = 6f;
   private static final float[] DOTS = {DASH, DASH};
@@ -76,7 +76,7 @@ final class LookSheet {
     List<Look.Finding> nativeFindings = nativePicture == null ? null : Look.measure(nativePicture);
     List<Look.Finding> findings = nativeFindings == null ? ourFindings : against(ourFindings, nativeFindings);
     for (Look.Finding finding : findings) {
-      System.out.println((finding.agrees() ? "same    " : "differs ") + describe(finding));
+      System.out.println(String.format("%-10s", finding.verdict()) + describe(finding));
     }
     ImageIO.write(sheet(screen, ourPicture, nativePicture, findings), "png", out);
     System.out.println("look-check: " + out);
@@ -101,7 +101,8 @@ final class LookSheet {
 
   private static String describe(Look.Finding finding) {
     String ours = finding.ours < 0 ? "not found" : Math.round(finding.ours) + " " + finding.unit;
-    return finding.name + ": native " + Math.round(finding.nativeValue) + " " + finding.unit + ", ours " + ours
+    String nativeText = finding.nativeFound() ? Math.round(finding.nativeValue) + " " + finding.unit : "not found";
+    return finding.name + ": native " + nativeText + ", ours " + ours
         + (finding.note.isEmpty() ? "" : " (" + finding.note + ")");
   }
 
@@ -232,12 +233,13 @@ final class LookSheet {
     g.drawString("Measured, native then ours", x, HEADER - CAPTION_GAP);
     g.setFont(new Font(FONT, Font.PLAIN, TEXT_SIZE));
     for (Look.Finding finding : findings) {
-      g.setColor(finding.agrees() ? AGREE : OURS_MARK);
-      g.drawString(finding.agrees() ? "same" : "differs", x, y + TEXT_SIZE);
+      g.setColor(!finding.nativeFound() ? FRAME : finding.agrees() ? AGREE : OURS_MARK);
+      g.drawString(finding.verdict(), x, y + TEXT_SIZE);
       g.setColor(INK);
       g.drawString(finding.name, x + NAME_X, y + TEXT_SIZE);
       String ourValue = finding.ours < 0 ? "not found" : Math.round(finding.ours) + " " + finding.unit;
-      g.drawString("native " + Math.round(finding.nativeValue) + "   ours " + ourValue, x + NAME_X, y + TEXT_SIZE + CAPTION_GAP + SMALL_TEXT_SIZE);
+      String nativeValue = finding.nativeFound() ? String.valueOf(Math.round(finding.nativeValue)) : "not found";
+      g.drawString("native " + nativeValue + "   ours " + ourValue, x + NAME_X, y + TEXT_SIZE + CAPTION_GAP + SMALL_TEXT_SIZE);
       y += ROW_STEP + SMALL_TEXT_SIZE;
     }
     int grey = Look.textGrey(ours, Look.barHeight(ours));

@@ -14,6 +14,8 @@ import javax.imageio.ImageIO;
  */
 public final class LookTest {
   private static final float STRETCH = 1.2f;
+  /** Settings' menu pane on the Manta: its 2 px divider at 551 and 552 px (#299, device round 9). */
+  private static final int MENU_PANE = 552;
 
   private static void check(boolean ok, String message) {
     if (!ok) {
@@ -50,6 +52,25 @@ public final class LookTest {
     for (Look.Finding finding : Look.measure(blank)) {
       check(finding.ours < 0, "a blank picture shows " + finding.name);
     }
+    // The same picture behind a Settings-style menu pane: measured in its own pane, the same values.
+    BufferedImage twoPane = new BufferedImage(MENU_PANE + 1 + picture.getWidth(), picture.getHeight(), BufferedImage.TYPE_INT_RGB);
+    java.awt.Graphics2D panes = twoPane.createGraphics();
+    panes.setColor(new java.awt.Color(Tokens.PAPER_COLOUR));
+    panes.fillRect(0, 0, twoPane.getWidth(), twoPane.getHeight());
+    panes.drawImage(picture, MENU_PANE + 1, 0, null);
+    int bar = Look.barHeight(picture);
+    panes.setColor(new java.awt.Color(Tokens.INK_COLOUR));
+    panes.fillRect(0, 0, MENU_PANE, bar);
+    panes.fillRect(MENU_PANE - 1, 0, 2, twoPane.getHeight());
+    panes.dispose();
+    List<Look.Finding> paned = Look.measure(twoPane);
+    for (int i = 0; i < findings.size(); i++) {
+      check(paned.get(i).ours == findings.get(i).ours, findings.get(i).name + " in a two-pane picture: " + paned.get(i).ours
+          + ", alone: " + findings.get(i).ours);
+    }
+    // A value the native screen does not have is neither the same nor a difference.
+    Look.Finding none = new Look.Finding("Dotted rule thickness", "px", -1, 1, "");
+    check(!none.agrees() && none.verdict().equals("no native"), "a value with no native counterpart agrees");
     System.out.println("LookTest ok: " + findings.size() + " values measured");
   }
 }

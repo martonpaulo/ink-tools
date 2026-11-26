@@ -56,12 +56,13 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 ([#299](https://github.com/martonpaulo/ink-tools/issues/299)) measures a picture of one of our screens, 1920 px wide
 or any other width, against the values of this page, which `tokens.json` holds: the black bar, the
 rule to rule height of a row, a caption's box and its row, the solid and dotted rules, both side margins, the
-switch's track and the radio ring, and the text grey and its contrast. It prints each value as `same` or `differs`, the
-native value then ours, and draws one sheet: our picture with its rules and their pitch marked, the native rhythm
+switch's track and the radio ring, and the text grey and its contrast. It prints each value as `same`, `differs` or
+`no native` (the native screen has none, such as a switch on a screen of radio rows), the native value then ours, and draws one sheet: our picture with its rules and their pitch marked, the native rhythm
 drawn from these values (a native row where ours is a row; ours kept, hatched, where the catalog has no
 value, such as a note), and the table. The values are in pixels of the Manta (11.8 px per mm) at any picture
 width, since every token is in millimetres. `--native NATIVE.png` takes a screencap of the native screen
-and measures it the same way, in place of the catalog's values. The JVM test
+and measures it the same way, in place of the catalog's values; on a two-pane Settings screen it measures the pane
+right of the menu's divider. The JVM test
 (`apps/handwriting-language/look/LookTest.java`) runs the measure over a recorded picture of our own screen.
 What it cannot measure stays for the owner's taste: the order of the rows, the wording and the whitespace of a note.
 

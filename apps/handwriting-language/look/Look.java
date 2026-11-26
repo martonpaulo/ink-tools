@@ -38,6 +38,14 @@ final class Look {
   private static final float SWITCH_RATIO_MAX = 2.2f;
   private static final int MARK_MIN_PX = 20;
   private static final int MARK_MAX_PX = 155;
+  /**
+   * A two-pane screen's divider: a column of ink from the bar down at least this share of the
+   * picture, between these shares of its width (Settings keeps its menu at the leading side, its
+   * divider at 552 of 1920 px on the Manta, measured 2026-11-26, #299).
+   */
+  private static final float DIVIDER_SHARE = 0.9f;
+  private static final float DIVIDER_FROM = 0.2f;
+  private static final float DIVIDER_TO = 0.5f;
   /** The controls sit in the trailing part of the picture. */
   private static final float CONTROLS_FROM = 0.6f;
   /** The column read for the black bar, in from the trailing edge, clear of its title and its ×. */
@@ -113,8 +121,18 @@ final class Look {
       this.note = note;
     }
 
+    /** False when the native screen has none of it, such as a switch on a screen of radio rows. */
+    boolean nativeFound() {
+      return nativeValue >= 0;
+    }
+
     boolean agrees() {
-      return ours >= 0 && Math.abs(ours - nativeValue) <= TOLERANCE_PX;
+      return nativeFound() && ours >= 0 && Math.abs(ours - nativeValue) <= TOLERANCE_PX;
+    }
+
+    /** «same», «differs», or «no native» when the native screen has none to compare. */
+    String verdict() {
+      return !nativeFound() ? "no native" : agrees() ? "same" : "differs";
     }
   }
 
@@ -340,7 +358,40 @@ final class Look {
   }
 
   /** Every difference worth a line, native value then ours; a value of -1 is not found. */
-  static List<Finding> measure(BufferedImage picture) {
+  /**
+   * The content pane of a two-pane screen, right of its divider; the picture itself when it has one
+   * pane. Settings' native screens keep a menu at the leading side, so their rows span the pane, not
+   * the picture, and the margins count from the divider.
+   */
+  static BufferedImage contentPane(BufferedImage picture) {
+    int bar = barHeight(picture);
+    int width = picture.getWidth();
+    int height = picture.getHeight();
+    int needed = Math.round((height - bar) * DIVIDER_SHARE);
+    int x = Math.round(width * DIVIDER_FROM);
+    while (x < Math.round(width * DIVIDER_TO) && columnInk(picture, x, bar) < needed) {
+      x++;
+    }
+    if (x >= Math.round(width * DIVIDER_TO)) {
+      return picture;
+    }
+    // The divider is 2 px wide on the Manta: the pane starts after its last column.
+    while (x + 1 < width && columnInk(picture, x + 1, bar) >= needed) {
+      x++;
+    }
+    return picture.getSubimage(x + 1, 0, width - x - 1, height);
+  }
+
+  private static int columnInk(BufferedImage picture, int x, int top) {
+    int ink = 0;
+    for (int y = top; y < picture.getHeight(); y++) {
+      ink += luminance(picture.getRGB(x, y)) < RULE_BELOW ? 1 : 0;
+    }
+    return ink;
+  }
+
+  static List<Finding> measure(BufferedImage whole) {
+    BufferedImage picture = contentPane(whole);
     List<Finding> findings = new ArrayList<>();
     int bar = barHeight(picture);
     findings.add(new Finding("Title bar height", "px", px(Tokens.TITLE_BAR_HEIGHT_MM), bar > 0 ? bar : -1, ""));
