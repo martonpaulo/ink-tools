@@ -77,7 +77,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   | 4 | Screen automation: `inkctl` finds controls by text and id | any interface change; a step fails | our tests only | Screen automation | find buttons by their text in Settings and in notes | `inkctl doctor` before each test round |
   | 5 | Observed device behaviour that no API states (Back key routing, pen units, the Calendar and To-Do reading rules) | silently | the person | Observed device behaviour | the Back key, pen units, how Calendar and To-Do read entries | an effect test: write, read back, compare |
 
-  The README's level diagram reads the last five columns: `scripts/readme_figures.py` draws it, with
+  The README's level table reads the last five columns: `scripts/readme_figures.py` writes it, with
   the registry's item count per level, so those columns hold only what the public README may say
   ([#407](https://github.com/martonpaulo/ink-tools/issues/407)).
 

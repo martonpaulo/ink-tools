@@ -1,4 +1,4 @@
-"""Tests of readme_figures.py (#407): the README tables and diagrams follow their data, and --check sees drift."""
+"""Tests of readme_figures.py (#407): the README tables, tool map and level table follow their data, and --check sees drift."""
 import json
 import shutil
 import subprocess
@@ -16,12 +16,11 @@ SCRIPT = ROOT / "scripts/readme_figures.py"
 
 
 def copy_inputs(target):
-    """A throwaway root holding only what the generator reads, and its committed outputs."""
+    """A throwaway root holding only what the generator reads, and the README it writes into."""
     for rel in ("AGENTS.md", "README.md", "docs/tools.json", "docs/architecture.md", "registry/items"):
         source, dest = ROOT / rel, target / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         (shutil.copytree if source.is_dir() else shutil.copy)(source, dest)
-    shutil.copytree(ROOT / readme_figures.DIAGRAMS, target / readme_figures.DIAGRAMS)
 
 
 def check(root):
@@ -59,7 +58,7 @@ class Drift(unittest.TestCase):
         path.write_text(json.dumps(data), encoding="utf-8")
         result = check(self.tmp)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("levels-light.svg: differs", result.stdout)
+        self.assertIn("README.md: differs", result.stdout)
 
     def test_regeneration_makes_the_check_pass(self):
         (self.tmp / "README.md").write_text(
@@ -88,8 +87,42 @@ class Pieces(unittest.TestCase):
         self.assertTrue(all(lv["Public name"] and lv["Tested by"] for lv in levels))
         self.assertTrue(rule.startswith("Use the highest level") and "#" not in rule)
 
-    def test_wrap_keeps_words_whole(self):
-        self.assertEqual(readme_figures.wrap("one two three", 50), ["one two", "three"])
+    def test_the_level_table_has_a_chip_name_and_count_per_level(self):
+        levels, rule = readme_figures.load_levels(ROOT)
+        block = readme_figures.levels_block(levels, rule, {1: 0, 2: 4, 3: 0, 4: 1, 5: 9})
+        rows = [line for line in block.splitlines() if line.startswith("| ") and line[2] in "🟩🟦🟨🟪🟥"]
+        self.assertEqual(len(rows), 5)
+        self.assertTrue(rows[0].startswith("| 🟩 1 · Official plugin API |") and rows[0].endswith("| none needed |"))
+        self.assertTrue(rows[4].endswith("| 9 |") and "**silently**" in rows[4])
+        self.assertLess(block.index(rule), block.index("| Level |"))
+        self.assertIn("Level 1 is the highest and the steadiest", block.split("| 🟥 5")[1])
+        self.assertNotIn("<img", block)
+
+    def test_the_tool_map_is_a_titled_mermaid_flowchart_with_one_chain_per_tool(self):
+        data = {"tools": [
+            {"name": "Pen", "status": "Beta", "map": {"outside": [], "service": [], "logic": ["shapes"],
+                                                      "supernote": "ts", "tablet": ["the page"], "registry": ["pen"]}},
+            {"name": "Sync", "status": "Planned", "map": {"outside": ["Todoist"], "service": ["TaskProvider"],
+                                                          "logic": ["compare"], "supernote": "java",
+                                                          "tablet": ["To-Do"], "registry": []}},
+            {"name": "Probe", "status": "Internal"}]}
+        block = readme_figures.map_block(data, {"pen": {5}})
+        mermaid = block.split("```mermaid\n")[1].split("```")[0]
+        self.assertTrue(mermaid.startswith("flowchart LR\n  accTitle: ") and "\n  accDescr: " in mermaid)
+        for key, head in readme_figures.MAP_COLUMNS:
+            self.assertIn(f'subgraph {key}["{head}"]', mermaid)
+        self.assertIn("pen_tool --> pen_adapter --> pen_tablet", mermaid)
+        self.assertIn("sync_outside --> sync_service --> sync_tool --> sync_adapter --> sync_tablet", mermaid)
+        self.assertIn("class sync_outside,sync_service,sync_tool,sync_adapter,sync_tablet planned", mermaid)
+        self.assertIn("classDef planned stroke-dasharray", mermaid)
+        self.assertIn('pen_tablet["the page<br>levels 🟩1 🟥5"]', mermaid)
+        self.assertNotIn("probe", mermaid)
+        self.assertIn("| Pen | nothing from outside | sn-adapter | 🟩 1 🟥 5 |", block)
+        self.assertIn("| Sync (planned) | Todoist | TaskProvider; Java reader |  |", block)
+
+    def test_a_missing_marker_stops_the_generation(self):
+        with self.assertRaises(SystemExit):
+            readme_figures.with_block("no markers", "x", readme_figures.MAP_START, readme_figures.MAP_END)
 
 
 if __name__ == "__main__":

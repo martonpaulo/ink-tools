@@ -50,21 +50,117 @@ on the tablet. Outside services always enter through an adapter of ours, so repl
 adapter, not a change to the tool. On the tablet side, every tool goes through one Supernote
 adapter per language, and all of them read the same registry of device dependencies.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="design/diagrams/tool-map-dark.svg">
-  <img src="design/diagrams/tool-map-light.svg" alt="Tool map: for each tool, the outside world, the service adapter, the tool and its pure logic, the Supernote adapter and what it changes on the tablet, with the tool's dependency levels.">
-</picture>
+<!-- tool-map:start: written by scripts/readme_figures.py from docs/tools.json and registry/items -->
 
-The circles above are dependency levels. Each level is as fragile as the part of the tablet it
-depends on, and each part a tool depends on below level 1 has a written reason and a check that
+```mermaid
+flowchart LR
+  accTitle: Tool map: where each tool's data comes from and where it lands
+  accDescr: One chain per tool, left to right: the outside world, the service adapter, the tool and its pure logic, the Supernote adapter, and what it changes on the tablet with its dependency levels. Tools: Smart Pen; Lasso Actions; Image Editing; Device Transfer; Account Sync; Puzzles (planned); Handwriting Language; Ink Notebook Editor; Ink Tools Control; Ink Tools Helper.
+  subgraph outside["Outside world"]
+    direction TB
+    lasso_actions_outside["Wiktionary · Wikipedia<br>Wikimedia Commons · Wikidata<br>Openclipart · OpenMoji<br>Apertium"]
+    device_transfer_outside["iPhone · Mac<br>LocalSend app<br>Ink Notebook Editor (planned)"]
+    account_sync_outside["Todoist<br>Google Calendar<br>iCloud (CalDAV) · ICS links<br>Telegram Saved Messages (planned)"]
+    ink_notebook_editor_outside["Mac<br>files on the Mac"]
+    ink_tools_control_outside["Mac<br>USB or Wi-Fi ADB"]
+  end
+  subgraph service["Service adapter"]
+    direction TB
+    lasso_actions_service["DictionaryProvider<br>picture sources<br>translator"]
+    device_transfer_service["LocalSend v2 protocol"]
+    account_sync_service["TaskProvider<br>CalendarProvider ×3<br>Digest source (planned)"]
+  end
+  subgraph tool["Tool + pure logic"]
+    direction TB
+    smart_pen_tool["<b>Smart Pen</b><br>ink-core: shapes and conversion"]
+    lasso_actions_tool["<b>Lasso Actions</b><br>ink-core: write, recognise, insert<br>picture-search: rank"]
+    image_editing_tool["<b>Image Editing</b><br>picture-search: pixel measures"]
+    device_transfer_tool["<b>Device Transfer</b><br>ink-core: page to PNG, receive and insert"]
+    account_sync_tool["<b>Account Sync</b><br>sync-core: compare and decide"]
+    puzzles_tool["<b>Puzzles (planned)</b><br>puzzle generator and word lists"]
+    handwriting_language_tool["<b>Handwriting Language</b><br>the language cycle"]
+    ink_notebook_editor_tool["<b>Ink Notebook Editor</b><br>NoteFormat: read and draw a note"]
+    ink_tools_control_tool["<b>Ink Tools Control</b><br>inkctl"]
+    ink_tools_helper_tool["<b>Ink Tools Helper</b><br>the plugin settings calls"]
+  end
+  subgraph adapter["Supernote adapter"]
+    direction TB
+    smart_pen_adapter["<b>sn-adapter</b><br>TypeScript: official API + registry"]
+    lasso_actions_adapter["<b>sn-adapter</b><br>TypeScript: official API + registry"]
+    image_editing_adapter["<b>sn-adapter</b><br>TypeScript: official API + registry"]
+    device_transfer_adapter["<b>sn-adapter</b><br>TypeScript: official API + registry"]
+    account_sync_adapter["<b>sn-adapter</b><br>TypeScript: official API + registry"]
+    puzzles_adapter["<b>sn-adapter</b><br>TypeScript: official API + registry"]
+    handwriting_language_adapter["<b>Java reader</b><br>from the one registry"]
+    ink_notebook_editor_adapter["<b>Swift reader</b><br>from the one registry"]
+    ink_tools_control_adapter["<b>Python reader</b><br>from the one registry"]
+    ink_tools_helper_adapter["<b>Java reader</b><br>from the one registry"]
+  end
+  subgraph tablet["On the tablet · levels"]
+    direction TB
+    smart_pen_tablet["the page<br>strokes, shapes and text boxes<br>levels 🟩1 🟥5"]
+    lasso_actions_tablet["the page<br>lasso, picture, sticker, text<br>levels 🟩1 🟦2 🟥5"]
+    image_editing_tablet["the page<br>a lassoed picture<br>levels 🟩1 🟥5"]
+    device_transfer_tablet["the page<br>notes and files<br>levels 🟩1 🟥5"]
+    account_sync_tablet["To-Do · Calendar · Digest<br>the tablet's own apps<br>levels 🟩1 🟦2 🟥5"]
+    puzzles_tablet["a new page<br>the grid as its background<br>levels 🟩1"]
+    handwriting_language_tablet["the handwriting language<br>the floating button<br>levels 🟦2 🟨3"]
+    ink_notebook_editor_tablet["notes<br>through inkctl<br>levels 🟦2 🟥5"]
+    ink_tools_control_tablet["screens, settings, notes<br>for tests and setup<br>levels 🟦2 🟨3 🟪4 🟥5"]
+    ink_tools_helper_tablet["plugin settings<br>levels 🟨3 🟥5"]
+  end
+  smart_pen_tool --> smart_pen_adapter --> smart_pen_tablet
+  lasso_actions_outside --> lasso_actions_service --> lasso_actions_tool --> lasso_actions_adapter --> lasso_actions_tablet
+  image_editing_tool --> image_editing_adapter --> image_editing_tablet
+  device_transfer_outside --> device_transfer_service --> device_transfer_tool --> device_transfer_adapter --> device_transfer_tablet
+  account_sync_outside --> account_sync_service --> account_sync_tool --> account_sync_adapter --> account_sync_tablet
+  puzzles_tool --> puzzles_adapter --> puzzles_tablet
+  handwriting_language_tool --> handwriting_language_adapter --> handwriting_language_tablet
+  ink_notebook_editor_outside --> ink_notebook_editor_tool --> ink_notebook_editor_adapter --> ink_notebook_editor_tablet
+  ink_tools_control_outside --> ink_tools_control_tool --> ink_tools_control_adapter --> ink_tools_control_tablet
+  ink_tools_helper_tool --> ink_tools_helper_adapter --> ink_tools_helper_tablet
+  classDef planned stroke-dasharray: 5 5
+  classDef registry stroke-width: 2px
+  class smart_pen_adapter,lasso_actions_adapter,image_editing_adapter,device_transfer_adapter,account_sync_adapter,puzzles_adapter,handwriting_language_adapter,ink_notebook_editor_adapter,ink_tools_control_adapter,ink_tools_helper_adapter registry
+  class puzzles_tool,puzzles_adapter,puzzles_tablet planned
+```
+
+| Tool | Source | Adapter | Levels |
+| :--- | :--- | :--- | :--- |
+| Smart Pen | nothing from outside | sn-adapter | 🟩 1 🟥 5 |
+| Lasso Actions | Wiktionary · Wikipedia, Wikimedia Commons · Wikidata, Openclipart · OpenMoji, Apertium | DictionaryProvider, picture sources, translator; sn-adapter | 🟩 1 🟦 2 🟥 5 |
+| Image Editing | nothing from outside | sn-adapter | 🟩 1 🟥 5 |
+| Device Transfer | iPhone · Mac, LocalSend app, Ink Notebook Editor (planned) | LocalSend v2 protocol; sn-adapter | 🟩 1 🟥 5 |
+| Account Sync | Todoist, Google Calendar, iCloud (CalDAV) · ICS links, Telegram Saved Messages (planned) | TaskProvider, CalendarProvider ×3, Digest source (planned); sn-adapter | 🟩 1 🟦 2 🟥 5 |
+| Puzzles (planned) | nothing from outside | sn-adapter | 🟩 1 |
+| Handwriting Language | nothing from outside | Java reader | 🟦 2 🟨 3 |
+| Ink Notebook Editor | Mac, files on the Mac | Swift reader | 🟦 2 🟥 5 |
+| Ink Tools Control | Mac, USB or Wi-Fi ADB | Python reader | 🟦 2 🟨 3 🟪 4 🟥 5 |
+| Ink Tools Helper | nothing from outside | Java reader | 🟨 3 🟥 5 |
+
+<!-- tool-map:end -->
+
+The levels in the last column are dependency levels. Each level is as fragile as the part of the
+tablet it depends on, and each part a tool depends on below level 1 has a written reason and a check that
 runs after a firmware update, so it never breaks silently.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="design/diagrams/levels-dark.svg">
-  <img src="design/diagrams/levels-light.svg" alt="The five dependency levels, from the official plugin API to observed device behaviour, with examples, when each breaks and where each is tested.">
-</picture>
+<!-- levels:start: written by scripts/readme_figures.py from docs/architecture.md and registry/items -->
 
-The diagrams and the tool tables are generated by `scripts/readme_figures.py` from
+Use the highest level that delivers the outcome at acceptable cost and quality.
+
+| Level | Examples | When it breaks | Where it is tested | Registry items |
+| :--- | :--- | :--- | :--- | ---: |
+| 🟩 1 · Official plugin API | lasso, insert a picture, pages, files, buttons, dialogs | rarely, with Ratta's notice; affects the person | Mac tests, with the simulated adapter | none needed |
+| 🟦 2 · Device data | Calendar, To-Do and Digest entries; the handwriting language; the note file format | any firmware update; the probe sees it; affects the person | a tablet probe of fields, paths and versions | 11 |
+| 🟨 3 · System screens and components | native switches and bars, the helper app, Settings shortcuts | any firmware update; a call fails; affects the person | a tablet probe that loads and checks each one | 7 |
+| 🟪 4 · Screen automation | find buttons by their text in Settings and in notes | any interface change; a step fails; affects only our tests | `inkctl doctor` before each test round | 3 |
+| 🟥 5 · Observed device behaviour | the Back key, pen units, how Calendar and To-Do read entries | **silently**; affects the person | an effect test: write, read back, compare | 22 |
+
+Level 1 is the highest and the steadiest; level 5 is the lowest and changes with no error.
+
+<!-- levels:end -->
+
+The tool tables, the tool map and the level table are generated by `scripts/readme_figures.py` from
 [`docs/tools.json`](docs/tools.json), the level table of [`docs/architecture.md`](docs/architecture.md#layer-rules)
 and the [registry](registry/); a check fails when they fall behind.
 

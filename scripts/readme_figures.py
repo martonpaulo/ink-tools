@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the README's tool tables and its two diagrams from the repository's data (#407).
+"""Write the README's tool tables, tool map and level table from the repository's data (#407).
 
     readme_figures.py [--root DIR] [--check]
 
@@ -9,11 +9,12 @@ Sources, each the one owner of its values:
 - registry/items/: how many items sit at each level, and each tool's level circles;
 - AGENTS.md's `- README Status values:` line: the status dots and their legend.
 
-Writes the README block between TOOLS_START and TOOLS_END, and design/diagrams/levels-<theme>.svg and
-tool-map-<theme>.svg for the light and dark themes, which the README shows through one <picture>
-each. --check writes nothing: it exits 1 naming each file that differs from a fresh generation, so a
-data change that forgets the diagrams fails the `docs` gate. The public wording of every file it
-writes is #408's gate.
+Writes three README blocks, each between its marker comments: the Tools tables (TOOLS_START), the
+tool map as a Mermaid flowchart with a table of the same facts under it (MAP_START), and the five
+levels as a Markdown table (LEVELS_START). GitHub renders the Mermaid block as accessible SVG, so the
+repository holds no image of either figure (owner, 2026-11-26). --check writes nothing: it exits 1
+when the README differs from a fresh generation, so a data change that forgets them fails the
+`docs` gate. The public wording of what it writes is #408's gate.
 """
 import argparse
 import html
@@ -28,20 +29,11 @@ import readme_status  # noqa: E402
 
 TOOLS_START = "<!-- tools:start: written by scripts/readme_figures.py from docs/tools.json -->"
 TOOLS_END = "<!-- tools:end -->"
-DIAGRAMS = Path("design/diagrams")
-THEMES = ("light", "dark")
+MAP_START = "<!-- tool-map:start: written by scripts/readme_figures.py from docs/tools.json and registry/items -->"
+MAP_END = "<!-- tool-map:end -->"
+LEVELS_START = "<!-- levels:start: written by scripts/readme_figures.py from docs/architecture.md and registry/items -->"
+LEVELS_END = "<!-- levels:end -->"
 
-SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
-# The owner's architecture page palette, light and dark; levels 1 to 5 are l1..l5.
-PALETTE = {
-    "light": {"paper": "#ffffff", "ink": "#151515", "muted": "#5d5f5a", "line": "#cfd0c8",
-              "tint": "#eef1ec", "target": "#1f6f69", "bad": "#b23a2a", "chip": "#ffffff",
-              "l1": "#2f6b3f", "l2": "#2c5d8a", "l3": "#8a6a1f", "l4": "#6b5a8a", "l5": "#a2452f"},
-    "dark": {"paper": "#1d1e1b", "ink": "#ecece6", "muted": "#a6a8a0", "line": "#3d3f39",
-             "tint": "#24271f", "target": "#6fc5bd", "bad": "#f08a76", "chip": "#151515",
-             "l1": "#7fc08f", "l2": "#86b5e0", "l3": "#d8b35c", "l4": "#b9a6dc", "l5": "#e9907a"},
-}
 ADAPTERS = {
     "ts": ("sn-adapter", "TypeScript: official API + registry"),
     "java": ("Java reader", "from the one registry"),
@@ -49,18 +41,11 @@ ADAPTERS = {
     "swift": ("Swift reader", "from the one registry"),
 }
 LEVELS = range(1, 6)
-
-
-def wrap(text, width):
-    """Lines of at most `width` pixels, split at spaces."""
-    limit, lines, line = int(width / LAYOUT["char"]), [], ""  # LAYOUT is defined below
-    for word in text.split():
-        if line and len(line) + 1 + len(word) > limit:
-            lines.append(line)
-            line = word
-        else:
-            line = f"{line} {word}".strip()
-    return lines + [line] if line else lines
+# The coloured chip of each level, in the order of the owner's palette (green for the steadiest).
+CHIPS = {1: "🟩", 2: "🟦", 3: "🟨", 4: "🟪", 5: "🟥"}
+# The tool map's columns, left to right: the subgraph id and its heading.
+MAP_COLUMNS = (("outside", "Outside world"), ("service", "Service adapter"), ("tool", "Tool + pure logic"),
+               ("adapter", "Supernote adapter"), ("tablet", "On the tablet · levels"))
 
 
 def esc(text):
@@ -118,7 +103,7 @@ def code(text):
 
 
 def plain(text):
-    """A tools.json string as SVG text: no Markdown."""
+    """A tools.json string as plain text, for a Mermaid label or the rule sentence: no Markdown."""
     return re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text.replace("`", ""))
 
 
@@ -152,185 +137,98 @@ def readme_block(data, values):
     return "\n".join([TOOLS_START] + out + [TOOLS_END])
 
 
-def with_block(readme, block):
-    start, end = readme.find(TOOLS_START), readme.find(TOOLS_END)
+def with_block(readme, block, start_marker, end_marker):
+    """`readme` with the text from `start_marker` to `end_marker` replaced by `block`, which holds both."""
+    start, end = readme.find(start_marker), readme.find(end_marker)
     if start < 0 or end < start:
-        raise SystemExit("README.md: no tools block markers")
-    return readme[:start] + block + readme[end + len(TOOLS_END):]
+        raise SystemExit(f"README.md: no {start_marker} ... {end_marker} markers")
+    return readme[:start] + block + readme[end + len(end_marker):]
 
 
-# ---------------------------------------------------------------- SVG pieces
-
-SVG_NS = "http://www.w3.org/2000/svg"
-# Every size of the two diagrams, in px; the one owner of their geometry.
-LAYOUT = {
-    "line": 18, "char": 6.2, "boldWrap": 0.9, "margin": 24, "radius": 8, "boxRadius": 6, "stroke": 1.5,
-    "targetStroke": 2, "pad": 14, "textTop": 24, "dash": "5 4",
-    "font": {"title": 14, "text": 13, "small": 12, "label": 11, "labelSpacing": 0.6},
-    "levels": {"width": 1000, "titleY": 32, "headY": 60, "top": 74, "rowPad": 22, "rowGap": 10, "minLines": 2,
-               "chip": (24, 252), "examples": (296, 260), "breaks": (576, 190), "tested": (784, 170),
-               "arrowInset": 26, "arrowLabel": 10, "arrowEnd": 14, "arrowTip": 4, "noteY": 18, "bottom": 36},
-    "map": {"widths": (196, 176, 230, 188, 236), "gap": 26, "headY": 30, "top": 46, "rowPad": 20, "rowGap": 14,
-            "emptyInset": 12, "circle": 10, "circleStep": 26, "circleInset": 18, "circleText": 4,
-            "legendY": 8, "noteY": 30, "bottom": 48},
-}
-TOOL_COLUMN = 2
-ADAPTER_COLUMN = 3
-TABLET_COLUMN = 4
+# ---------------------------------------------------------------- level table
 
 
-def stroked(colour, width):
-    return f'stroke="{colour}" stroke-width="{width}"'
-
-
-def svg(width, height, title, body, c):
-    m, r, s = LAYOUT["margin"], LAYOUT["radius"], LAYOUT["stroke"]
-    return (f'<svg xmlns="{SVG_NS}" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
-            f'role="img" aria-labelledby="t" font-family="{SANS}">\n<title id="t">{esc(title)}</title>\n'
-            f'<defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">'
-            f'<path d="M0,0 L10,5 L0,10 z" fill="{c["ink"]}"/></marker>'
-            f'<marker id="headT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">'
-            f'<path d="M0,0 L10,5 L0,10 z" fill="{c["target"]}"/></marker></defs>\n'
-            f'<rect x="{s / 2}" y="{s / 2}" width="{width - s}" height="{height - s}" rx="{r}" fill="{c["paper"]}" '
-            f'{stroked(c["line"], s)}/>\n' + "\n".join(body) + "\n</svg>\n")
-
-
-def text(x, y, value, c, size=None, fill="ink", weight=None, mono=False, anchor=None, extra=""):
-    attrs = f'x="{x}" y="{y}" font-size="{size or LAYOUT["font"]["text"]}" fill="{c[fill] if fill in c else fill}"'
-    if weight:
-        attrs += f' font-weight="{weight}"'
-    if mono:
-        attrs += f' font-family="{MONO}"'
-    if anchor:
-        attrs += f' text-anchor="{anchor}"'
-    return f"<text {attrs}{extra}>{esc(value)}</text>"
-
-
-def label(x, y, value, c):
-    font = LAYOUT["font"]
-    return text(x, y, value, c, size=font["label"], fill="muted", mono=True, extra=f' letter-spacing="{font["labelSpacing"]}"')
-
-
-# ---------------------------------------------------------------- levels diagram
-
-
-def levels_svg(levels, rule, counts, theme):
-    c, L, font, line, top = PALETTE[theme], LAYOUT["levels"], LAYOUT["font"], LAYOUT["line"], LAYOUT["textTop"]
-    chip, examples_col, breaks_col, tested_col = L["chip"], L["examples"], L["breaks"], L["tested"]
-    body = [text(chip[0], L["titleY"], rule, c, size=font["title"], weight="600"),
-            label(chip[0], L["headY"], "LEVEL", c), label(examples_col[0], L["headY"], "EXAMPLES", c),
-            label(breaks_col[0], L["headY"], "WHEN IT BREAKS", c), label(tested_col[0], L["headY"], "WHERE IT IS TESTED", c)]
-    y = L["top"]
+def levels_block(levels, rule, counts):
+    """The five levels as a Markdown table, the rule sentence above it and the reading line under it."""
+    out = [LEVELS_START, "", rule, "",
+           "| Level | Examples | When it breaks | Where it is tested | Registry items |",
+           "| :--- | :--- | :--- | :--- | ---: |"]
     for lv in levels:
         n = int(lv["Level"])
-        examples = wrap(lv["Public examples"], examples_col[1])
-        tested = wrap(plain(lv["Tested by"]), tested_col[1])
-        breaks = wrap(lv["Breaks when"], breaks_col[1])
+        breaks = lv["Breaks when"]
+        if breaks.strip().lower() == "silently":
+            breaks = f"**{breaks}**"
         impact = "affects only our tests" if "test" in lv["Impact"] else "affects the person"
-        height = L["rowPad"] + max(L["minLines"], len(examples), len(tested), len(breaks) + 1) * line
-        count = f"{counts[n]} registry items" if counts[n] else "no registry item needed"
-        body.append(f'<rect x="{chip[0]}" y="{y}" width="{chip[1]}" height="{height - L["rowGap"]}" '
-                    f'rx="{LAYOUT["boxRadius"]}" fill="{c["l" + str(n)]}"/>')
-        body.append(text(chip[0] + LAYOUT["pad"], y + top, f"{n} · {lv['Public name'].upper()}", c,
-                         size=font["label"], fill=c["chip"], weight="600", mono=True))
-        body.append(text(chip[0] + LAYOUT["pad"], y + top + line, count, c, size=font["small"], fill=c["chip"], mono=True))
-        for i, part in enumerate(examples):
-            body.append(text(examples_col[0], y + top + i * line, part, c))
-        silent = lv["Breaks when"].strip().lower() == "silently"
-        for i, part in enumerate(breaks):
-            body.append(text(breaks_col[0], y + top + i * line, part, c, fill="bad" if silent else "ink",
-                             weight="600" if silent else None))
-        body.append(text(breaks_col[0], y + top + len(breaks) * line, impact, c, size=font["small"], fill="muted"))
-        for i, part in enumerate(tested):
-            body.append(text(tested_col[0], y + top + i * line, part, c))
-        y += height
-    arrow_x = L["width"] - L["arrowInset"]
-    body.append(f'<path d="M{arrow_x} {y - L["arrowEnd"]} V{L["top"] + L["arrowTip"]}" {stroked(c["target"], LAYOUT["targetStroke"])} '
-                f'fill="none" marker-end="url(#headT)"/>')
-    mid, label_x = (y + L["top"]) // 2, arrow_x - L["arrowLabel"]
-    body.append(text(label_x, mid, "prefer higher", c, size=font["label"], fill="target", mono=True, anchor="middle",
-                     extra=f' transform="rotate(-90 {label_x} {mid})"'))
-    note = "Level 1 is the highest and the steadiest; level 5 the lowest and the most fragile, since it changes with no error."
-    body.append(text(chip[0], y + L["noteY"], note, c, size=font["small"], fill="muted"))
-    title = "The five dependency levels: " + "; ".join(f"{lv['Level']}, {lv['Public name']}" for lv in levels)
-    return svg(L["width"], y + L["bottom"], title, body, c)
+        count = str(counts[n]) if counts[n] else "none needed"
+        out.append(f"| {CHIPS[n]} {n} · {lv['Public name']} | {lv['Public examples']} | {breaks}; {impact} "
+                   f"| {lv['Tested by']} | {count} |")
+    out += ["", "Level 1 is the highest and the steadiest; level 5 is the lowest and changes with no error.", "",
+            LEVELS_END]
+    return "\n".join(out)
 
 
-# ---------------------------------------------------------------- tool map diagram
+# ---------------------------------------------------------------- tool map
 
 
-def box(x, y, w, h, c, stroke="line", dashed=False, width=None):
-    dash = f' stroke-dasharray="{LAYOUT["dash"]}"' if dashed else ""
-    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{LAYOUT["boxRadius"]}" fill="{c["paper"]}" '
-            f'{stroked(c[stroke], width or LAYOUT["stroke"])}{dash}/>')
+def node_text(lines, bold_first=False):
+    """Mermaid node label: one line per entry, the first bold when asked, quotes as entities."""
+    parts = [plain(line).replace('"', "#quot;") for line in lines]
+    if bold_first and parts:
+        parts[0] = f"<b>{parts[0]}</b>"
+    return "<br>".join(parts)
 
 
-def lines_in(x, y, lines, width, c, first_bold=False):
-    """Each line wrapped to `width`; a first bold line, then muted ones, or muted where planned."""
-    out, row, font = [], 0, LAYOUT["font"]
-    for i, line in enumerate(lines):
-        bold = i == 0 and first_bold
-        muted = not bold and (first_bold or "(planned)" in line)
-        for part in wrap(line, width * (LAYOUT["boldWrap"] if bold else 1)):
-            out.append(text(x, y + row * LAYOUT["line"], part, c, weight="600" if bold else None,
-                            size=font["small"] if muted else font["text"], fill="muted" if muted else "ink"))
-            row += 1
-    return out, row
+def chips(levels, sep=" "):
+    """Each level as its chip and number; `sep=""` keeps them together where a Mermaid label wraps."""
+    return " ".join(f"{CHIPS[n]}{sep}{n}" for n in levels)
 
 
-def arrow(x1, x2, y, c):
-    return (f'<path d="M{x1} {y} H{x2 - 2}" {stroked(c["ink"], LAYOUT["stroke"])} fill="none" '
-            f'marker-end="url(#head)"/>')
+def slug(name):
+    return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
 
-def map_svg(data, registry_tools, theme):
-    c, M, font, pad = PALETTE[theme], LAYOUT["map"], LAYOUT["font"], LAYOUT["pad"]
-    cols, x = [], LAYOUT["margin"]
-    for w in M["widths"]:
-        cols.append((x, w))
-        x += w + M["gap"]
-    width = x - M["gap"] + LAYOUT["margin"]
-    heads = ["OUTSIDE WORLD", "SERVICE ADAPTER", "TOOL + PURE LOGIC", "SUPERNOTE ADAPTER", "ON THE TABLET · LEVELS"]
-    body = [label(x, M["headY"], head, c) for (x, _), head in zip(cols, heads)]
-    y = M["top"]
+def map_block(data, registry_tools):
+    """The tool map as one Mermaid flowchart, a column per subgraph and a chain per tool, and a table of
+    the same facts for readers without Mermaid."""
     rows = [t for t in data["tools"] if "map" in t]
+    names = "; ".join(t["name"] + (" (planned)" if t["status"] == "Planned" else "") for t in rows)
+    columns = {key: [] for key, _ in MAP_COLUMNS}
+    chains, planned, table = [], [], []
     for tool in rows:
-        m = tool["map"]
-        planned = tool["status"] == "Planned"
+        m, base = tool["map"], slug(tool["name"])
+        is_planned = tool["status"] == "Planned"
         levels = row_levels(tool, registry_tools)
-        cells = [m["outside"], m["service"], [tool["name"] + (" (planned)" if planned else "")] + m["logic"],
-                 list(ADAPTERS[m["supernote"]]), m["tablet"]]
-        inner = [w - 2 * pad for _, w in cols]
-        inner[TABLET_COLUMN] -= len(levels) * M["circleStep"]
-        bold = (TOOL_COLUMN, ADAPTER_COLUMN)
-        used = max(lines_in(0, 0, lines, inner[i], c, first_bold=i in bold)[1] for i, lines in enumerate(cells))
-        h = M["rowPad"] + used * LAYOUT["line"]
-        mid = y + h // 2
-        drawn = []
-        for i, ((x, w), lines) in enumerate(zip(cols, cells)):
-            if not lines:
-                if i == 0:
-                    body.append(text(x + M["emptyInset"], mid, "nothing from outside", c, size=font["small"], fill="muted"))
-                continue
-            stroke, sw = ("target", LAYOUT["targetStroke"]) if i == ADAPTER_COLUMN else ("line", LAYOUT["stroke"])
-            body.append(box(x, y, w, h, c, stroke=stroke, dashed=planned, width=sw))
-            body += lines_in(x + pad, y + LAYOUT["textTop"], lines, inner[i], c, first_bold=i in bold)[0]
-            drawn.append((x, w))
-        for (x1, w1), (x2, _) in zip(drawn, drawn[1:]):
-            body.append(arrow(x1 + w1, x2, mid, c))
-        x, w = cols[TABLET_COLUMN]
-        for k, level in enumerate(reversed(levels)):
-            cx, cy = x + w - M["circleInset"] - k * M["circleStep"], y + M["circleInset"]
-            body.append(f'<circle cx="{cx}" cy="{cy}" r="{M["circle"]}" fill="{c["l" + str(level)]}"/>')
-            body.append(text(cx, cy + M["circleText"], str(level), c, size=font["label"], fill=c["chip"], weight="600",
-                             anchor="middle"))
-        y += h + M["rowGap"]
-    body.append(text(LAYOUT["margin"], y + M["legendY"], "Teal border: every device name a tool uses comes from the one registry.",
-                     c, size=font["label"], fill="target", mono=True))
-    body.append(text(LAYOUT["margin"], y + M["noteY"], "Each row is a tool. Outside services always enter through an "
-                     "adapter in our words; the circles are the tool's dependency levels.", c, size=font["small"], fill="muted"))
-    title = "Tool map: for each tool, where its data comes from and where it lands. " + "; ".join(t["name"] for t in rows)
-    return svg(width, y + M["bottom"], title, body, c)
+        title = tool["name"] + (" (planned)" if is_planned else "")
+        adapter = ADAPTERS[m["supernote"]]
+        cells = {"outside": node_text(m["outside"]), "service": node_text(m["service"]),
+                 "tool": node_text([title] + m["logic"], bold_first=True),
+                 "adapter": node_text(adapter, bold_first=True),
+                 "tablet": node_text(m["tablet"] + [f"levels {chips(levels, sep='')}"])}
+        chain = []
+        for key, _ in MAP_COLUMNS:
+            if cells[key]:
+                columns[key].append(f'    {base}_{key}["{cells[key]}"]')
+                chain.append(f"{base}_{key}")
+        chains.append("  " + " --> ".join(chain))
+        if is_planned:
+            planned += chain
+        source = ", ".join(plain(x) for x in m["outside"]) or "nothing from outside"
+        via = ", ".join(plain(x) for x in m["service"])
+        table.append(f"| {title} | {source} | {via + '; ' if via else ''}{adapter[0]} | {chips(levels)} |")
+    out = [MAP_START, "", "```mermaid", "flowchart LR",
+           "  accTitle: Tool map: where each tool's data comes from and where it lands",
+           "  accDescr: One chain per tool, left to right: the outside world, the service adapter, the tool and its "
+           f"pure logic, the Supernote adapter, and what it changes on the tablet with its dependency levels. Tools: {names}."]
+    for key, head in MAP_COLUMNS:
+        out += [f'  subgraph {key}["{head}"]', "    direction TB"] + columns[key] + ["  end"]
+    out += chains
+    out += ["  classDef planned stroke-dasharray: 5 5",
+            "  classDef registry stroke-width: 2px"]
+    out.append("  class " + ",".join(f"{slug(t['name'])}_adapter" for t in rows) + " registry")
+    if planned:
+        out.append("  class " + ",".join(planned) + " planned")
+    out += ["```", "", "| Tool | Source | Adapter | Levels |", "| :--- | :--- | :--- | :--- |"] + table + ["", MAP_END]
+    return "\n".join(out)
 
 
 # ---------------------------------------------------------------- main
@@ -344,11 +242,11 @@ def generate(root):
         raise SystemExit("AGENTS.md: no README Status values line")
     levels, rule = load_levels(root)
     counts, registry_tools = load_registry(root)
-    out = {"README.md": with_block((root / "README.md").read_text(encoding="utf-8"), readme_block(data, values))}
-    for theme in THEMES:
-        out[str(DIAGRAMS / f"levels-{theme}.svg")] = levels_svg(levels, rule, counts, theme)
-        out[str(DIAGRAMS / f"tool-map-{theme}.svg")] = map_svg(data, registry_tools, theme)
-    return out
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    readme = with_block(readme, readme_block(data, values), TOOLS_START, TOOLS_END)
+    readme = with_block(readme, map_block(data, registry_tools), MAP_START, MAP_END)
+    readme = with_block(readme, levels_block(levels, rule, counts), LEVELS_START, LEVELS_END)
+    return {"README.md": readme}
 
 
 def main():
