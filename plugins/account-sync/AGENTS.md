@@ -54,7 +54,10 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   stays blocked with the reason.
 - **Sync runner** ([#28](https://github.com/martonpaulo/ink-tools/issues/28), [#44](https://github.com/martonpaulo/ink-tools/issues/44)): `src/sync.ts` runs sync-core's `runBridgeSync`, one
   pass when PluginHost loads Bridge (`index.js`), one every `AUTO_SYNC_MINUTES` while the host
-  lives, and the same runner behind Settings' «Sync now». The load pass moves the sign-in drops in
+  lives, the same runner behind Settings' «Sync now», and one after a tablet edit: `src/providerWatch.ts`
+  starts a pass on `BridgeProviders`' change event, a `ContentObserver` on the Calendar and To-Do,
+  debounced and blind to our own writes (`ChangeGate`, JVM tests in `native/tests/`), beside the
+  timer, never instead ([#296](https://github.com/martonpaulo/ink-tools/issues/296)). The load pass moves the sign-in drops in
   and runs nothing, since it never probes. The Calendar and To-Do are written through
   `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`, `src/deviceStores.ts`);
   a Calendar event is removed by `status='cancelled'`, never a delete, which that provider ignores. The Google OAuth client is its own file,

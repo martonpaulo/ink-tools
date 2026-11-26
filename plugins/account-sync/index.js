@@ -7,6 +7,7 @@ import App from './App';
 import {name as appName} from './app.json';
 import {bridgeSync} from './src/service';
 import {startAutoSync} from './src/sync';
+import {watchProviders} from './src/providerWatch';
 import {
   registerSettingsEntry,
   showPluginView,
@@ -23,3 +24,6 @@ registerSettingsEntry(() => showPluginView()).catch(error => {
 // AUTO_SYNC_MINUTES while the host process lives (docs/supernote.md: every enabled plugin loads
 // into one PluginHost process at its start).
 startAutoSync(bridgeSync);
+
+// A tablet edit of the Calendar or the To-Do syncs at once, beside the timer (#296).
+watchProviders(bridgeSync);

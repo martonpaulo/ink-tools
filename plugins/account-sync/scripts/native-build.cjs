@@ -21,6 +21,16 @@ module.exports = defineBuild(
     hostTools,
     packageClass: 'com.bridge.files.BridgeFilesPackage',
     sources: [nativeSources, adapter.nativeSources, path.join(root, 'native/com')],
+    // The observer's debounce and echo guard (#296): pure Java, no Android type.
+    test: ({jvmTests, javaSources}) =>
+      jvmTests({
+        prefix: 'account-sync',
+        files: [
+          path.join(root, 'native/com/bridge/providers/ChangeGate.java'),
+          ...javaSources(path.join(root, 'native/tests')),
+        ],
+        mains: ['com.bridge.providers.ChangeGateTest'],
+      }),
   },
   require.main === module,
 );
