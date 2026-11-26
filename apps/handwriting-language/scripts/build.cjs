@@ -307,4 +307,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {badgingProblems, buildApk, test};
+module.exports = {NATIVE_ACCESS, app, badgingProblems, buildApk, javaSources, test, tokensSource, tools};

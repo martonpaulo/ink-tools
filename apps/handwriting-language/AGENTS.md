@@ -115,8 +115,8 @@ node scripts/build.cjs --test   # JVM tests of the button rule, the cycle and th
 node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed and verified
 ```
 
-- The gate (`gates.json` › `handwriting-language`, CI `validate-handwriting-language.yml`) runs both.
-- `javac -Werror`: a new warning fails the build.
+- The gate (`gates.json` › `handwriting-language`, CI `validate-handwriting-language.yml`) runs both, with `javac -Werror`: a new warning fails the build. It does not run the renders:
+  `RENDER_EVIDENCE=<dir> node scripts/renders.cjs` draws the real screen off screen, with no device, on Robolectric's native graphics (JVM; first run downloads about 400 MB into `.toolchain/renders/`): five states at three widths, `renders/ScreenRenders.java`, asked for by the root `AGENTS.md` › Interface paths ([#285](https://github.com/martonpaulo/ink-tools/issues/285)); its font is not the tablet's.
 - Logic with no Android import goes in `ButtonGesture`, `ButtonPlace`, `ButtonRule`, `LanguageCycle` or `LanguageFiles` and gets a JVM test;
   the Android classes stay thin.
 - All visible copy is in `Copy.java`; the native controls (title bar, list row, switch, radio
