@@ -327,8 +327,19 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#204](https://github.com/martonpaulo/ink-tools/issues/204)]. A full view's way out is its own
   visible «Close». The window is focusable and a window hands a key to its focused view, so Image
   Editing 0.1.0 beta 15 makes its React root view focusable, focuses it on each show and turns Back
-  into `hardwareBackPress` (`BackKey.java`) [inference, device round pending,
-  [#226](https://github.com/martonpaulo/ink-tools/issues/226)].
+  into `hardwareBackPress` [inference, device round pending,
+  [#226](https://github.com/martonpaulo/ink-tools/issues/226)]; that code is now sn-adapter's
+  `BackKeyModule`, which Device Link registers too
+  ([#300](https://github.com/martonpaulo/ink-tools/issues/300)).
+- A plugin view without that module does not keep Back: on Device Link 0.2.0 beta 1, Back on
+  «Receive» closed the view and the note under it, which left the task stack [measured, Manta,
+  device round 9, 2026-11-26, [#300](https://github.com/martonpaulo/ink-tools/issues/300)].
+- A plugin's native thread outlives its view: the LocalSend receiver kept no socket only because
+  the view's × called its stop; with the view closed, native promises still resolve in the
+  plugin's JavaScript, while a JS timer does not fire [measured, Manta, device round 9,
+  2026-11-26, [#289](https://github.com/martonpaulo/ink-tools/issues/289),
+  [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. `isBackground` in the plugin list
+  stays 0 for Device Link.
 - A plugin's detail page in Settings › Apps › Plugins has a «Settings» row only when the plugin has
   a config button: on Probe's page, which has none, «Uninstall» sits where Account Sync's page has
   «Settings» (y about 920), and a blind tap there opened the uninstall dialog [measured, 2026-11-17,

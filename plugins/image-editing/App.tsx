@@ -46,8 +46,8 @@ import {working} from './src/working';
  * the styles grid back to the editor, the editor, or Settings, and does nothing while an edit runs
  * (#204). In a pen mode it leaves the mode: Erase keeps its strokes as «Done» does, Crop drops its
  * marks as «Cancel» does (#278). PluginHost never sends React Native's Back event to a plugin view
- * (#204), so the native module turns the key into it (`BackKey.java`, #226); every screen keeps its
- * visible «Close» too.
+ * (#204), so sn-adapter's native Back key module turns the key into it (`BackKeyModule.java`,
+ * #226, #300); every screen keeps its visible «Close» too.
  */
 export default function App({
   close = () => closePluginView(),

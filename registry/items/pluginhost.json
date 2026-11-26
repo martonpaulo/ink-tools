@@ -46,7 +46,7 @@
       "probe": {
         "unprobed": "needs a key press on the tablet"
       },
-      "active": "image-editing native BackKey.java",
+      "active": "sn-adapter native BackKeyModule.java, registered by image-editing and device-link",
       "values": {}
     },
     {

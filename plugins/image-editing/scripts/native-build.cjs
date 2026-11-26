@@ -8,6 +8,8 @@ const path = require('node:path');
 const {defineBuild} = require('../../../packages/native-build/native-build.cjs');
 const hostTools = require('./host-tools.cjs');
 const {nativeSources} = require('../../../packages/picture-search/plugin-config');
+// sn-adapter's Java: the Back key module, shared with Device Link (#300).
+const snAdapter = require('../../../packages/sn-adapter/plugin-config').nativeSources;
 
 const root = path.resolve(__dirname, '..');
 /** The picture-search classes the pure JVM tests need: no Android or React type. */
@@ -18,7 +20,7 @@ module.exports = defineBuild(
     root,
     hostTools,
     packageClass: 'com.retouch.image.RetouchPackage',
-    sources: [path.join(root, 'native/src'), nativeSources],
+    sources: [path.join(root, 'native/src'), nativeSources, snAdapter],
     test: ({jvmTests, javaSources}) =>
       jvmTests({
         prefix: 'retouch',

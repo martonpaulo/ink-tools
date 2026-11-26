@@ -150,9 +150,9 @@ test('the view asks the native module to route Back to its own root view (#226)'
   expect(listenBackKey.mock.calls).toEqual([[11]]);
 });
 
-test('listenBackKey calls RetouchImage and reports a missing module (#226)', async () => {
+test('listenBackKey calls ImageEditingBack, the shared Back key module, and reports a missing module (#226)', async () => {
   const listen = jest.fn(async () => true);
-  const native = retouchNative({RetouchImage: {listenBackKey: listen}});
+  const native = retouchNative({ImageEditingBack: {listenBackKey: listen}});
   expect(await native.listenBackKey(11)).toEqual({ok: true, value: true});
   expect(listen).toHaveBeenCalledWith(11);
   expect((await retouchNative({}).listenBackKey(11)).ok).toBe(false);

@@ -3,17 +3,13 @@ package com.retouch.image;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.view.View;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
-import com.facebook.react.bridge.UIManager;
-import com.facebook.react.bridge.UiThreadUtil;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.uimanager.UIManagerHelper;
 import com.inktools.files.EinkPixels;
 import com.inktools.files.SafePaths;
 import java.io.BufferedOutputStream;
@@ -102,32 +98,6 @@ public final class RetouchModule extends ReactContextBaseJavaModule {
     } catch (SafePaths.Refused refused) {
       promise.reject(refused.code, refused.getMessage());
     }
-  }
-
-  /**
-   * Makes the device Back key reach the view (#226): finds the React root view of `rootTag` and
-   * gives it {@link BackKey}'s listener. Resolves true once set; rejects NOT_FOUND when no view has
-   * that tag.
-   */
-  @ReactMethod
-  public void listenBackKey(double rootTag, Promise promise) {
-    ReactApplicationContext context = getReactApplicationContext();
-    int tag = (int) rootTag;
-    UiThreadUtil.runOnUiThread(() -> {
-      try {
-        UIManager uiManager = UIManagerHelper.getUIManagerForReactTag(context, tag);
-        View root = uiManager == null ? null : uiManager.resolveView(tag);
-        if (root == null) {
-          promise.reject("NOT_FOUND", "no view has the root tag " + tag);
-          return;
-        }
-        BackKey.listen(root, context);
-        promise.resolve(true);
-      } catch (RuntimeException error) {
-        // resolveView throws for a tag it does not hold.
-        promise.reject("NOT_FOUND", error.getClass().getName() + ": " + error.getMessage());
-      }
-    });
   }
 
   /**

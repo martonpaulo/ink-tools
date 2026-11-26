@@ -47,8 +47,14 @@ floating selection is no lasso for the plugin API and «Document» edited nothin
 stays until the next receive ([#196](https://github.com/martonpaulo/ink-tools/issues/196)). Since
 beta 9, the page is read again every 250 ms for up to 3 s until the host commits the picture (on
 beta 8 a read 120 ms after the insert held 0 elements), else the centred rect the host places it
-at (`centredRect`, the picture's own size from `Image.getSize`) is lassoed. Still to
-come: whether the receiver can stay on with the view closed.
+at (`centredRect`, the picture's own size from `Image.getSize`) is lassoed. The view's ×
+and Back only close the view: the native receiver goes on, on its own thread, until an item
+lands, `RECEIVE_WINDOW_MS` ends or «Stop» is pressed, and a tap on «Receive» shows the running
+receive again ([#289](https://github.com/martonpaulo/ink-tools/issues/289); on 0.2.0 beta 1 the ×
+stopped it and the next send met «connection refused»). Its waits tick on `DeviceLinkTicks`, as a
+JS timer never fires with the view closed. Back reaches the view through sn-adapter's
+`BackKeyModule`, registered as `DeviceLinkBack` ([#300](https://github.com/martonpaulo/ink-tools/issues/300)): on beta 1 Back went past the view and
+closed the note behind it. Still to come: a receiver started at plugin start, with no tap.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
 lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with the devices found, one tap

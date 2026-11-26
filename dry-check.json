@@ -156,7 +156,7 @@
    "packages/ink-core": 1,
    "plugins/account-sync": 5,
    "plugins/device-link": 1,
-   "plugins/image-editing": 2,
+   "plugins/image-editing": 1,
    "plugins/smart-pen": 1
   },
   "identical": {

@@ -13,6 +13,8 @@ import {
 
 export const IMAGE_MODULE = 'RetouchImage';
 export const FILES_MODULE = 'RetouchFiles';
+/** sn-adapter's Back key module, as `RetouchPackage.java` registers it (#300). */
+export const BACK_MODULE = 'ImageEditingBack';
 
 /** The edits the Java side runs; Undo and Restore original need no pixel work. */
 export type PixelEdit =
@@ -109,7 +111,7 @@ const MODULE_OF: Record<keyof Native, string> = {
   crop: IMAGE_MODULE,
   erase: IMAGE_MODULE,
   setDebugFolder: IMAGE_MODULE,
-  listenBackKey: IMAGE_MODULE,
+  listenBackKey: BACK_MODULE,
   readText: FILES_MODULE,
   writeText: FILES_MODULE,
   deleteFile: FILES_MODULE,

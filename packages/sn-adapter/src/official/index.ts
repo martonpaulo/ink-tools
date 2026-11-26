@@ -5,6 +5,7 @@
  */
 export * from './result';
 export * from './actions';
+export * from './backKey';
 export * from './buttons';
 export * from './collection';
 export * from './dialog';

@@ -26,10 +26,13 @@ const row = (tree: ReactTestRenderer, label: string) => rows(tree, label)[0];
 async function render(
   api: ReturnType<typeof fakeRelay>['api'],
   close: () => void = () => {},
+  armBackKey: (rootTag: number) => void = () => {},
 ) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<App native={api} close={close} />);
+    tree = renderer.create(
+      <App native={api} close={close} armBackKey={armBackKey} />,
+    );
   });
   return tree;
 }
@@ -158,6 +161,14 @@ test('the receive view keeps the size rules, names the tablet and stops (#49)', 
   });
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(onStop).toHaveBeenCalledTimes(1);
+});
+
+test('the view arms the shared Back key module once, so Back never reaches the note (#300)', async () => {
+  // Device round 9 (Manta, 2026-11-26): Back on Device Link's view closed the note under it.
+  const arm = jest.fn();
+  const tree = await render(fakeRelay().api, () => {}, arm);
+  await act(async () => tree.update(<App native={fakeRelay().api} close={() => {}} armBackKey={arm} />));
+  expect(arm).toHaveBeenCalledTimes(1);
 });
 
 test('Back on a running receive closes only the view; the receiver goes on (#289)', async () => {

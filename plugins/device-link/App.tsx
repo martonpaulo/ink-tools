@@ -1,6 +1,6 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Text, ToastAndroid, View} from 'react-native';
-import {closePluginView} from '@ink-tools/sn-adapter/official';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
+import {RootTagContext, Text, ToastAndroid, View} from 'react-native';
+import {closePluginView, listenBackKey} from '@ink-tools/sn-adapter/official';
 import {
   Button,
   ChoiceList,
@@ -44,7 +44,21 @@ import {
   ReceiveState,
 } from './src/receive/session';
 
-type Props = {native?: Relay; close?: () => void};
+/** sn-adapter's Back key module, as `RelayPackage.java` registers it (#300). */
+export const BACK_MODULE = 'DeviceLinkBack';
+
+type Props = {
+  native?: Relay;
+  close?: () => void;
+  /** Routes the device Back key to this view's root (#300); tests pass a fake. */
+  armBackKey?: (rootTag: number) => void;
+};
+
+function armDeviceBackKey(rootTag: number): void {
+  listenBackKey(BACK_MODULE, rootTag).then(result =>
+    console.log(`Relay: back key: ${result.ok ? 'listening' : result.message}`),
+  );
+}
 
 /** One instance, so the view's effects do not run again on every render. */
 const defaultRelay = relay();
@@ -142,7 +156,15 @@ export function TextView({
 export default function App({
   native = defaultRelay,
   close = () => closePluginView(),
+  armBackKey = armDeviceBackKey,
 }: Props) {
+  // Back went past the view and closed the note behind it (device round 9, #300): the native
+  // module keeps the key in the view, once per root view, as Image Editing's does.
+  const rootTag = useContext(RootTagContext);
+  useEffect(() => {
+    armBackKey(rootTag);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rootTag]);
   const [receiving, setReceiving] = useState<ReceiveState>(receiveState());
   const [texting, setTexting] = useState<TextState>(textState());
   const [picking, setPicking] = useState<PickState>(pickState());
