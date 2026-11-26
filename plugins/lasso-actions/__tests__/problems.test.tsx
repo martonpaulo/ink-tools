@@ -29,6 +29,7 @@ test('a heading the tablet could not make shows the Error state with its reason 
         lassoRect: async () => ok({left: 600, top: 400, right: 800, bottom: 460}),
         pageSize: async () => fail(-1, 'thrown'),
         setTitle: async () => ok(true),
+        select: async () => ok(true),
         resize: async () => ok(true),
         toast: () => undefined,
         fail: problem => working.hold(problem),

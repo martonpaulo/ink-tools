@@ -24,10 +24,10 @@ to a native title style (1 black, 2 shadow, 3 dark grey, 4 light grey) and place
 its own line at the leading margin, at the handwriting's own size (`HEADING_MARGIN`, inferred until
 the device probe, Task 1 of [#252](https://github.com/martonpaulo/ink-tools/issues/252), measures it): `resizeLassoRect` scales the strokes to the
 rect it gets, and a title's box is its strokes' box (device round 7), so a heading is never
-widened. `src/headings/run.ts` reads the lasso and the page size together, moves the strokes with
-`resizeLassoRect`, which keeps them lassoed, then makes them a title through sn-adapter's
-`setLassoTitle`, which clears the lasso (device round 9). A failed move still makes the title in
-place and says so; a failed title shows the Error state.
+widened. `src/headings/run.ts` reads the lasso and the page size together, sets the title through
+sn-adapter's `setLassoTitle`, lassoes its strokes again, then moves them with `resizeLassoRect`: a
+move sent before the title in the same press was lost (device round 9). A failed title changes
+nothing; a failed move keeps the title and says so.
 
 ## Collection
 

@@ -470,7 +470,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - `resizeLassoRect` keeps the lasso on the moved strokes, and `setLassoTitle` then makes them a
   title where they are; `getLassoRect` right after the move still answered the box before it
   [measured, Ink Tools Probe 0.0.2 beta 14 and Lasso Actions 0.2.0 beta 33, Manta, 2026-11-26,
-  [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings now moves first and titles after, with no second lasso.
+  [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. That held only with a second press between the move and the title: in one
+  lasso row press, `resizeLassoRect` then `setLassoTitle` 15 to 46 ms later answered success and
+  left the title at its old place, unmoved, on 6 of 7 presses [measured, Lasso Actions 0.2.0
+  beta 33, Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings titles first, then lassoes and moves.
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been
