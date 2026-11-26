@@ -291,8 +291,21 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   Capitals come back lower case; I, L, Q, G, Y and X were misread, and O, V and some 8 gave no
   text. At 15 mm some cells gave no text box near the cell, which may be the round's matching by
   position. Through the screen (lasso, menu, conversion) a cell took 10.3 to 11 s, not the call's
-  own time. The strokes are one machine font, so the rates say little about handwriting; the pen
-  rows and the call's own time per cell and per row are [unverified].
+  own time. The strokes are one machine font, so the rates say little about handwriting.
+- The owner's handwriting, one character per 12.7 mm (149 px) cell of a 9 by 9 grid page, read
+  with `recognizeElements` from a plugin with no screen, once per cell and once per row, language
+  `es_ES` [measured, Manta, firmware `Chauvet.E103.2610191001.2559`, device round R13,
+  2026-11-26, [#378](https://github.com/martonpaulo/ink-tools/issues/378)]:
+
+  | Characters | Per cell, exact | Per cell, case folded | Wrong | No text | One call per row |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | Digits 1 to 9, the 5 erased | 7 of 8 | 7 of 8 | 0 | 1 (8) | 8 of 8 |
+  | Capitals A to Z | 18 of 26 | 20 of 26 | 2 (A as «^», S as «5») | 4 (O, U, V, X) | 26 of 26 |
+
+  A row read in one call gave every character, with its spaces only partly kept: «1 2 3 46789»,
+  «S T U VW X Y Z». A cell alone took 252 to 560 ms, about 250 ms when it gave no text; a row of
+  8 to 9 cells took 797 to 1171 ms. So read a row in one call, and a single cell only to place a
+  row's characters; a cell that gives no text is unread, never wrong.
 - PluginHost's JS runs plain text work far slower than a Mac: picture-search's text scorers took
   about 120 ms per pass over 12 results, and its first ranking in a fresh JS instance (after an
   install) took 1057 ms for 18 results, against 87 ms later on the same instance [measured,
