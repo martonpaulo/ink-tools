@@ -1,4 +1,5 @@
 import { cluesOf, countNonogramSolutions, generateNonogram, lineClue, NONOGRAM_BANDS, rateNonogram, solveLine } from '../src/nonogram';
+import { createRandom, digest } from '../src/random';
 
 const U = -1;
 const E = 0;
@@ -51,6 +52,19 @@ describe('uniqueness and rating', () => {
 
   test('a filled square is easy', () => {
     expect(rateNonogram(cluesOf(5, 5, new Array(25).fill(true)))).toEqual({ difficulty: 'easy', sweeps: 1, probes: 0 });
+  });
+
+  test('probing gives the same ratings as before its trials were pruned', () => {
+    // 400 seeded pictures of 8 to 15 per side: 250 easy, 41 medium, 5 hard and 104 that need a
+    // guess, so probing runs on 109 of them. The digest was taken before #434 pruned the probe
+    // trials that a consistent trial already covers; the pruning must change no rating.
+    const ratings = Array.from({ length: 400 }, (_, i) => {
+      const random = createRandom(`ratings/${i}`);
+      const side = 8 + random.int(8);
+      const cells = Array.from({ length: side * side }, () => random.chance(58));
+      return rateNonogram(cluesOf(side, side, cells));
+    });
+    expect(digest(ratings)).toBe('6a06d440');
   });
 });
 
