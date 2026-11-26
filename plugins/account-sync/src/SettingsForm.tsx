@@ -41,6 +41,11 @@ const ITEMS: Record<TwoWayModule, 'item.task' | 'item.event'> = {
   calendar: 'item.event',
 };
 
+const ITEM_NOUNS: Record<TwoWayModule, 'items.task' | 'items.event'> = {
+  todo: 'items.task',
+  calendar: 'items.event',
+};
+
 export type SettingsFormProps = {
   settings: BridgeSettings;
   onChange: (next: BridgeSettings) => void;
@@ -48,8 +53,6 @@ export type SettingsFormProps = {
   modules?: ModuleRow[];
   /** Opens the Needs state of a provider with no connection (#256). */
   onConnect?: Connect;
-  /** Open, unlinked tablet To-Do tasks, read before the first sync; absent while unknown. */
-  tabletOnlyTasks?: number | null;
   /** The time the statuses compare with, so «today» shows only the time; tests pass one. */
   now?: number;
   /** The confirm dialog of a destructive action: the host's, unless a test passes its own. */
@@ -61,7 +64,6 @@ export function SettingsForm({
   onChange,
   modules = [],
   onConnect = () => {},
-  tabletOnlyTasks,
   now,
   ask = confirm,
 }: SettingsFormProps): React.JSX.Element {
@@ -76,7 +78,7 @@ export function SettingsForm({
           <React.Fragment key={module}>
             <RowGroup caption={name}>
               <SwitchRow
-                title={name}
+                title={format('module.switch', {module: name})}
                 subtitle={
                   row
                     ? statusLine(
@@ -114,12 +116,7 @@ export function SettingsForm({
               {twoWay(module) && (
                 <SwitchRow
                   title={copy['sendTabletOnly.button']}
-                  subtitle={tabletOnlyNotice(
-                    module,
-                    settings,
-                    module === 'todo' ? tabletOnlyTasks : undefined,
-                    row,
-                  )}
+                  subtitle={tabletOnlyNotice(module, settings, row)}
                   value={settings.sendTabletOnly[module]}
                   disabled={!on}
                   onChange={next =>
@@ -147,26 +144,30 @@ export function SettingsForm({
 
 /**
  * The tablet-only notice, said once, at its own setting (#411): how many items exist only on the
- * tablet and what the switch does with them; nothing while the count is unknown or zero. To-Do reads
- * its count before the first sync; a module's last run gives it after that.
+ * tablet and what the switch does with them, from the module's last run; before a run, or with
+ * none left, what the switch sends and to where. Only a pass counts: the tablet alone cannot tell a
+ * task the service already holds, so a count read before it was too high (device round 6).
  */
 export function tabletOnlyNotice(
   module: TwoWayModule,
   settings: BridgeSettings,
-  read: number | null | undefined,
   row?: ModuleRow,
 ): string | undefined {
   if (!settings.modules[module]) {
     return undefined;
   }
   const run = row?.status.state === 'ran' ? row.status.run : undefined;
-  const count = typeof read === 'number' ? read : run?.keptLocal;
+  const count = run?.keptLocal;
+  const providers = providerNames(module);
   if (!count) {
-    return undefined;
+    return format(settings.sendTabletOnly[module] ? 'sendTabletOnly.aboutOn' : 'sendTabletOnly.about', {
+      items: copy[ITEM_NOUNS[module]],
+      providers,
+    });
   }
   const values = {
     items: plural(ITEMS[module], count),
-    providers: providerNames(module),
+    providers,
   };
   return settings.sendTabletOnly[module]
     ? plural('sendTabletOnly.sent', count, values)

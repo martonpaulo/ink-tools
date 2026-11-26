@@ -17,7 +17,6 @@ function runner(snapshot: Partial<SyncSnapshot>): SyncRunner & {syncNow: jest.Mo
   return {
     syncNow: jest.fn(async () => ({running: false, runs: {}, probe: {}, ...snapshot})),
     snapshot: jest.fn(),
-    tabletOnlyTasks: jest.fn(),
     subscribe: jest.fn(),
   } as unknown as SyncRunner & {syncNow: jest.Mock};
 }

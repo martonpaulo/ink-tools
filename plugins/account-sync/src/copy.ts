@@ -68,6 +68,11 @@ export const copy = {
   'sendTabletOnly.kept.other': '{items} exist only on the tablet. Turn this on to send them to {providers}.',
   'sendTabletOnly.sent.one': '{items} goes to {providers} at the next sync.',
   'sendTabletOnly.sent.other': '{items} go to {providers} at the next sync.',
+  /** What the switch does while no pass has counted the items yet, or none is left (#411). */
+  'sendTabletOnly.about': 'Turn this on to send {items} that exist only on the tablet to {providers}.',
+  'sendTabletOnly.aboutOn': 'Sends {items} that exist only on the tablet to {providers} at each sync.',
+  'items.task': 'tasks',
+  'items.event': 'events',
   'item.task.one': '{count} task',
   'item.task.other': '{count} tasks',
   'item.event.one': '{count} event',
@@ -78,6 +83,8 @@ export const copy = {
   'module.todo': 'To-Do',
   'module.calendar': 'Calendar',
   'module.digest': 'Digest',
+  /** A module's switch, under the group caption that names the module, so the two never repeat (#411). */
+  'module.switch': 'Sync {module}',
   'provider.todoist': 'Todoist',
   'provider.google': 'Google',
   'provider.icloud': 'iCloud',

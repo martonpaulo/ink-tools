@@ -58,11 +58,11 @@ const texts = (tree: ReactTestRenderer) =>
 
 test('a change is saved and is still there after a restart (#40)', async () => {
   const first = await mount();
-  await act(async () => toggle(first, 'Calendar').props.onPress());
+  await act(async () => toggle(first, 'Sync Calendar').props.onPress());
   expect(JSON.parse(files[`${DIR}/settings.json`]).modules.calendar).toBe(true);
   act(() => first.unmount());
   const second = await mount();
-  expect(toggle(second, 'Calendar').props.accessibilityState.checked).toBe(
+  expect(toggle(second, 'Sync Calendar').props.accessibilityState.checked).toBe(
     true,
   );
   expect(screenBreaks(second.root)).toEqual([]);
@@ -73,7 +73,7 @@ test('each module says whether it is off or why it does not run (#88)', async ()
   expect(texts(tree)).toEqual(
     expect.arrayContaining([copy['module.calendar'], 'Syncs Calendar with Google, iCloud and ICS.']),
   );
-  await act(async () => toggle(tree, 'Calendar').props.onPress());
+  await act(async () => toggle(tree, 'Sync Calendar').props.onPress());
   // Settings never probes (#43): Calendar waits for the device check of the next sync.
   expect(
     texts(tree).some(
@@ -88,7 +88,7 @@ test('each module says whether it is off or why it does not run (#88)', async ()
 test('a failed save is said on the screen; a failed load offers a retry', async () => {
   const tree = await mount();
   refuseWrites = true;
-  await act(async () => toggle(tree, 'To-Do').props.onPress());
+  await act(async () => toggle(tree, 'Sync To-Do').props.onPress());
   expect(
     tree.root.findAllByProps({accessibilityRole: 'alert'})[0].props.children,
   ).toMatch(/not saved.*disk full/);
@@ -115,7 +115,6 @@ function fakeRunner() {
       return snap;
     }),
     snapshot: () => snap,
-    tabletOnlyTasks: async () => 94,
     subscribe: l => {
       listeners.add(l);
       return () => listeners.delete(l);
@@ -140,7 +139,7 @@ test('opening Settings and turning a module on never touches a provider; the run
   await act(async () => {
     tree = renderer.create(<App folder={folder as never} sync={runner} />);
   });
-  await act(async () => toggle(tree, 'Calendar').props.onPress());
+  await act(async () => toggle(tree, 'Sync Calendar').props.onPress());
   expect(calls).toEqual([]);
   expect(runner.syncNow).not.toHaveBeenCalled();
   await act(async () =>
@@ -156,7 +155,7 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
   await act(async () => {
     tree = renderer.create(<App folder={folder as never} sync={runner} />);
   });
-  await act(async () => toggle(tree, 'Calendar').props.onPress());
+  await act(async () => toggle(tree, 'Sync Calendar').props.onPress());
   await act(async () => toggle(tree, copy['sync.button']).props.onPress());
   expect(runner.syncNow).toHaveBeenCalledTimes(1);
   expect(texts(tree)).toContain(copy['sync.running']);

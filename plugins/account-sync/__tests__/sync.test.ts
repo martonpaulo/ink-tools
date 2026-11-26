@@ -322,7 +322,6 @@ test('the automatic sync runs at start and every AUTO_SYNC_MINUTES until stopped
     {
       syncNow,
       snapshot: jest.fn(),
-      tabletOnlyTasks: jest.fn(),
       subscribe: jest.fn(),
     },
     timers,
@@ -375,7 +374,7 @@ test('each pass first moves in the sign-in drop files, before it reads a secret 
   );
 });
 
-test('Settings reads the tablet-only tasks before the first pass, and the pass keeps the first-link time', async () => {
+test('the pass counts the tablet-only tasks it kept and keeps the first-link time', async () => {
   const tasks = [
     {
       localId: 'l1',
@@ -406,9 +405,8 @@ test('Settings reads the tablet-only tasks before the first pass, and the pass k
     },
   });
   const runner = createSyncRunner(d);
-  const before = (await d.loadSettings()) as {ok: true; value: BridgeSettings};
-  expect(await runner.tabletOnlyTasks(before.value)).toBe(2);
-  await runner.syncNow();
+  const done = await runner.syncNow();
+  expect(done.runs.todo?.keptLocal).toBe(2);
   expect(saved.at(-1)?.firstLinked).toEqual({calendar: NOW, todo: NOW});
 });
 

@@ -11,7 +11,6 @@ import {
   fromTodoist,
   PULL_ONLY,
   syncTasks,
-  tabletOnlyKept,
   toTodoistBody,
 } from '../src';
 
@@ -551,7 +550,6 @@ describe('tablet-only tasks on the first pass (owner assumption, safe first sync
     const out = await syncTasks(f.provider, f.store, []);
     expect(f.log).toEqual(['create local from todoist']);
     expect(out.keptLocal).toBe(94);
-    expect(tabletOnlyKept(many(94), [], PULL_ONLY)).toBe(94);
   });
 
   test('the run carries the kept count as data for Settings, never as a warning (#411)', async () => {
@@ -574,6 +572,5 @@ describe('tablet-only tasks on the first pass (owner assumption, safe first sync
     const out = await syncTasks(f.provider, f.store, [], policy);
     expect(f.log).toEqual(['create remote new']);
     expect(out.keptLocal).toBe(1);
-    expect(tabletOnlyKept([D('old', c('old'), 500), D('new', c('new'), 1500)], [], policy)).toBe(1);
   });
 });

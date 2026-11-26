@@ -13,7 +13,6 @@ function fakeRunner(): SyncRunner & {syncNow: jest.Mock} {
   return {
     syncNow: jest.fn(async () => ({running: false, runs: {}, probe: {}})),
     snapshot: () => ({running: false, runs: {}, probe: {}}),
-    tabletOnlyTasks: async () => null,
     subscribe: () => () => {},
   };
 }

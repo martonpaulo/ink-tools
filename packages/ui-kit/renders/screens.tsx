@@ -214,8 +214,8 @@ const OWNER_RUNS = {
 const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, tail: '…wxyz'}, google: {state: 'signedIn' as const, tail: '…abcd'}, icloud: {state: 'signedIn' as const, tail: '…efgh'}};
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
-const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}, tabletOnlyTasks?: number) =>
-  mount(<AccountSyncSettings state={{kind: 'ready', sync: SYNC}} renderForm={onConnect => <AccountSyncForm settings={settings} onChange={noop} modules={accountSyncRows(settings, {todo: [], calendar: []}, runs, signIns)} onConnect={onConnect} tabletOnlyTasks={tabletOnlyTasks} now={OWNER_AT} />} onClose={noop} />);
+const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}) =>
+  mount(<AccountSyncSettings state={{kind: 'ready', sync: SYNC}} renderForm={onConnect => <AccountSyncForm settings={settings} onChange={noop} modules={accountSyncRows(settings, {todo: [], calendar: []}, runs, signIns)} onConnect={onConnect} now={OWNER_AT} />} onClose={noop} />);
 
 // One line per screen, so adding one is one line.
 // prettier-ignore
@@ -231,7 +231,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'plugin-diagnostics-done', render: () => diagnostics({lines: PROBE_LINES, status: 'done'}), raw: PROBE_LINES},
   {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']}), raw: [diagnosticsCopy['needs.native'].command]},
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
-  {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS, 233)},
+  {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS)},
   {name: 'account-sync-settings', render: () => accountSync(accountSyncDefaults())},
   {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})},
   {name: 'account-sync-connect', render: () => accountSync(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})},

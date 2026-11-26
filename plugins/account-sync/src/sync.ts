@@ -36,7 +36,6 @@ import {
   refreshAccessToken,
   runBridgeSync,
   SecretStore,
-  tabletOnlyKept,
   TimeWindow,
   TWO_WAY_MODULES,
 } from '@ink-tools/sync-core';
@@ -315,11 +314,6 @@ export interface SyncRunner {
   /** One pass; a press while one runs joins it instead of starting a second. */
   syncNow(options?: PassOptions): Promise<SyncSnapshot>;
   snapshot(): SyncSnapshot;
-  /**
-   * How many open tablet To-Do tasks with no link would stay on the tablet at the next pass, for
-   * Settings to show before the first «Sync now»; null when the tablet cannot be read.
-   */
-  tabletOnlyTasks(settings: BridgeSettings): Promise<number | null>;
   subscribe(listener: (s: SyncSnapshot) => void): () => void;
 }
 
@@ -469,21 +463,6 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
       return pass;
     },
     snapshot: () => current,
-    async tabletOnlyTasks(settings) {
-      if (!device.stores) {
-        return null;
-      }
-      try {
-        const tasks = await device.stores.tasks.list();
-        return tabletOnlyKept(tasks, state.links, {
-          firstLinked: state.firstLinked.todo,
-          sendTabletOnly: settings.sendTabletOnly.todo,
-        });
-      } catch (e) {
-        log(`[Bridge] sync: the To-Do did not read: ${(e as Error).message}`);
-        return null;
-      }
-    },
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

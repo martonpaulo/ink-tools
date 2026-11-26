@@ -104,7 +104,6 @@ export default function App({
   const [settings, setSettings] = useState<BridgeSettings | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [saveProblem, setSaveProblem] = useState<string | null>(null);
-  const [tabletOnly, setTabletOnly] = useState<number | null>(null);
   const store = useMemo(
     () => secrets ?? createSecretStore(folder),
     [secrets, folder],
@@ -150,21 +149,6 @@ export default function App({
     load();
   }, [load]);
 
-  // Before the first «Sync now», show how many tablet-only tasks would stay on the tablet.
-  useEffect(() => {
-    let current = true;
-    if (settings?.modules.todo) {
-      sync.tabletOnlyTasks(settings).then(n => {
-        if (current) {
-          setTabletOnly(n);
-        }
-      });
-    }
-    return () => {
-      current = false;
-    };
-  }, [settings, sync, synced.runs]);
-
   const change = async (next: BridgeSettings) => {
     setSettings(next);
     const saved = await saveSettings(folder, next);
@@ -200,7 +184,6 @@ export default function App({
                 onChange={change}
                 modules={moduleRows(settings, synced.probe, synced.runs, signIns, signOut)}
                 onConnect={onConnect}
-                tabletOnlyTasks={tabletOnly}
               />
             )
           : undefined
