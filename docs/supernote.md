@@ -834,6 +834,11 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   less, plain resampling leaves a 5 mm dot grid at grey 190 and a thumbnail blank, so the Ink
   Notebook Editor darkens before it resamples [measured, 2026-11-25,
   [#308](https://github.com/martonpaulo/ink-tools/issues/308)].
+- Each note made by `inkctl note new` has its own file ID. A page the tablet moves
+  (`PluginFileAPI` through `inkctl note move-page`) gets a new `PAGEID`, while it draws equal to the
+  page before the move (0.000 % of pixels) [measured, Manta, device round 5, 2026-11-26,
+  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So the Ink Notebook Editor tells
+  pages apart by `PAGEID` only within one copy of a note.
 - A text box and a picture a plugin inserts are drawn into the main layer's bitmap, so a reader of
   the bitmaps shows them with no element decoding [measured].
 - `PluginFileAPI.generateNotePng` at `times: 1` on white matches `NoteFormat`'s drawing of the same
