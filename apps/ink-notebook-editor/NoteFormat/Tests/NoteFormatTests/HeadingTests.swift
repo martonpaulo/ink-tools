@@ -2,9 +2,9 @@ import Foundation
 import Testing
 @testable import NoteFormat
 
-/// The note's Headings (#331). The notes are `content.note` with Heading blocks added in the
-/// layout read on a Manta note; a note made on the tablet with a Heading of each level joins the
-/// fixtures in the device round.
+/// The note's Headings (#331). Most notes are `content.note` with Heading blocks added in the
+/// layout read on a Manta note; `headings-tablet.note` was made on the tablet: four lines of
+/// `inkctl ink write`, each given one of the four Heading styles with the lasso's Heading button.
 @Suite struct HeadingTests {
     struct Made {
         let page: Int
@@ -29,10 +29,10 @@ import Testing
             let block = bytes.count
             bytes += NoteWriter.lengthPrefixed(
                 NoteWriter.text([
-                    .init(key: "TITLESEQNO", value: "0"), .init(key: "TITLELEVEL", value: String(heading.level)),
+                    .init(key: "TITLESEQNO", value: "0"), .init(key: "TITLELEVEL", value: "1"),
                     .init(key: "TITLERECT", value: rect), .init(key: "TITLERECTORI", value: rect),
                     .init(key: "TITLEBITMAP", value: String(bitmap)), .init(key: "TITLEPROTOCOL", value: "RATTA_RLE"),
-                    .init(key: "TITLESTYLE", value: "1000254"),
+                    .init(key: "TITLESTYLE", value: Registry.NotefileFormatVersions.headingStyles[heading.level - 1]),
                 ]))
             pairs.append(.init(key: footerKey(heading), value: String(block)))
         }
@@ -73,15 +73,32 @@ import Testing
         #expect(throws: NoteFormatError.badPage(7)) { try note.headings() }
     }
 
-    @Test func testAHeadingBlockWithoutItsLevelFails() throws {
+    @Test func testAHeadingBlockWithoutItsStyleFails() throws {
         let file = try NoteFile(data: try FixtureTests.fixture("content.note"))
         var bytes = Array(file.bytes[..<NoteWriter.footerAddress(file)])
         let block = bytes.count
         bytes += NoteWriter.lengthPrefixed(Array("<TITLERECT:1,1,20,20>".utf8))
         let pairs = file.footer.pairs + [.init(key: "TITLE_000100010001", value: String(block))]
         let note = try NoteFile(bytes: try NoteWriter.withFooter(file, prefix: bytes, pairs: pairs))
-        #expect(throws: NoteFormatError.badHeading("the block at byte \(block) lacks its level, box or picture")) {
+        #expect(throws: NoteFormatError.badHeading("the block at byte \(block) lacks its style, box or picture")) {
             try note.headings()
         }
+    }
+
+    /// The tablet writes `TITLELEVEL` 1 for every style; the level comes from the style. The lines
+    /// «Level 1» to «Level 4» got, in this order, the styles black, dark grey, light grey and shadow.
+    @Test func testTheTabletsFourHeadingStylesGiveFourLevels() throws {
+        let note = try NoteFile(data: try FixtureTests.fixture("headings-tablet.note"))
+        let headings = try note.headings()
+        #expect(headings.map(\.page) == [0, 0, 0, 0])
+        #expect(headings.map(\.level) == [1, 3, 4, 2])
+        #expect(headings.map(\.box.y) == [293, 593, 893, 1193])
+        for heading in headings {
+            let image = try note.image(of: heading)
+            #expect(image.width == heading.box.width && image.height == heading.box.height)
+        }
+        // A Heading's record in the page's elements is left out: only the four lines' strokes remain.
+        let elements = try note.elements(page: 0)
+        #expect(!elements.isEmpty && elements.allSatisfy { $0.kind == .stroke })
     }
 }

@@ -4,7 +4,7 @@ import Foundation
 /// One Heading: its page, its level, and its box in page pixels from the top left.
 public struct Heading: Sendable, Equatable {
     public let page: Int
-    /// 1 is the top level.
+    /// 1 is the top level, from the Heading's style.
     public let level: Int
     public let box: PageRect
     /// The address of the picture of the handwriting the Heading covers.
@@ -27,8 +27,9 @@ extension NoteFile {
 
     /// Every Heading, by page, then from the top of the page. A Heading block that cannot be read
     /// throws `badHeading`, never a missing Heading.
-    /// shortcut: the block's keys were read on one Heading of a Manta note and from supernotelib's
-    /// footer keys; the device round makes a note with a Heading of each level a fixture.
+    /// The tablet writes `TITLELEVEL` 1 for every style, so the level is the style's place in
+    /// Lasso Actions' map, «Heading 1» to «Heading 4» (#252): black, shadow, dark grey, light grey
+    /// (measured on `headings-tablet.note`, #331).
     public func headings() throws -> [Heading] {
         try footer.pairs.compactMap { pair -> Heading? in
             guard pair.key.hasPrefix(Self.headingKeyPrefix) else { return nil }
@@ -38,9 +39,13 @@ extension NoteFile {
             }
             let block = try Self.metadata(bytes, at: address)
             let rect = (block["TITLERECTORI"] ?? block["TITLERECT"])?.split(separator: ",").compactMap { Int($0) }
-            guard let level = block["TITLELEVEL"].flatMap({ Int($0) }), let rect, rect.count == 4,
+            guard let style = block["TITLESTYLE"], let rect, rect.count == 4,
                 rect[2] > 0, rect[3] > 0, let bitmap = block.address("TITLEBITMAP")
-            else { throw NoteFormatError.badHeading("the block at byte \(address) lacks its level, box or picture") }
+            else { throw NoteFormatError.badHeading("the block at byte \(address) lacks its style, box or picture") }
+            guard let index = Registry.NotefileFormatVersions.headingStyles.firstIndex(of: style) else {
+                throw NoteFormatError.badHeading("the block at byte \(address) has an unknown style \(style)")
+            }
+            let level = index + 1
             guard pages.indices.contains(number - 1) else { throw NoteFormatError.badPage(number - 1) }
             return Heading(
                 page: number - 1, level: level, box: PageRect(x: rect[0], y: rect[1], width: rect[2], height: rect[3]),
