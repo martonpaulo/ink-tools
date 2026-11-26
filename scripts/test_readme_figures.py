@@ -198,6 +198,12 @@ class Pieces(unittest.TestCase):
             self.assertIn(line, lines)
         self.assertFalse([line for line in lines if "|" in line])  # a thank-you list, never a table (#425)
 
+    def test_the_credits_sit_after_before_you_install_and_before_the_license(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        credits = readme.index(readme_figures.CREDITS_START)
+        self.assertLess(readme.index("## Before you install"), credits)  # owner's place (#427)
+        self.assertLess(credits, readme.index("## License"))
+
     def test_notice_links_are_credited_left_out_or_our_own(self):
         root = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, root)

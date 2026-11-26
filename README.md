@@ -12,32 +12,6 @@ A monorepo of independent subprojects. Each keeps its own `AGENTS.md`, versionin
 plugins and the tablet apps use SemVer with a numbered beta. A home page with the privacy policy,
 at inktools.martonpaulo.com, is planned ([#371](https://github.com/martonpaulo/ink-tools/issues/371)).
 
-<!-- credits:start: written by scripts/readme_figures.py from docs/tools.json -->
-
-## Credits
-
-A special thank-you to the authors of these Supernote projects. Ink Tools stands on their work: some of their code runs inside it, and some of their ideas shaped it.
-
-### Code we use
-
-- [supernote-tool](https://github.com/jya-dev/supernote-tool) by jya: the `.note` reader and RLE decoder, ported to Swift.
-- [supernote-snap](https://github.com/CharlesCheval/supernote-snap) v0.9.0 by Charles Cheval: the Smart Shapes recognizer, hold detection and stroke guard.
-- [supernote-pic2note](https://github.com/Keplex/supernote-pic2note) by Keplex: the native build pipeline without Gradle.
-- [SuperFun](https://github.com/AgP42/SuperFun) by AgP42: the word-search theme word banks.
-
-### Ideas we follow
-
-- [Supernote-InkGames](https://github.com/wolfsolver/Supernote-InkGames) by wolfsolver: puzzles generated for the page, solved with the pen.
-- [SuperFun](https://github.com/AgP42/SuperFun) by AgP42: a set of games inside one plugin.
-- [Inkling](https://github.com/Laumss/Inkling) by Laumss: write a picture file, then insert it on the page.
-- [sn-plugins](https://github.com/Laumss/sn-plugins) by Laumss: the Settings screen conventions in `ui-kit`.
-- [supernote-mcp](https://github.com/ridget/supernote-mcp) by ridget: inkctl touches the tablet only when it is called.
-- [inkbridge](https://github.com/CRSiegfried/inkbridge) by CRSiegfried: inkctl leaves transcription to whoever calls it.
-
-Each project's licence, and what Ink Tools took from it, is in the `NOTICE.md` of the part that uses it.
-
-<!-- credits:end -->
-
 <!-- tools:start: written by scripts/readme_figures.py from docs/tools.json -->
 
 ## Tools
@@ -201,6 +175,32 @@ and the [registry](registry/); a check fails when they fall behind.
 <!-- risk-notice:end -->
 
 The [install guide](docs/install.md) says how to install, update and remove a plugin, and which tools have a stable release.
+
+<!-- credits:start: written by scripts/readme_figures.py from docs/tools.json -->
+
+## Credits
+
+A special thank-you to the authors of these Supernote projects. Ink Tools stands on their work: some of their code runs inside it, and some of their ideas shaped it.
+
+### Code we use
+
+- [supernote-tool](https://github.com/jya-dev/supernote-tool) by jya: the `.note` reader and RLE decoder, ported to Swift.
+- [supernote-snap](https://github.com/CharlesCheval/supernote-snap) v0.9.0 by Charles Cheval: the Smart Shapes recognizer, hold detection and stroke guard.
+- [supernote-pic2note](https://github.com/Keplex/supernote-pic2note) by Keplex: the native build pipeline without Gradle.
+- [SuperFun](https://github.com/AgP42/SuperFun) by AgP42: the word-search theme word banks.
+
+### Ideas we follow
+
+- [Supernote-InkGames](https://github.com/wolfsolver/Supernote-InkGames) by wolfsolver: puzzles generated for the page, solved with the pen.
+- [SuperFun](https://github.com/AgP42/SuperFun) by AgP42: a set of games inside one plugin.
+- [Inkling](https://github.com/Laumss/Inkling) by Laumss: write a picture file, then insert it on the page.
+- [sn-plugins](https://github.com/Laumss/sn-plugins) by Laumss: the Settings screen conventions in `ui-kit`.
+- [supernote-mcp](https://github.com/ridget/supernote-mcp) by ridget: inkctl touches the tablet only when it is called.
+- [inkbridge](https://github.com/CRSiegfried/inkbridge) by CRSiegfried: inkctl leaves transcription to whoever calls it.
+
+Each project's licence, and what Ink Tools took from it, is in the `NOTICE.md` of the part that uses it.
+
+<!-- credits:end -->
 
 ## License
 
