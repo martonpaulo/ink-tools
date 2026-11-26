@@ -596,6 +596,23 @@
     "hand-click"
    ],
    "plannedIf": "if a plugin"
+  },
+  {
+   "out": "design/icons/planned/puzzles/icon",
+   "kind": "plugin",
+   "planned": "#376",
+   "readme": true,
+   "tabler": [
+    "puzzle"
+   ]
+  },
+  {
+   "out": "design/icons/cli/inkctl/icon",
+   "kind": "plugin",
+   "readme": true,
+   "tabler": [
+    "terminal-2"
+   ]
   }
  ],
  "retired": {},
