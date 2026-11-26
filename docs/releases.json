@@ -1,5 +1,7 @@
 {
-  "about": "Written by scripts/site_figures.py fetch from the GitHub releases (#437): for each release prefix of docs/tools.json, the newest stable release, else the newest beta, and its file. The home page's Download buttons link these files.",
+  "about": "Written by scripts/site_figures.py fetch from the GitHub releases (#437): for each release prefix of docs/tools.json, the newest stable release, else the newest beta, and its file. The home page's Download buttons link these files. `downloads` and `stars` are the hero's counts (#443).",
+  "downloads": 234,
+  "stars": 2,
   "releases": {
     "account-sync": {
       "tag": "account-sync-v0.1.0-beta.30",

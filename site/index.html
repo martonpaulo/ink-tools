@@ -50,6 +50,9 @@
         <p class="actions">
           <a class="button primary" href="#install">How to install, step by step</a>
         </p>
+        <!-- site-stats:start: written by scripts/site_figures.py -->
+        <p class="hero-stats"><a href="https://github.com/martonpaulo/ink-tools/stargazers" target="_blank" rel="noopener">234 downloads · ★ 2 stars on GitHub</a></p>
+        <!-- site-stats:end -->
       </div>
     </section>
     <!-- site-tools:start: written by scripts/site_figures.py -->
@@ -190,7 +193,7 @@
           <h3>Ink Tools Helper</h3>
           <ul class="features"><li><strong>Plugin settings</strong>: the tablet side of the Plugins commands of <code>inkctl</code>.</li><li><strong>Firmware watch</strong>: runs the Firmware watch of <code>inkctl</code> at boot after a firmware change.</li></ul>
         </li>
-        <li class="card">
+        <li class="card lone-2">
           <p class="card-head">
             <img src="/icons/ink-tools-probe.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
@@ -209,23 +212,22 @@
         <h2 id="install-title">Install in a few minutes</h2>
         <p class="lead">Most people need only a plugin, so its guide comes first.</p>
         <!-- site-install:start: written by scripts/site_figures.py -->
-        <div class="install-grid">
+        <div class="grid-3 install-grid">
           <article class="install">
             <h3>Install a plugin</h3>
-            <ol class="steps"><li>Download the tool&#x27;s <code>.snplg</code> file with its Download button on <a href="#tools">inktools.martonpaulo.com</a>, or from its release on the <a href="https://github.com/martonpaulo/ink-tools/releases" target="_blank" rel="noopener">releases page</a>. Keep the file name: it carries the version.</li><li>Connect the tablet to the computer with a USB cable, or use Supernote Cloud, and copy the file into the tablet&#x27;s <code>MyStyle</code> folder.</li><li>On the tablet, open Settings, then Apps, then Plugins, and tap Select Plugin Package. In Select Plugin, choose the file, then tap Install.</li><li>When the tablet asks, allow the permissions the release notes list. A plugin that is refused a permission shows what it needs and how to give it.</li><li>Tap the plugin in the Plugins list to open its page, and turn it on with the switch there. The tablet keeps at most 10 plugins on at one time.</li></ol>
+            <ol class="steps"><li>Download the plugin&#x27;s <code>.snplg</code> file from <a href="#tools">inktools.martonpaulo.com</a>.</li><li>Copy the file into the tablet&#x27;s <code>MyStyle</code> folder, over a USB cable or Supernote Cloud.</li><li>On the tablet, open Settings › Apps › Plugins › Select Plugin Package, choose the file and tap Install.</li><li>Allow what it asks for, then turn the plugin on in Settings › Apps › Plugins.</li></ol>
           </article>
           <article class="install">
             <h3>Install the tablet app</h3>
-            <p>Handwriting Language has no release yet: it waits for a build signed with a release key. Until then it installs only from a copy of the repository, over a cable, as its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/handwriting-language/README.md#install" target="_blank" rel="noopener">README</a> shows.</p>
+            <p>Handwriting Language has no release yet; its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/handwriting-language/README.md#install" target="_blank" rel="noopener">README</a> shows how to install it.</p>
           </article>
           <article class="install">
             <h3>Install the Mac app</h3>
-            <p>Ink Notebook Editor has no release yet. It builds on a Mac from a copy of the repository, as its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/ink-notebook-editor/README.md" target="_blank" rel="noopener">README</a> shows.</p>
+            <p>Ink Notebook Editor has no release yet; its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/ink-notebook-editor/README.md" target="_blank" rel="noopener">README</a> shows how to build it.</p>
           </article>
-          <article class="install">
+          <article class="install lone-2">
             <h3>Install the Mac command line</h3>
-            <p>Ink Tools Control (<code>inkctl</code>) has no release: it runs from a copy of the repository.</p>
-            <ol class="steps"><li>On the Mac, install Python 3.9 or later and Android&#x27;s <code>adb</code> tool.</li><li>On the tablet, turn on Sideloading in Settings (<a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/docs/research/2026-11-adb-on-supernote.md#steps" target="_blank" rel="noopener">how</a>).</li><li>In Terminal, copy the repository: <code>git clone https://github.com/martonpaulo/ink-tools</code>.</li><li>Follow the Quick Start of <a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/README.md" target="_blank" rel="noopener">Ink Tools Control</a>: it puts <code>inkctl</code> on your path and connects it to the tablet.</li></ol>
+            <p>Ink Tools Control (<code>inkctl</code>) runs from a copy of this repository; follow its <a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/README.md" target="_blank" rel="noopener">Quick Start</a>.</p>
           </article>
         </div>
         <!-- site-install:end -->

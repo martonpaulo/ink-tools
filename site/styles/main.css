@@ -23,6 +23,8 @@
   --page-width: min(73.75rem, 100% - 2.5rem);
   --control-height: 3rem;
   --glyph-tile: 3rem;
+  /* One even padding for every card and install box (#443). */
+  --box-padding: var(--space-m);
   --text-sm: 0.875rem;
   --text-md: 1.125rem;
   --text-xl: 1.75rem;
@@ -258,7 +260,7 @@ main {
 .card {
   display: flex;
   flex-direction: column;
-  padding: var(--space-l);
+  padding: var(--box-padding);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--surface);
@@ -319,14 +321,8 @@ main {
   font-size: var(--text-sm);
 }
 
-.install-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-s);
-}
-
 .install {
-  padding: var(--space-l);
+  padding: var(--box-padding);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--surface);
@@ -355,11 +351,14 @@ main {
   margin-top: var(--space-2xs);
 }
 
+/* One list, one credit per row, so every row starts at the same edge (#443). */
 .credits {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2xs) var(--space-l);
+  margin: 0 0 var(--space-m);
   padding-left: 1.1rem;
+}
+
+.credits li + li {
+  margin-top: var(--space-2xs);
 }
 
 /* A tool's picture or video (#414): written by scripts/site_media.py inside its card. */
@@ -526,10 +525,26 @@ main {
   font-size: var(--text-2xl);
 }
 
-.hero p:not(.eyebrow, .actions) {
+.hero p:not(.eyebrow, .actions, .hero-stats) {
   margin: 0 auto var(--space-l);
   color: var(--secondary);
   font-size: var(--text-md);
+}
+
+/* The downloads and stars line (#443), quiet, as on windowhop.martonpaulo.com. */
+.hero-stats {
+  margin: var(--space-m) 0 0;
+  font-size: var(--text-sm);
+}
+
+.hero-stats a {
+  color: var(--secondary);
+  text-decoration: none;
+}
+
+.hero-stats a:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 
 .section {
@@ -547,10 +562,6 @@ main {
   margin: calc(-1 * var(--space-xs)) 0 var(--space-m);
   color: var(--secondary);
   font-size: var(--text-md);
-}
-
-.section h3 {
-  margin: var(--space-l) 0 var(--space-2xs);
 }
 
 .page {
@@ -578,9 +589,20 @@ main {
 }
 
 /* 9 Responsive. Breakpoints: 1024, 820, 640 and 520 px. */
+/* A last card alone on its row spans the row; site_figures.py marks it per column count (#443). */
+@media (min-width: 1025px) {
+  .grid-3 > .lone-3 {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 1024px) {
   .grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-3 > .lone-2 {
+    grid-column: 1 / -1;
   }
 }
 
@@ -589,9 +611,7 @@ main {
     --page-width: calc(100% - 2rem);
   }
 
-  .grid-3,
-  .install-grid,
-  .credits {
+  .grid-3 {
     grid-template-columns: minmax(0, 1fr);
   }
 

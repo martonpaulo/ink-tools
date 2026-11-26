@@ -1,4 +1,4 @@
-"""Tests of site_figures.py (#437, #439): the home page follows docs/tools.json, the releases and the install guide,
+"""Tests of site_figures.py (#437, #439, #443): the home page follows docs/tools.json, the releases and the install guide,
 says each fact once and keeps one width."""
 import json
 import shutil
@@ -108,6 +108,54 @@ class PageChecks(unittest.TestCase):
     def test_every_tool_has_its_page_icon(self):
         data = json.loads((ROOT / "docs/tools.json").read_text(encoding="utf-8"))
         self.assertEqual(site_figures.icon_problems(ROOT, data), [])
+
+
+class Layout(unittest.TestCase):
+    """#443: a lone last card spans its row, boxes keep one padding and no title margin, the hero counts."""
+
+    def test_a_lone_last_card_is_marked_for_each_column_count(self):
+        expected = {1: {0: "lone-3 lone-2"}, 2: {}, 3: {2: "lone-2"}, 4: {3: "lone-3"}}
+        for count, marks in expected.items():
+            with self.subTest(count=count):
+                self.assertEqual(site_figures.lone_classes(count), marks)
+
+    def test_the_install_guide_counts_after_its_full_width_first_box(self):
+        expected = {1: {}, 2: {1: "lone-3 lone-2"}, 3: {}, 4: {3: "lone-2"}}
+        for count, marks in expected.items():
+            with self.subTest(count=count):
+                self.assertEqual(site_figures.lone_classes(count, first_spans=True), marks)
+
+    def test_box_rules(self):
+        good = (".card { padding: var(--box-padding); } .install { padding: var(--box-padding); }"
+                ".card h3 { margin: 0 0 1rem; } @media (min-width: 1px) { .grid-3 > .lone-3 { grid-column: 1 / -1; } }"
+                ".grid-3 > .lone-2 { grid-column: 1 / -1; }")
+        self.assertEqual(site_figures.box_problems(good), [])
+        for bad in (good + ".section h3 { margin: 2rem 0 0.5rem; }",
+                    good.replace(".install { padding: var(--box-padding); }", ".install { padding: 2rem; }"),
+                    good.replace(".card { padding: var(--box-padding); }", ".card { padding: 2rem 1rem 1rem; }"),
+                    good.replace(".grid-3 > .lone-2 { grid-column: 1 / -1; }", "")):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.box_problems(bad))
+
+    def test_the_hero_counts(self):
+        line = "".join(site_figures.stats_block({"downloads": 1234, "stars": 1}))
+        self.assertIn("1,234 downloads · ★ 1 star on GitHub</a>", line)
+        self.assertIn('href="https://github.com/martonpaulo/ink-tools/stargazers"', line)
+        self.assertIn('rel="noopener">5 downloads</a>', "".join(site_figures.stats_block({"downloads": 5, "stars": 0})))
+        self.assertEqual(site_figures.stats_block({}), [""])
+
+    def test_downloads_sum_every_published_file(self):
+        rows = [{"assets": [{"download_count": 3}, {"download_count": 4}]}, {"draft": True, "assets": [{"download_count": 9}]}]
+        self.assertEqual(site_figures.total_downloads(rows), 7)
+
+    def test_the_plugin_guide_is_short_and_plain(self):
+        text = (ROOT / "docs/install.md").read_text(encoding="utf-8")
+        body = text.split("## Install a plugin", 1)[1].split("\n## ", 1)[0]
+        steps = [line for line in body.splitlines() if line[:1].isdigit()]
+        self.assertLessEqual(len(steps), 4)
+        self.assertIn("Settings › Apps › Plugins", body)
+        self.assertIn("`MyStyle`", body)
+        self.assertNotIn("10 plugins", text)
 
 
 if __name__ == "__main__":

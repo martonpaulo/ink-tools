@@ -46,54 +46,30 @@ prerelease for testing.
 
 ## Install a plugin
 
-1. Download the tool's `.snplg` file with its Download button on
-   [inktools.martonpaulo.com](https://inktools.martonpaulo.com/#tools), or from its release on the
-   [releases page](https://github.com/martonpaulo/ink-tools/releases). Keep the file name: it carries
-   the version.
-2. Connect the tablet to the computer with a USB cable, or use Supernote Cloud, and copy the file
-   into the tablet's `MyStyle` folder.
-3. On the tablet, open Settings, then Apps, then Plugins, and tap Select Plugin Package. In Select
-   Plugin, choose the file, then tap Install.
-4. When the tablet asks, allow the permissions the release notes list. A plugin that is refused a
-   permission shows what it needs and how to give it.
-5. Tap the plugin in the Plugins list to open its page, and turn it on with the switch there. The
-   tablet keeps at most 10 plugins on at one time.
+1. Download the plugin's `.snplg` file from [inktools.martonpaulo.com](https://inktools.martonpaulo.com/#tools).
+2. Copy the file into the tablet's `MyStyle` folder, over a USB cable or Supernote Cloud.
+3. On the tablet, open Settings › Apps › Plugins › Select Plugin Package, choose the file and tap Install.
+4. Allow what it asks for, then turn the plugin on in Settings › Apps › Plugins.
 
 ## Update a plugin
 
-1. Download the newer `.snplg` and copy it into `MyStyle`, as when you installed it.
-2. Install it again from Settings, then Apps, then Plugins, then Select Plugin Package: choose the
-   new file, then tap Install.
-   The tablet replaces the old version. Choose the new file by its version
-   in the name: reinstalling from the plugin's existing entry installs the old copy again.
+Copy the new `.snplg` into `MyStyle` and install it the same way. Choose the file with the new version in its name.
 
 ## Remove a plugin
 
-1. Open Settings, then Apps, then Plugins, and tap the plugin.
-2. Tap Uninstall and confirm. Your notes stay as they are.
-3. Delete the `.snplg` from `MyStyle` if you do not need it again.
+Open Settings › Apps › Plugins, tap the plugin, then tap Uninstall. Your notes stay as they are.
 
 ## Install the tablet app
 
-Handwriting Language has no release yet: it waits for a build signed with a release key. Until then
-it installs only from a copy of the repository, over a cable, as its
-[README](../apps/handwriting-language/README.md#install) shows.
+Handwriting Language has no release yet; its [README](../apps/handwriting-language/README.md#install) shows how to install it.
 
 ## Install the Mac app
 
-Ink Notebook Editor has no release yet. It builds on a Mac from a copy of the
-repository, as its [README](../apps/ink-notebook-editor/README.md) shows.
+Ink Notebook Editor has no release yet; its [README](../apps/ink-notebook-editor/README.md) shows how to build it.
 
 ## Install the Mac command line
 
-Ink Tools Control (`inkctl`) has no release: it runs from a copy of the repository.
-
-1. On the Mac, install Python 3.9 or later and Android's `adb` tool.
-2. On the tablet, turn on Sideloading in Settings
-   ([how](../cli/inkctl/docs/research/2026-11-adb-on-supernote.md#steps)).
-3. In Terminal, copy the repository: `git clone https://github.com/martonpaulo/ink-tools`.
-4. Follow the Quick Start of [Ink Tools Control](../cli/inkctl/README.md): it puts `inkctl` on your
-   path and connects it to the tablet.
+Ink Tools Control (`inkctl`) runs from a copy of this repository; follow its [Quick Start](../cli/inkctl/README.md).
 
 ## How each step is checked
 
