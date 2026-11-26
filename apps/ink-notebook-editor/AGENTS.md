@@ -84,8 +84,30 @@ with this folder as its root: `Package.swift`, `Makefile`, `Support/`, `scripts/
   `DocumentGroup(viewing:)` of the imported type `com.martonpaulo.inktools.notebookeditor.note`,
   declared in `Support/Info.plist` with the role Viewer, so Ratta's own app keeps the `.note` files.
   Every visible word is in `Copy.swift`; `make strings` refreshes `Support/Localizable.xcstrings`.
-- The tablet only through `inkctl`, never ADB (owner, 2026-11-16), and every call with
-  `--read-only`; `files pull` passes `--allow-notes`, since the owner picks the note.
+- The tablet only through `inkctl`, never ADB (owner, 2026-11-16), and every read with
+  `--read-only`; `files pull` passes `--allow-notes`, since the owner picks the note. Only the
+  write path writes ([#313](https://github.com/martonpaulo/ink-tools/issues/313)).
+
+## The write path
+
+Every edit is one `TabletOperation` (`Sources/InkNotebookEditorKit/`): the note, the hash of the
+Mac's copy it was made on, the page and the change. `WritePath.send` refuses it on another base,
+keeps a backup of the copy (`NoteBackups`, the 10 newest per note in Application Support), sends it,
+pulls the note back and stops when a page the edit did not touch changed (`NoteDiff.untouchedChanged`,
+by page id). A failure leaves the Mac's copy and keeps the backup.
+
+- Route T, the default: `inkctl note edit` hands the operations to the helper inside Device Link
+  ([#312](https://github.com/martonpaulo/ink-tools/issues/312)), which applies them with the tablet's file API.
+- Route B, recorded exceptions only, each refused while the note is open on the tablet:
+  - a page move: `NoteWriter.movePage`, then `inkctl files push`; [#263](https://github.com/martonpaulo/ink-tools/issues/263) measured every
+    layer and element block byte-equal, and the tablet's save rewrites only page metadata;
+  - Revert to Backup: the backup's own bytes, pushed, pulled back and compared byte for byte.
+  Firmware watch: [#318](https://github.com/martonpaulo/ink-tools/issues/318).
+- Edit without waiting ([#314](https://github.com/martonpaulo/ink-tools/issues/314)): `BackgroundSender` queues each drawn edit and sends it in the
+  background, one at a time; a run of nudges on the same elements is one request when it ends; a
+  refusal gives back the editor's undo and a plain message; after a send only the edited page is
+  drawn again. No operation reads a page's elements on the tablet.
+- `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 
 Differences from the standard, each for a reason:
 

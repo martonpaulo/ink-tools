@@ -1,5 +1,6 @@
 // The app's only way to the tablet: the `inkctl` command line, never ADB itself (owner, 2026-11-16,
-// #262). Every call passes --read-only, so inkctl refuses any command that would change the tablet.
+// #262). Every read passes --read-only, so inkctl refuses any command that would change the tablet;
+// only the write path's two calls, `note edit` and `files push`, write (#313).
 import Foundation
 
 /// Why a call to inkctl gave no answer, each with a plain message and its next step.
@@ -54,7 +55,7 @@ public struct CommandResult: Sendable, Equatable {
     }
 }
 
-public struct Inkctl: Sendable {
+public struct Inkctl: Sendable, TabletWriting {
     /// The folders a Finder-launched app looks in: its PATH lacks the ones a shell adds. inkctl's
     /// own install links it into ~/.local/bin (cli/inkctl/README.md).
     public static func searchFolders(home: URL, path: String?) -> [URL] {
@@ -153,11 +154,33 @@ public struct Inkctl: Sendable {
         }
     }
 
-    private func run(_ arguments: [String]) async throws(InkctlFailure) -> CommandResult {
+    /// Applies the tablet helper's operations, a JSON file, to one note (`inkctl --json note edit`,
+    /// #312): the write path's route T. `--allow-notes`: the owner picks the note.
+    public func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
+        struct Answer: Decodable { let openNote: String? }
+        guard !note.hasPrefix("-") else { throw .failed(String(localized: "\(note) is not a path inkctl can edit.")) }
+        let result = try await run(
+            ["note", "edit", "--allow-notes", note, operations.path(percentEncoded: false)], writes: true)
+        do {
+            return EditAnswer(openNote: try JSONDecoder().decode(Answer.self, from: result.stdout).openNote)
+        } catch {
+            throw .failed(String(localized: "inkctl answered something that is not the helper's answer."))
+        }
+    }
+
+    /// Replaces one note with the Mac's file (`inkctl --json files push --overwrite`): the write
+    /// path's one Mac-written route, a page move, and Revert to Backup (#313).
+    public func push(_ local: URL, to note: String) async throws(InkctlFailure) {
+        guard !note.hasPrefix("-") else { throw .failed(String(localized: "\(note) is not a path inkctl can write.")) }
+        _ = try await run(["files", "push", "--overwrite", local.path(percentEncoded: false), note], writes: true)
+    }
+
+    private func run(_ arguments: [String], writes: Bool = false) async throws(InkctlFailure) -> CommandResult {
         guard let executable else { throw .missing }
         let result: CommandResult
         do {
-            result = try await Self.launch(executable, ["--json", "--read-only"] + arguments, environment)
+            result = try await Self.launch(
+                executable, ["--json"] + (writes ? [] : ["--read-only"]) + arguments, environment)
         } catch is CancellationError {
             throw .cancelled
         } catch {

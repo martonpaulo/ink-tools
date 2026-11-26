@@ -39,6 +39,36 @@ import Testing
         #expect(try arguments() == ["--json", "--read-only", "files", "ls", "Note"])
     }
 
+    @Test func theWritePathsEditSendsTheOperationsWithoutReadOnly() async throws {
+        let inkctl = try fake(#"echo '{"ok": true, "openNote": "/storage/emulated/0/Note/B.note", "results": []}'"#)
+        let operations = folder.appending(path: "ops.json")
+        let answer = try await inkctl.edit(note: "/storage/emulated/0/Note/A.note", operations: operations)
+        #expect(answer == EditAnswer(openNote: "/storage/emulated/0/Note/B.note"))
+        #expect(
+            try arguments() == [
+                "--json", "note", "edit", "--allow-notes", "/storage/emulated/0/Note/A.note",
+                operations.path(percentEncoded: false),
+            ])
+    }
+
+    @Test func theWritePathsPushReplacesTheNoteWithoutReadOnly() async throws {
+        let inkctl = try fake("exit 0")
+        try await inkctl.push(URL(filePath: "/tmp/a.note"), to: "/storage/emulated/0/Note/A.note")
+        #expect(
+            try arguments() == [
+                "--json", "files", "push", "--overwrite", "/tmp/a.note", "/storage/emulated/0/Note/A.note",
+            ])
+    }
+
+    @Test func aRefusalOfTheHelperIsAFailureWithItsWords() async throws {
+        let inkctl = try fake(
+            #"echo '{"error": "usage", "message": "device-link edit: no-element: operation 1"}'; exit 2"#)
+        await #expect(throws: InkctlFailure.failed("device-link edit: no-element: operation 1")) {
+            try await inkctl.edit(
+                note: "/storage/emulated/0/Note/A.note", operations: self.folder.appending(path: "o.json"))
+        }
+    }
+
     @Test func aTabletThatIsNotConnectedIsNamed() async throws {
         let inkctl = try fake(
             #"echo '{"error": "unreachable", "message": "no tablet on USB"}'; echo 'inkctl: no tablet on USB' >&2; exit 3"#

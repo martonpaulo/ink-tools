@@ -11,11 +11,7 @@ public enum NoteDiff {
     /// The report, one line per page and one per footer key family that either note has.
     public static func lines(_ before: NoteFile, _ after: NoteFile) -> [String] {
         var lines = ["pages: \(before.pages.count) -> \(after.pages.count)"]
-        let afterIndex = Dictionary(
-            after.pages.enumerated().compactMap { entry in
-                entry.element.metadata["PAGEID"].map { ($0, entry.offset) }
-            },
-            uniquingKeysWith: { first, _ in first })
+        let afterIndex = pageIndex(after)
         for (index, page) in before.pages.enumerated() {
             guard let id = page.metadata["PAGEID"], let found = afterIndex[id] else {
                 lines.append("page \(index + 1): not found in AFTER")
@@ -65,6 +61,36 @@ public enum NoteDiff {
             }
         }
         return changed
+    }
+
+    /// The pages of `before`, by number from 1, that an edit did not touch (`edited`, from 0) and that
+    /// `after` lost or changed, for the write path's check (#313). Each page is found by its
+    /// `PAGEID`, so a moved page still counts as kept; its layers and element blocks must keep their
+    /// bytes, while its metadata may change, as the tablet's save rewrites it (#263).
+    public static func untouchedChanged(_ before: NoteFile, _ after: NoteFile, edited: Set<Int>) -> [Int] {
+        let afterIndex = pageIndex(after)
+        return before.pages.enumerated().compactMap { index, page in
+            guard !edited.contains(index) else { return nil }
+            guard let id = page.metadata["PAGEID"], let found = afterIndex[id] else { return index + 1 }
+            let other = after.pages[found]
+            let layers = NoteFile.layerKeys.contains { key in
+                block(before, page.layers.first { $0.key == key }?.bitmapAddress)
+                    != block(after, other.layers.first { $0.key == key }?.bitmapAddress)
+            }
+            let blocks = pageBlocks.contains { key in
+                block(before, page.metadata.address(key)) != block(after, other.metadata.address(key))
+            }
+            return layers || blocks ? index + 1 : nil
+        }
+    }
+
+    /// Each page's index in `file` by its `PAGEID`; the first of two pages with one id wins.
+    static func pageIndex(_ file: NoteFile) -> [String: Int] {
+        Dictionary(
+            file.pages.enumerated().compactMap { entry in
+                entry.element.metadata["PAGEID"].map { ($0, entry.offset) }
+            },
+            uniquingKeysWith: { first, _ in first })
     }
 
     /// Two page metadata blocks alike but for their addresses, which move whenever any block before
