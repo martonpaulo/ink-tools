@@ -82,10 +82,13 @@ export default function App({
   sync = bridgeSync,
   close = () => closePluginView(),
   secrets,
+  log = console.log,
 }: {
   folder?: Folder;
   /** The sign-in secrets in the private folder (#116); tests pass a fake. */
   secrets?: SecretStore;
+  /** Where a failure's details go; the screen shows one sentence. */
+  log?: (line: string) => void;
   /** The runner behind «Sync now»: the plugin host's one, which also runs the automatic pass. */
   sync?: SyncRunner;
   /** Closes the plugin view; tests pass a fake. */
@@ -125,8 +128,9 @@ export default function App({
     try {
       await store.remove(provider);
     } catch (e) {
+      log(`[Bridge] sign-out: ${provider}: ${(e as Error).message}`);
       setSaveProblem(
-        format('signOut.problem', {reason: (e as Error).message}),
+        format('signOut.problem', {provider: copy[`provider.${provider as 'todoist'}`]}),
       );
     }
     await readSignIns();

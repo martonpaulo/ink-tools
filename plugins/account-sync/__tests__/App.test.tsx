@@ -247,3 +247,37 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
   );
   expect(screenBreaks(tree.root)).toEqual([]);
 });
+
+test('a sign-out that fails says so in one sentence and logs why (#116)', async () => {
+  const secrets: SecretStore = {
+    read: async () => 'synthetic-token-wxyz',
+    remove: async () => {
+      throw new Error('the file module cannot delete a file');
+    },
+  };
+  const base = defaultSettings();
+  files[`${DIR}/settings.json`] = JSON.stringify({
+    ...base,
+    modules: {...base.modules, todo: true},
+    providers: {...base.providers, todoist: true},
+  });
+  const log = jest.fn();
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(
+      <App folder={folder as never} secrets={secrets} log={log} />,
+    );
+  });
+  const press = (label: string) =>
+    tree.root.findAll(
+      n =>
+        (n.props.accessibilityLabel === label || n.props.label === label) &&
+        typeof n.props.onPress === 'function',
+    )[0];
+  await act(async () => press('Sign out of Todoist').props.onPress());
+  await act(async () => press(copy['signOut.yes']).props.onPress());
+  expect(texts(tree)).toContain('The Todoist sign-out did not finish. Try again.');
+  expect(log).toHaveBeenCalledWith(
+    '[Bridge] sign-out: todoist: the file module cannot delete a file',
+  );
+});

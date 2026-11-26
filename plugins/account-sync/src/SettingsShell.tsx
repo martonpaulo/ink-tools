@@ -149,6 +149,12 @@ function SyncLine({sync}: {sync: SyncControl}): React.JSX.Element {
 
 /** A provider's sign-in in words: the masked tail and a sign-out, or how to sign in (#90). */
 function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
+  // Its own gap and a space before the next module's divider, so the line, its button and the
+  // divider never touch (#116).
+  return <View style={styles.signIn}>{signInParts(provider)}</View>;
+}
+
+function signInParts(provider: ProviderSignIn): React.JSX.Element {
   const {signIn} = provider;
   switch (signIn.state) {
     case 'signedOut':
@@ -168,7 +174,7 @@ function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
       );
     case 'signedIn':
       return (
-        <View>
+        <>
           <Text style={shared.text}>
             {format('signIn.in', {provider: provider.name, tail: signIn.tail})}
           </Text>
@@ -181,7 +187,7 @@ function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
             yes={copy['signOut.yes']}
             onConfirm={provider.onSignOut}
           />
-        </View>
+        </>
       );
   }
 }
@@ -233,4 +239,5 @@ const styles = StyleSheet.create({
   rows: {flex: 1},
   /** The screen's own gap between its parts, kept inside the scroll. */
   gap: {gap: metrics.sectionGap},
+  signIn: {gap: metrics.controlGap, paddingBottom: metrics.sectionGap},
 });
