@@ -99,6 +99,7 @@ case "$1" in
             "getprop ro.product.model") echo "Supernote Nomad" ;;
             "getprop ro.product.board") cat "$ADB_FILES/model" ;;
             "dumpsys battery"*) cat "$ADB_FILES/battery" ;;
+            "dumpsys power"*) cat "$ADB_FILES/power" 2>/dev/null || true ;;
             "sha256sum "*) cat "$ADB_FILES/checksum" ;;
             "dumpsys activity broadcasts") cat "$ADB_FILES/broadcasts" ;;
             "dumpsys package com.ratta.absent") echo 'Unable to find package' ;;
@@ -1432,6 +1433,7 @@ helper_screen() {
 answer_line() {  # the time, then the answer's tail after the id
     printf '%s I/ReactNativeJS(  900): SNPROBE answer %s\n' "$1" "$2"
 }
+not_listening() { rm -f "$work/home/.cache/inkctl/helper-answered"; }  # the next Probe call presses (#286)
 helper_ready() {
     reset_device
     rm -f "$work/home/.cache/inkctl/helper-answered"
@@ -1502,14 +1504,14 @@ check "ink save writes the lassoed strokes from the top-left corner" "$(python3 
 helper_ready
 run ink strokes "$work/local/sample.json" --at 500 600 >/dev/null
 check "ink strokes moves a saved sample to --at" "$(command_field "d['strokes'][1][0]")" "[540, 610]"
-run ink write "í" --at 100 200 >/dev/null
+not_listening; run ink write "í" --at 100 200 >/dev/null
 check "an accent on i takes the dot's place" "$(command_field "len(d['strokes'])")" "2"
 run ink write "Wq!" --at 100 200 >/dev/null 2>&1
 check "a character the font lacks is a usage error before any push" "$?$(called ' push ')" "20"
 run ink write "abc" --at 1900 200 >/dev/null 2>&1
 check "ink that leaves the page is a usage error before any push" "$?$(called ' push ')" "20"
 printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
-run ink write "a" --at 100 200 >/dev/null 2>&1
+not_listening; run ink write "a" --at 100 200 >/dev/null 2>&1
 check "ink write on a note outside Note/Tests/ is refused" "$?$(called ' push ')" "120"
 run ink write "a" --at 100 200 --allow-notes >/dev/null 2>&1
 check "--allow-notes lets ink write on another note" "$?" "0"
@@ -1524,7 +1526,23 @@ helper_ready
 run ink write "a" --at 100 200 >/dev/null
 check "Probe's answer starts its listen window" "$?$(test -s "$answered_file" && echo kept)" "0kept"
 run ink write "b" --at 100 200 >/dev/null
-check "within the window a command needs no press and no read for the button" "$?$(called 'input tap')$(called 'uiautomator dump')" "001"
+check "within the window a command needs no press and no screen read" "$?$(called 'input tap')$(called 'uiautomator dump')" "000"
+check "within the window Probe checks the test note itself, before the ink" "$(command_field "d['op'], [step['op'] for step in d['steps']], d['steps'][0]['folder']")" "('batch', ['requireNote', 'insertStrokes'], '$root/Note/Tests/')"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"batch","ms":90,"steps":[{"ok":true,"op":"requireNote","ms":5},{"ok":true,"op":"insertStrokes","ms":80,"page":0,"strokes":1,"rect":{"left":100}}]}' > "$files/helper-answer"
+check "a guarded answer prints as the command's own" "$(run ink write "b" --at 100 200 | grep -c "rect {'left': 100}, in 80 ms")" "1"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":false,"code":3,"message":"step 1 (requireNote): the open note is outside","step":1,"steps":[{"ok":false,"op":"requireNote","code":3}]}' > "$files/helper-answer"
+run ink write "b" --at 100 200 >/dev/null 2>"$work/err"
+check "a note outside Note/Tests/ that Probe finds is protected" "$?$(grep -c 'is protected' "$work/err")" "121"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":false,"code":2,"message":"step 1: unknown op: requireNote"}' > "$files/helper-answer"
+run ink write "b" --at 100 200 >/dev/null 2>"$work/err"
+check "a Probe too old to check the note fails and asks for a new build" "$?$(grep -c 'install Probe built from main' "$work/err")" "11"
+: > "$log"
+printf 'mWakefulness=Awake\n' > "$files/power"
+run ink write "b" --at 100 200 >/dev/null 2>&1
+check "a screen already on gets no wake key" "$(called 'keyevent WAKEUP')" "0"
+rm -f "$files/power"
+helper_ready
+python3 -c 'import time; print(time.time())' > "$answered_file"
 python3 -c 'import time; print(time.time() - 600)' > "$answered_file"
 run ink write "c" --at 100 200 >/dev/null
 check "after the window inkctl presses Run Command again" "$?$(called 'input tap 350 1450')" "01"
@@ -1536,17 +1554,23 @@ cat > "$work/local/batch.json" <<'JSON'
 JSON
 helper_ready
 batch_answer '{"ok":true,"op":"batch","ms":900,"steps":[{"ok":true,"op":"insertStrokes","ms":300,"page":0,"strokes":3,"rect":{"left":100}},{"ok":true,"op":"lassoRect","ms":100,"rect":{"left":90},"counts":{"trailNum":3}},{"ok":true,"op":"lassoLast","ms":100,"rect":{"left":92},"counts":{"trailNum":3}},{"ok":true,"op":"insertStrokes","ms":300,"page":0,"strokes":2,"rect":{"left":500}}]}'
-run batch "$work/local/batch.json" > "$work/out"
+not_listening; run batch "$work/local/batch.json" > "$work/out"
 check "batch sends every step in one command, with one push and one press" "$?$(command_field "d['op'], [step['op'] for step in d['steps']]")$(called ' push ')$(called 'input tap')" "0('batch', ['insertStrokes', 'lassoRect', 'lassoLast', 'insertStrokes'])11"
 check "batch turns each step as its own command does" "$(command_field "d['steps'][1]['rect'], d['steps'][3]['strokes'][1][0], min(p[0] for s in d['steps'][0]['strokes'] for p in s)")" "({'left': 90, 'top': 190, 'right': 290, 'bottom': 270}, [540, 610], 100)"
 check "batch prints one line per step, then the total" "$(grep -c '^step [1-4] ' "$work/out")$(grep -c '^step 2 lasso rect: lassoed: ' "$work/out")$(tail -1 "$work/out")" "41batch: 4 steps in 900 ms"
-check "batch in JSON answers each step's own result" "$(run batch "$work/local/batch.json" --json | field "['ok'],[(s['do'], s['ok']) for s in d['steps']][0],d['steps'][3]['points']")" "(True, ('ink write', True), 4)"
-batch_answer '{"ok":false,"code":1501,"message":"step 2 (lassoRect): no permission","step":2,"steps":[{"ok":true,"op":"insertStrokes","ms":300,"strokes":3,"rect":{"left":100}},{"ok":false,"op":"lassoRect","code":1501,"message":"no permission"}]}'
-run batch "$work/local/batch.json" > "$work/out" 2>"$work/err"
-check "a refused step fails the batch and names the step, after the lines of the steps before it" "$?$(grep -c 'step 2 (lassoRect): no permission' "$work/err")$(grep -c '^step 1 ink write: inserted: ' "$work/out")$(grep -c '^step 2' "$work/out")" "1110"
-check "a refused step in JSON carries the step and the answers so far" "$(run batch "$work/local/batch.json" --json 2>/dev/null | field "['step'], len(d['steps'])")" "(2, 2)"
-batch_answer '{"ok":true,"op":"batch","ms":10,"steps":[{"ok":true,"op":"insertStrokes","ms":3}]}'
+check "batch waits for Probe 20 s and 1.5 s a step, unless --timeout says" "$(not_listening; run batch "$work/local/batch.json" --json | field "['timeout']")$(not_listening; run batch "$work/local/batch.json" --json --timeout 5 | field "['timeout']")" "26.05.0"
+batch_answer '{"ok":false,"code":1501,"message":"step 3 (lassoRect): no permission","step":3,"steps":[{"ok":true,"op":"requireNote"},{"ok":true,"op":"insertStrokes","ms":300,"strokes":3,"rect":{"left":100}},{"ok":false,"op":"lassoRect","code":1501,"message":"no permission"}]}'
+python3 -c 'import time; print(time.time())' > "$work/home/.cache/inkctl/helper-answered"
 run batch "$work/local/batch.json" >/dev/null 2>"$work/err"
+check "a guarded batch names a refused step from 1, as sent" "$?$(grep -c 'step 2 (lassoRect): no permission' "$work/err")" "11"
+batch_answer '{"ok":true,"op":"batch","ms":900,"steps":[{"ok":true,"op":"insertStrokes","ms":300,"page":0,"strokes":3,"rect":{"left":100}},{"ok":true,"op":"lassoRect","ms":100,"rect":{"left":90},"counts":{"trailNum":3}},{"ok":true,"op":"lassoLast","ms":100,"rect":{"left":92},"counts":{"trailNum":3}},{"ok":true,"op":"insertStrokes","ms":300,"page":0,"strokes":2,"rect":{"left":500}}]}'
+check "batch in JSON answers each step's own result" "$(not_listening; run batch "$work/local/batch.json" --json | field "['ok'],[(s['do'], s['ok']) for s in d['steps']][0],d['steps'][3]['points']")" "(True, ('ink write', True), 4)"
+batch_answer '{"ok":false,"code":1501,"message":"step 2 (lassoRect): no permission","step":2,"steps":[{"ok":true,"op":"insertStrokes","ms":300,"strokes":3,"rect":{"left":100}},{"ok":false,"op":"lassoRect","code":1501,"message":"no permission"}]}'
+not_listening; run batch "$work/local/batch.json" > "$work/out" 2>"$work/err"
+check "a refused step fails the batch and names the step, after the lines of the steps before it" "$?$(grep -c 'step 2 (lassoRect): no permission' "$work/err")$(grep -c '^step 1 ink write: inserted: ' "$work/out")$(grep -c '^step 2' "$work/out")" "1110"
+check "a refused step in JSON carries the step and the answers so far" "$(not_listening; run batch "$work/local/batch.json" --json 2>/dev/null | field "['step'], len(d['steps'])")" "(2, 2)"
+batch_answer '{"ok":true,"op":"batch","ms":10,"steps":[{"ok":true,"op":"insertStrokes","ms":3}]}'
+not_listening; run batch "$work/local/batch.json" >/dev/null 2>"$work/err"
 check "an answer with fewer steps than sent is a failure" "$?$(grep -c 'answered 1 of 4 steps' "$work/err")" "11"
 helper_ready
 printf '{"steps": [{"do": "lasso last-insert"}, {"do": "lasso rect", "rect": [10, 10, 0, 5]}]}' > "$work/local/bad.json"
@@ -1559,6 +1583,7 @@ printf '{"steps": []}' > "$work/local/bad.json"
 check "a batch with no steps is a usage error" "$(exit_and_pushes batch "$work/local/bad.json")" "20"
 check "a missing batch file is not found" "$(exit_and_pushes batch "$work/local/none.json")" "40"
 printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
+not_listening
 check "a batch with ink on a note outside Note/Tests/ is refused" "$(exit_and_pushes batch "$work/local/batch.json")" "120"
 printf '[{"do": "lasso last-insert"}]' > "$work/local/lasso.json"
 batch_answer '{"ok":true,"op":"batch","ms":10,"steps":[{"ok":true,"op":"lassoLast","ms":3,"rect":{"left":1},"counts":{}}]}'
@@ -1640,25 +1665,25 @@ run note png 0 "$work/local/page0.png" >/dev/null 2>&1
 check "note png 0 is a usage error" "$?" "2"
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPicture","ms":90,"page":0,"path":"/storage/emulated/0/.data/plugin/inktools-probe/picture.png"}' > "$files/helper-answer"
 printf 'picture' > "$work/local/square.png"
-run note insert-picture "$work/local/square.png" >/dev/null
+not_listening; run note insert-picture "$work/local/square.png" >/dev/null
 check "note insert-picture pushes the picture to Probe's folder and names it" "$?$(called "push $work/local/square.png $root/.data/plugin/inktools-probe/picture.png")$(command_field "d['op'], d['path']")" "01('insertPicture', '/storage/emulated/0/.data/plugin/inktools-probe/picture.png')"
 printf 'gif' > "$work/local/square.gif"
 run note insert-picture "$work/local/square.gif" >/dev/null 2>&1
 check "note insert-picture of a GIF is a usage error before any push" "$?$(called "square.gif")" "20"
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertTextBox","ms":90,"page":0,"rect":{"left":100,"top":200,"right":900,"bottom":320}}' > "$files/helper-answer"
-run note insert-text "Test box" --at 100 200 --size 800 120 >/dev/null
+not_listening; run note insert-text "Test box" --at 100 200 --size 800 120 >/dev/null
 check "note insert-text sends the text, the rect and the font size" "$?$(command_field "d['op'], d['text'], d['rect'], d['fontSize']")" "0('insertTextBox', 'Test box', {'left': 100, 'top': 200, 'right': 900, 'bottom': 320}, 40)"
 run note insert-text "Test box" --at 1800 200 --size 800 120 >/dev/null 2>&1
 check "a text box that leaves the page is a usage error" "$?" "2"
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPage","ms":400,"page":1,"template":"style_white"}' > "$files/helper-answer"
-run note insert-page style_white --page 2 >/dev/null
+not_listening; run note insert-page style_white --page 2 >/dev/null
 check "note insert-page sends the template and the page, from 0" "$?$(command_field "d['op'], d['page'], d['template']")" "0('insertPage', 1, 'style_white')"
 run note insert-page ../x.png --page 2 >/dev/null 2>&1
 check "a template that is not a system name is a usage error" "$?" "2"
 # A page background a plugin made, straight in MyStyle, is a template too (#377); round 11 found it refused (#379).
 printf 'f %s\n' "$root/MyStyle/r11-sudoku.png" >> "$files/paths"
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPage","ms":400,"page":1,"template":"/storage/emulated/0/MyStyle/r11-sudoku.png"}' > "$files/helper-answer"
-run note insert-page MyStyle/r11-sudoku.png --page 2 >/dev/null
+not_listening; run note insert-page MyStyle/r11-sudoku.png --page 2 >/dev/null
 check "note insert-page sends a MyStyle background as its full path" "$?$(command_field "d['op'], d['page'], d['template']")" "0('insertPage', 1, '$root/MyStyle/r11-sudoku.png')"
 run note insert-page MyStyle/absent.png --page 2 >/dev/null 2>&1
 check "a MyStyle background that is not on the tablet is not found" "$?" "4"
@@ -1687,7 +1712,7 @@ run --read-only note move-page Note/Tests/Move.note 1 3 >/dev/null 2>&1
 check "read-only refuses note move-page" "$?" "11"
 printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
 for refused in "png 1 $work/local/diary.png" "insert-page style_white --page 2"; do
-    run note $refused >/dev/null 2>&1
+    not_listening; run note $refused >/dev/null 2>&1
     check "note ${refused%% *} on a note outside Note/Tests/ is refused" "$?" "12"
 done
 run --read-only note insert-page style_white --page 2 >/dev/null 2>&1

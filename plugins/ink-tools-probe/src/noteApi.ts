@@ -157,6 +157,10 @@ export const noteApi: HelperApi = {
     return unwrap<Record<string, unknown>>('getLassoElementTypeCounts', await PluginCommAPI.getLassoElementTypeCounts());
   },
 
+  async openNotePath() {
+    return unwrap<string>('getCurrentFilePath', await PluginCommAPI.getCurrentFilePath());
+  },
+
   async lastElementRect() {
     const element = unwrap<Element>('getLastElement', await PluginFileAPI.getLastElement());
     if (element.type === PICTURE && element.picture) {

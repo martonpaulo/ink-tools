@@ -480,6 +480,12 @@ HELPER_RENDER_PATH = f"{HELPER_FOLDER}/page.png"  # Probe's RENDER_PATH (src/hel
 # its owner, #286); inkctl waits for the answer with no press while that window is open, less a margin.
 HELPER_LISTEN_SECONDS = 110.0
 HELPER_LISTEN_WAIT = 2.0  # seconds for a listening Probe to answer before inkctl presses after all
+# A batch's default wait for Probe: HELPER_TIMEOUT and this per step; a word took 0.75 to 1.1 s,
+# and 50 words did not fit 20 s (device round 13, #286).
+BATCH_STEP_SECONDS = 1.5
+# Probe's answer code when the open note is outside the folder a `requireNote` names (helper.ts OUTSIDE_FOLDER).
+HELPER_OUTSIDE_FOLDER = 3
+SCREEN_AWAKE = "mWakefulness=Awake"  # `dumpsys power` with the screen on
 HELPER_ANSWERED_FILE = Path.home() / ".cache/inkctl/helper-answered"  # the time of Probe's last answer
 # A plugin's own action by command, with no screen (#283): packages/sn-adapter/src/official/actions.ts owns
 # the request file and the answer lines; each plugin reads the file in its own folder on a timer.
@@ -1105,10 +1111,13 @@ class Device:
 
     def wake(self) -> None:
         """Turn the screen on, doing nothing if it is on. `am start -W` hangs on a sleeping screen.
-        Once per run: a second wake would only drop the screen read the run already holds."""
+        Once per run: a second wake would only drop the screen read the run already holds. The key
+        press is sent only when the power state does not read Awake: it took 1.0 s of a 4.7 s
+        `ink write` with the screen on (device round 13, #286)."""
         if self.awake:
             return
-        self.shell("input keyevent WAKEUP")
+        if SCREEN_AWAKE not in self.shell("dumpsys power | grep -m1 mWakefulness= || true"):
+            self.shell("input keyevent WAKEUP")
         self.awake = True
 
     def test(self, condition: str) -> bool:
@@ -2631,14 +2640,39 @@ def press_helper(device: Device, limit: float) -> None:
     press_element(device, expect_element(device, HELPER_BUTTON, limit))
 
 
-def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict:
-    """Run one command in Probe and return its answer; a refusal or no answer is a Failure."""
+def guarded_command(command: dict, guard: str) -> dict:
+    """`command` as a batch whose first step makes Probe check that the open note is in `guard` (#286)."""
+    steps = command["steps"] if command["op"] == "batch" else [command]
+    return {"op": "batch", "steps": [{"op": "requireNote", "folder": guard}, *steps]}
+
+
+def unguarded_answer(answer: dict, command: dict) -> dict:
+    """The answer `command` would have had alone, from the answer of its guarded batch (#286). A
+    refused guard is a protected note, or a Probe too old to check it, which ran nothing."""
+    message = str(answer.get("message", ""))
+    if not answer.get("ok") and (answer.get("step") == 1 or ("step" not in answer and message.startswith("step 1:"))):
+        if answer.get("code") == HELPER_OUTSIDE_FOLDER:
+            raise protected("writing on a note outside Note/Tests/")
+        raise Failure(EXIT_FAILED, "device_error", f"Probe could not check the open note, so nothing ran: {answer.get('code')} {message}; install Probe built from main", HELPER_LOG_STEP)
+    steps = answer.get("steps", [])[1:]
+    failed = {"step": answer["step"] - 1, "message": f"step {answer['step'] - 1} ({steps[-1].get('op')}): {steps[-1].get('message')}"} if "step" in answer and steps else {}
+    if command["op"] == "batch":
+        return {**answer, "steps": steps, **failed}
+    if failed:
+        return {"ok": False, "code": answer.get("code"), "message": steps[-1].get("message")}
+    return steps[0] if steps else answer
+
+
+def helper_call(device: Device, args: argparse.Namespace, command: dict, guard: str | None = None) -> dict:
+    """Run one command in Probe and return its answer; a refusal or no answer is a Failure. With
+    `guard`, Probe first checks that the open note is in that folder, and runs nothing outside it."""
     if device.activity() != NOTE_ACTIVITY:
         raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", "no note is open; open a test note first (inkctl note open)", "inkctl note open Note/Tests/X.note")
     command_id = uuid.uuid4().hex
+    sent = guarded_command(command, guard) if guard else command
     with tempfile.TemporaryDirectory() as folder:
         local = os.path.join(folder, os.path.basename(HELPER_COMMAND_PATH))
-        Path(local).write_text(json.dumps({"id": command_id, **command}), encoding="utf-8")
+        Path(local).write_text(json.dumps({"id": command_id, **sent}), encoding="utf-8")
         device.shell(f"mkdir -p {shlex.quote(posixpath.dirname(HELPER_COMMAND_PATH))}")
         push_file(device, local, HELPER_COMMAND_PATH, overwrite=True)
     since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
@@ -2652,24 +2686,34 @@ def helper_call(device: Device, args: argparse.Namespace, command: dict) -> dict
     if answer is None:
         raise Failure(EXIT_TIMEOUT, "timeout", f"Probe gave no answer in {args.timeout:g} s; is Probe installed with its permissions on Always Allow?", HELPER_LOG_STEP)
     note_helper_answered()
+    if guard:
+        answer = unguarded_answer(answer, command)
     if not answer.get("ok"):
         steps = {"step": answer["step"], "steps": answer.get("steps", [])} if "step" in answer else {}
         raise Failure(EXIT_FAILED, "device_error", f"Probe refused {command['op']}: {answer.get('code')} {answer.get('message')}", HELPER_LOG_STEP, extra=steps)
     return answer
 
 
-def need_test_note(device: Device, allow_notes: bool) -> None:
+def need_test_note(device: Device, allow_notes: bool, helper: bool = False) -> str | None:
     """Ink goes only on a test note, unless the caller allows the owner's notes too. The screen is
-    woken first, so the read the check makes is the one «Run Command» is pressed from (#286)."""
+    woken first, so the read the check makes is the one «Run Command» is pressed from (#286). For a
+    Probe command while Probe listens, no screen is read: the folder is returned, for helper_call's
+    `guard`, and Probe checks the open note's own path before it runs anything. The screen read took
+    2.2 s of a 4.7 s `ink write` (device round 13, #286)."""
     device.wake()
-    if not allow_notes and not test_note_on_screen(device):
+    if allow_notes:
+        return None
+    if helper and helper_listening():
+        return f"{TEST_NOTES_FOLDER}/"
+    if not test_note_on_screen(device):
         raise protected("writing on a note outside Note/Tests/")
+    return None
 
 
 def insert_ink(device: Device, args: argparse.Namespace, strokes: list) -> tuple[dict, str]:
     check_on_page(strokes)
-    need_test_note(device, args.allow_notes)
-    return ink_answer(strokes, helper_call(device, args, {"op": "insertStrokes", "strokes": strokes}))
+    guard = need_test_note(device, args.allow_notes, helper=True)
+    return ink_answer(strokes, helper_call(device, args, {"op": "insertStrokes", "strokes": strokes}, guard))
 
 
 def ink_answer(strokes: list, answer: dict) -> tuple[dict, str]:
@@ -2732,11 +2776,11 @@ def command_note_insert_picture(device: Device, args: argparse.Namespace):
         raise bad_usage(f"a picture is a .png, .jpg or .jpeg file: {args.file}")
     if not os.path.isfile(args.file):
         raise not_found(args.file)
-    need_test_note(device, args.allow_notes)
+    guard = need_test_note(device, args.allow_notes, helper=True)
     # One fixed name in Probe's folder: Probe takes no other path, and the next insert replaces it.
     remote = f"{HELPER_FOLDER}/picture{suffix}"
     push_file(device, args.file, remote, overwrite=True)
-    answer = helper_call(device, args, {"op": "insertPicture", "path": remote})
+    answer = helper_call(device, args, {"op": "insertPicture", "path": remote}, guard)
     return answer, f"inserted: {args.file} on page {answer.get('page', 0) + 1} in {answer.get('ms')} ms"
 
 
@@ -2748,9 +2792,9 @@ def command_note_insert_text(device: Device, args: argparse.Namespace):
         raise bad_usage("a text box needs text")
     rect = {"left": x, "top": y, "right": x + width, "bottom": y + height}
     check_on_page([[[rect["left"], rect["top"]], [rect["right"], rect["bottom"]]]])
-    need_test_note(device, args.allow_notes)
+    guard = need_test_note(device, args.allow_notes, helper=True)
     command = {"op": "insertTextBox", "text": args.text, "rect": rect, "fontSize": args.font_size}
-    answer = helper_call(device, args, command)
+    answer = helper_call(device, args, command, guard)
     return answer, f"inserted: a text box at {rect} on page {answer.get('page', 0) + 1} in {answer.get('ms')} ms"
 
 
@@ -2770,10 +2814,10 @@ def command_note_insert_page(device: Device, args: argparse.Namespace):
         raise bad_usage(f"a template is a system template name such as {NOTE_BLANK_STYLE}, or a .png file in {PLUGIN_FOLDER}/: {args.template}")
     if args.page < 1:
         raise bad_usage("the page counts from 1")
-    need_test_note(device, args.allow_notes)
+    guard = need_test_note(device, args.allow_notes, helper=True)
     if template != args.template and not device.test(f"-f {shlex.quote(template)}"):
         raise not_found(template, f"inkctl files push FILE.png {PLUGIN_FOLDER}/NAME.png")
-    answer = helper_call(device, args, {"op": "insertPage", "page": args.page - 1, "template": template})
+    answer = helper_call(device, args, {"op": "insertPage", "page": args.page - 1, "template": template}, guard)
     return answer, f"inserted: page {args.page} with {template} in {answer.get('ms')} ms"
 
 
@@ -2929,10 +2973,11 @@ def command_batch(device: Device, args: argparse.Namespace):
             planned.append((step["do"], *batch_step(step, folder)))
         except Failure as failure:
             raise Failure(failure.code, failure.kind, f"step {index}: {failure.message}", failure.next_step) from failure
-    if any(strokes is not None for _, _, strokes in planned):
-        need_test_note(device, args.allow_notes)
+    guard = need_test_note(device, args.allow_notes, helper=True) if any(strokes is not None for _, _, strokes in planned) else None
+    if args.timeout is None:
+        args.timeout = HELPER_TIMEOUT + BATCH_STEP_SECONDS * len(planned)
     try:
-        answer = helper_call(device, args, {"op": "batch", "steps": [command for _, command, _ in planned]})
+        answer = helper_call(device, args, {"op": "batch", "steps": [command for _, command, _ in planned]}, guard)
     except Failure as failure:
         if "step" not in failure.extra:
             raise
@@ -2943,7 +2988,7 @@ def command_batch(device: Device, args: argparse.Namespace):
     results = [batch_line(index, kind, strokes, step) for index, ((kind, _, strokes), step) in enumerate(zip(planned, answer.get("steps", [])), start=1)]
     if len(results) != len(planned):
         raise Failure(EXIT_FAILED, "device_error", f"Probe answered {len(results)} of {len(planned)} steps", HELPER_LOG_STEP)
-    data = {"ok": True, "ms": answer.get("ms"), "steps": [data for data, _ in results]}
+    data = {"ok": True, "ms": answer.get("ms"), "timeout": args.timeout, "steps": [data for data, _ in results]}
     return data, "\n".join([*(text for _, text in results), f"batch: {len(results)} steps in {answer.get('ms')} ms"])
 
 
@@ -4827,6 +4872,7 @@ def build_parser() -> argparse.ArgumentParser:
     for helped in (opened, created, batched, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged, moved_page):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
         helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
+    batched.set_defaults(timeout=None)  # sized from the steps: HELPER_TIMEOUT and BATCH_STEP_SECONDS each (#286)
 
     languages = noun("lang")
     add(languages, "get", command_lang_get)

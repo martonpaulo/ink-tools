@@ -8,7 +8,9 @@ import {
   COMMAND_PATH,
   HelperError,
   LASSO_MARGIN,
+  MAX_BATCH_STEPS,
   NOTES_FOLDER,
+  OUTSIDE_FOLDER,
   parseCommand,
   runCommand,
   type HelperApi,
@@ -42,6 +44,7 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     insertNotePage: jest.fn().mockResolvedValue(undefined),
     insertNoteElements: jest.fn().mockResolvedValue(undefined),
     removeNotePage: jest.fn().mockResolvedValue(undefined),
+    openNotePath: jest.fn().mockResolvedValue('/storage/emulated/0/Note/Tests/A.note'),
     ...overrides,
   } as HelperApi & Record<string, jest.Mock>;
 }
@@ -491,5 +494,36 @@ describe('the listener between presses (#286)', () => {
     run.fake.fire();
     expect(run.fake.running()).toBe(false);
     expect(run.fake.timers.setInterval).toHaveBeenCalledWith(expect.any(Function), LISTEN_POLL_MS);
+  });
+});
+
+describe('requireNote guards the steps after it with the open note\'s path (#286)', () => {
+  const tests = '/storage/emulated/0/Note/Tests/';
+  const guarded = (steps: object[]) => command({op: 'batch', steps: [{op: 'requireNote', folder: tests}, ...steps]});
+  const stroke = {op: 'insertStrokes', strokes: [[[10, 20], [30, 40]]]};
+
+  test('a test note runs the steps', async () => {
+    const note = api({openNotePath: jest.fn().mockResolvedValue('/storage/emulated/0/Note/tests/A.note')});
+    const {answer} = await runCommand(guarded([stroke]), note);
+    expect(answer).toMatchObject({ok: true, steps: [{ok: true, op: 'requireNote'}, {ok: true, op: 'insertStrokes'}]});
+    expect(note.insertStrokes).toHaveBeenCalled();
+  });
+
+  test('another note runs nothing, and its path is not answered', async () => {
+    const note = api({openNotePath: jest.fn().mockResolvedValue('/storage/emulated/0/Note/Diary.note')});
+    const {answer} = await runCommand(guarded([stroke]), note);
+    expect(answer).toMatchObject({ok: false, code: OUTSIDE_FOLDER, step: 1});
+    expect(JSON.stringify(answer)).not.toContain('Diary');
+    expect(note.insertStrokes).not.toHaveBeenCalled();
+  });
+
+  test('the guard does not count against the step limit', async () => {
+    const {answer} = await runCommand(guarded(Array(MAX_BATCH_STEPS).fill(stroke)), api());
+    expect(answer).toMatchObject({ok: true});
+  });
+
+  test.each([['/storage/emulated/0/Note/Tests'], ['/storage/emulated/0/Note/../'], ['/sdcard/Note/Tests/']])('a folder %s is refused', async folder => {
+    const {answer} = await runCommand(command({op: 'batch', steps: [{op: 'requireNote', folder}, stroke]}), api());
+    expect(answer).toMatchObject({ok: false, code: 2});
   });
 });

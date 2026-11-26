@@ -50,6 +50,11 @@ export const NOTES_FOLDER = '/storage/emulated/0/Note/';
  * `insertNotePage` refuses with code 802 (docs/supernote.md › Note file format, #214).
  */
 const SCREEN_SUFFIX = /_a[0-9]+x[0-9]*$/;
+/**
+ * The answer code of a `requireNote` the open note does not meet: inkctl reads it as a protected
+ * note, as it would its own screen check (#286).
+ */
+export const OUTSIDE_FOLDER = 3;
 
 export type Point = {x: number; y: number};
 export type Rect = {left: number; top: number; right: number; bottom: number};
@@ -92,6 +97,8 @@ export interface HelperApi {
   insertNotePage(notePath: string, page: number, template: string): Promise<void>;
   insertNoteElements(notePath: string, page: number, elements: unknown[]): Promise<void>;
   removeNotePage(notePath: string, page: number): Promise<void>;
+  /** The path of the note open on screen (#286). */
+  openNotePath(): Promise<string>;
 }
 
 export class HelperError extends Error {
@@ -124,7 +131,8 @@ type Step =
   | {id: string; op: 'listFiles'; where: Where}
   | {id: string; op: 'readLassoRect'}
   | {id: string; op: 'resizeLasso'; rect: Rect}
-  | {id: string; op: 'movePage'; path: string; from: number; to: number; template?: string};
+  | {id: string; op: 'movePage'; path: string; from: number; to: number; template?: string}
+  | {id: string; op: 'requireNote'; folder: string};
 
 /** Where a sticker probe keeps its file: inkctl's own folder, or the plugin's private folder (#249). */
 type Where = 'probe' | 'plugin';
@@ -267,7 +275,9 @@ export function parseCommand(text: string): Command {
 
 /** A batch's steps: 1 to MAX_BATCH_STEPS commands of any op but `batch`, each checked as alone (#286). */
 function parseSteps(id: string, value: unknown): Step[] {
-  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_BATCH_STEPS) {
+  // A leading `requireNote` guards the steps; it does not count against MAX_BATCH_STEPS (#286).
+  const guarded = Array.isArray(value) && (value[0] as {op?: unknown} | undefined)?.op === 'requireNote' ? 1 : 0;
+  if (!Array.isArray(value) || value.length === guarded || value.length > MAX_BATCH_STEPS + guarded) {
     throw new HelperError(USAGE, `steps must be a list of 1 to ${MAX_BATCH_STEPS} commands`);
   }
   return value.map((step, index) => {
@@ -323,9 +333,20 @@ function parseStep(id: string, raw: Record<string, unknown>): Step {
       const template = raw.template === undefined ? undefined : parseTemplate(raw.template);
       return {id, op: 'movePage', path: parseNotePath(raw.path), from, to, template};
     }
+    case 'requireNote':
+      return {id, op: 'requireNote', folder: parseNoteFolder(raw.folder)};
     default:
       throw new HelperError(USAGE, `unknown op: ${String(raw.op)}`);
   }
+}
+
+/** A folder in NOTES_FOLDER, ending in `/`, with no `..` part. */
+function parseNoteFolder(value: unknown): string {
+  const rest = typeof value === 'string' && value.startsWith(NOTES_FOLDER) && value.endsWith('/') ? value.slice(NOTES_FOLDER.length) : '';
+  if (!rest || rest.split('/').slice(0, -1).some(part => !part || part === '.' || part === '..')) {
+    throw new HelperError(USAGE, `folder must be a folder in ${NOTES_FOLDER}, ending in /`);
+  }
+  return value as string;
 }
 
 /** The smallest rect holding every point. */
@@ -475,6 +496,15 @@ async function execute(command: Step, api: HelperApi): Promise<Record<string, un
       return {rect: await api.lassoBox()};
     case 'movePage':
       return movePage(command, api);
+    case 'requireNote': {
+      // inkctl's test-note guard without a screen read (#286): the open note's own path. Shared
+      // storage ignores case, as inkctl's check does. The path is never answered: it may be the owner's.
+      const path = await api.openNotePath();
+      if (!path.toLowerCase().startsWith(command.folder.toLowerCase())) {
+        throw new HelperError(OUTSIDE_FOLDER, `the open note is outside ${command.folder}; nothing was run`);
+      }
+      return {folder: command.folder};
+    }
   }
 }
 
