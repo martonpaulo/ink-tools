@@ -1,7 +1,6 @@
 # The note file format, element by element, for a Mac-written note
 
-Status: research for [#362](https://github.com/martonpaulo/ink-tools/issues/362), 2026-11-26,
-stopped at a clean point when the run went to medium. It feeds
+Status: research for [#362](https://github.com/martonpaulo/ink-tools/issues/362), 2026-11-26. It feeds
 [#339](https://github.com/martonpaulo/ink-tools/issues/339) (a new note made on the Mac) and
 [#363](https://github.com/martonpaulo/ink-tools/issues/363) (an edit through Supernote Cloud).
 Firmware `Chauvet.E103.2610191001.2559`, note app `1.00.261015`, files `SN_FILE_VER_20260016`,
@@ -71,6 +70,15 @@ lay out [community documentation, measured]. What this study adds on Manta files
 | Element type in section 4 | `0` | `0` | `5000000` | `2000000` | `1000254` (the band's style) |
 | First text field | `none` | `none` | 20 comma-separated base64 fields | 20 fields | 20 fields |
 
+- Pen strokes drawn by hand, per tool, on public Manta samples (`SN_FILE_VER_20260016`): needle pen
+  `pen 10`, ink pen `16`, calligraphy pen `15`, marker `11`; all carry the head words `10, 0, 32, -1`,
+  record class `5000`, a pressure and an angle per point, and 2 fill-direction entries. Tones: `0`,
+  `157`, `201`, `254`; the marker stores its black as `1` and its dark grey as `158`. Erasers: the
+  stroke eraser `pen 3`, colour `255`, class `-2`, operation `601`; the area eraser `pen 9`, class
+  `-4`, operation `603`; the eraser of the ink pen `pen 16`, colour `255`, class `-1`, operation `602`.
+  The lasso is `pen 4`, class `-5`, operation `604`, followed by a second record whose operation
+  says what the selection did (`14` delete, `4` and `2` move or copy) [measured on community
+  samples; the eraser `602` also on a test note of this project].
 - The 20 fields of a text box, a picture or a Heading band: two zeros, the element type, a creation
   time or `none`, the rectangle twice (`x,y,width,height`), three `none`, `0`, the font size, `none`,
   the content (the text, or the PNG), the style (text) or the PNG again (picture), then `47` or
@@ -80,13 +88,16 @@ lay out [community documentation, measured]. What this study adds on Manta files
 - Points are stored down from the top and in from the right, in screen units: `21632` high and
   `16224` wide on a Manta page [measured].
 - The outline the tablet keeps per stroke (rings of float points in page pixels) and a 16-byte
-  `0xFF` entry per outline ring follow the arrays [measured]. Whether the tablet needs a Mac-written
-  outline to lasso and erase is [unknown].
+  `0xFF` entry per outline ring follow the arrays [measured]. The tablet makes the outline only
+  when a stroke or element is created (by the pen, the lasso or the file API) and when it upgrades an
+  old file; it does not make it again when it opens a note, and the lasso selects by the stored
+  outline [observed on the device]. So a Mac-written stroke must carry its outline. The file API
+  makes the outline for an element sent without one [observed on the device].
 - Trail status, the first word after the five arrays that follow the points: `0` drawn; `-99`
   erased; `-16` deleted by the lasso or replaced by Real-Time Text; `-4` partly erased, its pieces
   follow as new records; `-3` moved, the moved copy is a later record [community documentation;
-  `-16` measured on `realtime-text-tablet.note`]. A `-5` was measured on test notes after
-  `inkctl` edits, meaning [unknown].
+  `-16` measured on `realtime-text-tablet.note`]; `-5` removed by an undo, or replaced by the fill
+  tool [observed on the device; measured on test notes after undo rounds].
 
 ## Per feature: how the tablet does it and how the editor does it
 
@@ -99,24 +110,25 @@ The editor's features: [`plugin-scope.md` › Ink Notebook Editor](../plugin-sco
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | Reading and drawing | draws a page from its layer bitmaps; can redraw them from the records | `NoteFormat` decodes the bitmaps; 0.003 % of pixels from the tablet's PNG | matches | measured | — |
 | Elements of a page | draws only records whose trail status is not negative | read every record but erasers and Heading bands; now also leaves out a negative status | matched after the fix in this change | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
-| Page move | its own move rewrites the page order; the file API's move gives the page a new `PAGEID` | route B, `NoteWriter.movePage`: keeps every block and the `PAGEID`, renumbers the page in footer keys | differs on `PAGEID`; key renumbering [unknown] | measured | [#442](https://github.com/martonpaulo/ink-tools/issues/442) |
+| Page move | its own move keeps the `PAGEID`, renumbers the page in the `PAGE`, `TITLE_`, `KEYWORD_` and `LINKO_` footer keys, leaves each keyword block's `KEYWORDPAGE` as it was, and rewrites the header; the file API's move is a copy and a delete, so the page gets a new `PAGEID` | route B, `NoteWriter.movePage`: keeps every block and the `PAGEID`, renumbers `TITLE_`, `KEYWORD_`, `LINKO_` and `LINKI_` | matches but for `LINKI_` and the header | observed on the device, measured | [#442](https://github.com/martonpaulo/ink-tools/issues/442) |
 | Page add, duplicate, delete | its own calls; a delete also removes the page's Headings, keywords and links | route T | matches | observed on the device | — |
-| Strokes written on the Mac | records as above | the proof writer writes file-API records | matches the reader; tablet acceptance [unknown] | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
+| Strokes written on the Mac | records as above, with the outline the lasso uses | the proof writer writes file-API records with an outline | matches the reader; the lasso on the device waits for the device check | measured, observed on the device | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
 | Eraser and lasso delete | keep the record, set its trail status | route T; the reader now hides them | matches | community documentation, measured | — |
 | Lasso move, resize, rotate, flip | marks the old record moved and writes a moved copy with new outline and shift rectangles | route T | matches | community documentation | — |
-| Pictures | `bitmap` record with the PNG in its fields, pixels in the main layer | route T; the proof writer writes the same record | matches the reader; tablet acceptance [unknown] | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
-| Text boxes | `0000` record with text, font size and font path; pixels in the main layer; `DISABLE` area | route T; the proof writer writes the record, its pixels in its own font | whether the tablet draws the text again in its font [unknown] | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
-| Headings | a `0001` band record and a footer `TITLE_` block with the picture of the ink under it | route T; the proof writer writes both | matches the reader; tablet acceptance [unknown] | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
-| Keywords | a footer `KEYWORD_` block and a block with the word | the proof writer writes both | matches the reader; page after a move [unknown] | measured | [#442](https://github.com/martonpaulo/ink-tools/issues/442) |
-| Links | `LINKO_` and `LINKI_` blocks and a link-tag record | not written | no Manta sample [unknown] | community documentation | [#347](https://github.com/martonpaulo/ink-tools/issues/347), [#348](https://github.com/martonpaulo/ink-tools/issues/348) |
-| Templates | the template's bitmap is stored in the note, named by `STYLE_` | the proof writer draws its own grid under a built-in name | whether the tablet keeps the stored bitmap or its own [unknown] | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
+| Pictures | `bitmap` record with the PNG in its fields, pixels in the main layer | route T; the proof writer writes the same record | matches the reader; the device check confirms | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
+| Text boxes | `0000` record with text, font size and font path; the page shows the main layer's pixels, and the tablet draws the box again in its font when the box is edited or moved | route T; the proof writer writes the record and its own pixels | the Mac must draw the text in a font the tablet has, or the box changes look on its first edit | observed on the device, measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
+| Headings | a `0001` band record and a footer `TITLE_` block with the picture of the ink under it | route T; the proof writer writes both | matches the reader; the device check confirms | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
+| Keywords | a footer `KEYWORD_` block and a block with the word; on a page move only the key's page changes | the proof writer writes both | matches | measured, observed on the device | — |
+| Links | a `LINKO_` block per link (`LINKTYPE` `0` page, `1` file, `4` web; `LINKFILE` the target's path in base64, `LINKFILEID` its `FILE_ID`, `PAGEID` the target page, `LINKBITMAP` the picture of the linked ink) and a `0000` record with operation `500` and element type `20000000` | not written | a link names its target by path, `FILE_ID` and `PAGEID`, so the Mac must keep all three | community documentation (a Nomad sample) | [#347](https://github.com/martonpaulo/ink-tools/issues/347), [#348](https://github.com/martonpaulo/ink-tools/issues/348) |
+| Templates | the page draws the template bitmap stored in the note (`STYLE_`, `BGLAYER`), not the tablet's template file | the proof writer draws its own grid under a built-in name | a Mac-drawn template must equal the tablet's own pixels, or the note shows the Mac's | measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
 | PDF backgrounds | `user_pdf_` style, a PNG in the background layer, `PDFSTYLELIST` | read | matches | measured | — |
 | Layers | `LAYER1` to `LAYER3` blocks, `LAYERINFO` and `LAYERSEQ`, the record's layer number | the proof writer writes Layer 1 | matches the reader | measured | — |
-| Recognition | per page `RECOGNTEXT`, `RECOGNFILE` and their statuses; the tablet sets the status when it edits the page | route B and the writer keep the old blocks | differs | measured, observed on the device | [#440](https://github.com/martonpaulo/ink-tools/issues/440) |
+| Recognition | per page `RECOGNTEXT`, `RECOGNFILE`, their statuses and `IDTABLE` (each stroke number to its recognition id); the tablet sets the status when it edits the page | route B and the writer keep the old blocks | differs | measured, observed on the device | [#440](https://github.com/martonpaulo/ink-tools/issues/440) |
 | IDs and checks | random `FILE_ID` and `PAGEID`; per page a stroke number from 1; checks as in the answer above | the writer keeps IDs and makes new ones the same way | matches | measured, observed on the device | — |
 | Backups | keeps its own copy of each note and puts it back when the file does not start with `note`; a thumbnail cache keyed by the note's inode, path and `FILE_ID` | 10 backups on the Mac ([#313](https://github.com/martonpaulo/ink-tools/issues/313)) | whether a pushed file leaves these stale [unknown] | observed on the device | [#441](https://github.com/martonpaulo/ink-tools/issues/441) |
 | Conflicts | a sync conflict keeps a copy and offers a page-by-page merge matched by `PAGEID` | both copies kept ([#317](https://github.com/martonpaulo/ink-tools/issues/317)) | matches while the Mac keeps `PAGEID`s | observed on the device | — |
 | Supernote Cloud | uploads and downloads whole files, checked by MD5 and size | not built ([#363](https://github.com/martonpaulo/ink-tools/issues/363)) | an upload must give the file's MD5 | observed on the device | [#363](https://github.com/martonpaulo/ink-tools/issues/363) |
+| `DIRTY` | the count of page saves appended since the last compaction; above a limit that falls with the file's size the tablet compacts the note on open or close, which sets it back to `0` | a new Mac note writes `0` | matches; a Mac append should add one per page it appends | observed on the device, measured | [#362](https://github.com/martonpaulo/ink-tools/issues/362) |
 | Write path | appends changed blocks and a new footer | route T by default; route B appends the same way | matches | observed on the device, measured | — |
 
 ## The proof notes
@@ -135,16 +147,11 @@ The editor's features: [`plugin-scope.md` › Ink Notebook Editor](../plugin-sco
 
 ## Left to study
 
-1. The device check of `full.note`: opens, lassos, erases; what the tablet draws for the text box,
-   the template and the Heading.
-2. Whether the tablet needs the stroke outline, the pen-stroke head words and pressures, or draws a
-   stroke from its points alone.
-3. The tablet's own page move: footer keys, `KEYWORDPAGE`, `PAGEID` ([#442](https://github.com/martonpaulo/ink-tools/issues/442)).
-4. `DIRTY`: a new note has `0`, an edited one `3`; its meaning.
-5. The trail status `-5`, the link records and the link footer entries, and `IDTABLE` and
-   `EXTERNALLINKINFO`.
-6. Notes written with each pen, the eraser and the lasso by hand: only one hand eraser record and
-   no hand marker or ink pen stroke were in the samples.
+1. The device check of `full.note`: opens, lassos and erases; that the Mac-written outline serves
+   the lasso; how the text box, the grid template and the Heading look.
+2. `LINKI_` on a page move and what the tablet rewrites in the header then
+   ([#442](https://github.com/martonpaulo/ink-tools/issues/442)).
+3. A Manta note with links of each kind, read on the Mac.
 
 ## Sources
 
