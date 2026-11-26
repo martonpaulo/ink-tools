@@ -881,7 +881,11 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
   its folder of the hidden `.data/plugin/`, `inktools-<plugin folder>`, which sn-adapter's
   `pluginDataFolder` names for every plugin: the plugin file guard allows it, `adb shell` writes it
   and Supernote Cloud does not sync it ([#22](https://github.com/martonpaulo/ink-tools/issues/22), [#148](https://github.com/martonpaulo/ink-tools/issues/148),
-  [#367](https://github.com/martonpaulo/ink-tools/issues/367)). What stays in `MyStyle/` is
+  [#367](https://github.com/martonpaulo/ink-tools/issues/367)). `PluginFileAPI.generateNotePng`
+  refuses that folder (code 1204, «Invalid file path»), while it writes the private folder,
+  `EXPORT/` and `MyStyle/` [measured, Manta, 2026-11-26]; so Probe draws a page in its private
+  folder and copies it there with `FileUtils.copyFile`
+  ([#296](https://github.com/martonpaulo/ink-tools/issues/296)). What stays in `MyStyle/` is
   what the person or another app must see there: stickers for the Sticker import, fonts, and Word
   Lookup's measured fallback for an insert from the private folder that failed.
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)]. It takes a

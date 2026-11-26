@@ -1,5 +1,5 @@
 /** The glue to sn-plugin-lib: a written stroke carries a pen type the host accepts (#249), a render saves first (#296). */
-import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
+import {FileUtils, PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {noteApi, saveFirst} from '../src/noteApi';
 
 jest.mock('sn-plugin-lib', () => ({
@@ -12,8 +12,8 @@ jest.mock('sn-plugin-lib', () => ({
   },
   PluginFileAPI: {generateNotePng: jest.fn(), getElements: jest.fn(), insertNotePage: jest.fn()},
   PluginNoteAPI: {saveCurrentNote: jest.fn()},
-  PluginManager: {},
-  FileUtils: {},
+  PluginManager: {getPluginDirPath: jest.fn(async () => '/data/plugins/probe/')},
+  FileUtils: {copyFile: jest.fn(async () => true)},
 }));
 
 const accessor = () => ({add: jest.fn().mockResolvedValue(true)});
@@ -56,6 +56,26 @@ describe('renderPage saves the note first (#296)', () => {
     (PluginNoteAPI.saveCurrentNote as jest.Mock).mockRejectedValue(new Error('no note'));
     await saveFirst(line => lines.push(line), () => clock.shift() ?? 0);
     expect(lines).toEqual(['save: failed: no note in 12 ms: the page is drawn as the file holds it']);
+  });
+});
+
+describe('renderPage draws in the private folder, then copies to the channel (#296)', () => {
+  beforeEach(() => {
+    (PluginCommAPI.getCurrentFilePath as jest.Mock).mockResolvedValue({success: true, result: '/Note/a.note'});
+    (PluginFileAPI.generateNotePng as jest.Mock).mockResolvedValue({success: true, result: true});
+    (PluginNoteAPI.saveCurrentNote as jest.Mock).mockResolvedValue({success: true, result: true});
+  });
+
+  test('never asks generateNotePng for the hidden folder it refuses with 1204', async () => {
+    const channel = '/storage/emulated/0/.data/plugin/inktools-probe/page.png';
+    await noteApi.renderPage(0, channel);
+    expect((PluginFileAPI.generateNotePng as jest.Mock).mock.calls.at(-1)[0]).toMatchObject({pngPath: '/data/plugins/probe/page.png'});
+    expect(FileUtils.copyFile).toHaveBeenLastCalledWith('/data/plugins/probe/page.png', channel);
+  });
+
+  test('fails when the copy does not reach the channel', async () => {
+    (FileUtils.copyFile as jest.Mock).mockResolvedValueOnce(false);
+    await expect(noteApi.renderPage(0, '/c/page.png')).rejects.toThrow('copyFile: the page image did not reach /c/page.png');
   });
 });
 

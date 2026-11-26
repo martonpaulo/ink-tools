@@ -16,6 +16,13 @@ const THICKNESS = 400;
 /** `generateNotePng` at the page's own size, on white (sn-adapter's `pageImage` uses the same). */
 const PAGE_SCALE = 1;
 const WHITE_BACKGROUND = 1;
+/**
+ * The page PNG's name in the plugin's private folder: `generateNotePng` refuses the hidden
+ * `.data/plugin/` folder inkctl reads, code 1204 «Invalid file path», while it writes the private
+ * folder, `EXPORT/` and `MyStyle/` (measured, Manta, 2026-11-26, #296). So the page is drawn there
+ * and copied to the channel folder; `MyStyle/` would sync it to Supernote Cloud (#148).
+ */
+const DRAWN_PAGE = 'page.png';
 
 type Response = {success?: boolean; result?: unknown; error?: {code?: number; message?: string}};
 type Accessor<T> = {size(): Promise<number>; getRange(start: number, count: number): Promise<T[]>; add(index: number, value: T): Promise<boolean>};
@@ -117,12 +124,16 @@ export const noteApi: HelperApi = {
     // (#296). A failed save is logged and the page is drawn as the file holds it.
     await saveFirst();
     const notePath = unwrap<string>('getCurrentFilePath', await PluginCommAPI.getCurrentFilePath());
+    const drawn = `${await noteApi.pluginFolder()}/${DRAWN_PAGE}`;
     const made = unwrap<boolean>(
       'generateNotePng',
-      await PluginFileAPI.generateNotePng({notePath, page, times: PAGE_SCALE, pngPath, type: WHITE_BACKGROUND}),
+      await PluginFileAPI.generateNotePng({notePath, page, times: PAGE_SCALE, pngPath: drawn, type: WHITE_BACKGROUND}),
     );
     if (made !== true) {
       throw new HelperError(1, 'generateNotePng: the page image was not generated');
+    }
+    if (!(await FileUtils.copyFile(drawn, pngPath))) {
+      throw new HelperError(1, `copyFile: the page image did not reach ${pngPath}`);
     }
     return {pictures: await picturesOn(notePath, page)};
   },
