@@ -1,4 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
+  // The page tests read and write their golden PNGs and decode them with Node's fs and zlib (#379);
+  // src/ uses no Node module, as the tablet has none.
+  "compilerOptions": {"types": ["jest", "node"]},
   "include": ["src", "__tests__"]
 }

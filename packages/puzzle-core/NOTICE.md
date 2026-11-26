@@ -77,3 +77,12 @@ SOFTWARE.
 
 The Portuguese word-search themes, `words/themes-pt.source.json`, were written for this package
 under the repository's licence, CC BY-NC-SA 4.0.
+
+## Figtree
+
+The page renderer draws its text from the outlines of Figtree, the typeface in `design/fonts/`
+(`src/page/font-data.ts`, written by `scripts/font-outlines.swift` from
+`design/fonts/Figtree[wght].ttf` at weights 400 and 700, curves cut into straight segments),
+copyright 2022 The Figtree Project Authors, licensed under the SIL Open Font License 1.1, whose
+full text is in [`design/fonts/OFL-Figtree.txt`](../../design/fonts/OFL-Figtree.txt). Figtree names
+no Reserved Font Name ([#379](https://github.com/martonpaulo/ink-tools/issues/379)).
