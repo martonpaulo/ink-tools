@@ -26,6 +26,12 @@ public final class ProbeTargets {
   public static final String ROW_ID = "id";
 
   /**
+   * A row id no provider gives: the Supernote providers answer a refused insert with -1 (#63). The
+   * Calendar's write test selects it, as sn-adapter's {@code NO_ROW_ID} does (#213).
+   */
+  static final String NO_ROW_ID = "-1";
+
+  /**
    * The Calendar's revert cancels the row, as Account Sync's writer does, because its delete is a
    * no-op on the tablet (#208, #43). They mirror the descriptor's {@code calendar.rules.cancelledStatus}
    * and the {@code status} and {@code modified} fields; ProbeTargetsTest keeps them equal.
@@ -41,9 +47,9 @@ public final class ProbeTargets {
     public final String uri;
     /** Text column that holds {@link #MARKER}; the revert deletes, by row id, only rows where it equals it. */
     public final String markerColumn;
-    /** Whether a dry insert is tried: false for the provider root, which has no table. */
+    /** Whether a write test is tried: false for the provider root, which has no table. */
     public final boolean writable;
-    /** The NOT NULL columns the dry insert fills: {@link #calendarRow}, {@link #taskRow} or none. */
+    /** The NOT NULL columns the dry insert fills ({@link #taskRow} or none), or the Calendar's write test. */
     final Kind kind;
 
     Target(String label, String uri, String markerColumn, boolean writable) {
@@ -63,16 +69,32 @@ public final class ProbeTargets {
       return kind == Kind.CALENDAR;
     }
 
-    /** Every column of the dry insert, the marker included, for an insert at {@code now} (epoch ms). */
-    public Map<String, Object> row(long now) {
-      Map<String, Object> row;
-      if (kind == Kind.CALENDAR) {
-        row = calendarRow(now);
-      } else if (kind == Kind.TASK) {
-        row = taskRow();
-      } else {
-        row = new LinkedHashMap<>();
+    /**
+     * Whether the probe's write test inserts a marked row. Not for the Calendar (#213): its provider
+     * cannot delete a row again, so every insert left one; its test is {@link #testWrite} instead.
+     */
+    public boolean insertsOnProbe() {
+      return kind != Kind.CALENDAR;
+    }
+
+    /**
+     * The Calendar's write test (#213): the columns an update selected by {@link #ROW_ID} {@code =}
+     * {@link #NO_ROW_ID} sets, which matches no row, so the provider runs its write path and its
+     * permission check and changes nothing. The column is one a real write sets, the status Account
+     * Sync's writer cancels with, as sn-adapter's probeCapability does.
+     */
+    public Map<String, Object> testWrite() {
+      Map<String, Object> values = new LinkedHashMap<>();
+      values.put(STATUS_COLUMN, CANCELLED_STATUS);
+      return values;
+    }
+
+    /** Every column of the dry insert, the marker included; only a target that {@link #insertsOnProbe}. */
+    public Map<String, Object> row() {
+      if (!insertsOnProbe()) {
+        throw new IllegalStateException(label + " inserts no row");
       }
+      Map<String, Object> row = kind == Kind.TASK ? taskRow() : new LinkedHashMap<String, Object>();
       row.put(markerColumn, MARKER);
       return row;
     }
@@ -83,30 +105,6 @@ public final class ProbeTargets {
     PLAIN,
     CALENDAR,
     TASK
-  }
-
-  private static final long HOUR_MS = 60L * 60L * 1000L;
-
-  /**
-   * The control-calendar test event (#208): one hour from {@code now}, with every NOT NULL column of
-   * {@code data_info} filled as Account Sync's dry insert fills it. The provider refuses a row
-   * without one, naming one column at a time (#43). The column names and the tag, state and status
-   * mirror the descriptor's {@code calendar.rules} ({@code requiredOnInsert}, {@code writeTag},
-   * {@code writeState}, {@code writeStatus}); ProbeTargetsTest keeps them equal.
-   */
-  static Map<String, Object> calendarRow(long now) {
-    Map<String, Object> row = new LinkedHashMap<>();
-    row.put("calendarId", MARKER);
-    row.put("tag", "task");
-    row.put("state", 0);
-    row.put("readOnly", 1);
-    row.put("isAllDay", 0);
-    row.put("title", MARKER);
-    row.put("startTime", now);
-    row.put("endTime", now + HOUR_MS);
-    row.put("lastModifiedTime", now);
-    row.put("status", "confirmed");
-    return row;
   }
 
   /**

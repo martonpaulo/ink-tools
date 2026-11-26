@@ -26,7 +26,7 @@ public final class ProbeTargetsTest {
     check(digest, "the digest table is probed with a dry insert");
     check(tasks && calendar, "both control providers are present");
     check(ProbeTargets.all().get(0).uri.equals("content://com.ratta.supernote.knowledge.provider"), "the provider root is queried first");
-    calendarRowFillsTheDescriptorColumns();
+    calendarWritesNoRow();
     calendarRevertCancelsLikeAccountSync();
     taskRowFillsTheDescriptorColumns();
     rowKeyIsTheDescriptors();
@@ -34,29 +34,33 @@ public final class ProbeTargetsTest {
     System.out.println("ProbeTargetsTest ok");
   }
 
-  /** #208: the control-calendar row fills every requiredOnInsert column with Account Sync's values. */
-  static void calendarRowFillsTheDescriptorColumns() {
+  /**
+   * #213: the Calendar's provider cannot delete a row, so its write test inserts none: an update of
+   * the descriptor's status column to its cancelledStatus, selected by the row id -1, which no row has.
+   */
+  static void calendarWritesNoRow() {
     String rules = rules("calendar");
-    Set<String> columns = requiredOnInsert(rules, "calendar");
     ProbeTargets.Target calendar = target("control-calendar");
-    long now = 1700000000000L;
-    Map<String, Object> row = calendar.row(now);
-    for (String column : columns) {
-      check(row.get(column) != null, "the control-calendar row fills " + column);
+    check(calendar.writable && !calendar.insertsOnProbe(), "the control-calendar write test inserts no row");
+    check(target("control-task").insertsOnProbe(), "the control-task write test still inserts and deletes by id");
+    Map<String, Object> values = calendar.testWrite();
+    check(values.size() == 1 && ProbeTargets.CANCELLED_STATUS.equals(values.get(ProbeTargets.STATUS_COLUMN)),
+        "the test write sets only the status, to the cancelled status");
+    check(ProbeTargets.CANCELLED_STATUS.equals(text(rules, "cancelledStatus")), "the cancelled status is the descriptor's");
+    check(ProbeTargets.NO_ROW_ID.equals("-1"), "the test write selects the row id -1, which no provider gives");
+    try {
+      calendar.row();
+      throw new AssertionError("the control-calendar has no insert row");
+    } catch (IllegalStateException expected) {
+      check(expected.getMessage().contains("inserts no row"), "asking the Calendar for an insert row fails loudly");
     }
-    check(row.get("tag").equals(text(rules, "writeTag")), "the tag is the descriptor's writeTag");
-    check(String.valueOf(row.get("state")).equals(number(rules, "writeState")), "the state is the descriptor's writeState");
-    check(row.get("status").equals(text(rules, "writeStatus")), "the status is the descriptor's writeStatus");
-    check(row.get("title").equals(ProbeTargets.MARKER), "the title carries the marker the revert deletes by");
-    check(row.get("startTime").equals(now) && row.get("endTime").equals(now + 3600000L), "the test event lasts one hour, in epoch ms");
-    check(row.get("lastModifiedTime").equals(now), "lastModifiedTime is the insert time, in epoch ms");
   }
 
   /** #217: the control-task row fills every todo.rules.requiredOnInsert column, as the calendar row does. */
   static void taskRowFillsTheDescriptorColumns() {
     Set<String> columns = requiredOnInsert(rules("todo"), "todo");
     check(columns.contains("taskId"), "the descriptor lists taskId among the task's NOT NULL columns");
-    Map<String, Object> task = target("control-task").row(1700000000000L);
+    Map<String, Object> task = target("control-task").row();
     for (String column : columns) {
       check(task.get(column) != null, "the control-task row fills " + column);
     }
@@ -147,12 +151,6 @@ public final class ProbeTargetsTest {
 
   static String text(String rules, String key) {
     Matcher m = Pattern.compile("\"" + key + "\"\\s*:\\s*\"([^\"]*)\"").matcher(rules);
-    check(m.find(), "calendar.rules has " + key);
-    return m.group(1);
-  }
-
-  static String number(String rules, String key) {
-    Matcher m = Pattern.compile("\"" + key + "\"\\s*:\\s*(-?\\d+)").matcher(rules);
     check(m.find(), "calendar.rules has " + key);
     return m.group(1);
   }

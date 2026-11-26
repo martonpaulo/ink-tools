@@ -76,7 +76,11 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
             for (ProbeTargets.Target target : ProbeTargets.all()) {
               query(resolver, target, lines);
               if (target.writable) {
-                dryInsert(resolver, target, lines);
+                if (target.insertsOnProbe()) {
+                  dryInsert(resolver, target, lines);
+                } else {
+                  testWrite(resolver, target, lines);
+                }
               }
             }
             WritableArray out = Arguments.createArray();
@@ -187,6 +191,28 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
   }
 
   /**
+   * The Calendar's write test (#213): an update selected by the row id {@link ProbeTargets#NO_ROW_ID},
+   * which matches no row, so no «SNPROBE dry insert» row is left; its provider cannot delete one.
+   * Then the revert cancels any marked row an older probe inserted, so none stays active.
+   */
+  private static void testWrite(ContentResolver resolver, ProbeTargets.Target target, List<String> lines) {
+    Uri base = Uri.parse(target.uri);
+    try {
+      ContentValues values = new ContentValues();
+      for (Map.Entry<String, Object> column : target.testWrite().entrySet()) {
+        values.put(column.getKey(), String.valueOf(column.getValue()));
+      }
+      int changed =
+          resolver.update(base, values, ProbeTargets.ROW_ID + " = ?", new String[] {ProbeTargets.NO_ROW_ID});
+      emit(lines, ProbeFormat.ok(target.label, "test-write", changed + " rows changed by " + ProbeTargets.ROW_ID
+          + " " + ProbeTargets.NO_ROW_ID + ", no row inserted"));
+    } catch (Throwable error) {
+      emit(lines, ProbeFormat.failed(target.label, "test-write", error));
+    }
+    revert(resolver, target, base, null, false, lines);
+  }
+
+  /**
    * Inserts one row marked {@link ProbeTargets#MARKER}, then deletes it, and every older marked row,
    * by row id ({@link ProbeRevert}, #213): the Calendar provider ignored a delete by the marker.
    */
@@ -196,7 +222,7 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
     String createdId = null;
     try {
       ContentValues values = new ContentValues();
-      for (Map.Entry<String, Object> column : target.row(System.currentTimeMillis()).entrySet()) {
+      for (Map.Entry<String, Object> column : target.row().entrySet()) {
         Object value = column.getValue();
         if (value instanceof Integer) {
           values.put(column.getKey(), (Integer) value);
@@ -213,6 +239,12 @@ public final class ProbeProvidersModule extends ReactContextBaseJavaModule {
     } catch (Throwable error) {
       emit(lines, ProbeFormat.failed(target.label, "insert", error));
     }
+    revert(resolver, target, base, createdId, inserted, lines);
+  }
+
+  /** Removes, or for the Calendar cancels, the new row and every older marked one ({@link ProbeRevert}). */
+  private static void revert(
+      ContentResolver resolver, ProbeTargets.Target target, Uri base, String createdId, boolean inserted, List<String> lines) {
     List<String> revert = new ArrayList<>();
     ProbeRevert.revert(
         target.cancelsOnRevert()
