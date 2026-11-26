@@ -464,6 +464,17 @@ def width_problems(css):
     return problems
 
 
+def gutter_problems(css):
+    """No `html` rule reserving the scrollbar's space, so a short page and a long page would not share
+    one content left edge (martonpaulo/workbench#2124, #443)."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    if any(re.search(r"scrollbar-gutter\s*:\s*stable", body)
+           for selectors, body in RULE.findall(css) if selectors.strip() in ("html", ":root")):
+        return []
+    return [f"{CSS}: no html {{ scrollbar-gutter: stable }}: the page reserves the scrollbar's space "
+            "(martonpaulo/workbench#2124)"]
+
+
 def subtitle_problems(name, page):
     """A `.hero-summary` that is not the one paragraph directly under the page's `<h1>` (owner, on #444)."""
     count = len(re.findall(rf'class="[^"]*\b{SUBTITLE}\b', page))
@@ -520,7 +531,7 @@ def box_problems(css):
 
 def page_problems(root):
     css = (root / CSS).read_text(encoding="utf-8")
-    problems = width_problems(css) + box_problems(css)
+    problems = width_problems(css) + box_problems(css) + gutter_problems(css)
     problems += install_problems((root / "docs/install.md").read_text(encoding="utf-8"))
     for name in PAGES:
         page = (root / name).read_text(encoding="utf-8")

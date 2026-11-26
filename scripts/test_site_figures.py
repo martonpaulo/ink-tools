@@ -101,6 +101,14 @@ class PageChecks(unittest.TestCase):
     def test_a_short_label_may_repeat(self):
         self.assertEqual(site_figures.repetition_problems("x.html", "<p>Version 0.1.0</p><p>Version 0.1.0</p>"), [])
 
+    def test_the_page_reserves_the_scrollbar_space(self):
+        """A short page and a long page share one left edge only with the gutter reserved (workbench#2124)."""
+        self.assertEqual(site_figures.gutter_problems("html { scrollbar-gutter: stable; }"), [])
+        for bad in ("body { margin: 0; }", "body { scrollbar-gutter: stable; }",
+                    "/* html { scrollbar-gutter: stable; } */"):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.gutter_problems(bad))
+
     def test_only_the_container_sets_the_width_and_no_text_is_capped(self):
         good = ".container { width: var(--page-width); } .dot::before { width: 0.5em; } .shot img { width: 100%; }"
         self.assertEqual(site_figures.width_problems(good), [])
