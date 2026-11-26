@@ -246,17 +246,18 @@ private struct UndoCommands: View {
 }
 
 /// Edit › Move Page Up and Move Page Down: the current page one place up or down (#330), on a
-/// note opened from the tablet.
+/// note opened from the tablet. Control-Command-Up and Down (owner, D92 A; Command-Option-Arrow is
+/// Go › Previous and Next Page, #319).
 private struct MovePageCommands: View {
     @FocusedValue(\.noteEditor) private var editor
     @FocusedValue(\.pageNavigator) private var navigator
 
     var body: some View {
-        item(Copy.movePageUp, by: -1)
-        item(Copy.movePageDown, by: 1)
+        item(Copy.movePageUp, by: -1, key: .upArrow)
+        item(Copy.movePageDown, by: 1, key: .downArrow)
     }
 
-    private func item(_ title: String, by step: Int) -> some View {
+    private func item(_ title: String, by step: Int, key: KeyEquivalent) -> some View {
         let from = navigator?.wrappedValue.index
         let to = from.map { $0 + step }
         let fits = editor?.canEdit == true && to.map { (0..<(editor?.pageCount ?? 0)).contains($0) } == true
@@ -264,6 +265,7 @@ private struct MovePageCommands: View {
             guard let editor, let from, let to, editor.movePage(from: from, to: to) else { return }
             navigator?.wrappedValue.show(to)
         }
+        .keyboardShortcut(key, modifiers: [.control, .command])
         .disabled(!fits)
         .help(editor == nil ? Copy.editOnlyFromTablet : "")
     }
