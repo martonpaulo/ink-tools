@@ -71,6 +71,11 @@ describe('generateNonogram', () => {
     expect(rateNonogram(generateNonogram('S1', { width: 15, height: 10 }, 'medium'))?.difficulty).toBe('medium');
   });
 
+  test('a small hard picture that once ran out of attempts finds its puzzle', () => {
+    // Small pictures rarely need probing: 5 x 5 hard found none for S2 in 360 attempts (#380).
+    expect(rateNonogram(generateNonogram('S2', { width: 5, height: 5 }, 'hard'))?.difficulty).toBe('hard');
+  });
+
   test('a wide picture keeps its width and height apart', () => {
     const puzzle = generateNonogram('W', { width: 15, height: 10 }, 'medium');
     expect([puzzle.rows.length, puzzle.columns.length, puzzle.id.size]).toEqual([10, 15, '15X10']);

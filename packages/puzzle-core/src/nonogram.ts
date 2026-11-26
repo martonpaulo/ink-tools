@@ -355,6 +355,16 @@ export function cluesOf(width: number, height: number, solution: readonly boolea
 
 const NONOGRAM_ATTEMPTS = 360;
 /**
+ * A small picture rarely needs probing, so a hard one can take more than the attempts: 5 x 5 hard
+ * found none for seed S2 (#380). A picture under 100 cells gets attempts up to this budget over its
+ * cells (1 440 for 5 x 5); each costs little, and one found within the first 360 is unchanged.
+ */
+const SMALL_PICTURE_BUDGET = 36000;
+
+function attemptsFor(cells: number): number {
+  return Math.max(NONOGRAM_ATTEMPTS, Math.ceil(SMALL_PICTURE_BUDGET / cells));
+}
+/**
  * Fill chance in percent before smoothing, per band: denser pictures tend to need less. Each value
  * gives its band most often over sides 10 to 25 (#380: at 55 and 50, under 1 % of 15 x 10 pictures
  * rated medium or hard, so a puzzle took hundreds of attempts or none was found).
@@ -373,7 +383,8 @@ export function generateNonogram(seed: string, size: NonogramSize, difficulty: D
     }
   }
   if (!NONOGRAM_BANDS.includes(difficulty)) throw new RangeError(`a nonogram offers ${NONOGRAM_BANDS.join(', ')}, not ${difficulty}`);
-  for (let i = 0; i < NONOGRAM_ATTEMPTS; i++) {
+  const attempts = attemptsFor(width * height);
+  for (let i = 0; i < attempts; i++) {
     const random = createRandom(childSeed(seed, i));
     const solution = picture(random, width, height, DENSITY[difficulty]);
     const filled = solution.filter(Boolean).length;
@@ -390,5 +401,5 @@ export function generateNonogram(seed: string, size: NonogramSize, difficulty: D
       solution,
     };
   }
-  throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${NONOGRAM_ATTEMPTS} attempts`);
+  throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${attempts} attempts`);
 }
