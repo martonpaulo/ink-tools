@@ -16,7 +16,7 @@ tablet ([#373](https://github.com/martonpaulo/ink-tools/issues/373)). Read the n
 
 <!-- risk-notice:start: written by scripts/risk_notice.py from docs/risk-notice.md -->
 <p><strong>Ink Tools is unofficial.</strong> It is not made, affiliated with, endorsed or reviewed by Ratta. «Supernote» is a trademark of its owner and names the device only.</p>
-<p>Some tools use parts of the tablet's software that Ratta does not document. A firmware update can change those parts and break a feature until a fix ships. The <a href="https://github.com/martonpaulo/ink-tools/issues/293" target="_blank" rel="noopener">firmware watch</a>, being built now, checks those parts after an update and reports what broke.</p>
+<p>Some tools use parts of the tablet's software that Ratta does not document. A firmware update can change those parts and break a feature until a fix ships. The <a href="https://github.com/martonpaulo/ink-tools/issues/293" target="_blank" rel="noopener">firmware watch</a> checks those parts after an update and reports what broke.</p>
 <p>No tool needs root or modified firmware. Use these tools at your own risk, and keep a backup of your notes before you install or update one.</p>
 <!-- risk-notice:end -->
 

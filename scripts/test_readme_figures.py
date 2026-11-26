@@ -63,7 +63,7 @@ class Drift(unittest.TestCase):
         self.assertIn(message, result.stdout + result.stderr)
 
     def test_a_tool_change_without_regeneration_fails(self):
-        self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="Working"))
+        self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="In progress"))
         self.assert_fails("README.md: differs")
 
     def test_a_registry_change_without_regeneration_fails(self):
@@ -78,7 +78,7 @@ class Drift(unittest.TestCase):
         self.assert_fails("plugins/smart-pen/NOTICE.md: links someone/new-plugin")
 
     def test_a_credits_change_without_regeneration_fails(self):
-        self.edit_json("docs/tools.json", lambda data: data["credits"]["groups"][0]["rows"][0].update(author="someone else"))
+        self.edit_json("docs/tools.json", lambda data: data["credits"]["groups"][0]["rows"][0].update(text="something else"))
         self.assert_fails("README.md: differs")
 
     def test_regeneration_makes_the_check_pass(self):
@@ -181,22 +181,36 @@ class Pieces(unittest.TestCase):
         data = json.loads((ROOT / "docs/tools.json").read_text(encoding="utf-8"))
         self.assertEqual(readme_figures.data_problems(ROOT, data), [])
 
-    def test_the_credits_list_each_group_with_its_rows_and_links(self):
+    def test_the_credits_are_one_list_with_one_line_per_repository(self):
         credits = {"intro": "Thanks.", "closing": "Licences are in NOTICE.md.", "notCredited": [], "groups": [
             {"title": "Code we use", "rows": [
                 {"project": "lib", "url": "https://github.com/a/lib", "author": "A", "text": "the reader",
                  "where": "x/NOTICE.md", "version": "v1.0"}]},
             {"title": "Ideas we follow", "rows": [
                 {"project": "idea", "url": "https://github.com/b/idea", "author": "B", "text": "one plugin",
+                 "where": "docs/y.md"},
+                {"project": "lib", "url": "https://github.com/a/lib", "author": "A", "text": "a set of games",
                  "where": "docs/y.md"}]}]}
         block = readme_figures.credits_block(credits)
         self.assertTrue(block.startswith(readme_figures.CREDITS_START) and block.endswith(readme_figures.CREDITS_END))
-        self.assertLess(block.index("### Code we use"), block.index("### Ideas we follow"))
         lines = block.splitlines()
-        for line in ("- [lib](https://github.com/a/lib) v1.0 by A: the reader.",
-                     "- [idea](https://github.com/b/idea) by B: one plugin.", "Licences are in NOTICE.md."):
-            self.assertIn(line, lines)
-        self.assertFalse([line for line in lines if "|" in line])  # a thank-you list, never a table (#425)
+        items = [line for line in lines if line.startswith("- ")]
+        self.assertEqual(items, ["- [a/lib](https://github.com/a/lib): the reader; a set of games.",
+                                 "- [b/idea](https://github.com/b/idea): one plugin."])  # owner, #429
+        self.assertIn("Licences are in NOTICE.md.", lines)
+        self.assertFalse([line for line in lines if "|" in line or line.startswith("###")])
+
+    def test_a_status_behind_its_releases_fails(self):
+        tools = [{"name": "Pen", "status": "Beta", "link": "https://x/releases?q=pen&expanded=true"},
+                 {"name": "Edit", "status": "In progress", "link": "https://x/releases?q=edit"},
+                 {"name": "Lab", "status": "In progress", "link": "https://x/releases?q=lab"},
+                 {"name": "Help", "status": "Internal", "link": "https://x/releases?q=help"}]
+        tags = {"pen": ["pen-v0.1.0-beta.8", "pen-v0.1.0"], "edit": ["edit-v0.1.0-beta.3"], "lab": [],
+                "help": ["help-v0.1.0"]}
+        problems = readme_figures.status_problems(tools, tags.get)
+        self.assertEqual(len(problems), 2)
+        self.assertIn("Pen: status Beta trails its releases (pen-v...); set Working", problems[0])
+        self.assertIn("Edit: status In progress trails", problems[1])
 
     def test_the_credits_sit_after_before_you_install_and_before_the_license(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

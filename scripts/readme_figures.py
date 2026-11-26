@@ -23,6 +23,7 @@ import argparse
 import html
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -161,16 +162,24 @@ def repository(url):
     return match.group(1).lower() if match else None
 
 
+def repository_name(url):
+    """The owner/name of a GitHub repository URL, as GitHub spells it (#429)."""
+    match = REPOSITORY.match(url)
+    if not match:
+        raise SystemExit(f"docs/tools.json: credits: {url} is not a GitHub repository URL")
+    return match.group(1)
+
+
 def credits_block(credits):
-    """The README Credits section: a thank-you, then one bullet per project in each group, no table (#425)."""
-    out = [CREDITS_START, "", "## Credits", "", credits["intro"], ""]
+    """The README Credits section: a thank-you, then one list with one line per repository, its code and
+    ideas joined, no table, group heading or version (#425, #429)."""
+    lines = {}
     for group in credits["groups"]:
-        out += [f"### {group['title']}", ""]
         for row in group["rows"]:
-            version = f" {row['version']}" if row.get("version") else ""
-            out.append(f"- [{row['project']}]({row['url']}){version} by {row['author']}: {row['text']}.")
-        out.append("")
-    out += [credits["closing"], ""]
+            lines.setdefault(row["url"], []).append(row["text"])
+    out = [CREDITS_START, "", "## Credits", "", credits["intro"], ""]
+    out += [f"- [{repository_name(url)}]({url}): {'; '.join(texts)}." for url, texts in lines.items()]
+    out += ["", credits["closing"], ""]
     return "\n".join(out + [CREDITS_END])
 
 
@@ -343,10 +352,42 @@ def data_problems(root, data):
     return problems
 
 
+RELEASE_QUERY = re.compile(r"/releases\?q=([a-z0-9-]+)")
+STABLE_TAG = re.compile(r"-v\d+\.\d+\.\d+$")
+
+
+def release_tags(root, prefix):
+    """The release tags `<prefix>-v...` this checkout knows; none in a checkout without tags."""
+    out = subprocess.run(["git", "-C", str(root), "tag", "-l", f"{prefix}-v*"], capture_output=True, text=True)
+    return out.stdout.split() if out.returncode == 0 else []
+
+
+def status_problems(tools, tags_of):
+    """A tool whose README status trails its newest release (#429): a stable tag needs Working, a beta
+    tag Beta or Working. A tool with no tags, or an Internal one, is left alone."""
+    problems = []
+    for tool in tools:
+        match = RELEASE_QUERY.search(tool.get("link", ""))
+        if not match or tool["status"] == "Internal":
+            continue
+        tags = tags_of(match.group(1))
+        if any(STABLE_TAG.search(t) for t in tags):
+            need = ("Working",)
+        elif tags:
+            need = ("Beta", "Working")
+        else:
+            continue
+        if tool["status"] not in need:
+            problems.append(f"docs/tools.json: {tool['name']}: status {tool['status']} trails its releases "
+                            f"({match.group(1)}-v...); set {need[0]}")
+    return problems
+
+
 def generate(root):
     """{relative path: expected text} for every file this script owns."""
     data = json.loads((root / "docs/tools.json").read_text(encoding="utf-8"))
-    problems = data_problems(root, data) + credit_problems(root, data["credits"])
+    problems = (data_problems(root, data) + credit_problems(root, data["credits"])
+                + status_problems(data["tools"], lambda prefix: release_tags(root, prefix)))
     if problems:
         raise SystemExit("\n".join(problems))
     values = readme_status.allowed((root / "AGENTS.md").read_text(encoding="utf-8"))

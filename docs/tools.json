@@ -6,7 +6,7 @@
   ],
   "tools": [
     {
-      "name": "Smart Pen", "section": "tools", "kind": "plugin", "status": "Beta",
+      "name": "Smart Pen", "section": "tools", "kind": "plugin", "status": "Working",
       "network": [],
       "icon": "design/icons/readme/smart-pen.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=smart-pen&expanded=true",
@@ -48,7 +48,7 @@
       }
     },
     {
-      "name": "Image Editing", "section": "tools", "kind": "plugin", "status": "In progress",
+      "name": "Image Editing", "section": "tools", "kind": "plugin", "status": "Beta",
       "network": [],
       "icon": "design/icons/readme/image-editing.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=image-editing&expanded=true",
@@ -69,7 +69,7 @@
       }
     },
     {
-      "name": "Device Link", "section": "tools", "kind": "plugin", "status": "Beta",
+      "name": "Device Link", "section": "tools", "kind": "plugin", "status": "Working",
       "network": ["LocalSend devices you pick on your own local network; nothing goes to the internet"],
       "icon": "design/icons/readme/device-link.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-link&expanded=true",
@@ -77,7 +77,7 @@
         {"name": "Send Page", "text": "send the open page to an iPhone or a Mac over LocalSend."},
         {"name": "Send Selection", "text": "send a lasso selection, as typed text or as a picture; you choose on each send."},
         {"name": "Receive", "text": "receive text, a picture or a PDF into the open note."},
-        {"name": "Editor helper", "text": "applies the Ink Notebook Editor's edits from the Mac to the tablet's notes.", "planned": true}
+        {"name": "Editor helper", "text": "applies the Ink Notebook Editor's edits from the Mac to the tablet's notes."}
       ],
       "map": {
         "sources": [
@@ -90,7 +90,7 @@
       }
     },
     {
-      "name": "Account Sync", "section": "tools", "kind": "plugin", "status": "In progress",
+      "name": "Account Sync", "section": "tools", "kind": "plugin", "status": "Beta",
       "network": ["Google Calendar, only when you connect a Google account", "Todoist, only when you connect a Todoist account", "iCloud Calendar (CalDAV), only when you connect an Apple ID", "Each calendar feed (ICS) address you add"],
       "icon": "design/icons/readme/account-sync.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=account-sync&expanded=true",
@@ -112,7 +112,7 @@
       }
     },
     {
-      "name": "Puzzles", "section": "tools", "kind": "plugin", "status": "Planned",
+      "name": "Puzzles", "section": "tools", "kind": "plugin", "status": "In progress",
       "icon": "design/icons/readme/puzzles.png",
       "link": "https://github.com/martonpaulo/ink-tools/issues/376",
       "features": [
@@ -151,7 +151,7 @@
       "features": [
         {"name": "Open a note", "text": "read a `.note` notebook on the Mac and page through it."},
         {"name": "Open from Tablet", "text": "copy a note from the tablet over the cable through `inkctl` and open the copy."},
-        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Link.", "planned": true}
+        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Link."}
       ],
       "map": {
         "sources": [
@@ -171,7 +171,7 @@
         {"name": "Control", "text": "`inkctl` controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root."},
         {"name": "Plugins", "text": "install, enable, permit and uninstall plugins with no screen."},
         {"name": "Notes and ink", "text": "open notes, write synthetic ink, lasso and read the screen for tests."},
-        {"name": "Firmware watch", "text": "on connect, check every device dependency and report what a firmware update broke.", "planned": true}
+        {"name": "Firmware watch", "text": "on connect, check every device dependency and report what a firmware update broke."}
       ],
       "map": {
         "sources": [],
@@ -187,7 +187,7 @@
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=ink-tools-helper&expanded=true",
       "features": [
         {"name": "Plugin settings", "text": "lets `inkctl` install, enable and permit plugins with no screen."},
-        {"name": "Firmware watch", "text": "at boot after a firmware change, check every device dependency and report what broke.", "planned": true}
+        {"name": "Firmware watch", "text": "at boot after a firmware change, check every device dependency and report what broke."}
       ],
       "map": {
         "sources": [],
