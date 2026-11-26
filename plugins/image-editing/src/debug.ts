@@ -6,11 +6,20 @@
  * restarts, as every setting does until #40's storage.
  */
 import {Result, SHARED_ROOT} from '@ink-tools/sn-adapter/official';
+import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 import {RetouchSettings} from './edits';
 import {RetouchNative} from './native';
 
-/** Under `MyStyle/Retouch/`, whose sweep (#182) reads only its own top-level names. */
-export const DEBUG_DIR = `${SHARED_ROOT}/MyStyle/Retouch/debug`;
+/** Image Editing's own folder in the hidden `.data/plugin/`, beside Account Sync's drop folder. */
+export const DEBUG_HOME = `${SHARED_ROOT}/${REGISTRY.pluginhostFileSandbox.hiddenFolder}/inktools-image-editing`;
+
+/**
+ * In the hidden `.data/plugin/`, which the plugin file guard allows, `adb shell` reads and
+ * Supernote Cloud does not sync: in `MyStyle/Retouch/debug` the saved pictures uploaded (#367).
+ * Not the private folder, which `adb shell` cannot read (docs/supernote.md › Files and sync).
+ * shortcut: a plugin's write there is not yet measured on the tablet; the #367 device round checks it.
+ */
+export const DEBUG_DIR = `${DEBUG_HOME}/debug`;
 
 /** The settings with the switch set, after the Java side took it; unchanged when it refused. */
 export async function setDebug(

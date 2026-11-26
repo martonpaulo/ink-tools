@@ -3,6 +3,7 @@ package com.retouch.image;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.inktools.files.Ink2PicFilesPackage;
+import com.inktools.files.Registry;
 import com.inktools.files.SafePaths;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,13 +16,17 @@ import java.util.List;
 public final class RetouchPackage extends Ink2PicFilesPackage {
   /** PluginConfig.json `pluginID`, the name of the plugin's private folder; a test pins the two. */
   static final String PLUGIN_ID = "l5m9ev3xmshh37u8";
+  /** src/debug.ts `DEBUG_HOME`: Image Editing's own folder in the hidden .data/plugin/ (#367). */
+  static final String DEBUG_HOME = Registry.PluginhostFileSandbox.SHARED_ROOT + "/"
+      + Registry.PluginhostFileSandbox.HIDDEN_FOLDER + "/inktools-image-editing";
 
   public RetouchPackage() {
-    // Its private folder, EXPORT and MyStyle/Retouch, where the debug PNGs go (src/debug.ts, #302).
+    // Its private folder, EXPORT, MyStyle/Retouch and its folder in the hidden .data/plugin/,
+    // where the debug PNGs go, out of the cloud sync (src/debug.ts, #367).
     super(
         "RetouchFiles",
         "RetouchInk2PicImage",
-        SafePaths.Roots.plugin(PLUGIN_ID, "Retouch"));
+        SafePaths.Roots.plugin(PLUGIN_ID, "Retouch", DEBUG_HOME));
   }
 
   @Override

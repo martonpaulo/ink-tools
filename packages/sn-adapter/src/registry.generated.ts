@@ -67,6 +67,7 @@ export const REGISTRY = {
     sharedRoot: '/storage/emulated/0',
     sharedFolder: 'MyStyle',
     exportFolder: 'EXPORT',
+    hiddenFolder: '.data/plugin',
     privateHomes: ['/data/data/com.ratta.supernote.pluginhost/files/plugins', '/data/user/0/com.ratta.supernote.pluginhost/files/plugins'],
   },
   storageCloudConflictFolder: {

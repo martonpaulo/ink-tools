@@ -41,6 +41,7 @@ public final class Registry {
     public static final String SHARED_ROOT = "/storage/emulated/0";
     public static final String SHARED_FOLDER = "MyStyle";
     public static final String EXPORT_FOLDER = "EXPORT";
+    public static final String HIDDEN_FOLDER = ".data/plugin";
     public static final List<String> PRIVATE_HOMES = Collections.unmodifiableList(Arrays.asList("/data/data/com.ratta.supernote.pluginhost/files/plugins", "/data/user/0/com.ratta.supernote.pluginhost/files/plugins"));
 
     private PluginhostFileSandbox() {}
