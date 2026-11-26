@@ -20,7 +20,15 @@ const QUESTION = REGISTRY.pluginhostHostDialogs.questionStyle;
  * either of its buttons, so its promise never settles (sn-plugin-lib 0.2.3 `RTNUIUtils`; observed
  * device behaviour, #296): the next question settles it as a Cancel first.
  */
-let openQuestion: (() => void) | null = null;
+let openQuestion: {dismiss: () => void; at: number} | null = null;
+
+/**
+ * A second question this soon after the first is a double press while the first dialog opens, not a
+ * press after Back: it is answered «no» and shows no second dialog, which the host cannot close and
+ * whose answer would leave the first one's lost (#296).
+ * shortcut: a time window, until the host reports a dismiss; Back and a new press take longer.
+ */
+export const DOUBLE_PRESS_MS = 1_400;
 
 /**
  * Asks `question` in the host's confirm dialog: `cancel` on the left, outlined, and `action` on the
@@ -34,8 +42,13 @@ export function confirm(
   question: string,
   action: string,
   cancel: string,
+  now: () => number = Date.now,
 ): Promise<Result<boolean>> {
-  openQuestion?.();
+  const at = now();
+  if (openQuestion && at - openQuestion.at < DOUBLE_PRESS_MS) {
+    return Promise.resolve(ok(false));
+  }
+  openQuestion?.dismiss();
   return new Promise(resolve => {
     let settled = false;
     const settle = (answer: Result<boolean>) => {
@@ -43,13 +56,13 @@ export function confirm(
         return;
       }
       settled = true;
-      if (openQuestion === dismissed) {
+      if (openQuestion === open) {
         openQuestion = null;
       }
       resolve(answer);
     };
-    const dismissed = () => settle(ok(false));
-    openQuestion = dismissed;
+    const open = {dismiss: () => settle(ok(false)), at};
+    openQuestion = open;
     attempt(
       () => NativeUIUtils.showRattaDialog(question, cancel, action, QUESTION),
       raw =>

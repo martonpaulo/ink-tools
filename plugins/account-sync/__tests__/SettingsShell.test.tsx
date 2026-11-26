@@ -252,6 +252,17 @@ describe('SettingsShell (#93)', () => {
       expect(onSignOut).toHaveBeenCalledTimes(1);
     });
 
+    it('asks before it signs out an unreadable sign-in too (#296)', async () => {
+      const onSignOut = jest.fn();
+      const ask = jest.fn(async (_q: string, _a: string, _c: string) => ok(false));
+      const rows = withSignIns(() => {});
+      rows[0].signIns![1] = {...rows[0].signIns![1], onSignOut};
+      const tree = render(READY, () => {}, rows, settings, ask);
+      await press(tree, 'Sign out of Google');
+      expect(ask).toHaveBeenCalledWith('Sign out of Google? Account Sync deletes its sign-in from the tablet.', copy['signOut.yes'], copy.cancel);
+      expect(onSignOut).not.toHaveBeenCalled();
+    });
+
     it('signs out from the host dialog, which asks the same question (#296)', async () => {
       const onSignOut = jest.fn();
       const ask = jest.fn(async (_q: string, _a: string, _c: string) => ok(true));

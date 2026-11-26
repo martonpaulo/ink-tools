@@ -199,15 +199,17 @@ function AccountRow({
         />
       );
     case 'unreadable':
+      // Sign out deletes the sign-in file here too, so it asks first, as when signed in (#296).
       return (
-        <ActionRow
+        <Confirmed
           title={title}
           subtitle={format('signIn.unreadable', {reason: signIn.reason})}
-          action={{
-            label: copy['signOut.button'],
-            accessibilityLabel: format('signOut.label', {provider: provider.name}),
-            onPress: provider.onSignOut,
-          }}
+          label={copy['signOut.button']}
+          accessibilityLabel={format('signOut.label', {provider: provider.name})}
+          question={format('signOut.confirm', {provider: provider.name})}
+          yes={copy['signOut.yes']}
+          onConfirm={provider.onSignOut}
+          ask={ask}
         />
       );
     case 'signedIn':
