@@ -235,40 +235,35 @@
     "owner": "plugins/account-sync/native/com/bridge/files/BridgeFilesPackage.java",
     "other": "plugins/account-sync/src/files.ts",
     "pattern": "['\\\"]BridgeFiles['\\\"]",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/account-sync/native-modules.json"
    },
    {
     "rule": "Account Sync native module name: BridgeProviders",
     "owner": "plugins/account-sync/native/com/bridge/providers/BridgeProvidersModule.java",
     "other": "plugins/account-sync/src/deviceReader.ts",
     "pattern": "['\\\"]BridgeProviders['\\\"]",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/account-sync/native-modules.json"
    },
    {
     "rule": "Device Link native module name: RelayLocalSend",
     "owner": "plugins/device-link/native/src/com/relay/localsend/RelayModule.java",
     "other": "plugins/device-link/src/native.ts",
     "pattern": "['\\\"]RelayLocalSend['\\\"]",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/device-link/native-modules.json"
    },
    {
     "rule": "Word Lookup native module name: LookupFiles",
     "owner": "plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java",
     "other": "plugins/lasso-actions/src/profile.ts",
     "pattern": "['\\\"]LookupFiles['\\\"]",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/lasso-actions/native-modules.json"
    },
    {
     "rule": "Word Lookup native module name: LookupImage",
     "owner": "plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java",
     "other": "plugins/lasso-actions/src/profile.ts",
     "pattern": "['\\\"]LookupImage['\\\"]",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/lasso-actions/native-modules.json"
    },
    {
     "rule": "LocalSend default port: 53317",
@@ -647,13 +642,14 @@
   "constants": {
    "counts": {
     "apps/handwriting-language/scripts/build.cjs": 3,
-    "apps/handwriting-language/scripts/host-tools.cjs": 1,
     "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
     "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
     "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
     "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Tablet.swift": 1,
     "apps/ink-tools-helper/scripts/build.cjs": 4,
     "cli/inkctl/src/inkctl": 12,
+    "packages/ink-core/src/conversion/convert.ts": 1,
+    "packages/ink-core/src/conversion/shapes.ts": 2,
     "packages/ink-core/src/lasso.ts": 1,
     "packages/ink-core/src/place.ts": 1,
     "packages/native-build/host-tools.cjs": 1,
@@ -689,12 +685,10 @@
     "plugins/image-editing/src/working.ts": 1,
     "plugins/ink-tools-probe/src/helper.ts": 4,
     "plugins/ink-tools-probe/src/noteApi.ts": 4,
-    "plugins/smart-pen/src/modules/text/buttons.ts": 3,
-    "packages/ink-core/src/conversion/convert.ts": 1,
-    "packages/ink-core/src/conversion/shapes.ts": 2,
-    "plugins/smart-pen/src/modules/shapes/geometry.ts": 1,
     "plugins/lasso-actions/src/pictures.ts": 1,
     "plugins/lasso-actions/src/textBox.ts": 2,
+    "plugins/smart-pen/src/modules/shapes/geometry.ts": 1,
+    "plugins/smart-pen/src/modules/text/buttons.ts": 3,
     "scripts/dry_cross.py": 1,
     "scripts/icons.py": 1,
     "scripts/license_check.py": 1

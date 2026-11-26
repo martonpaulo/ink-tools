@@ -4,10 +4,11 @@
  * names no provider. A missing module rejects each call, so the probe blocks every module with that
  * reason instead of reporting a device it never read.
  */
+import nativeModules from '../native-modules.json';
 import {NativeModules} from 'react-native';
 import type {DeviceReader, Row} from '@ink-tools/sn-adapter';
 
-export const PROVIDERS_MODULE = 'BridgeProviders';
+export const PROVIDERS_MODULE = nativeModules.providers;
 
 /** The calls of the Java module, as `native/com/bridge/providers/BridgeProvidersModule.java` defines them. */
 export type ProvidersModule = {

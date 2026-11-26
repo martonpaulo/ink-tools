@@ -4,6 +4,7 @@
  * rejection keeps the module's text code (`IDENTITY`, `NO_ANSWER`, `TIMEOUT`, `IO`) in `moduleCode`. The
  * receive half (#49) adds the identity, the receiver and its arrivals.
  */
+import nativeModules from '../native-modules.json';
 import {NativeModules} from 'react-native';
 import {
   fail,
@@ -12,7 +13,7 @@ import {
   Result,
 } from '@ink-tools/sn-adapter/official';
 
-export const MODULE_NAME = 'RelayLocalSend';
+export const MODULE_NAME = nativeModules.localSend;
 
 export type Datagram = {ip: string; text: string};
 export type HttpAnswer = {status: number; body: string};

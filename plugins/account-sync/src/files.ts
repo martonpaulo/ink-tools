@@ -3,6 +3,7 @@
  * under Bridge's name, #40, #142): sn-plugin-lib 0.2.3 has no file writer. A missing module or a
  * refused call is a failure with the module's reason, never an empty file.
  */
+import nativeModules from '../native-modules.json';
 import {NativeModules} from 'react-native';
 import {
   fail,
@@ -22,7 +23,8 @@ export type TextFiles = {
   deleteFile?: (path: string) => Promise<unknown>;
 };
 
-export const FILES_MODULE = 'BridgeFiles';
+/** The Java module's name: one golden file the Java test reads too (#295). */
+export const FILES_MODULE = nativeModules.files;
 
 const reason = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
