@@ -20,6 +20,7 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
   const toasts: string[] = [];
   const logs: string[] = [];
   let lasso: Result<Rect> = ok({left: 100, top: 200, right: 300, bottom: 260});
+  let answer = true;
   const host: CollectionHost = {
     folder: async () => ok(DIR),
     list: async dir => {
@@ -62,6 +63,10 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
       calls.push('close view');
       return ok(true);
     },
+    ask: async question => {
+      calls.push(`ask ${question}`);
+      return ok(answer);
+    },
     toast: text => toasts.push(text),
     log: line => logs.push(line),
     ...over,
@@ -74,6 +79,9 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
     toasts,
     lassoAt: (rect: Result<Rect>) => {
       lasso = rect;
+    },
+    answerWith: (yes: boolean) => {
+      answer = yes;
     },
   };
 }
@@ -263,7 +271,27 @@ test("Clear Collection deletes every piece, and the folder's other files stay", 
   await addToCollection(fake.host, false);
   expect(await clearCollection(fake.host)).toEqual({ok: true, count: 0});
   expect([...fake.files]).toEqual([`${DIR}/settings.json`]);
+  expect(fake.calls).toContain(`ask ${copy['collection.clearConfirm'](2)}`);
   expect(fake.toasts.at(-1)).toBe(copy['collection.cleared']);
+});
+
+test('Clear Collection asks first, and Cancel keeps every piece (device round 7)', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  await addToCollection(fake.host, false);
+  fake.answerWith(false);
+  expect(await clearCollection(fake.host)).toEqual({ok: false, why: 'kept'});
+  expect(await countPieces(fake.host)).toBe(2);
+  expect(fake.calls.some(call => call.startsWith('remove'))).toBe(false);
+});
+
+test('a confirm dialog that fails keeps every piece and says so', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  fake.host.ask = async () => fail(-1, 'thrown');
+  expect(await clearCollection(fake.host)).toEqual({ok: false, why: 'kept'});
+  expect(await countPieces(fake.host)).toBe(1);
+  expect(fake.toasts.at(-1)).toBe(copy['collection.notAsked']);
 });
 
 test('a plugin restart between Add and Paste keeps the pieces: they are read from the folder', async () => {

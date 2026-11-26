@@ -8,6 +8,7 @@
 import {rectProblem, type Rect, type Size} from '@ink-tools/ink-core';
 import {
   closePluginView,
+  confirm,
   deleteLassoElements,
   getLassoRect,
   insertSticker,
@@ -43,6 +44,8 @@ export type CollectionHost = {
   select: (rect: Rect) => Promise<Result<boolean>>;
   /** Closes the plugin view, so the note is in front while the pieces go in. */
   closeView: () => Promise<Result<boolean>>;
+  /** Asks `question` in the host's confirm dialog; true only for `action`. */
+  ask: (question: string, action: string, cancel: string) => Promise<Result<boolean>>;
   toast: (text: string) => void;
   log: (line: string) => void;
 };
@@ -61,6 +64,7 @@ export type CollectionFailure =
   | 'empty'
   | 'page'
   | 'insert'
+  | 'kept'
   | 'clear';
 
 const done = (result: Result<boolean>) => result.ok && result.value;
@@ -222,7 +226,11 @@ async function removePieces(
   return left;
 }
 
-/** «Clear Collection»: every piece is deleted; the pieces left when a delete failed. */
+/**
+ * «Clear Collection»: asks in the host's confirm dialog, then deletes every piece; the pieces left
+ * when a delete failed. Cancel, Back or a dialog that fails keeps every piece (device round 7: the
+ * Clear button deleted them all with no question).
+ */
 export async function clearCollection(
   host: CollectionHost,
 ): Promise<CollectionOutcome> {
@@ -230,6 +238,21 @@ export async function clearCollection(
   const listed = await listPieces(host, tag);
   if (!listed) {
     return stop(host, 'folder', copy['collection.failed']);
+  }
+  const count = listed.pieces.length;
+  if (count > 0) {
+    const answer = await host.ask(
+      copy['collection.clearConfirm'](count),
+      copy['button.clear'],
+      copy['button.cancel'],
+    );
+    if (!answer.ok) {
+      host.log(`${tag}: confirm ${answer.code} ${answer.message}`);
+      return stop(host, 'kept', copy['collection.notAsked']);
+    }
+    if (!answer.value) {
+      return {ok: false, why: 'kept'};
+    }
   }
   const left = await removePieces(host, listed, tag);
   if (left > 0) {
@@ -259,6 +282,7 @@ export const DEVICE_HOST: CollectionHost = {
   resize: resizeLassoRect,
   select: lassoElements,
   closeView: closePluginView,
+  ask: confirm,
   toast: showToast,
   log: lookupLog,
 };

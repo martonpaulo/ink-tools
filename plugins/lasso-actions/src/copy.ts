@@ -10,7 +10,7 @@ export const copy = {
     'Lasso a handwritten word and insert a picture, a definition, a summary or a translation for it.',
   'module.headings': 'Headings',
   'module.headingsNote':
-    'Lasso a handwritten line and make it a heading of level 1 to 4, across the page.',
+    'Lasso a handwritten line and make it a heading of level 1 to 4, moved to the left margin.',
   'module.collection': 'Collection',
   'module.collectionNote':
     'Lasso pieces from several pages one after another, then paste them together on another page.',
@@ -19,6 +19,9 @@ export const copy = {
   'button.collectionCut': 'Cut to Collection',
   'button.collectionPaste': 'Paste Collection',
   'button.collectionClear': 'Clear Collection',
+  /** The host's confirm dialog before Clear Collection deletes the pieces. */
+  'button.clear': 'Clear',
+  'button.cancel': 'Cancel',
   'permission.collection':
     'Lasso Actions keeps the pieces you collect in its own folder and pastes them in your note.',
   'collection.title': 'Collection',
@@ -36,6 +39,10 @@ export const copy = {
   'collection.pasted': (count: number) =>
     `Pasted: ${count} ${count === 1 ? 'piece' : 'pieces'}`,
   'collection.cleared': 'The collection is empty.',
+  'collection.clearConfirm': (count: number) =>
+    `Delete the ${count === 1 ? 'piece' : `${count} pieces`} in the collection? What you pasted stays on its page.`,
+  'collection.notAsked':
+    'The collection was kept: the question could not be shown. Try Clear Collection again.',
   'collection.empty':
     'The collection is empty. Lasso something and press Add to Collection.',
   'collection.noLasso': 'Lasso something first, then press again.',
