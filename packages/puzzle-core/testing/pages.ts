@@ -15,10 +15,13 @@ import {
   drawSquareLattice,
   drawText,
   drawTriangleLattice,
+  drawBinairoPage,
   FONT_WEIGHTS,
+  generateBinairo,
   generateNonogram,
   generateSudoku,
   generateWordSearch,
+  layoutBinairoPage,
   layoutPage,
   puzzleCode,
   type PageLayout,
@@ -91,5 +94,10 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawWordPanel(r, layout, ['Panel', 'right']);
     drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
     return r;
+  }],
+  ['page-binairo-10mm-portrait-right', () => {
+    const puzzle = generateBinairo('P1', 10, 'medium');
+    const layout = layoutBinairoPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 });
+    return drawBinairoPage(puzzle, layout, { game: 'Binairo', difficulty: 'Medium', code: puzzleCode(puzzle.id) });
   }],
 ];
