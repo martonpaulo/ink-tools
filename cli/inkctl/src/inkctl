@@ -718,6 +718,10 @@ PLUGIN_DENIED = re.compile(r"PluginSec.*DENY")
 # PluginHost's own install lines, logged under this tag with the path it was given
 # (docs/research/2026-11-pluginhost-control.md): the proof of a same-version update (#310).
 HOST_INSTALL_TAG = "PluginInstallManager"
+# PluginHost's error code when the binder thread that serves a call still carries another plugin's
+# id (docs/supernote.md › Plugins, #225); a restart of the host clears it (#297).
+HOST_FOREIGN_PLUGIN = "errorCode=100"
+HOST_PACKAGE = REGISTRY["pluginhost.setting-service"]["hostPackage"]
 HOST_INSTALL_DONE = "installPlugin: success"
 HOST_INSTALL_FAILED = "installPlugin: failed"
 HOST_UPGRADE = "isUpgrade=true"
@@ -3462,6 +3466,16 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
     code, answer = bridge_result(device, "install", path=pushed["path"])
     # The list proves a failure that landed only when the version changed (#225).
     row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None else None
+    if row is None and code == BRIDGE_FAILED and HOST_FOREIGN_PLUGIN in answer:
+        # Another plugin's id on the host's binder thread refused the install; it held after a
+        # plugin action ran and cleared after a host restart (measured twice, Manta, 2026-11-26, #297).
+        print(f"PluginHost answered {HOST_FOREIGN_PLUGIN}: restarting {HOST_PACKAGE} and installing once more", file=sys.stderr, flush=True)
+        device.shell(f"am force-stop {shlex.quote(HOST_PACKAGE)}")
+        settled_plugin_rows(device, args.timeout)
+        if since is not None:
+            since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
+        code, answer = bridge_result(device, "install", path=pushed["path"])
+        row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None else None
     if row is None:
         bridge_answer(code, answer)
         row = proven_row(device, config, args.timeout, installed, since, pushed["path"])

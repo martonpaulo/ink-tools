@@ -144,6 +144,7 @@ case "$1" in
             "find /storage/emulated/0/Note -name"*) cat "$ADB_FILES/notes-found" ;;
             "find /storage/emulated/0/MyStyle/fonts -type f") cat "$ADB_FILES/fonts-found" ;;
             "am start"*) cat "$ADB_FILES/am"; [ -f "$ADB_FILES/am-goes-to" ] && cat "$ADB_FILES/am-goes-to" > "$ADB_FILES/foreground"; : ;;
+            "am force-stop com.ratta.supernote.pluginhost") : ;;
             "am broadcast -n com.martonpaulo.inktools.bridge/"*)
                 printf '%s\n' "$2" >> "$ADB_FILES/bridge-calls"
                 if [ -f "$ADB_FILES/bridge-answer" ]; then
@@ -1095,7 +1096,7 @@ check "a bridge onFailed whose version landed reports the update" "$?$(printf '%
 check "a bridge onFailed that landed logs the host's error once" "$(grep -c 'onFailed PluginError{errorCode=100}' "$work/err")" "1"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' | tee "$files/rows" > "$files/rows-after-bridge"
 run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
-check "a bridge onFailed whose version did not change still fails" "$?$(grep -c 'onFailed PluginError{errorCode=100}' "$work/err")" "11"
+check "a bridge onFailed whose version did not change still fails, after one PluginHost restart and retry (#297)" "$?$(grep -c 'onFailed PluginError{errorCode=100}' "$work/err")$(called 'am force-stop com.ratta.supernote.pluginhost')$(called 'op install')" "1112"
 # #419: PluginHost restarts after an install, and its list answers nothing for a while.
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"

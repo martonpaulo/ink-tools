@@ -660,7 +660,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`. In device
   round 5 (Manta, 2026-11-26) an install answered error 100 while another plugin's view was open,
   so `inkctl plugin install` refuses while the screen holds a window of the host's package
-  ([#418](https://github.com/martonpaulo/ink-tools/issues/418)).
+  ([#418](https://github.com/martonpaulo/ink-tools/issues/418)). With no plugin view open, a
+  same-version update of Device Link right after a Probe action answered error 100 naming Probe,
+  and PluginHost logged `installPlugin: failed`; after `am force-stop` of the host the same file
+  installed [measured twice, Manta, 2026-11-26]. So on error 100 `inkctl plugin install` restarts
+  the host and installs once more
+  ([#297](https://github.com/martonpaulo/ink-tools/issues/297)).
 - After an install PluginHost restarts, and its plugin list gives an empty answer until it is back:
   a landed install then failed its read-back on 2 of 2 tries [measured, Manta, device round 5,
   2026-11-26]; the install's reads wait for an answer up to `--timeout`
