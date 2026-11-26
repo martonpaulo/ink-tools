@@ -514,6 +514,7 @@ RECT_NUMBERS = ("x", "y", "width", "height")  # a page rectangle, as `lasso rect
 PICTURE_SUFFIXES = (".png", ".jpg", ".jpeg")
 TEXT_FONT_SIZE = 40  # page pixels, a text box's font size by default
 TEMPLATE_NAME = re.compile(r"[a-z0-9_]+")  # a system template, as getNoteSystemTemplates names it
+BACKGROUND_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.png")  # a page background a plugin made, straight in MyStyle (#377)
 PAGE_COUNTER = re.compile(r"\s*(\d+)\s*/\s*\d+\s*")  # the note bottom bar's «3 / 14», in the id of the note title (#220)
 PAGE_READS = 6  # reads of the counter after a jump, WAIT_INTERVAL apart
 # The test fixtures note (#220): one fixture per page, built by hand on the tablet; this table mirrors
@@ -2753,14 +2754,27 @@ def command_note_insert_text(device: Device, args: argparse.Namespace):
     return answer, f"inserted: a text box at {rect} on page {answer.get('page', 0) + 1} in {answer.get('ms')} ms"
 
 
+def background_path(template: str) -> str | None:
+    """The full path of a page background given as MyStyle/NAME.png or that full path, else None.
+    insertNotePage takes a plugin-made PNG straight in MyStyle as the page's background (#377);
+    device round 11 found insert-page refusing it (#379)."""
+    folder = remote_path(PLUGIN_FOLDER) + "/"
+    path = remote_path(template)
+    name = path[len(folder):] if path.startswith(folder) else ""
+    return path if BACKGROUND_NAME.fullmatch(name) else None
+
+
 def command_note_insert_page(device: Device, args: argparse.Namespace):
-    if not TEMPLATE_NAME.fullmatch(args.template):
-        raise bad_usage(f"a template is a system template name such as {NOTE_BLANK_STYLE}: {args.template}")
+    template = args.template if TEMPLATE_NAME.fullmatch(args.template) else background_path(args.template)
+    if template is None:
+        raise bad_usage(f"a template is a system template name such as {NOTE_BLANK_STYLE}, or a .png file in {PLUGIN_FOLDER}/: {args.template}")
     if args.page < 1:
         raise bad_usage("the page counts from 1")
     need_test_note(device, args.allow_notes)
-    answer = helper_call(device, args, {"op": "insertPage", "page": args.page - 1, "template": args.template})
-    return answer, f"inserted: page {args.page} with {args.template} in {answer.get('ms')} ms"
+    if template != args.template and not device.test(f"-f {shlex.quote(template)}"):
+        raise not_found(template, f"inkctl files push FILE.png {PLUGIN_FOLDER}/NAME.png")
+    answer = helper_call(device, args, {"op": "insertPage", "page": args.page - 1, "template": template})
+    return answer, f"inserted: page {args.page} with {template} in {answer.get('ms')} ms"
 
 
 def command_note_move_page(device: Device, args: argparse.Namespace):
@@ -4728,7 +4742,7 @@ def build_parser() -> argparse.ArgumentParser:
     texted.add_argument("--size", nargs=2, type=int, metavar=("W", "H"), required=True, help="the box's width and height, in page pixels")
     texted.add_argument("--font-size", type=int, default=TEXT_FONT_SIZE, help="in page pixels")
     paged = add(notes, "insert-page", command_note_insert_page, changes=True)
-    paged.add_argument("template", help=f"a system template name, such as {NOTE_BLANK_STYLE}")
+    paged.add_argument("template", help=f"a system template name, such as {NOTE_BLANK_STYLE}, or a page background: MyStyle/NAME.png")
     paged.add_argument("--page", type=int, required=True, help="the new page's number, from 1")
     moved_page = add(notes, "move-page", command_note_move_page, changes=True)
     moved_page.add_argument("path", help="the note, which must not be the open one")

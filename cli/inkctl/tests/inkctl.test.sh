@@ -1655,6 +1655,15 @@ run note insert-page style_white --page 2 >/dev/null
 check "note insert-page sends the template and the page, from 0" "$?$(command_field "d['op'], d['page'], d['template']")" "0('insertPage', 1, 'style_white')"
 run note insert-page ../x.png --page 2 >/dev/null 2>&1
 check "a template that is not a system name is a usage error" "$?" "2"
+# A page background a plugin made, straight in MyStyle, is a template too (#377); round 11 found it refused (#379).
+printf 'f %s\n' "$root/MyStyle/r11-sudoku.png" >> "$files/paths"
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"insertPage","ms":400,"page":1,"template":"/storage/emulated/0/MyStyle/r11-sudoku.png"}' > "$files/helper-answer"
+run note insert-page MyStyle/r11-sudoku.png --page 2 >/dev/null
+check "note insert-page sends a MyStyle background as its full path" "$?$(command_field "d['op'], d['page'], d['template']")" "0('insertPage', 1, '$root/MyStyle/r11-sudoku.png')"
+run note insert-page MyStyle/absent.png --page 2 >/dev/null 2>&1
+check "a MyStyle background that is not on the tablet is not found" "$?" "4"
+run note insert-page MyStyle/Probe/x.png --page 2 >/dev/null 2>&1
+check "a background below MyStyle is a usage error" "$?" "2"
 # A page move goes to Probe's file API on a closed note, while another note is open (#263).
 printf 'f %s\n' "$root/Note/Tests/Move.note" "$root/Note/Tests/Round one.note" "$root/Note/Diary.note" >> "$files/paths"
 answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"movePage","ms":700,"path":"/storage/emulated/0/Note/Tests/Move.note","from":0,"to":2,"pages":4,"template":"style_white","storedTemplate":"style_white_a5x2","elements":3}' > "$files/helper-answer"
