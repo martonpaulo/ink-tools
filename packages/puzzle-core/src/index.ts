@@ -8,6 +8,8 @@ export { createRandom, childSeed, digest, type Random } from './random';
 export { searchExactCover, type ExactCoverProblem, type ExactCoverResult } from './exact-cover';
 export * from './sudoku-techniques';
 export * from './sudoku';
+export * from './jigsaw';
+export * from './jigsaw-page';
 export * from './nonogram';
 export * from './maze';
 export * from './word-search';
