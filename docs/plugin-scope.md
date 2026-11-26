@@ -261,6 +261,13 @@ Owner decisions of 2026-11-26 (the checklist with each governing issue is in
   EventKit and opens it there; Digest goes to the owner's Telegram «Saved Messages», through the official Telegram API (TDLib), never to Panoram. The person
   chooses text or image on each capture, as [Rules for every feature](#rules-for-every-feature) says. The editor
   never writes the tablet's database.
+- **Drop a PDF** (later, should, [#403](https://github.com/martonpaulo/ink-tools/issues/403)): on each drop the owner chooses to use its pages as
+  templates (page backgrounds he writes over) or to render it into the note (one note page per PDF
+  page, as native elements or pictures the tablet can lasso); both in Manta tones.
+- **Markdown** (later, should, [#404](https://github.com/martonpaulo/ink-tools/issues/404)): Markdown typed or pasted shows formatted at once; `#` to
+  `####` become the tablet's native Headings; lists, bold, italic, quotes and code are styled within
+  what the tablet's text box supports; what the tablet cannot show is shown as the tablet will show
+  it, so no style is ever lost on the tablet.
 - **Edit through Supernote Cloud** (later): open a note from Supernote Cloud and edit it with no
   tablet nearby; the Mac writes the `.note` itself, with real vector strokes and elements the tablet
   can lasso and erase, never a page bitmap alone, and uploads it after a backup; the tablet picks it
