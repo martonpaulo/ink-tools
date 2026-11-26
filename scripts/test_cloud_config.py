@@ -1,9 +1,10 @@
-"""`.github/cloud.json` names real gates and keeps only the Swift app on the Mac (#301).
+"""`.github/cloud.json` names real gates and keeps the Mac-only gates off the cloud list (#301).
 
 Workbench's `cloud_ready.py` reads `cloud.json` to tell whether a cloud session can finish an issue:
 a gate outside its `cloud` list sends the issue back to the Mac. A gate renamed or added in
 `gates.json` without this file would silently move every issue that selects it off the cloud, so
-each gate is either a cloud gate or the one Mac gate, the Ink Notebook Editor's Xcode build.
+each gate is either a cloud gate or a Mac gate: the Ink Notebook Editor's Xcode build, and the two
+Android app builds, whose toolchain download gets a 403 from dl.google.com in the cloud.
 """
 
 import json
@@ -11,7 +12,7 @@ import pathlib
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MAC_GATES = {"ink-notebook-editor"}
+MAC_GATES = {"ink-notebook-editor", "handwriting-language", "inktools-bridge"}
 
 
 class CloudConfigTest(unittest.TestCase):
