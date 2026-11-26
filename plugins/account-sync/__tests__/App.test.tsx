@@ -214,6 +214,15 @@ test('Close and Back close Settings, and do nothing while a pass runs (#204, #26
   back.restore();
 });
 
+/** Mounts the given App and lets its first reads settle. */
+async function mountApp(app: React.ReactElement) {
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(app);
+  });
+  return tree;
+}
+
 test('Settings shows whether Todoist is signed in and signs it out (#116)', async () => {
   const stored: Partial<Record<SecretProvider, string>> = {todoist: 'synthetic-token-wxyz'};
   const secrets: SecretStore = {
@@ -228,10 +237,7 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
     modules: {...base.modules, todo: true},
     providers: {...base.providers, todoist: true},
   });
-  let tree!: ReactTestRenderer;
-  await act(async () => {
-    tree = renderer.create(<App folder={folder as never} secrets={secrets} />);
-  });
+  const tree = await mountApp(<App folder={folder as never} secrets={secrets} />);
   expect(texts(tree)).toContain('Todoist: signed in (…wxyz).');
   const press = (label: string) =>
     tree.root.findAll(
@@ -261,12 +267,7 @@ test('a sign-out that fails says so in one sentence and logs why (#116)', async 
     providers: {...base.providers, todoist: true},
   });
   const log = jest.fn();
-  let tree!: ReactTestRenderer;
-  await act(async () => {
-    tree = renderer.create(
-      <App folder={folder as never} secrets={secrets} log={log} />,
-    );
-  });
+  const tree = await mountApp(<App folder={folder as never} secrets={secrets} log={log} />);
   const press = (label: string) =>
     tree.root.findAll(
       n =>
@@ -288,10 +289,7 @@ test('a module that is on offers Connect for each provider with no connection, a
     ...base,
     modules: {...base.modules, calendar: true},
   });
-  let tree!: ReactTestRenderer;
-  await act(async () => {
-    tree = renderer.create(<App folder={folder as never} secrets={secrets} />);
-  });
+  const tree = await mountApp(<App folder={folder as never} secrets={secrets} />);
   // Calendar is on with no provider connected: Google and iCloud offer Connect; ICS needs none.
   expect(texts(tree)).toEqual(
     expect.arrayContaining(['Google: not connected.', 'iCloud: not connected.']),
