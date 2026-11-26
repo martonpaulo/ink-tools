@@ -1759,6 +1759,9 @@ result=$(run note open "Note/A note.note")
 check "note open over an open note asks Device Link to save it first" "$?$(action_field "d['action']")$(cat "$files/action-path")" "0save-note$helper_folder/action.json"
 check "the save is pushed before the next note starts" "$(grep -n -E ' push |am start' "$log" | head -1 | grep -c ' push ')$(called 'am start')" "11"
 check "note open names the note it saved" "$(printf '%s' "$result" | head -1)" "saved first: $root/Note/Tests/Other.note"
+# note new reaches the same save, so it takes the same --timeout (device round 13: it crashed).
+run note new "Note/Tests/Saved first.note" >/dev/null 2>"$work/err"
+check "note new over an open note saves it first instead of crashing" "$?$(action_field "d['action']")$(grep -c Traceback "$work/err")" "0save-note0"
 action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":1,"message":"saveCurrentNote did not save the open note: answered false"}' > "$files/action-answer"
 run note open "Note/A note.note" >/dev/null 2>"$work/err"
 check "a failed save stops the switch with why and starts nothing" "$?$(called 'am start')$(grep -c 'the open note did not save, so no other note was opened' "$work/err")" "101"
