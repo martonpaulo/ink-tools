@@ -991,6 +991,16 @@
         }
       }
     },
+    "Restore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore"
+          }
+        }
+      }
+    },
     "Restore Page" : {
       "localizations" : {
         "en" : {

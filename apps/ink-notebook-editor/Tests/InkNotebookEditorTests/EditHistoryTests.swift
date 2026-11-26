@@ -111,6 +111,15 @@ import Testing
         #expect(picture.apply(to: ["a", "b"]) == ["a", "b"] && picture.apply(to: ["a"]) == nil)
     }
 
+    /// A delete is undone by the backup kept before its send (#327).
+    @Test func aDeleteIsUndoneByItsBackup() {
+        let element = MovedElement(record: 3, box: EditRect(left: 0, top: 0, right: 10, bottom: 10))
+        let delete = NoteEdit.deleteElements(page: 1, elements: [element])
+        #expect(delete.inverse == .restoreElements(page: 1) && delete.undoneByBackup && delete.inverse.restoresBackup)
+        #expect(delete.apply(to: ["a", "b"]) == ["a", "b"])
+        #expect(NoteEdit.deleteElements(page: 1, elements: []).apply(to: ["a", "b"]) == nil)
+    }
+
     @Test func theMenuNamesTheEdit() {
         var history = EditHistory()
         #expect(Copy.undo(history.undoKind) == Copy.undoBare)

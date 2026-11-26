@@ -277,6 +277,8 @@ nonisolated enum Copy {
         case .insertPicture: String(localized: "Insert Picture")
         case .insertText: String(localized: "Insert Text Box")
         case .revertInsert: String(localized: "Remove Insert")
+        case .deleteElements: String(localized: "Delete")
+        case .restoreElements: String(localized: "Restore")
         }
     }
 }

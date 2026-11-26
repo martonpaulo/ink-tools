@@ -234,6 +234,18 @@ final class RenderTests {
         try await render("move-sending", Self.sizes) {
             NotebookView(pages: drawn, viewer: viewer, live: live, editor: editor)
         }
+        // A deleted selection on its way (#327): the template where it was, nothing selected.
+        let deleting = NoteEditor(
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            backups: NoteBackups(folder: scratch.appending(path: "DeleteBackups")))
+        deleting.deleteElements(page: 0, elements: items.map(MovedElement.init))
+        for _ in 0..<500 where deleting.deletions(on: 0).isEmpty {
+            // timing-independent: a poll on the lift with a deadline; the render is checked by eye.
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        try await render("delete-sending", Self.sizes) {
+            NotebookView(pages: drawn, live: live, editor: deleting)
+        }
     }
 
     /// Inserting a picture and a text box (#264): each sheet over the window it opens from, as a

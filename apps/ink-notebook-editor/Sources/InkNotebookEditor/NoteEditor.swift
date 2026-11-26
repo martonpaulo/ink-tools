@@ -65,6 +65,8 @@ final class NoteEditor {
     private(set) var movedPage: Int?
     /// The backup kept just before each applied page removal: its undo puts that note back (#329).
     @ObservationIgnored private var removalBackups: [EditID: URL] = [:]
+    /// Edits undone while on their way whose undo is their backup, sent once the tablet applies them.
+    @ObservationIgnored private var undoWhenApplied: Set<Int> = []
     private let logger = Logger(subsystem: "com.martonpaulo.inktools.notebookeditor", category: "edit")
 
     init(tabletPath: String, copy: URL, base: NoteFile, tablet: any TabletWriting, backups: NoteBackups) {
@@ -270,6 +272,21 @@ final class NoteEditor {
         }
     }
 
+    /// Deletes the selected elements of `page` (#327): drawn at once as the template where they
+    /// were, sent in the background; Undo puts them back from the backup kept before the send.
+    @discardableResult
+    func deleteElements(page: Int, elements: [MovedElement]) -> Bool {
+        record(.deleteElements(page: page, elements: elements))
+    }
+
+    /// The deletes on their way to page `index`: the template where each selection was.
+    func deletions(on index: Int) -> [LiftedInk] {
+        pending.compactMap { waiting in
+            guard case .deleteElements(let page, _) = waiting.edit, page == index else { return nil }
+            return lifts[waiting.ticket]
+        }
+    }
+
     /// The moves on their way to page `index`, with their lifted ink once it is ready.
     func moves(on index: Int) -> [(move: ElementMove, lifted: LiftedInk)] {
         pending.compactMap { waiting in
@@ -299,6 +316,9 @@ final class NoteEditor {
                     lifts[waiting.ticket] = nil
                     insertImages[waiting.ticket] = nil
                     redraw()
+                } else if waiting.edit.undoneByBackup {
+                    // Its backup is named only when the tablet answers: undo it then.
+                    undoWhenApplied.insert(waiting.ticket)
                 } else {
                     send(waiting.edit.inverse, history: nil)
                 }
@@ -350,7 +370,10 @@ final class NoteEditor {
         pending.append(Pending(ticket: ticket, edit: edit, history: id, backup: backup))
         if case .moveElements(let move) = edit {
             // A move leaves the note as it is: its lifted ink is drawn over the page instead.
-            lift(move, ticket: ticket)
+            lift(move.page, move.elements, ticket: ticket)
+        } else if case .deleteElements(let page, let elements) = edit {
+            // A delete too: the template where its elements were is drawn over the page.
+            lift(page, elements, ticket: ticket)
         } else {
             redraw()
         }
@@ -377,12 +400,12 @@ final class NoteEditor {
         }
     }
 
-    /// Lifts a move's elements off the page as it is shown, for drawing the move at once.
-    private func lift(_ move: ElementMove, ticket: Int) {
+    /// Lifts elements off the page as it is shown, for drawing a move or a delete at once.
+    private func lift(_ page: Int, _ elements: [MovedElement], ticket: Int) {
         let note = shown
         Task {
             guard lifts[ticket] == nil,
-                let lifted = await LiftedInk.make(note, page: move.page, items: move.elements.map(\.selectable))
+                let lifted = await LiftedInk.make(note, page: page, items: elements.map(\.selectable))
             else { return }
             if pending.contains(where: { $0.ticket == ticket }) { lifts[ticket] = lifted }
         }
@@ -410,6 +433,9 @@ final class NoteEditor {
             lifts[ticket] = nil
             insertImages[ticket] = nil
             if case .moveElements(let move) = done?.edit { movedPage = move.page } else { movedPage = nil }
+            if undoWhenApplied.remove(ticket) != nil, let done {
+                send(done.edit.inverse, history: nil, backup: backup)
+            }
             reloadBase()
             refreshBackups()
         case .refused(let ticket, let message):
@@ -418,6 +444,11 @@ final class NoteEditor {
             lifts[ticket] = nil
             insertImages[ticket] = nil
             if run == ticket { run = nil }
+            // A refused edit left nothing to undo.
+            if undoWhenApplied.remove(ticket) != nil {
+                redraw()
+                return
+            }
             if let id = refused.history {
                 _ = history.refused(id)
             } else {
@@ -466,10 +497,10 @@ final class NoteEditor {
             return try NotePreview.insertingPage(note, at: at, like: source)
         case .removePage(let at):
             return try NotePreview.removingPage(note, at: at)
-        case .restorePage, .revertInsert:
+        case .restorePage, .revertInsert, .restoreElements:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
-        case .moveElements, .insertPicture, .insertText:
+        case .moveElements, .insertPicture, .insertText, .deleteElements:
             // Drawn over the page: a move from its lifted ink (`moves(on:)`), an insert from its
             // picture or its text (`insertions(on:)`).
             return note

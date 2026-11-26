@@ -268,6 +268,55 @@ import Testing
         #expect(editor.refusal?.contains("tablet-refused") == true)
     }
 
+    @Test func aDeletedSelectionIsDrawnAtOnceAsItsTemplate() async throws {
+        let editor = NoteEditor(
+            tabletPath: WritePathTests.note, copy: copy, base: try NoteFile(data: original),
+            tablet: RenderTests.SlowTablet(),
+            backups: NoteBackups(folder: folder.appending(path: "Backups")))
+        #expect(editor.deleteElements(page: 0, elements: try selection()))
+        for _ in 0..<500 where editor.deletions(on: 0).isEmpty {
+            // timing-independent: a poll on the lift with a deadline; the expectation fails a hang.
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(editor.deletions(on: 0).count == 1)
+        #expect(editor.history.undoKind == .deleteElements(page: 0, elements: try selection()))
+    }
+
+    @Test func aDeleteIsSentByNumberAndUndoneByItsBackup() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        let elements = try selection()
+        #expect(editor.deleteElements(page: 0, elements: elements))
+        await settle(editor)
+        let sent = try #require(tablet.sent.first { $0["op"] as? String == "deleteElements" })
+        #expect(sent["nums"] as? [Int] == elements.map { $0.record + 1 })
+        editor.undo()
+        await settle(editor)
+        #expect(tablet.bytes == original)
+        #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
+        #expect(editor.history.redoKind == .deleteElements(page: 0, elements: elements))
+    }
+
+    @Test func aDeleteUndoneBeforeItIsSentSendsNothing() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        #expect(editor.deleteElements(page: 0, elements: try selection()))
+        editor.undo()
+        await settle(editor)
+        // Dropped from the queue, or sent then put back: the tablet ends with the note as it was.
+        #expect(tablet.bytes == original)
+        #expect(editor.deletions(on: 0).isEmpty)
+    }
+
+    @Test func aRefusedDeleteLeavesTheElementsAndSaysWhy() async throws {
+        let editor = try editor()
+        tablet.failEdit = .failed("device-link edit: no-element: operation 1")
+        #expect(editor.deleteElements(page: 0, elements: try selection()))
+        await settle(editor)
+        #expect(editor.deletions(on: 0).isEmpty && editor.history.undoKind == nil)
+        #expect(editor.refusal?.contains("no-element") == true)
+    }
+
     @Test func revertToTheOldestBackupGivesTheNoteBackAndStartsUndoOver() async throws {
         let editor = try editor()
         #expect(!editor.canRevert)

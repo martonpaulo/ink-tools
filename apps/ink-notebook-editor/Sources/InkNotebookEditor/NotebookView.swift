@@ -235,6 +235,14 @@ struct NotebookView: View {
         return .handled
     }
 
+    /// Deletes the selection on the page in front, when the note can be edited.
+    private func deleteSelection() {
+        guard let editor, editor.canEdit, let page = viewer.selection.page,
+            let items = pages.selectable(page)?.filter({ viewer.selection.ids.contains($0.id) }), !items.isEmpty
+        else { return }
+        if editor.deleteElements(page: page, elements: items.map(MovedElement.init)) { viewer.selection.clear() }
+    }
+
     /// Each arrow's direction, for a nudge.
     static let nudges: [KeyEquivalent: (dx: Int, dy: Int)] = [
         .leftArrow: (-1, 0), .rightArrow: (1, 0), .upArrow: (0, -1), .downArrow: (0, 1),
@@ -323,6 +331,9 @@ struct NotebookView: View {
         .focusable()
         .focusEffectDisabled()
         .focused($pageFocused)
+        // Delete and Edit › Delete remove the selection on a note from the tablet, as Preview
+        // deletes a selected annotation; Undo takes it back (#327).
+        .onDeleteCommand(perform: deleteSelection)
         // Edit › Paste on a note from the tablet: a picture to place, or text as a text box (#264).
         .onPasteCommand(
             of: [.image, .plainText, .rtf],

@@ -53,6 +53,10 @@ struct SelectionLayer: View {
                     Image(decorative: lifted.ink, scale: 1),
                     in: at.offsetBy(dx: CGFloat(move.dx) / pixels, dy: CGFloat(move.dy) / pixels))
             }
+            // Each delete on its way: the template where its elements were (#327).
+            for lifted in editor?.deletions(on: index) ?? [] {
+                context.draw(Image(decorative: lifted.hole, scale: 1), in: points(lifted.frame))
+            }
             // Each picture or text box on its way, at its box (#264).
             for (rect, image) in editor?.insertions(on: index) ?? [] {
                 let box = CGRect(

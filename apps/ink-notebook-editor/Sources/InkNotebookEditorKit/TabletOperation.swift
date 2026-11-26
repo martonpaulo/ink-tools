@@ -81,7 +81,11 @@ public struct TabletOperation: Sendable, Equatable {
         case .insertText(let page, let text, let rect, let fontSize):
             self.init(
                 note: note, baseHash: baseHash, page: page, change: .insertText(text, rect: rect, fontSize: fontSize))
-        case .restorePage(let page), .revertInsert(let page):
+        case .deleteElements(let page, let elements):
+            self.init(
+                note: note, baseHash: baseHash, page: page,
+                change: .deleteElements(elements.map { $0.record + 1 }.sorted()))
+        case .restorePage(let page), .revertInsert(let page), .restoreElements(let page):
             guard let backup else { return nil }
             self.init(note: note, baseHash: baseHash, page: page, change: .restoreBackup(backup))
         }

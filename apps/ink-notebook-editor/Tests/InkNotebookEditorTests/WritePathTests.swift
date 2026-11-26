@@ -105,6 +105,16 @@ import Testing
 
     /// An add and a removal go to the helper; the undo of a removal is the backup kept before it,
     /// by the Mac's route, and there is none without that backup (#329).
+    /// A delete goes to the helper by each element's tablet number, in order (#327).
+    @Test func aDeleteNamesEachElementByItsTabletNumber() throws {
+        let elements = [9, 2, 5].map { MovedElement(record: $0, box: Self.rect) }
+        let delete = try #require(
+            TabletOperation(.deleteElements(page: 1, elements: elements), note: Self.note, baseHash: "h"))
+        #expect(delete.helperOperations == [.deleteElements(page: 1, nums: [3, 6, 10])])
+        #expect(delete.editedPages == [1] && delete.route == .tablet)
+        #expect(TabletOperation(.restoreElements(page: 1), note: Self.note, baseHash: "h") == nil)
+    }
+
     @Test func pagesAreAddedAndRemovedByTheTabletAndARemovalUndoneByItsBackup() throws {
         let insert = try #require(
             TabletOperation(.insertPage(at: 2, template: "style_white"), note: Self.note, baseHash: "h"))

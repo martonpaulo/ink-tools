@@ -124,6 +124,8 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
 - Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
   or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
+- Delete removes a selection by the helper's `deleteElements` ([#327](https://github.com/martonpaulo/ink-tools/issues/327)), drawn at once as the template
+  where it was; its undo is the backup kept before its send.
 - `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 
 Differences from the standard, each for a reason:

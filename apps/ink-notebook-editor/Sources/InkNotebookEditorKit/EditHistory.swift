@@ -18,6 +18,11 @@ public enum NoteEdit: Sendable, Equatable {
     case insertPicture(page: Int, file: URL, rect: EditRect)
     /// Inserts a typed text box at `rect` on `page` (#264).
     case insertText(page: Int, text: String, rect: EditRect, fontSize: Int)
+    /// Deletes the selected elements of `page` (#327).
+    case deleteElements(page: Int, elements: [MovedElement])
+    /// Puts `page`'s deleted elements back, from the backup kept before the delete's send: no
+    /// tablet operation puts deleted ink back as it was (#327).
+    case restoreElements(page: Int)
     /// Puts `page` back as it was before an insert, from the backup kept before its send: the
     /// undo of an insert, whose new element's number is known only on the tablet (#264).
     case revertInsert(page: Int)
@@ -33,13 +38,15 @@ public enum NoteEdit: Sendable, Equatable {
         case .insertPicture(let page, _, _), .insertText(let page, _, _, _): .revertInsert(page: page)
         // An insert undone is done again by Redo, never by this inverse.
         case .revertInsert(let page): .revertInsert(page: page)
+        case .deleteElements(let page, _): .restoreElements(page: page)
+        case .restoreElements(let page): .restoreElements(page: page)
         }
     }
 
     /// Whether this edit puts back a backup, so the editor names the backup its undo restores.
     public var restoresBackup: Bool {
         switch self {
-        case .restorePage, .revertInsert: true
+        case .restorePage, .revertInsert, .restoreElements: true
         default: false
         }
     }
@@ -47,7 +54,7 @@ public enum NoteEdit: Sendable, Equatable {
     /// Whether the backup kept before this edit's send is what undoes it.
     public var undoneByBackup: Bool {
         switch self {
-        case .removePage, .insertPicture, .insertText: true
+        case .removePage, .insertPicture, .insertText, .deleteElements: true
         default: false
         }
     }
@@ -73,8 +80,11 @@ public enum NoteEdit: Sendable, Equatable {
         case .moveElements(let move):
             // A move keeps the pages; it fits a page of the note and moves something.
             guard pages.indices.contains(move.page), !move.isEmpty else { return nil }
-        case .insertPicture(let page, _, _), .insertText(let page, _, _, _), .revertInsert(let page):
+        case .insertPicture(let page, _, _), .insertText(let page, _, _, _), .revertInsert(let page),
+            .restoreElements(let page):
             guard pages.indices.contains(page) else { return nil }
+        case .deleteElements(let page, let elements):
+            guard pages.indices.contains(page), !elements.isEmpty else { return nil }
         }
         return changed
     }
