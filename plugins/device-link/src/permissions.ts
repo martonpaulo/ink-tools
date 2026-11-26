@@ -12,9 +12,10 @@ import {
   PERMISSION_INTERNET,
   requestPermission,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 
-/** Every permission `PluginConfig.json` declares; `__tests__/permissions.test.ts` checks both match. */
+/** Every permission `PluginConfig.json` declares; `__tests__/permissions.test.tsx` checks both match. */
 export const NEEDED = [
   PERMISSION_INTERNET,
   PERMISSION_FILE_READ,
@@ -77,4 +78,14 @@ export async function logPermissions(deps: PermissionDeps = DEVICE): Promise<voi
 /** The toast for a refused permission: it names it, never «Open a note first». */
 export function refusedLine(permission: string): string {
   return copy.permissionRefused(copy.permissionNames[permission] ?? permission);
+}
+
+/** The Needs state of a refused permission (#256): its name, why it is needed, the steps that allow it. */
+export function refusedProblem(permission: string): Problem {
+  const name = copy.permissionNames[permission] ?? permission;
+  return {
+    what: copy.permissionNeeded(name),
+    reason: copy.permissionReason,
+    fix: {steps: copy.permissionSteps(name)},
+  };
 }

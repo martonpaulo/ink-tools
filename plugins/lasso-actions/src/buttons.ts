@@ -14,6 +14,7 @@ import {
   Result,
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {DEFINE_BUTTON_ID} from './definition';
 import {iconUri} from './icons';
@@ -236,6 +237,39 @@ export async function missingFor(
   return missing;
 }
 
+/**
+ * The Needs state of a press whose permissions the host does not grant now (#256): why each is
+ * needed, and «Allow», which asks for each while the view shows, then runs `done`.
+ */
+export function permissionProblem(
+  missing: readonly Need[],
+  done: () => void,
+  deps: Pick<ButtonDeps, 'requestPermission' | 'log'> = DEVICE,
+): Problem {
+  return {
+    what: copy['needs.permission'],
+    reason: missing.map(need => need.reason).join(' '),
+    fix: {
+      label: copy['needs.allow'],
+      run: () => {
+        askNeeds(missing, deps)
+          .catch(error => deps.log(`request failed: ${error}`))
+          .then(done);
+      },
+    },
+  };
+}
+
+async function askNeeds(
+  missing: readonly Need[],
+  deps: Pick<ButtonDeps, 'requestPermission' | 'log'>,
+): Promise<void> {
+  for (const need of missing) {
+    const asked = await deps.requestPermission(need.permission, need.reason);
+    deps.log(describe(`request ${need.permission}`, asked));
+  }
+}
+
 /** Asks for each permission a switched-on button needs and the host has not granted. */
 export function askMissing(
   settings: LookupSettings,
@@ -250,10 +284,7 @@ export async function askStates(
   deps: ButtonDeps = DEVICE,
 ): Promise<void> {
   const on = states.filter(state => state.on).map(state => state.button);
-  for (const need of await missingFor(on, deps)) {
-    const asked = await deps.requestPermission(need.permission, need.reason);
-    deps.log(describe(`request ${need.permission}`, asked));
-  }
+  await askNeeds(await missingFor(on, deps), deps);
 }
 
 /** The Settings path: the buttons follow the switches, then each missing permission is asked. */

@@ -53,8 +53,8 @@ export function tempDir(pluginDir: string): string {
   return `${pluginDir}/tmp`;
 }
 
-/** What one send ends in: a line for the toast. */
-export type Outcome = {kind: 'toast'; text: string};
+/** A send's ending: a toast line, or a failure on the tablet that the Error state shows (#256). */
+export type Outcome = {kind: 'toast' | 'failed'; text: string};
 
 /** Called with the receiver at the address that took the item, once it was sent (#307). */
 export type Delivered = (target: Device) => Promise<void>;
@@ -373,11 +373,9 @@ async function capture(
   try {
     const made = await make(pngPath);
     if (!made.ok) {
-      return {
-        kind: 'toast',
-        text:
-          made.code === EMPTY_LASSO_CODE ? copy.nothingSelected : copy.noImage,
-      };
+      return made.code === EMPTY_LASSO_CODE
+        ? {kind: 'toast', text: copy.nothingSelected}
+        : {kind: 'failed', text: copy.noImage};
     }
     written = made.value;
     return {

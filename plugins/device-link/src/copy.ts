@@ -56,6 +56,16 @@ export const copy = {
     'plugin.permission.FILE:READ': 'File read',
     'plugin.permission.FILE:WRITE': 'File write',
   } as Record<string, string>,
+  /** The Needs state of a refused permission (#256): what is missing, then the steps that allow it. */
+  permissionNeeded: (name: string) =>
+    `Device Link needs the ${name} permission`,
+  permissionSteps: (name: string) => [
+    'Open Settings > Apps > Plugins > Device Link.',
+    `Allow ${name}.`,
+    'Press the button again.',
+  ],
+  /** The Error state's reason under a send that failed on the tablet (#256). */
+  sendFailedReason: 'Close, then press the button again.',
   permissionRefused: (name: string) =>
     `${name} permission not allowed: allow it in Settings > Apps > Plugins > Device Link`,
   result(result: SendResult, alias: string): string {

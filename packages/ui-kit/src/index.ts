@@ -6,7 +6,7 @@ export {shared, STATUS_LINES} from './styles';
 export {Button, BUTTON_KINDS, buttonId} from './Button';
 export type {ButtonKind, ButtonProps} from './Button';
 export {createWorking, WORKING_TEXT, WORKING_TIMEOUT_MS} from './working';
-export type {Working, WorkingPorts, WorkingRun} from './working';
+export type {HeldState, Working, WorkingPorts, WorkingRun} from './working';
 export {useWorking, WorkingStrip} from './WorkingStrip';
 export {useBackKey} from './backKey';
 export {CLOSE_TEXT, RETRY_TEXT} from './problem';

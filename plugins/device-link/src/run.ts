@@ -27,7 +27,7 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
-import {ensurePermissions, refusedLine} from './permissions';
+import {ensurePermissions, refusedLine, refusedProblem} from './permissions';
 import {
   Delivered,
   discoverDevices,
@@ -45,6 +45,7 @@ import {working} from './working';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
 import {Image} from 'react-native';
+import type {Problem} from '@ink-tools/ui-kit';
 import {NoteHost, Size} from './receive/receive';
 import {
   afterSent,
@@ -79,9 +80,12 @@ async function currentPage(pngPath: string): Promise<Result<string>> {
   return pageImage(note.value, page.value, pngPath);
 }
 
-/** What a send tap finds (#307): a toast line, the receivers to pick from, or none at all. */
+/**
+ * What a send tap finds (#307): a refused permission's Needs state (#256), the receivers to pick
+ * from, or none at all.
+ */
 export type Found =
-  | {kind: 'toast'; text: string}
+  | {kind: 'needs'; problem: Problem}
   | {kind: 'pick'; devices: Device[]}
   | {kind: 'none'};
 
@@ -108,7 +112,8 @@ export async function findForSend(
   // Before the first file or network call (#163): without it every file call fails.
   const refused = await ensure();
   if (refused !== null) {
-    return {kind: 'toast', text: refusedLine(refused)};
+    sendLog(`refused ${refused}`);
+    return {kind: 'needs', problem: refusedProblem(refused)};
   }
   const devices = await findReceivers(native, pluginDir);
   sendLog(`found ${devices.length} receivers`);
@@ -151,29 +156,32 @@ export async function sendPicked(
 ): Promise<Outcome> {
   const dir = await pluginDir();
   if (!dir.ok) {
-    return {kind: 'toast', text: copy.noImage};
+    sendLog(`plugin folder failed: ${dir.code} ${dir.message}`);
+    return {kind: 'failed', text: copy.noImage};
   }
+  let failed = false;
   const text = await pinnedSend(
     native,
     device,
-    async (self, delivered) =>
-      (
-        await sendCapture(
-          native,
-          self,
-          device,
-          tempDir(dir.value),
-          capture,
-          // Only the page is read from the file; the lasso preview is drawn from the open page.
-          capture === 'page' ? savedFirst(currentPage) : lassoImage,
-          Date.now,
-          findAgain(native, self, pluginDir),
-          delivered,
-        )
-      ).text,
+    async (self, delivered) => {
+      const sent = await sendCapture(
+        native,
+        self,
+        device,
+        tempDir(dir.value),
+        capture,
+        // Only the page is read from the file; the lasso preview is drawn from the open page.
+        capture === 'page' ? savedFirst(currentPage) : lassoImage,
+        Date.now,
+        findAgain(native, self, pluginDir),
+        delivered,
+      );
+      failed = sent.kind === 'failed';
+      return sent.text;
+    },
     pluginDir,
   );
-  return {kind: 'toast', text};
+  return {kind: failed ? 'failed' : 'toast', text};
 }
 
 async function currentPageSize(): Promise<Result<Size>> {
@@ -265,6 +273,11 @@ function sendTo(device: Device, text: string, native: Relay): Promise<string> {
   );
 }
 
+/** The Error state of a send that failed on the tablet (#256): the failure line, then what to do. */
+export function sendFailedProblem(line: string): Problem {
+  return {what: line, reason: copy.sendFailedReason};
+}
+
 /** The pick of «Send Page» and «Send Selection» on the tablet (#307), under the strip. */
 export function pickDeps(
   closeView: () => void,
@@ -272,9 +285,10 @@ export function pickDeps(
   native: Relay = relay(),
 ): PickDeps {
   return {
-    send: async (capture, device) => (await sendPicked(capture, device, native)).text,
+    send: (capture, device) => sendPicked(capture, device, native),
     run: task => working.run(task),
     toast,
+    fail: line => working.hold(sendFailedProblem(line)),
     log,
     closeView,
   };

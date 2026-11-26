@@ -62,6 +62,8 @@ export const copy = {
   /** Toasts of a Headings press (#252). */
   'heading.noLasso': 'Lasso a handwritten line first, then press a heading.',
   'heading.failed': 'The heading could not be made.',
+  /** The Error state's reason under a failed heading (#256); the details go to the log. */
+  'heading.failedReason': 'Close, then lasso the line and press the heading again.',
   'heading.notMoved':
     'The heading was made, but it could not be moved to the margin.',
   'button.define': 'Insert Definition',
@@ -144,6 +146,9 @@ export const copy = {
   'choose.inserting': 'Putting the picture in your note.',
   'choose.tile': (title: string, source: string) => `${title}, from ${source}`,
   'choose.noWord': 'Lasso a handwritten word first, then press Choose Image.',
+  /** The Needs state of a press whose permission the host does not grant now (#256). */
+  'needs.permission': 'Lasso Actions needs a permission',
+  'needs.allow': 'Allow',
 } as const;
 
 /**

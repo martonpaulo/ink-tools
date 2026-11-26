@@ -12,7 +12,9 @@ import {
   setLassoTitle,
   type TitleStyle,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
+import {working} from '../working';
 import {currentPageSize} from '../pageSize';
 import {lookupLog, showToast, whyNot} from '../textBox';
 import {levelStyle, placement, type HeadingLevel} from './levels';
@@ -23,10 +25,15 @@ export type HeadingHost = {
   setTitle: (style: TitleStyle) => Promise<Result<boolean>>;
   resize: (rect: Rect) => Promise<Result<boolean>>;
   toast: (text: string) => void;
+  /** Holds a failure on the tablet on the Error state, with its reason and Close (#256). */
+  fail: (problem: Problem) => void;
   log: (line: string) => void;
 };
 
-/** How a press ended: the toast it showed names it to the person. */
+/** The Error state of a heading the tablet could not make (#256). */
+const FAILED: Problem = {what: copy['heading.failed'], reason: copy['heading.failedReason']};
+
+/** How a press ended: the toast or the Error state it showed names it to the person. */
 export type HeadingOutcome =
   | {ok: true; rect: Rect}
   | {ok: false; why: 'lasso' | 'page' | 'unplaced' | 'title' | 'resize'};
@@ -51,7 +58,7 @@ export async function applyHeading(
   const page = await host.pageSize();
   if (!page.ok) {
     host.log(`${tag}: page size failed: ${page.code} ${page.message}`);
-    host.toast(copy['heading.failed']);
+    host.fail(FAILED);
     return {ok: false, why: 'page'};
   }
   const problem = rectProblem(rect.value, page.value);
@@ -64,7 +71,7 @@ export async function applyHeading(
   const titled = await host.setTitle(levelStyle(level));
   if (!titled.ok || !titled.value) {
     host.log(`${tag}: setLassoTitle ${whyNot(titled)}`);
-    host.toast(copy['heading.failed']);
+    host.fail(FAILED);
     return {ok: false, why: 'title'};
   }
   const resized = await host.resize(target);
@@ -83,6 +90,7 @@ export const DEVICE_HOST: HeadingHost = {
   setTitle: setLassoTitle,
   resize: resizeLassoRect,
   toast: showToast,
+  fail: problem => working.hold(problem),
   log: lookupLog,
 };
 

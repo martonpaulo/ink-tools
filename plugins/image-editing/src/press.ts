@@ -12,6 +12,7 @@ import {
   requestPermission,
   showPluginView,
 } from '@ink-tools/sn-adapter/official';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from './crop';
 import {DEVICE as EDIT_DEVICE, Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
@@ -41,6 +42,8 @@ export type PressDeps = {
   /** A page-wide edit under the strip, shown at once: it runs one edit per picture (#140). */
   page: (edit: EditId) => Promise<PageDone>;
   toast: (text: string) => void;
+  /** Holds a failure on the tablet on the Error state, with its reason and Close (#256). */
+  fail: (problem: Problem) => void;
   /** Removes the PNGs earlier builds left, once per session, after the press's own work (#182). */
   sweep: () => Promise<void>;
   log: (line: string) => void;
@@ -72,6 +75,7 @@ export const PRESS_DEVICE: PressDeps = {
   edit: edit => working.run(() => runPress(edit), {showAfterMs: STRIP_AFTER_MS}),
   page: edit => working.run(() => runPageEdit(edit)),
   toast: showToast,
+  fail: problem => working.hold(problem),
   sweep: () => sweepOrphans(EDIT_DEVICE),
   log: line => console.log(`Retouch: ${line}`),
 };
@@ -108,6 +112,11 @@ export function pageToast(done: PageDone): string {
     : copy['page.done'](done.edited, done.pictures);
 }
 
+/** The Error state of a press that failed on the tablet: what failed and what to do (#256). */
+function failedProblem(what: string): Problem {
+  return {what, reason: copy['press.failedReason']};
+}
+
 /** Runs `edit`'s press; the value is the edit's outcome, or null when a permission was missing. */
 export async function pressEdit(
   edit: EditDefinition,
@@ -123,13 +132,21 @@ export async function pressEdit(
   const each = PAGE_EDITS[edit.id];
   if (each) {
     const page = await deps.page(each);
-    deps.toast(pageToast(page));
+    if (page.kind === 'failed') {
+      deps.log(`${edit.id}: page failed: ${page.why}`);
+      deps.fail(failedProblem(copy['page.failedTitle']));
+    } else {
+      deps.toast(pageToast(page));
+    }
     await deps.sweep();
     return page;
   }
   const done = await deps.edit(edit.id);
   const reason = reasonOf(edit.name, done);
-  if (reason) {
+  if (done.kind === 'failed' && !NO_FILE_PERMISSION.test(done.why)) {
+    deps.log(`${edit.id}: failed: ${done.why}`);
+    deps.fail(failedProblem(copy['press.failedTitle'](edit.name)));
+  } else if (reason) {
     deps.toast(reason);
   }
   await deps.sweep();

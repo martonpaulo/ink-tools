@@ -2,6 +2,7 @@
 import {fail, ok, TITLE_STYLE} from '@ink-tools/sn-adapter/official';
 import {HEADING_MARGIN} from '../src/headings/levels';
 import {applyHeading, HeadingHost} from '../src/headings/run';
+import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from '../src/copy';
 
 const PAGE = {width: 1404, height: 1872};
@@ -10,6 +11,7 @@ const WORD = {left: 600, top: 400, right: 800, bottom: 460};
 function fakeHost(over: Partial<HeadingHost> = {}) {
   const calls: string[] = [];
   const toasts: string[] = [];
+  const failures: Problem[] = [];
   const host: HeadingHost = {
     lassoRect: async () => ok(WORD),
     pageSize: async () => ok(PAGE),
@@ -24,10 +26,11 @@ function fakeHost(over: Partial<HeadingHost> = {}) {
       return ok(true);
     },
     toast: text => toasts.push(text),
+    fail: problem => failures.push(problem),
     log: () => {},
     ...over,
   };
-  return {host, calls, toasts};
+  return {host, calls, toasts, failures};
 }
 
 test('a lassoed word becomes a level 2 heading at the leading margin, across the page', async () => {
@@ -85,12 +88,13 @@ test('an unread page size changes nothing', async () => {
 });
 
 test('a refused title leaves the lasso untouched', async () => {
-  const {host, calls, toasts} = fakeHost({
+  const {host, calls, toasts, failures} = fakeHost({
     setTitle: async () => ok(false),
   });
   expect(await applyHeading(4, host)).toEqual({ok: false, why: 'title'});
   expect(calls).toEqual([]);
-  expect(toasts).toEqual([copy['heading.failed']]);
+  expect(toasts).toEqual([]);
+  expect(failures.map(failure => failure.what)).toEqual([copy['heading.failed']]);
 });
 
 test('a failed resize keeps the title and says the heading was not moved', async () => {

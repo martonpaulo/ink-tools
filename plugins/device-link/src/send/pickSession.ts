@@ -4,6 +4,7 @@
  * how it went. Back or × closes the view, and nothing is sent.
  */
 import {Device} from '../localsend/protocol';
+import type {Outcome} from './sendPng';
 
 /** What a send captures: the open page or the lasso selection. */
 export type Capture = 'page' | 'selection';
@@ -39,11 +40,13 @@ export function startPick(capture: Capture, devices: Device[]): void {
 }
 
 export type PickDeps = {
-  /** Sends the capture to the picked receiver; answers the toast line. */
-  send(capture: Capture, device: Device): Promise<string>;
+  /** Sends the capture to the picked receiver; answers its toast line or its failure. */
+  send(capture: Capture, device: Device): Promise<Outcome>;
   /** Runs the send under the «Loading…» strip, which closes the view when it ends. */
-  run(task: () => Promise<string>): Promise<string>;
+  run(task: () => Promise<Outcome>): Promise<Outcome>;
   toast(line: string): void;
+  /** Holds a failure on the tablet on the Error state, with its reason and Close (#256). */
+  fail(line: string): void;
   log(line: string): void;
   closeView(): void;
 };
@@ -56,7 +59,12 @@ export async function pickDevice(deps: PickDeps, device: Device): Promise<void> 
   const {capture} = state;
   setState(IDLE);
   try {
-    deps.toast(await deps.run(() => deps.send(capture, device)));
+    const outcome = await deps.run(() => deps.send(capture, device));
+    if (outcome.kind === 'failed') {
+      deps.fail(outcome.text);
+    } else {
+      deps.toast(outcome.text);
+    }
   } catch (error) {
     // The strip holds the failure on its Error state.
     deps.log(`send failed: ${String(error)}`);

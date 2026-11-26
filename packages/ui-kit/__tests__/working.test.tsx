@@ -143,6 +143,28 @@ describe('createWorking (#103)', () => {
     expect(calls).toEqual(['show']);
   });
 
+  it('holds a known failure with no throw and opens the view on it, until Close (#256)', async () => {
+    const {calls, working} = setup();
+    working.hold({what: 'Could not send.', reason: 'Try again.'});
+    expect(working.problem()).toEqual({what: 'Could not send.', reason: 'Try again.'});
+    expect(working.heldState()).toBe('error');
+    expect(calls).toEqual(['show']);
+    working.hold({what: 'Needs Network.'}, 'needs');
+    expect(working.heldState()).toBe('needs');
+    expect(calls).toEqual(['show']);
+    await working.dismiss();
+    expect(working.heldState()).toBeNull();
+    expect(calls).toEqual(['show', 'close']);
+  });
+
+  it('keeps the view open after a run whose task held a problem (#256)', async () => {
+    const {calls, working} = setup();
+    await working.run(async () => working.hold({what: 'Needs Network.'}, 'needs'));
+    expect(working.isWorking()).toBe(false);
+    expect(working.heldState()).toBe('needs');
+    expect(calls).toEqual(['show']);
+  });
+
   it('closes the view once, when the last of two runs ends', async () => {
     const {calls, working} = setup();
     const first = pending<void>();
@@ -212,5 +234,23 @@ describe('WorkingStrip (#103)', () => {
     });
     expect(tree.root.findByType(Text).props.children).toBe('Settings');
     expect(calls).toEqual(['show', 'close']);
+  });
+
+  it('shows a held check as Needs, with its fix and Close (#256)', async () => {
+    const {working} = setup();
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<Root working={working} />);
+    });
+    act(() => {
+      working.hold({what: 'Needs Network.', fix: {steps: ['Allow it.']}}, 'needs');
+    });
+    expect(tree.root.findAllByProps({testID: 'needs'}).length).toBeGreaterThan(0);
+    const shown = tree.root.findAllByType(Text).map(node => node.props.children);
+    expect(shown).toEqual(['Needs Network.', '1. Allow it.']);
+    const closes = tree.root.findAll(
+      node => node.props.accessibilityLabel === CLOSE_TEXT && typeof node.props.onPress === 'function',
+    );
+    expect(closes.length).toBeGreaterThan(0);
   });
 });

@@ -11,6 +11,9 @@
  */
 import {Problem, reasonOf} from './problem';
 
+/** Which state a held problem shows: `Needs` after a check, `ErrorView` after a failure (#256). */
+export type HeldState = 'needs' | 'error';
+
 /** The strip's one line, in the owner's words (A7). */
 export const WORKING_TEXT = 'Loading…';
 
@@ -60,6 +63,13 @@ export type Working = {
   isWorking: () => boolean;
   /** The failure the view shows until `dismiss`, or null. */
   problem: () => Problem | null;
+  /** Which state the held problem shows, or null when none is held. */
+  heldState: () => HeldState | null;
+  /**
+   * Holds `problem` with no throw (#256): a known failure or a check a run answers as a value. The
+   * view opens on it, or stays open when a run's strip shows now, until `dismiss`.
+   */
+  hold: (problem: Problem, state?: HeldState) => void;
   /** Clears the held failure and closes the view, as the Error state's Close does. */
   dismiss: () => Promise<void>;
   /** Calls `listener` on each change of `isWorking` or `problem`; the value is the unsubscribe call. */
@@ -78,6 +88,7 @@ export function createWorking(ports: WorkingPorts): Working {
   let next = 0;
   let handedOver = false;
   let held: Problem | null = null;
+  let heldAs: HeldState = 'error';
 
   const notify = () => {
     const working = showing.size > 0;
@@ -163,6 +174,7 @@ export function createWorking(ports: WorkingPorts): Working {
         // The view closed at the timeout, so that failure has only the toast left.
         if (!timedOut) {
           held = {what: ports.copy.failed, reason: reasonOf(error)};
+          heldAs = 'error';
         }
         await end();
         if (timedOut) {
@@ -186,6 +198,17 @@ export function createWorking(ports: WorkingPorts): Working {
     },
     isWorking: () => showing.size > 0,
     problem: () => held,
+    heldState: () => (held === null ? null : heldAs),
+    hold: (problem, state = 'error') => {
+      const open = held !== null;
+      held = problem;
+      heldAs = state;
+      notify();
+      // A run's strip keeps the view open, and its ending then leaves it on the held state.
+      if (showing.size === 0 && !open) {
+        ports.show().catch(error => ports.log(`strip: show failed: ${error}`));
+      }
+    },
     dismiss: async () => {
       if (held === null) {
         return;

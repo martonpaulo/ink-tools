@@ -6,12 +6,14 @@ import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
-import {ListRow} from '@ink-tools/ui-kit';
+import {ListRow, WorkingStrip} from '@ink-tools/ui-kit';
+import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
+import {copy} from '../src/copy';
 import {ok} from '@ink-tools/sn-adapter/official';
 import App, {TextView} from '../App';
 import {Device} from '../src/localsend/protocol';
 import {deviceSubtitle, PickView} from '../src/PickDevice';
-import {findForSend, pinnedSend} from '../src/run';
+import {findForSend, pinnedSend, sendFailedProblem} from '../src/run';
 import {
   cancelPick,
   pickDevice,
@@ -234,9 +236,13 @@ describe('the pinned send', () => {
 
 function pickDeps(overrides: Partial<PickDeps> = {}): PickDeps {
   return {
-    send: jest.fn(async (_capture, device: Device) => `Sent to ${device.alias}`),
+    send: jest.fn(async (_capture, device: Device) => ({
+      kind: 'toast' as const,
+      text: `Sent to ${device.alias}`,
+    })),
     run: jest.fn(task => task()),
     toast: jest.fn(),
+    fail: jest.fn(),
     log: jest.fn(),
     closeView: jest.fn(),
     ...overrides,
@@ -263,6 +269,30 @@ describe('the pick', () => {
     await pickDevice(d, mac);
     expect(d.send).not.toHaveBeenCalled();
     expect(d.closeView).toHaveBeenCalledTimes(1);
+  });
+
+  test('a picture that could not be made shows the Error state with its reason and Close (#256)', async () => {
+    const working = quietWorking({failed: copy.workingFailed, timeout: copy.workingTimeout});
+    const d = pickDeps({
+      send: jest.fn(async () => ({kind: 'failed' as const, text: copy.noImage})),
+      run: task => working.run(task),
+      fail: line => working.hold(sendFailedProblem(line)),
+    });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<WorkingStrip working={working} />);
+    });
+    startPick('page', [mac]);
+    await act(async () => {
+      await pickDevice(d, mac);
+    });
+    expect(d.toast).not.toHaveBeenCalled();
+    expect(tree.root.findAllByProps({testID: 'error-view'}).length).toBeGreaterThan(0);
+    const shown = shownTexts(tree.root);
+    expect(shown).toEqual(expect.arrayContaining([copy.noImage, copy.sendFailedReason]));
+    expect(
+      pressables(tree.root).length,
+    ).toBeGreaterThan(0);
   });
 
   test('a send that throws leaves the failure to the strip, with no toast', async () => {

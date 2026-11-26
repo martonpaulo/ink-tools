@@ -21,13 +21,13 @@ import {
   TextBoxInput,
   TIMEOUT_CODE,
 } from '@ink-tools/sn-adapter/official';
-import {missingFor, BUTTONS} from './buttons';
+import {missingFor, BUTTONS, Need, permissionProblem} from './buttons';
 import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';
 import {pickedFor} from './picks';
 import {PICTURE_LANGUAGES} from './pictureLanguages';
 import {showToast} from './textBox';
-import {showOwnView} from './working';
+import {working} from './working';
 import {Mode, modeAdapters} from './modes';
 import {findKept, privatePicturesDir, recordKept} from './library';
 import {
@@ -230,7 +230,7 @@ export type PictureDeps = {
   settings: () => Promise<LookupSettings>;
   folder: () => Promise<Result<string>>;
   /** The permissions this mode's press needs and the host has not granted. */
-  missing: (mode: Mode) => Promise<readonly unknown[]>;
+  missing: (mode: Mode) => Promise<readonly Need[]>;
   read: () => Promise<Result<LassoQuery>>;
   insert: (
     mode: Mode,
@@ -240,7 +240,8 @@ export type PictureDeps = {
   ) => Promise<QuickInsert>;
   /** Writes a text box on the current page. */
   write: (box: TextBoxInput) => Promise<Result<boolean>>;
-  show: () => Promise<Result<boolean>>;
+  /** Shows the Needs state of the missing permissions, with «Allow» (#256). */
+  needs: (missing: readonly Need[]) => void;
   /** The device toast when absent. */
   toast?: (text: string) => void;
 };
@@ -254,8 +255,12 @@ const DEVICE: PictureDeps = {
   insert: (mode, word, place, limit) =>
     insertBest(word, place, modeDeps(mode), pictureCopy[mode.kind], limit),
   write: insertText,
-  // The view stays open for Settings, which asks for the permission, so the strip hands it over.
-  show: showOwnView,
+  // The view stays open on the Needs state; «Allow» asks while it shows, then closes it (#256).
+  needs: missing =>
+    working.hold(
+      permissionProblem(missing, () => working.dismiss()),
+      'needs',
+    ),
 };
 
 /** One press at a time across both picture buttons (#93). */
@@ -308,9 +313,10 @@ export async function pictureLasso(
       return null;
     }
     await deps.folder();
-    if ((await deps.missing(mode)).length > 0) {
-      log(`${name}: a permission is missing, opening the view`);
-      await logged('showPluginView', deps.show);
+    const missing = await deps.missing(mode);
+    if (missing.length > 0) {
+      log(`${name}: missing ${missing.map(need => need.permission).join(', ')}`);
+      deps.needs(missing);
       return null;
     }
     const query = await deps.read();

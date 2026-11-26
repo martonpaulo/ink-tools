@@ -103,8 +103,9 @@ function send(capture) {
   working
     .run(() => findForSend())
     .then(found => {
-      if (found.kind === 'toast') {
-        ToastAndroid.show(found.text, ToastAndroid.SHORT);
+      if (found.kind === 'needs') {
+        // The view opens on the Needs state, with the steps that allow the permission (#256).
+        working.hold(found.problem, 'needs');
         return;
       }
       if (found.kind === 'pick') {

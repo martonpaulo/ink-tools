@@ -1,4 +1,8 @@
 /** Relay asks for every permission it declares before its first call (#163). */
+import React from 'react';
+import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import {WorkingStrip} from '@ink-tools/ui-kit';
+import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import config from '../PluginConfig.json';
 import {copy} from '../src/copy';
@@ -7,6 +11,7 @@ import {
   NEEDED,
   PermissionDeps,
   refusedLine,
+  refusedProblem,
 } from '../src/permissions';
 import {findForSend} from '../src/run';
 import {fakeRelay} from '../test-support/fakeRelay';
@@ -67,7 +72,25 @@ test('a send with a refused permission makes no file and calls no network', asyn
     async () => 'plugin.permission.INTERNET',
     async () => ok('/plugin'),
   );
-  expect(outcome).toEqual({kind: 'toast', text: refusedLine('plugin.permission.INTERNET')});
+  expect(outcome).toEqual({kind: 'needs', problem: refusedProblem('plugin.permission.INTERNET')});
   expect(native.readText).not.toHaveBeenCalled();
   expect(native.post).not.toHaveBeenCalled();
+});
+
+test('a refused permission shows the Needs state with its steps and Close (#256)', async () => {
+  const working = quietWorking({failed: 'Failed.', timeout: 'Still working.'});
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = renderer.create(<WorkingStrip working={working} />);
+  });
+  act(() => {
+    working.hold(refusedProblem('plugin.permission.FILE:READ'), 'needs');
+  });
+  expect(tree.root.findAllByProps({testID: 'needs'}).length).toBeGreaterThan(0);
+  const shown = shownTexts(tree.root);
+  expect(shown).toContain(copy.permissionNeeded('File read'));
+  expect(shown).toContain('2. Allow File read.');
+  expect(
+    pressables(tree.root).length,
+  ).toBeGreaterThan(0);
 });

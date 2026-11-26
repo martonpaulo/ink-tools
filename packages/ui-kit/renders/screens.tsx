@@ -42,6 +42,11 @@ import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/
 import {PickView as DeviceLinkPick} from '../../../plugins/device-link/src/PickDevice';
 import {ReceiveView as DeviceLinkReceive, TextView as DeviceLinkText} from '../../../plugins/device-link/App';
 import type {Device as TransferDevice} from '../../../plugins/device-link/src/localsend/protocol';
+import {refusedProblem as deviceLinkRefused} from '../../../plugins/device-link/src/permissions';
+import {sendFailedProblem as deviceLinkSendFailed} from '../../../plugins/device-link/src/run';
+import {copy as deviceLinkCopy} from '../../../plugins/device-link/src/copy';
+import {permissionProblem as lassoActionsPermission, FILE_WRITE as LASSO_FILE_WRITE} from '../../../plugins/lasso-actions/src/buttons';
+import {copy as imageEditingCopy} from '../../../plugins/image-editing/src/copy';
 
 export type ScreenRender = {
   name: string;
@@ -68,6 +73,8 @@ const WORKING: Working = {
   handOver: () => {},
   isWorking: () => true,
   problem: () => null,
+  heldState: () => null,
+  hold: () => {},
   subscribe: () => () => {},
   dismiss: () => {},
 } as unknown as Working;
@@ -238,6 +245,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'device-link-pick', render: () => mount(<DeviceLinkPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
   {name: 'device-link-text', render: () => mount(<DeviceLinkText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
   {name: 'device-link-receive', render: () => mount(<DeviceLinkReceive state="ready" onStop={noop} />)},
+  {name: 'device-link-needs-permission', render: () => mount(<Needs problem={deviceLinkRefused('plugin.permission.FILE:READ')} onClose={noop} />)},
+  {name: 'device-link-error', render: () => mount(<ErrorView problem={deviceLinkSendFailed(deviceLinkCopy.noImage)} onClose={noop} />)},
+  {name: 'lasso-actions-needs-permission', render: () => mount(<Needs problem={lassoActionsPermission([LASSO_FILE_WRITE], noop)} onClose={noop} />)},
+  {name: 'image-editing-error', render: () => mount(<ErrorView problem={{what: imageEditingCopy['press.failedTitle']('Enhance'), reason: imageEditingCopy['press.failedReason']}} onClose={noop} />)},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
   {name: 'image-editing-opening', render: () => imageEditor({phase: 'opening'})},
   {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed'}} onPick={noop} onToggle={noop} onClose={noop} />)},

@@ -1,4 +1,8 @@
 /** A press changes the picture or shows why it did not, never nothing (#170). */
+import React from 'react';
+import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
+import {WorkingStrip} from '@ink-tools/ui-kit';
+import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {copy} from '../src/copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE} from '../src/crop';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE} from '../src/edit';
@@ -16,6 +20,7 @@ function deps(missing: string[], done: Done) {
     edit: jest.fn(async () => done),
     page: jest.fn(),
     toast: text => toasts.push(text),
+    fail: jest.fn(),
     sweep: jest.fn(async () => undefined),
     log: () => undefined,
   };
@@ -53,10 +58,6 @@ test('every press that changed nothing shows its reason', async () => {
     [{kind: 'nothing', why: NO_MARKS}, copy['press.eraseNoMarks']],
     [{kind: 'nothing', why: NOT_PICTURE_AND_MARKS}, copy['press.eraseNotPicture']],
     [{kind: 'nothing', why: MARKS_OUTSIDE}, copy['press.eraseOutside']],
-    [
-      {kind: 'failed', why: 'modifyPageElements: 9 broken'},
-      copy['press.failed']('Enhance', 'modifyPageElements: 9 broken'),
-    ],
   ];
   for (const [done, toast] of cases) {
     const {d, toasts} = deps([], done);
@@ -78,4 +79,27 @@ test('the orphan sweep runs after the edit, and not when a permission is missing
   const missing = deps(['plugin.permission.FILE:READ'], {kind: 'edited', edit: 'enhance', ms: 1});
   await pressEdit(ENHANCE, missing.d);
   expect(missing.d.sweep).not.toHaveBeenCalled();
+});
+
+test('a press that failed on the tablet shows the Error state with its reason and Close, the details only in the log (#256)', async () => {
+  const working = quietWorking({failed: copy['working.failed'], timeout: copy['working.timeout']});
+  const lines: string[] = [];
+  const {d, toasts} = deps([], {kind: 'failed', why: 'modifyPageElements: 9 broken'});
+  d.fail = problem => working.hold(problem);
+  d.log = line => lines.push(line);
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = renderer.create(<WorkingStrip working={working} />);
+  });
+  await act(async () => {
+    await pressEdit(ENHANCE, d);
+  });
+  expect(toasts).toEqual([]);
+  expect(tree.root.findAllByProps({testID: 'error-view'}).length).toBeGreaterThan(0);
+  const shown = shownTexts(tree.root);
+  expect(shown).toEqual([copy['press.failedTitle']('Enhance'), copy['press.failedReason']]);
+  expect(lines.join('\n')).toContain('modifyPageElements: 9 broken');
+  expect(
+    pressables(tree.root).length,
+  ).toBeGreaterThan(0);
 });

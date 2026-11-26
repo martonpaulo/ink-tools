@@ -90,7 +90,7 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
   toast line (`sendLog`).
 - Permissions: `INTERNET`, `FILE:READ` and `FILE:WRITE`; `__tests__/pluginConfig.test.ts` checks them.
   `src/permissions.ts` asks for each one before the first file, note or network call of a tap and
-  when Settings opens, and a refusal's toast names it ([#163](https://github.com/martonpaulo/supernote-tools/issues/163)); `__tests__/permissions.test.ts`
+  when Settings opens, and a refusal's toast names it ([#163](https://github.com/martonpaulo/supernote-tools/issues/163)); `__tests__/permissions.test.tsx`
   checks that every declared permission is asked.
 - Relay writes only in its private folder (`getPluginDirPath`): the settings (`settingsPath`), and
   the sent PNGs, received files and PDF pages in `tempDir`. A shared path such as
