@@ -2122,7 +2122,7 @@ auth=$(cat "$KEYCHAIN/auth-url")
 check "the consent asks both Calendar scopes and the test calendars, offline" "$(python3 -c 'import sys,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); print(q["scope"], q["access_type"], q["code_challenge_method"], q["redirect_uri"].startswith("http://127.0.0.1:"))' "$auth")" "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.app.created offline S256 True"
 check "the exchange proves the PKCE verifier" "$(python3 -c 'import sys,hashlib,base64,urllib.parse as u; q=dict(u.parse_qsl(u.urlsplit(sys.argv[1]).query)); b=dict(u.parse_qsl(open(sys.argv[2]).read())); print(base64.urlsafe_b64encode(hashlib.sha256(b["code_verifier"].encode()).digest()).rstrip(b"=").decode()==q["code_challenge"], b["code"], b["grant_type"], b["redirect_uri"]==q["redirect_uri"])' "$auth" "$KEYCHAIN/token-body")" "True code-SYNTHETIC authorization_code True"
 check "the success page names the product and the state" "$(grep -c -e 'Ink Tools</span>' -e '<span>Signed in to Google</span>' "$KEYCHAIN/page.html")" "2"
-check "the page has a dark look" "$(grep -c 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "1"
+check "the page is light only, as the site is (#437)" "$(grep -c -e 'content="light"' -e 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "1"
 # #413: the page wears the site's look, from the site's own files, and loads nothing from the network.
 check "the page inlines the site's stylesheet whole, tokens and font stack included" "$(python3 -c 'import sys; page=open(sys.argv[1]).read(); css=open(sys.argv[2]).read(); print(css in page, "--accent:" in page, "font-family: -apple-system" in page)' "$KEYCHAIN/page.html" "$repo_root/../../site/styles/main.css")" "True True True"
 check "the success page says it is done and links the site's privacy policy" "$(grep -c -e 'You are done. Close this tab' -e '<a href="https://inktools.martonpaulo.com/privacy/">Privacy policy</a>' "$KEYCHAIN/page.html")" "2"
@@ -2133,7 +2133,7 @@ BROWSER_MODE=badstate google --json >"$work/out" 2>/dev/null
 check "a wrong state is refused" "$?" "1"
 check "a wrong state names its error" "$(field "['error']" < "$work/out")" "google_denied"
 check "a wrong state exchanges no code" "$([ -f "$KEYCHAIN/token-body" ] && echo exchanged || echo none)" "none"
-check "a wrong state shows the failure page, in the site's look, with the next step" "$(grep -c -e '<span>Sign-in failed</span>' -e 'class="failed"' -e 'run <code>inkctl google login</code> again' -e 'prefers-color-scheme: dark' "$KEYCHAIN/page.html")" "4"
+check "a wrong state shows the failure page, in the site's look, with the next step" "$(grep -c -e '<span>Sign-in failed</span>' -e 'class="failed"' -e 'run <code>inkctl google login</code> again' "$KEYCHAIN/page.html")" "3"
 BROWSER_MODE=denied google >/dev/null 2>"$work/err"
 check "a refused consent fails" "$?" "1"
 check "a refused consent names Google's answer" "$(grep -c 'access_denied' "$work/err")" "1"
