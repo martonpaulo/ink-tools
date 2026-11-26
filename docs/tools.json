@@ -1,5 +1,5 @@
 {
-  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; map.sources lists each outside service group, one item per line, with the service adapter it enters through (via) when it has one; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's levels (#407, #412); network lists each service a plugin sends data to, which its release notes print, an empty list for none (#373).",
+  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; map.sources lists each outside service group, one item per line, with the service adapter it enters through (via) when it has one; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's levels (#407, #412); network lists each service a plugin sends data to, which its release notes print, an empty list for none (#373). credits holds the README Credits section: the Supernote projects whose code Ink Tools uses or whose ideas it follows, in two groups; notCredited lists the general libraries and data a NOTICE.md links that stay out of it, so --check fails when a NOTICE.md links a repository in neither (#424).",
   "sections": [
     {"id": "tools", "title": "Tools", "intro": "For people who use the tablet."},
     {"id": "developer", "title": "Developer tools", "intro": ""}
@@ -206,5 +206,30 @@
         {"name": "Probes", "text": "quick on-device experiments for our tests. Never shipped."}
       ]
     }
-  ]
+  ],
+  "credits": {
+    "intro": "Ink Tools builds on other Supernote projects. Each licence text stays in the `NOTICE.md` the row links.",
+    "groups": [
+      {"title": "Code we use", "column": "What Ink Tools uses", "rows": [
+        {"project": "supernote-tool", "url": "https://github.com/jya-dev/supernote-tool", "author": "jya", "text": "The `.note` reader and RLE decoder, ported to Swift", "where": "apps/ink-notebook-editor/NOTICE.md"},
+        {"project": "supernote-snap", "url": "https://github.com/CharlesCheval/supernote-snap", "author": "Charles Cheval", "text": "The Smart Shapes recognizer, hold detection and stroke guard", "where": "plugins/smart-pen/NOTICE.md", "version": "v0.9.0"},
+        {"project": "supernote-pic2note", "url": "https://github.com/Keplex/supernote-pic2note", "author": "Keplex", "text": "The native build pipeline without Gradle", "where": "packages/native-build/NOTICE.md"},
+        {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "The word-search theme word banks", "where": "packages/puzzle-core/NOTICE.md"}
+      ]},
+      {"title": "Ideas we follow", "column": "Idea", "rows": [
+        {"project": "Supernote-InkGames", "url": "https://github.com/wolfsolver/Supernote-InkGames", "author": "wolfsolver", "text": "Puzzles generated for the page, solved with the pen", "where": "docs/research/2026-11-paper-games.md"},
+        {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "A set of games inside one plugin", "where": "docs/research/2026-11-paper-games.md"},
+        {"project": "Inkling", "url": "https://github.com/Laumss/Inkling", "author": "Laumss", "text": "Write a picture file, then insert it on the page", "where": "docs/research/plugin-brief/brief.md"},
+        {"project": "sn-plugins", "url": "https://github.com/Laumss/sn-plugins", "author": "Laumss", "text": "The Settings screen conventions in `ui-kit`", "where": "docs/plugin-scope.md"},
+        {"project": "supernote-mcp", "url": "https://github.com/ridget/supernote-mcp", "author": "ridget", "text": "inkctl: touch the tablet only when called", "where": "cli/inkctl/docs/product.md"},
+        {"project": "inkbridge", "url": "https://github.com/CRSiegfried/inkbridge", "author": "CRSiegfried", "text": "inkctl: leave transcription to the caller", "where": "cli/inkctl/docs/product.md"}
+      ]}
+    ],
+    "notCredited": [
+      "https://github.com/hfg-gmuend/openmoji",
+      "https://github.com/muan/emojilib",
+      "https://github.com/unicode-org/cldr-json",
+      "https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words"
+    ]
+  }
 }

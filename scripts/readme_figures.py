@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""Write the README's tool tables, tool map and level table from the repository's data (#407).
+"""Write the README's credits, tool tables, tool map and level table from the repository's data (#407).
 
     readme_figures.py [--root DIR] [--check]
 
 Sources, each the one owner of its values:
-- docs/tools.json: every tool row (the README Tools and Developer tools tables, the tool map);
+- docs/tools.json: every tool row (the README Tools and Developer tools tables, the tool map), and
+  `credits`, the Supernote projects the README Credits section names (#424);
 - docs/architecture.md › Layer rules: the level table's public columns and the rule sentence;
 - registry/items/: how many items sit at each level, and each tool's levels;
 - AGENTS.md's `- README Status values:` line: the status dots and their legend.
 
-Writes three README blocks, each between its marker comments: the Tools tables (TOOLS_START), the
+Writes four README blocks, each between its marker comments: the Credits section (CREDITS_START), the
+Tools tables (TOOLS_START), the
 tool map as a Mermaid flowchart with a table of the same facts under it (MAP_START), and the five
 levels as a Markdown table (LEVELS_START). GitHub renders the Mermaid block as accessible SVG, so the
 repository holds no image of either figure (owner, 2026-11-26). --check writes nothing: it exits 1
 when the README differs from a fresh generation, so a data change that forgets them fails the
-`docs` gate. The public wording of what it writes is #408's gate.
+`docs` gate. It also exits 1 when a NOTICE.md links a GitHub repository that `credits` neither
+credits nor lists in `notCredited`, so a new credit in a NOTICE.md cannot miss the README. The public wording of what it writes is #408's gate.
 """
 import argparse
 import html
@@ -27,6 +30,8 @@ sys.dont_write_bytecode = True  # no __pycache__ beside the root scripts, which 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import readme_status  # noqa: E402
 
+CREDITS_START = "<!-- credits:start: written by scripts/readme_figures.py from docs/tools.json -->"
+CREDITS_END = "<!-- credits:end -->"
 TOOLS_START = "<!-- tools:start: written by scripts/readme_figures.py from docs/tools.json -->"
 TOOLS_END = "<!-- tools:end -->"
 MAP_START = "<!-- tool-map:start: written by scripts/readme_figures.py from docs/tools.json and registry/items -->"
@@ -44,6 +49,9 @@ LEVELS = range(1, 6)
 # Each level as a keycap emoji (owner, 2026-11-26, #412).
 KEYCAPS = {n: f"{n}\ufe0f\u20e3" for n in range(1, 6)}
 # The tool map's groups, by where a tool runs, from its tools.json kind: (subgraph id, heading, kinds).
+# A GitHub repository link, as owner/name, in a NOTICE.md (#424).
+REPOSITORY = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?(?=[/)#>\s`]|$)")
+OWN_OWNER = "martonpaulo/"
 GROUPS = (("plugins", "Tablet plugins", ("plugin",)), ("apps", "Tablet apps", ("app",)),
           ("mac", "Mac", ("Mac app", "CLI")))
 
@@ -142,6 +150,52 @@ def with_block(readme, block, start_marker, end_marker):
     if start < 0 or end < start:
         raise SystemExit(f"README.md: no {start_marker} ... {end_marker} markers")
     return readme[:start] + block + readme[end + len(end_marker):]
+
+
+# ---------------------------------------------------------------- credits
+
+
+def repository(url):
+    """The owner/name of a GitHub repository URL, lower case, or None."""
+    match = REPOSITORY.match(url)
+    return match.group(1).lower() if match else None
+
+
+def credits_block(credits):
+    """The README Credits section: one Markdown table per group, each row linking its NOTICE.md or doc."""
+    out = [CREDITS_START, "", "## Credits", "", credits["intro"], ""]
+    for group in credits["groups"]:
+        out += [f"### {group['title']}", "", f"| Project | Author | {group['column']} | Where |",
+                "| :--- | :--- | :--- | :--- |"]
+        for row in group["rows"]:
+            version = f" {row['version']}" if row.get("version") else ""
+            out.append(f"| [{row['project']}]({row['url']}){version} | {row['author']} | {row['text']} "
+                       f"| [`{row['where']}`]({row['where']}) |")
+        out.append("")
+    return "\n".join(out + [CREDITS_END])
+
+
+def credit_problems(root, credits):
+    """What the credits break: a row whose Where file is missing, or a NOTICE.md that links a GitHub
+    repository the credits neither credit nor leave out by name (#424)."""
+    problems = []
+    named = set()
+    for group in credits["groups"]:
+        for row in group["rows"]:
+            named.add(repository(row["url"]))
+            if not (root / row["where"]).is_file():
+                problems.append(f"docs/tools.json: credits: {row['project']}: no file {row['where']}")
+    named |= {repository(url) for url in credits["notCredited"]}
+    for notice in sorted(root.glob("**/NOTICE.md")):
+        rel = notice.relative_to(root).as_posix()
+        if "node_modules" in notice.parts:
+            continue
+        found = {m.group(1).lower() for m in REPOSITORY.finditer(notice.read_text(encoding="utf-8"))}
+        for repo in sorted(found - named):
+            if not repo.startswith(OWN_OWNER):
+                problems.append(f"{rel}: links {repo}, which docs/tools.json credits neither credits nor lists "
+                                "in notCredited")
+    return problems
 
 
 # ---------------------------------------------------------------- level table
@@ -293,7 +347,7 @@ def data_problems(root, data):
 def generate(root):
     """{relative path: expected text} for every file this script owns."""
     data = json.loads((root / "docs/tools.json").read_text(encoding="utf-8"))
-    problems = data_problems(root, data)
+    problems = data_problems(root, data) + credit_problems(root, data["credits"])
     if problems:
         raise SystemExit("\n".join(problems))
     values = readme_status.allowed((root / "AGENTS.md").read_text(encoding="utf-8"))
@@ -302,6 +356,7 @@ def generate(root):
     levels, rule = load_levels(root)
     counts, registry_tools = load_registry(root)
     readme = (root / "README.md").read_text(encoding="utf-8")
+    readme = with_block(readme, credits_block(data["credits"]), CREDITS_START, CREDITS_END)
     readme = with_block(readme, readme_block(data, values), TOOLS_START, TOOLS_END)
     readme = with_block(readme, map_block(data, registry_tools), MAP_START, MAP_END)
     readme = with_block(readme, levels_block(levels, rule, counts), LEVELS_START, LEVELS_END)

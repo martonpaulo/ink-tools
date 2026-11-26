@@ -22,6 +22,13 @@ def copy_inputs(target):
         source, dest = ROOT / rel, target / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         (shutil.copytree if source.is_dir() else shutil.copy)(source, dest)
+    credits = json.loads((ROOT / "docs/tools.json").read_text(encoding="utf-8"))["credits"]
+    notices = subprocess.run(["git", "-C", str(ROOT), "ls-files", "*NOTICE.md"], capture_output=True, text=True,
+                             check=True).stdout.split()
+    for rel in notices + [row["where"] for group in credits["groups"] for row in group["rows"]]:
+        dest = target / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, dest)
 
 
 def check(root):
@@ -43,23 +50,36 @@ class Drift(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp)
 
-    def test_a_tool_change_without_regeneration_fails(self):
-        path = self.tmp / "docs/tools.json"
+    def edit_json(self, rel, change):
+        """Apply `change` to the JSON file at `rel` of the throwaway root."""
+        path = self.tmp / rel
         data = json.loads(path.read_text(encoding="utf-8"))
-        data["tools"][0]["status"] = "Working"
+        change(data)
         path.write_text(json.dumps(data), encoding="utf-8")
+
+    def assert_fails(self, message):
         result = check(self.tmp)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("README.md: differs", result.stdout)
+        self.assertIn(message, result.stdout + result.stderr)
+
+    def test_a_tool_change_without_regeneration_fails(self):
+        self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="Working"))
+        self.assert_fails("README.md: differs")
 
     def test_a_registry_change_without_regeneration_fails(self):
-        path = self.tmp / "registry/items/pen.json"
-        data = json.loads(path.read_text(encoding="utf-8"))
-        data["items"].append(dict(data["items"][0], id="pen.extra", level=4))
-        path.write_text(json.dumps(data), encoding="utf-8")
-        result = check(self.tmp)
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("README.md: differs", result.stdout)
+        self.edit_json("registry/items/pen.json",
+                       lambda data: data["items"].append(dict(data["items"][0], id="pen.extra", level=4)))
+        self.assert_fails("README.md: differs")
+
+    def test_a_notice_credit_missing_from_the_credits_fails(self):
+        notice = self.tmp / "plugins/smart-pen/NOTICE.md"
+        notice.write_text(notice.read_text(encoding="utf-8") + "\nAdapted from https://github.com/someone/new-plugin.\n",
+                          encoding="utf-8")
+        self.assert_fails("plugins/smart-pen/NOTICE.md: links someone/new-plugin")
+
+    def test_a_credits_change_without_regeneration_fails(self):
+        self.edit_json("docs/tools.json", lambda data: data["credits"]["groups"][0]["rows"][0].update(author="someone else"))
+        self.assert_fails("README.md: differs")
 
     def test_regeneration_makes_the_check_pass(self):
         (self.tmp / "README.md").write_text(
@@ -160,6 +180,36 @@ class Pieces(unittest.TestCase):
     def test_every_repository_row_has_an_icon(self):
         data = json.loads((ROOT / "docs/tools.json").read_text(encoding="utf-8"))
         self.assertEqual(readme_figures.data_problems(ROOT, data), [])
+
+    def test_the_credits_list_each_group_with_its_rows_and_links(self):
+        credits = {"intro": "Thanks.", "notCredited": [], "groups": [
+            {"title": "Code we use", "column": "What Ink Tools uses", "rows": [
+                {"project": "lib", "url": "https://github.com/a/lib", "author": "A", "text": "the reader",
+                 "where": "x/NOTICE.md", "version": "v1.0"}]},
+            {"title": "Ideas we follow", "column": "Idea", "rows": [
+                {"project": "idea", "url": "https://github.com/b/idea", "author": "B", "text": "one plugin",
+                 "where": "docs/y.md"}]}]}
+        block = readme_figures.credits_block(credits)
+        self.assertTrue(block.startswith(readme_figures.CREDITS_START) and block.endswith(readme_figures.CREDITS_END))
+        self.assertLess(block.index("### Code we use"), block.index("### Ideas we follow"))
+        self.assertIn("| [lib](https://github.com/a/lib) v1.0 | A | the reader | [`x/NOTICE.md`](x/NOTICE.md) |", block)
+        self.assertIn("| Project | Author | Idea | Where |", block)
+
+    def test_notice_links_are_credited_left_out_or_our_own(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        (root / "a").mkdir()
+        (root / "a/NOTICE.md").write_text(
+            "[x](https://github.com/A/Lib/tree/v1) <https://github.com/c/data> https://github.com/martonpaulo/ink-tools "
+            "https://github.com/d/new.git", encoding="utf-8")
+        (root / "a/doc.md").write_text("x", encoding="utf-8")
+        credits = {"groups": [{"rows": [{"project": "Lib", "url": "https://github.com/a/lib", "where": "a/doc.md"},
+                                        {"project": "Gone", "url": "https://github.com/e/gone", "where": "a/none.md"}]}],
+                   "notCredited": ["https://github.com/c/data"]}
+        problems = readme_figures.credit_problems(root, credits)
+        self.assertEqual(len(problems), 2, problems)
+        self.assertIn("Gone: no file a/none.md", problems[0])
+        self.assertTrue(problems[1].startswith("a/NOTICE.md: links d/new,"))
 
     def test_a_missing_marker_stops_the_generation(self):
         with self.assertRaises(SystemExit):
