@@ -497,6 +497,8 @@ NOTE_MODE_NORMAL = REGISTRY["note.activity"]["normalMode"]
 PLUGIN_SUFFIX = ".snplg"
 PLUGIN_FOLDER = REGISTRY["pluginhost.file-sandbox"]["sharedFolder"]
 PLUGIN_URI = f"content://{REGISTRY['pluginhost.plugin-list']['authority']}/{REGISTRY['pluginhost.plugin-list']['path']}"
+# After an install PluginHost restarts, and its plugin list answers nothing until it is back (#419).
+PLUGIN_LIST_RESTARTING = "the plugin list gave no answer for {limit:g} s: PluginHost restarts after an install; run inkctl plugin list once it answers"
 CONTENT_QUERY = "content query --uri"
 PLUGIN_NEXT_STEP = "On the device: Settings > Apps > Plugins > Add Plugin."
 # The Note app's text-box font menu lists every .ttf and .otf file under this folder, read
@@ -2683,6 +2685,24 @@ def plugin_rows(device: Device) -> list[dict]:
     return query_rows(device, f"{CONTENT_QUERY} {PLUGIN_URI}")
 
 
+def settled_plugin_rows(device: Device, limit: float) -> list[dict]:
+    """The plugin list, read again while it gives an empty answer, as it does while PluginHost
+    restarts after an install (device round 5, #419), up to `limit` seconds. Any other answer, rows,
+    the provider's own «no rows» or an error text, counts at once."""
+    started = time.monotonic()
+    while True:
+        output = device.shell(f"{CONTENT_QUERY} {PLUGIN_URI}")
+        if output.strip():
+            rows = parse_rows(output)
+            if not rows and NO_ROWS not in output:
+                raise Failure(EXIT_FAILED, "device_error", output.strip())
+            return rows
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_FAILED, "device_error", PLUGIN_LIST_RESTARTING.format(limit=limit), PLUGIN_LIST_STEP)
+        time.sleep(WAIT_INTERVAL)
+
+
+
 def shown_plugin_names(row: dict) -> list[str]:
     """The names a plugin shows, one for each language."""
     shown = row.get("name", "")
@@ -2820,7 +2840,7 @@ def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) 
     """Prove the install from the list. An update needs the version column, or nothing proves it changed."""
     started = time.monotonic()
     while True:
-        for row in plugin_rows(device):
+        for row in settled_plugin_rows(device, max(0.0, limit - (time.monotonic() - started))):
             if row.get("pluginID") != config["id"]:
                 continue
             if updating and "versionName" not in row:
@@ -2944,11 +2964,11 @@ def wait_until(limit: float, condition, message: str):
         time.sleep(WAIT_INTERVAL)
 
 
-def landed_despite_failure(device: Device, config: dict):
+def landed_despite_failure(device: Device, config: dict, limit: float):
     """The plugin's row when PluginHost answered onFailed yet holds the file's build: its binder
     thread can carry another plugin's id and refuse the callback after the update landed
     (docs/supernote.md, #225). None when the list does not prove the build."""
-    for row in plugin_rows(device):
+    for row in settled_plugin_rows(device, limit):
         if row.get("pluginID") == config["id"] and "versionName" in row and same_build(row, config, row["versionName"]):
             return row
     return None
@@ -2958,7 +2978,7 @@ def install_through_bridge(device: Device, args: argparse.Namespace, config: dic
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
     code, answer = bridge_result(device, "install", path=pushed["path"])
     # The list proves a failure that landed only when the version changed (#225).
-    row = landed_despite_failure(device, config) if code == BRIDGE_FAILED and since is None else None
+    row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None else None
     if row is None:
         bridge_answer(code, answer)
         row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
@@ -3097,7 +3117,7 @@ def command_plugin_action(device: Device, args: argparse.Namespace):
 def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
-    installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
+    installed = [row for row in settled_plugin_rows(device, args.timeout) if row.get("pluginID") == config["id"]]
     same = bool(installed) and same_build(installed[0], config, installed[0].get("versionName"))
     if same and not args.same_version:
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", PLUGIN_LIST_STEP)

@@ -200,7 +200,13 @@ case "$1" in
                 # timing-independent: the real stream never ends; the test's limit ends this one.
                 [ -n "${ADB_HANG:-}" ] && exec sleep 30
                 : ;;
-            "content query"*) cat "$ADB_FILES/rows" ;;
+            "content query"*)
+                # $ADB_FILES/rows-silent: that many reads answer nothing, as while PluginHost restarts (#419).
+                if [ -f "$ADB_FILES/rows-silent" ] && [ "$(cat "$ADB_FILES/rows-silent")" -gt 0 ]; then
+                    echo $(($(cat "$ADB_FILES/rows-silent") - 1)) > "$ADB_FILES/rows-silent"
+                else
+                    cat "$ADB_FILES/rows"
+                fi ;;
             "input tap"*)
                 if [ -f "$ADB_FILES/taps-left" ]; then
                     left=$(($(cat "$ADB_FILES/taps-left") - 1))
@@ -1030,6 +1036,19 @@ check "a bridge onFailed that landed logs the host's error once" "$(grep -c 'onF
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' | tee "$files/rows" > "$files/rows-after-bridge"
 run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
 check "a bridge onFailed whose version did not change still fails" "$?$(grep -c 'onFailed PluginError{errorCode=100}' "$work/err")" "11"
+# #419: PluginHost restarts after an install, and its list answers nothing for a while.
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
+printf 'Broadcast completed: result=1, data="ok onSuccess PluginInfo{pluginID=new.plugin}"\n' > "$files/bridge-answer"
+echo 3 > "$files/rows-silent"
+result=$(run plugin install "$work/local/test.snplg" --overwrite --json 2>"$work/err")
+check "plugin install reads the list again while PluginHost restarts, and proves the update (#419)" "$?$(printf '%s' "$result" | field "['action'],d['row']['versionName']")$(cat "$files/rows-silent")" "0('updated', '2.0')0"
+rm -f "$files/rows-after-bridge"
+printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
+echo 999 > "$files/rows-silent"
+run plugin install "$work/local/test.snplg" --overwrite --timeout 0 >/dev/null 2>"$work/err"
+check "a list that never answers fails after the limit, naming the restart (#419)" "$?$(grep -c 'PluginHost restarts after an install' "$work/err")" "11"
+rm -f "$files/rows-silent"
 rm -f "$files/rows-after-bridge"
 printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
 printf 'Broadcast completed: result=5, data="timeout no callback"\n' > "$files/bridge-answer"

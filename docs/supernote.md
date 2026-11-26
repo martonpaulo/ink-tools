@@ -548,6 +548,10 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [measured, Manta, bridge 0.1.0 beta 2, 2026-11-17,
   [#225](https://github.com/martonpaulo/ink-tools/issues/225)]. Why the thread keeps the other id
   is [unverified]; `inkctl plugin install` reads the version back after an `onFailed`.
+- After an install PluginHost restarts, and its plugin list gives an empty answer until it is back:
+  a landed install then failed its read-back on 2 of 2 tries [measured, Manta, device round 5,
+  2026-11-26]; the install's reads wait for an answer up to `--timeout`
+  ([#419](https://github.com/martonpaulo/ink-tools/issues/419)).
 - An enable through the bridge after a disable once got no callback: PluginHost logged
   `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
   uninstall and an install loaded it [reported by the device round of 2026-11-17, Image Editing,
