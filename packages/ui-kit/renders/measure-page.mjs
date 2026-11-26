@@ -127,6 +127,8 @@ export function measurePage() {
         fontSize,
         glyphs: shownX(el, boxOf(glyphs)),
         code: Boolean(el.closest(CODE)),
+        // The code block's box, so a line that runs past its side is caught: lines wrap (#405).
+        codeBox: el.closest(CODE) ? boxOf(el.closest(CODE).getBoundingClientRect()) : undefined,
         monospace: /monospace/i.test(getComputedStyle(el).fontFamily),
         within,
         scroll: scrollOf(el),

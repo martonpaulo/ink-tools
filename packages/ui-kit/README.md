@@ -202,14 +202,18 @@ Code, JSON and logs show only in `CodeBlock`, never in a plain `Text`
 ([#405](https://github.com/martonpaulo/ink-tools/issues/405)):
 
 - an ink-bordered box about half the window high (`codeBlockHeight`);
-- the lines never wrap: the box scrolls sideways, with its bar at the box's bottom, and down
-  inside, both bars kept drawn (`persistentScrollbar`), so nothing flashes on e-ink;
-- the inner scroll is at least as wide as the box, so a short log keeps its bar at the box's edge;
+- it scrolls up and down only: a long line wraps inside the box, nothing runs past its sides and
+  there is no sideways bar; its one bar stays drawn at the box's edge (`persistentScrollbar`), so
+  nothing flashes on e-ink (owner, 2026-11-26);
+- «Copy», a secondary button at the box's top right, puts the whole text on the clipboard with
+  React Native's clipboard module and confirms it in a short toast (`copyToClipboard`); a block
+  with no lines has no Copy;
 - `fit` sizes the box to its lines, for the one command a `Needs` fix names (`command`);
 - the `code` text style: the system monospaced face (`monospace`), ink on paper, at the minimum
   size, so more of a line shows.
 
 A screen in `renders/screens.tsx` lists the raw lines it is fed as `raw`, and the renders fail when
-one of them, or any monospaced text, shows outside the block (`rawBreaks` in `renders/rules.ts`).
+one of them, or any monospaced text, shows outside the block, and when a line of the block runs
+past its side (`rawBreaks` in `renders/rules.ts`).
 A screen shows the block only when it has lines to show. Headless Chromium hides scroll bars, so the renders show the box and its cut lines, not the bars;
-the device round checks both scroll directions.
+the device round checks the vertical scroll, the wrapped lines and Copy.

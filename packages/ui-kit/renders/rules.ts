@@ -45,6 +45,8 @@ export type Measured = {
     bar?: boolean;
     /** True inside ui-kit's CodeBlock (#405). */
     code?: boolean;
+    /** The box of the code block the text sits in (#405). */
+    codeBox?: Box;
     /** True when drawn in a monospaced face. */
     monospace?: boolean;
   }[];
@@ -124,9 +126,11 @@ export function missingBarBreaks({bars}: Pick<Measured, 'bars'>): string[] {
  */
 export function rawBreaks({texts}: Pick<Measured, 'texts'>, raw: readonly string[] = []): string[] {
   const lines = new Set(raw.map(line => line.trim()));
-  return texts.flatMap(({text, code, monospace}) => {
+  return texts.flatMap(({text, code, codeBox, glyphs, monospace}) => {
     if (code) {
-      return [];
+      // The block scrolls up and down only: a long line wraps inside its sides (owner, #405).
+      const past = codeBox && (glyphs.left + TOLERANCE < codeBox.left || glyphs.right - TOLERANCE > codeBox.right);
+      return past ? [`code line «${text.slice(0, 60)}» runs past the code block's side: its lines wrap`] : [];
     }
     if (lines.has(text)) {
       return [`raw text «${text.slice(0, 60)}» shows outside ui-kit's CodeBlock`];

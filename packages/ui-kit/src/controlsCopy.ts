@@ -16,3 +16,6 @@ export const DELETE_LABEL = 'Delete';
 export const DOWNLOAD_LABEL = 'Download';
 /** The spoken name of the field's ×, which clears its text (#287). */
 export const CLEAR_LABEL = 'Clear';
+/** The code block's «Copy» and the toast that confirms it (#405). */
+export const COPY_LABEL = 'Copy';
+export const COPIED_TEXT = 'Copied';

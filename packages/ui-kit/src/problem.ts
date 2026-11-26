@@ -5,7 +5,7 @@
 
 /**
  * The one fix: an action the tool runs itself, or the exact steps only the owner can do, with the
- * one command they name, shown in ui-kit's CodeBlock so it never wraps (#405).
+ * one command they name, shown in ui-kit's CodeBlock, with its Copy (#405).
  */
 export type Fix = {label: string; run: () => void} | {steps: string[]; command?: string};
 
