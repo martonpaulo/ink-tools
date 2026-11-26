@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreML
 import Foundation
 import Vision
 
@@ -31,7 +32,34 @@ nonisolated struct VisionRecognizer: PageRecognizer {
     }
 
     func words(in image: CGImage) async throws -> [(text: String, box: CGRect)] {
+        try await Self.withCPUFallback { onCPU in try await read(image, onCPU: onCPU) }
+    }
+
+    /// Runs `attempt` on Vision's default devices, then once more on the CPU when that fails. A Mac
+    /// whose Neural Engine or GPU cannot compile Vision's text model, such as a virtual Mac, fails
+    /// with a private `e5rtError`, while its CPU still reads the page (#319). A cancellation is
+    /// never retried.
+    static func withCPUFallback<T: Sendable>(_ attempt: @Sendable (_ onCPU: Bool) async throws -> T) async throws -> T {
+        do {
+            return try await attempt(false)
+        } catch {
+            if error is CancellationError || Task.isCancelled { throw error }
+            if let vision = error as? VisionError, case .requestCancelled = vision { throw error }
+            return try await attempt(true)
+        }
+    }
+
+    private func read(_ image: CGImage, onCPU: Bool) async throws -> [(text: String, box: CGRect)] {
         var request = RecognizeTextRequest()
+        if onCPU {
+            for (stage, devices) in request.supportedComputeStageDevices {
+                let cpu = devices.first { device in
+                    if case .cpu = device { return true }
+                    return false
+                }
+                if let cpu { request.setComputeDevice(cpu, for: stage) }
+            }
+        }
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
         if !languages.isEmpty {
