@@ -540,10 +540,12 @@ enum PageKeys {
     ]
 }
 
-private struct ThumbnailRow: View {
+/// One page in the page list: its thumbnail and number.
+struct ThumbnailRow: View {
     let index: Int
     let count: Int
     let pages: PageImages
+    @Environment(\.backgroundProminence) private var prominence
 
     var body: some View {
         // The row is as tall as its page's thumbnail, so a landscape page leaves no blank band (#291).
@@ -555,6 +557,7 @@ private struct ThumbnailRow: View {
             Text("\(index + 1)")
                 .font(.caption)
                 .monospacedDigit()
+                .foregroundStyle(Tokens.sidebarText(on: prominence))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 4)

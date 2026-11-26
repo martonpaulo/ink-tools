@@ -271,7 +271,12 @@ final class RenderTests {
     }
 }
 
-/// A titled window that is never ordered in and draws at one pixel per point.
+/// A titled window that is never ordered in and draws at one pixel per point. Its capture leaves
+/// out what the window server composites: a layer's compositing filter (SwiftUI's vibrant text on
+/// the sidebar's glass, drawn dark on dark until `Tokens.sidebarText`, #420) and the scroll edge
+/// effect under the toolbar. A selected sidebar row draws black in light mode for the same
+/// reason; its number follows `Tokens.sidebarText(on:)` on screen. `AppearanceTests` checks the
+/// page list's numbers in both appearances.
 @MainActor
 final class OffscreenWindow: NSWindow {
     override var backingScaleFactor: CGFloat { 1 }
