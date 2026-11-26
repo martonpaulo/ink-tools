@@ -1,16 +1,17 @@
 /**
  * The «Send Text» view's state (#99): the lasso is read when the button is pressed, then the view
- * shows the recognised text with «Send to <device>» and «Cancel», or «No text recognized» with
- * «Close». With no device chosen, the view shows Settings first, as a first send does.
+ * shows the recognised text with the receivers found, one tap each to send (#307), and «Cancel»,
+ * or «No text recognized» with «Close». With no receiver found, the view shows Settings and its
+ * «No LocalSend device found».
  */
 import {Device} from '../localsend/protocol';
 
 export type TextState =
   | {phase: 'idle'}
   | {phase: 'reading'}
-  | {phase: 'ready'; text: string; device: Device}
+  | {phase: 'ready'; text: string; devices: Device[]}
   | {phase: 'empty'}
-  | {phase: 'sending'; text: string; device: Device};
+  | {phase: 'sending'; text: string; devices: Device[]; to: Device};
 
 const IDLE: TextState = {phase: 'idle'};
 let state: TextState = IDLE;
@@ -40,8 +41,8 @@ export type TextDeps = {
   refused(permission: string): string;
   /** The lassoed handwriting as text; null when none was recognised or the call failed. */
   read(): Promise<string | null>;
-  /** The chosen device, or null before one is chosen. */
-  device(): Promise<Device | null>;
+  /** The receivers one search finds, the last pick first (#307); empty when none answers. */
+  devices(): Promise<Device[]>;
   /** Sends the text; answers the toast line. */
   send(device: Device, text: string): Promise<string>;
   closeView(): void;
@@ -61,23 +62,25 @@ export async function startTextSend(deps: TextDeps): Promise<void> {
     deps.toast(deps.refused(missing));
     return;
   }
-  const device = await deps.device();
-  if (device === null) {
-    // The view shows Settings while the state is idle.
+  const devices = await deps.devices();
+  if (devices.length === 0) {
+    // The view shows Settings, with «No LocalSend device found», while the state is idle.
     setState(IDLE);
     return;
   }
   const text = await deps.read();
-  setState(text === null || text.trim() === '' ? {phase: 'empty'} : {phase: 'ready', text, device});
+  setState(
+    text === null || text.trim() === '' ? {phase: 'empty'} : {phase: 'ready', text, devices},
+  );
 }
 
-/** «Send to <device>»: sends once, then closes the view with the toast. */
-export async function confirmTextSend(deps: TextDeps): Promise<void> {
+/** A tap on one receiver of the list: sends once to it, then closes the view with the toast. */
+export async function confirmTextSend(deps: TextDeps, device: Device): Promise<void> {
   if (state.phase !== 'ready') {
     return;
   }
-  const {text, device} = state;
-  setState({phase: 'sending', text, device});
+  const {text, devices} = state;
+  setState({phase: 'sending', text, devices, to: device});
   try {
     const line = await deps.send(device, text);
     deps.closeView();

@@ -13,6 +13,15 @@ const lan = (...parts: number[]) => parts.join('.');
 const answer = (alias: string, fingerprint: string) =>
   JSON.stringify({alias, fingerprint, port: 53317, protocol: 'https'});
 
+/** The pressable list rows named `label` (#307). */
+const rows = (tree: ReactTestRenderer, label: string) =>
+  tree.root.findAll(
+    node =>
+      typeof node.props.onPress === 'function' &&
+      node.props.accessibilityLabel === label,
+  );
+const row = (tree: ReactTestRenderer, label: string) => rows(tree, label)[0];
+
 async function render(
   api: ReturnType<typeof fakeRelay>['api'],
   close: () => void = () => {},
@@ -59,7 +68,7 @@ test('«No LocalSend device found» closes by its Close button and by Back (#98)
   back.restore();
 });
 
-test('picking a found device saves it with its fingerprint', async () => {
+test('picking a found device in Settings lists it first on each send (#307)', async () => {
   const {api, calls} = fakeRelay({
     discover: jest.fn(async () => [
       {ip: lan(10, 0, 0, 2), text: answer('Mac', 'fp')},
@@ -70,25 +79,25 @@ test('picking a found device saves it with its fingerprint', async () => {
     tree.root.find(
       node =>
         typeof node.type === 'string' &&
-        node.props.accessibilityLabel === 'Send to: Mac',
+        node.props.accessibilityLabel === 'Show first when sending: Mac',
     );
   expect(radio().props.accessibilityState.checked).toBe(false);
   await act(async () => {
     tree.root
       .findAll(
         node =>
-          node.props.accessibilityLabel === 'Send to: Mac' &&
+          node.props.accessibilityLabel === 'Show first when sending: Mac' &&
           typeof node.props.onPress === 'function',
       )[0]
       .props.onPress();
   });
-  expect(JSON.parse(calls.written[0]).device).toMatchObject({
+  expect(JSON.parse(calls.written[0]).last).toMatchObject({
     alias: 'Mac',
     fingerprint: 'fp',
   });
   expect(radio().props.accessibilityState.checked).toBe(true);
   expect(
-    tree.root.findAllByProps({children: 'Sends go to Mac'}).length,
+    tree.root.findAllByProps({children: 'Mac shows first when you send'}).length,
   ).toBeGreaterThan(0);
 });
 
@@ -105,8 +114,8 @@ test('two receivers with one alias show apart as two radios (#274)', async () =>
       typeof node.type === 'string' && node.props.accessibilityRole === 'radio',
   );
   expect(radios.map(node => node.props.accessibilityLabel)).toEqual([
-    `Send to: Mac · ${lan(10, 0, 0, 2)}`,
-    `Send to: Mac · ${lan(10, 0, 0, 3)}`,
+    `Show first when sending: Mac · ${lan(10, 0, 0, 2)}`,
+    `Show first when sending: Mac · ${lan(10, 0, 0, 3)}`,
   ]);
   expect(screenBreaks(tree.root)).toEqual([]);
 });
@@ -142,7 +151,7 @@ test('the receive view keeps the size rules, names the tablet and stops (#49)', 
 });
 
 test('the send half announces the certificate fingerprint, the saved one only without it', async () => {
-  const settings = {fingerprint: 'saved', device: null};
+  const settings = {fingerprint: 'saved', pins: {}, last: null};
   const {api} = fakeRelay();
   await expect(
     ownFingerprint(api, settings, async () => ok('/p')),
@@ -152,7 +161,7 @@ test('the send half announces the certificate fingerprint, the saved one only wi
   ).resolves.toBe('saved');
 });
 
-test('«Send Text» shows the text with Send and Cancel, or only Close when empty (#99)', async () => {
+test('«Send Text» shows the text with one row per receiver and Cancel, or only Close when empty (#99, #307)', async () => {
   const device: Device = {
     alias: 'Mac',
     ip: lan(10, 0, 0, 2),
@@ -160,12 +169,13 @@ test('«Send Text» shows the text with Send and Cancel, or only Close when empt
     protocol: 'https',
     fingerprint: 'fp',
   };
+  const iphone: Device = {...device, alias: 'iPhone', fingerprint: 'fp2'};
   const onSend = jest.fn();
   let ready!: ReactTestRenderer;
   await act(async () => {
     ready = renderer.create(
       <TextView
-        state={{phase: 'ready', text: 'Buy milk', device}}
+        state={{phase: 'ready', text: 'Buy milk', devices: [device, iphone]}}
         onSend={onSend}
         onCancel={() => {}}
       />,
@@ -173,9 +183,10 @@ test('«Send Text» shows the text with Send and Cancel, or only Close when empt
   });
   expect(screenBreaks(ready.root)).toEqual([]);
   await act(async () => {
-    ready.root.findByProps({label: 'Send to Mac'}).props.onPress();
+    row(ready, 'iPhone').props.onPress();
   });
   expect(onSend).toHaveBeenCalledTimes(1);
+  expect(onSend).toHaveBeenCalledWith(iphone);
   expect(ready.root.findAllByProps({label: 'Cancel'}).length).toBeGreaterThan(
     0,
   );
@@ -186,5 +197,5 @@ test('«Send Text» shows the text with Send and Cancel, or only Close when empt
     );
   });
   expect(empty.root.findAllByProps({label: 'Close'}).length).toBeGreaterThan(0);
-  expect(empty.root.findAllByProps({label: 'Send to Mac'})).toEqual([]);
+  expect(rows(empty, 'Mac')).toEqual([]);
 });

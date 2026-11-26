@@ -16,15 +16,16 @@ import {
 import {copy} from './src/copy';
 import {
   ALIAS,
+  findForSend,
   noteHost,
   RECEIVE_ID,
-  runSend,
   SEND_PAGE_ID,
   SEND_SELECTION_ID,
   SEND_TEXT_ID,
   textDeps,
 } from './src/run';
 import {startTextSend} from './src/send/textSession';
+import {startPick} from './src/send/pickSession';
 import {relay} from './src/native';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
@@ -95,20 +96,22 @@ function receive() {
 }
 
 /**
- * No view: the person stays on the note under the «Loading…» strip (#103) and reads a toast; with
- * no device, Settings opens.
+ * The search runs under the «Loading…» strip (#103); then the view lists the receivers found, and
+ * a tap there sends (#307). With none found, Settings opens on «No LocalSend device found».
  */
 function send(capture) {
   working
-    .run(() => runSend(capture))
-    .then(outcome => {
-      if (outcome.kind === 'choose') {
-        // The strip has closed the view; Settings opens on its own.
-        showPluginView();
-      } else {
-        // Whether the host shows the toast is measured in the device round (#98 Task 8).
-        ToastAndroid.show(outcome.text, ToastAndroid.SHORT);
+    .run(() => findForSend())
+    .then(found => {
+      if (found.kind === 'toast') {
+        ToastAndroid.show(found.text, ToastAndroid.SHORT);
+        return;
       }
+      if (found.kind === 'pick') {
+        startPick(capture, found.devices);
+      }
+      // The strip has closed the view; the list or Settings opens on its own.
+      showPluginView();
     })
     .catch(error => console.error(`Relay: send failed: ${error.message}`));
 }

@@ -8,7 +8,7 @@ import {
   PermissionDeps,
   refusedLine,
 } from '../src/permissions';
-import {runSend} from '../src/run';
+import {findForSend} from '../src/run';
 import {fakeRelay} from '../test-support/fakeRelay';
 
 function deps(granted: string[], answer = 2): PermissionDeps {
@@ -62,8 +62,7 @@ test('the refusal toast names the permission, never «Open a note first»', () =
 
 test('a send with a refused permission makes no file and calls no network', async () => {
   const {api, native} = fakeRelay();
-  const outcome = await runSend(
-    'page',
+  const outcome = await findForSend(
     api,
     async () => 'plugin.permission.INTERNET',
     async () => ok('/plugin'),
