@@ -75,6 +75,11 @@ export interface DeviceTaskStore {
   update(localId: string, content: TaskContent): Promise<DeviceTask>;
   /** Soft delete. */
   remove(localId: string): Promise<void>;
+  /**
+   * True when this tool created the task from the service, read from the row itself, so the proof
+   * survives a restart, when the links in memory are gone (#423). Absent, only a link proves it.
+   */
+  fromService?(task: DeviceTask): boolean;
 }
 
 /** One synced pair. `fingerprint` is the content both sides held after the last sync. */

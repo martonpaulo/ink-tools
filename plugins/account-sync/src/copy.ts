@@ -45,6 +45,9 @@ export const copy = {
   /** Asked in the host's confirm dialog, so it names what it removes and stands alone (#296). */
   'remove.confirm': 'Remove what Account Sync wrote for {module}? Your own events and tasks stay.',
   'remove.yes': 'Remove',
+  /** What a removal did, as the screen's notice (#423). */
+  'remove.done': '{module}: removed {count} {things} Account Sync wrote.',
+  'remove.problem': '{module}: {count} of what Account Sync wrote did not go. Try again.',
   cancel: 'Cancel',
   'account.title': '{provider} account',
   'signIn.in': 'Signed in ({tail})',

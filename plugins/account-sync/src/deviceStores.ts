@@ -557,6 +557,8 @@ export function createDeviceTasks(
       );
       return saved(localId, c, at);
     },
+    // A row made from a service task carries its id in its own id, so a restart keeps the proof (#423).
+    fromService: task => task.localId.startsWith(SERVICE_TASK_PREFIX),
     async remove(localId) {
       const row = await find(localId);
       // Soft delete with hasSync=0, as the native app does, so its sync uploads the delete.

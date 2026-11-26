@@ -217,7 +217,7 @@ const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, tail: '…wxyz'}, 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
 const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}) =>
-  mount(<AccountSyncSettings state={{kind: 'ready', sync: SYNC}} renderForm={onConnect => <AccountSyncForm settings={settings} onChange={noop} modules={accountSyncRows(settings, {todo: [], calendar: []}, runs, signIns)} onConnect={onConnect} now={OWNER_AT} />} onClose={noop} />);
+  mount(<AccountSyncSettings state={{kind: 'ready', sync: SYNC}} renderForm={onConnect => <AccountSyncForm settings={settings} onChange={noop} modules={accountSyncRows(settings, {todo: [], calendar: []}, runs, signIns, noop, noop)} onConnect={onConnect} now={OWNER_AT} />} onClose={noop} />);
 
 // One line per screen, so adding one is one line.
 // prettier-ignore

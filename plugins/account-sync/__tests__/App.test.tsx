@@ -119,6 +119,7 @@ function fakeRunner() {
       listeners.add(l);
       return () => listeners.delete(l);
     },
+    removeWritten: jest.fn(async () => ({removed: 3, errors: []})),
   };
   return {runner, publish};
 }
@@ -296,4 +297,19 @@ test('a module that is on offers Connect for each provider with no connection, a
     tree.root.findAllByProps({accessibilityLabel: 'Connect Google'}).length,
   ).toBeGreaterThan(0);
   expect(screenBreaks(tree.root)).toEqual([]);
+});
+
+test('an off Calendar and To-Do offer «Remove what Account Sync wrote» with the removal behind it, Digest none (#423)', async () => {
+  const {runner} = fakeRunner();
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App folder={folder as never} sync={runner} />);
+  });
+  const rows = texts(tree).filter(t => t === copy['remove.title']);
+  expect(rows).toHaveLength(2);
+  // The host dialog is not there in a test: the row asks itself, and the second press removes.
+  await act(async () => toggle(tree, copy['remove.yes']).props.onPress());
+  await act(async () => toggle(tree, copy['remove.yes']).props.onPress());
+  expect(runner.removeWritten).toHaveBeenCalledWith('todo');
+  expect(texts(tree)).toContain('To-Do: removed 3 tasks Account Sync wrote.');
 });

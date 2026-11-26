@@ -34,11 +34,15 @@ import {
   ProbeProblems,
   ProviderId,
   refreshAccessToken,
+  removeCalendarRows,
+  removeImportedTasks,
   runBridgeSync,
   SecretStore,
   TimeWindow,
+  TwoWayModule,
   TWO_WAY_MODULES,
 } from '@ink-tools/sync-core';
+import type {CleanupResult} from '@ink-tools/sync-core';
 import type {Capability, CapabilityStatus} from '@ink-tools/sn-adapter';
 import type {DeviceStores} from './deviceStores';
 import type {SecretDrop} from './secretStore';
@@ -313,6 +317,12 @@ export function onlyModule(settings: BridgeSettings, only: ModuleId): BridgeSett
 export interface SyncRunner {
   /** One pass; a press while one runs joins it instead of starting a second. */
   syncNow(options?: PassOptions): Promise<SyncSnapshot>;
+  /**
+   * «Remove what Account Sync wrote» for a module that is off (#89, #423): the Calendar rows or the
+   * To-Do tasks it wrote, never the person's own. It waits for a pass that runs, and a pass pressed
+   * meanwhile waits for it, so no pass reads a half-removed module.
+   */
+  removeWritten(module: TwoWayModule): Promise<CleanupResult>;
   snapshot(): SyncSnapshot;
   subscribe(listener: (s: SyncSnapshot) => void): () => void;
 }
@@ -447,19 +457,70 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
     return {running: false, runs, probe};
   };
 
+  /**
+   * After a removal the next pass must not read the removed rows as the person's edits: a Calendar
+   * row is removed by cancelling it, which the push would send to the service as a delete. So the
+   * Calendar's sync time moves past the removal and its baseline empties; the To-Do keeps only the
+   * links of the tasks that stay.
+   */
+  const remove = async (module: TwoWayModule): Promise<CleanupResult> => {
+    const stores = device.stores;
+    if (!stores) {
+      return {removed: 0, errors: ['the Calendar and To-Do are not reachable in this build']};
+    }
+    if (module === 'calendar') {
+      const result = await removeCalendarRows(stores.calendar);
+      state = {...state, calendar: {lastSync: device.now(), baseline: []}};
+      return result;
+    }
+    const {links, ...result} = await removeImportedTasks(stores.tasks, state.links);
+    state = {...state, links};
+    return result;
+  };
+
   return {
+    removeWritten(module) {
+      const removal = (pass ?? Promise.resolve(current)).then(() => {
+        publish({...current, running: true});
+        return remove(module).catch(
+          (e): CleanupResult => ({removed: 0, errors: [(e as Error).message]}),
+        );
+      });
+      const done = removal.then(result => {
+        log(`[Bridge] remove ${module}: ${result.removed} removed${result.errors.map(e => `; ${e}`).join('')}`);
+        return result;
+      });
+      // A pass pressed during the removal joins this promise, then sees the state it left.
+      const mine: Promise<SyncSnapshot> = done.then(() => {
+        if (pass === mine) {
+          pass = null;
+        }
+        const next = {...current, running: false};
+        publish(next);
+        return next;
+      });
+      pass = mine;
+      return done;
+    },
     syncNow(options = {}) {
-      pass ??= run(options)
+      if (pass) {
+        return pass;
+      }
+      const mine: Promise<SyncSnapshot> = run(options)
         .catch(e => ({
           ...current,
           running: false,
           problem: (e as Error).message,
         }))
         .then(next => {
-          pass = null;
+          // A removal queued behind this pass holds the slot now; only this pass's own is cleared.
+          if (pass === mine) {
+            pass = null;
+          }
           publish(next);
           return next;
         });
+      pass = mine;
       return pass;
     },
     snapshot: () => current,

@@ -14,6 +14,7 @@ function fakeRunner(): SyncRunner & {syncNow: jest.Mock} {
     syncNow: jest.fn(async () => ({running: false, runs: {}, probe: {}})),
     snapshot: () => ({running: false, runs: {}, probe: {}}),
     subscribe: () => () => {},
+    removeWritten: async () => ({removed: 0, errors: []}),
   };
 }
 

@@ -14,7 +14,8 @@ import {
   moduleStatus,
   ProbeProblems,
 } from '@ink-tools/sync-core/status';
-import type {ModuleId} from '@ink-tools/sync-core/settings';
+import {TWO_WAY_MODULES} from '@ink-tools/sync-core/settings';
+import type {ModuleId, TwoWayModule} from '@ink-tools/sync-core/settings';
 import {
   SECRET_PROVIDERS,
   SecretProvider,
@@ -42,7 +43,9 @@ export type SignIns = Partial<Record<SecretProvider, SignIn>>;
  * started, or waits for its first (#28, #44), and one that is off says so. Never a schedule (#39).
  * Under a module that is on, each of its providers that signs in with a secret says whether it is
  * connected, with a sign-out, or offers «Connect» (#116; owner, 2026-11-26: every connection is off
- * until the person connects it); one whose sign-in was not read yet shows nothing.
+ * until the person connects it); one whose sign-in was not read yet shows nothing. A module that
+ * writes rows, Calendar and To-Do, offers «Remove what Account Sync wrote» with `onRemoveWritten`
+ * behind it; Digest writes nothing yet, so it offers none (#423).
  */
 export function moduleRows(
   settings: BridgeSettings,
@@ -50,9 +53,12 @@ export function moduleRows(
   runs: Partial<Record<ModuleId, ModuleRun>> = {},
   signIns: SignIns = {},
   onSignOut: (provider: SecretProvider) => void = () => {},
+  onRemoveWritten?: (module: TwoWayModule) => void,
 ): ModuleRow[] {
+  const writes = (id: ModuleId): id is TwoWayModule => (TWO_WAY_MODULES as ModuleId[]).includes(id);
   return MODULES.map(id => ({
     id,
+    ...(onRemoveWritten && writes(id) ? {onRemoveWritten: () => onRemoveWritten(id)} : {}),
     name: copy[`module.${id}`],
     status: moduleStatus(id, settings, probe, runs),
     signIns: signInProviders(id).flatMap(p => {
@@ -135,6 +141,19 @@ export default function App({
     await readSignIns();
   };
 
+  const [removeNotice, setRemoveNotice] = useState<string | null>(null);
+  const removeWritten = async (module: TwoWayModule) => {
+    setRemoveNotice(null);
+    const done = await sync.removeWritten(module);
+    done.errors.forEach(e => log(`[Bridge] remove ${module}: ${e}`));
+    const name = copy[`module.${module}`];
+    setRemoveNotice(
+      done.errors.length
+        ? format('remove.problem', {module: name, count: String(done.errors.length)})
+        : format('remove.done', {module: name, count: String(done.removed), things: copy[`things.${module}`]}),
+    );
+  };
+
   const load = useCallback(async () => {
     setProblem(null);
     const loaded = await loadSettings(folder);
@@ -162,7 +181,7 @@ export default function App({
     : settings
     ? {
         kind: 'ready',
-        notice: saveProblem ?? undefined,
+        notice: saveProblem ?? removeNotice ?? undefined,
         sync: {
           running: synced.running,
           onSyncNow: () => {
@@ -182,7 +201,7 @@ export default function App({
               <SettingsForm
                 settings={settings}
                 onChange={change}
-                modules={moduleRows(settings, synced.probe, synced.runs, signIns, signOut)}
+                modules={moduleRows(settings, synced.probe, synced.runs, signIns, signOut, removeWritten)}
                 onConnect={onConnect}
               />
             )

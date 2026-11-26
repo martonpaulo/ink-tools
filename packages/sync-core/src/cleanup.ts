@@ -7,7 +7,7 @@
  */
 import {eventKey} from './calendar';
 import type {DeviceCalendarStore, TimeWindow} from './calendar';
-import type {DeviceTaskStore, TaskLink} from './tasks';
+import type {DeviceTask, DeviceTaskStore, TaskLink} from './tasks';
 
 /** Every time the device store can hold, so no row of ours is left outside the window. */
 export const ALL_TIME: TimeWindow = {from: 0, to: Number.MAX_SAFE_INTEGER};
@@ -45,27 +45,34 @@ export interface TaskCleanupResult extends CleanupResult {
 }
 
 /**
- * Soft-delete each To-Do task Bridge created from the service (`origin: 'service'`) and drop its
- * link. A link with no origin, written before #89, is kept with its task: without proof that Bridge
- * wrote it, nothing is removed. The service is not touched: the module is off.
+ * Soft-delete each To-Do task Bridge created from the service and drop its link. The proof is the
+ * link's `origin: 'service'`, or the store's own mark on the row (`fromService`, #423), which a
+ * restart keeps while the links in memory are lost. A task with neither, such as one the owner wrote
+ * on the tablet or a link written before #89, stays with its link: without proof, nothing is
+ * removed. The service is not touched: the module is off.
  */
 export async function removeImportedTasks(store: DeviceTaskStore, links: TaskLink[]): Promise<TaskCleanupResult> {
   const result: TaskCleanupResult = {removed: 0, errors: [], links: []};
-  const live = new Map((await store.list()).map(t => [t.localId, t]));
-  for (const link of links) {
-    const task = live.get(link.localId);
-    if (link.origin !== 'service' || !task) {
-      result.links.push(link);
+  const tasks = await store.list();
+  const byId = new Map(links.map(link => [link.localId, link]));
+  const ours = (task: DeviceTask) => byId.get(task.localId)?.origin === 'service' || store.fromService?.(task) === true;
+  const kept = new Set<string>();
+  for (const task of tasks) {
+    if (!ours(task)) {
+      kept.add(task.localId);
       continue;
     }
     if (task.deleted) continue; // already gone on the tablet; only the link is left to drop
     try {
-      await store.remove(link.localId);
+      await store.remove(task.localId);
       result.removed++;
     } catch (err) {
-      result.links.push(link);
+      kept.add(task.localId);
       result.errors.push(`remove ${task.title}: ${(err as Error).message}`);
     }
   }
+  // A link whose task the tablet no longer lists is kept, as before: nothing proves it is ours to drop.
+  const live = new Set(tasks.map(task => task.localId));
+  result.links = links.filter(link => kept.has(link.localId) || !live.has(link.localId));
   return result;
 }

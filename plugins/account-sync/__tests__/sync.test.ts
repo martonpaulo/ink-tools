@@ -323,6 +323,7 @@ test('the automatic sync runs at start and every AUTO_SYNC_MINUTES until stopped
       syncNow,
       snapshot: jest.fn(),
       subscribe: jest.fn(),
+      removeWritten: jest.fn(),
     },
     timers,
   );
@@ -536,4 +537,62 @@ test('a pass with only one module probes and runs that module alone (#283)', asy
   const done = await createSyncRunner(device({probe})).syncNow({only: 'todo'});
   expect(probe.mock.calls).toEqual([[['todo']]]);
   expect(Object.keys(done.runs)).toEqual(['todo']);
+});
+
+describe('Remove what Account Sync wrote (#423)', () => {
+  test('a removed Calendar row is never sent to the service as a delete at the next pass', async () => {
+    let clock = NOW;
+    const methods: string[] = [];
+    const net = network();
+    const real = createDeviceStores(rows(), () => clock);
+    // The removal cancels the row on the tablet, which the next pass reads as an edit after it.
+    let edits: Awaited<ReturnType<typeof real.calendar.listEdits>> = [];
+    const stores = {...real, calendar: {...real.calendar, listEdits: async () => edits}};
+    const d = device({
+      stores,
+      now: () => clock,
+      fetch: async (url, init) => {
+        methods.push(`${init?.method ?? 'GET'} ${url.replace(/\?.*$/, '')}`);
+        return net.fetch(url, init);
+      },
+    });
+    const runner = createSyncRunner(d);
+    await runner.syncNow();
+    clock = NOW + 10;
+    expect(await runner.removeWritten('calendar')).toEqual({removed: 0, errors: []});
+    edits = [
+      {
+        event: {calendarId: 'work', eventId: 'e1', title: 'Standup', content: '', start: NOW, end: NOW + 1, allDay: false, modified: NOW + 5},
+        cancelled: true,
+      },
+    ];
+    clock = NOW + 20;
+    await runner.syncNow();
+    expect(methods.filter(m => m.startsWith('DELETE'))).toEqual([]);
+  });
+
+  test('the To-Do removal keeps only the links of the tasks that stay, and a pass waits for it', async () => {
+    const real = createDeviceStores(rows(), () => NOW);
+    const removed: string[] = [];
+    const tasks = {
+      ...real.tasks,
+      list: async () => [
+        {localId: 'inktoolsrt1', title: 'Buy milk', detail: '', due: null, completed: false, modified: 1, deleted: false},
+        {localId: 'mine', title: 'Call home', detail: '', due: null, completed: false, modified: 1, deleted: false},
+      ],
+      remove: async (id: string) => {
+        removed.push(id);
+      },
+    };
+    const runner = createSyncRunner(device({stores: {...real, tasks}}));
+    expect(await runner.removeWritten('todo')).toEqual({removed: 1, errors: []});
+    expect(removed).toEqual(['inktoolsrt1']);
+    expect(runner.snapshot().running).toBe(false);
+  });
+
+  test('without the tablet stores the removal says so, never «0 removed»', async () => {
+    const runner = createSyncRunner(device({stores: undefined}));
+    const out = await runner.removeWritten('calendar');
+    expect(out.errors).toHaveLength(1);
+  });
 });

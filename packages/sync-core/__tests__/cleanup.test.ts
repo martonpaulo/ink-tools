@@ -90,6 +90,22 @@ test('an imported task already deleted on the tablet only drops its link', async
   expect(out).toEqual({removed: 0, errors: [], links: []});
 });
 
+test('after a restart, with no link left, the store\'s mark still proves which tasks came from the service (#423)', async () => {
+  const t = todo([task('svc-1', 'imported'), task('l2', 'written on the tablet'), task('svc-3', 'gone', true)]);
+  const store: DeviceTaskStore = {...t.store, fromService: x => x.localId.startsWith('svc-')};
+  const out = await removeImportedTasks(store, []);
+  expect(out).toEqual({removed: 1, errors: [], links: []});
+  expect(t.tasks.filter(x => x.deleted).map(x => x.localId)).toEqual(['svc-1', 'svc-3']);
+});
+
+test('a task the store does not mark and no service link names stays, whatever its link says (#423)', async () => {
+  const t = todo([task('l1', 'synced from the tablet')]);
+  const store: DeviceTaskStore = {...t.store, fromService: () => false};
+  const out = await removeImportedTasks(store, [link('l1')]);
+  expect(out).toEqual({removed: 0, errors: [], links: [link('l1')]});
+  expect(t.tasks[0].deleted).toBe(false);
+});
+
 test('sync marks the tasks it imports from the service, and only those', async () => {
   const remote: RemoteTask[] = [{remoteId: 'r1', title: 'from service', detail: '', due: null, completed: false, modified: 1}];
   const provider: TaskProvider = {
