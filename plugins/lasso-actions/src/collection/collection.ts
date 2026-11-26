@@ -100,3 +100,16 @@ export function placements(
   });
   return {targets: pieces.map(piece => move(piece.rect)), union: move(union)};
 }
+
+/**
+ * Where `insertSticker` pastes a piece: its own size at the page centre [measured,
+ * docs/supernote.md, #249]. The paste then has no lasso a later call can use, so the paste lassoes
+ * this rect again before it moves the piece (the lasso rule of docs/supernote.md).
+ */
+export function pastedRect(piece: Rect, page: Size): Rect {
+  const width = piece.right - piece.left;
+  const height = piece.bottom - piece.top;
+  const left = Math.round((page.width - width) / 2);
+  const top = Math.round((page.height - height) / 2);
+  return {left, top, right: left + width, bottom: top + height};
+}

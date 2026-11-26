@@ -21,6 +21,7 @@ import {deleteFile, listDir, pluginFolder} from '../profile';
 import {lookupLog, showToast, whyNot} from '../textBox';
 import {
   nextSeq,
+  pastedRect,
   pieceName,
   piecesIn,
   placements,
@@ -137,8 +138,8 @@ export async function addToCollection(
 }
 
 /**
- * «Paste Collection»: each piece goes on the current page in the order it was taken and moves to
- * its place, the group shifted onto the page as one; then the whole group is lassoed, so the
+ * «Paste Collection»: each piece goes on the current page in the order it was taken, is lassoed
+ * again where the host pasted it, and moves to its place, the group shifted onto the page as one; then the whole group is lassoed, so the
  * person moves it as one selection. The collection is emptied unless `keep`; a piece that fails
  * stops the paste and keeps the collection whole.
  */
@@ -156,16 +157,21 @@ export async function pasteCollection(
   }
   const page = await host.pageSize();
   const placed = page.ok ? placements(listed.pieces, page.value) : null;
-  if (!placed) {
+  if (!page.ok || !placed) {
     host.log(`${tag}: page size failed`);
     return stop(host, 'page', copy['collection.failed']);
   }
   for (const [index, piece] of listed.pieces.entries()) {
     const path = `${listed.dir}/${piece.name}`;
+    // From the view a pasted piece is no lasso the API can use (904 on the tablet, device round 6):
+    // lasso it again where the host pasted it, then move it.
     const inserted = await host.insertSticker(path);
-    const moved = done(inserted)
-      ? await host.resize(placed.targets[index])
+    const selected = done(inserted)
+      ? await host.select(pastedRect(piece.rect, page.value))
       : inserted;
+    const moved = done(selected)
+      ? await host.resize(placed.targets[index])
+      : selected;
     if (!done(moved)) {
       host.log(`${tag}: ${piece.name}: ${whyNot(moved)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));

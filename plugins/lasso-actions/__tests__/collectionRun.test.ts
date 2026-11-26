@@ -131,9 +131,13 @@ test('Paste Collection puts every piece in order at its place, lassoes the group
   fake.toasts.length = 0;
   expect(await pasteCollection(fake.host, false)).toEqual({ok: true, count: 0});
   expect(fake.calls).toEqual([
+    // Each paste lands at the page centre with no usable lasso (device round 6): lassoed again
+    // there, then moved.
     `insert ${DIR}/collection-1_100_200_200_60.sticker`,
+    'select 602,906,802,966',
     'move 100,200,300,260',
     `insert ${DIR}/collection-2_500_900_300_100.sticker`,
+    'select 552,886,852,986',
     'move 500,900,800,1000',
     'select 100,200,800,1000',
     `remove ${DIR}/collection-1_100_200_200_60.sticker`,
@@ -164,6 +168,17 @@ test('a piece that fails stops the paste and keeps the collection whole', async 
   });
   expect(fake.toasts.at(-1)).toBe(copy['collection.notPasted'](1));
   expect(await countPieces(fake.host)).toBe(2);
+});
+
+test('a pasted piece that cannot be lassoed again stops the paste before any move', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  fake.calls.length = 0;
+  fake.host.select = async () => fail(904, 'No lasso action has been performed');
+  expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'insert'});
+  expect(fake.calls).toEqual([`insert ${DIR}/collection-1_100_200_200_60.sticker`]);
+  expect(fake.toasts.at(-1)).toBe(copy['collection.notPasted'](0));
+  expect(await countPieces(fake.host)).toBe(1);
 });
 
 test('an empty collection pastes nothing and says so', async () => {
