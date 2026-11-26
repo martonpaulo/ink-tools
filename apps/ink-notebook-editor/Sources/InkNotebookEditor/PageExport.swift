@@ -7,8 +7,9 @@ import UniformTypeIdentifiers
 /// A page taken out of the note (#323): as PNG, as PDF and, when it has words, as text, for Edit ›
 /// Copy and for a drag of its thumbnail. The page is drawn only when another app asks for it.
 nonisolated enum PageExport {
-    /// The page's pixels are 300 to the inch, as the tablet draws them.
-    static let dotsPerInch = 300.0
+    /// The page's pixels are 300 to the inch, as the tablet draws them: the unit the note's
+    /// recognition boxes are measured in too (registry item notefile.format-versions).
+    static let dotsPerInch = Double(Registry.NotefileFormatVersions.recognitionBoxDotsPerInch)
     static let pointsPerInch = 72.0
 
     /// An item provider for page `index` of `note`: PNG, PDF and, when `text` is not empty, plain

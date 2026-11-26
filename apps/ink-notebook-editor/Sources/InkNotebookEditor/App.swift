@@ -1,3 +1,4 @@
+import AppKit
 import InkNotebookEditorKit
 import SwiftUI
 
@@ -10,7 +11,8 @@ struct InkNotebookEditorApp: App {
 
     var body: some Scene {
         DocumentGroup(viewing: NoteDocument.self) { file in
-            NotebookWindow(document: file.document)
+            NotebookWindow(
+                document: file.document, name: file.fileURL?.deletingPathExtension().lastPathComponent ?? "")
         }
         // The window opens at its content's ideal size, wide for a landscape note (#291), and
         // never past the screen's edge.
@@ -21,6 +23,17 @@ struct InkNotebookEditorApp: App {
         .commands {
             CommandGroup(after: .newItem) {
                 OpenFromTabletCommand()
+            }
+            // Edit › Find replaces the text-editing items: the notes are read only (#322).
+            CommandGroup(replacing: .textEditing) {
+                FindCommands()
+            }
+            CommandGroup(after: .pasteboard) {
+                CopyTextCommands()
+            }
+            CommandGroup(before: .toolbar) {
+                SidebarCommands()
+                Divider()
             }
             CommandGroup(before: .toolbar) {
                 ViewCommands()
@@ -123,5 +136,33 @@ private struct ReportIssueCommand: View {
                 macOS: "\(system.majorVersion).\(system.minorVersion).\(system.patchVersion)")
             if let url { openURL(url) }
         }
+    }
+}
+
+/// Edit › Copy Page as Text and Copy Note as Text: the recognised words in reading order (#323).
+private struct CopyTextCommands: View {
+    @FocusedValue(\.noteText) private var text
+    @FocusedValue(\.pageNavigator) private var navigator
+
+    var body: some View {
+        let page = navigator?.wrappedValue.index
+        let pageText = page.flatMap { text?.text(pages: [$0]) }
+        Button(Copy.copyPageAsText) {
+            if let page { copy(pages: [page]) }
+        }
+        .keyboardShortcut("c", modifiers: [.command, .option])
+        // A page with no recognised words leaves the pasteboard as it is.
+        .disabled(pageText?.isEmpty != false)
+        .help(text?.index == nil ? Copy.textNotReady : pageText?.isEmpty == true ? Copy.pageHasNoWords : "")
+        Button(Copy.copyNoteAsText) { copy(pages: nil) }
+            .keyboardShortcut("c", modifiers: [.command, .option, .shift])
+            .disabled(text?.index == nil)
+            .help(text?.index == nil ? Copy.textNotReady : "")
+    }
+
+    private func copy(pages: Set<Int>?) {
+        guard let words = text?.text(pages: pages) else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(words, forType: .string)
     }
 }

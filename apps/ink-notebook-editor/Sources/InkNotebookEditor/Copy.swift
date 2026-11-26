@@ -39,6 +39,31 @@ nonisolated enum Copy {
     static let openAnother = String(localized: "Open Another File…")
     static let pageHasNoImage = String(localized: "The page has no image.")
 
+    // MARK: Find, Headings and copy (#322, #331, #323)
+
+    static let findMenu = String(localized: "Find")
+    static let findItem = String(localized: "Find…")
+    static let findNext = String(localized: "Find Next")
+    static let findPrevious = String(localized: "Find Previous")
+    static let findInNote = String(localized: "Find in Note")
+    static let previousMatch = String(localized: "Previous Match")
+    static let nextMatch = String(localized: "Next Match")
+    static let done = String(localized: "Done")
+    static let noResults = String(localized: "No results")
+    static let sidebarShows = String(localized: "Sidebar")
+    static let headings = String(localized: "Headings")
+    static let heading = String(localized: "Heading")
+    static let noHeadingsTitle = String(localized: "No Headings")
+    static let noHeadingsNext = String(localized: "Make a Heading on the tablet, then copy the note again.")
+    static let headingsFailedTitle = String(localized: "The Headings cannot be read")
+    static let headingsFailedNext = String(localized: "The pages still show. Copy the note again to see its Headings.")
+    static let copyPageAsText = String(localized: "Copy Page as Text")
+    static let copyNoteAsText = String(localized: "Copy Note as Text")
+    static let textNotReady = String(localized: "The handwriting is still being read.")
+    static let pageHasNoWords = String(localized: "This page has no recognised words.")
+    static let untitledNote = String(localized: "Note")
+    static let readingHandwritingStart = String(localized: "Reading the handwriting…")
+
     // MARK: Open from Tablet
 
     static let loadingTablet = String(localized: "Reading the tablet…")
@@ -94,5 +119,17 @@ nonisolated enum Copy {
 
     static func cannotOpen(_ path: String, _ reason: String) -> String {
         String(localized: "\(path): \(reason)")
+    }
+
+    static func matchOf(_ match: Int, _ count: Int) -> String {
+        String(localized: "\(match) of \(count)")
+    }
+
+    static func readingHandwriting(_ done: Int, _ count: Int) -> String {
+        String(localized: "Reading page \(done) of \(count)…")
+    }
+
+    static func headingLabel(_ text: String, _ level: Int, _ page: Int, _ count: Int) -> String {
+        String(localized: "\(text), level \(level), page \(page) of \(count)")
     }
 }

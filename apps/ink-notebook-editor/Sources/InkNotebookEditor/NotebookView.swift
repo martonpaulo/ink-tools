@@ -13,10 +13,12 @@ struct NotebookWindow: View {
     let document: NoteDocument
     /// Whether the page list shows when the window opens.
     var columns: NavigationSplitViewVisibility = .automatic
+    /// The file's name without its extension, for the files a copy or a drag makes (#323).
+    var name = ""
     @Environment(\.openDocument) private var openDocument
     @State private var dropFailure: String?
     /// The note's words, read in the background for Find in Note and Copy as Text (#321).
-    @State private var indexer = NoteIndexer()
+    @State private var text = NoteText(indexer: NoteIndexer())
 
     var body: some View {
         Group {
@@ -29,8 +31,10 @@ struct NotebookWindow: View {
                 NotebookView(pages: PageImages(note: note), columns: columns)
             }
         }
+        .environment(text)
         .task {
-            if case .note(let note) = document.content { await indexer.run(note: note) }
+            text.name = name
+            if case .note(let note) = document.content { await text.indexer.run(note: note) }
         }
         .frame(
             minWidth: Self.minimum.width, idealWidth: idealSize.width, minHeight: Self.minimum.height,
@@ -85,50 +89,49 @@ struct NotebookView: View {
     @State private var navigator: PageNavigator
     @State private var columns: NavigationSplitViewVisibility
     @State private var viewer: PageViewer
+    @State private var sidebar: SidebarMode
     @FocusState private var pageFocused: Bool
     @Environment(\.displayScale) private var displayScale
+    @Environment(NoteText.self) private var text: NoteText?
 
     init(
         pages: PageImages, page: Int = 0, columns: NavigationSplitViewVisibility = .automatic,
-        viewer: PageViewer = PageViewer()
+        viewer: PageViewer = PageViewer(), sidebar: SidebarMode = .pages
     ) {
         _pages = State(initialValue: pages)
         _navigator = State(initialValue: PageNavigator(pageCount: pages.note.pages.count, index: page))
         _columns = State(initialValue: columns)
         _viewer = State(initialValue: viewer)
+        _sidebar = State(initialValue: sidebar)
     }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
-            ScrollViewReader { list in
-                List(selection: selection) {
-                    ForEach(0..<navigator.pageCount, id: \.self) { index in
-                        ThumbnailRow(index: index, count: navigator.pageCount, pages: pages)
-                            .id(index)
-                            .task(id: displayScale) { await pages.loadThumbnail(index, scale: displayScale) }
-                    }
-                }
-                // The current page's thumbnail stays in view, as in Preview, however the page changed.
-                .onChange(of: navigator.index) { _, index in
-                    if let index { list.scrollTo(index) }
+            Group {
+                switch sidebar {
+                case .pages: pageList
+                case .headings: HeadingsList(note: pages.note, navigator: $navigator) { pageFocused = true }
                 }
             }
-            .accessibilityLabel(Copy.pages)
+            // Pages or Headings, as Preview's sidebar shows thumbnails or a Table of Contents (#331).
+            .safeAreaInset(edge: .top) {
+                Picker(Copy.sidebarShows, selection: $sidebar) {
+                    ForEach(SidebarMode.allCases, id: \.self) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .padding(.horizontal, 8)
+            }
             .navigationSplitViewColumnWidth(min: 150, ideal: Self.sidebarWidth, max: 260)
         } detail: {
-            Group {
-                switch viewer.layout {
-                case .scroll:
-                    PageScroll(pages: pages, navigator: $navigator, viewer: viewer)
-                case .grid:
-                    PageGrid(pages: pages, navigator: $navigator, viewer: viewer)
+            // The find bar stands above the pages, under the toolbar, as in Safari and TextEdit
+            // (#322): a bar of the scroll's top edge, so the pages keep their margin below it.
+            pageArea
+                .safeAreaBar(edge: .top) {
+                    if let text, text.findShown {
+                        FindBar(text: text) { pageFocused = true }
+                    }
                 }
-            }
-            // The pages hold the keyboard focus, so the page keys work with the sidebar shown or
-            // hidden, and Page Up and Page Down never scroll the list instead.
-            .focusable()
-            .focusEffectDisabled()
-            .focused($pageFocused)
         }
         .toolbar { ViewerToolbar(viewer: viewer) }
         .navigationSubtitle(subtitle)
@@ -147,6 +150,14 @@ struct NotebookView: View {
         }
         .focusedSceneValue(\.pageNavigator, $navigator)
         .focusedSceneValue(\.pageViewer, viewer)
+        .focusedSceneValue(\.noteText, text)
+        .focusedSceneValue(\.sidebarMode, $sidebar)
+        // View › Pages and Headings show the sidebar too, when it is hidden.
+        .onChange(of: sidebar) { columns = .all }
+        // The current match's page shows, as Find Next and Previous move through the note.
+        .onChange(of: text?.search.currentMatch) { _, match in
+            if let match { navigator.show(match.page) }
+        }
         .onKeyPress(keys: Set(PageKeys.moves.keys).union([.return])) { press in
             if let target = viewer.scroll(for: press.key) {
                 viewer.scrollTarget = target
@@ -193,6 +204,49 @@ struct NotebookView: View {
             guard let items = pages.selectable(index) else { return }
             viewer.selection.selectAll(Set(items.map(\.id)), page: index)
         }
+    }
+
+    /// The pages, as one scroll or a grid.
+    private var pageArea: some View {
+        Group {
+            switch viewer.layout {
+            case .scroll:
+                PageScroll(pages: pages, navigator: $navigator, viewer: viewer)
+            case .grid:
+                PageGrid(pages: pages, navigator: $navigator, viewer: viewer)
+            }
+        }
+        // The pages hold the keyboard focus, so the page keys work with the sidebar shown or
+        // hidden, and Page Up and Page Down never scroll the list instead.
+        .focusable()
+        .focusEffectDisabled()
+        .focused($pageFocused)
+        // Edit › Copy takes the current page out as PNG, PDF and its text (#323).
+        .onCopyCommand {
+            guard let page = navigator.index, let provider = text?.provider(of: pages.note, page: page) else {
+                return []
+            }
+            return [provider]
+        }
+    }
+
+    /// Every page's thumbnail; the current one stays in view, as in Preview, however the page changed.
+    private var pageList: some View {
+        ScrollViewReader { list in
+            List(selection: selection) {
+                ForEach(0..<navigator.pageCount, id: \.self) { index in
+                    ThumbnailRow(index: index, count: navigator.pageCount, pages: pages)
+                        .id(index)
+                        .task(id: displayScale) { await pages.loadThumbnail(index, scale: displayScale) }
+                        // A thumbnail dragged to Finder or another app gives its page (#323).
+                        .onDrag { text?.provider(of: pages.note, page: index) ?? NSItemProvider() }
+                }
+            }
+            .onChange(of: navigator.index) { _, index in
+                if let index { list.scrollTo(index) }
+            }
+        }
+        .accessibilityLabel(Copy.pages)
     }
 
     /// A click in the page list shows that page and gives the focus back to the page.
@@ -598,6 +652,7 @@ private struct PageView: View {
                     PageMarker(text: Copy.elementsNotSelectable)
                 }
             }
+            .overlay { FindMarks(page: index, pixels: pages.size(of: index), size: size) }
             .task(id: key) {
                 guard resample, let image = await PageImages.fit(full, to: pixels) else { return }
                 fitted = Fitted(key: key, image: image)

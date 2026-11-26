@@ -21,6 +21,16 @@
         }
       }
     },
+    "%@, level %lld, page %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, level %2$lld, page %3$lld of %4$lld"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {
@@ -37,6 +47,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld"
+          }
+        }
+      }
+    },
+    "%lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld"
           }
         }
       }
@@ -91,12 +111,42 @@
         }
       }
     },
+    "Copy Note as Text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Note as Text"
+          }
+        }
+      }
+    },
+    "Copy Page as Text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Page as Text"
+          }
+        }
+      }
+    },
     "Copying %@ from the tablet…" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copying %@ from the tablet…"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
           }
         }
       }
@@ -127,6 +177,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enclosing Folder"
+          }
+        }
+      }
+    },
+    "Find" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find"
+          }
+        }
+      }
+    },
+    "Find Next" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Next"
+          }
+        }
+      }
+    },
+    "Find Previous" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Previous"
+          }
+        }
+      }
+    },
+    "Find in Note" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find in Note"
+          }
+        }
+      }
+    },
+    "Find…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find…"
           }
         }
       }
@@ -181,6 +281,26 @@
         }
       }
     },
+    "Heading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heading"
+          }
+        }
+      }
+    },
+    "Headings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Headings"
+          }
+        }
+      }
+    },
     "Install inkctl as cli/inkctl/README.md says, then try again." : {
       "localizations" : {
         "en" : {
@@ -211,12 +331,32 @@
         }
       }
     },
+    "Make a Heading on the tablet, then copy the note again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make a Heading on the tablet, then copy the note again."
+          }
+        }
+      }
+    },
     "Make a note on the tablet, then refresh." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make a note on the tablet, then refresh."
+          }
+        }
+      }
+    },
+    "Next Match" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next Match"
           }
         }
       }
@@ -231,12 +371,42 @@
         }
       }
     },
+    "No Headings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Headings"
+          }
+        }
+      }
+    },
     "No notes in this folder" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No notes in this folder"
+          }
+        }
+      }
+    },
+    "No results" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results"
+          }
+        }
+      }
+    },
+    "Note" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
           }
         }
       }
@@ -361,12 +531,42 @@
         }
       }
     },
+    "Previous Match" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous Match"
+          }
+        }
+      }
+    },
     "Previous Page" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Previous Page"
+          }
+        }
+      }
+    },
+    "Reading page %lld of %lld…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading page %1$lld of %2$lld…"
+          }
+        }
+      }
+    },
+    "Reading the handwriting…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the handwriting…"
           }
         }
       }
@@ -431,12 +631,32 @@
         }
       }
     },
+    "Sidebar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sidebar"
+          }
+        }
+      }
+    },
     "Template %@ cannot be drawn" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Template %@ cannot be drawn"
+          }
+        }
+      }
+    },
+    "The Headings cannot be read" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Headings cannot be read"
           }
         }
       }
@@ -481,6 +701,16 @@
         }
       }
     },
+    "The handwriting is still being read." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The handwriting is still being read."
+          }
+        }
+      }
+    },
     "The note could not be copied" : {
       "localizations" : {
         "en" : {
@@ -507,6 +737,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The page has no image."
+          }
+        }
+      }
+    },
+    "The pages still show. Copy the note again to see its Headings." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The pages still show. Copy the note again to see its Headings."
           }
         }
       }
@@ -557,6 +797,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This page cannot be drawn"
+          }
+        }
+      }
+    },
+    "This page has no recognised words." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This page has no recognised words."
           }
         }
       }

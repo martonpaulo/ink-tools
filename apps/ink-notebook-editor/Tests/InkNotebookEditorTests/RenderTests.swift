@@ -5,6 +5,7 @@ import SwiftUI
 import Testing
 
 @testable import InkNotebookEditor
+@testable import NoteFormat
 
 /// Renders every window state, light and dark, at the smallest, default and a large window size,
 /// into $RENDER_EVIDENCE (`make renders`). Off screen: the window is never ordered in, keys nothing
@@ -105,6 +106,87 @@ final class RenderTests {
             NotebookWindow(document: NoteDocument(data: Data("not a note".utf8)))
         }
         try await render("page-failed", Self.sizes) { StateView(.pageFailed("page 2: the layer bitmap ends early")) }
+    }
+
+    /// Find in Note with matches, with none and while the handwriting is read (#322), and the
+    /// Headings sidebar with its outline and empty (#331). The note is `content.note` with typed
+    /// words drawn in and two Headings added; Vision reads the words, as in the app.
+    @Test func textStates() async throws {
+        let note = try Self.noteWithText()
+        let drawn = PageImages(note: note)
+        for index in note.pages.indices {
+            await drawn.loadThumbnail(index, scale: 1)
+            await drawn.loadPage(index)
+        }
+        let store = scratch.appending(path: "Index")
+        let read = NoteText(
+            indexer: NoteIndexer(store: NoteIndexStore(root: store), recognizer: VisionRecognizer(preferred: ["en-US"]))
+        )
+        await read.indexer.run(note: note)
+        read.showFind()
+        read.query = "harvest"
+        try await render("find-matches", Self.sizes) { NotebookView(pages: drawn).environment(read) }
+        let none = NoteText(
+            indexer: NoteIndexer(store: NoteIndexStore(root: store), recognizer: VisionRecognizer(preferred: ["en-US"]))
+        )
+        await none.indexer.run(note: note)
+        none.showFind()
+        none.query = "orchard"
+        try await render("find-none", Self.sizes) { NotebookView(pages: drawn).environment(none) }
+        let reading = NoteText(indexer: NoteIndexer(store: NoteIndexStore(root: store)))
+        reading.showFind()
+        reading.query = "harvest"
+        try await render("find-reading", Self.sizes) { NotebookView(pages: drawn).environment(reading) }
+        let outline = NoteText(
+            indexer: NoteIndexer(store: NoteIndexStore(root: store), recognizer: VisionRecognizer(preferred: ["en-US"]))
+        )
+        await outline.indexer.run(note: note)
+        try await render("headings", Self.sizes) {
+            NotebookView(pages: drawn, sidebar: .headings).environment(outline)
+        }
+        let plain = PageImages(note: try Fixtures.note("content.note"))
+        await plain.loadPage(0)
+        try await render("headings-empty", Self.sizes) {
+            NotebookView(pages: plain, sidebar: .headings).environment(none)
+        }
+    }
+
+    /// `content.note` with typed words on pages 1 and 3, and two Headings: one over the words on
+    /// page 1, at level 1, and one on page 4 with only its handwriting, at level 2.
+    static func noteWithText() throws -> NoteFile {
+        var note = try Fixtures.note("content.note")
+        let title = PageRect(x: 200, y: 300, width: 1300, height: 160)
+        note = try NoteFile(
+            bytes: try NoteWriter.drawText(note, page: 0, text: "Harvest plan", in: title, fontSize: 110))
+        note = try NoteFile(
+            bytes: try NoteWriter.drawText(
+                note, page: 0, text: "Spring harvest notes", in: PageRect(x: 200, y: 700, width: 1500, height: 140),
+                fontSize: 90))
+        note = try NoteFile(
+            bytes: try NoteWriter.drawText(
+                note, page: 2, text: "Harvest day", in: PageRect(x: 200, y: 500, width: 1300, height: 140), fontSize: 90
+            ))
+        var bytes = Array(note.bytes[..<NoteWriter.footerAddress(note)])
+        var pairs = note.footer.pairs
+        let seeds = PageRect(x: 200, y: 200, width: 700, height: 120)
+        for (page, level, rect, words) in [(0, 1, title, "Harvest plan"), (3, 2, seeds, "Seed list")] {
+            let coverage = NoteWriter.textCoverage(words, width: rect.width, height: rect.height, fontSize: 90)
+            let pixels = coverage.map {
+                $0 >= NoteWriter.halfCoverage ? RattaRLE.Grey.black : RattaRLE.Grey.transparent
+            }
+            let bitmap = bytes.count
+            bytes += NoteWriter.lengthPrefixed(RattaRLE.encode(pixels, greyscale: note.storesGreyscale))
+            let box = "\(rect.x),\(rect.y),\(rect.width),\(rect.height)"
+            let block = bytes.count
+            bytes += NoteWriter.lengthPrefixed(
+                NoteWriter.text([
+                    .init(key: "TITLELEVEL", value: String(level)), .init(key: "TITLERECTORI", value: box),
+                    .init(key: "TITLEBITMAP", value: String(bitmap)), .init(key: "TITLEPROTOCOL", value: "RATTA_RLE"),
+                ]))
+            pairs.append(
+                .init(key: String(format: "TITLE_%04d%04d%04d", page + 1, rect.y, rect.x), value: String(block)))
+        }
+        return try NoteFile(bytes: try NoteWriter.withFooter(note, prefix: bytes, pairs: pairs))
     }
 
     @Test func tabletStates() async throws {
