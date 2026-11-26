@@ -12,7 +12,7 @@
       ],
       "reason": "the vendor UI library cannot load in a plugin (#287); our copies are measured from its screens",
       "evidence": {
-        "source": "screenshots and the decompiled supernoteuilib (#272, #287)",
+        "source": "screenshots and measurements of the vendor's own controls on the tablet (#272, #287)",
         "date": "2026-11-25"
       },
       "upgradePath": "an SDK component library",

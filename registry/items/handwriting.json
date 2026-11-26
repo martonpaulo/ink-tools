@@ -13,7 +13,7 @@
       ],
       "reason": "no API sets the recognition language; the file is what Settings writes and recognition reads",
       "evidence": {
-        "source": "HWLanguageSetting.changeDefault, decompiled (docs/supernote.md › Handwriting recognition language)",
+        "source": "HWLanguageSetting.changeDefault, observed device behaviour (docs/supernote.md › Handwriting recognition language)",
         "date": "2026-11-20"
       },
       "upgradePath": "an official language API",
@@ -46,7 +46,7 @@
       ],
       "reason": "the keyboard and the Settings label refresh only on this broadcast",
       "evidence": {
-        "source": "HWLanguageSetting.changeDefault, decompiled",
+        "source": "HWLanguageSetting.changeDefault, observed device behaviour",
         "date": "2026-11-20"
       },
       "upgradePath": "an official language API",

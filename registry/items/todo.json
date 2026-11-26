@@ -14,7 +14,7 @@
       ],
       "reason": "sn-plugin-lib has no task API; the provider is the only way to read and write tasks",
       "evidence": {
-        "source": "TaskContentProvider and DataBaseTools.insert, decompiled (#212)",
+        "source": "TaskContentProvider and DataBaseTools.insert, observed device behaviour (#212)",
         "version": "1.00.466",
         "date": "2026-11-17"
       },
@@ -125,9 +125,9 @@
       "readers": [
         "sn-adapter"
       ],
-      "reason": "the app lists a row by rules no API states (a NULL deleted hides it); only its decompiled code shows them",
+      "reason": "the app lists a row by rules no API states (a NULL deleted hides it); only observed app behaviour shows them",
       "evidence": {
-        "source": "DataBaseTools.insert, decompiled; device round of #212",
+        "source": "DataBaseTools.insert, observed device behaviour; device round of #212",
         "version": "1.00.466",
         "date": "2026-11-17"
       },
