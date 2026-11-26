@@ -906,7 +906,15 @@ def stale(message: str) -> Failure:
 
 
 def remote_path(path: str) -> str:
-    return path if path.startswith("/") else f"{SHARED_ROOT}/{path}".rstrip("/")
+    """A device path in its shared-storage spelling, case kept: relative to SHARED_ROOT, or an alias
+    such as /sdcard resolved, as the note app answers a note opened under an alias by that alias, and
+    Probe's test-note guard and Device Link's helper know only SHARED_ROOT (#312)."""
+    if not path.startswith("/"):
+        return f"{SHARED_ROOT}/{path}".rstrip("/")
+    for alias in SHARED_ALIASES:
+        if path == alias or path.startswith(f"{alias}/"):
+            return SHARED_ROOT + path[len(alias):]
+    return path
 
 
 def read_address() -> str:

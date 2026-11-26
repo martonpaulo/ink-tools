@@ -626,6 +626,9 @@ rm -f "$files/fingerprint" "$files/note-version" "$files/bridge-answer" "$work/h
 # Notes.
 run note open "Note/A note.note" --page 3 >/dev/null
 check "note open passes the page from 0 and quotes the path" "$(grep -cF "am start -W -a android.intent.action.VIEW -n $note_activity --es file_path '$root/Note/A note.note' --es from_app launcher --ei page 2" "$log")$(called "am start")" "11"
+run note open "/sdcard/Note/A note.note" >/dev/null
+check "note open names a /sdcard note by its shared path, which Probe's guard and Device Link compare (#312)" "$(grep -cF -- "--es file_path '$root/Note/A note.note'" "$log")" "1"
+run note open "Note/A note.note" --page 3 >/dev/null
 check "note open wakes the screen before it starts the app" "$(grep -n -E 'keyevent WAKEUP|am start' "$log" | head -1 | grep -c WAKEUP)" "1"
 run note open Note/Absent.note >/dev/null 2>&1
 check "note open on a missing file stops with its own code" "$?" "4"
