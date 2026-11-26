@@ -1,0 +1,103 @@
+/**
+ * The player's lines on a grid (#382): the edges a loop or a border draws, the cells a path
+ * visits (mazes, bridges), and a straight strike over a word. Geometry only, no recognition.
+ */
+import type { Grid } from '../page/grid';
+import { cellAt, densePoints, type InkPoint, type InkStroke } from './cells';
+
+/**
+ * [inference] shares of a cell, tuned in the device round: ink within this distance of an edge is
+ * on it; an edge is drawn when its middle is this much covered; a path point this near a border is
+ * in no cell; a strike bows at most this far from the line between its ends.
+ */
+export const EDGE_TOLERANCE = 0.2;
+export const EDGE_MIN_COVER = 0.6;
+export const PATH_MARGIN = 0.2;
+export const STRIKE_MAX_BOW = 0.4;
+/** An edge's ends this near a lattice dot are left out, so a corner never draws two edges. */
+const EDGE_END = 0.2;
+/** The edge's middle is measured in this many parts. */
+const EDGE_PARTS = 6;
+/** Points are filled in at this share of the cell before they are measured. */
+const LINE_STEP = 1 / 20;
+
+function requireSquare(grid: Grid, what: string): void {
+  if (grid.lattice !== 'square') throw new Error(`${what} needs a square grid, not a ${grid.lattice} one`);
+}
+
+/**
+ * The edges of a square grid the ink draws, as `h:c,r` (the top edge of cell c, r; r runs to
+ * `rows` for the bottom border) and `v:c,r` (the left edge; c runs to `columns`).
+ */
+export function inkedEdges(grid: Grid, strokes: readonly InkStroke[]): Set<string> {
+  requireSquare(grid, 'an edge check');
+  const { columns, rows, cell } = grid;
+  const parts = new Map<string, Set<number>>();
+  const mark = (key: string, along: number): void => {
+    const part = Math.floor((along - EDGE_END) / ((1 - 2 * EDGE_END) / EDGE_PARTS));
+    if (part < 0 || part >= EDGE_PARTS) return;
+    const set = parts.get(key) ?? new Set<number>();
+    set.add(part);
+    parts.set(key, set);
+  };
+  for (const stroke of strokes) {
+    for (const { x, y } of densePoints(stroke.points, cell * LINE_STEP)) {
+      const u = (x - grid.x) / cell;
+      const v = (y - grid.y) / cell;
+      const line = Math.round(v);
+      const column = Math.floor(u);
+      if (Math.abs(v - line) <= EDGE_TOLERANCE && line >= 0 && line <= rows && column >= 0 && column < columns) {
+        mark(`h:${column},${line}`, u - column);
+      }
+      const across = Math.round(u);
+      const row = Math.floor(v);
+      if (Math.abs(u - across) <= EDGE_TOLERANCE && across >= 0 && across <= columns && row >= 0 && row < rows) {
+        mark(`v:${across},${row}`, v - row);
+      }
+    }
+  }
+  const drawn = new Set<string>();
+  for (const [key, set] of parts) if (set.size >= EDGE_MIN_COVER * EDGE_PARTS) drawn.add(key);
+  return drawn;
+}
+
+/** The square cell a path point is in, or null near a border, so a path along it does not jump cells. */
+export function innerCellAt(grid: Grid, x: number, y: number): number | null {
+  requireSquare(grid, 'a path check');
+  const u = (x - grid.x) / grid.cell;
+  const v = (y - grid.y) / grid.cell;
+  const near = (t: number): boolean => t - Math.floor(t) < PATH_MARGIN || t - Math.floor(t) > 1 - PATH_MARGIN;
+  return near(u) || near(v) ? null : cellAt(grid, x, y);
+}
+
+/**
+ * The cells a drawn path visits, in order, a repeat of the last one dropped and a point in no cell
+ * skipped. `locate` is the game's own: `innerCellAt` for a rectangle, a circle maze's for a circle.
+ * The points are the pen's, about 4 px apart; a gap wider than a cell may skip one.
+ */
+export function pathCells<K>(points: readonly InkPoint[], locate: (x: number, y: number) => K | null): K[] {
+  const visited: K[] = [];
+  for (const { x, y } of points) {
+    const key = locate(x, y);
+    if (key !== null && key !== visited[visited.length - 1]) visited.push(key);
+  }
+  return visited;
+}
+
+/** A strike's two end cells and whether it is straight; null when an end is off the grid. */
+export function strokeSpan(grid: Grid, stroke: InkStroke): { from: number; to: number; straight: boolean } | null {
+  const { points } = stroke;
+  if (points.length === 0) return null;
+  const first = points[0];
+  const last = points[points.length - 1];
+  const from = cellAt(grid, first.x, first.y);
+  const to = cellAt(grid, last.x, last.y);
+  if (from === null || to === null) return null;
+  const length = Math.hypot(last.x - first.x, last.y - first.y);
+  const bow = (p: InkPoint): number =>
+    length === 0
+      ? Math.hypot(p.x - first.x, p.y - first.y)
+      : Math.abs((last.x - first.x) * (first.y - p.y) - (first.x - p.x) * (last.y - first.y)) / length;
+  const straight = points.every(p => bow(p) <= STRIKE_MAX_BOW * grid.cell);
+  return { from, to, straight };
+}

@@ -12,3 +12,4 @@ export * from './nonogram';
 export * from './maze';
 export * from './word-search';
 export * from './page';
+export * from './check';
