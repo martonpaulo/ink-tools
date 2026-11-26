@@ -12,7 +12,7 @@
 import {CalendarEvent, CalendarProvider, CalendarSyncResult, DeviceCalendarStore, TimeWindow, syncCalendar} from './calendar';
 import {CalendarWriter, DeviceEdit, DeviceRelinker, applyCreated, changedSince, conflictWarnings, pushCalendarEdits} from './push';
 import {ActivePlan, ModuleId, ProviderId, TwoWayModule} from './settings';
-import {ModuleRun, calendarRun, tasksRun} from './status';
+import {CalendarChoice, ModuleRun, calendarRun, tasksRun} from './status';
 import {DeviceTaskStore, PULL_ONLY, TabletOnlyPolicy, TaskLink, TaskProvider, syncTasks} from './tasks';
 
 /** One calendar service: Google, iCloud or the ICS feeds. Without a writer it is read-only. */
@@ -86,9 +86,17 @@ export async function runCalendarModule(
   }
   const owner = new Map<string, CalendarSource>();
   const readable: CalendarSource[] = [];
+  // The calendars a tablet-made event can go to: those of a source with a writer, that are on (#29).
+  const calendars: CalendarChoice[] = [];
   for (const source of m.sources) {
     try {
-      for (const c of await source.provider.listCalendars()) owner.set(c.calendarId, source);
+      const listed = await source.provider.listCalendars();
+      for (const c of listed) owner.set(c.calendarId, source);
+      if (source.writer) {
+        for (const c of listed) {
+          if (!source.calendarIds || source.calendarIds.includes(c.calendarId)) calendars.push({calendarId: c.calendarId, name: c.name, provider: source.id});
+        }
+      }
       readable.push(source);
     } catch (e) {
       total.errors.push(`${source.id}: ${message(e)}`);
@@ -179,7 +187,7 @@ export async function runCalendarModule(
   const at = now();
   const sourceSync = {...state.sourceSync};
   for (const source of readable) sourceSync[source.id] = stalled.has(source.id) ? (state.sourceSync?.[source.id] ?? state.lastSync) : at;
-  return {run: {...calendarRun(at, total, warnings), keptLocal}, state: {lastSync: at, sourceSync, baseline}};
+  return {run: {...calendarRun(at, total, warnings), keptLocal, calendars}, state: {lastSync: at, sourceSync, baseline}};
 }
 
 export interface TodoModule {

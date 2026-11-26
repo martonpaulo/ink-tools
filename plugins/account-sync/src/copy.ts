@@ -92,6 +92,13 @@ export const copy = {
   'provider.google': 'Google',
   'provider.icloud': 'iCloud',
   'provider.ics': 'ICS',
+  /** The calendar for events made on the tablet (#29). */
+  'defaultCalendar.title': 'Calendar for new tablet events',
+  'defaultCalendar.none': 'None: keep them on the tablet',
+  'defaultCalendar.choice': '{name} ({provider})',
+  'defaultCalendar.missing': 'The chosen calendar, not seen in the last sync',
+  'defaultCalendar.about': 'A new event made on the tablet goes to this calendar at the next sync, while Send tablet-only items is on.',
+  'defaultCalendar.waiting': 'Sync once to list the Google and iCloud calendars.',
   'ics.caption': 'ICS feeds',
   'ics.empty': 'No ICS feed yet.',
   'ics.field': 'Feed address, https:// or webcal://',

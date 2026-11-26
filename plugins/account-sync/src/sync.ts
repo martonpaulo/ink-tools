@@ -228,6 +228,7 @@ export async function buildModules(
   device: SyncDevice,
   providers: ProviderId[],
   icsFeeds: string[] = [],
+  defaultCalendarId?: string,
 ): Promise<BridgeModules> {
   const modules: BridgeModules = {};
   // Without the content providers the probe cannot have passed, so no module is in the plan.
@@ -256,6 +257,8 @@ export async function buildModules(
       sources,
       store: stores.calendar,
       window: calendarWindow(device.now()),
+      // Settings' calendar for new tablet events (#29); absent, such an event is only reported.
+      defaultCalendarId,
       // The writer's notes, such as the extra copies of an event it removed (#218).
       takeWarnings: () => stores.calendar.takeWarnings(),
     };
@@ -444,6 +447,7 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
         device,
         plan.providers,
         settings.value.icsFeeds,
+        settings.value.defaultCalendarId,
       );
       const done = await runBridgeSync(plan, modules, state, device.now);
       state = done.state;

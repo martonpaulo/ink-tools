@@ -66,6 +66,9 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   `google-client.secret`, from `inkctl secret set google-client` ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud reads the `icloud` sign-in, `<Apple ID>:<app-specific password>`, finds its calendars by CalDAV discovery from `services.json`'s `icloudCalDav` each pass and gets the CalDAV writer; ICS reads the `icsFeeds` addresses in `settings.json`, read-only ([#30](https://github.com/martonpaulo/ink-tools/issues/30)); Settings adds and removes them under Calendar (`src/IcsFeeds.tsx`), each named by its place and host only (`icsFeedName`). Not yet run on the tablet.
   A module's first pass only pulls: tablet-only items stay local unless its «Send tablet-only items»
   switch is on ([#207](https://github.com/martonpaulo/ink-tools/issues/207), an assumption the owner may override).
+  An event made on the tablet goes to Settings' «Calendar for new tablet events», `defaultCalendarId` in
+  `settings.json`, chosen among the Google and iCloud calendars the last pass listed (`ModuleRun.calendars`);
+  with none chosen it stays on the tablet and is reported ([#29](https://github.com/martonpaulo/ink-tools/issues/29)).
   «Remove what Account Sync wrote» ([#89](https://github.com/martonpaulo/ink-tools/issues/89), [#423](https://github.com/martonpaulo/ink-tools/issues/423)), offered under an off Calendar or To-Do, is the
   runner's `removeWritten`, run between passes: sync-core's cleanup removes the Calendar rows tagged
   `task` and the To-Do tasks made from the service, proved by their link or, after a restart, by

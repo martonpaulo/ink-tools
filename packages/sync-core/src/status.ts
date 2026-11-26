@@ -5,7 +5,7 @@
  * runs only while the plugin is alive (#39), so «last synced» is the last run since Bridge started.
  */
 import type {CalendarSyncResult} from './calendar';
-import type {BridgeSettings, ModuleId} from './settings';
+import type {BridgeSettings, ModuleId, ProviderId} from './settings';
 import type {SyncResult} from './tasks';
 
 export interface ModuleRun {
@@ -27,6 +27,18 @@ export interface ModuleRun {
    * says it once, at that setting, never as a warning (#411).
    */
   keptLocal?: number;
+  /**
+   * The calendars this pass read from a service that accepts writes (#29): the choices of Settings'
+   * calendar for new tablet events. Absent on a to-do run and on a calendar run that read nothing.
+   */
+  calendars?: CalendarChoice[];
+}
+
+/** A calendar an event made on the tablet can go to: its service id, name and provider (#29). */
+export interface CalendarChoice {
+  calendarId: string;
+  name: string;
+  provider: ProviderId;
 }
 
 export type ModuleStatus =

@@ -488,6 +488,29 @@ describe('iCloud and ICS on the tablet (#30)', () => {
     expect(net.calls.find(c => c.method === 'GET')?.auth).toBeUndefined();
   });
 
+  test('the pass gives the calendar module the chosen calendar for new tablet events (#29)', async () => {
+    const d = device({
+      fetch: apple().fetch,
+      secrets: {read: async () => 'tester@example.com:pw', remove: async () => {}},
+    });
+    expect((await buildModules(d, ['icloud'], [], CAL)).calendar?.defaultCalendarId).toBe(CAL);
+    expect((await buildModules(d, ['icloud'], [])).calendar?.defaultCalendarId).toBeUndefined();
+  });
+
+  test('Sync now lists the iCloud calendars as choices for new tablet events, never an ICS feed (#29)', async () => {
+    const d = device({
+      fetch: apple().fetch,
+      loadSettings: async () => ({ok: true, value: on()}),
+      secrets: {
+        read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null),
+        remove: async () => {},
+      },
+      stores: createDeviceStores(rows(), () => NOW),
+    });
+    const snap = await createSyncRunner(d).syncNow();
+    expect(snap.runs.calendar?.calendars).toEqual([{calendarId: CAL, name: 'Home', provider: 'icloud'}]);
+  });
+
   test('iCloud gets the CalDAV writer and ICS none, so only iCloud takes tablet edits', async () => {
     const d = device({
       fetch: apple().fetch,

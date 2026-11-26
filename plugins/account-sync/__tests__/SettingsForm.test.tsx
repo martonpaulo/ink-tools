@@ -12,7 +12,7 @@ import {
   setModule,
   setProvider,
 } from '@ink-tools/sync-core/settings';
-import {SettingsForm, tabletOnlyNotice} from '../src/SettingsForm';
+import {defaultCalendarChoices, SettingsForm, tabletOnlyNotice} from '../src/SettingsForm';
 import {copy, format} from '../src/copy';
 
 function render(settings: BridgeSettings, onChange = jest.fn()) {
@@ -271,5 +271,54 @@ describe('the tablet-only notice, said once at its own setting (#411)', () => {
     });
     const shown = tree.root.findAllByType(Text).map(n => n.props.children).filter(t => typeof t === 'string');
     expect(shown.filter(t => (t as string).includes('233'))).toHaveLength(1);
+  });
+});
+
+describe('the calendar for new tablet events (#29)', () => {
+  const calendarOn = setModule(defaultSettings(), 'calendar', true);
+  const ran = (calendars: {calendarId: string; name: string; provider: 'google' | 'icloud'}[]) => ({
+    id: 'calendar',
+    name: 'Calendar',
+    status: {
+      state: 'ran' as const,
+      run: {module: 'calendar' as const, at: 0, counts: {added: 0, changed: 0, removed: 0}, errors: [], warnings: [], calendars},
+    },
+  });
+  const work = {calendarId: 'g1', name: 'Work', provider: 'google' as const};
+  const radio = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll(
+      node =>
+        node.props.accessibilityRole === 'radio' &&
+        node.props.accessibilityLabel === `${copy['defaultCalendar.title']}: ${label}` &&
+        typeof node.props.onPress === 'function',
+    )[0];
+
+  it('offers none and each calendar the last pass listed; a saved one it did not list stays, named so', () => {
+    expect(defaultCalendarChoices(calendarOn)).toEqual([{value: '', label: copy['defaultCalendar.none']}]);
+    expect(defaultCalendarChoices(calendarOn, ran([work]))).toEqual([
+      {value: '', label: copy['defaultCalendar.none']},
+      {value: 'g1', label: 'Work (Google)'},
+    ]);
+    expect(defaultCalendarChoices({...calendarOn, defaultCalendarId: 'gone'}, ran([work]))[2]).toEqual({
+      value: 'gone',
+      label: copy['defaultCalendar.missing'],
+    });
+  });
+
+  it('shows only while Calendar is on, and a press saves the choice through the settings rules', () => {
+    const onChange = jest.fn();
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<SettingsForm settings={calendarOn} onChange={onChange} modules={[ran([work])]} />);
+    });
+    act(() => radio(tree, 'Work (Google)').props.onPress());
+    expect(onChange).toHaveBeenLastCalledWith({...calendarOn, defaultCalendarId: 'g1'});
+    act(() => {
+      tree.update(<SettingsForm settings={{...calendarOn, defaultCalendarId: 'g1'}} onChange={onChange} modules={[ran([work])]} />);
+    });
+    act(() => radio(tree, copy['defaultCalendar.none']).props.onPress());
+    expect(onChange).toHaveBeenLastCalledWith(calendarOn);
+    const off = render(defaultSettings()).tree;
+    expect(radio(off, copy['defaultCalendar.none'])).toBeUndefined();
   });
 });

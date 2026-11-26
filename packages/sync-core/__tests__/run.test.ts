@@ -262,3 +262,17 @@ test('a calendar pass repairs the older tablet rows before it reads any row, and
   expect(stopped.state).toBe(state);
   expect(broken.log).toEqual([]);
 });
+
+test('a pass lists the calendars a tablet-made event can go to: only those of a source with a writer that are on (#29)', async () => {
+  const t = tablet();
+  const two: CalendarProvider = {
+    listCalendars: async () => [{calendarId: 'g1', name: 'Work'}, {calendarId: 'g2', name: 'Home'}],
+    listEvents: async () => [],
+  };
+  const sources: CalendarSource[] = [
+    {id: 'google', provider: two, writer: writer(t.log), calendarIds: ['g2']},
+    {id: 'ics', provider: provider('feed', [])},
+  ];
+  const {run} = await runCalendarModule({sources, store: t.store, window: W}, {baseline: []}, () => 1000);
+  expect(run.calendars).toEqual([{calendarId: 'g2', name: 'Home', provider: 'google'}]);
+});

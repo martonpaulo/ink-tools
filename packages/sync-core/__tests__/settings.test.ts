@@ -9,6 +9,7 @@ import {
   serializeSettings,
   setModule,
   setProvider,
+  setDefaultCalendar,
   setSendTabletOnly,
 } from '../src/settings';
 
@@ -92,4 +93,17 @@ test('ICS feed addresses: none by default, https or webcal kept once, round-trip
   let full = defaultSettings();
   for (let i = 0; i < MAX_ICS_FEEDS; i++) full = addIcsFeed(full, `https://feeds.example.com/${i}.ics`);
   expect(() => addIcsFeed(full, 'https://feeds.example.com/more.ics')).toThrow(`at most ${MAX_ICS_FEEDS}`);
+});
+
+test('the calendar for new tablet events: none by default, chosen, cleared, round-trips, a wrong one throws (#29)', () => {
+  expect(defaultSettings().defaultCalendarId).toBeUndefined();
+  const chosen = setDefaultCalendar(defaultSettings(), 'g1');
+  expect(chosen.defaultCalendarId).toBe('g1');
+  expect(parseSettings(serializeSettings(chosen))).toEqual(chosen);
+  const cleared = setDefaultCalendar(chosen, undefined);
+  expect('defaultCalendarId' in cleared).toBe(false);
+  expect(parseSettings(serializeSettings(cleared))).toEqual(defaultSettings());
+  const stored = JSON.parse(serializeSettings(defaultSettings()));
+  expect(() => parseSettings(JSON.stringify({...stored, defaultCalendarId: 3}))).toThrow('defaultCalendarId');
+  expect(() => parseSettings(JSON.stringify({...stored, defaultCalendarId: ''}))).toThrow('defaultCalendarId');
 });

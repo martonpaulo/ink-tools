@@ -36,6 +36,11 @@ export interface BridgeSettings {
    * gave it (#30). A private feed's address is a secret of its own, so Settings never shows it whole.
    */
   icsFeeds: string[];
+  /**
+   * The calendar that receives an event made on the tablet (#29), by its service id, as a pass
+   * lists it (`ModuleRun.calendars`); absent, such an event stays on the tablet and is reported.
+   */
+  defaultCalendarId?: string;
 }
 
 export function defaultSettings(): BridgeSettings {
@@ -67,7 +72,7 @@ export function icsFeedAddress(raw: string): string {
 export function parseSettings(raw: string): BridgeSettings {
   const value: unknown = JSON.parse(raw);
   if (typeof value !== 'object' || value === null) throw new Error('settings: not an object');
-  const v = value as {schema?: unknown; modules?: unknown; providers?: unknown; sendTabletOnly?: unknown; firstLinked?: unknown; icsFeeds?: unknown};
+  const v = value as {schema?: unknown; modules?: unknown; providers?: unknown; sendTabletOnly?: unknown; firstLinked?: unknown; icsFeeds?: unknown; defaultCalendarId?: unknown};
   if (v.schema !== 1) throw new Error(`settings: unsupported schema ${String(v.schema)}`);
   const out = defaultSettings();
   for (const [key, target] of [['modules', out.modules], ['providers', out.providers]] as const) {
@@ -100,6 +105,11 @@ export function parseSettings(raw: string): BridgeSettings {
       return icsFeedAddress(f);
     });
   }
+  // Came after schema 1 shipped (#29): absent is no default calendar; a wrong type throws.
+  if (v.defaultCalendarId !== undefined) {
+    if (typeof v.defaultCalendarId !== 'string' || v.defaultCalendarId === '') throw new Error('settings: defaultCalendarId is not a calendar id');
+    out.defaultCalendarId = v.defaultCalendarId;
+  }
   return out;
 }
 
@@ -117,6 +127,13 @@ export function setModule(s: BridgeSettings, id: ModuleId, on: boolean): BridgeS
 
 export function setSendTabletOnly(s: BridgeSettings, id: TwoWayModule, on: boolean): BridgeSettings {
   return {...s, sendTabletOnly: {...s.sendTabletOnly, [id]: on}};
+}
+
+/** Choose the calendar for events made on the tablet (#29); `undefined` clears the choice. */
+export function setDefaultCalendar(s: BridgeSettings, calendarId: string | undefined): BridgeSettings {
+  const next: BridgeSettings = {...s, defaultCalendarId: calendarId};
+  if (!calendarId) delete next.defaultCalendarId;
+  return next;
 }
 
 /** Add one ICS feed; the same address twice is kept once, and past `MAX_ICS_FEEDS` it throws. */

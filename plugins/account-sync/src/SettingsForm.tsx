@@ -11,7 +11,8 @@
  */
 import React, {useState} from 'react';
 import {View} from 'react-native';
-import {ActionRow, RowGroup, SwitchRow} from '@ink-tools/ui-kit';
+import {ActionRow, ChoiceList, RowGroup, SwitchRow} from '@ink-tools/ui-kit';
+import type {Choice} from '@ink-tools/ui-kit';
 import {
   BridgeSettings,
   MODULE_PROVIDERS,
@@ -19,6 +20,7 @@ import {
   ModuleId,
   ProviderId,
   READ_ONLY_PROVIDERS,
+  setDefaultCalendar,
   setModule,
   setProvider,
   setSendTabletOnly,
@@ -137,6 +139,15 @@ export function SettingsForm({
                 <RemoveRow module={name} onConfirm={row.onRemoveWritten} ask={ask} />
               )}
             </RowGroup>
+            {module === 'calendar' && on && (
+              <ChoiceList
+                title={copy['defaultCalendar.title']}
+                choices={defaultCalendarChoices(settings, row)}
+                value={settings.defaultCalendarId ?? ''}
+                onChange={id => onChange(setDefaultCalendar(settings, id || undefined))}
+                note={defaultCalendarNote(row)}
+              />
+            )}
             {module === 'calendar' && (
               <IcsFeeds
                 settings={settings}
@@ -149,6 +160,39 @@ export function SettingsForm({
       })}
     </View>
   );
+}
+
+/** The calendars the last pass listed from a service that accepts writes, by `ModuleRun.calendars`. */
+const listedCalendars = (row?: ModuleRow) =>
+  row?.status.state === 'ran' ? row.status.run.calendars : undefined;
+
+/**
+ * The choices of the calendar for new tablet events (#29): none, then each calendar the last pass
+ * read from Google or iCloud. A saved calendar the last pass did not list stays a choice, named so,
+ * never dropped in silence.
+ */
+export function defaultCalendarChoices(
+  settings: BridgeSettings,
+  row?: ModuleRow,
+): Choice<string>[] {
+  const listed = listedCalendars(row) ?? [];
+  const choices: Choice<string>[] = [
+    {value: '', label: copy['defaultCalendar.none']},
+    ...listed.map(c => ({
+      value: c.calendarId,
+      label: format('defaultCalendar.choice', {name: c.name, provider: copy[`provider.${c.provider as 'google' | 'icloud'}`]}),
+    })),
+  ];
+  const saved = settings.defaultCalendarId;
+  if (saved && !listed.some(c => c.calendarId === saved)) {
+    choices.push({value: saved, label: copy['defaultCalendar.missing']});
+  }
+  return choices;
+}
+
+/** What the choice does, or, before a pass listed any calendar, how to list them. */
+function defaultCalendarNote(row?: ModuleRow): string {
+  return listedCalendars(row)?.length ? copy['defaultCalendar.about'] : copy['defaultCalendar.waiting'];
 }
 
 /**
