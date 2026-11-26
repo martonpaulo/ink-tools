@@ -1,10 +1,18 @@
 import {runNativeListenProbe, runNativeProviderProbe} from '../src/native';
+import {NeedError} from '../src/probe';
 
-test('a build without the native module says so instead of passing', async () => {
+const needOf = async (run: Promise<void>) => {
+  const error = await run.then(() => undefined, (e: unknown) => e);
+  expect(error).toBeInstanceOf(NeedError);
+  return (error as NeedError).need;
+};
+
+test('a build without the native module needs the native step instead of passing (#257)', async () => {
   const lines: string[] = [];
-  await runNativeProviderProbe(l => lines.push(l), {});
-  expect(lines).toHaveLength(1);
-  expect(lines[0]).toContain('ProbeProviders is missing');
+  const need = await needOf(runNativeProviderProbe(l => lines.push(l), {}));
+  expect(lines).toEqual([]);
+  expect(need.what).toContain('ProbeProviders is missing');
+  expect(need.steps[0]).toContain('npm -C plugins/plugin-diagnostics run build');
 });
 
 test('logs each native line, then starts the heartbeat', async () => {
@@ -21,11 +29,9 @@ test('a native failure propagates so runProbe logs it', async () => {
   await expect(runNativeProviderProbe(jest.fn(), {ProbeProviders: {run, startHeartbeat: jest.fn()}})).rejects.toThrow('boom');
 });
 
-test('a build without the listener says so instead of passing (#91)', async () => {
-  const lines: string[] = [];
-  await runNativeListenProbe(l => lines.push(l), {ProbeProviders: {run: jest.fn(), startHeartbeat: jest.fn()}});
-  expect(lines).toHaveLength(1);
-  expect(lines[0]).toContain('no startListener');
+test('a build without the listener needs the native step instead of passing (#91, #257)', async () => {
+  const need = await needOf(runNativeListenProbe(jest.fn(), {ProbeProviders: {run: jest.fn(), startHeartbeat: jest.fn()}}));
+  expect(need.what).toContain('has no listener');
 });
 
 test('logs the port and addresses of the listener and how to reach it (#91)', async () => {

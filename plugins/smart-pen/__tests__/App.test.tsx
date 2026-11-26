@@ -118,6 +118,8 @@ test('a settings file that cannot be read shows the defaults with a note', async
   expect(texts(tree)).toContain(
     'Could not read the settings file, so these are the defaults. A change is kept until the tablet restarts.',
   );
+  // The failure keeps ui-kit's title bar and its Close (#257).
+  expect(control(tree, 'Close')).toBeDefined();
   log.mockRestore();
 });
 
@@ -137,10 +139,20 @@ test('a change that fails to save is put back and said', async () => {
   expect(texts(tree)).toContain(
     'Could not apply or save that change. Try again.',
   );
+  expect(control(tree, 'Close')).toBeDefined();
   log.mockRestore();
 });
 
 test("Real-Time Text's own settings sit under its name", async () => {
   const {tree} = await mount();
   expect(texts(tree).filter(text => text === 'Real-Time Text').length).toBe(2);
+});
+
+test('the view shows Close before the settings file is read (#257)', async () => {
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App load={() => new Promise(() => {})} />);
+  });
+  expect(control(tree, 'Close')).toBeDefined();
+  expect(labels(tree)).not.toContain('Smart Shapes');
 });

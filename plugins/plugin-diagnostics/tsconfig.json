@@ -2,10 +2,14 @@
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
     "paths": {
+      // The shared screens (#257); its react and react-native imports resolve from this plugin's node_modules.
+      "@ink-tools/ui-kit": ["../../packages/ui-kit/src"],
+      "@ink-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
       // The registry of internals (#294) and the action channel (#283), the only parts of sn-adapter this plugin reads.
       "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       "@ink-tools/sn-adapter/actions": ["../../packages/sn-adapter/actions"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
-  }
+  },
+  "include": ["**/*", "../../packages/ui-kit/src"]
 }

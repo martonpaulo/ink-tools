@@ -89,10 +89,6 @@
    "plugins/plugin-diagnostics/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/plugin-diagnostics/App.tsx": {
-    "colour": 1,
-    "number": 4
-   },
    "plugins/plugin-diagnostics/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4

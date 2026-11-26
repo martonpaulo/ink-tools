@@ -12,7 +12,7 @@
     {"name": "word-lookup", "command": "cd plugins/word-lookup && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Word Lookup plugin"},
     {"name": "device-transfer", "command": "cd plugins/device-transfer && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Device Transfer plugin"},
     {"name": "smart-pen", "command": "cd plugins/smart-pen && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Smart Pen plugin (#305): its module switches and settings file, the pen-up router, Real-Time Text's conversion over a fake tablet (#184) and Smart Shapes' recognition, hold and replace over a fake page (#253)"},
-    {"name": "plugin-diagnostics", "command": "cd plugins/plugin-diagnostics && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Plugin Diagnostics plugin and its JVM tests"},
+    {"name": "plugin-diagnostics", "command": "cd plugins/plugin-diagnostics && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Plugin Diagnostics plugin, its JVM tests and its type check of ui-kit (#257)"},
     {"name": "handwriting-language", "command": "cd apps/handwriting-language && node scripts/build.cjs --test && node scripts/build.cjs", "covers": "the Handwriting Language app: its JVM tests and a signed, verified APK (#157, #160)"},
     {"name": "inktools-bridge", "command": "cd apps/inktools-bridge && node scripts/build.cjs --test && node scripts/build.cjs", "covers": "the Ink Tools bridge app: its JVM tests of the PluginHost call encoding and a signed, verified APK (#215)"},
     {"name": "inkctl", "command": "cd cli/inkctl && make validate", "covers": "the inkctl CLI and its contract tests"},

@@ -23,6 +23,7 @@ name is «Plugin Diagnostics», applied with the folder rename of [#194](https:/
   only executes: text to strokes and every refusal live in the CLI. The probe view runs the probe
   on «Run Probe», never on mount, because a «Run Command» press mounts the view's component too.
 - «Run Probe» also runs by command, with no screen: `src/actions.ts` gives sn-adapter's action channel (`@ink-tools/sn-adapter/actions`) the `run-probe` action and the reader of `MyStyle/Probe/action.json` ([#283](https://github.com/martonpaulo/ink-tools/issues/283)).
+- The view is drawn with `@ink-tools/ui-kit` ([#257](https://github.com/martonpaulo/ink-tools/issues/257)): the title bar's × closes it; a probe that throws `NeedError` (`src/probe.ts`) shows the Needs state with its steps, any other throw the Error state with Retry, and `run-probe` by command fails on either. Its copy is `src/copy.ts`.
 - Lines are logged with the tag `SNPROBE`. Never log a secret or a person's data.
 - Validate with `npm run validate`. A result found on the device goes to the issue or a research
   note, never kept as a claim without the device run.

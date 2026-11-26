@@ -6,7 +6,7 @@
 import {NativeModules} from 'react-native';
 import {ACTION_FILE, type Action} from '@ink-tools/sn-adapter/actions';
 import {PROBE_FOLDER} from './helper';
-import {runProbe, TAG} from './probe';
+import {probe, TAG} from './probe';
 
 type Reader = {readCommand(path: string): Promise<string>};
 
@@ -21,12 +21,16 @@ export function readActionFile(modules: Record<string, unknown> = NativeModules)
   return reader.readCommand(ACTION_PATH);
 }
 
-/** `run-probe`: the probe's lines, logged as «Run Probe» logs them; its line is the last, such as `probe done`. */
+/**
+ * `run-probe`: the probe's lines, logged as «Run Probe» logs them; its line is the last, such as
+ * `probe done`. A probe that needs something or failed is a failed action, never a success (#257).
+ */
 export function runProbeAction(runtime: Record<string, unknown>): Action {
   return async () => {
-    const lines = await runProbe(runtime);
+    const outcome = await probe(runtime);
+    const lines = outcome.lines;
     const last = lines[lines.length - 1] ?? '';
-    if (last.startsWith('probe failed')) {
+    if (outcome.status !== 'done') {
       throw new Error(last);
     }
     return {line: `${TAG} ${last}`, lines};

@@ -24,7 +24,6 @@ const PENDING_IDENTITY = new Set([
   'device-transfer: app.json displayName',
   'image-editing: app.json displayName',
   'plugin-diagnostics: app.json displayName',
-  'plugin-diagnostics: copy title',
   'word-lookup: app.json displayName',
 ]);
 /** The dependencies every plugin pins to the same version: one host runtime, one SDK. */

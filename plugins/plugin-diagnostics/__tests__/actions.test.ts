@@ -1,4 +1,5 @@
 /** Plugin Diagnostics' actions by command (#283): `run-probe`, the same probe as «Run Probe». */
+import {NativeModules} from 'react-native';
 import {ACTION_PATH, readActionFile, runProbeAction} from '../src/actions';
 import {PROBE_FOLDER} from '../src/helper';
 
@@ -12,8 +13,16 @@ test('the request file is action.json in the Probe folder, read by readCommand',
 
 test('run-probe runs the probe and answers its lines, the last one as its line', async () => {
   const spy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+  NativeModules.ProbeProviders = {run: jest.fn().mockResolvedValue(['digest query OK']), startHeartbeat: jest.fn()};
   const answer = await runProbeAction({b: 1, a: 2})({});
+  delete NativeModules.ProbeProviders;
   spy.mockRestore();
   expect(answer.line).toBe('SNPROBE probe done');
   expect((answer.lines as string[])[0]).toBe('runtime keys: a,b');
+});
+
+test('run-probe fails, never a success, when the probe needs the native step (#257)', async () => {
+  const spy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+  await expect(runProbeAction({})({})).rejects.toThrow('probe needs: The native module ProbeProviders is missing');
+  spy.mockRestore();
 });
