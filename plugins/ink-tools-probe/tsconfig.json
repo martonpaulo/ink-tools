@@ -5,9 +5,10 @@
       // The shared screens (#257); its react and react-native imports resolve from this plugin's node_modules.
       "@ink-tools/ui-kit": ["../../packages/ui-kit/src"],
       "@ink-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
-      // The registry of internals (#294) and the action channel (#283), the only parts of sn-adapter this plugin reads.
+      // The registry of internals (#294), the action channel (#283) and the button values (#295), the only parts of sn-adapter this plugin reads.
       "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       "@ink-tools/sn-adapter/actions": ["../../packages/sn-adapter/actions"],
+      "@ink-tools/sn-adapter/buttons": ["../../packages/sn-adapter/buttons"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

@@ -99,6 +99,16 @@
     "repeated": 3,
     "url": 4
    },
+   "plugins/lasso-actions/.eslintrc.js": {
+    "repeated": 1
+   },
+   "plugins/lasso-actions/scripts/native-toolchain.sh": {
+    "repeated": 3,
+    "url": 4
+   },
+   "plugins/lasso-actions/src/buttons.ts": {
+    "repeated": 1
+   },
    "plugins/smart-pen/.eslintrc.js": {
     "repeated": 1
    },
@@ -123,16 +133,6 @@
    },
    "plugins/smart-pen/test-support/strokes.ts": {
     "number": 17
-   },
-   "plugins/lasso-actions/.eslintrc.js": {
-    "repeated": 1
-   },
-   "plugins/lasso-actions/scripts/native-toolchain.sh": {
-    "repeated": 3,
-    "url": 4
-   },
-   "plugins/lasso-actions/src/buttons.ts": {
-    "repeated": 1
    },
    "scripts/npm_audit.py": {
     "number": 2,
@@ -307,8 +307,8 @@
   "repeated": {
    "plugins/device-link/AGENTS.md": 1,
    "plugins/image-editing/AGENTS.md": 3,
-   "plugins/smart-pen/AGENTS.md": 2,
-   "plugins/lasso-actions/AGENTS.md": 3
+   "plugins/lasso-actions/AGENTS.md": 3,
+   "plugins/smart-pen/AGENTS.md": 2
   }
  },
  "retired": {
@@ -459,9 +459,6 @@
    "plugins/account-sync/scripts/native-toolchain.sh": {
     "ink2pic": 1
    },
-   "plugins/device-link/index.js": {
-    "Ink2Pic": 1
-   },
    "plugins/device-link/src/receive/receive.ts": {
     "Ink2Pic": 1
    },
@@ -484,15 +481,6 @@
     "Ink2Pic": 1
    },
    "plugins/image-editing/src/native.ts": {
-    "Ink2Pic": 1
-   },
-   "plugins/smart-pen/index.js": {
-    "Ink2Pic": 1
-   },
-   "plugins/smart-pen/src/modules/text/settings.ts": {
-    "Ink2Pic": 1
-   },
-   "plugins/smart-pen/test-support/host.ts": {
     "Ink2Pic": 1
    },
    "plugins/lasso-actions/__tests__/App.test.tsx": {
@@ -544,6 +532,15 @@
     "Ink2Pic": 2
    },
    "plugins/lasso-actions/tsconfig.json": {
+    "Ink2Pic": 1
+   },
+   "plugins/smart-pen/index.js": {
+    "Ink2Pic": 1
+   },
+   "plugins/smart-pen/src/modules/text/settings.ts": {
+    "Ink2Pic": 1
+   },
+   "plugins/smart-pen/test-support/host.ts": {
     "Ink2Pic": 1
    }
   }

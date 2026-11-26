@@ -6,13 +6,18 @@ import {AppRegistry, Image, ToastAndroid} from 'react-native';
 import App from './App';
 import {name as appName} from './app.json';
 import {
+  BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
   closePluginView,
+  EDIT_DATA_STROKES,
   initPlugin,
   nativeTimers,
   onMotion,
   startActionChannel,
   registerButton,
   registerSettingsEntry,
+  SHOW_FULL_VIEW,
+  SHOW_NO_VIEW,
   showPluginView,
   startButtonQueue,
 } from '@ink-tools/sn-adapter/official';
@@ -36,13 +41,6 @@ import {working} from './src/working';
 import {editAction} from './src/editor/operations';
 import {deviceEditHost, readEditorRequest} from './src/editor/device';
 import {PenGate} from './src/editor/penGate';
-
-/** sn-plugin-lib 0.2.3 button types and show types, as Ink2Pic names them. */
-const BUTTON_TYPE_SIDEBAR = 1;
-const BUTTON_TYPE_LASSO = 2;
-const SHOW_NO_VIEW = 0;
-const SHOW_FULL_VIEW = 1;
-const EDIT_DATA_STROKES = 0;
 
 AppRegistry.registerComponent(appName, () => App);
 

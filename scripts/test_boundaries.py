@@ -124,6 +124,21 @@ class Boundaries(unittest.TestCase):
             "plugins/a/metro.config.js": "const s = {borderStyle: 'dotted'};\n",
         }), [("plugins/a/App.tsx", "controls"), ("plugins/a/index.js", "controls")])
 
+    def test_plugins_take_the_sdk_button_values_from_sn_adapter(self):
+        # Allowed: sn-adapter's owner file, an import, a test (#295).
+        self.assertEqual(self.tree({
+            "packages/sn-adapter/src/official/buttonValues.ts": "export const BUTTON_TYPE_SIDEBAR = 1;\n",
+            "plugins/a/index.js": "import {BUTTON_TYPE_LASSO} from '@ink-tools/sn-adapter/official';\n",
+            "plugins/a/__tests__/b.test.ts": "const SHOW_NO_VIEW = 0;\n",
+        }), [])
+        # The Probe is exempt from most rules, not this one.
+        self.assertEqual(self.tree({
+            "plugins/a/index.js": "const BUTTON_TYPE_LASSO = 2;\n",
+            "plugins/ink-tools-probe/src/register.ts": "const NO_VIEW = 0;\n",
+            "plugins/b/src/c.ts": "const EDIT_DATA_STROKES = 0;\n",
+        }), [("plugins/a/index.js", "buttons"), ("plugins/b/src/c.ts", "buttons"),
+             ("plugins/ink-tools-probe/src/register.ts", "buttons")])
+
     def test_pending_controls_only_shrink(self):
         files = {"plugins/a/src/A.tsx": "<View style={shared.listRow}>\n", "plugins/a/src/B.tsx": "const b = 1;\n"}
         self.assertEqual(self.tree(files, frozenset({"plugins/a/src/A.tsx"})), [])

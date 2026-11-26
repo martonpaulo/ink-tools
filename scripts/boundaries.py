@@ -26,13 +26,16 @@ The rules are `docs/architecture.md` › Layer rules:
   bar, pager or chevron glyph (‹ › ◀ ▶ × ✕ in a string); it takes the component of
   `@ink-tools/ui-kit` (#273). The files that still do are `PENDING_CONTROLS`, which #274 empties: a
   listed file that no longer draws one is a finding too, so the list only shrinks.
+- `buttons`: no plugin declares its own sn-plugin-lib button, show or lasso-data value (a constant
+  named `BUTTON_TYPE_…`, `SHOW_…VIEW`, `EDIT_DATA_…`, `SIDEBAR`, `LASSO`, `NO_VIEW` or
+  `ANY_LASSO_DATA`); it imports them from `@ink-tools/sn-adapter/official` or `/buttons` (#295).
 
 The host tools' Python under `cli/<tool>/src/` (inkctl is one extensionless file, read by its `#!`
 line, #295) is read for `vendor`, `service` and `dictionary`. The values inkctl still names when
 this landed are `PENDING_HOST` counts, which #295's value moves lower: a count above its row names
 each line, and a count below it is a finding too, so the counts only go down.
 
-`plugins/ink-tools-probe/` is exempt from every rule but `url` and `vendor`: it exists to call the SDK
+`plugins/ink-tools-probe/` is exempt from every rule but `url`, `vendor` and `buttons`: it exists to call the SDK
 directly, and reads the internals it probes through its readers like every tool (#294). Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java`, `.kt` and `.swift` for `vendor`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
@@ -84,6 +87,10 @@ OWN_CONTROLS = (
 PENDING_CONTROLS = frozenset({
     "plugins/lasso-actions/src/ui/ChooseScreen.tsx",
 })
+# A plugin's own copy of an SDK button value (#295): sn-adapter's buttonValues.ts owns each one.
+OWN_BUTTON_VALUE = re.compile(
+    r"\b(?:const|let|var)\s+(?:BUTTON_TYPE_\w+|SHOW_\w*VIEW|EDIT_DATA_\w+|SIDEBAR|LASSO|NO_VIEW|ANY_LASSO_DATA)\s*=")
+PLUGIN_CODE = re.compile(r"^plugins/[^/]+/")
 LINE_COMMENT = re.compile(r"^\s*(?://|\*|/\*)")
 PYTHON_COMMENT = re.compile(r"^\s*#")
 HOST_TOOL = re.compile(r"^cli/[^/]+/src/")
@@ -205,6 +212,8 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None):
         for number, line in enumerate(lines, 1):
             if LINE_COMMENT.match(line):
                 continue
+            if suffix in SCRIPT and not test and PLUGIN_CODE.match(rel) and OWN_BUTTON_VALUE.search(line):
+                found.append((rel, number, "buttons", "declares its own SDK button value; import it from @ink-tools/sn-adapter/official or /buttons"))
             if tablet and URL_USE.search(line):
                 found.append((rel, number, "url", "uses React Native's URL, whose getters throw; take parseUrl of sync-core"))
             if VENDOR.search(line) and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:

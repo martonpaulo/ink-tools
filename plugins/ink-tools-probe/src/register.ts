@@ -1,12 +1,11 @@
 import {PluginManager} from 'sn-plugin-lib';
+import {
+  BUTTON_TYPE_LASSO,
+  BUTTON_TYPE_SIDEBAR,
+  EDIT_DATA_ANY,
+  SHOW_NO_VIEW,
+} from '@ink-tools/sn-adapter/buttons';
 
-/** sn-plugin-lib 0.2.3: a sidebar button in the note, with no view (as Relay's «Send Page»). */
-const SIDEBAR = 1;
-/** sn-plugin-lib 0.2.3: a lasso toolbar button, listed in the lasso «⋯» menu. */
-const LASSO = 2;
-const NO_VIEW = 0;
-/** Every lasso data type (strokes, title, picture, text, link, geometric shape), so the row is live for any lasso. */
-const ANY_LASSO_DATA = [0, 1, 2, 3, 4, 5];
 /** The «Run Command» button inkctl presses (#148); the CLI finds it by this name. */
 export const COMMAND_BUTTON = {id: 300, name: 'Run Command'};
 /**
@@ -26,19 +25,19 @@ export async function registerProbe(onSettingsClick: () => void, onCommand: () =
     throw new Error(`registerConfigButton answered ${String(registered)}`);
   }
   PluginManager.registerConfigButtonListener({onClick: onSettingsClick});
-  const button = await PluginManager.registerButton(SIDEBAR, ['NOTE'], {
+  const button = await PluginManager.registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
     ...COMMAND_BUTTON,
     icon,
-    showType: NO_VIEW,
+    showType: SHOW_NO_VIEW,
   });
   if (button !== true) {
     throw new Error(`registerButton(${COMMAND_BUTTON.name}) answered ${String(button)}`);
   }
-  const lasso = await PluginManager.registerButton(LASSO, ['NOTE'], {
+  const lasso = await PluginManager.registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
     ...LASSO_COMMAND_BUTTON,
     icon,
-    editDataTypes: ANY_LASSO_DATA,
-    showType: NO_VIEW,
+    editDataTypes: [...EDIT_DATA_ANY],
+    showType: SHOW_NO_VIEW,
   });
   if (lasso !== true) {
     throw new Error(`registerButton(lasso ${LASSO_COMMAND_BUTTON.name}) answered ${String(lasso)}`);
