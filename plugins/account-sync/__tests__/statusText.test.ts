@@ -1,5 +1,7 @@
 /** A module's status in plain words, and the same record in the log (#88). */
+import {DEVICE_CHECK_PENDING, moduleStatus} from '@ink-tools/sync-core';
 import type {ModuleRun} from '@ink-tools/sync-core';
+import {defaultSettings} from '@ink-tools/sync-core/settings';
 import {
   logBlocked,
   logRun,
@@ -25,6 +27,14 @@ describe('statusLines (#88)', () => {
     expect(statusLines({state: 'waiting'})).toEqual([
       'On. Not synced since Account Sync started.',
     ]);
+  });
+
+  it('says a pending device check in one sentence, with one colon (#368)', () => {
+    const base = defaultSettings();
+    const on = {...base, modules: {...base.modules, todo: true}};
+    const [line] = statusLines(moduleStatus('todo', on, {}, {}));
+    expect(line).toBe(`On, but not running: ${DEVICE_CHECK_PENDING}`);
+    expect(line.split(':')).toHaveLength(2);
   });
 
   it('says a module that could not run is not running, why, and when it tried, never «synced»', () => {

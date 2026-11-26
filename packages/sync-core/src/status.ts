@@ -62,8 +62,11 @@ export function tasksRun(at: number, result: SyncResult): ModuleRun {
   };
 }
 
-/** Why a module that is on waits: no pass has probed it since the plugin host started (#43). */
-export const DEVICE_CHECK_PENDING = 'the device check has not run yet: it runs with the next sync';
+/**
+ * Why a module that is on waits: no pass has probed it since the plugin host started (#43). It
+ * follows «On, but not running: », so it holds no colon of its own: one sentence (#368).
+ */
+export const DEVICE_CHECK_PENDING = 'the device check runs with the next sync';
 
 /** The probe's problems per module; a module with no entry has no probe answer. */
 export type ProbeProblems = Partial<Record<ModuleId, string[]>>;

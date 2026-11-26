@@ -40,6 +40,6 @@ describe('module status (#88)', () => {
 
   test('a module with no probe answer is blocked, never shown as ready', () => {
     const on = setModule(defaultSettings(), 'todo', true);
-    expect(moduleStatus('todo', on, {}, {})).toEqual({state: 'blocked', reasons: ['the device check has not run yet: it runs with the next sync']});
+    expect(moduleStatus('todo', on, {}, {})).toEqual({state: 'blocked', reasons: ['the device check runs with the next sync']});
   });
 });
