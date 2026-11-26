@@ -79,6 +79,8 @@ export async function buildElement(spec: NewElement): Promise<Result<object>> {
 
 type Placed = {
   type?: number;
+  /** The stored outline the lasso selects by, rings of float page pixels (docs/research/2026-11-note-format.md). */
+  contoursSrc?: {size(): Promise<number>; getRange(start: number, count: number): Promise<PenPoint[][]>; setRange?(index: number, end: number, values: PenPoint[][]): Promise<boolean>} | null;
   picture?: {rect?: EditRect} | null;
   textBox?: {textRect?: EditRect} | null;
   stroke?: {
@@ -92,20 +94,47 @@ function boundsOf(points: PenPoint[]): EditRect {
   return {left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys)};
 }
 
-/** `point` of `from` at the same place in `to`; a line with no width or height keeps that side. */
-function mapPoint(point: PenPoint, from: EditRect, to: EditRect): PenPoint {
+/**
+ * `point` of `from` at the same place in `to`; a line with no width or height keeps that side.
+ * Sample points are whole pixels; the outline keeps its float points (`round` false).
+ */
+function mapPoint(point: PenPoint, from: EditRect, to: EditRect, round = true): PenPoint {
   const width = from.right - from.left;
   const height = from.bottom - from.top;
-  return {
-    x: Math.round(width ? to.left + ((point.x - from.left) * (to.right - to.left)) / width : point.x + to.left - from.left),
-    y: Math.round(height ? to.top + ((point.y - from.top) * (to.bottom - to.top)) / height : point.y + to.top - from.top),
-  };
+  const x = width ? to.left + ((point.x - from.left) * (to.right - to.left)) / width : point.x + to.left - from.left;
+  const y = height ? to.top + ((point.y - from.top) * (to.bottom - to.top)) / height : point.y + to.top - from.top;
+  return round ? {x: Math.round(x), y: Math.round(y)} : {x, y};
+}
+
+/**
+ * Moves the stroke's stored outline with its points: the tablet does not make it again, and the
+ * lasso selects by it, so a stroke moved without it is lassoed at its old place (device round 13,
+ * #325). A stroke with no outline has nothing to move.
+ */
+async function moveOutline(element: Placed, from: EditRect, to: EditRect): Promise<Result<true>> {
+  const outline = element.contoursSrc;
+  if (!outline) {
+    return ok(true);
+  }
+  const read = await readAll(outline);
+  if (!read.ok) {
+    return read;
+  }
+  if (!read.value.length) {
+    return ok(true);
+  }
+  if (!outline.setRange) {
+    return fail(THROWN_CODE, 'the stroke outline cannot be written');
+  }
+  const moved = read.value.map(ring => ring.map(point => mapPoint(point, from, to, false)));
+  return (await outline.setRange(0, moved.length, moved)) ? ok(true) : fail(THROWN_CODE, 'setRange did not write the outline');
 }
 
 /**
  * Moves and sizes an element read by `getElement` to `rect`, in place, for a modify call: a
  * picture's or text box's rect, or a stroke's points mapped from their bounds to `rect`. The stroke
- * writes its points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`).
+ * writes its points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`), and its
+ * stored outline (`contoursSrc`) with another, by the same mapping.
  * shortcut: setRange's end index is read as exclusive, as getRange counts; the device round checks it.
  */
 export async function placeElement(element: object, rect: EditRect): Promise<Result<object>> {
@@ -132,7 +161,11 @@ export async function placeElement(element: object, rect: EditRect): Promise<Res
   const from = boundsOf(read.value);
   const moved = read.value.map(point => mapPoint(point, from, rect));
   try {
-    return (await points.setRange(0, moved.length, moved)) ? ok(element) : fail(THROWN_CODE, 'setRange did not write the points');
+    if (!(await points.setRange(0, moved.length, moved))) {
+      return fail(THROWN_CODE, 'setRange did not write the points');
+    }
+    const outline = await moveOutline(placed, from, rect);
+    return outline.ok ? ok(element) : outline;
   } catch (error) {
     return fail(THROWN_CODE, error instanceof Error ? error.message : String(error));
   }

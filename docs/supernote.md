@@ -965,6 +965,10 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   - `inkctl ink write` of one word: 8 strokes, 289 points, `insertStrokes` 1136 ms, 14.3 s per command.
   - `inkctl lasso last-insert`: `lassoLast` 202 ms, 10.7 s per command. `inkctl lasso rect` around
     the written word: 8 trails lassoed in 149 ms, 11.0 s per command. Both show the lasso toolbar.
+  - A `lasso rect` over a place with nothing in it answered, in about 40 ms, the previous lasso's
+    counts (`bitmapNum: 1`, `trailNum: 8`), with the old selection still on screen [measured, three
+    times, Manta, 2026-11-26, [#325](https://github.com/martonpaulo/ink-tools/issues/325)]. So
+    Probe refuses a `lassoElements` that does not answer `true` and reads no counts after it.
   - `inkctl lasso rows` read 21 rows in 39.6 s; `inkctl lasso press` took 32.9 s the first time and
     10.4 s the second.
   - So most of a command's time is outside the plugin call: inkctl's push, press and log read.

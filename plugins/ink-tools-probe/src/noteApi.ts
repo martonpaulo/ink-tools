@@ -149,7 +149,11 @@ export const noteApi: HelperApi = {
   },
 
   async lasso(rect) {
-    unwrap('lassoElements', await PluginCommAPI.lassoElements(rect));
+    // A rect that catches nothing answers false, and the counts read after it are the previous
+    // lasso's (device round 13, #325): so a false answer is a refusal, never those counts.
+    if (unwrap<boolean>('lassoElements', await PluginCommAPI.lassoElements(rect)) !== true) {
+      throw new HelperError(1, `lassoElements: the rect ${JSON.stringify(rect)} lassoed nothing`);
+    }
     return unwrap<Record<string, unknown>>('getLassoElementTypeCounts', await PluginCommAPI.getLassoElementTypeCounts());
   },
 

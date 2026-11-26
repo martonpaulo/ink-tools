@@ -3,7 +3,13 @@ import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {noteApi, saveFirst} from '../src/noteApi';
 
 jest.mock('sn-plugin-lib', () => ({
-  PluginCommAPI: {createElement: jest.fn(), insertPageElements: jest.fn(), getCurrentFilePath: jest.fn()},
+  PluginCommAPI: {
+    createElement: jest.fn(),
+    insertPageElements: jest.fn(),
+    getCurrentFilePath: jest.fn(),
+    lassoElements: jest.fn(),
+    getLassoElementTypeCounts: jest.fn(),
+  },
   PluginFileAPI: {generateNotePng: jest.fn(), getElements: jest.fn(), insertNotePage: jest.fn()},
   PluginNoteAPI: {saveCurrentNote: jest.fn()},
   PluginManager: {},
@@ -96,5 +102,22 @@ describe('insertPage saves the open note first, or inserts nothing (#263)', () =
     (PluginNoteAPI.saveCurrentNote as jest.Mock).mockResolvedValue({success: false, error: {code: 904, message: 'busy'}});
     await expect(noteApi.insertPage(1, 'style_white')).rejects.toThrow(/no page was inserted/);
     expect(calls).toEqual([]);
+  });
+});
+
+describe('lasso (#325)', () => {
+  const rect = {left: 10, top: 10, right: 50, bottom: 50};
+
+  test('a rect that lassoes nothing is a refusal, never the previous lasso\'s counts', async () => {
+    (PluginCommAPI.lassoElements as jest.Mock).mockResolvedValue({success: true, result: false});
+    (PluginCommAPI.getLassoElementTypeCounts as jest.Mock).mockResolvedValue({success: true, result: {trailNum: 8}});
+    await expect(noteApi.lasso(rect)).rejects.toThrow(/lassoed nothing/);
+    expect(PluginCommAPI.getLassoElementTypeCounts).not.toHaveBeenCalled();
+  });
+
+  test('a rect that lassoes answers the counts', async () => {
+    (PluginCommAPI.lassoElements as jest.Mock).mockResolvedValue({success: true, result: true});
+    (PluginCommAPI.getLassoElementTypeCounts as jest.Mock).mockResolvedValue({success: true, result: {trailNum: 1}});
+    expect(await noteApi.lasso(rect)).toEqual({trailNum: 1});
   });
 });

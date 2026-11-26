@@ -281,6 +281,17 @@ describe('the editor helper calls (#312)', () => {
     expect(setRange).toHaveBeenCalledWith(0, 2, [{x: 100, y: 200}, {x: 300, y: 400}]);
   });
 
+  it("moves a stroke's stored outline with its points, so the lasso finds it at its new place (#325)", async () => {
+    const points = {size: async () => 2, getRange: async () => [{x: 0, y: 0}, {x: 10, y: 20}], setRange: jest.fn(async () => true)};
+    const ring = [{x: 0.5, y: 0}, {x: 10, y: 20}];
+    const setRange = jest.fn(async () => true);
+    const stroke = {type: 0, contoursSrc: {size: async () => 1, getRange: async () => [ring], setRange}, stroke: {points}};
+    expect((await page.placeElement(stroke, rect)).ok).toBe(true);
+    expect(setRange).toHaveBeenCalledWith(0, 1, [[{x: 110, y: 200}, {x: 300, y: 400}]]);
+    setRange.mockResolvedValue(false);
+    expect(await page.placeElement(stroke, rect)).toMatchObject({ok: false, message: 'setRange did not write the outline'});
+  });
+
   it('refuses to place an element it cannot move, and a stroke whose write fails', async () => {
     expect((await page.placeElement({type: 700}, rect)).ok).toBe(false);
     const stroke = {type: 0, stroke: {points: {size: async () => 1, getRange: async () => [{x: 1, y: 1}], setRange: async () => false}}};
