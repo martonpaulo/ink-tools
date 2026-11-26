@@ -8,8 +8,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 class QuickCheckSelection(unittest.TestCase):
-    def test_one_plugin_path_checks_that_plugin_only(self):
-        self.assertEqual(quick_check.typecheck_dirs(ROOT, ["plugins/lasso-actions/src/a.ts"]), ["plugins/lasso-actions"])
+    def test_one_plugin_path_checks_that_plugin_and_the_renders_that_draw_it(self):
+        # Account Sync's typecheck holds packages/ui-kit/renders/screens.tsx, which imports each
+        # drawn plugin: a Lasso Actions host change once broke it unchecked (#249).
+        self.assertEqual(
+            quick_check.typecheck_dirs(ROOT, ["plugins/lasso-actions/src/a.ts"]),
+            ["plugins/account-sync", "plugins/lasso-actions"])
+        self.assertEqual(quick_check.typecheck_dirs(ROOT, ["plugins/account-sync/src/a.ts"]), ["plugins/account-sync"])
 
     def test_packages_path_checks_packages_and_the_plugins_gates_map_it_to(self):
         folders = quick_check.typecheck_dirs(ROOT, ["packages/ink-core/src/a.ts"])

@@ -1,12 +1,12 @@
 name: Validate Account Sync
 
-# Runs only when plugins/account-sync/, the shared packages/ui-kit/, ink-core and sync-core it imports (#93, #301), the picture-search and sn-adapter Java it compiles, plugin-version.cjs, or this file changes; the gate is the subproject's own `npm run validate`, then the Android build cloud sessions cannot run (#235).
+# Runs only when plugins/account-sync/, the other plugins whose views packages/ui-kit/renders/screens.tsx draws and typechecks here (#249), the shared packages/ui-kit/, ink-core and sync-core it imports (#93, #301), the picture-search and sn-adapter Java it compiles, plugin-version.cjs, or this file changes; the gate is the subproject's own `npm run validate`, then the Android build cloud sessions cannot run (#235).
 on:
   push:
     branches: [main]
-    paths: ['plugins/account-sync/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'plugins/image-editing/**', 'plugins/lasso-actions/**', 'plugins/device-link/**', 'plugins/smart-pen/**', 'plugins/ink-tools-probe/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
   pull_request:
-    paths: ['plugins/account-sync/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'plugins/image-editing/**', 'plugins/lasso-actions/**', 'plugins/device-link/**', 'plugins/smart-pen/**', 'plugins/ink-tools-probe/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
   workflow_dispatch:
 
 permissions:
