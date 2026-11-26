@@ -10,6 +10,8 @@ import {
   drawCage,
   drawCellText,
   drawDotLattice,
+  drawEdgeSign,
+  drawFutoshikiPage,
   drawFooter,
   drawHexLattice,
   drawIcon,
@@ -21,6 +23,7 @@ import {
   encodePng,
   fillRect,
   fitCellMm,
+  generateFutoshiki,
   generateNonogram,
   generateSudoku,
   generateWordSearch,
@@ -225,6 +228,19 @@ describe('each primitive matches its golden image', () => {
     icons.forEach((icon, i) => drawIcon(r, grid, i % 4, Math.floor(i / 4), icon));
     expectGolden('icons', r);
   });
+
+  test('edge signs', () => {
+    const { r, grid } = latticeSwatch(4, 4);
+    drawCellText(r, grid, 0, 0, '1', 'given');
+    drawEdgeSign(r, grid, 0, 0, 'right', 'first');
+    drawEdgeSign(r, grid, 1, 0, 'right', 'second');
+    drawEdgeSign(r, grid, 0, 0, 'down', 'first');
+    drawEdgeSign(r, grid, 2, 1, 'down', 'second');
+    drawEdgeSign(r, grid, 2, 3, 'right', 'first');
+    expect(() => drawEdgeSign(r, grid, 3, 0, 'right', 'first')).toThrow('cell 3,0 has no neighbour to the right');
+    expect(() => drawEdgeSign(r, grid, 0, 3, 'down', 'first')).toThrow('cell 0,3 has no neighbour below');
+    expectGolden('edge-signs', r);
+  });
 });
 
 describe('each preset and layout matches its golden page', () => {
@@ -235,6 +251,11 @@ describe('each preset and layout matches its golden page', () => {
 
 describe('the layout', () => {
   const spec: PageSpec = { orientation: 'portrait', hand: 'right', cellMm: 15, lattice: 'square', columns: 9, rows: 9 };
+
+  test('a futoshiki page', () => {
+    expectGolden('page-futoshiki-7mm-portrait-right', drawFutoshikiPage(generateFutoshiki('P1', 7, 'hard'), { orientation: 'portrait', hand: 'right', cellMm: 7 }).raster);
+    expectGolden('page-futoshiki-15mm-landscape-left', drawFutoshikiPage(generateFutoshiki('P1', 5, 'medium'), { orientation: 'landscape', hand: 'left' }).raster);
+  });
 
   test('the presets are 83, 118 and 177 px cells', () => {
     expect([7, 10, 15].map((cellMm) => layoutPage({ ...spec, cellMm: cellMm as 7 | 10 | 15 }).grid.cell)).toEqual([83, 118, 177]);

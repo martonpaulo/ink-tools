@@ -26,6 +26,8 @@ const CASES = [
   ['maze 20 x 27 hard', () => core.generateMaze('P1', { shape: 'rectangle', width: 20, height: 27 }, 'hard')],
   ['maze 12 rings medium', () => core.generateMaze('P1', { shape: 'circle', rings: 12 }, 'medium')],
   ['word search 12 hard', () => core.generateWordSearch('P1', 12, 'hard', WORDS)],
+  ['futoshiki 5 x 5 medium', () => core.generateFutoshiki('P1', 5, 'medium')],
+  ['futoshiki 7 x 7 hard', () => core.generateFutoshiki('P1', 7, 'hard')],
 ];
 const only = process.env.ONLY;
 for (const [name, make] of CASES) {

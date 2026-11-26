@@ -33,6 +33,8 @@ const HEX_ROW_STEP = 1.5;
 const THIRDS = 3;
 /** A cage label's paper box: the label plus this many paddings across and down. */
 const LABEL_BOX_PADS = 3;
+/** An edge sign's chevron: how far its point and its arms reach from the edge, as shares of the cell. */
+const SIGN_SHAPE = { depth: 0.1, spread: 0.13, pad: 0.03 } as const;
 /** The icon shapes, as shares of the icon's half width. */
 const ICON_SHAPE = { crossArm: 0.7, trunkWidth: 0.25, canopyHalfWidth: 0.8, canopyBase: 1 / THIRDS } as const;
 
@@ -337,4 +339,29 @@ export function drawIcon(raster: Raster, grid: Grid, column: number, row: number
     }
     fillPolygon(raster, [points], 'ink');
   }
+}
+
+/**
+ * An inequality sign on the edge between a square cell and its right or lower neighbour, its point
+ * at the smaller one (futoshiki): a chevron in ink on a paper box that breaks the grid line.
+ */
+export function drawEdgeSign(raster: Raster, grid: Grid, column: number, row: number, toward: 'right' | 'down', smaller: 'first' | 'second'): void {
+  requireSquare(grid, 'an edge sign');
+  const across = toward === 'right' ? column + 1 < grid.columns : row + 1 < grid.rows;
+  if (!across) throw new Error(`cell ${column},${row} has no neighbour ${toward === 'right' ? 'to the right' : 'below'}`);
+  const { x, y, cell } = grid;
+  const depth = Math.round(cell * SIGN_SHAPE.depth);
+  const spread = Math.round(cell * SIGN_SHAPE.spread);
+  const pad = Math.round(cell * SIGN_SHAPE.pad);
+  // (u, v): u runs from the first cell to the second, across the edge; v runs along the edge.
+  const [ex, ey] = toward === 'right' ? [x + (column + 1) * cell, y + row * cell + cell / 2] : [x + column * cell + cell / 2, y + (row + 1) * cell];
+  const at = (u: number, v: number): [number, number] => (toward === 'right' ? [ex + u, ey + v] : [ex + v, ey + u]);
+  const point = smaller === 'first' ? -depth : depth;
+  const [px, py] = at(point, 0);
+  const [ax, ay] = at(-point, -spread);
+  const [bx, by] = at(-point, spread);
+  const half = toward === 'right' ? [depth + pad, spread + pad] : [spread + pad, depth + pad];
+  fillRect(raster, Math.round(ex - half[0]), Math.round(ey - half[1]), 2 * half[0], 2 * half[1], 'paper');
+  strokeLine(raster, ax, ay, px, py, LINE_PX.icon, 'ink');
+  strokeLine(raster, px, py, bx, by, LINE_PX.icon, 'ink');
 }
