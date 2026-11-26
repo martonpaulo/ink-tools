@@ -26,6 +26,8 @@ const CASES = [
   ['maze 20 x 27 hard', () => core.generateMaze('P1', { shape: 'rectangle', width: 20, height: 27 }, 'hard')],
   ['maze 12 rings medium', () => core.generateMaze('P1', { shape: 'circle', rings: 12 }, 'medium')],
   ['word search 12 hard', () => core.generateWordSearch('P1', 12, 'hard', WORDS)],
+  ['slitherlink 7 x 7 easy', () => core.generateSlitherlink('P1', { width: 7, height: 7 }, 'easy')],
+  ['slitherlink 10 x 10 hard', () => core.generateSlitherlink('P1', { width: 10, height: 10 }, 'hard')],
 ];
 const only = process.env.ONLY;
 for (const [name, make] of CASES) {

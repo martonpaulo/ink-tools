@@ -1,4 +1,4 @@
-import { digest, generateMaze, generateNonogram, generateSudoku, generateWordSearch } from '../src';
+import { digest, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
 
 /**
  * Pinned digests of one puzzle per game (#380). They change only when generation changes on
@@ -15,6 +15,8 @@ const PINNED: readonly [string, () => unknown, string][] = [
   ['maze 20 x 27 hard', () => generateMaze('P1', { shape: 'rectangle', width: 20, height: 27 }, 'hard'), '05d4c8e9'],
   ['maze 12 rings medium', () => generateMaze('P1', { shape: 'circle', rings: 12 }, 'medium'), 'a8c651b9'],
   ['word search 12 hard', () => generateWordSearch('P1', 12, 'hard', ['GATO', 'CACHORRO', 'LEAO', 'URSO', 'SAPO', 'PATO', 'CABRA', 'PEIXE']), 'fd1f2606'],
+  ['slitherlink 7 x 7 easy', () => generateSlitherlink('P1', { width: 7, height: 7 }, 'easy'), '43040ddb'],
+  ['slitherlink 10 x 10 hard', () => generateSlitherlink('P1', { width: 10, height: 10 }, 'hard'), '827fb590'],
 ];
 
 describe('the same seed gives the same puzzle everywhere', () => {

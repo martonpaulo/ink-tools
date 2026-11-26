@@ -14,9 +14,11 @@ import {
   drawRegions,
   drawSquareLattice,
   drawText,
+  drawSlitherlinkPage,
   drawTriangleLattice,
   FONT_WEIGHTS,
   generateNonogram,
+  generateSlitherlink,
   generateSudoku,
   generateWordSearch,
   layoutPage,
@@ -91,5 +93,10 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawWordPanel(r, layout, ['Panel', 'right']);
     drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
     return r;
+  }],
+  ['page-slitherlink-10mm-portrait-right', () => {
+    const puzzle = generateSlitherlink('P1', { width: 10, height: 10 }, 'medium');
+    const text = { game: 'Slitherlink', difficulty: 'Medium', rule: 'Draw one loop along the dots; each number counts its sides on the loop.' };
+    return drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text }).raster;
   }],
 ];
