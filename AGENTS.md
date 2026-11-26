@@ -13,6 +13,7 @@ Every change follows [`docs/architecture.md` › Layer rules](docs/architecture.
 - Public identifiers: GitHub repository and the `inkctl` CLI; the Bridge plugin. Not a package or registry product.
 - Display names ([#176](https://github.com/martonpaulo/ink-tools/issues/176)): each tool shows a feature name in Supernote's own wording; [`docs/product.md` › Display names](docs/product.md#display-names) lists them and where each name is used, never in npm packages, `pluginID`, `pluginKey` or data folders ([#194](https://github.com/martonpaulo/ink-tools/issues/194)).
 - Landing page: `https://inktools.martonpaulo.com/`, with the privacy policy at `/privacy/`: static pages in `site/`, no client script, checked and deployed to GitHub Pages by `validate-site.yml` ([#371](https://github.com/martonpaulo/ink-tools/issues/371)).
+- Icon: `site/favicon.svg`
 - License: `CC BY-NC-SA 4.0` ([#276](https://github.com/martonpaulo/ink-tools/issues/276))
 - Copyright: 2026 Marton Paulo
 - Development language: English.
@@ -27,6 +28,7 @@ Every change follows [`docs/architecture.md` › Layer rules](docs/architecture.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: disabled
 - Release, signing, and secret-storage policy: Per subproject: a plugin's beta ships a GitHub prerelease with its `.snplg`, a stable version a draft the owner publishes ([#373](https://github.com/martonpaulo/ink-tools/issues/373)); a device check installs a build of `main` ([Device builds](docs/architecture.md#device-builds), [#310](https://github.com/martonpaulo/ink-tools/issues/310)); inkctl ships as source; the Lingo app's signed test APK is handed over as a file, with no release yet. No monorepo-wide release.
+- Skill packs: core, apple, design, release, supernote, web
 - Skills baseline revision: `39e7da67c8a3b07aecc2b41eda49e543bf630d7a`
 - Skills baseline applied: `2026-11-25`
 - Skills baseline divergence `ci-pipelines` at `a8860162fcbfea13bef7d090447a9ae08aa83ccb`: this is a monorepo of independent subprojects; CI lives at the root, one path-filtered workflow per subproject plus the shared ones that [`docs/architecture.md` › CI workflows](docs/architecture.md#ci-workflows) lists.
