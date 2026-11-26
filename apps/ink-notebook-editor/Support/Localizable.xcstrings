@@ -31,12 +31,32 @@
         }
       }
     },
+    "%@ is not a path inkctl can edit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is not a path inkctl can edit."
+          }
+        }
+      }
+    },
     "%@ is not a path inkctl can read." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ is not a path inkctl can read."
+          }
+        }
+      }
+    },
+    "%@ is not a path inkctl can write." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is not a path inkctl can write."
           }
         }
       }
@@ -441,6 +461,16 @@
         }
       }
     },
+    "No backup could be kept, so this edit was taken back: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No backup could be kept, so this edit was taken back: %@"
+          }
+        }
+      }
+    },
     "No notes in this folder" : {
       "localizations" : {
         "en" : {
@@ -771,6 +801,16 @@
         }
       }
     },
+    "The Mac could not write this edit, so it was taken back: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mac could not write this edit, so it was taken back: %@"
+          }
+        }
+      }
+    },
     "The app could not make the folder %@: %@" : {
       "localizations" : {
         "en" : {
@@ -821,6 +861,16 @@
         }
       }
     },
+    "The note changed on the tablet, so this edit was taken back. Make it again on the new copy." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note changed on the tablet, so this edit was taken back. Make it again on the new copy."
+          }
+        }
+      }
+    },
     "The note copied from the tablet cannot be read." : {
       "localizations" : {
         "en" : {
@@ -847,6 +897,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The note could not be opened"
+          }
+        }
+      }
+    },
+    "The note is open on the tablet, so this edit was taken back. Close the note there and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note is open on the tablet, so this edit was taken back. Close the note there and try again."
           }
         }
       }
@@ -881,12 +941,42 @@
         }
       }
     },
+    "The tablet changed other pages too (%@), so the send stopped. Check the note on the tablet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet changed other pages too (%@), so the send stopped. Check the note on the tablet."
+          }
+        }
+      }
+    },
+    "The tablet did not apply this edit, so it was taken back: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet did not apply this edit, so it was taken back: %@"
+          }
+        }
+      }
+    },
     "The tablet is not connected" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The tablet is not connected"
+          }
+        }
+      }
+    },
+    "The tablet's note is not the backup after the restore." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet's note is not the backup after the restore."
           }
         }
       }
@@ -1051,6 +1141,16 @@
         }
       }
     },
+    "inkctl answered something that is not the helper's answer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inkctl answered something that is not the helper's answer."
+          }
+        }
+      }
+    },
     "inkctl could not finish" : {
       "localizations" : {
         "en" : {
@@ -1107,6 +1207,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "inkctl stopped with exit code %d and gave no reason."
+          }
+        }
+      }
+    },
+    "the send was cancelled." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the send was cancelled."
           }
         }
       }
