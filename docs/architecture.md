@@ -326,7 +326,21 @@ More tools may follow; this layout leaves room under `plugins/`, `cli/` and `app
 
 ## Device builds
 
-A device build is the `.snplg` asset of a plugin's CI prerelease, never a local build on the Mac
+A device check installs a build of `main` made on the Mac, so the tablet never waits for a version
+bump ([#310](https://github.com/martonpaulo/ink-tools/issues/310)):
+
+```bash
+python3 scripts/device_build.py plugins/<folder> --install
+```
+
+The script refuses uncommitted changes under the plugin or `packages/` and a commit that is not on
+`origin/main`. The build keeps the plugin's `versionName` and `versionCode`: PluginHost updates a
+plugin over an equal `versionCode` and refuses only a lower one, and the version rule has no build
+suffix ([#155](https://github.com/martonpaulo/ink-tools/issues/155)). Only the file name carries the commit,
+`<Plugin>-<version>-main-<commit>.snplg`. `inkctl plugin install --same-version` proves the update by
+PluginHost's own `installPlugin: success` line for that file.
+
+The build of a version is still the `.snplg` asset of a plugin's CI prerelease
 ([#203](https://github.com/martonpaulo/ink-tools/issues/203)). Each `prerelease-<plugin>.yml` runs the plugin's gate, builds the package (with its
 native `app.npk` where the plugin has one) and publishes `<Plugin>-<version>.snplg` under the tag
 `<plugin>-v<version>`. A Mac downloads it with:
@@ -334,6 +348,9 @@ native `app.npk` where the plugin has one) and publishes `<Plugin>-<version>.snp
 ```bash
 gh release download <tag> --repo martonpaulo/ink-tools --pattern '*.snplg'
 ```
+
+The Ink Tools bridge app keeps its CI build: its stable signing key lives only in the repository
+secrets ([#223](https://github.com/martonpaulo/ink-tools/issues/223), [`security.md`](security.md)).
 
 ## What this means for the cloud agent
 

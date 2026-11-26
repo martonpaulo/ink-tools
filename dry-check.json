@@ -165,6 +165,14 @@
  "twins": {
   "rules": [
    {
+    "rule": "A plugin package's config file: PluginConfig.json, read from the .snplg",
+    "owner": "cli/inkctl/src/inkctl",
+    "other": "scripts/device_build.py",
+    "pattern": "PluginConfig.json",
+    "golden": "",
+    "open": 295
+   },
+   {
     "rule": "Plugin Diagnostics answer line mark: SNPROBE answer",
     "owner": "plugins/plugin-diagnostics/src",
     "other": "cli/inkctl/src/inkctl",

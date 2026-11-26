@@ -53,7 +53,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   plugin list                    installed plugins, from PluginHost's provider (plugin ls is the same)
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
   plugin install FILE.snplg      copy, install or update, and prove it: through the Ink Tools bridge
-                                 app when it is installed, else through named elements on the screen
+                                 app when it is installed, else through named elements on the screen;
+                                 --same-version updates a build of main that keeps its version (#310)
   plugin enable|disable NAME     turn a plugin on or off through the bridge app, and prove it
   plugin action PLUGIN ACTION    run a plugin's own action with no screen and print its result:
                                  account-sync sync [--module calendar|todo], plugin-diagnostics run-probe
@@ -626,6 +627,12 @@ PERIOD = re.compile(r"(\d+)([smhd])")
 LOG_TIME = re.compile(r"\d\d-\d\d \d\d:\d\d:\d\d\.\d+")
 LOG_LEVELS = "VDIWEF"
 PLUGIN_DENIED = re.compile(r"PluginSec.*DENY")
+# PluginHost's own install lines, logged under this tag with the path it was given
+# (docs/research/2026-11-pluginhost-control.md): the proof of a same-version update (#310).
+HOST_INSTALL_TAG = "PluginInstallManager"
+HOST_INSTALL_DONE = "installPlugin: success"
+HOST_INSTALL_FAILED = "installPlugin: failed"
+HOST_UPGRADE = "isUpgrade=true"
 SIMPLE_WORD = re.compile(r"[a-z][\w-]*")
 PICKER_PAGE = re.compile(r"(\d+)\s*/\s*(\d+)")
 ROUTE_COMPONENT = re.compile(r"\s+[0-9a-f]+ (\S+/\S+) filter [0-9a-f]+")
@@ -2779,6 +2786,33 @@ def wait_for_plugin(device: Device, config: dict, limit: float, updating: bool) 
         time.sleep(WAIT_INTERVAL)
 
 
+def host_install_line(device: Device, since: str, path: str) -> str | None:
+    """PluginHost's success line for the file at `path` logged since `since`, or None while it has
+    logged none; its failure line for that file fails at once."""
+    done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", HOST_INSTALL_TAG)
+    for line in done.stdout.decode(errors="replace").splitlines():
+        if f"pluginZipPath={path}," not in line:
+            continue
+        if HOST_INSTALL_FAILED in line:
+            raise Failure(EXIT_FAILED, "device_error", f"PluginHost refused the update: {line.strip()}", f"inkctl logs --tag {HOST_INSTALL_TAG}")
+        if HOST_INSTALL_DONE in line and HOST_UPGRADE in line:
+            return line.strip()
+    return None
+
+
+def proven_row(device: Device, config: dict, limit: float, installed: list, since: str | None, path: str) -> dict:
+    """The plugin's row once the install is proven: by the version in the list, or, for a
+    same-version update (`since` set), by PluginHost's own success line for the pushed file (#310)."""
+    if since is None:
+        return wait_for_plugin(device, config, limit, bool(installed))
+    started = time.monotonic()
+    while host_install_line(device, since, path) is None:
+        if time.monotonic() - started >= limit:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"PluginHost logged no update of {config['id']} from {path} after {limit:g} s", f"inkctl logs --tag {HOST_INSTALL_TAG}")
+        time.sleep(WAIT_INTERVAL)
+    return wait_for_plugin(device, config, limit, True)
+
+
 def bridge_installed(device: Device) -> bool:
     """`pm path` prints the APK of an installed package and nothing, with exit 1, for a missing one."""
     done = device.adb("shell", f"pm path {BRIDGE_PACKAGE}")
@@ -2874,13 +2908,14 @@ def landed_despite_failure(device: Device, config: dict):
     return None
 
 
-def install_through_bridge(device: Device, args: argparse.Namespace, config: dict, installed: list) -> tuple:
+def install_through_bridge(device: Device, args: argparse.Namespace, config: dict, installed: list, since: str | None = None) -> tuple:
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
     code, answer = bridge_result(device, "install", path=pushed["path"])
-    row = landed_despite_failure(device, config) if code == BRIDGE_FAILED else None
+    # The list proves a failure that landed only when the version changed (#225).
+    row = landed_despite_failure(device, config) if code == BRIDGE_FAILED and since is None else None
     if row is None:
         bridge_answer(code, answer)
-        row = wait_for_plugin(device, config, args.timeout, bool(installed))
+        row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
     else:
         print(f"the bridge reported a failure, but {config['id']} {config['version']} is in the plugin list: {answer}", file=sys.stderr, flush=True)
     data = {
@@ -3017,10 +3052,14 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
     installed = [row for row in plugin_rows(device) if row.get("pluginID") == config["id"]]
-    if installed and same_build(installed[0], config, installed[0].get("versionName")):
+    same = bool(installed) and same_build(installed[0], config, installed[0].get("versionName"))
+    if same and not args.same_version:
         raise Failure(EXIT_EXISTS, "exists", f"{config['id']} {config['version']} is already installed", PLUGIN_LIST_STEP)
+    # A same-version update leaves the list unchanged, so PluginHost's own line, logged after
+    # this moment, is the proof (#310).
+    since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip() if same else None
     if bridge_installed(device):
-        return install_through_bridge(device, args, config, installed)
+        return install_through_bridge(device, args, config, installed, since)
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{name}"), args.overwrite)
     start_activity(device, f"-n {SETTINGS_ACTIVITY}")
     for step in PLUGIN_PATH_STEPS:
@@ -3033,7 +3072,7 @@ def command_plugin_install(device: Device, args: argparse.Namespace):
     turn_to_file(device, name, args.step_timeout)
     press_element(device, expect_element(device, f"text:{name}", args.step_timeout))
     press_element(device, expect_element(device, PLUGIN_CONFIRM_STEP, args.step_timeout))
-    row = wait_for_plugin(device, config, args.timeout, bool(installed))
+    row = proven_row(device, config, args.timeout, installed, since, pushed["path"])
     data = {
         "plugin": config["id"],
         "version": config["version"],
@@ -4221,6 +4260,7 @@ def build_parser() -> argparse.ArgumentParser:
     installing.add_argument("--overwrite", action="store_true", help="replace an earlier copy in MyStyle")
     installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
     installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
+    installing.add_argument("--same-version", action="store_true", help="update a plugin installed at this same version, such as a build of main (#310), proven by PluginHost's own install line")
     plugin_name_help = "the name the plugin list shows, its pluginKey or its pluginID"
     acting = add(plugins, "action", command_plugin_action, changes=True)
     acting.add_argument("plugin", help=f"a plugin with actions, by folder name: {', '.join(ACTION_PLUGINS)}")

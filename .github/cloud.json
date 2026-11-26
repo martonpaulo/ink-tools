@@ -3,4 +3,4 @@
            "cloud": ["docs", "license", "sleep", "dry", "boundaries", "registry", "packages",
                      "account-sync", "image-editing", "lasso-actions", "device-transfer",
                      "smart-pen", "plugin-diagnostics", "inkctl",
-                     "native", "audit", "versions", "case", "icons", "quick", "setup", "design", "site"]}}
+                     "native", "audit", "versions", "case", "icons", "quick", "setup", "design", "site", "device-build"]}}

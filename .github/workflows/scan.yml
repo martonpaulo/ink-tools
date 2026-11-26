@@ -78,6 +78,9 @@ jobs:
       - name: Check that each npm gate installs its subproject and cloud.json names every gate (#135, #301)
         run: python3 -B -m unittest scripts/test_gate_install.py scripts/test_cloud_config.py
 
+      - name: Check the build of main for a device check (#310)
+        run: python3 -B -m unittest scripts/test_device_build.py
+
       - name: Check each plugin's light native build (#153)
         run: python3 -B -m unittest scripts/test_native_package.py
 

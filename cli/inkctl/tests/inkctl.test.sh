@@ -907,6 +907,27 @@ check "plugin install updates a build that only raised versionCode" "$(printf '%
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0, versionCode=18\n' > "$files/rows"
 run plugin install "$work/local/test.snplg" >/dev/null 2>&1
 check "plugin install refuses the same versionCode" "$?" "5"
+# #310: a build of main keeps its version; PluginHost's own line for the pushed file proves the update.
+cp "$files/log" "$work/log-saved"
+sed -i.bak '\|MyStyle/test.snplg|d' "$files/paths"
+cp "$files/rows" "$files/rows-after"
+echo 5 > "$files/taps-left"
+printf '11-16 23:00:01.000 I/PluginInstallManager( 1): installPlugin: success, pluginName=Snap, pluginZipPath=%s/MyStyle/test.snplg, isUpgrade=true\n' "$root" > "$files/log"
+result=$(run plugin install "$work/local/test.snplg" --same-version --json 2>/dev/null)
+check "plugin install --same-version updates a build at the same version" "$?$(printf '%s' "$result" | field "['action'],d['version']")" "0('updated', '2.0')"
+check "plugin install --same-version reads PluginHost's lines from before the push" "$(called "logcat -d -v time -T 11-16 23:00:00.000 -s PluginInstallManager")" "1"
+sed -i.bak '\|MyStyle/test.snplg|d' "$files/paths"
+echo 5 > "$files/taps-left"
+printf '11-16 23:00:01.000 I/PluginInstallManager( 1): installPlugin: success, pluginName=Snap, pluginZipPath=%s/MyStyle/other.snplg, isUpgrade=true\n' "$root" > "$files/log"
+run plugin install "$work/local/test.snplg" --same-version --timeout 0 >/dev/null 2>&1
+check "another file's success line proves nothing" "$?" "6"
+sed -i.bak '\|MyStyle/test.snplg|d' "$files/paths"
+echo 5 > "$files/taps-left"
+printf '11-16 23:00:01.000 W/PluginInstallManager( 1): installPlugin: failed, pluginName=Snap, pluginZipPath=%s/MyStyle/test.snplg, errorCode=3, errorMessage=low\n' "$root" > "$files/log"
+run plugin install "$work/local/test.snplg" --same-version >/dev/null 2>"$work/err"
+check "PluginHost's failure line fails a same-version update" "$?$(grep -c 'PluginHost refused the update' "$work/err")" "11"
+cp "$work/log-saved" "$files/log"
+sed -i.bak '\|MyStyle/test.snplg|d' "$files/paths"
 printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after"
 echo 5 > "$files/taps-left"
