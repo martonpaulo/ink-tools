@@ -122,7 +122,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 
 ## Plugins
 
-- Install: copy the `.snplg` to `MyStyle/`, then Settings > Apps > Plugins > Add Plugin [official].
+- Install: copy the `.snplg` to `MyStyle/`, then Settings > Apps > Plugins > Select Plugin Package,
+  which opens «Select Plugin» at `Supernote >> MyStyle`; pick the file, then «Install» at the top
+  right. The Plugins page has no «Add Plugin», only «Go to InkHub» and «Select Plugin Package»; a
+  plugin's on switch is the «ON» on its own page, not in the list [measured, Manta, device round 7,
+  2026-11-26, [#373](https://github.com/martonpaulo/ink-tools/issues/373)].
   Reinstalling from the existing entry reinstalls the host's managed copy, not the new file
   [reported]; a versioned file name avoids picking the wrong one.
 - Limits: 30 installed, 10 enabled [official, 3.29.44 announcement]. PluginHost 1.00.2610150 holds both in

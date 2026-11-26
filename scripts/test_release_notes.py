@@ -67,6 +67,29 @@ class Notes(unittest.TestCase):
         self.save_tools()
         self.assertEqual(release_notes.check(self.root), ["plugins/other: no entry named 'Other' in docs/tools.json"])
 
+    def release(self, folder, prefix, file_cell):
+        """A prerelease workflow writing `<prefix>-<version>.snplg`, and the guide's row for it."""
+        workflows = self.root / ".github" / "workflows"
+        workflows.mkdir(parents=True, exist_ok=True)
+        (workflows / f"prerelease-{folder}.yml").write_text(
+            f'          asset="build/outputs/{prefix}-${{TAG#{folder}-v}}.snplg"\n')
+        (self.root / release_notes.INSTALL_DOC).write_text(
+            "| Tool | Stable release | File | Why not yet |\n| :--- | :--- | :--- | :--- |\n"
+            f"| Pen | yes, from `0.1.0` | {file_cell} | |\n| Probe | no release | | internal |\n")
+
+    def test_the_notes_name_the_file_the_release_ships(self):
+        # Device round 7 (#373): Device Link's release carried Relay-0.1.0.snplg, an older name.
+        self.save_tools()
+        self.release("pen", "Relay", "`Relay-<version>.snplg`")
+        self.assertIn("Download `Relay-0.1.0.snplg` below", release_notes.notes(self.root, "plugins/pen"))
+        self.assertEqual(release_notes.check(self.root), [])
+
+    def test_a_guide_naming_another_file_fails(self):
+        self.save_tools()
+        self.release("pen", "Relay", "`DeviceLink-<version>.snplg`")
+        self.assertEqual(release_notes.check(self.root), [
+            "docs/install.md: Pen's file is `DeviceLink-<version>.snplg`, but its release ships `Relay-<version>.snplg`"])
+
 
 if __name__ == "__main__":
     unittest.main()
