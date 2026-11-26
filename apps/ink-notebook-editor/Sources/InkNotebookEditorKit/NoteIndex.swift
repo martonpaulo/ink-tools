@@ -64,6 +64,20 @@ public struct NoteIndex: Sendable, Equatable, Codable {
         return tablet + extra
     }
 
+    /// The words to copy as text of `pages` (every page when nil): each tablet word, and each Mac
+    /// word no tablet word covers by half or more, so a word both sources read is copied once, as
+    /// the tablet read it (#323).
+    public func textWords(pages: Set<Int>?) -> [IndexedWord] {
+        let chosen = words.filter { pages?.contains($0.page) ?? true }
+        let tablet = chosen.filter { $0.source == .tablet }
+        return chosen.filter { word in
+            word.source == .tablet
+                || !tablet.contains {
+                    $0.page == word.page && Self.cover(of: word.box, by: $0.box) >= Self.sameWordCover
+                }
+        }
+    }
+
     /// The share of `box`'s area inside `other`.
     static func cover(of box: CGRect, by other: CGRect) -> Double {
         let area = box.width * box.height
