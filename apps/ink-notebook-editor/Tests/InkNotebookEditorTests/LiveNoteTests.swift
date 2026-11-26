@@ -142,7 +142,7 @@ import Testing
         let watch = Task { await live.run { _ in } }
         // The first look pulls; then the watch waits NoteWatch.interval between looks. A loaded
         // machine starts the fake inkctl slowly, so the bound is wide.
-        let deadline = ContinuousClock.now + .seconds(60)
+        let deadline = ContinuousClock.now + .seconds(LoadedMac.minutes * 60)
         while pullCount() == 0, ContinuousClock.now < deadline {
             // timing-independent: waits on the pull, bounded, never on a time.
             try await Task.sleep(for: .milliseconds(10))

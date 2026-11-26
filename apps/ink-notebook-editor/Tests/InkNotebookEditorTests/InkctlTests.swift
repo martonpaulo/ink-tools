@@ -2,6 +2,12 @@ import Foundation
 import InkNotebookEditorKit
 import Testing
 
+/// The bound of a test that waits for a fake `inkctl` to start: wide, since it only turns a hang
+/// into a failure. At a load average near 90 a fake took over a minute to start (#148).
+enum LoadedMac {
+    static let minutes = 3
+}
+
 /// The inkctl client against a fake `inkctl`: a shell script that records its arguments and answers
 /// as the real one does. The real tablet is never reached.
 @Suite final class InkctlTests {
@@ -146,8 +152,9 @@ import Testing
     }
 
     // timing-independent: the limit only turns a hang into a failure; the fake blocks until it is stopped.
+    // A busy Mac (load average near 90) took over a minute to start the fake, so the limit is wide.
     /// Cancel stops inkctl at once: the fake blocks until it is stopped, and nothing is left behind.
-    @Test(.timeLimit(.minutes(1)))
+    @Test(.timeLimit(.minutes(LoadedMac.minutes)))
     func aCancelledPullStopsInkctlAndLeavesNoFile() async throws {
         let started = folder.appending(path: "started")
         let inkctl = try fake(
@@ -156,7 +163,9 @@ import Testing
         let destination = folder.appending(path: "copies/A.note")
         let pull = Task { try await inkctl.pull("Note/A.note", to: destination) }
         while !FileManager.default.fileExists(atPath: started.path(percentEncoded: false)) {
-            await Task.yield()
+            // A sleep, not a yield, since a spin takes the CPU the fake needs to start.
+            // timing-independent: waits on the started file, bounded by the test's time limit.
+            try await Task.sleep(for: .milliseconds(10))
         }
         pull.cancel()
         await #expect(throws: InkctlFailure.cancelled) { try await pull.value }
