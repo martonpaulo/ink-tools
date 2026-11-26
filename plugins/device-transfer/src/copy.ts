@@ -12,7 +12,6 @@ export const copy = {
   readingText: 'Reading the handwriting…',
   noText: 'No text recognized',
   cancel: 'Cancel',
-  close: 'Close',
   devices: 'Send to',
   /** The second line of a receiver whose alias another one shares (#307). */
   twinDevice: (model: string | undefined, tail: string) =>

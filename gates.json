@@ -1,6 +1,6 @@
 {
   "gates": [
-    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py . && python3 scripts/readme_status.py --root . && python3 -B -m unittest scripts/test_readme_status.py", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file, and the README Status vocabulary of AGENTS.md (#268)"},
+    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py . && python3 scripts/readme_status.py --root . && python3 -B -m unittest scripts/test_readme_status.py && python3 scripts/readme_figures.py --root . --check && python3 -B -m unittest scripts/test_readme_figures.py", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file, the README Status vocabulary of AGENTS.md (#268), and the README tool tables and diagrams against a fresh generation from docs/tools.json, the level table and the registry (#407)"},
     {"name": "license", "command": "python3 scripts/license_check.py --root . && python3 -B -m unittest scripts/test_license_check.py", "covers": "every LICENSE file, AGENTS.md License line and README licence link says CC BY-NC-SA 4.0 (#276)"},
     {"name": "sleep", "command": "python3 scripts/sleep_guard.py .", "covers": "no test sleeps or bounds wall-clock time without a timing-independent note (Workbench #740, #1712)"},
     {"name": "dry", "command": "python3 scripts/dry_check.py --root . && python3 scripts/dry_cross.py --root . && python3 -B -m unittest scripts/test_dry_cross.py", "covers": "the DRY ratchet of dry-check.json: magic values, repeated blocks, identical files, repeated rules (#197), and dry_cross.py's Java and Swift values and one constant value named in two tools (#295)"},
@@ -24,7 +24,8 @@
     {"name": "icons", "command": "python3 scripts/icons.py --check && python3 -B -m unittest scripts/test_icons.py", "covers": "every icon Ink Tools shows on the tablet is drawn from design/icons/icons.json in the native outline style (stroke, colour, caps, extent), its files are current, and no two read alike (#271)"},
     {"name": "quick", "command": "python3 scripts/workflow_paths.py --root . && cd scripts && python3 -B -m unittest test_quick_check test_workflow_paths", "covers": "the Quick check's path selection: which subprojects a change type-checks (#180), and each validate workflow's paths equal to the gates.json rules of its gate (#301)"},
     {"name": "setup", "command": "python3 -B -m unittest scripts/test_gate_install.py scripts/test_cloud_config.py", "covers": "each npm gate installs its subproject from its lockfile when node_modules is missing or older than the lockfile (#135, #222), and .github/cloud.json names every gate as a cloud gate but the Ink Notebook Editor's (#301)"},
-    {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"}
+    {"name": "design", "command": "node --test design/covers/*.test.mjs", "covers": "the InkHub cover template filler"},
+    {"name": "site", "command": "bash scripts/validate-site.sh && python3 scripts/site_privacy.py --root . && python3 -B -m unittest scripts/test_site_privacy.py", "covers": "the home page and privacy policy in site/: the Workbench site check, and both pages present with a privacy section for every plugin that declares INTERNET (#371)"}
   ],
   "rules": [
     {"path": "*.md", "gates": ["docs", "license"]},
@@ -78,6 +79,9 @@
     {"path": "scripts/text_check.py", "gates": ["docs"]},
     {"path": "scripts/readme_status.py", "gates": ["docs"]},
     {"path": "scripts/test_readme_status.py", "gates": ["docs"]},
+    {"path": "scripts/readme_figures.py", "gates": ["docs"]},
+    {"path": "scripts/test_readme_figures.py", "gates": ["docs"]},
+    {"path": "design/diagrams/", "gates": ["docs"]},
     {"path": "*.md", "gates": ["dry"]},
     {"path": "*.py", "gates": ["dry", "sleep"]},
     {"path": "*.sh", "gates": ["dry", "sleep"]},
@@ -101,7 +105,7 @@
     {"path": "packages/sn-adapter/native/", "gates": ["plugin-diagnostics"]},
     {"path": "packages/sn-adapter/plugin-config.js", "gates": ["plugin-diagnostics"]},
     {"path": "packages/sn-adapter/src/internals/descriptor.json", "gates": ["plugin-diagnostics", "registry"]},
-    {"path": "registry/", "gates": ["registry", "packages", "plugin-diagnostics", "handwriting-language", "inktools-bridge", "inkctl", "ink-notebook-editor"]},
+    {"path": "registry/", "gates": ["docs", "registry", "packages", "plugin-diagnostics", "handwriting-language", "inktools-bridge", "inkctl", "ink-notebook-editor"]},
     {"path": "scripts/registry.py", "gates": ["registry"]},
     {"path": "scripts/registry_readers.py", "gates": ["registry", "boundaries"]},
     {"path": "scripts/test_registry.py", "gates": ["registry"]},
@@ -139,6 +143,17 @@
     {"path": "cli/inkctl/", "gates": ["inkctl"]},
     {"path": ".github/workflows/validate-inkctl.yml", "gates": ["inkctl"]},
     {"path": "design/", "gates": ["design"]},
-    {"path": ".github/workflows/validate-design.yml", "gates": ["design"]}
+    {"path": ".github/workflows/validate-design.yml", "gates": ["design"]},
+    {"path": "site/", "gates": ["site"]},
+    {"path": "design/social-card/", "gates": ["site"]},
+    {"path": "scripts/validate-site.sh", "gates": ["site"]},
+    {"path": "scripts/version-site-assets.sh", "gates": ["site"]},
+    {"path": "scripts/social-card.sh", "gates": ["site"]},
+    {"path": "scripts/lib/", "gates": ["site"]},
+    {"path": "scripts/site_privacy.py", "gates": ["site"]},
+    {"path": "scripts/test_site_privacy.py", "gates": ["site"]},
+    {"path": "plugins/*/PluginConfig.json", "gates": ["site"]},
+    {"path": "packages/sn-adapter/src/official/plugin.ts", "gates": ["site"]},
+    {"path": ".github/workflows/validate-site.yml", "gates": ["site"]}
   ]
 }

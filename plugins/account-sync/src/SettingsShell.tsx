@@ -5,18 +5,23 @@
  * words, never by colour alone: why it does not run, or its last sync (#88). A module that is off
  * keeps what Account Sync wrote; its «Remove what Account Sync wrote» button asks once more before
  * anything is deleted (#89). The title bar carries ui-kit's ×, since Back never reaches the view
- * on the Manta (#204, #266, #274).
+ * on the Manta (#204, #266, #274). A settings read that failed is ui-kit's Error state with its
+ * reason and Retry, and «Connect» opens the Needs state with the steps that connect the account
+ * (#256); each keeps the ×.
  */
 import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {
   Button,
+  ErrorView,
   ListRow,
   metrics,
+  Needs,
   RowGroup,
   shared,
   TitleBar,
 } from '@ink-tools/ui-kit';
+import type {Problem} from '@ink-tools/ui-kit';
 import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
 import {copy, format} from './copy';
 import {statusLines} from './statusText';
@@ -64,12 +69,26 @@ export function SettingsShell({
   /** What the title bar's × does: the same as Back (#266). */
   onClose: () => void;
 }): React.JSX.Element {
+  // The provider whose «Connect» was pressed: its Needs state shows until its × (#256).
+  const [connecting, setConnecting] = useState<ProviderSignIn | null>(null);
+  if (state.kind === 'error') {
+    return (
+      <ErrorView
+        problem={{what: copy['settings.error'], reason: state.reason}}
+        onRetry={state.onRetry}
+        onClose={onClose}
+      />
+    );
+  }
+  if (connecting !== null) {
+    return <Needs problem={connectProblem(connecting)} onClose={() => setConnecting(null)} />;
+  }
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={onClose} />
       {/* The module rows and one switch row per module and provider outgrow the Manta's height (#274). */}
       <ScrollView style={styles.rows} contentContainerStyle={styles.gap}>
-        <Body state={state} />
+        <Body state={state} onConnect={setConnecting} />
         {state.kind === 'ready' && state.notice && (
           <Text accessibilityRole="alert" style={shared.text}>
             {state.notice}
@@ -82,19 +101,28 @@ export function SettingsShell({
   );
 }
 
-function Body({state}: {state: ShellState}): React.JSX.Element {
+/** What a provider with no connection needs (#256): the Mac step only the owner can do, then a sync. */
+export function connectProblem(provider: ProviderSignIn): Problem {
+  const names = {provider: provider.name, id: provider.id};
+  return {
+    what: format('connect.what', names),
+    reason: format('connect.why', names),
+    fix: {steps: [format('connect.step.mac', names), copy['connect.step.sync']]},
+  };
+}
+
+type Connect = (provider: ProviderSignIn) => void;
+
+function Body({
+  state,
+  onConnect,
+}: {
+  state: Exclude<ShellState, {kind: 'error'}>;
+  onConnect: Connect;
+}): React.JSX.Element {
   switch (state.kind) {
     case 'loading':
       return <Text style={shared.text}>{copy['settings.loading']}</Text>;
-    case 'error':
-      return (
-        <View style={shared.row}>
-          <Text accessibilityRole="alert" style={shared.text}>
-            {format('settings.error', {reason: state.reason})}
-          </Text>
-          <Button label={copy['settings.retry']} onPress={state.onRetry} />
-        </View>
-      );
     case 'ready':
       if (state.modules.length === 0) {
         return <Text style={shared.text}>{copy['settings.empty']}</Text>;
@@ -111,7 +139,7 @@ function Body({state}: {state: ShellState}): React.JSX.Element {
                 subtitle={statusLines(module.status).join('\n') || undefined}
               />
               {module.signIns?.map(provider => (
-                <SignInLine key={provider.id} provider={provider} />
+                <SignInLine key={provider.id} provider={provider} onConnect={onConnect} />
               ))}
               {module.status.state === 'off' && module.onRemoveWritten && (
                 <Confirmed
@@ -148,17 +176,23 @@ function SyncLine({sync}: {sync: SyncControl}): React.JSX.Element {
 }
 
 /** A provider's sign-in in words: the masked tail and a sign-out, or how to sign in (#90). */
-function SignInLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
+function SignInLine({
+  provider,
+  onConnect,
+}: {
+  provider: ProviderSignIn;
+  onConnect: Connect;
+}): React.JSX.Element {
   // Its own gap and a space before the next module's divider, so the line, its button and the
   // divider never touch (#116).
-  return <View style={styles.signIn}>{signInParts(provider)}</View>;
+  return <View style={styles.signIn}>{signInParts(provider, onConnect)}</View>;
 }
 
-function signInParts(provider: ProviderSignIn): React.JSX.Element {
+function signInParts(provider: ProviderSignIn, onConnect: Connect): React.JSX.Element {
   const {signIn} = provider;
   switch (signIn.state) {
     case 'signedOut':
-      return <ConnectLine provider={provider} />;
+      return <ConnectLine provider={provider} onConnect={onConnect} />;
     case 'unreadable':
       return (
         <Text accessibilityRole="alert" style={shared.text}>
@@ -190,25 +224,25 @@ function signInParts(provider: ProviderSignIn): React.JSX.Element {
 
 /**
  * A provider with no connection (owner, 2026-11-26, docs/plugin-scope.md › Rules for every
- * feature): it says so and offers «Connect», which shows how; the rest of the plugin runs as usual.
- * shortcut: the tablet cannot sign in yet, so «Connect» shows the Mac command; the in-app sign-in
- * of each provider (#28 for Google) replaces it.
+ * feature): it says so and offers «Connect», which opens the Needs state (#256); the rest of the
+ * plugin runs as usual.
+ * shortcut: the tablet cannot sign in yet, so the Needs state gives the Mac command; the in-app
+ * sign-in of each provider (#28 for Google) replaces it.
  */
-function ConnectLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
-  const [shown, setShown] = useState(false);
+function ConnectLine({
+  provider,
+  onConnect,
+}: {
+  provider: ProviderSignIn;
+  onConnect: Connect;
+}): React.JSX.Element {
   return (
     <>
       <Text style={shared.text}>{format('signIn.out', {provider: provider.name})}</Text>
-      {shown ? (
-        <Text style={shared.text}>
-          {format('connect.how', {provider: provider.name, id: provider.id})}
-        </Text>
-      ) : (
-        <Button
-          label={format('connect.label', {provider: provider.name})}
-          onPress={() => setShown(true)}
-        />
-      )}
+      <Button
+        label={format('connect.label', {provider: provider.name})}
+        onPress={() => onConnect(provider)}
+      />
     </>
   );
 }

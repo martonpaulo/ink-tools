@@ -2,14 +2,14 @@
  * «Choose picture»'s screen (#156): the word, a switch between «Illustrations» and «Photos», one
  * status line and a page of large tiles for e-ink, as Ink2Pic's grid shows them: two per row,
  * no scrolling, no animation, a white tile behind a transparent picture. A tap inserts the picture
- * at the lassoed word and closes the view; «More» shows the next page; «Close» inserts nothing,
- * and so does Back, except while an insert runs (#204).
+ * at the lassoed word and closes the view; «More» shows the next page; the title bar's × inserts
+ * nothing, and so does Back, except while an insert runs (#204, #256).
  * Sizes and colours come from ui-kit (#93).
  */
 import React, {useEffect, useState} from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {PAGE_SIZE} from '@ink-tools/picture-search';
-import {Button, metrics, shared, useBackKey} from '@ink-tools/ui-kit';
+import {Button, metrics, shared, TitleBar, useBackKey} from '@ink-tools/ui-kit';
 import {
   Choice,
   ChooseList,
@@ -38,11 +38,12 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const mode = MODES[modeIndex];
-  useBackKey(() => {
+  const close = () => {
     if (!busy) {
       closeChoose();
     }
-  });
+  };
+  useBackKey(close);
 
   useEffect(() => {
     let open = true;
@@ -81,9 +82,7 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
 
   return (
     <View style={shared.screen}>
-      <Text accessibilityRole="header" style={shared.title}>
-        {copy['choose.title'](choice.word)}
-      </Text>
+      <TitleBar title={copy['choose.title'](choice.word)} onClose={busy ? undefined : close} />
       <View style={shared.row}>
         {MODES.map((each, index) => (
           <Button
@@ -102,7 +101,7 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
       </Text>
       {/*
         The grid takes the height the title, tabs and buttons leave, and its rows share it, so
-        «More» and «Close» always sit below the last tile, never over it (#169), as Ink2Pic's grid
+        «More» always sits below the last tile, never over it (#169), as Ink2Pic's grid
         does since its build 0.1.0 (6). Square tiles at half the width overflowed 1920 x 2560.
       */}
       <View testID="grid" style={styles.grid}>
@@ -155,13 +154,6 @@ export function ChooseScreen({choice}: {choice: Choice}): React.JSX.Element {
             onPress={() => setPage((page + 1) % pages)}
           />
         ) : null}
-        <Button
-          label={copy['choose.close']}
-          disabled={busy}
-          onPress={() => {
-            closeChoose();
-          }}
-        />
       </View>
     </View>
   );

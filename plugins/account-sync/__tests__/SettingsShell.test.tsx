@@ -3,16 +3,22 @@ import React from 'react';
 import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
+import {CLOSE_TEXT, RETRY_TEXT} from '@ink-tools/ui-kit';
 import {SettingsShell, ShellState} from '../src/SettingsShell';
 import {copy} from '../src/copy';
 
-function render(state: ShellState) {
+function render(state: ShellState, onClose: () => void = () => {}) {
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = renderer.create(<SettingsShell state={state} onClose={() => {}} />);
+    tree = renderer.create(<SettingsShell state={state} onClose={onClose} />);
   });
   return tree;
 }
+/** The outermost node with that spoken name or label that acts: a Button, or the title bar's ×. */
+const control = (tree: ReactTestRenderer, label: string) =>
+  tree.root.findAll(
+    n => (n.props.accessibilityLabel ?? n.props.label) === label && typeof n.props.onPress === 'function',
+  )[0];
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map(node => node.props.children);
 
@@ -80,18 +86,22 @@ describe('SettingsShell (#93)', () => {
     // A save that failed is said in words, as an alert, and the screen stays usable (#40).
     const notice = render(STATES.notice).root.findByProps({accessibilityRole: 'alert'});
     expect(notice.props.children).toBe('The change was not saved: disk full');
-    expect(texts(render(STATES.error))).toContain(
-      'The settings did not load: storage did not answer',
-    );
   });
 
-  it('retries from the error state', () => {
+  it('shows a failed settings read as the Error state: its reason, Retry and Close (#256)', () => {
     const onRetry = jest.fn();
-    const tree = render({kind: 'error', reason: 'x', onRetry});
-    act(() =>
-      tree.root.findByProps({accessibilityLabel: copy['settings.retry']}).props.onPress(),
-    );
+    const onClose = jest.fn();
+    const tree = render({kind: 'error', reason: 'storage did not answer', onRetry}, onClose);
+    expect(tree.root.findByProps({testID: 'error-view'})).toBeTruthy();
+    expect(texts(tree)).toEqual([copy['settings.error'], 'storage did not answer', RETRY_TEXT]);
+    act(() => control(tree, RETRY_TEXT).props.onPress());
     expect(onRetry).toHaveBeenCalledTimes(1);
+    act(() => control(tree, CLOSE_TEXT).props.onPress());
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(Object.keys(STATES))('keeps the title bar\'s Close in the %s state (#256)', name => {
+    expect(control(render(STATES[name]), CLOSE_TEXT)).toBeDefined();
   });
 
   it('shows the last sync of each module and why a module that is on does not run (#88)', () => {
@@ -176,14 +186,23 @@ describe('SettingsShell (#93)', () => {
       expect(tree.root.findAllByProps({accessibilityLabel: 'Sign out of iCloud'})).toHaveLength(0);
     });
 
-    it('offers Connect for a provider with no connection, which shows how (owner, 2026-11-26)', () => {
-      const tree = render(withSignIns(() => {}));
+    it('offers Connect for a provider with no connection, which opens the Needs state with its steps (owner, 2026-11-26; #256)', () => {
+      const onClose = jest.fn();
+      const tree = render(withSignIns(() => {}), onClose);
       expect(tree.root.findAllByProps({accessibilityLabel: 'Connect Todoist'})).toHaveLength(0);
       press(tree, 'Connect iCloud');
-      expect(texts(tree)).toContain(
-        'To connect iCloud, run inkctl secret set icloud on the Mac, then press Sync now.',
-      );
+      expect(tree.root.findByProps({testID: 'needs'})).toBeTruthy();
+      expect(texts(tree)).toEqual([
+        'iCloud is not connected',
+        'Account Sync reads iCloud with your own sign-in, which comes from the Mac.',
+        '1. On the Mac, run inkctl secret set icloud.',
+        '2. Close this view and press Sync now.',
+      ]);
       expect(screenBreaks(tree.root)).toEqual([]);
+      // Its × goes back to Settings, never closes the plugin.
+      press(tree, CLOSE_TEXT);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(texts(tree)).toContain('iCloud: not connected.');
     });
 
     it('signs out only after the confirmation, and Cancel keeps the sign-in', () => {

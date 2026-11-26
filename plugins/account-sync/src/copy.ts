@@ -2,8 +2,8 @@
 export const copy = {
   title: 'Account Sync',
   'settings.loading': 'Loading the settings…',
-  'settings.error': 'The settings did not load: {reason}',
-  'settings.retry': 'Try again',
+  /** The Error state's title (#256); the reason is the read's own message. */
+  'settings.error': 'The settings did not load',
   'settings.saveError': 'The change was not saved, so it is lost when Account Sync restarts: {reason}',
   'settings.empty': 'No module is ready yet.',
   'status.off': 'Off.',
@@ -26,7 +26,11 @@ export const copy = {
   'signIn.in': '{provider}: signed in ({tail}).',
   'signIn.out': '{provider}: not connected.',
   'connect.label': 'Connect {provider}',
-  'connect.how': 'To connect {provider}, run inkctl secret set {id} on the Mac, then press Sync now.',
+  /** The Needs state «Connect» opens (#256): what is missing, why, and the steps only the owner can do. */
+  'connect.what': '{provider} is not connected',
+  'connect.why': 'Account Sync reads {provider} with your own sign-in, which comes from the Mac.',
+  'connect.step.mac': 'On the Mac, run inkctl secret set {id}.',
+  'connect.step.sync': 'Close this view and press Sync now.',
   'signIn.unreadable': '{provider}: the sign-in did not read: {reason}',
   'signOut.button': 'Sign out',
   'signOut.label': 'Sign out of {provider}',

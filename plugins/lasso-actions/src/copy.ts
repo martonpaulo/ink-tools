@@ -97,7 +97,6 @@ export const copy = {
   'choose.title': (word: string) => `Pictures for «${word}»`,
   'choose.illustration': 'Illustrations',
   'choose.photo': 'Photos',
-  'choose.close': 'Close',
   'choose.more': 'More',
   'choose.inserting': 'Putting the picture in your note.',
   'choose.tile': (title: string, source: string) => `${title}, from ${source}`,

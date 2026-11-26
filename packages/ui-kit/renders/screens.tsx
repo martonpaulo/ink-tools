@@ -27,7 +27,7 @@ import LassoActionsSettings from '../../../plugins/lasso-actions/App';
 import PluginDiagnostics from '../../../plugins/plugin-diagnostics/App';
 import {copy as diagnosticsCopy} from '../../../plugins/plugin-diagnostics/src/copy';
 import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
-import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
+import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
 import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
@@ -36,7 +36,7 @@ import type {EditorState as ImageEditorState} from '../../../plugins/image-editi
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
 import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/StylesGrid';
 import {PickView as DeviceTransferPick} from '../../../plugins/device-transfer/src/PickDevice';
-import {TextView as DeviceTransferText} from '../../../plugins/device-transfer/App';
+import {ReceiveView as DeviceTransferReceive, TextView as DeviceTransferText} from '../../../plugins/device-transfer/App';
 import type {Device as TransferDevice} from '../../../plugins/device-transfer/src/localsend/protocol';
 
 export type ScreenRender = {
@@ -177,6 +177,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
   {name: 'account-sync-connect', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})}} onClose={noop} />)},
   {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
+  {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},
+  {name: 'account-sync-needs-connect', render: () => mount(<Needs problem={accountSyncConnect({id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: noop})} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
   {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},
@@ -185,6 +187,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
   {name: 'device-transfer-pick', render: () => mount(<DeviceTransferPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
   {name: 'device-transfer-text', render: () => mount(<DeviceTransferText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
+  {name: 'device-transfer-receive', render: () => mount(<DeviceTransferReceive state="ready" onStop={noop} />)},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
   {name: 'image-editing-opening', render: () => imageEditor({phase: 'opening'})},
   {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed'}} onPick={noop} onToggle={noop} onClose={noop} />)},

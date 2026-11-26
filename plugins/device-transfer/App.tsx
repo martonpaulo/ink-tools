@@ -55,7 +55,7 @@ export function deviceLabel(device: Device, all: Device[]): string {
   return twins > 1 ? `${device.alias} · ${device.ip}` : device.alias;
 }
 
-/** While a receive runs (#49): who the tablet is to the sender, and a way to stop. */
+/** While a receive runs (#49): who the tablet is to the sender, and a way to stop; the × stops it too (#256). */
 export function ReceiveView({
   state,
   onStop,
@@ -65,7 +65,7 @@ export function ReceiveView({
 }) {
   return (
     <View style={shared.screen}>
-      <TitleBar title={copy.title} />
+      <TitleBar title={copy.title} onClose={onStop} />
       <Text accessibilityLiveRegion="polite" style={shared.text}>
         {state === 'ready' ? copy.ready(ALIAS) : copy.starting}
       </Text>
@@ -77,7 +77,8 @@ export function ReceiveView({
 
 /**
  * «Send Text» (#99): the recognised text, read before it is sent, with the receivers found, one
- * tap each to send (#307), and «Cancel»; an empty recognition shows only «Close».
+ * tap each to send (#307), and «Cancel»; an empty recognition shows only its line. The title bar's ×
+ * cancels too, except while the text is read or sent, which ends by itself (#256).
  */
 export function TextView({
   state,
@@ -90,7 +91,10 @@ export function TextView({
 }) {
   return (
     <View style={shared.screen}>
-      <TitleBar title={copy.sendText} />
+      <TitleBar
+        title={copy.sendText}
+        onClose={state.phase === 'ready' || state.phase === 'empty' ? onCancel : undefined}
+      />
       {state.phase === 'ready' || state.phase === 'sending' ? (
         <>
           <Text style={shared.text}>{state.text}</Text>
@@ -114,7 +118,6 @@ export function TextView({
           <Text accessibilityLiveRegion="polite" style={shared.text}>
             {copy.noText}
           </Text>
-          <Button label={copy.close} onPress={onCancel} />
         </>
       ) : (
         <Text accessibilityLiveRegion="polite" style={shared.text}>

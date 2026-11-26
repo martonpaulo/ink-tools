@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="454" viewBox="0 0 1000 454" role="img" aria-labelledby="t" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<title id="t">The five dependency levels: 1, Official plugin API; 2, Device data; 3, System screens and components; 4, Screen automation; 5, Observed device behaviour</title>
+<defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ecece6"/></marker><marker id="headT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6fc5bd"/></marker></defs>
+<rect x="0.75" y="0.75" width="998.5" height="452.5" rx="8" fill="#1d1e1b" stroke="#3d3f39" stroke-width="1.5"/>
+<text x="24" y="32" font-size="14" fill="#ecece6" font-weight="600">Use the highest level that delivers the outcome at acceptable cost and quality.</text>
+<text x="24" y="60" font-size="11" fill="#a6a8a0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" letter-spacing="0.6">LEVEL</text>
+<text x="296" y="60" font-size="11" fill="#a6a8a0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" letter-spacing="0.6">EXAMPLES</text>
+<text x="576" y="60" font-size="11" fill="#a6a8a0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" letter-spacing="0.6">WHEN IT BREAKS</text>
+<text x="784" y="60" font-size="11" fill="#a6a8a0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" letter-spacing="0.6">WHERE IT IS TESTED</text>
+<rect x="24" y="74" width="252" height="48" rx="6" fill="#7fc08f"/>
+<text x="38" y="98" font-size="11" fill="#151515" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">1 · OFFICIAL PLUGIN API</text>
+<text x="38" y="116" font-size="12" fill="#151515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">no registry item needed</text>
+<text x="296" y="98" font-size="13" fill="#ecece6">lasso, insert a picture, pages, files,</text>
+<text x="296" y="116" font-size="13" fill="#ecece6">buttons, dialogs</text>
+<text x="576" y="98" font-size="13" fill="#ecece6">rarely, with Ratta&#x27;s notice</text>
+<text x="576" y="116" font-size="12" fill="#a6a8a0">affects the person</text>
+<text x="784" y="98" font-size="13" fill="#ecece6">Mac tests, with the</text>
+<text x="784" y="116" font-size="13" fill="#ecece6">simulated adapter</text>
+<rect x="24" y="132" width="252" height="66" rx="6" fill="#86b5e0"/>
+<text x="38" y="156" font-size="11" fill="#151515" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">2 · DEVICE DATA</text>
+<text x="38" y="174" font-size="12" fill="#151515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">11 registry items</text>
+<text x="296" y="156" font-size="13" fill="#ecece6">Calendar, To-Do and Digest entries; the</text>
+<text x="296" y="174" font-size="13" fill="#ecece6">handwriting language; the note file</text>
+<text x="296" y="192" font-size="13" fill="#ecece6">format</text>
+<text x="576" y="156" font-size="13" fill="#ecece6">any firmware update; the probe</text>
+<text x="576" y="174" font-size="13" fill="#ecece6">sees it</text>
+<text x="576" y="192" font-size="12" fill="#a6a8a0">affects the person</text>
+<text x="784" y="156" font-size="13" fill="#ecece6">a tablet probe of fields,</text>
+<text x="784" y="174" font-size="13" fill="#ecece6">paths and versions</text>
+<rect x="24" y="208" width="252" height="66" rx="6" fill="#d8b35c"/>
+<text x="38" y="232" font-size="11" fill="#151515" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">3 · SYSTEM SCREENS AND COMPONENTS</text>
+<text x="38" y="250" font-size="12" fill="#151515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">7 registry items</text>
+<text x="296" y="232" font-size="13" fill="#ecece6">native switches and bars, the helper app,</text>
+<text x="296" y="250" font-size="13" fill="#ecece6">Settings shortcuts</text>
+<text x="576" y="232" font-size="13" fill="#ecece6">any firmware update; a call</text>
+<text x="576" y="250" font-size="13" fill="#ecece6">fails</text>
+<text x="576" y="268" font-size="12" fill="#a6a8a0">affects the person</text>
+<text x="784" y="232" font-size="13" fill="#ecece6">a tablet probe that loads</text>
+<text x="784" y="250" font-size="13" fill="#ecece6">and checks each one</text>
+<rect x="24" y="284" width="252" height="66" rx="6" fill="#b9a6dc"/>
+<text x="38" y="308" font-size="11" fill="#151515" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">4 · SCREEN AUTOMATION</text>
+<text x="38" y="326" font-size="12" fill="#151515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">3 registry items</text>
+<text x="296" y="308" font-size="13" fill="#ecece6">find buttons by their text in Settings</text>
+<text x="296" y="326" font-size="13" fill="#ecece6">and in notes</text>
+<text x="576" y="308" font-size="13" fill="#ecece6">any interface change; a step</text>
+<text x="576" y="326" font-size="13" fill="#ecece6">fails</text>
+<text x="576" y="344" font-size="12" fill="#a6a8a0">affects only our tests</text>
+<text x="784" y="308" font-size="13" fill="#ecece6">inkctl doctor before each</text>
+<text x="784" y="326" font-size="13" fill="#ecece6">test round</text>
+<rect x="24" y="360" width="252" height="48" rx="6" fill="#e9907a"/>
+<text x="38" y="384" font-size="11" fill="#151515" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">5 · OBSERVED DEVICE BEHAVIOUR</text>
+<text x="38" y="402" font-size="12" fill="#151515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">22 registry items</text>
+<text x="296" y="384" font-size="13" fill="#ecece6">the Back key, pen units, how Calendar and</text>
+<text x="296" y="402" font-size="13" fill="#ecece6">To-Do read entries</text>
+<text x="576" y="384" font-size="13" fill="#f08a76" font-weight="600">silently</text>
+<text x="576" y="402" font-size="12" fill="#a6a8a0">affects the person</text>
+<text x="784" y="384" font-size="13" fill="#ecece6">an effect test: write, read</text>
+<text x="784" y="402" font-size="13" fill="#ecece6">back, compare</text>
+<path d="M974 404 V78" stroke="#6fc5bd" stroke-width="2" fill="none" marker-end="url(#headT)"/>
+<text x="964" y="246" font-size="11" fill="#6fc5bd" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" transform="rotate(-90 964 246)">prefer higher</text>
+<text x="24" y="436" font-size="12" fill="#a6a8a0">Level 1 is the highest and the steadiest; level 5 the lowest and the most fragile, since it changes with no error.</text>
+</svg>
