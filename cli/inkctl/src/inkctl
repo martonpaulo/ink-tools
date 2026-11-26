@@ -196,6 +196,7 @@ REGISTRY = {
         "exportFolder": "EXPORT",
         "hiddenFolder": ".data/plugin",
         "privateHomes": ("/data/data/com.ratta.supernote.pluginhost/files/plugins", "/data/user/0/com.ratta.supernote.pluginhost/files/plugins",),
+        "stickerImportFolders": ("Document", "EXPORT", "MyStyle", "Note", "SCREENSHOT", "INBOX",),
     },
     "pluginhost.plugin-list": {
         "authority": "com.ratta.supernote.pluginhost",

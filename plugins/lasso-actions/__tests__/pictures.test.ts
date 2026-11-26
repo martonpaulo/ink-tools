@@ -362,6 +362,18 @@ describe('a press (#111)', () => {
   });
 });
 
+test('a sticker refused for a drawing of raster pictures says so in one short toast (#35)', () => {
+  const {ToastAndroid} =
+    jest.requireActual<typeof import('react-native')>('react-native');
+  const show = jest.spyOn(ToastAndroid, 'show').mockImplementation(() => {});
+  LOOKUP_PICTURES.stickerRefused?.();
+  expect(show).toHaveBeenCalledWith(
+    'This drawing is made of pictures, not lines, so it went in as an image.',
+    ToastAndroid.SHORT,
+  );
+  show.mockRestore();
+});
+
 test('a picture left unselected over the ink says so in a short toast (#168)', () => {
   const {ToastAndroid} =
     jest.requireActual<typeof import('react-native')>('react-native');

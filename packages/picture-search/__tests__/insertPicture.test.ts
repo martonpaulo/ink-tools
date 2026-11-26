@@ -595,6 +595,8 @@ describe('«Insert Sticker» pastes a sticker made of pen strokes (#35, D62 A)',
       .mockResolvedValue({width: 8, height: 8, rows: square});
     convert.mockResolvedValue({success: true, result: true});
     paste.mockResolvedValue({success: true, result: true});
+    (FileUtils.exists as jest.Mock).mockResolvedValue(false);
+    (FileUtils.makeDir as jest.Mock).mockResolvedValue(true);
   });
 
   it('traces the picture into strokes, writes them as a .sticker file and pastes it, never as an image', async () => {
@@ -603,7 +605,9 @@ describe('«Insert Sticker» pastes a sticker made of pen strokes (#35, D62 A)',
     expect(PluginCommAPI.createElement).toHaveBeenCalledWith(0);
     const [params] = convert.mock.calls[0];
     expect(params.machineType).toBe(5);
-    expect(params.stickerPath).toMatch(/openclipart-340609\.sticker$/);
+    // In the plugin's stickers folder under MyStyle, which the Sticker plugin's import lists (#35).
+    expect(params.stickerPath).toBe('/storage/emulated/0/MyStyle/Test/stickers/openclipart-340609.sticker');
+    expect(FileUtils.makeDir).toHaveBeenCalledWith('/storage/emulated/0/MyStyle/Test/stickers');
     expect(params.elements).toHaveLength(1);
     expect(params.elements[0].stroke.penType).toBe(10);
     // The square's outline: its 4 corners and the closing point.
@@ -656,5 +660,36 @@ describe('«Insert Sticker» pastes a sticker made of pen strokes (#35, D62 A)',
       expect.anything(),
     );
     expect(logLines().join('\n')).toMatch(/sticker: 1 strokes, 5 points, from svg/);
+  });
+
+  it('refuses a sticker from an SVG of raster pictures in a frame, puts the picture in and says so once (device round 6)', async () => {
+    const svg: SearchResult = {
+      ...result,
+      id: 'commons:8',
+      source: 'commons',
+      mime: 'image/svg+xml',
+      original: {url: 'https://upload.wikimedia.org/b.svg', width: 512},
+    };
+    native.readText.mockImplementation(async (file: string) =>
+      file.endsWith('.svg')
+        ? '<svg><rect x="0" y="0" width="10" height="5"/><image href="data:image/png;base64,AA" width="10" height="5"/></svg>'
+        : null,
+    );
+    const stickerRefused = jest.fn();
+    pictures = {...pictures, stickerRefused};
+    const done = await insertPicture(svg, 'apple', null, false, sticker);
+    expect(done.ok).toBe(true);
+    expect(convert).not.toHaveBeenCalled();
+    expect(paste).not.toHaveBeenCalled();
+    expect(PluginNoteAPI.insertImage).toHaveBeenCalledTimes(1);
+    expect(stickerRefused).toHaveBeenCalledTimes(1);
+  });
+
+  it('pastes nothing when the stickers folder cannot be made', async () => {
+    (FileUtils.makeDir as jest.Mock).mockResolvedValue(false);
+    await insertPicture(result, 'ladle', null, false, sticker);
+    expect(convert).not.toHaveBeenCalled();
+    expect(PluginNoteAPI.insertImage).toHaveBeenCalledTimes(1);
+    expect(logLines().join('\n')).toMatch(/stickers could not be made; inserted as a picture/);
   });
 });

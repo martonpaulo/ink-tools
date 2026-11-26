@@ -133,6 +133,9 @@ export const copy = {
   /** A toast after an insert that touches other ink, which a lasso would take with it (#168). */
   'picture.unselected':
     'The picture touches your writing, so it is not selected.',
+  /** A toast after «Insert Sticker» put a picture in: its drawing has no lines to draw (#35). */
+  'sticker.pictureDrawing':
+    'This drawing is made of pictures, not lines, so it went in as an image.',
   /** Written on the note below the word: a word with no translation is never guessed (#158). */
   'translation.none': (word: string) => `${word}: no translation found`,
   'translation.failed': (word: string) =>

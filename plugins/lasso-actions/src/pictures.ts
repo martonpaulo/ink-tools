@@ -83,6 +83,8 @@ export const LOOKUP_PICTURES: PictureStore = {
   record: recordKept,
   lassoSkipped: () =>
     ToastAndroid.show(copy['picture.unselected'], ToastAndroid.SHORT),
+  stickerRefused: () =>
+    ToastAndroid.show(copy['sticker.pictureDrawing'], ToastAndroid.SHORT),
 };
 
 /** Lookup's pictures in the private folder, which Supernote file sync does not read (#23). */

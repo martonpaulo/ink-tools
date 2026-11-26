@@ -36,13 +36,14 @@ public final class Registry {
       new Item("storage.cloud-conflict-folder", 5, "user", "picture-search", null, "a conflict appears only after two devices sync", "picture-search src/storage/settings.ts"),
       new Item("storage.sign-in-drop-folder", 2, "user", "account-sync", null, "#293 adds a read of the folder", "account-sync src/secretStore.ts")));
 
-  /** PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders (pluginhost.file-sandbox). */
+  /** PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders; the built-in Sticker plugin keeps its library in its own private folder, and its import lists .sticker files in the shared folders named here (pluginhost.file-sandbox). */
   public static final class PluginhostFileSandbox {
     public static final String SHARED_ROOT = "/storage/emulated/0";
     public static final String SHARED_FOLDER = "MyStyle";
     public static final String EXPORT_FOLDER = "EXPORT";
     public static final String HIDDEN_FOLDER = ".data/plugin";
     public static final List<String> PRIVATE_HOMES = Collections.unmodifiableList(Arrays.asList("/data/data/com.ratta.supernote.pluginhost/files/plugins", "/data/user/0/com.ratta.supernote.pluginhost/files/plugins"));
+    public static final List<String> STICKER_IMPORT_FOLDERS = Collections.unmodifiableList(Arrays.asList("Document", "EXPORT", "MyStyle", "Note", "SCREENSHOT", "INBOX"));
 
     private PluginhostFileSandbox() {}
   }

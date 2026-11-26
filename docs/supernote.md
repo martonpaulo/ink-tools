@@ -736,6 +736,13 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
 
 ## Files and sync
 
+- The built-in Sticker plugin keeps its sticker library in its own private folder, with an index
+  of its own, which no other plugin writes; its import screen lists `.sticker` files in the
+  shared folders (`Document`, `EXPORT`, `MyStyle`, `Note`, `SCREENSHOT`, `INBOX`) [device data,
+  2026-11-26, [#35](https://github.com/martonpaulo/ink-tools/issues/35); the registry's `pluginhost.file-sandbox`]. A `.sticker`
+  file under the plugin's private folder is never listed [measured, Manta, 2026-11-26]. So «Insert
+  Sticker» keeps its stickers in `MyStyle/Lookup/stickers`, which syncs to Supernote Cloud;
+  whether that import lists a subfolder's files is [unverified, [#35](https://github.com/martonpaulo/ink-tools/issues/35)].
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
   [#23](https://github.com/martonpaulo/ink-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
