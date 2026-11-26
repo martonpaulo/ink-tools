@@ -1,5 +1,9 @@
 package com.supernotetools.lingo;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * Every visible text of the app, in English (root AGENTS.md › Product copy). The launcher
  * label lives in the manifest, which scripts/build.cjs writes, since a manifest cannot read Java.
@@ -74,6 +78,17 @@ final class Copy {
       default:
         return FAILURE_OTHER;
     }
+  }
+
+  /** Each failure sentence by its kind's name: the copy keys of the adapter's InternalFailure (#294). */
+  static final Map<String, String> FAILURES = failures();
+
+  private static Map<String, String> failures() {
+    Map<String, String> sentences = new LinkedHashMap<>();
+    for (FileFailure.Kind kind : FileFailure.Kind.values()) {
+      sentences.put(kind.name(), failure(kind));
+    }
+    return Collections.unmodifiableMap(sentences);
   }
 
   /** The detail under a floating-button choice, or null for none. */

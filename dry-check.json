@@ -16,6 +16,8 @@
    "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java",
    "packages/picture-search/native/com/inktools/files/Registry.java",
    "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java",
+   "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/InternalFailure.java",
+   "apps/handwriting-language/src/com/supernotetools/lingo/InternalFailure.java",
    "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift"
   ],

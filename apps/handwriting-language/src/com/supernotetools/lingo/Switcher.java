@@ -2,11 +2,15 @@ package com.supernotetools.lingo;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /** One tap from either surface: switch the file, tell the system, log one line. */
 final class Switcher {
@@ -28,9 +32,23 @@ final class Switcher {
           + " ms=" + (SystemClock.elapsedRealtime() - start));
       return step.to;
     } catch (IOException | RuntimeException error) {
-      Log.e(TAG, "surface=" + surface + " error=" + error.getMessage());
+      InternalFailure internal = error instanceof FileFailure
+          ? ((FileFailure) error).internal("switch", Build.FINGERPRINT, settingsVersion(context)) : null;
+      Log.e(TAG, "surface=" + surface + (internal != null ? " " + internal.agentLog() : " error=" + error.getMessage()));
       throw error instanceof IOException ? (IOException) error : new IOException(error.getMessage(), error);
     }
+  }
+
+  /** The Settings app's version name, which reads the language file, for a failure's log (#294). */
+  private static Map<String, String> settingsVersion(Context context) {
+    String app = Registry.SettingsLanguagePage.PACKAGE;
+    String version;
+    try {
+      version = context.getPackageManager().getPackageInfo(app, 0).versionName;
+    } catch (PackageManager.NameNotFoundException missing) {
+      version = InternalFailure.UNREAD;
+    }
+    return Collections.singletonMap(app, version == null ? InternalFailure.UNREAD : version);
   }
 
   /** The active code, or null when unknown; throws when the folder cannot be read. */

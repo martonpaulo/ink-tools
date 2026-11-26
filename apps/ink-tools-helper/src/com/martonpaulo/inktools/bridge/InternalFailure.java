@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Written by scripts/registry.py from registry/ (#294); never edit it by hand.
+ *
  * The one failure value of the Java adapter for a Supernote internal (#294, docs/architecture.md ›
  * Layer rules, «A failure reads as a sentence»), as sn-adapter's src/failure.ts defines it: the
  * person sees one friendly sentence, chosen by a copy key from the tool's own copy; the agent's log

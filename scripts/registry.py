@@ -16,8 +16,9 @@ version, the header of sn-adapter's descriptor and the ratchet's ceiling per lev
 - no two generated names collide, and every tool an item names has a reader.
 
 Then it writes `packages/sn-adapter/src/internals/descriptor.json`, the shape `chooseDescriptor`
-reads, from the three provider items, and one reader per runtime (`registry_readers.py`: TypeScript,
-Java, Python and Swift). Without `--write` it compares each written file with the
+reads, from the three provider items, one reader per runtime (`registry_readers.py`: TypeScript,
+Java, Python and Swift), and the Java adapter's failure value, `InternalFailure.java`, beside each
+Java reader that reports a failed internal. Without `--write` it compares each written file with the
 disk and fails on a stale or hand-edited one. Prints one `path: problem` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
 """
@@ -226,6 +227,7 @@ def outputs(meta, items, root):
             written[reader.path] = registry_readers.text(reader, meta["version"], items, current)
         except ValueError as error:
             raise Invalid([str(error)])
+    written.update(registry_readers.failure_files())
     return written
 
 

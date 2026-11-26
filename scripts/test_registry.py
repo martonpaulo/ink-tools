@@ -82,6 +82,21 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("stale or edited by hand", out)
 
+    def test_each_java_tool_that_reports_failures_gets_one_failure_value(self):
+        code, out = self.run_main("--write")
+        self.assertEqual(code, 0, out)
+        lingo = self.root / "apps/handwriting-language/src/com/supernotetools/lingo/InternalFailure.java"
+        helper = self.root / "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/InternalFailure.java"
+        self.assertTrue(lingo.read_text().startswith("package com.supernotetools.lingo;\n"))
+        self.assertTrue(helper.read_text().startswith("package com.martonpaulo.inktools.bridge;\n"))
+        self.assertIn('append("\\n\\tat ")', lingo.read_text())
+        self.assertEqual(lingo.read_text().split("\n", 1)[1], helper.read_text().split("\n", 1)[1])
+        self.assertFalse((self.root / "packages/picture-search/native/com/inktools/files/InternalFailure.java").exists())
+        lingo.write_text(lingo.read_text().replace("unread", "unknown"))
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("lingo/InternalFailure.java: stale or edited by hand", out)
+
     def test_an_item_below_level_one_needs_a_reason(self):
         del self.areas["todo"][0]["reason"]
         self.assertIn("below level 1 with no reason", self.problems())

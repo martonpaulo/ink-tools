@@ -36,8 +36,8 @@ Two surfaces ship in one build:
   Language, the floating button hidden while the screen is in front (`ButtonRule`), each missing permission with
   the button to its system screen and the command that grants it, and the command that turns on writing detection when it
   is off. An error shows in bold beside the control whose action failed. It is a plain sentence with the
-  next step, from `Copy`; the detail stays in the `LingoApp` log line
-  ([#280](https://github.com/martonpaulo/ink-tools/issues/280)). A tap redraws only its own rows; the
+  next step, from `Copy`; the detail stays in the `LingoApp` log line, an `InternalFailure` log for a failed read or write of
+  the language folder ([#280](https://github.com/martonpaulo/ink-tools/issues/280), [#294](https://github.com/martonpaulo/ink-tools/issues/294)). A tap redraws only its own rows; the
   page is rebuilt when it shows again or an error or note comes or goes
   ([#281](https://github.com/martonpaulo/ink-tools/issues/281)). Each section is one group,
   as ui-kit's `RowGroup` draws it: the caption, smaller and grey, at the bottom of its box, its rows of the
