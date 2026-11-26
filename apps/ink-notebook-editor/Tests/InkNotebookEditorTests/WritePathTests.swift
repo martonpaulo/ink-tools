@@ -95,12 +95,28 @@ import Testing
         #expect(operation.refusal(onBase: "def") == .staleBase)
     }
 
-    @Test func aPageMoveFromTheHistoryIsWrittenByTheMacAndTouchesNoPageBytes() {
-        let operation = TabletOperation(.movePage(from: 0, to: 2), note: Self.note, baseHash: "h")
+    @Test func aPageMoveFromTheHistoryIsWrittenByTheMacAndTouchesNoPageBytes() throws {
+        let operation = try #require(TabletOperation(.movePage(from: 0, to: 2), note: Self.note, baseHash: "h"))
         #expect(operation.route == .mac)
         #expect(operation.change == .movePage(from: 0, to: 2))
         #expect(operation.editedPages.isEmpty)
         #expect(operation.helperOperations.isEmpty)
+    }
+
+    /// An add and a removal go to the helper; the undo of a removal is the backup kept before it,
+    /// by the Mac's route, and there is none without that backup (#329).
+    @Test func pagesAreAddedAndRemovedByTheTabletAndARemovalUndoneByItsBackup() throws {
+        let insert = try #require(
+            TabletOperation(.insertPage(at: 2, template: "style_white"), note: Self.note, baseHash: "h"))
+        #expect(insert.route == .tablet && insert.helperOperations == [.insertPage(page: 2, template: "style_white")])
+        let remove = try #require(TabletOperation(.removePage(at: 1), note: Self.note, baseHash: "h"))
+        #expect(remove.helperOperations == [.removePage(page: 1)] && remove.editedPages == [1])
+        #expect(TabletOperation(.restorePage(at: 1), note: Self.note, baseHash: "h") == nil)
+        let backup = URL(filePath: "/tmp/backup.note")
+        let restore = try #require(
+            TabletOperation(.restorePage(at: 1), note: Self.note, baseHash: "h", backup: backup))
+        #expect(restore.route == .mac && restore.change == .restoreBackup(backup))
+        #expect(restore.editedPages.isEmpty && restore.helperOperations.isEmpty)
     }
 
     @Test func theHelperOperationsAreTheJSONTheHelperReads() throws {
@@ -172,7 +188,7 @@ import Testing
         tablet.openNote = "/storage/emulated/0/Note/Other.note"
         let copy = try copy()
         try await path(tablet).send(
-            TabletOperation(.movePage(from: 0, to: 1), note: Self.note, baseHash: "base"), copy: copy)
+            TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .movePage(from: 0, to: 1)), copy: copy)
         #expect(tablet.calls == ["edit openNote", "push", "pull"])
         #expect(try String(contentsOf: copy, encoding: .utf8) == "basemoved")
     }
@@ -183,7 +199,8 @@ import Testing
         let copy = try copy()
         await #expect(throws: WriteFailure.openOnTablet) {
             try await self.path(tablet).send(
-                TabletOperation(.movePage(from: 0, to: 1), note: Self.note, baseHash: "base"), copy: copy)
+                TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .movePage(from: 0, to: 1)),
+                copy: copy)
         }
         #expect(!tablet.calls.contains("push"))
     }

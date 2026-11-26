@@ -44,6 +44,9 @@ public struct TabletOperation: Sendable, Equatable {
         case insertPage(template: String)
         /// Removes the page at `page`.
         case removePage
+        /// Puts the note back as the backup kept before an edit: Revert to Backup's route, for
+        /// the undo of a removal (#329).
+        case restoreBackup(URL)
     }
 
     /// The note on the tablet, by its full path.
@@ -61,24 +64,34 @@ public struct TabletOperation: Sendable, Equatable {
         self.change = change
     }
 
-    /// The operation of an edit from the history (#328).
-    public init(_ edit: NoteEdit, note: String, baseHash: String) {
+    /// The operation of an edit from the history (#328); nil for the restore of a page without
+    /// the backup kept before its removal, the only copy of that page's content.
+    public init?(_ edit: NoteEdit, note: String, baseHash: String, backup: URL? = nil) {
         switch edit {
         case .movePage(let from, let to):
             self.init(note: note, baseHash: baseHash, page: from, change: .movePage(from: from, to: to))
+        case .insertPage(let at, let template):
+            self.init(note: note, baseHash: baseHash, page: at, change: .insertPage(template: template))
+        case .removePage(let at):
+            self.init(note: note, baseHash: baseHash, page: at, change: .removePage)
+        case .restorePage(let at):
+            guard let backup else { return nil }
+            self.init(note: note, baseHash: baseHash, page: at, change: .restoreBackup(backup))
         }
     }
 
     public var route: WriteRoute {
-        if case .movePage = change { return .mac }
-        return .tablet
+        switch change {
+        case .movePage, .restoreBackup: .mac
+        default: .tablet
+        }
     }
 
     /// The pages of the note before the edit that the edit may change, from 0; every other page
     /// must keep its bytes. A page move changes none: each page keeps its bytes at a new place.
     public var editedPages: Set<Int> {
         switch change {
-        case .movePage, .insertPage: []
+        case .movePage, .insertPage, .restoreBackup: []
         default: [page]
         }
     }
@@ -101,7 +114,7 @@ public struct TabletOperation: Sendable, Equatable {
     /// for an operation the Mac writes. A picture names its local file; inkctl copies it.
     public var helperOperations: [HelperOperation] {
         switch change {
-        case .movePage: []
+        case .movePage, .restoreBackup: []
         case .insertText(let text, let rect, let fontSize):
             [.insertElements(page: page, elements: [.text(text, rect: rect, fontSize: fontSize)])]
         case .insertPicture(let file, let rect):

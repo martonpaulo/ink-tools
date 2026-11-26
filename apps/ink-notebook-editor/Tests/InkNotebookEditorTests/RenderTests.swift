@@ -133,7 +133,7 @@ final class RenderTests {
     final class SlowTablet: TabletWriting {
         func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
             // timing-independent: a stand-in for a tablet that has not answered yet; no result waits on it.
-            try? await Task.sleep(for: .seconds(60))
+            try? await Task.sleep(for: .seconds(3600))
             throw .cancelled
         }
         func push(_ local: URL, to note: String) async throws(InkctlFailure) { throw .cancelled }
@@ -166,6 +166,56 @@ final class RenderTests {
         try await render("edit-refused", Self.sizes) {
             NotebookView(pages: moved, page: 2, live: live, editor: editor)
         }
+        editor.refusal = nil
+        // Insert Page… and Delete Page… (#329): the sheet under the toolbar and the confirmation in
+        // the middle of the window, each over the window they open from. A sheet and an alert are
+        // windows of their own, so each is drawn on its own and set over the window's render.
+        try await render("insert-page", Self.sizes) {
+            ZStack(alignment: .top) {
+                NotebookView(pages: moved, page: 2, live: live, editor: editor)
+                InsertPageSheet(editor: editor, page: 2) { _ in }
+                    .background(.background, in: .rect(cornerRadius: 12))
+                    .shadow(radius: 12)
+                    .padding(.top, 52)
+            }
+        }
+        for dark in [false, true] {
+            let alert = try Self.alertImage(
+                title: Copy.deletePageTitle(3), message: Copy.deletePagesMessage(1),
+                buttons: [Copy.delete, Copy.cancel], dark: dark)
+            for (sizeName, size) in Self.sizes {
+                let png = try await OffscreenWindow.png(
+                    of: AnyView(
+                        ZStack {
+                            NotebookView(pages: moved, page: 2, live: live, editor: editor)
+                            // The alert's panel draws its material behind it on screen only.
+                            Image(nsImage: alert)
+                                .background(.regularMaterial, in: .rect(cornerRadius: 16))
+                                .shadow(radius: 12)
+                        }), size: size, dark: dark)
+                try png.write(to: folder.appending(path: "delete-page-\(dark ? "dark" : "light")-\(sizeName).png"))
+            }
+        }
+    }
+
+    /// The system's alert with the confirmation's words, as SwiftUI's `alert` shows them, drawn off
+    /// screen: the panel is laid out and cached, never ordered in. The test process has no app
+    /// icon, so the alert shows the system's generic one.
+    static func alertImage(title: String, message: String, buttons: [String], dark: Bool) throws -> NSImage {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        for button in buttons { alert.addButton(withTitle: button) }
+        alert.buttons.first?.hasDestructiveAction = true
+        alert.window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        alert.layout()
+        guard let view = alert.window.contentView?.superview ?? alert.window.contentView,
+            let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds)
+        else { throw CocoaError(.fileWriteUnknown) }
+        view.cacheDisplay(in: view.bounds, to: bitmap)
+        let image = NSImage(size: view.bounds.size)
+        image.addRepresentation(bitmap)
+        return image
     }
 
     /// Find in Note with matches, with none and while the handwriting is read (#322), and the

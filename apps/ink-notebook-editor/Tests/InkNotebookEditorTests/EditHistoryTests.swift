@@ -85,6 +85,23 @@ import Testing
         #expect(NoteEdit.pageDrag(1, before: 3) == .movePage(from: 1, to: 2))
     }
 
+    /// An add and a removal of a page, and their inverses (#329): the page numbers after each, and
+    /// the last page never removed.
+    @Test func pagesAddedAndRemovedAndTheirInverses() {
+        let pages = ["a", "b", "c"]
+        #expect(NoteEdit.insertPage(at: 1, template: "style_white").apply(to: pages) == ["a", "new", "b", "c"])
+        #expect(NoteEdit.insertPage(at: 3, template: "style_white").apply(to: pages) == ["a", "b", "c", "new"])
+        #expect(NoteEdit.insertPage(at: 4, template: "style_white").apply(to: pages) == nil)
+        #expect(NoteEdit.removePage(at: 0).apply(to: pages) == ["b", "c"])
+        #expect(NoteEdit.removePage(at: 3).apply(to: pages) == nil)
+        #expect(NoteEdit.removePage(at: 0).apply(to: ["a"]) == nil)
+        #expect(NoteEdit.insertPage(at: 1, template: "style_white").inverse == .removePage(at: 1))
+        #expect(NoteEdit.removePage(at: 2).inverse == .restorePage(at: 2))
+        #expect(NoteEdit.restorePage(at: 2).inverse == .removePage(at: 2))
+        let removed = NoteEdit.removePage(at: 1).apply(to: pages) ?? []
+        #expect(NoteEdit.restorePage(at: 1).apply(to: removed)?.count == pages.count)
+    }
+
     @Test func theMenuNamesTheEdit() {
         var history = EditHistory()
         #expect(Copy.undo(history.undoKind) == Copy.undoBare)

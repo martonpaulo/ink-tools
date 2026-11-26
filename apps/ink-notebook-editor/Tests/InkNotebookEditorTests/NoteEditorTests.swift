@@ -103,6 +103,62 @@ import Testing
         #expect(editor.history.undoKind == .movePage(from: 0, to: 1))
     }
 
+    /// The tablet's own add or delete of a page, as the helper applies it.
+    func tabletApplies(_ edit: @escaping @Sendable (NoteFile) throws -> NoteFile) {
+        tablet.onEdit = Self.applying(edit)
+    }
+
+    /// Built outside the main actor, as the tablet calls it from the sender's.
+    nonisolated static func applying(_ edit: @escaping @Sendable (NoteFile) throws -> NoteFile) -> (Data) -> Data {
+        { data in (try? NoteFile(data: data)).flatMap { try? edit($0) }.map { Data($0.bytes) } ?? data }
+    }
+
+    @Test func anAddedPageIsDrawnAtOnceOnItsTemplateAndUndoneByItsRemoval() async throws {
+        let editor = try editor()
+        let before = Self.ids(editor.shown)
+        let template = try #require(editor.templates.first)
+        tabletApplies { @Sendable in try NotePreview.insertingPage($0, at: 1, like: 0) }
+        #expect(editor.insertPage(at: 1, template: template))
+        #expect(editor.shown.pages.count == before.count + 1)
+        #expect(editor.shown.pages[1].style == template)
+        await settle(editor)
+        #expect(try NoteFile(data: tablet.bytes).pages.count == before.count + 1)
+        #expect(tablet.sent.first?["op"] as? String == "insertPage")
+        tabletApplies { @Sendable in try NotePreview.removingPage($0, at: 1) }
+        editor.undo()
+        await settle(editor)
+        #expect(try Self.ids(tablet.bytes) == before)
+        #expect(tablet.sent.last?["op"] as? String == "removePage")
+    }
+
+    @Test func aDeletedPageComesBackWithItsInkByItsBackup() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in try NotePreview.removingPage($0, at: 0) }
+        #expect(editor.removePage(at: 0))
+        #expect(editor.shown.pages.count == 3)
+        await settle(editor)
+        #expect(try NoteFile(data: tablet.bytes).pages.count == 3)
+        editor.undo()
+        // Drawn at once from the backup, then pushed back by the Mac's route.
+        #expect(editor.shown.pages.count == 4)
+        await settle(editor)
+        #expect(tablet.bytes == original)
+        #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
+        #expect(editor.history.redoKind == .removePage(at: 0))
+    }
+
+    @Test func theLastPageIsNeverDeleted() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in try NotePreview.removingPage($0, at: 0) }
+        for _ in 0..<3 {
+            #expect(editor.removePage(at: 0))
+            await settle(editor)
+        }
+        #expect(!editor.canRemovePage)
+        #expect(!editor.removePage(at: 0))
+        #expect(editor.pending.isEmpty && editor.shown.pages.count == 1)
+    }
+
     @Test func revertToTheOldestBackupGivesTheNoteBackAndStartsUndoOver() async throws {
         let editor = try editor()
         #expect(!editor.canRevert)

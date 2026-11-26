@@ -198,10 +198,52 @@ nonisolated enum Copy {
         String(localized: "Edits on their way to the tablet: \(count)")
     }
 
+    // MARK: Pages (#329)
+
+    static let insertPageEllipsis = String(localized: "Insert Page…")
+    static let deletePageEllipsis = String(localized: "Delete Page…")
+
+    static func beforePage(_ page: Int) -> String {
+        String(localized: "Before Page \(page)")
+    }
+
+    static let insertPageTitle = String(localized: "Insert Page")
+    static let insertPlace = String(localized: "Place")
+    static let template = String(localized: "Template")
+
+    static func afterPage(_ page: Int) -> String {
+        String(localized: "After Page \(page)")
+    }
+
+    static let insert = String(localized: "Insert")
+    static let delete = String(localized: "Delete")
+    static let lastPageStays = String(localized: "A note keeps at least one page.")
+
+    static func deletePageTitle(_ page: Int) -> String {
+        String(localized: "Delete page \(page)?")
+    }
+
+    static func deletePagesMessage(_ count: Int) -> String {
+        String(
+            localized: "Pages to delete: \(count). The tablet deletes them with their ink; Edit › Undo puts them back.")
+    }
+
+    /// A template's name as the menu shows it, from its style: `style_8mm_ruled` reads «8mm ruled».
+    /// shortcut: made from the style id, not the tablet's own names; use those once `inkctl` lists
+    /// the tablet's templates (#329).
+    static func templateName(_ style: String) -> String {
+        if style.hasPrefix("user_") { return String(localized: "Custom template") }
+        let words = style.replacingOccurrences(of: "style_", with: "").replacingOccurrences(of: "_", with: " ")
+        return words.prefix(1).uppercased() + words.dropFirst()
+    }
+
     /// An edit's name in the menu.
     static func name(of edit: NoteEdit) -> String {
         switch edit {
         case .movePage: String(localized: "Move Page")
+        case .insertPage: String(localized: "Insert Page")
+        case .removePage: String(localized: "Delete Page")
+        case .restorePage: String(localized: "Restore Page")
         }
     }
 }

@@ -180,16 +180,8 @@ struct NotebookView: View {
         .onChange(of: editor?.revision) {
             if let editor { take(editor.shown) }
         }
-        .alert(
-            revertTitle, isPresented: revertAsked, presenting: editor?.revertCandidate
-        ) { backup in
-            Button(Copy.revert, role: .destructive) {
-                Task { await editor?.revert(to: backup) }
-            }
-            Button(Copy.cancel, role: .cancel) {}
-        } message: { _ in
-            Text(Copy.revertMessage)
-        }
+        // Insert Page, Delete Page and Revert to Backup ask in the window (#313, #329).
+        .modifier(EditDialogs(editor: editor) { navigator.show($0) })
         // View › Pages and Headings show the sidebar too, when it is hidden.
         .onChange(of: sidebar) { columns = .all }
         // The current match's page shows, as Find Next and Previous move through the note.
@@ -232,17 +224,6 @@ struct NotebookView: View {
         return selected > 0
             ? Copy.pageOfSelected(index + 1, navigator.pageCount, selected)
             : Copy.pageOf(index + 1, navigator.pageCount)
-    }
-
-    /// The confirmation of File › Revert to Backup, open while a backup waits for it.
-    private var revertAsked: Binding<Bool> {
-        Binding(
-            get: { editor?.revertCandidate != nil },
-            set: { if !$0 { editor?.revertCandidate = nil } })
-    }
-
-    private var revertTitle: String {
-        Copy.revertTitle(editor?.revertCandidate.map(RevertCommands.title) ?? "")
     }
 
     /// Draws a newer note: the tablet's copy, or the Mac's copy with the edits on their way.
@@ -333,9 +314,14 @@ struct NotebookView: View {
                         }
                         // A thumbnail dragged to Finder or another app gives its page (#323).
                         .itemProvider { text?.provider(of: pages.note, page: index) }
+                        .contextMenu { PageMenu(editor: editor, page: index) }
                 }
                 // A thumbnail dragged within the list moves its page, on a note from the tablet (#330).
                 .onMove(perform: pageDrag)
+            }
+            // Delete in the page list asks to delete the page in front (#329).
+            .onDeleteCommand {
+                if editor?.canRemovePage == true { editor?.removalAsked = navigator.index }
             }
             .onChange(of: navigator.index) { _, index in
                 if let index { list.scrollTo(index) }

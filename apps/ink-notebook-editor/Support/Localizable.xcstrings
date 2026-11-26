@@ -121,12 +121,42 @@
         }
       }
     },
+    "A note keeps at least one page." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A note keeps at least one page."
+          }
+        }
+      }
+    },
     "Actual Size" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actual Size"
+          }
+        }
+      }
+    },
+    "After Page %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After Page %lld"
+          }
+        }
+      }
+    },
+    "Before Page %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before Page %lld"
           }
         }
       }
@@ -207,6 +237,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copying %@ from the tablet…"
+          }
+        }
+      }
+    },
+    "Custom template" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom template"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "Delete Page" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Page"
+          }
+        }
+      }
+    },
+    "Delete Page…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Page…"
+          }
+        }
+      }
+    },
+    "Delete page %lld?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete page %lld?"
           }
         }
       }
@@ -387,6 +467,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Headings"
+          }
+        }
+      }
+    },
+    "Insert" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert"
+          }
+        }
+      }
+    },
+    "Insert Page" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert Page"
+          }
+        }
+      }
+    },
+    "Insert Page…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert Page…"
           }
         }
       }
@@ -681,6 +791,26 @@
         }
       }
     },
+    "Pages to delete: %lld. The tablet deletes them with their ink; Edit › Undo puts them back." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pages to delete: %lld. The tablet deletes them with their ink; Edit › Undo puts them back."
+          }
+        }
+      }
+    },
+    "Place" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place"
+          }
+        }
+      }
+    },
     "Previous Match" : {
       "localizations" : {
         "en" : {
@@ -781,6 +911,16 @@
         }
       }
     },
+    "Restore Page" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Page"
+          }
+        }
+      }
+    },
     "Revert" : {
       "localizations" : {
         "en" : {
@@ -867,6 +1007,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tablet not connected. Connect the cable and unlock it."
+          }
+        }
+      }
+    },
+    "Template" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Template"
           }
         }
       }

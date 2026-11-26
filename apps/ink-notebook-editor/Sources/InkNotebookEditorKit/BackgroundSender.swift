@@ -17,7 +17,7 @@ public enum SendOutcome<Undo: Sendable & Equatable>: Sendable, Equatable {
     case started(Undo)
     /// The tablet applied the edit: draw these pages again, from 0; nil when pages were added,
     /// removed or moved: all of them.
-    case applied(Undo, redraw: Set<Int>?)
+    case applied(Undo, redraw: Set<Int>?, backup: URL)
     /// Draw `undo` to take the edit back, and show `message`.
     case refused(undo: Undo, message: String)
 }
@@ -105,7 +105,7 @@ public struct EditQueue<Undo: Sendable & Equatable>: Sendable, Equatable {
 /// The pages to draw again after an operation applied, from 0; nil for all of them.
 public func pagesToRedraw(after operation: TabletOperation) -> Set<Int>? {
     switch operation.change {
-    case .movePage, .insertPage, .removePage: nil
+    case .movePage, .insertPage, .removePage, .restoreBackup: nil
     default: [operation.page]
     }
 }
@@ -190,9 +190,9 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
             outcome(.started(edit.undo))
             do {
                 let old = edit.operation.baseHash
-                try await path.send(edit.operation, copy: copy)
+                let backup = try await path.send(edit.operation, copy: copy)
                 if let new = try? path.hash(copy) { queue.rebase(from: old, to: new) }
-                outcome(.applied(edit.undo, redraw: pagesToRedraw(after: edit.operation)))
+                outcome(.applied(edit.undo, redraw: pagesToRedraw(after: edit.operation), backup: backup))
             } catch {
                 outcome(.refused(undo: edit.undo, message: error.message))
             }

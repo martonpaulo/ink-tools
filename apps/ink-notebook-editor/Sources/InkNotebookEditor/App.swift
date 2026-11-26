@@ -39,6 +39,7 @@ struct InkNotebookEditorApp: App {
                 CopyTextCommands()
                 Divider()
                 MovePageCommands()
+                PageCommands()
             }
             CommandGroup(before: .toolbar) {
                 SidebarCommands()

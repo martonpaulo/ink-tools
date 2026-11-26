@@ -64,7 +64,8 @@ import Testing
 
     @Test func onlyTheEditedPageIsRedrawnAfterAPull() {
         #expect(pagesToRedraw(after: Self.nudge(1)) == [1])
-        #expect(pagesToRedraw(after: TabletOperation(.movePage(from: 0, to: 2), note: Self.note, baseHash: "h")) == nil)
+        let move = TabletOperation(note: Self.note, baseHash: "h", page: 0, change: .movePage(from: 0, to: 2))
+        #expect(pagesToRedraw(after: move) == nil)
     }
 
     @Test func theMacSendsNoWholePageReadForAnyEditKind() throws {
@@ -119,7 +120,22 @@ import Testing
         await sender.nudged(Self.nudge(1), undo: 1)
         await sender.nudged(Self.nudge(2, number: 9), undo: 2)
         await sender.endRun()
-        #expect(outcomes.all == [.started(1), .applied(1, redraw: [1]), .started(2), .applied(2, redraw: [1])])
+        // The backups, oldest first: each send names the one it kept, by its file's name, as the
+        // temporary folder reads with and without /private.
+        let backups = try NoteBackups(folder: folder.appending(path: "Backups")).list(for: Self.note)
+            .reversed().map(\.lastPathComponent)
+        let named = outcomes.all.map { outcome in
+            if case .applied(let ticket, let redraw, let backup) = outcome {
+                return "applied \(ticket) \(redraw ?? []) \(backup.lastPathComponent)"
+            }
+            return "\(outcome)"
+        }
+        try #require(backups.count == 2)
+        #expect(
+            named == [
+                "\(SendOutcome<Int>.started(1))", "applied 1 [1] \(backups[0])",
+                "\(SendOutcome<Int>.started(2))", "applied 2 [1] \(backups[1])",
+            ])
         #expect(tablet.calls == ["edit modifyElements", "pull", "edit modifyElements", "pull"])
     }
 

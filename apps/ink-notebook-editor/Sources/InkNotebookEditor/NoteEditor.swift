@@ -13,11 +13,13 @@ import os
 /// on a state it was not made for.
 @Observable
 final class NoteEditor {
-    /// One edit on its way to the tablet; `history` is nil for the inverse an undo sends.
+    /// One edit on its way to the tablet; `history` is nil for the inverse an undo sends, and
+    /// `backup` names the note a page restore puts back.
     struct Pending: Equatable {
         let ticket: Int
         let edit: NoteEdit
         let history: EditID?
+        var backup: URL?
     }
 
     let tabletPath: String
@@ -36,6 +38,10 @@ final class NoteEditor {
     private(set) var backups: [URL] = []
     /// The backup File › Revert to Backup picked, waiting for the window's confirmation.
     var revertCandidate: URL?
+    /// The page Edit › Insert Page… adds next to, while its sheet shows (#329).
+    var insertNextTo: Int?
+    /// The page Edit › Delete Page… removes, while its confirmation shows (#329).
+    var removalAsked: Int?
     /// A restore is running: no edit starts meanwhile.
     private(set) var restoring = false
 
@@ -47,6 +53,8 @@ final class NoteEditor {
     /// The chain of hand-overs to the sender, so two edits reach it in the order they were made.
     @ObservationIgnored private var handOver: Task<Void, Never>?
     @ObservationIgnored private var nextTicket = 0
+    /// The backup kept just before each applied page removal: its undo puts that note back (#329).
+    @ObservationIgnored private var removalBackups: [EditID: URL] = [:]
     private let logger = Logger(subsystem: "com.martonpaulo.inktools.notebookeditor", category: "edit")
 
     init(tabletPath: String, copy: URL, base: NoteFile, tablet: any TabletWriting, backups: NoteBackups) {
@@ -98,10 +106,18 @@ final class NoteEditor {
             tablet: tablet, backups: backups,
             hash: { try hash($0) },
             macWrite: { operation, url in
-                guard case .movePage(let from, let to) = operation.change else {
+                switch operation.change {
+                case .movePage(let from, let to):
+                    return Data(
+                        try NoteWriter.movePage(try NoteFile(data: try Data(contentsOf: url)), from: from, to: to))
+                case .restoreBackup(let backup):
+                    // A backup the reader cannot read is never pushed.
+                    let bytes = try Data(contentsOf: backup)
+                    _ = try NoteFile(data: bytes)
+                    return bytes
+                default:
                     throw NoteFormatError.badPage(operation.page)
                 }
-                return Data(try NoteWriter.movePage(try NoteFile(data: try Data(contentsOf: url)), from: from, to: to))
             },
             untouchedChanged: { before, after, edited in
                 NoteDiff.untouchedChanged(
@@ -125,13 +141,38 @@ final class NoteEditor {
     /// to its own place, or of a page outside the note, records nothing.
     @discardableResult
     func movePage(from: Int, to: Int) -> Bool {
-        let edit = NoteEdit.movePage(from: from, to: to)
-        guard canEdit, edit.apply(to: Array(shown.pages.indices.map(String.init))) != nil else { return false }
+        record(.movePage(from: from, to: to))
+    }
+
+    /// Adds a page of no ink at `at` (from 0, up to the page count) on `template` (#329).
+    @discardableResult
+    func insertPage(at: Int, template: String) -> Bool {
+        record(.insertPage(at: at, template: template))
+    }
+
+    /// Removes page `at` (from 0); never the last page (#329).
+    @discardableResult
+    func removePage(at: Int) -> Bool {
+        record(.removePage(at: at))
+    }
+
+    /// Whether a page may be removed: a note keeps at least one page.
+    var canRemovePage: Bool { canEdit && pageCount > 1 }
+
+    /// The templates the note's pages use, in page order, each once: what an added page may take.
+    var templates: [String] {
+        var seen = Set<String>()
+        return shown.pages.compactMap(\.style).filter { seen.insert($0).inserted }
+    }
+
+    private func record(_ edit: NoteEdit) -> Bool {
+        guard canEdit, edit.apply(to: shown.pages.indices.map(String.init)) != nil else { return false }
         send(edit, history: history.record(edit))
         return true
     }
 
     func undo() {
+        let undone = history.undoID
         guard canEdit, let step = history.undo() else { return }
         switch step {
         case .drop(let id):
@@ -146,7 +187,13 @@ final class NoteEditor {
                 }
             }
         case .send(let inverse):
-            send(inverse, history: nil)
+            if case .restorePage = inverse {
+                // The page and its ink are only in the backup kept just before the removal.
+                guard let id = undone, let backup = removalBackups[id] else { return }
+                send(inverse, history: nil, backup: backup)
+            } else {
+                send(inverse, history: nil)
+            }
         }
     }
 
@@ -178,10 +225,10 @@ final class NoteEditor {
         refreshBackups()
     }
 
-    private func send(_ edit: NoteEdit, history id: EditID?) {
+    private func send(_ edit: NoteEdit, history id: EditID?, backup: URL? = nil) {
         let ticket = nextTicket
         nextTicket += 1
-        pending.append(Pending(ticket: ticket, edit: edit, history: id))
+        pending.append(Pending(ticket: ticket, edit: edit, history: id, backup: backup))
         redraw()
         let previous = handOver
         let copy = copy
@@ -191,7 +238,8 @@ final class NoteEditor {
             // The edit was made on the copy as it is now; the sender moves the base forward as
             // each edit ahead of it applies.
             let base = await Self.baseHash(copy)
-            await sender?.drew(TabletOperation(edit, note: note, baseHash: base), undo: ticket)
+            guard let operation = TabletOperation(edit, note: note, baseHash: base, backup: backup) else { return }
+            await sender?.drew(operation, undo: ticket)
         }
     }
 
@@ -205,10 +253,13 @@ final class NoteEditor {
         switch outcome {
         case .started(let ticket):
             if let id = pending.first(where: { $0.ticket == ticket })?.history { history.sent(id) }
-        case .applied(let ticket, _):
+        case .applied(let ticket, _, let backup):
             let done = pending.first { $0.ticket == ticket }
             pending.removeAll { $0.ticket == ticket }
-            if let id = done?.history { history.applied(id) }
+            if let id = done?.history {
+                history.applied(id)
+                if case .removePage = done?.edit { removalBackups[id] = backup }
+            }
             reloadBase()
             refreshBackups()
         case .refused(let ticket, let message):
@@ -218,6 +269,8 @@ final class NoteEditor {
                 _ = history.refused(id)
             } else {
                 history.restore(refused.edit.inverse)
+                // A refused page restore leaves the removal done, still undone by its backup.
+                if let backup = refused.backup, let id = history.undoID { removalBackups[id] = backup }
             }
             refusal = message
             redraw()
@@ -234,20 +287,36 @@ final class NoteEditor {
         redraw()
     }
 
-    /// Draws the copy with every pending edit, in order. A page move is a new footer over the same
-    /// page bytes, so this costs a parse, never a page decode.
+    /// Draws the copy with every pending edit, in order. A page edit is a new footer, and an added
+    /// page one new block, over the same page bytes, so this costs a parse, never a page decode.
     private func redraw() {
         var note = base
         for waiting in pending {
-            guard case .movePage(let from, let to) = waiting.edit else { continue }
             do {
-                note = try NoteFile(bytes: NoteWriter.movePage(note, from: from, to: to))
+                note = try Self.drawn(waiting, on: note)
             } catch {
                 logger.error("an edit could not be drawn: \(String(describing: error), privacy: .public)")
             }
         }
         shown = note
         revision += 1
+    }
+
+    /// `note` with one pending edit, for drawing only.
+    nonisolated static func drawn(_ waiting: Pending, on note: NoteFile) throws -> NoteFile {
+        switch waiting.edit {
+        case .movePage(let from, let to):
+            return try NoteFile(bytes: NoteWriter.movePage(note, from: from, to: to))
+        case .insertPage(let at, let template):
+            // The new page takes the template layer of a page that has its template.
+            let source = note.pages.firstIndex { $0.style == template } ?? min(at, note.pages.count - 1)
+            return try NotePreview.insertingPage(note, at: at, like: source)
+        case .removePage(let at):
+            return try NotePreview.removingPage(note, at: at)
+        case .restorePage:
+            guard let backup = waiting.backup else { return note }
+            return try NoteFile(data: try Data(contentsOf: backup))
+        }
     }
 
     private func refreshBackups() {

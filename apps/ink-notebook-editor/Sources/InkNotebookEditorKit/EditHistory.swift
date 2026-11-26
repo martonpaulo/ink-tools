@@ -6,24 +6,43 @@ import Foundation
 public enum NoteEdit: Sendable, Equatable {
     /// Moves the page at `from` to `to`, both counted from 0, as the tablet's page move does.
     case movePage(from: Int, to: Int)
+    /// Adds a page of no ink at `at` (from 0, up to the page count) on a system or note template.
+    case insertPage(at: Int, template: String)
+    /// Removes the page at `at`, from 0; never the last page.
+    case removePage(at: Int)
+    /// Puts back the page a removal took out at `at`, with its content: the undo of a removal.
+    case restorePage(at: Int)
 
     /// The edit that undoes this one.
     public var inverse: NoteEdit {
         switch self {
         case .movePage(let from, let to): .movePage(from: to, to: from)
+        case .insertPage(let at, _): .removePage(at: at)
+        case .removePage(let at): .restorePage(at: at)
+        case .restorePage(let at): .removePage(at: at)
         }
     }
 
+    /// The id an added or restored page shows until the tablet's copy names it.
+    static let newPage = "new"
+
     /// The page order after this edit, `pages` holding each page's id; nil when the edit does not
-    /// fit the note: a page outside it, or a move to where the page already is.
+    /// fit the note: a page outside it, a move to where the page already is, or the removal of
+    /// the last page.
     public func apply(to pages: [String]) -> [String]? {
+        var changed = pages
         switch self {
         case .movePage(let from, let to):
             guard pages.indices.contains(from), pages.indices.contains(to), from != to else { return nil }
-            var moved = pages
-            moved.insert(moved.remove(at: from), at: to)
-            return moved
+            changed.insert(changed.remove(at: from), at: to)
+        case .insertPage(let at, _), .restorePage(let at):
+            guard (0...pages.count).contains(at) else { return nil }
+            changed.insert(Self.newPage, at: at)
+        case .removePage(let at):
+            guard pages.indices.contains(at), pages.count > 1 else { return nil }
+            changed.remove(at: at)
         }
+        return changed
     }
 
     /// The page move a list's drag makes: `source` dropped before the row `destination`, both
@@ -115,6 +134,9 @@ public struct EditHistory: Sendable, Equatable {
         guard let edit = undone.popLast() else { return nil }
         return (push(edit), edit)
     }
+
+    /// The edit Undo would take back, by its place in the history.
+    public var undoID: EditID? { done.last?.id }
 
     /// The kind of edit Undo would take back, and Redo would do again, for the menu's name.
     public var undoKind: NoteEdit? { done.last?.edit }
