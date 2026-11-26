@@ -1663,6 +1663,33 @@ check "--module is only for account-sync sync" "$(exit_and_pushes plugin action 
 check "read-only refuses plugin action" "$(exit_and_pushes --read-only plugin action account-sync sync)" "110"
 rm -f "$files/action-answer"
 
+# Pen replay (#298): record the real pen in Smart Pen, save the tape, play it back on a test note.
+tape='{"version":1,"events":[{"at":0,"penUp":[{"points":[{"x":1,"y":2}],"pressures":[2000],"penType":10,"penColor":0,"thickness":200,"times":null}]}]}'
+action_line 'smart-pen ACTION_ID 1/1 {"ok":true,"action":"record-pen","line":"SmartPen: pen recording on"}' > "$files/action-answer"
+result=$(run ink record start --plugin smart-pen)
+check "ink record start asks Smart Pen in its hidden folder to record" "$?$(cat "$files/action-path")$(action_field "d['action'], d['args']")" "0$root/.data/plugin/inktools-smart-pen/action.json('record-pen', {'on': True})"
+action_line "smart-pen ACTION_ID 1/1 {\"ok\":true,\"action\":\"record-pen\",\"line\":\"off\",\"dropped\":0,\"tape\":$tape}" > "$files/action-answer"
+result=$(run ink record stop "$work/local/word.tape.json" --plugin smart-pen)
+check "ink record stop saves the tape the plugin answered" "$?|$result|$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["events"]))' "$work/local/word.tape.json")" "0|saved: 1 pen events to $work/local/word.tape.json, 0 dropped|1"
+run ink record stop "$work/local/word.tape.json" --plugin smart-pen >/dev/null 2>&1
+check "ink record stop never replaces a tape without --overwrite" "$?" "5"
+check "ink record stop needs a FILE, before any push" "$(exit_and_pushes ink record stop --plugin smart-pen)" "20"
+action_line 'smart-pen ACTION_ID 1/1 {"ok":true,"action":"record-pen","line":"off","dropped":0,"tape":{"version":1,"events":[]}}' > "$files/action-answer"
+check "a recording with no pen event is a failure, never an empty tape" "$(exit_and_pushes ink record stop "$work/local/empty.tape.json" --plugin smart-pen)$([ -e "$work/local/empty.tape.json" ] && echo saved)" "11"
+helper_ready
+action_line 'smart-pen ACTION_ID 1/1 {"ok":true,"action":"replay-pen","line":"SmartPen: replayed 1 pen-ups (1 strokes) and 0 motions, 0 listener errors","penUps":1}' > "$files/action-answer"
+result=$(run ink replay "$work/local/word.tape.json" --plugin smart-pen)
+check "ink replay sends the tape to Smart Pen and prints its line" "$?|$result|$(action_field "d['action'], d['args']['tape']['version']")" "0|SmartPen: replayed 1 pen-ups (1 strokes) and 0 motions, 0 listener errors|('replay-pen', 1)"
+printf '{"version":2,"events":[{"at":0}]}' > "$work/local/old.tape.json"
+check "a tape of another version is refused before any push" "$(exit_and_pushes ink replay "$work/local/old.tape.json" --plugin smart-pen)" "20"
+check "a missing tape is not found" "$(exit_and_pushes ink replay "$work/local/none.tape.json" --plugin smart-pen)" "40"
+printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
+check "ink replay on a note outside Note/Tests/ is refused" "$(exit_and_pushes ink replay "$work/local/word.tape.json" --plugin smart-pen)" "120"
+check "a plugin with no pen replay is a usage error" "$(exit_and_pushes ink replay "$work/local/word.tape.json" --plugin account-sync)" "20"
+rm -f "$files/action-answer" "$files/helper-answer" "$files/notes-found" "$work/local/word.tape.json" "$work/local/old.tape.json"
+cp "$work/tree-before-helper" "$files/tree.xml"
+reset_device
+
 # The handwriting language (#190): one code file in default/, packs as folders in resources/.
 printf 'pt_BR\n' > "$files/lang-default"
 printf 'en_US\nes_ES\npt_BR\nzh_CN\n' > "$files/lang-packs"

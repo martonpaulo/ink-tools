@@ -870,6 +870,20 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   [#148](https://github.com/martonpaulo/ink-tools/issues/148)]. Once a lasso exists, `inkctl click` presses its toolbar and every «⋯» row.
   A plugin's `lassoElements(rect)` does lasso with no pen (see Plugins), so a helper plugin button
   is the route an agent has.
+- Pen replay ([#298](https://github.com/martonpaulo/ink-tools/issues/298)): a stroke a plugin
+  inserts with `insertPageElements` (as `inkctl ink write` does) raises no `event_pen_up`, so no
+  conversion or shape starts from it [observed device behaviour, device rounds of
+  [#305](https://github.com/martonpaulo/ink-tools/issues/305)]. So a pen-driven plugin records the
+  real pen once and replays it itself: sn-adapter's `onPenUp` and `onMotion` keep the plugin's
+  listeners in one tap, and a replay inserts each recorded stroke with `createElement` and
+  `insertPageElements`, then hands the new element to those listeners, with the recorded gaps and
+  stroke times (registry `pen.replay-route`, level 1). `inkctl ink record start|stop` and
+  `inkctl ink replay FILE --plugin smart-pen` drive it through the plugin's action channel. It tests
+  the plugin's logic, not the host's pen delivery, so one real-pen smoke per release stays. Not yet
+  seen on the tablet [inference, device round pending]: that a created and inserted stroke reads its
+  points back as a pen-up element does, so Smart Shapes and Real-Time Text take it; and whether
+  `input stylus motionevent` reaches a plugin's own React Native view, such as Image Editing's Crop
+  and Erase, where inkctl could draw with no replay at all.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off
   with `inkctl wifi off` [measured]. With the tablet's Wi-Fi off (`adb -d shell svc wifi disable`),
   `adb -d` still answers over the cable [measured, 2026-11-16,

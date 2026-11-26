@@ -16,6 +16,7 @@ export * from './lasso';
 export * from './note';
 export * from './page';
 export * from './pen';
+export * from './penTape';
 export * from './plugin';
 export * from './register';
 export * from './shapes';

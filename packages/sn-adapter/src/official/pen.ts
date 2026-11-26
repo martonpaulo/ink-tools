@@ -6,7 +6,17 @@
  */
 import {PluginCommAPI, PluginFileAPI, PluginManager} from 'sn-plugin-lib';
 import {REGISTRY} from '../registry.generated';
-import {readAll} from './elements';
+import {emrToPage, offPage, readEmrRange, readAll, saveStroke} from './elements';
+import {getCurrentFilePath, getCurrentPageNum, getPageSize} from './page';
+import {
+  firstToRecord,
+  recordMotion,
+  recordPenUp,
+  replayTimes,
+  tapMotion,
+  tapPenUp,
+  type TapeStroke,
+} from './penTape';
 import {attempt, fail, fromResponse, ok, Result, THROWN_CODE} from './result';
 
 /** The only plugin event the docs list: its message is the Element[] just written. */
@@ -80,24 +90,91 @@ function subscribe(register: () => {remove: () => void}): Result<() => void> {
   }
 }
 
-/** Calls `listener` with the elements of each stroke the person ends; returns the stop function. */
-export function onPenUp(
-  listener: (elements: object[]) => void,
-): Result<() => void> {
-  return subscribe(() =>
-    PluginManager.registerEventListener(PEN_UP_EVENT, NORMAL_ORDER, {
-      onMsg: (msg: unknown) => listener(Array.isArray(msg) ? msg : []),
+/** The device subscription and the tap entry together: both stop, or neither starts. */
+function tapped(untap: () => void, register: () => {remove: () => void}): Result<() => void> {
+  const subscribed = subscribe(register);
+  if (!subscribed.ok) {
+    untap();
+    return subscribed;
+  }
+  return ok(() => {
+    subscribed.value();
+    untap();
+  });
+}
+
+/**
+ * One pen-up's strokes for the tape (#298), in page pixels: a pen-up may give EMR points (#206),
+ * turned with the same `offPage` and `emrToPage` Real-Time Text uses.
+ */
+async function tapeStrokes(elements: object[]): Promise<Result<TapeStroke>[]> {
+  const path = await getCurrentFilePath();
+  const page = await getCurrentPageNum();
+  const size = path.ok && page.ok ? await getPageSize(path.value, page.value) : null;
+  return Promise.all(
+    elements.map(async (element): Promise<Result<TapeStroke>> => {
+      if (!path.ok) {
+        return path;
+      }
+      if (!page.ok) {
+        return page;
+      }
+      if (!size?.ok) {
+        return size ?? fail(THROWN_CODE, 'no page size');
+      }
+      const saved = await saveStroke(element);
+      if (!saved.ok) {
+        return saved;
+      }
+      const times = await strokeTimes(element);
+      let points = saved.value.points;
+      if (offPage(points, size.value)) {
+        const range = await readEmrRange();
+        if (!range.ok) {
+          return range;
+        }
+        points = emrToPage(points, size.value, range.value);
+      }
+      return ok({...saved.value, points, times: times.ok ? times.value : null});
     }),
   );
 }
 
-/** Calls `listener` with each touch or pen motion; returns the stop function. */
+/**
+ * Calls `listener` with the elements of each stroke the person ends, and with each stroke a pen
+ * replay inserts (#298); returns the stop function. While a recording is on, the stroke is read for
+ * the tape before the listener runs, as the listener may free it.
+ */
+export function onPenUp(
+  listener: (elements: object[]) => void,
+): Result<() => void> {
+  return tapped(tapPenUp(listener), () =>
+    PluginManager.registerEventListener(PEN_UP_EVENT, NORMAL_ORDER, {
+      onMsg: (msg: unknown) => {
+        const elements = Array.isArray(msg) ? msg : [];
+        const at = firstToRecord(elements);
+        if (at !== null) {
+          tapeStrokes(elements)
+            .then(strokes => recordPenUp(strokes, at))
+            .finally(() => listener(elements));
+          return;
+        }
+        listener(elements);
+      },
+    }),
+  );
+}
+
+/** Calls `listener` with each touch or pen motion, and each one a pen replay plays; returns the stop function. */
 export function onMotion(
   listener: (motion: Motion) => void,
 ): Result<() => void> {
-  return subscribe(() =>
+  return tapped(tapMotion(listener), () =>
     PluginManager.registerMotionListener(NORMAL_ORDER, {
-      onMsg: (msg: Motion) => listener(msg),
+      onMsg: (msg: Motion) => {
+        recordMotion(msg);
+        listener(msg);
+      },
     }),
   );
 }
@@ -155,6 +232,11 @@ const timeOf = (point: RecognPoint | undefined): number | null =>
  * (#296 › Device checks).
  */
 export async function strokeTimes(element: object): Promise<Result<StrokeTimes | null>> {
+  // A stroke a pen replay inserted carries the recorded times, as a rebuilt stroke has none (#298).
+  const replayed = replayTimes(element);
+  if (replayed !== undefined) {
+    return ok(replayed);
+  }
   const accessor = (element as SdkElement).stroke?.recognPoints;
   if (!accessor) {
     return ok(null);

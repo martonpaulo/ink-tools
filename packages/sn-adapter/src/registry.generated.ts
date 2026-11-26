@@ -22,6 +22,7 @@ export const REGISTRY_ITEMS: readonly RegistryItem[] = [
   {id: 'digest.provider', level: 2, impact: 'user', owner: 'sn-adapter', probe: 'sn-adapter probeCapability(digest)', unprobed: null, active: 'sn-adapter internals/digest.ts'},
   {id: 'pen.digitizer-units', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'needs a pen stroke; the effect test is the Smart Pen device round', active: 'sn-adapter official/elements.ts'},
   {id: 'pen.pen-types', level: 5, impact: 'user', owner: 'smart-pen', probe: null, unprobed: 'needs a pen stroke and a lasso; the effect test is the Smart Pen device round', active: 'smart-pen src/modules/shapes/guard.ts'},
+  {id: 'pen.replay-route', level: 1, impact: 'tests', owner: 'sn-adapter', probe: null, unprobed: 'needs one real-pen recording; the effect test is Smart Pen\'s replay in the device round (#298)', active: 'sn-adapter official/penTape.ts'},
   {id: 'plugin-api.element-reads', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a probe would have to hang the host to see the limit', active: 'sn-adapter official/elements.ts'},
   {id: 'plugin-api.unregister-unknown-button', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a probe would hang the plugin', active: 'sn-adapter official/buttons.ts'},
   {id: 'plugin-api.pen-up-uuid', level: 5, impact: 'user', owner: 'smart-pen', probe: null, unprobed: 'needs a pen stroke; the effect test is the Smart Pen device round', active: 'smart-pen src/modules/text/device.ts'},
@@ -64,6 +65,9 @@ export const REGISTRY = {
   penPenTypes: {
     lasso: 4,
     ink: [1, 10, 11, 15, 16],
+  },
+  penReplayRoute: {
+    tapeVersion: 1,
   },
   pluginApiElementReads: {
     maxConcurrent: 4,

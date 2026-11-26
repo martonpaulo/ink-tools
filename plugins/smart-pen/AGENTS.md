@@ -76,6 +76,13 @@ after a sidebar press; does a re-registered sidebar button show its new icon; th
 ratio defaults; for «Convert to Text», what the native «Recognize as Text» makes. From Smart Shapes:
 whether one undo brings a replaced stroke back.
 
+Pen replay ([#298](https://github.com/martonpaulo/ink-tools/issues/298)): `src/actions.ts` runs
+`record-pen` and `replay-pen` on sn-adapter's action channel, ticked by `SmartPenTicks` with no view
+open, from `action.json` in `.data/plugin/inktools-smart-pen/`. Once per release the owner writes a
+word and holds a circle 1 s after `inkctl ink record start`; `inkctl ink record stop FILE`
+saves the tape, and each round replays it with `inkctl ink replay FILE --plugin smart-pen` on a
+fresh mode start (a converter that saw EMR points from the real pen keeps reading EMR).
+
 ## Build and test
 
 ```sh

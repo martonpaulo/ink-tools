@@ -60,6 +60,35 @@
           16
         ]
       }
+    },
+    {
+      "id": "pen.replay-route",
+      "title": "Pen replay: a recorded stroke inserted through the official element calls and handed to the plugin's own pen listeners",
+      "level": 1,
+      "impact": "tests",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter",
+        "inkctl"
+      ],
+      "reason": "level 1 is the highest; the routes below it were rejected: sendevent to the pen node is refused and input stylus motionevent draws no lasso (measured, #148); a stroke inserted with insertPageElements raises no event_pen_up, so no conversion starts (observed device behaviour, #298); emitting the SDK's own plugin event inside the plugin would reach the listeners but rests on an undocumented SDK internal (level 3)",
+      "evidence": {
+        "source": "sn-plugin-lib 0.2.3 PluginManager.registerEventListener and createElement; measured on a Manta (#148, #298)",
+        "date": "2026-11-26"
+      },
+      "upgradePath": "none: the route is already level 1; it tests our plugin logic, not the host's pen delivery, which the one real-pen smoke per release covers",
+      "lastVerified": "unverified",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "unprobed": "needs one real-pen recording; the effect test is Smart Pen's replay in the device round (#298)"
+      },
+      "active": "sn-adapter official/penTape.ts",
+      "issues": [
+        298
+      ],
+      "values": {
+        "tapeVersion": 1
+      }
     }
   ]
 }

@@ -22,6 +22,10 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   ink write TEXT --at X Y        write the text as synthetic strokes on a note under Note/Tests/
   ink strokes FILE --at X Y      insert a saved stroke sample there
   ink save FILE                  save the lassoed strokes as a sample
+  ink record start|stop [FILE] --plugin P
+                                 record the real pen in a plugin, then save its pen tape (#298)
+  ink replay FILE --plugin P     play a pen tape to the plugin, as if the pen wrote it, on the open
+                                 test note
   batch FILE                     run a JSON list of ink write, ink strokes, lasso rect and lasso
                                  last-insert steps through Probe in one press; one line per step
   note png PAGE LOCAL            the tablet's own PNG of a page of the open test note, through Probe
@@ -140,6 +144,7 @@ REGISTRY_ITEMS = (
     {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new"},
     {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl"},
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
+    {"id": "pen.replay-route", "level": 1, "impact": "tests", "owner": "sn-adapter", "probe": None, "unprobed": "needs one real-pen recording; the effect test is Smart Pen's replay in the device round (#298)", "active": "sn-adapter official/penTape.ts"},
     {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java"},
     {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
     {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "ink-tools-helper", "probe": "ink-tools-helper ping", "unprobed": None, "active": "ink-tools-helper HostCalls.java"},
@@ -189,6 +194,9 @@ REGISTRY = {
     "note.fonts-folder": {
         "folder": "MyStyle/fonts",
         "suffixes": (".ttf", ".otf",),
+    },
+    "pen.replay-route": {
+        "tapeVersion": 1,
     },
     "pluginhost.file-sandbox": {
         "sharedRoot": "/storage/emulated/0",
@@ -451,7 +459,17 @@ ACTION_SYNC_MODULES = ("calendar", "todo")
 ACTION_PLUGINS = {
     "account-sync": {"folder": SIGN_IN_DROP_FOLDER, "actions": ("sync",)},
     "ink-tools-probe": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
+    # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298).
+    "smart-pen": {
+        "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-smart-pen",
+        "actions": ("record-pen", "replay-pen"),
+    },
 }
+# Pen replay (#298): the plugins that record and replay the pen, and the tape version they read,
+# from the registry item the plugins' sn-adapter reads too.
+PEN_PLUGINS = tuple(name for name, entry in ACTION_PLUGINS.items() if "replay-pen" in entry["actions"])
+PEN_TAPE_VERSION = REGISTRY["pen.replay-route"]["tapeVersion"]
+PEN_TAPE_MAX_BYTES = 500_000  # a tape of a few words is tens of KB; the plugin reads the file at once
 BATCH_STEPS = ("ink write", "ink strokes", "lasso rect", "lasso last-insert")
 RECT_NUMBERS = ("x", "y", "width", "height")  # a page rectangle, as `lasso rect X Y W H` takes it
 PICTURE_SUFFIXES = (".png", ".jpg", ".jpeg")
@@ -1666,7 +1684,7 @@ def push_file(device: Device, local: str, path: str, overwrite: bool, timeout: f
         path = f"{path.rstrip('/')}/{os.path.basename(local)}"
     replaced = device.test(f"-e {shlex.quote(path)}")
     if replaced and not overwrite:
-        raise Failure(EXIT_EXISTS, "exists", f"{path} exists; pass --overwrite to replace it")
+        raise exists_failure(path)
     transfer(device, "push", local, path, missing=local, timeout=timeout)
     size = int(device.shell(f"stat -c %s {shlex.quote(path)}").strip())
     if size != os.path.getsize(local):
@@ -2405,7 +2423,7 @@ def command_note_png(device: Device, args: argparse.Namespace):
     if args.page < 1:
         raise bad_usage("the page counts from 1")
     if os.path.exists(args.local_path) and not args.overwrite:
-        raise Failure(EXIT_EXISTS, "exists", f"{args.local_path} exists; pass --overwrite to replace it")
+        raise exists_failure(args.local_path)
     if not args.allow_notes and not test_note_on_screen(device):
         raise protected("rendering a note outside Note/Tests/")
     answer = helper_call(device, args, {"op": "renderPage", "page": args.page - 1})
@@ -3125,12 +3143,50 @@ def action_failure(plugin: str, action: str, answer: dict) -> Failure:
     """The plugin's refusal or failure, with the exit code its answer code maps to: the channel's
     ACTION_REFUSED and ACTION_STALE are 2 and 7, inkctl's own usage and stale codes, by design."""
     message = f"{plugin} {action}: {answer.get('message')}"
-    step = f"inkctl logs --plugin {plugin}"
+    step = logs_step(plugin)
     if answer.get("code") == EXIT_USAGE:
         return Failure(EXIT_USAGE, "usage", message, step)
     if answer.get("code") == EXIT_STALE:
         return Failure(EXIT_STALE, "stale", message, f"inkctl plugin action {plugin} {action}")
     return Failure(EXIT_FAILED, "device_error", message, step)
+
+
+def exists_failure(path: str) -> Failure:
+    """A file inkctl would replace, refused without --overwrite."""
+    return Failure(EXIT_EXISTS, "exists", f"{path} exists; pass --overwrite to replace it")
+
+
+def logs_step(name: str) -> str:
+    """The next step after a plugin's failed or missing answer: its own log lines."""
+    return f"inkctl logs --plugin {name}"
+
+
+def run_action(device: Device, name: str, action: str, request_args: dict, timeout: float) -> dict:
+    """Push one request to a plugin's action file and wait for its answer in the log (#283)."""
+    plugin = ACTION_PLUGINS[name]
+    now = device.shell("date +%s").strip()
+    if not now.isdigit():
+        raise Failure(EXIT_FAILED, "device_error", f"the tablet's time did not read: {now!r}")
+    request_id = uuid.uuid4().hex
+    request = {"id": request_id, "action": action, "args": request_args, "at": int(now) * MILLISECONDS}
+    since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
+    with tempfile.TemporaryDirectory() as folder:
+        local = os.path.join(folder, ACTION_FILE)
+        Path(local).write_text(json.dumps(request), encoding="utf-8")
+        device.shell(f"mkdir -p {shlex.quote(plugin['folder'])}")
+        push_file(device, local, f"{plugin['folder']}/{ACTION_FILE}", overwrite=True)
+    started = time.monotonic()
+    while True:
+        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", PLUGIN_LOG_TAG)
+        answer = action_answer(done.stdout.decode(errors="replace").splitlines(), name, request_id)
+        if answer is not None:
+            break
+        if time.monotonic() - started >= timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{name} gave no answer in {timeout:g} s; is it installed and on?", logs_step(name))
+        time.sleep(WAIT_INTERVAL)
+    if not answer.get("ok"):
+        raise action_failure(name, action, answer)
+    return answer
 
 
 def command_plugin_action(device: Device, args: argparse.Namespace):
@@ -3145,28 +3201,51 @@ def command_plugin_action(device: Device, args: argparse.Namespace):
         if (args.plugin, args.action) != ("account-sync", "sync"):
             raise bad_usage("--module is for account-sync sync")
         request_args["module"] = args.module
-    now = device.shell("date +%s").strip()
-    if not now.isdigit():
-        raise Failure(EXIT_FAILED, "device_error", f"the tablet's time did not read: {now!r}")
-    request_id = uuid.uuid4().hex
-    request = {"id": request_id, "action": args.action, "args": request_args, "at": int(now) * MILLISECONDS}
-    since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
-    with tempfile.TemporaryDirectory() as folder:
-        local = os.path.join(folder, ACTION_FILE)
-        Path(local).write_text(json.dumps(request), encoding="utf-8")
-        device.shell(f"mkdir -p {shlex.quote(plugin['folder'])}")
-        push_file(device, local, f"{plugin['folder']}/{ACTION_FILE}", overwrite=True)
-    started = time.monotonic()
-    while True:
-        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", PLUGIN_LOG_TAG)
-        answer = action_answer(done.stdout.decode(errors="replace").splitlines(), args.plugin, request_id)
-        if answer is not None:
-            break
-        if time.monotonic() - started >= args.timeout:
-            raise Failure(EXIT_TIMEOUT, "timeout", f"{args.plugin} gave no answer in {args.timeout:g} s; is it installed and on?", f"inkctl logs --plugin {args.plugin}")
-        time.sleep(WAIT_INTERVAL)
-    if not answer.get("ok"):
-        raise action_failure(args.plugin, args.action, answer)
+    answer = run_action(device, args.plugin, args.action, request_args, args.timeout)
+    return answer, str(answer.get("line", ""))
+
+
+def command_ink_record(device: Device, args: argparse.Namespace):
+    """Turn a plugin's pen recorder on, or off and save the tape it kept (#298)."""
+    if args.state == "start":
+        answer = run_action(device, args.plugin, "record-pen", {"on": True}, args.timeout)
+        return answer, f"{answer.get('line', '')}; write with the pen, then: inkctl ink record stop FILE --plugin {args.plugin}"
+    if not args.file:
+        raise bad_usage("ink record stop needs the FILE the tape goes to")
+    if os.path.exists(args.file) and not args.overwrite:
+        raise exists_failure(args.file)
+    answer = run_action(device, args.plugin, "record-pen", {"on": False}, args.timeout)
+    tape = answer.get("tape")
+    if not isinstance(tape, dict) or not tape.get("events"):
+        raise Failure(EXIT_FAILED, "device_error", f"{args.plugin} recorded no pen event; was the module on while you wrote?", logs_step(args.plugin))
+    handle, partial = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(args.file)), suffix=".partial")
+    with os.fdopen(handle, "w", encoding="utf-8") as stream:
+        json.dump(tape, stream)
+    os.replace(partial, args.file)
+    data = {"path": args.file, "events": len(tape["events"]), "dropped": answer.get("dropped", 0)}
+    return data, f"saved: {data['events']} pen events to {args.file}, {data['dropped']} dropped"
+
+
+def read_tape(path: str) -> dict:
+    """The tape at `path`, checked as far as the Mac can: the plugin checks every event again."""
+    if not os.path.isfile(path):
+        raise not_found(path)
+    if os.path.getsize(path) > PEN_TAPE_MAX_BYTES:
+        raise bad_usage(f"{path} is over {PEN_TAPE_MAX_BYTES} bytes; record a shorter tape")
+    try:
+        tape = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise bad_usage(f"{path} is not a pen tape: {error}")
+    if not isinstance(tape, dict) or tape.get("version") != PEN_TAPE_VERSION or not isinstance(tape.get("events"), list) or not tape["events"]:
+        raise bad_usage(f"{path} is not a version {PEN_TAPE_VERSION} pen tape with events")
+    return tape
+
+
+def command_ink_replay(device: Device, args: argparse.Namespace):
+    """Play a pen tape to the plugin on the open test note, and print what it played (#298)."""
+    tape = read_tape(args.file)
+    need_test_note(device, args.allow_notes)
+    answer = run_action(device, args.plugin, "replay-pen", {"tape": tape}, args.timeout)
     return answer, str(answer.get("line", ""))
 
 
@@ -4360,6 +4439,16 @@ def build_parser() -> argparse.ArgumentParser:
     sampled.add_argument("file", help="a JSON sample, as ink save writes it")
     saved = add(inks, "save", command_ink_save)
     saved.add_argument("file", help="where the lassoed strokes go, as JSON")
+    recorded = add(inks, "record", command_ink_record, changes=True)
+    recorded.add_argument("state", choices=("start", "stop"), help="start the plugin's pen recorder, or stop it and save the tape")
+    recorded.add_argument("file", nargs="?", help="stop: where the pen tape goes, as JSON")
+    recorded.add_argument("--overwrite", action="store_true", help="replace an existing tape")
+    replayed = add(inks, "replay", command_ink_replay, changes=True)
+    replayed.add_argument("file", help="a pen tape, as ink record stop saves it")
+    replayed.add_argument("--allow-notes", action="store_true", help="replay on a note outside Note/Tests/")
+    for pen in (recorded, replayed):
+        pen.add_argument("--plugin", choices=PEN_PLUGINS, required=True, help="the plugin whose pen listeners record or replay")
+        pen.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the plugin's answer")
     for placed in (written, sampled):
         placed.add_argument("--at", nargs=2, type=int, metavar=("X", "Y"), required=True, help="the ink's top-left corner, in page pixels")
         placed.add_argument("--allow-notes", action="store_true", help="write on a note outside Note/Tests/")
