@@ -23,6 +23,8 @@ export const MODULE_CODE = -2;
 export const TIMEOUT_CODE = -3;
 /** The lasso holds no handwriting. */
 export const EMPTY_LASSO_CODE = -4;
+/** A wrapper refused its argument before any SDK call. */
+export const BAD_ARGUMENT_CODE = -5;
 
 type SdkResponse = {
   success?: boolean;

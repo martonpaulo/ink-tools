@@ -480,8 +480,8 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   (for example `style_white`): the name `getNotePageTemplate` returns (`style_white_a5x2`) fails with
   «802 Background template file does not exist!» [measured, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
 - `insertNotePage({notePath, page, template})` also takes the full path of a plugin-made 1920 x 2560
-  greyscale PNG in `MyStyle/` as `template`: it inserts the page after `page` with that picture as
-  its background (`{"result":true}`), and the page's style then reads `user_<file name>` as a
+  greyscale PNG in `MyStyle/` as `template`: it inserts a page with that picture as its background
+  (`{"result":true}`), and the page's style then reads `user_<file name>` as a
   template picked by hand. The bare name (`user_<file name>`, `<file name>` or `<file name>.png`)
   fails with 802. `createNote({template: <that path>, mode: 0, isPortrait: true})` takes the same
   path. With no note open, every file call answered 118 «The handwriting app is not open».
@@ -491,6 +491,13 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [measured, Manta, firmware `Chauvet.E103.2610191001.2559`, device round 8, 2026-11-26,
   [#377](https://github.com/martonpaulo/ink-tools/issues/377)]. Whether the pen eraser leaves it
   intact is [unverified].
+- `insertNotePage`'s `page` is the index, from 0, that the new page takes; the page there and
+  every later one move down. Four inserts at `page` 0, 1, 2 and 3 into a one-page note put the
+  four new pages first, in call order, and the note's own page last; so a page after the current
+  one takes `getCurrentPageNum() + 1` (sn-adapter's `insertPageAfter`). A 2560 x 1920 background
+  inserted into a portrait note shows upright but scaled to the page's width: 10 mm cells measure
+  about 7.5 mm, with white bands above and below [measured, Manta, device round 11, 2026-11-26,
+  [#379](https://github.com/martonpaulo/ink-tools/issues/379)].
 - `insertNotePage` on the open note drops the ink written on it since its last save: three notes
   inked page by page with an insert between pages kept no stroke at all, while inserting every page
   first, then writing, kept all of it [measured, Manta, device round 5, 2026-11-26,
