@@ -8,11 +8,11 @@ import {
 } from '@ink-tools/sn-adapter/official';
 
 export async function currentPageSize(): Promise<Result<Size>> {
-  const path = await getCurrentFilePath();
+  // Asked together: two independent bridge calls cost one round trip, not two (#252).
+  const [path, page] = await Promise.all([getCurrentFilePath(), getCurrentPageNum()]);
   if (!path.ok) {
     return path;
   }
-  const page = await getCurrentPageNum();
   if (!page.ok) {
     return page;
   }

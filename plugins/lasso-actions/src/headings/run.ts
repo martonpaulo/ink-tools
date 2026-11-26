@@ -1,7 +1,7 @@
 /**
  * One Headings press (#252): the lassoed handwriting becomes a native title of the level's style,
- * then the lasso box moves to the heading's place, on its own line from the leading margin across
- * the writing width. Making the title clears the lasso on the tablet, so the press lassoes the
+ * then the lasso box moves to the heading's place, on its own line at the leading margin, at its
+ * own size (levels.ts `placement`). Making the title clears the lasso on the tablet, so the press lassoes the
  * title's strokes again by their rect before it moves them, as docs/supernote.md's lasso rule says
  * for a call that clears the lasso. It runs over a host interface, so the tests use a fake page;
  * `DEVICE_HOST` is the tablet's.
@@ -54,13 +54,15 @@ export async function applyHeading(
   host: HeadingHost,
 ): Promise<HeadingOutcome> {
   const tag = `heading ${level}`;
-  const rect = await host.lassoRect();
+  const started = Date.now();
+  // The two reads are independent bridge calls: asked together, the press waits for one round trip
+  // instead of two (device round 7 measured 1.07 s for a warm press, #252).
+  const [rect, page] = await Promise.all([host.lassoRect(), host.pageSize()]);
   if (!rect.ok) {
     host.log(`${tag}: lasso failed: ${rect.code} ${rect.message}`);
     host.toast(copy['heading.noLasso']);
     return {ok: false, why: 'lasso'};
   }
-  const page = await host.pageSize();
   if (!page.ok) {
     host.log(`${tag}: page size failed: ${page.code} ${page.message}`);
     host.fail(FAILED);
@@ -92,7 +94,7 @@ export async function applyHeading(
     host.toast(copy['heading.notMoved']);
     return {ok: false, why: 'resize'};
   }
-  host.log(`${tag}: done at ${JSON.stringify(target)}`);
+  host.log(`${tag}: done at ${JSON.stringify(target)} in ${Date.now() - started} ms`);
   return {ok: true, rect: target};
 }
 

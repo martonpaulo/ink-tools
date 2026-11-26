@@ -20,15 +20,21 @@ test('each level has its own native style, level 1 the strongest', () => {
   expect(HEADING_LEVELS.map(levelStyle)).not.toContain(TITLE_STYLE.none);
 });
 
-test('a word in the middle of a line goes to the leading margin and spans the writing width', () => {
+test('a word in the middle of a line moves to the leading margin at its own size', () => {
   expect(
     placement({left: 600, top: 400, right: 800, bottom: 460}, PAGE),
   ).toEqual({
     left: HEADING_MARGIN,
     top: 400,
-    right: PAGE.width - HEADING_MARGIN,
+    right: HEADING_MARGIN + 200,
     bottom: 460,
   });
+});
+
+test('a lasso wider than the writing width starts nearer the edge and never leaves the page', () => {
+  expect(
+    placement({left: 20, top: 400, right: PAGE.width - 40, bottom: 460}, PAGE),
+  ).toEqual({left: 60, top: 400, right: PAGE.width, bottom: 460});
 });
 
 test('a lasso of several lines keeps its union height and stays one heading', () => {
@@ -36,7 +42,7 @@ test('a lasso of several lines keeps its union height and stays one heading', ()
   expect(rect).toEqual({
     left: HEADING_MARGIN,
     top: 400,
-    right: PAGE.width - HEADING_MARGIN,
+    right: HEADING_MARGIN + 600,
     bottom: 600,
   });
 });
@@ -47,7 +53,7 @@ test('a lasso past the page edge is moved back onto the page', () => {
   ).toEqual({
     left: HEADING_MARGIN,
     top: PAGE.height - 60,
-    right: PAGE.width - HEADING_MARGIN,
+    right: HEADING_MARGIN + 200,
     bottom: PAGE.height,
   });
   expect(

@@ -39,7 +39,7 @@ function fakeHost(over: Partial<HeadingHost> = {}) {
   return {host, calls, toasts, failures};
 }
 
-test('a lassoed word becomes a level 2 heading at the leading margin, across the page', async () => {
+test('a lassoed word becomes a level 2 heading at the leading margin, at its own size', async () => {
   const {host, calls, toasts} = fakeHost();
   const outcome = await applyHeading(2, host);
   expect(outcome).toEqual({
@@ -47,7 +47,7 @@ test('a lassoed word becomes a level 2 heading at the leading margin, across the
     rect: {
       left: HEADING_MARGIN,
       top: 400,
-      right: PAGE.width - HEADING_MARGIN,
+      right: HEADING_MARGIN + 200,
       bottom: 460,
     },
   });
@@ -55,7 +55,7 @@ test('a lassoed word becomes a level 2 heading at the leading margin, across the
   expect(calls).toEqual([
     `title ${TITLE_STYLE.shadow}`,
     'select 600,400,800,460',
-    `resize ${HEADING_MARGIN},400,${PAGE.width - HEADING_MARGIN},460`,
+    `resize ${HEADING_MARGIN},400,${HEADING_MARGIN + 200},460`,
   ]);
   expect(toasts).toEqual([]);
 });
@@ -121,4 +121,61 @@ test('a failed resize keeps the title and says the heading was not moved', async
   expect(await applyHeading(2, host)).toEqual({ok: false, why: 'resize'});
   expect(calls).toEqual([`title ${TITLE_STYLE.shadow}`, 'select 600,400,800,460']);
   expect(toasts).toEqual([copy['heading.notMoved']]);
+});
+
+/**
+ * The Manta's page as device round 7 recorded it (#252): «save», 280 x 75 px of strokes, lassoed
+ * as a 290 x 180 box on a 1920 x 2560 page. `resizeLassoRect` maps the strokes from the lasso box
+ * onto the new rect, scaling them (a 1,728 px target gave a 1,666 px title, TITLERECT
+ * 130,841,1666,75), and the title's box is the strokes' box.
+ */
+function mantaPage() {
+  const page = {width: 1920, height: 2560};
+  let lasso = {left: 465, top: 789, right: 755, bottom: 969};
+  let strokes = {left: 470, top: 841, right: 750, bottom: 916};
+  const map = (value: number, from0: number, from1: number, to0: number, to1: number) =>
+    to0 + ((value - from0) * (to1 - to0)) / (from1 - from0);
+  const {host} = fakeHost({
+    lassoRect: async () => ok(lasso),
+    pageSize: async () => ok(page),
+    resize: async rect => {
+      strokes = {
+        left: map(strokes.left, lasso.left, lasso.right, rect.left, rect.right),
+        right: map(strokes.right, lasso.left, lasso.right, rect.left, rect.right),
+        top: map(strokes.top, lasso.top, lasso.bottom, rect.top, rect.bottom),
+        bottom: map(strokes.bottom, lasso.top, lasso.bottom, rect.top, rect.bottom),
+      };
+      lasso = rect;
+      return ok(true);
+    },
+  });
+  return {host, title: () => strokes};
+}
+
+test('on the Manta a heading keeps the handwriting at its size and moves it to the margin (#252)', async () => {
+  const manta = mantaPage();
+  const outcome = await applyHeading(2, manta.host);
+  expect(outcome.ok).toBe(true);
+  const title = manta.title();
+  expect(title.right - title.left).toBeCloseTo(280);
+  expect(title.bottom - title.top).toBeCloseTo(75);
+  expect(title.left).toBeCloseTo(HEADING_MARGIN + 5);
+});
+
+test('the press asks for the lasso and the page size together, before the title', async () => {
+  const order: string[] = [];
+  const {host} = fakeHost({
+    lassoRect: async () => {
+      order.push('lasso asked');
+      await Promise.resolve();
+      order.push('lasso answered');
+      return ok(WORD);
+    },
+    pageSize: async () => {
+      order.push('page asked');
+      return ok(PAGE);
+    },
+  });
+  await applyHeading(1, host);
+  expect(order.slice(0, 2)).toEqual(['lasso asked', 'page asked']);
 });
