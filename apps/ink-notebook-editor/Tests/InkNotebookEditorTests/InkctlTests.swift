@@ -163,6 +163,32 @@ import Testing
         #expect(
             try FileManager.default.contentsOfDirectory(atPath: destination.deletingLastPathComponent().path()).isEmpty)
     }
+
+    // timing-independent: the limit and the fake's sleep only turn a hang into a failure.
+    /// More pulls than the Mac has cores all start and all stop on cancel: a wait for inkctl that
+    /// held a cooperative thread would leave the last pull unstarted and the cancel unrun (#325).
+    @Test(.timeLimit(.minutes(1)))
+    func moreCancelledPullsThanCoresAllStartAndStop() async throws {
+        let count = ProcessInfo.processInfo.activeProcessorCount + 1
+        let marker = folder.appending(path: "started-").path(percentEncoded: false)
+        let inkctl = try fake(
+            // timing-independent: the sleep stands for a copy that only ends when it is stopped.
+            "for last; do :; done; printf 'half' > \"$last\"; : > '\(marker)'$$; exec sleep 120"
+        )
+        let copies = folder.appending(path: "copies")
+        let pulls = (0..<count).map { index in
+            Task { try await inkctl.pull("Note/A.note", to: copies.appending(path: "\(index).note")) }
+        }
+        let files = FileManager.default
+        while try files.contentsOfDirectory(atPath: folder.path()).count(where: { $0.hasPrefix("started-") }) < count {
+            await Task.yield()
+        }
+        pulls.forEach { $0.cancel() }
+        for pull in pulls {
+            await #expect(throws: InkctlFailure.cancelled) { try await pull.value }
+        }
+        #expect(try files.contentsOfDirectory(atPath: copies.path()).isEmpty)
+    }
 }
 
 @Suite struct IssueReportTests {

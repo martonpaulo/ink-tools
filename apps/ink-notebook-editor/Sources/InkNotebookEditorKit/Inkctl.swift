@@ -192,8 +192,12 @@ public struct Inkctl: Sendable, TabletWriting {
         return result
     }
 
-    /// Runs one command off the caller's actor with its arguments as an array, never a shell line.
-    /// Standard error goes to a file, so neither pipe can fill and stall the child.
+    /// Runs one command with its arguments as an array, never a shell line. Standard error goes to
+    /// a file, so neither pipe can fill and stall the child.
+    ///
+    /// The wait for inkctl blocks a dispatch thread, never one of Swift's few cooperative threads:
+    /// with as many calls under way as the Mac has cores, a blocked pool would stop every other task,
+    /// a cancel among them (#325).
     @concurrent
     static func launch(_ executable: URL, _ arguments: [String], _ environment: [String: String]) async throws
         -> CommandResult
@@ -210,20 +214,65 @@ public struct Inkctl: Sendable, TabletWriting {
         defer { try? FileManager.default.removeItem(at: errorFile) }
         let errorHandle = try FileHandle(forWritingTo: errorFile)
         process.standardError = errorHandle
-        try Task.checkCancellation()
+        let child = Child(process, reading: output.fileHandleForReading)
         // A cancelled task stops inkctl, so a cancelled copy ends at once and leaves only its
-        // temporary file, which `pull` removes.
+        // temporary file, which `pull` removes. A cancel before the start means it never starts.
         let stdout = try await withTaskCancellationHandler {
-            try process.run()
-            let stdout = try output.fileHandleForReading.readToEnd() ?? Data()
-            process.waitUntilExit()
-            return stdout
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, any Error>) in
+                child.start(continuation)
+            }
         } onCancel: {
-            process.terminate()
+            child.cancel()
         }
         try errorHandle.close()
         try Task.checkCancellation()
         let stderr = (try? Data(contentsOf: errorFile)) ?? Data()
         return CommandResult(exitCode: process.terminationStatus, stdout: stdout, stderr: stderr)
+    }
+
+    /// One inkctl process whose start and stop are ordered by a lock, so a cancel that comes before
+    /// `run()` keeps it from starting and one that comes after stops it; `terminate()` is never sent
+    /// to a process that has not started.
+    private final class Child: @unchecked Sendable {
+        private let process: Process
+        private let reading: FileHandle
+        private let lock = NSLock()
+        private var cancelled = false
+        private var started = false
+
+        init(_ process: Process, reading: FileHandle) {
+            self.process = process
+            self.reading = reading
+        }
+
+        func start(_ continuation: CheckedContinuation<Data, any Error>) {
+            let launched: Result<Bool, any Error> = lock.withLock {
+                guard !cancelled else { return .success(false) }
+                do {
+                    try process.run()
+                    started = true
+                    return .success(true)
+                } catch {
+                    return .failure(error)
+                }
+            }
+            switch launched {
+            case .failure(let error): continuation.resume(throwing: error)
+            case .success(false): continuation.resume(throwing: CancellationError())
+            case .success(true):
+                DispatchQueue.global().async {
+                    let stdout: Result<Data, any Error> = Result { try self.reading.readToEnd() ?? Data() }
+                    self.process.waitUntilExit()
+                    continuation.resume(with: stdout)
+                }
+            }
+        }
+
+        func cancel() {
+            lock.withLock {
+                cancelled = true
+                if started { process.terminate() }
+            }
+        }
     }
 }
