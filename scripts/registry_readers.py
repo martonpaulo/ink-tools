@@ -33,7 +33,7 @@ FIELDS = ("id", "level", "impact", "owner", "probe", "unprobed", "active")
 
 
 class Reader:
-    def __init__(self, language, path, tools, package=None, block=False, failure=False):
+    def __init__(self, language, path, tools, package=None, block=False, failure=False, watch=False):
         self.language = language
         self.path = path
         self.tools = tools
@@ -42,6 +42,9 @@ class Reader:
         # A Java reader with `failure` also gets the adapter's failure value, InternalFailure.java,
         # beside it: one text for every Java tool that reports a failed internal (#294).
         self.failure = failure
+        # A Java reader with `watch` lists every item in its table, for the firmware watch (#293);
+        # its values stay those of the items its tools read.
+        self.watch = watch
 
 
 READERS = (
@@ -51,7 +54,7 @@ READERS = (
     Reader("java", "packages/picture-search/native/com/inktools/files/Registry.java",
            ("picture-search",), package="com.inktools.files"),
     Reader("java", "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java",
-           ("ink-tools-helper",), package="com.martonpaulo.inktools.bridge", failure=True),
+           ("ink-tools-helper",), package="com.martonpaulo.inktools.bridge", failure=True, watch=True),
     Reader("java", "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
            ("ink-tools-probe",), package="com.probe.providers"),
     Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True),
@@ -122,7 +125,10 @@ def cells(item, literal, none):
 def text(reader, version, items, current=None):
     """The reader's file text; a block reader splices its block into the current text."""
     chosen = selected(reader, items)
-    body = WRITERS[reader.language](reader, version, chosen)
+    if reader.watch:
+        body = WRITERS[reader.language](reader, version, chosen, table=items)
+    else:
+        body = WRITERS[reader.language](reader, version, chosen)
     if not reader.block:
         return body
     start, end = current.find(BLOCK_START), current.find(BLOCK_END)
@@ -205,7 +211,13 @@ def java_value(value):
     return quoted(value)
 
 
-def java(reader, version, items):
+def off_text(item):
+    """The kill switch as one string: null-like None when the module is on (#293)."""
+    off = item.get("off")
+    return None if off is None else "until %s: %s" % (off["review"], off["reason"])
+
+
+def java(reader, version, items, table=None):
     lines = [
         "package %s;" % reader.package,
         "",
@@ -228,8 +240,10 @@ def java(reader, version, items):
         "    /** Why no safe probe exists yet; null when the item has a probe. */",
         "    public final String unprobed;",
         "    public final String active;",
+        "    /** The kill switch: why the module is off and until when it is reviewed; null when it is on (#293). */",
+        "    public final String off;",
         "",
-        "    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active) {",
+        "    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active, String off) {",
         "      this.id = id;",
         "      this.level = level;",
         "      this.impact = impact;",
@@ -237,14 +251,17 @@ def java(reader, version, items):
         "      this.probe = probe;",
         "      this.unprobed = unprobed;",
         "      this.active = active;",
+        "      this.off = off;",
         "    }",
         "  }",
         "",
+        "  /** %s */" % ("Every item of the registry, for the firmware watch (#293)." if table is not None else "The items this app reads."),
         "  public static final List<Item> ITEMS = Collections.unmodifiableList(Arrays.asList(",
     ]
     rows = []
-    for item in items:
-        rows.append("      new Item(%s)" % ", ".join(cells(item, quoted, "null")))
+    for item in (items if table is None else table):
+        off = off_text(item)
+        rows.append("      new Item(%s)" % ", ".join(cells(item, quoted, "null") + ["null" if off is None else quoted(off)]))
     lines.append(",\n".join(rows) + "));")
     for item in items:
         values = values_of(item)

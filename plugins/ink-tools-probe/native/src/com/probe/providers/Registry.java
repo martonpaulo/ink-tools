@@ -19,8 +19,10 @@ public final class Registry {
     /** Why no safe probe exists yet; null when the item has a probe. */
     public final String unprobed;
     public final String active;
+    /** The kill switch: why the module is off and until when it is reviewed; null when it is on (#293). */
+    public final String off;
 
-    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active) {
+    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active, String off) {
       this.id = id;
       this.level = level;
       this.impact = impact;
@@ -28,15 +30,17 @@ public final class Registry {
       this.probe = probe;
       this.unprobed = unprobed;
       this.active = active;
+      this.off = off;
     }
   }
 
+  /** The items this app reads. */
   public static final List<Item> ITEMS = Collections.unmodifiableList(Arrays.asList(
-      new Item("calendar.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(calendar)", null, "sn-adapter internals/calendar.ts"),
-      new Item("diagnostics.provider-probes", 2, "tests", "ink-tools-probe", "ink-tools-probe Run Probe", null, "ink-tools-probe native ProbeTargets.java"),
-      new Item("digest.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(digest)", null, "sn-adapter internals/digest.ts"),
-      new Item("storage.helper-channel", 2, "tests", "ink-tools-probe", "inkctl helper", null, "ink-tools-probe src/helper.ts"),
-      new Item("todo.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(todo)", null, "sn-adapter internals/todo.ts")));
+      new Item("calendar.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(calendar)", null, "sn-adapter internals/calendar.ts", null),
+      new Item("diagnostics.provider-probes", 2, "tests", "ink-tools-probe", "ink-tools-probe Run Probe", null, "ink-tools-probe native ProbeTargets.java", null),
+      new Item("digest.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(digest)", null, "sn-adapter internals/digest.ts", null),
+      new Item("storage.helper-channel", 2, "tests", "ink-tools-probe", "inkctl helper", null, "ink-tools-probe src/helper.ts", null),
+      new Item("todo.provider", 2, "user", "sn-adapter", "sn-adapter probeCapability(todo)", null, "sn-adapter internals/todo.ts", null)));
 
   /** The Calendar provider's authority, tables and columns (calendar.provider). */
   public static final class CalendarProvider {

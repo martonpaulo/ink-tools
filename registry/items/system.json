@@ -8,7 +8,8 @@
       "impact": "user",
       "owner": "inkctl",
       "readers": [
-        "inkctl"
+        "inkctl",
+        "ink-tools-helper"
       ],
       "reason": "the SDK's getDeviceType answers only in a plugin; the shell reads the board property",
       "evidence": {

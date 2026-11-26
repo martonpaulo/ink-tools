@@ -30,7 +30,7 @@ adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32
 
 - `-f 32` is `FLAG_INCLUDE_STOPPED_PACKAGES`: an app never opened is «stopped» and gets no
   broadcast without it.
-- Ops: `ping`, `install`, `enable`, `disable`, `uninstall`, `allow` (`Command`). `allow` sets
+- Ops: `ping`, `install`, `enable`, `disable`, `uninstall`, `allow`, `watch` (`Command`). `allow` sets
   `status`, by default 2, «Always Allow».
 - Result codes (`Outcome`): 1 ok, 2 failed, 3 usage, 4 PluginHost unreachable, 5 no callback in
   50 s. 0 is never used: `am` prints `result=0` when no receiver ran, so `inkctl` reads it as an
@@ -38,6 +38,17 @@ adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32
 - The data is one line: the word, then PluginHost's callback and its arguments, such as
   `ok onSuccess PluginInfo{…}` or `failed onFailed PluginError{…}`.
 - Each call logs under the tag `InkToolsBridge`.
+
+## The firmware watch
+
+`watch` ([#293](https://github.com/martonpaulo/ink-tools/issues/293)) runs one probe per registry item this app can check when the environment
+fingerprint changed (`--ez force true` runs it anyway); `BootReceiver` runs it at each boot.
+`Watch` (pure, `WatchTest`) holds the fingerprint (SHA-256 of `Build.FINGERPRINT`, each visible
+vendor package's versionCode and the registry version), the statuses `ok`, `broken` and
+`unprobed`, and the answer line `watch <fingerprint> | <id> <status> [what changed] | …`, which
+leaves out an item another tool probes. `Probes` (Android) only resolves a provider or a service and
+loads PluginHost's classes and Stub numbers; the registry's `off` kill switch makes an item
+`unprobed`. A broken item posts one notice with a sentence per feature from `Copy`.
 
 ## How a call is made
 
@@ -66,7 +77,7 @@ adb shell am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32
 - The receiver is exported for the shell and guarded by `android.permission.DUMP`, which the shell
   holds and no installed app can get. So the bridge adds no route for another app; PluginHost's
   service is already open to every app.
-- The app asks for no permission. PluginHost opens the `.snplg` path itself, so only a path under
+- The app asks for one permission, `RECEIVE_BOOT_COMPLETED`, for the firmware watch at boot. PluginHost opens the `.snplg` path itself, so only a path under
   `/sdcard` is accepted, and an id or a permission name holds no shell character.
 - Loading PluginHost's code into this process is the price of its exact parcel layout; the app
   never runs other PluginHost code.

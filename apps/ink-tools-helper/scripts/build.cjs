@@ -20,6 +20,10 @@ const root = path.resolve(__dirname, '..');
 const HOST_PACKAGE = require('../../../registry/items/pluginhost.json').items.find(
   item => item.id === 'pluginhost.setting-service',
 ).values.hostPackage;
+/** The providers the firmware watch resolves (#293): Android 11 shows an app only what its queries name. */
+const WATCHED_PROVIDERS = ['calendar', 'todo', 'digest'].map(
+  area => require(`../../../registry/items/${area}.json`).items.find(item => item.id === `${area}.provider`).descriptor.authority,
+);
 const build = path.join(root, 'build');
 const TOOLCHAIN = path.resolve(root, '../handwriting-language/scripts/toolchain.sh');
 /** The owner's rule for new apps: com.martonpaulo.<project>.<app>. Never rename it: the tablet keys grants on it. */
@@ -30,8 +34,8 @@ const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 const MIN_API = '30';
 const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
-const PURE = ['HostCalls', 'Command', 'Outcome', 'Fields', 'Callbacks', 'Registry', 'InternalFailure', 'Copy'];
-const TESTS = ['HostCallsTest', 'CommandTest', 'FieldsTest', 'RegistryTest', 'InternalFailureTest'];
+const PURE = ['HostCalls', 'Command', 'Outcome', 'Fields', 'Callbacks', 'Registry', 'InternalFailure', 'Copy', 'Watch'];
+const TESTS = ['HostCallsTest', 'CommandTest', 'FieldsTest', 'RegistryTest', 'InternalFailureTest', 'WatchTest'];
 /**
  * shortcut: without the stable key, a local debug key in .toolchain/, outside Git and unique to each
  * checkout, as the Lingo app does; an APK from another checkout has another key, so the tablet needs
@@ -95,7 +99,8 @@ const ICON = path.join(root, 'res', 'drawable', 'ic_launcher.xml');
 /**
  * The manifest, written from app.json so the versions cannot drift. No launcher entry: the bridge
  * has no screen; it still has an icon, which Customize Sidebar shows (#260). The receiver is
- * exported for the shell and guarded by DUMP, a permission the shell holds and no installed app can get. <queries> makes PluginHost visible on Android 11.
+ * exported for the shell and guarded by DUMP, a permission the shell holds and no installed app can get. <queries> makes PluginHost visible on Android 11,
+ * and each provider the firmware watch resolves (#293). The boot receiver runs the watch at each boot.
  */
 function manifest(file, {versionCode, versionName: name}) {
   fs.writeFileSync(
@@ -106,13 +111,20 @@ function manifest(file, {versionCode, versionName: name}) {
     android:versionCode="${versionCode}"
     android:versionName="${name}">
   <uses-sdk android:minSdkVersion="${MIN_API}" android:targetSdkVersion="${TARGET_API}" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <queries>
     <package android:name="${HOST_PACKAGE}" />
+${WATCHED_PROVIDERS.map(authority => `    <provider android:authorities="${authority}" />`).join('\n')}
   </queries>
   <application android:label="Ink Tools Helper" android:icon="@drawable/ic_launcher"
       android:allowBackup="false" android:hasCode="true">
     <receiver android:name=".CommandReceiver" android:exported="true"
         android:permission="android.permission.DUMP" />
+    <receiver android:name=".BootReceiver" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
   </application>
 </manifest>
 `,

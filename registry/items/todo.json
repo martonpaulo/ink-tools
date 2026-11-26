@@ -10,7 +10,8 @@
       "readers": [
         "sn-adapter",
         "ink-tools-probe",
-        "inkctl"
+        "inkctl",
+        "ink-tools-helper"
       ],
       "reason": "sn-plugin-lib has no task API; the provider is the only way to read and write tasks",
       "evidence": {

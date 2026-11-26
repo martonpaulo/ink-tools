@@ -113,7 +113,9 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   no-op). Each module has a kill switch in the registry, with a review date: off stops the module
   and says so. One card per run lists what broke, updated by a stable id, and each run feeds a
   compatibility table per fingerprint. Recorded fixtures per fingerprint run in CI against the
-  adapters. Prior art: [`research/2026-11-architecture-prior-art.md`](research/2026-11-architecture-prior-art.md).
+  adapters. Built so far: the Helper's `watch` op and boot run (`apps/ink-tools-helper/AGENTS.md`
+  › The firmware watch) and the `off` field of the registry, whose review date fails the
+  `registry` gate once passed. Prior art: [`research/2026-11-architecture-prior-art.md`](research/2026-11-architecture-prior-art.md).
 - **No fallback for a Supernote internal.** A broken internal stops its module and says so; it never
   takes a hidden second path. Outside services may keep a second source, such as the offline then
   online dictionary or a second translator (owner, 2026-11-25).

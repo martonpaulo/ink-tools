@@ -11,6 +11,7 @@ version, the header of sn-adapter's descriptor and the ratchet's ceiling per lev
 - an item's id starts with its file's area, and no two items share an id;
 - an item below level 1 has a `reason`; its owner is the first of its `readers`, none twice;
 - only an sn-adapter item of the calendar, todo or digest area carries a `descriptor`;
+- a kill switch (`off`) whose review date has passed fails, so a module is never left off unseen;
 - the ratchet: no level holds more items than its ceiling, and a ceiling above its count is
   lowered to the count, so a ceiling only goes down;
 - no two generated names collide, and every tool an item names has a reader.
@@ -26,6 +27,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 import registry_readers
@@ -157,7 +159,7 @@ def load(root):
     return meta, [item for _, _, item in items]
 
 
-def rule_errors(items):
+def rule_errors(items, today=None):
     """[message] for each rule the schema cannot state (the module docstring lists them)."""
     errors = []
     seen = set()
@@ -177,6 +179,9 @@ def rule_errors(items):
             errors.append("%s: a reader is named twice" % where)
         if "descriptor" in item and (item["owner"] != DESCRIPTOR_OWNER or area not in DESCRIPTOR_AREAS):
             errors.append("%s: only an %s item of %s carries a descriptor" % (where, DESCRIPTOR_OWNER, ", ".join(DESCRIPTOR_AREAS)))
+        off = item.get("off")
+        if off and off["review"] < (today or date.today().isoformat()):
+            errors.append("%s: its kill switch's review date %s has passed; check the item and turn it on, or set a new date" % (where, off["review"]))
     return errors
 
 

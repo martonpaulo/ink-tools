@@ -14,10 +14,12 @@ import java.util.regex.Pattern;
  *   --es op enable  --es pluginID ID        (or disable, uninstall)
  *   --es op allow   --es pluginID ID --es perm A,B [--ei status 2]
  *   --es op ping
+ *   --es op watch [--ez force true]          (the firmware watch, #293)
  * </pre>
  */
 public final class Command {
-  public enum Op { PING, INSTALL, ENABLE, DISABLE, UNINSTALL, ALLOW }
+  public enum Op { PING, INSTALL, ENABLE, DISABLE, UNINSTALL, ALLOW, WATCH }
+  private static final String OPS = "ping, install, enable, disable, uninstall, allow or watch";
 
   /** PluginPermissionManager.STATUS_ALWAYS, «Always Allow» (registry item pluginhost.permission-status). */
   public static final int STATUS_ALWAYS = Registry.PluginhostPermissionStatus.ALWAYS;
@@ -33,30 +35,44 @@ public final class Command {
   public final String pluginId;
   public final List<String> permissions;
   public final int status;
+  /** For watch: run the probes even when the fingerprint did not change. */
+  public final boolean force;
 
   private Command(Op op, String path, String pluginId, List<String> permissions, int status) {
+    this(op, path, pluginId, permissions, status, false);
+  }
+
+  private Command(Op op, String path, String pluginId, List<String> permissions, int status, boolean force) {
     this.op = op;
     this.path = path;
     this.pluginId = pluginId;
     this.permissions = permissions;
     this.status = status;
+    this.force = force;
   }
 
   /** Throws IllegalArgumentException with a message for the shell when a value is missing or wrong. */
   public static Command parse(String op, String path, String pluginId, String perm, Integer status) {
+    return parse(op, path, pluginId, perm, status, false);
+  }
+
+  /** As {@link #parse(String, String, String, String, Integer)}, with watch's {@code --ez force}. */
+  public static Command parse(String op, String path, String pluginId, String perm, Integer status, boolean force) {
     if (op == null) {
-      throw new IllegalArgumentException("missing --es op: ping, install, enable, disable, uninstall or allow");
+      throw new IllegalArgumentException("missing --es op: " + OPS);
     }
     Op parsed;
     try {
       parsed = Op.valueOf(op.trim().toUpperCase(java.util.Locale.ROOT));
     } catch (IllegalArgumentException error) {
-      throw new IllegalArgumentException("unknown op " + op + ": ping, install, enable, disable, uninstall or allow");
+      throw new IllegalArgumentException("unknown op " + op + ": " + OPS);
     }
     List<String> none = Collections.emptyList();
     switch (parsed) {
       case PING:
         return new Command(parsed, null, null, none, 0);
+      case WATCH:
+        return new Command(parsed, null, null, none, 0, force);
       case INSTALL:
         if (path == null || path.contains("/../") || !SHARED_PATH.matcher(path).matches()) {
           throw new IllegalArgumentException("--es path must be an absolute .snplg path under /sdcard: " + path);

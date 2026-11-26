@@ -127,6 +127,18 @@ public final class HostCalls {
     return null;
   }
 
+  /** Null when every call number the registry names passes {@link #refusal}; else each refusal, joined (#293). */
+  public static String callNumbersChanged(Map<String, Integer> stub) {
+    StringBuilder changed = new StringBuilder();
+    for (int code : new int[] {INSTALL, UNINSTALL, SET_ENABLE, UPDATE_PERMISSIONS}) {
+      String refused = refusal(stub, code);
+      if (refused != null) {
+        changed.append(changed.length() == 0 ? "" : "; ").append(refused);
+      }
+    }
+    return changed.length() == 0 ? null : changed.toString();
+  }
+
   private static void parcelable(Wire wire, Object value) {
     if (value == null) {
       wire.writeInt(0);

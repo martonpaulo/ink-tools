@@ -19,8 +19,10 @@ public final class Registry {
     /** Why no safe probe exists yet; null when the item has a probe. */
     public final String unprobed;
     public final String active;
+    /** The kill switch: why the module is off and until when it is reviewed; null when it is on (#293). */
+    public final String off;
 
-    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active) {
+    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active, String off) {
       this.id = id;
       this.level = level;
       this.impact = impact;
@@ -28,14 +30,16 @@ public final class Registry {
       this.probe = probe;
       this.unprobed = unprobed;
       this.active = active;
+      this.off = off;
     }
   }
 
+  /** The items this app reads. */
   public static final List<Item> ITEMS = Collections.unmodifiableList(Arrays.asList(
-      new Item("handwriting.language-file", 2, "user", "handwriting-language", null, "#293 adds a read of the folder's one file", "handwriting-language LanguageFiles.java"),
-      new Item("handwriting.changed-broadcast", 3, "user", "handwriting-language", null, "sending it is the change itself", "handwriting-language Switcher.java"),
-      new Item("handwriting.writing-screens", 3, "user", "handwriting-language", null, "#293 adds a resolve of each activity name", "handwriting-language ButtonRule.java"),
-      new Item("settings.language-page", 3, "user", "handwriting-language", null, "#293 adds a resolve of the activity without starting it", "handwriting-language SettingsActivity.java")));
+      new Item("handwriting.language-file", 2, "user", "handwriting-language", null, "#293 adds a read of the folder's one file", "handwriting-language LanguageFiles.java", null),
+      new Item("handwriting.changed-broadcast", 3, "user", "handwriting-language", null, "sending it is the change itself", "handwriting-language Switcher.java", null),
+      new Item("handwriting.writing-screens", 3, "user", "handwriting-language", null, "#293 adds a resolve of each activity name", "handwriting-language ButtonRule.java", null),
+      new Item("settings.language-page", 3, "user", "handwriting-language", null, "#293 adds a resolve of the activity without starting it", "handwriting-language SettingsActivity.java", null)));
 
   /** The handwriting recognition language: one empty file named for the code in .data/dictionary/default/ (handwriting.language-file). */
   public static final class HandwritingLanguageFile {

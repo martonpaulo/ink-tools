@@ -138,7 +138,7 @@ flowchart TB
 | Handwriting Language | nothing from outside | Java reader | the handwriting language<br>the floating button | 2️⃣ 3️⃣ |
 | Ink Notebook Editor | note files on the Mac | Swift reader | notes<br>through inkctl | 2️⃣ 5️⃣ |
 | Ink Tools Control | nothing from outside | Python reader | screens<br>settings<br>notes<br>for tests and setup | 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ |
-| Ink Tools Helper | nothing from outside | Java reader | plugin settings | 3️⃣ 5️⃣ |
+| Ink Tools Helper | nothing from outside | Java reader | plugin settings | 2️⃣ 3️⃣ 5️⃣ |
 
 <!-- tool-map:end -->
 

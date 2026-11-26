@@ -97,6 +97,25 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("lingo/InternalFailure.java: stale or edited by hand", out)
 
+    def test_a_kill_switch_past_its_review_date_fails(self):
+        self.areas["todo"][0]["off"] = {"reason": "the To-Do columns changed", "review": "2000-01-01"}
+        self.assertIn("review date 2000-01-01 has passed", self.problems())
+        self.areas["todo"][0]["off"]["review"] = "2999-01-01"
+        self.save()
+        registry.load(self.root)
+
+    def test_the_watch_reader_lists_every_item_with_its_kill_switch(self):
+        self.areas["todo"][0]["off"] = {"reason": "the To-Do columns changed", "review": "2999-01-01"}
+        code, out = self.run_main("--write")
+        self.assertEqual(code, 0, out)
+        helper = (self.root / "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java").read_text()
+        for area in registry.DESCRIPTOR_AREAS:
+            self.assertIn('new Item("%s.provider"' % area, helper)
+        self.assertIn('"until 2999-01-01: the To-Do columns changed")', helper)
+        self.assertNotIn("class TodoProvider", helper)
+        lingo = (self.root / "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java").read_text()
+        self.assertNotIn('new Item("todo.provider"', lingo)
+
     def test_an_item_below_level_one_needs_a_reason(self):
         del self.areas["todo"][0]["reason"]
         self.assertIn("below level 1 with no reason", self.problems())

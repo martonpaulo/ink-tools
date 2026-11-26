@@ -103,7 +103,7 @@ final class Bridge {
         default:
           return Outcome.of(Outcome.USAGE, "no call for " + command.op);
       }
-      String refused = HostCalls.refusal(Callback.transactions(classes.loader, HostCalls.DESCRIPTOR), code);
+      String refused = HostCalls.refusal(transactions(classes.loader, HostCalls.DESCRIPTOR), code);
       if (refused != null) {
         InternalFailure failure = new InternalFailure(
             CALL_NUMBERS_ITEM, command.op.name().toLowerCase(java.util.Locale.ROOT), Copy.HOST_CHANGED,
@@ -207,22 +207,23 @@ final class Bridge {
       return outcome;
     }
 
-    /** The Stub's TRANSACTION_<method> constants; empty when PluginHost's Stub has none. */
-    private static Map<String, Integer> transactions(ClassLoader loader, String descriptor) {
-      Map<String, Integer> found = new HashMap<>();
-      try {
-        for (Field field : loader.loadClass(descriptor + "$Stub").getDeclaredFields()) {
-          if (Modifier.isStatic(field.getModifiers()) && field.getType() == int.class
-              && field.getName().startsWith("TRANSACTION_")) {
-            field.setAccessible(true);
-            found.put(field.getName().substring("TRANSACTION_".length()), field.getInt(null));
-          }
+  }
+
+  /** The Stub's TRANSACTION_<method> constants; empty when PluginHost's Stub has none. */
+  static Map<String, Integer> transactions(ClassLoader loader, String descriptor) {
+    Map<String, Integer> found = new HashMap<>();
+    try {
+      for (Field field : loader.loadClass(descriptor + "$Stub").getDeclaredFields()) {
+        if (Modifier.isStatic(field.getModifiers()) && field.getType() == int.class
+            && field.getName().startsWith("TRANSACTION_")) {
+          field.setAccessible(true);
+          found.put(field.getName().substring("TRANSACTION_".length()), field.getInt(null));
         }
-      } catch (ReflectiveOperationException | RuntimeException error) {
-        Log.w(TAG, "no Stub constants for " + descriptor + ": " + error);
       }
-      return found;
+    } catch (ReflectiveOperationException | RuntimeException error) {
+      Log.w(TAG, "no Stub constants for " + descriptor + ": " + error);
     }
+    return found;
   }
 
   /** {@link HostCalls.Wire} over a real Parcel. */

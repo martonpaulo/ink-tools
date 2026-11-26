@@ -22,13 +22,15 @@ public final class CommandReceiver extends BroadcastReceiver {
           intent.getStringExtra("path"),
           intent.getStringExtra("pluginID"),
           intent.getStringExtra("perm"),
-          intent.hasExtra("status") ? intent.getIntExtra("status", Command.STATUS_ALWAYS) : null);
+          intent.hasExtra("status") ? intent.getIntExtra("status", Command.STATUS_ALWAYS) : null,
+          intent.getBooleanExtra("force", false));
     } catch (IllegalArgumentException error) {
       finish(pending, Outcome.of(Outcome.USAGE, error.getMessage()));
       return;
     }
     final Command command = parsed;
-    new Thread(() -> finish(pending, new Bridge(app).run(command)), "ink-tools-helper").start();
+    new Thread(() -> finish(pending, command.op == Command.Op.WATCH
+        ? new Probes(app).watch(command.force) : new Bridge(app).run(command)), "ink-tools-helper").start();
   }
 
   private static void finish(PendingResult pending, Outcome outcome) {

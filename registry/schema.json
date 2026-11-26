@@ -90,6 +90,16 @@
           ]
         },
         "active": {"type": "string", "minLength": 1, "description": "The implementation that serves the item now."},
+        "off": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason", "review"],
+          "description": "The kill switch (#293): present, the module that serves the item is off and says so; absent, it is on. scripts/registry.py fails once the review date has passed.",
+          "properties": {
+            "reason": {"type": "string", "minLength": 1, "description": "What broke, as the person reads it."},
+            "review": {"$ref": "#/$defs/date"}
+          }
+        },
         "issues": {"type": "array", "items": {"type": "integer", "minimum": 1}},
         "values": {
           "type": "object",

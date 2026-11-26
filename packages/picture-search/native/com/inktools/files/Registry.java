@@ -19,8 +19,10 @@ public final class Registry {
     /** Why no safe probe exists yet; null when the item has a probe. */
     public final String unprobed;
     public final String active;
+    /** The kill switch: why the module is off and until when it is reviewed; null when it is on (#293). */
+    public final String off;
 
-    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active) {
+    Item(String id, int level, String impact, String owner, String probe, String unprobed, String active, String off) {
       this.id = id;
       this.level = level;
       this.impact = impact;
@@ -28,13 +30,15 @@ public final class Registry {
       this.probe = probe;
       this.unprobed = unprobed;
       this.active = active;
+      this.off = off;
     }
   }
 
+  /** The items this app reads. */
   public static final List<Item> ITEMS = Collections.unmodifiableList(Arrays.asList(
-      new Item("pluginhost.file-sandbox", 5, "user", "picture-search", null, "#293 adds a write and delete of a test file in each allowed folder", "picture-search native SafePaths.java"),
-      new Item("storage.cloud-conflict-folder", 5, "user", "picture-search", null, "a conflict appears only after two devices sync", "picture-search src/storage/settings.ts"),
-      new Item("storage.sign-in-drop-folder", 2, "user", "account-sync", null, "#293 adds a read of the folder", "account-sync src/secretStore.ts")));
+      new Item("pluginhost.file-sandbox", 5, "user", "picture-search", null, "#293 adds a write and delete of a test file in each allowed folder", "picture-search native SafePaths.java", null),
+      new Item("storage.cloud-conflict-folder", 5, "user", "picture-search", null, "a conflict appears only after two devices sync", "picture-search src/storage/settings.ts", null),
+      new Item("storage.sign-in-drop-folder", 2, "user", "account-sync", null, "#293 adds a read of the folder", "account-sync src/secretStore.ts", null)));
 
   /** PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders; the built-in Sticker plugin keeps its library in its own private folder, and its Import lists sticker collections, ZIP files with the stickerCollectionExtension that hold .sticker files, from stickerCollectionFolder; a sticker path in one of the stickerImportFolders is moved to the plugin's own folder (pluginhost.file-sandbox). */
   public static final class PluginhostFileSandbox {
