@@ -19,4 +19,22 @@ public enum PageFit {
         let scale = max(scale, 1)
         return (Int((points.width * scale).rounded(.down)), Int((points.height * scale).rounded(.down)))
     }
+
+    /// The size a notebook window opens at, as Preview opens a PDF (#291): `portrait` for a
+    /// portrait first page; for a landscape one, `portrait`'s height and as wide as the page needs
+    /// beside the page list (`sidebar`) with `margin` around it, so the page fills the window with
+    /// no blank band. Rounded up to whole points, so the page is never a point narrower.
+    public static func window(firstPage page: CGSize, sidebar: CGFloat, margin: CGFloat, portrait: CGSize) -> CGSize {
+        guard page.width > page.height, page.height > 0 else { return portrait }
+        let pageHeight = max(portrait.height - 2 * margin, 1)
+        let width = sidebar + 2 * margin + pageHeight * page.width / page.height
+        return CGSize(width: width.rounded(.up), height: portrait.height)
+    }
+
+    /// `size`, shrunk with its aspect kept when it is larger than `screen`, the display's visible
+    /// area, so a window never opens past the screen's edge.
+    public static func onScreen(_ size: CGSize, screen: CGSize) -> CGSize {
+        guard size.width > screen.width || size.height > screen.height else { return size }
+        return fitted(page: size, in: screen)
+    }
 }

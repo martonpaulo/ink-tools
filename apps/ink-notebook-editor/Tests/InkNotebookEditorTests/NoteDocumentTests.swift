@@ -207,3 +207,24 @@ enum Fixtures {
         #expect(TabletMessages.noNotes.kind == .empty)
     }
 }
+
+/// The window a notebook opens at (#291).
+@MainActor
+@Suite struct NotebookWindowSizeTests {
+    @Test func aPortraitNotebookOpensAtThePortraitWindow() throws {
+        #expect(
+            NotebookWindow(document: NoteDocument(data: try Fixtures.data("content.note"))).idealSize
+                == NotebookWindow.portrait)
+    }
+
+    @Test(arguments: ["landscape.note", "landscape-tablet.note"])
+    func aLandscapeNotebookOpensWide(name: String) throws {
+        let size = NotebookWindow(document: NoteDocument(data: try Fixtures.data(name))).idealSize
+        #expect(size.height == NotebookWindow.portrait.height && size.width > NotebookWindow.portrait.width)
+    }
+
+    @Test func aFileTheReaderCannotReadOpensAtThePortraitWindow() {
+        #expect(
+            NotebookWindow(document: NoteDocument(data: Data("not a note".utf8))).idealSize == NotebookWindow.portrait)
+    }
+}

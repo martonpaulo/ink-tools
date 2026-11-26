@@ -11,6 +11,8 @@ extension FocusedValues {
 /// The window of one open `.note`: its state, else the notebook (#262).
 struct NotebookWindow: View {
     let document: NoteDocument
+    /// Whether the page list shows when the window opens.
+    var columns: NavigationSplitViewVisibility = .automatic
     @Environment(\.openDocument) private var openDocument
     @State private var dropFailure: String?
 
@@ -22,10 +24,13 @@ struct NotebookWindow: View {
             case .note(let note) where note.pages.isEmpty:
                 StateView(.noPages) { OpenAnotherButton() }
             case .note(let note):
-                NotebookView(pages: PageImages(note: note))
+                NotebookView(pages: PageImages(note: note), columns: columns)
             }
         }
-        .frame(minWidth: 640, minHeight: 420)
+        .frame(
+            minWidth: Self.minimum.width, idealWidth: idealSize.width, minHeight: Self.minimum.height,
+            idealHeight: idealSize.height
+        )
         // A `.note` dropped on the window opens in its own window, as on the Dock icon.
         .dropDestination(for: URL.self) { urls, _ in
             let notes = urls.filter { TabletListing.isNote($0.lastPathComponent) }
@@ -48,20 +53,42 @@ struct NotebookWindow: View {
     }
 }
 
+extension NotebookWindow {
+    /// The smallest window, in points.
+    static let minimum = CGSize(width: 640, height: 420)
+    /// The window a portrait notebook, or a window with no page, opens at, in points.
+    static let portrait = CGSize(width: 1000, height: 720)
+
+    /// The size the window opens at: wide for a landscape first page, so the page fits with no
+    /// blank band, as Preview opens a landscape PDF (#291). The app's window placement keeps it on
+    /// the screen.
+    var idealSize: CGSize {
+        guard case .note(let note) = document.content, !note.pages.isEmpty else { return Self.portrait }
+        return PageFit.window(
+            firstPage: PageImages(note: note).size(of: 0), sidebar: NotebookView.sidebarWidth,
+            margin: PageView.margin, portrait: Self.portrait)
+    }
+}
+
 /// The page list beside the current page, scaled to the window, as Preview shows a PDF.
 struct NotebookView: View {
+    /// The page list's width when the window opens, in points.
+    static let sidebarWidth: CGFloat = 170
+
     @State var pages: PageImages
     @State private var navigator: PageNavigator
+    @State private var columns: NavigationSplitViewVisibility
     @FocusState private var pageFocused: Bool
     @Environment(\.displayScale) private var displayScale
 
-    init(pages: PageImages, page: Int = 0) {
+    init(pages: PageImages, page: Int = 0, columns: NavigationSplitViewVisibility = .automatic) {
         _pages = State(initialValue: pages)
         _navigator = State(initialValue: PageNavigator(pageCount: pages.note.pages.count, index: page))
+        _columns = State(initialValue: columns)
     }
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             ScrollViewReader { list in
                 List(selection: selection) {
                     ForEach(0..<navigator.pageCount, id: \.self) { index in
@@ -76,7 +103,7 @@ struct NotebookView: View {
                 }
             }
             .accessibilityLabel(Copy.pages)
-            .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 260)
+            .navigationSplitViewColumnWidth(min: 150, ideal: Self.sidebarWidth, max: 260)
         } detail: {
             if let index = navigator.index {
                 PageView(index: index, count: navigator.pageCount, pages: pages)

@@ -12,6 +12,12 @@ struct InkNotebookEditorApp: App {
         DocumentGroup(viewing: NoteDocument.self) { file in
             NotebookWindow(document: file.document)
         }
+        // The window opens at its content's ideal size, wide for a landscape note (#291), and
+        // never past the screen's edge.
+        .defaultWindowPlacement { content, context in
+            let ideal = content.sizeThatFits(.unspecified)
+            return WindowPlacement(size: PageFit.onScreen(ideal, screen: context.defaultDisplay.visibleRect.size))
+        }
         .commands {
             CommandGroup(after: .newItem) {
                 OpenFromTabletCommand()

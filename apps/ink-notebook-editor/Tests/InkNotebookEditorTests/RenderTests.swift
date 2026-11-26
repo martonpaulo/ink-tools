@@ -49,6 +49,11 @@ final class RenderTests {
         }
         await wide.loadPage(0)
         try await render("notebook-landscape", Self.sizes) { NotebookView(pages: wide) }
+        // A landscape note's window opens wide, and its page fills it with no blank band (#291).
+        let landscapeWindow = NotebookWindow(document: NoteDocument(data: try Fixtures.data("landscape.note")))
+        try await render("notebook-landscape-window", [("opening", landscapeWindow.idealSize)]) {
+            NotebookView(pages: wide)
+        }
         // A page's template draws dark enough to see at every size, and one the reader cannot
         // draw carries its marker (#308).
         let templates = PageImages(note: try Fixtures.note("templates.note"))

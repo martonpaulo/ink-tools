@@ -64,6 +64,30 @@ import Testing
     @Test func aPageWithNoAreaFitsToZero() {
         #expect(PageFit.fitted(page: .zero, in: Self.box) == .zero)
     }
+
+    static let window = CGSize(width: 1000, height: 720)
+
+    @Test func aPortraitNotebookOpensAtThePortraitWindow() {
+        #expect(
+            PageFit.window(firstPage: Self.portrait, sidebar: 170, margin: 24, portrait: Self.window) == Self.window)
+        #expect(PageFit.window(firstPage: .zero, sidebar: 170, margin: 24, portrait: Self.window) == Self.window)
+    }
+
+    /// A landscape page fills the page area of the window it opens in, with no blank band (#291).
+    @Test func aLandscapeNotebookOpensAsWideAsItsPage() {
+        let page = CGSize(width: 2560, height: 1920)
+        let window = PageFit.window(firstPage: page, sidebar: 170, margin: 24, portrait: Self.window)
+        #expect(window == CGSize(width: 1114, height: 720))
+        let area = CGSize(width: window.width - 170 - 2 * 24, height: window.height - 2 * 24)
+        let fitted = PageFit.fitted(page: page, in: area)
+        #expect(fitted.height == area.height && area.width - fitted.width < 1)
+    }
+
+    @Test func aWindowLargerThanTheScreenShrinksWithItsAspect() {
+        let screen = CGSize(width: 1280, height: 775)
+        #expect(PageFit.onScreen(CGSize(width: 1114, height: 720), screen: screen) == CGSize(width: 1114, height: 720))
+        #expect(PageFit.onScreen(CGSize(width: 2000, height: 720), screen: screen) == CGSize(width: 1280, height: 460))
+    }
 }
 
 @Suite struct TabletListingTests {
