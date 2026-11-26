@@ -14,6 +14,9 @@ export const MODULE_PROVIDERS: Record<ModuleId, ProviderId[]> = {
   digest: [],
 };
 
+/** Providers a sync only reads: an ICS feed is never written, so no tablet item is sent there (#411). */
+export const READ_ONLY_PROVIDERS: readonly ProviderId[] = ['ics'];
+
 export const MODULES = Object.keys(MODULE_PROVIDERS) as ModuleId[];
 
 /** The modules that sync both ways, so they can hold tablet-only items. */

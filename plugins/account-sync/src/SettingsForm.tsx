@@ -18,6 +18,7 @@ import {
   MODULES,
   ModuleId,
   ProviderId,
+  READ_ONLY_PROVIDERS,
   setModule,
   setProvider,
   setSendTabletOnly,
@@ -35,6 +36,14 @@ const twoWay = (m: string): m is TwoWayModule =>
 
 const providerNames = (module: ModuleId) =>
   joinNames(MODULE_PROVIDERS[module].map(p => copy[`provider.${p}`]));
+
+/** The providers a tablet-only item can be sent to: never a read-only one, such as ICS. */
+const sendTargets = (module: ModuleId) =>
+  joinNames(
+    MODULE_PROVIDERS[module]
+      .filter(p => !READ_ONLY_PROVIDERS.includes(p))
+      .map(p => copy[`provider.${p}`]),
+  );
 
 const ITEMS: Record<TwoWayModule, 'item.task' | 'item.event'> = {
   todo: 'item.task',
@@ -158,7 +167,7 @@ export function tabletOnlyNotice(
   }
   const run = row?.status.state === 'ran' ? row.status.run : undefined;
   const count = run?.keptLocal;
-  const providers = providerNames(module);
+  const providers = sendTargets(module);
   if (!count) {
     return format(settings.sendTabletOnly[module] ? 'sendTabletOnly.aboutOn' : 'sendTabletOnly.about', {
       items: copy[ITEM_NOUNS[module]],

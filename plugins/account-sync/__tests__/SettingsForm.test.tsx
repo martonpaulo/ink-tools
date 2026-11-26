@@ -238,11 +238,11 @@ describe('the tablet-only notice, said once at its own setting (#411)', () => {
       'Turn this on to send tasks that exist only on the tablet to Todoist.',
     );
     expect(tabletOnlyNotice('calendar', calendarOn)).toBe(
-      'Turn this on to send events that exist only on the tablet to Google, iCloud and ICS.',
+      'Turn this on to send events that exist only on the tablet to Google and iCloud.',
     );
     const sending = {...calendarOn, sendTabletOnly: {...calendarOn.sendTabletOnly, calendar: true}};
     expect(tabletOnlyNotice('calendar', sending)).toBe(
-      'Sends events that exist only on the tablet to Google, iCloud and ICS at each sync.',
+      'Sends events that exist only on the tablet to Google and iCloud at each sync.',
     );
     expect(tabletOnlyNotice('todo', defaultSettings())).toBeUndefined();
   });
@@ -255,7 +255,7 @@ describe('the tablet-only notice, said once at its own setting (#411)', () => {
       '233 tasks exist only on the tablet. Turn this on to send them to Todoist.',
     );
     expect(tabletOnlyNotice('calendar', calendarOn, ran('calendar', 2))).toBe(
-      '2 events exist only on the tablet. Turn this on to send them to Google, iCloud and ICS.',
+      '2 events exist only on the tablet. Turn this on to send them to Google and iCloud.',
     );
   });
 
