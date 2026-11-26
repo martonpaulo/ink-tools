@@ -14,6 +14,7 @@ import Testing
     static let pages: [(note: String, page: Int)] = [
         ("blank", 1), ("content", 1), ("content", 2), ("content", 3), ("content", 4),
         ("templates", 1), ("templates", 2), ("templates", 3),
+        ("custom-template-tablet", 1), ("landscape-tablet", 1),
     ]
 
     static func fixture(_ name: String) throws -> Data {
@@ -28,6 +29,18 @@ import Testing
         let tablet = try PageBitmap(imageData: try Self.fixture("\(note)-p\(page).png"))
         let share = try #require(drawn.differingShare(from: tablet, threshold: Self.threshold))
         #expect(share <= Self.tolerance, "\(note) page \(page): \(share * 100) % differ")
+    }
+
+    /// A custom template picked in NOTE's template list (#308): a synthetic PNG copied to MyStyle,
+    /// no ink. A landscape note made with the screen turned (#291): one line of `inkctl ink write`
+    /// strokes. Both drawn as the tablet draws them, the landscape page wide and upright.
+    @Test func testTabletCustomTemplateAndLandscapeMetadata() throws {
+        let custom = try NoteFile(data: try Self.fixture("custom-template-tablet.note"))
+        #expect(custom.pages.map(\.style) == ["user_inktools-test-template"])
+        let landscape = try NoteFile(data: try Self.fixture("landscape-tablet.note"))
+        #expect(landscape.pages.map(\.isHorizontal) == [true])
+        let drawn = try landscape.render(page: 0)
+        #expect((drawn.width, drawn.height) == (2560, 1920))
     }
 
     @Test func testTabletNoteMetadata() throws {
