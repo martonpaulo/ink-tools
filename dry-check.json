@@ -267,6 +267,22 @@
     "pattern": "53317",
     "golden": "",
     "open": 295
+   },
+   {
+    "rule": "Plugin action channel answer line mark: INKTOOLS action",
+    "owner": "packages/sn-adapter/src/official/actions.ts",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "INKTOOLS action",
+    "golden": "",
+    "open": 283
+   },
+   {
+    "rule": "Plugin action channel request file: action.json in the plugin's folder",
+    "owner": "packages/sn-adapter/src/official/actions.ts",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "action\\.json",
+    "golden": "",
+    "open": 283
    }
   ]
  },

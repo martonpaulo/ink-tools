@@ -316,6 +316,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - PluginHost exports only its launcher `StubActivity`, a `com.ratta.supernote.plugin.action.DEBUG`
   receiver and a messenger service; no intent opens one plugin's view [measured, `dumpsys
   package`, [#139](https://github.com/martonpaulo/ink-tools/issues/139)].
+- So a plugin's own action runs by a file, not an intent: inkctl writes `action.json` in a folder
+  the plugin reads, and the plugin reads it on a JS timer in PluginHost
+  (`packages/sn-adapter/src/official/actions.ts`, `inkctl plugin action`); a plugin with no action
+  yet is pressed with `inkctl click` on its named element. How soon the timer answers, and whether
+  it runs while the tablet sleeps, is [unverified]
+  ([#283](https://github.com/martonpaulo/ink-tools/issues/283)).
 - InkHub's Upload Item form on the tablet, category Plugins: subcategory (Writing, Drawing,
   Reading, Utility, Game, Other), license, the package, up to 6 thumbnails in a 3:4 slot, picked
   from the tablet's own folders (Document, EXPORT, MyStyle, Note, SCREENSHOT, INBOX). It states no

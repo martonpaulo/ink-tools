@@ -68,10 +68,16 @@ case "$1" in
         if [ -f "$ADB_FILES/pull-content" ]; then cp "$ADB_FILES/pull-content" "$3"; fi ;;
     push)
         case "$3" in
+            */action.json) cp "$2" "$ADB_FILES/action.json"; printf '%s\n' "$3" > "$ADB_FILES/action-path"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
             *MyStyle/Probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
             *MyStyle/Probe/picture.*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
         esac ;;
     logcat)
+        if [ -f "$ADB_FILES/action-answer" ]; then
+            id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$ADB_FILES/action.json")
+            sed "s/ACTION_ID/$id/" "$ADB_FILES/action-answer"
+            exit 0
+        fi
         if [ -f "$ADB_FILES/helper-answer" ]; then
             id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$ADB_FILES/command.json")
             sed "s/COMMAND_ID/$id/" "$ADB_FILES/helper-answer"
@@ -1520,6 +1526,34 @@ rm -f "$files/pull-content" "$work/local/page2.png" "$work/local/square.png" "$w
 rm -f "$files/helper-answer" "$files/command.json" "$files/notes-found"
 cp "$work/tree-before-helper" "$files/tree.xml"
 reset_device
+
+# A plugin's own action by command, with no screen (#283).
+action_line() { printf '11-16 23:00:01.000 I/ReactNativeJS(  900): INKTOOLS action %s\n' "$1"; }
+action_field() { python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(eval(sys.argv[2], {'d': d}))" "$files/action.json" "$1"; }
+reset_device
+action_line 'account-sync ACTION_ID 1/1 {"ok":true,"action":"sync","ms":900,"line":"[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings","modules":["todo"]}' > "$files/action-answer"
+result=$(run plugin action account-sync sync --module todo)
+check "plugin action writes the request in the plugin's folder and prints the plugin's line" "$?$(cat "$files/action-path")|$result" "0$root/.data/plugin/inktools-account-sync/action.json|[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings"
+check "the request names the action, its module and the tablet's time" "$(action_field "d['action'], d['args'], d['at'], len(d['id'])")" "('sync', {'module': 'todo'}, 1800000000000, 32)"
+check "plugin action presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
+check "plugin action in JSON answers the plugin's own answer" "$(run plugin action account-sync sync --json | field "['ok'],d['modules']")" "(True, ['todo'])"
+action_line 'plugin-diagnostics ACTION_ID 1/2 {"ok":true,"action":"run-probe","ms":40,' > "$files/action-answer"
+action_line 'plugin-diagnostics ACTION_ID 2/2 "line":"SNPROBE probe done","lines":["probe done"]}' >> "$files/action-answer"
+check "run-probe joins an answer in chunks, in MyStyle/Probe/" "$(run plugin action plugin-diagnostics run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/MyStyle/Probe/action.json"
+action_line 'account-sync ACTION_ID 1/1 {"ok":true,"action":"sync","line":"another plugin"}' > "$files/action-answer"
+check "an answer of another plugin is not this one's, and no answer times out" "$(exit_and_pushes plugin action plugin-diagnostics run-probe --timeout 0)" "61"
+action_line 'account-sync ACTION_ID 1/1 {"ok":false,"code":1,"message":"no module ran: none is on"}' > "$files/action-answer"
+run plugin action account-sync sync >/dev/null 2>"$work/err"
+check "an action that failed exits 1 with the plugin's message" "$?$(grep -c 'account-sync sync: no module ran: none is on' "$work/err")" "11"
+action_line 'account-sync ACTION_ID 1/1 {"ok":false,"code":2,"message":"unknown action: sync"}' > "$files/action-answer"
+check "an action the plugin refuses exits 2" "$(exit_and_pushes plugin action account-sync sync)" "21"
+action_line 'account-sync ACTION_ID 1/1 {"ok":false,"code":7,"message":"stale: the request is 90 s old"}' > "$files/action-answer"
+check "a stale request exits 7" "$(exit_and_pushes plugin action account-sync sync)" "71"
+check "an unknown action is refused before any push" "$(exit_and_pushes plugin action account-sync format)" "20"
+check "a plugin with no actions is refused before any push" "$(exit_and_pushes plugin action smart-shapes sync)" "20"
+check "--module is only for account-sync sync" "$(exit_and_pushes plugin action plugin-diagnostics run-probe --module todo)" "20"
+check "read-only refuses plugin action" "$(exit_and_pushes --read-only plugin action account-sync sync)" "110"
+rm -f "$files/action-answer"
 
 # The handwriting language (#190): one code file in default/, packs as folders in resources/.
 printf 'pt_BR\n' > "$files/lang-default"

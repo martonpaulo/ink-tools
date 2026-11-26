@@ -55,6 +55,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   plugin install FILE.snplg      copy, install or update, and prove it: through the Ink Tools bridge
                                  app when it is installed, else through named elements on the screen
   plugin enable|disable NAME     turn a plugin on or off through the bridge app, and prove it
+  plugin action PLUGIN ACTION    run a plugin's own action with no screen and print its result:
+                                 account-sync sync [--module calendar|todo], plugin-diagnostics run-probe
   plugin allow NAME [PERM...]    set permissions (default: every one it uses) to Always Allow
                                  through the bridge app, and prove it from the plugin's row
   plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
@@ -424,6 +426,18 @@ HELPER_RENDER_PATH = f"{HELPER_FOLDER}/page.png"  # Probe's RENDER_PATH (src/hel
 HELPER_LISTEN_SECONDS = 110.0
 HELPER_LISTEN_WAIT = 2.0  # seconds for a listening Probe to answer before inkctl presses after all
 HELPER_ANSWERED_FILE = Path.home() / ".cache/inkctl/helper-answered"  # the time of Probe's last answer
+# A plugin's own action by command, with no screen (#283): packages/sn-adapter/src/official/actions.ts owns
+# the request file and the answer lines; each plugin reads the file in its own folder on a timer.
+ACTION_FILE = "action.json"
+ACTION_MARK = "INKTOOLS action"
+ACTION_ANSWER = re.compile(re.escape(ACTION_MARK) + r" (?P<plugin>\S+) (?P<id>\S+) (?P<index>\d+)/(?P<count>\d+) (?P<chunk>.*)")
+ACTION_TIMEOUT = 60.0  # seconds: a sync pass reads the network and writes the tablet
+ACTION_SYNC_MODULES = ("calendar", "todo")
+# The plugins with actions, by folder name: where each reads its request, and the actions it runs.
+ACTION_PLUGINS = {
+    "account-sync": {"folder": SIGN_IN_DROP_FOLDER, "actions": ("sync",)},
+    "plugin-diagnostics": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
+}
 BATCH_STEPS = ("ink write", "ink strokes", "lasso rect", "lasso last-insert")
 RECT_NUMBERS = ("x", "y", "width", "height")  # a page rectangle, as `lasso rect X Y W H` takes it
 PICTURE_SUFFIXES = (".png", ".jpg", ".jpeg")
@@ -2939,6 +2953,65 @@ def command_plugin_allow(device: Device, args: argparse.Namespace):
     return data, f"always allowed: {plugin_id} {' '.join(names)}"
 
 
+def action_answer(lines: list[str], plugin: str, request_id: str):
+    """The whole answer to this request from the plugin's log lines, or None while a chunk is missing."""
+    parts = {}
+    for line in lines:
+        found = ACTION_ANSWER.fullmatch(parse_log(line).get("message", ""))
+        if found and found["plugin"] == plugin and found["id"] == request_id:
+            parts[int(found["index"])] = (int(found["count"]), found["chunk"])
+    return whole_answer(parts)
+
+
+def action_failure(plugin: str, action: str, answer: dict) -> Failure:
+    """The plugin's refusal or failure, with the exit code its answer code maps to: the channel's
+    ACTION_REFUSED and ACTION_STALE are 2 and 7, inkctl's own usage and stale codes, by design."""
+    message = f"{plugin} {action}: {answer.get('message')}"
+    step = f"inkctl logs --plugin {plugin}"
+    if answer.get("code") == EXIT_USAGE:
+        return Failure(EXIT_USAGE, "usage", message, step)
+    if answer.get("code") == EXIT_STALE:
+        return Failure(EXIT_STALE, "stale", message, f"inkctl plugin action {plugin} {action}")
+    return Failure(EXIT_FAILED, "device_error", message, step)
+
+
+def command_plugin_action(device: Device, args: argparse.Namespace):
+    """Run a plugin's own action by its request file and print the plugin's result line (#283)."""
+    plugin = ACTION_PLUGINS.get(args.plugin)
+    if plugin is None:
+        raise bad_usage(f"{args.plugin} has no actions; plugins with actions: {', '.join(ACTION_PLUGINS)}")
+    if args.action not in plugin["actions"]:
+        raise bad_usage(f"{args.plugin} runs {', '.join(plugin['actions'])}, not {args.action}")
+    request_args = {}
+    if args.module:
+        if (args.plugin, args.action) != ("account-sync", "sync"):
+            raise bad_usage("--module is for account-sync sync")
+        request_args["module"] = args.module
+    now = device.shell("date +%s").strip()
+    if not now.isdigit():
+        raise Failure(EXIT_FAILED, "device_error", f"the tablet's time did not read: {now!r}")
+    request_id = uuid.uuid4().hex
+    request = {"id": request_id, "action": args.action, "args": request_args, "at": int(now) * MILLISECONDS}
+    since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
+    with tempfile.TemporaryDirectory() as folder:
+        local = os.path.join(folder, ACTION_FILE)
+        Path(local).write_text(json.dumps(request), encoding="utf-8")
+        device.shell(f"mkdir -p {shlex.quote(plugin['folder'])}")
+        push_file(device, local, f"{plugin['folder']}/{ACTION_FILE}", overwrite=True)
+    started = time.monotonic()
+    while True:
+        done = device.adb("logcat", "-d", "-v", "time", "-T", since, "-s", PLUGIN_LOG_TAG)
+        answer = action_answer(done.stdout.decode(errors="replace").splitlines(), args.plugin, request_id)
+        if answer is not None:
+            break
+        if time.monotonic() - started >= args.timeout:
+            raise Failure(EXIT_TIMEOUT, "timeout", f"{args.plugin} gave no answer in {args.timeout:g} s; is it installed and on?", f"inkctl logs --plugin {args.plugin}")
+        time.sleep(WAIT_INTERVAL)
+    if not answer.get("ok"):
+        raise action_failure(args.plugin, args.action, answer)
+    return answer, str(answer.get("line", ""))
+
+
 def command_plugin_install(device: Device, args: argparse.Namespace):
     config = read_plugin_config(args.file)
     name = os.path.basename(args.file)
@@ -4148,6 +4221,11 @@ def build_parser() -> argparse.ArgumentParser:
     installing.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
     installing.add_argument("--timeout", type=float, default=INSTALL_TIMEOUT, help="seconds for the plugin to appear")
     plugin_name_help = "the name the plugin list shows, its pluginKey or its pluginID"
+    acting = add(plugins, "action", command_plugin_action, changes=True)
+    acting.add_argument("plugin", help=f"a plugin with actions, by folder name: {', '.join(ACTION_PLUGINS)}")
+    acting.add_argument("action", help=", ".join(f"{name}: {' '.join(entry['actions'])}" for name, entry in ACTION_PLUGINS.items()))
+    acting.add_argument("--module", choices=ACTION_SYNC_MODULES, help="account-sync sync: this module alone")
+    acting.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the plugin's answer")
     permitting = add(plugins, "permissions", command_plugin_permissions, changes=True)
     permitting.add_argument("plugin", help=plugin_name_help)
     permitting.add_argument("choice", nargs="?", choices=("always",), help=f"set every permission to «{PERMISSION_ALWAYS}» and read them back")
