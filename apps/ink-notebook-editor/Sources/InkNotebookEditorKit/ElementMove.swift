@@ -36,7 +36,7 @@ public struct MovedElement: Sendable, Equatable {
             points: points, isArea: isArea, isPicture: isPicture, record: record)
     }
 
-    func moved(_ dx: Int, _ dy: Int) -> MovedElement {
+    public func moved(_ dx: Int, _ dy: Int) -> MovedElement {
         MovedElement(
             record: record, box: ElementMove.offset(box, dx, dy),
             points: points.map { CGPoint(x: $0.x + CGFloat(dx), y: $0.y + CGFloat(dy)) }, isArea: isArea,

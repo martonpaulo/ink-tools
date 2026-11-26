@@ -262,7 +262,9 @@ struct NotebookView: View {
         if press.phase == .up { return .handled }
         let step = ElementMove.nudge(
             magnification: viewer.magnification, scale: displayScale, shift: press.modifiers.contains(.shift))
-        editor.nudge(items.map(MovedElement.init), page: page, dx: direction.dx * step, dy: direction.dy * step)
+        // From where the changes on their way put the selection (#326).
+        editor.nudge(
+            editor.chain(items, page: page).elements, page: page, dx: direction.dx * step, dy: direction.dy * step)
         return .handled
     }
 

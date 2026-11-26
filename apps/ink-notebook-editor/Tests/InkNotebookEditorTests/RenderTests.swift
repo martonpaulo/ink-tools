@@ -279,6 +279,23 @@ final class RenderTests {
         try await render("delete-sending", Self.sizes) {
             NotebookView(pages: drawn, live: live, editor: deleting)
         }
+        // A picture turned right on its way (#326): drawn turned at once, framed with its resize
+        // handles and the rotation knob.
+        let turning = NoteEditor(
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            backups: NoteBackups(folder: scratch.appending(path: "TurnBackups")))
+        turning.pictureFolder = { self.scratch }
+        let pictures = items.filter(\.isPicture)
+        let picked = PageViewer()
+        picked.selection.selectAll(Set(pictures.map(\.id)), page: 0)
+        await turning.transform(pictures, page: 0) { .quarterTurn(page: 0, elements: $0, clockwise: true) }
+        for _ in 0..<500 where turning.liftedChanges(on: 0).isEmpty {
+            // timing-independent: a poll on the lift with a deadline; the render is checked by eye.
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        try await render("rotate-sending", Self.sizes) {
+            NotebookView(pages: drawn, viewer: picked, live: live, editor: turning)
+        }
     }
 
     /// Inserting a picture and a text box (#264): each sheet over the window it opens from, as a

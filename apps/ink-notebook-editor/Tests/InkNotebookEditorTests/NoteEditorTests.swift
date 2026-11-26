@@ -263,13 +263,52 @@ import Testing
         #expect(lifted.frame.contains(CGRect(x: 760, y: 1130, width: 300, height: 200)))
         #expect(editor.moveElements(move, lifted: lifted))
         // Drawn from the lifted ink before the tablet answers.
-        #expect(editor.moves(on: 0).map(\.move) == [move])
+        #expect(
+            editor.liftedChanges(on: 0).map(\.matrix) == [PageMatrix(a: 1, b: 0, c: 0, d: 1, tx: 120, ty: -40)])
         await settle(editor)
         let sent = tablet.sent.filter { $0["op"] as? String == "modifyElements" }
         #expect(sent.count == elements.count)
         #expect(sent.compactMap { $0["num"] as? Int } == elements.map { $0.record + 1 })
         #expect(editor.history.undoKind == .moveElements(move))
         #expect(editor.movedPage == 0)
+    }
+
+    /// The picture of page 1 of `content.note`, as a selection names it.
+    func picture() throws -> MovedElement {
+        let element = try #require(try NoteFile(data: original).elements(page: 0).first { $0.kind == .picture })
+        return MovedElement(
+            record: element.record, box: EditRect(element.bounds), points: element.points, isPicture: true)
+    }
+
+    @Test func aTurnedPictureIsSentAsANewFileAndNoChangeOfItsPageStartsMeanwhile() async throws {
+        let editor = try editor()
+        let folder = try WritePathTests.makeFolder("transformed-pictures")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        editor.pictureFolder = { folder }
+        tabletApplies { @Sendable in $0 }
+        let picture = try picture()
+        #expect(
+            await editor.transform([picture.selectable], page: 0) {
+                .quarterTurn(page: 0, elements: $0, clockwise: true)
+            })
+        // The tablet renumbers the page's elements as it replaces the picture: nothing waits on it.
+        #expect(!editor.moveElements(ElementMove(page: 0, elements: [picture], dx: 5, dy: 5)))
+        #expect(editor.refusal == Copy.pictureOnItsWay)
+        await settle(editor)
+        let sent = tablet.sent.filter { $0["op"] as? String == "modifyElements" }
+        #expect(sent.count == 1 && sent.first?["num"] as? Int == picture.record + 1)
+        let file = try #require(sent.first?["file"] as? String)
+        #expect(file.hasPrefix(folder.path(percentEncoded: false)) && file.hasSuffix(".png"))
+        #expect(editor.movedPage == nil)
+    }
+
+    @Test func aTextBoxIsNeverTurnedAndTheBarSaysWhy() async throws {
+        let editor = try editor()
+        let elements = try selection()
+        let turned = await editor.transform(elements.map(\.selectable), page: 0) {
+            .flip(page: 0, elements: $0, horizontal: true)
+        }
+        #expect(!turned && editor.refusal == Copy.textBoxTurned && editor.pending.isEmpty)
     }
 
     @Test func tenNudgesAreOneRequestAndOneUndo() async throws {
@@ -299,7 +338,7 @@ import Testing
         tablet.failEdit = .failed("device-link edit: no-element: operation 1")
         #expect(editor.moveElements(ElementMove(page: 0, elements: try selection(), dx: 10, dy: 10)))
         await settle(editor)
-        #expect(editor.moves(on: 0).isEmpty && editor.history.undoKind == nil)
+        #expect(editor.liftedChanges(on: 0).isEmpty && editor.history.undoKind == nil)
         #expect(editor.refusal?.contains("no-element") == true)
     }
 

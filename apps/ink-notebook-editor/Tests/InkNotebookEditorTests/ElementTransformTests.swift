@@ -145,6 +145,22 @@ import Testing
         #expect(high == files[3] && lowFile == files[1] && targets.count == 5)
     }
 
+    @Test func aChangeMadeBeforeTheTabletAnswersBuildsOnTheEditsOnTheirWay() {
+        let move = ElementMove(page: 0, elements: [Self.stroke], dx: 50, dy: 0)
+        let turn = ElementTransform.quarterTurn(
+            page: 0, elements: move.elements.map { $0.moved(50, 0) }, clockwise: true)
+        let other = ElementMove(page: 1, elements: [Self.stroke], dx: 9, dy: 9)
+        let chain = ElementChain(
+            [Self.stroke], page: 0, after: [.moveElements(move), .moveElements(other), .transformElements(turn)])
+        // Moved to (150, 200)-(350, 200), then turned about (250, 200).
+        #expect(chain.elements[0].points == [CGPoint(x: 250, y: 100), CGPoint(x: 250, y: 300)])
+        #expect(chain.matrix.apply(CGPoint(x: 100, y: 200)) == CGPoint(x: 250, y: 100))
+        // A second turn now turns about the turned frame, as the window shows it.
+        let again = ElementTransform.quarterTurn(page: 0, elements: chain.elements, clockwise: true)
+        #expect(again.transformed[0].points == [CGPoint(x: 350, y: 200), CGPoint(x: 150, y: 200)])
+        #expect(ElementChain([Self.picture], page: 0, after: [.moveElements(move)]).matrix.isIdentity)
+    }
+
     @Test func theHelperGetsOneMatrixForTheStrokesAndAFileForEachPicture() throws {
         let turn = ElementTransform.quarterTurn(page: 1, elements: [Self.stroke, Self.picture], clockwise: true)
             .with(pictureFiles: [3: URL(filePath: "/tmp/turned.png")])

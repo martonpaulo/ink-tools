@@ -199,6 +199,35 @@ nonisolated enum Copy {
         String(localized: "Edits on their way to the tablet: \(count)")
     }
 
+    // MARK: Resize, rotate and flip (#326)
+
+    static let rotateLeft = String(localized: "Rotate Left")
+    static let rotateRight = String(localized: "Rotate Right")
+    static let flipHorizontal = String(localized: "Flip Horizontal")
+    static let flipVertical = String(localized: "Flip Vertical")
+    static let rotateFreely = String(localized: "Rotate")
+    static let transformTooLarge = String(localized: "The selection does not fit on the page once turned.")
+    static let textBoxTurned = String(
+        localized: "A text box can be resized, but not rotated or flipped: the tablet keeps a text box upright.")
+    static let pictureNotTransformed = String(
+        localized: "The picture could not be made ready for the tablet. Nothing changed.")
+    static let pictureOnItsWay = String(
+        localized: "Wait until the picture's last change reaches the tablet, then change this page again.")
+
+    /// A resize handle's name, for VoiceOver.
+    static func resizeHandle(_ handle: ResizeHandle) -> String {
+        switch handle {
+        case .topLeft: String(localized: "Resize from the top left corner")
+        case .top: String(localized: "Resize from the top edge")
+        case .topRight: String(localized: "Resize from the top right corner")
+        case .right: String(localized: "Resize from the right edge")
+        case .bottomRight: String(localized: "Resize from the bottom right corner")
+        case .bottom: String(localized: "Resize from the bottom edge")
+        case .bottomLeft: String(localized: "Resize from the bottom left corner")
+        case .left: String(localized: "Resize from the left edge")
+        }
+    }
+
     // MARK: Pages (#329)
 
     static let insertPageEllipsis = String(localized: "Insert Page…")

@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import InkNotebookEditorKit
+import NoteFormat
 import PDFKit
 import UniformTypeIdentifiers
 
@@ -95,6 +96,54 @@ nonisolated struct PictureImport: @unchecked Sendable {
         CGImageDestinationAddImage(destination, grey, nil)
         guard CGImageDestinationFinalize(destination) else { throw .unreadable(file.lastPathComponent) }
         return PictureImport(image: grey, file: file)
+    }
+
+    /// A picture already on page `page` of `note` at `box`, mapped by `matrix` into the bounds of
+    /// its mapped corners, in Manta greys, as a new PNG in `folder`: the file the helper puts in its
+    /// place (#326).
+    /// shortcut: the reader does not decode a picture element's own pixels, so its pixels are cut
+    /// from the page as the Mac draws it without its template, and ink drawn over the picture goes
+    /// with it; decode the record's pixels once the format research names their layout.
+    @concurrent
+    static func transformed(
+        _ note: NoteFile, page: Int, box: EditRect, matrix: PageMatrix, folder: URL
+    ) async throws(Failure) -> PictureImport {
+        let drawn: PageBitmap
+        do {
+            drawn = try note.render(page: page, template: false)
+        } catch {
+            throw .unreadable(String(describing: error))
+        }
+        guard let pageImage = drawn.cgImage(), let cut = pageImage.cropping(to: box.rect),
+            let image = mapped(cut, box: box.rect, matrix: matrix)
+        else { throw .unreadable("the picture") }
+        return try make(image, folder: folder)
+    }
+
+    /// `cut`, the pixels of `box` on the page, drawn through `matrix` into the bounds of its mapped
+    /// corners, rounded out to whole pixels. A freely turned picture's corners are white: an
+    /// inserted picture is opaque.
+    static func mapped(_ cut: CGImage, box: CGRect, matrix: PageMatrix) -> CGImage? {
+        let target = box.applying(matrix.affine).integral
+        let width = Int(target.width)
+        let height = Int(target.height)
+        guard width > 0, height > 0,
+            let context = CGContext(
+                data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        context.setFillColor(gray: 1, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        // Page pixels count down from the top; the context counts up from the bottom.
+        context.translateBy(x: 0, y: CGFloat(height))
+        context.scaleBy(x: 1, y: -1)
+        context.translateBy(x: -target.minX, y: -target.minY)
+        context.concatenate(matrix.affine)
+        // The picture is drawn upright in its box in this downward space.
+        context.translateBy(x: 0, y: box.minY + box.maxY)
+        context.scaleBy(x: 1, y: -1)
+        context.draw(cut, in: box)
+        return context.makeImage()
     }
 
     /// The app's folder of pictures waiting to be inserted: Application Support/Ink Notebook

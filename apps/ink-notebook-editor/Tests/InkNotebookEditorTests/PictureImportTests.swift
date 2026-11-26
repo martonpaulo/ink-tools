@@ -35,6 +35,35 @@ import UniformTypeIdentifiers
         return try #require(context.makeImage())
     }
 
+    /// A 20 by 10 picture: black on the left half, white on the right.
+    static func halves() throws -> CGImage {
+        let context = try #require(
+            CGContext(
+                data: nil, width: 20, height: 10, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.setFillColor(gray: 1, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: 20, height: 10))
+        context.setFillColor(gray: 0, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: 10, height: 10))
+        return try #require(context.makeImage())
+    }
+
+    @Test func aPictureTurnedRightPutsItsLeftSideOnTopAndAFlipMirrorsIt() throws {
+        let box = CGRect(x: 100, y: 200, width: 20, height: 10)
+        let turn = ElementTransform.quarterTurn(
+            page: 0, elements: [MovedElement(record: 0, box: EditRect(box), isPicture: true)], clockwise: true)
+        let turned = try #require(PictureImport.mapped(try Self.halves(), box: box, matrix: turn.matrix))
+        #expect(turned.width == 10 && turned.height == 20)
+        let greys = try Self.greys(turned)
+        #expect(greys[5] < 20 && greys[19 * 10 + 5] > 235)
+        let mirror = ElementTransform.flip(
+            page: 0, elements: [MovedElement(record: 0, box: EditRect(box), isPicture: true)], horizontal: true)
+        let flipped = try Self.greys(
+            try #require(PictureImport.mapped(try Self.halves(), box: box, matrix: mirror.matrix)))
+        #expect(flipped[0] > 235 && flipped[19] < 20)
+    }
+
     static func greys(_ image: CGImage) throws -> [UInt8] {
         var bytes = [UInt8](repeating: 0, count: image.width * image.height)
         let context = try #require(

@@ -156,13 +156,32 @@ private struct ReportIssueCommand: View {
     }
 }
 
-/// Tools › Rectangular Selection and Lasso Selection, as Preview's Tools menu holds them (#324).
+/// Tools › Rectangular Selection and Lasso Selection, as Preview's Tools menu holds them (#324),
+/// then Rotate Left and Right and Flip Horizontal and Vertical of the selection (#326).
 private struct ToolCommands: View {
     @FocusedValue(\.pageViewer) private var viewer
+    @FocusedValue(\.pageImages) private var pages
+    @FocusedValue(\.noteEditor) private var editor
 
     var body: some View {
         tool(Copy.rectangularSelection, .rectangle)
         tool(Copy.lassoSelection, .lasso)
+        Divider()
+        ForEach(SelectionChange.allCases, id: \.self) { change in
+            Button(change.title) {
+                guard let editor, let page = viewer?.selection.page else { return }
+                change.apply(to: selected, page: page, editor: editor)
+            }
+            .keyboardShortcut(change.shortcut)
+            .disabled(editor?.canEdit != true || selected.isEmpty)
+            .help(editor == nil ? Copy.editOnlyFromTablet : "")
+        }
+    }
+
+    /// The selected elements of the window in front.
+    private var selected: [Selectable] {
+        guard let viewer, let page = viewer.selection.page else { return [] }
+        return pages?.selectable(page)?.filter { viewer.selection.ids.contains($0.id) } ?? []
     }
 
     private func tool(_ title: String, _ tool: PageViewer.SelectionTool) -> some View {

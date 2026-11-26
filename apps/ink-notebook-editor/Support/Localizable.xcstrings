@@ -141,6 +141,16 @@
         }
       }
     },
+    "A text box can be resized, but not rotated or flipped: the tablet keeps a text box upright." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A text box can be resized, but not rotated or flipped: the tablet keeps a text box upright."
+          }
+        }
+      }
+    },
     "Actual Size" : {
       "localizations" : {
         "en" : {
@@ -457,6 +467,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fix the problem named above, then try again."
+          }
+        }
+      }
+    },
+    "Flip" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flip"
+          }
+        }
+      }
+    },
+    "Flip Horizontal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flip Horizontal"
+          }
+        }
+      }
+    },
+    "Flip Vertical" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flip Vertical"
           }
         }
       }
@@ -1031,6 +1071,96 @@
         }
       }
     },
+    "Resize" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize"
+          }
+        }
+      }
+    },
+    "Resize from the bottom edge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the bottom edge"
+          }
+        }
+      }
+    },
+    "Resize from the bottom left corner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the bottom left corner"
+          }
+        }
+      }
+    },
+    "Resize from the bottom right corner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the bottom right corner"
+          }
+        }
+      }
+    },
+    "Resize from the left edge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the left edge"
+          }
+        }
+      }
+    },
+    "Resize from the right edge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the right edge"
+          }
+        }
+      }
+    },
+    "Resize from the top edge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the top edge"
+          }
+        }
+      }
+    },
+    "Resize from the top left corner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the top left corner"
+          }
+        }
+      }
+    },
+    "Resize from the top right corner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize from the top right corner"
+          }
+        }
+      }
+    },
     "Restore" : {
       "localizations" : {
         "en" : {
@@ -1087,6 +1217,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Revert to Backup"
+          }
+        }
+      }
+    },
+    "Rotate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotate"
+          }
+        }
+      }
+    },
+    "Rotate Left" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotate Left"
+          }
+        }
+      }
+    },
+    "Rotate Right" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotate Right"
           }
         }
       }
@@ -1351,6 +1511,26 @@
         }
       }
     },
+    "The picture could not be made ready for the tablet. Nothing changed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The picture could not be made ready for the tablet. Nothing changed."
+          }
+        }
+      }
+    },
+    "The selection does not fit on the page once turned." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selection does not fit on the page once turned."
+          }
+        }
+      }
+    },
     "The selection has no recognised words." : {
       "localizations" : {
         "en" : {
@@ -1547,6 +1727,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wait until every edit reached the tablet."
+          }
+        }
+      }
+    },
+    "Wait until the picture's last change reaches the tablet, then change this page again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wait until the picture's last change reaches the tablet, then change this page again."
           }
         }
       }

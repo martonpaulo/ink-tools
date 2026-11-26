@@ -275,6 +275,56 @@ public struct ElementTransform: Sendable, Equatable {
     }
 }
 
+/// A selection as the edits still on its way leave it (#326).
+public struct ElementChain: Sendable, Equatable {
+    /// Each element where the pending edits put it.
+    public let elements: [MovedElement]
+    /// The pending edits' map, in order, from the Mac's copy to `elements`.
+    public let matrix: PageMatrix
+
+    /// `elements` of the Mac's copy on `page` after each move or transform in `edits` of the same
+    /// elements, in order, so a change made before the tablet's copy returns builds on what the
+    /// window shows and the tablet gets the same result.
+    public init(_ elements: [MovedElement], page: Int, after edits: [NoteEdit]) {
+        var now = elements
+        var matrix = PageMatrix.identity
+        let records = Set(elements.map(\.record))
+        for edit in edits {
+            switch edit {
+            case .moveElements(let move) where move.page == page && Set(move.elements.map(\.record)) == records:
+                now = now.map { $0.moved(move.dx, move.dy) }
+                matrix = matrix.moved(Double(move.dx), Double(move.dy))
+            case .transformElements(let transform)
+            where transform.page == page && Set(transform.elements.map(\.record)) == records:
+                now = ElementTransform(page: page, elements: now, matrix: transform.matrix).transformed
+                matrix = matrix.then(transform.matrix)
+            default:
+                continue
+            }
+        }
+        self.elements = now
+        self.matrix = matrix
+    }
+
+    /// The edit's own map: a move's offset or a transform's matrix; nil for any other edit.
+    public static func matrix(of edit: NoteEdit) -> PageMatrix? {
+        switch edit {
+        case .moveElements(let move): PageMatrix.identity.moved(Double(move.dx), Double(move.dy))
+        case .transformElements(let transform): transform.matrix
+        default: nil
+        }
+    }
+
+    /// The page and elements an edit moves or transforms; nil for any other edit.
+    public static func target(of edit: NoteEdit) -> (page: Int, records: Set<Int>)? {
+        switch edit {
+        case .moveElements(let move): (move.page, Set(move.elements.map(\.record)))
+        case .transformElements(let transform): (transform.page, Set(transform.elements.map(\.record)))
+        default: nil
+        }
+    }
+}
+
 extension EditRect {
     /// The box as a rectangle in page pixels.
     public var rect: CGRect { CGRect(x: left, y: top, width: right - left, height: bottom - top) }
