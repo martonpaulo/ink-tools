@@ -58,6 +58,11 @@ export const PluginFileAPI = mocks(
   'insertElements',
   'getLastElement',
   'getElements',
+  'getElement',
+  'modifyElements',
+  'deleteElements',
+  'removeNotePage',
+  'getNoteTotalPageNum',
 );
 
 export const NativeUIUtils = mocks('showRattaDialog', 'showErrorTipDialog');

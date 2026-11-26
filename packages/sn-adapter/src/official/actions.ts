@@ -62,9 +62,16 @@ export interface ActionChannel {
   stop(): void;
 }
 
-/** A request the action refuses, such as a bad argument: answered with ACTION_REFUSED, not ACTION_FAILED. */
+/**
+ * A request the action refuses, such as a bad argument: answered with ACTION_REFUSED, not
+ * ACTION_FAILED. `detail` joins the answer, such as a refusal's name and what the plugin saw (#312).
+ */
 export class ActionRefused extends Error {
-  constructor(message: string, readonly code: number = ACTION_REFUSED) {
+  constructor(
+    message: string,
+    readonly code: number = ACTION_REFUSED,
+    readonly detail: Record<string, unknown> = {},
+  ) {
     super(message);
   }
 }
@@ -125,8 +132,10 @@ export function startActionChannel({
       const result = await actions[request.action](request.args);
       return {ok: true, action: request.action, ms: now() - started, ...result};
     } catch (error) {
-      const code = error instanceof ActionRefused ? error.code : ACTION_FAILED;
-      return {ok: false, code, message: error instanceof Error ? error.message : String(error)};
+      const refused = error instanceof ActionRefused;
+      const code = refused ? error.code : ACTION_FAILED;
+      const detail = refused ? error.detail : {};
+      return {...detail, ok: false, code, message: error instanceof Error ? error.message : String(error)};
     }
   }
 

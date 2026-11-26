@@ -15,7 +15,8 @@ module.exports = defineBuild(
     root,
     hostTools,
     packageClass: 'com.relay.localsend.RelayPackage',
-    sources: [path.join(root, 'native/src')],
+    // sn-adapter's native timer ticks the editor helper's action channel with no view open (#312).
+    sources: [path.join(root, 'native/src'), require('../../../packages/sn-adapter/plugin-config').nativeSources],
     test: ({jvmTests, javaSources}) =>
       jvmTests({
         prefix: 'relay',

@@ -8,6 +8,7 @@
       "@ink-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
       // sn-adapter's official tier (#101); ink-core for the page types it names.
       "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
+      "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       "@ink-tools/ink-core": ["../../packages/ink-core/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }

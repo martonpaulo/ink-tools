@@ -8,6 +8,9 @@ import {name as appName} from './app.json';
 import {
   closePluginView,
   initPlugin,
+  nativeTimers,
+  onMotion,
+  startActionChannel,
   registerButton,
   registerSettingsEntry,
   showPluginView,
@@ -30,6 +33,9 @@ import {relay} from './src/native';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
 import {working} from './src/working';
+import {editAction} from './src/editor/operations';
+import {deviceEditHost, readEditorRequest} from './src/editor/device';
+import {PenGate} from './src/editor/penGate';
 
 /** sn-plugin-lib 0.2.3 button types and show types, as Ink2Pic names them. */
 const BUTTON_TYPE_SIDEBAR = 1;
@@ -152,4 +158,15 @@ registerSettingsEntry(() => {
   ensurePermissions();
 }).catch(error => {
   console.error(`Relay: ${error.message}`);
+});
+
+// The Ink Notebook Editor's tablet helper (#312): inkctl's request file, read on the native timer,
+// which ticks with no view open; an edit waits while the pen is on the page.
+const pen = new PenGate();
+report('pen listener', onMotion(event => pen.motion(event)));
+startActionChannel({
+  plugin: 'device-link',
+  read: () => readEditorRequest(relay()),
+  actions: {edit: editAction(deviceEditHost(pen))},
+  timers: nativeTimers('DeviceLinkTicks'),
 });

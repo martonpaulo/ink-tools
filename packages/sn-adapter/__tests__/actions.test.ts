@@ -1,5 +1,6 @@
 import {
   ACTION_CHUNK,
+  ActionRefused,
   ACTION_MAX_AGE_MS,
   ACTION_POLL_MS,
   actionLines,
@@ -70,6 +71,21 @@ test.each([
   await run.channel.check();
   expect(run.answers()[0].answer).toMatchObject({ok: false, code: 2, message: expect.stringContaining(message)});
   expect(sync).not.toHaveBeenCalled();
+});
+
+test("a refusal's detail joins its answer, and cannot replace ok, code or message (#312)", async () => {
+  const edit = jest.fn(async () => {
+    throw new ActionRefused('no-element: page 2 has no element 9', 2, {refusal: 'no-element', openNote: null, ok: true});
+  });
+  const run = setup({edit}, request({action: 'edit'}));
+  await run.channel.check();
+  expect(run.answers()[0].answer).toEqual({
+    ok: false,
+    code: 2,
+    message: 'no-element: page 2 has no element 9',
+    refusal: 'no-element',
+    openNote: null,
+  });
 });
 
 test('answers a request older than ACTION_MAX_AGE_MS as stale, with code 7, and never runs it', async () => {

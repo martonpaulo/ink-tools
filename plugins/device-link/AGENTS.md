@@ -65,6 +65,16 @@ root `Note/` folder, not the open note's folder (measured, 2026-11-17, [#214](ht
 as its template, its page index base, and whether the note keeps its backgrounds once the PNGs
 are gone.
 
+**Editor helper built, not yet on the device** ([#312](https://github.com/martonpaulo/ink-tools/issues/312)): the Ink Notebook Editor's tablet
+helper, the action `edit` of sn-adapter's action channel ([#283](https://github.com/martonpaulo/ink-tools/issues/283)), which ticks on
+`DeviceLinkTicks` (`RelayPackage.java`) with no view open. inkctl's `note edit` writes `action.json`
+and the pictures in `.data/plugin/inktools-device-link/` (`EDITOR_FOLDER`), read with
+`RelayLocalSend.readText`. `src/editor/operations.ts` owns the operations and the named refusals;
+on the open note the element calls are the open-note calls, and a modify or page change saves the
+note first; on another note, the file API by path. `src/editor/penGate.ts` holds each edit while
+the pen is on the page, at most 20 s. To test on the device: each operation with the screen
+untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.
+
 ## What it is
 
 Send the current page, or a lasso selection, as a PNG to an iPhone or a Mac running LocalSend on

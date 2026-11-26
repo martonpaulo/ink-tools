@@ -14,6 +14,7 @@ export * from './headings';
 export * from './image';
 export * from './lasso';
 export * from './note';
+export * from './noteEdit';
 export * from './page';
 export * from './pen';
 export * from './penTape';

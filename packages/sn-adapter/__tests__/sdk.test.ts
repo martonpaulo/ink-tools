@@ -107,6 +107,36 @@ const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [
     () => page.getPageSize('/Note/a.note', 0),
     {width: 1920, height: 2560},
   ],
+  [
+    'insertElements by path (#312)',
+    mocked(PluginFileAPI.insertElements),
+    () => page.insertElements('/Note/a.note', 1, []),
+    true,
+  ],
+  [
+    'modifyElements by path (#312)',
+    mocked(PluginFileAPI.modifyElements),
+    () => page.modifyElements('/Note/a.note', 1, []),
+    [3],
+  ],
+  [
+    'deleteElements by path (#312)',
+    mocked(PluginFileAPI.deleteElements),
+    () => page.deleteElements('/Note/a.note', 1, [3]),
+    true,
+  ],
+  [
+    'removeNotePage (#312)',
+    mocked(PluginFileAPI.removeNotePage),
+    () => page.removeNotePage('/Note/a.note', 1),
+    true,
+  ],
+  [
+    'getNoteTotalPageNum (#312)',
+    mocked(PluginFileAPI.getNoteTotalPageNum),
+    () => page.getNoteTotalPageNum('/Note/a.note'),
+    3,
+  ],
 ];
 
 describe.each(responseCalls)('%s', (_name, sdkCall, wrapper, value) => {
@@ -222,5 +252,47 @@ describe('numeric answers (#23)', () => {
     expect((await plugin.hasPermission(plugin.PERMISSION_INTERNET)).ok).toBe(
       false,
     );
+  });
+});
+
+describe('the editor helper calls (#312)', () => {
+  const rect = {left: 100, top: 200, right: 300, bottom: 400};
+
+  it('reads one element by its number, and an empty answer is a failure', async () => {
+    mocked(PluginFileAPI.getElement).mockResolvedValue(success({type: 500}));
+    expect(await page.getElement('/Note/a.note', 0, 4)).toEqual({ok: true, value: {type: 500}});
+    expect(PluginFileAPI.getElement).toHaveBeenCalledWith('/Note/a.note', 0, 4);
+    mocked(PluginFileAPI.getElement).mockResolvedValue(success(null));
+    expect(await page.getElement('/Note/a.note', 0, 4)).toMatchObject({ok: false, message: 'page 0 has no element 4'});
+  });
+
+  it("places a picture's and a text box's rect", async () => {
+    const picture = {type: 200, picture: {rect: {left: 0, top: 0, right: 1, bottom: 1}}};
+    expect(await page.placeElement(picture, rect)).toEqual({ok: true, value: {type: 200, picture: {rect}}});
+    const text = {type: 500, textBox: {textRect: {left: 0, top: 0, right: 1, bottom: 1}}};
+    expect(await page.placeElement(text, rect)).toEqual({ok: true, value: {type: 500, textBox: {textRect: rect}}});
+  });
+
+  it("maps a stroke's points from their bounds to the rect, in one setRange", async () => {
+    const setRange = jest.fn(async () => true);
+    const points = [{x: 0, y: 0}, {x: 10, y: 20}];
+    const stroke = {type: 0, stroke: {points: {size: async () => 2, getRange: async () => points, setRange}}};
+    expect((await page.placeElement(stroke, rect)).ok).toBe(true);
+    expect(setRange).toHaveBeenCalledWith(0, 2, [{x: 100, y: 200}, {x: 300, y: 400}]);
+  });
+
+  it('refuses to place an element it cannot move, and a stroke whose write fails', async () => {
+    expect((await page.placeElement({type: 700}, rect)).ok).toBe(false);
+    const stroke = {type: 0, stroke: {points: {size: async () => 1, getRange: async () => [{x: 1, y: 1}], setRange: async () => false}}};
+    expect(await page.placeElement(stroke, rect)).toMatchObject({ok: false, message: 'setRange did not write the points'});
+  });
+
+  it('builds a picture element with its file and rect', async () => {
+    mocked(PluginCommAPI.createElement).mockResolvedValue(success({type: 200}));
+    expect(await page.buildElement({kind: 'picture', file: '/x/p.png', rect})).toEqual({
+      ok: true,
+      value: {type: 200, picture: {picturePath: '/x/p.png', rect}},
+    });
+    expect(PluginCommAPI.createElement).toHaveBeenCalledWith(200);
   });
 });
