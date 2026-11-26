@@ -146,8 +146,11 @@ import Testing
     }
 
     // timing-independent: the limit only turns a hang into a failure; the fake blocks until it is stopped.
+    // The wait sleeps, never `Task.yield()`: a yield loop holds one of the few shared test threads
+    // while the whole suite runs in parallel, so the fake started late and the limit ran out (#325),
+    // and a sleep also ends at the limit's cancel instead of spinning on.
     /// Cancel stops inkctl at once: the fake blocks until it is stopped, and nothing is left behind.
-    @Test(.timeLimit(.minutes(1)))
+    @Test(.timeLimit(.minutes(2)))
     func aCancelledPullStopsInkctlAndLeavesNoFile() async throws {
         let started = folder.appending(path: "started")
         let inkctl = try fake(
@@ -156,7 +159,8 @@ import Testing
         let destination = folder.appending(path: "copies/A.note")
         let pull = Task { try await inkctl.pull("Note/A.note", to: destination) }
         while !FileManager.default.fileExists(atPath: started.path(percentEncoded: false)) {
-            await Task.yield()
+            // timing-independent: a poll on the fake's own file; the time limit is its deadline.
+            try await Task.sleep(for: .milliseconds(20))
         }
         pull.cancel()
         await #expect(throws: InkctlFailure.cancelled) { try await pull.value }
