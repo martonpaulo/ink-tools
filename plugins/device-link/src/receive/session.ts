@@ -27,7 +27,11 @@ export function onReceiveState(listener: (next: ReceiveState) => void): () => vo
   };
 }
 
-/** One receive with the view open; answers the toast line, or null when one is already running. */
+/**
+ * One receive; answers the toast line, or null when one is already running. Closing the view never
+ * stops it (#289): the native receiver runs on its own thread until an item lands, the window ends
+ * or «Stop» is pressed, so a tap on «Receive» while one runs shows its view again, with «Stop».
+ */
 export async function runReceive(
   native: Relay,
   host: NoteHost,
@@ -35,6 +39,7 @@ export async function runReceive(
   showView: () => void,
 ): Promise<string | null> {
   if (state !== 'idle') {
+    showView();
     return null;
   }
   setState('starting');

@@ -55,17 +55,23 @@ export function deviceLabel(device: Device, all: Device[]): string {
   return twins > 1 ? `${device.alias} · ${device.ip}` : device.alias;
 }
 
-/** While a receive runs (#49): who the tablet is to the sender, and a way to stop; the × stops it too (#256). */
+/**
+ * While a receive runs (#49): who the tablet is to the sender, and «Stop». The title bar's × and
+ * Back only close the view: the receiver goes on with the view closed and places what arrives in
+ * the open note (#289); a tap on «Receive» shows this view again.
+ */
 export function ReceiveView({
   state,
   onStop,
+  onClose,
 }: {
   state: ReceiveState;
   onStop: () => void;
+  onClose: () => void;
 }) {
   return (
     <View style={shared.screen}>
-      <TitleBar title={copy.title} onClose={onStop} />
+      <TitleBar title={copy.title} onClose={onClose} />
       <Text accessibilityLiveRegion="polite" style={shared.text}>
         {state === 'ready' ? copy.ready(ALIAS) : copy.starting}
       </Text>
@@ -154,9 +160,8 @@ export default function App({
       cancelTextSend(textDeps(close, toast, native));
     } else if (pickState().phase !== 'idle') {
       cancelPick({closeView: close});
-    } else if (receiveState() !== 'idle') {
-      native.stopReceive();
     } else {
+      // A running receive goes on with its view closed (#289).
       close();
     }
   });
@@ -186,7 +191,11 @@ export default function App({
   }
   if (receiving !== 'idle') {
     return (
-      <ReceiveView state={receiving} onStop={() => native.stopReceive()} />
+      <ReceiveView
+        state={receiving}
+        onStop={() => native.stopReceive()}
+        onClose={close}
+      />
     );
   }
   return <SettingsView native={native} close={close} />;

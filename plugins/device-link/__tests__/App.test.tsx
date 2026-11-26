@@ -8,6 +8,7 @@ import {ownFingerprint} from '../src/settings/device';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {fakeRelay} from '../test-support/fakeRelay';
 import {Device} from '../src/localsend/protocol';
+import {runReceive} from '../src/receive/session';
 
 const lan = (...parts: number[]) => parts.join('.');
 const answer = (alias: string, fingerprint: string) =>
@@ -135,9 +136,11 @@ test('two receivers with one alias are told apart', () => {
 
 test('the receive view keeps the size rules, names the tablet and stops (#49)', async () => {
   const onStop = jest.fn();
+  const onClose = jest.fn();
+  const view = <ReceiveView state="ready" onStop={onStop} onClose={onClose} />;
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<ReceiveView state="ready" onStop={onStop} />);
+    tree = renderer.create(view);
   });
   expect(screenBreaks(tree.root)).toEqual([]);
   expect(
@@ -148,11 +151,40 @@ test('the receive view keeps the size rules, names the tablet and stops (#49)', 
     tree.root.findByProps({label: 'Stop'}).props.onPress();
   });
   expect(onStop).toHaveBeenCalledTimes(1);
-  // The title bar's Close stops the receive too (#256).
+  // Round 9 (Manta, 2026-11-26): the × stopped the receiver, and the next send met «connection
+  // refused». The × now only closes the view; the receiver goes on (#289).
   await act(async () => {
     tree.root.findByProps({accessibilityLabel: 'Close'}).props.onPress();
   });
-  expect(onStop).toHaveBeenCalledTimes(2);
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(onStop).toHaveBeenCalledTimes(1);
+});
+
+test('Back on a running receive closes only the view; the receiver goes on (#289)', async () => {
+  const back = catchBackKey();
+  let release!: () => void;
+  const {api, calls} = fakeRelay({
+    nextReceived: jest.fn(
+      () => new Promise(resolve => (release = () => resolve({kind: 'stopped'}))),
+    ),
+  });
+  const host = {
+    permissions: async () => null,
+    pluginDir: async () => ok('/plugin'),
+  } as never;
+  const running = runReceive(api, host, 'Supernote', () => {});
+  const close = jest.fn();
+  const tree = await render(api, close);
+  await act(async () => {});
+  expect(tree.root.findByProps({label: 'Stop'})).toBeTruthy();
+  await act(async () => {
+    expect(back.press()).toBe(true);
+  });
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(calls.stopped).toBe(0);
+  release();
+  await running;
+  back.restore();
 });
 
 test('Send Text keeps the title bar\'s Close while it waits, never while it reads or sends (#256)', async () => {

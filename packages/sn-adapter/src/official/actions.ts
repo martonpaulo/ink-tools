@@ -191,6 +191,41 @@ export function nativeTimers(
   modules: Record<string, unknown> = NativeModules,
   subscribe?: TickSubscribe,
 ): ActionTimers {
+  // One instance per module: two would each number their timers from 1, and every tick of one
+  // would also run the other's timer of the same number (#289).
+  const shared = modules === NativeModules && subscribe === undefined;
+  const known = shared ? sharedTimers.get(name) : undefined;
+  if (known) {
+    return known;
+  }
+  const timers = makeTimers(name, log, modules, subscribe);
+  if (shared) {
+    sharedTimers.set(name, timers);
+  }
+  return timers;
+}
+
+const sharedTimers = new Map<string, ActionTimers>();
+
+/**
+ * Resolves after `ms` on `timers`: on `nativeTimers` it resolves with no view open, where a
+ * `setTimeout` never fires (Lasso Actions' paste, device round 9, #249, #289).
+ */
+export function timerWait(timers: ActionTimers, ms: number): Promise<void> {
+  return new Promise(resolve => {
+    const handle = timers.setInterval(() => {
+      timers.clearInterval(handle);
+      resolve();
+    }, Math.max(1, ms));
+  });
+}
+
+function makeTimers(
+  name: string,
+  log: (line: string) => void,
+  modules: Record<string, unknown>,
+  subscribe?: TickSubscribe,
+): ActionTimers {
   const module = modules[name] as TickModule | undefined;
   if (!module?.start || !module?.stop) {
     log(`INKTOOLS timers: no native ${name} module: JS timers, which stop while no view of the plugin shows`);

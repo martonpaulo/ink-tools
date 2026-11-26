@@ -276,14 +276,16 @@ test('a text that would not fit below the last one starts at the top again', () 
   expect(textBox(PAGE, 'short', PAGE.height - 10).top).toBe(first.top);
 });
 
-test('a second tap while receiving starts nothing', async () => {
-  const {api} = fakeRelay({}, [{kind: 'stopped'}]);
+test('a second tap while receiving starts nothing and shows the running receive again (#289)', async () => {
+  const {api, calls} = fakeRelay({}, [{kind: 'stopped'}]);
   const show = jest.fn();
   const first = runReceive(api, note(), 'Supernote', show);
   expect(receiveState()).toBe('starting');
   await expect(runReceive(api, note(), 'Supernote', show)).resolves.toBeNull();
   await expect(first).resolves.toBe(copy.receiveStopped);
-  expect(show).toHaveBeenCalledTimes(1);
+  // Once for the first tap, once for the second: the view was closed while the receiver ran.
+  expect(show).toHaveBeenCalledTimes(2);
+  expect(calls.started).toHaveLength(1);
   expect(receiveState()).toBe('idle');
 });
 

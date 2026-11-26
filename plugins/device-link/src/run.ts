@@ -18,16 +18,21 @@ import {
   insertText,
   lassoElements,
   lassoImage,
+  nativeTimers,
   occupiedRects,
   ok,
   pageImage,
   recognizeElements,
   Result,
   THROWN_CODE,
+  timerWait,
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
 import {ensurePermissions, refusedLine, refusedProblem} from './permissions';
+
+/** The native timer module `RelayPackage.java` registers; index.js ticks the editor helper on it. */
+const TICKS_MODULE = 'DeviceLinkTicks';
 import {
   Delivered,
   discoverDevices,
@@ -243,7 +248,8 @@ export const noteHost: NoteHost = {
   lasso: lassoElements,
   insertImage,
   imageSize: pictureSize,
-  wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
+  // The native tick: the receive goes on with the view closed, where a JS timer never fires (#289).
+  wait: ms => timerWait(nativeTimers(TICKS_MODULE), ms),
   createNote,
   insertNotePage,
 };

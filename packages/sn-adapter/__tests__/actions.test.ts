@@ -6,6 +6,7 @@ import {
   actionLines,
   nativeTimers,
   startActionChannel,
+  timerWait,
   type Action,
 } from '../src/official/actions';
 
@@ -180,6 +181,25 @@ describe('nativeTimers (#283)', () => {
     expect(lines).toEqual(['INKTOOLS timers: no native BridgeTicks module: JS timers, which stop while no view of the plugin shows']);
     const handle = timers.setInterval(() => {}, 1000);
     timers.clearInterval(handle);
+  });
+
+  test('one instance per module on the device, so two callers never share a timer number (#289)', () => {
+    expect(nativeTimers('DeviceLinkTicks', () => {})).toBe(nativeTimers('DeviceLinkTicks', () => {}));
+  });
+
+  test('timerWait resolves on the first native tick and stops its timer (#289)', async () => {
+    const run = native();
+    let done = false;
+    const waited = timerWait(run.timers, 250).then(() => {
+      done = true;
+    });
+    const key = run.module.start.mock.calls[0][0];
+    expect(run.module.start).toHaveBeenCalledWith(key, 250);
+    await Promise.resolve();
+    expect(done).toBe(false);
+    run.tick(key);
+    await waited;
+    expect(run.module.stop).toHaveBeenCalledWith(key);
   });
 
   test('drives the channel: a native tick reads the request file', async () => {
