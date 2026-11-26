@@ -277,6 +277,22 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - `recognizeElements` on one lassoed handwritten word took 2.6 s in Lookup 0.2.0 beta 4 [measured,
   pen round, 2026-11-16, [#19](https://github.com/martonpaulo/ink-tools/issues/19)]; 963 to 999 ms
   on the Manta's «apple» fixture in Word Lookup 0.2.0 beta 27 [measured, 2026-11-25].
+- One character per grid cell, written as synthetic ink by `inkctl ink write` at about 70 % of the
+  cell's height and read with Lasso Actions' «Convert to Text» (`recognizeElements`), language
+  `es_ES` [measured, Manta, firmware `Chauvet.E103.2610191001.2559`, device round 8, 2026-11-26,
+  [#378](https://github.com/martonpaulo/ink-tools/issues/378)]:
+
+  | Cell | Digits 1 to 9 right | Letters A to Z right, case folded | Total |
+  | :--- | :--- | :--- | :--- |
+  | 7 mm (83 px) | 8 of 9 | 20 of 26 | 28 of 35 |
+  | 10 mm (119 px) | 6 of 9 | 18 of 26 | 24 of 35 |
+  | 15 mm (178 px) | 5 of 9 | 13 of 26 | 18 of 35 |
+
+  Capitals come back lower case; I, L, Q, G, Y and X were misread, and O, V and some 8 gave no
+  text. At 15 mm some cells gave no text box near the cell, which may be the round's matching by
+  position. Through the screen (lasso, menu, conversion) a cell took 10.3 to 11 s, not the call's
+  own time. The strokes are one machine font, so the rates say little about handwriting; the pen
+  rows and the call's own time per cell and per row are [unverified].
 - PluginHost's JS runs plain text work far slower than a Mac: picture-search's text scorers took
   about 120 ms per pass over 12 results, and its first ranking in a fresh JS instance (after an
   install) took 1057 ms for 18 results, against 87 ms later on the same instance [measured,
