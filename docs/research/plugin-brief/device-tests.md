@@ -195,7 +195,7 @@ The shared «Insert best picture» flow, now in Word Lookup (Ink2Pic is retired)
 [`word-lookup-v0.2.0-beta.27`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.27),
 commit `942e2aa`, installed with `inkctl plugin install`; beta 26 measured just before as the base.
 «Insert Image» on `Note/Tests/Fixtures.note` page 1, read as «appe»; the agent lassoed the word over
-Plugin Diagnostics and read the log over ADB; the fixture note was restored after
+Ink Tools Probe and read the log over ADB; the fixture note was restored after
 ([#19](https://github.com/martonpaulo/ink-tools/issues/19)).
 
 | Run | Search | Thumbnails | Insert and lasso | `time total` |
@@ -246,7 +246,7 @@ index for «Insert Image», which searches without OpenMoji (`c5288e8`); the con
 is in it too. Prerelease
 [`word-lookup-v0.2.0-beta.30`](https://github.com/martonpaulo/ink-tools/releases/tag/word-lookup-v0.2.0-beta.30),
 commit `1cd89f2`, installed with `inkctl plugin install`. «Insert Image» on `Note/Tests/Fixtures.note`,
-lassoed with `inkctl fixture NAME --lasso word` over Plugin Diagnostics (switched off after), log
+lassoed with `inkctl fixture NAME --lasso word` over Ink Tools Probe (switched off after), log
 read over ADB; the fixture note was restored after, checksum checked
 ([#19](https://github.com/martonpaulo/ink-tools/issues/19)). The first run is the first search of a
 fresh JS instance, after the install.

@@ -22,7 +22,7 @@ BLOCK_END = "# END registry"
 # The tools whose code runs in the plugins' JavaScript: they read sn-adapter's reader.
 TYPESCRIPT_TOOLS = ("sn-adapter", "ui-kit", "picture-search", "account-sync", "smart-pen",
                     "image-editing", "device-link", "lasso-actions",
-                    "plugin-diagnostics")
+                    "ink-tools-probe")
 CONTENT = "content://"
 # The item table's fields, in the order of `cells`.
 FIELDS = ("id", "level", "impact", "owner", "probe", "unprobed", "active")
@@ -43,10 +43,10 @@ READERS = (
            ("handwriting-language",), package="com.supernotetools.lingo"),
     Reader("java", "packages/picture-search/native/com/inktools/files/Registry.java",
            ("picture-search",), package="com.inktools.files"),
-    Reader("java", "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java",
-           ("inktools-bridge",), package="com.martonpaulo.inktools.bridge"),
-    Reader("java", "plugins/plugin-diagnostics/native/src/com/probe/providers/Registry.java",
-           ("plugin-diagnostics",), package="com.probe.providers"),
+    Reader("java", "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java",
+           ("ink-tools-helper",), package="com.martonpaulo.inktools.bridge"),
+    Reader("java", "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
+           ("ink-tools-probe",), package="com.probe.providers"),
     Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True),
     Reader("swift", "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift",
            ("ink-notebook-editor",)),

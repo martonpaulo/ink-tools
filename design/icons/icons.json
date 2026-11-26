@@ -22,7 +22,7 @@
    ]
   },
   {
-   "out": "apps/inktools-bridge/res/drawable/ic_launcher",
+   "out": "apps/ink-tools-helper/res/drawable/ic_launcher",
    "kind": "app",
    "tabler": [
     "plug-connected"
@@ -114,14 +114,14 @@
    ]
   },
   {
-   "out": "plugins/plugin-diagnostics/assets/icon",
+   "out": "plugins/ink-tools-probe/assets/icon",
    "kind": "plugin",
    "tabler": [
     "stethoscope"
    ]
   },
   {
-   "out": "plugins/plugin-diagnostics/assets/command",
+   "out": "plugins/ink-tools-probe/assets/command",
    "kind": "plugin",
    "tabler": [
     "stethoscope",
@@ -663,7 +663,7 @@
     "letter-h"
    ]
   },
-  "plugin-diagnostics": {
+  "ink-tools-probe": {
    "motif": [
     "stethoscope"
    ]

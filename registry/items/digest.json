@@ -9,7 +9,7 @@
       "owner": "sn-adapter",
       "readers": [
         "sn-adapter",
-        "plugin-diagnostics"
+        "ink-tools-probe"
       ],
       "reason": "sn-plugin-lib has no Digest API; the provider is the only way to add an entry",
       "evidence": {

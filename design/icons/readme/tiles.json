@@ -19,7 +19,7 @@
   "svg": "b40ba2a5eb2fd13a0b86c381e495b01947ab5dff6124519caf3b9aaa196cc131",
   "png": "598493c29ce54dc541d34048d49d54cb67cb3e5cf44056aa7d8444c5bdc7e7e8"
  },
- "inktools-bridge": {
+ "ink-tools-helper": {
   "svg": "50b22048baecd1cd2369dbb35d5d24651e7489e7a2730223d7dc629d1fd5fc0e",
   "png": "9d993e495456f9e648d7b049ea61c96902fc21b051cb8a774a123c92e0ae8aec"
  },
@@ -27,7 +27,7 @@
   "svg": "8352516344f785bdedd3957c6c8d45c2c7010abc17128f287300413f1ac2a0df",
   "png": "6fed4651870aeefa9fb5d094c31a9611c5acefa5b34302cdc5cf7c932e680494"
  },
- "plugin-diagnostics": {
+ "ink-tools-probe": {
   "svg": "28996008461c740be3e5c2ddcc231dce8b1b641deb0756bcf91be2672a6c2349",
   "png": "1a52b0c724df9c02e0543ea842a8cbec14a55ad341894d00f30ba9ee9229c956"
  },

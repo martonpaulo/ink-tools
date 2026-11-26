@@ -52,12 +52,12 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
   apps                           installed packages
   plugin list                    installed plugins, from PluginHost's provider (plugin ls is the same)
   plugin push FILE.snplg         copy a plugin to MyStyle; the install is then done on the device
-  plugin install FILE.snplg      copy, install or update, and prove it: through the Ink Tools bridge
+  plugin install FILE.snplg      copy, install or update, and prove it: through the Ink Tools Helper
                                  app when it is installed, else through named elements on the screen;
                                  --same-version updates a build of main that keeps its version (#310)
   plugin enable|disable NAME     turn a plugin on or off through the bridge app, and prove it
   plugin action PLUGIN ACTION    run a plugin's own action with no screen and print its result:
-                                 account-sync sync [--module calendar|todo], plugin-diagnostics run-probe
+                                 account-sync sync [--module calendar|todo], ink-tools-probe run-probe
   plugin allow NAME [PERM...]    set permissions (default: every one it uses) to Always Allow
                                  through the bridge app, and prove it from the plugin's row
   plugin permissions NAME        read a plugin's permissions in Settings; always sets each to Allow
@@ -142,13 +142,13 @@ REGISTRY_ITEMS = (
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install"},
     {"id": "pluginhost.file-sandbox", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "#293 adds a write and delete of a test file in each allowed folder", "active": "picture-search native SafePaths.java"},
     {"id": "pluginhost.plugin-list", "level": 2, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl plugin list"},
-    {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "inktools-bridge", "probe": "inktools-bridge ping", "unprobed": None, "active": "inktools-bridge HostCalls.java"},
-    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "inktools-bridge", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "inktools-bridge Command.java"},
+    {"id": "pluginhost.setting-service", "level": 3, "impact": "tests", "owner": "ink-tools-helper", "probe": "ink-tools-helper ping", "unprobed": None, "active": "ink-tools-helper HostCalls.java"},
+    {"id": "pluginhost.permission-status", "level": 5, "impact": "tests", "owner": "ink-tools-helper", "probe": None, "unprobed": "a probe would change a plugin's permission", "active": "ink-tools-helper Command.java"},
     {"id": "settings.language-page", "level": 3, "impact": "user", "owner": "handwriting-language", "probe": None, "unprobed": "#293 adds a resolve of the activity without starting it", "active": "handwriting-language SettingsActivity.java"},
     {"id": "settings.plugin-install-screens", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin install"},
     {"id": "settings.plugin-detail-labels", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "walking the screens is the test itself", "active": "inkctl plugin allow and uninstall"},
     {"id": "storage.sign-in-drop-folder", "level": 2, "impact": "user", "owner": "account-sync", "probe": None, "unprobed": "#293 adds a read of the folder", "active": "account-sync src/secretStore.ts"},
-    {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "plugin-diagnostics", "probe": "inkctl helper", "unprobed": None, "active": "plugin-diagnostics src/helper.ts"},
+    {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "ink-tools-probe", "probe": "inkctl helper", "unprobed": None, "active": "ink-tools-probe src/helper.ts"},
     {"id": "system.device-identity", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl status", "unprobed": None, "active": "inkctl status"},
     {"id": "system.firmware-page", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl firmware", "unprobed": None, "active": "inkctl firmware"},
     {"id": "system.plugin-log-tag", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl logs", "unprobed": None, "active": "inkctl logs"},
@@ -304,7 +304,7 @@ EXIT_CODES = """exit codes:
   11 read-only mode refused a command that changes the device
   12 the notes folder or a note on the screen is protected: pass --allow-notes
   13 the firmware was refused: not newer, not from Ratta, or the battery is too low
-  14 the Ink Tools bridge app is not on the device: install its APK (apps/inktools-bridge)
+  14 the Ink Tools Helper app is not on the device: install its APK (apps/ink-tools-helper)
 
 a failure in --json has the fields: error, message, cause, next
 
@@ -424,7 +424,7 @@ SCROLL_END = 0.2
 SCROLL_MILLISECONDS = 300
 SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring nothing new
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
-# Ink through Probe's «Run Command» button (#148): plugins/plugin-diagnostics/src/helper.ts owns the other side.
+# Ink through Probe's «Run Command» button (#148): plugins/ink-tools-probe/src/helper.ts owns the other side.
 HELPER_COMMAND_PATH = f"{REGISTRY['storage.helper-channel']['folder']}/{REGISTRY['storage.helper-channel']['commandFile']}"
 HELPER_BUTTON = "text:Run Command"
 NOTE_PLUGINS_BUTTON = REGISTRY["note.screen-ids"]["pluginsButton"]  # the note toolbar's plugin panel, where sidebar buttons show
@@ -435,7 +435,7 @@ HELPER_TIMEOUT = 20.0
 HELPER_LOG_STEP = "inkctl logs --plugin Probe"
 HELPER_FOLDER = posixpath.dirname(HELPER_COMMAND_PATH)
 HELPER_RENDER_PATH = f"{HELPER_FOLDER}/page.png"  # Probe's RENDER_PATH (src/helper.ts, #261)
-# After each command Probe reads its file again for LISTEN_MS (plugins/plugin-diagnostics/src/command.ts,
+# After each command Probe reads its file again for LISTEN_MS (plugins/ink-tools-probe/src/command.ts,
 # its owner, #286); inkctl waits for the answer with no press while that window is open, less a margin.
 HELPER_LISTEN_SECONDS = 110.0
 HELPER_LISTEN_WAIT = 2.0  # seconds for a listening Probe to answer before inkctl presses after all
@@ -450,7 +450,7 @@ ACTION_SYNC_MODULES = ("calendar", "todo")
 # The plugins with actions, by folder name: where each reads its request, and the actions it runs.
 ACTION_PLUGINS = {
     "account-sync": {"folder": SIGN_IN_DROP_FOLDER, "actions": ("sync",)},
-    "plugin-diagnostics": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
+    "ink-tools-probe": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
 }
 BATCH_STEPS = ("ink write", "ink strokes", "lasso rect", "lasso last-insert")
 RECT_NUMBERS = ("x", "y", "width", "height")  # a page rectangle, as `lasso rect X Y W H` takes it
@@ -532,7 +532,7 @@ PICKER_NEXT_PAGE = REGISTRY["settings.plugin-install-screens"]["nextPage"]
 PICKER_PAGE_NUMBER = REGISTRY["settings.plugin-install-screens"]["pageNumber"]
 PICKER_MAX_PAGES = 50
 PLUGIN_ENABLED = re.compile(r"Enabled \((\d+)/(\d+)\)")
-# The Ink Tools bridge app (#215, apps/inktools-bridge/AGENTS.md): it binds PluginHost's
+# The Ink Tools Helper app (#215, apps/ink-tools-helper/AGENTS.md): it binds PluginHost's
 # PluginSettingService, which `adb` cannot reach, and answers an ordered broadcast. Its result codes
 # are the app's Outcome class; 0 is what `am` prints when no receiver ran.
 BRIDGE_PACKAGE = "com.martonpaulo.inktools.bridge"
@@ -546,7 +546,7 @@ BRIDGE_USAGE = 3
 BRIDGE_TIMEOUT_RESULT = 5
 BRIDGE_ANSWER = re.compile(r'Broadcast completed: result=(-?\d+)(?:, data="(.*)")?')
 BRIDGE_CALL_TIMEOUT = 75  # the app waits up to 50 s for PluginHost's callback, under Android's 60 s
-BRIDGE_NEXT_STEP = "adb install the Ink Tools bridge APK (apps/inktools-bridge), or use the screen route for an install"
+BRIDGE_NEXT_STEP = "adb install the Ink Tools Helper APK (apps/ink-tools-helper), or use the screen route for an install"
 BRIDGE_LOG_STEP = "inkctl logs --tag InkToolsBridge"
 # What cleared the refused enable of 2026-11-17 (#228): an uninstall and an install loaded the
 # plugin; an uninstall drops its Always Allow grants, so they are set again.
@@ -560,7 +560,7 @@ PLUGIN_ON_VALUES = ("1", "true")
 PLUGIN_PERMISSIONS_STEP = REGISTRY["settings.plugin-detail-labels"]["permissions"]  # shortcut: the path is recorded, the exact label is not; confirm it with `inkctl snapshot` on the tablet
 PERMISSION_ALWAYS = REGISTRY["settings.plugin-detail-labels"]["always"]  # Settings' always-allow choice, as recorded; shortcut: confirm on the tablet that a row shows this same text as its state
 PERMISSION_STATES = REGISTRY["settings.plugin-detail-labels"]["states"]
-PLUGIN_UNINSTALL_STEP = REGISTRY["settings.plugin-detail-labels"]["uninstall"]  # measured on Plugin Diagnostics' page, 2026-11-25 (#191)
+PLUGIN_UNINSTALL_STEP = REGISTRY["settings.plugin-detail-labels"]["uninstall"]  # measured on Ink Tools Probe's page, 2026-11-25 (#191)
 UNINSTALL_WARNING = REGISTRY["settings.plugin-detail-labels"]["uninstallWarning"]  # part of the confirmation's text, measured 2026-11-16
 UNINSTALL_CONFIRM_STEP = REGISTRY["settings.plugin-detail-labels"]["confirm"]  # the confirmation's own button by id: its text, «Uninstall», is also the dialog's title (#191)
 CALENDAR_SYNC_ACTION = REGISTRY["calendar.sync-broadcast"]["action"]
@@ -588,7 +588,7 @@ JOB_ROUTES = (
     {"job": "list plugins", "command": "plugin ls", "kind": "provider", "name": PLUGIN_URI},
 )
 JOBS_WITHOUT_ROUTE = (
-    {"job": "install or update a plugin", "needs": "the screen, or the Ink Tools bridge app (#215)", "command": "plugin install"},
+    {"job": "install or update a plugin", "needs": "the screen, or the Ink Tools Helper app (#215)", "command": "plugin install"},
     {"job": "ask for a sync of one file", "needs": "nothing: the tablet syncs a changed file by itself, and Android refuses its broadcast to the shell user", "command": ""},
     {"job": "search the InkHub store", "needs": "Ratta's servers, which wait for the owner's yes", "command": ""},
 )
@@ -683,7 +683,7 @@ FAILURE_ADVICE = {
     "firmware_refused": ("the update is not safe to copy", "inkctl firmware"),
     "read_only": ("read-only mode forbids a command that changes the device", "inkctl status"),
     "protected": ("the notes folder or a note on the screen is protected", "inkctl files ls"),
-    "no_bridge": ("the Ink Tools bridge app is not installed or did not answer", "adb install inktools-bridge-<version>.apk"),
+    "no_bridge": ("the Ink Tools Helper app is not installed or did not answer", "adb install ink-tools-helper-<version>.apk"),
     "missing_call": ("a firmware update may have changed this call", "inkctl doctor"),
     "unexpected_screen": ("the screen is not the one this step expects", "inkctl snapshot"),
     "log_error": ("the command's own log could not be read", "inkctl status"),
@@ -2099,7 +2099,7 @@ def command_lasso_press(device: Device, args: argparse.Namespace):
 
 
 # Ink and lasso through Probe's «Run Command» button (#148). inkctl pushes one command file, presses
-# the button in the open note, and reads the answer Probe logs; `plugins/plugin-diagnostics/src/helper.ts` owns
+# the button in the open note, and reads the answer Probe logs; `plugins/ink-tools-probe/src/helper.ts` owns
 # the other side of this contract.
 def arc(cx: float, cy: float, rx: float, ry: float, start: float, end: float) -> list[tuple[float, float]]:
     """Points along an ellipse from one angle to another, in degrees, counterclockwise when end > start."""
@@ -2966,7 +2966,7 @@ def bridge_answer(code: int, answer: str) -> str:
     if code == BRIDGE_OK:
         return answer
     if code == BRIDGE_NOT_RUN:
-        raise Failure(EXIT_NO_BRIDGE, "no_bridge", f"the Ink Tools bridge app did not answer; {BRIDGE_NEXT_STEP}", BRIDGE_NEXT_STEP)
+        raise Failure(EXIT_NO_BRIDGE, "no_bridge", f"the Ink Tools Helper app did not answer; {BRIDGE_NEXT_STEP}", BRIDGE_NEXT_STEP)
     if code == BRIDGE_USAGE:
         raise bad_usage(f"the bridge refused the request: {answer}")
     if code == BRIDGE_TIMEOUT_RESULT:

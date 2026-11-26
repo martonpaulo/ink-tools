@@ -12,7 +12,7 @@ import pathlib
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MAC_GATES = {"ink-notebook-editor", "handwriting-language", "inktools-bridge"}
+MAC_GATES = {"ink-notebook-editor", "handwriting-language", "ink-tools-helper"}
 
 
 class CloudConfigTest(unittest.TestCase):

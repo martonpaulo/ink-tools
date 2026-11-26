@@ -43,7 +43,7 @@ registry item `pluginhost.file-sandbox` holds the device's folder names.
 The route the owner chose for [#1](https://github.com/martonpaulo/ink-tools/issues/1) (Inbox D74 A, 2026-11-25) keeps Wi-Fi ADB on
 across restarts, with no USB cable:
 
-- Only the Ink Tools Bridge holds `WRITE_SECURE_SETTINGS`, granted once by the owner with
+- Only the Ink Tools Helper holds `WRITE_SECURE_SETTINGS`, granted once by the owner with
   `adb shell pm grant` over the cable. Its boot receiver runs only on boot and writes only
   `adb_wifi_enabled`.
 - The exposure the owner accepted: the Manta's ADB asks no computer for authorization
@@ -58,12 +58,12 @@ across restarts, with no USB cable:
 
 ## Android signing keys
 
-The Ink Tools bridge prerelease signs its APK with one stable key, so each build updates the last
+The Ink Tools Helper prerelease signs its APK with one stable key, so each build updates the last
 one on the tablet ([#223](https://github.com/martonpaulo/ink-tools/issues/223)). The rule and the fallback are in
-[`apps/inktools-bridge/AGENTS.md`](../apps/inktools-bridge/AGENTS.md#versioning-and-signing).
+[`apps/ink-tools-helper/AGENTS.md`](../apps/ink-tools-helper/AGENTS.md#versioning-and-signing).
 
 - The keystore and its password are two repository secrets, `INKTOOLS_BRIDGE_KEYSTORE_BASE64` and
-  `INKTOOLS_BRIDGE_KEYSTORE_PASSWORD`. Only `prerelease-inktools-bridge.yml` reads them, in the
+  `INKTOOLS_BRIDGE_KEYSTORE_PASSWORD`. Only `prerelease-ink-tools-helper.yml` reads them, in the
   env of its build step. It runs on a push to `main` or by hand, never on a pull request, so a
   fork never reaches them. No validate workflow reads a stored secret.
 - The keystore is decoded under `RUNNER_TEMP`, outside the checkout, and removed after the build.

@@ -32,7 +32,7 @@ line, #295) is read for `vendor`, `service` and `dictionary`. The values inkctl 
 this landed are `PENDING_HOST` counts, which #295's value moves lower: a count above its row names
 each line, and a count below it is a finding too, so the counts only go down.
 
-`plugins/plugin-diagnostics/` is exempt from every rule but `url` and `vendor`: it exists to call the SDK
+`plugins/ink-tools-probe/` is exempt from every rule but `url` and `vendor`: it exists to call the SDK
 directly, and reads the internals it probes through its readers like every tool (#294). Only code is
 read (`.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`, and `.java`, `.kt` and `.swift` for `vendor`), never a
 comment-only mention in a document. Prints one `path:line: rule: text` line per finding.
@@ -52,7 +52,7 @@ READER_FILES = frozenset(reader.path for reader in registry_readers.READERS if n
 SKIP = {"node_modules", ".git", ".scratch", ".claude", "build", "android", ".toolchain"}
 SCRIPT = {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"}
 NATIVE = {".java", ".kt"}
-EXEMPT = ("plugins/plugin-diagnostics/",)
+EXEMPT = ("plugins/ink-tools-probe/",)
 TEST_PARTS = {"__tests__", "__mocks__", "tests"}
 
 # An import target: `from 'x'`, `import 'x'`, `require('x')`, `import('x')`, `jest.mock('x'`.

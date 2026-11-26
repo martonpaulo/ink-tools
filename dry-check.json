@@ -15,8 +15,8 @@
    "packages/sn-adapter/src/registry.generated.ts",
    "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java",
    "packages/picture-search/native/com/inktools/files/Registry.java",
-   "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java",
-   "plugins/plugin-diagnostics/native/src/com/probe/providers/Registry.java",
+   "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java",
+   "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift"
   ],
   "counts": {
@@ -90,10 +90,10 @@
    "plugins/image-editing/src/buttons.ts": {
     "repeated": 1
    },
-   "plugins/plugin-diagnostics/.eslintrc.js": {
+   "plugins/ink-tools-probe/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/plugin-diagnostics/scripts/native-toolchain.sh": {
+   "plugins/ink-tools-probe/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
    },
@@ -173,40 +173,40 @@
     "open": 295
    },
    {
-    "rule": "Plugin Diagnostics answer line mark: SNPROBE answer",
-    "owner": "plugins/plugin-diagnostics/src",
+    "rule": "Ink Tools Probe answer line mark: SNPROBE answer",
+    "owner": "plugins/ink-tools-probe/src",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "SNPROBE answer",
     "golden": "",
     "open": 295
    },
    {
-    "rule": "Plugin Diagnostics answer id when the command has none: unknown",
-    "owner": "plugins/plugin-diagnostics/src",
+    "rule": "Ink Tools Probe answer id when the command has none: unknown",
+    "owner": "plugins/ink-tools-probe/src",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "UNKNOWN_ID = ['\\\"]unknown['\\\"]",
     "golden": "",
     "open": 295
    },
    {
-    "rule": "Plugin Diagnostics page render file: page.png in the command folder",
-    "owner": "plugins/plugin-diagnostics/src",
+    "rule": "Ink Tools Probe page render file: page.png in the command folder",
+    "owner": "plugins/ink-tools-probe/src",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "page\\.png",
     "golden": "",
     "open": 295
    },
    {
-    "rule": "Plugin Diagnostics sidebar button inkctl presses: Run Command",
-    "owner": "plugins/plugin-diagnostics/src",
+    "rule": "Ink Tools Probe sidebar button inkctl presses: Run Command",
+    "owner": "plugins/ink-tools-probe/src",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "Run Command['\\\"]",
     "golden": "",
     "open": 295
    },
    {
-    "rule": "Plugin Diagnostics page size in page pixels: 1920 x 2560",
-    "owner": "plugins/plugin-diagnostics/src",
+    "rule": "Ink Tools Probe page size in page pixels: 1920 x 2560",
+    "owner": "plugins/ink-tools-probe/src",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "PAGE_(?:WIDTH|HEIGHT) = (?:1920|2560)\\b",
     "golden": "",
@@ -621,13 +621,13 @@
     "plugins/image-editing/native/src/com/retouch/image/RetouchModule.java": {
      "repeated": 1
     },
-    "plugins/plugin-diagnostics/native/src/com/probe/providers/ProbeFormat.java": {
+    "plugins/ink-tools-probe/native/src/com/probe/providers/ProbeFormat.java": {
      "number": 2
     },
-    "plugins/plugin-diagnostics/native/src/com/probe/providers/ProbeListener.java": {
+    "plugins/ink-tools-probe/native/src/com/probe/providers/ProbeListener.java": {
      "number": 3
     },
-    "plugins/plugin-diagnostics/native/src/com/probe/providers/ProbeProvidersModule.java": {
+    "plugins/ink-tools-probe/native/src/com/probe/providers/ProbeProvidersModule.java": {
      "number": 5
     }
    },
@@ -645,7 +645,7 @@
     "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
     "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
     "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Tablet.swift": 1,
-    "apps/inktools-bridge/scripts/build.cjs": 4,
+    "apps/ink-tools-helper/scripts/build.cjs": 4,
     "cli/inkctl/src/inkctl": 12,
     "packages/ink-core/src/lasso.ts": 1,
     "packages/ink-core/src/place.ts": 1,
@@ -680,8 +680,8 @@
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": 3,
     "plugins/image-editing/src/edits.ts": 2,
     "plugins/image-editing/src/working.ts": 1,
-    "plugins/plugin-diagnostics/src/helper.ts": 4,
-    "plugins/plugin-diagnostics/src/noteApi.ts": 4,
+    "plugins/ink-tools-probe/src/helper.ts": 4,
+    "plugins/ink-tools-probe/src/noteApi.ts": 4,
     "plugins/smart-pen/src/modules/text/buttons.ts": 3,
     "packages/ink-core/src/conversion/convert.ts": 1,
     "packages/ink-core/src/conversion/shapes.ts": 2,

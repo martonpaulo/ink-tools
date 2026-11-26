@@ -469,8 +469,8 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   performed. Cannot call the API!` [measured, Image Editing 0.1.0 beta 13, Manta, 2026-11-25,
   [#248](https://github.com/martonpaulo/ink-tools/issues/248)]. Whether a button pinned to the toolbar keeps a lasso is [unverified].
 - A lasso «⋯» row (`registerButton(2, ...)`, any `editDataTypes`) keeps the lasso, unlike a sidebar
-  button: from Plugin Diagnostics' lasso row, `getLassoRect` answered the lassoed strokes' box in
-  23 ms and `saveStickerByLasso` wrote a sticker file in 39 ms [measured, Plugin Diagnostics
+  button: from Ink Tools Probe's lasso row, `getLassoRect` answered the lassoed strokes' box in
+  23 ms and `saveStickerByLasso` wrote a sticker file in 39 ms [measured, Ink Tools Probe
   0.0.2 beta 10, Manta, 2026-11-25, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
   On the same tablet and day:
   - `lassoElements(rect)` selects strokes only: a text box inside the rect stayed out of the lasso
@@ -563,7 +563,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
   uninstall and an install loaded it [reported by the device round of 2026-11-17, Image Editing,
   [#228](https://github.com/martonpaulo/ink-tools/issues/228)]. It did not happen again on
-  Plugin Diagnostics or on Image Editing 0.1.0 beta 12, whose `.npk` loaded between
+  Ink Tools Probe or on Image Editing 0.1.0 beta 12, whose `.npk` loaded between
   `setCurrentPluginId` and `clearCurrentPluginId` and whose buttons came back in 1 s; each enable
   also logs `DENY reason=system_dir_listing path=/sys/devices/system/cpu`, which stops nothing
   [measured, Manta, 2026-11-25, [#228](https://github.com/martonpaulo/ink-tools/issues/228)]. The cause is [unverified]; a refused
@@ -705,8 +705,8 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   shows once, «Lingo», although it has two launcher activities, and a sidebar tap opens the first
   one [measured, 2026-11-16, Lingo app 0.1.0 beta 2,
   [#160](https://github.com/martonpaulo/ink-tools/issues/160)]. It lists an app with no activity
-  too (Ink Tools Bridge), with the application's `android:icon`, or Android's default icon
-  without one [measured, 2026-11-25, Ink Tools Bridge 0.1.0 beta 2 and beta 3,
+  too (Ink Tools Helper), with the application's `android:icon`, or Android's default icon
+  without one [measured, 2026-11-25, Ink Tools Helper 0.1.0 beta 2 and beta 3,
   [#260](https://github.com/martonpaulo/ink-tools/issues/260)]. Every install of the app, an update with the same launcher activity
   included, drops the item until the Supernote launcher (`com.ratta.supernote.launcher`) reads
   the apps again: `am force-stop com.ratta.supernote.launcher` brought it back each time; a
@@ -731,7 +731,7 @@ Read on 2026-11-14 for [#103](https://github.com/martonpaulo/ink-tools/issues/10
 
 The plugin view was chosen: the native loading box centred in an otherwise transparent view
 ([#103](https://github.com/martonpaulo/ink-tools/issues/103), [#287](https://github.com/martonpaulo/ink-tools/issues/287), `packages/ui-kit/README.md`). Opened from Settings, the host draws that
-view over the screen behind it, which shows around the box undimmed [measured, Plugin Diagnostics
+view over the screen behind it, which shows around the box undimmed [measured, Ink Tools Probe
 test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/287)]; over a note it is still to test.
 
 ## Files and sync

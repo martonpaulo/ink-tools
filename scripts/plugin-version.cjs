@@ -26,7 +26,7 @@ const PENDING_IDENTITY = new Set([
   'account-sync: app.json displayName',
   'device-link: app.json displayName',
   'image-editing: app.json displayName',
-  'plugin-diagnostics: app.json displayName',
+  'ink-tools-probe: app.json displayName',
 ]);
 /** The dependencies every plugin pins to the same version: one host runtime, one SDK. */
 const SHARED_PINS = ['react-native', 'react', 'sn-plugin-lib'];

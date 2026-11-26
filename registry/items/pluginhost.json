@@ -126,9 +126,9 @@
       "title": "PluginHost's private PluginSettingService and its binder descriptors",
       "level": 3,
       "impact": "tests",
-      "owner": "inktools-bridge",
+      "owner": "ink-tools-helper",
       "readers": [
-        "inktools-bridge",
+        "ink-tools-helper",
         "inkctl"
       ],
       "reason": "no public API installs, enables or permits a plugin; the service is the only route without the screen",
@@ -141,9 +141,9 @@
       "lastVerified": "2026-11-17",
       "publicApiRequest": "not asked",
       "probe": {
-        "name": "inktools-bridge ping"
+        "name": "ink-tools-helper ping"
       },
-      "active": "inktools-bridge HostCalls.java",
+      "active": "ink-tools-helper HostCalls.java",
       "issues": [
         215,
         418
@@ -163,9 +163,9 @@
       "title": "The transaction numbers of IPluginSetting's four calls",
       "level": 5,
       "impact": "tests",
-      "owner": "inktools-bridge",
+      "owner": "ink-tools-helper",
       "readers": [
-        "inktools-bridge"
+        "ink-tools-helper"
       ],
       "reason": "the numbers come from PluginHost's interface as seen in device data; a reordered interface would run another method, so each call checks the name behind its number first",
       "evidence": {
@@ -177,9 +177,9 @@
       "lastVerified": "2026-11-17",
       "publicApiRequest": "not asked",
       "probe": {
-        "name": "inktools-bridge call-number check"
+        "name": "ink-tools-helper call-number check"
       },
-      "active": "inktools-bridge HostCalls.java",
+      "active": "ink-tools-helper HostCalls.java",
       "issues": [
         215,
         293
@@ -200,9 +200,9 @@
       "title": "PluginHost's PluginInfo and PluginPermission classes, loaded by reflection, and the fields set on them",
       "level": 3,
       "impact": "tests",
-      "owner": "inktools-bridge",
+      "owner": "ink-tools-helper",
       "readers": [
-        "inktools-bridge"
+        "ink-tools-helper"
       ],
       "reason": "the parcel layout is PluginHost's own; loading its classes avoids copying that layout",
       "evidence": {
@@ -214,9 +214,9 @@
       "lastVerified": "2026-11-17",
       "publicApiRequest": "not asked",
       "probe": {
-        "name": "inktools-bridge ping"
+        "name": "ink-tools-helper ping"
       },
-      "active": "inktools-bridge HostClasses.java",
+      "active": "ink-tools-helper HostClasses.java",
       "issues": [
         215
       ],
@@ -232,9 +232,9 @@
       "title": "The permission status values: -1 the lowest (cancelled), 2 Always Allow",
       "level": 5,
       "impact": "tests",
-      "owner": "inktools-bridge",
+      "owner": "ink-tools-helper",
       "readers": [
-        "inktools-bridge",
+        "ink-tools-helper",
         "inkctl"
       ],
       "reason": "PluginPermissionManager's constants are private; the value was read in device data",
@@ -249,7 +249,7 @@
       "probe": {
         "unprobed": "a probe would change a plugin's permission"
       },
-      "active": "inktools-bridge Command.java",
+      "active": "ink-tools-helper Command.java",
       "values": {
         "always": 2,
         "lowest": -1

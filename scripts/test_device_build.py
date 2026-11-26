@@ -55,7 +55,7 @@ class DeviceBuildTest(unittest.TestCase):
         self.folder.mkdir(parents=True)
         (self.folder / "PluginConfig.json").write_text(json.dumps(CONFIG), encoding="utf-8")
         (self.folder / "package.json").write_text(json.dumps({"name": "Fake", "version": "0.1.0-beta.2"}), encoding="utf-8")
-        (self.root / "apps" / "inktools-bridge").mkdir(parents=True)
+        (self.root / "apps" / "ink-tools-helper").mkdir(parents=True)
 
     def run_script(self, runner, *words):
         err, out = io.StringIO(), io.StringIO()
@@ -87,7 +87,7 @@ class DeviceBuildTest(unittest.TestCase):
         self.assertEqual(self.run_script(FakeRunner(self.folder, on_main=False), "plugins/fake")[0], 2)
 
     def test_refuses_an_app_and_an_unknown_folder(self):
-        code, _, err = self.run_script(FakeRunner(self.folder), "apps/inktools-bridge")
+        code, _, err = self.run_script(FakeRunner(self.folder), "apps/ink-tools-helper")
         self.assertEqual(code, 2)
         self.assertIn("keeps its CI build", err)
         self.assertEqual(self.run_script(FakeRunner(self.folder), "plugins/missing")[0], 2)

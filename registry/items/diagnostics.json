@@ -3,25 +3,25 @@
   "items": [
     {
       "id": "diagnostics.provider-probes",
-      "title": "Plugin Diagnostics' direct provider probes: the Digest root and digest paths, the control task and calendar rows",
+      "title": "Ink Tools Probe's direct provider probes: the Digest root and digest paths, the control task and calendar rows",
       "level": 2,
       "impact": "tests",
-      "owner": "plugin-diagnostics",
+      "owner": "ink-tools-probe",
       "readers": [
-        "plugin-diagnostics"
+        "ink-tools-probe"
       ],
       "reason": "the plugin exists to call the internals directly; its targets mirror the provider items",
       "evidence": {
-        "source": "plugins/plugin-diagnostics/native ProbeTargets.java, kept equal to descriptor.json by ProbeTargetsTest (#208, #217)",
+        "source": "plugins/ink-tools-probe/native ProbeTargets.java, kept equal to descriptor.json by ProbeTargetsTest (#208, #217)",
         "date": "2026-11-20"
       },
       "upgradePath": "none needed: a diagnostic tool",
       "lastVerified": "unverified",
       "publicApiRequest": "not asked",
       "probe": {
-        "name": "plugin-diagnostics Run Probe"
+        "name": "ink-tools-probe Run Probe"
       },
-      "active": "plugin-diagnostics native ProbeTargets.java",
+      "active": "ink-tools-probe native ProbeTargets.java",
       "issues": [
         59,
         208,

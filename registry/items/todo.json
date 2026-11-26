@@ -9,7 +9,7 @@
       "owner": "sn-adapter",
       "readers": [
         "sn-adapter",
-        "plugin-diagnostics",
+        "ink-tools-probe",
         "inkctl"
       ],
       "reason": "sn-plugin-lib has no task API; the provider is the only way to read and write tasks",

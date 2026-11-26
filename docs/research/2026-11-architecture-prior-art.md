@@ -53,7 +53,7 @@ Recorded on [#293](https://github.com/martonpaulo/ink-tools/issues/293) and [#29
 8. Registry fields `evidence`, `upgradePath`, `lastVerified`, `publicApiRequest`, and a ratchet per
    level.
 9. A boundary denylist of vendor names with the registry as the allowlist.
-10. The watch runs in the InkTools Bridge app and on `inkctl` connect.
+10. The watch runs in the Ink Tools Helper app and on `inkctl` connect.
 
 ## Risks to avoid
 

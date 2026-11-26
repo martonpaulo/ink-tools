@@ -178,8 +178,8 @@
     },
     {
       "name": "Ink Tools Helper", "section": "developer", "kind": "app", "status": "Internal",
-      "icon": "design/icons/readme/inktools-bridge.png",
-      "link": "https://github.com/martonpaulo/ink-tools/releases?q=inktools-bridge&expanded=true",
+      "icon": "design/icons/readme/ink-tools-helper.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=ink-tools-helper&expanded=true",
       "features": [
         {"name": "Plugin settings", "text": "lets `inkctl` install, enable and permit plugins with no screen."},
         {"name": "Firmware watch", "text": "at boot after a firmware change, check every device dependency and report what broke.", "planned": true}
@@ -189,13 +189,13 @@
         "logic": ["the plugin settings calls"],
         "supernote": "java",
         "tablet": ["plugin settings"],
-        "registry": ["inktools-bridge"]
+        "registry": ["ink-tools-helper"]
       }
     },
     {
       "name": "Ink Tools Probe", "section": "developer", "kind": "plugin", "status": "Internal",
-      "icon": "design/icons/readme/plugin-diagnostics.png",
-      "link": "https://github.com/martonpaulo/ink-tools/releases?q=plugin-diagnostics&expanded=true",
+      "icon": "design/icons/readme/ink-tools-probe.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=ink-tools-probe&expanded=true",
       "features": [
         {"name": "Run Command", "text": "the sidebar button `inkctl` presses to write ink and lasso with no pen."},
         {"name": "Probes", "text": "quick on-device experiments for our tests. Never shipped."}

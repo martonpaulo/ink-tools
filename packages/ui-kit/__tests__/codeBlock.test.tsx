@@ -105,14 +105,14 @@ describe('rawBreaks (#405)', () => {
   const RAW = [LONG, 'probe done'];
 
   it('fails a fixture screen that shows raw lines in a plain Text', () => {
-    expect(rawBreaks(screen([text('Plugin Diagnostics'), text(LONG), text('probe done')]), RAW)).toEqual([
+    expect(rawBreaks(screen([text('Ink Tools Probe'), text(LONG), text('probe done')]), RAW)).toEqual([
       `raw text «${LONG.slice(0, 60)}» shows outside ui-kit's CodeBlock`,
       "raw text «probe done» shows outside ui-kit's CodeBlock",
     ]);
   });
 
   it('passes the same lines inside the code block', () => {
-    expect(rawBreaks(screen([text('Plugin Diagnostics'), text(LONG, {code: true}), text('probe done', {code: true})]), RAW)).toEqual([]);
+    expect(rawBreaks(screen([text('Ink Tools Probe'), text(LONG, {code: true}), text('probe done', {code: true})]), RAW)).toEqual([]);
   });
 
   it("fails a code line that runs past the block's side, and passes one wrapped inside it (#405)", () => {

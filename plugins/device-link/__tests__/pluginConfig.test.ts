@@ -1,7 +1,7 @@
 import config from '../PluginConfig.json';
 import bridge from '../../account-sync/PluginConfig.json';
 import lookup from '../../lasso-actions/PluginConfig.json';
-import probe from '../../plugin-diagnostics/PluginConfig.json';
+import probe from '../../ink-tools-probe/PluginConfig.json';
 
 const others = [bridge, lookup, probe].map(c => c.pluginID);
 

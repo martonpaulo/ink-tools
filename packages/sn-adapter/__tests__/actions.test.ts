@@ -121,9 +121,9 @@ test('a check while one runs does nothing, so a slow action never runs twice', a
 
 test('a long answer is split in numbered chunks that join back to the JSON', () => {
   const answer = {ok: true, line: 'x'.repeat(ACTION_CHUNK * 2)};
-  const lines = actionLines('plugin-diagnostics', ID, answer);
+  const lines = actionLines('ink-tools-probe', ID, answer);
   expect(lines).toHaveLength(3);
-  expect(lines[0].startsWith(`INKTOOLS action plugin-diagnostics ${ID} 1/3 `)).toBe(true);
+  expect(lines[0].startsWith(`INKTOOLS action ink-tools-probe ${ID} 1/3 `)).toBe(true);
   expect(JSON.parse(lines.map(line => line.replace(/^(\S+ ){4}\S+ /, '')).join(''))).toEqual(answer);
 });
 

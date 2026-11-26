@@ -18,7 +18,7 @@ class QuickCheckSelection(unittest.TestCase):
         # Lookup and Bridge import ink-core, so they are checked (#161, #301); Probe does not.
         self.assertIn("plugins/lasso-actions", folders)
         self.assertIn("plugins/account-sync", folders)
-        self.assertNotIn("plugins/plugin-diagnostics", folders)
+        self.assertNotIn("plugins/ink-tools-probe", folders)
 
     def test_docs_only_change_checks_nothing(self):
         self.assertEqual(quick_check.typecheck_dirs(ROOT, ["docs/product.md"]), [])

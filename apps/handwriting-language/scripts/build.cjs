@@ -162,7 +162,7 @@ function resources(work, aapt2) {
 /**
  * What is wrong with the APK's `aapt2 dump badging` output (#246): the app needs its icon, since
  * Customize Sidebar lists every app package with it, and `launchers` launcher entries: one here,
- * since the sidebar lists one entry per app (#160); none for Ink Tools Bridge, which has no screen
+ * since the sidebar lists one entry per app (#160); none for Ink Tools Helper, which has no screen
  * (#260).
  */
 function badgingProblems(badging, launchers = 1) {

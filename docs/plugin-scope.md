@@ -402,7 +402,7 @@ ship under until the merges land.
 | Account Sync | unchanged | outside services |
 | Puzzles ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | new, planned: the games of [Puzzles](#puzzles) | a new page after the current one |
 
-Plugin Diagnostics stays a developer tool, off day to day. «Convert to Text»'s conversion engine
+Ink Tools Probe stays a developer tool, off day to day. «Convert to Text»'s conversion engine
 becomes shared package code, used by Smart Pen's live conversion and Lasso Actions. Names follow
 NOTE's own naming.
 

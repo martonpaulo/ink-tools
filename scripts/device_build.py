@@ -10,7 +10,7 @@ updates a plugin over an equal `versionCode`; only the file name carries the com
 picker never takes an older copy. `--install` hands the file to `inkctl plugin install
 --same-version`, which proves the update by PluginHost's own install line.
 
-The Ink Tools bridge app and the Lingo app are not plugins: they keep their CI build, whose stable
+The Ink Tools Helper app and the Lingo app are not plugins: they keep their CI build, whose stable
 signing key lives only in the repository secrets (#223, docs/security.md).
 
 Exit 0 when built (and installed), 2 on a refused input, 1 when the build fails, else inkctl's code.
@@ -101,7 +101,7 @@ def build(folder: pathlib.Path, out: pathlib.Path, commit: str, run: Runner) -> 
 
 def main(argv: Sequence[str] | None = None, run: Runner = subprocess.run, root: pathlib.Path = ROOT) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("plugin", help="a plugin folder, such as plugins/plugin-diagnostics")
+    parser.add_argument("plugin", help="a plugin folder, such as plugins/ink-tools-probe")
     parser.add_argument("--install", action="store_true", help="install it with inkctl plugin install --same-version")
     parser.add_argument("--out", type=pathlib.Path, help="the folder for the file (default: the plugin's build/outputs)")
     args = parser.parse_args(argv)

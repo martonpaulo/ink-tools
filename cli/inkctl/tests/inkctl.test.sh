@@ -539,7 +539,7 @@ check "routes does not claim an operation it never proved" "$(printf '%s' "$resu
 check "routes quotes a component name" "$(grep -cF "'com.ratta.one/a.Outer\$Inner'" "$log")" "1"
 check "routes is read-only" "$(called 'am start')$(called 'content ')$(called 'input ')" "000"
 check "routes names which job each route does" "$(printf '%s' "$result" | expression "[j['command'] for j in d['jobs'] if j['job']=='sync the To-do']")" "['sync tasks']"
-check "routes says which jobs have no route" "$(printf '%s' "$result" | expression "[j['needs'] for j in d['jobs_without_route']][0]")" "the screen, or the Ink Tools bridge app (#215)"
+check "routes says which jobs have no route" "$(printf '%s' "$result" | expression "[j['needs'] for j in d['jobs_without_route']][0]")" "the screen, or the Ink Tools Helper app (#215)"
 check "routes covers every Ratta package by default" "$(run routes --json | expression "[p['package'] for p in d['packages']]")" "['com.ratta.one']"
 check "routes prints one line per route" "$(run routes com.ratta.one | grep -c '^receiver')" "1"
 run routes com.ratta.absent >/dev/null 2>&1
@@ -1008,7 +1008,7 @@ check "a file with no plugin config stops before any copy" "$?$(called ' push ')
 run plugin install "$work/local/old.txt" >/dev/null 2>&1
 check "plugin install refuses another kind of file" "$?" "2"
 
-# The Ink Tools bridge app (#215): install, enable, disable and Always Allow through one ordered broadcast.
+# The Ink Tools Helper app (#215): install, enable, disable and Always Allow through one ordered broadcast.
 bridge_calls() { cat "$files/bridge-calls" 2>/dev/null; }
 exit_of() { run "$@" >/dev/null 2>&1; echo $?; }
 wc -c < "$work/local/test.snplg" | tr -d ' ' > "$files/size"
@@ -1103,7 +1103,7 @@ rm -f "$files/bridge-installed"
 : > "$files/bridge-calls"
 run plugin enable Snap >/dev/null 2>"$work/err"
 check "plugin enable without the bridge app stops with its own code and sends nothing" "$?$(bridge_calls)" "14"
-check "plugin enable without the bridge says how to install it" "$(grep -c 'inktools-bridge' "$work/err")" "1"
+check "plugin enable without the bridge says how to install it" "$(grep -c 'ink-tools-helper' "$work/err")" "1"
 check "read-only mode refuses plugin enable" "$(exit_of --read-only plugin enable Snap)" "11"
 touch "$files/bridge-installed"
 rm -f "$files/bridge-answer"
@@ -1645,11 +1645,11 @@ check "plugin action writes the request in the plugin's folder and prints the pl
 check "the request names the action, its module and the tablet's time" "$(action_field "d['action'], d['args'], d['at'], len(d['id'])")" "('sync', {'module': 'todo'}, 1800000000000, 32)"
 check "plugin action presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
 check "plugin action in JSON answers the plugin's own answer" "$(run plugin action account-sync sync --json | field "['ok'],d['modules']")" "(True, ['todo'])"
-action_line 'plugin-diagnostics ACTION_ID 1/2 {"ok":true,"action":"run-probe","ms":40,' > "$files/action-answer"
-action_line 'plugin-diagnostics ACTION_ID 2/2 "line":"SNPROBE probe done","lines":["probe done"]}' >> "$files/action-answer"
-check "run-probe joins an answer in chunks, in MyStyle/Probe/" "$(run plugin action plugin-diagnostics run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/MyStyle/Probe/action.json"
+action_line 'ink-tools-probe ACTION_ID 1/2 {"ok":true,"action":"run-probe","ms":40,' > "$files/action-answer"
+action_line 'ink-tools-probe ACTION_ID 2/2 "line":"SNPROBE probe done","lines":["probe done"]}' >> "$files/action-answer"
+check "run-probe joins an answer in chunks, in MyStyle/Probe/" "$(run plugin action ink-tools-probe run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/MyStyle/Probe/action.json"
 action_line 'account-sync ACTION_ID 1/1 {"ok":true,"action":"sync","line":"another plugin"}' > "$files/action-answer"
-check "an answer of another plugin is not this one's, and no answer times out" "$(exit_and_pushes plugin action plugin-diagnostics run-probe --timeout 0)" "61"
+check "an answer of another plugin is not this one's, and no answer times out" "$(exit_and_pushes plugin action ink-tools-probe run-probe --timeout 0)" "61"
 action_line 'account-sync ACTION_ID 1/1 {"ok":false,"code":1,"message":"no module ran: none is on"}' > "$files/action-answer"
 run plugin action account-sync sync >/dev/null 2>"$work/err"
 check "an action that failed exits 1 with the plugin's message" "$?$(grep -c 'account-sync sync: no module ran: none is on' "$work/err")" "11"
@@ -1659,7 +1659,7 @@ action_line 'account-sync ACTION_ID 1/1 {"ok":false,"code":7,"message":"stale: t
 check "a stale request exits 7" "$(exit_and_pushes plugin action account-sync sync)" "71"
 check "an unknown action is refused before any push" "$(exit_and_pushes plugin action account-sync format)" "20"
 check "a plugin with no actions is refused before any push" "$(exit_and_pushes plugin action smart-shapes sync)" "20"
-check "--module is only for account-sync sync" "$(exit_and_pushes plugin action plugin-diagnostics run-probe --module todo)" "20"
+check "--module is only for account-sync sync" "$(exit_and_pushes plugin action ink-tools-probe run-probe --module todo)" "20"
 check "read-only refuses plugin action" "$(exit_and_pushes --read-only plugin action account-sync sync)" "110"
 rm -f "$files/action-answer"
 

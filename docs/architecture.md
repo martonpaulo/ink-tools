@@ -107,7 +107,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   generated readers and inkctl's registry block as the only places a name may stand.
 - **Target: the firmware watch** ([#293](https://github.com/martonpaulo/ink-tools/issues/293)). It runs one probe per registry item when the
   environment fingerprint changes (`Build.FINGERPRINT`, every vendor app's `versionCode`, the
-  registry version; versions are labels, never gates), in the InkTools Bridge app and when `inkctl`
+  registry version; versions are labels, never gates), in the Ink Tools Helper app and when `inkctl`
   connects, since a plugin may never see a first start. Each item reads `ok`, `broken` or
   `unprobed` (no safe probe, with its reason and accepted risk; probes only read or make a provable
   no-op). Each module has a kill switch in the registry, with a review date: off stops the module
@@ -133,7 +133,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   imports a service client; `scripts/boundaries.py` enforces it in the `boundaries` gate and in CI
   ([#101](https://github.com/martonpaulo/ink-tools/issues/101)). It reads inkctl too, for the provider and
   service-host rules; inkctl's existing names are counts that only go down
-  ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). `plugins/plugin-diagnostics` is exempt from
+  ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). `plugins/ink-tools-probe` is exempt from
   the SDK and service rules, since it exists to call internals directly, but names each internal it
   probes only through its registry readers, as every tool does
   ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
@@ -160,7 +160,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   cause chain ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
 - **No `URL` getter on the tablet.** React Native's `URL` throws on `protocol`, `host` and the
   rest, so tablet code parses with `parseUrl` of `sync-core`; the `url` rule of
-  `scripts/boundaries.py` covers every plugin, `plugins/plugin-diagnostics` included
+  `scripts/boundaries.py` covers every plugin, `plugins/ink-tools-probe` included
   ([#209](https://github.com/martonpaulo/ink-tools/issues/209)).
 
 ## Shared packages
@@ -178,12 +178,12 @@ ink-tools/
     lasso-actions/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
     device-link/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     image-editing/  # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
-    plugin-diagnostics/ # permanent on-device investigation plugin
+    ink-tools-probe/ # permanent on-device investigation plugin
   cli/
     inkctl/          # the ADB control CLI (formerly supernote-adb, then inkctl)
   apps/
     handwriting-language/ # sideloaded tablet app: switch the handwriting language tablet-wide
-    inktools-bridge/ # sideloaded helper app: lets inkctl install, enable and permit plugins
+    ink-tools-helper/ # sideloaded helper app: lets inkctl install, enable and permit plugins
     ink-notebook-editor/ # macOS app, Ink Notebook Editor: a read-only .note reader for now
 ```
 
@@ -208,7 +208,7 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
 | Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Planned |
 
-Plugin Diagnostics stays a developer tool, off day to day. The conversion engine is shared package code,
+Ink Tools Probe stays a developer tool, off day to day. The conversion engine is shared package code,
 `ink-core`'s `@ink-tools/ink-core/conversion` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»
 ([#250](https://github.com/martonpaulo/ink-tools/issues/250)); until [#306](https://github.com/martonpaulo/ink-tools/issues/306) moves it, Smart Pen still carries that lasso button. The table below lists the plugins as they ship today.
 
@@ -221,11 +221,11 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | Lasso Actions | `plugins/lasso-actions/` | `lookup` (`pluginKey` `Lookup`, kept from Word Lookup so the tablet updates it in place, [#306](https://github.com/martonpaulo/ink-tools/issues/306)) |
 | Device Link | `plugins/device-link/` | `relay` |
 | Image Editing | `plugins/image-editing/` | `retouch` |
-| Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
+| Ink Tools Probe | `plugins/ink-tools-probe/` | `probe` |
 | Smart Pen | `plugins/smart-pen/` | `RealTimeConversion` (`pluginKey`, kept from Real-Time Conversion so the tablet updates it in place, [#305](https://github.com/martonpaulo/ink-tools/issues/305)) |
 
-«Bridge» alone never names the helper app: that is the Ink Tools bridge app,
-[`apps/inktools-bridge/`](#the-tablet-apps).
+«Bridge» alone never names the helper app: that is the Ink Tools Helper app,
+[`apps/ink-tools-helper/`](#the-tablet-apps).
 
 - **Account Sync** — brings external services onto the device. Three modules, each opt in/out: **to-do**
   (Todoist <-> native To-Do), **calendar** (Google / iCloud / ICS <-> native Calendar), **digest**
@@ -236,7 +236,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
     the note buttons (`registerButton(..., ['NOTE'], ...)`) and the plugin's Settings entry
     (`registerConfigButton()` + `startConfigQueue()`) **independently**. Account Sync registers only the
     config button and no NOTE buttons, so it appears only in the plugin settings, never in notes.
-    (API-confirmed from the first note plugin; to confirm on device via Plugin Diagnostics.)
+    (API-confirmed from the first note plugin; to confirm on device via Ink Tools Probe.)
   - **A change made on both sides between two syncs** ([#87](https://github.com/martonpaulo/ink-tools/issues/87), owner D14 A): on both
     modules the later change wins, and a tie goes to the service. To-Do compares the two
     `modified` times (`packages/sync-core/src/tasks.ts`). Calendar compares the tablet row's
@@ -285,11 +285,11 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   from the repository ([#288](https://github.com/martonpaulo/ink-tools/issues/288)).
 - **Device Link** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
   LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/ink-tools/issues/98), [#49](https://github.com/martonpaulo/ink-tools/issues/49)). Its network half is a native
-  Java module, as Plugin Diagnostics' listener is.
+  Java module, as Ink Tools Probe's listener is.
 - **Image Editing** — edit an image already on the page: lasso it and tap Enhance, Lighter, Darker, Undo or
   Restore original ([#136](https://github.com/martonpaulo/ink-tools/issues/136)). Its pixel work is a native Java module that reuses
   `picture-search`'s `Decolor` and `EinkPixels`.
-- **Plugin Diagnostics** — a minimal plugin for on-device investigation (provider reachability,
+- **Ink Tools Probe** — a minimal plugin for on-device investigation (provider reachability,
   permission checks), reused whenever a device question comes up.
 - **Smart Pen** — the pen features, each a module switched on or off in its Settings ([#305](https://github.com/martonpaulo/ink-tools/issues/305)):
   Real-Time Text turns handwriting into a text box as each word ends, with an Undo Conversion
@@ -312,7 +312,7 @@ measures are `packages/picture-search`.
   handwriting recognition language of the whole tablet from a floating button or its sidebar entry
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
   `ink-core`; its pure cycle and file switch are unit-tested on the JVM.
-- **Ink Tools Bridge** (`apps/inktools-bridge/`) — a sideloaded helper app with no screen that binds
+- **Ink Tools Helper** (`apps/ink-tools-helper/`) — a sideloaded helper app with no screen that binds
   PluginHost's exported `PluginSettingService` and runs one install, enable, disable, uninstall or
   permission change per `am broadcast` from `inkctl` ([#215](https://github.com/martonpaulo/ink-tools/issues/215)). `adb` cannot hold the callback binder
   PluginHost answers through, so a live app process must. Plain Java; its call encoding is
@@ -352,7 +352,7 @@ native `app.npk` where the plugin has one) and publishes `<Plugin>-<version>.snp
 gh release download <tag> --repo martonpaulo/ink-tools --pattern '*.snplg'
 ```
 
-The Ink Tools bridge app keeps its CI build: its stable signing key lives only in the repository
+The Ink Tools Helper app keeps its CI build: its stable signing key lives only in the repository
 secrets ([#223](https://github.com/martonpaulo/ink-tools/issues/223), [`security.md`](security.md)).
 
 ## What this means for the cloud agent

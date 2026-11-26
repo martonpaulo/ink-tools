@@ -18,7 +18,7 @@ export interface RegistryItem {
 export const REGISTRY_ITEMS: readonly RegistryItem[] = [
   {id: 'calendar.provider', level: 2, impact: 'user', owner: 'sn-adapter', probe: 'sn-adapter probeCapability(calendar)', unprobed: null, active: 'sn-adapter internals/calendar.ts'},
   {id: 'calendar.reading-rules', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a row\'s visibility shows only on the screen; the effect test is the device round (#293 adds a read round-trip on a known row)', active: 'sn-adapter internals/calendar.ts'},
-  {id: 'diagnostics.provider-probes', level: 2, impact: 'tests', owner: 'plugin-diagnostics', probe: 'plugin-diagnostics Run Probe', unprobed: null, active: 'plugin-diagnostics native ProbeTargets.java'},
+  {id: 'diagnostics.provider-probes', level: 2, impact: 'tests', owner: 'ink-tools-probe', probe: 'ink-tools-probe Run Probe', unprobed: null, active: 'ink-tools-probe native ProbeTargets.java'},
   {id: 'digest.provider', level: 2, impact: 'user', owner: 'sn-adapter', probe: 'sn-adapter probeCapability(digest)', unprobed: null, active: 'sn-adapter internals/digest.ts'},
   {id: 'pen.digitizer-units', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'needs a pen stroke; the effect test is the Smart Pen device round', active: 'sn-adapter official/elements.ts'},
   {id: 'pen.pen-types', level: 5, impact: 'user', owner: 'smart-pen', probe: null, unprobed: 'needs a pen stroke and a lasso; the effect test is the Smart Pen device round', active: 'smart-pen src/modules/shapes/guard.ts'},
@@ -35,7 +35,7 @@ export const REGISTRY_ITEMS: readonly RegistryItem[] = [
   {id: 'pluginhost.host-dialogs', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a dialog waits for a press on the tablet; the effect test is the #296 device round', active: 'sn-adapter official/dialog.ts'},
   {id: 'storage.cloud-conflict-folder', level: 5, impact: 'user', owner: 'picture-search', probe: null, unprobed: 'a conflict appears only after two devices sync', active: 'picture-search src/storage/settings.ts'},
   {id: 'storage.sign-in-drop-folder', level: 2, impact: 'user', owner: 'account-sync', probe: null, unprobed: '#293 adds a read of the folder', active: 'account-sync src/secretStore.ts'},
-  {id: 'storage.helper-channel', level: 2, impact: 'tests', owner: 'plugin-diagnostics', probe: 'inkctl helper', unprobed: null, active: 'plugin-diagnostics src/helper.ts'},
+  {id: 'storage.helper-channel', level: 2, impact: 'tests', owner: 'ink-tools-probe', probe: 'inkctl helper', unprobed: null, active: 'ink-tools-probe src/helper.ts'},
   {id: 'todo.provider', level: 2, impact: 'user', owner: 'sn-adapter', probe: 'sn-adapter probeCapability(todo)', unprobed: null, active: 'sn-adapter internals/todo.ts'},
   {id: 'todo.row-rules', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a row\'s visibility shows only in the app; #293 adds a read round-trip on a known row', active: 'sn-adapter internals/rules.ts'},
   {id: 'todo.twin-repair', level: 5, impact: 'user', owner: 'account-sync', probe: null, unprobed: 'a twin appears only after a cloud sync; the accepted risk is a real task soft-deleted, so the repair logs each removal', active: 'account-sync deviceStores.ts'},

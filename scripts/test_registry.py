@@ -130,14 +130,14 @@ class RegistryTest(unittest.TestCase):
         self.assertIn("lower its ceiling from 5 to 3", self.problems())
 
     def test_each_reader_holds_the_items_of_its_tools(self):
-        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl", "inktools-bridge", "ink-notebook-editor"]
+        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl", "ink-tools-helper", "ink-notebook-editor"]
         code, out = self.run_main("--write")
         self.assertEqual(code, 0, out)
         ts = (self.root / "packages/sn-adapter/src/registry.generated.ts").read_text()
         self.assertIn("todoProvider: {", ts)
         self.assertIn("action: 'an.action',", ts)
         self.assertIn("authority: 'a.provider',", ts)
-        bridge = (self.root / "apps/inktools-bridge/src/com/martonpaulo/inktools/bridge/Registry.java").read_text()
+        bridge = (self.root / "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java").read_text()
         self.assertIn("public static final class TodoProvider {", bridge)
         self.assertIn('public static final String ACTION = "an.action";', bridge)
         self.assertNotIn("CalendarProvider", bridge)

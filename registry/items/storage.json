@@ -62,17 +62,17 @@
     },
     {
       "id": "storage.helper-channel",
-      "title": "Plugin Diagnostics' helper channel: MyStyle/Probe/command.json and SNPROBE log lines",
+      "title": "Ink Tools Probe's helper channel: MyStyle/Probe/command.json and SNPROBE log lines",
       "level": 2,
       "impact": "tests",
-      "owner": "plugin-diagnostics",
+      "owner": "ink-tools-probe",
       "readers": [
-        "plugin-diagnostics",
+        "ink-tools-probe",
         "inkctl"
       ],
       "reason": "the only file a plugin and the shell both reach is in the shared MyStyle folder",
       "evidence": {
-        "source": "plugins/plugin-diagnostics/src/helper.ts (#148)",
+        "source": "plugins/ink-tools-probe/src/helper.ts (#148)",
         "date": "2026-11-16"
       },
       "upgradePath": "none needed: both ends are ours",
@@ -81,7 +81,7 @@
       "probe": {
         "name": "inkctl helper"
       },
-      "active": "plugin-diagnostics src/helper.ts",
+      "active": "ink-tools-probe src/helper.ts",
       "issues": [
         148
       ],

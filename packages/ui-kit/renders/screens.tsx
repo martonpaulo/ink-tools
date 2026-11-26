@@ -27,9 +27,9 @@ import {DEFAULT_PEN_SETTINGS} from '../../../plugins/smart-pen/src/settings';
 import LassoActionsSettings from '../../../plugins/lasso-actions/App';
 import {CollectionScreen as LassoCollection} from '../../../plugins/lasso-actions/src/ui/CollectionScreen';
 import type {CollectionHost} from '../../../plugins/lasso-actions/src/collection/run';
-import PluginDiagnostics from '../../../plugins/plugin-diagnostics/App';
-import {copy as diagnosticsCopy} from '../../../plugins/plugin-diagnostics/src/copy';
-import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
+import PluginDiagnostics from '../../../plugins/ink-tools-probe/App';
+import {copy as diagnosticsCopy} from '../../../plugins/ink-tools-probe/src/copy';
+import type {ProbeOutcome} from '../../../plugins/ink-tools-probe/src/probe';
 import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
@@ -158,7 +158,7 @@ async function imageEditor(state: Partial<ImageEditorState> = {}) {
   }
   return tree;
 }
-/** Plugin Diagnostics after «Run Probe», ended with this outcome (#257). */
+/** Ink Tools Probe after «Run Probe», ended with this outcome (#257). */
 async function diagnostics(outcome: ProbeOutcome): Promise<ReactTestRenderer> {
   const tree = await mount(<PluginDiagnostics close={noop} run={async () => outcome} />);
   const run = tree.root.find(node => node.props.accessibilityLabel === diagnosticsCopy.run && typeof node.props.onPress === 'function');
@@ -227,10 +227,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
   {name: 'lasso-actions-collection', render: () => mount(<LassoCollection close={noop} host={COLLECTION_HOST} />)},
-  {name: 'plugin-diagnostics', render: () => mount(<PluginDiagnostics close={noop} run={async () => ({lines: [], status: 'done'})} />)},
-  {name: 'plugin-diagnostics-done', render: () => diagnostics({lines: PROBE_LINES, status: 'done'}), raw: PROBE_LINES},
-  {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']}), raw: [diagnosticsCopy['needs.native'].command]},
-  {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
+  {name: 'ink-tools-probe', render: () => mount(<PluginDiagnostics close={noop} run={async () => ({lines: [], status: 'done'})} />)},
+  {name: 'ink-tools-probe-done', render: () => diagnostics({lines: PROBE_LINES, status: 'done'}), raw: PROBE_LINES},
+  {name: 'ink-tools-probe-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']}), raw: [diagnosticsCopy['needs.native'].command]},
+  {name: 'ink-tools-probe-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
   {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS)},
   {name: 'account-sync-settings', render: () => accountSync(accountSyncDefaults())},
   {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})},

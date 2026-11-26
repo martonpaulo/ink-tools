@@ -25,9 +25,9 @@ Not counted: Android public APIs, LocalSend, Google, Todoist and iCloud, ADB, an
 | Real-Time Conversion | 1 | Pen-up uuid differs from `getElements`; `recognizeElements` takes page elements only |
 | Image Editing | 3 | Back key through the overlay window; Crop and Erase element facts; inserted PNG copied into `.data/plugin/` |
 | Device Transfer | 1 | `insertImage` floating selection committed later |
-| Plugin Diagnostics | 2 | Provider probes; the `command.json` and `SNPROBE` helper channel |
+| Ink Tools Probe | 2 | Provider probes; the `command.json` and `SNPROBE` helper channel |
 | Handwriting Language | 4 | Language file in `/sdcard/.data/dictionary/default/`; `hw_type_change`; Settings deep link `HWLanguageSetting`; writing screens by activity name |
-| InkTools Bridge | 4 | Private `PluginSettingService`; hard-coded interface numbers 1, 5, 6, 9 (5 is uninstall, never checked against the host); PluginHost classes by reflection; permission status values |
+| Ink Tools Helper | 4 | Private `PluginSettingService`; hard-coded interface numbers 1, 5, 6, 9 (5 is uninstall, never checked against the host); PluginHost classes by reflection; permission status values |
 | inkctl | 12 | PluginHost plugin list provider; Note activity and extras; install and detail screens by text; Note screen ids; Calendar sync broadcast; To-Do sync trigger row; language folder; `MyStyle/fonts`; `ro.product.board`; Ratta's change-log page; log tags |
 | Ink Notebook Editor | 2 | The `.note` format and version allow-list; `NoteWriter` byte edit |
 
@@ -48,7 +48,7 @@ skips inkctl.
 | Visual values outside tokens (page-text typography copied in 3 plugins and inkctl) | 6 |
 | User copy outside copy modules | 7 |
 | Timeouts, limits, URLs (LocalSend path and 64 KiB in TS and 4 Java files, Google API base and scopes) | 10 |
-| The same value in several places (SDK button enums in 5 plugins, the Plugin Diagnostics ↔ inkctl contract, native module names) | 9 |
+| The same value in several places (SDK button enums in 5 plugins, the Ink Tools Probe ↔ inkctl contract, native module names) | 9 |
 | Versions and ids by hand (`pluginKey` ×4 per plugin, stale README versions) | 5 |
 | Other (pen ids and SDK enums past the `sdk` rule, host error codes) | 4 |
 
