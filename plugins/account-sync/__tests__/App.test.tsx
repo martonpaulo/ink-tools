@@ -3,7 +3,7 @@ import React from 'react';
 import {NativeModules, Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
-import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import {fail, ok, THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {DEVICE_CHECK_PENDING} from '@ink-tools/sync-core';
 import App from '../App';
@@ -312,4 +312,13 @@ test('an off Calendar and To-Do offer «Remove what Account Sync wrote» with th
   await act(async () => toggle(tree, copy['remove.yes']).props.onPress());
   expect(runner.removeWritten).toHaveBeenCalledWith('todo');
   expect(texts(tree)).toContain('To-Do: removed 3 tasks Account Sync wrote.');
+});
+
+test('the view arms its own Back key module once, so Back never reaches the note (#300)', async () => {
+  // Device round 9: Back on a plugin view with no module closed the note behind it.
+  const module = fakeBackKeyModule('AccountSyncBack');
+  await mount();
+  await act(async () => {});
+  expect(module.listen).toHaveBeenCalledTimes(1);
+  module.restore();
 });

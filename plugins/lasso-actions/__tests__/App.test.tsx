@@ -9,7 +9,7 @@ import {NativeModules} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {PluginManager} from 'sn-plugin-lib';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
-import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {resetButtonsForTests} from '../src/buttons';
 import {DEFINE_BUTTON_ID} from '../src/definition';
@@ -244,4 +244,13 @@ describe('Saved pictures (#23)', () => {
     NativeModules.LookupFiles = {...files, listSizes: jest.fn(async () => [])};
     expect(texts(await open()).join('\n')).not.toContain('Earlier versions');
   });
+});
+
+test('the view arms its own Back key module once, so Back never reaches the note (#300)', async () => {
+  // Device round 9: Back on a plugin view with no module closed the note behind it.
+  const module = fakeBackKeyModule('LassoActionsBack');
+  await open();
+  await act(async () => {});
+  expect(module.listen).toHaveBeenCalledTimes(1);
+  module.restore();
 });

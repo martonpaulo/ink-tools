@@ -1,9 +1,10 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
+  armBackKey,
   closePluginView,
   getPluginDirPath,
 } from '@ink-tools/sn-adapter/official';
-import {useBackKey} from '@ink-tools/ui-kit';
+import {useArmOnRoot, useBackKey} from '@ink-tools/ui-kit';
 import {
   BridgeSettings,
   MODULE_PROVIDERS,
@@ -83,6 +84,9 @@ export function moduleRows(
  * runner's last pass and never probes itself: the probe runs only for a sync that needs it, and
  * only for the modules that are on (#43).
  */
+/** sn-adapter's Back key module, as `BridgeFilesPackage.java` registers it (#300). */
+export const BACK_MODULE = 'AccountSyncBack';
+
 export default function App({
   folder = getPluginDirPath,
   sync = bridgeSync,
@@ -100,6 +104,8 @@ export default function App({
   /** Closes the plugin view; tests pass a fake. */
   close?: () => void;
 }) {
+  // Back stays in the view and never reaches the note behind it (#300).
+  useArmOnRoot(rootTag => armBackKey(BACK_MODULE, rootTag));
   const synced = useSync(sync);
   const exit = () => {
     if (!synced.running) {

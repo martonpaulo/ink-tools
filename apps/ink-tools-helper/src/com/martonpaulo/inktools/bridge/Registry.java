@@ -60,7 +60,7 @@ public final class Registry {
       new Item("plugin-api.floating-insert", 5, "user", "device-link", null, "needs a picture insert on a note page", "device-link src/receive/receive.ts", null),
       new Item("plugin-api.batch-no-redraw", 5, "user", "sn-adapter", null, "needs a conversion on a note page; the effect test is the Smart Pen device round (#296)", "sn-adapter official/elements.ts", null),
       new Item("pluginhost.no-back-press", 5, "user", "ui-kit", null, "needs a key press on the tablet", "ui-kit src/backKey.ts", null),
-      new Item("pluginhost.overlay-back-key", 5, "user", "image-editing", null, "needs a key press on the tablet", "sn-adapter native BackKeyModule.java, registered by image-editing and device-link", null),
+      new Item("pluginhost.overlay-back-key", 5, "user", "image-editing", null, "needs a key press on the tablet", "sn-adapter native BackKeyModule.java, registered by every plugin with a full view", null),
       new Item("pluginhost.file-sandbox", 5, "user", "picture-search", null, "#293 adds a write and delete of a test file in each allowed folder", "picture-search native SafePaths.java", null),
       new Item("pluginhost.plugin-list", 2, "tests", "inkctl", "inkctl routes", null, "inkctl plugin list", null),
       new Item("pluginhost.setting-service", 3, "tests", "ink-tools-helper", "ink-tools-helper ping", null, "ink-tools-helper HostCalls.java", null),

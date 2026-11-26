@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   ChoiceList,
+  useArmOnRoot,
   RowGroup,
   shared,
   SwitchGroup,
@@ -11,7 +12,7 @@ import {
   useWorking,
   WorkingStrip,
 } from '@ink-tools/ui-kit';
-import {closePluginView} from '@ink-tools/sn-adapter/official';
+import {armBackKey, closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {askStates, BUTTONS, isOn, LassoButton, withSwitch} from './src/buttons';
 import {Choice, currentChoice, onChoice} from './src/choose';
@@ -49,12 +50,17 @@ const sourceLabel = (name: string): string =>
  * While «Paste Collection» has opened it, the view is the collection's screen (#249). «Saved pictures» says where the inserted pictures are kept and why, and names the old
  * synced folders that still hold files, with the File Manager step (#23).
  */
+/** sn-adapter's Back key module, as `LookupFilesPackage.java` registers it (#300). */
+export const BACK_MODULE = 'LassoActionsBack';
+
 export default function App({
   close = () => closePluginView(),
 }: {
   /** Closes the plugin view; tests pass a fake. */
   close?: () => void;
 }) {
+  // Back stays in the view and never reaches the note behind it (#300).
+  useArmOnRoot(rootTag => armBackKey(BACK_MODULE, rootTag));
   const [choice, setChoice] = useState<Choice | null>(currentChoice());
   const [collection, setCollection] = useState(collectionOpen());
   useEffect(() => onChoice(setChoice), []);

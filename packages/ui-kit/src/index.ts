@@ -8,7 +8,7 @@ export type {ButtonKind, ButtonProps} from './Button';
 export {createWorking, WORKING_TEXT, WORKING_TIMEOUT_MS} from './working';
 export type {HeldState, Working, WorkingPorts, WorkingRun} from './working';
 export {useWorking, WorkingStrip} from './WorkingStrip';
-export {useBackKey} from './backKey';
+export {useArmOnRoot, useBackKey} from './backKey';
 export {CLOSE_TEXT, RETRY_TEXT} from './problem';
 export type {Fix, Problem} from './problem';
 export {ErrorView, LoadingView, Needs} from './ProblemView';

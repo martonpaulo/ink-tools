@@ -7,12 +7,13 @@ import {
   shared,
   SwitchRow,
   TitleBar,
+  useArmOnRoot,
   useBackKey,
   useWorking,
   WorkingStrip,
   type Working,
 } from '@ink-tools/ui-kit';
-import {closePluginView} from '@ink-tools/sn-adapter/official';
+import {armBackKey, closePluginView} from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
 import {MODULES} from './src/modules';
 import {copy as textCopy} from './src/modules/text/copy';
@@ -43,8 +44,13 @@ const SIZES = MIN_SIZE_CHOICES_MM.map(mm => ({
 }));
 
 /** A button's failure holds the view on ui-kit's Error state until Close (#257); else Settings. */
+/** sn-adapter's Back key module, as `SmartPenFilesPackage.java` registers it (#300). */
+export const BACK_MODULE = 'SmartPenBack';
+
 export default function App(props: SettingsProps & {working?: Working}) {
   const {working = deviceWorking, ...settings} = props;
+  // Back stays in the view and never reaches the note behind it (#300).
+  useArmOnRoot(rootTag => armBackKey(BACK_MODULE, rootTag));
   if (useWorking(working)) {
     return <WorkingStrip working={working} />;
   }

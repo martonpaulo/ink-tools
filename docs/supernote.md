@@ -329,7 +329,8 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   Editing 0.1.0 beta 15 makes its React root view focusable, focuses it on each show and turns Back
   into `hardwareBackPress` [inference, device round pending,
   [#226](https://github.com/martonpaulo/ink-tools/issues/226)]; that code is now sn-adapter's
-  `BackKeyModule`, which Device Link registers too
+  `BackKeyModule`, which every plugin with a full view registers under its own name and arms
+  once per root view with ui-kit's `useArmOnRoot`
   ([#300](https://github.com/martonpaulo/ink-tools/issues/300)).
 - A plugin view without that module does not keep Back: on Device Link 0.2.0 beta 1, Back on
   «Receive» closed the view and the note under it, which left the task stack [measured, Manta,

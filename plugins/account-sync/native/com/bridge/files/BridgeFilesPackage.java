@@ -6,6 +6,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.inktools.files.Ink2PicFilesPackage;
 import com.inktools.files.Registry;
 import com.inktools.files.SafePaths;
+import com.inktools.backkey.BackKeyModule;
 import com.inktools.timer.TickModule;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,8 @@ public class BridgeFilesPackage extends Ink2PicFilesPackage {
   static final String PLUGIN_ID = "4d11a9bbc6ad25e2";
   /** The native timer's module name; index.js passes the same name to `nativeTimers`. */
   static final String TICKS_MODULE = "BridgeTicks";
+  /** The Back key module's name; App.tsx `BACK_MODULE` names the same (#300). */
+  static final String BACK_MODULE = "AccountSyncBack";
 
   public BridgeFilesPackage() {
     // Its private folder, EXPORT, MyStyle/Bridge and the sign-in drop folder of
@@ -38,6 +41,8 @@ public class BridgeFilesPackage extends Ink2PicFilesPackage {
     modules.add(new BridgeProvidersModule(context));
     // The timer of the automatic sync and the action channel, which ticks with no view open (#283).
     modules.add(new TickModule(context, TICKS_MODULE));
+    // sn-adapter's Back key: Back closes the view, never the note behind it (#300).
+    modules.add(new BackKeyModule(context, BACK_MODULE));
     return modules;
   }
 }

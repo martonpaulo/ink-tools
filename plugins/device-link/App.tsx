@@ -1,11 +1,12 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
-import {RootTagContext, Text, ToastAndroid, View} from 'react-native';
-import {closePluginView, listenBackKey} from '@ink-tools/sn-adapter/official';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Text, ToastAndroid, View} from 'react-native';
+import {armBackKey as armModule, closePluginView} from '@ink-tools/sn-adapter/official';
 import {
   Button,
   ChoiceList,
   shared,
   TitleBar,
+  useArmOnRoot,
   useBackKey,
   useWorking,
   WorkingStrip,
@@ -54,11 +55,7 @@ type Props = {
   armBackKey?: (rootTag: number) => void;
 };
 
-function armDeviceBackKey(rootTag: number): void {
-  listenBackKey(BACK_MODULE, rootTag).then(result =>
-    console.log(`Relay: back key: ${result.ok ? 'listening' : result.message}`),
-  );
-}
+const armDeviceBackKey = (rootTag: number) => armModule(BACK_MODULE, rootTag);
 
 /** One instance, so the view's effects do not run again on every render. */
 const defaultRelay = relay();
@@ -159,12 +156,8 @@ export default function App({
   armBackKey = armDeviceBackKey,
 }: Props) {
   // Back went past the view and closed the note behind it (device round 9, #300): the native
-  // module keeps the key in the view, once per root view, as Image Editing's does.
-  const rootTag = useContext(RootTagContext);
-  useEffect(() => {
-    armBackKey(rootTag);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootTag]);
+  // module keeps the key in the view, once per root view, as every plugin view does.
+  useArmOnRoot(armBackKey);
   const [receiving, setReceiving] = useState<ReceiveState>(receiveState());
   const [texting, setTexting] = useState<TextState>(textState());
   const [picking, setPicking] = useState<PickState>(pickState());

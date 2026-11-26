@@ -3,7 +3,7 @@
  * as React Native does, newest handler first, until one answers true. Kept out of the entry, so
  * out of the bundle, as `screenBreaks` is.
  */
-import {BackHandler} from 'react-native';
+import {BackHandler, NativeModules} from 'react-native';
 
 type Handler = () => boolean | null | undefined;
 
@@ -25,5 +25,21 @@ export function catchBackKey() {
       [...handlers].reverse().some(handler => handler() === true),
     count: () => handlers.length,
     restore: () => spy.mockRestore(),
+  };
+}
+
+/**
+ * A fake of sn-adapter's native Back key module registered as `name` (#300): `listen` records each
+ * root tag a view arms it on; `restore` takes the fake away.
+ */
+export function fakeBackKeyModule(name: string) {
+  const listen = jest.fn(async (_rootTag: number) => true);
+  const modules = NativeModules as Record<string, unknown>;
+  modules[name] = {listenBackKey: listen};
+  return {
+    listen,
+    restore: () => {
+      delete modules[name];
+    },
   };
 }

@@ -6,8 +6,8 @@
  * so this runs only on a host that does; each full view keeps a visible «Close». Upgrade to a
  * native key listener only if a device round shows one receives the key.
  */
-import {useEffect, useRef} from 'react';
-import {BackHandler} from 'react-native';
+import {useContext, useEffect, useRef} from 'react';
+import {BackHandler, RootTagContext} from 'react-native';
 
 export function useBackKey(onBack: () => void): void {
   const latest = useRef(onBack);
@@ -24,4 +24,18 @@ export function useBackKey(onBack: () => void): void {
     );
     return () => subscription.remove();
   }, []);
+}
+
+/**
+ * Runs `arm` once per root view of the plugin, with its root tag: each plugin arms sn-adapter's
+ * native Back key module there, so the key reaches `useBackKey` and never the note behind the view
+ * (#226, #300). Call it before any early return of the plugin's root component.
+ */
+export function useArmOnRoot(arm: (rootTag: number) => void): void {
+  const rootTag = useContext(RootTagContext);
+  useEffect(() => {
+    arm(rootTag);
+    // Once per root view: the native listener outlives each show of the view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rootTag]);
 }

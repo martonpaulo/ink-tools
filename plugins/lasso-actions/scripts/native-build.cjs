@@ -18,7 +18,8 @@ module.exports = defineBuild(
     root,
     hostTools,
     packageClass: 'com.lookup.files.LookupFilesPackage',
-    sources: [nativeSources, path.join(root, 'native')],
+    // sn-adapter's Java: the Back key module every plugin view registers (#300).
+    sources: [nativeSources, require('../../../packages/sn-adapter/plugin-config').nativeSources, path.join(root, 'native')],
   },
   require.main === module,
 );

@@ -1,8 +1,13 @@
 package com.lookup.files;
 
+import com.facebook.react.bridge.NativeModule;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.inktools.backkey.BackKeyModule;
 import com.inktools.files.Ink2PicFilesPackage;
 import com.inktools.files.Registry;
 import com.inktools.files.SafePaths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Listed in Lookup's PluginConfig.json `reactPackages` by scripts/native-build.cjs: picture-search's
@@ -12,6 +17,8 @@ import com.inktools.files.SafePaths;
 public class LookupFilesPackage extends Ink2PicFilesPackage {
   /** PluginConfig.json `pluginID`, the name of the plugin's private folder; a test pins the two. */
   static final String PLUGIN_ID = "t2obvupqt3edmnrr";
+  /** The Back key module's name; App.tsx `BACK_MODULE` names the same (#300). */
+  static final String BACK_MODULE = "LassoActionsBack";
 
   /**
    * The retired picture plugin's folders Lookup replaces (#91), which Settings counts so the person can delete them
@@ -24,5 +31,13 @@ public class LookupFilesPackage extends Ink2PicFilesPackage {
     // Its private folder, EXPORT and MyStyle/Lookup, the profile's folder (src/profile.ts, #302),
     // and the retired picture plugin's folders it replaces.
     super("LookupFiles", "LookupImage", SafePaths.Roots.plugin(PLUGIN_ID, "Lookup", RETIRED + "library", RETIRED + "symbols"));
+  }
+
+  @Override
+  public List<NativeModule> createNativeModules(ReactApplicationContext context) {
+    List<NativeModule> modules = new ArrayList<>(super.createNativeModules(context));
+    // sn-adapter's Back key: Back closes the view, never the note behind it (#300).
+    modules.add(new BackKeyModule(context, BACK_MODULE));
+    return modules;
   }
 }

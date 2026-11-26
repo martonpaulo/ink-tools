@@ -2,7 +2,7 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
-import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import {WorkingStrip} from '@ink-tools/ui-kit';
 import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import App from '../App';
@@ -180,4 +180,13 @@ test('a button that failed on the tablet shows the Error state with its reason a
   });
   expect(working.problem()).toBeNull();
   expect(tree.root.findAllByType(WorkingStrip).length).toBe(0);
+});
+
+test('the view arms its own Back key module once, so Back never reaches the note (#300)', async () => {
+  // Device round 9: Back on a plugin view with no module closed the note behind it.
+  const module = fakeBackKeyModule('SmartPenBack');
+  await mount();
+  await act(async () => {});
+  expect(module.listen).toHaveBeenCalledTimes(1);
+  module.restore();
 });

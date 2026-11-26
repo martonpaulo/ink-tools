@@ -27,3 +27,15 @@ export async function listenBackKey(
     return fail(MODULE_CODE, (error as {message?: string}).message ?? code, code);
   }
 }
+
+/** Arms the module `name` on `rootTag` and logs the answer, for a view's root effect (#300). */
+export function armBackKey(
+  name: string,
+  rootTag: number,
+  log: (line: string) => void = line => console.log(line),
+  modules: Record<string, unknown> = NativeModules,
+): void {
+  listenBackKey(name, rootTag, modules).then(result =>
+    log(`INKTOOLS ${name}: back key: ${result.ok ? 'listening' : result.message}`),
+  );
+}
