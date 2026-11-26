@@ -19,15 +19,10 @@ const path = require('node:path');
 
 /**
  * The plugin fields that still disagree with the identity rule (#295), as `<folder>: <field>`. Each
- * row is a finding once it agrees, so the list only shrinks; #295 decides whether `app.json`
- * `displayName` is the display name (Smart Pen) or the code name (the rest).
+ * row is a finding once it agrees, so the list only shrinks; `app.json` `displayName` is the
+ * display name, as `PluginConfig.json` `name` is.
  */
-const PENDING_IDENTITY = new Set([
-  'account-sync: app.json displayName',
-  'device-link: app.json displayName',
-  'image-editing: app.json displayName',
-  'ink-tools-probe: app.json displayName',
-]);
+const PENDING_IDENTITY = new Set();
 /** The dependencies every plugin pins to the same version: one host runtime, one SDK. */
 const SHARED_PINS = ['react-native', 'react', 'sn-plugin-lib'];
 /** The copy module's title line: `title: 'Word Lookup',`. */
