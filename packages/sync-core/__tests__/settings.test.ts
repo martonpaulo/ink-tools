@@ -1,6 +1,7 @@
 import {
   activePlan,
   addIcsFeed,
+  icsFeedName,
   MAX_ICS_FEEDS,
   removeIcsFeed,
   defaultSettings,
@@ -66,6 +67,11 @@ test('«Send tablet-only items» is off by default, round-trips, and a wrong typ
   expect(parseSettings(serializeSettings(on))).toEqual(on);
   expect(parseSettings(JSON.stringify({schema: 1, modules: {}, providers: {}})).sendTabletOnly).toEqual({todo: false, calendar: false});
   expect(() => parseSettings(JSON.stringify({schema: 1, modules: {}, providers: {}, sendTabletOnly: {todo: 'yes'}}))).toThrow('settings: sendTabletOnly.todo is not a boolean');
+});
+
+test('an ICS feed is named by its place and host, never its path (#30)', () => {
+  expect(icsFeedName('webcal://feeds.example.com/private/token-1/a.ics', 0)).toBe('ICS 1 (feeds.example.com)');
+  expect(icsFeedName('https://cal.example.org/b.ics?key=secret', 2)).toBe('ICS 3 (cal.example.org)');
 });
 
 test('ICS feed addresses: none by default, https or webcal kept once, round-trip, a bad one throws (#30)', () => {

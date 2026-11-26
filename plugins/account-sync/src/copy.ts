@@ -41,6 +41,15 @@ export const copy = {
   'provider.google': 'Google',
   'provider.icloud': 'iCloud',
   'provider.ics': 'ICS',
+  'ics.caption': 'ICS feeds',
+  'ics.empty': 'No ICS feed yet.',
+  'ics.field': 'Feed address, https:// or webcal://',
+  'ics.add': 'Add feed',
+  'ics.remove': 'Remove',
+  'ics.removeLabel': 'Remove {name}',
+  'ics.invalid': 'This is not a feed address. Use one that starts with https:// or webcal://.',
+  'ics.off': 'Turn on Calendar and ICS to add or remove a feed.',
+  'ics.full': 'Account Sync keeps at most {max} feeds. Remove one to add another.',
 } as const;
 
 export type CopyKey = keyof typeof copy;

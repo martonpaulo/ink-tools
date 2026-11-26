@@ -1,7 +1,7 @@
 /**
  * Bridge's opt-in switches (#40): one `RowGroup` per module, under the module's caption, a toggle for the module and one per
  * provider. Each is a ui-kit `SwitchRow`, whose switch a screen reader hears as checked or not
- * (#274). A provider
+ * (#274). The Calendar module's ICS feed addresses follow its group (#30). A provider
  * stays disabled while its module is off, and every change goes through the sync-core rules.
  */
 import React from 'react';
@@ -18,6 +18,7 @@ import {
   TwoWayModule,
 } from '@ink-tools/sync-core/settings';
 import {copy, format} from './copy';
+import {IcsFeeds} from './IcsFeeds';
 
 const twoWay = (m: string): m is TwoWayModule =>
   (TWO_WAY_MODULES as string[]).includes(m);
@@ -40,44 +41,55 @@ export function SettingsForm({
         const on = settings.modules[module];
         const name = copy[`module.${module}`];
         return (
-          <RowGroup key={module} caption={name}>
-            <SwitchRow
-              title={name}
-              value={on}
-              onChange={next => onChange(setModule(settings, module, next))}
-            />
-            {MODULE_PROVIDERS[module].map(provider => (
+          <React.Fragment key={module}>
+            <RowGroup caption={name}>
               <SwitchRow
-                key={provider}
-                title={copy[`provider.${provider}`]}
-                value={settings.providers[provider]}
-                disabled={!on}
-                onChange={next =>
-                  onChange(setProvider(settings, provider, next))
-                }
+                title={name}
+                value={on}
+                onChange={next => onChange(setModule(settings, module, next))}
               />
-            ))}
-            {twoWay(module) && (
-              <SwitchRow
-                title={copy['sendTabletOnly.button']}
-                subtitle={
-                  module === 'todo' && on && typeof tabletOnlyTasks === 'number'
-                    ? format(
-                        settings.sendTabletOnly.todo
-                          ? 'sendTabletOnly.sent'
-                          : 'sendTabletOnly.kept',
-                        {count: String(tabletOnlyTasks)},
-                      )
-                    : undefined
-                }
-                value={settings.sendTabletOnly[module]}
-                disabled={!on}
-                onChange={next =>
-                  onChange(setSendTabletOnly(settings, module, next))
-                }
+              {MODULE_PROVIDERS[module].map(provider => (
+                <SwitchRow
+                  key={provider}
+                  title={copy[`provider.${provider}`]}
+                  value={settings.providers[provider]}
+                  disabled={!on}
+                  onChange={next =>
+                    onChange(setProvider(settings, provider, next))
+                  }
+                />
+              ))}
+              {twoWay(module) && (
+                <SwitchRow
+                  title={copy['sendTabletOnly.button']}
+                  subtitle={
+                    module === 'todo' &&
+                    on &&
+                    typeof tabletOnlyTasks === 'number'
+                      ? format(
+                          settings.sendTabletOnly.todo
+                            ? 'sendTabletOnly.sent'
+                            : 'sendTabletOnly.kept',
+                          {count: String(tabletOnlyTasks)},
+                        )
+                      : undefined
+                  }
+                  value={settings.sendTabletOnly[module]}
+                  disabled={!on}
+                  onChange={next =>
+                    onChange(setSendTabletOnly(settings, module, next))
+                  }
+                />
+              )}
+            </RowGroup>
+            {module === 'calendar' && (
+              <IcsFeeds
+                settings={settings}
+                onChange={onChange}
+                enabled={on && settings.providers.ics}
               />
             )}
-          </RowGroup>
+          </React.Fragment>
         );
       })}
     </View>

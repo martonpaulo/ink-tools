@@ -49,10 +49,13 @@ export function defaultSettings(): BridgeSettings {
 /** The most ICS feeds Settings keeps; the owner has three (#30). */
 export const MAX_ICS_FEEDS = 20;
 
+/** A `webcal:` address is the same feed over HTTPS. */
+const WEBCAL = /^webcal:\/\//i;
+
 /** An ICS feed address as Settings keeps it, trimmed, or a refusal naming why. */
 export function icsFeedAddress(raw: string): string {
   const url = raw.trim();
-  const parsed = parseUrl(url.replace(/^webcal:\/\//i, 'https://'));
+  const parsed = parseUrl(url.replace(WEBCAL, 'https://'));
   if (!parsed || parsed.protocol !== 'https:') throw new Error('settings: an ICS feed needs an https: or webcal: address');
   return url;
 }
@@ -119,6 +122,14 @@ export function addIcsFeed(s: BridgeSettings, raw: string): BridgeSettings {
   if (s.icsFeeds.includes(url)) return s;
   if (s.icsFeeds.length >= MAX_ICS_FEEDS) throw new Error(`settings: at most ${MAX_ICS_FEEDS} ICS feeds`);
   return {...s, icsFeeds: [...s.icsFeeds, url]};
+}
+
+/**
+ * A feed's name, in Settings and on its calendar: its place in the list and its host, never the
+ * whole address, which can hold a secret path or query (#30).
+ */
+export function icsFeedName(url: string, index: number): string {
+  return `ICS ${index + 1} (${parseUrl(url.replace(WEBCAL, 'https://'))?.host ?? 'feed'})`;
 }
 
 export function removeIcsFeed(s: BridgeSettings, url: string): BridgeSettings {

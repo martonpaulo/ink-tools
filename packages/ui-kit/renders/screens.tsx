@@ -25,6 +25,8 @@ import SmartPenSettings from '../../../plugins/smart-pen/App';
 import {DEFAULT_PEN_SETTINGS} from '../../../plugins/smart-pen/src/settings';
 import WordLookupSettings from '../../../plugins/word-lookup/App';
 import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
+import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
+import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
@@ -95,6 +97,11 @@ const IMAGE_EDITOR: ImageEditorState = {
   message: null,
 };
 const noop = () => {};
+/** Account Sync with Calendar and ICS on and one synthetic feed, scrolled to its ICS feeds (#30). */
+const ICS_FEEDS = addIcsFeed(
+  accountSyncProvider(accountSyncModule(accountSyncDefaults(), 'calendar', true), 'ics', true),
+  'webcal://feeds.example.com/private/sample.ics',
+);
 /** The picture's stage height the renders report: under its floor on the Nomad, the smallest window. */
 const STAGE_HEIGHT = 280;
 /** The editor, laid out: the picture's stage reports a size, as on the device, so the picture shows. */
@@ -141,6 +148,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
+  {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
   {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},

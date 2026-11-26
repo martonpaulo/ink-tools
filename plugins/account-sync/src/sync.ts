@@ -23,13 +23,13 @@ import {
   HttpFetch,
   httpsUrl,
   ICLOUD_CALDAV_ROOT,
+  icsFeedName,
   initialBridgeState,
   ModuleAvailability,
   ModuleId,
   ModuleRun,
   OAuthClient,
   parseICloudSignIn,
-  parseUrl,
   ProbeProblems,
   ProviderId,
   refreshAccessToken,
@@ -201,7 +201,7 @@ function icsSource(device: SyncDevice, feeds: string[]): CalendarSource {
   }
   const named = feeds.map((url, i) => {
     const https = httpsUrl(url);
-    return {id: https, url: https, name: `ICS ${i + 1} (${parseUrl(https)?.host ?? 'feed'})`};
+    return {id: https, url: https, name: icsFeedName(https, i)};
   });
   const fetchText = async (url: string) => {
     const res = await device.fetch(url, {method: 'GET', headers: {Accept: 'text/calendar'}});

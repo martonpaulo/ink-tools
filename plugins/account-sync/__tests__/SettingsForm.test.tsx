@@ -5,12 +5,15 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {metrics} from '@ink-tools/ui-kit';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {
+  addIcsFeed,
   BridgeSettings,
   defaultSettings,
+  MAX_ICS_FEEDS,
   setModule,
   setProvider,
 } from '@ink-tools/sync-core/settings';
 import {SettingsForm} from '../src/SettingsForm';
+import {copy, format} from '../src/copy';
 
 function render(settings: BridgeSettings, onChange = jest.fn()) {
   let tree!: ReactTestRenderer;
@@ -84,7 +87,7 @@ describe('SettingsForm (#40)', () => {
     expect(onChange.mock.calls[0][0].providers.todoist).toBe(false);
   });
 
-  it('draws each module name as a section caption in the context grey (#275, #274)', () => {
+  it('draws each module name, and the ICS feeds under Calendar, as a section caption in the context grey (#275, #274, #30)', () => {
     const {tree} = render(defaultSettings());
     const headings = tree.root.findAll(
       n => n.type === Text && n.props.accessibilityRole === 'header',
@@ -92,6 +95,7 @@ describe('SettingsForm (#40)', () => {
     expect(headings.map(h => h.props.children)).toEqual([
       'To-Do',
       'Calendar',
+      'ICS feeds',
       'Digest',
     ]);
     for (const heading of headings) {
@@ -114,5 +118,90 @@ describe('SettingsForm (#40)', () => {
         render(setModule(defaultSettings(), 'calendar', true)).tree.root,
       ),
     ).toEqual([]);
+  });
+});
+
+describe('the ICS feeds field (#30)', () => {
+  const ICS_ON = setProvider(
+    setModule(defaultSettings(), 'calendar', true),
+    'ics',
+    true,
+  );
+  const SECRET = 'https://feeds.example.com/private/token-123/calendar.ics';
+  const field = (tree: ReactTestRenderer) =>
+    tree.root.findByProps({accessibilityLabel: copy['ics.field']});
+  const button = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll(
+      node =>
+        node.props.accessibilityLabel === label &&
+        typeof node.props.onPress === 'function',
+    )[0];
+  const texts = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType(Text).map(node => node.props.children);
+
+  it('adds a webcal address through the sync-core rule, and empties the field', () => {
+    const {tree, onChange} = render(ICS_ON);
+    expect(button(tree, copy['ics.add']).props.disabled).toBe(true);
+    act(() =>
+      field(tree).props.onChangeText(' webcal://feeds.example.com/a.ics '),
+    );
+    expect(button(tree, copy['ics.add']).props.disabled).toBe(false);
+    act(() => button(tree, copy['ics.add']).props.onPress());
+    expect(onChange).toHaveBeenLastCalledWith(
+      addIcsFeed(ICS_ON, 'webcal://feeds.example.com/a.ics'),
+    );
+    expect(field(tree).props.value).toBe('');
+  });
+
+  it('says why a wrong address is refused, and adds nothing', () => {
+    const {tree, onChange} = render(ICS_ON);
+    act(() => field(tree).props.onChangeText('ftp://feeds.example.com/a.ics'));
+    act(() => button(tree, copy['ics.add']).props.onPress());
+    expect(onChange).not.toHaveBeenCalled();
+    const alert = tree.root.findByProps({accessibilityRole: 'alert'});
+    expect(alert.props.children).toBe(copy['ics.invalid']);
+  });
+
+  it('names a feed by its place and host only, and removes it', () => {
+    const one = addIcsFeed(ICS_ON, SECRET);
+    const {tree, onChange} = render(one);
+    const name = 'ICS 1 (feeds.example.com)';
+    expect(texts(tree)).toContain(name);
+    // The private path never shows (#30).
+    expect(JSON.stringify(tree.toJSON())).not.toContain('token-123');
+    act(() => button(tree, format('ics.removeLabel', {name})).props.onPress());
+    expect(onChange.mock.calls[0][0].icsFeeds).toEqual([]);
+  });
+
+  it('acts only while Calendar and ICS are on, and says so', () => {
+    const off = setProvider(ICS_ON, 'ics', false);
+    const {tree} = render({...off, icsFeeds: [SECRET]});
+    expect(field(tree).props.editable).toBe(false);
+    expect(button(tree, copy['ics.add']).props.disabled).toBe(true);
+    expect(
+      button(
+        tree,
+        format('ics.removeLabel', {name: 'ICS 1 (feeds.example.com)'}),
+      ).props.disabled,
+    ).toBe(true);
+    expect(texts(tree)).toContain(copy['ics.off']);
+  });
+
+  it('stops at the limit and says why', () => {
+    const icsFeeds = Array.from(
+      {length: MAX_ICS_FEEDS},
+      (_, i) => `https://feeds.example.com/${i}.ics`,
+    );
+    const {tree} = render({...ICS_ON, icsFeeds});
+    expect(button(tree, copy['ics.add']).props.disabled).toBe(true);
+    expect(texts(tree)).toContain(
+      format('ics.full', {max: String(MAX_ICS_FEEDS)}),
+    );
+  });
+
+  it('keeps the size rules with feeds listed', () => {
+    expect(screenBreaks(render(addIcsFeed(ICS_ON, SECRET)).tree.root)).toEqual(
+      [],
+    );
   });
 });
