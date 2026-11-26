@@ -26,6 +26,9 @@ const CASES = [
   ['maze 20 x 27 hard', () => core.generateMaze('P1', { shape: 'rectangle', width: 20, height: 27 }, 'hard')],
   ['maze 12 rings medium', () => core.generateMaze('P1', { shape: 'circle', rings: 12 }, 'medium')],
   ['word search 12 hard', () => core.generateWordSearch('P1', 12, 'hard', WORDS)],
+  ['star battle 8 x 8 one star easy', () => core.generateStarBattle('P1', { side: 8, stars: 1 }, 'easy')],
+  ['star battle 10 x 10 one star hard', () => core.generateStarBattle('P1', { side: 10, stars: 1 }, 'hard')],
+  ['star battle 10 x 10 two stars hard', () => core.generateStarBattle('P1', { side: 10, stars: 2 }, 'hard')],
 ];
 const only = process.env.ONLY;
 for (const [name, make] of CASES) {

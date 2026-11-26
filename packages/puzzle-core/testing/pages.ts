@@ -16,10 +16,13 @@ import {
   drawText,
   drawTriangleLattice,
   FONT_WEIGHTS,
+  drawStarBattlePage,
   generateNonogram,
+  generateStarBattle,
   generateSudoku,
   generateWordSearch,
   layoutPage,
+  layoutStarBattle,
   puzzleCode,
   type PageLayout,
   type Raster,
@@ -91,5 +94,10 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawWordPanel(r, layout, ['Panel', 'right']);
     drawFooter(r, layout, { game: 'Triangle lattice', difficulty: 'Easy', code: 'TEST-0002', rule: 'A landscape page with the panel away from the left hand.' });
     return r;
+  }],
+  ['star-battle-10mm-portrait-right', () => {
+    const puzzle = generateStarBattle('P1', { side: 10, stars: 2 }, 'hard');
+    const layout = layoutStarBattle(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 });
+    return drawStarBattlePage(puzzle, layout, { game: 'Star Battle', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Put 2 stars in each row, column and region; stars never touch, even at a corner.' });
   }],
 ];

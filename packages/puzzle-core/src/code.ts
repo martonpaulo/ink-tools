@@ -8,10 +8,10 @@
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const GAMES = ['sudoku', 'nonogram', 'maze', 'word-search'] as const;
+export const GAMES = ['sudoku', 'nonogram', 'maze', 'word-search', 'star-battle'] as const;
 export type Game = (typeof GAMES)[number];
 
-const GAME_CODES: Record<Game, string> = { sudoku: 'SU', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS' };
+const GAME_CODES: Record<Game, string> = { sudoku: 'SU', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', 'star-battle': 'SB' };
 const BAND_CODES: Record<Difficulty, string> = { easy: 'E', medium: 'M', hard: 'H', expert: 'X' };
 
 /** Crockford's base 32: no I, L, O or U, so a hand-copied code is not misread. */
