@@ -12,6 +12,7 @@ import {
   ACTION_FAILED,
   ActionRefused,
   MAX_STROKE_POINTS,
+  PICTURE_TYPE,
   pluginDataFolder,
   SHARED_ROOT,
   type ActionResult,
@@ -46,7 +47,7 @@ export const REFUSAL = {
 
 export type Operation =
   | {op: 'insertElements'; page: number; elements: NewElement[]}
-  | {op: 'modifyElements'; page: number; num: number; rect: EditRect}
+  | {op: 'modifyElements'; page: number; num: number; rect: EditRect; file?: string}
   | {op: 'deleteElements'; page: number; nums: number[]}
   | {op: 'insertPage'; page: number; template: string}
   | {op: 'removePage'; page: number}
@@ -61,7 +62,7 @@ export interface EditHost {
   pageCount(path: string): Promise<Result<number>>;
   build(spec: NewElement): Promise<Result<object>>;
   getElement(path: string, page: number, num: number): Promise<Result<object>>;
-  place(element: object, rect: EditRect): Promise<Result<object>>;
+  place(element: object, page: number, rect: EditRect): Promise<Result<object>>;
   insertOpen(page: number, elements: object[]): Promise<Result<unknown>>;
   insertByPath(path: string, page: number, elements: object[]): Promise<Result<unknown>>;
   modifyOpen(page: number, elements: object[]): Promise<Result<unknown>>;
@@ -102,6 +103,13 @@ function parseRect(value: unknown): EditRect {
   return {left: Math.round(l), top: Math.round(t), right: Math.round(r), bottom: Math.round(b)};
 }
 
+/** A picture file inkctl copied into EDITOR_FOLDER. */
+function parsePictureFile(value: unknown): string {
+  const name = typeof value === 'string' && value.startsWith(EDITOR_FOLDER) ? value.slice(EDITOR_FOLDER.length) : '';
+  check(/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}\.(png|jpe?g)$/i.test(name), `file must be a .png or .jpg in ${EDITOR_FOLDER}`);
+  return value as string;
+}
+
 function parseElement(value: unknown): NewElement {
   const raw = (value ?? {}) as Record<string, unknown>;
   switch (raw.kind) {
@@ -125,11 +133,8 @@ function parseElement(value: unknown): NewElement {
       check(typeof raw.text === 'string' && raw.text.trim().length > 0 && raw.text.length <= LIMITS.text, `text must hold 1 to ${LIMITS.text} characters`);
       check(wholeIn(raw.fontSize, FONT_SIZES.min, FONT_SIZES.max), `fontSize must be a whole number from ${FONT_SIZES.min} to ${FONT_SIZES.max}`);
       return {kind: 'text', text: raw.text as string, rect: parseRect(raw.rect), fontSize: raw.fontSize as number};
-    case 'picture': {
-      const name = typeof raw.file === 'string' && raw.file.startsWith(EDITOR_FOLDER) ? raw.file.slice(EDITOR_FOLDER.length) : '';
-      check(/^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}\.(png|jpe?g)$/i.test(name), `file must be a .png or .jpg in ${EDITOR_FOLDER}`);
-      return {kind: 'picture', file: raw.file as string, rect: parseRect(raw.rect)};
-    }
+    case 'picture':
+      return {kind: 'picture', file: parsePictureFile(raw.file), rect: parseRect(raw.rect)};
     default:
       throw new BadRequest(`unknown element kind: ${String(raw.kind)}`);
   }
@@ -143,7 +148,13 @@ function parseOperation(value: unknown): Operation {
       return {op: 'insertElements', page: parsePage(raw.page), elements: (raw.elements as unknown[]).map(parseElement)};
     case 'modifyElements':
       check(wholeIn(raw.num, 1, Number.MAX_SAFE_INTEGER), 'num must be an element number from 1');
-      return {op: 'modifyElements', page: parsePage(raw.page), num: raw.num as number, rect: parseRect(raw.rect)};
+      return {
+        op: 'modifyElements',
+        page: parsePage(raw.page),
+        num: raw.num as number,
+        rect: parseRect(raw.rect),
+        ...(raw.file === undefined ? {} : {file: parsePictureFile(raw.file)}),
+      };
     case 'deleteElements': {
       const nums = raw.nums;
       check(Array.isArray(nums) && nums.length > 0 && nums.length <= LIMITS.elements && nums.every(num => wholeIn(num, 1, Number.MAX_SAFE_INTEGER)), `nums must hold 1 to ${LIMITS.elements} element numbers from 1`);
@@ -220,7 +231,10 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
     }
     case 'modifyElements': {
       const element = await must(`element ${operation.num}`, host.getElement(path, operation.page, operation.num), REFUSAL.noElement);
-      const placed = await must('place', host.place(element, operation.rect));
+      if ((element as {type?: number}).type === PICTURE_TYPE) {
+        return movePicture(operation, path, open, host);
+      }
+      const placed = await must('place', host.place(element, operation.page, operation.rect));
       await must('modify', open ? host.modifyOpen(operation.page, [placed]) : host.modifyByPath(path, operation.page, [placed]));
       return {page: operation.page, num: operation.num, rect: operation.rect};
     }
@@ -234,6 +248,28 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
       await must('removeNotePage', host.removePage(path, operation.page));
       return {page: operation.page, pages: pages - 1};
   }
+}
+
+/**
+ * A picture moves as a new picture at the rect, then the old one deleted. A modify cannot move it:
+ * the path a read answers names no file, and a modify with a file that exists left the old picture
+ * drawn at its old place beside the moved one (device round 13, #312). So the request names the
+ * picture's file, and the insert comes first, so a failure never loses the picture.
+ */
+async function movePicture(
+  operation: Extract<Operation, {op: 'modifyElements'}>,
+  path: string,
+  open: boolean,
+  host: EditHost,
+): Promise<Record<string, unknown>> {
+  if (!operation.file) {
+    throw new Stopped(REFUSAL.badRequest, `element ${operation.num} is a picture: a picture moves only with its file`);
+  }
+  const {page, num, rect} = operation;
+  const picture = await must('createElement', host.build({kind: 'picture', file: operation.file, rect}));
+  await must('insert', open ? host.insertOpen(page, [picture]) : host.insertByPath(path, page, [picture]));
+  await must(`delete of the old picture ${num}, after the moved one was inserted`, open ? host.deleteOpen(page, [num]) : host.deleteByPath(path, page, [num]));
+  return {page, num, rect, replaced: true};
 }
 
 /** The open note's path, or null when none is open or the call failed. */

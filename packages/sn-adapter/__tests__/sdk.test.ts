@@ -268,16 +268,16 @@ describe('the editor helper calls (#312)', () => {
 
   it("places a picture's and a text box's rect", async () => {
     const picture = {type: 200, picture: {rect: {left: 0, top: 0, right: 1, bottom: 1}}};
-    expect(await page.placeElement(picture, rect)).toEqual({ok: true, value: {type: 200, picture: {rect}}});
+    expect(await page.placeElement(picture, 0, rect)).toEqual({ok: true, value: {type: 200, pageNum: 0, picture: {rect}}});
     const text = {type: 500, textBox: {textRect: {left: 0, top: 0, right: 1, bottom: 1}}};
-    expect(await page.placeElement(text, rect)).toEqual({ok: true, value: {type: 500, textBox: {textRect: rect}}});
+    expect(await page.placeElement(text, 0, rect)).toEqual({ok: true, value: {type: 500, pageNum: 0, textBox: {textRect: rect}}});
   });
 
   it("maps a stroke's points from their bounds to the rect, in one setRange", async () => {
     const setRange = jest.fn(async () => true);
     const points = [{x: 0, y: 0}, {x: 10, y: 20}];
     const stroke = {type: 0, stroke: {points: {size: async () => 2, getRange: async () => points, setRange}}};
-    expect((await page.placeElement(stroke, rect)).ok).toBe(true);
+    expect((await page.placeElement(stroke, 0, rect)).ok).toBe(true);
     expect(setRange).toHaveBeenCalledWith(0, 2, [{x: 100, y: 200}, {x: 300, y: 400}]);
   });
 
@@ -286,16 +286,21 @@ describe('the editor helper calls (#312)', () => {
     const ring = [{x: 0.5, y: 0}, {x: 10, y: 20}];
     const setRange = jest.fn(async () => true);
     const stroke = {type: 0, contoursSrc: {size: async () => 1, getRange: async () => [ring], setRange}, stroke: {points}};
-    expect((await page.placeElement(stroke, rect)).ok).toBe(true);
+    expect((await page.placeElement(stroke, 0, rect)).ok).toBe(true);
     expect(setRange).toHaveBeenCalledWith(0, 1, [[{x: 110, y: 200}, {x: 300, y: 400}]]);
     setRange.mockResolvedValue(false);
-    expect(await page.placeElement(stroke, rect)).toMatchObject({ok: false, message: 'setRange did not write the outline'});
+    expect(await page.placeElement(stroke, 0, rect)).toMatchObject({ok: false, message: 'setRange did not write the outline'});
   });
 
   it('refuses to place an element it cannot move, and a stroke whose write fails', async () => {
-    expect((await page.placeElement({type: 700}, rect)).ok).toBe(false);
+    expect((await page.placeElement({type: 700}, 0, rect)).ok).toBe(false);
     const stroke = {type: 0, stroke: {points: {size: async () => 1, getRange: async () => [{x: 1, y: 1}], setRange: async () => false}}};
-    expect(await page.placeElement(stroke, rect)).toMatchObject({ok: false, message: 'setRange did not write the points'});
+    expect(await page.placeElement(stroke, 0, rect)).toMatchObject({ok: false, message: 'setRange did not write the points'});
+  });
+
+  it('sets pageNum to the page index, as a read answers -1 and a modify below 0 is refused (#312)', async () => {
+    const text = {type: 500, pageNum: -1, textBox: {textRect: rect}};
+    expect(await page.placeElement(text, 2, rect)).toMatchObject({ok: true, value: {pageNum: 2}});
   });
 
   it('builds a picture element with its file and rect', async () => {

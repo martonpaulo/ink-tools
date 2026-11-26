@@ -65,9 +65,36 @@ describe('operations on a closed note go through the file API by path', () => {
     await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 4, rect: RECT}]});
     expect(calls).toEqual([
       `getElement ${JSON.stringify([NOTE, 0, 4])}`,
-      `place ${JSON.stringify([{type: 500}, RECT])}`,
+      `place ${JSON.stringify([{type: 500}, 0, RECT])}`,
       `modifyByPath ${JSON.stringify([NOTE, 0, [{type: 500, placed: true}]])}`,
     ]);
+  });
+
+  it('moves a picture as the moved picture inserted, then the old one deleted (#312)', async () => {
+    const file = `${EDITOR_FOLDER}picture-1.png`;
+    const {fake, calls} = host(OTHER, {getElement: async () => ok({type: 200})});
+    const answer = await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 5, rect: RECT, file}]});
+    expect(calls).toEqual(['build picture', `insertByPath ${JSON.stringify([NOTE, 0, [{built: 'picture'}]])}`, `deleteByPath ${JSON.stringify([NOTE, 0, [5]])}`]);
+    expect(answer).toMatchObject({results: [{ok: true, op: 'modifyElements', num: 5, replaced: true}]});
+  });
+
+  it('moves a picture on the open note through the open-note calls (#312)', async () => {
+    const {fake, calls} = host(NOTE, {getElement: async () => ok({type: 200})});
+    await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: RECT, file: `${EDITOR_FOLDER}p.png`}]});
+    expect(calls.map(call => call.split(' ')[0])).toEqual(['save', 'build', 'insertOpen', 'deleteOpen']);
+  });
+
+  it('refuses a picture move with no file, and never modifies it in place (#312)', async () => {
+    const {fake, calls} = host(OTHER, {getElement: async () => ok({type: 200})});
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 5, rect: RECT}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request', step: 1});
+    expect(calls).toEqual([]);
+  });
+
+  it('refuses a modify file outside the helper folder (#312)', async () => {
+    const {fake} = host();
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 5, rect: RECT, file: '/sdcard/x.png'}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request'});
   });
 
   it('deletes, inserts a page and removes a page, in the order sent', async () => {

@@ -79,6 +79,7 @@ export async function buildElement(spec: NewElement): Promise<Result<object>> {
 
 type Placed = {
   type?: number;
+  pageNum?: number;
   /** The stored outline the lasso selects by, rings of float page pixels (docs/research/2026-11-note-format.md). */
   contoursSrc?: {size(): Promise<number>; getRange(start: number, count: number): Promise<PenPoint[][]>; setRange?(index: number, end: number, values: PenPoint[][]): Promise<boolean>} | null;
   picture?: {rect?: EditRect} | null;
@@ -131,14 +132,16 @@ async function moveOutline(element: Placed, from: EditRect, to: EditRect): Promi
 }
 
 /**
- * Moves and sizes an element read by `getElement` to `rect`, in place, for a modify call: a
- * picture's or text box's rect, or a stroke's points mapped from their bounds to `rect`. The stroke
+ * Moves and sizes an element read by `getElement` to `rect` on `page`, in place, for a modify call.
+ * `pageNum` is set to `page`: a read answers -1, -2 or 0 for the same element, and a modify below 0
+ * is refused, code 107 (device round 13, #312). A picture's or text box's rect, or a stroke's points mapped from their bounds to `rect`. The stroke
  * writes its points back with one `setRange` (sn-plugin-lib 0.2.3 `ElementDataAccessor`), and its
  * stored outline (`contoursSrc`) with another, by the same mapping.
  * shortcut: setRange's end index is read as exclusive, as getRange counts; the device round checks it.
  */
-export async function placeElement(element: object, rect: EditRect): Promise<Result<object>> {
+export async function placeElement(element: object, page: number, rect: EditRect): Promise<Result<object>> {
   const placed = element as Placed;
+  placed.pageNum = page;
   if (placed.type === PICTURE_TYPE && placed.picture) {
     placed.picture.rect = rect;
     return ok(element);

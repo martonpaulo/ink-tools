@@ -455,6 +455,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     [new picture element])`, which deletes and inserts in one call.
   - The host copies each inserted PNG into `.data/plugin/` under a new name, so the plugin's own file
     can be removed after the write. `pageNum` read 0 before the write and 1 after, on page 1 of 1.
+- A picture read with `PluginFileAPI.getElement` cannot be moved by a modify [measured, Manta,
+  2026-11-26, device round 13, [#312](https://github.com/martonpaulo/ink-tools/issues/312)]:
+  - its `picturePath` is a new `.data/plugin/<milliseconds>.png` on every read, and no file exists
+    there, so a modify that sends it back is refused, code 1211 «PNG file does not exist»;
+  - its `pageNum` reads -1, -2 or 0 on successive reads of the same page-1 element, and a modify
+    below 0 is refused, code 107, so a modify sets `pageNum` to the page index;
+  - a modify with a PNG that exists and a moved rect is accepted on the open and on a closed note,
+    but the page then draws the picture twice, at the old and the new rect, also after a reopen.
+    So Device Link moves a picture as a new picture at the new rect, then deletes the old one.
 - A plugin can put ink and pictures on the open page and lasso them with no pen [measured,
   2026-11-16, a throwaway probe on sn-plugin-lib 0.2.3, [#148](https://github.com/martonpaulo/ink-tools/issues/148)]:
   - A stroke: `createElement(0)`, then for each point `stroke.points.add(i, {x, y})`,

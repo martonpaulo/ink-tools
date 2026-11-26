@@ -2820,8 +2820,8 @@ def edit_operations(path: str) -> list:
 
 def command_note_edit(device: Device, args: argparse.Namespace):
     """Apply the Ink Notebook Editor's operations to one note through Device Link's helper, with no
-    screen tap (#312). Each picture an element names by a local `file` is copied to the helper's
-    folder first; the plugin checks every operation, and its refusal is named in the answer."""
+    screen tap (#312). Each picture an element or a picture move names by a local `file` is copied to
+    the helper's folder first; the plugin checks every operation, and its refusal is named in the answer."""
     need_note_suffix(args.path)
     path = remote_path(args.path)
     if not args.allow_notes and not in_test_notes(path):
@@ -2829,6 +2829,8 @@ def command_note_edit(device: Device, args: argparse.Namespace):
     operations = edit_operations(args.operations)
     folder = ACTION_PLUGINS["device-link"]["folder"]
     pictures = [element for operation in operations for element in operation.get("elements") or [] if isinstance(element, dict) and element.get("kind") == "picture"]
+    # A picture moves only with its file: the helper inserts it at the new rect, then deletes the old one.
+    pictures += [operation for operation in operations if operation.get("op") == "modifyElements" and "file" in operation]
     for element in pictures:
         local = str(element.get("file", ""))
         suffix = os.path.splitext(local)[1].lower()

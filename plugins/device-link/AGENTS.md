@@ -77,7 +77,8 @@ helper, the action `edit` of sn-adapter's action channel ([#283](https://github.
 and the pictures in `.data/plugin/inktools-device-link/` (`EDITOR_FOLDER`), read with
 `RelayLocalSend.readText`. `src/editor/operations.ts` owns the operations and the named refusals;
 on the open note the element calls are the open-note calls, and a modify or page change saves the
-note first; on another note, the file API by path. `src/editor/penGate.ts` holds each edit while
+note first; on another note, the file API by path. A picture moves as a new picture from the file
+the request names, then the old one deleted, as a modify draws it twice (`docs/supernote.md`). `src/editor/penGate.ts` holds each edit while
 the pen is on the page, at most 20 s. The action `save-note` (`src/editor/save.ts`) saves the open
 note, which inkctl asks before it opens another note ([#426](https://github.com/martonpaulo/ink-tools/issues/426)). To test on the device: each operation with the screen
 untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.

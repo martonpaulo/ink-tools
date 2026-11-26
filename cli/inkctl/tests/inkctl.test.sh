@@ -1741,6 +1741,11 @@ run note edit Note/Tests/Edit.note "$work/local/ops.json" >/dev/null 2>"$work/er
 check "a refusal of the helper exits 2 and names it" "$?$(grep -c 'device-link edit: no-element: operation 1' "$work/err")" "21"
 action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":1,"message":"tablet-refused: operation 2 (insertElements): insert: code 802","refusal":"tablet-refused"}' > "$files/action-answer"
 check "a call the tablet refused exits 1" "$(exit_and_pushes note edit Note/Tests/Edit.note "$work/local/ops.json")" "12"
+printf '[{"op":"modifyElements","page":0,"num":3,"rect":{"left":1,"top":2,"right":30,"bottom":40},"file":"%s"}]' "$work/local/edit.png" > "$work/local/move-ops.json"
+action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"edit\",\"ms\":300,\"openNote\":null,\"results\":[{\"ok\":true}]}" > "$files/action-answer"
+: > "$files/picture-paths"
+run note edit Note/Tests/Edit.note "$work/local/move-ops.json" >/dev/null
+check "note edit copies a picture move's file to the helper's folder and names it there" "$?$(cat "$files/picture-paths")|$(action_field "d['args']['ops'][0]['file']")" "0$helper_folder/picture-1.png|$helper_folder/picture-1.png"
 printf '{"op":"openNote"}' > "$work/local/bad-ops.json"
 check "a file that holds no list of operations is a usage error before any push" "$(exit_and_pushes note edit Note/Tests/Edit.note "$work/local/bad-ops.json")" "20"
 printf '[{"op":"insertElements","page":0,"elements":[{"kind":"picture","file":"%s"}]}]' "$work/local/edit.gif" > "$work/local/bad-ops.json"
@@ -1748,7 +1753,7 @@ check "a picture that is not a PNG or JPEG is a usage error before any push" "$(
 check "note edit on a note outside Note/Tests/ is refused" "$(exit_and_pushes note edit Note/Diary.note "$work/local/ops.json")" "120"
 check "note edit of a missing note is not found" "$(exit_and_pushes note edit Note/Tests/Absent.note "$work/local/ops.json")" "40"
 check "read-only refuses note edit" "$(exit_and_pushes --read-only note edit Note/Tests/Edit.note "$work/local/ops.json")" "110"
-rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/bad-ops.json"
+rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/move-ops.json" "$work/local/bad-ops.json"
 
 # A note open on screen is saved through Device Link before another note opens (#426): a switch by
 # intent lost a native lasso delete and a Collection paste (device round 10).
