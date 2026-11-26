@@ -158,11 +158,7 @@ function signInParts(provider: ProviderSignIn): React.JSX.Element {
   const {signIn} = provider;
   switch (signIn.state) {
     case 'signedOut':
-      return (
-        <Text style={shared.text}>
-          {format('signIn.out', {provider: provider.name, id: provider.id})}
-        </Text>
-      );
+      return <ConnectLine provider={provider} />;
     case 'unreadable':
       return (
         <Text accessibilityRole="alert" style={shared.text}>
@@ -190,6 +186,32 @@ function signInParts(provider: ProviderSignIn): React.JSX.Element {
         </>
       );
   }
+}
+
+/**
+ * A provider with no connection (owner, 2026-11-26, docs/plugin-scope.md › Rules for every
+ * feature): it says so and offers «Connect», which shows how; the rest of the plugin runs as usual.
+ * shortcut: the tablet cannot sign in yet, so «Connect» shows the Mac command; the in-app sign-in
+ * of each provider (#28 for Google) replaces it.
+ */
+function ConnectLine({provider}: {provider: ProviderSignIn}): React.JSX.Element {
+  const [shown, setShown] = useState(false);
+  return (
+    <>
+      <Text style={shared.text}>{format('signIn.out', {provider: provider.name})}</Text>
+      {shown ? (
+        <Text style={shared.text}>
+          {format('connect.how', {provider: provider.name, id: provider.id})}
+        </Text>
+      ) : (
+        <Button
+          label={copy['connect.button']}
+          accessibilityLabel={format('connect.label', {provider: provider.name})}
+          onPress={() => setShown(true)}
+        />
+      )}
+    </>
+  );
 }
 
 /** A destructive action: one press asks, the second does it, Cancel does nothing (#89, #90). */

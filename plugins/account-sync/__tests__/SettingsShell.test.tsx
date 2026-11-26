@@ -168,12 +168,22 @@ describe('SettingsShell (#93)', () => {
       expect(texts(tree)).toEqual(
         expect.arrayContaining([
           'Todoist: signed in (…wxyz).',
-          'iCloud: not signed in. On the Mac, run inkctl secret set icloud.',
+          'iCloud: not connected.',
           'Google: the sign-in did not read: read failed',
         ]),
       );
       expect(screenBreaks(tree.root)).toEqual([]);
       expect(tree.root.findAllByProps({accessibilityLabel: 'Sign out of iCloud'})).toHaveLength(0);
+    });
+
+    it('offers Connect for a provider with no connection, which shows how (owner, 2026-11-26)', () => {
+      const tree = render(withSignIns(() => {}));
+      expect(tree.root.findAllByProps({accessibilityLabel: 'Connect Todoist'})).toHaveLength(0);
+      press(tree, 'Connect iCloud');
+      expect(texts(tree)).toContain(
+        'To connect iCloud, run inkctl secret set icloud on the Mac, then press Sync now.',
+      );
+      expect(screenBreaks(tree.root)).toEqual([]);
     });
 
     it('signs out only after the confirmation, and Cancel keeps the sign-in', () => {

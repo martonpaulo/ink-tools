@@ -40,8 +40,9 @@ export type SignIns = Partial<Record<SecretProvider, SignIn>>;
  * Each module's status from the settings and the device probe (#88, #43): a module the probe has not
  * cleared is blocked with its reasons, one it cleared shows its last run since the plugin host
  * started, or waits for its first (#28, #44), and one that is off says so. Never a schedule (#39).
- * Under it, each provider that is on and signs in with a secret says whether it is signed in, with
- * a sign-out (#116); one whose sign-in was not read yet shows nothing.
+ * Under a module that is on, each of its providers that signs in with a secret says whether it is
+ * connected, with a sign-out, or offers «Connect» (#116; owner, 2026-11-26: every connection is off
+ * until the person connects it); one whose sign-in was not read yet shows nothing.
  */
 export function moduleRows(
   settings: BridgeSettings,
@@ -56,8 +57,7 @@ export function moduleRows(
     status: moduleStatus(id, settings, probe, runs),
     signIns: signInProviders(id).flatMap(p => {
       const signIn = signIns[p];
-      return settings.providers[p as keyof BridgeSettings['providers']] &&
-        signIn
+      return settings.modules[id] && signIn
         ? [
             {
               id: p,

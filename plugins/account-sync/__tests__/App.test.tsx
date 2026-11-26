@@ -242,9 +242,8 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
   await act(async () => press('Sign out of Todoist').props.onPress());
   await act(async () => press(copy['signOut.yes']).props.onPress());
   expect(secrets.remove).toHaveBeenCalledWith('todoist');
-  expect(texts(tree)).toContain(
-    'Todoist: not signed in. On the Mac, run inkctl secret set todoist.',
-  );
+  expect(texts(tree)).toContain('Todoist: not connected.');
+  expect(press('Connect Todoist')).toBeDefined();
   expect(screenBreaks(tree.root)).toEqual([]);
 });
 
@@ -280,4 +279,26 @@ test('a sign-out that fails says so in one sentence and logs why (#116)', async 
   expect(log).toHaveBeenCalledWith(
     '[Bridge] sign-out: todoist: the file module cannot delete a file',
   );
+});
+
+test('a module that is on offers Connect for each provider with no connection, and runs as usual (owner, 2026-11-26)', async () => {
+  const secrets: SecretStore = {read: async () => null, remove: async () => {}};
+  const base = defaultSettings();
+  files[`${DIR}/settings.json`] = JSON.stringify({
+    ...base,
+    modules: {...base.modules, calendar: true},
+  });
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App folder={folder as never} secrets={secrets} />);
+  });
+  // Calendar is on with no provider connected: Google and iCloud offer Connect; ICS needs none.
+  expect(texts(tree)).toEqual(
+    expect.arrayContaining(['Google: not connected.', 'iCloud: not connected.']),
+  );
+  expect(texts(tree)).not.toContain('Todoist: not connected.');
+  expect(
+    tree.root.findAllByProps({accessibilityLabel: 'Connect Google'}).length,
+  ).toBeGreaterThan(0);
+  expect(screenBreaks(tree.root)).toEqual([]);
 });
