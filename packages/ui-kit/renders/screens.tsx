@@ -29,6 +29,7 @@ import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
 import WordLookupSettings from '../../../plugins/word-lookup/App';
 import {SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
+import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
 import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
@@ -149,6 +150,9 @@ const STROKE = [
   {x: 900, y: 600},
 ];
 
+/** Account Sync with To-Do and Todoist on, before the first sync, signed in to Todoist (#116, #368). */
+const SIGNED_IN = accountSyncProvider(accountSyncModule(accountSyncDefaults(), 'todo', true), 'todoist', true);
+
 // One line per screen, so adding one is one line.
 // prettier-ignore
 export const SCREENS: ScreenRender[] = [
@@ -161,6 +165,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
   {name: 'word-lookup-settings', render: () => mount(<WordLookupSettings close={() => {}} />)},
   {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
+  {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
   {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},

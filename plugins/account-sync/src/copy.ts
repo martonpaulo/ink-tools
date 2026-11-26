@@ -30,6 +30,7 @@ export const copy = {
   'signOut.label': 'Sign out of {provider}',
   'signOut.confirm': 'Sign out of {provider}? Account Sync deletes its sign-in from the tablet.',
   'signOut.yes': 'Sign out',
+  'signOut.problem': 'The sign-out did not finish: {reason}',
   'sendTabletOnly.button': 'Send tablet-only items',
   'sendTabletOnly.kept':
     '{count} tablet-only tasks stay on the tablet; only tasks made after the first sync go to the account.',

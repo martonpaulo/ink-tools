@@ -9,6 +9,8 @@ import {DEVICE_CHECK_PENDING} from '@ink-tools/sync-core';
 import App from '../App';
 import {copy} from '../src/copy';
 import type {SyncRunner, SyncSnapshot} from '../src/sync';
+import type {SecretProvider, SecretStore} from '@ink-tools/sync-core/secrets';
+import {defaultSettings} from '@ink-tools/sync-core/settings';
 
 const DIR = '/data/plugins/bridge';
 const folder = async () => ok(DIR);
@@ -210,4 +212,38 @@ test('Close and Back close Settings, and do nothing while a pass runs (#204, #26
   pressClose();
   expect(close).toHaveBeenCalledTimes(2);
   back.restore();
+});
+
+test('Settings shows whether Todoist is signed in and signs it out (#116)', async () => {
+  const stored: Partial<Record<SecretProvider, string>> = {todoist: 'synthetic-token-wxyz'};
+  const secrets: SecretStore = {
+    read: async provider => stored[provider] ?? null,
+    remove: jest.fn(async provider => {
+      delete stored[provider];
+    }),
+  };
+  const base = defaultSettings();
+  files[`${DIR}/settings.json`] = JSON.stringify({
+    ...base,
+    modules: {...base.modules, todo: true},
+    providers: {...base.providers, todoist: true},
+  });
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = renderer.create(<App folder={folder as never} secrets={secrets} />);
+  });
+  expect(texts(tree)).toContain('Todoist: signed in (…wxyz).');
+  const press = (label: string) =>
+    tree.root.findAll(
+      n =>
+        (n.props.accessibilityLabel === label || n.props.label === label) &&
+        typeof n.props.onPress === 'function',
+    )[0];
+  await act(async () => press('Sign out of Todoist').props.onPress());
+  await act(async () => press(copy['signOut.yes']).props.onPress());
+  expect(secrets.remove).toHaveBeenCalledWith('todoist');
+  expect(texts(tree)).toContain(
+    'Todoist: not signed in. On the Mac, run inkctl secret set todoist.',
+  );
+  expect(screenBreaks(tree.root)).toEqual([]);
 });
