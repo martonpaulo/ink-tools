@@ -312,6 +312,10 @@ describe('the query languages (#71, owner D7)', () => {
     expect(isTitleOfQuery('maçã', 'Maçã (fruta)')).toBe(true);
     expect(isTitleOfQuery('apple', 'Apple Inc.')).toBe(false);
     expect(isTitleOfQuery('apple logo', 'Apple')).toBe(true);
+    // The Spanish Wikipedia's «CLOCK» is the gene, whose protein then led «clock» (#13).
+    expect(isTitleOfQuery('clock', 'CLOCK')).toBe(false);
+    expect(isTitleOfQuery('CLOCK', 'CLOCK')).toBe(true);
+    expect(isTitleOfQuery('clock', 'Clock')).toBe(true);
   });
 
   it('gives every language its own request budget', () => {

@@ -54,6 +54,16 @@ export function withoutAccents(text: string): string {
   return text.normalize('NFD').replace(/\p{M}+/gu, '');
 }
 
+const ACRONYM = /^\p{Lu}{2,}$/u;
+
+/**
+ * Whether the word is written in capitals, as an acronym or a gene is: «HOT», «CLOCK». Such a
+ * word names a namesake of the plain word «hot» or «clock», never the thing (#13).
+ */
+export function isAcronym(word: string): boolean {
+  return ACRONYM.test(word);
+}
+
 /** Whether `word` is `queryWord` or its plural. */
 export function sameWord(word: string, queryWord: string): boolean {
   return (

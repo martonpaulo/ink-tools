@@ -12,6 +12,7 @@ import type {SourceAdapter, SourceContext} from '../adapter';
 import {apiFailure} from '../fetcher';
 import {knownHit} from '../phrase';
 import {
+  isAcronym,
   lookupLanguages,
   normalise,
   readIntent,
@@ -610,8 +611,15 @@ type LookupOutcome = Outcome<
  */
 export function isTitleOfQuery(query: string, title: string): boolean {
   const subject = readIntent(query).subject.map(withoutAccents);
-  const have = words(withoutAccents(title.replace(/\s*\([^)]*\)\s*$/, '')));
+  const bare = title.replace(/\s*\([^)]*\)\s*$/, '');
+  const have = words(withoutAccents(bare));
+  // «CLOCK», the gene the Spanish Wikipedia finds, is not «clock» unless so written (#13).
+  const typed = query.split(/\s+/u);
+  const acronym = bare
+    .split(/\s+/u)
+    .some(word => isAcronym(word) && !typed.includes(word));
   return (
+    !acronym &&
     have.length > 0 &&
     have.length === subject.length &&
     have.every((word, i) => sameWord(word, subject[i]) || sameWord(subject[i], word))

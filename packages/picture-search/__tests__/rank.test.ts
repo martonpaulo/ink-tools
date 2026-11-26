@@ -595,6 +595,33 @@ describe('namesakes of a plain word (#13)', () => {
     ).toEqual(['Red Apple', 'Apples Temple canton de Vaud Suisse']);
   });
 
+  it('keeps a pocket watch filed under the clock time it shows for «time»', () => {
+    // A clock time is not a proper name (lab run 45521795964: the watch left page 1).
+    const tags = ['Pocket watches', 'Absolute space and time', 'Time 03:01'];
+    const watch = photo('MontreGousset001', tags);
+    const unfiled = photo('MontreGousset001', ['Pocket watches']);
+    expect(einkScore(watch, 'time', PHOTO_SCORERS)).toBe(
+      einkScore(unfiled, 'time', PHOTO_SCORERS),
+    );
+  });
+
+  it('puts the HOT missile after a hot spring for «hot»: a word in capitals is a name', () => {
+    // Lab run 45521795964: the missile led page 1, filed only under «Euromissile HOT».
+    const missile = photo('Long Range Anti-tank Weapon HOT 3 - ILA2002-clean', [
+      'Euromissile HOT',
+      'Self-published work',
+    ]);
+    const spring = photo('Hot spring, Reykjadalur Valley, Iceland', [
+      'Hot springs of Iceland in 2023',
+    ]);
+    expect(
+      rankForEink([[missile, spring]], 'hot', PHOTO_SCORERS).map(x => x.title),
+    ).toEqual([
+      'Hot spring, Reykjadalur Valley, Iceland',
+      'Long Range Anti-tank Weapon HOT 3 - ILA2002-clean',
+    ]);
+  });
+
   it('keeps the namesake when the query names it or asks for its logo', () => {
     expect(einkScore(computer, 'apple ii', PHOTO_SCORERS)).toBeGreaterThan(0);
     const music = photo('Apple Music Logo', ['Apple Music']);

@@ -8,6 +8,7 @@ import {namesThing} from './adapters/openmoji';
 import {
   FILLER_WORDS,
   hasStyle,
+  isAcronym,
   isNumber,
   QueryIntent,
   readIntent,
@@ -207,10 +208,15 @@ const stylisedScorer: Scorer = (result, {styles}) =>
     ? STYLISED_SCORE
     : 0;
 
+/** What follows the word in a proper name: a capitalised word or a whole number, never «03:01». */
+const NAME_GOES_ON = /^(\p{Lu}|\p{N}+$)/u;
+
 /**
- * Whether a category names a proper name that starts with the word: the word capitalised, then a
- * capitalised word or a number, «Apple II», «Apple Music», «Apples VD». Commons names categories
- * in sentence case, so the thing itself reads «Apple trees» or «Red apples», never so (#13).
+ * Whether a category names a proper name that holds the word: the word capitalised, then a
+ * capitalised word or a whole number, «Apple II», «Original Apple Campus», «Apples VD», or the
+ * word in capitals, an acronym, «Euromissile HOT», «CLOCK proteins». Commons names categories in
+ * sentence case, so the thing itself reads «Apple trees» or «Red apples», never so (#13). A clock
+ * time, «Time 03:01», files a picture of a clock, not a namesake (lab run 45521795964).
  */
 function namesNamesake(category: string, word: string): boolean {
   const tokens = category.normalize('NFC').split(/[\s\-–,]+/u);
@@ -218,7 +224,7 @@ function namesNamesake(category: string, word: string): boolean {
     (token, i) =>
       /^\p{Lu}/u.test(token) &&
       sameWord(token.toLowerCase(), word) &&
-      /^[\p{Lu}\p{N}]/u.test(tokens[i + 1] ?? ''),
+      (isAcronym(token) || NAME_GOES_ON.test(tokens[i + 1] ?? '')),
   );
 }
 
