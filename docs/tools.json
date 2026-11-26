@@ -186,8 +186,8 @@
       "icon": "design/icons/readme/ink-tools-helper.png",
       "link": "https://github.com/martonpaulo/ink-tools/releases?q=ink-tools-helper&expanded=true",
       "features": [
-        {"name": "Plugin settings", "text": "lets `inkctl` install, enable and permit plugins with no screen."},
-        {"name": "Firmware watch", "text": "at boot after a firmware change, check every device dependency and report what broke."}
+        {"name": "Plugin settings", "text": "the tablet side of the Plugins commands of `inkctl`."},
+        {"name": "Firmware watch", "text": "runs the Firmware watch of `inkctl` at boot after a firmware change."}
       ],
       "map": {
         "sources": [],

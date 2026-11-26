@@ -2,6 +2,7 @@
 import json
 import math
 import re
+import shutil
 import struct
 import sys
 import tempfile
@@ -185,7 +186,7 @@ class Style(unittest.TestCase):
         self.assertEqual(grid, STORE["grid"])
 
     def test_every_icon_is_built_from_the_pinned_tabler_glyphs(self):
-        names = {p if isinstance(p, str) else p["name"] for i in ICONS for p in i["tabler"]}
+        names = {p if isinstance(p, str) else p["name"] for i in [*ICONS, *icons.site_icons().values()] for p in i["tabler"]}
         self.assertTrue(all(i["tabler"] for i in ICONS))
         self.assertEqual(sorted(STORE["glyphs"]), sorted(names))  # no glyph missing, none unused
         self.assertEqual((STORE["package"], STORE["version"]), ("@tabler/icons", "3.53.0"))
@@ -362,6 +363,33 @@ class Pngs(unittest.TestCase):
             readme = (ROOT / "README.md").read_text(encoding="utf-8")
             (root / "README.md").write_text(readme.replace("design/icons/readme/account-sync.png", "plugins/account-sync/assets/icon.png"))
             self.assertTrue(any("row of account-sync" in p for p in icons.tile_problems(root)))
+
+    def test_every_tool_shows_one_icon_style_on_the_landing_page(self):
+        # #439: plugins, apps, the Mac app and the command line, each drawn as a plugin icon on the site tile.
+        sources = icons.site_sources()
+        tile = NATIVE["site"]["tile"]
+        self.assertEqual(sorted(sources), sorted(p.stem for p in (ROOT / tile["dir"]).glob("*")))
+        self.assertIn("ink-notebook-editor", sources)
+        for name, text in sources.items():
+            with self.subTest(name):
+                self.assertIn(f'fill="{tile["fill"]}"', text)
+                self.assertIn(f'stroke-width="{NATIVE["plugin"]["strokeWidth"]}"', text)
+                self.assertNotIn("<image", text)
+        self.assertLess(tile["padding"], NATIVE["readme"]["tile"]["padding"])  # the glyph a little larger than the README's
+
+    def test_a_stale_or_orphan_site_icon_fails_the_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in ("design/icons/icons.json", "design/icons/native.json", "design/icons/tabler.json"):
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(ROOT / rel, root / rel)
+            icons.write_site_icons(root)
+            self.assertEqual(icons.site_problems(root), [])
+            (root / "site/icons/puzzles.svg").write_text("<svg/>")
+            (root / "site/icons/old.png").write_bytes(b"")
+            problems = icons.site_problems(root)
+            self.assertIn("site/icons/puzzles.svg differs from design/icons/icons.json", problems)
+            self.assertIn("site/icons/old.png: no tool draws it; remove it", problems)
 
     def test_no_two_icons_read_alike(self):
         def ink(alpha):

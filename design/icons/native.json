@@ -47,5 +47,14 @@
     "padding": 5,
     "strokeWidth": 2.125,
     "note": "Plugin icons are 96 x 96 PNGs; the tablet scales a lasso row to 60 px (docs/supernote.md). Each plugin icon is built from Tabler glyphs on their 24 grid, scaled about its centre so its stroke outline spans the toolbar icons' inkSpanPx of 64 on its longer side, and centred; it is written with `padding` units around the grid (viewBox -5 -5 34 34) and a stroke of 2.125 of 34, the toolbar icons' 4 of 64."
+  },
+  "site": {
+    "tile": {
+      "fill": "#f3efea",
+      "radius": 0.2246,
+      "padding": 0.14,
+      "dir": "site/icons",
+      "note": "the landing page shows every tool's icon, plugin, app, Mac app or command line, drawn as a plugin icon is (stroke and margin) on this warm rounded tile; the padding is under the README tile's 0.2, so the glyph is a little larger in its tile (#439)"
+    }
   }
 }

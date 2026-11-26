@@ -1,4 +1,5 @@
-"""Tests of site_figures.py (#437): the home page follows docs/tools.json, the releases and the install guide."""
+"""Tests of site_figures.py (#437, #439): the home page follows docs/tools.json, the releases and the install guide,
+says each fact once and keeps one width."""
 import json
 import shutil
 import sys
@@ -67,6 +68,46 @@ class Page(unittest.TestCase):
         page = site_figures.generate(self.tmp)
         self.assertNotIn("ink-tools-helper-v", page)
         self.assertIn("releases/download/smart-pen-v0.1.0/SmartPen-0.1.0.snplg", page)
+
+
+class PageChecks(unittest.TestCase):
+    """#439: each fact once, and one width token."""
+
+    def test_the_committed_pages_pass(self):
+        self.assertEqual(site_figures.page_problems(ROOT), [])
+
+    def test_a_repeated_sentence_or_link_target_fails_outside_navigation(self):
+        page = ('<header><a href="/">Ink Tools</a></header><nav><a href="/#tools">Tools</a></nav><main>'
+                '<p>Ink Tools is unofficial. It runs no server.</p><a href="/#tools">See</a>'
+                '<footer><p>Ink Tools is unofficial.</p><a href="/">Home</a></footer></main>')
+        problems = site_figures.repetition_problems("x.html", page)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("«Ink Tools is unofficial.»", problems[0])
+        twice = page.replace('<a href="/">Home</a>', '<a href="/#tools">Again</a>')
+        self.assertTrue(any("«/#tools»" in p for p in site_figures.repetition_problems("x.html", twice)))
+
+    def test_a_short_label_may_repeat(self):
+        self.assertEqual(site_figures.repetition_problems("x.html", "<p>Version 0.1.0</p><p>Version 0.1.0</p>"), [])
+
+    def test_only_the_container_sets_the_width_and_only_a_paragraph_a_measure(self):
+        good = (".container { width: var(--page-width); } .section p, .hero p:not(.a, .b) { max-width: var(--measure-prose); }"
+                ".dot::before { width: 0.5em; } .shot img { width: 100%; }")
+        self.assertEqual(site_figures.width_problems(good), [])
+        for bad in (".section > .container > :where(p, ul, div) { max-width: var(--measure-prose); }",
+                    ".hero h1 { max-width: 20ch; }", ".notice { max-width: 46rem; }", ".grid { width: var(--page-width); }"):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.width_problems(bad))
+
+    def test_a_section_without_its_container_fails(self):
+        self.assertTrue(site_figures.section_problems("x.html", '<section><div class="narrow"><p>x</p></div></section>'))
+        self.assertEqual(site_figures.section_problems("x.html", '<section><div class="container"><div></div></div></section>'), [])
+
+    def test_a_link_to_the_home_page_stays_on_the_page(self):
+        self.assertEqual(site_figures.inline("[the tools](https://inktools.martonpaulo.com/#tools)"), '<a href="#tools">the tools</a>')
+
+    def test_every_tool_has_its_page_icon(self):
+        data = json.loads((ROOT / "docs/tools.json").read_text(encoding="utf-8"))
+        self.assertEqual(site_figures.icon_problems(ROOT, data), [])
 
 
 if __name__ == "__main__":

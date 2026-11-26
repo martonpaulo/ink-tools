@@ -7,7 +7,8 @@ side by side); `design/icons/tabler.json` keeps those glyphs from the pinned `@t
 margin). This script writes, for each icon, the SVG and the 96 x 96 PNG beside a plugin's button (or
 the vector XML of an app's launcher icon), so no icon drifts from its source.
 
-    python3 scripts/icons.py            write every file, the README tiles included, and design/icons/sheet.png (needs rsvg-convert)
+    python3 scripts/icons.py            write every file, the README tiles and the landing page's icons
+                                        (site/icons) included, and design/icons/sheet.png (needs rsvg-convert)
     python3 scripts/icons.py --check    fail when a written SVG or XML differs from its source
     python3 scripts/icons.py --tabler DIR
                                         refresh design/icons/tabler.json from an unpacked
@@ -410,7 +411,7 @@ def vendor(package_dir, root=ROOT):
         raise SystemExit(f"icons: the package is {version}; tabler.json pins {store['version']}")
     nodes = json.loads((package_dir / "tabler-nodes-outline.json").read_text())
     icons, _ = load(root)
-    names = sorted({p if isinstance(p, str) else p["name"] for i in icons for p in i["tabler"]})
+    names = sorted({p if isinstance(p, str) else p["name"] for i in [*icons, *site_icons(root).values()] for p in i["tabler"]})
     missing = [n for n in names if n not in nodes]
     if missing:
         raise SystemExit(f"icons: Tabler {version} has no {', '.join(missing)}")
@@ -435,17 +436,6 @@ def mac_icon_svg(root=ROOT):
     return (
         f"{SVG_OPEN} viewBox=\"0 0 1024 1024\" width=\"1024\" height=\"1024\">"
         f'<rect width="1024" height="1024" rx="230" fill="{colour}"/>{inner}</svg>\n'
-    )
-
-
-def tile_text(icon_svg, native):
-    """An icon's SVG centred on the README's rounded tile (native.json `readme.tile`), on a 100 box."""
-    tile = native["readme"]["tile"]
-    pad = tile["padding"] * 100
-    inner = re.sub(r'width="\d+" height="\d+"', f'x="{number(pad)}" y="{number(pad)}" width="{number(100 - 2 * pad)}" height="{number(100 - 2 * pad)}"', icon_svg, count=1)
-    return (
-        f'{SVG_OPEN} viewBox="0 0 100 100" width="{PLUGIN_PX}" height="{PLUGIN_PX}">'
-        f'<rect width="100" height="100" rx="{number(tile["radius"] * 100)}" fill="{tile["fill"]}"/>{inner}</svg>\n'
     )
 
 
@@ -482,9 +472,10 @@ def tile_sources(root=ROOT):
     return out, problems
 
 
-def tile_text(icon_svg, native):
-    """An icon's SVG centred on the README's rounded tile (native.json `readme.tile`), on a 100 box."""
-    tile = native["readme"]["tile"]
+def tile_text(icon_svg, native, surface="readme"):
+    """An icon's SVG centred on a rounded tile, native.json's `<surface>.tile` (the README's or the
+    landing page's), on a 100 box."""
+    tile = native[surface]["tile"]
     pad = tile["padding"] * 100
     box = f'x="{number(pad)}" y="{number(pad)}" width="{number(100 - 2 * pad)}" height="{number(100 - 2 * pad)}"'
     inner = re.sub(r'width="\d+" height="\d+"', box, icon_svg, count=1)
@@ -530,6 +521,50 @@ def write_readme_pngs(root=ROOT):
         render_tile(text, folder / f"{name}.png")
         record[name] = {"svg": sha(text), "png": sha((folder / f"{name}.png").read_bytes())}
     (root / TILES).write_text(json.dumps(record, indent=1) + "\n")
+
+
+def site_sources(root=ROOT):
+    """{tool name: SVG} of the landing page's tool icons (#439): each tool's own icon, a plugin's, an
+    app's launcher, a planned tool's or the command line's (icons.json `readme`) and the Mac app's
+    (`site.icons`), every one drawn as a plugin icon is, with its stroke and margin, on native.json's `site`
+    tile, so the page shows one style and never an app's own artwork."""
+    icons, native = load(root)
+    store = glyphs(root)
+    out = {}
+    for icon in icons:
+        main = icon["out"].startswith(("plugins/", "apps/")) and icon["out"].endswith(("/icon", "/ic_launcher"))
+        if main or icon.get("readme"):
+            drawn = svg_text(icon_paths({**icon, "kind": "plugin"}, native, store), native)
+            out[tool(icon["out"])] = tile_text(drawn, native, "site")
+    for name, icon in site_icons(root).items():
+        out[name] = tile_text(svg_text(icon_paths({**icon, "kind": "plugin"}, native, store), native), native, "site")
+    return out
+
+
+def site_icons(root=ROOT):
+    """icons.json `site.icons`: {tool name: {"tabler": [...]}} for a tool with no Tabler icon of its own."""
+    return json.loads((root / "design/icons/icons.json").read_text())["site"]["icons"]
+
+
+def site_problems(root=ROOT):
+    """A landing-page icon that is missing, stale or has no tool."""
+    _, native = load(root)
+    folder = root / native["site"]["tile"]["dir"]
+    sources = site_sources(root)
+    problems = [f"{folder.relative_to(root).as_posix()}/{name}.svg differs from design/icons/icons.json"
+                for name, text in sorted(sources.items())
+                if not (folder / f"{name}.svg").is_file() or (folder / f"{name}.svg").read_text() != text]
+    problems += [f"{path.relative_to(root).as_posix()}: no tool draws it; remove it"
+                 for path in sorted(folder.glob("*")) if path.stem not in sources or path.suffix != ".svg"]
+    return problems
+
+
+def write_site_icons(root=ROOT):
+    _, native = load(root)
+    folder = root / native["site"]["tile"]["dir"]
+    folder.mkdir(parents=True, exist_ok=True)
+    for name, text in site_sources(root).items():
+        (folder / f"{name}.svg").write_text(text)
 
 
 # A Tools row: its tile, then its kind link, to the piece's releases (?q=name) or its folder (#268).
@@ -597,6 +632,7 @@ def write(root=ROOT):
         for px in icon.get("extraPng", []):
             render_png(svg, root / f'{icon["out"]}-{px}.png', px)
     write_readme_pngs(root)
+    write_site_icons(root)
 
 
 def check(root=ROOT):
@@ -605,7 +641,7 @@ def check(root=ROOT):
         f"{rel} differs from design/icons/icons.json"
         for rel, text in texts(root).items()
         if not (root / rel).is_file() or (root / rel).read_text() != text
-    ] + tile_problems(root)
+    ] + tile_problems(root) + site_problems(root)
 
 
 def sheet(out_dir, native_dir=None, sizes=False):

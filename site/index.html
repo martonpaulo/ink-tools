@@ -44,12 +44,11 @@
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
       <div class="container">
-        <p class="eyebrow">Unofficial · free · open source</p>
+        <p class="eyebrow">Free · open source</p>
         <h1 id="hero-title">Tools for your Supernote tablet</h1>
-        <p>Plugins and a tablet app that turn handwriting into shapes, text and pictures, sync your calendars and to-dos, and send pages to your phone, plus tools for the Mac. Not made by Ratta.</p>
+        <p>Plugins and a tablet app that turn handwriting into shapes, text and pictures, sync your calendars and to-dos, and send pages to your phone, plus tools for the Mac.</p>
         <p class="actions">
-          <a class="button primary" href="#tools">See the tools</a>
-          <a class="button secondary" href="#install">How to install, step by step</a>
+          <a class="button primary" href="#install">How to install, step by step</a>
         </p>
       </div>
     </section>
@@ -61,7 +60,7 @@
       <ul class="grid-3 cards">
         <li class="card">
           <p class="card-head">
-            <img src="/icons/smart-pen.png" width="48" height="48" alt="">
+            <img src="/icons/smart-pen.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-working">Working</span>
           </p>
@@ -76,7 +75,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/lasso-actions.png" width="48" height="48" alt="">
+            <img src="/icons/lasso-actions.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-beta">Beta</span>
           </p>
@@ -91,7 +90,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/image-editing.png" width="48" height="48" alt="">
+            <img src="/icons/image-editing.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-beta">Beta</span>
           </p>
@@ -106,7 +105,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/device-link.png" width="48" height="48" alt="">
+            <img src="/icons/device-link.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-working">Working</span>
           </p>
@@ -121,7 +120,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/account-sync.png" width="48" height="48" alt="">
+            <img src="/icons/account-sync.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-beta">Beta</span>
           </p>
@@ -136,7 +135,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/puzzles.png" width="48" height="48" alt="">
+            <img src="/icons/puzzles.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-in-progress">In progress</span>
           </p>
@@ -145,7 +144,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/handwriting-language.png" width="48" height="48" alt="">
+            <img src="/icons/handwriting-language.svg" width="48" height="48" alt="">
             <span class="kind">Tablet app</span>
             <span class="badge status-beta">Beta</span>
           </p>
@@ -156,7 +155,7 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/ink-notebook-editor.png" width="48" height="48" alt="">
+            <img src="/icons/ink-notebook-editor.svg" width="48" height="48" alt="">
             <span class="kind">Mac app</span>
             <span class="badge status-in-progress">In progress</span>
           </p>
@@ -175,7 +174,7 @@
       <ul class="grid-3 cards">
         <li class="card">
           <p class="card-head">
-            <img src="/icons/ink-tools-control.png" width="48" height="48" alt="">
+            <img src="/icons/inkctl.svg" width="48" height="48" alt="">
             <span class="kind">Mac command line</span>
             <span class="badge status-working">Working</span>
           </p>
@@ -184,16 +183,16 @@
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/ink-tools-helper.png" width="48" height="48" alt="">
+            <img src="/icons/ink-tools-helper.svg" width="48" height="48" alt="">
             <span class="kind">Tablet app</span>
             <span class="badge status-internal">Internal</span>
           </p>
           <h3>Ink Tools Helper</h3>
-          <ul class="features"><li><strong>Plugin settings</strong>: lets <code>inkctl</code> install, enable and permit plugins with no screen.</li><li><strong>Firmware watch</strong>: at boot after a firmware change, check every device dependency and report what broke.</li></ul>
+          <ul class="features"><li><strong>Plugin settings</strong>: the tablet side of the Plugins commands of <code>inkctl</code>.</li><li><strong>Firmware watch</strong>: runs the Firmware watch of <code>inkctl</code> at boot after a firmware change.</li></ul>
         </li>
         <li class="card">
           <p class="card-head">
-            <img src="/icons/ink-tools-probe.png" width="48" height="48" alt="">
+            <img src="/icons/ink-tools-probe.svg" width="48" height="48" alt="">
             <span class="kind">Plugin</span>
             <span class="badge status-internal">Internal</span>
           </p>
@@ -208,12 +207,12 @@
     <section class="section" id="install" aria-labelledby="install-title">
       <div class="container">
         <h2 id="install-title">Install in a few minutes</h2>
-        <p class="lead">Most people need only a plugin: download its file, copy it to the tablet and install it from Settings. No root, no modified firmware.</p>
+        <p class="lead">Most people need only a plugin, so its guide comes first.</p>
         <!-- site-install:start: written by scripts/site_figures.py -->
         <div class="install-grid">
           <article class="install">
             <h3>Install a plugin</h3>
-            <ol class="steps"><li>Download the tool&#x27;s <code>.snplg</code> file with its Download button on <a href="https://inktools.martonpaulo.com/#tools" target="_blank" rel="noopener">inktools.martonpaulo.com</a>, or from its release on the <a href="https://github.com/martonpaulo/ink-tools/releases" target="_blank" rel="noopener">releases page</a>. Keep the file name: it carries the version.</li><li>Connect the tablet to the computer with a USB cable, or use Supernote Cloud, and copy the file into the tablet&#x27;s <code>MyStyle</code> folder.</li><li>On the tablet, open Settings, then Apps, then Plugins, and tap Select Plugin Package. In Select Plugin, choose the file, then tap Install.</li><li>When the tablet asks, allow the permissions the release notes list. A plugin that is refused a permission shows what it needs and how to give it.</li><li>Tap the plugin in the Plugins list to open its page, and turn it on with the switch there. The tablet keeps at most 10 plugins on at one time.</li></ol>
+            <ol class="steps"><li>Download the tool&#x27;s <code>.snplg</code> file with its Download button on <a href="#tools">inktools.martonpaulo.com</a>, or from its release on the <a href="https://github.com/martonpaulo/ink-tools/releases" target="_blank" rel="noopener">releases page</a>. Keep the file name: it carries the version.</li><li>Connect the tablet to the computer with a USB cable, or use Supernote Cloud, and copy the file into the tablet&#x27;s <code>MyStyle</code> folder.</li><li>On the tablet, open Settings, then Apps, then Plugins, and tap Select Plugin Package. In Select Plugin, choose the file, then tap Install.</li><li>When the tablet asks, allow the permissions the release notes list. A plugin that is refused a permission shows what it needs and how to give it.</li><li>Tap the plugin in the Plugins list to open its page, and turn it on with the switch there. The tablet keeps at most 10 plugins on at one time.</li></ol>
           </article>
           <article class="install">
             <h3>Install the tablet app</h3>
@@ -221,11 +220,11 @@
           </article>
           <article class="install">
             <h3>Install the Mac app</h3>
-            <p>Ink Notebook Editor is in progress and has no release yet. It builds on a Mac from a copy of the repository, as its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/ink-notebook-editor/README.md" target="_blank" rel="noopener">README</a> shows.</p>
+            <p>Ink Notebook Editor has no release yet. It builds on a Mac from a copy of the repository, as its <a href="https://github.com/martonpaulo/ink-tools/blob/main/apps/ink-notebook-editor/README.md" target="_blank" rel="noopener">README</a> shows.</p>
           </article>
           <article class="install">
             <h3>Install the Mac command line</h3>
-            <p>Ink Tools Control (<code>inkctl</code>) is for developers and has no release: it runs from a copy of the repository.</p>
+            <p>Ink Tools Control (<code>inkctl</code>) has no release: it runs from a copy of the repository.</p>
             <ol class="steps"><li>On the Mac, install Python 3.9 or later and Android&#x27;s <code>adb</code> tool.</li><li>On the tablet, turn on Sideloading in Settings (<a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/docs/research/2026-11-adb-on-supernote.md#steps" target="_blank" rel="noopener">how</a>).</li><li>In Terminal, copy the repository: <code>git clone https://github.com/martonpaulo/ink-tools</code>.</li><li>Follow the Quick Start of <a href="https://github.com/martonpaulo/ink-tools/blob/main/cli/inkctl/README.md" target="_blank" rel="noopener">Ink Tools Control</a>: it puts <code>inkctl</code> on your path and connects it to the tablet.</li></ol>
           </article>
         </div>
@@ -248,7 +247,7 @@
 
     <section class="section" id="credits" aria-labelledby="credits-title">
       <div class="container">
-        <h2 id="credits-title">Built in public, on shared work</h2>
+        <h2 id="credits-title">Built on shared work</h2>
         <!-- site-credits:start: written by scripts/site_figures.py -->
         <p>A special thank-you to the authors of these Supernote projects. Ink Tools stands on their work: some of their code runs inside it, and some of their ideas shaped it.</p>
         <ul class="credits">
@@ -263,24 +262,15 @@
           <li><a href="https://github.com/CRSiegfried/inkbridge" target="_blank" rel="noopener">CRSiegfried/inkbridge</a>: inkctl leaves transcription to whoever calls it.</li>
         </ul>
         <p>Each project&#x27;s licence, and what Ink Tools took from it, is in the <code>NOTICE.md</code> of the part that uses it.</p>
-        <h3 id="license">License</h3>
-        <p><a href="https://github.com/martonpaulo/ink-tools/blob/main/LICENSE" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> © 2026 Marton Paulo. Each subproject preserves its own <code>NOTICE.md</code> and third-party notices.</p>
         <!-- site-credits:end -->
       </div>
     </section>
 
-    <section class="section" id="privacy" aria-labelledby="privacy-title">
-      <div class="container">
-        <h2 id="privacy-title">Privacy</h2>
-        <p>Ink Tools runs no server, collects no analytics and has no account of its own. A tool sends data only to the service you use it with, and each release lists those services.</p>
-        <p><a href="/privacy/">Read the privacy policy</a></p>
-      </div>
-    </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p>Developed by <a href="https://martonpaulo.com" target="_blank" rel="noopener">Marton Paulo</a> · © 2026 · CC BY-NC-SA 4.0 · Unofficial, not affiliated with Ratta</p>
+      <p>Developed by <a href="https://martonpaulo.com" target="_blank" rel="noopener">Marton Paulo</a> · © 2026 · <a href="https://github.com/martonpaulo/ink-tools/blob/main/LICENSE" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
       <ul>
         <li><a href="https://github.com/martonpaulo/ink-tools/issues" target="_blank" rel="noopener">Report an issue</a></li>
         <li><a href="https://github.com/martonpaulo/ink-tools" target="_blank" rel="noopener">GitHub</a></li>

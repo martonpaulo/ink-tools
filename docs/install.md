@@ -81,12 +81,12 @@ it installs only from a copy of the repository, over a cable, as its
 
 ## Install the Mac app
 
-Ink Notebook Editor is in progress and has no release yet. It builds on a Mac from a copy of the
+Ink Notebook Editor has no release yet. It builds on a Mac from a copy of the
 repository, as its [README](../apps/ink-notebook-editor/README.md) shows.
 
 ## Install the Mac command line
 
-Ink Tools Control (`inkctl`) is for developers and has no release: it runs from a copy of the repository.
+Ink Tools Control (`inkctl`) has no release: it runs from a copy of the repository.
 
 1. On the Mac, install Python 3.9 or later and Android's `adb` tool.
 2. On the tablet, turn on Sideloading in Settings
