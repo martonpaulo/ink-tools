@@ -56,6 +56,7 @@
     {"path": "scripts/plugin-version.cjs", "gates": ["versions", "handwriting-language", "ink-tools-helper", "account-sync", "lasso-actions", "ink-tools-probe", "device-link", "image-editing", "smart-pen"]},
     {"path": "plugins/*/scripts/native-*", "gates": ["native"]},
     {"path": "packages/native-build/", "gates": ["native", "account-sync", "lasso-actions", "device-link", "image-editing", "ink-tools-probe", "smart-pen"]},
+    {"path": "packages/native-build/host-tools.cjs", "gates": ["handwriting-language", "ink-tools-helper"]},
     {"path": "scripts/gates.py", "gates": ["docs", "quick"]},
     {"path": "scripts/quick_check.py", "gates": ["quick", "case", "wording"]},
     {"path": "scripts/case_check.py", "gates": ["case", "quick"]},

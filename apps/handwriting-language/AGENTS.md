@@ -108,7 +108,7 @@ The app writes only inside `/sdcard/.data/dictionary/default/`, and only a name 
 
 No Gradle: the same light toolchain as the plugins' native code (`javac`, D8, `aapt2`, then
 `zipalign` and `apksigner`), installed by `scripts/toolchain.sh` into `.toolchain/` with pinned
-SHA-1 checks, or taken from `ANDROID_HOME` on a CI runner. A JDK is found by `scripts/host-tools.cjs`.
+SHA-1 checks, or taken from `ANDROID_HOME` on a CI runner. A JDK is found by `../../packages/native-build/host-tools.cjs`, the one JDK locator ([#295](https://github.com/martonpaulo/ink-tools/issues/295)).
 
 ```sh
 node scripts/build.cjs --test   # JVM tests of the button rule, the cycle, the file switch and the look check

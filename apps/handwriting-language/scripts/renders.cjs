@@ -13,7 +13,7 @@
  */
 const {execFileSync} = require('node:child_process');
 const crypto = require('node:crypto');
-const {jdkBin, jdkTool} = require('./host-tools.cjs');
+const {jdkBin, jdkTool} = require('../../../packages/native-build/host-tools.cjs');
 const {NATIVE_ACCESS, failOnMissingJdk, app, javaSources, tokensSource, tools} = require('./build.cjs');
 const path = require('node:path');
 const fs = require('node:fs');

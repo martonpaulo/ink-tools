@@ -11,7 +11,7 @@
  * Handwriting Language's renders come from `scripts/renders.cjs`.
  */
 const {execFileSync} = require('node:child_process');
-const {jdkTool} = require('./host-tools.cjs');
+const {jdkTool} = require('../../../packages/native-build/host-tools.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const {NATIVE_ACCESS, failOnMissingJdk, javaSources, tokensSource} = require('./build.cjs');

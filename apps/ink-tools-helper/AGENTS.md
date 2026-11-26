@@ -85,7 +85,7 @@ loads PluginHost's classes and Stub numbers; the registry's `off` kill switch ma
 ## Build and test
 
 The Lingo app's toolchain, reused, not copied: `../handwriting-language/scripts/toolchain.sh` (pinned
-build-tools and platform) and `../handwriting-language/scripts/host-tools.cjs` (the JDK finder).
+build-tools and platform) and `../../packages/native-build/host-tools.cjs` (the JDK finder).
 
 ```sh
 node scripts/build.cjs --test   # JVM tests (call encoding, command parsing, field access), signing-key choice

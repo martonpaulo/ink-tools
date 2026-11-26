@@ -7,7 +7,7 @@
  *   node scripts/build.cjs           build build/outputs/ink-tools-helper-<version>.apk, signed and verified
  *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK) and the signing-key test
  */
-const {jdkTool, JDK_MISSING} = require('../../handwriting-language/scripts/host-tools.cjs');
+const {jdkTool, JDK_MISSING} = require('../../../packages/native-build/host-tools.cjs');
 const {badgingProblems} = require('../../handwriting-language/scripts/build.cjs');
 const {versionName} = require('../../../scripts/plugin-version.cjs');
 const {execFileSync} = require('node:child_process');

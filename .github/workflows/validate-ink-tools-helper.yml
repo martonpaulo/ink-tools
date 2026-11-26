@@ -5,9 +5,9 @@ name: Validate Ink Tools Helper
 on:
   push:
     branches: [main]
-    paths: ['apps/ink-tools-helper/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-ink-tools-helper.yml']
+    paths: ['apps/ink-tools-helper/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', 'registry/**', 'packages/native-build/host-tools.cjs', '.github/workflows/validate-ink-tools-helper.yml']
   pull_request:
-    paths: ['apps/ink-tools-helper/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', 'registry/**', '.github/workflows/validate-ink-tools-helper.yml']
+    paths: ['apps/ink-tools-helper/**', 'apps/handwriting-language/scripts/**', 'scripts/plugin-version.cjs', 'registry/**', 'packages/native-build/host-tools.cjs', '.github/workflows/validate-ink-tools-helper.yml']
   workflow_dispatch:
 
 permissions:
