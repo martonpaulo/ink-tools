@@ -45,8 +45,6 @@ export type CollectionHost = {
   select: (rect: Rect) => Promise<Result<boolean>>;
   /** Closes the plugin view, so the note is in front while the pieces go in. */
   closeView: () => Promise<Result<boolean>>;
-  /** Resolves after `ms` milliseconds. */
-  wait: (ms: number) => Promise<void>;
   /** Asks `question` in the host's confirm dialog; true only for `action`. */
   ask: (question: string, action: string, cancel: string) => Promise<Result<boolean>>;
   toast: (text: string) => void;
@@ -73,23 +71,27 @@ export type CollectionFailure =
 const done = (result: Result<boolean>) => result.ok && result.value;
 
 /**
- * `insertSticker` answers before NOTE lassoes the pasted piece: about 250 ms later on the Manta
- * (device round 9, #249), and a `resizeLassoRect` in between answers 904. The move is asked again
- * every step, up to the number of steps (2 s in all), until it is taken.
+ * `insertSticker` answers before NOTE lassoes the pasted piece: about 250 ms later on the Manta,
+ * and a `resizeLassoRect` in between answers 904 (device round 9, #249). The move is asked again at
+ * once, up to this many times: no timer, since a paste waiting on `setTimeout` with the view closed
+ * never asked again (device round 9). Each ask is one bridge round trip, about 6 ms when refused.
  */
-export const PASTE_SETTLE_STEP_MS = 50;
-export const PASTE_SETTLE_STEPS = 40;
+export const PASTE_SETTLE_TRIES = 80;
 
-/** Moves the piece just pasted to `rect`, once NOTE has lassoed it. */
-async function movePasted(host: CollectionHost, rect: Rect): Promise<Result<boolean>> {
+/** Moves the piece just pasted to `rect`, once NOTE has lassoed it; logs how many asks it took. */
+async function movePasted(
+  host: CollectionHost,
+  rect: Rect,
+  tag: string,
+): Promise<Result<boolean>> {
   let moved = await host.resize(rect);
-  for (
-    let step = 0;
-    !moved.ok && moved.code === NO_LASSO_CODE && step < PASTE_SETTLE_STEPS;
-    step += 1
-  ) {
-    await host.wait(PASTE_SETTLE_STEP_MS);
+  let tries = 0;
+  while (!moved.ok && moved.code === NO_LASSO_CODE && tries < PASTE_SETTLE_TRIES) {
+    tries += 1;
     moved = await host.resize(rect);
+  }
+  if (tries > 0) {
+    host.log(`${tag}: move asked again ${tries} times`);
   }
   return moved;
 }
@@ -210,7 +212,7 @@ export async function pasteCollection(
       host.log(`${tag}: ${piece.name}: insertSticker ${whyNot(inserted)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));
     }
-    const moved = await movePasted(host, placed.targets[index]);
+    const moved = await movePasted(host, placed.targets[index], tag);
     if (!done(moved)) {
       host.log(`${tag}: ${piece.name}: resizeLassoRect ${whyNot(moved)}`);
       return stop(host, 'insert', copy['collection.notPasted'](index));
@@ -307,7 +309,6 @@ export const DEVICE_HOST: CollectionHost = {
   resize: resizeLassoRect,
   select: lassoElements,
   closeView: closePluginView,
-  wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
   ask: confirm,
   toast: showToast,
   log: lookupLog,

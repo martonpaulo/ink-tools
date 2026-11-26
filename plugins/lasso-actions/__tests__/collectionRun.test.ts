@@ -6,7 +6,7 @@ import {
   clearCollection,
   CollectionHost,
   countPieces,
-  PASTE_SETTLE_STEPS,
+  PASTE_SETTLE_TRIES,
   pasteCollection,
 } from '../src/collection/run';
 import {copy} from '../src/copy';
@@ -64,7 +64,6 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
       calls.push('close view');
       return ok(true);
     },
-    wait: async () => {},
     ask: async question => {
       calls.push(`ask ${question}`);
       return ok(answer);
@@ -203,14 +202,14 @@ test('a pasted piece that cannot be moved stops the paste, and the log names the
  * page centre in the pasted state. While the plugin view is in front, no lasso call reaches it:
  * `resizeLassoRect` answers 904 and `lassoElements` at the page centre answers false. With no view
  * in front, NOTE lassoes the pasted piece about 250 ms after `insertSticker` answers, and a
- * `resizeLassoRect` before that answers 904 too (device round 9).
+ * `resizeLassoRect` before that answers 904 too, in about 6 ms (device round 9): some asks refused.
  */
-const MANTA_PASTE_LASSO_MS = 250;
+const MANTA_REFUSED_ASKS = 40;
 
 function mantaPage(fake: ReturnType<typeof fakeHost>) {
   let viewOpen = true;
   let pasted = false;
-  let unlassoedMs = 0;
+  let refusals = 0;
   const placed: string[] = [];
   Object.assign(fake.host, {
     closeView: async () => {
@@ -219,15 +218,16 @@ function mantaPage(fake: ReturnType<typeof fakeHost>) {
     },
     insertSticker: async (path: string) => {
       pasted = true;
-      unlassoedMs = MANTA_PASTE_LASSO_MS;
+      refusals = MANTA_REFUSED_ASKS;
       placed.push(path.slice(DIR.length + 1));
       return ok(true);
     },
-    wait: async (ms: number) => {
-      unlassoedMs -= ms;
-    },
     resize: async () => {
-      if (viewOpen || !pasted || unlassoedMs > 0) {
+      if (!viewOpen && pasted && refusals > 0) {
+        refusals -= 1;
+        return fail(904, 'No lasso action has been performed. Cannot call the API!');
+      }
+      if (viewOpen || !pasted) {
         return fail(904, 'No lasso action has been performed. Cannot call the API!');
       }
       pasted = false;
@@ -255,14 +255,8 @@ test('on the Manta a move asked before NOTE lassoed the piece is asked again (#2
   const fake = fakeHost();
   await addToCollection(fake.host, false);
   mantaPage(fake);
-  const waits: number[] = [];
-  const settle = fake.host.wait;
-  fake.host.wait = async ms => {
-    waits.push(ms);
-    await settle(ms);
-  };
   expect(await pasteCollection(fake.host, false)).toEqual({ok: true, count: 0});
-  expect(waits.reduce((sum, ms) => sum + ms, 0)).toBeGreaterThanOrEqual(MANTA_PASTE_LASSO_MS);
+  expect(fake.logs).toContain(`collection paste: move asked again ${MANTA_REFUSED_ASKS} times`);
 });
 
 test('a move that never finds a lasso stops within the settle limit', async () => {
@@ -274,7 +268,7 @@ test('a move that never finds a lasso stops within the settle limit', async () =
     return fail(904, 'No lasso action has been performed. Cannot call the API!');
   };
   expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'insert'});
-  expect(asked).toBe(PASTE_SETTLE_STEPS + 1);
+  expect(asked).toBe(PASTE_SETTLE_TRIES + 1);
 });
 
 test('on the Manta a paste with the view still open stops after piece 1, naming the call', async () => {

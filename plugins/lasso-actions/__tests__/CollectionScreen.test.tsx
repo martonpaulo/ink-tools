@@ -50,7 +50,6 @@ function folderHost(names: string[]): CollectionHost & {names: string[]} {
     resize: async () => ok(true),
     select: async () => ok(true),
     closeView: async () => ok(true),
-    wait: async () => {},
     ask: async () => ok(true),
     toast: () => {},
     log: () => {},
