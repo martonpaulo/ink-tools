@@ -113,7 +113,7 @@ copy. `inkctl google login` keeps the Google sign-in in the login Keychain, serv
 | `INKCTL_SERVICES` | environment | A JSON file in place of `packages/sync-core/src/services.json`, the one owner of the Todoist and Google addresses, scopes and the test objects' name. The tests point it at a fake server. |
 | `ACCOUNT_SYNC_TODOIST_TOKEN` | login Keychain, service `ink-tools` | The Todoist token `sandbox todoist` uses. |
 | `ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT` | login Keychain, service `ink-tools` | The JSON of the Google OAuth client of type «Desktop app», which `google login` reads. |
-| `ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN` | login Keychain, service `ink-tools` | The Google refresh token `google login` writes. While the consent screen is in «Testing», it lasts 7 days. |
+| `ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN` | login Keychain, service `ink-tools` | The Google refresh token `google login` writes. The Google app is published, so it does not expire after 7 days; one issued before 2026-11-26 lasts 7 days. |
 
 Every Keychain item's name, description and rotation is in [Account Sync sign-in secrets](../../docs/security.md#account-sync-sign-in-secrets).
 

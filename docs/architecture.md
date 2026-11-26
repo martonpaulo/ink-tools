@@ -272,7 +272,8 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 
     Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh
     tokens expire after 7 days; «In production» without verification keeps them, behind an
-    «unverified app» warning. The app stays in «Testing» for now (owner, 2026-11-16,
+    «unverified app» warning and a cap of 100 users. The app is published, so its tokens do not
+    expire after 7 days (owner, 2026-11-26, [#372](https://github.com/martonpaulo/ink-tools/issues/372); it was in «Testing» from 2026-11-16,
     [#124](https://github.com/martonpaulo/ink-tools/issues/124)). The loopback flow needs an OAuth client of the «Desktop app» type:
     the existing client is a «TVs and Limited Input devices» one, with no redirect URIs.
 - **Lasso Actions** (formerly Word Lookup) — actions on lassoed handwriting, each a module switched on or off in its Settings ([#306](https://github.com/martonpaulo/ink-tools/issues/306)). Its Lookup module: write a word, lasso it, insert an **illustration**, a **photo**, a **definition**

@@ -21,8 +21,9 @@ const form = (o: Record<string, string>) => new URLSearchParams(o).toString();
 const FORM = {'Content-Type': 'application/x-www-form-urlencoded'};
 
 /**
- * Google refused the stored refresh token: it was revoked, or it expired (seven days while the
- * consent screen is in Testing, #64). Settings shows Google as signed out, never an empty calendar.
+ * Google refused the stored refresh token: it was revoked, or it expired (seven days for a token
+ * issued while the app was in Testing, #64; none now it is published, #372). Settings shows
+ * Google as signed out, never an empty calendar.
  */
 export class GoogleSignedOutError extends Error {
   constructor() {

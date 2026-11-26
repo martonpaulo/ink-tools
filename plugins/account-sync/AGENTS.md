@@ -85,8 +85,11 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
 - **Google sign-in client** ([#124](https://github.com/martonpaulo/supernote-tools/issues/124)): the OAuth client created for the device-code flow is of the «TVs and
   Limited Input devices» type, which has no redirect URIs, so the loopback sign-in of
   `inkctl google login` needs a new client of the «Desktop app» type in the same Google Cloud
-  project; the owner creates it. While the consent screen stays in «Testing», each refresh
-  token lasts 7 days and the owner signs in again; publishing the app is a ROADMAP item.
+  project; the owner creates it. The app is published («In production», owner, 2026-11-26,
+  [#372](https://github.com/martonpaulo/ink-tools/issues/372)), so a refresh token issued after that does not expire after 7 days;
+  one issued while the app was in «Testing» kept its 7-day life, so the owner signed in again once. The
+  consent screen shows «Google hasn't verified this app», and the app is capped at 100 users;
+  verification is not planned, as the owner is the one user.
 - The private design and reverse-engineering notes live in the workbench research folder.
 
 ## Reuse
