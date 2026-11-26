@@ -113,16 +113,18 @@ enum ElementRecord {
                 return CGPoint(x: CGFloat(width - inFromRight) * scale, y: CGFloat(down) * scale)
             }
             let kind: PageElement.Kind
+            // The kind names come first: a text box that Real-Time Text inserts carries the
+            // stroke document name too (#324, device round 8).
             let named = try name(at: kindName)
             if named == values.pictureKind {
                 kind = .picture
-            } else if try name(at: documentKind) == values.strokeDocument {
-                kind = .stroke
             } else if named == values.textBoxKind {
                 kind = .textBox
             } else if named == values.headingKind {
                 // A Heading's band is read from the footer (`headings()`), not as an element.
                 return nil
+            } else if try name(at: documentKind) == values.strokeDocument {
+                kind = .stroke
             } else {
                 throw failure("element \(number + 1) is of an unknown kind «\(named)»")
             }

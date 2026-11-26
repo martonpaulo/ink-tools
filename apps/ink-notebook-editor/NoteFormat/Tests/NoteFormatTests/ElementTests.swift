@@ -66,6 +66,49 @@ import Testing
         Self.expect(elements[25].bounds, near: CGRect(x: 200, y: 1300, width: 900, height: 54))
     }
 
+    /// `realtime-text-tablet.note`, made on the tablet in device round 8 (#298, #324): a replayed
+    /// word that Real-Time Text turned into a text box. That text box carries the stroke document
+    /// name, so the kind name decides before the document name does.
+    @Test func aRealTimeTextBoxReadsAsATextBox() throws {
+        let note = try Self.note("realtime-text-tablet")
+        let elements = try note.elements(page: 0)
+        let boxes = elements.filter { $0.kind == .textBox }
+        #expect(boxes.count == 1, "\(elements.map(\.kind))")
+        let bytes = try Self.bytes("realtime-text-tablet")
+        let block = try Self.block(bytes)
+        // Its text box record carries the stroke document name, as the tablet wrote it.
+        #expect(Self.records(bytes, from: block).contains { record in
+            Self.name(bytes, at: record + ElementRecord.kindName) == Registry.NotefileFormatVersions.textBoxKind
+                && Self.name(bytes, at: record + ElementRecord.documentKind)
+                    == Registry.NotefileFormatVersions.strokeDocument
+        })
+    }
+
+    @Test func aTextBoxWithTheStrokeDocumentNameStaysATextBox() throws {
+        var bytes = try Self.bytes("content")
+        // The first record (the text box) gets the stroke document name, as Real-Time Text writes it.
+        let document = try Self.block(bytes) + 4 + ElementRecord.documentKind
+        let name = Array(Registry.NotefileFormatVersions.strokeDocument.utf8)
+        for (index, byte) in name.enumerated() {
+            bytes[document + index] = byte
+        }
+        bytes[document + name.count] = 0
+        #expect(try NoteFile(bytes: bytes).elements(page: 0).map(\.kind) == [.textBox, .picture])
+    }
+
+    /// The start of each record (its length word) of the element block at `block`.
+    static func records(_ bytes: [UInt8], from block: Int) -> [Int] {
+        var offset = block + 4
+        return (0..<NoteFile.word(bytes, at: block)).map { _ in
+            defer { offset += 4 + NoteFile.word(bytes, at: offset) }
+            return offset
+        }
+    }
+
+    static func name(_ bytes: [UInt8], at offset: Int) -> String {
+        String(decoding: bytes[offset..<(offset + ElementRecord.nameLength)].prefix { $0 != 0 }, as: UTF8.self)
+    }
+
     @Test func aRecordOfAnUnknownKindThrows() throws {
         var bytes = try Self.bytes("content")
         // The first record (the text box) renamed: its kind name starts 52 bytes into the record.
