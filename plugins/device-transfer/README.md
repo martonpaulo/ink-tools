@@ -25,11 +25,21 @@ from them straight into the open note.
 
 ## Send from the iPhone with one Shortcut
 
+The Shortcut is ready-made: [Send to Supernote.shortcut](shortcuts/Send%20to%20Supernote.shortcut),
+signed for anyone, built from [its source](shortcuts/Send%20to%20Supernote.plist)
+([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
+
 1. Install LocalSend on the iPhone.
-2. In Shortcuts, make a new Shortcut and turn on «Show in Share Sheet» for Text and Images.
-3. Add «Convert Image» to JPEG (iPhone photos are HEIC, which the note does not take).
-4. Add LocalSend's share action, or «Share» and pick LocalSend, then «Supernote».
-5. On the tablet, tap «Receive», then share from the iPhone with the Shortcut.
+2. Open the `.shortcut` file on the iPhone and tap «Add Shortcut».
+3. On the tablet, tap «Receive».
+4. On the iPhone, share a text or a photo, pick «Send to Supernote», then LocalSend, then
+   «Supernote».
+
+The Shortcut shows in the Share Sheet for Text and Images. It converts an image to JPEG (iPhone
+photos are HEIC, which the note does not take) and passes a text on as it is. LocalSend for iOS
+has no Shortcuts action
+([localsend#1074](https://github.com/localsend/localsend/issues/1074)), so the Shortcut ends in
+the Share Sheet: the taps on LocalSend and on «Supernote» stay.
 
 From the Mac, tap «Receive» and drop the text or the picture on «Supernote» in LocalSend.
 
