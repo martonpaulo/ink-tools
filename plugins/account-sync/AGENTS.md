@@ -58,7 +58,7 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   and runs nothing, since it never probes. The Calendar and To-Do are written through
   `BridgeProviders`' query, insert, update and delete (`src/deviceRows.ts`, `src/deviceStores.ts`);
   a Calendar event is removed by `status='cancelled'`, never a delete, which that provider ignores. The Google OAuth client is its own file,
-  `google-client.secret`, from `inkctl secret set google-client` ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud and ICS are not bound yet ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). Not yet run on the tablet.
+  `google-client.secret`, from `inkctl secret set google-client` ([#200](https://github.com/martonpaulo/ink-tools/issues/200)); iCloud reads the `icloud` sign-in, `<Apple ID>:<app-specific password>`, finds its calendars by CalDAV discovery from `services.json`'s `icloudCalDav` each pass and gets the CalDAV writer; ICS reads the `icsFeeds` addresses in `settings.json`, read-only ([#30](https://github.com/martonpaulo/ink-tools/issues/30)). No Settings field adds a feed yet. Not yet run on the tablet.
   A module's first pass only pulls: tablet-only items stay local unless its «Send tablet-only items»
   switch is on ([#207](https://github.com/martonpaulo/ink-tools/issues/207), an assumption the owner may override).
 - **Digest writer** ([#42](https://github.com/martonpaulo/ink-tools/issues/42)): `src/digestStore.ts` writes `DigestEntry` items into the

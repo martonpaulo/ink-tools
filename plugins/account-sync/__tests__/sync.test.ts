@@ -11,6 +11,7 @@ import {ContentRows, createDeviceStores} from '../src/deviceStores';
 import {
   AUTO_SYNC_MINUTES,
   calendarWindow,
+  buildModules,
   createSyncRunner,
   startAutoSync,
   SyncDevice,
@@ -407,4 +408,123 @@ test('Settings reads the tablet-only tasks before the first pass, and the pass k
   expect(await runner.tabletOnlyTasks(before.value)).toBe(2);
   await runner.syncNow();
   expect(saved.at(-1)?.firstLinked).toEqual({calendar: NOW, todo: NOW});
+});
+
+describe('iCloud and ICS on the tablet (#30)', () => {
+  const ROOT = 'https://caldav.icloud.com/';
+  const HOME = 'https://p01-caldav.icloud.com/123/calendars/';
+  const CAL = `${HOME}home/`;
+  const FEED = 'webcal://feeds.example.com/private-token/holidays.ics';
+  const vcal = (uid: string, title: string) =>
+    [
+      'BEGIN:VCALENDAR',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTART:${new Date(NOW).toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
+      `DTEND:${new Date(NOW + 3_600_000).toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
+      `SUMMARY:${title}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+  const ms = (inner: string) =>
+    `<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">${inner}</d:multistatus>`;
+  const resp = (href: string, props: string) =>
+    `<d:response><d:href>${href}</d:href><d:propstat><d:prop>${props}</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>`;
+
+  function apple() {
+    const calls: Array<{url: string; method: string; auth?: string}> = [];
+    const text = (code: number, body: string) => ({
+      ok: code < 300,
+      status: code,
+      json: async () => ({}),
+      text: async () => body,
+    });
+    const fetch: SyncDevice['fetch'] = async (url, init) => {
+      calls.push({url, method: init.method, auth: init.headers.Authorization});
+      if (init.method === 'PROPFIND' && url === ROOT) {
+        return text(207, ms(resp('/', '<d:current-user-principal><d:href>/123/principal/</d:href></d:current-user-principal>')));
+      }
+      if (init.method === 'PROPFIND' && url.endsWith('/principal/')) {
+        return text(207, ms(resp('/123/principal/', `<c:calendar-home-set><d:href>${HOME}</d:href></c:calendar-home-set>`)));
+      }
+      if (init.method === 'PROPFIND' && url === HOME) {
+        return text(207, ms(resp('/123/calendars/home/', '<d:resourcetype><d:collection/><c:calendar/></d:resourcetype><d:displayname>Home</d:displayname>')));
+      }
+      if (init.method === 'REPORT' && url === CAL) {
+        return text(207, ms(resp('/123/calendars/home/a.ics', `<c:calendar-data>${vcal('a', 'Dentist').replace(/</g, '&lt;')}</c:calendar-data>`)));
+      }
+      if (init.method === 'GET' && url === 'https://feeds.example.com/private-token/holidays.ics') {
+        return text(200, vcal('h', 'Holiday'));
+      }
+      return text(404, '');
+    };
+    return {calls, fetch};
+  }
+
+  const on = (feeds: string[] = [FEED]): BridgeSettings => ({
+    ...setProvider(setProvider(setModule(defaultSettings(), 'calendar', true), 'icloud', true), 'ics', true),
+    icsFeeds: feeds,
+  });
+
+  test('Sync now reads iCloud by discovery and the ICS feed over HTTPS into the native Calendar', async () => {
+    const net = apple();
+    const table = rows();
+    const d = device({
+      fetch: net.fetch,
+      loadSettings: async () => ({ok: true, value: on()}),
+      secrets: {
+        read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null),
+        remove: async () => {},
+      },
+      stores: createDeviceStores(table, () => NOW),
+    });
+    const snap = await createSyncRunner(d).syncNow();
+    expect(snap.runs.calendar).toMatchObject({counts: {added: 2}, errors: []});
+    expect(table.inserted.map(r => r.title).sort()).toEqual(['Dentist', 'Holiday']);
+    // The Basic credentials of tester@example.com:abcd-efgh-ijkl-mnop, never the plain pair.
+    const auth = 'Basic dGVzdGVyQGV4YW1wbGUuY29tOmFiY2QtZWZnaC1pamtsLW1ub3A=';
+    expect(net.calls.filter(c => c.url.includes('icloud')).every(c => c.auth === auth)).toBe(true);
+    expect(net.calls.find(c => c.method === 'GET')?.auth).toBeUndefined();
+  });
+
+  test('iCloud gets the CalDAV writer and ICS none, so only iCloud takes tablet edits', async () => {
+    const d = device({
+      fetch: apple().fetch,
+      secrets: {read: async () => 'tester@example.com:pw', remove: async () => {}},
+    });
+    const modules = await buildModules(d, ['icloud', 'ics'], [FEED]);
+    const [icloud, ics] = modules.calendar!.sources;
+    expect(icloud).toMatchObject({id: 'icloud', writer: expect.any(Object)});
+    expect(ics.id).toBe('ics');
+    expect(ics.writer).toBeUndefined();
+    // The feed's name shows only its host: a private feed's path is a secret.
+    expect(await ics.provider.listCalendars()).toEqual([
+      {calendarId: 'https://feeds.example.com/private-token/holidays.ics', name: 'ICS 1 (feeds.example.com)'},
+    ]);
+  });
+
+  test('signed out, a broken sign-in, a refused discovery and no feed each fail with the reason', async () => {
+    const reasons = async (over: Partial<SyncDevice>, feeds: string[] = []) => {
+      const modules = await buildModules(device(over), ['icloud', 'ics'], feeds);
+      return Promise.all(
+        modules.calendar!.sources.map(s =>
+          s.provider.listCalendars().then(
+            () => 'read',
+            (e: Error) => e.message,
+          ),
+        ),
+      );
+    };
+    expect(await reasons({secrets: {read: async () => null, remove: async () => {}}})).toEqual([
+      'not signed in: on the Mac, run inkctl secret set icloud',
+      'no ICS feed address in Settings',
+    ]);
+    expect((await reasons({secrets: {read: async () => 'no-colon', remove: async () => {}}}))[0]).toMatch(
+      /^the sign-in did not read: .*<Apple ID>:<app-specific password>/,
+    );
+    const refused: SyncDevice['fetch'] = async () => ({ok: false, status: 401, json: async () => ({}), text: async () => ''});
+    expect(
+      (await reasons({fetch: refused, secrets: {read: async () => 'a@example.com:pw', remove: async () => {}}}))[0],
+    ).toMatch(/^the iCloud calendars did not read: CalDAV refused the sign-in/);
+  });
 });

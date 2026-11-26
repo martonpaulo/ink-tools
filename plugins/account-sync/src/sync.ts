@@ -8,19 +8,28 @@
  */
 import {
   activePlan,
+  basicCredentials,
   BridgeModules,
   BridgeSettings,
   BridgeState,
   CalendarSource,
+  createCalDavProvider,
+  createCalDavWriter,
   createGoogleCalendarProvider,
   createGoogleCalendarWriter,
+  createIcsProvider,
   createTodoistProvider,
+  discoverCalDavCalendars,
   HttpFetch,
+  httpsUrl,
+  ICLOUD_CALDAV_ROOT,
   initialBridgeState,
   ModuleAvailability,
   ModuleId,
   ModuleRun,
   OAuthClient,
+  parseICloudSignIn,
+  parseUrl,
   ProbeProblems,
   ProviderId,
   refreshAccessToken,
@@ -84,7 +93,13 @@ export interface SyncDevice {
   fetch: Fetch;
   now: () => number;
   log?: (line: string) => void;
+  /** A new, unique UID for an event made on the tablet and sent to iCloud (#30); tests fix it. */
+  newUid?: () => string;
 }
+
+/** A UID for an iCloud event made on the tablet: the time and a random part, never a person's data. */
+const randomUid = (now: number) =>
+  `${now.toString(36)}-${Math.random().toString(36).slice(2, 12)}@ink-tools`;
 
 /** A source that is on but cannot read: its pass fails with the reason, never an empty calendar. */
 const failing = (id: ProviderId, reason: string): CalendarSource => ({
@@ -128,6 +143,79 @@ async function googleSource(device: SyncDevice): Promise<CalendarSource> {
   };
 }
 
+/** Where a provider's notes go, such as a time zone read as UTC (#61). */
+const warnTo = (device: SyncDevice, id: ProviderId) => (warnings: string[]) =>
+  warnings.forEach(w => (device.log ?? console.log)(`[Bridge] ${id}: ${w}`));
+
+/**
+ * iCloud over CalDAV (#30): the sign-in `inkctl secret set icloud` sent, the owner's calendars found
+ * by discovery once per pass, and the CalDAV writer, so the push of tablet edits reaches iCloud.
+ */
+async function icloudSource(device: SyncDevice): Promise<CalendarSource> {
+  const raw = await device.secrets.read('icloud');
+  if (raw === null) {
+    return failing('icloud', signedOut('icloud'));
+  }
+  const {appleId, password} = parseICloudSignIn(raw);
+  const signIn = {
+    username: appleId,
+    getPassword: async () => password,
+    basicAuth: basicCredentials,
+  };
+  let calendars;
+  try {
+    calendars = await discoverCalDavCalendars({
+      ...signIn,
+      fetch: device.fetch,
+      root: ICLOUD_CALDAV_ROOT,
+    });
+  } catch (e) {
+    return failing('icloud', `the iCloud calendars did not read: ${(e as Error).message}`);
+  }
+  return {
+    id: 'icloud',
+    provider: createCalDavProvider({
+      ...signIn,
+      fetch: device.fetch,
+      calendars,
+      onWarnings: warnTo(device, 'icloud'),
+    }),
+    writer: createCalDavWriter({
+      ...signIn,
+      fetch: device.fetch,
+      calendars,
+      newUid: () => (device.newUid ?? (() => randomUid(device.now())))(),
+      now: device.now,
+    }),
+  };
+}
+
+/**
+ * The ICS feeds in Settings (#30), one read-only calendar each: no writer, so a tablet edit to one
+ * is reported, never sent. A feed's id is its HTTPS address, unique across sources; its name holds
+ * only the host, as a private feed's path is a secret.
+ */
+function icsSource(device: SyncDevice, feeds: string[]): CalendarSource {
+  if (!feeds.length) {
+    return failing('ics', 'no ICS feed address in Settings');
+  }
+  const named = feeds.map((url, i) => {
+    const https = httpsUrl(url);
+    return {id: https, url: https, name: `ICS ${i + 1} (${parseUrl(https)?.host ?? 'feed'})`};
+  });
+  const fetchText = async (url: string) => {
+    const res = await device.fetch(url, {method: 'GET', headers: {Accept: 'text/calendar'}});
+    if (!res.ok) {
+      throw new Error(`the feed answered HTTP ${res.status}`);
+    }
+    return res.text();
+  };
+  return {
+    id: 'ics',
+    provider: createIcsProvider(fetchText, named, warnTo(device, 'ics')),
+  };
+}
+
 /**
  * The modules of one pass, with only the providers the plan turned on. A provider whose sign-in
  * read fails, or that is not built for the tablet yet, is a failing source, so its error shows.
@@ -135,6 +223,7 @@ async function googleSource(device: SyncDevice): Promise<CalendarSource> {
 export async function buildModules(
   device: SyncDevice,
   providers: ProviderId[],
+  icsFeeds: string[] = [],
 ): Promise<BridgeModules> {
   const modules: BridgeModules = {};
   // Without the content providers the probe cannot have passed, so no module is in the plan.
@@ -147,8 +236,10 @@ export async function buildModules(
     try {
       if (id === 'google') {
         sources.push(await googleSource(device));
-      } else if (id === 'icloud' || id === 'ics') {
-        sources.push(failing(id, 'not built for the tablet yet (#30)'));
+      } else if (id === 'icloud') {
+        sources.push(await icloudSource(device));
+      } else if (id === 'ics') {
+        sources.push(icsSource(device, icsFeeds));
       }
     } catch (e) {
       sources.push(
@@ -329,7 +420,11 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
     }
     const runs = {...current.runs};
     if (plan.modules.length) {
-      const modules = await buildModules(device, plan.providers);
+      const modules = await buildModules(
+        device,
+        plan.providers,
+        settings.value.icsFeeds,
+      );
       const done = await runBridgeSync(plan, modules, state, device.now);
       state = done.state;
       await keepFirstLinked(device, state, log);

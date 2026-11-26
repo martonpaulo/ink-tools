@@ -2,6 +2,7 @@
   "todoistApi": "https://api.todoist.com/api/v1",
   "googleCalendarApi": "https://www.googleapis.com/calendar/v3",
   "googleTokenEndpoint": "https://oauth2.googleapis.com/token",
+  "icloudCalDav": "https://caldav.icloud.com/",
   "googleScopes": {
     "read": "https://www.googleapis.com/auth/calendar.readonly",
     "write": "https://www.googleapis.com/auth/calendar.events",

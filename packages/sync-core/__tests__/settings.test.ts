@@ -1,5 +1,8 @@
 import {
   activePlan,
+  addIcsFeed,
+  MAX_ICS_FEEDS,
+  removeIcsFeed,
   defaultSettings,
   parseSettings,
   serializeSettings,
@@ -63,4 +66,24 @@ test('«Send tablet-only items» is off by default, round-trips, and a wrong typ
   expect(parseSettings(serializeSettings(on))).toEqual(on);
   expect(parseSettings(JSON.stringify({schema: 1, modules: {}, providers: {}})).sendTabletOnly).toEqual({todo: false, calendar: false});
   expect(() => parseSettings(JSON.stringify({schema: 1, modules: {}, providers: {}, sendTabletOnly: {todo: 'yes'}}))).toThrow('settings: sendTabletOnly.todo is not a boolean');
+});
+
+test('ICS feed addresses: none by default, https or webcal kept once, round-trip, a bad one throws (#30)', () => {
+  expect(defaultSettings().icsFeeds).toEqual([]);
+  let s = addIcsFeed(defaultSettings(), ' webcal://feeds.example.com/a.ics ');
+  s = addIcsFeed(addIcsFeed(s, 'https://feeds.example.com/b.ics'), 'https://feeds.example.com/b.ics');
+  expect(s.icsFeeds).toEqual(['webcal://feeds.example.com/a.ics', 'https://feeds.example.com/b.ics']);
+  expect(parseSettings(serializeSettings(s)).icsFeeds).toEqual(s.icsFeeds);
+  expect(removeIcsFeed(s, 'https://feeds.example.com/b.ics').icsFeeds).toEqual(['webcal://feeds.example.com/a.ics']);
+  expect(() => addIcsFeed(s, 'http://feeds.example.com/c.ics')).toThrow('https: or webcal:');
+  expect(() => addIcsFeed(s, 'feeds.example.com/c.ics')).toThrow('https: or webcal:');
+  const stored = JSON.parse(serializeSettings(s));
+  expect(() => parseSettings(JSON.stringify({...stored, icsFeeds: 'x'}))).toThrow('icsFeeds');
+  expect(() => parseSettings(JSON.stringify({...stored, icsFeeds: [3]}))).toThrow('icsFeeds');
+  expect(() => parseSettings(JSON.stringify({...stored, icsFeeds: ['ftp://x/y']}))).toThrow('https: or webcal:');
+  const {icsFeeds: _gone, ...older} = stored;
+  expect(parseSettings(JSON.stringify(older)).icsFeeds).toEqual([]);
+  let full = defaultSettings();
+  for (let i = 0; i < MAX_ICS_FEEDS; i++) full = addIcsFeed(full, `https://feeds.example.com/${i}.ics`);
+  expect(() => addIcsFeed(full, 'https://feeds.example.com/more.ics')).toThrow(`at most ${MAX_ICS_FEEDS}`);
 });

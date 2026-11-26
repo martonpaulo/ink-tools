@@ -255,6 +255,12 @@ export interface CalDavOptions {
   onWarnings?: WarningSink;
 }
 
+/** The request headers every CalDAV call shares: the Basic sign-in and, with a body, its XML type. */
+export const CALDAV_XML = 'application/xml; charset=utf-8';
+export const CALDAV_ANSWER = 'CalDAV answer';
+export const basicHeader = async (o: Pick<CalDavOptions, 'username' | 'getPassword' | 'basicAuth'>) =>
+  `Basic ${o.basicAuth(o.username, await o.getPassword())}`;
+
 const CALENDAR_DATA_OPEN = /<(?:\w+:)?calendar-data[^>]{0,200}>/g;
 const CALENDAR_DATA_CLOSE = /<\/(?:\w+:)?calendar-data>/g;
 
@@ -294,11 +300,11 @@ export function createCalDavProvider(o: CalDavOptions): CalendarProvider {
       const body = `<?xml version="1.0" encoding="utf-8"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"><c:time-range start="${rfc5545(w.from)}" end="${rfc5545(w.to)}"/></c:comp-filter></c:comp-filter></c:filter></c:calendar-query>`;
       const res = await o.fetch(requireHttps(cal.url, 'CalDAV calendar'), {
         method: 'REPORT',
-        headers: {Authorization: `Basic ${o.basicAuth(o.username, await o.getPassword())}`, Depth: '1', 'Content-Type': 'application/xml; charset=utf-8'},
+        headers: {Authorization: await basicHeader(o), Depth: '1', 'Content-Type': CALDAV_XML},
         body,
       });
       if (!res.ok) throw new Error(`CalDAV REPORT failed with HTTP ${res.status}`);
-      const xml = withinLimit(await res.text(), 'CalDAV answer');
+      const xml = withinLimit(await res.text(), CALDAV_ANSWER);
       const events: IcsEvent[] = [];
       const warnings: string[] = [];
       for (const body of calendarData(xml, warnings)) {

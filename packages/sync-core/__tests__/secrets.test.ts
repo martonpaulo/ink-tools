@@ -1,5 +1,5 @@
 /** Sign-in secrets: file names, the masked tail and the parse of a stored value (#90). */
-import {SecretStore, maskSecret, parseGoogleClient, parseSecret, secretFileName, signInState} from '../src';
+import {SecretStore, maskSecret, parseGoogleClient, parseICloudSignIn, parseSecret, secretFileName, signInState} from '../src';
 
 const SYNTHETIC = 'synthetic-token-0000-wxyz';
 
@@ -44,4 +44,12 @@ test('the Google client reads as inkctl writes it; a broken one throws, never a 
   expect(() => parseGoogleClient('{"client_id":"","client_secret":"s"}')).toThrow('no client_id');
   expect(() => parseGoogleClient('null')).toThrow('no client_id');
   expect(() => parseGoogleClient('')).toThrow('not JSON: secrets: the stored secret is empty');
+});
+
+test('the iCloud sign-in is <Apple ID>:<app-specific password>, split at the first colon (#30)', () => {
+  expect(parseICloudSignIn('tester@example.com:abcd-efgh-ijkl-mnop\n')).toEqual({appleId: 'tester@example.com', password: 'abcd-efgh-ijkl-mnop'});
+  expect(parseICloudSignIn('tester@example.com:a:b')).toEqual({appleId: 'tester@example.com', password: 'a:b'});
+  expect(() => parseICloudSignIn('abcd-efgh-ijkl-mnop')).toThrow('not <Apple ID>:<app-specific password>');
+  expect(() => parseICloudSignIn(':abcd')).toThrow('no Apple ID');
+  expect(() => parseICloudSignIn('tester@example.com:')).toThrow('no app-specific password');
 });

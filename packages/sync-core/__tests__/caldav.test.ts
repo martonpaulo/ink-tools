@@ -1,5 +1,6 @@
 import {CalendarEvent} from '../src/calendar';
-import {createCalDavWriter, foldLine} from '../src/caldav';
+import {createCalDavWriter, discoverCalDavCalendars, foldLine} from '../src/caldav';
+import {basicCredentials} from '../src/http';
 import {HttpInit} from '../src/http';
 import {expandEvents, parseIcs, unfold} from '../src/ics';
 
@@ -118,4 +119,74 @@ test('long lines fold at 75 octets, counting multibyte characters, and unfold ba
   const folded = foldLine(line);
   for (const part of folded.split('\r\n')) expect(unescape(encodeURIComponent(part)).length).toBeLessThanOrEqual(75);
   expect(unfold(folded)).toEqual([line]);
+});
+
+describe('CalDAV discovery (#30)', () => {
+  const ROOT = 'https://caldav.example.com/';
+  const ms = (...responses: string[]) =>
+    `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">${responses.join('')}</d:multistatus>`;
+  const resp = (href: string, props: string, status = 'HTTP/1.1 200 OK') =>
+    `<d:response><d:href>${href}</d:href><d:propstat><d:prop>${props}</d:prop><d:status>${status}</d:status></d:propstat></d:response>`;
+  const cal = (href: string, name: string, comps: string[] | null, type = '<d:collection/><c:calendar/>') =>
+    resp(href, `<d:resourcetype>${type}</d:resourcetype><d:displayname>${name}</d:displayname>${
+      comps ? `<c:supported-calendar-component-set>${comps.map(c => `<c:comp name="${c}"/>`).join('')}</c:supported-calendar-component-set>` : ''}`);
+
+  function davServer(answers: Record<string, string>, status: Record<string, number> = {}) {
+    const calls: Array<{url: string; init: HttpInit}> = [];
+    const fetch = async (url: string, init: HttpInit) => {
+      calls.push({url, init});
+      const code = status[url] ?? (answers[url] === undefined ? 404 : 207);
+      return {ok: code < 300, status: code, text: async () => answers[url] ?? ''};
+    };
+    const found = () => discoverCalDavCalendars({fetch, root: ROOT, username: 'tester', getPassword: async () => 'app-password', basicAuth: (u, p) => `${u}:${p}`});
+    return {calls, found};
+  }
+
+  const HOME = 'https://p01-caldav.example.com:443/123/calendars/';
+  const ANSWERS = {
+    [ROOT]: ms(resp('/', '<d:current-user-principal><d:href>/123/principal/</d:href></d:current-user-principal>')),
+    'https://caldav.example.com/123/principal/': ms(resp('/123/principal/', `<c:calendar-home-set><d:href>${HOME}</d:href></c:calendar-home-set>`)),
+    [HOME]: ms(
+      resp('/123/calendars/', '<d:resourcetype><d:collection/></d:resourcetype>'),
+      cal('/123/calendars/home/', 'Home &amp; family', ['VEVENT']),
+      cal('/123/calendars/work/', 'Work', null),
+      cal('/123/calendars/tasks/', 'Reminders', ['VTODO']),
+      cal('/123/calendars/inbox/', 'Inbox', null, '<d:collection/><c:schedule-inbox/>'),
+      cal('/123/calendars/holidays/', 'Holidays', ['VEVENT'], '<d:collection/><cs:subscribed xmlns:cs="http://calendarserver.org/ns/"/>'),
+      resp('/123/calendars/gone/', '<d:displayname/>', 'HTTP/1.1 404 Not Found'),
+    ),
+  };
+
+  test('finds the principal, the home and only the event calendars, named and keyed by URL', async () => {
+    const {calls, found} = davServer(ANSWERS);
+    expect(await found()).toEqual([
+      {id: 'https://p01-caldav.example.com:443/123/calendars/home/', name: 'Home & family', url: 'https://p01-caldav.example.com:443/123/calendars/home/'},
+      {id: 'https://p01-caldav.example.com:443/123/calendars/work/', name: 'Work', url: 'https://p01-caldav.example.com:443/123/calendars/work/'},
+    ]);
+    expect(calls.map(c => [c.init.method, c.init.headers.Depth])).toEqual([['PROPFIND', '0'], ['PROPFIND', '0'], ['PROPFIND', '1']]);
+    expect(calls[0].init.headers.Authorization).toBe('Basic tester:app-password');
+    expect(calls[0].init.body).toContain('current-user-principal');
+  });
+
+  test('a refused sign-in names the Apple ID and password; a missing principal fails, never an empty list', async () => {
+    await expect(davServer(ANSWERS, {[ROOT]: 401}).found()).rejects.toThrow('HTTP 401');
+    await expect(davServer({...ANSWERS, [ROOT]: ms(resp('/', '<d:current-user-principal/>', 'HTTP/1.1 404 Not Found'))}).found())
+      .rejects.toThrow('no current-user-principal');
+  });
+
+  test('an http root is refused before any request', async () => {
+    const calls: unknown[] = [];
+    await expect(discoverCalDavCalendars({
+      fetch: async () => { calls.push(1); return {ok: true, status: 207, text: async () => ''}; },
+      root: 'http://caldav.example.com/', username: 'u', getPassword: async () => 'p', basicAuth: () => 'x',
+    })).rejects.toThrow('https');
+    expect(calls).toHaveLength(0);
+  });
+});
+
+test('Basic credentials are RFC 7617 base64 of the UTF-8 pair (#30)', () => {
+  expect(basicCredentials('Aladdin', 'open sesame')).toBe('QWxhZGRpbjpvcGVuIHNlc2FtZQ==');
+  expect(basicCredentials('a', 'b')).toBe('YTpi');
+  expect(basicCredentials('ab', 'c')).toBe('YWI6Yw==');
+  expect(basicCredentials('tést', 'ü€')).toBe('dMOpc3Q6w7zigqw=');
 });

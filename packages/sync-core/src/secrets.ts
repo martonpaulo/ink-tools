@@ -66,6 +66,23 @@ export function parseGoogleClient(raw: string): {clientId: string; clientSecret:
   return {clientId: field('client_id'), clientSecret: field('client_secret')};
 }
 
+/**
+ * Read the stored iCloud sign-in (#30): `<Apple ID>:<app-specific password>`, the Basic credentials
+ * form CalDAV sends (RFC 7617, where a user name holds no colon). `inkctl secret set icloud` takes it
+ * on standard input from the two login Keychain items `docs/security.md` names. A value with no
+ * colon, or an empty half, throws, so the calendar run fails with the reason.
+ */
+export function parseICloudSignIn(raw: string): {appleId: string; password: string} {
+  const value = parseSecret(raw);
+  const at = value.indexOf(':');
+  if (at < 0) throw new Error('secrets: the iCloud sign-in is not <Apple ID>:<app-specific password>');
+  const appleId = value.slice(0, at);
+  const password = value.slice(at + 1);
+  if (!appleId) throw new Error('secrets: the iCloud sign-in has no Apple ID');
+  if (!password) throw new Error('secrets: the iCloud sign-in has no app-specific password');
+  return {appleId, password};
+}
+
 /** A provider's sign-in, as Settings words it. */
 export type SignIn =
   | {state: 'signedOut'}

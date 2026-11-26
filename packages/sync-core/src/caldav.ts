@@ -1,7 +1,11 @@
 import {CalendarEvent} from './calendar';
 import {HttpFetch, requireHttps} from './http';
-import {CalDavOptions, calendarData, parseTime, rfc5545, unfold, withinLimit, xmlText} from './ics';
+import {CALDAV_ANSWER, CALDAV_XML, CalDavOptions, IcsFeed, basicHeader, calendarData, parseTime, rfc5545, unfold, withinLimit, xmlText} from './ics';
 import {CalendarWriter} from './push';
+import services from './services.json';
+
+/** Where iCloud's CalDAV discovery starts; `services.json` owns the address. */
+export const ICLOUD_CALDAV_ROOT: string = services.icloudCalDav;
 
 /**
  * iCloud over CalDAV, write side (#30): the `CalendarWriter` the two-way push of #29 drives.
@@ -161,7 +165,7 @@ export function createCalDavWriter(o: CalDavWriterOptions): CalendarWriter {
     const url = requireHttps(cal.url, 'CalDAV calendar');
     return url.endsWith('/') ? url : `${url}/`;
   };
-  const auth = async () => `Basic ${o.basicAuth(o.username, await o.getPassword())}`;
+  const auth = () => basicHeader(o);
   const stamp = () => `DTSTAMP:${rfc5545(o.now())}`;
 
   const send = async (method: string, url: string, headers: Record<string, string>, body?: string) =>
@@ -171,9 +175,9 @@ export function createCalDavWriter(o: CalDavWriterOptions): CalendarWriter {
   async function find(calendarId: string, uid: string): Promise<CalDavResource | null> {
     const base = collection(calendarId);
     const query = `<?xml version="1.0" encoding="utf-8"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><d:getetag/><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"><c:prop-filter name="UID"><c:text-match collation="i;octet">${escapeXml(uid)}</c:text-match></c:prop-filter></c:comp-filter></c:comp-filter></c:filter></c:calendar-query>`;
-    const res = await send('REPORT', base, {Depth: '1', 'Content-Type': 'application/xml; charset=utf-8'}, query);
+    const res = await send('REPORT', base, {Depth: '1', 'Content-Type': CALDAV_XML}, query);
     if (!res.ok) throw new Error(`CalDAV REPORT failed with HTTP ${res.status}`);
-    const xml = withinLimit(await res.text(), 'CalDAV answer');
+    const xml = withinLimit(await res.text(), CALDAV_ANSWER);
     const href = /<(?:\w+:)?href>([^<]{1,2000})<\/(?:\w+:)?href>/.exec(xml)?.[1];
     const etag = /<(?:\w+:)?getetag>([^<]{1,200})<\/(?:\w+:)?getetag>/.exec(xml)?.[1];
     const data = calendarData(xml)[0];
@@ -250,4 +254,93 @@ export function createCalDavWriter(o: CalDavWriterOptions): CalendarWriter {
       return put(res, [...lines.slice(0, m.to), timeLine('EXDATE', occurrence, series), ...lines.slice(m.to)]);
     },
   };
+}
+
+/** The status a server answers a refused sign-in with (RFC 9110 §15.5.2). */
+const HTTP_UNAUTHORIZED = 401;
+
+/** What CalDAV discovery needs: the server's root, and the same sign-in as a read. */
+export interface CalDavDiscoveryOptions extends Pick<CalDavOptions, 'username' | 'getPassword' | 'basicAuth'> {
+  fetch: HttpFetch<{text(): Promise<string>}>;
+  /** Where discovery starts, such as `services.json`'s `icloudCalDav`. */
+  root: string;
+}
+
+/** One `<response>` of a multistatus answer: its href and the inner XML of its 200 propstat. */
+interface DavResponse {
+  href: string;
+  props: string;
+}
+
+const RESPONSE = /<(?:\w+:)?response[\s>][\s\S]*?<\/(?:\w+:)?response>/g;
+const tagged = (name: string) => new RegExp(`<(?:\\w+:)?${name}(?:\\s[^>]{0,200})?>([\\s\\S]*?)</(?:\\w+:)?${name}>`);
+const HREF = tagged('href');
+
+function davResponses(xml: string): DavResponse[] {
+  return [...xml.matchAll(RESPONSE)].map(([block]) => {
+    // Only a propstat whose status is 200 holds props the server has; a 404 one lists the missing.
+    const ok = [...block.matchAll(/<(?:\w+:)?propstat[\s>][\s\S]*?<\/(?:\w+:)?propstat>/g)]
+      .map(m => m[0])
+      .filter(p => / 200 /.test(tagged('status').exec(p)?.[1] ?? ' 200 '));
+    return {href: xmlText((HREF.exec(block)?.[1] ?? '').trim()), props: ok.join('')};
+  });
+}
+
+/** An href made absolute against the URL it answered, as RFC 4918 §8.3 allows either. */
+function absolute(href: string, base: string): string {
+  if (/^https?:\/\//i.test(href)) return href;
+  const origin = /^https:\/\/[^/]+/i.exec(base)![0];
+  return `${origin}${href.startsWith('/') ? '' : '/'}${href}`;
+}
+
+/** The href inside a property, such as `current-user-principal` or `calendar-home-set`. */
+const hrefIn = (props: string, name: string): string | null => {
+  const inner = tagged(name).exec(props)?.[1];
+  const href = inner ? HREF.exec(inner)?.[1] : undefined;
+  return href ? xmlText(href.trim()) : null;
+};
+
+/**
+ * The owner's event calendars on a CalDAV server (#30), as RFC 6764 §6 and RFC 4791 §6.2.1 find
+ * them: PROPFIND the root for `current-user-principal`, the principal for `calendar-home-set`, then
+ * the home at depth 1. A collection is kept when its resourcetype is `calendar` and its component
+ * set, when it names one, holds VEVENT; so iCloud's Reminders lists (VTODO only), the scheduling
+ * inbox and outbox, and a subscribed calendar (resourcetype `subscribed`, read as an ICS feed
+ * instead, #82) are left out. Each calendar's id is its collection URL, unique across sources.
+ * Not yet run against iCloud: the owner's live check of #30.
+ */
+export async function discoverCalDavCalendars(o: CalDavDiscoveryOptions): Promise<IcsFeed[]> {
+  const auth = await basicHeader(o);
+  const propfind = async (url: string, depth: '0' | '1', props: string): Promise<DavResponse[]> => {
+    const body = `<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop>${props}</d:prop></d:propfind>`;
+    const res = await o.fetch(requireHttps(url, 'CalDAV server'), {
+      method: 'PROPFIND',
+      headers: {Authorization: auth, Depth: depth, 'Content-Type': CALDAV_XML},
+      body,
+    });
+    if (res.status === HTTP_UNAUTHORIZED) throw new Error('CalDAV refused the sign-in (HTTP 401): check the Apple ID and the app-specific password');
+    if (!res.ok) throw new Error(`CalDAV PROPFIND failed with HTTP ${res.status}`);
+    return davResponses(withinLimit(await res.text(), CALDAV_ANSWER));
+  };
+  const one = async (url: string, name: string, props: string) => {
+    for (const r of await propfind(url, '0', props)) {
+      const href = hrefIn(r.props, name);
+      if (href) return absolute(href, url);
+    }
+    throw new Error(`CalDAV answer has no ${name}`);
+  };
+  const principal = await one(o.root, 'current-user-principal', '<d:current-user-principal/>');
+  const home = await one(principal, 'calendar-home-set', '<c:calendar-home-set/>');
+  const found = await propfind(home, '1', '<d:resourcetype/><d:displayname/><c:supported-calendar-component-set/>');
+  const out: IcsFeed[] = [];
+  for (const r of found) {
+    const type = tagged('resourcetype').exec(r.props)?.[1] ?? '';
+    if (!/<(?:\w+:)?calendar[\s/>]/.test(type)) continue;
+    const comps = tagged('supported-calendar-component-set').exec(r.props)?.[1];
+    if (comps !== undefined && !/name="VEVENT"/i.test(comps)) continue;
+    const url = absolute(r.href, home);
+    const name = xmlText((tagged('displayname').exec(r.props)?.[1] ?? '').trim()) || url;
+    out.push({id: url, name, url});
+  }
+  return out;
 }
