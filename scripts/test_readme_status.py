@@ -62,7 +62,7 @@ class Vocabulary(unittest.TestCase):
         self.assertEqual(readme_status.bad_cells(html, ["🟡 Beta"]), (True, []))
 
     def test_a_name_and_what_it_does_table_is_ignored(self):
-        # The Developer tools and Shared code tables have no Type or Status column (owner, 2026-11-25).
+        # The Developer tools table has no Type or Status column (owner, 2026-11-25).
         html = '<table>\n  <tr><th>Name</th><th>What it does</th></tr>\n  <tr><td><b>A</b> (app)</td><td>x</td></tr>\n</table>\n'
         self.assertEqual(readme_status.bad_cells(html, ["🟡 Beta"]), (False, []))
 

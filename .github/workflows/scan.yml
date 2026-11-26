@@ -41,6 +41,11 @@ jobs:
           python3 scripts/readme_status.py --root .
           python3 -B -m unittest scripts/test_readme_status.py
 
+      - name: Check the README tool tables and diagrams are current (#407)
+        run: |
+          python3 scripts/readme_figures.py --root . --check
+          python3 -B -m unittest scripts/test_readme_figures.py
+
       - name: Check the DRY ratchet
         run: python3 scripts/dry_check.py --root .
 

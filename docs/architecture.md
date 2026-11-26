@@ -69,13 +69,17 @@ The owner's rules for keeping each part replaceable (2026-11-14):
 - **The device side has five levels, by how fragile they are** (owner, 2026-11-25; the rule for
   choosing among them is «The highest dependency level that serves» below):
 
-  | Level | What | Breaks when | Impact |
-  | :--- | :--- | :--- | :--- |
-  | 1 | `sn-plugin-lib`, public Android API, our own code | rarely, with Ratta's notice | the person |
-  | 2 | Internal data: content providers, private files and folders, the `.note` format | any firmware update; the probe sees it | the person |
-  | 3 | Internal vendor code and screens: classes, activities, deep links, broadcasts, the host binder | any firmware update; a call fails | the person |
-  | 4 | Screen automation: `inkctl` finds controls by text and id | any interface change; a step fails | our tests only |
-  | 5 | Behaviour learned from decompiled code (Back key routing, pen units, the Calendar and To-Do reading rules) | silently | the person |
+  | Level | What | Breaks when | Impact | Public name | Public examples | Tested by |
+  | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+  | 1 | `sn-plugin-lib`, public Android API, our own code | rarely, with Ratta's notice | the person | Official plugin API | lasso, insert a picture, pages, files, buttons, dialogs | Mac tests, with the simulated adapter |
+  | 2 | Internal data: content providers, private files and folders, the `.note` format | any firmware update; the probe sees it | the person | Device data | Calendar, To-Do and Digest entries; the handwriting language; the note file format | a tablet probe of fields, paths and versions |
+  | 3 | Internal vendor code and screens: classes, activities, deep links, broadcasts, the host binder | any firmware update; a call fails | the person | System screens and components | native switches and bars, the helper app, Settings shortcuts | a tablet probe that loads and checks each one |
+  | 4 | Screen automation: `inkctl` finds controls by text and id | any interface change; a step fails | our tests only | Screen automation | find buttons by their text in Settings and in notes | `inkctl doctor` before each test round |
+  | 5 | Observed device behaviour that no API states (Back key routing, pen units, the Calendar and To-Do reading rules) | silently | the person | Observed device behaviour | the Back key, pen units, how Calendar and To-Do read entries | an effect test: write, read back, compare |
+
+  The README's level diagram reads the last five columns: `scripts/readme_figures.py` draws it, with
+  the registry's item count per level, so those columns hold only what the public README may say
+  ([#407](https://github.com/martonpaulo/ink-tools/issues/407)).
 
 - **Target: one registry of internals, four adapters** ([#294](https://github.com/martonpaulo/ink-tools/issues/294)). Every internal lives in one
   registry, data and not code, with one JSON Schema: per item its level, impact, owning tool,

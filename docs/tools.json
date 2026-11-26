@@ -1,0 +1,197 @@
+{
+  "about": "The one owner of every tool row the README shows: its Tools and Developer tools tables and the tool map diagram. scripts/readme_figures.py writes them; status is a word of AGENTS.md's README Status values; supernote names the runtime whose adapter reads the registry; registry names the registry tools whose items give the row's level circles (#407).",
+  "sections": [
+    {"id": "tools", "title": "Tools", "intro": "For people who use the tablet."},
+    {"id": "developer", "title": "Developer tools", "intro": ""}
+  ],
+  "tools": [
+    {
+      "name": "Smart Pen", "section": "tools", "kind": "plugin", "status": "Beta",
+      "icon": "design/icons/readme/smart-pen.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=smart-pen&expanded=true",
+      "features": [
+        {"name": "Smart Shapes", "text": "draw a triangle, circle, square, rectangle or arrow and hold the pen still at the end; it becomes a clean shape, and letters stay handwriting."},
+        {"name": "Real-Time Text", "text": "while it is on, each handwritten word becomes typed text at its place, with no lasso; drawings stay handwriting."},
+        {"name": "Undo Conversion", "text": "brings the last converted word back as handwriting."},
+        {"name": "Gestures", "text": "a finger double or triple tap picks a pen, the eraser or the lasso, as you map it.", "planned": true}
+      ],
+      "map": {
+        "outside": [], "service": [],
+        "logic": ["ink-core: shapes and conversion"],
+        "supernote": "ts",
+        "tablet": ["the page", "strokes, shapes and text boxes"],
+        "registry": ["smart-pen"]
+      }
+    },
+    {
+      "name": "Lasso Actions", "section": "tools", "kind": "plugin", "status": "Beta",
+      "icon": "design/icons/readme/lasso-actions.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=lasso-actions&expanded=true",
+      "features": [
+        {"name": "Word Lookup", "text": "lasso a handwritten word, then Insert Sticker (a clean illustration), Insert Image (a photo), Choose Image (pick from the results), Insert Definition, Insert Summary (three sentences from Wikipedia) or Translate, one button per language pair, such as «Translate ES→PT»."},
+        {"name": "Convert to Text", "text": "turn the whole lassoed handwriting into one text box."},
+        {"name": "Headings", "text": "Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin.", "planned": true},
+        {"name": "Collection", "text": "Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page.", "planned": true}
+      ],
+      "map": {
+        "outside": ["Wiktionary · Wikipedia", "Wikimedia Commons · Wikidata", "Openclipart · OpenMoji", "Apertium"],
+        "service": ["DictionaryProvider", "picture sources", "translator"],
+        "logic": ["ink-core: write, recognise, insert", "picture-search: rank"],
+        "supernote": "ts",
+        "tablet": ["the page", "lasso, picture, sticker, text"],
+        "registry": ["lasso-actions", "picture-search"]
+      }
+    },
+    {
+      "name": "Image Editing", "section": "tools", "kind": "plugin", "status": "In progress",
+      "icon": "design/icons/readme/image-editing.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=image-editing&expanded=true",
+      "features": [
+        {"name": "Enhance", "text": "make a lassoed picture readable on e-ink with one tap; Lighter and Darker adjust it."},
+        {"name": "Crop", "text": "draw a rectangle with the pen around the part to keep."},
+        {"name": "Erase", "text": "draw over the part to erase with the pen."},
+        {"name": "Remove background", "text": "keep the subject and drop what is behind it."},
+        {"name": "Make sticker", "text": "turn the picture into a sticker."},
+        {"name": "Document", "text": "straighten a photographed page as a document."}
+      ],
+      "map": {
+        "outside": [], "service": [],
+        "logic": ["picture-search: pixel measures"],
+        "supernote": "ts",
+        "tablet": ["the page", "a lassoed picture"],
+        "registry": ["image-editing"]
+      }
+    },
+    {
+      "name": "Device Transfer", "section": "tools", "kind": "plugin", "status": "Beta",
+      "icon": "design/icons/readme/device-transfer.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-transfer&expanded=true",
+      "note": "[being renamed Device Link](https://github.com/martonpaulo/ink-tools/issues/369)",
+      "features": [
+        {"name": "Send Page", "text": "send the open page to an iPhone or a Mac over LocalSend."},
+        {"name": "Send Selection", "text": "send a lasso selection, as typed text or as a picture; you choose on each send."},
+        {"name": "Receive", "text": "receive text, a picture or a PDF into the open note."},
+        {"name": "Editor helper", "text": "applies the Ink Notebook Editor's edits from the Mac to the tablet's notes.", "planned": true}
+      ],
+      "map": {
+        "outside": ["iPhone · Mac", "LocalSend app", "Ink Notebook Editor (planned)"],
+        "service": ["LocalSend v2 protocol"],
+        "logic": ["ink-core: page to PNG, receive and insert"],
+        "supernote": "ts",
+        "tablet": ["the page", "notes and files"],
+        "registry": ["device-transfer"]
+      }
+    },
+    {
+      "name": "Account Sync", "section": "tools", "kind": "plugin", "status": "In progress",
+      "icon": "design/icons/readme/account-sync.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=account-sync&expanded=true",
+      "features": [
+        {"name": "To-Do", "text": "sync the tablet's to-dos with Todoist."},
+        {"name": "Calendar", "text": "sync Google, iCloud and ICS calendars with the tablet's calendar."},
+        {"name": "Digest", "text": "sync the Digest both ways with your Telegram «Saved Messages».", "planned": true}
+      ],
+      "map": {
+        "outside": ["Todoist", "Google Calendar", "iCloud (CalDAV) · ICS links", "Telegram Saved Messages (planned)"],
+        "service": ["TaskProvider", "CalendarProvider ×3", "Digest source (planned)"],
+        "logic": ["sync-core: compare and decide"],
+        "supernote": "ts",
+        "tablet": ["To-Do · Calendar · Digest", "the tablet's own apps"],
+        "registry": ["account-sync"]
+      }
+    },
+    {
+      "name": "Puzzles", "section": "tools", "kind": "plugin", "status": "Planned",
+      "link": "https://github.com/martonpaulo/ink-tools/issues/376",
+      "features": [
+        {"name": "New game", "text": "pick a game, a language and a difficulty; the game is a new page after the current one, its grid drawn as the page background, so erasing never removes it."},
+        {"name": "Show solution", "text": "shows the answer over the plugin's view, never on the page."},
+        {"name": "Check", "text": "reads what you wrote and marks the wrong cells."}
+      ],
+      "map": {
+        "outside": [], "service": [],
+        "logic": ["puzzle generator and word lists"],
+        "supernote": "ts",
+        "tablet": ["a new page", "the grid as its background"],
+        "registry": []
+      }
+    },
+    {
+      "name": "Handwriting Language", "section": "tools", "kind": "app", "status": "Beta",
+      "icon": "design/icons/readme/handwriting-language.png",
+      "link": "apps/handwriting-language/",
+      "features": [
+        {"name": "Switch Language", "text": "switch the handwriting recognition language of the whole tablet with one tap."},
+        {"name": "Floating button", "text": "a small button where you write, shown only while there is text or ink input."}
+      ],
+      "map": {
+        "outside": [], "service": [],
+        "logic": ["the language cycle"],
+        "supernote": "java",
+        "tablet": ["the handwriting language", "the floating button"],
+        "registry": ["handwriting-language"]
+      }
+    },
+    {
+      "name": "Ink Notebook Editor", "section": "tools", "kind": "Mac app", "status": "In progress",
+      "icon": "design/icons/apps/ink-notebook-editor.png",
+      "link": "apps/ink-notebook-editor/",
+      "features": [
+        {"name": "Open a note", "text": "read a `.note` notebook on the Mac and page through it."},
+        {"name": "Open from Tablet", "text": "copy a note from the tablet over the cable through `inkctl` and open the copy."},
+        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Transfer.", "planned": true}
+      ],
+      "map": {
+        "outside": ["Mac", "files on the Mac"],
+        "service": [],
+        "logic": ["NoteFormat: read and draw a note"],
+        "supernote": "swift",
+        "tablet": ["notes", "through inkctl"],
+        "registry": ["ink-notebook-editor"]
+      }
+    },
+    {
+      "name": "Ink Tools Control", "section": "developer", "kind": "CLI", "status": "Working",
+      "link": "cli/inkctl/",
+      "features": [
+        {"name": "Control", "text": "`inkctl` controls the tablet over Wi-Fi ADB or USB with direct calls, JSON answers and stable exit codes, without root."},
+        {"name": "Plugins", "text": "install, enable, permit and uninstall plugins with no screen."},
+        {"name": "Notes and ink", "text": "open notes, write synthetic ink, lasso and read the screen for tests."},
+        {"name": "Firmware watch", "text": "on connect, check every device dependency and report what a firmware update broke.", "planned": true}
+      ],
+      "map": {
+        "outside": ["Mac", "USB or Wi-Fi ADB"],
+        "service": [],
+        "logic": ["inkctl"],
+        "supernote": "python",
+        "tablet": ["screens, settings, notes", "for tests and setup"],
+        "registry": ["inkctl"]
+      }
+    },
+    {
+      "name": "Ink Tools Helper", "section": "developer", "kind": "app", "status": "Internal",
+      "icon": "design/icons/readme/inktools-bridge.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=inktools-bridge&expanded=true",
+      "features": [
+        {"name": "Plugin settings", "text": "lets `inkctl` install, enable and permit plugins with no screen."},
+        {"name": "Firmware watch", "text": "at boot after a firmware change, check every device dependency and report what broke.", "planned": true}
+      ],
+      "map": {
+        "outside": [], "service": [],
+        "logic": ["the plugin settings calls"],
+        "supernote": "java",
+        "tablet": ["plugin settings"],
+        "registry": ["inktools-bridge"]
+      }
+    },
+    {
+      "name": "Ink Tools Probe", "section": "developer", "kind": "plugin", "status": "Internal",
+      "icon": "design/icons/readme/plugin-diagnostics.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=plugin-diagnostics&expanded=true",
+      "features": [
+        {"name": "Run Command", "text": "the sidebar button `inkctl` presses to write ink and lasso with no pen."},
+        {"name": "Probes", "text": "quick on-device experiments for our tests. Never shipped."}
+      ]
+    }
+  ]
+}

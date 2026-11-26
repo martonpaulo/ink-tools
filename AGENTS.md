@@ -122,7 +122,7 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 - README Status values: `🟢 Working`, `🟡 Beta`, `🔵 In progress`, `⚪ Planned`, `🟣 Internal`.
   In the README Tools table each status is the emoji of one of them, before the name in the Name cell, with a legend under the table;
   the kind under the name (plugin, app, Mac app; no parentheses) links to the piece's own releases when it has them, else to its folder (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268));
-  `scripts/readme_status.py` checks it in the `docs` gate.
+  `scripts/readme_status.py` checks it in the `docs` gate; `scripts/readme_figures.py` writes the tool tables and the two diagrams from `docs/tools.json`, and that gate fails when they fall behind ([#407](https://github.com/martonpaulo/ink-tools/issues/407)).
 - Every fenced code block you create or materially edit has an explicit language identifier.
 - Never mark an API, a flag or a behaviour `implemented` without running it. Fix or drop a broken script; never ship it documented as working.
 - Every issue or pull request reference in Markdown prose is a link to the issue's URL; code,
