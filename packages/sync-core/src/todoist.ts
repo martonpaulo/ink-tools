@@ -114,8 +114,9 @@ export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
     },
     async update(remoteId, c) {
       const before = await this.get(remoteId);
-      if (!before) throw new Error(`Todoist task ${remoteId} no longer exists`);
-      const t = (await call('POST', `/tasks/${enc(remoteId)}`, toTodoistBody(c))) as TodoistTask;
+      if (!before) return null;
+      const t = (await call('POST', `/tasks/${enc(remoteId)}`, toTodoistBody(c), true)) as TodoistTask | null;
+      if (!t) return null;
       await setChecked(remoteId, c.completed, before.completed);
       return {...fromTodoist(t), completed: c.completed};
     },

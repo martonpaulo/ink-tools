@@ -19,6 +19,8 @@ const c = (title: string, extra: Partial<TaskContent> = {}): TaskContent => ({ti
 function fakes(remote: RemoteTask[], device: DeviceTask[]) {
   let n = 100;
   const log: string[] = [];
+  /** Ids the service still lists but answers 404 for (#370). */
+  const gone = new Set<string>();
   const provider: TaskProvider = {
     list: async () => remote.filter(t => !t.completed),
     get: async id => remote.find(t => t.remoteId === id) ?? null,
@@ -29,9 +31,11 @@ function fakes(remote: RemoteTask[], device: DeviceTask[]) {
       return t;
     },
     update: async (id, x) => {
-      Object.assign(remote.find(t => t.remoteId === id)!, x);
+      const found = remote.find(t => t.remoteId === id);
+      if (!found || gone.has(id)) return null;
+      Object.assign(found, x);
       log.push(`update remote ${x.title}`);
-      return remote.find(t => t.remoteId === id)!;
+      return found;
     },
     remove: async id => {
       remote.splice(remote.findIndex(t => t.remoteId === id), 1);
@@ -56,7 +60,7 @@ function fakes(remote: RemoteTask[], device: DeviceTask[]) {
       log.push(`remove local ${id}`);
     },
   };
-  return {provider, store, log};
+  return {provider, store, log, gone};
 }
 const R = (id: string, x: TaskContent, modified = 1): RemoteTask => ({...x, remoteId: id, modified});
 const D = (id: string, x: TaskContent, modified = 1): DeviceTask => ({...x, localId: id, modified, deleted: false});
@@ -95,6 +99,18 @@ test('a change on one side is copied to the other', async () => {
   const out = await syncTasks(g.provider, g.store, [link('r1', 'l1', base)]);
   expect(g.log).toEqual(['update remote renamed']);
   expect(out.links[0].fingerprint).toBe(fingerprint(c('renamed')));
+});
+
+test('a tablet edit of a task the service still lists but no longer has removes the row, with no error (#370)', async () => {
+  // Todoist listed a deleted project's task for about 20 minutes while its own read answered 404.
+  const base = c('a');
+  const f = fakes([R('r1', base)], [D('l1', c('edited on the tablet'))]);
+  f.gone.add('r1');
+  const out = await syncTasks(f.provider, f.store, [link('r1', 'l1', base)]);
+  expect(out.errors).toEqual([]);
+  expect(out.links).toEqual([]);
+  expect(out.counts.removedLocal).toBe(1);
+  expect(f.log).toEqual(['remove local l1']);
 });
 
 test('both sides changed: the later change wins and a tie goes to the service', async () => {
@@ -234,7 +250,20 @@ describe('todoist', () => {
     const respond = (status: number) =>
       createTodoistProvider({fetch: async () => ({ok: status < 400, status, json: async () => ({}), text: async () => ''}), token: 't'});
     expect(await respond(404).get('1')).toBeNull();
+    // An update of a gone task is no error (device round 6, #370).
+    expect(await respond(404).update('1', c('x'))).toBeNull();
     await expect(respond(500).get('1')).rejects.toThrow(/HTTP 500/);
+  });
+
+  test('an update whose write answers 404 after the read found the task is gone too (#370)', async () => {
+    const provider = createTodoistProvider({
+      token: 't',
+      fetch: async (_url, init) =>
+        init.method === 'GET'
+          ? {ok: true, status: 200, json: async () => task, text: async () => ''}
+          : {ok: false, status: 404, json: async () => ({}), text: async () => ''},
+    });
+    expect(await provider.update('7', c('x'))).toBeNull();
   });
 });
 

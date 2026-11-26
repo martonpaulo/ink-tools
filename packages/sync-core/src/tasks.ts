@@ -41,7 +41,12 @@ export interface TaskProvider {
   /** One task by id, completed or not; null when it no longer exists. */
   get(remoteId: string): Promise<RemoteTask | null>;
   create(content: TaskContent): Promise<RemoteTask>;
-  update(remoteId: string, content: TaskContent): Promise<RemoteTask>;
+  /**
+   * Writes the content; null when the task no longer exists on the service. A service may still
+   * list a task it already answers 404 for: Todoist did for about 20 minutes after its project was
+   * deleted (device round 6, #370).
+   */
+  update(remoteId: string, content: TaskContent): Promise<RemoteTask | null>;
   remove(remoteId: string): Promise<void>;
 }
 
@@ -260,7 +265,14 @@ async function syncLinked(
     return {...link, fingerprint: fingerprint(remote)};
   }
   if (direction === 'toRemote') {
-    await provider.update(link.remoteId, content(device));
+    const updated = await provider.update(link.remoteId, content(device));
+    if (!updated) {
+      // Gone on the service, though its list still showed it: the same rule as a task gone from
+      // the list, the tablet row is removed (#370).
+      await store.remove(link.localId);
+      result.counts.removedLocal++;
+      return null;
+    }
     result.counts.updatedRemote++;
     return {...link, fingerprint: fingerprint(device)};
   }
