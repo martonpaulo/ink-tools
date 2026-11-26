@@ -2,13 +2,13 @@
 import {SendResult} from './localsend/protocol';
 
 export const copy = {
-  title: 'Device Transfer',
+  title: 'Device Link',
   sendPage: 'Send Page',
   sendSelection: 'Send Selection',
   sendText: 'Send Text',
   /** Toasts that replace the «Loading…» strip (#103). */
-  workingFailed: 'Device Transfer stopped with an error.',
-  workingTimeout: 'Device Transfer is still working.',
+  workingFailed: 'Device Link stopped with an error.',
+  workingTimeout: 'Device Link is still working.',
   readingText: 'Reading the handwriting…',
   noText: 'No text recognized',
   cancel: 'Cancel',
@@ -27,7 +27,7 @@ export const copy = {
   unreachable: (alias: string) => `${alias} not reachable`,
   noAnswer: (alias: string) => `${alias} did not accept in time`,
   identityChanged: (alias: string) =>
-    `${alias} identity changed, not sent. Pick it in Device Transfer Settings to trust it again.`,
+    `${alias} identity changed, not sent. Pick it in Device Link Settings to trust it again.`,
   notLocal: (alias: string) => `${alias} is not on this network`,
   receive: 'Receive',
   ready: (alias: string) => `Ready to receive as ${alias}`,
@@ -40,7 +40,7 @@ export const copy = {
   receiveStopped: 'Receiving stopped',
   receiveFailed: 'Could not start receiving',
   notAnImage: 'Send a JPEG, a PNG or a PDF',
-  refusedOffer: 'Device Transfer takes one text, one picture or one PDF',
+  refusedOffer: 'Device Link takes one text, one picture or one PDF',
   tooLarge: 'The file is over 30 MB',
   receivedPdf: (name: string, pages: number) =>
     `${name} made with ${pages} ${pages === 1 ? 'page' : 'pages'}`,
@@ -50,14 +50,14 @@ export const copy = {
   noNote: 'Open a note first',
   insertFailed: 'Could not add it to the note',
   permissionReason:
-    'Device Transfer sends and receives pages, pictures and texts over LocalSend',
+    'Device Link sends and receives pages, pictures and texts over LocalSend',
   permissionNames: {
     'plugin.permission.INTERNET': 'Network',
     'plugin.permission.FILE:READ': 'File read',
     'plugin.permission.FILE:WRITE': 'File write',
   } as Record<string, string>,
   permissionRefused: (name: string) =>
-    `${name} permission not allowed: allow it in Settings > Apps > Plugins > Device Transfer`,
+    `${name} permission not allowed: allow it in Settings > Apps > Plugins > Device Link`,
   result(result: SendResult, alias: string): string {
     switch (result.kind) {
       case 'sent':

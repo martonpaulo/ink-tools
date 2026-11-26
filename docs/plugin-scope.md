@@ -240,7 +240,7 @@ Owner decisions of 2026-11-26 (the checklist with each governing issue is in
 - **Collection and Headings on both sides:** the tablet's lasso buttons stay
   ([#249](https://github.com/martonpaulo/ink-tools/issues/249), [#252](https://github.com/martonpaulo/ink-tools/issues/252)); the Mac gets its own version.
 - **The tablet helper lives inside an existing plugin** ([#304](https://github.com/martonpaulo/ink-tools/issues/304)), never a new plugin slot:
-  Device Transfer, renamed Device Link, which keeps its `pluginID` and `pluginKey` ([#369](https://github.com/martonpaulo/ink-tools/issues/369), [#312](https://github.com/martonpaulo/ink-tools/issues/312)).
+  Device Link (formerly Device Transfer), which keeps its `pluginID` and `pluginKey` ([#369](https://github.com/martonpaulo/ink-tools/issues/369), [#312](https://github.com/martonpaulo/ink-tools/issues/312)).
 - **Resize and rotate or flip are in the first release**, for any selection, pictures already in
   the note included.
 - **One note at a time.** Find in Note (Command-F) stays; search across all notes, Spotlight
@@ -329,7 +329,7 @@ Shortcut sends it over LocalSend to the tablet, and a plugin drops it in.
 
 ## relay
 
-Shown on the tablet as **Device Transfer**, with the buttons «Send Page», «Send Selection» and «Receive» ([#176](https://github.com/martonpaulo/ink-tools/issues/176), [#172](https://github.com/martonpaulo/ink-tools/issues/172)).
+Shown on the tablet as **Device Link**, with the buttons «Send Page», «Send Selection» and «Receive» ([#176](https://github.com/martonpaulo/ink-tools/issues/176), [#172](https://github.com/martonpaulo/ink-tools/issues/172)).
 
 The plugin that moves pictures and text between the tablet and the owner's iPhone and Mac over
 LocalSend; one plugin for both directions (owner D25 A). Its receive half is the phone-to-note need
@@ -362,10 +362,10 @@ above ([#49](https://github.com/martonpaulo/ink-tools/issues/49)).
 - Whether a listener can stay open in the background is measured in the tablet round and decided
   after it (product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). A scanned PDF as page backgrounds is [#143](https://github.com/martonpaulo/ink-tools/issues/143).
 - A received photo lands as it is. «Straighten as document» lives only in Image Editing's Document
-  mode ([#137](https://github.com/martonpaulo/ink-tools/issues/137)); Device Transfer no longer offers it (owner, 2026-11-25, which replaces the
+  mode ([#137](https://github.com/martonpaulo/ink-tools/issues/137)); Device Link no longer offers it (owner, 2026-11-25, which replaces the
   offer decided on 2026-11-16).
 
-Device Transfer and Account Sync stay two plugins, each with a clear name; they share no flow
+Device Link and Account Sync stay two plugins, each with a clear name; they share no flow
 (owner, 2026-11-16).
 
 ## smart-pen
@@ -398,7 +398,7 @@ ship under until the merges land.
 | Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes, Real-Time Text and Undo Conversion (built, smart-pen), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
 | Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (built, lasso-actions), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), in smart-pen until it moves), Headings (built, [#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection (built, [#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
 | Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
-| Device Transfer | unchanged; receives a photo as it is | the page and files |
+| Device Link | unchanged; receives a photo as it is | the page and files |
 | Account Sync | unchanged | outside services |
 | Puzzles ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | new, planned: the games of [Puzzles](#puzzles) | a new page after the current one |
 
@@ -435,7 +435,7 @@ Owner decisions of 2026-11-26:
 
 - **Public services and the user's own accounts only.** Ink Tools features use only public services and the person's own accounts, never one of the owner's private apps. Ink Tools never connects to Panoram, which is the owner's private app; Digest uses Telegram instead.
 - **Every account connection is off until the person connects it in Settings.** This holds for Telegram, Todoist, Google and iCloud. Without a connection, its row shows «Connect», and the rest of the plugin works normally.
-- **The person chooses text or image on every send** (owner, 2026-11-26, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#98](https://github.com/martonpaulo/ink-tools/issues/98), [#307](https://github.com/martonpaulo/ink-tools/issues/307), [#366](https://github.com/martonpaulo/ink-tools/issues/366)). This holds for every send from the tablet (Device Transfer's sends, the Telegram Digest send) and the editor's Quick capture. As text, the recognized text shows first in an editable preview the person can correct before sending, with a switch to «image» that works at any time. The choice is preselected: text when the selection is plain text, an image when it holds drawings or arrows.
+- **The person chooses text or image on every send** (owner, 2026-11-26, [#42](https://github.com/martonpaulo/ink-tools/issues/42), [#98](https://github.com/martonpaulo/ink-tools/issues/98), [#307](https://github.com/martonpaulo/ink-tools/issues/307), [#366](https://github.com/martonpaulo/ink-tools/issues/366)). This holds for every send from the tablet (Device Link's sends, the Telegram Digest send) and the editor's Quick capture. As text, the recognized text shows first in an editable preview the person can correct before sending, with a switch to «image» that works at any time. The choice is preselected: text when the selection is plain text, an image when it holds drawings or arrows.
 
 ## Design direction
 

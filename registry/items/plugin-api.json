@@ -132,13 +132,13 @@
       "title": "insertImage leaves a floating selection the host commits later",
       "level": 5,
       "impact": "user",
-      "owner": "device-transfer",
+      "owner": "device-link",
       "readers": [
-        "device-transfer"
+        "device-link"
       ],
       "reason": "the SDK does not say when an inserted picture reaches the page; a device round showed the delay",
       "evidence": {
-        "source": "Device Transfer device round (#196)",
+        "source": "Device Link device round (#196)",
         "date": "2026-11-22"
       },
       "upgradePath": "an SDK insert that answers once the picture is on the page",
@@ -147,7 +147,7 @@
       "probe": {
         "unprobed": "needs a picture insert on a note page"
       },
-      "active": "device-transfer src/receive/receive.ts",
+      "active": "device-link src/receive/receive.ts",
       "issues": [
         196
       ],

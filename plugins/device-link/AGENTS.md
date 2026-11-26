@@ -1,6 +1,6 @@
 # Relay — agent guidance
 
-Scoped guidance for `plugins/device-transfer/`. Inherits the repository root `../../AGENTS.md`; this file holds
+Scoped guidance for `plugins/device-link/`. Inherits the repository root `../../AGENTS.md`; this file holds
 only what is specific here. A `CLAUDE.md` symlink points at this file.
 
 ## Status

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Device Transfer's native code: the LocalSend v2 module in native/src, built by the shared light native build,
+ * Device Link's native code: the LocalSend v2 module in native/src, built by the shared light native build,
  * packages/native-build/native-build.cjs (#231), which documents the commands.
  */
 const path = require('node:path');

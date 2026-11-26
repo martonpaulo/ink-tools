@@ -90,5 +90,5 @@ Edit a picture already on the page, readable on the 16-grey screen with one tap.
 
 ## Reuse
 
-Scaffold from the removed Lingo plugin ([#161](https://github.com/martonpaulo/ink-tools/issues/161)); native build from `../device-transfer/scripts/`; Java module names under Retouch's
+Scaffold from the removed Lingo plugin ([#161](https://github.com/martonpaulo/ink-tools/issues/161)); native build from `../device-link/scripts/`; Java module names under Retouch's
 own names through `Ink2PicFilesPackage` ([#142](https://github.com/martonpaulo/supernote-tools/issues/142)).

@@ -24,7 +24,7 @@ const path = require('node:path');
  */
 const PENDING_IDENTITY = new Set([
   'account-sync: app.json displayName',
-  'device-transfer: app.json displayName',
+  'device-link: app.json displayName',
   'image-editing: app.json displayName',
   'plugin-diagnostics: app.json displayName',
 ]);

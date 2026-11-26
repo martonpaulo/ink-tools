@@ -96,7 +96,7 @@ test.each([
   [{status: 403}, 'Mac declined'],
   [{status: 409}, 'Mac is busy with another transfer'],
   [{status: 500}, 'Mac answered 500'],
-  [coded('IDENTITY'), 'Mac identity changed, not sent. Pick it in Device Transfer Settings to trust it again.'],
+  [coded('IDENTITY'), 'Mac identity changed, not sent. Pick it in Device Link Settings to trust it again.'],
   [coded('TIMEOUT'), 'Mac not reachable'],
   // The offer arrived and was not accepted in time: never «not reachable» (#98).
   [coded('NO_ANSWER'), 'Mac did not accept in time'],

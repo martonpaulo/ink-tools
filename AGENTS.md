@@ -40,7 +40,7 @@ Before editing under a path, read the file its row names. A module with rules of
 
 | Path | Read first |
 | :--- | :--- |
-| `plugins/account-sync/`, `plugins/device-transfer/`, `plugins/image-editing/`, `plugins/plugin-diagnostics/`, `plugins/smart-pen/`, `plugins/lasso-actions/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) and `docs/supernote.md` (device facts; add each new one there) |
+| `plugins/account-sync/`, `plugins/device-link/`, `plugins/image-editing/`, `plugins/plugin-diagnostics/`, `plugins/smart-pen/`, `plugins/lasso-actions/` | that plugin's own `AGENTS.md` (device plugins on sn-plugin-lib) and `docs/supernote.md` (device facts; add each new one there) |
 | `cli/<name>/`: `cli/inkctl/` | that tool's own `AGENTS.md` (host-side tools) |
 | `apps/<name>/`: `apps/handwriting-language/`, `apps/inktools-bridge/`, `apps/ink-notebook-editor/` | that app's own `AGENTS.md` (the sideloaded Android apps, the macOS app) and `docs/supernote.md` (device facts) |
 | `packages/` | `packages/README.md` and `docs/architecture.md` (shared packages) |

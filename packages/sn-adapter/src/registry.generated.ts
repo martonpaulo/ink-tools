@@ -27,7 +27,7 @@ export const REGISTRY_ITEMS: readonly RegistryItem[] = [
   {id: 'plugin-api.pen-up-uuid', level: 5, impact: 'user', owner: 'smart-pen', probe: null, unprobed: 'needs a pen stroke; the effect test is the Smart Pen device round', active: 'smart-pen src/modules/text/device.ts'},
   {id: 'plugin-api.crop-erase-elements', level: 5, impact: 'user', owner: 'image-editing', probe: null, unprobed: 'needs a picture on a note page; the effect test is the Image Editing device round', active: 'image-editing src/edit.ts'},
   {id: 'plugin-api.inserted-picture-copy', level: 5, impact: 'user', owner: 'image-editing', probe: null, unprobed: 'needs a picture insert on a note page', active: 'image-editing src/edit.ts'},
-  {id: 'plugin-api.floating-insert', level: 5, impact: 'user', owner: 'device-transfer', probe: null, unprobed: 'needs a picture insert on a note page', active: 'device-transfer src/receive/receive.ts'},
+  {id: 'plugin-api.floating-insert', level: 5, impact: 'user', owner: 'device-link', probe: null, unprobed: 'needs a picture insert on a note page', active: 'device-link src/receive/receive.ts'},
   {id: 'plugin-api.batch-no-redraw', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'needs a conversion on a note page; the effect test is the Smart Pen device round (#296)', active: 'sn-adapter official/elements.ts'},
   {id: 'pluginhost.no-back-press', level: 5, impact: 'user', owner: 'ui-kit', probe: null, unprobed: 'needs a key press on the tablet', active: 'ui-kit src/backKey.ts'},
   {id: 'pluginhost.overlay-back-key', level: 5, impact: 'user', owner: 'image-editing', probe: null, unprobed: 'needs a key press on the tablet', active: 'image-editing native BackKey.java'},

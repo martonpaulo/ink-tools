@@ -350,7 +350,7 @@ class Pngs(unittest.TestCase):
             self.assertIn("design/icons/readme/fake-plugin.png: no README tile", icons.tile_problems(root))
             icons.write_readme_pngs(root)
             self.assertFalse([p for p in icons.tile_problems(root) if "fake-plugin" in p])
-            (plugin / "assets/icon.svg").write_text((ROOT / "plugins/device-transfer/assets/icon.svg").read_text())
+            (plugin / "assets/icon.svg").write_text((ROOT / "plugins/device-link/assets/icon.svg").read_text())
             self.assertIn("design/icons/readme/fake-plugin.png: stale", icons.tile_problems(root))
 
     def test_a_readme_row_without_its_tile_fails_the_check(self):

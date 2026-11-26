@@ -199,7 +199,7 @@ describe('the pinned send', () => {
       (self, delivered) => sendText(api, self, changed, 'x', undefined, delivered),
       pluginDir,
     );
-    expect(line).toBe('Mac identity changed, not sent. Pick it in Device Transfer Settings to trust it again.');
+    expect(line).toBe('Mac identity changed, not sent. Pick it in Device Link Settings to trust it again.');
     expect(native.post).not.toHaveBeenCalled();
     expect(file().pins).toEqual({Mac: 'mac-fp'});
   });

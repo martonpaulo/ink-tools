@@ -64,20 +64,20 @@
     "repeated": 3,
     "url": 4
    },
-   "plugins/device-transfer/.eslintrc.js": {
+   "plugins/device-link/.eslintrc.js": {
     "repeated": 1
    },
-   "plugins/device-transfer/scripts/native-toolchain.sh": {
+   "plugins/device-link/scripts/native-toolchain.sh": {
     "repeated": 3,
     "url": 4
    },
-   "plugins/device-transfer/src/localsend/protocol.ts": {
+   "plugins/device-link/src/localsend/protocol.ts": {
     "number": 23
    },
-   "plugins/device-transfer/src/receive/receive.ts": {
+   "plugins/device-link/src/receive/receive.ts": {
     "number": 1
    },
-   "plugins/device-transfer/test-support/fakeRelay.ts": {
+   "plugins/device-link/test-support/fakeRelay.ts": {
     "number": 2
    },
    "plugins/image-editing/.eslintrc.js": {
@@ -153,12 +153,12 @@
    "cli/inkctl": 1,
    "packages/ink-core": 1,
    "plugins/account-sync": 5,
-   "plugins/device-transfer": 1,
+   "plugins/device-link": 1,
    "plugins/image-editing": 2,
    "plugins/smart-pen": 1
   },
   "identical": {
-   "plugins/device-transfer/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
+   "plugins/device-link/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)",
    "plugins/image-editing/scripts/native-toolchain.sh": "each plugin builds and tests on its own, with no shared script folder: a plugin gate runs from its own folder (single-project-layout divergence in AGENTS.md)"
   }
  },
@@ -214,16 +214,16 @@
    },
    {
     "rule": "LocalSend API path: /api/localsend/v2",
-    "owner": "plugins/device-transfer/src/localsend/protocol.ts",
-    "other": "plugins/device-transfer/native/src/com/relay/localsend",
+    "owner": "plugins/device-link/src/localsend/protocol.ts",
+    "other": "plugins/device-link/native/src/com/relay/localsend",
     "pattern": "/api/localsend/v2",
     "golden": "",
     "open": 295
    },
    {
     "rule": "LocalSend JSON message limit: 64 KiB",
-    "owner": "plugins/device-transfer/src/localsend/protocol.ts",
-    "other": "plugins/device-transfer/native/src/com/relay/localsend",
+    "owner": "plugins/device-link/src/localsend/protocol.ts",
+    "other": "plugins/device-link/native/src/com/relay/localsend",
     "pattern": "MAX_\\w*BYTES = 64 \\* 1024",
     "golden": "",
     "open": 295
@@ -245,9 +245,9 @@
     "open": 295
    },
    {
-    "rule": "Device Transfer native module name: RelayLocalSend",
-    "owner": "plugins/device-transfer/native/src/com/relay/localsend/RelayModule.java",
-    "other": "plugins/device-transfer/src/native.ts",
+    "rule": "Device Link native module name: RelayLocalSend",
+    "owner": "plugins/device-link/native/src/com/relay/localsend/RelayModule.java",
+    "other": "plugins/device-link/src/native.ts",
     "pattern": "['\\\"]RelayLocalSend['\\\"]",
     "golden": "",
     "open": 295
@@ -270,7 +270,7 @@
    },
    {
     "rule": "LocalSend default port: 53317",
-    "owner": "plugins/device-transfer/src/localsend",
+    "owner": "plugins/device-link/src/localsend",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "53317",
     "golden": "",
@@ -303,7 +303,7 @@
    "cli/inkctl/docs/research/**"
   ],
   "repeated": {
-   "plugins/device-transfer/AGENTS.md": 1,
+   "plugins/device-link/AGENTS.md": 1,
    "plugins/image-editing/AGENTS.md": 3,
    "plugins/smart-pen/AGENTS.md": 2,
    "plugins/lasso-actions/AGENTS.md": 3
@@ -457,10 +457,10 @@
    "plugins/account-sync/scripts/native-toolchain.sh": {
     "ink2pic": 1
    },
-   "plugins/device-transfer/index.js": {
+   "plugins/device-link/index.js": {
     "Ink2Pic": 1
    },
-   "plugins/device-transfer/src/receive/receive.ts": {
+   "plugins/device-link/src/receive/receive.ts": {
     "Ink2Pic": 1
    },
    "plugins/image-editing/index.js": {
@@ -603,16 +603,16 @@
     "plugins/account-sync/native/com/bridge/providers/BridgeProvidersModule.java": {
      "number": 2
     },
-    "plugins/device-transfer/native/src/com/relay/localsend/Discovery.java": {
+    "plugins/device-link/native/src/com/relay/localsend/Discovery.java": {
      "number": 2
     },
-    "plugins/device-transfer/native/src/com/relay/localsend/Identity.java": {
+    "plugins/device-link/native/src/com/relay/localsend/Identity.java": {
      "number": 4
     },
-    "plugins/device-transfer/native/src/com/relay/localsend/PinnedClient.java": {
+    "plugins/device-link/native/src/com/relay/localsend/PinnedClient.java": {
      "number": 3
     },
-    "plugins/device-transfer/native/src/com/relay/localsend/Receiver.java": {
+    "plugins/device-link/native/src/com/relay/localsend/Receiver.java": {
      "number": 28
     },
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": {
@@ -634,7 +634,7 @@
    "duplicates": {
     "packages/picture-search": 3,
     "packages/sn-adapter": 1,
-    "plugins/device-transfer": 6
+    "plugins/device-link": 6
    }
   },
   "constants": {
@@ -674,9 +674,9 @@
     "packages/sn-adapter/src/official/storage.ts": 1,
     "packages/ui-kit/src/problem.ts": 1,
     "plugins/account-sync/src/settingsStore.ts": 1,
-    "plugins/device-transfer/native/src/com/relay/localsend/Receiver.java": 1,
-    "plugins/device-transfer/src/receive/receive.ts": 3,
-    "plugins/device-transfer/src/run.ts": 3,
+    "plugins/device-link/native/src/com/relay/localsend/Receiver.java": 1,
+    "plugins/device-link/src/receive/receive.ts": 3,
+    "plugins/device-link/src/run.ts": 3,
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": 3,
     "plugins/image-editing/src/edits.ts": 2,
     "plugins/image-editing/src/working.ts": 1,

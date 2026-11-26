@@ -1,5 +1,5 @@
 /**
- * Device Transfer's «Loading…» strip (#103): Send Page and Send Selection run with no view, so
+ * Device Link's «Loading…» strip (#103): Send Page and Send Selection run with no view, so
  * each shows it from the press to the toast (index.js), from the shared ui-kit.
  */
 import {ToastAndroid} from 'react-native';

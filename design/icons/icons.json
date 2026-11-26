@@ -36,7 +36,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/icon",
+   "out": "plugins/device-link/assets/icon",
    "kind": "plugin",
    "tabler": [
     {
@@ -52,7 +52,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-page",
+   "out": "plugins/device-link/assets/send-page",
    "kind": "plugin",
    "tabler": [
     "file",
@@ -63,7 +63,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-selection",
+   "out": "plugins/device-link/assets/send-selection",
    "kind": "plugin",
    "tabler": [
     "marquee",
@@ -74,7 +74,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/send-text",
+   "out": "plugins/device-link/assets/send-text",
    "kind": "plugin",
    "tabler": [
     "align-left",
@@ -85,7 +85,7 @@
    ]
   },
   {
-   "out": "plugins/device-transfer/assets/receive",
+   "out": "plugins/device-link/assets/receive",
    "kind": "plugin",
    "tabler": [
     "device-tablet-down"
@@ -601,7 +601,7 @@
  "retired": {},
  "families": {
   "about": "Each tool's icons share one motif, a glyph every one of them names, and still differ at a glance (owner, 2026-11-25, #271); a tool with one icon needs none. `except` lists an icon that cannot carry the motif, with the reason.",
-  "device-transfer": {
+  "device-link": {
    "motif": [
     "arrows-left-right",
     "arrow-narrow-right",

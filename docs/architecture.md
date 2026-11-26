@@ -170,13 +170,13 @@ ink-tools/
   packages/
     sn-adapter/     # Supernote adapter: official sn-plugin-lib tier + internals tier (descriptor, adapt-on/off probe)
     sync-core/      # diff, recurrence expansion, mapping, module orchestration (provider-agnostic)
-    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Lasso Actions, Device Transfer, Image Editing)
+    ink-core/       # handwrite -> recognise -> lasso -> insert-on-page (shared by Lasso Actions, Device Link, Image Editing)
     picture-search/ # the picture search core and its pure-Java pixel measures (for Lasso Actions and Image Editing)
     ui-kit/         # the Settings look: tokens, shared styles, Button (imported by every plugin)
   plugins/
     account-sync/   # to-do + calendar + digest, each module and provider opt in/out
     lasso-actions/    # write a word -> insert a picture, a definition or a translation (each mode and pair opt in/out)
-    device-transfer/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
+    device-link/ # send a page or a lasso selection to an iPhone or a Mac over LocalSend
     image-editing/  # lasso a picture on the page -> Enhance, Lighter, Darker, Undo, Restore original
     plugin-diagnostics/ # permanent on-device investigation plugin
   cli/
@@ -204,7 +204,7 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Built ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); Gestures not yet |
 | Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Built with Lookup ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); Convert to Text still in Smart Pen until it moves; Headings and Collection paused |
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
-| Device Transfer | send, receive | the page and files | unchanged |
+| Device Link | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
 | Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Planned |
 
@@ -219,7 +219,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | :--- | :--- | :--- |
 | Account Sync | `plugins/account-sync/` | `bridge` (npm package, `BridgeFilesPackage`) |
 | Lasso Actions | `plugins/lasso-actions/` | `lookup` (`pluginKey` `Lookup`, kept from Word Lookup so the tablet updates it in place, [#306](https://github.com/martonpaulo/ink-tools/issues/306)) |
-| Device Transfer | `plugins/device-transfer/` | `relay` |
+| Device Link | `plugins/device-link/` | `relay` |
 | Image Editing | `plugins/image-editing/` | `retouch` |
 | Plugin Diagnostics | `plugins/plugin-diagnostics/` | `probe` |
 | Smart Pen | `plugins/smart-pen/` | `RealTimeConversion` (`pluginKey`, kept from Real-Time Conversion so the tablet updates it in place, [#305](https://github.com/martonpaulo/ink-tools/issues/305)) |
@@ -281,7 +281,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   translation. A new plugin with its own `pluginID` (owner D40, [#110](https://github.com/martonpaulo/ink-tools/issues/110)); it replaced the
   first picture plugin, which is retired, uninstalled from the tablet ([#45](https://github.com/martonpaulo/ink-tools/issues/45)) and removed
   from the repository ([#288](https://github.com/martonpaulo/ink-tools/issues/288)).
-- **Device Transfer** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
+- **Device Link** — sends the current page or a lasso selection as a PNG to an iPhone or a Mac over
   LocalSend v2, and will receive from them ([#98](https://github.com/martonpaulo/ink-tools/issues/98), [#49](https://github.com/martonpaulo/ink-tools/issues/49)). Its network half is a native
   Java module, as Plugin Diagnostics' listener is.
 - **Image Editing** — edit an image already on the page: lasso it and tap Enhance, Lighter, Darker, Undo or
@@ -295,7 +295,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
   square, rectangle or arrow, as the native Smart Straight Line does ([#253](https://github.com/martonpaulo/ink-tools/issues/253)); its guidance is
   [`plugins/smart-pen/AGENTS.md`](../plugins/smart-pen/AGENTS.md).
 
-Lasso Actions, Device Transfer and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
+Lasso Actions, Device Link and Image Editing share `ink-core` (the handwrite -> recognise -> lasso -> insert-on-page
 gesture). Account Sync's three modules share `sync-core`. All of them are to go through `sn-adapter` for
 any Supernote access. Every plugin's Settings look comes from `ui-kit`
 ([#93](https://github.com/martonpaulo/ink-tools/issues/93)): Metro bundles it from `packages/` into each `.snplg`, and

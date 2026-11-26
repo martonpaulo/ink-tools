@@ -1,6 +1,6 @@
-# Device Transfer
+# Device Link
 
-`relay` is this plugin's internal name, kept in its npm package and data folder; the folder is `device-transfer` ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
+`relay` is this plugin's internal name, kept in its npm package and data folder; the folder is `device-link` ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)); it was Device Transfer up to 0.1.0 beta 13 and is Device Link from beta 14, with the same `pluginID` and `pluginKey`, so the tablet updates it in place ([#369](https://github.com/martonpaulo/ink-tools/issues/369)).
 
 A Supernote plugin: send the current page, or a lasso selection, as a picture to your iPhone or
 your Mac over [LocalSend](https://localsend.org), with one tap; and receive a text or a picture

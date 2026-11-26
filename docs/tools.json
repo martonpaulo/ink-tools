@@ -63,10 +63,9 @@
       }
     },
     {
-      "name": "Device Transfer", "section": "tools", "kind": "plugin", "status": "Beta",
-      "icon": "design/icons/readme/device-transfer.png",
-      "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-transfer&expanded=true",
-      "note": "[being renamed Device Link](https://github.com/martonpaulo/ink-tools/issues/369)",
+      "name": "Device Link", "section": "tools", "kind": "plugin", "status": "Beta",
+      "icon": "design/icons/readme/device-link.png",
+      "link": "https://github.com/martonpaulo/ink-tools/releases?q=device-link&expanded=true",
       "features": [
         {"name": "Send Page", "text": "send the open page to an iPhone or a Mac over LocalSend."},
         {"name": "Send Selection", "text": "send a lasso selection, as typed text or as a picture; you choose on each send."},
@@ -79,7 +78,7 @@
         "logic": ["ink-core: page to PNG, receive and insert"],
         "supernote": "ts",
         "tablet": ["the page", "notes and files"],
-        "registry": ["device-transfer"]
+        "registry": ["device-link"]
       }
     },
     {
@@ -139,7 +138,7 @@
       "features": [
         {"name": "Open a note", "text": "read a `.note` notebook on the Mac and page through it."},
         {"name": "Open from Tablet", "text": "copy a note from the tablet over the cable through `inkctl` and open the copy."},
-        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Transfer.", "planned": true}
+        {"name": "Edit", "text": "edit a note on the Mac without breaking the format, and send the edits back through Device Link.", "planned": true}
       ],
       "map": {
         "outside": ["Mac", "files on the Mac"],

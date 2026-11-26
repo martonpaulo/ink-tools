@@ -226,7 +226,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   s_client` to the Mac's LocalSend 1.18.2, 2026-11-25, [#98](https://github.com/martonpaulo/ink-tools/issues/98)]. Its source makes the
   certificate optional only while web share is on, and trusts a `register` only when the claimed
   `fingerprint` is the client certificate's SHA-256 (`packages/core/src/http/server/`). A LocalSend
-  client presents its own identity's certificate; Device Transfer presents the `Identity.java`
+  client presents its own identity's certificate; Device Link presents the `Identity.java`
   certificate it receives with, so its fingerprint matches [measured on the Mac: `PinnedClient`
   got 200 from `register` with it and an `IOException` without it; the tablet's send is
   unverified until the next device round].
@@ -443,7 +443,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Right after a plugin's `PluginCommAPI.jumpToPage`, the next press of the plugins button is lost;
   a wait of about 4 s before it works, and 1.5 s was too short on a page with a picture [measured,
   Probe, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
-- A Word Lookup or Device Transfer insert leaves the inserted picture lassoed, but a plugin command
+- A Lasso Actions or Device Link insert leaves the inserted picture lassoed, but a plugin command
   run after it clears the lasso: `getLassoElementTypeCounts` then answers 904 [measured, Probe,
   2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)]. Lasso again by the element's rect before pressing a row.
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
@@ -478,7 +478,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   120 ms after the insert held 0 elements, and later the page held it as `type=200 rect=[498, 680,
   1421, 1880]`, a 923 x 1200 JPEG centred on the 1920 x 2560 page at its own size [measured,
   Device Transfer 0.1.0 beta 8, 2026-11-17, [#196](https://github.com/martonpaulo/ink-tools/issues/196)]. When it lands is [unverified]; Device
-  Transfer reads again every 250 ms for up to 3 s.
+  Link reads again every 250 ms for up to 3 s.
 - Permissions of a no-view button [measured, 2026-11-16, Retouch and a probe,
   [#170](https://github.com/martonpaulo/ink-tools/issues/170)]:
   - After a PluginHost start, the first press of a plugin's button mounts the plugin's root

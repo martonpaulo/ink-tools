@@ -39,9 +39,9 @@ import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorVi
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
 import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/StylesGrid';
-import {PickView as DeviceTransferPick} from '../../../plugins/device-transfer/src/PickDevice';
-import {ReceiveView as DeviceTransferReceive, TextView as DeviceTransferText} from '../../../plugins/device-transfer/App';
-import type {Device as TransferDevice} from '../../../plugins/device-transfer/src/localsend/protocol';
+import {PickView as DeviceLinkPick} from '../../../plugins/device-link/src/PickDevice';
+import {ReceiveView as DeviceLinkReceive, TextView as DeviceLinkText} from '../../../plugins/device-link/App';
+import type {Device as TransferDevice} from '../../../plugins/device-link/src/localsend/protocol';
 
 export type ScreenRender = {
   name: string;
@@ -172,7 +172,7 @@ const STROKE = [
 
 /** Account Sync with To-Do and Todoist on, before the first sync, signed in to Todoist (#116, #368). */
 const SIGNED_IN = accountSyncProvider(accountSyncModule(accountSyncDefaults(), 'todo', true), 'todoist', true);
-/** Device Transfer's receivers (#307): synthetic, two with one alias to show them apart. */
+/** Device Link's receivers (#307): synthetic, two with one alias to show them apart. */
 const TRANSFER_DEVICES: TransferDevice[] = [
   {alias: 'Mac', deviceModel: 'MacBook', ip: '10.0.0.2', port: 53317, protocol: 'https', fingerprint: 'aaaaaa111111'},
   {alias: 'iPhone', deviceModel: 'iPhone', ip: '10.0.0.3', port: 53317, protocol: 'https', fingerprint: 'bbbbbb222222'},
@@ -214,7 +214,7 @@ const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}
 export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs', render: () => mount(<Needs problem={{what: 'Sample access is off', reason: 'The sample tool reads the sample folder to show your pictures.', fix: {label: 'Turn it on', run: () => {}}}} onClose={() => {}} />)},
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
-  {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Transfer stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
+  {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Link stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
   {name: 'lasso-actions-collection', render: () => mount(<LassoCollection close={noop} host={COLLECTION_HOST} />)},
@@ -235,9 +235,9 @@ export const SCREENS: ScreenRender[] = [
   {name: 'image-editing-editor', render: () => imageEditor()},
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
-  {name: 'device-transfer-pick', render: () => mount(<DeviceTransferPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
-  {name: 'device-transfer-text', render: () => mount(<DeviceTransferText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
-  {name: 'device-transfer-receive', render: () => mount(<DeviceTransferReceive state="ready" onStop={noop} />)},
+  {name: 'device-link-pick', render: () => mount(<DeviceLinkPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
+  {name: 'device-link-text', render: () => mount(<DeviceLinkText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
+  {name: 'device-link-receive', render: () => mount(<DeviceLinkReceive state="ready" onStop={noop} />)},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
   {name: 'image-editing-opening', render: () => imageEditor({phase: 'opening'})},
   {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed'}} onPick={noop} onToggle={noop} onClose={noop} />)},
