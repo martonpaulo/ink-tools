@@ -93,15 +93,14 @@ class Drift(unittest.TestCase):
         self.edit_json("registry/items/pen.json", lambda data: data["items"][1].update(
             off={"reason": "The pen menu does not open.", "review": "2099-01-01"}, issues=[901]))
         self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="Working"))
-        with self.assertRaises(SystemExit) as stop:  # no Broken value in AGENTS.md yet: a plain stop
-            readme_figures.generate(self.tmp)
-        self.assertIn("has no `🔴 Broken`", str(stop.exception))
-        agents = self.tmp / "AGENTS.md"
-        agents.write_text(agents.read_text(encoding="utf-8").replace("`🟣 Internal`.", "`🟣 Internal`, `🔴 Broken`."),
-                          encoding="utf-8")
         with mock.patch.object(readme_figures, "release_tags", lambda root, prefix: [f"{prefix}-v1.0.0"] if prefix == "smart-pen" else []):
             readme = readme_figures.generate(self.tmp)["README.md"]
         self.assertIn("<sub><sup>🔴</sup></sub>&nbsp;<b>Smart Pen</b>", readme)
+        agents = self.tmp / "AGENTS.md"
+        agents.write_text(agents.read_text(encoding="utf-8").replace(", `🔴 Broken`.", "."), encoding="utf-8")
+        with self.assertRaises(SystemExit) as stop:  # a Broken tool with no Broken value: a plain stop
+            readme_figures.generate(self.tmp)
+        self.assertIn("has no `🔴 Broken`", str(stop.exception))
 
     def test_a_broken_status_typed_by_hand_fails(self):
         self.edit_json("docs/tools.json", lambda data: data["tools"][0].update(status="Broken"))

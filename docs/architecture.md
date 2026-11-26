@@ -13,6 +13,8 @@ history is in [`decisions.md`](decisions.md).
 - [The host tools](#the-host-tools)
 - [Device builds](#device-builds)
 - [What this means for the cloud agent](#what-this-means-for-the-cloud-agent)
+- [Repository layout](#repository-layout)
+- [CI workflows](#ci-workflows)
 
 ## Why layers
 
@@ -384,3 +386,11 @@ A cloud session's work reaches `main` by `git merge --no-ff` of its hand-off bra
 cherry-pick: GitHub's compare counts commit IDs, so a cherry-picked commit still shows the branch
 as ahead. Parallel cloud sessions race on a plugin's version: bump it right before landing, never
 at the start of the work (lessons of the 2026-11-16 night rounds, [#214](https://github.com/martonpaulo/ink-tools/issues/214)).
+
+## Repository layout
+
+The `single-project-layout` divergence of `AGENTS.md`: the repository holds several independent subprojects under one folder per plugin in `plugins/`, `packages/`, `cli/inkctl/`, `apps/ink-notebook-editor/` (the macOS app, [#48](https://github.com/martonpaulo/ink-tools/issues/48)) and `apps/handwriting-language/` (the Lingo app, a sideloaded Android app, not a plugin, named for its feature as every subproject folder is, [#194](https://github.com/martonpaulo/ink-tools/issues/194), [#160](https://github.com/martonpaulo/ink-tools/issues/160): a plugin cannot write the handwriting language file, [#157](https://github.com/martonpaulo/ink-tools/issues/157)), each with its own gate, and the plugins, the app and the CLI each with their own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
+
+## CI workflows
+
+The `ci-pipelines` divergence of `AGENTS.md`: this is a monorepo of independent subprojects; CI lives at the root: one `validate-<subproject>.yml` per subproject, path-filtered, run in its folder, plus one `prerelease-<plugin>.yml` per plugin under `plugins/` ([#203](https://github.com/martonpaulo/ink-tools/issues/203)), `validate-site.yml` (the site gate, which also deploys `site/` to GitHub Pages from `main`, [#371](https://github.com/martonpaulo/ink-tools/issues/371)), `lab.yml` (the search lab of the shared picture search, in `plugins/lasso-actions/lab/`, by hand on GitHub's runner only, [#108](https://github.com/martonpaulo/ink-tools/issues/108), [#288](https://github.com/martonpaulo/ink-tools/issues/288)), `scan.yml` (the weekly npm audit of every plugin; the text check and issue links of every Markdown file, [#77](https://github.com/martonpaulo/ink-tools/issues/77); `scripts/boundaries.py` on a package or plugin change, [#101](https://github.com/martonpaulo/ink-tools/issues/101); the icons, licence and Quick check gates and `scripts/workflow_paths.py`, [#301](https://github.com/martonpaulo/ink-tools/issues/301)) and one `dependabot.yml` ([#38](https://github.com/martonpaulo/ink-tools/issues/38)). The root `gates.json`, read by `scripts/gates.py`, maps each subproject's paths to its gate ([#75](https://github.com/martonpaulo/ink-tools/issues/75)); CI does not run the selector: `scripts/workflow_paths.py` keeps each `validate-<gate>.yml`'s push `paths` equal to that gate's rules, and each prerelease runs only when its version file changes ([#301](https://github.com/martonpaulo/ink-tools/issues/301)).

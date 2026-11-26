@@ -14,6 +14,7 @@ Type: product definition. Current rules only; decision history lives in `docs/de
 - [Accepted evidence gaps](#accepted-evidence-gaps)
 - [Display names](#display-names)
 - [Product versioning](#product-versioning)
+- [README tables](#readme-tables)
 
 ## What it is
 
@@ -116,3 +117,12 @@ Decided in [#176](https://github.com/martonpaulo/ink-tools/issues/176): each too
 ## Product versioning
 
 Every plugin uses SemVer with a numbered beta ([#155](https://github.com/martonpaulo/ink-tools/issues/155)): `package.json`, the Git tag `<plugin>-v<version>` and the GitHub prerelease read `0.2.0-beta.3` for a test build and `0.2.0` for a release; the tablet's `versionName` in `PluginConfig.json` derives from it (`0.2.0 beta 3`, `0.2.0`), checked by `scripts/plugin-version.cjs`; `versionCode` is a hidden integer that rises on every build and never resets, which `plugin-version.cjs --identity` checks over the Git history ([#295](https://github.com/martonpaulo/ink-tools/issues/295)). A plugin renamed to a new folder keeps its `pluginID`, so its next build takes a `versionName` and `versionCode` no earlier folder name used: `--identity` checks it over the history and tags of every folder, which needs a full clone (`git fetch --unshallow --tags`), and each prerelease workflow refuses such a version with `--published`, naming the earlier tag ([#410](https://github.com/martonpaulo/ink-tools/issues/410)). A version with no beta suffix is a stable release: its prerelease workflow creates it as a draft whose notes `scripts/release_notes.py` writes (the risk notice of `docs/risk-notice.md`, the permissions, the network services of `docs/tools.json`, the [install guide](install.md)), and the owner publishes it; a tool gets one only when it is ready, as the install guide's table says ([#373](https://github.com/martonpaulo/ink-tools/issues/373)). A fix after a release raises PATCH; a new feature raises MINOR and starts again at beta 1. No `-dev.N` suffix. The Lingo app follows the same rule, its version in `apps/handwriting-language/app.json` and its tag `handwriting-language-v<version>` ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). inkctl and the monorepo are unversioned.
+
+## README tables
+
+The status values are AGENTS.md's `- README Status values:` line, its one source.
+
+- In the README Tools table each status is the emoji of one of them, before the name in the Name cell, with a legend under the table.
+- The kind under the name (plugin, app, Mac app; no parentheses) links to the piece's own releases when it has them, else to its folder (owner, 2026-11-25, [#268](https://github.com/martonpaulo/ink-tools/issues/268)).
+- `scripts/readme_status.py` checks it in the `docs` gate; `scripts/readme_figures.py` writes the tool tables, the tool map (a top-to-bottom Mermaid flowchart that draws each part once, tools grouped by where they run, with a table of the same facts) and the level table (levels as keycaps) from `docs/tools.json`, between marker comments, and that gate fails when they fall behind or a row has no icon; the README holds no diagram image (owner, 2026-11-26, [#407](https://github.com/martonpaulo/ink-tools/issues/407), [#412](https://github.com/martonpaulo/ink-tools/issues/412)).
+- 🔴 Broken is never typed in `docs/tools.json`: a released tool (Working or Beta) turns Broken when a registry item it reads is switched off, the firmware watch's record, or when an open issue labelled `regression` names it in its title. `scripts/tool_facts.py` writes those issues to `docs/tool-facts.json`, and the README shows the reason with a link to the issue ([#436](https://github.com/martonpaulo/ink-tools/issues/436)).
