@@ -23,6 +23,7 @@ const page = (extra: Partial<Measured>): Measured => ({
   scrolls: [],
   bars: [],
   rows: [],
+  captions: [],
   ...extra,
 });
 
@@ -93,5 +94,26 @@ describe('nativeBreaks (#411)', () => {
       'row «Short» is under the native row height 86',
       'row «Inset» starts off the native inset 27',
     ]);
+  });
+
+  describe('the first caption under the title bar (#416)', () => {
+    const bar = {name: 'the title bar', box: box(0, 0, 1000, 80)};
+    const caption = (top: number) => ({name: 'Modules', box: box(27, top, 973, top + 60)});
+    const row = {name: 'Lookup', box: box(27, 170, 973, 256)};
+
+    it('passes a first caption whose box starts at the bar', () => {
+      expect(nativeBreaks(page({bars: [bar], captions: [caption(80)], rows: [row]}), NATIVE)).toEqual([]);
+    });
+
+    it('fails a first caption a section gap below the bar', () => {
+      expect(nativeBreaks(page({bars: [bar], captions: [caption(98)], rows: [row]}), NATIVE)).toEqual([
+        "caption «Modules» starts 18 units off the title bar's bottom: its box starts at the bar",
+      ]);
+    });
+
+    it('passes a caption under a plain line, which keeps its gap', () => {
+      const status = {name: 's', text: 'Loading…', fontSize: 19, glyphs: box(27, 98, 300, 120), within: []};
+      expect(nativeBreaks(page({bars: [bar], captions: [caption(140)], texts: [status]}), NATIVE)).toEqual([]);
+    });
   });
 });

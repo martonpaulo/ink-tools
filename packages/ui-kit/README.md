@@ -48,8 +48,11 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   `rowHeight`, the light dotted line (`lightLine`) between two rows of one group, and the solid line
   (`separator`) after the group's last row. The group's `note` sits under its last row, above the
   solid line, never between a caption and its rows. `RowGroup` draws all of it; the caption's box
-  is the space above a group, so its container adds no gap of its own; a row with no caption is a
-  `RowGroup` too. A `ListRow` draws no line and a screen draws no caption by itself:
+  is the space above a group: it takes back the screen's `sectionGap` above it, so a first caption's
+  box starts at the title bar's bottom line as in native Settings, and the group adds that gap under
+  its solid line, so two groups stand one caption box apart and plain text after a group keeps a
+  gap (owner D91 A, [#416](https://github.com/martonpaulo/ink-tools/issues/416)); the renders fail a
+  first caption that does not start at the bar. A row with no caption is a `RowGroup` too. A `ListRow` draws no line and a screen draws no caption by itself:
   `SectionCaption` is not exported.
 - A language shows only its name, never its code such as `pt_BR` (owner,
   [#275](https://github.com/martonpaulo/ink-tools/issues/275)).

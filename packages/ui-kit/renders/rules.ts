@@ -56,6 +56,8 @@ export type Measured = {
   bars: {name: string; box: Box}[];
   /** Every visible ui-kit list row, by its box (#411). */
   rows: {name: string; box: Box}[];
+  /** Every visible section caption's box, ui-kit's `SECTION_CAPTION_ID` (#416). */
+  captions: {name: string; box: Box}[];
 };
 
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
@@ -214,8 +216,9 @@ const SCREEN_ACTIONS = ['button-primary', 'button-destructive', 'bar-action'];
 /**
  * The native Settings rules a screen keeps (#411): one button hierarchy, where only a destructive
  * button spans the width, a row action sits in a row and a row holds no other button; the
- * screen-level actions in one place; text only in a native role's size; and each list row at the
- * native height, starting at the native inset.
+ * screen-level actions in one place; text only in a native role's size; each list row at the
+ * native height, starting at the native inset; and a caption that is the first part under the title
+ * bar starts its box at the bar's bottom line (#416).
  */
 export function nativeBreaks(measured: Measured, native: Native): string[] {
   const found: string[] = [];
@@ -260,5 +263,29 @@ export function nativeBreaks(measured: Measured, native: Native): string[] {
       found.push(`row «${row.name.slice(0, 40)}» starts off the native inset ${native.screenPadding}`);
     }
   }
+  found.push(...firstCaptionBreaks(measured));
   return found;
+}
+
+/**
+ * A caption that is the first part under a title bar, with no row or text between them, whose box
+ * does not start at the bar's bottom line, as the native Settings caption does (#416).
+ */
+export function firstCaptionBreaks({bars, captions, rows, texts}: Measured): string[] {
+  return bars.flatMap(bar => {
+    const first = captions
+      .filter(caption => caption.box.bottom > bar.box.bottom + TOLERANCE)
+      .sort((a, b) => a.box.top - b.box.top)[0];
+    if (!first) {
+      return [];
+    }
+    // The caption's own text lies inside its box, so it never counts as a part above it.
+    const between = [...rows.map(row => row.box), ...texts.filter(text => !text.bar).map(text => text.glyphs)].some(
+      part => part.top + TOLERANCE >= bar.box.bottom && part.bottom - TOLERANCE <= first.box.top,
+    );
+    const off = Math.abs(first.box.top - bar.box.bottom);
+    return !between && off > TOLERANCE
+      ? [`caption «${first.name}» starts ${Math.round(off)} units off the title bar's bottom: its box starts at the bar`]
+      : [];
+  });
 }

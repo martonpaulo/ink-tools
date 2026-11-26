@@ -82,6 +82,11 @@ export function measurePage() {
     .filter(shown)
     .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect())}));
 
+  // ui-kit's section caption box, by its SECTION_CAPTION_ID (#416).
+  const captions = [...document.querySelectorAll('[data-kind="section-caption"]')]
+    .filter(shown)
+    .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect())}));
+
   const bars = [...document.querySelectorAll(BAR)]
     .filter(shown)
     .map(el => ({name: 'the title bar', box: boxOf(el.getBoundingClientRect())}));
@@ -135,5 +140,5 @@ export function measurePage() {
         bar: inBar(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions};
 }

@@ -146,13 +146,19 @@ export function LoadingMark(): React.JSX.Element {
   );
 }
 
+/** The `nativeID` of a section caption's box, which the render rules find captions by (#416). */
+export const SECTION_CAPTION_ID = 'section-caption';
+
 /**
  * A caption such as «Installed Languages»: ink, the row's size and regular weight, at the bottom of
  * the native caption's box, so it reads as the head of the rows under it (#272); `RowGroup` draws it.
+ * Its box takes back the screen's section gap above it, so a first caption's box starts at the title
+ * bar's bottom line, as native Settings draws it; `RowGroup` adds that gap under its line, so the
+ * space between two groups stays the caption's box (owner D91 A, #416).
  */
 export function SectionCaption({children}: {children: string}): React.JSX.Element {
   return (
-    <View style={styles.caption}>
+    <View nativeID={SECTION_CAPTION_ID} style={styles.caption}>
       <Text accessibilityRole="header" style={shared.heading}>
         {children}
       </Text>
@@ -185,5 +191,5 @@ const styles = StyleSheet.create({
     backgroundColor: metrics.ink,
   },
   infoBar: {width: metrics.markStroke, height: metrics.loadingIcon / 2 - metrics.markStroke, backgroundColor: metrics.ink},
-  caption: {minHeight: metrics.captionHeight, justifyContent: 'flex-end'},
+  caption: {minHeight: metrics.captionHeight, justifyContent: 'flex-end', marginTop: -metrics.sectionGap},
 });

@@ -28,13 +28,15 @@ export type RowGroupProps = {
  * the bottom of its box, then its rows with the light dotted line between two of them, and the
  * solid line after the last, as the native Page menu and Settings › Apps › Plugins draw them. A note
  * sits under the last row, above the solid line, as the native note of «Usage and Diagnostics». The
- * caption's box is the space above a group; its container adds none.
+ * caption's box is the space above a group: it takes back the section gap its container puts above
+ * it, and the group adds that gap under its solid line, so a first caption starts at the title bar's
+ * bottom and plain text after a group keeps a gap (owner D91 A, #416).
  */
 export function RowGroup({caption, children, note}: RowGroupProps): React.JSX.Element {
   const rows = React.Children.toArray(children);
   const notes = note === undefined ? [] : typeof note === 'string' ? [note] : note;
   return (
-    <View>
+    <View style={styles.group}>
       {caption !== undefined && <SectionCaption>{caption}</SectionCaption>}
       {rows.map((row, index) => (
         <React.Fragment key={React.isValidElement(row) && row.key !== null ? row.key : index}>
@@ -187,6 +189,7 @@ export function ChoiceList<V>({
 }
 
 const styles = StyleSheet.create({
+  group: {marginBottom: metrics.sectionGap},
   separator: {height: metrics.separator, backgroundColor: metrics.ink},
   lightBox: {height: metrics.lightLine, overflow: 'hidden'},
   lightDashes: {

@@ -96,6 +96,7 @@ const screen = (texts: Measured['texts']): Measured => ({
   screen: {left: 0, top: 0, right: 1024, bottom: 1365},
   targets: [],
   rows: [],
+  captions: [],
   texts,
   scrolls: [],
   bars: [],
