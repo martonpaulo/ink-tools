@@ -71,7 +71,7 @@ test('a change is saved and is still there after a restart (#40)', async () => {
 test('each module says whether it is off or why it does not run (#88)', async () => {
   const tree = await mount();
   expect(texts(tree)).toEqual(
-    expect.arrayContaining([copy['module.calendar'], copy['status.off']]),
+    expect.arrayContaining([copy['module.calendar'], 'Syncs Calendar with Google, iCloud and ICS.']),
   );
   await act(async () => toggle(tree, 'Calendar').props.onPress());
   // Settings never probes (#43): Calendar waits for the device check of the next sync.
@@ -160,9 +160,8 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
   await act(async () => toggle(tree, copy['sync.button']).props.onPress());
   expect(runner.syncNow).toHaveBeenCalledTimes(1);
   expect(texts(tree)).toContain(copy['sync.running']);
-  expect(
-    toggle(tree, copy['sync.button']).props.accessibilityState.disabled,
-  ).toBe(true);
+  // While a pass runs, the title bar's action says so and takes no press (#411).
+  expect(toggle(tree, copy['sync.button'])).toBeUndefined();
   const at = new Date(2026, 10, 16, 22, 15).getTime();
   await act(async () =>
     publish({
@@ -180,10 +179,8 @@ test('Sync now runs the plugin host runner and its run shows under the module (#
     }),
   );
   expect(texts(tree)).toEqual(
-    // The module's status lines are its row's grey subtitle, one line each (#274).
-    expect.arrayContaining([
-      'Last synced 2026-11-16 22:15.\n2 added, 0 changed, 0 removed',
-    ]),
+    // The module's status is one line under its switch, with no zero count (#274, #411).
+    expect.arrayContaining([expect.stringMatching(/^Synced at (2026-11-16 )?22:15 · 2 events added$/)]),
   );
   expect(screenBreaks(tree.root)).toEqual([]);
 });
@@ -239,7 +236,7 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
     providers: {...base.providers, todoist: true},
   });
   const tree = await mountApp(<App folder={folder as never} secrets={secrets} />);
-  expect(texts(tree)).toContain('Todoist: signed in (…wxyz).');
+  expect(texts(tree)).toEqual(expect.arrayContaining(['Todoist account', 'Signed in (…wxyz)']));
   const press = (label: string) =>
     tree.root.findAll(
       n =>
@@ -249,7 +246,7 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
   await act(async () => press('Sign out of Todoist').props.onPress());
   await act(async () => press(copy['signOut.yes']).props.onPress());
   expect(secrets.remove).toHaveBeenCalledWith('todoist');
-  expect(texts(tree)).toContain('Todoist: not connected.');
+  expect(texts(tree)).toContain(copy['signIn.out']);
   expect(press('Connect Todoist')).toBeDefined();
   expect(screenBreaks(tree.root)).toEqual([]);
 });
@@ -293,9 +290,9 @@ test('a module that is on offers Connect for each provider with no connection, a
   const tree = await mountApp(<App folder={folder as never} secrets={secrets} />);
   // Calendar is on with no provider connected: Google and iCloud offer Connect; ICS needs none.
   expect(texts(tree)).toEqual(
-    expect.arrayContaining(['Google: not connected.', 'iCloud: not connected.']),
+    expect.arrayContaining(['Google account', 'iCloud account', copy['signIn.out']]),
   );
-  expect(texts(tree)).not.toContain('Todoist: not connected.');
+  expect(texts(tree)).not.toContain('Todoist account');
   expect(
     tree.root.findAllByProps({accessibilityLabel: 'Connect Google'}).length,
   ).toBeGreaterThan(0);

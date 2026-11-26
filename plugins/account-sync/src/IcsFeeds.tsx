@@ -7,7 +7,7 @@
  */
 import React, {useState} from 'react';
 import {StyleSheet, Text, TextInput, View} from 'react-native';
-import {Button, ListRow, metrics, RowGroup, shared} from '@ink-tools/ui-kit';
+import {ActionRow, Button, ListRow, metrics, RowGroup, shared} from '@ink-tools/ui-kit';
 import {
   addIcsFeed,
   BridgeSettings,
@@ -50,22 +50,20 @@ export function IcsFeeds({
   return (
     <RowGroup caption={copy['ics.caption']} note={why}>
       {settings.icsFeeds.length === 0 ? (
-        <Text style={shared.text}>{copy['ics.empty']}</Text>
+        <ListRow title={copy['ics.empty']} />
       ) : (
         settings.icsFeeds.map((url, index) => {
           const name = icsFeedName(url, index);
           return (
-            <ListRow
+            <ActionRow
               key={url}
               title={name}
-              trailing={
-                <Button
-                  label={copy['ics.remove']}
-                  accessibilityLabel={format('ics.removeLabel', {name})}
-                  disabled={!enabled}
-                  onPress={() => onChange(removeIcsFeed(settings, url))}
-                />
-              }
+              action={{
+                label: copy['ics.remove'],
+                accessibilityLabel: format('ics.removeLabel', {name}),
+                disabled: !enabled,
+                onPress: () => onChange(removeIcsFeed(settings, url)),
+              }}
             />
           );
         })

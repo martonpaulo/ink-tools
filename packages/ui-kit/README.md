@@ -53,8 +53,10 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   `SectionCaption` is not exported.
 - A language shows only its name, never its code such as `pt_BR` (owner,
   [#275](https://github.com/martonpaulo/ink-tools/issues/275)).
-- Every other gap is the one spacing step, `SPACE_MM` (screen padding, section gap, control gap,
-  row padding); a screen adds no spacing value of its own.
+- The screen padding is the native side margin, `sideMargin`, so a row's text starts where the
+  native rows' does ([#411](https://github.com/martonpaulo/ink-tools/issues/411)). Every other gap is the one spacing step, `SPACE_MM` (section gap, control gap,
+  row padding); a screen adds no spacing value of its own. The renders fail a list row under
+  `rowHeight` or off that inset, and a text whose size is no native text role's.
 - Several pages of Settings are a `NavList` in a left pane, or a page opened from a row with a
   `Chevron` and left with the title bar's ‹, as the system Settings does.
 
@@ -62,7 +64,7 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
 
 - One text style per native role, all regular weight, in `tokens.json`'s `text` group and
   `textStyles` ([`native-catalog.md` › Text styles](native-catalog.md#text-styles)): `barTitle` (the
-  black bar's titles, `shared.barTitle`), `caption` (`shared.heading`), `rowTitle` (row titles and
+  black bar's titles, `shared.barTitle`), `barAction` (the bar's text action, `shared.barAction`), `caption` (`shared.heading`), `rowTitle` (row titles and
   body text, `shared.text`), `subtitle` (a row's subtitle or value, a group's note, a description,
   the switch's word, `shared.subtitle`) and `hint` (Ink Tools' own grey hints and status lines,
   `shared.hint`); a screen's own title, where it has no title bar yet, takes `fontTitle`
@@ -105,7 +107,7 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 
 | Component | What it draws |
 | :--- | :--- |
-| `TitleBar` | the black band: the drawn × to close (`onClose`), ‹ to go back (`onBack`), each a target the band's full height, the title centred; with `paneTitle`, the native two levels, «× Settings ‹ Language & Region» |
+| `TitleBar` | the black band: the drawn × to close (`onClose`), ‹ to go back (`onBack`), each a target the band's full height, the title centred; with `paneTitle`, the native two levels, «× Settings ‹ Language & Region»; with `action`, the screen's one action as text at its trailing edge, such as «Sync now» ([#411](https://github.com/martonpaulo/ink-tools/issues/411)) |
 | `NavList` | the left navigation list: an optional icon and a label per item, the dotted line under each, the open item marked by an ink bar at its trailing edge |
 | `ListRow` | a title, an optional subtitle, a `leading` slot (the ✓) and a `trailing` slot (its control), at the native `rowHeight`, with no line of its own; with `onPress` the whole row is one button |
 | `RowGroup` | rows that belong together: an optional caption, the rows with the light dotted line between two of them, an optional `note`, and the solid line after the group |
@@ -116,15 +118,20 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
 | `SearchField` | a bordered field with a drawn magnifier and a grey placeholder, its spoken name; a × that clears the text while the field has text |
 | `Pager` | \|‹ ‹ page / total › ›\| with drawn arrows, the current page in bold; a button that would leave the range is disabled, its arrow grey |
 | `IconButton` | `remove` (⊖), `delete` (a trash) and `download` (an arrow over a tray), each with its spoken name |
-| `Button` with `primary` | the small filled black button, such as «Scan» |
+| `Button` | one button hierarchy ([#411](https://github.com/martonpaulo/ink-tools/issues/411)): `kind` `primary`, the small filled black button such as «Scan», the one main action of a screen; `secondary` (the default), an outlined button as wide as its label; `row`, a settings row's action, `rowButtonWidth` wide; `destructive`, the outlined button that spans the width at a page's end, as the native «Uninstall» |
+| `ActionRow` | a setting with an action instead of a switch, such as an account and its «Sign out»: a `ListRow` whose trailing control is a `row` button, with an optional second one, such as Cancel while it asks to confirm |
 | `SwitchRow` | an on/off setting: a `ListRow` whose trailing `Switch` speaks the row's title |
 | `SwitchGroup` | an on/off setting with no caption: a `SwitchRow` that is its own `RowGroup`, closed by the solid line |
 | `ChoiceList` | one value out of several: a `RowGroup` with one `ListRow` per value, each `Radio` spoken «setting: value», and an optional `note` |
 
 - One `Button` for every other action, at least `touchTarget` high: black on white with the native
-  2 px ink border. While a finger is down, an ink bar lies along its bottom edge (`pressBar`), as the
+  2 px ink border. Its `kind` sets its level; only a `destructive` button spans the width, a row's
+  action is an `ActionRow`, and a screen's actions sit together: its one primary action, or the
+  title bar's `action` ([#411](https://github.com/martonpaulo/ink-tools/issues/411)). The renders fail a full-width button of another kind, a
+  `row` button outside a row, another button inside one, and two screen actions more than a row
+  apart. While a finger is down, an ink bar lies along its bottom edge (`pressBar`), as the
   native button shows a press: one change, no animation ([#287](https://github.com/martonpaulo/ink-tools/issues/287)).
-- Black fill marks the one primary action of a screen, such as Save or Start.
+- Black fill marks the one primary action of a screen, such as Save or Start (`kind="primary"`).
 - A control that cannot act, a `Button` or a tile, is a dashed outline with its label in `#444444`
   on paper, never a black fill (`shared.disabledOutline`, `shared.disabledText`), and a line next
   to it says why (interface rule 16, [#233](https://github.com/martonpaulo/ink-tools/issues/233)).
@@ -133,7 +140,7 @@ never a redrawn copy; sn-adapter does not wrap them yet, so no plugin calls them
   that [#274](https://github.com/martonpaulo/ink-tools/issues/274) moves each plugin from.
 - Every target, a button, switch, radio or checkbox, is at least `touchTarget` in each direction;
   `screenBreaks` checks it in each component's test.
-- A button in a list row takes `rowButtonWidth`, so the buttons of every row share a column.
+- A button in a list row is `kind="row"`, `rowButtonWidth` wide, so the buttons of every row share a column.
 
 ## The «Loading…» box
 

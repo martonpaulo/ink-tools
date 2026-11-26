@@ -80,7 +80,7 @@ export function CollectionScreen({
       <View style={shared.buttons}>
         <Button
           label={copy['button.collectionPaste']}
-          primary
+          kind="primary"
           disabled={busy || empty}
           onPress={paste}
         />

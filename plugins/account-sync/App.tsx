@@ -178,13 +178,6 @@ export default function App({
     : settings
     ? {
         kind: 'ready',
-        modules: moduleRows(
-          settings,
-          synced.probe,
-          synced.runs,
-          signIns,
-          signOut,
-        ),
         notice: saveProblem ?? undefined,
         sync: {
           running: synced.running,
@@ -199,13 +192,19 @@ export default function App({
     <SettingsShell
       state={state}
       onClose={exit}
-      form={settings && (
-          <SettingsForm
-            settings={settings}
-            onChange={change}
-            tabletOnlyTasks={tabletOnly}
-          />
-        )}
+      renderForm={
+        settings
+          ? onConnect => (
+              <SettingsForm
+                settings={settings}
+                onChange={change}
+                modules={moduleRows(settings, synced.probe, synced.runs, signIns, signOut)}
+                onConnect={onConnect}
+                tabletOnlyTasks={tabletOnly}
+              />
+            )
+          : undefined
+      }
     />
   );
 }

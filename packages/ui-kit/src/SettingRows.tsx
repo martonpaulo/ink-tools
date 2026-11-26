@@ -6,6 +6,7 @@
  */
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {Button} from './Button';
 import {ListRow} from './ListRow';
 import {metrics} from './metrics';
 import {shared} from './styles';
@@ -107,6 +108,42 @@ export function SwitchGroup(props: SwitchRowProps): React.JSX.Element {
     <RowGroup>
       <SwitchRow {...props} />
     </RowGroup>
+  );
+}
+
+export type ActionRowProps = {
+  title: string;
+  /** The current state in words, such as «Signed in as …dd85», under the title. */
+  subtitle?: string;
+  /** The row's action, at its trailing edge, as native Settings puts one (#411). */
+  action: {label: string; onPress: () => void; accessibilityLabel?: string; disabled?: boolean};
+  /** A second action before it, such as Cancel while the row asks to confirm. */
+  secondAction?: {label: string; onPress: () => void};
+};
+
+/**
+ * A setting with an action instead of a switch, such as an account and its «Sign out» (#411): one
+ * `ListRow` whose trailing control is a `row` button, so the actions of every row share a column
+ * and no action stands apart from the row it belongs to.
+ */
+export function ActionRow({title, subtitle, action, secondAction}: ActionRowProps): React.JSX.Element {
+  return (
+    <ListRow
+      title={title}
+      subtitle={subtitle}
+      trailing={
+        <View style={shared.row}>
+          {secondAction && <Button kind="row" label={secondAction.label} onPress={secondAction.onPress} />}
+          <Button
+            kind="row"
+            label={action.label}
+            accessibilityLabel={action.accessibilityLabel}
+            disabled={action.disabled}
+            onPress={action.onPress}
+          />
+        </View>
+      }
+    />
   );
 }
 

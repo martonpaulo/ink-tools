@@ -22,6 +22,11 @@ export interface ModuleRun {
    * nothing was read or written, and `errors` says why. Settings says «not running», never «synced».
    */
   notRun?: true;
+  /**
+   * Tablet-only items the pass left on the tablet, since «Send tablet-only items» is off: Settings
+   * says it once, at that setting, never as a warning (#411).
+   */
+  keptLocal?: number;
 }
 
 export type ModuleStatus =
@@ -59,6 +64,7 @@ export function tasksRun(at: number, result: SyncResult): ModuleRun {
     },
     errors: [...result.errors],
     warnings: [...result.warnings],
+    keptLocal: result.keptLocal,
   };
 }
 

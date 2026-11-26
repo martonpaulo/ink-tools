@@ -6,7 +6,7 @@ import {
   logBlocked,
   logRun,
   SHOWN_MESSAGES,
-  statusLines,
+  statusLine,
 } from '../src/statusText';
 
 const run = (extra: Partial<ModuleRun> = {}): ModuleRun => ({
@@ -18,59 +18,57 @@ const run = (extra: Partial<ModuleRun> = {}): ModuleRun => ({
   ...extra,
 });
 
-describe('statusLines (#88)', () => {
-  it('says off, why a module that is on does not run, and that nothing ran yet', () => {
-    expect(statusLines({state: 'off'})).toEqual(['Off.']);
-    expect(statusLines({state: 'blocked', reasons: ['a', 'b']})).toEqual([
-      'On, but not running: a; b.',
-    ]);
-    expect(statusLines({state: 'waiting'})).toEqual([
-      'On. Not synced since Account Sync started.',
-    ]);
+const AT = new Date(2026, 10, 14, 9, 7).getTime();
+const SAME_DAY = new Date(2026, 10, 14, 18, 0).getTime();
+const ABOUT = 'Syncs Calendar with Google.';
+const say = (status: Parameters<typeof statusLine>[0], now = SAME_DAY) =>
+  statusLine(status, ABOUT, now);
+
+describe('statusLine (#88, #411)', () => {
+  it('says what an off module does, why one that is on does not run, and that nothing ran yet', () => {
+    expect(say({state: 'off'})).toBe(ABOUT);
+    expect(say({state: 'blocked', reasons: ['a', 'b']})).toBe('On, but not running: a; b.');
+    expect(say({state: 'waiting'})).toBe('Not synced yet.');
   });
 
   it('says a pending device check in one sentence, with one colon (#368)', () => {
     const base = defaultSettings();
     const on = {...base, modules: {...base.modules, todo: true}};
-    const [line] = statusLines(moduleStatus('todo', on, {}, {}));
-    expect(line).toBe(`On, but not running: ${DEVICE_CHECK_PENDING}.`);
-    expect(line.split(':')).toHaveLength(2);
+    const said = say(moduleStatus('todo', on, {}, {}));
+    expect(said).toBe(`On, but not running: ${DEVICE_CHECK_PENDING}.`);
+    expect(said.split(':')).toHaveLength(2);
   });
 
   it('says a module that could not run is not running, why, and when it tried, never «synced»', () => {
     const reasons = Array.from({length: SHOWN_MESSAGES + 1}, (_, i) => `r${i}`);
-    expect(
-      statusLines({state: 'blocked', reasons, at: run().at}),
-    ).toEqual([
-      `On, but not running: ${reasons.slice(0, SHOWN_MESSAGES).join('; ')}.`,
-      'and 1 more in the log',
-      'Last tried 2026-11-14 09:07.',
-    ]);
-  });
-
-  it('gives the last sync time and the counts of a clean run', () => {
-    expect(statusLines({state: 'ran', run: run()})).toEqual([
-      'Last synced 2026-11-14 09:07.',
-      '2 added, 0 changed, 1 removed',
-    ]);
-  });
-
-  it('lists the first errors and warnings and counts the rest', () => {
-    const errors = Array.from(
-      {length: SHOWN_MESSAGES + 2},
-      (_, i) => `event ${i}: refused`,
+    expect(say({state: 'blocked', reasons, at: AT})).toBe(
+      `On, but not running: ${reasons.slice(0, SHOWN_MESSAGES).join('; ')}. Last tried at 09:07.`,
     );
-    const lines = statusLines({
+  });
+
+  it('says «no changes» for a zero count, never «0 added, 0 changed, 0 removed»', () => {
+    const zero = run({counts: {added: 0, changed: 0, removed: 0}});
+    expect(say({state: 'ran', run: zero})).toBe('Synced at 09:07 · no changes');
+  });
+
+  it('names one item in the singular and more in the plural, leaving zero counts out', () => {
+    const one = run({counts: {added: 0, changed: 0, removed: 1}});
+    expect(say({state: 'ran', run: one})).toBe('Synced at 09:07 · 1 event removed');
+    const many = run({module: 'todo', counts: {added: 2, changed: 1, removed: 0}});
+    expect(say({state: 'ran', run: many})).toBe('Synced at 09:07 · 2 tasks added, 1 task changed');
+  });
+
+  it('gives the date of a sync on another day', () => {
+    expect(say({state: 'ran', run: run()}, AT + 2 * 24 * 3600 * 1000)).toMatch(/^Synced at 2026-11-14 09:07 · /);
+  });
+
+  it('says only that some items failed or synced in part; the messages stay in the log', () => {
+    const said = say({
       state: 'ran',
-      run: run({errors, warnings: ['e1: TZID Europe/Paris is read as UTC']}),
+      run: run({errors: ['event 1: refused'], warnings: ['e1: TZID Europe/Paris is read as UTC']}),
     });
-    expect(lines.slice(2)).toEqual([
-      `Not synced (${errors.length}):`,
-      ...errors.slice(0, SHOWN_MESSAGES),
-      'and 2 more in the log',
-      'Synced, but read with care (1):',
-      'e1: TZID Europe/Paris is read as UTC',
-    ]);
+    expect(said).toBe('Synced at 09:07 · 2 events added, 1 event removed, some events not synced, some events synced in part');
+    expect(said).not.toMatch(/\(s\)|\(\d+\)|read with care|TZID/);
   });
 });
 

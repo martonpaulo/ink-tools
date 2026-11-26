@@ -79,6 +79,7 @@ const text = (value: string, flags: {code?: boolean; monospace?: boolean} = {}) 
 const screen = (texts: Measured['texts']): Measured => ({
   screen: {left: 0, top: 0, right: 1024, bottom: 1365},
   targets: [],
+  rows: [],
   texts,
   scrolls: [],
   bars: [],

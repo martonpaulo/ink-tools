@@ -103,13 +103,13 @@ function ProblemView({
       {(fix !== undefined && 'run' in fix) || onRetry ? (
         <View style={shared.buttons}>
           {fix !== undefined && 'run' in fix && (
-            <Button label={fix.label} onPress={fix.run} primary />
+            <Button label={fix.label} onPress={fix.run} kind="primary" />
           )}
           {onRetry && (
             <Button
               label={RETRY_TEXT}
               onPress={onRetry}
-              primary={fix === undefined || !('run' in fix)}
+              kind={fix === undefined || !('run' in fix) ? 'primary' : 'secondary'}
             />
           )}
         </View>

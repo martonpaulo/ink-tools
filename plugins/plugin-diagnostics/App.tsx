@@ -74,7 +74,7 @@ export default function App({
       <TitleBar title={copy.title} onClose={close} />
       <Text style={shared.hint}>{copy.hint}</Text>
       <View style={shared.buttons}>
-        <Button label={copy.run} onPress={start} primary />
+        <Button label={copy.run} onPress={start} kind="primary" />
       </View>
       {lines !== null && lines.length > 0 && <CodeBlock lines={lines} label={copy.output} />}
       {lines !== null && lines.length === 0 && <Text style={shared.hint}>{copy.noLines}</Text>}

@@ -1,3 +1,4 @@
+import {runTodoModule} from '../src/run';
 import {
   DeviceTask,
   DeviceTaskStore,
@@ -551,6 +552,13 @@ describe('tablet-only tasks on the first pass (owner assumption, safe first sync
     expect(f.log).toEqual(['create local from todoist']);
     expect(out.keptLocal).toBe(94);
     expect(tabletOnlyKept(many(94), [], PULL_ONLY)).toBe(94);
+  });
+
+  test('the run carries the kept count as data for Settings, never as a warning (#411)', async () => {
+    const f = fakes([], many(3));
+    const {run} = await runTodoModule({provider: f.provider, store: f.store}, [], () => 9);
+    expect(run.keptLocal).toBe(3);
+    expect(run.warnings).toEqual([]);
   });
 
   test('with «Send tablet-only items» on, the first pass creates all N', async () => {

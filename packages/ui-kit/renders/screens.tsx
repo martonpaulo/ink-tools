@@ -8,6 +8,7 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import type {WindowName} from './html';
 import {View} from 'react-native';
 import {
+  ActionRow,
   Button,
   ErrorView,
   LoadingView,
@@ -32,6 +33,7 @@ import type {ProbeOutcome} from '../../../plugins/plugin-diagnostics/src/probe';
 import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
+import type {BridgeSettings as AccountSyncSettingsValue} from '@ink-tools/sync-core/settings';
 import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
@@ -77,10 +79,15 @@ function ControlsSheet(): React.JSX.Element {
       <TitleBar title="Controls" onClose={() => {}} onBack={() => {}} />
       <View style={shared.buttons}>
         <Button label="Plain" onPress={() => {}} />
-        <Button label="Primary" primary onPress={() => {}} />
+        <Button label="Primary" kind="primary" onPress={() => {}} />
         <Button label="Selected" selected onPress={() => {}} />
         <Button label="Disabled" disabled onPress={() => {}} />
       </View>
+      <Button label="Destructive" kind="destructive" onPress={() => {}} />
+      <RowGroup caption="Row actions">
+        <ActionRow title="Sample account" subtitle="Signed in (…wxyz)" action={{label: 'Sign out', onPress: () => {}}} />
+        <ActionRow title="Sample confirm" subtitle="Remove the sample?" secondAction={{label: 'Cancel', onPress: () => {}}} action={{label: 'Remove', onPress: () => {}}} />
+      </RowGroup>
       <RowGroup caption="Switches">
         <SwitchRow title="Sample on" value onChange={() => {}} />
         <SwitchRow title="Sample off" value={false} onChange={() => {}} />
@@ -189,6 +196,19 @@ const COLLECTION_HOST: CollectionHost = {
   log: noop,
 };
 
+/** The owner's tablet state of 2026-11-26 (#411): To-Do, Calendar and their accounts on, Digest off, after a sync. */
+const OWNER_AT = new Date(2026, 10, 26, 3, 49).getTime();
+const OWNER = accountSyncProvider(accountSyncProvider(accountSyncProvider(accountSyncProvider(accountSyncModule(accountSyncModule(accountSyncDefaults(), 'todo', true), 'calendar', true), 'todoist', true), 'google', true), 'icloud', true), 'ics', true);
+const OWNER_RUNS = {
+  todo: {module: 'todo' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 0}, errors: [], warnings: [], keptLocal: 233},
+  calendar: {module: 'calendar' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 1}, errors: [], warnings: [], keptLocal: 0},
+};
+const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, tail: '…wxyz'}, google: {state: 'signedIn' as const, tail: '…abcd'}, icloud: {state: 'signedIn' as const, tail: '…efgh'}};
+const SYNC = {running: false, onSyncNow: noop};
+/** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
+const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}, tabletOnlyTasks?: number) =>
+  mount(<AccountSyncSettings state={{kind: 'ready', sync: SYNC}} renderForm={onConnect => <AccountSyncForm settings={settings} onChange={noop} modules={accountSyncRows(settings, {todo: [], calendar: []}, runs, signIns)} onConnect={onConnect} tabletOnlyTasks={tabletOnlyTasks} now={OWNER_AT} />} onClose={noop} />);
+
 // One line per screen, so adding one is one line.
 // prettier-ignore
 export const SCREENS: ScreenRender[] = [
@@ -202,10 +222,11 @@ export const SCREENS: ScreenRender[] = [
   {name: 'plugin-diagnostics-done', render: () => diagnostics({lines: PROBE_LINES, status: 'done'}), raw: PROBE_LINES},
   {name: 'plugin-diagnostics-needs', render: () => diagnostics({lines: [], status: 'needs', need: diagnosticsCopy['needs.native']}), raw: [diagnosticsCopy['needs.native'].command]},
   {name: 'plugin-diagnostics-failed', render: () => diagnostics({lines: [], status: 'failed', reason: 'digest query DENIED SecurityException'})},
-  {name: 'account-sync-settings', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: [{id: 'calendar', name: 'Calendar', status: {state: 'off'}}]}} onClose={() => {}} />)},
-  {name: 'account-sync-signed-in', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(SIGNED_IN, {}, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})}} onClose={noop} />)},
-  {name: 'account-sync-connect', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: accountSyncRows(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})}} onClose={noop} />)},
-  {name: 'account-sync-ics-feeds', render: () => mount(<AccountSyncSettings state={{kind: 'ready', modules: []}} form={<AccountSyncForm settings={ICS_FEEDS} onChange={noop} />} onClose={noop} />)},
+  {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS, 233)},
+  {name: 'account-sync-settings', render: () => accountSync(accountSyncDefaults())},
+  {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', tail: '…wxyz'}})},
+  {name: 'account-sync-connect', render: () => accountSync(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})},
+  {name: 'account-sync-ics-feeds', render: () => accountSync(ICS_FEEDS)},
   {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},
   {name: 'account-sync-needs-connect', render: () => mount(<Needs problem={accountSyncConnect({id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: noop})} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},

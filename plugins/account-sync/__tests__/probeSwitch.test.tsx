@@ -17,7 +17,8 @@ import {
   setModule,
 } from '@ink-tools/sync-core';
 import {probeProblems} from '../src/probe';
-import {ModuleRow, SettingsShell} from '../src/SettingsShell';
+import type {ModuleRow} from '../src/SettingsShell';
+import {SettingsForm} from '../src/SettingsForm';
 
 const D = BUNDLED_DESCRIPTOR;
 
@@ -78,7 +79,7 @@ test('a To-Do table without dueTime turns To-Do off with its reason, and Calenda
   expect(modules.map(m => m.status.state)).toEqual(['blocked', 'waiting']);
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = renderer.create(<SettingsShell state={{kind: 'ready', modules}} onClose={() => {}} />);
+    tree = renderer.create(<SettingsForm settings={settings} onChange={() => {}} modules={modules} />);
   });
   const texts = tree.root.findAllByType(Text).map(node => node.props.children);
   expect(texts).toContain(

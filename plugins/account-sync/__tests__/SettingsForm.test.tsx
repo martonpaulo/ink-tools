@@ -12,7 +12,7 @@ import {
   setModule,
   setProvider,
 } from '@ink-tools/sync-core/settings';
-import {SettingsForm} from '../src/SettingsForm';
+import {SettingsForm, tabletOnlyNotice} from '../src/SettingsForm';
 import {copy, format} from '../src/copy';
 
 function render(settings: BridgeSettings, onChange = jest.fn()) {
@@ -203,5 +203,50 @@ describe('the ICS feeds field (#30)', () => {
     expect(screenBreaks(render(addIcsFeed(ICS_ON, SECRET)).tree.root)).toEqual(
       [],
     );
+  });
+});
+
+describe('the tablet-only notice, said once at its own setting (#411)', () => {
+  const todoOn = setModule(defaultSettings(), 'todo', true);
+  const calendarOn = setModule(defaultSettings(), 'calendar', true);
+  const ran = (keptLocal: number) => ({
+    id: 'calendar',
+    name: 'Calendar',
+    status: {
+      state: 'ran' as const,
+      run: {module: 'calendar' as const, at: 0, counts: {added: 0, changed: 0, removed: 0}, errors: [], warnings: [], keptLocal},
+    },
+  });
+
+  it('says nothing for zero items or an unknown count', () => {
+    expect(tabletOnlyNotice('todo', todoOn, 0)).toBeUndefined();
+    expect(tabletOnlyNotice('todo', todoOn, null)).toBeUndefined();
+    expect(tabletOnlyNotice('calendar', calendarOn, undefined, ran(0))).toBeUndefined();
+  });
+
+  it('names one item in the singular and more in the plural, never «task(s)»', () => {
+    expect(tabletOnlyNotice('todo', todoOn, 1)).toBe(
+      '1 task exists only on the tablet. Turn this on to send it to Todoist.',
+    );
+    expect(tabletOnlyNotice('todo', todoOn, 233)).toBe(
+      '233 tasks exist only on the tablet. Turn this on to send them to Todoist.',
+    );
+    expect(tabletOnlyNotice('calendar', calendarOn, undefined, ran(2))).toBe(
+      '2 events exist only on the tablet. Turn this on to send them to Google, iCloud and ICS.',
+    );
+  });
+
+  it('says where the items go once the switch is on', () => {
+    const sending = {...todoOn, sendTabletOnly: {...todoOn.sendTabletOnly, todo: true}};
+    expect(tabletOnlyNotice('todo', sending, 1)).toBe('1 task goes to Todoist at the next sync.');
+  });
+
+  it('shows the notice only under «Send tablet-only items», not in the module status', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<SettingsForm settings={todoOn} onChange={() => {}} tabletOnlyTasks={233} />);
+    });
+    const shown = tree.root.findAllByType(Text).map(n => n.props.children).filter(t => typeof t === 'string');
+    expect(shown.filter(t => (t as string).includes('233'))).toHaveLength(1);
   });
 });

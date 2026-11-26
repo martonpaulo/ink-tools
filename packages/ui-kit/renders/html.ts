@@ -204,6 +204,10 @@ function attributes(node: ReactTestRendererJSON): string {
   if (name) {
     parts.push(`data-name="${escape(name)}"`);
   }
+  // A ui-kit component's kind, such as a button's level or a list row, for the render rules (#411).
+  if (typeof props.nativeID === 'string') {
+    parts.push(`data-kind="${escape(props.nativeID)}"`);
+  }
   if (tappable(props) || node.type === 'TextInput') {
     parts.push('data-target');
   }

@@ -5,42 +5,63 @@ export const copy = {
   /** The Error state's title (#256); the reason is the read's own message. */
   'settings.error': 'The settings did not load',
   'settings.saveError': 'The change was not saved, so it is lost when Account Sync restarts: {reason}',
-  'settings.empty': 'No module is ready yet.',
-  'status.off': 'Off.',
+  /** What each module does, under its switch while it is off (#411). */
+  'about.todo': 'Syncs To-Do with {providers}, both ways.',
+  'about.calendar': 'Syncs Calendar with {providers}.',
+  'about.digest': 'Saves messages from a connected account to Digest. No account connects yet.',
   'status.blocked': 'On, but not running: {reasons}.',
-  'status.tried': 'Last tried {time}.',
-  'status.waiting': 'On. Not synced since Account Sync started.',
-  'status.lastSync': 'Last synced {time}.',
-  'status.counts': '{added} added, {changed} changed, {removed} removed',
-  'status.errors': 'Not synced ({count}):',
-  'status.warnings': 'Synced, but read with care ({count}):',
-  'status.more': 'and {count} more in the log',
+  'status.tried': 'Last tried at {time}.',
+  'status.waiting': 'Not synced yet.',
+  /** One short line per module, as native Settings states a status (#411): when, then what changed. */
+  'status.synced': 'Synced at {time} · {changes}',
+  'status.noChanges': 'no changes',
+  'status.added': '{items} added',
+  'status.changed': '{items} changed',
+  'status.removed': '{items} removed',
+  /** A failed or inexact item is named in the log; the status says only that there was one (#411). */
+  'status.failed': 'some {things} not synced',
+  'status.inPart': 'some {things} synced in part',
+  'things.todo': 'tasks',
+  'things.calendar': 'events',
+  'things.digest': 'entries',
   'sync.button': 'Sync now',
   'sync.running': 'Syncing…',
   'sync.problem': 'The sync did not start: {reason}',
-  'remove.button': 'Remove what Account Sync wrote',
-  'remove.confirm':
-    'Remove what Account Sync wrote for {module}? Your own events and tasks stay.',
+  'remove.title': 'Remove what Account Sync wrote',
+  'remove.about': 'Your own events and tasks stay.',
+  /** Asked in the host's confirm dialog, so it names what it removes and stands alone (#296). */
+  'remove.confirm': 'Remove what Account Sync wrote for {module}? Your own events and tasks stay.',
   'remove.yes': 'Remove',
   cancel: 'Cancel',
-  'signIn.in': '{provider}: signed in ({tail}).',
-  'signIn.out': '{provider}: not connected.',
+  'account.title': '{provider} account',
+  'signIn.in': 'Signed in ({tail})',
+  'signIn.out': 'Not connected',
+  'connect.button': 'Connect',
   'connect.label': 'Connect {provider}',
   /** The Needs state «Connect» opens (#256): what is missing, why, and the steps only the owner can do. */
   'connect.what': '{provider} is not connected',
   'connect.why': 'Account Sync reads {provider} with your own sign-in, which comes from the Mac.',
   'connect.step.mac': 'On the Mac, run inkctl secret set {id}.',
   'connect.step.sync': 'Close this view and press Sync now.',
-  'signIn.unreadable': '{provider}: the sign-in did not read: {reason}',
+  'signIn.unreadable': 'The sign-in did not read: {reason}',
   'signOut.button': 'Sign out',
   'signOut.label': 'Sign out of {provider}',
   'signOut.confirm': 'Sign out of {provider}? Account Sync deletes its sign-in from the tablet.',
   'signOut.yes': 'Sign out',
   'signOut.problem': 'The {provider} sign-out did not finish. Try again.',
   'sendTabletOnly.button': 'Send tablet-only items',
-  'sendTabletOnly.kept':
-    '{count} tablet-only tasks stay on the tablet; only tasks made after the first sync go to the account.',
-  'sendTabletOnly.sent': '{count} tablet-only tasks go to the account at the next sync.',
+  /** The tablet-only notice, said once, at its own setting (#411). */
+  'sendTabletOnly.kept.one': '{items} exists only on the tablet. Turn this on to send it to {providers}.',
+  'sendTabletOnly.kept.other': '{items} exist only on the tablet. Turn this on to send them to {providers}.',
+  'sendTabletOnly.sent.one': '{items} goes to {providers} at the next sync.',
+  'sendTabletOnly.sent.other': '{items} go to {providers} at the next sync.',
+  'item.task.one': '{count} task',
+  'item.task.other': '{count} tasks',
+  'item.event.one': '{count} event',
+  'item.event.other': '{count} events',
+  'item.entry.one': '{count} entry',
+  'item.entry.other': '{count} entries',
+  'list.and': '{first} and {last}',
   'module.todo': 'To-Do',
   'module.calendar': 'Calendar',
   'module.digest': 'Digest',
@@ -61,6 +82,13 @@ export const copy = {
 
 export type CopyKey = keyof typeof copy;
 
+/** The keys that come in a `.one` and an `.other` form, by their shared stem. */
+type PluralStem = CopyKey extends infer K
+  ? K extends `${infer Stem}.one`
+    ? Stem
+    : never
+  : never;
+
 /** A copy string with its `{name}` parts filled in. */
 export function format(
   key: CopyKey,
@@ -70,4 +98,28 @@ export function format(
     /\{(\w+)\}/g,
     (part, name: string) => values[name] ?? part,
   );
+}
+
+/**
+ * The form of `stem` for `count`, English singular or plural (#411), with `{count}` and `values`
+ * filled in: never «task(s)».
+ */
+export function plural(
+  stem: PluralStem,
+  count: number,
+  values: Record<string, string> = {},
+): string {
+  const key = `${stem}.${count === 1 ? 'one' : 'other'}` as CopyKey;
+  return format(key, {...values, count: String(count)});
+}
+
+/** Names joined as a person writes them: «A», «A and B», «A, B and C». */
+export function joinNames(names: readonly string[]): string {
+  if (names.length < 2) {
+    return names.join('');
+  }
+  return format('list.and', {
+    first: names.slice(0, -1).join(', '),
+    last: names[names.length - 1],
+  });
 }
