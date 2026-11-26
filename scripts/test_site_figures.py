@@ -109,6 +109,18 @@ class PageChecks(unittest.TestCase):
             with self.subTest(bad):
                 self.assertTrue(site_figures.gutter_problems(bad))
 
+    def test_the_link_underline_never_reaches_the_external_arrow(self):
+        """The ↗ sits in its own box the link's decoration does not reach (#456)."""
+        good = 'a[href^="http"]:not(.button)::after { content: "\\2009\\2197"; display: inline-block; text-decoration: none; }'
+        self.assertEqual(site_figures.arrow_problems(good), [])
+        for bad in ('a[href^="http"]:not(.button)::after { content: "\\2009\\2197"; }',
+                    'a[href^="http"]::after { content: "\\2197"; display: inline-block; }',
+                    'a[href^="http"]::after { content: "\\2197"; text-decoration: none; }',
+                    'a::after { content: "\\2197"; /* display: inline-block; text-decoration: none; */ }',
+                    "a { color: red; }"):
+            with self.subTest(bad):
+                self.assertTrue(site_figures.arrow_problems(bad))
+
     def test_only_the_container_sets_the_width_and_no_text_is_capped(self):
         good = ".container { width: var(--page-width); } .dot::before { width: 0.5em; } .shot img { width: 100%; }"
         self.assertEqual(site_figures.width_problems(good), [])

@@ -130,9 +130,12 @@ a:focus-visible {
   border-radius: 2px;
 }
 
-/* External links: the arrow is drawn here once, never in the markup. */
+/* External links: the arrow is drawn here once, never in the markup. Its own inline-block box keeps
+   the link's underline off it, at rest and on hover (#456); site_figures.py --check holds it. */
 a[href^="http"]:not(.button)::after {
   content: "\2009\2197";
+  display: inline-block;
+  text-decoration: none;
 }
 
 code {

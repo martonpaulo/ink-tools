@@ -475,6 +475,20 @@ def gutter_problems(css):
             "(martonpaulo/workbench#2124)"]
 
 
+def arrow_problems(css):
+    """An external-link arrow the link's underline reaches (#456): the `::after` that draws the ↗ is
+    not its own `inline-block` box with `text-decoration: none`, so the decoration runs under it."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    for selectors, body in RULE.findall(css):
+        if "::after" in selectors and "2197" in body:
+            if (re.search(r"(?:^|;|\{)\s*display\s*:\s*inline-block\b", body)
+                    and re.search(r"(?:^|;|\{)\s*text-decoration\s*:\s*none\b", body)):
+                return []
+            return [f"{CSS}: {' '.join(selectors.split())} {{ display: inline-block; text-decoration: none }}: "
+                    "the link's underline never reaches the external-link arrow (#456)"]
+    return [f"{CSS}: no ::after rule draws the external-link arrow (\\2197)"]
+
+
 def subtitle_problems(name, page):
     """A `.hero-summary` that is not the one paragraph directly under the page's `<h1>` (owner, on #444)."""
     count = len(re.findall(rf'class="[^"]*\b{SUBTITLE}\b', page))
@@ -531,7 +545,7 @@ def box_problems(css):
 
 def page_problems(root):
     css = (root / CSS).read_text(encoding="utf-8")
-    problems = width_problems(css) + box_problems(css) + gutter_problems(css)
+    problems = width_problems(css) + box_problems(css) + gutter_problems(css) + arrow_problems(css)
     problems += install_problems((root / "docs/install.md").read_text(encoding="utf-8"))
     for name in PAGES:
         page = (root / name).read_text(encoding="utf-8")
