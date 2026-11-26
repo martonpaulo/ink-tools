@@ -29,14 +29,23 @@ A computer editor for one note at a time (owner, 2026-11-26; the feature list is
   redraws only the edited page; an edit kind slower than the write-path round's ceiling on a page
   of 500 or more strokes stays out of the first release.
 - Mac OCR only reads and indexes: it never writes into the file.
+- Only Manta tones: the 16 screen greys and the pen colours of
+  [`docs/supernote.md` › Greys and colours](../../docs/supernote.md#greys-and-colours). An inserted
+  image is converted to Manta greys and shown as the tablet will show it; ink and text tools offer
+  only the pen tones; no colour enters a note and no colour preview is shown.
+- One exception to «the tablet writes», later: Edit through Supernote Cloud writes the `.note` on
+  the Mac, with real vector strokes and elements, never a page bitmap alone, after a backup.
+- Every owner decision of 2026-11-26, with its issue:
+  [`docs/decisions.md` › Ink Notebook Editor scope of 2026-11-26](../../docs/decisions.md#ink-notebook-editor-scope-of-2026-11-26).
 
 ## Out of scope
 
 - Handwriting or drawing input on the Mac.
-- Search across all notes; Find in Note stays.
+- Search across all notes, Spotlight indexing, tabs and two notes side by side; Find in Note stays.
 - Sharing with other people, collaboration, comments, publishing.
-- Managing To-Do, Calendar or Digest; a later Quick capture only sends to them, through Panoram,
-  and never writes the tablet's database.
+- Managing To-Do, Calendar or Digest; a later Quick capture only sends to them (Todoist, Apple
+  Calendar, and Panoram for Digest) and never writes the tablet's database.
+- The Partner app or an own sync server; Supernote Cloud beyond the editor's own note files.
 
 ## First delivery: a faithful reader
 
