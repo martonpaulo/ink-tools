@@ -28,17 +28,22 @@ const MS_PER_SECOND = 1000;
 
 /**
  * One test's time limit, scaled by how busy the machine is (#422): Jest's 5-second default times
- * the one-minute load average per CPU, or the gates `land.py` runs at once (`SKD_JOBS`) per CPU,
- * whichever is larger, never below the default or above the cap. A test that passes alone then
- * does not time out inside a landing gate on a loaded Mac.
+ * the one-minute load average per CPU, never below the default or above the cap. Inside a landing
+ * gate (`land.py` sets `SKD_JOBS`) it is the cap: the load read when Jest starts does not hold for
+ * the run, as other gates start beside it. A gate read load 17 on 8 CPUs, so 10.5 s, then the load
+ * rose to 38 and two tests that pass alone in under a second timed out (#451). A test that passes
+ * alone then does not time out inside a gate; a hang still fails at the cap.
  */
 exports.testTimeout = ({
   load = os.loadavg()[0],
   cpus = os.cpus().length,
   jobs = Number(process.env.SKD_JOBS) || 0,
 } = {}) => {
+  if (jobs > 0) {
+    return MAX_TEST_TIMEOUT_S * MS_PER_SECOND;
+  }
   const perCpu = Math.max(1, cpus);
-  const factor = Math.max(1, load / perCpu, jobs / perCpu);
+  const factor = Math.max(1, load / perCpu);
   return Math.round(Math.min(MAX_TEST_TIMEOUT_S, DEFAULT_TEST_TIMEOUT_S * factor) * MS_PER_SECOND);
 };
 
