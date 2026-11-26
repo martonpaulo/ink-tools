@@ -6,7 +6,8 @@ name: Scan
 # internals and the files it writes on every change to them (#294), and gates.json's
 # npm gates install from each lockfile when node_modules is missing (#135), and each plugin's native
 # build leaves no .snplg without its app.npk (#153). No two tracked paths differ only in case, so the
-# owner's Mac, whose disk ignores case, sees every file CI sees (#227). The weekly audit fails on any advisory
+# owner's Mac, whose disk ignores case, sees every file CI sees (#227), and no tracked file states the
+# method used on vendor software (#408). The weekly audit fails on any advisory
 # audit-exceptions.json does not name (#154). The icons (#271), the licence (#276), the Quick check's
 # selection and each validate workflow's paths against gates.json (#301) are checked here too.
 on:
@@ -56,6 +57,11 @@ jobs:
         run: |
           python3 scripts/case_check.py --root .
           python3 -B -m unittest scripts/test_case_check.py
+
+      - name: Check that no tracked file states the method used on vendor software (#408)
+        run: |
+          python3 scripts/public_wording.py --root .
+          python3 -B -m unittest scripts/test_public_wording.py
 
   boundaries:
     name: adapter boundaries

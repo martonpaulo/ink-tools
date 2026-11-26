@@ -75,11 +75,8 @@ Long-running work follows `bench-project-standards`'s `references/long-running-o
 
 - Ink Tools features use only public services and the user's own accounts, never one of the owner's private apps (Panoram, for one); every account connection is off until the person connects it in Settings, its row showing «Connect» ([`docs/plugin-scope.md`](docs/plugin-scope.md#rules-for-every-feature), owner, 2026-11-26).
 
-- **Research before building.** Before creating anything new here, search for tools and projects
-  that already do it — device plugins, sideloaded Android apps (especially ones built for the
-  Supernote), GitHub code, CLIs, services. Prefer reusing or basing on an existing one; we build new
-  only because nothing existing satisfies what we want, and we say which gap forces it. Study the device and third-party software with `rea`/Ghidra and the decompiled apps
-  before designing against them. (`bench-code-reuse` and `bench-code-third-party` own the method.)
+- **Research before building.** Before creating anything new here, search for tools and projects that already do it — device plugins, sideloaded Android apps (especially ones built for the Supernote), GitHub code, CLIs, services. Prefer reusing or basing on an existing one; we build new only because nothing existing satisfies what we want, and we say which gap forces it. Study how the device and third-party software behave before designing against them. (`bench-code-reuse` and `bench-code-third-party` own the method.)
+- **Public wording.** The repository is public: write a device fact by what it is and how it was seen («observed device behaviour», «device data», «measured on the tablet»), never by the method used on vendor software, and name a vendor internal only where code needs it; `registry/items/` is the one home of internal names. `scripts/public_wording.py` holds the forbidden terms and fails on them (gate `wording`, [#408](https://github.com/martonpaulo/ink-tools/issues/408)).
 - Preserve behavior outside the task and unrelated or uncommitted user changes.
 - Follow the patterns this project already repeats. When a change would break a recorded pattern or establish a new one, stop and ask first, naming the existing pattern, the proposed one, and why the existing one does not fit.
 - When a change sets or fixes a pattern, the same delivery adds the cheapest automatic check that guards it: a lint or type rule, a test over the repository, a gate script. A larger check becomes its own issue ([martonpaulo/skill-deck#732](https://github.com/martonpaulo/skill-deck/issues/732)).
