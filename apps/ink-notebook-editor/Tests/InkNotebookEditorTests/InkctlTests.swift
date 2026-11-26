@@ -3,9 +3,10 @@ import InkNotebookEditorKit
 import Testing
 
 /// The bound of a test that waits for a fake `inkctl` to start: wide, since it only turns a hang
-/// into a failure. At a load average near 90 a fake took over a minute to start (#148).
+/// into a failure. At a load average near 90 a fake took over a minute to start (#148); near 190,
+/// with several lanes building, a cancelled pull passed 3 minutes (#326).
 enum LoadedMac {
-    static let minutes = 3
+    static let minutes = 10
 }
 
 /// The inkctl client against a fake `inkctl`: a shell script that records its arguments and answers
