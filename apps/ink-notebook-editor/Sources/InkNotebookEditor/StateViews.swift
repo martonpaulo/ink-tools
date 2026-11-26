@@ -25,6 +25,15 @@ struct StateMessage: Equatable {
     static let noPages = StateMessage(
         kind: .empty, title: Copy.noPagesTitle, detail: Copy.noPagesNext, systemImage: "doc")
 
+    static let noHeadings = StateMessage(
+        kind: .empty, title: Copy.noHeadingsTitle, detail: Copy.noHeadingsNext, systemImage: "list.bullet.indent")
+
+    static func headingsFailed(_ reason: String) -> StateMessage {
+        StateMessage(
+            kind: .problem, title: Copy.headingsFailedTitle, detail: "\(reason)\n\n\(Copy.headingsFailedNext)",
+            systemImage: "exclamationmark.triangle")
+    }
+
     static func pageFailed(_ reason: String) -> StateMessage {
         StateMessage(
             kind: .problem, title: Copy.pageFailedTitle, detail: "\(reason)\n\n\(Copy.pageFailedNext)",
