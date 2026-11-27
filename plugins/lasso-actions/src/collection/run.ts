@@ -81,6 +81,9 @@ export type CollectionFailure =
 
 const done = (result: Result<boolean>) => result.ok && result.value;
 
+/** The most asks NOTE took to lasso a pasted piece: 620 ms (Ink Tools Probe, Manta, 2026-11-27). */
+const SLOWEST_SETTLE_ASKS = 72;
+
 /**
  * `insertSticker` answers before NOTE lassoes the pasted piece: about 250 ms later on the Manta
  * (device round 9, #249). Until then the lasso is the one there before the paste: none, so a move
@@ -88,11 +91,9 @@ const done = (result: Result<boolean>) => result.ok && result.value;
  * moves that piece instead (piece 2 moved piece 1 off its place, and the union lasso then failed).
  * So the paste asks `getLassoRect` again at once until it answers a rect other than the one before
  * the paste, up to this many times: no timer, since a paste waiting on `setTimeout` with the view
- * closed never asked again (device round 9). Each ask is one bridge round trip, about 6 to 9 ms;
- * the slowest lasso measured took 72 asks, 620 ms (Ink Tools Probe, Manta, 2026-11-27), so the
- * limit leaves twice that.
+ * closed never asked again (device round 9). Each ask is one bridge round trip, about 6 to 9 ms.
  */
-export const PASTE_SETTLE_TRIES = 160;
+export const PASTE_SETTLE_TRIES = 2 * SLOWEST_SETTLE_ASKS;
 
 const sameRect = (a: Rect, b: Rect) =>
   a.left === b.left && a.top === b.top && a.right === b.right && a.bottom === b.bottom;
