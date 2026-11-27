@@ -610,6 +610,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   which does not save first, did not bring the element back either, after the other plugins' saves
   in the same session; so the old page state the insert drew from is one no save has refreshed
   [inference]. An erase and an unplaced paste through the save are still [unverified].
+- Strokes Probe's `ink write` puts on a page, with no save after them, are lost when the hardware
+  Back closes the note: a word written on a new note was gone after Back and a reopen, and the note
+  app logged `onStop` and `onDestroy` with no `saveNoteData`. A Device Link helper insert, which
+  saves first, survived the same Back and reopen. So a device round that writes with Probe saves
+  or inserts through a saving plugin before it closes the note [measured, Manta, builds of `main`
+  at `d433a20f`, 2026-11-27, [#536](https://github.com/martonpaulo/ink-tools/issues/536)].
 - Right after a plugin's `PluginCommAPI.jumpToPage`, the next press of the plugins button is lost;
   a wait of about 4 s before it works, and 1.5 s was too short on a page with a picture [measured,
   Probe, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].
