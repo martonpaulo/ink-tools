@@ -291,8 +291,10 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
     if (!center || !(major > 0) || !(minor > 0)) {
       return fail(THROWN_CODE, 'the shape has no centre or radii');
     }
-    if (geometry.ellipseAngle) {
-      return fail(THROWN_CODE, 'a turned ellipse cannot be moved yet');
+    // A read may answer the angle as a string or in its own unit: a value that reads as 0 is not turned,
+    // and any other says what came, for the device round (#463).
+    if (Number(geometry.ellipseAngle ?? 0) !== 0) {
+      return fail(THROWN_CODE, `a turned ellipse cannot be moved yet (ellipseAngle ${JSON.stringify(geometry.ellipseAngle)})`);
     }
     const from = {left: center.x - major, top: center.y - minor, right: center.x + major, bottom: center.y + minor};
     const map: PointMap = (point, round) => mapPoint(point, from, rect, round);

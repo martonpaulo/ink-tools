@@ -410,6 +410,11 @@ describe('the editor helper calls (#312)', () => {
       message: 'the shape has no centre or radii',
     });
     const turned = {type: 'GEO_ellipse', ellipseCenterPoint: {x: 50, y: 50}, ellipseMajorAxisRadius: 50, ellipseMinorAxisRadius: 20, ellipseAngle: 30};
-    expect(await page.placeElement({type: 700, geometry: turned}, 0, rect)).toMatchObject({ok: false, message: 'a turned ellipse cannot be moved yet'});
+    expect(await page.placeElement({type: 700, geometry: turned}, 0, rect)).toMatchObject({
+      ok: false,
+      message: 'a turned ellipse cannot be moved yet (ellipseAngle 30)',
+    });
+    const readAsText = {...turned, ellipseAngle: '0'};
+    expect((await page.placeElement({type: 700, geometry: readAsText}, 0, rect)).ok).toBe(true);
   });
 });
