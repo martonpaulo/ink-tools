@@ -9,7 +9,8 @@ The paths go through `gates.py`'s rules (`gates.json`), the one map. A selected 
 starts with `cd DIR &&` names a subproject; when DIR/package.json has a `typecheck` script and
 DIR/node_modules matches its lockfile (`npm_install.py`, #222), `npm run typecheck` runs there. Subprojects without that script (the JVM
 and Python gates) are skipped: the full gate still runs them. ESLint is left to the gate, since it is
-not cheap on the larger plugins. Every run first refuses tracked paths that differ only in case
+not cheap on the larger plugins. A subproject whose Makefile has a `lint` target runs `make lint`, read-only
+and seconds long, so a line the Swift lint refuses never costs a full build (#460). Every run first refuses tracked paths that differ only in case
 (`case_check.py`, #227), since a case-insensitive disk would merge them, and tracked text that states
 the method used on vendor software (`public_wording.py`, #408). Exit 0 pass, 1 a type error (its lines are printed), 2 a usage error.
 """
@@ -29,6 +30,7 @@ import npm_install  # noqa: E402
 import public_wording  # noqa: E402
 
 CD_PREFIX = re.compile(r"^cd (\S+) &&")
+LINT_TARGET = re.compile(r"^lint:", re.MULTILINE)
 
 
 def typecheck_dirs(root: pathlib.Path, paths: list[str]) -> list[str]:
@@ -43,6 +45,21 @@ def typecheck_dirs(root: pathlib.Path, paths: list[str]) -> list[str]:
             continue
         scripts = json.loads(package.read_text(encoding="utf-8")).get("scripts", {})
         if "typecheck" in scripts:
+            found.append(match.group(1))
+    return found
+
+
+def lint_dirs(root: pathlib.Path, paths: list[str]) -> list[str]:
+    """The subproject folders (relative, in gate order) whose gate the paths select and whose Makefile has `lint`."""
+    data = gates.load(root)
+    commands = {gate["name"]: gate["command"] for gate in data["gates"]}
+    found: list[str] = []
+    for name in gates.select(data, paths):
+        match = CD_PREFIX.match(commands[name])
+        makefile = root / match.group(1) / "Makefile" if match else None
+        if makefile is None or not makefile.is_file() or match.group(1) in found:
+            continue
+        if LINT_TARGET.search(makefile.read_text(encoding="utf-8")):
             found.append(match.group(1))
     return found
 
@@ -62,11 +79,12 @@ def main(argv: list[str] | None = None) -> int:
         paths = [line for line in env.splitlines() if line] or tree_paths(root)
     try:
         folders = typecheck_dirs(root, paths)
+        linted = lint_dirs(root, paths)
     except gates.DataError as error:
         print(error, file=sys.stderr)
         return 2
     if listing:
-        print("\n".join(folders))
+        print("\n".join(folders + [f"{folder} (lint)" for folder in linted]))
         return 0
     failed = 0
     for kind, first, second in case_check.collisions(case_check.tracked(root)):
@@ -86,8 +104,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"quick {folder}: type error\n{result.stdout}{result.stderr}")
         else:
             print(f"quick {folder}: pass")
-    if not folders:
-        print("quick: no subproject with a typecheck script is reached")
+    for folder in linted:
+        # shortcut: the one lint target is Note Editor's Swift lint, whose tools exist only on macOS;
+        # a lint target of another platform would need its own test for its tools.
+        if sys.platform != "darwin":
+            print(f"quick {folder}: lint skipped off macOS (the gate runs it)")
+            continue
+        result = subprocess.run(["make", "lint"], cwd=root / folder, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            failed = 1
+            print(f"quick {folder}: lint failed\n{result.stdout}{result.stderr}")
+        else:
+            print(f"quick {folder}: lint pass")
+    if not folders and not linted:
+        print("quick: no subproject with a typecheck script or a lint target is reached")
     return failed
 
 

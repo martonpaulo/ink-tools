@@ -27,6 +27,14 @@ class QuickCheckSelection(unittest.TestCase):
 
     def test_docs_only_change_checks_nothing(self):
         self.assertEqual(quick_check.typecheck_dirs(ROOT, ["docs/product.md"]), [])
+        self.assertEqual(quick_check.lint_dirs(ROOT, ["docs/product.md"]), [])
+
+    def test_note_editor_path_runs_its_lint(self):
+        # A line too long for SwiftLint passed the quick check and failed only the full gate (#460).
+        self.assertEqual(
+            quick_check.lint_dirs(ROOT, ["apps/note-editor/Sources/NoteEditor/ViewerToolbar.swift"]),
+            ["apps/note-editor"])
+        self.assertEqual(quick_check.lint_dirs(ROOT, ["plugins/lasso-actions/src/a.ts"]), [])
 
 
 if __name__ == "__main__":
