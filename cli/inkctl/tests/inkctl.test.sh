@@ -1765,6 +1765,14 @@ wait "$first_action"
 first_status=$?
 check "two plugin actions at once both answer" "$first_status$second_status|$(cat "$work/first-action")|$second" "00|[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings|[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings"
 rm -r "$files/push-first" "$files/push-second"
+# The settings a device round sets and restores (#29): the request carries them, typed; nothing else runs it.
+action_line 'account-sync ACTION_ID 1/1 {"ok":true,"action":"settings","line":"settings: set defaultCalendarId, sendTabletOnly.calendar"}' > "$files/action-answer"
+run plugin action account-sync settings --set defaultCalendarId=cal-1 --set sendTabletOnly.calendar=true >/dev/null
+check "settings --set sends each setting typed: text, true and false" "$(action_field "d['action'], d['args']")" "('settings', {'set': {'defaultCalendarId': 'cal-1', 'sendTabletOnly.calendar': True}})"
+run plugin action account-sync settings --restore >/dev/null
+check "settings --restore asks the plugin to put the round's values back" "$(action_field "d['args']")" "{'restore': True}"
+check "settings needs one of --set and --restore, and --set a KEY=VALUE" "$(exit_and_pushes plugin action account-sync settings)$(exit_and_pushes plugin action account-sync settings --set a=1 --restore)$(exit_and_pushes plugin action account-sync settings --set novalue)" "202020"
+check "--set belongs to account-sync settings only" "$(exit_and_pushes plugin action account-sync sync --set a=1)" "20"
 action_line 'ink-tools-probe ACTION_ID 1/2 {"ok":true,"action":"run-probe","ms":40,' > "$files/action-answer"
 action_line 'ink-tools-probe ACTION_ID 2/2 "line":"SNPROBE probe done","lines":["probe done"]}' >> "$files/action-answer"
 check "run-probe joins an answer in chunks, in Probe's hidden folder" "$(run plugin action ink-tools-probe run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/.data/plugin/inktools-probe/action.json"

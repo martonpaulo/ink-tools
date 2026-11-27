@@ -9,12 +9,13 @@ import {bridgeSync} from './src/service';
 import {startAutoSync} from './src/sync';
 import {watchProviders} from './src/providerWatch';
 import {
+  getPluginDirPath,
   nativeTimers,
   registerSettingsEntry,
   showPluginView,
   startActionChannel,
 } from '@ink-tools/sn-adapter/official';
-import {readActionFile, syncAction} from './src/actions';
+import {readActionFile, settingsAction, syncAction} from './src/actions';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -32,11 +33,12 @@ const timers = nativeTimers('BridgeTicks');
 // plugin loads into one PluginHost process at its start).
 startAutoSync(bridgeSync, timers);
 
-// «Sync now» by command from inkctl, with no screen (#283): `inkctl plugin action account-sync sync`.
+// «Sync now» by command from inkctl, with no screen (#283): `inkctl plugin action account-sync sync`;
+// and the settings a device round sets and restores (#29): `… account-sync settings --set K=V`.
 startActionChannel({
   plugin: 'account-sync',
   read: () => readActionFile(),
-  actions: {sync: syncAction(bridgeSync)},
+  actions: {sync: syncAction(bridgeSync), settings: settingsAction(getPluginDirPath)},
   timers,
 });
 

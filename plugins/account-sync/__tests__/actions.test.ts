@@ -1,6 +1,14 @@
 /** Account Sync's actions by command (#283): `sync`, the same pass as «Sync now». */
-import {ActionRefused} from '@ink-tools/sn-adapter/official';
-import {ACTION_PATH, readActionFile, syncAction} from '../src/actions';
+import {ActionRefused, ok} from '@ink-tools/sn-adapter/official';
+import {
+  defaultSettings,
+  parseSettings,
+  serializeSettings,
+  setDefaultCalendar,
+  type BridgeSettings,
+} from '@ink-tools/sync-core/settings';
+import {ACTION_PATH, readActionFile, ROUND_FILE, settingsAction, syncAction} from '../src/actions';
+import type {TextFiles} from '../src/files';
 import {SECRET_DROP_FOLDER} from '../src/secretStore';
 import type {SyncRunner, SyncSnapshot} from '../src/sync';
 
@@ -75,4 +83,63 @@ test('the automatic sync and the action channel tick on the native timer, which 
   expect(index).toContain(`nativeTimers('${name}')`);
   expect(index).toMatch(/startAutoSync\(bridgeSync, timers\)/);
   expect(index.slice(index.indexOf('startActionChannel({'))).toMatch(/^ {2}timers,\n\}\);/m);
+});
+
+/** The settings a device round sets and restores by command (#29). */
+describe('settings', () => {
+  const DIR = '/private/plugin';
+  const folder = async () => ok(DIR);
+  function memory(initial: Record<string, string> = {}): TextFiles & {files: Record<string, string>} {
+    const files = {...initial};
+    return {
+      files,
+      readText: async path => files[path] ?? null,
+      writeText: async (path, text) => {
+        files[path] = text;
+        return null;
+      },
+      deleteFile: async path => {
+        delete files[path];
+        return true;
+      },
+    };
+  }
+  const stored = (files: Record<string, string>) => parseSettings(files[`${DIR}/settings.json`]);
+  const start = (s: BridgeSettings) => memory({[`${DIR}/settings.json`]: serializeSettings(s)});
+
+  test('set changes the named settings and keeps what they were for restore, answering no value', async () => {
+    const files = start(setDefaultCalendar(defaultSettings(), 'own-calendar'));
+    const answer = await settingsAction(folder, files)({set: {defaultCalendarId: 'test-calendar', 'sendTabletOnly.calendar': true}});
+    expect(stored(files.files).defaultCalendarId).toBe('test-calendar');
+    expect(stored(files.files).sendTabletOnly.calendar).toBe(true);
+    expect(JSON.parse(files.files[`${DIR}/${ROUND_FILE}`])).toEqual({defaultCalendarId: 'own-calendar', 'sendTabletOnly.calendar': false});
+    expect(answer.line).toBe('settings: set defaultCalendarId, sendTabletOnly.calendar; restore with inkctl plugin action account-sync settings --restore');
+    expect(JSON.stringify(answer)).not.toMatch(/own-calendar|test-calendar/);
+  });
+
+  test('restore puts back the values from before the first set of the round and removes the file', async () => {
+    const files = start(defaultSettings());
+    const action = settingsAction(folder, files);
+    await action({set: {defaultCalendarId: 'first'}});
+    await action({set: {defaultCalendarId: 'second', 'sendTabletOnly.todo': true}});
+    expect((await action({restore: true})).line).toBe('settings: restored defaultCalendarId, sendTabletOnly.todo');
+    expect(stored(files.files)).toEqual(defaultSettings());
+    expect(files.files[`${DIR}/${ROUND_FILE}`]).toBeUndefined();
+  });
+
+  test('refuses an unknown setting, a wrong type and a restore with nothing kept, changing nothing', async () => {
+    const files = start(defaultSettings());
+    const before = {...files.files};
+    const action = settingsAction(folder, files);
+    for (const args of [{set: {modules: true}}, {set: {'sendTabletOnly.calendar': 'yes'}}, {set: {defaultCalendarId: ' '}}, {set: {}}, {}, {restore: true}]) {
+      await expect(action(args)).rejects.toBeInstanceOf(ActionRefused);
+    }
+    expect(files.files).toEqual(before);
+  });
+
+  test('settings that do not load are a failure, never a reset to the defaults', async () => {
+    const files = memory({[`${DIR}/settings.json`]: '{"schema":2}'});
+    await expect(settingsAction(folder, files)({set: {defaultCalendarId: 'x'}})).rejects.toThrow('the settings did not load');
+    expect(files.files[`${DIR}/${ROUND_FILE}`]).toBeUndefined();
+  });
 });

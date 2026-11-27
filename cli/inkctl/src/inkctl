@@ -501,7 +501,8 @@ ACTION_TIMEOUT = 60.0  # seconds: a sync pass reads the network and writes the t
 ACTION_SYNC_MODULES = ("calendar", "todo")
 # The plugins with actions, by folder name: where each reads its request, and the actions it runs.
 ACTION_PLUGINS = {
-    "account-sync": {"folder": SIGN_IN_DROP_FOLDER, "actions": ("sync",)},
+    # `settings` sets the settings a device round needs and restores them (#29): plugins/account-sync/src/actions.ts.
+    "account-sync": {"folder": SIGN_IN_DROP_FOLDER, "actions": ("sync", "settings")},
     "ink-tools-probe": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
     # Device Link's folder in the hidden .data/plugin/, where the editor helper reads its request and
     # the pictures an edit inserts (plugins/device-link/src/editor/operations.ts EDITOR_FOLDER, #312).
@@ -3664,6 +3665,15 @@ def locked_action(device: Device, name: str, action: str, request_args: dict, ti
     return answer
 
 
+def setting_value(pair: str) -> tuple:
+    """One `KEY=VALUE` of `--set`: true and false as booleans, null as none, any other value as text;
+    the plugin refuses a key or a type it does not take."""
+    key, sep, value = pair.partition("=")
+    if not sep or not key:
+        raise bad_usage(f"--set takes KEY=VALUE, not {pair!r}")
+    return key, {"true": True, "false": False, "null": None}.get(value, value)
+
+
 def command_plugin_action(device: Device, args: argparse.Namespace):
     """Run a plugin's own action by its request file and print the plugin's result line (#283)."""
     plugin = ACTION_PLUGINS.get(args.plugin)
@@ -3676,6 +3686,15 @@ def command_plugin_action(device: Device, args: argparse.Namespace):
         if (args.plugin, args.action) != ("account-sync", "sync"):
             raise bad_usage("--module is for account-sync sync")
         request_args["module"] = args.module
+    settings = (args.plugin, args.action) == ("account-sync", "settings")
+    if (args.set or args.restore) and not settings:
+        raise bad_usage("--set and --restore are for account-sync settings")
+    if settings and bool(args.set) == bool(args.restore):
+        raise bad_usage("account-sync settings takes --set KEY=VALUE or --restore, one of them")
+    if args.restore:
+        request_args["restore"] = True
+    elif args.set:
+        request_args["set"] = dict(setting_value(pair) for pair in args.set)
     answer = run_action(device, args.plugin, args.action, request_args, args.timeout)
     return answer, str(answer.get("line", ""))
 
@@ -5000,6 +5019,8 @@ def build_parser() -> argparse.ArgumentParser:
     acting.add_argument("plugin", help=f"a plugin with actions, by folder name: {', '.join(ACTION_PLUGINS)}")
     acting.add_argument("action", help=", ".join(f"{name}: {' '.join(entry['actions'])}" for name, entry in ACTION_PLUGINS.items()))
     acting.add_argument("--module", choices=ACTION_SYNC_MODULES, help="account-sync sync: this module alone")
+    acting.add_argument("--set", action="append", metavar="KEY=VALUE", help="account-sync settings: set one setting for a device round, such as defaultCalendarId=ID or sendTabletOnly.calendar=true; repeatable")
+    acting.add_argument("--restore", action="store_true", help="account-sync settings: put back what the round's --set replaced")
     acting.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the plugin's answer")
     permitting = add(plugins, "permissions", command_plugin_permissions, changes=True)
     permitting.add_argument("plugin", help=plugin_name_help)
