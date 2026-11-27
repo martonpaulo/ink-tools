@@ -1,10 +1,13 @@
 /**
  * The games of the Puzzles view (#453): one entry per game, in the order the view lists them. A
  * game issue adds its entry here, with its view; the game's logic stays in
- * `@ink-tools/puzzle-core` (`docs/architecture.md` › Layer rules). The shell ships with none.
+ * `@ink-tools/puzzle-core` (`docs/architecture.md` › Layer rules). A puzzle game is one
+ * `PuzzleGame` of `src/games/`, shown by the shared game view (`src/play/GameView.tsx`, #386).
  */
 import type React from 'react';
 import type {Requirement} from './requirements';
+import {MAZE} from './games/maze';
+import {puzzleEntry} from './play/GameView';
 
 export type GameViewProps = {
   /** Back to the game list. */
@@ -25,4 +28,4 @@ export type Game = {
   View: React.ComponentType<GameViewProps>;
 };
 
-export const GAMES: readonly Game[] = [];
+export const GAMES: readonly Game[] = [puzzleEntry(MAZE)];

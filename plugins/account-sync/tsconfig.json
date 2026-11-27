@@ -21,6 +21,8 @@
       // (#40), and jest.config.js and metro.config.js map the same names.
       "@ink-tools/sync-core": ["../../packages/sync-core/src"],
       "@ink-tools/sync-core/*": ["../../packages/sync-core/src/*"],
+      // The Puzzles games' views in the renders (#386).
+      "@ink-tools/puzzle-core": ["../../packages/puzzle-core/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

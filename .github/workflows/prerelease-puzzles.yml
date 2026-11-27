@@ -1,0 +1,121 @@
+name: Prerelease Puzzles
+
+# Each Puzzles build becomes a GitHub prerelease carrying Puzzles-<version>.snplg (#203, #386): a device
+# build comes from CI, never from the owner's Mac. A push to main that changes PluginConfig.json,
+# where the version lives, publishes (#301) when its puzzles-v<package.json version> tag does not
+# exist yet, so each version publishes once; the version follows root AGENTS.md › Product versioning
+# (#155).
+
+on:
+  push:
+    branches: [main]
+    paths: [plugins/puzzles/PluginConfig.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time per plugin, never cancelled half way (#301).
+concurrency:
+  group: prerelease-puzzles
+  cancel-in-progress: false
+
+jobs:
+  prerelease:
+    name: prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: plugins/puzzles
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history and every tag, so the version check below sees earlier folder names (#410).
+          fetch-depth: 0
+
+      - name: Resolve the tag from PluginConfig.json
+        id: tag
+        run: |
+          version="$(node ../../scripts/plugin-version.cjs .)"
+          tag="puzzles-v$version"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$tag is already published; nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A version an earlier folder name of this plugin used is already on the tablet (#410).
+          node ../../scripts/plugin-version.cjs --published .
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: plugins/puzzles/package-lock.json
+
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/puzzles/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/puzzles-${{ hashFiles('plugins/puzzles/package-lock.json') }}
+
+      - name: Restore the native toolchain, keyed on its script (#301)
+        if: steps.tag.outputs.publish == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: plugins/puzzles/.toolchain
+          key: toolchain-${{ runner.os }}-plugins/puzzles-${{ hashFiles('packages/native-build/native-toolchain.sh') }}
+
+      - name: Install dependencies
+        if: steps.tag.outputs.publish == 'true' && steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run the gate
+        if: steps.tag.outputs.publish == 'true'
+        run: npm run validate
+
+      - name: Build the package with its native app.npk
+        if: steps.tag.outputs.publish == 'true'
+        run: npm run build
+
+      - name: Create the prerelease, or the draft of a stable release
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          # The asset name carries the version so the owner can tell builds apart on the tablet.
+          asset="build/outputs/Puzzles-${TAG#puzzles-v}.snplg"
+          cp build/outputs/Puzzles.snplg "$asset"
+          # A beta is a prerelease. A stable version waits as a draft, with notes written from the
+          # repository's data, until the owner publishes it (#373).
+          case "$TAG" in
+            *-beta.*)
+              gh release create "$TAG" "$asset" \
+                --prerelease --target "$GITHUB_SHA" --title "$TAG" \
+                --notes "Puzzles prerelease build, with its native app.npk. Install on the tablet." ;;
+            *)
+              python3 ../../scripts/release_notes.py --root ../.. plugins/puzzles > "$RUNNER_TEMP/notes.md"
+              gh release create "$TAG" "$asset" \
+                --draft --target "$GITHUB_SHA" --title "Puzzles ${TAG#puzzles-v}" \
+                --notes-file "$RUNNER_TEMP/notes.md" ;;
+          esac
+
+      - name: Read the asset back
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          echo "$names"
+          case "$names" in
+            *"Puzzles-${TAG#puzzles-v}.snplg"*) ;;
+            *) echo "::error::Puzzles-${TAG#puzzles-v}.snplg is missing from $TAG."; exit 1 ;;
+          esac

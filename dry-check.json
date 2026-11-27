@@ -259,6 +259,14 @@
     "pattern": "(?:toolbarWidth: CGFloat = 200|toolbarMinWidth: CGFloat = 110|HELPER_LISTEN_SECONDS = 110\\.0)\\b",
     "golden": "",
     "open": 295
+   },
+   {
+    "rule": "Base64 alphabet of RFC 4648",
+    "owner": "packages/sync-core/src/http.ts",
+    "other": "packages/puzzle-core/src/page/base64.ts",
+    "pattern": "const (?:BASE64|ALPHABET) = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\\+/'",
+    "golden": "",
+    "open": 535
    }
   ]
  },

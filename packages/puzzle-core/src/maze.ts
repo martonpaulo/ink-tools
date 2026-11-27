@@ -10,7 +10,7 @@
  * The rating counts the junctions on the solution path, the places a solver must choose.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { createRandom, type Random } from './random';
 
 export type MazeSize = { shape: 'rectangle'; width: number; height: number } | { shape: 'circle'; rings: number };
@@ -192,6 +192,53 @@ function checkSize(size: MazeSize): void {
 
 export const mazeSizeToken = (size: MazeSize): string =>
   size.shape === 'rectangle' ? `${size.width}X${size.height}` : `C${size.rings}`;
+
+/** The size a puzzle code's size token names (`12X16`, `C8`): the inverse of `mazeSizeToken`. */
+export function parseMazeSizeToken(sizeText: string): MazeSize {
+  const rectangle = /^(\d{1,2})X(\d{1,2})$/.exec(sizeText);
+  const circle = /^C(\d{1,2})$/.exec(sizeText);
+  const size: MazeSize | null = rectangle
+    ? { shape: 'rectangle', width: Number(rectangle[1]), height: Number(rectangle[2]) }
+    : circle
+      ? { shape: 'circle', rings: Number(circle[1]) }
+      : null;
+  if (!size) throw new RangeError(`«${sizeText}» is not a maze size`);
+  checkSize(size);
+  return size;
+}
+
+export type MazeShape = MazeSize['shape'];
+export const MAZE_SHAPES: readonly MazeShape[] = ['rectangle', 'circle'];
+
+/**
+ * The size the Puzzles view gives each shape and band on a portrait page; a landscape page turns a
+ * rectangle. Each fits the page at the 7 mm cell or larger (`mazeLayout`), as the page tests pin.
+ */
+export const MAZE_PAGE_SIZES: Readonly<Record<MazeShape, Readonly<Record<'easy' | 'medium' | 'hard', MazeSize>>>> = {
+  rectangle: {
+    easy: { shape: 'rectangle', width: 10, height: 13 },
+    medium: { shape: 'rectangle', width: 14, height: 18 },
+    hard: { shape: 'rectangle', width: 19, height: 25 },
+  },
+  circle: {
+    easy: { shape: 'circle', rings: 5 },
+    medium: { shape: 'circle', rings: 7 },
+    hard: { shape: 'circle', rings: 9 },
+  },
+};
+
+/** The size of `MAZE_PAGE_SIZES` for the page's orientation: a landscape page turns a rectangle. */
+export function mazePageSize(shape: MazeShape, band: 'easy' | 'medium' | 'hard', orientation: 'portrait' | 'landscape'): MazeSize {
+  const size = MAZE_PAGE_SIZES[shape][band];
+  return orientation === 'landscape' && size.shape === 'rectangle' ? { shape: 'rectangle', width: size.height, height: size.width } : size;
+}
+
+/** The maze a puzzle code names (`MZ-12X16-M-7K2Q9X`), the same one every time. */
+export function mazeFromCode(code: string): Maze {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'maze') throw new RangeError(`«${code}» is not a maze code`);
+  return generateMaze(id.seed, parseMazeSizeToken(id.size), id.difficulty);
+}
 
 /**
  * A perfect maze of the given size and band from the seed. A rectangle runs from the top-left cell

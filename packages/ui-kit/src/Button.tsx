@@ -65,7 +65,7 @@ export function Button({
       onPress={onPress}>
       {({pressed}) => (
         <>
-          <Text style={[shared.text, filled && styles.primaryText, disabled && shared.disabledText]}>
+          <Text style={[shared.text, styles.label, filled && styles.primaryText, disabled && shared.disabledText]}>
             {label}
           </Text>
           {/* Both marks are drawn over the box, so neither moves the label (brief 8.4). */}
@@ -93,6 +93,8 @@ const styles = StyleSheet.create({
   row: {width: metrics.rowButtonWidth, minHeight: metrics.touchTarget},
   destructive: {alignSelf: 'stretch'},
   filled: {backgroundColor: metrics.ink},
+  /** A label that wraps stays centred in its box, as a one-line label is (#386). */
+  label: {textAlign: 'center'},
   primaryText: {color: metrics.paper},
   selectedBox: {borderRadius: metrics.selectionRadius},
   // Over the button's own border, so turning a toggle on never changes the box.

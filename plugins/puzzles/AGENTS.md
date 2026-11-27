@@ -5,8 +5,9 @@ here is a symlink to this file.
 
 ## Status
 
-**The shell, built, not yet on the device** ([#453](https://github.com/martonpaulo/ink-tools/issues/453)): the
-plugin, its toolbar button and its full view, with no game. Each game is a sub-issue of
+**The shell and its first game, built, not yet on the device** ([#453](https://github.com/martonpaulo/ink-tools/issues/453),
+[#386](https://github.com/martonpaulo/ink-tools/issues/386)): the plugin, its toolbar button, its full view and the maze.
+Each game is a sub-issue of
 [#376](https://github.com/martonpaulo/ink-tools/issues/376). On the tablet the plugin is called
 **Puzzles**; `puzzles` is its folder, gate, workflow and tag prefix, and `Puzzles` its `pluginKey`
 (also `package.json` and `app.json` `name`). Its `pluginID` (`kfrnz9x0vwj8h9z2`) names its private
@@ -23,19 +24,35 @@ data folder. Log lines start `Puzzles:`.
   the native module `PuzzlesBack` (`native/com/puzzles/view/PuzzlesPackage.java`, built by
   `scripts/native-build.cjs`), so it never reaches the note behind the view.
 
+## A game's view
+
+`src/play/GameView.tsx` is every puzzle game's view ([#386](https://github.com/martonpaulo/ink-tools/issues/386)): the
+game's choices and «Add Page»; on a page the game made, «Check» and «Show Solution», whose pictures
+show only in the view, so the note never gets the answer. `src/play/pages.ts` reads and writes the
+pages: a new puzzle is `MyStyle/<code>.png`, written by the native module `PuzzlesPages`
+(`native/com/puzzles/view/PageFileModule.java`, as sn-plugin-lib writes no bytes), inserted as the
+background of a new page after the current one once the note saved, then deleted, as the note keeps
+the background ([#377](https://github.com/martonpaulo/ink-tools/issues/377)). The page's background then reads
+`user_<code>`, so the view finds the puzzle of the current page from it and stores nothing.
+
 ## Adding a game
 
-1. The game's logic, page and check live in `packages/puzzle-core`, never here
-   ([`docs/architecture.md` › Layer rules](../../docs/architecture.md#layer-rules)).
-2. Add its entry to `GAMES` in `src/games.ts`: an id, its title, its view, and in `requires` what it
-   needs beyond the plugin's permissions, which the view checks before the game opens.
-3. Its view takes `onBack` and `onClose` and shows ui-kit's `TitleBar` with Close; its strings go in
-   its own copy module.
-4. A word game's languages come from `resolveLanguages()` over My languages
+1. The game's logic, page, check and view pictures live in `packages/puzzle-core`, never here
+   ([`docs/architecture.md` › Layer rules](../../docs/architecture.md#layer-rules)): its generator, a
+   `…FromCode` that makes the same puzzle from its code, and its check and answer drawn on a copy of
+   the page (`packages/puzzle-core/src/page/view.ts`).
+2. A puzzle game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices,
+   `create`, `open` and, on a board, `check` and `answer`, each a call into puzzle-core; its strings
+   are its own, the shared ones in `src/play/copy.ts`. Add `puzzleEntry(<game>)` to `GAMES` in
+   `src/games.ts`, with in `requires` what it needs beyond the plugin's permissions, which the view
+   checks before the game opens. A game that is no puzzle, such as a pass-and-play board, gives its
+   own view, which takes `onBack` and `onClose` and shows ui-kit's `TitleBar` with Close.
+3. A word game's languages come from `resolveLanguages()` over My languages
    ([#502](https://github.com/martonpaulo/ink-tools/issues/502)) once it lands; until then from a
    default the game declares, never a list written in the plugin. A language with no pack, or with
    letters the page font lacks, shows as unavailable with its reason
    ([#484](https://github.com/martonpaulo/ink-tools/issues/484)): a new kind of `Requirement`.
+4. Its screens join `packages/ui-kit/renders/screens.tsx`.
 
 ## Permissions
 

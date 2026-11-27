@@ -1,4 +1,4 @@
-import { checkMaze, drawMazePage, generateMaze, mazeCellCentre, mazeLayout, mazeSolutionLine, NATIVE_GREYS, type InkStroke, type Maze, type MazeSize } from '../src';
+import { checkMaze, drawMazeAnswer, drawMazeCheck, drawMazePage, generateMaze, MAZE_SHAPES, mazeCellCentre, mazeFromCode, mazeLayout, mazeMarks, mazePageSize, mazeSolutionLine, NATIVE_GREYS, parseMazeSizeToken, puzzleCode, type InkStroke, type Maze, type MazeSize } from '../src';
 
 /** FNV-1a over the pixel bytes: `digest` goes through JSON, too slow for a whole page. */
 function pixelHash(pixels: ArrayLike<number>): string {
@@ -79,4 +79,38 @@ test('the page of a fixed seed is pinned', () => {
   const circle = generateMaze('7K2Q9X', CIRCLE, 'medium');
   const pin = (m: Maze): string => pixelHash(drawMazePage(m, mazeLayout(m, 'portrait', 'right')).pixels);
   expect([pin(rect), pin(circle)]).toEqual(['28f863a0', '8254de52']);
+});
+
+describe('the maze in the Puzzles view (#386)', () => {
+  test('a code gives back the same maze, and a size token reads back', () => {
+    const maze = generateMaze('7K2Q9X', mazePageSize('circle', 'hard', 'portrait'), 'hard');
+    expect(mazeFromCode(puzzleCode(maze.id))).toEqual(maze);
+    expect(parseMazeSizeToken('12X16')).toEqual({ shape: 'rectangle', width: 12, height: 16 });
+    expect(() => parseMazeSizeToken('C99')).toThrow(RangeError);
+    expect(() => mazeFromCode('SU-9-H-7K2Q9X')).toThrow('not a maze code');
+  });
+
+  test.each(MAZE_SHAPES.flatMap(shape => (['easy', 'medium', 'hard'] as const).flatMap(band => (['portrait', 'landscape'] as const).map(o => [shape, band, o] as const))))(
+    'the %s %s size fits a %s page',
+    (shape, band, orientation) => {
+      const maze = generateMaze('7K2Q9X', mazePageSize(shape, band, orientation), band);
+      expect(() => mazeLayout(maze, orientation, 'right')).not.toThrow();
+    },
+  );
+
+  test('the answer and the check are drawn on a copy, so the page keeps no answer', () => {
+    const maze = generateMaze('7K2Q9X', RECT, 'medium');
+    const layout = mazeLayout(maze, 'portrait', 'right');
+    const page = drawMazePage(maze, layout);
+    const before = pixelHash(page.pixels);
+    const answer = drawMazeAnswer(maze, layout, page);
+    const [x, y] = mazeCellCentre(maze, layout.grid, maze.solution[1]);
+    expect(answer.pixels[Math.round(y) * answer.width + Math.round(x)]).toBe(0);
+    const [side] = sideCell(maze);
+    const strokes = [pathStroke(maze, [...maze.solution.slice(0, maze.solution.indexOf(side) + 1), sideCell(maze)[1]], layout.grid)];
+    const check = checkMaze(maze, layout, strokes);
+    expect(mazeMarks(maze, layout.grid, check)).toHaveLength(check.wrong.length + check.crossings.length);
+    drawMazeCheck(maze, layout, page, strokes, check);
+    expect(pixelHash(page.pixels)).toBe(before);
+  });
 });

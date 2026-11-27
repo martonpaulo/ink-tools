@@ -1,5 +1,5 @@
 import {FileUtils, PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
-import {BAD_ARGUMENT_CODE, insertNotePage, insertPageAfter, listFolder, noteSystemTemplates, THROWN_CODE} from '../src/official';
+import {BAD_ARGUMENT_CODE, insertNotePage, insertPageAfter, listFolder, noteSystemTemplates, pageTemplate, removeFile, THROWN_CODE} from '../src/official';
 
 const mocked = (fn: unknown) => fn as jest.Mock;
 const NOTE = '/storage/emulated/0/Note/Tests/Puzzles.note';
@@ -69,5 +69,30 @@ describe('the tablet\'s templates (#451)', () => {
     await expect(listFolder('/x')).resolves.toEqual(expect.objectContaining({ok: false, message: 'Dir is not exists'}));
     mocked(FileUtils.listFiles).mockResolvedValueOnce(['grid.png']);
     await expect(listFolder('/x')).resolves.toEqual(expect.objectContaining({ok: false, code: THROWN_CODE}));
+  });
+});
+
+describe('a page background (#386)', () => {
+  test('reads the name and md5 of the page template', async () => {
+    mocked(PluginFileAPI.getNotePageTemplate).mockResolvedValue({success: true, result: {name: 'user_MZ-10X13-E-7K2Q9X', md5: 'abc'}});
+    await expect(pageTemplate(NOTE, 3)).resolves.toEqual({ok: true, value: {name: 'user_MZ-10X13-E-7K2Q9X', md5: 'abc'}});
+    expect(PluginFileAPI.getNotePageTemplate).toHaveBeenCalledWith(NOTE, 3);
+  });
+
+  test('an answer with no name is a failure, never an empty name', async () => {
+    mocked(PluginFileAPI.getNotePageTemplate).mockResolvedValue({success: true, result: null});
+    await expect(pageTemplate(NOTE, 0)).resolves.toEqual(expect.objectContaining({ok: false, code: THROWN_CODE}));
+  });
+
+  test('a refused call keeps the host code', async () => {
+    mocked(PluginFileAPI.getNotePageTemplate).mockResolvedValue({success: false, error: {code: 118, message: 'The handwriting app is not open'}});
+    await expect(pageTemplate(NOTE, 0)).resolves.toEqual(expect.objectContaining({ok: false, code: 118}));
+  });
+
+  test('removeFile is true only when the host deleted the file', async () => {
+    mocked(FileUtils.deleteFile).mockResolvedValue(true);
+    await expect(removeFile(PAGE_PNG)).resolves.toEqual({ok: true, value: true});
+    mocked(FileUtils.deleteFile).mockResolvedValue(false);
+    await expect(removeFile(PAGE_PNG)).resolves.toEqual({ok: true, value: false});
   });
 });

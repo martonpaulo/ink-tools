@@ -9,6 +9,7 @@ const path = require('path');
 const inkCore = require('../../ink-core/plugin-config');
 const snAdapter = require('../../sn-adapter/plugin-config');
 const pictureSearch = require('../../picture-search/plugin-config');
+const puzzleCore = require('../../puzzle-core/plugin-config');
 
 /** The plugin whose React Native, Jest setup and node_modules the renders use. */
 const HOST = path.join(__dirname, '../../../plugins/account-sync');
@@ -40,7 +41,9 @@ module.exports = {
   testMatch: [path.join(__dirname, '*.render.tsx')],
   setupFiles: [path.join(__dirname, 'manta.ts')],
   // The host's own node_modules first, for the shared ui-kit package (#93).
-  modulePaths: [...base.modulePaths, globalRoot],
+  // NODE_PATH too, for the throwaway Playwright copy above: a config that sets modulePaths makes
+  // Jest ignore NODE_PATH, so it is read here (#386).
+  modulePaths: [...base.modulePaths, globalRoot, ...(process.env.NODE_PATH || '').split(path.delimiter).filter(Boolean)],
   // Every plugin's view renders with the host's one React and React Native, as the ui-kit package
   // does (#253): its own node_modules would load a second copy.
   moduleNameMapper: {
@@ -48,6 +51,7 @@ module.exports = {
     ...inkCore.jestModuleNameMapper,
     ...snAdapter.jestModuleNameMapper,
     ...pictureSearch.jestModuleNameMapper,
+    ...puzzleCore.jestModuleNameMapper,
     '^sn-plugin-lib$': snAdapter.jestSdkMock,
     '^react$': '<rootDir>/node_modules/react',
     '^react/(.*)$': '<rootDir>/node_modules/react/$1',

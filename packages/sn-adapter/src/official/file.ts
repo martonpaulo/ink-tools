@@ -1,6 +1,6 @@
 /** Note files a plugin makes, rather than the open note it edits (#143, Relay). */
 import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
-import {attempt, BAD_ARGUMENT_CODE, fail, ok, Result, THROWN_CODE} from './result';
+import {attempt, BAD_ARGUMENT_CODE, fail, fromResponse, ok, Result, THROWN_CODE} from './result';
 
 /**
  * Creates a portrait note at `notePath` whose first page has the PNG at `templatePath` as its
@@ -66,6 +66,32 @@ export function noteSystemTemplates(): Promise<Result<string[]>> {
         return fail(THROWN_CODE, `getNoteSystemTemplates answered no template list: ${JSON.stringify(raw)}`);
       }
       return ok(names as string[]);
+    },
+  );
+}
+
+/** A page's background as the note names it (sn-plugin-lib 0.2.3 `NoteTemplateInfo`). */
+export type PageTemplate = {name: string; md5: string};
+
+/**
+ * The background of page `page` (from 0) of the note at `notePath` (`getNotePageTemplate`, #386). A
+ * page inserted with a PNG of `MyStyle/` reads `user_<file name>` [measured, #377], so Puzzles names
+ * each page PNG by its puzzle code and finds the puzzle of a page again from its background. An
+ * answer with no name is a failure, never an empty name.
+ */
+export function pageTemplate(notePath: string, page: number): Promise<Result<PageTemplate>> {
+  return attempt(
+    () => PluginFileAPI.getNotePageTemplate(notePath, page),
+    raw => {
+      const answer = fromResponse<{name?: unknown; md5?: unknown} | null>(raw);
+      if (!answer.ok) {
+        return answer;
+      }
+      const {name, md5} = answer.value ?? {};
+      if (typeof name !== 'string' || name.length === 0) {
+        return fail(THROWN_CODE, `getNotePageTemplate answered no template name: ${JSON.stringify(raw)}`);
+      }
+      return ok({name, md5: typeof md5 === 'string' ? md5 : ''});
     },
   );
 }

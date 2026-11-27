@@ -7,6 +7,7 @@
 import { type Maze } from './maze';
 import { puzzleCode } from './code';
 import { densePoints, pathCells, innerCellAt, type InkStroke } from './check';
+import { copyRaster, drawInk, drawPolyline, drawRings, VIEW_ANSWER_PX } from './page/view';
 import {
   createPage,
   drawFooter,
@@ -218,4 +219,34 @@ export function checkMaze(maze: Maze, layout: PageLayout, strokes: readonly InkS
     crossings: [...crossings.values()],
     solved: maze.solution.every(cell => visited.has(cell)) && wrong.size === 0 && crossings.size === 0,
   };
+}
+
+/** Where «Check» rings a maze's mistakes: each wrong cell, and the wall between the two cells of each crossing. */
+export function mazeMarks(maze: Maze, grid: Grid, check: MazeCheck): [number, number][] {
+  const centre = (cell: number) => mazeCellCentre(maze, grid, cell);
+  const walls = check.crossings.map(([a, b]): [number, number] => {
+    const [ax, ay] = centre(a);
+    const [bx, by] = centre(b);
+    return [(ax + bx) / 2, (ay + by) / 2];
+  });
+  return [...check.wrong.map(centre), ...walls];
+}
+
+/** The ring around a mark, as a share of a cell: most of it, so it never hides the next cell's ink. */
+const MARK_SHARE = 0.4;
+export const mazeMarkRadius = (grid: Grid): number => grid.cell * MARK_SHARE;
+
+/** The page with the player's ink and mistakes ringed, for the plugin's view only. */
+export function drawMazeCheck(maze: Maze, layout: PageLayout, page: Raster, strokes: readonly InkStroke[], check: MazeCheck): Raster {
+  const marked = copyRaster(page);
+  drawInk(marked, strokes);
+  drawRings(marked, mazeMarks(maze, layout.grid, check), mazeMarkRadius(layout.grid));
+  return marked;
+}
+
+/** The page with the route drawn, for the plugin's view only: the note never gets it. */
+export function drawMazeAnswer(maze: Maze, layout: PageLayout, page: Raster): Raster {
+  const answer = copyRaster(page);
+  drawPolyline(answer, mazeSolutionLine(maze, layout), VIEW_ANSWER_PX);
+  return answer;
 }

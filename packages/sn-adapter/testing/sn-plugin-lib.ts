@@ -66,6 +66,7 @@ export const PluginFileAPI = mocks(
   'removeNotePage',
   'getNoteTotalPageNum',
   'insertNotePage',
+  'getNotePageTemplate',
   'insertKeyWord',
   'deleteKeyWord',
 );
@@ -77,4 +78,5 @@ export const FileUtils = mocks(
   'makeDir',
   'listFiles',
   'getExternalDirPath',
+  'deleteFile',
 );

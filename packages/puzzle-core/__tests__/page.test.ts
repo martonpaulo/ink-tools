@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { crc32, inflateSync } from 'zlib';
 import {
+  toBase64,
   NATIVE_GREYS,
   PageFitError,
   assertNativeGreys,
@@ -307,5 +308,12 @@ describe('the layout', () => {
 describe('text', () => {
   test('a character outside the page font is refused', () => {
     expect(() => drawText(createRaster(100, 100), 'É', 10, 50, { size: 40, weight: 400, tone: 'ink' })).toThrow('has no «É»');
+  });
+});
+
+describe('toBase64 (#386)', () => {
+  test.each([0, 1, 2, 3, 4, 5, 300])('matches Node for %i bytes', length => {
+    const bytes = Uint8Array.from({ length }, (_, i) => (i * 37 + 11) & 0xff);
+    expect(toBase64(bytes)).toBe(Buffer.from(bytes).toString('base64'));
   });
 });
