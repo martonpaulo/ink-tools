@@ -171,6 +171,22 @@ Notes for an agent that drives the tablet in a test round, learned in the rounds
 - **Read the plugin list after a bridge `failed`.** An install can land while the callback fails ([#225](https://github.com/martonpaulo/ink-tools/issues/225)); `plugin list` is the proof.
 - **Run one session per tablet.** Two agents on the tablet at once gave phantom page changes and Settings windows over the note (2026-11-17).
 
+
+### Install guide checks
+
+A device round checks the steps of the user [install guide](../../docs/install.md) with inkctl
+for every step a command can do, and by hand for the pen and screen steps
+([#373](https://github.com/martonpaulo/ink-tools/issues/373)):
+
+| Step | Checked with |
+| :--- | :--- |
+| Copy the file | `inkctl plugin push FILE.snplg` |
+| Install and update | `inkctl plugin install FILE.snplg`, then `inkctl plugin list` |
+| Allow permissions | `inkctl plugin permissions NAME` |
+| Turn on | `inkctl plugin enable NAME` |
+| Remove | `inkctl plugin uninstall NAME` |
+| **Select Plugin Package** and the permission prompt on screen | by hand, in the device round |
+
 <br />
 
 ## License

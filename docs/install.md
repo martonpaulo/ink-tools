@@ -12,8 +12,6 @@ tablet, and installs the other tools ([#373](https://github.com/martonpaulo/ink-
 - [Remove a plugin](#remove-a-plugin)
 - [Install the tablet app](#install-the-tablet-app)
 - [Install the Mac app](#install-the-mac-app)
-- [Install the Mac command line](#install-the-mac-command-line)
-- [How each step is checked](#how-each-step-is-checked)
 
 ## Before you install
 
@@ -39,7 +37,6 @@ network service it sends data to.
 | Puzzles | not yet | | in progress: no game yet ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) |
 | Handwriting Language | not yet | `lingo-app-<version>.apk` | test builds ship as prereleases signed with its release key ([#494](https://github.com/martonpaulo/ink-tools/issues/494)); it is a sideloaded app, not a plugin |
 | Note Editor | not yet | | in progress |
-| Ink Tools Control | no release | | a Mac command line tool, unversioned: use it from a clone of this repository |
 | Ink Tools Helper, Ink Tools Probe | no release | | developer tools for this project, never offered to others |
 
 Every other build on the [releases page](https://github.com/martonpaulo/ink-tools/releases) is a
@@ -50,7 +47,11 @@ prerelease for testing.
 1. Download the plugin's `.snplg` file from [inktools.martonpaulo.com](https://inktools.martonpaulo.com/#tools).
 2. Copy the file into the tablet's `MyStyle` folder, over a USB cable or Supernote Cloud.
 3. On the tablet, open **Settings** › **Apps** › **Plugins** › **Select Plugin Package**, choose the file and tap **Install**.
-4. Allow what it asks for, then turn the plugin on in **Settings** › **Apps** › **Plugins**.
+4. Turn the plugin on in **Settings** › **Apps** › **Plugins**. The install itself asks nothing:
+   the tablet asks for each permission the release notes list the first time you open the plugin's
+   Settings or press one of its buttons. Choose **Always Allow**, as a button that works with no
+   screen of its own works only with Always Allow ([Plugins](supernote.md#plugins)). A plugin that
+   is refused a permission shows what it needs and how to give it.
 
 ## Update a plugin
 
@@ -66,23 +67,4 @@ Handwriting Language has no release yet: its first prerelease waits for its sign
 
 ## Install the Mac app
 
-Note Editor has no release yet; its [README](../apps/note-editor/README.md) shows how to build it.
-
-## Install the Mac command line
-
-Ink Tools Control (`inkctl`) runs from a copy of this repository; follow its [Quick Start](../cli/inkctl/README.md).
-
-## How each step is checked
-
-The project checks these steps on a tablet in its device rounds, with Ink Tools Control
-(`cli/inkctl/`) for every step a command can do, and the person's own hands for the pen and screen
-steps:
-
-| Step | Checked with |
-| :--- | :--- |
-| Copy the file | `inkctl plugin push FILE.snplg` |
-| Install and update | `inkctl plugin install FILE.snplg`, then `inkctl plugin list` |
-| Allow permissions | `inkctl plugin permissions NAME` |
-| Turn on | `inkctl plugin enable NAME` |
-| Remove | `inkctl plugin uninstall NAME` |
-| **Select Plugin Package** and the permission prompt on screen | by hand, in the device round |
+Note Editor has no release yet. It will be a notarized download from [inktools.martonpaulo.com](https://inktools.martonpaulo.com/), with no terminal step ([#445](https://github.com/martonpaulo/ink-tools/issues/445)).
