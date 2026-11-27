@@ -38,6 +38,7 @@ function api(overrides: Partial<HelperApi> = {}): HelperApi & Record<string, jes
     makeDir: jest.fn().mockResolvedValue(undefined),
     listFiles: jest.fn().mockResolvedValue(['1.sticker']),
     deleteFile: jest.fn().mockResolvedValue(undefined),
+    fileDigest: jest.fn().mockResolvedValue('0123456789abcdef0123456789abcdef'),
     notePageCount: jest.fn().mockResolvedValue(4),
     notePageTemplate: jest.fn().mockResolvedValue('style_5mm_grid_a5x2'),
     notePageElements: jest.fn().mockResolvedValue([{type: 0}, {type: 500}]),
@@ -526,4 +527,20 @@ describe('requireNote guards the steps after it with the open note\'s path (#286
     const {answer} = await runCommand(command({op: 'batch', steps: [{op: 'requireNote', folder}, stroke]}), api());
     expect(answer).toMatchObject({ok: false, code: 2});
   });
+});
+
+test('digestFile answers the MD5 the plugin read of a note in Note/, and refuses any other path (#522)', async () => {
+  const note = api();
+  const {answer} = await runCommand(command({op: 'digestFile', path: NOTE}), note);
+  expect(answer).toMatchObject({ok: true, op: 'digestFile', path: NOTE, md5: '0123456789abcdef0123456789abcdef'});
+  expect(note.fileDigest).toHaveBeenCalledWith(NOTE);
+  for (const path of [`${NOTES_FOLDER}Tests/../Move.note`, '/storage/emulated/0/MyStyle/Move.note', `${NOTES_FOLDER}Tests/Move.png`]) {
+    expect((await runCommand(command({op: 'digestFile', path}), note)).answer).toMatchObject({ok: false, code: 2});
+  }
+  expect(note.fileDigest).toHaveBeenCalledTimes(1);
+});
+
+test('digestFile fails when the plugin cannot read the file, never with an empty digest (#522)', async () => {
+  const refused = api({fileDigest: jest.fn().mockRejectedValue(new Error('not allowed to access sdcard path outside whitelist'))});
+  expect((await runCommand(command({op: 'digestFile', path: NOTE}), refused)).answer).toMatchObject({ok: false});
 });

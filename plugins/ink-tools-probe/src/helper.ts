@@ -87,6 +87,9 @@ export interface HelperApi {
   makeDir(path: string): Promise<void>;
   listFiles(path: string): Promise<string[]>;
   deleteFile(path: string): Promise<void>;
+  /** The MD5 of a file the plugin reads, through the official file utilities: whether a plugin can
+   * read a saved `.note` (#522). Throws when the file is missing or gives no digest. */
+  fileDigest(path: string): Promise<string>;
   /** The page count of the note at `notePath`, open or not (#263). */
   notePageCount(notePath: string): Promise<number>;
   /** The template name `getNotePageTemplate` gives for a page of that note, as the file stores it. */
@@ -132,6 +135,7 @@ type Step =
   | {id: string; op: 'readLassoRect'}
   | {id: string; op: 'resizeLasso'; rect: Rect}
   | {id: string; op: 'movePage'; path: string; from: number; to: number; template?: string}
+  | {id: string; op: 'digestFile'; path: string}
   | {id: string; op: 'requireNote'; folder: string};
 
 /** Where a sticker probe keeps its file: inkctl's own folder, or the plugin's private folder (#249). */
@@ -335,6 +339,8 @@ function parseStep(id: string, raw: Record<string, unknown>): Step {
     }
     case 'requireNote':
       return {id, op: 'requireNote', folder: parseNoteFolder(raw.folder)};
+    case 'digestFile':
+      return {id, op: 'digestFile', path: parseNotePath(raw.path)};
     default:
       throw new HelperError(USAGE, `unknown op: ${String(raw.op)}`);
   }
@@ -496,6 +502,8 @@ async function execute(command: Step, api: HelperApi): Promise<Record<string, un
       return {rect: await api.lassoBox()};
     case 'movePage':
       return movePage(command, api);
+    case 'digestFile':
+      return {path: command.path, md5: await api.fileDigest(command.path)};
     case 'requireNote': {
       // inkctl's test-note guard without a screen read (#286): the open note's own path. Shared
       // storage ignores case, as inkctl's check does. The path is never answered: it may be the owner's.

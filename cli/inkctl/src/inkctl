@@ -36,6 +36,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  insert page N of the open test note with a system template
   note move-page PATH FROM TO    move page FROM of a closed test note to TO, through Probe's file
                                  API calls, while another note is open
+  note digest PATH               whether a plugin can read a saved test note: Probe's MD5 of
+                                 the file through the plugin file API beside the tablet's own
   note edit PATH OPS.json        apply the Note Editor's operations to a test note, open or
                                  not, through Device Link's helper, with no screen tap (#312)
   note templates                 the tablet's page templates, through Device Link: system ones by
@@ -2895,6 +2897,25 @@ def command_note_move_page(device: Device, args: argparse.Namespace):
     return data, f"moved: page {args.from_page} of {path} to page {args.to_page}, {answer.get('elements')} elements, template {answer.get('template')}, in {answer.get('ms')} ms"
 
 
+def command_note_digest(device: Device, args: argparse.Namespace):
+    """Probe reads a saved note in Note/ through the plugin file API and answers its MD5; equal to
+    the tablet's own MD5 of the file, it proves a plugin can read the note's bytes (#522)."""
+    need_note_suffix(args.path)
+    path = remote_path(args.path)
+    if not args.allow_notes and not in_test_notes(path):
+        raise protected("reading a note outside Note/Tests/")
+    if not device.test(f"-f {shlex.quote(path)}"):
+        raise not_found(path)
+    answer = helper_call(device, args, {"op": "digestFile", "path": path})
+    plugin = str(answer.get("md5", "")).lower()
+    listed = device.shell(f"md5sum {shlex.quote(path)}").split()
+    tablet = listed[0].lower() if listed else ""
+    data = {"path": path, "plugin_md5": plugin, "tablet_md5": tablet, "equal": plugin == tablet}
+    if plugin != tablet:
+        raise Failure(EXIT_FAILED, "device_error", f"the plugin read {plugin or 'no digest'} of {path}, the tablet has {tablet}; was the note saved in between?", "inkctl note digest PATH", extra=data)
+    return data, f"read by the plugin: {path}, MD5 {plugin}, equal to the tablet's"
+
+
 def edit_operations(path: str) -> list:
     """The operations of `note edit`: a JSON list, or an object with `ops`, read from PATH (#312)."""
     try:
@@ -4930,12 +4951,14 @@ def build_parser() -> argparse.ArgumentParser:
     moved_page.add_argument("from_page", type=int, metavar="FROM", help="the page to move, from 1")
     moved_page.add_argument("to_page", type=int, metavar="TO", help="its number after the move, from 1")
     moved_page.add_argument("--template", help="the new page's system template; default: the page's own")
+    digested = add(notes, "digest", command_note_digest)
+    digested.add_argument("path", help="a saved note in Note/Tests/")
     add(notes, "templates", command_note_templates).add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
     edited = add(notes, "edit", command_note_edit, changes=True)
     edited.add_argument("path", help="the note, open or not")
     edited.add_argument("operations", help="a JSON file: a list of the Note Editor's operations")
     edited.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
-    for on_note in (rendered, pictured, texted, paged, moved_page, edited):
+    for on_note in (rendered, pictured, texted, paged, moved_page, edited, digested):
         on_note.add_argument("--allow-notes", action="store_true", help="use a note outside Note/Tests/")
 
     files = noun("files")

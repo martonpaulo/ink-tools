@@ -121,6 +121,7 @@ case "$1" in
             "dumpsys battery"*) cat "$ADB_FILES/battery" ;;
             "dumpsys power"*) cat "$ADB_FILES/power" 2>/dev/null || true ;;
             "sha256sum "*) cat "$ADB_FILES/checksum" ;;
+            "md5sum "*) cat "$ADB_FILES/md5" ;;
             "dumpsys activity broadcasts") cat "$ADB_FILES/broadcasts" ;;
             "dumpsys package com.ratta.absent") echo 'Unable to find package' ;;
             "dumpsys package com.ratta"*) cat "$ADB_FILES/package-dump" ;;
@@ -1739,6 +1740,18 @@ check "note move-page sends the note's path and the pages, from 0" "$?$(command_
 check "note move-page answers the pages from 1" "$(printf '%s' "$result" | field "['from'],d['to'],d['elements']")" "(1, 3, 3)"
 run note move-page Note/Tests/Move.note 3 1 --template style_5mm_grid >/dev/null
 check "note move-page --template sends the template" "$?$(command_field "d['from'], d['to'], d['template']")" "0(2, 0, 'style_5mm_grid')"
+# A plugin reads a saved note's bytes: Probe's MD5 beside the tablet's (#522).
+answer_line '11-16 23:00:01.000' 'COMMAND_ID 1/1 {"ok":true,"op":"digestFile","path":"/storage/emulated/0/Note/Tests/Move.note","md5":"ABCDEF0123456789ABCDEF0123456789"}' > "$files/helper-answer"
+echo 'abcdef0123456789abcdef0123456789  /storage/emulated/0/Note/Tests/Move.note' > "$files/md5"
+result=$(run note digest Note/Tests/Move.note --json)
+check "note digest sends the note's path to Probe" "$?$(command_field "d['op'], d['path']")" "0('digestFile', '$root/Note/Tests/Move.note')"
+check "note digest compares the plugin's MD5 with the tablet's, in any case" "$(printf '%s' "$result" | field "['equal'],d['plugin_md5']")" "(True, 'abcdef0123456789abcdef0123456789')"
+echo '00000000000000000000000000000000  /storage/emulated/0/Note/Tests/Move.note' > "$files/md5"
+run note digest Note/Tests/Move.note --json >"$work/out" 2>/dev/null
+check "note digest fails when the plugin read other bytes" "$? $(field "['error'],d['equal']" < "$work/out")" "1 ('device_error', False)"
+run note digest Note/Private.note >/dev/null 2>&1
+check "note digest refuses a note outside Note/Tests/" "$?" "12"
+rm -f "$files/md5"
 rm -f "$files/command.json"
 for bad in "Note/Tests/Move.note 2 2" "Note/Tests/Move.note 0 2" "Note/Tests/Move.pdf 1 2" "Note/Tests/Move.note 1 2 --template ../x"; do
     run note move-page $bad >/dev/null 2>&1

@@ -1193,6 +1193,17 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   picture's own size [measured on the Mac on every record of every fixture, 2026-11-26,
   [#327](https://github.com/martonpaulo/ink-tools/issues/327)]. Only black (colour 0) is seen; the
   colour of a grey pen waits for a device round.
+- A picture's PNG in a saved note is a whole PNG file, most often stored twice in the record (two
+  Base64 fields), always 8-bit greyscale: 186 PNGs (54 different) in 28 different notes pulled
+  from tablets, of sizes from 153 x 135 to 1745 x 1413. An Image Editing result is stored as its own PNG, a new record
+  beside the old one: on `Regress 524 2026-11-27.note`, Lasso Actions' 200 x 133 apple (8875
+  bytes) and its Invert result (2454 bytes, 200 x 133), and the same apple has the same bytes in
+  another note [measured on the Mac, 2026-11-27,
+  [#522](https://github.com/martonpaulo/ink-tools/issues/522)]. So a plugin that can read the
+  saved `.note` can take a picture's own pixels from it, without the ink a lasso preview draws in.
+  Whether a plugin can read a `.note` (`Note/` is on the plugin file whitelist) is
+  [unverified], and `inkctl note digest` measures it; whether a picture larger than the page is
+  stored at its source size or scaled is [unverified].
 - Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
   [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 

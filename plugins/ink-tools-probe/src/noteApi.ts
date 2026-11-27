@@ -242,6 +242,17 @@ export const noteApi: HelperApi = {
     }
   },
 
+  async fileDigest(path) {
+    if (!(await FileUtils.exists(path))) {
+      throw new HelperError(1, `fileDigest: ${path} is not there`);
+    }
+    const md5 = await FileUtils.getFileMD5(path);
+    if (!md5) {
+      throw new HelperError(1, `fileDigest: ${path} gave no digest`);
+    }
+    return md5.toLowerCase();
+  },
+
   async notePageCount(notePath) {
     return unwrap<number>('getNoteTotalPageNum', await PluginFileAPI.getNoteTotalPageNum(notePath));
   },
