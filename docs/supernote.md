@@ -990,6 +990,14 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   as large as its box, not the whole page [measured on the Mac on one Heading of a Manta note,
   2026-11-26, [#331](https://github.com/martonpaulo/ink-tools/issues/331)]; a note with a Heading
   of each level waits for a device round.
+- A keyword is a footer entry `KEYWORD_<page, 4 digits from 1><4 digits>` whose value is the address
+  of a block: `KEYWORDPAGE` (0 on every page seen), `KEYWORDSEQNO` 0, `KEYWORDRECT` (x, y, width,
+  height of the lassoed ink), `KEYWORDRECTORI` and `KEYWORDSITE`, the address of a length-prefixed
+  block holding the keyword's UTF-8 text. The last four digits of the key are the top of
+  `KEYWORDRECTORI`. A keyword whose text was typed in the lasso's keyword dialog has
+  `KEYWORDRECT` and `KEYWORDRECTORI` `0,0,0,0`, so two typed keywords on a page share one key, and
+  the Note Editor reads the footer as a list of pairs [measured, Manta, 2026-11-27,
+  `keywords-tablet.note`, [#346](https://github.com/martonpaulo/ink-tools/issues/346)].
 - A page's strokes, pictures and text boxes are records in the block `TOTALPATH` points at: a
   count, then one length-prefixed record each, in drawing order. A record holds its pen, colour,
   thickness and layer, a kind name (`others` for a pen stroke, `bitmap` for a picture), a box in

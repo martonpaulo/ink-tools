@@ -21,6 +21,8 @@ public enum NoteFormatError: Error, Equatable, CustomStringConvertible {
     case badRecognition(page: Int, reason: String)
     /// A Heading's footer key or block cannot be read (#331).
     case badHeading(String)
+    /// A keyword's footer key or block cannot be read (#346).
+    case badKeyword(String)
 
     public var description: String {
         switch self {
@@ -44,6 +46,8 @@ public enum NoteFormatError: Error, Equatable, CustomStringConvertible {
             return "The handwriting recognition of page \(page + 1) cannot be read: \(reason)."
         case .badHeading(let reason):
             return "A Heading cannot be read: \(reason)."
+        case .badKeyword(let reason):
+            return "A keyword cannot be read: \(reason)."
         }
     }
 }
