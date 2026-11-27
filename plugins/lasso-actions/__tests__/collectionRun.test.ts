@@ -6,6 +6,7 @@ import {
   clearCollection,
   CollectionHost,
   countPieces,
+  PASTE_MOVE_REPEATS,
   PASTE_SETTLE_TRIES,
   pasteCollection,
 } from '../src/collection/run';
@@ -24,6 +25,8 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
   const logs: string[] = [];
   let lasso: Result<Rect> = ok({left: 100, top: 200, right: 300, bottom: 260});
   let answer = true;
+  /** A clock that moves 7 ms a read, about one bridge call, so a paste's wait ends. */
+  let clock = 0;
   const host: CollectionHost = {
     folder: async () => ok(DIR),
     list: async dir => {
@@ -59,6 +62,7 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
       lasso = ok(rect);
       return ok(true);
     },
+    now: () => (clock += 7),
     saveNote: async () => {
       calls.push('save note');
       lasso = fail(904, 'No lasso action has been performed');
@@ -98,6 +102,9 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
     },
   };
 }
+
+/** The move a paste sends, then sends again while NOTE may not have readied the piece (#249). */
+const moves = (rect: string) => Array(PASTE_MOVE_REPEATS + 1).fill(`move ${rect}`);
 
 test('Add to Collection writes the lasso as the next piece and leaves the page alone', async () => {
   const fake = fakeHost();
@@ -164,10 +171,10 @@ test('Paste Collection puts every piece in order at its place, lassoes the group
     // page by a save before the next one (#249).
     'close view',
     `insert ${DIR}/collection-1_100_200_200_60.sticker`,
-    'move 100,200,300,260',
+    ...moves('100,200,300,260'),
     'save note',
     `insert ${DIR}/collection-2_500_900_300_100.sticker`,
-    'move 500,900,800,1000',
+    ...moves('500,900,800,1000'),
     'save note',
     'select 100,200,800,1000',
     `remove ${DIR}/collection-1_100_200_200_60.sticker`,
@@ -225,6 +232,8 @@ test('a pasted piece that cannot be moved stops the paste, and the log names the
  * the page; a save lays it on the page and ends the lasso.
  */
 const MANTA_ASKS = 56;
+/** How long NOTE took to ready a pasted piece for a move after its lasso showed (round 16). */
+const MANTA_READY_MS = 310;
 const NO_LASSO = fail(904, 'No lasso action has been performed. Cannot call the API!');
 /** What `getLassoRect` answers for a pasted piece of 180 by 180, wherever it is. */
 const PASTED_RECT = {left: 0, top: 0, right: 180, bottom: 180};
@@ -235,10 +244,14 @@ function mantaPage(fake: ReturnType<typeof fakeHost>) {
   let lasso: {piece: string; rect: Rect; pasted: boolean} | null = null;
   let pending: string | null = null;
   let asks = 0;
+  let clock = 0;
+  /** When the pasted piece takes a move; one asked before is answered success and ignored. */
+  let readyAt = 0;
   /** Where each piece ends, by its file name. */
   const placed = new Map<string, Rect>();
   const settle = () => {
     if (pending !== null && !viewOpen && ++asks >= MANTA_ASKS) {
+      readyAt = clock + MANTA_READY_MS;
       lasso = {piece: pending, rect: PASTED_RECT, pasted: true};
       placed.set(pending, {left: 600, top: 800, right: 780, bottom: 980});
       pending = null;
@@ -267,6 +280,9 @@ function mantaPage(fake: ReturnType<typeof fakeHost>) {
       if (lasso === null) {
         return NO_LASSO;
       }
+      if (clock < readyAt) {
+        return ok(true);
+      }
       placed.set(lasso.piece, rect);
       if (!lasso.pasted) {
         lasso = {...lasso, rect};
@@ -277,6 +293,7 @@ function mantaPage(fake: ReturnType<typeof fakeHost>) {
       lasso = null;
       return ok(true);
     },
+    now: () => (clock += 7),
     select: async (rect: Rect) =>
       ok([...placed.values()].every(at => at.left >= rect.left && at.right <= rect.right && at.top >= rect.top && at.bottom <= rect.bottom) && placed.size > 0),
   });

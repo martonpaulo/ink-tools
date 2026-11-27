@@ -41,7 +41,7 @@ write. «Paste Collection», a NOTE toolbar button, opens `src/ui/CollectionScre
 Paste, Clear and «Keep After Paste» (saved as `collection.keepAfterPaste`, default off). Paste
 (`src/collection/run.ts`) closes the plugin view, inserts each piece with `insertSticker` and moves
 it with `resizeLassoRect` to its place, asked again at once, up to twice the slowest wait measured, while NOTE has not
-lassoed the piece yet (904; a timer never fired with the view closed, device round 9), then saves the note, which lays the piece on the page before the next paste could drop it, the group shifted onto the page as one, lassoes
+lassoed the piece yet (904; a timer never fired with the view closed, device round 9), sends the move again while NOTE may not have readied the piece (it ignores an early one), then saves the note, which lays the piece on the page before the next paste could drop it, the group shifted onto the page as one, lassoes
 the union with `lassoElements`, then empties the collection unless kept, and keeps it whole when
 the union lasso fails, the one check that the pieces are on the page (device round 9 lost the
 first of two pieces); a failed piece stops the

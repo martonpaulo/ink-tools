@@ -208,6 +208,10 @@ const COLLECTION_HOST: CollectionHost = {
   closeView: () => answer(true),
   resize: () => answer(true),
   saveNote: () => answer(true),
+  now: (() => {
+    let clock = 0;
+    return () => (clock += 7);
+  })(),
   select: () => answer(true),
   ask: () => answer(true),
   toast: noop,

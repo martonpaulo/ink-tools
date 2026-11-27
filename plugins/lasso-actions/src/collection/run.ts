@@ -49,6 +49,8 @@ export type CollectionHost = {
   resize: (rect: Rect) => Promise<Result<boolean>>;
   /** Saves the open note, which lays a pasted piece on the page and ends its lasso (#249). */
   saveNote: () => Promise<Result<boolean>>;
+  /** The time in ms: a paste waits by it with no timer, which never fires with the view closed. */
+  now: () => number;
   select: (rect: Rect) => Promise<Result<boolean>>;
   /** Closes the plugin view, so the note is in front while the pieces go in. */
   closeView: () => Promise<Result<boolean>>;
@@ -95,6 +97,18 @@ const SLOWEST_SETTLE_ASKS = 72;
  */
 export const PASTE_SETTLE_TRIES = 2 * SLOWEST_SETTLE_ASKS;
 
+/**
+ * NOTE answers `resizeLassoRect` with success but leaves the piece where it was pasted when the
+ * move comes before its selection is ready: about 310 ms after `getLassoRect` first answered, the
+ * plugin view having just closed, the move sent 7 ms after that answer never moved the piece, and
+ * the save laid both pieces at the page centre (device round 16, Manta, 2026-11-27, #249). No call
+ * tells when the selection is ready, and a move to the same place again changes nothing once one
+ * took, so the paste sends the move again every PASTE_MOVE_GAP_MS, PASTE_MOVE_REPEATS times,
+ * before the save.
+ */
+export const PASTE_MOVE_GAP_MS = 300;
+export const PASTE_MOVE_REPEATS = 3;
+
 const sameRect = (a: Rect, b: Rect) =>
   a.left === b.left && a.top === b.top && a.right === b.right && a.bottom === b.bottom;
 
@@ -105,6 +119,33 @@ async function currentLasso(host: CollectionHost): Promise<Result<Rect | null>> 
     return rect;
   }
   return rect.code === NO_LASSO_CODE ? ok(null) : rect;
+}
+
+/**
+ * Moves the pasted piece to `rect`, then again every PASTE_MOVE_GAP_MS while the selection may
+ * not be ready, asking `getLassoRect` meanwhile so the wait needs no timer; the failed call, or
+ * null when every move answered success.
+ */
+async function moveUntilReady(
+  host: CollectionHost,
+  rect: Rect,
+): Promise<{call: string; result: Result<boolean>} | null> {
+  for (let sent = 0; sent <= PASTE_MOVE_REPEATS; sent++) {
+    if (sent > 0) {
+      const until = host.now() + PASTE_MOVE_GAP_MS;
+      while (host.now() < until) {
+        const lasso = await currentLasso(host);
+        if (!lasso.ok) {
+          return {call: 'getLassoRect', result: lasso};
+        }
+      }
+    }
+    const moved = await host.resize(rect);
+    if (!done(moved)) {
+      return {call: 'resizeLassoRect', result: moved};
+    }
+  }
+  return null;
 }
 
 /**
@@ -141,9 +182,9 @@ async function pasteAndMove(
       if (tries > 1) {
         host.log(`${tag}: the pasted piece was lassoed after ${tries} asks`);
       }
-      const moved = await host.resize(rect);
-      if (!done(moved)) {
-        return {call: 'resizeLassoRect', result: moved};
+      const moved = await moveUntilReady(host, rect);
+      if (moved) {
+        return moved;
       }
       return {call: 'saveCurrentNote', result: await host.saveNote()};
     }
@@ -367,6 +408,7 @@ export const DEVICE_HOST: CollectionHost = {
   insertSticker,
   resize: resizeLassoRect,
   saveNote: saveCurrentNote,
+  now: Date.now,
   select: lassoElements,
   closeView: closePluginView,
   ask: confirm,

@@ -613,6 +613,13 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     moved piece put one piece in twice. NOTE lassoed a pasted piece after 38 to 72 asks of
     `getLassoRect`, 230 to 620 ms after `insertSticker` answered [measured, Ink Tools Probe's
     `run-probe` action, Manta, 2026-11-27, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
+  - `resizeLassoRect` sent before NOTE has readied a pasted piece answers success and moves
+    nothing: in Lasso Actions' paste, just after `closePluginView`, the move went 7 ms after
+    `getLassoRect` first answered the piece's local rect and about 300 ms before NOTE's selection
+    was ready, and the save then laid both pieces at the page centre. `getLassoRect` answers the
+    same local rect before and after a move, so no call tells a move that took from one that did
+    not [measured, Lasso Actions from `c1bf206`, Manta, 2026-11-27,
+    [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
   - From Probe's `run-probe` action, `saveStickerByLasso` after a `lassoElements` of inserted
     strokes answered true and wrote a 180 by 180 sticker [measured, Manta, 2026-11-27,
     [#249](https://github.com/martonpaulo/ink-tools/issues/249)].

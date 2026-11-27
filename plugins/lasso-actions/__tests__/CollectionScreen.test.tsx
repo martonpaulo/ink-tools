@@ -49,6 +49,10 @@ function folderHost(names: string[]): CollectionHost & {names: string[]} {
     insertSticker: async () => ok(true),
     resize: async () => ok(true),
     saveNote: async () => ok(true),
+    now: (() => {
+      let clock = 0;
+      return () => (clock += 7);
+    })(),
     select: async () => ok(true),
     closeView: async () => ok(true),
     ask: async () => ok(true),
