@@ -275,8 +275,8 @@ Owner decisions of 2026-11-26 (the checklist with each governing issue is in
   written to Supernote Cloud», for the editor's own note files only, and one of the three cases in
   which the Mac writes a note file: a new note, created on the tablet or on the Mac as the user picks
   ([#339](https://github.com/martonpaulo/ink-tools/issues/339)); a whole note sent either way, Mac to tablet or tablet to Mac ([#504](https://github.com/martonpaulo/ink-tools/issues/504)); and an
-  edit through Supernote Cloud. Where an edit to an existing note is saved is the user's choice (below).
-- **Where edits are saved is the user's choice** (owner, 2026-11-27): Settings › Tablet has «Where edits are saved»: on the tablet, on the Mac, or in Supernote Cloud. The default is the tablet when it is connected, the Mac when no tablet is connected. Any edit may be saved on the Mac, not only a page move or Revert to Backup. A backup is always made before writing, and a note changed on both sides keeps both copies and says so ([#317](https://github.com/martonpaulo/ink-tools/issues/317)). Saving on the Mac needs the Mac `.note` writer ([#362](https://github.com/martonpaulo/ink-tools/issues/362)); until it exists the choice shows as unavailable with its reason. Each destination is a capability of the note-transport adapters ([#496](https://github.com/martonpaulo/ink-tools/issues/496)), not a hard-coded list.
+  edit through Supernote Cloud.
+- **Where edits are saved is the user's choice** (owner, 2026-11-27): tablet, Mac or Supernote Cloud, as [Note Editor's write path](../apps/note-editor/AGENTS.md#the-write-path) defines ([#496](https://github.com/martonpaulo/ink-tools/issues/496)).
 - **Every later feature is approved work** (38 from the page plus Edit through Supernote Cloud),
   captured as delivery issues: «should» items P2 before «could» items P3, each blocked by the
   first-release issue it builds on, all tracked in [#332](https://github.com/martonpaulo/ink-tools/issues/332).
