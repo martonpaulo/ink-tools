@@ -44,7 +44,7 @@ export function drawJigsawPage(puzzle: JigsawSudoku, options: JigsawPageOptions 
   puzzle.givens.forEach((value, cell) => {
     if (value) drawCellText(page, layout.grid, cell % JIGSAW_SIZE, Math.floor(cell / JIGSAW_SIZE), String(value), 'given');
   });
-  drawFooter(page, layout, { game: 'Jigsaw sudoku', difficulty: DIFFICULTY_LABELS[puzzle.id.difficulty], code: puzzleCode(puzzle.id), rule: RULE });
+  drawFooter(page, layout, { game: 'Jigsaw Sudoku', difficulty: DIFFICULTY_LABELS[puzzle.id.difficulty], code: puzzleCode(puzzle.id), rule: RULE });
   return page;
 }
 

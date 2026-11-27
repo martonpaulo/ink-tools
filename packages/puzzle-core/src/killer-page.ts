@@ -18,7 +18,7 @@ export interface KillerPageOptions {
   cellMm?: CellPreset;
 }
 
-export const KILLER_FOOTER = { game: 'Killer sudoku', rule: 'Put 1 to 9 once in each row, column and box; each cage adds up to its sum, no digit twice.' } as const;
+export const KILLER_FOOTER = { game: 'Killer Sudoku', rule: 'Put 1 to 9 once in each row, column and box; each cage adds up to its sum, no digit twice.' } as const;
 
 const BAND_NAMES = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert' } as const;
 
