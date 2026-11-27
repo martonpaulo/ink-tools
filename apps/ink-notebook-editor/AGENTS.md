@@ -104,6 +104,8 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
     `PAGEID` as the tablet's own move does, where the file API's copy and delete gives a new one
     that breaks links to the page ([`docs/research/2026-11-editor-dependency-levels.md`](../../docs/research/2026-11-editor-dependency-levels.md));
   - Revert to Backup: the backup's own bytes, pushed, pulled back and compared byte for byte.
+  - a template change: a scratch page stores the template, the Mac points the page at its background and
+    pushes, keeping `PAGEID` ([#337](https://github.com/martonpaulo/ink-tools/issues/337), [`docs/supernote.md`](../../docs/supernote.md#note-file-format)).
   Firmware watch: [#318](https://github.com/martonpaulo/ink-tools/issues/318).
 - Edit without waiting ([#314](https://github.com/martonpaulo/ink-tools/issues/314)): `BackgroundSender` queues each drawn edit and sends it in the
   background, one at a time; a run of nudges on the same elements is one request when it ends; a

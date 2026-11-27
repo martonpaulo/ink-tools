@@ -943,6 +943,22 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   page before the move (0.000 % of pixels) [measured, Manta, device round 5, 2026-11-26,
   [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So the Ink Notebook Editor tells
   pages apart by `PAGEID` only within one copy of a note.
+- A page's template is its page block's `PAGESTYLE`, `PAGESTYLEMD5` and `BGLAYER`; the background
+  itself is a block the footer names `STYLE_<style>`. A page pointed at the background of another
+  page's template, with that page left out of the footer, opens on the tablet with the new template
+  and every stroke: on a closed copy of a 540-stroke page, the tablet's `insertNotePage` of a
+  scratch page took 0.1 s (2.0 s from the Mac's request), the Mac's rewrite and push 1.2 s, and the
+  pull between them 0.9 s, about 4 s in all; the page kept its `PAGEID`, its main layer and its
+  element block byte-equal, and a lasso of the whole page took all 540 strokes. Copying the same
+  540 strokes to a new page through the file API (`insertElements`, then `removePage`) took 97 s in
+  nine requests, each insert on the closed note about 9 s, gave the page a new `PAGEID` and grew the
+  file from 2.5 MB to 25.8 MB [measured, Manta, 2026-11-27,
+  [#337](https://github.com/martonpaulo/ink-tools/issues/337)]. A note that already stores the template's
+  background needs no scratch page, only the push. The tablet lists no landscape template, so a
+  template change does not turn a page.
+- Device Link's helper reads a request file of at most 64 KB; a larger one is never run, and
+  `inkctl` refuses it before the push. 540 strokes with their points make about 440 KB
+  [measured, Manta, 2026-11-27, [#337](https://github.com/martonpaulo/ink-tools/issues/337)].
 - A text box and a picture a plugin inserts are drawn into the main layer's bitmap, so a reader of
   the bitmaps shows them with no element decoding [measured].
 - `PluginFileAPI.generateNotePng` at `times: 1` on white matches `NoteFormat`'s drawing of the same
