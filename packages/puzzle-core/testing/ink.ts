@@ -1,6 +1,4 @@
 /**
- * The player's ink in tests (#382): characters written as `inkctl ink write` draws them, from its
- * own font (scripts/inkctl_glyphs.py), and a recogniser that reads them back.
  * Synthetic ink for the check tests (#382, #383): characters written in grid cells as
  * `inkctl ink write` draws them, from its own font (scripts/inkctl_glyphs.py), and a recogniser
  * that reads each written copy back.
