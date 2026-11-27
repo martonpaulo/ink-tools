@@ -12,9 +12,11 @@ final class NoteText {
     var name = ""
     /// Whether a find runs: the bar under the toolbar shows its result.
     var findShown = false
-    /// Whether the toolbar's find field is in the window; a narrow window moves it under the
-    /// overflow button, and the bar then holds the field (#460).
-    var fieldInToolbar = false
+    /// How many of the toolbar's find fields are in the window: a narrow window moves the field
+    /// under the overflow button, and the bar then holds one (#460). The toolbar may keep more than
+    /// one copy of an item's view, so each copy counts itself in and out.
+    var toolbarFields = 0
+    var fieldInToolbar: Bool { toolbarFields > 0 }
     /// The find field's text; each change finds again.
     var query = "" {
         didSet { find() }
@@ -175,7 +177,7 @@ private struct FindSearchFieldView: NSViewRepresentable {
         if inToolbar {
             field.placed = { [weak text] inWindow in
                 // Not during a view update: the bar shows or hides its own field on this.
-                Task { @MainActor in text?.fieldInToolbar = inWindow }
+                Task { @MainActor in text?.toolbarFields += inWindow ? 1 : -1 }
             }
         }
         field.placeholderString = Copy.findInNote
@@ -234,12 +236,15 @@ private struct FindSearchFieldView: NSViewRepresentable {
 
 /// The find field: a search field drawn by `FindFieldCell`.
 final class FindSearchField: NSSearchField {
-    /// Told whether the field is in a window, each time it moves in or out of one.
+    /// Told when the field moves into a window (true) or out of one (false).
     var placed: (Bool) -> Void = { _ in }
+    private var inWindow = false
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        placed(window != nil)
+        guard (window != nil) != inWindow else { return }
+        inWindow = window != nil
+        placed(inWindow)
     }
 
     /// Whether the field takes the focus: once clicked or asked by Edit › Find, never when the

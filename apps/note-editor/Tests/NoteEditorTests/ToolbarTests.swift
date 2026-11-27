@@ -60,6 +60,34 @@ import Testing
         #expect(frame.width >= 120 && window.contentLayoutRect.union(frame).width <= window.frame.width, "\(frame)")
     }
 
+    /// A find under way shows exactly one find field: the toolbar's in a window of the default
+    /// width, the bar's in the narrowest one, where the toolbar's is under the overflow button.
+    @Test(arguments: [CGSize(width: 640, height: 420), CGSize(width: 1000, height: 720)])
+    func aFindShowsOneField(size: CGSize) async throws {
+        let note = try Fixtures.note("content.note")
+        let text = NoteText(indexer: NoteIndexer())
+        text.showFind()
+        text.query = "harvest"
+        let window = KeyedOffscreenWindow(size: size, dark: false)
+        defer { window.close() }
+        window.show(NotebookView(pages: PageImages(note: note)).environment(text))
+        #expect(try await window.until { Self.fields(in: window).count == 1 })
+        // timing-independent: turns of the main actor for the toolbar to settle; the count is checked after.
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(Self.fields(in: window).count == 1, "\(size)")
+    }
+
+    /// Every search field in `window`'s frame view.
+    static func fields(in window: NSWindow) -> [NSSearchField] {
+        var found: [NSSearchField] = []
+        var views = [window.contentView?.superview].compactMap(\.self)
+        while let view = views.popLast() {
+            if let field = view as? NSSearchField { found.append(field) }
+            views += view.subviews
+        }
+        return found
+    }
+
     /// The search field anywhere in `window`'s frame view, the toolbar included.
     static func field(in window: NSWindow) -> NSSearchField? {
         var views = [window.contentView?.superview].compactMap(\.self)
