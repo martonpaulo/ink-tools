@@ -12,7 +12,29 @@ public struct PageElement: Sendable, Equatable {
         case stroke, picture, textBox
     }
 
-    public let kind: Kind
+    /// What an element holds besides its place, read from the Mac's copy, so the element can be
+    /// inserted again elsewhere (#327).
+    public enum Content: Sendable, Equatable {
+        /// A stroke's pen colour as its record stores it (0 is black) and its thickness, in the
+        /// units the tablet helper's stroke insert takes (400 for the pen `inkctl ink write` uses).
+        /// shortcut: only black (0) is measured on a fixture; the other pen tones wait for the
+        /// device round of #327, and the edit model checks the value against the pen tones.
+        case stroke(penColor: Int, thickness: Int)
+        /// A picture's image, the PNG file its record holds, at the picture's own pixel size.
+        case picture(png: Data)
+        /// A text box's text and its font size in page pixels.
+        case textBox(text: String, fontSize: Double)
+    }
+
+    public var kind: Kind {
+        switch content {
+        case .stroke: .stroke
+        case .picture: .picture
+        case .textBox: .textBox
+        }
+    }
+
+    public let content: Content
     /// The layer the element is on: 0 for the main layer.
     public let layer: Int
     /// A stroke's box holds its ink; a picture's or a text box's is its frame.
@@ -68,6 +90,7 @@ enum ElementRecord {
     static let key = "TOTALPATH"
     static let word = 4
     static let colour = 8
+    static let thickness = 12
     static let layer = 48
     static let kindName = 52
     static let nameLength = 52
@@ -82,6 +105,15 @@ enum ElementRecord {
     /// The arrays after the points, each a count then its items: pressures, angles, draw flags,
     /// smoothed points and their greys, by the size of one item. The record's trail status follows.
     static let arraysAfterPoints = [2, 4, 1, 8, 4]
+    /// A record ends with its data, a length-prefixed text of comma-separated Base64 fields
+    /// (`none` for a stroke), then one more length-prefixed text and this many bytes. Read from
+    /// the end, since the arrays between the trail status and the data vary by kind; measured on
+    /// every record of every fixture (#327).
+    static let afterData = 17
+    /// The data's fields of a picture or a text box, from 0: a text box's font size
+    /// (`40.000000`), and a text box's text or a picture's PNG file (#327). Field 4 holds the
+    /// frame (`x,y,width,height`), which the points already give.
+    static let field = (fontSize: 10, payload: 12)
 
     static func elements(_ bytes: [UInt8], pageHeight: Int, page: Int) throws -> PageElements {
         let reader = Reader(bytes: bytes, page: page)
@@ -173,14 +205,14 @@ enum ElementRecord {
             guard try trailStatus(after: pointsAt + ElementRecord.word + count * pointLength) >= 0 else {
                 return nil
             }
-            let kind: PageElement.Kind
+            let content: PageElement.Content
             // The kind names come first: a text box that Real-Time Text inserts carries the
             // stroke document name too (#324, device round 8).
             let named = try name(at: kindName)
             if named == values.pictureKind {
-                kind = .picture
+                content = .picture(png: try payload(number: number))
             } else if named == values.textBoxKind {
-                kind = .textBox
+                content = try textBox(number: number)
             } else if named == values.headingKind {
                 // A Heading's band is read from the footer (`headings()`), not as an element.
                 return nil
@@ -188,13 +220,13 @@ enum ElementRecord {
                 // A shape (the line tool, Smart Shapes, a geometry or five-star element of the
                 // plugin API) is stored as a stroke is, with its own kind name and no document
                 // name: its box and points are its ink (#459).
-                kind = .stroke
+                content = .stroke(penColor: try word(at: colour), thickness: try word(at: thickness))
             } else {
                 // One record of a kind the reader does not know is stepped over, never the page.
                 return .unknown(named)
             }
             let bounds: CGRect
-            if kind == .stroke {
+            if case .stroke = content {
                 // A stroke's box is in page pixels and holds its width of ink.
                 let left = try word(at: box)
                 let top = try word(at: box + ElementRecord.word)
@@ -211,7 +243,51 @@ enum ElementRecord {
                 bounds = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
             }
             return .element(
-                PageElement(kind: kind, layer: try word(at: layer), bounds: bounds, points: points, record: number))
+                PageElement(
+                    content: content, layer: try word(at: layer), bounds: bounds, points: points, record: number))
+        }
+
+        /// The start of the length-prefixed text that ends at `end`: the last place whose word
+        /// equals the bytes between it and `end`.
+        func text(endingAt end: Int) -> Int? {
+            stride(from: end - ElementRecord.word, through: 0, by: -1).first {
+                NoteFile.word(bytes, at: $0) == end - $0 - ElementRecord.word
+            }
+        }
+
+        /// The decoded fields of the record's data, read from its end.
+        func dataFields(number: Int) throws -> [Data] {
+            let end = bytes.count - afterData
+            guard end >= ElementRecord.word, let last = text(endingAt: end), let data = text(endingAt: last) else {
+                throw failure("element \(number + 1) has no data")
+            }
+            let fields = bytes[(data + ElementRecord.word)..<last]
+                .split(separator: UInt8(ascii: ","), omittingEmptySubsequences: false)
+            return try fields.map { field in
+                guard let decoded = Data(base64Encoded: Data(field)) else {
+                    throw failure("element \(number + 1) has a data field that is not Base64")
+                }
+                return decoded
+            }
+        }
+
+        func payload(number: Int) throws -> Data {
+            let fields = try dataFields(number: number)
+            guard fields.indices.contains(field.payload), !fields[field.payload].isEmpty else {
+                throw failure("element \(number + 1) has no content in its data")
+            }
+            return fields[field.payload]
+        }
+
+        func textBox(number: Int) throws -> PageElement.Content {
+            let fields = try dataFields(number: number)
+            guard fields.indices.contains(field.payload),
+                let text = String(data: fields[field.payload], encoding: .utf8),
+                let size = Double(String(decoding: fields[field.fontSize], as: UTF8.self)), size > 0
+            else {
+                throw failure("element \(number + 1) has no text or font size in its data")
+            }
+            return .textBox(text: text, fontSize: size)
         }
     }
 }

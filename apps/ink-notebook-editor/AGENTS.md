@@ -145,6 +145,9 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
 - Delete removes a selection by the helper's `deleteElements` ([#327](https://github.com/martonpaulo/ink-tools/issues/327)), drawn at once as the template
   where it was; its undo is the backup kept before its send.
+- Cut, Copy and Paste ([#327](https://github.com/martonpaulo/ink-tools/issues/327)): `PageElement.content` reads what each element holds; `ElementClipping`,
+  our own pasteboard type, places it at the pointer or in place, and a paste is one `insertElements`,
+  strokes as strokes with a `PenTone`. The Edit menu commands are still to come.
 - `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 
 Differences from the standard, each for a reason:

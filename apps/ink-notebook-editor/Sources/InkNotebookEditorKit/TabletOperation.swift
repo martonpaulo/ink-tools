@@ -1,8 +1,19 @@
 // The one write path's operation (#313): what the Mac sends for one edit, in our own words. The
 // tablet helper inside Device Link applies it (#312, route T); a page move alone is written by the
-// Mac (route B), the recorded exception of AGENTS.md. No field carries a colour, so no colour can
-// enter a note through an operation (only Manta tones, owner 2026-11-26).
+// Mac (route B), the recorded exception of AGENTS.md. A stroke's colour is a `PenTone`, and no
+// other field carries one, so no colour can enter a note through an operation (only Manta tones,
+// owner 2026-11-26).
+import CoreGraphics
 import Foundation
+
+/// The Manta's four pen tones (`docs/supernote.md` › Greys and colours), by the value the tablet
+/// helper's stroke insert takes; no other colour can be written (#327).
+public enum PenTone: Int, Sendable, Equatable, Codable, CaseIterable {
+    case black = 0x00
+    case darkGrey = 0x9D
+    case grey = 0xC9
+    case white = 0xFE
+}
 
 /// A rectangle on a page, in page pixels.
 public struct EditRect: Sendable, Equatable, Codable {
@@ -16,6 +27,22 @@ public struct EditRect: Sendable, Equatable, Codable {
         self.top = top
         self.right = right
         self.bottom = bottom
+    }
+
+    /// The smallest rect that holds this one and `other`.
+    public func union(_ other: EditRect) -> EditRect {
+        EditRect(
+            left: min(left, other.left), top: min(top, other.top), right: max(right, other.right),
+            bottom: max(bottom, other.bottom))
+    }
+
+    /// The smallest rect of whole pixels that holds every point; empty at the origin for none.
+    public init(around points: [CGPoint]) {
+        let xs = points.map(\.x)
+        let ys = points.map(\.y)
+        self.init(
+            left: Int((xs.min() ?? 0).rounded(.down)), top: Int((ys.min() ?? 0).rounded(.down)),
+            right: Int((xs.max() ?? 0).rounded(.up)), bottom: Int((ys.max() ?? 0).rounded(.up)))
     }
 }
 
@@ -36,6 +63,8 @@ public struct TabletOperation: Sendable, Equatable {
         case insertText(String, rect: EditRect, fontSize: Int)
         /// A picture file on the Mac, already in Manta greys, at `rect`.
         case insertPicture(URL, rect: EditRect)
+        /// Inserts strokes, text boxes and pictures together, as a paste does (#327).
+        case insertElements([HelperElement])
         /// Moves or resizes each element, by its number on the page from 1, to its rect.
         case placeElements([ElementPlacement])
         /// Resizes, rotates or flips elements: each target one tablet call, in order (#326).
@@ -123,6 +152,8 @@ public struct TabletOperation: Sendable, Equatable {
         switch change {
         case .insertText(_, let rect, _), .insertPicture(_, let rect): rect
         case .placeElements(let placements) where placements.count == 1: placements[0].rect
+        case .insertElements(let elements):
+            elements.first.map { first in elements.dropFirst().reduce(first.box) { $0.union($1.box) } }
         default: nil
         }
     }
@@ -154,6 +185,7 @@ public struct TabletOperation: Sendable, Equatable {
                 }
             }
         case .deleteElements(let numbers): [.deleteElements(page: page, nums: numbers)]
+        case .insertElements(let elements): [.insertElements(page: page, elements: elements)]
         case .insertPage(let template): [.insertPage(page: page, template: template)]
         // Highest first, so each number still names the page the owner picked.
         case .removePages(let pages): pages.sorted(by: >).map { .removePage(page: $0) }
@@ -236,12 +268,29 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
 public enum HelperElement: Sendable, Equatable, Encodable {
     case text(String, rect: EditRect, fontSize: Int)
     case picture(String, rect: EditRect)
+    /// A pen stroke through `points`, in page pixels, as the helper's `stroke` element reads it.
+    case stroke(points: [CGPoint], penColor: PenTone, thickness: Int)
 
-    private enum Key: String, CodingKey { case kind, text, rect, fontSize, file }
+    private enum Key: String, CodingKey { case kind, text, rect, fontSize, file, points, penColor, thickness }
+
+    /// The box the element covers: a stroke's points, a text box's or a picture's rect.
+    public var box: EditRect {
+        switch self {
+        case .text(_, let rect, _), .picture(_, let rect): rect
+        case .stroke(let points, _, _): EditRect(around: points)
+        }
+    }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: Key.self)
         switch self {
+        case .stroke(let points, let penColor, let thickness):
+            try container.encode("stroke", forKey: .kind)
+            // Each point is `[x, y]` in whole page pixels, as the helper's `parseElement` reads it.
+            try container.encode(points.map { [Int($0.x.rounded()), Int($0.y.rounded())] }, forKey: .points)
+            for (value, key) in [(penColor.rawValue, Key.penColor), (thickness, Key.thickness)] {
+                try container.encode(value, forKey: key)
+            }
         case .text(let text, let rect, let fontSize):
             try container.encode("text", forKey: .kind)
             try container.encode(text, forKey: .text)

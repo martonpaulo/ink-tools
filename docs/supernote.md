@@ -1009,6 +1009,15 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   and the file box followed [measured, Manta, 2026-11-26,
   [#452](https://github.com/martonpaulo/ink-tools/issues/452)]. So `placeElement` moves the box with
   the points.
+- An element record's first words after its length are the pen type, the colour and the
+  thickness: `inkctl ink write` strokes read 10, 0 and 400, the stroke Real-Time Text left 4, 0
+  and 200. Every record ends with two length-prefixed texts, then 17 bytes; the first text is the
+  element's data, `none` for a stroke, and for a text box or a picture 20 comma-separated Base64
+  fields: field 4 its frame (`x,y,width,height`), field 10 a text box's font size (`40.000000`,
+  the `insert-text` default) and field 12 a text box's text or a picture's PNG file at the
+  picture's own size [measured on the Mac on every record of every fixture, 2026-11-26,
+  [#327](https://github.com/martonpaulo/ink-tools/issues/327)]. Only black (colour 0) is seen; the
+  colour of a grey pen waits for a device round.
 - Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
   [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 

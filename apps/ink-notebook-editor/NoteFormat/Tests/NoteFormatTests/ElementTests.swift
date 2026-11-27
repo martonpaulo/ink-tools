@@ -127,6 +127,40 @@ import Testing
         #expect(try NoteFile(bytes: bytes).elements(page: 0).map(\.kind) == [.textBox, .picture])
     }
 
+    /// What each element holds, for a paste on another page or note (#327), as the fixtures were
+    /// made: `inkctl ink write` strokes in black at thickness 400, `inkctl note insert-text` boxes
+    /// at its default font size of 40, and the PNG files `inkctl note insert-picture` placed.
+    @Test func eachElementReadsWhatItHolds() throws {
+        let strokes = try Self.note("landscape-tablet").elements(page: 0)
+        #expect(strokes.allSatisfy { $0.content == .stroke(penColor: 0, thickness: 400) })
+        let elements = try Self.note("elements-tablet").elements(page: 0)
+        #expect(elements[23].content == .textBox(text: "First text box", fontSize: 40))
+        #expect(elements[25].content == .textBox(text: "Second text box", fontSize: 40))
+        guard case .picture(let png) = elements[24].content else {
+            Issue.record("element 25 is no picture: \(elements[24].kind)")
+            return
+        }
+        let picture = try PageBitmap(imageData: png)
+        #expect(picture.width == 400 && picture.height == 300)
+        let content = try Self.note("content").elements(page: 0)
+        #expect(content[0].content == .textBox(text: "Notebook editor fixture", fontSize: 40))
+    }
+
+    /// The Real-Time Text fixture: the word «casa» at font size 84, and the stroke the tablet still
+    /// draws, at the thinner pen of that round.
+    @Test func aRealTimeTextBoxKeepsItsWordAndSize() throws {
+        let elements = try Self.note("realtime-text-tablet").elements(page: 0)
+        #expect(elements.first?.content == .stroke(penColor: 0, thickness: 200))
+        #expect(elements.last?.content == .textBox(text: "casa", fontSize: 84))
+    }
+
+    @Test func aDataFieldThatIsNotBase64Throws() throws {
+        var bytes = try Self.bytes("content")
+        // The text box's data starts 487 bytes into its record, as measured on this fixture.
+        bytes[try Self.block(bytes) + 4 + 487] = UInt8(ascii: "!")
+        #expect(throws: NoteFormatError.self) { try NoteFile(bytes: bytes).elements(page: 0) }
+    }
+
     /// The start of each record (its length word) of the element block at `block`.
     static func records(_ bytes: [UInt8], from block: Int) -> [Int] {
         var offset = block + 4
