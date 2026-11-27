@@ -52,6 +52,14 @@ The switch can be turned off.
 
 - The plugin API has no call that presses the screen. It only listens to touch ([API index](https://docs.supernote.com/_llms/en/api-reference.txt)).
 - Browse & Access serves files only. Screen Mirroring is view only.
+- Browse & Access cannot replace or delete a file. Measured on the Manta, firmware
+  Chauvet E103.2610191001.2559, 2026-11-27 ([#497](https://github.com/martonpaulo/ink-tools/issues/497)): an upload is a multipart
+  `POST` of one `file` field to a folder's path on port 8089, as `supernote-mcp` sends it. An
+  upload under an existing note's name kept the old note and wrote the new bytes beside it as
+  `<name>(1).note`, which opened intact on the tablet. `DELETE` on a file's path answers `301` and
+  changes nothing. So a write-back over Browse & Access alone adds a copy; it never updates a note
+  in place. An `.apk` upload is stored byte for byte, so a phone's browser can bring an APK to the
+  tablet this way.
 - The official documentation has no page on ADB.
 
 ## Limits of this research
