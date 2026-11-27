@@ -5,7 +5,11 @@
  * nearest Node gets to the tablet's engine.
  */
 import {
+  bridgesAnswers,
   createPage,
+  drawBridgesPage,
+  drawLinkAnswers,
+  generateBridges,
   drawArrowword,
   generateArrowword,
   drawCellText,
@@ -127,6 +131,11 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     const text = { game: 'Slitherlink', difficulty: 'Medium', rule: 'Draw one loop along the dots; each number counts its sides on the loop.' };
     const { layout, raster } = drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text });
     return drawEdgeAnswers(raster, layout.grid, slitherlinkLoop(puzzle));
+  }],
+  ['bridges-answer-10mm-portrait-right', () => {
+    const puzzle = generateBridges('P1', { width: 10, height: 13 }, 'medium');
+    const { layout, raster } = drawBridgesPage(puzzle, 'portrait', 'right');
+    return drawLinkAnswers(raster, layout.grid, bridgesAnswers(puzzle));
   }],
   ['hitori-15mm-portrait-right', () => drawHitoriPage(generateHitori('P1', 8, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
   ['page-binairo-10mm-portrait-right', () => {

@@ -1,5 +1,8 @@
 import {
   BRIDGES_BANDS,
+  BRIDGES_SIDES,
+  bridgesAnswers,
+  bridgesFromCode,
   bridgesLinks,
   bridgesPageSpec,
   checkBridges,
@@ -7,7 +10,9 @@ import {
   createPage,
   digest,
   drawBridges,
-  drawFooter,
+  drawBridgesPage,
+  drawLinkAnswers,
+  linkLine,
   generateBridges,
   layoutPage,
   parsePuzzleCode,
@@ -22,10 +27,8 @@ import {
   type InkStroke,
 } from '../src';
 
-const SIZES = [
-  { width: 7, height: 7 },
-  { width: 10, height: 13 },
-];
+/** The sides the Puzzles view offers, and one page-shaped grid. */
+const SIZES = [...BRIDGES_SIDES.map(side => ({ width: side, height: side })), { width: 10, height: 13 }];
 const SEEDS = ['A', 'B', 'C'];
 
 /** True when every island is reached from the first over the solution's bridges. */
@@ -131,17 +134,8 @@ const pageGrid = (puzzle: Bridges): Grid => layoutPage(bridgesPageSpec(puzzle, '
 describe('the Bridges page', () => {
   test('draws every island in native greys, at the largest cell that fits, with its footer', () => {
     const puzzle = generateBridges('P1', { width: 10, height: 13 }, 'medium');
-    const spec = bridgesPageSpec(puzzle, 'portrait', 'right');
-    expect(spec.cellMm).toBe(10);
-    const layout = layoutPage(spec);
-    const raster = createPage(layout);
-    drawBridges(raster, layout.grid, puzzle);
-    drawFooter(raster, layout, {
-      game: 'Bridges',
-      difficulty: 'Medium',
-      code: puzzleCode(puzzle.id),
-      rule: 'Join the islands in one group: each number counts its bridges, at most two a pair, none crossing.',
-    });
+    expect(bridgesPageSpec(puzzle, 'portrait', 'right').cellMm).toBe(10);
+    const { layout, raster } = drawBridgesPage(puzzle, 'portrait', 'right');
     assertNativeGreys(raster);
     // Each island's centre is paper inside an ink ring.
     for (const island of puzzle.islands) {
@@ -149,7 +143,7 @@ describe('the Bridges page', () => {
       const ring = Math.round(x + layout.grid.cell * 0.32 - 1);
       expect(raster.pixels[Math.round(y) * raster.width + ring]).toBe(0x00);
     }
-    expect(digest(Array.from(raster.pixels.filter((_, i) => i % 97 === 0)))).toBe('7b2c8be7');
+    expect(digest(Array.from(raster.pixels.filter((_, i) => i % 97 === 0)))).toBe('72f50a43');
   });
 
   test('refuses a grid of another size', () => {
@@ -197,11 +191,45 @@ describe('checkBridges', () => {
     expect(result.right).toHaveLength(puzzle.solution.filter(count => count > 0).length);
   });
 
-  test('one wrong count on a solved page marks exactly that link', () => {
-    const e = puzzle.solution.findIndex(count => count === 2);
+  test('one bridge too many on a solved page marks exactly that link, and one too few is left to do', () => {
+    const e = puzzle.solution.findIndex(count => count === 1);
     const counts = puzzle.solution.slice();
-    counts[e] = 1;
+    counts[e] = 2;
     expect(checkBridges(grid, puzzle, solved(counts)).wrong).toEqual([e]);
+    const double = puzzle.solution.findIndex(count => count === 2);
+    const fewer = puzzle.solution.slice();
+    fewer[double] = 1;
+    expect(checkBridges(grid, puzzle, solved(fewer))).toMatchObject({ wrong: [], empty: [double] });
+  });
+
+  test('a cross marked in a one-cell gap to rule the link out is no bridge', () => {
+    const e = bridgesLinks(puzzle.islands).findIndex((link, i) => {
+      const [a, b] = [puzzle.islands[link.from], puzzle.islands[link.to]];
+      return puzzle.solution[i] === 0 && Math.abs(a.column - b.column) + Math.abs(a.row - b.row) === 2;
+    });
+    expect(e).toBeGreaterThanOrEqual(0);
+    const link = bridgesLinks(puzzle.islands)[e];
+    const [a] = [puzzle.islands[link.from]];
+    const [x, y] = cellCenter(grid, a.column + (link.horizontal ? 1 : 0), a.row + (link.horizontal ? 0 : 1));
+    for (const arm of [0.2, 0.3, 0.4].map(share => share * grid.cell)) {
+      const cross = [
+        { points: [{ x: x - arm, y: y - arm }, { x: x + arm, y: y + arm }], element: null },
+        { points: [{ x: x - arm, y: y + arm }, { x: x + arm, y: y - arm }], element: null },
+      ];
+      expect(checkBridges(grid, puzzle, cross).wrong).toEqual([]);
+    }
+  });
+
+  test('a double bridge drawn out and back in one stroke is two, and a bridge drawn in pieces is one', () => {
+    const e = puzzle.solution.findIndex(count => count === 2);
+    const [first, second] = drawLink(grid, puzzle, e, 2);
+    const outAndBack = { points: [...first.points, ...second.points.slice().reverse()], element: null };
+    expect(checkBridges(grid, puzzle, [outAndBack]).right).toEqual([e]);
+    const one = puzzle.solution.findIndex(count => count === 1);
+    const [line] = drawLink(grid, puzzle, one, 1);
+    const half = Math.floor(line.points.length / 2);
+    const pieces = [{ points: line.points.slice(0, half), element: null }, { points: line.points.slice(half), element: null }];
+    expect(checkBridges(grid, puzzle, pieces).right).toEqual([one]);
   });
 
   test('a bridge where the solution has none is wrong, and a missing one is empty, not wrong', () => {
@@ -223,5 +251,38 @@ describe('checkBridges', () => {
     const [x, y] = cellCenter(grid, a.column + 1, a.row);
     const across = { points: [{ x, y: y - grid.cell }, { x, y: y + grid.cell }], element: null };
     expect(checkBridges(grid, puzzle, [across]).wrong).toEqual([]);
+  });
+});
+
+describe('the Bridges code and the pictures of the plugin view (#396)', () => {
+  const puzzle = generateBridges('P1', { width: 7, height: 7 }, 'medium');
+
+  test('a code names the same grid again, and another game\'s code is refused', () => {
+    expect(bridgesFromCode(puzzleCode(puzzle.id))).toEqual(puzzle);
+    const page = generateBridges('P1', { width: 10, height: 13 }, 'easy');
+    expect(bridgesFromCode(puzzleCode(page.id))).toEqual(page);
+    expect(() => bridgesFromCode('SL-7X7-E-7K2Q9X')).toThrow('not a Bridges code');
+  });
+
+  test('the answers are every link with its bridges, and a link\'s line runs between the two rings', () => {
+    const answers = bridgesAnswers(puzzle);
+    expect(answers.map(answer => answer.count)).toEqual(puzzle.solution);
+    const grid: Grid = { lattice: 'square', x: 0, y: 0, cell: 100, columns: 7, rows: 7 };
+    expect(linkLine(grid, [0, 0], [3, 0])).toEqual([[82, 50], [318, 50]]);
+    expect(linkLine(grid, [0, 0], [0, 2], 10)).toEqual([[40, 82], [40, 218]]);
+  });
+
+  test('the answer is a copy in native greys that leaves each island as drawn', () => {
+    const { layout, raster } = drawBridgesPage(puzzle, 'portrait', 'right');
+    const before = Buffer.from(raster.pixels);
+    const answered = drawLinkAnswers(raster, layout.grid, bridgesAnswers(puzzle));
+    expect(Buffer.from(raster.pixels).equals(before)).toBe(true);
+    expect(Buffer.from(answered.pixels).equals(before)).toBe(false);
+    assertNativeGreys(answered);
+    for (const island of puzzle.islands) {
+      const [x, y] = cellCenter(layout.grid, island.column, island.row);
+      const at = Math.round(y) * raster.width + Math.round(x);
+      expect(answered.pixels[at]).toBe(raster.pixels[at]);
+    }
   });
 });

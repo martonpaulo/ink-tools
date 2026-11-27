@@ -7,8 +7,9 @@
 import {
   checkSlitherlink,
   drawEdgeAnswers,
-  drawEdgeCheck,
+  drawLineCheck,
   drawSlitherlinkPage,
+  edgeEnds,
   generateSlitherlink,
   puzzleCode,
   SLITHERLINK_BANDS,
@@ -36,7 +37,7 @@ function board(puzzle: Slitherlink, shape: PageShape): Puzzle {
     page,
     check: async ink => {
       const found = checkSlitherlink(puzzle, grid, ink);
-      return {picture: drawEdgeCheck(page, grid, ink, found.wrong), wrong: found.wrong.length, unread: 0, solved: found.solved};
+      return {picture: drawLineCheck(page, grid, ink, found.wrong.map(key => edgeEnds(grid, key))), wrong: found.wrong.length, unread: 0, solved: found.solved};
     },
     answer: () => drawEdgeAnswers(page, grid, slitherlinkLoop(puzzle)),
   };

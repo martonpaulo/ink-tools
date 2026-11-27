@@ -59,12 +59,13 @@ import {KILLER} from '../../../plugins/puzzles/src/games/killer';
 import {CALCUDOKU} from '../../../plugins/puzzles/src/games/calcudoku';
 import {KAKURO} from '../../../plugins/puzzles/src/games/kakuro';
 import {SLITHERLINK} from '../../../plugins/puzzles/src/games/slitherlink';
+import {BRIDGES} from '../../../plugins/puzzles/src/games/bridges';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -336,6 +337,21 @@ const slitherlinkInk = () => {
     return {points: [{x: x0 + (x1 - x0) / 10, y: y0 + (y1 - y0) / 10}, {x: x1 - (x1 - x0) / 10, y: y1 - (y1 - y0) / 10}], element: {}};
   });
 };
+/** A Bridges page of 10 x 10, its bridges drawn but one, and one link drawn with a bridge too many (#396). */
+const BRIDGES_CODE = 'BR-10X10-M-1';
+const bridgesInk = () => {
+  const puzzle = bridgesFromCode(BRIDGES_CODE);
+  const {grid} = drawBridgesPage(puzzle, 'portrait', 'right').layout;
+  const counts = puzzle.solution.slice();
+  counts[counts.findIndex(count => count === 2)] = 0;
+  counts[counts.findIndex(count => count === 1)] = 2;
+  return bridgesAnswers(puzzle).flatMap(({from, to}, e) =>
+    Array.from({length: counts[e]}, (_, i) => {
+      const [[x0, y0], [x1, y1]] = linkLine(grid, from, to, (i - (counts[e] - 1) / 2) * grid.cell * VIEW_LINK_GAP);
+      return {points: [{x: x0, y: y0}, {x: x1, y: y1}], element: {}};
+    }),
+  );
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -367,6 +383,7 @@ const puzzlesKiller = (code: string | null, steps: string[] = []) => puzzlesGame
 const puzzlesCalcudoku = (code: string | null, steps: string[] = []) => puzzlesGame(CALCUDOKU, calcudokuInk, code, steps);
 const puzzlesKakuro = (code: string | null, steps: string[] = []) => puzzlesGame(KAKURO, kakuroInk, code, steps);
 const puzzlesSlitherlink = (code: string | null, steps: string[] = []) => puzzlesGame(SLITHERLINK, slitherlinkInk, code, steps);
+const puzzlesBridges = (code: string | null, steps: string[] = []) => puzzlesGame(BRIDGES, bridgesInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -419,6 +436,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-slitherlink-page', render: () => puzzlesSlitherlink(SLITHERLINK_CODE)},
   {name: 'puzzles-slitherlink-check', render: () => puzzlesSlitherlink(SLITHERLINK_CODE, ['Check'])},
   {name: 'puzzles-slitherlink-solution', render: () => puzzlesSlitherlink(SLITHERLINK_CODE, ['Show Solution'])},
+  {name: 'puzzles-bridges', render: () => puzzlesBridges(null)},
+  {name: 'puzzles-bridges-page', render: () => puzzlesBridges(BRIDGES_CODE)},
+  {name: 'puzzles-bridges-check', render: () => puzzlesBridges(BRIDGES_CODE, ['Check'])},
+  {name: 'puzzles-bridges-solution', render: () => puzzlesBridges(BRIDGES_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

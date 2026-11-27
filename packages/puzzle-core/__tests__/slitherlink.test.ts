@@ -3,7 +3,7 @@ import {
   checkSlitherlink,
   countSlitherlinkSolutions,
   drawEdgeAnswers,
-  drawEdgeCheck,
+  drawLineCheck,
   drawSlitherlinkPage,
   edgeEnds,
   generateSlitherlink,
@@ -183,7 +183,7 @@ describe('the slitherlink page and its check', () => {
     const before = Buffer.from(raster.pixels);
     const loop = slitherlinkLoop(puzzle);
     const off = slitherlinkEdgeKeys(puzzle.width, puzzle.height).find(key => !loop.includes(key)) as string;
-    const checked = drawEdgeCheck(raster, grid, [along(grid, off)], [off]);
+    const checked = drawLineCheck(raster, grid, [along(grid, off)], [edgeEnds(grid, off)]);
     const answered = drawEdgeAnswers(raster, grid, loop);
     expect(Buffer.from(raster.pixels).equals(before)).toBe(true);
     for (const picture of [checked, answered]) {

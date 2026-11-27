@@ -123,9 +123,24 @@ export const ALONG_MIN_COVER = 0.6;
 const ALONG_PARTS_PER_CELL = 6;
 
 /**
- * How many strokes run along the row or column segment between two square cells' facing borders,
- * such as the bridges drawn between two islands: a stroke counts when its points near the line cover
- * most of the segment, so a line that only crosses it, or a mark beside it, does not count.
+ * [inference] a share of a cell, tuned in the device round: two runs of ink along a line this far
+ * apart across it are two lines, such as a double bridge; nearer, one line drawn in pieces.
+ */
+export const ALONG_LINE_GAP = 0.1;
+
+/** One run of ink along a line: the parts of the segment it covers and its mean place across. */
+interface AlongRun {
+  covered: Set<number>;
+  offSum: number;
+  points: number;
+}
+
+/**
+ * How many lines run along the row or column segment between two square cells' facing borders,
+ * such as the bridges drawn between two islands (#396). Ink counts only while the pen runs along the
+ * segment, so a cross marked to rule a link out, or a line across it, draws none. A stroke is split
+ * where the pen turns back, so a double line drawn out and back is two; runs at nearly the same place
+ * across are one line drawn in pieces. A line counts when it covers most of the segment.
  */
 export function strokesAlong(grid: Grid, from: readonly [number, number], to: readonly [number, number], strokes: readonly InkStroke[]): number {
   requireSquare(grid, 'a line check');
@@ -137,17 +152,38 @@ export function strokesAlong(grid: Grid, from: readonly [number, number], to: re
   const start = Math.min(horizontal ? c0 : r0, horizontal ? c1 : r1) + 1;
   const end = Math.max(horizontal ? c0 : r0, horizontal ? c1 : r1);
   const parts = Math.max(1, (end - start) * ALONG_PARTS_PER_CELL);
-  let count = 0;
+  const runs: AlongRun[] = [];
   for (const stroke of strokes) {
-    const covered = new Set<number>();
-    for (const { x, y } of densePoints(stroke.points, grid.cell * LINE_STEP)) {
-      const u = (x - grid.x) / grid.cell;
-      const v = (y - grid.y) / grid.cell;
-      const [along, off] = horizontal ? [u, v] : [v, u];
-      if (Math.abs(off - across) > STRIKE_MAX_BOW || along < start || along >= end) continue;
-      covered.add(Math.floor(((along - start) / (end - start)) * parts));
-    }
-    if (covered.size >= ALONG_MIN_COVER * parts) count++;
+    const points = densePoints(stroke.points, grid.cell * LINE_STEP).map(({ x, y }) => {
+      const [u, v] = [(x - grid.x) / grid.cell, (y - grid.y) / grid.cell];
+      return horizontal ? [u, v] : [v, u];
+    });
+    let run: AlongRun | null = null;
+    let way = 0;
+    points.forEach(([along, off], i) => {
+      // The pen's way at this point, read as `inkedEdges` reads it.
+      const [a, b] = [points[Math.max(0, i - SLOPE_REACH)], points[Math.min(points.length - 1, i + SLOPE_REACH)]];
+      const [step, drift] = [b[0] - a[0], b[1] - a[1]];
+      if (Math.abs(off - across) > STRIKE_MAX_BOW || along < start || along >= end || Math.abs(drift) > Math.abs(step) * EDGE_MAX_SLOPE) {
+        run = null;
+        return;
+      }
+      if (!run || Math.sign(step) !== way) {
+        run = { covered: new Set<number>(), offSum: 0, points: 0 };
+        runs.push(run);
+        way = Math.sign(step);
+      }
+      run.covered.add(Math.floor(((along - start) / (end - start)) * parts));
+      run.offSum += off;
+      run.points++;
+    });
   }
-  return count;
+  // Runs side by side, nearest first: a new line starts where the next run lies a line's gap away.
+  const placed = runs.map(run => ({ covered: run.covered, off: run.offSum / run.points })).sort((p, q) => p.off - q.off);
+  const lines: Set<number>[] = [];
+  placed.forEach((run, i) => {
+    if (i === 0 || run.off - placed[i - 1].off > ALONG_LINE_GAP) lines.push(new Set<number>());
+    for (const part of run.covered) lines[lines.length - 1].add(part);
+  });
+  return lines.filter(line => line.size >= ALONG_MIN_COVER * parts).length;
 }

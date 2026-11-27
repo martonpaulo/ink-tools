@@ -16,7 +16,7 @@
  * the tests use to pin the solution count.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
 
 export interface BridgesSize {
@@ -52,6 +52,8 @@ export interface Bridges {
 export const BRIDGES_BANDS: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 /** A hard grid needs `hardMinSide` cells a side: under it, fewer than 1 seed in 2 found one in the attempts. */
 export const BRIDGES_LIMITS = { minSide: 5, maxSide: 15, hardMinSide: 7 } as const;
+/** The square sides the Puzzles view offers: each one's every band is found for every seed the tests try. */
+export const BRIDGES_SIDES: readonly number[] = [7, 10, 13];
 /** The most bridges one pair of islands can share. */
 export const MAX_BRIDGES = 2;
 
@@ -419,4 +421,12 @@ export function generateBridges(seed: string, size: BridgesSize, difficulty: Dif
     return { id: { game: 'bridges', size: bridgesSizeToken(size), difficulty, seed }, width, height, islands, solution: rated.solution };
   }
   throw new Error(`no ${difficulty} ${width} x ${height} Bridges grid from seed «${seed}» in ${ATTEMPTS} attempts`);
+}
+
+/** The Bridges grid a puzzle code names (`BR-7X7-M-7K2Q9X`), the same one every time (#396). */
+export function bridgesFromCode(code: string): Bridges {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'bridges') throw new RangeError(`«${code}» is not a Bridges code`);
+  const [width, height] = id.size.split('X').map(Number);
+  return generateBridges(id.seed, { width, height }, id.difficulty);
 }

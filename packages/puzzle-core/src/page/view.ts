@@ -5,7 +5,7 @@
  */
 import { type InkStroke } from '../check/cells';
 import { drawCentredText, FONT_WEIGHTS } from './font';
-import { cellCenter, type Grid } from './grid';
+import { cellCenter, type Cell, type Grid } from './grid';
 import { TEXT_SIZE, type Tone } from './look';
 import { type Raster, strokeLine } from './raster';
 
@@ -152,9 +152,11 @@ export function edgeEnds(grid: Grid, key: string): [[number, number], [number, n
   return match[1] === 'h' ? [at(column, row), at(column + 1, row)] : [at(column, row), at(column, row + 1)];
 }
 
-/** A capsule around an edge, as a closed polyline: a half ring at each end, joined along the edge. */
-function edgeCapsule(grid: Grid, key: string): [number, number][] {
-  const [[x0, y0], [x1, y1]] = edgeEnds(grid, key);
+/** A line between two points, such as an edge or a link. */
+export type Segment = readonly [readonly [number, number], readonly [number, number]];
+
+/** A capsule around a line's middle, along it, as a closed polyline: a half ring at each end, joined along the line. */
+function lineCapsule(grid: Grid, [[x0, y0], [x1, y1]]: Segment): [number, number][] {
   const [cx, cy] = [(x0 + x1) / 2, (y0 + y1) / 2];
   const axis = Math.atan2(y1 - y0, x1 - x0);
   const radius = (grid.cell * VIEW_EDGE_MARK.width) / 2;
@@ -173,12 +175,12 @@ function edgeCapsule(grid: Grid, key: string): [number, number][] {
 }
 
 /**
- * The page an edges game's «Check» shows (#391): the player's ink and a capsule around each wrong
- * edge, named as `inkedEdges` names it.
+ * The page an edges or links game's «Check» shows (#391, #396): the player's ink and a capsule along
+ * the middle of each wrong line, so it never reads as a cell's ring or an island.
  */
-export function drawEdgeCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly string[]): Raster {
+export function drawLineCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly Segment[]): Raster {
   const marked = drawPointCheck(page, strokes, [], 0);
-  for (const key of wrong) drawPolyline(marked, edgeCapsule(grid, key), VIEW_MARK_PX);
+  for (const line of wrong) drawPolyline(marked, lineCapsule(grid, line), VIEW_MARK_PX);
   return marked;
 }
 
@@ -189,5 +191,40 @@ export function drawEdgeCheck(page: Raster, grid: Grid, strokes: readonly InkStr
 export function drawEdgeAnswers(page: Raster, grid: Grid, edges: readonly string[]): Raster {
   const answer = copyRaster(page);
   for (const key of edges) drawPolyline(answer, edgeEnds(grid, key), VIEW_ANSWER_PX);
+  return answer;
+}
+
+/** One link of a links game's answer (#396): the two cells it joins and how many lines it takes. */
+export interface LinkAnswer {
+  readonly from: Cell;
+  readonly to: Cell;
+  readonly count: number;
+}
+
+/** Two lines of one link sit this share of a cell apart, inside the islands' rings at both ends. */
+export const VIEW_LINK_GAP = VIEW_MARK_SHARE / 2;
+
+/** A link's line between the rims of its two cells' icons, `offset` pixels to one side. */
+export function linkLine(grid: Grid, from: Cell, to: Cell, offset = 0): [[number, number], [number, number]] {
+  const [ax, ay] = cellCenter(grid, ...from);
+  const [bx, by] = cellCenter(grid, ...to);
+  const length = Math.hypot(bx - ax, by - ay);
+  const [ux, uy] = [(bx - ax) / length, (by - ay) / length];
+  const rim = (grid.cell * TEXT_SIZE.icon) / 2;
+  const [ox, oy] = [-uy * offset, ux * offset];
+  return [
+    [ax + ux * rim + ox, ay + uy * rim + oy],
+    [bx - ux * rim + ox, by - uy * rim + oy],
+  ];
+}
+
+/** The page with a links game's answer drawn (#396), for the plugin's view only: one or two lines a link, none for 0. */
+export function drawLinkAnswers(page: Raster, grid: Grid, links: readonly LinkAnswer[]): Raster {
+  const answer = copyRaster(page);
+  const gap = grid.cell * VIEW_LINK_GAP;
+  for (const { from, to, count } of links) {
+    // The lines of a link sit side by side, centred on the line between the cells.
+    for (let i = 0; i < count; i++) drawPolyline(answer, linkLine(grid, from, to, (i - (count - 1) / 2) * gap), VIEW_ANSWER_PX);
+  }
   return answer;
 }
