@@ -22,6 +22,8 @@ export type Settings = {
   pins: Record<string, string>;
   /** The receiver picked last, listed first on the next send; null before the first pick. */
   last: Device | null;
+  /** «Receive in the background» (#289): a receiver started at plugin start; off by default. */
+  background: boolean;
 };
 
 /** What a receiver's announced fingerprint is to its pin (#307). */
@@ -166,7 +168,7 @@ export async function loadSettings(
   if (last !== null && !('pins' in parsed)) {
     pins[last.alias] = last.fingerprint;
   }
-  return {fingerprint, pins, last};
+  return {fingerprint, pins, last, background: parsed.background === true};
 }
 
 export async function saveSettings(

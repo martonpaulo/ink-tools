@@ -37,6 +37,7 @@ import {startPick} from './src/send/pickSession';
 import {relay} from './src/native';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
+import {placePendingOnPenUp, startBackgroundIfOn} from './src/receive/background';
 import {working} from './src/working';
 import {editAction} from './src/editor/operations';
 import {templatesAction} from './src/editor/templates';
@@ -89,6 +90,11 @@ registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
   showType: SHOW_FULL_VIEW,
 }).then(result => report('receive button', result));
 
+function showLine(line) {
+  closePluginView();
+  ToastAndroid.show(line, ToastAndroid.SHORT);
+}
+
 /**
  * The view shows «Ready to receive» until the first item lands in the note (#49); the window then
  * goes on with the view closed, and each item shows its toast as it lands (#289). The end line
@@ -96,10 +102,6 @@ registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
  */
 function receive() {
   let landed = 0;
-  const showLine = line => {
-    closePluginView();
-    ToastAndroid.show(line, ToastAndroid.SHORT);
-  };
   runReceive(relay(), noteHost, ALIAS, () => showPluginView(), line => {
     landed += 1;
     showLine(line);
@@ -171,6 +173,12 @@ report(
   }),
 );
 
+// «Receive in the background» (#289): with the switch on, the receiver starts here, with no tap.
+const backgroundDeps = {native: relay(), host: noteHost, alias: ALIAS, onItem: showLine};
+startBackgroundIfOn(backgroundDeps).catch(error =>
+  console.error(`Relay: background receive failed: ${error.message}`),
+);
+
 // Settings is a view, so the host's dialog has a place to show; a no-view tap asks too (#163).
 registerSettingsEntry(() => {
   showPluginView();
@@ -183,7 +191,19 @@ registerSettingsEntry(() => {
 // which ticks with no view open; an edit waits while the pen is on the page. `save-note` saves the
 // open note before inkctl opens another (#426); `templates` lists the tablet's page templates (#451).
 const pen = new PenGate();
-report('pen listener', onMotion(event => pen.motion(event)));
+// A pen-up places what a background receive kept with no note open (#289).
+const MOTION_UP = 1;
+report(
+  'pen listener',
+  onMotion(event => {
+    pen.motion(event);
+    if (event.action === MOTION_UP) {
+      placePendingOnPenUp(backgroundDeps).catch(error =>
+        console.error(`Relay: place the waiting items failed: ${error.message}`),
+      );
+    }
+  }),
+);
 const editHost = deviceEditHost(pen);
 startActionChannel({
   plugin: 'device-link',

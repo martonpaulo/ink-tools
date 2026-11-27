@@ -48,6 +48,14 @@ export const copy = {
   pdfTooManyPages: (max: number) => `The PDF has more than ${max} pages`,
   pdfNoNote: 'Could not make the note',
   noNote: 'Open a note first',
+  /** A background receive with no note open (#289): the item waits for the next open note. */
+  keptForNote: 'Received: it goes into the next note you write in',
+  receiveInBackground: 'Receive in the background',
+  receiveInBackgroundHint: 'Takes what LocalSend sends while the tablet is awake.',
+  receiveInBackgroundNote:
+    'You do not need to open Receive. Each text or picture goes into the open note, or waits for the next note you write in. Stop turns it off.',
+  /** A background receive that failed (#289): the switch now reads off, and this says why. */
+  backgroundStopped: (why: string) => `Receiving in the background stopped: ${why}`,
   insertFailed: 'Could not add it to the note',
   permissionReason:
     'Device Link sends and receives pages, pictures and texts over LocalSend',

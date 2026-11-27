@@ -5,6 +5,8 @@ import {
   Button,
   ChoiceList,
   shared,
+  RowGroup,
+  SwitchRow,
   TitleBar,
   useArmOnRoot,
   useBackKey,
@@ -14,7 +16,8 @@ import {
 import {copy} from './src/copy';
 import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';
-import {ALIAS, pickDeps, textDeps} from './src/run';
+import {ALIAS, noteHost, pickDeps, textDeps} from './src/run';
+import {onBackgroundSwitch, setBackground} from './src/receive/background';
 import {PickDevice, PickView} from './src/PickDevice';
 import {
   cancelPick,
@@ -43,6 +46,7 @@ import {
   onReceiveState,
   receiveState,
   ReceiveState,
+  stopReceiving,
 } from './src/receive/session';
 
 /** sn-adapter's Back key module, as `RelayPackage.java` registers it (#300). */
@@ -208,7 +212,7 @@ export default function App({
     return (
       <ReceiveView
         state={receiving}
-        onStop={() => native.stopReceive()}
+        onStop={() => stopReceiving(native)}
         onClose={close}
       />
     );
@@ -239,6 +243,15 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
     });
   }, [native, search]);
 
+  // A background receive that ended («Stop», or a receiver that could not start) reads off here too.
+  useEffect(
+    () =>
+      onBackgroundSwitch(on =>
+        setSettings(current => (current === null ? current : {...current, background: on})),
+      ),
+    [],
+  );
+
   const choose = (device: Device) => {
     if (settings === null) {
       return;
@@ -248,10 +261,75 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
     saveSettings(native, next);
   };
 
-  const chosen = settings?.last ?? null;
+  // «Receive in the background» (#289): saved, then the receiver starts or stops at once.
+  const switchBackground = (on: boolean) => {
+    if (settings === null) {
+      return;
+    }
+    setSettings({...settings, background: on});
+    const onItem = (line: string) => ToastAndroid.show(line, ToastAndroid.SHORT);
+    setBackground({native, host: noteHost, alias: ALIAS, onItem}, on).then(saved => {
+      if (!saved) {
+        // Not saved: the switch shows what is saved.
+        setSettings(current => (current === null ? current : {...current, background: !on}));
+      }
+    });
+  };
+
+  return (
+    <SettingsForm
+      settings={settings}
+      devices={devices}
+      onChoose={choose}
+      onSearch={() => settings !== null && search(settings)}
+      onBackground={switchBackground}
+      onClose={close}
+    />
+  );
+}
+
+/**
+ * Settings (#307, #289): «Receive in the background» first, in its own group with its note, so it
+ * stays in place while the search below fills in; then the receivers found, the one listed first on
+ * the next send chosen, named as its row is, and «Search Again». Nothing shows under the title bar
+ * until the saved values are read (`settings` null), never a default off first on e-ink; `devices`
+ * is null while the search runs.
+ */
+export function SettingsForm({
+  settings,
+  devices,
+  onChoose,
+  onSearch,
+  onBackground,
+  onClose,
+}: {
+  settings: Settings | null;
+  devices: Device[] | null;
+  onChoose: (device: Device) => void;
+  onSearch: () => void;
+  onBackground: (on: boolean) => void;
+  onClose: () => void;
+}) {
+  if (settings === null) {
+    // Nothing under the bar until the saved values are read: no default drawn first, no row moving.
+    return (
+      <View style={shared.screen}>
+        <TitleBar title={copy.title} onClose={onClose} />
+      </View>
+    );
+  }
+  const chosen = settings.last;
   return (
     <View style={shared.screen}>
-      <TitleBar title={copy.title} onClose={close} />
+      <TitleBar title={copy.title} onClose={onClose} />
+      <RowGroup note={copy.receiveInBackgroundNote}>
+        <SwitchRow
+          title={copy.receiveInBackground}
+          subtitle={copy.receiveInBackgroundHint}
+          value={settings.background}
+          onChange={onBackground}
+        />
+      </RowGroup>
       {devices === null ? (
         <Text style={shared.text}>{copy.searching}</Text>
       ) : devices.length === 0 ? (
@@ -264,23 +342,21 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
             label: deviceLabel(device, devices),
           }))}
           value={chosen?.fingerprint ?? null}
+          note={chosen === null ? undefined : copy.chosen(deviceLabel(chosen, devices))}
           onChange={fingerprint => {
             const device = devices.find(
               each => each.fingerprint === fingerprint,
             );
             if (device) {
-              choose(device);
+              onChoose(device);
             }
           }}
         />
       )}
-      {chosen !== null && (
-        <Text style={shared.hint}>{copy.chosen(chosen.alias)}</Text>
-      )}
       <Button
         label={copy.searchAgain}
-        disabled={devices === null || settings === null}
-        onPress={() => settings !== null && search(settings)}
+        disabled={devices === null}
+        onPress={onSearch}
       />
     </View>
   );

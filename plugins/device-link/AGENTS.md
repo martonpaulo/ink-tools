@@ -54,7 +54,15 @@ receive again ([#289](https://github.com/martonpaulo/ink-tools/issues/289); on 0
 stopped it and the next send met «connection refused»). Its waits tick on `DeviceLinkTicks`, as a
 JS timer never fires with the view closed. Back reaches the view through sn-adapter's
 `BackKeyModule`, registered as `DeviceLinkBack` ([#300](https://github.com/martonpaulo/ink-tools/issues/300)): on beta 1 Back went past the view and
-closed the note behind it. Still to come: a receiver started at plugin start, with no tap.
+closed the note behind it. Settings' «Receive in the background» switch, off by default, starts
+the same receiver at plugin start with no tap and no window end, until «Stop» or the switch turned
+off (`src/receive/background.ts`, `runBackgroundReceive`). A background receive that ends by
+«Stop» or a failure turns the switch off and tells an open Settings view; a failure also says why
+in a toast. A stop sent while the receiver still starts is sent again once it is ready
+(`stopReceiving` in `session.ts`), as the native start clears a stop queued before it. With no note open, a text or a picture waits in `tmp/pending.json`
+(`src/receive/pending.ts`) and the next «Receive» tap or pen-up in a note places it ([#289](https://github.com/martonpaulo/ink-tools/issues/289)).
+To test on the device: the switch after a plugin update, a Wi-Fi change while it is on, and its
+battery cost.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
 lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with the devices found, one tap

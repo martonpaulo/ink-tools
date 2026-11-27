@@ -177,6 +177,7 @@ describe('a receiver that moved (#98)', () => {
       fingerprint: 'self',
       pins: {Mac: mac.fingerprint},
       last: moved,
+      background: false,
     });
     const lines = logged.mock.calls.map(call => call[0]);
     expect(lines).toContain(`Relay: send: to Mac at ${moved.ip}:53317 over https`);
@@ -231,7 +232,7 @@ describe('a receiver that moved (#98)', () => {
 });
 
 test('a send presents the certificate it announces, and none without the identity (#98)', async () => {
-  const settings = {fingerprint: 'saved', pins: {}, last: null};
+  const settings = {fingerprint: 'saved', pins: {}, last: null, background: false};
   const {api} = fakeRelay();
   await expect(ownIdentity(api, settings, async () => ok('/p'))).resolves.toEqual({
     fingerprint: 'cert-fp',
@@ -372,18 +373,19 @@ describe('settings', () => {
   test('a missing or unreadable file starts fresh with a new fingerprint', async () => {
     const {api} = fakeRelay({readText: jest.fn(async () => '{oops')});
     const settings = await loadSettings(api, pluginDir, () => 0.5);
-    expect(settings).toEqual({fingerprint: '8'.repeat(32), pins: {}, last: null});
+    expect(settings).toEqual({fingerprint: '8'.repeat(32), pins: {}, last: null, background: false});
   });
 
   test('the pins and the last pick survive a save and a load (#307)', async () => {
     const {api, calls} = fakeRelay();
-    await saveSettings(api, {fingerprint: 'f', pins: {Mac: mac.fingerprint}, last: mac}, pluginDir);
+    await saveSettings(api, {fingerprint: 'f', pins: {Mac: mac.fingerprint}, last: mac, background: true}, pluginDir);
     const read = jest.fn(async (_path: string) => calls.written[0]);
     const {api: again} = fakeRelay({readText: read});
     await expect(loadSettings(again, pluginDir)).resolves.toEqual({
       fingerprint: 'f',
       pins: {Mac: mac.fingerprint},
       last: mac,
+      background: true,
     });
     // In the private folder: a shared path is outside the whitelist (#164).
     expect(read).toHaveBeenCalledWith('/plugin/settings.json');

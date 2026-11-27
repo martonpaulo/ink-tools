@@ -40,7 +40,7 @@ import type {EditorState as ImageEditorState} from '../../../plugins/image-editi
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
 import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/StylesGrid';
 import {PickView as DeviceLinkPick} from '../../../plugins/device-link/src/PickDevice';
-import {ReceiveView as DeviceLinkReceive, TextView as DeviceLinkText} from '../../../plugins/device-link/App';
+import {ReceiveView as DeviceLinkReceive, SettingsForm as DeviceLinkSettings, TextView as DeviceLinkText} from '../../../plugins/device-link/App';
 import type {Device as TransferDevice} from '../../../plugins/device-link/src/localsend/protocol';
 import {refusedProblem as deviceLinkRefused} from '../../../plugins/device-link/src/permissions';
 import {sendFailedProblem as deviceLinkSendFailed} from '../../../plugins/device-link/src/run';
@@ -296,6 +296,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'device-link-pick', render: () => mount(<DeviceLinkPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
   {name: 'device-link-text', render: () => mount(<DeviceLinkText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
   {name: 'device-link-receive', render: () => mount(<DeviceLinkReceive state="ready" onStop={noop} onClose={noop} />)},
+  {name: 'device-link-settings', render: () => mount(<DeviceLinkSettings settings={{fingerprint: 'self', pins: {}, last: TRANSFER_DEVICES[0], background: true}} devices={TRANSFER_DEVICES} onChoose={noop} onSearch={noop} onBackground={noop} onClose={noop} />)},
+  {name: 'device-link-settings-searching', render: () => mount(<DeviceLinkSettings settings={{fingerprint: 'self', pins: {}, last: null, background: false}} devices={null} onChoose={noop} onSearch={noop} onBackground={noop} onClose={noop} />)},
   {name: 'device-link-needs-permission', render: () => mount(<Needs problem={deviceLinkRefused('plugin.permission.FILE:READ')} onClose={noop} />)},
   {name: 'device-link-error', render: () => mount(<ErrorView problem={deviceLinkSendFailed(deviceLinkCopy.noImage)} onClose={noop} />)},
   {name: 'lasso-actions-needs-permission', render: () => mount(<Needs problem={lassoActionsPermission([LASSO_FILE_WRITE], noop)} onClose={noop} />)},

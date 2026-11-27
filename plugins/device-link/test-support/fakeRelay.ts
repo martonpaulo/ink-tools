@@ -23,6 +23,8 @@ export function fakeRelay(
     started: [],
     stopped: 0,
   };
+  // As the native receiver: after a stop, a wait answers «stopped» until the next start.
+  let stopped = false;
   const native: RelayNative = {
     discover: jest.fn(async () => []),
     post: jest.fn(async (...args: unknown[]) => {
@@ -42,15 +44,19 @@ export function fakeRelay(
     identity: jest.fn(async () => 'cert-fp'),
     startReceive: jest.fn(async (...args: unknown[]) => {
       calls.started.push(args);
+      stopped = false;
       return 'cert-fp';
     }),
-    nextReceived: jest.fn(async () => arrivals.shift() ?? null),
+    nextReceived: jest.fn(async () =>
+      arrivals.length > 0 ? arrivals.shift() ?? null : stopped ? {kind: 'stopped' as const} : null,
+    ),
     answer: jest.fn(async (...args: unknown[]) => {
       calls.answers.push(args);
       return true;
     }),
     stopReceive: jest.fn(async () => {
       calls.stopped += 1;
+      stopped = true;
       return true;
     }),
     exists: jest.fn(async () => false),

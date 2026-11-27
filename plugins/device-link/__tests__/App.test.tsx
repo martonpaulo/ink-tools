@@ -8,7 +8,7 @@ import {ownFingerprint} from '../src/settings/device';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {fakeRelay} from '../test-support/fakeRelay';
 import {Device} from '../src/localsend/protocol';
-import {runReceive} from '../src/receive/session';
+import {receivingInBackground, runReceive} from '../src/receive/session';
 
 const lan = (...parts: number[]) => parts.join('.');
 const answer = (alias: string, fingerprint: string) =>
@@ -224,7 +224,7 @@ test('Send Text keeps the title bar\'s Close while it waits, never while it read
 });
 
 test('the send half announces the certificate fingerprint, the saved one only without it', async () => {
-  const settings = {fingerprint: 'saved', pins: {}, last: null};
+  const settings = {fingerprint: 'saved', pins: {}, last: null, background: false};
   const {api} = fakeRelay();
   await expect(
     ownFingerprint(api, settings, async () => ok('/p')),
@@ -272,4 +272,62 @@ test('«Send Text» shows the text with one row per receiver and Cancel, or only
   // The empty view's one way out is the title bar's × (#256).
   expect(empty.root.findAllByProps({accessibilityLabel: 'Close'}).length).toBeGreaterThan(0);
   expect(rows(empty, 'Mac')).toEqual([]);
+});
+
+const BACKGROUND = 'Receive in the background';
+const backgroundOn = (tree: ReactTestRenderer) => row(tree, BACKGROUND).props.accessibilityState.checked;
+
+/** Presses the switch, then lets the save and the receiver's start or end settle, `turns` times. */
+async function pressBackground(tree: ReactTestRenderer, turns = 1) {
+  await act(async () => {
+    row(tree, BACKGROUND).props.onPress();
+  });
+  for (let i = 0; i < turns; i++) {
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+  }
+}
+
+test('Settings has «Receive in the background», off by default, and turning it on saves it (#289)', async () => {
+  const {api, calls} = fakeRelay();
+  const tree = await render(api);
+  const toggle = row(tree, 'Receive in the background');
+  expect(toggle.props.accessibilityState.checked).toBe(false);
+  expect(screenBreaks(tree.root)).toEqual([]);
+  await act(async () => {
+    toggle.props.onPress();
+  });
+  expect(backgroundOn(tree)).toBe(true);
+  expect(calls.written.some(text => JSON.parse(text).background === true)).toBe(true);
+  // Off again, so no receiver outlives the test.
+  await pressBackground(tree);
+  expect(receivingInBackground()).toBe(false);
+});
+
+test('Settings shows the switch off again when the background receiver it started cannot run (#289)', async () => {
+  // Files kept in memory, so the switch saved on is read back when the receiver starts.
+  const files: Record<string, string> = {};
+  const {api} = fakeRelay({
+    readText: jest.fn(async (path: string) => files[path] ?? null),
+    writeText: jest.fn(async (path: string, text: string) => {
+      files[path] = text;
+      return null;
+    }),
+    startReceive: jest.fn(async () => {
+      throw Object.assign(new Error('BindException'), {code: 'IO'});
+    }),
+  });
+  const tree = await render(api);
+  await pressBackground(tree, 20);
+  expect(backgroundOn(tree)).toBe(false);
+});
+
+test('Settings puts the switch back when its value cannot be saved (#289)', async () => {
+  const {api} = fakeRelay({writeText: jest.fn(async () => {
+    throw Object.assign(new Error('EACCES'), {code: 'IO'});
+  })});
+  const tree = await render(api);
+  await pressBackground(tree);
+  expect(backgroundOn(tree)).toBe(false);
 });

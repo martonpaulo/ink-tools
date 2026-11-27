@@ -241,11 +241,12 @@ test('a port in use or a missing module is «Could not start receiving»', async
   await expect(receiveOne(fakeRelay().api, noDir, 'Supernote')).resolves.toEqual(held);
 });
 
-test('a text with no open note is «Open a note first»', async () => {
-  const {api} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'x'}})]);
+test('a text with no open note waits for the next open note (#289)', async () => {
+  const {api, calls} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'x'}})]);
   const host = note({pageSize: jest.fn(async () => fail(-1, 'no note'))});
-  await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.noNote);
+  await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.keptForNote);
   expect(host.insertText).not.toHaveBeenCalled();
+  expect(calls.written).toEqual([JSON.stringify([{kind: 'text', text: 'x'}])]);
 });
 
 test('a failed insert says so', async () => {

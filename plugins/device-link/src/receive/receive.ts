@@ -21,9 +21,13 @@ import {Relay} from '../native';
 import {refusedProblem} from '../permissions';
 import {tempDir} from '../send/sendPng';
 import {NoteFiles, pdfToNote} from './pdfNote';
+import {addPending, loadPending, PendingItem, savePending} from './pending';
 
 /** How long one tap on «Receive» keeps the tablet visible. */
 export const RECEIVE_WINDOW_MS = 2 * 60 * 1000;
+
+/** The longest single wait of a background receive, which has no window end (#289). */
+export const BACKGROUND_WAIT_MS = 60 * 1000;
 
 export const TEXT_FONT_SIZE = 32;
 const LINE_HEIGHT = Math.round(TEXT_FONT_SIZE * 1.5);
@@ -281,9 +285,12 @@ const RECEIVE_FAILED: ReceiveHeld = {problem: {what: copy.receiveFailed}, state:
 
 /**
  * Receives and places each item that comes in the window, until the window ends or «Stop»; answers
- * the last item's line, or, when none landed, why, or the failure the view holds (#438). `onReady` runs once the tablet is visible, and
+ * the last item's line, or, when none landed, why. `onReady` runs once the tablet is visible, and
  * `onItem` with each item's line as it lands. A refused offer keeps the window open for the next
- * one. A closed receive took only its first item before (device round 11, #289).
+ * one. A closed receive took only its first item before (device round 11, #289). A failure the view
+ * holds (#438) is answered instead of a line. `windowMs` null is the background receive: no window
+ * end, only «Stop» or the switch turned off ends it (#289). Items the receive cannot place, with
+ * no note open, wait (`pending.ts`), and the ones waiting from before are placed first.
  */
 export async function receiveOne(
   native: Relay,
@@ -291,7 +298,7 @@ export async function receiveOne(
   alias: string,
   onReady: () => void = () => {},
   now: () => number = Date.now,
-  windowMs: number = RECEIVE_WINDOW_MS,
+  windowMs: number | null = RECEIVE_WINDOW_MS,
   onItem: (line: string) => void = () => {},
 ): Promise<string | ReceiveHeld> {
   // Before the first file, note or network call (#163): without it every file call fails.
@@ -328,26 +335,40 @@ export async function receiveOne(
     last = line;
     onItem(line);
   };
+  /** Places a text or a picture, or keeps it for the next open note (#289). */
+  const placeOrKeep = async (item: PendingItem) => {
+    if (!(await host.pageSize()).ok) {
+      const kept = await addPending(native, dir.value, item);
+      host.log(kept ? 'receive: no note open: the item waits' : 'receive: no note open, and the item could not be kept');
+      landed(kept ? copy.keptForNote : copy.noNote);
+      return;
+    }
+    landed(item.kind === 'text' ? await placeText(host, item.text) : await placeImage(native, host, item.path));
+  };
+  await placePending(native, host, dir.value, landed);
   try {
-    const deadline = now() + windowMs;
-    for (let left = windowMs; left > 0; left = deadline - now()) {
-      const next = await native.nextReceived(left);
+    const deadline = windowMs === null ? Number.POSITIVE_INFINITY : now() + windowMs;
+    for (let left = deadline - now(); left > 0; left = deadline - now()) {
+      const next = await native.nextReceived(windowMs === null ? BACKGROUND_WAIT_MS : left);
       if (!next.ok) {
         return RECEIVE_FAILED;
       }
       const arrival = next.value;
       if (arrival === null) {
+        if (windowMs === null) {
+          continue;
+        }
         break;
       }
       if (arrival.kind === 'stopped') {
         return last ?? copy.receiveStopped;
       }
       if (arrival.kind === 'file') {
-        landed(
-          arrival.path.endsWith('.pdf')
-            ? await pdfToNote(native, host, arrival.path)
-            : await placeImage(native, host, arrival.path),
-        );
+        if (arrival.path.endsWith('.pdf')) {
+          landed(await pdfToNote(native, host, arrival.path));
+        } else {
+          await placeOrKeep({kind: 'image', path: arrival.path});
+        }
         continue;
       }
       if (arrival.kind === 'offer') {
@@ -359,7 +380,7 @@ export async function receiveOne(
           decision.extension,
         );
         if (decision.taken.kind === 'text') {
-          landed(await placeText(host, decision.taken.text));
+          await placeOrKeep({kind: 'text', text: decision.taken.text});
           continue;
         }
         if (decision.taken.kind === 'refuse') {
@@ -371,4 +392,27 @@ export async function receiveOne(
   } finally {
     await native.stopReceive();
   }
+}
+
+/**
+ * Places each item that waits from a receive with no note open (#289), in arrival order, while a
+ * note is open; what still cannot be placed waits on. `onItem` gets each placed item's line.
+ * Answers how many were placed.
+ */
+export async function placePending(
+  native: Relay,
+  host: NoteHost,
+  pluginDir: string,
+  onItem: (line: string) => void = () => {},
+): Promise<number> {
+  const waiting = await loadPending(native, pluginDir);
+  if (waiting.length === 0 || !(await host.pageSize()).ok) {
+    return 0;
+  }
+  // Saved first, so an item is never placed twice when a place throws.
+  await savePending(native, pluginDir, []);
+  for (const item of waiting) {
+    onItem(item.kind === 'text' ? await placeText(host, item.text) : await placeImage(native, host, item.path));
+  }
+  return waiting.length;
 }
