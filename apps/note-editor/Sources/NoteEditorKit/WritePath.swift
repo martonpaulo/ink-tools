@@ -195,7 +195,14 @@ public struct WritePath: Sendable {
     /// backup first, and the restored note is pulled back and compared byte for byte. When the
     /// tablet's note is no longer the copy, the backup goes beside it as a conflict note instead,
     /// and `restoreConflict` names it (#317).
-    public func restore(_ backup: URL, note: String, copy: URL) async throws(WriteFailure) {
+    public func restore(
+        _ backup: URL, note: String, copy: URL,
+        timing: @Sendable (SendTiming) -> Void = logSendTiming
+    ) async throws(WriteFailure) {
+        // A revert is a send too, so its line names its slow step as an edit's does (#530).
+        let started = timed.now()
+        _ = timed.take()
+        defer { timing(SendTiming(waited: .zero, steps: timed.take(), total: timed.now() - started)) }
         let work = try makeWork()
         defer { try? FileManager.default.removeItem(at: work) }
         let current = work.appending(path: "current.note")

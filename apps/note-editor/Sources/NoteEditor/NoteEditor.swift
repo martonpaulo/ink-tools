@@ -6,6 +6,16 @@ import Observation
 import SwiftUI
 import os
 
+/// Each send's timing in the unified log at the notice level, which `log show` reads with no flag:
+/// `log show --last 5m --predicate 'eventMessage BEGINSWITH "Note Editor send:"'` (#530).
+nonisolated enum SendLog {
+    static let logger = Logger(subsystem: "com.martonpaulo.inktools.noteeditor", category: "send")
+
+    static func write(_ timing: SendTiming) {
+        logger.notice("Note Editor send: \(timing.line, privacy: .public)")
+    }
+}
+
 /// The edits of one note opened from the tablet (#313, #314): Undo and Redo through the history
 /// (#328), each edit drawn at once and sent in the background, a refusal taken back with its plain
 /// message, and File › Revert to Backup. The window shows the Mac's copy with every edit still on
@@ -104,7 +114,7 @@ final class NoteEditor {
         self.path = path
         let (stream, continuation) = AsyncStream.makeStream(of: SendOutcome<Int>.self)
         outcomes = continuation
-        sender = BackgroundSender(path: path, copy: copy) { continuation.yield($0) }
+        sender = BackgroundSender(path: path, copy: copy, timing: SendLog.write) { continuation.yield($0) }
         listener = Task { [weak self] in
             for await outcome in stream { self?.handle(outcome) }
         }
@@ -589,7 +599,7 @@ final class NoteEditor {
         restoring = true
         defer { restoring = false }
         do {
-            try await path.restore(backup, note: tabletPath, copy: copy)
+            try await path.restore(backup, note: tabletPath, copy: copy, timing: SendLog.write)
             history = EditHistory()
             reloadBase()
         } catch {

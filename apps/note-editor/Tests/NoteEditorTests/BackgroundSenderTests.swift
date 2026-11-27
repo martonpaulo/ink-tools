@@ -293,6 +293,40 @@ import Testing
         #expect(timing.total == names.reduce(Duration.zero) { $0 + (SlowTablet.times[$1] ?? .zero) })
     }
 
+    @Test func aRevertTimesEveryTabletCallAsASendDoes() async throws {
+        let fake = WritePathTests.FakeTablet(bytes: Data("now".utf8))
+        let clock = ManualClock()
+        let timed = TimedTablet(SlowTablet(fake, clock: clock), now: { clock.now() })
+        let copy = folder.appending(path: "copy.note")
+        try Data("now".utf8).write(to: copy)
+        let backup = folder.appending(path: "old.note")
+        try Data("old".utf8).write(to: backup)
+        let timings = Timings()
+        try await WritePathTests.path(timed, folder: folder).restore(
+            backup, note: WritePathTests.note, copy: copy, timing: { timings.add($0) })
+        let timing = try #require(timings.all.count == 1 ? timings.all.first : nil)
+        #expect(timing.steps.map(\.name) == ["pull", "edit", "push", "pull"])
+        #expect(timing.total == .seconds(8))
+        #expect(timing.waited == .zero)
+    }
+
+    /// A send over a tablet that answers at once ends at once by the wall clock: a fixed delay or
+    /// poll in the queue fails here, which the manual clock cannot show (#530).
+    @Test func aSendOverAnInstantTabletWaitsForNothingElse() async throws {
+        let fake = WritePathTests.FakeTablet(bytes: Data("base".utf8))
+        let copy = folder.appending(path: "copy.note")
+        try Data("base".utf8).write(to: copy)
+        let timings = Timings()
+        let sender = BackgroundSender<Int>(
+            path: WritePathTests.path(fake, folder: folder), copy: copy, timing: { timings.add($0) },
+            outcome: { _ in })
+        let wall = ContinuousClock()
+        let took = await wall.measure { await sender.drew(Self.nudge(1), undo: 1) }
+        #expect(timings.all.count == 1)
+        // About 10 ms on a laptop; the margin keeps a loaded machine from failing it.
+        #expect(took < .milliseconds(1500))
+    }
+
     @Test func aSendTimingReadsAsOneLogLine() {
         let timing = SendTiming(
             waited: .milliseconds(100),

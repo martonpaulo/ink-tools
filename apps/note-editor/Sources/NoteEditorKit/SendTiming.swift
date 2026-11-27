@@ -49,9 +49,9 @@ public struct SendTiming: Sendable, Equatable {
     }
 }
 
-/// Writes one send's timing to the app's log, read with
-/// `log show --predicate 'eventMessage BEGINSWITH "Note Editor send:"'` (#530); `NSLog`, as this
-/// module imports only Foundation and CoreGraphics.
+/// Writes one send's timing with `NSLog`, as this module imports only Foundation and CoreGraphics.
+/// For an app started by `open` that line reaches only stderr (measured on the owner's Mac,
+/// 2026-11-27, #530), so the app passes its own unified-log writer, `SendLog.write`.
 public func logSendTiming(_ timing: SendTiming) {
     NSLog("Note Editor send: %@", timing.line)
 }
