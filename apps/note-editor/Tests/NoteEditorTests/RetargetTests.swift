@@ -2,6 +2,9 @@ import Foundation
 import NoteEditorKit
 import Testing
 
+@testable import NoteEditor
+@testable import NoteFormat
+
 /// An edit sent after the owner changed the note on the tablet (#317): each operation kind is aimed
 /// at the same pages and elements of the newer note, or refused so both copies are kept.
 @Suite struct RetargetTests {
@@ -89,5 +92,17 @@ import Testing
         #expect(
             ConflictName.path(for: Self.note, at: date, timeZone: utc)
                 == "/storage/emulated/0/Note/Tests/a conflict 2026-11-27 06.07.57.note")
+    }
+
+    @Test func aTabletNoteGivesThePageIdsAndTheBoxesTheSelectionReads() throws {
+        let file = try Fixtures.note("content.note")
+        let outline = try NoteOutline(file)
+        #expect(outline.pages.count == file.pages.count)
+        #expect(outline.pages.map(\.id) == file.pages.map { $0.metadata["PAGEID"] })
+        let elements = try file.elements(page: 0)
+        #expect(outline.pages[0].boxes.count == elements.count)
+        for element in elements {
+            #expect(outline.pages[0].boxes[element.record + 1] == EditRect(element.bounds))
+        }
     }
 }

@@ -1,8 +1,9 @@
 // The one write path (#313): every edit reaches the note through the tablet. In order: the
-// operation's base must be the Mac's copy, a backup of that copy is kept, the tablet applies the
-// operation (or, for a page move, takes the Mac's bytes), the Mac pulls the note back, and every
-// page the edit did not touch must have kept its bytes. A failure at any step leaves the Mac's
-// copy as it was and keeps the backup.
+// operation's base must be the note it is sent to, a backup of that note is kept, the tablet
+// applies the operation (or, for a page move, takes the Mac's bytes), the Mac pulls the note back,
+// and every page the edit did not touch must have kept its bytes. A failure at any step leaves the
+// Mac's copy as it was and keeps the backup. When the tablet's note moved on since the edit was
+// drawn, the edit is re-targeted at it, or kept in a conflict note beside it (#317).
 import Foundation
 
 /// Why a send stopped, each with a plain message.
@@ -19,6 +20,12 @@ public enum WriteFailure: Error, Sendable, Equatable {
     case tablet(InkctlFailure)
     /// The pulled note changed pages the edit did not touch, by number from 1.
     case untouchedPagesChanged([Int])
+    /// The tablet's note changed where the edit was, so the edit went to this conflict note, by its
+    /// tablet path, and the note keeps the tablet's changes (#317).
+    case conflict(String)
+    /// A Revert to Backup found the tablet's note changed, so the backup went to this conflict
+    /// note, by its tablet path, and the note keeps the tablet's changes (#317).
+    case restoreConflict(String)
 }
 
 /// What the tablet answered to an edit.
@@ -42,6 +49,33 @@ public protocol TabletWriting: Sendable {
     func templates() async throws(InkctlFailure) -> [PageTemplateChoice]
 }
 
+/// What a send checked against the tablet's note did (#317).
+public enum SendResult: Sendable, Equatable {
+    /// The tablet's note took the edit, after a backup; `retargeted` when the note had moved on and
+    /// the edit was aimed at its newer pages and elements.
+    case applied(backup: URL, retargeted: Bool)
+    /// The edit could not be aimed at the newer note, so it went to this conflict note, by its
+    /// tablet path; the note itself is untouched.
+    case kept(conflict: String)
+}
+
+/// What the sender knows of an operation's base when the tablet's note may have moved on (#317).
+public struct TabletBase: Sendable, Equatable {
+    /// The Mac's copy as the operation saw it; nil when none was kept, so a newer note refuses it.
+    public let snapshot: URL?
+    /// The edits on the same base already re-targeted and applied, in order: a conflict note starts
+    /// from the snapshot, so it takes them again before this one.
+    public let sentOnBase: [TabletOperation]
+    /// The conflict note an earlier edit on this base made, which later ones join.
+    public let conflict: String?
+
+    public init(snapshot: URL?, sentOnBase: [TabletOperation] = [], conflict: String? = nil) {
+        self.snapshot = snapshot
+        self.sentOnBase = sentOnBase
+        self.conflict = conflict
+    }
+}
+
 public struct WritePath: Sendable {
     let tablet: any TabletWriting
     let backups: NoteBackups
@@ -52,23 +86,32 @@ public struct WritePath: Sendable {
     /// The pages of `before` (by number from 1) that changed in `after` although not in `edited`
     /// (from 0): `NoteDiff.untouchedChanged`, matching pages by their ids.
     let untouchedChanged: @Sendable (_ before: URL, _ after: URL, _ edited: Set<Int>) throws -> [Int]
+    /// A note's page ids and element boxes, which a re-target reads (#317).
+    let outline: @Sendable (URL) throws -> NoteOutline
+    /// The time a conflict note is named by.
+    let now: @Sendable () -> Date
 
     public init(
         tablet: any TabletWriting,
         backups: NoteBackups,
         hash: @escaping @Sendable (URL) throws -> String,
         macWrite: @escaping @Sendable (TabletOperation, URL) throws -> Data,
-        untouchedChanged: @escaping @Sendable (URL, URL, Set<Int>) throws -> [Int]
+        untouchedChanged: @escaping @Sendable (URL, URL, Set<Int>) throws -> [Int],
+        outline: @escaping @Sendable (URL) throws -> NoteOutline,
+        now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.tablet = tablet
         self.backups = backups
         self.hash = hash
         self.macWrite = macWrite
         self.untouchedChanged = untouchedChanged
+        self.outline = outline
+        self.now = now
     }
 
-    /// Sends one operation made on `copy`, the Mac's copy of the note; on success `copy` holds the
-    /// note as the tablet saved it. Answers the backup kept before the send.
+    /// Sends one operation made on `copy`, the Mac's copy of the note, trusting that the copy is the
+    /// tablet's note, as it is right after a send pulled it; on success `copy` holds the note as
+    /// the tablet saved it. Answers the backup kept before the send.
     @discardableResult
     public func send(_ operation: TabletOperation, copy: URL) async throws(WriteFailure) -> URL {
         let found: String
@@ -78,42 +121,89 @@ public struct WritePath: Sendable {
             throw .backup(error.localizedDescription)
         }
         if let refusal = operation.refusal(onBase: found) { throw refusal }
-        let backup: URL
-        do {
-            backup = try backups.keep(copy, for: operation.note)
-        } catch {
-            throw .backup(error.localizedDescription)
-        }
-        let work = FileManager.default.temporaryDirectory.appending(path: "write-path-\(UUID().uuidString)")
+        let work = try makeWork()
         defer { try? FileManager.default.removeItem(at: work) }
+        return try await apply(operation, copy: copy, current: copy, work: work)
+    }
+
+    /// Sends one operation after reading the tablet's note as it is now (#317). On the operation's
+    /// own base it is sent as it is; on a newer note it is re-targeted from `base.snapshot`; when a
+    /// target is not found exactly once, the snapshot is pushed beside the note as a conflict note
+    /// and takes the edits of that base, and the tablet's note is left as the owner wrote it.
+    public func send(_ operation: TabletOperation, copy: URL, base: TabletBase) async throws(WriteFailure)
+        -> SendResult
+    {
+        let work = try makeWork()
+        defer { try? FileManager.default.removeItem(at: work) }
+        let current = work.appending(path: "current.note")
         do {
-            try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+            _ = try await tablet.pull(operation.note, to: current)
         } catch {
-            throw .backup(error.localizedDescription)
+            throw .tablet(error)
         }
-        switch operation.route {
-        case .tablet:
-            let file = work.appending(path: "operations.json")
-            do {
-                try JSONEncoder().encode(operation.helperOperations).write(to: file)
-            } catch {
-                throw .macWrite(error.localizedDescription)
-            }
-            do {
-                _ = try await tablet.edit(note: operation.note, operations: file)
-            } catch {
-                throw .tablet(error)
-            }
-        case .mac:
-            try await pushMacBytes(operation, copy: copy, work: work)
+        let found: String
+        do {
+            found = try hash(current)
+        } catch {
+            throw .tablet(.failed(error.localizedDescription))
         }
-        try await pullAndCheck(operation.note, into: copy, edited: operation.editedPages, work: work)
-        return backup
+        if found == operation.baseHash {
+            return .applied(
+                backup: try await apply(operation, copy: copy, current: current, work: work), retargeted: false)
+        }
+        if let conflict = base.conflict {
+            try await replay([operation], on: conflict, work: work)
+            return .kept(conflict: conflict)
+        }
+        guard let snapshot = base.snapshot else { throw .staleBase }
+        let retargeted: TabletOperation?
+        do {
+            retargeted = operation.retargeted(base: try outline(snapshot), current: try outline(current))
+        } catch {
+            throw .tablet(.failed(error.localizedDescription))
+        }
+        if let retargeted {
+            return .applied(
+                backup: try await apply(retargeted, copy: copy, current: current, work: work), retargeted: true)
+        }
+        let conflict = ConflictName.path(for: operation.note, at: now())
+        do {
+            _ = try await tablet.push(snapshot, to: conflict)
+        } catch {
+            throw .tablet(error)
+        }
+        try await replay(base.sentOnBase + [operation], on: conflict, work: work)
+        return .kept(conflict: conflict)
     }
 
     /// Restores `backup` as the tablet's note through the same path: the current copy is kept as a
-    /// backup first, and the restored note is pulled back and compared byte for byte.
+    /// backup first, and the restored note is pulled back and compared byte for byte. When the
+    /// tablet's note is no longer the copy, the backup goes beside it as a conflict note instead,
+    /// and `restoreConflict` names it (#317).
     public func restore(_ backup: URL, note: String, copy: URL) async throws(WriteFailure) {
+        let work = try makeWork()
+        defer { try? FileManager.default.removeItem(at: work) }
+        let current = work.appending(path: "current.note")
+        do {
+            _ = try await tablet.pull(note, to: current)
+        } catch {
+            throw .tablet(error)
+        }
+        let same: Bool
+        do {
+            same = try hash(current) == hash(copy)
+        } catch {
+            throw .tablet(.failed(error.localizedDescription))
+        }
+        if !same {
+            let conflict = ConflictName.path(for: note, at: now())
+            do {
+                _ = try await tablet.push(backup, to: conflict)
+            } catch {
+                throw .tablet(error)
+            }
+            throw .restoreConflict(conflict)
+        }
         do {
             try backups.keep(copy, for: note)
         } catch {
@@ -125,8 +215,7 @@ public struct WritePath: Sendable {
         } catch {
             throw .tablet(error)
         }
-        let pulled = FileManager.default.temporaryDirectory.appending(path: "restore-\(UUID().uuidString).note")
-        defer { try? FileManager.default.removeItem(at: pulled) }
+        let pulled = work.appending(path: "restored.note")
         do {
             _ = try await tablet.pull(note, to: pulled)
         } catch {
@@ -141,16 +230,72 @@ public struct WritePath: Sendable {
         try replace(copy, with: pulled)
     }
 
-    private func pushMacBytes(_ operation: TabletOperation, copy: URL, work: URL) async throws(WriteFailure) {
-        try await refuseWhenOpen(operation.note)
-        let file = work.appending(path: "written.note")
+    /// Keeps a backup of `current`, the tablet's note before the send, applies the operation and
+    /// pulls the note back into `copy`, checking that no other page changed.
+    private func apply(_ operation: TabletOperation, copy: URL, current: URL, work: URL) async throws(WriteFailure)
+        -> URL
+    {
+        let backup: URL
         do {
-            try macWrite(operation, copy).write(to: file)
+            backup = try backups.keep(current, for: operation.note)
+        } catch {
+            throw .backup(error.localizedDescription)
+        }
+        switch operation.route {
+        case .tablet:
+            try await edit(operation, on: operation.note, work: work)
+        case .mac:
+            try await refuseWhenOpen(operation.note)
+            try await pushMacBytes(operation, from: current, to: operation.note, work: work)
+        }
+        try await pullAndCheck(operation.note, into: copy, before: current, edited: operation.editedPages, work: work)
+        return backup
+    }
+
+    /// Applies `operations` in order to the conflict note `note`, which no one has open yet.
+    private func replay(_ operations: [TabletOperation], on note: String, work: URL) async throws(WriteFailure) {
+        for operation in operations {
+            switch operation.route {
+            case .tablet:
+                try await edit(operation, on: note, work: work)
+            case .mac:
+                let local = work.appending(path: "conflict.note")
+                try? FileManager.default.removeItem(at: local)
+                do {
+                    _ = try await tablet.pull(note, to: local)
+                } catch {
+                    throw .tablet(error)
+                }
+                try await pushMacBytes(operation, from: local, to: note, work: work)
+            }
+        }
+    }
+
+    private func edit(_ operation: TabletOperation, on note: String, work: URL) async throws(WriteFailure) {
+        let file = work.appending(path: "operations.json")
+        do {
+            try JSONEncoder().encode(operation.helperOperations).write(to: file)
         } catch {
             throw .macWrite(error.localizedDescription)
         }
         do {
-            _ = try await tablet.push(file, to: operation.note)
+            _ = try await tablet.edit(note: note, operations: file)
+        } catch {
+            throw .tablet(error)
+        }
+    }
+
+    private func pushMacBytes(_ operation: TabletOperation, from source: URL, to note: String, work: URL)
+        async throws(WriteFailure)
+    {
+        let file = work.appending(path: "written.note")
+        do {
+            try macWrite(operation, source).write(to: file)
+        } catch {
+            throw .macWrite(error.localizedDescription)
+        }
+        do {
+            _ = try await tablet.push(file, to: note)
         } catch {
             throw .tablet(error)
         }
@@ -175,7 +320,9 @@ public struct WritePath: Sendable {
         if answer.openNote == note { throw .openOnTablet }
     }
 
-    private func pullAndCheck(_ note: String, into copy: URL, edited: Set<Int>, work: URL) async throws(WriteFailure) {
+    private func pullAndCheck(_ note: String, into copy: URL, before: URL, edited: Set<Int>, work: URL)
+        async throws(WriteFailure)
+    {
         let pulled = work.appending(path: "pulled.note")
         do {
             _ = try await tablet.pull(note, to: pulled)
@@ -184,12 +331,22 @@ public struct WritePath: Sendable {
         }
         let stray: [Int]
         do {
-            stray = try untouchedChanged(copy, pulled, edited)
+            stray = try untouchedChanged(before, pulled, edited)
         } catch {
             throw .tablet(.failed(error.localizedDescription))
         }
         if !stray.isEmpty { throw .untouchedPagesChanged(stray) }
         try replace(copy, with: pulled)
+    }
+
+    private func makeWork() throws(WriteFailure) -> URL {
+        let work = FileManager.default.temporaryDirectory.appending(path: "write-path-\(UUID().uuidString)")
+        do {
+            try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        } catch {
+            throw .backup(error.localizedDescription)
+        }
+        return work
     }
 
     private func replace(_ copy: URL, with pulled: URL) throws(WriteFailure) {

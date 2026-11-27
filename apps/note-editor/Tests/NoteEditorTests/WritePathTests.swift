@@ -23,9 +23,12 @@ import Testing
         try? FileManager.default.removeItem(at: folder)
     }
 
-    /// A tablet that records each call and holds one note's bytes.
+    /// A tablet that records each call and holds the note's bytes, and those of each other note
+    /// the write path makes, such as a conflict note (#317).
     final class FakeTablet: TabletWriting, @unchecked Sendable {
         var bytes: Data
+        /// Every note but `WritePathTests.note`, by its path.
+        var others: [String: Data] = [:]
         var calls: [String] = []
         var sent: [[String: Any]] = []
         var failEdit: InkctlFailure?
@@ -35,6 +38,14 @@ import Testing
 
         init(bytes: Data) { self.bytes = bytes }
 
+        func read(_ note: String) -> Data {
+            note == WritePathTests.note ? bytes : others[note] ?? Data()
+        }
+
+        func write(_ data: Data, to note: String) {
+            if note == WritePathTests.note { bytes = data } else { others[note] = data }
+        }
+
         func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
             let list = (try? JSONSerialization.jsonObject(with: Data(contentsOf: operations))) as? [[String: Any]] ?? []
             let ops = list.compactMap { $0["op"] as? String }
@@ -42,19 +53,19 @@ import Testing
             if ops != ["openNote"] {
                 if let failEdit { throw failEdit }
                 sent.append(contentsOf: list)
-                bytes = onEdit(bytes)
+                write(onEdit(read(note)), to: note)
             }
             return EditAnswer(openNote: openNote)
         }
 
         func push(_ local: URL, to note: String) async throws(InkctlFailure) {
             calls.append("push")
-            bytes = (try? Data(contentsOf: local)) ?? Data()
+            write((try? Data(contentsOf: local)) ?? Data(), to: note)
         }
 
         func pull(_ note: String, to destination: URL) async throws(InkctlFailure) {
             calls.append("pull")
-            try? bytes.write(to: destination)
+            try? read(note).write(to: destination)
         }
 
         /// The tablet's templates (#451): `templateList`, or `failTemplates` when set.
@@ -74,20 +85,45 @@ import Testing
         return url
     }
 
-    func path(_ tablet: FakeTablet, stray: [Int] = [], now: @escaping @Sendable () -> Date = { Date() }) -> WritePath {
-        Self.path(tablet, folder: folder, stray: stray, now: now)
+    func path(
+        _ tablet: FakeTablet, stray: [Int] = [], outlines: [String: NoteOutline] = [:],
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) -> WritePath {
+        Self.path(tablet, folder: folder, stray: stray, outlines: outlines, now: now)
     }
 
-    /// The write path over the fake tablet: a copy's hash is its text, and a page move adds `moved`.
+    /// The write path over the fake tablet: a copy's hash is its text, a page move adds `moved`,
+    /// and a note's outline is the one `outlines` holds for its text.
     static func path(
-        _ tablet: FakeTablet, folder: URL, stray: [Int] = [], now: @escaping @Sendable () -> Date = { Date() }
+        _ tablet: FakeTablet, folder: URL, stray: [Int] = [], outlines: [String: NoteOutline] = [:],
+        now: @escaping @Sendable () -> Date = { Date() }
     ) -> WritePath {
         WritePath(
             tablet: tablet,
             backups: NoteBackups(folder: folder.appending(path: "Backups"), now: now),
             hash: { url in String(bytes: try Data(contentsOf: url), encoding: .utf8) ?? "" },
             macWrite: { _, url in try Data(contentsOf: url) + Data("moved".utf8) },
-            untouchedChanged: { _, _, _ in stray })
+            untouchedChanged: { _, _, _ in stray },
+            outline: { url in
+                let text = String(bytes: try Data(contentsOf: url), encoding: .utf8) ?? ""
+                guard let outline = outlines[text] else { throw CocoaError(.fileReadCorruptFile) }
+                return outline
+            },
+            now: now)
+    }
+
+    /// Two pages, `P1` and `P2`, with these element boxes on the first, by number from 1.
+    static func outline(_ boxes: [Int: EditRect]) -> NoteOutline {
+        NoteOutline(pages: [.init(id: "P1", boxes: boxes), .init(id: "P2", boxes: [:])])
+    }
+
+    static let other = EditRect(left: 500, top: 600, right: 700, bottom: 800)
+
+    /// A snapshot of the base, as the sender keeps it, in the suite's folder.
+    func snapshot(_ text: String = "base") throws -> URL {
+        let url = folder.appending(path: "snapshot.note")
+        try Data(text.utf8).write(to: url)
+        return url
     }
 
     static let rect = EditRect(left: 10, top: 20, right: 110, bottom: 220)
@@ -303,10 +339,108 @@ import Testing
         let backup = folder.appending(path: "old.note")
         try Data("old".utf8).write(to: backup)
         try await path(tablet).restore(backup, note: Self.note, copy: copy)
-        #expect(tablet.calls == ["edit openNote", "push", "pull"])
+        #expect(tablet.calls == ["pull", "edit openNote", "push", "pull"])
         #expect(try String(contentsOf: copy, encoding: .utf8) == "old")
         let kept = try NoteBackups(folder: folder.appending(path: "Backups")).list(for: Self.note)
         #expect(try kept.map { try String(contentsOf: $0, encoding: .utf8) } == ["now"])
+    }
+
+    // The tablet's note read before the send (#317).
+
+    @Test func onItsOwnBaseTheTabletsNoteTakesTheEditAsItIs() async throws {
+        let tablet = FakeTablet(bytes: Data("base".utf8))
+        let copy = try copy()
+        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .deleteElements([2]))
+        let result = try await path(tablet).send(operation, copy: copy, base: TabletBase(snapshot: nil))
+        guard case .applied(_, let retargeted) = result else {
+            Issue.record("\(result)")
+            return
+        }
+        #expect(!retargeted)
+        #expect(tablet.calls == ["pull", "edit deleteElements", "pull"])
+        #expect(try String(contentsOf: copy, encoding: .utf8) == "baseedited")
+    }
+
+    /// The owner deleted an earlier stroke on the tablet: the target is found by its box and sent
+    /// by its new number, and the Mac's copy becomes the tablet's newer note.
+    @Test func onANewerNoteThatHoldsTheTargetTheEditIsSentByItsNewNumber() async throws {
+        let tablet = FakeTablet(bytes: Data("newer".utf8))
+        let copy = try copy()
+        let outlines = ["base": Self.outline([1: Self.other, 2: Self.rect]), "newer": Self.outline([1: Self.rect])]
+        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .deleteElements([2]))
+        let result = try await path(tablet, outlines: outlines).send(
+            operation, copy: copy, base: TabletBase(snapshot: try snapshot()))
+        guard case .applied(let backup, let retargeted) = result else {
+            Issue.record("\(result)")
+            return
+        }
+        #expect(retargeted)
+        #expect(tablet.sent.first?["nums"] as? [Int] == [1])
+        #expect(try String(contentsOf: backup, encoding: .utf8) == "newer")
+        #expect(try String(contentsOf: copy, encoding: .utf8) == "neweredited")
+    }
+
+    /// Two elements with the target's box: never a guess, so the base goes beside the note as a
+    /// conflict note, takes the edits of that base in order, and the tablet's note is untouched.
+    @Test func onANewerNoteWithoutOneMatchBothCopiesAreKept() async throws {
+        let tablet = FakeTablet(bytes: Data("newer".utf8))
+        let copy = try copy()
+        let outlines = ["base": Self.outline([2: Self.rect]), "newer": Self.outline([1: Self.rect, 2: Self.rect])]
+        let clock = Date(timeIntervalSince1970: 1_800_000_000)
+        let earlier = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .deleteElements([7]))
+        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .deleteElements([2]))
+        let result = try await path(tablet, outlines: outlines, now: { clock }).send(
+            operation, copy: copy, base: TabletBase(snapshot: try snapshot(), sentOnBase: [earlier]))
+        let conflict = ConflictName.path(for: Self.note, at: clock)
+        #expect(result == .kept(conflict: conflict))
+        #expect(tablet.calls == ["pull", "push", "edit deleteElements", "edit deleteElements"])
+        #expect(tablet.sent.compactMap { $0["nums"] as? [Int] } == [[7], [2]])
+        #expect(tablet.bytes == Data("newer".utf8))
+        #expect(tablet.others[conflict] == Data("baseeditededited".utf8))
+        #expect(try String(contentsOf: copy, encoding: .utf8) == "base")
+        // A later edit on that base joins the same conflict note.
+        let later = try await path(tablet, outlines: outlines).send(
+            operation, copy: copy, base: TabletBase(snapshot: try snapshot(), conflict: conflict))
+        #expect(later == .kept(conflict: conflict))
+        #expect(tablet.bytes == Data("newer".utf8) && tablet.others.count == 1)
+    }
+
+    /// The loss #317 closes: a page move drawn before a pen change is written from the tablet's
+    /// newer note, never from the Mac's older copy.
+    @Test func aPageMoveOnANewerNoteIsWrittenFromItNeverOverIt() async throws {
+        let tablet = FakeTablet(bytes: Data("newer".utf8))
+        let copy = try copy()
+        let outlines = ["base": Self.outline([:]), "newer": Self.outline([1: Self.rect])]
+        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .movePage(from: 0, to: 1))
+        let result = try await path(tablet, outlines: outlines).send(
+            operation, copy: copy, base: TabletBase(snapshot: try snapshot()))
+        guard case .applied(_, true) = result else {
+            Issue.record("\(result)")
+            return
+        }
+        #expect(tablet.calls == ["pull", "edit openNote", "push", "pull"])
+        #expect(tablet.bytes == Data("newermoved".utf8))
+        // Without the base's snapshot, nothing is pushed.
+        let stale = FakeTablet(bytes: Data("newer".utf8))
+        await #expect(throws: WriteFailure.staleBase) {
+            try await self.path(stale, outlines: outlines).send(operation, copy: copy, base: TabletBase(snapshot: nil))
+        }
+        #expect(stale.calls == ["pull"])
+    }
+
+    @Test func aRestoreOverANewerNoteGoesBesideItAsAConflictNote() async throws {
+        let tablet = FakeTablet(bytes: Data("newer".utf8))
+        let copy = try copy("now")
+        let backup = folder.appending(path: "old.note")
+        try Data("old".utf8).write(to: backup)
+        let clock = Date(timeIntervalSince1970: 1_800_000_000)
+        let conflict = ConflictName.path(for: Self.note, at: clock)
+        await #expect(throws: WriteFailure.restoreConflict(conflict)) {
+            try await self.path(tablet, now: { clock }).restore(backup, note: Self.note, copy: copy)
+        }
+        #expect(tablet.bytes == Data("newer".utf8))
+        #expect(tablet.others[conflict] == Data("old".utf8))
+        #expect(try String(contentsOf: copy, encoding: .utf8) == "now")
     }
 
     @Test func backupsOfTwoNotesOfOneNameKeepApart() {

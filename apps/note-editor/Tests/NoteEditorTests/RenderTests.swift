@@ -181,6 +181,15 @@ final class RenderTests {
         try await render("edit-refused", Self.sizes) {
             NotebookView(pages: moved, page: 2, live: live, editor: editor)
         }
+        // An edit the tablet's newer note could not take goes to a conflict note beside it (#317).
+        editor.refusal = WriteFailure.conflict("Note/Garden conflict 2026-11-27 08.30.00.note").message
+        try await render("edit-conflict", Self.sizes) {
+            NotebookView(pages: moved, page: 2, live: live, editor: editor)
+        }
+        editor.refusal = WriteFailure.restoreConflict("Note/Garden conflict 2026-11-27 08.30.00.note").message
+        try await render("edit-conflict-restore", Self.sizes) {
+            NotebookView(pages: moved, page: 2, live: live, editor: editor)
+        }
         editor.refusal = nil
         // Insert Page… and Delete Page… (#329): the sheet under the toolbar and the confirmation in
         // the middle of the window, each over the window they open from. A sheet and an alert are

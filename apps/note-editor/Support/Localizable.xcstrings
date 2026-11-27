@@ -1391,6 +1391,26 @@
         }
       }
     },
+    "The note changed on the tablet, so the backup was saved in a new note beside it: “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note changed on the tablet, so the backup was saved in a new note beside it: “%@”."
+          }
+        }
+      }
+    },
+    "The note changed on the tablet, so this edit was saved in a new note beside it: “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note changed on the tablet, so this edit was saved in a new note beside it: “%@”."
+          }
+        }
+      }
+    },
     "The note changed on the tablet, so this edit was taken back. Make it again on the new copy." : {
       "localizations" : {
         "en" : {

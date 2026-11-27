@@ -136,7 +136,67 @@ import Testing
                 "\(SendOutcome<Int>.started(1))", "applied 1 [1] \(backups[0])",
                 "\(SendOutcome<Int>.started(2))", "applied 2 [1] \(backups[1])",
             ])
-        #expect(tablet.calls == ["edit modifyElements", "pull", "edit modifyElements", "pull"])
+        // The tablet's note is read before the first send only: the second trusts the first's pull.
+        #expect(tablet.calls == ["pull", "edit modifyElements", "pull", "edit modifyElements", "pull"])
+    }
+
+    /// A sender on a copy the tablet moved past (#317): the copy says "base", the tablet "newer".
+    func movedOn(_ outlines: [String: NoteOutline]) throws -> (
+        WritePathTests.FakeTablet, Outcomes, BackgroundSender<Int>
+    ) {
+        let tablet = WritePathTests.FakeTablet(bytes: Data("newer".utf8))
+        let copy = folder.appending(path: "copy.note")
+        try Data("base".utf8).write(to: copy)
+        let outcomes = Outcomes()
+        let sender = BackgroundSender<Int>(
+            path: WritePathTests.path(tablet, folder: folder, outlines: outlines), copy: copy,
+            snapshots: BaseSnapshots(folder: folder.appending(path: "Snapshots"))
+        ) { outcomes.add($0) }
+        return (tablet, outcomes, sender)
+    }
+
+    static func delete(_ number: Int) -> TabletOperation {
+        TabletOperation(note: note, baseHash: "base", page: 0, change: .deleteElements([number]))
+    }
+
+    static let first = EditRect(left: 0, top: 0, right: 10, bottom: 10)
+    static let second = EditRect(left: 50, top: 50, right: 60, bottom: 60)
+
+    /// Each edit keeps its base after a re-targeted send, so the next is re-targeted from it too,
+    /// and every page is drawn again from the tablet's newer note.
+    @Test func editsOnANewerNoteAreEachRetargetedAndNotRebased() async throws {
+        let base = WritePathTests.outline([2: Self.first, 5: Self.second])
+        let newer = WritePathTests.outline([3: Self.first, 6: Self.second])
+        let (tablet, outcomes, sender) = try movedOn(["base": base, "newer": newer, "neweredited": newer])
+        #expect(await sender.base() == "base")
+        // Both are queued before the first is sent, as edits made in a quick run are.
+        await sender.nudged(Self.delete(2), undo: 1)
+        await sender.nudged(Self.delete(5), undo: 2)
+        await sender.endRun()
+        #expect(tablet.sent.compactMap { $0["nums"] as? [Int] } == [[3], [6]])
+        let redraws = outcomes.all.compactMap { outcome -> Set<Int>?? in
+            if case .applied(_, let redraw, _) = outcome { return .some(redraw) }
+            return nil
+        }
+        #expect(redraws == [nil, nil])
+    }
+
+    @Test func aConflictNamesItsNoteAndALaterEditOnThatBaseJoinsIt() async throws {
+        let base = WritePathTests.outline([2: Self.first])
+        let newer = WritePathTests.outline([1: Self.first, 4: Self.first])
+        let (tablet, outcomes, sender) = try movedOn(["base": base, "newer": newer])
+        #expect(await sender.base() == "base")
+        await sender.drew(Self.delete(2), undo: 1)
+        await sender.drew(Self.delete(2), undo: 2)
+        let conflict = try #require(tablet.others.keys.first)
+        #expect(tablet.others.count == 1 && tablet.bytes == Data("newer".utf8))
+        let message = WriteFailure.conflict(conflict).message
+        #expect(message.contains(URL(filePath: conflict).deletingPathExtension().lastPathComponent))
+        #expect(message != WriteFailure.restoreConflict(conflict).message)
+        #expect(
+            outcomes.all == [
+                .started(1), .refused(undo: 1, message: message), .started(2), .refused(undo: 2, message: message),
+            ])
     }
 
     final class Outcomes: @unchecked Sendable {

@@ -93,6 +93,11 @@ public struct EditQueue<Undo: Sendable & Equatable>: Sendable, Equatable {
         }
     }
 
+    /// The bases the waiting edits and the open run were made on.
+    public var bases: Set<String> {
+        Set((waiting + (run.map { [$0] } ?? [])).map(\.operation.baseHash))
+    }
+
     /// Two placements of the same elements on the same page of the same note.
     static func sameTargets(_ first: TabletOperation, _ second: TabletOperation) -> Bool {
         guard first.note == second.note, first.page == second.page,
@@ -133,7 +138,24 @@ extension WriteFailure {
                 localized:
                     "The tablet changed other pages too (\(pages.map(String.init).joined(separator: ", "))), so the send stopped. Check the note on the tablet."
             )
+        case .conflict(let path):
+            String(
+                localized:
+                    "The note changed on the tablet, so this edit was saved in a new note beside it: “\(Self.name(path))”."
+            )
+        case .restoreConflict(let path):
+            String(
+                localized:
+                    "The note changed on the tablet, so the backup was saved in a new note beside it: “\(Self.name(path))”."
+            )
         }
+    }
+}
+
+extension WriteFailure {
+    /// A note's name as the tablet lists it: its file name without `.note`.
+    static func name(_ path: String) -> String {
+        URL(filePath: path).deletingPathExtension().lastPathComponent
     }
 }
 
@@ -155,11 +177,34 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
     let outcome: @Sendable (SendOutcome<Undo>) -> Void
     var queue = EditQueue<Undo>()
     var sending = false
+    /// The Mac's copy as each queued edit saw it, by base hash (#317).
+    let snapshots: BaseSnapshots
+    /// Per base: the edits re-targeted at a newer note and applied, in order.
+    var sentOnBase: [String: [TabletOperation]] = [:]
+    /// Per base: the conflict note its edits go to, once one was made.
+    var conflicts: [String: String] = [:]
 
-    public init(path: WritePath, copy: URL, outcome: @escaping @Sendable (SendOutcome<Undo>) -> Void) {
+    public init(
+        path: WritePath, copy: URL,
+        snapshots: BaseSnapshots = BaseSnapshots(
+            folder: FileManager.default.temporaryDirectory.appending(path: "base-snapshots-\(UUID().uuidString)")),
+        outcome: @escaping @Sendable (SendOutcome<Undo>) -> Void
+    ) {
         self.path = path
         self.copy = copy
+        self.snapshots = snapshots
         self.outcome = outcome
+    }
+
+    deinit {
+        snapshots.removeAll()
+    }
+
+    /// The base of an edit drawn now: the hash of the Mac's copy, which is kept aside so the edit
+    /// can be re-targeted if the tablet's note moves on before it is sent (#317). An unreadable
+    /// copy gives a base no copy has, so the write path refuses the edit.
+    public func base() -> String {
+        (try? snapshots.keep(copy, hash: path.hash)) ?? ""
     }
 
     public func drew(_ operation: TabletOperation, undo: Undo) async {
@@ -186,16 +231,53 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
         guard !sending else { return }
         sending = true
         defer { sending = false }
+        // shortcut: the tablet's note is read before a send only when it can have moved on: for the
+        // first send after the queue was idle, and for an edit on another base than the copy. A
+        // send in a run trusts the note the run just pulled, which saves about 1 s a send (#317);
+        // upgrade to the live watch's save signal (#315) once it reaches the sender.
+        var pulled = false
         while let edit = queue.next() {
             outcome(.started(edit.undo))
+            let operation = edit.operation
             do {
-                let old = edit.operation.baseHash
-                let backup = try await path.send(edit.operation, copy: copy)
-                if let new = try? path.hash(copy) { queue.rebase(from: old, to: new) }
-                outcome(.applied(edit.undo, redraw: pagesToRedraw(after: edit.operation), backup: backup))
+                let result: SendResult
+                if pulled, (try? path.hash(copy)) == operation.baseHash {
+                    result = .applied(backup: try await path.send(operation, copy: copy), retargeted: false)
+                } else {
+                    let base = TabletBase(
+                        snapshot: snapshots.file(for: operation.baseHash),
+                        sentOnBase: sentOnBase[operation.baseHash] ?? [], conflict: conflicts[operation.baseHash])
+                    result = try await path.send(operation, copy: copy, base: base)
+                }
+                switch result {
+                case .applied(let backup, let retargeted):
+                    pulled = true
+                    if retargeted {
+                        // The edits behind keep their base, so each is re-targeted from it too.
+                        sentOnBase[operation.baseHash, default: []].append(operation)
+                    } else if let new = try? snapshots.keep(copy, hash: path.hash) {
+                        queue.rebase(from: operation.baseHash, to: new)
+                    }
+                    let redraw = retargeted ? nil : pagesToRedraw(after: operation)
+                    outcome(.applied(edit.undo, redraw: redraw, backup: backup))
+                case .kept(let conflict):
+                    conflicts[operation.baseHash] = conflict
+                    outcome(.refused(undo: edit.undo, message: WriteFailure.conflict(conflict).message))
+                }
             } catch {
                 outcome(.refused(undo: edit.undo, message: error.message))
             }
         }
+        forget()
+    }
+
+    /// With the queue empty, keeps only what an edit can still name: the bases of the open run and
+    /// of the copy as it is now.
+    func forget() {
+        var kept = queue.bases
+        if let now = try? path.hash(copy) { kept.insert(now) }
+        snapshots.drop(except: kept)
+        sentOnBase = sentOnBase.filter { kept.contains($0.key) }
+        conflicts = conflicts.filter { kept.contains($0.key) }
     }
 }

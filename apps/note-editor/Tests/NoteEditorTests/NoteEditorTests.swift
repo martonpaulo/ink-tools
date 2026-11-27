@@ -59,7 +59,8 @@ import Testing
         #expect(try Self.ids(tablet.bytes) == expected)
         #expect(Self.ids(editor.base) == expected)
         #expect(editor.history.undoKind == .movePage(from: from, to: to))
-        #expect(tablet.calls == ["edit openNote", "push", "pull"])
+        // The first send after the queue was idle reads the tablet's note first (#317).
+        #expect(tablet.calls == ["pull", "edit openNote", "push", "pull"])
     }
 
     @Test func aMoveToItsOwnPlaceRecordsAndSendsNothing() throws {

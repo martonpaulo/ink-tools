@@ -149,7 +149,8 @@ final class NoteEditor {
                 NoteDiff.untouchedChanged(
                     try NoteFile(data: try Data(contentsOf: before)), try NoteFile(data: try Data(contentsOf: after)),
                     edited: edited)
-            })
+            },
+            outline: { try NoteOutline(try NoteFile(data: try Data(contentsOf: $0))) })
     }
 
     var pageCount: Int { shown.pages.count }
@@ -557,13 +558,12 @@ final class NoteEditor {
     /// Hands one edit to the sender, after every edit made before it.
     private func hand(_ edit: NoteEdit, ticket: Int, backup: URL? = nil, nudge: Bool = false) {
         let previous = handOver
-        let copy = copy
         let note = tabletPath
         handOver = Task { [sender] in
             await previous?.value
-            // The edit was made on the copy as it is now; the sender moves the base forward as
-            // each edit ahead of it applies.
-            let base = await Self.baseHash(copy)
+            // The edit was made on the copy as it is now; the sender keeps that copy aside and
+            // moves the base forward as each edit ahead of it applies (#317).
+            let base = await sender?.base() ?? ""
             guard let operation = TabletOperation(edit, note: note, baseHash: base, backup: backup) else { return }
             if nudge {
                 await sender?.nudged(operation, undo: ticket)
@@ -603,12 +603,6 @@ final class NoteEditor {
             else { return }
             if pending.contains(where: { $0.ticket == ticket }) { lifts[ticket] = lifted }
         }
-    }
-
-    @concurrent
-    private static func baseHash(_ copy: URL) async -> String {
-        // An unreadable copy gives a base no copy has, so the write path refuses the edit.
-        (try? hash(copy)) ?? ""
     }
 
     private func handle(_ outcome: SendOutcome<Int>) {
@@ -658,6 +652,8 @@ final class NoteEditor {
                 // A refused page restore leaves the removal done, still undone by its backup.
                 if let backup = refused.backup, let id = history.undoID { removalBackups[id] = backup }
             }
+            // The same words again change nothing the bar watches, so they are said aloud here.
+            if refusal == message { AccessibilityNotification.Announcement(message).post() }
             refusal = message
             redraw()
         }
@@ -740,6 +736,7 @@ struct RefusalBar: View {
             Label(message, systemImage: "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.multicolor)
                 .lineLimit(2)
+                .help(message)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button(Copy.dismiss, action: dismiss)
         }
