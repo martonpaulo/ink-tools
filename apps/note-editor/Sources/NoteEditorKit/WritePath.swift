@@ -26,6 +26,17 @@ public enum WriteFailure: Error, Sendable, Equatable {
     /// A Revert to Backup found the tablet's note changed, so the backup went to this conflict
     /// note, by its tablet path, and the note keeps the tablet's changes (#317).
     case restoreConflict(String)
+    /// The note changed on the tablet, so this conflict note, by its tablet path, holds the base,
+    /// but the edit could not be applied to it, for `reason` (#317). The note stays on the tablet.
+    case conflictNotApplied(String, reason: String)
+
+    /// The conflict note the failure left on the tablet, by its tablet path; nil with none.
+    public var conflictNote: String? {
+        switch self {
+        case .conflict(let path), .restoreConflict(let path), .conflictNotApplied(let path, _): path
+        case .staleBase, .openOnTablet, .backup, .macWrite, .tablet, .untouchedPagesChanged: nil
+        }
+    }
 }
 
 /// What the tablet answered to an edit.
@@ -252,8 +263,17 @@ public struct WritePath: Sendable {
         return backup
     }
 
-    /// Applies `operations` in order to the conflict note `note`, which no one has open yet.
+    /// Applies `operations` in order to the conflict note `note`, which no one has open yet. A
+    /// failure names the note, which stays on the tablet either way.
     private func replay(_ operations: [TabletOperation], on note: String, work: URL) async throws(WriteFailure) {
+        do {
+            try await applyInOrder(operations, on: note, work: work)
+        } catch {
+            throw .conflictNotApplied(note, reason: error.reason)
+        }
+    }
+
+    private func applyInOrder(_ operations: [TabletOperation], on note: String, work: URL) async throws(WriteFailure) {
         for operation in operations {
             switch operation.route {
             case .tablet:

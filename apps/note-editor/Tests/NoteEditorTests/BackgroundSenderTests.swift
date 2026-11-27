@@ -202,6 +202,27 @@ import Testing
             ])
     }
 
+    /// The tablet refuses the edit on the conflict note just made: the refusal still names that
+    /// note, and the next edit on the base joins it instead of making a second one (#317).
+    @Test func aRefusedReplayNamesTheConflictNoteAndTheNextEditJoinsIt() async throws {
+        let base = WritePathTests.outline([2: Self.first])
+        let newer = WritePathTests.outline([1: Self.first, 4: Self.first])
+        let (tablet, outcomes, sender) = try movedOn(["base": base, "newer": newer])
+        #expect(await sender.base() == "base")
+        tablet.failEdit = .failed("tablet-refused: insert: code 802")
+        await sender.drew(Self.delete(2), undo: 1)
+        let conflict = try #require(tablet.others.keys.first)
+        tablet.failEdit = nil
+        await sender.drew(Self.delete(2), undo: 2)
+        #expect(tablet.others.count == 1 && tablet.bytes == Data("newer".utf8))
+        let refused = WriteFailure.conflictNotApplied(conflict, reason: "tablet-refused: insert: code 802").message
+        #expect(
+            outcomes.all == [
+                .started(1), .refused(undo: 1, message: refused, conflict: conflict), .started(2),
+                .refused(undo: 2, message: WriteFailure.conflict(conflict).message, conflict: conflict),
+            ])
+    }
+
     final class Outcomes: @unchecked Sendable {
         private let lock = NSLock()
         private var list: [SendOutcome<Int>] = []

@@ -1617,6 +1617,16 @@
         }
       }
     },
+    "The note changed on the tablet, so a new note was made beside it: “%@”. This edit could not be applied there, so it was taken back: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note changed on the tablet, so a new note was made beside it: “%1$@”. This edit could not be applied there, so it was taken back: %2$@"
+          }
+        }
+      }
+    },
     "The note changed on the tablet, so the backup was saved in a new note beside it: “%@”." : {
       "localizations" : {
         "en" : {

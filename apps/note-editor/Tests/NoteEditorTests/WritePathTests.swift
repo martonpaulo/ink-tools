@@ -409,6 +409,34 @@ import Testing
         #expect(tablet.bytes == Data("newer".utf8) && tablet.others.count == 1)
     }
 
+    /// The tablet refuses the edit on a conflict note the write path just made, as it did for a
+    /// rect off the page on the Manta: the note stays on the tablet, so the failure names it, and
+    /// the tablet's note is untouched.
+    @Test func aRefusedReplayStillNamesTheConflictNoteItMade() async throws {
+        let tablet = FakeTablet(bytes: Data("newer".utf8))
+        tablet.failEdit = .failed("tablet-refused: operation 1 (insertElements): insert: code 802")
+        let copy = try copy()
+        let outlines = ["base": Self.outline([2: Self.rect]), "newer": Self.outline([1: Self.rect, 2: Self.rect])]
+        let clock = Date(timeIntervalSince1970: 1_800_000_000)
+        let conflict = ConflictName.path(for: Self.note, at: clock)
+        let operation = TabletOperation(note: Self.note, baseHash: "base", page: 0, change: .deleteElements([2]))
+        let failure = WriteFailure.conflictNotApplied(
+            conflict, reason: "tablet-refused: operation 1 (insertElements): insert: code 802")
+        await #expect(throws: failure) {
+            try await self.path(tablet, outlines: outlines, now: { clock }).send(
+                operation, copy: copy, base: TabletBase(snapshot: try self.snapshot()))
+        }
+        #expect(tablet.others[conflict] == Data("base".utf8))
+        #expect(tablet.bytes == Data("newer".utf8))
+        #expect(failure.conflictNote == conflict)
+        #expect(failure.message.contains(URL(filePath: conflict).deletingPathExtension().lastPathComponent))
+        // An edit that joins that conflict note and fails names it too.
+        await #expect(throws: failure) {
+            try await self.path(tablet, outlines: outlines).send(
+                operation, copy: copy, base: TabletBase(snapshot: try self.snapshot(), conflict: conflict))
+        }
+    }
+
     /// The loss #317 closes: a page move drawn before a pen change is written from the tablet's
     /// newer note, never from the Mac's older copy.
     @Test func aPageMoveOnANewerNoteIsWrittenFromItNeverOverIt() async throws {

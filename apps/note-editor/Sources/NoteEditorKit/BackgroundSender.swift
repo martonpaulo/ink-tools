@@ -149,6 +149,21 @@ extension WriteFailure {
                 localized:
                     "The note changed on the tablet, so the backup was saved in a new note beside it: “\(Self.name(path))”."
             )
+        case .conflictNotApplied(let path, let reason):
+            String(
+                localized:
+                    "The note changed on the tablet, so a new note was made beside it: “\(Self.name(path))”. This edit could not be applied there, so it was taken back: \(reason)"
+            )
+        }
+    }
+
+    /// The failure's own words, without the editor's sentence around them.
+    var reason: String {
+        switch self {
+        case .tablet(let failure): failure.words
+        case .backup(let reason), .macWrite(let reason): reason
+        case .staleBase, .openOnTablet, .untouchedPagesChanged, .conflict, .restoreConflict, .conflictNotApplied:
+            message
         }
     }
 }
@@ -267,7 +282,10 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
                         .refused(undo: edit.undo, message: WriteFailure.conflict(conflict).message, conflict: conflict))
                 }
             } catch {
-                outcome(.refused(undo: edit.undo, message: error.message))
+                // A conflict note made before the failure stays on the tablet: later edits on that
+                // base join it, and the refusal names it (#317).
+                if let conflict = error.conflictNote { conflicts[operation.baseHash] = conflict }
+                outcome(.refused(undo: edit.undo, message: error.message, conflict: error.conflictNote))
             }
         }
         forget()
