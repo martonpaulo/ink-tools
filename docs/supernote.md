@@ -42,6 +42,12 @@ the Nomad) or `getDeviceType()`, as `inkctl status` does ([#284](https://github.
   (0, 2440) after [measured, `user_rotation` 1 then 0, 2026-11-25,
   [#244](https://github.com/martonpaulo/ink-tools/issues/244)].
 - A page has the same 1920 x 2560 size; `getPageSize` answers it [measured, build 0.1.0 (3)].
+- The note's page bar covers a portrait page's bottom 116 px, from y 2444 of 2560 (about 9.8 mm): a
+  Puzzles footer line drawn lower lost the bottom of its «g», «9» and «,» under it [measured,
+  Manta, Puzzles 0.1.0 beta 1, 2026-11-27, [#553](https://github.com/martonpaulo/ink-tools/issues/553)].
+  So a Puzzles page keeps its footer above the bar (`PAGE_MM.pageBar` and `PAGE_MM.bottom` in
+  `packages/puzzle-core/src/page/look.ts`); the bar on a landscape page is not measured yet and
+  takes the same margin [inference].
 - Stroke points from `getElements` are page pixels [measured, Probe, 2026-11-17,
   [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. The pen digitizer (EMR) spans 21632 x
   16224 on the Manta page, its x running down the page and its y from the right edge to the left

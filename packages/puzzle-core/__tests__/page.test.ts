@@ -39,7 +39,7 @@ import {
   type PageSpec,
   type Raster,
 } from '../src';
-import { TONES } from '../src/page/look';
+import { mmToPx, PAGE_MM, TONES } from '../src/page/look';
 import { SAMPLE_PAGES } from '../testing/pages';
 
 /**
@@ -280,6 +280,15 @@ describe('each primitive matches its golden image', () => {
   });
 });
 
+describe('the note\'s page bar (#553)', () => {
+  test.each(SAMPLE_PAGES.map(([name, draw]) => [name, draw] as const))('%s keeps the band under the page bar blank', (name, draw) => {
+    const raster = draw();
+    const barTop = raster.height - mmToPx(PAGE_MM.pageBar);
+    const inked = raster.pixels.subarray(barTop * raster.width).findIndex(pixel => pixel !== TONES.paper);
+    expect([name, inked]).toEqual([name, -1]);
+  });
+});
+
 describe('each preset and layout matches its golden page', () => {
   test.each(SAMPLE_PAGES.map(([name, draw]) => [name, draw] as const))('%s', (name, draw) => {
     expectGolden(name, draw());
@@ -300,7 +309,7 @@ describe('the layout', () => {
 
   test('a grid that does not fit throws, naming how much it is over', () => {
     expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(PageFitError);
-    expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(/2693 px too wide, 2195 px too tall/);
+    expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(/2693 px too wide, 2205 px too tall/);
   });
 
   test('the largest preset that fits is chosen, and none is an error', () => {

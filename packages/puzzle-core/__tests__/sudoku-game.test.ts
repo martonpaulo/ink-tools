@@ -67,7 +67,7 @@ describe('the sudoku page', () => {
   test('the same seed gives the same page bytes, pinned', () => {
     const bytes = sudokuPagePng(generateSudoku('G1', 9, 'easy'), OPTIONS);
     expect(Buffer.from(bytes).equals(Buffer.from(sudokuPagePng(generateSudoku('G1', 9, 'easy'), OPTIONS)))).toBe(true);
-    expect(crc32(bytes)).toBe(854134691);
+    expect(crc32(bytes)).toBe(2329722462);
   });
 
   test('the solution is never drawn: a page with the solution blanked has the same pixels', () => {

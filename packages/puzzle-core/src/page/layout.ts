@@ -52,7 +52,7 @@ export class PageFitError extends Error {
 }
 
 /** The footer's two baselines, as shares of its height from its top. */
-const FOOTER_BASELINES = { first: 0.42, second: 0.86 } as const;
+const FOOTER_BASELINES = { first: 0.4, second: 0.88 } as const;
 
 const SIDES: readonly Side[] = ['top', 'left', 'bottom', 'right'];
 
@@ -61,6 +61,7 @@ export function layoutPage(spec: PageSpec): PageLayout {
   if (!CELL_PRESETS_MM.includes(spec.cellMm)) throw new Error(`the cell presets are ${CELL_PRESETS_MM.join(', ')} mm, not ${spec.cellMm}`);
   const { width, height } = PAGE_SIZE[spec.orientation];
   const margin = mmToPx(PAGE_MM.margin);
+  const bottom = mmToPx(PAGE_MM.bottom);
   const footerHeight = mmToPx(PAGE_MM.footer);
   const gap = mmToPx(PAGE_MM.gap);
   const cell = latticeCell(spec.lattice, mmToPx(spec.cellMm));
@@ -82,7 +83,7 @@ export function layoutPage(spec: PageSpec): PageLayout {
   const contentHeight = blockHeight + (belowHeight > 0 ? gap + belowHeight : 0);
 
   const areaWidth = width - 2 * margin;
-  const areaHeight = height - 2 * margin - footerHeight;
+  const areaHeight = height - margin - bottom - footerHeight;
   if (contentWidth > areaWidth || contentHeight > areaHeight) {
     throw new PageFitError(spec, contentWidth - areaWidth, contentHeight - areaHeight);
   }
@@ -102,7 +103,7 @@ export function layoutPage(spec: PageSpec): PageLayout {
     clueGap: gap,
     sidePanel,
     belowPanel: belowHeight > 0 ? { x: margin, y: top + blockHeight + gap, width: areaWidth, height: belowHeight } : null,
-    footer: { x: margin, y: height - margin - footerHeight, width: width - 2 * margin, height: footerHeight },
+    footer: { x: margin, y: height - bottom - footerHeight, width: width - 2 * margin, height: footerHeight },
   };
 }
 

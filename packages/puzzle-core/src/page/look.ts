@@ -71,7 +71,18 @@ export const LINE_PX = {
 /** The page margins and the footer band, in millimetres. */
 export const PAGE_MM = {
   margin: 8,
-  footer: 12,
+  /**
+   * The note's page bar covers the page's bottom 116 px [measured, Manta, 2026-11-27, #553]: from
+   * y 2444 of a 2560 px page, so the footer ends above it (`docs/supernote.md` › Page bar).
+   */
+  pageBar: 9.82,
+  /**
+   * The bottom margin: the page bar and half a millimetre of paper above it; the footer's lowest
+   * descender sits about 0.5 mm higher still, so no footer text hides under the bar (#553).
+   */
+  bottom: 10.32,
+  /** The footer band: two lines of `TEXT_SIZE.footerMm` text, packed so the bottom margin costs a grid little height (#553). */
+  footer: 10.5,
   /** The gap between the grid, its outside clues and a side panel. */
   gap: 3,
 } as const;
