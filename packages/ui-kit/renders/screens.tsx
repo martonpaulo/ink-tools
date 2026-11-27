@@ -61,12 +61,13 @@ import {KAKURO} from '../../../plugins/puzzles/src/games/kakuro';
 import {SLITHERLINK} from '../../../plugins/puzzles/src/games/slitherlink';
 import {BRIDGES} from '../../../plugins/puzzles/src/games/bridges';
 import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
+import {STAR_BATTLE} from '../../../plugins/puzzles/src/games/starBattle';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -367,6 +368,22 @@ const nonogramInk = () => {
     return {points: rows.flatMap(row => [{x: x + grid.cell * 0.12, y: row}, {x: x + grid.cell * 0.88, y: row}]), element: {}};
   });
 };
+/** The largest star battle with two stars a line, its stars drawn but for its last two, and one star off the answer (#392). */
+const STAR_BATTLE_CODE = 'SB-10S2-H-1';
+const starBattleInk = () => {
+  const puzzle = starBattleFromCode(STAR_BATTLE_CODE);
+  const {grid} = layoutStarBattle(puzzle, {orientation: 'portrait', hand: 'right'});
+  const stars = puzzle.solution.flatMap((on, cell) => (on ? [cell] : []));
+  const off = puzzle.solution.findIndex(on => !on);
+  return [...stars.slice(0, -2), off].map(cell => {
+    const [cx, cy] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+    const points = Array.from({length: 6}, (_, i) => {
+      const angle = -Math.PI / 2 + (((2 * i) % 5) * 2 * Math.PI) / 5;
+      return {x: cx + 0.35 * grid.cell * Math.cos(angle), y: cy + 0.35 * grid.cell * Math.sin(angle)};
+    });
+    return {points, element: {}};
+  });
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -400,6 +417,7 @@ const puzzlesKakuro = (code: string | null, steps: string[] = []) => puzzlesGame
 const puzzlesSlitherlink = (code: string | null, steps: string[] = []) => puzzlesGame(SLITHERLINK, slitherlinkInk, code, steps);
 const puzzlesBridges = (code: string | null, steps: string[] = []) => puzzlesGame(BRIDGES, bridgesInk, code, steps);
 const puzzlesNonogram = (code: string | null, steps: string[] = []) => puzzlesGame(NONOGRAM, nonogramInk, code, steps);
+const puzzlesStarBattle = (code: string | null, steps: string[] = []) => puzzlesGame(STAR_BATTLE, starBattleInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -460,6 +478,11 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-nonogram-page', render: () => puzzlesNonogram(NONOGRAM_CODE)},
   {name: 'puzzles-nonogram-check', render: () => puzzlesNonogram(NONOGRAM_CODE, ['Check'])},
   {name: 'puzzles-nonogram-solution', render: () => puzzlesNonogram(NONOGRAM_CODE, ['Show Solution'])},
+  {name: 'puzzles-star-battle', render: () => puzzlesStarBattle(null)},
+  {name: 'puzzles-star-battle-page', render: () => puzzlesStarBattle(STAR_BATTLE_CODE)},
+  {name: 'puzzles-star-battle-two', render: () => puzzlesStarBattle(null, ['Size: 10 x 10', 'Stars in each row, column and region: 2 stars'])},
+  {name: 'puzzles-star-battle-check', render: () => puzzlesStarBattle(STAR_BATTLE_CODE, ['Check'])},
+  {name: 'puzzles-star-battle-solution', render: () => puzzlesStarBattle(STAR_BATTLE_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

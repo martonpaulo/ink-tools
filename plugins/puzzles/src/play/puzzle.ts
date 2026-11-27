@@ -18,6 +18,11 @@ export type PuzzleOption = {
   choices: readonly Choice<string>[] | ((earlier: Choices) => readonly Choice<string>[]);
   /** The value picked when the view opens. */
   initial: string;
+  /**
+   * What the earlier choices hold back from this one, under its last value, such as «2 stars from
+   * 8 x 8.» (#392): a choice the earlier ones narrow says so, never only changes.
+   */
+  note?: (earlier: Choices) => string | undefined;
 };
 
 /** The choices `option` offers after `earlier`. */

@@ -9,6 +9,7 @@ import {
   puzzleCode,
   rateStarBattle,
   starBattleBands,
+  starBattleFromCode,
   STAR_BATTLE_MAX_SIDE,
   STAR_BATTLE_MIN_SIDE,
   type InkPoint,
@@ -147,5 +148,15 @@ describe('checkStarBattle', () => {
     const [cx, cy] = cellCenter(grid, stars[0] % 8, Math.floor(stars[0] / 8)).map(Math.round);
     expect(raster.pixels[cy * raster.width + cx]).toBe(0xff);
     expect(cellIndex(grid, 0, 1)).toBe(8);
+  });
+});
+
+describe('starBattleFromCode (#392)', () => {
+  test('a code names the same star battle again, two stars too, and another game\'s code is refused', () => {
+    const one = generateStarBattle('P1', { side: 6, stars: 1 }, 'medium');
+    expect(starBattleFromCode(puzzleCode(one.id))).toEqual(one);
+    const two = generateStarBattle('P1', { side: 8, stars: 2 }, 'easy');
+    expect(starBattleFromCode(puzzleCode(two.id))).toEqual(two);
+    expect(() => starBattleFromCode('NO-10X10-M-7K2Q9X')).toThrow('not a star battle code');
   });
 });

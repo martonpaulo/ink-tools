@@ -307,6 +307,7 @@ function Ready({
               title={option.title}
               choices={offered(option, choices)}
               value={choices[option.id]}
+              note={option.note?.(choices)}
               onChange={value => onChoose(option.id, value)}
             />
           ))}

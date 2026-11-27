@@ -16,7 +16,7 @@
  * unit). A grid that still needs a guess is never offered.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
 
 export interface StarBattleSize {
@@ -538,3 +538,10 @@ export function generateStarBattle(seed: string, size: StarBattleSize, difficult
   throw new Error(`no ${difficulty} ${side} x ${side} star battle with ${stars} stars from seed «${seed}» in ${STAR_BATTLE_ATTEMPTS} attempts`);
 }
 
+/** The star battle a puzzle code names (`SB-8S2-H-7K2Q9X`), the same one every time (#392). */
+export function starBattleFromCode(code: string): StarBattle {
+  const id = parsePuzzleCode(code);
+  const match = /^(\d+)S([12])$/.exec(id.size);
+  if (id.game !== 'star-battle' || !match) throw new RangeError(`«${code}» is not a star battle code`);
+  return generateStarBattle(id.seed, { side: Number(match[1]), stars: Number(match[2]) as 1 | 2 }, id.difficulty);
+}
