@@ -75,6 +75,7 @@ const CASES = [
   ['slitherlink 10 x 10 hard', () => core.generateSlitherlink('P1', { width: 10, height: 10 }, 'hard')],
   ['futoshiki 5 x 5 medium', () => core.generateFutoshiki('P1', 5, 'medium')],
   ['futoshiki 7 x 7 hard', () => core.generateFutoshiki('P1', 7, 'hard')],
+  ['binairo 10 x 10 hard', () => core.generateBinairo('P1', 10, 'hard')],
 ];
 const only = process.env.ONLY;
 for (const [name, make] of CASES) {

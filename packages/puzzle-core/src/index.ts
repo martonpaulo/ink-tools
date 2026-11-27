@@ -25,6 +25,7 @@ export * from './calcudoku';
 export * from './calcudoku-page';
 export * from './light-up';
 export * from './hitori';
+export * from './binairo';
 export * from './page';
 export * from './check';
 export * from './maze-page';

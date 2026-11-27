@@ -17,14 +17,17 @@ import {
   drawText,
   drawSlitherlinkPage,
   drawTriangleLattice,
+  drawBinairoPage,
   FONT_WEIGHTS,
   drawLightUpPage,
   generateLightUp,
   generateHitori,
+  generateBinairo,
   generateNonogram,
   generateSlitherlink,
   generateSudoku,
   generateWordSearch,
+  layoutBinairoPage,
   layoutPage,
   puzzleCode,
   renderBoardPage,
@@ -109,4 +112,9 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     return drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text }).raster;
   }],
   ['hitori-15mm-portrait-right', () => drawHitoriPage(generateHitori('P1', 8, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
+  ['page-binairo-10mm-portrait-right', () => {
+    const puzzle = generateBinairo('P1', 10, 'medium');
+    const layout = layoutBinairoPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 });
+    return drawBinairoPage(puzzle, layout, { game: 'Binairo', difficulty: 'Medium', code: puzzleCode(puzzle.id) });
+  }],
 ];
