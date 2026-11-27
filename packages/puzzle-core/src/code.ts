@@ -9,10 +9,10 @@
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in'] as const;
+export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in', 'light-up'] as const;
 export type Game = (typeof GAMES)[number];
 
-const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI' };
+const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI', 'light-up': 'LU' };
 const BAND_CODES: Record<Difficulty, string> = { easy: 'E', medium: 'M', hard: 'H', expert: 'X' };
 
 /** Crockford's base 32: no I, L, O or U, so a hand-copied code is not misread. */

@@ -23,6 +23,7 @@ export * from './futoshiki-page';
 export * from './codeword';
 export * from './calcudoku';
 export * from './calcudoku-page';
+export * from './light-up';
 export * from './page';
 export * from './check';
 export * from './maze-page';

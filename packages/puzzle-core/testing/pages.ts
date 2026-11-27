@@ -17,6 +17,8 @@ import {
   drawSlitherlinkPage,
   drawTriangleLattice,
   FONT_WEIGHTS,
+  drawLightUpPage,
+  generateLightUp,
   generateNonogram,
   generateSlitherlink,
   generateSudoku,
@@ -76,6 +78,7 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawFooter(r, layout, { game: 'Sudoku', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Put 1 to 9 once in each row, each column and each box.' });
     return r;
   }],
+  ['page-light-up-10mm-portrait-right', () => drawLightUpPage(generateLightUp('P1', { width: 10, height: 10 }, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
   ['page-10mm-landscape-right', () => {
     const layout = layoutPage({ orientation: 'landscape', hand: 'right', cellMm: 10, lattice: 'hex', columns: 12, rows: 10, sidePanelMm: 40 });
     const r = createPage(layout);

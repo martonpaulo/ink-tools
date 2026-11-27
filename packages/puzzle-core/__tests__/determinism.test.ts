@@ -1,4 +1,4 @@
-import { digest, generateCalcudoku, generateCodeword, generateFillIn, generateFutoshiki, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
+import { digest, generateCalcudoku, generateCodeword, generateFillIn, generateFutoshiki, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
 import { WORD_LISTS } from '../src/words-data';
 
 /**
@@ -23,6 +23,7 @@ const PINNED: readonly [string, () => unknown, string][] = [
   ['codeword 13 EN medium', () => generateCodeword('P1', 13, 'medium', WORD_LISTS.en), '60b2f276'],
   ['calcudoku 6 x 6 medium', () => generateCalcudoku('P1', 6, 'medium'), 'c7ecd04a'],
   ['fill-in pt medium', () => generateFillIn('P1', 'medium', WORD_LISTS.pt), '5f277c78'],
+  ['light up 10 x 10 hard', () => generateLightUp('P1', { width: 10, height: 10 }, 'hard'), 'fe009ec1'],
 ];
 
 describe('the same seed gives the same puzzle everywhere', () => {
