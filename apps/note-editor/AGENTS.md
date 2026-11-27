@@ -72,7 +72,8 @@ only in a description, never in the name, the bundle identifier or the icon
 ([`docs/decisions.md`](../../docs/decisions.md)). The code name is `NoteEditor`, the slug
 `note-editor` (folder, gate, cask), the bundle identifier `com.martonpaulo.inktools.noteeditor`.
 `LegacyNames` moves what a build under the old name kept, once, at launch: its Application Support
-folders and its defaults.
+folders and its defaults. File › Open Recent starts empty after the rename, since macOS keeps that
+list by bundle identifier and offers no public way to move it; with no release, only test builds lose it.
 
 ## The app
 
