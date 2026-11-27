@@ -4,14 +4,13 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {Image, RootTagContext, ScrollView, StyleSheet} from 'react-native';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {TitleBar} from '@ink-tools/ui-kit';
-import {catchBackKey} from '@ink-tools/ui-kit/backKeyTest';
+import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {defaultSettings, EDITS, setEdit, STYLES} from '../src/edits';
 import * as editor from '../src/editor';
 import {EditorState} from '../src/editor';
 import {Editor} from '../src/EditorView';
 import {copy} from '../src/copy';
-import {retouchNative} from '../src/native';
 
 const READY: EditorState = {
   phase: 'ready',
@@ -133,11 +132,11 @@ test('the Styles grid keeps the size rules, labels each tile, says when it faile
 });
 
 test('the view asks the native module to route Back to its own root view (#226)', async () => {
-  const listenBackKey = jest.fn();
+  const armBackKey = jest.fn();
   let tree!: ReactTestRenderer;
   const app = (
     <RootTagContext.Provider value={11}>
-      <App close={() => {}} listenBackKey={listenBackKey} />
+      <App close={() => {}} armBackKey={armBackKey} />
     </RootTagContext.Provider>
   );
   await act(async () => {
@@ -147,15 +146,25 @@ test('the view asks the native module to route Back to its own root view (#226)'
     tree.update(app);
   });
   // Once per root view: PluginHost never sends Back to a plugin view by itself (#204).
-  expect(listenBackKey.mock.calls).toEqual([[11]]);
+  expect(armBackKey.mock.calls).toEqual([[11]]);
 });
 
-test('listenBackKey calls ImageEditingBack, the shared Back key module, and reports a missing module (#226)', async () => {
-  const listen = jest.fn(async () => true);
-  const native = retouchNative({ImageEditingBack: {listenBackKey: listen}});
-  expect(await native.listenBackKey(11)).toEqual({ok: true, value: true});
-  expect(listen).toHaveBeenCalledWith(11);
-  expect((await retouchNative({}).listenBackKey(11)).ok).toBe(false);
+test('the view arms ImageEditingBack through the shared path and logs INKTOOLS (#300)', async () => {
+  // Every plugin view arms sn-adapter's module through ui-kit's useArmOnRoot (device round 14).
+  const module = fakeBackKeyModule('ImageEditingBack');
+  const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+  await act(async () => {
+    renderer.create(
+      <RootTagContext.Provider value={11}>
+        <App close={() => {}} />
+      </RootTagContext.Provider>,
+    );
+  });
+  await act(async () => {});
+  expect(module.listen.mock.calls).toEqual([[11]]);
+  expect(log).toHaveBeenCalledWith('INKTOOLS ImageEditingBack: back key: listening');
+  log.mockRestore();
+  module.restore();
 });
 
 describe("Back does what the open screen's «Close» does (#204)", () => {
