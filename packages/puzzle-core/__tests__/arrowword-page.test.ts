@@ -5,6 +5,7 @@ import {
   createPage,
   drawArrowword,
   emptyClueCells,
+  fitClue,
   generateArrowword,
   layoutPage,
   TONES,
@@ -62,6 +63,12 @@ describe('wrapClue', () => {
 
   test('a word wider than the cell is refused', () => {
     expect(() => wrapClue('Unbreakableword', 60, 35)).toThrow('wider than its clue cell');
+  });
+
+  test('a clue with letters the page font lacks is drawn with them folded, as in the crossword', () => {
+    expect(fitClue('Félin für Öl', grid.cell, grid.cell / 2)).toEqual(['Felin fur', 'Ol']);
+    const accented = { ...puzzle, slots: puzzle.slots.map((slot, i) => (i === 0 ? { ...slot, clue: 'Ação ß' } : slot)) };
+    expect(() => drawArrowword(createPage(layout), grid, accented)).not.toThrow();
   });
 
   test('a clue too long for its share of the cell is refused when drawn', () => {

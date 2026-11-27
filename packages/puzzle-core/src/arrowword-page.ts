@@ -6,7 +6,7 @@
  */
 import { arrowwordAnswers, emptyClueCells, type Arrowword, type ArrowwordSlot } from './arrowword';
 import { checkCells, readCells, type CheckResult, type InkStroke, type Recognize } from './check';
-import { capHeight, drawText, FONT_WEIGHTS, measureText } from './page/font';
+import { capHeight, drawText, FONT_WEIGHTS, measureText, pageText } from './page/font';
 import { drawSquareLattice, shadeCells, type Cell, type Grid } from './page/grid';
 import { mmToPx, TEXT_SIZE } from './page/look';
 import { fillPolygon, type Raster } from './page/raster';
@@ -33,16 +33,32 @@ function cellOf(grid: Grid, index: number): Cell {
 }
 
 /** One clue's text, centred in its share of the clue cell, and its arrow at that share's edge. */
+/**
+ * The clue's lines as the page font draws them (accents the font lacks are folded, as in the
+ * crossword) in a share `height` of a clue cell of side `cell` pixels; throws when they do not fit.
+ */
+export function fitClue(clue: string, cell: number, height: number): string[] {
+  const inset = Math.round(cell * INSET_SHARE);
+  const size = mmToPx(TEXT_SIZE.arrowClueMm);
+  const lines = wrapClue(pageText(clue), cell - 2 * inset, size);
+  if (clueBlock(lines.length) > height - inset) throw new Error(`the clue «${clue}» takes ${lines.length} lines, more than its clue cell holds`);
+  return lines;
+}
+
+/** The height of `lines` lines of clue text, from the first cap top to the last baseline. */
+function clueBlock(lines: number): number {
+  const size = mmToPx(TEXT_SIZE.arrowClueMm);
+  return capHeight(size) + (lines - 1) * Math.round(size * TEXT_SIZE.lineStep);
+}
+
 function drawClue(raster: Raster, grid: Grid, slot: ArrowwordSlot, top: number, height: number): void {
   const [column] = cellOf(grid, slot.clueCell);
   const { cell } = grid;
   const left = grid.x + column * cell;
-  const inset = Math.round(cell * INSET_SHARE);
   const size = mmToPx(TEXT_SIZE.arrowClueMm);
   const step = Math.round(size * TEXT_SIZE.lineStep);
-  const lines = wrapClue(slot.clue, cell - 2 * inset, size);
-  const block = capHeight(size) + (lines.length - 1) * step;
-  if (block > height - inset) throw new Error(`the clue «${slot.clue}» takes ${lines.length} lines, more than its clue cell holds`);
+  const lines = fitClue(slot.clue, cell, height);
+  const block = clueBlock(lines.length);
   const first = top + (height - block) / 2 + capHeight(size);
   lines.forEach((line, i) => drawText(raster, line, left + cell / 2, first + i * step, { size, weight: FONT_WEIGHTS.regular, tone: 'ink', align: 'center' }));
 
