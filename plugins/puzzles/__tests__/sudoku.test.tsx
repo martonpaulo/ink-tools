@@ -50,6 +50,13 @@ describe('the sudoku game (#383)', () => {
     expect(inScroll).toBe(false);
   });
 
+  test('a page with no sudoku says so out of the scrolled choices, so the longest list never cuts it', async () => {
+    const tree = await mount(SUDOKU, fakePages().pages);
+    const [list] = tree.root.findAllByType(ScrollView);
+    expect(shownTexts(tree.root)).toContain(playCopy['here.none'](sudokuCopy.title));
+    expect(shownTexts(list)).not.toContain(playCopy['here.none'](sudokuCopy.title));
+  });
+
   test('«Add Page» puts the chosen sudoku on a new page, the same for the same seed', async () => {
     const fake = fakePages();
     const tree = await mount(SUDOKU, fake.pages);

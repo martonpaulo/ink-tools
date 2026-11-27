@@ -310,7 +310,6 @@ function Ready({
               onChange={value => onChoose(option.id, value)}
             />
           ))}
-          {!board && thisPage}
         </ScrollView>
       )}
       {/* Fixed under the choices, so a long list never pushes the view's main action off screen (#383). */}
@@ -318,6 +317,8 @@ function Ready({
       <View style={[shared.buttons, styles.section]}>
         <Button kind="primary" label={playCopy['new.add']} onPress={onAdd} />
       </View>
+      {/* With no puzzle on the page, its note comes last, out of the list, so a long list never cuts it. */}
+      {!board && thisPage}
     </View>
   );
 }
