@@ -347,11 +347,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#204](https://github.com/martonpaulo/ink-tools/issues/204)]. A full view's way out is its own
   visible «Close». The window is focusable and a window hands a key to its focused view, so Image
   Editing 0.1.0 beta 15 makes its React root view focusable, focuses it on each show and turns Back
-  into `hardwareBackPress` [inference, device round pending,
-  [#226](https://github.com/martonpaulo/ink-tools/issues/226)]; that code is now sn-adapter's
+  into `hardwareBackPress` ([#226](https://github.com/martonpaulo/ink-tools/issues/226)); that code is now sn-adapter's
   `BackKeyModule`, which every plugin with a full view registers under its own name and arms
   once per root view with ui-kit's `useArmOnRoot`
-  ([#300](https://github.com/martonpaulo/ink-tools/issues/300)).
+  ([#300](https://github.com/martonpaulo/ink-tools/issues/300)). With it, `input keyevent 4` closes
+  only the view, and the note under it stays the resumed activity, on Account Sync's, Lasso
+  Actions', Smart Pen's and Device Link's Settings, Device Link's «Receive» and Image Editing's
+  editor [measured, Manta, 2026-11-26 and 2026-11-27, log `INKTOOLS ImageEditingBack: back key:
+  listening`, then `back key`].
 - A plugin view without that module does not keep Back: on Device Link 0.2.0 beta 1, Back on
   «Receive» closed the view and the note under it, which left the task stack [measured, Manta,
   device round 9, 2026-11-26, [#300](https://github.com/martonpaulo/ink-tools/issues/300)].
