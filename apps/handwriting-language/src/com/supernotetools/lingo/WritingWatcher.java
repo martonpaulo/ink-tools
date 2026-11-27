@@ -9,7 +9,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 /**
  * Tells where the owner writes, from window events only, with no timer (#195): the handwriting
  * keyboard is open while a `TYPE_INPUT_METHOD` window is in `getWindows()`, and the foreground
- * activity comes from `TYPE_WINDOW_STATE_CHANGED`. Enabled once over ADB (Copy.WATCHER_COMMANDS).
+ * activity comes from `TYPE_WINDOW_STATE_CHANGED`. Enabled once on the Accessibility screen or over ADB (Copy.WATCHER_COMMANDS, #489).
  * The keyboard window appears about 140 ms after its state event, so `TYPE_WINDOWS_CHANGED`
  * reads the list again (docs/supernote.md › Handwriting recognition language). An `inkctl
  * snapshot` restarts the service, so it reads the windows again on each connect.

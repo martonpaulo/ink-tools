@@ -93,13 +93,9 @@ adb shell appops set com.supernotetools.lingo MANAGE_EXTERNAL_STORAGE allow
 adb shell appops set com.supernotetools.lingo SYSTEM_ALERT_WINDOW allow
 ```
 
-Writing detection, once, also over ADB (this command replaces any other enabled accessibility
-service; the settings screen shows it while the service is off):
-
-```sh
-adb shell settings put secure enabled_accessibility_services com.supernotetools.lingo/.WritingWatcher
-adb shell settings put secure accessibility_enabled 1
-```
+Writing detection, once: Settings › Accessibility › Handwriting Language › Use Handwriting
+Language, which the settings screen opens; or the two ADB commands of the [README](README.md#install),
+which keep the other services ([#489](https://github.com/martonpaulo/ink-tools/issues/489)).
 
 The app writes only inside `/sdcard/.data/dictionary/default/`, and only a name that matches
 `^[a-z]{2}_[A-Z]{2}$` and has its pack installed.
@@ -135,7 +131,7 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
 
 - SemVer with a numbered beta, as the root `AGENTS.md` › Product versioning sets for plugins
   ([#155](https://github.com/martonpaulo/supernote-tools/issues/155)): `app.json` `version`
-  `0.1.0-beta.13` gives the `versionName` `0.1.0 beta 13` (derived by `scripts/plugin-version.cjs`);
+  `0.1.0-beta.14` gives the `versionName` `0.1.0 beta 14` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
 - No release workflow yet: a test build is handed over as a file for the device round.

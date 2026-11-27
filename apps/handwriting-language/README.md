@@ -13,10 +13,18 @@ Status: test build for device rounds ([#157](https://github.com/martonpaulo/supe
 ```sh
 adb uninstall com.supernotetools.dialect   # only when the old Dialect build is installed
 node scripts/build.cjs
-adb install build/outputs/lingo-app-0.1.0-beta.13.apk
+adb install build/outputs/lingo-app-0.1.0-beta.14.apk
 adb shell appops set com.supernotetools.lingo MANAGE_EXTERNAL_STORAGE allow
 adb shell appops set com.supernotetools.lingo SYSTEM_ALERT_WINDOW allow
-adb shell settings put secure enabled_accessibility_services com.supernotetools.lingo/.WritingWatcher
+adb shell '
+k=enabled_accessibility_services
+v=$(settings get secure $k)
+s=com.supernotetools.lingo/.WritingWatcher
+case ":$v:" in
+*":${s%/*}/"*) ;;
+:null:|::) settings put secure $k "$s" ;;
+*) settings put secure $k "$v:$s" ;;
+esac'
 adb shell settings put secure accessibility_enabled 1
 adb shell am force-stop com.ratta.supernote.launcher   # the sidebar lists the app again after an install
 ```

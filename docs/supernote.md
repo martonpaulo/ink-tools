@@ -851,9 +851,14 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   writable file-format field even though the UI forbids changing it after creation [measured,
   source].
 - Where the owner writes can be told by a sideloaded app's accessibility service, enabled over
-  ADB with `settings put secure enabled_accessibility_services <package>/<service>` and
-  `accessibility_enabled 1` [measured, 2026-11-16, a throwaway service,
-  [#157](https://github.com/martonpaulo/ink-tools/issues/157)]:
+  ADB by adding `<package>/<service>` to `enabled_accessibility_services`, read first, since a
+  plain `settings put` replaces every other enabled service, and `accessibility_enabled 1`
+  [measured, 2026-11-16, a throwaway service,
+  [#157](https://github.com/martonpaulo/ink-tools/issues/157)]. Settings › Accessibility lists a
+  sideloaded service under Downloaded apps; its «Use» switch asks «Allow … to have full control of
+  your device?», and Allow adds it in full form (`<package>/<package>.<Service>`) and keeps the
+  other entries [measured, 2026-11-27, Manta, Handwriting Language 0.1.0 beta 14,
+  [#489](https://github.com/martonpaulo/ink-tools/issues/489)]:
   - The handwriting keyboard (`com.android.inputmethod.keyboard/.PinyinIME`) shows as a window of
     type `TYPE_INPUT_METHOD` in `getWindows()` about 140 ms after its `TYPE_WINDOW_STATE_CHANGED`
     event, and leaves the list when it closes; one `getWindows()` read took 4 to 125 ms.
