@@ -10,13 +10,10 @@ import {
   initPlugin,
   registerButton,
   SHOW_FULL_VIEW,
-  showPluginView,
   startButtonQueue,
 } from '@ink-tools/sn-adapter/official';
 import {copy} from './src/copy';
-
-/** The one toolbar button's id; its press opens the Puzzles view (#453). */
-const PUZZLES_ID = 1;
+import {onToolbarPress, PUZZLES_ID} from './src/toolbar';
 
 AppRegistry.registerComponent(appName, () => App);
 
@@ -36,14 +33,5 @@ registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
 }).then(result => report('button', result));
 
 // At start-up, before the view exists, as the press can come first: it shows the view, which
-// checks what a game needs when the game opens (src/PuzzlesView.tsx).
-report(
-  'button listener',
-  startButtonQueue(id => {
-    if (id !== PUZZLES_ID) {
-      return false;
-    }
-    showPluginView();
-    return true;
-  }),
-);
+// checks what a game needs when the game opens (src/PuzzlesView.tsx), and starts at the game list.
+report('button listener', startButtonQueue(id => onToolbarPress(id)));

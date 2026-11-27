@@ -6,10 +6,13 @@ import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
 import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {RETRY_TEXT} from '@ink-tools/ui-kit';
+import {PluginManager} from 'sn-plugin-lib';
+import {startButtonQueue} from '@ink-tools/sn-adapter/official';
 import App from '../App';
 import {copy} from '../src/copy';
 import type {Game} from '../src/games';
 import type {RequirementPorts} from '../src/requirements';
+import {onToolbarPress, PUZZLES_ID} from '../src/toolbar';
 
 const READ = 'plugin.permission.FILE:READ';
 const WRITE = 'plugin.permission.FILE:WRITE';
@@ -148,16 +151,16 @@ test('Close and Back both close the view, and Back is armed on the native module
   back.restore();
 });
 
-test('a new press of the toolbar button starts at the game list, never where the last one ended (#386)', async () => {
-  let pressed = () => {};
-  const presses = (listener: () => void) => {
-    pressed = listener;
-    return () => {};
-  };
-  const tree = await mount({ports: fakePorts(new Set([READ, WRITE])), games: [game()], presses});
+test('a new press of the toolbar button starts at the game list, never where the last one ended (#386, #539)', async () => {
+  // The device path: sn-plugin-lib's button listener, sn-adapter's queue and the view's own listener.
+  const show = jest.fn();
+  startButtonQueue(id => onToolbarPress(id, show));
+  const listener = (PluginManager.registerButtonListener as jest.Mock).mock.calls.at(-1)[0];
+  const tree = await mount({ports: fakePorts(new Set([READ, WRITE])), games: [game()]});
   await press(tree, GAME_LABEL);
   expect(shownTexts(tree.root)).toContain('Playing');
-  await act(async () => pressed());
+  await act(async () => listener.onButtonPress({id: PUZZLES_ID}));
+  expect(show).toHaveBeenCalledTimes(1);
   expect(shownTexts(tree.root)).toContain('Test game');
   expect(shownTexts(tree.root)).not.toContain('Playing');
 });

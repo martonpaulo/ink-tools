@@ -46,8 +46,6 @@ const DEVICE_PORTS: RequirementPorts = {
 export type PuzzlesViewProps = {
   /** Closes the plugin view; tests pass a fake. */
   close?: () => void;
-  /** Each press of the toolbar button while the view is mounted; tests pass a fake. */
-  presses?: (listener: () => void) => () => void;
   ports?: RequirementPorts;
   games?: readonly Game[];
 };
@@ -63,13 +61,12 @@ export function PuzzlesView({
   close = () => closePluginView(),
   ports = DEVICE_PORTS,
   games = GAMES,
-  presses = onButtonEvent,
 }: PuzzlesViewProps): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>({kind: 'list'});
   const list = useCallback(() => setScreen({kind: 'list'}), []);
   // The view outlives a close, so each press starts at the game list, never on the screen the last
-  // one ended on, such as a solution (device round, #386).
-  useEffect(() => presses(list), [presses, list]);
+  // one ended on, such as a solution (device round, #386); `src/toolbar.ts` lets the press reach here (#539).
+  useEffect(() => onButtonEvent(list), [list]);
 
   /** Checks what `game` needs, then opens it, or shows the Needs or Error state that stops it. */
   const open = useCallback(
