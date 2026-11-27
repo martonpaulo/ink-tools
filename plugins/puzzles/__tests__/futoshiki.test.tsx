@@ -36,7 +36,8 @@ const openCells = PUZZLE.givens.flatMap((given, cell) => (given === 0 ? [cell] :
 
 describe('the futoshiki game (#390)', () => {
   test('is in the game list, after the jigsaw sudoku', () => {
-    expect(GAMES.map(game => game.id).slice(0, 3)).toEqual(['maze', 'jigsaw-sudoku', 'futoshiki']);
+    const ids = GAMES.map(game => game.id);
+    expect(ids.indexOf('futoshiki')).toBeGreaterThan(ids.indexOf('jigsaw-sudoku'));
   });
 
   test('a size change drops a band it does not offer, and «Add Page» puts that puzzle on a new page', async () => {

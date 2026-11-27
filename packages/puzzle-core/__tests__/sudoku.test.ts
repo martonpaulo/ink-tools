@@ -1,4 +1,5 @@
-import { countSudokuSolutions, decodeSudoku, digSudoku, encodeSudoku, generateSudoku, solveSudoku, SUDOKU_SIZES } from '../src/sudoku';
+import { countSudokuSolutions, decodeSudoku, digSudoku, encodeSudoku, generateSudoku, solveSudoku, sudokuFromCode, SUDOKU_SIZES } from '../src/sudoku';
+import { puzzleCode } from '../src/code';
 import { SUDOKU_BANK } from '../src/sudoku-bank';
 import { finishSudoku, geometry, isSingleAt, nextSudokuStep, rateSudoku, solvesWithin, type SudokuShape } from '../src/sudoku-techniques';
 import { createRandom } from '../src/random';
@@ -187,5 +188,15 @@ describe('the fast checks agree with the full rating', () => {
     expect(isSingleAt(NINE, full, 40, solution[40])).toBe(true);
     // The empty grid forces nothing.
     expect(isSingleAt(NINE, new Array(81).fill(0), 0, 1)).toBe(false);
+  });
+});
+
+describe('the sudoku code (#383)', () => {
+  test('names the same puzzle again, at every size, and another game\'s code is refused', () => {
+    for (const size of [4, 9, 16]) {
+      const puzzle = generateSudoku('7K2Q9X', size, 'easy');
+      expect(sudokuFromCode(puzzleCode(puzzle.id))).toEqual(puzzle);
+    }
+    expect(() => sudokuFromCode('JS-9-E-7K2Q9X')).toThrow('not a sudoku code');
   });
 });

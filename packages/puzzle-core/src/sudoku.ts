@@ -6,7 +6,7 @@
  * is the page renderer's job.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
 import { childSeed, createRandom, type Random } from './random';
 import { SUDOKU_BANK } from './sudoku-bank';
@@ -211,4 +211,11 @@ export function generateSudoku(seed: string, size: number, difficulty: Difficult
     }
   }
   throw new Error(`no ${difficulty} ${size} x ${size} sudoku from seed «${seed}» in ${BANK_TRIES} views of the bank`);
+}
+
+/** The sudoku a puzzle code names (`SU-9-H-7K2Q9X`), the same one every time (#383). */
+export function sudokuFromCode(code: string): Sudoku {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'sudoku') throw new RangeError(`«${code}» is not a sudoku code`);
+  return generateSudoku(id.seed, Number(id.size), id.difficulty);
 }

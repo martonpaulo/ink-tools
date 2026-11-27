@@ -54,12 +54,13 @@ import type {RequirementPorts as PuzzlesPorts} from '../../../plugins/puzzles/sr
 import {MAZE} from '../../../plugins/puzzles/src/games/maze';
 import {JIGSAW} from '../../../plugins/puzzles/src/games/jigsaw';
 import {FUTOSHIKI} from '../../../plugins/puzzles/src/games/futoshiki';
+import {SUDOKU} from '../../../plugins/puzzles/src/games/sudoku';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {cellCenter, drawFutoshikiPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, mazeCellCentre, mazeFromCode, mazeLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {cellCenter, drawFutoshikiPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -293,6 +294,13 @@ const futoshikiInk = () => {
   const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
   return cellInk(drawFutoshikiPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, open, 16, puzzle.size);
 };
+const SUDOKU_CODE = 'SU-9-M-1';
+/** The largest grid, whose answers are numbers of two digits (#383). */
+const SUDOKU_16_CODE = 'SU-16-E-1';
+const sudokuInk = (code: string) => () => {
+  const puzzle = sudokuFromCode(code);
+  return cellInk(sudokuLayout(puzzle, 'portrait', 'right').grid, [...sudokuExpected(puzzle)], 30, Math.min(puzzle.shape.size, 9));
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -319,6 +327,7 @@ const puzzlesGame = async (game: PuzzleGame, ink: () => InkStroke<object>[], cod
 const puzzlesMaze = (code: string | null, steps: string[] = [], failing = false) => puzzlesGame(MAZE, mazeInk, code, steps, failing);
 const puzzlesJigsaw = (code: string | null, steps: string[] = []) => puzzlesGame(JIGSAW, jigsawInk, code, steps);
 const puzzlesFutoshiki = (code: string | null, steps: string[] = []) => puzzlesGame(FUTOSHIKI, futoshikiInk, code, steps);
+const puzzlesSudoku = (code: string | null, steps: string[] = []) => puzzlesGame(SUDOKU, sudokuInk(code ?? SUDOKU_CODE), code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -346,6 +355,11 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-jigsaw-page', render: () => puzzlesJigsaw(JIGSAW_CODE)},
   {name: 'puzzles-jigsaw-check', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Check'])},
   {name: 'puzzles-jigsaw-solution', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Show Solution'])},
+  {name: 'puzzles-sudoku', render: () => puzzlesSudoku(null)},
+  {name: 'puzzles-sudoku-page', render: () => puzzlesSudoku(SUDOKU_CODE)},
+  {name: 'puzzles-sudoku-check', render: () => puzzlesSudoku(SUDOKU_CODE, ['Check'])},
+  {name: 'puzzles-sudoku-solution', render: () => puzzlesSudoku(SUDOKU_CODE, ['Show Solution'])},
+  {name: 'puzzles-sudoku-16-solution', render: () => puzzlesSudoku(SUDOKU_16_CODE, ['Show Solution'])},
   {name: 'puzzles-futoshiki', render: () => puzzlesFutoshiki(null)},
   {name: 'puzzles-futoshiki-page', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE)},
   {name: 'puzzles-futoshiki-check', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Check'])},
