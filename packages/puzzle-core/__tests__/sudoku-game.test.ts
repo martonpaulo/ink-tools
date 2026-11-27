@@ -14,6 +14,7 @@ import {
   type SudokuPageOptions,
 } from '../src';
 import { fakeRecognizer, write, writeNumber } from '../testing/ink';
+import { expectOnlyWrong } from '../testing/check';
 
 /** Classic sudoku as a Puzzles game (#383): fixed seeds, its page and its «Check». */
 const OPTIONS: SudokuPageOptions = {
@@ -108,10 +109,7 @@ describe('«Check» on a page solved in inkctl ink', () => {
     const wrongCell = open[Math.floor(open.length / 2)];
     const { recognize } = fakeRecognizer();
     const result = await checkSudoku(puzzle, layout, solve(puzzle, layout, new Set([wrongCell])), recognize);
-    expect(result.wrong).toEqual([wrongCell]);
-    expect(result.right).toHaveLength(open.length - 1);
-    expect(result.unread).toEqual([]);
-    expect(result.empty).toEqual([]);
+    expectOnlyWrong(result, wrongCell, open.length);
   });
 
   test('a blank page reads every open cell empty, and a given is never checked', async () => {

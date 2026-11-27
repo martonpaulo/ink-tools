@@ -16,6 +16,7 @@ import {
 } from '../src';
 import { WORD_LANGUAGES } from '../src/words';
 import { WORD_LISTS } from '../src/words-data';
+import { expectOnlyWrong } from '../testing/check';
 
 /** The letter each cell of the puzzle's solution holds, '' for a block. */
 const lettersOf = (puzzle: Codeword): string[] => puzzle.numbers.map(n => (n ? puzzle.key[n - 1] : ''));
@@ -149,9 +150,6 @@ describe('«Check» on a codeword page', () => {
       return { points: [{ x: cx - 10, y: cy }, { x: cx + 10, y: cy }], element: { letter } };
     });
     const result = await checkCodeword(puzzle, layout.grid, strokes, recognize);
-    expect(result.wrong).toEqual([wrong]);
-    expect(result.right).toHaveLength(cells.length - 1);
-    expect(result.empty).toEqual([]);
-    expect(result.unread).toEqual([]);
+    expectOnlyWrong(result, wrong, cells.length);
   });
 });

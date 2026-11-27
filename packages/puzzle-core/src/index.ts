@@ -26,3 +26,5 @@ export * from './calcudoku-page';
 export * from './page';
 export * from './check';
 export * from './maze-page';
+export * from './fill-in';
+export * from './fill-in-page';

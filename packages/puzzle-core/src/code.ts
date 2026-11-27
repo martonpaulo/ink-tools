@@ -3,15 +3,16 @@
  * shared, typed back and regenerated, and a daily puzzle is seeded by the date.
  *
  *   SU-9-H-7K2Q9X   sudoku, 9 x 9, hard, seed 7K2Q9X
+ *   FI-PT-M-7K2Q9X  fill-in, Portuguese words, medium, seed 7K2Q9X
  */
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku'] as const;
+export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in'] as const;
 export type Game = (typeof GAMES)[number];
 
-const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD' };
+const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI' };
 const BAND_CODES: Record<Difficulty, string> = { easy: 'E', medium: 'M', hard: 'H', expert: 'X' };
 
 /** Crockford's base 32: no I, L, O or U, so a hand-copied code is not misread. */
