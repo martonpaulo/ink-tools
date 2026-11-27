@@ -12,8 +12,8 @@
       ],
       "reason": "the .note format is not documented; supernotelib and our reader parse it",
       "evidence": {
-        "source": "supernotelib SupernoteXParser.SN_SIGNATURES; recognition boxes measured against rendered ink on Manta notes; element records measured on the fixtures content.note and landscape-tablet.note; text box, Heading and Heading style records measured on notes made on a Manta (firmware Chauvet.E103.2610191001.2559, 2026-11-26)",
-        "date": "2026-11-26"
+        "source": "supernotelib SupernoteXParser.SN_SIGNATURES; recognition boxes measured against rendered ink on Manta notes; element records measured on the fixtures content.note and landscape-tablet.note; text box, Heading and Heading style records measured on notes made on a Manta (firmware Chauvet.E103.2610191001.2559, 2026-11-26); shape records (the geometry and five-star kinds of sn-plugin-lib 0.2.3 model/Element) measured on a Manta test note, 2026-11-27",
+        "date": "2026-11-27"
       },
       "upgradePath": "a documented format or an export API",
       "lastVerified": "unverified",
@@ -51,6 +51,13 @@
         "eraserColour": 255,
         "textBoxKind": "0000",
         "headingKind": "0001",
+        "shapeKinds": [
+          "straightLine",
+          "GEO_circle",
+          "GEO_ellipse",
+          "GEO_polygon",
+          "fiveStarsSignal"
+        ],
         "headingStyles": [
           "1000254",
           "1000000",

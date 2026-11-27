@@ -26,6 +26,19 @@ enum Fixtures {
         return note
     }
 
+    /// `content.note` with its first element record's point count past the record, so page 1
+    /// draws while its elements cannot be read (#459).
+    static func damagedElementsNote() throws -> NoteFile {
+        var bytes = [UInt8](try data("content.note"))
+        let note = try NoteFile(data: Data(bytes))
+        guard let block = note.pages[0].metadata.address("TOTALPATH") else { throw CocoaError(.fileReadCorruptFile) }
+        // The block's length and count, the record's 212 bytes from its length word, then the
+        // count of its disabled areas (none): the point count.
+        let points = block + 4 + 4 + 212 + 4
+        bytes.replaceSubrange(points..<(points + 4), with: [0xFF, 0xFF, 0xFF, 0x00])
+        return try NoteFile(data: Data(bytes))
+    }
+
     /// `custom-template.note` with its template picture's signature broken, so the reader cannot
     /// draw the template (#308).
     static func damagedTemplateNote() throws -> NoteFile {
@@ -231,6 +244,26 @@ enum Fixtures {
         let intact = PageImages(note: try Fixtures.note("custom-template.note"))
         await intact.loadPage(0)
         #expect(intact.missingTemplates[0] == nil)
+    }
+
+    /// A page whose elements cannot be read still draws; its marker names the reader's reason,
+    /// and its report holds the whole diagnostic (#459).
+    @Test func aPageWhoseElementsFailNamesTheCause() async throws {
+        let pages = PageImages(note: try Fixtures.damagedElementsNote())
+        await pages.loadPage(0)
+        await pages.loadElements(0)
+        guard case .ready = pages.page(0), case .failure(let failure) = pages.elements[0] else {
+            Issue.record("the page did not draw, or its elements read")
+            return
+        }
+        #expect(failure.reason == "element 1 has more points than bytes")
+        #expect(Copy.elementsNotSelectable(failure.reason).hasSuffix(failure.reason))
+        #expect(failure.diagnostic.hasPrefix("The strokes and elements of page 1 cannot be read"))
+        #expect(failure.diagnostic.contains("Notebook format") && failure.diagnostic.contains("macOS"))
+        // Any other read failure gives the marker a plain reason, its words only in the report.
+        let other = PageImages.failure(NoteFormatError.blockOutOfRange(address: 9), format: 20_260_016)
+        #expect(other.reason == Copy.elementBlockUnreadable)
+        #expect(other.diagnostic.hasPrefix(NoteFormatError.blockOutOfRange(address: 9).description))
     }
 
     @Test func aFailedCopyIsNamedAsACopyButKeepsTheNamedStates() {

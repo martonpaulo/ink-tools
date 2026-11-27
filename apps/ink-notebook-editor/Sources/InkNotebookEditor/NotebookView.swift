@@ -837,10 +837,14 @@ private struct PageView: View {
                 SelectionLayer(index: page.index, pages: pages, viewer: viewer, pixelSize: page.pixels, size: size)
             }
             .overlay(alignment: .top) {
-                if let style = pages.missingTemplates[page.index] {
-                    PageMarker(text: Copy.templateNotShown(style))
-                } else if case .failure = pages.elements[page.index] {
-                    PageMarker(text: Copy.elementsNotSelectable)
+                // A page can lack its template and its elements at once: each marker shows (#459).
+                VStack(spacing: 0) {
+                    if let style = pages.missingTemplates[page.index] {
+                        PageMarker(text: Copy.templateNotShown(style))
+                    }
+                    if case .failure(let failure) = pages.elements[page.index] {
+                        PageMarker(text: Copy.elementsNotSelectable(failure.reason), report: failure.diagnostic)
+                    }
                 }
             }
             .overlay { FindMarks(page: page.index, pixels: page.pixels, size: size) }
@@ -859,15 +863,33 @@ private struct PageMarker: View {
     /// The space between the capsule and the page's top edge, in points.
     static let margin: CGFloat = 8
 
+    /// The space between the sentence and the Copy Report button under it, in points.
+    static let spacing: CGFloat = 4
+    /// The corners' radius: a capsule for one line, a rounded box for more, in points.
+    static let cornerRadius: CGFloat = 14
+
     let text: String
+    /// The diagnostic its Copy Report button puts on the pasteboard; nil shows no button (#459).
+    var report: String?
 
     var body: some View {
-        Label(text, systemImage: "exclamationmark.triangle.fill")
-            .symbolRenderingMode(.multicolor)
-            .font(.callout)
-            .padding(Self.inset)
-            .background(.regularMaterial, in: .capsule)
-            .padding(Self.margin)
+        VStack(alignment: .leading, spacing: Self.spacing) {
+            Label(text, systemImage: "exclamationmark.triangle.fill")
+                .symbolRenderingMode(.multicolor)
+            if let report {
+                Button(Copy.copyReport) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(report, forType: .string)
+                    AccessibilityNotification.Announcement(Copy.reportCopied).post()
+                }
+                .buttonStyle(.link)
+                .help(Copy.copyReportHelp)
+            }
+        }
+        .font(.callout)
+        .padding(Self.inset)
+        .background(.regularMaterial, in: .rect(cornerRadius: Self.cornerRadius, style: .continuous))
+        .padding(Self.margin)
     }
 }
 

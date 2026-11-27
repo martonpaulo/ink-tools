@@ -121,6 +121,12 @@ final class RenderTests {
         await damaged.loadThumbnail(0, scale: 1)
         await damaged.loadPage(0)
         try await render("notebook-template-missing", Self.sizes) { NotebookView(pages: damaged) }
+        // A page whose elements cannot be read names why, with its Copy Report button (#459).
+        let unselectable = PageImages(note: try Fixtures.damagedElementsNote())
+        await unselectable.loadThumbnail(0, scale: 1)
+        await unselectable.loadPage(0)
+        await unselectable.loadElements(0)
+        try await render("notebook-elements-unreadable", Self.sizes) { NotebookView(pages: unselectable) }
         let loading = PageImages(note: note)
         try await render("notebook-loading", Self.sizes) { NotebookView(pages: loading) }
         try await render("unreadable", Self.sizes) {

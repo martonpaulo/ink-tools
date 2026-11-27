@@ -105,9 +105,11 @@ final class PageImages {
         }
     }
 
-    /// Why a page's elements cannot be selected: the reader's words.
+    /// Why a page's elements cannot be selected: the reader's reason, for the page's marker, and
+    /// the whole diagnostic, for a bug report (#459).
     struct ElementFailure: Error, Equatable {
         let reason: String
+        let diagnostic: String
     }
 
     /// The page's elements, read from the Mac's own copy of the note, never from the tablet; a
@@ -128,9 +130,14 @@ final class PageImages {
         [Selectable], ElementFailure
     > {
         do {
-            let found = try note.elements(page: index)
+            let read = try note.readElements(page: index)
+            for skipped in read.skipped {
+                logger.notice(
+                    "page \(index + 1, privacy: .public): element \(skipped.record + 1, privacy: .public) of the unknown kind \(skipped.kind, privacy: .public) is not selectable"
+                )
+            }
             return .success(
-                found.enumerated().map { id, element in
+                read.elements.enumerated().map { id, element in
                     Selectable(
                         id: id, bounds: element.bounds, points: element.points, isArea: element.kind != .stroke,
                         isPicture: element.kind == .picture, record: element.record)
@@ -139,8 +146,23 @@ final class PageImages {
             logger.error(
                 "page \(index + 1, privacy: .public): elements not read: \(String(describing: error), privacy: .public)"
             )
-            return .failure(ElementFailure(reason: String(describing: error)))
+            return .failure(Self.failure(error, format: note.version))
         }
+    }
+
+    /// The marker's reason and the report's diagnostic for an element read that failed: the
+    /// reader's reason, and the whole error with the app's and the Mac's versions.
+    nonisolated static func failure(_ error: any Error, format: Int) -> ElementFailure {
+        let reason =
+            if case NoteFormatError.badElement(_, let reason) = error { reason } else { Copy.elementBlockUnreadable }
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "unknown"
+        let build = info["CFBundleVersion"] as? String ?? "unknown"
+        let app = "\(version) (\(build))"
+        let mac = ProcessInfo.processInfo.operatingSystemVersionString
+        return ElementFailure(
+            reason: reason,
+            diagnostic: "\(error) Notebook format \(format). Ink Notebook Editor \(app), macOS \(mac).")
     }
 
     /// Takes a newer copy of the note (#315): the pages that did not change keep their drawings,

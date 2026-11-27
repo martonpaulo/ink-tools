@@ -25,7 +25,10 @@ nonisolated enum Copy {
     static let selectionTool = String(localized: "Selection Tool")
     static let rectangularSelection = String(localized: "Rectangular Selection")
     static let lassoSelection = String(localized: "Lasso Selection")
-    static let elementsNotSelectable = String(localized: "Nothing on this page can be selected")
+    static let copyReport = String(localized: "Copy Report")
+    static let copyReportHelp = String(localized: "Copies what went wrong, to paste into a bug report")
+    static let reportCopied = String(localized: "Report copied")
+    static let elementBlockUnreadable = String(localized: "its element block cannot be read")
 
     // MARK: Notebook window
 
@@ -133,6 +136,10 @@ nonisolated enum Copy {
 
     static func templateNotShown(_ style: String) -> String {
         String(localized: "Template \(style) cannot be drawn")
+    }
+
+    static func elementsNotSelectable(_ reason: String) -> String {
+        String(localized: "Nothing on this page can be selected: \(reason)")
     }
 
     static func copying(_ name: String) -> String {

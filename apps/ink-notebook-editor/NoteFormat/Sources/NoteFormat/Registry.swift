@@ -35,6 +35,7 @@ public enum Registry {
         public static let eraserColour: Int = 255
         public static let textBoxKind: String = "0000"
         public static let headingKind: String = "0001"
+        public static let shapeKinds: [String] = ["straightLine", "GEO_circle", "GEO_ellipse", "GEO_polygon", "fiveStarsSignal"]
         public static let headingStyles: [String] = ["1000254", "1000000", "1157254", "1201000"]
     }
 

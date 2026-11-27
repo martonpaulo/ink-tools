@@ -138,12 +138,62 @@ import Testing
         String(decoding: bytes[offset..<(offset + ElementRecord.nameLength)].prefix { $0 != 0 }, as: UTF8.self)
     }
 
-    @Test func aRecordOfAnUnknownKindThrows() throws {
+    /// The tablet stores a shape (its line tool, Smart Shapes, a plugin's geometry or five-star
+    /// element) as a stroke record with the shape's kind name and no document name; 18 of 33 pages
+    /// of a handwritten test note failed on one (#459). Each stroke of `elements-tablet.note`
+    /// written so, one kind at a time, reads as the same stroke.
+    @Test(arguments: Registry.NotefileFormatVersions.shapeKinds)
+    func aShapeReadsAsAStroke(kind: String) throws {
+        let before = try Self.note("elements-tablet").elements(page: 0)
+        var bytes = try Self.bytes("elements-tablet")
+        let records = Self.records(bytes, from: try Self.block(bytes))
+        for record in [records[0], records[11], records[22]] {
+            Self.write(kind, into: &bytes, at: record + ElementRecord.kindName)
+            Self.write("", into: &bytes, at: record + ElementRecord.documentKind)
+        }
+        let read = try NoteFile(bytes: bytes).readElements(page: 0)
+        #expect(read.skipped.isEmpty)
+        #expect(read.elements == before)
+    }
+
+    /// A record of a kind the reader does not know is stepped over and named; the page's other
+    /// elements read with their own record numbers (#459).
+    @Test func aRecordOfAnUnknownKindSkipsOnlyItself() throws {
+        let before = try Self.note("elements-tablet").elements(page: 0)
+        var bytes = try Self.bytes("elements-tablet")
+        let records = Self.records(bytes, from: try Self.block(bytes))
+        Self.write("GEO_unknown", into: &bytes, at: records[3] + ElementRecord.kindName)
+        Self.write("", into: &bytes, at: records[3] + ElementRecord.documentKind)
+        let read = try NoteFile(bytes: bytes).readElements(page: 0)
+        #expect(read.skipped == [SkippedElement(record: 3, kind: "GEO_unknown")])
+        #expect(read.elements == before.filter { $0.record != 3 })
+        // The text box of `content.note`, renamed, is stepped over too; the picture still reads.
+        var content = try Self.bytes("content")
+        content[try Self.block(content) + 4 + ElementRecord.kindName] = UInt8(ascii: "9")
+        #expect(try NoteFile(bytes: content).elements(page: 0).map(\.kind) == [.picture])
+    }
+
+    /// An unknown kind does not excuse a record whose bytes do not hold together: its point count
+    /// past the record still fails the page, with the page and the reason apart (#459).
+    @Test func anUnknownKindWithBrokenBytesStillFailsThePage() throws {
         var bytes = try Self.bytes("content")
-        // The first record (the text box) renamed: its kind name starts 52 bytes into the record.
-        let name = try Self.block(bytes) + 4 + 52
-        bytes[name] = UInt8(ascii: "9")
-        #expect(throws: NoteFormatError.self) { try NoteFile(bytes: bytes).elements(page: 0) }
+        let record = try Self.block(bytes) + 4
+        bytes[record + ElementRecord.kindName] = UInt8(ascii: "9")
+        for (index, byte) in [UInt8(0xFF), 0xFF, 0xFF, 0x00].enumerated() {
+            bytes[record + ElementRecord.disabledAreas + 4 + index] = byte
+        }
+        #expect(throws: NoteFormatError.badElement(page: 0, reason: "element 1 has more points than bytes")) {
+            try NoteFile(bytes: bytes).elements(page: 0)
+        }
+        #expect(
+            NoteFormatError.badElement(page: 0, reason: "element 1 has more points than bytes").description
+                == "The strokes and elements of page 1 cannot be read: element 1 has more points than bytes.")
+    }
+
+    /// Writes `name` into the 52-byte name field at `offset`, the rest of the field zero.
+    static func write(_ name: String, into bytes: inout [UInt8], at offset: Int) {
+        let field = Array(name.utf8) + Array(repeating: 0, count: ElementRecord.nameLength - name.utf8.count)
+        bytes.replaceSubrange(offset..<(offset + ElementRecord.nameLength), with: field)
     }
 
     @Test func aPageOutsideTheNoteIsRefused() throws {

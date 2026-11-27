@@ -26,14 +26,37 @@ public struct PageElement: Sendable, Equatable {
     public let record: Int
 }
 
+/// A record of a page the reader steps over: its kind is none it knows (#459).
+public struct SkippedElement: Sendable, Equatable {
+    /// The record's place in the page's element block, from 0, as `PageElement.record`.
+    public let record: Int
+    /// The kind name the record carries.
+    public let kind: String
+}
+
+/// What a page's element block reads to: its elements, and the records of a kind the reader does
+/// not know, stepped over so the rest of the page still selects (#459).
+public struct PageElements: Sendable, Equatable {
+    public let elements: [PageElement]
+    public let skipped: [SkippedElement]
+}
+
 extension NoteFile {
     /// Every element of page `index`, in the order the page stores them, the last on top. A page
     /// with no element records has none. An eraser record is left out: it hides ink, it is not
     /// an element. A Heading's record is left out too: `headings()` reads it from the footer.
     public func elements(page index: Int) throws -> [PageElement] {
+        try readElements(page: index).elements
+    }
+
+    /// The elements of page `index`, and each record of an unknown kind, stepped over. A record
+    /// whose bytes do not hold together still fails the whole page (#459).
+    public func readElements(page index: Int) throws -> PageElements {
         guard pages.indices.contains(index) else { throw NoteFormatError.badPage(index) }
         let page = pages[index]
-        guard let address = page.metadata.address(ElementRecord.key), address != 0 else { return [] }
+        guard let address = page.metadata.address(ElementRecord.key), address != 0 else {
+            return PageElements(elements: [], skipped: [])
+        }
         let size = pageSize
         let height = page.isHorizontal ? size.width : size.height
         return try ElementRecord.elements(Array(try block(at: address)), pageHeight: height, page: index)
@@ -60,23 +83,33 @@ enum ElementRecord {
     /// smoothed points and their greys, by the size of one item. The record's trail status follows.
     static let arraysAfterPoints = [2, 4, 1, 8, 4]
 
-    static func elements(_ bytes: [UInt8], pageHeight: Int, page: Int) throws -> [PageElement] {
+    static func elements(_ bytes: [UInt8], pageHeight: Int, page: Int) throws -> PageElements {
         let reader = Reader(bytes: bytes, page: page)
         let count = try reader.word(at: 0)
         var offset = word
         var elements: [PageElement] = []
+        var skipped: [SkippedElement] = []
         for number in 0..<count {
             let length = try reader.word(at: offset)
             guard length <= bytes.count - offset - word else {
                 throw reader.failure("element \(number + 1) runs past the block")
             }
             let record = Reader(bytes: Array(bytes[offset..<(offset + word + length)]), page: page)
-            if let element = try record.element(pageHeight: pageHeight, number: number) {
-                elements.append(element)
+            switch try record.element(pageHeight: pageHeight, number: number) {
+            case .element(let element): elements.append(element)
+            case .unknown(let kind): skipped.append(SkippedElement(record: number, kind: kind))
+            case .none: break
             }
             offset += word + length
         }
-        return elements
+        return PageElements(elements: elements, skipped: skipped)
+    }
+
+    /// What one record reads to.
+    enum Read {
+        case element(PageElement)
+        /// A record of a kind the reader does not know, by its kind name.
+        case unknown(String)
     }
 
     struct Reader {
@@ -84,7 +117,7 @@ enum ElementRecord {
         let page: Int
 
         func failure(_ reason: String) -> NoteFormatError {
-            .badElement("page \(page + 1): \(reason)")
+            .badElement(page: page, reason: reason)
         }
 
         func word(at offset: Int) throws -> Int {
@@ -113,7 +146,7 @@ enum ElementRecord {
             return Int32(bitPattern: UInt32(truncatingIfNeeded: try word(at: at)))
         }
 
-        func element(pageHeight: Int, number: Int) throws -> PageElement? {
+        func element(pageHeight: Int, number: Int) throws -> Read? {
             let values = Registry.NotefileFormatVersions.self
             guard try word(at: colour) != values.eraserColour else { return nil }
             let height = try word(at: physicalHeight)
@@ -151,10 +184,14 @@ enum ElementRecord {
             } else if named == values.headingKind {
                 // A Heading's band is read from the footer (`headings()`), not as an element.
                 return nil
-            } else if try name(at: documentKind) == values.strokeDocument {
+            } else if try name(at: documentKind) == values.strokeDocument || values.shapeKinds.contains(named) {
+                // A shape (the line tool, Smart Shapes, a geometry or five-star element of the
+                // plugin API) is stored as a stroke is, with its own kind name and no document
+                // name: its box and points are its ink (#459).
                 kind = .stroke
             } else {
-                throw failure("element \(number + 1) is of an unknown kind «\(named)»")
+                // One record of a kind the reader does not know is stepped over, never the page.
+                return .unknown(named)
             }
             let bounds: CGRect
             if kind == .stroke {
@@ -173,8 +210,8 @@ enum ElementRecord {
                 }
                 bounds = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
             }
-            return PageElement(
-                kind: kind, layer: try word(at: layer), bounds: bounds, points: points, record: number)
+            return .element(
+                PageElement(kind: kind, layer: try word(at: layer), bounds: bounds, points: points, record: number))
         }
     }
 }

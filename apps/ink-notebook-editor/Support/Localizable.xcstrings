@@ -221,6 +221,16 @@
         }
       }
     },
+    "Copies what went wrong, to paste into a bug report" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copies what went wrong, to paste into a bug report"
+          }
+        }
+      }
+    },
     "Copy Note as Text" : {
       "localizations" : {
         "en" : {
@@ -237,6 +247,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copy Page as Text"
+          }
+        }
+      }
+    },
+    "Copy Report" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Report"
           }
         }
       }
@@ -811,12 +831,12 @@
         }
       }
     },
-    "Nothing on this page can be selected" : {
+    "Nothing on this page can be selected: %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nothing on this page can be selected"
+            "value" : "Nothing on this page can be selected: %@"
           }
         }
       }
@@ -1087,6 +1107,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Report an Issue…"
+          }
+        }
+      }
+    },
+    "Report copied" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report copied"
           }
         }
       }
@@ -1837,6 +1867,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "inkctl stopped with exit code %d and gave no reason."
+          }
+        }
+      }
+    },
+    "its element block cannot be read" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "its element block cannot be read"
           }
         }
       }
