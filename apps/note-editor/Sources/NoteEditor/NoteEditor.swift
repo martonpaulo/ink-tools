@@ -253,7 +253,8 @@ final class NoteEditor {
         case .failure(.cancelled):
             return
         case .failure(let error):
-            templateList = .noteOnly(TabletTemplates.ordered(noteTemplates, first: style), reason: error.words)
+            templateList = .noteOnly(
+                TabletTemplates.ordered(noteTemplates, first: style), reason: Copy.templatesCause(error))
         case nil:
             templateList = .noteOnly(
                 TabletTemplates.ordered(noteTemplates, first: style), reason: Copy.templatesTimedOut(limit))

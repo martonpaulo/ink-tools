@@ -39,8 +39,6 @@ struct InsertPageSheet: View {
     static let width: CGFloat = 340
     /// The space around the sheet's content, in points, as a system sheet's.
     static let inset: CGFloat = 20
-    /// The most lines the failure sentence takes; the whole sentence is in its help tag.
-    static let failureLines = 4
 
     /// What a press of Insert does (#531).
     enum Press: Equatable {
@@ -124,9 +122,7 @@ struct InsertPageSheet: View {
                 let message = Copy.templatesFailed(reason, noteHasTemplates: !fallback.isEmpty)
                 Label(message, systemImage: "exclamationmark.triangle")
                     .font(.callout)
-                    .lineLimit(Self.failureLines)
                     .fixedSize(horizontal: false, vertical: true)
-                    .help(message)
                     .onAppear { AccessibilityNotification.Announcement(message).post() }
             }
             HStack {

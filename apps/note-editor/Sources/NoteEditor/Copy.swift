@@ -297,24 +297,39 @@ nonisolated enum Copy {
     static let insertWaits = String(localized: "The page is added once the tablet's templates are read.")
     static let customTemplates = String(localized: "Custom")
 
-    /// Why the sheet offers only the note's own templates, or none, with inkctl's words as their own
-    /// sentence and the next step: the list is read again when the sheet opens (#451).
+    /// Why the sheet offers only the note's own templates, or none, then `reason`: the plain cause
+    /// and the next step. The list is read again when the sheet opens (#451).
     static func templatesFailed(_ reason: String, noteHasTemplates: Bool) -> String {
         noteHasTemplates
-            ? String(
-                localized:
-                    "Only this note's templates are shown: the tablet's list did not load. \(reason) Check that the tablet is connected and awake, then open Insert Page again."
-            )
+            ? String(localized: "Only this note's templates are shown: the tablet's list did not load. \(reason)")
             : String(
                 localized:
-                    "The tablet's list did not load, and no page of this note uses a template the Mac can send. \(reason) Check that the tablet is connected and awake, then open Insert Page again."
+                    "The tablet's list did not load, and no page of this note uses a template the Mac can send. \(reason)"
             )
     }
 
-    /// The reason of a list the tablet did not send within the sheet's limit (#531).
-    static func templatesTimedOut(_ limit: Duration) -> String {
-        String(localized: "The tablet did not answer within \(limit.components.seconds) seconds.")
+    /// The step after a list the tablet did not send: the sheet reads it again when it opens (#451).
+    static let templatesNext = String(
+        localized: "Check that the tablet is connected and awake, then open Insert Page again.")
+
+    /// The plain cause of a list the tablet did not send, and the step that fits it (#531). inkctl's
+    /// own words stay out of the sheet: they can carry a hint for the developer, such as an `adb`
+    /// command.
+    static func templatesCause(_ failure: InkctlFailure) -> String {
+        switch failure {
+        case .missing: "\(missingTitle). \(missingNext)"
+        case .notConnected: thenNext(String(localized: "The Mac cannot reach the tablet."))
+        case .notFound, .failed, .cancelled: thenNext(String(localized: "The tablet's answer could not be read."))
+        }
     }
+
+    /// The reason of a list the tablet did not send within the sheet's limit (#531), and the step.
+    static func templatesTimedOut(_ limit: Duration) -> String {
+        thenNext(String(localized: "The tablet did not answer within \(limit.components.seconds) seconds."))
+    }
+
+    /// A template list's cause, then the step that reads the list again.
+    private static func thenNext(_ cause: String) -> String { "\(cause) \(templatesNext)" }
 
     /// A template's name as the picker shows it: a system one from its id, a custom one by its file name.
     static func templateName(_ choice: PageTemplateChoice) -> String {

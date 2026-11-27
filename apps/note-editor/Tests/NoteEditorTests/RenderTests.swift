@@ -226,11 +226,11 @@ final class RenderTests {
                 "insert-page-note-only",
                 .noteOnly(
                     TabletTemplates.ordered(editor.noteTemplates, first: front),
-                    reason: InkctlFailure.notConnected("No tablet answered over USB or Wi-Fi.").words)
+                    reason: Copy.templatesCause(.notConnected("No tablet answered over USB or Wi-Fi.")))
             ),
             (
                 "insert-page-no-template",
-                .noteOnly([], reason: InkctlFailure.notConnected("No tablet answered over USB or Wi-Fi.").words)
+                .noteOnly([], reason: Copy.templatesCause(.notConnected("No tablet answered over USB or Wi-Fi.")))
             ),
         ]
         // Insert pressed while the list loads: its own progress (#531).

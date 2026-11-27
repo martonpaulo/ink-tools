@@ -193,16 +193,30 @@ import Testing
         if case .tablet = editor.templateList {} else { Issue.record("not the tablet's list: \(editor.templateList)") }
     }
 
+    /// The sheet says the plain cause; inkctl's own words, here its Wi-Fi hint, stay out (#531).
     @Test func theSheetFallsBackToTheNotesTemplatesWhenTheTabletDoesNotAnswer() async throws {
         let editor = try editor()
-        tablet.failTemplates = .notConnected("No tablet answered.")
+        let hint = "[device]: the address does not answer on this network. Over USB, run adb tcpip 5555."
+        tablet.failTemplates = .notConnected(hint)
         await editor.loadTemplates(nextTo: 2)
         #expect(
             editor.templateList
                 == .noteOnly(
                     ["style_8mm_ruled_line", "style_white", "style_5mm_grid", "style_5mm_dots"]
                         .map(PageTemplateChoice.system),
-                    reason: "No tablet answered."))
+                    reason: "The Mac cannot reach the tablet. \(Copy.templatesNext)"))
+        guard case .noteOnly(_, let reason) = editor.templateList else { return }
+        let message = Copy.templatesFailed(reason, noteHasTemplates: true)
+        #expect(!message.contains("adb") && !message.contains("[device]"), "\(message)")
+        tablet.failTemplates = .failed("inkctl: templates: unexpected answer from the helper")
+        await editor.loadTemplates(nextTo: 2)
+        guard case .noteOnly(_, let unread) = editor.templateList else {
+            Issue.record("not the note's list: \(editor.templateList)")
+            return
+        }
+        #expect(unread == "The tablet's answer could not be read. \(Copy.templatesNext)")
+        // A missing inkctl has its own step, never the tablet's.
+        #expect(Copy.templatesCause(.missing) == "\(Copy.missingTitle). \(Copy.missingNext)")
     }
 
     @Test func aTemplateListThatNeverComesFallsBackToTheNotesTemplatesWithinTheLimit() async throws {
@@ -602,7 +616,9 @@ import Testing
     @Test func aDeletedSelectionIsDrawnAtOnceAsItsTemplate() async throws {
         let editor = NoteEditor(
             tabletPath: WritePathTests.note, copy: copy, base: try NoteFile(data: original),
-            tablet: RenderTests.SlowTablet(),
+            // A pull that waits: a pull that fails at once takes the delete back before its ink
+            // lifts on a loaded Mac, and a taken-back edit draws nothing (2026-11-28, load 18).
+            tablet: RenderTests.SlowTablet(pullWaits: true),
             backups: NoteBackups(folder: folder.appending(path: "Backups")))
         #expect(editor.deleteElements(page: 0, elements: try selection()))
         for _ in 0..<500 where editor.deletions(on: 0).isEmpty {

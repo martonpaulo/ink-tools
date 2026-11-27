@@ -212,6 +212,16 @@
         }
       }
     },
+    "Check that the tablet is connected and awake, then open Insert Page again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check that the tablet is connected and awake, then open Insert Page again."
+          }
+        }
+      }
+    },
     "Connect the tablet by cable or Wi-Fi, unlock it, then try again." : {
       "localizations" : {
         "en" : {
@@ -1024,12 +1034,12 @@
         }
       }
     },
-    "Only this note's templates are shown: the tablet's list did not load. %@ Check that the tablet is connected and awake, then open Insert Page again." : {
+    "Only this note's templates are shown: the tablet's list did not load. %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only this note's templates are shown: the tablet's list did not load. %@ Check that the tablet is connected and awake, then open Insert Page again."
+            "value" : "Only this note's templates are shown: the tablet's list did not load. %@"
           }
         }
       }
@@ -1567,6 +1577,16 @@
         }
       }
     },
+    "The Mac cannot reach the tablet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mac cannot reach the tablet."
+          }
+        }
+      }
+    },
     "The Mac could not write this edit, so it was taken back: %@" : {
       "localizations" : {
         "en" : {
@@ -1897,12 +1917,22 @@
         }
       }
     },
-    "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Check that the tablet is connected and awake, then open Insert Page again." : {
+    "The tablet's answer could not be read." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Check that the tablet is connected and awake, then open Insert Page again."
+            "value" : "The tablet's answer could not be read."
+          }
+        }
+      }
+    },
+    "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@"
           }
         }
       }
