@@ -9,6 +9,7 @@ import {
 } from '../src/modules';
 import {HEADING_BUTTONS} from '../src/headings/buttons';
 import {COLLECTION_BUTTONS} from '../src/collection/buttons';
+import {CONVERT_ID} from '../src/convert/buttons';
 import {
   defaultSettings,
   LASSO_SETTINGS_VERSION,
@@ -28,7 +29,7 @@ import {
   resetButtonsForTests,
 } from '../src/buttons';
 
-const ALL_ON = {lookup: true, headings: true, collection: true};
+const ALL_ON = {lookup: true, convert: true, headings: true, collection: true};
 
 test('every module id has one row', () => {
   expect(MODULES.map(row => row.id)).toEqual([...MODULE_IDS]);
@@ -60,15 +61,16 @@ test("Word Lookup's file is read whole as Lookup's settings, every module on, to
 test('a file already in the new shape is read as it is, not marked for a rewrite', () => {
   const settings = {
     ...parseLassoSettings(null).settings,
-    modules: {lookup: false, headings: true, collection: true},
-    otherModules: {convert: true},
+    modules: {lookup: false, convert: true, headings: true, collection: true},
+    otherModules: {gestures: true},
   };
   const again = parseLassoSettings(serializeLassoSettings(settings));
   expect(again.problems).toEqual([]);
   expect(again.settings).toEqual({...settings, oldShape: false});
   expect(JSON.parse(serializeLassoSettings(again.settings)).modules).toEqual({
-    convert: true,
+    gestures: true,
     lookup: false,
+    convert: true,
     headings: true,
     collection: true,
   });
@@ -95,6 +97,28 @@ test('with the Lookup module off no Lookup button is on, and on again its switch
   expect(activeLookup(ALL_ON, lookup)).toBe(lookup);
 });
 
+test('Convert to Text registers its lasso button while it is on, and none while it is off (#306)', () => {
+  const on = (modules: typeof ALL_ON) =>
+    moduleStates({...parseLassoSettings(null).settings, modules})
+      .filter(state => state.on)
+      .map(state => state.button.id);
+  expect(on(ALL_ON)).toContain(CONVERT_ID);
+  expect(on({...ALL_ON, convert: false})).not.toContain(CONVERT_ID);
+  // Convert to Text off and Lookup on: Lookup's buttons stay, Convert's goes.
+  const lookupOnly = on({lookup: true, convert: false, headings: false, collection: false});
+  expect(lookupOnly).not.toContain(CONVERT_ID);
+  expect(lookupOnly.length).toBeGreaterThan(0);
+  expect(on({lookup: false, convert: true, headings: false, collection: false})).toEqual([CONVERT_ID]);
+});
+
+test('a file written before Convert to Text joined reads it on, the default for a new module', () => {
+  const {settings, problems} = parseLassoSettings(
+    JSON.stringify({version: 2, modules: {lookup: true, headings: false, collection: true}, lookup: {}}),
+  );
+  expect(problems).toEqual([]);
+  expect(settings.modules).toEqual({lookup: true, convert: true, headings: false, collection: true});
+});
+
 test('Headings registers its four lasso buttons while it is on, and none while it is off (#252)', async () => {
   const on = (modules: typeof ALL_ON) =>
     moduleStates({...parseLassoSettings(null).settings, modules})
@@ -106,7 +130,7 @@ test('Headings registers its four lasso buttons while it is on, and none while i
     expect.arrayContaining([ids[0]]),
   );
   // Turning Lookup off leaves the Headings buttons on.
-  expect(on({lookup: false, headings: true, collection: false})).toEqual(ids);
+  expect(on({lookup: false, convert: false, headings: true, collection: false})).toEqual(ids);
 
   resetButtonsForTests();
   const deps = {

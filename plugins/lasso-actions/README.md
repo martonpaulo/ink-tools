@@ -2,7 +2,9 @@
 
 On the tablet this plugin is called **Lasso Actions**, formerly Word Lookup; `lookup` stays its internal name, and the folder is `lasso-actions` ([#176](https://github.com/martonpaulo/ink-tools/issues/176), [#306](https://github.com/martonpaulo/ink-tools/issues/306)).
 
-Each action on lassoed handwriting is a module you switch on or off in its Settings; an off module has no lasso button. Lookup is the first module; «Convert to Text» joins it from Smart Pen, and Headings and Collection are planned.
+Each action on lassoed handwriting is a module you switch on or off in its Settings; an off module has no lasso button. Its modules are Lookup, Convert to Text, Headings and Collection.
+
+Its **Convert to Text** module: lasso handwriting and press «Convert to Text» in the lasso's «⋯» list; the whole lasso becomes one text box at its place, each handwritten line a paragraph. Smart Pen's «Undo Conversion» does not undo it yet ([#525](https://github.com/martonpaulo/ink-tools/issues/525)).
 
 Its **Lookup** module: write a word by hand, lasso it, and insert a picture, a photo, a short
 definition or a translation for it. It replaces the first picture plugin, which is retired and uninstalled from the

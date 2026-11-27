@@ -996,8 +996,8 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
   new text box; a round sets it back to the font it found [measured, 2026-11-25, Manta,
   [#247](https://github.com/martonpaulo/ink-tools/issues/247), [#250](https://github.com/martonpaulo/ink-tools/issues/250)].
   The setting is in the Note app's private storage, not in `settings list`.
-- A lasso «⋯» row exists only while its plugin is enabled: «Convert to Text» shows only with
-  Real-Time Conversion turned on [measured, 2026-11-25, `inkctl lasso rows`,
+- A lasso «⋯» row exists only while its plugin is enabled: «Convert to Text» showed only with
+  Real-Time Conversion turned on, its plugin then [measured, 2026-11-25, `inkctl lasso rows`,
   [#250](https://github.com/martonpaulo/ink-tools/issues/250)].
 
 ## Note file format

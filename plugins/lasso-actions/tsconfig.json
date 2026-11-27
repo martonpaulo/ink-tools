@@ -11,6 +11,8 @@
       // The registry of internals (#294).
       "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       "@ink-tools/ink-core": ["../../packages/ink-core/src"],
+      // Its conversion engine's own entry, for Convert to Text's sizes (#306).
+      "@ink-tools/ink-core/conversion": ["../../packages/ink-core/src/conversion"],
       "@ink-tools/ink-core/pinyin-data": ["../../packages/ink-core/pinyin-data"],
       // Ink2Pic's picture search, shared for the picture buttons (#125).
       "@ink-tools/picture-search": ["../../packages/picture-search/src"],

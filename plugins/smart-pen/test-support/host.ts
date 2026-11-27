@@ -11,7 +11,6 @@ import {
   type UndoHost,
   type InkStroke,
 } from '@ink-tools/ink-core/conversion';
-import type {LassoConvertHost} from '../src/modules/text/lasso';
 
 export type FakeElement = {
   uuid: string;
@@ -54,27 +53,7 @@ export function fakeTablet(answer = 'café') {
   const logs: string[] = [];
   const renumber = () =>
     page.forEach((element, index) => (element.numInPage = index));
-  /** The lassoed page elements, by their place in `page` (#250); the rect is their bounds. */
-  const lasso: {nums: number[]} = {nums: []};
-  const lassoed = () =>
-    page.filter(element => lasso.nums.includes(element.numInPage as number));
-  const host: ConvertHost & UndoHost & LassoConvertHost = {
-    getLassoElements: jest.fn(async () =>
-      ok(lassoed().map(element => ({...element}))),
-    ),
-    getLassoRect: jest.fn(async () => {
-      const points = lassoed().flatMap(element => element.points ?? []);
-      const xs = points.map(point => point.x);
-      const ys = points.map(point => point.y);
-      return points.length > 0
-        ? ok({
-            left: Math.min(...xs),
-            top: Math.min(...ys),
-            right: Math.max(...xs),
-            bottom: Math.max(...ys),
-          })
-        : fail(THROWN_CODE, 'no lasso');
-    }),
+  const host: ConvertHost & UndoHost = {
     onPenUp: jest.fn(next => {
       listener = next;
       return ok(() => {
@@ -176,15 +155,6 @@ export function fakeTablet(answer = 'café') {
     host,
     page,
     logs,
-    /** Writes the strokes on the page in page pixels and lassoes them, as the person's lasso does. */
-    lassoStrokes(strokes: InkStroke[]) {
-      const first = page.length;
-      strokes.forEach(each =>
-        page.push({uuid: `page-${each.id}`, type: 0, points: each.points}),
-      );
-      renumber();
-      lasso.nums = strokes.map((_, index) => first + index);
-    },
     get listening() {
       return listener !== null;
     },

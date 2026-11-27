@@ -404,14 +404,14 @@ ship under until the merges land.
 | Target plugin | Modules (today's plugin) | Acts on |
 | :--- | :--- | :--- |
 | Smart Pen ([#305](https://github.com/martonpaulo/ink-tools/issues/305)) | Smart Shapes, Real-Time Text and Undo Conversion (built, smart-pen), Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing |
-| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (built, lasso-actions), Convert to Text ([#250](https://github.com/martonpaulo/ink-tools/issues/250), in smart-pen until it moves), Headings (built, [#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection (built, [#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
+| Lasso Actions ([#306](https://github.com/martonpaulo/ink-tools/issues/306)) | Lookup (built, lasso-actions), Convert to Text (built, [#250](https://github.com/martonpaulo/ink-tools/issues/250)), Headings (built, [#252](https://github.com/martonpaulo/ink-tools/issues/252); buttons «Heading 1» to «Heading 4»), Collection (built, [#249](https://github.com/martonpaulo/ink-tools/issues/249); buttons «Add to Collection», «Cut to Collection», «Paste Collection») | lassoed handwriting |
 | Image Editing | unchanged, including «Straighten as document» in Document mode | a lassoed picture |
 | Device Link | unchanged; receives a photo as it is | the page and files |
 | Account Sync | unchanged | outside services |
 | Puzzles ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | new, planned: the games of [Puzzles](#puzzles) | a new page after the current one |
 
 Ink Tools Probe stays a developer tool, off day to day. «Convert to Text»'s conversion engine
-becomes shared package code, used by Smart Pen's live conversion and Lasso Actions. Names follow
+is shared package code, used by Smart Pen's live conversion and Lasso Actions. Names follow
 NOTE's own naming.
 
 ## Puzzles

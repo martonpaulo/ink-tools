@@ -22,7 +22,6 @@ import {
 import {Buttons, converterFor} from './src/modules/text/buttons';
 import {
   DEVICE_CONVERT,
-  DEVICE_LASSO,
   DEVICE_UNDO,
 } from './src/modules/text/device';
 import {DEVICE as SHAPES_DEVICE} from './src/modules/shapes/device';
@@ -55,7 +54,6 @@ const buttons = new Buttons({
   makeConverter: () =>
     converterFor({...DEVICE_CONVERT, onPenUp: router.onTextPenUp}),
   undo: DEVICE_UNDO,
-  lasso: DEVICE_LASSO,
   toast: text => ToastAndroid.show(text, ToastAndroid.SHORT),
   errorTip,
   fail: problem => working.hold(problem),
@@ -66,7 +64,6 @@ const buttons = new Buttons({
     on: Image.resolveAssetSource(require('./assets/mode-on.png')).uri,
     off: Image.resolveAssetSource(require('./assets/mode-off.png')).uri,
     undo: Image.resolveAssetSource(require('./assets/undo.png')).uri,
-    lasso: Image.resolveAssetSource(require('./assets/convert.png')).uri,
   },
 });
 

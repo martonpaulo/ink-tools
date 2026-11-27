@@ -22,6 +22,8 @@ import {headingLasso} from './src/headings/run';
 import {ADD_ID, CUT_ID, PASTE_ID} from './src/collection/buttons';
 import {addToCollection, DEVICE_HOST} from './src/collection/run';
 import {closeCollection, openCollection} from './src/collection/view';
+import {CONVERT_ID} from './src/convert/buttons';
+import {convertToText} from './src/convert/run';
 import {getSettings, saveSettings} from './src/profile';
 import {translateLasso} from './src/translation';
 import {working} from './src/working';
@@ -73,6 +75,13 @@ const listening = startButtonQueue(id => {
     clearChoice();
     openCollection();
     showPluginView();
+    return true;
+  }
+  if (id === CONVERT_ID) {
+    // Convert to Text (#250): the lassoed handwriting becomes one text box.
+    working.run(convertToText).catch(error => {
+      console.error(`Lookup: convert: ${error.message}`);
+    });
     return true;
   }
   const level = headingLevel(id);

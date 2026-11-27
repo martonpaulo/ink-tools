@@ -8,6 +8,17 @@ export const copy = {
   'module.lookup': 'Lookup',
   'module.lookupNote':
     'Lasso a handwritten word and insert a picture, a definition, a summary or a translation for it.',
+  'module.convert': 'Convert to Text',
+  'module.convertNote':
+    'Lasso handwriting and turn it into one text box, each handwritten line a paragraph.',
+  /** The lasso button (#250), the tablet's verb-and-noun wording. */
+  'button.convert': 'Convert to Text',
+  'permission.convert': 'Lasso Actions writes the converted text in your note.',
+  /** Toasts and the Error state of a «Convert to Text» press (#250, #256). */
+  'convert.done': 'Converted to text',
+  'convert.empty': 'Lasso some handwriting first',
+  'convert.failed': 'Could not convert the handwriting',
+  'convert.failedReason': 'Close, then lasso the handwriting and press Convert to Text again.',
   'module.headings': 'Headings',
   'module.headingsNote':
     'Lasso a handwritten line and make it a heading of level 1 to 4, moved to the left margin.',

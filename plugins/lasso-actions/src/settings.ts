@@ -237,6 +237,7 @@ export const LASSO_SETTINGS_VERSION = 2;
 /** Every module starts on: Lookup was the whole plugin before, and a new module's buttons are wanted (#252). */
 export const DEFAULT_MODULES: Record<ModuleId, boolean> = {
   lookup: true,
+  convert: true,
   headings: true,
   collection: true,
 };

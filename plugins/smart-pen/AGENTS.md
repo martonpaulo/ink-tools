@@ -19,8 +19,8 @@ that is off is never registered: no button, no pen listener. The Gestures of
 [#270](https://github.com/martonpaulo/ink-tools/issues/270) add a row when they are built.
 
 - **Real-Time Text** (`src/modules/text/`, [#184](https://github.com/martonpaulo/ink-tools/issues/184) to [#188](https://github.com/martonpaulo/ink-tools/issues/188)): the sidebar buttons «Real-Time Text»
-  (the mode, `buttons.ts`) and «Undo Conversion», and until [#306](https://github.com/martonpaulo/ink-tools/issues/306) moves it the lasso button
-  «Convert to Text» ([#250](https://github.com/martonpaulo/ink-tools/issues/250), `lasso.ts`). `setButtonState` in sn-plugin-lib 0.2.3 only enables or
+  (the mode, `buttons.ts`) and «Undo Conversion»; the lasso button «Convert to Text»
+  ([#250](https://github.com/martonpaulo/ink-tools/issues/250)) is Lasso Actions' since [#306](https://github.com/martonpaulo/ink-tools/issues/306), and «Undo Conversion» cannot undo it yet ([#525](https://github.com/martonpaulo/ink-tools/issues/525)). `setButtonState` in sn-plugin-lib 0.2.3 only enables or
   disables a button, so the mode shows by its icon (`assets/mode-on.png`, `assets/mode-off.png`),
   registered again on each change, and a toast says it in words. The engine (the word-end rule, what
   stays handwriting, the conversion, the undo) is `ink-core`'s `@ink-tools/ink-core/conversion`
@@ -75,7 +75,7 @@ Open, for the Mac: install Smart Pen over Real-Time Conversion and uninstall Sma
 `inkctl`; the module switches across a restart; shapes and word-by-word conversion together on one
 page; «Undo Conversion». From Real-Time Conversion: does `event_pen_up` arrive with no view open
 after a sidebar press; does a re-registered sidebar button show its new icon; the idle, grace and
-ratio defaults; for «Convert to Text», what the native «Recognize as Text» makes. From Smart Shapes:
+ratio defaults. From Smart Shapes:
 whether one undo brings a replaced stroke back.
 
 Pen replay ([#298](https://github.com/martonpaulo/ink-tools/issues/298)): `src/actions.ts` runs

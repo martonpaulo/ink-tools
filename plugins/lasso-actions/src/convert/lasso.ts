@@ -1,24 +1,24 @@
 /**
- * «Convert to Text» (#250): a lasso button that recognizes the whole lassoed handwriting in ONE
- * recognizeElements call and, in ONE batchUpdatePageElements call, replaces its strokes with one
- * text box at the lasso's place. Line breaks in the recognized text stay as paragraphs. «Undo
- * Conversion» (#188) undoes it, as it undoes a word. Any failure keeps the handwriting and is
- * logged; the lasso's elements are freed either way.
+ * «Convert to Text» (#250), Lasso Actions' Convert to Text module (#306, moved from Smart Pen): a
+ * lasso button that recognizes the whole lassoed handwriting in ONE recognizeElements call and, in
+ * ONE batchUpdatePageElements call, replaces its strokes with one text box at the lasso's place,
+ * sized as ink-core's word conversion sizes a word. Line breaks in the recognized text stay as
+ * paragraphs. Any failure keeps the handwriting and is logged; the lasso's elements are freed
+ * either way.
+ *
+ * shortcut: Smart Pen's «Undo Conversion» keeps its record in its own bundle's memory, which this
+ * plugin cannot reach, so a lasso conversion is not undone by it; the record moves to the Ink Tools
+ * shared folder in #525, after #502 reads and writes files there.
  *
  * shortcut: the box uses the tablet's default font, as the word conversion does, until the chosen
  * font of #144 has its device fact (`fontPath`); then the settings' font goes into the box here.
  */
 import type {Rect, Size} from '@ink-tools/ink-core';
-import type {
-  Result,
-  SavedStroke,
-  TextBoxInput,
-} from '@ink-tools/sn-adapter/official';
+import type {Result, TextBoxInput} from '@ink-tools/sn-adapter/official';
 import {
   LINE_SHARE,
   MIN_FONT_SIZE,
   type HostElement,
-  setLastConversion,
 } from '@ink-tools/ink-core/conversion';
 
 /**
@@ -36,7 +36,6 @@ export type LassoConvertHost = {
   getCurrentPageNum(): Promise<Result<number>>;
   getPageSize(path: string, page: number): Promise<Result<Size>>;
   recognizeElements(elements: object[], size: Size): Promise<Result<string>>;
-  saveStroke(element: object): Promise<Result<SavedStroke>>;
   createTextBox(box: TextBoxInput): Promise<Result<object>>;
   batchUpdatePageElements(
     deleteNums: number[],
@@ -151,16 +150,6 @@ async function replaceLasso(
     log('lasso kept: recognized as empty text');
     return 'failed';
   }
-  // Kept for «Undo Conversion» before the strokes leave the page (#188).
-  const saved: SavedStroke[] = [];
-  for (const element of strokes) {
-    const one = await host.saveStroke(element);
-    if (!one.ok) {
-      log(`lasso kept: saveStroke ${one.message}`);
-      return 'failed';
-    }
-    saved.push(one.value);
-  }
   const box = lassoBoxFor(paragraphs, rect.value, size.value);
   const made = await host.createTextBox(box);
   if (!made.ok) {
@@ -183,7 +172,6 @@ async function replaceLasso(
     );
     return 'failed';
   }
-  setLastConversion({path: path.value, page: page.value, box, strokes: saved});
   log(
     `lasso converted ${[...paragraphs].length} characters in ` +
       `${paragraphs.split('\n').length} paragraphs from ${nums.length} strokes`,

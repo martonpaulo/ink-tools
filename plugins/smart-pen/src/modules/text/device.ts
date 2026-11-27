@@ -7,8 +7,6 @@ import {
   getCurrentFilePath,
   getCurrentPageNum,
   getElements,
-  getLassoElements,
-  getLassoRect,
   getPageSize,
   onMotion,
   onPenUp,
@@ -21,7 +19,6 @@ import {
   strokeTimes,
 } from '@ink-tools/sn-adapter/official';
 import {type ConvertHost, type UndoHost} from '@ink-tools/ink-core/conversion';
-import type {LassoConvertHost} from './lasso';
 
 const log = (line: string) => console.log(`SmartPen: text: ${line}`);
 
@@ -53,21 +50,6 @@ export const DEVICE_UNDO: UndoHost = {
   getCurrentPageNum,
   getElements,
   rebuildStroke: saved => rebuildStroke(saved, createElement),
-  batchUpdatePageElements: (nums, elements, page) =>
-    batchUpdatePageElements(nums, elements, page),
-  recycleElement,
-  log,
-};
-
-export const DEVICE_LASSO: LassoConvertHost = {
-  getLassoElements,
-  getLassoRect,
-  getCurrentFilePath,
-  getCurrentPageNum,
-  getPageSize,
-  recognizeElements,
-  saveStroke,
-  createTextBox,
   batchUpdatePageElements: (nums, elements, page) =>
     batchUpdatePageElements(nums, elements, page),
   recycleElement,

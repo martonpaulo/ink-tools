@@ -9,13 +9,12 @@ Lasso Actions is Word Lookup renamed ([#306](https://github.com/martonpaulo/ink-
 `pluginKey` `Lookup` (also `package.json` and `app.json` `name`, the log prefix and `MyStyle/Lookup`),
 so the tablet updates it in place and its private folder keeps its `settings.json`. `src/modules.ts`
 is the module table; a module that is off registers no button (`moduleStates`, `activeLookup` for
-Lookup's own switches). Lookup, Headings and Collection are built: «Convert to Text» joins once Smart Pen's
-conversion engine is on `main` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)). Each module lives in its own folder under `src/`
-(`src/headings/`, `src/collection/`), with button ids of its own (Headings from 2000, Collection
-after them). The settings file is
-`{version: 2, modules, lookup, collection}` (`src/settings.ts`); Word Lookup's file, with no `modules` key, is
-read whole as `lookup` and written once in the new shape at start-up; a module switch a newer build
-wrote is kept.
+Lookup's own switches). Lookup, Convert to Text, Headings and Collection are built, each in its own folder under `src/` (`src/convert/`, `src/headings/`, `src/collection/`), with button ids of its own (Headings from 2000, then Collection, then Convert to Text).
+The settings file is `{version: 2, modules, lookup, collection}` (`src/settings.ts`); Word Lookup's file, with no `modules` key, is read whole as `lookup` and written once in the new shape at start-up; a module switch a newer build wrote is kept.
+
+## Convert to Text
+
+«Convert to Text» ([#250](https://github.com/martonpaulo/ink-tools/issues/250), from Smart Pen by [#306](https://github.com/martonpaulo/ink-tools/issues/306)): `src/convert/lasso.ts` makes the whole lasso one text box in one recognition and one page change, sized by ink-core's conversion entry; `src/convert/run.ts` toasts or holds the Error state. Smart Pen's «Undo Conversion» cannot undo it yet ([#525](https://github.com/martonpaulo/ink-tools/issues/525)).
 
 ## Headings
 

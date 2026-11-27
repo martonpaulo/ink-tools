@@ -139,7 +139,7 @@
    ]
   },
   {
-   "out": "plugins/smart-pen/assets/convert",
+   "out": "plugins/lasso-actions/assets/convert",
    "kind": "plugin",
    "tabler": [
     "text-recognition",

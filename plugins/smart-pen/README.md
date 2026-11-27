@@ -16,8 +16,7 @@ its Settings; an off module has no button and never listens to the pen.
   pause closes a word, and an accent written just after still joins it. Drawings, arrows and
   scribbles stay handwriting.
   - «Undo Conversion» in the sidebar brings back the handwriting of the last conversion.
-  - «Convert to Text» in the lasso's «⋯» list turns the whole lassoed handwriting into one text
-    box at its place, each handwritten line a paragraph; it moves to Lasso Actions with
+  - «Convert to Text», for a whole lasso, is in Lasso Actions since
     [#306](https://github.com/martonpaulo/ink-tools/issues/306).
   - Settings: start with Real-Time Text on, word spacing, and how long to wait before converting.
 - **Smart Shapes**: draw a triangle, circle, square, rectangle or arrow and hold the pen still at

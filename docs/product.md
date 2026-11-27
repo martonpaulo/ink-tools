@@ -32,13 +32,12 @@ alone, with its own `AGENTS.md`, versioning and releases. They come in four kind
   - **Image Editing** (`plugins/image-editing`) makes a picture on the page readable on e-ink.
   - **Device Link** (`plugins/device-link`) moves pictures and text between the tablet and the owner's iPhone and Mac over
     LocalSend.
-  - **Lasso Actions** has its Headings module, buttons «Heading 1» to «Heading 4» ([#252](https://github.com/martonpaulo/ink-tools/issues/252)), and its Collection module, buttons «Add to Collection», «Cut to Collection», «Paste Collection» ([#249](https://github.com/martonpaulo/ink-tools/issues/249)). Planned: it will gain Convert to Text; one plugin per surface of use, as Smart Pen already does for the pen ([#304](https://github.com/martonpaulo/ink-tools/issues/304), [architecture](architecture.md#plugin-grouping)).
+  - **Lasso Actions** has its Convert to Text module, the lasso button «Convert to Text», which turns a whole lasso into one text box ([#250](https://github.com/martonpaulo/ink-tools/issues/250), [#306](https://github.com/martonpaulo/ink-tools/issues/306)), its Headings module, buttons «Heading 1» to «Heading 4» ([#252](https://github.com/martonpaulo/ink-tools/issues/252)), and its Collection module, buttons «Add to Collection», «Cut to Collection», «Paste Collection» ([#249](https://github.com/martonpaulo/ink-tools/issues/249)). One plugin per surface of use, as Smart Pen already does for the pen ([#304](https://github.com/martonpaulo/ink-tools/issues/304), [architecture](architecture.md#plugin-grouping)).
   - **Ink Tools Probe** (`plugins/ink-tools-probe`) is a developer-only plugin for device
     experiments.
   - **Smart Pen** (`plugins/smart-pen`, beta) holds the pen features, each a module switched on or off
     in its Settings ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): **Real-Time Text** turns each handwritten word into typed text with no
-    lasso, from its sidebar button «Real-Time Text», with an undo of the last conversion, and a
-    whole lasso into one text box with its lasso button «Convert to Text» until Lasso Actions takes it
+    lasso, from its sidebar button «Real-Time Text», with an undo of the last word conversion
     ([#144](https://github.com/martonpaulo/ink-tools/issues/144), [#184](https://github.com/martonpaulo/ink-tools/issues/184), [#250](https://github.com/martonpaulo/ink-tools/issues/250)); **Smart Shapes** turns a stroke held still at its end into a
     clean triangle, circle, square, rectangle or arrow, and never changes a figure under its minimum
     size ([#253](https://github.com/martonpaulo/ink-tools/issues/253)).

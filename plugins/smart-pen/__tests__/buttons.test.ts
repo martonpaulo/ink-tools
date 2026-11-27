@@ -1,6 +1,5 @@
 import {
   Buttons,
-  LASSO_BUTTON_ID,
   MODE_BUTTON_ID,
   UNDO_BUTTON_ID,
 } from '../src/modules/text/buttons';
@@ -12,7 +11,6 @@ import {
 } from '@ink-tools/ink-core/conversion';
 import {DEFAULT_SETTINGS, setSettings} from '../src/modules/text/settings';
 import {fakeTablet} from '../test-support/host';
-import {letter} from '../../../packages/ink-core/testing/ink';
 
 function setup(granted = true, tipShown = true) {
   const tablet = fakeTablet();
@@ -28,7 +26,6 @@ function setup(granted = true, tipShown = true) {
     requestPermission: jest.fn(async () => ({ok: true as const, value: 2})),
     makeConverter: () => new Converter(tablet.host, DEFAULT_WORD_OPTIONS),
     undo: tablet.host,
-    lasso: tablet.host,
     toast: (text: string) => toasts.push(text),
     errorTip: (text: string) => {
       tips.push(text);
@@ -44,7 +41,6 @@ function setup(granted = true, tipShown = true) {
       on: 'on.png',
       off: 'off.png',
       undo: 'undo.png',
-      lasso: 'convert.png',
     },
   };
   return {tablet, toasts, tips, host, buttons: new Buttons(host)};
@@ -58,16 +54,9 @@ beforeEach(() => {
 test('every button registers at start-up, the switch off by default', async () => {
   const {host, buttons, tablet} = setup();
   await buttons.registerAll();
-  expect(host.register).toHaveBeenCalledWith(
-    2,
-    ['NOTE'],
-    expect.objectContaining({
-      id: LASSO_BUTTON_ID,
-      name: 'Convert to Text',
-      editDataTypes: [0],
-      showType: 0,
-    }),
-  );
+  // «Convert to Text» is Lasso Actions' since #306: Smart Pen registers no lasso button.
+  expect(host.register).not.toHaveBeenCalledWith(2, expect.anything(), expect.anything());
+  expect(host.register).toHaveBeenCalledTimes(2);
   expect(host.register).toHaveBeenCalledWith(
     1,
     ['NOTE'],
@@ -103,7 +92,6 @@ test('switching the module off stops the mode and removes every button (#305)', 
   expect(buttons.on).toBe(false);
   expect(tablet.listening).toBe(false);
   expect(host.unregister.mock.calls).toEqual([
-    [LASSO_BUTTON_ID],
     [UNDO_BUTTON_ID],
     [MODE_BUTTON_ID],
   ]);
@@ -167,30 +155,4 @@ test('Undo Conversion with nothing converted says so', async () => {
   const {buttons, toasts} = setup();
   expect(await buttons.undo()).toBe('nothing');
   expect(toasts).toEqual([copy['toast.nothing']]);
-});
-
-test('«Convert to Text» converts the lasso and says so; without the permissions it asks first', async () => {
-  const {tablet, toasts, buttons} = setup();
-  tablet.lassoStrokes([letter(0), letter(30)]);
-  expect(await buttons.convertLasso()).toBe('converted');
-  expect(toasts).toEqual([copy['toast.converted']]);
-  const denied = setup(false);
-  expect(await denied.buttons.convertLasso()).toBeNull();
-  expect(denied.toasts).toEqual([]);
-  expect(denied.host.needs).toHaveBeenCalledTimes(1);
-  expect(denied.tablet.host.getLassoElements).not.toHaveBeenCalled();
-});
-
-test('a conversion that fails on the tablet holds the Error state, with no toast (#257)', async () => {
-  const {host, buttons, toasts} = setup();
-  host.lasso = {
-    ...host.lasso,
-    getLassoElements: jest.fn(async () => ({ok: false as const, code: -1, message: 'thrown'})),
-  } as typeof host.lasso;
-  expect(await buttons.convertLasso()).toBe('failed');
-  expect(toasts).toEqual([]);
-  expect(host.fail).toHaveBeenCalledWith({
-    what: copy['toast.convertFailed'],
-    reason: copy['error.again'],
-  });
 });

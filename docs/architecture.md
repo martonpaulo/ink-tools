@@ -223,15 +223,15 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Plugin | Modules | Surface | Status |
 | :--- | :--- | :--- | :--- |
 | Smart Pen | Smart Shapes, Real-Time Text, Gestures ([#270](https://github.com/martonpaulo/ink-tools/issues/270)) | the pen while writing | Built ([#305](https://github.com/martonpaulo/ink-tools/issues/305)); Gestures not yet |
-| Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Built with Lookup ([#306](https://github.com/martonpaulo/ink-tools/issues/306)); Convert to Text still in Smart Pen until it moves; Headings and Collection paused |
+| Lasso Actions | Lookup, Convert to Text, Headings, Collection | lassoed handwriting | Built ([#306](https://github.com/martonpaulo/ink-tools/issues/306)): Lookup, Convert to Text, Headings and Collection |
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
 | Device Link | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
 | Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Planned |
 
 Ink Tools Probe stays a developer tool, off day to day. The conversion engine is shared package code,
-`ink-core`'s `@ink-tools/ink-core/conversion` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»
-([#250](https://github.com/martonpaulo/ink-tools/issues/250)); until [#306](https://github.com/martonpaulo/ink-tools/issues/306) moves it, Smart Pen still carries that lasso button. The table below lists the plugins as they ship today.
+`ink-core`'s `@ink-tools/ink-core/conversion` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions has «Convert to Text»
+([#250](https://github.com/martonpaulo/ink-tools/issues/250), moved by [#306](https://github.com/martonpaulo/ink-tools/issues/306)); «Undo Conversion» does not yet undo a lasso conversion, since each plugin's memory is its own ([#525](https://github.com/martonpaulo/ink-tools/issues/525)). The table below lists the plugins as they ship today.
 
 Each plugin is named here by its display name ([product › Display names](product.md#display-names)).
 Older code names stay in npm packages, `pluginKey`, log prefixes, data folders and older issues:

@@ -190,6 +190,7 @@ test('the Lookup module switch removes every Lookup button and its rows, and is 
   const writes = files.writeText.mock.calls as unknown as [string, string][];
   expect(JSON.parse(writes[writes.length - 1][1]).modules).toEqual({
     lookup: false,
+    convert: true,
     headings: true,
     collection: true,
   });
