@@ -155,7 +155,9 @@ Ink Tools adopts the second (owner, 2026-11-25): it sets the levels apart.
 Crops: Keyboard, `553, 133, 1367, 99`; Handwriting Recognition Language, `553, 133, 1367, 114`.
 
 - A box from the line above to the caption's bottom: 99 px in Keyboard (`dp_px_85`), 112 px in
-  Apps › Plugins; Ink Tools takes the Plugins list's 112 px (`captionHeight`). Its text at the
+  Apps › Plugins; Ink Tools takes Keyboard's 99 px (`captionHeight`, owner D97 A,
+  [#416](https://github.com/martonpaulo/ink-tools/issues/416)), so a first caption's baseline
+  sits where Keyboard's does. Its text at the
   bottom, no line under it. The
   native text is black; Ink Tools draws it in the context grey at the subtitle's size, as the
   Plugins list's smaller caption ([Text styles](#text-styles)).
