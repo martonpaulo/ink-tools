@@ -1039,6 +1039,24 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   and the file box followed [measured, Manta, 2026-11-26,
   [#452](https://github.com/martonpaulo/ink-tools/issues/452)]. So `placeElement` moves the box with
   the points.
+- The number the plugin API gives an element (`getElement(path, page, num)`, `numInPage`) is kept in
+  the element's record, not taken from its place in the list. On a closed note, a modify by path moves
+  the record to the end of the list and keeps its number: after a shift of number 1 on a 4-stroke page,
+  the file held the strokes in the order 2, 3, 4, 1, and number 1 still named the same stroke. A delete
+  by path leaves a gap: after number 1 of 16 was deleted, number 1 answered «no element» and number
+  16 named a stroke on the 15-record page. Neither a Device Link reinstall nor opening and closing
+  the note closed the gap, and neither did a delete on the open note and a save. A stroke written
+  later took the free number 1. On the open note, after a delete through the open-note calls that was
+  not yet saved, number 2 still named the same stroke. On records of the same layout, the number is the 32-bit word 441 bytes
+  before the record's end; other layouts keep it elsewhere. So a reader that numbers elements
+  by their place matches the tablet only on a page with no edit since its last save on the tablet
+  [measured, Manta, 2026-11-27, [#317](https://github.com/martonpaulo/ink-tools/issues/317),
+  [#471](https://github.com/martonpaulo/ink-tools/issues/471)].
+- The file of a note open on the tablet holds only what the tablet saved: 16 strokes written by
+  `inkctl ink write` were missing from it until another note was opened, which saves first, and a
+  delete through the open-note calls left the file byte-equal. So the Note Editor's pull before a send
+  cannot see a change made on the open note since its last save [measured, Manta, 2026-11-27,
+  [#317](https://github.com/martonpaulo/ink-tools/issues/317)].
 - An element record's first words after its length are the pen type, the colour and the
   thickness: `inkctl ink write` strokes read 10, 0 and 400, the stroke Real-Time Text left 4, 0
   and 200. Every record ends with two length-prefixed texts, then 17 bytes; the first text is the
