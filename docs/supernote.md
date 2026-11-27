@@ -1025,7 +1025,9 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   [#459](https://github.com/martonpaulo/ink-tools/issues/459)]. `GEO_ellipse` has not been seen in a file yet.
   An ellipse inserted by path with `ellipseAngle` 0 (major radius along x, drawn wider than tall)
   reads back through `getElement` with `ellipseAngle` 90.00273895263672, so a stored 0 or about 90
-  is an unturned ellipse [measured on the Manta, 2026-11-27,
+  is an unturned ellipse. A modify takes the insert's convention: writing the read 90.0027 back
+  drew the ellipse turned by 90° (600 by 300 drawn 300 by 600) on a closed and an open note, so the
+  helper writes the read angle less 90 [measured on the Manta, 2026-11-27,
   [#463](https://github.com/martonpaulo/ink-tools/issues/463)].
 - A stroke's record box is the element's `recognizeResult` (`up_left_point_x` to
   `down_right_point_y`, page pixels) in the plugin API. A modify of a closed note by path makes the

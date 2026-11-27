@@ -280,7 +280,7 @@ export async function placeElement(element: object, page: number, rect: EditRect
 /**
  * Moves and sizes a shape to `rect` (#463): a line's or polygon's points mapped from their bounds,
  * or an ellipse's centre and radii; a circle sized to a rect that is not square becomes an ellipse.
- * The angle read is written back as it came, so the shape keeps its look.
+ * The angle goes back in the insert's convention (`insertAngle`), so the shape keeps its look.
  * shortcut: a turned ellipse (an angle not near 0 or 90) is refused, since its box needs the angle's sense; the device round settles it.
  */
 function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect): Result<object> {
@@ -303,6 +303,7 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
     if (geometry.ellipseMajorAxisRadius !== geometry.ellipseMinorAxisRadius) {
       geometry.type = 'GEO_ellipse';
     }
+    geometry.ellipseAngle = insertAngle(geometry.ellipseAngle);
     moveBox(placed, map);
     return ok(placed);
   }
@@ -325,6 +326,16 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
 function isUnturned(angle: unknown): boolean {
   const degrees = Math.round(Number(angle ?? 0));
   return degrees === 0 || degrees === UNTURNED_STORED_ANGLE;
+}
+
+/**
+ * The read angle in the convention a modify takes, the insert's (#463): a modify that wrote back the
+ * read 90.0027 drew the ellipse turned by 90° on the Manta, so a stored angle about 90 goes back
+ * less 90, keeping its float noise, and one about 0 as it came.
+ */
+function insertAngle(angle: unknown): number {
+  const degrees = Number(angle ?? 0);
+  return Math.round(degrees) === UNTURNED_STORED_ANGLE ? degrees - UNTURNED_STORED_ANGLE : degrees;
 }
 
 /** The angle the tablet stores for an ellipse inserted at angle 0, measured on the Manta (#463). */
