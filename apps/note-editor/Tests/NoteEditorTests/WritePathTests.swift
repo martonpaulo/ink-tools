@@ -162,6 +162,57 @@ import Testing
         #expect(first?["file"] as? String == "/tmp/p.png")
     }
 
+    @Test func aShapeIsTheGeometryElementTheHelperReads() throws {
+        func json(_ element: HelperElement) throws -> [String: Any] {
+            try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(element)) as? [String: Any])
+        }
+        let line = try json(
+            .geometry(.line(from: CGPoint(x: 10, y: 20), to: CGPoint(x: 300.4, y: 20)), penColor: .black, penWidth: 400)
+        )
+        #expect(line["kind"] as? String == "geometry" && line["shape"] as? String == "straightLine")
+        #expect(line["points"] as? [[Int]] == [[10, 20], [300, 20]])
+        #expect(line.keys.sorted() == ["kind", "penColor", "penWidth", "points", "shape"])
+        let corners = [
+            CGPoint(x: 100, y: 100), CGPoint(x: 300, y: 100), CGPoint(x: 300, y: 200), CGPoint(x: 100, y: 200),
+        ]
+        let rectangle = try json(.geometry(.polygon(corners), penColor: .black, penWidth: 400))
+        #expect(rectangle["shape"] as? String == "GEO_polygon")
+        #expect(rectangle["points"] as? [[Int]] == [[100, 100], [300, 100], [300, 200], [100, 200], [100, 100]])
+        let ellipse = try json(
+            .geometry(
+                .ellipse(center: CGPoint(x: 600, y: 800), horizontal: 200, vertical: 120), penColor: .darkGrey,
+                penWidth: 200))
+        #expect(ellipse["shape"] as? String == "GEO_ellipse" && ellipse["center"] as? [Int] == [600, 800])
+        #expect(ellipse["major"] as? Int == 200 && ellipse["minor"] as? Int == 120 && ellipse["angle"] as? Int == 0)
+        #expect(ellipse["penColor"] as? Int == 0x9D)
+        let circle = try json(
+            .geometry(
+                .ellipse(center: CGPoint(x: 600, y: 800), horizontal: 90, vertical: 90), penColor: .black, penWidth: 400
+            ))
+        #expect(circle["shape"] as? String == "GEO_circle")
+        #expect(
+            HelperElement.geometry(
+                .ellipse(center: CGPoint(x: 600, y: 800), horizontal: 90, vertical: 60), penColor: .black, penWidth: 400
+            ).box
+                == EditRect(left: 510, top: 740, right: 690, bottom: 860))
+    }
+
+    @Test func aShapeOffThePageOrWithTooManyCornersDoesNotFit() {
+        let page = CGSize(width: 1920, height: 2560)
+        #expect(GeometryShape.line(from: .zero, to: CGPoint(x: 1920, y: 2560)).fits(on: page))
+        #expect(!GeometryShape.line(from: CGPoint(x: 10, y: 10), to: CGPoint(x: 10, y: 10)).fits(on: page))
+        #expect(!GeometryShape.line(from: CGPoint(x: 10, y: 10), to: CGPoint(x: 2000, y: 10)).fits(on: page))
+        let corners = (0..<GeometryShape.maxPolygonPoints).map { CGPoint(x: 10 + $0, y: 10 + $0 % 2) }
+        #expect(!GeometryShape.polygon(corners).fits(on: page))
+        #expect(GeometryShape.polygon(Array(corners.prefix(63))).fits(on: page))
+        #expect(!GeometryShape.polygon(Array(corners.prefix(2))).fits(on: page))
+        #expect(!GeometryShape.ellipse(center: CGPoint(x: 100, y: 800), horizontal: 200, vertical: 120).fits(on: page))
+        #expect(!GeometryShape.ellipse(center: CGPoint(x: 600, y: 800), horizontal: 0, vertical: 120).fits(on: page))
+        #expect(
+            GeometryShape.ellipse(center: CGPoint(x: 1200, y: 800), horizontal: 1000, vertical: 100)
+                .fits(on: CGSize(width: 2560, height: 1920)))
+    }
+
     @Test func aSendKeepsABackupThenAppliesThenPullsBack() async throws {
         let tablet = FakeTablet(bytes: Data("base".utf8))
         let copy = try copy()

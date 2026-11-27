@@ -150,6 +150,9 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
 - Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
   or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
+- A shape goes as the tablet's own geometry element (`HelperElement.geometry`, `GeometryShape`: a line, a
+  polygon, a circle or an ellipse at angle 0), which the helper inserts as type 700
+  ([#463](https://github.com/martonpaulo/ink-tools/issues/463)); Insert › Shape is [#350](https://github.com/martonpaulo/ink-tools/issues/350).
 - Delete removes a selection by the helper's `deleteElements` ([#327](https://github.com/martonpaulo/ink-tools/issues/327)), drawn at once as the template
   where it was; its undo is the backup kept before its send.
 - Cut, Copy and Paste ([#327](https://github.com/martonpaulo/ink-tools/issues/327)): `PageElement.content` reads what each element holds; `ElementClipping`,

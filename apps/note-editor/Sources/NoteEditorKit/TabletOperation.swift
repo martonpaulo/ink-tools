@@ -264,21 +264,77 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
     }
 }
 
+/// A shape the tablet keeps as its own geometry element, type 700, in page pixels (#463): the
+/// Device Link helper's `geometry` element takes exactly these.
+public enum GeometryShape: Sendable, Equatable {
+    /// The tablet's line tool, `straightLine`.
+    case line(from: CGPoint, to: CGPoint)
+    /// `GEO_polygon`: the corners in order; the closing point is added when sent.
+    case polygon([CGPoint])
+    /// `GEO_circle` when the two radii are equal, else `GEO_ellipse`; never turned, as the helper
+    /// takes angle 0 only until the device round settles the angle's unit.
+    case ellipse(center: CGPoint, horizontal: Int, vertical: Int)
+
+    /// The most points the helper takes for a polygon, the closing one included.
+    public static let maxPolygonPoints = 64
+
+    /// The box the shape covers.
+    public var box: EditRect {
+        switch self {
+        case .line(let from, let to): EditRect(around: [from, to])
+        case .polygon(let corners): EditRect(around: corners)
+        case .ellipse(let center, let horizontal, let vertical):
+            EditRect(
+                around: [
+                    CGPoint(x: center.x - CGFloat(horizontal), y: center.y - CGFloat(vertical)),
+                    CGPoint(x: center.x + CGFloat(horizontal), y: center.y + CGFloat(vertical)),
+                ])
+        }
+    }
+
+    /// Whether the helper takes the shape on a page of `size` pixels: a line of two distinct ends,
+    /// a polygon of 3 corners up to one under the limit, radii from 1, all of it on the page.
+    public func fits(on size: CGSize) -> Bool {
+        let box = box
+        let onPage =
+            box.left >= 0 && box.top >= 0 && CGFloat(box.right) <= size.width
+            && CGFloat(box.bottom) <= size.height
+        switch self {
+        case .line(let from, let to):
+            return onPage && from != to
+        case .polygon(let corners):
+            return onPage && (3..<Self.maxPolygonPoints).contains(corners.count)
+        case .ellipse(_, let horizontal, let vertical):
+            return onPage && horizontal >= 1 && vertical >= 1
+        }
+    }
+}
+
 /// An element the helper inserts, in its JSON shape.
 public enum HelperElement: Sendable, Equatable, Encodable {
     case text(String, rect: EditRect, fontSize: Int)
     case picture(String, rect: EditRect)
     /// A pen stroke through `points`, in page pixels, as the helper's `stroke` element reads it.
     case stroke(points: [CGPoint], penColor: PenTone, thickness: Int)
+    /// A shape as the tablet's geometry element, its line `penWidth` from 100 to 5000 as the helper checks (#463).
+    case geometry(GeometryShape, penColor: PenTone, penWidth: Int)
 
-    private enum Key: String, CodingKey { case kind, text, rect, fontSize, file, points, penColor, thickness }
+    private enum Key: String, CodingKey {
+        case kind, text, rect, fontSize, file, points, penColor, thickness, shape, center, major, minor, angle, penWidth
+    }
 
-    /// The box the element covers: a stroke's points, a text box's or a picture's rect.
+    /// The box the element covers: a stroke's points, a shape's box, a text box's or a picture's rect.
     public var box: EditRect {
         switch self {
         case .text(_, let rect, _), .picture(_, let rect): rect
         case .stroke(let points, _, _): EditRect(around: points)
+        case .geometry(let shape, _, _): shape.box
         }
+    }
+
+    /// `[x, y]` in whole page pixels, as the helper's `parsePoint` reads it.
+    private static func pixels(_ points: [CGPoint]) -> [[Int]] {
+        points.map { [Int($0.x.rounded()), Int($0.y.rounded())] }
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -300,6 +356,24 @@ public enum HelperElement: Sendable, Equatable, Encodable {
             try container.encode("picture", forKey: .kind)
             try container.encode(file, forKey: .file)
             try container.encode(rect, forKey: .rect)
+        case .geometry(let shape, let penColor, let penWidth):
+            try container.encode("geometry", forKey: .kind)
+            switch shape {
+            case .line(let from, let to):
+                try container.encode("straightLine", forKey: .shape)
+                try container.encode(Self.pixels([from, to]), forKey: .points)
+            case .polygon(let corners):
+                try container.encode("GEO_polygon", forKey: .shape)
+                try container.encode(Self.pixels(corners + corners.prefix(1)), forKey: .points)
+            case .ellipse(let center, let horizontal, let vertical):
+                try container.encode(horizontal == vertical ? "GEO_circle" : "GEO_ellipse", forKey: .shape)
+                try container.encode(Self.pixels([center])[0], forKey: .center)
+                try container.encode(horizontal, forKey: .major)
+                try container.encode(vertical, forKey: .minor)
+                try container.encode(0, forKey: .angle)
+            }
+            try container.encode(penColor.rawValue, forKey: .penColor)
+            try container.encode(penWidth, forKey: .penWidth)
         }
     }
 }
