@@ -179,9 +179,18 @@ export function drawTriangleLattice(raster: Raster, grid: Grid): void {
   strokeCellEdges(raster, grid, 'ink');
 }
 
-/** Fills cells with a tone (the shade grey by default), drawn before the lattice. */
+/**
+ * Fills cells with a tone (the shade grey by default), drawn before the lattice. A square cell on
+ * whole pixels is the same pixels as its polygon, filled as a rectangle: the polygon's coverage
+ * took 0.3 s of a 12 x 12 kakuro page under `node --jitless`, about 3 s on the tablet (#552).
+ */
 export function shadeCells(raster: Raster, grid: Grid, cells: readonly Cell[], tone: Tone = 'shade'): void {
-  for (const [c, r] of cells) fillPolygon(raster, [cellPolygon(grid, c, r)], tone);
+  const { x, y, cell } = grid;
+  const whole = grid.lattice === 'square' && [x, y, cell].every(Number.isInteger);
+  for (const [c, r] of cells) {
+    if (whole) fillRect(raster, x + c * cell, y + r * cell, cell, cell, tone);
+    else fillPolygon(raster, [cellPolygon(grid, c, r)], tone);
+  }
 }
 
 /** Thick ink borders between cells of different regions (sudoku boxes, jigsaw regions), and the frame. */

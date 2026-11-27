@@ -39,7 +39,9 @@ import {
   type PageSpec,
   type Raster,
 } from '../src';
+import { cellPolygon } from '../src/page/grid';
 import { mmToPx, PAGE_MM, TONES } from '../src/page/look';
+import * as rasterModule from '../src/page/raster';
 import { SAMPLE_PAGES } from '../testing/pages';
 
 /**
@@ -162,6 +164,27 @@ describe('the PNG', () => {
 
   test('a blank page packs small', () => {
     expect(encodePng(createRaster(1920, 2560)).length).toBeLessThan(40_000);
+  });
+
+  test('a square cell on whole pixels is shaded as a rectangle, the same pixels as its polygon (#552)', () => {
+    const fills = jest.spyOn(rasterModule, 'fillPolygon');
+    const cells: [number, number][] = [[0, 0], [2, 1], [4, 4]];
+    for (const grid of [square(5, 5), square(5, 5, 117.5)]) {
+      // The lattice under the shade, where it can be drawn: a square lattice sits on whole pixels.
+      const under = (r: Raster) => Number.isInteger(grid.cell) && drawSquareLattice(r, grid);
+      const shaded = createRaster(SWATCH, SWATCH);
+      under(shaded);
+      fills.mockClear();
+      shadeCells(shaded, grid, cells);
+      // The polygon's coverage was most of a 12 x 12 kakuro page's drawing time on the tablet.
+      expect(fills).toHaveBeenCalledTimes(Number.isInteger(grid.cell) ? 0 : cells.length);
+      const filled = createRaster(SWATCH, SWATCH);
+      under(filled);
+      for (const [c, r] of cells) rasterModule.fillPolygon(filled, [cellPolygon(grid, c, r)], 'shade');
+      expect(Buffer.from(shaded.pixels).equals(Buffer.from(filled.pixels))).toBe(true);
+      expect(Buffer.from(encodePng(shaded)).equals(Buffer.from(encodePng(unflagged(shaded))))).toBe(true);
+    }
+    fills.mockRestore();
   });
 
   test('a rectangle off whole pixels is refused', () => {
