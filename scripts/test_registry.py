@@ -15,6 +15,7 @@ import registry  # noqa: E402
 import registry_readers  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+FINGERPRINT = "ab" * 32
 
 ITEM = {
     "id": "calendar.provider", "title": "The Calendar provider", "level": 2, "impact": "user",
@@ -248,6 +249,74 @@ class RegistryTest(unittest.TestCase):
         shutil.rmtree(self.root / registry.ITEMS)
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(registry.main(["--root", str(self.root)]), 2)
+
+    # docs/compatibility.md from the committed firmware check results (#293).
+
+    def result(self, entries, fingerprint=FINGERPRINT, firmware="Manta 1.0"):
+        folder = self.root / registry.WATCH
+        folder.mkdir(parents=True, exist_ok=True)
+        data = {"fingerprint": fingerprint, "firmware": firmware, "registry": "2026.11.25",
+                "items": [{"id": item_id, "status": status, "detail": detail} for item_id, status, detail in entries]}
+        (folder / (fingerprint + ".json")).write_text(json.dumps(data))
+
+    def page(self):
+        return (self.root / registry.COMPATIBILITY).read_text()
+
+    def test_no_result_writes_no_page_and_a_left_page_fails(self):
+        self.assertEqual(self.run_main("--write")[0], 0)
+        self.assertFalse((self.root / registry.COMPATIBILITY).exists())
+        (self.root / "docs").mkdir()
+        (self.root / registry.COMPATIBILITY).write_text("old\n")
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("docs/compatibility.md: no result in registry/watch writes it", out)
+        self.assertEqual(self.run_main("--write")[0], 0)
+        self.assertFalse((self.root / registry.COMPATIBILITY).exists())
+
+    def test_a_result_writes_one_row_per_item_and_a_hand_edit_fails(self):
+        self.result([("calendar.provider", "ok", ""), ("todo.provider", "broken", "no column due|date"),
+                     ("gone.item", "unprobed", "a reason")])
+        code, out = self.run_main("--write")
+        self.assertEqual(code, 0, out)
+        page = self.page()
+        self.assertIn("1. `Manta 1.0`, fingerprint `abababab`, registry 2026.11.25: 1 ok, 1 broken, 1 unprobed.", page)
+        rows = ("| `calendar.provider` | 2 | sn-adapter | ok |", "| `todo.provider` | 2 | sn-adapter | broken |",
+                "| `digest.provider` | 2 | sn-adapter | not checked |", "| `gone.item` |  | not in the registry | unprobed |")
+        for row in rows:
+            self.assertIn(row, page)
+        self.assertIn("- Result 1, `todo.provider`: no column due\\|date", page)
+        self.assertEqual(self.run_main()[0], 0)
+        (self.root / registry.COMPATIBILITY).write_text(page + "edit\n")
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("docs/compatibility.md: stale or edited by hand", out)
+
+    def test_two_results_are_two_columns_by_firmware(self):
+        self.result([("calendar.provider", "ok", "")], fingerprint="cd" * 32, firmware="Manta 2.0")
+        self.result([("calendar.provider", "broken", "gone")], firmware="Manta 1.0")
+        self.assertEqual(self.run_main("--write")[0], 0)
+        page = self.page()
+        self.assertIn("| `calendar.provider` | 2 | sn-adapter | broken | ok |", page)
+        self.assertLess(page.index("`Manta 1.0`"), page.index("`Manta 2.0`"))
+
+    def test_a_result_named_after_another_fingerprint_fails(self):
+        self.result([("calendar.provider", "ok", "")])
+        (self.root / registry.WATCH / (FINGERPRINT + ".json")).rename(self.root / registry.WATCH / ("cd" * 32 + ".json"))
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("its fingerprint is %s, not its file name" % FINGERPRINT, out)
+
+    def test_a_bad_status_fails(self):
+        self.result([("calendar.provider", "fine", "")])
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("'fine' is not one of ok, broken, unprobed", out)
+
+    def test_an_item_listed_twice_in_one_result_fails(self):
+        self.result([("todo.provider", "ok", ""), ("todo.provider", "ok", "")])
+        code, out = self.run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("todo.provider listed twice", out)
 
 
 if __name__ == "__main__":
