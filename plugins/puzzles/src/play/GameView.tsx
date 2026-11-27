@@ -297,19 +297,22 @@ function Ready({
   return (
     <View style={shared.screen}>
       <TitleBar title={game.title} onBack={onBack} onClose={onClose} />
-      <ScrollView style={styles.choices}>
-        {board && thisPage}
-        {game.options.map(option => (
-          <ChoiceList
-            key={option.id}
-            title={option.title}
-            choices={offered(option, choices)}
-            value={choices[option.id]}
-            onChange={value => onChoose(option.id, value)}
-          />
-        ))}
-        {!board && thisPage}
-      </ScrollView>
+      {/* A board with no choices has nothing to scroll: its «New page» part starts under the bar. */}
+      {(game.open || game.options.length > 0) && (
+        <ScrollView style={styles.choices}>
+          {board && thisPage}
+          {game.options.map(option => (
+            <ChoiceList
+              key={option.id}
+              title={option.title}
+              choices={offered(option, choices)}
+              value={choices[option.id]}
+              onChange={value => onChoose(option.id, value)}
+            />
+          ))}
+          {!board && thisPage}
+        </ScrollView>
+      )}
       {/* Fixed under the choices, so a long list never pushes the view's main action off screen (#383). */}
       <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />
       <View style={[shared.buttons, styles.section]}>
