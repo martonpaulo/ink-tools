@@ -43,8 +43,9 @@ lint: ## SwiftLint, then swift-format lint; read-only, fails on any finding
 format: ## Rewrite the sources with swift-format (the only target that edits sources)
 	@swift format format --in-place --recursive $(SWIFT_SOURCES)
 
-validate: ## Repository invariants (scripts/validate.sh); no compiler, seconds
+validate: ## Repository invariants (scripts/validate.sh) and the release cask (scripts/test-cask.sh); no compiler, seconds
 	@scripts/validate.sh
+	@scripts/test-cask.sh
 
 check: build lint test validate ## Everything a commit needs, stopping at the first failure
 

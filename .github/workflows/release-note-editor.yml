@@ -1,0 +1,185 @@
+name: Release Note Editor
+
+# Each Note Editor version becomes a signed and notarized GitHub release carrying
+# Note-Editor-<version>.zip, and the Homebrew cask martonpaulo/tap/note-editor follows it (#445).
+# A push to main that changes Support/Info.plist, where the version lives, publishes when its
+# note-editor-v<CFBundleShortVersionString> tag does not exist yet, as the plugins' prerelease
+# workflows do (#301); workflow_dispatch runs it by hand on main. The steps follow WindowHop's
+# release workflow, with the canonical package-app.sh and notarize.sh.
+on:
+  push:
+    branches: [main]
+    paths: [apps/note-editor/Support/Info.plist]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One release at a time, never cancelled half way.
+concurrency:
+  group: release-note-editor
+  cancel-in-progress: false
+
+# The same Xcode pin as validate-note-editor.yml; change both together.
+env:
+  XCODE_VERSION: "27.1"
+
+jobs:
+  release:
+    name: release note-editor
+    runs-on: xcode-27
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: apps/note-editor
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve the version and the tag from Support/Info.plist
+        id: tag
+        run: |
+          test "$GITHUB_REF" = refs/heads/main || { echo "A release runs only on main, not $GITHUB_REF." >&2; exit 1; }
+          version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Support/Info.plist)
+          tag="note-editor-v$version"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$tag is already published; nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "VERSION=$version"
+            echo "TAG=$tag"
+            echo "ARCHIVE=artifacts/Note-Editor-$version.zip"
+          } >> "$GITHUB_ENV"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm the pinned Xcode
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          xcodebuild -version
+          xcodebuild -version | grep -qx "Xcode $XCODE_VERSION"
+
+      - name: Require the release secrets
+        if: steps.tag.outputs.publish == 'true'
+        env:
+          CERT: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          missing=()
+          [ -n "$CERT" ] || missing+=(DEVELOPER_ID_CERT_P12)
+          [ -n "$CERT_PASSWORD" ] || missing+=(DEVELOPER_ID_CERT_PASSWORD)
+          [ -n "$NOTARY_API_KEY" ] || missing+=(NOTARY_API_KEY)
+          [ -n "$NOTARY_API_KEY_ID" ] || missing+=(NOTARY_API_KEY_ID)
+          [ -n "$NOTARY_API_ISSUER_ID" ] || missing+=(NOTARY_API_ISSUER_ID)
+          [ -n "$HOMEBREW_TAP_TOKEN" ] || missing+=(HOMEBREW_TAP_TOKEN)
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "Release blocked: missing secrets: ${missing[*]}" >&2
+            exit 1
+          fi
+
+      # As WindowHop's release: the P12 is checked with its password, then normalized to the legacy
+      # PKCS#12 profile Keychain accepts; the unencrypted files are removed on every path.
+      - name: Import the Developer ID certificate
+        if: steps.tag.outputs.publish == 'true'
+        env:
+          CERT: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          umask 077
+          KEYCHAIN=build.keychain
+          security create-keychain -p ci "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          export CERT_PASSWORD
+          COMPAT_PASSWORD=$(openssl rand -hex 16)
+          export COMPAT_PASSWORD
+          trap 'rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/cert.pem" "$RUNNER_TEMP/cert-compatible.p12"' EXIT
+          echo "$CERT" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          openssl pkcs12 -legacy -in "$RUNNER_TEMP/cert.p12" -passin env:CERT_PASSWORD -nodes -out "$RUNNER_TEMP/cert.pem"
+          openssl pkcs12 -export -legacy -in "$RUNNER_TEMP/cert.pem" -passout env:COMPAT_PASSWORD -out "$RUNNER_TEMP/cert-compatible.p12"
+          security import "$RUNNER_TEMP/cert-compatible.p12" -k "$KEYCHAIN" -P "$COMPAT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KEYCHAIN"
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | awk -F'"' '/Developer ID Application:/ {print $2; exit}')
+          case "$IDENTITY" in
+            "Developer ID Application:"*) ;;
+            *) echo "Release blocked: the P12 holds no Developer ID Application identity." >&2; exit 1 ;;
+          esac
+          echo "DEVELOPER_ID_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+
+      - name: Build and package the app
+        if: steps.tag.outputs.publish == 'true'
+        run: scripts/package-app.sh --archive "$ARCHIVE"
+
+      - name: Write the notary API key
+        if: steps.tag.outputs.publish == 'true'
+        env:
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
+        run: |
+          umask 077
+          KEY_PATH="$RUNNER_TEMP/notary/AuthKey.p8"
+          mkdir -p "$(dirname "$KEY_PATH")"
+          printf '%s\n' "$NOTARY_API_KEY" > "$KEY_PATH"
+          {
+            echo "NOTARY_API_KEY_PATH=$KEY_PATH"
+            echo "NOTARY_API_KEY_ID=$NOTARY_API_KEY_ID"
+            echo "NOTARY_API_ISSUER_ID=$NOTARY_API_ISSUER_ID"
+          } >> "$GITHUB_ENV"
+
+      # A ZIP cannot be stapled: the app inside is stapled, then zipped again.
+      - name: Notarize, staple and check the app
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          scripts/notarize.sh --artifact "$ARCHIVE"
+          xcrun stapler staple "build/Note Editor.app"
+          xcrun stapler validate "build/Note Editor.app"
+          codesign --verify --deep --strict --verbose=2 "build/Note Editor.app"
+          spctl --assess --type execute --verbose=2 "build/Note Editor.app"
+          rm "$ARCHIVE"
+          ditto -c -k --keepParent "build/Note Editor.app" "$ARCHIVE"
+          echo "SHA256=$(shasum -a 256 "$ARCHIVE" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      # Never the repository's Latest release, which the plugins share; a beta version is a prerelease
+      # (docs/product.md › Product versioning).
+      - name: Publish the GitHub release
+        if: steps.tag.outputs.publish == 'true'
+        run: |
+          flags=(--latest=false)
+          case "$VERSION" in *-beta.*) flags+=(--prerelease) ;; esac
+          gh release create "$TAG" "$ARCHIVE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Note Editor $VERSION" "${flags[@]}" \
+            --notes "Note Editor $VERSION for macOS 27 on Apple silicon, signed with Developer ID and notarized. Install it with \`brew install --cask martonpaulo/tap/note-editor\`, or download Note-Editor-$VERSION.zip below. SHA-256: $SHA256"
+
+      # The cask is the delivery, so a failed push fails the run; the release stays published.
+      - name: Update the Homebrew cask
+        if: steps.tag.outputs.publish == 'true'
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone --depth 1 "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/martonpaulo/homebrew-tap.git" "$RUNNER_TEMP/tap"
+          scripts/cask.sh --version "$VERSION" --sha256 "$SHA256" > "$RUNNER_TEMP/tap/Casks/note-editor.rb"
+          cd "$RUNNER_TEMP/tap"
+          git add Casks/note-editor.rb
+          git diff --cached --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: Note Editor $VERSION"
+          git push origin HEAD
+
+      - name: Remove the notary key and the keychain
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/notary"
+          security delete-keychain build.keychain 2>/dev/null || true
