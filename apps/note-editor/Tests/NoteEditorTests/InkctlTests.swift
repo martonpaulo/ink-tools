@@ -206,10 +206,10 @@ enum LoadedMac {
             try FileManager.default.contentsOfDirectory(atPath: destination.deletingLastPathComponent().path()).isEmpty)
     }
 
+    // timing-independent: the bound only turns a stalled call into a failure; it is wide for a loaded Mac.
     /// Every call ends once inkctl exits (#317): `waitUntilExit` on a dispatch thread stayed blocked
     /// after the child had exited, within the first 64 of these calls. The calls run in a task the
     /// test does not await, so a stalled one fails the test at the bound instead of hanging it.
-    // timing-independent: the bound only turns a stalled call into a failure; it is wide for a loaded Mac.
     @Test func manyShortCallsAllEnd() async throws {
         let inkctl = try fake(#"echo '{"path": "/x", "entries": []}'"#)
         let finished = DispatchSemaphore(value: 0)
