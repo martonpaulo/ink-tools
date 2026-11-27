@@ -112,6 +112,28 @@ import Testing
         #expect(editor.history.undoKind == .movePage(from: 0, to: 1))
     }
 
+    /// Found on the Manta (2026-11-27): «open on the tablet» stayed over a later send that pushed.
+    @Test func theNextAppliedSendClosesTheRefusalBar() async throws {
+        let editor = try editor()
+        tablet.openNote = WritePathTests.note
+        editor.movePage(from: 0, to: 1)
+        await settle(editor)
+        #expect(editor.refusal == WriteFailure.openOnTablet.message)
+        tablet.openNote = nil
+        editor.movePage(from: 2, to: 3)
+        await settle(editor)
+        #expect(editor.refusal == nil)
+    }
+
+    @Test func aConflictBarStaysOverALaterAppliedSend() async throws {
+        let editor = try editor()
+        let conflict = "Note/Tests/Edit conflict 2026-11-27 09.00.00.note"
+        editor.refuse(WriteFailure.conflict(conflict).message, conflict: conflict)
+        editor.movePage(from: 0, to: 1)
+        await settle(editor)
+        #expect(editor.conflictNote == conflict && editor.refusal == WriteFailure.conflict(conflict).message)
+    }
+
     /// The tablet's own add or delete of a page, as the helper applies it.
     func tabletApplies(_ edit: @escaping @Sendable (NoteFile) throws -> NoteFile) {
         tablet.onEdit = Self.applying(edit)

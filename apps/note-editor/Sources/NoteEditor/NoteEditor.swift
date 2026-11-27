@@ -42,7 +42,7 @@ final class NoteEditor {
     private(set) var revision = 0
     private(set) var history = EditHistory()
     private(set) var pending: [Pending] = []
-    /// The plain message of the newest refusal, until dismissed.
+    /// The plain message of the newest refusal, until dismissed or a later send is applied.
     var refusal: String? {
         didSet { conflictNote = nil }
     }
@@ -610,6 +610,7 @@ final class NoteEditor {
             try await path.restore(backup, note: tabletPath, copy: copy, timing: SendLog.write)
             history = EditHistory()
             reloadBase()
+            closeRefusalOnceSent()
         } catch {
             if case .restoreConflict(let note) = error {
                 refuse(error.message, conflict: note)
@@ -723,6 +724,7 @@ final class NoteEditor {
             reloadBase()
             liftUnlifted()
             refreshBackups()
+            closeRefusalOnceSent()
         case .refused(let ticket, let message, let conflict):
             guard let refused = pending.first(where: { $0.ticket == ticket }) else { return }
             pending.removeAll { $0.ticket == ticket }
@@ -822,4 +824,14 @@ struct LiftedChange {
     let records: Set<Int>
     let lifted: LiftedInk
     let matrix: PageMatrix
+}
+
+extension NoteEditor {
+    /// Closes the refusal bar once the tablet applied a later send and none is on its way: why an
+    /// earlier edit was taken back is no longer true, as a Mac banner closes once its cause is gone
+    /// (Manta, 2026-11-27). A conflict's bar stays for its Open Conflict Note, and a hint that holds
+    /// an edit back stays while that edit's send is on its way.
+    fileprivate func closeRefusalOnceSent() {
+        if pending.isEmpty, conflictNote == nil { refusal = nil }
+    }
 }
