@@ -1073,6 +1073,12 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   the older copy went beside the note as a conflict note with both moves, the note stayed as the
   tablet wrote it, and the conflict note opened on the tablet [measured, Manta, 2026-11-27,
   [#317](https://github.com/martonpaulo/ink-tools/issues/317)].
+- A picture resized, turned a quarter or flipped through the Note Editor's write path is a new
+  picture at its new frame, and the old one is deleted by the number its record stores: on a closed
+  note and on an open one, each pulled or reopened note held one picture. The new picture takes a
+  free number when there is one: after a turn deleted number 2, the flipped copy became number 2
+  again [measured, Manta, 2026-11-27, [#326](https://github.com/martonpaulo/ink-tools/issues/326),
+  [#471](https://github.com/martonpaulo/ink-tools/issues/471)].
 - An element record's first words after its length are the pen type, the colour and the
   thickness: `inkctl ink write` strokes read 10, 0 and 400, the stroke Real-Time Text left 4, 0
   and 200. Every record ends with two length-prefixed texts, then 17 bytes; the first text is the
