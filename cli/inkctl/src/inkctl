@@ -288,6 +288,9 @@ REGISTRY = {
         "folder": "/storage/emulated/0/.data/plugin/inktools-probe",
         "commandFile": "command.json",
         "answerMark": "SNPROBE answer",
+        "unknownId": "unknown",
+        "renderFile": "page.png",
+        "commandButton": "Run Command",
     },
     "system.device-identity": {
         "boardProperty": "ro.product.board",
@@ -471,15 +474,15 @@ SCROLL_QUIET_READS = 2  # a list has ended when this many reads in a row bring n
 LIST_EDGE = 2  # pixels: a child this close to the list's lower edge reaches it
 # Ink through Probe's «Run Command» button (#148): plugins/ink-tools-probe/src/helper.ts owns the other side.
 HELPER_COMMAND_PATH = f"{REGISTRY['storage.helper-channel']['folder']}/{REGISTRY['storage.helper-channel']['commandFile']}"
-HELPER_BUTTON = "text:Run Command"
+HELPER_BUTTON = "text:" + REGISTRY["storage.helper-channel"]["commandButton"]
 NOTE_PLUGINS_BUTTON = REGISTRY["note.screen-ids"]["pluginsButton"]  # the note toolbar's plugin panel, where sidebar buttons show
 HELPER_ANSWER = re.compile(re.escape(REGISTRY["storage.helper-channel"]["answerMark"]) + r" (?P<id>\S+) (?P<index>\d+)/(?P<count>\d+) (?P<chunk>.*)")
-HELPER_UNKNOWN_ID = "unknown"
+HELPER_UNKNOWN_ID = REGISTRY["storage.helper-channel"]["unknownId"]
 HELPER_DATE_FORMAT = "+%m-%d %H:%M:%S.000"  # a device time `logcat -T` takes
 HELPER_TIMEOUT = 20.0
 HELPER_LOG_STEP = "inkctl logs --plugin Probe"
 HELPER_FOLDER = posixpath.dirname(HELPER_COMMAND_PATH)
-HELPER_RENDER_PATH = f"{HELPER_FOLDER}/page.png"  # Probe's RENDER_PATH (src/helper.ts, #261)
+HELPER_RENDER_PATH = f"{HELPER_FOLDER}/{REGISTRY['storage.helper-channel']['renderFile']}"  # Probe's RENDER_PATH (src/helper.ts, #261)
 # After each command Probe reads its file again for LISTEN_MS (plugins/ink-tools-probe/src/command.ts,
 # its owner, #286); inkctl waits for the answer with no press while that window is open, less a margin.
 HELPER_LISTEN_SECONDS = 110.0

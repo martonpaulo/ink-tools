@@ -62,7 +62,7 @@
     },
     {
       "id": "storage.helper-channel",
-      "title": "Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/ and SNPROBE log lines",
+      "title": "Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/, the «Run Command» button that runs it, SNPROBE log lines and the page.png render",
       "level": 2,
       "impact": "tests",
       "owner": "ink-tools-probe",
@@ -88,7 +88,10 @@
       "values": {
         "folder": "/storage/emulated/0/.data/plugin/inktools-probe",
         "commandFile": "command.json",
-        "answerMark": "SNPROBE answer"
+        "answerMark": "SNPROBE answer",
+        "unknownId": "unknown",
+        "renderFile": "page.png",
+        "commandButton": "Run Command"
       }
     },
     {

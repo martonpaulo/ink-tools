@@ -102,6 +102,9 @@ export const REGISTRY = {
     folder: '/storage/emulated/0/.data/plugin/inktools-probe',
     commandFile: 'command.json',
     answerMark: 'SNPROBE answer',
+    unknownId: 'unknown',
+    renderFile: 'page.png',
+    commandButton: 'Run Command',
   },
   storageSharedFolder: {
     folder: '/storage/emulated/0/.data/plugin/inktools-shared',

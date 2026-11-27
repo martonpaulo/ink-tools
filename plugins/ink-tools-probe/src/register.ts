@@ -5,14 +5,15 @@ import {
   EDIT_DATA_ANY,
   SHOW_NO_VIEW,
 } from '@ink-tools/sn-adapter/buttons';
+import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 
-/** The «Run Command» button inkctl presses (#148); the CLI finds it by this name. */
-export const COMMAND_BUTTON = {id: 300, name: 'Run Command'};
+/** The «Run Command» button inkctl presses (#148); the CLI finds it by this name, from registry item storage.helper-channel. */
+export const COMMAND_BUTTON = {id: 300, name: REGISTRY.storageHelperChannel.commandButton};
 /**
  * The same command from the lasso menu (#249): a sidebar press clears the lasso, so a call that
  * needs one made by hand, such as `saveStickerByLasso`, runs from here (`inkctl lasso press`).
  */
-export const LASSO_COMMAND_BUTTON = {id: 301, name: 'Run Command'};
+export const LASSO_COMMAND_BUTTON = {id: 301, name: REGISTRY.storageHelperChannel.commandButton};
 
 /**
  * Probe registers its Settings entry, which opens the probe view, and «Run Command», which runs

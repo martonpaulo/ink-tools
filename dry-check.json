@@ -151,38 +151,6 @@
     "open": 295
    },
    {
-    "rule": "Ink Tools Probe answer line mark: SNPROBE answer",
-    "owner": "plugins/ink-tools-probe/src",
-    "other": "cli/inkctl/src/inkctl",
-    "pattern": "SNPROBE answer",
-    "golden": "",
-    "open": 295
-   },
-   {
-    "rule": "Ink Tools Probe answer id when the command has none: unknown",
-    "owner": "plugins/ink-tools-probe/src",
-    "other": "cli/inkctl/src/inkctl",
-    "pattern": "UNKNOWN_ID = ['\\\"]unknown['\\\"]",
-    "golden": "",
-    "open": 295
-   },
-   {
-    "rule": "Ink Tools Probe page render file: page.png in the command folder",
-    "owner": "plugins/ink-tools-probe/src",
-    "other": "cli/inkctl/src/inkctl",
-    "pattern": "page\\.png",
-    "golden": "",
-    "open": 295
-   },
-   {
-    "rule": "Ink Tools Probe sidebar button inkctl presses: Run Command",
-    "owner": "plugins/ink-tools-probe/src",
-    "other": "cli/inkctl/src/inkctl",
-    "pattern": "Run Command['\\\"]",
-    "golden": "",
-    "open": 295
-   },
-   {
     "rule": "Ink Tools Probe page size in page pixels: 1920 x 2560",
     "owner": "plugins/ink-tools-probe/src",
     "other": "cli/inkctl/src/inkctl",

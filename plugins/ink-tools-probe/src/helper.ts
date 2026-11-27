@@ -23,7 +23,7 @@ export const COMMAND_PATH = `${PROBE_FOLDER}${CHANNEL.commandFile}`;
 /** Every answer line starts with this, then the command id, the chunk number and the count. */
 export const ANSWER_MARK = CHANNEL.answerMark;
 /** The id of an answer whose command carries none it could read. */
-export const UNKNOWN_ID = 'unknown';
+export const UNKNOWN_ID = CHANNEL.unknownId;
 /** A logcat line holds about 4 KB; a longer answer goes in chunks of this many characters. */
 export const ANSWER_CHUNK = 3000;
 /** The page's size in pixels on the owner's tablet (docs/supernote.md › Screen and units). */
@@ -36,7 +36,7 @@ export const MAX_POINTS = 5000;
 /** At most this many steps in one `batch` command, each held to its own command's limits (#286). */
 export const MAX_BATCH_STEPS = 64;
 /** Where `renderPage` writes the page's PNG for inkctl to pull (#261). */
-export const RENDER_PATH = `${PROBE_FOLDER}page.png`;
+export const RENDER_PATH = `${PROBE_FOLDER}${CHANNEL.renderFile}`;
 /** A text box's text, and its font size in page pixels, kept to what one press needs. */
 export const MAX_TEXT = 500;
 export const MIN_FONT_SIZE = 8;

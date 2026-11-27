@@ -68,11 +68,14 @@ public final class Registry {
     private DigestProvider() {}
   }
 
-  /** Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/ and SNPROBE log lines (storage.helper-channel). */
+  /** Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/, the «Run Command» button that runs it, SNPROBE log lines and the page.png render (storage.helper-channel). */
   public static final class StorageHelperChannel {
     public static final String FOLDER = "/storage/emulated/0/.data/plugin/inktools-probe";
     public static final String COMMAND_FILE = "command.json";
     public static final String ANSWER_MARK = "SNPROBE answer";
+    public static final String UNKNOWN_ID = "unknown";
+    public static final String RENDER_FILE = "page.png";
+    public static final String COMMAND_BUTTON = "Run Command";
 
     private StorageHelperChannel() {}
   }
