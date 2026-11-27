@@ -3,7 +3,7 @@
  * path, one element by its number, page removal, and the element building and placing for a move or
  * a resize. The open-note calls it routes to live beside their other callers: `insertPageElements`
  * (page.ts), `modifyPageElements` (image.ts), `deletePageElements` (shapes.ts), `insertNotePage`
- * (file.ts) and `saveCurrentNote` (note.ts).
+ * (file.ts) and `saveCurrentNote` (note.ts). A keyword goes in and out by path, the open note too (#346).
  */
 import {PluginFileAPI} from 'sn-plugin-lib';
 import {createTextBox, readAll, rebuildStroke, STROKE_TYPE, TEXT_TYPE} from './elements';
@@ -49,6 +49,19 @@ export function deleteElements(notePath: string, page: number, numsInPage: numbe
 
 export function removeNotePage(notePath: string, page: number): Promise<Result<boolean>> {
   return attempt(() => PluginFileAPI.removeNotePage(notePath, page));
+}
+
+/** Adds `keyword` to `page` (from 0) of the note at `notePath`, with no place on the page (#346). */
+export function insertKeyWord(notePath: string, page: number, keyword: string): Promise<Result<boolean>> {
+  return attempt(() => PluginFileAPI.insertKeyWord(notePath, page, keyword));
+}
+
+/**
+ * Removes the keyword at `index` of `page` (from 0) of the note at `notePath` (#346).
+ * shortcut: the index's base and order (footer order or place) are not measured; the device round of #346 settles them.
+ */
+export function deleteKeyWord(notePath: string, page: number, index: number): Promise<Result<boolean>> {
+  return attempt(() => PluginFileAPI.deleteKeyWord(notePath, page, index));
 }
 
 export function getNoteTotalPageNum(notePath: string): Promise<Result<number>> {

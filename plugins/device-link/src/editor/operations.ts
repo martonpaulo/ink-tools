@@ -31,8 +31,8 @@ import {CUSTOM_TEMPLATE_FOLDER, isCustomTemplatePath} from './templates';
 export const EDITOR_FOLDER = `${pluginDataFolder('inktools-device-link')}/`;
 /** The only folder a request may name a note in. */
 export const NOTES_FOLDER = `${SHARED_ROOT}/Note/`;
-/** The most a request may hold: operations, elements in one operation, and a text box's characters. */
-export const LIMITS = {operations: 64, elements: 64, text: 500};
+/** The most a request may hold: operations, elements in one operation, a text box's and a keyword's characters. */
+export const LIMITS = {operations: 64, elements: 64, text: 500, keyword: 100};
 export const FONT_SIZES = {min: 8, max: 200};
 export const THICKNESS = {min: 100, max: 5000};
 /** The page's size in pixels on the Manta (docs/supernote.md › Screen and units). */
@@ -58,6 +58,8 @@ export type Operation =
   | {op: 'deleteElements'; page: number; nums: number[]}
   | {op: 'insertPage'; page: number; template: string}
   | {op: 'removePage'; page: number}
+  | {op: 'insertKeyword'; page: number; text: string}
+  | {op: 'deleteKeyword'; page: number; index: number}
   | {op: 'openNote'};
 
 /** A text box's new text and font size, for the Mac's edit of a text box made on the tablet (#264). */
@@ -85,6 +87,10 @@ export interface EditHost {
   deleteByPath(path: string, page: number, nums: number[]): Promise<Result<unknown>>;
   insertPage(path: string, page: number, template: string): Promise<Result<unknown>>;
   removePage(path: string, page: number): Promise<Result<unknown>>;
+  /** Adds a keyword to a page by the note's path, the open note too (#346). */
+  insertKeyword(path: string, page: number, text: string): Promise<Result<unknown>>;
+  /** Removes a page's keyword by its index in the page (#346). */
+  deleteKeyword(path: string, page: number, index: number): Promise<Result<unknown>>;
   /** True once the pen is up and quiet; false when it stayed down past the wait. */
   penIdle(): Promise<boolean>;
 }
@@ -206,6 +212,15 @@ function parseText(raw: Record<string, unknown>): TextChange {
   return {text: raw.text as string, fontSize: raw.fontSize as number};
 }
 
+/** A keyword's text: 1 to LIMITS.keyword characters, not all blank, with no line break (#346). */
+function parseKeyword(value: unknown): string {
+  check(
+    typeof value === 'string' && value.trim().length > 0 && value.length <= LIMITS.keyword && !/[\r\n\u2028\u2029]/.test(value),
+    `text must hold 1 to ${LIMITS.keyword} characters on one line`,
+  );
+  return value as string;
+}
+
 function parseElement(value: unknown): NewElement {
   const raw = (value ?? {}) as Record<string, unknown>;
   switch (raw.kind) {
@@ -258,6 +273,12 @@ function parseOperation(value: unknown): Operation {
       return {op: 'insertPage', page: parsePage(raw.page), template: raw.template as string};
     case 'removePage':
       return {op: 'removePage', page: parsePage(raw.page)};
+    case 'insertKeyword':
+      return {op: 'insertKeyword', page: parsePage(raw.page), text: parseKeyword(raw.text)};
+    case 'deleteKeyword':
+      // shortcut: the index is taken from 0 in the tablet's order; the device round of #346 measures both.
+      check(wholeIn(raw.index, 0, Number.MAX_SAFE_INTEGER), 'index must be a keyword index from 0');
+      return {op: 'deleteKeyword', page: parsePage(raw.page), index: raw.index as number};
     case 'openNote':
       return {op: 'openNote'};
     default:
@@ -358,6 +379,12 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
     case 'removePage':
       await must('removeNotePage', host.removePage(path, operation.page));
       return {page: operation.page, pages: pages - 1};
+    case 'insertKeyword':
+      await must('insertKeyWord', host.insertKeyword(path, operation.page, operation.text));
+      return {page: operation.page, keyword: true};
+    case 'deleteKeyword':
+      await must(`deleteKeyWord of keyword ${operation.index}`, host.deleteKeyword(path, operation.page, operation.index));
+      return {page: operation.page, index: operation.index};
   }
 }
 
@@ -389,8 +416,11 @@ async function openNotePath(host: EditHost): Promise<string | null> {
   return open.ok && open.value ? open.value : null;
 }
 
-/** Operations whose read or write of the open note needs its newest ink in the file first. */
-const SAVES_FIRST = new Set<Operation['op']>(['modifyElements', 'transformElements', 'insertPage', 'removePage']);
+/**
+ * Operations whose read or write of the open note needs its newest ink in the file first. A keyword
+ * call writes the file by path, as a page change does (#346).
+ */
+const SAVES_FIRST = new Set<Operation['op']>(['modifyElements', 'transformElements', 'insertPage', 'removePage', 'insertKeyword', 'deleteKeyword']);
 
 /** The action `edit`: never a success for an operation that did not apply. */
 export function editAction(host: EditHost, now: () => number = Date.now) {
