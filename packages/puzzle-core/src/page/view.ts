@@ -17,6 +17,13 @@ export const VIEW_MARK_PX = 6;
 export const VIEW_ANSWER_PX = 8;
 /** The ring around a wrong cell, as a share of the cell: most of it, so it never hides the next cell's ink. */
 export const VIEW_MARK_SHARE = 0.4;
+/**
+ * A cell whose top-left corner holds a label (a cage's sum or sign): its answer and its ring sit
+ * this share of the cell lower and further right, at this scale, so they never cover the label (#388).
+ */
+export const LABELLED_CELL = { shift: 0.12, scale: 0.75 } as const;
+/** The cells a cage game labels: each cage's top-left cell, the first in reading order, as `drawCage` puts it. */
+export const cageLabelCells = (cages: readonly { cells: readonly number[] }[]): Set<number> => new Set(cages.map(cage => Math.min(...cage.cells)));
 /** A ring is drawn in this many chords. */
 const RING_CHORDS = 36;
 const FULL_TURN = 2 * Math.PI;
@@ -63,26 +70,50 @@ export function drawRings(raster: Raster, centres: readonly (readonly [number, n
 const centres = (grid: Grid, cells: readonly number[]): [number, number][] =>
   cells.map(cell => cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns)));
 
+/** Where a cell's answer or ring centres: its centre, or lower right of it in a labelled cell. */
+const markAt = (grid: Grid, cell: number, labelled: ReadonlySet<number>): [number, number] => {
+  const [x, y] = centres(grid, [cell])[0];
+  const shift = labelled.has(cell) ? grid.cell * LABELLED_CELL.shift : 0;
+  return [x + shift, y + shift];
+};
+const scaleAt = (cell: number, labelled: ReadonlySet<number>): number => (labelled.has(cell) ? LABELLED_CELL.scale : 1);
+
+/** A ring around each of `cells`, smaller and lower right in a labelled cell. */
+function ringCells(raster: Raster, grid: Grid, cells: readonly number[], labelled: ReadonlySet<number>, dashed: boolean): void {
+  for (const cell of cells) drawRings(raster, [markAt(grid, cell, labelled)], grid.cell * VIEW_MARK_SHARE * scaleAt(cell, labelled), dashed);
+}
+
 /**
  * The page a cell game's «Check» shows (#397): the player's ink, a ring around each wrong cell and
- * a dashed ring around each cell it could not read. Both hold cell indexes, as `checkCells` names them.
+ * a dashed ring around each cell it could not read. Both hold cell indexes, as `checkCells` names them;
+ * `labelled` names the cells whose corner label a ring must leave clear (#388).
  */
-export function drawCellCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly number[], unread: readonly number[] = []): Raster {
+export function drawCellCheck(
+  page: Raster,
+  grid: Grid,
+  strokes: readonly InkStroke[],
+  wrong: readonly number[],
+  unread: readonly number[] = [],
+  labelled: ReadonlySet<number> = new Set(),
+): Raster {
   const marked = copyRaster(page);
   drawInk(marked, strokes);
-  drawRings(marked, centres(grid, wrong), grid.cell * VIEW_MARK_SHARE);
-  drawRings(marked, centres(grid, unread), grid.cell * VIEW_MARK_SHARE, true);
+  ringCells(marked, grid, wrong, labelled, false);
+  ringCells(marked, grid, unread, labelled, true);
   return marked;
 }
 
 /**
  * The page with a cell game's answer written in (#397), for the plugin's view only: each value in
  * its cell in the grid lines' grey and a regular weight, so the givens in bold black still read as the puzzle's.
+ * `labelled` names the cells whose corner label the answer must leave clear (#388).
  */
-export function drawCellAnswers(page: Raster, grid: Grid, answers: ReadonlyMap<number, string>): Raster {
+export function drawCellAnswers(page: Raster, grid: Grid, answers: ReadonlyMap<number, string>, labelled: ReadonlySet<number> = new Set()): Raster {
   const answer = copyRaster(page);
-  const style = { size: Math.round(grid.cell * TEXT_SIZE.given), weight: FONT_WEIGHTS.regular, tone: 'line' } as const;
-  const cells = [...answers.keys()];
-  centres(grid, cells).forEach(([x, y], i) => drawCentredText(answer, answers.get(cells[i]) as string, x, y, style));
+  for (const [cell, text] of answers) {
+    const [x, y] = markAt(grid, cell, labelled);
+    const style = { size: Math.round(grid.cell * TEXT_SIZE.given * scaleAt(cell, labelled)), weight: FONT_WEIGHTS.regular, tone: 'line' } as const;
+    drawCentredText(answer, text, x, y, style);
+  }
   return answer;
 }

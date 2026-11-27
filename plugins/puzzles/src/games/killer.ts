@@ -4,6 +4,7 @@
  */
 import {
   checkKiller,
+  cageLabelCells,
   drawCellAnswers,
   drawCellCheck,
   drawKillerPage,
@@ -26,6 +27,8 @@ const BANDS = Object.keys(KILLER_BANDS) as Difficulty[];
 
 function board(puzzle: KillerSudoku, shape: PageShape): Puzzle {
   const {raster: page, layout} = drawKillerPage(puzzle, {orientation: shape.orientation, hand: shape.hand});
+  // A cage's sum sits in its top-left cell: the marks and answers leave it clear (#388).
+  const labelled = cageLabelCells(puzzle.cages);
   const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
   return {
     code: puzzleCode(puzzle.id),
@@ -34,9 +37,9 @@ function board(puzzle: KillerSudoku, shape: PageShape): Puzzle {
       const found = await checkKiller(puzzle, layout.grid, ink, read);
       const unread = found.unread.map(cell => cell.index);
       const solved = found.wrong.length === 0 && found.empty.length === 0 && unread.length === 0;
-      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, solved};
+      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread, labelled), wrong: found.wrong.length, unread: unread.length, solved};
     },
-    answer: () => drawCellAnswers(page, layout.grid, new Map(open)),
+    answer: () => drawCellAnswers(page, layout.grid, new Map(open), labelled),
   };
 }
 

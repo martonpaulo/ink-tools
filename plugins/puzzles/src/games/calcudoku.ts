@@ -5,6 +5,7 @@
  */
 import {
   CALCUDOKU_SIZES,
+  cageLabelCells,
   calcudokuFromCode,
   checkCalcudoku,
   drawCalcudokuPage,
@@ -29,6 +30,8 @@ const SIZES = Object.keys(CALCUDOKU_SIZES).map(Number);
 
 function board(puzzle: Calcudoku, shape: PageShape): Puzzle {
   const {raster: page, layout} = drawCalcudokuPage(puzzle, {orientation: shape.orientation, hand: shape.hand});
+  // A cage's label sits in its top-left cell: the marks and answers leave it clear.
+  const labelled = cageLabelCells(puzzle.cages);
   const all = puzzle.solution.map((value, cell) => [cell, String(value)] as const);
   return {
     code: puzzleCode(puzzle.id),
@@ -37,9 +40,9 @@ function board(puzzle: Calcudoku, shape: PageShape): Puzzle {
       const found = await checkCalcudoku(puzzle, layout, ink, read);
       const unread = found.unread.map(cell => cell.index);
       const solved = found.wrong.length === 0 && found.empty.length === 0 && unread.length === 0;
-      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, solved};
+      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread, labelled), wrong: found.wrong.length, unread: unread.length, solved};
     },
-    answer: () => drawCellAnswers(page, layout.grid, new Map(all)),
+    answer: () => drawCellAnswers(page, layout.grid, new Map(all), labelled),
   };
 }
 

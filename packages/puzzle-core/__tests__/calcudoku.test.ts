@@ -11,6 +11,7 @@ import {
   type CalcudokuCage,
 } from '../src/calcudoku';
 import { checkCalcudoku, drawCalcudokuPage } from '../src/calcudoku-page';
+import { cageLabelCells, drawCellAnswers, drawCellCheck } from '../src/page/view';
 import { digest } from '../src/random';
 import { assertNativeGreys } from '../src/page/raster';
 import { parsePuzzleCode, puzzleCode } from '../src/code';
@@ -160,5 +161,32 @@ describe('the calcudoku code (#388)', () => {
     const puzzle = generateCalcudoku('7K2Q9X', 6, 'medium');
     expect(digest(calcudokuFromCode(puzzleCode(puzzle.id)))).toBe(digest(puzzle));
     expect(() => calcudokuFromCode('FU-6-M-7K2Q9X')).toThrow('not a calcudoku code');
+  });
+});
+
+describe('the answer and the check leave each cage label clear (#388)', () => {
+  test('no pixel of a labelled cell\'s label corner changes, while the cell gets its answer and its ring', () => {
+    const puzzle = generateCalcudoku('7K2Q9X', 6, 'medium');
+    const { layout, raster: page } = drawCalcudokuPage(puzzle, { orientation: 'portrait', hand: 'right' });
+    const { grid } = layout;
+    const labelled = cageLabelCells(puzzle.cages);
+    const all = new Map(puzzle.solution.map((value, cell) => [cell, String(value)] as const));
+    const cells = [...labelled];
+    const answered = drawCellAnswers(page, grid, all, labelled);
+    const checked = drawCellCheck(page, grid, [], cells, [], labelled);
+    /** The pixels of the cell's corner the label takes: its top 30 % and left 55 %. */
+    const corner = (raster: typeof page, cell: number) => {
+      const left = grid.x + (cell % grid.columns) * grid.cell;
+      const top = grid.y + Math.floor(cell / grid.columns) * grid.cell;
+      const out: number[] = [];
+      for (let y = top + 4; y < top + grid.cell * 0.3; y++) for (let x = left + 4; x < left + grid.cell * 0.55; x++) out.push(raster.pixels[y * raster.width + x]);
+      return out;
+    };
+    for (const cell of cells) {
+      expect(corner(answered, cell)).toEqual(corner(page, cell));
+      expect(corner(checked, cell)).toEqual(corner(page, cell));
+    }
+    expect(Buffer.from(answered.pixels).equals(Buffer.from(page.pixels))).toBe(false);
+    expect(Buffer.from(checked.pixels).equals(Buffer.from(page.pixels))).toBe(false);
   });
 });
