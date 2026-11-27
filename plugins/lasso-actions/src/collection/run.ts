@@ -99,14 +99,15 @@ export const PASTE_SETTLE_TRIES = 2 * SLOWEST_SETTLE_ASKS;
 
 /**
  * NOTE answers `resizeLassoRect` with success but leaves the piece where it was pasted when the
- * move comes before its selection is ready: about 310 ms after `getLassoRect` first answered, the
+ * move comes before its selection is ready: SELECTION_READY_MS after `getLassoRect` first answered, the
  * plugin view having just closed, the move sent 7 ms after that answer never moved the piece, and
  * the save laid both pieces at the page centre (device round 16, Manta, 2026-11-27, #249). No call
  * tells when the selection is ready, and a move to the same place again changes nothing once one
  * took, so the paste sends the move again every PASTE_MOVE_GAP_MS, PASTE_MOVE_REPEATS times,
  * before the save.
  */
-export const PASTE_MOVE_GAP_MS = 300;
+const SELECTION_READY_MS = 311;
+export const PASTE_MOVE_GAP_MS = SELECTION_READY_MS;
 export const PASTE_MOVE_REPEATS = 3;
 
 const sameRect = (a: Rect, b: Rect) =>
