@@ -102,6 +102,34 @@ import Testing
         }
     }
 
+    /// A delete on its way at 100 % on a display of scale 2 leaves the page as it was beyond its
+    /// element's frame widened by the hole's margin and a pixel of smoothing (#478): a neighbour's
+    /// ink further away keeps every pixel.
+    @Test func aDeleteOnItsWayKeepsThePageBeyondItsMargin() async throws {
+        let note = try NoteFile(data: original)
+        let pages = PageImages(note: note)
+        await pages.loadElements(0)
+        let item = try #require(pages.selectable(0)?.first)
+        let lifted = try #require(await LiftedInk.make(note, page: 0, items: [item]))
+        let page = try #require(try note.render(page: 0).cgImage())
+        let pixels: CGFloat = 2
+        let points = CGSize(width: CGFloat(page.width) / pixels, height: CGFloat(page.height) / pixels)
+        let deleting = try Self.grey(page, deletions: [lifted], pixels: pixels, size: points, scale: 2)
+        let plain = try Self.grey(page, deletions: [], pixels: pixels, size: points, scale: 2)
+        // In display pixels, one a page pixel here.
+        let reach = item.bounds.insetBy(
+            dx: -(LiftedInk.edge + PendingEdits.holeMargin * pixels + 2),
+            dy: -(LiftedInk.edge + PendingEdits.holeMargin * pixels + 2))
+        var changed = 0
+        for row in 0..<deleting.height {
+            for column in 0..<deleting.width where !reach.contains(CGPoint(x: column, y: row)) {
+                let at = row * deleting.width + column
+                if abs(Int(deleting.pixels[at]) - Int(plain.pixels[at])) > 8 { changed += 1 }
+            }
+        }
+        #expect(changed == 0, "\(changed) pixels changed beyond the hole's margin")
+    }
+
     /// A selection moved onto the place of a deleted one, both on their way, shows its ink there:
     /// every hole is cut before any moved ink is drawn (#478).
     @Test func aMoveOntoADeletedPlaceShowsItsInk() async throws {
