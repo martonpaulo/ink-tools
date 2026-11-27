@@ -990,6 +990,15 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   [«Inspecting the Supernote .note format»](https://walnut356.github.io/posts/inspecting-the-supernote-note-format); that an eraser
   stroke is a record of colour 255 is that post's, not yet seen here, and one note with several
   text boxes and an erased stroke waits for a device round.
+- A shape is a record of the same layout with its own kind name and no document name: the line
+  tool's `straightLine`, the geometry kinds `GEO_polygon`, `GEO_circle` and `GEO_ellipse`, and the
+  star `fiveStarsSignal`, which the plugin library's `Element` gives as `TYPE_GEO` 700 (with
+  `Geometry.type`) and `TYPE_FIVE_STAR` 800 (`sn-plugin-lib` 0.2.3). Its points are an ordinary
+  path and its trail status is 0: a straight line has 2 points, a rectangle polygon 5 (closed) and
+  a circle its outline, more than 64. A 54-page Manta note of handwriting and shapes read all
+  15664 elements with none stepped over, while a reader that knew only `others`, `bitmap` and the
+  text kinds failed 19 of its pages [measured on the Mac, 2026-11-27,
+  [#459](https://github.com/martonpaulo/ink-tools/issues/459)]. `GEO_ellipse` has not been seen in a file yet.
 - A stroke's record box is the element's `recognizeResult` (`up_left_point_x` to
   `down_right_point_y`, page pixels) in the plugin API. A modify of a closed note by path makes the
   box again from the points; `modifyPageElements` on the open note keeps the box it is sent. A stroke

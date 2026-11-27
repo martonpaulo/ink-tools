@@ -20,13 +20,16 @@ public enum NoteDiff {
             let other = after.pages[found]
             var parts = [page.metadata == other.metadata ? "metadata equal" : "metadata changed"]
             for key in NoteFile.layerKeys {
-                let old = page.layers.first { $0.key == key }, new = other.layers.first { $0.key == key }
-                parts.append(compare(
-                    key, block(before, old?.bitmapAddress), block(after, new?.bitmapAddress)))
+                let old = page.layers.first { $0.key == key }
+                let new = other.layers.first { $0.key == key }
+                parts.append(
+                    compare(
+                        key, block(before, old?.bitmapAddress), block(after, new?.bitmapAddress)))
             }
             for key in pageBlocks {
-                parts.append(compare(
-                    key, block(before, page.metadata.address(key)), block(after, other.metadata.address(key))))
+                parts.append(
+                    compare(
+                        key, block(before, page.metadata.address(key)), block(after, other.metadata.address(key))))
             }
             lines.append("page \(index + 1) -> \(found + 1): " + parts.joined(separator: ", "))
         }

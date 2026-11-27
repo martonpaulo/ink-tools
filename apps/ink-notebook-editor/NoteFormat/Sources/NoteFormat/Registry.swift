@@ -1,3 +1,4 @@
+// swift-format-ignore-file
 // The registry of Supernote internals this app reads. Written by scripts/registry.py from registry/ (#294); never edit it by hand.
 
 /// The registry's version, items and values.

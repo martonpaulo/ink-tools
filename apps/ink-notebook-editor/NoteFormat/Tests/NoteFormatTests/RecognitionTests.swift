@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// The tablet's recognition of a page (#321). The note is `content.note` with a recognition

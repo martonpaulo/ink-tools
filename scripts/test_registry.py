@@ -125,6 +125,8 @@ class RegistryTest(unittest.TestCase):
         self.assertIn("readonly off: string | null;", ts)
         swift = (self.root / "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
         self.assertIn("public let off: String?", swift)
+        # swift-format leaves the generated file alone, since `make lint` names NoteFormat/ (#459).
+        self.assertTrue(swift.startswith("// swift-format-ignore-file\n"))
 
     def test_an_item_below_level_one_needs_a_reason(self):
         del self.areas["todo"][0]["reason"]

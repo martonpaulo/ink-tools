@@ -1,4 +1,5 @@
 import Testing
+
 @testable import NoteFormat
 
 /// The generated registry reader loads and agrees with the reader's version list (#294).

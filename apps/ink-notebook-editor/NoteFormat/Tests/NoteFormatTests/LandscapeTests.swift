@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// Landscape pages (#291): a page with `ORIENTATION` 1090 or 1270 stores its raster with the
@@ -44,12 +45,13 @@ import Testing
                 ("LAYERTYPE", "NOTE"), ("LAYERPROTOCOL", "RATTA_RLE"), ("LAYERNAME", "MAINLAYER"),
                 ("LAYERBITMAP", String(bitmap)),
             ])
-            pages.append(builder.metadata([
-                ("PAGEID", "P\(index + 1)"), ("PAGESTYLE", "style_white"), ("ORIENTATION", orientation),
-                // supernotelib reads all five layer keys; 0 is a layer with nothing.
-                ("MAINLAYER", String(layer)), ("LAYER1", "0"), ("LAYER2", "0"), ("LAYER3", "0"), ("BGLAYER", "0"),
-                ("LAYERINFO", info), ("LAYERSEQ", "MAINLAYER"),
-            ]))
+            pages.append(
+                builder.metadata([
+                    ("PAGEID", "P\(index + 1)"), ("PAGESTYLE", "style_white"), ("ORIENTATION", orientation),
+                    // supernotelib reads all five layer keys; 0 is a layer with nothing.
+                    ("MAINLAYER", String(layer)), ("LAYER1", "0"), ("LAYER2", "0"), ("LAYER3", "0"), ("BGLAYER", "0"),
+                    ("LAYERINFO", info), ("LAYERSEQ", "MAINLAYER"),
+                ]))
         }
         return builder.finish(header: header, pages: pages)
     }

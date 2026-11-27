@@ -7,7 +7,8 @@
 .PHONY: help build test lint format validate check app icon strings renders clean
 
 CONFIGURATION ?= debug
-SWIFT_SOURCES ?= Sources Tests
+# NoteFormat/, the reader package, is linted with the app; its nested .swiftlint.yml adds its own rules.
+SWIFT_SOURCES ?= Sources Tests NoteFormat
 # Spotlight skips a *.noindex folder (workbench#1517); every SwiftPM call and script uses it.
 SWIFT_SCRATCH ?= .build.noindex
 # Icon Composer's renderer, run from its real path: it finds icrtool beside itself.
@@ -35,7 +36,6 @@ build: ## Build (CONFIGURATION=debug|release); fails on any warning in a project
 test: ## Swift Testing suites; fail on any warning
 	@scripts/fail-on-warnings.sh -- swift test --scratch-path $(SWIFT_SCRATCH)
 
-# The paths keep SwiftLint off NoteFormat/, the reader package, which has its own gate (AGENTS.md).
 lint: ## SwiftLint, then swift-format lint; read-only, fails on any finding
 	@swiftlint lint --strict --quiet $(SWIFT_SOURCES)
 	@swift format lint --strict --recursive $(SWIFT_SOURCES)

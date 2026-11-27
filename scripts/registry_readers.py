@@ -329,6 +329,8 @@ def swift_value(value):
 
 def swift(reader, version, items):
     lines = [
+        # A generated file keeps the writer's layout: `make lint` names NoteFormat/ (#459).
+        "// swift-format-ignore-file",
         "// The registry of Supernote internals this app reads. %s" % HEADER,
         "",
         "/// The registry's version, items and values.",

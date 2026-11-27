@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// Writes a synthetic `.note` file: the signature, length-prefixed blocks, the footer and its
@@ -92,7 +93,7 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
     @Test func testParsesHeaderAndFooter() throws {
         let note = try NoteFile(bytes: sampleNote())
         #expect(note.fileType == "note")
-        #expect(note.version == 20230015)
+        #expect(note.version == 20_230_015)
         #expect(note.storesGreyscale)
         #expect(note.header["FILE_TYPE"] == "NOTE")
         #expect(note.pageSize == (width, height))
@@ -170,22 +171,28 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
     @Test func testUnknownTemplateEncodingNamesTheStyle() throws {
         let note = try NoteFile(bytes: oneLayerNote(encoding: "SN_ASA_COMPRESS", style: "style_white", bitmap: [0]))
         let image = try note.render(page: 0)
-        #expect(image.templateFailure == TemplateFailure(
-            style: "style_white", reason: .unknownProtocol("SN_ASA_COMPRESS")))
+        #expect(
+            image.templateFailure
+                == TemplateFailure(
+                    style: "style_white", reason: .unknownProtocol("SN_ASA_COMPRESS")))
         #expect(image.pixels.allSatisfy { $0 == RattaRLE.Grey.transparent })
     }
 
     @Test func testBadCustomBackgroundNamesTheStyle() throws {
         let note = try NoteFile(bytes: oneLayerNote(encoding: "RATTA_RLE", style: "user_lined", bitmap: [1, 2, 3]))
-        #expect(try note.render(page: 0).templateFailure == TemplateFailure(
-            style: "user_lined", reason: .badPicture("the given image")))
+        #expect(
+            try note.render(page: 0).templateFailure
+                == TemplateFailure(
+                    style: "user_lined", reason: .badPicture("the given image")))
     }
 
     @Test func testCustomBackgroundOfAnotherSizeNamesTheStyle() throws {
         let small = try #require(PageBitmap(width: 2, height: 2, pixels: [0, 0, 0, 0]).pngData())
         let note = try NoteFile(bytes: oneLayerNote(encoding: "RATTA_RLE", style: "user_lined", bitmap: [UInt8](small)))
-        #expect(try note.render(page: 0).templateFailure == TemplateFailure(
-            style: "user_lined", reason: .badPicture("BGLAYER")))
+        #expect(
+            try note.render(page: 0).templateFailure
+                == TemplateFailure(
+                    style: "user_lined", reason: .badPicture("BGLAYER")))
     }
 
     @Test func testUnknownInkEncodingStillFails() throws {
@@ -195,7 +202,9 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
         let layer = builder.metadata([
             ("LAYERNAME", "MAINLAYER"), ("LAYERPROTOCOL", "SN_ASA_COMPRESS"), ("LAYERBITMAP", String(data)),
         ])
-        let page = builder.metadata([("PAGESTYLE", "style_white"), ("MAINLAYER", String(layer)), ("LAYERSEQ", "MAINLAYER")])
+        let page = builder.metadata([
+            ("PAGESTYLE", "style_white"), ("MAINLAYER", String(layer)), ("LAYERSEQ", "MAINLAYER"),
+        ])
         let note = try NoteFile(bytes: builder.finish(header: header, pages: [page]))
         #expect(throws: NoteFormatError.unknownProtocol("SN_ASA_COMPRESS")) { try note.render(page: 0) }
     }
@@ -209,7 +218,8 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
     }
 
     @Test func testHiddenLayerSkipped() throws {
-        let info = ##"[{"layerId"#0,"isBackgroundLayer"#false,"isVisible"#false},{"layerId"#0,"isBackgroundLayer"#true,"isVisible"#true}]"##
+        let info =
+            ##"[{"layerId"#0,"isBackgroundLayer"#false,"isVisible"#false},{"layerId"#0,"isBackgroundLayer"#true,"isVisible"#true}]"##
         let image = try NoteFile(bytes: sampleNote(layerInfo: info)).render(page: 0)
         #expect(!image.pixels.contains(RattaRLE.Grey.black))
         #expect(image.pixels[0] == RattaRLE.Grey.white)
@@ -232,7 +242,9 @@ func sampleNote(layerInfo: String? = nil) -> [UInt8] {
         let white = PageBitmap(width: 2, height: 2, pixels: [255, 255, 255, 255])
         let marked = PageBitmap(width: 2, height: 2, pixels: [0, 250, 255, 255])
         #expect(white.differingShare(from: marked, threshold: 16) == 0.25)
-        #expect(white.differingShare(from: PageBitmap(width: 1, height: 4, pixels: [255, 255, 255, 255]), threshold: 16) == nil)
+        #expect(
+            white.differingShare(from: PageBitmap(width: 1, height: 4, pixels: [255, 255, 255, 255]), threshold: 16)
+                == nil)
     }
 }
 

@@ -30,16 +30,17 @@ public struct PageBitmap: Sendable, Equatable {
     /// Reads a PNG or JPEG into grey pixels, on white where it is transparent.
     public init(imageData: Data) throws {
         guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+            let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
         else { throw NoteFormatError.badPicture("the given image") }
         let width = image.width
         let height = image.height
         var pixels = [UInt8](repeating: 255, count: width * height)
         let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
-                bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
-                bitmapInfo: CGImageAlphaInfo.none.rawValue)
+            guard
+                let context = CGContext(
+                    data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                    bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
+                    bitmapInfo: CGImageAlphaInfo.none.rawValue)
             else { return false }
             context.setFillColor(gray: 1, alpha: 1)
             context.fill(CGRect(x: 0, y: 0, width: width, height: height))
@@ -64,8 +65,9 @@ public struct PageBitmap: Sendable, Equatable {
     public func pngData() -> Data? {
         guard let image = cgImage() else { return nil }
         let output = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(
-            output as CFMutableData, "public.png" as CFString, 1, nil)
+        guard
+            let destination = CGImageDestinationCreateWithData(
+                output as CFMutableData, "public.png" as CFString, 1, nil)
         else { return nil }
         CGImageDestinationAddImage(destination, image, nil)
         return CGImageDestinationFinalize(destination) ? output as Data : nil
@@ -104,7 +106,8 @@ extension NoteFile {
             throw NoteFormatError.unknownProtocol("a page without layers (\(page.metadata["PROTOCOL"] ?? "none"))")
         }
         let (portraitWidth, portraitHeight) = pageSize
-        let (width, height) = page.isHorizontal
+        let (width, height) =
+            page.isHorizontal
             ? (portraitHeight, portraitWidth) : (portraitWidth, portraitHeight)
         var canvas = [UInt8](repeating: RattaRLE.Grey.transparent, count: width * height)
         let visibility = page.visibility
@@ -115,8 +118,8 @@ extension NoteFile {
             // hidden, except MAINLAYER. Without LAYERINFO every layer is shown.
             let shown = visibility.isEmpty || (visibility[name] ?? (name == Self.mainLayer))
             guard shown, template || name != Self.backgroundLayer, ink || name == Self.backgroundLayer,
-                  let layer = page.layers.first(where: { $0.name == name }),
-                  layer.bitmapAddress != 0
+                let layer = page.layers.first(where: { $0.name == name }),
+                layer.bitmapAddress != 0
             else { continue }
             let pixels: [UInt8]
             do {
@@ -146,7 +149,8 @@ extension NoteFile {
         guard layer.encoding == Self.rleEncoding else {
             throw NoteFormatError.unknownProtocol(layer.encoding ?? "none")
         }
-        let blankPage = isBackground && page.style == Self.whiteStyle
+        let blankPage =
+            isBackground && page.style == Self.whiteStyle
             && data.count == Self.blankWhiteBlockSize
         return try RattaRLE.decode(
             data, width: width, height: height, blankPage: blankPage, greyscale: storesGreyscale)

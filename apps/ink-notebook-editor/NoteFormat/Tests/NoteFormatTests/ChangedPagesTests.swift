@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// Which pages a newer copy of a note changed, so a live window redraws only those (#315).

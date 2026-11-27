@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// Page templates (#308): the background layer draws under the ink, for both kinds.
@@ -41,7 +42,8 @@ import Testing
             ("LAYERTYPE", "NOTE"), ("LAYERPROTOCOL", "RATTA_RLE"), ("LAYERNAME", "BGLAYER"),
             ("LAYERBITMAP", String(background)),
         ])
-        let info = ##"[{"layerId"#0,"name"#"Main layer","isBackgroundLayer"#false,"isVisible"#true},{"layerId"#-1,"name"#"Background layer","isBackgroundLayer"#true,"isVisible"#true}]"##
+        let info =
+            ##"[{"layerId"#0,"name"#"Main layer","isBackgroundLayer"#false,"isVisible"#true},{"layerId"#-1,"name"#"Background layer","isBackgroundLayer"#true,"isVisible"#true}]"##
         let page = builder.metadata([
             ("PAGEID", "P1"), ("PAGESTYLE", style), ("ORIENTATION", "1000"),
             ("MAINLAYER", String(main)), ("LAYER1", "0"), ("LAYER2", "0"), ("LAYER3", "0"), ("BGLAYER", String(back)),
@@ -76,7 +78,9 @@ import Testing
             let drawn = try file.render(page: page)
             #expect(drawn.templateFailure == nil)
             // The template adds dark pixels the white page does not have.
-            let marks = zip(drawn.pixels, white.pixels).filter { $0.0 < Self.markGrey && $0.1 == RattaRLE.Grey.transparent }.count
+            let marks = zip(drawn.pixels, white.pixels).filter {
+                $0.0 < Self.markGrey && $0.1 == RattaRLE.Grey.transparent
+            }.count
             #expect(marks > 1000, "page \(page + 1): \(marks) template pixels")
         }
     }

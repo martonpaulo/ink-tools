@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// The reader's port (#294) and the kill switch before each read (#293).
@@ -7,8 +8,9 @@ import Testing
     static func turnedOff(_ id: String) -> [Registry.Item] {
         Registry.items.map { item in
             guard item.id == id else { return item }
-            return Registry.Item(id: item.id, level: item.level, impact: item.impact, owner: item.owner, probe: item.probe,
-                                 unprobed: item.unprobed, active: item.active, off: "until 2026-12-31: the format moved")
+            return Registry.Item(
+                id: item.id, level: item.level, impact: item.impact, owner: item.owner, probe: item.probe,
+                unprobed: item.unprobed, active: item.active, off: "until 2026-12-31: the format moved")
         }
     }
 
@@ -19,7 +21,9 @@ import Testing
         let note = try #require(NoteReader.implementations[name]).read(bytes: bytes)
         #expect(note.pages.count == 4)
         #expect(note.bytes == bytes)
-        #expect(throws: NoteFormatError.self) { try NoteReader.implementations[name]?.read(bytes: Array("not a note".utf8)) }
+        #expect(throws: NoteFormatError.self) {
+            try NoteReader.implementations[name]?.read(bytes: Array("not a note".utf8))
+        }
     }
 
     @Test func testTheRegistryNamesTheFormatReader() {

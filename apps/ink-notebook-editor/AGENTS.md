@@ -151,7 +151,6 @@ Differences from the standard, each for a reason:
 
 - Not sandboxed: it starts `inkctl`, a program outside the bundle.
 - No changelog, Sparkle, disk image or release: a personal app with no public distribution yet.
-- `make lint` names `Sources Tests`, so it skips `NoteFormat/`, which has its own gate.
 
 ## Validation
 

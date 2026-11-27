@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// The Mac route of #263: each edit keeps the bytes it does not change.
@@ -45,8 +46,10 @@ import Testing
         let header = builder.metadata([("FILE_TYPE", "NOTE")])
         let pages = (1...3).map { builder.metadata([("PAGEID", "P\($0)")]) }
         let footer = builder.metadata(
-            [("PAGE1", String(pages[0])), ("PAGE2", String(pages[1])), ("PAGE3", String(pages[2])),
-             ("TITLE_00030120", "3"), ("KEYWORD_00010400", "9"), ("FILE_FEATURE", String(header))])
+            [
+                ("PAGE1", String(pages[0])), ("PAGE2", String(pages[1])), ("PAGE3", String(pages[2])),
+                ("TITLE_00030120", "3"), ("KEYWORD_00010400", "9"), ("FILE_FEATURE", String(header)),
+            ])
         builder.bytes += NoteWriter.tailMarker + NoteWriter.word(footer)
         let file = try NoteFile(bytes: builder.bytes)
         let moved = try NoteFile(bytes: try NoteWriter.movePage(file, from: 2, to: 0))
@@ -57,8 +60,9 @@ import Testing
 
     @Test func testTextIsDrawnIntoTheMainLayerOnly() throws {
         let file = try Self.content()
-        let edited = try NoteFile(bytes: try NoteWriter.drawText(
-            file, page: 1, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
+        let edited = try NoteFile(
+            bytes: try NoteWriter.drawText(
+                file, page: 1, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
         let footer = NoteWriter.footerAddress(file)
         // Nothing is written over: the new blocks follow the old ones.
         #expect(Array(edited.bytes[..<footer]) == Array(file.bytes[..<footer]))
@@ -116,8 +120,9 @@ import Testing
 
     @Test func testAnEditNamesTheChangedLayerOnly() throws {
         let file = try NoteWriterTests.content()
-        let edited = try NoteFile(bytes: try NoteWriter.drawText(
-            file, page: 1, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
+        let edited = try NoteFile(
+            bytes: try NoteWriter.drawText(
+                file, page: 1, text: "Ink", in: PageRect(x: 100, y: 100, width: 300, height: 120), fontSize: 80))
         let lines = NoteDiff.lines(file, edited)
         let page2 = try #require(lines.first { $0.hasPrefix("page 2 -> 2: ") })
         #expect(page2.contains("metadata changed"))

@@ -68,7 +68,8 @@ public struct Page: Sendable, Equatable {
         guard var info = metadata["LAYERINFO"], info != "none" else { return [:] }
         info = info.replacingOccurrences(of: "#", with: ":")
         let json = Data(info.utf8)
-        let decoded = (try? JSONSerialization.jsonObject(with: json))
+        let decoded =
+            (try? JSONSerialization.jsonObject(with: json))
             ?? Data(base64Encoded: info).flatMap { try? JSONSerialization.jsonObject(with: $0) }
         guard let entries = decoded as? [[String: Any]] else { return [:] }
         var shown: [String: Bool] = [:]
@@ -127,10 +128,10 @@ public struct NoteFile: Sendable {
         self.bytes = bytes
         let signatureEnd = Self.fileTypeLength + Self.signaturePrefix.count + Self.versionDigits
         guard bytes.count > signatureEnd + Self.wordSize,
-              let signature = String(bytes: bytes[Self.fileTypeLength..<signatureEnd], encoding: .ascii),
-              signature.hasPrefix(Self.signaturePrefix),
-              let version = Int(signature.dropFirst(Self.signaturePrefix.count)),
-              Self.knownVersions.contains(version)
+            let signature = String(bytes: bytes[Self.fileTypeLength..<signatureEnd], encoding: .ascii),
+            signature.hasPrefix(Self.signaturePrefix),
+            let version = Int(signature.dropFirst(Self.signaturePrefix.count)),
+            Self.knownVersions.contains(version)
         else {
             let start = String(decoding: bytes.prefix(signatureEnd), as: UTF8.self)
             throw NoteFormatError.unsupportedVersion(start.isEmpty ? "an empty file" : start)
@@ -151,7 +152,8 @@ public struct NoteFile: Sendable {
         let pageAddresses = footer.pairs
             .compactMap { pair -> (Int, Int)? in
                 guard pair.key.hasPrefix("PAGE"), let number = Int(pair.key.dropFirst(4)),
-                      let address = Int(pair.value) else { return nil }
+                    let address = Int(pair.value)
+                else { return nil }
                 return (number, address)
             }
             .sorted { $0.0 < $1.0 }
@@ -209,9 +211,10 @@ public struct NoteFile: Sendable {
                 if sawMainLayer { name = "BGLAYER" }
                 sawMainLayer = true
             }
-            layers.append(Layer(
-                key: key, name: name, encoding: layer["LAYERPROTOCOL"],
-                bitmapAddress: layer.address("LAYERBITMAP") ?? 0, type: layer["LAYERTYPE"]))
+            layers.append(
+                Layer(
+                    key: key, name: name, encoding: layer["LAYERPROTOCOL"],
+                    bitmapAddress: layer.address("LAYERBITMAP") ?? 0, type: layer["LAYERTYPE"]))
         }
         return Page(metadata: info, layers: layers)
     }

@@ -24,8 +24,10 @@ public enum NoteReader {
 
     /// The implementation the registry names, checking the item's kill switch before each read
     /// (#293). An item with no implementation of its `active` name stops: no other one is taken.
-    static func port(items: [Registry.Item] = Registry.items,
-                     implementations: [String: any NoteReading] = implementations) -> any NoteReading {
+    static func port(
+        items: [Registry.Item] = Registry.items,
+        implementations: [String: any NoteReading] = implementations
+    ) -> any NoteReading {
         let item = Registry.item(itemId, in: items)
         guard let chosen = implementations[item.active] else {
             preconditionFailure("no implementation of \(item.id) for its active \(item.active)")

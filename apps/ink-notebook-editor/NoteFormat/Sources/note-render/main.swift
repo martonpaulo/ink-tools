@@ -12,12 +12,20 @@ let usage = """
     """
 
 enum Exit: Int32 {
-    case done = 0, differs = 1, usage = 2, unreadable = 3
+    case done = 0
+    case differs = 1
+    case usage = 2
+    case unreadable = 3
 }
 
 func fail(_ message: String, _ code: Exit) -> Never {
     FileHandle.standardError.write(Data((message + "\n").utf8))
     exit(code.rawValue)
+}
+
+/// Writes one line of the tool's product to standard output.
+func say(_ line: String) {
+    FileHandle.standardOutput.write(Data((line + "\n").utf8))
 }
 
 var arguments = Array(CommandLine.arguments.dropFirst())
@@ -30,10 +38,10 @@ while arguments.count >= 2, arguments[0].hasPrefix("--") {
 }
 let known: Set<String> = ["page", "out", "compare", "tolerance", "threshold"]
 guard arguments.isEmpty, Set(options.keys).isSubset(of: known),
-      let pageText = options["page"], let page = Int(pageText), page >= 1,
-      (options["out"] == nil) != (options["compare"] == nil),
-      let tolerance = Double(options["tolerance"] ?? "0.5"),
-      let threshold = Int(options["threshold"] ?? "16")
+    let pageText = options["page"], let page = Int(pageText), page >= 1,
+    (options["out"] == nil) != (options["compare"] == nil),
+    let tolerance = Double(options["tolerance"] ?? "0.5"),
+    let threshold = Int(options["threshold"] ?? "16")
 else { fail(usage, .usage) }
 
 let bitmap: PageBitmap
@@ -51,7 +59,7 @@ if let out = options["out"] {
     } catch {
         fail("\(out): \(error.localizedDescription)", .unreadable)
     }
-    print("page \(page): \(bitmap.width) x \(bitmap.height) -> \(out)")
+    say("page \(page): \(bitmap.width) x \(bitmap.height) -> \(out)")
 } else if let reference = options["compare"] {
     let other: PageBitmap
     do {
@@ -60,10 +68,10 @@ if let out = options["out"] {
         fail("\(reference): \(error)", .unreadable)
     }
     guard let share = bitmap.differingShare(from: other, threshold: threshold) else {
-        print("page \(page): size \(bitmap.width) x \(bitmap.height), reference \(other.width) x \(other.height)")
+        say("page \(page): size \(bitmap.width) x \(bitmap.height), reference \(other.width) x \(other.height)")
         exit(Exit.differs.rawValue)
     }
     let percent = share * 100
-    print(String(format: "page %d: %.3f %% of pixels differ by more than %d", page, percent, threshold))
+    say(String(format: "page %d: %.3f %% of pixels differ by more than %d", page, percent, threshold))
     exit(percent > tolerance ? Exit.differs.rawValue : Exit.done.rawValue)
 }

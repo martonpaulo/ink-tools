@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// What the editor draws while an add or a delete of a page is on its way (#329).
@@ -12,8 +13,10 @@ import Testing
         let header = builder.metadata([("FILE_TYPE", "NOTE")])
         let pages = (1...3).map { builder.metadata([("PAGEID", "P\($0)")]) }
         let footer = builder.metadata(
-            [("PAGE1", String(pages[0])), ("PAGE2", String(pages[1])), ("PAGE3", String(pages[2])),
-             ("TITLE_00030120", "3"), ("KEYWORD_00010400", "9"), ("FILE_FEATURE", String(header))])
+            [
+                ("PAGE1", String(pages[0])), ("PAGE2", String(pages[1])), ("PAGE3", String(pages[2])),
+                ("TITLE_00030120", "3"), ("KEYWORD_00010400", "9"), ("FILE_FEATURE", String(header)),
+            ])
         builder.bytes += NoteWriter.tailMarker + NoteWriter.word(footer)
         return try NoteFile(bytes: builder.bytes)
     }

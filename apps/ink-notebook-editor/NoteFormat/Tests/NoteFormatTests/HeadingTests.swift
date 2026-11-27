@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// The note's Headings (#331). Most notes are `content.note` with Heading blocks added in the

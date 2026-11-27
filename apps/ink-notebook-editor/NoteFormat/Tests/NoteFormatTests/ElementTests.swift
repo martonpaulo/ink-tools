@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// The element records of a page, read-only (#324), from notes the tablet wrote:
@@ -98,11 +99,12 @@ import Testing
         let bytes = try Self.bytes("realtime-text-tablet")
         let block = try Self.block(bytes)
         // Its text box record carries the stroke document name, as the tablet wrote it.
-        #expect(Self.records(bytes, from: block).contains { record in
-            Self.name(bytes, at: record + ElementRecord.kindName) == Registry.NotefileFormatVersions.textBoxKind
-                && Self.name(bytes, at: record + ElementRecord.documentKind)
-                    == Registry.NotefileFormatVersions.strokeDocument
-        })
+        #expect(
+            Self.records(bytes, from: block).contains { record in
+                Self.name(bytes, at: record + ElementRecord.kindName) == Registry.NotefileFormatVersions.textBoxKind
+                    && Self.name(bytes, at: record + ElementRecord.documentKind)
+                        == Registry.NotefileFormatVersions.strokeDocument
+            })
     }
 
     /// The four strokes Real-Time Text replaced stay in the block with a negative trail status;

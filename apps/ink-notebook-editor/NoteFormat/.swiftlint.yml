@@ -1,0 +1,5 @@
+# NoteFormat's own rules, merged into the app's shared configuration (its header says how).
+disabled_rules:
+  # The reader decodes a file's names and metadata as the tablet writes them, keeping a byte that
+  # is not UTF-8 as U+FFFD: a failable decode would turn one bad byte into a missing value.
+  - optional_data_string_conversion

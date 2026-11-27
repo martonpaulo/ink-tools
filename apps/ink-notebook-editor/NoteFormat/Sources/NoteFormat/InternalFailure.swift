@@ -9,7 +9,8 @@ public struct InternalFailure: Error, CustomStringConvertible {
 
     /// The person's sentence for each copy key.
     public static let copy: [String: String] = [
-        "turnedOff": "Ink Notebook Editor cannot open notebooks in this version because a tablet update changed the notebook format, so update Ink Tools to open them again.",
+        "turnedOff":
+            "Ink Notebook Editor cannot open notebooks in this version because a tablet update changed the notebook format, so update Ink Tools to open them again."
     ]
 
     public let item: Registry.Item
@@ -21,8 +22,10 @@ public struct InternalFailure: Error, CustomStringConvertible {
     public let cause: (any Error)?
 
     /// The failure of `item`; a copy key with no sentence is a bug, so it stops.
-    public init(item: Registry.Item, method: String, copyKey: String, firmware: String = unread,
-                apps: [(String, String)] = [], cause: (any Error)?) {
+    public init(
+        item: Registry.Item, method: String, copyKey: String, firmware: String = unread,
+        apps: [(String, String)] = [], cause: (any Error)?
+    ) {
         precondition(Self.copy[copyKey] != nil, "no copy for \(copyKey)")
         self.item = item
         self.method = method

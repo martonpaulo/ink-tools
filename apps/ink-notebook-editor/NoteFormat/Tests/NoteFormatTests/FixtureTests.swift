@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import NoteFormat
 
 /// Notes the owner's tablet wrote, made by the agent with inkctl (no person's data), each page
@@ -45,10 +46,11 @@ import Testing
 
     @Test func testTabletNoteMetadata() throws {
         let file = try NoteFile(data: try Self.fixture("content.note"))
-        #expect(file.version == 20260016)
+        #expect(file.version == 20_260_016)
         #expect(file.pageSize == (1920, 2560))
-        #expect(file.pages.map(\.style) == [
-            "style_white_a5x2", "style_5mm_grid_a5x2", "style_8mm_ruled_line_a5x2", "style_5mm_dots_a5x2",
-        ])
+        #expect(
+            file.pages.map(\.style) == [
+                "style_white_a5x2", "style_5mm_grid_a5x2", "style_8mm_ruled_line_a5x2", "style_5mm_dots_a5x2",
+            ])
     }
 }

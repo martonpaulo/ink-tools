@@ -151,7 +151,7 @@ public enum NoteWriter {
         let raw = String(decoding: try file.block(at: address), as: UTF8.self)
         let pattern = "<\(key):"
         guard let start = raw.range(of: pattern),
-              let end = raw[start.upperBound...].firstIndex(of: ">")
+            let end = raw[start.upperBound...].firstIndex(of: ">")
         else { throw NoteFormatError.badFooter("block \(address) has no \(key)") }
         return Array((raw[..<start.upperBound] + String(value) + raw[end...]).utf8)
     }
@@ -164,12 +164,14 @@ public enum NoteWriter {
         guard file.pages.indices.contains(index) else { throw NoteFormatError.badPage(index) }
         let page = file.pages[index]
         guard let layer = page.layers.first(where: { $0.name == NoteFile.mainLayer }),
-              let layerAddress = page.metadata.address(layer.key)
+            let layerAddress = page.metadata.address(layer.key)
         else { throw NoteFormatError.unknownProtocol("a page without a main layer") }
         let (portraitWidth, portraitHeight) = file.pageSize
-        let (width, height) = page.isHorizontal
+        let (width, height) =
+            page.isHorizontal
             ? (portraitHeight, portraitWidth) : (portraitWidth, portraitHeight)
-        var pixels = layer.bitmapAddress == 0
+        var pixels =
+            layer.bitmapAddress == 0
             ? [UInt8](repeating: RattaRLE.Grey.transparent, count: width * height)
             : try file.layerPixels(layer, of: page, width: width, height: height)
         edit(&pixels, width)
@@ -194,13 +196,15 @@ public enum NoteWriter {
     static func textCoverage(_ text: String, width: Int, height: Int, fontSize: Double) -> [UInt8] {
         var coverage = [UInt8](repeating: 0, count: width * height)
         coverage.withUnsafeMutableBytes { buffer in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
-                bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
-                bitmapInfo: CGImageAlphaInfo.none.rawValue)
+            guard
+                let context = CGContext(
+                    data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                    bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
+                    bitmapInfo: CGImageAlphaInfo.none.rawValue)
             else { return }
             context.setFillColor(gray: 1, alpha: 1)
-            let font = CTFontCreateUIFontForLanguage(.system, fontSize, nil)
+            let font =
+                CTFontCreateUIFontForLanguage(.system, fontSize, nil)
                 ?? CTFontCreateWithName("Helvetica" as CFString, fontSize, nil)
             let attributes = [kCTFontAttributeName: font as Any, kCTForegroundColorFromContextAttributeName: true]
             let line = CTLineCreateWithAttributedString(

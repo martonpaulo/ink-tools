@@ -14,12 +14,20 @@ let usage = """
     """
 
 enum Exit: Int32 {
-    case done = 0, usage = 2, unreadable = 3, refused = 4
+    case done = 0
+    case usage = 2
+    case unreadable = 3
+    case refused = 4
 }
 
 func fail(_ message: String, _ code: Exit) -> Never {
     FileHandle.standardError.write(Data((message + "\n").utf8))
     exit(code.rawValue)
+}
+
+/// Writes one line of the tool's product to standard output.
+func say(_ line: String) {
+    FileHandle.standardOutput.write(Data((line + "\n").utf8))
 }
 
 func read(_ path: String) -> NoteFile {
@@ -31,7 +39,9 @@ func read(_ path: String) -> NoteFile {
 }
 
 func diff(_ beforePath: String, _ afterPath: String) {
-    NoteDiff.lines(read(beforePath), read(afterPath)).forEach { print($0) }
+    for line in NoteDiff.lines(read(beforePath), read(afterPath)) {
+        say(line)
+    }
 }
 
 /// The command, its positional arguments and its `--key value` options.

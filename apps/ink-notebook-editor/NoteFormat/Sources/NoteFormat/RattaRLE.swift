@@ -105,7 +105,8 @@ public enum RattaRLE {
     static func code(for grey: UInt8, greyscale: Bool) -> UInt8 {
         let table = greyscale ? greyscaleCodes : codes
         // The first code of each grey, in the order the tables list black, transparent and white.
-        let preferred: [UInt8] = greyscale
+        let preferred: [UInt8] =
+            greyscale
             ? [0x61, 0x62, 0x9d, 0xc9, 0x65, 0x63, 0x64] : [0x61, 0x62, 0x63, 0x64, 0x65]
         if let found = preferred.first(where: { table[$0] == grey }) { return found }
         // A grey that is itself a table code would decode as another grey: the nearest that is not.
