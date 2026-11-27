@@ -39,6 +39,8 @@ function host(open: string | null = OTHER, overrides: Partial<EditHost> = {}) {
     deleteByPath: record('deleteByPath', true),
     insertPage: record('insertPage', true),
     removePage: record('removePage', true),
+    insertKeyword: record('insertKeyword', true),
+    deleteKeyword: record('deleteKeyword', true),
     penIdle: async () => true,
     ...overrides,
   };
@@ -164,6 +166,25 @@ describe('operations on a closed note go through the file API by path', () => {
     ]);
   });
 
+  it('adds and removes a keyword by the note path, in the order sent (#346)', async () => {
+    const {fake, calls} = host();
+    const answer = await editAction(fake)({
+      path: NOTE,
+      ops: [
+        {op: 'insertKeyword', page: 1, text: 'plan'},
+        {op: 'deleteKeyword', page: 2, index: 0},
+      ],
+    });
+    expect(calls).toEqual([`insertKeyword ${JSON.stringify([NOTE, 1, 'plan'])}`, `deleteKeyword ${JSON.stringify([NOTE, 2, 0])}`]);
+    expect(answer).toMatchObject({results: [{ok: true, op: 'insertKeyword', page: 1}, {ok: true, op: 'deleteKeyword', page: 2, index: 0}]});
+  });
+
+  it(`takes a keyword of exactly ${LIMITS.keyword} characters (#346)`, async () => {
+    const {fake, calls} = host();
+    await editAction(fake)({path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: 'k'.repeat(LIMITS.keyword)}]});
+    expect(calls).toHaveLength(1);
+  });
+
   it('openNote alone reads only, and answers the open note', async () => {
     const {fake, calls} = host();
     expect(await editAction(fake)({path: NOTE, ops: [{op: 'openNote'}]})).toMatchObject({openNote: OTHER});
@@ -189,6 +210,12 @@ describe('operations on the open note use the open-note calls', () => {
     await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 1, num: 2, rect: RECT}, {op: 'removePage', page: 2}]});
     expect(calls[0]).toBe('save []');
     expect(calls.slice(1).map(call => call.split(' ')[0])).toEqual(['getElement', 'place', 'modifyOpen', 'removePage']);
+  });
+
+  it('saves first for a keyword, which goes by path on the open note too (#346)', async () => {
+    const {fake, calls} = host(NOTE);
+    await editAction(fake)({path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: 'idea'}, {op: 'deleteKeyword', page: 0, index: 1}]});
+    expect(calls).toEqual(['save []', `insertKeyword ${JSON.stringify([NOTE, 0, 'idea'])}`, `deleteKeyword ${JSON.stringify([NOTE, 0, 1])}`]);
   });
 
   it('a failed save is refused save-failed, and nothing runs', async () => {
@@ -218,6 +245,13 @@ describe('each refusal is named, with the open note', () => {
     ['a template path outside MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: '/storage/emulated/0/Document/grid.png'}]}, 'bad-request'],
     ['a template path that climbs out of MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: `${CUSTOM_TEMPLATE_FOLDER}/../Note/grid.png`}]}, 'bad-request'],
     ['a template in a folder of MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: `${CUSTOM_TEMPLATE_FOLDER}/fonts/grid.png`}]}, 'bad-request'],
+    ['an empty keyword', {path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: ''}]}, 'bad-request'],
+    ['a blank keyword', {path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: '   '}]}, 'bad-request'],
+    ['a keyword one character too long', {path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: 'k'.repeat(LIMITS.keyword + 1)}]}, 'bad-request'],
+    ['a keyword with a line break', {path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: 'two\nlines'}]}, 'bad-request'],
+    ['a keyword that is not a text', {path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: 7}]}, 'bad-request'],
+    ['a keyword index below 0', {path: NOTE, ops: [{op: 'deleteKeyword', page: 0, index: -1}]}, 'bad-request'],
+    ['a keyword index that is not whole', {path: NOTE, ops: [{op: 'deleteKeyword', page: 0, index: 0.5}]}, 'bad-request'],
     ['a picture outside the helper folder', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{kind: 'picture', file: '/sdcard/x.png', rect: RECT}]}]}, 'bad-request'],
   ])('%s is refused before any call', async (_name, args, name) => {
     const {fake, calls} = host();
@@ -265,6 +299,20 @@ describe('each refusal is named, with the open note', () => {
     expect(refused.message).toBe('tablet-refused: operation 2 (insertPage): insertNotePage: bad template');
     expect(refused.detail).toMatchObject({refusal: 'tablet-refused', step: 2, sdkCode: 802, results: [{ok: true, op: 'deleteElements'}]});
     expect(calls.some(call => call.startsWith('removePage'))).toBe(false);
+  });
+
+  it('a keyword the tablet refuses is tablet-refused, with its SDK code (#346)', async () => {
+    const {fake} = host(OTHER, {deleteKeyword: async () => fail(904, 'no keyword 5')});
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'deleteKeyword', page: 0, index: 5}]}));
+    expect(refused.message).toBe('tablet-refused: operation 1 (deleteKeyword): deleteKeyWord of keyword 5: no keyword 5');
+    expect(refused.detail).toMatchObject({refusal: 'tablet-refused', sdkCode: 904});
+  });
+
+  it('a keyword on a page past the note is page-out-of-range (#346)', async () => {
+    const {fake, calls} = host();
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'insertKeyword', page: 3, text: 'plan'}]}));
+    expect(refused.detail).toMatchObject({refusal: 'page-out-of-range'});
+    expect(calls).toEqual([]);
   });
 
   it('with no note open, openNote is null', async () => {

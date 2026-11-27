@@ -132,6 +132,18 @@ const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [
     true,
   ],
   [
+    'insertKeyWord by path (#346)',
+    mocked(PluginFileAPI.insertKeyWord),
+    () => page.insertKeyWord('/Note/a.note', 1, 'plan'),
+    true,
+  ],
+  [
+    'deleteKeyWord by path (#346)',
+    mocked(PluginFileAPI.deleteKeyWord),
+    () => page.deleteKeyWord('/Note/a.note', 1, 0),
+    true,
+  ],
+  [
     'getNoteTotalPageNum (#312)',
     mocked(PluginFileAPI.getNoteTotalPageNum),
     () => page.getNoteTotalPageNum('/Note/a.note'),
