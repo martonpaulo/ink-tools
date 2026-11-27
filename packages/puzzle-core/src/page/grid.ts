@@ -301,6 +301,25 @@ export function drawCellText(raster: Raster, grid: Grid, column: number, row: nu
   drawText(raster, text, grid.x + column * cell + inset, grid.y + row * cell + inset + capHeight(size), { size, weight: FONT_WEIGHTS.regular, tone: 'ink' });
 }
 
+/** Where a split clue's sums centre, as shares of the cell from its top-left corner. */
+const SPLIT_CLUE = { across: [0.69, 0.3], down: [0.31, 0.7] } as const;
+
+/**
+ * A split clue cell (kakuro): a diagonal from the top-left to the bottom-right corner, the sum of
+ * the run to the right in the upper half and the sum of the run below in the lower half. Shade
+ * the cell first; a missing sum leaves its half empty.
+ */
+export function drawSplitClue(raster: Raster, grid: Grid, column: number, row: number, across?: string, down?: string): void {
+  requireSquare(grid, 'a split clue');
+  const { cell } = grid;
+  const left = grid.x + column * cell;
+  const top = grid.y + row * cell;
+  strokeLine(raster, left, top, left + cell, top + cell, LINE_PX.grid, 'ink');
+  const style = { size: Math.round(cell * TEXT_SIZE.splitClue), weight: FONT_WEIGHTS.bold, tone: 'ink' } as const;
+  if (across !== undefined) drawCentredText(raster, across, left + cell * SPLIT_CLUE.across[0], top + cell * SPLIT_CLUE.across[1], style);
+  if (down !== undefined) drawCentredText(raster, down, left + cell * SPLIT_CLUE.down[0], top + cell * SPLIT_CLUE.down[1], style);
+}
+
 /** An arrow pointing right around the origin, as a share of its half length. */
 const ARROW = [-1, -0.12, 0.35, -0.12, 0.35, -0.45, 1, 0, 0.35, 0.45, 0.35, 0.12, -1, 0.12];
 /** Quarter turns: maps (u, v) of the right-pointing arrow to page directions. */

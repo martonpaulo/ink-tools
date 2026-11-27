@@ -1,4 +1,4 @@
-import { digest, generateArrowword, generateBinairo, generateCalcudoku, generateCodeword, generateCrossword, generateFillIn, generateFutoshiki, generateHitori, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateStarBattle, generateSudoku, generateWordSearch } from '../src';
+import { digest, generateArrowword, generateBinairo, generateCalcudoku, generateCodeword, generateCrossword, generateFillIn, generateFutoshiki, generateHitori, generateKakuro, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateStarBattle, generateSudoku, generateWordSearch } from '../src';
 import { CLUE_BANKS } from '../src/clues-data';
 import { WORD_LISTS } from '../src/words-data';
 import { maskedClueBank } from '../testing/clue-bank';
@@ -34,6 +34,8 @@ const PINNED: readonly [string, () => unknown, string][] = [
   ['star battle 8 x 8 one star easy', () => generateStarBattle('P1', { side: 8, stars: 1 }, 'easy'), 'fa706b9d'],
   ['star battle 10 x 10 one star hard', () => generateStarBattle('P1', { side: 10, stars: 1 }, 'hard'), '91497e82'],
   ['star battle 10 x 10 two stars hard', () => generateStarBattle('P1', { side: 10, stars: 2 }, 'hard'), '6a2f02a8'],
+  ['kakuro 10 x 10 hard', () => generateKakuro('P1', 10, 'hard'), '0d1162f6'],
+  ['kakuro 12 x 12 medium', () => generateKakuro('P1', 12, 'medium'), '99161f1b'],
 ];
 
 describe('the same seed gives the same puzzle everywhere', () => {

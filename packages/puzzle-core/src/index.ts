@@ -32,6 +32,8 @@ export * from './crossword';
 export * from './crossword-page';
 export * from './star-battle';
 export * from './star-battle-page';
+export * from './kakuro';
+export * from './kakuro-page';
 export * from './page';
 export * from './check';
 export * from './maze-page';

@@ -14,6 +14,8 @@ import {
   type InkStroke,
   type ReadText,
 } from '../src/check';
+import { generateKakuro } from '../src/kakuro';
+import { checkKakuro, kakuroPageSpec } from '../src/kakuro-page';
 import { cellCenter, type Grid } from '../src/page/grid';
 import { layoutPage } from '../src/page/layout';
 import { fakeRecognizer, write, type Tag } from '../testing/ink';
@@ -125,6 +127,39 @@ describe('the ink check on a sudoku page in inkctl ink', () => {
     expect((await readCells(grid, strokes, [0, 1, 2], spaced, 'digit')).map(read => read.status === 'read' && read.text)).toEqual(['1', '2', '9']);
     const stray = async (): Promise<ReadText> => ({ ok: true, text: '1 / 9' });
     expect((await readCells(grid, strokes, [0, 1, 2], stray, 'digit'))[1]).toEqual({ index: 1, status: 'unread', reason: 'read «/», not a digit' });
+  });
+});
+
+describe('the kakuro «Check» in inkctl ink', () => {
+  test('a page solved with one wrong entry gets exactly that entry marked', async () => {
+    const puzzle = generateKakuro('P1', 10, 'medium');
+    const grid = layoutPage(kakuroPageSpec(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 })).grid;
+    const whites = puzzle.blocks.flatMap((block, i) => (block ? [] : [i]));
+    const wrong = whites[Math.floor(whites.length / 2)];
+    const strokes = whites.flatMap(i => {
+      const digit = i === wrong ? (puzzle.solution[i] % 9) + 1 : puzzle.solution[i];
+      return write(grid, i % puzzle.size, Math.floor(i / puzzle.size), String(digit));
+    });
+    const { recognize, calls } = fakeRecognizer();
+    const result = await checkKakuro(grid, puzzle, strokes, recognize);
+    expect(result.wrong).toEqual([wrong]);
+    expect(result.right).toHaveLength(whites.length - 1);
+    expect(result.empty).toEqual([]);
+    expect(result.unread).toEqual([]);
+    // One call per row that holds white cells: the clue row has none.
+    expect(calls).toHaveLength(puzzle.size - 1);
+  });
+
+  test('a half-solved page leaves the unwritten cells empty, never wrong', async () => {
+    const puzzle = generateKakuro('P1', 6, 'easy');
+    const grid = layoutPage(kakuroPageSpec(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 15 })).grid;
+    const whites = puzzle.blocks.flatMap((block, i) => (block ? [] : [i]));
+    const written = whites.slice(0, 3);
+    const strokes = written.flatMap(i => write(grid, i % puzzle.size, Math.floor(i / puzzle.size), String(puzzle.solution[i])));
+    const result = await checkKakuro(grid, puzzle, strokes, fakeRecognizer().recognize);
+    expect(result.right).toEqual(written);
+    expect(result.wrong).toEqual([]);
+    expect(result.empty).toEqual(whites.slice(3));
   });
 });
 
