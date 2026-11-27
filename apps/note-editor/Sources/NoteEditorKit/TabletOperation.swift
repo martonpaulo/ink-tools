@@ -277,6 +277,8 @@ public enum GeometryShape: Sendable, Equatable {
 
     /// The most points the helper takes for a polygon, the closing one included.
     public static let maxPolygonPoints = 64
+    /// The fewest corners a polygon has: a triangle.
+    public static let minPolygonCorners = 3
 
     /// The box the shape covers.
     public var box: EditRect {
@@ -303,7 +305,7 @@ public enum GeometryShape: Sendable, Equatable {
         case .line(let from, let to):
             return onPage && from != to
         case .polygon(let corners):
-            return onPage && (3..<Self.maxPolygonPoints).contains(corners.count)
+            return onPage && (Self.minPolygonCorners..<Self.maxPolygonPoints).contains(corners.count)
         case .ellipse(_, let horizontal, let vertical):
             return onPage && horizontal >= 1 && vertical >= 1
         }
