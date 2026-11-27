@@ -205,6 +205,31 @@ enum LoadedMac {
         #expect(
             try FileManager.default.contentsOfDirectory(atPath: destination.deletingLastPathComponent().path()).isEmpty)
     }
+
+    /// Every call ends once inkctl exits (#317): `waitUntilExit` on a dispatch thread stayed blocked
+    /// after the child had exited, within the first 64 of these calls. The calls run in a task the
+    /// test does not await, so a stalled one fails the test at the bound instead of hanging it.
+    // timing-independent: the bound only turns a stalled call into a failure; it is wide for a loaded Mac.
+    @Test func manyShortCallsAllEnd() async throws {
+        let inkctl = try fake(#"echo '{"path": "/x", "entries": []}'"#)
+        let finished = DispatchSemaphore(value: 0)
+        Task.detached {
+            for _ in 0..<10 {
+                await withTaskGroup(of: Void.self) { group in
+                    for _ in 0..<64 {
+                        group.addTask { _ = try? await inkctl.list(folder: "/x") }
+                    }
+                }
+            }
+            finished.signal()
+        }
+        let ended = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                continuation.resume(returning: finished.wait(timeout: .now() + .seconds(LoadedMac.minutes * 60)))
+            }
+        }
+        #expect(ended == .success)
+    }
 }
 
 @Suite struct IssueReportTests {

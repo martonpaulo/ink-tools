@@ -256,7 +256,12 @@ public struct Inkctl: Sendable, TabletWriting {
             self.reading = reading
         }
 
+        /// The end of inkctl comes from `terminationHandler`, never `waitUntilExit`: on a dispatch
+        /// thread, `waitUntilExit` stayed blocked for minutes after inkctl had exited and been
+        /// reaped, in about one of 640 short calls, so the edit queue never moved on (#317).
         func start(_ continuation: CheckedContinuation<Data, any Error>) {
+            let exited = DispatchSemaphore(value: 0)
+            process.terminationHandler = { _ in exited.signal() }
             let launched: Result<Bool, any Error> = lock.withLock {
                 guard !cancelled else { return .success(false) }
                 do {
@@ -273,7 +278,7 @@ public struct Inkctl: Sendable, TabletWriting {
             case .success(true):
                 DispatchQueue.global().async {
                     let stdout: Result<Data, any Error> = Result { try self.reading.readToEnd() ?? Data() }
-                    self.process.waitUntilExit()
+                    exited.wait()
                     continuation.resume(with: stdout)
                 }
             }
