@@ -23,6 +23,11 @@ export type Mark = 'empty' | 'dot' | 'cross' | 'shade' | 'other';
 export const DOT_MAX_SHARE = 0.3;
 export const SHADE_MIN_COVER = 0.3;
 export const CROSS_MIN_SPAN = 0.4;
+/**
+ * [inference] a share of the cell: a piece of a stroke that never gets this deep into a cell, from
+ * its nearest side, is a neighbour's mark spilling over the border, not a mark of this cell (#384).
+ */
+export const SPILL_DEPTH = 0.15;
 /** The sub-squares a cell is divided into, per side, to measure how much ink covers it. */
 const COVER_STEPS = 12;
 /** A segment counts as diagonal within 20 degrees of a quarter turn's half, in radians. */
@@ -89,6 +94,36 @@ export function strokesByCell<E>(grid: Grid, strokes: readonly InkStroke<E>[]): 
     const list = byCell.get(best);
     if (list) list.push(stroke);
     else byCell.set(best, [stroke]);
+  }
+  return byCell;
+}
+
+/**
+ * Each cell's ink for a game of marks (#384): every stroke cut where it crosses a cell border, so
+ * a run shaded or struck through in one stroke marks each cell it covers. A piece that only spills
+ * over a border, never `SPILL_DEPTH` into its cell, is left out, as is ink off the grid.
+ */
+export function marksByCell<E>(grid: Grid, strokes: readonly InkStroke<E>[]): Map<number, InkStroke<E>[]> {
+  const byCell = new Map<number, InkStroke<E>[]>();
+  const keep = (index: number | null, points: InkPoint[], element: E): void => {
+    if (index === null || points.length === 0) return;
+    const box = cellBounds(grid, index);
+    const depth = (p: InkPoint): number => Math.min(p.x - box.left, box.right - p.x, p.y - box.top, box.bottom - p.y);
+    if (!points.some(p => depth(p) >= SPILL_DEPTH * grid.cell)) return;
+    byCell.set(index, [...(byCell.get(index) ?? []), { points, element }]);
+  };
+  for (const stroke of strokes) {
+    let at: number | null = null;
+    let piece: InkPoint[] = [];
+    for (const point of densePoints(stroke.points, grid.cell * DENSE_SHARE)) {
+      const index = cellAt(grid, point.x, point.y);
+      if (index !== at) {
+        keep(at, piece, stroke.element);
+        [at, piece] = [index, []];
+      }
+      piece.push(point);
+    }
+    keep(at, piece, stroke.element);
   }
   return byCell;
 }

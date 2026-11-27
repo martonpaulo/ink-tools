@@ -3,7 +3,7 @@
  * renderer, and the player's ink read by the shared check engine. The footer's copy is the
  * caller's, so the plugin keeps every visible string.
  */
-import { classifyMark, strokesByCell, type InkStroke } from './check/cells';
+import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { type CheckResult } from './check/read';
 import { drawRegions, drawSquareLattice, type Grid } from './page/grid';
 import { createPage, drawFooter, fitCellMm, layoutPage, type FooterText, type PageLayout } from './page/layout';
@@ -43,7 +43,7 @@ export function checkStarBattle<E>(puzzle: StarBattle, grid: Grid, strokes: read
   if (grid.lattice !== 'square' || grid.columns !== puzzle.side || grid.rows !== puzzle.side) {
     throw new Error(`a ${puzzle.side} x ${puzzle.side} star battle is checked on its own grid, not a ${grid.columns} x ${grid.rows} ${grid.lattice} one`);
   }
-  const byCell = strokesByCell(grid, strokes);
+  const byCell = marksByCell(grid, strokes);
   const result: CheckResult = { wrong: [], right: [], empty: [], unread: [] };
   puzzle.solution.forEach((star, index) => {
     const mark = classifyMark(grid, index, byCell.get(index) ?? []);

@@ -1,4 +1,5 @@
-import { cluesOf, countNonogramSolutions, decodePicture, drawNonogram, encodePicture, generateNonogram, lineClue, NONOGRAM_BANDS, rateNonogram, solveLine } from '../src/nonogram';
+import { cluesOf, countNonogramSolutions, decodePicture, drawNonogram, encodePicture, generateNonogram, lineClue, NONOGRAM_BANDS, nonogramFromCode, rateNonogram, solveLine } from '../src/nonogram';
+import { puzzleCode } from '../src/code';
 import { NONOGRAM_BANK } from '../src/nonogram-bank';
 import { createRandom, digest } from '../src/random';
 
@@ -170,5 +171,15 @@ describe('the nonogram bank', () => {
   test('a shape and band outside the bank is drawn live, as before', () => {
     expect(NONOGRAM_BANK['15x10:medium']).toBeUndefined();
     expect(generateNonogram('P1', { width: 15, height: 10 }, 'medium')).toEqual(drawNonogram('P1', { width: 15, height: 10 }, 'medium'));
+  });
+});
+
+describe('nonogramFromCode (#384)', () => {
+  test('a code names the same nonogram again, and another game\'s code is refused', () => {
+    const square = generateNonogram('P1', { width: 10, height: 10 }, 'medium');
+    expect(nonogramFromCode(puzzleCode(square.id))).toEqual(square);
+    const wide = generateNonogram('P1', { width: 15, height: 10 }, 'hard');
+    expect(nonogramFromCode(puzzleCode(wide.id))).toEqual(wide);
+    expect(() => nonogramFromCode('BR-7X7-E-7K2Q9X')).toThrow('not a nonogram code');
   });
 });

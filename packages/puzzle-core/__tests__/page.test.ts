@@ -9,6 +9,7 @@ import {
   createPage,
   createRaster,
   drawCage,
+  drawCellMarks,
   drawCellText,
   drawDotLattice,
   drawEdgeSign,
@@ -37,6 +38,7 @@ import {
   type PageSpec,
   type Raster,
 } from '../src';
+import { TONES } from '../src/page/look';
 import { SAMPLE_PAGES } from '../testing/pages';
 
 /**
@@ -97,6 +99,13 @@ const SWATCH = 720;
 /** The same pixels with no changed-row flags, for a test that writes pixels directly. */
 const unflagged = ({ width, height, pixels }: Raster): Raster => ({ width, height, pixels });
 const square = (columns: number, rows: number, cell = 118): Grid => ({ lattice: 'square', x: 60, y: 60, cell, columns, rows });
+
+/** A fresh swatch with only this grid's lattice, to compare a drawn-on swatch with. */
+function createSwatchLattice(grid: Grid): Raster {
+  const r = createRaster(SWATCH, SWATCH);
+  drawSquareLattice(r, grid);
+  return r;
+}
 
 /** A swatch with a square lattice already drawn, for the primitives drawn over one. */
 function latticeSwatch(columns: number, rows: number): { r: Raster; grid: Grid } {
@@ -199,6 +208,24 @@ describe('each primitive matches its golden image', () => {
     drawCage(r, grid, [[3, 0], [3, 1], [2, 1], [2, 2], [3, 2]], '23');
     drawCage(r, grid, [[0, 3]], '5');
     expectGolden('cage', r);
+  });
+
+  test('the answer marks of a marks game, one each, on a copy of the page (#384)', () => {
+    const { r, grid } = latticeSwatch(4, 4);
+    const marked = drawCellMarks(r, grid, new Map([[0, 'shade'], [5, 'dot'], [10, 'star'], [15, 'bulb']] as const));
+    assertNativeGreys(marked);
+    // The page keeps its pixels: the answer is drawn on a copy.
+    expect(Buffer.from(r.pixels).equals(Buffer.from(marked.pixels))).toBe(false);
+    expect(Buffer.from(r.pixels).equals(Buffer.from(createSwatchLattice(grid).pixels))).toBe(true);
+    expectGolden('cell-marks', unflagged(marked));
+  });
+
+  test('a shaded run keeps the line between its cells, so it can be counted (#384)', () => {
+    const { r, grid } = latticeSwatch(4, 4);
+    const marked = drawCellMarks(r, grid, new Map([[0, 'shade'], [1, 'shade']] as const));
+    const middle = Math.round(grid.y + grid.cell / 2) * marked.width;
+    expect(marked.pixels[middle + Math.round(grid.x + grid.cell / 2)]).toBe(TONES.strong);
+    expect(marked.pixels[middle + Math.round(grid.x + grid.cell)]).toBeLessThan(TONES.strong);
   });
 
   test('outside clues on every side', () => {

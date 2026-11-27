@@ -267,6 +267,14 @@
     "pattern": "const (?:BASE64|ALPHABET) = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\\+/'",
     "golden": "",
     "open": 535
+   },
+   {
+    "rule": "Not one value, two that only match: puzzle-core's ink spill depth (0.15 of a cell, #384) and Image Editing's smallest document share of the page (0.15)",
+    "owner": "packages/puzzle-core/src/check/cells.ts",
+    "other": "plugins/image-editing/native/src/com/retouch/image/Retouch.java",
+    "pattern": "(?:SPILL_DEPTH = 0\\.15;|DOCUMENT_MIN_PAGE = 0\\.15;)",
+    "golden": "",
+    "open": 384
    }
   ]
  },

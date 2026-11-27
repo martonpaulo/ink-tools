@@ -16,7 +16,7 @@
 
 import { type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
-import { classifyMark, strokesByCell, type InkStroke } from './check/cells';
+import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { type CheckResult } from './check/read';
 import { drawFooter, drawIcon, drawSquareLattice, createPage, fitCellMm, layoutPage, type Hand, type Orientation, type FooterText, type PageLayout, type Raster, type CellPreset } from './page';
 
@@ -437,7 +437,7 @@ export function drawBinairoPage(puzzle: Binairo, layout: PageLayout, footer: Omi
  * or crossed. A cell with other ink is unread, never wrong; a given is never checked.
  */
 export function checkBinairo<E>(puzzle: Binairo, layout: PageLayout, strokes: readonly InkStroke<E>[]): CheckResult {
-  const byCell = strokesByCell(layout.grid, strokes);
+  const byCell = marksByCell(layout.grid, strokes);
   const result: CheckResult = { wrong: [], right: [], empty: [], unread: [] };
   puzzle.givens.forEach((given, index) => {
     if (given !== BINAIRO_OPEN) return;

@@ -60,12 +60,13 @@ import {CALCUDOKU} from '../../../plugins/puzzles/src/games/calcudoku';
 import {KAKURO} from '../../../plugins/puzzles/src/games/kakuro';
 import {SLITHERLINK} from '../../../plugins/puzzles/src/games/slitherlink';
 import {BRIDGES} from '../../../plugins/puzzles/src/games/bridges';
+import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -353,6 +354,19 @@ const bridgesInk = () => {
     }),
   );
 };
+/** The largest nonogram, its picture shaded but for its last two cells, and one cell shaded off it (#384). */
+const NONOGRAM_CODE = 'NO-15X15-M-1';
+const nonogramInk = () => {
+  const puzzle = nonogramFromCode(NONOGRAM_CODE);
+  const {grid} = layoutNonogramPage(puzzle, {orientation: 'portrait', hand: 'right'});
+  const filled = puzzle.solution.flatMap((on, cell) => (on ? [cell] : []));
+  const off = puzzle.solution.findIndex(on => !on);
+  return [...filled.slice(0, -2), off].map(cell => {
+    const [x, y] = [grid.x + (cell % grid.columns) * grid.cell, grid.y + Math.floor(cell / grid.columns) * grid.cell];
+    const rows = Array.from({length: 8}, (_, i) => y + grid.cell * (0.12 + i * 0.11));
+    return {points: rows.flatMap(row => [{x: x + grid.cell * 0.12, y: row}, {x: x + grid.cell * 0.88, y: row}]), element: {}};
+  });
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -385,6 +399,7 @@ const puzzlesCalcudoku = (code: string | null, steps: string[] = []) => puzzlesG
 const puzzlesKakuro = (code: string | null, steps: string[] = []) => puzzlesGame(KAKURO, kakuroInk, code, steps);
 const puzzlesSlitherlink = (code: string | null, steps: string[] = []) => puzzlesGame(SLITHERLINK, slitherlinkInk, code, steps);
 const puzzlesBridges = (code: string | null, steps: string[] = []) => puzzlesGame(BRIDGES, bridgesInk, code, steps);
+const puzzlesNonogram = (code: string | null, steps: string[] = []) => puzzlesGame(NONOGRAM, nonogramInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -441,6 +456,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-bridges-page', render: () => puzzlesBridges(BRIDGES_CODE)},
   {name: 'puzzles-bridges-check', render: () => puzzlesBridges(BRIDGES_CODE, ['Check'])},
   {name: 'puzzles-bridges-solution', render: () => puzzlesBridges(BRIDGES_CODE, ['Show Solution'])},
+  {name: 'puzzles-nonogram', render: () => puzzlesNonogram(null)},
+  {name: 'puzzles-nonogram-page', render: () => puzzlesNonogram(NONOGRAM_CODE)},
+  {name: 'puzzles-nonogram-check', render: () => puzzlesNonogram(NONOGRAM_CODE, ['Check'])},
+  {name: 'puzzles-nonogram-solution', render: () => puzzlesNonogram(NONOGRAM_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

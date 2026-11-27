@@ -14,7 +14,7 @@
  * when it also needs probing (a cell whose one value breaks a rule).
  */
 
-import { classifyMark, strokesByCell, type InkStroke } from './check/cells';
+import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { puzzleCode, type Difficulty, type PuzzleId } from './code';
 import { drawCellText, drawSquareLattice, type Grid } from './page/grid';
 import { createPage, drawFooter, fitCellMm, layoutPage, type PageLayout } from './page/layout';
@@ -405,7 +405,7 @@ export function checkHitori(puzzle: Hitori, grid: Grid, strokes: readonly InkStr
   if (grid.columns !== puzzle.size || grid.rows !== puzzle.size) {
     throw new RangeError(`the grid is ${grid.columns} x ${grid.rows}, the hitori ${puzzle.size} x ${puzzle.size}`);
   }
-  const byCell = strokesByCell(grid, strokes);
+  const byCell = marksByCell(grid, strokes);
   const result: HitoriCheck = { wrong: [], right: [], empty: [] };
   puzzle.solution.forEach((shaded, index) => {
     const mark = classifyMark(grid, index, byCell.get(index) ?? []);

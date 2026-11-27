@@ -6,8 +6,8 @@
 import { type InkStroke } from '../check/cells';
 import { drawCentredText, FONT_WEIGHTS } from './font';
 import { cellCenter, type Cell, type Grid } from './grid';
-import { TEXT_SIZE, type Tone } from './look';
-import { type Raster, strokeLine } from './raster';
+import { TEXT_SIZE, TONES, type Tone } from './look';
+import { fillDisc, fillPolygon, type Raster, strokeLine } from './raster';
 
 /** The player's ink as the view draws it: the tablet's thinnest pen is about this wide. */
 export const VIEW_INK_PX = 3;
@@ -225,6 +225,60 @@ export function drawLinkAnswers(page: Raster, grid: Grid, links: readonly LinkAn
   for (const { from, to, count } of links) {
     // The lines of a link sit side by side, centred on the line between the cells.
     for (let i = 0; i < count; i++) drawPolyline(answer, linkLine(grid, from, to, (i - (count - 1) / 2) * gap), VIEW_ANSWER_PX);
+  }
+  return answer;
+}
+
+/** A mark a marks game's answer puts in a cell (#384): a shaded cell, a dot, a star or a bulb. */
+export type CellMark = 'shade' | 'dot' | 'star' | 'bulb';
+
+/** The marks' sizes, as shares of the cell: a dot's radius, a star's outer and inner radius, a bulb's radius. */
+export const CELL_MARK_SHARE = { dot: 0.1, starOuter: 0.36, starInner: 0.15, bulb: 0.28 } as const;
+/** A star's points. */
+const STAR_POINTS = 5;
+
+/** A star's outline round a cell's centre, its first point up, as `fillPolygon` takes it. */
+function starContour(cx: number, cy: number, outer: number, inner: number): number[] {
+  return Array.from({ length: 2 * STAR_POINTS }, (_, i) => {
+    const radius = i % 2 === 0 ? outer : inner;
+    const angle = -Math.PI / 2 + (i * Math.PI) / STAR_POINTS;
+    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+  }).flat();
+}
+
+/**
+ * A cell of the answer shaded under the page's lines (#384): only its paper turns grey, so every
+ * grid line and every heavier group line still shows through a shaded run, and a run is counted by them.
+ */
+function shadeUnderLines(answer: Raster, grid: Grid, cell: number): void {
+  const grey = TONES.strong;
+  const left = Math.round(grid.x + (cell % grid.columns) * grid.cell);
+  const top = Math.round(grid.y + Math.floor(cell / grid.columns) * grid.cell);
+  const right = Math.round(grid.x + ((cell % grid.columns) + 1) * grid.cell);
+  const bottom = Math.round(grid.y + (Math.floor(cell / grid.columns) + 1) * grid.cell);
+  for (let y = Math.max(0, top); y < Math.min(answer.height, bottom); y++) {
+    for (let x = Math.max(0, left); x < Math.min(answer.width, right); x++) {
+      const at = y * answer.width + x;
+      if (answer.pixels[at] > grey) answer.pixels[at] = grey;
+    }
+  }
+}
+
+/**
+ * The page with a marks game's answer drawn (#384), for the plugin's view only: a shaded cell in a
+ * grey the lines stay darker than, and a dot, a star or a bulb in the grey `drawCellAnswers` writes in.
+ */
+export function drawCellMarks(page: Raster, grid: Grid, marks: ReadonlyMap<number, CellMark>): Raster {
+  const answer = copyRaster(page);
+  for (const [cell, mark] of marks) {
+    const [cx, cy] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+    if (mark === 'shade') {
+      shadeUnderLines(answer, grid, cell);
+    } else if (mark === 'star') {
+      fillPolygon(answer, [starContour(cx, cy, grid.cell * CELL_MARK_SHARE.starOuter, grid.cell * CELL_MARK_SHARE.starInner)], 'line');
+    } else {
+      fillDisc(answer, cx, cy, grid.cell * CELL_MARK_SHARE[mark], 'line');
+    }
   }
   return answer;
 }

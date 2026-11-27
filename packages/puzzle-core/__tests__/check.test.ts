@@ -3,6 +3,7 @@ import {
   cellIndex,
   checkCells,
   classifyMark,
+  marksByCell,
   inkedEdges,
   innerCellAt,
   normalizeRead,
@@ -217,6 +218,27 @@ describe('classifyMark', () => {
     for (const digit of '0123456789') {
       expect([digit, classifyMark(grid, 0, write(grid, 0, 0, digit))]).toEqual([digit, 'other']);
     }
+  });
+});
+
+describe('marksByCell (#384)', () => {
+  const grid = sudokuGrid();
+  const at = (u: number, v: number): InkPoint => ({ x: grid.x + u * grid.cell, y: grid.y + v * grid.cell });
+  const kinds = (strokes: InkStroke<null>[], cells: number[]) => {
+    const byCell = marksByCell(grid, strokes);
+    return cells.map(cell => classifyMark(grid, cell, byCell.get(cell) ?? []));
+  };
+
+  test('one stroke shading a run of three cells shades each of them', () => {
+    // A zigzag down and up across cells 0 to 2 of the first row, six passes a cell.
+    const zigzag = Array.from({ length: 19 }, (_, i) => at(0.1 + (i * 2.8) / 18, i % 2 ? 0.9 : 0.1));
+    expect(kinds([stroke(zigzag)], [0, 1, 2, 3])).toEqual(['shade', 'shade', 'shade', 'empty']);
+  });
+
+  test('a cross spilling a little over its cell marks only its own cell', () => {
+    const cross = [stroke(line(at(3.9, 0.9), at(5.1, 2.1))), stroke(line(at(3.9, 2.1), at(5.1, 0.9)))];
+    const center = 1 * 9 + 4;
+    expect(kinds(cross, [center, center - 1, center + 1, center - 9, center + 9])).toEqual(['cross', 'empty', 'empty', 'empty', 'empty']);
   });
 });
 

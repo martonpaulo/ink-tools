@@ -26,6 +26,14 @@ export const playCopy = {
     count === 1
       ? 'Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.'
       : `Puzzles could not read ${count} entries, which have dashed circles. Write them again, go back, then press Check.`,
+  /**
+   * The unread note of a game answered with a shade, a dot or a cross (#384): it says how to mark, as
+   * «Write it again» cannot. All the ink in a cell is read together, so the old mark is erased first.
+   */
+  'verdict.unreadMark': (count: number) =>
+    count === 1
+      ? 'Puzzles could not read 1 cell, which has a dashed circle. Erase it, then shade it fully or put a dot or a cross in it. Then go back and press Check.'
+      : `Puzzles could not read ${count} cells, which have dashed circles. Erase them, then shade each fully or put a dot or a cross in it. Then go back and press Check.`,
   'answer.note': 'Only Puzzles shows the solution. Your note does not change.',
   /** The Error states of a game view. */
   'error.here': 'Puzzles could not read this page.',

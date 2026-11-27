@@ -14,7 +14,7 @@
  */
 
 import { puzzleCode, type Difficulty, type PuzzleId } from './code';
-import { classifyMark, strokesByCell, type InkStroke } from './check/cells';
+import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { FONT_WEIGHTS, drawCentredText } from './page/font';
 import { cellCenter, drawSquareLattice, shadeCells, type Cell } from './page/grid';
 import { createPage, drawFooter, fitCellMm, layoutPage, type PageLayout } from './page/layout';
@@ -388,7 +388,7 @@ export interface LightUpCheck {
  * marks a cell the player left without one. Ink on a wall is ignored.
  */
 export function checkLightUp<E>(puzzle: LightUp, layout: Pick<PageLayout, 'grid'>, strokes: readonly InkStroke<E>[]): LightUpCheck {
-  const byCell = strokesByCell(layout.grid, strokes);
+  const byCell = marksByCell(layout.grid, strokes);
   const result = { wrong: [] as number[], right: [] as number[], missing: [] as number[], solved: false };
   for (let i = 0; i < puzzle.walls.length; i++) {
     if (puzzle.walls[i]) continue;

@@ -10,7 +10,7 @@
  * pictures drawn on the Mac instead, as the sudokus do (#434).
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { NONOGRAM_BANK } from './nonogram-bank';
 import { childSeed, createRandom, type Random } from './random';
 
@@ -32,6 +32,11 @@ export interface Nonogram {
 
 export const NONOGRAM_BANDS: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 export const NONOGRAM_MIN_SIDE = 5;
+/**
+ * The square sides the Puzzles view offers: each one's every band is found, and its grid and clues
+ * fit a page of either orientation; 20 x 20 and larger need cells under the 7 mm preset.
+ */
+export const NONOGRAM_SIDES: readonly number[] = [5, 10, 15];
 export const NONOGRAM_MAX_SIDE = 25; // a 30 x 30 «medium» was not found within the attempts for every seed
 
 const UNKNOWN = -1;
@@ -534,4 +539,12 @@ export function generateNonogram(seed: string, size: NonogramSize, difficulty: D
     if (fits) return nonogramOf(seed, width, height, difficulty, solution, grid);
   }
   throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${BANK_TRIES} views of the bank`);
+}
+
+/** The nonogram a puzzle code names (`NO-10X10-M-7K2Q9X`), the same one every time (#384). */
+export function nonogramFromCode(code: string): Nonogram {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'nonogram') throw new RangeError(`«${code}» is not a nonogram code`);
+  const [width, height] = id.size.split('X').map(Number);
+  return generateNonogram(id.seed, { width, height }, id.difficulty);
 }
