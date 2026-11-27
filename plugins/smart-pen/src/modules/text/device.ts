@@ -22,6 +22,7 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {type ConvertHost, type UndoHost} from '@ink-tools/ink-core/conversion';
 import type {LassoConvertHost} from './lasso';
+import {withArmedFailure} from '../../faults';
 
 const log = (line: string) => console.log(`SmartPen: text: ${line}`);
 
@@ -65,7 +66,8 @@ export const DEVICE_LASSO: LassoConvertHost = {
   getCurrentFilePath,
   getCurrentPageNum,
   getPageSize,
-  recognizeElements,
+  // A failure inkctl armed for a device round answers first, once (#257).
+  recognizeElements: withArmedFailure(recognizeElements),
   saveStroke,
   createTextBox,
   batchUpdatePageElements: (nums, elements, page) =>

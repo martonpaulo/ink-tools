@@ -519,10 +519,11 @@ ACTION_PLUGINS = {
         "actions": ("edit", "save-note", "templates"),
         "max_request_bytes": 64 * 1024,
     },
-    # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298).
+    # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298);
+    # fail-next-convert makes the next Convert to Text fail, for a device round (#257).
     "smart-pen": {
         "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-smart-pen",
-        "actions": ("record-pen", "replay-pen"),
+        "actions": ("record-pen", "replay-pen", "fail-next-convert"),
     },
 }
 # Pen replay (#298): the plugins that record and replay the pen, and the tape version they read,

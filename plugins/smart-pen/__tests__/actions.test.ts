@@ -15,6 +15,7 @@ function host(overrides: Partial<PenActionsHost> = {}): PenActionsHost {
     start: jest.fn(() => ({ok: true as const, value: true as const})),
     stop: () => ({ok: true, value: {tape: TAPE, dropped: 0}}),
     replay: jest.fn(async () => ({ok: true as const, value: {listeners: 2, motions: 0, penUps: 1, strokes: 1, listenerErrors: 0}})),
+    armConvertFailure: jest.fn(),
     ...overrides,
   };
 }
@@ -73,4 +74,11 @@ test('the request file is read from Smart Pen\'s hidden folder', async () => {
   await expect(readActionFile(read)).resolves.toBe('{}');
   expect(read).toHaveBeenCalledWith('/storage/emulated/0/.data/plugin/inktools-smart-pen/action.json');
   expect(ACTION_PATH).toBe('/storage/emulated/0/.data/plugin/inktools-smart-pen/action.json');
+});
+
+test('fail-next-convert arms the failure and says so (#257)', async () => {
+  const fake = host();
+  const answer = await penActions(fake)['fail-next-convert']({});
+  expect(fake.armConvertFailure).toHaveBeenCalledTimes(1);
+  expect(answer.line).toBe('SmartPen: the next Convert to Text fails on purpose');
 });

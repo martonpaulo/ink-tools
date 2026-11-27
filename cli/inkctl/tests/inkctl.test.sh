@@ -1943,6 +1943,10 @@ check "a missing tape is not found" "$(exit_and_pushes ink replay "$work/local/n
 printf '%s\n' "$root/Note/Diary.note" > "$files/notes-found"
 check "ink replay on a note outside Note/Tests/ is refused" "$(exit_and_pushes ink replay "$work/local/word.tape.json" --plugin smart-pen)" "120"
 check "a plugin with no pen replay is a usage error" "$(exit_and_pushes ink replay "$work/local/word.tape.json" --plugin account-sync)" "20"
+# A failed Convert to Text for a device round (#257): Smart Pen arms it from its request file.
+action_line 'smart-pen ACTION_ID 1/1 {"ok":true,"action":"fail-next-convert","line":"SmartPen: the next Convert to Text fails on purpose"}' > "$files/action-answer"
+result=$(run plugin action smart-pen fail-next-convert)
+check "plugin action smart-pen fail-next-convert asks Smart Pen in its hidden folder" "$?|$result|$(action_field "d['action'], d['args']")" "0|SmartPen: the next Convert to Text fails on purpose|('fail-next-convert', {})"
 rm -f "$files/action-answer" "$files/helper-answer" "$files/notes-found" "$work/local/word.tape.json" "$work/local/old.tape.json"
 cp "$work/tree-before-helper" "$files/tree.xml"
 reset_device

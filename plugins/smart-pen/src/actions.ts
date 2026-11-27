@@ -1,7 +1,8 @@
 /**
  * Smart Pen's actions inkctl runs by command, with no screen (#298): `record-pen` turns the pen
- * recorder on (`args.on` true) or off (false, answering the tape), and `replay-pen` plays a tape to
- * the modules that are on, as if the pen had written it (sn-adapter `penTape.ts`). The request file
+ * recorder on (`args.on` true) or off (false, answering the tape), `replay-pen` plays a tape to
+ * the modules that are on, as if the pen had written it (sn-adapter `penTape.ts`), and
+ * `fail-next-convert` makes the next «Convert to Text» fail, for a device round (#257, `faults.ts`). The request file
  * sits in Smart Pen's folder of the hidden `.data/plugin/`, which inkctl writes and Supernote Cloud
  * does not sync; sn-adapter's channel owns the request and answer format.
  */
@@ -21,6 +22,7 @@ import {
   type Action,
 } from '@ink-tools/sn-adapter/official';
 import {readText} from '@ink-tools/picture-search/storage';
+import {armConvertFailure} from './faults';
 
 /** Smart Pen's own folder in the hidden `.data/plugin/`; SmartPenFilesPackage.java `ACTION_HOME`. */
 export const ACTION_HOME = pluginDataFolder('inktools-smart-pen');
@@ -41,6 +43,7 @@ export type PenActionsHost = {
   start(): Result<true>;
   stop(): Result<{tape: PenTape; dropped: number}>;
   replay(tape: PenTape): Promise<Result<ReplayCounts>>;
+  armConvertFailure(): void;
 };
 
 const DEVICE: PenActionsHost = {
@@ -48,6 +51,7 @@ const DEVICE: PenActionsHost = {
   stop: stopPenRecording,
   // The same native timers as the action channel: a replay runs with no Smart Pen view (#469).
   replay: tape => replayPenTape(tape, deviceReplay(nativeTimers(TICKS_MODULE))),
+  armConvertFailure,
 };
 
 export function penActions(host: PenActionsHost = DEVICE): Record<string, Action> {
@@ -86,6 +90,10 @@ export function penActions(host: PenActionsHost = DEVICE): Record<string, Action
         line: `SmartPen: replayed ${penUps} pen-ups (${strokes} strokes) and ${motions} motions, ${listenerErrors} listener errors${plain}`,
         ...played.value,
       };
+    },
+    'fail-next-convert': async () => {
+      host.armConvertFailure();
+      return {line: 'SmartPen: the next Convert to Text fails on purpose'};
     },
   };
 }
