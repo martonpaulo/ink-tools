@@ -6,7 +6,7 @@
  * rules. A cell is named by its index, `row * size + column`, as the page and the check name it.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
 import { childSeed, createRandom } from './random';
 
@@ -389,4 +389,11 @@ export function generateFutoshiki(seed: string, size: number, difficulty: Diffic
     return { id: { game: 'futoshiki', size: String(size), difficulty, seed }, size, givens: made.givens, signs: made.signs, solution: made.solution, rating };
   }
   throw new Error(`no ${difficulty} ${size} x ${size} futoshiki from seed «${seed}» in ${FUTOSHIKI_ATTEMPTS} attempts`);
+}
+
+/** The futoshiki a puzzle code names (`FU-7-H-7K2Q9X`), the same one every time (#390). */
+export function futoshikiFromCode(code: string): Futoshiki {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'futoshiki') throw new RangeError(`«${code}» is not a futoshiki code`);
+  return generateFutoshiki(id.seed, Number(id.size), id.difficulty);
 }

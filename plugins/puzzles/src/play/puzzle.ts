@@ -8,16 +8,35 @@
 import type {Choice} from '@ink-tools/ui-kit';
 import type {Hand, InkStroke, Orientation, Raster, Recognize} from '@ink-tools/puzzle-core';
 
+export type Choices = Readonly<Record<string, string>>;
+
 /** One choice of the game before a new page, such as the shape or the difficulty. */
 export type PuzzleOption = {
   id: string;
   title: string;
-  choices: readonly Choice<string>[];
+  /** Its choices, or those the earlier choices allow, such as the bands of the chosen size (#390). */
+  choices: readonly Choice<string>[] | ((earlier: Choices) => readonly Choice<string>[]);
   /** The value picked when the view opens. */
   initial: string;
 };
 
-export type Choices = Readonly<Record<string, string>>;
+/** The choices `option` offers after `earlier`. */
+export const offered = (option: PuzzleOption, earlier: Choices): readonly Choice<string>[] =>
+  typeof option.choices === 'function' ? option.choices(earlier) : option.choices;
+
+/**
+ * `choices` with each option, in order, on a value it offers after the earlier ones: a value it no
+ * longer offers, such as a band the new size lacks, falls to its first (#390).
+ */
+export function settle(options: readonly PuzzleOption[], choices: Choices): Choices {
+  const out: Record<string, string> = {};
+  for (const option of options) {
+    const list = offered(option, out);
+    const value = choices[option.id];
+    out[option.id] = list.some(choice => choice.value === value) ? value : list[0].value;
+  }
+  return out;
+}
 
 /** The page a puzzle is drawn for. */
 export type PageShape = {orientation: Orientation; hand: Hand};

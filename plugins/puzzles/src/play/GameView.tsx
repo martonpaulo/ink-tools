@@ -24,7 +24,7 @@ import {encodePng, parsePuzzleCode, seedFromNumber, toBase64, type Raster} from 
 import type {Game, GameViewProps} from '../games';
 import {playCopy} from './copy';
 import {devicePages, type Here, type PagePorts} from './pages';
-import type {Choices, GamePage, PageShape, Puzzle, PuzzleGame, Verdict} from './puzzle';
+import {offered, settle, type Choices, type GamePage, type PageShape, type Puzzle, type PuzzleGame, type Verdict} from './puzzle';
 
 /** A fresh seed for each new puzzle: 40 bits, eight characters of the code's alphabet. */
 const SEED_RANGE = 2 ** 40;
@@ -61,7 +61,7 @@ export function GameView({
   const pages = useMemo(() => given ?? devicePages(), [given]);
   const [screen, setScreen] = useState<Screen>({kind: 'reading'});
   const [choices, setChoices] = useState<Choices>(() =>
-    Object.fromEntries(game.options.map(option => [option.id, option.initial])),
+    settle(game.options, Object.fromEntries(game.options.map(option => [option.id, option.initial]))),
   );
 
   const failed = useCallback(
@@ -188,7 +188,7 @@ export function GameView({
           game={game}
           screen={screen}
           choices={choices}
-          onChoose={(id, value) => setChoices(current => ({...current, [id]: value}))}
+          onChoose={(id, value) => setChoices(current => settle(game.options, {...current, [id]: value}))}
           onAdd={() => add(screen.here)}
           onCheck={board => check(screen.here, board)}
           onAnswer={board => answer(screen.here, board)}
@@ -252,7 +252,7 @@ function Ready({
           <ChoiceList
             key={option.id}
             title={option.title}
-            choices={option.choices}
+            choices={offered(option, choices)}
             value={choices[option.id]}
             onChange={value => onChoose(option.id, value)}
           />

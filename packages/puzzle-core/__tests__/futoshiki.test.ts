@@ -2,7 +2,9 @@ import {
   FUTOSHIKI_SIZES,
   checkFutoshiki,
   countFutoshikiSolutions,
+  digest,
   drawFutoshikiPage,
+  futoshikiFromCode,
   futoshikiSignsOf,
   generateFutoshiki,
   parsePuzzleCode,
@@ -121,4 +123,12 @@ describe('the futoshiki page and its check', () => {
     await expect(checkFutoshiki(puzzle, { ...layout.grid, columns: 6 }, [], recognize)).rejects.toThrow('not a 6 x 5 one');
   });
 
+});
+
+describe('the futoshiki code (#390)', () => {
+  test('names the same puzzle again, and another game\'s code is refused', () => {
+    const puzzle = generateFutoshiki('7K2Q9X', 5, 'medium');
+    expect(digest(futoshikiFromCode(puzzleCode(puzzle.id)))).toBe(digest(puzzle));
+    expect(() => futoshikiFromCode('JS-9-E-7K2Q9X')).toThrow('not a futoshiki code');
+  });
 });

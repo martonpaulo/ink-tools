@@ -7,8 +7,8 @@ here is a symlink to this file.
 
 **The shell and its first games, built, not yet on the device** ([#453](https://github.com/martonpaulo/ink-tools/issues/453),
 [#386](https://github.com/martonpaulo/ink-tools/issues/386), [#397](https://github.com/martonpaulo/ink-tools/issues/397),
-[#402](https://github.com/martonpaulo/ink-tools/issues/402)): the plugin, its toolbar button, its full view, the maze,
-the jigsaw sudoku and the pass-and-play boards.
+[#402](https://github.com/martonpaulo/ink-tools/issues/402), [#390](https://github.com/martonpaulo/ink-tools/issues/390)): the plugin, its toolbar button, its full view,
+the maze, the jigsaw sudoku, futoshiki and the pass-and-play boards.
 Each game is a sub-issue of
 [#376](https://github.com/martonpaulo/ink-tools/issues/376). On the tablet the plugin is called
 **Puzzles**; `puzzles` is its folder, gate, workflow and tag prefix, and `Puzzles` its `pluginKey`
@@ -48,8 +48,9 @@ deletes the page files an earlier one left; each press of the button starts at t
    `…FromCode` that makes the same puzzle from its code, and its check and answer drawn on a copy of
    the page (`packages/puzzle-core/src/page/view.ts`; a game of cells uses its `drawCellCheck` and
    `drawCellAnswers`, [#397](https://github.com/martonpaulo/ink-tools/issues/397)).
-2. A game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices and
-   `create`, and for a puzzle `open`, whose `Puzzle` has its `check` and `answer`, each a call into
+2. A game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices (an
+   option's choices may follow the earlier ones, as futoshiki's bands follow its size,
+   [#390](https://github.com/martonpaulo/ink-tools/issues/390)) and `create`, and for a puzzle `open`, whose `Puzzle` has its `check` and `answer`, each a call into
    puzzle-core; a pass-and-play board has no `open` ([#402](https://github.com/martonpaulo/ink-tools/issues/402)). Its
    strings are its own, the shared ones in `src/play/copy.ts`. Add it to `GAMES` in `src/games.ts`,
    with in `requires` what it needs beyond the plugin's permissions, which the view checks before

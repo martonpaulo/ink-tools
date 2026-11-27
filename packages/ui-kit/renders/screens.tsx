@@ -53,12 +53,13 @@ import type {Game as PuzzlesGame} from '../../../plugins/puzzles/src/games';
 import type {RequirementPorts as PuzzlesPorts} from '../../../plugins/puzzles/src/requirements';
 import {MAZE} from '../../../plugins/puzzles/src/games/maze';
 import {JIGSAW} from '../../../plugins/puzzles/src/games/jigsaw';
+import {FUTOSHIKI} from '../../../plugins/puzzles/src/games/futoshiki';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {cellCenter, jigsawExpected, jigsawFromCode, jigsawLayout, mazeCellCentre, mazeFromCode, mazeLayout, type InkStroke} from '@ink-tools/puzzle-core';
+import {cellCenter, drawFutoshikiPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, mazeCellCentre, mazeFromCode, mazeLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -273,16 +274,23 @@ const mazeInk = () => {
   const cells = [...maze.solution.slice(0, maze.solution.indexOf(from) + 1), off];
   return [{points: cells.map(cell => ({x: mazeCellCentre(maze, grid, cell)[0], y: mazeCellCentre(maze, grid, cell)[1]})), element: {}}];
 };
-/** A jigsaw sudoku page of the player's, partly filled: one cell holds the next digit, one a mark the tablet cannot read (#397). */
-const JIGSAW_CODE = 'JS-9-E-1';
-const jigsawInk = (): InkStroke<object>[] => {
-  const {grid} = jigsawLayout();
-  const cells = [...jigsawExpected(jigsawFromCode(JIGSAW_CODE))].slice(0, 30);
-  return cells.map(([cell, digit], i) => {
+/**
+ * A cell game's page of the player's, partly filled: the first `count` open cells hold their digit,
+ * but the eighth holds the next one and the thirteenth a mark the tablet cannot read (#397, #390).
+ */
+const cellInk = (grid: Grid, open: readonly (readonly [number, string])[], count: number, largest: number): InkStroke<object>[] =>
+  open.slice(0, count).map(([cell, digit], i) => {
     const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
-    const written = i === 7 ? String((Number(digit) % 9) + 1) : i === 12 ? 'x' : digit;
+    const written = i === 7 ? String((Number(digit) % largest) + 1) : i === 12 ? 'x' : digit;
     return {points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: written}};
   });
+const JIGSAW_CODE = 'JS-9-E-1';
+const jigsawInk = () => cellInk(jigsawLayout().grid, [...jigsawExpected(jigsawFromCode(JIGSAW_CODE))], 30, 9);
+const FUTOSHIKI_CODE = 'FU-6-M-1';
+const futoshikiInk = () => {
+  const puzzle = futoshikiFromCode(FUTOSHIKI_CODE);
+  const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
+  return cellInk(drawFutoshikiPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, open, 16, puzzle.size);
 };
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
@@ -309,6 +317,7 @@ const puzzlesGame = async (game: PuzzleGame, ink: () => InkStroke<object>[], cod
 };
 const puzzlesMaze = (code: string | null, steps: string[] = [], failing = false) => puzzlesGame(MAZE, mazeInk, code, steps, failing);
 const puzzlesJigsaw = (code: string | null, steps: string[] = []) => puzzlesGame(JIGSAW, jigsawInk, code, steps);
+const puzzlesFutoshiki = (code: string | null, steps: string[] = []) => puzzlesGame(FUTOSHIKI, futoshikiInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -336,6 +345,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-jigsaw-page', render: () => puzzlesJigsaw(JIGSAW_CODE)},
   {name: 'puzzles-jigsaw-check', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Check'])},
   {name: 'puzzles-jigsaw-solution', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Show Solution'])},
+  {name: 'puzzles-futoshiki', render: () => puzzlesFutoshiki(null)},
+  {name: 'puzzles-futoshiki-page', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE)},
+  {name: 'puzzles-futoshiki-check', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Check'])},
+  {name: 'puzzles-futoshiki-solution', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

@@ -14,7 +14,7 @@ the current one, its grid drawn as the page's background, solved with the pen
 - **Puzzles** on the note toolbar opens the Puzzles view: the list of games, with Close.
 - Opening a game first checks that Puzzles may read and write files, which every game needs, and
   shows «Allow» when it may not.
-- **Maze**, **Jigsaw Sudoku**: pick the choices, and «Add Page» puts a new puzzle after the current
+- **Maze**, **Jigsaw Sudoku**, **Futoshiki**: pick the choices, and «Add Page» puts a new puzzle after the current
   page. On a puzzle's page, «Check» circles the mistakes in your ink and «Show Solution» shows the
   answer, both only in the Puzzles view, so your note never gets the answer.
 - **Dots and Boxes**, **Gomoku**, **Ultimate Tic-Tac-Toe**: «Add Page» puts an empty board with a
