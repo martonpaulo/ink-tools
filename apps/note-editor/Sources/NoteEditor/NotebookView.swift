@@ -172,9 +172,9 @@ struct NotebookView: View {
                             }
                         }
                     }
-                    // The refusal bar may close on its own (#316): the pages slide up, not jump.
-                    .animation(reduceMotion ? nil : .default, value: editor?.refusal)
                 }
+                // The refusal bar may close on its own (#316): the bar and the pages move together.
+                .animation(reduceMotion ? nil : .default, value: editor?.refusal)
         }
         .toolbar(id: ViewerToolbar.id) {
             ViewerToolbar(
