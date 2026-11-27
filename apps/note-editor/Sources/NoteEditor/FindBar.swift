@@ -146,6 +146,14 @@ struct FindBar: View {
     /// The space around the bar's controls, in points, as Safari's find bar.
     static let inset = EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
 
+    /// The keypad's Enter, and Fn-Return.
+    static let enter = KeyEquivalent("\u{3}")
+
+    /// Whether a text field holds text an input method is still composing, which Return confirms.
+    static var composing: Bool {
+        NSApplication.shared.windows.contains { ($0.firstResponder as? NSTextView)?.hasMarkedText() == true }
+    }
+
     @Bindable var text: NoteText
     /// Gives the keyboard focus back to the pages when the bar closes.
     let closed: () -> Void
@@ -157,7 +165,14 @@ struct FindBar: View {
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: Self.fieldWidth)
                 .focused($fieldFocused)
-                .onSubmit { text.next() }
+                // Return or Enter, and with Shift, go to the next and previous match each time, as in
+                // Safari; `onSubmit` fired only on the first Return after a change. A Return that
+                // confirms an input method's text stays the field's.
+                .onKeyPress(keys: [.return, Self.enter]) { press in
+                    guard !Self.composing else { return .ignored }
+                    if press.modifiers.contains(.shift) { text.previous() } else { text.next() }
+                    return .handled
+                }
                 .accessibilityLabel(Copy.findInNote)
             Text(text.status)
                 .foregroundStyle(.secondary)
@@ -205,6 +220,17 @@ struct FindMarks: View {
     let size: CGSize
     @Environment(NoteText.self) private var text: NoteText?
 
+    /// How far a mark reaches past its words' box, in points: a recognized word's box can end
+    /// inside its last letter.
+    static let outset: CGFloat = 3
+
+    /// The mark of a match whose words' box is `box` in page pixels, on a page drawn at `scale`
+    /// points a pixel.
+    static func mark(_ box: CGRect, scale: CGFloat) -> CGRect {
+        CGRect(x: box.minX * scale, y: box.minY * scale, width: box.width * scale, height: box.height * scale)
+            .insetBy(dx: -outset, dy: -outset)
+    }
+
     var body: some View {
         if let text, text.findShown {
             let scale = pixels.width > 0 ? size.width / pixels.width : 0
@@ -212,9 +238,7 @@ struct FindMarks: View {
             ZStack(alignment: .topLeading) {
                 ForEach(Array(text.search.matches.enumerated()), id: \.offset) { _, match in
                     if match.page == page {
-                        let box = CGRect(
-                            x: match.box.minX * scale, y: match.box.minY * scale, width: match.box.width * scale,
-                            height: match.box.height * scale)
+                        let box = Self.mark(match.box, scale: scale)
                         let isCurrent = match == current
                         RoundedRectangle(cornerRadius: 2)
                             .fill(Color(nsColor: .findHighlightColor).opacity(isCurrent ? 0.55 : 0.3))
