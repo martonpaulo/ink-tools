@@ -64,4 +64,103 @@ import Testing
         #expect(editor.pending.isEmpty && editor.refusal != nil)
         #expect(try await row(editor) == plain)
     }
+
+    /// A delete of every element of page 1 on its way, drawn as the page and the thumbnails draw it
+    /// at `width` points on a display of `scale`, leaves no edge of them (#478): inside each element's
+    /// frame widened by 2 points, no pixel is darker than the template alone drawn the same way.
+    @Test(arguments: [
+        (name: "39 % at 1x", width: 1404 * 0.39, scale: 1), (name: "39 % at 2x", width: 1404 * 0.39 / 2, scale: 2),
+        (name: "thumbnail", width: 100, scale: 2),
+    ])
+    func aDeleteOnItsWayLeavesNoEdge(size: (name: String, width: CGFloat, scale: CGFloat)) async throws {
+        let note = try NoteFile(data: original)
+        let pages = PageImages(note: note)
+        await pages.loadElements(0)
+        let items = try #require(pages.selectable(0))
+        let lifted = try #require(await LiftedInk.make(note, page: 0, items: items))
+        let page = try #require(try note.render(page: 0).cgImage())
+        let template = try #require(try note.render(page: 0, ink: false).cgImage())
+        let pixels = CGFloat(page.width) / size.width
+        let points = CGSize(width: size.width, height: CGFloat(page.height) / pixels)
+        let deleting = try Self.grey(page, deletions: [lifted], pixels: pixels, size: points, scale: size.scale)
+        let bare = try Self.grey(template, deletions: [], pixels: pixels, size: points, scale: size.scale)
+        let device = size.scale / pixels
+        for item in items {
+            let frame = item.bounds.insetBy(dx: -2 * pixels, dy: -2 * pixels)
+            let left = max(Int(frame.minX * device), 0)
+            let right = min(Int(frame.maxX * device), deleting.width - 1)
+            let top = max(Int(frame.minY * device), 0)
+            let bottom = min(Int(frame.maxY * device), deleting.height - 1)
+            var darkest = 0
+            for row in top...bottom {
+                for column in left...right {
+                    let at = row * deleting.width + column
+                    darkest = max(darkest, Int(bare.pixels[at]) - Int(deleting.pixels[at]))
+                }
+            }
+            #expect(darkest <= 8, "\(size.name): element \(item.id) leaves an edge \(darkest) greys dark")
+        }
+    }
+
+    /// A selection moved onto the place of a deleted one, both on their way, shows its ink there:
+    /// every hole is cut before any moved ink is drawn (#478).
+    @Test func aMoveOntoADeletedPlaceShowsItsInk() async throws {
+        let note = try NoteFile(data: original)
+        let pages = PageImages(note: note)
+        await pages.loadElements(0)
+        let items = try #require(pages.selectable(0))
+        let (moved, deleted) = (try #require(items.first), try #require(items.last))
+        #expect(moved.id != deleted.id)
+        let lifted = try #require(await LiftedInk.make(note, page: 0, items: [moved]))
+        let gone = try #require(await LiftedInk.make(note, page: 0, items: [deleted]))
+        let shift = CGAffineTransform(
+            translationX: deleted.bounds.midX - moved.bounds.midX, y: deleted.bounds.midY - moved.bounds.midY)
+        let change = LiftedChange(records: [moved.record], lifted: lifted, matrix: PageMatrix(shift))
+        let page = try #require(try note.render(page: 0).cgImage())
+        let template = try #require(try note.render(page: 0, ink: false).cgImage())
+        let pixels: CGFloat = 2
+        let points = CGSize(width: CGFloat(page.width) / pixels, height: CGFloat(page.height) / pixels)
+        let drawn = try Self.grey(
+            page, changes: [change], deletions: [gone], pixels: pixels, size: points, scale: 1)
+        let bare = try Self.grey(template, deletions: [], pixels: pixels, size: points, scale: 1)
+        // Where the moved ink lies on the deleted selection's old place.
+        let landed = moved.bounds.applying(shift).intersection(deleted.bounds)
+        #expect(!landed.isEmpty)
+        var darkest = 0
+        for row in Int(landed.minY / pixels)..<Int(landed.maxY / pixels) {
+            for column in Int(landed.minX / pixels)..<Int(landed.maxX / pixels) {
+                let at = row * drawn.width + column
+                darkest = max(darkest, Int(bare.pixels[at]) - Int(drawn.pixels[at]))
+            }
+        }
+        #expect(darkest > 64, "the moved ink is \(darkest) greys dark at its new place")
+    }
+
+    /// `image` drawn at `size` points on a display of `scale` with `changes` and `deletions` over
+    /// it, as grey bytes.
+    static func grey(
+        _ image: CGImage, changes: [LiftedChange] = [], deletions: [LiftedInk], pixels: CGFloat, size: CGSize,
+        scale: CGFloat
+    ) throws -> PageBitmap {
+        let view = ZStack {
+            Image(decorative: image, scale: 1).resizable().interpolation(.high)
+            Canvas { context, _ in
+                PendingEdits.draw(
+                    changes: changes, deletions: deletions, insertions: [], pixels: pixels, in: &context)
+            }
+        }
+        .frame(width: size.width, height: size.height)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = scale
+        let drawn = try #require(renderer.cgImage)
+        var bytes = [UInt8](repeating: 0, count: drawn.width * drawn.height)
+        bytes.withUnsafeMutableBytes { buffer in
+            let context = CGContext(
+                data: buffer.baseAddress, width: drawn.width, height: drawn.height, bitsPerComponent: 8,
+                bytesPerRow: drawn.width, space: CGColorSpaceCreateDeviceGray(),
+                bitmapInfo: CGImageAlphaInfo.none.rawValue)
+            context?.draw(drawn, in: CGRect(x: 0, y: 0, width: drawn.width, height: drawn.height))
+        }
+        return PageBitmap(width: drawn.width, height: drawn.height, pixels: bytes)
+    }
 }

@@ -2,12 +2,12 @@ import NoteEditorKit
 import SwiftUI
 
 /// The element edits on their way to the tablet, drawn over a page or its thumbnail as the page
-/// will look once the tablet applies them (#314, #476): each moved or transformed selection's ink
-/// at its new place and the template where it was, each delete's template, each insert's picture
-/// or text at its box.
+/// will look once the tablet applies them (#314, #476): the template where each moved, transformed
+/// or deleted selection was, each moved or transformed selection's ink at its new place, each
+/// insert's picture or text at its box.
 enum PendingEdits {
-    /// Draws `changes`, then `deletions`, then `insertions` in `context`, whose points are
-    /// `pixels` page pixels each.
+    /// Draws the holes of `changes` and `deletions`, then the ink of `changes`, then `insertions`
+    /// in `context`, whose points are `pixels` page pixels each.
     static func draw(
         changes: [LiftedChange], deletions: [LiftedInk], insertions: [(rect: EditRect, image: CGImage)],
         pixels: CGFloat, in context: inout GraphicsContext
@@ -16,20 +16,46 @@ enum PendingEdits {
             CGRect(
                 x: rect.minX / pixels, y: rect.minY / pixels, width: rect.width / pixels, height: rect.height / pixels)
         }
+        // Every hole first, so a hole never covers another selection's ink at its new place.
+        for lifted in changes.map(\.lifted) + deletions {
+            hole(lifted, pixels: pixels, in: context)
+        }
         for change in changes {
-            context.draw(Image(decorative: change.lifted.hole, scale: 1), in: points(change.lifted.frame))
             var mapped = context
             mapped.scaleBy(x: 1 / pixels, y: 1 / pixels)
             mapped.concatenate(change.matrix.affine)
             mapped.draw(Image(decorative: change.lifted.ink, scale: 1), in: change.lifted.frame)
         }
-        for lifted in deletions {
-            context.draw(Image(decorative: lifted.hole, scale: 1), in: points(lifted.frame))
-        }
         for (rect, image) in insertions {
             let box = CGRect(x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top)
             context.draw(Image(decorative: image, scale: 1), in: points(box))
         }
+    }
+
+    /// How far a hole reaches past the element's ink, in points: the page under it is smoothed when
+    /// drawn small, so its edge spreads past the ink by a display pixel or more (#478).
+    static let holeMargin: CGFloat = 2
+
+    /// The template where `lifted` was, cut by its elements' shapes widened by `holeMargin`.
+    /// shortcut: a neighbour's ink within that margin of a lifted element is covered too; it shows
+    /// only until the tablet's copy comes back.
+    static func hole(_ lifted: LiftedInk, pixels: CGFloat, in context: GraphicsContext) {
+        var page = context
+        page.scaleBy(x: 1 / pixels, y: 1 / pixels)
+        let widened = min(holeMargin * pixels, LiftedInk.reach - LiftedInk.edge)
+        page.clipToLayer { mask in
+            for item in lifted.items {
+                let (path, width) = LiftedInk.shape(item, widened: widened)
+                if let width {
+                    mask.stroke(
+                        Path(path), with: .color(.black),
+                        style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
+                } else {
+                    mask.fill(Path(path), with: .color(.black))
+                }
+            }
+        }
+        page.draw(Image(decorative: lifted.template, scale: 1), in: lifted.templateFrame)
     }
 }
 

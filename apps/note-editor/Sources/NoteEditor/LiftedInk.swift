@@ -11,13 +11,21 @@ nonisolated struct LiftedInk: @unchecked Sendable {
     let frame: CGRect
     /// The selection's ink, see-through elsewhere.
     let ink: CGImage
-    /// The page's template where the selection was, see-through elsewhere.
-    let hole: CGImage
+    /// The page's template in `frame` widened by `reach`, inside the page, opaque: the hole is cut
+    /// from it where it is drawn, as wide as the size it is drawn at needs (#478).
+    let template: CGImage
+    /// Where `template` lies on the page, in page pixels.
+    let templateFrame: CGRect
+    /// The lifted elements, whose shapes cut the hole.
+    let items: [Selectable]
 
     /// The ink a stroke's path is drawn with when its box gives no width, in page pixels.
     static let thinnestStroke: CGFloat = 4
     /// Room around a stroke's path for anti-aliasing, in page pixels.
     static let edge: CGFloat = 3
+    /// How far the hole may reach past the selection's frame, in page pixels: 2 points of the page
+    /// list's thumbnail, the smallest drawing of a page, are about 25.
+    static let reach: CGFloat = 48
 
     /// Lifts `items` off page `index` of `note`; nil when the page cannot be drawn.
     /// shortcut: a stroke's mask is its path at the width its box leaves around it, so a neighbour's
@@ -30,9 +38,25 @@ nonisolated struct LiftedInk: @unchecked Sendable {
         let frame = items.map { $0.bounds.insetBy(dx: -edge, dy: -edge) }.reduce(CGRect.null) { $0.union($1) }
             .intersection(page).integral
         guard !frame.isEmpty, let mask = mask(items, frame: frame) else { return nil }
-        guard let ink = cut(drawn, mask: mask, frame: frame), let hole = cut(template, mask: mask, frame: frame)
+        let around = frame.insetBy(dx: -reach, dy: -reach).intersection(page).integral
+        let opaque = [UInt8](repeating: .max, count: Int(around.width) * Int(around.height))
+        guard let ink = cut(drawn, mask: mask, frame: frame), let hole = cut(template, mask: opaque, frame: around)
         else { return nil }
-        return LiftedInk(frame: frame, ink: ink, hole: hole)
+        return LiftedInk(frame: frame, ink: ink, template: hole, templateFrame: around, items: items)
+    }
+
+    /// One element's share of the hole, in page pixels: a stroke's path and the width it is
+    /// stroked at, or an area's frame (width nil) filled, each `widened` past the element's ink.
+    static func shape(_ item: Selectable, widened: CGFloat = 0) -> (path: CGPath, width: CGFloat?) {
+        if item.isArea || item.points.count < 2 {
+            // A frame's own border may stand a pixel or two outside its corners.
+            let grown = edge + widened
+            return (CGPath(rect: item.bounds.insetBy(dx: -grown, dy: -grown), transform: nil), nil)
+        }
+        let path = CGMutablePath()
+        path.addLines(between: item.points)
+        let spread = min(item.bounds.width - path.boundingBox.width, item.bounds.height - path.boundingBox.height)
+        return (path, max(spread, thinnestStroke) + 2 * (edge + widened))
     }
 
     /// One byte per pixel of `frame`, 255 where the selection is: each stroke's path stroked at
@@ -55,18 +79,14 @@ nonisolated struct LiftedInk: @unchecked Sendable {
             context.setLineCap(.round)
             context.setLineJoin(.round)
             for item in items {
-                if item.isArea || item.points.count < 2 {
-                    // A frame's own border may stand a pixel or two outside its corners.
-                    context.fill(item.bounds.insetBy(dx: -edge, dy: -edge))
-                    continue
-                }
-                let path = CGMutablePath()
-                path.addLines(between: item.points)
-                let spread = min(
-                    item.bounds.width - path.boundingBox.width, item.bounds.height - path.boundingBox.height)
-                context.setLineWidth(max(spread, thinnestStroke) + 2 * edge)
+                let (path, width) = shape(item)
                 context.addPath(path)
-                context.strokePath()
+                if let width {
+                    context.setLineWidth(width)
+                    context.strokePath()
+                } else {
+                    context.fillPath()
+                }
             }
             return true
         }
