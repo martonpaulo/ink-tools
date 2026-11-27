@@ -17,6 +17,7 @@ const READY: EditorState = {
   rect: {left: 100, top: 200, right: 300, bottom: 400},
   opened: null,
   preview: '/w/editor-1.png',
+  previewKept: false,
   guided: false,
   busy: null,
   draw: null,

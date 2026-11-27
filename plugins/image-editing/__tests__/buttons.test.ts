@@ -4,7 +4,7 @@ import {
   BUTTON_TYPE_LASSO,
   BUTTON_TYPE_SIDEBAR,
   ButtonDeps,
-  EDIT_DATA_PICTURE,
+  EDIT_DATA_ANY,
   registerEditorButton,
   SHOW_FULL_VIEW,
 } from '../src/buttons';
@@ -23,7 +23,7 @@ function fakeDeps(held: readonly number[] = []) {
   return {deps, logs};
 }
 
-test('the plugin registers one lasso button, «Image Editing», for pictures, with a full view', async () => {
+test('the plugin registers one lasso button, «Image Editing», for any lasso, with a full view (#522)', async () => {
   const {deps} = fakeDeps();
   expect(await registerEditorButton(deps)).toEqual(ok(true));
   const register = deps.register as jest.Mock;
@@ -34,7 +34,7 @@ test('the plugin registers one lasso button, «Image Editing», for pictures, wi
     {
       id: EDITOR_BUTTON_ID,
       name: 'Image Editing',
-      editDataTypes: [EDIT_DATA_PICTURE],
+      editDataTypes: [...EDIT_DATA_ANY],
       showType: SHOW_FULL_VIEW,
       icon: 'file:///editor.png',
     },

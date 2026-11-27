@@ -25,6 +25,7 @@ import {
   lassoImage,
   NO_LASSO_CODE,
   PenPoint,
+  PICTURE_TYPE,
   recycleElement,
   Result,
 } from '@ink-tools/sn-adapter/official';
@@ -37,6 +38,7 @@ import {
   Marks,
   onePicture,
   pictureAt,
+  PictureElement,
   removeFile,
   runEdit,
   sizeOf,
@@ -106,8 +108,13 @@ export type EditorState =
       rect: Rect;
       /** The note and page it is on; null when the host did not answer at the open. */
       opened: Where | null;
-      /** The lasso preview shown in the view. */
+      /** The picture shown in the view: a lasso preview, or the state an edit put on the page. */
       preview: string;
+      /**
+       * The preview is a state file that Image Editing's history keeps, shown after an edit on a
+       * picture with other elements in its lasso (#522); the editor never removes it.
+       */
+      previewKept: boolean;
       /** The lasso held pen marks with the picture when the view opened. */
       guided: boolean;
       /** The edit running now; the buttons wait. */
@@ -258,6 +265,12 @@ export function onEditorState(
 const describe = (what: string, r: {code: number; message: string}) =>
   `${what}: ${r.code} ${r.message}`;
 
+/** Whether a lassoed element is a picture with its rect. */
+const isPicture = (element: object): element is PictureElement => {
+  const each = element as Partial<PictureElement>;
+  return each.type === PICTURE_TYPE && each.picture?.rect !== undefined;
+};
+
 /** No element is lassoed (#248). */
 const NO_LASSO = 'no lasso';
 
@@ -282,9 +295,15 @@ async function readLasso(
       return {rect: {...alone.picture.rect}, guided: false};
     }
     const split = splitGuides(lassoed.value, {none: '', mixed: ''});
-    return typeof split === 'string'
-      ? copy['press.notPicture']
-      : {rect: {...split.picture}, guided: true};
+    if (typeof split !== 'string') {
+      return {rect: {...split.picture}, guided: true};
+    }
+    // One picture with shapes, text or other elements over it, as the owner's photo over a rounded
+    // rectangle (#522): the editor opens on it, and each edit takes it out of its lasso.
+    const pictures = lassoed.value.filter(isPicture);
+    return pictures.length === 1
+      ? {rect: {...pictures[0].picture.rect}, guided: false}
+      : copy['press.notPicture'];
   } finally {
     await Promise.all(lassoed.value.map(element => deps.recycle(element)));
   }
@@ -322,7 +341,7 @@ export async function openEditor(
   setState({phase: 'opening'});
   if (before.phase === 'ready') {
     deps.log('editor: pressed again: reading the lasso again');
-    await deps.remove(before.preview);
+    await dropPreview(before, deps);
     await dropStrokes(before, deps);
   }
   deps.log('editor: open');
@@ -356,6 +375,7 @@ export async function openEditor(
     ...read,
     opened,
     preview,
+    previewKept: false,
     busy: null,
     draw: null,
     marks: [],
@@ -509,7 +529,7 @@ async function runOnPicture(
   );
   if (PAGE_WIDE.includes(edit.id)) {
     setState({phase: 'idle'});
-    await deps.remove(at.preview);
+    await dropPreview(at, deps);
     closeView();
     if (message !== null) {
       deps.toast(message);
@@ -519,7 +539,13 @@ async function runOnPicture(
   await showAfter({...at, busy: edit.id}, done, message, deps);
 }
 
-/** Shows the picture again after an edit: its new place, a fresh preview, the outcome's line. */
+/**
+ * Shows the picture again after an edit: its new place, the picture now on the page, the outcome's
+ * line. With the picture alone in its lasso that is a fresh lasso preview. With other elements in
+ * it, the preview would draw them in, squashed into the picture's frame, as after a Mirror whose
+ * lasso again took the pictures beside it (measured on the Manta, 2026-11-27, #522): the view then
+ * shows the state the edit wrote.
+ */
 async function showAfter(
   at: Ready,
   done: Done | PageDone | null,
@@ -528,17 +554,19 @@ async function showAfter(
 ): Promise<void> {
   const edited = done !== null && done.kind === 'edited' ? done : null;
   const rect = edited?.rect ? {...edited.rect} : at.rect;
-  let preview = at.preview;
-  if (edited && typeof (await relasso({...at, rect}, deps)) !== 'string') {
-    const fresh = await readPreview(deps);
+  let {preview, previewKept} = at;
+  const found = edited ? await relasso({...at, rect}, deps) : null;
+  if (edited && found !== null && typeof found !== 'string') {
+    const fresh = found.alone ? await readPreview(deps) : edited.path ?? null;
     if (fresh !== null) {
-      await deps.remove(at.preview);
+      await dropPreview(at, deps);
       preview = fresh;
+      previewKept = !found.alone;
     }
   }
   // An edit deletes the marks lassoed with the picture, so the next pen edit draws in the view.
   const guided = at.guided && !edited;
-  setState({...at, rect, preview, guided, busy: null, strokes: [], message});
+  setState({...at, rect, preview, previewKept, guided, busy: null, strokes: [], message});
 }
 
 /** A style picked in the grid (#133) ran on the picture: show it again. */
@@ -616,6 +644,13 @@ async function renderStroke(deps: EditorDeps): Promise<void> {
     return;
   }
   setState({...now, strokes: [...now.strokes, dest], message: null});
+}
+
+/** The preview of `at`, removed, unless it is a state the history keeps. */
+async function dropPreview(at: Ready, deps: EditorDeps): Promise<void> {
+  if (!at.previewKept) {
+    await deps.remove(at.preview);
+  }
 }
 
 /** The stroke images of `at`, removed: nothing of them stays in the working folder. */
@@ -697,7 +732,7 @@ export async function closeEditor(
   }
   setState({phase: 'idle'});
   if (at.phase === 'ready') {
-    await deps.remove(at.preview);
+    await dropPreview(at, deps);
     await dropStrokes(at, deps);
   }
   closeView();

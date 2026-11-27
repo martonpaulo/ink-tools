@@ -212,7 +212,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   [#226](https://github.com/martonpaulo/ink-tools/issues/226), [#134](https://github.com/martonpaulo/ink-tools/issues/134)]. Image Editing's editor draws Erase and Crop marks that way; the
   marks drawn on the page and lassoed with the picture stay as the fallback.
 - A lasso button whose `editDataTypes` do not match the lasso stays in the «⋯» list, in grey, and
-  does nothing; it is not hidden [measured, 2026-11-16, a lassoed text box].
+  does nothing; it is not hidden [measured, 2026-11-16, a lassoed text box]. A button for pictures
+  alone (`[2]`) is grey for a lasso of a picture with ink over it (`trailNum 6, bitmapNum 1`), so
+  every type the lasso holds must be listed [measured, Image Editing 0.1.0 beta 17, Manta,
+  2026-11-27, [#522](https://github.com/martonpaulo/ink-tools/issues/522)]; that a button for every
+  type (`[0, 1, 2, 3, 4, 5]`) is live for that lasso is [unverified].
 - A plugin's declared permissions stay «Ask Every Time» until the plugin calls
   `requestPermission`: no dialog shows without that call, and every file call fails. Settings ›
   Apps › Plugins › the plugin › Permissions sets each one to Allow, Ask Every Time or Don't Allow

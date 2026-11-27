@@ -134,6 +134,7 @@ const IMAGE_EDITOR: ImageEditorState = {
   rect: {left: 100, top: 200, right: 1060, bottom: 1070},
   opened: null,
   preview: '/w/editor-1.png',
+  previewKept: false,
   guided: false,
   busy: null,
   draw: null,

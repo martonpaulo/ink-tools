@@ -6,7 +6,9 @@ holds only what is specific here. A `CLAUDE.md` symlink points at this file.
 ## Status
 
 **Built, device round pending** ([#136](https://github.com/martonpaulo/supernote-tools/issues/136)): lasso one picture on the page and press
-**Image Editing**, the plugin's one lasso button ([#226](https://github.com/martonpaulo/ink-tools/issues/226), `src/buttons.ts`), also a note
+**Image Editing**, the plugin's one lasso button ([#226](https://github.com/martonpaulo/ink-tools/issues/226), `src/buttons.ts`), live for a lasso of
+any data type, since a row for pictures alone stays grey when ink lies over the picture
+([#522](https://github.com/martonpaulo/ink-tools/issues/522)), also a note
 toolbar button the owner can pin, which with nothing lassoed shows ui-kit's Needs state
 ([#248](https://github.com/martonpaulo/ink-tools/issues/248)); its full view,
 the editor (`src/editor.ts`, `src/EditorView.tsx`), shows the picture and every edit switched on in
@@ -17,7 +19,8 @@ lassoes the picture again by its rect, runs the same `pressEdit` a lasso row ran
 status line in place of the toast, and shows the picture again from a fresh lasso preview. The edit
 takes the picture whose rect matches, within the registry's `frameTolerance`, out of whatever that
 lasso holds; with ink or shapes in it, the pixels come from the state Image Editing put on the page,
-and a picture never edited before is refused with why, as is a deleted picture or a turned page
+and a picture never edited before is refused with why, as is a deleted picture or a turned page;
+after such an edit the view shows the state it wrote, not a lasso preview with the ink drawn in
 ([#522](https://github.com/martonpaulo/ink-tools/issues/522)).
 **Crop** ([#132](https://github.com/martonpaulo/ink-tools/issues/132)) and **Erase** ([#134](https://github.com/martonpaulo/ink-tools/issues/134)) take the pen in the editor: the marks
 drawn over the preview, mapped to page pixels, go through `cropBox` and `eraseMarks`. A pen move

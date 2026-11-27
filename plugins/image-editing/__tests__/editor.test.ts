@@ -353,6 +353,37 @@ describe('the editor finds its picture again by its rect, within the measured to
     expect(target).toEqual(RECT);
   });
 
+  test('a picture lassoed with a shape over it opens the editor on the picture (#522)', async () => {
+    const {deps} = fakeDeps([{type: 700}, picture(), stroke]);
+    await openEditor(deps);
+    expect(editorState()).toMatchObject({phase: 'ready', rect: RECT, guided: false});
+  });
+
+  test('after an edit whose lasso holds more than the picture, the view shows the state it wrote, and keeps it at Close', async () => {
+    const lassoed: object[] = [picture()];
+    const f = fakeDeps(lassoed, {
+      kind: 'edited',
+      edit: 'mirror',
+      ms: 5,
+      rect: MOVED,
+      path: '/w/9-mirror.png',
+    });
+    await openEditor(f.deps);
+    // The lasso after the edit took the pictures beside it too (measured on the Manta, 2026-11-27).
+    lassoed.push(picture({left: 400, top: 200, right: 600, bottom: 400}), stroke);
+    lassoed.splice(0, 1, picture(MOVED));
+    await runEditorEdit(editOf('mirror'), close, f.deps);
+    expect(editorState()).toMatchObject({
+      rect: MOVED,
+      preview: '/w/9-mirror.png',
+      previewKept: true,
+      message: null,
+    });
+    expect(f.removed).toEqual(['/w/editor-0.png']);
+    await closeEditor(close, f.deps);
+    expect(f.removed).toEqual(['/w/editor-0.png']);
+  });
+
   test('Styles with ink on the picture says why: its grid would draw the ink in', async () => {
     const lassoed: object[] = [picture()];
     const f = fakeDeps(lassoed);

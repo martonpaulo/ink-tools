@@ -125,10 +125,18 @@ export type EditOptions = StyleOptions & {box?: Box; marks?: Marks; target?: Rec
 
 /**
  * What a press did, for the log and the tests. An edit gives the picture's new place on the page,
- * so the editor view lassoes it again for the next edit (#226).
+ * so the editor view lassoes it again for the next edit (#226), and the PNG it put there, which the
+ * view shows when the lasso holds more than the picture (#522).
  */
 export type Done =
-  | {kind: 'edited'; edit: EditId | StyleId; ms: number; quad?: string; rect?: Rect}
+  | {
+      kind: 'edited';
+      edit: EditId | StyleId;
+      ms: number;
+      quad?: string;
+      rect?: Rect;
+      path?: string;
+    }
   | {kind: 'nothing'; why: string}
   | {kind: 'failed'; why: string};
 
@@ -413,8 +421,8 @@ async function pixelEdit(
     await save(change, work, deps);
     const {quad} = edited.value;
     return quad === undefined
-      ? {kind: 'edited', edit, ms: 0, rect}
-      : {kind: 'edited', edit, ms: 0, quad, rect};
+      ? {kind: 'edited', edit, ms: 0, rect, path: resultPath}
+      : {kind: 'edited', edit, ms: 0, quad, rect, path: resultPath};
   } finally {
     for (const path of [preview.value, originalPath, resultPath]) {
       if (path && !keep.has(path)) {
@@ -446,7 +454,7 @@ async function putBack(
     return {kind: 'failed', why: why('modifyPageElements', replaced)};
   }
   await save(step.after(rect, deps.now()), work, deps);
-  return {kind: 'edited', edit, ms: 0, rect};
+  return {kind: 'edited', edit, ms: 0, rect, path: step.show.path};
 }
 
 function replace(

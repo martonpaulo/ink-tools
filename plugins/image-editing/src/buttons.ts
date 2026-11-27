@@ -1,13 +1,18 @@
 /**
- * Image Editing's one lasso button (#226): «Image Editing», shown when the lasso holds a picture,
- * with `showType` 1, so the host opens the plugin's full view, the editor, where every edit is a
- * button. The builds before it registered one row per edit, which crowded the lasso menu.
+ * Image Editing's one lasso button (#226): «Image Editing», with `showType` 1, so the host opens the
+ * plugin's full view, the editor, where every edit is a button. The builds before it registered one
+ * row per edit, which crowded the lasso menu.
+ *
+ * The row takes every lasso data type: a row registered for pictures alone stayed grey for a lasso
+ * of a picture with ink over it (measured on the Manta, 2026-11-27, #522), so the editor's picture
+ * with ink or shapes in its lasso could not be reached. The editor itself says when the lasso holds
+ * no picture.
  */
 import {Image} from 'react-native';
 import {
   BUTTON_TYPE_LASSO,
   BUTTON_TYPE_SIDEBAR,
-  EDIT_DATA_PICTURE,
+  EDIT_DATA_ANY,
   registerButton,
   Result,
   SHOW_FULL_VIEW,
@@ -17,7 +22,7 @@ import {copy} from './copy';
 import {EDITOR_BUTTON_ID, EDITOR_TOOLBAR_ID, LEGACY_BUTTON_IDS} from './edits';
 
 // sn-plugin-lib's button values, owned by sn-adapter (#295).
-export {BUTTON_TYPE_LASSO, BUTTON_TYPE_SIDEBAR, EDIT_DATA_PICTURE, SHOW_FULL_VIEW};
+export {BUTTON_TYPE_LASSO, BUTTON_TYPE_SIDEBAR, EDIT_DATA_ANY, SHOW_FULL_VIEW};
 
 export type ButtonDeps = {
   register: typeof registerButton;
@@ -51,7 +56,7 @@ export async function registerEditorButton(
   const result = await deps.register(BUTTON_TYPE_LASSO, ['NOTE'], {
     id: EDITOR_BUTTON_ID,
     name: copy.title,
-    editDataTypes: [EDIT_DATA_PICTURE],
+    editDataTypes: [...EDIT_DATA_ANY],
     showType: SHOW_FULL_VIEW,
     icon: deps.icon,
   });
