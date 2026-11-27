@@ -248,5 +248,43 @@ class SiteCaptureTest(Fixture):
         self.assertNotIn("--allow-notes", out.getvalue())
 
 
+class SocialCardTest(Fixture):
+    URL = "https://tools.example.com/social-card.jpg"
+
+    def card_site(self, card: bytes, page_metas: str) -> None:
+        self.write(str(site_media.CARD), card)
+        self.write(str(site_media.SITE_CARD), card)
+        self.write("site/CNAME", "tools.example.com\n")
+        self.write("site/index.html", page_metas)
+        self.write("site/404.html", '<meta name="robots" content="noindex">\n')
+
+    def metas(self, url: str) -> str:
+        return (f'<meta property="og:image" content="{url}">\n'
+                f'<meta name="twitter:image" content="{url}">\n')
+
+    def test_a_good_card_passes(self) -> None:
+        self.card_site(jpeg(1200, 630), self.metas(self.URL))
+        self.assertEqual(site_media.check_social_card(self.root), [])
+
+    def test_a_wrong_size_or_heavy_card_fails(self) -> None:
+        self.card_site(jpeg(1200, 600, padding=60_000) + b"\x00" * 250_000, self.metas(self.URL))
+        problems = site_media.check_social_card(self.root)
+        self.assertTrue(any("not 1200 x 630" in p for p in problems), problems)
+        self.assertTrue(any("over 300000" in p for p in problems), problems)
+
+    def test_a_stale_site_copy_fails(self) -> None:
+        self.card_site(jpeg(1200, 630), self.metas(self.URL))
+        self.write(str(site_media.SITE_CARD), jpeg(1200, 630, padding=4))
+        self.assertTrue(any("differs" in p for p in site_media.check_social_card(self.root)))
+
+    def test_an_indexed_page_without_the_card_fails(self) -> None:
+        self.card_site(jpeg(1200, 630), '<meta property="og:image" content="https://tools.example.com/old.jpg">\n')
+        problems = site_media.check_social_card(self.root)
+        self.assertEqual(problems, [f"site/index.html: {key} must be {self.URL}" for key in site_media.CARD_METAS])
+
+    def test_the_repository_card_passes(self) -> None:
+        self.assertEqual(site_media.check_social_card(REPO), [])
+
+
 if __name__ == "__main__":
     unittest.main()

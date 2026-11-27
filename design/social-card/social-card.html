@@ -1,76 +1,100 @@
 <!doctype html>
 <!--
-  Ink Tools social card (#371, Workbench public-pages.md section 5, skill-deck #261).
-  Render: scripts/social-card.sh, which writes site/social-card.jpg (1200x630, JPEG q92, 4:4:4).
-  Pattern A: the visual is a redrawing of the tablet page with a lassoed word and the Lasso Actions
-  toolbar. Ground: an ink-blue gradient, for ink on paper.
+  Ink Tools social card, 1200x630 (#462, first card #371; Workbench public-pages.md section 5).
+  Render: bash scripts/social-card.sh, which writes design/social-card/social-card.jpg and its copy
+  site/social-card.jpg, the og:image and twitter:image of every page.
+  Model: the retired picture plugin's card (its archived repository, design/social-card/): warm paper, a pill,
+  the name, a two-line benefit, the icon and address; on the right a plain dark bezel (no brand
+  marks) cropped at the bottom edge.
+  Colours: the tokens in :root, the e-ink palette (near-black ink on warm paper with greys, no
+  other colour and no gradient).
+  The visual: a handwritten «soup» in a lasso, the Lasso Actions buttons under it, and the picture
+  Insert Sticker put in. tureen.svg: Openclipart 185227 «tureen» by johnny_automatic, CC0, from
+  Dorothy Daly's «Italian Cooking» (not in copyright); unchanged. See NOTICE.md.
+  The icon is design/icon.svg as an image, since a file:// page loads an SVG only as an image.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<title>Ink Tools social card</title>
 <style>
   @font-face { font-family: "Gabarito"; src: url("../fonts/Gabarito[wght].ttf"); font-weight: 400 900; }
   @font-face { font-family: "Figtree"; src: url("../fonts/Figtree[wght].ttf"); font-weight: 300 900; }
+  @font-face { font-family: "Caveat"; font-weight: 600; src: url("fonts/caveat-latin-600-normal.woff2") format("woff2"); }
+  :root {
+    --ink: #1c1c1a;
+    --ink-soft: #4a4945;
+    --paper: #ece8df;
+    --screen: #f8f6f1;
+    --rule: #dcd8cf;
+    --bezel: #262624;
+    --shadow-far: rgba(28, 28, 26, .22);
+    --shadow-near: rgba(28, 28, 26, .14);
+  }
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
-  body {
-    position: relative;
-    background: radial-gradient(circle at 78% 30%, rgba(140, 184, 230, 0.35), transparent 55%),
-      linear-gradient(135deg, #10263f 0%, #1e4670 55%, #2f6aa3 100%);
-    font-family: "Figtree", sans-serif;
-    color: #ffffff;
+  body { position: relative; font-family: "Figtree", sans-serif; color: var(--ink); background: var(--paper); }
+  .copy {
+    position: absolute; left: 96px; top: 0; bottom: 0; width: 480px;
+    display: flex; flex-direction: column; justify-content: center;
   }
-  .copy { position: absolute; left: 96px; top: 50%; width: 440px; transform: translateY(-50%); }
   .eyebrow {
-    display: inline-block; padding: 8px 16px; border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16); font-size: 19px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase;
+    align-self: flex-start;
+    font-size: 19px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    padding: 9px 16px; border-radius: 999px; border: 2px solid var(--ink);
   }
-  h1 { margin: 24px 0 16px; font-family: "Gabarito", sans-serif; font-weight: 700; font-size: 88px; line-height: 1; }
-  .promise { margin: 0 0 28px; font-size: 38px; font-weight: 500; line-height: 1.2; }
-  .domain { font-size: 24px; font-weight: 500; color: #d6e6f6; }
-  .tablet {
-    position: absolute; left: 640px; top: 70px; width: 520px; height: 640px;
-    border-radius: 22px; background: #efefef;
-    box-shadow: 0 40px 80px rgba(15, 23, 42, 0.30), 0 8px 20px rgba(15, 23, 42, 0.12);
+  h1 { font-family: "Gabarito", sans-serif; font-weight: 700; font-size: 88px; line-height: 1; margin: 28px 0 20px; letter-spacing: -.01em; }
+  .promise { font-size: 38px; font-weight: 500; line-height: 1.2; margin: 0; }
+  .domain { display: flex; align-items: center; gap: 14px; margin-top: 36px; font-size: 24px; font-weight: 500; color: var(--ink-soft); }
+  .domain img { width: 40px; height: 40px; flex: none; }
+  .device {
+    position: absolute; left: 660px; top: 52px; width: 452px; height: 640px;
+    box-sizing: border-box; padding: 20px 20px 0;
+    background: var(--bezel); border-radius: 30px 30px 0 0;
+    box-shadow: 0 30px 60px var(--shadow-far), 0 6px 16px var(--shadow-near);
   }
-  .lines { position: absolute; inset: 70px 40px auto 40px; }
-  .lines div { height: 2px; background: #c9c9c9; margin-bottom: 54px; }
-  .ink { position: absolute; left: 70px; top: 120px; }
-  .lasso {
-    position: absolute; left: 52px; top: 104px; width: 236px; height: 110px;
-    border: 3px dashed #383838; border-radius: 8px;
+  .screen {
+    position: relative; height: 100%; overflow: hidden;
+    background-color: var(--screen);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 47px, var(--rule) 47px 48px);
+    background-position: 0 30px;
+    border-radius: 10px 10px 0 0;
   }
+  .word {
+    position: absolute; left: 0; right: 0; top: 30px; text-align: center;
+    font-family: "Caveat", cursive; font-weight: 600; font-size: 104px; line-height: 1;
+    transform: rotate(-3deg);
+  }
+  .lasso { position: absolute; left: 88px; top: 26px; width: 236px; height: 124px; stroke: var(--ink-soft); }
   .toolbar {
-    position: absolute; left: 52px; top: 232px; display: flex; gap: 0;
-    background: #ffffff; border: 2px solid #000000; border-radius: 10px; overflow: hidden;
-    color: #000000; font-size: 20px; font-weight: 600;
+    position: absolute; left: 50%; top: 164px; transform: translateX(-50%); display: flex;
+    background: var(--screen); border: 2px solid var(--ink); border-radius: 10px; overflow: hidden;
+    font-size: 18px; font-weight: 600; white-space: nowrap;
   }
-  .toolbar span { padding: 14px 18px; border-right: 2px solid #000000; }
+  .toolbar span { padding: 11px 14px; border-right: 2px solid var(--ink); }
+  .toolbar span:first-child { background: var(--ink); color: var(--screen); }
   .toolbar span:last-child { border-right: 0; }
-  .inserted { position: absolute; left: 70px; top: 330px; width: 130px; height: 130px; }
+  .picture { position: absolute; left: 76px; top: 240px; width: 248px; padding: 6px; background: var(--screen); }
 </style>
 </head>
 <body>
   <div class="copy">
-    <span class="eyebrow">Free · Open source</span>
+    <span class="eyebrow">Supernote tools · Open source</span>
     <h1>Ink Tools</h1>
-    <p class="promise">Plugins and Mac tools for your Supernote</p>
-    <span class="domain">inktools.martonpaulo.com</span>
+    <p class="promise">Plugins and Mac tools<br>for your Supernote.</p>
+    <div class="domain">
+      <img src="../icon.svg" alt="">
+      inktools.martonpaulo.com
+    </div>
   </div>
-  <div class="tablet" aria-hidden="true">
-    <div class="lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-    <svg class="ink" width="200" height="80" viewBox="0 0 200 80">
-      <path d="M32 34 C22 24 8 32 10 46 C12 58 28 58 32 44 L33 55 M42 30 L42 76 M42 38 C48 26 64 28 64 42 C64 56 48 58 42 48 M74 30 L74 76 M74 38 C80 26 96 28 96 42 C96 56 80 58 74 48 M108 8 L108 55 M120 44 L144 44 C144 30 122 28 120 44 C118 58 138 60 146 52"
-        fill="none" stroke="#000000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <div class="lasso"></div>
-    <div class="toolbar"><span>Insert Sticker</span><span>Translate</span><span>Definition</span></div>
-    <svg class="inserted" viewBox="0 0 130 130">
-      <path d="M65 34 C40 20 14 36 18 70 C22 104 48 122 65 112 C82 122 108 104 112 70 C116 36 90 20 65 34 Z"
-        fill="none" stroke="#000000" stroke-width="5" stroke-linejoin="round"/>
-      <path d="M65 34 C64 22 70 12 80 8" fill="none" stroke="#000000" stroke-width="5" stroke-linecap="round"/>
-      <path d="M70 22 C82 10 98 14 102 22 C90 30 78 28 70 22 Z" fill="none" stroke="#000000" stroke-width="4"/>
-    </svg>
+  <div class="device" aria-hidden="true">
+    <div class="screen">
+      <div class="word">soup</div>
+      <svg class="lasso" viewBox="0 0 236 124" fill="none" stroke-width="2.5" stroke-dasharray="9 7" stroke-linecap="round">
+        <path d="M30 22C70 4 170 2 212 20c24 12 22 62 2 82-34 22-150 22-190 2C2 90 0 40 30 22z"/>
+      </svg>
+      <div class="toolbar"><span>Insert Sticker</span><span>Translate</span><span>Definition</span></div>
+      <img class="picture" src="tureen.svg" alt="">
+    </div>
   </div>
 </body>
 </html>

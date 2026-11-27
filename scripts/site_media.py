@@ -38,6 +38,12 @@ WRITER = f"written by scripts/site_media.py from {SHOTS}"
 KINDS = ("picture", "video")
 SOURCES = ("tablet", "mac-render")
 POSTER_SUFFIX = "-poster.jpg"
+CARD = Path("design/social-card/social-card.jpg")
+SITE_CARD = Path("site/social-card.jpg")
+CARD_SIZE = (1200, 630)
+CARD_MAX_BYTES = 300_000
+CARD_METAS = ("og:image", "twitter:image")
+META = re.compile(r'<meta\s+(?:property|name)="([^"]+)"\s+content="([^"]*)"')
 
 # JPEG start-of-frame markers carry the size; C4, C8 and CC are other segments in the same range.
 JPEG_SOF = set(range(0xC0, 0xD0)) - {0xC4, 0xC8, 0xCC}
@@ -272,6 +278,35 @@ def run(root: Path, write: bool) -> list[str]:
     return problems
 
 
+def check_social_card(root: Path) -> list[str]:
+    card_path = root / CARD
+    if not card_path.is_file():
+        return [f"{CARD} is missing: run bash scripts/social-card.sh"]
+    card = card_path.read_bytes()
+    problems: list[str] = []
+    try:
+        size = jpeg_size(card)
+    except MediaError as error:
+        return [f"{CARD} {error}"]
+    if size != CARD_SIZE:
+        problems.append(f"{CARD} is {size[0]} x {size[1]}, not {CARD_SIZE[0]} x {CARD_SIZE[1]}")
+    if len(card) >= CARD_MAX_BYTES:
+        problems.append(f"{CARD} is {len(card)} bytes, over {CARD_MAX_BYTES}")
+    site_card = root / SITE_CARD
+    if not site_card.is_file() or site_card.read_bytes() != card:
+        problems.append(f"{SITE_CARD} differs from {CARD}: run bash scripts/social-card.sh")
+    host = (root / "site/CNAME").read_text(encoding="utf-8").strip()
+    url = f"https://{host}/{SITE_CARD.name}"
+    for page in sorted((root / "site").rglob("*.html")):
+        text = page.read_text(encoding="utf-8")
+        metas = dict(META.findall(text))
+        if "noindex" in metas.get("robots", ""):
+            continue
+        rel = page.relative_to(root)
+        problems += [f"{rel}: {key} must be {url}" for key in CARD_METAS if metas.get(key) != url]
+    return problems
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("action", choices=("check", "write"))
@@ -279,6 +314,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         problems = run(args.root, args.action == "write")
+        if args.action == "check":
+            problems += check_social_card(args.root)
     except (MediaError, KeyError, json.JSONDecodeError) as error:
         print(f"site_media: {error}", file=sys.stderr)
         return 1

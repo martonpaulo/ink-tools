@@ -33,3 +33,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+The social card (`design/social-card/`, [#462](https://github.com/martonpaulo/ink-tools/issues/462))
+carries two third-party files, both unchanged:
+
+- `tureen.svg`: [Openclipart 185227 «tureen»](https://openclipart.org/detail/185227) by
+  johnny_automatic, from Dorothy Daly's *Italian Cooking* (not in copyright), CC0 1.0.
+- `fonts/caveat-latin-600-normal.woff2`: Caveat, copyright 2014 The Caveat Project Authors, SIL Open
+  Font License 1.1 (`fonts/OFL-Caveat.txt`).
