@@ -16,6 +16,7 @@ import {saveCurrentNote} from './note';
 import {rebuildStroke, type SavedStroke} from './elements';
 import type {Motion, StrokeTimes} from './pen';
 import {fail, ok, Result, THROWN_CODE} from './result';
+import {timerWait, type ActionTimers} from './actions';
 
 /** The tape format's version; inkctl reads the same value from the registry. */
 export const PEN_TAPE_VERSION: number = REGISTRY.penReplayRoute.tapeVersion;
@@ -241,21 +242,28 @@ export interface ReplayHost {
   now(): number;
 }
 
-/** The tablet's side: createElement and insertPageElements, as rebuildStroke does for Undo Conversion. */
-export const DEVICE_REPLAY: ReplayHost = {
-  page: getCurrentPageNum,
-  async insert(stroke, page) {
-    const element = await rebuildStroke(stroke, createElement);
-    if (!element.ok) {
-      return element;
-    }
-    const inserted = await insertPageElements([element.value], page);
-    return inserted.ok ? ok(element.value) : inserted;
-  },
-  save: saveCurrentNote,
-  sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
-  now: () => Date.now(),
-};
+/**
+ * The tablet's side: createElement and insertPageElements, as rebuildStroke does for Undo
+ * Conversion. The gaps wait on the plugin's native `timers`: a `setTimeout` never fires while no
+ * view of the plugin shows, so the replay hung and held the action channel, which then answered
+ * no request (device round, Manta, 2026-11-27, #469).
+ */
+export function deviceReplay(timers: ActionTimers): ReplayHost {
+  return {
+    page: getCurrentPageNum,
+    async insert(stroke, page) {
+      const element = await rebuildStroke(stroke, createElement);
+      if (!element.ok) {
+        return element;
+      }
+      const inserted = await insertPageElements([element.value], page);
+      return inserted.ok ? ok(element.value) : inserted;
+    },
+    save: saveCurrentNote,
+    sleep: ms => timerWait(timers, ms),
+    now: () => Date.now(),
+  };
+}
 
 function deliver<T>(listeners: Set<(value: T) => void>, value: T): number {
   let errors = 0;
@@ -276,7 +284,7 @@ function deliver<T>(listeners: Set<(value: T) => void>, value: T): number {
  * open page and hands the new elements to the pen-up listeners, each with its recorded times shifted
  * to now. A failed page read or insert stops the replay with why; it is never a partial success.
  */
-export async function replayPenTape(tape: PenTape, host: ReplayHost = DEVICE_REPLAY): Promise<Result<ReplayCounts>> {
+export async function replayPenTape(tape: PenTape, host: ReplayHost): Promise<Result<ReplayCounts>> {
   if (penUpListeners.size === 0 && motionListeners.size === 0) {
     return fail(THROWN_CODE, NO_LISTENER);
   }

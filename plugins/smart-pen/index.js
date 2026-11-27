@@ -32,7 +32,7 @@ import {STILL_RADIUS_PX} from './src/modules/shapes/settings';
 import {createPenRouter} from './src/pen';
 import {getSettings} from './src/profile';
 import {applySettings, setModuleHost} from './src/runtime';
-import {penActions, readActionFile} from './src/actions';
+import {penActions, readActionFile, TICKS_MODULE} from './src/actions';
 import {nativeTimers, startActionChannel} from '@ink-tools/sn-adapter/actions';
 import {working} from './src/working';
 
@@ -116,7 +116,7 @@ startActionChannel({
   plugin: 'smart-pen',
   read: () => readActionFile(),
   actions: penActions(),
-  timers: nativeTimers('SmartPenTicks'),
+  timers: nativeTimers(TICKS_MODULE),
 });
 
 // The modules start as the settings file says, once the plugin is initialised.

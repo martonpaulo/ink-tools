@@ -4,6 +4,7 @@
  */
 import {PluginCommAPI, PluginFileAPI, PluginManager} from 'sn-plugin-lib';
 import {
+  deviceReplay,
   onMotion,
   onPenUp,
   parsePenTape,
@@ -15,6 +16,7 @@ import {
   stopPenRecording,
   strokeTimes,
   type PenTape,
+  type ActionTimers,
   type ReplayHost,
   type SavedStroke,
 } from '../src/official';
@@ -68,6 +70,33 @@ beforeEach(() => {
   mocked(PluginManager.registerEventListener).mockReturnValue({remove: jest.fn()});
   mocked(PluginManager.registerMotionListener).mockReturnValue({remove: jest.fn()});
   resetPenTapForTests();
+});
+
+test('the device replay waits each gap on the native timers, never a JS timer, which stops with no view (#469)', async () => {
+  jest.useFakeTimers();
+  try {
+    const started: Array<{fn: () => void; ms: number}> = [];
+    const timers: ActionTimers = {
+      setInterval: (fn, ms) => started.push({fn, ms}) - 1,
+      clearInterval: () => {},
+    };
+    let done = false;
+    const waited = deviceReplay(timers)
+      // timing-independent: a fake timer stands for the native tick; the test fires it by hand.
+      .sleep(40)
+      .then(() => {
+        done = true;
+      });
+    expect(jest.getTimerCount()).toBe(0);
+    expect(started.map(timer => timer.ms)).toEqual([40]);
+    await Promise.resolve();
+    expect(done).toBe(false);
+    started[0].fn();
+    await waited;
+    expect(done).toBe(true);
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 test('a replay inserts each stroke on the open page and hands it to the pen-up listener', async () => {

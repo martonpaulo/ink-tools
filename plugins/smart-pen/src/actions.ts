@@ -8,6 +8,8 @@
 import {
   ACTION_FILE,
   ActionRefused,
+  deviceReplay,
+  nativeTimers,
   parsePenTape,
   type PenTape,
   replayPenTape,
@@ -23,6 +25,8 @@ import {readText} from '@ink-tools/picture-search/storage';
 /** Smart Pen's own folder in the hidden `.data/plugin/`; SmartPenFilesPackage.java `ACTION_HOME`. */
 export const ACTION_HOME = pluginDataFolder('inktools-smart-pen');
 export const ACTION_PATH = `${ACTION_HOME}/${ACTION_FILE}`;
+/** The native timer module; SmartPenFilesPackage.java `TICKS_MODULE`. Its ticks reach JavaScript with no view open. */
+export const TICKS_MODULE = 'SmartPenTicks';
 
 /** The request file's text, null when there is none; a refused read throws its reason. */
 export async function readActionFile(read: typeof readText = readText): Promise<string | null> {
@@ -42,7 +46,8 @@ export type PenActionsHost = {
 const DEVICE: PenActionsHost = {
   start: () => startPenRecording(),
   stop: stopPenRecording,
-  replay: tape => replayPenTape(tape),
+  // The same native timers as the action channel: a replay runs with no Smart Pen view (#469).
+  replay: tape => replayPenTape(tape, deviceReplay(nativeTimers(TICKS_MODULE))),
 };
 
 export function penActions(host: PenActionsHost = DEVICE): Record<string, Action> {
