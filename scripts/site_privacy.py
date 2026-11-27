@@ -9,6 +9,10 @@ plugin whose `plugins/<folder>/PluginConfig.json` declares the network permissio
 heading `<h2 id="<folder>">` in the privacy policy that names the plugin by its `name`, so a plugin
 that gains network access cannot ship without saying what it sends and where.
 
+Four more `<h2>` sections must exist, one for each network use or stored secret that is not a plugin
+(`SECTIONS`: language pack downloads, the Supernote Cloud password, Browse & Access, a Device Link
+sign-in token, #505), so a page that drops one fails.
+
 Prints one `missing<TAB>what` line per problem. Exit 0 with none, 1 with problems, 2 on a bad root.
 Python's standard library only.
 """
@@ -25,6 +29,13 @@ PAGES = ("site/index.html", "site/privacy/index.html")
 PRIVACY = "site/privacy/index.html"
 # sn-adapter owns the permission names; this reads the network one from there instead of a copy.
 PERMISSIONS = "packages/sn-adapter/src/official/plugin.ts"
+# Sections the page must keep whatever the plugins declare: id and heading text (#505).
+SECTIONS = {
+    "language-packs": "Language pack downloads",
+    "supernote-cloud": "Supernote Cloud password",
+    "browse-and-access": "Browse & Access",
+    "device-link-token": "Sign-in token sent through Device Link",
+}
 
 
 def internet_permission(root: pathlib.Path) -> str:
@@ -60,6 +71,9 @@ def check(root: pathlib.Path) -> list[str]:
     for folder, name in networked_plugins(root):
         if found.get(folder) != name:
             problems.append(f'{PRIVACY}: <h2 id="{folder}">{name}</h2>')
+    for section, title in SECTIONS.items():
+        if found.get(section) != title:
+            problems.append(f'{PRIVACY}: <h2 id="{section}">{title}</h2>')
     return problems
 
 

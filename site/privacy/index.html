@@ -50,7 +50,7 @@
         </ol>
       </nav>
       <h1>Privacy policy</h1>
-      <p class="lead">Last updated 26 November 2026. Ink Tools runs no server. It collects no analytics, has no account of its own and sells nothing. Each tool below sends data only to the service named, and only when you use that feature.</p>
+      <p class="lead">Last updated 27 November 2026. Ink Tools runs no server. It collects no analytics, has no account of its own and sells nothing. Each tool below sends data only to the service named, and only when you use that feature.</p>
 
       <h2 id="account-sync">Account Sync</h2>
       <p>Account Sync brings your to-dos and calendars onto the tablet. Every account is off until you connect it in the plugin's Settings. The tablet talks to each service directly; nothing passes through a server of ours.</p>
@@ -78,6 +78,18 @@
 
       <h2 id="device-link">Device Link</h2>
       <p>Device Link sends a page, a selection or text to a LocalSend device you pick, and receives from one, only on your local network. It finds devices with LocalSend's discovery on that network and sends over an encrypted connection straight to the device. Nothing goes over the internet.</p>
+
+      <h2 id="language-packs">Language pack downloads</h2>
+      <p>Planned, not yet released. When you choose to add a handwriting language pack, the app downloads it from GitHub Releases (<code>github.com</code>). Only the request for the file is sent; GitHub sees your network address, as with any web request, and handles it under its own privacy policy. Nothing is downloaded until you ask. To remove a pack, delete it in the app's language list.</p>
+
+      <h2 id="supernote-cloud">Supernote Cloud password</h2>
+      <p>This feature is planned and not yet released. Note Editor can reach your notes through Supernote Cloud, only if you connect it in Settings. Your Supernote Cloud password is sent to Supernote's own service to sign in and is kept in your Mac's login Keychain, never in a file or a log. To remove it, disconnect Supernote Cloud in Settings, or delete the item in Keychain Access.</p>
+
+      <h2 id="browse-and-access">Browse &amp; Access</h2>
+      <p>This mode is planned and not yet released. Browse &amp; Access is the Supernote's own feature that serves your files over your local network. Note Editor reads your notes from it over plain HTTP, with no password and no encryption, so anyone on the same network can read what it sends. Use it only on a network you trust. It is off until you turn it on in the tablet's settings and choose it in Note Editor's Settings; turn it off on the tablet to remove access.</p>
+
+      <h2 id="device-link-token">Sign-in token sent through Device Link</h2>
+      <p>This step is planned and not yet released. You can sign in to Account Sync on your phone and send the sign-in token to the tablet as text through Device Link. The token travels over your local network on LocalSend's encrypted connection, straight to the tablet, and is stored in the plugin's private folder like any other token. To remove it, disconnect that account in Account Sync's Settings.</p>
 
       <h2 id="ink-tools-probe">Ink Tools Probe</h2>
       <p>Ink Tools Probe is a developer tool for testing Ink Tools on a tablet; it is never released to users. It holds the network permission only so that a test can try a network call. It sends no data of yours to any service, and writes its results to the tablet's own log.</p>

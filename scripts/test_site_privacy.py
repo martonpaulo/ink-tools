@@ -10,7 +10,8 @@ import unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import site_privacy  # noqa: E402
 
-PRIVACY_PAGE = '<h1>Privacy policy</h1>\n<h2 id="sync">Sync Tool</h2>\n<p>Sends to a service.</p>\n'
+SECTION_HEADINGS = "".join(f'<h2 id="{key}">{title}</h2>\n' for key, title in site_privacy.SECTIONS.items())
+PRIVACY_PAGE = '<h1>Privacy policy</h1>\n<h2 id="sync">Sync Tool</h2>\n<p>Sends to a service.</p>\n' + SECTION_HEADINGS
 
 
 class SitePrivacyTest(unittest.TestCase):
@@ -49,6 +50,12 @@ class SitePrivacyTest(unittest.TestCase):
     def test_networked_plugin_without_section_fails(self) -> None:
         self.plugin("transfer", "Transfer Tool", ["plugin.permission.INTERNET"])
         self.assertEqual(site_privacy.check(self.root), ['site/privacy/index.html: <h2 id="transfer">Transfer Tool</h2>'])
+
+    def test_each_required_section_is_checked(self) -> None:
+        for key, title in site_privacy.SECTIONS.items():
+            with self.subTest(section=key):
+                self.write("site/privacy/index.html", PRIVACY_PAGE.replace(f'<h2 id="{key}">{title}</h2>\n', ""))
+                self.assertEqual(site_privacy.check(self.root), [f'site/privacy/index.html: <h2 id="{key}">{title}</h2>'])
 
     def test_section_with_another_name_fails(self) -> None:
         self.write("site/privacy/index.html", PRIVACY_PAGE.replace("Sync Tool", "Old Name"))
