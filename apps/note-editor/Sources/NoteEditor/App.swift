@@ -67,6 +67,8 @@ struct NoteEditorApp: App {
             CommandGroup(before: .toolbar) {
                 ViewCommands()
             }
+            // View › Show Toolbar and Customize Toolbar…, for the toolbar's own set (#460).
+            ToolbarCommands()
             // An Insert menu, as Pages holds one (#264).
             CommandMenu(Copy.insertMenu) {
                 InsertCommands()

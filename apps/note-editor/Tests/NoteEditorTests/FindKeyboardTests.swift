@@ -5,22 +5,26 @@ import Testing
 
 @testable import NoteEditor
 
-/// The find bar by keyboard alone (#322): Edit › Find puts the focus in the field, typing finds,
-/// Return and Shift-Return go to the next and previous match each time, and Escape closes the bar
-/// and gives the focus back. The keys go to the test's own window, which is never ordered in, as
+/// Find by keyboard alone (#322), in the toolbar's search field (#460): Edit › Find puts the focus
+/// in the field, typing finds, Return and Shift-Return go to the next and previous match each time,
+/// and Escape ends the find and gives the focus back. The keys go to the test's own window, which is never ordered in, as
 /// `PageTurnTests` sends them, so nothing reaches the screen or another app.
 @MainActor
 @Suite(.serialized) struct FindKeyboardTests {
     @Test(arguments: [false, true])
-    func theFindBarWorksByKeyboardAlone(dark: Bool) async throws {
+    func findWorksByKeyboardAlone(dark: Bool) async throws {
         let (text, folder) = try await NoteTextTests.read()
         defer { try? FileManager.default.removeItem(at: folder) }
         var closed = 0
         let window = KeyedOffscreenWindow(size: CGSize(width: 700, height: 80), dark: dark)
-        window.show(FindBar(text: text) { closed += 1 })
+        window.show(
+            VStack {
+                FindField(text: text) { closed += 1 }.frame(width: FindField.width)
+                if text.findShown { FindBar(text: text) {} }
+            })
         defer { window.close() }
 
-        // Edit › Find: the bar's field takes the focus.
+        // Edit › Find: the field takes the focus.
         text.showFind()
         #expect(try await window.until { Self.fieldHasFocus(in: window) })
         for key in "word" { Self.press(String(key), keyCode: 0, in: window) }

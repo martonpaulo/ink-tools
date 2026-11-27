@@ -10,14 +10,14 @@ final class NoteText {
     let indexer: NoteIndexer
     /// The note file's name without its extension.
     var name = ""
-    /// Whether the find bar shows.
+    /// Whether a find runs: the bar under the toolbar shows its result.
     var findShown = false
-    /// The find bar's text; each change finds again.
+    /// The find field's text; each change finds again.
     var query = "" {
         didSet { find() }
     }
     private(set) var search = NoteSearch()
-    /// Asks the find bar to take the keyboard focus, as Edit › Find does when the bar shows.
+    /// Asks the find field to take the keyboard focus, as Edit › Find does.
     var focusRequest = 0
     /// The note's Headings and their pictures, read once (#331).
     @ObservationIgnored private var headingsRead: Result<[Heading], NoteFormatError>?
@@ -37,7 +37,7 @@ final class NoteText {
         search.find(query, in: index?.words ?? [])
     }
 
-    /// Edit › Find: shows the bar and puts the focus in its field.
+    /// Edit › Find: shows the bar and puts the focus in the find field.
     func showFind() {
         findShown = true
         focusRequest += 1
@@ -135,52 +135,138 @@ extension FocusedValues {
     @Entry var noteText: NoteText?
 }
 
-/// The find bar under the toolbar, as Safari and TextEdit show it: the field, the count, the
-/// previous and next buttons and Done (#322).
-struct FindBar: View {
-    /// The field's width, in points.
-    static let fieldWidth: CGFloat = 260
+/// The find field in the toolbar, the platform's search field where Preview keeps its own (#322,
+/// #460): typing finds, Return or Enter go to the next match and with Shift to the previous one
+/// each time, as in Safari, Escape ends the find, and Edit › Find puts the focus in it.
+struct FindField: View {
+    /// The field's width in the toolbar, in points, as Preview's search field.
+    static let width: CGFloat = 200
 
-    /// The status's width, so the buttons beside it stay in place as it changes, in points.
-    static let statusWidth: CGFloat = 150
+    let text: NoteText
+    /// Gives the keyboard focus back to the pages when Escape ends the find.
+    let closed: () -> Void
+
+    var body: some View {
+        // The query and the focus request are read here, so a change of either updates the field.
+        FindSearchFieldView(text: text, query: text.query, focusRequest: text.focusRequest, closed: closed)
+    }
+}
+
+/// The AppKit search field of `FindField`.
+private struct FindSearchFieldView: NSViewRepresentable {
+    let text: NoteText
+    let query: String
+    let focusRequest: Int
+    let closed: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeNSView(context: Context) -> NSSearchField {
+        let field = FindSearchField()
+        field.placeholderString = Copy.findInNote
+        field.setAccessibilityLabel(Copy.findInNote)
+        field.delegate = context.coordinator
+        (field.cell as? FindFieldCell)?.editor.step = { [weak coordinator = context.coordinator] backward in
+            coordinator?.step(backward: backward)
+        }
+        // A field made while a find runs takes the focus, as Edit › Find asked before it existed.
+        context.coordinator.focusSeen = text.findShown ? focusRequest - 1 : focusRequest
+        return field
+    }
+
+    func updateNSView(_ field: NSSearchField, context: Context) {
+        context.coordinator.parent = self
+        // A text an input method still composes stays the field's until it is confirmed.
+        let composing = (field.currentEditor() as? NSTextView)?.hasMarkedText() == true
+        if field.stringValue != query, !composing { field.stringValue = query }
+        if focusRequest != context.coordinator.focusSeen {
+            context.coordinator.focusSeen = focusRequest
+            Task { @MainActor in field.window?.makeFirstResponder(field) }
+        }
+    }
+
+    final class Coordinator: NSObject, NSSearchFieldDelegate {
+        var parent: FindSearchFieldView
+        /// The last Edit › Find the field took the focus for.
+        var focusSeen = 0
+
+        init(_ parent: FindSearchFieldView) { self.parent = parent }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let field = notification.object as? NSSearchField else { return }
+            // The field's clear button ends the find, as Preview's does.
+            if field.stringValue.isEmpty {
+                parent.text.closeFind()
+            } else {
+                parent.text.findShown = true
+                parent.text.query = field.stringValue
+            }
+        }
+
+        func step(backward: Bool) {
+            if backward { parent.text.previous() } else { parent.text.next() }
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+            guard selector == #selector(NSResponder.cancelOperation(_:)) else { return false }
+            parent.text.closeFind()
+            parent.closed()
+            return true
+        }
+    }
+}
+
+/// The find field: a search field drawn by `FindFieldCell`.
+final class FindSearchField: NSSearchField {
+    override class var cellClass: AnyClass? {
+        get { FindFieldCell.self }
+        set {}
+    }
+}
+
+/// The find field's cell, whose editor takes Return and Enter, with or without Shift, before the
+/// field ends its editing: `onSubmit` fired only on the first Return after a change.
+final class FindFieldCell: NSSearchFieldCell {
+    let editor = FindFieldEditor()
+
+    override func fieldEditor(for controlView: NSView) -> NSTextView? { editor }
+}
+
+/// The text view that edits the find field.
+final class FindFieldEditor: NSTextView {
+    /// Return and the keypad's Enter, by key code.
+    static let stepKeys: Set<UInt16> = [36, 76]
+    /// Goes to the next match, or the previous one when the argument is true.
+    var step: (Bool) -> Void = { _ in }
+
+    convenience init() {
+        self.init(frame: .zero)
+        isFieldEditor = true
+    }
+
+    override func keyDown(with event: NSEvent) {
+        // A Return that confirms an input method's text stays the input method's.
+        guard Self.stepKeys.contains(event.keyCode), !hasMarkedText() else {
+            super.keyDown(with: event)
+            return
+        }
+        step(event.modifierFlags.contains(.shift))
+    }
+}
+
+/// The result of a find, under the toolbar while it runs: the previous and next buttons, the count
+/// and Done (#322, #460). The status follows the buttons and takes its own width, so a longer
+/// status never moves them.
+struct FindBar: View {
     /// The space around the bar's controls, in points, as Safari's find bar.
     static let inset = EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
-
-    /// The keypad's Enter, and Fn-Return.
-    static let enter = KeyEquivalent("\u{3}")
-
-    /// Whether a text field holds text an input method is still composing, which Return confirms.
-    static var composing: Bool {
-        NSApplication.shared.windows.contains { ($0.firstResponder as? NSTextView)?.hasMarkedText() == true }
-    }
 
     @Bindable var text: NoteText
     /// Gives the keyboard focus back to the pages when the bar closes.
     let closed: () -> Void
-    @FocusState private var fieldFocused: Bool
 
     var body: some View {
         HStack(spacing: 8) {
-            TextField(Copy.findInNote, text: $text.query, prompt: Text(Copy.findInNote))
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: Self.fieldWidth)
-                .focused($fieldFocused)
-                // Return or Enter, and with Shift, go to the next and previous match each time, as in
-                // Safari; `onSubmit` fired only on the first Return after a change. A Return that
-                // confirms an input method's text stays the field's.
-                .onKeyPress(keys: [.return, Self.enter]) { press in
-                    guard !Self.composing else { return .ignored }
-                    if press.modifiers.contains(.shift) { text.previous() } else { text.next() }
-                    return .handled
-                }
-                .accessibilityLabel(Copy.findInNote)
-            Text(text.status)
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
-                .lineLimit(1)
-                .frame(width: Self.statusWidth, alignment: .leading)
-                .help(text.status)
-                .accessibilityLabel(text.status)
             ControlGroup {
                 Button(Copy.previousMatch, systemImage: "chevron.left") { text.previous() }
                     .help(Copy.previousMatch)
@@ -189,6 +275,12 @@ struct FindBar: View {
             }
             .fixedSize()
             .disabled(text.search.matches.isEmpty)
+            Text(text.status)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .help(text.status)
+                .accessibilityLabel(text.status)
             Spacer(minLength: 0)
             Button(Copy.done, action: close)
         }
@@ -197,7 +289,6 @@ struct FindBar: View {
         .background(.bar)
         .overlay(alignment: .bottom) { Divider() }
         .onExitCommand(perform: close)
-        .onChange(of: text.focusRequest, initial: true) { fieldFocused = true }
         .onChange(of: text.indexer.state) { text.find() }
         // VoiceOver hears the count as it changes, not each page of the reading.
         .onChange(of: text.status) { _, status in

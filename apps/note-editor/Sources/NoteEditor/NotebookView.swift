@@ -167,7 +167,9 @@ struct NotebookView: View {
                     }
                 }
         }
-        .toolbar { ViewerToolbar(viewer: viewer) }
+        .toolbar(id: ViewerToolbar.id) {
+            ViewerToolbar(viewer: viewer, editor: editor, text: text, page: navigator.index) { pageFocused = true }
+        }
         .navigationSubtitle(subtitle)
         // Edit › Select All and Escape, by the menu or by the keys when no menu holds them (#324).
         .onCommand(#selector(NSResponder.selectAll(_:))) { selectAll() }
@@ -694,81 +696,6 @@ private struct GridCell: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(ThumbnailRow.label(index, count, pages.thumbnail(index, .grid)))
         .accessibilityAddTraits(isCurrent ? [.isButton, .isSelected] : .isButton)
-    }
-}
-
-/// The toolbar of a notebook window: the layout and the zoom, as Preview's toolbar holds them.
-private struct ViewerToolbar: ToolbarContent {
-    @Bindable var viewer: PageViewer
-    /// A magnification as the zoom pop-up shows it: a whole percentage.
-    static let percent = FloatingPointFormatStyle<Double>.Percent.percent.precision(.fractionLength(0))
-
-    var body: some ToolbarContent {
-        ToolbarItem {
-            Picker(Copy.viewLayout, selection: $viewer.layout) {
-                // Preview's symbols for the same two views.
-                Label(Copy.continuousScroll, systemImage: "scroll").tag(PageViewer.Layout.scroll)
-                    .help(Copy.continuousScroll)
-                Label(Copy.contactSheet, systemImage: "square.grid.3x3.square").tag(PageViewer.Layout.grid)
-                    .help(Copy.contactSheet)
-            }
-            .pickerStyle(.segmented)
-            .labelStyle(.iconOnly)
-        }
-        ToolbarItem {
-            Picker(Copy.selectionTool, selection: $viewer.shownTool) {
-                Label(Copy.rectangularSelection, systemImage: "rectangle.dashed").tag(
-                    PageViewer.SelectionTool?.some(.rectangle)
-                )
-                .help(Copy.rectangularSelection)
-                Label(Copy.lassoSelection, systemImage: "lasso").tag(PageViewer.SelectionTool?.some(.lasso))
-                    .help(Copy.lassoSelection)
-            }
-            .pickerStyle(.segmented)
-            .labelStyle(.iconOnly)
-            .disabled(viewer.layout != .scroll)
-        }
-        ToolbarItem {
-            ControlGroup {
-                Button(Copy.zoomOut, systemImage: "minus.magnifyingglass") {
-                    if let zoom = viewer.zoomedOut { viewer.zoom = zoom }
-                }
-                .disabled(viewer.zoomedOut == nil)
-                .help(Copy.zoomOut)
-                Button(Copy.zoomIn, systemImage: "plus.magnifyingglass") {
-                    if let zoom = viewer.zoomedIn { viewer.zoom = zoom }
-                }
-                .disabled(viewer.zoomedIn == nil)
-                .help(Copy.zoomIn)
-                // The shown magnification, and the three zooms that hold while the window is
-                // resized, with the View menu's names (#458). In one group with Zoom Out and Zoom
-                // In, so a narrow window keeps them together; the grid has no zoom, so no pop-up.
-                if viewer.layout == .scroll {
-                    Menu {
-                        Picker(Copy.zoom, selection: $viewer.zoom) {
-                            Text(Copy.actualSize).tag(PageZoom.magnification(1))
-                            Text(Copy.zoomToFit).tag(PageZoom.fitPage)
-                            Text(Copy.zoomToWidth).tag(PageZoom.fitWidth)
-                        }
-                        .pickerStyle(.inline)
-                        .labelsHidden()
-                    } label: {
-                        // The largest step's label, hidden, keeps the width the same at every
-                        // zoom, so Zoom In never moves under the pointer.
-                        ZStack {
-                            Text(PageZoom.steps[PageZoom.steps.count - 1], format: Self.percent).hidden()
-                            Text(viewer.magnification, format: Self.percent)
-                        }
-                        .monospacedDigit()
-                    }
-                    .help(Copy.zoom)
-                    .accessibilityLabel(Copy.zoom)
-                    .accessibilityValue(Text(viewer.magnification, format: Self.percent))
-                }
-            } label: {
-                Label(Copy.zoom, systemImage: "magnifyingglass")
-            }
-        }
     }
 }
 

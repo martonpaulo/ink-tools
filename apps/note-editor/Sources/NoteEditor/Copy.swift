@@ -361,6 +361,9 @@ nonisolated enum Copy {
     }
 
     static let insertShape = String(localized: "Shape")
+    /// The toolbar's Markup items and their help (#460).
+    static let insertShapeTool = String(localized: "Insert Shape")
+    static let insertTextBoxTool = String(localized: "Insert Text Box")
 
     /// The bar over the pages while a shape waits for its drag.
     static func shapeHint(_ kind: ShapeKind) -> String {
