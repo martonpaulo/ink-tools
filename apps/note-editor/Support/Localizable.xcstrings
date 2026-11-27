@@ -151,6 +151,17 @@
         }
       }
     },
+    "A text box needs text. To remove the text box, close this and choose Edit › Delete." : {
+      "comment" : "Why a text box sheet's button is off",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A text box needs text. To remove the text box, close this and choose Edit › Delete."
+          }
+        }
+      }
+    },
     "Actual Size" : {
       "localizations" : {
         "en" : {
@@ -477,6 +488,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drawing the page…"
+          }
+        }
+      }
+    },
+    "Edit Text Box" : {
+      "comment" : "Sheet title and undo name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Text Box"
+          }
+        }
+      }
+    },
+    "Edit Text Box…" : {
+      "comment" : "Edit menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Text Box…"
           }
         }
       }
@@ -1367,6 +1400,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Screenshot"
+          }
+        }
+      }
+    },
+    "Select one text box to edit its text." : {
+      "comment" : "Why Edit Text Box… is off",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select one text box to edit its text."
           }
         }
       }

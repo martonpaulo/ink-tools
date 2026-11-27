@@ -63,6 +63,12 @@ by the write path of [`AGENTS.md`](AGENTS.md#the-write-path).
 - Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
   or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
+- Edit › Edit Text Box…, a double-click on a text box or its VoiceOver action opens one text box,
+  made on the tablet or on the Mac, with its text and font size read from the Mac's copy, or from
+  its edit still on its way ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). Done sends one `modifyElements`
+  with the new `text` and `fontSize`, which the helper sets on that text box; the box keeps its
+  place and width and takes the height of its lines, wrapped ones counted. The Mac draws the template where the old
+  text was and the new text over it at once; Undo is the backup kept before the send.
 - Insert › Shape draws a line, an arrow, a rectangle, a rounded rectangle, an ellipse, a triangle or
   a diamond by a drag on the page, Shift keeping it square or straight; a click puts it at its
   default size there and Return in the middle of the page, and Escape cancels

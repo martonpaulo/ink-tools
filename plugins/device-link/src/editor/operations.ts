@@ -19,6 +19,7 @@ import {
   SHARED_ROOT,
   type ActionResult,
   STROKE_TYPE,
+  TEXT_TYPE,
   type EditRect,
   type Matrix,
   type NewElement,
@@ -52,12 +53,15 @@ export const REFUSAL = {
 
 export type Operation =
   | {op: 'insertElements'; page: number; elements: NewElement[]}
-  | {op: 'modifyElements'; page: number; num: number; rect: EditRect; file?: string}
+  | {op: 'modifyElements'; page: number; num: number; rect: EditRect; file?: string; text?: TextChange}
   | {op: 'transformElements'; page: number; nums: number[]; matrix: Matrix}
   | {op: 'deleteElements'; page: number; nums: number[]}
   | {op: 'insertPage'; page: number; template: string}
   | {op: 'removePage'; page: number}
   | {op: 'openNote'};
+
+/** A text box's new text and font size, for the Mac's edit of a text box made on the tablet (#264). */
+export type TextChange = {text: string; fontSize: number};
 
 export type EditRequest = {path: string; ops: Operation[]};
 
@@ -69,6 +73,8 @@ export interface EditHost {
   build(spec: NewElement): Promise<Result<object>>;
   getElement(path: string, page: number, num: number): Promise<Result<object>>;
   place(element: object, page: number, rect: EditRect): Promise<Result<object>>;
+  /** Sets a text box's text and font size, refused for any other element (#264). */
+  retext(element: object, text: string, fontSize: number): Result<object>;
   /** Scales, rotates or flips a stroke through `matrix`, refused when it leaves the page (#326). */
   transform(element: object, page: number, matrix: Matrix): Promise<Result<object>>;
   insertOpen(page: number, elements: object[]): Promise<Result<unknown>>;
@@ -193,6 +199,13 @@ function parseGeometry(raw: Record<string, unknown>): NewElement {
   return {kind: 'geometry', shape, points: [], ellipse: {center, major: a, minor: b, angle: 0}, penColor, penWidth};
 }
 
+/** A text box's text, 1 to LIMITS.text characters not all blank, and its font size. */
+function parseText(raw: Record<string, unknown>): TextChange {
+  check(typeof raw.text === 'string' && raw.text.trim().length > 0 && raw.text.length <= LIMITS.text, `text must hold 1 to ${LIMITS.text} characters`);
+  check(wholeIn(raw.fontSize, FONT_SIZES.min, FONT_SIZES.max), `fontSize must be a whole number from ${FONT_SIZES.min} to ${FONT_SIZES.max}`);
+  return {text: raw.text as string, fontSize: raw.fontSize as number};
+}
+
 function parseElement(value: unknown): NewElement {
   const raw = (value ?? {}) as Record<string, unknown>;
   switch (raw.kind) {
@@ -206,9 +219,7 @@ function parseElement(value: unknown): NewElement {
     case 'geometry':
       return parseGeometry(raw);
     case 'text':
-      check(typeof raw.text === 'string' && raw.text.trim().length > 0 && raw.text.length <= LIMITS.text, `text must hold 1 to ${LIMITS.text} characters`);
-      check(wholeIn(raw.fontSize, FONT_SIZES.min, FONT_SIZES.max), `fontSize must be a whole number from ${FONT_SIZES.min} to ${FONT_SIZES.max}`);
-      return {kind: 'text', text: raw.text as string, rect: parseRect(raw.rect), fontSize: raw.fontSize as number};
+      return {kind: 'text', ...parseText(raw), rect: parseRect(raw.rect)};
     case 'picture':
       return {kind: 'picture', file: parsePictureFile(raw.file), rect: parseRect(raw.rect)};
     default:
@@ -224,12 +235,15 @@ function parseOperation(value: unknown): Operation {
       return {op: 'insertElements', page: parsePage(raw.page), elements: (raw.elements as unknown[]).map(parseElement)};
     case 'modifyElements':
       check(wholeIn(raw.num, 1, Number.MAX_SAFE_INTEGER), 'num must be an element number from 1');
+      // A new text and font size come together, for a text box only, never with a picture's file (#264).
+      check(raw.text === undefined || raw.file === undefined, 'a modify sets a text or a file, not both');
       return {
         op: 'modifyElements',
         page: parsePage(raw.page),
         num: raw.num as number,
         rect: parseRect(raw.rect),
         ...(raw.file === undefined ? {} : {file: parsePictureFile(raw.file)}),
+        ...(raw.text === undefined && raw.fontSize === undefined ? {} : {text: parseText(raw)}),
       };
     case 'transformElements':
       return {op: 'transformElements', page: parsePage(raw.page), nums: parseNums(raw.nums), matrix: parseMatrix(raw.matrix)};
@@ -313,9 +327,14 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
       if ((element as {type?: number}).type === PICTURE_TYPE) {
         return movePicture(operation, path, open, host);
       }
+      const {text} = operation;
+      if (text && (element as {type?: number}).type !== TEXT_TYPE) {
+        throw new Stopped(REFUSAL.badRequest, `element ${operation.num} is not a text box: only a text box takes a text`);
+      }
       const placed = await must('place', host.place(element, operation.page, operation.rect));
-      await must('modify', open ? host.modifyOpen(operation.page, [placed]) : host.modifyByPath(path, operation.page, [placed]));
-      return {page: operation.page, num: operation.num, rect: operation.rect};
+      const changed = text ? await must('retext', Promise.resolve(host.retext(placed, text.text, text.fontSize))) : placed;
+      await must('modify', open ? host.modifyOpen(operation.page, [changed]) : host.modifyByPath(path, operation.page, [changed]));
+      return {page: operation.page, num: operation.num, rect: operation.rect, ...(text ? {retexted: true} : {})};
     }
     case 'transformElements': {
       // Strokes only: a picture or a text box is sent a rect by modifyElements (#326).

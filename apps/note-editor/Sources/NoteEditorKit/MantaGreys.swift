@@ -69,4 +69,13 @@ public enum TextBoxPlacement {
         let top = min(max(point.y - size.height / 2, 0), page.height - size.height)
         return EditRect(CGRect(origin: CGPoint(x: left.rounded(), y: top.rounded()), size: size))
     }
+
+    /// The box of an edited text box (#264): its place and width kept, its height that of `lines`
+    /// lines at `fontSize`, as a new box's, moved up only when it would pass the page's bottom.
+    public static func box(editing box: EditRect, lines: Int, fontSize: Int, page: CGSize) -> EditRect {
+        let pageHeight = Int(page.height)
+        let height = min(Int((Double(max(lines, 1) * fontSize) * lineShare).rounded()), pageHeight)
+        let top = min(max(box.top, 0), pageHeight - height)
+        return EditRect(left: box.left, top: top, right: box.right, bottom: top + height)
+    }
 }

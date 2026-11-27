@@ -177,6 +177,9 @@ struct SelectionLayer: View {
                 ForEach(SelectionChange.allCases.filter { !$0.turns || turnable }, id: \.self) { change in
                     Button(change.title) { change.apply(to: items, page: index, editor: editor) }
                 }
+                if let request = editor.textBoxRequest(items, page: index) {
+                    Button(Copy.editTextBoxTitle) { editor.insertRequest = request }
+                }
             }
         }
     }
@@ -344,6 +347,8 @@ struct SelectionLayer: View {
             return
         }
         let adding = NSEvent.modifierFlags.contains(.shift)
+        // A double-click on a text box, selected or not, opens it for editing (#264).
+        let opens = (NSApp.currentEvent?.clickCount ?? 0) >= 2 && !adding
         let moved = hypot(value.translation.width, value.translation.height) >= Self.reach
         let selected = viewer.selection.page == index ? viewer.selection.ids : []
         let shown = (pages.selectable(index) ?? []).filter { selected.contains($0.id) }
@@ -361,6 +366,12 @@ struct SelectionLayer: View {
         let apply = { (items: [Selectable]) in
             if !moved {
                 viewer.selection.click(HitTest.click(end, in: items, tolerance: tolerance), page: index, adding: adding)
+                if opens, let editor,
+                    let request = editor.textBoxRequest(
+                        items.filter { viewer.selection.ids.contains($0.id) }, page: index)
+                {
+                    editor.insertRequest = request
+                }
             } else if tool == .lasso {
                 viewer.selection.take(HitTest.lasso(lasso, in: items), page: index, adding: adding)
             } else {

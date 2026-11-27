@@ -273,6 +273,12 @@ describe('the editor helper calls (#312)', () => {
     expect(await page.placeElement(text, 0, rect)).toEqual({ok: true, value: {type: 500, pageNum: 0, textBox: {textRect: rect}}});
   });
 
+  it("sets a text box's text and font size, and refuses any other element (#264)", () => {
+    const text = {type: 500, textBox: {textRect: rect, textContentFull: 'old', fontSize: 40}};
+    expect(page.retextElement(text, 'new\nline', 48)).toEqual({ok: true, value: {type: 500, textBox: {textRect: rect, textContentFull: 'new\nline', fontSize: 48}}});
+    expect(page.retextElement({type: 0}, 'x', 40)).toMatchObject({ok: false, message: 'the element is not a text box'});
+  });
+
   it("maps a stroke's points from their bounds to the rect, in one setRange", async () => {
     const setRange = jest.fn(async () => true);
     const points = [{x: 0, y: 0}, {x: 10, y: 20}];

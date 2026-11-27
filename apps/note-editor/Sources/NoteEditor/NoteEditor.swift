@@ -322,6 +322,45 @@ final class NoteEditor {
         return insert(.insertText(page: page, text: text, rect: rect, fontSize: fontSize), image: image)
     }
 
+    /// The text box sheet for the one selected `items` of `page` when it is a text box, made on the
+    /// tablet or on the Mac, with its text and font size from the Mac's copy (#264); nil for any
+    /// other selection. Its box is where the changes on its way put it.
+    func textBoxRequest(_ items: [Selectable], page: Int) -> InsertRequest? {
+        guard canEdit, items.count == 1, let item = items.first, item.isArea, !item.isPicture,
+            let element = ((try? base.elements(page: page)) ?? []).first(where: { $0.record == item.record }),
+            case .textBox(let text, let fontSize) = element.content,
+            let moved = chain(items, page: page).elements.first
+        else { return nil }
+        // An edit of the same box still on its way is what the page shows: the sheet starts there.
+        for waiting in pending.reversed() {
+            if case .editText(page, let edited, let newer, let size, let rect) = waiting.edit,
+                edited.record == item.record
+            {
+                return InsertRequest(
+                    page: page,
+                    content: .editText(MovedElement(record: edited.record, box: rect), text: newer, fontSize: size))
+            }
+        }
+        return InsertRequest(
+            page: page, content: .editText(moved, text: text, fontSize: Int(fontSize.rounded())))
+    }
+
+    /// Sets the text box `element` of `page` to `text` at `fontSize` (#264): drawn at once as the
+    /// template where it was and the new text over it, in the system font, sent in the background;
+    /// Undo puts it back from the backup kept before the send.
+    /// shortcut: the tablet's text box font is not on the Mac, as for an insert.
+    @discardableResult
+    func editText(page: Int, element: MovedElement, text: String, fontSize: Int) -> Bool {
+        let size = pageSize(page)
+        let lines = TextPreview.lines(text, width: element.box.right - element.box.left, fontSize: fontSize)
+        let rect = TextBoxPlacement.box(
+            editing: element.box, lines: lines, fontSize: fontSize,
+            page: CGSize(width: size.width, height: size.height))
+        let image = TextPreview.image(
+            text, width: rect.right - rect.left, height: rect.bottom - rect.top, fontSize: fontSize)
+        return insert(.editText(page: page, element: element, text: text, fontSize: fontSize, rect: rect), image: image)
+    }
+
     /// Inserts `shape` on `page` as the tablet's geometry element, in black at Insert › Shape's
     /// one width, drawn at once from its outline (#350).
     @discardableResult
@@ -344,6 +383,7 @@ final class NoteEditor {
             switch waiting.edit {
             case .insertPicture(let page, _, let rect) where page == index: return (rect, image)
             case .insertText(let page, _, let rect, _) where page == index: return (rect, image)
+            case .editText(let page, _, _, _, let rect) where page == index: return (rect, image)
             case .insertShape(let page, let shape, _, _) where page == index:
                 return ShapeDrawing.preview(shape).map { ($0.rect, image) }
             default: return nil
@@ -358,11 +398,15 @@ final class NoteEditor {
         record(.deleteElements(page: page, elements: elements))
     }
 
-    /// The deletes on their way to page `index`: the template where each selection was.
+    /// The deletes and text box edits on their way to page `index`: the template where each
+    /// selection, or each text box's old text, was.
     func deletions(on index: Int) -> [LiftedInk] {
         pending.compactMap { waiting in
-            guard case .deleteElements(let page, _) = waiting.edit, page == index else { return nil }
-            return lifts[waiting.ticket]
+            switch waiting.edit {
+            case .deleteElements(let page, _) where page == index, .editText(let page, _, _, _, _) where page == index:
+                lifts[waiting.ticket]
+            default: nil
+            }
         }
     }
 
@@ -559,6 +603,9 @@ final class NoteEditor {
         } else if case .deleteElements(let page, let elements) = edit {
             // A delete too: the template where its elements were is drawn over the page.
             lift(page, elements, ticket: ticket)
+        } else if case .editText(let page, let element, _, _, _) = edit {
+            // A text box's edit: the template where its old text was, and the new text over it.
+            lift(page, [element], ticket: ticket)
         } else {
             redraw()
         }
@@ -713,7 +760,7 @@ final class NoteEditor {
         case .restorePages, .revertInsert, .restoreElements:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
-        case .moveElements, .transformElements, .insertPicture, .insertText, .insertShape, .deleteElements:
+        case .moveElements, .transformElements, .insertPicture, .insertText, .insertShape, .deleteElements, .editText:
             // Drawn over the page: a move or a transform from its lifted ink, an insert from its
             // picture or its text (`insertions(on:)`).
             return note

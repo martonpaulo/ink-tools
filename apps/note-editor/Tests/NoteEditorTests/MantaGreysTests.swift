@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import NoteEditorKit
 import Testing
 
@@ -45,5 +46,33 @@ import Testing
         #expect(box == EditRect(left: 384, top: 1190, right: 1536, bottom: 1370))
         let low = TextBoxPlacement.box(lines: 1, fontSize: 40, centredOn: CGPoint(x: 1900, y: 2550), page: page)
         #expect(low.right == 1920 && low.bottom == 2560)
+    }
+    @Test func anEditedTextBoxKeepsItsPlaceAndWidthAndStaysOnThePage() {
+        let page = CGSize(width: 1920, height: 2560)
+        let old = EditRect(left: 100, top: 200, right: 900, bottom: 260)
+        #expect(
+            TextBoxPlacement.box(editing: old, lines: 2, fontSize: 40, page: page)
+                == EditRect(left: 100, top: 200, right: 900, bottom: 320))
+        let low = EditRect(left: 100, top: 2500, right: 900, bottom: 2560)
+        #expect(
+            TextBoxPlacement.box(editing: low, lines: 3, fontSize: 40, page: page)
+                == EditRect(left: 100, top: 2380, right: 900, bottom: 2560))
+    }
+
+    @Test func aTextBoxEditIsSentAsOneModifyWithItsTextAndFontSizeAndUndoneByItsBackup() throws {
+        let element = MovedElement(record: 4, box: EditRect(left: 0, top: 0, right: 10, bottom: 10))
+        let rect = EditRect(left: 0, top: 0, right: 10, bottom: 60)
+        let edit = NoteEdit.editText(page: 1, element: element, text: "Hi", fontSize: 40, rect: rect)
+        #expect(edit.inverse == .restoreElements(page: 1) && edit.undoneByBackup)
+        #expect(
+            NoteEdit.editText(page: 1, element: element, text: " ", fontSize: 40, rect: rect).apply(to: ["a", "b"])
+                == nil)
+        let operation = try #require(TabletOperation(edit, note: "/Note/a.note", baseHash: "h"))
+        #expect(operation.editedPages == [1] && operation.bounds == rect)
+        let json = try #require(
+            try JSONSerialization.jsonObject(with: JSONEncoder().encode(operation.helperOperations)) as? [[String: Any]]
+        )
+        #expect(json.count == 1 && json[0]["op"] as? String == "modifyElements" && json[0]["num"] as? Int == 5)
+        #expect(json[0]["text"] as? String == "Hi" && json[0]["fontSize"] as? Int == 40 && json[0]["page"] as? Int == 1)
     }
 }

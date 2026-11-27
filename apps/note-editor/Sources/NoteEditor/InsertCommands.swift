@@ -8,6 +8,8 @@ struct InsertRequest: Identifiable {
     enum Content {
         case picture(PictureImport)
         case text(String)
+        /// A text box already on the page, made on the tablet or on the Mac, opened for editing.
+        case editText(MovedElement, text: String, fontSize: Int)
     }
 
     let id = UUID()
@@ -53,6 +55,23 @@ struct InsertCommands: View {
         }
         .disabled(!ready)
         .help(editor == nil ? Copy.editOnlyFromTablet : "")
+    }
+}
+
+/// Edit › Edit Text Box…: the one selected text box, made on the tablet or on the Mac, opened with
+/// its text and font size (#264); a double-click on a text box opens it too.
+struct EditTextBoxCommand: View {
+    @FocusedValue(\.pageViewer) private var viewer: PageViewer?
+    @FocusedValue(\.noteEditor) private var editor
+    @FocusedValue(\.pageImages) private var pages
+
+    var body: some View {
+        // The selection's own page: a text box opens wherever it is selected.
+        let selected = pages.flatMap { pages in viewer.flatMap { $0.selected(in: pages, on: $0.selection.page) } }
+        let textBox = selected.flatMap { editor?.textBoxRequest($0.items, page: $0.page) }
+        Button(Copy.editTextBoxEllipsis) { editor?.insertRequest = textBox }
+            .disabled(textBox == nil)
+            .help(textBox == nil ? Copy.editTextBoxHelp : "")
     }
 }
 
@@ -151,7 +170,9 @@ extension NoteEditor {
     /// A pasted text becomes a text box in the middle of `page`, at once (#264).
     func pasteText(_ text: String, page: Int) -> Bool {
         let size = pageSize(page)
-        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).count
+        let lines = TextPreview.lines(
+            text, width: Int((Double(size.width) * TextBoxPlacement.widthShare).rounded()),
+            fontSize: InsertSheet.defaultFontSize)
         let box = TextBoxPlacement.box(
             lines: lines, fontSize: InsertSheet.defaultFontSize,
             centredOn: CGPoint(x: size.width / 2, y: size.height / 2),
@@ -194,9 +215,13 @@ struct InsertSheet: View {
             _text = State(initialValue: "")
         } else {
             _share = State(initialValue: TextBoxPlacement.widthShare)
-            if case .text(let initial) = request.content {
+            switch request.content {
+            case .text(let initial):
                 _text = State(initialValue: initial)
-            } else {
+            case .editText(_, let initial, let size):
+                _text = State(initialValue: initial)
+                _fontSize = State(initialValue: Self.kept(size))
+            case .picture:
                 _text = State(initialValue: "")
             }
         }
@@ -219,12 +244,12 @@ struct InsertSheet: View {
                         .accessibilityValue(Copy.percentOfPage(share))
                 }
                 Text(Copy.greysNote).font(.callout).foregroundStyle(.secondary)
-            case .text:
-                Text(Copy.insertTextBoxTitle).font(.headline)
+            case .text, .editText:
+                Text(title).font(.headline)
                 TextEditor(text: $text)
                     .font(.body)
                     .frame(height: Self.previewHeight / 2)
-                    .accessibilityLabel(Copy.insertTextBoxTitle)
+                    .accessibilityLabel(title)
                 Stepper(value: $fontSize, in: Self.fontSizes, step: Self.fontStep) {
                     Text(Copy.fontSize(fontSize))
                 }
@@ -235,21 +260,32 @@ struct InsertSheet: View {
                 Spacer()
                 Button(Copy.cancel, role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button(Copy.insert) {
+                Button(isEdit ? Copy.done : Copy.insert) {
                     insert()
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(isTextEmpty)
+                .help(isTextEmpty ? Copy.textBoxNeedsText : "")
             }
         }
         .padding(InsertPageSheet.inset)
         .frame(width: Self.width)
     }
 
-    private var isTextEmpty: Bool {
-        if case .text = request.content { return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    /// A font size inside the tablet's limits, as the stepper shows it.
+    static func kept(_ size: Int) -> Int { min(max(size, fontSizes.lowerBound), fontSizes.upperBound) }
+
+    private var isEdit: Bool {
+        if case .editText = request.content { return true }
         return false
+    }
+
+    private var title: String { isEdit ? Copy.editTextBoxTitle : Copy.insertTextBoxTitle }
+
+    private var isTextEmpty: Bool {
+        if case .picture = request.content { return false }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func insert() {
@@ -263,9 +299,14 @@ struct InsertSheet: View {
                 width: size.width * share)
             editor.insertPicture(page: request.page, file: picture.file, rect: box, image: picture.image)
         case .text:
-            let lines = text.split(separator: "\n", omittingEmptySubsequences: false).count
+            let lines = TextPreview.lines(
+                text, width: Int((size.width * TextBoxPlacement.widthShare).rounded()), fontSize: fontSize)
             let box = TextBoxPlacement.box(lines: lines, fontSize: fontSize, centredOn: centre, page: size)
             editor.insertText(page: request.page, text: text, rect: box, fontSize: fontSize)
+        case .editText(let element, let before, let size):
+            // An unchanged text box sends nothing, and its size changes only by the stepper.
+            guard text != before || fontSize != Self.kept(size) else { return }
+            editor.editText(page: request.page, element: element, text: text, fontSize: fontSize)
         }
     }
 }

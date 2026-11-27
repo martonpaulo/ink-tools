@@ -68,6 +68,9 @@ extension TabletOperation {
             let found = numbers.compactMap { number(newPage, $0) }
             guard found.count == numbers.count else { return nil }
             change = .deleteElements(found.sorted())
+        case .editText(let old, let rect, let text, let fontSize):
+            guard let found = number(newPage, old) else { return nil }
+            change = .editText(number: found, rect: rect, text: text, fontSize: fontSize)
         case .placeElements(let placements):
             let found = placements.compactMap { placement in
                 number(newPage, placement.number).map { ElementPlacement(number: $0, rect: placement.rect) }

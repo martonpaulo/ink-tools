@@ -116,7 +116,7 @@ type Placed = {
   /** The stored box the lasso tests first, in page pixels; only a modify of a closed note makes it again (#452). */
   recognizeResult?: StoredBox | null;
   picture?: {rect?: EditRect} | null;
-  textBox?: {textRect?: EditRect} | null;
+  textBox?: {textRect?: EditRect; textContentFull?: string; fontSize?: number} | null;
   geometry?: StoredGeometry | null;
   stroke?: {
     points?: {size(): Promise<number>; getRange(start: number, count: number): Promise<PenPoint[]>; setRange?(index: number, end: number, values: PenPoint[]): Promise<boolean>};
@@ -247,6 +247,20 @@ async function writeStroke(placed: Placed, write: WritePoints, read: PenPoint[],
   } catch (error) {
     return fail(THROWN_CODE, error instanceof Error ? error.message : String(error));
   }
+}
+
+/**
+ * Sets a text box read by `getElement` to `text` at `fontSize`, in place, for a modify call: the
+ * Mac's edit of a text box made on the tablet (#264). Refused for any other element.
+ */
+export function retextElement(element: object, text: string, fontSize: number): Result<object> {
+  const placed = element as Placed;
+  if (placed.type !== TEXT_TYPE || !placed.textBox) {
+    return fail(THROWN_CODE, 'the element is not a text box');
+  }
+  placed.textBox.textContentFull = text;
+  placed.textBox.fontSize = fontSize;
+  return ok(element);
 }
 
 /**

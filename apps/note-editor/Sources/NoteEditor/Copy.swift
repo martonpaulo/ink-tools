@@ -324,6 +324,14 @@ nonisolated enum Copy {
         localized: "The tablet shows 16 greys, so the picture is shown and sent in them.")
     static let insertPictureTitle = String(localized: "Insert Picture")
     static let insertTextBoxTitle = String(localized: "Insert Text Box")
+    /// Edit › Edit Text Box… and its sheet (#264).
+    static let editTextBoxEllipsis = String(localized: "Edit Text Box…", comment: "Edit menu item")
+    static let editTextBoxTitle = String(localized: "Edit Text Box", comment: "Sheet title and undo name")
+    static let editTextBoxHelp = String(
+        localized: "Select one text box to edit its text.", comment: "Why Edit Text Box… is off")
+    static let textBoxNeedsText = String(
+        localized: "A text box needs text. To remove the text box, close this and choose Edit › Delete.",
+        comment: "Why a text box sheet's button is off")
     static let pictureWidth = String(localized: "Width")
 
     // MARK: Insert › Shape (#350)
@@ -404,6 +412,7 @@ nonisolated enum Copy {
         case .insertPicture: String(localized: "Insert Picture")
         case .insertText: String(localized: "Insert Text Box")
         case .insertShape: String(localized: "Insert Shape")
+        case .editText: editTextBoxTitle
         case .revertInsert: String(localized: "Remove Insert")
         case .transformElements(let transform):
             switch transform.kind {

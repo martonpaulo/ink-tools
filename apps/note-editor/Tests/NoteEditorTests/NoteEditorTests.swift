@@ -46,6 +46,14 @@ import Testing
         #expect(editor.pending.isEmpty)
     }
 
+    /// Undo puts the note back as the backup kept before the edit: Revert to Backup's route.
+    func expectUndoneByBackup(_ editor: NoteEditor) async {
+        editor.undo()
+        await settle(editor)
+        #expect(tablet.bytes == original)
+        #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
+    }
+
     @Test(arguments: [(0, 3), (3, 0), (1, 2)])
     func aMoveIsDrawnAtOnceAndTheTabletGetsTheSameOrder(from: Int, to: Int) async throws {
         let editor = try editor()
@@ -393,10 +401,7 @@ import Testing
         #expect(
             editor.insertions(on: 1).isEmpty
                 && editor.history.undoKind == .insertPicture(page: 1, file: picture.file, rect: rect))
-        editor.undo()
-        await settle(editor)
-        #expect(tablet.bytes == original)
-        #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
+        await expectUndoneByBackup(editor)
     }
 
     @Test func pastedTextIsOneTextBoxInTheMiddleOfThePageInBlack() async throws {
@@ -426,6 +431,82 @@ import Testing
         #expect(editor.refusal?.contains("tablet-refused") == true)
     }
 
+    /// The fixture's text box on page 0, as the selection names it.
+    func textBox() throws -> (item: Selectable, text: String, fontSize: Double) {
+        let element = try #require(try NoteFile(data: original).elements(page: 0).first { $0.kind == .textBox })
+        guard case .textBox(let text, let fontSize) = element.content else { throw NoteFormatError.badPage(0) }
+        let item = Selectable(
+            id: 0, bounds: element.bounds, points: element.points, isArea: true, record: element.record)
+        return (item, text, fontSize)
+    }
+
+    @Test func aTextBoxMadeOnTheTabletOpensWithItsTextAndFontSize() throws {
+        let editor = try editor()
+        let box = try textBox()
+        let request = try #require(editor.textBoxRequest([box.item], page: 0))
+        guard case .editText(let element, let text, let fontSize) = request.content else {
+            Issue.record("not a text box edit")
+            return
+        }
+        #expect(text == box.text && fontSize == Int(box.fontSize.rounded()))
+        #expect(element.record == box.item.record && element.box == EditRect(box.item.bounds))
+        // Two elements, a picture or a stroke open nothing.
+        #expect(editor.textBoxRequest([box.item, box.item], page: 0) == nil)
+        let picture = try picture()
+        #expect(editor.textBoxRequest([picture.selectable], page: 0) == nil)
+    }
+
+    @Test func anEditedTextBoxIsDrawnAtOnceSentAsOneModifyAndUndoneByItsBackup() async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable in $0 }
+        let box = try textBox()
+        let element = MovedElement(box.item)
+        #expect(editor.editText(page: 0, element: element, text: "New\nsecond line", fontSize: 48))
+        let shown = try #require(editor.insertions(on: 0).first?.rect)
+        // Its place and width kept, two lines high at the new size.
+        #expect(shown.left == element.box.left && shown.right == element.box.right && shown.top == element.box.top)
+        #expect(shown.bottom - shown.top == 144)
+        await settle(editor)
+        let sent = try #require(tablet.sent.first { $0["op"] as? String == "modifyElements" })
+        #expect(sent["num"] as? Int == element.record + 1)
+        #expect(sent["text"] as? String == "New\nsecond line" && sent["fontSize"] as? Int == 48)
+        #expect(sent["file"] == nil)
+        #expect(
+            editor.history.undoKind
+                == .editText(page: 0, element: element, text: "New\nsecond line", fontSize: 48, rect: shown))
+        await expectUndoneByBackup(editor)
+    }
+
+    @Test func aTextBoxReopenedWhileItsEditIsOnItsWayShowsTheNewText() throws {
+        let editor = NoteEditor(
+            tabletPath: WritePathTests.note, copy: copy, base: try NoteFile(data: original),
+            tablet: RenderTests.SlowTablet(pullWaits: true),
+            backups: NoteBackups(folder: folder.appending(path: "Backups")))
+        let box = try textBox()
+        #expect(editor.editText(page: 0, element: MovedElement(box.item), text: "Newer", fontSize: 60))
+        let rect = try #require(editor.insertions(on: 0).first?.rect)
+        let request = try #require(editor.textBoxRequest([box.item], page: 0))
+        guard case .editText(let element, let text, let fontSize) = request.content else {
+            Issue.record("not a text box edit")
+            return
+        }
+        #expect(text == "Newer" && fontSize == 60 && element.box == rect && element.record == box.item.record)
+    }
+
+    @Test func aLongLineWrapsToMoreLinesInANarrowBox() {
+        let line = String(repeating: "word ", count: 40)
+        #expect(TextPreview.lines(line, width: 400, fontSize: 40) > 1)
+        #expect(TextPreview.lines("One\nTwo", width: 1200, fontSize: 40) == 2)
+        #expect(TextPreview.lines("", width: 1200, fontSize: 40) == 1)
+    }
+
+    @Test func aBlankTextBoxIsNeverSent() throws {
+        let editor = try editor()
+        let element = MovedElement(try textBox().item)
+        #expect(!editor.editText(page: 0, element: element, text: " \n ", fontSize: 40))
+        #expect(editor.pending.isEmpty)
+    }
+
     @Test func aDeletedSelectionIsDrawnAtOnceAsItsTemplate() async throws {
         let editor = NoteEditor(
             tabletPath: WritePathTests.note, copy: copy, base: try NoteFile(data: original),
@@ -448,10 +529,7 @@ import Testing
         await settle(editor)
         let sent = try #require(tablet.sent.first { $0["op"] as? String == "deleteElements" })
         #expect(sent["nums"] as? [Int] == elements.map { $0.record + 1 })
-        editor.undo()
-        await settle(editor)
-        #expect(tablet.bytes == original)
-        #expect(tablet.calls.suffix(3) == ["edit openNote", "push", "pull"])
+        await expectUndoneByBackup(editor)
         #expect(editor.history.redoKind == .deleteElements(page: 0, elements: elements))
     }
 

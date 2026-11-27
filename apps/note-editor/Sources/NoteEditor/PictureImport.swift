@@ -175,6 +175,20 @@ nonisolated enum TextPreview {
 }
 
 extension TextPreview {
+    /// How many lines `text` takes at `fontSize` in a box `width` pixels wide, its own line breaks
+    /// and the lines it wraps to, as `image` draws it; at least one (#264).
+    static func lines(_ text: String, width: Int, fontSize: Int) -> Int {
+        let font = NSFont.systemFont(ofSize: CGFloat(fontSize))
+        let height = NSAttributedString(string: text, attributes: [.font: font])
+            .boundingRect(
+                with: CGSize(width: CGFloat(max(width, 1)), height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin]
+            ).height
+        let line = NSLayoutManager().defaultLineHeight(for: font)
+        let breaks = text.split(separator: "\n", omittingEmptySubsequences: false).count
+        return max(breaks, Int((height / line).rounded(.up)), 1)
+    }
+
     /// Rich text from another app keeps only its plain text and line breaks (owner, 2026-11-26).
     nonisolated static func plain(from pasteboard: NSPasteboard) -> String? {
         if let string = pasteboard.string(forType: .string) { return string }

@@ -145,13 +145,22 @@ final class RenderTests {
 
     /// A tablet that never answers in a render's time, so an edit stays on its way.
     final class SlowTablet: TabletWriting {
+        /// A pull that waits too, so an edit stays on its way while a render waits for its drawing.
+        let pullWaits: Bool
+
+        init(pullWaits: Bool = false) { self.pullWaits = pullWaits }
+
         func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
             // timing-independent: a stand-in for a tablet that has not answered yet; no result waits on it.
             try? await Task.sleep(for: .seconds(3600))
             throw .cancelled
         }
         func push(_ local: URL, to note: String) async throws(InkctlFailure) { throw .cancelled }
-        func pull(_ note: String, to destination: URL) async throws(InkctlFailure) { throw .cancelled }
+        func pull(_ note: String, to destination: URL) async throws(InkctlFailure) {
+            // timing-independent: a stand-in for a tablet that has not answered yet; no result waits on it.
+            if pullWaits { try? await Task.sleep(for: .seconds(3600)) }
+            throw .cancelled
+        }
         func templates() async throws(InkctlFailure) -> [PageTemplateChoice] { [] }
     }
 
@@ -256,7 +265,8 @@ final class RenderTests {
 
     /// A copy of `content.note` opened as if from the tablet, named `name`: its edits never reach a
     /// tablet, as the watch never starts and the tablet never answers; every thumbnail drawn.
-    private func tabletNote(_ name: String) async throws -> (LiveNote, NoteEditor, PageImages) {
+    private func tabletNote(_ name: String, pullWaits: Bool = false) async throws -> (LiveNote, NoteEditor, PageImages)
+    {
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
         let copy = scratch.appending(path: "\(name).note")
         try Fixtures.data("content.note").write(to: copy)
@@ -265,13 +275,42 @@ final class RenderTests {
             tabletPath: "Note/\(name).note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
         live.watches = false
         let editor = NoteEditor(
-            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(pullWaits: pullWaits),
             backups: NoteBackups(folder: scratch.appending(path: "\(name)Backups")))
         let drawn = PageImages(note: note)
         for index in note.pages.indices {
             await drawn.loadThumbnail(index, scale: 1)
         }
         return (live, editor, drawn)
+    }
+
+    /// Edit Text Box… (#264): the sheet over a text box made on the tablet, with its text and font
+    /// size, and the edit on its way, drawn at once as the template and the new text.
+    @Test func editTextStates() async throws {
+        let (live, editor, drawn) = try await tabletNote("EditedText", pullWaits: true)
+        await drawn.loadPage(0)
+        await drawn.loadElements(0)
+        let item = try #require(drawn.selectable(0)?.first { $0.isArea && !$0.isPicture })
+        let request = try #require(editor.textBoxRequest([item], page: 0))
+        try await render("edit-text", Self.sizes) {
+            ZStack(alignment: .top) {
+                NotebookView(pages: drawn, page: 0, live: live, editor: editor)
+                InsertSheet(editor: editor, request: request)
+                    .background(.background, in: .rect(cornerRadius: 12))
+                    .shadow(radius: 12)
+                    .padding(.top, 52)
+            }
+        }
+        guard case .editText(let element, _, _) = request.content else { return }
+        editor.editText(page: 0, element: element, text: "Edited on the Mac\nSecond line", fontSize: 48)
+        for _ in 0..<500 where editor.deletions(on: 0).isEmpty {
+            // timing-independent: a poll on the lift with a deadline; the expectation fails a hang.
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(editor.deletions(on: 0).count == 1)
+        try await render("edit-text-sending", Self.sizes) {
+            NotebookView(pages: drawn, page: 0, live: live, editor: editor)
+        }
     }
 
     /// Insert › Shape (#350): the bar while a shape waits for its drag, and every shape on its way to

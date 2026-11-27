@@ -71,6 +71,8 @@ public struct TabletOperation: Sendable, Equatable {
         case transformElements([TransformTarget])
         /// Deletes the elements, by their numbers on the page from 1.
         case deleteElements([Int])
+        /// Sets the text and font size of the text box numbered `number` from 1, its box at `rect` (#264).
+        case editText(number: Int, rect: EditRect, text: String, fontSize: Int)
         /// Inserts a page at `page` with a system template such as `style_white`.
         case insertPage(template: String)
         /// Removes the pages at these places, each from 0; `page` is the lowest.
@@ -125,6 +127,10 @@ public struct TabletOperation: Sendable, Equatable {
             self.init(
                 note: note, baseHash: baseHash, page: page,
                 change: .deleteElements(elements.map { $0.record + 1 }.sorted()))
+        case .editText(let page, let element, let text, let fontSize, let rect):
+            self.init(
+                note: note, baseHash: baseHash, page: page,
+                change: .editText(number: element.record + 1, rect: rect, text: text, fontSize: fontSize))
         case .restorePages(let pages):
             guard let backup, let lowest = pages.min() else { return nil }
             self.init(note: note, baseHash: baseHash, page: lowest, change: .restoreBackup(backup))
@@ -154,7 +160,7 @@ public struct TabletOperation: Sendable, Equatable {
     /// The bounds the edit writes into, when it writes into one place of a page.
     public var bounds: EditRect? {
         switch change {
-        case .insertText(_, let rect, _), .insertPicture(_, let rect): rect
+        case .insertText(_, let rect, _), .insertPicture(_, let rect), .editText(_, let rect, _, _): rect
         case .placeElements(let placements) where placements.count == 1: placements[0].rect
         case .insertElements(let elements):
             elements.first.map { first in elements.dropFirst().reduce(first.box) { $0.union($1.box) } }
@@ -189,6 +195,8 @@ public struct TabletOperation: Sendable, Equatable {
                 }
             }
         case .deleteElements(let numbers): [.deleteElements(page: page, nums: numbers)]
+        case .editText(let number, let rect, let text, let fontSize):
+            [.modifyElements(page: page, num: number, rect: rect, text: TextChange(text: text, fontSize: fontSize))]
         case .insertElements(let elements): [.insertElements(page: page, elements: elements)]
         case .insertPage(let template): [.insertPage(page: page, template: template)]
         // Highest first, so each number still names the page the owner picked.
@@ -211,15 +219,18 @@ public struct ElementPlacement: Sendable, Equatable {
 /// An operation of the tablet helper, in its JSON shape.
 public enum HelperOperation: Sendable, Equatable, Encodable {
     case insertElements(page: Int, elements: [HelperElement])
-    /// A picture names its new file: the helper inserts it at `rect` and deletes the old one.
-    case modifyElements(page: Int, num: Int, rect: EditRect, file: String? = nil)
+    /// A picture names its new file: the helper inserts it at `rect` and deletes the old one. A
+    /// text box may take a new text and font size (#264).
+    case modifyElements(page: Int, num: Int, rect: EditRect, file: String? = nil, text: TextChange? = nil)
     case transformElements(page: Int, nums: [Int], matrix: [Double])
     case deleteElements(page: Int, nums: [Int])
     case insertPage(page: Int, template: String)
     case removePage(page: Int)
     case openNote
 
-    private enum Key: String, CodingKey { case op, page, elements, num, rect, file, nums, matrix, template }
+    private enum Key: String, CodingKey {
+        case op, page, elements, num, rect, file, text, fontSize, nums, matrix, template
+    }
 
     /// The helper's name of the operation.
     private var name: String {
@@ -237,7 +248,7 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
     /// The page the operation targets, from 0; none for `openNote`.
     private var page: Int? {
         switch self {
-        case .insertElements(let page, _), .modifyElements(let page, _, _, _), .transformElements(let page, _, _),
+        case .insertElements(let page, _), .modifyElements(let page, _, _, _, _), .transformElements(let page, _, _),
             .deleteElements(let page, _), .insertPage(let page, _), .removePage(let page):
             page
         case .openNote: nil
@@ -251,10 +262,12 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
         switch self {
         case .insertElements(_, let elements):
             try container.encode(elements, forKey: .elements)
-        case .modifyElements(_, let num, let rect, let file):
+        case .modifyElements(_, let num, let rect, let file, let text):
             try container.encode(num, forKey: .num)
             try container.encode(rect, forKey: .rect)
             try container.encodeIfPresent(file, forKey: .file)
+            try container.encodeIfPresent(text?.text, forKey: .text)
+            try container.encodeIfPresent(text?.fontSize, forKey: .fontSize)
         case .transformElements(_, let nums, let matrix):
             try container.encode(nums, forKey: .nums)
             try container.encode(matrix, forKey: .matrix)
@@ -265,6 +278,17 @@ public enum HelperOperation: Sendable, Equatable, Encodable {
         case .removePage, .openNote:
             break
         }
+    }
+}
+
+/// A text box's new text and font size, as the helper's `modifyElements` takes them (#264).
+public struct TextChange: Sendable, Equatable {
+    public let text: String
+    public let fontSize: Int
+
+    public init(text: String, fontSize: Int) {
+        self.text = text
+        self.fontSize = fontSize
     }
 }
 

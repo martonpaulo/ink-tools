@@ -18,6 +18,9 @@ public enum NoteEdit: Sendable, Equatable {
     case insertPicture(page: Int, file: URL, rect: EditRect)
     /// Inserts a typed text box at `rect` on `page` (#264).
     case insertText(page: Int, text: String, rect: EditRect, fontSize: Int)
+    /// Sets a text box's text and font size, its box at `rect` (#264): the edit of a text box,
+    /// made on the tablet or on the Mac, by its record on `page`.
+    case editText(page: Int, element: MovedElement, text: String, fontSize: Int, rect: EditRect)
     /// Inserts a shape as the tablet's geometry element on `page` (#350).
     case insertShape(page: Int, shape: GeometryShape, penColor: PenTone, penWidth: Int)
     /// Resizes, rotates or flips a selection on its page (#326).
@@ -45,7 +48,7 @@ public enum NoteEdit: Sendable, Equatable {
         case .revertInsert(let page): .revertInsert(page: page)
         // A matrix inverse would drift by the tablet's whole-pixel rounding: the backup is exact.
         case .transformElements(let transform): .restoreElements(page: transform.page)
-        case .deleteElements(let page, _): .restoreElements(page: page)
+        case .deleteElements(let page, _), .editText(let page, _, _, _, _): .restoreElements(page: page)
         case .restoreElements(let page): .restoreElements(page: page)
         }
     }
@@ -61,7 +64,8 @@ public enum NoteEdit: Sendable, Equatable {
     /// Whether the backup kept before this edit's send is what undoes it.
     public var undoneByBackup: Bool {
         switch self {
-        case .removePages, .insertPicture, .insertText, .insertShape, .deleteElements, .transformElements: true
+        case .removePages, .insertPicture, .insertText, .insertShape, .deleteElements, .transformElements, .editText:
+            true
         default: false
         }
     }
@@ -102,6 +106,10 @@ public enum NoteEdit: Sendable, Equatable {
             guard pages.indices.contains(page) else { return nil }
         case .deleteElements(let page, let elements):
             guard pages.indices.contains(page), !elements.isEmpty else { return nil }
+        case .editText(let page, _, let text, _, _):
+            guard pages.indices.contains(page), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return nil
+            }
         case .transformElements(let transform):
             guard pages.indices.contains(transform.page), !transform.isEmpty, transform.refusal == nil else {
                 return nil

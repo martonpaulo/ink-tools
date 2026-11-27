@@ -26,6 +26,10 @@ function host(open: string | null = OTHER, overrides: Partial<EditHost> = {}) {
     },
     getElement: record('getElement', {type: 500}),
     place: record('place', {type: 500, placed: true}),
+    retext: (element, text, fontSize) => {
+      calls.push(`retext ${JSON.stringify([element, text, fontSize])}`);
+      return ok({...element, retexted: text});
+    },
     transform: record('transform', {type: 0, transformed: true}),
     insertOpen: record('insertOpen', true),
     insertByPath: record('insertByPath', true),
@@ -70,6 +74,25 @@ describe('operations on a closed note go through the file API by path', () => {
       `place ${JSON.stringify([{type: 500}, 0, RECT])}`,
       `modifyByPath ${JSON.stringify([NOTE, 0, [{type: 500, placed: true}]])}`,
     ]);
+  });
+
+  it("changes a text box's text and font size with its rect, in one modify (#264)", async () => {
+    const {fake, calls} = host();
+    const answer = await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 4, rect: RECT, text: 'New\nline', fontSize: 48}]});
+    expect(calls).toEqual([
+      `getElement ${JSON.stringify([NOTE, 0, 4])}`,
+      `place ${JSON.stringify([{type: 500}, 0, RECT])}`,
+      `retext ${JSON.stringify([{type: 500, placed: true}, 'New\nline', 48])}`,
+      `modifyByPath ${JSON.stringify([NOTE, 0, [{type: 500, placed: true, retexted: 'New\nline'}]])}`,
+    ]);
+    expect(answer).toMatchObject({results: [{ok: true, op: 'modifyElements', num: 4, retexted: true}]});
+  });
+
+  it('refuses a text for an element that is not a text box, and writes nothing (#264)', async () => {
+    const {fake, calls} = host(OTHER, {getElement: async () => ok({type: 0})});
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 2, rect: RECT, text: 'x', fontSize: 40}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request', step: 1});
+    expect(calls).toEqual([]);
   });
 
   it('moves a picture as the moved picture inserted, then the old one deleted (#312)', async () => {
@@ -188,6 +211,9 @@ describe('each refusal is named, with the open note', () => {
     ['a matrix that flattens the stroke', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [1], matrix: [1, 2, 2, 4, 0, 0]}]}, 'bad-request'],
     ['a matrix with no number', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [1], matrix: [1, 0, 0, 1, 0, null]}]}, 'bad-request'],
     ['a transform of no element', {path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [], matrix: [1, 0, 0, 1, 0, 0]}]}, 'bad-request'],
+    ['a text with no font size', {path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: RECT, text: 'x'}]}, 'bad-request'],
+    ['a blank text', {path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: RECT, text: '  ', fontSize: 40}]}, 'bad-request'],
+    ['a text and a file', {path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: RECT, text: 'x', fontSize: 40, file: `${EDITOR_FOLDER}p.png`}]}, 'bad-request'],
     ['a rect off the page', {path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 1, rect: {left: 0, top: 0, right: 5000, bottom: 10}}]}, 'bad-request'],
     ['a template path outside MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: '/storage/emulated/0/Document/grid.png'}]}, 'bad-request'],
     ['a template path that climbs out of MyStyle', {path: NOTE, ops: [{op: 'insertPage', page: 0, template: `${CUSTOM_TEMPLATE_FOLDER}/../Note/grid.png`}]}, 'bad-request'],

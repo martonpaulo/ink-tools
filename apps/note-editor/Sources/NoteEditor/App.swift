@@ -55,6 +55,7 @@ struct NoteEditorApp: App {
                 Divider()
                 MovePageCommands()
                 PageCommands()
+                EditTextBoxCommand()
             }
             CommandGroup(before: .toolbar) {
                 SidebarCommands()
