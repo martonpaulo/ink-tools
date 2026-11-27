@@ -50,7 +50,7 @@ describe('the futoshiki game (#390)', () => {
     await press(tree, playCopy['new.add']);
     const expected = generateFutoshiki(SEED, 5, 'easy');
     expect(inserted.map(page => page.code)).toEqual([puzzleCode(expected.id)]);
-    expect(calls).toEqual(['clear', 'here', 'codeOf', 'hide', 'insert']);
+    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     const again = FUTOSHIKI.create({size: '5', band: 'easy'}, SEED, SHAPE);
     expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);
   });
@@ -82,6 +82,6 @@ describe('the futoshiki game (#390)', () => {
     const tree = await mount(FUTOSHIKI, pages);
     await press(tree, playCopy['here.answer']);
     expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
-    expect(calls).toEqual(['clear', 'here', 'codeOf']);
+    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'codeOf']);
   });
 });

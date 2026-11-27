@@ -24,7 +24,7 @@ describe('the pass-and-play boards (#402)', () => {
     await press(tree, playCopy['new.add']);
     expect(inserted.map(page => page.code)).toEqual([`${game}-${SEED}`]);
     expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(renderBoardPage(game, {orientation: 'portrait', hand: 'right'}))))).toBe(true);
-    expect(calls).toEqual(['clear', 'here', 'codeOf', 'hide', 'insert']);
+    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     expect(back).toHaveBeenCalled();
   });
 

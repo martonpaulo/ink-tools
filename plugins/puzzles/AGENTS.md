@@ -40,6 +40,10 @@ the note and ends the plugin's JavaScript, so the view closes before it and the 
 deletes the page files an earlier one left; each press of the button starts at the game list
 ([#386](https://github.com/martonpaulo/ink-tools/issues/386)). The page's background then reads
 `user_<code>`, so the view finds the puzzle of the current page from it and stores nothing.
+The view outlives a close and the page can turn before the next press, so «Add Page», «Check» and
+«Show Solution» each read the page on screen again, never the read the view opened with; a page
+that holds another puzzle of the game is checked or solved as that one, and a page with none shows
+instead ([#542](https://github.com/martonpaulo/ink-tools/issues/542)).
 
 ## Adding a game
 

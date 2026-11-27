@@ -24,22 +24,29 @@ type FakeOptions = {
   failHere?: boolean;
 };
 
-/** Fake pages: every call is recorded, and every inserted page kept. */
+/**
+ * Fake pages: every call is recorded, and every inserted page kept, with the page it went after.
+ * `turn` moves to another page, as the page bar does while the view stays mounted (#542).
+ */
 export function fakePages({code = null, ink = [], read = () => ({ok: true, text: null}), failHere = false}: FakeOptions = {}) {
   const calls: string[] = [];
-  const inserted: {code: string; png: Uint8Array}[] = [];
+  const inserted: {code: string; png: Uint8Array; after: number}[] = [];
+  const on = {here: HERE, code, failHere};
+  const turn = (page: number, pageCode: string | null = null) => {
+    Object.assign(on, {here: {...HERE, page}, code: pageCode});
+  };
   const pages: PagePorts = {
     here: async () => {
       calls.push('here');
-      return failHere ? {ok: false, code: THROWN_CODE, message: 'The handwriting app is not open'} : {ok: true, value: HERE};
+      return on.failHere ? {ok: false, code: THROWN_CODE, message: 'The handwriting app is not open'} : {ok: true, value: on.here};
     },
     codeOf: async () => {
       calls.push('codeOf');
-      return {ok: true, value: code};
+      return {ok: true, value: on.code};
     },
-    insert: async (_here, puzzle, png) => {
+    insert: async (here, puzzle, png) => {
       calls.push('insert');
-      inserted.push({code: puzzle, png});
+      inserted.push({code: puzzle, png, after: here.page});
       return {ok: true, value: true};
     },
     ink: async () => {
@@ -58,7 +65,11 @@ export function fakePages({code = null, ink = [], read = () => ({ok: true, text:
     show: async () => calls.push('show'),
     log: () => {},
   };
-  return {pages, calls, inserted};
+  /** Makes the next page reads fail, or answer again. */
+  const failReads = (fail: boolean) => {
+    on.failHere = fail;
+  };
+  return {pages, calls, inserted, turn, failReads};
 }
 
 /** One game's view on these pages, with a fixed seed. */

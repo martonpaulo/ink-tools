@@ -47,7 +47,7 @@ describe('the jigsaw sudoku game (#397)', () => {
     await press(tree, playCopy['new.add']);
     const expected = generateJigsawSudoku(SEED, 'medium');
     expect(inserted.map(page => page.code)).toEqual([puzzleCode(expected.id)]);
-    expect(calls).toEqual(['clear', 'here', 'codeOf', 'hide', 'insert']);
+    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     expect(back).toHaveBeenCalled();
     const again = JIGSAW.create({band: 'medium'}, SEED, {orientation: 'portrait', hand: 'right'});
     expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);
@@ -97,6 +97,6 @@ describe('the jigsaw sudoku game (#397)', () => {
     const tree = await mount(JIGSAW, pages);
     await press(tree, playCopy['here.answer']);
     expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
-    expect(calls).toEqual(['clear', 'here', 'codeOf']);
+    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'codeOf']);
   });
 });

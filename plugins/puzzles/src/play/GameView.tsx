@@ -4,6 +4,8 @@
  * mistakes in the ink, and «Show Solution», both shown here only, so the note never gets the answer.
  * A pass-and-play board (#402) has no `open`: its view is the choices and «Add Page» alone.
  * Every control comes from ui-kit (#273); a failure stays on screen as its Error with Retry (#245).
+ * Each of those presses reads the page on screen again, never the read the view kept: the view
+ * outlives a close, and the page can turn before the next press (device round, #542).
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Image, ScrollView, StyleSheet, View} from 'react-native';
@@ -40,10 +42,10 @@ export type GameViewDeps = {
 
 type Screen =
   | {kind: 'reading'}
-  | {kind: 'ready'; here: Here; board: Puzzle | null}
+  | {kind: 'ready'; board: Puzzle | null}
   | {kind: 'working'}
-  | {kind: 'verdict'; here: Here; board: Puzzle; verdict: Verdict}
-  | {kind: 'answer'; here: Here; board: Puzzle; picture: Raster}
+  | {kind: 'verdict'; board: Puzzle; verdict: Verdict}
+  | {kind: 'answer'; board: Puzzle; picture: Raster}
   | {kind: 'error'; problem: Problem; retry: () => void};
 
 const shapeOf = (here: Here): PageShape => ({orientation: here.orientation, hand: HAND});
@@ -82,6 +84,8 @@ export function GameView({
     };
     const here = await pages.here();
     if (!here.ok) {return failed(playCopy['error.here'], retry, here.message);}
+    // The page only: a note's name can be personal, and logs keep no personal data.
+    pages.log(`${game.id}: on page ${here.value.page}`);
     const code = await pages.codeOf(here.value);
     if (!code.ok) {return failed(playCopy['error.here'], retry, code.message);}
     let board: Puzzle | null = null;
@@ -93,7 +97,7 @@ export function GameView({
         pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
       }
     }
-    setScreen({kind: 'ready', here: here.value, board});
+    setScreen({kind: 'ready', board});
   }, [failed, game, pages]);
 
   useEffect(() => {
@@ -102,17 +106,53 @@ export function GameView({
     read();
   }, [pages, read]);
 
+  /**
+   * The page on screen now and its puzzle of this game: `board` when the page still holds it, else
+   * the puzzle the page holds now, so the press acts on the page the person sees. A page with no
+   * puzzle of this game shows instead, and this answers null, so a check or a solution never belongs
+   * to another page (#542).
+   */
+  const onScreen = useCallback(
+    async (board: Puzzle, retry: () => void): Promise<{here: Here; board: Puzzle} | null> => {
+      const here = await pages.here();
+      if (!here.ok) {
+        failed(playCopy['error.here'], retry, here.message);
+        return null;
+      }
+      const code = await pages.codeOf(here.value);
+      if (!code.ok) {
+        failed(playCopy['error.here'], retry, code.message);
+        return null;
+      }
+      if (code.value === board.code) {return {here: here.value, board};}
+      pages.log(`${game.id}: page ${here.value.page} holds ${code.value ?? 'no puzzle'}, not ${board.code}`);
+      if (code.value !== null && game.open) {
+        try {
+          return {here: here.value, board: game.open(code.value, shapeOf(here.value))};
+        } catch (error) {
+          pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
+        }
+      }
+      read();
+      return null;
+    },
+    [failed, game, pages, read],
+  );
+
   const add = useCallback(
-    async (here: Here) => {
+    async () => {
       const retry = () => {
-      add(here);
-    };
+        add();
+      };
       setScreen({kind: 'working'});
+      // The page on screen now, not the one the view opened on (#542).
+      const here = await pages.here();
+      if (!here.ok) {return failed(playCopy['error.here'], retry, here.message);}
       await nextFrame();
       let board: GamePage;
       let png: Uint8Array;
       try {
-        board = game.create(choices, seed(), shapeOf(here));
+        board = game.create(choices, seed(), shapeOf(here.value));
         png = encodePng(board.page);
       } catch (error) {
         return failed(playCopy['error.add'], retry, String(error));
@@ -120,9 +160,9 @@ export function GameView({
       // The view closes first: the note reload of a successful insert can end this JavaScript, and a
       // view left open then stays frozen on Loading over a dead bridge (device round, #386). The note
       // shows the new page after the current one; only a failure opens the view again, on its Error.
-      pages.log(`${game.id}: adding ${board.code} after page ${here.page}`);
+      pages.log(`${game.id}: adding ${board.code} after page ${here.value.page}`);
       await pages.hide();
-      const inserted = await pages.insert(here, board.code, png);
+      const inserted = await pages.insert(here.value, board.code, png);
       if (!inserted.ok) {
         await pages.show();
         return failed(playCopy['error.add'], retry, inserted.message);
@@ -134,11 +174,14 @@ export function GameView({
   );
 
   const check = useCallback(
-    async (here: Here, board: Puzzle) => {
+    async (shown: Puzzle) => {
       const retry = () => {
-      check(here, board);
-    };
+        check(shown);
+      };
       setScreen({kind: 'working'});
+      const now = await onScreen(shown, retry);
+      if (!now) {return;}
+      const {here, board} = now;
       const ink = await pages.ink(here);
       if (!ink.ok) {return failed(playCopy['error.check'], retry, ink.message);}
       let verdict: Verdict;
@@ -148,16 +191,24 @@ export function GameView({
         return failed(playCopy['error.check'], retry, String(error));
       }
       pages.log(`${game.id}: checked ${board.code}: ${verdict.wrong} wrong, solved ${verdict.solved}`);
-      setScreen({kind: 'verdict', here, board, verdict});
+      setScreen({kind: 'verdict', board, verdict});
     },
-    [failed, game.id, pages],
+    [failed, game.id, onScreen, pages],
   );
 
-  const answer = useCallback(async (here: Here, board: Puzzle) => {
-    setScreen({kind: 'working'});
-    await nextFrame();
-    setScreen({kind: 'answer', here, board, picture: board.answer()});
-  }, []);
+  const answer = useCallback(
+    async (shown: Puzzle) => {
+      const retry = () => {
+        answer(shown);
+      };
+      setScreen({kind: 'working'});
+      const now = await onScreen(shown, retry);
+      if (!now) {return;}
+      await nextFrame();
+      setScreen({kind: 'answer', board: now.board, picture: now.board.answer()});
+    },
+    [onScreen],
+  );
 
   switch (screen.kind) {
     case 'reading':
@@ -173,11 +224,11 @@ export function GameView({
           ? playCopy['verdict.open']
           : playCopy['verdict.wrong'](verdict.wrong);
       const line = verdict.unread === 0 ? found : `${found} ${playCopy['verdict.unread'](verdict.unread)}`;
-      const back = () => setScreen({kind: 'ready', here: screen.here, board: screen.board});
+      const back = () => setScreen({kind: 'ready', board: screen.board});
       return <Picture title={playCopy['verdict.title']} note={line} raster={verdict.picture} onBack={back} onClose={onClose} />;
     }
     case 'answer': {
-      const back = () => setScreen({kind: 'ready', here: screen.here, board: screen.board});
+      const back = () => setScreen({kind: 'ready', board: screen.board});
       return (
         <Picture title={playCopy['answer.title']} note={playCopy['answer.note']} raster={screen.picture} onBack={back} onClose={onClose} />
       );
@@ -189,9 +240,9 @@ export function GameView({
           screen={screen}
           choices={choices}
           onChoose={(id, value) => setChoices(current => settle(game.options, {...current, [id]: value}))}
-          onAdd={() => add(screen.here)}
-          onCheck={board => check(screen.here, board)}
-          onAnswer={board => answer(screen.here, board)}
+          onAdd={add}
+          onCheck={check}
+          onAnswer={answer}
           onBack={onBack}
           onClose={onClose}
         />
@@ -221,7 +272,7 @@ function Ready({
   onClose,
 }: GameViewProps & {
   game: PuzzleGame;
-  screen: {here: Here; board: Puzzle | null};
+  screen: {board: Puzzle | null};
   choices: Choices;
   onChoose: (id: string, value: string) => void;
   onAdd: () => void;
