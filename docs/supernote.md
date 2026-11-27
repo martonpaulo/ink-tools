@@ -1145,10 +1145,15 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   stays out of the file until a save; with no module on, it inserts and saves the strokes as plain
   ink. Smart Shapes took a replayed held circle and square, which the lasso delete then left on the
   page (see Plugins, [#477](https://github.com/martonpaulo/ink-tools/issues/477)) [measured, Manta,
-  2026-11-27]. Not yet seen on the tablet [inference, device round pending]: that Real-Time Text
-  takes a replayed word; and whether
-  `input stylus motionevent` reaches a plugin's own React Native view, such as Image Editing's Crop
-  and Erase, where inkctl could draw with no replay at all.
+  2026-11-27]. Real-Time Text took a replayed five-stroke «hola» in its mode, with no Smart Pen view
+  open: 4 characters, and the text box alone stayed after a close and reopen [measured, Manta,
+  2026-11-27]. A replay hung at `getCurrentPageNum` after Smart Pen's Settings view was opened from
+  the Settings app: PluginHost kept `com.ratta.settings` as its note app (`getNoteAppPkgName`) after
+  the view closed and a note opened, until PluginHost was restarted (`am force-stop
+  com.ratta.supernote.pluginhost`) [measured, Manta, 2026-11-27]. Not yet seen on the tablet, an
+  inference until a device round [inference]: whether `input stylus motionevent` reaches a plugin's
+  own React Native view, such as Image Editing's Crop and Erase, where inkctl could draw with no
+  replay at all.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off
   with `inkctl wifi off` [measured]. With the tablet's Wi-Fi off (`adb -d shell svc wifi disable`),
   `adb -d` still answers over the cable [measured, 2026-11-16,
