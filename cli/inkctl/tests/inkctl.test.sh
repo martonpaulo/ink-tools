@@ -79,7 +79,18 @@ case "$1" in
         if [ -f "$ADB_FILES/pull-content" ]; then cp "$ADB_FILES/pull-content" "$3"; fi ;;
     push)
         case "$3" in
-            */action.json) cp "$2" "$ADB_FILES/action.json"; printf '%s\n' "$3" > "$ADB_FILES/action-path"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
+            */action.json)
+                # With $ADB_PUSH_MEET, the first push waits for a second one to start, so two
+                # requests at once overlap unless inkctl holds them apart (#471).
+                if [ -n "${ADB_PUSH_MEET:-}" ]; then
+                    if mkdir "$ADB_FILES/push-first" 2>/dev/null; then
+                        # timing-independent: the loop ends when a second push starts; the bound only ends it when none comes.
+                        for _ in $(seq 30); do [ -d "$ADB_FILES/push-second" ] && break; sleep 0.1; done
+                    else
+                        mkdir -p "$ADB_FILES/push-second"
+                    fi
+                fi
+                cp "$2" "$ADB_FILES/action.json"; printf '%s\n' "$3" > "$ADB_FILES/action-path"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
             *inktools-probe/command.json) cp "$2" "$ADB_FILES/command.json"; wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size" ;;
             *inktools-probe/picture.*|*inktools-device-link/picture-*) wc -c < "$2" | tr -d ' ' > "$ADB_FILES/size"; printf '%s\n' "$3" >> "$ADB_FILES/picture-paths" ;;
         esac ;;
@@ -1745,6 +1756,15 @@ check "plugin action writes the request in the plugin's folder and prints the pl
 check "the request names the action, its module and the tablet's time" "$(action_field "d['action'], d['args'], d['at'], len(d['id'])")" "('sync', {'module': 'todo'}, 1800000000000, 32)"
 check "plugin action presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
 check "plugin action in JSON answers the plugin's own answer" "$(run plugin action account-sync sync --json | field "['ok'],d['modules']")" "(True, ['todo'])"
+# Two requests at once to one plugin: the second waits for the first's answer, never replaces its file (#471).
+ADB_PUSH_MEET=1 run plugin action account-sync sync --module todo --timeout 10 > "$work/first-action" 2>&1 &
+first_action=$!
+second=$(ADB_PUSH_MEET=1 run plugin action account-sync sync --module todo --timeout 10 2>&1)
+second_status=$?
+wait "$first_action"
+first_status=$?
+check "two plugin actions at once both answer" "$first_status$second_status|$(cat "$work/first-action")|$second" "00|[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings|[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings"
+rm -r "$files/push-first" "$files/push-second"
 action_line 'ink-tools-probe ACTION_ID 1/2 {"ok":true,"action":"run-probe","ms":40,' > "$files/action-answer"
 action_line 'ink-tools-probe ACTION_ID 2/2 "line":"SNPROBE probe done","lines":["probe done"]}' >> "$files/action-answer"
 check "run-probe joins an answer in chunks, in Probe's hidden folder" "$(run plugin action ink-tools-probe run-probe)$(cat "$files/action-path")" "SNPROBE probe done$root/.data/plugin/inktools-probe/action.json"

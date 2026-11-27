@@ -110,6 +110,8 @@ the work goes on with the tablet's Wi-Fi off; `status` names the link.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import fcntl
 import hashlib
 import html.parser
 import http.client
@@ -488,6 +490,7 @@ BATCH_STEP_SECONDS = 1.5
 HELPER_OUTSIDE_FOLDER = 3
 SCREEN_AWAKE = "mWakefulness=Awake"  # `dumpsys power` with the screen on
 HELPER_ANSWERED_FILE = Path.home() / ".cache/inkctl/helper-answered"  # the time of Probe's last answer
+REQUEST_LOCKS = Path.home() / ".cache/inkctl"  # one lock file per plugin request file (#471)
 # A plugin's own action by command, with no screen (#283): packages/sn-adapter/src/official/actions.ts owns
 # the request file and the answer lines; each plugin reads the file in its own folder on a timer.
 ACTION_FILE = "action.json"
@@ -2684,9 +2687,27 @@ def unguarded_answer(answer: dict, command: dict) -> dict:
     return steps[0] if steps else answer
 
 
+@contextlib.contextmanager
+def one_request_at_a_time(name: str):
+    """Hold this Mac's lock on one plugin's request file from the push to the answer: a second inkctl
+    that pushed to the same file meanwhile replaced or emptied the first one's request, and both failed
+    (#471). The lock ends with the process, so a call that dies never holds it.
+    shortcut: one lock per plugin on this Mac, whichever tablet; a second tablet waits too, and a request
+    from another computer is not held off. Upgrade to one lock per tablet if two tablets are used at once."""
+    REQUEST_LOCKS.mkdir(parents=True, exist_ok=True)
+    with open(REQUEST_LOCKS / f"{name}.lock", "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
+
+
 def helper_call(device: Device, args: argparse.Namespace, command: dict, guard: str | None = None) -> dict:
     """Run one command in Probe and return its answer; a refusal or no answer is a Failure. With
     `guard`, Probe first checks that the open note is in that folder, and runs nothing outside it."""
+    with one_request_at_a_time("ink-tools-probe-command"):
+        return locked_helper_call(device, args, command, guard)
+
+
+def locked_helper_call(device: Device, args: argparse.Namespace, command: dict, guard: str | None) -> dict:
     if device.activity() != NOTE_ACTIVITY:
         raise Failure(EXIT_UNEXPECTED_SCREEN, "unexpected_screen", "no note is open; open a test note first (inkctl note open)", "inkctl note open Note/Tests/X.note")
     command_id = uuid.uuid4().hex
@@ -3606,6 +3627,11 @@ def logs_step(name: str) -> str:
 
 def run_action(device: Device, name: str, action: str, request_args: dict, timeout: float) -> dict:
     """Push one request to a plugin's action file and wait for its answer in the log (#283)."""
+    with one_request_at_a_time(f"{name}-action"):
+        return locked_action(device, name, action, request_args, timeout)
+
+
+def locked_action(device: Device, name: str, action: str, request_args: dict, timeout: float) -> dict:
     plugin = ACTION_PLUGINS[name]
     now = device.shell("date +%s").strip()
     if not now.isdigit():
