@@ -280,7 +280,8 @@ export async function placeElement(element: object, page: number, rect: EditRect
 /**
  * Moves and sizes a shape to `rect` (#463): a line's or polygon's points mapped from their bounds,
  * or an ellipse's centre and radii; a circle sized to a rect that is not square becomes an ellipse.
- * shortcut: a turned ellipse (angle not 0) is refused, since its box needs the angle's unit; the device round settles it.
+ * The angle read is written back as it came, so the shape keeps its look.
+ * shortcut: a turned ellipse (an angle not near 0 or 90) is refused, since its box needs the angle's sense; the device round settles it.
  */
 function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect): Result<object> {
   const center = geometry.ellipseCenterPoint;
@@ -291,9 +292,7 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
     if (!center || !(major > 0) || !(minor > 0)) {
       return fail(THROWN_CODE, 'the shape has no centre or radii');
     }
-    // A read may answer the angle as a string or in its own unit: a value that reads as 0 is not turned,
-    // and any other says what came, for the device round (#463).
-    if (Number(geometry.ellipseAngle ?? 0) !== 0) {
+    if (!isUnturned(geometry.ellipseAngle)) {
       return fail(THROWN_CODE, `a turned ellipse cannot be moved yet (ellipseAngle ${JSON.stringify(geometry.ellipseAngle)})`);
     }
     const from = {left: center.x - major, top: center.y - minor, right: center.x + major, bottom: center.y + minor};
@@ -317,6 +316,19 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
   moveBox(placed, map);
   return ok(placed);
 }
+
+/**
+ * Whether a read ellipse angle is an unturned ellipse's (#463). A read may answer it as a string,
+ * and the tablet stores the angle 0 of an insert as about 90 (90.0027 measured on the Manta), so 0
+ * and 90 both mean not turned, to the nearest degree; any other value is refused with what came.
+ */
+function isUnturned(angle: unknown): boolean {
+  const degrees = Math.round(Number(angle ?? 0));
+  return degrees === 0 || degrees === UNTURNED_STORED_ANGLE;
+}
+
+/** The angle the tablet stores for an ellipse inserted at angle 0, measured on the Manta (#463). */
+const UNTURNED_STORED_ANGLE = 90;
 
 /** An affine map of page pixels, as CoreGraphics orders it: x' = a x + c y + tx, y' = b x + d y + ty. */
 export type Matrix = [a: number, b: number, c: number, d: number, tx: number, ty: number];

@@ -416,5 +416,16 @@ describe('the editor helper calls (#312)', () => {
     });
     const readAsText = {...turned, ellipseAngle: '0'};
     expect((await page.placeElement({type: 700, geometry: readAsText}, 0, rect)).ok).toBe(true);
+    expect(await page.placeElement({type: 700, geometry: {...turned, ellipseAngle: 91}}, 0, rect)).toMatchObject({ok: false});
+  });
+
+  it('moves an ellipse the tablet stored at about 90 after an insert at 0, writing that angle back (#463)', async () => {
+    // The value the Manta answered for an ellipse inserted at angle 0 (#463, device round 2).
+    const stored = 90.00273895263672;
+    const ellipse = {type: 'GEO_ellipse', ellipseCenterPoint: {x: 50, y: 50}, ellipseMajorAxisRadius: 50, ellipseMinorAxisRadius: 20, ellipseAngle: stored};
+    expect(await page.placeElement({type: 700, geometry: ellipse}, 0, rect)).toMatchObject({
+      ok: true,
+      value: {geometry: {ellipseCenterPoint: {x: 200, y: 300}, ellipseMajorAxisRadius: 100, ellipseMinorAxisRadius: 100, ellipseAngle: stored}},
+    });
   });
 });

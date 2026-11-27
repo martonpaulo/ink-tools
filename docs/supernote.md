@@ -1023,6 +1023,10 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   15664 elements with none stepped over, while a reader that knew only `others`, `bitmap` and the
   text kinds failed 19 of its pages [measured on the Mac, 2026-11-27,
   [#459](https://github.com/martonpaulo/ink-tools/issues/459)]. `GEO_ellipse` has not been seen in a file yet.
+  An ellipse inserted by path with `ellipseAngle` 0 (major radius along x, drawn wider than tall)
+  reads back through `getElement` with `ellipseAngle` 90.00273895263672, so a stored 0 or about 90
+  is an unturned ellipse [measured on the Manta, 2026-11-27,
+  [#463](https://github.com/martonpaulo/ink-tools/issues/463)].
 - A stroke's record box is the element's `recognizeResult` (`up_left_point_x` to
   `down_right_point_y`, page pixels) in the plugin API. A modify of a closed note by path makes the
   box again from the points; `modifyPageElements` on the open note keeps the box it is sent. A stroke
