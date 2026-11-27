@@ -1753,6 +1753,32 @@ run note digest Note/Tests/Move.note --json >"$work/out" 2>/dev/null
 check "note digest fails when the plugin read other bytes" "$? $(field "['error'],d['equal']" < "$work/out")" "1 ('device_error', False)"
 run note digest Note/Private.note >/dev/null 2>&1
 check "note digest refuses a note outside Note/Tests/" "$?" "12"
+# A command that asks Probe needs both waits once Probe's listen window closed: digest had neither
+# and stopped with an AttributeError on the tablet (#522).
+cat > "$work/helped.py" <<'PY'
+import argparse, importlib.machinery, importlib.util, inspect, sys
+
+loader = importlib.machinery.SourceFileLoader("inkctl_helped", sys.argv[1])
+spec = importlib.util.spec_from_loader(loader.name, loader)
+inkctl = importlib.util.module_from_spec(spec)
+loader.exec_module(inkctl)
+missing = []
+
+def walk(parser, name):
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for sub, child in action.choices.items():
+                walk(child, f"{name} {sub}".strip())
+    func = parser.get_default("handler")
+    if func and "helper_call(" in inspect.getsource(func):
+        for option in ("timeout", "step_timeout"):
+            if parser.get_default(option) is None and not any(a.dest == option for a in parser._actions):
+                missing.append(f"{name}: {option}")
+
+walk(inkctl.build_parser(), "")
+print(" ".join(missing) or "none")
+PY
+check "every command that asks Probe takes --timeout and --step-timeout" "$(python3 "$work/helped.py" "$script")" "none"
 rm -f "$files/md5"
 rm -f "$files/command.json"
 for bad in "Note/Tests/Move.note 2 2" "Note/Tests/Move.note 0 2" "Note/Tests/Move.pdf 1 2" "Note/Tests/Move.note 1 2 --template ../x"; do

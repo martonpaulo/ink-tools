@@ -5037,7 +5037,7 @@ def build_parser() -> argparse.ArgumentParser:
     fixtures.add_argument("name", nargs="?", help="a fixture of Note/Tests/Fixtures.note, as --list names it")
     fixtures.add_argument("--list", dest="list_fixtures", action="store_true", help="print each fixture, its page, its rects and what it serves; no tablet is reached")
     fixtures.add_argument("--lasso", metavar="ITEM", help="then lasso this rect of the fixture, as --list names it")
-    for helped in (opened, created, batched, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged, moved_page):
+    for helped in (opened, created, batched, fixtures, boxed, last, written, sampled, saved, rendered, pictured, texted, paged, moved_page, digested):
         helped.add_argument("--timeout", type=float, default=HELPER_TIMEOUT, help="seconds for Probe's answer")
         helped.add_argument("--step-timeout", type=float, default=STEP_TIMEOUT, help=STEP_TIMEOUT_HELP)
     batched.set_defaults(timeout=None)  # sized from the steps: HELPER_TIMEOUT and BATCH_STEP_SECONDS each (#286)
