@@ -6,7 +6,7 @@ A settings-only Supernote plugin with to-do, calendar and digest modules, each o
 module syncs your calendars with the **native** Supernote Calendar, the real one the device already
 shows, not a separate calendar inside a plugin.
 
-**Status: scaffolded.** Settings-only shell; the modules are tracked in this repository's issues.
+**Status: Beta.** A settings-only shell with the to-do and calendar modules, each opt in; the modules are tracked in this repository's issues.
 
 ## What it will do
 

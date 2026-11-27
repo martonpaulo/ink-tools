@@ -83,6 +83,16 @@ class Vocabulary(unittest.TestCase):
         values = readme_status.allowed((root / "AGENTS.md").read_text(encoding="utf-8"))
         self.assertEqual(readme_status.bad_cells((root / "README.md").read_text(encoding="utf-8"), values), (True, []))
 
+    def test_account_sync_readme_status_matches_the_tool_list(self):
+        # #490: the plugin README opened with «scaffolded» while docs/tools.json said Beta.
+        import json
+        root = Path(__file__).resolve().parent.parent
+        tools = json.loads((root / "docs" / "tools.json").read_text(encoding="utf-8"))
+        tools = tools["tools"] if isinstance(tools, dict) else tools
+        status = next(t["status"] for t in tools if t["name"].startswith("Account Sync"))
+        readme = (root / "plugins" / "account-sync" / "README.md").read_text(encoding="utf-8")
+        self.assertIn(f"**Status: {status}.**", readme)
+
 
 if __name__ == "__main__":
     unittest.main()
