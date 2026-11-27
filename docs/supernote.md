@@ -858,7 +858,10 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
   sideloaded service under Downloaded apps; its «Use» switch asks «Allow … to have full control of
   your device?», and Allow adds it in full form (`<package>/<package>.<Service>`) and keeps the
   other entries [measured, 2026-11-27, Manta, Handwriting Language 0.1.0 beta 14,
-  [#489](https://github.com/martonpaulo/ink-tools/issues/489)]:
+  [#489](https://github.com/martonpaulo/ink-tools/issues/489)]. With `package:<app>`,
+  `MANAGE_APP_ALL_FILES_ACCESS_PERMISSION` opens the app's own «All files access» page («Allow access
+  to manage all files») and `ACTION_MANAGE_OVERLAY_PERMISSION` the «Display over other apps» list,
+  both in the Android Settings app [measured, same day, [#494](https://github.com/martonpaulo/ink-tools/issues/494)]:
   - The handwriting keyboard (`com.android.inputmethod.keyboard/.PinyinIME`) shows as a window of
     type `TYPE_INPUT_METHOD` in `getWindows()` about 140 ms after its `TYPE_WINDOW_STATE_CHANGED`
     event, and leaves the list when it closes; one `getWindows()` read took 4 to 125 ms.

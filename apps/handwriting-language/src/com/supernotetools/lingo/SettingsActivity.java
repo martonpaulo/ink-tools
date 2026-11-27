@@ -144,7 +144,7 @@ public final class SettingsActivity extends Activity {
     next.setOnClickListener(view -> switchLanguage());
     addGroup(Ink.group(this, null, Arrays.asList(activeRow, next), null));
     if (!files) {
-      missing(Place.FILES, Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+      missing(Place.FILES, Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, Copy.FILES_SETTING, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
     }
     errorAt(Place.SWITCH, Copy.SWITCH_FAILED);
 
@@ -167,12 +167,12 @@ public final class SettingsActivity extends Activity {
     modes.add(reset);
     addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
     if (!overlay) {
-      missing(Place.OVERLAY, Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+      missing(Place.OVERLAY, Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, Copy.OVERLAY_SETTING, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
     }
     if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
       // Android 11 has no screen for one service, so the list opens and the steps say what to tap;
       // the system adds the service to the enabled ones and keeps the others (#489).
-      missing(Place.WATCHER, Copy.WATCHER_OFF, Copy.WATCHER_STEPS, Copy.OPEN_WATCHER_SETTINGS,
+      missing(Place.WATCHER, Copy.WATCHER_OFF, Copy.WATCHER_STEPS, Copy.OPEN_WATCHER_SETTINGS, Copy.WATCHER_SETTING,
           new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
     }
 
@@ -309,12 +309,12 @@ public final class SettingsActivity extends Activity {
   }
 
   /** A missing permission: what it stops and the button to its system screen, with no computer (#494). */
-  private void missing(Place place, String what, String open, String screen) {
-    missing(place, what, null, open, new Intent(screen, Uri.parse("package:" + getPackageName())));
+  private void missing(Place place, String what, String open, String setting, String screen) {
+    missing(place, what, null, open, setting, new Intent(screen, Uri.parse("package:" + getPackageName())));
   }
 
   /** The same, with the steps to take on a system screen that lists every app, when it has any. */
-  private void missing(Place place, String what, String steps, String open, Intent screen) {
+  private void missing(Place place, String what, String steps, String open, String setting, Intent screen) {
     bold(what);
     if (steps != null) {
       add(Ink.text(this, steps, Ink.Role.ROW_TITLE));
@@ -324,7 +324,7 @@ public final class SettingsActivity extends Activity {
       try {
         startActivity(screen);
       } catch (ActivityNotFoundException none) {
-        fail(place, Copy.NO_PERMISSION_SCREEN);
+        fail(place, Copy.noScreen(setting));
       }
     });
     addButton(button);

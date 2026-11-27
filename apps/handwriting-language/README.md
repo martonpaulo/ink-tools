@@ -10,14 +10,15 @@ Status: test build for device rounds ([#157](https://github.com/martonpaulo/supe
 
 ## Install
 
-On the tablet, with no computer:
+With no computer, once a `handwriting-language-v…` prerelease is on the
+[releases page](https://github.com/martonpaulo/ink-tools/releases) (the first one waits for its signing key):
 
-1. Turn on Settings › Security & Privacy › Sideloading.
-2. In the tablet's Browser, open the [releases page](https://github.com/martonpaulo/ink-tools/releases),
-   pick the newest `handwriting-language-v…` release and download its `lingo-app-….apk`.
-3. Open the downloaded file and tap Install.
+1. On the tablet, turn on Settings › Security & Privacy › Sideloading.
+2. On a phone, download the release's `lingo-app-….apk`, then send it to the tablet with Device Link,
+   or upload it in the phone's browser to the address the tablet's Browse & Access shows.
+3. On the tablet, open the file and tap Install.
 4. Open Handwriting Language from the sidebar. Each missing permission shows a button that opens its
-   system screen: All-files access, Display over other apps, and Accessibility for writing detection.
+   system screen: All files access, Display over other apps, and Accessibility for writing detection.
 
 A build from source signed by another key needs Handwriting Language uninstalled first.
 

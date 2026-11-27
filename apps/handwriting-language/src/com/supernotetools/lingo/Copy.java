@@ -46,7 +46,14 @@ final class Copy {
   static final String OVERLAY_OFF = "Display over other apps is off, so the floating button cannot show.";
   static final String OPEN_FILES_PERMISSION = "Open All-Files Access Settings";
   static final String OPEN_OVERLAY_PERMISSION = "Open Display Over Apps Settings";
-  static final String NO_PERMISSION_SCREEN = "This tablet did not open the settings screen. Open the tablet's Settings and turn it on there for " + TITLE + ".";
+  static final String FILES_SETTING = "All files access";
+  static final String OVERLAY_SETTING = "Display over other apps";
+  static final String WATCHER_SETTING = "Accessibility";
+
+  /** The tablet opened no screen for `setting`: where to turn it on by hand, naming it (#494). */
+  static String noScreen(String setting) {
+    return "This tablet did not open the " + setting + " screen, so " + setting + " cannot be turned on from here. Restart the tablet and try again.";
+  }
   static final String SWITCH_FAILED = "The last switch failed:";
   static final String VERSION = "Version";
   static final String NOTIFICATION = "Handwriting Language floating button";
