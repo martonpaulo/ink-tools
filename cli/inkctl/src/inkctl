@@ -3918,6 +3918,16 @@ def read_back_permissions(device: Device, limit: float) -> list[dict]:
         time.sleep(WAIT_INTERVAL)
 
 
+def reopen_permissions(device: Device, args: argparse.Namespace, row: dict) -> None:
+    """Back to the plugin's permission rows after a choice. The tablet stays on the permission's own
+    page (Allow / Ask Every Time / Don't Allow), and the hardware Back closes Settings instead of going
+    up one level [measured, Manta, firmware 2559, 2026-11-27, #537]; so close it and walk the path again.
+    shortcut: the page's own back arrow has no recorded selector; use it once `inkctl snapshot` names it."""
+    device.shell("input keyevent BACK")
+    open_plugin_page(device, args, row)
+    press_element(device, expect_element(device, PLUGIN_PERMISSIONS_STEP, args.step_timeout))
+
+
 def command_plugin_permissions(device: Device, args: argparse.Namespace):
     """Read a plugin's permissions in Settings, or set each one the page lists to the always-allow choice.
     The page lists only what the plugin declares, so nothing undeclared is granted."""
@@ -3933,8 +3943,9 @@ def command_plugin_permissions(device: Device, args: argparse.Namespace):
             if not current:
                 raise unexpected_screen(f"the permission {label} left the page")
             press_element(device, current[0]["element"])
-            press_element(device, expect_screen(device, permission_choices, args.step_timeout, f"no dialog with the choices {', '.join(PERMISSION_STATES)}"))
+            press_element(device, expect_screen(device, permission_choices, args.step_timeout, f"no page with the choices {', '.join(PERMISSION_STATES)}"))
             changed.append(label)
+            reopen_permissions(device, args, row)
         rows = read_back_permissions(device, args.step_timeout)
         data["changed"] = changed
     data["permissions"] = shown_permissions(rows)

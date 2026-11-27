@@ -1264,13 +1264,15 @@ result=$(run plugin permissions SnapKey --json 2>/dev/null)
 check "plugin permissions reads each permission and its state" "$(printf '%s' "$result" | expression "[(p['permission'], p['state']) for p in d['permissions']]")" "[('Network Access', 'Ask Every Time'), ('File Read Access', 'Allow'), ('File Write Access', \"Don't Allow\")]"
 check "plugin permissions finds the plugin by its pluginKey" "$(printf '%s' "$result" | field "['plugin']")" "snap.id"
 check "plugin permissions presses only the way to the page" "$(called 'input tap')" "4"
-settings_screens list list list plugin start dialog half dialog done
+# After a choice the tablet stays on the choice's page and Back closes Settings (#537): the walk starts again.
+settings_screens list list list plugin start dialog list list list plugin half dialog list list list plugin done
 result=$(run plugin permissions snap always --json 2>/dev/null)
 check "plugin permissions always changes only what is not on Allow" "$(printf '%s' "$result" | field "['changed']")" "['Network Access', 'File Write Access']"
 check "plugin permissions always reads every state back" "$(printf '%s' "$result" | expression "{p['state'] for p in d['permissions']}")" "{'Allow'}"
-check "plugin permissions always presses each row and its choice" "$(called 'input tap')" "8"
-check "plugin permissions always presses the choice in the dialog" "$(called 'input tap 960 1150')" "2"
-settings_screens list list list plugin start dialog half dialog half
+check "plugin permissions always presses each row, its choice and the way back" "$(called 'input tap')" "16"
+check "plugin permissions always presses the choice on its page" "$(called 'input tap 960 1150')" "2"
+check "plugin permissions always leaves each choice page with Back" "$(called 'input keyevent BACK')" "2"
+settings_screens list list list plugin start dialog list list list plugin half dialog list list list plugin half
 run plugin permissions Snap always --step-timeout 0 >/dev/null 2>"$work/err"
 check "a read-back that keeps another state fails" "$?$(grep -c 'File Write Access' "$work/err")" "11"
 settings_screens list list list plugin start half
