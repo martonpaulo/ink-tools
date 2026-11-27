@@ -13,9 +13,14 @@
  * loop; `medium` and `hard` also need trials (set an edge, follow the rules, and take the other
  * value when that breaks one), `hard` many of them. A puzzle the solver finishes has one solution:
  * every step it takes is forced.
+ *
+ * A new page of a slow size and band comes from `slitherlink-bank.ts` (#552): a 10 x 10 hard took
+ * up to 23 s on the tablet.
  */
 import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
+import { SLITHERLINK_BANK } from './slitherlink-bank';
 
 export interface SlitherlinkSize {
   width: number;
@@ -512,10 +517,47 @@ export function generateSlitherlink(seed: string, size: SlitherlinkSize, difficu
   throw new Error(`no ${difficulty} ${width} x ${height} slitherlink from seed «${seed}» in ${ATTEMPTS} attempts`);
 }
 
-/** The slitherlink a puzzle code names (`SL-7X7-M-7K2Q9X`), the same one every time (#391). */
+/** A seed bank entry's no-number mark among the clues. */
+const NO_CLUE = '.';
+
+/**
+ * A seed bank entry's text (#552): the clues row by row, `.` for none, then each edge of the loop
+ * as 1 or 0 in `slitherlinkEdgeKeys` order, then the trials, joined by «/».
+ */
+export function encodeSlitherlink(puzzle: Pick<Slitherlink, 'clues' | 'solution' | 'trials'>): string {
+  const clues = puzzle.clues.map(clue => (clue === null ? NO_CLUE : String(clue))).join('');
+  return [clues, puzzle.solution.map(on => (on ? '1' : '0')).join(''), String(puzzle.trials)].join('/');
+}
+
+function slitherlinkOfEntry(entry: SeedBankEntry, width: number, height: number, difficulty: Difficulty): Slitherlink {
+  const [clueText, edgeText, trialText] = entry.text.split('/');
+  const edges = slitherlinkEdgeKeys(width, height).length;
+  if (clueText?.length !== width * height || edgeText?.length !== edges) throw new RangeError(`a ${width} x ${height} slitherlink entry has ${width * height} clues and ${edges} edges`);
+  return {
+    id: { game: 'slitherlink', size: `${width}X${height}`, difficulty, seed: entry.seed },
+    width,
+    height,
+    clues: [...clueText].map(ch => (ch === NO_CLUE ? null : Number(ch))),
+    solution: [...edgeText].map(ch => ch === '1'),
+    trials: Number(trialText),
+  };
+}
+
+/**
+ * The slitherlink a new page shows: at a size and band in the bank, the entry the seed picks,
+ * ready at once and named by its own seed (#552); elsewhere `generateSlitherlink`'s, made live.
+ */
+export function newSlitherlink(seed: string, size: SlitherlinkSize, difficulty: Difficulty): Slitherlink {
+  const { width, height } = size;
+  const entry = pickFromBank(SLITHERLINK_BANK, bankPair(`${width}x${height}`, difficulty), seed);
+  return entry ? slitherlinkOfEntry(entry, width, height, difficulty) : generateSlitherlink(seed, size, difficulty);
+}
+
+/** The slitherlink a puzzle code names (`SL-7X7-M-7K2Q9X`), the same one every time (#391), banked or not. */
 export function slitherlinkFromCode(code: string): Slitherlink {
   const id = parsePuzzleCode(code);
   if (id.game !== 'slitherlink') throw new RangeError(`«${code}» is not a slitherlink code`);
   const [width, height] = id.size.split('X').map(Number);
-  return generateSlitherlink(id.seed, { width, height }, id.difficulty);
+  const entry = findInBank(SLITHERLINK_BANK, bankPair(`${width}x${height}`, id.difficulty), id.seed);
+  return entry ? slitherlinkOfEntry(entry, width, height, id.difficulty) : generateSlitherlink(id.seed, { width, height }, id.difficulty);
 }

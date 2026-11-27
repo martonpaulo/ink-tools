@@ -10,7 +10,7 @@ import {
   drawLineCheck,
   drawSlitherlinkPage,
   edgeEnds,
-  generateSlitherlink,
+  newSlitherlink,
   puzzleCode,
   SLITHERLINK_BANDS,
   SLITHERLINK_SIDES,
@@ -63,7 +63,7 @@ export const SLITHERLINK: PuzzleGame = {
   ],
   create: (choices, seed, shape) => {
     const side = Number(choices.size);
-    return board(generateSlitherlink(seed, {width: side, height: side}, choices.band as Difficulty), shape);
+    return board(newSlitherlink(seed, {width: side, height: side}, choices.band as Difficulty), shape);
   },
   open: (code, shape) => board(slitherlinkFromCode(code), shape),
 };

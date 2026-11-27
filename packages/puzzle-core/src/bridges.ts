@@ -14,10 +14,15 @@
  *
  * A grid that still needs a guess is never offered. `countBridgesSolutions` is the plain search
  * the tests use to pin the solution count.
+ *
+ * A new page of a slow size and band comes from `bridges-bank.ts` (#552): a 13 x 13 hard took
+ * 9 s on the tablet.
  */
 
+import { BRIDGES_BANK } from './bridges-bank';
 import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
 
 export interface BridgesSize {
   width: number;
@@ -423,10 +428,46 @@ export function generateBridges(seed: string, size: BridgesSize, difficulty: Dif
   throw new Error(`no ${difficulty} ${width} x ${height} Bridges grid from seed «${seed}» in ${ATTEMPTS} attempts`);
 }
 
-/** The Bridges grid a puzzle code names (`BR-7X7-M-7K2Q9X`), the same one every time (#396). */
+/** A seed bank entry's mark for a cell with no island. */
+const NO_ISLAND = '.';
+
+/**
+ * A seed bank entry's text (#552): the grid row by row, `.` for water and each island's number,
+ * then the bridges on each link of `bridgesLinks`, joined by «/».
+ */
+export function encodeBridges(puzzle: Pick<Bridges, 'width' | 'height' | 'islands' | 'solution'>): string {
+  const cells = new Array<string>(puzzle.width * puzzle.height).fill(NO_ISLAND);
+  for (const island of puzzle.islands) cells[island.row * puzzle.width + island.column] = String(island.clue);
+  return [cells.join(''), puzzle.solution.join('')].join('/');
+}
+
+function bridgesOfEntry(entry: SeedBankEntry, width: number, height: number, difficulty: Difficulty): Bridges {
+  const [cellText, linkText] = entry.text.split('/');
+  if (cellText?.length !== width * height) throw new RangeError(`a ${width} x ${height} Bridges entry has ${width * height} cells, not ${cellText?.length}`);
+  const islands: BridgesIsland[] = [];
+  [...cellText].forEach((ch, cell) => {
+    if (ch !== NO_ISLAND) islands.push({ column: cell % width, row: Math.floor(cell / width), clue: Number(ch) });
+  });
+  const solution = [...(linkText ?? '')].map(Number);
+  if (solution.length !== bridgesLinks(islands).length) throw new RangeError('a Bridges entry has one count per link');
+  return { id: { game: 'bridges', size: bridgesSizeToken({ width, height }), difficulty, seed: entry.seed }, width, height, islands, solution };
+}
+
+/**
+ * The Bridges grid a new page shows: at a size and band in the bank, the entry the seed picks,
+ * ready at once and named by its own seed (#552); elsewhere `generateBridges`'s, made live.
+ */
+export function newBridges(seed: string, size: BridgesSize, difficulty: Difficulty): Bridges {
+  const { width, height } = size;
+  const entry = pickFromBank(BRIDGES_BANK, bankPair(`${width}x${height}`, difficulty), seed);
+  return entry ? bridgesOfEntry(entry, width, height, difficulty) : generateBridges(seed, size, difficulty);
+}
+
+/** The Bridges grid a puzzle code names (`BR-7X7-M-7K2Q9X`), the same one every time (#396), banked or not. */
 export function bridgesFromCode(code: string): Bridges {
   const id = parsePuzzleCode(code);
   if (id.game !== 'bridges') throw new RangeError(`«${code}» is not a Bridges code`);
   const [width, height] = id.size.split('X').map(Number);
-  return generateBridges(id.seed, { width, height }, id.difficulty);
+  const entry = findInBank(BRIDGES_BANK, bankPair(`${width}x${height}`, id.difficulty), id.seed);
+  return entry ? bridgesOfEntry(entry, width, height, id.difficulty) : generateBridges(id.seed, { width, height }, id.difficulty);
 }

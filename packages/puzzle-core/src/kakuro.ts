@@ -5,14 +5,15 @@
  * techniques finish it, which proves one solution. The result is our own model; drawing it and
  * checking the ink are `kakuro-page.ts`'s job.
  *
- * shortcut: generated on the tablet, not from a bank as sudoku is: under `node --jitless` a
- * 12 x 12 hard takes about 1 s and 3 s at worst over the seeds tried; move it to a bank the way
- * `sudoku-bank.ts` does if the device round measures it slower than the player can wait.
+ * A new page of a slow size and band comes from `kakuro-bank.ts` (#552): a 12 x 12 hard took
+ * 10 s on the tablet.
  */
 
 import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
+import { KAKURO_BANK } from './kakuro-bank';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
 
 export type KakuroDirection = 'across' | 'down';
 
@@ -579,9 +580,33 @@ export function generateKakuro(seed: string, size: number, difficulty: Difficult
   throw new Error(`no ${difficulty} ${size} x ${size} kakuro from seed «${seed}» in ${KAKURO_ATTEMPTS} attempts`);
 }
 
-/** The kakuro a puzzle code names (`KK-10-M-7K2Q9X`), the same one every time (#389). */
+/** A seed bank entry's text: the solution row by row, 0 for a block; the sums follow from it (#552). */
+export function encodeKakuro(puzzle: Pick<Kakuro, 'solution'>): string {
+  return puzzle.solution.join('');
+}
+
+function kakuroOfEntry(entry: SeedBankEntry, size: number, difficulty: Difficulty): Kakuro {
+  const solution = [...entry.text].map(Number);
+  if (solution.length !== size * size) throw new RangeError(`a ${size} x ${size} kakuro entry has ${size * size} digits, not ${solution.length}`);
+  const clues = cluesOf(size, solution.map(digit => digit === 0), solution);
+  // The band is reached by its own technique and no easier one, so the rating follows from the band.
+  return { id: { game: 'kakuro', size: String(size), difficulty, seed: entry.seed }, ...clues, solution, rating: { difficulty, hardest: TECHNIQUE_OF[difficulty] } };
+}
+
+/**
+ * The kakuro a new page shows: at a size and band in the bank, the entry the seed picks, ready at
+ * once and named by its own seed (#552); elsewhere `generateKakuro`'s, made live.
+ */
+export function newKakuro(seed: string, size: number, difficulty: Difficulty): Kakuro {
+  const entry = pickFromBank(KAKURO_BANK, bankPair(size, difficulty), seed);
+  return entry ? kakuroOfEntry(entry, size, difficulty) : generateKakuro(seed, size, difficulty);
+}
+
+/** The kakuro a puzzle code names (`KK-10-M-7K2Q9X`), the same one every time (#389), banked or not. */
 export function kakuroFromCode(code: string): Kakuro {
   const id = parsePuzzleCode(code);
   if (id.game !== 'kakuro') throw new RangeError(`«${code}» is not a kakuro code`);
-  return generateKakuro(id.seed, Number(id.size), id.difficulty);
+  const size = Number(id.size);
+  const entry = findInBank(KAKURO_BANK, bankPair(size, id.difficulty), id.seed);
+  return entry ? kakuroOfEntry(entry, size, id.difficulty) : generateKakuro(id.seed, size, id.difficulty);
 }

@@ -75,6 +75,14 @@ rewrites the bank from `digSudoku` with fixed seeds, and `puzzle-core/scripts/pr
 the pinned seeds; under `node --jitless`, the nearest Node gets to the tablet's engine with no
 JIT. Both read a `tsc` build of `src`, as their headers show.
 
+Kakuro, slitherlink and Bridges keep a seed bank each, `src/<game>-bank.ts` (24 puzzles per slow
+size and band, each kept with the seed it was made from, about 25 kB a game): `newKakuro`,
+`newSlitherlink` and `newBridges` give a new page the entry its seed picks, named by the entry's
+own seed, so its code still names the puzzle the live generator makes; every other size and band,
+and every other code, is made live ([#552](https://github.com/martonpaulo/ink-tools/issues/552)).
+`puzzle-core/scripts/seed-bank.cjs` rewrites a game's bank, and its header records which sizes and
+bands it holds and why.
+
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
 `--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).

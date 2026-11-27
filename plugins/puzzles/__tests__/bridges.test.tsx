@@ -6,6 +6,7 @@ import {
   drawBridgesPage,
   generateBridges,
   linkLine,
+  newBridges,
   puzzleCode,
   VIEW_LINK_GAP,
   type Grid,
@@ -41,7 +42,7 @@ describe('the Bridges game (#396)', () => {
     const tree = await mount(BRIDGES, fake.pages);
     await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(10)}`);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.hard}`);
-    const code = puzzleCode(generateBridges(SEED, {width: 10, height: 10}, 'hard').id);
+    const code = puzzleCode(newBridges(SEED, {width: 10, height: 10}, 'hard').id);
     await expectAdded(tree, fake, BRIDGES, code, {size: '10', band: 'hard'});
   });
 

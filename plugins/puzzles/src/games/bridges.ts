@@ -12,8 +12,8 @@ import {
   drawBridgesPage,
   drawLinkAnswers,
   drawLineCheck,
-  generateBridges,
   linkLine,
+  newBridges,
   puzzleCode,
   type Bridges,
   type Difficulty,
@@ -64,7 +64,7 @@ export const BRIDGES: PuzzleGame = {
   ],
   create: (choices, seed, shape) => {
     const side = Number(choices.size);
-    return board(generateBridges(seed, {width: side, height: side}, choices.band as Difficulty), shape);
+    return board(newBridges(seed, {width: side, height: side}, choices.band as Difficulty), shape);
   },
   open: (code, shape) => board(bridgesFromCode(code), shape),
 };

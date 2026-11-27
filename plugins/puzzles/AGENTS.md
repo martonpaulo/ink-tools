@@ -52,7 +52,10 @@ instead ([#542](https://github.com/martonpaulo/ink-tools/issues/542)).
    ([`docs/architecture.md` › Layer rules](../../docs/architecture.md#layer-rules)): its generator, a
    `…FromCode` that makes the same puzzle from its code, and its check and answer drawn on a copy of
    the page (`packages/puzzle-core/src/page/view.ts`; a game of cells uses its `drawCellCheck` and
-   `drawCellAnswers`, [#397](https://github.com/martonpaulo/ink-tools/issues/397)).
+   `drawCellAnswers`, [#397](https://github.com/martonpaulo/ink-tools/issues/397)). A size and band
+   whose generator takes over 0.1 s of CPU under `node --jitless` comes from a bank, as the sudokus,
+   the nonograms and the seed banks of `packages/puzzle-core/scripts/seed-bank.cjs` do: the tablet
+   runs 5 to 15 times slower ([#552](https://github.com/martonpaulo/ink-tools/issues/552)).
 2. A game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices (an
    option's choices may follow the earlier ones, as futoshiki's bands follow its size,
    [#390](https://github.com/martonpaulo/ink-tools/issues/390)) and `create`, and for a puzzle `open`, whose `Puzzle` has its `check` and `answer`, each a call into

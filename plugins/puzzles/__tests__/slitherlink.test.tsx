@@ -4,6 +4,7 @@ import {
   drawSlitherlinkPage,
   edgeEnds,
   generateSlitherlink,
+  newSlitherlink,
   puzzleCode,
   slitherlinkEdgeKeys,
   slitherlinkFromCode,
@@ -44,7 +45,7 @@ describe('the slitherlink game (#391)', () => {
     const tree = await mount(SLITHERLINK, fake.pages);
     await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(7)}`);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.hard}`);
-    const code = puzzleCode(generateSlitherlink(SEED, {width: 7, height: 7}, 'hard').id);
+    const code = puzzleCode(newSlitherlink(SEED, {width: 7, height: 7}, 'hard').id);
     await expectAdded(tree, fake, SLITHERLINK, code, {size: '7', band: 'hard'});
   });
 

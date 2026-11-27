@@ -1,6 +1,6 @@
 /** Kakuro in the Puzzles view (#389): a size and a band, «Check» of the white cells and «Show Solution». */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {drawKakuroPage, generateKakuro, kakuroAnswers, kakuroFromCode, puzzleCode, type Kakuro} from '@ink-tools/puzzle-core';
+import {drawKakuroPage, generateKakuro, kakuroAnswers, kakuroFromCode, newKakuro, puzzleCode, type Kakuro} from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {KAKURO, kakuroCopy} from '../src/games/kakuro';
 import {playCopy} from '../src/play/copy';
@@ -25,7 +25,7 @@ describe('the kakuro game (#389)', () => {
     const tree = await mount(KAKURO, fake.pages);
     await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(8)}`);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.medium}`);
-    await expectAdded(tree, fake, KAKURO, puzzleCode(generateKakuro(SEED, 8, 'medium').id), {size: '8', band: 'medium'});
+    await expectAdded(tree, fake, KAKURO, puzzleCode(newKakuro(SEED, 8, 'medium').id), {size: '8', band: 'medium'});
   });
 
   test('a page with another game offers only a new one', async () => {
