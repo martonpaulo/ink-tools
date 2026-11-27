@@ -1,7 +1,8 @@
 /**
  * The native list row (#273): a title, an optional subtitle under it, a leading slot for the ✓
  * of a chosen item and a trailing slot for its control (Chevron, Switch, Radio, an IconButton). A
- * row with `onPress` is one button; without it, only its control acts. It has the native row's fixed
+ * row with `onPress` is one button, or one radio or switch with `control`; without it, only its
+ * control acts. It has the native row's fixed
  * height and draws no line: `RowGroup` draws the line after each row (#272, #275).
  */
 import React from 'react';
@@ -19,19 +20,21 @@ export type ListRowProps = {
   trailing?: React.ReactNode;
   onPress?: () => void;
   /**
-   * A pressable row that is one radio choice (#554): it speaks as a radio, by this label, checked
-   * or not, and its trailing `Radio` only shows the choice.
+   * A pressable row that is one radio choice or one on/off setting (#554): it speaks as that
+   * control, by this label, checked or not, and its trailing `Radio` or `Switch` only shows the
+   * state. A disabled one does not act, and its title and subtitle take the disabled grey, as
+   * its control does.
    */
-  radio?: {label: string; checked: boolean};
+  control?: {role: 'radio' | 'switch'; label: string; checked: boolean; disabled?: boolean};
 };
 
-export function ListRow({title, subtitle, leading, trailing, onPress, radio}: ListRowProps): React.JSX.Element {
+export function ListRow({title, subtitle, leading, trailing, onPress, control}: ListRowProps): React.JSX.Element {
   const content = (
     <>
       {leading}
       <View style={styles.texts}>
-        <Text style={shared.text}>{title}</Text>
-        {subtitle !== undefined && <Text style={shared.subtitle}>{subtitle}</Text>}
+        <Text style={[shared.text, control?.disabled && shared.disabledText]}>{title}</Text>
+        {subtitle !== undefined && <Text style={[shared.subtitle, control?.disabled && shared.disabledText]}>{subtitle}</Text>}
       </View>
       {trailing}
     </>
@@ -45,9 +48,12 @@ export function ListRow({title, subtitle, leading, trailing, onPress, radio}: Li
   }
   return (
     <Pressable
-      accessibilityRole={radio ? 'radio' : 'button'}
-      accessibilityLabel={radio?.label ?? (subtitle === undefined ? title : `${title}, ${subtitle}`)}
-      accessibilityState={radio ? {checked: radio.checked} : undefined}
+      accessibilityRole={control?.role ?? 'button'}
+      accessibilityLabel={control?.label ?? (subtitle === undefined ? title : `${title}, ${subtitle}`)}
+      // The row's label hides the texts inside it, so a control row says its subtitle as the hint.
+      accessibilityHint={control ? subtitle : undefined}
+      accessibilityState={control ? {checked: control.checked, disabled: control.disabled} : undefined}
+      disabled={control?.disabled}
       nativeID={LIST_ROW_ID}
       style={[styles.row, styles.target]}
       onPress={onPress}>

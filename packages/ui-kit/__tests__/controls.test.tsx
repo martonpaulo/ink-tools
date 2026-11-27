@@ -414,4 +414,26 @@ describe('the native controls (#273)', () => {
     expect(onChange.mock.calls).toEqual([['tight']]);
     expect(tree.root.findAll(n => n.props.accessibilityRole === 'radio' && typeof n.type === 'string')).toHaveLength(2);
   });
+
+  it('turns an on/off setting by a press on its title too, speaks it once, and stays still when disabled (#554)', () => {
+    const onChange = jest.fn();
+    const pressText = (tree: ReactTestRenderer, text: string) => {
+      let node = tree.root.find(n => n.props.children === text && typeof n.type === 'string').parent;
+      while (node && typeof node.props.onPress !== 'function') {
+        node = node.parent;
+      }
+      act(() => node!.props.onPress());
+      return node!;
+    };
+    const tree = render(<SwitchRow title="Data saver" subtitle="Fewer pictures" value onChange={onChange} />);
+    pressText(tree, 'Data saver');
+    expect(onChange.mock.calls).toEqual([[false]]);
+    const switches = tree.root.findAll(n => n.props.accessibilityRole === 'switch' && typeof n.type === 'string');
+    expect(switches.map(n => [n.props.accessibilityLabel, n.props.accessibilityHint, n.props.accessibilityState.checked])).toEqual([['Data saver', 'Fewer pictures', true]]);
+    const off = render(<SwitchRow title="Data saver" value={false} disabled onChange={onChange} />);
+    expect(pressText(off, 'Data saver').props.disabled).toBe(true);
+    // A row that does not act looks it: its title takes the disabled grey, as its switch does.
+    const title = off.root.find(n => n.props.children === 'Data saver' && typeof n.type === 'string');
+    expect(StyleSheet.flatten(title.props.style).color).toBe(metrics.context);
+  });
 });

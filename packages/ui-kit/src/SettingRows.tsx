@@ -77,7 +77,10 @@ export type SwitchRowProps = {
   disabled?: boolean;
 };
 
-/** An on/off setting; its switch speaks the row's title. */
+/**
+ * An on/off setting: a press anywhere on its row turns it, its title too, not only the switch at
+ * its end, as a choice row chooses (#554); the row speaks as the switch, by its title.
+ */
 export function SwitchRow({
   title,
   subtitle,
@@ -89,14 +92,9 @@ export function SwitchRow({
     <ListRow
       title={title}
       subtitle={subtitle}
-      trailing={
-        <Switch
-          value={value}
-          accessibilityLabel={title}
-          disabled={disabled}
-          onChange={onChange}
-        />
-      }
+      onPress={() => onChange(!value)}
+      control={{role: 'switch', label: title, checked: value, disabled}}
+      trailing={<Switch value={value} disabled={disabled} />}
     />
   );
 }
@@ -184,7 +182,7 @@ export function ChoiceList<V>({
             title={choice.label}
             // The whole row chooses, its label too, not only the radio at its end (#554).
             onPress={() => onChange(choice.value)}
-            radio={{label: `${title}: ${choice.label}`, checked: choice.value === value}}
+            control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value}}
             trailing={<Radio checked={choice.value === value} />}
           />
         ))}

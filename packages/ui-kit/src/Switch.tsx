@@ -14,13 +14,38 @@ import {shared} from './styles';
 
 export type SwitchProps = {
   value: boolean;
-  onChange: (value: boolean) => void;
-  /** The setting's name, spoken with the state, such as «Sync to-dos». */
-  accessibilityLabel: string;
   disabled?: boolean;
-};
+} & (
+  | {
+      onChange: (value: boolean) => void;
+      /** The setting's name, spoken with the state, such as «Sync to-dos». */
+      accessibilityLabel: string;
+    }
+  | {
+      /** None: the switch only shows the state; the row around it acts and speaks for it, as a `SwitchRow` does (#554). */
+      onChange?: undefined;
+      accessibilityLabel?: undefined;
+    }
+);
 
 export function Switch({value, onChange, accessibilityLabel, disabled = false}: SwitchProps): React.JSX.Element {
+  const look = (
+    <>
+      <Text style={[shared.subtitle, disabled && shared.disabledText]}>{value ? ON_TEXT : OFF_TEXT}</Text>
+      <View
+        testID="switch-track"
+        style={[styles.track, value && styles.trackOn, disabled && styles.trackDisabled]}>
+        <View testID="switch-knob" style={[styles.knob, value && styles.knobOn, disabled && styles.knobDisabled]} />
+      </View>
+    </>
+  );
+  if (!onChange) {
+    return (
+      <View style={styles.target} importantForAccessibility="no-hide-descendants">
+        {look}
+      </View>
+    );
+  }
   return (
     <Pressable
       accessibilityRole="switch"
@@ -29,12 +54,7 @@ export function Switch({value, onChange, accessibilityLabel, disabled = false}: 
       disabled={disabled}
       style={styles.target}
       onPress={() => onChange(!value)}>
-      <Text style={[shared.subtitle, disabled && shared.disabledText]}>{value ? ON_TEXT : OFF_TEXT}</Text>
-      <View
-        testID="switch-track"
-        style={[styles.track, value && styles.trackOn, disabled && styles.trackDisabled]}>
-        <View testID="switch-knob" style={[styles.knob, value && styles.knobOn, disabled && styles.knobDisabled]} />
-      </View>
+      {look}
     </Pressable>
   );
 }
