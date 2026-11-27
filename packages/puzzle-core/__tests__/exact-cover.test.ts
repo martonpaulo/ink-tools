@@ -25,6 +25,12 @@ describe('searchExactCover', () => {
     expect(searchExactCover(KNUTH, 2, [1, 3]).count).toBe(0);
   });
 
+  test('a budget stops the search and says so; without one it is never exhausted (#397)', () => {
+    const many = { columns: 2, rows: [[0], [1], [0], [1], [0, 1]] };
+    expect(searchExactCover(many, 10, [], 2)).toEqual({ count: 1, first: [0, 1], exhausted: true });
+    expect(searchExactCover(many, 10).exhausted).toBe(false);
+  });
+
   test('a row naming a missing column is refused', () => {
     expect(() => searchExactCover({ columns: 2, rows: [[2]] }, 1)).toThrow(RangeError);
   });

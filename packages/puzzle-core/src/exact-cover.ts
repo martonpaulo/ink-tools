@@ -18,13 +18,22 @@ export interface ExactCoverResult {
   count: number;
   /** The row indices of the first cover found, or null with none. */
   first: number[] | null;
+  /** True when the search stopped at its `budget` of steps: the count is then a lower bound. */
+  exhausted: boolean;
 }
 
 /**
  * Counts the exact covers that contain every row of `chosen`, stopping at `limit`. Rows are tried
- * in their given order, so a caller that shuffles them gets a random first cover.
+ * in their given order, so a caller that shuffles them gets a random first cover. With a `budget`,
+ * the search also stops after that many rows tried and says it is `exhausted`, so a caller that
+ * only wants some cover can give up on a slow problem and try another, the same way every run.
  */
-export function searchExactCover(problem: ExactCoverProblem, limit: number, chosen: readonly number[] = []): ExactCoverResult {
+export function searchExactCover(
+  problem: ExactCoverProblem,
+  limit: number,
+  chosen: readonly number[] = [],
+  budget = Infinity,
+): ExactCoverResult {
   const { columns, rows } = problem;
   let nodes = columns + 1;
   for (const row of rows) nodes += row.length;
@@ -104,7 +113,7 @@ export function searchExactCover(problem: ExactCoverProblem, limit: number, chos
     if (start < 0) continue;
     let node = start;
     do {
-      if (coveredByChoice.has(column[node])) return { count: 0, first: null };
+      if (coveredByChoice.has(column[node])) return { count: 0, first: null, exhausted: false };
       coveredByChoice.add(column[node]);
       node = right[node];
     } while (node !== start);
@@ -118,6 +127,8 @@ export function searchExactCover(problem: ExactCoverProblem, limit: number, chos
 
   let count = 0;
   let first: number[] | null = null;
+  let tried = 0;
+  let exhausted = false;
   const solve = (): boolean => {
     if (right[0] === 0) {
       count++;
@@ -130,6 +141,11 @@ export function searchExactCover(problem: ExactCoverProblem, limit: number, chos
     if (size[best] === 0) return false;
     cover(best);
     for (let r = down[best]; r !== best; r = down[r]) {
+      if (++tried > budget) {
+        exhausted = true;
+        uncover(best);
+        return true;
+      }
       partial.push(rowOf[r]);
       for (let j = right[r]; j !== r; j = right[j]) cover(column[j]);
       const done = solve();
@@ -144,5 +160,5 @@ export function searchExactCover(problem: ExactCoverProblem, limit: number, chos
     return false;
   };
   if (limit > 0) solve();
-  return { count, first };
+  return { count, first, exhausted };
 }

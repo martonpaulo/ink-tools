@@ -7,7 +7,7 @@
  * solver knows square boxes only; upgrade when `geometry` takes regions.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
 import { childSeed, createRandom, type Random } from './random';
 
@@ -22,7 +22,14 @@ export const JIGSAW_CLUES: Readonly<Record<string, number>> = { easy: 38, medium
 
 /** Seeded attempts (regions, full grid, digging) before generation gives up with an error. */
 const ATTEMPTS = 60;
-const REGION_GROWTHS = 130;
+/**
+ * The rows a full grid may try before its regions are dropped: 25 per placement of a digit in a
+ * cell. Measured on the Mac (#397): without it one layout of seed 2DB3 took 7 s; with it 80 seeds
+ * over two bands each took at most 78 ms.
+ */
+const GRID_BUDGET = 25 * CELLS * JIGSAW_SIZE;
+/** Swaps tried from the boxes, four per cell: over 80 seeds, a puzzle kept at most two square regions (#397). */
+const REGION_SWAPS = 4 * CELLS;
 
 export interface JigsawSudoku {
   id: PuzzleId;
@@ -43,27 +50,50 @@ const neighbours = (cell: number): number[] => {
   return out;
 };
 
-/** Nine connected regions of nine cells by seeded growth, or null when the growth got stuck. */
-function growRegions(random: Random): number[] | null {
-  const regions = new Array<number>(CELLS).fill(-1);
-  const sizes = new Array<number>(JIGSAW_SIZE).fill(0);
-  random.shuffle(Array.from({ length: CELLS }, (_, i) => i))
-    .slice(0, JIGSAW_SIZE)
-    .forEach((cell, region) => {
-      regions[cell] = region;
-      sizes[region] = 1;
-    });
-  for (let placed = JIGSAW_SIZE; placed < CELLS; placed++) {
-    const open = sizes.map((size, region) => ({ size, region })).filter(r => r.size < JIGSAW_SIZE);
-    const least = Math.min(...open.map(r => r.size));
-    const region = random.pick(open.filter(r => r.size === least)).region;
-    const frontier = new Set<number>();
-    regions.forEach((owner, cell) => {
-      if (owner === region) for (const next of neighbours(cell)) if (regions[next] === -1) frontier.add(next);
-    });
-    if (frontier.size === 0) return null;
-    regions[random.pick([...frontier].sort((a, b) => a - b))] = region;
-    sizes[region]++;
+/** One region is one connected piece: every cell of `region` reached from its first. */
+function connected(regions: readonly number[], region: number): boolean {
+  const first = regions.indexOf(region);
+  const seen = new Set<number>([first]);
+  const queue = [first];
+  while (queue.length) {
+    for (const next of neighbours(queue.pop() as number)) {
+      if (regions[next] !== region || seen.has(next)) continue;
+      seen.add(next);
+      queue.push(next);
+    }
+  }
+  return seen.size === JIGSAW_SIZE;
+}
+
+/**
+ * Nine connected regions of nine cells from the seed: the regular 3 x 3 boxes, then seeded swaps
+ * of two border cells between neighbouring regions, each kept only when both regions stay in one
+ * piece. Every step keeps the regions valid, so it never gets stuck, which growing regions from
+ * nine seed cells did for most seeds (#397).
+ */
+function swapRegions(random: Random): number[] {
+  const box = Math.sqrt(JIGSAW_SIZE);
+  const regions = Array.from({ length: CELLS }, (_, cell) => {
+    const [r, c] = [Math.floor(cell / JIGSAW_SIZE), cell % JIGSAW_SIZE];
+    return Math.floor(r / box) * box + Math.floor(c / box);
+  });
+  for (let i = 0; i < REGION_SWAPS; i++) {
+    const a = random.int(CELLS);
+    const others = neighbours(a).filter(cell => regions[cell] !== regions[a]);
+    if (others.length === 0) continue;
+    const [from, to] = [regions[a], regions[random.pick(others)]];
+    // A cell of `to` beside `from`, but not beside `a` alone, goes the other way.
+    const back = regions.flatMap((owner, cell) =>
+      owner === to && neighbours(cell).some(next => next !== a && regions[next] === from) ? [cell] : [],
+    );
+    if (back.length === 0) continue;
+    const b = random.pick(back);
+    regions[a] = to;
+    regions[b] = from;
+    if (!connected(regions, from) || !connected(regions, to)) {
+      regions[a] = from;
+      regions[b] = to;
+    }
   }
   return regions;
 }
@@ -106,11 +136,15 @@ export function solveJigsaw(regions: readonly number[], values: readonly number[
   return out;
 }
 
-/** A full valid grid on these regions drawn from the seed, or null when the regions admit none. */
+/**
+ * A full valid grid on these regions drawn from the seed, or null when the regions admit none or
+ * the search passed `GRID_BUDGET` rows: a rare layout takes seconds to fill, so the next attempt's
+ * regions are tried instead (#397).
+ */
 function fullGrid(regions: readonly number[], seed: string): number[] | null {
   const base = problemFor(regions);
   const order = createRandom(seed).shuffle(base.rows.map((_, i) => i));
-  const found = searchExactCover({ columns: base.columns, rows: order.map(i => base.rows[i]) }, 1).first;
+  const found = searchExactCover({ columns: base.columns, rows: order.map(i => base.rows[i]) }, 1, [], GRID_BUDGET).first;
   if (!found) return null;
   const out = new Array<number>(CELLS).fill(0);
   for (const row of found) {
@@ -124,27 +158,13 @@ function fullGrid(regions: readonly number[], seed: string): number[] | null {
 export function validRegions(regions: readonly number[]): boolean {
   if (regions.length !== CELLS) return false;
   for (let region = 0; region < JIGSAW_SIZE; region++) {
-    const cells = regions.flatMap((owner, cell) => (owner === region ? [cell] : []));
-    if (cells.length !== JIGSAW_SIZE) return false;
-    const seen = new Set<number>([cells[0]]);
-    const queue = [cells[0]];
-    while (queue.length) {
-      for (const next of neighbours(queue.pop() as number)) {
-        if (regions[next] !== region || seen.has(next)) continue;
-        seen.add(next);
-        queue.push(next);
-      }
-    }
-    if (seen.size !== JIGSAW_SIZE) return false;
+    if (regions.filter(owner => owner === region).length !== JIGSAW_SIZE || !connected(regions, region)) return false;
   }
   return true;
 }
 
 function attempt(seed: string, clues: number): Omit<JigsawSudoku, 'id'> | null {
-  const random = createRandom(childSeed(seed, 'regions'));
-  let regions: number[] | null = null;
-  for (let i = 0; i < REGION_GROWTHS && !regions; i++) regions = growRegions(random);
-  if (!regions) return null;
+  const regions = swapRegions(createRandom(childSeed(seed, 'regions')));
   const solution = fullGrid(regions, childSeed(seed, 'grid'));
   if (!solution) return null;
   const givens = solution.slice();
@@ -171,4 +191,11 @@ export function generateJigsawSudoku(seed: string, difficulty: Difficulty): Jigs
     if (made) return { id: { game: 'jigsaw-sudoku', size: String(JIGSAW_SIZE), difficulty, seed }, ...made };
   }
   throw new Error(`no ${difficulty} jigsaw sudoku from seed «${seed}» in ${ATTEMPTS} attempts`);
+}
+
+/** The jigsaw sudoku a puzzle code names (`JS-9-E-7K2Q9X`), the same one every time (#397). */
+export function jigsawFromCode(code: string): JigsawSudoku {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'jigsaw-sudoku' || id.size !== String(JIGSAW_SIZE)) throw new RangeError(`«${code}» is not a jigsaw sudoku code`);
+  return generateJigsawSudoku(id.seed, id.difficulty);
 }

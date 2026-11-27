@@ -52,12 +52,13 @@ import {PuzzlesView} from '../../../plugins/puzzles/src/PuzzlesView';
 import type {Game as PuzzlesGame} from '../../../plugins/puzzles/src/games';
 import type {RequirementPorts as PuzzlesPorts} from '../../../plugins/puzzles/src/requirements';
 import {MAZE} from '../../../plugins/puzzles/src/games/maze';
+import {JIGSAW} from '../../../plugins/puzzles/src/games/jigsaw';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {mazeCellCentre, mazeFromCode, mazeLayout, type InkStroke} from '@ink-tools/puzzle-core';
+import {cellCenter, jigsawExpected, jigsawFromCode, jigsawLayout, mazeCellCentre, mazeFromCode, mazeLayout, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -272,6 +273,16 @@ const mazeInk = () => {
   const cells = [...maze.solution.slice(0, maze.solution.indexOf(from) + 1), off];
   return [{points: cells.map(cell => ({x: mazeCellCentre(maze, grid, cell)[0], y: mazeCellCentre(maze, grid, cell)[1]})), element: {}}];
 };
+/** A jigsaw sudoku page of the player's, filled in but one cell, which holds the next digit (#397). */
+const JIGSAW_CODE = 'JS-9-E-1';
+const jigsawInk = (): InkStroke<object>[] => {
+  const {grid} = jigsawLayout();
+  const cells = [...jigsawExpected(jigsawFromCode(JIGSAW_CODE))].slice(0, 30);
+  return cells.map(([cell, digit], i) => {
+    const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+    return {points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: i === 7 ? String((Number(digit) % 9) + 1) : digit}};
+  });
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -296,6 +307,7 @@ const puzzlesGame = async (game: PuzzleGame, ink: () => InkStroke<object>[], cod
   return tree;
 };
 const puzzlesMaze = (code: string | null, steps: string[] = [], failing = false) => puzzlesGame(MAZE, mazeInk, code, steps, failing);
+const puzzlesJigsaw = (code: string | null, steps: string[] = []) => puzzlesGame(JIGSAW, jigsawInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -319,6 +331,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-maze-solution', render: () => puzzlesMaze(MAZE_CODE, ['Show Solution'])},
   {name: 'puzzles-maze-error', render: () => puzzlesMaze(null, [], true)},
   {name: 'puzzles-list', render: () => puzzles('granted', [...PUZZLES_LIST])},
+  {name: 'puzzles-jigsaw', render: () => puzzlesJigsaw(null)},
+  {name: 'puzzles-jigsaw-page', render: () => puzzlesJigsaw(JIGSAW_CODE)},
+  {name: 'puzzles-jigsaw-check', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Check'])},
+  {name: 'puzzles-jigsaw-solution', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

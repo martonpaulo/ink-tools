@@ -5,9 +5,13 @@ import {
   checkJigsaw,
   countJigsawSolutions,
   digest,
+  drawCellAnswers,
+  drawCellCheck,
   drawJigsawPage,
   generateJigsawSudoku,
   JIGSAW_CLUES,
+  jigsawExpected,
+  jigsawFromCode,
   jigsawLayout,
   parsePuzzleCode,
   puzzleCode,
@@ -67,8 +71,8 @@ describe('jigsaw sudoku generation', () => {
   });
 
   test('pins the output for fixed seeds', () => {
-    expect(digest(generate('P1', 'easy'))).toBe('6911e28e');
-    expect(digest(generate('P1', 'hard'))).toBe('241f45ea');
+    expect(digest(generate('P1', 'easy'))).toBe('c3cd3f10');
+    expect(digest(generate('P1', 'hard'))).toBe('5d8edc93');
   });
 
   test('a removed clue that breaks uniqueness is counted as more than one solution', () => {
@@ -77,6 +81,10 @@ describe('jigsaw sudoku generation', () => {
     const bad = solution.slice();
     bad[0] = bad[1];
     expect(countJigsawSolutions(regions, bad)).toBe(0);
+  });
+
+  test('seeds whose regions never grew, or whose first layout filled slowly, give a puzzle (#397)', () => {
+    for (const seed of ['7K2Q9X', '2DB3', 'YY9']) expect(validRegions(generateJigsawSudoku(seed, 'easy').regions)).toBe(true);
   });
 
   test('a band not offered throws, and the code round-trips', () => {
@@ -111,5 +119,44 @@ describe('the jigsaw page and «Check»', () => {
     const result = await checkJigsaw(puzzle, strokes, recognize);
     expect(result.wrong).toEqual([wrongCell]);
     expect(result.right.length).toBe(empty.length - 1);
+  });
+});
+
+describe('the jigsaw code and the pictures of the plugin view (#397)', () => {
+  test('a code names the same puzzle again, and another game\'s code is refused', () => {
+    const puzzle = generate('P1', 'easy');
+    expect(digest(jigsawFromCode(puzzleCode(puzzle.id)))).toBe(digest(puzzle));
+    expect(() => jigsawFromCode('MZ-10X13-E-7K2Q9X')).toThrow('not a jigsaw sudoku code');
+  });
+
+  test('the check and answer pictures are copies in native greys: the page stays as inserted', () => {
+    const puzzle = generate('P1', 'easy');
+    const page = drawJigsawPage(puzzle);
+    const before = Buffer.from(page.pixels);
+    const { grid } = jigsawLayout();
+    const wrong = [...jigsawExpected(puzzle).keys()][0];
+    const checked = drawCellCheck(page, grid, write(wrong, '1'), [wrong]);
+    const answered = drawCellAnswers(page, grid, jigsawExpected(puzzle));
+    expect(Buffer.from(page.pixels).equals(before)).toBe(true);
+    assertNativeGreys(checked);
+    assertNativeGreys(answered);
+    expect(Buffer.from(checked.pixels).equals(before)).toBe(false);
+    expect(Buffer.from(answered.pixels).equals(before)).toBe(false);
+  });
+
+  test('the answer writes in the empty cells only: a given cell keeps its pixels', () => {
+    const puzzle = generate('P1', 'easy');
+    const page = drawJigsawPage(puzzle);
+    const { grid } = jigsawLayout();
+    const answered = drawCellAnswers(page, grid, jigsawExpected(puzzle));
+    const given = puzzle.givens.findIndex(Boolean);
+    const [cx, cy] = cellCenter(grid, given % 9, Math.floor(given / 9));
+    const half = Math.floor(grid.cell / 2) - 4;
+    for (let y = cy - half; y < cy + half; y++) {
+      for (let x = cx - half; x < cx + half; x++) {
+        const at = Math.round(y) * page.width + Math.round(x);
+        expect(answered.pixels[at]).toBe(page.pixels[at]);
+      }
+    }
   });
 });

@@ -7,7 +7,7 @@
 import { type Maze } from './maze';
 import { puzzleCode } from './code';
 import { densePoints, pathCells, innerCellAt, type InkStroke } from './check';
-import { copyRaster, drawInk, drawPolyline, drawRings, VIEW_ANSWER_PX } from './page/view';
+import { copyRaster, drawInk, drawPolyline, drawRings, VIEW_ANSWER_PX, VIEW_MARK_SHARE } from './page/view';
 import {
   createPage,
   drawFooter,
@@ -232,9 +232,8 @@ export function mazeMarks(maze: Maze, grid: Grid, check: MazeCheck): [number, nu
   return [...check.wrong.map(centre), ...walls];
 }
 
-/** The ring around a mark, as a share of a cell: most of it, so it never hides the next cell's ink. */
-const MARK_SHARE = 0.4;
-export const mazeMarkRadius = (grid: Grid): number => grid.cell * MARK_SHARE;
+/** The ring around a mark: the share of a cell every game's ring takes. */
+export const mazeMarkRadius = (grid: Grid): number => grid.cell * VIEW_MARK_SHARE;
 
 /** The page with the player's ink and mistakes ringed, for the plugin's view only. */
 export function drawMazeCheck(maze: Maze, layout: PageLayout, page: Raster, strokes: readonly InkStroke[], check: MazeCheck): Raster {
