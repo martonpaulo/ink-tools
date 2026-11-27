@@ -218,7 +218,8 @@ export const MAZE_PAGE_SIZES: Readonly<Record<MazeShape, Readonly<Record<'easy' 
   rectangle: {
     easy: { shape: 'rectangle', width: 10, height: 13 },
     medium: { shape: 'rectangle', width: 14, height: 18 },
-    hard: { shape: 'rectangle', width: 19, height: 25 },
+    // 18 x 24, so its landscape turn keeps the gap above the footer that the page bar's margin narrowed (#553).
+    hard: { shape: 'rectangle', width: 18, height: 24 },
   },
   circle: {
     easy: { shape: 'circle', rings: 5 },

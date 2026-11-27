@@ -83,7 +83,8 @@ export function layoutPage(spec: PageSpec): PageLayout {
   const contentHeight = blockHeight + (belowHeight > 0 ? gap + belowHeight : 0);
 
   const areaWidth = width - 2 * margin;
-  const areaHeight = height - margin - bottom - footerHeight;
+  // The gap keeps the grid's lowest line clear of the footer's first line, as it does the clues (#553).
+  const areaHeight = height - margin - bottom - footerHeight - gap;
   if (contentWidth > areaWidth || contentHeight > areaHeight) {
     throw new PageFitError(spec, contentWidth - areaWidth, contentHeight - areaHeight);
   }

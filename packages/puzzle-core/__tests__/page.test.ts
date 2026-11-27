@@ -309,7 +309,7 @@ describe('the layout', () => {
 
   test('a grid that does not fit throws, naming how much it is over', () => {
     expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(PageFitError);
-    expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(/2693 px too wide, 2205 px too tall/);
+    expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(/2693 px too wide, 2240 px too tall/);
   });
 
   test('the largest preset that fits is chosen, and none is an error', () => {
