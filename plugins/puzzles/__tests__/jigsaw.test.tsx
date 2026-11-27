@@ -81,6 +81,17 @@ describe('the jigsaw sudoku game (#397)', () => {
     expect(shownTexts(other.root)).toContain(playCopy['verdict.open']);
   });
 
+  test('an entry the tablet cannot read is named, and the page is not solved', async () => {
+    const unreadable = [...jigsawExpected(PUZZLE).keys()][3];
+    const read = (elements: object[]) =>
+      elements.some(element => (element as {digit: string}).digit === 'x') ? {ok: true as const, text: null} : readDigits(elements);
+    const ink = [...jigsawExpected(PUZZLE)].map(([cell, digit]) => write(cell, cell === unreadable ? 'x' : digit));
+    const {pages} = fakePages({code: CODE, ink, read});
+    const tree = await mount(JIGSAW, pages);
+    await press(tree, playCopy['here.check']);
+    expect(shownTexts(tree.root)).toContain(`${playCopy['verdict.open']} ${playCopy['verdict.unread'](1)}`);
+  });
+
   test('«Show Solution» writes nothing to the note', async () => {
     const {pages, calls} = fakePages({code: CODE});
     const tree = await mount(JIGSAW, pages);

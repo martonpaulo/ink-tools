@@ -42,6 +42,8 @@ export const TONES = {
   ink: 0x00,
   /** Grid lines and the footer. */
   line: 0x44,
+  /** The player's ink in the plugin's view: over 3:1 on paper, and apart from the grid's black and grey. */
+  pen: 0x77,
   /** Filled icons that must stay apart from ink. */
   strong: 0xaa,
   /** Region shading that the pen's ink still reads over. */

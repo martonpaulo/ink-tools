@@ -12,7 +12,7 @@
  */
 
 import { checkCells, readCells, type CheckResult, type InkStroke, type Recognize } from './check';
-import { puzzleCode, type Difficulty, type PuzzleId } from './code';
+import { DIFFICULTY_LABELS, puzzleCode, type Difficulty, type PuzzleId } from './code';
 import {
   FONT_WEIGHTS,
   createPage,
@@ -422,7 +422,6 @@ export const CODEWORD_FOOTER = {
   game: 'Codeword',
   rule: 'Each number stands for one letter. Fill the grid with words.',
 } as const;
-const DIFFICULTY_LABELS: Readonly<Record<string, string>> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 /** The key beside the grid: two columns of a number and a box, as shares of one entry's step. */
 const KEY = { columns: 2, panelMm: 36, box: 0.78, text: 0.42, gap: 0.2 } as const;
 

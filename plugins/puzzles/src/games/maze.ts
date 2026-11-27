@@ -40,6 +40,7 @@ function board(maze: Maze, shape: PageShape): Puzzle {
       return {
         picture: drawMazeCheck(maze, layout, page, ink, found),
         wrong: found.wrong.length + found.crossings.length,
+        unread: 0,
         solved: found.solved,
       };
     },

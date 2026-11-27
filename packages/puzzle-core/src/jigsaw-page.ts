@@ -5,7 +5,7 @@
  */
 import { checkCells, readCells, type CheckResult, type InkStroke, type Recognize } from './check';
 import { JIGSAW_SIZE, type JigsawSudoku } from './jigsaw';
-import { puzzleCode } from './code';
+import { DIFFICULTY_LABELS, puzzleCode } from './code';
 import {
   createPage,
   drawCellText,
@@ -23,7 +23,6 @@ export interface JigsawPageOptions {
 }
 
 const RULE = 'Fill each row, column and bold region with 1 to 9 once.';
-const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert' } as const;
 
 /** Where the page puts the grid; `checkJigsaw` reads the player's ink from the same layout. */
 export const jigsawLayout = (options: JigsawPageOptions = {}): PageLayout =>
@@ -45,7 +44,7 @@ export function drawJigsawPage(puzzle: JigsawSudoku, options: JigsawPageOptions 
   puzzle.givens.forEach((value, cell) => {
     if (value) drawCellText(page, layout.grid, cell % JIGSAW_SIZE, Math.floor(cell / JIGSAW_SIZE), String(value), 'given');
   });
-  drawFooter(page, layout, { game: 'Jigsaw sudoku', difficulty: DIFFICULTY_LABEL[puzzle.id.difficulty], code: puzzleCode(puzzle.id), rule: RULE });
+  drawFooter(page, layout, { game: 'Jigsaw sudoku', difficulty: DIFFICULTY_LABELS[puzzle.id.difficulty], code: puzzleCode(puzzle.id), rule: RULE });
   return page;
 }
 

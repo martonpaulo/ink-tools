@@ -37,21 +37,25 @@ export function drawPolyline(raster: Raster, points: readonly (readonly [number,
 }
 
 /**
- * The player's strokes, so a marked page shows what was written beside each mark: in a mid grey,
- * so ink, the grid in black and the black rings read as three things.
+ * The player's strokes, so a marked page shows what was written beside each mark: in the `pen`
+ * grey, so ink, the grid and the black rings read as three things (#397).
  */
 export function drawInk(raster: Raster, strokes: readonly InkStroke[]): void {
-  for (const stroke of strokes) drawPolyline(raster, stroke.points.map(point => [point.x, point.y] as const), VIEW_INK_PX, 'strong');
+  for (const stroke of strokes) drawPolyline(raster, stroke.points.map(point => [point.x, point.y] as const), VIEW_INK_PX, 'pen');
 }
 
-/** A ring of `radius` around each centre: the mark «Check» puts on a wrong entry. */
-export function drawRings(raster: Raster, centres: readonly (readonly [number, number])[], radius: number): void {
+/**
+ * A ring of `radius` around each centre: the mark «Check» puts on a wrong entry. A dashed ring,
+ * every other chord, marks an entry it could not read (#397).
+ */
+export function drawRings(raster: Raster, centres: readonly (readonly [number, number])[], radius: number, dashed = false): void {
   for (const [cx, cy] of centres) {
     const ring = Array.from({ length: RING_CHORDS + 1 }, (_, i) => {
       const angle = (i / RING_CHORDS) * FULL_TURN;
       return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)] as const;
     });
-    drawPolyline(raster, ring, VIEW_MARK_PX);
+    if (!dashed) drawPolyline(raster, ring, VIEW_MARK_PX);
+    else for (let i = 0; i < RING_CHORDS; i += 2) drawPolyline(raster, ring.slice(i, i + 2), VIEW_MARK_PX);
   }
 }
 
@@ -60,23 +64,24 @@ const centres = (grid: Grid, cells: readonly number[]): [number, number][] =>
   cells.map(cell => cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns)));
 
 /**
- * The page a cell game's «Check» shows (#397): the player's ink, and a ring around each wrong cell.
- * `wrong` holds cell indexes, as `checkCells` names them.
+ * The page a cell game's «Check» shows (#397): the player's ink, a ring around each wrong cell and
+ * a dashed ring around each cell it could not read. Both hold cell indexes, as `checkCells` names them.
  */
-export function drawCellCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly number[]): Raster {
+export function drawCellCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly number[], unread: readonly number[] = []): Raster {
   const marked = copyRaster(page);
   drawInk(marked, strokes);
   drawRings(marked, centres(grid, wrong), grid.cell * VIEW_MARK_SHARE);
+  drawRings(marked, centres(grid, unread), grid.cell * VIEW_MARK_SHARE, true);
   return marked;
 }
 
 /**
  * The page with a cell game's answer written in (#397), for the plugin's view only: each value in
- * its cell in a mid grey and a regular weight, so the givens in bold black still read as the puzzle's.
+ * its cell in the grid lines' grey and a regular weight, so the givens in bold black still read as the puzzle's.
  */
 export function drawCellAnswers(page: Raster, grid: Grid, answers: ReadonlyMap<number, string>): Raster {
   const answer = copyRaster(page);
-  const style = { size: Math.round(grid.cell * TEXT_SIZE.given), weight: FONT_WEIGHTS.regular, tone: 'strong' } as const;
+  const style = { size: Math.round(grid.cell * TEXT_SIZE.given), weight: FONT_WEIGHTS.regular, tone: 'line' } as const;
   const cells = [...answers.keys()];
   centres(grid, cells).forEach(([x, y], i) => drawCentredText(answer, answers.get(cells[i]) as string, x, y, style));
   return answer;

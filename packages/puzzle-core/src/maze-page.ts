@@ -5,7 +5,7 @@
  * own view to overlay.
  */
 import { type Maze } from './maze';
-import { puzzleCode } from './code';
+import { DIFFICULTY_LABELS, puzzleCode } from './code';
 import { densePoints, pathCells, innerCellAt, type InkStroke } from './check';
 import { copyRaster, drawInk, drawPolyline, drawRings, VIEW_ANSWER_PX, VIEW_MARK_SHARE } from './page/view';
 import {
@@ -134,7 +134,7 @@ function drawCircle(raster: Raster, maze: Maze, grid: Grid): void {
 }
 
 /** The maze page: its walls and a footer, as a raster in the Manta's greys. */
-export function drawMazePage(maze: Maze, layout: PageLayout, difficultyLabel: string = maze.id.difficulty): Raster {
+export function drawMazePage(maze: Maze, layout: PageLayout, difficultyLabel: string = DIFFICULTY_LABELS[maze.id.difficulty]): Raster {
   const raster = createPage(layout);
   if (maze.size.shape === 'rectangle') drawRectangle(raster, maze, layout.grid);
   else drawCircle(raster, maze, layout.grid);

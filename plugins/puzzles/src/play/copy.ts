@@ -18,6 +18,11 @@ export const playCopy = {
   'verdict.solved': 'Solved. Nothing is wrong.',
   'verdict.open': 'Nothing is wrong so far.',
   'verdict.wrong': (count: number) => (count === 1 ? '1 mistake is circled.' : `${count} mistakes are circled.`),
+  /** Added after the verdict when some entries could not be read. */
+  'verdict.unread': (count: number) =>
+    count === 1
+      ? 'Puzzles could not read 1 entry, which has a dashed circle. Write it again, then press Check.'
+      : `Puzzles could not read ${count} entries, which have dashed circles. Write them again, then press Check.`,
   'answer.note': 'Only Puzzles shows the solution. Your note does not change.',
   /** The Error states of a game view. */
   'error.here': 'Puzzles could not read this page.',

@@ -167,11 +167,12 @@ export function GameView({
       return <ErrorView problem={screen.problem} onRetry={screen.retry} onClose={onClose} />;
     case 'verdict': {
       const {verdict} = screen;
-      const line = verdict.solved
+      const found = verdict.solved
         ? playCopy['verdict.solved']
         : verdict.wrong === 0
           ? playCopy['verdict.open']
           : playCopy['verdict.wrong'](verdict.wrong);
+      const line = verdict.unread === 0 ? found : `${found} ${playCopy['verdict.unread'](verdict.unread)}`;
       const back = () => setScreen({kind: 'ready', here: screen.here, board: screen.board});
       return <Picture title={playCopy['verdict.title']} note={line} raster={verdict.picture} onBack={back} onClose={onClose} />;
     }

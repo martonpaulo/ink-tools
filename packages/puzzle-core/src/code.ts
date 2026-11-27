@@ -9,6 +9,8 @@
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
+/** A band as a page footer names it: «Easy», the same case on every game's page (#397). */
+export const DIFFICULTY_LABELS: Readonly<Record<Difficulty, string>> = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert' };
 
 export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in', 'light-up', 'hitori', 'binairo', 'arrowword', 'bridges', 'crossword', 'star-battle', 'kakuro', 'killer-sudoku'] as const;
 export type Game = (typeof GAMES)[number];

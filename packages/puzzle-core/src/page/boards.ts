@@ -99,6 +99,9 @@ function drawBoard(game: BoardGame, raster: Raster, grid: Grid): void {
   }
 }
 
+/** How a board is played, as its page's footer says it: the Puzzles list shows it too (#402). */
+export const boardRule = (game: BoardGame): string => BOARDS[game].rule;
+
 /** The page of a two-player board, as one `Raster`; encode it with `encodePng` for a page background. */
 export function renderBoardPage(game: BoardGame, options: BoardOptions = {}): Raster {
   const def = BOARDS[game];

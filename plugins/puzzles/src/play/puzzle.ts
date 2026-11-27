@@ -22,8 +22,8 @@ export type Choices = Readonly<Record<string, string>>;
 /** The page a puzzle is drawn for. */
 export type PageShape = {orientation: Orientation; hand: Hand};
 
-/** What «Check» found: the page with the marks, for the view only, and how many it marked. */
-export type Verdict = {picture: Raster; wrong: number; solved: boolean};
+/** What «Check» found: the page with the marks, for the view only, the wrong and the unread entries it marked. */
+export type Verdict = {picture: Raster; wrong: number; unread: number; solved: boolean};
 
 /** A new page: the name of its background and the picture drawn as it. */
 export type GamePage = {

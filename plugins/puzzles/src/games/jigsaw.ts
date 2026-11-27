@@ -21,7 +21,7 @@ import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
 
 export const jigsawCopy = {
   title: 'Jigsaw Sudoku',
-  subtitle: 'Fill each row, column and bold region with 1 to 9',
+  subtitle: 'Fill each row, column and bold region with 1 to 9 once',
 } as const;
 
 function board(puzzle: JigsawSudoku, shape: PageShape): Puzzle {
@@ -33,8 +33,9 @@ function board(puzzle: JigsawSudoku, shape: PageShape): Puzzle {
     page,
     check: async (ink, read) => {
       const found = await checkJigsaw(puzzle, ink, read, options);
-      const solved = found.wrong.length === 0 && found.empty.length === 0 && found.unread.length === 0;
-      return {picture: drawCellCheck(page, grid, ink, found.wrong), wrong: found.wrong.length, solved};
+      const unread = found.unread.map(cell => cell.index);
+      const solved = found.wrong.length === 0 && found.empty.length === 0 && unread.length === 0;
+      return {picture: drawCellCheck(page, grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, solved};
     },
     answer: () => drawCellAnswers(page, grid, jigsawExpected(puzzle)),
   };

@@ -273,14 +273,15 @@ const mazeInk = () => {
   const cells = [...maze.solution.slice(0, maze.solution.indexOf(from) + 1), off];
   return [{points: cells.map(cell => ({x: mazeCellCentre(maze, grid, cell)[0], y: mazeCellCentre(maze, grid, cell)[1]})), element: {}}];
 };
-/** A jigsaw sudoku page of the player's, filled in but one cell, which holds the next digit (#397). */
+/** A jigsaw sudoku page of the player's, partly filled: one cell holds the next digit, one a mark the tablet cannot read (#397). */
 const JIGSAW_CODE = 'JS-9-E-1';
 const jigsawInk = (): InkStroke<object>[] => {
   const {grid} = jigsawLayout();
   const cells = [...jigsawExpected(jigsawFromCode(JIGSAW_CODE))].slice(0, 30);
   return cells.map(([cell, digit], i) => {
     const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
-    return {points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: i === 7 ? String((Number(digit) % 9) + 1) : digit}};
+    const written = i === 7 ? String((Number(digit) % 9) + 1) : i === 12 ? 'x' : digit;
+    return {points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: written}};
   });
 };
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */

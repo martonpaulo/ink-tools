@@ -1,6 +1,6 @@
 /** The pass-and-play boards in the Puzzles view (#402): «Add Page» only, no check and no solution. */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {BOARD_GAMES, encodePng, renderBoardPage} from '@ink-tools/puzzle-core';
+import {BOARD_GAMES, boardRule, encodePng, renderBoardPage} from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {BOARDS, boardsCopy} from '../src/games/boards';
 import {playCopy} from '../src/play/copy';
@@ -10,6 +10,8 @@ describe('the pass-and-play boards (#402)', () => {
   test('each board is in the game list, after the puzzles', () => {
     expect(GAMES.map(game => game.id).slice(-BOARD_GAMES.length)).toEqual([...BOARD_GAMES]);
     expect(BOARDS.map(board => board.title)).toEqual(BOARD_GAMES.map(game => boardsCopy.titles[game]));
+    // Each board says how it is played, as its page does, so no two rows read alike.
+    expect(BOARDS.map(board => board.subtitle)).toEqual(BOARD_GAMES.map(boardRule));
   });
 
   test.each(BOARD_GAMES)('«Add Page» puts the %s board on a new page after this one', async game => {
