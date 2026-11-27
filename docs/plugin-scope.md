@@ -271,8 +271,11 @@ Owner decisions of 2026-11-26 (the checklist with each governing issue is in
 - **Edit through Supernote Cloud** (later): open a note from Supernote Cloud and edit it with no
   tablet nearby; the Mac writes the `.note` itself, with real vector strokes and elements the tablet
   can lasso and erase, never a page bitmap alone, and uploads it after a backup; the tablet picks it
-  up on its next sync; a conflict keeps both copies and warns. This is the one exception to «the
-  tablet writes» and to «nothing written to Supernote Cloud», for the editor's own note files only.
+  up on its next sync; a conflict keeps both copies and warns. It is the one exception to «nothing
+  written to Supernote Cloud», for the editor's own note files only, and one of the three cases in
+  which the Mac writes a note file: a new note, created on the tablet or on the Mac as the user picks
+  ([#339](https://github.com/martonpaulo/ink-tools/issues/339)); a whole note sent either way, Mac to tablet or tablet to Mac ([#504](https://github.com/martonpaulo/ink-tools/issues/504)); and an
+  edit through Supernote Cloud. Editing an existing note in place goes through the tablet.
 - **Every later feature is approved work** (38 from the page plus Edit through Supernote Cloud),
   captured as delivery issues: «should» items P2 before «could» items P3, each blocked by the
   first-release issue it builds on, all tracked in [#332](https://github.com/martonpaulo/ink-tools/issues/332).
@@ -285,13 +288,17 @@ stays); colour in a note, or a colour preview the tablet cannot show; Word Looku
 definitions, summaries and AI writing; Real-Time Text, Smart Shapes and pen gestures; managing
 To-Do, Calendar or Digest (Quick capture only sends to them); sharing, collaboration, comments,
 publishing; the Partner app, its database, or any own sync server; writing to Supernote Cloud
-beyond the editor's own note files; own ADB code; PDFs, EPUBs and `.mark` files; math conversion,
+beyond the editor's own note files; PDFs, EPUBs and `.mark` files; math conversion,
 audio, typed documents; Windows, Linux, iPad or web; template generation (parked, [#141](https://github.com/martonpaulo/ink-tools/issues/141)).
 
 The full editor is the goal from the start, not a viewer and exporter first on `supernotelib`
-(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). It fetches and writes back the tablet's notes over the
-cable through `inkctl`, with no ADB code of its own (owner, 2026-11-16,
-[#48](https://github.com/martonpaulo/ink-tools/issues/48)).
+(product audit, owner, [#141](https://github.com/martonpaulo/ink-tools/issues/141)). Reading and editing are separate, because the tablet
+writes: it reads a note by file, through Browse & Access ([#497](https://github.com/martonpaulo/ink-tools/issues/497)) or through Supernote Cloud
+([#363](https://github.com/martonpaulo/ink-tools/issues/363)), and edits through Device Link, where the tablet writes ([#493](https://github.com/martonpaulo/ink-tools/issues/493)). Each route is an
+adapter behind one note-transport interface, and Settings › Tablet lists the modes the adapters
+declare ([#496](https://github.com/martonpaulo/ink-tools/issues/496)). Advanced mode runs adb inside the app on a private server port
+(`ADB_SERVER_SOCKET`), so it never clashes with a developer's adb ([#498](https://github.com/martonpaulo/ink-tools/issues/498)); `inkctl` stays a
+developer tool (owner, 2026-11-27, [decision index](decisions.md#decision-index)).
 
 ## bridge
 

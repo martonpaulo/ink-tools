@@ -33,8 +33,13 @@ A computer editor for one note at a time (owner, 2026-11-26; the feature list is
   [`docs/supernote.md` › Greys and colours](../../docs/supernote.md#greys-and-colours). An inserted
   image is converted to Manta greys and shown as the tablet will show it; ink and text tools offer
   only the pen tones; no colour enters a note and no colour preview is shown.
-- One exception to «the tablet writes», later: Edit through Supernote Cloud writes the `.note` on
-  the Mac, with real vector strokes and elements, never a page bitmap alone, after a backup.
+- Besides route B's recorded exceptions (below), the Mac writes a note file in three cases: a new
+  note, created on the tablet or on the Mac as the user picks
+  ([#339](https://github.com/martonpaulo/ink-tools/issues/339)); a whole note sent either way
+  ([#504](https://github.com/martonpaulo/ink-tools/issues/504)); and, later, Edit through Supernote
+  Cloud, with real vector strokes and elements, never a page bitmap alone, after a backup
+  ([#363](https://github.com/martonpaulo/ink-tools/issues/363)). Editing an existing note in place
+  goes through the tablet.
 - Every owner decision of 2026-11-26, with its issue:
   [`docs/decisions.md` › Ink Notebook Editor scope of 2026-11-26](../../docs/decisions.md#ink-notebook-editor-scope-of-2026-11-26).
 
