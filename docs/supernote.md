@@ -543,6 +543,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   inserted into a portrait note shows upright but scaled to the page's width: 10 mm cells measure
   about 7.5 mm, with white bands above and below [measured, Manta, device round 11, 2026-11-26,
   [#379](https://github.com/martonpaulo/ink-tools/issues/379)].
+- A successful `insertNotePage` from a plugin's full view reloads the note and ends the plugin's
+  JavaScript: the view closed, the code after the call never ran (its PNG stayed), and the next
+  press of the plugin's button showed the last frame, «Loading…», with
+  `Calling JS function after bridge has been destroyed` in the system log, until Close and a new
+  press [measured, Manta, device round of 2026-11-27, [#386](https://github.com/martonpaulo/ink-tools/issues/386)].
+  Puzzles closes its view before the insert and deletes its page files at the next game view.
 - `insertNotePage` on the open note drops the ink written on it since its last save: three notes
   inked page by page with an insert between pages kept no stroke at all, while inserting every page
   first, then writing, kept all of it [measured, Manta, device round 5, 2026-11-26,

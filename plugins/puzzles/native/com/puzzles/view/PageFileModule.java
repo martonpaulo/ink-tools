@@ -50,7 +50,48 @@ final class PageFileModule extends ReactContextBaseJavaModule {
         });
   }
 
+  /**
+   * Deletes every page PNG in {@code folder}, the ones an earlier Add Page left: the note reload of
+   * an insert ends the plugin's JavaScript before it can delete its own page (device round, #386).
+   * Resolves with how many it deleted; a missing folder holds none.
+   */
+  @ReactMethod
+  public void removePages(final String folder, final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              promise.resolve(removePngs(new File(folder)));
+            } catch (Throwable error) {
+              String message = error.getMessage() == null ? error.toString() : error.getMessage();
+              promise.reject("IO", message, error);
+            }
+          }
+        });
+  }
+
+  static int removePngs(File folder) throws IOException {
+    File[] files = folder.listFiles();
+    int removed = 0;
+    for (File file : files == null ? new File[0] : files) {
+      String name = file.getName();
+      if (!file.isFile() || !(name.endsWith(".png") || name.endsWith(".png.part"))) {
+        continue;
+      }
+      if (!file.delete()) {
+        throw new IOException("could not delete " + file);
+      }
+      removed++;
+    }
+    return removed;
+  }
+
   static void write(File target, byte[] bytes) throws IOException {
+    File folder = target.getParentFile();
+    if (folder != null && !folder.isDirectory() && !folder.mkdirs()) {
+      throw new IOException("could not make " + folder);
+    }
     File partial = new File(target.getPath() + ".part");
     try (FileOutputStream out = new FileOutputStream(partial)) {
       out.write(bytes);

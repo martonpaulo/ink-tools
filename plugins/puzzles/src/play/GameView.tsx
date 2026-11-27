@@ -41,7 +41,6 @@ type Screen =
   | {kind: 'reading'}
   | {kind: 'ready'; here: Here; board: Board | null}
   | {kind: 'working'}
-  | {kind: 'added'}
   | {kind: 'verdict'; here: Here; board: Board; verdict: Verdict}
   | {kind: 'answer'; here: Here; board: Board; picture: Raster}
   | {kind: 'error'; problem: Problem; retry: () => void};
@@ -97,8 +96,10 @@ export function GameView({
   }, [failed, game, pages]);
 
   useEffect(() => {
+    // The page files an earlier Add Page left, as its insert ended this JavaScript before it could.
+    pages.clear();
     read();
-  }, [read]);
+  }, [pages, read]);
 
   const add = useCallback(
     async (here: Here) => {
@@ -115,12 +116,20 @@ export function GameView({
       } catch (error) {
         return failed(playCopy['error.add'], retry, String(error));
       }
+      // The view closes first: the note reload of a successful insert can end this JavaScript, and a
+      // view left open then stays frozen on Loading over a dead bridge (device round, #386). The note
+      // shows the new page after the current one; only a failure opens the view again, on its Error.
+      pages.log(`${game.id}: adding ${board.code} after page ${here.page}`);
+      await pages.hide();
       const inserted = await pages.insert(here, board.code, png);
-      if (!inserted.ok) {return failed(playCopy['error.add'], retry, inserted.message);}
-      pages.log(`${game.id}: added ${board.code} after page ${here.page}`);
-      setScreen({kind: 'added'});
+      if (!inserted.ok) {
+        await pages.show();
+        return failed(playCopy['error.add'], retry, inserted.message);
+      }
+      pages.log(`${game.id}: added ${board.code}`);
+      onBack();
     },
-    [choices, failed, game, pages, seed],
+    [choices, failed, game, onBack, pages, seed],
   );
 
   const check = useCallback(
@@ -155,8 +164,6 @@ export function GameView({
       return <LoadingView title={game.title} onClose={onClose} />;
     case 'error':
       return <ErrorView problem={screen.problem} onRetry={screen.retry} onClose={onClose} />;
-    case 'added':
-      return <Added game={game} onBack={onBack} onClose={onClose} />;
     case 'verdict': {
       const {verdict} = screen;
       const line = verdict.solved
@@ -253,16 +260,6 @@ function Ready({
         </View>
         {!board && thisPage}
       </ScrollView>
-    </View>
-  );
-}
-
-function Added({game, onBack, onClose}: GameViewProps & {game: PuzzleGame}): React.JSX.Element {
-  useBackKey(onBack);
-  return (
-    <View style={shared.screen}>
-      <TitleBar title={playCopy['added.title']} onBack={onBack} onClose={onClose} />
-      <RowGroup note={playCopy['added.note'](game.title)} />
     </View>
   );
 }

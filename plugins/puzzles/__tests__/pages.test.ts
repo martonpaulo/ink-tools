@@ -1,5 +1,5 @@
 /** The note pages a game reads and writes (#386), against sn-adapter's SDK mock. */
-import {FileUtils, PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
+import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {toBase64} from '@ink-tools/puzzle-core';
 import {devicePages, PAGE_FILE_MODULE, PAGE_FOLDER, type Here} from '../src/play/pages';
 
@@ -35,33 +35,45 @@ describe('the current page', () => {
 
 describe('a new page', () => {
   const written: [string, string][] = [];
+  const cleared: string[] = [];
   const writeBase64 = async (path: string, base64: string) => {
     written.push([path, base64]);
     return true;
   };
-  const modules = {[PAGE_FILE_MODULE]: {writeBase64}};
+  const removePages = async (folder: string) => {
+    cleared.push(folder);
+    return 2;
+  };
+  const modules = {[PAGE_FILE_MODULE]: {writeBase64, removePages}};
 
-  test('writes the PNG named by its code, inserts it after the saved page, then deletes it', async () => {
+  test('waits in the hidden plugin folder, never in MyStyle, which Supernote Cloud syncs', () => {
+    expect(PAGE_FOLDER).toBe('/storage/emulated/0/.data/plugin/inktools-puzzles/pages');
+    expect(PAGE_FOLDER).not.toContain('MyStyle');
+  });
+
+  test('writes the PNG named by its code and inserts it after the saved page', async () => {
     mocked(PluginNoteAPI.saveCurrentNote).mockResolvedValue({success: true, result: true});
     mocked(PluginFileAPI.insertNotePage).mockResolvedValue({success: true, result: true});
-    mocked(FileUtils.deleteFile).mockResolvedValue(true);
     await expect(devicePages(modules).insert(HERE, CODE, PNG)).resolves.toEqual({ok: true, value: true});
     const path = `${PAGE_FOLDER}/${CODE}.png`;
     expect(written).toEqual([[path, toBase64(PNG)]]);
     expect(PluginFileAPI.insertNotePage).toHaveBeenCalledWith({notePath: NOTE, page: 3, template: path});
-    expect(FileUtils.deleteFile).toHaveBeenCalledWith(path);
   });
 
-  test('is not inserted when the note does not save, and its PNG still goes', async () => {
+  test('the page files an earlier insert left are deleted', async () => {
+    await expect(devicePages(modules).clear()).resolves.toEqual({ok: true, value: 2});
+    expect(cleared).toEqual([PAGE_FOLDER]);
+  });
+
+  test('is not inserted when the note does not save', async () => {
     mocked(PluginNoteAPI.saveCurrentNote).mockResolvedValue({success: true, result: false});
-    mocked(FileUtils.deleteFile).mockResolvedValue(true);
     await expect(devicePages(modules).insert(HERE, CODE, PNG)).resolves.toEqual(expect.objectContaining({ok: false}));
     expect(PluginFileAPI.insertNotePage).not.toHaveBeenCalled();
-    expect(FileUtils.deleteFile).toHaveBeenCalled();
   });
 
   test('fails when the page file module is not loaded', async () => {
     await expect(devicePages({}).insert(HERE, CODE, PNG)).resolves.toEqual(expect.objectContaining({ok: false, message: expect.stringContaining(PAGE_FILE_MODULE)}));
+    await expect(devicePages({}).clear()).resolves.toEqual(expect.objectContaining({ok: false}));
     expect(PluginFileAPI.insertNotePage).not.toHaveBeenCalled();
   });
 });

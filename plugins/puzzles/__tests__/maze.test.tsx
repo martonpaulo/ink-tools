@@ -49,15 +49,21 @@ function fakePages({code = null as string | null, ink = [] as InkStroke<object>[
       calls.push('read');
       return {ok: true, text: null};
     },
+    clear: async () => {
+      calls.push('clear');
+      return {ok: true, value: 0};
+    },
+    hide: async () => calls.push('hide'),
+    show: async () => calls.push('show'),
     log: () => {},
   };
   return {pages, calls, inserted};
 }
 
-async function mount(pages: PagePorts) {
+async function mount(pages: PagePorts, onBack = () => {}) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<GameView game={MAZE} pages={pages} seed={() => SEED} onBack={() => {}} onClose={() => {}} />);
+    tree = renderer.create(<GameView game={MAZE} pages={pages} seed={() => SEED} onBack={onBack} onClose={() => {}} />);
   });
   return tree;
 }
@@ -91,16 +97,19 @@ describe('the maze game (#386)', () => {
     expect(GAMES.map(game => game.id)).toContain('maze');
   });
 
-  test('«Add Page» puts the chosen maze on a new page, the same for the same seed', async () => {
-    const {pages, inserted} = fakePages();
-    const tree = await mount(pages);
+  test('«Add Page» closes the view, then puts the chosen maze on a new page, the same for the same seed', async () => {
+    const {pages, inserted, calls} = fakePages();
+    const back = jest.fn();
+    const tree = await mount(pages, back);
     expect(shownTexts(tree.root)).toEqual(expect.arrayContaining(['Shape', 'Rectangle', 'Circle', 'Difficulty', 'Easy', 'Medium', 'Hard']));
     await press(tree, 'Shape: Circle');
     await press(tree, 'Difficulty: Hard');
     await press(tree, playCopy['new.add']);
     const expected = generateMaze(SEED, mazePageSize('circle', 'hard', 'portrait'), 'hard');
     expect(inserted.map(page => page.code)).toEqual([puzzleCode(expected.id)]);
-    expect(shownTexts(tree.root)).toContain(playCopy['added.note']('Maze'));
+    // The note reload of the insert can end the view's JavaScript, so the view is closed before it.
+    expect(calls).toEqual(['clear', 'here', 'codeOf', 'hide', 'insert']);
+    expect(back).toHaveBeenCalled();
     const again = MAZE.create({shape: 'circle', band: 'hard'}, SEED, {orientation: 'portrait', hand: 'right'});
     expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);
   });
@@ -139,7 +148,7 @@ describe('the maze game (#386)', () => {
     const tree = await mount(pages);
     await press(tree, playCopy['here.answer']);
     expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
-    expect(calls).toEqual(['here', 'codeOf']);
+    expect(calls).toEqual(['clear', 'here', 'codeOf']);
   });
 
   test('a page the host cannot read shows the Error state, and Retry reads it again', async () => {
@@ -152,10 +161,12 @@ describe('the maze game (#386)', () => {
 });
 
 test('a page that cannot go in shows its own Error, which does not blame the note', async () => {
-  const {pages} = fakePages();
+  const {pages, calls} = fakePages();
   pages.insert = async () => ({ok: false, code: 802, message: 'Background template file does not exist!'});
   const tree = await mount(pages);
   await press(tree, playCopy['new.add']);
+  // A failed insert opens the closed view again, on its Error.
+  expect(calls.slice(-2)).toEqual(['hide', 'show']);
   expect(shownTexts(tree.root)).toEqual(expect.arrayContaining([playCopy['error.add'], playCopy['error.hint']]));
   expect(shownTexts(tree.root)).not.toContain(playCopy['error.hereHint']);
 });

@@ -276,6 +276,9 @@ const mazePages = (code: string | null, failing = false): PuzzlesPages => ({
   insert: async () => ({ok: true, value: true}),
   ink: async () => ({ok: true, value: mazeInk()}),
   read: async () => ({ok: true, text: null}),
+  clear: async () => ({ok: true, value: 0}),
+  hide: async () => {},
+  show: async () => {},
   log: noop,
 });
 /** The maze's view on these pages; `steps` presses each label in turn. */
@@ -308,7 +311,6 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-error', render: () => puzzles('failing', PUZZLES_GAMES, [OPEN_GAME])},
   {name: 'puzzles-maze', render: () => puzzlesMaze(null)},
   {name: 'puzzles-maze-page', render: () => puzzlesMaze(MAZE_CODE)},
-  {name: 'puzzles-maze-added', render: () => puzzlesMaze(null, ['Add Page'])},
   {name: 'puzzles-maze-check', render: () => puzzlesMaze(MAZE_CODE, ['Check'])},
   {name: 'puzzles-maze-solution', render: () => puzzlesMaze(MAZE_CODE, ['Show Solution'])},
   {name: 'puzzles-maze-error', render: () => puzzlesMaze(null, [], true)},

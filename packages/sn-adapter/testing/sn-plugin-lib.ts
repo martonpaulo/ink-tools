@@ -78,5 +78,4 @@ export const FileUtils = mocks(
   'makeDir',
   'listFiles',
   'getExternalDirPath',
-  'deleteFile',
 );

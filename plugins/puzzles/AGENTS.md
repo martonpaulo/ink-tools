@@ -29,10 +29,13 @@ data folder. Log lines start `Puzzles:`.
 `src/play/GameView.tsx` is every puzzle game's view ([#386](https://github.com/martonpaulo/ink-tools/issues/386)): the
 game's choices and «Add Page»; on a page the game made, «Check» and «Show Solution», whose pictures
 show only in the view, so the note never gets the answer. `src/play/pages.ts` reads and writes the
-pages: a new puzzle is `MyStyle/<code>.png`, written by the native module `PuzzlesPages`
-(`native/com/puzzles/view/PageFileModule.java`, as sn-plugin-lib writes no bytes), inserted as the
-background of a new page after the current one once the note saved, then deleted, as the note keeps
-the background ([#377](https://github.com/martonpaulo/ink-tools/issues/377)). The page's background then reads
+pages: a new puzzle is `<code>.png` in the plugin's hidden folder (`.data/plugin/inktools-puzzles/pages/`,
+never `MyStyle/`, which Supernote Cloud syncs), written by the native module `PuzzlesPages`
+(`native/com/puzzles/view/PageFileModule.java`, as sn-plugin-lib writes no bytes), and inserted as
+the background of a new page after the current one once the note saved. A successful insert reloads
+the note and ends the plugin's JavaScript, so the view closes before it and the next game view
+deletes the page files an earlier one left; each press of the button starts at the game list
+([#386](https://github.com/martonpaulo/ink-tools/issues/386)). The page's background then reads
 `user_<code>`, so the view finds the puzzle of the current page from it and stores nothing.
 
 ## Adding a game

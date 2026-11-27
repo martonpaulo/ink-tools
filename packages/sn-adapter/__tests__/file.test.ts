@@ -1,5 +1,5 @@
 import {FileUtils, PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
-import {BAD_ARGUMENT_CODE, insertNotePage, insertPageAfter, listFolder, noteSystemTemplates, pageTemplate, removeFile, THROWN_CODE} from '../src/official';
+import {BAD_ARGUMENT_CODE, insertNotePage, insertPageAfter, listFolder, noteSystemTemplates, pageTemplate, THROWN_CODE} from '../src/official';
 
 const mocked = (fn: unknown) => fn as jest.Mock;
 const NOTE = '/storage/emulated/0/Note/Tests/Puzzles.note';
@@ -87,12 +87,5 @@ describe('a page background (#386)', () => {
   test('a refused call keeps the host code', async () => {
     mocked(PluginFileAPI.getNotePageTemplate).mockResolvedValue({success: false, error: {code: 118, message: 'The handwriting app is not open'}});
     await expect(pageTemplate(NOTE, 0)).resolves.toEqual(expect.objectContaining({ok: false, code: 118}));
-  });
-
-  test('removeFile is true only when the host deleted the file', async () => {
-    mocked(FileUtils.deleteFile).mockResolvedValue(true);
-    await expect(removeFile(PAGE_PNG)).resolves.toEqual({ok: true, value: true});
-    mocked(FileUtils.deleteFile).mockResolvedValue(false);
-    await expect(removeFile(PAGE_PNG)).resolves.toEqual({ok: true, value: false});
   });
 });

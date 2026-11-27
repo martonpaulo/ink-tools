@@ -43,17 +43,6 @@ export async function makeFolder(path: string): Promise<Result<boolean>> {
   );
 }
 
-/**
- * Deletes the file at `path` (official `FileUtils.deleteFile`); `true` when the host deleted it. A
- * Puzzles page PNG goes once its page is inserted, as the note keeps the background (#377, #386).
- */
-export async function removeFile(path: string): Promise<Result<boolean>> {
-  return attempt(
-    () => FileUtils.deleteFile(path),
-    raw => ok(raw === true),
-  );
-}
-
 /** One entry of a folder: its full path, and whether it is a folder. */
 export type FolderEntry = {path: string; folder: boolean};
 

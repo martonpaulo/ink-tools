@@ -4,11 +4,12 @@
  * permissions and the game's own. While that runs, the Loading state; a missing one, the Needs
  * state with its fix; a check the host could not answer, the Error state with Retry (#245).
  */
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import {
   closePluginView,
   hasPermission,
+  onButtonEvent,
   requestPermission,
 } from '@ink-tools/sn-adapter/official';
 import {
@@ -45,6 +46,8 @@ const DEVICE_PORTS: RequirementPorts = {
 export type PuzzlesViewProps = {
   /** Closes the plugin view; tests pass a fake. */
   close?: () => void;
+  /** Each press of the toolbar button while the view is mounted; tests pass a fake. */
+  presses?: (listener: () => void) => () => void;
   ports?: RequirementPorts;
   games?: readonly Game[];
 };
@@ -60,9 +63,13 @@ export function PuzzlesView({
   close = () => closePluginView(),
   ports = DEVICE_PORTS,
   games = GAMES,
+  presses = onButtonEvent,
 }: PuzzlesViewProps): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>({kind: 'list'});
   const list = useCallback(() => setScreen({kind: 'list'}), []);
+  // The view outlives a close, so each press starts at the game list, never on the screen the last
+  // one ended on, such as a solution (device round, #386).
+  useEffect(() => presses(list), [presses, list]);
 
   /** Checks what `game` needs, then opens it, or shows the Needs or Error state that stops it. */
   const open = useCallback(

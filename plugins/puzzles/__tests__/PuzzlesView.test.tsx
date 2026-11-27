@@ -147,3 +147,17 @@ test('Close and Back both close the view, and Back is armed on the native module
   module.restore();
   back.restore();
 });
+
+test('a new press of the toolbar button starts at the game list, never where the last one ended (#386)', async () => {
+  let pressed = () => {};
+  const presses = (listener: () => void) => {
+    pressed = listener;
+    return () => {};
+  };
+  const tree = await mount({ports: fakePorts(new Set([READ, WRITE])), games: [game()], presses});
+  await press(tree, GAME_LABEL);
+  expect(shownTexts(tree.root)).toContain('Playing');
+  await act(async () => pressed());
+  expect(shownTexts(tree.root)).toContain('Test game');
+  expect(shownTexts(tree.root)).not.toContain('Playing');
+});

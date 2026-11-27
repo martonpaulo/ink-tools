@@ -14,9 +14,6 @@ export const playCopy = {
   'here.none': (game: string) => `This page has no ${game}. Open a ${game} page to check it or see its solution.`,
   /** The row of the page's puzzle: its game and difficulty, then its code. */
   'here.title': (game: string, band: string) => `${game}, ${band}`,
-  /** After a new page went in. */
-  'added.title': 'Page added',
-  'added.note': (game: string) => `The ${game} is on the next page. Close Puzzles and turn the page to solve it.`,
   'verdict.solved': 'Solved. Nothing is wrong.',
   'verdict.open': 'Nothing is wrong so far.',
   'verdict.wrong': (count: number) => (count === 1 ? '1 mistake is circled.' : `${count} mistakes are circled.`),
