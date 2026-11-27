@@ -1,0 +1,617 @@
+{
+ "language": "en",
+ "entries": [
+  {
+   "answer": "CAT",
+   "clue": "Pet that purrs"
+  },
+  {
+   "answer": "DOG",
+   "clue": "Pet that barks"
+  },
+  {
+   "answer": "COW",
+   "clue": "Farm animal that gives milk"
+  },
+  {
+   "answer": "PIG",
+   "clue": "Pink farm animal"
+  },
+  {
+   "answer": "HEN",
+   "clue": "Farm bird that lays eggs"
+  },
+  {
+   "answer": "OWL",
+   "clue": "Bird that hunts at night"
+  },
+  {
+   "answer": "BEE",
+   "clue": "Insect that makes honey"
+  },
+  {
+   "answer": "ANT",
+   "clue": "Small insect that lives in a colony"
+  },
+  {
+   "answer": "FOX",
+   "clue": "Wild animal with a bushy red tail"
+  },
+  {
+   "answer": "HORSE",
+   "clue": "Animal you can ride"
+  },
+  {
+   "answer": "SHEEP",
+   "clue": "Animal that gives wool"
+  },
+  {
+   "answer": "GOAT",
+   "clue": "Farm animal with a beard"
+  },
+  {
+   "answer": "MOUSE",
+   "clue": "Small animal that likes cheese"
+  },
+  {
+   "answer": "LION",
+   "clue": "Big cat with a mane"
+  },
+  {
+   "answer": "TIGER",
+   "clue": "Big cat with stripes"
+  },
+  {
+   "answer": "BEAR",
+   "clue": "Large animal that sleeps in winter"
+  },
+  {
+   "answer": "WOLF",
+   "clue": "Wild animal that howls"
+  },
+  {
+   "answer": "FISH",
+   "clue": "It swims and breathes through gills"
+  },
+  {
+   "answer": "SHARK",
+   "clue": "Large fish with sharp teeth"
+  },
+  {
+   "answer": "WHALE",
+   "clue": "Largest animal in the sea"
+  },
+  {
+   "answer": "BIRD",
+   "clue": "Animal with feathers"
+  },
+  {
+   "answer": "DUCK",
+   "clue": "Bird that says quack"
+  },
+  {
+   "answer": "FROG",
+   "clue": "Green animal that jumps and croaks"
+  },
+  {
+   "answer": "SNAKE",
+   "clue": "Long animal with no legs"
+  },
+  {
+   "answer": "APPLE",
+   "clue": "Red or green fruit"
+  },
+  {
+   "answer": "PEAR",
+   "clue": "Fruit that is narrow at the top"
+  },
+  {
+   "answer": "LEMON",
+   "clue": "Sour yellow fruit"
+  },
+  {
+   "answer": "GRAPE",
+   "clue": "Small fruit made into wine"
+  },
+  {
+   "answer": "MELON",
+   "clue": "Large sweet summer fruit"
+  },
+  {
+   "answer": "BREAD",
+   "clue": "Food baked from flour"
+  },
+  {
+   "answer": "RICE",
+   "clue": "Small white grain"
+  },
+  {
+   "answer": "MILK",
+   "clue": "White drink from a cow"
+  },
+  {
+   "answer": "CHEESE",
+   "clue": "Food made from milk"
+  },
+  {
+   "answer": "EGG",
+   "clue": "What a hen lays"
+  },
+  {
+   "answer": "SALT",
+   "clue": "White mineral from the sea, put on food"
+  },
+  {
+   "answer": "SUGAR",
+   "clue": "It makes coffee sweet"
+  },
+  {
+   "answer": "SOUP",
+   "clue": "Hot liquid food"
+  },
+  {
+   "answer": "CAKE",
+   "clue": "Sweet food for a birthday"
+  },
+  {
+   "answer": "TEA",
+   "clue": "Hot drink made from leaves"
+  },
+  {
+   "answer": "WATER",
+   "clue": "Clear liquid we drink"
+  },
+  {
+   "answer": "WINE",
+   "clue": "Drink made from grapes"
+  },
+  {
+   "answer": "HEAD",
+   "clue": "Top part of the body"
+  },
+  {
+   "answer": "HAND",
+   "clue": "It has five fingers"
+  },
+  {
+   "answer": "FOOT",
+   "clue": "You stand on it"
+  },
+  {
+   "answer": "ARM",
+   "clue": "Limb between shoulder and hand"
+  },
+  {
+   "answer": "LEG",
+   "clue": "Limb you walk on"
+  },
+  {
+   "answer": "EYE",
+   "clue": "You see with it"
+  },
+  {
+   "answer": "EAR",
+   "clue": "You hear with it"
+  },
+  {
+   "answer": "NOSE",
+   "clue": "You smell with it"
+  },
+  {
+   "answer": "MOUTH",
+   "clue": "You eat with it"
+  },
+  {
+   "answer": "TOOTH",
+   "clue": "White part in your mouth"
+  },
+  {
+   "answer": "HEART",
+   "clue": "Organ that pumps blood"
+  },
+  {
+   "answer": "MOTHER",
+   "clue": "Female parent"
+  },
+  {
+   "answer": "FATHER",
+   "clue": "Male parent"
+  },
+  {
+   "answer": "SISTER",
+   "clue": "Daughter of your parents"
+  },
+  {
+   "answer": "BROTHER",
+   "clue": "Son of your parents"
+  },
+  {
+   "answer": "BABY",
+   "clue": "Very young child"
+  },
+  {
+   "answer": "FRIEND",
+   "clue": "Person you like and trust"
+  },
+  {
+   "answer": "KING",
+   "clue": "Male ruler of a kingdom"
+  },
+  {
+   "answer": "QUEEN",
+   "clue": "Wife of a king"
+  },
+  {
+   "answer": "HOUSE",
+   "clue": "Building where people live"
+  },
+  {
+   "answer": "DOOR",
+   "clue": "You open it to go in"
+  },
+  {
+   "answer": "WINDOW",
+   "clue": "Glass in a wall"
+  },
+  {
+   "answer": "ROOF",
+   "clue": "Top of a house"
+  },
+  {
+   "answer": "BED",
+   "clue": "You sleep in it"
+  },
+  {
+   "answer": "CHAIR",
+   "clue": "Seat with a back"
+  },
+  {
+   "answer": "TABLE",
+   "clue": "Furniture you eat at"
+  },
+  {
+   "answer": "LAMP",
+   "clue": "It gives light at night"
+  },
+  {
+   "answer": "BOOK",
+   "clue": "You read it"
+  },
+  {
+   "answer": "PEN",
+   "clue": "You write with it in ink"
+  },
+  {
+   "answer": "KEY",
+   "clue": "It opens a lock"
+  },
+  {
+   "answer": "CLOCK",
+   "clue": "It shows the time"
+  },
+  {
+   "answer": "PHONE",
+   "clue": "You call people with it"
+  },
+  {
+   "answer": "CAR",
+   "clue": "Vehicle with four wheels"
+  },
+  {
+   "answer": "BUS",
+   "clue": "Large vehicle for many people"
+  },
+  {
+   "answer": "TRAIN",
+   "clue": "It runs on rails"
+  },
+  {
+   "answer": "BOAT",
+   "clue": "It floats on water"
+  },
+  {
+   "answer": "SHIP",
+   "clue": "Large boat"
+  },
+  {
+   "answer": "PLANE",
+   "clue": "It flies people far away"
+  },
+  {
+   "answer": "ROAD",
+   "clue": "Way for cars"
+  },
+  {
+   "answer": "CITY",
+   "clue": "Large town"
+  },
+  {
+   "answer": "RIVER",
+   "clue": "Water that flows to the sea"
+  },
+  {
+   "answer": "SEA",
+   "clue": "Large body of salt water"
+  },
+  {
+   "answer": "LAKE",
+   "clue": "Water with land all around"
+  },
+  {
+   "answer": "ISLAND",
+   "clue": "Land with water all around"
+  },
+  {
+   "answer": "BEACH",
+   "clue": "Sand by the sea"
+  },
+  {
+   "answer": "SAND",
+   "clue": "Small grains on a beach"
+  },
+  {
+   "answer": "STONE",
+   "clue": "Small piece of rock"
+  },
+  {
+   "answer": "TREE",
+   "clue": "Tall plant with a trunk"
+  },
+  {
+   "answer": "LEAF",
+   "clue": "Green part of a tree"
+  },
+  {
+   "answer": "FLOWER",
+   "clue": "Colourful part of a plant"
+  },
+  {
+   "answer": "ROSE",
+   "clue": "Flower with thorns"
+  },
+  {
+   "answer": "GRASS",
+   "clue": "Green plants of a lawn"
+  },
+  {
+   "answer": "FOREST",
+   "clue": "Many trees together"
+  },
+  {
+   "answer": "MOUNTAIN",
+   "clue": "Very high land"
+  },
+  {
+   "answer": "SUN",
+   "clue": "Star of our days"
+  },
+  {
+   "answer": "MOON",
+   "clue": "It shines at night"
+  },
+  {
+   "answer": "STAR",
+   "clue": "Point of light in the night sky"
+  },
+  {
+   "answer": "SKY",
+   "clue": "Blue space above us"
+  },
+  {
+   "answer": "RAIN",
+   "clue": "Water that falls from clouds"
+  },
+  {
+   "answer": "SNOW",
+   "clue": "Cold white flakes"
+  },
+  {
+   "answer": "WIND",
+   "clue": "Moving air"
+  },
+  {
+   "answer": "CLOUD",
+   "clue": "White shape in the sky"
+  },
+  {
+   "answer": "FIRE",
+   "clue": "It burns and gives heat"
+  },
+  {
+   "answer": "ICE",
+   "clue": "Frozen water"
+  },
+  {
+   "answer": "RED",
+   "clue": "Colour of blood"
+  },
+  {
+   "answer": "BLUE",
+   "clue": "Colour of the sky"
+  },
+  {
+   "answer": "GREEN",
+   "clue": "Colour of grass"
+  },
+  {
+   "answer": "BLACK",
+   "clue": "Colour of night"
+  },
+  {
+   "answer": "WHITE",
+   "clue": "Colour of snow"
+  },
+  {
+   "answer": "DAY",
+   "clue": "Twenty-four hours"
+  },
+  {
+   "answer": "NIGHT",
+   "clue": "Dark part of the day"
+  },
+  {
+   "answer": "WEEK",
+   "clue": "Seven days"
+  },
+  {
+   "answer": "MONTH",
+   "clue": "About thirty days"
+  },
+  {
+   "answer": "YEAR",
+   "clue": "Twelve months"
+  },
+  {
+   "answer": "SUMMER",
+   "clue": "Hottest season"
+  },
+  {
+   "answer": "WINTER",
+   "clue": "Coldest season"
+  },
+  {
+   "answer": "MORNING",
+   "clue": "Start of the day"
+  },
+  {
+   "answer": "SCHOOL",
+   "clue": "Place where children learn"
+  },
+  {
+   "answer": "DOCTOR",
+   "clue": "Person who treats the sick"
+  },
+  {
+   "answer": "TEACHER",
+   "clue": "Person who teaches a class"
+  },
+  {
+   "answer": "FARM",
+   "clue": "Place with fields and animals"
+  },
+  {
+   "answer": "MONEY",
+   "clue": "You pay with it"
+  },
+  {
+   "answer": "GOLD",
+   "clue": "Yellow precious metal"
+  },
+  {
+   "answer": "SHOE",
+   "clue": "You wear it on a foot"
+  },
+  {
+   "answer": "HAT",
+   "clue": "You wear it on your head"
+  },
+  {
+   "answer": "SHIRT",
+   "clue": "Top with a collar and buttons"
+  },
+  {
+   "answer": "DRESS",
+   "clue": "One piece of clothing with a skirt"
+  },
+  {
+   "answer": "SONG",
+   "clue": "Music with words"
+  },
+  {
+   "answer": "MUSIC",
+   "clue": "Art of sounds"
+  },
+  {
+   "answer": "GAME",
+   "clue": "Something you play by its rules"
+  },
+  {
+   "answer": "BALL",
+   "clue": "Round toy"
+  },
+  {
+   "answer": "DREAM",
+   "clue": "Story you see in your sleep"
+  },
+  {
+   "answer": "NAME",
+   "clue": "What you are called"
+  },
+  {
+   "answer": "WORD",
+   "clue": "Unit of language"
+  },
+  {
+   "answer": "OIL",
+   "clue": "Liquid for frying"
+  },
+  {
+   "answer": "ART",
+   "clue": "Painting or sculpture"
+  },
+  {
+   "answer": "AIR",
+   "clue": "What we breathe"
+  },
+  {
+   "answer": "AGE",
+   "clue": "How old you are"
+  },
+  {
+   "answer": "END",
+   "clue": "Opposite of start"
+  },
+  {
+   "answer": "TWO",
+   "clue": "One plus one"
+  },
+  {
+   "answer": "TEN",
+   "clue": "Two times five"
+  },
+  {
+   "answer": "SIX",
+   "clue": "Half a dozen"
+  },
+  {
+   "answer": "NINE",
+   "clue": "Three times three"
+  },
+  {
+   "answer": "TOE",
+   "clue": "Digit of the foot"
+  },
+  {
+   "answer": "INK",
+   "clue": "Liquid in a pen"
+  },
+  {
+   "answer": "OAK",
+   "clue": "Tree that gives acorns"
+  },
+  {
+   "answer": "HONEY",
+   "clue": "Sweet food made by bees"
+  },
+  {
+   "answer": "AUNT",
+   "clue": "Sister of a parent"
+  },
+  {
+   "answer": "BONE",
+   "clue": "Hard part of the skeleton"
+  },
+  {
+   "answer": "CHILD",
+   "clue": "Young person"
+  },
+  {
+   "answer": "PEACE",
+   "clue": "Opposite of war"
+  },
+  {
+   "answer": "LIGHT",
+   "clue": "Opposite of darkness"
+  }
+ ]
+}

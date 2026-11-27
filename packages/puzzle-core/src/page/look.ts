@@ -23,6 +23,11 @@ export function mmToPx(mm: number): number {
   return Math.round((mm * PAGE_SIZE.portrait.width) / PAGE_WIDTH_MM);
 }
 
+/** Pixels to millimetres, unrounded: the inverse of `mmToPx`. */
+export function pxToMm(px: number): number {
+  return (px * PAGE_WIDTH_MM) / PAGE_SIZE.portrait.width;
+}
+
 /** The cell sizes a page offers: 7 mm is the least a handwritten digit needs, 15 mm fits candidates. */
 export const CELL_PRESETS_MM = [7, 10, 15] as const;
 export type CellPreset = (typeof CELL_PRESETS_MM)[number];
@@ -88,4 +93,7 @@ export const TEXT_SIZE = {
   arrowClueMm: 3,
   /** The line step of a clue's wrapped lines, as a share of its em. */
   lineStep: 1.1,
+  /** A crossword's clue list, in millimetres of em, and its line step as a share of the em (#400). */
+  clueListMm: 3.4,
+  clueLineStep: 1.3,
 } as const;

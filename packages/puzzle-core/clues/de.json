@@ -1,0 +1,565 @@
+{
+ "language": "de",
+ "entries": [
+  {
+   "answer": "KATZE",
+   "clue": "Haustier, das miaut"
+  },
+  {
+   "answer": "HUND",
+   "clue": "Haustier, das bellt"
+  },
+  {
+   "answer": "KUH",
+   "clue": "Hoftier, das Milch gibt"
+  },
+  {
+   "answer": "SCHWEIN",
+   "clue": "Rosa Tier auf dem Bauernhof"
+  },
+  {
+   "answer": "HUHN",
+   "clue": "Vogel, der Eier legt"
+  },
+  {
+   "answer": "EULE",
+   "clue": "Vogel, der nachts jagt"
+  },
+  {
+   "answer": "BIENE",
+   "clue": "Insekt, das Honig macht"
+  },
+  {
+   "answer": "AMEISE",
+   "clue": "Kleines Insekt, das in Kolonien lebt"
+  },
+  {
+   "answer": "FUCHS",
+   "clue": "Schlaues Tier mit rotem Schwanz"
+  },
+  {
+   "answer": "PFERD",
+   "clue": "Tier, auf dem man reitet"
+  },
+  {
+   "answer": "SCHAF",
+   "clue": "Tier, das Wolle gibt"
+  },
+  {
+   "answer": "ZIEGE",
+   "clue": "Hoftier mit Bart"
+  },
+  {
+   "answer": "MAUS",
+   "clue": "Kleines Nagetier"
+  },
+  {
+   "answer": "LOEWE",
+   "clue": "Große Katze mit Mähne"
+  },
+  {
+   "answer": "TIGER",
+   "clue": "Große Katze mit Streifen"
+  },
+  {
+   "answer": "BAER",
+   "clue": "Großes Tier mit Winterschlaf"
+  },
+  {
+   "answer": "WOLF",
+   "clue": "Wildes Tier, das heult"
+  },
+  {
+   "answer": "FISCH",
+   "clue": "Tier, das mit Kiemen atmet"
+  },
+  {
+   "answer": "WAL",
+   "clue": "Größtes Tier im Meer"
+  },
+  {
+   "answer": "VOGEL",
+   "clue": "Tier mit Federn"
+  },
+  {
+   "answer": "ENTE",
+   "clue": "Vogel, der schnattert"
+  },
+  {
+   "answer": "FROSCH",
+   "clue": "Grünes Tier, das quakt"
+  },
+  {
+   "answer": "SCHLANGE",
+   "clue": "Tier ohne Beine"
+  },
+  {
+   "answer": "APFEL",
+   "clue": "Rote oder grüne Frucht"
+  },
+  {
+   "answer": "BIRNE",
+   "clue": "Obst, das oben schmal ist"
+  },
+  {
+   "answer": "ZITRONE",
+   "clue": "Saure gelbe Frucht"
+  },
+  {
+   "answer": "BROT",
+   "clue": "Gebackenes aus Mehl"
+  },
+  {
+   "answer": "REIS",
+   "clue": "Kleines weißes Korn"
+  },
+  {
+   "answer": "MILCH",
+   "clue": "Weißes Getränk von der Kuh"
+  },
+  {
+   "answer": "KAESE",
+   "clue": "Lebensmittel aus Milch"
+  },
+  {
+   "answer": "SALZ",
+   "clue": "Weißes Gewürz aus dem Meer"
+  },
+  {
+   "answer": "ZUCKER",
+   "clue": "Macht den Kaffee süß"
+  },
+  {
+   "answer": "SUPPE",
+   "clue": "Heißes, flüssiges Gericht"
+  },
+  {
+   "answer": "KUCHEN",
+   "clue": "Süßes zum Geburtstag"
+  },
+  {
+   "answer": "TEE",
+   "clue": "Heißes Getränk aus Blättern"
+  },
+  {
+   "answer": "WASSER",
+   "clue": "Klare Flüssigkeit zum Trinken"
+  },
+  {
+   "answer": "WEIN",
+   "clue": "Getränk aus Trauben"
+  },
+  {
+   "answer": "KOPF",
+   "clue": "Oberster Teil des Körpers"
+  },
+  {
+   "answer": "HAND",
+   "clue": "Hat fünf Finger"
+  },
+  {
+   "answer": "FUSS",
+   "clue": "Darauf steht man"
+  },
+  {
+   "answer": "ARM",
+   "clue": "Glied zwischen Schulter und Hand"
+  },
+  {
+   "answer": "BEIN",
+   "clue": "Damit geht man"
+  },
+  {
+   "answer": "AUGE",
+   "clue": "Damit sieht man"
+  },
+  {
+   "answer": "OHR",
+   "clue": "Damit hört man"
+  },
+  {
+   "answer": "NASE",
+   "clue": "Damit riecht man"
+  },
+  {
+   "answer": "MUND",
+   "clue": "Damit isst man"
+  },
+  {
+   "answer": "ZAHN",
+   "clue": "Weißer Teil im Mund"
+  },
+  {
+   "answer": "HERZ",
+   "clue": "Organ, das Blut pumpt"
+  },
+  {
+   "answer": "MUTTER",
+   "clue": "Weiblicher Elternteil"
+  },
+  {
+   "answer": "VATER",
+   "clue": "Männlicher Elternteil"
+  },
+  {
+   "answer": "SCHWESTER",
+   "clue": "Tochter der Eltern"
+  },
+  {
+   "answer": "BRUDER",
+   "clue": "Sohn der Eltern"
+  },
+  {
+   "answer": "BABY",
+   "clue": "Sehr kleines Kind"
+  },
+  {
+   "answer": "FREUND",
+   "clue": "Mensch, dem man vertraut"
+  },
+  {
+   "answer": "KOENIG",
+   "clue": "Herrscher eines Reiches"
+  },
+  {
+   "answer": "HAUS",
+   "clue": "Gebäude zum Wohnen"
+  },
+  {
+   "answer": "TUER",
+   "clue": "Man öffnet sie zum Eintreten"
+  },
+  {
+   "answer": "FENSTER",
+   "clue": "Glas in der Wand"
+  },
+  {
+   "answer": "DACH",
+   "clue": "Oberer Teil des Hauses"
+  },
+  {
+   "answer": "BETT",
+   "clue": "Darin schläft man"
+  },
+  {
+   "answer": "STUHL",
+   "clue": "Sitz mit Lehne"
+  },
+  {
+   "answer": "TISCH",
+   "clue": "Möbel zum Essen"
+  },
+  {
+   "answer": "LAMPE",
+   "clue": "Gibt Licht am Abend"
+  },
+  {
+   "answer": "BUCH",
+   "clue": "Man liest es"
+  },
+  {
+   "answer": "UHR",
+   "clue": "Zeigt die Zeit"
+  },
+  {
+   "answer": "AUTO",
+   "clue": "Fahrzeug mit vier Rädern"
+  },
+  {
+   "answer": "BUS",
+   "clue": "Großes Fahrzeug für viele Menschen"
+  },
+  {
+   "answer": "ZUG",
+   "clue": "Fährt auf Schienen"
+  },
+  {
+   "answer": "BOOT",
+   "clue": "Schwimmt auf dem Wasser"
+  },
+  {
+   "answer": "SCHIFF",
+   "clue": "Großes Boot"
+  },
+  {
+   "answer": "STRASSE",
+   "clue": "Weg für Autos"
+  },
+  {
+   "answer": "STADT",
+   "clue": "Großer Ort"
+  },
+  {
+   "answer": "FLUSS",
+   "clue": "Wasser, das zum Meer fließt"
+  },
+  {
+   "answer": "MEER",
+   "clue": "Große Fläche aus Salzwasser"
+  },
+  {
+   "answer": "SEE",
+   "clue": "Wasser mit Land ringsum"
+  },
+  {
+   "answer": "INSEL",
+   "clue": "Land mit Wasser ringsum"
+  },
+  {
+   "answer": "STRAND",
+   "clue": "Sand am Meer"
+  },
+  {
+   "answer": "SAND",
+   "clue": "Kleine Körner am Strand"
+  },
+  {
+   "answer": "STEIN",
+   "clue": "Stück Fels"
+  },
+  {
+   "answer": "BAUM",
+   "clue": "Hohe Pflanze mit Stamm"
+  },
+  {
+   "answer": "BLATT",
+   "clue": "Grüner Teil des Baumes"
+  },
+  {
+   "answer": "BLUME",
+   "clue": "Bunter Teil der Pflanze"
+  },
+  {
+   "answer": "ROSE",
+   "clue": "Blume mit Dornen"
+  },
+  {
+   "answer": "GRAS",
+   "clue": "Grüne Pflanzen der Wiese"
+  },
+  {
+   "answer": "WALD",
+   "clue": "Viele Bäume zusammen"
+  },
+  {
+   "answer": "BERG",
+   "clue": "Sehr hohes Land"
+  },
+  {
+   "answer": "SONNE",
+   "clue": "Stern des Tages"
+  },
+  {
+   "answer": "MOND",
+   "clue": "Er scheint in der Nacht"
+  },
+  {
+   "answer": "STERN",
+   "clue": "Lichtpunkt am Nachthimmel"
+  },
+  {
+   "answer": "HIMMEL",
+   "clue": "Blauer Raum über uns"
+  },
+  {
+   "answer": "REGEN",
+   "clue": "Wasser aus den Wolken"
+  },
+  {
+   "answer": "SCHNEE",
+   "clue": "Weiße, kalte Flocken"
+  },
+  {
+   "answer": "WIND",
+   "clue": "Bewegte Luft"
+  },
+  {
+   "answer": "WOLKE",
+   "clue": "Weiße Form am Himmel"
+  },
+  {
+   "answer": "FEUER",
+   "clue": "Es brennt und wärmt"
+  },
+  {
+   "answer": "EIS",
+   "clue": "Gefrorenes Wasser"
+  },
+  {
+   "answer": "ROT",
+   "clue": "Farbe des Blutes"
+  },
+  {
+   "answer": "BLAU",
+   "clue": "Farbe des Himmels"
+  },
+  {
+   "answer": "GRUEN",
+   "clue": "Farbe des Grases"
+  },
+  {
+   "answer": "SCHWARZ",
+   "clue": "Farbe der Nacht"
+  },
+  {
+   "answer": "WEISS",
+   "clue": "Farbe des Schnees"
+  },
+  {
+   "answer": "TAG",
+   "clue": "Vierundzwanzig Stunden"
+  },
+  {
+   "answer": "NACHT",
+   "clue": "Dunkler Teil des Tages"
+  },
+  {
+   "answer": "WOCHE",
+   "clue": "Sieben Tage"
+  },
+  {
+   "answer": "MONAT",
+   "clue": "Etwa dreißig Tage"
+  },
+  {
+   "answer": "JAHR",
+   "clue": "Zwölf Monate"
+  },
+  {
+   "answer": "SOMMER",
+   "clue": "Heißeste Jahreszeit"
+  },
+  {
+   "answer": "WINTER",
+   "clue": "Kälteste Jahreszeit"
+  },
+  {
+   "answer": "MORGEN",
+   "clue": "Beginn des Tages"
+  },
+  {
+   "answer": "SCHULE",
+   "clue": "Ort, an dem Kinder lernen"
+  },
+  {
+   "answer": "ARZT",
+   "clue": "Er behandelt Kranke"
+  },
+  {
+   "answer": "LEHRER",
+   "clue": "Er unterrichtet eine Klasse"
+  },
+  {
+   "answer": "GELD",
+   "clue": "Damit bezahlt man"
+  },
+  {
+   "answer": "GOLD",
+   "clue": "Gelbes Edelmetall"
+  },
+  {
+   "answer": "SCHUH",
+   "clue": "Man trägt ihn am Fuß"
+  },
+  {
+   "answer": "HUT",
+   "clue": "Man trägt ihn auf dem Kopf"
+  },
+  {
+   "answer": "HEMD",
+   "clue": "Oberteil mit Kragen und Knöpfen"
+  },
+  {
+   "answer": "KLEID",
+   "clue": "Einteiliges Kleidungsstück"
+  },
+  {
+   "answer": "LIED",
+   "clue": "Musik mit Worten"
+  },
+  {
+   "answer": "MUSIK",
+   "clue": "Kunst der Töne"
+  },
+  {
+   "answer": "SPIEL",
+   "clue": "Zeitvertreib mit Regeln"
+  },
+  {
+   "answer": "BALL",
+   "clue": "Rundes Spielzeug"
+  },
+  {
+   "answer": "TRAUM",
+   "clue": "Geschichte im Schlaf"
+  },
+  {
+   "answer": "NAME",
+   "clue": "So heißt man"
+  },
+  {
+   "answer": "WORT",
+   "clue": "Einheit der Sprache"
+  },
+  {
+   "answer": "OEL",
+   "clue": "Flüssigkeit zum Braten"
+  },
+  {
+   "answer": "KUNST",
+   "clue": "Malerei oder Bildhauerei"
+  },
+  {
+   "answer": "LUFT",
+   "clue": "Was wir atmen"
+  },
+  {
+   "answer": "ENDE",
+   "clue": "Gegenteil von Anfang"
+  },
+  {
+   "answer": "ZWEI",
+   "clue": "Eins plus eins"
+  },
+  {
+   "answer": "ZEHN",
+   "clue": "Zwei mal fünf"
+  },
+  {
+   "answer": "SECHS",
+   "clue": "Ein halbes Dutzend"
+  },
+  {
+   "answer": "NEUN",
+   "clue": "Drei mal drei"
+  },
+  {
+   "answer": "TINTE",
+   "clue": "Flüssigkeit im Füller"
+  },
+  {
+   "answer": "LICHT",
+   "clue": "Gegenteil von Dunkelheit"
+  },
+  {
+   "answer": "HONIG",
+   "clue": "Süßes von den Bienen"
+  },
+  {
+   "answer": "TANTE",
+   "clue": "Schwester von Vater oder Mutter"
+  },
+  {
+   "answer": "OPA",
+   "clue": "Vater von Vater oder Mutter"
+  },
+  {
+   "answer": "OMA",
+   "clue": "Mutter von Vater oder Mutter"
+  },
+  {
+   "answer": "KIND",
+   "clue": "Junger Mensch"
+  }
+ ]
+}

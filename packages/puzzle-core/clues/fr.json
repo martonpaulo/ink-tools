@@ -1,0 +1,581 @@
+{
+ "language": "fr",
+ "entries": [
+  {
+   "answer": "CHAT",
+   "clue": "Animal de compagnie qui miaule"
+  },
+  {
+   "answer": "CHIEN",
+   "clue": "Animal de compagnie qui aboie"
+  },
+  {
+   "answer": "VACHE",
+   "clue": "Animal de ferme qui donne du lait"
+  },
+  {
+   "answer": "COCHON",
+   "clue": "Animal rose de la ferme"
+  },
+  {
+   "answer": "POULE",
+   "clue": "Oiseau qui pond des oeufs"
+  },
+  {
+   "answer": "HIBOU",
+   "clue": "Oiseau qui chasse la nuit"
+  },
+  {
+   "answer": "ABEILLE",
+   "clue": "Insecte qui fait du miel"
+  },
+  {
+   "answer": "FOURMI",
+   "clue": "Petit insecte qui vit en colonie"
+  },
+  {
+   "answer": "RENARD",
+   "clue": "Animal rusé à la queue rousse"
+  },
+  {
+   "answer": "CHEVAL",
+   "clue": "Animal que l'on monte"
+  },
+  {
+   "answer": "MOUTON",
+   "clue": "Animal qui donne de la laine"
+  },
+  {
+   "answer": "CHEVRE",
+   "clue": "Animal de ferme à barbiche"
+  },
+  {
+   "answer": "SOURIS",
+   "clue": "Petit rongeur"
+  },
+  {
+   "answer": "LION",
+   "clue": "Grand félin à crinière"
+  },
+  {
+   "answer": "TIGRE",
+   "clue": "Grand félin rayé"
+  },
+  {
+   "answer": "OURS",
+   "clue": "Grand animal qui hiberne"
+  },
+  {
+   "answer": "LOUP",
+   "clue": "Animal sauvage qui hurle"
+  },
+  {
+   "answer": "POISSON",
+   "clue": "Animal qui respire par des branchies"
+  },
+  {
+   "answer": "BALEINE",
+   "clue": "Plus grand animal de la mer"
+  },
+  {
+   "answer": "OISEAU",
+   "clue": "Animal à plumes"
+  },
+  {
+   "answer": "CANARD",
+   "clue": "Oiseau qui fait coin-coin"
+  },
+  {
+   "answer": "GRENOUILLE",
+   "clue": "Animal vert qui saute et coasse"
+  },
+  {
+   "answer": "SERPENT",
+   "clue": "Reptile sans pattes"
+  },
+  {
+   "answer": "POMME",
+   "clue": "Fruit rouge ou vert"
+  },
+  {
+   "answer": "POIRE",
+   "clue": "Fruit étroit en haut"
+  },
+  {
+   "answer": "CITRON",
+   "clue": "Fruit jaune et acide"
+  },
+  {
+   "answer": "RAISIN",
+   "clue": "Fruit du vin"
+  },
+  {
+   "answer": "MELON",
+   "clue": "Gros fruit sucré d'été"
+  },
+  {
+   "answer": "PAIN",
+   "clue": "Aliment de farine cuit au four"
+  },
+  {
+   "answer": "RIZ",
+   "clue": "Petit grain blanc"
+  },
+  {
+   "answer": "LAIT",
+   "clue": "Boisson blanche de la vache"
+  },
+  {
+   "answer": "FROMAGE",
+   "clue": "Aliment fait de lait"
+  },
+  {
+   "answer": "OEUF",
+   "clue": "Ce que pond la poule"
+  },
+  {
+   "answer": "SEL",
+   "clue": "Assaisonnement blanc de la mer"
+  },
+  {
+   "answer": "SUCRE",
+   "clue": "Il rend le café doux"
+  },
+  {
+   "answer": "SOUPE",
+   "clue": "Plat liquide et chaud"
+  },
+  {
+   "answer": "GATEAU",
+   "clue": "Douceur d'anniversaire"
+  },
+  {
+   "answer": "THE",
+   "clue": "Boisson chaude faite de feuilles"
+  },
+  {
+   "answer": "EAU",
+   "clue": "Liquide que l'on boit"
+  },
+  {
+   "answer": "VIN",
+   "clue": "Boisson faite de raisin"
+  },
+  {
+   "answer": "TETE",
+   "clue": "Haut du corps"
+  },
+  {
+   "answer": "MAIN",
+   "clue": "Elle a cinq doigts"
+  },
+  {
+   "answer": "PIED",
+   "clue": "On se tient debout dessus"
+  },
+  {
+   "answer": "BRAS",
+   "clue": "Membre entre l'épaule et la main"
+  },
+  {
+   "answer": "JAMBE",
+   "clue": "Membre qui sert à marcher"
+  },
+  {
+   "answer": "OEIL",
+   "clue": "On voit avec lui"
+  },
+  {
+   "answer": "OREILLE",
+   "clue": "On entend avec elle"
+  },
+  {
+   "answer": "NEZ",
+   "clue": "On sent avec lui"
+  },
+  {
+   "answer": "BOUCHE",
+   "clue": "On mange avec elle"
+  },
+  {
+   "answer": "DENT",
+   "clue": "Partie blanche dans la bouche"
+  },
+  {
+   "answer": "COEUR",
+   "clue": "Organe qui pompe le sang"
+  },
+  {
+   "answer": "MERE",
+   "clue": "Parent féminin"
+  },
+  {
+   "answer": "PERE",
+   "clue": "Parent masculin"
+  },
+  {
+   "answer": "SOEUR",
+   "clue": "Fille des mêmes parents"
+  },
+  {
+   "answer": "FRERE",
+   "clue": "Fils des mêmes parents"
+  },
+  {
+   "answer": "BEBE",
+   "clue": "Très jeune enfant"
+  },
+  {
+   "answer": "AMI",
+   "clue": "Personne en qui l'on a confiance"
+  },
+  {
+   "answer": "ROI",
+   "clue": "Souverain d'un royaume"
+  },
+  {
+   "answer": "REINE",
+   "clue": "Épouse du roi"
+  },
+  {
+   "answer": "MAISON",
+   "clue": "Bâtiment où l'on habite"
+  },
+  {
+   "answer": "PORTE",
+   "clue": "On l'ouvre pour entrer"
+  },
+  {
+   "answer": "FENETRE",
+   "clue": "Vitre dans le mur"
+  },
+  {
+   "answer": "TOIT",
+   "clue": "Haut de la maison"
+  },
+  {
+   "answer": "LIT",
+   "clue": "On y dort"
+  },
+  {
+   "answer": "CHAISE",
+   "clue": "Siège avec un dossier"
+  },
+  {
+   "answer": "TABLE",
+   "clue": "Meuble où l'on mange"
+  },
+  {
+   "answer": "LAMPE",
+   "clue": "Elle éclaire le soir"
+  },
+  {
+   "answer": "LIVRE",
+   "clue": "On le lit"
+  },
+  {
+   "answer": "STYLO",
+   "clue": "On écrit avec lui"
+  },
+  {
+   "answer": "CLE",
+   "clue": "Elle ouvre la serrure"
+  },
+  {
+   "answer": "MONTRE",
+   "clue": "Elle donne l'heure au poignet"
+  },
+  {
+   "answer": "VOITURE",
+   "clue": "Véhicule à quatre roues"
+  },
+  {
+   "answer": "BUS",
+   "clue": "Grand véhicule pour beaucoup de gens"
+  },
+  {
+   "answer": "TRAIN",
+   "clue": "Il roule sur des rails"
+  },
+  {
+   "answer": "BATEAU",
+   "clue": "Il flotte sur l'eau"
+  },
+  {
+   "answer": "NAVIRE",
+   "clue": "Grand bateau"
+  },
+  {
+   "answer": "AVION",
+   "clue": "Il vole avec des passagers"
+  },
+  {
+   "answer": "ROUTE",
+   "clue": "Voie pour les voitures"
+  },
+  {
+   "answer": "VILLE",
+   "clue": "Grande agglomération"
+  },
+  {
+   "answer": "RIVIERE",
+   "clue": "Cours d'eau"
+  },
+  {
+   "answer": "MER",
+   "clue": "Grande étendue d'eau salée"
+  },
+  {
+   "answer": "LAC",
+   "clue": "Eau entourée de terre"
+  },
+  {
+   "answer": "ILE",
+   "clue": "Terre entourée d'eau"
+  },
+  {
+   "answer": "PLAGE",
+   "clue": "Sable au bord de la mer"
+  },
+  {
+   "answer": "SABLE",
+   "clue": "Petits grains de la plage"
+  },
+  {
+   "answer": "PIERRE",
+   "clue": "Morceau de roche"
+  },
+  {
+   "answer": "ARBRE",
+   "clue": "Grande plante à tronc"
+  },
+  {
+   "answer": "FEUILLE",
+   "clue": "Partie verte de l'arbre"
+  },
+  {
+   "answer": "FLEUR",
+   "clue": "Partie colorée de la plante"
+  },
+  {
+   "answer": "ROSE",
+   "clue": "Fleur à épines"
+  },
+  {
+   "answer": "HERBE",
+   "clue": "Plante verte de la pelouse"
+  },
+  {
+   "answer": "FORET",
+   "clue": "Beaucoup d'arbres ensemble"
+  },
+  {
+   "answer": "MONTAGNE",
+   "clue": "Terre très haute"
+  },
+  {
+   "answer": "SOLEIL",
+   "clue": "Étoile du jour"
+  },
+  {
+   "answer": "LUNE",
+   "clue": "Elle brille la nuit"
+  },
+  {
+   "answer": "ETOILE",
+   "clue": "Point de lumière dans le ciel nocturne"
+  },
+  {
+   "answer": "CIEL",
+   "clue": "Espace bleu au-dessus de nous"
+  },
+  {
+   "answer": "PLUIE",
+   "clue": "Eau qui tombe des nuages"
+  },
+  {
+   "answer": "NEIGE",
+   "clue": "Flocons blancs et froids"
+  },
+  {
+   "answer": "VENT",
+   "clue": "Air en mouvement"
+  },
+  {
+   "answer": "NUAGE",
+   "clue": "Forme blanche dans le ciel"
+  },
+  {
+   "answer": "FEU",
+   "clue": "Il brûle et chauffe"
+  },
+  {
+   "answer": "GLACE",
+   "clue": "Eau gelée"
+  },
+  {
+   "answer": "ROUGE",
+   "clue": "Couleur du sang"
+  },
+  {
+   "answer": "BLEU",
+   "clue": "Couleur du ciel"
+  },
+  {
+   "answer": "VERT",
+   "clue": "Couleur de l'herbe"
+  },
+  {
+   "answer": "NOIR",
+   "clue": "Couleur de la nuit"
+  },
+  {
+   "answer": "BLANC",
+   "clue": "Couleur de la neige"
+  },
+  {
+   "answer": "JOUR",
+   "clue": "Vingt-quatre heures"
+  },
+  {
+   "answer": "NUIT",
+   "clue": "Partie sombre de la journée"
+  },
+  {
+   "answer": "SEMAINE",
+   "clue": "Sept jours"
+  },
+  {
+   "answer": "MOIS",
+   "clue": "Environ trente jours"
+  },
+  {
+   "answer": "ANNEE",
+   "clue": "Douze mois"
+  },
+  {
+   "answer": "ETE",
+   "clue": "Saison la plus chaude"
+  },
+  {
+   "answer": "HIVER",
+   "clue": "Saison la plus froide"
+  },
+  {
+   "answer": "MATIN",
+   "clue": "Début de la journée"
+  },
+  {
+   "answer": "ECOLE",
+   "clue": "Lieu où les enfants apprennent"
+  },
+  {
+   "answer": "MEDECIN",
+   "clue": "Il soigne les malades"
+  },
+  {
+   "answer": "ARGENT",
+   "clue": "On paie avec lui"
+  },
+  {
+   "answer": "CHAUSSURE",
+   "clue": "On la porte au pied"
+  },
+  {
+   "answer": "CHAPEAU",
+   "clue": "On le porte sur la tête"
+  },
+  {
+   "answer": "CHEMISE",
+   "clue": "Haut à col et boutons"
+  },
+  {
+   "answer": "ROBE",
+   "clue": "Vêtement féminin d'une pièce"
+  },
+  {
+   "answer": "CHANSON",
+   "clue": "Musique avec des paroles"
+  },
+  {
+   "answer": "MUSIQUE",
+   "clue": "Art des sons"
+  },
+  {
+   "answer": "JEU",
+   "clue": "Activité avec des règles"
+  },
+  {
+   "answer": "BALLE",
+   "clue": "Jouet rond"
+  },
+  {
+   "answer": "REVE",
+   "clue": "Histoire vue en dormant"
+  },
+  {
+   "answer": "NOM",
+   "clue": "Comment on s'appelle"
+  },
+  {
+   "answer": "MOT",
+   "clue": "Unité de la langue"
+  },
+  {
+   "answer": "HUILE",
+   "clue": "Liquide pour frire"
+  },
+  {
+   "answer": "ART",
+   "clue": "Peinture ou sculpture"
+  },
+  {
+   "answer": "AIR",
+   "clue": "Ce que l'on respire"
+  },
+  {
+   "answer": "FIN",
+   "clue": "Contraire de début"
+  },
+  {
+   "answer": "DEUX",
+   "clue": "Un plus un"
+  },
+  {
+   "answer": "DIX",
+   "clue": "Deux fois cinq"
+  },
+  {
+   "answer": "SIX",
+   "clue": "Une demi-douzaine"
+  },
+  {
+   "answer": "NEUF",
+   "clue": "Trois fois trois"
+  },
+  {
+   "answer": "ENCRE",
+   "clue": "Liquide du stylo"
+  },
+  {
+   "answer": "AIL",
+   "clue": "Condiment en gousses"
+  },
+  {
+   "answer": "MIEL",
+   "clue": "Douceur faite par les abeilles"
+  },
+  {
+   "answer": "PAIX",
+   "clue": "Contraire de guerre"
+  },
+  {
+   "answer": "TANTE",
+   "clue": "Soeur du père ou de la mère"
+  },
+  {
+   "answer": "ENFANT",
+   "clue": "Jeune personne"
+  }
+ ]
+}

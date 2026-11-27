@@ -4,15 +4,17 @@
  *
  *   SU-9-H-7K2Q9X   sudoku, 9 x 9, hard, seed 7K2Q9X
  *   FI-PT-M-7K2Q9X  fill-in, Portuguese words, medium, seed 7K2Q9X
+ *   CR-13PT-E-3F    crossword, 13 x 13 in Portuguese, easy, seed 3F
  */
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in', 'light-up', 'hitori', 'binairo', 'arrowword', 'bridges'] as const;
+export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in', 'light-up', 'hitori', 'binairo', 'arrowword', 'bridges', 'crossword'] as const;
 export type Game = (typeof GAMES)[number];
 
-const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI', 'light-up': 'LU', hitori: 'HI', binairo: 'BI', arrowword: 'AW', bridges: 'BR' };
+// Each game's code is its own: codeword took CW first, so the crossword is CR (#400).
+const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI', 'light-up': 'LU', hitori: 'HI', binairo: 'BI', arrowword: 'AW', bridges: 'BR', crossword: 'CR' };
 const BAND_CODES: Record<Difficulty, string> = { easy: 'E', medium: 'M', hard: 'H', expert: 'X' };
 
 /** Crockford's base 32: no I, L, O or U, so a hand-copied code is not misread. */
@@ -23,7 +25,7 @@ const CODE_PARTS = 4;
 
 export interface PuzzleId {
   game: Game;
-  /** The game's size token: `9` for a sudoku, `10X15` for a nonogram, `C12` for a circular maze. */
+  /** The game's size token: `9` for a sudoku, `10X15` for a nonogram, `C12` for a circular maze, `13EN` for a crossword. */
   size: string;
   difficulty: Difficulty;
   seed: string;

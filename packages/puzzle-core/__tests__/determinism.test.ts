@@ -1,4 +1,5 @@
-import { digest, generateArrowword, generateBinairo, generateCalcudoku, generateCodeword, generateFillIn, generateFutoshiki, generateHitori, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
+import { digest, generateArrowword, generateBinairo, generateCalcudoku, generateCodeword, generateCrossword, generateFillIn, generateFutoshiki, generateHitori, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
+import { CLUE_BANKS } from '../src/clues-data';
 import { WORD_LISTS } from '../src/words-data';
 import { maskedClueBank } from '../testing/clue-bank';
 
@@ -28,6 +29,8 @@ const PINNED: readonly [string, () => unknown, string][] = [
   ['hitori 8 x 8 medium', () => generateHitori('P1', 8, 'medium'), 'ce19aabd'],
   ['binairo 10 x 10 hard', () => generateBinairo('P1', 10, 'hard'), 'bbcf3637'],
   ['arrowword PT 8 x 8 medium', () => generateArrowword('P1', 'medium', maskedClueBank('pt')), '8fd9d42e'],
+  ['crossword 13 x 13 EN medium', () => generateCrossword('P1', 13, 'medium', CLUE_BANKS.en), '4f8247fa'],
+  ['crossword 9 x 9 PT easy', () => generateCrossword('P1', 9, 'easy', CLUE_BANKS.pt), 'b03c7e47'],
 ];
 
 describe('the same seed gives the same puzzle everywhere', () => {

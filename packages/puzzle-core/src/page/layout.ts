@@ -1,5 +1,6 @@
 /**
- * Where a game's grid, its outside clues, a side panel and the footer go on the page (#379).
+ * Where a game's grid, its outside clues, a side or a lower panel and the footer go on the page
+ * (#379, the lower panel #400).
  * Everything must fit on one page: a layout that does not throws `PageFitError`, never clips.
  */
 import { FONT_WEIGHTS, drawText, measureText } from './font';
@@ -18,6 +19,8 @@ export interface PageSpec {
   clues?: Partial<Record<Side, number>>;
   /** A panel beside the grid (a word search's list), in millimetres wide. */
   sidePanelMm?: number;
+  /** A panel below the grid as wide as the page's text area (a crossword's clues), in millimetres high. */
+  belowPanelMm?: number;
 }
 
 export interface Box {
@@ -34,6 +37,7 @@ export interface PageLayout {
   /** The gap between the grid and its outside clues, for `drawOutsideClues`. */
   readonly clueGap: number;
   readonly sidePanel: Box | null;
+  readonly belowPanel: Box | null;
   readonly footer: Box;
 }
 
@@ -74,14 +78,16 @@ export function layoutPage(spec: PageSpec): PageLayout {
   const blockWidth = depth.left + gridWidth + depth.right;
   const blockHeight = depth.top + gridHeight + depth.bottom;
   const contentWidth = blockWidth + (panelWidth > 0 ? gap + panelWidth : 0);
+  const belowHeight = spec.belowPanelMm ? mmToPx(spec.belowPanelMm) : 0;
+  const contentHeight = blockHeight + (belowHeight > 0 ? gap + belowHeight : 0);
 
   const areaWidth = width - 2 * margin;
   const areaHeight = height - 2 * margin - footerHeight;
-  if (contentWidth > areaWidth || blockHeight > areaHeight) {
-    throw new PageFitError(spec, contentWidth - areaWidth, blockHeight - areaHeight);
+  if (contentWidth > areaWidth || contentHeight > areaHeight) {
+    throw new PageFitError(spec, contentWidth - areaWidth, contentHeight - areaHeight);
   }
   const left = margin + Math.floor((areaWidth - contentWidth) / 2);
-  const top = margin + Math.floor((areaHeight - blockHeight) / 2);
+  const top = margin + Math.floor((areaHeight - contentHeight) / 2);
   // The panel goes on the side away from the writing hand, so the hand never covers it.
   const panelFirst = panelWidth > 0 && spec.hand === 'right';
   const blockLeft = panelFirst ? left + panelWidth + gap : left;
@@ -95,6 +101,7 @@ export function layoutPage(spec: PageSpec): PageLayout {
     grid: { lattice: spec.lattice, x: blockLeft + depth.left, y: top + depth.top, cell, columns: spec.columns, rows: spec.rows },
     clueGap: gap,
     sidePanel,
+    belowPanel: belowHeight > 0 ? { x: margin, y: top + blockHeight + gap, width: areaWidth, height: belowHeight } : null,
     footer: { x: margin, y: height - margin - footerHeight, width: width - 2 * margin, height: footerHeight },
   };
 }

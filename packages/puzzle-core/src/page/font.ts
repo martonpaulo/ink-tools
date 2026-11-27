@@ -25,6 +25,22 @@ function glyph(char: string, weight: FontWeight): readonly (number | readonly nu
   return found;
 }
 
+/**
+ * The text as the page font can draw it: a letter the font lacks loses its accent (é as e, ü as u),
+ * and ß is written ss. shortcut: the font holds printable ASCII and Ñ only; add the accented
+ * letters to `scripts/font-outlines.swift` on the Mac and drop this fold when the clue text of a
+ * crossword (#400) must show them.
+ */
+export function pageText(text: string): string {
+  return [...text]
+    .map(char => {
+      if (FONT_GLYPHS[FONT_WEIGHTS.regular][char] && FONT_GLYPHS[FONT_WEIGHTS.bold][char]) return char;
+      if (char === 'ß') return 'ss';
+      return char.normalize('NFD').replace(/\p{M}/gu, '');
+    })
+    .join('');
+}
+
 /** The width of `text` in pixels at `size`. */
 export function measureText(text: string, size: number, weight: FontWeight): number {
   let units = 0;

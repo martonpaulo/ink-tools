@@ -1,4 +1,4 @@
-import { dailySeed, parsePuzzleCode, puzzleCode, seedFromNumber } from '../src/code';
+import { dailySeed, GAMES, parsePuzzleCode, puzzleCode, seedFromNumber } from '../src/code';
 
 describe('puzzle codes', () => {
   test('a code names game, size, band and seed, and reads back', () => {
@@ -22,6 +22,13 @@ describe('puzzle codes', () => {
     ['SU-9!-H-AB', 'is not a size'],
   ])('«%s» is refused: %s', (code, why) => {
     expect(() => parsePuzzleCode(code)).toThrow(why);
+  });
+
+  test('every game reads back from its own code (two games never share one, #400)', () => {
+    for (const game of GAMES) {
+      const id = { game, size: '9', difficulty: 'easy' as const, seed: '1' };
+      expect(parsePuzzleCode(puzzleCode(id)).game).toBe(game);
+    }
   });
 
   test('seeds come from numbers and dates', () => {
