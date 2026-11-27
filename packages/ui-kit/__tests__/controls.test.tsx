@@ -23,6 +23,7 @@ import {
   TitleBar,
 } from '../src';
 import {SectionCaption} from '../src/marks';
+import tokens from '../src/tokens.json';
 import {screenBreaks} from '../src/screenBreaks';
 
 function render(element: React.JSX.Element) {
@@ -331,6 +332,8 @@ describe('the native controls (#273)', () => {
     expect(note).toMatchObject({fontSize: metrics.fontSubtitle, color: metrics.ink});
     const box = tree.root.find(n => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === metrics.captionHeight);
     expect(StyleSheet.flatten(box.props.style).justifyContent).toBe('flex-end');
+    // The box is native Settings › Keyboard's 99 px, so a first caption's baseline sits where Keyboard's does (owner D97 A, #416).
+    expect(Math.round(tokens.mm.captionHeight.value * tokens.pxPerMm.value)).toBe(99);
     // The solid line comes after the note, which belongs to the last row.
     const group = tree.root.findAll(n => typeof n.type === 'string')[0];
     const last = group.children[group.children.length - 1] as ReactTestInstance;
