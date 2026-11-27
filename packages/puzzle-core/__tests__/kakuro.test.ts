@@ -1,6 +1,7 @@
 import {
   countKakuroSolutions,
   generateKakuro,
+  kakuroFromCode,
   kakuroRuns,
   KAKURO_SIZES,
   rateKakuro,
@@ -8,7 +9,7 @@ import {
   type Kakuro,
   type KakuroClues,
 } from '../src/kakuro';
-import { kakuroAnswers, kakuroPageSpec } from '../src/kakuro-page';
+import { drawKakuroPage, kakuroAnswers, kakuroPageSpec } from '../src/kakuro-page';
 import { parsePuzzleCode, puzzleCode, type Difficulty } from '../src/code';
 import { layoutPage } from '../src/page/layout';
 
@@ -127,5 +128,15 @@ describe('the page and its answers', () => {
     expect(answers.size).toBe(puzzle.blocks.filter(block => !block).length);
     expect(answers.get(7)).toBe('8');
     expect(answers.has(0)).toBe(false);
+  });
+
+  test('the page drawn without a preset takes the largest that fits, and a code gives its puzzle back', () => {
+    const puzzle = generateKakuro('P1', 12, 'medium');
+    const shape = { orientation: 'portrait', hand: 'right' } as const;
+    expect(drawKakuroPage(puzzle, shape).layout.grid.cell).toBeGreaterThanOrEqual(drawKakuroPage(puzzle, { ...shape, cellMm: 10 }).layout.grid.cell);
+    const code = puzzleCode(puzzle.id);
+    expect(code).toBe('KK-12-M-P1');
+    expect(kakuroFromCode(code)).toEqual(puzzle);
+    expect(() => kakuroFromCode('CD-6-M-7K2Q9X')).toThrow('not a kakuro code');
   });
 });

@@ -16,7 +16,7 @@ import {
   drawOutsideClues,
   drawRegions,
   drawSquareLattice,
-  drawKakuro,
+  drawKakuroPage,
   drawText,
   drawSlitherlinkPage,
   drawTriangleLattice,
@@ -34,7 +34,6 @@ import {
   generateSudoku,
   generateWordSearch,
   layoutBinairoPage,
-  kakuroPageSpec,
   layoutPage,
   layoutStarBattle,
   puzzleCode,
@@ -93,14 +92,7 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     return r;
   }],
   ['page-light-up-10mm-portrait-right', () => drawLightUpPage(generateLightUp('P1', { width: 10, height: 10 }, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
-  ['kakuro-10mm-portrait-right', () => {
-    const puzzle = generateKakuro('P1', 12, 'medium');
-    const layout = layoutPage(kakuroPageSpec(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 }));
-    const r = createPage(layout);
-    drawKakuro(r, layout.grid, puzzle);
-    drawFooter(r, layout, { game: 'Kakuro', difficulty: 'Medium', code: puzzleCode(puzzle.id), rule: 'Write 1 to 9 so each run adds up to its sum, with no digit twice in a run.' });
-    return r;
-  }],
+  ['kakuro-10mm-portrait-right', () => drawKakuroPage(generateKakuro('P1', 12, 'medium'), { orientation: 'portrait', hand: 'right', cellMm: 10 }).raster],
   ['page-10mm-landscape-right', () => {
     const layout = layoutPage({ orientation: 'landscape', hand: 'right', cellMm: 10, lattice: 'hex', columns: 12, rows: 10, sidePanelMm: 40 });
     const r = createPage(layout);

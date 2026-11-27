@@ -1,24 +1,30 @@
 /**
  * The kakuro page and its «Check» (#389), over the shared renderer and ink check: the blocks
  * shaded, each clue block split by a diagonal with its sums, and the player's digits read from the
- * ink and compared with the solution. The footer's copy is the plugin's, so it is not drawn here.
+ * ink and compared with the solution. `drawKakuroPage` adds the footer; the page carries no answer.
  */
 import { checkCells, readCells, type CheckResult, type InkStroke, type Recognize } from './check';
+import { DIFFICULTY_LABELS, puzzleCode } from './code';
 import { type Kakuro } from './kakuro';
 import { drawSplitClue, drawSquareLattice, shadeCells, type Cell, type Grid } from './page/grid';
-import { type PageSpec } from './page/layout';
+import { createPage, drawFooter, fitCellMm, layoutPage, type PageLayout, type PageSpec } from './page/layout';
 import { type CellPreset, type Hand, type Orientation } from './page/look';
 import { type Raster } from './page/raster';
 
 export interface KakuroPageOptions {
   orientation: Orientation;
   hand: Hand;
-  cellMm: CellPreset;
+  /** The cell preset; the largest that fits when absent. */
+  cellMm?: CellPreset;
 }
+
+/** The footer's game name and one-line rule. */
+export const KAKURO_FOOTER = { game: 'Kakuro', rule: 'Put 1 to 9 once in each run; each run adds up to its sum.' } as const;
 
 /** The page a kakuro needs: a square grid of its side, no outside clue, no side panel. */
 export function kakuroPageSpec(puzzle: Kakuro, options: KakuroPageOptions): PageSpec {
-  return { ...options, lattice: 'square', columns: puzzle.size, rows: puzzle.size };
+  const shape = { orientation: options.orientation, hand: options.hand, lattice: 'square', columns: puzzle.size, rows: puzzle.size } as const;
+  return { ...shape, cellMm: options.cellMm ?? fitCellMm(shape) };
 }
 
 /** Draws the grid on a page laid out from `kakuroPageSpec`: blocks, lattice and the split clues. */
@@ -32,6 +38,15 @@ export function drawKakuro(raster: Raster, grid: Grid, puzzle: Kakuro): void {
   const sums = new Map<number, { across?: string; down?: string }>();
   for (const run of puzzle.runs) sums.set(run.clue, { ...sums.get(run.clue), [run.direction]: String(run.sum) });
   for (const [index, { across, down }] of sums) drawSplitClue(raster, grid, ...cellOf(index), across, down);
+}
+
+/** The puzzle's page with its footer: its layout, for «Check», and its raster, for `encodePng`. */
+export function drawKakuroPage(puzzle: Kakuro, options: KakuroPageOptions): { layout: PageLayout; raster: Raster } {
+  const layout = layoutPage(kakuroPageSpec(puzzle, options));
+  const raster = createPage(layout);
+  drawKakuro(raster, layout.grid, puzzle);
+  drawFooter(raster, layout, { ...KAKURO_FOOTER, difficulty: DIFFICULTY_LABELS[puzzle.id.difficulty], code: puzzleCode(puzzle.id) });
+  return { layout, raster };
 }
 
 /** The digit each white cell must hold, by cell index: what «Check» compares and «Show solution» shows. */

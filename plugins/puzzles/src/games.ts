@@ -10,6 +10,7 @@ import {BOARDS} from './games/boards';
 import {CALCUDOKU} from './games/calcudoku';
 import {FUTOSHIKI} from './games/futoshiki';
 import {JIGSAW} from './games/jigsaw';
+import {KAKURO} from './games/kakuro';
 import {KILLER} from './games/killer';
 import {MAZE} from './games/maze';
 import {SUDOKU} from './games/sudoku';
@@ -34,4 +35,4 @@ export type Game = {
   View: React.ComponentType<GameViewProps>;
 };
 
-export const GAMES: readonly Game[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, ...BOARDS].map(game => puzzleEntry(game));
+export const GAMES: readonly Game[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, ...BOARDS].map(game => puzzleEntry(game));

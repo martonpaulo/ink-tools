@@ -10,7 +10,7 @@
  * `sudoku-bank.ts` does if the device round measures it slower than the player can wait.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
 import { childSeed, createRandom, type Random } from './random';
 
@@ -577,4 +577,11 @@ export function generateKakuro(seed: string, size: number, difficulty: Difficult
     return { id: { game: 'kakuro', size: String(size), difficulty, seed }, ...clues, solution: fill, rating: rated.rating };
   }
   throw new Error(`no ${difficulty} ${size} x ${size} kakuro from seed «${seed}» in ${KAKURO_ATTEMPTS} attempts`);
+}
+
+/** The kakuro a puzzle code names (`KK-10-M-7K2Q9X`), the same one every time (#389). */
+export function kakuroFromCode(code: string): Kakuro {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'kakuro') throw new RangeError(`«${code}» is not a kakuro code`);
+  return generateKakuro(id.seed, Number(id.size), id.difficulty);
 }

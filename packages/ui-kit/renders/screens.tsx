@@ -57,12 +57,13 @@ import {FUTOSHIKI} from '../../../plugins/puzzles/src/games/futoshiki';
 import {SUDOKU} from '../../../plugins/puzzles/src/games/sudoku';
 import {KILLER} from '../../../plugins/puzzles/src/games/killer';
 import {CALCUDOKU} from '../../../plugins/puzzles/src/games/calcudoku';
+import {KAKURO} from '../../../plugins/puzzles/src/games/kakuro';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKillerPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -315,6 +316,12 @@ const calcudokuInk = () => {
   const all = puzzle.solution.map((value, cell) => [cell, String(value)] as const);
   return cellInk(drawCalcudokuPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, all, 20, puzzle.size);
 };
+/** The largest kakuro, whose page takes the 10 mm cells (#389). */
+const KAKURO_CODE = 'KK-12-M-1';
+const kakuroInk = () => {
+  const puzzle = kakuroFromCode(KAKURO_CODE);
+  return cellInk(drawKakuroPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, [...kakuroAnswers(puzzle)], 40, 9);
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -344,6 +351,7 @@ const puzzlesFutoshiki = (code: string | null, steps: string[] = []) => puzzlesG
 const puzzlesSudoku = (code: string | null, steps: string[] = []) => puzzlesGame(SUDOKU, sudokuInk(code ?? SUDOKU_CODE), code, steps);
 const puzzlesKiller = (code: string | null, steps: string[] = []) => puzzlesGame(KILLER, killerInk, code, steps);
 const puzzlesCalcudoku = (code: string | null, steps: string[] = []) => puzzlesGame(CALCUDOKU, calcudokuInk, code, steps);
+const puzzlesKakuro = (code: string | null, steps: string[] = []) => puzzlesGame(KAKURO, kakuroInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -388,6 +396,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-futoshiki-page', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE)},
   {name: 'puzzles-futoshiki-check', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Check'])},
   {name: 'puzzles-futoshiki-solution', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Show Solution'])},
+  {name: 'puzzles-kakuro', render: () => puzzlesKakuro(null)},
+  {name: 'puzzles-kakuro-page', render: () => puzzlesKakuro(KAKURO_CODE)},
+  {name: 'puzzles-kakuro-check', render: () => puzzlesKakuro(KAKURO_CODE, ['Check'])},
+  {name: 'puzzles-kakuro-solution', render: () => puzzlesKakuro(KAKURO_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},
