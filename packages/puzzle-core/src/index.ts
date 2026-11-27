@@ -21,6 +21,8 @@ export * from './games/word-search';
 export * from './futoshiki';
 export * from './futoshiki-page';
 export * from './codeword';
+export * from './calcudoku';
+export * from './calcudoku-page';
 export * from './page';
 export * from './check';
 export * from './maze-page';
