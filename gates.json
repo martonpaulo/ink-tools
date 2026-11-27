@@ -71,6 +71,7 @@
     {"path": ".github/workflows/lab.yml", "gates": ["lasso-actions"]},
     {"path": "dry-check.json", "gates": ["dry"]},
     {"path": "design/icons/", "gates": ["icons"]},
+    {"path": "site/icons/", "gates": ["icons"]},
     {"path": "scripts/icons.py", "gates": ["icons"]},
     {"path": "scripts/test_icons.py", "gates": ["icons"]},
     {"path": "plugins/*/assets/*", "gates": ["icons"]},
