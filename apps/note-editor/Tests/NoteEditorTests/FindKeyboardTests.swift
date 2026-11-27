@@ -17,11 +17,8 @@ import Testing
         defer { try? FileManager.default.removeItem(at: folder) }
         var closed = 0
         let window = KeyedOffscreenWindow(size: CGSize(width: 700, height: 80), dark: dark)
-        window.show(
-            VStack {
-                FindField(text: text) { closed += 1 }.frame(width: FindField.width)
-                if text.findShown { FindBar(text: text) {} }
-            })
+        // The bar holds the field while the toolbar's is under the overflow button, as here.
+        window.show(FindBar(text: text) { closed += 1 })
         defer { window.close() }
 
         // Edit › Find: the field takes the focus.

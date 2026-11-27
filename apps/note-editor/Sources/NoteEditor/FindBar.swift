@@ -12,6 +12,9 @@ final class NoteText {
     var name = ""
     /// Whether a find runs: the bar under the toolbar shows its result.
     var findShown = false
+    /// Whether the toolbar's find field is in the window; a narrow window moves it under the
+    /// overflow button, and the bar then holds the field (#460).
+    var fieldInToolbar = false
     /// The find field's text; each change finds again.
     var query = "" {
         didSet { find() }
@@ -145,12 +148,15 @@ struct FindField: View {
     static let minWidth: CGFloat = 110
 
     let text: NoteText
+    /// Whether this is the toolbar's field, which tells `text` when it is in the window.
+    var inToolbar = false
     /// Gives the keyboard focus back to the pages when Escape ends the find.
     let closed: () -> Void
 
     var body: some View {
         // The query and the focus request are read here, so a change of either updates the field.
-        FindSearchFieldView(text: text, query: text.query, focusRequest: text.focusRequest, closed: closed)
+        FindSearchFieldView(
+            text: text, query: text.query, focusRequest: text.focusRequest, inToolbar: inToolbar, closed: closed)
     }
 }
 
@@ -159,12 +165,19 @@ private struct FindSearchFieldView: NSViewRepresentable {
     let text: NoteText
     let query: String
     let focusRequest: Int
+    let inToolbar: Bool
     let closed: () -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeNSView(context: Context) -> NSSearchField {
+    func makeNSView(context: Context) -> FindSearchField {
         let field = FindSearchField()
+        if inToolbar {
+            field.placed = { [weak text] inWindow in
+                // Not during a view update: the bar shows or hides its own field on this.
+                Task { @MainActor in text?.fieldInToolbar = inWindow }
+            }
+        }
         field.placeholderString = Copy.findInNote
         field.setAccessibilityLabel(Copy.findInNote)
         field.delegate = context.coordinator
@@ -176,13 +189,14 @@ private struct FindSearchFieldView: NSViewRepresentable {
         return field
     }
 
-    func updateNSView(_ field: NSSearchField, context: Context) {
+    func updateNSView(_ field: FindSearchField, context: Context) {
         context.coordinator.parent = self
         // A text an input method still composes stays the field's until it is confirmed.
         let composing = (field.currentEditor() as? NSTextView)?.hasMarkedText() == true
         if field.stringValue != query, !composing { field.stringValue = query }
         if focusRequest != context.coordinator.focusSeen {
             context.coordinator.focusSeen = focusRequest
+            field.mayFocus = true
             Task { @MainActor in field.window?.makeFirstResponder(field) }
         }
     }
@@ -220,6 +234,25 @@ private struct FindSearchFieldView: NSViewRepresentable {
 
 /// The find field: a search field drawn by `FindFieldCell`.
 final class FindSearchField: NSSearchField {
+    /// Told whether the field is in a window, each time it moves in or out of one.
+    var placed: (Bool) -> Void = { _ in }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        placed(window != nil)
+    }
+
+    /// Whether the field takes the focus: once clicked or asked by Edit › Find, never when the
+    /// window opens, where the pages keep it, as Preview's search field waits.
+    var mayFocus = false
+
+    override var acceptsFirstResponder: Bool { mayFocus && super.acceptsFirstResponder }
+
+    override func mouseDown(with event: NSEvent) {
+        mayFocus = true
+        super.mouseDown(with: event)
+    }
+
     override class var cellClass: AnyClass? {
         get { FindFieldCell.self }
         set {}
@@ -257,7 +290,7 @@ final class FindFieldEditor: NSTextView {
 }
 
 /// The result of a find, under the toolbar while it runs: the previous and next buttons, the count
-/// and Done (#322, #460). The status follows the buttons and takes its own width, so a longer
+/// and Done (#322, #460), and the find field itself while the toolbar's is under its overflow button. The status follows the buttons and takes its own width, so a longer
 /// status never moves them.
 struct FindBar: View {
     /// The space around the bar's controls, in points, as Safari's find bar.
@@ -269,6 +302,9 @@ struct FindBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            if !text.fieldInToolbar {
+                FindField(text: text, closed: closed).frame(width: FindField.width)
+            }
             ControlGroup {
                 Button(Copy.previousMatch, systemImage: "chevron.left") { text.previous() }
                     .help(Copy.previousMatch)

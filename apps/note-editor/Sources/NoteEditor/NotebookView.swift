@@ -157,7 +157,9 @@ struct NotebookView: View {
             pageArea
                 .safeAreaBar(edge: .top) {
                     VStack(spacing: 0) {
-                        if let text, text.findShown {
+                        // The bar shows a result once there is a query, as Preview shows nothing
+                        // before one, or the field while the toolbar's is out of the window.
+                        if let text, text.findShown, !text.query.isEmpty || !text.fieldInToolbar {
                             FindBar(text: text) { pageFocused = true }
                         }
                         // A refused edit is taken back, and the bar says why until dismissed (#314).
