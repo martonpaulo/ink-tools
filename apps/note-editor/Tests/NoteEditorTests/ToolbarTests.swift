@@ -75,6 +75,13 @@ import Testing
         // timing-independent: turns of the main actor for the toolbar to settle; the count is checked after.
         try await Task.sleep(for: .milliseconds(300))
         #expect(Self.fields(in: window).count == 1, "\(size)")
+        // The bar's field is small as its buttons, and narrows within the toolbar field's widths,
+        // leaving room for the status; the toolbar's keeps the size AppKit gives a toolbar.
+        if size.width < 1000 {
+            let field = try #require(Self.fields(in: window).first)
+            #expect(field.controlSize == .small, "\(field.controlSize)")
+            #expect(field.frame.width >= FindField.toolbarMinWidth && field.frame.width <= FindField.toolbarWidth)
+        }
     }
 
     /// Every search field in `window`'s frame view.

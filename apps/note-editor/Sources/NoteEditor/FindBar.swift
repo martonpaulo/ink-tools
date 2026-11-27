@@ -193,6 +193,14 @@ private struct FindSearchFieldView: NSViewRepresentable {
 
     func updateNSView(_ field: FindSearchField, context: Context) {
         context.coordinator.parent = self
+        // SwiftUI's control size does not reach an AppKit field: the bar's small field matches its
+        // small buttons only when it is told. The toolbar's keeps AppKit's size, as the toolbar's
+        // large controls would push it under the overflow button.
+        let size = Self.appKitSize(context.environment.controlSize)
+        if !inToolbar, field.controlSize != size {
+            field.controlSize = size
+            field.font = .systemFont(ofSize: NSFont.systemFontSize(for: size))
+        }
         // A text an input method still composes stays the field's until it is confirmed.
         let composing = (field.currentEditor() as? NSTextView)?.hasMarkedText() == true
         if field.stringValue != query, !composing { field.stringValue = query }
@@ -200,6 +208,17 @@ private struct FindSearchFieldView: NSViewRepresentable {
             context.coordinator.focusSeen = focusRequest
             field.mayFocus = true
             Task { @MainActor in field.window?.makeFirstResponder(field) }
+        }
+    }
+
+    /// The AppKit control size of a SwiftUI one.
+    static func appKitSize(_ size: ControlSize) -> NSControl.ControlSize {
+        switch size {
+        case .mini: .mini
+        case .small: .small
+        case .large: .large
+        case .extraLarge: .extraLarge
+        default: .regular
         }
     }
 
@@ -308,7 +327,10 @@ struct FindBar: View {
     var body: some View {
         HStack(spacing: 8) {
             if !text.fieldInToolbar {
-                FindField(text: text, closed: closed).frame(width: FindField.toolbarWidth)
+                // As wide as the toolbar's field, narrowing first so the status keeps its words.
+                FindField(text: text, closed: closed).frame(
+                    minWidth: FindField.toolbarMinWidth, idealWidth: FindField.toolbarWidth,
+                    maxWidth: FindField.toolbarWidth)
             }
             ControlGroup {
                 Button(Copy.previousMatch, systemImage: "chevron.left") { text.previous() }
@@ -322,6 +344,7 @@ struct FindBar: View {
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
                 .lineLimit(1)
+                .layoutPriority(1)
                 .help(text.status)
                 .accessibilityLabel(text.status)
             Spacer(minLength: 0)
