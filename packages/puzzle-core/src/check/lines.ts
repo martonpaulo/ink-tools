@@ -101,3 +101,41 @@ export function strokeSpan(grid: Grid, stroke: InkStroke): { from: number; to: n
   const straight = points.every(p => bow(p) <= STRIKE_MAX_BOW * grid.cell);
   return { from, to, straight };
 }
+
+/**
+ * [inference] a share of a cell, tuned in the device round: a stroke runs along a straight line when
+ * its points within `STRIKE_MAX_BOW` of it, as straight as a strike, cover this much of its length.
+ */
+export const ALONG_MIN_COVER = 0.6;
+/** A line's length is measured in this many parts per cell. */
+const ALONG_PARTS_PER_CELL = 6;
+
+/**
+ * How many strokes run along the row or column segment between two square cells' facing borders,
+ * such as the bridges drawn between two islands: a stroke counts when its points near the line cover
+ * most of the segment, so a line that only crosses it, or a mark beside it, does not count.
+ */
+export function strokesAlong(grid: Grid, from: readonly [number, number], to: readonly [number, number], strokes: readonly InkStroke[]): number {
+  requireSquare(grid, 'a line check');
+  const [[c0, r0], [c1, r1]] = [from, to];
+  if (c0 !== c1 && r0 !== r1) throw new Error(`cells ${c0},${r0} and ${c1},${r1} are not on one row or column`);
+  const horizontal = r0 === r1;
+  // In cell units: the line's position across, and the segment between the cells' facing borders.
+  const across = (horizontal ? r0 : c0) + 1 / 2;
+  const start = Math.min(horizontal ? c0 : r0, horizontal ? c1 : r1) + 1;
+  const end = Math.max(horizontal ? c0 : r0, horizontal ? c1 : r1);
+  const parts = Math.max(1, (end - start) * ALONG_PARTS_PER_CELL);
+  let count = 0;
+  for (const stroke of strokes) {
+    const covered = new Set<number>();
+    for (const { x, y } of densePoints(stroke.points, grid.cell * LINE_STEP)) {
+      const u = (x - grid.x) / grid.cell;
+      const v = (y - grid.y) / grid.cell;
+      const [along, off] = horizontal ? [u, v] : [v, u];
+      if (Math.abs(off - across) > STRIKE_MAX_BOW || along < start || along >= end) continue;
+      covered.add(Math.floor(((along - start) / (end - start)) * parts));
+    }
+    if (covered.size >= ALONG_MIN_COVER * parts) count++;
+  }
+  return count;
+}

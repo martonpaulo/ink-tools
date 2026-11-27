@@ -33,3 +33,7 @@ export * from './check';
 export * from './maze-page';
 export * from './fill-in';
 export * from './fill-in-page';
+export * from './bridges';
+export * from './page';
+export * from './check';
+export * from './bridges-page';
