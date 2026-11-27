@@ -11,9 +11,14 @@ fail() { echo "error: $1" >&2; failures=$((failures + 1)); }
 
 version=$("$PLIST_BUDDY" -c "Print :CFBundleShortVersionString" Support/Info.plist)
 build=$("$PLIST_BUDDY" -c "Print :CFBundleVersion" Support/Info.plist)
-IFS=. read -r v_major v_minor v_patch <<<"$version"
-derived=$((10#$v_major * 10000 + 10#$v_minor * 100 + 10#$v_patch))
-[[ $build == "$derived" ]] || fail "CFBundleVersion ($build) is not $derived for version $version"
+# SemVer with a numbered beta, as docs/product.md › Product versioning says (#445); a beta's build
+# number derives from its X.Y.Z, so the beta and the release it leads to share it.
+if [[ $version =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-beta\.[0-9]+)?$ ]]; then
+  derived=$((10#${BASH_REMATCH[1]} * 10000 + 10#${BASH_REMATCH[2]} * 100 + 10#${BASH_REMATCH[3]}))
+  [[ $build == "$derived" ]] || fail "CFBundleVersion ($build) is not $derived for version $version"
+else
+  fail "CFBundleShortVersionString ($version) is not X.Y.Z or X.Y.Z-beta.N"
+fi
 
 plutil -lint -s Support/Info.plist Support/PrivacyInfo.xcprivacy || fail "a property list in Support/ is invalid"
 
