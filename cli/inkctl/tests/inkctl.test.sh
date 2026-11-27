@@ -37,6 +37,15 @@ sys.addaudithook(refuse_real_browser)
 PY
 cat > "$work/bin/adb" <<'STUB'
 #!/bin/bash
+# The start and end signal of each command (#430) goes to its own file, prefixed with how many calls
+# came before it, and not to $ADB_LOG, so the other checks read only the command's own calls. Today's
+# Helper refuses the op it does not know yet; $ADB_FILES/activity-answer replaces that answer.
+call="$*"
+case "$call" in *"CommandReceiver -f 32 --es op activity "*)
+    printf '%s %s\n' "$(grep -c . "$ADB_LOG")" "${call#*shell }" >> "$ADB_FILES/activity-signals"
+    if [ -f "$ADB_FILES/activity-answer" ]; then cat "$ADB_FILES/activity-answer"; else echo 'Broadcast completed: result=3, data="usage unknown op"'; fi
+    exit 0 ;;
+esac
 printf '%s\n' "$*" >> "$ADB_LOG"
 # A real `adb shell` forwards the input it inherits: with $ADB_READS_STDIN, every call but the
 # secret write drains it, so a call that inherits a piped secret swallows it.
@@ -1972,7 +1981,7 @@ check "a run names the app in front" "$(run history --json --limit 1 | field "['
 check "the log file is private" "$(python3 -c 'import os,sys; print(format(os.stat(sys.argv[1]).st_mode & 0o777, "o"))' "$history_file")" "600"
 run files ls "Note" >/dev/null
 check "a run names its command" "$(run history --json --limit 1 | field "['runs'][0]['command']")" "files ls"
-check "a call keeps its verb and timing" "$(run history --json --limit 1 | expression "[c['call'] for c in d['runs'][0]['calls']]")" "['devices', 'get-state', 'shell getprop', 'shell dumpsys', 'shell ls', 'shell dumpsys']"
+check "a call keeps its verb and timing" "$(run history --json --limit 1 | expression "[c['call'] for c in d['runs'][0]['calls']]")" "['devices', 'get-state', 'shell getprop', 'shell dumpsys', 'shell am', 'shell ls', 'shell dumpsys', 'shell am']"
 run note open "Note/A note.note" >/dev/null
 check "the log keeps no path" "$(grep -c 'A note' "$history_file")" "0"
 check "the log masks the address" "$(grep -c 'device-a' "$history_file")" "0"
@@ -2436,6 +2445,31 @@ assert all((item["probe"] is None) != (item["unprobed"] is None) for item in ns[
 print(ns["REGISTRY"]["todo.provider"]["tasksUri"])
 '
 check "the registry block loads and derives the To-Do URI" "$(python3 -c "$registry_check" "$script" 2>&1)" "content://com.ratta.supernote.task.provider/tasks_table"
+
+# The start and end signal (#430): every command that reaches the tablet tells the Ink Tools Helper,
+# so its mark shows that inkctl drives the tablet; a Helper that refuses or fails changes nothing.
+signals() { cut -d' ' -f2- "$files/activity-signals" 2>/dev/null; }
+reset_device
+rm -f "$files/activity-signals" "$files/activity-answer"
+run status >/dev/null 2>&1
+status_code=$?
+signal_op="am broadcast -n com.martonpaulo.inktools.bridge/.CommandReceiver -f 32 --es op activity --es state"
+check "a command on the tablet sends a start and an end signal" "$(signals)" "$signal_op start
+$signal_op end"
+check "the start signal follows the connection, the end signal every call" "$(cut -d' ' -f1 "$files/activity-signals" | tr '\n' ' ')$(grep -c . "$log")" "$(grep -n -m1 -e 'dumpsys activity' "$log" | cut -d: -f1) $(grep -c . "$log") $(grep -c . "$log")"
+check "a refused signal leaves the exit code" "$status_code" "0"
+rm -f "$files/activity-signals"
+printf 'Error: no answer\n' > "$files/activity-answer"
+run status >/dev/null 2>&1
+check "a signal with no answer leaves the exit code" "$?$(signals | wc -l | tr -d ' ')" "01"
+rm -f "$files/activity-signals" "$files/activity-answer"
+run no-such-file-command >/dev/null 2>&1
+run history >/dev/null 2>&1
+check "a command that reaches no tablet sends no signal" "$(signals | wc -l | tr -d ' ')" "0"
+echo offline > "$files/state"
+ADB_CONNECT_FAILS=1 run status >/dev/null 2>&1
+check "an unreachable tablet gets no signal" "$?$(signals | wc -l | tr -d ' ')" "30"
+reset_device
 
 check "no test reached the real browser opener" "$([ -f "$work/real-browser-reached" ] && echo reached || echo never)" "never"
 
