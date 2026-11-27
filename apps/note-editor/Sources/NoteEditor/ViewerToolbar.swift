@@ -81,7 +81,7 @@ struct ViewerToolbar: CustomizableToolbarContent {
         if let text {
             ToolbarItem(id: "search") {
                 FindField(text: text, inToolbar: true, closed: findClosed)
-                    .frame(minWidth: FindField.minWidth, idealWidth: FindField.width, maxWidth: FindField.width)
+                    .frame(minWidth: FindField.toolbarMinWidth, idealWidth: FindField.toolbarWidth, maxWidth: FindField.toolbarWidth)
                     .help(Copy.findInNote)
             }
         }

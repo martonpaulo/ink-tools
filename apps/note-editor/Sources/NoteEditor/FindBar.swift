@@ -146,8 +146,8 @@ extension FocusedValues {
 struct FindField: View {
     /// The field's width in the toolbar, in points, as Preview's search field, and the least it
     /// narrows to before the toolbar moves it under its overflow button.
-    static let width: CGFloat = 200
-    static let minWidth: CGFloat = 110
+    static let toolbarWidth: CGFloat = 200
+    static let toolbarMinWidth: CGFloat = 110
 
     let text: NoteText
     /// Whether this is the toolbar's field, which tells `text` when it is in the window.
@@ -308,7 +308,7 @@ struct FindBar: View {
     var body: some View {
         HStack(spacing: 8) {
             if !text.fieldInToolbar {
-                FindField(text: text, closed: closed).frame(width: FindField.width)
+                FindField(text: text, closed: closed).frame(width: FindField.toolbarWidth)
             }
             ControlGroup {
                 Button(Copy.previousMatch, systemImage: "chevron.left") { text.previous() }
