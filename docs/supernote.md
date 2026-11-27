@@ -693,6 +693,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   on the open note answered code 102.
   The cause is [unverified]: the one failing install was the morning's first one [measured, Manta,
   2026-11-27, builds `aab22bf` to `7202068`,
+  [#474](https://github.com/martonpaulo/ink-tools/issues/474)]. Seven more runs with
+  `Note/Tests/Install 474 2026-11-27.note` open, each followed by one helper `insertElements` on
+  that note, all applied, and PluginHost named `com.ratta.supernote.note` as its note app
+  (`getNoteAppPkgName`) each time: three plain installs of Device Link `4c1f529`; an `am
+  force-stop` of the host with no install; the error-100 path (host stopped, then the install);
+  and, after Device Link's Settings view was opened from the Settings app and closed, a note open
+  followed by an edit, and by an install and an edit. The same day, a Smart Pen replay after its Settings view had switched
+  modules found `com.ratta.settings` as the note app until the host restarted (see Pen replay), so
+  a stale note-app binding is the likelier cause [measured, Manta, 2026-11-27,
   [#474](https://github.com/martonpaulo/ink-tools/issues/474)].
 - An enable through the bridge after a disable once got no callback: PluginHost logged
   `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
