@@ -1947,6 +1947,16 @@
         }
       }
     },
+    "Toggle Sidebar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle Sidebar"
+          }
+        }
+      }
+    },
     "Tools" : {
       "localizations" : {
         "en" : {

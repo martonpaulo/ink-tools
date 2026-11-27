@@ -147,6 +147,10 @@ struct NotebookView: View {
                 .padding(.horizontal, 8)
             }
             .navigationSplitViewColumnWidth(min: 150, ideal: Self.sidebarWidth, max: 260)
+            // The split view's own sidebar button is left out: AppKit keeps every window's toolbar
+            // of one identifier in step, and that button, added by each window again, stopped the
+            // app when a note opened after another closed. The toolbar holds its own (#460).
+            .toolbar(removing: .sidebarToggle)
         } detail: {
             // The find bar stands above the pages, under the toolbar, as in Safari and TextEdit
             // (#322): a bar of the scroll's top edge, so the pages keep their margin below it.
@@ -168,7 +172,9 @@ struct NotebookView: View {
                 }
         }
         .toolbar(id: ViewerToolbar.id) {
-            ViewerToolbar(viewer: viewer, editor: editor, text: text, page: navigator.index) { pageFocused = true }
+            ViewerToolbar(
+                viewer: viewer, columns: $columns, editor: editor, text: text, page: navigator.index
+            ) { pageFocused = true }
         }
         .navigationSubtitle(subtitle)
         // Edit › Select All and Escape, by the menu or by the keys when no menu holds them (#324).

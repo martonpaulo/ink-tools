@@ -56,6 +56,8 @@ nonisolated enum Copy {
     static let done = String(localized: "Done")
     static let noResults = String(localized: "No results")
     static let sidebarShows = String(localized: "Sidebar")
+    /// The toolbar's sidebar button, named as View › Toggle Sidebar (#460).
+    static let toggleSidebar = String(localized: "Toggle Sidebar")
     static let headings = String(localized: "Headings")
     static let heading = String(localized: "Heading")
     static let noHeadingsTitle = String(localized: "No Headings")

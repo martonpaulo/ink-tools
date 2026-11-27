@@ -1,8 +1,8 @@
 import NoteEditorKit
 import SwiftUI
 
-/// The toolbar of a notebook window, in Preview's order (#460): the layout, the zoom, the Markup
-/// tools and the find field last. View › Customize Toolbar changes it, and the window keeps the
+/// The toolbar of a notebook window, in Preview's order (#460): the sidebar, the layout, the zoom,
+/// the Markup tools and the find field last. View › Customize Toolbar changes it, and the window keeps the
 /// owner's set. Share (#467), Get Info (#468) and rotate (#341) join it when they exist, never as a
 /// placeholder.
 struct ViewerToolbar: CustomizableToolbarContent {
@@ -12,6 +12,7 @@ struct ViewerToolbar: CustomizableToolbarContent {
     static let percent = FloatingPointFormatStyle<Double>.Percent.percent.precision(.fractionLength(0))
 
     @Bindable var viewer: PageViewer
+    @Binding var columns: NavigationSplitViewVisibility
     let editor: NoteEditor?
     let text: NoteText?
     let page: Int?
@@ -19,6 +20,12 @@ struct ViewerToolbar: CustomizableToolbarContent {
     let findClosed: () -> Void
 
     var body: some CustomizableToolbarContent {
+        ToolbarItem(id: "toggleSidebar", placement: .navigation) {
+            Button(Copy.toggleSidebar, systemImage: "sidebar.left") {
+                withAnimation { columns = columns == .detailOnly ? .all : .detailOnly }
+            }
+            .help(Copy.toggleSidebar)
+        }
         ToolbarItem(id: "layout") {
             Picker(Copy.viewLayout, selection: $viewer.layout) {
                 // Preview's symbols for the same two views.
