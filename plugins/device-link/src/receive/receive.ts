@@ -1,6 +1,6 @@
 /**
- * One receive (#49): the tablet is a LocalSend receiver for one item, then it lands in the open
- * note, floating and selected, for the person to move. Text becomes a text box; a PNG or JPEG goes
+ * One receive (#49): the tablet is a LocalSend receiver for its window, and each item lands in the
+ * open note, floating and selected, for the person to move (#289). Text becomes a text box; a PNG or JPEG goes
  * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
  * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
@@ -78,7 +78,7 @@ let lastText: {page: string; bottom: number} | null = null;
 
 export function resetPlacedForTests(): void {
   lastText = null;
-  lastImage = null;
+  keptImages = [];
 }
 
 /**
@@ -164,12 +164,12 @@ export function addedRect(before: OccupiedRead | null, after: OccupiedRead | nul
  * was removed at once was gone after Back on the beta 7 round.
  * shortcut: one file stays after the last receive of a run until the next run's first receive.
  */
-let lastImage: string | null = null;
+/** The pictures the last receive placed: kept until the next receive, as the host may still read one (#196). */
+let keptImages: string[] = [];
 
-async function removeLastImage(native: Relay): Promise<void> {
-  if (lastImage !== null) {
-    await native.remove(lastImage);
-    lastImage = null;
+async function removeKeptImages(native: Relay): Promise<void> {
+  for (const path of keptImages.splice(0)) {
+    await native.remove(path);
   }
 }
 
@@ -233,7 +233,7 @@ async function placeImage(native: Relay, host: NoteHost, path: string): Promise<
     await native.remove(path);
     return copy.insertFailed;
   }
-  lastImage = path;
+  keptImages.push(path);
   const beforeRead = before.ok ? before.value : null;
   let rect = await waitForAdded(host, beforeRead);
   if (rect === null && beforeRead?.complete) {
@@ -280,8 +280,10 @@ export type ReceiveHeld = {problem: Problem; state: HeldState};
 const RECEIVE_FAILED: ReceiveHeld = {problem: {what: copy.receiveFailed}, state: 'error'};
 
 /**
- * Receives one item and places it; answers the toast line, or the failure the view holds (#438). `onReady` runs once the tablet is
- * visible. A refused offer keeps the window open for the next one.
+ * Receives and places each item that comes in the window, until the window ends or «Stop»; answers
+ * the last item's line, or, when none landed, why, or the failure the view holds (#438). `onReady` runs once the tablet is visible, and
+ * `onItem` with each item's line as it lands. A refused offer keeps the window open for the next
+ * one. A closed receive took only its first item before (device round 11, #289).
  */
 export async function receiveOne(
   native: Relay,
@@ -290,6 +292,7 @@ export async function receiveOne(
   onReady: () => void = () => {},
   now: () => number = Date.now,
   windowMs: number = RECEIVE_WINDOW_MS,
+  onItem: (line: string) => void = () => {},
 ): Promise<string | ReceiveHeld> {
   // Before the first file, note or network call (#163): without it every file call fails.
   const missing = await host.permissions();
@@ -317,9 +320,14 @@ export async function receiveOne(
   if (!started.ok) {
     return RECEIVE_FAILED;
   }
-  await removeLastImage(native);
+  await removeKeptImages(native);
   onReady();
   let refused: Taken | null = null;
+  let last: string | null = null;
+  const landed = (line: string) => {
+    last = line;
+    onItem(line);
+  };
   try {
     const deadline = now() + windowMs;
     for (let left = windowMs; left > 0; left = deadline - now()) {
@@ -332,12 +340,15 @@ export async function receiveOne(
         break;
       }
       if (arrival.kind === 'stopped') {
-        return copy.receiveStopped;
+        return last ?? copy.receiveStopped;
       }
       if (arrival.kind === 'file') {
-        return arrival.path.endsWith('.pdf')
-          ? await pdfToNote(native, host, arrival.path)
-          : await placeImage(native, host, arrival.path);
+        landed(
+          arrival.path.endsWith('.pdf')
+            ? await pdfToNote(native, host, arrival.path)
+            : await placeImage(native, host, arrival.path),
+        );
+        continue;
       }
       if (arrival.kind === 'offer') {
         const decision = decideOffer(arrival.body, arrival.sessionId, arrival.token);
@@ -348,14 +359,15 @@ export async function receiveOne(
           decision.extension,
         );
         if (decision.taken.kind === 'text') {
-          return await placeText(host, decision.taken.text);
+          landed(await placeText(host, decision.taken.text));
+          continue;
         }
         if (decision.taken.kind === 'refuse') {
           refused = decision.taken;
         }
       }
     }
-    return refusedLine(refused);
+    return last ?? refusedLine(refused);
   } finally {
     await native.stopReceive();
   }

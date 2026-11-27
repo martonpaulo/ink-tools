@@ -28,15 +28,17 @@ export function onReceiveState(listener: (next: ReceiveState) => void): () => vo
 }
 
 /**
- * One receive; answers the toast line, the failure to hold (#438), or null when one is already running. Closing the view never
- * stops it (#289): the native receiver runs on its own thread until an item lands, the window ends
- * or «Stop» is pressed, so a tap on «Receive» while one runs shows its view again, with «Stop».
+ * One receive window; answers its last line, the failure to hold (#438), or null when one is already running. Closing the view
+ * never stops it (#289): the native receiver runs on its own thread and takes every item until the
+ * window ends or «Stop» is pressed, `onItem` getting each item's line as it lands, so a tap on
+ * «Receive» while one runs shows its view again, with «Stop».
  */
 export async function runReceive(
   native: Relay,
   host: NoteHost,
   alias: string,
   showView: () => void,
+  onItem: (line: string) => void = () => {},
 ): Promise<string | ReceiveHeld | null> {
   if (state !== 'idle') {
     showView();
@@ -45,7 +47,7 @@ export async function runReceive(
   setState('starting');
   showView();
   try {
-    return await receiveOne(native, host, alias, () => setState('ready'));
+    return await receiveOne(native, host, alias, () => setState('ready'), undefined, undefined, onItem);
   } finally {
     setState('idle');
   }

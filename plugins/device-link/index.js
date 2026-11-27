@@ -89,9 +89,21 @@ registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
   showType: SHOW_FULL_VIEW,
 }).then(result => report('receive button', result));
 
-/** The view shows «Ready to receive» until one item lands in the note (#49). */
+/**
+ * The view shows «Ready to receive» until the first item lands in the note (#49); the window then
+ * goes on with the view closed, and each item shows its toast as it lands (#289). The end line
+ * shows only when no item landed.
+ */
 function receive() {
-  runReceive(relay(), noteHost, ALIAS, () => showPluginView())
+  let landed = 0;
+  const showLine = line => {
+    closePluginView();
+    ToastAndroid.show(line, ToastAndroid.SHORT);
+  };
+  runReceive(relay(), noteHost, ALIAS, () => showPluginView(), line => {
+    landed += 1;
+    showLine(line);
+  })
     .then(end => {
       if (end === null) {
         return;
@@ -101,8 +113,9 @@ function receive() {
         working.hold(end.problem, end.state);
         return;
       }
-      closePluginView();
-      ToastAndroid.show(end, ToastAndroid.SHORT);
+      if (landed === 0) {
+        showLine(end);
+      }
     })
     .catch(error => console.error(`Relay: receive failed: ${error.message}`));
 }

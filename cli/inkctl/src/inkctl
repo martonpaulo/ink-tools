@@ -54,7 +54,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  nothing else in the account is read or changed
   localsend receive|send|stop    a headless LocalSend peer on this Mac (LocalGo): receive
                                  auto-accepts into .scratch/localsend-received over https, or
-                                 --http; send FILE... --to ALIAS|--ip HOST; stop ends it
+                                 --http; send FILE...|--text TEXT --to ALIAS|--ip HOST; stop ends it
   wait toast TEXT                catch a short on-screen message that holds TEXT, from the moment
                                  the wait starts: start it, then do what shows the message
   apps                           installed packages
@@ -4797,20 +4797,29 @@ def command_localsend_stop(device, args: argparse.Namespace):
 
 
 def command_localsend_send(device, args: argparse.Namespace):
+    """Send files, or with --text one LocalSend text message: LocalGo's `--stdin` sends it with its
+    preview, which a receiver reads as a text, where a .txt file is a file with no preview, refused by
+    Device Link (403, device round 11, #289)."""
     if bool(args.to) == bool(args.ip):
         raise bad_usage("give the receiver as --to ALIAS or --ip ADDRESS")
+    if bool(args.paths) == (args.text is not None):
+        raise bad_usage("give FILE... or --text TEXT, not both")
+    if args.text is not None and not args.text.strip():
+        raise bad_usage("--text needs a text")
     for path in args.paths:
         if not os.path.exists(path):
             raise not_found(path)
-    files = [part for path in args.paths for part in ("--file", path)]
+    files = ["--stdin"] if args.text is not None else [part for path in args.paths for part in ("--file", path)]
     command = [localgo(), "send", *files, *(["--to", args.to] if args.to else ["--ip", args.ip])]
     try:
-        done = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=args.timeout, check=False)
+        done = subprocess.run(command, input=args.text, stdin=None if args.text is not None else subprocess.DEVNULL, capture_output=True, text=True, timeout=args.timeout, check=False)
     except subprocess.TimeoutExpired:
         raise Failure(EXIT_TIMEOUT, "timeout", f"the send took more than {args.timeout:g} s") from None
     if done.returncode != 0:
         raise Failure(EXIT_FAILED, "device_error", (done.stderr or done.stdout).strip()[:ERROR_EXCERPT] or "localgo send failed")
     target = args.to or args.ip
+    if args.text is not None:
+        return {"sent": [], "text": args.text, "to": target, "answer": done.stdout.strip()}, f"sent a text of {len(args.text)} characters to {target}"
     return {"sent": args.paths, "to": target, "answer": done.stdout.strip()}, f"sent {len(args.paths)} files to {target}"
 
 
@@ -5107,7 +5116,8 @@ def build_parser() -> argparse.ArgumentParser:
     receive.add_argument("--port", type=int, default=LOCALSEND_PORT)
     receive.add_argument("--alias", default=LOCALSEND_ALIAS, help="the name other devices see")
     sent = add(localsend, "send", command_localsend_send)
-    sent.add_argument("paths", nargs="+", metavar="FILE")
+    sent.add_argument("paths", nargs="*", metavar="FILE")
+    sent.add_argument("--text", help="send this text as one LocalSend text message, in place of files")
     sent.add_argument("--to", help="the receiver's alias")
     sent.add_argument("--ip", help="the receiver's address, HOST or HOST:PORT")
     sent.add_argument("--timeout", type=float, default=TRANSFER_TIMEOUT, help="seconds")

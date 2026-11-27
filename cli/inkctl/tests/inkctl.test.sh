@@ -2390,6 +2390,8 @@ import http.server, os, sys
 args = sys.argv[1:]
 open(os.environ["LOCALGO_LOG"], "a").write(" ".join(args) + "\n")
 if args[0] == "send":
+    if "--stdin" in args:
+        open(os.environ["LOCALGO_LOG"], "a").write("stdin: " + sys.stdin.read() + "\n")
     print("Sent 1 file")
     sys.exit(int(os.environ.get("LOCALGO_SEND_EXIT", "0")))
 port = int(args[args.index("--port") + 1])
@@ -2432,6 +2434,13 @@ run localsend send "$work/received/page.png" >/dev/null 2>&1
 check "localsend send needs a receiver" "$?" "2"
 run localsend send "$work/no-such-file" --to Mac >/dev/null 2>&1
 check "localsend send refuses a missing file" "$?" "4"
+: > "$LOCALGO_LOG"
+result=$(run localsend send --text "Buy milk" --to Supernote)
+check "localsend send --text sends one text message with its preview, over stdin (#289)" "$?|$result|$(cat "$LOCALGO_LOG")" "0|sent a text of 8 characters to Supernote|send --stdin --to Supernote
+stdin: Buy milk"
+check "localsend send takes files or --text, not both" "$(exit_and_pushes localsend send "$work/received/page.png" --text x --to Mac)" "20"
+check "localsend send --text needs a text" "$(exit_and_pushes localsend send --text ' ' --to Mac)" "20"
+check "localsend send needs files or --text" "$(exit_and_pushes localsend send --to Mac)" "20"
 LOCALGO_SEND_EXIT=1 run localsend send "$work/received/page.png" --to Mac >/dev/null 2>&1
 check "a failed send fails" "$?" "1"
 check "no localsend call reached the tablet" "$(wc -l < "$log" | tr -d ' ')" "0"

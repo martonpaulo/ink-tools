@@ -185,6 +185,32 @@ test('a file over the limit is refused with a toast that names the size (#143)',
   await expect(receiveOne(api, note(), 'Supernote')).resolves.toBe(copy.tooLarge);
 });
 
+test('the window takes every item until it ends, each line as it lands (#289)', async () => {
+  // Device round 11: a picture sent 6 s after a text was refused (403), as the window ended with
+  // its first item.
+  const {api, calls} = fakeRelay({}, [
+    offer({t: {fileType: 'text/plain', preview: 'first'}}),
+    ...imageArrives('/tmp/received-two.png'),
+    ...imageArrives('/tmp/received-three.png'),
+  ]);
+  const host = note();
+  const lines: string[] = [];
+  await expect(receiveOne(api, host, 'Supernote', undefined, undefined, undefined, line => lines.push(line))).resolves.toBe(copy.receivedImage);
+  expect(lines).toEqual([copy.receivedText, copy.receivedImage, copy.receivedImage]);
+  expect(host.insertText).toHaveBeenCalledTimes(1);
+  expect(host.insertImage).toHaveBeenCalledTimes(2);
+  expect(calls.stopped).toBe(1);
+  expect(calls.removed).toEqual([]);
+  const next = fakeRelay();
+  await receiveOne(next.api, note(), 'Supernote');
+  expect(next.calls.removed).toEqual(['/tmp/received-two.png', '/tmp/received-three.png']);
+});
+
+test('«Stop» after an item answers that item, not «Stopped»', async () => {
+  const {api} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'one'}}), {kind: 'stopped'}]);
+  await expect(receiveOne(api, note(), 'Supernote')).resolves.toBe(copy.receivedText);
+});
+
 test('a refused offer is followed by a good one in the same window', async () => {
   const {api} = fakeRelay({}, [
     offer({a: {fileType: 'text/plain'}, b: {fileType: 'text/plain'}}),
