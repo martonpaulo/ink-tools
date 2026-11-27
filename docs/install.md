@@ -37,7 +37,7 @@ network service it sends data to.
 | Account Sync | not yet | | in progress |
 | Image Editing | not yet | | in progress |
 | Handwriting Language | not yet | | it has no release build signed with a release key yet; it is a sideloaded app, not a plugin |
-| Ink Notebook Editor | not yet | | in progress |
+| Note Editor | not yet | | in progress |
 | Ink Tools Control | no release | | a Mac command line tool, unversioned: use it from a clone of this repository |
 | Ink Tools Helper, Ink Tools Probe | no release | | developer tools for this project, never offered to others |
 
@@ -65,7 +65,7 @@ Handwriting Language has no release yet; its [README](../apps/handwriting-langua
 
 ## Install the Mac app
 
-Ink Notebook Editor has no release yet; its [README](../apps/ink-notebook-editor/README.md) shows how to build it.
+Note Editor has no release yet; its [README](../apps/note-editor/README.md) shows how to build it.
 
 ## Install the Mac command line
 

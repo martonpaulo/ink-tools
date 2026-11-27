@@ -1,6 +1,6 @@
 /**
  * The action `templates` (#451): the tablet's page templates, each by the value `insertNotePage`
- * takes, for Ink Notebook Editor's Insert Page. It reads and writes nothing else: the system
+ * takes, for Note Editor's Insert Page. It reads and writes nothing else: the system
  * templates by their names (`getNoteSystemTemplates`, such as `style_white`), and the custom ones,
  * the PNGs straight in `MyStyle/`, by their full paths (docs/supernote.md › Note file format).
  */

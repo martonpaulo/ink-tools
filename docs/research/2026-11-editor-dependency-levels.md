@@ -79,7 +79,7 @@ Status: research for the owner's question of 2026-11-26, after the note format s
 
 1. Keep reading at level 2 and every connected edit at level 1, with the page move as the one
    recorded route-B edit; record the `PAGEID` reason beside the existing one in
-   `apps/ink-notebook-editor/AGENTS.md`.
+   `apps/note-editor/AGENTS.md`.
 2. Build the queue of [#360](https://github.com/martonpaulo/ink-tools/issues/360) before the writer's element kinds: it gives editing away
    from the tablet at level 1.
 3. Build the writer of [#362](https://github.com/martonpaulo/ink-tools/issues/362) in the order its two users need: a new note, then

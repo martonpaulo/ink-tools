@@ -1762,7 +1762,7 @@ check "a plugin with no actions is refused before any push" "$(exit_and_pushes p
 check "--module is only for account-sync sync" "$(exit_and_pushes plugin action ink-tools-probe run-probe --module todo)" "20"
 check "read-only refuses plugin action" "$(exit_and_pushes --read-only plugin action account-sync sync)" "110"
 
-# The Ink Notebook Editor's operations through Device Link's helper, with no screen tap (#312).
+# The Note Editor's operations through Device Link's helper, with no screen tap (#312).
 helper_folder="$root/.data/plugin/inktools-device-link"
 printf 'f %s\n' "$root/Note/Tests/Edit.note" "$root/Note/Diary.note" >> "$files/paths"
 printf 'png' > "$work/local/edit.png"

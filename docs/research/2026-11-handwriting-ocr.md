@@ -27,7 +27,7 @@ records how far they agree and how long Vision takes.
 
 - Pages: the 25 first pages with five or more recognised words, up to six per note, of the owner's
   five Manta notes with Real-Time Recognition on (Spanish, Portuguese and Chinese). They were read
-  on the Mac only and are not committed, as `apps/ink-notebook-editor/AGENTS.md` says.
+  on the Mac only and are not committed, as `apps/note-editor/AGENTS.md` says.
 - Each page was drawn at 1920 x 2560 in greys and read by Vision's `RecognizeTextRequest` at the
   accurate level with language correction, the setting the editor uses.
 - A tablet word counts as found when Vision returned the same word on the page, with case,

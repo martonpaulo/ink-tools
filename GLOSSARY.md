@@ -13,7 +13,7 @@ this table only names them. A new name for a product part is recorded here first
 | display name | the feature name a tool shows, in Supernote's own wording, in `PluginConfig.json` `name`, the visible copy and the docs | - |
 | Handwriting Language | the sideloaded tablet app in `apps/handwriting-language` that switches the handwriting recognition language; the Lingo app in code | - |
 | Image Editing | the plugin in `plugins/image-editing` that makes a picture on the page readable on e-ink | Image Editor |
-| Ink Notebook Editor | the Mac app in `apps/ink-notebook-editor` that reads and edits `.note` files | - |
+| Note Editor | the Mac app in `apps/note-editor` that reads and edits `.note` files | Ink Notebook Editor |
 | Ink Tools | the product: every plugin, app and tool in this repository | Supernote Tools |
 | Ink Tools Control | the Mac CLI in `cli/inkctl`, run as `inkctl`, that drives the tablet over Wi-Fi ADB | - |
 | Ink Tools Helper | the sideloaded developer app in `apps/ink-tools-helper`, with no screen, that lets `inkctl` install, enable and permit plugins | Ink Tools Bridge |

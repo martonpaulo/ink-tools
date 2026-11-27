@@ -11,7 +11,7 @@ source of truth for scope; delivery issues cite it. Architecture (layers, packag
 - [Lingo app](#lingo-app)
 - [Dictionary and translation engine (shared)](#dictionary-and-translation-engine-shared)
 - [retouch](#retouch)
-- [Ink Notebook Editor](#ink-notebook-editor)
+- [Note Editor](#note-editor)
 - [bridge](#bridge)
 - [New: phone to open note](#new-phone-to-open-note)
 - [relay](#relay)
@@ -207,7 +207,7 @@ and levels sliders, ordered and halftone dither and other error-diffusion styles
 forced white borders, OCR of the image. Resize stays only if the native lasso cannot already resize
 an image ([#130](https://github.com/martonpaulo/ink-tools/issues/130)).
 
-## Ink Notebook Editor
+## Note Editor
 
 Named by the owner on 2026-11-16, a brand-free name; the working name was `desk` ([#175](https://github.com/martonpaulo/ink-tools/issues/175)).
 
@@ -424,7 +424,7 @@ game is a sub-issue of [#376](https://github.com/martonpaulo/ink-tools/issues/37
 - **Solo puzzles** have one generated solution; **two-player pen games** (tic-tac-toe, dots and
   boxes, battleship, paper soccer, hangman) are pass-and-play pages with a grid and a score area and
   no answer check.
-- **Shared code.** The generator and the word lists are a shared package, so the Ink Notebook Editor
+- **Shared code.** The generator and the word lists are a shared package, so the Note Editor
   can later add «Insert game».
 - **Device probes first**: whether a plugin can insert a page with its own background, and how well
   the recognition reads handwritten digits in grid cells.

@@ -19,7 +19,7 @@
    "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/InternalFailure.java",
    "apps/handwriting-language/src/com/supernotetools/lingo/InternalFailure.java",
    "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
-   "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift"
+   "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift"
   ],
   "counts": {
    "apps/handwriting-language/scripts/toolchain.sh": {
@@ -250,7 +250,7 @@
    {
     "rule": "A failure log's word for a firmware or app version it could not read: unread",
     "owner": "cli/inkctl/src/inkctl",
-    "other": "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/InternalFailure.swift",
+    "other": "apps/note-editor/NoteFormat/Sources/NoteFormat/InternalFailure.swift",
     "pattern": "\"unread\"",
     "golden": "",
     "open": 295
@@ -525,37 +525,37 @@
     "apps/handwriting-language/src/com/supernotetools/lingo/LanguageCycle.java": {
      "number": 2
     },
-    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteFile.swift": {
+    "apps/note-editor/NoteFormat/Sources/NoteFormat/NoteFile.swift": {
      "number": 4
     },
-    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": {
+    "apps/note-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": {
      "number": 1
     },
-    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/PageImage.swift": {
+    "apps/note-editor/NoteFormat/Sources/NoteFormat/PageImage.swift": {
      "number": 1
     },
-    "apps/ink-notebook-editor/NoteFormat/Sources/note-render/main.swift": {
+    "apps/note-editor/NoteFormat/Sources/note-render/main.swift": {
      "number": 3
     },
-    "apps/ink-notebook-editor/NoteFormat/Sources/note-tool/main.swift": {
+    "apps/note-editor/NoteFormat/Sources/note-tool/main.swift": {
      "number": 5
     },
-    "apps/ink-notebook-editor/Sources/InkNotebookEditor/App.swift": {
+    "apps/note-editor/Sources/NoteEditor/App.swift": {
      "number": 2
     },
-    "apps/ink-notebook-editor/Sources/InkNotebookEditor/NotebookView.swift": {
+    "apps/note-editor/Sources/NoteEditor/NotebookView.swift": {
      "number": 5
     },
-    "apps/ink-notebook-editor/Sources/InkNotebookEditor/OpenFromTablet.swift": {
+    "apps/note-editor/Sources/NoteEditor/OpenFromTablet.swift": {
      "number": 6
     },
-    "apps/ink-notebook-editor/Sources/InkNotebookEditor/StateViews.swift": {
+    "apps/note-editor/Sources/NoteEditor/StateViews.swift": {
      "number": 1
     },
-    "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Inkctl.swift": {
+    "apps/note-editor/Sources/NoteEditorKit/Inkctl.swift": {
      "path": 2
     },
-    "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/IssueReport.swift": {
+    "apps/note-editor/Sources/NoteEditorKit/IssueReport.swift": {
      "url": 1
     },
     "packages/picture-search/native/com/inktools/files/Decolor.java": {
@@ -612,8 +612,8 @@
     "apps/handwriting-language/scripts/build.cjs": 3,
     "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
     "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
-    "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
-    "apps/ink-notebook-editor/Sources/InkNotebookEditorKit/Tablet.swift": 1,
+    "apps/note-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
+    "apps/note-editor/Sources/NoteEditorKit/Tablet.swift": 1,
     "apps/ink-tools-helper/scripts/build.cjs": 4,
     "cli/inkctl/src/inkctl": 12,
     "packages/ink-core/src/conversion/convert.ts": 1,

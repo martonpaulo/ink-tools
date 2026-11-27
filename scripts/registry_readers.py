@@ -58,8 +58,8 @@ READERS = (
     Reader("java", "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
            ("ink-tools-probe",), package="com.probe.providers"),
     Reader("python", "cli/inkctl/src/inkctl", ("inkctl",), block=True, watch=True),
-    Reader("swift", "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift",
-           ("ink-notebook-editor",)),
+    Reader("swift", "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift",
+           ("note-editor",)),
 )
 
 

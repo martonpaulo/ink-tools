@@ -396,7 +396,7 @@ class Pngs(unittest.TestCase):
         sources = icons.site_sources()
         tile = NATIVE["site"]["tile"]
         self.assertEqual(sorted(sources), sorted(p.stem for p in (ROOT / tile["dir"]).glob("*")))
-        self.assertIn("ink-notebook-editor", sources)
+        self.assertIn("note-editor", sources)
         for name, text in sources.items():
             with self.subTest(name):
                 self.assertIn(f'fill="{tile["fill"]}"', text)

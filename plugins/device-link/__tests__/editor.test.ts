@@ -1,4 +1,4 @@
-/** The Ink Notebook Editor's tablet helper (#312): each operation's calls in order, each refusal, the pen pause. */
+/** The Note Editor's tablet helper (#312): each operation's calls in order, each refusal, the pen pause. */
 import {ActionRefused, fail, ok} from '@ink-tools/sn-adapter/official';
 import {EDITOR_FOLDER, editAction, LIMITS, NOTES_FOLDER, type EditHost} from '../src/editor/operations';
 import {PEN_PAUSE, PenGate} from '../src/editor/penGate';

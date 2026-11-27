@@ -166,7 +166,7 @@ registerSettingsEntry(() => {
   console.error(`Relay: ${error.message}`);
 });
 
-// The Ink Notebook Editor's tablet helper (#312): inkctl's request file, read on the native timer,
+// The Note Editor's tablet helper (#312): inkctl's request file, read on the native timer,
 // which ticks with no view open; an edit waits while the pen is on the page. `save-note` saves the
 // open note before inkctl opens another (#426); `templates` lists the tablet's page templates (#451).
 const pen = new PenGate();

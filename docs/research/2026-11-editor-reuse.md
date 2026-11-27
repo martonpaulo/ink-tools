@@ -50,11 +50,11 @@ Marks: **[measured]** run here on a note the tablet wrote; **[documented]** a pr
 ## What the editor relies on today
 
 - `NoteFormat/` is a Swift port of `supernote-tool`'s reader (Apache-2.0, at `c1019f1c`): the container, `RATTA_RLE`,
-  and the layer composition ([`apps/ink-notebook-editor/NOTICE.md`](../../apps/ink-notebook-editor/NOTICE.md)).
+  and the layer composition ([`apps/note-editor/NOTICE.md`](../../apps/note-editor/NOTICE.md)).
 - The element reader (`PageElements.swift`) is the project's own. It follows walnut356's public description of the
   record and does not use `supernote-tool`, which reads only bitmaps.
 - Route T writes every element edit through the Device Link helper and the plugin library's file API
-  ([`apps/ink-notebook-editor/AGENTS.md`](../../apps/ink-notebook-editor/AGENTS.md#the-write-path)). The helper's
+  ([`apps/note-editor/AGENTS.md`](../../apps/note-editor/AGENTS.md#the-write-path)). The helper's
   element kinds are `stroke`, `text` and `picture` (`plugins/device-link/src/editor/operations.ts`).
 
 ## The shape records that stop the reader

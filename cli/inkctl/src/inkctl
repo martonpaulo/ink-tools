@@ -36,7 +36,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  insert page N of the open test note with a system template
   note move-page PATH FROM TO    move page FROM of a closed test note to TO, through Probe's file
                                  API calls, while another note is open
-  note edit PATH OPS.json        apply the Ink Notebook Editor's operations to a test note, open or
+  note edit PATH OPS.json        apply the Note Editor's operations to a test note, open or
                                  not, through Device Link's helper, with no screen tap (#312)
   note templates                 the tablet's page templates, through Device Link: system ones by
                                  name, the PNGs in MyStyle by full path; read-only (#451)
@@ -156,8 +156,8 @@ REGISTRY_ITEMS = (
     {"id": "note.activity", "level": 3, "impact": "tests", "owner": "inkctl", "probe": "inkctl routes", "unprobed": None, "active": "inkctl note open and note new", "off": None},
     {"id": "note.screen-ids", "level": 4, "impact": "tests", "owner": "inkctl", "probe": None, "unprobed": "finding the controls is the test itself", "active": "inkctl", "off": None},
     {"id": "note.fonts-folder", "level": 5, "impact": "user", "owner": "inkctl", "probe": None, "unprobed": "the font menu shows only on the screen", "active": "inkctl font install", "off": None},
-    {"id": "notefile.format-versions", "level": 2, "impact": "user", "owner": "ink-notebook-editor", "probe": None, "unprobed": "#293 adds a parse of a fixture note per firmware", "active": "ink-notebook-editor NoteFile.swift", "off": None},
-    {"id": "notefile.writer-byte-edit", "level": 5, "impact": "user", "owner": "ink-notebook-editor", "probe": None, "unprobed": "a written note is checked by opening it on the tablet", "active": "ink-notebook-editor NoteWriter.swift", "off": None},
+    {"id": "notefile.format-versions", "level": 2, "impact": "user", "owner": "note-editor", "probe": None, "unprobed": "#293 adds a parse of a fixture note per firmware", "active": "note-editor NoteFile.swift", "off": None},
+    {"id": "notefile.writer-byte-edit", "level": 5, "impact": "user", "owner": "note-editor", "probe": None, "unprobed": "a written note is checked by opening it on the tablet", "active": "note-editor NoteWriter.swift", "off": None},
     {"id": "pen.digitizer-units", "level": 5, "impact": "user", "owner": "sn-adapter", "probe": None, "unprobed": "needs a pen stroke; the effect test is the Smart Pen device round", "active": "sn-adapter official/elements.ts", "off": None},
     {"id": "pen.pen-types", "level": 5, "impact": "user", "owner": "smart-pen", "probe": None, "unprobed": "needs a pen stroke and a lasso; the effect test is the Smart Pen device round", "active": "smart-pen src/modules/shapes/guard.ts", "off": None},
     {"id": "pen.replay-route", "level": 1, "impact": "tests", "owner": "sn-adapter", "probe": None, "unprobed": "needs one real-pen recording; the effect test is Smart Pen's replay in the device round (#298)", "active": "sn-adapter official/penTape.ts", "off": None},
@@ -2884,7 +2884,7 @@ def edit_operations(path: str) -> list:
 
 
 def command_note_edit(device: Device, args: argparse.Namespace):
-    """Apply the Ink Notebook Editor's operations to one note through Device Link's helper, with no
+    """Apply the Note Editor's operations to one note through Device Link's helper, with no
     screen tap (#312). Each picture an element or a picture move names by a local `file` is copied to
     the helper's folder first; the plugin checks every operation, and its refusal is named in the answer."""
     need_note_suffix(args.path)
@@ -4859,7 +4859,7 @@ def build_parser() -> argparse.ArgumentParser:
     add(notes, "templates", command_note_templates).add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
     edited = add(notes, "edit", command_note_edit, changes=True)
     edited.add_argument("path", help="the note, open or not")
-    edited.add_argument("operations", help="a JSON file: a list of the Ink Notebook Editor's operations")
+    edited.add_argument("operations", help="a JSON file: a list of the Note Editor's operations")
     edited.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
     for on_note in (rendered, pictured, texted, paged, moved_page, edited):
         on_note.add_argument("--allow-notes", action="store_true", help="use a note outside Note/Tests/")

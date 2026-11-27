@@ -3,7 +3,7 @@
 Status: research for [#263](https://github.com/martonpaulo/ink-tools/issues/263), 2026-11-26.
 Device rounds 5 and 6 on the owner's Manta (firmware `Chauvet.E103.2610191001.2559`), on
 agent-made test notes in `Note/Tests/` only, never the owner's notes. Tools: `note-tool` and
-`note-render`, built from `apps/ink-notebook-editor/NoteFormat` (release), and `inkctl`.
+`note-render`, built from `apps/note-editor/NoteFormat` (release), and `inkctl`.
 
 Marks, as in [`../supernote.md`](../supernote.md): **[measured]** on the tablet in this round;
 **[inference]** reasoned, not run.
@@ -23,7 +23,7 @@ Marks, as in [`../supernote.md`](../supernote.md): **[measured]** on the tablet 
 - Route B, Mac-written bytes then `inkctl files push`, is kept only for a page move (0.5 s, every
   page block byte-equal) and for Revert to Backup. A Mac-written picture or text box is pixels only:
   the tablet's next ink write on that page redraws from the elements and drops it [measured].
-- The rule lives in [`apps/ink-notebook-editor/AGENTS.md`](../../apps/ink-notebook-editor/AGENTS.md#the-write-path);
+- The rule lives in [`apps/note-editor/AGENTS.md`](../../apps/note-editor/AGENTS.md#the-write-path);
   its decision row is in [`../decisions.md`](../decisions.md#decision-index).
 
 ## The six cells

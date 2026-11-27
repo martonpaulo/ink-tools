@@ -1,5 +1,5 @@
 /**
- * The file API calls the Ink Notebook Editor's tablet helper makes (#312): elements of a note by its
+ * The file API calls the Note Editor's tablet helper makes (#312): elements of a note by its
  * path, one element by its number, page removal, and the element building and placing for a move or
  * a resize. The open-note calls it routes to live beside their other callers: `insertPageElements`
  * (page.ts), `modifyPageElements` (image.ts), `deletePageElements` (shapes.ts), `insertNotePage`

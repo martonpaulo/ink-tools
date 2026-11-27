@@ -3,7 +3,7 @@
 Workbench's `cloud_ready.py` reads `cloud.json` to tell whether a cloud session can finish an issue:
 a gate outside its `cloud` list sends the issue back to the Mac. A gate renamed or added in
 `gates.json` without this file would silently move every issue that selects it off the cloud, so
-each gate is either a cloud gate or a Mac gate: the Ink Notebook Editor's Xcode build, and the two
+each gate is either a cloud gate or a Mac gate: the Note Editor's Xcode build, and the two
 Android app builds, whose toolchain download gets a 403 from dl.google.com in the cloud.
 """
 
@@ -12,7 +12,7 @@ import pathlib
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MAC_GATES = {"ink-notebook-editor", "handwriting-language", "ink-tools-helper"}
+MAC_GATES = {"note-editor", "handwriting-language", "ink-tools-helper"}
 
 
 class CloudConfigTest(unittest.TestCase):
@@ -27,8 +27,8 @@ class CloudConfigTest(unittest.TestCase):
 
     def test_the_mac_paths_hold_the_swift_app(self):
         mac_paths = self.config["mac_paths"]
-        self.assertIn("apps/ink-notebook-editor/", mac_paths)
-        self.assertTrue((ROOT / "apps" / "ink-notebook-editor").is_dir())
+        self.assertIn("apps/note-editor/", mac_paths)
+        self.assertTrue((ROOT / "apps" / "note-editor").is_dir())
 
     def test_the_gate_command_runs_the_selector(self):
         command = self.config["gates"]["command"]

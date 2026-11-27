@@ -77,7 +77,7 @@
         {"name": "Send Page", "text": "send the open page to an iPhone or a Mac over LocalSend."},
         {"name": "Send Selection", "text": "send a lasso selection, as typed text or as a picture; you choose on each send."},
         {"name": "Receive", "text": "receive text, a picture or a PDF into the open note."},
-        {"name": "Editor helper", "text": "applies the Ink Notebook Editor's edits from the Mac to the tablet's notes."}
+        {"name": "Editor helper", "text": "applies the Note Editor's edits from the Mac to the tablet's notes."}
       ],
       "map": {
         "sources": [
@@ -145,9 +145,9 @@
       }
     },
     {
-      "name": "Ink Notebook Editor", "section": "tools", "kind": "Mac app", "status": "In progress",
-      "icon": "design/icons/apps/ink-notebook-editor.png",
-      "link": "apps/ink-notebook-editor/",
+      "name": "Note Editor", "section": "tools", "kind": "Mac app", "status": "In progress",
+      "icon": "design/icons/apps/note-editor.png",
+      "link": "apps/note-editor/",
       "features": [
         {"name": "Open a note", "text": "read a `.note` notebook on the Mac and page through it."},
         {"name": "Open from Tablet", "text": "copy a note from the tablet over the cable through `inkctl` and open the copy."},
@@ -160,7 +160,7 @@
         "logic": ["NoteFormat: read and draw a note"],
         "supernote": "swift",
         "tablet": ["notes", "through inkctl"],
-        "registry": ["ink-notebook-editor"]
+        "registry": ["note-editor"]
       }
     },
     {
@@ -212,7 +212,7 @@
     "closing": "Each project's licence, and what Ink Tools took from it, is in the `NOTICE.md` of the part that uses it.",
     "groups": [
       {"title": "Code we use", "rows": [
-        {"project": "supernote-tool", "url": "https://github.com/jya-dev/supernote-tool", "author": "jya", "text": "the `.note` reader and RLE decoder, ported to Swift", "where": "apps/ink-notebook-editor/NOTICE.md"},
+        {"project": "supernote-tool", "url": "https://github.com/jya-dev/supernote-tool", "author": "jya", "text": "the `.note` reader and RLE decoder, ported to Swift", "where": "apps/note-editor/NOTICE.md"},
         {"project": "supernote-snap", "url": "https://github.com/CharlesCheval/supernote-snap", "author": "Charles Cheval", "text": "the Smart Shapes recognizer, hold detection and stroke guard", "where": "plugins/smart-pen/NOTICE.md", "version": "v0.9.0"},
         {"project": "supernote-pic2note", "url": "https://github.com/Keplex/supernote-pic2note", "author": "Keplex", "text": "the native build pipeline without Gradle", "where": "packages/native-build/NOTICE.md"},
         {"project": "SuperFun", "url": "https://github.com/AgP42/SuperFun", "author": "AgP42", "text": "the word-search theme word banks", "where": "packages/puzzle-core/NOTICE.md"}

@@ -71,7 +71,7 @@ root `Note/` folder, not the open note's folder (measured, 2026-11-17, [#214](ht
 as its template, its page index base, and whether the note keeps its backgrounds once the PNGs
 are gone.
 
-**Editor helper built, not yet on the device** ([#312](https://github.com/martonpaulo/ink-tools/issues/312)): the Ink Notebook Editor's tablet
+**Editor helper built, not yet on the device** ([#312](https://github.com/martonpaulo/ink-tools/issues/312)): the Note Editor's tablet
 helper, the action `edit` of sn-adapter's action channel ([#283](https://github.com/martonpaulo/ink-tools/issues/283)), which ticks on
 `DeviceLinkTicks` (`RelayPackage.java`) with no view open. inkctl's `note edit` writes `action.json`
 and the pictures in `.data/plugin/inktools-device-link/` (`EDITOR_FOLDER`), read with

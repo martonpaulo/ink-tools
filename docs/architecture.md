@@ -96,8 +96,8 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   `cli/inkctl/src/inkctl` (a single file by design) and NoteFormat's `Registry.swift`; each holds
   only the items its tools read. There are four Supernote adapters,
   one per runtime, sharing the registry and the common rules, not code: TypeScript (`sn-adapter`,
-  the plugins), Java (the apps and the plugins' native code), Python (`inkctl`) and Swift (Ink
-  Notebook Editor). Inside each, one module per level the runtime needs; a module exists only when a
+  the plugins), Java (the apps and the plugins' native code), Python (`inkctl`) and Swift (Note
+  Editor). Inside each, one module per level the runtime needs; a module exists only when a
   tool needs it. Each operation is a port named in our words (`writeTask`, `setLanguage`,
   `readPage`) with one implementation per level, and the registry names the active one: moving a
   part to a higher level adds the new implementation beside the old one, the port's shared contract
@@ -204,7 +204,7 @@ ink-tools/
   apps/
     handwriting-language/ # sideloaded tablet app: switch the handwriting language tablet-wide
     ink-tools-helper/ # sideloaded helper app: lets inkctl install, enable and permit plugins
-    ink-notebook-editor/ # macOS app, Ink Notebook Editor: a read-only .note reader for now
+    note-editor/ # macOS app, Note Editor: a read-only .note reader for now
 ```
 
 ## The plugins (on device)
@@ -343,7 +343,7 @@ measures are `packages/picture-search`.
 - **`inkctl`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
   codes, no root (formerly `supernote-adb`, then `snadb`, which still runs as a shim,
   [#173](https://github.com/martonpaulo/ink-tools/issues/173)).
-- **Ink Notebook Editor** (`apps/ink-notebook-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). It opens a note read-only, from a file or from the tablet through `inkctl`, and pages through it ([#262](https://github.com/martonpaulo/ink-tools/issues/262)); editing follows.
+- **Note Editor** (`apps/note-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). It opens a note read-only, from a file or from the tablet through `inkctl`, and pages through it ([#262](https://github.com/martonpaulo/ink-tools/issues/262)); editing follows.
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
 
@@ -389,7 +389,7 @@ at the start of the work (lessons of the 2026-11-16 night rounds, [#214](https:/
 
 ## Repository layout
 
-The `single-project-layout` divergence of `AGENTS.md`: the repository holds several independent subprojects under one folder per plugin in `plugins/`, `packages/`, `cli/inkctl/`, `apps/ink-notebook-editor/` (the macOS app, [#48](https://github.com/martonpaulo/ink-tools/issues/48)) and `apps/handwriting-language/` (the Lingo app, a sideloaded Android app, not a plugin, named for its feature as every subproject folder is, [#194](https://github.com/martonpaulo/ink-tools/issues/194), [#160](https://github.com/martonpaulo/ink-tools/issues/160): a plugin cannot write the handwriting language file, [#157](https://github.com/martonpaulo/ink-tools/issues/157)), each with its own gate, and the plugins, the app and the CLI each with their own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
+The `single-project-layout` divergence of `AGENTS.md`: the repository holds several independent subprojects under one folder per plugin in `plugins/`, `packages/`, `cli/inkctl/`, `apps/note-editor/` (the macOS app, [#48](https://github.com/martonpaulo/ink-tools/issues/48)) and `apps/handwriting-language/` (the Lingo app, a sideloaded Android app, not a plugin, named for its feature as every subproject folder is, [#194](https://github.com/martonpaulo/ink-tools/issues/194), [#160](https://github.com/martonpaulo/ink-tools/issues/160): a plugin cannot write the handwriting language file, [#157](https://github.com/martonpaulo/ink-tools/issues/157)), each with its own gate, and the plugins, the app and the CLI each with their own `AGENTS.md`, versioning and release policy; the root file carries shared policy and a route map.
 
 ## CI workflows
 

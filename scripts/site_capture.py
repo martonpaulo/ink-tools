@@ -11,7 +11,7 @@ Each shot of design/site-media/shots.json runs its `steps` through inkctl, then:
 - a tablet video is `screenrecord` over the cable for the shot's seconds while its `record` steps
   run, copied off the tablet, muted, resized and saved as site/media/ID.mp4 with a poster frame
   site/media/ID-poster.jpg;
-- a Mac render is the Ink Notebook Editor's off-screen render (`make renders`), resized.
+- a Mac render is the Note Editor's off-screen render (`make renders`), resized.
 
 A `hand` step is the owner's: the script prints it and waits for Enter, so the owner does only
 the pen and the taps no command reaches. Privacy: every shot runs on test notes under
@@ -38,7 +38,7 @@ import site_media  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 INKCTL = ROOT / "cli/inkctl/src/inkctl"
-EDITOR = Path("apps/ink-notebook-editor")
+EDITOR = Path("apps/note-editor")
 TEST_NOTES = "Note/Tests/"
 NOTE_OPENERS = (("note", "open"), ("note", "new"))
 REFUSED_FLAG = "--allow-notes"

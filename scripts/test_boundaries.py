@@ -38,7 +38,7 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(self.tree({
             "packages/sn-adapter/src/registry.generated.ts": "  authority: 'com.ratta.supernote.task.provider',\n",
             "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/Registry.java": "String A = \"com.ratta.supernote.pluginhost\";\n",
-            "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift": "let a = \"com.ratta.supernote.note\"\n",
+            "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift": "let a = \"com.ratta.supernote.note\"\n",
             "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java": "String A = \"com.ratta.supernote.task.provider\";\n",
             "plugins/ink-tools-probe/native/tests/com/probe/providers/PTest.java": "String a = \"com.ratta.supernote.task.provider\";\n",
             "plugins/a/__tests__/a.test.ts": "expect(uri).toContain('com.ratta.supernote.task.provider');\n",

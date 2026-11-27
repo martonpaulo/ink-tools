@@ -1,7 +1,7 @@
 {
   "about": "The one owner of the site's tool pictures and videos (#414): each shot's slot (a tool card of site/index.html), size, text alternative, caption and the steps that take it again. scripts/site_capture.py takes the shots on the Mac with the tablet over inkctl, on test notes under Note/Tests/ with synthetic content only; scripts/site_media.py writes each card's media block from the files present in site/media/ and checks them in the site gate.",
   "budget": {"pictureBytes": 250000, "videoBytes": 2000000, "videoSeconds": 8, "altCharacters": 150},
-  "slots": ["smart-pen", "lasso-actions", "image-editing", "device-link", "account-sync", "handwriting-language", "ink-notebook-editor"],
+  "slots": ["smart-pen", "lasso-actions", "image-editing", "device-link", "account-sync", "handwriting-language", "note-editor"],
   "shots": [
     {
       "id": "smart-pen-shapes", "slot": "smart-pen", "kind": "picture", "source": "tablet", "width": 720, "height": 960,
@@ -91,9 +91,9 @@
       ]
     },
     {
-      "id": "ink-notebook-editor-notebook", "slot": "ink-notebook-editor", "kind": "picture", "source": "mac-render", "render": "notebook-light-default.png", "width": 1000, "height": 720,
-      "alt": "The Ink Notebook Editor window on a Mac, showing a page of a test notebook with handwriting.",
-      "caption": "Ink Notebook Editor: a Supernote notebook opened on the Mac."
+      "id": "note-editor-notebook", "slot": "note-editor", "kind": "picture", "source": "mac-render", "render": "notebook-light-default.png", "width": 1000, "height": 720,
+      "alt": "The Note Editor window on a Mac, showing a page of a test notebook with handwriting.",
+      "caption": "Note Editor: a Supernote notebook opened on the Mac."
     }
   ]
 }

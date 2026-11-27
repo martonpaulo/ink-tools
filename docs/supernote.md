@@ -920,7 +920,7 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
 ## Note file format
 
 Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
-`Chauvet.E103.2610191001.2559_release`), read with the Ink Notebook Editor's `NoteFormat`
+`Chauvet.E103.2610191001.2559_release`), read with the Note Editor's `NoteFormat`
 ([#261](https://github.com/martonpaulo/ink-tools/issues/261)):
 
 - A new note starts `noteSN_FILE_VER_20260016`; the header says `APPLY_EQUIPMENT` `N5`, so pages are
@@ -935,13 +935,13 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   `STYLE_<style><md5>`; `PDFSTYLELIST` lists the styles in base64 [measured, 2026-11-25,
   [#308](https://github.com/martonpaulo/ink-tools/issues/308)].
 - A template's dots and ruled lines are 1 to 3 pixels wide: drawn at a third of the page's size or
-  less, plain resampling leaves a 5 mm dot grid at grey 190 and a thumbnail blank, so the Ink
-  Notebook Editor darkens before it resamples [measured, 2026-11-25,
+  less, plain resampling leaves a 5 mm dot grid at grey 190 and a thumbnail blank, so the Note
+  Editor darkens before it resamples [measured, 2026-11-25,
   [#308](https://github.com/martonpaulo/ink-tools/issues/308)].
 - Each note made by `inkctl note new` has its own file ID. A page the tablet moves
   (`PluginFileAPI` through `inkctl note move-page`) gets a new `PAGEID`, while it draws equal to the
   page before the move (0.000 % of pixels) [measured, Manta, device round 5, 2026-11-26,
-  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So the Ink Notebook Editor tells
+  [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So the Note Editor tells
   pages apart by `PAGEID` only within one copy of a note.
 - A page's template is its page block's `PAGESTYLE`, `PAGESTYLEMD5` and `BGLAYER`; the background
   itself is a block the footer names `STYLE_<style>`. A page pointed at the background of another
@@ -982,7 +982,7 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   in millimetres at the page's 300 dpi: on five Manta notes every box ended within 162 x 216 mm,
   the 1920 x 2560 page, and a word's box times 300 / 25.4 enclosed its ink. `RECOGNSTATUS` is 1
   when the recognition is done and 2 while it runs; a page at 2 still held the words of an earlier
-  run, so the Ink Notebook Editor reads only pages at 1 [measured on the Mac, 2026-11-26,
+  run, so the Note Editor reads only pages at 1 [measured on the Mac, 2026-11-26,
   [#321](https://github.com/martonpaulo/ink-tools/issues/321)].
 - A Heading is a block the footer names `TITLE_` with its page from 1 in four digits and its place
   on the page: `TITLELEVEL`, `TITLERECT` and `TITLERECTORI` (`x,y,width,height` in page pixels),

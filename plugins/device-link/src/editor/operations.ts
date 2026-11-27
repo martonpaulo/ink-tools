@@ -1,5 +1,5 @@
 /**
- * The Ink Notebook Editor's tablet helper (#312): the action `edit` that inkctl sends through the
+ * The Note Editor's tablet helper (#312): the action `edit` that inkctl sends through the
  * action channel of #283 with no screen tap. A request names one note in `Note/` and 1 to
  * LIMITS.operations operations, run in order; the first that fails stops the rest, and the answer
  * names it. Every answer carries `openNote`, the open note's path, for the Mac's open-note guard.

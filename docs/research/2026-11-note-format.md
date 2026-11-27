@@ -101,7 +101,7 @@ lay out [community documentation, measured]. What this study adds on Manta files
 
 ## Per feature: how the tablet does it and how the editor does it
 
-The editor's features: [`plugin-scope.md` › Ink Notebook Editor](../plugin-scope.md#ink-notebook-editor),
+The editor's features: [`plugin-scope.md` › Ink Notebook Editor](../plugin-scope.md#note-editor),
 [#48](https://github.com/martonpaulo/ink-tools/issues/48) and [#332](https://github.com/martonpaulo/ink-tools/issues/332).
 «Ours» is route T (the tablet's file API through the helper, [#313](https://github.com/martonpaulo/ink-tools/issues/313)) unless it says route B
 (bytes the Mac writes).
@@ -163,4 +163,4 @@ The editor's features: [`plugin-scope.md` › Ink Notebook Editor](../plugin-sco
   the header, footer, keyword, Heading and link blocks; its writer writes pictures of pages, not
   records.
 - [supernote-tool](https://github.com/jya-dev/supernote-tool) at `c1019f1c` (Apache-2.0): the
-  reader `NoteFormat` is ported from ([NOTICE](../../apps/ink-notebook-editor/NOTICE.md)).
+  reader `NoteFormat` is ported from ([NOTICE](../../apps/note-editor/NOTICE.md)).

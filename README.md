@@ -23,11 +23,11 @@ For people who use the tablet.
   <tr><td align="center"><br><p align="center"><img src="design/icons/readme/smart-pen.png" width="48" height="48" alt=""></p><sub><sup>🟢</sup></sub>&nbsp;<b>Smart Pen</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=smart-pen&amp;expanded=true">plugin</a><br><br></td><td><br><ul><li><b>Smart Shapes</b>: draw a triangle, circle, square, rectangle or arrow and hold the pen still at the end; it becomes a clean shape, and letters stay handwriting.</li><li><b>Real-Time Text</b>: while it is on, each handwritten word becomes typed text at its place, with no lasso; drawings stay handwriting.</li><li><b>Undo Conversion</b>: brings the last converted word back as handwriting.</li><li><b>Gestures</b>: a finger double or triple tap picks a pen, the eraser or the lasso, as you map it. (planned)</li></ul><br></td></tr>
   <tr><td align="center"><br><p align="center"><img src="design/icons/readme/lasso-actions.png" width="48" height="48" alt=""></p><sub><sup>🟡</sup></sub>&nbsp;<b>Lasso Actions</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=lasso-actions&amp;expanded=true">plugin</a><br><br></td><td><br><ul><li><b>Word Lookup</b>: lasso a handwritten word, then Insert Sticker (a clean illustration), Insert Image (a photo), Choose Image (pick from the results), Insert Definition, Insert Summary (three sentences from Wikipedia) or Translate, one button per language pair, such as «Translate ES→PT».</li><li><b>Convert to Text</b>: turn the whole lassoed handwriting into one text box.</li><li><b>Headings</b>: Heading 1 to Heading 4 turn a lassoed line into a heading of that level at the left margin, across the page.</li><li><b>Collection</b>: Add to Collection and Cut to Collection gather lasso selections; Paste Collection puts them together on another page.</li></ul><br></td></tr>
   <tr><td align="center"><br><p align="center"><img src="design/icons/readme/image-editing.png" width="48" height="48" alt=""></p><sub><sup>🟡</sup></sub>&nbsp;<b>Image Editing</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=image-editing&amp;expanded=true">plugin</a><br><br></td><td><br><ul><li><b>Enhance</b>: make a lassoed picture readable on e-ink with one tap; Lighter and Darker adjust it.</li><li><b>Crop</b>: draw a rectangle with the pen around the part to keep.</li><li><b>Erase</b>: draw over the part to erase with the pen.</li><li><b>Remove background</b>: keep the subject and drop what is behind it.</li><li><b>Make sticker</b>: turn the picture into a sticker.</li><li><b>Document</b>: straighten a photographed page as a document.</li></ul><br></td></tr>
-  <tr><td align="center"><br><p align="center"><img src="design/icons/readme/device-link.png" width="48" height="48" alt=""></p><sub><sup>🟢</sup></sub>&nbsp;<b>Device Link</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=device-link&amp;expanded=true">plugin</a><br><br></td><td><br><ul><li><b>Send Page</b>: send the open page to an iPhone or a Mac over LocalSend.</li><li><b>Send Selection</b>: send a lasso selection, as typed text or as a picture; you choose on each send.</li><li><b>Receive</b>: receive text, a picture or a PDF into the open note.</li><li><b>Editor helper</b>: applies the Ink Notebook Editor&#x27;s edits from the Mac to the tablet&#x27;s notes.</li></ul><br></td></tr>
+  <tr><td align="center"><br><p align="center"><img src="design/icons/readme/device-link.png" width="48" height="48" alt=""></p><sub><sup>🟢</sup></sub>&nbsp;<b>Device Link</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=device-link&amp;expanded=true">plugin</a><br><br></td><td><br><ul><li><b>Send Page</b>: send the open page to an iPhone or a Mac over LocalSend.</li><li><b>Send Selection</b>: send a lasso selection, as typed text or as a picture; you choose on each send.</li><li><b>Receive</b>: receive text, a picture or a PDF into the open note.</li><li><b>Editor helper</b>: applies the Note Editor&#x27;s edits from the Mac to the tablet&#x27;s notes.</li></ul><br></td></tr>
   <tr><td align="center"><br><p align="center"><img src="design/icons/readme/account-sync.png" width="48" height="48" alt=""></p><sub><sup>🟡</sup></sub>&nbsp;<b>Account Sync</b><br><a href="https://github.com/martonpaulo/ink-tools/releases?q=account-sync&amp;expanded=true">plugin</a><br><br></td><td><br><ul><li><b>To-Do</b>: sync the tablet&#x27;s to-dos with Todoist.</li><li><b>Calendar</b>: sync Google, iCloud and ICS calendars with the tablet&#x27;s calendar.</li><li><b>Digest</b>: sync the Digest both ways with your Telegram «Saved Messages». (planned)</li></ul><br></td></tr>
   <tr><td align="center"><br><p align="center"><img src="design/icons/readme/puzzles.png" width="48" height="48" alt=""></p><sub><sup>🔵</sup></sub>&nbsp;<b>Puzzles</b><br><a href="https://github.com/martonpaulo/ink-tools/issues/376">plugin</a><br><br></td><td><br><ul><li><b>New game</b>: pick a game, a language and a difficulty; the game is a new page after the current one, its grid drawn as the page background, so erasing never removes it.</li><li><b>Show solution</b>: shows the answer over the plugin&#x27;s view, never on the page.</li><li><b>Check</b>: reads what you wrote and marks the wrong cells.</li></ul><br></td></tr>
   <tr><td align="center"><br><p align="center"><img src="design/icons/readme/handwriting-language.png" width="48" height="48" alt=""></p><sub><sup>🟡</sup></sub>&nbsp;<b>Handwriting Language</b><br><a href="apps/handwriting-language/">app</a><br><br></td><td><br><ul><li><b>Switch Language</b>: switch the handwriting recognition language of the whole tablet with one tap.</li><li><b>Floating button</b>: a small button where you write, shown only while there is text or ink input.</li></ul><br></td></tr>
-  <tr><td align="center"><br><p align="center"><img src="design/icons/apps/ink-notebook-editor.png" width="48" height="48" alt=""></p><sub><sup>🔵</sup></sub>&nbsp;<b>Ink Notebook Editor</b><br><a href="apps/ink-notebook-editor/">Mac app</a><br><br></td><td><br><ul><li><b>Open a note</b>: read a <code>.note</code> notebook on the Mac and page through it.</li><li><b>Open from Tablet</b>: copy a note from the tablet over the cable through <code>inkctl</code> and open the copy.</li><li><b>Edit</b>: edit a note on the Mac without breaking the format, and send the edits back through Device Link.</li></ul><br></td></tr>
+  <tr><td align="center"><br><p align="center"><img src="design/icons/apps/note-editor.png" width="48" height="48" alt=""></p><sub><sup>🔵</sup></sub>&nbsp;<b>Note Editor</b><br><a href="apps/note-editor/">Mac app</a><br><br></td><td><br><ul><li><b>Open a note</b>: read a <code>.note</code> notebook on the Mac and page through it.</li><li><b>Open from Tablet</b>: copy a note from the tablet over the cable through <code>inkctl</code> and open the copy.</li><li><b>Edit</b>: edit a note on the Mac without breaking the format, and send the edits back through Device Link.</li></ul><br></td></tr>
 </table>
 
 Status: <sub><sup>🟢</sup></sub>&nbsp;Working&emsp;<sub><sup>🟡</sup></sub>&nbsp;Beta&emsp;<sub><sup>🔵</sup></sub>&nbsp;In progress&emsp;<sub><sup>⚪</sup></sub>&nbsp;Planned&emsp;<sub><sup>🟣</sup></sub>&nbsp;Internal&emsp;<sub><sup>🔴</sup></sub>&nbsp;Broken
@@ -55,7 +55,7 @@ adapter per language, and all of them read the same registry of device dependenc
 ```mermaid
 flowchart TB
   accTitle: Tool map: where each tool's data comes from and where it lands
-  accDescr: Top to bottom: the outside services, the service adapters they enter through, the tools grouped by where they run (tablet plugins, tablet apps, Mac), the Supernote adapter of each runtime, the one registry of device dependencies they all read, and the tablet. Tools: Smart Pen; Lasso Actions; Image Editing; Device Link; Account Sync; Puzzles; Handwriting Language; Ink Notebook Editor; Ink Tools Control; Ink Tools Helper.
+  accDescr: Top to bottom: the outside services, the service adapters they enter through, the tools grouped by where they run (tablet plugins, tablet apps, Mac), the Supernote adapter of each runtime, the one registry of device dependencies they all read, and the tablet. Tools: Smart Pen; Lasso Actions; Image Editing; Device Link; Account Sync; Puzzles; Handwriting Language; Note Editor; Ink Tools Control; Ink Tools Helper.
   subgraph outside["Outside world"]
     o_wiktionary["Wiktionary<br/>Wikipedia"]
     o_wikimedia_commons["Wikimedia Commons<br/>Wikidata<br/>Openclipart<br/>OpenMoji"]
@@ -88,7 +88,7 @@ flowchart TB
     t_ink_tools_helper["<b>Ink Tools Helper</b><br/>the plugin settings calls"]
   end
   subgraph g_mac["Mac"]
-    t_ink_notebook_editor["<b>Ink Notebook Editor</b><br/>NoteFormat: read and draw a note"]
+    t_note_editor["<b>Note Editor</b><br/>NoteFormat: read and draw a note"]
     t_ink_tools_control["<b>Ink Tools Control</b><br/>inkctl<br/>over USB or Wi-Fi ADB"]
   end
   subgraph adapters["Supernote adapters"]
@@ -113,10 +113,10 @@ flowchart TB
   s_calendarprovider --> t_account_sync
   o_telegram_saved_messages -.-> s_digest_source
   s_digest_source -.-> t_account_sync
-  o_note_files_on_the_mac --> t_ink_notebook_editor
+  o_note_files_on_the_mac --> t_note_editor
   g_plugins --> a_ts
   g_apps --> a_java
-  t_ink_notebook_editor --> a_swift
+  t_note_editor --> a_swift
   t_ink_tools_control --> a_python
   a_ts --> registry
   a_java --> registry
@@ -136,7 +136,7 @@ flowchart TB
 | Account Sync | Todoist<br>Google Calendar<br>iCloud (CalDAV)<br>ICS links<br>Telegram Saved Messages (planned) | TaskProvider<br>CalendarProvider<br>Digest source (planned)<br>sn-adapter | the tablet's own apps<br>To-Do<br>Calendar<br>Digest (planned) | 1️⃣ 2️⃣ 5️⃣ |
 | Puzzles | nothing from outside | sn-adapter | a new page<br>the grid as its background | 1️⃣ |
 | Handwriting Language | nothing from outside | Java reader | the handwriting language<br>the floating button | 2️⃣ 3️⃣ |
-| Ink Notebook Editor | note files on the Mac | Swift reader | notes<br>through inkctl | 2️⃣ 5️⃣ |
+| Note Editor | note files on the Mac | Swift reader | notes<br>through inkctl | 2️⃣ 5️⃣ |
 | Ink Tools Control | nothing from outside | Python reader | screens<br>settings<br>notes<br>for tests and setup | 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ |
 | Ink Tools Helper | nothing from outside | Java reader | plugin settings | 2️⃣ 3️⃣ 5️⃣ |
 

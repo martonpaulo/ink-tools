@@ -1,6 +1,6 @@
 /**
  * The Puzzles core (#380): seeded generators with one solution and a difficulty rating, shared by
- * the Puzzles plugin and, later, the Ink Notebook Editor. Pure TypeScript: no React Native, no
+ * the Puzzles plugin and, later, the Note Editor. Pure TypeScript: no React Native, no
  * device call, no network.
  */
 export * from './code';

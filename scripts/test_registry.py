@@ -123,7 +123,7 @@ class RegistryTest(unittest.TestCase):
         ts = (self.root / "packages/sn-adapter/src/registry.generated.ts").read_text()
         self.assertIn("off: 'until 2999-01-01: the To-Do columns changed'}", ts)
         self.assertIn("readonly off: string | null;", ts)
-        swift = (self.root / "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
+        swift = (self.root / "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
         self.assertIn("public let off: String?", swift)
         # swift-format leaves the generated file alone, since `make lint` names NoteFormat/ (#459).
         self.assertTrue(swift.startswith("// swift-format-ignore-file\n"))
@@ -176,7 +176,7 @@ class RegistryTest(unittest.TestCase):
         self.assertIn("lower its ceiling from 5 to 3", self.problems())
 
     def test_each_reader_holds_the_items_of_its_tools(self):
-        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl", "ink-tools-helper", "ink-notebook-editor"]
+        self.areas["todo"][0]["readers"] = ["sn-adapter", "inkctl", "ink-tools-helper", "note-editor"]
         code, out = self.run_main("--write")
         self.assertEqual(code, 0, out)
         ts = (self.root / "packages/sn-adapter/src/registry.generated.ts").read_text()
@@ -187,7 +187,7 @@ class RegistryTest(unittest.TestCase):
         self.assertIn("public static final class TodoProvider {", bridge)
         self.assertIn('public static final String ACTION = "an.action";', bridge)
         self.assertNotIn("CalendarProvider", bridge)
-        swift = (self.root / "apps/ink-notebook-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
+        swift = (self.root / "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift").read_text()
         self.assertIn('public static let action: String = "an.action"', swift)
         lingo = (self.root / "apps/handwriting-language/src/com/supernotetools/lingo/Registry.java").read_text()
         self.assertNotIn("TodoProvider", lingo)

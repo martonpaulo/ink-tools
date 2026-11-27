@@ -6,9 +6,9 @@
       "title": "The .note format and the versions the reader accepts",
       "level": 2,
       "impact": "user",
-      "owner": "ink-notebook-editor",
+      "owner": "note-editor",
       "readers": [
-        "ink-notebook-editor"
+        "note-editor"
       ],
       "reason": "the .note format is not documented; supernotelib and our reader parse it",
       "evidence": {
@@ -21,7 +21,7 @@
       "probe": {
         "unprobed": "#293 adds a parse of a fixture note per firmware"
       },
-      "active": "ink-notebook-editor NoteFile.swift",
+      "active": "note-editor NoteFile.swift",
       "issues": [
         261,
         321,
@@ -71,9 +71,9 @@
       "title": "NoteWriter edits a .note file's bytes in place",
       "level": 5,
       "impact": "user",
-      "owner": "ink-notebook-editor",
+      "owner": "note-editor",
       "readers": [
-        "ink-notebook-editor"
+        "note-editor"
       ],
       "reason": "no API writes a note; the byte layout was learned from supernotelib and test files",
       "evidence": {
@@ -86,7 +86,7 @@
       "probe": {
         "unprobed": "a written note is checked by opening it on the tablet"
       },
-      "active": "ink-notebook-editor NoteWriter.swift",
+      "active": "note-editor NoteWriter.swift",
       "issues": [
         262
       ],

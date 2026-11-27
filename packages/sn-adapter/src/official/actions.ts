@@ -11,7 +11,7 @@
  * (device round 5, #283), so each plugin passes `nativeTimers`, which tick from the plugin's native
  * `TickModule` with no view open.
  *
- * A request comes in a run of several, as an Ink Notebook Editor session or a device round sends
+ * A request comes in a run of several, as an Note Editor session or a device round sends
  * them: after each one the channel also reads the file every ACTION_BURST_POLL_MS, until
  * ACTION_BURST_MS pass with no new request. The idle read stays ACTION_POLL_MS, so an idle plugin
  * reads its file no more often than before; within a run, an edit no longer waits up to a whole

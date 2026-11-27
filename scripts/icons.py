@@ -436,7 +436,7 @@ def render_png(svg, png, px):
 
 def mac_icon_svg(root=ROOT):
     """The Mac app's `AppIcon.icon` as one SVG: its page layer on a rounded square of its fill colour."""
-    folder = root / "apps/ink-notebook-editor/Support/AppIcon.icon"
+    folder = root / "apps/note-editor/Support/AppIcon.icon"
     fill = json.loads((folder / "icon.json").read_text())["fill"]["automatic-gradient"]
     channels = fill.split(":")[1].split(",")[:RGB_CHANNELS]
     colour = "rgb(" + ",".join(f"{float(v):.0%}" for v in channels) + ")"
@@ -596,10 +596,10 @@ def tile_problems(root=ROOT):
         elif note["svg"] != sha(text) or note["png"] != sha(png.read_bytes()):
             problems.append(f"{folder}/{name}.png: stale")
     readme = (root / "README.md").read_text(encoding="utf-8") if (root / "README.md").is_file() else ""
-    editor = "design/icons/apps/ink-notebook-editor.png"
+    editor = "design/icons/apps/note-editor.png"
     for src, release, folder_link in re.findall(ROW, readme):
         name = release or folder_link.split("/")[1]
-        want = editor if name == "ink-notebook-editor" else f"{folder}/{name}.png"
+        want = editor if name == "note-editor" else f"{folder}/{name}.png"
         if src != want:
             problems.append(f"README.md: the row of {name} shows {src}, not {want}")
         elif not (root / want).is_file():
@@ -619,7 +619,7 @@ def write_app_pngs(root=ROOT):
         for i in icons
         if i["kind"] == "app"
     }
-    sources["ink-notebook-editor"] = mac_icon_svg(root)
+    sources["note-editor"] = mac_icon_svg(root)
     with tempfile.TemporaryDirectory() as tmp:
         for name, text in sources.items():
             svg = Path(tmp) / f"{name}.svg"

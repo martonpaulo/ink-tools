@@ -680,7 +680,7 @@
  "site": {
   "about": "Landing-page icons for a tool whose own icon is not drawn from Tabler (the Mac app's is its own artwork): each names its Tabler glyphs as an icon above does. scripts/icons.py draws them, with every tool's own icon, as plugin icons on native.json's site tile, into site/icons (#439).",
   "icons": {
-   "ink-notebook-editor": {
+   "note-editor": {
     "tabler": [
      "notebook"
     ]

@@ -13,7 +13,7 @@ body:
         - Image Editing (image-editing)
         - Device Link (device-link)
         - Handwriting Language (app)
-        - Ink Notebook Editor (Mac app)
+        - Note Editor (Mac app)
         - Other
     validations:
       required: true
