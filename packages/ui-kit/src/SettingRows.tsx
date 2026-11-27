@@ -182,13 +182,10 @@ export function ChoiceList<V>({
           <ListRow
             key={choice.label}
             title={choice.label}
-            trailing={
-              <Radio
-                checked={choice.value === value}
-                accessibilityLabel={`${title}: ${choice.label}`}
-                onPress={() => onChange(choice.value)}
-              />
-            }
+            // The whole row chooses, its label too, not only the radio at its end (#554).
+            onPress={() => onChange(choice.value)}
+            radio={{label: `${title}: ${choice.label}`, checked: choice.value === value}}
+            trailing={<Radio checked={choice.value === value} />}
           />
         ))}
       </RowGroup>

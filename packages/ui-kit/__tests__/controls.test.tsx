@@ -391,4 +391,27 @@ describe('the native controls (#273)', () => {
     press(tree, 'Word spacing: Wide');
     expect(onChange.mock.calls).toEqual([['tight'], ['wide']]);
   });
+
+  it('chooses a value by a press anywhere on its row, its label too, and speaks each choice once (#554)', () => {
+    const onChange = jest.fn();
+    const tree = render(
+      <ChoiceList
+        title="Word spacing"
+        choices={[
+          {value: 'tight', label: 'Tight'},
+          {value: 'wide', label: 'Wide'},
+        ]}
+        value="wide"
+        onChange={onChange}
+      />,
+    );
+    const label = tree.root.find(n => n.props.children === 'Tight' && typeof n.type === 'string');
+    let node = label.parent;
+    while (node && typeof node.props.onPress !== 'function') {
+      node = node.parent;
+    }
+    act(() => node!.props.onPress());
+    expect(onChange.mock.calls).toEqual([['tight']]);
+    expect(tree.root.findAll(n => n.props.accessibilityRole === 'radio' && typeof n.type === 'string')).toHaveLength(2);
+  });
 });

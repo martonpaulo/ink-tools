@@ -18,9 +18,14 @@ export type ListRowProps = {
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
   onPress?: () => void;
+  /**
+   * A pressable row that is one radio choice (#554): it speaks as a radio, by this label, checked
+   * or not, and its trailing `Radio` only shows the choice.
+   */
+  radio?: {label: string; checked: boolean};
 };
 
-export function ListRow({title, subtitle, leading, trailing, onPress}: ListRowProps): React.JSX.Element {
+export function ListRow({title, subtitle, leading, trailing, onPress, radio}: ListRowProps): React.JSX.Element {
   const content = (
     <>
       {leading}
@@ -40,8 +45,9 @@ export function ListRow({title, subtitle, leading, trailing, onPress}: ListRowPr
   }
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={subtitle === undefined ? title : `${title}, ${subtitle}`}
+      accessibilityRole={radio ? 'radio' : 'button'}
+      accessibilityLabel={radio?.label ?? (subtitle === undefined ? title : `${title}, ${subtitle}`)}
+      accessibilityState={radio ? {checked: radio.checked} : undefined}
       nativeID={LIST_ROW_ID}
       style={[styles.row, styles.target]}
       onPress={onPress}>

@@ -5,12 +5,23 @@ import {metrics} from './metrics';
 
 export type RadioProps = {
   checked: boolean;
-  onPress: () => void;
-  /** The choice's name, such as «English». */
-  accessibilityLabel: string;
+  /**
+   * Without it the radio only shows the choice: the row around it acts and speaks for it, as a
+   * `ChoiceList` row does (#554).
+   */
+  onPress?: () => void;
+  /** The choice's name, such as «English»; only a radio that acts has one. */
+  accessibilityLabel?: string;
 };
 
 export function Radio({checked, onPress, accessibilityLabel}: RadioProps): React.JSX.Element {
+  if (!onPress) {
+    return (
+      <View style={styles.target} importantForAccessibility="no-hide-descendants">
+        <View style={styles.ring}>{checked && <View testID="radio-dot" style={styles.dot} />}</View>
+      </View>
+    );
+  }
   return (
     <Pressable
       accessibilityRole="radio"
