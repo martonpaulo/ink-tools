@@ -1,6 +1,9 @@
 /** The strings every game view shares (#386); each game keeps its own beside it. English only (#93). */
 export const playCopy = {
   difficulty: 'Difficulty',
+  /** A game of several grid sizes: the choice's title and each size's label. */
+  size: 'Size',
+  sizeLabel: (size: number) => `${size} x ${size}`,
   bands: {easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert'} as Record<string, string>,
   'new.caption': 'New page',
   'new.add': 'Add Page',

@@ -1,38 +1,25 @@
 /** Killer sudoku in the Puzzles view (#387): a band, «Check» and «Show Solution». */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {
-  cellCenter,
   drawKillerPage,
-  encodePng,
   generateKiller,
   killerFromCode,
   puzzleCode,
-  type InkStroke,
   type KillerSudoku,
 } from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {KILLER, killerCopy} from '../src/games/killer';
 import {playCopy} from '../src/play/copy';
-import {fakePages, HERE, mount, press, SEED} from '../testing/gameView';
+import {expectAdded, expectSolved, fakePages, HERE, mount, press, readDigits, SEED, writtenCells} from '../testing/gameView';
 
 const PUZZLE: KillerSudoku = generateKiller(SEED, 'medium');
 const CODE = puzzleCode(PUZZLE.id);
 const SHAPE = {orientation: HERE.orientation, hand: 'right' as const};
 
-/** A stroke in each open cell, tagged with the digit `change` makes of its solution digit. */
-function written(change: (cell: number, digit: string) => string): InkStroke<object>[] {
-  const {grid} = drawKillerPage(PUZZLE, SHAPE).layout;
-  return PUZZLE.givens.flatMap((given, cell) => {
-    if (given !== 0) {return [];}
-    const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
-    return [{points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: change(cell, String(PUZZLE.solution[cell]))}}];
-  });
-}
-const readDigits = (elements: object[]) => {
-  const digits = elements.map(element => (element as {digit: string}).digit);
-  return digits.includes('x') ? {ok: true as const, text: null} : {ok: true as const, text: digits.join(' ')};
-};
-const openCells = PUZZLE.givens.flatMap((given, cell) => (given === 0 ? [cell] : []));
+const OPEN = PUZZLE.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(PUZZLE.solution[cell])] as const] : []));
+const GRID = drawKillerPage(PUZZLE, SHAPE).layout.grid;
+const written = (change?: (cell: number, digit: string) => string) => writtenCells(GRID, OPEN, change);
+const openCells = OPEN.map(([cell]) => cell);
 
 describe('the killer sudoku game (#387)', () => {
   test('is in the game list, after the sudoku, with every band', async () => {
@@ -43,14 +30,10 @@ describe('the killer sudoku game (#387)', () => {
   });
 
   test('«Add Page» puts the chosen killer sudoku on a new page, the same for the same seed', async () => {
-    const {pages, inserted, calls} = fakePages();
-    const tree = await mount(KILLER, pages);
+    const fake = fakePages();
+    const tree = await mount(KILLER, fake.pages);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.medium}`);
-    await press(tree, playCopy['new.add']);
-    expect(inserted.map(page => page.code)).toEqual([CODE]);
-    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
-    const again = KILLER.create({band: 'medium'}, SEED, SHAPE);
-    expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);
+    await expectAdded(tree, fake, KILLER, CODE, {band: 'medium'});
   });
 
   test('a page with another game offers only a new one', async () => {
@@ -68,10 +51,7 @@ describe('the killer sudoku game (#387)', () => {
     const tree = await mount(KILLER, first.pages);
     await press(tree, playCopy['here.check']);
     expect(shownTexts(tree.root)).toContain(`${playCopy['verdict.wrong'](1)} ${playCopy['verdict.unread'](1)}`);
-    const right = fakePages({code: CODE, ink: written((_cell, digit) => digit), read: readDigits});
-    const solved = await mount(KILLER, right.pages);
-    await press(solved, playCopy['here.check']);
-    expect(shownTexts(solved.root)).toContain(playCopy['verdict.solved']);
+    await expectSolved(KILLER, CODE, written());
   });
 
   test('«Show Solution» writes nothing to the note', async () => {

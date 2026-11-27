@@ -2,35 +2,23 @@
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {
   calcudokuFromCode,
-  cellCenter,
   drawCalcudokuPage,
-  encodePng,
   generateCalcudoku,
   puzzleCode,
   type Calcudoku,
-  type InkStroke,
 } from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {CALCUDOKU, calcudokuCopy} from '../src/games/calcudoku';
 import {playCopy} from '../src/play/copy';
-import {fakePages, HERE, mount, press, SEED} from '../testing/gameView';
+import {expectAdded, expectSolved, fakePages, HERE, mount, press, readDigits, SEED, writtenCells} from '../testing/gameView';
 
 const PUZZLE: Calcudoku = generateCalcudoku(SEED, 4, 'easy');
 const CODE = puzzleCode(PUZZLE.id);
 const SHAPE = {orientation: HERE.orientation, hand: 'right' as const};
 
-/** A stroke in every cell, tagged with the digit `change` makes of its solution digit. */
-function written(change: (cell: number, digit: string) => string): InkStroke<object>[] {
-  const {grid} = drawCalcudokuPage(PUZZLE, SHAPE).layout;
-  return PUZZLE.solution.map((value, cell) => {
-    const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
-    return {points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: change(cell, String(value))}};
-  });
-}
-const readDigits = (elements: object[]) => {
-  const digits = elements.map(element => (element as {digit: string}).digit);
-  return digits.includes('x') ? {ok: true as const, text: null} : {ok: true as const, text: digits.join(' ')};
-};
+const OPEN = PUZZLE.solution.map((value, cell) => [cell, String(value)] as const);
+const GRID = drawCalcudokuPage(PUZZLE, SHAPE).layout.grid;
+const written = (change?: (cell: number, digit: string) => string) => writtenCells(GRID, OPEN, change);
 
 describe('the calcudoku game (#388)', () => {
   test('is in the game list, after the killer sudoku', () => {
@@ -39,17 +27,13 @@ describe('the calcudoku game (#388)', () => {
   });
 
   test('a size change drops a band it does not offer, and «Add Page» puts that puzzle on a new page', async () => {
-    const {pages, inserted, calls} = fakePages();
-    const tree = await mount(CALCUDOKU, pages);
+    const fake = fakePages();
+    const tree = await mount(CALCUDOKU, fake.pages);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.hard}`);
-    await press(tree, `${calcudokuCopy.size}: ${calcudokuCopy.sizeLabel(9)}`);
+    await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(9)}`);
     expect(shownTexts(tree.root)).not.toContain(playCopy.bands.hard);
-    await press(tree, `${calcudokuCopy.size}: ${calcudokuCopy.sizeLabel(4)}`);
-    await press(tree, playCopy['new.add']);
-    expect(inserted.map(page => page.code)).toEqual([CODE]);
-    expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
-    const again = CALCUDOKU.create({size: '4', band: 'easy'}, SEED, SHAPE);
-    expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);
+    await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(4)}`);
+    await expectAdded(tree, fake, CALCUDOKU, CODE, {size: '4', band: 'easy'});
   });
 
   test('a page with another game offers only a new one', async () => {
@@ -66,10 +50,7 @@ describe('the calcudoku game (#388)', () => {
     const tree = await mount(CALCUDOKU, first.pages);
     await press(tree, playCopy['here.check']);
     expect(shownTexts(tree.root)).toContain(`${playCopy['verdict.wrong'](1)} ${playCopy['verdict.unread'](1)}`);
-    const right = fakePages({code: CODE, ink: written((_cell, digit) => digit), read: readDigits});
-    const solved = await mount(CALCUDOKU, right.pages);
-    await press(solved, playCopy['here.check']);
-    expect(shownTexts(solved.root)).toContain(playCopy['verdict.solved']);
+    await expectSolved(CALCUDOKU, CODE, written());
   });
 
   test('«Show Solution» writes nothing to the note', async () => {

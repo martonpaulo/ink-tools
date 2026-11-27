@@ -20,8 +20,6 @@ import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
 export const futoshikiCopy = {
   title: 'Futoshiki',
   subtitle: 'Fill each row and column once; each sign points to the smaller digit',
-  size: 'Size',
-  sizeLabel: (size: number) => `${size} x ${size}`,
 } as const;
 
 const SIZES = Object.keys(FUTOSHIKI_SIZES).map(Number);
@@ -49,8 +47,8 @@ export const FUTOSHIKI: PuzzleGame = {
   options: [
     {
       id: 'size',
-      title: futoshikiCopy.size,
-      choices: SIZES.map(size => ({value: String(size), label: futoshikiCopy.sizeLabel(size)})),
+      title: playCopy.size,
+      choices: SIZES.map(size => ({value: String(size), label: playCopy.sizeLabel(size)})),
       initial: String(SIZES[0]),
     },
     {

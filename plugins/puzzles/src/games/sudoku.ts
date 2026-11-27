@@ -21,8 +21,6 @@ import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
 export const sudokuCopy = {
   title: 'Sudoku',
   subtitle: 'Fill each row, column and box once',
-  size: 'Size',
-  sizeLabel: (size: number) => `${size} x ${size}`,
   /** The rule the page's footer prints. */
   rule: (size: number) => `Put 1 to ${size} once in each row, column and box.`,
 } as const;
@@ -54,8 +52,8 @@ export const SUDOKU: PuzzleGame = {
   options: [
     {
       id: 'size',
-      title: sudokuCopy.size,
-      choices: SIZES.map(size => ({value: String(size), label: sudokuCopy.sizeLabel(size)})),
+      title: playCopy.size,
+      choices: SIZES.map(size => ({value: String(size), label: playCopy.sizeLabel(size)})),
       initial: String(CLASSIC),
     },
     {

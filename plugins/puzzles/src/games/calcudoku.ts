@@ -22,8 +22,6 @@ import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
 export const calcudokuCopy = {
   title: 'Calcudoku',
   subtitle: 'Fill each row and column once; each cage makes its number with its sign',
-  size: 'Size',
-  sizeLabel: (size: number) => `${size} x ${size}`,
 } as const;
 
 const SIZES = Object.keys(CALCUDOKU_SIZES).map(Number);
@@ -53,8 +51,8 @@ export const CALCUDOKU: PuzzleGame = {
   options: [
     {
       id: 'size',
-      title: calcudokuCopy.size,
-      choices: SIZES.map(size => ({value: String(size), label: calcudokuCopy.sizeLabel(size)})),
+      title: playCopy.size,
+      choices: SIZES.map(size => ({value: String(size), label: playCopy.sizeLabel(size)})),
       initial: String(SIZES[0]),
     },
     {

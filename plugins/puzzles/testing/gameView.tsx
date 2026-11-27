@@ -5,12 +5,13 @@
  */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {pressables} from '@ink-tools/ui-kit/problemTest';
-import type {InkStroke, ReadText} from '@ink-tools/puzzle-core';
+import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
+import {cellCenter, encodePng, type Grid, type InkStroke, type ReadText} from '@ink-tools/puzzle-core';
 import {THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {GameView} from '../src/play/GameView';
 import type {Here, PagePorts} from '../src/play/pages';
-import type {PuzzleGame} from '../src/play/puzzle';
+import type {Choices, PuzzleGame} from '../src/play/puzzle';
+import {playCopy} from '../src/play/copy';
 
 export const SEED = '7K2Q9X';
 export const HERE: Here = {notePath: '/storage/emulated/0/Note/Puzzles.note', page: 2, size: {width: 1920, height: 2560}, orientation: 'portrait'};
@@ -89,4 +90,47 @@ export async function press(tree: ReactTestRenderer, label: string) {
     control.props.onPress();
     await new Promise(resolve => setTimeout(resolve, 0));
   });
+}
+
+/** A written stroke reaches this share of the cell above and below its centre. */
+const STROKE_REACH = 0.25;
+
+/**
+ * A cell game's page written by hand (#390, #383): a stroke in each of `cells`, tagged with what
+ * `change` makes of its right value; `readDigits` reads the tags back, and an `x` as unreadable.
+ */
+export function writtenCells(
+  grid: Grid,
+  cells: Iterable<readonly [number, string]>,
+  change: (cell: number, value: string) => string = (_cell, value) => value,
+): InkStroke<object>[] {
+  return [...cells].map(([cell, value]) => {
+    const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+    const reach = grid.cell * STROKE_REACH;
+    return {points: [{x, y: y - reach}, {x, y: y + reach}], element: {digit: change(cell, value)}};
+  });
+}
+export const readDigits = (elements: object[]): ReadText => {
+  const digits = elements.map(element => (element as {digit: string}).digit);
+  return digits.includes('x') ? {ok: true, text: null} : {ok: true, text: digits.join(' ')};
+};
+
+/** «Check» on a page holding `code` and `ink` says it is solved. */
+export async function expectSolved(game: PuzzleGame, code: string, ink: InkStroke<object>[]) {
+  const right = fakePages({code, ink, read: readDigits});
+  const tree = await mount(game, right.pages);
+  await press(tree, playCopy['here.check']);
+  expect(shownTexts(tree.root)).toContain(playCopy['verdict.solved']);
+}
+
+/**
+ * Presses «Add Page» and expects one new page, `code`, drawn as `game` draws it from `choices`
+ * and the fixed seed; the view closes before the insert, as its note reload can end the view.
+ */
+export async function expectAdded(tree: ReactTestRenderer, fake: ReturnType<typeof fakePages>, game: PuzzleGame, code: string, choices: Choices) {
+  await press(tree, playCopy['new.add']);
+  expect(fake.inserted.map(page => page.code)).toEqual([code]);
+  expect(fake.calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
+  const again = game.create(choices, SEED, {orientation: HERE.orientation, hand: 'right'});
+  expect(Buffer.from(fake.inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);
 }
