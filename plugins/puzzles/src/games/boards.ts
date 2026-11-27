@@ -20,7 +20,8 @@ export const boardsCopy = {
 const boardGame = (game: BoardGame): PuzzleGame => ({
   id: game,
   title: boardsCopy.titles[game],
-  subtitle: boardRule(game),
+  // The page's rule is a sentence; the game list's subtitles carry no full stop, as the puzzles' do.
+  subtitle: boardRule(game).replace(/\.$/, ''),
   options: [],
   create: (_choices, seed, shape) => ({code: `${game}-${seed}`, page: renderBoardPage(game, shape)}),
 });

@@ -297,7 +297,7 @@ function Ready({
   return (
     <View style={shared.screen}>
       <TitleBar title={game.title} onBack={onBack} onClose={onClose} />
-      <ScrollView style={styles.fill}>
+      <ScrollView style={styles.choices}>
         {board && thisPage}
         {game.options.map(option => (
           <ChoiceList
@@ -308,12 +308,13 @@ function Ready({
             onChange={value => onChoose(option.id, value)}
           />
         ))}
-        <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />
-        <View style={[shared.buttons, styles.section]}>
-          <Button kind="primary" label={playCopy['new.add']} onPress={onAdd} />
-        </View>
         {!board && thisPage}
       </ScrollView>
+      {/* Fixed under the choices, so a long list never pushes the view's main action off screen (#383). */}
+      <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />
+      <View style={[shared.buttons, styles.section]}>
+        <Button kind="primary" label={playCopy['new.add']} onPress={onAdd} />
+      </View>
     </View>
   );
 }
@@ -345,6 +346,8 @@ function Picture({
 
 const styles = StyleSheet.create({
   fill: {flex: 1},
+  /** As tall as the choices, and no taller than the room the fixed «New page» part leaves (#383). */
+  choices: {flexGrow: 0, flexShrink: 1},
   /** The gap a RowGroup leaves under itself, so the next caption sits as far from the button. */
   section: {marginBottom: metrics.sectionGap},
 });

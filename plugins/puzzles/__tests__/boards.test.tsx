@@ -11,7 +11,9 @@ describe('the pass-and-play boards (#402)', () => {
     expect(GAMES.map(game => game.id).slice(-BOARD_GAMES.length)).toEqual([...BOARD_GAMES]);
     expect(BOARDS.map(board => board.title)).toEqual(BOARD_GAMES.map(game => boardsCopy.titles[game]));
     // Each board says how it is played, as its page does, so no two rows read alike.
-    expect(BOARDS.map(board => board.subtitle)).toEqual(BOARD_GAMES.map(boardRule));
+    expect(BOARDS.map(board => board.subtitle)).toEqual(BOARD_GAMES.map(game => boardRule(game).replace(/\.$/, '')));
+    // Every game's subtitle, puzzles and boards alike, ends without a full stop.
+    expect(GAMES.filter(entry => entry.subtitle?.endsWith('.'))).toEqual([]);
   });
 
   test.each(BOARD_GAMES)('«Add Page» puts the %s board on a new page after this one', async game => {

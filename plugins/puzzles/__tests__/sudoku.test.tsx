@@ -1,4 +1,5 @@
 /** Classic sudoku in the Puzzles view (#383): a size, a band that size offers, «Check» and «Show Solution». */
+import {ScrollView} from 'react-native';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {
   cellCenter,
@@ -49,6 +50,16 @@ describe('the sudoku game (#383)', () => {
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.hard}`);
     await press(tree, `${sudokuCopy.size}: ${sudokuCopy.sizeLabel(4)}`);
     expect(shownTexts(tree.root)).not.toContain(playCopy.bands.hard);
+  });
+
+  test('«Add Page» stays out of the scrolled choices, so the longest list never hides it', async () => {
+    const tree = await mount(SUDOKU, fakePages({code: CODE}).pages);
+    const [add] = pressables(tree.root, playCopy['new.add']);
+    let inScroll = false;
+    for (let node = add.parent; node; node = node.parent) {
+      inScroll = inScroll || node.type === ScrollView;
+    }
+    expect(inScroll).toBe(false);
   });
 
   test('«Add Page» puts the chosen sudoku on a new page, the same for the same seed', async () => {
