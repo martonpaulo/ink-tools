@@ -294,7 +294,10 @@ export async function placeElement(element: object, page: number, rect: EditRect
 /**
  * Moves and sizes a shape to `rect` (#463): a line's or polygon's points mapped from their bounds,
  * or an ellipse's centre and radii; a circle sized to a rect that is not square becomes an ellipse.
- * The angle goes back in the insert's convention (`insertAngle`), so the shape keeps its look.
+ * The angle goes back in the insert's convention (`insertAngle`), so the shape keeps its look. A
+ * circle looks the same at any angle, so it goes back at 0: Smart Pen's circles are stored turned
+ * (45.5 measured on the Manta, #459), and a circle sized to a rect that is not square becomes an
+ * ellipse along the rect.
  * shortcut: a turned ellipse (an angle not near 0 or 90) is refused, since its box needs the angle's sense; the device round settles it.
  */
 function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect): Result<object> {
@@ -306,7 +309,8 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
     if (!center || !(major > 0) || !(minor > 0)) {
       return fail(THROWN_CODE, 'the shape has no centre or radii');
     }
-    if (!isUnturned(geometry.ellipseAngle)) {
+    const circle = major === minor;
+    if (!circle && !isUnturned(geometry.ellipseAngle)) {
       return fail(THROWN_CODE, `a turned ellipse cannot be moved yet (ellipseAngle ${JSON.stringify(geometry.ellipseAngle)})`);
     }
     const from = {left: center.x - major, top: center.y - minor, right: center.x + major, bottom: center.y + minor};
@@ -317,7 +321,7 @@ function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect)
     if (geometry.ellipseMajorAxisRadius !== geometry.ellipseMinorAxisRadius) {
       geometry.type = 'GEO_ellipse';
     }
-    geometry.ellipseAngle = insertAngle(geometry.ellipseAngle);
+    geometry.ellipseAngle = circle ? 0 : insertAngle(geometry.ellipseAngle);
     moveBox(placed, map);
     return ok(placed);
   }

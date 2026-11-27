@@ -425,11 +425,24 @@ describe('the editor helper calls (#312)', () => {
     expect(await page.placeElement({type: 700, geometry: {...turned, ellipseAngle: 91}}, 0, rect)).toMatchObject({ok: false});
   });
 
+  it('moves a circle stored turned, as Smart Pen draws it, and writes it back at 0 (#459)', async () => {
+    // A held circle Smart Pen drew on the Manta read back at this angle, and the move was refused.
+    const circle = {type: 'GEO_circle', ellipseCenterPoint: {x: 50, y: 50}, ellipseMajorAxisRadius: 50, ellipseMinorAxisRadius: 50, ellipseAngle: 45.52582931518555};
+    expect(await page.placeElement({type: 700, geometry: {...circle}}, 0, {left: 100, top: 200, right: 300, bottom: 400})).toMatchObject({
+      ok: true,
+      value: {geometry: {type: 'GEO_circle', ellipseCenterPoint: {x: 200, y: 300}, ellipseMajorAxisRadius: 100, ellipseMinorAxisRadius: 100, ellipseAngle: 0}},
+    });
+    expect(await page.placeElement({type: 700, geometry: {...circle}}, 0, {left: 100, top: 200, right: 500, bottom: 400})).toMatchObject({
+      ok: true,
+      value: {geometry: {type: 'GEO_ellipse', ellipseMajorAxisRadius: 200, ellipseMinorAxisRadius: 100, ellipseAngle: 0}},
+    });
+  });
+
   it('moves an ellipse the tablet stored at about 90 after an insert at 0, writing the angle in the insert convention (#463)', async () => {
     // The value the Manta answered for an ellipse inserted at angle 0 (#463, device round 2).
     const stored = 90.00273895263672;
     const ellipse = {type: 'GEO_ellipse', ellipseCenterPoint: {x: 50, y: 50}, ellipseMajorAxisRadius: 50, ellipseMinorAxisRadius: 20, ellipseAngle: stored};
-    expect(await page.placeElement({type: 700, geometry: ellipse}, 0, rect)).toMatchObject({
+    expect(await page.placeElement({type: 700, geometry: {...ellipse}}, 0, rect)).toMatchObject({
       ok: true,
       value: {geometry: {ellipseCenterPoint: {x: 200, y: 300}, ellipseMajorAxisRadius: 100, ellipseMinorAxisRadius: 100}},
     });
