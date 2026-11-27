@@ -39,6 +39,7 @@ export const REGISTRY_ITEMS: readonly RegistryItem[] = [
   {id: 'storage.cloud-conflict-folder', level: 5, impact: 'user', owner: 'picture-search', probe: null, unprobed: 'a conflict appears only after two devices sync', active: 'picture-search src/storage/settings.ts', off: null},
   {id: 'storage.sign-in-drop-folder', level: 2, impact: 'user', owner: 'account-sync', probe: null, unprobed: '#293 adds a read of the folder', active: 'account-sync src/secretStore.ts', off: null},
   {id: 'storage.helper-channel', level: 2, impact: 'tests', owner: 'ink-tools-probe', probe: 'inkctl helper', unprobed: null, active: 'ink-tools-probe src/helper.ts', off: null},
+  {id: 'storage.shared-folder', level: 2, impact: 'user', owner: 'sn-adapter', probe: 'sn-adapter probeSharedFolder', unprobed: null, active: 'sn-adapter src/official/storage.ts', off: null},
   {id: 'todo.provider', level: 2, impact: 'user', owner: 'sn-adapter', probe: 'sn-adapter probeCapability(todo)', unprobed: null, active: 'sn-adapter internals/todo.ts', off: null},
   {id: 'todo.row-rules', level: 5, impact: 'user', owner: 'sn-adapter', probe: null, unprobed: 'a row\'s visibility shows only in the app; #293 adds a read round-trip on a known row', active: 'sn-adapter internals/rules.ts', off: null},
   {id: 'todo.twin-repair', level: 5, impact: 'user', owner: 'account-sync', probe: null, unprobed: 'a twin appears only after a cloud sync; the accepted risk is a real task soft-deleted, so the repair logs each removal', active: 'account-sync deviceStores.ts', off: null},
@@ -101,6 +102,10 @@ export const REGISTRY = {
     folder: '/storage/emulated/0/.data/plugin/inktools-probe',
     commandFile: 'command.json',
     answerMark: 'SNPROBE answer',
+  },
+  storageSharedFolder: {
+    folder: '/storage/emulated/0/.data/plugin/inktools-shared',
+    permissions: ['plugin.permission.FILE:READ', 'plugin.permission.FILE:WRITE'],
   },
   todoProvider: {
     authority: 'com.ratta.supernote.task.provider',

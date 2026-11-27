@@ -74,6 +74,7 @@ public final class Registry {
       new Item("storage.cloud-conflict-folder", 5, "user", "picture-search", null, "a conflict appears only after two devices sync", "picture-search src/storage/settings.ts", null),
       new Item("storage.sign-in-drop-folder", 2, "user", "account-sync", null, "#293 adds a read of the folder", "account-sync src/secretStore.ts", null),
       new Item("storage.helper-channel", 2, "tests", "ink-tools-probe", "inkctl helper", null, "ink-tools-probe src/helper.ts", null),
+      new Item("storage.shared-folder", 2, "user", "sn-adapter", "sn-adapter probeSharedFolder", null, "sn-adapter src/official/storage.ts", null),
       new Item("system.device-identity", 2, "user", "inkctl", "inkctl status", null, "inkctl status", null),
       new Item("system.firmware-page", 2, "user", "inkctl", "inkctl firmware", null, "inkctl firmware", null),
       new Item("system.plugin-log-tag", 5, "tests", "inkctl", "inkctl logs", null, "inkctl logs", null),

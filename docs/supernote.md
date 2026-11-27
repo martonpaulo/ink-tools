@@ -958,6 +958,23 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
   ([#296](https://github.com/martonpaulo/ink-tools/issues/296)). What stays in `MyStyle/` is
   what the person or another app must see there: stickers for the Sticker import, fonts, and Word
   Lookup's measured fallback for an insert from the private folder that failed.
+- **One plugin reads what another plugin wrote in `.data/plugin/`.** The plugin file guard allows
+  the whole hidden `.data/plugin/` tree to every plugin with `FILE:READ` and `FILE:WRITE`, not only
+  the plugin's own folder: two plugins with different plugin ids, both holding the file
+  permissions, each created `.data/plugin/inktools-shared/`, wrote a file there with plain Java file
+  I/O on a native module's worker thread, listed the folder and read the other's file, through Java
+  and through the SDK's `FileUtils` (`listFiles`, `getFileMD5`, `copyFile`); a plugin also read the
+  files in another plugin's own `inktools-<plugin folder>` [measured, Manta, firmware
+  `Chauvet.E103.2610191001.2559_release`, 2026-11-27, [#499](https://github.com/martonpaulo/ink-tools/issues/499)].
+  Uninstalling the plugin that wrote a file there leaves the file: the files of the uninstalled
+  plugin stayed and the other plugin still read them [measured, same round]. Supernote Cloud does
+  not sync `.data/plugin/` ([#22](https://github.com/martonpaulo/ink-tools/issues/22)). So the
+  values the tools share (My languages, the language packs) live in one shared folder, the
+  registry's `storage.shared-folder`, which sn-adapter's `SHARED_FOLDER` and `probeSharedFolder`
+  read; a file there outlives the plugin that wrote it, so each tool that writes one names it and
+  the file's owner. Whether Handwriting Language, with `MANAGE_EXTERNAL_STORAGE`, reads and writes
+  that folder is [unverified: no build of it carries the read yet, [#499](https://github.com/martonpaulo/ink-tools/issues/499)];
+  it writes `/sdcard/.data/dictionary/default/`, under the same `.data/` [measured, see Plugins].
 - A sync conflict renames a folder to `<name>_CONFLICT_<17 digits>` [measured, [#22](https://github.com/martonpaulo/ink-tools/issues/22)]. It takes a
   child changed on the tablet since the last sync and the folder deleted and recreated on the
   cloud side (the launcher's `SingleSyncTask`, [#22](https://github.com/martonpaulo/ink-tools/issues/22)), so Word Lookup keeps

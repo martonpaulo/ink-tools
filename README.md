@@ -153,7 +153,7 @@ Use the highest level that delivers the outcome at acceptable cost and quality.
 | Level | Examples | When it breaks | Where it is tested | Registry items |
 | :--- | :--- | :--- | :--- | ---: |
 | 1️⃣ Official plugin API | lasso, insert a picture, pages, files, buttons, dialogs | rarely, with Ratta's notice; affects the person | Mac tests, with the simulated adapter | 1 |
-| 2️⃣ Device data | Calendar, To-Do and Digest entries; the handwriting language; the note file format | any firmware update; the probe sees it; affects the person | a tablet probe of fields, paths and versions | 11 |
+| 2️⃣ Device data | Calendar, To-Do and Digest entries; the handwriting language; the note file format | any firmware update; the probe sees it; affects the person | a tablet probe of fields, paths and versions | 12 |
 | 3️⃣ System screens and components | native switches and bars, the helper app, Settings shortcuts | any firmware update; a call fails; affects the person | a tablet probe that loads and checks each one | 7 |
 | 4️⃣ Screen automation | find buttons by their text in Settings and in notes | any interface change; a step fails; affects only our tests | `inkctl doctor` before each test round | 3 |
 | 5️⃣ Observed device behaviour | the Back key, pen units, how Calendar and To-Do read entries | **silently**; affects the person | an effect test: write, read back, compare | 24 |

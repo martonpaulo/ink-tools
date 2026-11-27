@@ -1,5 +1,6 @@
 import {FileUtils} from 'sn-plugin-lib';
 import {REGISTRY} from '../registry.generated';
+import {hasPermission} from './plugin';
 import {attempt, fail, ok, Result, THROWN_CODE} from './result';
 
 /**
@@ -64,4 +65,58 @@ export async function listFolder(path: string): Promise<Result<FolderEntry[]>> {
       return ok(entries.map(entry => ({path: entry.path as string, folder: entry.type === 0})));
     },
   );
+}
+
+/**
+ * The Ink Tools shared folder (the registry's `storage.shared-folder`, #499): the one home of the
+ * values the tools share, such as My languages and the language packs (#502, #503). Two plugins
+ * with different plugin ids each created, wrote, read and listed it on the Manta, so no plugin
+ * depends on another to reach what that one wrote; Supernote Cloud does not sync `.data/plugin/`.
+ */
+export const SHARED_FOLDER: string = REGISTRY.storageSharedFolder.folder;
+
+/** The permissions a plugin needs to use the shared folder, declared in the registry, not here. */
+export const SHARED_FOLDER_PERMISSIONS: readonly string[] = REGISTRY.storageSharedFolder.permissions;
+
+/** Whether this plugin can use the shared folder now: ready with its entries, or the permissions it misses. */
+export type SharedFolderState =
+  | {status: 'ready'; folder: string; entries: FolderEntry[]}
+  | {status: 'needs'; missing: string[]};
+
+export type SharedFolderDeps = {
+  has: (permission: string) => Promise<Result<boolean>>;
+  make: (path: string) => Promise<Result<boolean>>;
+  list: (path: string) => Promise<Result<FolderEntry[]>>;
+};
+
+const SHARED_FOLDER_DEVICE: SharedFolderDeps = {has: hasPermission, make: makeFolder, list: listFolder};
+
+/**
+ * The shared folder's probe (`storage.shared-folder`'s `probe`): every permission the registry
+ * lists that is not granted, a failed check counted as not granted, so a screen shows the exact
+ * missing one in its Needs state (#245); with all granted, the folder made when missing and listed.
+ * A folder that is not made or not listed is a failure that names it, never an empty list.
+ */
+export async function probeSharedFolder(
+  deps: SharedFolderDeps = SHARED_FOLDER_DEVICE,
+): Promise<Result<SharedFolderState>> {
+  const missing: string[] = [];
+  for (const permission of SHARED_FOLDER_PERMISSIONS) {
+    const held = await deps.has(permission);
+    if (!(held.ok && held.value)) {
+      missing.push(permission);
+    }
+  }
+  if (missing.length) {
+    return ok({status: 'needs', missing});
+  }
+  const made = await deps.make(SHARED_FOLDER);
+  if (!made.ok) {
+    return made;
+  }
+  if (!made.value) {
+    return fail(THROWN_CODE, `the shared folder ${SHARED_FOLDER} was not made`);
+  }
+  const entries = await deps.list(SHARED_FOLDER);
+  return entries.ok ? ok({status: 'ready', folder: SHARED_FOLDER, entries: entries.value}) : entries;
 }

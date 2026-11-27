@@ -185,6 +185,7 @@ REGISTRY_ITEMS = (
     {"id": "storage.cloud-conflict-folder", "level": 5, "impact": "user", "owner": "picture-search", "probe": None, "unprobed": "a conflict appears only after two devices sync", "active": "picture-search src/storage/settings.ts", "off": None},
     {"id": "storage.sign-in-drop-folder", "level": 2, "impact": "user", "owner": "account-sync", "probe": None, "unprobed": "#293 adds a read of the folder", "active": "account-sync src/secretStore.ts", "off": None},
     {"id": "storage.helper-channel", "level": 2, "impact": "tests", "owner": "ink-tools-probe", "probe": "inkctl helper", "unprobed": None, "active": "ink-tools-probe src/helper.ts", "off": None},
+    {"id": "storage.shared-folder", "level": 2, "impact": "user", "owner": "sn-adapter", "probe": "sn-adapter probeSharedFolder", "unprobed": None, "active": "sn-adapter src/official/storage.ts", "off": None},
     {"id": "system.device-identity", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl status", "unprobed": None, "active": "inkctl status", "off": None},
     {"id": "system.firmware-page", "level": 2, "impact": "user", "owner": "inkctl", "probe": "inkctl firmware", "unprobed": None, "active": "inkctl firmware", "off": None},
     {"id": "system.plugin-log-tag", "level": 5, "impact": "tests", "owner": "inkctl", "probe": "inkctl logs", "unprobed": None, "active": "inkctl logs", "off": None},

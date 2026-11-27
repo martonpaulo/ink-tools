@@ -90,6 +90,39 @@
         "commandFile": "command.json",
         "answerMark": "SNPROBE answer"
       }
+    },
+    {
+      "id": "storage.shared-folder",
+      "title": "The Ink Tools shared folder in .data/plugin/, where every Ink Tools plugin reads and writes the values the tools share",
+      "level": 2,
+      "impact": "user",
+      "owner": "sn-adapter",
+      "readers": [
+        "sn-adapter"
+      ],
+      "reason": "the SDK has no store shared between plugins; the hidden .data/plugin/ is the folder the plugin file guard lets each plugin with the file permissions write, and Supernote Cloud does not sync it",
+      "evidence": {
+        "source": "device round on a Manta: two plugins with different plugin ids created, wrote, read and listed the folder (#499)",
+        "version": "Chauvet.E103.2610191001.2559",
+        "date": "2026-11-27"
+      },
+      "upgradePath": "an SDK store shared between plugins",
+      "lastVerified": "2026-11-27",
+      "publicApiRequest": "not asked",
+      "probe": {
+        "name": "sn-adapter probeSharedFolder"
+      },
+      "active": "sn-adapter src/official/storage.ts",
+      "issues": [
+        499
+      ],
+      "values": {
+        "folder": "/storage/emulated/0/.data/plugin/inktools-shared",
+        "permissions": [
+          "plugin.permission.FILE:READ",
+          "plugin.permission.FILE:WRITE"
+        ]
+      }
     }
   ]
 }
