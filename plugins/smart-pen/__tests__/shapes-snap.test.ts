@@ -22,9 +22,15 @@ function strokeOf(points: PenPoint[], numInPage = 0) {
 }
 type FakeElement = ReturnType<typeof strokeOf>;
 
-/** A page holding `others` beside the stroke inside the lasso. */
-function fakeHost(others = 0) {
+/**
+ * A page holding `others` beside the stroke inside the lasso. The stroke is the page's last element
+ * until a delete takes it; `lassoLeaves` is a lasso delete that answers true and leaves it, as the
+ * tablet does for a stroke a plugin inserted (#477).
+ */
+function fakeHost(others = 0, lassoLeaves = false) {
   const stroke = strokeOf(CIRCLE, 7);
+  const before = strokeOf([{x: 9, y: 9}], 6);
+  let onPage = true;
   const host = {
     strokePoints: jest.fn(async (e: object) => ok((e as FakeElement).points)),
     saveStroke: jest.fn(async () =>
@@ -55,10 +61,16 @@ function fakeHost(others = 0) {
         ...Array.from({length: others}, () => strokeOf([{x: 1, y: 1}])),
       ]),
     ),
-    deleteLassoElements: jest.fn(async () => ok(true)),
+    deleteLassoElements: jest.fn(async () => {
+      onPage = onPage && lassoLeaves;
+      return ok(true);
+    }),
     clearLasso: jest.fn(async () => ok(true)),
-    getLastElement: jest.fn(async () => ok(stroke)),
-    deletePageElements: jest.fn(async () => ok(true)),
+    getLastElement: jest.fn(async () => ok(onPage ? stroke : before)),
+    deletePageElements: jest.fn(async () => {
+      onPage = false;
+      return ok(true);
+    }),
     insertGeometry: jest.fn(async () => ok(true)),
     ensureAccess: jest.fn(async () => true),
     recycleElement: jest.fn(async () => ok(true as const)),
@@ -79,9 +91,30 @@ test('a held circle becomes a circle, deleted through the lasso so the undo hist
   );
   expect(host.deleteLassoElements).toHaveBeenCalledTimes(1);
   expect(host.deletePageElements).not.toHaveBeenCalled();
+  expect(host.recycleElement).toHaveBeenCalledWith(
+    expect.objectContaining({numInPage: 6}),
+  );
   expect(host.insertGeometry).toHaveBeenCalledWith(
     expect.objectContaining({type: 'GEO_circle', penWidth: 500}),
   );
+});
+
+test('a lasso delete that leaves the stroke is followed by a delete by its number (#477)', async () => {
+  const host = fakeHost(0, true);
+  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe(
+    'circle (number)',
+  );
+  expect(host.deleteLassoElements).toHaveBeenCalledTimes(1);
+  expect(host.deletePageElements).toHaveBeenCalledWith([7], 0);
+  expect(host.getLastElement).toHaveBeenCalledTimes(1);
+  expect(host.insertGeometry).toHaveBeenCalledTimes(1);
+});
+
+test('a refused delete by number keeps the stroke as ink, with no shape over it', async () => {
+  const host = fakeHost(0, true);
+  host.deletePageElements.mockResolvedValue(ok(false));
+  expect(await handleStroke(host, strokeOf(CIRCLE), held)).toBe('failed');
+  expect(host.insertGeometry).not.toHaveBeenCalled();
 });
 
 test('the same circle not held stays ink', async () => {

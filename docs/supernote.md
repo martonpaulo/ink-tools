@@ -271,6 +271,13 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - `lassoElements(rect)` with an inserted picture's rect also selects the handwriting strokes under
   the picture, and a delete of that selection removes them [measured, pen round, 2026-11-16,
   Lookup 0.2.0 beta 4, [#168](https://github.com/martonpaulo/ink-tools/issues/168)].
+- A stroke a plugin inserted with `insertPageElements` is not removed by `deleteLassoElements`:
+  after `lassoElements(rect)` around it alone, the delete answered true, a new lasso still held the
+  stroke, and `getLastElement` still named it by its number, saved first or not. A
+  `deletePageElements` of that number removed it, and a later `insertGeometry` left the geometry
+  alone, in the file too, after the note was closed and opened again. So a replayed stroke goes by
+  its number in Smart Shapes. Whether the real pen's stroke behaves the same waits for a pen check
+  [measured, Manta, 2026-11-27, [#477](https://github.com/martonpaulo/ink-tools/issues/477)].
 - Reading a page's elements one by one for their rects costs about 8 to 11 ms per element (3
   elements in 24 ms, 5 in 54 ms); a test page of 69 to 90 elements ran past a 300 ms budget every
   time [measured, 2026-11-16, Lookup 0.2.0 beta 4,

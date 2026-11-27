@@ -30,7 +30,9 @@ that is off is never registered: no button, no pen listener. The Gestures of
   triangle, circle, square, rectangle or arrow; a figure under the minimum size stays ink.
   `hold.ts`, `guard.ts` and `recognize.ts` come from Snap v0.9.0 (MIT), as [`NOTICE.md`](NOTICE.md)
   records; keep the notice with any copied code. Replace order: wait for the pen to lift, save the
-  stroke, delete it (through the lasso when it holds that stroke alone, else by its number), insert
+  stroke, delete it (through the lasso when it holds that stroke alone, else by its number; by its
+  number too when the page's last element is still that stroke after the lasso delete, as for a
+  replayed stroke, [#477](https://github.com/martonpaulo/ink-tools/issues/477)), insert
   the shape with `insertGeometry`; a failed insert writes the stroke back.
 
 ## How the modules share the pen

@@ -148,26 +148,61 @@ async function removeByLasso(
   return false;
 }
 
+/** What a delete by number did: deleted the stroke, found another last element, could not read it, or was refused. */
+type ByNumber = 'deleted' | 'absent' | 'unread' | 'refused';
+
 /** Deletes the stroke by its number, found as the page's last element; this clears the undo history. */
 async function removeByNumber(
   host: SnapHost,
   raw: readonly PenPoint[],
   page: number,
-): Promise<boolean> {
+): Promise<ByNumber> {
   const last = await host.getLastElement();
-  if (!last.ok || !last.value) {
-    return false;
+  if (!last.ok) {
+    return 'unread';
+  }
+  if (!last.value) {
+    return 'absent';
   }
   try {
     const num = (last.value as StrokeFields).numInPage ?? 0;
     if (num < 1 || !(await isTheStroke(host, last.value, raw))) {
-      return false;
+      return 'absent';
     }
     const deleted = await host.deletePageElements([num], page);
-    return deleted.ok && deleted.value;
+    return deleted.ok && deleted.value ? 'deleted' : 'refused';
   } finally {
     await host.recycleElement(last.value);
   }
+}
+
+/**
+ * Removes the stroke, through the lasso first. `deleteLassoElements` answered true and left a stroke
+ * a plugin had inserted, a replayed one, which stayed the page's last element; its number then
+ * deleted it (measured, Manta, 2026-11-27, #477). So a lasso delete counts once the last element is
+ * no longer the stroke; null when the stroke is still on the page.
+ */
+async function removeStroke(
+  host: SnapHost,
+  raw: readonly PenPoint[],
+  pagePoints: PenPoint[],
+  page: number,
+): Promise<'lasso' | 'number' | null> {
+  const lassoed = await removeByLasso(host, raw, pagePoints);
+  const byNumber = await removeByNumber(host, raw, page);
+  if (byNumber === 'deleted') {
+    if (lassoed) {
+      host.log('the lasso delete left the stroke: deleted by its number');
+    }
+    return 'number';
+  }
+  if (!lassoed || byNumber === 'refused') {
+    return null;
+  }
+  if (byNumber === 'unread') {
+    host.log('after the lasso delete, the last element did not read');
+  }
+  return 'lasso';
 }
 
 export async function handleStroke(
@@ -232,13 +267,10 @@ export async function handleStroke(
     host.log(`save: ${saved.message}`);
     return 'failed';
   }
-  let how: 'lasso' | 'number' = 'lasso';
-  if (!(await removeByLasso(host, raw.value, points))) {
-    how = 'number';
-    if (!(await removeByNumber(host, raw.value, page.value))) {
-      host.log('kept as ink: the stroke was not found on the page');
-      return 'failed';
-    }
+  const how = await removeStroke(host, raw.value, points, page.value);
+  if (!how) {
+    host.log('kept as ink: the stroke was not found on the page');
+    return 'failed';
   }
   const info = await host.getPenInfo();
   const sdkStroke = (
