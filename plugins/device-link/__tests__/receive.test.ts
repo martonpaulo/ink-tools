@@ -9,6 +9,7 @@ import {
   PLACED_RETRY_MS,
   PLACED_WAIT_MS,
   freeTextBox,
+  boundedPage,
   NoteHost,
   receiveOne,
   resetPlacedForTests,
@@ -247,6 +248,28 @@ test('a text with no open note waits for the next open note (#289)', async () =>
   await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.keptForNote);
   expect(host.insertText).not.toHaveBeenCalled();
   expect(calls.written).toEqual([JSON.stringify([{kind: 'text', text: 'x'}])]);
+});
+
+test('with no note open a page read that never answers keeps the text, and the next offer and Stop still go (#289)', async () => {
+  const {api, calls} = fakeRelay({}, [
+    offer({t: {fileType: 'text/plain', preview: 'x'}}),
+    offer({t: {fileType: 'text/plain', preview: 'y'}}),
+    {kind: 'stopped' as const},
+  ]);
+  // The host's answer with no note open: none (the hang seen twice on the Manta). Bounded as the
+  // device host is (`src/run.ts`).
+  const host = boundedPage(note({pageSize: jest.fn(() => new Promise<never>(() => {}))}));
+  await expect(
+    receiveOne(api, host, 'Supernote', () => {}, Date.now, null),
+  ).resolves.toBe(copy.keptForNote);
+  expect(calls.answers).toHaveLength(2);
+  // Each kept in turn (this fake reads back no file it wrote).
+  expect(calls.written).toEqual([
+    JSON.stringify([{kind: 'text', text: 'x'}]),
+    JSON.stringify([{kind: 'text', text: 'y'}]),
+  ]);
+  expect(calls.stopped).toBe(1);
+  expect(host.insertText).not.toHaveBeenCalled();
 });
 
 test('a failed insert says so', async () => {

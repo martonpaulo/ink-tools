@@ -51,7 +51,7 @@ import {Device} from './localsend/protocol';
 import {copy} from './copy';
 import {Image} from 'react-native';
 import type {Problem} from '@ink-tools/ui-kit';
-import {NoteHost, Size} from './receive/receive';
+import {boundedPage, NoteHost, Size} from './receive/receive';
 import {
   afterSent,
   checkPin,
@@ -236,7 +236,7 @@ function pictureSize(path: string): Promise<Result<Size>> {
 }
 
 /** The open note, as a receive places into it. */
-export const noteHost: NoteHost = {
+export const noteHost: NoteHost = boundedPage({
   permissions: ensurePermissions,
   pluginDir: getPluginDirPath,
   pageKey: currentPageKey,
@@ -252,7 +252,7 @@ export const noteHost: NoteHost = {
   wait: ms => timerWait(nativeTimers(TICKS_MODULE), ms),
   createNote,
   insertNotePage,
-};
+});
 
 /** The lassoed handwriting as text, as Lookup reads it (`ink-core`); null when there is none. */
 async function readLassoText(): Promise<string | null> {

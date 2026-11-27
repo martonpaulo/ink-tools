@@ -5,7 +5,7 @@
  * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
 import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
-import {Result, TextBoxInput} from '@ink-tools/sn-adapter/official';
+import {fail, Result, TextBoxInput, TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 import type {HeldState, Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
 import {
@@ -28,6 +28,16 @@ export const RECEIVE_WINDOW_MS = 2 * 60 * 1000;
 
 /** The longest single wait of a background receive, which has no window end (#289). */
 export const BACKGROUND_WAIT_MS = 60 * 1000;
+
+/**
+ * How long a read of the open page's size may take. A text received with no note open hung the
+ * receive loop: the item was lost, every later offer got the receiver's 500, and Stop did nothing
+ * (measured twice on the Manta, 2026-11-27, #289); no «no note open» line was logged, so the
+ * page read is the call that never answered [inference]. A page read past it counts as no note
+ * open, and the item waits for the next one.
+ * shortcut: 4.5 s is a guess well above a page read with a note open; measure that read and set it.
+ */
+export const PAGE_READ_MS = 4500;
 
 export const TEXT_FONT_SIZE = 32;
 const LINE_HEIGHT = Math.round(TEXT_FONT_SIZE * 1.5);
@@ -75,6 +85,31 @@ export function textBox(page: Size, text: string, after: number | null = null): 
   const top = below + lines * LINE_HEIGHT <= page.height - LINE_HEIGHT ? below : first;
   const bottom = Math.min(page.height - LINE_HEIGHT, top + lines * LINE_HEIGHT);
   return {left, top, right: left + width, bottom: Math.max(bottom, top + LINE_HEIGHT)};
+}
+
+/**
+ * `host` with a page-size read that gives up after {@link PAGE_READ_MS}, on the host's own wait:
+ * a JS timer never fires while the view is closed (#289). The device host is made with it
+ * (`src/run.ts`); a test host whose wait ends at once is not, as every read would lose that race.
+ */
+export function boundedPage<H extends NoteHost>(host: H): H {
+  return {
+    ...host,
+    pageSize: () => {
+      let answered = false;
+      const read = host.pageSize().then(size => {
+        answered = true;
+        return size;
+      });
+      const late = host.wait(PAGE_READ_MS).then(() => {
+        if (!answered) {
+          host.log(`receive: no page size in ${PAGE_READ_MS} ms: no note open`);
+        }
+        return fail(TIMEOUT_CODE, `no page size in ${PAGE_READ_MS} ms`);
+      });
+      return Promise.race([read, late]);
+    },
+  };
 }
 
 /** The last text this run placed: its page and its box's bottom. */
