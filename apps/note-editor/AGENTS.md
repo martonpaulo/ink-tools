@@ -116,6 +116,11 @@ by page id). A failure leaves the Mac's copy and keeps the backup.
   background, one at a time; a run of nudges on the same elements is one request when it ends; a
   refusal gives back the editor's undo and a plain message; after a send only the edited page is
   drawn again. No operation reads a page's elements on the tablet.
+- A newer note on the tablet ([#317](https://github.com/martonpaulo/ink-tools/issues/317)): the first send of a run pulls the tablet's note; on
+  a newer one, each edit is re-targeted from the copy it was made on (`BaseSnapshots`), a page by its
+  `PAGEID` and an element by its box, found exactly once, and named by the number its record stores
+  ([#471](https://github.com/martonpaulo/ink-tools/issues/471)). A target not found keeps both: that copy goes beside the note as
+  `<name> conflict <date>.note` with the edits made on it, and the refusal bar opens it.
 - Each edit in the app, menu by menu, its drawing at once and its undo: [README › Editing](README.md#editing).
 - `NoteWriter.drawPicture` and `drawText` stay measuring tools of [#263](https://github.com/martonpaulo/ink-tools/issues/263), never writers.
 

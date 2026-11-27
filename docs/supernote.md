@@ -1067,6 +1067,12 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   delete through the open-note calls left the file byte-equal. So the Note Editor's pull before a send
   cannot see a change made on the open note since its last save [measured, Manta, 2026-11-27,
   [#317](https://github.com/martonpaulo/ink-tools/issues/317)].
+- The Note Editor's re-target on a closed note, after the tablet deleted a stroke: two moves made on
+  the older copy, queued together, each moved the stroke the Mac had selected and no other, and the
+  Mac's copy then equalled the tablet's note. When the tablet deleted the very stroke a move named,
+  the older copy went beside the note as a conflict note with both moves, the note stayed as the
+  tablet wrote it, and the conflict note opened on the tablet [measured, Manta, 2026-11-27,
+  [#317](https://github.com/martonpaulo/ink-tools/issues/317)].
 - An element record's first words after its length are the pen type, the colour and the
   thickness: `inkctl ink write` strokes read 10, 0 and 400, the stroke Real-Time Text left 4, 0
   and 200. Every record ends with two length-prefixed texts, then 17 bytes; the first text is the
