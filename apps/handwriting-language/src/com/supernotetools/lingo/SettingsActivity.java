@@ -40,8 +40,6 @@ import java.util.Set;
  */
 public final class SettingsActivity extends Activity {
   static final String EXTRA_BUTTON = "button";
-  private static final String FILES_OP = "MANAGE_EXTERNAL_STORAGE";
-  private static final String OVERLAY_OP = "SYSTEM_ALERT_WINDOW";
 
   /** Where the last error shows: beside the control whose action failed (#275). */
   /** Where an error shows: each permission block has its own, so a failure shows once (#489). */
@@ -146,7 +144,7 @@ public final class SettingsActivity extends Activity {
     next.setOnClickListener(view -> switchLanguage());
     addGroup(Ink.group(this, null, Arrays.asList(activeRow, next), null));
     if (!files) {
-      missing(Place.FILES, Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, FILES_OP, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+      missing(Place.FILES, Copy.FILES_OFF, Copy.OPEN_FILES_PERMISSION, Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
     }
     errorAt(Place.SWITCH, Copy.SWITCH_FAILED);
 
@@ -169,13 +167,13 @@ public final class SettingsActivity extends Activity {
     modes.add(reset);
     addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
     if (!overlay) {
-      missing(Place.OVERLAY, Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, OVERLAY_OP, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+      missing(Place.OVERLAY, Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
     }
     if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
       // Android 11 has no screen for one service, so the list opens and the steps say what to tap;
       // the system adds the service to the enabled ones and keeps the others (#489).
       missing(Place.WATCHER, Copy.WATCHER_OFF, Copy.WATCHER_STEPS, Copy.OPEN_WATCHER_SETTINGS,
-          new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS), Copy.WATCHER_COMMANDS);
+          new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
     }
 
     List<View> languages = new ArrayList<>();
@@ -262,7 +260,7 @@ public final class SettingsActivity extends Activity {
     }
   }
 
-  /** Whether the system lists WritingWatcher as enabled, which the Accessibility screen or the ADB command sets. */
+  /** Whether the system lists WritingWatcher as enabled, which the Accessibility screen sets. */
   private boolean watcherOn() {
     String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
     if (enabled == null) {
@@ -310,13 +308,13 @@ public final class SettingsActivity extends Activity {
     }
   }
 
-  /** A missing permission: what it stops, the button to its system screen, then the ADB command. */
-  private void missing(Place place, String what, String open, String op, String screen) {
-    missing(place, what, null, open, new Intent(screen, Uri.parse("package:" + getPackageName())), Copy.grantCommand(op));
+  /** A missing permission: what it stops and the button to its system screen, with no computer (#494). */
+  private void missing(Place place, String what, String open, String screen) {
+    missing(place, what, null, open, new Intent(screen, Uri.parse("package:" + getPackageName())));
   }
 
   /** The same, with the steps to take on a system screen that lists every app, when it has any. */
-  private void missing(Place place, String what, String steps, String open, Intent screen, String... commands) {
+  private void missing(Place place, String what, String steps, String open, Intent screen) {
     bold(what);
     if (steps != null) {
       add(Ink.text(this, steps, Ink.Role.ROW_TITLE));
@@ -331,10 +329,6 @@ public final class SettingsActivity extends Activity {
     });
     addButton(button);
     errorAt(place, null);
-    add(Ink.text(this, Copy.GRANT_FROM_COMPUTER, Ink.Role.ROW_TITLE));
-    for (String line : commands) {
-      command(line);
-    }
   }
 
   private void fail(Place place, String message) {
@@ -357,14 +351,6 @@ public final class SettingsActivity extends Activity {
   private void bold(String value) {
     TextView view = Ink.text(this, value, Ink.Role.ROW_TITLE);
     view.setTypeface(Typeface.DEFAULT_BOLD);
-    add(view);
-  }
-
-  /** A command to type on the computer: monospace and selectable. */
-  private void command(String value) {
-    TextView view = Ink.text(this, value, Ink.Role.ROW_TITLE);
-    view.setTypeface(Typeface.MONOSPACE);
-    view.setTextIsSelectable(true);
     add(view);
   }
 

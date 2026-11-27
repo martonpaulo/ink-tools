@@ -30,28 +30,10 @@ final class Copy {
   static final String BUTTON_HELP = "One tap switches to the next language; a long press opens this screen; drag it to move it. It hides while this screen is open.";
   static final String RESET_PLACE = "Reset Button Position";
   static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
-  static final String WATCHER = PACKAGE + "/.WritingWatcher";
   /** What the service reads, said before the system's «full control» warning; the steps on its screen. */
   static final String WATCHER_STEPS = "Writing detection is an accessibility service: it reads only which apps and windows are open, "
       + "never what they show. Open Accessibility Settings, tap " + TITLE + ", turn on Use " + TITLE + ", then tap Allow.";
   static final String OPEN_WATCHER_SETTINGS = "Open Accessibility Settings";
-  /**
-   * Adds the watcher to the enabled list and keeps every other service in it (#489): the list is
-   * read first, and the service is appended only when no entry of the app is there, in the short
-   * form this command writes or the full one the Accessibility screen writes. One command per
-   * entry, the script one short statement per line, so no line wraps on the 1404 px screen.
-   */
-  static final String[] WATCHER_COMMANDS = {
-      "adb shell '\n"
-          + "k=enabled_accessibility_services\n"
-          + "v=$(settings get secure $k)\n"
-          + "s=" + WATCHER + "\n"
-          + "case \":$v:\" in\n"
-          + "*\":${s%/*}/\"*) ;;\n"
-          + ":null:|::) settings put secure $k \"$s\" ;;\n"
-          + "*) settings put secure $k \"$v:$s\" ;;\n"
-          + "esac'",
-      "adb shell settings put secure accessibility_enabled 1"};
   static final String CYCLE_SECTION = "Languages in the Cycle";
   static final String CYCLE_HELP = "Only installed languages are listed.";
   static final String INSTALL_LANGUAGES = "Handwriting Recognition Language";
@@ -62,10 +44,9 @@ final class Copy {
   static final String CYCLE_LAST = "Keep at least one language in the cycle.";
   static final String FILES_OFF = "All-files access is off, so the language cannot be switched.";
   static final String OVERLAY_OFF = "Display over other apps is off, so the floating button cannot show.";
-  static final String GRANT_FROM_COMPUTER = "Or run this on a computer with ADB:";
   static final String OPEN_FILES_PERMISSION = "Open All-Files Access Settings";
   static final String OPEN_OVERLAY_PERMISSION = "Open Display Over Apps Settings";
-  static final String NO_PERMISSION_SCREEN = "This tablet has no such settings screen. Use the command below.";
+  static final String NO_PERMISSION_SCREEN = "This tablet did not open the settings screen. Open the tablet's Settings and turn it on there for " + TITLE + ".";
   static final String SWITCH_FAILED = "The last switch failed:";
   static final String VERSION = "Version";
   static final String NOTIFICATION = "Handwriting Language floating button";
@@ -134,9 +115,5 @@ final class Copy {
       default:
         return BUTTON_WRITING;
     }
-  }
-
-  static String grantCommand(String op) {
-    return "adb shell appops set " + PACKAGE + " " + op + " allow";
   }
 }

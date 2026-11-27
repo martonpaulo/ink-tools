@@ -1,16 +1,21 @@
-// The signing-key choice of build.cjs (#223): the stable key from the environment, else the debug key.
+// The signing-key choice of signing.cjs (#223, #494): the stable key from the environment, else the debug key.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const {signingArgs, STABLE_KEYSTORE_ENV, STABLE_PASSWORD_ENV, STABLE_KEY_ALIAS} = require('./build.cjs');
+const {passwordEnv, signingArgs: sign} = require('./signing.cjs');
 
 const DEBUG_STORE = '/synthetic/debug.keystore';
 const debugKey = () => DEBUG_STORE;
+const STABLE_KEYSTORE_ENV = 'SYNTHETIC_APP_KEYSTORE';
+const STABLE_KEY_ALIAS = 'synthetic-app';
+const KEY = {keystoreEnv: STABLE_KEYSTORE_ENV, stableAlias: STABLE_KEY_ALIAS, debugAlias: 'synthetic-app-debug', debugPass: 'android'};
+const STABLE_PASSWORD_ENV = passwordEnv(KEY);
+const signingArgs = (env, debugStore) => sign({...KEY, debugStore}, env);
 
 function withStore(body) {
-  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'ink-tools-helper-signing-'));
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'native-build-signing-'));
   const store = path.join(folder, 'stable.keystore');
   fs.writeFileSync(store, 'synthetic');
   try {

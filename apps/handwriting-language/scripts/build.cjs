@@ -12,6 +12,7 @@ const os = require('node:os');
 const path = require('node:path');
 const {execFileSync} = require('node:child_process');
 const {jdkTool, JDK_MISSING} = require('../../../packages/native-build/host-tools.cjs');
+const {signingArgs} = require('../../../packages/native-build/signing.cjs');
 const {versionName} = require('../../../scripts/plugin-version.cjs');
 const androidTokens = require('../../../packages/ui-kit/android-tokens.cjs');
 
@@ -25,16 +26,19 @@ const MIN_API = '30';
 const TARGET_API = '30';
 /** The classes with no Android import, which the JVM tests compile. */
 const PURE = ['ButtonGesture', 'ButtonPlace', 'ButtonRule', 'LanguageCycle', 'LanguageFiles', 'FileFailure', 'InternalFailure', 'Copy', 'Registry'];
-const TESTS = ['ButtonGestureTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest', 'FileFailureTest', 'RegistryTest'];
+const TESTS = ['ButtonGestureTest', 'CopyTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest', 'FileFailureTest', 'RegistryTest'];
 /** The native look's tokens, written from ui-kit's tokens.json before javac, never by hand (#275). */
 const TOKENS_CLASS = 'Tokens';
 /**
- * shortcut: a local debug key in .toolchain/, outside Git and unique to each checkout; an APK
- * from another checkout or CI has another key, so the tablet needs an uninstall before it.
- * Upgrade to one stored release key when Lingo gets a published release.
+ * The release key (#494): the prerelease workflow sets INKTOOLS_LINGO_KEYSTORE and its _PASSWORD
+ * from repository secrets, so every published APK updates the last one on the tablet. A local build
+ * keeps a debug key in .toolchain/, outside Git and unique to each checkout; the tablet needs an
+ * uninstall before an APK signed by the other key.
  */
 const KEY_ALIAS = 'lingo-app-debug';
 const KEY_PASS = 'android';
+const STABLE_KEYSTORE_ENV = 'INKTOOLS_LINGO_KEYSTORE';
+const STABLE_KEY_ALIAS = 'inktools-lingo';
 /** apksigner's Conscrypt loads a native library; this flag keeps JDK 24 and later quiet about it. */
 const NATIVE_ACCESS = '--enable-native-access=ALL-UNNAMED';
 
@@ -177,7 +181,7 @@ function badgingProblems(badging, launchers = 1) {
   return problems;
 }
 
-function signingKey() {
+function debugKey() {
   const store = path.join(root, '.toolchain', 'lingo-app-debug.keystore');
   if (!fs.existsSync(store)) {
     fs.mkdirSync(path.dirname(store), {recursive: true});
@@ -189,6 +193,9 @@ function signingKey() {
   }
   return store;
 }
+
+/** This app's keys for `signing.cjs`. */
+const KEY = {keystoreEnv: STABLE_KEYSTORE_ENV, stableAlias: STABLE_KEY_ALIAS, debugAlias: KEY_ALIAS, debugPass: KEY_PASS, debugStore: debugKey};
 
 function buildApk() {
   const t = tools();
@@ -226,8 +233,7 @@ function buildApk() {
   const apk = path.join(outputs, `lingo-app-${info.version}.apk`);
   fs.rmSync(apk, {force: true});
   run(jdkTool('java'), [
-    NATIVE_ACCESS, '-jar', t.apksigner, 'sign', '--ks', signingKey(), '--ks-key-alias', KEY_ALIAS,
-    '--ks-pass', `pass:${KEY_PASS}`, '--key-pass', `pass:${KEY_PASS}`, '--out', apk, aligned,
+    NATIVE_ACCESS, '-jar', t.apksigner, 'sign', ...signingArgs(KEY).args, '--out', apk, aligned,
   ]);
   run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'verify', apk]);
   const badging = execFileSync(t.aapt2, ['dump', 'badging', apk], {cwd: root, encoding: 'utf8'});
@@ -254,7 +260,7 @@ function test() {
   const classes = path.join(work, 'classes');
   const tokens = path.join(work, 'tokens.properties');
   try {
-    run(process.execPath, ['--test', androidTokens.TEST]);
+    run(process.execPath, ['--test', androidTokens.TEST, path.join(__dirname, '../../../packages/native-build/signing.test.cjs')]);
     run(jdkTool('javac'), [
       '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror', '-d', classes,
       ...PURE.map(name => path.join(root, `src/com/supernotetools/lingo/${name}.java`)),

@@ -86,15 +86,10 @@ In short: the active language is one empty file named with its code in
 
 ## Permissions
 
-Two special permissions, granted once over ADB (no network permission, no other app's data):
-
-```sh
-adb shell appops set com.supernotetools.lingo MANAGE_EXTERNAL_STORAGE allow
-adb shell appops set com.supernotetools.lingo SYSTEM_ALERT_WINDOW allow
-```
-
+Two special permissions (no network permission, no other app's data), each granted on the
+system screen its button opens, with no computer ([#494](https://github.com/martonpaulo/ink-tools/issues/494)); the README's developer section grants them over ADB.
 Writing detection, once: Settings › Accessibility › Handwriting Language › Use Handwriting
-Language, which the settings screen opens; or the two ADB commands of the [README](README.md#install),
+Language, which the settings screen opens; or the two ADB commands of the [README](README.md#build-from-source),
 which keep the other services ([#489](https://github.com/martonpaulo/ink-tools/issues/489)).
 
 The app writes only inside `/sdcard/.data/dictionary/default/`, and only a name that matches
@@ -134,10 +129,13 @@ node scripts/build.cjs          # build/outputs/lingo-app-<version>.apk, signed 
   `0.1.0-beta.14` gives the `versionName` `0.1.0 beta 14` (derived by `scripts/plugin-version.cjs`);
   `versionCode` rises on every build sent to the tablet and never resets. A tag, when one is cut,
   is `handwriting-language-v<version>`.
-- No release workflow yet: a test build is handed over as a file for the device round.
-- The APK is signed with a debug key created in `.toolchain/lingo-app-debug.keystore`, outside Git and unique
-  to each checkout. An APK from another checkout or from CI has another key, so the tablet needs
-  `adb uninstall com.supernotetools.lingo` before it (which drops the app's settings and grants).
+- A push to `main` that changes `app.json` publishes the `handwriting-language-v<version>` prerelease with
+  its APK (`prerelease-handwriting-language.yml`), signed with the release key of the
+  `INKTOOLS_LINGO_KEYSTORE_BASE64` and `_PASSWORD` secrets; with no key the workflow fails and publishes
+  nothing ([#494](https://github.com/martonpaulo/ink-tools/issues/494), `docs/security.md` › Android signing keys).
+- A local build is signed with a debug key in `.toolchain/lingo-app-debug.keystore`, outside Git and unique
+  to each checkout, so the tablet needs an uninstall (which drops the app's settings and grants) between
+  builds of two keys.
 - The applicationId changed with the name (`com.supernotetools.dialect` to
   `com.supernotetools.lingo`, [#160](https://github.com/martonpaulo/supernote-tools/issues/160)): Android installs the new id beside the old app, so
   uninstall Dialect first (`adb uninstall com.supernotetools.dialect`), or both write the language

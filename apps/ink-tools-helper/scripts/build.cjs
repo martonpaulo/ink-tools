@@ -8,6 +8,7 @@
  *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK) and the signing-key test
  */
 const {jdkTool, JDK_MISSING} = require('../../../packages/native-build/host-tools.cjs');
+const {signingArgs} = require('../../../packages/native-build/signing.cjs');
 const {badgingProblems} = require('../../handwriting-language/scripts/build.cjs');
 const {versionName} = require('../../../scripts/plugin-version.cjs');
 const {execFileSync} = require('node:child_process');
@@ -51,7 +52,6 @@ const KEY_PASS = 'android';
  * and only the same key lets the tablet update the app in place (#303).
  */
 const STABLE_KEYSTORE_ENV = 'INKTOOLS_BRIDGE_KEYSTORE';
-const STABLE_PASSWORD_ENV = `${STABLE_KEYSTORE_ENV}_PASSWORD`;
 const STABLE_KEY_ALIAS = 'inktools-bridge';
 const NATIVE_ACCESS = '--enable-native-access=ALL-UNNAMED';
 
@@ -144,26 +144,8 @@ function debugKey() {
   return store;
 }
 
-/**
- * The apksigner key arguments: the stable key when STABLE_KEYSTORE_ENV is set, else the local debug
- * key (`makeDebugKey`). A keystore without its password, or a path that does not exist, fails: a
- * half-set key must never fall back to a key the tablet cannot update from.
- */
-function signingArgs(env = process.env, makeDebugKey = debugKey) {
-  const store = env[STABLE_KEYSTORE_ENV];
-  if (!store) {
-    const debug = makeDebugKey();
-    return {stable: false, args: ['--ks', debug, '--ks-key-alias', KEY_ALIAS, '--ks-pass', `pass:${KEY_PASS}`, '--key-pass', `pass:${KEY_PASS}`]};
-  }
-  if (!env[STABLE_PASSWORD_ENV]) {
-    throw Error(`${STABLE_KEYSTORE_ENV} is set but ${STABLE_PASSWORD_ENV} is empty`);
-  }
-  if (!fs.existsSync(store)) {
-    throw Error(`${STABLE_KEYSTORE_ENV} names a missing file: ${store}`);
-  }
-  const pass = `env:${STABLE_PASSWORD_ENV}`;
-  return {stable: true, args: ['--ks', store, '--ks-key-alias', STABLE_KEY_ALIAS, '--ks-pass', pass, '--key-pass', pass]};
-}
+/** This app's keys for `signing.cjs`: the stable key from the environment, else the local debug key. */
+const KEY = {keystoreEnv: STABLE_KEYSTORE_ENV, stableAlias: STABLE_KEY_ALIAS, debugAlias: KEY_ALIAS, debugPass: KEY_PASS, debugStore: debugKey};
 
 function buildApk() {
   const t = tools();
@@ -202,7 +184,7 @@ function buildApk() {
   fs.mkdirSync(outputs, {recursive: true});
   const apk = path.join(outputs, `ink-tools-helper-${info.version}.apk`);
   fs.rmSync(apk, {force: true});
-  const key = signingArgs();
+  const key = signingArgs(KEY);
   run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'sign', ...key.args, '--out', apk, aligned]);
   run(jdkTool('java'), [NATIVE_ACCESS, '-jar', t.apksigner, 'verify', apk]);
   const badging = execFileSync(t.aapt2, ['dump', 'badging', apk], {encoding: 'utf8'});
@@ -230,7 +212,7 @@ function test() {
     for (const name of TESTS) {
       run(jdkTool('java'), ['-cp', classes, `${PACKAGE}.${name}`]);
     }
-    run(process.execPath, ['--test', path.join(__dirname, 'signing.test.cjs'), path.join(__dirname, 'badging.test.cjs')]);
+    run(process.execPath, ['--test', path.join(__dirname, '../../../packages/native-build/signing.test.cjs'), path.join(__dirname, 'badging.test.cjs')]);
   } finally {
     fs.rmSync(classes, {recursive: true, force: true});
   }
@@ -252,4 +234,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {buildApk, test, signingArgs, STABLE_KEYSTORE_ENV, STABLE_PASSWORD_ENV, STABLE_KEY_ALIAS};
+module.exports = {buildApk, test, KEY};

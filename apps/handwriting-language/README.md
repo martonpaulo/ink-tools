@@ -10,6 +10,29 @@ Status: test build for device rounds ([#157](https://github.com/martonpaulo/supe
 
 ## Install
 
+On the tablet, with no computer:
+
+1. Turn on Settings › Security & Privacy › Sideloading.
+2. In the tablet's Browser, open the [releases page](https://github.com/martonpaulo/ink-tools/releases),
+   pick the newest `handwriting-language-v…` release and download its `lingo-app-….apk`.
+3. Open the downloaded file and tap Install.
+4. Open Handwriting Language from the sidebar. Each missing permission shows a button that opens its
+   system screen: All-files access, Display over other apps, and Accessibility for writing detection.
+
+A build from source signed by another key needs Handwriting Language uninstalled first.
+
+The floating button shows while the handwriting keyboard is open or a note, Digest, To-Do or Email
+is in front; drag it anywhere. Tap «Handwriting Language» in the sidebar, or long-press the
+button, to open the app: it shows the active language with «Switch to Next Language», where the button
+shows (only where you write, always, or hidden) and the languages in the cycle.
+
+How it works and how to change it: [`AGENTS.md`](AGENTS.md).
+
+
+## Build from source
+
+For development, with a computer and ADB:
+
 ```sh
 adb uninstall com.supernotetools.dialect   # only when the old Dialect build is installed
 node scripts/build.cjs
@@ -28,10 +51,3 @@ esac'
 adb shell settings put secure accessibility_enabled 1
 adb shell am force-stop com.ratta.supernote.launcher   # the sidebar lists the app again after an install
 ```
-
-The floating button shows while the handwriting keyboard is open or a note, Digest, To-Do or Email
-is in front; drag it anywhere. Tap «Handwriting Language» in the sidebar, or long-press the
-button, to open the app: it shows the active language with «Switch to Next Language», where the button
-shows (only where you write, always, or hidden) and the languages in the cycle.
-
-How it works and how to change it: [`AGENTS.md`](AGENTS.md).

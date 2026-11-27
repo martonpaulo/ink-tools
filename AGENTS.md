@@ -27,7 +27,7 @@ Every change follows [`docs/architecture.md` › Layer rules](docs/architecture.
 - Merge policy: merge commits, so every branch commit reaches `main`.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`, never the pull request's.
 - Delete branches after merge: disabled
-- Release, signing, and secret-storage policy: Per subproject: a plugin's beta ships a GitHub prerelease with its `.snplg`, a stable version a draft the owner publishes ([#373](https://github.com/martonpaulo/ink-tools/issues/373)); a device check installs a build of `main` ([Device builds](docs/architecture.md#device-builds), [#310](https://github.com/martonpaulo/ink-tools/issues/310)); inkctl ships as source; the Lingo app's signed test APK is handed over as a file, with no release yet. No monorepo-wide release.
+- Release, signing, and secret-storage policy: Per subproject: a plugin's beta ships a GitHub prerelease with its `.snplg`, a stable version a draft the owner publishes ([#373](https://github.com/martonpaulo/ink-tools/issues/373)); a device check installs a build of `main` ([Device builds](docs/architecture.md#device-builds), [#310](https://github.com/martonpaulo/ink-tools/issues/310)); inkctl ships as source; the Lingo app ships prereleases signed with its own key. No monorepo-wide release.
 - Skill packs: core, apple, design, release, supernote, web
 - Skills baseline revision: `39e7da67c8a3b07aecc2b41eda49e543bf630d7a`
 - Skills baseline applied: `2026-11-25`

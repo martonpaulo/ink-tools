@@ -71,8 +71,13 @@ one on the tablet ([#223](https://github.com/martonpaulo/ink-tools/issues/223)).
 - It is a test key for a sideloaded developer app, not a release key. A leaked key lets someone
   sign an APK that updates the bridge, which still needs `adb` on the tablet. To rotate it, make a
   new keystore, set both secrets again and uninstall the bridge once on the tablet.
-- The Lingo app has no prerelease: its CI build is never installed, so its per-run debug key needs
-  no secret.
+- Handwriting Language (the Lingo app) signs its prereleases with its own release key, the secrets
+  `INKTOOLS_LINGO_KEYSTORE_BASE64` and `INKTOOLS_LINGO_KEYSTORE_PASSWORD`, read only by
+  `prerelease-handwriting-language.yml` in the same way. Unlike the Helper it is a user release: with
+  no key the workflow fails and publishes nothing, and a leaked key lets someone sign an update that
+  a tablet with Sideloading on would accept, so a leak means a new key, new secrets and one uninstall
+  on every tablet ([#494](https://github.com/martonpaulo/ink-tools/issues/494)). Both apps choose their key through
+  `packages/native-build/signing.cjs`.
 
 ## Account Sync sign-in secrets
 

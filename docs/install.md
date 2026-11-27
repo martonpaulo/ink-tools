@@ -36,7 +36,7 @@ network service it sends data to.
 | Lasso Actions | not yet | | an open P1 issue: [#13](https://github.com/martonpaulo/ink-tools/issues/13) |
 | Account Sync | not yet | | in progress |
 | Image Editing | not yet | | in progress |
-| Handwriting Language | not yet | | it has no release build signed with a release key yet; it is a sideloaded app, not a plugin |
+| Handwriting Language | not yet | `lingo-app-<version>.apk` | test builds ship as prereleases signed with its release key ([#494](https://github.com/martonpaulo/ink-tools/issues/494)); it is a sideloaded app, not a plugin |
 | Note Editor | not yet | | in progress |
 | Ink Tools Control | no release | | a Mac command line tool, unversioned: use it from a clone of this repository |
 | Ink Tools Helper, Ink Tools Probe | no release | | developer tools for this project, never offered to others |
@@ -61,7 +61,7 @@ Open **Settings** › **Apps** › **Plugins**, tap the plugin, then tap **Unins
 
 ## Install the tablet app
 
-Handwriting Language has no release yet; its [README](../apps/handwriting-language/README.md#install) shows how to install it.
+Handwriting Language installs on the tablet with no computer, from its prerelease on the releases page; its [README](../apps/handwriting-language/README.md#install) shows the steps.
 
 ## Install the Mac app
 
