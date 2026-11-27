@@ -7,6 +7,7 @@ const path = require('node:path');
 import { WORD_LISTS } from '../src/words-data';
 import { gridPattern, licenceProblems, WORD_LANGUAGES, type SourceManifest } from '../src/words';
 import { generateWordSearch } from '../src/word-search';
+import avoidData from '../words/avoid.json';
 
 const ROOT = path.join(__dirname, '..');
 const manifest: SourceManifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'words', 'sources.json'), 'utf8'));
@@ -82,11 +83,17 @@ describe('licence check', () => {
     expect(licenceProblems(manifest, Object.values(WORD_LISTS), notice)).toEqual([]);
   });
 
-  test('every file in words/ but the sources is a list or a declared source', () => {
+  test('the avoid list of each language has recorded, allowed and noticed sources', () => {
+    const avoid = WORD_LANGUAGES.map(language => ({ language, sources: [`ldnoobw-${language}`] }));
+    expect(avoid.map(a => a.sources[0])).toEqual(avoidData.sources);
+    expect(licenceProblems(manifest, avoid, notice)).toEqual([]);
+  });
+
+  test('every file in words/ but the sources and the avoid list is a list or a declared source', () => {
     const files: string[] = fs.readdirSync(path.join(ROOT, 'words'));
     const declared = new Set(Object.values(manifest.sources).map(s => s.path?.replace(/^words\//, '')));
     const lists = WORD_LANGUAGES.map(l => `${l}.json`);
-    expect(files.filter(f => f !== 'sources.json' && !lists.includes(f) && !declared.has(f))).toEqual([]);
+    expect(files.filter(f => f !== 'sources.json' && f !== 'avoid.json' && !lists.includes(f) && !declared.has(f))).toEqual([]);
   });
 
   test.each([

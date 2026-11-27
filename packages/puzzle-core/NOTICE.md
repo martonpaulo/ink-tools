@@ -41,7 +41,9 @@ from and their terms.
 The offensive words removed from each list come from the
 [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words) lists
 by Shutterstock and its contributors, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-They are read at build time only and are not bundled.
+`words/avoid.json` bundles an adaptation of them, so a word search's filler letters never spell
+one ([#385](https://github.com/martonpaulo/ink-tools/issues/385)): their single words of three
+letters or more, folded to each grid's letters.
 
 ## SuperFun word-search banks
 

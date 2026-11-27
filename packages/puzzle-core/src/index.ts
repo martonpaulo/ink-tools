@@ -14,6 +14,7 @@ export * from './maze';
 export * from './word-search';
 export * from './slitherlink';
 export * from './slitherlink-page';
+export * from './games/word-search';
 export * from './page';
 export * from './check';
 export * from './maze-page';

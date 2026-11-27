@@ -80,4 +80,8 @@ export const TEXT_SIZE = {
   icon: 0.64,
   /** The footer's text, in millimetres of em (3 mm or more, the screen's floor). */
   footerMm: 3.4,
+  /** A side panel's word list (a word search's words), in millimetres of em. */
+  listMm: 3.4,
+  /** The step between two lines of a list, as a share of its em. */
+  listLeading: 1.45,
 } as const;
