@@ -638,10 +638,11 @@
    "motif": [
     "search",
     "letter-h",
-    "clipboard"
+    "clipboard",
+    "text-recognition"
    ],
    "except": {
-    "icon": "the plugin's own icon, the lasso, stands for every module; `search` marks Lookup's buttons, `letter-h` Headings' (#252), `clipboard` Collection's (#249)",
+    "icon": "the plugin's own icon, the lasso, stands for every module; `search` marks Lookup's buttons, `letter-h` Headings' (#252), `clipboard` Collection's (#249), `text-recognition` Convert to Text's (#250, #306)",
     "translate-es-pt": "two language codes and their arrow fill the box",
     "translate-pt-es": "as translate-es-pt",
     "translate-pt-zh": "as translate-es-pt",
