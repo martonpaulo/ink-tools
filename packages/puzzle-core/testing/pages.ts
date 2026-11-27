@@ -14,9 +14,11 @@ import {
   drawRegions,
   drawSquareLattice,
   drawText,
+  drawSlitherlinkPage,
   drawTriangleLattice,
   FONT_WEIGHTS,
   generateNonogram,
+  generateSlitherlink,
   generateSudoku,
   generateWordSearch,
   layoutPage,
@@ -96,4 +98,9 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
   ['board-dots-and-boxes', () => renderBoardPage('dots-and-boxes')],
   ['board-gomoku', () => renderBoardPage('gomoku', { hand: 'left' })],
   ['board-ultimate-tic-tac-toe', () => renderBoardPage('ultimate-tic-tac-toe', { orientation: 'landscape' })],
+  ['page-slitherlink-10mm-portrait-right', () => {
+    const puzzle = generateSlitherlink('P1', { width: 10, height: 10 }, 'medium');
+    const text = { game: 'Slitherlink', difficulty: 'Medium', rule: 'Draw one loop along the dots; each number counts its sides on the loop.' };
+    return drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text }).raster;
+  }],
 ];

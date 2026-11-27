@@ -12,6 +12,8 @@ export * from './nonogram';
 export * from './nonogram-page';
 export * from './maze';
 export * from './word-search';
+export * from './slitherlink';
+export * from './slitherlink-page';
 export * from './page';
 export * from './check';
 export * from './maze-page';
