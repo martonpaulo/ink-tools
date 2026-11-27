@@ -8,6 +8,7 @@ import {
   createPage,
   drawCellText,
   drawFooter,
+  drawHitoriPage,
   drawHexLattice,
   drawIcon,
   drawOutsideClues,
@@ -19,6 +20,7 @@ import {
   FONT_WEIGHTS,
   drawLightUpPage,
   generateLightUp,
+  generateHitori,
   generateNonogram,
   generateSlitherlink,
   generateSudoku,
@@ -106,4 +108,5 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     const text = { game: 'Slitherlink', difficulty: 'Medium', rule: 'Draw one loop along the dots; each number counts its sides on the loop.' };
     return drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text }).raster;
   }],
+  ['hitori-15mm-portrait-right', () => drawHitoriPage(generateHitori('P1', 8, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
 ];
