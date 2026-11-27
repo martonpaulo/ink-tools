@@ -18,6 +18,7 @@ import {
   ok,
   resizeLassoRect,
   Result,
+  saveCurrentNote,
   saveStickerByLasso,
 } from '@ink-tools/sn-adapter/official';
 import type {Problem} from '@ink-tools/ui-kit';
@@ -46,6 +47,8 @@ export type CollectionHost = {
   deleteLasso: () => Promise<Result<boolean>>;
   insertSticker: (path: string) => Promise<Result<boolean>>;
   resize: (rect: Rect) => Promise<Result<boolean>>;
+  /** Saves the open note, which lays a pasted piece on the page and ends its lasso (#249). */
+  saveNote: () => Promise<Result<boolean>>;
   select: (rect: Rect) => Promise<Result<boolean>>;
   /** Closes the plugin view, so the note is in front while the pieces go in. */
   closeView: () => Promise<Result<boolean>>;
@@ -85,9 +88,11 @@ const done = (result: Result<boolean>) => result.ok && result.value;
  * moves that piece instead (piece 2 moved piece 1 off its place, and the union lasso then failed).
  * So the paste asks `getLassoRect` again at once until it answers a rect other than the one before
  * the paste, up to this many times: no timer, since a paste waiting on `setTimeout` with the view
- * closed never asked again (device round 9). Each ask is one bridge round trip, about 6 ms.
+ * closed never asked again (device round 9). Each ask is one bridge round trip, about 6 to 9 ms;
+ * the slowest lasso measured took 72 asks, 620 ms (Ink Tools Probe, Manta, 2026-11-27), so the
+ * limit leaves twice that.
  */
-export const PASTE_SETTLE_TRIES = 80;
+export const PASTE_SETTLE_TRIES = 160;
 
 const sameRect = (a: Rect, b: Rect) =>
   a.left === b.left && a.top === b.top && a.right === b.right && a.bottom === b.bottom;
@@ -102,8 +107,15 @@ async function currentLasso(host: CollectionHost): Promise<Result<Rect | null>> 
 }
 
 /**
- * Pastes one piece and moves it to `rect` once NOTE has lassoed it: the lasso differs from
- * `before`, the one read before the paste. Logs how many asks the new lasso took.
+ * Pastes one piece, moves it to `rect` once NOTE has lassoed it (the lasso differs from `before`,
+ * the one read before the paste), then saves the note. Logs how many asks the new lasso took.
+ *
+ * A moved piece stays a pasted selection, still answering its local rect such as
+ * `{0, 0, 180, 180}`, and the next `insertSticker` drops it from the page: device round 12 lost
+ * piece 1 that way, and two pieces of the same size never told their lassoes apart. The save lays
+ * the piece on the page and ends its lasso (`getLassoRect` answers 904 at once), so the next piece
+ * is the only lasso and nothing pasted before it can be dropped [measured, Ink Tools Probe, Manta,
+ * 2026-11-27, #249].
  */
 async function pasteAndMove(
   host: CollectionHost,
@@ -128,7 +140,11 @@ async function pasteAndMove(
       if (tries > 1) {
         host.log(`${tag}: the pasted piece was lassoed after ${tries} asks`);
       }
-      return {call: 'resizeLassoRect', result: await host.resize(rect)};
+      const moved = await host.resize(rect);
+      if (!done(moved)) {
+        return {call: 'resizeLassoRect', result: moved};
+      }
+      return {call: 'saveCurrentNote', result: await host.saveNote()};
     }
   }
   return {
@@ -223,7 +239,8 @@ export async function addToCollection(
  * round 6) and the paste stopped after piece 1 with `answered false` once it was lassoed again at
  * the page centre (device round 7). From a lasso row, with no view in front, `resizeLassoRect`
  * right after `insertSticker` moved the piece exactly (docs/supernote.md, #249), so the paste
- * runs that way, moving each piece once NOTE has lassoed it (`pasteAndMove`).
+ * runs that way, moving each piece once NOTE has lassoed it and saving the note before the next
+ * piece (`pasteAndMove`).
  */
 export async function pasteCollection(
   host: CollectionHost,
@@ -348,6 +365,7 @@ export const DEVICE_HOST: CollectionHost = {
   deleteLasso: deleteLassoElements,
   insertSticker,
   resize: resizeLassoRect,
+  saveNote: saveCurrentNote,
   select: lassoElements,
   closeView: closePluginView,
   ask: confirm,

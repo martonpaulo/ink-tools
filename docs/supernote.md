@@ -602,8 +602,20 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
     `insertSticker` and asks it again at once until it answers another rect, then moves the
     piece. Whether `getLassoRect` answers the new piece's rect with the view closed, and so tells
     the new lasso from the old one, is [unverified].
-  - Back while a pasted piece is still selected drops it from the page. What commits a paste is
-    [unverified].
+  - Back while a pasted piece is still selected drops it from the page, and so does the next
+    `insertSticker`: a piece moved with `resizeLassoRect` stays a pasted selection, whose
+    `getLassoRect` still answers its local rect (`{0, 0, 180, 180}` for any piece of 180 by 180,
+    so two pieces of the same size are not told apart by their rect). `saveCurrentNote` lays the
+    piece on the page at its new place and ends the lasso: `getLassoRect` answers 904 at once,
+    and two pieces pasted, moved and saved one after the other both stayed at their places. A
+    `setLassoBoxState(2)` after the move also kept both, but `getLassoRect` still answered the
+    local rect at once and the old piece's page rect a moment later; a `lassoElements` over the
+    moved piece put one piece in twice. NOTE lassoed a pasted piece after 38 to 72 asks of
+    `getLassoRect`, 230 to 620 ms after `insertSticker` answered [measured, Ink Tools Probe's
+    `run-probe` action, Manta, 2026-11-27, [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
+  - From Probe's `run-probe` action, `saveStickerByLasso` after a `lassoElements` of inserted
+    strokes answered true and wrote a 180 by 180 sticker [measured, Manta, 2026-11-27,
+    [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
   - A rect lasso takes every stroke inside the rect, ink already on the page included.
   - `FileUtils.listFiles` lists a file as `{type, path}`, and answers null again once the folder
     is empty.

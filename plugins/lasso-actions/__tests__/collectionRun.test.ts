@@ -59,6 +59,11 @@ function fakeHost(over: Partial<CollectionHost> = {}) {
       lasso = ok(rect);
       return ok(true);
     },
+    saveNote: async () => {
+      calls.push('save note');
+      lasso = fail(904, 'No lasso action has been performed');
+      return ok(true);
+    },
     select: async rect => {
       calls.push(
         `select ${rect.left},${rect.top},${rect.right},${rect.bottom}`,
@@ -155,12 +160,15 @@ test('Paste Collection puts every piece in order at its place, lassoes the group
   fake.toasts.length = 0;
   expect(await pasteCollection(fake.host, false)).toEqual({ok: true, count: 0});
   expect(fake.calls).toEqual([
-    // The view closes first; each piece is then moved right after its paste (#249).
+    // The view closes first; each piece is then moved right after its paste and laid on the
+    // page by a save before the next one (#249).
     'close view',
     `insert ${DIR}/collection-1_100_200_200_60.sticker`,
     'move 100,200,300,260',
+    'save note',
     `insert ${DIR}/collection-2_500_900_300_100.sticker`,
     'move 500,900,800,1000',
+    'save note',
     'select 100,200,800,1000',
     `remove ${DIR}/collection-1_100_200_200_60.sticker`,
     `remove ${DIR}/collection-2_500_900_300_100.sticker`,
@@ -208,27 +216,31 @@ test('a pasted piece that cannot be moved stops the paste, and the log names the
 });
 
 /**
- * The Manta as device rounds 6, 7 and 9 recorded it (#249): `insertSticker` answers before NOTE
- * lassoes the pasted piece, about 250 ms later, some 56 asks of about 6 ms. Until then the lasso is
- * the one before the paste: none, and a lasso call answers 904, or the piece pasted before, and a
- * move answers success and moves that piece. While the plugin view is in front, NOTE never lassoes
- * the pasted piece.
+ * The Manta as device rounds 6, 7, 9 and 12 and the 2026-11-27 Probe run recorded it (#249):
+ * `insertSticker` answers before NOTE lassoes the pasted piece, about 250 ms later, some 56 asks
+ * of about 6 ms. Until then the lasso is the one before the paste: none, and a lasso call answers
+ * 904, or the piece pasted before, and a move answers success and moves that piece. While the
+ * plugin view is in front, NOTE never lassoes the pasted piece. A pasted piece stays a pasted
+ * selection after its move, answering its local rect, and the next `insertSticker` drops it from
+ * the page; a save lays it on the page and ends the lasso.
  */
 const MANTA_ASKS = 56;
 const NO_LASSO = fail(904, 'No lasso action has been performed. Cannot call the API!');
+/** What `getLassoRect` answers for a pasted piece of 180 by 180, wherever it is. */
+const PASTED_RECT = {left: 0, top: 0, right: 180, bottom: 180};
 
 function mantaPage(fake: ReturnType<typeof fakeHost>) {
   let viewOpen = true;
-  /** The piece the lasso holds, and its rect, or null with no lasso. */
-  let lasso: {piece: string; rect: Rect} | null = null;
+  /** The piece the lasso holds, or null with no lasso; a pasted piece answers PASTED_RECT. */
+  let lasso: {piece: string; rect: Rect; pasted: boolean} | null = null;
   let pending: string | null = null;
   let asks = 0;
   /** Where each piece ends, by its file name. */
   const placed = new Map<string, Rect>();
   const settle = () => {
     if (pending !== null && !viewOpen && ++asks >= MANTA_ASKS) {
-      lasso = {piece: pending, rect: {left: 600, top: 800, right: 800, bottom: 981}};
-      placed.set(pending, lasso.rect);
+      lasso = {piece: pending, rect: PASTED_RECT, pasted: true};
+      placed.set(pending, {left: 600, top: 800, right: 780, bottom: 980});
       pending = null;
     }
   };
@@ -238,6 +250,10 @@ function mantaPage(fake: ReturnType<typeof fakeHost>) {
       return ok(true);
     },
     insertSticker: async (path: string) => {
+      if (lasso?.pasted) {
+        // The piece pasted before was never laid on the page: the new paste drops it.
+        placed.delete(lasso.piece);
+      }
       pending = path.slice(DIR.length + 1);
       asks = 0;
       return ok(true);
@@ -251,8 +267,14 @@ function mantaPage(fake: ReturnType<typeof fakeHost>) {
       if (lasso === null) {
         return NO_LASSO;
       }
-      lasso = {piece: lasso.piece, rect};
       placed.set(lasso.piece, rect);
+      if (!lasso.pasted) {
+        lasso = {...lasso, rect};
+      }
+      return ok(true);
+    },
+    saveNote: async () => {
+      lasso = null;
       return ok(true);
     },
     select: async (rect: Rect) =>
@@ -274,6 +296,35 @@ test('on the Manta each of two pieces moves to its own place (#249, round 9)', a
     'collection-2_500_900_300_100.sticker': {left: 500, top: 900, right: 800, bottom: 1000},
   });
   expect(fake.logs).toContain(`collection paste: the pasted piece was lassoed after ${MANTA_ASKS} asks`);
+});
+
+test('on the Manta two pieces of the same size each stay at their own place (#249, round 12)', async () => {
+  // Round 12 lost piece 1 to piece 2's paste; with the same size the lasso never told them apart.
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  fake.lassoAt(ok({left: 500, top: 900, right: 680, bottom: 1080}));
+  await addToCollection(fake.host, false);
+  fake.lassoAt(ok({left: 900, top: 300, right: 1080, bottom: 480}));
+  await addToCollection(fake.host, false);
+  const placed = mantaPage(fake);
+  expect(await pasteCollection(fake.host, false)).toEqual({ok: true, count: 0});
+  expect(Object.fromEntries(placed)).toEqual({
+    'collection-1_100_200_200_60.sticker': {left: 100, top: 200, right: 300, bottom: 260},
+    'collection-2_500_900_180_180.sticker': {left: 500, top: 900, right: 680, bottom: 1080},
+    'collection-3_900_300_180_180.sticker': {left: 900, top: 300, right: 1080, bottom: 480},
+  });
+});
+
+test('a pasted piece the save cannot lay on the page stops the paste and keeps the collection', async () => {
+  const fake = fakeHost();
+  await addToCollection(fake.host, false);
+  await addToCollection(fake.host, false);
+  fake.host.saveNote = async () => fail(-1, 'thrown');
+  expect(await pasteCollection(fake.host, false)).toEqual({ok: false, why: 'insert'});
+  expect(fake.logs.at(-1)).toBe(
+    'collection paste: collection-1_100_200_200_60.sticker: saveCurrentNote -1 thrown',
+  );
+  expect(await countPieces(fake.host)).toBe(2);
 });
 
 test('a pasted piece that is never lassoed stops the paste within the settle limit', async () => {

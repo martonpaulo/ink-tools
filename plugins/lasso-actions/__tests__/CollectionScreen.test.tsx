@@ -48,6 +48,7 @@ function folderHost(names: string[]): CollectionHost & {names: string[]} {
     deleteLasso: async () => ok(true),
     insertSticker: async () => ok(true),
     resize: async () => ok(true),
+    saveNote: async () => ok(true),
     select: async () => ok(true),
     closeView: async () => ok(true),
     ask: async () => ok(true),

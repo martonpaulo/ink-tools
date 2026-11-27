@@ -207,6 +207,7 @@ const COLLECTION_HOST: CollectionHost = {
   insertSticker: () => answer(true),
   closeView: () => answer(true),
   resize: () => answer(true),
+  saveNote: () => answer(true),
   select: () => answer(true),
   ask: () => answer(true),
   toast: noop,
