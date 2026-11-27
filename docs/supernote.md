@@ -674,6 +674,14 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   a landed install then failed its read-back on 2 of 2 tries [measured, Manta, device round 5,
   2026-11-26]; the install's reads wait for an answer up to `--timeout`
   ([#419](https://github.com/martonpaulo/ink-tools/issues/419)).
+- After a same-version install of Device Link with a note open, the helper's next note edit
+  answered SDK code 102 («This app is not allowed to use this API», from `getNoteTotalPageNum`) in 1
+  of 7 installs, on a closed note and on the open note, until that note was opened again. In the
+  other 6, an edit on a closed note within 7 s of the install's end applied, and none of the 5 calls
+  on the open note answered code 102.
+  The cause is [unverified]: the one failing install was the morning's first one [measured, Manta,
+  2026-11-27, builds `aab22bf` to `7202068`,
+  [#474](https://github.com/martonpaulo/ink-tools/issues/474)].
 - An enable through the bridge after a disable once got no callback: PluginHost logged
   `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
   uninstall and an install loaded it [reported by the device round of 2026-11-17, Image Editing,
