@@ -21,7 +21,7 @@ A computer editor for one note at a time (owner, 2026-11-26; the feature list is
   image, and export (searchable PDF, Markdown) as getting the owner's own content out.
 - Edit it without loss: select, move, resize, rotate, delete, copy and paste, pages, pictures,
   typed text boxes, Headings.
-- The Mac shows, the tablet writes: every edit is a request that the tablet helper, a module of an
+- The Mac shows, the tablet writes by default (the user may choose the Mac or Supernote Cloud, see The write path): every edit is a request that the tablet helper, a module of an
   existing plugin ([#304](https://github.com/martonpaulo/ink-tools/issues/304)), applies with the
   tablet's file API; the Mac pulls the note back and checks the untouched pages.
 - Edit without waiting: the Mac draws each edit at once and sends it in the background, reads
@@ -38,8 +38,7 @@ A computer editor for one note at a time (owner, 2026-11-26; the feature list is
   ([#339](https://github.com/martonpaulo/ink-tools/issues/339)); a whole note sent either way
   ([#504](https://github.com/martonpaulo/ink-tools/issues/504)); and, later, Edit through Supernote
   Cloud, with real vector strokes and elements, never a page bitmap alone, after a backup
-  ([#363](https://github.com/martonpaulo/ink-tools/issues/363)). Editing an existing note in place
-  goes through the tablet.
+  ([#363](https://github.com/martonpaulo/ink-tools/issues/363)). Where an edit to an existing note is saved is the user's choice (below).
 - Every owner decision of 2026-11-26, with its issue:
   [`docs/decisions.md` › Ink Notebook Editor scope of 2026-11-26](../../docs/decisions.md#ink-notebook-editor-scope-of-2026-11-26).
 
@@ -106,9 +105,14 @@ keeps a backup of the copy (`NoteBackups`, the 10 newest per note in Application
 pulls the note back and stops when a page the edit did not touch changed (`NoteDiff.untouchedChanged`,
 by page id). A failure leaves the Mac's copy and keeps the backup.
 
-- Route T, the default: `inkctl note edit` hands the operations to the helper inside Device Link
+- Where edits are saved (owner, 2026-11-27): Settings › Tablet, «Where edits are saved»: the tablet, the Mac or Supernote Cloud.
+  The default is the tablet when it is connected, the Mac when none is. A backup is always made before writing; a note
+  changed on both sides keeps both copies and says so ([#317](https://github.com/martonpaulo/ink-tools/issues/317)). Saving on the Mac needs
+  the Mac `.note` writer ([#362](https://github.com/martonpaulo/ink-tools/issues/362)); until it exists the choice shows as unavailable
+  with its reason. Each destination is a capability of the note-transport adapters ([#496](https://github.com/martonpaulo/ink-tools/issues/496)).
+- Route T, the default while a tablet is connected: `inkctl note edit` hands the operations to the helper inside Device Link
   ([#312](https://github.com/martonpaulo/ink-tools/issues/312)), which applies them with the tablet's file API.
-- Route B, recorded exceptions only, each refused while the note is open on the tablet:
+- Route B, saving on the Mac: any edit when the user picks it or no tablet is connected (generalized from the recorded exceptions, 2026-11-27); the measured cases below stay the proven ones, each refused while the note is open on the tablet:
   - a page move: `NoteWriter.movePage`, then `inkctl files push`; [#263](https://github.com/martonpaulo/ink-tools/issues/263) measured every
     layer and element block byte-equal, and the tablet's save rewrites only page metadata, and it keeps the page's
     `PAGEID` as the tablet's own move does, where the file API's copy and delete gives a new one
