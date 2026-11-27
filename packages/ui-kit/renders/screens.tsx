@@ -55,12 +55,13 @@ import {MAZE} from '../../../plugins/puzzles/src/games/maze';
 import {JIGSAW} from '../../../plugins/puzzles/src/games/jigsaw';
 import {FUTOSHIKI} from '../../../plugins/puzzles/src/games/futoshiki';
 import {SUDOKU} from '../../../plugins/puzzles/src/games/sudoku';
+import {KILLER} from '../../../plugins/puzzles/src/games/killer';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {cellCenter, drawFutoshikiPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {cellCenter, drawFutoshikiPage, drawKillerPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -301,6 +302,12 @@ const sudokuInk = (code: string) => () => {
   const puzzle = sudokuFromCode(code);
   return cellInk(sudokuLayout(puzzle, 'portrait', 'right').grid, [...sudokuExpected(puzzle)], 30, Math.min(puzzle.shape.size, 9));
 };
+const KILLER_CODE = 'KS-9-M-1';
+const killerInk = () => {
+  const puzzle = killerFromCode(KILLER_CODE);
+  const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
+  return cellInk(drawKillerPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, open, 30, 9);
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -328,6 +335,7 @@ const puzzlesMaze = (code: string | null, steps: string[] = [], failing = false)
 const puzzlesJigsaw = (code: string | null, steps: string[] = []) => puzzlesGame(JIGSAW, jigsawInk, code, steps);
 const puzzlesFutoshiki = (code: string | null, steps: string[] = []) => puzzlesGame(FUTOSHIKI, futoshikiInk, code, steps);
 const puzzlesSudoku = (code: string | null, steps: string[] = []) => puzzlesGame(SUDOKU, sudokuInk(code ?? SUDOKU_CODE), code, steps);
+const puzzlesKiller = (code: string | null, steps: string[] = []) => puzzlesGame(KILLER, killerInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -360,6 +368,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-sudoku-check', render: () => puzzlesSudoku(SUDOKU_CODE, ['Check'])},
   {name: 'puzzles-sudoku-solution', render: () => puzzlesSudoku(SUDOKU_CODE, ['Show Solution'])},
   {name: 'puzzles-sudoku-16-solution', render: () => puzzlesSudoku(SUDOKU_16_CODE, ['Show Solution'])},
+  {name: 'puzzles-killer', render: () => puzzlesKiller(null)},
+  {name: 'puzzles-killer-page', render: () => puzzlesKiller(KILLER_CODE)},
+  {name: 'puzzles-killer-check', render: () => puzzlesKiller(KILLER_CODE, ['Check'])},
+  {name: 'puzzles-killer-solution', render: () => puzzlesKiller(KILLER_CODE, ['Show Solution'])},
   {name: 'puzzles-futoshiki', render: () => puzzlesFutoshiki(null)},
   {name: 'puzzles-futoshiki-page', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE)},
   {name: 'puzzles-futoshiki-check', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Check'])},

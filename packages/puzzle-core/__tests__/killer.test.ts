@@ -11,6 +11,7 @@ import {
   encodeKiller,
   encodePng,
   generateKiller,
+  killerFromCode,
   parsePuzzleCode,
   puzzleCode,
   solveKiller,
@@ -186,5 +187,13 @@ describe('the killer page and its check', () => {
     expect(result.wrong).toEqual([]);
     expect(result.empty).toHaveLength(puzzle.givens.filter(v => v === 0).length);
     await expect(checkKiller(puzzle, { ...layout.grid, columns: 8 }, [], recognize)).rejects.toThrow('its own grid');
+  });
+});
+
+describe('the killer sudoku code (#387)', () => {
+  test('names the same puzzle again, and another game\'s code is refused', () => {
+    const puzzle = generateKiller('7K2Q9X', 'medium');
+    expect(digest(killerFromCode(puzzleCode(puzzle.id)))).toBe(digest(puzzle));
+    expect(() => killerFromCode('SU-9-M-7K2Q9X')).toThrow('not a killer sudoku code');
   });
 });

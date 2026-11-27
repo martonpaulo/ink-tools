@@ -10,7 +10,7 @@
  * entry another way. Drawing the page and checking the ink are `killer-page.ts`'s job.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
 import { KILLER_BANK } from './killer-bank';
 import { generateSudoku } from './sudoku';
@@ -462,4 +462,11 @@ export function generateKiller(seed: string, difficulty: Difficulty): KillerSudo
     ...view,
     rating: { difficulty, cages: view.cages.length, largestCage, givens },
   };
+}
+
+/** The killer sudoku a puzzle code names (`KS-9-M-7K2Q9X`), the same one every time (#387). */
+export function killerFromCode(code: string): KillerSudoku {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'killer-sudoku' || id.size !== String(N)) throw new RangeError(`«${code}» is not a killer sudoku code`);
+  return generateKiller(id.seed, id.difficulty);
 }
