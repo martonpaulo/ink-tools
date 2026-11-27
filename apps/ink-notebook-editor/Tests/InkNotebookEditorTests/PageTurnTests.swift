@@ -31,7 +31,9 @@ import Testing
         try #require(count >= 4)
 
         let window = KeyedOffscreenWindow(size: NotebookWindow.portrait, dark: dark)
-        window.show(NotebookWindow(document: document, columns: columns))
+        // At Zoom to Fit every key turns a page; at Zoom to Width, where a note opens (#458), the
+        // vertical keys scroll the page instead, as `PageViewerTests` checks.
+        window.show(NotebookWindow(document: document, columns: columns, zoom: .fitPage))
         defer { window.close() }
         #expect(try await window.shows(Copy.pageOf(1, count)))
         // The page takes the focus when the window opens, so the first key already turns it.

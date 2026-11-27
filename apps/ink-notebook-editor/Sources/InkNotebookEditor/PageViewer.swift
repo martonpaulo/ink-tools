@@ -41,7 +41,8 @@ final class PageViewer {
     /// How far an arrow key scrolls, in points, as a line of text in a Mac document.
     static let line: CGFloat = 40
 
-    init(layout: Layout = .scroll, zoom: PageZoom = .fitPage) {
+    /// A note opens at Zoom to Width, its page as wide as the window (#458).
+    init(layout: Layout = .scroll, zoom: PageZoom = .fitWidth) {
         self.layout = layout
         self.zoom = zoom
     }

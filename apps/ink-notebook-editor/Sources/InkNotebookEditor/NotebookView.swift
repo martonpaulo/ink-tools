@@ -13,6 +13,8 @@ struct NotebookWindow: View {
     let document: NoteDocument
     /// Whether the page list shows when the window opens.
     var columns: NavigationSplitViewVisibility = .automatic
+    /// The zoom the window opens at: Zoom to Width (#458).
+    var zoom: PageZoom = .fitWidth
     /// The file's name without its extension, for the files a copy or a drag makes (#323).
     var name = ""
     @Environment(\.openDocument) private var openDocument
@@ -35,7 +37,9 @@ struct NotebookWindow: View {
             case .note(let note) where note.pages.isEmpty:
                 StateView(.noPages) { OpenAnotherButton() }
             case .note(let note):
-                NotebookView(pages: PageImages(note: note), columns: columns, live: live, editor: editor)
+                NotebookView(
+                    pages: PageImages(note: note), columns: columns, viewer: PageViewer(zoom: zoom), live: live,
+                    editor: editor)
             }
         }
         .environment(text)
@@ -683,6 +687,8 @@ private struct GridCell: View {
 /// The toolbar of a notebook window: the layout and the zoom, as Preview's toolbar holds them.
 private struct ViewerToolbar: ToolbarContent {
     @Bindable var viewer: PageViewer
+    /// A magnification as the zoom pop-up shows it: a whole percentage.
+    static let percent = FloatingPointFormatStyle<Double>.Percent.percent.precision(.fractionLength(0))
 
     var body: some ToolbarContent {
         ToolbarItem {
@@ -721,6 +727,31 @@ private struct ViewerToolbar: ToolbarContent {
                 }
                 .disabled(viewer.zoomedIn == nil)
                 .help(Copy.zoomIn)
+                // The shown magnification, and the three zooms that hold while the window is
+                // resized, with the View menu's names (#458). In one group with Zoom Out and Zoom
+                // In, so a narrow window keeps them together; the grid has no zoom, so no pop-up.
+                if viewer.layout == .scroll {
+                    Menu {
+                        Picker(Copy.zoom, selection: $viewer.zoom) {
+                            Text(Copy.actualSize).tag(PageZoom.magnification(1))
+                            Text(Copy.zoomToFit).tag(PageZoom.fitPage)
+                            Text(Copy.zoomToWidth).tag(PageZoom.fitWidth)
+                        }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                    } label: {
+                        // The largest step's label, hidden, keeps the width the same at every
+                        // zoom, so Zoom In never moves under the pointer.
+                        ZStack {
+                            Text(PageZoom.steps[PageZoom.steps.count - 1], format: Self.percent).hidden()
+                            Text(viewer.magnification, format: Self.percent)
+                        }
+                        .monospacedDigit()
+                    }
+                    .help(Copy.zoom)
+                    .accessibilityLabel(Copy.zoom)
+                    .accessibilityValue(Text(viewer.magnification, format: Self.percent))
+                }
             } label: {
                 Label(Copy.zoom, systemImage: "magnifyingglass")
             }

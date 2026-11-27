@@ -5,7 +5,7 @@ import CoreGraphics
 /// The zoom of a notebook window. A magnification of 1 is Actual Size: one page pixel per display
 /// pixel, so the raster shows unresampled. The fit zooms fit each page by its own aspect, so a
 /// landscape page among portrait ones fits as they do (#291).
-public enum PageZoom: Sendable, Equatable {
+public enum PageZoom: Sendable, Hashable {
     case fitPage
     case fitWidth
     case magnification(Double)

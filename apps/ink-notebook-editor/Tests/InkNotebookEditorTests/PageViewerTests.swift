@@ -47,6 +47,20 @@ import Testing
         #expect(viewer.scroll(for: .rightArrow) == nil)
     }
 
+    /// A note opens at Zoom to Width, and a fit zoom holds while the window is resized: the page
+    /// follows the new width or the new window (#458).
+    @Test func aNoteOpensAtZoomToWidthAndAFitHoldsOnResize() {
+        #expect(PageViewer().zoom == .fitWidth)
+        let viewer = Self.viewer(.fitWidth)
+        viewer.viewport = CGSize(width: 600, height: 600)
+        #expect(viewer.zoom == .fitWidth)
+        #expect(viewer.zoom.size(of: viewer.page, in: viewer.viewport, scale: 1).width == 600)
+        viewer.zoom = .fitPage
+        viewer.viewport = CGSize(width: 900, height: 400)
+        #expect(viewer.zoom.size(of: viewer.page, in: viewer.viewport, scale: 1).height == 400)
+        #expect(viewer.magnification == 400.0 / 2560)
+    }
+
     @Test func theGridKeysNeverScroll() {
         let viewer = Self.viewer(.magnification(2))
         viewer.layout = .grid
