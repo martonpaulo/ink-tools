@@ -303,9 +303,9 @@ export const MAX_PHRASE_WORDS = 4;
  * The line's trailing word groups, longest first, ending with the last word (#87): «Miguel de
  * Cervantes», then «Cervantes». A group of two words or more starts with a capital letter, so
  * «de Cervantes», «uma banana» and «a China» are never tried. A line with no capital letter at all
- * tries every group: the tablet's recognition answers in lower case («quem foi miguel de
- * cervantes», measured on the Manta, 2026-11-27), so its capitals mark nothing, and the one titles
- * request decides. shortcut: the capital marks a name only in scripts with case; read the device
+ * tries every group: a line written in lower case is recognised in lower case («quem foi miguel
+ * de cervantes», measured on the Manta, 2026-11-27), so no capital marks the name, and the one
+ * titles request decides. shortcut: the capital marks a name only in scripts with case; read the device
  * logs when a name is missed.
  */
 export function trailingGroups(line: string): string[] {

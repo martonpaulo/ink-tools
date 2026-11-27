@@ -120,7 +120,8 @@ describe('resolving a written line (#87)', () => {
   });
 
   it('resolves a line the tablet recognised in lower case, by the title a word redirects to', async () => {
-    // Measured on the Manta, 2026-11-27: the recognition answered «quem foi miguel de cervantes»;
+    // Measured on the Manta, 2026-11-27: a line written in lower case was recognised as «quem foi
+    // miguel de cervantes»;
     // pt.wikipedia has no «Miguel de cervantes», and «Cervantes» redirects to the article.
     const fetch = jest.fn().mockResolvedValue(
       ok(
