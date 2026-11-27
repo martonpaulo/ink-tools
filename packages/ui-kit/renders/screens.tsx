@@ -48,6 +48,9 @@ import {copy as deviceLinkCopy} from '../../../plugins/device-link/src/copy';
 import {permissionProblem as lassoActionsPermission, FILE_WRITE as LASSO_FILE_WRITE} from '../../../plugins/lasso-actions/src/buttons';
 import {copy as imageEditingCopy} from '../../../plugins/image-editing/src/copy';
 import {copy as smartPenTextCopy} from '../../../plugins/smart-pen/src/modules/text/copy';
+import {PuzzlesView} from '../../../plugins/puzzles/src/PuzzlesView';
+import type {Game as PuzzlesGame} from '../../../plugins/puzzles/src/games';
+import type {RequirementPorts as PuzzlesPorts} from '../../../plugins/puzzles/src/requirements';
 
 export type ScreenRender = {
   name: string;
@@ -227,6 +230,31 @@ const OWNER_RUNS = {
   calendar: {module: 'calendar' as const, at: OWNER_AT, counts: {added: 0, changed: 0, removed: 1}, errors: [], warnings: [], keptLocal: 0},
 };
 const OWNER_SIGN_INS = {todoist: {state: 'signedIn' as const, account: 'Test User (tester@example.com)'}, google: {state: 'signedIn' as const, account: 'tester@example.com'}, icloud: {state: 'signedIn' as const, account: 'tester@example.org'}};
+/** Puzzles' host: every permission granted, none, none and Allow refused, or no answer (#453). */
+type PuzzlesHost = 'granted' | 'refused' | 'denied' | 'failing';
+const puzzlesPorts = (host: PuzzlesHost): PuzzlesPorts => ({
+  has: async () => (host === 'failing' ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: host === 'granted'}),
+  request: async () => ({ok: true, value: host === 'denied' ? 0 : 1}),
+  log: noop,
+});
+/** Two synthetic games, so the list shows rows as a game issue adds them. */
+const PUZZLES_GAMES: PuzzlesGame[] = [
+  {id: 'sample-grid', title: 'Sample grid', subtitle: 'Fill every row and column once', View: () => <View />},
+  {id: 'sample-words', title: 'Sample words', subtitle: 'Find the hidden words', View: () => <View />},
+];
+/** Presses the control named `label`, as the person would. */
+const pressIn = (tree: ReactTestRenderer, label: string) =>
+  act(async () => tree.root.find(node => node.props.accessibilityLabel === label && typeof node.props.onPress === 'function').props.onPress());
+/** The Puzzles view on this host; `steps` presses the first game, then each label after it. */
+const puzzles = async (host: PuzzlesHost, games: PuzzlesGame[] = [], steps: string[] = []) => {
+  const tree = await mount(<PuzzlesView close={noop} ports={puzzlesPorts(host)} games={games} />);
+  for (const label of steps) {
+    await pressIn(tree, label);
+  }
+  return tree;
+};
+const OPEN_GAME = 'Sample grid, Fill every row and column once';
+
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
 const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}) =>
@@ -238,6 +266,11 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-needs', render: () => mount(<Needs problem={{what: 'Sample access is off', reason: 'The sample tool reads the sample folder to show your pictures.', fix: {label: 'Turn it on', run: () => {}}}} onClose={() => {}} />)},
   {name: 'ui-kit-needs-steps', render: () => mount(<Needs problem={{what: 'Sample setting is off', reason: 'Only you can turn it on.', fix: {steps: ['Open Settings on the tablet.', 'Turn on Sample setting.']}}} onClose={() => {}} />)},
   {name: 'ui-kit-error', render: () => mount(<ErrorView problem={{what: 'Device Link stopped with an error.', reason: 'The sample device did not answer.'}} onRetry={() => {}} onClose={() => {}} />)},
+  {name: 'puzzles', render: () => puzzles('granted')},
+  {name: 'puzzles-games', render: () => puzzles('granted', PUZZLES_GAMES)},
+  {name: 'puzzles-needs', render: () => puzzles('refused', PUZZLES_GAMES, [OPEN_GAME])},
+  {name: 'puzzles-needs-steps', render: () => puzzles('denied', PUZZLES_GAMES, [OPEN_GAME, 'Allow'])},
+  {name: 'puzzles-error', render: () => puzzles('failing', PUZZLES_GAMES, [OPEN_GAME])},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},

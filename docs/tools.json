@@ -114,11 +114,12 @@
     {
       "name": "Puzzles", "section": "tools", "kind": "plugin", "status": "In progress",
       "icon": "design/icons/readme/puzzles.png",
-      "link": "https://github.com/martonpaulo/ink-tools/issues/376",
+      "link": "plugins/puzzles/",
+      "network": [],
       "features": [
-        {"name": "New game", "text": "pick a game, a language and a difficulty; the game is a new page after the current one, its grid drawn as the page background, so erasing never removes it."},
-        {"name": "Show solution", "text": "shows the answer over the plugin's view, never on the page."},
-        {"name": "Check", "text": "reads what you wrote and marks the wrong cells."}
+        {"name": "New game", "text": "pick a game, a language and a difficulty; the game is a new page after the current one, its grid drawn as the page background, so erasing never removes it.", "planned": true},
+        {"name": "Show solution", "text": "shows the answer over the plugin's view, never on the page.", "planned": true},
+        {"name": "Check", "text": "reads what you wrote and marks the wrong cells.", "planned": true}
       ],
       "map": {
         "sources": [],

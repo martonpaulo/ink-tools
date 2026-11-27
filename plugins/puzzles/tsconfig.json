@@ -1,0 +1,18 @@
+{
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    // The shared packages live outside this folder (#93); their react and react-native imports
+    // resolve from this plugin's node_modules, as packages/ui-kit/plugin-config.js does for Metro.
+    "paths": {
+      "@ink-tools/ui-kit": ["../../packages/ui-kit/src"],
+      "@ink-tools/ui-kit/*": ["../../packages/ui-kit/src/*"],
+      // sn-adapter's official tier (#101).
+      "@ink-tools/sn-adapter/official": ["../../packages/sn-adapter/src/official"],
+      "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
+      // The games' generators, pages and checks (#453).
+      "@ink-tools/puzzle-core": ["../../packages/puzzle-core/src"],
+      "*": ["./node_modules/@types/*", "./node_modules/*"]
+    }
+  },
+  "include": ["**/*", "../../packages/ui-kit/src", "../../packages/sn-adapter/src/official"]
+}

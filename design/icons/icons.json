@@ -594,10 +594,8 @@
    "plannedIf": "if a plugin"
   },
   {
-   "out": "design/icons/planned/puzzles/icon",
+   "out": "plugins/puzzles/assets/icon",
    "kind": "plugin",
-   "planned": "#376",
-   "readme": true,
    "tabler": [
     "puzzle"
    ]

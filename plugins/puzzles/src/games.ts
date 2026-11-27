@@ -1,0 +1,28 @@
+/**
+ * The games of the Puzzles view (#453): one entry per game, in the order the view lists them. A
+ * game issue adds its entry here, with its view; the game's logic stays in
+ * `@ink-tools/puzzle-core` (`docs/architecture.md` › Layer rules). The shell ships with none.
+ */
+import type React from 'react';
+import type {Requirement} from './requirements';
+
+export type GameViewProps = {
+  /** Back to the game list. */
+  onBack: () => void;
+  /** Closes the Puzzles view; the game's title bar shows ui-kit's Close. */
+  onClose: () => void;
+};
+
+export type Game = {
+  /** Stable, in our words: `sudoku`, `word-search`. */
+  id: string;
+  /** The game's name in the list. */
+  title: string;
+  /** One line under the name: what the player does. */
+  subtitle?: string;
+  /** What this game needs beyond the plugin's own requirements, checked before its view opens. */
+  requires?: readonly Requirement[];
+  View: React.ComponentType<GameViewProps>;
+};
+
+export const GAMES: readonly Game[] = [];

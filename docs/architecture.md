@@ -227,7 +227,7 @@ The tablet enables at most 10 plugins and every enabled plugin loads into one Pl
 | Image Editing | Enhance, Lighter, Darker, Document, Erase, Crop | a lassoed picture | unchanged |
 | Device Link | send, receive | the page and files | unchanged |
 | Account Sync | to-do, calendar, digest | outside services | unchanged |
-| Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Planned |
+| Puzzles | the games ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) | its own view and a new page | Shell built ([#453](https://github.com/martonpaulo/ink-tools/issues/453)), no game yet |
 
 Ink Tools Probe stays a developer tool, off day to day. The conversion engine is shared package code,
 `ink-core`'s `@ink-tools/ink-core/conversion` ([#305](https://github.com/martonpaulo/ink-tools/issues/305)): Smart Pen keeps live conversion and «Undo Conversion», Lasso Actions gets «Convert to Text»
@@ -244,6 +244,7 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
 | Image Editing | `plugins/image-editing/` | `retouch` |
 | Ink Tools Probe | `plugins/ink-tools-probe/` | `probe` |
 | Smart Pen | `plugins/smart-pen/` | `RealTimeConversion` (`pluginKey`, kept from Real-Time Conversion so the tablet updates it in place, [#305](https://github.com/martonpaulo/ink-tools/issues/305)) |
+| Puzzles | `plugins/puzzles/` | `Puzzles` (`pluginKey`, [#453](https://github.com/martonpaulo/ink-tools/issues/453)) |
 
 «Bridge» alone never names the helper app: that is the Ink Tools Helper app,
 [`apps/ink-tools-helper/`](#the-tablet-apps).

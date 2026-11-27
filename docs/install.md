@@ -36,6 +36,7 @@ network service it sends data to.
 | Lasso Actions | not yet | | an open P1 issue: [#13](https://github.com/martonpaulo/ink-tools/issues/13) |
 | Account Sync | not yet | | in progress |
 | Image Editing | not yet | | in progress |
+| Puzzles | not yet | | in progress: no game yet ([#376](https://github.com/martonpaulo/ink-tools/issues/376)) |
 | Handwriting Language | not yet | `lingo-app-<version>.apk` | test builds ship as prereleases signed with its release key ([#494](https://github.com/martonpaulo/ink-tools/issues/494)); it is a sideloaded app, not a plugin |
 | Note Editor | not yet | | in progress |
 | Ink Tools Control | no release | | a Mac command line tool, unversioned: use it from a clone of this repository |

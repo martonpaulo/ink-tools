@@ -93,6 +93,9 @@
    "plugins/lasso-actions/src/buttons.ts": {
     "repeated": 1
    },
+   "plugins/puzzles/.eslintrc.js": {
+    "repeated": 1
+   },
    "plugins/smart-pen/.eslintrc.js": {
     "repeated": 1
    },
