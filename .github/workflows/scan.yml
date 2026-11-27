@@ -42,6 +42,11 @@ jobs:
           python3 scripts/readme_status.py --root .
           python3 -B -m unittest scripts/test_readme_status.py
 
+      - name: Check every AGENTS.md is within its line cap
+        run: |
+          python3 -B scripts/agents_length.py --root .
+          python3 -B -m unittest scripts/test_agents_length.py
+
       - name: Check the README tool tables and diagrams are current (#407)
         run: |
           python3 scripts/readme_figures.py --root . --check

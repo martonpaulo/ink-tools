@@ -204,7 +204,7 @@ ink-tools/
   apps/
     handwriting-language/ # sideloaded tablet app: switch the handwriting language tablet-wide
     ink-tools-helper/ # sideloaded helper app: lets inkctl install, enable and permit plugins
-    note-editor/ # macOS app, Note Editor: a read-only .note reader for now
+    note-editor/ # macOS app, Note Editor: a .note reader and editor
 ```
 
 ## The plugins (on device)
@@ -343,7 +343,7 @@ measures are `packages/picture-search`.
 - **`inkctl`** — control a Supernote over Wi-Fi ADB with direct calls, JSON answers and stable exit
   codes, no root (formerly `supernote-adb`, then `snadb`, which still runs as a shim,
   [#173](https://github.com/martonpaulo/ink-tools/issues/173)).
-- **Note Editor** (`apps/note-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). It opens a note read-only, from a file or from the tablet through `inkctl`, and pages through it ([#262](https://github.com/martonpaulo/ink-tools/issues/262)); editing follows.
+- **Note Editor** (`apps/note-editor/`, formerly the working name `desk`) — a macOS app that reads and edits Supernote `.note` files on the Mac ([#48](https://github.com/martonpaulo/ink-tools/issues/48)). It opens a note from a file or from the tablet through `inkctl` and pages through it ([#262](https://github.com/martonpaulo/ink-tools/issues/262)); a note from the tablet is edited through the tablet's file API ([#313](https://github.com/martonpaulo/ink-tools/issues/313)).
 
 More tools may follow; this layout leaves room under `plugins/`, `cli/` and `apps/`.
 

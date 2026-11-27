@@ -1,6 +1,6 @@
 {
   "gates": [
-    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py . && python3 scripts/readme_status.py --root . && python3 -B -m unittest scripts/test_readme_status.py && python3 scripts/readme_figures.py --root . --check && python3 -B -m unittest scripts/test_readme_figures.py scripts/test_tool_facts.py && python3 scripts/risk_notice.py --root . && python3 scripts/release_notes.py --root . --check && python3 -B -m unittest scripts/test_risk_notice.py scripts/test_release_notes.py", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file, the README Status vocabulary of AGENTS.md (#268), and the README tool tables, tool map and level table against a fresh generation from docs/tools.json, the level table and the registry (#407), the one risk notice in README.md, docs/install.md and site/index.html, and each released plugin's permissions and network list behind its release notes (#373)"},
+    {"name": "docs", "command": "python3 scripts/text_check.py . && python3 scripts/issue_links.py . && python3 scripts/readme_status.py --root . && python3 -B -m unittest scripts/test_readme_status.py && python3 -B scripts/agents_length.py --root . && python3 -B -m unittest scripts/test_agents_length.py && python3 scripts/readme_figures.py --root . --check && python3 -B -m unittest scripts/test_readme_figures.py scripts/test_tool_facts.py && python3 scripts/risk_notice.py --root . && python3 scripts/release_notes.py --root . --check && python3 -B -m unittest scripts/test_risk_notice.py scripts/test_release_notes.py", "covers": "links, anchors, invisible characters and linked issue references in every Markdown file, the README Status vocabulary of AGENTS.md (#268), every AGENTS.md within its line cap (the route map's 200 and 150), and the README tool tables, tool map and level table against a fresh generation from docs/tools.json, the level table and the registry (#407), the one risk notice in README.md, docs/install.md and site/index.html, and each released plugin's permissions and network list behind its release notes (#373)"},
     {"name": "license", "command": "python3 scripts/license_check.py --root . && python3 -B -m unittest scripts/test_license_check.py", "covers": "every LICENSE file, AGENTS.md License line and README licence link says CC BY-NC-SA 4.0 (#276)"},
     {"name": "sleep", "command": "python3 scripts/sleep_guard.py .", "covers": "no test sleeps or bounds wall-clock time without a timing-independent note (Workbench #740, #1712)"},
     {"name": "dry", "command": "python3 scripts/dry_check.py --root . && python3 scripts/dry_cross.py --root . && python3 -B -m unittest scripts/test_dry_cross.py", "covers": "the DRY ratchet of dry-check.json: magic values, repeated blocks, identical files, repeated rules (#197), and dry_cross.py's Java and Swift values and one constant value named in two tools (#295)"},
@@ -59,7 +59,7 @@
     {"path": "packages/native-build/host-tools.cjs", "gates": ["handwriting-language", "ink-tools-helper"]},
     {"path": "scripts/gates.py", "gates": ["docs", "quick"]},
     {"path": "scripts/quick_check.py", "gates": ["quick", "case", "wording"]},
-    {"path": "scripts/case_check.py", "gates": ["case", "quick"]},
+    {"path": "scripts/case_check.py", "gates": ["case", "quick", "docs"]},
     {"path": "scripts/test_case_check.py", "gates": ["case"]},
     {"path": "scripts/public_wording.py", "gates": ["wording", "quick"]},
     {"path": "scripts/test_public_wording.py", "gates": ["wording"]},
@@ -85,6 +85,8 @@
     {"path": "*.java", "gates": ["dry"]},
     {"path": "scripts/text_check.py", "gates": ["docs"]},
     {"path": "scripts/readme_status.py", "gates": ["docs"]},
+    {"path": "scripts/agents_length.py", "gates": ["docs"]},
+    {"path": "scripts/test_agents_length.py", "gates": ["docs"]},
     {"path": "scripts/test_readme_status.py", "gates": ["docs"]},
     {"path": "scripts/readme_figures.py", "gates": ["docs"]},
     {"path": "scripts/test_readme_figures.py", "gates": ["docs"]},
