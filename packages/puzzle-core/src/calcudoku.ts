@@ -20,7 +20,7 @@
  * too close.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
 import { childSeed, createRandom, type Random } from './random';
 
@@ -353,4 +353,11 @@ export function generateCalcudoku(seed: string, size: number, difficulty: Diffic
     if (made) return { id: { game: 'calcudoku', size: sizeToken(size), difficulty, seed }, size, ...made };
   }
   throw new Error(`no ${difficulty} ${size} x ${size} calcudoku from seed «${seed}» in ${CALCUDOKU_ATTEMPTS} attempts`);
+}
+
+/** The calcudoku a puzzle code names (`CD-6-M-7K2Q9X`), the same one every time (#388). */
+export function calcudokuFromCode(code: string): Calcudoku {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'calcudoku') throw new RangeError(`«${code}» is not a calcudoku code`);
+  return generateCalcudoku(id.seed, Number(id.size), id.difficulty);
 }

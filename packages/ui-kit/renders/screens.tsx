@@ -56,12 +56,13 @@ import {JIGSAW} from '../../../plugins/puzzles/src/games/jigsaw';
 import {FUTOSHIKI} from '../../../plugins/puzzles/src/games/futoshiki';
 import {SUDOKU} from '../../../plugins/puzzles/src/games/sudoku';
 import {KILLER} from '../../../plugins/puzzles/src/games/killer';
+import {CALCUDOKU} from '../../../plugins/puzzles/src/games/calcudoku';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {cellCenter, drawFutoshikiPage, drawKillerPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKillerPage, futoshikiFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -308,6 +309,12 @@ const killerInk = () => {
   const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
   return cellInk(drawKillerPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, open, 30, 9);
 };
+const CALCUDOKU_CODE = 'CD-6-M-1';
+const calcudokuInk = () => {
+  const puzzle = calcudokuFromCode(CALCUDOKU_CODE);
+  const all = puzzle.solution.map((value, cell) => [cell, String(value)] as const);
+  return cellInk(drawCalcudokuPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, all, 20, puzzle.size);
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -336,6 +343,7 @@ const puzzlesJigsaw = (code: string | null, steps: string[] = []) => puzzlesGame
 const puzzlesFutoshiki = (code: string | null, steps: string[] = []) => puzzlesGame(FUTOSHIKI, futoshikiInk, code, steps);
 const puzzlesSudoku = (code: string | null, steps: string[] = []) => puzzlesGame(SUDOKU, sudokuInk(code ?? SUDOKU_CODE), code, steps);
 const puzzlesKiller = (code: string | null, steps: string[] = []) => puzzlesGame(KILLER, killerInk, code, steps);
+const puzzlesCalcudoku = (code: string | null, steps: string[] = []) => puzzlesGame(CALCUDOKU, calcudokuInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -372,6 +380,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-killer-page', render: () => puzzlesKiller(KILLER_CODE)},
   {name: 'puzzles-killer-check', render: () => puzzlesKiller(KILLER_CODE, ['Check'])},
   {name: 'puzzles-killer-solution', render: () => puzzlesKiller(KILLER_CODE, ['Show Solution'])},
+  {name: 'puzzles-calcudoku', render: () => puzzlesCalcudoku(null)},
+  {name: 'puzzles-calcudoku-page', render: () => puzzlesCalcudoku(CALCUDOKU_CODE)},
+  {name: 'puzzles-calcudoku-check', render: () => puzzlesCalcudoku(CALCUDOKU_CODE, ['Check'])},
+  {name: 'puzzles-calcudoku-solution', render: () => puzzlesCalcudoku(CALCUDOKU_CODE, ['Show Solution'])},
   {name: 'puzzles-futoshiki', render: () => puzzlesFutoshiki(null)},
   {name: 'puzzles-futoshiki-page', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE)},
   {name: 'puzzles-futoshiki-check', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Check'])},

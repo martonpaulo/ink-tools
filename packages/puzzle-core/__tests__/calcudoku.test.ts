@@ -4,6 +4,7 @@ import {
   cageLabel,
   countCalcudokuSolutions,
   deduceCalcudoku,
+  calcudokuFromCode,
   generateCalcudoku,
   solveCalcudoku,
   type Calcudoku,
@@ -151,5 +152,13 @@ describe('the page and «Check»', () => {
     const result = await checkCalcudoku(puzzle, layout, [], recognize);
     expect(result.empty).toHaveLength(puzzle.solution.length);
     expect(result.wrong).toEqual([]);
+  });
+});
+
+describe('the calcudoku code (#388)', () => {
+  test('names the same puzzle again, and another game\'s code is refused', () => {
+    const puzzle = generateCalcudoku('7K2Q9X', 6, 'medium');
+    expect(digest(calcudokuFromCode(puzzleCode(puzzle.id)))).toBe(digest(puzzle));
+    expect(() => calcudokuFromCode('FU-6-M-7K2Q9X')).toThrow('not a calcudoku code');
   });
 });
