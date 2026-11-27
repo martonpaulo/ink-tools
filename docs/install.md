@@ -47,8 +47,8 @@ prerelease for testing.
 1. Download the plugin's `.snplg` file from [inktools.martonpaulo.com](https://inktools.martonpaulo.com/#tools).
 2. Copy the file into the tablet's `MyStyle` folder, over a USB cable or Supernote Cloud.
 3. On the tablet, open **Settings** › **Apps** › **Plugins** › **Select Plugin Package**, choose the file and tap **Install**.
-4. Turn the plugin on in **Settings** › **Apps** › **Plugins**. The install itself asks nothing:
-   the tablet asks for each permission the release notes list the first time you open the plugin's
+4. The install opens the plugin's own page, already turned on: there is nothing to switch on. The
+   install itself asks nothing: the tablet asks for each permission the release notes list the first time you open the plugin's
    Settings or press one of its buttons. Choose **Always Allow**, as a button that works with no
    screen of its own works only with Always Allow ([Plugins](supernote.md#plugins)). A plugin that
    is refused a permission shows what it needs and how to give it.
