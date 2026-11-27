@@ -333,7 +333,8 @@ public struct WritePath: Sendable {
     }
 
     /// A Mac-written note is refused while the tablet has it open: the tablet's next save would
-    /// write its own copy over it.
+    /// write its own copy over it. The Mac names a note relative to the shared storage and the
+    /// helper answers it absolute, so both are compared in one spelling (#316).
     private func refuseWhenOpen(_ note: String) async throws(WriteFailure) {
         let probe = FileManager.default.temporaryDirectory.appending(path: "open-note-\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: probe) }
@@ -348,7 +349,11 @@ public struct WritePath: Sendable {
         } catch {
             throw .tablet(error)
         }
-        if answer.openNote == note { throw .openOnTablet }
+        if let open = answer.openNote,
+            TabletCopyLocation.sharedPath(open) == TabletCopyLocation.sharedPath(note)
+        {
+            throw .openOnTablet
+        }
     }
 
     private func pullAndCheck(_ note: String, into copy: URL, before: URL, edited: Set<Int>, work: URL)

@@ -90,4 +90,19 @@ public struct TabletCopyLocation: Sendable, Equatable {
 
     /// The tablet's shared storage, where inkctl's relative paths start.
     public static let sharedStorage = "/storage/emulated/0"
+
+    /// Other spellings of the shared storage, as the note app may answer a note opened under one
+    /// (inkctl's `SHARED_ALIASES`).
+    static let sharedAliases = ["/sdcard", "/mnt/sdcard", "/storage/self/primary"]
+
+    /// `path` in the one spelling the helper answers: absolute under `sharedStorage`. A relative
+    /// path, as `tabletPath(for:)` makes it, starts there; an alias is resolved. Two spellings of
+    /// one note compare equal only after this (#316).
+    public static func sharedPath(_ path: String) -> String {
+        guard path.hasPrefix("/") else { return sharedStorage + "/" + path }
+        for alias in sharedAliases where path == alias || path.hasPrefix(alias + "/") {
+            return sharedStorage + path.dropFirst(alias.count)
+        }
+        return path
+    }
 }

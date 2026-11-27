@@ -38,12 +38,17 @@ import Testing
 
         init(bytes: Data) { self.bytes = bytes }
 
+        /// Any spelling of `WritePathTests.note`, as the real tablet takes them all (#316).
+        static func isTheNote(_ note: String) -> Bool {
+            TabletCopyLocation.sharedPath(note) == WritePathTests.note
+        }
+
         func read(_ note: String) -> Data {
-            note == WritePathTests.note ? bytes : others[note] ?? Data()
+            Self.isTheNote(note) ? bytes : others[note] ?? Data()
         }
 
         func write(_ data: Data, to note: String) {
-            if note == WritePathTests.note { bytes = data } else { others[note] = data }
+            if Self.isTheNote(note) { bytes = data } else { others[note] = data }
         }
 
         func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
@@ -77,6 +82,13 @@ import Testing
             if let failTemplates { throw failTemplates }
             return templateList
         }
+    }
+
+    /// A backup holding «old», as a Revert to Backup sends it.
+    func oldBackup() throws -> URL {
+        let backup = folder.appending(path: "old.note")
+        try Data("old".utf8).write(to: backup)
+        return backup
     }
 
     func copy(_ text: String = "base") throws -> URL {
@@ -320,6 +332,40 @@ import Testing
         #expect(!tablet.calls.contains("push"))
     }
 
+    /// The Mac names the note relative to the shared storage, the helper answers it absolute or
+    /// under an alias: each is the open note, and nothing is pushed (#316, measured on the Manta).
+    @Test(arguments: [Self.note, "/sdcard/Note/Tests/Edit.note", "/storage/self/primary/Note/Tests/Edit.note"])
+    func aPageMoveIsRefusedWhenTheTabletSpellsTheOpenNoteOtherwise(_ answered: String) async throws {
+        let tablet = FakeTablet(bytes: Data("base".utf8))
+        tablet.openNote = answered
+        let copy = try copy()
+        let move = TabletOperation(
+            note: "Note/Tests/Edit.note", baseHash: "base", page: 0, change: .movePage(from: 0, to: 1))
+        await #expect(throws: WriteFailure.openOnTablet) {
+            try await self.path(tablet).send(move, copy: copy)
+        }
+        #expect(!tablet.calls.contains("push"))
+    }
+
+    @Test func aRestoreOfTheNoteOpenOnTheTabletIsRefused() async throws {
+        let tablet = FakeTablet(bytes: Data("now".utf8))
+        tablet.openNote = Self.note
+        let copy = try copy("now")
+        let backup = try oldBackup()
+        await #expect(throws: WriteFailure.openOnTablet) {
+            try await self.path(tablet).restore(backup, note: "Note/Tests/Edit.note", copy: copy)
+        }
+        #expect(!tablet.calls.contains("push"))
+        #expect(tablet.bytes == Data("now".utf8))
+    }
+
+    @Test func aNoteOfAnotherFolderIsNotTheOpenNote() {
+        #expect(TabletCopyLocation.sharedPath("Note/Tests/Edit.note") == Self.note)
+        #expect(TabletCopyLocation.sharedPath("/sdcard") == "/storage/emulated/0")
+        #expect(TabletCopyLocation.sharedPath("/sdcardx/Edit.note") == "/sdcardx/Edit.note")
+        #expect(TabletCopyLocation.sharedPath("Note/Edit.note") != Self.note)
+    }
+
     @Test func theBackupFolderKeepsExactlyTenCopiesAfterElevenSends() async throws {
         let tablet = FakeTablet(bytes: Data("v0".utf8))
         tablet.onEdit = { _ in Data() }
@@ -340,8 +386,7 @@ import Testing
     @Test func aRestoreKeepsTheCurrentCopyThenPushesTheBackupAndChecksIt() async throws {
         let tablet = FakeTablet(bytes: Data("now".utf8))
         let copy = try copy("now")
-        let backup = folder.appending(path: "old.note")
-        try Data("old".utf8).write(to: backup)
+        let backup = try oldBackup()
         try await path(tablet).restore(backup, note: Self.note, copy: copy)
         #expect(tablet.calls == ["pull", "edit openNote", "push", "pull"])
         #expect(try String(contentsOf: copy, encoding: .utf8) == "old")
@@ -463,8 +508,7 @@ import Testing
     @Test func aRestoreOverANewerNoteGoesBesideItAsAConflictNote() async throws {
         let tablet = FakeTablet(bytes: Data("newer".utf8))
         let copy = try copy("now")
-        let backup = folder.appending(path: "old.note")
-        try Data("old".utf8).write(to: backup)
+        let backup = try oldBackup()
         let clock = Date(timeIntervalSince1970: 1_800_000_000)
         let conflict = ConflictName.path(for: Self.note, at: clock)
         await #expect(throws: WriteFailure.restoreConflict(conflict)) {
