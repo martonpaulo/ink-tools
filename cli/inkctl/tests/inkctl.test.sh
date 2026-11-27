@@ -229,6 +229,8 @@ case "$1" in
                 fi ;;
             uiautomator)
                 cat "$ADB_FILES/events"
+                # ADB_EVENTS_KILLED: a screen dump by another call kills the stream, as on the Manta (#532).
+                [ -n "${ADB_EVENTS_KILLED:-}" ] && exit 137
                 # timing-independent: the real stream never ends; the test's limit ends this one.
                 [ -n "${ADB_HANG:-}" ] && exec sleep 30
                 : ;;
@@ -950,6 +952,8 @@ check "wait toast times out on another text" "$?" "6"
 check "wait toast is bounded" "$((SECONDS - started < 15))" "1"
 run wait toast "Saved" --timeout 3 --json >"$work/out" 2>/dev/null
 check "an events stream that ends early is a device error" "$? $(field "['error']" < "$work/out")" "1 device_error"
+ADB_EVENTS_KILLED=1 run wait toast "Saved" --timeout 3 --json >"$work/out" 2>/dev/null
+check "an events stream another uiautomator call killed names the tap to use" "$? $(field "['error'],'inkctl tap' in d['message']" < "$work/out")" "1 ('device_error', True)"
 run wait toast " " --timeout 1 >/dev/null 2>&1
 check "wait toast refuses an empty text" "$?" "2"
 

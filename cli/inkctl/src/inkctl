@@ -3105,12 +3105,20 @@ def wait_toast(device: Device, args: argparse.Namespace):
     if not args.value.strip():
         raise bad_usage("wait toast needs the text to look for")
     started = time.monotonic()
-    for line in device.stream(TOAST_EVENTS, args.timeout):
-        if seen := toast_seen(line, args.value):
-            waited = round(time.monotonic() - started, 1)
-            return {"kind": "toast", "value": args.value, **seen, "seconds": waited}, f"toast: {seen['text']} ({seen['package']}), after {waited} s"
+    # One uiautomator connection at a time: a `click` or `snapshot` by selector started during the
+    # wait dumps the screen and kills `uiautomator events` (exit 137) [measured, Manta, 2026-11-27, #532].
+    stopped = "uiautomator events ended early: a `click` or `snapshot` during the wait stops it; press with `inkctl tap X Y` instead"
+    try:
+        for line in device.stream(TOAST_EVENTS, args.timeout):
+            if seen := toast_seen(line, args.value):
+                waited = round(time.monotonic() - started, 1)
+                return {"kind": "toast", "value": args.value, **seen, "seconds": waited}, f"toast: {seen['text']} ({seen['package']}), after {waited} s"
+    except Failure as failure:
+        if failure.code != EXIT_FAILED:
+            raise
+        raise Failure(EXIT_FAILED, "device_error", stopped, "inkctl history --failures") from failure
     if time.monotonic() - started < args.timeout:
-        raise Failure(EXIT_FAILED, "device_error", "uiautomator events ended early; another uiautomator call may hold the screen", "inkctl history --failures")
+        raise Failure(EXIT_FAILED, "device_error", stopped, "inkctl history --failures")
     raise Failure(EXIT_TIMEOUT, "timeout", f"no toast with «{args.value}» in {args.timeout:g} s")
 
 
