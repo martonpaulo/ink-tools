@@ -422,6 +422,28 @@ function attemptsFor(cells: number): number {
  * rated medium or hard, so a puzzle took hundreds of attempts or none was found).
  */
 const DENSITY: Record<string, number> = { easy: 62, medium: 45, hard: 40 };
+/**
+ * The most lines (rows and columns together) a drawn picture may leave empty, as a share of them:
+ * a sparse hard picture left 8 of 15 columns at «0» on the tablet, a page that reads as blank
+ * (#384). One in five keeps most hard draws, so a hard page takes about as long as before.
+ * shortcut: only pictures 10 cells or more on each side are held to it, as a thin hard picture
+ * fails it too often for every seed to find one (#435); hold those too when a thin shape is offered.
+ */
+const MAX_EMPTY_LINE_SHARE = 0.2;
+const BLANK_CHECK_MIN_SIDE = 10;
+
+/** Whether a picture leaves more of its lines empty than `MAX_EMPTY_LINE_SHARE` allows. */
+function mostlyBlank(cells: readonly boolean[], width: number, height: number): boolean {
+  if (Math.min(width, height) < BLANK_CHECK_MIN_SIDE) return false;
+  let empty = 0;
+  for (let r = 0; r < height; r++) if (!cells.slice(r * width, (r + 1) * width).some(Boolean)) empty++;
+  for (let c = 0; c < width; c++) {
+    let any = false;
+    for (let r = 0; r < height && !any; r++) any = cells[r * width + c];
+    if (!any) empty++;
+  }
+  return empty > MAX_EMPTY_LINE_SHARE * (width + height);
+}
 
 function checkSize(size: NonogramSize, difficulty: Difficulty): void {
   for (const side of [size.width, size.height]) {
@@ -458,7 +480,7 @@ export function drawNonogram(seed: string, size: NonogramSize, difficulty: Diffi
     const random = createRandom(childSeed(seed, i));
     const solution = picture(random, width, height, DENSITY[difficulty]);
     const filled = solution.filter(Boolean).length;
-    if (filled === 0 || filled === solution.length) continue;
+    if (filled === 0 || filled === solution.length || mostlyBlank(solution, width, height)) continue;
     const grid = cluesOf(width, height, solution);
     // A rating proves uniqueness: every deduction it makes is forced, and it finishes the grid.
     if (rateTowards(grid, difficulty)?.difficulty !== difficulty) continue;
