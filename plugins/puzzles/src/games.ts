@@ -6,6 +6,7 @@
  */
 import type React from 'react';
 import type {Requirement} from './requirements';
+import {BOARDS} from './games/boards';
 import {MAZE} from './games/maze';
 import {puzzleEntry} from './play/GameView';
 
@@ -28,4 +29,4 @@ export type Game = {
   View: React.ComponentType<GameViewProps>;
 };
 
-export const GAMES: readonly Game[] = [puzzleEntry(MAZE)];
+export const GAMES: readonly Game[] = [MAZE, ...BOARDS].map(game => puzzleEntry(game));

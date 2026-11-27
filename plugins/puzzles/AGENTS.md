@@ -5,8 +5,9 @@ here is a symlink to this file.
 
 ## Status
 
-**The shell and its first game, built, not yet on the device** ([#453](https://github.com/martonpaulo/ink-tools/issues/453),
-[#386](https://github.com/martonpaulo/ink-tools/issues/386)): the plugin, its toolbar button, its full view and the maze.
+**The shell and its first games, built, not yet on the device** ([#453](https://github.com/martonpaulo/ink-tools/issues/453),
+[#386](https://github.com/martonpaulo/ink-tools/issues/386), [#402](https://github.com/martonpaulo/ink-tools/issues/402)): the plugin, its toolbar button, its full
+view, the maze and the pass-and-play boards.
 Each game is a sub-issue of
 [#376](https://github.com/martonpaulo/ink-tools/issues/376). On the tablet the plugin is called
 **Puzzles**; `puzzles` is its folder, gate, workflow and tag prefix, and `Puzzles` its `pluginKey`
@@ -26,9 +27,10 @@ data folder. Log lines start `Puzzles:`.
 
 ## A game's view
 
-`src/play/GameView.tsx` is every puzzle game's view ([#386](https://github.com/martonpaulo/ink-tools/issues/386)): the
-game's choices and «Add Page»; on a page the game made, «Check» and «Show Solution», whose pictures
-show only in the view, so the note never gets the answer. `src/play/pages.ts` reads and writes the
+`src/play/GameView.tsx` is every game's view ([#386](https://github.com/martonpaulo/ink-tools/issues/386)): the
+game's choices and «Add Page»; on a page a puzzle made, «Check» and «Show Solution», whose pictures
+show only in the view, so the note never gets the answer. A pass-and-play board has no `open`, so
+its view is the choices and «Add Page» alone ([#402](https://github.com/martonpaulo/ink-tools/issues/402)). `src/play/pages.ts` reads and writes the
 pages: a new puzzle is `<code>.png` in the plugin's hidden folder (`.data/plugin/inktools-puzzles/pages/`,
 never `MyStyle/`, which Supernote Cloud syncs), written by the native module `PuzzlesPages`
 (`native/com/puzzles/view/PageFileModule.java`, as sn-plugin-lib writes no bytes), and inserted as
@@ -44,12 +46,14 @@ deletes the page files an earlier one left; each press of the button starts at t
    ([`docs/architecture.md` › Layer rules](../../docs/architecture.md#layer-rules)): its generator, a
    `…FromCode` that makes the same puzzle from its code, and its check and answer drawn on a copy of
    the page (`packages/puzzle-core/src/page/view.ts`).
-2. A puzzle game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices,
-   `create`, `open` and, on a board, `check` and `answer`, each a call into puzzle-core; its strings
-   are its own, the shared ones in `src/play/copy.ts`. Add `puzzleEntry(<game>)` to `GAMES` in
-   `src/games.ts`, with in `requires` what it needs beyond the plugin's permissions, which the view
-   checks before the game opens. A game that is no puzzle, such as a pass-and-play board, gives its
-   own view, which takes `onBack` and `onClose` and shows ui-kit's `TitleBar` with Close.
+2. A game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices and
+   `create`, and for a puzzle `open`, whose `Puzzle` has its `check` and `answer`, each a call into
+   puzzle-core; a pass-and-play board has no `open` ([#402](https://github.com/martonpaulo/ink-tools/issues/402)). Its
+   strings are its own, the shared ones in `src/play/copy.ts`. Add it to `GAMES` in `src/games.ts`,
+   with in `requires` what it needs beyond the plugin's permissions, which the view checks before
+   the game opens. A game whose play the shared view cannot hold gives its own view, which takes
+   `onBack` and `onClose` and shows ui-kit's `TitleBar` with Close. Its Jest test drives the view
+   through `testing/gameView.tsx`'s fake pages.
 3. A word game's languages come from `resolveLanguages()` over My languages
    ([#502](https://github.com/martonpaulo/ink-tools/issues/502)) once it lands; until then from a
    default the game declares, never a list written in the plugin. A language with no pack, or with

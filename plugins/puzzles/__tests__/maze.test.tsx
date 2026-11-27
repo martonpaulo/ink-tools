@@ -1,6 +1,4 @@
 /** The maze in the Puzzles view (#386): a new page from its choices, «Check» and «Show Solution». */
-import React from 'react';
-import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {RETRY_TEXT} from '@ink-tools/ui-kit';
 import {
@@ -15,68 +13,12 @@ import {
   type Maze,
 } from '@ink-tools/puzzle-core';
 import {MAZE} from '../src/games/maze';
-import {GameView} from '../src/play/GameView';
 import {playCopy} from '../src/play/copy';
-import {codeOfTemplate, type Here, type PagePorts} from '../src/play/pages';
+import {codeOfTemplate, type PagePorts} from '../src/play/pages';
 import {GAMES} from '../src/games';
+import {fakePages, mount as mountGame, press, SEED} from '../testing/gameView';
 
-const SEED = '7K2Q9X';
-const HERE: Here = {notePath: '/storage/emulated/0/Note/Puzzles.note', page: 2, size: {width: 1920, height: 2560}, orientation: 'portrait'};
-
-/** Fake pages: `code` is the puzzle the current page holds; every call is recorded. */
-function fakePages({code = null as string | null, ink = [] as InkStroke<object>[], failHere = false} = {}) {
-  const calls: string[] = [];
-  const inserted: {code: string; png: Uint8Array}[] = [];
-  const pages: PagePorts = {
-    here: async () => {
-      calls.push('here');
-      return failHere ? {ok: false, code: 118, message: 'The handwriting app is not open'} : {ok: true, value: HERE};
-    },
-    codeOf: async () => {
-      calls.push('codeOf');
-      return {ok: true, value: code};
-    },
-    insert: async (_here, puzzle, png) => {
-      calls.push('insert');
-      inserted.push({code: puzzle, png});
-      return {ok: true, value: true};
-    },
-    ink: async () => {
-      calls.push('ink');
-      return {ok: true, value: ink};
-    },
-    read: async () => {
-      calls.push('read');
-      return {ok: true, text: null};
-    },
-    clear: async () => {
-      calls.push('clear');
-      return {ok: true, value: 0};
-    },
-    hide: async () => calls.push('hide'),
-    show: async () => calls.push('show'),
-    log: () => {},
-  };
-  return {pages, calls, inserted};
-}
-
-async function mount(pages: PagePorts, onBack = () => {}) {
-  let tree!: ReactTestRenderer;
-  await act(async () => {
-    tree = renderer.create(<GameView game={MAZE} pages={pages} seed={() => SEED} onBack={onBack} onClose={() => {}} />);
-  });
-  return tree;
-}
-
-/** Presses the control, then lets the view's next frame and its ports' answers run. */
-const press = async (tree: ReactTestRenderer, label: string) => {
-  const [control] = pressables(tree.root, label);
-  expect(control).toBeDefined();
-  await act(async () => {
-    control.props.onPress();
-    await new Promise(resolve => setTimeout(resolve, 0));
-  });
-};
+const mount = (pages: PagePorts, onBack = () => {}) => mountGame(MAZE, pages, onBack);
 
 /** The player's path through these cells, as strokes in page pixels. */
 const path = (maze: Maze, cells: number[]): InkStroke<object>[] => {

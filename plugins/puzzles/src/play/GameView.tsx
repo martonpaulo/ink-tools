@@ -2,6 +2,7 @@
  * One game's view (#386), the same for every game: its choices and «Add Page», which puts a new
  * puzzle on a page after the current one; and, on a page the game made, «Check», which marks the
  * mistakes in the ink, and «Show Solution», both shown here only, so the note never gets the answer.
+ * A pass-and-play board (#402) has no `open`: its view is the choices and «Add Page» alone.
  * Every control comes from ui-kit (#273); a failure stays on screen as its Error with Retry (#245).
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
@@ -23,7 +24,7 @@ import {encodePng, parsePuzzleCode, seedFromNumber, toBase64, type Raster} from 
 import type {Game, GameViewProps} from '../games';
 import {playCopy} from './copy';
 import {devicePages, type Here, type PagePorts} from './pages';
-import type {Board, Choices, PageShape, PuzzleGame, Verdict} from './puzzle';
+import type {Choices, GamePage, PageShape, Puzzle, PuzzleGame, Verdict} from './puzzle';
 
 /** A fresh seed for each new puzzle: 40 bits, eight characters of the code's alphabet. */
 const SEED_RANGE = 2 ** 40;
@@ -39,10 +40,10 @@ export type GameViewDeps = {
 
 type Screen =
   | {kind: 'reading'}
-  | {kind: 'ready'; here: Here; board: Board | null}
+  | {kind: 'ready'; here: Here; board: Puzzle | null}
   | {kind: 'working'}
-  | {kind: 'verdict'; here: Here; board: Board; verdict: Verdict}
-  | {kind: 'answer'; here: Here; board: Board; picture: Raster}
+  | {kind: 'verdict'; here: Here; board: Puzzle; verdict: Verdict}
+  | {kind: 'answer'; here: Here; board: Puzzle; picture: Raster}
   | {kind: 'error'; problem: Problem; retry: () => void};
 
 const shapeOf = (here: Here): PageShape => ({orientation: here.orientation, hand: HAND});
@@ -83,8 +84,8 @@ export function GameView({
     if (!here.ok) {return failed(playCopy['error.here'], retry, here.message);}
     const code = await pages.codeOf(here.value);
     if (!code.ok) {return failed(playCopy['error.here'], retry, code.message);}
-    let board: Board | null = null;
-    if (code.value !== null) {
+    let board: Puzzle | null = null;
+    if (code.value !== null && game.open) {
       try {
         board = game.open(code.value, shapeOf(here.value));
       } catch (error) {
@@ -108,7 +109,7 @@ export function GameView({
     };
       setScreen({kind: 'working'});
       await nextFrame();
-      let board: Board;
+      let board: GamePage;
       let png: Uint8Array;
       try {
         board = game.create(choices, seed(), shapeOf(here));
@@ -133,7 +134,7 @@ export function GameView({
   );
 
   const check = useCallback(
-    async (here: Here, board: Board) => {
+    async (here: Here, board: Puzzle) => {
       const retry = () => {
       check(here, board);
     };
@@ -152,7 +153,7 @@ export function GameView({
     [failed, game.id, pages],
   );
 
-  const answer = useCallback(async (here: Here, board: Board) => {
+  const answer = useCallback(async (here: Here, board: Puzzle) => {
     setScreen({kind: 'working'});
     await nextFrame();
     setScreen({kind: 'answer', here, board, picture: board.answer()});
@@ -219,16 +220,17 @@ function Ready({
   onClose,
 }: GameViewProps & {
   game: PuzzleGame;
-  screen: {here: Here; board: Board | null};
+  screen: {here: Here; board: Puzzle | null};
   choices: Choices;
   onChoose: (id: string, value: string) => void;
   onAdd: () => void;
-  onCheck: (board: Board) => void;
-  onAnswer: (board: Board) => void;
+  onCheck: (board: Puzzle) => void;
+  onAnswer: (board: Puzzle) => void;
 }): React.JSX.Element {
   useBackKey(onBack);
   const {board} = screen;
-  const thisPage = board ? (
+  // A board's page holds nothing the view reads back, so it has no «This page» (#402).
+  const thisPage = !game.open ? null : board ? (
     <RowGroup caption={playCopy['here.caption']}>
       <ActionRow
         title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(board.code).difficulty])}
@@ -254,7 +256,7 @@ function Ready({
             onChange={value => onChoose(option.id, value)}
           />
         ))}
-        <RowGroup caption={playCopy['new.caption']} note={playCopy['new.note']} />
+        <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />
         <View style={[shared.buttons, styles.section]}>
           <Button kind="primary" label={playCopy['new.add']} onPress={onAdd} />
         </View>

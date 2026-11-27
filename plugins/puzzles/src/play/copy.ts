@@ -5,6 +5,7 @@ export const playCopy = {
   'new.caption': 'New page',
   'new.add': 'Add Page',
   'new.note': 'The puzzle goes on a new page after this one, as its background, so erasing never erases the grid.',
+  'new.noteBoard': 'The board goes on a new page after this one, as its background, so erasing never erases the board.',
   'here.caption': 'This page',
   'here.check': 'Check',
   'here.answer': 'Show Solution',

@@ -52,9 +52,12 @@ import {PuzzlesView} from '../../../plugins/puzzles/src/PuzzlesView';
 import type {Game as PuzzlesGame} from '../../../plugins/puzzles/src/games';
 import type {RequirementPorts as PuzzlesPorts} from '../../../plugins/puzzles/src/requirements';
 import {MAZE} from '../../../plugins/puzzles/src/games/maze';
+import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
+import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
+import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {mazeCellCentre, mazeFromCode, mazeLayout} from '@ink-tools/puzzle-core';
+import {mazeCellCentre, mazeFromCode, mazeLayout, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -269,21 +272,21 @@ const mazeInk = () => {
   const cells = [...maze.solution.slice(0, maze.solution.indexOf(from) + 1), off];
   return [{points: cells.map(cell => ({x: mazeCellCentre(maze, grid, cell)[0], y: mazeCellCentre(maze, grid, cell)[1]})), element: {}}];
 };
-/** The maze's pages: the current page holds `code`, or the host cannot read it. */
-const mazePages = (code: string | null, failing = false): PuzzlesPages => ({
+/** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
+const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
   codeOf: async () => ({ok: true, value: code}),
   insert: async () => ({ok: true, value: true}),
-  ink: async () => ({ok: true, value: mazeInk()}),
-  read: async () => ({ok: true, text: null}),
+  ink: async () => ({ok: true, value: ink()}),
+  read: async (_here, elements) => ({ok: true, text: elements.map(element => (element as {digit?: string}).digit ?? '').join(' ').trim() || null}),
   clear: async () => ({ok: true, value: 0}),
   hide: async () => {},
   show: async () => {},
   log: noop,
 });
-/** The maze's view on these pages; `steps` presses each label in turn. */
-const puzzlesMaze = async (code: string | null, steps: string[] = [], failing = false) => {
-  const tree = await mount(<PuzzlesGameView game={MAZE} pages={mazePages(code, failing)} seed={() => '7K2Q9X'} onBack={noop} onClose={noop} />);
+/** A game's view on these pages; `steps` presses each label in turn. */
+const puzzlesGame = async (game: PuzzleGame, ink: () => InkStroke<object>[], code: string | null, steps: string[] = [], failing = false) => {
+  const tree = await mount(<PuzzlesGameView game={game} pages={gamePages(code, ink, failing)} seed={() => '7K2Q9X'} onBack={noop} onClose={noop} />);
   for (const label of steps) {
     await act(async () => {
       tree.root.find(node => (node.props.accessibilityLabel === label || node.props.children === label) && typeof node.props.onPress === 'function').props.onPress();
@@ -292,6 +295,7 @@ const puzzlesMaze = async (code: string | null, steps: string[] = [], failing = 
   }
   return tree;
 };
+const puzzlesMaze = (code: string | null, steps: string[] = [], failing = false) => puzzlesGame(MAZE, mazeInk, code, steps, failing);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -314,6 +318,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-maze-check', render: () => puzzlesMaze(MAZE_CODE, ['Check'])},
   {name: 'puzzles-maze-solution', render: () => puzzlesMaze(MAZE_CODE, ['Show Solution'])},
   {name: 'puzzles-maze-error', render: () => puzzlesMaze(null, [], true)},
+  {name: 'puzzles-list', render: () => puzzles('granted', [...PUZZLES_LIST])},
+  {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
