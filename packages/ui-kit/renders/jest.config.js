@@ -21,7 +21,11 @@ const base = require(path.join(HOST, 'jest.config'));
  * throwaway copy, never a global install (#265): `npm install --prefix <tmp> playwright`, then
  * `PLAYWRIGHT_BROWSERS_PATH=<tmp>/browsers npx --prefix <tmp> playwright install chromium`, then
  * `NODE_PATH=<tmp>/node_modules PLAYWRIGHT_BROWSERS_PATH=<tmp>/browsers npm run renders`; Jest's
- * resolver reads NODE_PATH. Remove <tmp> afterwards.
+ * resolver reads NODE_PATH. Remove <tmp> afterwards. The owner's Mac keeps one such copy for every
+ * lane in the main checkout's ignored `.scratch/pw255/` (its `node_modules` and `browsers`), so a
+ * lane, from any worktree, sets NODE_PATH to `<main checkout>/.scratch/pw255/node_modules` and
+ * PLAYWRIGHT_BROWSERS_PATH to `<main checkout>/.scratch/pw255/browsers` before
+ * `RENDER_EVIDENCE=<dir> npm -C plugins/account-sync run renders`, and keeps the copy.
  */
 const globalRoot = execFileSync('npm', ['root', '-g'], {encoding: 'utf8'}).trim();
 
