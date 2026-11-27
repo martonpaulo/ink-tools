@@ -9,6 +9,7 @@ import {
   createPage,
   createRaster,
   drawCage,
+  drawCellFrameCheck,
   drawCellMarks,
   drawCellText,
   drawDotLattice,
@@ -218,6 +219,14 @@ describe('each primitive matches its golden image', () => {
     expect(Buffer.from(r.pixels).equals(Buffer.from(marked.pixels))).toBe(false);
     expect(Buffer.from(r.pixels).equals(Buffer.from(createSwatchLattice(grid).pixels))).toBe(true);
     expectGolden('cell-marks', unflagged(marked));
+  });
+
+  test('the framed «Check» marks: a square inside a wrong cell, a dashed one inside an unread cell (#393)', () => {
+    const { r, grid } = latticeSwatch(4, 4);
+    const checked = drawCellFrameCheck(r, grid, [], [5], [10]);
+    assertNativeGreys(checked);
+    expect(Buffer.from(r.pixels).equals(Buffer.from(createSwatchLattice(grid).pixels))).toBe(true);
+    expectGolden('cell-frames', unflagged(checked));
   });
 
   test('a shaded run keeps the line between its cells, so it can be counted (#384)', () => {

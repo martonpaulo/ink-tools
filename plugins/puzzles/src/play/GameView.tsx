@@ -222,7 +222,7 @@ export function GameView({
         ? playCopy['verdict.solved']
         : verdict.wrong === 0
           ? playCopy['verdict.open']
-          : playCopy['verdict.wrong'](verdict.wrong);
+          : (game.wrong ?? playCopy['verdict.wrong'])(verdict.wrong);
       const line = verdict.unread === 0 ? found : `${found} ${(game.unread ?? playCopy['verdict.unread'])(verdict.unread)}`;
       const back = () => setScreen({kind: 'ready', board: screen.board});
       return <Picture title={playCopy['verdict.title']} note={line} raster={verdict.picture} onBack={back} onClose={onClose} />;

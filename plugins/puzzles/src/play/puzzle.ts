@@ -71,6 +71,8 @@ export type PuzzleGame = {
   options: readonly PuzzleOption[];
   /** The note for entries «Check» could not read, when the shared one, «Write it again», does not fit the game. */
   unread?: (count: number) => string;
+  /** The note for wrong entries, when the shared one, «circled», does not fit the game's mark (#393). */
+  wrong?: (count: number) => string;
   /** A new page from the choices and a fresh seed: a puzzle, or an empty board. */
   create: (choices: Choices, seed: string, shape: PageShape) => GamePage;
   /**

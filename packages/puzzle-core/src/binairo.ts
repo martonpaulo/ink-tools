@@ -14,7 +14,7 @@
  * or crosses a 0, so «Check» reads the ink without recognition.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
 import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { type CheckResult } from './check/read';
@@ -400,6 +400,13 @@ export function generateBinairo(seed: string, size: number, difficulty: Difficul
     return { id: { game: 'binairo', size: String(size), difficulty, seed }, size, givens, solution };
   }
   throw new Error(`no ${difficulty} ${size} x ${size} binairo from seed «${seed}» in ${BINAIRO_ATTEMPTS} attempts`);
+}
+
+/** The binairo a puzzle code names (`BI-8-M-7K2Q9X`), the same one every time (#393). */
+export function binairoFromCode(code: string): Binairo {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'binairo' || !/^\d+$/.test(id.size)) throw new RangeError(`«${code}» is not a binairo code`);
+  return generateBinairo(id.seed, Number(id.size), id.difficulty);
 }
 
 /** How the page is set: its orientation, the writing hand, and the cell preset (the largest that fits when absent). */

@@ -34,6 +34,12 @@ export const playCopy = {
     count === 1
       ? 'Puzzles could not read 1 cell, which has a dashed circle. Erase it, then shade it fully or put a dot or a cross in it. Then go back and press Check.'
       : `Puzzles could not read ${count} cells, which have dashed circles. Erase them, then shade each fully or put a dot or a cross in it. Then go back and press Check.`,
+  /** The notes of a game whose «Check» frames a cell instead of circling it, as its own marks are rings (#393). */
+  'verdict.wrongFramed': (count: number) => (count === 1 ? '1 mistake has a square around it.' : `${count} mistakes have squares around them.`),
+  'verdict.unreadFramed': (count: number) =>
+    count === 1
+      ? 'Puzzles could not read 1 cell, which has a dashed square. Erase it, then shade it fully or put a dot or a cross in it. Then go back and press Check.'
+      : `Puzzles could not read ${count} cells, which have dashed squares. Erase them, then shade each fully or put a dot or a cross in it. Then go back and press Check.`,
   'answer.note': 'Only Puzzles shows the solution. Your note does not change.',
   /** The Error states of a game view. */
   'error.here': 'Puzzles could not read this page.',

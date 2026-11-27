@@ -62,12 +62,13 @@ import {SLITHERLINK} from '../../../plugins/puzzles/src/games/slitherlink';
 import {BRIDGES} from '../../../plugins/puzzles/src/games/bridges';
 import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
 import {STAR_BATTLE} from '../../../plugins/puzzles/src/games/starBattle';
+import {BINAIRO} from '../../../plugins/puzzles/src/games/binairo';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -384,6 +385,33 @@ const starBattleInk = () => {
     return {points, element: {}};
   });
 };
+/**
+ * The largest binairo, its open cells shaded for black and dotted for white but for the last two,
+ * and one marked the other way (#393); with `unread`, the first cell that should be black dotted
+ * instead and one cell holding a slash Check cannot read.
+ */
+const BINAIRO_CODE = 'BI-12-H-1';
+const binairoInk = (unread = false) => () => {
+  const puzzle = binairoFromCode(BINAIRO_CODE);
+  const {grid} = layoutBinairoPage(puzzle, {orientation: 'portrait', hand: 'right'});
+  const open = puzzle.givens.flatMap((given, cell) => (given === BINAIRO_OPEN ? [cell] : []));
+  const marked = open.slice(0, -2);
+  const wrong = unread ? marked.find(cell => puzzle.solution[cell] === 1)! : marked[0];
+  const slashed = unread ? marked.find(cell => cell !== wrong)! : -1;
+  const at = (cell: number) => [grid.x + (cell % grid.columns) * grid.cell, grid.y + Math.floor(cell / grid.columns) * grid.cell] as const;
+  return marked.map(cell => {
+    const [x, y] = at(cell);
+    if (cell === slashed) {
+      return {points: [{x: x + grid.cell * 0.2, y: y + grid.cell * 0.8}, {x: x + grid.cell * 0.8, y: y + grid.cell * 0.2}], element: {}};
+    }
+    const value = cell === wrong ? 1 - puzzle.solution[cell] : puzzle.solution[cell];
+    if (value === 0) {
+      return {points: [{x: x + grid.cell * 0.45, y: y + grid.cell * 0.45}, {x: x + grid.cell * 0.55, y: y + grid.cell * 0.55}], element: {}};
+    }
+    const rows = Array.from({length: 8}, (_, i) => y + grid.cell * (0.12 + i * 0.11));
+    return {points: rows.flatMap(row => [{x: x + grid.cell * 0.12, y: row}, {x: x + grid.cell * 0.88, y: row}]), element: {}};
+  });
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -418,6 +446,7 @@ const puzzlesSlitherlink = (code: string | null, steps: string[] = []) => puzzle
 const puzzlesBridges = (code: string | null, steps: string[] = []) => puzzlesGame(BRIDGES, bridgesInk, code, steps);
 const puzzlesNonogram = (code: string | null, steps: string[] = []) => puzzlesGame(NONOGRAM, nonogramInk, code, steps);
 const puzzlesStarBattle = (code: string | null, steps: string[] = []) => puzzlesGame(STAR_BATTLE, starBattleInk, code, steps);
+const puzzlesBinairo = (code: string | null, steps: string[] = [], unread = false) => puzzlesGame(BINAIRO, binairoInk(unread), code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -483,6 +512,11 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-star-battle-two', render: () => puzzlesStarBattle(null, ['Size: 10 x 10', 'Stars in each row, column and region: 2 stars'])},
   {name: 'puzzles-star-battle-check', render: () => puzzlesStarBattle(STAR_BATTLE_CODE, ['Check'])},
   {name: 'puzzles-star-battle-solution', render: () => puzzlesStarBattle(STAR_BATTLE_CODE, ['Show Solution'])},
+  {name: 'puzzles-binairo', render: () => puzzlesBinairo(null)},
+  {name: 'puzzles-binairo-page', render: () => puzzlesBinairo(BINAIRO_CODE)},
+  {name: 'puzzles-binairo-check', render: () => puzzlesBinairo(BINAIRO_CODE, ['Check'])},
+  {name: 'puzzles-binairo-check-unread', render: () => puzzlesBinairo(BINAIRO_CODE, ['Check'], true)},
+  {name: 'puzzles-binairo-solution', render: () => puzzlesBinairo(BINAIRO_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

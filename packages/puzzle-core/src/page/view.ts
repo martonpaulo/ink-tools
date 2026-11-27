@@ -125,6 +125,46 @@ export function drawCellCheck(
   return marked;
 }
 
+/** How far a «Check» frame sits inside its cell, as a share of the cell (#393). */
+export const VIEW_FRAME_INSET = 0.08;
+/** The sides a dashed frame's every side is cut into: drawn, left out, drawn. */
+const FRAME_DASHES = 5;
+
+/** A square just inside each of `cells`; a dashed one draws every other piece of each side. */
+function frameCells(raster: Raster, grid: Grid, cells: readonly number[], dashed: boolean): void {
+  for (const cell of cells) {
+    const inset = grid.cell * VIEW_FRAME_INSET;
+    const left = grid.x + (cell % grid.columns) * grid.cell + inset;
+    const top = grid.y + Math.floor(cell / grid.columns) * grid.cell + inset;
+    const side = grid.cell - 2 * inset;
+    const corners = [[left, top], [left + side, top], [left + side, top + side], [left, top + side], [left, top]] as const;
+    for (let i = 1; i < corners.length; i++) {
+      const [x0, y0] = corners[i - 1];
+      const [x1, y1] = corners[i];
+      if (!dashed) {
+        drawPolyline(raster, [corners[i - 1], corners[i]], VIEW_MARK_PX);
+        continue;
+      }
+      for (let k = 0; k < FRAME_DASHES; k += 2) {
+        const [a, b] = [k / FRAME_DASHES, (k + 1) / FRAME_DASHES];
+        drawPolyline(raster, [[x0 + (x1 - x0) * a, y0 + (y1 - y0) * a], [x0 + (x1 - x0) * b, y0 + (y1 - y0) * b]], VIEW_MARK_PX);
+      }
+    }
+  }
+}
+
+/**
+ * The «Check» page of a game whose own marks are rings, such as binairo's printed white discs or
+ * a circled bulb (#393): `drawCellCheck` with a square frame inside each wrong cell instead of a
+ * ring, and a dashed one inside each cell it could not read, so a mark never looks like a clue or an entry.
+ */
+export function drawCellFrameCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly number[], unread: readonly number[] = []): Raster {
+  const marked = drawPointCheck(page, strokes, [], 0);
+  frameCells(marked, grid, wrong, false);
+  frameCells(marked, grid, unread, true);
+  return marked;
+}
+
 /**
  * The page with a cell game's answer written in (#397), for the plugin's view only: each value in
  * its cell in the grid lines' grey and a regular weight, so the givens in bold black still read as the puzzle's.

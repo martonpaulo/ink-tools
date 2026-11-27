@@ -3,6 +3,7 @@ import {
   BINAIRO_BANDS,
   BINAIRO_OPEN,
   BINAIRO_SIDES,
+  binairoFromCode,
   checkBinairo,
   countBinairoSolutions,
   drawBinairoPage,
@@ -172,5 +173,13 @@ describe('«Check» from the ink', () => {
     expect(result.empty).toContain(blank);
     expect(result.empty).toHaveLength(OPEN_CELLS.length - 2);
     expect(result.wrong).toEqual([]);
+  });
+});
+
+describe('binairoFromCode (#393)', () => {
+  test('a code names the same binairo again, and another game\'s code is refused', () => {
+    const puzzle = generateBinairo('P1', 8, 'medium');
+    expect(binairoFromCode(puzzleCode(puzzle.id))).toEqual(puzzle);
+    expect(() => binairoFromCode('NO-10X10-M-7K2Q9X')).toThrow('not a binairo code');
   });
 });
