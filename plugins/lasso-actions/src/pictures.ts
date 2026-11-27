@@ -9,11 +9,12 @@
  * opens Lookup's view, which asks for it (App.tsx).
  */
 import {ToastAndroid} from 'react-native';
-import {checkLookup, LassoPlace} from '@ink-tools/ink-core';
+import {checkLookup, LassoPlace, Rect} from '@ink-tools/ink-core';
 import {
   DEFAULT_ADAPTERS,
   keepMode,
   keptInMode,
+  resolvePhrase,
 } from '@ink-tools/picture-search';
 import {
   insertText,
@@ -34,6 +35,7 @@ import {findKept, privatePicturesDir, recordKept} from './library';
 import {
   createPressGuard,
   deviceAnalyzer,
+  deviceContext,
   Done,
   getLookupSettings,
   insertBest,
@@ -235,6 +237,12 @@ export type PictureDeps = {
   /** The permissions this mode's press needs and the host has not granted. */
   missing: (mode: Mode) => Promise<readonly Need[]>;
   read: () => Promise<Result<LassoQuery>>;
+  /**
+   * What a written line searches (#18): the longest trailing word group that is a Wikipedia
+   * article, else the last word, chosen by picture-search's `resolvePhrase` in one request. Absent,
+   * the whole recognition is searched.
+   */
+  phrase?: (mode: Mode, line: string) => Promise<Phrase>;
   insert: (
     mode: Mode,
     word: string,
@@ -249,12 +257,59 @@ export type PictureDeps = {
   fail: (problem: Problem) => void;
 };
 
+/** The words of a written line a press searches, and how many of its last words they are. */
+export type Phrase = {query: string; words: number};
+
+/**
+ * The words of a written line to search (#18), in the mode's search languages: «Quem foi Miguel de
+ * Cervantes» searches «Miguel de Cervantes», «Eu comi uma banana» searches «banana». A failed
+ * check falls back to the last word inside `resolvePhrase`; a throw keeps the line, never loses it.
+ */
+export async function phraseOf(
+  mode: Mode,
+  line: string,
+  settings: LookupSettings,
+  fetch?: Parameters<typeof deviceContext>[1],
+): Promise<Phrase> {
+  const whole = {query: line, words: wordsOf(line).length};
+  try {
+    const ctx = deviceContext(modeSearchSettings(mode, settings), fetch);
+    const choice = await resolvePhrase(line, ctx);
+    return choice ? {query: choice.query, words: choice.words} : whole;
+  } catch (error) {
+    log(`phrase: the check failed (${String(error)}); the line is searched`);
+    return whole;
+  }
+}
+
+function wordsOf(line: string): string[] {
+  return line.trim().split(/\s+/).filter(Boolean);
+}
+
+/**
+ * The part of the lasso that holds the line's last `words` words (#18), so the picture goes below
+ * them; null when they are the whole line.
+ * shortcut: the split is by the share of characters, as recognition gives no word positions;
+ * upgrade to the strokes' own gaps when a device round shows it lands under the wrong word.
+ */
+export function wordsRect(rect: Rect, line: string, words: number): Rect | null {
+  const all = wordsOf(line);
+  if (words <= 0 || words >= all.length) {
+    return null;
+  }
+  const tail = all.slice(-words).join(' ').length;
+  const share = tail / all.join(' ').length;
+  const left = Math.round(rect.right - (rect.right - rect.left) * share);
+  return {...rect, left};
+}
+
 const DEVICE: PictureDeps = {
   settings: getLookupSettings,
   folder: pluginFolder,
   missing: mode =>
     missingFor(BUTTONS.filter(button => button.id === mode.buttonId)),
   read: () => readLassoQuery(),
+  phrase: async (mode, line) => phraseOf(mode, line, await getLookupSettings()),
   insert: (mode, word, place, limit) =>
     insertBest(word, place, modeDeps(mode), pictureCopy[mode.kind], limit),
   write: insertText,
@@ -339,12 +394,19 @@ export async function pictureLasso(
       }
       return null;
     }
-    const word = checked.value.query;
+    const line = checked.value.query;
     const place = checked.value.place;
-    log(`${name}: "${word}"`);
+    const phrase = deps.phrase ? await deps.phrase(mode, line) : null;
+    const word = phrase?.query ?? line;
+    log(
+      word === line
+        ? `${name}: "${word}"`
+        : `${name}: "${line}" searches "${word}"`,
+    );
+    const words = place && phrase ? wordsRect(place.rect, line, phrase.words) : null;
     // The person stays on the note: the place is read again before the picture is lassoed (#93).
     const at: LassoPlace | null = place
-      ? {...place, recheck: true as const}
+      ? {...place, recheck: true as const, ...(words ? {words} : {})}
       : null;
     const inserted = await deps.insert(mode, word, at, {
       deadline: started + NO_VIEW_LIMIT_MS,

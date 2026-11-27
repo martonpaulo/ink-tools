@@ -9,6 +9,7 @@ export { searchExactCover, type ExactCoverProblem, type ExactCoverResult } from 
 export * from './sudoku-techniques';
 export * from './sudoku';
 export * from './nonogram';
+export * from './nonogram-page';
 export * from './maze';
 export * from './word-search';
 export * from './page';

@@ -220,6 +220,13 @@ describe('placeAtLasso (#109)', () => {
     );
   });
 
+  it('places below the words the search names, not the whole lasso (#18)', async () => {
+    const words = {left: 220, top: 200, right: 300, bottom: 260};
+    const placed = await placeAtLasso(placeHost(true), '/p.png', picture, {...place, words});
+    expect(placed).toEqual({ok: true, value: placeRect(words, picture, page)});
+    expect(placed.ok && placed.value.left).toBe(220);
+  });
+
   it('places in free space from the place\'s occupied rects, and logs when there is none (#152)', async () => {
     const ink = {left: 0, top: 290, right: 1920, bottom: 400};
     const host = {...placeHost(true), log: jest.fn()};

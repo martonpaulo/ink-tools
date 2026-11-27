@@ -24,6 +24,11 @@ export type LassoPlace = {
    * today's: a partial read placed a box over the person's ink.
    */
   occupied?: Rect[];
+  /**
+   * The part of `rect` the search names, when it is not the whole lasso (#18): the picture is
+   * placed at these words; `rect` stays the lasso, which the recheck compares.
+   */
+  words?: Rect;
 };
 
 /**
