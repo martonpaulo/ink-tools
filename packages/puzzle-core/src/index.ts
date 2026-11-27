@@ -11,6 +11,8 @@ export * from './sudoku';
 export * from './jigsaw';
 export * from './jigsaw-page';
 export * from './sudoku-game';
+export * from './killer';
+export * from './killer-page';
 export * from './nonogram';
 export * from './nonogram-page';
 export * from './maze';

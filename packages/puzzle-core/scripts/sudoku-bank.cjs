@@ -7,7 +7,7 @@
  *   npx tsc -p packages/puzzle-core --outDir OUT --module commonjs --noEmit false
  *   node packages/puzzle-core/scripts/sudoku-bank.cjs OUT/src > packages/puzzle-core/src/sudoku-bank.ts
  */
-const { builtCore } = require('./built-core.cjs');
+const { bankEntry, builtCore } = require('./built-core.cjs');
 
 const ENTRIES = 16;
 const { core } = builtCore('sudoku-bank.cjs BUILT_SRC_DIR > src/sudoku-bank.ts');
@@ -18,7 +18,7 @@ for (const [size, offered] of Object.entries(core.SUDOKU_SIZES)) {
     for (let i = 0; seen.size < ENTRIES; i++) {
       seen.add(core.encodeSudoku(core.digSudoku(`bank/${size}/${band}/${i}`, Number(size), band).givens));
     }
-    lines.push(`  '${size}:${band}': [\n${[...seen].map(text => `    '${text}',`).join('\n')}\n  ],`);
+    lines.push(bankEntry(`'${size}:${band}'`, seen));
   }
 }
 process.stdout.write(`/**

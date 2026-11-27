@@ -10,7 +10,7 @@
  *   npx tsc -p packages/puzzle-core --outDir OUT --module commonjs --noEmit false
  *   node packages/puzzle-core/scripts/nonogram-bank.cjs OUT/src > packages/puzzle-core/src/nonogram-bank.ts
  */
-const { builtCore } = require('./built-core.cjs');
+const { bankEntry, builtCore } = require('./built-core.cjs');
 
 const ENTRIES = 16;
 const PAIRS = [
@@ -68,7 +68,7 @@ for (const pair of PAIRS) {
   for (let i = 0; seen.size < ENTRIES; i++) {
     seen.add(core.encodePicture(core.drawNonogram(`bank/${shape}/${band}/${i}`, { width, height }, band).solution));
   }
-  lines.push(`  '${pair}': [\n${[...seen].map(text => `    '${text}',`).join('\n')}\n  ],`);
+  lines.push(bankEntry(`'${pair}'`, seen));
 }
 process.stdout.write(`/**
  * Drawn nonogram pictures, ${ENTRIES} per shape and band in the bank, five cells per base-32 digit,

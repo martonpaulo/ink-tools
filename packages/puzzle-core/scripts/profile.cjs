@@ -67,6 +67,7 @@ const CASES = [
   ['sudoku 4 x 4 easy', () => core.generateSudoku('P1', 4, 'easy')],
   ['sudoku 9 x 9 hard', () => core.generateSudoku('P1', 9, 'hard')],
   ['sudoku 16 x 16 medium', () => core.generateSudoku('P1', 16, 'medium')],
+  ['killer sudoku expert', () => core.generateKiller('P1', 'expert')],
   ['nonogram 15 x 10 medium', () => core.generateNonogram('P1', { width: 15, height: 10 }, 'medium')],
   ['maze 20 x 27 hard', () => core.generateMaze('P1', { shape: 'rectangle', width: 20, height: 27 }, 'hard')],
   ['maze 12 rings medium', () => core.generateMaze('P1', { shape: 'circle', rings: 12 }, 'medium')],

@@ -13,4 +13,9 @@ function builtCore(usage) {
   return { core: require(path.resolve(built, 'index.js')), rest };
 }
 
-module.exports = { builtCore };
+/** One key of a bank's generated record: its entries as quoted strings, one a line. */
+function bankEntry(key, texts) {
+  return `  ${key}: [\n${[...texts].map(text => `    '${text}',`).join('\n')}\n  ],`;
+}
+
+module.exports = { bankEntry, builtCore };

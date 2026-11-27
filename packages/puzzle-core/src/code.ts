@@ -10,11 +10,11 @@
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in', 'light-up', 'hitori', 'binairo', 'arrowword', 'bridges', 'crossword', 'star-battle', 'kakuro'] as const;
+export const GAMES = ['sudoku', 'jigsaw-sudoku', 'nonogram', 'maze', 'word-search', 'slitherlink', 'futoshiki', 'codeword', 'calcudoku', 'fill-in', 'light-up', 'hitori', 'binairo', 'arrowword', 'bridges', 'crossword', 'star-battle', 'kakuro', 'killer-sudoku'] as const;
 export type Game = (typeof GAMES)[number];
 
 // Each game's code is its own: codeword took CW first, so the crossword is CR (#400).
-const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI', 'light-up': 'LU', hitori: 'HI', binairo: 'BI', arrowword: 'AW', bridges: 'BR', crossword: 'CR', 'star-battle': 'SB', kakuro: 'KK' };
+const GAME_CODES: Record<Game, string> = { sudoku: 'SU', 'jigsaw-sudoku': 'JS', nonogram: 'NO', maze: 'MZ', 'word-search': 'WS', slitherlink: 'SL', futoshiki: 'FU', codeword: 'CW', calcudoku: 'CD', 'fill-in': 'FI', 'light-up': 'LU', hitori: 'HI', binairo: 'BI', arrowword: 'AW', bridges: 'BR', crossword: 'CR', 'star-battle': 'SB', kakuro: 'KK', 'killer-sudoku': 'KS' };
 const BAND_CODES: Record<Difficulty, string> = { easy: 'E', medium: 'M', hard: 'H', expert: 'X' };
 
 /** Crockford's base 32: no I, L, O or U, so a hand-copied code is not misread. */
