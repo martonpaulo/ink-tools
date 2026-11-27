@@ -42,6 +42,9 @@ struct NoteEditorApp: App {
             CommandGroup(after: .saveItem) {
                 RevertCommands()
             }
+            CommandGroup(after: .importExport) {
+                ExportCommands()
+            }
             // Undo and Redo of the note's edits, named by the history (#328).
             CommandGroup(replacing: .undoRedo) {
                 UndoCommands()

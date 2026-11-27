@@ -41,6 +41,10 @@ public struct PageElement: Sendable, Equatable {
     public let bounds: CGRect
     /// The path a stroke follows; the corners of a picture's or a text box's frame.
     public let points: [CGPoint]
+    /// The outline the tablet fills for a stroke, in page pixels: closed rings, usually one, a
+    /// letter with a hole two (#365). Nil for a picture or a text box, and for a stroke whose
+    /// record does not hold its outline where the reader looks; such a stroke still has its points.
+    public let outline: [[CGPoint]]?
     /// The tablet's element number less one, as the record stores it (#471): what names the
     /// element to the tablet's helper. It is not the record's place in the page's block: an edit
     /// on the tablet moves the record it changes to the end and keeps its number, and a delete
@@ -107,6 +111,14 @@ enum ElementRecord {
     static let arraysAfterPoints = [2, 4, 1, 8, 4]
     /// The tablet's element number, from the trail status's start (#471).
     static let numberAfterTrail = 8
+    /// A stroke's outline follows its trail status: this many bytes, a count of 4-byte items,
+    /// `outlineGap` bytes, then a ring count and each ring as a point count and float32 x, y pairs
+    /// in page pixels. Offsets from the public format notes of `philips/supernote-typescript`
+    /// (`src/strokes.ts`), measured on every stroke of the fixtures (#365).
+    static let outlineAfterTrail = 52
+    static let outlineGap = 10
+    /// A ring of fewer points encloses nothing.
+    static let ringMinimum = 3
     /// A record ends with its data, a length-prefixed text of comma-separated Base64 fields
     /// (`none` for a stroke), then one more length-prefixed text and this many bytes. Read from
     /// the end, since the arrays between the trail status and the data vary by kind; measured on
@@ -172,7 +184,7 @@ enum ElementRecord {
         /// `offset`, and the tablet's element number, the third word from the trail status: 1 to 3
         /// on a page the tablet wrote in order, 3, 1, 2 after it moved number 3 (measured on every
         /// record of every fixture and on notes edited through the tablet's helper, #471).
-        func trail(after offset: Int) throws -> (status: Int32, number: Int) {
+        func trail(after offset: Int) throws -> (status: Int32, number: Int, at: Int) {
             var at = offset
             for itemLength in arraysAfterPoints {
                 let items = try word(at: at)
@@ -182,7 +194,34 @@ enum ElementRecord {
                 at += ElementRecord.word + items * itemLength
             }
             let status = Int32(bitPattern: UInt32(truncatingIfNeeded: try word(at: at)))
-            return (status, try word(at: at + numberAfterTrail))
+            return (status, try word(at: at + numberAfterTrail), at)
+        }
+
+        /// The outline rings after the trail status at `trail`; nil when they do not fit the record.
+        func outline(afterTrail trail: Int) -> [[CGPoint]]? {
+            var at = trail + outlineAfterTrail
+            guard let items = try? word(at: at), items <= (bytes.count - at) / ElementRecord.word else { return nil }
+            at += ElementRecord.word * (1 + items) + outlineGap
+            guard let count = try? word(at: at), count <= (bytes.count - at) / ElementRecord.word else { return nil }
+            at += ElementRecord.word
+            var rings: [[CGPoint]] = []
+            for _ in 0..<count {
+                guard let points = try? word(at: at), points <= (bytes.count - at - ElementRecord.word) / pointLength
+                else { return nil }
+                at += ElementRecord.word
+                let ring = (0..<points).map { index in
+                    let point = at + index * pointLength
+                    return CGPoint(x: CGFloat(float(at: point)), y: CGFloat(float(at: point + ElementRecord.word)))
+                }
+                at += points * pointLength
+                if ring.count >= ringMinimum { rings.append(ring) }
+            }
+            return rings.isEmpty ? nil : rings
+        }
+
+        /// The little-endian float32 at `offset`, which the caller has checked lies in the record.
+        func float(at offset: Int) -> Float {
+            Float(bitPattern: UInt32(truncatingIfNeeded: NoteFile.word(bytes, at: offset)))
         }
 
         func element(pageHeight: Int, number: Int) throws -> Read? {
@@ -234,7 +273,9 @@ enum ElementRecord {
                 return .unknown(named, record: stored)
             }
             let bounds: CGRect
+            var outline: [[CGPoint]]?
             if case .stroke = content {
+                outline = self.outline(afterTrail: ending.at)
                 // A stroke's box is in page pixels and holds its width of ink.
                 let left = try word(at: box)
                 let top = try word(at: box + ElementRecord.word)
@@ -252,7 +293,8 @@ enum ElementRecord {
             }
             return .element(
                 PageElement(
-                    content: content, layer: try word(at: layer), bounds: bounds, points: points, record: stored))
+                    content: content, layer: try word(at: layer), bounds: bounds, points: points, outline: outline,
+                    record: stored))
         }
 
         /// The start of the length-prefixed text that ends at `end`: the last place whose word

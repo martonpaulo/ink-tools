@@ -92,6 +92,34 @@ import Testing
         #expect(elements.map(\.record) == Array(1..<26) + [0])
     }
 
+    /// Every stroke carries the outline the tablet fills, inside its box (#365): one ring, or two
+    /// for a letter with a hole.
+    @Test(arguments: ["elements-tablet", "landscape-tablet"])
+    func everyStrokeHasItsOutlineInsideItsBox(name: String) throws {
+        let strokes = try Self.note(name).elements(page: 0).filter { $0.kind == .stroke }
+        #expect(!strokes.isEmpty)
+        for (number, stroke) in strokes.enumerated() {
+            let rings = try #require(stroke.outline, "stroke \(number + 1) of \(name) has no outline")
+            #expect(rings.allSatisfy { $0.count >= ElementRecord.ringMinimum })
+            let box = stroke.bounds.insetBy(dx: -Self.slack, dy: -Self.slack)
+            #expect(rings.joined().allSatisfy(box.contains), "stroke \(number + 1) of \(name)")
+        }
+        #expect(try Self.note("content").elements(page: 0).allSatisfy { $0.outline == nil })
+    }
+
+    /// A record whose outline does not read where the reader looks keeps its stroke and points.
+    @Test func aStrokeWhoseOutlineDoesNotReadKeepsItsPoints() throws {
+        var bytes = try Self.bytes("elements-tablet")
+        let start = try #require(Self.records(bytes, from: try Self.block(bytes)).first)
+        let record = ElementRecord.Reader(
+            bytes: Array(bytes[start..<(start + 4 + NoteFile.word(bytes, at: start))]), page: 0)
+        let points = ElementRecord.disabledAreas + 4 + (try record.word(at: ElementRecord.disabledAreas)) * 24
+        let trail = try record.trail(after: points + 4 + (try record.word(at: points)) * 8).at
+        for index in 0..<4 { bytes[start + trail + ElementRecord.outlineAfterTrail + index] = 0xFF }
+        let stroke = try #require(try NoteFile(bytes: bytes).elements(page: 0).first)
+        #expect(stroke.kind == .stroke && stroke.outline == nil && !stroke.points.isEmpty)
+    }
+
     /// Without its ink, a page draws its template alone: what a lifted selection leaves (#325).
     @Test func aPageWithoutItsInkIsItsTemplate() throws {
         let note = try Self.note("elements-tablet")

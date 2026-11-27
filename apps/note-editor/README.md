@@ -14,6 +14,8 @@ it opens a note and pages through it, and edits a note opened from the tablet.
   `~/.local/bin` (its README), `/opt/homebrew/bin` or `/usr/local/bin`, and the tablet on its cable.
 - **Page through it.** The page list beside the page, which scales to the window. The arrow keys,
   Page Up and Page Down turn pages; Home and End go to the first and last page; the Go menu names them.
+- **Export the ink as vectors.** File › Export as Vector PDF… writes the note, and Export Page as
+  SVG… the page in view: each stroke is the outline the tablet fills, over the page's template.
 
 Build and open it on a Mac with Xcode 27:
 

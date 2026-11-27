@@ -171,6 +171,12 @@ nonisolated enum PageExport {
         return image
     }
 
+    /// Page `index`'s template alone, without its ink: what a vector export draws under it (#365).
+    static func template(of note: NoteFile, page index: Int) throws -> CGImage {
+        guard let image = try note.render(page: index, ink: false).cgImage() else { throw ExportError.noImage }
+        return image
+    }
+
     static func png(_ image: CGImage) throws -> Data {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil)

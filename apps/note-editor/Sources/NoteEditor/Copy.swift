@@ -70,6 +70,10 @@ nonisolated enum Copy {
     static let pageHasNoWords = String(localized: "This page has no recognised words.")
     static let selectionHasNoWords = String(localized: "The selection has no recognised words.")
     static let untitledNote = String(localized: "Note")
+    static let exportVectorPDF = String(localized: "Export as Vector PDF…")
+    static let exportPageSVG = String(localized: "Export Page as SVG…")
+    static let exportVectorHelp = String(localized: "The ink as sharp outlines, over the page's template.")
+    static let exportFailed = String(localized: "The note could not be exported")
 
     // MARK: A live note (#315)
 

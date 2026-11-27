@@ -554,6 +554,26 @@
         }
       }
     },
+    "Export Page as SVG…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export Page as SVG…"
+          }
+        }
+      }
+    },
+    "Export as Vector PDF…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export as Vector PDF…"
+          }
+        }
+      }
+    },
     "Find" : {
       "localizations" : {
         "en" : {
@@ -1617,6 +1637,16 @@
         }
       }
     },
+    "The ink as sharp outlines, over the page's template." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The ink as sharp outlines, over the page's template."
+          }
+        }
+      }
+    },
     "The note changed on the tablet, so a new note was made beside it: “%@”. This edit could not be applied there, so it was taken back: %@" : {
       "localizations" : {
         "en" : {
@@ -1673,6 +1703,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The note could not be copied"
+          }
+        }
+      }
+    },
+    "The note could not be exported" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note could not be exported"
           }
         }
       }
