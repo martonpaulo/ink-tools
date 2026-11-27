@@ -108,6 +108,7 @@ struct NotebookView: View {
     @FocusState private var pageFocused: Bool
     @Environment(\.displayScale) private var displayScale
     @Environment(NoteText.self) private var text: NoteText?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The watch of a note opened from the tablet, which keeps its pages fresh (#315).
     let live: LiveNote?
     /// The edits of a note opened from the tablet (#313, #314); nil for a note opened from a file.
@@ -171,6 +172,8 @@ struct NotebookView: View {
                             }
                         }
                     }
+                    // The refusal bar may close on its own (#316): the pages slide up, not jump.
+                    .animation(reduceMotion ? nil : .default, value: editor?.refusal)
                 }
         }
         .toolbar(id: ViewerToolbar.id) {

@@ -125,6 +125,18 @@ import Testing
         #expect(editor.refusal == nil)
     }
 
+    /// A send already on its way when the bar showed says nothing of the bar's cause (#316 audit).
+    @Test func aRefusalStaysOverASendMadeBeforeIt() async throws {
+        let editor = try editor()
+        editor.movePage(from: 0, to: 1)
+        editor.refusal = Copy.refusal(.tooLarge)
+        await settle(editor)
+        #expect(editor.refusal == Copy.refusal(.tooLarge))
+        editor.movePage(from: 2, to: 3)
+        await settle(editor)
+        #expect(editor.refusal == nil)
+    }
+
     @Test func aConflictBarStaysOverALaterAppliedSend() async throws {
         let editor = try editor()
         let conflict = "Note/Tests/Edit conflict 2026-11-27 09.00.00.note"

@@ -44,8 +44,10 @@ final class NoteEditor {
     private(set) var pending: [Pending] = []
     /// The plain message of the newest refusal, until dismissed or a later send is applied.
     var refusal: String? {
-        didSet { conflictNote = nil }
+        didSet { (conflictNote, refusalMark) = (nil, nextTicket) }
     }
+    /// The first ticket whose applied send closes the refusal bar: no send already on its way (#316).
+    @ObservationIgnored private var refusalMark = 0
     /// The conflict note the newest refusal names, by its tablet path, for the bar's Open
     /// Conflict Note (#475); nil for any other refusal, and once the bar is dismissed.
     private(set) var conflictNote: String?
@@ -610,7 +612,7 @@ final class NoteEditor {
             try await path.restore(backup, note: tabletPath, copy: copy, timing: SendLog.write)
             history = EditHistory()
             reloadBase()
-            closeRefusalOnceSent()
+            if conflictNote == nil { refusal = nil }
         } catch {
             if case .restoreConflict(let note) = error {
                 refuse(error.message, conflict: note)
@@ -724,7 +726,7 @@ final class NoteEditor {
             reloadBase()
             liftUnlifted()
             refreshBackups()
-            closeRefusalOnceSent()
+            closeRefusal(applied: ticket)
         case .refused(let ticket, let message, let conflict):
             guard let refused = pending.first(where: { $0.ticket == ticket }) else { return }
             pending.removeAll { $0.ticket == ticket }
@@ -827,11 +829,20 @@ struct LiftedChange {
 }
 
 extension NoteEditor {
-    /// Closes the refusal bar once the tablet applied a later send and none is on its way: why an
-    /// earlier edit was taken back is no longer true, as a Mac banner closes once its cause is gone
-    /// (Manta, 2026-11-27). A conflict's bar stays for its Open Conflict Note, and a hint that holds
-    /// an edit back stays while that edit's send is on its way.
-    fileprivate func closeRefusalOnceSent() {
-        if pending.isEmpty, conflictNote == nil { refusal = nil }
+    /// Closes the refusal bar once its cause is gone, as a Mac banner closes (Manta, 2026-11-27): a
+    /// send made after the refusal was applied, or, for the picture hint, no picture change is on
+    /// its way. A conflict's bar stays for its Open Conflict Note.
+    fileprivate func closeRefusal(applied ticket: Int) {
+        guard refusal != nil, conflictNote == nil else { return }
+        if refusal == Copy.refusal(.pictureOnItsWay) {
+            if !pending.contains(where: { Self.changesPicture($0.edit) }) { refusal = nil }
+        } else if ticket >= refusalMark {
+            refusal = nil
+        }
+    }
+
+    private static func changesPicture(_ edit: NoteEdit) -> Bool {
+        guard case .transformElements(let transform) = edit else { return false }
+        return transform.elements.contains(where: \.isPicture)
     }
 }
