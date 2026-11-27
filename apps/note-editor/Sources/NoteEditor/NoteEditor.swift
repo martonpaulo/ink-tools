@@ -237,16 +237,24 @@ final class NoteEditor {
     }
 
     /// Reads the tablet's templates for an add next to `page`, its template first; on a failure,
-    /// the system templates the note's pages use, each once, with the failure's sentence.
-    func loadTemplates(nextTo page: Int) async {
+    /// or no answer within `limit` (#531), the system templates the note's pages use, each once,
+    /// with the reason. A call past the limit is cancelled, which stops inkctl.
+    func loadTemplates(nextTo page: Int, within limit: Duration = TabletTemplates.answerLimit) async {
         templateList = .loading
         let style = shown.pages.indices.contains(page) ? shown.pages[page].style : nil
-        do {
-            templateList = .tablet(TabletTemplates.ordered(try await tablet.templates(), first: style))
-        } catch .cancelled {
-            // The sheet closed while the list loaded: nothing to show, and no failure.
-        } catch {
+        let answer = await TabletTemplates.read(from: tablet, within: limit)
+        // The sheet closed while the list loaded: nothing to show, and no failure.
+        guard !Task.isCancelled else { return }
+        switch answer {
+        case .success(let choices):
+            templateList = .tablet(TabletTemplates.ordered(choices, first: style))
+        case .failure(.cancelled):
+            return
+        case .failure(let error):
             templateList = .noteOnly(TabletTemplates.ordered(noteTemplates, first: style), reason: error.words)
+        case nil:
+            templateList = .noteOnly(
+                TabletTemplates.ordered(noteTemplates, first: style), reason: Copy.templatesTimedOut(limit))
         }
     }
 

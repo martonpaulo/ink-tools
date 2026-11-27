@@ -1024,12 +1024,12 @@
         }
       }
     },
-    "Only this note's templates are shown: the tablet's list did not load. %@ Connect the tablet, then open Insert Page again." : {
+    "Only this note's templates are shown: the tablet's list did not load. %@ Check that the tablet is connected and awake, then open Insert Page again." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only this note's templates are shown: the tablet's list did not load. %@ Connect the tablet, then open Insert Page again."
+            "value" : "Only this note's templates are shown: the tablet's list did not load. %@ Check that the tablet is connected and awake, then open Insert Page again."
           }
         }
       }
@@ -1757,6 +1757,16 @@
         }
       }
     },
+    "The page is added once the tablet's templates are read." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The page is added once the tablet's templates are read."
+          }
+        }
+      }
+    },
     "The pages still show. Copy the note again to see its Headings." : {
       "localizations" : {
         "en" : {
@@ -1837,6 +1847,16 @@
         }
       }
     },
+    "The tablet did not answer within %lld seconds." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tablet did not answer within %lld seconds."
+          }
+        }
+      }
+    },
     "The tablet did not apply this edit, so it was taken back: %@" : {
       "localizations" : {
         "en" : {
@@ -1877,12 +1897,12 @@
         }
       }
     },
-    "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Connect the tablet, then open Insert Page again." : {
+    "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Check that the tablet is connected and awake, then open Insert Page again." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Connect the tablet, then open Insert Page again."
+            "value" : "The tablet's list did not load, and no page of this note uses a template the Mac can send. %@ Check that the tablet is connected and awake, then open Insert Page again."
           }
         }
       }

@@ -76,9 +76,16 @@ import Testing
         /// The tablet's templates (#451): `templateList`, or `failTemplates` when set.
         var templateList: [PageTemplateChoice] = [.system("style_white"), .system("style_8mm_lines")]
         var failTemplates: InkctlFailure?
+        /// The call never answers until it is cancelled, as once on the Manta (#531).
+        var templatesHang = false
 
         func templates() async throws(InkctlFailure) -> [PageTemplateChoice] {
             calls.append("templates")
+            if templatesHang {
+                // timing-independent: a fake for a call that never answers; only its cancel ends it.
+                try? await Task.sleep(for: .seconds(3600))
+                throw .cancelled
+            }
             if let failTemplates { throw failTemplates }
             return templateList
         }

@@ -31,6 +31,9 @@ enum InsertPlace: Hashable, CaseIterable {
 /// The sheet of Edit › Insert Page…: where the page goes and its template, from the tablet's list,
 /// the page in front's first (#329, #451); while the list loads a progress line shows, and when the
 /// tablet does not answer, the note's own templates with why. The tablet draws the template.
+/// Insert pressed while the list loads says so in the template row and adds the page with the first
+/// choice, the page in front's template, once the tablet's list is read (#531): a press is never
+/// lost. When the list does not come, the sheet stays open with the note's own templates and why.
 struct InsertPageSheet: View {
     /// The sheet's width, in points, as a Preview sheet of two choices.
     static let width: CGFloat = 340
@@ -39,6 +42,21 @@ struct InsertPageSheet: View {
     /// The most lines the failure sentence takes; the whole sentence is in its help tag.
     static let failureLines = 4
 
+    /// What a press of Insert does (#531).
+    enum Press: Equatable {
+        /// Adds the page on this template.
+        case insert(String)
+        /// The list is loading: wait for it, then add the page on its first choice.
+        case wait
+        /// No template can be sent; the sheet says why.
+        case none
+    }
+
+    static func press(_ list: NoteEditor.TemplateList, chosen: String?) -> Press {
+        if list == .loading { return .wait }
+        return chosen.map(Press.insert) ?? .none
+    }
+
     let editor: NoteEditor
     let page: Int
     /// Reads the tablet's list when the sheet opens; a render sets the list itself and passes false.
@@ -46,13 +64,26 @@ struct InsertPageSheet: View {
     let inserted: (Int) -> Void
     @State private var place = InsertPlace.after
     @State private var template: String?
+    /// Insert was pressed while the list loaded; the page is added once it is read.
+    @State private var waiting: Bool
     @Environment(\.dismiss) private var dismiss
 
-    init(editor: NoteEditor, page: Int, loads: Bool = true, inserted: @escaping (Int) -> Void) {
+    /// `waiting` is for a render of Insert pressed while the list loads.
+    init(
+        editor: NoteEditor, page: Int, loads: Bool = true, waiting: Bool = false,
+        inserted: @escaping (Int) -> Void
+    ) {
         self.editor = editor
         self.page = page
         self.loads = loads
+        _waiting = State(initialValue: waiting)
         self.inserted = inserted
+    }
+
+    private func insert(_ value: String) {
+        let at = place.index(nextTo: page)
+        if editor.insertPage(at: at, template: value) { inserted(at) }
+        dismiss()
     }
 
     var body: some View {
@@ -74,7 +105,7 @@ struct InsertPageSheet: View {
                     LabeledContent(Copy.template) {
                         HStack {
                             ProgressView().controlSize(.small)
-                            Text(Copy.readingTemplates).foregroundStyle(.secondary)
+                            Text(waiting ? Copy.insertWaits : Copy.readingTemplates).foregroundStyle(.secondary)
                         }
                         .accessibilityElement(children: .combine)
                     }
@@ -102,14 +133,27 @@ struct InsertPageSheet: View {
                 Spacer()
                 Button(Copy.cancel, role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button(Copy.insert) {
-                    let at = place.index(nextTo: page)
-                    if let chosen, editor.insertPage(at: at, template: chosen) { inserted(at) }
-                    dismiss()
+                Button {
+                    switch Self.press(list, chosen: chosen) {
+                    case .insert(let value): insert(value)
+                    case .wait: waiting = true
+                    case .none: break
+                    }
+                } label: {
+                    Text(Copy.insert)
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(chosen == nil)
+                .disabled(waiting || (list != .loading && chosen == nil))
             }
+        }
+        .onChange(of: waiting) { _, now in
+            if now { AccessibilityNotification.Announcement(Copy.insertWaits).post() }
+        }
+        .onChange(of: editor.templateList) { _, loaded in
+            guard waiting, loaded != .loading else { return }
+            waiting = false
+            // Only the tablet's own list adds the page unasked; without it the sheet shows why.
+            if case .tablet(let choices) = loaded, let first = template ?? choices.first?.value { insert(first) }
         }
         .padding(Self.inset)
         .frame(width: Self.width)

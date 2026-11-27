@@ -233,12 +233,13 @@ final class RenderTests {
                 .noteOnly([], reason: InkctlFailure.notConnected("No tablet answered over USB or Wi-Fi.").words)
             ),
         ]
-        for (name, list) in lists {
+        // Insert pressed while the list loads: its own progress (#531).
+        for (name, list, waiting) in lists.map({ ($0.0, $0.1, false) }) + [("insert-page-waiting", .loading, true)] {
             editor.templateList = list
             try await render(name, Self.sizes) {
                 ZStack(alignment: .top) {
                     NotebookView(pages: moved, page: 2, live: live, editor: editor)
-                    InsertPageSheet(editor: editor, page: 2, loads: false) { _ in }
+                    InsertPageSheet(editor: editor, page: 2, loads: false, waiting: waiting) { _ in }
                         .background(.background, in: .rect(cornerRadius: 12))
                         .shadow(radius: 12)
                         .padding(.top, 52)

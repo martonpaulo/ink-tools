@@ -41,6 +41,35 @@ public struct PageTemplateChoice: Sendable, Hashable, Identifiable {
 public enum TabletTemplates {
     public enum ParseError: Error, Equatable { case notATemplateList }
 
+    /// How long Insert Page… waits for the tablet's list before it offers the note's own (#531):
+    /// the list took 1.0 to 2.0 s in six first sheets of a session over the cable, with and without
+    /// a send in flight, and once it never answered and the sheet waited over 2 minutes (Manta,
+    /// 2026-11-27). Five times the slowest answer.
+    public static let answerLimit: Duration = .seconds(10)
+
+    /// The tablet's answer, or nil when it gave none within `limit`; the call is then cancelled,
+    /// which stops inkctl.
+    public static func read(
+        from tablet: any TabletWriting, within limit: Duration
+    ) async -> Result<[PageTemplateChoice], InkctlFailure>? {
+        await withTaskGroup(of: Result<[PageTemplateChoice], InkctlFailure>?.self) { group in
+            group.addTask {
+                do throws(InkctlFailure) {
+                    return .success(try await tablet.templates())
+                } catch {
+                    return .failure(error)
+                }
+            }
+            group.addTask {
+                try? await Task.sleep(for: limit)
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+
     /// The choices of inkctl's answer, system first, in the tablet's order; an answer with no
     /// system template or an entry without its name or path is not a list.
     public static func parse(_ data: Data) throws(ParseError) -> [PageTemplateChoice] {

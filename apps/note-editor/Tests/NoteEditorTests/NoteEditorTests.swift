@@ -171,6 +171,26 @@ import Testing
                     reason: "No tablet answered."))
     }
 
+    @Test func aTemplateListThatNeverComesFallsBackToTheNotesTemplatesWithinTheLimit() async throws {
+        let editor = try editor()
+        tablet.templatesHang = true
+        // An unbounded read never returns: without the limit this call hangs (#531).
+        await editor.loadTemplates(nextTo: 2, within: .milliseconds(50))
+        #expect(
+            editor.templateList
+                == .noteOnly(
+                    ["style_8mm_ruled_line", "style_white", "style_5mm_grid", "style_5mm_dots"]
+                        .map(PageTemplateChoice.system),
+                    reason: Copy.templatesTimedOut(.milliseconds(50))))
+    }
+
+    @Test func insertPressedWhileTheListLoadsWaitsAndThenAddsTheFirstChoice() {
+        #expect(InsertPageSheet.press(.loading, chosen: nil) == .wait)
+        let listed = NoteEditor.TemplateList.tablet([.system("style_white")])
+        #expect(InsertPageSheet.press(listed, chosen: "style_white") == .insert("style_white"))
+        #expect(InsertPageSheet.press(.noteOnly([], reason: "No tablet answered."), chosen: nil) == .none)
+    }
+
     @Test func aSheetThatOpensAgainStartsLoadingAndAClosedSheetsReadLeavesNoFailure() async throws {
         let editor = try editor()
         await editor.loadTemplates(nextTo: 0)

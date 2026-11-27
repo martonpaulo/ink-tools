@@ -293,6 +293,8 @@ nonisolated enum Copy {
     }
 
     static let readingTemplates = String(localized: "Reading the tablet's templates…")
+    /// Insert pressed while the list loads (#531): the page is added once the list is read.
+    static let insertWaits = String(localized: "The page is added once the tablet's templates are read.")
     static let customTemplates = String(localized: "Custom")
 
     /// Why the sheet offers only the note's own templates, or none, with inkctl's words as their own
@@ -301,12 +303,17 @@ nonisolated enum Copy {
         noteHasTemplates
             ? String(
                 localized:
-                    "Only this note's templates are shown: the tablet's list did not load. \(reason) Connect the tablet, then open Insert Page again."
+                    "Only this note's templates are shown: the tablet's list did not load. \(reason) Check that the tablet is connected and awake, then open Insert Page again."
             )
             : String(
                 localized:
-                    "The tablet's list did not load, and no page of this note uses a template the Mac can send. \(reason) Connect the tablet, then open Insert Page again."
+                    "The tablet's list did not load, and no page of this note uses a template the Mac can send. \(reason) Check that the tablet is connected and awake, then open Insert Page again."
             )
+    }
+
+    /// The reason of a list the tablet did not send within the sheet's limit (#531).
+    static func templatesTimedOut(_ limit: Duration) -> String {
+        String(localized: "The tablet did not answer within \(limit.components.seconds) seconds.")
     }
 
     /// A template's name as the picker shows it: a system one from its id, a custom one by its file name.
