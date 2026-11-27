@@ -61,7 +61,7 @@ Open **Settings** › **Apps** › **Plugins**, tap the plugin, then tap **Unins
 
 ## Install the tablet app
 
-Handwriting Language installs on the tablet with no computer, from its prerelease on the releases page; its [README](../apps/handwriting-language/README.md#install) shows the steps.
+Handwriting Language has no release yet: its first prerelease waits for its signing key, and then installs on the tablet with no computer; its [README](../apps/handwriting-language/README.md#install) shows the steps.
 
 ## Install the Mac app
 
