@@ -9,6 +9,12 @@ import Foundation
 public struct QueuedEdit<Undo: Sendable & Equatable>: Sendable, Equatable {
     public let operation: TabletOperation
     public let undo: Undo
+    /// When the edit joined the queue, for the send's timing (#530); not part of its identity.
+    public var queued: ContinuousClock.Instant = .now
+
+    public static func == (left: Self, right: Self) -> Bool {
+        left.operation == right.operation && left.undo == right.undo
+    }
 }
 
 /// What the editor does after the tablet answers.
@@ -55,7 +61,8 @@ public struct EditQueue<Undo: Sendable & Equatable>: Sendable, Equatable {
 
     /// The run ended, on the key's release or a quiet moment: its one edit is queued.
     public mutating func endRun() {
-        guard let open = run else { return }
+        guard var open = run else { return }
+        open.queued = .now
         waiting.append(open)
         run = nil
     }
@@ -84,7 +91,7 @@ public struct EditQueue<Undo: Sendable & Equatable>: Sendable, Equatable {
             return QueuedEdit(
                 operation: TabletOperation(
                     note: operation.note, baseHash: new, page: operation.page, change: operation.change),
-                undo: edit.undo)
+                undo: edit.undo, queued: edit.queued)
         }
         if let open = run, open.operation.baseHash == old {
             run = QueuedEdit(
@@ -199,17 +206,26 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
     var sentOnBase: [String: [TabletOperation]] = [:]
     /// Per base: the conflict note its edits go to, once one was made.
     var conflicts: [String: String] = [:]
+    /// What each send's timing goes to: the app's log, unless a test reads it (#530).
+    let timing: @Sendable (SendTiming) -> Void
 
     public init(
         path: WritePath, copy: URL,
         snapshots: BaseSnapshots = BaseSnapshots(
             folder: FileManager.default.temporaryDirectory.appending(path: "base-snapshots-\(UUID().uuidString)")),
+        timing: @escaping @Sendable (SendTiming) -> Void = logSendTiming,
         outcome: @escaping @Sendable (SendOutcome<Undo>) -> Void
     ) {
         self.path = path
         self.copy = copy
         self.snapshots = snapshots
+        self.timing = timing
         self.outcome = outcome
+    }
+
+    /// The time since `started` on the timed tablet's clock.
+    func since(_ started: ContinuousClock.Instant) -> Duration {
+        path.timed.now() - started
     }
 
     deinit {
@@ -254,6 +270,11 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
         var pulled = false
         while let edit = queue.next() {
             outcome(.started(edit.undo))
+            let started = path.timed.now()
+            _ = path.timed.take()
+            defer {
+                timing(SendTiming(waited: started - edit.queued, steps: path.timed.take(), total: since(started)))
+            }
             let operation = edit.operation
             do {
                 let result: SendResult

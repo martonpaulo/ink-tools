@@ -95,7 +95,7 @@ import Testing
     /// The write path over the fake tablet: a copy's hash is its text, a page move adds `moved`,
     /// and a note's outline is the one `outlines` holds for its text.
     static func path(
-        _ tablet: FakeTablet, folder: URL, stray: [Int] = [], outlines: [String: NoteOutline] = [:],
+        _ tablet: any TabletWriting, folder: URL, stray: [Int] = [], outlines: [String: NoteOutline] = [:],
         now: @escaping @Sendable () -> Date = { Date() }
     ) -> WritePath {
         WritePath(

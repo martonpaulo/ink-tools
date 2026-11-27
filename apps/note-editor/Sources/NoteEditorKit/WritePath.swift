@@ -89,6 +89,8 @@ public struct TabletBase: Sendable, Equatable {
 
 public struct WritePath: Sendable {
     let tablet: any TabletWriting
+    /// The same tablet, each call timed for the sender's log (#530).
+    public let timed: TimedTablet
     let backups: NoteBackups
     /// The hash the operation's base is checked against.
     let hash: @Sendable (URL) throws -> String
@@ -111,7 +113,9 @@ public struct WritePath: Sendable {
         outline: @escaping @Sendable (URL) throws -> NoteOutline,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
-        self.tablet = tablet
+        let timed = tablet as? TimedTablet ?? TimedTablet(tablet)
+        self.timed = timed
+        self.tablet = timed
         self.backups = backups
         self.hash = hash
         self.macWrite = macWrite

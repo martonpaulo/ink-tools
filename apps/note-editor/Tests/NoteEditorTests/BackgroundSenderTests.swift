@@ -223,6 +223,88 @@ import Testing
             ])
     }
 
+    /// A clock only the fake tablet moves, so a send's timing is read off it, never off the wall (#530).
+    final class ManualClock: @unchecked Sendable {
+        private let lock = NSLock()
+        private let start = ContinuousClock.now
+        private var offset = Duration.zero
+        func now() -> ContinuousClock.Instant { lock.withLock { start + offset } }
+        func advance(_ by: Duration) { lock.withLock { offset += by } }
+    }
+
+    /// The write path's fake tablet, each call taking a set time on the manual clock: a pull 2 s,
+    /// a push 1 s and an edit 3 s.
+    final class SlowTablet: TabletWriting, @unchecked Sendable {
+        let fake: WritePathTests.FakeTablet
+        let clock: ManualClock
+        static let times: [String: Duration] = ["pull": .seconds(2), "push": .seconds(1), "edit": .seconds(3)]
+
+        init(_ fake: WritePathTests.FakeTablet, clock: ManualClock) {
+            self.fake = fake
+            self.clock = clock
+        }
+
+        func edit(note: String, operations: URL) async throws(InkctlFailure) -> EditAnswer {
+            clock.advance(Self.times["edit"] ?? .zero)
+            return try await fake.edit(note: note, operations: operations)
+        }
+
+        func push(_ local: URL, to note: String) async throws(InkctlFailure) {
+            clock.advance(Self.times["push"] ?? .zero)
+            try await fake.push(local, to: note)
+        }
+
+        func pull(_ note: String, to destination: URL) async throws(InkctlFailure) {
+            clock.advance(Self.times["pull"] ?? .zero)
+            try await fake.pull(note, to: destination)
+        }
+
+        func templates() async throws(InkctlFailure) -> [PageTemplateChoice] {
+            try await fake.templates()
+        }
+    }
+
+    final class Timings: @unchecked Sendable {
+        private let lock = NSLock()
+        private var list: [SendTiming] = []
+        func add(_ timing: SendTiming) { lock.withLock { list.append(timing) } }
+        var all: [SendTiming] { lock.withLock { list } }
+    }
+
+    @Test func eachSendTimesEveryTabletCallAndTheRestOnTheMac() async throws {
+        let fake = WritePathTests.FakeTablet(bytes: Data("base".utf8))
+        let clock = ManualClock()
+        let timed = TimedTablet(SlowTablet(fake, clock: clock), now: { clock.now() })
+        let copy = folder.appending(path: "copy.note")
+        try Data("base".utf8).write(to: copy)
+        let timings = Timings()
+        let sender = BackgroundSender<Int>(
+            path: WritePathTests.path(timed, folder: folder), copy: copy, timing: { timings.add($0) },
+            outcome: { _ in })
+        await sender.drew(Self.nudge(1), undo: 1)
+        let timing = try #require(timings.all.count == 1 ? timings.all.first : nil)
+        let names = fake.calls.map { $0.hasPrefix("edit") ? "edit" : $0 }
+        #expect(!names.isEmpty)
+        #expect(timing.steps.map(\.name) == names)
+        #expect(timing.steps.map(\.duration) == names.map { SlowTablet.times[$0] ?? .zero })
+        // Nothing but the tablet moves the clock, so a wait or poll added to the send shows here
+        // only once it reads the clock; the Mac's own work takes no time on it.
+        #expect(timing.onMac == .zero)
+        #expect(timing.total == names.reduce(Duration.zero) { $0 + (SlowTablet.times[$1] ?? .zero) })
+    }
+
+    @Test func aSendTimingReadsAsOneLogLine() {
+        let timing = SendTiming(
+            waited: .milliseconds(100),
+            steps: [
+                SendTiming.Step(name: "pull", duration: .seconds(2)),
+                SendTiming.Step(name: "edit", duration: .milliseconds(3300)),
+            ],
+            total: .milliseconds(5500))
+        #expect(timing.onMac == .milliseconds(200))
+        #expect(timing.line == "waited 0.1 s, pull 2.0 s, edit 3.3 s, on the Mac 0.2 s, total 5.5 s")
+    }
+
     final class Outcomes: @unchecked Sendable {
         private let lock = NSLock()
         private var list: [SendOutcome<Int>] = []
