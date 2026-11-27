@@ -254,6 +254,49 @@ describe('each refusal is named, with the open note', () => {
   });
 });
 
+describe("shapes go as the tablet's own geometry element (#463)", () => {
+  const line = {kind: 'geometry', shape: 'straightLine', points: [[10, 20], [300, 20]], penColor: 0, penWidth: 400};
+  const square = [[100, 100], [300, 100], [300, 200], [100, 200], [100, 100]];
+  const rectangle = {kind: 'geometry', shape: 'GEO_polygon', points: square, penColor: 0, penWidth: 400};
+  const ellipse = {kind: 'geometry', shape: 'GEO_ellipse', center: [600, 800], major: 200, minor: 120, angle: 0, penColor: 0x9d, penWidth: 200};
+
+  it('builds a line, a rectangle and an ellipse, then inserts them in one call', async () => {
+    const built: unknown[] = [];
+    const {fake, calls} = host(OTHER, {
+      build: async spec => {
+        built.push(spec);
+        return ok({built: spec.kind});
+      },
+    });
+    await editAction(fake, () => 0)({path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [line, rectangle, ellipse]}]});
+    expect(built).toEqual([
+      {kind: 'geometry', shape: 'straightLine', points: [{x: 10, y: 20}, {x: 300, y: 20}], ellipse: null, penColor: 0, penWidth: 400},
+      {kind: 'geometry', shape: 'GEO_polygon', points: square.map(([x, y]) => ({x, y})), ellipse: null, penColor: 0, penWidth: 400},
+      {kind: 'geometry', shape: 'GEO_ellipse', points: [], ellipse: {center: {x: 600, y: 800}, major: 200, minor: 120, angle: 0}, penColor: 0x9d, penWidth: 200},
+    ]);
+    expect(calls).toEqual([`insertByPath ${JSON.stringify([NOTE, 0, [{built: 'geometry'}, {built: 'geometry'}, {built: 'geometry'}]])}`]);
+  });
+
+  it.each([
+    ['a line of 3 points', {...line, points: [[1, 1], [2, 2], [3, 3]]}],
+    ['an open polygon', {...rectangle, points: square.slice(0, 4)}],
+    ['a polygon of 65 points', {...rectangle, points: [...Array.from({length: 64}, (_, i) => [10 + i, 10]), [10, 10]]}],
+    ['a point off the page', {...line, points: [[10, 20], [2000, 20]]}],
+    ['an ellipse past the page edge', {...ellipse, center: [100, 800]}],
+    ['a circle with two radii', {...ellipse, shape: 'GEO_circle'}],
+    ['a turned ellipse', {...ellipse, angle: 30}],
+    ['an ellipse given points', {...ellipse, points: [[1, 1]]}],
+    ['a colour outside the pen tones', {...line, penColor: 0x80}],
+    ['a pen width outside the range', {...line, penWidth: 50}],
+    ['a kind the tablet has but the helper does not send', {...line, shape: 'fiveStarsSignal'}],
+  ])('%s is refused before any call', async (_name, element) => {
+    const {fake, calls} = host();
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [element]}]}));
+    expect(refused.detail).toEqual({refusal: 'bad-request', openNote: OTHER});
+    expect(calls).toEqual([]);
+  });
+});
+
 describe('the pen pause', () => {
   function clock() {
     let time = 10_000;

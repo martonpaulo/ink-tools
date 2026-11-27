@@ -14,11 +14,22 @@ import {attempt, fail, ok, Result, THROWN_CODE} from './result';
 
 export type EditRect = TextBoxInput['rect'];
 
+/** The tablet's shape kinds, sn-plugin-lib 0.2.3 `Geometry.type` (#463). */
+export const GEOMETRY_SHAPES = ['straightLine', 'GEO_polygon', 'GEO_circle', 'GEO_ellipse'] as const;
+export type GeometryShape = (typeof GEOMETRY_SHAPES)[number];
+
+/** A circle's or an ellipse's centre and radii in page pixels; `major` along x at angle 0, as Smart Pen draws a circle. */
+export type EllipseSpec = {center: PenPoint; major: number; minor: number; angle: number};
+
 /** An element the Mac asks for, in our words (#312); the helper checks every field before this. */
 export type NewElement =
   | {kind: 'stroke'; points: PenPoint[]; penColor: number; thickness: number}
   | {kind: 'text'; text: string; rect: EditRect; fontSize: number}
-  | {kind: 'picture'; file: string; rect: EditRect};
+  | {kind: 'picture'; file: string; rect: EditRect}
+  | {kind: 'geometry'; shape: GeometryShape; points: PenPoint[]; ellipse: EllipseSpec | null; penColor: number; penWidth: number};
+
+/** `Element.TYPE_GEO` in sn-plugin-lib 0.2.3: a line, polygon, circle or ellipse the tablet keeps as a shape (#463). */
+export const GEOMETRY_TYPE = 700;
 
 /** The fineliner, sn-plugin-lib 0.2.3's pen type 10: a new stroke's penType 0 is refused (code 302, #249). */
 const FINELINER = 10;
@@ -74,6 +85,26 @@ export async function buildElement(spec: NewElement): Promise<Result<object>> {
       made.value.picture = {picturePath: spec.file, rect: spec.rect};
       return made;
     }
+    case 'geometry': {
+      const made = await createElement(GEOMETRY_TYPE);
+      if (!made.ok) {
+        return made;
+      }
+      // The fields of sn-plugin-lib 0.2.3's `Geometry`, as Smart Pen's insertGeometry sends them (#463).
+      made.value.geometry = {
+        type: spec.shape,
+        penColor: spec.penColor,
+        penType: FINELINER,
+        penWidth: spec.penWidth,
+        points: spec.points,
+        ellipseCenterPoint: spec.ellipse?.center ?? null,
+        ellipseMajorAxisRadius: spec.ellipse?.major ?? 0,
+        ellipseMinorAxisRadius: spec.ellipse?.minor ?? 0,
+        ellipseAngle: spec.ellipse?.angle ?? 0,
+        showLassoAfterInsert: false,
+      };
+      return made;
+    }
   }
 }
 
@@ -86,12 +117,23 @@ type Placed = {
   recognizeResult?: StoredBox | null;
   picture?: {rect?: EditRect} | null;
   textBox?: {textRect?: EditRect} | null;
+  geometry?: StoredGeometry | null;
   stroke?: {
     points?: {size(): Promise<number>; getRange(start: number, count: number): Promise<PenPoint[]>; setRange?(index: number, end: number, values: PenPoint[]): Promise<boolean>};
   } | null;
 };
 
 type StoredBox = {up_left_point_x?: number; up_left_point_y?: number; down_right_point_x?: number; down_right_point_y?: number};
+
+/** A shape's fields as a read answers them, sn-plugin-lib 0.2.3 `Geometry` (#463). */
+type StoredGeometry = {
+  type?: string;
+  points?: PenPoint[] | null;
+  ellipseCenterPoint?: PenPoint | null;
+  ellipseMajorAxisRadius?: number;
+  ellipseMinorAxisRadius?: number;
+  ellipseAngle?: number;
+};
 
 function boundsOf(points: PenPoint[]): EditRect {
   const xs = points.map(point => point.x);
@@ -224,12 +266,54 @@ export async function placeElement(element: object, page: number, rect: EditRect
     placed.textBox.textRect = rect;
     return ok(element);
   }
+  if (placed.type === GEOMETRY_TYPE && placed.geometry) {
+    return placeGeometry(placed, placed.geometry, rect);
+  }
   const stroke = await strokePoints(placed);
   if (!stroke.ok) {
     return stroke;
   }
   const from = boundsOf(stroke.value.read);
   return writeStroke(placed, stroke.value.write, stroke.value.read, (point, round) => mapPoint(point, from, rect, round));
+}
+
+/**
+ * Moves and sizes a shape to `rect` (#463): a line's or polygon's points mapped from their bounds,
+ * or an ellipse's centre and radii; a circle sized to a rect that is not square becomes an ellipse.
+ * shortcut: a turned ellipse (angle not 0) is refused, since its box needs the angle's unit; the device round settles it.
+ */
+function placeGeometry(placed: Placed, geometry: StoredGeometry, rect: EditRect): Result<object> {
+  const center = geometry.ellipseCenterPoint;
+  const isEllipse = geometry.type === 'GEO_circle' || geometry.type === 'GEO_ellipse';
+  if (isEllipse) {
+    const major = geometry.ellipseMajorAxisRadius ?? 0;
+    const minor = geometry.ellipseMinorAxisRadius ?? 0;
+    if (!center || !(major > 0) || !(minor > 0)) {
+      return fail(THROWN_CODE, 'the shape has no centre or radii');
+    }
+    if (geometry.ellipseAngle) {
+      return fail(THROWN_CODE, 'a turned ellipse cannot be moved yet');
+    }
+    const from = {left: center.x - major, top: center.y - minor, right: center.x + major, bottom: center.y + minor};
+    const map: PointMap = (point, round) => mapPoint(point, from, rect, round);
+    geometry.ellipseCenterPoint = map(center, true);
+    geometry.ellipseMajorAxisRadius = Math.round((rect.right - rect.left) / 2);
+    geometry.ellipseMinorAxisRadius = Math.round((rect.bottom - rect.top) / 2);
+    if (geometry.ellipseMajorAxisRadius !== geometry.ellipseMinorAxisRadius) {
+      geometry.type = 'GEO_ellipse';
+    }
+    moveBox(placed, map);
+    return ok(placed);
+  }
+  const points = geometry.points ?? [];
+  if (points.length < 2) {
+    return fail(THROWN_CODE, 'the shape has no points');
+  }
+  const from = boundsOf(points);
+  const map: PointMap = (point, round) => mapPoint(point, from, rect, round);
+  geometry.points = points.map(point => map(point, true));
+  moveBox(placed, map);
+  return ok(placed);
 }
 
 /** An affine map of page pixels, as CoreGraphics orders it: x' = a x + c y + tx, y' = b x + d y + ty. */

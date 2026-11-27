@@ -270,6 +270,14 @@
     "pattern": "action\\.json",
     "golden": "",
     "open": 283
+   },
+   {
+    "rule": "Not one value, two that only match: sn-adapter's geometry element type (sn-plugin-lib TYPE_GEO, 700) and ink-core's word pause of 700 ms (#463)",
+    "owner": "packages/sn-adapter/src/official/noteEdit.ts",
+    "other": "packages/ink-core/src/conversion/words.ts",
+    "pattern": "(?:GEOMETRY_TYPE|WORD_PAUSE_MS) = 700;",
+    "golden": "",
+    "open": 295
    }
   ]
  },

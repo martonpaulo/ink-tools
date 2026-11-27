@@ -11,6 +11,8 @@
 import {
   ACTION_FAILED,
   ActionRefused,
+  GEOMETRY_SHAPES,
+  type GeometryShape,
   MAX_STROKE_POINTS,
   PICTURE_TYPE,
   pluginDataFolder,
@@ -140,25 +142,69 @@ function parsePictureFile(value: unknown): string {
   return value as string;
 }
 
+/** The fewest and most points a polygon may hold, the last one closing it: a triangle is 4 (#463). */
+export const POLYGON_POINTS = {min: 4, max: 64};
+
+/** One `[x, y]` on the page, in whole pixels. */
+function parsePoint(point: unknown): {x: number; y: number} {
+  const [x, y] = Array.isArray(point) ? point : [];
+  check(typeof x === 'number' && typeof y === 'number' && x >= 0 && y >= 0 && x <= PAGE.width && y <= PAGE.height, 'a point is not [x, y] on the page');
+  return {x: Math.round(x), y: Math.round(y)};
+}
+
+function parsePenColor(value: unknown): number {
+  check(PEN_TONES.includes(value as number), 'penColor must be a pen tone: 0, 157, 201 or 254');
+  return value as number;
+}
+
+/**
+ * A shape the tablet keeps as its own (#463): a straight line of 2 points, a closed polygon of 4 to
+ * MAX_POLYGON_POINTS, or a circle or ellipse by its centre and radii, wholly on the page.
+ */
+function parseGeometry(raw: Record<string, unknown>): NewElement {
+  check(GEOMETRY_SHAPES.includes(raw.shape as GeometryShape), `shape must be one of ${GEOMETRY_SHAPES.join(', ')}`);
+  const shape = raw.shape as GeometryShape;
+  const penColor = parsePenColor(raw.penColor);
+  check(wholeIn(raw.penWidth, THICKNESS.min, THICKNESS.max), `penWidth must be a whole number from ${THICKNESS.min} to ${THICKNESS.max}`);
+  const penWidth = raw.penWidth as number;
+  if (shape === 'straightLine' || shape === 'GEO_polygon') {
+    check(raw.center === undefined, `a ${shape} has points, not a center`);
+    const points = Array.isArray(raw.points) ? raw.points.map(parsePoint) : [];
+    if (shape === 'straightLine') {
+      check(points.length === 2, 'a straight line needs 2 points');
+    } else {
+      const [first, last] = [points[0], points[points.length - 1]];
+      const closed = points.length >= POLYGON_POINTS.min && first.x === last.x && first.y === last.y;
+      check(
+        closed && points.length <= POLYGON_POINTS.max,
+        `a polygon needs ${POLYGON_POINTS.min} to ${POLYGON_POINTS.max} points, the last equal to the first`,
+      );
+    }
+    return {kind: 'geometry', shape, points, ellipse: null, penColor, penWidth};
+  }
+  check(raw.points === undefined, `a ${shape} has a center and radii, not points`);
+  const center = parsePoint(raw.center);
+  const {major, minor, angle} = raw;
+  check(wholeIn(major, 1, PAGE.height) && wholeIn(minor, 1, PAGE.height), 'major and minor must be whole radii from 1');
+  check(shape === 'GEO_ellipse' || major === minor, 'a circle has major equal to minor');
+  check(angle === 0, 'angle must be 0: a turned ellipse waits for the device round');
+  const [a, b] = [major as number, minor as number];
+  check(center.x - a >= 0 && center.y - b >= 0 && center.x + a <= PAGE.width && center.y + b <= PAGE.height, 'the ellipse must lie on the page');
+  return {kind: 'geometry', shape, points: [], ellipse: {center, major: a, minor: b, angle: 0}, penColor, penWidth};
+}
+
 function parseElement(value: unknown): NewElement {
   const raw = (value ?? {}) as Record<string, unknown>;
   switch (raw.kind) {
     case 'stroke': {
       const points = raw.points;
       check(Array.isArray(points) && points.length >= 2 && points.length <= MAX_STROKE_POINTS, `a stroke needs 2 to ${MAX_STROKE_POINTS} points`);
-      check(PEN_TONES.includes(raw.penColor as number), 'penColor must be a pen tone: 0, 157, 201 or 254');
+      const penColor = parsePenColor(raw.penColor);
       check(wholeIn(raw.thickness, THICKNESS.min, THICKNESS.max), `thickness must be a whole number from ${THICKNESS.min} to ${THICKNESS.max}`);
-      return {
-        kind: 'stroke',
-        points: (points as unknown[]).map(point => {
-          const [x, y] = Array.isArray(point) ? point : [];
-          check(typeof x === 'number' && typeof y === 'number' && x >= 0 && y >= 0 && x <= PAGE.width && y <= PAGE.height, 'a point is not [x, y] on the page');
-          return {x: Math.round(x), y: Math.round(y)};
-        }),
-        penColor: raw.penColor as number,
-        thickness: raw.thickness as number,
-      };
+      return {kind: 'stroke', points: (points as unknown[]).map(parsePoint), penColor, thickness: raw.thickness as number};
     }
+    case 'geometry':
+      return parseGeometry(raw);
     case 'text':
       check(typeof raw.text === 'string' && raw.text.trim().length > 0 && raw.text.length <= LIMITS.text, `text must hold 1 to ${LIMITS.text} characters`);
       check(wholeIn(raw.fontSize, FONT_SIZES.min, FONT_SIZES.max), `fontSize must be a whole number from ${FONT_SIZES.min} to ${FONT_SIZES.max}`);

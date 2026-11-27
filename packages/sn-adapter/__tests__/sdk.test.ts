@@ -351,4 +351,65 @@ describe('the editor helper calls (#312)', () => {
     });
     expect(PluginCommAPI.createElement).toHaveBeenCalledWith(200);
   });
+
+  it('builds a shape as a geometry element of type 700, with the Geometry fields (#463)', async () => {
+    mocked(PluginCommAPI.createElement).mockResolvedValue(success({type: 700}));
+    const points = [{x: 10, y: 20}, {x: 300, y: 20}];
+    expect(await page.buildElement({kind: 'geometry', shape: 'straightLine', points, ellipse: null, penColor: 0, penWidth: 400})).toEqual({
+      ok: true,
+      value: {
+        type: 700,
+        geometry: {
+          type: 'straightLine',
+          penColor: 0,
+          penType: 10,
+          penWidth: 400,
+          points,
+          ellipseCenterPoint: null,
+          ellipseMajorAxisRadius: 0,
+          ellipseMinorAxisRadius: 0,
+          ellipseAngle: 0,
+          showLassoAfterInsert: false,
+        },
+      },
+    });
+    expect(PluginCommAPI.createElement).toHaveBeenCalledWith(700);
+    const circle = {center: {x: 500, y: 600}, major: 100, minor: 100, angle: 0};
+    expect(await page.buildElement({kind: 'geometry', shape: 'GEO_circle', points: [], ellipse: circle, penColor: 0x9d, penWidth: 200})).toMatchObject({
+      ok: true,
+      value: {geometry: {type: 'GEO_circle', points: [], ellipseCenterPoint: {x: 500, y: 600}, ellipseMajorAxisRadius: 100, ellipseMinorAxisRadius: 100}},
+    });
+  });
+
+  it("places a shape's points and stored box, and a circle sized to a wide rect becomes an ellipse (#463)", async () => {
+    const square = [{x: 0, y: 0}, {x: 10, y: 0}, {x: 10, y: 10}, {x: 0, y: 10}, {x: 0, y: 0}];
+    const box = {up_left_point_x: 0, up_left_point_y: 0, down_right_point_x: 10, down_right_point_y: 10};
+    const polygon = {type: 700, geometry: {type: 'GEO_polygon', points: square}, recognizeResult: box};
+    expect(await page.placeElement(polygon, 0, rect)).toMatchObject({
+      ok: true,
+      value: {
+        pageNum: 0,
+        geometry: {points: [{x: 100, y: 200}, {x: 300, y: 200}, {x: 300, y: 400}, {x: 100, y: 400}, {x: 100, y: 200}]},
+        recognizeResult: {up_left_point_x: 100, up_left_point_y: 200, down_right_point_x: 300, down_right_point_y: 400},
+      },
+    });
+    const circle = {
+      type: 700,
+      geometry: {type: 'GEO_circle', points: [], ellipseCenterPoint: {x: 50, y: 50}, ellipseMajorAxisRadius: 50, ellipseMinorAxisRadius: 50, ellipseAngle: 0},
+    };
+    expect(await page.placeElement(circle, 0, {left: 100, top: 200, right: 500, bottom: 400})).toMatchObject({
+      ok: true,
+      value: {geometry: {type: 'GEO_ellipse', ellipseCenterPoint: {x: 300, y: 300}, ellipseMajorAxisRadius: 200, ellipseMinorAxisRadius: 100}},
+    });
+  });
+
+  it('refuses a shape it cannot place: no points, no radii, or a turned ellipse (#463)', async () => {
+    expect(await page.placeElement({type: 700, geometry: {type: 'straightLine', points: []}}, 0, rect)).toMatchObject({ok: false, message: 'the shape has no points'});
+    expect(await page.placeElement({type: 700, geometry: {type: 'GEO_circle', ellipseCenterPoint: null}}, 0, rect)).toMatchObject({
+      ok: false,
+      message: 'the shape has no centre or radii',
+    });
+    const turned = {type: 'GEO_ellipse', ellipseCenterPoint: {x: 50, y: 50}, ellipseMajorAxisRadius: 50, ellipseMinorAxisRadius: 20, ellipseAngle: 30};
+    expect(await page.placeElement({type: 700, geometry: turned}, 0, rect)).toMatchObject({ok: false, message: 'a turned ellipse cannot be moved yet'});
+  });
 });
