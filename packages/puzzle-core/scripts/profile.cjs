@@ -76,6 +76,9 @@ const CASES = [
   ['futoshiki 5 x 5 medium', () => core.generateFutoshiki('P1', 5, 'medium')],
   ['futoshiki 7 x 7 hard', () => core.generateFutoshiki('P1', 7, 'hard')],
   ['binairo 10 x 10 hard', () => core.generateBinairo('P1', 10, 'hard')],
+  ['star battle 8 x 8 one star easy', () => core.generateStarBattle('P1', { side: 8, stars: 1 }, 'easy')],
+  ['star battle 10 x 10 one star hard', () => core.generateStarBattle('P1', { side: 10, stars: 1 }, 'hard')],
+  ['star battle 10 x 10 two stars hard', () => core.generateStarBattle('P1', { side: 10, stars: 2 }, 'hard')],
 ];
 const only = process.env.ONLY;
 for (const [name, make] of CASES) {

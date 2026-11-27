@@ -30,6 +30,8 @@ export * from './arrowword';
 export * from './arrowword-page';
 export * from './crossword';
 export * from './crossword-page';
+export * from './star-battle';
+export * from './star-battle-page';
 export * from './page';
 export * from './check';
 export * from './maze-page';

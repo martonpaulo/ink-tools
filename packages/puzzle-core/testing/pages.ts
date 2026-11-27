@@ -27,10 +27,13 @@ import {
   generateBinairo,
   generateNonogram,
   generateSlitherlink,
+  drawStarBattlePage,
+  generateStarBattle,
   generateSudoku,
   generateWordSearch,
   layoutBinairoPage,
   layoutPage,
+  layoutStarBattle,
   puzzleCode,
   renderBoardPage,
   type PageLayout,
@@ -127,5 +130,10 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawArrowword(r, layout.grid, puzzle);
     drawFooter(r, layout, { game: 'Arrowword', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Write each answer from its clue, in the direction of its arrow.' });
     return r;
+  }],
+  ['star-battle-10mm-portrait-right', () => {
+    const puzzle = generateStarBattle('P1', { side: 10, stars: 2 }, 'hard');
+    const layout = layoutStarBattle(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 });
+    return drawStarBattlePage(puzzle, layout, { game: 'Star Battle', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Put 2 stars in each row, column and region; stars never touch, even at a corner.' });
   }],
 ];
