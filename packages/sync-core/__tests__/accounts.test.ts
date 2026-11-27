@@ -107,9 +107,14 @@ describe('Settings', () => {
     expect(parseSettings(JSON.stringify(stored)).accounts).toEqual({});
   });
 
-  it('a name is one line, cut to the limit', () => {
+  it('a name is one line, cut to the limit with a mark, never inside a character', () => {
     expect(accountName('a\nb')).toBe('a b');
-    expect(accountName('x'.repeat(MAX_ACCOUNT_CHARS + 5))).toHaveLength(MAX_ACCOUNT_CHARS);
+    const cut = accountName('x'.repeat(MAX_ACCOUNT_CHARS + 5))!;
+    expect(Array.from(cut)).toHaveLength(MAX_ACCOUNT_CHARS);
+    expect(cut.endsWith('…')).toBe(true);
+    expect(accountName('x'.repeat(MAX_ACCOUNT_CHARS))).toBe('x'.repeat(MAX_ACCOUNT_CHARS));
+    const emoji = accountName('😀'.repeat(MAX_ACCOUNT_CHARS + 1))!;
+    expect(Array.from(emoji).slice(0, -1).every(char => char === '😀')).toBe(true);
     expect(accountName('  ')).toBeUndefined();
   });
 });

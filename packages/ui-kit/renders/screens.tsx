@@ -34,7 +34,7 @@ import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettin
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
 import type {BridgeSettings as AccountSyncSettingsValue} from '@ink-tools/sync-core/settings';
-import {addIcsFeed, defaultSettings as accountSyncDefaults, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
+import {accountName, addIcsFeed, defaultSettings as accountSyncDefaults, setIcsNames, setModule as accountSyncModule, setProvider as accountSyncProvider} from '@ink-tools/sync-core/settings';
 import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorView';
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
@@ -124,9 +124,16 @@ const IMAGE_EDITOR: ImageEditorState = {
 };
 const noop = () => {};
 /** Account Sync with Calendar and ICS on and one synthetic feed, scrolled to its ICS feeds (#30). */
-const ICS_FEEDS = addIcsFeed(
-  accountSyncProvider(accountSyncModule(accountSyncDefaults(), 'calendar', true), 'ics', true),
-  'webcal://feeds.example.com/private/sample.ics',
+const ICS_FEEDS = setIcsNames(
+  addIcsFeed(
+    addIcsFeed(
+      accountSyncProvider(accountSyncModule(accountSyncDefaults(), 'calendar', true), 'ics', true),
+      'webcal://feeds.example.com/private/sample.ics',
+    ),
+    'https://other.example.org/calendar.ics',
+  ),
+  // The first feed gave its calendar name at the last pass (#433); the second shows its host.
+  {'webcal://feeds.example.com/private/sample.ics': 'Sample holidays'},
 );
 /** The picture's stage height the renders report: under its floor on the Nomad, the smallest window. */
 const STAGE_HEIGHT = 280;
@@ -237,6 +244,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'account-sync-owner', render: () => accountSync(OWNER, OWNER_RUNS, OWNER_SIGN_INS)},
   {name: 'account-sync-settings', render: () => accountSync(accountSyncDefaults())},
   {name: 'account-sync-signed-in', render: () => accountSync(SIGNED_IN, {}, {todoist: {state: 'signedIn', account: 'tester@example.com'}})},
+  {name: 'account-sync-signed-in-long', render: () => accountSync(OWNER, {}, {todoist: {state: 'signedIn', account: accountName(`Sample Tester With A Very Long Given Name (${'sample.tester.with.a.long.address'.repeat(2)}@example.com)`)}, google: {state: 'signedIn'}, icloud: {state: 'signedIn', account: 'tester@example.org'}})},
   {name: 'account-sync-connect', render: () => accountSync(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})},
   {name: 'account-sync-ics-feeds', render: () => accountSync(ICS_FEEDS)},
   {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},

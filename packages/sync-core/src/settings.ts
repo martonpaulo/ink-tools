@@ -62,10 +62,17 @@ export interface Accounts {
 /** The longest account or calendar name kept; a longer one is cut, never refused. */
 export const MAX_ACCOUNT_CHARS = 96;
 
-/** A name as Settings keeps it: one trimmed line, cut to the limit; empty is no name. */
+/**
+ * A name as Settings keeps it: one trimmed line; empty is no name. A longer name is cut between
+ * characters, never inside one, and ends with «…», so a cut address never reads as another one.
+ */
 export function accountName(raw: string): string | undefined {
   const line = raw.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
-  return line ? line.slice(0, MAX_ACCOUNT_CHARS) : undefined;
+  if (!line) {
+    return undefined;
+  }
+  const chars = Array.from(line);
+  return chars.length > MAX_ACCOUNT_CHARS ? `${chars.slice(0, MAX_ACCOUNT_CHARS - 1).join('')}…` : line;
 }
 
 export function defaultSettings(): BridgeSettings {

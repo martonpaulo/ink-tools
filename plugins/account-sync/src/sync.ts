@@ -514,6 +514,10 @@ export function createSyncRunner(device: SyncDevice): SyncRunner {
         runs[id] = r;
         logRun(r, log);
       }
+    } else if (movedIn.length) {
+      // A sign-in moved in on a pass that runs no module (the load pass, or every module blocked):
+      // forget the replaced account's name now, so its row never names the account signed out of.
+      await keepSettings(device, state, noAccountReads(), movedIn, log);
     }
     return {running: false, runs, probe};
   };

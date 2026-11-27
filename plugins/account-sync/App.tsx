@@ -139,10 +139,10 @@ export default function App({
   }, [store, accounts]);
 
   // A pass moves a sign-in dropped by `inkctl secret set` in and reads its account (#433), so read
-  // the settings and the sign-ins again after each one.
+  // the settings and the sign-ins again after each one, a pass whose modules were all blocked too.
   useEffect(() => {
     readSignIns();
-  }, [readSignIns]);
+  }, [readSignIns, synced.runs]);
 
   const signOut = async (provider: SecretProvider) => {
     try {

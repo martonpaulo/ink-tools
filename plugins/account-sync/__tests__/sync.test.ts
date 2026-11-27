@@ -740,4 +740,15 @@ describe('the account each service is signed in to (#433)', () => {
     await createSyncRunner(d).syncNow();
     expect(kept.get().accounts).toEqual({todoist: EMAIL});
   });
+
+  test('a sign-in moved in on the load pass, which runs no module, forgets the old account at once', async () => {
+    const kept = keeping({...settings('google', 'todoist'), accounts: {google: EMAIL, todoist: EMAIL}});
+    const d = device({
+      fetch: accounts(true).fetch,
+      importSecrets: async () => [{provider: 'google', moved: true}],
+      ...kept.over,
+    });
+    await createSyncRunner(d).syncNow({load: true});
+    expect(kept.get().accounts).toEqual({todoist: EMAIL});
+  });
 });
