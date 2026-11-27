@@ -28,6 +28,15 @@ export const ACTION_POLL_MS = 1_200;
 export const ACTION_BURST_POLL_MS = ACTION_POLL_MS / 8;
 export const ACTION_BURST_MS = 2 * 60_000;
 export const ACTION_MAX_AGE_MS = 60_000;
+/**
+ * How long one action may hold the channel. PluginHost sends a plugin's call to the app that last
+ * came to the front; with the Settings app there, `getCurrentFilePath` went to Settings, which has
+ * no answer for it, and the call never returned. The channel stayed busy, so every later request,
+ * the note in front again, went unanswered until PluginHost restarted [measured, Ink Tools Probe's
+ * `run-probe`, Manta, 2026-11-27, #474]. Past this limit the channel answers the request as
+ * unfinished and takes the next one; the call itself cannot be cancelled.
+ */
+export const ACTION_RUN_LIMIT_MS = 2 * ACTION_MAX_AGE_MS;
 /** A logcat line holds about 4 KB with its prefix; a longer answer goes in chunks of this many characters. */
 export const ACTION_CHUNK = 3200;
 /** The answer codes inkctl maps to its exit codes. */
@@ -130,6 +139,8 @@ export function startActionChannel({
 }: ActionChannelOptions): ActionChannel {
   const answered: string[] = [];
   let busy = false;
+  /** The running request and when it started; a run counter, so a late end of an abandoned one changes nothing. */
+  let running = {id: '', since: 0, run: 0};
   let burst: unknown = null;
   let lastRequest = 0;
 
@@ -169,9 +180,16 @@ export function startActionChannel({
   const channel: ActionChannel = {
     async check() {
       if (busy) {
-        return;
+        if (now() - running.since <= ACTION_RUN_LIMIT_MS) {
+          return;
+        }
+        const message = `no end in ${Math.round(ACTION_RUN_LIMIT_MS / 1000)} s: a call the host never answered, such as one made while another app than the note was in front; the channel takes the next request`;
+        actionLines(plugin, running.id, {ok: false, code: ACTION_FAILED, message}).forEach(log);
+        busy = false;
       }
       busy = true;
+      const run = running.run + 1;
+      running = {id: '', since: now(), run};
       try {
         let text: string | null;
         try {
@@ -186,9 +204,15 @@ export function startActionChannel({
         answered.push(id);
         answered.splice(0, Math.max(0, answered.length - IDS_KEPT));
         hurry();
-        actionLines(plugin, id, await answer(text)).forEach(log);
+        running = {...running, id};
+        const reply = await answer(text);
+        if (running.run === run) {
+          actionLines(plugin, id, reply).forEach(log);
+        }
       } finally {
-        busy = false;
+        if (running.run === run) {
+          busy = false;
+        }
       }
     },
     stop() {

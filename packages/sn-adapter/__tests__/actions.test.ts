@@ -5,6 +5,7 @@ import {
   ActionRefused,
   ACTION_MAX_AGE_MS,
   ACTION_POLL_MS,
+  ACTION_RUN_LIMIT_MS,
   actionLines,
   nativeTimers,
   startActionChannel,
@@ -174,6 +175,40 @@ test('a check while one runs does nothing, so a slow action never runs twice', a
   await first;
   expect(sync).toHaveBeenCalledTimes(1);
   expect(run.lines).toHaveLength(1);
+});
+
+test('an action that never ends frees the channel after ACTION_RUN_LIMIT_MS, and its late end is not logged (#474)', async () => {
+  // Manta, 2026-11-27: a call made while the Settings app was in front never returned, and the
+  // channel answered nothing more until PluginHost restarted.
+  let clock = NOW;
+  let file: string | null = JSON.stringify({id: ID, at: clock, args: {}, action: 'hang'});
+  const lines: string[] = [];
+  let release: (value: {line: string}) => void = () => {};
+  const hang = jest.fn(() => new Promise<{line: string}>(resolve => (release = resolve)));
+  const sync = jest.fn(async () => ({line: 'done'}));
+  const timers = {setInterval: jest.fn(() => 7), clearInterval: jest.fn()};
+  const channel = startActionChannel({plugin: 'account-sync', read: async () => file, actions: {hang, sync}, log: line => lines.push(line), now: () => clock, timers});
+  void channel.check();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(hang).toHaveBeenCalledTimes(1);
+
+  file = JSON.stringify({id: 'b2c3d4e5', at: clock, args: {}, action: 'sync'});
+  await channel.check();
+  expect(sync).not.toHaveBeenCalled(); // still within the limit: the channel waits
+
+  clock += ACTION_RUN_LIMIT_MS + 1;
+  file = JSON.stringify({id: 'b2c3d4e5', at: clock, args: {}, action: 'sync'});
+  await channel.check();
+  expect(sync).toHaveBeenCalledTimes(1);
+  expect(lines[0]).toContain(`INKTOOLS action account-sync ${ID} 1/1 {"ok":false,"code":1,"message":"no end in`);
+  expect(lines[1]).toContain('INKTOOLS action account-sync b2c3d4e5 1/1 {"ok":true,"action":"sync"');
+
+  release({line: 'late'});
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(lines).toHaveLength(2);
+  file = JSON.stringify({id: 'c3d4e5f6', at: clock, args: {}, action: 'sync'});
+  await channel.check();
+  expect(sync).toHaveBeenCalledTimes(2);
 });
 
 test('a long answer is split in numbered chunks that join back to the JSON', () => {

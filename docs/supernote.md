@@ -722,6 +722,16 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   modules found `com.ratta.settings` as the note app until the host restarted (see Pen replay), so
   a stale note-app binding is the likelier cause [measured, Manta, 2026-11-27,
   [#474](https://github.com/martonpaulo/ink-tools/issues/474)].
+  PluginHost sends each plugin call to the client app that last reported coming to the front
+  (`getCurrentClientUid`; the note app, the Settings app and the document app are each a client),
+  and refuses a note API for any other client with code 102 «This app is not allowed to use this
+  API». With the Settings app in front, Probe's `run-probe` action called `getCurrentFilePath`,
+  which PluginHost sent to the Settings client, and it was never answered. Opening the note made
+  the note app current again (a press of Probe's «Run Command» worked at once), but the hung call
+  kept Probe's action channel busy, so every later action went unanswered until PluginHost
+  restarted; that, not a stale binding, is what held after the Settings view. Since then the
+  channel gives up on an action after `ACTION_RUN_LIMIT_MS` and takes the next request [measured,
+  Manta, 2026-11-27, [#474](https://github.com/martonpaulo/ink-tools/issues/474)].
 - An enable through the bridge after a disable once got no callback: PluginHost logged
   `PluginSec DENY reason=other_plugin` on the plugin's own `.npk` and the call timed out; an
   uninstall and an install loaded it [reported by the device round of 2026-11-17, Image Editing,
