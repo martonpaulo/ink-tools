@@ -185,17 +185,17 @@ describe('nonogramFromCode (#384)', () => {
 });
 
 describe('a drawn picture never reads as blank (#384)', () => {
-  test('a large picture leaves at most a fifth of its lines empty, the tablet\'s mostly blank 15 x 15 hard too', () => {
-    const emptyLines = (p: { width: number; height: number; solution: boolean[] }): number => {
+  test('a large picture leaves at most a fifth of its rows and a fifth of its columns empty, the tablet\'s mostly blank 15 x 15 hard too', () => {
+    const emptyLines = (p: { width: number; height: number; solution: boolean[] }): [rows: number, columns: number] => {
       const rows = Array.from({ length: p.height }, (_, r) => p.solution.slice(r * p.width, (r + 1) * p.width).some(Boolean));
       const columns = Array.from({ length: p.width }, (_, c) => rows.some((_, r) => p.solution[r * p.width + c]));
-      return [...rows, ...columns].filter(line => !line).length;
+      return [rows.filter(line => !line).length, columns.filter(line => !line).length];
     };
     const blank: string[] = [];
-    for (const seed of ['7Z9GEKG7', ...Array.from({ length: 12 }, (_, i) => `S${i}`)]) {
+    for (const seed of ['7Z9GEKG7', '1', ...Array.from({ length: 24 }, (_, i) => `S${i}`)]) {
       for (const band of NONOGRAM_BANDS) {
-        const puzzle = generateNonogram(seed, { width: 15, height: 15 }, band);
-        if (emptyLines(puzzle) > 6) blank.push(`${seed} ${band}: ${emptyLines(puzzle)} empty lines`);
+        const [rows, columns] = emptyLines(generateNonogram(seed, { width: 15, height: 15 }, band));
+        if (rows > 3 || columns > 3) blank.push(`${seed} ${band}: ${rows} empty rows, ${columns} empty columns`);
       }
     }
     expect(blank).toEqual([]);

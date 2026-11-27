@@ -423,7 +423,7 @@ function attemptsFor(cells: number): number {
  */
 const DENSITY: Record<string, number> = { easy: 62, medium: 45, hard: 40 };
 /**
- * The most lines (rows and columns together) a drawn picture may leave empty, as a share of them:
+ * The most rows, and the most columns, a drawn picture may leave empty, as a share of each:
  * a sparse hard picture left 8 of 15 columns at «0» on the tablet, a page that reads as blank
  * (#384). One in five keeps most hard draws, so a hard page takes about as long as before.
  * shortcut: only pictures 10 cells or more on each side are held to it, as a thin hard picture
@@ -432,17 +432,21 @@ const DENSITY: Record<string, number> = { easy: 62, medium: 45, hard: 40 };
 const MAX_EMPTY_LINE_SHARE = 0.2;
 const BLANK_CHECK_MIN_SIDE = 10;
 
-/** Whether a picture leaves more of its lines empty than `MAX_EMPTY_LINE_SHARE` allows. */
+/**
+ * Whether a picture leaves more of its rows, or more of its columns, empty than
+ * `MAX_EMPTY_LINE_SHARE` allows: each direction on its own, so a side never reads as blank.
+ */
 function mostlyBlank(cells: readonly boolean[], width: number, height: number): boolean {
   if (Math.min(width, height) < BLANK_CHECK_MIN_SIDE) return false;
-  let empty = 0;
-  for (let r = 0; r < height; r++) if (!cells.slice(r * width, (r + 1) * width).some(Boolean)) empty++;
+  let rows = 0;
+  for (let r = 0; r < height; r++) if (!cells.slice(r * width, (r + 1) * width).some(Boolean)) rows++;
+  let columns = 0;
   for (let c = 0; c < width; c++) {
     let any = false;
     for (let r = 0; r < height && !any; r++) any = cells[r * width + c];
-    if (!any) empty++;
+    if (!any) columns++;
   }
-  return empty > MAX_EMPTY_LINE_SHARE * (width + height);
+  return rows > MAX_EMPTY_LINE_SHARE * height || columns > MAX_EMPTY_LINE_SHARE * width;
 }
 
 function checkSize(size: NonogramSize, difficulty: Difficulty): void {
