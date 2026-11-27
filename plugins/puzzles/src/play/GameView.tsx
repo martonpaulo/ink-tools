@@ -145,10 +145,10 @@ export function GameView({
         add();
       };
       setScreen({kind: 'working'});
+      await nextFrame();
       // The page on screen now, not the one the view opened on (#542).
       const here = await pages.here();
       if (!here.ok) {return failed(playCopy['error.here'], retry, here.message);}
-      await nextFrame();
       let board: GamePage;
       let png: Uint8Array;
       try {
@@ -202,9 +202,9 @@ export function GameView({
         answer(shown);
       };
       setScreen({kind: 'working'});
+      await nextFrame();
       const now = await onScreen(shown, retry);
       if (!now) {return;}
-      await nextFrame();
       setScreen({kind: 'answer', board: now.board, picture: now.board.answer()});
     },
     [onScreen],

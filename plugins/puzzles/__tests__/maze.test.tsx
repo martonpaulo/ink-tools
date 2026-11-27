@@ -1,6 +1,5 @@
 /** The maze in the Puzzles view (#386): a new page from its choices, «Check» and «Show Solution». */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {act} from 'react-test-renderer';
 import {RETRY_TEXT} from '@ink-tools/ui-kit';
 import {BACK_LABEL} from '@ink-tools/ui-kit/controlsCopy';
 import {
@@ -142,10 +141,6 @@ describe('each press acts on the page on screen, not the one the view opened on 
     const tree = await mount(pages);
     turn(4, other);
     await press(tree, playCopy['here.answer']);
-    // The second page read and the open of the other maze take one more turn than the press waits.
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
     expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
     await press(tree, BACK_LABEL);
     expect(shownTexts(tree.root)).toEqual(expect.arrayContaining([playCopy['here.title']('Maze', 'Hard'), other]));
