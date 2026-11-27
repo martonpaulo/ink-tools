@@ -1140,9 +1140,13 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   `insertPageElements`, then hands the new element to those listeners, with the recorded gaps and
   stroke times (registry `pen.replay-route`, level 1). `inkctl ink record start|stop` and
   `inkctl ink replay FILE --plugin smart-pen` drive it through the plugin's action channel. It tests
-  the plugin's logic, not the host's pen delivery, so one real-pen smoke per release stays. Not yet
-  seen on the tablet [inference, device round pending]: that a created and inserted stroke reads its
-  points back as a pen-up element does, so Smart Shapes and Real-Time Text take it; and whether
+  the plugin's logic, not the host's pen delivery, so one real-pen smoke per release stays. A replay
+  saves the note after each pen-up's insert and before the listeners run, as an inserted stroke
+  stays out of the file until a save; with no module on, it inserts and saves the strokes as plain
+  ink. Smart Shapes took a replayed held circle and square, which the lasso delete then left on the
+  page (see Plugins, [#477](https://github.com/martonpaulo/ink-tools/issues/477)) [measured, Manta,
+  2026-11-27]. Not yet seen on the tablet [inference, device round pending]: that Real-Time Text
+  takes a replayed word; and whether
   `input stylus motionevent` reaches a plugin's own React Native view, such as Image Editing's Crop
   and Erase, where inkctl could draw with no replay at all.
 - USB ADB needs Sideloading on; Wi-Fi ADB is turned on over the cable (`inkctl wifi on`) and off

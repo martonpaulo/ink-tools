@@ -34,7 +34,8 @@ export type TapeEvent =
 /** `at` counts ms from the tape's first event. */
 export type PenTape = {version: number; events: TapeEvent[]};
 
-export type ReplayCounts = {motions: number; penUps: number; strokes: number; listenerErrors: number};
+/** `listeners`: how many pen-up and motion listeners were on; with none, the strokes stay plain ink (#298). */
+export type ReplayCounts = {listeners: number; motions: number; penUps: number; strokes: number; listenerErrors: number};
 
 type PenUpListener = (elements: object[]) => void;
 type MotionListener = (motion: Motion) => void;
@@ -71,7 +72,7 @@ export function penRecording(): boolean {
   return recording !== null;
 }
 
-/** Why a recording or a replay cannot run: the plugin's modules are all off, so nothing hears the pen. */
+/** Why a recording cannot run: the plugin's modules are all off, so nothing hears the pen. */
 const NO_LISTENER = 'no pen listener is on: turn the plugin module on first';
 
 /**
@@ -282,17 +283,17 @@ function deliver<T>(listeners: Set<(value: T) => void>, value: T): number {
  * Plays the tape to the listeners on now, with the recorded gaps (each at most REPLAY_MAX_GAP_MS).
  * A motion goes to the motion listeners with this replay's times; a pen-up inserts its strokes on the
  * open page and hands the new elements to the pen-up listeners, each with its recorded times shifted
- * to now. A failed page read or insert stops the replay with why; it is never a partial success.
+ * to now. With no listener on, the strokes are inserted and saved as plain ink, as the pen writes
+ * with every module off (#298). A failed page read or insert stops the replay with why; it is never
+ * a partial success.
  */
 export async function replayPenTape(tape: PenTape, host: ReplayHost): Promise<Result<ReplayCounts>> {
-  if (penUpListeners.size === 0 && motionListeners.size === 0) {
-    return fail(THROWN_CODE, NO_LISTENER);
-  }
   const page = await host.page();
   if (!page.ok) {
     return page;
   }
-  const counts: ReplayCounts = {motions: 0, penUps: 0, strokes: 0, listenerErrors: 0};
+  const listeners = penUpListeners.size + motionListeners.size;
+  const counts: ReplayCounts = {listeners, motions: 0, penUps: 0, strokes: 0, listenerErrors: 0};
   const base = host.now();
   let previous = 0;
   let downTime = base;

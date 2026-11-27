@@ -108,7 +108,7 @@ test('a replay inserts each stroke on the open page and hands it to the pen-up l
 
   const result = await replayPenTape(TAPE, host);
 
-  expect(result).toEqual({ok: true, value: {motions: 2, penUps: 1, strokes: 1, listenerErrors: 0}});
+  expect(result).toEqual({ok: true, value: {listeners: 2, motions: 2, penUps: 1, strokes: 1, listenerErrors: 0}});
   expect(inserted).toEqual([{stroke: STROKE, page: 3}]);
   expect(motions).toEqual([0, 1]);
   expect(penUps).toEqual([[{uuid: 'replayed-1'}]]);
@@ -149,11 +149,14 @@ test('a replayed stroke answers its recorded times, shifted to the replay', asyn
   expect(await strokeTimes(element as unknown as object)).toEqual({ok: true, value: {startedAt: 1_000_000, endedAt: 1_000_040}});
 });
 
-test('with no listener on, a replay inserts nothing and says why', async () => {
-  const {host, inserted} = fakeHost();
+test('with no listener on, a replay inserts and saves the strokes as plain ink (#298)', async () => {
+  // A device round's «both modules off» line checks that replayed ink stays as written; the replay
+  // refused it while no module listened.
+  const {host, inserted, calls} = fakeHost();
   const result = await replayPenTape(TAPE, host);
-  expect(result.ok).toBe(false);
-  expect(inserted).toEqual([]);
+  expect(result).toEqual({ok: true, value: {listeners: 0, motions: 2, penUps: 1, strokes: 1, listenerErrors: 0}});
+  expect(inserted).toEqual([{stroke: STROKE, page: 3}]);
+  expect(calls).toEqual(['insert', 'save']);
 });
 
 test('a stopped listener gets no replayed stroke', async () => {

@@ -14,7 +14,7 @@ function host(overrides: Partial<PenActionsHost> = {}): PenActionsHost {
   return {
     start: jest.fn(() => ({ok: true as const, value: true as const})),
     stop: () => ({ok: true, value: {tape: TAPE, dropped: 0}}),
-    replay: jest.fn(async () => ({ok: true as const, value: {motions: 0, penUps: 1, strokes: 1, listenerErrors: 0}})),
+    replay: jest.fn(async () => ({ok: true as const, value: {listeners: 2, motions: 0, penUps: 1, strokes: 1, listenerErrors: 0}})),
     ...overrides,
   };
 }
@@ -49,6 +49,12 @@ test('replay-pen plays a good tape and says what it played', async () => {
   const answer = await penActions(fake)['replay-pen']({tape: TAPE});
   expect(fake.replay).toHaveBeenCalledWith(TAPE);
   expect(answer.line).toBe('SmartPen: replayed 1 pen-ups (1 strokes) and 0 motions, 0 listener errors');
+});
+
+test('replay-pen with no module on says the strokes stayed plain ink (#298)', async () => {
+  const fake = host({replay: jest.fn(async () => ({ok: true as const, value: {listeners: 0, motions: 0, penUps: 1, strokes: 1, listenerErrors: 0}}))});
+  const answer = await penActions(fake)['replay-pen']({tape: TAPE});
+  expect(answer.line).toBe('SmartPen: replayed 1 pen-ups (1 strokes) and 0 motions, 0 listener errors, no module on: plain ink');
 });
 
 test('replay-pen refuses a bad tape before it plays anything', async () => {

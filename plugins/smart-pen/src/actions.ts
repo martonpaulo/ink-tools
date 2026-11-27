@@ -80,9 +80,10 @@ export function penActions(host: PenActionsHost = DEVICE): Record<string, Action
       if (!played.ok) {
         throw new Error(played.message);
       }
-      const {motions, penUps, strokes, listenerErrors} = played.value;
+      const {listeners, motions, penUps, strokes, listenerErrors} = played.value;
+      const plain = listeners === 0 ? ', no module on: plain ink' : '';
       return {
-        line: `SmartPen: replayed ${penUps} pen-ups (${strokes} strokes) and ${motions} motions, ${listenerErrors} listener errors`,
+        line: `SmartPen: replayed ${penUps} pen-ups (${strokes} strokes) and ${motions} motions, ${listenerErrors} listener errors${plain}`,
         ...played.value,
       };
     },
