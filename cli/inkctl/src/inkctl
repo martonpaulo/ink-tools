@@ -3508,15 +3508,20 @@ def landed_despite_failure(device: Device, config: dict, limit: float):
 def install_through_bridge(device: Device, args: argparse.Namespace, config: dict, installed: list, since: str | None = None) -> tuple:
     pushed = push_file(device, args.file, remote_path(f"{PLUGIN_FOLDER}/{os.path.basename(args.file)}"), args.overwrite)
     code, answer = bridge_result(device, "install", path=pushed["path"])
+    # A first install refused with errorCode=100 can still leave its row in the list with its native
+    # part not loaded, so no toolbar button (Manta, 2026-11-27, #533): the row proves nothing there.
+    refused_first = not installed and code == BRIDGE_FAILED and HOST_FOREIGN_PLUGIN in answer
     # The list proves a failure that landed only when the version changed (#225).
-    row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None else None
+    row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None and not refused_first else None
     if row is None and code == BRIDGE_FAILED and HOST_FOREIGN_PLUGIN in answer:
         # Another plugin's id on the host's binder thread refused the install; it held after a
         # plugin action ran and cleared after a host restart (measured twice, Manta, 2026-11-26, #297).
         print(f"PluginHost answered {HOST_FOREIGN_PLUGIN}: restarting {HOST_PACKAGE} and installing once more", file=sys.stderr, flush=True)
         device.shell(f"am force-stop {shlex.quote(HOST_PACKAGE)}")
         settled_plugin_rows(device, args.timeout)
-        if since is not None:
+        if since is not None or refused_first:
+            # The second install is proven by PluginHost's own success line for the file, as a
+            # same-version update is (#310): a refused first install's row may already be listed.
             since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
         code, answer = bridge_result(device, "install", path=pushed["path"])
         row = landed_despite_failure(device, config, args.timeout) if code == BRIDGE_FAILED and since is None else None

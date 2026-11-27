@@ -170,6 +170,8 @@ case "$1" in
                 if [ -f "$ADB_FILES/bridge-answer" ]; then
                     echo 'Broadcasting: Intent { flg=0x20 cmp=com.martonpaulo.inktools.bridge/.CommandReceiver }'
                     cat "$ADB_FILES/bridge-answer"
+                    # A second call answers bridge-answer-next, when a test sets one (#533).
+                    [ -f "$ADB_FILES/bridge-answer-next" ] && mv "$ADB_FILES/bridge-answer-next" "$ADB_FILES/bridge-answer"
                     [ -f "$ADB_FILES/rows-after-bridge" ] && cp "$ADB_FILES/rows-after-bridge" "$ADB_FILES/rows"
                     [ -f "$ADB_FILES/plugin-row-after" ] && cp "$ADB_FILES/plugin-row-after" "$ADB_FILES/plugin-row"
                 else
@@ -1117,6 +1119,18 @@ check "a bridge onFailed that landed logs the host's error once" "$(grep -c 'onF
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' | tee "$files/rows" > "$files/rows-after-bridge"
 run plugin install "$work/local/test.snplg" --overwrite >/dev/null 2>"$work/err"
 check "a bridge onFailed whose version did not change still fails, after one PluginHost restart and retry (#297)" "$?$(grep -c 'onFailed PluginError{errorCode=100}' "$work/err")$(called 'am force-stop com.ratta.supernote.pluginhost')$(called 'op install')" "1112"
+# #533: a first install refused with errorCode=100 can leave its row listed with no native part
+# loaded; the row proves nothing, so PluginHost restarts and the second install is proven by its line.
+printf 'Row: 0 name=Other, pluginID=other\n' > "$files/rows"
+printf 'Row: 0 name=Other, pluginID=other\nRow: 1 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
+printf 'Broadcast completed: result=2, data="failed onFailed PluginError{errorCode=100}"\n' > "$files/bridge-answer"
+printf 'Broadcast completed: result=1, data="ok onSuccess PluginInfo{pluginID=new.plugin}"\n' > "$files/bridge-answer-next"
+cp "$files/log" "$work/log-saved"
+printf '11-16 23:00:01.000 I/PluginInstallManager( 1): installPlugin: success, pluginName=Snap, pluginZipPath=%s/MyStyle/test.snplg, isUpgrade=true\n' "$root" > "$files/log"
+result=$(run plugin install "$work/local/test.snplg" --overwrite --json 2>"$work/err")
+check "a first install refused with errorCode=100 restarts PluginHost and is proven by the second install's line, though its row was listed (#533)" "$?$(printf '%s' "$result" | field "['action']")$(called 'am force-stop com.ratta.supernote.pluginhost')$(called 'op install')$(grep -c 'is in the plugin list' "$work/err")" "0installed120"
+rm -f "$files/bridge-answer-next"
+cp "$work/log-saved" "$files/log"
 # #419: PluginHost restarts after an install, and its list answers nothing for a while.
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=1.0\n' > "$files/rows"
 printf 'Row: 0 name=Snap, pluginID=new.plugin, versionName=2.0\n' > "$files/rows-after-bridge"
