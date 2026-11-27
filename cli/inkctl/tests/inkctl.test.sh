@@ -1754,7 +1754,7 @@ action_line 'account-sync ACTION_ID 1/1 {"ok":true,"action":"sync","ms":900,"lin
 result=$(run plugin action account-sync sync --module todo)
 check "plugin action writes the request in the plugin's folder and prints the plugin's line" "$?$(cat "$files/action-path")|$result" "0$root/.data/plugin/inktools-account-sync/action.json|[Bridge] sync todo: 2026-11-16T23:00:01.000Z, 1 added, 0 errors, 0 warnings"
 check "the request names the action, its module and the tablet's time" "$(action_field "d['action'], d['args'], d['at'], len(d['id'])")" "('sync', {'module': 'todo'}, 1800000000000, 32)"
-check "plugin action presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
+check "plugin action presses nothing and reads no screen, and wakes the tablet first (#4)" "$(called 'input tap')$(called 'uiautomator')$(grep -n -E 'keyevent WAKEUP| push ' "$log" | head -1 | grep -c WAKEUP)" "001"
 check "plugin action in JSON answers the plugin's own answer" "$(run plugin action account-sync sync --json | field "['ok'],d['modules']")" "(True, ['todo'])"
 # Two requests at once to one plugin: the second waits for the first's answer, never replaces its file (#471).
 ADB_PUSH_MEET=1 run plugin action account-sync sync --module todo --timeout 10 > "$work/first-action" 2>&1 &
@@ -1801,7 +1801,7 @@ result=$(run note edit Note/Tests/Edit.note "$work/local/ops.json")
 check "note edit writes the request in Device Link's folder and prints the answer" "$?$(cat "$files/action-path")|$result" "0$helper_folder/action.json|edited: 2 operations on $root/Note/Tests/Edit.note in 300 ms; open note: $root/Note/Tests/Other.note"
 check "note edit sends the note's path and the operations as the action edit" "$(action_field "d['action'], d['args']['path'], [op['op'] for op in d['args']['ops']]")" "('edit', '$root/Note/Tests/Edit.note', ['deleteElements', 'insertElements'])"
 check "note edit copies each picture to the helper's folder and names it there" "$(cat "$files/picture-paths")|$(action_field "d['args']['ops'][1]['elements'][0]['file']")" "$helper_folder/picture-1.png|$helper_folder/picture-1.png"
-check "note edit presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
+check "note edit presses nothing and reads no screen" "$(called 'input tap')$(called 'uiautomator')" "00"
 action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":2,"message":"no-element: operation 1 (deleteElements): page 0 has no element 2","refusal":"no-element","openNote":null}' > "$files/action-answer"
 run note edit Note/Tests/Edit.note "$work/local/ops.json" >/dev/null 2>"$work/err"
 check "a refusal of the helper exits 2 and names it" "$?$(grep -c 'device-link edit: no-element: operation 1' "$work/err")" "21"
@@ -1831,7 +1831,7 @@ check "note templates runs under --read-only and prints each template" "$?$(acti
 system: style_8mm_lines
 custom: week: $root/MyStyle/week.png"
 check "note templates in JSON answers both lists" "$(run note templates --json | field "['system'][1]['name'], d['custom']")" "('style_8mm_lines', [{'name': 'week', 'path': '$root/MyStyle/week.png'}])"
-check "note templates presses nothing and reads no screen" "$(called 'input ')$(called 'uiautomator')" "00"
+check "note templates presses nothing and reads no screen" "$(called 'input tap')$(called 'uiautomator')" "00"
 action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"templates","system":[],"custom":[]}' > "$files/action-answer"
 check "an answer with no system template is a failure, never an empty list" "$(exit_and_pushes note templates)" "11"
 action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"templates","system":[{"name":"style_white"}],"custom":[{"name":"week"}]}' > "$files/action-answer"

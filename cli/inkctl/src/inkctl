@@ -3637,7 +3637,10 @@ def run_action(device: Device, name: str, action: str, request_args: dict, timeo
 
 
 def locked_action(device: Device, name: str, action: str, request_args: dict, timeout: float) -> dict:
+    """The screen is woken first: the plugin reads its file on a native timer that counts uptime, so
+    it stops while the tablet sleeps, also with the cable in (device round 11, #4)."""
     plugin = ACTION_PLUGINS[name]
+    device.wake()
     now = device.shell("date +%s").strip()
     if not now.isdigit():
         raise Failure(EXIT_FAILED, "device_error", f"the tablet's time did not read: {now!r}")
