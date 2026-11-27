@@ -278,6 +278,14 @@
     "pattern": "(?:GEOMETRY_TYPE|WORD_PAUSE_MS) = 700;",
     "golden": "",
     "open": 295
+   },
+   {
+    "rule": "Not one value, two that only match: Note Editor's find field widths in the toolbar (200 and 110 points, as Preview's) and inkctl's Helper listen time of 110 s (#460)",
+    "owner": "apps/note-editor/Sources/NoteEditor/FindBar.swift",
+    "other": "cli/inkctl/src/inkctl",
+    "pattern": "(?:toolbarWidth: CGFloat = 200|toolbarMinWidth: CGFloat = 110|HELPER_LISTEN_SECONDS = 110\\.0)\\b",
+    "golden": "",
+    "open": 295
    }
   ]
  },
