@@ -84,4 +84,8 @@ export const TEXT_SIZE = {
   listMm: 3.4,
   /** The step between two lines of a list, as a share of its em. */
   listLeading: 1.45,
+  /** An arrowword's clue text in its clue cell, in millimetres of em: the screen's floor. */
+  arrowClueMm: 3,
+  /** The line step of a clue's wrapped lines, as a share of its em. */
+  lineStep: 1.1,
 } as const;

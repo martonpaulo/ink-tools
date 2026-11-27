@@ -1,5 +1,6 @@
-import { digest, generateBinairo, generateCalcudoku, generateCodeword, generateFillIn, generateFutoshiki, generateHitori, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
+import { digest, generateArrowword, generateBinairo, generateCalcudoku, generateCodeword, generateFillIn, generateFutoshiki, generateHitori, generateLightUp, generateMaze, generateNonogram, generateSlitherlink, generateSudoku, generateWordSearch } from '../src';
 import { WORD_LISTS } from '../src/words-data';
+import { maskedClueBank } from '../testing/clue-bank';
 
 /**
  * Pinned digests of one puzzle per game (#380). They change only when generation changes on
@@ -26,6 +27,7 @@ const PINNED: readonly [string, () => unknown, string][] = [
   ['light up 10 x 10 hard', () => generateLightUp('P1', { width: 10, height: 10 }, 'hard'), 'fe009ec1'],
   ['hitori 8 x 8 medium', () => generateHitori('P1', 8, 'medium'), 'ce19aabd'],
   ['binairo 10 x 10 hard', () => generateBinairo('P1', 10, 'hard'), 'bbcf3637'],
+  ['arrowword PT 8 x 8 medium', () => generateArrowword('P1', 'medium', maskedClueBank('pt')), '8fd9d42e'],
 ];
 
 describe('the same seed gives the same puzzle everywhere', () => {

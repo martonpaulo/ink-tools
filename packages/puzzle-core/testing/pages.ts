@@ -6,6 +6,8 @@
  */
 import {
   createPage,
+  drawArrowword,
+  generateArrowword,
   drawCellText,
   drawFooter,
   drawHitoriPage,
@@ -34,6 +36,7 @@ import {
   type PageLayout,
   type Raster,
 } from '../src';
+import { maskedClueBank } from './clue-bank';
 
 const PANEL_TEXT = { size: 48, first: 60, step: 64 } as const;
 
@@ -116,5 +119,13 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     const puzzle = generateBinairo('P1', 10, 'medium');
     const layout = layoutBinairoPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10 });
     return drawBinairoPage(puzzle, layout, { game: 'Binairo', difficulty: 'Medium', code: puzzleCode(puzzle.id) });
+  }],
+  ['page-15mm-arrowword', () => {
+    const puzzle = generateArrowword('P1', 'hard', maskedClueBank('pt'));
+    const layout = layoutPage({ orientation: 'portrait', hand: 'right', cellMm: 15, lattice: 'square', columns: puzzle.columns, rows: puzzle.rows });
+    const r = createPage(layout);
+    drawArrowword(r, layout.grid, puzzle);
+    drawFooter(r, layout, { game: 'Arrowword', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Write each answer from its clue, in the direction of its arrow.' });
+    return r;
   }],
 ];
