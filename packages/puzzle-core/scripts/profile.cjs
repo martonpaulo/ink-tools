@@ -73,6 +73,8 @@ const CASES = [
   ['word search 12 hard', () => core.generateWordSearch('P1', 12, 'hard', WORDS)],
   ['slitherlink 7 x 7 easy', () => core.generateSlitherlink('P1', { width: 7, height: 7 }, 'easy')],
   ['slitherlink 10 x 10 hard', () => core.generateSlitherlink('P1', { width: 10, height: 10 }, 'hard')],
+  ['futoshiki 5 x 5 medium', () => core.generateFutoshiki('P1', 5, 'medium')],
+  ['futoshiki 7 x 7 hard', () => core.generateFutoshiki('P1', 7, 'hard')],
 ];
 const only = process.env.ONLY;
 for (const [name, make] of CASES) {
