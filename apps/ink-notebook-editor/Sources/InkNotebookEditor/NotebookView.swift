@@ -425,8 +425,9 @@ extension FocusedValues {
 }
 
 /// Every page, one below the other, each drawn as it scrolls into view (#319). The scroll follows
-/// the current page, and the current page follows the scroll.
-private struct PageScroll: View {
+/// the current page, and the current page follows the scroll. Internal, not private, so the scroll
+/// tests read its scroll bar width (#457).
+struct PageScroll: View {
     let pages: PageImages
     @Binding var navigator: PageNavigator
     let viewer: PageViewer
@@ -440,6 +441,8 @@ private struct PageScroll: View {
     /// The magnification a pinch started at, and where in the window.
     @State private var pinchBase: Double?
     @State private var pinchAnchor: CGPoint?
+    /// The width a vertical scroll bar takes beside the pages, by the Mac's scroll bar setting (#457).
+    @State private var scrollerWidth = Self.verticalScrollerWidth()
     @Environment(\.displayScale) private var displayScale
 
     init(pages: PageImages, navigator: Binding<PageNavigator>, viewer: PageViewer) {
@@ -457,14 +460,33 @@ private struct PageScroll: View {
         page == 0 ? ScrollPosition(edge: .top) : ScrollPosition(id: page, anchor: .top)
     }
 
+    /// Posted when the Mac's scroll bar setting changes.
+    static let scrollerStyleChanged = NSScroller.preferredScrollerStyleDidChangeNotification
+
+    /// The width a vertical scroll bar of `style` takes beside the pages: a bar shown always takes
+    /// its width, one shown only while scrolling floats over them and takes none (#457).
+    static func verticalScrollerWidth(_ style: NSScroller.Style = NSScroller.preferredScrollerStyle) -> CGFloat {
+        style == .legacy ? NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) : 0
+    }
+
     private func scroll(to page: Int) {
         if page == 0 { position.scrollTo(edge: .top) } else { position.scrollTo(id: page, anchor: .top) }
     }
 
     var body: some View {
         GeometryReader { proxy in
-            let viewport = CGSize(
+            // The pages fit the width the scroll shows beside its vertical scroll bar: a page as wide
+            // as the window would scroll sideways by the bar's width (#457). The scroll reports its
+            // whole frame as visible, the bar and the page list over it included, so the bar's width
+            // comes from the Mac's setting.
+            // Pages that fit the window's height at its whole width show no vertical bar.
+            let whole = CGSize(
                 width: max(proxy.size.width - 2 * PageView.margin, 0),
+                height: max(proxy.size.height - 2 * PageView.margin, 0))
+            let fits = stack(viewer.zoom, whole).top(of: pages.pageSizes.count) <= proxy.size.height
+            let width = max(proxy.size.width - (fits ? 0 : scrollerWidth), 0)
+            let viewport = CGSize(
+                width: max(width - 2 * PageView.margin, 0),
                 height: max(proxy.size.height - 2 * PageView.margin, 0))
             ScrollView([.vertical, .horizontal]) {
                 // Each page carries half the margin above and below it, so a page scrolled to the top
@@ -484,7 +506,7 @@ private struct PageScroll: View {
                 .scrollTargetLayout()
                 .padding(.horizontal, PageView.margin)
                 .padding(.vertical, PageView.margin / 2)
-                .frame(minWidth: proxy.size.width)
+                .frame(minWidth: width)
             }
             .scrollPosition($position, anchor: .top)
             .onScrollGeometryChange(for: ScrollGeometry.self, of: { $0 }) { _, geometry in
@@ -526,6 +548,9 @@ private struct PageScroll: View {
                 position.scrollTo(point: CGPoint(x: max(share * width - anchor.x, 0), y: y))
             }
             .onChange(of: viewport, initial: true) { _, viewport in viewer.viewport = viewport }
+            .onReceive(NotificationCenter.default.publisher(for: Self.scrollerStyleChanged)) { _ in
+                scrollerWidth = Self.verticalScrollerWidth()
+            }
             .onChange(of: viewer.scrollTarget) { _, target in
                 guard let target else { return }
                 position.scrollTo(point: target)
@@ -782,7 +807,8 @@ private struct Thumbnail: View {
 }
 
 /// One page of the scroll at its zoomed size, drawn from a raster of exactly that many pixels.
-private struct PageView: View {
+/// Internal, not private, so the scroll tests read its margin (#457).
+struct PageView: View {
     /// The space around the pages and between them, in points.
     static let margin: CGFloat = 24
 
